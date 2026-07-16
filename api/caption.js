@@ -53,7 +53,7 @@ export default async function handler(req, res) {
             {
               parts: [
                 { text: prompt },
-                { inline_data: { mime_type: mimeType, data: base64Data } }
+                { inlineData: { mimeType: mimeType, data: base64Data } }
               ]
             }
           ]
