@@ -1057,11 +1057,16 @@ async function autoCaptionPhoto(dataUrl, captionEl){
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ image: dataUrl })
     });
-    if(!res.ok) throw new Error('caption service returned ' + res.status);
-    var data = await res.json();
+    var data = null;
+    try{ data = await res.json(); }catch(parseErr){ /* non-JSON response */ }
+    if(!res.ok){
+      var detail = (data && (data.detail || data.error)) ? (data.detail || data.error) : ('HTTP ' + res.status);
+      captionEl.textContent = '[Caption failed: ' + String(detail).slice(0, 300) + ']';
+      return;
+    }
     captionEl.textContent = (data && data.caption) ? data.caption : '[Caption — describe what this photo shows.]';
   }catch(e){
-    captionEl.textContent = '[Caption — describe what this photo shows.]';
+    captionEl.textContent = '[Caption failed: ' + (e.message || e) + ']';
   }
 }
 
