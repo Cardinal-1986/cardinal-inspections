@@ -174,6 +174,51 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 #savedFlash{font-size:12.5px;color:#9fdcb4;min-width:70px;}
 #reportFrame{flex:1;width:100%;border:0;background:#3d3d3d;}
 
+/* ---------- assistant chat panel ---------- */
+.editor-body{flex:1;display:flex;min-height:0;}
+.editor-body #reportFrame{flex:1;min-width:0;}
+#assistantPanel{
+  display:none;width:340px;flex:none;background:#fff;border-left:4px solid var(--red);
+  flex-direction:column;min-height:0;
+}
+#assistantPanel.open{display:flex;}
+.assist-head{
+  background:var(--ink);color:#fff;padding:10px 14px;font-size:13.5px;font-weight:700;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.assist-head button{
+  background:none;border:0;color:#bbb;font-size:16px;cursor:pointer;padding:2px 6px;
+}
+.assist-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
+.amsg{max-width:92%;font-size:13.5px;line-height:1.45;border-radius:8px;padding:8px 11px;}
+.amsg.user{align-self:flex-end;background:#f0e3e4;border:1px solid #e2c8ca;}
+.amsg.bot{align-self:flex-start;background:#f5f4f2;border:1px solid var(--line);}
+.amsg.bot.err{background:#fdeaea;border-color:var(--red);color:var(--red-dk);}
+.amsg img{max-width:120px;border-radius:5px;display:block;}
+.amsg .sec-tag{
+  display:inline-block;background:var(--red);color:#fff;border-radius:9px;
+  font-size:10.5px;font-weight:700;padding:1px 8px;margin-bottom:4px;letter-spacing:.04em;
+}
+.assist-drop{
+  margin:0 12px;border:2px dashed var(--line);border-radius:7px;padding:10px;text-align:center;
+  color:var(--muted);font-size:12.5px;cursor:pointer;
+}
+.assist-drop.drag{border-color:var(--red);color:var(--red-dk);}
+.assist-inputrow{display:flex;gap:8px;padding:12px;}
+.assist-inputrow textarea{
+  flex:1;font:inherit;font-size:13.5px;padding:8px 10px;border:1px solid var(--line);
+  border-radius:6px;resize:none;height:60px;
+}
+.assist-inputrow button{
+  align-self:flex-end;font:inherit;font-weight:700;font-size:13px;border:0;border-radius:6px;
+  background:var(--red);color:#fff;padding:10px 14px;cursor:pointer;
+}
+.assist-inputrow button:disabled{opacity:.5;cursor:default;}
+@media (max-width:820px){
+  .editor-body{flex-direction:column;}
+  #assistantPanel{width:100%;height:46%;border-left:0;border-top:4px solid var(--red);}
+}
+
 footer.site{
   border-top:1px solid var(--line);background:var(--paper);
   padding:18px 0;font-size:12.5px;color:var(--muted);
@@ -267,9 +312,27 @@ footer.site{
     </span>
     <button class="btn" id="saveBtn">Save</button>
     <button class="btn dark" id="printBtn">Print / PDF</button>
+    <button class="btn dark" id="assistantBtn">&#128194; Assistant</button>
     <span id="savedFlash"></span>
   </div>
-  <iframe id="reportFrame" title="Inspection report editor"></iframe>
+  <div class="editor-body">
+    <iframe id="reportFrame" title="Inspection report editor"></iframe>
+    <div id="assistantPanel">
+      <div class="assist-head">
+        Inspection Assistant
+        <button id="assistantClose" title="Close">&#10005;</button>
+      </div>
+      <div class="assist-msgs" id="assistMsgs">
+        <div class="amsg bot">Drop photos here and I'll file each one in the right section with a caption. Or type what you saw on the inspection and I'll add it to the matching section's write-up.</div>
+      </div>
+      <div class="assist-drop" id="assistDrop">&#128247; Drop photos here or tap to choose</div>
+      <input type="file" id="assistFile" accept="image/*" multiple style="display:none;">
+      <div class="assist-inputrow">
+        <textarea id="assistText" placeholder="e.g. Cracked boot seal on the SE slope, two nail pops on the west face"></textarea>
+        <button id="assistSend">Add</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1163,6 +1226,225 @@ function wireCoverPhoto(doc){
       btn.disabled = false;
       alert('Could not process that photo: ' + (err.message || err));
     });
+  });
+}
+
+/* =========================================================================
+   INSPECTION ASSISTANT — chat panel that files photos & notes into sections
+   ========================================================================= */
+var assistantPanel = document.getElementById('assistantPanel');
+var assistMsgs = document.getElementById('assistMsgs');
+var assistDrop = document.getElementById('assistDrop');
+var assistFile = document.getElementById('assistFile');
+var assistText = document.getElementById('assistText');
+var assistSend = document.getElementById('assistSend');
+
+document.getElementById('assistantBtn').addEventListener('click', function(){
+  assistantPanel.classList.toggle('open');
+});
+document.getElementById('assistantClose').addEventListener('click', function(){
+  assistantPanel.classList.remove('open');
+});
+
+function assistMsg(kind, html){
+  var d = document.createElement('div');
+  d.className = 'amsg ' + kind;
+  d.innerHTML = html;
+  assistMsgs.appendChild(d);
+  assistMsgs.scrollTop = assistMsgs.scrollHeight;
+  return d;
+}
+
+/* ---- section helpers (operate on the report iframe document) ---- */
+function findSectionHeading(doc, num){
+  var heads = doc.querySelectorAll('h2.sec');
+  for(var i=0;i<heads.length;i++){
+    var n = heads[i].querySelector('.num');
+    if(n && n.textContent.trim() === String(num)) return heads[i];
+  }
+  return null;
+}
+function sectionName(doc, num){
+  var h = findSectionHeading(doc, num);
+  if(!h) return 'Section ' + num;
+  var clone = h.cloneNode(true);
+  var n = clone.querySelector('.num'); if(n) n.remove();
+  return clone.textContent.trim();
+}
+function sectionElements(doc, num){
+  var h = findSectionHeading(doc, num);
+  if(!h) return [];
+  var els = [];
+  var el = h.nextElementSibling;
+  while(el && !(el.tagName === 'H2' && el.classList.contains('sec'))){
+    els.push(el);
+    el = el.nextElementSibling;
+  }
+  return els;
+}
+function findEmptyFrameInSection(doc, num){
+  var els = sectionElements(doc, num);
+  for(var i=0;i<els.length;i++){
+    var frames = els[i].querySelectorAll ? els[i].querySelectorAll('.fig .frame') : [];
+    for(var j=0;j<frames.length;j++){
+      if(!frames[j].querySelector('img')) return frames[j];
+    }
+  }
+  return null;
+}
+function addFrameToSection(doc, num){
+  var els = sectionElements(doc, num);
+  var lastRow = null, figCount = 0;
+  els.forEach(function(el){
+    if(el.classList && el.classList.contains('figrow')) lastRow = el;
+    if(el.querySelectorAll) figCount += el.querySelectorAll('.fig').length;
+  });
+  var fig = doc.createElement('div');
+  fig.className = 'fig avoid-break';
+  fig.innerHTML = '<div class="frame">PHOTO</div>' +
+    '<div class="cap"><b>Fig. ' + num + '.' + (figCount + 1) + '</b> — <span class="ph">[Caption.]</span></div>';
+  if(lastRow && lastRow.querySelectorAll('.fig').length < 2){
+    lastRow.appendChild(fig);
+  }else{
+    var row = doc.createElement('div');
+    row.className = 'figrow';
+    row.appendChild(fig);
+    if(lastRow && lastRow.parentNode){
+      lastRow.parentNode.insertBefore(row, lastRow.nextSibling);
+    }else{
+      var h = findSectionHeading(doc, num);
+      var anchor = h ? h.nextElementSibling : null;
+      if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(row, anchor.nextSibling);
+      else if(h && h.parentNode) h.parentNode.appendChild(row);
+    }
+  }
+  return fig.querySelector('.frame');
+}
+function placePhotoInSection(doc, num, dataUrl, caption){
+  var frame = findEmptyFrameInSection(doc, num) || addFrameToSection(doc, num);
+  if(!frame) return false;
+  Array.prototype.slice.call(frame.childNodes).forEach(function(node){
+    if(node.nodeType === 1 && node.tagName === 'BUTTON') return;
+    if(node.nodeType === 1 && node.tagName === 'INPUT') return;
+    if(node.nodeType === 1 && node.classList && node.classList.contains('tag')) return;
+    frame.removeChild(node);
+  });
+  var img = doc.createElement('img');
+  img.src = dataUrl;
+  var btn = frame.querySelector('button');
+  if(btn){ frame.insertBefore(img, btn); btn.textContent = '\u21BB Replace photo'; }
+  else frame.appendChild(img);
+  var cap = frame.parentElement ? frame.parentElement.querySelector('.cap .ph') : null;
+  if(cap && caption) cap.textContent = caption;
+  wirePhotoFrames(doc);
+  return true;
+}
+function addNoteToSection(doc, num, sentence){
+  var els = sectionElements(doc, num);
+  for(var i=0;i<els.length;i++){
+    if(els[i].tagName === 'P'){
+      var t = (els[i].textContent || '').trim();
+      if(els[i].classList.contains('ph') || t.charAt(0) === '['){
+        els[i].textContent = sentence;
+        els[i].classList.add('ph');
+        return true;
+      }
+      els[i].textContent = t + ' ' + sentence;
+      return true;
+    }
+  }
+  var h = findSectionHeading(doc, num);
+  if(h){
+    var p = doc.createElement('p');
+    p.className = 'ph';
+    p.textContent = sentence;
+    h.parentNode.insertBefore(p, h.nextSibling);
+    return true;
+  }
+  return false;
+}
+
+/* ---- photo intake ---- */
+assistDrop.addEventListener('click', function(){ assistFile.click(); });
+assistDrop.addEventListener('dragover', function(e){ e.preventDefault(); assistDrop.classList.add('drag'); });
+assistDrop.addEventListener('dragleave', function(){ assistDrop.classList.remove('drag'); });
+assistDrop.addEventListener('drop', function(e){
+  e.preventDefault(); assistDrop.classList.remove('drag');
+  if(e.dataTransfer.files) handleAssistFiles(e.dataTransfer.files);
+});
+assistFile.addEventListener('change', function(){
+  if(assistFile.files) handleAssistFiles(assistFile.files);
+  assistFile.value = '';
+});
+
+function handleAssistFiles(fileList){
+  var files = Array.prototype.slice.call(fileList).filter(function(f){ return /^image\//.test(f.type); });
+  files.forEach(function(file){ processAssistPhoto(file); });
+}
+
+async function processAssistPhoto(file){
+  var doc = frame.contentDocument;
+  if(!doc){ assistMsg('bot err', 'Open a report first.'); return; }
+  var dataUrl;
+  try{ dataUrl = await resizeImageFile(file, 1600, 0.82); }
+  catch(e){ assistMsg('bot err', 'Could not read that photo: ' + (e.message || e)); return; }
+  assistMsg('user', '<img src="' + dataUrl + '">');
+  var working = assistMsg('bot', 'Filing photo\u2026');
+  try{
+    var res = await fetch('/api/organize', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ image: dataUrl })
+    });
+    var data = null;
+    try{ data = await res.json(); }catch(pe){}
+    if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+    var ok = placePhotoInSection(doc, data.section, dataUrl, data.caption);
+    if(!ok) throw new Error('Could not find a place for it in section ' + data.section);
+    working.innerHTML = '<span class="sec-tag">Section ' + data.section + '</span><br>' +
+      'Placed in <b>' + escHtml(sectionName(doc, data.section)) + '</b>:<br>\u201C' + escHtml(data.caption) + '\u201D';
+  }catch(e){
+    working.className = 'amsg bot err';
+    working.textContent = 'Could not file that photo: ' + String(e.message || e).slice(0, 250);
+  }
+}
+
+/* ---- note intake ---- */
+assistSend.addEventListener('click', sendAssistNote);
+assistText.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendAssistNote(); }
+});
+async function sendAssistNote(){
+  var note = assistText.value.trim();
+  if(!note) return;
+  var doc = frame.contentDocument;
+  if(!doc){ assistMsg('bot err', 'Open a report first.'); return; }
+  assistText.value = '';
+  assistMsg('user', escHtml(note));
+  var working = assistMsg('bot', 'Adding to the report\u2026');
+  assistSend.disabled = true;
+  try{
+    var res = await fetch('/api/organize', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ note: note })
+    });
+    var data = null;
+    try{ data = await res.json(); }catch(pe){}
+    if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+    var ok = addNoteToSection(doc, data.section, data.sentence);
+    if(!ok) throw new Error('Could not find section ' + data.section);
+    working.innerHTML = '<span class="sec-tag">Section ' + data.section + '</span><br>' +
+      'Added to <b>' + escHtml(sectionName(doc, data.section)) + '</b>:<br>\u201C' + escHtml(data.sentence) + '\u201D';
+  }catch(e){
+    working.className = 'amsg bot err';
+    working.textContent = 'Could not add that note: ' + String(e.message || e).slice(0, 250);
+  }
+  assistSend.disabled = false;
+}
+function escHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
 }
 
