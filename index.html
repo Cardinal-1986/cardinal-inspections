@@ -520,7 +520,7 @@ recommendations.</p>
   <tr><td class="k">Inspection Method</td><td><span class="ph">[e.g. Visual, non-invasive; roof surface accessed directly]</span></td></tr>
 </table>
 
-<h3>Overall Condition Assessment</h3>
+<h3 data-cardinal-summary-heading>Overall Condition Assessment</h3>
 <p class="ph">[Summarize the overall condition of the roof system here — general wear, granule loss, fastener
 condition, brittleness, remaining serviceable life, and whether repair or full replacement is recommended.
 Keep it factual and specific.]</p>
@@ -957,6 +957,159 @@ function setEditorStatus(status, sentAt){
   toggleBtn.textContent = status === 'sent' ? 'Mark unsent' : 'Mark sent';
 }
 
+/* ---------- photo upload + auto-caption (inside the report iframe) ---------- */
+function wirePhotoFrames(doc){
+  var frames = doc.querySelectorAll('.fig .frame');
+  frames.forEach(function(frame){
+    if(frame.getAttribute('data-wired')) return;
+    frame.setAttribute('data-wired','1');
+
+    var input = doc.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.className = 'no-print';
+    input.style.display = 'none';
+
+    var btn = doc.createElement('button');
+    btn.type = 'button';
+    btn.className = 'no-print';
+    btn.textContent = frame.querySelector('img') ? '\u21BB Replace photo' : '\uD83D\uDCF7 Add photo';
+    btn.style.cssText = 'position:absolute;bottom:8px;right:8px;z-index:5;font:12px "Segoe UI",Arial,sans-serif;'+
+      'padding:6px 10px;border-radius:5px;border:1px solid #bbb;background:rgba(255,255,255,.94);cursor:pointer;';
+
+    frame.appendChild(input);
+    frame.appendChild(btn);
+
+    btn.addEventListener('click', function(e){ e.stopPropagation(); input.click(); });
+
+    input.addEventListener('change', function(){
+      var file = input.files && input.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(){
+        var dataUrl = reader.result;
+        Array.prototype.slice.call(frame.childNodes).forEach(function(node){
+          if(node === btn || node === input) return;
+          if(node.nodeType === 1 && node.classList && node.classList.contains('tag')) return;
+          frame.removeChild(node);
+        });
+        var img = doc.createElement('img');
+        img.src = dataUrl;
+        frame.insertBefore(img, btn);
+        btn.textContent = '\u21BB Replace photo';
+
+        var cap = frame.parentElement ? frame.parentElement.querySelector('.cap .ph') : null;
+        if(cap){
+          cap.textContent = 'Captioning…';
+          autoCaptionPhoto(dataUrl, cap);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+}
+
+async function autoCaptionPhoto(dataUrl, captionEl){
+  try{
+    var res = await fetch('/api/caption', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ image: dataUrl })
+    });
+    if(!res.ok) throw new Error('caption service returned ' + res.status);
+    var data = await res.json();
+    captionEl.textContent = (data && data.caption) ? data.caption : '[Caption — describe what this photo shows.]';
+  }catch(e){
+    captionEl.textContent = '[Caption — describe what this photo shows.]';
+  }
+}
+
+function wireSummaryDraftButton(doc){
+  var heading = doc.querySelector('[data-cardinal-summary-heading]');
+  if(!heading || heading.getAttribute('data-wired')) return;
+  heading.setAttribute('data-wired','1');
+
+  var summaryPara = heading.nextElementSibling;
+  if(!summaryPara) return;
+
+  var btn = doc.createElement('button');
+  btn.type = 'button';
+  btn.className = 'no-print';
+  btn.textContent = '\u2728 Draft with AI';
+  btn.style.cssText = 'margin:4px 0 10px;font:13px "Segoe UI",Arial,sans-serif;padding:7px 14px;'+
+    'border-radius:5px;border:1px solid #bbb;background:#fff;cursor:pointer;';
+  heading.insertAdjacentElement('afterend', btn);
+
+  btn.addEventListener('click', async function(){
+    btn.disabled = true;
+    var oldLabel = btn.textContent;
+    btn.textContent = 'Drafting…';
+    try{
+      var captions = [];
+      doc.querySelectorAll('.fig .cap .ph').forEach(function(el){
+        var t = (el.textContent || '').trim();
+        if(t && t.charAt(0) !== '[') captions.push(t);
+      });
+      var res = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ captions: captions })
+      });
+      if(!res.ok) throw new Error('summarize service returned ' + res.status);
+      var data = await res.json();
+      if(data && data.summary){
+        summaryPara.textContent = data.summary;
+      }
+    }catch(e){
+      alert('Could not draft the summary: ' + (e.message || e));
+    }
+    btn.disabled = false;
+    btn.textContent = oldLabel;
+  });
+}
+
+function wireCoverPhoto(doc){
+  var box = doc.querySelector('.cover-photo');
+  if(!box || box.getAttribute('data-wired')) return;
+  box.setAttribute('data-wired','1');
+  box.style.position = 'relative';
+
+  var input = doc.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.className = 'no-print';
+  input.style.display = 'none';
+
+  var btn = doc.createElement('button');
+  btn.type = 'button';
+  btn.className = 'no-print';
+  btn.textContent = box.querySelector('img') ? '\u21BB Replace cover photo' : '\uD83D\uDCF7 Add cover photo';
+  btn.style.cssText = 'position:absolute;bottom:10px;right:10px;z-index:5;font:13px "Segoe UI",Arial,sans-serif;'+
+    'padding:7px 12px;border-radius:5px;border:1px solid #bbb;background:rgba(255,255,255,.94);cursor:pointer;';
+
+  box.appendChild(input);
+  box.appendChild(btn);
+
+  btn.addEventListener('click', function(e){ e.stopPropagation(); input.click(); });
+
+  input.addEventListener('change', function(){
+    var file = input.files && input.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      Array.prototype.slice.call(box.childNodes).forEach(function(node){
+        if(node === btn || node === input) return;
+        box.removeChild(node);
+      });
+      var img = doc.createElement('img');
+      img.src = reader.result;
+      box.insertBefore(img, btn);
+      btn.textContent = '\u21BB Replace cover photo';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function openEditor(id){
   var r;
   try{ r = await db.get(id); }
@@ -980,6 +1133,9 @@ async function openEditor(id){
         'font:13px "Segoe UI",Arial,sans-serif;padding:8px 14px;text-align:center;';
       hint.textContent = 'Editing mode — click any text to type over it. Yellow highlights are fill-in fields. Use the toolbar above to Save or Print/PDF.';
       doc.body.insertBefore(hint, doc.body.firstChild);
+      wirePhotoFrames(doc);
+      wireSummaryDraftButton(doc);
+      wireCoverPhoto(doc);
     }catch(e){}
   };
   editor.classList.add('open');
@@ -992,6 +1148,19 @@ function serializeFrame(){
   var clone = doc.documentElement.cloneNode(true);
   var hint = clone.querySelector('[data-cardinal-hint]');
   if(hint) hint.remove();
+  clone.querySelectorAll('.fig .frame button, .fig .frame input[type=file]').forEach(function(el){ el.remove(); });
+  clone.querySelectorAll('.fig .frame[data-wired]').forEach(function(el){ el.removeAttribute('data-wired'); });
+  var coverPhoto = clone.querySelector('.cover-photo[data-wired]');
+  if(coverPhoto){
+    coverPhoto.removeAttribute('data-wired');
+    coverPhoto.querySelectorAll('button, input[type=file]').forEach(function(el){ el.remove(); });
+  }
+  var summaryHeading = clone.querySelector('[data-cardinal-summary-heading]');
+  if(summaryHeading){
+    summaryHeading.removeAttribute('data-wired');
+    var nextBtn = summaryHeading.nextElementSibling;
+    if(nextBtn && nextBtn.tagName === 'BUTTON') nextBtn.remove();
+  }
   var body = clone.querySelector('body');
   if(body){
     body.removeAttribute('contenteditable');
