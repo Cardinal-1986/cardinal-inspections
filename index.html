@@ -964,6 +964,32 @@ function setEditorStatus(status, sentAt){
 }
 
 /* ---------- photo upload + auto-caption (inside the report iframe) ---------- */
+/* Resize/compress a photo before embedding or sending for captioning.
+   Keeps report size manageable and avoids oversized upload/API payloads. */
+function resizeImageFile(file, maxDim, quality){
+  return new Promise(function(resolve, reject){
+    var reader = new FileReader();
+    reader.onerror = function(){ reject(new Error('Could not read the file')); };
+    reader.onload = function(){
+      var img = new Image();
+      img.onerror = function(){ reject(new Error('Could not decode the image')); };
+      img.onload = function(){
+        var w = img.naturalWidth, h = img.naturalHeight;
+        var scale = Math.min(1, maxDim / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale));
+        var ch = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+        resolve(canvas.toDataURL('image/jpeg', quality || 0.82));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function wirePhotoFrames(doc){
   var frames = doc.querySelectorAll('.fig .frame');
   frames.forEach(function(frame){
@@ -995,9 +1021,10 @@ function wirePhotoFrames(doc){
     input.addEventListener('change', function(){
       var file = input.files && input.files[0];
       if(!file) return;
-      var reader = new FileReader();
-      reader.onload = function(){
-        var dataUrl = reader.result;
+      var origLabel = btn.textContent;
+      btn.textContent = 'Processing…';
+      btn.disabled = true;
+      resizeImageFile(file, 1600, 0.82).then(function(dataUrl){
         Array.prototype.slice.call(frame.childNodes).forEach(function(node){
           if(node === btn || node === input) return;
           if(node.nodeType === 1 && node.classList && node.classList.contains('tag')) return;
@@ -1007,14 +1034,18 @@ function wirePhotoFrames(doc){
         img.src = dataUrl;
         frame.insertBefore(img, btn);
         btn.textContent = '\u21BB Replace photo';
+        btn.disabled = false;
 
         var cap = frame.parentElement ? frame.parentElement.querySelector('.cap .ph') : null;
         if(cap){
           cap.textContent = 'Captioning…';
           autoCaptionPhoto(dataUrl, cap);
         }
-      };
-      reader.readAsDataURL(file);
+      }).catch(function(err){
+        btn.textContent = origLabel;
+        btn.disabled = false;
+        alert('Could not process that photo: ' + (err.message || err));
+      });
     });
   });
 }
@@ -1109,18 +1140,24 @@ function wireCoverPhoto(doc){
   input.addEventListener('change', function(){
     var file = input.files && input.files[0];
     if(!file) return;
-    var reader = new FileReader();
-    reader.onload = function(){
+    var origLabel = btn.textContent;
+    btn.textContent = 'Processing…';
+    btn.disabled = true;
+    resizeImageFile(file, 1800, 0.85).then(function(dataUrl){
       Array.prototype.slice.call(box.childNodes).forEach(function(node){
         if(node === btn || node === input) return;
         box.removeChild(node);
       });
       var img = doc.createElement('img');
-      img.src = reader.result;
+      img.src = dataUrl;
       box.insertBefore(img, btn);
       btn.textContent = '\u21BB Replace cover photo';
-    };
-    reader.readAsDataURL(file);
+      btn.disabled = false;
+    }).catch(function(err){
+      btn.textContent = origLabel;
+      btn.disabled = false;
+      alert('Could not process that photo: ' + (err.message || err));
+    });
   });
 }
 
