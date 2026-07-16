@@ -183,6 +183,12 @@ footer.site{
   table.reports th:nth-child(2),table.reports td:nth-child(2){display:none;}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
+@media (max-width:640px){
+  .toolbar{padding:8px 10px;}
+  .toolbar .statuswrap{order:3;width:100%;justify-content:space-between;margin-top:4px;}
+  .toolbar #reportTitle{font-size:16px;padding:10px;}
+  .toolbar .btn{padding:11px 16px;font-size:14px;}
+}
 </style>
 </head>
 <body>
@@ -976,6 +982,10 @@ function wirePhotoFrames(doc){
     btn.textContent = frame.querySelector('img') ? '\u21BB Replace photo' : '\uD83D\uDCF7 Add photo';
     btn.style.cssText = 'position:absolute;bottom:8px;right:8px;z-index:5;font:12px "Segoe UI",Arial,sans-serif;'+
       'padding:6px 10px;border-radius:5px;border:1px solid #bbb;background:rgba(255,255,255,.94);cursor:pointer;';
+    if (doc.defaultView && doc.defaultView.innerWidth < 640) {
+      btn.style.fontSize = '14px';
+      btn.style.padding = '10px 14px';
+    }
 
     frame.appendChild(input);
     frame.appendChild(btn);
@@ -1086,6 +1096,10 @@ function wireCoverPhoto(doc){
   btn.textContent = box.querySelector('img') ? '\u21BB Replace cover photo' : '\uD83D\uDCF7 Add cover photo';
   btn.style.cssText = 'position:absolute;bottom:10px;right:10px;z-index:5;font:13px "Segoe UI",Arial,sans-serif;'+
     'padding:7px 12px;border-radius:5px;border:1px solid #bbb;background:rgba(255,255,255,.94);cursor:pointer;';
+  if (doc.defaultView && doc.defaultView.innerWidth < 640) {
+    btn.style.fontSize = '15px';
+    btn.style.padding = '11px 16px';
+  }
 
   box.appendChild(input);
   box.appendChild(btn);
