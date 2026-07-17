@@ -256,6 +256,42 @@ footer.site{
 }
 #estMenu .estopt:hover{background:#f7efec;color:#9c1822;}
 #estMenu .estopt + .estopt{border-top:1px solid #eee;}
+
+/* ---- project cards (home) ---- */
+.projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin:10px 0 26px;}
+.pcard{
+  border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;cursor:pointer;
+  transition:box-shadow .15s, transform .15s;
+}
+.pcard:hover{box-shadow:0 6px 18px rgba(0,0,0,.14);transform:translateY(-2px);}
+.pcard .thumb{height:130px;background:#efe9e6;display:flex;align-items:center;justify-content:center;
+  color:#b3a49d;font:600 13px 'Segoe UI',Arial,sans-serif;overflow:hidden;}
+.pcard .thumb img{width:100%;height:100%;object-fit:cover;}
+.pcard .body{padding:11px 13px;}
+.pcard .nm{font-weight:800;font-size:15.5px;color:#2b2b2b;}
+.pcard .ad{font-size:12.5px;color:#6b6b6b;margin-top:2px;min-height:16px;}
+.pcard .ft{font-size:11.5px;color:#8a6f66;margin-top:7px;display:flex;justify-content:space-between;}
+/* ---- profile ---- */
+.projhead{display:flex;gap:20px;margin:16px 0 8px;flex-wrap:wrap;}
+.projcover{position:relative;flex:0 0 320px;height:190px;border:1px solid var(--line);border-radius:10px;
+  background:#efe9e6;display:flex;align-items:center;justify-content:center;color:#b3a49d;
+  font:600 14px 'Segoe UI',Arial,sans-serif;overflow:hidden;}
+.projcover img{width:100%;height:100%;object-fit:cover;}
+.projcover .chipbtn{position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,.95);}
+.projinfo{flex:1;min-width:240px;}
+.projinfo h2{margin:2px 0 6px;font-size:24px;}
+.projmeta{font:14px/1.7 'Segoe UI',Arial,sans-serif;color:#444;}
+.projmeta b{display:inline-block;min-width:76px;color:#8a6f66;font-weight:700;}
+.projsec{font-size:17px;margin:20px 0 6px;border-bottom:2px solid var(--red);padding-bottom:4px;}
+#projNotes{width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+  font:14px/1.5 'Segoe UI',Arial,sans-serif;resize:vertical;box-sizing:border-box;}
+/* ---- modal ---- */
+.projform{max-width:430px;margin:9vh auto 0;background:#fff;border-radius:12px;padding:22px 24px;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);}
+.projform label{display:block;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#555;margin:10px 0 0;}
+.projform input{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;
+  border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;}
+@media (max-width:640px){ .projcover{flex-basis:100%;} }
 </style>
 </head>
 <body>
@@ -269,19 +305,7 @@ footer.site{
     <div class="headactions">
       <span class="whoami" id="whoami"></span>
       <button class="btn ghost" id="signOutBtn" style="display:none;">Sign out</button>
-      <button class="btn" id="newReportBtn" style="display:none;">+ New inspection report</button>
-      <span id="estWrap" style="display:none;position:relative;">
-        <button class="btn" id="newEstimateBtn">+ New estimate ▾</button>
-        <div id="estMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
-             background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:250px;
-             box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
-          <button class="estopt" data-tpl="roof">🏠 Roofing estimate</button>
-          <button class="estopt" data-tpl="siding">🧱 Mastic vinyl siding</button>
-          <button class="estopt" data-tpl="windows">🪟 Replacement vinyl windows</button>
-          <button class="estopt" data-tpl="gutters">🌧 Seamless gutters (5″ / 6″)</button>
-          <button class="estopt" data-tpl="general">🔧 General repair estimate</button>
-        </div>
-      </span>
+      <button class="btn" id="addProjectBtn" style="display:none;">+ Add project</button>
     </div>
   </div>
 </header>
@@ -314,18 +338,79 @@ footer.site{
   </div>
 
   <section class="history wrap">
-    <h2 class="sec"><span class="num">&#9776;</span>Inspection History</h2>
+    <h2 class="sec"><span class="num">&#9776;</span>Client Projects</h2>
     <p class="subnote" id="storageNote"></p>
     <div class="controls">
-      <input type="search" id="searchBox" placeholder="Search by property address / title…" aria-label="Search reports">
-      <button class="filterbtn active" data-filter="all">All</button>
-      <button class="filterbtn f-unsent" data-filter="unsent">Unsent</button>
-      <button class="filterbtn f-sent" data-filter="sent">Sent</button>
+      <input type="search" id="searchBox" placeholder="Search clients by name, address, phone, email…" aria-label="Search projects">
       <button class="chipbtn" id="refreshBtn" title="Reload from team storage">&#8635; Refresh</button>
       <span class="count" id="countLabel"></span>
     </div>
     <div id="historyMount"><div class="loading">Loading…</div></div>
   </section>
+</div>
+
+<!-- ============ PROJECT PROFILE ============ -->
+<div id="projectView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <button class="btn dark" id="projBackBtn">&larr; All projects</button>
+
+    <div class="projhead">
+      <div class="projcover" id="projCover">
+        <span id="projCoverEmpty">COVER PHOTO</span>
+        <button class="chipbtn" id="projCoverBtn">&#128247; Add cover photo</button>
+        <input type="file" id="projCoverInput" accept="image/*" style="display:none;">
+      </div>
+      <div class="projinfo">
+        <h2 id="projName"></h2>
+        <div id="projMeta" class="projmeta"></div>
+        <div style="margin-top:10px;">
+          <button class="chipbtn" id="projEditBtn">&#9998; Edit client info</button>
+          <button class="chipbtn danger" id="projDelBtn">Delete project</button>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="projsec">&#128221; Notes</h3>
+    <textarea id="projNotes" placeholder="Job notes, call log, material selections, HOA details…"></textarea>
+    <div style="margin:6px 0 18px;">
+      <button class="chipbtn" id="projNotesSave">Save notes</button>
+      <span id="notesFlash" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#2e7d32;"></span>
+    </div>
+
+    <h3 class="projsec">&#128196; Documents</h3>
+    <div style="margin:6px 0 12px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn" id="pNewReportBtn">+ New inspection report</button>
+      <span id="pEstWrap" style="position:relative;">
+        <button class="btn" id="pNewEstimateBtn">+ New estimate &#9662;</button>
+        <div id="pEstMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
+             background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:250px;
+             box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
+          <button class="estopt" data-tpl="roof">&#127968; Roofing estimate</button>
+          <button class="estopt" data-tpl="siding">&#129521; Mastic vinyl siding</button>
+          <button class="estopt" data-tpl="windows">&#129695; Replacement vinyl windows</button>
+          <button class="estopt" data-tpl="gutters">&#127783; Seamless gutters (5&#8243; / 6&#8243;)</button>
+          <button class="estopt" data-tpl="general">&#128295; General repair estimate</button>
+        </div>
+      </span>
+    </div>
+    <div id="projDocsMount"><div class="loading">Loading…</div></div>
+  </div>
+</div>
+
+<!-- ============ ADD / EDIT PROJECT MODAL ============ -->
+<div id="projModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:200;">
+  <div class="projform">
+    <h3 id="projModalTitle" style="margin:0 0 12px;">Add project</h3>
+    <label>Client name *<input type="text" id="pfName" autocomplete="off"></label>
+    <label>Property address<input type="text" id="pfAddress" autocomplete="off"></label>
+    <label>Phone number<input type="tel" id="pfPhone" autocomplete="off"></label>
+    <label>Email address<input type="email" id="pfEmail" autocomplete="off"></label>
+    <div style="margin-top:14px;text-align:right;">
+      <button class="chipbtn" id="pfCancel">Cancel</button>
+      <button class="btn" id="pfSave">Save</button>
+    </div>
+    <div id="pfError" style="color:#C8202E;font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
+  </div>
 </div>
 
 <footer class="site">
@@ -1088,6 +1173,10 @@ table.items tr.totals td.lbl{text-align:right;font-weight:700;}
 table.items tr.totals td.val{text-align:right;width:14%;white-space:nowrap;}
 table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weight:800;}
 .items-hint{font-size:9pt;color:var(--muted);margin:2px 0 0;}
+.descbox{border:1px solid var(--line);border-left:4px solid var(--red);border-radius:4px;
+  background:#fbfaf9;padding:10px 14px;margin:8px 0;}
+.descbox p{margin:7px 0;}
+.cbx{cursor:pointer;font-size:13pt;user-select:none;}
 .sign{display:flex;gap:28px;margin-top:34px;}
 .sign .col{flex:1;}
 .sign .line{border-bottom:1.5px solid var(--ink);height:34px;}
@@ -1208,19 +1297,35 @@ var WINDOW_BODY =
 var GUTTER_BODY =
   '<h2 class="sec"><span class="num">1</span>Gutter System</h2>' +
   '<table class="facts">' +
-  '<tr><td class="k">Gutter Size</td><td><span class="ph">[5&quot; K-style or 6&quot; K-style \u2014 keep one]</span></td></tr>' +
+  '<tr><td class="k">Gutter Size</td><td>' +
+    '<span class="cbx" data-val="5">\u2610</span> 5" K-style seamless &nbsp;&nbsp;&nbsp; ' +
+    '<span class="cbx" data-val="6">\u2610</span> 6" K-style seamless ' +
+    '<span class="items-hint no-print">(click a box to check it)</span></td></tr>' +
   '<tr><td class="k">Material / Color</td><td>Seamless aluminum \u2014 <span class="ph">[color]</span></td></tr>' +
-  '<tr><td class="k">Downspouts</td><td><span class="ph">[2x3 or 3x4]</span></td></tr>' +
   '</table>' +
-  '<h2 class="sec"><span class="num">2</span>Line-Item Pricing</h2>' +
-  EST_ITEMS_HEAD +
-  estRow('Remove &amp; dispose of existing gutters &amp; downspouts','LF','LF') +
-  estRow('Seamless aluminum gutter \u2014 <span class="ph">[5&quot; / 6&quot;]</span>, hidden hangers','LF','LF') +
-  estRow('Downspouts \u2014 <span class="ph">[size]</span>','LF','LF') +
-  estRow('End caps, miters &amp; outlets','EA','EA') +
-  estRow('Gutter guards (optional)','LF','LF') +
-  estRow('<span class="ph">[Additional item]</span>','qty','<span class="ph">[un]</span>') +
-  EST_TOTAL_ROW + '</table>' + EST_HINT;
+  '<h2 class="sec"><span class="num">2</span>Scope of Work</h2>' +
+  '<div class="descbox">' +
+  '<p><b>Gutters:</b> Furnish and install custom-fabricated <span data-gsize="gutter">6"</span> seamless K-style aluminum gutters, ' +
+  'secured using heavy-duty premium hidden hangers screwed directly into the fascia/rafter tails for a ' +
+  'clean, bracket-free exterior profile and maximum structural support.</p>' +
+  '<p><b>Downspouts:</b> Install matching <span data-gsize="spout">oversized 3" x 4"</span> aluminum downspouts to maximize water ' +
+  'volume capacity and ensure rapid drainage away from the foundation.</p>' +
+  '<p><b>Kickout Flashing:</b> Install aluminum kickout flashing at all critical roof-to-wall ' +
+  'intersections where gutters terminate. This ensures water runoff is properly directed away from the ' +
+  'siding and directly into the gutter system, preventing costly water intrusion behind the wall cladding.</p>' +
+  '<p><b>Includes:</b> Complete removal and proper disposal of existing gutter system, comprehensive ' +
+  'inspection of the fascia boards prior to installation, and post-job clean-up of the property.</p>' +
+  '</div>' +
+  '<h2 class="sec"><span class="num">3</span>Pricing</h2>' +
+  '<table class="items" id="estItems">' +
+  '<tr><th style="width:76%;">Description</th><th style="text-align:right;">Price</th></tr>' +
+  '<tr class="li"><td>Complete seamless gutter &amp; downspout system \u2014 as described above</td>' +
+    '<td class="rate"><span class="ph">[0.00]</span></td></tr>' +
+  '<tr class="li"><td><b>Optional:</b> ShurFlow Leafguard gutter protection system</td>' +
+    '<td class="rate"><span class="ph">[0.00]</span></td></tr>' +
+  '<tr class="totals grand"><td class="lbl">TOTAL</td><td class="val" id="estTotal">\u2014</td></tr>' +
+  '</table>' +
+  '<p class="items-hint no-print">Leave the Leafguard price blank to exclude it \u2014 the TOTAL adds every price entered. Numbers only (no $ needed).</p>';
 
 var GENERAL_BODY =
   '<h2 class="sec"><span class="num">1</span>Description of Repairs</h2>' +
@@ -1296,7 +1401,7 @@ var db = {
   list: async function(){
     if(TEAM){
       var r = await sb.from(TABLE)
-        .select('id,title,project,status,sent_at,created_at,updated_at,created_by')
+        .select('id,title,project,project_id,status,sent_at,created_at,updated_at,created_by')
         .order('created_at', {ascending:false});
       if(r.error) throw r.error;
       return r.data;
@@ -1313,14 +1418,15 @@ var db = {
     }
     return lsLoad().find(function(x){ return x.id === id; });
   },
-  create: async function(title, html, project){
+  create: async function(title, html, project, projectId){
     var now = new Date().toISOString();
     var tpl = html || REPORT_TEMPLATE;
     var proj = (project || '').trim() || null;
     if(TEAM){
       var user = (await sb.auth.getUser()).data.user;
       var r = await sb.from(TABLE).insert({
-        title: title, project: proj, status: 'unsent', html: tpl,
+        title: title, project: proj, project_id: projectId || null,
+        status: 'unsent', html: tpl,
         created_by: user ? user.email : null
       }).select('id').single();
       if(r.error) throw r.error;
@@ -1328,7 +1434,8 @@ var db = {
     }
     var list = lsLoad();
     var id = uid();
-    list.push({ id:id, title:title, project:proj, status:'unsent', sent_at:null,
+    list.push({ id:id, title:title, project:proj, project_id: projectId || null,
+                status:'unsent', sent_at:null,
                 created_at:now, updated_at:now, created_by:null, html:tpl });
     lsSave(list);
     return id;
@@ -1360,6 +1467,7 @@ var db = {
       var user = (await sb.auth.getUser()).data.user;
       var r = await sb.from(TABLE).insert({
         title: src.title + ' (copy)', project: src.project || null,
+        project_id: src.project_id || null,
         status:'unsent', html: src.html,
         created_by: user ? user.email : null
       });
@@ -1369,11 +1477,70 @@ var db = {
     var now = new Date().toISOString();
     var list = lsLoad();
     list.push({ id:uid(), title:src.title + ' (copy)', project: src.project || null,
+                project_id: src.project_id || null,
                 status:'unsent', sent_at:null,
                 created_at:now, updated_at:now, created_by:null, html:src.html });
     lsSave(list);
   }
 };
+
+/* =========================================================================
+   PROJECTS (client profiles)
+   ========================================================================= */
+var PKEY = 'cardinal_projects_v1';
+function plsLoad(){ try{ return JSON.parse(localStorage.getItem(PKEY)) || []; }catch(e){ return []; } }
+function plsSave(l){ localStorage.setItem(PKEY, JSON.stringify(l)); }
+
+var pdb = {
+  list: async function(){
+    if(TEAM){
+      var r = await sb.from('projects')
+        .select('id,name,address,phone,email,notes,cover_image,created_by,created_at,updated_at')
+        .order('updated_at', {ascending:false});
+      if(r.error) throw r.error;
+      return r.data || [];
+    }
+    return plsLoad().sort(function(a,b){ return (b.updated_at||'').localeCompare(a.updated_at||''); });
+  },
+  create: async function(fields){
+    var now = new Date().toISOString();
+    if(TEAM){
+      var user = (await sb.auth.getUser()).data.user;
+      fields.created_by = user ? user.email : null;
+      var r = await sb.from('projects').insert(fields).select('id').single();
+      if(r.error) throw r.error;
+      return r.data.id;
+    }
+    var l = plsLoad(); var id = uid();
+    fields.id = id; fields.created_at = now; fields.updated_at = now; fields.created_by = null;
+    l.push(fields); plsSave(l);
+    return id;
+  },
+  update: async function(id, fields){
+    fields.updated_at = new Date().toISOString();
+    if(TEAM){
+      var r = await sb.from('projects').update(fields).eq('id', id);
+      if(r.error) throw r.error;
+      return;
+    }
+    var l = plsLoad();
+    var it = l.find(function(x){ return x.id === id; });
+    if(it) Object.assign(it, fields);
+    plsSave(l);
+  },
+  remove: async function(id){
+    if(TEAM){
+      var r = await sb.from('projects').delete().eq('id', id);
+      if(r.error) throw r.error;
+      return;
+    }
+    plsSave(plsLoad().filter(function(x){ return x.id !== id; }));
+    var docs = lsLoad();
+    docs.forEach(function(d){ if(d.project_id === id) d.project_id = null; });
+    lsSave(docs);
+  }
+};
+
 
 /* =========================================================================
    HISTORY: search + status filter + render
@@ -1384,103 +1551,158 @@ var statusFilter = 'all';
 var mount = document.getElementById('historyMount');
 var countLabel = document.getElementById('countLabel');
 
+var cacheProjects = [];
+var currentProject = null;
+
 async function reload(){
   mount.innerHTML = '<div class="loading">Loading…</div>';
   try{
-    cacheRows = await db.list();
-    render();
+    var res = await Promise.all([pdb.list(), db.list()]);
+    cacheProjects = res[0];
+    cacheRows = res[1];
+    if(currentProject){
+      var fresh = cacheProjects.find(function(x){ return x.id === currentProject.id; });
+      if(fresh) currentProject = fresh;
+    }
+    renderHome();
+    if(currentProject && document.getElementById('projectView').style.display !== 'none'){
+      renderProjectDocs();
+    }
   }catch(e){
-    mount.innerHTML = '<div class="empty"><b>Could not load reports.</b><br>' + esc(e.message || e) + '</div>';
+    mount.innerHTML = '<div class="empty"><b>Could not load.</b><br>' + esc(e.message || e) + '</div>';
   }
 }
 
-function render(){
+function docRowHtml(r){
+  var statusCell = r.status === 'sent'
+    ? '<span class="chip sent">SENT</span>' +
+      (r.sent_at ? '<small>Sent ' + fmtDay(r.sent_at) + '</small>' : '')
+    : '<span class="chip unsent">UNSENT</span>';
+  var toggleLabel = r.status === 'sent' ? 'Mark unsent' : 'Mark sent';
+  var by = r.created_by ? ' · by ' + esc(r.created_by) : '';
+  return '<tr>' +
+    '<td class="title"><b>' + esc(r.title || 'Untitled') + '</b>' +
+      '<span class="ref">ID ' + esc(String(r.id).slice(0,8)) + by + '</span></td>' +
+    '<td class="dates">' + fmt(r.created_at) + '<small>updated ' + fmt(r.updated_at) + '</small></td>' +
+    '<td class="status">' + statusCell + '</td>' +
+    '<td>' +
+      '<button class="chipbtn" data-act="open" data-id="'+r.id+'">Open / Edit</button>' +
+      '<button class="chipbtn" data-act="toggle" data-id="'+r.id+'">'+toggleLabel+'</button>' +
+      '<button class="chipbtn" data-act="download" data-id="'+r.id+'">Download</button>' +
+      '<button class="chipbtn" data-act="dup" data-id="'+r.id+'">Duplicate</button>' +
+      '<button class="chipbtn danger" data-act="del" data-id="'+r.id+'">Delete</button>' +
+    '</td></tr>';
+}
+function docTable(rows){
+  return '<table class="reports"><thead><tr>' +
+    '<th>Document</th><th>Date created</th><th>Status</th><th>Actions</th>' +
+    '</tr></thead><tbody>' + rows.map(docRowHtml).join('') + '</tbody></table>';
+}
+
+function renderHome(){
   var q = searchText.trim().toLowerCase();
-  var rows = cacheRows.filter(function(r){
-    if(statusFilter !== 'all' && r.status !== statusFilter) return false;
+  var projs = cacheProjects.filter(function(pr){
+    if(!q) return true;
+    var hay = [pr.name, pr.address, pr.phone, pr.email].join(' ').toLowerCase();
+    return hay.indexOf(q) !== -1;
+  });
+  countLabel.textContent = projs.length + ' project' + (projs.length === 1 ? '' : 's');
+
+  var out = '';
+  if(!cacheProjects.length){
+    out += '<div class="empty"><b>No client projects yet.</b><br>' +
+      'Click <b>+ Add project</b> to create your first client profile.</div>';
+  }else if(!projs.length){
+    out += '<div class="empty"><b>No projects match your search.</b></div>';
+  }else{
+    out += '<div class="projgrid">' + projs.map(function(pr){
+      var n = cacheRows.filter(function(r){ return r.project_id === pr.id; }).length;
+      var thumb = pr.cover_image
+        ? '<img src="' + pr.cover_image + '" alt="">'
+        : 'NO COVER PHOTO';
+      var by = pr.created_by ? esc(pr.created_by.split('@')[0]) : '';
+      return '<div class="pcard" data-proj="' + pr.id + '">' +
+        '<div class="thumb">' + thumb + '</div>' +
+        '<div class="body">' +
+          '<div class="nm">' + esc(pr.name || 'Unnamed client') + '</div>' +
+          '<div class="ad">' + esc(pr.address || '') + '</div>' +
+          '<div class="ft"><span>' + n + ' document' + (n === 1 ? '' : 's') + '</span><span>' + by + '</span></div>' +
+        '</div></div>';
+    }).join('') + '</div>';
+  }
+
+  var loose = cacheRows.filter(function(r){
+    if(r.project_id) return false;
     if(q){
-      var hay = ((r.title || '') + ' ' + (r.project || '')).toLowerCase();
+      var hay = ((r.title||'') + ' ' + (r.project||'')).toLowerCase();
       if(hay.indexOf(q) === -1) return false;
     }
     return true;
   });
-  countLabel.textContent = rows.length + ' of ' + cacheRows.length + ' report' + (cacheRows.length === 1 ? '' : 's');
-
-  if(!cacheRows.length){
-    mount.innerHTML = '<div class="empty"><b>No inspections yet.</b><br>' +
-      'Click <b>+ New inspection report</b> to create your first report from the Cardinal template.</div>';
-    return;
+  if(loose.length){
+    out += '<h3 class="projsec">&#128451; Unassigned documents</h3>' +
+      '<p class="subnote">Created before client profiles existed, or their project was deleted.</p>' +
+      docTable(loose);
   }
-  if(!rows.length){
-    mount.innerHTML = '<div class="empty"><b>No reports match.</b><br>Clear the search or switch the Sent/Unsent filter.</div>';
-    return;
+  mount.innerHTML = out;
+}
+
+/* ---------- project profile ---------- */
+var projectView = document.getElementById('projectView');
+function showHome(){
+  currentProject = null;
+  projectView.style.display = 'none';
+  mainView.style.display = 'block';
+  renderHome();
+  window.scrollTo(0,0);
+}
+function openProject(id){
+  var pr = cacheProjects.find(function(x){ return x.id === id; });
+  if(!pr) return;
+  currentProject = pr;
+  document.getElementById('projName').textContent = pr.name || 'Unnamed client';
+  document.getElementById('projMeta').innerHTML =
+    (pr.address ? '<div><b>Address</b> ' + esc(pr.address) + '</div>' : '') +
+    (pr.phone   ? '<div><b>Phone</b> <a href="tel:' + esc(pr.phone) + '">' + esc(pr.phone) + '</a></div>' : '') +
+    (pr.email   ? '<div><b>Email</b> <a href="mailto:' + esc(pr.email) + '">' + esc(pr.email) + '</a></div>' : '') +
+    (pr.created_by ? '<div><b>Rep</b> ' + esc(pr.created_by) + '</div>' : '');
+  var cov = document.getElementById('projCover');
+  var img = cov.querySelector('img');
+  if(img) img.remove();
+  document.getElementById('projCoverEmpty').style.display = pr.cover_image ? 'none' : 'inline';
+  if(pr.cover_image){
+    var im = document.createElement('img');
+    im.src = pr.cover_image;
+    cov.insertBefore(im, cov.firstChild);
   }
-
-  /* group by project (client / property address) */
-  var groups = {};
-  var order = [];
-  rows.forEach(function(r){
-    var key = (r.project || '').trim() || '\u0000other';
-    if(!groups[key]){ groups[key] = []; order.push(key); }
-    groups[key].push(r);
-  });
-  order.sort(function(a, b){
-    if(a === '\u0000other') return 1;
-    if(b === '\u0000other') return -1;
-    var la = Math.max.apply(null, groups[a].map(function(r){ return +new Date(r.updated_at || r.created_at); }));
-    var lb = Math.max.apply(null, groups[b].map(function(r){ return +new Date(r.updated_at || r.created_at); }));
-    return lb - la;
-  });
-
-  function rowHtml(r){
-    var statusCell = r.status === 'sent'
-      ? '<span class="chip sent">SENT</span>' +
-        (r.sent_at ? '<small>Sent ' + fmtDay(r.sent_at) + '</small>' : '')
-      : '<span class="chip unsent">UNSENT</span>';
-    var toggleLabel = r.status === 'sent' ? 'Mark unsent' : 'Mark sent';
-    var by = r.created_by ? ' · by ' + esc(r.created_by) : '';
-    return '<tr>' +
-      '<td class="title"><b>' + esc(r.title || 'Untitled inspection') + '</b>' +
-        '<span class="ref">ID ' + esc(String(r.id).slice(0,8)) + by + '</span></td>' +
-      '<td class="dates">' + fmt(r.created_at) + '<small>updated ' + fmt(r.updated_at) + '</small></td>' +
-      '<td class="status">' + statusCell + '</td>' +
-      '<td>' +
-        '<button class="chipbtn" data-act="open" data-id="'+r.id+'">Open / Edit</button>' +
-        '<button class="chipbtn" data-act="toggle" data-id="'+r.id+'">'+toggleLabel+'</button>' +
-        '<button class="chipbtn" data-act="download" data-id="'+r.id+'">Download</button>' +
-        '<button class="chipbtn" data-act="dup" data-id="'+r.id+'">Duplicate</button>' +
-        '<button class="chipbtn danger" data-act="del" data-id="'+r.id+'">Delete</button>' +
-      '</td></tr>';
-  }
-
-  var html = order.map(function(key){
-    var label = key === '\u0000other' ? 'Other / unassigned' : key;
-    var g = groups[key];
-    return '<tr class="projrow"><td colspan="4">\uD83D\uDCC1 ' + esc(label) +
-           ' <span class="projcount">' + g.length + ' document' + (g.length === 1 ? '' : 's') + '</span></td></tr>' +
-           g.map(rowHtml).join('');
-  }).join('');
-
-  mount.innerHTML =
-    '<table class="reports"><thead><tr>' +
-    '<th>Project / document</th><th>Date created</th><th>Status</th><th>Actions</th>' +
-    '</tr></thead><tbody>' + html + '</tbody></table>';
+  document.getElementById('projCoverBtn').textContent =
+    pr.cover_image ? '\u21BB Replace cover photo' : '\uD83D\uDCF7 Add cover photo';
+  document.getElementById('projNotes').value = pr.notes || '';
+  document.getElementById('notesFlash').textContent = '';
+  renderProjectDocs();
+  mainView.style.display = 'none';
+  projectView.style.display = 'block';
+  window.scrollTo(0,0);
+}
+function renderProjectDocs(){
+  var docs = cacheRows.filter(function(r){ return currentProject && r.project_id === currentProject.id; });
+  var m = document.getElementById('projDocsMount');
+  m.innerHTML = docs.length ? docTable(docs)
+    : '<div class="empty"><b>No documents yet.</b><br>Create an inspection report or estimate above.</div>';
 }
 
 document.getElementById('searchBox').addEventListener('input', function(){
-  searchText = this.value; render();
-});
-document.querySelectorAll('.filterbtn').forEach(function(b){
-  b.addEventListener('click', function(){
-    document.querySelectorAll('.filterbtn').forEach(function(x){ x.classList.remove('active'); });
-    b.classList.add('active');
-    statusFilter = b.getAttribute('data-filter');
-    render();
-  });
+  searchText = this.value; renderHome();
 });
 document.getElementById('refreshBtn').addEventListener('click', reload);
 
-mount.addEventListener('click', async function(e){
+/* open a project card */
+mount.addEventListener('click', function(e){
+  var card = e.target.closest('.pcard');
+  if(card){ openProject(card.getAttribute('data-proj')); }
+});
+
+async function handleDocAction(e){
   var b = e.target.closest('button[data-act]');
   if(!b) return;
   var id = b.getAttribute('data-id');
@@ -1509,7 +1731,9 @@ mount.addEventListener('click', async function(e){
       return;
     }
   }catch(err){ showError('Action failed: ' + (err.message || err)); }
-});
+}
+mount.addEventListener('click', handleDocAction);
+document.getElementById('projDocsMount').addEventListener('click', handleDocAction);
 
 function downloadReport(r){
   var blob = new Blob([r.html], {type:'text/html'});
@@ -1520,27 +1744,101 @@ function downloadReport(r){
   setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
-/* ---------- new report ---------- */
-document.getElementById('newReportBtn').addEventListener('click', async function(){
-  var project = prompt('Client or property address (groups this report into a project):', '');
-  if(project === null) return;
-  project = project.trim();
-  var title = prompt('Report title:', project || '');
-  if(title === null) return;
+/* =========================================================================
+   ADD PROJECT + PROFILE ACTIONS
+   ========================================================================= */
+var projModal = document.getElementById('projModal');
+var pfEditing = null; /* null = adding, else project id */
+
+function openProjModal(pr){
+  pfEditing = pr ? pr.id : null;
+  document.getElementById('projModalTitle').textContent = pr ? 'Edit client info' : 'Add project';
+  document.getElementById('pfName').value    = pr ? (pr.name || '')    : '';
+  document.getElementById('pfAddress').value = pr ? (pr.address || '') : '';
+  document.getElementById('pfPhone').value   = pr ? (pr.phone || '')   : '';
+  document.getElementById('pfEmail').value   = pr ? (pr.email || '')   : '';
+  document.getElementById('pfError').textContent = '';
+  projModal.style.display = 'block';
+  setTimeout(function(){ document.getElementById('pfName').focus(); }, 50);
+}
+document.getElementById('addProjectBtn').addEventListener('click', function(){ openProjModal(null); });
+document.getElementById('pfCancel').addEventListener('click', function(){ projModal.style.display = 'none'; });
+projModal.addEventListener('click', function(e){ if(e.target === projModal) projModal.style.display = 'none'; });
+
+document.getElementById('pfSave').addEventListener('click', async function(){
+  var name = document.getElementById('pfName').value.trim();
+  if(!name){ document.getElementById('pfError').textContent = 'Client name is required.'; return; }
+  var fields = {
+    name: name,
+    address: document.getElementById('pfAddress').value.trim() || null,
+    phone:   document.getElementById('pfPhone').value.trim()   || null,
+    email:   document.getElementById('pfEmail').value.trim()   || null
+  };
   try{
-    var id = await db.create(title.trim() || project || 'Untitled inspection', null, project);
+    if(pfEditing){
+      await pdb.update(pfEditing, fields);
+      projModal.style.display = 'none';
+      await reload();
+      if(currentProject && currentProject.id === pfEditing) openProject(pfEditing);
+    }else{
+      var id = await pdb.create(fields);
+      projModal.style.display = 'none';
+      await reload();
+      openProject(id);
+    }
+  }catch(err){
+    document.getElementById('pfError').textContent = 'Could not save: ' + (err.message || err);
+  }
+});
+
+document.getElementById('projBackBtn').addEventListener('click', showHome);
+document.getElementById('projEditBtn').addEventListener('click', function(){
+  if(currentProject) openProjModal(currentProject);
+});
+document.getElementById('projDelBtn').addEventListener('click', async function(){
+  if(!currentProject) return;
+  if(!confirm('Delete "' + currentProject.name + '"? Documents are kept and moved to Unassigned. This cannot be undone.')) return;
+  try{
+    await pdb.remove(currentProject.id);
     await reload();
-    await openEditor(id);
-  }catch(err){ showError('Could not create report: ' + (err.message || err)); }
+    showHome();
+  }catch(err){ showError('Could not delete project: ' + (err.message || err)); }
 });
 
-var estMenu = document.getElementById('estMenu');
-document.getElementById('newEstimateBtn').addEventListener('click', function(e){
-  e.stopPropagation();
-  estMenu.style.display = estMenu.style.display === 'block' ? 'none' : 'block';
+/* cover photo */
+document.getElementById('projCoverBtn').addEventListener('click', function(){
+  document.getElementById('projCoverInput').click();
 });
-document.addEventListener('click', function(){ estMenu.style.display = 'none'; });
+document.getElementById('projCoverInput').addEventListener('change', async function(){
+  var file = this.files && this.files[0];
+  this.value = '';
+  if(!file || !currentProject) return;
+  try{
+    var dataUrl = await resizeImageFile(file, 1600, 0.82);
+    await pdb.update(currentProject.id, { cover_image: dataUrl });
+    currentProject.cover_image = dataUrl;
+    var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
+    if(cp) cp.cover_image = dataUrl;
+    openProject(currentProject.id);
+  }catch(err){ showError('Cover photo failed: ' + (err.message || err)); }
+});
 
+/* notes */
+document.getElementById('projNotesSave').addEventListener('click', async function(){
+  if(!currentProject) return;
+  var v = document.getElementById('projNotes').value;
+  try{
+    await pdb.update(currentProject.id, { notes: v });
+    currentProject.notes = v;
+    var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
+    if(cp) cp.notes = v;
+    var f = document.getElementById('notesFlash');
+    f.textContent = '\u2713 Saved';
+    setTimeout(function(){ f.textContent = ''; }, 2000);
+  }catch(err){ showError('Could not save notes: ' + (err.message || err)); }
+});
+
+/* document creation inside a profile */
 var EST_TYPES = {
   roof:    { label:'Estimate',        tpl:function(){ return ESTIMATE_TEMPLATE; } },
   siding:  { label:'Siding Estimate', tpl:function(){ return SIDING_TEMPLATE; } },
@@ -1548,22 +1846,38 @@ var EST_TYPES = {
   gutters: { label:'Gutter Estimate', tpl:function(){ return GUTTER_TEMPLATE; } },
   general: { label:'Repair Estimate', tpl:function(){ return GENERAL_TEMPLATE; } }
 };
-estMenu.addEventListener('click', async function(e){
-  var opt = e.target.closest('.estopt');
-  if(!opt) return;
-  e.stopPropagation();
-  estMenu.style.display = 'none';
-  var kind = EST_TYPES[opt.getAttribute('data-tpl')];
-  if(!kind) return;
-  var project = prompt('Client or property address (groups this estimate into a project):', '');
-  if(project === null) return;
-  project = project.trim();
-  var title = prompt(kind.label + ' title:', project || '');
+
+document.getElementById('pNewReportBtn').addEventListener('click', async function(){
+  if(!currentProject) return;
+  var title = prompt('Report title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
   if(title === null) return;
   try{
-    var name = (title.trim() || project || 'Untitled');
+    var id = await db.create(title.trim() || 'Untitled inspection', null,
+                             currentProject.name, currentProject.id);
+    await reload();
+    await openEditor(id);
+  }catch(err){ showError('Could not create report: ' + (err.message || err)); }
+});
+
+var pEstMenu = document.getElementById('pEstMenu');
+document.getElementById('pNewEstimateBtn').addEventListener('click', function(e){
+  e.stopPropagation();
+  pEstMenu.style.display = pEstMenu.style.display === 'block' ? 'none' : 'block';
+});
+document.addEventListener('click', function(){ pEstMenu.style.display = 'none'; });
+pEstMenu.addEventListener('click', async function(e){
+  var opt = e.target.closest('.estopt');
+  if(!opt || !currentProject) return;
+  e.stopPropagation();
+  pEstMenu.style.display = 'none';
+  var kind = EST_TYPES[opt.getAttribute('data-tpl')];
+  if(!kind) return;
+  var title = prompt(kind.label + ' title:', currentProject.name);
+  if(title === null) return;
+  try{
+    var name = (title.trim() || currentProject.name || 'Untitled');
     if(name.toLowerCase().indexOf(kind.label.toLowerCase()) !== 0) name = kind.label + ' \u2014 ' + name;
-    var id = await db.create(name, kind.tpl(), project);
+    var id = await db.create(name, kind.tpl(), currentProject.name, currentProject.id);
     await reload();
     await openEditor(id);
   }catch(err){ showError('Could not create estimate: ' + (err.message || err)); }
@@ -2040,7 +2354,8 @@ function wireEstimateCalc(doc){
   function recalc(){
     var total = 0, any = false;
     table.querySelectorAll('tr.li').forEach(function(row){
-      var qty = parseNum(row.querySelector('.qty'));
+      var qtyEl = row.querySelector('.qty');
+      var qty = qtyEl ? parseNum(qtyEl) : 1;   /* price-only rows count as qty 1 */
       var rate = parseNum(row.querySelector('.rate'));
       if(!isNaN(qty) && !isNaN(rate)){ total += qty * rate; any = true; }
     });
@@ -2174,6 +2489,33 @@ function fillRoofrFields(doc, d){
   });
 }
 
+/* ---------- clickable checkboxes (☐/☑) — serialize as plain text ---------- */
+function applyGutterSize(doc, val){
+  var g = doc.querySelector('[data-gsize="gutter"]');
+  var s = doc.querySelector('[data-gsize="spout"]');
+  if(g) g.textContent = val === '5' ? '5"' : '6"';
+  if(s) s.textContent = val === '5' ? '2" x 3"' : 'oversized 3" x 4"';
+}
+function wireCheckboxes(doc){
+  doc.querySelectorAll('.cbx').forEach(function(el){
+    if(el.getAttribute('data-cbx')) return;
+    el.setAttribute('data-cbx','1');
+    el.addEventListener('click', function(e){
+      e.preventDefault();
+      var val = el.getAttribute('data-val');
+      if(val){
+        /* size boxes act like radio buttons and rewrite the description */
+        var cell = el.parentNode;
+        cell.querySelectorAll('.cbx[data-val]').forEach(function(x){ x.textContent = '\u2610'; });
+        el.textContent = '\u2611';
+        applyGutterSize(doc, val);
+      }else{
+        el.textContent = el.textContent.trim() === '\u2610' ? '\u2611' : '\u2610';
+      }
+    });
+  });
+}
+
 async function openEditor(id){
   var r;
   try{ r = await db.get(id); }
@@ -2202,6 +2544,7 @@ async function openEditor(id){
       wireCoverPhoto(doc);
       wireEstimateCalc(doc);
       wireRoofrUpload(doc);
+      wireCheckboxes(doc);
     }catch(e){}
   };
   editor.classList.add('open');
@@ -2225,6 +2568,7 @@ function serializeFrame(){
   if(roofrBar) roofrBar.remove();
   var estTable = clone.querySelector('#estItems[data-wired]');
   if(estTable) estTable.removeAttribute('data-wired');
+  clone.querySelectorAll('.cbx[data-cbx]').forEach(function(el){ el.removeAttribute('data-cbx'); });
   var summaryHeading = clone.querySelector('[data-cardinal-summary-heading]');
   if(summaryHeading){
     summaryHeading.removeAttribute('data-wired');
@@ -2282,6 +2626,7 @@ document.getElementById('backBtn').addEventListener('click', async function(){
   document.body.style.overflow = '';
   frame.srcdoc = '';
   current = null;
+  await reload();
 });
 
 /* =========================================================================
@@ -2291,18 +2636,18 @@ var loginView = document.getElementById('loginView');
 var mainView  = document.getElementById('mainView');
 var whoami    = document.getElementById('whoami');
 var signOutBtn = document.getElementById('signOutBtn');
-var newBtn    = document.getElementById('newReportBtn');
+var addProjBtn = document.getElementById('addProjectBtn');
 var storageNote = document.getElementById('storageNote');
 
 function showMain(userEmail){
   loginView.classList.remove('open');
   mainView.style.display = 'block';
-  newBtn.style.display = 'inline-block';
-  document.getElementById('estWrap').style.display = 'inline-block';
+  addProjBtn.style.display = 'inline-block';
+  projectView.style.display = 'none';
   if(TEAM){
     whoami.textContent = userEmail || '';
     signOutBtn.style.display = 'inline-block';
-    storageNote.innerHTML = 'Documents are grouped by project (client / property address). You see the projects you created' + (userEmail === 'theo@cardinalrenovations.net' ? ' — and as admin, everyone else\u2019s too' : '; the admin sees all') + '. Use <b>Download</b> to keep a standalone copy.';
+    storageNote.innerHTML = 'Each card is a client profile holding their info, notes, photos, inspection reports and estimates. You see the projects you created' + (userEmail === 'theo@cardinalrenovations.net' ? ' — and as admin, everyone else\u2019s too' : '; the admin sees all') + '. Use <b>Download</b> to keep a standalone copy.';
     document.getElementById('bannerMount').innerHTML = '';
   }else{
     storageNote.innerHTML = 'All inspection projects, newest first. Reports are stored in this browser — use <b>Download</b> to keep a standalone copy of any report.';
