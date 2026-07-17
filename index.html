@@ -42,7 +42,7 @@ header.site{background:var(--paper);border-bottom:6px solid var(--red);}
   text-transform:uppercase;letter-spacing:.14em;
 }
 .headactions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.whoami{font-size:13px;color:var(--muted);}
+.whoami{font-weight:800;font-size:17px;color:#2b2b2b;}
 
 .btn{
   display:inline-block;border:0;cursor:pointer;font:inherit;
@@ -347,7 +347,9 @@ footer.site{
 /* ---- hero ---- */
 .hero{display:flex;gap:20px;align-items:stretch;flex-wrap:wrap;margin:18px 0 4px;}
 .hero-left{flex:1;min-width:250px;display:flex;flex-direction:column;justify-content:center;gap:6px;}
-.hero-hi{font:800 26px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.hero-hi{font:italic 600 18.5px/1.45 Georgia,'Times New Roman',serif;color:#3a2c28;max-width:520px;}
+.hero-hi .qmark{color:#C8202E;font-size:24px;font-weight:800;}
+.qauthor{font:700 13px 'Segoe UI',Arial,sans-serif;color:#8a6f66;margin-top:4px;font-style:normal;}
 .hero-clock{font:600 14.5px 'Segoe UI',Arial,sans-serif;color:#8a6f66;}
 .hero-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
 .hstat{font:700 12.5px 'Segoe UI',Arial,sans-serif;background:#f3ecea;color:#7a4a3e;
@@ -370,7 +372,7 @@ footer.site{
 .calgrid .day .dot{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
   width:4px;height:4px;border-radius:50%;background:#C8202E;}
 .calgrid .day.today .dot{background:#fff;}
-@media (max-width:640px){ .calcard{flex-basis:100%;} .hero-hi{font-size:21px;} }
+@media (max-width:640px){ .calcard{flex-basis:100%;} .hero-hi{font-size:16.5px;} }
 
 .calgrid .day.cur{cursor:pointer;}
 .calgrid .day.cur:hover{background:#f7efec;}
@@ -415,6 +417,9 @@ footer.site{
       </div>
     </div>
     <div class="headactions">
+      <span class="whoami" id="whoami"></span>
+      <button class="btn" id="addProjectBtn" style="display:none;">+ Add project</button>
+      <button class="btn ghost" id="signOutBtn" style="display:none;">Sign out</button>
       <span id="navWrap" style="display:none;position:relative;">
         <button class="btn ghost" id="navBtn">&#9776; Menu</button>
         <div id="navMenu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:80;
@@ -427,9 +432,6 @@ footer.site{
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
         </div>
       </span>
-      <span class="whoami" id="whoami"></span>
-      <button class="btn ghost" id="signOutBtn" style="display:none;">Sign out</button>
-      <button class="btn" id="addProjectBtn" style="display:none;">+ Add project</button>
     </div>
   </div>
 </header>
@@ -3201,13 +3203,46 @@ document.getElementById('leadList').addEventListener('click', function(e){
 });
 
 /* ---------- hero: greeting + stats ---------- */
+var QUOTES = [
+  ["The harder I work, the luckier I get.", "Samuel Goldwyn"],
+  ["Whether you think you can or you think you can't \u2014 you're right.", "Henry Ford"],
+  ["Well done is better than well said.", "Benjamin Franklin"],
+  ["Opportunity is missed by most people because it is dressed in overalls and looks like work.", "Thomas Edison"],
+  ["Believe you can and you're halfway there.", "Theodore Roosevelt"],
+  ["Do what you can, with what you have, where you are.", "Theodore Roosevelt"],
+  ["You don't have to be great to start, but you have to start to be great.", "Zig Ziglar"],
+  ["Either you run the day or the day runs you.", "Jim Rohn"],
+  ["It does not matter how slowly you go as long as you do not stop.", "Confucius"],
+  ["A dream doesn't become reality through magic; it takes sweat, determination and hard work.", "Colin Powell"],
+  ["I never dreamed about success. I worked for it.", "Est\u00e9e Lauder"],
+  ["The secret of getting ahead is getting started.", "Mark Twain"],
+  ["Action is the foundational key to all success.", "Pablo Picasso"],
+  ["The most effective way to do it, is to do it.", "Amelia Earhart"],
+  ["The way to get started is to quit talking and begin doing.", "Walt Disney"],
+  ["Don't let what you cannot do interfere with what you can do.", "John Wooden"],
+  ["Nothing will work unless you do.", "Maya Angelou"],
+  ["It's hard to beat a person who never gives up.", "Babe Ruth"],
+  ["The only way to do great work is to love what you do.", "Steve Jobs"],
+  ["I've failed over and over and over again in my life. And that is why I succeed.", "Michael Jordan"],
+  ["Inaction breeds doubt and fear. Action breeds confidence and courage.", "Dale Carnegie"],
+  ["If you cannot do great things, do small things in a great way.", "Napoleon Hill"],
+  ["Excellence is to do a common thing in an uncommon way.", "Booker T. Washington"],
+  ["Luck is what happens when preparation meets opportunity.", "Seneca"],
+  ["The best way to predict the future is to create it.", "Peter Drucker"],
+  ["Quality means doing it right when no one is looking.", "Henry Ford"],
+  ["Success is the sum of small efforts, repeated day in and day out.", "Robert Collier"],
+  ["Perseverance is not a long race; it is many short races one after the other.", "Walter Elliot"],
+  ["Ability is what you're capable of doing. Motivation determines what you do. Attitude determines how well you do it.", "Lou Holtz"],
+  ["Energy and persistence conquer all things.", "Benjamin Franklin"]
+];
 function renderHero(){
   var g = document.getElementById('heroGreeting');
   if(g){
-    var h = new Date().getHours();
-    var part = h < 12 ? 'Good morning' : (h < 17 ? 'Good afternoon' : 'Good evening');
-    var up = getUserProfile();
-    g.textContent = part + (up.first ? ', ' + up.first : '') + '!';
+    var start = new Date(new Date().getFullYear(), 0, 0);
+    var doy = Math.floor((Date.now() - start.getTime()) / 86400000);
+    var q = QUOTES[doy % QUOTES.length];
+    g.innerHTML = '<span class="qmark">\u201C</span>' + esc(q[0]) + '<span class="qmark">\u201D</span>' +
+      '<div class="qauthor">\u2014 ' + esc(q[1]) + '</div>';
   }
   var s = document.getElementById('heroStats');
   if(s){
