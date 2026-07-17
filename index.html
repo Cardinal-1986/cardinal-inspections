@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cardinal Inspections</title>
+<title>Cardinal Client Resources</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -292,6 +292,11 @@ footer.site{
 .projform input{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;
   border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;}
 @media (max-width:640px){ .projcover{flex-basis:100%;} }
+
+.brand{display:flex;align-items:center;gap:14px;}
+#brandLogo{height:52px;width:auto;}
+.logincard .loginlogo{display:block;margin:0 auto 14px;max-width:230px;height:auto;}
+@media (max-width:640px){ #brandLogo{height:40px;} }
 </style>
 </head>
 <body>
@@ -299,8 +304,11 @@ footer.site{
 <header class="site">
   <div class="wrap masthead">
     <div class="brand">
-      <h1>CARDINAL <span>INSPECTIONS</span></h1>
-      <p class="tag">Cardinal Roofing &amp; Renovations · Roof Inspection Reports</p>
+      <img id="brandLogo" alt="Cardinal Roofing &amp; Renovations" style="display:none;">
+      <div>
+        <h1>CARDINAL <span>CLIENT RESOURCES</span></h1>
+        <p class="tag">Cardinal Roofing &amp; Renovations · Inspections, Estimates &amp; Client Files</p>
+      </div>
     </div>
     <div class="headactions">
       <span class="whoami" id="whoami"></span>
@@ -313,8 +321,9 @@ footer.site{
 <!-- ============ LOGIN (team mode only) ============ -->
 <div id="loginView">
   <div class="logincard">
+    <img class="loginlogo" id="loginLogo" alt="Cardinal Roofing &amp; Renovations" style="display:none;">
     <h2>Team sign in</h2>
-    <p>Inspection reports are shared across the Cardinal team. Sign in with the account your administrator created for you in Supabase.</p>
+    <p>Cardinal Client Resources holds every client profile, inspection report, and estimate. Sign in with the account your administrator created for you.</p>
     <label for="loginEmail">Email</label>
     <input id="loginEmail" type="email" autocomplete="username" placeholder="you@cardinalroofing.com">
     <label for="loginPassword">Password</label>
@@ -329,12 +338,11 @@ footer.site{
   <div class="wrap" id="bannerMount"></div>
 
   <div class="wrap purpose">
-    <p><b>Purpose.</b> Cardinal Inspections is the home for every roof inspection report produced by
-    Cardinal Roofing &amp; Renovations. Each report is built from our standard branded template — covering
-    exterior elevations, aerial overview, roof surface, penetrations and flashings, chimney, attic and
-    ventilation, findings by priority, and recommendations — so that every client receives a consistent,
-    professional, photo-documented record of their roof's condition. From this page you can create a new
-    inspection, edit and print any report to PDF, and track whether — and when — each report was sent to the client.</p>
+    <p><b>Purpose.</b> Cardinal Client Resources is the home for every client of
+    Cardinal Roofing &amp; Renovations. Each client has a profile holding their contact information, job notes,
+    a cover photo, and every document we produce for them — branded inspection reports and estimates for
+    roofing, siding, windows, gutters, and repairs. From this page you can add a client, open their profile,
+    and create, edit, print, and track every document.</p>
   </div>
 
   <section class="history wrap">
@@ -414,7 +422,7 @@ footer.site{
 </div>
 
 <footer class="site">
-  <div class="wrap">Cardinal Roofing &amp; Renovations — internal inspection report manager.</div>
+  <div class="wrap">Cardinal Roofing &amp; Renovations — Client Resources: profiles, inspections &amp; estimates.</div>
 </footer>
 
 <!-- ============ EDITOR ============ -->
@@ -901,7 +909,7 @@ body{
 }
 @page{size:Letter;margin:0.75in 0.65in 0.9in;}
 .no-print{}
-@media print{.no-print{display:none!important;}}
+@media print{.no-print{display:none!important;} body{width:auto;margin:0;padding:0;}}
 .ph{background:#fff6c4;padding:0 3px;border-radius:2px;}
 
 /* header */
@@ -1141,7 +1149,7 @@ body{
 }
 @page{size:Letter;margin:0.75in 0.65in 0.9in;}
 .no-print{}
-@media print{.no-print{display:none!important;}}
+@media print{.no-print{display:none!important;} body{width:auto;margin:0;padding:0;}}
 .ph{background:#fff6c4;padding:0 3px;border-radius:2px;}
 .est-head{text-align:center;margin-bottom:14px;}
 .est-logo{width:2.6in;max-width:60%;display:block;margin:0 auto 8px;}
@@ -2568,6 +2576,8 @@ function serializeFrame(){
   if(roofrBar) roofrBar.remove();
   var estTable = clone.querySelector('#estItems[data-wired]');
   if(estTable) estTable.removeAttribute('data-wired');
+  var pf = clone.querySelector('#printFix');
+  if(pf) pf.remove();
   clone.querySelectorAll('.cbx[data-cbx]').forEach(function(el){ el.removeAttribute('data-cbx'); });
   var summaryHeading = clone.querySelector('[data-cardinal-summary-heading]');
   if(summaryHeading){
@@ -2604,7 +2614,17 @@ async function saveCurrent(){
 document.getElementById('saveBtn').addEventListener('click', saveCurrent);
 document.getElementById('printBtn').addEventListener('click', async function(){
   await saveCurrent();
-  try{ frame.contentWindow.focus(); frame.contentWindow.print(); }
+  try{
+    var d = frame.contentDocument;
+    if(d && d.head && !d.getElementById('printFix')){
+      var st = d.createElement('style');
+      st.id = 'printFix';
+      st.textContent = '@media print{body{width:auto !important;margin:0 !important;padding:0 !important;}}';
+      d.head.appendChild(st);
+    }
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+  }
   catch(e){ showError('Print failed: ' + e.message); }
 });
 toggleBtn.addEventListener('click', async function(){
@@ -2632,6 +2652,15 @@ document.getElementById('backBtn').addEventListener('click', async function(){
 /* =========================================================================
    AUTH + BOOT
    ========================================================================= */
+(function(){
+  var m = REPORT_TEMPLATE.match(/class="cover-logo" src="(data:image\/[^"]+)"/);
+  if(!m) return;
+  ['brandLogo','loginLogo'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.src = m[1]; el.style.display = 'block'; }
+  });
+})();
+
 var loginView = document.getElementById('loginView');
 var mainView  = document.getElementById('mainView');
 var whoami    = document.getElementById('whoami');
@@ -2657,7 +2686,8 @@ function showMain(userEmail){
 }
 function showLogin(){
   mainView.style.display = 'none';
-  newBtn.style.display = 'none';
+  projectView.style.display = 'none';
+  addProjBtn.style.display = 'none';
   signOutBtn.style.display = 'none';
   whoami.textContent = '';
   loginView.classList.add('open');
