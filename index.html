@@ -259,19 +259,30 @@ footer.site{
 #estMenu .estopt + .estopt{border-top:1px solid #eee;}
 
 /* ---- project cards (home) ---- */
-.projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin:10px 0 26px;}
+.projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:10px 0 26px;}
 .pcard{
-  border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;cursor:pointer;
+  position:relative;border-radius:14px;overflow:hidden;cursor:pointer;background:#efe9e6;
+  aspect-ratio:4/3;box-shadow:0 2px 8px rgba(0,0,0,.10);
   transition:box-shadow .15s, transform .15s;
 }
-.pcard:hover{box-shadow:0 6px 18px rgba(0,0,0,.14);transform:translateY(-2px);}
-.pcard .thumb{height:130px;background:#efe9e6;display:flex;align-items:center;justify-content:center;
-  color:#b3a49d;font:600 13px 'Segoe UI',Arial,sans-serif;overflow:hidden;}
-.pcard .thumb img{width:100%;height:100%;object-fit:cover;}
-.pcard .body{padding:11px 13px;}
-.pcard .nm{font-weight:800;font-size:15.5px;color:#2b2b2b;}
-.pcard .ad{font-size:12.5px;color:#6b6b6b;margin-top:2px;min-height:16px;}
-.pcard .ft{font-size:11.5px;color:#8a6f66;margin-top:7px;display:flex;justify-content:space-between;}
+.pcard:hover{box-shadow:0 10px 26px rgba(0,0,0,.22);transform:translateY(-3px);}
+.pcard.feat{grid-column:span 2;aspect-ratio:2/1;}
+.pcard .thumb{position:absolute;inset:0;}
+.pcard .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.pcard .initial{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font:800 64px 'Segoe UI',Arial,sans-serif;color:#d8cbc5;}
+.pcard.feat .initial{font-size:96px;}
+.pcard .ovl{
+  position:absolute;left:0;right:0;bottom:0;padding:34px 14px 10px;color:#fff;
+  background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.62) 70%);
+}
+.pcard .nm{font:800 17px 'Segoe UI',Arial,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.5);}
+.pcard.feat .nm{font-size:21px;}
+.pcard .ad{font:600 12px 'Segoe UI',Arial,sans-serif;opacity:.9;margin-top:1px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
+.pcard .ft{font:700 11px 'Segoe UI',Arial,sans-serif;opacity:.85;margin-top:5px;display:flex;justify-content:space-between;gap:8px;}
+.pcard .newchip{position:absolute;top:10px;left:10px;background:var(--red);color:#fff;
+  font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;padding:4px 10px;border-radius:10px;}
+@media (max-width:560px){ .pcard.feat{grid-column:span 1;aspect-ratio:4/3;} }
 /* ---- profile ---- */
 .projhead{display:flex;gap:20px;margin:16px 0 8px;flex-wrap:wrap;}
 .projcover{position:relative;flex:0 0 320px;height:190px;border:1px solid var(--line);border-radius:10px;
@@ -340,6 +351,12 @@ footer.site{
   border-radius:8px;padding:9px 12px;margin:6px 0 2px;}
 
 /* ---- header nav ---- */
+#navMenu{
+  position:fixed;right:10px;z-index:120;
+  background:#fff;border:1px solid #c9c2bf;border-radius:10px;
+  min-width:230px;max-width:calc(100vw - 20px);
+  box-shadow:0 10px 28px rgba(0,0,0,.22);overflow:hidden;
+}
 #navMenu .navopt{display:block;width:100%;text-align:left;padding:11px 16px;border:0;background:#fff;
   font:600 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
 #navMenu .navopt:hover{background:#f7efec;color:#9c1822;}
@@ -372,7 +389,15 @@ footer.site{
 .calgrid .day .dot{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
   width:4px;height:4px;border-radius:50%;background:#C8202E;}
 .calgrid .day.today .dot{background:#fff;}
-@media (max-width:640px){ .calcard{flex-basis:100%;} .hero-hi{font-size:16.5px;} }
+@media (max-width:640px){
+  .calcard{flex-basis:100%;} .hero-hi{font-size:16.5px;}
+  .masthead{padding:16px 0 12px;gap:10px;}
+  .headactions{width:100%;justify-content:space-between;gap:8px;}
+  .whoami{font-size:15.5px;}
+  #navMenu{left:10px;right:10px;min-width:0;}
+  #navMenu .navopt{padding:14px 18px;font-size:15px;}
+  #clientsBtn{padding:8px 10px;}
+}
 
 .calgrid .day.cur{cursor:pointer;}
 .calgrid .day.cur:hover{background:#f7efec;}
@@ -403,6 +428,18 @@ footer.site{
 }
 #mainView{ background-position:center 230px; background-size:min(880px, 94%); }
 #loginView{ background-position:center 72%; background-size:min(560px, 92%); }
+
+.clirow{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;
+  background:#fff;padding:10px 14px;margin:7px 0;cursor:pointer;transition:box-shadow .12s;}
+.clirow:hover{box-shadow:0 4px 14px rgba(0,0,0,.12);}
+.clirow .mini{flex:0 0 44px;width:44px;height:44px;border-radius:50%;overflow:hidden;background:#efe9e6;
+  display:flex;align-items:center;justify-content:center;font:800 18px 'Segoe UI',Arial,sans-serif;color:#c0aea6;}
+.clirow .mini img{width:100%;height:100%;object-fit:cover;}
+.clirow .bd{flex:1;min-width:0;}
+.clirow .bd b{font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.clirow .bd small{display:block;font:12.5px 'Segoe UI',Arial,sans-serif;color:#777;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.clirow .chev{color:#c0aea6;font-size:20px;font-weight:800;}
 </style>
 </head>
 <body>
@@ -420,11 +457,10 @@ footer.site{
       <span class="whoami" id="whoami"></span>
       <button class="btn" id="addProjectBtn" style="display:none;">+ Add project</button>
       <button class="btn ghost" id="signOutBtn" style="display:none;">Sign out</button>
-      <span id="navWrap" style="display:none;position:relative;">
+      <button class="btn ghost" id="clientsBtn" style="display:none;">&#128101; Clients</button>
+      <span id="navWrap" style="display:none;">
         <button class="btn ghost" id="navBtn">&#9776; Menu</button>
-        <div id="navMenu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:80;
-             background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:210px;
-             box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
+        <div id="navMenu" style="display:none;">
           <button class="navopt" data-nav="home">&#127968; Home &#8212; Clients</button>
           <button class="navopt" data-nav="recents">&#128337; Recents</button>
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
@@ -639,6 +675,19 @@ footer.site{
       </div>
       <div id="upError" style="color:#C8202E;font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
     </div>
+  </div>
+</div>
+
+<!-- ============ CLIENT DIRECTORY ============ -->
+<div id="clientsView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <button class="btn dark" id="cliBackBtn">&larr; Home</button>
+    <h2 style="margin:16px 0 4px;">&#128101; Client Directory</h2>
+    <div class="controls" style="margin:8px 0 4px;">
+      <input type="search" id="cliFilter" placeholder="Filter by name, address, phone, email, rep&#8230;" aria-label="Filter clients">
+      <span class="count" id="cliCount"></span>
+    </div>
+    <div id="cliList"></div>
   </div>
 </div>
 
@@ -2230,6 +2279,7 @@ async function reload(){
     renderHero();
     renderCalendar();
     if(currentList && listView.style.display !== 'none') renderList();
+    if(clientsView.style.display !== 'none') renderClientDirectory();
     if(currentProject && document.getElementById('projectView').style.display !== 'none'){
       renderProjectDocs();
     }
@@ -2295,19 +2345,21 @@ function renderHome(){
   }else if(!projs.length){
     out += '<div class="empty"><b>No projects match your search.</b></div>';
   }else{
-    out += '<div class="projgrid">' + projs.map(function(pr){
+    out += '<div class="projgrid">' + projs.map(function(pr, idx){
       var n = cacheRows.filter(function(r){ return r.project_id === pr.id; }).length;
       var thumb = pr.cover_image
-        ? '<img src="' + pr.cover_image + '" alt="">'
-        : 'NO COVER PHOTO';
+        ? '<div class="thumb"><img src="' + pr.cover_image + '" alt=""></div>'
+        : '<div class="initial">' + esc((pr.name || '?').trim().charAt(0).toUpperCase()) + '</div>';
       var by = pr.created_by ? esc(pr.created_by.split('@')[0]) : '';
-      return '<div class="pcard" data-proj="' + pr.id + '">' +
-        '<div class="thumb">' + thumb + '</div>' +
-        '<div class="body">' +
+      var feat = (idx === 0 && !q) ? ' feat' : '';
+      return '<div class="pcard' + feat + '" data-proj="' + pr.id + '">' +
+        thumb +
+        (feat ? '<span class="newchip">MOST RECENT</span>' : '') +
+        '<div class="ovl">' +
           '<div class="nm">' + esc(pr.name || 'Unnamed client') + '</div>' +
           '<div class="ad">' + esc(pr.address || '') + '</div>' +
           '<div class="ft"><span>' + n + ' document' + (n === 1 ? '' : 's') +
-            (pr.photos_transferred ? ' <span title="Photos transferred to report" style="color:#1d6b34;font-weight:800;">\u2713 \uD83D\uDCF7\u2192\uD83D\uDCC4</span>' : '') +
+            (pr.photos_transferred ? ' \u00b7 \u2713 \uD83D\uDCF7\u2192\uD83D\uDCC4' : '') +
             '</span><span>' + by + '</span></div>' +
         '</div></div>';
     }).join('') + '</div>';
@@ -2959,6 +3011,7 @@ function prefillChecklist(tpl, cl){
    ========================================================================= */
 var listView = document.getElementById('listView');
 var profileView = document.getElementById('profileView');
+var clientsView = document.getElementById('clientsView');
 var currentList = null;
 
 function hideAllViews(){
@@ -2967,13 +3020,54 @@ function hideAllViews(){
   document.getElementById('galleryView').style.display = 'none';
   listView.style.display = 'none';
   profileView.style.display = 'none';
+  clientsView.style.display = 'none';
 }
+
+/* ---------- client directory ---------- */
+function renderClientDirectory(){
+  var q = (document.getElementById('cliFilter').value || '').trim().toLowerCase();
+  var list = cacheProjects.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); })
+    .filter(function(pr){
+      if(!q) return true;
+      return [pr.name, pr.address, pr.phone, pr.email, pr.created_by].join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+  document.getElementById('cliCount').textContent = list.length + ' client' + (list.length === 1 ? '' : 's');
+  document.getElementById('cliList').innerHTML = list.length ? list.map(function(pr){
+    var mini = pr.cover_image ? '<img src="' + pr.cover_image + '" alt="">'
+                              : esc((pr.name || '?').trim().charAt(0).toUpperCase());
+    var sub = [pr.address, pr.phone].filter(Boolean).join(' \u00b7 ');
+    return '<div class="clirow" data-proj="' + pr.id + '">' +
+      '<span class="mini">' + mini + '</span>' +
+      '<span class="bd"><b>' + esc(pr.name || 'Unnamed client') + '</b>' +
+        (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
+      '<span class="chev">&#8250;</span></div>';
+  }).join('') : '<div class="empty"><b>No clients match.</b></div>';
+}
+function openClientsDirectory(){
+  hideAllViews();
+  clientsView.style.display = 'block';
+  document.getElementById('cliFilter').value = '';
+  renderClientDirectory();
+  window.scrollTo(0,0);
+  setTimeout(function(){ document.getElementById('cliFilter').focus(); }, 80);
+}
+document.getElementById('clientsBtn').addEventListener('click', openClientsDirectory);
+document.getElementById('cliBackBtn').addEventListener('click', showHome);
+document.getElementById('cliFilter').addEventListener('input', renderClientDirectory);
+document.getElementById('cliList').addEventListener('click', function(e){
+  var row = e.target.closest('.clirow');
+  if(row) openProject(row.getAttribute('data-proj'));
+});
 var navMenu = document.getElementById('navMenu');
 document.getElementById('navBtn').addEventListener('click', function(e){
   e.stopPropagation();
-  navMenu.style.display = navMenu.style.display === 'block' ? 'none' : 'block';
+  if(navMenu.style.display === 'block'){ navMenu.style.display = 'none'; return; }
+  var r = this.getBoundingClientRect();
+  navMenu.style.top = Math.round(r.bottom + 6) + 'px';
+  navMenu.style.display = 'block';
 });
 document.addEventListener('click', function(){ navMenu.style.display = 'none'; });
+window.addEventListener('scroll', function(){ navMenu.style.display = 'none'; }, { passive: true });
 navMenu.addEventListener('click', function(e){
   var opt = e.target.closest('.navopt');
   if(!opt) return;
@@ -4356,6 +4450,7 @@ function showMain(userEmail){
   mainView.style.display = 'block';
   addProjBtn.style.display = 'inline-block';
   document.getElementById('navWrap').style.display = 'inline-block';
+  document.getElementById('clientsBtn').style.display = 'inline-block';
   hideAllViews();
   mainView.style.display = 'block';
   if(TEAM){
@@ -4389,6 +4484,7 @@ whoami.addEventListener('click', async function(){
 function showLogin(){
   hideAllViews();
   document.getElementById('navWrap').style.display = 'none';
+  document.getElementById('clientsBtn').style.display = 'none';
   addProjBtn.style.display = 'none';
   signOutBtn.style.display = 'none';
   whoami.textContent = '';
