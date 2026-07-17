@@ -254,6 +254,7 @@ footer.site{
       <span class="whoami" id="whoami"></span>
       <button class="btn ghost" id="signOutBtn" style="display:none;">Sign out</button>
       <button class="btn" id="newReportBtn" style="display:none;">+ New inspection report</button>
+      <button class="btn" id="newEstimateBtn" style="display:none;">+ New estimate</button>
     </div>
   </div>
 </header>
@@ -769,6 +770,250 @@ compromised porch or area until repairs are complete.]</p>
 </html>
 `;
 
+/* ---------- estimate template (logo injected from report template at runtime) ---------- */
+var ESTIMATE_TEMPLATE_RAW = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cardinal Roofing &amp; Renovations — Roofing Estimate</title>
+<style>
+:root{
+  --red:#C8202E; --red-dk:#9c1822; --ink:#1b1b1b; --muted:#666;
+  --line:#d9d9d9; --hi:#C8102E; --amber:#E8A33D; --slate:#6B7A8F;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:Georgia,"Times New Roman",serif;color:var(--ink);font-size:11pt;line-height:1.5;
+  width:8.5in;margin:0 auto;padding:0.75in 0.65in 0.9in;background:#fff;
+}
+@page{size:Letter;margin:0.75in 0.65in 0.9in;}
+.no-print{}
+@media print{.no-print{display:none!important;}}
+.ph{background:#fff6c4;padding:0 3px;border-radius:2px;}
+
+/* header */
+.est-head{text-align:center;margin-bottom:14px;}
+.est-logo{width:2.6in;max-width:60%;display:block;margin:0 auto 8px;}
+.est-title{font-size:24pt;font-weight:800;letter-spacing:1px;margin:2mm 0 1mm;}
+.est-title span{color:var(--red);}
+.est-sub{font-size:11pt;color:var(--muted);margin:0 0 6px;}
+.rule{height:3px;background:var(--red);border:0;margin:8px 0 14px;}
+
+/* meta + facts tables */
+table.meta,table.facts{border-collapse:collapse;width:100%;margin:6px 0 12px;font-size:10.5pt;}
+table.meta td,table.facts td{border:1px solid var(--line);padding:7px 10px;vertical-align:top;}
+table.meta td.k,table.facts td.k{background:#f6f6f6;font-weight:700;width:26%;color:#333;}
+
+h2.sec{
+  font-size:14pt;font-weight:800;margin:22px 0 6px;padding-bottom:4px;
+  border-bottom:2px solid var(--red);
+}
+h2.sec .num{
+  display:inline-block;background:var(--red);color:#fff;border-radius:4px;
+  font-size:11pt;padding:1px 8px;margin-right:8px;vertical-align:2px;
+}
+p{margin:6px 0;}
+.note{
+  border:1px solid var(--line);border-left:4px solid var(--amber);background:#fdf9ef;
+  padding:9px 12px;font-size:10.5pt;margin:10px 0;
+}
+
+/* roofr figure */
+.figrow{display:flex;gap:12px;margin:12px 0;}
+.fig{flex:1;}
+.fig .frame{
+  position:relative;width:100%;height:95mm;border:1px solid var(--line);border-radius:5px;
+  background:#f1f1f1;display:flex;align-items:center;justify-content:center;
+  color:#a5a5a5;font-size:10pt;text-align:center;overflow:hidden;
+}
+.fig .frame img{width:100%;height:100%;object-fit:contain;background:#fff;}
+.fig .cap{font-size:9.5pt;color:#444;margin-top:5px;}
+.fig .cap b{color:var(--red-dk);}
+
+/* line items */
+table.items{border-collapse:collapse;width:100%;margin:8px 0 4px;font-size:10.5pt;}
+table.items th{
+  background:var(--ink);color:#fff;text-align:left;padding:7px 9px;font-size:9.5pt;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+table.items td{border:1px solid var(--line);padding:6px 9px;vertical-align:top;}
+table.items td.qty,table.items td.rate,table.items td.amt{text-align:right;white-space:nowrap;width:12%;}
+table.items td.unit{width:10%;color:var(--muted);}
+table.items tr.totals td{border:0;padding:4px 9px;}
+table.items tr.totals td.lbl{text-align:right;font-weight:700;}
+table.items tr.totals td.val{text-align:right;width:12%;white-space:nowrap;}
+table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weight:800;}
+.items-hint{font-size:9pt;color:var(--muted);margin:2px 0 0;}
+
+/* unit pricing */
+table.units{border-collapse:collapse;width:100%;margin:8px 0;font-size:10.5pt;}
+table.units th{background:#f6f6f6;border:1px solid var(--line);padding:6px 9px;text-align:left;}
+table.units td{border:1px solid var(--line);padding:6px 9px;}
+table.units td.pr{text-align:right;white-space:nowrap;width:22%;}
+
+/* signatures */
+.sign{display:flex;gap:28px;margin-top:34px;}
+.sign .col{flex:1;}
+.sign .line{border-bottom:1.5px solid var(--ink);height:34px;}
+.sign .lbl{font-size:9.5pt;color:var(--muted);margin-top:5px;}
+.avoid-break{break-inside:avoid;}
+.page-break{break-before:page;}
+</style>
+</head>
+<body>
+
+<!-- ======================= HEADER ======================= -->
+<div class="est-head">
+  <img class="est-logo" src="__LOGO__" alt="Cardinal Roofing &amp; Renovations">
+  <div class="est-title">ROOFING <span>ESTIMATE</span></div>
+  <div class="est-sub">Cardinal Roofing &amp; Renovations</div>
+</div>
+<hr class="rule">
+
+<table class="meta">
+  <tr><td class="k">Prepared For</td><td><span class="ph">[Client name]</span></td>
+      <td class="k">Estimate #</td><td><span class="ph">[e.g. EST-2026-041]</span></td></tr>
+  <tr><td class="k">Property Address</td><td><span class="ph">[Street, City, State ZIP]</span></td>
+      <td class="k">Estimate Date</td><td><span class="ph">[Date]</span></td></tr>
+  <tr><td class="k">Based on Inspection</td><td><span class="ph">[Inspection report date / job no.]</span></td>
+      <td class="k">Prepared By</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>
+  <tr><td class="k">Valid Through</td><td><span class="ph">[30 days from estimate date]</span></td>
+      <td class="k">Job / Claim #</td><td><span class="ph">[If applicable]</span></td></tr>
+</table>
+
+<!-- ======================= 1. ROOFR MEASUREMENTS ======================= -->
+<h2 class="sec"><span class="num">1</span>Roof Measurements (Roofr Report)</h2>
+<p>Measurements below are taken from the Roofr aerial measurement report for this property.
+Quantities in the line items are derived from these figures plus the stated waste factor.</p>
+
+<table class="facts">
+  <tr><td class="k">Total Roof Area</td><td><span class="ph">[e.g. 2,847 sq ft — 28.5 squares]</span></td></tr>
+  <tr><td class="k">Predominant Pitch</td><td><span class="ph">[e.g. 6/12; porch 4/12]</span></td></tr>
+  <tr><td class="k">Ridges</td><td><span class="ph">[e.g. 64 LF]</span></td></tr>
+  <tr><td class="k">Hips</td><td><span class="ph">[e.g. 38 LF]</span></td></tr>
+  <tr><td class="k">Valleys</td><td><span class="ph">[e.g. 52 LF]</span></td></tr>
+  <tr><td class="k">Eaves</td><td><span class="ph">[e.g. 148 LF]</span></td></tr>
+  <tr><td class="k">Rakes</td><td><span class="ph">[e.g. 96 LF]</span></td></tr>
+  <tr><td class="k">Step Flashing</td><td><span class="ph">[e.g. 24 LF]</span></td></tr>
+  <tr><td class="k">Wall / Apron Flashing</td><td><span class="ph">[e.g. 18 LF]</span></td></tr>
+  <tr><td class="k">Penetrations</td><td><span class="ph">[e.g. 4 pipe jacks, 1 furnace vent, 1 chimney]</span></td></tr>
+  <tr><td class="k">Waste Factor Applied</td><td><span class="ph">[e.g. 12% (hips/valleys)]</span></td></tr>
+</table>
+
+<div class="figrow">
+  <div class="fig avoid-break">
+    <div class="frame">ROOFR DIAGRAM</div>
+    <div class="cap"><b>Roofr measurement diagram</b> — <span class="ph">[Add the Roofr roof diagram image here using the Add photo button.]</span></div>
+  </div>
+</div>
+
+<!-- ======================= 2. FINDINGS THIS ESTIMATE ADDRESSES ======================= -->
+<div class="page-break"></div>
+<h2 class="sec"><span class="num">2</span>Findings Addressed by This Estimate</h2>
+<p>The scope and pricing below respond to the findings documented in the inspection report referenced above.</p>
+<table class="facts">
+  <tr><td class="k">Finding</td><td class="k" style="width:74%;">Addressed By</td></tr>
+  <tr><td><span class="ph">[e.g. Widespread degranulation, all slopes]</span></td>
+      <td><span class="ph">[Full tear-off and replacement — items 1–5]</span></td></tr>
+  <tr><td><span class="ph">[e.g. UV-cracked pipe jack boot seals]</span></td>
+      <td><span class="ph">[New pipe jacks at all penetrations — item 8]</span></td></tr>
+  <tr><td><span class="ph">[e.g. Deteriorated chimney counterflashing]</span></td>
+      <td><span class="ph">[New counterflashing — item 10]</span></td></tr>
+</table>
+
+<!-- ======================= 3. SCOPE OF WORK ======================= -->
+<h2 class="sec"><span class="num">3</span>Scope of Work</h2>
+<p class="ph">[Describe the work in trade terms — e.g.: Remove existing roof covering to the deck (one layer).
+Inspect decking and report any deterioration prior to dry-in. Install ice-and-water shield at eaves and
+valleys, synthetic underlayment over remaining field, new drip edge at eaves and rakes, architectural
+asphalt shingles fastened per manufacturer specification, new pipe jacks at all penetrations, step and
+counterflashing where indicated, and hip-and-ridge cap with ridge ventilation. Haul off and dispose of
+all debris; magnetic sweep of grounds on completion.]</p>
+
+<!-- ======================= 4. PRICING ======================= -->
+<h2 class="sec"><span class="num">4</span>Line-Item Pricing</h2>
+<table class="items" id="estItems">
+  <tr>
+    <th style="width:44%;">Description</th><th>Qty</th><th>Unit</th><th>Unit Price</th><th>Amount</th>
+  </tr>
+  <tr class="li"><td>Tear-off &amp; disposal of existing roof covering — <span class="ph">[layers]</span></td>
+    <td class="qty"><span class="ph">[28.5]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Ice-and-water shield — eaves &amp; valleys</td>
+    <td class="qty"><span class="ph">[qty]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Synthetic underlayment — remaining field</td>
+    <td class="qty"><span class="ph">[qty]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Drip edge — eaves &amp; rakes</td>
+    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Architectural asphalt shingles — <span class="ph">[mfr / line / color]</span> (incl. waste)</td>
+    <td class="qty"><span class="ph">[SQ]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Starter strip — eaves &amp; rakes</td>
+    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Hip &amp; ridge cap shingles</td>
+    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Ridge ventilation</td>
+    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Pipe jacks / boot seals at penetrations</td>
+    <td class="qty"><span class="ph">[ea]</span></td><td class="unit">EA</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Step flashing at roof-to-wall transitions</td>
+    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td>Chimney counterflashing</td>
+    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="li"><td><span class="ph">[Additional item]</span></td>
+    <td class="qty"><span class="ph">[qty]</span></td><td class="unit"><span class="ph">[un]</span></td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+  <tr class="totals"><td colspan="4" class="lbl">Subtotal</td><td class="val" id="estSubtotal">—</td></tr>
+  <tr class="totals"><td colspan="4" class="lbl">Tax (<span id="estTaxRate" class="ph">[0]</span>%)</td><td class="val" id="estTaxAmt">—</td></tr>
+  <tr class="totals grand"><td colspan="4" class="lbl">TOTAL</td><td class="val" id="estTotal">—</td></tr>
+</table>
+<p class="items-hint no-print">Amounts, subtotal, tax, and total calculate automatically as you type quantities and unit prices. Type only numbers in Qty and Unit Price (no $ needed).</p>
+
+<!-- ======================= 5. CONCEALED CONDITIONS ======================= -->
+<div class="page-break"></div>
+<h2 class="sec"><span class="num">5</span>Concealed Conditions &amp; Unit Pricing</h2>
+<p>Deck, framing, and substrate conditions concealed beneath the existing roof covering cannot be assessed
+until tear-off. Should deteriorated decking, compromised rafters, or other concealed conditions be
+discovered during the course of work, a <b>written change order will be issued and approved by the client
+prior to any additional work being performed.</b> The unit pricing below applies to such discoveries so the
+cost basis is agreed in advance:</p>
+
+<table class="units">
+  <tr><th>Likely Discovery</th><th>Unit</th><th style="text-align:right;">Unit Price</th></tr>
+  <tr><td>Roof decking replacement (7/16" OSB)</td><td>per 4×8 sheet</td><td class="pr"><span class="ph">[$0.00]</span></td></tr>
+  <tr><td>Plank decking replacement</td><td>per LF</td><td class="pr"><span class="ph">[$0.00]</span></td></tr>
+  <tr><td>Rafter sistering / repair</td><td>per rafter</td><td class="pr"><span class="ph">[$0.00]</span></td></tr>
+  <tr><td>Fascia replacement</td><td>per LF</td><td class="pr"><span class="ph">[$0.00]</span></td></tr>
+  <tr><td><span class="ph">[Other]</span></td><td><span class="ph">[unit]</span></td><td class="pr"><span class="ph">[$0.00]</span></td></tr>
+</table>
+
+<!-- ======================= 6. TERMS ======================= -->
+<h2 class="sec"><span class="num">6</span>Terms</h2>
+<p class="ph">[Payment schedule — e.g. deposit on acceptance, balance on completion. Warranty terms —
+manufacturer material warranty and Cardinal workmanship warranty period. Scheduling and weather
+allowances. Any exclusions (gutters, interior repairs, painting, etc.).]</p>
+<div class="note"><b>Acceptance.</b> This estimate is valid through the date shown above. Signature below
+authorizes Cardinal Roofing &amp; Renovations to perform the work described, under the terms stated,
+including the concealed-conditions change-order process in Section 5.</div>
+
+<div class="sign">
+  <div class="col">
+    <div class="line"></div>
+    <div class="lbl">Cardinal Roofing &amp; Renovations — Authorized Representative &nbsp;|&nbsp; Date</div>
+  </div>
+  <div class="col">
+    <div class="line"></div>
+    <div class="lbl">Client Acceptance &nbsp;|&nbsp; Date</div>
+  </div>
+</div>
+
+</body>
+</html>
+`;
+var ESTIMATE_TEMPLATE = (function(){
+  var m = REPORT_TEMPLATE.match(/class="cover-logo" src="(data:image\/[^"]+)"/);
+  return ESTIMATE_TEMPLATE_RAW.replace('__LOGO__', m ? m[1] : '');
+})();
+
+
 var TEAM = !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
 var sb = TEAM ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 var TABLE = 'inspection_reports';
@@ -832,12 +1077,13 @@ var db = {
     }
     return lsLoad().find(function(x){ return x.id === id; });
   },
-  create: async function(title){
+  create: async function(title, html){
     var now = new Date().toISOString();
+    var tpl = html || REPORT_TEMPLATE;
     if(TEAM){
       var user = (await sb.auth.getUser()).data.user;
       var r = await sb.from(TABLE).insert({
-        title: title, status: 'unsent', html: REPORT_TEMPLATE,
+        title: title, status: 'unsent', html: tpl,
         created_by: user ? user.email : null
       }).select('id').single();
       if(r.error) throw r.error;
@@ -846,7 +1092,7 @@ var db = {
     var list = lsLoad();
     var id = uid();
     list.push({ id:id, title:title, status:'unsent', sent_at:null,
-                created_at:now, updated_at:now, created_by:null, html:REPORT_TEMPLATE });
+                created_at:now, updated_at:now, created_by:null, html:tpl });
     lsSave(list);
     return id;
   },
@@ -1015,6 +1261,18 @@ document.getElementById('newReportBtn').addEventListener('click', async function
     await reload();
     await openEditor(id);
   }catch(err){ showError('Could not create report: ' + (err.message || err)); }
+});
+
+document.getElementById('newEstimateBtn').addEventListener('click', async function(){
+  var title = prompt('Property address / estimate title:', '');
+  if(title === null) return;
+  try{
+    var name = (title.trim() || 'Untitled');
+    if(!/^estimate/i.test(name)) name = 'Estimate — ' + name;
+    var id = await db.create(name, ESTIMATE_TEMPLATE);
+    await reload();
+    await openEditor(id);
+  }catch(err){ showError('Could not create estimate: ' + (err.message || err)); }
 });
 
 /* =========================================================================
@@ -1469,6 +1727,57 @@ function escHtml(s){
   });
 }
 
+/* ---------- estimate: auto-calc line items (no-op on inspection reports) ---------- */
+function wireEstimateCalc(doc){
+  var table = doc.getElementById('estItems');
+  if(!table || table.getAttribute('data-wired')) return;
+  table.setAttribute('data-wired','1');
+
+  function parseNum(el){
+    if(!el) return NaN;
+    var t = (el.textContent || '').replace(/[$,\s]/g, '');
+    if(!t || t.charAt(0) === '[') return NaN;
+    var v = parseFloat(t);
+    return isNaN(v) ? NaN : v;
+  }
+  function money(v){
+    return '$' + v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function recalc(){
+    var subtotal = 0;
+    table.querySelectorAll('tr.li').forEach(function(row){
+      var qty = parseNum(row.querySelector('.qty'));
+      var rate = parseNum(row.querySelector('.rate'));
+      var amtCell = row.querySelector('.amt');
+      if(!amtCell) return;
+      if(isNaN(qty) || isNaN(rate)){
+        amtCell.textContent = '\u2014';
+      }else{
+        var amt = qty * rate;
+        amtCell.textContent = money(amt);
+        subtotal += amt;
+      }
+    });
+    var subEl = doc.getElementById('estSubtotal');
+    if(subEl) subEl.textContent = subtotal > 0 ? money(subtotal) : '\u2014';
+    var taxRateEl = doc.getElementById('estTaxRate');
+    var taxRate = taxRateEl ? parseNum(taxRateEl) : NaN;
+    if(isNaN(taxRate)) taxRate = 0;
+    var tax = subtotal * taxRate / 100;
+    var taxEl = doc.getElementById('estTaxAmt');
+    if(taxEl) taxEl.textContent = subtotal > 0 ? money(tax) : '\u2014';
+    var totEl = doc.getElementById('estTotal');
+    if(totEl) totEl.textContent = subtotal > 0 ? money(subtotal + tax) : '\u2014';
+  }
+
+  var timer = null;
+  doc.body.addEventListener('input', function(){
+    clearTimeout(timer);
+    timer = setTimeout(recalc, 250);
+  });
+  recalc();
+}
+
 async function openEditor(id){
   var r;
   try{ r = await db.get(id); }
@@ -1495,6 +1804,7 @@ async function openEditor(id){
       wirePhotoFrames(doc);
       wireSummaryDraftButton(doc);
       wireCoverPhoto(doc);
+      wireEstimateCalc(doc);
     }catch(e){}
   };
   editor.classList.add('open');
@@ -1587,6 +1897,7 @@ function showMain(userEmail){
   loginView.classList.remove('open');
   mainView.style.display = 'block';
   newBtn.style.display = 'inline-block';
+  document.getElementById('newEstimateBtn').style.display = 'inline-block';
   if(TEAM){
     whoami.textContent = userEmail || '';
     signOutBtn.style.display = 'inline-block';
