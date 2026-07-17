@@ -327,6 +327,72 @@ footer.site{
 .tchip.trade{background:#f3ecea;color:#7a4a3e;border:1px solid #e0d2cc;}
 .tchip.insp{background:#e8f0fb;color:#1d4f91;border:1px solid #c9dbf2;}
 .tchip.est{background:#e9f5ec;color:#1d6b34;border:1px solid #c8e5cf;}
+
+.ckcard{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  border:1px solid var(--line);border-radius:10px;background:#fff;padding:14px 16px;margin:8px 0;}
+.ckhead{font:800 14.5px 'Segoe UI',Arial,sans-serif;color:#9c1822;border-bottom:2px solid var(--red);
+  padding-bottom:4px;margin:18px 0 6px;}
+.ckrow{display:flex;gap:12px;flex-wrap:wrap;}
+.ckrow > label{flex:1;min-width:150px;}
+.ckinline{display:flex;gap:14px;flex-wrap:wrap;font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#444;margin-top:6px;}
+.ckinline label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:inherit;margin:0;}
+.ckclient{font:13.5px/1.6 'Segoe UI',Arial,sans-serif;color:#444;background:#f8f5f4;border:1px solid var(--line);
+  border-radius:8px;padding:9px 12px;margin:6px 0 2px;}
+
+/* ---- header nav ---- */
+#navMenu .navopt{display:block;width:100%;text-align:left;padding:11px 16px;border:0;background:#fff;
+  font:600 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+#navMenu .navopt:hover{background:#f7efec;color:#9c1822;}
+#navMenu .navopt + .navopt{border-top:1px solid #eee;}
+/* ---- hero ---- */
+.hero{display:flex;gap:20px;align-items:stretch;flex-wrap:wrap;margin:18px 0 4px;}
+.hero-left{flex:1;min-width:250px;display:flex;flex-direction:column;justify-content:center;gap:6px;}
+.hero-hi{font:800 26px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.hero-clock{font:600 14.5px 'Segoe UI',Arial,sans-serif;color:#8a6f66;}
+.hero-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.hstat{font:700 12.5px 'Segoe UI',Arial,sans-serif;background:#f3ecea;color:#7a4a3e;
+  border:1px solid #e0d2cc;border-radius:12px;padding:5px 12px;cursor:pointer;}
+.hstat:hover{background:#eaddd8;}
+.hstat b{color:#9c1822;}
+/* ---- calendar ---- */
+.calcard{flex:0 0 300px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 14px;}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;
+  font:700 14.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.calnav{border:1px solid var(--line);background:#fff;border-radius:6px;width:28px;height:28px;
+  font-size:16px;cursor:pointer;color:#7a4a3e;}
+.calnav:hover{background:#f7efec;}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;
+  font:12.5px 'Segoe UI',Arial,sans-serif;}
+.calgrid .dow{font-weight:800;color:#8a6f66;font-size:10.5px;padding:3px 0;}
+.calgrid .day{position:relative;padding:6px 0;border-radius:7px;color:#333;}
+.calgrid .day.other{color:#c9c0bc;}
+.calgrid .day.today{background:var(--red);color:#fff;font-weight:800;}
+.calgrid .day .dot{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:#C8202E;}
+.calgrid .day.today .dot{background:#fff;}
+@media (max-width:640px){ .calcard{flex-basis:100%;} .hero-hi{font-size:21px;} }
+
+.calgrid .day.cur{cursor:pointer;}
+.calgrid .day.cur:hover{background:#f7efec;}
+.calgrid .day.today.cur:hover{background:var(--red);}
+.calgrid .day .adot{position:absolute;bottom:2px;left:calc(50% + 5px);transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:#E8A33D;}
+.calgrid .day .dot{left:calc(50% - 5px);}
+.calgrid .day.today .adot{background:#ffe2ae;}
+.callegend{font:11px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;margin-top:8px;}
+.ldot{display:inline-block;width:7px;height:7px;border-radius:50%;vertical-align:middle;}
+.ldot.doc{background:#C8202E;}
+.ldot.appt{background:#E8A33D;}
+.calnextup{font:600 12px 'Segoe UI',Arial,sans-serif;color:#7a4a3e;margin-top:6px;}
+.apptlist{max-height:220px;overflow:auto;}
+.apptrow{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:8px;
+  padding:9px 11px;margin:6px 0;font:13.5px 'Segoe UI',Arial,sans-serif;}
+.apptrow .tm{font-weight:800;color:#9c1822;white-space:nowrap;min-width:64px;}
+.apptrow .bd{flex:1;}
+.apptrow .bd small{display:block;color:#8a8a8a;}
+.apptrow .del{border:0;background:none;color:#b3a49d;font-size:15px;cursor:pointer;}
+.apptrow .del:hover{color:#C8202E;}
+.apptempty{font:13px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;padding:6px 0;}
 </style>
 </head>
 <body>
@@ -341,6 +407,18 @@ footer.site{
       </div>
     </div>
     <div class="headactions">
+      <span id="navWrap" style="display:none;position:relative;">
+        <button class="btn ghost" id="navBtn">&#9776; Menu</button>
+        <div id="navMenu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:80;
+             background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:210px;
+             box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
+          <button class="navopt" data-nav="home">&#127968; Home &#8212; Clients</button>
+          <button class="navopt" data-nav="recents">&#128337; Recents</button>
+          <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
+          <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
+          <button class="navopt" data-nav="profile">&#128100; My Profile</button>
+        </div>
+      </span>
       <span class="whoami" id="whoami"></span>
       <button class="btn ghost" id="signOutBtn" style="display:none;">Sign out</button>
       <button class="btn" id="addProjectBtn" style="display:none;">+ Add project</button>
@@ -367,17 +445,28 @@ footer.site{
 <div id="mainView" style="display:none;">
   <div class="wrap" id="bannerMount"></div>
 
-  <div class="wrap purpose">
-    <p><b>Purpose.</b> Cardinal Client Resources is the home for every client of
-    Cardinal Roofing &amp; Renovations. Each client has a profile holding their contact information, job notes,
-    a cover photo, and every document we produce for them — branded inspection reports and estimates for
-    roofing, siding, windows, gutters, and repairs. From this page you can add a client, open their profile,
-    and create, edit, print, and track every document.</p>
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-left">
+        <div id="heroGreeting" class="hero-hi"></div>
+        <div id="homeClock" class="hero-clock"></div>
+        <div id="heroStats" class="hero-stats"></div>
+      </div>
+      <div class="calcard" id="calCard">
+        <div class="calhead">
+          <button class="calnav" id="calPrev">&#8249;</button>
+          <b id="calTitle"></b>
+          <button class="calnav" id="calNext">&#8250;</button>
+        </div>
+        <div class="calgrid" id="calGrid"></div>
+        <div class="callegend"><span class="ldot doc"></span> documents &nbsp; <span class="ldot appt"></span> appointments &#8212; tap a day to schedule</div>
+        <div id="apptUpcoming" class="calnextup"></div>
+      </div>
+    </div>
   </div>
 
   <section class="history wrap">
     <h2 class="sec"><span class="num">&#9776;</span>Client Projects</h2>
-    <div id="homeClock" style="font:600 14px 'Segoe UI',Arial,sans-serif;color:#8a6f66;margin:2px 0 8px;"></div>
     <p class="subnote" id="storageNote"></p>
     <div class="controls">
       <input type="search" id="searchBox" placeholder="Search clients by name, address, phone, email…" aria-label="Search projects">
@@ -417,6 +506,7 @@ footer.site{
       <button class="ptab active" data-tab="overview">&#128203; Overview</button>
       <button class="ptab" data-tab="inspections">&#128269; Inspections</button>
       <button class="ptab" data-tab="estimates">&#128176; Estimates</button>
+      <button class="ptab" data-tab="checklists">&#128203; Checklists</button>
     </div>
 
     <div id="tab-overview">
@@ -429,13 +519,6 @@ footer.site{
     </div>
 
     <div id="tab-inspections" style="display:none;">
-      <h3 class="projsec">&#128203; Roofing Checklist <span id="ckStatus" class="projcount">Not completed</span></h3>
-      <p class="subnote">Baseline specs required <b>before an inspection report can be created</b> — they feed
-      directly into the report&#8217;s Property Facts.</p>
-      <div style="margin:6px 0 18px;">
-        <button class="btn" id="ckOpenBtn">Open checklist</button>
-      </div>
-
       <h3 class="projsec">&#128248; Photo Gallery <span id="galSummary" class="projcount">0 / 20</span></h3>
       <p class="subnote">Field photos live on their own page — add, review, and transfer them into an inspection report.</p>
       <div style="margin:6px 0 18px;">
@@ -467,6 +550,21 @@ footer.site{
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
     </div>
+
+    <div id="tab-checklists" style="display:none;">
+      <h3 class="projsec">&#128203; Checklists</h3>
+      <p class="subnote">Job checklists for this client. The Roofing Inspection Checklist must be completed
+      before an inspection report can be created &#8212; its core specs feed the report automatically.</p>
+      <div class="cklist">
+        <div class="ckcard">
+          <div>
+            <b>Roofing Inspection Checklist</b>
+            <span id="ckStatus" class="projcount">Not completed</span>
+          </div>
+          <button class="btn" id="ckOpenBtn">Open checklist</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -495,6 +593,37 @@ footer.site{
   </div>
 </div>
 
+<!-- ============ DOCUMENT LIST PAGE (recents / inspections / estimates) ============ -->
+<div id="listView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <button class="btn dark" id="listBackBtn">&larr; Home</button>
+    <h2 id="listTitle" style="margin:16px 0 4px;"></h2>
+    <p class="subnote" id="listNote"></p>
+    <div id="listMount"><div class="loading">Loading…</div></div>
+  </div>
+</div>
+
+<!-- ============ MY PROFILE PAGE ============ -->
+<div id="profileView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <button class="btn dark" id="profBackBtn">&larr; Home</button>
+    <h2 style="margin:16px 0 4px;">&#128100; My Profile</h2>
+    <p class="subnote">Your name and contact info appear as &#8220;Prepared By / Inspector&#8221; on every
+    estimate and inspection report you create.</p>
+    <div class="projform" style="margin:10px 0;max-width:430px;box-shadow:none;border:1px solid var(--line);">
+      <label>First name<input type="text" id="upFirst" autocomplete="given-name"></label>
+      <label>Last name<input type="text" id="upLast" autocomplete="family-name"></label>
+      <label>Phone number<input type="tel" id="upPhone" autocomplete="tel"></label>
+      <label>Email<input type="email" id="upEmail" disabled style="background:#f3f0ee;color:#777;"></label>
+      <div style="margin-top:14px;">
+        <button class="btn" id="upSave">Save profile</button>
+        <span id="upFlash" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#2e7d32;"></span>
+      </div>
+      <div id="upError" style="color:#C8202E;font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ ADD / EDIT PROJECT MODAL ============ -->
 <div id="projModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:200;">
   <div class="projform">
@@ -513,42 +642,163 @@ footer.site{
 
 <!-- ============ ROOFING CHECKLIST MODAL ============ -->
 <div id="ckModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:210;overflow:auto;">
-  <div class="projform" style="max-width:520px;margin:5vh auto 5vh;">
-    <h3 style="margin:0 0 4px;">&#128203; Roofing Checklist</h3>
-    <div id="ckDate" class="subnote" style="margin:0 0 8px;"></div>
-    <label>Type of structure *
-      <select id="ck_structure"><option value="">&#8212; select &#8212;</option>
-        <option>Single Family</option><option>Multi-Family</option><option>Commercial</option>
-        <option>Shed</option><option>Barn</option></select></label>
+  <div class="projform" style="max-width:600px;margin:4vh auto 4vh;">
+    <h3 style="margin:0 0 4px;">&#128203; Roofing Inspection Checklist</h3>
+    <div id="ckDate" class="subnote" style="margin:0 0 4px;"></div>
+
+    <div class="ckhead">&#128100; Client Information</div>
+    <div class="ckclient" id="ckClientLine"></div>
+    <label>Active leak?
+      <select id="ck_leak"><option value="">&#8212; select &#8212;</option>
+        <option>Yes</option><option>No</option></select></label>
+
+    <div class="ckhead">&#128203; System Baseline Specifications (Mandatory Data)</div>
+    <div class="ckrow">
+      <label>Type of structure *
+        <select id="ck_structure"><option value="">&#8212; select &#8212;</option>
+          <option>Single Family</option><option>Multi-Family</option><option>Commercial</option>
+          <option>Shed</option><option>Barn</option></select></label>
+      <label>Estimated roof age (years) *<input type="number" id="ck_age" min="0" max="120" inputmode="numeric"></label>
+    </div>
     <label>Inspection method *
       <select id="ck_method"><option value="">&#8212; select &#8212;</option>
         <option>Visual, non-invasive; roof surface accessed directly</option>
         <option>Visual, non-invasive; assessed from ladder at eaves</option>
         <option>Drone-assisted visual inspection</option></select></label>
-    <label>Attic access *
-      <select id="ck_attic"><option value="">&#8212; select &#8212;</option>
-        <option>Yes</option><option>No</option></select></label>
-    <label>Estimated roof age (years) *<input type="number" id="ck_age" min="0" max="120" inputmode="numeric"></label>
-    <label>Condition of the roof *
-      <select id="ck_condition"><option value="">&#8212; select &#8212;</option>
-        <option>Good</option><option>Fair</option><option>Poor</option><option>Critical</option></select></label>
-    <label>Number of layers *
-      <select id="ck_layers"><option value="">&#8212; select &#8212;</option>
-        <option>1 Layer</option><option>2 Layers</option><option>3+ Layers (Code Violation)</option></select></label>
-    <label>Decking type *
-      <select id="ck_decking"><option value="">&#8212; select &#8212;</option>
-        <option>OSB</option><option>Plywood</option><option>1x6 Plank / Spaced Lumber</option></select></label>
+    <div class="ckrow">
+      <label>Number of layers *
+        <select id="ck_layers"><option value="">&#8212; select &#8212;</option>
+          <option>1 Layer</option><option>2 Layers</option><option>3+ Layers (Code Violation)</option>
+          <option>Cedar Shake***</option></select></label>
+      <label>Existing roof type *
+        <select id="ck_rooftype"><option value="">&#8212; select &#8212;</option>
+          <option>Asphalt shingle</option><option>Low slope</option><option>Flat</option><option>Metal</option></select></label>
+    </div>
+    <div class="ckrow">
+      <label>Decking type *
+        <select id="ck_decking"><option value="">&#8212; select &#8212;</option>
+          <option>OSB</option><option>Plywood</option><option>1x6 Plank / Spaced Lumber</option></select></label>
+      <label>Decking condition
+        <select id="ck_deckcond"><option value="">&#8212; select &#8212;</option>
+          <option>Good</option><option>Fair</option><option>Poor</option></select></label>
+    </div>
     <label>Steepness / pitch *<input type="text" id="ck_pitch" placeholder="e.g. 6/12" autocomplete="off"></label>
-    <label>Existing roof type *
-      <select id="ck_rooftype"><option value="">&#8212; select &#8212;</option>
-        <option>Asphalt shingle</option><option>Low slope</option><option>Flat</option><option>Metal</option></select></label>
-    <label>Field notes (optional)<textarea id="ck_notes" rows="3" style="width:100%;box-sizing:border-box;margin-top:4px;
+    <label style="margin-top:12px;">Existing ventilation type (check all that apply)</label>
+    <div class="ckinline">
+      <label><input type="checkbox" class="ckvent" value="Ridge Vent"> Ridge Vent</label>
+      <label><input type="checkbox" class="ckvent" value="Box Vents / Turtles"> Box Vents / Turtles</label>
+      <label><input type="checkbox" class="ckvent" value="Power Vent"> Power Vent</label>
+      <label><input type="checkbox" class="ckvent" value="Gable Vents"> Gable Vents</label>
+    </div>
+    <div class="ckrow">
+      <label>Soffit intake?
+        <select id="ck_soffit"><option value="">&#8212; select &#8212;</option>
+          <option>Yes</option><option>No</option></select></label>
+      <label>Ventilation condition
+        <select id="ck_ventcond"><option value="">&#8212; select &#8212;</option>
+          <option>&#128994; Good</option><option>&#128993; Fair</option>
+          <option>&#128992; Poor</option><option>&#128308; Critical</option></select></label>
+    </div>
+
+    <div class="ckhead">&#128294; Mandatory Attic Inspection</div>
+    <p class="subnote" style="margin:2px 0 6px;"><b>The Rule:</b> You cannot accurately diagnose a roof from the
+    outside alone. Request attic access on every inspection to protect the company from deck failure or hidden
+    mold liability.</p>
+    <div class="ckrow">
+      <label>Attic access *
+        <select id="ck_attic"><option value="">&#8212; select &#8212;</option>
+          <option>Yes</option><option>No</option></select></label>
+      <label>Decking condition (from attic)
+        <select id="ck_attic_deck"><option value="">&#8212; select &#8212;</option>
+          <option>Good</option><option>Stained / Tracked</option><option>Active Rot / Mold</option></select></label>
+    </div>
+    <div class="ckrow">
+      <label>Light check &#8212; daylight through raw wood?
+        <select id="ck_light"><option value="">&#8212; select &#8212;</option>
+          <option>Yes</option><option>No</option></select></label>
+      <label>Intake baffles
+        <select id="ck_baffles"><option value="">&#8212; select &#8212;</option>
+          <option>Clear</option><option>Blocked</option></select></label>
+    </div>
+    <div class="ckrow">
+      <label># Bathroom vents<input type="number" id="ck_bathvents" min="0" max="20" inputmode="numeric"></label>
+      <label># Kitchen vents<input type="number" id="ck_kitchvents" min="0" max="20" inputmode="numeric"></label>
+      <label>Vented properly outside?
+        <select id="ck_ductout"><option value="">&#8212; select &#8212;</option>
+          <option>Yes</option><option>No</option></select></label>
+    </div>
+
+    <div class="ckhead">&#128165; Surface &amp; Component Defects</div>
+    <label>Granule loss / bald spots
+      <select id="ck_granule"><option value="">&#8212; select &#8212;</option>
+        <option>None</option><option>Mild</option><option>Heavy</option><option>Critical</option></select></label>
+    <div class="ckrow">
+      <label>Wind damage
+        <select id="ck_wind"><option value="">&#8212; select &#8212;</option><option>Yes</option><option>No</option></select></label>
+      <label>Hail impact
+        <select id="ck_hail"><option value="">&#8212; select &#8212;</option><option>Yes</option><option>No</option></select></label>
+    </div>
+    <div class="ckrow">
+      <label>Flashing failures
+        <select id="ck_flash"><option value="">&#8212; select &#8212;</option><option>Yes</option><option>No</option></select></label>
+      <label>Pipe boot degradation
+        <select id="ck_boot"><option value="">&#8212; select &#8212;</option><option>Yes</option><option>No</option></select></label>
+    </div>
+    <label>Biological growth (moss / lichen / debris in valleys)
+      <select id="ck_bio"><option value="">&#8212; select &#8212;</option><option>Yes</option><option>No</option></select></label>
+
+    <div class="ckhead">&#127981; Roof Extrusions</div>
+    <div class="ckrow">
+      <label>Flue pipe
+        <select id="ck_flue"><option value="">&#8212; select &#8212;</option><option>Yes</option><option>No</option></select></label>
+      <label>Storm base / cap / collar condition
+        <select id="ck_fluecond"><option value="">&#8212; select &#8212;</option>
+          <option>Good</option><option>Fair</option><option>Poor</option></select></label>
+    </div>
+    <div class="ckrow">
+      <label>Satellite dish
+        <select id="ck_sat"><option value="">&#8212; select &#8212;</option><option>Yes</option><option>No</option></select></label>
+      <label>Pipe jacks quantity<input type="number" id="ck_jacks" min="0" max="30" inputmode="numeric"></label>
+    </div>
+    <label>Other extrusions<input type="text" id="ck_other" autocomplete="off"></label>
+
+    <div class="ckhead">&#128202; Overall Roof Condition</div>
+    <label>Overall roof condition *
+      <select id="ck_condition"><option value="">&#8212; select &#8212;</option>
+        <option>Excellent</option><option>Good</option><option>Fair</option>
+        <option>Poor</option><option>Critical</option></select></label>
+
+    <div class="ckhead">&#128221; Notes</div>
+    <label>Capture context that doesn&#8217;t fit the checkboxes &#8212; homeowner comments, unusual conditions, follow-up items.
+      <textarea id="ck_notes" rows="3" style="width:100%;box-sizing:border-box;margin-top:4px;
       padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;resize:vertical;"></textarea></label>
+
     <div style="margin-top:14px;text-align:right;">
       <button class="chipbtn" id="ckCancel">Cancel</button>
       <button class="btn" id="ckSave">Save checklist</button>
     </div>
     <div id="ckError" style="color:#C8202E;font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- ============ APPOINTMENTS MODAL ============ -->
+<div id="apptModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:220;overflow:auto;">
+  <div class="projform" style="max-width:460px;margin:7vh auto 7vh;">
+    <h3 id="apptDayTitle" style="margin:0 0 8px;"></h3>
+    <div id="apptList" class="apptlist"></div>
+    <div class="ckhead" style="margin-top:14px;">&#43; Add appointment</div>
+    <label>What *<input type="text" id="apptTitle" placeholder="e.g. Inspection @ 12 Oak St" autocomplete="off"></label>
+    <div class="ckrow">
+      <label>Time<input type="time" id="apptTime"></label>
+      <label>Client (optional)
+        <select id="apptClient"><option value="">&#8212; none &#8212;</option></select></label>
+    </div>
+    <label>Notes<input type="text" id="apptNotes" autocomplete="off"></label>
+    <div style="margin-top:14px;text-align:right;">
+      <button class="chipbtn" id="apptClose">Close</button>
+      <button class="btn" id="apptSave">Add</button>
+    </div>
+    <div id="apptError" style="color:#C8202E;font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -1761,6 +2011,49 @@ var photoDb = {
   }
 };
 
+/* =========================================================================
+   APPOINTMENTS
+   ========================================================================= */
+var AKEY = 'cardinal_appointments_v1';
+function alsLoad(){ try{ return JSON.parse(localStorage.getItem(AKEY)) || []; }catch(e){ return []; } }
+function alsSave(l){ localStorage.setItem(AKEY, JSON.stringify(l)); }
+
+var adb = {
+  list: async function(){
+    if(TEAM){
+      var r = await sb.from('appointments')
+        .select('id,title,appt_date,appt_time,project_id,notes,created_by')
+        .order('appt_date', {ascending:true})
+        .order('appt_time', {ascending:true});
+      if(r.error) throw r.error;
+      return r.data || [];
+    }
+    return alsLoad().sort(function(a,b){
+      return (a.appt_date + (a.appt_time||'')).localeCompare(b.appt_date + (b.appt_time||''));
+    });
+  },
+  create: async function(fields){
+    if(TEAM){
+      var user = (await sb.auth.getUser()).data.user;
+      fields.created_by = user ? user.email : null;
+      var r = await sb.from('appointments').insert(fields);
+      if(r.error) throw r.error;
+      return;
+    }
+    fields.id = uid(); fields.created_by = null;
+    var l = alsLoad(); l.push(fields); alsSave(l);
+  },
+  remove: async function(id){
+    if(TEAM){
+      var r = await sb.from('appointments').delete().eq('id', id);
+      if(r.error) throw r.error;
+      return;
+    }
+    alsSave(alsLoad().filter(function(x){ return x.id !== id; }));
+  }
+};
+
+
 
 /* =========================================================================
    HISTORY: search + status filter + render
@@ -1772,19 +2065,27 @@ var mount = document.getElementById('historyMount');
 var countLabel = document.getElementById('countLabel');
 
 var cacheProjects = [];
+var cacheAppts = [];
 var currentProject = null;
 
 async function reload(){
   mount.innerHTML = '<div class="loading">Loading…</div>';
   try{
-    var res = await Promise.all([pdb.list(), db.list()]);
+    var res = await Promise.all([
+      pdb.list(), db.list(),
+      adb.list().catch(function(){ return []; })
+    ]);
     cacheProjects = res[0];
     cacheRows = res[1];
+    cacheAppts = res[2];
     if(currentProject){
       var fresh = cacheProjects.find(function(x){ return x.id === currentProject.id; });
       if(fresh) currentProject = fresh;
     }
     renderHome();
+    renderHero();
+    renderCalendar();
+    if(currentList && listView.style.display !== 'none') renderList();
     if(currentProject && document.getElementById('projectView').style.display !== 'none'){
       renderProjectDocs();
     }
@@ -1809,10 +2110,12 @@ function docRowHtml(r){
     : '<span class="chip unsent">UNSENT</span>';
   var toggleLabel = r.status === 'sent' ? 'Mark unsent' : 'Mark sent';
   var by = r.created_by ? ' · by ' + esc(r.created_by) : '';
+  var pr0 = r.project_id ? cacheProjects.find(function(x){ return x.id === r.project_id; }) : null;
+  var cli = pr0 ? ' · ' + esc(pr0.name) : (r.project ? ' · ' + esc(r.project) : '');
   var k = docKind(r.title);
   return '<tr>' +
     '<td class="title"><b>' + esc(r.title || 'Untitled') + '</b>' +
-      '<span class="ref">ID ' + esc(String(r.id).slice(0,8)) + by + '</span></td>' +
+      '<span class="ref">ID ' + esc(String(r.id).slice(0,8)) + cli + by + '</span></td>' +
     '<td><span class="tchip trade">' + k.trade + '</span></td>' +
     '<td><span class="tchip ' + (k.type === 'Estimate' ? 'est' : 'insp') + '">' + k.type + '</span></td>' +
     '<td class="dates">' + fmt(r.created_at) + '<small>updated ' + fmt(r.updated_at) + '</small></td>' +
@@ -1885,10 +2188,12 @@ function renderHome(){
 var projectView = document.getElementById('projectView');
 function showHome(){
   currentProject = null;
-  projectView.style.display = 'none';
-  document.getElementById('galleryView').style.display = 'none';
+  currentList = null;
+  hideAllViews();
   mainView.style.display = 'block';
   renderHome();
+  renderHero();
+  renderCalendar();
   window.scrollTo(0,0);
 }
 function openProject(id){
@@ -1919,8 +2224,7 @@ function openProject(id){
   loadGallery();
   renderCkStatus();
   showTab('overview');
-  mainView.style.display = 'none';
-  document.getElementById('galleryView').style.display = 'none';
+  hideAllViews();
   projectView.style.display = 'block';
   window.scrollTo(0,0);
 }
@@ -1937,7 +2241,7 @@ function showTab(name){
   document.querySelectorAll('.ptab').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-tab') === name);
   });
-  ['overview','inspections','estimates'].forEach(function(t){
+  ['overview','inspections','estimates','checklists'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
 }
@@ -2145,14 +2449,17 @@ galXferMenu.addEventListener('click', async function(e){
     if(docId === '__new__'){
       var cl2 = getChecklist(currentProject);
       if(!cl2){
-        alert('Complete the Roofing Checklist first \u2014 its baseline specs feed directly into the report.');
+        alert('Complete the Roofing Inspection Checklist first \u2014 its baseline specs feed directly into the report.');
+        galleryView.style.display = 'none';
+        projectView.style.display = 'block';
+        showTab('checklists');
         openChecklist();
         return;
       }
       var title = prompt('Report title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
       if(title === null) return;
       docId = await db.create(title.trim() || 'Untitled inspection',
-                              prefillChecklist(prefillClientInfo(REPORT_TEMPLATE, currentProject), cl2),
+                              injectChecklistFindings(prefillChecklist(prefillUserInfo(prefillClientInfo(REPORT_TEMPLATE, currentProject)), cl2), cl2),
                               currentProject.name, currentProject.id);
       await reload();
     }
@@ -2298,6 +2605,8 @@ document.getElementById('projNotesSave').addEventListener('click', async functio
    ROOFING CHECKLIST
    ========================================================================= */
 var CK_FIELDS = ['structure','method','attic','age','condition','layers','decking','pitch','rooftype'];
+var CK_OPT = ['leak','deckcond','soffit','ventcond','attic_deck','light','baffles','bathvents','kitchvents',
+              'ductout','granule','wind','hail','flash','boot','bio','flue','fluecond','sat','jacks','other'];
 function getChecklist(pr){
   if(!pr || !pr.checklist) return null;
   try{ var c = JSON.parse(pr.checklist); return (c && c.structure) ? c : null; }
@@ -2320,10 +2629,19 @@ var ckModal = document.getElementById('ckModal');
 function openChecklist(){
   if(!currentProject) return;
   var cl = getChecklist(currentProject) || {};
-  CK_FIELDS.concat(['notes']).forEach(function(f){
+  CK_FIELDS.concat(CK_OPT).concat(['notes']).forEach(function(f){
     var el = document.getElementById('ck_' + f);
     if(el) el.value = cl[f] != null ? cl[f] : '';
   });
+  var vents = (cl.vent_types || '').split(',').map(function(s){ return s.trim(); });
+  document.querySelectorAll('.ckvent').forEach(function(cb){
+    cb.checked = vents.indexOf(cb.value) !== -1;
+  });
+  document.getElementById('ckClientLine').innerHTML =
+    '<b>' + esc(currentProject.name || '') + '</b>' +
+    (currentProject.address ? ' &#183; ' + esc(currentProject.address) : '') +
+    (currentProject.phone ? ' &#183; ' + esc(currentProject.phone) : '') +
+    ' <span style="color:#8a8a8a;">(from client profile)</span>';
   document.getElementById('ckDate').textContent = cl.completed_at
     ? ('Completed ' + fmtDay(cl.completed_at) + ' \u2014 edits update the saved checklist.')
     : ('For ' + (currentProject.name || 'this client') + ' \u2014 all * fields are required.');
@@ -2347,6 +2665,12 @@ document.getElementById('ckSave').addEventListener('click', async function(){
     document.getElementById('ckError').textContent = 'Please complete every required field (' + missing.length + ' remaining).';
     return;
   }
+  CK_OPT.forEach(function(f){
+    var el = document.getElementById('ck_' + f);
+    cl[f] = el ? (el.value || '').trim() : '';
+  });
+  cl.vent_types = Array.prototype.map.call(
+    document.querySelectorAll('.ckvent:checked'), function(cb){ return cb.value; }).join(', ');
   cl.notes = (document.getElementById('ck_notes').value || '').trim();
   var prev = getChecklist(currentProject);
   cl.completed_at = (prev && prev.completed_at) ? prev.completed_at : new Date().toISOString();
@@ -2362,6 +2686,66 @@ document.getElementById('ckSave').addEventListener('click', async function(){
     document.getElementById('ckError').textContent = 'Could not save: ' + (err.message || err);
   }
 });
+
+/* build findings rows from checklist problem answers */
+function buildChecklistFindings(cl){
+  var F = [];
+  function add(area, text, pr){ F.push({ area:area, text:text, pr:pr }); }
+  if(cl.leak === 'Yes') add('Interior / roof system', 'Homeowner reports an active leak at time of inspection.', 'high');
+  if(cl.layers === '3+ Layers (Code Violation)') add('Roof system', 'Three or more roofing layers present \u2014 code violation; full tear-off required.', 'high');
+  else if(cl.layers === '2 Layers') add('Roof system', 'Two roofing layers present \u2014 complete tear-off required at replacement.', 'mod');
+  if(cl.wind === 'Yes') add('Roof covering', 'Wind damage observed \u2014 missing, lifted, torn, or creased shingles.', 'high');
+  if(cl.hail === 'Yes') add('Roof covering', 'Hail impact observed \u2014 pockmarks, bruised shingle mats, or fractured reinforcement layers.', 'high');
+  if(cl.granule === 'Critical') add('Roof covering', 'Critical granule loss / bald spots \u2014 exposed fiberglass mat; covering at end of service life.', 'high');
+  else if(cl.granule === 'Heavy') add('Roof covering', 'Heavy granule loss / bald spots \u2014 asphalt bleeding and accelerated shingle wear.', 'high');
+  else if(cl.granule === 'Mild') add('Roof covering', 'Mild granule loss observed on shingle surfaces.', 'mon');
+  if(cl.bio === 'Yes') add('Roof covering / valleys', 'Biological growth \u2014 moss, lichen, or organic debris build-up holding water in valleys.', 'mod');
+  if(cl.flash === 'Yes') add('Flashings', 'Flashing failures \u2014 lifted or rusted wall flashing, step flashing, or chimney counter-flashing.', 'high');
+  if(cl.boot === 'Yes') add('Penetrations', 'Pipe boot degradation \u2014 cracked, split, or dry-rotted rubber collars at plumbing boots.', 'high');
+  if(cl.fluecond === 'Poor') add('Flue', 'Flue storm base, cap, and/or collar in poor condition.', 'mod');
+  if(cl.attic_deck === 'Active Rot / Mold') add('Attic / roof decking', 'Active rot and/or mold observed on roof decking between rafters.', 'high');
+  else if(cl.attic_deck === 'Stained / Tracked') add('Attic / roof decking', 'Water staining and dark tracking observed on roof decking between rafters.', 'mod');
+  if(cl.deckcond === 'Poor') add('Roof decking', 'Decking condition assessed as poor from exterior inspection.', 'high');
+  if(cl.light === 'Yes') add('Attic / roof decking', 'Daylight visible through raw wood at valleys/ridges with lights off \u2014 deck penetration present.', 'high');
+  if(cl.baffles === 'Blocked') add('Ventilation', 'Soffit intake baffles physically blocked by insulation \u2014 intake airflow restricted.', 'mod');
+  if(cl.soffit === 'No') add('Ventilation', 'No soffit intake present \u2014 system lacks balanced intake ventilation.', 'mod');
+  if(cl.ductout === 'No') add('Ventilation', 'Bathroom/kitchen exhaust fans not vented to the exterior \u2014 humid air discharging directly into the attic.', 'mod');
+  if((cl.ventcond || '').indexOf('Critical') !== -1) add('Ventilation', 'Ventilation condition assessed as critical.', 'high');
+  else if((cl.ventcond || '').indexOf('Poor') !== -1) add('Ventilation', 'Ventilation condition assessed as poor.', 'mod');
+  return F;
+}
+var CK_PR = { high:['high','HIGH'], mod:['mod','MODERATE'], mon:['mon','MONITOR'] };
+function injectChecklistFindings(tpl, cl){
+  var F = buildChecklistFindings(cl);
+  if(!F.length) return tpl;
+  try{
+    var doc = new DOMParser().parseFromString(tpl, 'text/html');
+    var table = doc.querySelector('table.concerns');
+    if(!table) return tpl;
+    var sample = table.querySelectorAll('tr');
+    /* remove the sample rows (all but the header row) */
+    for(var i = sample.length - 1; i >= 1; i--) sample[i].remove();
+    var n = 0;
+    F.forEach(function(f){
+      n++;
+      var tr = doc.createElement('tr');
+      var pr = CK_PR[f.pr] || CK_PR.mon;
+      tr.innerHTML = '<td class="n">' + n + '</td>' +
+        '<td><b class="fill">' + esc(f.area) + '</b></td>' +
+        '<td><span class="fill">' + esc(f.text) + '</span></td>' +
+        '<td class="pr"><span class="chip ' + pr[0] + '">' + pr[1] + '</span></td>';
+      table.appendChild(tr);
+    });
+    /* one blank row for manual additions */
+    var blank = doc.createElement('tr');
+    blank.innerHTML = '<td class="n">' + (n + 1) + '</td>' +
+      '<td><b class="ph">[Area]</b></td>' +
+      '<td><span class="ph">[Finding.]</span></td>' +
+      '<td class="pr"><span class="chip mon">MONITOR</span></td>';
+    table.appendChild(blank);
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  }catch(e){ return tpl; }
+}
 
 /* checklist values -> inspection report Property Facts */
 function prefillChecklist(tpl, cl){
@@ -2389,6 +2773,312 @@ function prefillChecklist(tpl, cl){
   }
   return tpl;
 }
+
+/* =========================================================================
+   HEADER NAV + LIST PAGES + MY PROFILE + CALENDAR
+   ========================================================================= */
+var listView = document.getElementById('listView');
+var profileView = document.getElementById('profileView');
+var currentList = null;
+
+function hideAllViews(){
+  mainView.style.display = 'none';
+  projectView.style.display = 'none';
+  document.getElementById('galleryView').style.display = 'none';
+  listView.style.display = 'none';
+  profileView.style.display = 'none';
+}
+var navMenu = document.getElementById('navMenu');
+document.getElementById('navBtn').addEventListener('click', function(e){
+  e.stopPropagation();
+  navMenu.style.display = navMenu.style.display === 'block' ? 'none' : 'block';
+});
+document.addEventListener('click', function(){ navMenu.style.display = 'none'; });
+navMenu.addEventListener('click', function(e){
+  var opt = e.target.closest('.navopt');
+  if(!opt) return;
+  e.stopPropagation();
+  navMenu.style.display = 'none';
+  var nav = opt.getAttribute('data-nav');
+  if(nav === 'home'){ showHome(); }
+  else if(nav === 'profile'){ openMyProfile(); }
+  else { openList(nav); }
+});
+
+var LIST_DEFS = {
+  recents: { title:'\uD83D\uDD52 Recents', note:'Your most recently updated documents across every client.',
+    filter:function(r){ return true; }, sort:function(a,b){ return String(b.updated_at||b.created_at).localeCompare(String(a.updated_at||a.created_at)); }, limit:25 },
+  inspections: { title:'\uD83D\uDD0D Inspections', note:'Every inspection report you can see, newest first.',
+    filter:function(r){ return !isEstimateTitle(r.title); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } },
+  estimates: { title:'\uD83D\uDCB0 Estimates', note:'Every estimate you can see, newest first.',
+    filter:function(r){ return isEstimateTitle(r.title); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } }
+};
+function openList(kind){
+  var def = LIST_DEFS[kind];
+  if(!def) return;
+  currentList = kind;
+  hideAllViews();
+  listView.style.display = 'block';
+  document.getElementById('listTitle').innerHTML = def.title;
+  document.getElementById('listNote').textContent = def.note;
+  renderList();
+  window.scrollTo(0,0);
+}
+function renderList(){
+  if(!currentList) return;
+  var def = LIST_DEFS[currentList];
+  var rows = cacheRows.filter(def.filter).sort(def.sort);
+  if(def.limit) rows = rows.slice(0, def.limit);
+  document.getElementById('listMount').innerHTML = rows.length
+    ? docTable(rows)
+    : '<div class="empty"><b>Nothing here yet.</b></div>';
+}
+document.getElementById('listBackBtn').addEventListener('click', showHome);
+document.getElementById('listMount').addEventListener('click', handleDocAction);
+
+/* ---------- my profile ---------- */
+function getUserProfile(){
+  if(TEAM && currentUser){
+    var m = currentUser.user_metadata || {};
+    return { first: m.first_name || '', last: m.last_name || '',
+             phone: m.phone || '', email: currentUser.email || '',
+             full: m.full_name || ((m.first_name || '') + ' ' + (m.last_name || '')).trim() || displayNameFor(currentUser) };
+  }
+  try{
+    var lp = JSON.parse(localStorage.getItem('cardinal_user_profile') || '{}');
+    return { first: lp.first || '', last: lp.last || '', phone: lp.phone || '', email: lp.email || '',
+             full: ((lp.first || '') + ' ' + (lp.last || '')).trim() };
+  }catch(e){ return { first:'', last:'', phone:'', email:'', full:'' }; }
+}
+function openMyProfile(){
+  var up = getUserProfile();
+  document.getElementById('upFirst').value = up.first;
+  document.getElementById('upLast').value = up.last;
+  document.getElementById('upPhone').value = up.phone;
+  document.getElementById('upEmail').value = up.email;
+  document.getElementById('upError').textContent = '';
+  document.getElementById('upFlash').textContent = '';
+  hideAllViews();
+  profileView.style.display = 'block';
+  window.scrollTo(0,0);
+}
+document.getElementById('profBackBtn').addEventListener('click', showHome);
+document.getElementById('upSave').addEventListener('click', async function(){
+  var first = document.getElementById('upFirst').value.trim();
+  var last  = document.getElementById('upLast').value.trim();
+  var phone = document.getElementById('upPhone').value.trim();
+  var full  = (first + ' ' + last).trim();
+  if(!first || !last){
+    document.getElementById('upError').textContent = 'First and last name are required.';
+    return;
+  }
+  try{
+    if(TEAM){
+      var r = await sb.auth.updateUser({ data: { first_name:first, last_name:last, phone:phone, full_name:full } });
+      if(r.error) throw r.error;
+      currentUser.user_metadata = currentUser.user_metadata || {};
+      Object.assign(currentUser.user_metadata, { first_name:first, last_name:last, phone:phone, full_name:full });
+    }else{
+      localStorage.setItem('cardinal_user_profile', JSON.stringify({ first:first, last:last, phone:phone }));
+    }
+    whoami.textContent = full;
+    document.getElementById('upFlash').textContent = '\u2713 Saved';
+    setTimeout(function(){ document.getElementById('upFlash').textContent = ''; }, 2500);
+  }catch(err){
+    document.getElementById('upError').textContent = 'Could not save: ' + (err.message || err);
+  }
+});
+
+/* rep info -> Prepared By / Inspector on documents */
+function prefillUserInfo(tpl){
+  var up = getUserProfile();
+  if(!up.full) return tpl;
+  var contact = [up.full, up.phone, up.email].filter(Boolean).join(' \u00b7 ');
+  tpl = tpl.split('<span class="ph">[Rep name &amp; title]</span>')
+           .join('<span class="fill">' + esc(contact) + '</span>');
+  tpl = tpl.split('<span class="ph">[INSPECTOR NAME]</span>')
+           .join('<span class="fill">' + esc(up.full) + '</span>');
+  return tpl;
+}
+
+/* ---------- hero: greeting + stats ---------- */
+function renderHero(){
+  var g = document.getElementById('heroGreeting');
+  if(g){
+    var h = new Date().getHours();
+    var part = h < 12 ? 'Good morning' : (h < 17 ? 'Good afternoon' : 'Good evening');
+    var up = getUserProfile();
+    g.textContent = part + (up.first ? ', ' + up.first : '') + '!';
+  }
+  var s = document.getElementById('heroStats');
+  if(s){
+    var insp = cacheRows.filter(function(r){ return !isEstimateTitle(r.title); }).length;
+    var ests = cacheRows.filter(function(r){ return isEstimateTitle(r.title); }).length;
+    var unsent = cacheRows.filter(function(r){ return r.status !== 'sent'; }).length;
+    s.innerHTML =
+      '<span class="hstat" data-nav="home"><b>' + cacheProjects.length + '</b> clients</span>' +
+      '<span class="hstat" data-nav="inspections"><b>' + insp + '</b> inspections</span>' +
+      '<span class="hstat" data-nav="estimates"><b>' + ests + '</b> estimates</span>' +
+      '<span class="hstat" data-nav="recents"><b>' + unsent + '</b> unsent</span>';
+  }
+}
+document.getElementById('heroStats').addEventListener('click', function(e){
+  var st = e.target.closest('.hstat');
+  if(!st) return;
+  var nav = st.getAttribute('data-nav');
+  if(nav === 'home') return;
+  openList(nav);
+});
+
+/* ---------- calendar + appointments ---------- */
+var calCursor = new Date();
+function pad2(n){ return (n < 10 ? '0' : '') + n; }
+function dateStr(y, m, d){ return y + '-' + pad2(m + 1) + '-' + pad2(d); }
+function fmtApptTime(t){
+  if(!t) return '';
+  var hm = t.split(':');
+  var h = parseInt(hm[0], 10), mm = hm[1] || '00';
+  var ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if(h === 0) h = 12;
+  return h + ':' + mm + ' ' + ap;
+}
+function renderCalendar(){
+  var grid = document.getElementById('calGrid');
+  if(!grid) return;
+  var y = calCursor.getFullYear(), m = calCursor.getMonth();
+  document.getElementById('calTitle').textContent =
+    calCursor.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+  var docDays = {};
+  cacheRows.forEach(function(r){
+    var d = new Date(r.created_at);
+    if(d.getFullYear() === y && d.getMonth() === m) docDays[d.getDate()] = true;
+  });
+  var apptDays = {};
+  cacheAppts.forEach(function(a){
+    var parts = String(a.appt_date || '').split('-');
+    if(parseInt(parts[0],10) === y && parseInt(parts[1],10) === m + 1){
+      apptDays[parseInt(parts[2],10)] = true;
+    }
+  });
+  var out = ['S','M','T','W','T','F','S'].map(function(d){ return '<div class="dow">' + d + '</div>'; }).join('');
+  var startDow = new Date(y, m, 1).getDay();
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var prevDays = new Date(y, m, 0).getDate();
+  var today = new Date();
+  for(var i = startDow - 1; i >= 0; i--) out += '<div class="day other">' + (prevDays - i) + '</div>';
+  for(var d = 1; d <= daysInMonth; d++){
+    var isToday = (d === today.getDate() && m === today.getMonth() && y === today.getFullYear());
+    out += '<div class="day cur' + (isToday ? ' today' : '') + '" data-d="' + dateStr(y, m, d) + '">' + d +
+           (docDays[d] ? '<span class="dot"></span>' : '') +
+           (apptDays[d] ? '<span class="adot"></span>' : '') + '</div>';
+  }
+  var cells = startDow + daysInMonth;
+  var trail = (7 - (cells % 7)) % 7;
+  for(var t = 1; t <= trail; t++) out += '<div class="day other">' + t + '</div>';
+  grid.innerHTML = out;
+  renderUpcoming();
+}
+function renderUpcoming(){
+  var el = document.getElementById('apptUpcoming');
+  if(!el) return;
+  var now = new Date();
+  var todayS = dateStr(now.getFullYear(), now.getMonth(), now.getDate());
+  var up = cacheAppts.filter(function(a){ return a.appt_date >= todayS; });
+  if(!up.length){ el.textContent = ''; return; }
+  var a = up[0];
+  var parts = a.appt_date.split('-');
+  var lbl = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10))
+    .toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  el.textContent = 'Next: ' + lbl + (a.appt_time ? ' \u00b7 ' + fmtApptTime(a.appt_time) : '') + ' \u2014 ' + a.title;
+}
+document.getElementById('calPrev').addEventListener('click', function(){
+  calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth() - 1, 1); renderCalendar();
+});
+document.getElementById('calNext').addEventListener('click', function(){
+  calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth() + 1, 1); renderCalendar();
+});
+
+/* day click -> schedule modal */
+var apptModal = document.getElementById('apptModal');
+var apptDay = null;
+document.getElementById('calGrid').addEventListener('click', function(e){
+  var day = e.target.closest('.day.cur');
+  if(!day) return;
+  openApptDay(day.getAttribute('data-d'));
+});
+function openApptDay(ds){
+  apptDay = ds;
+  var parts = ds.split('-');
+  document.getElementById('apptDayTitle').textContent = '\uD83D\uDCC5 ' +
+    new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10))
+      .toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  var sel = document.getElementById('apptClient');
+  sel.innerHTML = '<option value="">\u2014 none \u2014</option>' +
+    cacheProjects.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); })
+      .map(function(pr){ return '<option value="' + pr.id + '">' + esc(pr.name || '') + '</option>'; }).join('');
+  document.getElementById('apptTitle').value = '';
+  document.getElementById('apptTime').value = '';
+  document.getElementById('apptNotes').value = '';
+  document.getElementById('apptError').textContent = '';
+  renderApptList();
+  apptModal.style.display = 'block';
+}
+function renderApptList(){
+  var list = cacheAppts.filter(function(a){ return a.appt_date === apptDay; });
+  var m = document.getElementById('apptList');
+  if(!list.length){
+    m.innerHTML = '<div class="apptempty">Nothing scheduled for this day.</div>';
+    return;
+  }
+  m.innerHTML = list.map(function(a){
+    var pr = a.project_id ? cacheProjects.find(function(x){ return x.id === a.project_id; }) : null;
+    return '<div class="apptrow" data-aid="' + a.id + '">' +
+      '<span class="tm">' + (a.appt_time ? fmtApptTime(a.appt_time) : '\u2014') + '</span>' +
+      '<span class="bd"><b>' + esc(a.title) + '</b>' +
+        ((pr || a.notes || a.created_by) ? '<small>' +
+          (pr ? esc(pr.name) : '') +
+          (a.notes ? (pr ? ' \u00b7 ' : '') + esc(a.notes) : '') +
+          (a.created_by ? ' \u00b7 ' + esc(a.created_by.split('@')[0]) : '') + '</small>' : '') +
+      '</span>' +
+      '<button class="del" title="Delete">\u2715</button></div>';
+  }).join('');
+}
+document.getElementById('apptList').addEventListener('click', async function(e){
+  var del = e.target.closest('.del');
+  if(!del) return;
+  var row = del.closest('.apptrow');
+  var id = row.getAttribute('data-aid');
+  if(!confirm('Delete this appointment?')) return;
+  try{
+    await adb.remove(id);
+    cacheAppts = cacheAppts.filter(function(x){ return String(x.id) !== String(id); });
+    renderApptList(); renderCalendar();
+  }catch(err){ document.getElementById('apptError').textContent = 'Could not delete: ' + (err.message || err); }
+});
+document.getElementById('apptClose').addEventListener('click', function(){ apptModal.style.display = 'none'; });
+apptModal.addEventListener('click', function(e){ if(e.target === apptModal) apptModal.style.display = 'none'; });
+document.getElementById('apptSave').addEventListener('click', async function(){
+  var title = document.getElementById('apptTitle').value.trim();
+  if(!title){ document.getElementById('apptError').textContent = 'Enter what the appointment is.'; return; }
+  var f = {
+    title: title,
+    appt_date: apptDay,
+    appt_time: document.getElementById('apptTime').value || null,
+    project_id: document.getElementById('apptClient').value || null,
+    notes: document.getElementById('apptNotes').value.trim() || null
+  };
+  try{
+    await adb.create(f);
+    cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
+    document.getElementById('apptTitle').value = '';
+    document.getElementById('apptTime').value = '';
+    document.getElementById('apptNotes').value = '';
+    document.getElementById('apptError').textContent = '';
+    renderApptList(); renderCalendar();
+  }catch(err){
+    document.getElementById('apptError').textContent = 'Could not save \u2014 if this persists, run the appointments migration in Supabase. (' + (err.message || err) + ')';
+  }
+});
 
 /* ---------- home date & clock ---------- */
 function tickHomeClock(){
@@ -2459,7 +3149,8 @@ document.getElementById('pNewReportBtn').addEventListener('click', async functio
   if(!currentProject) return;
   var cl = getChecklist(currentProject);
   if(!cl){
-    alert('Complete the Roofing Checklist first \u2014 its baseline specs feed directly into the report.');
+    alert('Complete the Roofing Inspection Checklist first \u2014 its baseline specs feed directly into the report.');
+    showTab('checklists');
     openChecklist();
     return;
   }
@@ -2467,7 +3158,7 @@ document.getElementById('pNewReportBtn').addEventListener('click', async functio
   if(title === null) return;
   try{
     var id = await db.create(title.trim() || 'Untitled inspection',
-                             prefillChecklist(prefillClientInfo(REPORT_TEMPLATE, currentProject), cl),
+                             injectChecklistFindings(prefillChecklist(prefillUserInfo(prefillClientInfo(REPORT_TEMPLATE, currentProject)), cl), cl),
                              currentProject.name, currentProject.id);
     await reload();
     await openEditor(id);
@@ -2492,7 +3183,7 @@ pEstMenu.addEventListener('click', async function(e){
   try{
     var name = (title.trim() || currentProject.name || 'Untitled');
     if(name.toLowerCase().indexOf(kind.label.toLowerCase()) !== 0) name = kind.label + ' \u2014 ' + name;
-    var id = await db.create(name, prefillClientInfo(kind.tpl(), currentProject), currentProject.name, currentProject.id);
+    var id = await db.create(name, prefillUserInfo(prefillClientInfo(kind.tpl(), currentProject)), currentProject.name, currentProject.id);
     await reload();
     await openEditor(id);
   }catch(err){ showError('Could not create estimate: ' + (err.message || err)); }
@@ -3320,8 +4011,9 @@ function showMain(userEmail){
   loginView.classList.remove('open');
   mainView.style.display = 'block';
   addProjBtn.style.display = 'inline-block';
-  projectView.style.display = 'none';
-  document.getElementById('galleryView').style.display = 'none';
+  document.getElementById('navWrap').style.display = 'inline-block';
+  hideAllViews();
+  mainView.style.display = 'block';
   if(TEAM){
     whoami.textContent = currentUser ? displayNameFor(currentUser) : (userEmail || '');
     whoami.title = (userEmail || '') + ' \u2014 click to set your display name';
@@ -3351,9 +4043,8 @@ whoami.addEventListener('click', async function(){
 });
 
 function showLogin(){
-  mainView.style.display = 'none';
-  projectView.style.display = 'none';
-  document.getElementById('galleryView').style.display = 'none';
+  hideAllViews();
+  document.getElementById('navWrap').style.display = 'none';
   addProjBtn.style.display = 'none';
   signOutBtn.style.display = 'none';
   whoami.textContent = '';
