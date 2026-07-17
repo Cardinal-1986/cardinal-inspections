@@ -888,17 +888,17 @@ table.units td.pr{text-align:right;white-space:nowrap;width:22%;}
 Quantities in the line items are derived from these figures plus the stated waste factor.</p>
 
 <table class="facts">
-  <tr><td class="k">Total Roof Area</td><td><span class="ph">[e.g. 2,847 sq ft — 28.5 squares]</span></td></tr>
-  <tr><td class="k">Predominant Pitch</td><td><span class="ph">[e.g. 6/12; porch 4/12]</span></td></tr>
-  <tr><td class="k">Ridges</td><td><span class="ph">[e.g. 64 LF]</span></td></tr>
-  <tr><td class="k">Hips</td><td><span class="ph">[e.g. 38 LF]</span></td></tr>
-  <tr><td class="k">Valleys</td><td><span class="ph">[e.g. 52 LF]</span></td></tr>
-  <tr><td class="k">Eaves</td><td><span class="ph">[e.g. 148 LF]</span></td></tr>
-  <tr><td class="k">Rakes</td><td><span class="ph">[e.g. 96 LF]</span></td></tr>
-  <tr><td class="k">Step Flashing</td><td><span class="ph">[e.g. 24 LF]</span></td></tr>
-  <tr><td class="k">Wall / Apron Flashing</td><td><span class="ph">[e.g. 18 LF]</span></td></tr>
-  <tr><td class="k">Penetrations</td><td><span class="ph">[e.g. 4 pipe jacks, 1 furnace vent, 1 chimney]</span></td></tr>
-  <tr><td class="k">Waste Factor Applied</td><td><span class="ph">[e.g. 12% (hips/valleys)]</span></td></tr>
+  <tr><td class="k">Total Roof Area</td><td><span class="ph" data-roofr="area">[e.g. 2,847 sq ft — 28.5 squares]</span></td></tr>
+  <tr><td class="k">Predominant Pitch</td><td><span class="ph" data-roofr="pitch">[e.g. 6/12; porch 4/12]</span></td></tr>
+  <tr><td class="k">Ridges</td><td><span class="ph" data-roofr="ridge_lf">[e.g. 64 LF]</span></td></tr>
+  <tr><td class="k">Hips</td><td><span class="ph" data-roofr="hip_lf">[e.g. 38 LF]</span></td></tr>
+  <tr><td class="k">Valleys</td><td><span class="ph" data-roofr="valley_lf">[e.g. 52 LF]</span></td></tr>
+  <tr><td class="k">Eaves</td><td><span class="ph" data-roofr="eave_lf">[e.g. 148 LF]</span></td></tr>
+  <tr><td class="k">Rakes</td><td><span class="ph" data-roofr="rake_lf">[e.g. 96 LF]</span></td></tr>
+  <tr><td class="k">Step Flashing</td><td><span class="ph" data-roofr="step_lf">[e.g. 24 LF]</span></td></tr>
+  <tr><td class="k">Wall / Apron Flashing</td><td><span class="ph" data-roofr="wall_lf">[e.g. 18 LF]</span></td></tr>
+  <tr><td class="k">Penetrations</td><td><span class="ph" data-roofr="penetrations">[e.g. 4 pipe jacks, 1 furnace vent, 1 chimney]</span></td></tr>
+  <tr><td class="k">Waste Factor Applied</td><td><span class="ph" data-roofr="waste_pct">[e.g. 12% (hips/valleys)]</span></td></tr>
 </table>
 
 <div class="figrow">
@@ -938,25 +938,25 @@ all debris; magnetic sweep of grounds on completion.]</p>
     <th style="width:44%;">Description</th><th>Qty</th><th>Unit</th><th>Unit Price</th><th>Amount</th>
   </tr>
   <tr class="li"><td>Tear-off &amp; disposal of existing roof covering — <span class="ph">[layers]</span></td>
-    <td class="qty"><span class="ph">[28.5]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+    <td class="qty"><span class="ph" data-rq="squares">[28.5]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Ice-and-water shield — eaves &amp; valleys</td>
     <td class="qty"><span class="ph">[qty]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Synthetic underlayment — remaining field</td>
-    <td class="qty"><span class="ph">[qty]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+    <td class="qty"><span class="ph" data-rq="squares">[qty]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Drip edge — eaves &amp; rakes</td>
-    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+    <td class="qty"><span class="ph" data-rq="eave_plus_rake">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Architectural asphalt shingles — <span class="ph">[mfr / line / color]</span> (incl. waste)</td>
-    <td class="qty"><span class="ph">[SQ]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+    <td class="qty"><span class="ph" data-rq="squares_waste">[SQ]</span></td><td class="unit">SQ</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Starter strip — eaves &amp; rakes</td>
-    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+    <td class="qty"><span class="ph" data-rq="eave_plus_rake">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Hip &amp; ridge cap shingles</td>
-    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+    <td class="qty"><span class="ph" data-rq="ridge_plus_hip">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Ridge ventilation</td>
-    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+    <td class="qty"><span class="ph" data-rq="ridge">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Pipe jacks / boot seals at penetrations</td>
     <td class="qty"><span class="ph">[ea]</span></td><td class="unit">EA</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Step flashing at roof-to-wall transitions</td>
-    <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
+    <td class="qty"><span class="ph" data-rq="step">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td>Chimney counterflashing</td>
     <td class="qty"><span class="ph">[LF]</span></td><td class="unit">LF</td><td class="rate"><span class="ph">[0.00]</span></td><td class="amt">—</td></tr>
   <tr class="li"><td><span class="ph">[Additional item]</span></td>
@@ -1778,6 +1778,168 @@ function wireEstimateCalc(doc){
   recalc();
 }
 
+/* ---------- estimate: Roofr PDF import (no-op on inspection reports) ---------- */
+var pdfjsReady = null;
+function loadPdfJs(){
+  if(pdfjsReady) return pdfjsReady;
+  pdfjsReady = new Promise(function(resolve, reject){
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = function(){
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      resolve(window.pdfjsLib);
+    };
+    s.onerror = function(){ pdfjsReady = null; reject(new Error('Could not load PDF reader')); };
+    document.head.appendChild(s);
+  });
+  return pdfjsReady;
+}
+
+function wireRoofrUpload(doc){
+  var anchor = doc.querySelector('[data-roofr]');
+  if(!anchor || doc.getElementById('roofrBar')) return;
+  var table = anchor.closest('table');
+  if(!table) return;
+
+  var bar = doc.createElement('div');
+  bar.id = 'roofrBar';
+  bar.className = 'no-print';
+  bar.style.cssText = 'margin:8px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;';
+  bar.innerHTML = '<button type="button" id="roofrBtn" style="font:600 13.5px \'Segoe UI\',Arial,sans-serif;'+
+    'padding:9px 16px;border:0;border-radius:6px;background:#C8202E;color:#fff;cursor:pointer;">'+
+    '\uD83D\uDCC4 Upload Roofr PDF</button>'+
+    '<span id="roofrStatus" style="font:12.5px \'Segoe UI\',Arial,sans-serif;color:#666;"></span>'+
+    '<span id="roofrPagePick" style="display:none;font:12.5px \'Segoe UI\',Arial,sans-serif;">Diagram page: '+
+    '<select id="roofrPageSel" style="font:inherit;"></select> '+
+    '<button type="button" id="roofrPageUse" style="font:inherit;padding:3px 10px;border:1px solid #bbb;'+
+    'border-radius:5px;background:#fff;cursor:pointer;">Use</button></span>';
+  table.parentNode.insertBefore(bar, table);
+
+  var input = doc.createElement('input');
+  input.type = 'file'; input.accept = 'application/pdf'; input.style.display = 'none';
+  input.className = 'no-print';
+  bar.appendChild(input);
+
+  var status = bar.querySelector('#roofrStatus');
+  var currentPdf = null;
+
+  bar.querySelector('#roofrBtn').addEventListener('click', function(){ input.click(); });
+
+  input.addEventListener('change', async function(){
+    var file = input.files && input.files[0];
+    if(!file) return;
+    try{
+      status.textContent = 'Reading PDF\u2026';
+      var lib = await loadPdfJs();
+      var buf = await file.arrayBuffer();
+      var pdf = await lib.getDocument({data: buf}).promise;
+      currentPdf = pdf;
+
+      var texts = [];
+      for(var i = 1; i <= pdf.numPages; i++){
+        var page = await pdf.getPage(i);
+        var tc = await page.getTextContent();
+        texts.push('--- PAGE ' + i + ' ---\n' +
+          tc.items.map(function(it){ return it.str; }).join(' '));
+      }
+      status.textContent = 'Extracting measurements with AI\u2026';
+      var res = await fetch('/api/roofr', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ text: texts.join('\n\n').slice(0, 60000) })
+      });
+      var data = null;
+      try{ data = await res.json(); }catch(pe){}
+      if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+
+      fillRoofrFields(doc, data);
+      status.textContent = 'Measurements filled \u2014 review the yellow fields. ';
+
+      var pick = bar.querySelector('#roofrPagePick');
+      var sel = bar.querySelector('#roofrPageSel');
+      sel.innerHTML = '';
+      for(var p = 1; p <= pdf.numPages; p++){
+        var opt = doc.createElement('option');
+        opt.value = p; opt.textContent = p;
+        if(data.diagram_page && parseInt(data.diagram_page,10) === p) opt.selected = true;
+        sel.appendChild(opt);
+      }
+      pick.style.display = 'inline';
+      await renderRoofrDiagram(doc, pdf, parseInt(sel.value,10) || 1);
+    }catch(e){
+      status.textContent = 'Import failed: ' + String(e.message || e).slice(0,200);
+    }
+    input.value = '';
+  });
+
+  bar.querySelector('#roofrPageUse').addEventListener('click', async function(){
+    if(!currentPdf) return;
+    var sel = bar.querySelector('#roofrPageSel');
+    await renderRoofrDiagram(doc, currentPdf, parseInt(sel.value,10) || 1);
+  });
+}
+
+function fillRoofrFields(doc, d){
+  function setPh(key, val){
+    var el = doc.querySelector('[data-roofr="' + key + '"]');
+    if(el && val != null && val !== '') el.textContent = String(val);
+  }
+  var sq = (d.squares != null) ? Number(d.squares)
+         : (d.area_sqft != null ? Number(d.area_sqft) / 100 : null);
+  if(d.area_sqft != null && sq != null){
+    setPh('area', Number(d.area_sqft).toLocaleString('en-US') + ' sq ft \u2014 ' + sq.toFixed(1) + ' squares');
+  }else if(sq != null){
+    setPh('area', sq.toFixed(1) + ' squares');
+  }
+  setPh('pitch', d.pitch);
+  ['ridge_lf','hip_lf','valley_lf','eave_lf','rake_lf','step_lf','wall_lf'].forEach(function(k){
+    if(d[k] != null) setPh(k, Number(d[k]).toLocaleString('en-US') + ' LF');
+  });
+  setPh('penetrations', d.penetrations);
+  var waste = (d.waste_pct != null) ? Number(d.waste_pct)
+            : ((Number(d.hip_lf||0) + Number(d.valley_lf||0)) > 0 ? 12 : 10);
+  setPh('waste_pct', waste + '%');
+
+  var vals = {
+    squares: sq != null ? sq.toFixed(1) : null,
+    squares_waste: sq != null ? (sq * (1 + waste/100)).toFixed(1) : null,
+    eave_plus_rake: (d.eave_lf != null || d.rake_lf != null)
+      ? Math.round(Number(d.eave_lf||0) + Number(d.rake_lf||0)) : null,
+    ridge_plus_hip: (d.ridge_lf != null || d.hip_lf != null)
+      ? Math.round(Number(d.ridge_lf||0) + Number(d.hip_lf||0)) : null,
+    ridge: d.ridge_lf != null ? Math.round(Number(d.ridge_lf)) : null,
+    step: d.step_lf != null ? Math.round(Number(d.step_lf)) : null
+  };
+  doc.querySelectorAll('[data-rq]').forEach(function(el){
+    var v = vals[el.getAttribute('data-rq')];
+    if(v != null) el.textContent = String(v);
+  });
+}
+
+async function renderRoofrDiagram(doc, pdf, pageNum){
+  var page = await pdf.getPage(pageNum);
+  var viewport = page.getViewport({scale: 2});
+  var canvas = document.createElement('canvas');
+  canvas.width = viewport.width; canvas.height = viewport.height;
+  await page.render({canvasContext: canvas.getContext('2d'), viewport: viewport}).promise;
+  var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+  var frames = doc.querySelectorAll('.fig .frame');
+  var frame = frames.length ? frames[0] : null;
+  if(!frame) return;
+  Array.prototype.slice.call(frame.childNodes).forEach(function(node){
+    if(node.nodeType === 1 && (node.tagName === 'BUTTON' || node.tagName === 'INPUT')) return;
+    if(node.nodeType === 1 && node.classList && node.classList.contains('tag')) return;
+    frame.removeChild(node);
+  });
+  var img = doc.createElement('img');
+  img.src = dataUrl;
+  var btn = frame.querySelector('button');
+  if(btn){ frame.insertBefore(img, btn); btn.textContent = '\u21BB Replace photo'; }
+  else frame.appendChild(img);
+}
+
 async function openEditor(id){
   var r;
   try{ r = await db.get(id); }
@@ -1805,6 +1967,7 @@ async function openEditor(id){
       wireSummaryDraftButton(doc);
       wireCoverPhoto(doc);
       wireEstimateCalc(doc);
+      wireRoofrUpload(doc);
     }catch(e){}
   };
   editor.classList.add('open');
@@ -1824,6 +1987,10 @@ function serializeFrame(){
     coverPhoto.removeAttribute('data-wired');
     coverPhoto.querySelectorAll('button, input[type=file]').forEach(function(el){ el.remove(); });
   }
+  var roofrBar = clone.querySelector('#roofrBar');
+  if(roofrBar) roofrBar.remove();
+  var estTable = clone.querySelector('#estItems[data-wired]');
+  if(estTable) estTable.removeAttribute('data-wired');
   var summaryHeading = clone.querySelector('[data-cardinal-summary-heading]');
   if(summaryHeading){
     summaryHeading.removeAttribute('data-wired');
