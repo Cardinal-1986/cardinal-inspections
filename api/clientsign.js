@@ -60,7 +60,7 @@ export default async function handler(req, res) {
         await fetch(`${SUPABASE_URL}/rest/v1/projects?id=eq.${doc.project_id}`,
           { method: 'PATCH',
             headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-            body: JSON.stringify({ stage: 'Signed', updated_at: new Date().toISOString() }) });
+            body: JSON.stringify({ stage: 'Approved', updated_at: new Date().toISOString() }) });
       } catch (e) {}
     }
 
@@ -79,7 +79,7 @@ export default async function handler(req, res) {
             html: `<div style="font-family:'Segoe UI',Arial,sans-serif;">
               <h2 style="color:#C8202E;">Document signed</h2>
               <p><b>${esc(doc.title)}</b> was just accepted and signed by <b>${esc(cleanName)}</b> (${date}).</p>
-              <p>The signed copy is saved in Cardinal Client Resources and the client's stage moved to <b>Signed</b>.</p>
+              <p>The signed copy is saved in Cardinal Client Resources and the client's stage moved to <b>Approved</b>.</p>
             </div>`
           })
         });

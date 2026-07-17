@@ -29,11 +29,12 @@ body{
 }
 
 /* ---------- header ---------- */
-header.site{background:var(--paper);border-bottom:6px solid var(--red);}
+header.site{background:var(--ink);border-bottom:4px solid var(--red);
+  position:sticky;top:0;z-index:90;box-shadow:0 2px 10px rgba(0,0,0,.25);}
 .wrap{max-width:1100px;margin:0 auto;padding:0 24px;}
 .masthead{
   display:flex;align-items:center;justify-content:space-between;
-  gap:16px;padding:26px 0 20px;flex-wrap:wrap;
+  gap:16px;padding:10px 0;flex-wrap:wrap;
 }
 .brand h1{margin:0;font-size:30px;font-weight:800;letter-spacing:.5px;line-height:1.15;}
 .brand h1 span{color:var(--red);}
@@ -290,7 +291,7 @@ footer.site{
 .projmeta{font:14px/1.7 'Segoe UI',Arial,sans-serif;color:#444;}
 .projmeta b{display:inline-block;min-width:76px;color:#8a6f66;font-weight:700;}
 .projsec{font-size:17px;margin:20px 0 6px;border-bottom:2px solid var(--red);padding-bottom:4px;}
-#projNotes{width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+#projNotes{display:none;width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
   font:14px/1.5 'Segoe UI',Arial,sans-serif;resize:vertical;box-sizing:border-box;}
 /* ---- modal ---- */
 .projform{max-width:430px;margin:9vh auto 0;background:#fff;border-radius:12px;padding:22px 24px;
@@ -392,6 +393,7 @@ footer.site{
   #navMenu{left:10px;right:10px;min-width:0;}
   #navMenu .navopt{padding:14px 18px;font-size:15px;}
   #clientsBtn{padding:8px 10px;}
+  #homeBtn{padding:8px 10px;}
 }
 
 .calgrid .day.cur{cursor:pointer;}
@@ -439,11 +441,11 @@ footer.site{
 .stagechip{display:inline-block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;
   padding:3px 9px;border-radius:9px;text-transform:uppercase;}
 .stg-Lead{background:#e8f0fb;color:#1d4f91;}
-.stg-Inspected{background:#fdf3e2;color:#8a5a10;}
-.stg-EstimateSent{background:#f3e8fb;color:#5b2d91;}
-.stg-Signed{background:#e9f5ec;color:#1d6b34;}
+.stg-Prospect{background:#fdf3e2;color:#b26a00;}
+.stg-Approved{background:#e9f5ec;color:#1d6b34;}
 .stg-Scheduled{background:#fff0f0;color:#9c1822;}
-.stg-Complete{background:#ececec;color:#555;}
+.stg-Completed{background:#ececec;color:#4a6572;}
+.stg-Invoiced{background:#f3e8fb;color:#5b2d91;}
 .pcard .stagechip{position:absolute;top:10px;left:10px;box-shadow:0 1px 4px rgba(0,0,0,.25);}
 .stgfilter{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;}
 .stgfilter .hstat.on{background:#9c1822;color:#fff;border-color:#9c1822;}
@@ -460,6 +462,55 @@ footer.site{
   font:600 13.5px 'Segoe UI',Arial,sans-serif;text-align:right;background:#FFF9C4;}
 .mattable td.u{width:120px;color:#666;}
 .matempty{font:13px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;padding:8px 0 2px;}
+
+header.site .brand h1, header.site .brand .co{color:#fff !important;}
+header.site .brand .co small, header.site .tag{color:#d8cbc5 !important;}
+header.site .whoami{color:#fff;}
+header.site .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);}
+header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
+#brandLogo{background:#fff;border-radius:8px;padding:3px;height:44px !important;}
+@media (max-width:640px){ #brandLogo{height:36px !important;} }
+/* ---- pipeline widget ---- */
+.pipecard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px 16px;margin:14px 0;}
+.pipetitle{font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;margin-bottom:10px;}
+.piperow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.pipebtn{border:0;border-radius:10px;color:#fff;cursor:pointer;padding:12px 6px;text-align:center;
+  font:700 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;transition:transform .12s, box-shadow .12s;}
+.pipebtn:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.2);}
+.pipebtn .n{display:block;font-size:24px;font-weight:800;line-height:1.1;}
+.pipe-lead{background:#1d4f91;} .pipe-prospect{background:#b26a00;} .pipe-approved{background:#1d6b34;}
+.pipe-completed{background:#4a6572;} .pipe-invoiced{background:#5b2d91;}
+@media (max-width:640px){ .piperow{grid-template-columns:repeat(2,1fr);} .pipebtn.pipe-invoiced{grid-column:span 2;} }
+/* ---- home two-column layout ---- */
+.homecols{display:flex;gap:20px;align-items:flex-start;}
+.homemain{flex:1;min-width:0;}
+.homeside{flex:0 0 300px;display:flex;flex-direction:column;gap:14px;}
+@media (max-width:900px){ .homecols{flex-direction:column;} .homeside{flex-basis:auto;width:100%;} }
+/* ---- activity feed ---- */
+.actcard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 14px;}
+.acthead{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;margin-bottom:6px;}
+.actitem{display:flex;gap:9px;padding:7px 0;border-bottom:1px solid #f0ebe8;font:12.5px 'Segoe UI',Arial,sans-serif;}
+.actitem:last-child{border-bottom:0;}
+.actitem .ic{flex:0 0 auto;font-size:15px;}
+.actitem .tx{color:#444;line-height:1.4;min-width:0;}
+.actitem .tx b{color:#2b2b2b;}
+.actitem .tm{display:block;color:#9a8c85;font-size:11px;margin-top:1px;}
+/* ---- team notes chat ---- */
+.chatbox{border:1px solid var(--line);border-radius:12px;background:#faf7f5;padding:12px;max-width:680px;}
+.chatthread{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px;}
+.chatmsg{display:flex;gap:9px;align-items:flex-start;}
+.chatmsg .av{flex:0 0 32px;width:32px;height:32px;border-radius:50%;background:#C8202E;color:#fff;
+  display:flex;align-items:center;justify-content:center;font:800 13px 'Segoe UI',Arial,sans-serif;}
+.chatmsg.mine .av{background:#2b2b2b;}
+.chatmsg .bub{background:#fff;border:1px solid #e6ddd9;border-radius:4px 12px 12px 12px;padding:8px 12px;
+  font:13.5px/1.45 'Segoe UI',Arial,sans-serif;color:#333;min-width:0;max-width:85%;}
+.chatmsg .who{font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#9c1822;}
+.chatmsg .when{font-size:10.5px;color:#9a8c85;margin-left:6px;font-weight:600;}
+.chatmsg .mention{background:#fdecea;color:#9c1822;font-weight:700;border-radius:4px;padding:0 3px;}
+.chatinput{display:flex;gap:8px;margin-top:10px;}
+.chatinput input{flex:1;padding:11px 13px;border:1px solid #c9c2bf;border-radius:9px;
+  font:14px 'Segoe UI',Arial,sans-serif;background:#fff;}
+.chatempty{font:12.5px 'Segoe UI',Arial,sans-serif;color:#9a8c85;padding:8px 2px;}
 </style>
 </head>
 <body>
@@ -477,6 +528,7 @@ footer.site{
       <span class="whoami" id="whoami"></span>
       <button class="btn" id="addProjectBtn" style="display:none;">+ Add project</button>
       <button class="btn ghost" id="signOutBtn" style="display:none;">Sign out</button>
+      <button class="btn ghost" id="homeBtn" style="display:none;">&#127968; Home</button>
       <button class="btn ghost" id="clientsBtn" style="display:none;">&#128101; Clients</button>
       <span id="navWrap" style="display:none;">
         <button class="btn ghost" id="navBtn">&#9776; Menu</button>
@@ -513,22 +565,34 @@ footer.site{
   <div class="wrap" id="bannerMount"></div>
 
   <div class="wrap">
-    <div class="hero">
-      <div class="hero-left">
-        <div id="heroGreeting" class="hero-hi"></div>
-        <div id="homeClock" class="hero-clock"></div>
-        <div id="heroStats" class="hero-stats"></div>
-      </div>
-      <div class="calcard" id="calCard">
-        <div class="calhead">
-          <button class="calnav" id="calPrev">&#8249;</button>
-          <b id="calTitle"></b>
-          <button class="calnav" id="calNext">&#8250;</button>
+    <div class="homecols">
+      <div class="homemain">
+        <div class="hero-left" style="margin-top:14px;">
+          <div id="heroGreeting" class="hero-hi"></div>
+          <div id="homeClock" class="hero-clock"></div>
+          <div id="heroStats" class="hero-stats"></div>
         </div>
-        <div class="calgrid" id="calGrid"></div>
-        <div class="callegend"><span class="ldot doc"></span> documents &nbsp; <span class="ldot appt"></span> appointments &#8212; tap a day to schedule</div>
-        <div id="apptUpcoming" class="calnextup"></div>
+        <div class="pipecard">
+          <div class="pipetitle">&#128202; Cardinal Pipeline</div>
+          <div class="piperow" id="pipeRow"></div>
+        </div>
       </div>
+      <aside class="homeside" style="margin-top:14px;">
+        <div class="calcard" id="calCard" style="flex-basis:auto;">
+          <div class="calhead">
+            <button class="calnav" id="calPrev">&#8249;</button>
+            <b id="calTitle"></b>
+            <button class="calnav" id="calNext">&#8250;</button>
+          </div>
+          <div class="calgrid" id="calGrid"></div>
+          <div class="callegend"><span class="ldot doc"></span> documents &nbsp; <span class="ldot appt"></span> appointments &#8212; tap a day to schedule</div>
+          <div id="apptUpcoming" class="calnextup"></div>
+        </div>
+        <div class="actcard">
+          <div class="acthead">&#9889; Activity</div>
+          <div id="actFeed"></div>
+        </div>
+      </aside>
     </div>
   </div>
 
@@ -585,11 +649,15 @@ footer.site{
     </div>
 
     <div id="tab-overview">
-      <h3 class="projsec">&#128221; Notes</h3>
-      <textarea id="projNotes" placeholder="Job notes, call log, material selections, HOA details…"></textarea>
-      <div style="margin:6px 0 18px;">
-        <button class="chipbtn" id="projNotesSave">Save notes</button>
-        <span id="notesFlash" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#2e7d32;"></span>
+      <h3 class="projsec">&#128172; Team Notes</h3>
+      <p class="subnote">Job chat for this client &#8212; visible to everyone with access. Tag a teammate with
+      @name (e.g. @theo) to flag them.</p>
+      <div class="chatbox">
+        <div class="chatthread" id="chatThread"></div>
+        <div class="chatinput">
+          <input type="text" id="chatText" placeholder="Write a note&#8230; use @name to tag" autocomplete="off">
+          <button class="btn" id="chatSend">Send</button>
+        </div>
       </div>
     </div>
 
@@ -1027,6 +1095,8 @@ footer.site{
 <!-- ============ EDITOR ============ -->
 <div id="editorView" aria-hidden="true">
   <div class="toolbar">
+    <img id="editorLogo" alt="Home" title="Save &amp; go home"
+         style="display:none;height:34px;width:auto;cursor:pointer;border-radius:6px;background:#fff;padding:3px;">
     <button class="btn dark" id="backBtn">&larr; Back to history</button>
     <div class="grow">
       <input id="reportTitle" placeholder="Report title / property address" aria-label="Report title">
@@ -2380,6 +2450,8 @@ async function reload(){
     renderHome();
     renderHero();
     renderCalendar();
+    renderPipeline();
+    renderActivity();
     if(currentList && listView.style.display !== 'none') renderList();
     if(clientsView.style.display !== 'none') renderClientDirectory();
     if(currentProject && document.getElementById('projectView').style.display !== 'none'){
@@ -2453,7 +2525,7 @@ function renderHome(){
         ? '<div class="thumb"><img src="' + pr.cover_image + '" alt=""></div>'
         : '<div class="initial">' + esc((pr.name || '?').trim().charAt(0).toUpperCase()) + '</div>';
       var by = pr.created_by ? esc(pr.created_by.split('@')[0]) : '';
-      var stg = STAGES.indexOf(pr.stage) !== -1 ? pr.stage : 'Lead';
+      var stg = normStage(pr.stage);
       return '<div class="pcard" data-proj="' + pr.id + '">' +
         thumb +
         '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' +
@@ -2493,6 +2565,8 @@ function showHome(){
   renderHome();
   renderHero();
   renderCalendar();
+  renderPipeline();
+  renderActivity();
   window.scrollTo(0,0);
 }
 function openProject(id){
@@ -2516,10 +2590,9 @@ function openProject(id){
   }
   document.getElementById('projCoverBtn').textContent =
     pr.cover_image ? '\u21BB Replace cover photo' : '\uD83D\uDCF7 Add cover photo';
-  document.getElementById('stageSel').value = STAGES.indexOf(pr.stage) !== -1 ? pr.stage : 'Lead';
+  document.getElementById('stageSel').value = normStage(pr.stage);
   document.getElementById('ptCheck').checked = !!pr.photos_transferred;
-  document.getElementById('projNotes').value = pr.notes || '';
-  document.getElementById('notesFlash').textContent = '';
+  renderChat();
   renderProjectDocs();
   loadGallery();
   renderCkStatus();
@@ -2889,18 +2962,58 @@ document.getElementById('projCoverInput').addEventListener('change', async funct
 });
 
 /* notes */
-document.getElementById('projNotesSave').addEventListener('click', async function(){
+/* ---------- team notes chat ---------- */
+function fmtChatText(t){
+  return esc(t).replace(/@([A-Za-z][\w.-]*)/g, '<span class="mention">@$1</span>');
+}
+function renderChat(){
   if(!currentProject) return;
-  var v = document.getElementById('projNotes').value;
+  var all = parseCkAll(currentProject);
+  var msgs = all.comments || [];
+  /* legacy notes field becomes the first pinned message */
+  if(currentProject.notes && !msgs.some(function(m){ return m.legacy; })){
+    msgs = [{ legacy:true, name:'Notes', by:'', at:currentProject.created_at,
+              text: currentProject.notes }].concat(msgs);
+  }
+  var me = TEAM && currentUser ? currentUser.email : '';
+  var thread = document.getElementById('chatThread');
+  thread.innerHTML = msgs.length ? msgs.map(function(m){
+    var initials = (m.name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(0); }).join('').slice(0,2).toUpperCase();
+    var mine = m.by && m.by === me;
+    return '<div class="chatmsg' + (mine ? ' mine' : '') + '">' +
+      '<span class="av">' + esc(initials) + '</span>' +
+      '<span class="bub"><span class="who">' + esc(m.name || m.by || '') + '</span>' +
+      '<span class="when">' + (m.at ? timeAgo(m.at) : '') + '</span><br>' +
+      fmtChatText(m.text || '') + '</span></div>';
+  }).join('') : '<div class="chatempty">No notes yet \u2014 start the thread.</div>';
+  thread.scrollTop = thread.scrollHeight;
+}
+async function sendChat(){
+  if(!currentProject) return;
+  var inp = document.getElementById('chatText');
+  var text = inp.value.trim();
+  if(!text) return;
+  var up = getUserProfile();
+  var msg = {
+    by: TEAM && currentUser ? currentUser.email : 'local',
+    name: up.full || (TEAM && currentUser ? displayNameFor(currentUser) : 'Me'),
+    at: new Date().toISOString(),
+    text: text
+  };
+  var mentions = (text.match(/@([A-Za-z][\w.-]*)/g) || []).map(function(s){ return s.slice(1).toLowerCase(); });
+  if(mentions.length) msg.mentions = mentions;
   try{
-    await pdb.update(currentProject.id, { notes: v });
-    currentProject.notes = v;
-    var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
-    if(cp) cp.notes = v;
-    var f = document.getElementById('notesFlash');
-    f.textContent = '\u2713 Saved';
-    setTimeout(function(){ f.textContent = ''; }, 2000);
-  }catch(err){ showError('Could not save notes: ' + (err.message || err)); }
+    var all = parseCkAll(currentProject);
+    var msgs = all.comments || [];
+    msgs.push(msg);
+    await saveCkPatch({ comments: msgs });
+    inp.value = '';
+    renderChat();
+  }catch(err){ showError('Could not post: ' + (err.message || err)); }
+}
+document.getElementById('chatSend').addEventListener('click', sendChat);
+document.getElementById('chatText').addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
 });
 
 /* =========================================================================
@@ -3459,8 +3572,14 @@ async function exportBackup(){
 }
 
 /* ---------- pipeline stages ---------- */
-var STAGES = ['Lead','Inspected','Estimate Sent','Signed','Scheduled','Complete'];
-function stageClass(s){ return 'stg-' + String(s || 'Lead').replace(/ /g,''); }
+var STAGES = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced'];
+var LEGACY_STAGE = { 'Inspected':'Prospect', 'Estimate Sent':'Prospect', 'Signed':'Approved', 'Complete':'Completed' };
+function normStage(s){
+  s = s || 'Lead';
+  if(LEGACY_STAGE[s]) return LEGACY_STAGE[s];
+  return STAGES.indexOf(s) !== -1 ? s : 'Lead';
+}
+function stageClass(s){ return 'stg-' + normStage(s).replace(/ /g,''); }
 (function(){
   var sel = document.getElementById('stageSel');
   sel.innerHTML = STAGES.map(function(s){ return '<option>' + s + '</option>'; }).join('');
@@ -3507,12 +3626,12 @@ function renderClientDirectory(){
   var sf = document.getElementById('stgFilter');
   sf.innerHTML = '<span class="hstat' + (cliStageFilter === '' ? ' on' : '') + '" data-stg="">All stages</span>' +
     STAGES.map(function(s){
-      var n = cacheProjects.filter(function(pr){ return (pr.stage || 'Lead') === s; }).length;
+      var n = cacheProjects.filter(function(pr){ return normStage(pr.stage) === s; }).length;
       return '<span class="hstat' + (cliStageFilter === s ? ' on' : '') + '" data-stg="' + s + '">' + s + ' <b>' + n + '</b></span>';
     }).join('');
   var list = cacheProjects.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); })
     .filter(function(pr){
-      if(cliStageFilter && (pr.stage || 'Lead') !== cliStageFilter) return false;
+      if(cliStageFilter && normStage(pr.stage) !== cliStageFilter) return false;
       if(!q) return true;
       return [pr.name, pr.address, pr.phone, pr.email, pr.created_by].join(' ').toLowerCase().indexOf(q) !== -1;
     });
@@ -3521,7 +3640,7 @@ function renderClientDirectory(){
     var mini = pr.cover_image ? '<img src="' + pr.cover_image + '" alt="">'
                               : esc((pr.name || '?').trim().charAt(0).toUpperCase());
     var sub = [pr.address, pr.phone].filter(Boolean).join(' \u00b7 ');
-    var stg = STAGES.indexOf(pr.stage) !== -1 ? pr.stage : 'Lead';
+    var stg = normStage(pr.stage);
     return '<div class="clirow" data-proj="' + pr.id + '">' +
       '<span class="mini">' + mini + '</span>' +
       '<span class="bd"><b>' + esc(pr.name || 'Unnamed client') + '</b> ' +
@@ -3530,15 +3649,27 @@ function renderClientDirectory(){
       '<span class="chev">&#8250;</span></div>';
   }).join('') : '<div class="empty"><b>No clients match.</b></div>';
 }
-function openClientsDirectory(){
+function openClientsDirectory(keepFilter){
   hideAllViews();
   clientsView.style.display = 'block';
   document.getElementById('cliFilter').value = '';
+  if(keepFilter !== true) cliStageFilter = '';
   renderClientDirectory();
   window.scrollTo(0,0);
   setTimeout(function(){ document.getElementById('cliFilter').focus(); }, 80);
 }
 document.getElementById('clientsBtn').addEventListener('click', openClientsDirectory);
+document.getElementById('homeBtn').addEventListener('click', showHome);
+(function(){
+  var brand = document.querySelector('.brand');
+  if(brand){
+    brand.style.cursor = 'pointer';
+    brand.title = 'Home';
+    brand.addEventListener('click', function(){
+      if(mainView && document.getElementById('navWrap').style.display !== 'none') showHome();
+    });
+  }
+})();
 document.getElementById('cliBackBtn').addEventListener('click', showHome);
 document.getElementById('cliFilter').addEventListener('input', renderClientDirectory);
 document.getElementById('stgFilter').addEventListener('click', function(e){
@@ -3557,6 +3688,15 @@ document.getElementById('navBtn').addEventListener('click', function(e){
   if(navMenu.style.display === 'block'){ navMenu.style.display = 'none'; return; }
   var r = this.getBoundingClientRect();
   navMenu.style.top = Math.round(r.bottom + 6) + 'px';
+  if(window.innerWidth > 640){
+    /* align the menu's right edge with the button, not the screen edge */
+    navMenu.style.right = Math.max(10, Math.round(window.innerWidth - r.right)) + 'px';
+    navMenu.style.left = 'auto';
+  }else{
+    /* mobile: let the CSS full-width sheet rules apply */
+    navMenu.style.right = '';
+    navMenu.style.left = '';
+  }
   navMenu.style.display = 'block';
 });
 document.addEventListener('click', function(){ navMenu.style.display = 'none'; });
@@ -3791,6 +3931,74 @@ document.getElementById('leadList').addEventListener('click', function(e){
 });
 
 /* ---------- hero: greeting + stats ---------- */
+var PIPE_BUCKETS = [
+  { key:'Lead',      label:'LEADS',      cls:'pipe-lead' },
+  { key:'Prospect',  label:'PROSPECTS',  cls:'pipe-prospect' },
+  { key:'Approved',  label:'APPROVED',   cls:'pipe-approved' },
+  { key:'Completed', label:'COMPLETED',  cls:'pipe-completed' },
+  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced' }
+];
+function renderPipeline(){
+  var row = document.getElementById('pipeRow');
+  if(!row) return;
+  row.innerHTML = PIPE_BUCKETS.map(function(b){
+    var n = cacheProjects.filter(function(pr){
+      var s = normStage(pr.stage);
+      return s === b.key || (b.key === 'Approved' && s === 'Scheduled');
+    }).length;
+    return '<button class="pipebtn ' + b.cls + '" data-stg="' + b.key + '">' +
+      '<span class="n">' + n + '</span>' + b.label + '</button>';
+  }).join('');
+}
+document.getElementById('pipeRow').addEventListener('click', function(e){
+  var btn = e.target.closest('.pipebtn');
+  if(!btn) return;
+  cliStageFilter = btn.getAttribute('data-stg');
+  openClientsDirectory(true);
+});
+
+function timeAgo(iso){
+  var s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if(s < 60) return 'just now';
+  if(s < 3600) return Math.floor(s/60) + 'm ago';
+  if(s < 86400) return Math.floor(s/3600) + 'h ago';
+  if(s < 604800) return Math.floor(s/86400) + 'd ago';
+  return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+function renderActivity(){
+  var mount = document.getElementById('actFeed');
+  if(!mount) return;
+  var ev = [];
+  cacheRows.forEach(function(r){
+    var pr = r.project_id ? cacheProjects.find(function(x){ return x.id === r.project_id; }) : null;
+    var cli = pr ? pr.name : (r.project || '');
+    var who = r.created_by ? r.created_by.split('@')[0] : '';
+    ev.push({ t:r.created_at, ic: isEstimateTitle(r.title) ? '\uD83D\uDCB0' : '\uD83D\uDD0D',
+      tx:'<b>' + esc(who) + '</b> created <b>' + esc(r.title) + '</b>' + (cli ? ' for ' + esc(cli) : '') });
+    if(r.sent_at) ev.push({ t:r.sent_at, ic:'\uD83D\uDCE7',
+      tx:'<b>' + esc(r.title) + '</b> sent' + (cli ? ' to ' + esc(cli) : '') });
+  });
+  cacheAppts.forEach(function(a){
+    if(!a.created_at) return;
+    var pr = a.project_id ? cacheProjects.find(function(x){ return x.id === a.project_id; }) : null;
+    ev.push({ t:a.created_at, ic:'\uD83D\uDCC5',
+      tx:'<b>' + esc(a.title) + '</b> scheduled for ' + esc(a.appt_date) +
+        (pr ? ' \u00b7 ' + esc(pr.name) : '') });
+  });
+  cacheProjects.forEach(function(pr2){
+    ev.push({ t:pr2.created_at, ic:'\uD83D\uDC64',
+      tx:'<b>' + esc(pr2.name || 'Client') + '</b> added' +
+        (pr2.created_by ? ' by <b>' + esc(pr2.created_by.split('@')[0]) + '</b>' : '') });
+  });
+  ev = ev.filter(function(x){ return x.t; })
+         .sort(function(a,b){ return String(b.t).localeCompare(String(a.t)); })
+         .slice(0, 14);
+  mount.innerHTML = ev.length ? ev.map(function(x){
+    return '<div class="actitem"><span class="ic">' + x.ic + '</span>' +
+      '<span class="tx">' + x.tx + '<span class="tm">' + timeAgo(x.t) + '</span></span></div>';
+  }).join('') : '<div class="chatempty">No activity yet.</div>';
+}
+
 var QUOTES = [
   ["The harder I work, the luckier I get.", "Samuel Goldwyn"],
   ["Whether you think you can or you think you can't \u2014 you're right.", "Henry Ford"],
@@ -5061,7 +5269,7 @@ toggleBtn.addEventListener('click', async function(){
     reload();
   }catch(err){ showError('Could not update status: ' + (err.message || err)); }
 });
-document.getElementById('backBtn').addEventListener('click', async function(){
+async function closeEditor(){
   await saveCurrent();
   editor.classList.remove('open');
   editor.setAttribute('aria-hidden','true');
@@ -5069,6 +5277,11 @@ document.getElementById('backBtn').addEventListener('click', async function(){
   frame.srcdoc = '';
   current = null;
   await reload();
+}
+document.getElementById('backBtn').addEventListener('click', closeEditor);
+document.getElementById('editorLogo').addEventListener('click', async function(){
+  await closeEditor();
+  showHome();
 });
 
 /* =========================================================================
@@ -5077,7 +5290,7 @@ document.getElementById('backBtn').addEventListener('click', async function(){
 (function(){
   var m = REPORT_TEMPLATE.match(/class="cover-logo" src="(data:image\/[^"]+)"/);
   if(!m) return;
-  ['brandLogo','loginLogo'].forEach(function(id){
+  ['brandLogo','loginLogo','editorLogo'].forEach(function(id){
     var el = document.getElementById(id);
     if(el){ el.src = m[1]; el.style.display = 'block'; }
   });
@@ -5105,6 +5318,7 @@ function showMain(userEmail){
   mainView.style.display = 'block';
   addProjBtn.style.display = 'inline-block';
   document.getElementById('navWrap').style.display = 'inline-block';
+  document.getElementById('homeBtn').style.display = 'inline-block';
   document.getElementById('clientsBtn').style.display = 'inline-block';
   document.getElementById('backupNav').style.display =
     (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
@@ -5141,6 +5355,7 @@ whoami.addEventListener('click', async function(){
 function showLogin(){
   hideAllViews();
   document.getElementById('navWrap').style.display = 'none';
+  document.getElementById('homeBtn').style.display = 'none';
   document.getElementById('clientsBtn').style.display = 'none';
   addProjBtn.style.display = 'none';
   signOutBtn.style.display = 'none';
