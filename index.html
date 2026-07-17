@@ -297,6 +297,29 @@ footer.site{
 #brandLogo{height:52px;width:auto;}
 .logincard .loginlogo{display:block;margin:0 auto 14px;max-width:230px;height:auto;}
 @media (max-width:640px){ #brandLogo{height:40px;} }
+
+/* ---- photo gallery ---- */
+.galgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:4px 0 18px;}
+.gph{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#efe9e6;aspect-ratio:4/3;}
+.gph img{width:100%;height:100%;object-fit:cover;display:block;}
+.gph .gchk{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:6px;border:2px solid #fff;
+  background:rgba(0,0,0,.35);color:#fff;font:700 15px/20px 'Segoe UI',Arial,sans-serif;text-align:center;cursor:pointer;}
+.gph.checked{outline:3px solid var(--red);}
+.gph.checked .gchk{background:var(--red);border-color:var(--red);}
+.gph .gdel{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:6px;border:0;
+  background:rgba(0,0,0,.45);color:#fff;font:700 13px/24px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.gph .gdel:hover{background:#C8202E;}
+.galempty{color:#8a8a8a;font:13.5px 'Segoe UI',Arial,sans-serif;padding:14px 0;}
+#galXferMenu .estopt{display:block;width:100%;text-align:left;padding:10px 14px;border:0;background:#fff;
+  font:13.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#galXferMenu .estopt:hover{background:#f7efec;color:#9c1822;}
+#galXferMenu .estopt + .estopt{border-top:1px solid #eee;}
+
+/* ---- profile tabs ---- */
+.ptabs{display:flex;gap:6px;margin:18px 0 0;border-bottom:2px solid var(--red);flex-wrap:wrap;}
+.ptab{border:1px solid var(--line);border-bottom:0;background:#f3ecea;color:#6b5a54;
+  padding:10px 18px;border-radius:9px 9px 0 0;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.ptab.active{background:var(--red);color:#fff;border-color:var(--red);}
 </style>
 </head>
 <body>
@@ -378,30 +401,65 @@ footer.site{
       </div>
     </div>
 
-    <h3 class="projsec">&#128221; Notes</h3>
-    <textarea id="projNotes" placeholder="Job notes, call log, material selections, HOA details…"></textarea>
-    <div style="margin:6px 0 18px;">
-      <button class="chipbtn" id="projNotesSave">Save notes</button>
-      <span id="notesFlash" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#2e7d32;"></span>
+    <div class="ptabs">
+      <button class="ptab active" data-tab="overview">&#128203; Overview</button>
+      <button class="ptab" data-tab="inspections">&#128269; Inspections</button>
+      <button class="ptab" data-tab="estimates">&#128176; Estimates</button>
     </div>
 
-    <h3 class="projsec">&#128196; Documents</h3>
-    <div style="margin:6px 0 12px;display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn" id="pNewReportBtn">+ New inspection report</button>
-      <span id="pEstWrap" style="position:relative;">
-        <button class="btn" id="pNewEstimateBtn">+ New estimate &#9662;</button>
-        <div id="pEstMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
-             background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:250px;
-             box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
-          <button class="estopt" data-tpl="roof">&#127968; Roofing estimate</button>
-          <button class="estopt" data-tpl="siding">&#129521; Mastic vinyl siding</button>
-          <button class="estopt" data-tpl="windows">&#129695; Replacement vinyl windows</button>
-          <button class="estopt" data-tpl="gutters">&#127783; Seamless gutters (5&#8243; / 6&#8243;)</button>
-          <button class="estopt" data-tpl="general">&#128295; General repair estimate</button>
-        </div>
-      </span>
+    <div id="tab-overview">
+      <h3 class="projsec">&#128221; Notes</h3>
+      <textarea id="projNotes" placeholder="Job notes, call log, material selections, HOA details…"></textarea>
+      <div style="margin:6px 0 18px;">
+        <button class="chipbtn" id="projNotesSave">Save notes</button>
+        <span id="notesFlash" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#2e7d32;"></span>
+      </div>
     </div>
-    <div id="projDocsMount"><div class="loading">Loading…</div></div>
+
+    <div id="tab-inspections" style="display:none;">
+      <h3 class="projsec">&#128248; Photo Gallery <span id="galCount" class="projcount">0 / 20</span></h3>
+      <p class="subnote">Field photos for this client. Check the ones to use, then transfer them into an
+      inspection report — transferred photos are removed from this gallery.</p>
+      <div style="margin:6px 0 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="chipbtn" id="galAddBtn">&#43; Add photos</button>
+        <button class="chipbtn" id="galCamBtn" style="background:#C8202E;color:#fff;border-color:#C8202E;">&#128247; Take photo</button>
+        <span id="galXferWrap" style="position:relative;">
+          <button class="btn" id="galXferBtn">Transfer checked to report &#9662;</button>
+          <div id="galXferMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
+               background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:260px;max-height:280px;overflow:auto;
+               box-shadow:0 6px 18px rgba(0,0,0,.18);"></div>
+        </span>
+        <span id="galStatus" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#666;"></span>
+        <input type="file" id="galFileInput" accept="image/*" multiple style="display:none;">
+        <input type="file" id="galCamInput" accept="image/*" capture="environment" style="display:none;">
+      </div>
+      <div id="galGrid" class="galgrid"></div>
+
+      <h3 class="projsec">&#128196; Inspection Reports</h3>
+      <div style="margin:6px 0 12px;">
+        <button class="btn" id="pNewReportBtn">+ New inspection report</button>
+      </div>
+      <div id="inspDocsMount"><div class="loading">Loading…</div></div>
+    </div>
+
+    <div id="tab-estimates" style="display:none;">
+      <h3 class="projsec">&#128196; Estimates</h3>
+      <div style="margin:6px 0 12px;">
+        <span id="pEstWrap" style="position:relative;">
+          <button class="btn" id="pNewEstimateBtn">+ New estimate &#9662;</button>
+          <div id="pEstMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
+               background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:250px;
+               box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
+            <button class="estopt" data-tpl="roof">&#127968; Roofing estimate</button>
+            <button class="estopt" data-tpl="siding">&#129521; Mastic vinyl siding</button>
+            <button class="estopt" data-tpl="windows">&#129695; Replacement vinyl windows</button>
+            <button class="estopt" data-tpl="gutters">&#127783; Seamless gutters (5&#8243; / 6&#8243;)</button>
+            <button class="estopt" data-tpl="general">&#128295; General repair estimate</button>
+          </div>
+        </span>
+      </div>
+      <div id="estDocsMount"><div class="loading">Loading…</div></div>
+    </div>
   </div>
 </div>
 
@@ -674,6 +732,7 @@ small.hint{color:#b06a00;font-size:8.5pt;}
     <table>
       <tr><td class="k">Property Address</td><td><span class="ph">[STREET ADDRESS, CITY, STATE ZIP]</span></td></tr>
       <tr><td class="k">Prepared For</td><td><span class="ph">[CLIENT / HOMEOWNER NAME]</span></td></tr>
+      <tr><td class="k">Client Contact</td><td><span class="ph">[Phone · Email]</span></td></tr>
       <tr><td class="k">Client Company (if any)</td><td><span class="ph">[COMPANY / MANAGEMENT CO. — or delete this row]</span></td></tr>
       <tr><td class="k">Inspection Date</td><td><span class="ph">[MONTH DD, YYYY]</span></td></tr>
       <tr><td class="k">Report / Estimate No.</td><td><span class="ph">[REFERENCE #]</span></td></tr>
@@ -1209,6 +1268,10 @@ table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weig
       <td class="k">Estimate #</td><td><span class="ph">[e.g. EST-2026-041]</span></td></tr>
   <tr><td class="k">Property Address</td><td><span class="ph">[Street, City, State ZIP]</span></td>
       <td class="k">Estimate Date</td><td><span class="ph">[Date]</span></td></tr>
+  <tr><td class="k">Client Contact</td><td><span class="ph">[Phone · Email]</span></td>
+      <td class="k">&nbsp;</td><td>&nbsp;</td></tr>
+  <tr><td class="k">Client Contact</td><td><span class="ph">[Phone · Email]</span></td>
+      <td class="k">&nbsp;</td><td>&nbsp;</td></tr>
   <tr><td class="k">Prepared By</td><td><span class="ph">[Rep name &amp; title]</span></td>
       <td class="k">Valid Through</td><td><span class="ph">[30 days from estimate date]</span></td></tr>
 </table>
@@ -1549,6 +1612,48 @@ var pdb = {
   }
 };
 
+var GAL_MAX = 20;
+var GKEY = 'cardinal_project_photos_v1';
+function glsLoad(){ try{ return JSON.parse(localStorage.getItem(GKEY)) || []; }catch(e){ return []; } }
+function glsSave(l){ localStorage.setItem(GKEY, JSON.stringify(l)); }
+
+var photoDb = {
+  listByProject: async function(projectId){
+    if(TEAM){
+      var r = await sb.from('project_photos')
+        .select('id,project_id,data,created_by,created_at')
+        .eq('project_id', projectId)
+        .order('created_at', {ascending:true});
+      if(r.error) throw r.error;
+      return r.data || [];
+    }
+    return glsLoad().filter(function(x){ return x.project_id === projectId; });
+  },
+  add: async function(projectId, dataUrl){
+    if(TEAM){
+      var user = (await sb.auth.getUser()).data.user;
+      var r = await sb.from('project_photos').insert({
+        project_id: projectId, data: dataUrl,
+        created_by: user ? user.email : null
+      });
+      if(r.error) throw r.error;
+      return;
+    }
+    var l = glsLoad();
+    l.push({ id: uid(), project_id: projectId, data: dataUrl,
+             created_by: null, created_at: new Date().toISOString() });
+    glsSave(l);
+  },
+  remove: async function(id){
+    if(TEAM){
+      var r = await sb.from('project_photos').delete().eq('id', id);
+      if(r.error) throw r.error;
+      return;
+    }
+    glsSave(glsLoad().filter(function(x){ return x.id !== id; }));
+  }
+};
+
 
 /* =========================================================================
    HISTORY: search + status filter + render
@@ -1688,16 +1793,32 @@ function openProject(id){
   document.getElementById('projNotes').value = pr.notes || '';
   document.getElementById('notesFlash').textContent = '';
   renderProjectDocs();
+  loadGallery();
+  showTab('overview');
   mainView.style.display = 'none';
   projectView.style.display = 'block';
   window.scrollTo(0,0);
 }
 function renderProjectDocs(){
   var docs = cacheRows.filter(function(r){ return currentProject && r.project_id === currentProject.id; });
-  var m = document.getElementById('projDocsMount');
-  m.innerHTML = docs.length ? docTable(docs)
-    : '<div class="empty"><b>No documents yet.</b><br>Create an inspection report or estimate above.</div>';
+  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title); });
+  var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
+  document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
+    : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
+  document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
+    : '<div class="empty"><b>No estimates yet.</b><br>Use <b>+ New estimate</b> to pick a template.</div>';
 }
+function showTab(name){
+  document.querySelectorAll('.ptab').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-tab') === name);
+  });
+  ['overview','inspections','estimates'].forEach(function(t){
+    document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
+  });
+}
+document.querySelectorAll('.ptab').forEach(function(b){
+  b.addEventListener('click', function(){ showTab(b.getAttribute('data-tab')); });
+});
 
 document.getElementById('searchBox').addEventListener('input', function(){
   searchText = this.value; renderHome();
@@ -1741,7 +1862,8 @@ async function handleDocAction(e){
   }catch(err){ showError('Action failed: ' + (err.message || err)); }
 }
 mount.addEventListener('click', handleDocAction);
-document.getElementById('projDocsMount').addEventListener('click', handleDocAction);
+document.getElementById('inspDocsMount').addEventListener('click', handleDocAction);
+document.getElementById('estDocsMount').addEventListener('click', handleDocAction);
 
 function downloadReport(r){
   var blob = new Blob([r.html], {type:'text/html'});
@@ -1750,6 +1872,178 @@ function downloadReport(r){
   a.download = (r.title || 'inspection-report').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'_') + '.html';
   document.body.appendChild(a); a.click();
   setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* =========================================================================
+   PHOTO GALLERY (per client project)
+   ========================================================================= */
+var currentPhotos = [];
+var galChecked = {};
+
+async function loadGallery(){
+  var grid = document.getElementById('galGrid');
+  if(!currentProject){ grid.innerHTML=''; return; }
+  grid.innerHTML = '<div class="loading">Loading photos…</div>';
+  try{
+    currentPhotos = await photoDb.listByProject(currentProject.id);
+  }catch(e){
+    currentPhotos = [];
+    grid.innerHTML = '<div class="galempty">Could not load photos: ' + esc(e.message || e) + '</div>';
+    return;
+  }
+  galChecked = {};
+  renderGallery();
+}
+function renderGallery(){
+  var grid = document.getElementById('galGrid');
+  document.getElementById('galCount').textContent = currentPhotos.length + ' / ' + GAL_MAX;
+  if(!currentPhotos.length){
+    grid.innerHTML = '<div class="galempty">No photos yet — use <b>+ Add photos</b> or <b>&#128247; Take photo</b>.</div>';
+    return;
+  }
+  grid.innerHTML = currentPhotos.map(function(ph){
+    var ck = galChecked[ph.id];
+    return '<div class="gph' + (ck ? ' checked' : '') + '" data-gid="' + ph.id + '">' +
+      '<img src="' + ph.data + '" alt="">' +
+      '<div class="gchk">' + (ck ? '\u2713' : '') + '</div>' +
+      '<button class="gdel" title="Delete photo">\u2715</button>' +
+    '</div>';
+  }).join('');
+}
+document.getElementById('galGrid').addEventListener('click', async function(e){
+  var card = e.target.closest('.gph');
+  if(!card) return;
+  var id = card.getAttribute('data-gid');
+  if(e.target.closest('.gdel')){
+    if(!confirm('Delete this photo from the gallery?')) return;
+    try{
+      await photoDb.remove(id);
+      currentPhotos = currentPhotos.filter(function(x){ return x.id !== id; });
+      delete galChecked[id];
+      renderGallery();
+    }catch(err){ showError('Could not delete photo: ' + (err.message || err)); }
+    return;
+  }
+  galChecked[id] = !galChecked[id];
+  if(!galChecked[id]) delete galChecked[id];
+  renderGallery();
+});
+
+async function addGalleryFiles(files){
+  if(!currentProject || !files || !files.length) return;
+  var room = GAL_MAX - currentPhotos.length;
+  var status = document.getElementById('galStatus');
+  if(room <= 0){
+    status.textContent = 'Gallery is full (' + GAL_MAX + ' photos). Delete or transfer some first.';
+    return;
+  }
+  var take = Array.prototype.slice.call(files, 0, room);
+  var skipped = files.length - take.length;
+  for(var i = 0; i < take.length; i++){
+    status.textContent = 'Adding photo ' + (i+1) + ' of ' + take.length + '\u2026';
+    try{
+      var dataUrl = await resizeImageFile(take[i], 1600, 0.82);
+      await photoDb.add(currentProject.id, dataUrl);
+    }catch(err){
+      status.textContent = 'Upload failed: ' + (err.message || err);
+      await loadGallery();
+      return;
+    }
+  }
+  status.textContent = skipped > 0
+    ? ('Added ' + take.length + ' \u2014 ' + skipped + ' skipped (20-photo limit).')
+    : ('Added ' + take.length + ' photo' + (take.length === 1 ? '' : 's') + '.');
+  setTimeout(function(){ status.textContent = ''; }, 4000);
+  await loadGallery();
+}
+document.getElementById('galAddBtn').addEventListener('click', function(){
+  document.getElementById('galFileInput').click();
+});
+document.getElementById('galCamBtn').addEventListener('click', function(){
+  document.getElementById('galCamInput').click();
+});
+document.getElementById('galFileInput').addEventListener('change', function(){
+  addGalleryFiles(this.files); this.value = '';
+});
+document.getElementById('galCamInput').addEventListener('change', function(){
+  addGalleryFiles(this.files); this.value = '';
+});
+
+/* ---------- transfer checked photos into an inspection report ---------- */
+var galXferMenu = document.getElementById('galXferMenu');
+function isEstimateTitle(t){
+  return /^(estimate|siding estimate|window estimate|gutter estimate|repair estimate)/i.test((t||'').trim());
+}
+document.getElementById('galXferBtn').addEventListener('click', function(e){
+  e.stopPropagation();
+  var ids = Object.keys(galChecked);
+  if(!ids.length){
+    document.getElementById('galStatus').textContent = 'Check at least one photo first.';
+    setTimeout(function(){ document.getElementById('galStatus').textContent = ''; }, 3000);
+    return;
+  }
+  var reports = cacheRows.filter(function(r){
+    return currentProject && r.project_id === currentProject.id && !isEstimateTitle(r.title);
+  });
+  galXferMenu.innerHTML =
+    reports.map(function(r){
+      return '<button class="estopt" data-doc="' + r.id + '">\uD83D\uDCC4 ' + esc(r.title || 'Untitled') + '</button>';
+    }).join('') +
+    '<button class="estopt" data-doc="__new__">\u2795 New inspection report\u2026</button>';
+  galXferMenu.style.display = galXferMenu.style.display === 'block' ? 'none' : 'block';
+});
+document.addEventListener('click', function(){ galXferMenu.style.display = 'none'; });
+
+galXferMenu.addEventListener('click', async function(e){
+  var opt = e.target.closest('.estopt');
+  if(!opt || !currentProject) return;
+  e.stopPropagation();
+  galXferMenu.style.display = 'none';
+  var docId = opt.getAttribute('data-doc');
+  var status = document.getElementById('galStatus');
+  try{
+    if(docId === '__new__'){
+      var title = prompt('Report title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
+      if(title === null) return;
+      docId = await db.create(title.trim() || 'Untitled inspection',
+                              prefillClientInfo(REPORT_TEMPLATE, currentProject),
+                              currentProject.name, currentProject.id);
+      await reload();
+    }
+    var picked = currentPhotos.filter(function(x){ return galChecked[x.id]; });
+    status.textContent = 'Transferring ' + picked.length + ' photo' + (picked.length===1?'':'s') + '\u2026';
+    await transferPhotosToReport(docId, picked);
+    for(var i = 0; i < picked.length; i++){ await photoDb.remove(picked[i].id); }
+    status.textContent = '\u2713 Transferred \u2014 photos removed from gallery.';
+    setTimeout(function(){ status.textContent = ''; }, 4000);
+    await reload();
+    await loadGallery();
+    await openEditor(docId);
+  }catch(err){
+    status.textContent = '';
+    showError('Transfer failed: ' + (err.message || err));
+  }
+});
+
+async function transferPhotosToReport(docId, photos){
+  var full = await db.get(docId);
+  if(!full) throw new Error('Report not found');
+  var doc = new DOMParser().parseFromString(full.html, 'text/html');
+  photos.forEach(function(ph){
+    var frame = null;
+    var frames = doc.querySelectorAll('.fig .frame');
+    for(var i = 0; i < frames.length; i++){
+      if(!frames[i].querySelector('img')){ frame = frames[i]; break; }
+    }
+    if(!frame) frame = addFrameToSection(doc, 5); /* overflow: new frame in Roof Surface */
+    if(!frame) return;
+    frame.textContent = '';
+    var img = doc.createElement('img');
+    img.src = ph.data;
+    frame.appendChild(img);
+  });
+  var out = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  await db.update(docId, { html: out });
 }
 
 /* =========================================================================
@@ -1847,6 +2141,27 @@ document.getElementById('projNotesSave').addEventListener('click', async functio
 });
 
 /* document creation inside a profile */
+function prefillClientInfo(tpl, pr){
+  if(!pr) return tpl;
+  function put(placeholder, value){
+    if(!value) return;
+    tpl = tpl.split('<span class="ph">' + placeholder + '</span>')
+             .join('<span>' + esc(value) + '</span>');
+  }
+  var contact = [pr.phone, pr.email].filter(Boolean).join(' \u00b7 ');
+  /* report cover + intro */
+  put('[CLIENT / HOMEOWNER NAME]', pr.name);
+  put('[STREET ADDRESS, CITY, STATE ZIP]', pr.address);
+  put('[PROPERTY ADDRESS]', pr.address);
+  put('[CLIENT NAME / ROLE]', pr.name);
+  /* estimates */
+  put('[Client name]', pr.name);
+  put('[Street, City, State ZIP]', pr.address);
+  /* shared contact row */
+  put('[Phone \u00b7 Email]', contact);
+  return tpl;
+}
+
 var EST_TYPES = {
   roof:    { label:'Estimate',        tpl:function(){ return ESTIMATE_TEMPLATE; } },
   siding:  { label:'Siding Estimate', tpl:function(){ return SIDING_TEMPLATE; } },
@@ -1860,7 +2175,8 @@ document.getElementById('pNewReportBtn').addEventListener('click', async functio
   var title = prompt('Report title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
   if(title === null) return;
   try{
-    var id = await db.create(title.trim() || 'Untitled inspection', null,
+    var id = await db.create(title.trim() || 'Untitled inspection',
+                             prefillClientInfo(REPORT_TEMPLATE, currentProject),
                              currentProject.name, currentProject.id);
     await reload();
     await openEditor(id);
@@ -1885,7 +2201,7 @@ pEstMenu.addEventListener('click', async function(e){
   try{
     var name = (title.trim() || currentProject.name || 'Untitled');
     if(name.toLowerCase().indexOf(kind.label.toLowerCase()) !== 0) name = kind.label + ' \u2014 ' + name;
-    var id = await db.create(name, kind.tpl(), currentProject.name, currentProject.id);
+    var id = await db.create(name, prefillClientInfo(kind.tpl(), currentProject), currentProject.name, currentProject.id);
     await reload();
     await openEditor(id);
   }catch(err){ showError('Could not create estimate: ' + (err.message || err)); }
