@@ -266,23 +266,18 @@ footer.site{
   transition:box-shadow .15s, transform .15s;
 }
 .pcard:hover{box-shadow:0 10px 26px rgba(0,0,0,.22);transform:translateY(-3px);}
-.pcard.feat{grid-column:span 2;aspect-ratio:2/1;}
 .pcard .thumb{position:absolute;inset:0;}
 .pcard .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .pcard .initial{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font:800 64px 'Segoe UI',Arial,sans-serif;color:#d8cbc5;}
-.pcard.feat .initial{font-size:96px;}
 .pcard .ovl{
   position:absolute;left:0;right:0;bottom:0;padding:34px 14px 10px;color:#fff;
   background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.62) 70%);
 }
 .pcard .nm{font:800 17px 'Segoe UI',Arial,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.5);}
-.pcard.feat .nm{font-size:21px;}
 .pcard .ad{font:600 12px 'Segoe UI',Arial,sans-serif;opacity:.9;margin-top:1px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
 .pcard .ft{font:700 11px 'Segoe UI',Arial,sans-serif;opacity:.85;margin-top:5px;display:flex;justify-content:space-between;gap:8px;}
-.pcard .newchip{position:absolute;top:10px;left:10px;background:var(--red);color:#fff;
-  font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;padding:4px 10px;border-radius:10px;}
-@media (max-width:560px){ .pcard.feat{grid-column:span 1;aspect-ratio:4/3;} }
+
 /* ---- profile ---- */
 .projhead{display:flex;gap:20px;margin:16px 0 8px;flex-wrap:wrap;}
 .projcover{position:relative;flex:0 0 320px;height:190px;border:1px solid var(--line);border-radius:10px;
@@ -440,6 +435,31 @@ footer.site{
 .clirow .bd small{display:block;font:12.5px 'Segoe UI',Arial,sans-serif;color:#777;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .clirow .chev{color:#c0aea6;font-size:20px;font-weight:800;}
+
+.stagechip{display:inline-block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;
+  padding:3px 9px;border-radius:9px;text-transform:uppercase;}
+.stg-Lead{background:#e8f0fb;color:#1d4f91;}
+.stg-Inspected{background:#fdf3e2;color:#8a5a10;}
+.stg-EstimateSent{background:#f3e8fb;color:#5b2d91;}
+.stg-Signed{background:#e9f5ec;color:#1d6b34;}
+.stg-Scheduled{background:#fff0f0;color:#9c1822;}
+.stg-Complete{background:#ececec;color:#555;}
+.pcard .stagechip{position:absolute;top:10px;left:10px;box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.stgfilter{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;}
+.stgfilter .hstat.on{background:#9c1822;color:#fff;border-color:#9c1822;}
+.stgfilter .hstat.on b{color:#fff;}
+
+.matcard{border:1px solid var(--line);border-radius:10px;background:#fff;padding:14px 16px;margin:10px 0;}
+.mathead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:15px;}
+.matbtns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px;}
+.mattable{width:100%;border-collapse:collapse;font:13.5px 'Segoe UI',Arial,sans-serif;margin-top:6px;}
+.mattable th{background:#2b2b2b;color:#fff;text-align:left;padding:7px 10px;font-size:12px;}
+.mattable td{border-bottom:1px solid #eee;padding:6px 10px;}
+.mattable td.q{width:110px;}
+.mattable td.q input{width:80px;padding:6px 8px;border:1px solid #c9c2bf;border-radius:6px;
+  font:600 13.5px 'Segoe UI',Arial,sans-serif;text-align:right;background:#FFF9C4;}
+.mattable td.u{width:120px;color:#666;}
+.matempty{font:13px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;padding:8px 0 2px;}
 </style>
 </head>
 <body>
@@ -466,6 +486,7 @@ footer.site{
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
+          <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
         </div>
       </span>
     </div>
@@ -537,10 +558,17 @@ footer.site{
       <div class="projinfo">
         <h2 id="projName"></h2>
         <div id="projMeta" class="projmeta"></div>
-        <label style="display:inline-flex;align-items:center;gap:7px;margin-top:8px;font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#444;cursor:pointer;">
-          <input type="checkbox" id="ptCheck" style="width:17px;height:17px;accent-color:#C8202E;">
-          Photos transferred to report
-        </label>
+        <div style="margin-top:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+          <label style="display:inline-flex;align-items:center;gap:7px;font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#444;">
+            Stage
+            <select id="stageSel" style="font:inherit;padding:6px 10px;border:1px solid #c9c2bf;border-radius:7px;background:#fff;"></select>
+          </label>
+          <label style="display:inline-flex;align-items:center;gap:7px;font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#444;cursor:pointer;">
+            <input type="checkbox" id="ptCheck" style="width:17px;height:17px;accent-color:#C8202E;">
+            Photos transferred to report
+          </label>
+          <button class="chipbtn" id="fupBtn">&#9200; Follow up&#8230;</button>
+        </div>
         <div style="margin-top:10px;">
           <button class="chipbtn" id="projEditBtn">&#9998; Edit client info</button>
           <button class="chipbtn danger" id="projDelBtn">Delete project</button>
@@ -553,6 +581,7 @@ footer.site{
       <button class="ptab" data-tab="inspections">&#128269; Inspections</button>
       <button class="ptab" data-tab="estimates">&#128176; Estimates</button>
       <button class="ptab" data-tab="checklists">&#128203; Checklists</button>
+      <button class="ptab" data-tab="materials">&#128230; Materials</button>
     </div>
 
     <div id="tab-overview">
@@ -619,6 +648,57 @@ footer.site{
         </div>
       </div>
     </div>
+
+    <div id="tab-materials" style="display:none;">
+      <h3 class="projsec">&#128230; Material Order Lists</h3>
+      <p class="subnote">Import measurements once and auto-generate a material order with quantities and units.
+      Quantities include standard waste and are fully editable &#8212; always verify against the scope before ordering.</p>
+
+      <div class="matcard" data-trade="roofing">
+        <div class="mathead"><b>&#127968; Roofing</b><span class="projcount" id="matSrcroofing">No measurements yet</span></div>
+        <div class="matbtns">
+          <button class="chipbtn matup" data-trade="roofing">&#128196; Import Roofr PDF</button>
+          <button class="chipbtn matgen" data-trade="roofing">&#9881;&#65039; Generate list</button>
+          <button class="chipbtn matcopy" data-trade="roofing">&#128203; Copy</button>
+          <button class="chipbtn matprint" data-trade="roofing">&#128424; Print</button>
+        </div>
+        <div class="matmount" id="matListroofing"></div>
+      </div>
+
+      <div class="matcard" data-trade="siding">
+        <div class="mathead"><b>&#129521; Siding</b><span class="projcount" id="matSrcsiding">No measurements yet</span></div>
+        <div class="matbtns">
+          <button class="chipbtn matup" data-trade="siding">&#128196; Import Hover PDF</button>
+          <button class="chipbtn matgen" data-trade="siding">&#9881;&#65039; Generate list</button>
+          <button class="chipbtn matcopy" data-trade="siding">&#128203; Copy</button>
+          <button class="chipbtn matprint" data-trade="siding">&#128424; Print</button>
+        </div>
+        <div class="matmount" id="matListsiding"></div>
+      </div>
+
+      <div class="matcard" data-trade="gutters">
+        <div class="mathead"><b>&#127783;&#65039; Gutters</b><span class="projcount" id="matSrcgutters">No footage set</span></div>
+        <div class="matbtns">
+          <button class="chipbtn matset" data-trade="gutters">&#9999;&#65039; Set gutter footage</button>
+          <button class="chipbtn matgen" data-trade="gutters">&#9881;&#65039; Generate list</button>
+          <button class="chipbtn matcopy" data-trade="gutters">&#128203; Copy</button>
+          <button class="chipbtn matprint" data-trade="gutters">&#128424; Print</button>
+        </div>
+        <div class="matmount" id="matListgutters"></div>
+      </div>
+
+      <div class="matcard" data-trade="windows">
+        <div class="mathead"><b>&#129695; Windows</b><span class="projcount" id="matSrcwindows">No count set</span></div>
+        <div class="matbtns">
+          <button class="chipbtn matset" data-trade="windows">&#9999;&#65039; Set window count</button>
+          <button class="chipbtn matgen" data-trade="windows">&#9881;&#65039; Generate list</button>
+          <button class="chipbtn matcopy" data-trade="windows">&#128203; Copy</button>
+          <button class="chipbtn matprint" data-trade="windows">&#128424; Print</button>
+        </div>
+        <div class="matmount" id="matListwindows"></div>
+      </div>
+      <input type="file" id="matFile" accept="application/pdf" style="display:none;">
+    </div>
   </div>
 </div>
 
@@ -683,10 +763,11 @@ footer.site{
   <div class="wrap" style="padding-top:18px;">
     <button class="btn dark" id="cliBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#128101; Client Directory</h2>
-    <div class="controls" style="margin:8px 0 4px;">
+    <div class="controls" style="margin:8px 0 0;">
       <input type="search" id="cliFilter" placeholder="Filter by name, address, phone, email, rep&#8230;" aria-label="Filter clients">
       <span class="count" id="cliCount"></span>
     </div>
+    <div class="stgfilter" id="stgFilter"></div>
     <div id="cliList"></div>
   </div>
 </div>
@@ -921,6 +1002,24 @@ footer.site{
   </div>
 </div>
 
+<!-- ============ SIGNATURE MODAL ============ -->
+<div id="sigModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.62);z-index:230;">
+  <div class="projform" style="max-width:560px;margin:12vh auto 0;">
+    <h3 style="margin:0 0 6px;">&#9997;&#65039; Client signature</h3>
+    <p class="subnote" style="margin:0 0 8px;">Have the client sign with a finger or stylus. The signature and
+    today&#8217;s date are placed on the acceptance line.</p>
+    <canvas id="sigPad" width="500" height="170" style="width:100%;border:2px dashed #c9c2bf;border-radius:10px;
+      background:#fff;touch-action:none;display:block;"></canvas>
+    <div style="margin-top:12px;display:flex;justify-content:space-between;">
+      <button class="chipbtn" id="sigClear">Clear</button>
+      <span>
+        <button class="chipbtn" id="sigCancel">Cancel</button>
+        <button class="btn" id="sigApply">Apply signature</button>
+      </span>
+    </div>
+  </div>
+</div>
+
 <footer class="site">
   <div class="wrap">Cardinal Roofing &amp; Renovations — Client Resources: profiles, inspections &amp; estimates.</div>
 </footer>
@@ -939,6 +1038,9 @@ footer.site{
     </span>
     <button class="btn" id="saveBtn">Save</button>
     <button class="btn dark" id="printBtn">Print / PDF</button>
+    <button class="btn dark" id="emailDocBtn">&#128231; Email to client</button>
+    <button class="btn dark" id="sigBtn" style="display:none;">&#9997;&#65039; Client signature</button>
+    <button class="btn dark" id="shareBtn">&#128279; Share link</button>
     <button class="btn dark" id="assistantBtn">&#128194; Assistant</button>
     <span id="savedFlash"></span>
   </div>
@@ -2022,7 +2124,7 @@ var db = {
   list: async function(){
     if(TEAM){
       var r = await sb.from(TABLE)
-        .select('id,title,project,project_id,status,sent_at,created_at,updated_at,created_by')
+        .select('id,title,project,project_id,status,sent_at,share_token,created_at,updated_at,created_by')
         .order('created_at', {ascending:false});
       if(r.error) throw r.error;
       return r.data;
@@ -2116,7 +2218,7 @@ var pdb = {
   list: async function(){
     if(TEAM){
       var r = await sb.from('projects')
-        .select('id,name,address,phone,email,notes,cover_image,checklist,photos_transferred,created_by,created_at,updated_at')
+        .select('id,name,address,phone,email,notes,cover_image,checklist,photos_transferred,stage,created_by,created_at,updated_at')
         .order('updated_at', {ascending:false});
       if(r.error) throw r.error;
       return r.data || [];
@@ -2351,10 +2453,10 @@ function renderHome(){
         ? '<div class="thumb"><img src="' + pr.cover_image + '" alt=""></div>'
         : '<div class="initial">' + esc((pr.name || '?').trim().charAt(0).toUpperCase()) + '</div>';
       var by = pr.created_by ? esc(pr.created_by.split('@')[0]) : '';
-      var feat = (idx === 0 && !q) ? ' feat' : '';
-      return '<div class="pcard' + feat + '" data-proj="' + pr.id + '">' +
+      var stg = STAGES.indexOf(pr.stage) !== -1 ? pr.stage : 'Lead';
+      return '<div class="pcard" data-proj="' + pr.id + '">' +
         thumb +
-        (feat ? '<span class="newchip">MOST RECENT</span>' : '') +
+        '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' +
         '<div class="ovl">' +
           '<div class="nm">' + esc(pr.name || 'Unnamed client') + '</div>' +
           '<div class="ad">' + esc(pr.address || '') + '</div>' +
@@ -2414,6 +2516,7 @@ function openProject(id){
   }
   document.getElementById('projCoverBtn').textContent =
     pr.cover_image ? '\u21BB Replace cover photo' : '\uD83D\uDCF7 Add cover photo';
+  document.getElementById('stageSel').value = STAGES.indexOf(pr.stage) !== -1 ? pr.stage : 'Lead';
   document.getElementById('ptCheck').checked = !!pr.photos_transferred;
   document.getElementById('projNotes').value = pr.notes || '';
   document.getElementById('notesFlash').textContent = '';
@@ -2421,6 +2524,7 @@ function openProject(id){
   loadGallery();
   renderCkStatus();
   renderGcStatus();
+  renderMaterialsTab();
   showTab('overview');
   hideAllViews();
   projectView.style.display = 'block';
@@ -2439,7 +2543,7 @@ function showTab(name){
   document.querySelectorAll('.ptab').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-tab') === name);
   });
-  ['overview','inspections','estimates','checklists'].forEach(function(t){
+  ['overview','inspections','estimates','checklists','materials'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
 }
@@ -2873,10 +2977,10 @@ document.getElementById('ckSave').addEventListener('click', async function(){
   var prev = getChecklist(currentProject);
   cl.completed_at = (prev && prev.completed_at) ? prev.completed_at : new Date().toISOString();
   cl.updated_at = new Date().toISOString();
-  /* keep other checklists stored alongside */
+  /* keep everything else stored alongside (general checklist, measurements, materials) */
   var prevAll = {};
   try{ prevAll = JSON.parse(currentProject.checklist || '{}') || {}; }catch(e){}
-  if(prevAll.general) cl.general = prevAll.general;
+  Object.keys(prevAll).forEach(function(k){ if(!(k in cl)) cl[k] = prevAll[k]; });
   try{
     await pdb.update(currentProject.id, { checklist: JSON.stringify(cl) });
     currentProject.checklist = JSON.stringify(cl);
@@ -3023,11 +3127,392 @@ function hideAllViews(){
   clientsView.style.display = 'none';
 }
 
+/* =========================================================================
+   MATERIAL ORDER LISTS
+   ========================================================================= */
+function ceil(n){ return Math.ceil(n); }
+function num(v){ var n = Number(v); return (isFinite(n) && n > 0) ? n : 0; }
+
+async function saveCkPatch(patch){
+  if(!currentProject) return;
+  var all = parseCkAll(currentProject);
+  Object.assign(all, patch);
+  var s = JSON.stringify(all);
+  await pdb.update(currentProject.id, { checklist: s });
+  currentProject.checklist = s;
+  var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
+  if(cp) cp.checklist = s;
+}
+
+async function extractPdfText(file, statusFn){
+  statusFn('Reading PDF\u2026');
+  var lib = await loadPdfJs();
+  var buf = await file.arrayBuffer();
+  var pdf = await lib.getDocument({ data: buf }).promise;
+  var texts = [];
+  for(var i = 1; i <= pdf.numPages; i++){
+    var page = await pdf.getPage(i);
+    var tc = await page.getTextContent();
+    texts.push('--- PAGE ' + i + ' ---\n' +
+      tc.items.map(function(it){ return it.str; }).join(' '));
+  }
+  return texts.join('\n\n').slice(0, 60000);
+}
+
+/* ---- generators: measurements -> [{m, q, u}] ---- */
+function genRoofingMats(r){
+  var sq = num(r.squares) || num(r.area_sqft) / 100;
+  if(!sq) return [];
+  var hipVal = num(r.hip_lf) + num(r.valley_lf);
+  var waste = 1 + Math.max(num(r.waste_pct), hipVal > 0 ? 15 : 10) / 100;
+  var wsq = sq * waste;
+  var eaveRake = num(r.eave_lf) + num(r.rake_lf);
+  var capLf = num(r.ridge_lf) + num(r.hip_lf);
+  var iwLf = num(r.valley_lf) + num(r.eave_lf);
+  var out = [];
+  out.push({ m:'Architectural shingles', q:ceil(wsq * 3), u:'bundles' });
+  out.push({ m:'Synthetic underlayment (10 sq roll)', q:ceil(wsq / 10), u:'rolls' });
+  if(iwLf) out.push({ m:'Ice & water shield (66 lf roll)', q:ceil(iwLf / 66), u:'rolls' });
+  if(eaveRake){
+    out.push({ m:'Starter strip (105 lf bundle)', q:ceil(eaveRake / 105), u:'bundles' });
+    out.push({ m:'Drip edge (10 ft)', q:ceil(eaveRake / 10), u:'pcs' });
+  }
+  if(capLf) out.push({ m:'Hip & ridge cap (25 lf bundle)', q:ceil(capLf / 25), u:'bundles' });
+  if(num(r.ridge_lf)) out.push({ m:'Ridge vent (4 ft)', q:ceil(num(r.ridge_lf) / 4), u:'pcs' });
+  if(num(r.step_lf)) out.push({ m:'Step flashing', q:ceil(num(r.step_lf) / 0.83), u:'pcs' });
+  if(num(r.wall_lf)) out.push({ m:'Apron/wall flashing (10 ft)', q:ceil(num(r.wall_lf) / 10), u:'pcs' });
+  if(num(r.penetrations_count)) out.push({ m:'Pipe boots', q:num(r.penetrations_count), u:'each' });
+  out.push({ m:'Coil roofing nails (7,200 ct)', q:Math.max(1, ceil(wsq / 16)), u:'boxes' });
+  out.push({ m:'Cap nails (2,000 ct)', q:Math.max(1, ceil(wsq / 20)), u:'boxes' });
+  out.push({ m:'Roofing sealant', q:Math.max(2, ceil(sq / 15)), u:'tubes' });
+  return out;
+}
+function genSidingMats(h){
+  var area = num(h.siding_area_sqft);
+  if(!area) return [];
+  var wsq = (area / 100) * 1.1;
+  var out = [];
+  out.push({ m:'Siding (squares, incl. 10% waste)', q:Math.round(wsq * 10) / 10, u:'squares' });
+  out.push({ m:'House wrap (9\u00d7150 roll)', q:Math.max(1, ceil(area * 1.1 / 1000)), u:'rolls' });
+  if(num(h.base_length_lf)){
+    out.push({ m:'Starter strip (12 ft)', q:ceil(num(h.base_length_lf) / 12), u:'pcs' });
+    out.push({ m:'Under-sill / utility trim (12.5 ft)', q:ceil(num(h.base_length_lf) / 12.5), u:'pcs' });
+  }
+  if(num(h.outside_corner_lf)) out.push({ m:'Outside corner posts (10 ft)', q:ceil(num(h.outside_corner_lf) / 10), u:'pcs' });
+  if(num(h.inside_corner_lf)) out.push({ m:'Inside corner posts (10 ft)', q:ceil(num(h.inside_corner_lf) / 10), u:'pcs' });
+  if(num(h.opening_perimeter_lf)) out.push({ m:'J-channel (12.5 ft)', q:ceil(num(h.opening_perimeter_lf) * 1.1 / 12.5), u:'pcs' });
+  if(num(h.soffit_area_sqft)) out.push({ m:'Soffit panels (12 sq ft panel)', q:ceil(num(h.soffit_area_sqft) * 1.1 / 12), u:'pcs' });
+  if(num(h.fascia_lf)) out.push({ m:'Aluminum fascia (12 ft)', q:ceil(num(h.fascia_lf) * 1.05 / 12), u:'pcs' });
+  out.push({ m:'Siding nails (1.5\u2033, 5 lb box)', q:Math.max(1, ceil(wsq / 18)), u:'boxes' });
+  if(num(h.openings_count)) out.push({ m:'Exterior caulk', q:Math.max(2, ceil(num(h.openings_count) / 5)), u:'tubes' });
+  return out;
+}
+function genGutterMats(all){
+  var lf = num(all.gutter_lf) || num((all.roofr || {}).eave_lf);
+  if(!lf) return [];
+  var run = lf * 1.05;
+  var ds = Math.max(2, ceil(lf / 35));
+  var out = [];
+  out.push({ m:'Seamless gutter run', q:Math.round(run), u:'lf' });
+  out.push({ m:'Downspouts (10 ft)', q:ds * ((num(all.stories) || 1) >= 2 ? 2 : 1), u:'pcs' });
+  out.push({ m:'Downspout outlets', q:ds, u:'each' });
+  out.push({ m:'Elbows (A/B)', q:ds * 3, u:'each' });
+  out.push({ m:'Hidden hangers', q:ceil(run / 2), u:'each' });
+  out.push({ m:'End caps', q:Math.max(2, ceil(lf / 40) * 2), u:'each' });
+  out.push({ m:'Miters (verify count on site)', q:0, u:'each' });
+  out.push({ m:'Gutter sealant', q:Math.max(2, ceil(lf / 50)), u:'tubes' });
+  out.push({ m:'Zip screws (bag)', q:1, u:'bags' });
+  return out;
+}
+function genWindowMats(all){
+  var n = num(all.win_count);
+  if(!n) return [];
+  return [
+    { m:'Replacement windows (per schedule)', q:n, u:'each' },
+    { m:'Shim packs', q:Math.max(1, ceil(n / 4)), u:'bundles' },
+    { m:'Low-expansion window foam', q:Math.max(1, ceil(n / 3)), u:'cans' },
+    { m:'Flashing tape (75 ft roll)', q:Math.max(1, ceil(n / 6)), u:'rolls' },
+    { m:'Backer rod', q:1, u:'rolls' },
+    { m:'Exterior caulk (color-matched)', q:Math.max(2, ceil(n / 2)), u:'tubes' },
+    { m:'Interior stop / trim (verify lengths)', q:0, u:'pcs' }
+  ];
+}
+var MAT_TRADES = {
+  roofing: { label:'Roofing', gen:function(all){ return genRoofingMats(all.roofr || {}); } },
+  siding:  { label:'Siding',  gen:function(all){ return genSidingMats(all.hover || {}); } },
+  gutters: { label:'Gutters', gen:genGutterMats },
+  windows: { label:'Windows', gen:genWindowMats }
+};
+
+function renderMatSources(){
+  if(!currentProject) return;
+  var all = parseCkAll(currentProject);
+  var r = all.roofr, h = all.hover;
+  document.getElementById('matSrcroofing').textContent =
+    r ? ('Roofr: ' + (num(r.squares) || (num(r.area_sqft)/100).toFixed(1)) + ' sq' + (r.pitch ? ' \u00b7 ' + r.pitch : '')) : 'No measurements yet';
+  document.getElementById('matSrcsiding').textContent =
+    h ? ('Hover: ' + num(h.siding_area_sqft) + ' sq ft siding') : 'No measurements yet';
+  var glf = num(all.gutter_lf) || num((r || {}).eave_lf);
+  document.getElementById('matSrcgutters').textContent =
+    glf ? (glf + ' lf' + (num(all.gutter_lf) ? '' : ' (from Roofr eaves)')) : 'No footage set';
+  document.getElementById('matSrcwindows').textContent =
+    num(all.win_count) ? (num(all.win_count) + ' windows') : 'No count set';
+}
+function renderMatList(trade){
+  var all = parseCkAll(currentProject);
+  var items = ((all.materials || {})[trade]) || [];
+  var mount = document.getElementById('matList' + trade);
+  if(!items.length){
+    mount.innerHTML = '<div class="matempty">No list yet \u2014 import measurements (or set the numbers), then Generate.</div>';
+    return;
+  }
+  mount.innerHTML = '<table class="mattable"><tr><th>Material</th><th style="text-align:right;">Qty</th><th>Unit</th></tr>' +
+    items.map(function(it, i){
+      return '<tr><td>' + esc(it.m) + '</td>' +
+        '<td class="q" style="text-align:right;"><input type="number" min="0" step="any" value="' + it.q + '" data-i="' + i + '"></td>' +
+        '<td class="u">' + esc(it.u) + '</td></tr>';
+    }).join('') + '</table>';
+}
+function renderMaterialsTab(){
+  renderMatSources();
+  Object.keys(MAT_TRADES).forEach(renderMatList);
+}
+function matListText(trade){
+  var all = parseCkAll(currentProject);
+  var items = ((all.materials || {})[trade]) || [];
+  return 'MATERIAL ORDER \u2014 ' + MAT_TRADES[trade].label + '\n' +
+    (currentProject.name || '') + (currentProject.address ? ' \u00b7 ' + currentProject.address : '') +
+    '\n' + fmtLongDate(new Date()) + '\n\n' +
+    items.map(function(it){ return String(it.q) + ' ' + it.u + ' \u2014 ' + it.m; }).join('\n');
+}
+
+(function wireMaterials(){
+  var tab = document.getElementById('tab-materials');
+  var fileInput = document.getElementById('matFile');
+  var pendingTrade = null;
+
+  tab.addEventListener('click', async function(e){
+    var btn = e.target.closest('button');
+    if(!btn || !currentProject) return;
+    var trade = btn.getAttribute('data-trade');
+
+    if(btn.classList.contains('matup')){
+      pendingTrade = trade;
+      fileInput.value = '';
+      fileInput.click();
+      return;
+    }
+    if(btn.classList.contains('matset')){
+      if(trade === 'gutters'){
+        var all0 = parseCkAll(currentProject);
+        var cur = all0.gutter_lf || ((all0.roofr || {}).eave_lf) || '';
+        var v = prompt('Gutter footage (lineal feet):', cur);
+        if(v === null) return;
+        await saveCkPatch({ gutter_lf: num(v) || null });
+      }else{
+        var v2 = prompt('Number of windows being replaced:', (parseCkAll(currentProject).win_count || ''));
+        if(v2 === null) return;
+        await saveCkPatch({ win_count: num(v2) || null });
+      }
+      renderMatSources();
+      return;
+    }
+    if(btn.classList.contains('matgen')){
+      var all = parseCkAll(currentProject);
+      var items = MAT_TRADES[trade].gen(all);
+      if(!items.length){
+        alert(trade === 'roofing' ? 'Import a Roofr PDF first.'
+            : trade === 'siding' ? 'Import a Hover PDF first.'
+            : trade === 'gutters' ? 'Set gutter footage (or import Roofr for eave length) first.'
+            : 'Set the window count first.');
+        return;
+      }
+      var mats = all.materials || {};
+      mats[trade] = items;
+      await saveCkPatch({ materials: mats });
+      renderMatList(trade);
+      return;
+    }
+    if(btn.classList.contains('matcopy')){
+      try{
+        await navigator.clipboard.writeText(matListText(trade));
+        btn.textContent = '\u2713 Copied';
+        setTimeout(function(){ btn.innerHTML = '\uD83D\uDCCB Copy'; }, 1800);
+      }catch(e2){ prompt('Copy the list:', matListText(trade)); }
+      return;
+    }
+    if(btn.classList.contains('matprint')){
+      var w = window.open('', '_blank');
+      if(!w) return;
+      var all2 = parseCkAll(currentProject);
+      var items2 = ((all2.materials || {})[trade]) || [];
+      w.document.write('<html><head><title>Material Order \u2014 ' + esc(MAT_TRADES[trade].label) + '</title>' +
+        '<style>body{font-family:Segoe UI,Arial,sans-serif;max-width:640px;margin:30px auto;color:#222;}' +
+        'h2{color:#C8202E;border-bottom:3px solid #C8202E;padding-bottom:6px;}' +
+        'table{width:100%;border-collapse:collapse;margin-top:14px;}' +
+        'th{background:#2b2b2b;color:#fff;text-align:left;padding:8px 10px;}' +
+        'td{border-bottom:1px solid #ddd;padding:7px 10px;}</style></head><body>' +
+        '<h2>Material Order \u2014 ' + esc(MAT_TRADES[trade].label) + '</h2>' +
+        '<p><b>' + esc(currentProject.name || '') + '</b>' +
+        (currentProject.address ? ' \u00b7 ' + esc(currentProject.address) : '') +
+        '<br>' + esc(fmtLongDate(new Date())) + ' \u00b7 Cardinal Roofing &amp; Renovations</p>' +
+        '<table><tr><th>Material</th><th>Qty</th><th>Unit</th></tr>' +
+        items2.map(function(it){ return '<tr><td>' + esc(it.m) + '</td><td>' + it.q + '</td><td>' + esc(it.u) + '</td></tr>'; }).join('') +
+        '</table></body></html>');
+      w.document.close();
+      setTimeout(function(){ w.print(); }, 300);
+      return;
+    }
+  });
+
+  /* qty edits persist */
+  tab.addEventListener('change', async function(e){
+    var inp = e.target;
+    if(inp.tagName !== 'INPUT' || !inp.hasAttribute('data-i')) return;
+    var card = inp.closest('.matcard');
+    if(!card || !currentProject) return;
+    var trade = card.getAttribute('data-trade');
+    var all = parseCkAll(currentProject);
+    var mats = all.materials || {};
+    var items = mats[trade] || [];
+    var i = parseInt(inp.getAttribute('data-i'), 10);
+    if(items[i]){
+      items[i].q = num(inp.value);
+      mats[trade] = items;
+      try{ await saveCkPatch({ materials: mats }); }catch(err){}
+    }
+  });
+
+  /* PDF import for roofing (Roofr) / siding (Hover) */
+  fileInput.addEventListener('change', async function(){
+    var file = fileInput.files && fileInput.files[0];
+    var trade = pendingTrade;
+    pendingTrade = null;
+    if(!file || !trade || !currentProject) return;
+    var srcEl = document.getElementById('matSrc' + trade);
+    try{
+      var text = await extractPdfText(file, function(s){ srcEl.textContent = s; });
+      srcEl.textContent = 'Extracting measurements with AI\u2026';
+      var ep = trade === 'siding' ? '/api/hover' : '/api/roofr';
+      var res = await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text })
+      });
+      var data = null; try{ data = await res.json(); }catch(pe){}
+      if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+      data.imported_at = new Date().toISOString();
+      var patch = {};
+      patch[trade === 'siding' ? 'hover' : 'roofr'] = data;
+      await saveCkPatch(patch);
+      /* auto-generate on successful import */
+      var all = parseCkAll(currentProject);
+      var items = MAT_TRADES[trade].gen(all);
+      if(items.length){
+        var mats = all.materials || {};
+        mats[trade] = items;
+        await saveCkPatch({ materials: mats });
+      }
+      renderMatSources();
+      renderMatList(trade);
+      if(trade === 'roofing'){ renderMatList('gutters'); }
+    }catch(err){
+      srcEl.textContent = 'Import failed: ' + String(err.message || err).slice(0, 120);
+    }
+  });
+})();
+
+/* ---------- full data backup (admin) ---------- */
+async function exportBackup(){
+  if(!confirm('Download a full backup of all clients, documents, photos, and appointments? This can take a minute.')) return;
+  try{
+    var docsFull = [];
+    for(var i = 0; i < cacheRows.length; i++){
+      var full = await db.get(cacheRows[i].id);
+      if(full) docsFull.push(full);
+    }
+    var photos = [];
+    for(var j = 0; j < cacheProjects.length; j++){
+      try{
+        var ph = await photoDb.listByProject(cacheProjects[j].id);
+        photos = photos.concat(ph);
+      }catch(e){}
+    }
+    var backup = {
+      app: 'Cardinal Client Resources',
+      exported_at: new Date().toISOString(),
+      exported_by: currentUser ? currentUser.email : 'local',
+      projects: cacheProjects,
+      documents: docsFull,
+      project_photos: photos,
+      appointments: cacheAppts
+    };
+    var blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    var d = new Date();
+    a.download = 'cardinal_backup_' + d.getFullYear() + pad2(d.getMonth()+1) + pad2(d.getDate()) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  }catch(err){ showError('Backup failed: ' + (err.message || err)); }
+}
+
+/* ---------- pipeline stages ---------- */
+var STAGES = ['Lead','Inspected','Estimate Sent','Signed','Scheduled','Complete'];
+function stageClass(s){ return 'stg-' + String(s || 'Lead').replace(/ /g,''); }
+(function(){
+  var sel = document.getElementById('stageSel');
+  sel.innerHTML = STAGES.map(function(s){ return '<option>' + s + '</option>'; }).join('');
+  sel.addEventListener('change', async function(){
+    if(!currentProject) return;
+    var v = sel.value;
+    try{
+      await pdb.update(currentProject.id, { stage: v });
+      currentProject.stage = v;
+      var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
+      if(cp) cp.stage = v;
+      renderHome();
+    }catch(err){ showError('Could not update stage: ' + (err.message || err)); }
+  });
+})();
+
+/* follow-up reminder from profile */
+document.getElementById('fupBtn').addEventListener('click', async function(){
+  if(!currentProject) return;
+  var days = prompt('Follow up in how many days?', '3');
+  if(days === null) return;
+  var n = parseInt(days, 10);
+  if(isNaN(n) || n < 0 || n > 365){ showError('Enter a number of days (0\u2013365).'); return; }
+  var d = new Date(Date.now() + n * 86400000);
+  try{
+    await adb.create({
+      title: 'Follow up \u2014 ' + (currentProject.name || 'client'),
+      appt_date: dateStr(d.getFullYear(), d.getMonth(), d.getDate()),
+      appt_time: '09:00',
+      project_id: currentProject.id,
+      notes: null
+    });
+    cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
+    renderCalendar();
+    alert('Follow-up scheduled for ' + d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' }) + ' at 9:00 AM.');
+  }catch(err){ showError('Could not schedule: ' + (err.message || err)); }
+});
+
+var cliStageFilter = '';
+
 /* ---------- client directory ---------- */
 function renderClientDirectory(){
   var q = (document.getElementById('cliFilter').value || '').trim().toLowerCase();
+  var sf = document.getElementById('stgFilter');
+  sf.innerHTML = '<span class="hstat' + (cliStageFilter === '' ? ' on' : '') + '" data-stg="">All stages</span>' +
+    STAGES.map(function(s){
+      var n = cacheProjects.filter(function(pr){ return (pr.stage || 'Lead') === s; }).length;
+      return '<span class="hstat' + (cliStageFilter === s ? ' on' : '') + '" data-stg="' + s + '">' + s + ' <b>' + n + '</b></span>';
+    }).join('');
   var list = cacheProjects.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); })
     .filter(function(pr){
+      if(cliStageFilter && (pr.stage || 'Lead') !== cliStageFilter) return false;
       if(!q) return true;
       return [pr.name, pr.address, pr.phone, pr.email, pr.created_by].join(' ').toLowerCase().indexOf(q) !== -1;
     });
@@ -3036,9 +3521,11 @@ function renderClientDirectory(){
     var mini = pr.cover_image ? '<img src="' + pr.cover_image + '" alt="">'
                               : esc((pr.name || '?').trim().charAt(0).toUpperCase());
     var sub = [pr.address, pr.phone].filter(Boolean).join(' \u00b7 ');
+    var stg = STAGES.indexOf(pr.stage) !== -1 ? pr.stage : 'Lead';
     return '<div class="clirow" data-proj="' + pr.id + '">' +
       '<span class="mini">' + mini + '</span>' +
-      '<span class="bd"><b>' + esc(pr.name || 'Unnamed client') + '</b>' +
+      '<span class="bd"><b>' + esc(pr.name || 'Unnamed client') + '</b> ' +
+        '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' +
         (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
       '<span class="chev">&#8250;</span></div>';
   }).join('') : '<div class="empty"><b>No clients match.</b></div>';
@@ -3054,6 +3541,12 @@ function openClientsDirectory(){
 document.getElementById('clientsBtn').addEventListener('click', openClientsDirectory);
 document.getElementById('cliBackBtn').addEventListener('click', showHome);
 document.getElementById('cliFilter').addEventListener('input', renderClientDirectory);
+document.getElementById('stgFilter').addEventListener('click', function(e){
+  var chip = e.target.closest('.hstat');
+  if(!chip) return;
+  cliStageFilter = chip.getAttribute('data-stg') || '';
+  renderClientDirectory();
+});
 document.getElementById('cliList').addEventListener('click', function(e){
   var row = e.target.closest('.clirow');
   if(row) openProject(row.getAttribute('data-proj'));
@@ -3076,6 +3569,7 @@ navMenu.addEventListener('click', function(e){
   var nav = opt.getAttribute('data-nav');
   if(nav === 'home'){ showHome(); }
   else if(nav === 'profile'){ openMyProfile(); }
+  else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
 });
 
@@ -4179,6 +4673,20 @@ function wireRoofrUpload(doc){
       if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
 
       fillRoofrFields(doc, data);
+      try{
+        var mpr = currentDocProject() || currentProject;
+        if(mpr){
+          var mAll = {};
+          try{ mAll = JSON.parse(mpr.checklist || '{}') || {}; }catch(me){}
+          data.imported_at = new Date().toISOString();
+          mAll.roofr = data;
+          var mS = JSON.stringify(mAll);
+          await pdb.update(mpr.id, { checklist: mS });
+          mpr.checklist = mS;
+          var mcp = cacheProjects.find(function(x){ return x.id === mpr.id; });
+          if(mcp) mcp.checklist = mS;
+        }
+      }catch(me2){}
       status.textContent = 'Measurements and quantities filled \u2014 review the yellow fields, fill the rest manually.';
 
     }catch(e){
@@ -4314,6 +4822,7 @@ async function openEditor(id){
       wireEstimateCalc(doc);
       wireRoofrUpload(doc);
       wireCheckboxes(doc);
+      document.getElementById('sigBtn').style.display = doc.querySelector('.sign') ? 'inline-block' : 'none';
     }catch(e){}
   };
   editor.classList.add('open');
@@ -4379,6 +4888,152 @@ async function saveCurrent(){
 }
 
 document.getElementById('saveBtn').addEventListener('click', saveCurrent);
+/* =========================================================================
+   EMAIL TO CLIENT / SIGNATURE / SHARE LINK
+   ========================================================================= */
+function currentDocRow(){
+  return cacheRows.find(function(r){ return r.id === current; }) || null;
+}
+function currentDocProject(){
+  var row = currentDocRow();
+  if(!row || !row.project_id) return null;
+  return cacheProjects.find(function(x){ return x.id === row.project_id; }) || null;
+}
+
+/* ---- share link ---- */
+async function ensureShareToken(){
+  var row = currentDocRow();
+  if(!row) throw new Error('Document not loaded');
+  if(row.share_token) return row.share_token;
+  var tok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+          : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+  await db.update(current, { share_token: tok });
+  row.share_token = tok;
+  return tok;
+}
+function shareUrlFor(tok){ return location.origin + '/api/share?t=' + tok; }
+document.getElementById('shareBtn').addEventListener('click', async function(){
+  try{
+    await saveCurrent();
+    var tok = await ensureShareToken();
+    var url = shareUrlFor(tok);
+    var copied = false;
+    try{ await navigator.clipboard.writeText(url); copied = true; }catch(e){}
+    prompt(copied ? 'Share link copied \u2014 clients can review AND sign right from this link:' : 'Share link \u2014 clients can review and sign right from this link:', url);
+  }catch(err){ showError('Could not create share link: ' + (err.message || err)); }
+});
+
+/* ---- email to client ---- */
+document.getElementById('emailDocBtn').addEventListener('click', async function(){
+  var btn = this;
+  try{
+    await saveCurrent();
+    var row = currentDocRow();
+    var pr = currentDocProject();
+    var to = prompt('Send to email address:', (pr && pr.email) || '');
+    if(to === null) return;
+    to = to.trim();
+    if(!to || to.indexOf('@') === -1){ showError('Enter a valid email address.'); return; }
+    btn.disabled = true; btn.textContent = 'Sending\u2026';
+    var tok = null;
+    try{ tok = await ensureShareToken(); }catch(e){}
+    var session = TEAM ? (await sb.auth.getSession()).data.session : null;
+    var res = await fetch('/api/senddoc', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (session ? session.access_token : '')
+      },
+      body: JSON.stringify({
+        to: to,
+        clientName: pr ? pr.name : '',
+        title: (row && row.title) || 'Cardinal Document',
+        html: serializeFrame(),
+        shareUrl: tok ? shareUrlFor(tok) : null
+      })
+    });
+    var data = null; try{ data = await res.json(); }catch(e){}
+    if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+    await db.update(current, { status: 'sent', sent_at: new Date().toISOString() });
+    btn.textContent = '\u2713 Sent';
+    setTimeout(function(){ btn.textContent = '\uD83D\uDCE7 Email to client'; btn.disabled = false; }, 2500);
+    if(pr && confirm('Sent. Schedule a follow-up reminder in 3 days?')){
+      var d = new Date(Date.now() + 3 * 86400000);
+      await adb.create({
+        title: 'Follow up \u2014 ' + (pr.name || 'client'),
+        appt_date: dateStr(d.getFullYear(), d.getMonth(), d.getDate()),
+        appt_time: '09:00',
+        project_id: pr.id,
+        notes: 'Re: ' + ((row && row.title) || 'sent document')
+      });
+      cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
+    }
+    await reload();
+  }catch(err){
+    btn.textContent = '\uD83D\uDCE7 Email to client'; btn.disabled = false;
+    showError('Could not send: ' + (err.message || err));
+  }
+});
+
+/* ---- client signature ---- */
+var sigModal = document.getElementById('sigModal');
+var sigPad = document.getElementById('sigPad');
+var sigCtx = sigPad.getContext('2d');
+var sigDrawn = false;
+function sigReset(){
+  sigCtx.fillStyle = '#fff';
+  sigCtx.fillRect(0, 0, sigPad.width, sigPad.height);
+  sigCtx.strokeStyle = '#1b1b6e';
+  sigCtx.lineWidth = 2.4;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+  sigDrawn = false;
+}
+function sigPos(e){
+  var r = sigPad.getBoundingClientRect();
+  var t = e.touches ? e.touches[0] : e;
+  return { x: (t.clientX - r.left) * (sigPad.width / r.width),
+           y: (t.clientY - r.top) * (sigPad.height / r.height) };
+}
+var sigDown = false;
+function sigStart(e){ e.preventDefault(); sigDown = true; var p = sigPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y); }
+function sigMove(e){ if(!sigDown) return; e.preventDefault(); var p = sigPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); sigDrawn = true; }
+function sigEnd(){ sigDown = false; }
+sigPad.addEventListener('mousedown', sigStart);
+sigPad.addEventListener('mousemove', sigMove);
+document.addEventListener('mouseup', sigEnd);
+sigPad.addEventListener('touchstart', sigStart, { passive: false });
+sigPad.addEventListener('touchmove', sigMove, { passive: false });
+sigPad.addEventListener('touchend', sigEnd);
+
+document.getElementById('sigBtn').addEventListener('click', function(){
+  sigReset();
+  sigModal.style.display = 'block';
+});
+document.getElementById('sigClear').addEventListener('click', sigReset);
+document.getElementById('sigCancel').addEventListener('click', function(){ sigModal.style.display = 'none'; });
+document.getElementById('sigApply').addEventListener('click', async function(){
+  if(!sigDrawn){ alert('Have the client sign first.'); return; }
+  var doc = frame.contentDocument;
+  var cols = doc ? doc.querySelectorAll('.sign .col') : [];
+  if(!cols.length){ sigModal.style.display = 'none'; return; }
+  var col = cols[cols.length - 1];
+  var line = col.querySelector('.line');
+  if(line){
+    line.innerHTML = '';
+    var img = doc.createElement('img');
+    img.src = sigPad.toDataURL('image/png');
+    img.style.cssText = 'height:44px;display:block;margin-bottom:-6px;';
+    line.appendChild(img);
+    line.style.height = 'auto';
+    line.style.borderBottom = '1.5px solid #1b1b1b';
+    var lbl = col.querySelector('.lbl');
+    if(lbl) lbl.innerHTML = 'Client Acceptance &nbsp;|&nbsp; Signed ' + esc(fmtLongDate(new Date()));
+  }
+  sigModal.style.display = 'none';
+  await saveCurrent();
+});
+
 document.getElementById('printBtn').addEventListener('click', async function(){
   await saveCurrent();
   try{
@@ -4451,6 +5106,8 @@ function showMain(userEmail){
   addProjBtn.style.display = 'inline-block';
   document.getElementById('navWrap').style.display = 'inline-block';
   document.getElementById('clientsBtn').style.display = 'inline-block';
+  document.getElementById('backupNav').style.display =
+    (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
   hideAllViews();
   mainView.style.display = 'block';
   if(TEAM){
