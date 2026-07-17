@@ -289,6 +289,7 @@ footer.site{
 .projform{max-width:430px;margin:9vh auto 0;background:#fff;border-radius:12px;padding:22px 24px;
   box-shadow:0 12px 40px rgba(0,0,0,.35);}
 .projform label{display:block;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#555;margin:10px 0 0;}
+.projform select{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;background:#fff;}
 .projform input{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;
   border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;}
 @media (max-width:640px){ .projcover{flex-basis:100%;} }
@@ -370,6 +371,7 @@ footer.site{
 
   <section class="history wrap">
     <h2 class="sec"><span class="num">&#9776;</span>Client Projects</h2>
+    <div id="homeClock" style="font:600 14px 'Segoe UI',Arial,sans-serif;color:#8a6f66;margin:2px 0 8px;"></div>
     <p class="subnote" id="storageNote"></p>
     <div class="controls">
       <input type="search" id="searchBox" placeholder="Search clients by name, address, phone, email…" aria-label="Search projects">
@@ -417,6 +419,13 @@ footer.site{
     </div>
 
     <div id="tab-inspections" style="display:none;">
+      <h3 class="projsec">&#128203; Roofing Checklist <span id="ckStatus" class="projcount">Not completed</span></h3>
+      <p class="subnote">Baseline specs required <b>before an inspection report can be created</b> — they feed
+      directly into the report&#8217;s Property Facts.</p>
+      <div style="margin:6px 0 18px;">
+        <button class="btn" id="ckOpenBtn">Open checklist</button>
+      </div>
+
       <h3 class="projsec">&#128248; Photo Gallery <span id="galCount" class="projcount">0 / 20</span></h3>
       <p class="subnote">Field photos for this client. Check the ones to use, then transfer them into an
       inspection report — transferred photos are removed from this gallery.</p>
@@ -476,6 +485,47 @@ footer.site{
       <button class="btn" id="pfSave">Save</button>
     </div>
     <div id="pfError" style="color:#C8202E;font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- ============ ROOFING CHECKLIST MODAL ============ -->
+<div id="ckModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:210;overflow:auto;">
+  <div class="projform" style="max-width:520px;margin:5vh auto 5vh;">
+    <h3 style="margin:0 0 4px;">&#128203; Roofing Checklist</h3>
+    <div id="ckDate" class="subnote" style="margin:0 0 8px;"></div>
+    <label>Type of structure *
+      <select id="ck_structure"><option value="">&#8212; select &#8212;</option>
+        <option>Single Family</option><option>Multi-Family</option><option>Commercial</option>
+        <option>Shed</option><option>Barn</option></select></label>
+    <label>Inspection method *
+      <select id="ck_method"><option value="">&#8212; select &#8212;</option>
+        <option>Visual, non-invasive; roof surface accessed directly</option>
+        <option>Visual, non-invasive; assessed from ladder at eaves</option>
+        <option>Drone-assisted visual inspection</option></select></label>
+    <label>Attic access *
+      <select id="ck_attic"><option value="">&#8212; select &#8212;</option>
+        <option>Yes</option><option>No</option></select></label>
+    <label>Estimated roof age (years) *<input type="number" id="ck_age" min="0" max="120" inputmode="numeric"></label>
+    <label>Condition of the roof *
+      <select id="ck_condition"><option value="">&#8212; select &#8212;</option>
+        <option>Good</option><option>Fair</option><option>Poor</option><option>Critical</option></select></label>
+    <label>Number of layers *
+      <select id="ck_layers"><option value="">&#8212; select &#8212;</option>
+        <option>1 Layer</option><option>2 Layers</option><option>3+ Layers (Code Violation)</option></select></label>
+    <label>Decking type *
+      <select id="ck_decking"><option value="">&#8212; select &#8212;</option>
+        <option>OSB</option><option>Plywood</option><option>1x6 Plank / Spaced Lumber</option></select></label>
+    <label>Steepness / pitch *<input type="text" id="ck_pitch" placeholder="e.g. 6/12" autocomplete="off"></label>
+    <label>Existing roof type *
+      <select id="ck_rooftype"><option value="">&#8212; select &#8212;</option>
+        <option>Asphalt shingle</option><option>Low slope</option><option>Flat</option><option>Metal</option></select></label>
+    <label>Field notes (optional)<textarea id="ck_notes" rows="3" style="width:100%;box-sizing:border-box;margin-top:4px;
+      padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;resize:vertical;"></textarea></label>
+    <div style="margin-top:14px;text-align:right;">
+      <button class="chipbtn" id="ckCancel">Cancel</button>
+      <button class="btn" id="ckSave">Save checklist</button>
+    </div>
+    <div id="ckError" style="color:#C8202E;font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -573,6 +623,20 @@ body{
   color:var(--ink);
   font-size:11pt;
   line-height:1.5;
+}
+
+/* ---------- screen readability (does not affect print) ---------- */
+@media screen{
+  body{max-width:900px;margin:0 auto;padding:26px 20px;box-sizing:border-box;}
+}
+@media screen and (max-width:640px){
+  body{padding:14px 12px;font-size:11.5pt;line-height:1.65;}
+  .figrow{flex-direction:column;}
+  .fig .frame{height:auto;aspect-ratio:4/3;}
+  .cover-photo{height:auto;aspect-ratio:4/3;}
+  .cover-title{font-size:22pt;}
+  table{font-size:10.5pt;}
+  h2.sec{font-size:14pt;}
 }
 
 @page{
@@ -775,6 +839,10 @@ recommendations.</p>
   <tr><td class="k">Roof Covering</td><td><span class="ph">[e.g. Asphalt shingles — field, hip, and ridge]</span></td></tr>
   <tr><td class="k">Roof Configuration</td><td><span class="ph">[e.g. Gable roof with front dormer and porch roof]</span></td></tr>
   <tr><td class="k">Roof Decking</td><td><span class="ph">[e.g. 1×8 nominal plank (board) decking, gapped]</span></td></tr>
+  <tr><td class="k">Estimated Roof Age</td><td><span class="ph">[Age — from checklist]</span></td></tr>
+  <tr><td class="k">Number of Layers</td><td><span class="ph">[Layers — from checklist]</span></td></tr>
+  <tr><td class="k">Predominant Pitch</td><td><span class="ph">[Pitch — from checklist]</span></td></tr>
+  <tr><td class="k">Baseline Condition</td><td><span class="ph">[Condition — from checklist]</span></td></tr>
   <tr><td class="k">Attic Access</td><td><span class="ph">[e.g. Accessible — decking, framing, insulation observed]</span></td></tr>
   <tr><td class="k">Inspection Method</td><td><span class="ph">[e.g. Visual, non-invasive; roof surface accessed directly]</span></td></tr>
 </table>
@@ -1160,6 +1228,10 @@ cost basis is agreed in advance:</p>
   <tr><td><span class="ph">[Other]</span></td><td><span class="ph">[unit]</span></td><td class="pr"><span class="ph">[$0.00]</span></td></tr>
 </table>
 
+<!-- ======================= NOTES ======================= -->
+<h2 class="sec">Notes</h2>
+<p class="ph">[Job-specific notes — access, scheduling, color selections, special conditions — or delete this line.]</p>
+
 <!-- ======================= 6. TERMS ======================= -->
 <h2 class="sec"><span class="num">6</span>Terms</h2>
 <p class="ph">[Payment schedule — e.g. deposit on acceptance, balance on completion. Warranty terms —
@@ -1283,10 +1355,11 @@ assessed until removal. Should deteriorated substrate, framing, or other conceal
 discovered during the work, a <b>written change order will be issued and approved by the client
 before any additional work is performed.</b></div>
 
+<h2 class="sec">Notes</h2>
+<p class="ph">[Job-specific notes — access, scheduling, color selections, special conditions — or delete this line.]</p>
+
 <h2 class="sec">Terms</h2>
-<p class="ph">[Payment schedule — e.g. deposit on acceptance, balance on completion. Warranty terms —
-manufacturer material warranty and Cardinal workmanship warranty period. Scheduling and weather
-allowances. Any exclusions.]</p>
+__EST_TERMS__
 <div class="note"><b>Acceptance.</b> This estimate is valid through the date shown above. Signature below
 authorizes Cardinal Roofing &amp; Renovations to perform the work described, under the terms stated,
 including the concealed-conditions change-order process above.</div>
@@ -1412,18 +1485,29 @@ var GENERAL_BODY =
   estRow('<span class="ph">[Repair item]</span>','qty','<span class="ph">[un]</span>') +
   EST_TOTAL_ROW + '</table>' + EST_HINT;
 
-function buildEstimate(titleHtml, body){
+var EST_TERMS_PH = '<p class="ph">[Payment schedule \u2014 e.g. deposit on acceptance, balance on completion. Warranty terms \u2014 ' +
+  'manufacturer material warranty and Cardinal workmanship warranty period. Scheduling and weather allowances. Any exclusions.]</p>';
+var EST_TERMS_STD =
+  '<p><b>Warranty Terms</b> \u2014 Cardinal Roofing and Renovations includes a 5 year workmanship warranty.</p>' +
+  '<p><b>Payment Schedule</b> \u2014 Deposit due upon contract signing, remaining balance due upon final completion.</p>';
+var EST_TERMS_GENERAL =
+  '<p><b>Warranty Terms</b> \u2014 Cardinal Roofing and Renovations includes a 5 year workmanship warranty. ' +
+  'Restrictions to warranty may apply for repair work.</p>' +
+  '<p><b>Payment Schedule</b> \u2014 Deposit due upon contract signing, remaining balance due upon final completion.</p>';
+
+function buildEstimate(titleHtml, body, terms){
   var m = REPORT_TEMPLATE.match(/class="cover-logo" src="(data:image\/[^"]+)"/);
   return ESTIMATE_BASE_RAW
     .replace('__LOGO__', m ? m[1] : '')
     .replace('__EST_TITLE__', titleHtml)
-    .replace('__EST_BODY__', body);
+    .replace('__EST_BODY__', body)
+    .replace('__EST_TERMS__', terms || EST_TERMS_PH);
 }
 
 var SIDING_TEMPLATE  = buildEstimate('MASTIC VINYL SIDING <span>ESTIMATE</span>', SIDING_BODY);
 var WINDOW_TEMPLATE  = buildEstimate('REPLACEMENT VINYL WINDOW <span>ESTIMATE</span>', WINDOW_BODY);
-var GUTTER_TEMPLATE  = buildEstimate('SEAMLESS GUTTER <span>ESTIMATE</span>', GUTTER_BODY);
-var GENERAL_TEMPLATE = buildEstimate('REPAIR <span>ESTIMATE</span>', GENERAL_BODY);
+var GUTTER_TEMPLATE  = buildEstimate('SEAMLESS GUTTER <span>ESTIMATE</span>', GUTTER_BODY, EST_TERMS_STD);
+var GENERAL_TEMPLATE = buildEstimate('REPAIR <span>ESTIMATE</span>', GENERAL_BODY, EST_TERMS_GENERAL);
 
 
 var TEAM = !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
@@ -1794,6 +1878,7 @@ function openProject(id){
   document.getElementById('notesFlash').textContent = '';
   renderProjectDocs();
   loadGallery();
+  renderCkStatus();
   showTab('overview');
   mainView.style.display = 'none';
   projectView.style.display = 'block';
@@ -2003,10 +2088,16 @@ galXferMenu.addEventListener('click', async function(e){
   var status = document.getElementById('galStatus');
   try{
     if(docId === '__new__'){
+      var cl2 = getChecklist(currentProject);
+      if(!cl2){
+        alert('Complete the Roofing Checklist first \u2014 its baseline specs feed directly into the report.');
+        openChecklist();
+        return;
+      }
       var title = prompt('Report title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
       if(title === null) return;
       docId = await db.create(title.trim() || 'Untitled inspection',
-                              prefillClientInfo(REPORT_TEMPLATE, currentProject),
+                              prefillChecklist(prefillClientInfo(REPORT_TEMPLATE, currentProject), cl2),
                               currentProject.name, currentProject.id);
       await reload();
     }
@@ -2140,14 +2231,130 @@ document.getElementById('projNotesSave').addEventListener('click', async functio
   }catch(err){ showError('Could not save notes: ' + (err.message || err)); }
 });
 
-/* document creation inside a profile */
-function prefillClientInfo(tpl, pr){
-  if(!pr) return tpl;
+/* =========================================================================
+   ROOFING CHECKLIST
+   ========================================================================= */
+var CK_FIELDS = ['structure','method','attic','age','condition','layers','decking','pitch','rooftype'];
+function getChecklist(pr){
+  if(!pr || !pr.checklist) return null;
+  try{ var c = JSON.parse(pr.checklist); return (c && c.structure) ? c : null; }
+  catch(e){ return null; }
+}
+function renderCkStatus(){
+  var el = document.getElementById('ckStatus');
+  var cl = getChecklist(currentProject);
+  if(cl){
+    el.textContent = '\u2713 Completed ' + (cl.completed_at ? fmtDay(cl.completed_at) : '');
+    el.style.background = '#e6f4ea'; el.style.color = '#2e7d32'; el.style.borderColor = '#bfe0c8';
+    document.getElementById('ckOpenBtn').textContent = 'View / edit checklist';
+  }else{
+    el.textContent = 'Not completed';
+    el.style.background = '#fff'; el.style.color = '#8a6f66'; el.style.borderColor = '';
+    document.getElementById('ckOpenBtn').textContent = 'Open checklist';
+  }
+}
+var ckModal = document.getElementById('ckModal');
+function openChecklist(){
+  if(!currentProject) return;
+  var cl = getChecklist(currentProject) || {};
+  CK_FIELDS.concat(['notes']).forEach(function(f){
+    var el = document.getElementById('ck_' + f);
+    if(el) el.value = cl[f] != null ? cl[f] : '';
+  });
+  document.getElementById('ckDate').textContent = cl.completed_at
+    ? ('Completed ' + fmtDay(cl.completed_at) + ' \u2014 edits update the saved checklist.')
+    : ('For ' + (currentProject.name || 'this client') + ' \u2014 all * fields are required.');
+  document.getElementById('ckError').textContent = '';
+  ckModal.style.display = 'block';
+}
+document.getElementById('ckOpenBtn').addEventListener('click', openChecklist);
+document.getElementById('ckCancel').addEventListener('click', function(){ ckModal.style.display = 'none'; });
+ckModal.addEventListener('click', function(e){ if(e.target === ckModal) ckModal.style.display = 'none'; });
+
+document.getElementById('ckSave').addEventListener('click', async function(){
+  if(!currentProject) return;
+  var cl = {};
+  var missing = [];
+  CK_FIELDS.forEach(function(f){
+    var v = (document.getElementById('ck_' + f).value || '').trim();
+    if(!v) missing.push(f);
+    cl[f] = v;
+  });
+  if(missing.length){
+    document.getElementById('ckError').textContent = 'Please complete every required field (' + missing.length + ' remaining).';
+    return;
+  }
+  cl.notes = (document.getElementById('ck_notes').value || '').trim();
+  var prev = getChecklist(currentProject);
+  cl.completed_at = (prev && prev.completed_at) ? prev.completed_at : new Date().toISOString();
+  cl.updated_at = new Date().toISOString();
+  try{
+    await pdb.update(currentProject.id, { checklist: JSON.stringify(cl) });
+    currentProject.checklist = JSON.stringify(cl);
+    var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
+    if(cp) cp.checklist = currentProject.checklist;
+    ckModal.style.display = 'none';
+    renderCkStatus();
+  }catch(err){
+    document.getElementById('ckError').textContent = 'Could not save: ' + (err.message || err);
+  }
+});
+
+/* checklist values -> inspection report Property Facts */
+function prefillChecklist(tpl, cl){
+  if(!cl) return tpl;
   function put(placeholder, value){
     if(!value) return;
     tpl = tpl.split('<span class="ph">' + placeholder + '</span>')
-             .join('<span>' + esc(value) + '</span>');
+             .join('<span class="fill">' + esc(value) + '</span>');
   }
+  put('[e.g. Single-family residence with masonry chimney, covered front porch, detached garage]', cl.structure);
+  put('[e.g. Asphalt shingles \u2014 field, hip, and ridge]', cl.rooftype);
+  put('[e.g. 1\u00d78 nominal plank (board) decking, gapped]', cl.decking);
+  put('[e.g. Accessible \u2014 decking, framing, insulation observed]',
+      cl.attic === 'Yes'
+        ? 'Accessible \u2014 attic, decking and ventilation inspected from interior'
+        : 'No attic access at time of inspection \u2014 decking assessed from exterior only');
+  put('[e.g. Visual, non-invasive; roof surface accessed directly]', cl.method);
+  put('[Age \u2014 from checklist]', cl.age + ' years (estimated)');
+  put('[Layers \u2014 from checklist]', cl.layers);
+  put('[Pitch \u2014 from checklist]', cl.pitch);
+  put('[Condition \u2014 from checklist]', cl.condition);
+  if(cl.notes){
+    tpl = tpl.split('<p class="ph">[Summarize the overall condition')
+             .join('<p class="fill" data-cknotes="1"><b>Field notes from checklist:</b> ' + esc(cl.notes) + '</p>\n<p class="ph">[Summarize the overall condition');
+  }
+  return tpl;
+}
+
+/* ---------- home date & clock ---------- */
+function tickHomeClock(){
+  var el = document.getElementById('homeClock');
+  if(!el) return;
+  var now = new Date();
+  el.textContent = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) +
+    ' \u00b7 ' + now.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+}
+tickHomeClock();
+setInterval(tickHomeClock, 15000);
+
+/* document creation inside a profile */
+function fmtLongDate(d){
+  return d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+}
+function prefillClientInfo(tpl, pr){
+  function put(placeholder, value){
+    if(!value) return;
+    tpl = tpl.split('<span class="ph">' + placeholder + '</span>')
+             .join('<span class="fill">' + esc(value) + '</span>');
+  }
+  /* automatic dates */
+  var today = new Date();
+  var plus30 = new Date(today.getTime() + 30 * 24 * 3600 * 1000);
+  put('[MONTH DD, YYYY]', fmtLongDate(today));            /* inspection date */
+  put('[Date]', fmtLongDate(today));                      /* estimate date  */
+  put('[30 days from estimate date]', fmtLongDate(plus30)); /* valid through */
+  if(!pr) return tpl;
   var contact = [pr.phone, pr.email].filter(Boolean).join(' \u00b7 ');
   /* report cover + intro */
   put('[CLIENT / HOMEOWNER NAME]', pr.name);
@@ -2172,11 +2379,17 @@ var EST_TYPES = {
 
 document.getElementById('pNewReportBtn').addEventListener('click', async function(){
   if(!currentProject) return;
+  var cl = getChecklist(currentProject);
+  if(!cl){
+    alert('Complete the Roofing Checklist first \u2014 its baseline specs feed directly into the report.');
+    openChecklist();
+    return;
+  }
   var title = prompt('Report title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
   if(title === null) return;
   try{
     var id = await db.create(title.trim() || 'Untitled inspection',
-                             prefillClientInfo(REPORT_TEMPLATE, currentProject),
+                             prefillChecklist(prefillClientInfo(REPORT_TEMPLATE, currentProject), cl),
                              currentProject.name, currentProject.id);
     await reload();
     await openEditor(id);
@@ -2840,6 +3053,23 @@ function wireCheckboxes(doc){
   });
 }
 
+/* Only data fields are editable; template boilerplate is locked so it
+   cannot be deleted or altered by accident. */
+var EDITABLE_SELECTOR = [
+  '.ph', '.fill',
+  '#estItems td.qty', '#estItems td.rate',
+  'table.meta td:not(.k)', 'table.facts td:not(.k)',
+  '.cover-meta td:not(.k)',
+  '[data-cardinal-summary-heading] + p'
+].join(',');
+function lockTemplate(doc){
+  doc.body.removeAttribute('contenteditable');
+  doc.querySelectorAll(EDITABLE_SELECTOR).forEach(function(el){
+    el.setAttribute('contenteditable','true');
+    el.setAttribute('spellcheck','true');
+  });
+}
+
 async function openEditor(id){
   var r;
   try{ r = await db.get(id); }
@@ -2853,7 +3083,15 @@ async function openEditor(id){
   frame.onload = function(){
     try{
       var doc = frame.contentDocument;
-      doc.body.setAttribute('contenteditable','true');
+      lockTemplate(doc);
+      if(!doc.getElementById('screenFix')){
+        var sfx = doc.createElement('style');
+        sfx.id = 'screenFix';
+        sfx.textContent = '@media screen{body{max-width:900px;width:auto !important;margin:0 auto;padding:22px 16px !important;box-sizing:border-box;}}' +
+          '@media screen and (max-width:640px){.figrow{flex-direction:column;}.fig .frame{height:auto;aspect-ratio:4/3;}' +
+          '.cover-photo{height:auto;aspect-ratio:4/3;}table{font-size:10.5pt;}body{font-size:11.5pt;line-height:1.65;}}';
+        doc.head.appendChild(sfx);
+      }
       doc.body.setAttribute('spellcheck','true');
       doc.body.style.outline = 'none';
       var hint = doc.createElement('div');
@@ -2894,6 +3132,8 @@ function serializeFrame(){
   if(estTable) estTable.removeAttribute('data-wired');
   var pf = clone.querySelector('#printFix');
   if(pf) pf.remove();
+  var sf = clone.querySelector('#screenFix');
+  if(sf) sf.remove();
   clone.querySelectorAll('.cbx[data-cbx]').forEach(function(el){ el.removeAttribute('data-cbx'); });
   var summaryHeading = clone.querySelector('[data-cardinal-summary-heading]');
   if(summaryHeading){
@@ -2901,6 +3141,10 @@ function serializeFrame(){
     var nextBtn = summaryHeading.nextElementSibling;
     if(nextBtn && nextBtn.tagName === 'BUTTON') nextBtn.remove();
   }
+  clone.querySelectorAll('[contenteditable]').forEach(function(el){
+    el.removeAttribute('contenteditable');
+    el.removeAttribute('spellcheck');
+  });
   var body = clone.querySelector('body');
   if(body){
     body.removeAttribute('contenteditable');
