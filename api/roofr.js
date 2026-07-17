@@ -34,10 +34,9 @@ export default async function handler(req, res) {
       '- ridge_lf, hip_lf, valley_lf, eave_lf, rake_lf: lineal feet of each\n' +
       '- step_lf: step flashing lineal feet\n' +
       '- wall_lf: wall/apron flashing lineal feet\n' +
-      '- penetrations: short string describing penetrations if listed, else null\n' +
-      '- waste_pct: suggested waste percentage if the report states one, else null\n' +
-      '- diagram_page: the page number most likely to contain the primary roof diagram ' +
-      '(often a page with few words and many short measurement labels), else null\n\n' +
+      '- penetrations: short string describing penetrations if listed (e.g. "4 pipe jacks, 1 chimney"), else null\n' +
+      '- penetrations_count: total number of pipe/vent penetrations needing boot seals as an integer, else null\n' +
+      '- waste_pct: suggested waste percentage if the report states one, else null\n\n' +
       'Respond with ONLY raw JSON, no markdown fences, exactly these keys.\n\n' +
       'REPORT TEXT:\n' + text.slice(0, 50000);
 
