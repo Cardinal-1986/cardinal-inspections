@@ -240,6 +240,7 @@ footer.site{
 }
 @media (max-width:680px){
   .brand h1{font-size:24px;}
+  table.reports th:nth-child(4),table.reports td:nth-child(4){display:none;}
   table.reports th:nth-child(2),table.reports td:nth-child(2){display:none;}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
@@ -321,6 +322,11 @@ footer.site{
 .ptab{border:1px solid var(--line);border-bottom:0;background:#f3ecea;color:#6b5a54;
   padding:10px 18px;border-radius:9px 9px 0 0;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
 .ptab.active{background:var(--red);color:#fff;border-color:var(--red);}
+
+.tchip{display:inline-block;font:700 11px 'Segoe UI',Arial,sans-serif;padding:3px 10px;border-radius:10px;white-space:nowrap;}
+.tchip.trade{background:#f3ecea;color:#7a4a3e;border:1px solid #e0d2cc;}
+.tchip.insp{background:#e8f0fb;color:#1d4f91;border:1px solid #c9dbf2;}
+.tchip.est{background:#e9f5ec;color:#1d6b34;border:1px solid #c8e5cf;}
 </style>
 </head>
 <body>
@@ -396,6 +402,10 @@ footer.site{
       <div class="projinfo">
         <h2 id="projName"></h2>
         <div id="projMeta" class="projmeta"></div>
+        <label style="display:inline-flex;align-items:center;gap:7px;margin-top:8px;font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#444;cursor:pointer;">
+          <input type="checkbox" id="ptCheck" style="width:17px;height:17px;accent-color:#C8202E;">
+          Photos transferred to report
+        </label>
         <div style="margin-top:10px;">
           <button class="chipbtn" id="projEditBtn">&#9998; Edit client info</button>
           <button class="chipbtn danger" id="projDelBtn">Delete project</button>
@@ -426,23 +436,11 @@ footer.site{
         <button class="btn" id="ckOpenBtn">Open checklist</button>
       </div>
 
-      <h3 class="projsec">&#128248; Photo Gallery <span id="galCount" class="projcount">0 / 20</span></h3>
-      <p class="subnote">Field photos for this client. Check the ones to use, then transfer them into an
-      inspection report — transferred photos are removed from this gallery.</p>
-      <div style="margin:6px 0 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <button class="chipbtn" id="galAddBtn">&#43; Add photos</button>
-        <button class="chipbtn" id="galCamBtn" style="background:#C8202E;color:#fff;border-color:#C8202E;">&#128247; Take photo</button>
-        <span id="galXferWrap" style="position:relative;">
-          <button class="btn" id="galXferBtn">Transfer checked to report &#9662;</button>
-          <div id="galXferMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
-               background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:260px;max-height:280px;overflow:auto;
-               box-shadow:0 6px 18px rgba(0,0,0,.18);"></div>
-        </span>
-        <span id="galStatus" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#666;"></span>
-        <input type="file" id="galFileInput" accept="image/*" multiple style="display:none;">
-        <input type="file" id="galCamInput" accept="image/*" capture="environment" style="display:none;">
+      <h3 class="projsec">&#128248; Photo Gallery <span id="galSummary" class="projcount">0 / 20</span></h3>
+      <p class="subnote">Field photos live on their own page — add, review, and transfer them into an inspection report.</p>
+      <div style="margin:6px 0 18px;">
+        <button class="btn" id="galOpenBtn">Open photo gallery &rarr;</button>
       </div>
-      <div id="galGrid" class="galgrid"></div>
 
       <h3 class="projsec">&#128196; Inspection Reports</h3>
       <div style="margin:6px 0 12px;">
@@ -469,6 +467,31 @@ footer.site{
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
     </div>
+  </div>
+</div>
+
+<!-- ============ PHOTO GALLERY PAGE ============ -->
+<div id="galleryView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <button class="btn dark" id="galBackBtn">&larr; Back to client profile</button>
+    <h2 style="margin:16px 0 2px;">&#128248; Photo Gallery <span id="galClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+      <h3 class="projsec">&#128248; Photo Gallery <span id="galCount" class="projcount">0 / 20</span></h3>
+      <p class="subnote">Field photos for this client. Check the ones to use, then transfer them into an
+      inspection report — transferred photos are removed from this gallery.</p>
+      <div style="margin:6px 0 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="chipbtn" id="galAddBtn">&#43; Add photos</button>
+        <button class="chipbtn" id="galCamBtn" style="background:#C8202E;color:#fff;border-color:#C8202E;">&#128247; Take photo</button>
+        <span id="galXferWrap" style="position:relative;">
+          <button class="btn" id="galXferBtn">Transfer checked to report &#9662;</button>
+          <div id="galXferMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
+               background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:260px;max-height:280px;overflow:auto;
+               box-shadow:0 6px 18px rgba(0,0,0,.18);"></div>
+        </span>
+        <span id="galStatus" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#666;"></span>
+        <input type="file" id="galFileInput" accept="image/*" multiple style="display:none;">
+        <input type="file" id="galCamInput" accept="image/*" capture="environment" style="display:none;">
+      </div>
+      <div id="galGrid" class="galgrid"></div>
   </div>
 </div>
 
@@ -1650,7 +1673,7 @@ var pdb = {
   list: async function(){
     if(TEAM){
       var r = await sb.from('projects')
-        .select('id,name,address,phone,email,notes,cover_image,created_by,created_at,updated_at')
+        .select('id,name,address,phone,email,notes,cover_image,checklist,photos_transferred,created_by,created_at,updated_at')
         .order('updated_at', {ascending:false});
       if(r.error) throw r.error;
       return r.data || [];
@@ -1770,6 +1793,15 @@ async function reload(){
   }
 }
 
+function docKind(title){
+  var t = (title || '').trim();
+  if(/^siding estimate/i.test(t)) return { type:'Estimate', trade:'Siding' };
+  if(/^window estimate/i.test(t)) return { type:'Estimate', trade:'Windows' };
+  if(/^gutter estimate/i.test(t)) return { type:'Estimate', trade:'Gutters' };
+  if(/^repair estimate/i.test(t)) return { type:'Estimate', trade:'Repair' };
+  if(/^estimate/i.test(t))        return { type:'Estimate', trade:'Roofing' };
+  return { type:'Inspection', trade:'Roofing' };
+}
 function docRowHtml(r){
   var statusCell = r.status === 'sent'
     ? '<span class="chip sent">SENT</span>' +
@@ -1777,9 +1809,12 @@ function docRowHtml(r){
     : '<span class="chip unsent">UNSENT</span>';
   var toggleLabel = r.status === 'sent' ? 'Mark unsent' : 'Mark sent';
   var by = r.created_by ? ' · by ' + esc(r.created_by) : '';
+  var k = docKind(r.title);
   return '<tr>' +
     '<td class="title"><b>' + esc(r.title || 'Untitled') + '</b>' +
       '<span class="ref">ID ' + esc(String(r.id).slice(0,8)) + by + '</span></td>' +
+    '<td><span class="tchip trade">' + k.trade + '</span></td>' +
+    '<td><span class="tchip ' + (k.type === 'Estimate' ? 'est' : 'insp') + '">' + k.type + '</span></td>' +
     '<td class="dates">' + fmt(r.created_at) + '<small>updated ' + fmt(r.updated_at) + '</small></td>' +
     '<td class="status">' + statusCell + '</td>' +
     '<td>' +
@@ -1792,7 +1827,7 @@ function docRowHtml(r){
 }
 function docTable(rows){
   return '<table class="reports"><thead><tr>' +
-    '<th>Document</th><th>Date created</th><th>Status</th><th>Actions</th>' +
+    '<th>Document</th><th>Trade</th><th>Type</th><th>Date created</th><th>Status</th><th>Actions</th>' +
     '</tr></thead><tbody>' + rows.map(docRowHtml).join('') + '</tbody></table>';
 }
 
@@ -1823,7 +1858,9 @@ function renderHome(){
         '<div class="body">' +
           '<div class="nm">' + esc(pr.name || 'Unnamed client') + '</div>' +
           '<div class="ad">' + esc(pr.address || '') + '</div>' +
-          '<div class="ft"><span>' + n + ' document' + (n === 1 ? '' : 's') + '</span><span>' + by + '</span></div>' +
+          '<div class="ft"><span>' + n + ' document' + (n === 1 ? '' : 's') +
+            (pr.photos_transferred ? ' <span title="Photos transferred to report" style="color:#1d6b34;font-weight:800;">\u2713 \uD83D\uDCF7\u2192\uD83D\uDCC4</span>' : '') +
+            '</span><span>' + by + '</span></div>' +
         '</div></div>';
     }).join('') + '</div>';
   }
@@ -1849,6 +1886,7 @@ var projectView = document.getElementById('projectView');
 function showHome(){
   currentProject = null;
   projectView.style.display = 'none';
+  document.getElementById('galleryView').style.display = 'none';
   mainView.style.display = 'block';
   renderHome();
   window.scrollTo(0,0);
@@ -1874,6 +1912,7 @@ function openProject(id){
   }
   document.getElementById('projCoverBtn').textContent =
     pr.cover_image ? '\u21BB Replace cover photo' : '\uD83D\uDCF7 Add cover photo';
+  document.getElementById('ptCheck').checked = !!pr.photos_transferred;
   document.getElementById('projNotes').value = pr.notes || '';
   document.getElementById('notesFlash').textContent = '';
   renderProjectDocs();
@@ -1881,6 +1920,7 @@ function openProject(id){
   renderCkStatus();
   showTab('overview');
   mainView.style.display = 'none';
+  document.getElementById('galleryView').style.display = 'none';
   projectView.style.display = 'block';
   window.scrollTo(0,0);
 }
@@ -1982,6 +2022,8 @@ async function loadGallery(){
 function renderGallery(){
   var grid = document.getElementById('galGrid');
   document.getElementById('galCount').textContent = currentPhotos.length + ' / ' + GAL_MAX;
+  var sum = document.getElementById('galSummary');
+  if(sum) sum.textContent = currentPhotos.length + ' / ' + GAL_MAX;
   if(!currentPhotos.length){
     grid.innerHTML = '<div class="galempty">No photos yet — use <b>+ Add photos</b> or <b>&#128247; Take photo</b>.</div>';
     return;
@@ -2041,6 +2083,19 @@ async function addGalleryFiles(files){
   setTimeout(function(){ status.textContent = ''; }, 4000);
   await loadGallery();
 }
+var galleryView = document.getElementById('galleryView');
+document.getElementById('galOpenBtn').addEventListener('click', function(){
+  if(!currentProject) return;
+  document.getElementById('galClient').textContent = '\u2014 ' + (currentProject.name || '');
+  projectView.style.display = 'none';
+  galleryView.style.display = 'block';
+  window.scrollTo(0,0);
+});
+document.getElementById('galBackBtn').addEventListener('click', function(){
+  galleryView.style.display = 'none';
+  projectView.style.display = 'block';
+  window.scrollTo(0,0);
+});
 document.getElementById('galAddBtn').addEventListener('click', function(){
   document.getElementById('galFileInput').click();
 });
@@ -2105,6 +2160,14 @@ galXferMenu.addEventListener('click', async function(e){
     status.textContent = 'Transferring ' + picked.length + ' photo' + (picked.length===1?'':'s') + '\u2026';
     await transferPhotosToReport(docId, picked);
     for(var i = 0; i < picked.length; i++){ await photoDb.remove(picked[i].id); }
+    try{
+      await pdb.update(currentProject.id, { photos_transferred: true });
+      currentProject.photos_transferred = true;
+      var cpx = cacheProjects.find(function(x){ return x.id === currentProject.id; });
+      if(cpx) cpx.photos_transferred = true;
+      var ptc = document.getElementById('ptCheck');
+      if(ptc) ptc.checked = true;
+    }catch(e2){}
     status.textContent = '\u2713 Transferred \u2014 photos removed from gallery.';
     setTimeout(function(){ status.textContent = ''; }, 4000);
     await reload();
@@ -2337,6 +2400,21 @@ function tickHomeClock(){
 }
 tickHomeClock();
 setInterval(tickHomeClock, 15000);
+
+document.getElementById('ptCheck').addEventListener('change', async function(){
+  if(!currentProject) return;
+  var v = this.checked;
+  try{
+    await pdb.update(currentProject.id, { photos_transferred: v });
+    currentProject.photos_transferred = v;
+    var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
+    if(cp) cp.photos_transferred = v;
+    renderHome();
+  }catch(err){
+    this.checked = !v;
+    showError('Could not update: ' + (err.message || err));
+  }
+});
 
 /* document creation inside a profile */
 function fmtLongDate(d){
@@ -3228,13 +3306,26 @@ var signOutBtn = document.getElementById('signOutBtn');
 var addProjBtn = document.getElementById('addProjectBtn');
 var storageNote = document.getElementById('storageNote');
 
+var DEFAULT_NAMES = { 'theo@cardinalrenovations.net': 'Theo Dorion' };
+function displayNameFor(user){
+  if(!user) return '';
+  var meta = user.user_metadata || {};
+  if(meta.full_name) return meta.full_name;
+  if(DEFAULT_NAMES[user.email]) return DEFAULT_NAMES[user.email];
+  var local = (user.email || '').split('@')[0];
+  return local ? local.charAt(0).toUpperCase() + local.slice(1) : '';
+}
+var currentUser = null;
 function showMain(userEmail){
   loginView.classList.remove('open');
   mainView.style.display = 'block';
   addProjBtn.style.display = 'inline-block';
   projectView.style.display = 'none';
+  document.getElementById('galleryView').style.display = 'none';
   if(TEAM){
-    whoami.textContent = userEmail || '';
+    whoami.textContent = currentUser ? displayNameFor(currentUser) : (userEmail || '');
+    whoami.title = (userEmail || '') + ' \u2014 click to set your display name';
+    whoami.style.cursor = 'pointer';
     signOutBtn.style.display = 'inline-block';
     storageNote.innerHTML = 'Each card is a client profile holding their info, notes, photos, inspection reports and estimates. You see the projects you created' + (userEmail === 'theo@cardinalrenovations.net' ? ' — and as admin, everyone else\u2019s too' : '; the admin sees all') + '. Use <b>Download</b> to keep a standalone copy.';
     document.getElementById('bannerMount').innerHTML = '';
@@ -3244,9 +3335,25 @@ function showMain(userEmail){
   }
   reload();
 }
+whoami.addEventListener('click', async function(){
+  if(!TEAM || !currentUser) return;
+  var name = prompt('Your full name (shown in the header):', displayNameFor(currentUser));
+  if(name === null) return;
+  name = name.trim();
+  if(!name) return;
+  try{
+    var r = await sb.auth.updateUser({ data: { full_name: name } });
+    if(r.error) throw r.error;
+    currentUser.user_metadata = currentUser.user_metadata || {};
+    currentUser.user_metadata.full_name = name;
+    whoami.textContent = name;
+  }catch(err){ showError('Could not save name: ' + (err.message || err)); }
+});
+
 function showLogin(){
   mainView.style.display = 'none';
   projectView.style.display = 'none';
+  document.getElementById('galleryView').style.display = 'none';
   addProjBtn.style.display = 'none';
   signOutBtn.style.display = 'none';
   whoami.textContent = '';
@@ -3268,7 +3375,7 @@ async function doLogin(){
       password: document.getElementById('loginPassword').value
     });
     if(res.error){ err.textContent = res.error.message; }
-    else { showMain(res.data.user ? res.data.user.email : ''); }
+    else { currentUser = res.data.user || null; showMain(res.data.user ? res.data.user.email : ''); }
   }catch(e){ err.textContent = e.message || String(e); }
   btn.disabled = false;
 }
@@ -3282,6 +3389,7 @@ signOutBtn.addEventListener('click', async function(){
   try{
     var s = await sb.auth.getSession();
     if(s.data && s.data.session && s.data.session.user){
+      currentUser = s.data.session.user;
       showMain(s.data.session.user.email);
     }else{
       showLogin();
