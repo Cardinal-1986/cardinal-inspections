@@ -524,8 +524,8 @@ header.site .brand .co small, header.site .tag{color:#d8cbc5 !important;}
 header.site .whoami{color:#fff;}
 header.site .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);}
 header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
-#brandLogo{background:#fff;border-radius:8px;padding:3px;height:40px !important;}
-@media (max-width:640px){ #brandLogo{height:36px !important;} }
+#brandLogo{background:#fff;border-radius:8px;padding:3px;height:40px !important;width:56px !important;object-fit:contain;flex:0 0 auto;cursor:pointer;}
+@media (max-width:640px){ #brandLogo{height:38px !important;width:52px !important;} }
 /* ---- pipeline widget ---- */
 .pipecard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px 16px;margin:14px 0;}
 .pipetitle{font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;margin-bottom:10px;}
@@ -731,15 +731,15 @@ html, body{overflow-x:hidden;max-width:100%;}
   border:1px dashed var(--line);border-radius:10px;padding:12px 14px;}
 
 /* ---- header refinements ---- */
-.titlecard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:10px;
-  height:40px;display:flex;align-items:center;justify-content:center;flex:1;min-width:0;
-  padding:0 12px;text-align:center;}
-.titlecard h1{font-size:16px !important;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.titlecard{height:40px;display:flex;align-items:center;justify-content:center;flex:1;min-width:0;
+  padding:0 8px;text-align:center;}
+.titlecard h1{font-size:17px !important;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:var(--red) !important;letter-spacing:.04em;}
+.titlecard h1 span{color:#fff !important;}
 .headactions{padding:0 2px;width:100%;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
 .headactions .btn{padding:0 13px;height:40px;font-size:13.5px;display:inline-flex;align-items:center;}
 .masthead{padding:9px 0;}
-#headCtx{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:10px;
-  height:40px;display:none;align-items:center;justify-content:center;flex:1;min-width:0;padding:0 10px;}
+
 @media (max-width:640px){
   .titlecard h1{font-size:14px !important;}
   .headactions .btn{padding:0 11px;font-size:13px;}
@@ -757,10 +757,19 @@ html, body{overflow-x:hidden;max-width:100%;}
 .locaddr, .cname, .wstitle, .afbd, .btitle{min-width:0;overflow-wrap:anywhere;}
 .qbtn.qwide{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-.repstrip{width:100%;display:flex;justify-content:center;padding:5px 0 7px;}
-.reppill{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:8px;
-  padding:4px 14px;font:700 12px 'Segoe UI',Arial,sans-serif;color:#e8cfc9;letter-spacing:.04em;}
-.reppill b{color:#fff;}
+.repstrip{width:100%;display:flex;gap:8px;padding:5px 0 8px;}
+.reppill{flex:1 1 0;min-width:0;height:34px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:8px;
+  padding:0 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#e8cfc9;letter-spacing:.04em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.reppill b, .reppill small{color:#fff;}
+#headCtx{color:#fff;font-size:13px;}
+#headCtx small{color:#e8b7ba;}
+
+.collhead{cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.collhead:hover{color:#9c1822;}
+.collchev{font-size:15px;color:#9a8c85;transition:transform .18s;display:inline-block;}
+.collhead.open .collchev{transform:rotate(90deg);}
 </style>
 </head>
 <body>
@@ -780,7 +789,6 @@ html, body{overflow-x:hidden;max-width:100%;}
         </div>
       </span>
       <div class="titlecard" id="brandTitle"><h1>CARDINAL <span>RESOURCE</span></h1></div>
-      <span id="headCtx"></span>
       <span id="navWrap" style="display:none;">
         <select id="jobMenuSel" class="jobmenu jobmenu-head" style="display:none;">
           <option value="overview">Overview</option>
@@ -805,6 +813,7 @@ html, body{overflow-x:hidden;max-width:100%;}
     </div>
     <div id="repStrip" class="repstrip" style="display:none;">
       <span class="reppill" id="repPill"></span>
+      <span class="reppill" id="headCtx"></span>
     </div>
   </div>
 </header>
@@ -861,8 +870,8 @@ html, body{overflow-x:hidden;max-width:100%;}
           <div id="apptUpcoming" class="calnextup"></div>
         </div>
         <div class="actcard">
-          <div class="acthead">&#9889; Activity</div>
-          <div id="actFeed"></div>
+          <div class="acthead collhead" id="actToggle">&#9889; Activity <span class="collchev">&#9656;</span></div>
+          <div id="actFeed" style="display:none;"></div>
         </div>
       </aside>
     </div>
@@ -990,47 +999,47 @@ html, body{overflow-x:hidden;max-width:100%;}
       Quantities include standard waste and are fully editable &#8212; always verify against the scope before ordering.</p>
 
       <div class="matcard" data-trade="roofing">
-        <div class="mathead"><b>&#127968; Roofing</b><span class="projcount" id="matSrcroofing">No measurements yet</span></div>
-        <div class="matbtns">
+        <div class="mathead collhead matcoll"><b>&#127968; Roofing</b><span class="projcount" id="matSrcroofing">No measurements yet</span><span class="collchev">&#9656;</span></div>
+        <div class="matbody" style="display:none;"><div class="matbtns">
           <button class="chipbtn matup" data-trade="roofing">&#128196; Import Roofr PDF</button>
           <button class="chipbtn matgen" data-trade="roofing">&#9881;&#65039; Generate list</button>
           <button class="chipbtn matcopy" data-trade="roofing">&#128203; Copy</button>
           <button class="chipbtn matprint" data-trade="roofing">&#128424; Print</button>
         </div>
-        <div class="matmount" id="matListroofing"></div>
+        <div class="matmount" id="matListroofing"></div></div>
       </div>
 
       <div class="matcard" data-trade="siding">
-        <div class="mathead"><b>&#129521; Siding</b><span class="projcount" id="matSrcsiding">No measurements yet</span></div>
-        <div class="matbtns">
+        <div class="mathead collhead matcoll"><b>&#129521; Siding</b><span class="projcount" id="matSrcsiding">No measurements yet</span><span class="collchev">&#9656;</span></div>
+        <div class="matbody" style="display:none;"><div class="matbtns">
           <button class="chipbtn matup" data-trade="siding">&#128196; Import Hover PDF</button>
           <button class="chipbtn matgen" data-trade="siding">&#9881;&#65039; Generate list</button>
           <button class="chipbtn matcopy" data-trade="siding">&#128203; Copy</button>
           <button class="chipbtn matprint" data-trade="siding">&#128424; Print</button>
         </div>
-        <div class="matmount" id="matListsiding"></div>
+        <div class="matmount" id="matListsiding"></div></div>
       </div>
 
       <div class="matcard" data-trade="gutters">
-        <div class="mathead"><b>&#127783;&#65039; Gutters</b><span class="projcount" id="matSrcgutters">No footage set</span></div>
-        <div class="matbtns">
+        <div class="mathead collhead matcoll"><b>&#127783;&#65039; Gutters</b><span class="projcount" id="matSrcgutters">No footage set</span><span class="collchev">&#9656;</span></div>
+        <div class="matbody" style="display:none;"><div class="matbtns">
           <button class="chipbtn matset" data-trade="gutters">&#9999;&#65039; Set gutter footage</button>
           <button class="chipbtn matgen" data-trade="gutters">&#9881;&#65039; Generate list</button>
           <button class="chipbtn matcopy" data-trade="gutters">&#128203; Copy</button>
           <button class="chipbtn matprint" data-trade="gutters">&#128424; Print</button>
         </div>
-        <div class="matmount" id="matListgutters"></div>
+        <div class="matmount" id="matListgutters"></div></div>
       </div>
 
       <div class="matcard" data-trade="windows">
-        <div class="mathead"><b>&#129695; Windows</b><span class="projcount" id="matSrcwindows">No count set</span></div>
-        <div class="matbtns">
+        <div class="mathead collhead matcoll"><b>&#129695; Windows</b><span class="projcount" id="matSrcwindows">No count set</span><span class="collchev">&#9656;</span></div>
+        <div class="matbody" style="display:none;"><div class="matbtns">
           <button class="chipbtn matset" data-trade="windows">&#9999;&#65039; Set window count</button>
           <button class="chipbtn matgen" data-trade="windows">&#9881;&#65039; Generate list</button>
           <button class="chipbtn matcopy" data-trade="windows">&#128203; Copy</button>
           <button class="chipbtn matprint" data-trade="windows">&#128424; Print</button>
         </div>
-        <div class="matmount" id="matListwindows"></div>
+        <div class="matmount" id="matListwindows"></div></div>
       </div>
       <input type="file" id="matFile" accept="application/pdf" style="display:none;">
     </div>
@@ -3396,6 +3405,9 @@ function openProjModal(pr){
 }
 /* ---------- +New menu ---------- */
 var newMenu = document.getElementById('newMenu');
+document.getElementById('brandLogo').addEventListener('click', function(){
+  if(currentUser || !TEAM) showHome();
+});
 document.getElementById('addProjectBtn').addEventListener('click', function(e){
   e.stopPropagation();
   if(newMenu.style.display === 'block'){ newMenu.style.display = 'none'; return; }
@@ -4211,10 +4223,6 @@ function setHeaderJobMenu(on){
   var nb = document.getElementById('navBtn');
   if(jm) jm.style.display = on ? 'inline-block' : 'none';
   if(nb) nb.style.display = on ? 'none' : 'inline-block';
-  var bt = document.getElementById('brandTitle');
-  var hc = document.getElementById('headCtx');
-  if(bt) bt.style.display = on ? 'none' : 'flex';
-  if(hc) hc.style.display = on ? 'flex' : 'none';
   var rs = document.getElementById('repStrip');
   if(rs){
     rs.style.display = on ? 'flex' : 'none';
@@ -5333,6 +5341,22 @@ document.getElementById('pushEnableBtn').addEventListener('click', async functio
     st.textContent = 'Could not enable: ' + (err.message || err);
     st.style.color = '#C8202E';
   }
+});
+/* collapsible sections */
+document.getElementById('actToggle').addEventListener('click', function(){
+  var body = document.getElementById('actFeed');
+  var open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  this.classList.toggle('open', open);
+});
+document.addEventListener('click', function(e){
+  var h = e.target.closest('.matcoll');
+  if(!h) return;
+  var body = h.parentElement.querySelector('.matbody');
+  if(!body) return;
+  var open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  h.classList.toggle('open', open);
 });
 document.getElementById('qFeedBtn').addEventListener('click', openActivityFeed);
 document.getElementById('qSearchBtn').addEventListener('click', openClientsDirectory);
