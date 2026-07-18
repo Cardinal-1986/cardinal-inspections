@@ -472,7 +472,7 @@ footer.site{
 
 /* ---- watermark (homepage + sign-in share one embedded image) ---- */
 #mainView .homecols{
-  background-image:url(/wm-home.jpg);
+  background-image:url(/wm-home.jpeg);
   background-repeat:no-repeat;
 }
 #mainView .homecols{
@@ -484,7 +484,7 @@ footer.site{
 @media (max-width:900px){
   #mainView .homecols{ background-position:center bottom; background-size:min(440px, 86%); min-height:0; }
 }
-.logincard{ --login-wm:url(/wm-login.jpg); }
+.logincard{ --login-wm:url(/wm-login.jpeg); }
 
 .clirow{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;
   background:#fff;padding:10px 14px;margin:7px 0;cursor:pointer;transition:box-shadow .12s;}
@@ -939,6 +939,29 @@ html, body{overflow-x:hidden;max-width:100%;}
 body:has(#loginView[style*="block"]){background:#fff;}
 #loginView{overflow-x:hidden;}
 .logincard{overflow:hidden;}
+
+/* ---- desktop login stage ---- */
+.loginhero{display:none;}
+@media (min-width:901px){
+  #loginView{display:none;align-items:center;justify-content:center;gap:clamp(48px,6vw,120px);padding:40px 48px;}
+  #loginView.open{display:flex;}
+  .loginhero{display:flex;flex-direction:column;align-items:center;text-align:center;max-width:660px;}
+  .heroart{width:min(560px,42vw);height:auto;opacity:.9;}
+  .heroname{font:800 clamp(44px,4.2vw,68px)/1 Georgia,'Times New Roman',serif;letter-spacing:.14em;margin-top:6px;
+    background:linear-gradient(160deg,#8a5a00 0%,#d4a017 30%,#f5d061 50%,#c8901c 70%,#7a4f00 100%);
+    -webkit-background-clip:text;background-clip:text;color:#b8860b;-webkit-text-fill-color:transparent;}
+  .herosub{font:800 clamp(14px,1.2vw,19px) 'Segoe UI',Arial,sans-serif;letter-spacing:.42em;color:#1c1416;margin-top:10px;text-indent:.42em;}
+  .heromotto{font:italic 700 16px Georgia,serif;color:#8a6f66;margin-top:14px;}
+  #heroQuote{margin:26px 0 0;max-width:520px;
+    font:italic 700 17px/1.6 Georgia,'Times New Roman',serif;letter-spacing:.015em;
+    background:linear-gradient(160deg,#8a5a00,#d4a017 35%,#c8901c 70%,#7a4f00);
+    -webkit-background-clip:text;background-clip:text;color:#b8860b;-webkit-text-fill-color:transparent;}
+  #heroQuote span{color:#9c8a72 !important;-webkit-text-fill-color:#9c8a72;letter-spacing:.12em;text-transform:uppercase;}
+  #heroClock{margin-top:22px;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8a6f66;font-variant-numeric:tabular-nums;}
+  /* card sheds its quote block on desktop — the hero carries the art */
+  #loginView.open .loginsep, #loginView.open #loginQuote{display:none;}
+  #loginView.open .logincard{width:400px;flex:0 0 auto;}
+}
 </style>
 </head>
 <body>
@@ -991,6 +1014,14 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
 <!-- ============ LOGIN (team mode only) ============ -->
 <div id="loginView">
+  <div class="loginhero">
+    <img class="heroart" src="/wm-home.jpeg" alt="">
+    <div class="heroname">CARDINAL</div>
+    <div class="herosub">ROOFING &amp; RENOVATIONS</div>
+    <div class="heromotto">&#8220;The Single Source Of Truth&#8221;</div>
+    <p id="heroQuote"></p>
+    <div id="heroClock"></div>
+  </div>
   <div class="logincard">
     <img class="loginlogo" id="loginLogo" alt="Cardinal Roofing &amp; Renovations" style="display:none;">
     <h2>Team sign in</h2>
@@ -5859,6 +5890,8 @@ function tickHomeClock(){
   if(qc) qc.textContent = txt;
   var lc = document.getElementById('loginClock');
   if(lc) lc.textContent = txt;
+  var hc = document.getElementById('heroClock');
+  if(hc) hc.textContent = txt;
 }
 tickHomeClock();
 setInterval(tickHomeClock, 1000);
@@ -7096,6 +7129,8 @@ document.getElementById('editorLogo').addEventListener('click', async function()
     var q = LOGIN_QUOTES[dy % LOGIN_QUOTES.length];
     lq.innerHTML = '\u201C' + q[0] + '\u201D<br>' +
       '<span style="font:600 11px \'Segoe UI\',Arial,sans-serif;font-style:normal;">\u2014 ' + q[1] + '</span>';
+    var hq = document.getElementById('heroQuote');
+    if(hq) hq.innerHTML = lq.innerHTML;
   }
   ['brandLogo','loginLogo','editorLogo'].forEach(function(id){
     var el = document.getElementById(id);
@@ -7241,6 +7276,7 @@ whoami.addEventListener('click', async function(){
 
 function showLogin(){
   hideAllViews();
+  document.getElementById('loginView').classList.add('open');
   var hd = document.querySelector('header.site');
   if(hd) hd.style.display = 'none';
   document.body.style.paddingTop = '0';
