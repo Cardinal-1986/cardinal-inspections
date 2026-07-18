@@ -866,6 +866,40 @@ html, body{overflow-x:hidden;max-width:100%;}
   #calCard .calnav{width:32px;height:32px;font-size:18px;}
   #calCard .callegend{margin-top:12px;font-size:11.5px;}
 }
+
+/* ---- Cardinal theme for home mini-calendars (white ground) ---- */
+.pipecard.teamcal{
+  border:1px solid #e2d5c3;border-top:5px solid #C8202E;border-radius:14px;
+  position:relative;overflow:hidden;
+  box-shadow:0 6px 18px rgba(40,20,10,.10), inset 0 1px 0 rgba(212,160,23,.4);
+}
+.pipecard.teamcal::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
+  background:linear-gradient(90deg,transparent,#d4a017 30%,#f5d061 50%,#d4a017 70%,transparent);}
+.pipecard.teamcal .pipetitle span:first-child{
+  font:800 15.5px Georgia,'Times New Roman',serif;letter-spacing:.03em;color:#1c1416;}
+.teamcal .minical .calhead b{
+  font:800 15.5px Georgia,'Times New Roman',serif;letter-spacing:.05em;
+  background:linear-gradient(160deg,#a06c08,#d4a017 40%,#f5d061 55%,#c8901c 75%);
+  -webkit-background-clip:text;background-clip:text;color:#b8860b;-webkit-text-fill-color:transparent;}
+.teamcal .minical .calnav{background:#C8202E;border:1px solid #7c1019;color:#fff;border-radius:8px;
+  box-shadow:0 2px 5px rgba(0,0,0,.22);}
+.teamcal .minical .calnav:hover{background:#a5121f;}
+.teamcal .minical .calgrid .dow{color:#b8860b;letter-spacing:.08em;}
+.teamcal .minical .calgrid .day{color:#2b2320;}
+.teamcal .minical .calgrid .day.other{color:#cfc4ba;}
+.teamcal .minical .calgrid .day.cur:hover{background:rgba(200,32,46,.12);}
+.teamcal .minical .calgrid .day.today{background:#C8202E;color:#fff;font-weight:800;
+  box-shadow:0 0 0 2px #d4a017, 0 2px 8px rgba(200,32,46,.35);}
+.teamcal .minical .calgrid .day.today.cur:hover{background:#a5121f;}
+.teamcal .callegend{color:#9c8a72;}
+@media (min-width:901px){
+  .pipecard.teamcal{padding:16px 18px;}
+  .teamcal .minical .calgrid{gap:5px;font-size:13.5px;}
+  .teamcal .minical .calgrid .day{padding:12px 0;border-radius:9px;}
+  .teamcal .minical .calgrid .dow{padding:6px 0;font-size:10.5px;}
+  .teamcal .minical .calhead b{font-size:17px;}
+  .teamcal .minical .calnav{width:32px;height:32px;font-size:18px;}
+}
 </style>
 </head>
 <body>
