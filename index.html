@@ -312,7 +312,7 @@ footer.site{
 .editpencil{position:absolute;bottom:9px;right:10px;border:1px solid var(--line);background:#faf7f5;
   border-radius:9px;width:36px;height:32px;font-size:15px;cursor:pointer;color:#8a6f66;}
 .editpencil:hover{background:#f3e9e4;color:#9c1822;}
-.projcover{position:relative;flex:0 0 178px;align-self:stretch;min-height:132px;border:1.5px dashed #d5c8c2;border-radius:12px;
+.projcover{position:relative;flex:0 0 148px;align-self:stretch;min-height:112px;border:1.5px dashed #d5c8c2;border-radius:12px;
   background:linear-gradient(160deg,#f6f1ee,#ece3de);display:flex;align-items:center;justify-content:center;color:#b3a49d;
   font:700 12px 'Segoe UI',Arial,sans-serif;overflow:hidden;transition:box-shadow .18s;}
 .projcover:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);}
@@ -334,7 +334,7 @@ footer.site{
 .projform select{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;background:#fff;}
 .projform input{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;
   border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;}
-@media (max-width:640px){ .projcover{flex:0 0 118px;min-height:118px;} .projinfo{padding:13px 14px;} }
+@media (max-width:640px){ .projcover{flex:0 0 104px;min-height:100px;} .projinfo{padding:12px 13px 32px;} }
 
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
@@ -731,39 +731,45 @@ html, body{overflow-x:hidden;max-width:100%;}
   border:1px dashed var(--line);border-radius:10px;padding:12px 14px;}
 
 /* ---- header refinements ---- */
-.brand{position:relative;width:100%;display:flex;align-items:center;justify-content:center;min-height:46px;}
-#brandLogo{position:absolute;left:0;top:50%;transform:translateY(-50%);}
-.titlecard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:11px;
-  padding:6px 18px;text-align:center;}
-.titlecard h1{font-size:20px !important;}
-.titlecard .tag{text-align:center;}
-.headactions{padding:0 2px;}
-.headactions .btn{padding:9px 13px;font-size:13.5px;}
+.titlecard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:10px;
+  height:40px;display:flex;align-items:center;justify-content:center;flex:1;min-width:0;
+  padding:0 12px;text-align:center;}
+.titlecard h1{font-size:16px !important;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.headactions{padding:0 2px;width:100%;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
+.headactions .btn{padding:0 13px;height:40px;font-size:13.5px;display:inline-flex;align-items:center;}
+.masthead{padding:9px 0;}
 #headCtx{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:10px;
-  padding:8px 10px;margin:0 8px;flex:1;min-width:0;}
-#headCtx:empty{background:none;border:0;}
+  height:40px;display:none;align-items:center;justify-content:center;flex:1;min-width:0;padding:0 10px;}
 @media (max-width:640px){
-  .titlecard{padding:5px 12px;}
-  .titlecard h1{font-size:15.5px !important;}
-  .titlecard .tag{display:none;}
-  .headactions .btn{padding:9px 12px;font-size:13px;}
-  #headCtx{font-size:13.5px;margin:0 6px;}
+  .titlecard h1{font-size:14px !important;}
+  .headactions .btn{padding:0 11px;font-size:13px;}
+  #headCtx{font-size:13px;}
+  .jobmenu-head{min-width:112px;font-size:12.5px;}
 }
+
+/* ---- overflow containment (long emails/addresses, flex shrink) ---- */
+.homemain, .homeside{min-width:0;}
+.homecols > *{max-width:100%;}
+.pipecard, .quickrow, .apprrow{max-width:100%;}
+.mrow > span, .mrow > a{min-width:0;overflow-wrap:anywhere;word-break:break-word;}
+.projinfo{overflow:hidden;}
+.wsrow, .contactrow, .locrow{max-width:100%;overflow:hidden;}
+.locaddr, .cname, .wstitle, .afbd, .btitle{min-width:0;overflow-wrap:anywhere;}
+.qbtn.qwide{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+.repstrip{width:100%;display:flex;justify-content:center;padding:5px 0 7px;}
+.reppill{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:8px;
+  padding:4px 14px;font:700 12px 'Segoe UI',Arial,sans-serif;color:#e8cfc9;letter-spacing:.04em;}
+.reppill b{color:#fff;}
 </style>
 </head>
 <body>
 
 <header class="site">
   <div class="wrap masthead">
-    <div class="brand">
-      <img id="brandLogo" alt="Cardinal Roofing &amp; Renovations" style="display:none;">
-      <div class="titlecard">
-        <h1>CARDINAL <span>CLIENT RESOURCES</span></h1>
-        <p class="tag">&#8220;The Single Source Of Truth&#8221;</p>
-      </div>
-    </div>
     <div class="headactions">
       <span class="whoami" id="whoami"></span>
+      <img id="brandLogo" alt="Home" title="Home" style="display:none;">
       <span id="newWrap" style="position:relative;display:inline-block;">
         <button class="btn" id="addProjectBtn" style="display:none;">&#65291; New</button>
         <div id="newMenu" style="display:none;">
@@ -773,6 +779,7 @@ html, body{overflow-x:hidden;max-width:100%;}
           <button class="navopt" data-new="reminder">&#9200; Reminder</button>
         </div>
       </span>
+      <div class="titlecard" id="brandTitle"><h1>CARDINAL <span>RESOURCE</span></h1></div>
       <span id="headCtx"></span>
       <span id="navWrap" style="display:none;">
         <select id="jobMenuSel" class="jobmenu jobmenu-head" style="display:none;">
@@ -795,6 +802,9 @@ html, body{overflow-x:hidden;max-width:100%;}
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
         </div>
       </span>
+    </div>
+    <div id="repStrip" class="repstrip" style="display:none;">
+      <span class="reppill" id="repPill"></span>
     </div>
   </div>
 </header>
@@ -879,7 +889,6 @@ html, body{overflow-x:hidden;max-width:100%;}
         <div id="projMeta" class="projmeta"></div>
         <div style="margin-top:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
           <select id="stageSel" style="display:none;"></select>
-          <button class="chipbtn" id="fupBtn">&#9200; Follow up&#8230;</button>
           <button class="btn" id="contactedBtn" style="display:none;">&#10003; Contacted &#8594; Prospect</button>
         </div>
       </div>
@@ -3051,10 +3060,8 @@ function openProject(id){
     esc(pr.name || 'Unnamed client') +
     '<span id="favStar" class="namestar" title="Favorite / high priority">\u2606</span>';
   document.getElementById('projMeta').innerHTML =
-    (pr.address ? '<div class="mrow"><span class="mlbl">ADDRESS</span><span>' + esc(pr.address) + '</span></div>' : '') +
-    (pr.phone   ? '<div class="mrow"><span class="mlbl">PHONE</span><a href="tel:' + esc(String(pr.phone).replace(/[^0-9+]/g,'')) + '">' + esc(pr.phone) + '</a></div>' : '') +
-    (pr.email   ? '<div class="mrow"><span class="mlbl">EMAIL</span><a href="mailto:' + esc(pr.email) + '">' + esc(pr.email) + '</a></div>' : '') +
-    (pr.created_by ? '<div class="mrow"><span class="mlbl">REP</span><span>' + esc(DEFAULT_NAMES[pr.created_by] || String(pr.created_by).split('@')[0]) + '</span></div>' : '');
+    (poOf(pr) ? '<div class="mrow"><span class="mlbl">PO</span><span>#' + poOf(pr) + '</span></div>' : '') +
+    (pr.address ? '<div class="mrow"><span class="mlbl">ADDRESS</span><span>' + esc(pr.address) + '</span></div>' : '');
   var cov = document.getElementById('projCover');
   var img = cov.querySelector('img');
   if(img) img.remove();
@@ -3726,6 +3733,7 @@ function renderOverview(){
     '<span class="cname"><small>Primary Contact</small>' + esc(pr.name || '\u2014') + '</span>' +
     '<span class="cicons">' +
       (pr.email ? '<a href="mailto:' + esc(pr.email) + '" title="Email">\u2709\uFE0F</a>' : '') +
+      '<a href="javascript:void(0)" class="fupicon" title="Schedule follow-up">\u23F0</a>' +
       (tel ? '<a href="sms:' + tel + '" title="Text">\uD83D\uDCAC</a>' : '') +
       (tel ? '<a href="tel:' + tel + '" class="calllink" title="Call">\uD83D\uDCDE</a>' : '') +
     '</span>';
@@ -3820,6 +3828,8 @@ document.getElementById('commsBackBtn').addEventListener('click', function(){
 /* ---------- call from app + log it ---------- */
 var pendingCall = null;
 document.getElementById('contactRow').addEventListener('click', function(e){
+  var f = e.target.closest('.fupicon');
+  if(f){ openFollowUp(); return; }
   var c = e.target.closest('.calllink');
   if(c && currentProject) pendingCall = { at: Date.now(), pr: currentProject.id, num: c.getAttribute('href').replace('tel:','') };
 });
@@ -4201,6 +4211,19 @@ function setHeaderJobMenu(on){
   var nb = document.getElementById('navBtn');
   if(jm) jm.style.display = on ? 'inline-block' : 'none';
   if(nb) nb.style.display = on ? 'none' : 'inline-block';
+  var bt = document.getElementById('brandTitle');
+  var hc = document.getElementById('headCtx');
+  if(bt) bt.style.display = on ? 'none' : 'flex';
+  if(hc) hc.style.display = on ? 'flex' : 'none';
+  var rs = document.getElementById('repStrip');
+  if(rs){
+    rs.style.display = on ? 'flex' : 'none';
+    if(on && currentProject){
+      var rep = assignedRepOf(currentProject);
+      var nm = rep ? (DEFAULT_NAMES[rep] || String(rep).split('@')[0]) : '\u2014';
+      document.getElementById('repPill').innerHTML = 'REP \u00b7 <b>' + esc(nm) + '</b>';
+    }
+  }
   setTimeout(fixHeadPad, 40);
 }
 function hideAllViews(){
@@ -4694,7 +4717,7 @@ document.getElementById('contactedBtn').addEventListener('click', async function
     this.style.display = 'none';
   }catch(err){ showError('Could not update stage: ' + (err.message || err)); }
 });
-document.getElementById('fupBtn').addEventListener('click', async function(){
+async function openFollowUp(){
   if(!currentProject) return;
   var days = prompt('Follow up in how many days?', '3');
   if(days === null) return;
@@ -4713,7 +4736,7 @@ document.getElementById('fupBtn').addEventListener('click', async function(){
     renderCalendar();
     alert('Follow-up scheduled for ' + d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' }) + ' at 9:00 AM.');
   }catch(err){ showError('Could not schedule: ' + (err.message || err)); }
-});
+}
 
 var cliStageFilter = '';
 
