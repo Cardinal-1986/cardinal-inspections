@@ -419,7 +419,6 @@ footer.site{
   .brand .tag{display:none;}
   #navMenu{left:10px;right:10px;min-width:0;}
   #navMenu .navopt{padding:14px 18px;font-size:15px;}
-  #clientsBtn{padding:8px 10px;}
 }
 
 .calgrid .day.cur{cursor:pointer;}
@@ -612,7 +611,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 }
 
 /* ---- no horizontal page sway ---- */
-html, body{overflow-x:hidden;max-width:100%;}
+html, body{overflow-x:clip;max-width:100%;}
 /* wide tables scroll inside their own container, not the page */
 #listMount, #historyMount, #estDocsMount, #inspDocsMount, #bannerMount{
   overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;
@@ -683,6 +682,27 @@ html, body{overflow-x:hidden;max-width:100%;}
 .locrow{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;}
 .locaddr{font:600 14.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;flex:1;}
 .locgo{font:700 13px 'Segoe UI',Arial,sans-serif;color:#1d4f91;white-space:nowrap;}
+
+#headCtx{flex:1;text-align:center;font:800 15.5px 'Segoe UI',Arial,sans-serif;color:#fff;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;padding:0 6px;}
+#headCtx small{color:#e8b7ba;font-weight:700;}
+
+.payring{width:86px;height:86px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(#7CB342 0%, #d9d9d9 0);}
+.payringinner{width:64px;height:64px;border-radius:50%;background:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 17px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;}
+.jobvalrow{align-items:center;gap:8px;}
+.wsrow{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0;}
+.wstitle{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;margin-bottom:6px;}
+.wstitle .unsig{font:700 11px 'Segoe UI',Arial,sans-serif;color:#b26a00;background:#fdf3e2;
+  border-radius:8px;padding:2px 8px;margin-left:6px;}
+.wsgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.wsgrid label{font:700 11px 'Segoe UI',Arial,sans-serif;color:#888;display:block;}
+.wsgrid b{font:800 15.5px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;}
+.wsgrid input{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #c9c2bf;border-radius:7px;
+  font:700 14px 'Segoe UI',Arial,sans-serif;}
+.wsempty{font:12.5px 'Segoe UI',Arial,sans-serif;color:#a89f9a;background:#fbfaf9;
+  border:1px dashed var(--line);border-radius:10px;padding:12px 14px;}
 </style>
 </head>
 <body>
@@ -707,7 +727,7 @@ html, body{overflow-x:hidden;max-width:100%;}
           <button class="navopt" data-new="reminder">&#9200; Reminder</button>
         </div>
       </span>
-      <button class="btn ghost" id="clientsBtn" style="display:none;">&#128101; Clients</button>
+      <span id="headCtx"></span>
       <span id="navWrap" style="display:none;">
         <button class="btn ghost" id="navBtn">&#9776; Menu</button>
         <div id="navMenu" style="display:none;">
@@ -716,6 +736,7 @@ html, body{overflow-x:hidden;max-width:100%;}
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
+          <button class="navopt" data-nav="clients">&#128101; Clients</button>
           <button class="navopt" data-nav="board">&#128197; Schedule Board</button>
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
@@ -799,8 +820,6 @@ html, body{overflow-x:hidden;max-width:100%;}
 <!-- ============ PROJECT PROFILE ============ -->
 <div id="projectView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <button class="btn dark" id="projBackBtn">&larr; All projects</button>
-
     <div class="projhead">
       <div class="projcover" id="projCover">
         <span id="projCoverEmpty">COVER PHOTO</span>
@@ -842,10 +861,14 @@ html, body{overflow-x:hidden;max-width:100%;}
       <div id="stageBanner" class="stagebanner">APPROVED</div>
       <div class="jobvalrow">
         <span><small>Job Value</small><b id="jobValueLbl">--</b></span>
-        <span style="text-align:right;"><small>Stage</small><b id="jobStageLbl">--</b></span>
+        <span class="payring" id="payRing"><span class="payringinner" id="payRingPct">0%</span></span>
+        <span style="text-align:right;"><small>Balance Due</small><b id="balanceLbl" style="color:#C8202E;">--</b></span>
       </div>
 
-      <h3 class="projsec" style="margin-top:18px;">Job Activity</h3>
+      <h3 class="projsec" style="margin-top:18px;">&#128178; Worksheet</h3>
+      <div id="wsMount"></div>
+
+      <h3 class="projsec" style="margin-top:20px;">Job Activity</h3>
       <div class="jagrid" id="jaGrid"></div>
 
       <h3 class="projsec" style="margin-top:20px;">Contacts</h3>
@@ -2964,6 +2987,8 @@ function renderHome(){
 /* ---------- project profile ---------- */
 var projectView = document.getElementById('projectView');
 function showHome(){
+  var hc = document.getElementById('headCtx');
+  if(hc) hc.textContent = '';
   currentProject = null;
   currentList = null;
   hideAllViews();
@@ -3000,6 +3025,9 @@ function openProject(id){
   renderFavBtn();
   document.getElementById('contactedBtn').style.display = (normStage(pr.stage) === 'Lead') ? 'inline-block' : 'none';
   document.getElementById('ptCheck').checked = !!pr.photos_transferred;
+  var hpo = poOf(pr);
+  document.getElementById('headCtx').innerHTML =
+    (hpo ? '<small>' + hpo + ':</small> ' : '') + esc(pr.name || '');
   renderOverview();
   renderChat();
   renderLeadCard();
@@ -3542,7 +3570,7 @@ document.getElementById('ldSave').addEventListener('click', async function(){
       email: emails.length ? emails[0].v : '',
       notes: document.getElementById('ldNotes').value.trim(),
       stage: 'Lead',
-      checklist: JSON.stringify({ lead: lead })
+      checklist: JSON.stringify({ lead: lead, po: nextPo(), stage_since: new Date().toISOString() })
     });
     var ad = document.getElementById('ldApptDate').value;
     if(ad){
@@ -3567,6 +3595,31 @@ document.getElementById('ldSave').addEventListener('click', async function(){
 
 /* lead details card on overview */
 /* ---------- AccuLynx-style overview ---------- */
+function stageAgo(iso){
+  if(!iso) return '';
+  var d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if(d < 1) return 'Today';
+  if(d === 1) return '1 Day Ago';
+  if(d < 14) return d + ' Days Ago';
+  if(d < 60) return Math.floor(d/7) + ' Weeks Ago';
+  return Math.floor(d/30) + ' Months Ago';
+}
+function jobFinance(pr){
+  var all = parseCkAll(pr);
+  var ws = all.ws || {};
+  var contracts = cacheRows.filter(function(r){
+    return r.project_id === pr.id && /^contract/i.test((r.title || '').trim());
+  });
+  var signed = contracts.filter(function(r){ return r.signed_at && Number(r.total) > 0; });
+  var value = 0, paid = 0;
+  signed.forEach(function(r){
+    value += Number(r.total);
+    paid += Number((ws[r.id] || {}).paid) || 0;
+  });
+  if(paid > value) paid = value;
+  return { contracts: contracts, value: value, paid: paid,
+           balance: value - paid, pct: value ? Math.round(paid / value * 100) : 0 };
+}
 var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', Approved:'#7CB342', Scheduled:'#7CB342',
   Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B' };
 function commsCount(pr){
@@ -3579,11 +3632,16 @@ function renderOverview(){
   var stg = normStage(pr.stage);
   var banner = document.getElementById('stageBanner');
   banner.style.background = STAGE_COLORS[stg] || '#607D8B';
+  var allCk = parseCkAll(pr);
   banner.innerHTML = esc(stg.toUpperCase()) +
-    '<small>updated ' + timeAgo(pr.updated_at || pr.created_at) + ' \u00b7 tap to change</small>';
-  var val = projectValue(pr);
-  document.getElementById('jobValueLbl').textContent = val ? fmtMoney(val) : '--';
-  document.getElementById('jobStageLbl').textContent = stg;
+    '<small>' + esc(stageAgo(allCk.stage_since || pr.updated_at || pr.created_at) || '') + '</small>';
+  var fin = jobFinance(pr);
+  document.getElementById('jobValueLbl').textContent = fin.value ? fmtMoney(fin.value) : '--';
+  document.getElementById('balanceLbl').textContent = fin.value ? fmtMoney(fin.balance) : '--';
+  var ring = document.getElementById('payRing');
+  ring.style.background = 'conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0)';
+  document.getElementById('payRingPct').textContent = fin.pct + '%';
+  renderWorksheet(pr, fin);
   /* activity grid */
   var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
   var ests = docs.filter(function(r){ return isEstimateTitle(r.title); }).length;
@@ -3625,6 +3683,43 @@ function renderOverview(){
     ? '<span class="locaddr">\uD83D\uDCCD ' + esc(pr.address) + '</span><span class="locgo">Open in Maps \u203A</span>'
     : '<span class="locaddr" style="color:#a89f9a;">No address on file</span>';
 }
+function renderWorksheet(pr, fin){
+  var mount = document.getElementById('wsMount');
+  if(!mount) return;
+  if(!fin.contracts.length){
+    mount.innerHTML = '<div class="wsempty">Contract totals appear here once a contract is created ' +
+      '(admin: Approvals card &#8594; Approve &amp; create contract). Signed contracts set the Job Value; ' +
+      'enter payments as they come in.</div>';
+    return;
+  }
+  var ws = parseCkAll(pr).ws || {};
+  mount.innerHTML = fin.contracts.map(function(r){
+    var tot = Number(r.total) || 0;
+    var paid = Number((ws[r.id] || {}).paid) || 0;
+    var rem = Math.max(0, tot - paid);
+    return '<div class="wsrow">' +
+      '<div class="wstitle">' + esc(r.title) + (r.signed_at ? '' : '<span class="unsig">awaiting signature</span>') + '</div>' +
+      '<div class="wsgrid">' +
+        '<span><label>Contract Total</label><b>' + (tot ? fmtMoney(tot) : '--') + '</b></span>' +
+        '<span><label>Amount Collected</label><input type="number" min="0" step="0.01" class="wspaid" ' +
+          'data-doc="' + r.id + '" value="' + (paid || '') + '" placeholder="0.00"' + (r.signed_at ? '' : ' disabled') + '></span>' +
+        '<span><label>Remaining</label><b>' + (tot ? fmtMoney(rem) : '--') + '</b></span>' +
+      '</div></div>';
+  }).join('');
+}
+document.getElementById('wsMount').addEventListener('change', async function(e){
+  var inp = e.target.closest('.wspaid');
+  if(!inp || !currentProject) return;
+  var v = parseFloat(inp.value);
+  if(isNaN(v) || v < 0) v = 0;
+  var all = parseCkAll(currentProject);
+  var ws = all.ws || {};
+  ws[inp.getAttribute('data-doc')] = { paid: v };
+  try{
+    await patchProjectCk(currentProject, { ws: ws });
+    renderOverview();
+  }catch(err){ showError('Could not save payment: ' + (err.message || err)); }
+});
 document.getElementById('jaGrid').addEventListener('click', function(e){
   var t = e.target.closest('.jatile');
   if(!t) return;
@@ -3737,6 +3832,8 @@ document.getElementById('pfSave').addEventListener('click', async function(){
       await reload();
       if(currentProject && currentProject.id === pfEditing) openProject(pfEditing);
     }else{
+      fields.checklist = JSON.stringify({ po: nextPo(), stage_since: new Date().toISOString() });
+      fields.stage = 'Lead';
       var id = await pdb.create(fields);
       projModal.style.display = 'none';
       await reload();
@@ -3747,7 +3844,6 @@ document.getElementById('pfSave').addEventListener('click', async function(){
   }
 });
 
-document.getElementById('projBackBtn').addEventListener('click', showHome);
 document.getElementById('projEditBtn').addEventListener('click', function(){
   if(currentProject) openProjModal(currentProject);
 });
@@ -4392,6 +4488,19 @@ async function exportBackup(){
   }catch(err){ showError('Backup failed: ' + (err.message || err)); }
 }
 
+/* ---------- PO numbers (sequential, starts 1002) ---------- */
+function poOf(pr){
+  var po = parseCkAll(pr).po;
+  return (typeof po === 'number' && po > 0) ? po : null;
+}
+function nextPo(){
+  var mx = 1001; /* so the first assigned is 1002 */
+  cacheProjects.forEach(function(pr){
+    var po = poOf(pr);
+    if(po && po > mx) mx = po;
+  });
+  return mx + 1;
+}
 /* ---------- 24-hour lead rule ---------- */
 function leadAgeHours(pr){
   if(normStage(pr.stage) !== 'Lead' || !pr.created_at) return null;
@@ -4483,6 +4592,7 @@ async function setStage(prId, v){
   var prev = normStage(pr.stage);
   await pdb.update(pr.id, { stage: v });
   pr.stage = v;
+  patchProjectCk(pr, { stage_since: new Date().toISOString() }).catch(function(){});
   if(currentProject && currentProject.id === pr.id){
     currentProject.stage = v;
     var ss = document.getElementById('stageSel');
@@ -4588,7 +4698,6 @@ function openClientsDirectory(keepFilter){
   window.scrollTo(0,0);
   setTimeout(function(){ document.getElementById('cliFilter').focus(); }, 80);
 }
-document.getElementById('clientsBtn').addEventListener('click', openClientsDirectory);
 (function(){
   var brand = document.querySelector('.brand');
   if(brand){
@@ -4645,6 +4754,7 @@ navMenu.addEventListener('click', function(e){
   var nav = opt.getAttribute('data-nav');
   if(nav === 'home'){ showHome(); }
   else if(nav === 'profile'){ openMyProfile(); }
+  else if(nav === 'clients'){ openClientsDirectory(); }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
@@ -6504,7 +6614,6 @@ function showMain(userEmail){
   mainView.style.display = 'block';
   addProjBtn.style.display = 'inline-block';
   document.getElementById('navWrap').style.display = 'inline-block';
-  document.getElementById('clientsBtn').style.display = 'inline-block';
   document.getElementById('backupNav').style.display =
     (ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
   var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
@@ -6542,7 +6651,6 @@ whoami.addEventListener('click', async function(){
 function showLogin(){
   hideAllViews();
   document.getElementById('navWrap').style.display = 'none';
-  document.getElementById('clientsBtn').style.display = 'none';
   addProjBtn.style.display = 'none';
   signOutBtn.style.display = 'none';
   whoami.textContent = '';
