@@ -38,7 +38,7 @@ body{
 header.site{background:var(--ink);border-bottom:4px solid var(--red);
   position:fixed;top:0;left:0;right:0;z-index:90;box-shadow:0 2px 10px rgba(0,0,0,.25);}
 body{padding-top:110px;} /* refined at runtime to the real header height */
-.wrap{max-width:1760px;margin:0 auto;padding:0 28px;}
+.wrap{max-width:none;margin:0 auto;padding:0 32px;}
 .masthead{
   display:flex;align-items:center;justify-content:space-between;
   gap:16px;padding:10px 0;flex-wrap:wrap;
@@ -691,6 +691,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 .jagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
 @media (min-width:900px){ .jagrid{grid-template-columns:repeat(3,1fr);} }
 @media (min-width:1300px){ .jagrid{grid-template-columns:repeat(4,1fr);} }
+@media (min-width:1900px){ .jagrid{grid-template-columns:repeat(6,1fr);} }
 .jatile{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;
   border:1px solid var(--line);border-radius:10px;padding:14px;cursor:pointer;
   font:700 14.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
@@ -808,6 +809,7 @@ html, body{overflow-x:hidden;max-width:100%;}
           <button class="navopt" data-nav="clients">&#128101; Clients</button>
           <button class="navopt" data-nav="board">&#128197; Schedule Board</button>
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
+          <button class="navopt" data-nav="backfill" id="backfillNav" style="display:none;">&#128202; Backfill totals</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
         </div>
       </span>
@@ -1128,7 +1130,7 @@ html, body{overflow-x:hidden;max-width:100%;}
     <button class="btn dark" id="cliBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#128101; Client Directory</h2>
     <div class="controls" style="margin:8px 0 0;">
-      <input type="search" id="cliFilter" placeholder="Filter by name, address, phone, email, rep&#8230;" aria-label="Filter clients">
+      <input type="search" id="cliFilter" placeholder="Filter by name, PO #, address, phone, email, rep&#8230;" aria-label="Filter clients">
       <span class="count" id="cliCount"></span>
     </div>
     <div class="stgfilter" id="stgFilter"></div>
@@ -1138,7 +1140,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 <!-- ============ ACTIVITY FEED PAGE ============ -->
 <div id="activityView" style="display:none;">
-  <div class="wrap" style="padding-top:18px;max-width:1040px;">
+  <div class="wrap" style="padding-top:18px;max-width:1500px;">
     <button class="btn dark" id="actBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#9889; Activity Feed</h2>
     <p class="subnote">Everything happening across the team, newest first.</p>
@@ -1164,7 +1166,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 <!-- ============ SCHEDULE BOARD ============ -->
 <div id="boardView" style="display:none;">
-  <div class="wrap" style="padding-top:18px;max-width:1200px;">
+  <div class="wrap" style="padding-top:18px;max-width:1700px;">
     <button class="btn dark" id="boardBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#128197; Schedule Board</h2>
     <p class="subnote">Jobs &#128296;, material drops &#128666;, and appointments &#128197; for the next 14 days. Tap a day to add or edit.</p>
@@ -2559,6 +2561,28 @@ var CONTRACT_TERMS = `
 <li><b>Payment.</b> Balances unpaid 30 days after completion accrue 1.5% monthly. Owner is responsible for reasonable collection costs.</li>
 `;
 var CONTRACT_TEMPLATE = buildEstimate('SERVICE <span>CONTRACT</span>', CONTRACT_BODY, CONTRACT_TERMS);
+var INVOICE_BODY =
+  '<div class="secthead">INVOICE</div>' +
+  '<table style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px;">' +
+    '<tr><td style="padding:4px 0;color:#666;width:130px;">Invoice #</td><td style="font-weight:800;">[INV_NUM]</td>' +
+    '<td style="padding:4px 0;color:#666;width:110px;">Date</td><td style="font-weight:700;">[INV_DATE]</td></tr>' +
+  '</table>' +
+  '<div class="secthead">SUMMARY</div>' +
+  '<table style="width:100%;border-collapse:collapse;font-size:14px;">' +
+    '<tr><td style="padding:9px 6px;border-bottom:1px solid #ddd;">Contract Price</td>' +
+      '<td style="padding:9px 6px;border-bottom:1px solid #ddd;text-align:right;font-weight:700;">[INV_TOTAL]</td></tr>' +
+    '<tr><td style="padding:9px 6px;border-bottom:1px solid #ddd;">Payments Received</td>' +
+      '<td style="padding:9px 6px;border-bottom:1px solid #ddd;text-align:right;font-weight:700;">&#8722;[INV_PAID]</td></tr>' +
+    '<tr><td style="padding:12px 6px;font-weight:800;font-size:16px;">BALANCE DUE</td>' +
+      '<td id="estTotal" style="padding:12px 6px;text-align:right;font-weight:800;font-size:16px;color:#9c1822;">[INV_DUE]</td></tr>' +
+  '</table>' +
+  '<p style="font-size:12.5px;color:#555;margin-top:14px;">Please remit the balance due upon receipt. ' +
+  'Checks payable to <b>Cardinal Roofing &amp; Renovations</b>. Thank you for your business!</p>';
+var INVOICE_TERMS =
+  '<b>Payment terms.</b> Balance is due upon receipt of this invoice. Accounts unpaid after 30 days ' +
+  'accrue a late charge of 1.5% per month (18% APR) on the outstanding balance. Please contact our ' +
+  'office with any questions about this invoice or to arrange payment.';
+var INVOICE_TEMPLATE = buildEstimate('SERVICE <span>INVOICE</span>', INVOICE_BODY, INVOICE_TERMS);
 
 function cbxColor(name, hex){
   return '<span class="sw"><span class="chipc" style="background:' + hex + ';"></span>' +
@@ -2951,6 +2975,7 @@ function docKind(title){
   if(/^repair estimate/i.test(t)) return { type:'Estimate', trade:'Repair' };
   if(/^estimate/i.test(t))        return { type:'Estimate', trade:'Roofing' };
   if(/^contract/i.test(t))        return { type:'Contract', trade:'\u2014' };
+  if(/^invoice/i.test(t))         return { type:'Invoice', trade:'\u2014' };
   return { type:'Inspection', trade:'Roofing' };
 }
 function docRowHtml(r){
@@ -2988,7 +3013,7 @@ function renderHome(){
   var q = searchText.trim().toLowerCase();
   var projs = cacheProjects.filter(function(pr){
     if(!q) return normStage(pr.stage) !== 'Closed'; /* Closed = archive: off the board */
-    var hay = [pr.name, pr.address, pr.phone, pr.email].join(' ').toLowerCase();
+    var hay = [pr.name, pr.address, pr.phone, pr.email, poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   });
   countLabel.textContent = projs.length + ' project' + (projs.length === 1 ? '' : 's');
@@ -3765,7 +3790,10 @@ function renderWorksheet(pr, fin){
     return;
   }
   var ws = parseCkAll(pr).ws || {};
-  mount.innerHTML = fin.contracts.map(function(r){
+  var invBtn = fin.value > 0
+    ? '<div style="text-align:right;margin:2px 0 6px;"><button class="chipbtn" data-mkinv="1">&#129534; Create invoice (balance ' + fmtMoney(fin.balance) + ')</button></div>'
+    : '';
+  mount.innerHTML = invBtn + fin.contracts.map(function(r){
     var tot = Number(r.total) || 0;
     var paid = Number((ws[r.id] || {}).paid) || 0;
     var rem = Math.max(0, tot - paid);
@@ -3779,6 +3807,29 @@ function renderWorksheet(pr, fin){
       '</div></div>';
   }).join('');
 }
+async function createInvoiceFor(pr){
+  var fin = jobFinance(pr);
+  if(!fin.value){ alert('Create an invoice after a contract is signed \u2014 the totals come from the signed contract.'); return; }
+  var invCount = cacheRows.filter(function(r){
+    return r.project_id === pr.id && /^invoice/i.test((r.title || '').trim());
+  }).length;
+  var num = '#' + (poOf(pr) || 'INV') + '-' + (invCount + 1);
+  var tpl = prefillUserInfo(prefillClientInfo(INVOICE_TEMPLATE, pr));
+  tpl = tpl.replace('[INV_NUM]', esc(num));
+  tpl = tpl.replace('[INV_DATE]', new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }));
+  tpl = tpl.replace('[INV_TOTAL]', fmtMoney(fin.value));
+  tpl = tpl.replace('[INV_PAID]', fmtMoney(fin.paid));
+  tpl = tpl.replace('[INV_DUE]', fmtMoney(fin.balance));
+  try{
+    var id = await db.create('Invoice \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
+    await reload();
+    await openEditor(id);
+    alert('Invoice ' + num + ' created from the signed contract and payments logged in the Worksheet. Email it to the client \u2014 the job moves to INVOICED automatically when sent.');
+  }catch(err){ showError('Could not create invoice: ' + (err.message || err)); }
+}
+document.getElementById('wsMount').addEventListener('click', function(e){
+  if(e.target.closest('[data-mkinv]') && currentProject) createInvoiceFor(currentProject);
+});
 document.getElementById('wsMount').addEventListener('change', async function(e){
   var inp = e.target.closest('.wspaid');
   if(!inp || !currentProject) return;
@@ -4762,7 +4813,7 @@ function renderClientDirectory(){
     .filter(function(pr){
       if(cliStageFilter && normStage(pr.stage) !== cliStageFilter) return false;
       if(!q) return true;
-      return [pr.name, pr.address, pr.phone, pr.email, pr.created_by].join(' ').toLowerCase().indexOf(q) !== -1;
+      return [pr.name, pr.address, pr.phone, pr.email, pr.created_by, poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase().indexOf(q) !== -1;
     });
   document.getElementById('cliCount').textContent = list.length + ' client' + (list.length === 1 ? '' : 's');
   document.getElementById('cliList').innerHTML = list.length ? list.map(function(pr){
@@ -4856,6 +4907,7 @@ navMenu.addEventListener('click', function(e){
   if(nav === 'home'){ showHome(); }
   else if(nav === 'profile'){ openMyProfile(); }
   else if(nav === 'clients'){ openClientsDirectory(); }
+  else if(nav === 'backfill'){ runTotalsBackfill(); }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
@@ -5125,6 +5177,27 @@ function renderApprovals(){
       (val ? ' \u00b7 ' + fmtMoney(val) : '') + '</span></span>' +
       '<button class="btn" data-approve="' + pr.id + '">Approve &amp; create contract</button></div>';
   }).join('');
+}
+async function runTotalsBackfill(){
+  if(!isAdminUser()){ alert('Admins only.'); return; }
+  var targets = cacheRows.filter(function(r){
+    var t = (r.title || '').trim();
+    return (isEstimateTitle(t) || /^(contract|invoice)/i.test(t)) && !(Number(r.total) > 0);
+  });
+  if(!targets.length){ alert('Nothing to backfill \u2014 every estimate, contract, and invoice already has a total.'); return; }
+  if(!confirm('Scan ' + targets.length + ' document(s) missing a dollar total and fill them in from the document contents?')) return;
+  var fixed = 0, skipped = 0;
+  for(var i = 0; i < targets.length; i++){
+    try{
+      var full = await db.get(targets[i].id);
+      var mm = /id="estTotal"[^>]*>([\s\S]*?)<\//.exec((full && full.html) || '');
+      var v = mm ? parseFloat(mm[1].replace(/<[^>]+>/g, '').replace(/[^0-9.]/g, '')) : NaN;
+      if(!isNaN(v) && v > 0){ await db.update(targets[i].id, { total: v }); fixed++; }
+      else skipped++;
+    }catch(e){ skipped++; }
+  }
+  await reload();
+  alert('Backfill complete: ' + fixed + ' total(s) filled in' + (skipped ? ', ' + skipped + ' had no readable total (open and re-save those to set one)' : '') + '. Pipeline dollars are now up to date.');
 }
 async function approveAndContract(prId){
   var pr = cacheProjects.find(function(x){ return String(x.id) === String(prId); });
@@ -6552,6 +6625,9 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     var data = null; try{ data = await res.json(); }catch(e){}
     if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
     await db.update(current, { status: 'sent', sent_at: new Date().toISOString() });
+    if(pr && row && /^invoice/i.test((row.title || '').trim()) && normStage(pr.stage) !== 'Invoiced'){
+      try{ await setStage(pr.id, 'Invoiced'); }catch(e){}
+    }
     btn.textContent = '\u2713 Sent';
     setTimeout(function(){ btn.textContent = '\uD83D\uDCE7 Email to client'; btn.disabled = false; }, 2500);
     if(pr && confirm('Sent. Schedule a follow-up reminder in 3 days?')){
@@ -6668,6 +6744,12 @@ toggleBtn.addEventListener('click', async function(){
     await db.update(current.id, { status: toSent ? 'sent' : 'unsent', sent_at: sentAt });
     current.status = toSent ? 'sent' : 'unsent';
     current.sent_at = sentAt;
+    if(toSent){
+      var trow = cacheRows.find(function(r){ return r.id === current.id; });
+      if(trow && trow.project_id && /^invoice/i.test((trow.title || '').trim())){
+        try{ await setStage(trow.project_id, 'Invoiced'); }catch(e){}
+      }
+    }
     setEditorStatus(current.status, sentAt);
     reload();
   }catch(err){ showError('Could not update status: ' + (err.message || err)); }
@@ -6751,6 +6833,8 @@ function showMain(userEmail){
   addProjBtn.style.display = 'inline-block';
   document.getElementById('navWrap').style.display = 'inline-block';
   document.getElementById('backupNav').style.display =
+    (ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
+  document.getElementById('backfillNav').style.display =
     (ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
   var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
   if(leadOpt) leadOpt.style.display = (PRODUCTION_EMAILS.indexOf(userEmail) !== -1) ? 'none' : 'block';
