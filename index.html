@@ -43,7 +43,7 @@ header.site{background:var(--ink);border-bottom:4px solid var(--red);
   text-transform:uppercase;letter-spacing:.14em;
 }
 .headactions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.whoami{font-weight:800;font-size:17px;color:#2b2b2b;}
+.whoami{display:none;}
 
 .btn{
   display:inline-block;border:0;cursor:pointer;font:inherit;
@@ -148,7 +148,7 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 .loading{padding:30px;text-align:center;color:var(--muted);}
 
 /* ---------- login ---------- */
-#loginView{display:none;min-height:60vh;align-items:flex-start;justify-content:center;padding:60px 20px;}
+#loginView{display:none;min-height:calc(100vh - 120px);align-items:flex-start;justify-content:center;padding:40px 20px 240px;}
 #loginView.open{display:flex;}
 .logincard{
   background:var(--paper);border:1px solid var(--line);border-top:6px solid var(--red);
@@ -395,13 +395,13 @@ footer.site{
 .calgrid .day.today .dot{background:#fff;}
 @media (max-width:640px){
   .calcard{flex-basis:100%;} .hero-hi{font-size:16.5px;}
-  .masthead{padding:16px 0 12px;gap:10px;}
+  .masthead{padding:8px 0;gap:8px;}
   .headactions{width:100%;justify-content:space-between;gap:8px;}
-  .whoami{font-size:15.5px;}
+  .brand h1{font-size:17px;}
+  .brand .tag{display:none;}
   #navMenu{left:10px;right:10px;min-width:0;}
   #navMenu .navopt{padding:14px 18px;font-size:15px;}
   #clientsBtn{padding:8px 10px;}
-  #homeBtn{padding:8px 10px;}
 }
 
 .calgrid .day.cur{cursor:pointer;}
@@ -440,7 +440,7 @@ footer.site{
 @media (max-width:900px){
   #mainView .homecols{ background-position:center bottom; background-size:min(440px, 86%); min-height:0; }
 }
-#loginView{ background-position:center 72%; background-size:min(560px, 92%); }
+#loginView{ background-position:center bottom; background-size:min(520px, 90%); }
 
 .clirow{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;
   background:#fff;padding:10px 14px;margin:7px 0;cursor:pointer;transition:box-shadow .12s;}
@@ -561,7 +561,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
       <img id="brandLogo" alt="Cardinal Roofing &amp; Renovations" style="display:none;">
       <div>
         <h1>CARDINAL <span>CLIENT RESOURCES</span></h1>
-        <p class="tag">Cardinal Roofing &amp; Renovations · Inspections, Estimates &amp; Client Files</p>
+        <p class="tag">&#8220;The one source of truth&#8221;</p>
       </div>
     </div>
     <div class="headactions">
@@ -575,8 +575,6 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
           <button class="navopt" data-new="reminder">&#9200; Reminder</button>
         </div>
       </span>
-      <button class="btn ghost" id="signOutBtn" style="display:none;">Sign out</button>
-      <button class="btn ghost" id="homeBtn" style="display:none;">&#127968; Home</button>
       <button class="btn ghost" id="clientsBtn" style="display:none;">&#128101; Clients</button>
       <span id="navWrap" style="display:none;">
         <button class="btn ghost" id="navBtn">&#9776; Menu</button>
@@ -598,7 +596,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   <div class="logincard">
     <img class="loginlogo" id="loginLogo" alt="Cardinal Roofing &amp; Renovations" style="display:none;">
     <h2>Team sign in</h2>
-    <p>Cardinal Client Resources holds every client profile, inspection report, and estimate. Sign in with the account your administrator created for you.</p>
+    <p style="font:italic 600 15px Georgia,'Times New Roman',serif;color:#7a4a3e;">&#8220;The one source of truth&#8221;</p>
     <label for="loginEmail">Email</label>
     <input id="loginEmail" type="email" autocomplete="username" placeholder="you@cardinalroofing.com">
     <label for="loginPassword">Password</label>
@@ -654,6 +652,9 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
     </div>
     <div id="historyMount"><div class="loading">Loading…</div></div>
   </section>
+  <div class="wrap" style="text-align:center;padding:30px 0 40px;">
+    <button class="chipbtn" id="signOutBtn" style="display:none;color:#8a6f66;">Sign out of Cardinal</button>
+  </div>
 </div>
 
 <!-- ============ PROJECT PROFILE ============ -->
@@ -4092,7 +4093,6 @@ function openClientsDirectory(keepFilter){
   setTimeout(function(){ document.getElementById('cliFilter').focus(); }, 80);
 }
 document.getElementById('clientsBtn').addEventListener('click', openClientsDirectory);
-document.getElementById('homeBtn').addEventListener('click', showHome);
 (function(){
   var brand = document.querySelector('.brand');
   if(brand){
@@ -5766,7 +5766,6 @@ function showMain(userEmail){
   mainView.style.display = 'block';
   addProjBtn.style.display = 'inline-block';
   document.getElementById('navWrap').style.display = 'inline-block';
-  document.getElementById('homeBtn').style.display = 'inline-block';
   document.getElementById('clientsBtn').style.display = 'inline-block';
   document.getElementById('backupNav').style.display =
     (ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
@@ -5805,7 +5804,6 @@ whoami.addEventListener('click', async function(){
 function showLogin(){
   hideAllViews();
   document.getElementById('navWrap').style.display = 'none';
-  document.getElementById('homeBtn').style.display = 'none';
   document.getElementById('clientsBtn').style.display = 'none';
   addProjBtn.style.display = 'none';
   signOutBtn.style.display = 'none';
