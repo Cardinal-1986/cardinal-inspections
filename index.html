@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1b1b1b">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Cardinal">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cardinal Client Resources</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -474,6 +480,7 @@ footer.site{
 .stg-Scheduled{background:#fff0f0;color:#9c1822;}
 .stg-Completed{background:#ececec;color:#4a6572;}
 .stg-Invoiced{background:#f3e8fb;color:#5b2d91;}
+.stg-Closed{background:#e6ecef;color:#3d5560;}
 .pcard .stagechip{position:absolute;top:10px;left:10px;box-shadow:0 1px 4px rgba(0,0,0,.25);}
 .stgfilter{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;}
 .stgfilter .hstat.on{background:#9c1822;color:#fff;border-color:#9c1822;}
@@ -501,14 +508,42 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 /* ---- pipeline widget ---- */
 .pipecard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px 16px;margin:14px 0;}
 .pipetitle{font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;margin-bottom:10px;}
-.piperow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
-.pipebtn{border:0;border-radius:10px;color:#fff;cursor:pointer;padding:12px 6px;text-align:center;
-  font:700 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;transition:transform .12s, box-shadow .12s;}
-.pipebtn:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.2);}
-.pipebtn .n{display:block;font-size:24px;font-weight:800;line-height:1.1;}
-.pipe-lead{background:#1d4f91;} .pipe-prospect{background:#b26a00;} .pipe-approved{background:#1d6b34;}
-.pipe-completed{background:#4a6572;} .pipe-invoiced{background:#5b2d91;}
-@media (max-width:640px){ .piperow{grid-template-columns:repeat(2,1fr);} .pipebtn.pipe-invoiced{grid-column:span 2;} }
+.piperow{display:flex;gap:6px;justify-content:space-between;}
+.pipebtn{flex:1;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:78px;}
+.pipebtn .pcirc{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;
+  margin:0 auto 6px;color:#fff;font:800 30px 'Segoe UI',Arial,sans-serif;
+  transition:transform .12s, box-shadow .12s;}
+.pipebtn:hover .pcirc{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.25);}
+.pipebtn .plabel{display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.pipebtn .pcount{display:block;font:800 20px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;line-height:1.2;}
+.pipebtn .pmoney{display:block;font:700 12px 'Segoe UI',Arial,sans-serif;color:#555;}
+.pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
+.pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;} .pipe-closed{background:#607D8B;}
+@media (max-width:640px){
+  .piperow{overflow-x:auto;justify-content:flex-start;padding-bottom:6px;-webkit-overflow-scrolling:touch;}
+  .pipebtn{flex:0 0 auto;min-width:86px;}
+  .pipebtn .pcirc{width:58px;height:58px;font-size:26px;}
+}
+/* ---- quick row ---- */
+.quickrow{display:flex;gap:8px;margin-top:14px;}
+.qbtn{border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;
+  font:700 14.5px 'Segoe UI',Arial,sans-serif;color:#1d4f91;padding:12px 14px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.qbtn:hover{box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.qbtn.qsq{flex:0 0 auto;font-size:17px;}
+.qbtn.qwide{flex:1;}
+/* ---- full activity feed page ---- */
+.afrow{display:flex;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;margin:8px 0;}
+.afrow .afav{flex:0 0 44px;text-align:center;}
+.afrow .afav .circ{width:40px;height:40px;border-radius:50%;background:#ece5e2;color:#7a4a3e;
+  display:flex;align-items:center;justify-content:center;font:800 14px 'Segoe UI',Arial,sans-serif;margin:0 auto;}
+.afrow .afav .tm{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#9a8c85;margin-top:3px;display:block;}
+.afrow .afbd{flex:1;min-width:0;font:14px 'Segoe UI',Arial,sans-serif;}
+.afrow .aflabel{font-weight:800;color:#C8202E;}
+.afrow .afwho{font-weight:800;color:#2b2b2b;}
+.afrow .afcli{display:block;color:#1d4f91;font-weight:700;margin:3px 0;cursor:pointer;}
+.afrow .afdetail{color:#555;font-size:13px;line-height:1.45;}
 /* ---- home two-column layout ---- */
 .homecols{display:flex;gap:20px;align-items:flex-start;}
 .homemain{flex:1;min-width:0;}
@@ -595,6 +630,59 @@ html, body{overflow-x:hidden;max-width:100%;}
   .pipebtn .n{font-size:20px;}
   .chatbox{max-width:100%;}
 }
+
+.apprrow{display:flex;align-items:center;gap:10px;justify-content:space-between;
+  border:1px solid var(--line);border-radius:9px;background:#fff;padding:10px 12px;margin:7px 0;flex-wrap:wrap;}
+.apprbd{flex:1;min-width:200px;}
+.apprcli{cursor:pointer;color:#1d4f91;}
+.apprdet{display:block;font:12.5px 'Segoe UI',Arial,sans-serif;color:#666;margin-top:2px;}
+
+.adot.jdot{background:#7CB342;}
+.adot.ddot{background:#29A3DC;}
+.bkind{font-size:15px;flex:0 0 auto;}
+
+.agechip{position:absolute;top:38px;left:8px;z-index:2;font:800 10px 'Segoe UI',Arial,sans-serif;
+  background:#eef2f5;color:#556;padding:2px 8px;border-radius:9px;}
+.agechip.late{background:#C8202E;color:#fff;}
+.clirow .agechip{position:static;margin-left:6px;}
+
+.bday{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 14px;margin:9px 0;cursor:pointer;}
+.bday:hover{box-shadow:0 4px 12px rgba(0,0,0,.12);}
+.bday.bempty{background:#fbfaf9;}
+.bhead{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#9c1822;border-bottom:1px solid #eee;padding-bottom:5px;margin-bottom:6px;}
+.bitem{display:flex;gap:10px;align-items:center;padding:5px 0;font:14px 'Segoe UI',Arial,sans-serif;}
+.btime{flex:0 0 74px;font-weight:700;color:#555;font-size:12.5px;}
+.btitle{flex:1;min-width:0;}
+.bcli{color:#1d4f91;font-weight:700;}
+.bnone{font:12.5px 'Segoe UI',Arial,sans-serif;color:#a89f9a;padding:2px 0;}
+
+.stagebanner{border-radius:10px;color:#fff;text-align:center;font:800 20px 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.06em;padding:16px 12px;cursor:pointer;}
+.stagebanner small{display:block;font:600 12px 'Segoe UI',Arial,sans-serif;opacity:.9;letter-spacing:0;margin-top:2px;}
+.jobvalrow{display:flex;justify-content:space-between;background:#fff;border:1px solid var(--line);
+  border-radius:10px;padding:12px 16px;margin-top:10px;}
+.jobvalrow small{display:block;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#888;}
+.jobvalrow b{font:800 22px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;}
+.jagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+@media (min-width:900px){ .jagrid{grid-template-columns:repeat(3,1fr);} }
+.jatile{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;
+  border:1px solid var(--line);border-radius:10px;padding:14px;cursor:pointer;
+  font:700 14.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.jatile:hover{box-shadow:0 4px 12px rgba(0,0,0,.12);}
+.jatile .jic{margin-right:2px;}
+.jatile .jn{font:800 16px 'Segoe UI',Arial,sans-serif;color:#e07b00;}
+.jatile .jn.zero{color:#c9c2bf;}
+.contactrow,.locrow{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;}
+.contactrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.cname{font:700 16px 'Segoe UI',Arial,sans-serif;color:#1d4f91;}
+.cname small{display:block;font:600 11px 'Segoe UI',Arial,sans-serif;color:#9a8c85;}
+.cicons{display:flex;gap:8px;}
+.cicons a{display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px;
+  background:#eef3f9;text-decoration:none;font-size:19px;border:1px solid #d5e0ee;}
+.cicons a:active{background:#dce8f7;}
+.locrow{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;}
+.locaddr{font:600 14.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;flex:1;}
+.locgo{font:700 13px 'Segoe UI',Arial,sans-serif;color:#1d4f91;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -628,6 +716,7 @@ html, body{overflow-x:hidden;max-width:100%;}
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
+          <button class="navopt" data-nav="board">&#128197; Schedule Board</button>
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
         </div>
@@ -659,7 +748,11 @@ html, body{overflow-x:hidden;max-width:100%;}
   <div class="wrap">
     <div class="homecols">
       <div class="homemain">
-        <div class="hero-left" style="margin-top:14px;">
+        <div class="quickrow">
+          <button class="qbtn qsq" id="qSearchBtn" title="Search clients">&#128269;</button>
+          <button class="qbtn qwide" id="qFeedBtn">&#9889; View Activity Feed</button>
+        </div>
+        <div class="hero-left" style="margin-top:10px;">
           <div id="heroGreeting" class="hero-hi"></div>
           <div id="homeClock" class="hero-clock"></div>
           <div id="heroStats" class="hero-stats"></div>
@@ -667,6 +760,10 @@ html, body{overflow-x:hidden;max-width:100%;}
         <div class="pipecard">
           <div class="pipetitle">&#128202; Cardinal Pipeline</div>
           <div class="piperow" id="pipeRow"></div>
+        </div>
+        <div class="pipecard" id="approvalsCard" style="display:none;margin-top:14px;border-left:5px solid #C8202E;">
+          <h3 style="margin:0 0 6px;">&#128276; Approvals &#8212; signed estimates awaiting contract</h3>
+          <div id="approvalsList"></div>
         </div>
       </div>
       <aside class="homeside" style="margin-top:14px;">
@@ -725,6 +822,7 @@ html, body{overflow-x:hidden;max-width:100%;}
           </label>
           <button class="chipbtn" id="fupBtn">&#9200; Follow up&#8230;</button>
           <button class="chipbtn" id="favBtn">&#9734; Favorite</button>
+          <button class="btn" id="contactedBtn" style="display:none;">&#10003; Contacted &#8594; Prospect</button>
         </div>
         <div style="margin-top:10px;">
           <button class="chipbtn" id="projEditBtn">&#9998; Edit client info</button>
@@ -742,19 +840,24 @@ html, body{overflow-x:hidden;max-width:100%;}
     </div>
 
     <div id="tab-overview">
-      <div id="leadCard" style="display:none;margin-bottom:18px;">
+      <div id="stageBanner" class="stagebanner">APPROVED</div>
+      <div class="jobvalrow">
+        <span><small>Job Value</small><b id="jobValueLbl">--</b></span>
+        <span style="text-align:right;"><small>Stage</small><b id="jobStageLbl">--</b></span>
+      </div>
+
+      <h3 class="projsec" style="margin-top:18px;">Job Activity</h3>
+      <div class="jagrid" id="jaGrid"></div>
+
+      <h3 class="projsec" style="margin-top:20px;">Contacts</h3>
+      <div class="contactrow" id="contactRow"></div>
+
+      <h3 class="projsec" style="margin-top:20px;">Location</h3>
+      <div class="locrow" id="locRow"></div>
+
+      <div id="leadCard" style="display:none;margin-top:20px;">
         <h3 class="projsec">&#128681; Lead Details</h3>
         <div class="ldbox" id="leadCardBody" style="background:#fff;"></div>
-      </div>
-      <h3 class="projsec">&#128172; Team Notes</h3>
-      <p class="subnote">Job chat for this client &#8212; visible to everyone with access. Tag a teammate with
-      @name (e.g. @theo) to flag them.</p>
-      <div class="chatbox">
-        <div class="chatthread" id="chatThread"></div>
-        <div class="chatinput">
-          <input type="text" id="chatText" placeholder="Write a note&#8230; use @name to tag" autocomplete="off">
-          <button class="btn" id="chatSend">Send</button>
-        </div>
       </div>
     </div>
 
@@ -920,6 +1023,19 @@ html, body{overflow-x:hidden;max-width:100%;}
       </div>
       <div id="upError" style="color:#C8202E;font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
     </div>
+
+    <h3 class="projsec" style="margin-top:26px;">&#128276; Phone Notifications</h3>
+    <div class="projform" style="margin:10px 0;max-width:430px;box-shadow:none;border:1px solid var(--line);">
+      <p class="subnote" style="margin:0 0 10px;">Get lock-screen alerts on this device when contracts are signed,
+      jobs are approved, and jobs complete.</p>
+      <div id="pushIosHint" style="display:none;font:12.5px 'Segoe UI',Arial,sans-serif;background:#fff8e1;
+        border:1px solid #e0c460;border-radius:8px;padding:9px 11px;margin-bottom:10px;">
+        <b>iPhone first step:</b> in Safari tap <b>Share &#8593;</b> &#8594; <b>Add to Home Screen</b>,
+        then open Cardinal from that icon and come back here.
+      </div>
+      <button class="btn" id="pushEnableBtn">&#128276; Enable notifications on this device</button>
+      <span id="pushStatus" style="display:block;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-top:9px;color:#555;"></span>
+    </div>
   </div>
 </div>
 
@@ -934,6 +1050,42 @@ html, body{overflow-x:hidden;max-width:100%;}
     </div>
     <div class="stgfilter" id="stgFilter"></div>
     <div id="cliList"></div>
+  </div>
+</div>
+
+<!-- ============ ACTIVITY FEED PAGE ============ -->
+<div id="activityView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;max-width:760px;">
+    <button class="btn dark" id="actBackBtn">&larr; Home</button>
+    <h2 style="margin:16px 0 4px;">&#9889; Activity Feed</h2>
+    <p class="subnote">Everything happening across the team, newest first.</p>
+    <div id="actFeedFull"></div>
+  </div>
+</div>
+
+<!-- ============ COMMUNICATIONS PAGE ============ -->
+<div id="commsView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;max-width:760px;">
+    <button class="btn dark" id="commsBackBtn">&larr; Back</button>
+    <h2 style="margin:16px 0 4px;">&#128172; Communications <span id="commsCli" style="color:#9c1822;"></span></h2>
+    <p class="subnote">Notes, call logs, and document activity for this client. Tag a teammate with @name.</p>
+    <div class="chatbox">
+      <div class="chatthread" id="chatThread"></div>
+      <div class="chatinput">
+        <input type="text" id="chatText" placeholder="Write a note&#8230; use @name to tag" autocomplete="off">
+        <button class="btn" id="chatSend">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SCHEDULE BOARD ============ -->
+<div id="boardView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;max-width:860px;">
+    <button class="btn dark" id="boardBackBtn">&larr; Home</button>
+    <h2 style="margin:16px 0 4px;">&#128197; Schedule Board</h2>
+    <p class="subnote">Jobs &#128296;, material drops &#128666;, and appointments &#128197; for the next 14 days. Tap a day to add or edit.</p>
+    <div id="boardMount"></div>
   </div>
 </div>
 
@@ -1260,6 +1412,12 @@ html, body{overflow-x:hidden;max-width:100%;}
     <div class="ckhead" style="margin-top:14px;">&#43; Add appointment</div>
     <label>What *<input type="text" id="apptTitle" placeholder="e.g. Inspection @ 12 Oak St" autocomplete="off"></label>
     <div class="ckrow">
+      <label>Type
+        <select id="apptKind">
+          <option value="appt">&#128197; Appointment</option>
+          <option value="job">&#128296; Job</option>
+          <option value="drop">&#128666; Material Drop</option>
+        </select></label>
       <label>Time<input type="time" id="apptTime"></label>
       <label>Client (optional)
         <select id="apptClient"><option value="">&#8212; none &#8212;</option></select></label>
@@ -2283,6 +2441,42 @@ var WINDOW_TEMPLATE  = buildEstimate('REPLACEMENT VINYL WINDOW <span>ESTIMATE</s
 var GUTTER_TEMPLATE  = buildEstimate('SEAMLESS GUTTER <span>ESTIMATE</span>', GUTTER_BODY, EST_TERMS_STD);
 var GENERAL_TEMPLATE = buildEstimate('REPAIR <span>ESTIMATE</span>', GENERAL_BODY, EST_TERMS_GENERAL);
 
+/* ---------------- SERVICE CONTRACT ---------------- */
+var CONTRACT_BODY = `
+<h2 class="sec">1 &nbsp;|&nbsp; Agreement</h2>
+<p style="font-size:10.5pt;">Cardinal Roofing &amp; Renovations (&#8220;Contractor&#8221;) agrees to furnish all labor, materials,
+equipment and services necessary to complete the work described below at the property listed above, and the
+undersigned client (&#8220;Owner&#8221;) agrees to pay the Contract Price under the terms of this agreement.</p>
+
+<h2 class="sec">2 &nbsp;|&nbsp; Scope of Work</h2>
+<div class="descbox"><span class="ph">[Describe the work &#8212; reference the accepted estimate, e.g. &#8220;Full roof replacement
+per Estimate dated MM/DD/YYYY: remove existing shingles, install synthetic underlayment, ice &amp; water shield,
+architectural shingles, ridge vent, new flashing and accessories. Includes haul-off and magnetic sweep.&#8221;]</span></div>
+
+<h2 class="sec">3 &nbsp;|&nbsp; Contract Price &amp; Payment Schedule</h2>
+<table class="items">
+  <thead><tr><th>Payment</th><th>Due</th><th class="price">Amount</th></tr></thead>
+  <tbody>
+    <tr><td>Deposit (50%)</td><td>Upon signing this contract</td><td class="price"><span class="ph">[0.00]</span></td></tr>
+    <tr><td>Final balance (50%)</td><td>Upon substantial completion</td><td class="price"><span class="ph">[0.00]</span></td></tr>
+  </tbody>
+  <tfoot><tr><td colspan="2" style="text-align:right;font-weight:800;">CONTRACT PRICE</td>
+    <td class="price" style="font-weight:800;" id="estTotal"><span class="ph" data-cprice="1">[0.00]</span></td></tr></tfoot>
+</table>
+<p style="font-size:9.5pt;color:#5c5c5c;">Insurance projects: payment schedule follows insurer disbursements plus deductible,
+which remains Owner&#8217;s responsibility under Ohio law.</p>
+`;
+var CONTRACT_TERMS = `
+<li><b>Right to cancel.</b> Owner may cancel this contract without penalty within three (3) business days of signing, by written notice.</li>
+<li><b>Workmanship warranty.</b> Contractor warrants workmanship for five (5) years from completion; manufacturer warranties apply to materials.</li>
+<li><b>Change orders.</b> Any change to the scope or price must be agreed in writing before the changed work begins.</li>
+<li><b>Concealed conditions.</b> Rotten decking, code upgrades, or other conditions not visible at inspection are billed as agreed change orders.</li>
+<li><b>Schedule.</b> Start and completion dates are good-faith estimates and may shift for weather or material availability.</li>
+<li><b>Insurance.</b> Contractor carries liability and workers&#8217; compensation coverage; certificates available on request.</li>
+<li><b>Payment.</b> Balances unpaid 30 days after completion accrue 1.5% monthly. Owner is responsible for reasonable collection costs.</li>
+`;
+var CONTRACT_TEMPLATE = buildEstimate('SERVICE <span>CONTRACT</span>', CONTRACT_BODY, CONTRACT_TERMS);
+
 function cbxColor(name, hex){
   return '<span class="sw"><span class="chipc" style="background:' + hex + ';"></span>' +
          '<span class="cbx">\u2610</span> ' + name + '</span>';
@@ -2397,7 +2591,7 @@ var db = {
   list: async function(){
     if(TEAM){
       var r = await sb.from(TABLE)
-        .select('id,title,project,project_id,status,sent_at,share_token,created_at,updated_at,created_by')
+        .select('id,title,project,project_id,status,sent_at,share_token,total,signed_at,created_at,updated_at,created_by')
         .order('created_at', {ascending:false});
       if(r.error) throw r.error;
       return r.data;
@@ -2590,7 +2784,7 @@ var adb = {
   list: async function(){
     if(TEAM){
       var r = await sb.from('appointments')
-        .select('id,title,appt_date,appt_time,project_id,notes,created_by')
+        .select('id,title,appt_date,appt_time,project_id,notes,kind,created_by')
         .order('appt_date', {ascending:true})
         .order('appt_time', {ascending:true});
       if(r.error) throw r.error;
@@ -2673,6 +2867,7 @@ function docKind(title){
   if(/^gutter estimate/i.test(t)) return { type:'Estimate', trade:'Gutters' };
   if(/^repair estimate/i.test(t)) return { type:'Estimate', trade:'Repair' };
   if(/^estimate/i.test(t))        return { type:'Estimate', trade:'Roofing' };
+  if(/^contract/i.test(t))        return { type:'Contract', trade:'\u2014' };
   return { type:'Inspection', trade:'Roofing' };
 }
 function docRowHtml(r){
@@ -2709,7 +2904,7 @@ function docTable(rows){
 function renderHome(){
   var q = searchText.trim().toLowerCase();
   var projs = cacheProjects.filter(function(pr){
-    if(!q) return true;
+    if(!q) return normStage(pr.stage) !== 'Closed'; /* Closed = archive: off the board */
     var hay = [pr.name, pr.address, pr.phone, pr.email].join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   });
@@ -2735,7 +2930,7 @@ function renderHome(){
       var stg = normStage(pr.stage);
       return '<div class="pcard" data-proj="' + pr.id + '">' +
         thumb +
-        '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' +
+        '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' + leadAgeChip(pr) +
         '<span class="favstar' + (isFav(pr) ? ' on' : '') + '" data-fav="' + pr.id + '" title="Favorite / high priority">' +
           (isFav(pr) ? '\u2B50' : '\u2606') + '</span>' +
         '<div class="ovl">' +
@@ -2804,7 +2999,9 @@ function openProject(id){
     pr.cover_image ? '\u21BB Replace cover photo' : '\uD83D\uDCF7 Add cover photo';
   document.getElementById('stageSel').value = normStage(pr.stage);
   renderFavBtn();
+  document.getElementById('contactedBtn').style.display = (normStage(pr.stage) === 'Lead') ? 'inline-block' : 'none';
   document.getElementById('ptCheck').checked = !!pr.photos_transferred;
+  renderOverview();
   renderChat();
   renderLeadCard();
   renderProjectDocs();
@@ -3370,6 +3567,137 @@ document.getElementById('ldSave').addEventListener('click', async function(){
 });
 
 /* lead details card on overview */
+/* ---------- AccuLynx-style overview ---------- */
+var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', Approved:'#7CB342', Scheduled:'#7CB342',
+  Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B' };
+function commsCount(pr){
+  var all = parseCkAll(pr);
+  return (all.comments || []).length;
+}
+function renderOverview(){
+  if(!currentProject) return;
+  var pr = currentProject;
+  var stg = normStage(pr.stage);
+  var banner = document.getElementById('stageBanner');
+  banner.style.background = STAGE_COLORS[stg] || '#607D8B';
+  banner.innerHTML = esc(stg.toUpperCase()) +
+    '<small>updated ' + timeAgo(pr.updated_at || pr.created_at) + ' \u00b7 tap to change</small>';
+  var val = projectValue(pr);
+  document.getElementById('jobValueLbl').textContent = val ? fmtMoney(val) : '--';
+  document.getElementById('jobStageLbl').textContent = stg;
+  /* activity grid */
+  var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
+  var ests = docs.filter(function(r){ return isEstimateTitle(r.title); }).length;
+  var contracts = docs.filter(function(r){ return /^contract/i.test((r.title||'').trim()); }).length;
+  var insp = docs.length - ests - contracts;
+  var appts = cacheAppts.filter(function(a){ return a.project_id === pr.id; }).length;
+  var photos = '\u2026';
+  photoDb.listByProject(pr.id).then(function(l){
+    var el = document.querySelector('.jatile[data-ja=\"photos\"] .jn');
+    if(el && currentProject && currentProject.id === pr.id){
+      el.textContent = l.length;
+      el.classList.toggle('zero', !l.length);
+    }
+  }).catch(function(){});
+  function tile(ic, label, n, act){
+    return '<div class="jatile" data-ja="' + act + '"><span><span class="jic">' + ic + '</span> ' + label + '</span>' +
+      '<span class="jn' + (n ? '' : ' zero') + '">' + n + '</span></div>';
+  }
+  document.getElementById('jaGrid').innerHTML =
+    tile('\uD83D\uDCAC', 'Communications', commsCount(pr), 'comms') +
+    tile('\uD83D\uDCC5', 'Appointments', appts, 'board') +
+    tile('\uD83D\uDCF7', 'Photos', photos, 'photos') +
+    tile('\uD83D\uDCB0', 'Estimates', ests, 'estimates') +
+    tile('\uD83D\uDCDC', 'Contracts', contracts, 'estimates') +
+    tile('\uD83D\uDD0D', 'Inspections', insp, 'inspections') +
+    tile('\uD83D\uDCE6', 'Materials', '', 'materials') +
+    tile('\uD83D\uDCCB', 'Checklists', '', 'checklists');
+  /* contacts */
+  var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
+  document.getElementById('contactRow').innerHTML =
+    '<span class="cname"><small>Primary Contact</small>' + esc(pr.name || '\u2014') + '</span>' +
+    '<span class="cicons">' +
+      (pr.email ? '<a href="mailto:' + esc(pr.email) + '" title="Email">\u2709\uFE0F</a>' : '') +
+      (tel ? '<a href="sms:' + tel + '" title="Text">\uD83D\uDCAC</a>' : '') +
+      (tel ? '<a href="tel:' + tel + '" class="calllink" title="Call">\uD83D\uDCDE</a>' : '') +
+    '</span>';
+  /* location */
+  document.getElementById('locRow').innerHTML = pr.address
+    ? '<span class="locaddr">\uD83D\uDCCD ' + esc(pr.address) + '</span><span class="locgo">Open in Maps \u203A</span>'
+    : '<span class="locaddr" style="color:#a89f9a;">No address on file</span>';
+}
+document.getElementById('jaGrid').addEventListener('click', function(e){
+  var t = e.target.closest('.jatile');
+  if(!t) return;
+  var act = t.getAttribute('data-ja');
+  if(act === 'comms'){ openCommunications(); }
+  else if(act === 'board'){ openScheduleBoard(); }
+  else if(act === 'photos'){ showTab('inspections'); }
+  else{ showTab(act); }
+});
+function mapsUrl(addr){
+  var q = encodeURIComponent(addr);
+  return isIOS() ? 'https://maps.apple.com/?daddr=' + q
+                 : 'https://www.google.com/maps/dir/?api=1&destination=' + q;
+}
+document.getElementById('locRow').addEventListener('click', function(){
+  if(currentProject && currentProject.address) window.open(mapsUrl(currentProject.address), '_blank');
+});
+document.getElementById('stageBanner').addEventListener('click', function(){
+  var s = document.getElementById('stageSel');
+  s.focus();
+  s.scrollIntoView({ behavior:'smooth', block:'center' });
+});
+
+/* ---------- communications page ---------- */
+var commsView = document.getElementById('commsView');
+function openCommunications(){
+  if(!currentProject) return;
+  hideAllViews();
+  commsView.style.display = 'block';
+  document.getElementById('commsCli').textContent = '\u2014 ' + (currentProject.name || '');
+  renderChat();
+  window.scrollTo(0, 0);
+}
+document.getElementById('commsBackBtn').addEventListener('click', function(){
+  if(currentProject) openProject(currentProject.id); else showHome();
+});
+
+/* ---------- call from app + log it ---------- */
+var pendingCall = null;
+document.getElementById('contactRow').addEventListener('click', function(e){
+  var c = e.target.closest('.calllink');
+  if(c && currentProject) pendingCall = { at: Date.now(), pr: currentProject.id, num: c.getAttribute('href').replace('tel:','') };
+});
+document.addEventListener('visibilitychange', async function(){
+  if(document.visibilityState !== 'visible' || !pendingCall) return;
+  var call = pendingCall; pendingCall = null;
+  if(Date.now() - call.at > 45 * 60000) return; /* stale */
+  if(!confirm('Log this call with ' + (currentProject && currentProject.id === call.pr ? currentProject.name : 'the client') + '?')) return;
+  var note = prompt('Call result / note:', '');
+  if(note === null) return;
+  var pr = cacheProjects.find(function(x){ return x.id === call.pr; });
+  if(!pr) return;
+  var all = {};
+  try{ all = JSON.parse(pr.checklist || '{}') || {}; }catch(e){}
+  all.comments = all.comments || [];
+  all.comments.push({
+    at: new Date().toISOString(),
+    name: displayNameFor(currentUser),
+    kind: 'call',
+    text: '\uD83D\uDCDE Call Log \u2014 ' + new Date().toLocaleString('en-US',
+      { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) +
+      ' \u00b7 ' + call.num + (note.trim() ? '\n' + note.trim() : '')
+  });
+  var s2 = JSON.stringify(all);
+  try{
+    await pdb.update(pr.id, { checklist: s2 });
+    pr.checklist = s2;
+    if(currentProject && currentProject.id === pr.id){ currentProject.checklist = s2; renderOverview(); }
+    if(commsView.style.display !== 'none') renderChat();
+  }catch(err){}
+});
+
 function renderLeadCard(){
   var card = document.getElementById('leadCard');
   if(!currentProject){ card.style.display = 'none'; return; }
@@ -3729,6 +4057,9 @@ function hideAllViews(){
   listView.style.display = 'none';
   profileView.style.display = 'none';
   clientsView.style.display = 'none';
+  activityView.style.display = 'none';
+  boardView.style.display = 'none';
+  commsView.style.display = 'none';
 }
 
 /* =========================================================================
@@ -4062,6 +4393,17 @@ async function exportBackup(){
   }catch(err){ showError('Backup failed: ' + (err.message || err)); }
 }
 
+/* ---------- 24-hour lead rule ---------- */
+function leadAgeHours(pr){
+  if(normStage(pr.stage) !== 'Lead' || !pr.created_at) return null;
+  return (Date.now() - new Date(pr.created_at).getTime()) / 3600000;
+}
+function leadAgeChip(pr){
+  var h = leadAgeHours(pr);
+  if(h === null) return '';
+  if(h > 24) return '<span class="agechip late">\u23F0 ' + Math.floor(h) + 'h \u2014 convert!</span>';
+  return '<span class="agechip">NEW \u00b7 ' + (h < 1 ? '<1' : Math.floor(h)) + 'h</span>';
+}
 /* ---------- favorites / high priority ---------- */
 function isFav(pr){
   try{ return JSON.parse((pr && pr.checklist) || '{}').fav === true; }catch(e){ return false; }
@@ -4099,7 +4441,7 @@ function renderFavBtn(){
 }
 
 /* ---------- pipeline stages ---------- */
-var STAGES = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced'];
+var STAGES = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
 var LEGACY_STAGE = { 'Inspected':'Prospect', 'Estimate Sent':'Prospect', 'Signed':'Approved', 'Complete':'Completed' };
 function normStage(s){
   s = s || 'Lead';
@@ -4107,25 +4449,83 @@ function normStage(s){
   return STAGES.indexOf(s) !== -1 ? s : 'Lead';
 }
 function stageClass(s){ return 'stg-' + normStage(s).replace(/ /g,''); }
+function notifyTeam(to, subject, bodyHtml){
+  /* fire-and-forget team email; silent if offline/unconfigured */
+  if(!TEAM) return;
+  sb.auth.getSession().then(function(s){
+    var tok = s.data.session && s.data.session.access_token;
+    if(!tok) return;
+    fetch('/api/notify', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
+      body: JSON.stringify({ to: to, subject: subject, html: bodyHtml })
+    }).catch(function(){});
+  }).catch(function(){});
+}
+async function patchProjectCk(pr, patch){
+  var all = {};
+  try{ all = JSON.parse(pr.checklist || '{}') || {}; }catch(e){}
+  Object.keys(patch).forEach(function(k){ all[k] = patch[k]; });
+  var s = JSON.stringify(all);
+  await pdb.update(pr.id, { checklist: s });
+  pr.checklist = s;
+  if(currentProject && currentProject.id === pr.id) currentProject.checklist = s;
+  var cp = cacheProjects.find(function(x){ return x.id === pr.id; });
+  if(cp) cp.checklist = s;
+}
+function assignedRepOf(pr){
+  var L = parseCkAll(pr).lead;
+  if(L && L.assigned && L.assigned.length) return L.assigned[0];
+  return pr.created_by || null;
+}
+async function setStage(prId, v){
+  var pr = cacheProjects.find(function(x){ return String(x.id) === String(prId); });
+  if(!pr) return;
+  var prev = normStage(pr.stage);
+  await pdb.update(pr.id, { stage: v });
+  pr.stage = v;
+  if(currentProject && currentProject.id === pr.id){
+    currentProject.stage = v;
+    var ss = document.getElementById('stageSel');
+    if(ss) ss.value = normStage(v);
+  }
+  renderHome();
+  /* workflow notifications */
+  if(v === 'Approved' && prev !== 'Approved'){
+    notifyTeam(['curtis@cardinalrenovations.net'].concat(ADMIN_EMAILS),
+      '\uD83D\uDD28 APPROVED \u2014 schedule + order materials: ' + (pr.name || ''),
+      '<p><b>' + esc(pr.name || '') + '</b> (' + esc(pr.address || '') + ') is now <b>APPROVED</b>.</p>' +
+      '<p><b>Curtis:</b> please schedule the job and the material drop on the Schedule Board, and order materials (see the client\u2019s \uD83D\uDCE6 Materials tab).</p>');
+  }
+  if(v === 'Completed' && prev !== 'Completed'){
+    var rep = assignedRepOf(pr);
+    notifyTeam((rep ? [rep] : []).concat(ADMIN_EMAILS),
+      '\uD83C\uDFC1 Job complete \u2014 walk-around + invoice: ' + (pr.name || ''),
+      '<p><b>' + esc(pr.name || '') + '</b> (' + esc(pr.address || '') + ') is marked <b>COMPLETED</b>.</p>' +
+      '<p>Next: do the <b>final walk-around</b> with the client, then send the invoice. ' +
+      'Once the invoice goes out, move the client to <b>Invoiced</b>.</p>');
+  }
+}
 (function(){
   var sel = document.getElementById('stageSel');
   sel.innerHTML = STAGES.map(function(s){ return '<option>' + s + '</option>'; }).join('');
   sel.addEventListener('change', async function(){
     if(!currentProject) return;
-    var v = sel.value;
-    try{
-      await pdb.update(currentProject.id, { stage: v });
-      currentProject.stage = v;
-      var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
-      if(cp) cp.stage = v;
-      renderHome();
-    }catch(err){ showError('Could not update stage: ' + (err.message || err)); }
+    try{ await setStage(currentProject.id, sel.value); }
+    catch(err){ showError('Could not update stage: ' + (err.message || err)); }
   });
 })();
 
 /* follow-up reminder from profile */
 document.getElementById('favBtn').addEventListener('click', function(){
   if(currentProject) toggleFav(currentProject.id);
+});
+document.getElementById('contactedBtn').addEventListener('click', async function(){
+  if(!currentProject) return;
+  try{
+    await setStage(currentProject.id, 'Prospect');
+    this.style.display = 'none';
+  }catch(err){ showError('Could not update stage: ' + (err.message || err)); }
 });
 document.getElementById('fupBtn').addEventListener('click', async function(){
   if(!currentProject) return;
@@ -4246,6 +4646,7 @@ navMenu.addEventListener('click', function(e){
   var nav = opt.getAttribute('data-nav');
   if(nav === 'home'){ showHome(); }
   else if(nav === 'profile'){ openMyProfile(); }
+  else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
 });
@@ -4296,6 +4697,7 @@ function getUserProfile(){
   }catch(e){ return { first:'', last:'', phone:'', email:'', full:'' }; }
 }
 function openMyProfile(){
+  setTimeout(updatePushUI, 50);
   var up = getUserProfile();
   document.getElementById('upFirst').value = up.first;
   document.getElementById('upLast').value = up.last;
@@ -4469,23 +4871,95 @@ document.getElementById('leadList').addEventListener('click', function(e){
 
 /* ---------- hero: greeting + stats ---------- */
 var PIPE_BUCKETS = [
-  { key:'Lead',      label:'LEADS',      cls:'pipe-lead' },
-  { key:'Prospect',  label:'PROSPECTS',  cls:'pipe-prospect' },
-  { key:'Approved',  label:'APPROVED',   cls:'pipe-approved' },
-  { key:'Completed', label:'COMPLETED',  cls:'pipe-completed' },
-  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced' }
+  { key:'Lead',      label:'LEADS',      cls:'pipe-lead',      tip:'New leads \u2014 not yet quoted' },
+  { key:'Prospect',  label:'PROSPECTS',  cls:'pipe-prospect',  tip:'Estimates out \u2014 awaiting decision' },
+  { key:'Approved',  label:'APPROVED',   cls:'pipe-approved',  tip:'Signed contracts (incl. scheduled)' },
+  { key:'Completed', label:'COMPLETED',  cls:'pipe-completed', tip:'Work finished \u2014 not yet invoiced' },
+  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' },
+  { key:'Closed',    label:'CLOSED',     letter:'$', cls:'pipe-closed', tip:'Paid \u2014 archived' }
 ];
+function projectValue(pr){
+  var best = 0;
+  cacheRows.forEach(function(r){
+    if(r.project_id === pr.id && isEstimateTitle(r.title) && Number(r.total) > best){
+      best = Number(r.total);
+    }
+  });
+  return best;
+}
+function fmtMoney(n){
+  if(!n) return '--';
+  return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function renderApprovals(){
+  var card = document.getElementById('approvalsCard');
+  if(!card) return;
+  if(!isAdminUser()){ card.style.display = 'none'; return; }
+  var pend = cacheProjects.filter(function(pr){
+    var s = normStage(pr.stage);
+    if(s !== 'Lead' && s !== 'Prospect') return false;
+    if(parseCkAll(pr).wf_approved) return false;
+    return cacheRows.some(function(r){
+      return r.project_id === pr.id && isEstimateTitle(r.title) && r.signed_at;
+    });
+  });
+  if(!pend.length){ card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  document.getElementById('approvalsList').innerHTML = pend.map(function(pr){
+    var est = cacheRows.filter(function(r){ return r.project_id === pr.id && isEstimateTitle(r.title) && r.signed_at; })
+      .sort(function(a,b){ return String(b.signed_at).localeCompare(String(a.signed_at)); })[0];
+    var val = projectValue(pr);
+    return '<div class="apprrow">' +
+      '<span class="apprbd"><b class="apprcli" data-proj="' + pr.id + '">' + esc(pr.name || '') + '</b>' +
+      '<span class="apprdet">' + esc(est.title) + ' \u00b7 signed ' + timeAgo(est.signed_at) +
+      (val ? ' \u00b7 ' + fmtMoney(val) : '') + '</span></span>' +
+      '<button class="btn" data-approve="' + pr.id + '">Approve &amp; create contract</button></div>';
+  }).join('');
+}
+async function approveAndContract(prId){
+  var pr = cacheProjects.find(function(x){ return String(x.id) === String(prId); });
+  if(!pr) return;
+  try{
+    await patchProjectCk(pr, { wf_approved: { at: new Date().toISOString(), by: currentUser ? currentUser.email : null } });
+    var price = projectValue(pr);
+    var tpl = prefillUserInfo(prefillClientInfo(CONTRACT_TEMPLATE, pr));
+    if(price > 0){
+      var half = price / 2;
+      var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+      tpl = tpl.replace('<span class="ph" data-cprice="1">[0.00]</span>', '$' + f2(price));
+      tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(half));
+      tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(price - half));
+    }
+    var id = await db.create('Contract \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
+    await reload();
+    await openEditor(id);
+    alert('Contract created and prefilled. Review the scope, then have the client sign \u2014 in person (\u270D\uFE0F) or by \uD83D\uDD17 share link. The project moves to APPROVED when the contract is signed.');
+  }catch(err){ showError('Could not create contract: ' + (err.message || err)); }
+}
+document.addEventListener('click', function(e){
+  var ap = e.target.closest('[data-approve]');
+  if(ap){ approveAndContract(ap.getAttribute('data-approve')); return; }
+  var ac = e.target.closest('.apprcli[data-proj]');
+  if(ac){ openProject(ac.getAttribute('data-proj')); }
+});
 function renderPipeline(){
   var row = document.getElementById('pipeRow');
   if(!row) return;
   row.innerHTML = PIPE_BUCKETS.map(function(b){
-    var n = cacheProjects.filter(function(pr){
+    var inBucket = cacheProjects.filter(function(pr){
       var s = normStage(pr.stage);
       return s === b.key || (b.key === 'Approved' && s === 'Scheduled');
-    }).length;
-    return '<button class="pipebtn ' + b.cls + '" data-stg="' + b.key + '">' +
-      '<span class="n">' + n + '</span>' + b.label + '</button>';
+    });
+    var n = inBucket.length;
+    var money = 0;
+    inBucket.forEach(function(pr){ money += projectValue(pr); });
+    return '<button class="pipebtn" data-stg="' + b.key + '" title="' + b.tip + '">' +
+      '<span class="pcirc ' + b.cls + '">' + (b.letter || b.label.charAt(0)) + '</span>' +
+      '<span class="plabel">' + b.label.charAt(0) + b.label.slice(1).toLowerCase() + '</span>' +
+      '<span class="pcount">' + n + '</span>' +
+      '<span class="pmoney">' + fmtMoney(money) + '</span></button>';
   }).join('');
+  renderApprovals();
 }
 document.getElementById('pipeRow').addEventListener('click', function(e){
   var btn = e.target.closest('.pipebtn');
@@ -4502,39 +4976,170 @@ function timeAgo(iso){
   if(s < 604800) return Math.floor(s/86400) + 'd ago';
   return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric' });
 }
-function renderActivity(){
-  var mount = document.getElementById('actFeed');
-  if(!mount) return;
+function buildActivityEvents(){
   var ev = [];
+  function actor(email){
+    if(!email) return { nm:'', ini:'\u2022' };
+    var nm = DEFAULT_NAMES[email] || email.split('@')[0];
+    var ini = nm.trim().split(/\s+/).map(function(w){ return w.charAt(0); }).join('').slice(0,2).toUpperCase();
+    return { nm:nm, ini:ini };
+  }
   cacheRows.forEach(function(r){
     var pr = r.project_id ? cacheProjects.find(function(x){ return x.id === r.project_id; }) : null;
     var cli = pr ? pr.name : (r.project || '');
-    var who = r.created_by ? r.created_by.split('@')[0] : '';
-    ev.push({ t:r.created_at, ic: isEstimateTitle(r.title) ? '\uD83D\uDCB0' : '\uD83D\uDD0D',
-      tx:'<b>' + esc(who) + '</b> created <b>' + esc(r.title) + '</b>' + (cli ? ' for ' + esc(cli) : '') });
-    if(r.sent_at) ev.push({ t:r.sent_at, ic:'\uD83D\uDCE7',
-      tx:'<b>' + esc(r.title) + '</b> sent' + (cli ? ' to ' + esc(cli) : '') });
+    var a = actor(r.created_by);
+    var isEst = isEstimateTitle(r.title);
+    ev.push({ t:r.created_at, ini:a.ini, label:(isEst ? 'New Estimate:' : 'New Inspection:'), who:a.nm,
+      cli:cli, pid: pr ? pr.id : null, detail:r.title });
+    if(r.sent_at) ev.push({ t:r.sent_at, ini:'\uD83D\uDCE7', label:'Document Sent:', who:a.nm,
+      cli:cli, pid: pr ? pr.id : null, detail:r.title });
   });
-  cacheAppts.forEach(function(a){
-    if(!a.created_at) return;
-    var pr = a.project_id ? cacheProjects.find(function(x){ return x.id === a.project_id; }) : null;
-    ev.push({ t:a.created_at, ic:'\uD83D\uDCC5',
-      tx:'<b>' + esc(a.title) + '</b> scheduled for ' + esc(a.appt_date) +
-        (pr ? ' \u00b7 ' + esc(pr.name) : '') });
+  cacheAppts.forEach(function(ap){
+    if(!ap.created_at) return;
+    var pr = ap.project_id ? cacheProjects.find(function(x){ return x.id === ap.project_id; }) : null;
+    var a = actor(ap.created_by);
+    ev.push({ t:ap.created_at, ini:'\uD83D\uDCC5', label:'Appointment:', who:a.nm,
+      cli: pr ? pr.name : '', pid: pr ? pr.id : null,
+      detail: ap.title + ' \u2014 ' + ap.appt_date + (ap.appt_time ? ' ' + fmtApptTime(ap.appt_time) : '') });
   });
   cacheProjects.forEach(function(pr2){
-    ev.push({ t:pr2.created_at, ic:'\uD83D\uDC64',
-      tx:'<b>' + esc(pr2.name || 'Client') + '</b> added' +
-        (pr2.created_by ? ' by <b>' + esc(pr2.created_by.split('@')[0]) + '</b>' : '') });
+    var a = actor(pr2.created_by);
+    ev.push({ t:pr2.created_at, ini:a.ini, label:'New Client:', who:a.nm,
+      cli:pr2.name || 'Client', pid:pr2.id, detail:'' });
+    var all = parseCkAll(pr2);
+    (all.comments || []).forEach(function(c){
+      var ini = (c.name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(0); }).join('').slice(0,2).toUpperCase();
+      ev.push({ t:c.at, ini:ini, label:'Comment by:', who:c.name || '',
+        cli:pr2.name || '', pid:pr2.id, detail:c.text || '' });
+    });
   });
-  ev = ev.filter(function(x){ return x.t; })
-         .sort(function(a,b){ return String(b.t).localeCompare(String(a.t)); })
-         .slice(0, 14);
+  return ev.filter(function(x){ return x.t; })
+           .sort(function(a,b){ return String(b.t).localeCompare(String(a.t)); });
+}
+function renderActivity(){
+  var mount = document.getElementById('actFeed');
+  if(!mount) return;
+  var ev = buildActivityEvents().slice(0, 14);
   mount.innerHTML = ev.length ? ev.map(function(x){
-    return '<div class="actitem"><span class="ic">' + x.ic + '</span>' +
-      '<span class="tx">' + x.tx + '<span class="tm">' + timeAgo(x.t) + '</span></span></div>';
+    return '<div class="actitem"><span class="ic">' + esc(x.ini) + '</span>' +
+      '<span class="tx"><b>' + esc(x.who) + '</b> ' + esc(x.label.replace(':','').toLowerCase()) + ' <b>' + esc(x.detail || x.cli) + '</b>' +
+      (x.cli && x.detail ? ' \u00b7 ' + esc(x.cli) : '') +
+      '<span class="tm">' + timeAgo(x.t) + '</span></span></div>';
   }).join('') : '<div class="chatempty">No activity yet.</div>';
 }
+var activityView = document.getElementById('activityView');
+function openActivityFeed(){
+  hideAllViews();
+  activityView.style.display = 'block';
+  var ev = buildActivityEvents().slice(0, 60);
+  document.getElementById('actFeedFull').innerHTML = ev.length ? ev.map(function(x){
+    return '<div class="afrow">' +
+      '<span class="afav"><span class="circ">' + esc(x.ini) + '</span><span class="tm">' + timeAgo(x.t) + '</span></span>' +
+      '<span class="afbd">' +
+        '<span class="aflabel">' + esc(x.label) + '</span> <span class="afwho">' + esc(x.who) + '</span>' +
+        (x.cli ? '<span class="afcli"' + (x.pid ? ' data-proj="' + x.pid + '"' : '') + '>' + esc(x.cli) + '</span>' : '') +
+        (x.detail ? '<span class="afdetail">' + esc(x.detail) + '</span>' : '') +
+      '</span></div>';
+  }).join('') : '<div class="empty"><b>No activity yet.</b></div>';
+  window.scrollTo(0,0);
+}
+var boardView = document.getElementById('boardView');
+var KIND_META = { job:{ic:'\uD83D\uDD28',nm:'Job'}, drop:{ic:'\uD83D\uDE9A',nm:'Material Drop'}, appt:{ic:'\uD83D\uDCC5',nm:'Appointment'} };
+function openScheduleBoard(){
+  hideAllViews();
+  boardView.style.display = 'block';
+  var out = '';
+  var today = new Date();
+  for(var i = 0; i < 14; i++){
+    var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    var ds = dateStr(d.getFullYear(), d.getMonth(), d.getDate());
+    var items = cacheAppts.filter(function(a){ return a.appt_date === ds; });
+    out += '<div class="bday' + (items.length ? '' : ' bempty') + '" data-day="' + ds + '">' +
+      '<div class="bhead">' + d.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' }) +
+      (i === 0 ? ' \u00b7 <b>Today</b>' : (i === 1 ? ' \u00b7 Tomorrow' : '')) + '</div>' +
+      (items.length ? items.map(function(a){
+        var k = KIND_META[a.kind || 'appt'] || KIND_META.appt;
+        var pr = a.project_id ? cacheProjects.find(function(x){ return x.id === a.project_id; }) : null;
+        return '<div class="bitem"><span class="bkind">' + k.ic + '</span>' +
+          '<span class="btime">' + (a.appt_time ? fmtApptTime(a.appt_time) : '\u2014') + '</span>' +
+          '<span class="btitle">' + esc(a.title || k.nm) + (pr ? ' <span class="bcli">\u00b7 ' + esc(pr.name) + '</span>' : '') + '</span></div>';
+      }).join('') : '<div class="bnone">Nothing scheduled</div>') +
+      '</div>';
+  }
+  document.getElementById('boardMount').innerHTML = out;
+  window.scrollTo(0,0);
+}
+document.getElementById('boardBackBtn').addEventListener('click', showHome);
+document.getElementById('boardMount').addEventListener('click', function(e){
+  var day = e.target.closest('.bday');
+  if(day){ openApptDay(day.getAttribute('data-day')); }
+});
+/* ---------- phone push notifications ---------- */
+var VAPID_PUBLIC = 'BBXZ2x7uHMX3p0j1F4apWn8xS-d9GnZw3BCJORAR4Nhfu1PVGGH2yBf2mbrpKa4Y-J3SLPvJaF9Y2JH6Kd6pxn0';
+function urlB64ToUint8(s){
+  var pad = '='.repeat((4 - s.length % 4) % 4);
+  var raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  var arr = new Uint8Array(raw.length);
+  for(var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function isStandalone(){
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+}
+function updatePushUI(){
+  var hint = document.getElementById('pushIosHint');
+  var st = document.getElementById('pushStatus');
+  if(!hint || !st) return;
+  hint.style.display = (isIOS() && !isStandalone()) ? 'block' : 'none';
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+    st.textContent = isIOS() && !isStandalone()
+      ? 'Add Cardinal to your Home Screen first (see above), then this button will work.'
+      : 'This browser does not support push notifications.';
+    return;
+  }
+  if(typeof Notification !== 'undefined' && Notification.permission === 'granted'){
+    st.textContent = '\u2705 Notifications are enabled on this device.';
+    st.style.color = '#2e7d32';
+  }
+}
+document.getElementById('pushEnableBtn').addEventListener('click', async function(){
+  var st = document.getElementById('pushStatus');
+  st.style.color = '#555';
+  if(isIOS() && !isStandalone()){
+    st.textContent = 'On iPhone: add Cardinal to your Home Screen first (Share \u2192 Add to Home Screen), open it from there, then tap this again.';
+    return;
+  }
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+    st.textContent = 'This browser does not support push notifications.';
+    return;
+  }
+  try{
+    var reg = await navigator.serviceWorker.register('/sw.js');
+    var perm = await Notification.requestPermission();
+    if(perm !== 'granted'){ st.textContent = 'Permission was not granted. You can change this in device settings.'; return; }
+    var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(VAPID_PUBLIC) });
+    var j = sub.toJSON();
+    var r = await sb.from('push_subscriptions').upsert({
+      email: currentUser.email, endpoint: sub.endpoint,
+      p256dh: j.keys.p256dh, auth: j.keys.auth
+    }, { onConflict: 'endpoint' });
+    if(r.error) throw r.error;
+    st.textContent = '\u2705 Done \u2014 this device now gets Cardinal alerts.';
+    st.style.color = '#2e7d32';
+    new Notification('Cardinal Client Resources', { body: 'Notifications are on. \uD83C\uDF89', icon: '/icon-192.png' });
+  }catch(err){
+    st.textContent = 'Could not enable: ' + (err.message || err);
+    st.style.color = '#C8202E';
+  }
+});
+document.getElementById('qFeedBtn').addEventListener('click', openActivityFeed);
+document.getElementById('qSearchBtn').addEventListener('click', openClientsDirectory);
+document.getElementById('actBackBtn').addEventListener('click', showHome);
+document.getElementById('actFeedFull').addEventListener('click', function(e){
+  var c = e.target.closest('.afcli[data-proj]');
+  if(c) openProject(c.getAttribute('data-proj'));
+});
 
 var QUOTES = [
   ["The harder I work, the luckier I get.", "Samuel Goldwyn"],
@@ -4621,10 +5226,13 @@ function renderCalendar(){
     if(d.getFullYear() === y && d.getMonth() === m) docDays[d.getDate()] = true;
   });
   var apptDays = {};
+  var apptKinds = {};
   cacheAppts.forEach(function(a){
     var parts = String(a.appt_date || '').split('-');
     if(parseInt(parts[0],10) === y && parseInt(parts[1],10) === m + 1){
-      apptDays[parseInt(parts[2],10)] = true;
+      var dd = parseInt(parts[2],10);
+      apptDays[dd] = true;
+      (apptKinds[dd] = apptKinds[dd] || {})[(a.kind || 'appt')] = true;
     }
   });
   var out = ['S','M','T','W','T','F','S'].map(function(d){ return '<div class="dow">' + d + '</div>'; }).join('');
@@ -4637,7 +5245,11 @@ function renderCalendar(){
     var isToday = (d === today.getDate() && m === today.getMonth() && y === today.getFullYear());
     out += '<div class="day cur' + (isToday ? ' today' : '') + '" data-d="' + dateStr(y, m, d) + '">' + d +
            (docDays[d] ? '<span class="dot"></span>' : '') +
-           (apptDays[d] ? '<span class="adot"></span>' : '') + '</div>';
+           (apptDays[d]
+             ? ((apptKinds[d].job ? '<span class="adot jdot"></span>' : '') +
+                (apptKinds[d].drop ? '<span class="adot ddot"></span>' : '') +
+                ((apptKinds[d].appt || (!apptKinds[d].job && !apptKinds[d].drop)) ? '<span class="adot"></span>' : ''))
+             : '') + '</div>';
   }
   var cells = startDow + daysInMonth;
   var trail = (7 - (cells % 7)) % 7;
@@ -4732,11 +5344,13 @@ document.getElementById('apptSave').addEventListener('click', async function(){
     appt_date: apptDay,
     appt_time: document.getElementById('apptTime').value || null,
     project_id: document.getElementById('apptClient').value || null,
-    notes: document.getElementById('apptNotes').value.trim() || null
+    notes: document.getElementById('apptNotes').value.trim() || null,
+    kind: document.getElementById('apptKind').value || 'appt'
   };
   try{
     await adb.create(f);
     cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
+    if(boardView.style.display !== 'none') openScheduleBoard();
     document.getElementById('apptTitle').value = '';
     document.getElementById('apptTime').value = '';
     document.getElementById('apptNotes').value = '';
@@ -5617,16 +6231,27 @@ function serializeFrame(){
   return '<!DOCTYPE html>\n' + clone.outerHTML;
 }
 
+function readEstimateTotal(){
+  try{
+    var el = frame.contentDocument && frame.contentDocument.getElementById('estTotal');
+    if(!el) return null;
+    var n = parseFloat(String(el.textContent || '').replace(/[^0-9.]/g, ''));
+    return (isFinite(n) && n > 0) ? n : 0;
+  }catch(e){ return null; }
+}
 async function saveCurrent(){
   if(!current) return;
   var html;
   try{ html = serializeFrame(); }
   catch(e){ showError('Could not read the report content: ' + e.message); return; }
   try{
-    await db.update(current.id, {
+    var fields = {
       html: html,
       title: titleInput.value.trim() || 'Untitled inspection'
-    });
+    };
+    var tot = readEstimateTotal();
+    if(tot !== null) fields.total = tot;
+    await db.update(current.id, fields);
     savedFlash.textContent = 'Saved ✓';
     setTimeout(function(){ savedFlash.textContent = ''; }, 2500);
     reload();
@@ -5778,6 +6403,20 @@ document.getElementById('sigApply').addEventListener('click', async function(){
   }
   sigModal.style.display = 'none';
   await saveCurrent();
+  /* workflow: record the signature as data */
+  try{
+    await db.update(current.id, { signed_at: new Date().toISOString() });
+    var t = (titleInput.value || '').trim();
+    if(/^contract/i.test(t) && current.project_id){
+      await setStage(current.project_id, 'Approved');
+      alert('Contract signed \u2014 project moved to APPROVED. Curtis has been notified to schedule and order materials.');
+    }else if(isEstimateTitle(t)){
+      notifyTeam(ADMIN_EMAILS, '\u270D\uFE0F Estimate signed \u2014 needs approval: ' + t,
+        '<p><b>' + esc(t) + '</b> was signed in person.</p><p>Review it in the <b>Approvals</b> card on the app home page, then approve &amp; generate the contract.</p>');
+      alert('Estimate signed. It now appears in the admin Approvals queue \u2014 a contract will be generated on approval.');
+    }
+    await reload();
+  }catch(e){}
 });
 
 document.getElementById('printBtn').addEventListener('click', async function(){
