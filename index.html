@@ -752,18 +752,17 @@ html, body{overflow-x:hidden;max-width:100%;}
           <button class="qbtn qsq" id="qSearchBtn" title="Search clients">&#128269;</button>
           <button class="qbtn qwide" id="qFeedBtn">&#9889; View Activity Feed</button>
         </div>
-        <div class="hero-left" style="margin-top:10px;">
-          <div id="heroGreeting" class="hero-hi"></div>
-          <div id="homeClock" class="hero-clock"></div>
-          <div id="heroStats" class="hero-stats"></div>
-        </div>
-        <div class="pipecard">
+        <div class="pipecard" style="margin-top:12px;">
           <div class="pipetitle">&#128202; Cardinal Pipeline</div>
           <div class="piperow" id="pipeRow"></div>
         </div>
         <div class="pipecard" id="approvalsCard" style="display:none;margin-top:14px;border-left:5px solid #C8202E;">
           <h3 style="margin:0 0 6px;">&#128276; Approvals &#8212; signed estimates awaiting contract</h3>
           <div id="approvalsList"></div>
+        </div>
+        <div class="hero-left" style="margin-top:14px;">
+          <div id="heroGreeting" class="hero-hi"></div>
+          <div id="homeClock" class="hero-clock"></div>
         </div>
       </div>
       <aside class="homeside" style="margin-top:14px;">
@@ -5182,26 +5181,7 @@ function renderHero(){
     g.innerHTML = '<span class="qmark">\u201C</span>' + esc(q[0]) + '<span class="qmark">\u201D</span>' +
       '<div class="qauthor">\u2014 ' + esc(q[1]) + '</div>';
   }
-  var s = document.getElementById('heroStats');
-  if(s){
-    var insp = cacheRows.filter(function(r){ return !isEstimateTitle(r.title); }).length;
-    var ests = cacheRows.filter(function(r){ return isEstimateTitle(r.title); }).length;
-    var unsent = cacheRows.filter(function(r){ return r.status !== 'sent'; }).length;
-    s.innerHTML =
-      '<span class="hstat" data-nav="home"><b>' + cacheProjects.length + '</b> clients</span>' +
-      '<span class="hstat" data-nav="inspections"><b>' + insp + '</b> inspections</span>' +
-      '<span class="hstat" data-nav="estimates"><b>' + ests + '</b> estimates</span>' +
-      '<span class="hstat" data-nav="recents"><b>' + unsent + '</b> unsent</span>';
-  }
 }
-document.getElementById('heroStats').addEventListener('click', function(e){
-  var st = e.target.closest('.hstat');
-  if(!st) return;
-  var nav = st.getAttribute('data-nav');
-  if(nav === 'home') return;
-  openList(nav);
-});
-
 /* ---------- calendar + appointments ---------- */
 var calCursor = new Date();
 function pad2(n){ return (n < 10 ? '0' : '') + n; }
