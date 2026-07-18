@@ -301,14 +301,26 @@ footer.site{
 /* ---- profile ---- */
 .projhead{display:flex;gap:14px;margin:16px 0 8px;align-items:stretch;flex-wrap:wrap;}
 .projinfo{flex:1;min-width:240px;background:#fff;border:1px solid var(--line);border-radius:12px;
-  padding:16px 18px;transition:box-shadow .18s, border-color .18s, transform .18s;}
+  padding:13px 15px 34px;position:relative;transition:box-shadow .18s, border-color .18s, transform .18s;}
 .projinfo:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);border-color:#d9b8b0;transform:translateY(-1px);}
-.projcover{position:relative;flex:0 0 168px;align-self:stretch;min-height:150px;border:1px solid var(--line);border-radius:12px;
-  background:#efe9e6;display:flex;align-items:center;justify-content:center;color:#b3a49d;
-  font:600 12px 'Segoe UI',Arial,sans-serif;overflow:hidden;transition:box-shadow .18s;}
+.projinfo h2{margin:0 0 7px;font-size:21px;display:flex;align-items:center;gap:8px;}
+.namestar{cursor:pointer;font-size:20px;color:#c9bfb9;user-select:none;line-height:1;}
+.namestar.on{color:#e8a900;}
+.mrow{display:flex;gap:10px;align-items:baseline;font:600 14px/1.75 'Segoe UI',Arial,sans-serif;color:#1b1b1b;}
+.mrow a{color:#1d4f91;text-decoration:none;font-weight:700;}
+.mlbl{flex:0 0 68px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.07em;color:#9a8c85;}
+.editpencil{position:absolute;bottom:9px;right:10px;border:1px solid var(--line);background:#faf7f5;
+  border-radius:9px;width:36px;height:32px;font-size:15px;cursor:pointer;color:#8a6f66;}
+.editpencil:hover{background:#f3e9e4;color:#9c1822;}
+.projcover{position:relative;flex:0 0 178px;align-self:stretch;min-height:132px;border:1.5px dashed #d5c8c2;border-radius:12px;
+  background:linear-gradient(160deg,#f6f1ee,#ece3de);display:flex;align-items:center;justify-content:center;color:#b3a49d;
+  font:700 12px 'Segoe UI',Arial,sans-serif;overflow:hidden;transition:box-shadow .18s;}
 .projcover:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);}
-.projcover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
-.projcover .chipbtn{position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,.95);padding:5px 9px;z-index:2;}
+.projcover.hasimg{border-style:solid;border-color:var(--line);}
+.projcover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;transition:transform .35s;}
+.projcover:hover img{transform:scale(1.05);}
+.projcover .chipbtn{position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,.95);padding:5px 9px;z-index:2;
+  border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.2);}
 .projinfo h2{margin:2px 0 6px;font-size:24px;}
 .projmeta{font:14px/1.7 'Segoe UI',Arial,sans-serif;color:#444;}
 .projmeta b{display:inline-block;min-width:76px;color:#8a6f66;font-weight:700;}
@@ -327,7 +339,7 @@ footer.site{
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
 .logincard .loginlogo{display:block;margin:0 auto 14px;max-width:230px;height:auto;}
-@media (max-width:640px){ #brandLogo{height:40px;} }
+@media (max-width:640px){ #brandLogo{height:38px !important;} }
 
 /* ---- photo gallery ---- */
 .galgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:4px 0 18px;}
@@ -347,6 +359,11 @@ footer.site{
 #galXferMenu .estopt + .estopt{border-top:1px solid #eee;}
 
 /* ---- profile tabs ---- */
+.jobmenuwrap{margin:18px 0 0;border-bottom:2px solid var(--red);padding-bottom:10px;}
+.jobmenu{-webkit-appearance:none;appearance:none;background:#4a4a4a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>') no-repeat right 14px center;
+  color:#fff;border:1px solid #333;border-radius:9px;font:700 15px 'Segoe UI',Arial,sans-serif;
+  padding:12px 40px 12px 16px;cursor:pointer;min-width:210px;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.jobmenu:focus{outline:2px solid var(--red);outline-offset:1px;}
 .ptabs{display:flex;gap:6px;margin:18px 0 0;border-bottom:2px solid var(--red);flex-wrap:wrap;}
 .ptab{border:1px solid var(--line);border-bottom:0;background:#f3ecea;color:#6b5a54;
   padding:10px 18px;border-radius:9px 9px 0 0;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
@@ -506,7 +523,7 @@ header.site .brand .co small, header.site .tag{color:#d8cbc5 !important;}
 header.site .whoami{color:#fff;}
 header.site .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);}
 header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
-#brandLogo{background:#fff;border-radius:8px;padding:3px;height:44px !important;}
+#brandLogo{background:#fff;border-radius:8px;padding:3px;height:40px !important;}
 @media (max-width:640px){ #brandLogo{height:36px !important;} }
 /* ---- pipeline widget ---- */
 .pipecard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px 16px;margin:14px 0;}
@@ -711,6 +728,26 @@ html, body{overflow-x:hidden;max-width:100%;}
   font:700 14px 'Segoe UI',Arial,sans-serif;}
 .wsempty{font:12.5px 'Segoe UI',Arial,sans-serif;color:#a89f9a;background:#fbfaf9;
   border:1px dashed var(--line);border-radius:10px;padding:12px 14px;}
+
+/* ---- header refinements ---- */
+.brand{position:relative;width:100%;display:flex;align-items:center;justify-content:center;min-height:46px;}
+#brandLogo{position:absolute;left:0;top:50%;transform:translateY(-50%);}
+.titlecard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:11px;
+  padding:6px 18px;text-align:center;}
+.titlecard h1{font-size:20px !important;}
+.titlecard .tag{text-align:center;}
+.headactions{padding:0 2px;}
+.headactions .btn{padding:9px 13px;font-size:13.5px;}
+#headCtx{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:10px;
+  padding:8px 10px;margin:0 8px;flex:1;min-width:0;}
+#headCtx:empty{background:none;border:0;}
+@media (max-width:640px){
+  .titlecard{padding:5px 12px;}
+  .titlecard h1{font-size:15.5px !important;}
+  .titlecard .tag{display:none;}
+  .headactions .btn{padding:9px 12px;font-size:13px;}
+  #headCtx{font-size:13.5px;margin:0 6px;}
+}
 </style>
 </head>
 <body>
@@ -719,7 +756,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   <div class="wrap masthead">
     <div class="brand">
       <img id="brandLogo" alt="Cardinal Roofing &amp; Renovations" style="display:none;">
-      <div>
+      <div class="titlecard">
         <h1>CARDINAL <span>CLIENT RESOURCES</span></h1>
         <p class="tag">&#8220;The Single Source Of Truth&#8221;</p>
       </div>
@@ -835,27 +872,25 @@ html, body{overflow-x:hidden;max-width:100%;}
         <div style="margin-top:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
           <select id="stageSel" style="display:none;"></select>
           <button class="chipbtn" id="fupBtn">&#9200; Follow up&#8230;</button>
-          <button class="chipbtn" id="favBtn">&#9734; Favorite</button>
           <button class="btn" id="contactedBtn" style="display:none;">&#10003; Contacted &#8594; Prospect</button>
         </div>
-        <div style="margin-top:10px;">
-          <button class="chipbtn" id="projEditBtn">&#9998; Edit client info</button>
-          <button class="chipbtn danger" id="projDelBtn">Delete project</button>
-        </div>
       </div>
+        <button id="projEditBtn" class="editpencil" title="Edit client info">&#9998;</button>
       <div class="projcover" id="projCover">
-        <span id="projCoverEmpty">COVER PHOTO</span>
+        <span id="projCoverEmpty">&#128247;<br>Add photo</span>
         <button class="chipbtn" id="projCoverBtn">&#128247;</button>
         <input type="file" id="projCoverInput" accept="image/*" style="display:none;">
       </div>
     </div>
 
-    <div class="ptabs">
-      <button class="ptab active" data-tab="overview">&#128203; Overview</button>
-      <button class="ptab" data-tab="inspections">&#128269; Inspections</button>
-      <button class="ptab" data-tab="estimates">&#128176; Estimates</button>
-      <button class="ptab" data-tab="checklists">&#128203; Checklists</button>
-      <button class="ptab" data-tab="materials">&#128230; Materials</button>
+    <div class="jobmenuwrap">
+      <select id="jobMenuSel" class="jobmenu">
+        <option value="overview">&#128203; Overview</option>
+        <option value="checklists">&#128203; Checklists</option>
+        <option value="inspections">&#128269; Inspections</option>
+        <option value="estimates">&#128176; Estimates</option>
+        <option value="materials">&#128230; Materials</option>
+      </select>
     </div>
 
     <div id="tab-overview">
@@ -992,8 +1027,10 @@ html, body{overflow-x:hidden;max-width:100%;}
     </div>
   </div>
   <div class="wrap" id="dangerZone" style="display:none;text-align:center;padding:34px 0 44px;">
-    <button class="chipbtn" id="delClientBtn" style="color:#C8202E;border-color:#e3b6ba;">&#128465; Delete this client</button>
-    <div style="font:11.5px 'Segoe UI',Arial,sans-serif;color:#a89f9a;margin-top:7px;">Admin only &#8212; removes the client and all their documents, photos, and appointments.</div>
+    <button id="delClientBtn" style="background:#C8202E;color:#fff;border:0;border-radius:9px;
+      font:800 14px 'Segoe UI',Arial,sans-serif;padding:13px 26px;cursor:pointer;box-shadow:0 3px 10px rgba(200,32,46,.35);">
+      &#128465; Delete Client</button>
+    <div style="font:12px 'Segoe UI',Arial,sans-serif;color:#a89f9a;margin-top:8px;">Permanently removes this client and everything attached to them. Admins only.</div>
   </div>
 </div>
 
@@ -3010,16 +3047,19 @@ function openProject(id){
   var pr = cacheProjects.find(function(x){ return x.id === id; });
   if(!pr) return;
   currentProject = pr;
-  document.getElementById('projName').textContent = pr.name || 'Unnamed client';
+  document.getElementById('projName').innerHTML =
+    esc(pr.name || 'Unnamed client') +
+    '<span id="favStar" class="namestar" title="Favorite / high priority">\u2606</span>';
   document.getElementById('projMeta').innerHTML =
-    (pr.address ? '<div><b>Address</b> ' + esc(pr.address) + '</div>' : '') +
-    (pr.phone   ? '<div><b>Phone</b> <a href="tel:' + esc(pr.phone) + '">' + esc(pr.phone) + '</a></div>' : '') +
-    (pr.email   ? '<div><b>Email</b> <a href="mailto:' + esc(pr.email) + '">' + esc(pr.email) + '</a></div>' : '') +
-    (pr.created_by ? '<div><b>Rep</b> ' + esc(pr.created_by) + '</div>' : '');
+    (pr.address ? '<div class="mrow"><span class="mlbl">ADDRESS</span><span>' + esc(pr.address) + '</span></div>' : '') +
+    (pr.phone   ? '<div class="mrow"><span class="mlbl">PHONE</span><a href="tel:' + esc(String(pr.phone).replace(/[^0-9+]/g,'')) + '">' + esc(pr.phone) + '</a></div>' : '') +
+    (pr.email   ? '<div class="mrow"><span class="mlbl">EMAIL</span><a href="mailto:' + esc(pr.email) + '">' + esc(pr.email) + '</a></div>' : '') +
+    (pr.created_by ? '<div class="mrow"><span class="mlbl">REP</span><span>' + esc(DEFAULT_NAMES[pr.created_by] || String(pr.created_by).split('@')[0]) + '</span></div>' : '');
   var cov = document.getElementById('projCover');
   var img = cov.querySelector('img');
   if(img) img.remove();
   document.getElementById('projCoverEmpty').style.display = pr.cover_image ? 'none' : 'inline';
+  cov.classList.toggle('hasimg', !!pr.cover_image);
   if(pr.cover_image){
     var im = document.createElement('img');
     im.src = pr.cover_image;
@@ -3058,15 +3098,14 @@ function renderProjectDocs(){
     : '<div class="empty"><b>No estimates yet.</b><br>Use <b>+ New estimate</b> to pick a template.</div>';
 }
 function showTab(name){
-  document.querySelectorAll('.ptab').forEach(function(b){
-    b.classList.toggle('active', b.getAttribute('data-tab') === name);
-  });
+  var sel = document.getElementById('jobMenuSel');
+  if(sel && sel.value !== name) sel.value = name;
   ['overview','inspections','estimates','checklists','materials'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
 }
-document.querySelectorAll('.ptab').forEach(function(b){
-  b.addEventListener('click', function(){ showTab(b.getAttribute('data-tab')); });
+document.getElementById('jobMenuSel').addEventListener('change', function(){
+  showTab(this.value);
 });
 
 document.getElementById('searchBox').addEventListener('input', function(){
@@ -3865,15 +3904,6 @@ document.getElementById('pfSave').addEventListener('click', async function(){
 document.getElementById('projEditBtn').addEventListener('click', function(){
   if(currentProject) openProjModal(currentProject);
 });
-document.getElementById('projDelBtn').addEventListener('click', async function(){
-  if(!currentProject) return;
-  if(!confirm('Delete "' + currentProject.name + '"? Documents are kept and moved to Unassigned. This cannot be undone.')) return;
-  try{
-    await pdb.remove(currentProject.id);
-    await reload();
-    showHome();
-  }catch(err){ showError('Could not delete project: ' + (err.message || err)); }
-});
 
 /* cover photo */
 document.getElementById('projCoverBtn').addEventListener('click', function(){
@@ -4558,12 +4588,11 @@ function favSort(list){
   });
 }
 function renderFavBtn(){
-  var b = document.getElementById('favBtn');
+  var b = document.getElementById('favStar');
   if(!b || !currentProject) return;
   var on = isFav(currentProject);
-  b.textContent = on ? '\u2B50 Favorite' : '\u2606 Favorite';
-  b.style.background = on ? '#fff7dc' : '';
-  b.style.borderColor = on ? '#e0c460' : '';
+  b.textContent = on ? '\u2B50' : '\u2606';
+  b.classList.toggle('on', on);
 }
 
 /* ---------- pipeline stages ---------- */
@@ -4644,8 +4673,8 @@ async function setStage(prId, v){
 })();
 
 /* follow-up reminder from profile */
-document.getElementById('favBtn').addEventListener('click', function(){
-  if(currentProject) toggleFav(currentProject.id);
+document.getElementById('projName').addEventListener('click', function(e){
+  if(e.target.closest('#favStar') && currentProject) toggleFav(currentProject.id);
 });
 document.getElementById('contactedBtn').addEventListener('click', async function(){
   if(!currentProject) return;
