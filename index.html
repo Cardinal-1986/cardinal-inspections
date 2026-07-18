@@ -690,6 +690,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 .jobvalrow b{font:800 22px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;}
 .jagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
 @media (min-width:900px){ .jagrid{grid-template-columns:repeat(3,1fr);} }
+@media (min-width:1300px){ .jagrid{grid-template-columns:repeat(4,1fr);} }
 .jatile{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;
   border:1px solid var(--line);border-radius:10px;padding:14px;cursor:pointer;
   font:700 14.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
@@ -1137,7 +1138,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 <!-- ============ ACTIVITY FEED PAGE ============ -->
 <div id="activityView" style="display:none;">
-  <div class="wrap" style="padding-top:18px;max-width:760px;">
+  <div class="wrap" style="padding-top:18px;max-width:1040px;">
     <button class="btn dark" id="actBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#9889; Activity Feed</h2>
     <p class="subnote">Everything happening across the team, newest first.</p>
@@ -1147,7 +1148,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 <!-- ============ COMMUNICATIONS PAGE ============ -->
 <div id="commsView" style="display:none;">
-  <div class="wrap" style="padding-top:18px;max-width:760px;">
+  <div class="wrap" style="padding-top:18px;max-width:900px;">
     <button class="btn dark" id="commsBackBtn">&larr; Back</button>
     <h2 style="margin:16px 0 4px;">&#128172; Communications <span id="commsCli" style="color:#9c1822;"></span></h2>
     <p class="subnote">Notes, call logs, and document activity for this client. Tag a teammate with @name.</p>
@@ -1163,7 +1164,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 <!-- ============ SCHEDULE BOARD ============ -->
 <div id="boardView" style="display:none;">
-  <div class="wrap" style="padding-top:18px;max-width:860px;">
+  <div class="wrap" style="padding-top:18px;max-width:1200px;">
     <button class="btn dark" id="boardBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#128197; Schedule Board</h2>
     <p class="subnote">Jobs &#128296;, material drops &#128666;, and appointments &#128197; for the next 14 days. Tap a day to add or edit.</p>
