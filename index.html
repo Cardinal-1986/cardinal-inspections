@@ -38,7 +38,7 @@ body{
 header.site{background:var(--ink);border-bottom:4px solid var(--red);
   position:fixed;top:0;left:0;right:0;z-index:90;box-shadow:0 2px 10px rgba(0,0,0,.25);}
 body{padding-top:110px;} /* refined at runtime to the real header height */
-.wrap{max-width:none;margin:0 auto;padding:0 32px;}
+.wrap{max-width:1880px;margin:0 auto;padding:0 32px;}
 .masthead{
   display:flex;align-items:center;justify-content:space-between;
   gap:16px;padding:10px 0;flex-wrap:wrap;
@@ -473,7 +473,7 @@ footer.site{
 #mainView .homecols{
   /* x: center of the main column (container minus 320px sidebar + 20px gap) */
   background-position: calc(50% - 170px) bottom;
-  background-size: min(760px, 60%);
+  background-size: min(640px, 44%);
   min-height: 560px;
 }
 @media (max-width:900px){
@@ -529,8 +529,8 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 /* ---- pipeline widget ---- */
 .pipecard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px 16px;margin:14px 0;}
 .pipetitle{font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;margin-bottom:10px;}
-.piperow{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
-.pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;}
+.piperow{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;justify-content:space-evenly;}
+.pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;max-width:200px;}
 .pipebtn .pcirc{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;
   margin:0 auto 6px;color:#fff;font:800 30px 'Segoe UI',Arial,sans-serif;
   transition:transform .12s, box-shadow .12s;}
@@ -660,6 +660,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 .adot.jdot{background:#7CB342;}
 .adot.ddot{background:#29A3DC;}
+.adot.tdot{background:#C8202E;}
 .bkind{font-size:15px;flex:0 0 auto;}
 
 .agechip{position:absolute;top:38px;left:8px;z-index:2;font:800 10px 'Segoe UI',Arial,sans-serif;
@@ -772,6 +773,31 @@ html, body{overflow-x:hidden;max-width:100%;}
 .collhead:hover{color:#9c1822;}
 .collchev{font-size:15px;color:#9a8c85;transition:transform .18s;display:inline-block;}
 .collhead.open .collchev{transform:rotate(90deg);}
+
+/* ---- desktop header search + dashboard row ---- */
+#headSearch{display:none;height:40px;width:clamp(320px,23vw,460px);box-sizing:border-box;border-radius:9px;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;
+  font:600 13.5px 'Segoe UI',Arial,sans-serif;padding:0 14px;}
+#headSearch::placeholder{color:#c9b8b4;}
+#headSearch:focus{outline:2px solid var(--red);background:rgba(255,255,255,.16);}
+.qclock{display:none;}
+.herorow{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;}
+.teamcal .pipetitle .chipbtn{font-size:12px;padding:5px 10px;}
+.tcrow{display:flex;gap:10px;align-items:baseline;padding:7px 2px;border-bottom:1px solid #f0eae7;
+  font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.tcrow:last-child{border-bottom:0;}
+.tcrow .tcd{flex:0 0 62px;font-weight:800;color:#9c1822;}
+.tcrow small{color:#9a8c85;font-weight:700;}
+.tcempty{font:12.5px 'Segoe UI',Arial,sans-serif;color:#a89f9a;padding:8px 2px;}
+@media (min-width:901px){
+  #headSearch{display:block;}
+  .qclock{display:flex;align-items:center;flex:1;font:800 16.5px 'Segoe UI',Arial,sans-serif;color:#5c4a42;
+    letter-spacing:.01em;font-variant-numeric:tabular-nums;}
+  .qbtn.qsq{display:none;}
+  .qbtn.qwide{flex:0 0 auto;padding:11px 26px;font-weight:800;}
+  .hero-clock{display:none;}
+}
+@media (max-width:900px){ .herorow{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -813,6 +839,7 @@ html, body{overflow-x:hidden;max-width:100%;}
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
         </div>
       </span>
+      <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
     </div>
     <div id="repStrip" class="repstrip" style="display:none;">
       <span class="reppill" id="repPill"></span>
@@ -845,8 +872,9 @@ html, body{overflow-x:hidden;max-width:100%;}
     <div class="homecols">
       <div class="homemain">
         <div class="quickrow">
+          <div id="qClock" class="qclock"></div>
           <button class="qbtn qsq" id="qSearchBtn" title="Search clients">&#128269;</button>
-          <button class="qbtn qwide" id="qFeedBtn">&#9889; View Activity Feed</button>
+          <button class="qbtn qwide" id="qFeedBtn"><b>Dashboard</b></button>
         </div>
         <div class="pipecard" style="margin-top:12px;">
           <div class="pipetitle">&#128202; Cardinal Pipeline</div>
@@ -856,9 +884,18 @@ html, body{overflow-x:hidden;max-width:100%;}
           <h3 style="margin:0 0 6px;">&#128276; Approvals &#8212; signed estimates awaiting contract</h3>
           <div id="approvalsList"></div>
         </div>
-        <div class="hero-left" style="margin-top:14px;">
-          <div id="heroGreeting" class="hero-hi"></div>
-          <div id="homeClock" class="hero-clock"></div>
+        <div class="herorow" style="margin-top:14px;">
+          <div class="pipecard teamcal">
+            <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
+              <span>&#127970; Team Calendar</span>
+              <button class="chipbtn" id="teamAddBtn">&#65291; Add</button>
+            </div>
+            <div id="teamCalList"></div>
+          </div>
+          <div class="hero-left">
+            <div id="heroGreeting" class="hero-hi"></div>
+            <div id="homeClock" class="hero-clock"></div>
+          </div>
         </div>
       </div>
       <aside class="homeside" style="margin-top:14px;">
@@ -869,12 +906,12 @@ html, body{overflow-x:hidden;max-width:100%;}
             <button class="calnav" id="calNext">&#8250;</button>
           </div>
           <div class="calgrid" id="calGrid"></div>
-          <div class="callegend"><span class="ldot doc"></span> documents &nbsp; <span class="ldot appt"></span> appointments &#8212; tap a day to schedule</div>
+          <div class="callegend"><span class="ldot doc"></span> documents &nbsp; <span class="ldot appt"></span> appts &nbsp; <span class="ldot" style="background:#C8202E;"></span> team &#8212; tap a day to schedule</div>
           <div id="apptUpcoming" class="calnextup"></div>
         </div>
         <div class="actcard">
-          <div class="acthead collhead" id="actToggle">&#9889; Activity <span class="collchev">&#9656;</span></div>
-          <div id="actFeed" style="display:none;"></div>
+          <div class="acthead collhead open" id="actToggle">&#9889; Activity <span class="collchev">&#9656;</span></div>
+          <div id="actFeed"></div>
         </div>
       </aside>
     </div>
@@ -1502,6 +1539,7 @@ html, body{overflow-x:hidden;max-width:100%;}
           <option value="appt">&#128197; Appointment</option>
           <option value="job">&#128296; Job</option>
           <option value="drop">&#128666; Material Drop</option>
+          <option value="team">&#127970; Team &#8212; meeting / vacation / PTO</option>
         </select></label>
       <label>Time<input type="time" id="apptTime"></label>
       <label>Client (optional)
@@ -3017,6 +3055,7 @@ function renderHome(){
     return hay.indexOf(q) !== -1;
   });
   countLabel.textContent = projs.length + ' project' + (projs.length === 1 ? '' : 's');
+  renderTeamCal();
 
   var out = '';
   if(!cacheProjects.length){
@@ -5327,7 +5366,7 @@ function openActivityFeed(){
   window.scrollTo(0,0);
 }
 var boardView = document.getElementById('boardView');
-var KIND_META = { job:{ic:'\uD83D\uDD28',nm:'Job'}, drop:{ic:'\uD83D\uDE9A',nm:'Material Drop'}, appt:{ic:'\uD83D\uDCC5',nm:'Appointment'} };
+var KIND_META = { job:{ic:'\uD83D\uDD28',nm:'Job'}, drop:{ic:'\uD83D\uDE9A',nm:'Material Drop'}, appt:{ic:'\uD83D\uDCC5',nm:'Appointment'}, team:{ic:'\uD83C\uDFE2',nm:'Team'} };
 function openScheduleBoard(){
   hideAllViews();
   boardView.style.display = 'block';
@@ -5528,7 +5567,8 @@ function renderCalendar(){
            (apptDays[d]
              ? ((apptKinds[d].job ? '<span class="adot jdot"></span>' : '') +
                 (apptKinds[d].drop ? '<span class="adot ddot"></span>' : '') +
-                ((apptKinds[d].appt || (!apptKinds[d].job && !apptKinds[d].drop)) ? '<span class="adot"></span>' : ''))
+                (apptKinds[d].team ? '<span class="adot tdot"></span>' : '') +
+                ((apptKinds[d].appt || (!apptKinds[d].job && !apptKinds[d].drop && !apptKinds[d].team)) ? '<span class="adot"></span>' : ''))
              : '') + '</div>';
   }
   var cells = startDow + daysInMonth;
@@ -5641,16 +5681,56 @@ document.getElementById('apptSave').addEventListener('click', async function(){
   }
 });
 
-/* ---------- home date & clock ---------- */
+/* ---------- home date & clock (live ticker) ---------- */
 function tickHomeClock(){
-  var el = document.getElementById('homeClock');
-  if(!el) return;
   var now = new Date();
-  el.textContent = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) +
-    ' \u00b7 ' + now.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+  var txt = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) +
+    ' \u00b7 ' + now.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', second:'2-digit' });
+  var el = document.getElementById('homeClock');
+  if(el) el.textContent = txt;
+  var qc = document.getElementById('qClock');
+  if(qc) qc.textContent = txt;
 }
 tickHomeClock();
-setInterval(tickHomeClock, 15000);
+setInterval(tickHomeClock, 1000);
+
+/* ---------- header search (desktop) ---------- */
+document.getElementById('headSearch').addEventListener('keydown', function(e){
+  if(e.key !== 'Enter') return;
+  var v = this.value.trim();
+  openClientsDirectory();
+  var cf = document.getElementById('cliFilter');
+  cf.value = v;
+  renderClientDirectory();
+});
+
+/* ---------- team calendar ---------- */
+function renderTeamCal(){
+  var mount = document.getElementById('teamCalList');
+  if(!mount) return;
+  var today = dateStr(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+  var rows = cacheAppts
+    .filter(function(a){ return a.kind === 'team' && String(a.appt_date || '') >= today; })
+    .sort(function(x, y){ return String(x.appt_date).localeCompare(String(y.appt_date)) ||
+                                 String(x.appt_time || '').localeCompare(String(y.appt_time || '')); })
+    .slice(0, 6);
+  if(!rows.length){
+    mount.innerHTML = '<div class="tcempty">No team events yet \u2014 add meetings, vacations, or PTO so the whole crew can see them.</div>';
+    return;
+  }
+  mount.innerHTML = rows.map(function(a){
+    var d = new Date(a.appt_date + 'T12:00:00');
+    var dt = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    return '<div class="tcrow"><span class="tcd">' + esc(dt) + '</span><span>' + esc(a.title || 'Team event') +
+      (a.appt_time ? ' <small>\u00b7 ' + esc(a.appt_time) + '</small>' : '') + '</span></div>';
+  }).join('');
+}
+document.getElementById('teamAddBtn').addEventListener('click', function(){
+  var t = new Date();
+  openApptDay(dateStr(t.getFullYear(), t.getMonth(), t.getDate()));
+  var k = document.getElementById('apptKind');
+  if(k) k.value = 'team';
+});
 
 /* admin: delete client (deep) */
 document.getElementById('delClientBtn').addEventListener('click', async function(){
