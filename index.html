@@ -36,7 +36,8 @@ body{
 
 /* ---------- header ---------- */
 header.site{background:var(--ink);border-bottom:4px solid var(--red);
-  position:sticky;top:0;z-index:90;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+  position:fixed;top:0;left:0;right:0;z-index:90;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+body{padding-top:110px;} /* refined at runtime to the real header height */
 .wrap{max-width:1760px;margin:0 auto;padding:0 28px;}
 .masthead{
   display:flex;align-items:center;justify-content:space-between;
@@ -298,13 +299,16 @@ footer.site{
 .pcard .ft{font:700 11px 'Segoe UI',Arial,sans-serif;opacity:.85;margin-top:5px;display:flex;justify-content:space-between;gap:8px;}
 
 /* ---- profile ---- */
-.projhead{display:flex;gap:20px;margin:16px 0 8px;flex-wrap:wrap;}
-.projcover{position:relative;flex:0 0 320px;height:190px;border:1px solid var(--line);border-radius:10px;
+.projhead{display:flex;gap:14px;margin:16px 0 8px;align-items:stretch;flex-wrap:wrap;}
+.projinfo{flex:1;min-width:240px;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px;transition:box-shadow .18s, border-color .18s, transform .18s;}
+.projinfo:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);border-color:#d9b8b0;transform:translateY(-1px);}
+.projcover{position:relative;flex:0 0 168px;align-self:stretch;min-height:150px;border:1px solid var(--line);border-radius:12px;
   background:#efe9e6;display:flex;align-items:center;justify-content:center;color:#b3a49d;
-  font:600 14px 'Segoe UI',Arial,sans-serif;overflow:hidden;}
-.projcover img{width:100%;height:100%;object-fit:cover;}
-.projcover .chipbtn{position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,.95);}
-.projinfo{flex:1;min-width:240px;}
+  font:600 12px 'Segoe UI',Arial,sans-serif;overflow:hidden;transition:box-shadow .18s;}
+.projcover:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);}
+.projcover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.projcover .chipbtn{position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,.95);padding:5px 9px;z-index:2;}
 .projinfo h2{margin:2px 0 6px;font-size:24px;}
 .projmeta{font:14px/1.7 'Segoe UI',Arial,sans-serif;color:#444;}
 .projmeta b{display:inline-block;min-width:76px;color:#8a6f66;font-weight:700;}
@@ -318,7 +322,7 @@ footer.site{
 .projform select{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;background:#fff;}
 .projform input{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;
   border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;}
-@media (max-width:640px){ .projcover{flex-basis:100%;} }
+@media (max-width:640px){ .projcover{flex:0 0 118px;min-height:118px;} .projinfo{padding:13px 14px;} }
 
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
@@ -519,7 +523,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
 .pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;} .pipe-closed{background:#607D8B;}
 @media (max-width:640px){
-  .piperow{overflow-x:auto;justify-content:flex-start;padding-bottom:6px;-webkit-overflow-scrolling:touch;}
+  .piperow{overflow-x:auto;justify-content:flex-start;padding:0 8px 6px 0;-webkit-overflow-scrolling:touch;}
   .pipebtn{flex:0 0 auto;min-width:86px;}
   .pipebtn .pcirc{width:58px;height:58px;font-size:26px;}
 }
@@ -611,7 +615,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 }
 
 /* ---- no horizontal page sway ---- */
-html, body{overflow-x:clip;max-width:100%;}
+html, body{overflow-x:hidden;max-width:100%;}
 /* wide tables scroll inside their own container, not the page */
 #listMount, #historyMount, #estDocsMount, #inspDocsMount, #bannerMount{
   overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;
@@ -656,7 +660,11 @@ html, body{overflow-x:clip;max-width:100%;}
 .bnone{font:12.5px 'Segoe UI',Arial,sans-serif;color:#a89f9a;padding:2px 0;}
 
 .stagebanner{border-radius:10px;color:#fff;text-align:center;font:800 20px 'Segoe UI',Arial,sans-serif;
-  letter-spacing:.06em;padding:16px 12px;cursor:pointer;}
+  letter-spacing:.06em;padding:14px 10px;display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.stagebanner .stgmid{flex:1;}
+.stgarrow{flex:0 0 44px;font:800 30px/1 'Segoe UI',Arial,sans-serif;cursor:pointer;opacity:.85;
+  padding:6px 0;border-radius:8px;user-select:none;}
+.stgarrow:hover{opacity:1;background:rgba(255,255,255,.15);}
 .stagebanner small{display:block;font:600 12px 'Segoe UI',Arial,sans-serif;opacity:.9;letter-spacing:0;margin-top:2px;}
 .jobvalrow{display:flex;justify-content:space-between;background:#fff;border:1px solid var(--line);
   border-radius:10px;padding:12px 16px;margin-top:10px;}
@@ -821,23 +829,11 @@ html, body{overflow-x:clip;max-width:100%;}
 <div id="projectView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
     <div class="projhead">
-      <div class="projcover" id="projCover">
-        <span id="projCoverEmpty">COVER PHOTO</span>
-        <button class="chipbtn" id="projCoverBtn">&#128247; Add cover photo</button>
-        <input type="file" id="projCoverInput" accept="image/*" style="display:none;">
-      </div>
       <div class="projinfo">
         <h2 id="projName"></h2>
         <div id="projMeta" class="projmeta"></div>
         <div style="margin-top:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
-          <label style="display:inline-flex;align-items:center;gap:7px;font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#444;">
-            Stage
-            <select id="stageSel" style="font:inherit;padding:6px 10px;border:1px solid #c9c2bf;border-radius:7px;background:#fff;"></select>
-          </label>
-          <label style="display:inline-flex;align-items:center;gap:7px;font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#444;cursor:pointer;">
-            <input type="checkbox" id="ptCheck" style="width:17px;height:17px;accent-color:#C8202E;">
-            Photos transferred to report
-          </label>
+          <select id="stageSel" style="display:none;"></select>
           <button class="chipbtn" id="fupBtn">&#9200; Follow up&#8230;</button>
           <button class="chipbtn" id="favBtn">&#9734; Favorite</button>
           <button class="btn" id="contactedBtn" style="display:none;">&#10003; Contacted &#8594; Prospect</button>
@@ -846,6 +842,11 @@ html, body{overflow-x:clip;max-width:100%;}
           <button class="chipbtn" id="projEditBtn">&#9998; Edit client info</button>
           <button class="chipbtn danger" id="projDelBtn">Delete project</button>
         </div>
+      </div>
+      <div class="projcover" id="projCover">
+        <span id="projCoverEmpty">COVER PHOTO</span>
+        <button class="chipbtn" id="projCoverBtn">&#128247;</button>
+        <input type="file" id="projCoverInput" accept="image/*" style="display:none;">
       </div>
     </div>
 
@@ -989,6 +990,10 @@ html, body{overflow-x:clip;max-width:100%;}
       </div>
       <input type="file" id="matFile" accept="application/pdf" style="display:none;">
     </div>
+  </div>
+  <div class="wrap" id="dangerZone" style="display:none;text-align:center;padding:34px 0 44px;">
+    <button class="chipbtn" id="delClientBtn" style="color:#C8202E;border-color:#e3b6ba;">&#128465; Delete this client</button>
+    <div style="font:11.5px 'Segoe UI',Arial,sans-serif;color:#a89f9a;margin-top:7px;">Admin only &#8212; removes the client and all their documents, photos, and appointments.</div>
   </div>
 </div>
 
@@ -2989,6 +2994,7 @@ var projectView = document.getElementById('projectView');
 function showHome(){
   var hc = document.getElementById('headCtx');
   if(hc) hc.textContent = '';
+  setTimeout(fixHeadPad, 50);
   currentProject = null;
   currentList = null;
   hideAllViews();
@@ -3024,8 +3030,9 @@ function openProject(id){
   document.getElementById('stageSel').value = normStage(pr.stage);
   renderFavBtn();
   document.getElementById('contactedBtn').style.display = (normStage(pr.stage) === 'Lead') ? 'inline-block' : 'none';
-  document.getElementById('ptCheck').checked = !!pr.photos_transferred;
   var hpo = poOf(pr);
+  document.getElementById('dangerZone').style.display = isAdminUser() ? 'block' : 'none';
+  setTimeout(fixHeadPad, 50);
   document.getElementById('headCtx').innerHTML =
     (hpo ? '<small>' + hpo + ':</small> ' : '') + esc(pr.name || '');
   renderOverview();
@@ -3288,8 +3295,6 @@ galXferMenu.addEventListener('click', async function(e){
       currentProject.photos_transferred = true;
       var cpx = cacheProjects.find(function(x){ return x.id === currentProject.id; });
       if(cpx) cpx.photos_transferred = true;
-      var ptc = document.getElementById('ptCheck');
-      if(ptc) ptc.checked = true;
     }catch(e2){}
     status.textContent = '\u2713 Transferred \u2014 photos removed from gallery.';
     setTimeout(function(){ status.textContent = ''; }, 4000);
@@ -3633,8 +3638,12 @@ function renderOverview(){
   var banner = document.getElementById('stageBanner');
   banner.style.background = STAGE_COLORS[stg] || '#607D8B';
   var allCk = parseCkAll(pr);
-  banner.innerHTML = esc(stg.toUpperCase()) +
-    '<small>' + esc(stageAgo(allCk.stage_since || pr.updated_at || pr.created_at) || '') + '</small>';
+  var si = STAGES.indexOf(stg);
+  banner.innerHTML =
+    (si > 0 ? '<span class="stgarrow" data-dir="-1" title="Back to ' + esc(STAGES[si-1]) + '">&#8249;</span>' : '') +
+    '<span class="stgmid">' + esc(stg.toUpperCase()) +
+      '<small>' + esc(stageAgo(allCk.stage_since || pr.updated_at || pr.created_at) || '') + '</small></span>' +
+    (si < STAGES.length - 1 ? '<span class="stgarrow" data-dir="1" title="Advance to ' + esc(STAGES[si+1]) + '">&#8250;</span>' : '');
   var fin = jobFinance(pr);
   document.getElementById('jobValueLbl').textContent = fin.value ? fmtMoney(fin.value) : '--';
   document.getElementById('balanceLbl').textContent = fin.value ? fmtMoney(fin.balance) : '--';
@@ -3737,10 +3746,19 @@ function mapsUrl(addr){
 document.getElementById('locRow').addEventListener('click', function(){
   if(currentProject && currentProject.address) window.open(mapsUrl(currentProject.address), '_blank');
 });
-document.getElementById('stageBanner').addEventListener('click', function(){
-  var s = document.getElementById('stageSel');
-  s.focus();
-  s.scrollIntoView({ behavior:'smooth', block:'center' });
+document.getElementById('stageBanner').addEventListener('click', async function(e){
+  var a = e.target.closest('.stgarrow');
+  if(!a || !currentProject) return;
+  var dir = parseInt(a.getAttribute('data-dir'), 10);
+  var si = STAGES.indexOf(normStage(currentProject.stage));
+  var ni = si + dir;
+  if(ni < 0 || ni >= STAGES.length) return;
+  var next = STAGES[ni];
+  if(!confirm((dir > 0 ? 'Advance' : 'Move back') + ' to ' + next.toUpperCase() + '?')) return;
+  try{
+    await setStage(currentProject.id, next);
+    renderOverview();
+  }catch(err){ showError('Could not update stage: ' + (err.message || err)); }
 });
 
 /* ---------- communications page ---------- */
@@ -4741,10 +4759,17 @@ document.getElementById('navBtn').addEventListener('click', function(e){
 });
 document.addEventListener('click', function(){ navMenu.style.display = 'none'; });
 window.addEventListener('scroll', function(){ navMenu.style.display = 'none'; }, { passive: true });
+function fixHeadPad(){
+  var h = document.querySelector('header.site');
+  if(h && h.offsetHeight) document.body.style.paddingTop = h.offsetHeight + 'px';
+}
+fixHeadPad();
+setTimeout(fixHeadPad, 300); /* after fonts/logo settle */
 var rzT = null;
 window.addEventListener('resize', function(){
   clearTimeout(rzT);
-  rzT = setTimeout(function(){ if(mainView.style.display !== 'none') renderHome(); }, 250);
+  fixHeadPad();
+  rzT = setTimeout(function(){ fixHeadPad(); if(mainView.style.display !== 'none') renderHome(); }, 250);
 });
 navMenu.addEventListener('click', function(e){
   var opt = e.target.closest('.navopt');
@@ -5462,18 +5487,37 @@ function tickHomeClock(){
 tickHomeClock();
 setInterval(tickHomeClock, 15000);
 
-document.getElementById('ptCheck').addEventListener('change', async function(){
-  if(!currentProject) return;
-  var v = this.checked;
+/* admin: delete client (deep) */
+document.getElementById('delClientBtn').addEventListener('click', async function(){
+  if(!currentProject || !isAdminUser()) return;
+  var pr = currentProject;
+  if(!confirm('Delete ' + (pr.name || 'this client') + '?\n\nThis permanently removes their profile, ALL documents (estimates, contracts, reports), photos, and appointments. This cannot be undone.')) return;
+  var typed = prompt('Type the client\u2019s name exactly to confirm deletion:', '');
+  if(typed === null) return;
+  if(typed.trim().toLowerCase() !== String(pr.name || '').trim().toLowerCase()){
+    alert('Name did not match \u2014 nothing was deleted.');
+    return;
+  }
+  var btn = this;
+  btn.disabled = true; btn.textContent = 'Deleting\u2026';
   try{
-    await pdb.update(currentProject.id, { photos_transferred: v });
-    currentProject.photos_transferred = v;
-    var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
-    if(cp) cp.photos_transferred = v;
-    renderHome();
+    var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
+    for(var i = 0; i < docs.length; i++){ try{ await db.remove(docs[i].id); }catch(e){} }
+    try{
+      var phs = await photoDb.listByProject(pr.id);
+      for(var j = 0; j < phs.length; j++){ try{ await photoDb.remove(phs[j].id); }catch(e){} }
+    }catch(e){}
+    var aps = cacheAppts.filter(function(a){ return a.project_id === pr.id; });
+    for(var k = 0; k < aps.length; k++){ try{ await adb.remove(aps[k].id); }catch(e){} }
+    await pdb.remove(pr.id);
+    currentProject = null;
+    await reload();
+    btn.disabled = false; btn.textContent = '\uD83D\uDDD1 Delete this client';
+    showHome();
+    alert('Client deleted.');
   }catch(err){
-    this.checked = !v;
-    showError('Could not update: ' + (err.message || err));
+    btn.disabled = false; btn.textContent = '\uD83D\uDDD1 Delete this client';
+    showError('Delete failed: ' + (err.message || err));
   }
 });
 
