@@ -148,7 +148,11 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 .loading{padding:30px;text-align:center;color:var(--muted);}
 
 /* ---------- login ---------- */
-#loginView{display:none;min-height:calc(100vh - 120px);align-items:flex-start;justify-content:center;padding:40px 20px 240px;}
+#loginView{display:none;position:relative;min-height:calc(100vh - 120px);align-items:flex-start;justify-content:center;padding:40px 20px 280px;}
+#loginQuote{position:absolute;left:20px;right:20px;bottom:148px;margin:0 auto;max-width:460px;text-align:center;
+  font:italic 700 14.5px/1.5 Georgia,'Times New Roman',serif;color:#B8860B;
+  text-shadow:0 0 8px #fff,0 0 14px #fff;}
+#loginQuote span{font:800 11.5px 'Segoe UI',Arial,sans-serif;font-style:normal;color:#a67c00;}
 #loginView.open{display:flex;}
 .logincard{
   background:var(--paper);border:1px solid var(--line);border-top:6px solid var(--red);
@@ -601,7 +605,7 @@ html, body{overflow-x:hidden;max-width:100%;}
       <img id="brandLogo" alt="Cardinal Roofing &amp; Renovations" style="display:none;">
       <div>
         <h1>CARDINAL <span>CLIENT RESOURCES</span></h1>
-        <p class="tag">&#8220;The one source of truth&#8221;</p>
+        <p class="tag">&#8220;The Single Source Of Truth&#8221;</p>
       </div>
     </div>
     <div class="headactions">
@@ -637,7 +641,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   <div class="logincard">
     <img class="loginlogo" id="loginLogo" alt="Cardinal Roofing &amp; Renovations" style="display:none;">
     <h2>Team sign in</h2>
-    <p style="font:italic 600 15px Georgia,'Times New Roman',serif;color:#7a4a3e;">&#8220;The one source of truth&#8221;</p>
+    <p style="font:italic 600 15px Georgia,'Times New Roman',serif;color:#7a4a3e;margin-bottom:4px;">&#8220;The Single Source Of Truth&#8221;</p>
     <label for="loginEmail">Email</label>
     <input id="loginEmail" type="email" autocomplete="username" placeholder="you@cardinalroofing.com">
     <label for="loginPassword">Password</label>
@@ -645,6 +649,7 @@ html, body{overflow-x:hidden;max-width:100%;}
     <button class="btn" id="loginBtn">Sign in</button>
     <div id="loginError" role="alert"></div>
   </div>
+  <p id="loginQuote"></p>
 </div>
 
 <!-- ============ MAIN ============ -->
@@ -5823,6 +5828,20 @@ document.getElementById('editorLogo').addEventListener('click', async function()
 (function(){
   var m = REPORT_TEMPLATE.match(/class="cover-logo" src="(data:image\/[^"]+)"/);
   if(!m) return;
+  var LOGIN_QUOTES = [
+    ["You are what you do, not what you say you\u2019ll do.", "Carl Jung"],
+    ["Honesty is the first chapter in the book of wisdom.", "Thomas Jefferson"],
+    ["Only those who dare to fail greatly can ever achieve greatly.", "Robert F. Kennedy"],
+    ["Failure is simply the opportunity to begin again, this time more intelligently.", "Henry Ford"]
+  ];
+  var lq = document.getElementById('loginQuote');
+  if(lq){
+    var st = new Date(new Date().getFullYear(), 0, 0);
+    var dy = Math.floor((Date.now() - st.getTime()) / 86400000);
+    var q = LOGIN_QUOTES[dy % LOGIN_QUOTES.length];
+    lq.innerHTML = '\u201C' + q[0] + '\u201D<br>' +
+      '<span style="font:600 11px \'Segoe UI\',Arial,sans-serif;font-style:normal;">\u2014 ' + q[1] + '</span>';
+  }
   ['brandLogo','loginLogo','editorLogo'].forEach(function(id){
     var el = document.getElementById(id);
     if(el){ el.src = m[1]; el.style.display = 'block'; }
