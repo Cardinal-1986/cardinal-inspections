@@ -827,6 +827,45 @@ html, body{overflow-x:hidden;max-width:100%;}
 .rememberlbl input{width:16px;height:16px;accent-color:#C8202E;}
 .forgotlink{color:#1d4f91;text-decoration:none;font-weight:700;}
 .forgotlink:hover{text-decoration:underline;}
+
+/* ---- Cardinal calendar theme (sidebar) ---- */
+#calCard{
+  background:linear-gradient(168deg,#241518 0%,#170f11 48%,#221407 100%);
+  border:1px solid #4a3420;border-top:5px solid #C8202E;border-radius:14px;
+  box-shadow:0 10px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(212,160,23,.35);
+  position:relative;overflow:hidden;
+}
+#calCard::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
+  background:linear-gradient(90deg,transparent,#d4a017 30%,#f5d061 50%,#d4a017 70%,transparent);}
+#calCard .calhead{margin-bottom:10px;}
+#calCard .calhead b{
+  font:800 16px Georgia,'Times New Roman',serif;letter-spacing:.05em;
+  background:linear-gradient(160deg,#a06c08,#d4a017 40%,#f5d061 55%,#c8901c 75%);
+  -webkit-background-clip:text;background-clip:text;color:#d4a017;-webkit-text-fill-color:transparent;}
+#calCard .calnav{background:#C8202E;border:1px solid #7c1019;color:#fff;border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);}
+#calCard .calnav:hover{background:#a5121f;}
+#calCard .calgrid .dow{color:#d4a017;font-size:10px;letter-spacing:.08em;}
+#calCard .calgrid .day{color:#ece0d0;}
+#calCard .calgrid .day.other{color:#5f5148;}
+#calCard .calgrid .day.cur:hover{background:rgba(200,32,46,.28);}
+#calCard .calgrid .day.today{background:#C8202E;color:#fff;font-weight:800;
+  box-shadow:0 0 0 2px #d4a017, 0 2px 8px rgba(200,32,46,.5);}
+#calCard .calgrid .day.today.cur:hover{background:#a5121f;}
+#calCard .calgrid .day .dot{background:#ff5a66;}
+#calCard .calgrid .day .adot{background:#f5d061;}
+#calCard .calgrid .day.today .dot{background:#fff;}
+#calCard .callegend{color:#b39a78;}
+#calCard .callegend .ldot{box-shadow:0 0 0 1px rgba(255,255,255,.25);}
+@media (min-width:901px){
+  #calCard{padding:16px 18px;}
+  #calCard .calgrid{gap:5px;font-size:13.5px;}
+  #calCard .calgrid .day{padding:12px 0;border-radius:9px;}
+  #calCard .calgrid .dow{padding:6px 0;font-size:10.5px;}
+  #calCard .calhead b{font-size:17.5px;}
+  #calCard .calnav{width:32px;height:32px;font-size:18px;}
+  #calCard .callegend{margin-top:12px;font-size:11.5px;}
+}
 </style>
 </head>
 <body>
