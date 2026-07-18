@@ -359,10 +359,11 @@ footer.site{
 #galXferMenu .estopt + .estopt{border-top:1px solid #eee;}
 
 /* ---- profile tabs ---- */
-.jobmenuwrap{margin:18px 0 0;border-bottom:2px solid var(--red);padding-bottom:10px;}
 .jobmenu{-webkit-appearance:none;appearance:none;background:#4a4a4a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>') no-repeat right 14px center;
   color:#fff;border:1px solid #333;border-radius:9px;font:700 15px 'Segoe UI',Arial,sans-serif;
   padding:12px 40px 12px 16px;cursor:pointer;min-width:210px;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.jobmenu-head{padding:9px 34px 9px 13px;min-width:138px;font-size:13.5px;border-radius:9px;
+  background-position:right 11px center;vertical-align:middle;}
 .jobmenu:focus{outline:2px solid var(--red);outline-offset:1px;}
 .ptabs{display:flex;gap:6px;margin:18px 0 0;border-bottom:2px solid var(--red);flex-wrap:wrap;}
 .ptab{border:1px solid var(--line);border-bottom:0;background:#f3ecea;color:#6b5a54;
@@ -528,8 +529,8 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 /* ---- pipeline widget ---- */
 .pipecard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px 16px;margin:14px 0;}
 .pipetitle{font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;margin-bottom:10px;}
-.piperow{display:flex;gap:6px;justify-content:space-between;}
-.pipebtn{flex:1;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:78px;}
+.piperow{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+.pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;}
 .pipebtn .pcirc{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;
   margin:0 auto 6px;color:#fff;font:800 30px 'Segoe UI',Arial,sans-serif;
   transition:transform .12s, box-shadow .12s;}
@@ -540,7 +541,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
 .pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;} .pipe-closed{background:#607D8B;}
 @media (max-width:640px){
-  .piperow{overflow-x:auto;justify-content:flex-start;padding:0 8px 6px 0;-webkit-overflow-scrolling:touch;}
+  .piperow{padding:0 8px 6px 0;}
   .pipebtn{flex:0 0 auto;min-width:86px;}
   .pipebtn .pcirc{width:58px;height:58px;font-size:26px;}
 }
@@ -774,6 +775,13 @@ html, body{overflow-x:hidden;max-width:100%;}
       </span>
       <span id="headCtx"></span>
       <span id="navWrap" style="display:none;">
+        <select id="jobMenuSel" class="jobmenu jobmenu-head" style="display:none;">
+          <option value="overview">Overview</option>
+          <option value="checklists">Checklists</option>
+          <option value="inspections">Inspections</option>
+          <option value="estimates">Estimates</option>
+          <option value="materials">Materials</option>
+        </select>
         <button class="btn ghost" id="navBtn">&#9776; Menu</button>
         <div id="navMenu" style="display:none;">
           <button class="navopt" data-nav="home">&#127968; Home &#8212; Clients</button>
@@ -883,15 +891,7 @@ html, body{overflow-x:hidden;max-width:100%;}
       </div>
     </div>
 
-    <div class="jobmenuwrap">
-      <select id="jobMenuSel" class="jobmenu">
-        <option value="overview">&#128203; Overview</option>
-        <option value="checklists">&#128203; Checklists</option>
-        <option value="inspections">&#128269; Inspections</option>
-        <option value="estimates">&#128176; Estimates</option>
-        <option value="materials">&#128230; Materials</option>
-      </select>
-    </div>
+
 
     <div id="tab-overview">
       <div id="stageBanner" class="stagebanner">APPROVED</div>
@@ -3086,6 +3086,7 @@ function openProject(id){
   showTab('overview');
   hideAllViews();
   projectView.style.display = 'block';
+  setHeaderJobMenu(true);
   window.scrollTo(0,0);
 }
 function renderProjectDocs(){
@@ -3260,6 +3261,7 @@ document.getElementById('galOpenBtn').addEventListener('click', function(){
 document.getElementById('galBackBtn').addEventListener('click', function(){
   galleryView.style.display = 'none';
   projectView.style.display = 'block';
+  setHeaderJobMenu(true);
   window.scrollTo(0,0);
 });
 document.getElementById('galAddBtn').addEventListener('click', function(){
@@ -3314,6 +3316,7 @@ galXferMenu.addEventListener('click', async function(e){
         alert('Complete the Roofing Inspection Checklist first \u2014 its baseline specs feed directly into the report.');
         galleryView.style.display = 'none';
         projectView.style.display = 'block';
+        setHeaderJobMenu(true);
         showTab('checklists');
         openChecklist();
         return;
@@ -4193,7 +4196,15 @@ var profileView = document.getElementById('profileView');
 var clientsView = document.getElementById('clientsView');
 var currentList = null;
 
+function setHeaderJobMenu(on){
+  var jm = document.getElementById('jobMenuSel');
+  var nb = document.getElementById('navBtn');
+  if(jm) jm.style.display = on ? 'inline-block' : 'none';
+  if(nb) nb.style.display = on ? 'none' : 'inline-block';
+  setTimeout(fixHeadPad, 40);
+}
 function hideAllViews(){
+  setHeaderJobMenu(false);
   mainView.style.display = 'none';
   projectView.style.display = 'none';
   document.getElementById('galleryView').style.display = 'none';
@@ -4794,6 +4805,10 @@ function fixHeadPad(){
 }
 fixHeadPad();
 setTimeout(fixHeadPad, 300); /* after fonts/logo settle */
+setTimeout(fixHeadPad, 900);
+window.addEventListener('load', fixHeadPad);
+var blImg = document.getElementById('brandLogo');
+if(blImg) blImg.addEventListener('load', fixHeadPad);
 var rzT = null;
 window.addEventListener('resize', function(){
   clearTimeout(rzT);
