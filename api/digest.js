@@ -16,6 +16,7 @@
 
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const ADMIN = process.env.ADMIN_EMAIL || 'theo@cardinalrenovations.net';
+const ADMINS = [ADMIN, 'joan@cardinalrenovations.net'].filter((v, i, a) => a.indexOf(v) === i);
 
 function todayLocal() {
   // Dayton, Ohio local date as YYYY-MM-DD
@@ -111,9 +112,11 @@ export default async function handler(req, res) {
     }
     // admin gets the whole team's day too (when there is more than their own)
     const allRows = appts.map(a => apptHtml(a, names[a.project_id], true)).join('');
-    if (!byRep[ADMIN] || Object.keys(byRep).length > 1) {
-      sends.push({ to: ADMIN, subject: `📅 Team schedule — ${appts.length} appointment${appts.length === 1 ? '' : 's'} today`,
-                   html: emailBody(`Team schedule for ${niceDate(today)}`, allRows) });
+    for (const adm of ADMINS) {
+      if (!byRep[adm] || Object.keys(byRep).length > 1) {
+        sends.push({ to: adm, subject: `📅 Team schedule — ${appts.length} appointment${appts.length === 1 ? '' : 's'} today`,
+                     html: emailBody(`Team schedule for ${niceDate(today)}`, allRows) });
+      }
     }
 
     const results = [];

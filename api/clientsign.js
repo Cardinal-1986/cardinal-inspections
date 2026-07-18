@@ -5,6 +5,7 @@
 
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const ADMIN = process.env.ADMIN_EMAIL || 'theo@cardinalrenovations.net';
+const ADMINS = [ADMIN, 'joan@cardinalrenovations.net'].filter((v, i, a) => a.indexOf(v) === i);
 const SIGN_RX = /(<div class="line">)(<\/div>\s*<div class="lbl">\s*Client Acceptance)([^<]*)(<\/div>)/;
 
 function esc(s) {
@@ -69,7 +70,7 @@ export default async function handler(req, res) {
     if (resendKey) {
       try {
         const from = process.env.DIGEST_FROM || 'Cardinal Client Resources <onboarding@resend.dev>';
-        const recipients = [...new Set([doc.created_by, ADMIN].filter(Boolean))];
+        const recipients = [...new Set([doc.created_by, ...ADMINS].filter(Boolean))];
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}` },

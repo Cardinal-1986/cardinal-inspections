@@ -1163,9 +1163,10 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
             <option>Community Action</option><option>Kitty Hawk Realty</option><option>Dayton Home Repair Network</option></select></label>
       </div>
 
-      <div class="ldbox">
+      <div class="ldbox" id="ldAssignBox">
         <div class="ldhead">Assign Lead</div>
-        <div id="ldAssign" class="ckinline"></div>
+        <label>Assign to
+          <select id="ldAssignSel"></select></label>
       </div>
 
       <div class="ldbox">
@@ -3074,7 +3075,13 @@ newMenu.addEventListener('click', function(e){
   newMenu.style.display = 'none';
   var kind = opt.getAttribute('data-new');
   if(kind === 'contact'){ openProjModal(null); }
-  else if(kind === 'lead'){ openLeadForm(); }
+  else if(kind === 'lead'){
+    if(isProductionUser()){
+      alert('Lead creation is for sales and admins \u2014 production accounts can add Contacts, Tasks, and Reminders.');
+      return;
+    }
+    openLeadForm();
+  }
   else if(kind === 'task'){
     var t = new Date();
     if(mainView.style.display === 'none') showHome();
@@ -3141,11 +3148,17 @@ function openLeadForm(){
   document.getElementById('ldPartnerWrap').style.display = 'none';
   var ph = document.getElementById('ldPhones'); ph.innerHTML = ''; ph.appendChild(ldContactRow('phone'));
   var em = document.getElementById('ldEmails'); em.innerHTML = ''; em.appendChild(ldContactRow('email'));
-  document.getElementById('ldAssign').innerHTML = getTeamMembers().map(function(e){
-    var nm = DEFAULT_NAMES[e] || e.split('@')[0];
-    return '<label><input type="checkbox" class="ldassn" value="' + esc(e) + '"' +
-      (TEAM && currentUser && currentUser.email === e ? ' checked' : '') + '> ' + esc(nm) + '</label>';
-  }).join('');
+  var assignBox = document.getElementById('ldAssignBox');
+  if(isAdminUser()){
+    assignBox.style.display = 'block';
+    var mySel = TEAM && currentUser ? currentUser.email : '';
+    document.getElementById('ldAssignSel').innerHTML = TEAM_ROSTER.map(function(m){
+      return '<option value="' + esc(m.email) + '"' + (m.email === mySel ? ' selected' : '') + '>' +
+        esc(m.name) + '</option>';
+    }).join('');
+  }else{
+    assignBox.style.display = 'none';
+  }
   document.getElementById('ldError').textContent = '';
   document.getElementById('ldSugg').style.display = 'none';
   leadFormModal.style.display = 'block';
@@ -3234,7 +3247,12 @@ document.getElementById('ldSave').addEventListener('click', async function(){
   var emails = rows('ldEmails');
   var suite = document.getElementById('ldSuite').value.trim();
   var addr = street + (suite ? ', ' + suite : '') + ', ' + city + ', ' + state + ' ' + zip;
-  var assigned = Array.prototype.map.call(document.querySelectorAll('.ldassn:checked'), function(c){ return c.value; });
+  var assigned;
+  if(isAdminUser()){
+    assigned = [document.getElementById('ldAssignSel').value];
+  }else{
+    assigned = TEAM && currentUser ? [currentUser.email] : [];
+  }
   var lead = {
     company: document.getElementById('ldCompany').value.trim(),
     phones: phones, emails: emails,
@@ -5710,7 +5728,21 @@ var signOutBtn = document.getElementById('signOutBtn');
 var addProjBtn = document.getElementById('addProjectBtn');
 var storageNote = document.getElementById('storageNote');
 
-var DEFAULT_NAMES = { 'theo@cardinalrenovations.net': 'Theo Dorion' };
+/* ---- team roster & roles (edit emails here if any differ) ---- */
+var TEAM_ROSTER = [
+  { name:'Nick Hey',            email:'nick@cardinalrenovations.net' },
+  { name:'Joan Hunt',           email:'joan@cardinalrenovations.net' },
+  { name:'Joseph Lehman',       email:'joey@cardinalrenovations.net' },
+  { name:'Theo Dorion',         email:'theo@cardinalrenovations.net' },
+  { name:'Jacob Henderson',     email:'jacob@cardinalrenovations.net' },
+  { name:'Scottie Steinbrugge', email:'scottie@cardinalrenovations.net' }
+];
+var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
+var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
+function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
+function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
+var DEFAULT_NAMES = {};
+TEAM_ROSTER.forEach(function(m){ DEFAULT_NAMES[m.email] = m.name; });
 function displayNameFor(user){
   if(!user) return '';
   var meta = user.user_metadata || {};
@@ -5728,7 +5760,9 @@ function showMain(userEmail){
   document.getElementById('homeBtn').style.display = 'inline-block';
   document.getElementById('clientsBtn').style.display = 'inline-block';
   document.getElementById('backupNav').style.display =
-    (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
+    (ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
+  var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
+  if(leadOpt) leadOpt.style.display = (PRODUCTION_EMAILS.indexOf(userEmail) !== -1) ? 'none' : 'block';
   hideAllViews();
   mainView.style.display = 'block';
   if(TEAM){
@@ -5736,7 +5770,7 @@ function showMain(userEmail){
     whoami.title = (userEmail || '') + ' \u2014 click to set your display name';
     whoami.style.cursor = 'pointer';
     signOutBtn.style.display = 'inline-block';
-    storageNote.innerHTML = 'Each card is a client profile holding their info, notes, photos, inspection reports and estimates. You see the projects you created' + (userEmail === 'theo@cardinalrenovations.net' ? ' — and as admin, everyone else\u2019s too' : '; the admin sees all') + '. Use <b>Download</b> to keep a standalone copy.';
+    storageNote.innerHTML = 'Each card is a client profile holding their info, notes, photos, inspection reports and estimates. You see the projects you created' + (ADMIN_EMAILS.indexOf(userEmail) !== -1 ? ' — and as admin, everyone else\u2019s too' : '; the admin sees all') + '. Use <b>Download</b> to keep a standalone copy.';
     document.getElementById('bannerMount').innerHTML = '';
   }else{
     storageNote.innerHTML = 'All inspection projects, newest first. Reports are stored in this browser — use <b>Download</b> to keep a standalone copy of any report.';
