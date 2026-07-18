@@ -165,7 +165,7 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 #loginError{color:var(--red-dk);font-size:13px;margin-top:10px;min-height:18px;}
 
 /* ---------- editor view ---------- */
-#editorView{display:none;position:fixed;inset:0;background:#fff;z-index:50;}
+#editorView{display:none;position:fixed;inset:0;background:#fff;z-index:150;}
 #editorView.open{display:flex;flex-direction:column;}
 .toolbar{
   background:var(--ink);color:#fff;display:flex;align-items:center;gap:10px;
@@ -570,6 +570,26 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
   .projgrid.swipe .pcard{flex:0 0 76%;scroll-snap-align:start;aspect-ratio:4/3;}
   .projgrid.swipe .seeall{flex:0 0 auto;display:flex;align-items:center;padding:0 8px;scroll-snap-align:start;}
+}
+
+/* ---- no horizontal page sway ---- */
+html, body{overflow-x:hidden;max-width:100%;}
+/* wide tables scroll inside their own container, not the page */
+#listMount, #historyMount, #estDocsMount, #inspDocsMount, #bannerMount{
+  overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;
+}
+@media (max-width:640px){
+  #listMount table.reports, #historyMount table.reports,
+  #estDocsMount table.reports, #inspDocsMount table.reports{min-width:520px;}
+  /* tighter table + compact action chips */
+  table.reports{font-size:13px;}
+  table.reports td{padding:9px 8px;}
+  table.reports th{padding:8px 8px;font-size:10.5px;}
+  table.reports td:last-child{white-space:normal;}
+  table.reports .chipbtn{padding:6px 9px;font-size:11.5px;margin:2px 2px 2px 0;}
+  .clirow{padding:9px 10px;}
+  .pipebtn .n{font-size:20px;}
+  .chatbox{max-width:100%;}
 }
 </style>
 </head>
