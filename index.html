@@ -347,6 +347,14 @@ footer.site{
   border-radius:8px;padding:9px 12px;margin:6px 0 2px;}
 
 /* ---- header nav ---- */
+#newMenu{
+  position:fixed;z-index:120;background:#fff;border:1px solid #c9c2bf;border-radius:10px;
+  min-width:190px;box-shadow:0 10px 28px rgba(0,0,0,.22);overflow:hidden;
+}
+#newMenu .navopt{display:block;width:100%;text-align:left;padding:11px 16px;border:0;background:#fff;
+  font:600 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+#newMenu .navopt:hover{background:#f7efec;color:#9c1822;}
+#newMenu .navopt + .navopt{border-top:1px solid #eee;}
 #navMenu{
   position:fixed;right:10px;z-index:120;
   background:#fff;border:1px solid #c9c2bf;border-radius:10px;
@@ -516,6 +524,25 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 @media (min-width:1400px){
   .projgrid{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));}
 }
+
+.ldbox{border:1px solid var(--line);border-radius:10px;background:#fcfaf9;padding:12px 14px;margin:0 0 12px;}
+.ldhead{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#9c1822;border-bottom:2px solid var(--red);
+  padding-bottom:4px;margin-bottom:8px;}
+.ldreq{float:right;font:600 11px 'Segoe UI',Arial,sans-serif;color:#9a8c85;}
+.ldrow{display:flex;gap:8px;margin:4px 0;}
+.ldrow input{flex:1;}
+.ldrow select{flex:0 0 110px;}
+.ldadd{margin-top:4px;font-size:12px;}
+.ldsugg{position:absolute;left:0;right:0;top:100%;z-index:40;background:#fff;border:1px solid #c9c2bf;
+  border-radius:0 0 9px 9px;box-shadow:0 8px 20px rgba(0,0,0,.18);max-height:220px;overflow:auto;}
+.ldsugg div{padding:9px 12px;font:13px 'Segoe UI',Arial,sans-serif;color:#333;cursor:pointer;}
+.ldsugg div:hover{background:#f7efec;}
+#leadCard .llrow{font:13.5px 'Segoe UI',Arial,sans-serif;color:#444;padding:3px 0;}
+#leadCard .llrow b{color:#2b2b2b;}
+.priochip{display:inline-block;font:800 10px 'Segoe UI',Arial,sans-serif;padding:2px 8px;border-radius:8px;}
+.prio-High{background:#fdf3e2;color:#b26a00;}
+.prio-Urgent{background:#fdecea;color:#9c1822;}
+.prio-Normal{background:#ececec;color:#555;}
 </style>
 </head>
 <body>
@@ -531,7 +558,15 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
     </div>
     <div class="headactions">
       <span class="whoami" id="whoami"></span>
-      <button class="btn" id="addProjectBtn" style="display:none;">+ Add project</button>
+      <span id="newWrap" style="position:relative;display:inline-block;">
+        <button class="btn" id="addProjectBtn" style="display:none;">&#65291; New</button>
+        <div id="newMenu" style="display:none;">
+          <button class="navopt" data-new="task">&#128203; Task</button>
+          <button class="navopt" data-new="contact">&#128100; Contact</button>
+          <button class="navopt" data-new="lead">&#128681; Lead</button>
+          <button class="navopt" data-new="reminder">&#9200; Reminder</button>
+        </div>
+      </span>
       <button class="btn ghost" id="signOutBtn" style="display:none;">Sign out</button>
       <button class="btn ghost" id="homeBtn" style="display:none;">&#127968; Home</button>
       <button class="btn ghost" id="clientsBtn" style="display:none;">&#128101; Clients</button>
@@ -654,6 +689,10 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
     </div>
 
     <div id="tab-overview">
+      <div id="leadCard" style="display:none;margin-bottom:18px;">
+        <h3 class="projsec">&#128681; Lead Details</h3>
+        <div class="ldbox" id="leadCardBody" style="background:#fff;"></div>
+      </div>
       <h3 class="projsec">&#128172; Team Notes</h3>
       <p class="subnote">Job chat for this client &#8212; visible to everyone with access. Tag a teammate with
       @name (e.g. @theo) to flag them.</p>
@@ -1050,6 +1089,111 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
     <div id="leadList"></div>
     <div style="margin-top:14px;text-align:right;">
       <button class="chipbtn" id="leadClose">Not now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ NEW LEAD MODAL ============ -->
+<div id="leadFormModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:225;overflow:auto;">
+  <div style="max-width:680px;margin:4vh auto;padding:0 12px 6vh;">
+    <div class="projform" style="max-width:none;">
+      <h3 style="margin:0 0 10px;">&#128681; New Lead</h3>
+
+      <div class="ldbox">
+        <div class="ldhead">Primary Contact <span class="ldreq">* Required</span></div>
+        <div class="ckrow">
+          <label>First Name *<input type="text" id="ldFirst" autocomplete="given-name"></label>
+          <label>Last Name *<input type="text" id="ldLast" autocomplete="family-name"></label>
+        </div>
+        <label>Company Name<input type="text" id="ldCompany" autocomplete="organization"></label>
+        <label style="margin-top:10px;">Phone</label>
+        <div id="ldPhones"></div>
+        <button class="chipbtn ldadd" id="ldAddPhone" type="button">&#65291; Add Another</button>
+        <label style="margin-top:12px;">Email</label>
+        <div id="ldEmails"></div>
+        <button class="chipbtn ldadd" id="ldAddEmail" type="button">&#65291; Add Another</button>
+        <label style="margin-top:12px;">Mailing Address<input type="text" id="ldMailing" autocomplete="off"></label>
+        <label>Billing Address<input type="text" id="ldBilling" autocomplete="off" placeholder="Leave blank if same"></label>
+      </div>
+
+      <div class="ldbox">
+        <div class="ldhead">Location Information <span class="ldreq">* Required</span></div>
+        <label style="position:relative;">Street *
+          <input type="text" id="ldStreet" autocomplete="off" placeholder="Start typing &#8212; address auto-completes">
+          <div id="ldSugg" class="ldsugg" style="display:none;"></div>
+        </label>
+        <label>Suite/Apt/Unit<input type="text" id="ldSuite" autocomplete="off"></label>
+        <div class="ckrow">
+          <label>City *<input type="text" id="ldCity" autocomplete="address-level2"></label>
+          <label>State *<select id="ldState"><option value="">State*</option><option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>GU</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>PR</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>VI</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>DC</option><option>WV</option><option>WI</option><option>WY</option></select></label>
+        </div>
+        <div class="ckrow">
+          <label>Zip *<input type="text" id="ldZip" inputmode="numeric" autocomplete="postal-code"></label>
+          <label>Country *<select id="ldCountry"><option>USA</option></select></label>
+        </div>
+      </div>
+
+      <div class="ldbox">
+        <div class="ldhead">Job Details</div>
+        <div class="ckrow">
+          <label>Job Category
+            <select id="ldCategory"><option value="">&#8212; select &#8212;</option>
+              <option>Commercial</option><option>Property Management</option><option>Residential</option></select></label>
+          <label>Work Type
+            <select id="ldWorkType"><option value="">&#8212; select &#8212;</option>
+              <option>Inspection</option><option>Insurance</option><option>New</option><option>Repair</option>
+              <option>Retail</option><option>Service</option><option>Warranty</option></select></label>
+        </div>
+        <label>Lead Source
+          <select id="ldSource"><option value="">&#8212; select &#8212;</option>
+            <option>Canvasser</option><option>Commercial</option><option>Direct Mailings</option>
+            <option>Door hanger</option><option>Door Knocking</option><option>Habitat - Dayton</option>
+            <option>Internet</option><option>Internet: Google</option><option>Internet: Website</option>
+            <option>Non Profit</option><option>Other</option><option>Previous Customer</option>
+            <option>Real-estate</option><option>Real-estate: Kitty Hawk</option><option>Referral</option>
+            <option>Roofle</option><option>Telemarketing</option><option>Truck</option><option>Yard Sign</option></select></label>
+        <div class="ckinline" style="margin-top:12px;">
+          <label><input type="checkbox" id="ldInsurance"> Insurance</label>
+          <label><input type="checkbox" id="ldRetail"> Retail</label>
+          <label><input type="checkbox" id="ldPartnerCk"> Partnership organization</label>
+        </div>
+        <label id="ldPartnerWrap" style="display:none;">Partner organization
+          <select id="ldPartner"><option value="">&#8212; select &#8212;</option>
+            <option>Habitat For Humanity</option><option>Rebuilding Together</option><option>County Corp</option>
+            <option>Community Action</option><option>Kitty Hawk Realty</option><option>Dayton Home Repair Network</option></select></label>
+      </div>
+
+      <div class="ldbox">
+        <div class="ldhead">Assign Lead</div>
+        <div id="ldAssign" class="ckinline"></div>
+      </div>
+
+      <div class="ldbox">
+        <div class="ldhead">&#128197; Initial Appointment</div>
+        <div class="ckrow">
+          <label>Appointment Date<input type="date" id="ldApptDate"></label>
+          <label>Start Time<input type="time" id="ldApptStart"></label>
+          <label>End Time<input type="time" id="ldApptEnd"></label>
+        </div>
+      </div>
+
+      <div class="ldbox">
+        <div class="ldhead">Notes / Tools</div>
+        <div class="ckrow">
+          <label>Priority Level
+            <select id="ldPriority"><option>Normal</option><option>High</option><option>Urgent</option></select></label>
+          <label>Lead Status
+            <select id="ldStatus"><option>Not Contacted</option><option>Contacted</option></select></label>
+        </div>
+        <label>Notes<textarea id="ldNotes" rows="3" style="width:100%;box-sizing:border-box;margin-top:4px;
+          padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;resize:vertical;"></textarea></label>
+      </div>
+
+      <div style="margin-top:6px;text-align:right;">
+        <button class="chipbtn" id="ldCancel">Cancel</button>
+        <button class="btn" id="ldSave">Create Lead</button>
+      </div>
+      <div id="ldError" style="color:#C8202E;font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
     </div>
   </div>
 </div>
@@ -2598,6 +2742,7 @@ function openProject(id){
   document.getElementById('stageSel').value = normStage(pr.stage);
   document.getElementById('ptCheck').checked = !!pr.photos_transferred;
   renderChat();
+  renderLeadCard();
   renderProjectDocs();
   loadGallery();
   renderCkStatus();
@@ -2904,7 +3049,264 @@ function openProjModal(pr){
   projModal.style.display = 'block';
   setTimeout(function(){ document.getElementById('pfName').focus(); }, 50);
 }
-document.getElementById('addProjectBtn').addEventListener('click', function(){ openProjModal(null); });
+/* ---------- +New menu ---------- */
+var newMenu = document.getElementById('newMenu');
+document.getElementById('addProjectBtn').addEventListener('click', function(e){
+  e.stopPropagation();
+  if(newMenu.style.display === 'block'){ newMenu.style.display = 'none'; return; }
+  var r = this.getBoundingClientRect();
+  newMenu.style.top = Math.round(r.bottom + 6) + 'px';
+  if(window.innerWidth > 640){
+    newMenu.style.left = Math.round(r.left) + 'px';
+    newMenu.style.right = 'auto';
+  }else{
+    newMenu.style.left = '10px';
+    newMenu.style.right = '10px';
+  }
+  newMenu.style.display = 'block';
+});
+document.addEventListener('click', function(){ newMenu.style.display = 'none'; });
+window.addEventListener('scroll', function(){ newMenu.style.display = 'none'; }, { passive: true });
+newMenu.addEventListener('click', function(e){
+  var opt = e.target.closest('.navopt');
+  if(!opt) return;
+  e.stopPropagation();
+  newMenu.style.display = 'none';
+  var kind = opt.getAttribute('data-new');
+  if(kind === 'contact'){ openProjModal(null); }
+  else if(kind === 'lead'){ openLeadForm(); }
+  else if(kind === 'task'){
+    var t = new Date();
+    if(mainView.style.display === 'none') showHome();
+    openApptDay(dateStr(t.getFullYear(), t.getMonth(), t.getDate()));
+  }
+  else if(kind === 'reminder'){
+    var title = prompt('Remind me about:');
+    if(!title || !title.trim()) return;
+    var days = prompt('In how many days?', '1');
+    if(days === null) return;
+    var n = parseInt(days, 10); if(isNaN(n) || n < 0) n = 1;
+    var d = new Date(Date.now() + n * 86400000);
+    adb.create({ title: '\u23F0 ' + title.trim(),
+      appt_date: dateStr(d.getFullYear(), d.getMonth(), d.getDate()),
+      appt_time: '09:00', project_id: null, notes: null
+    }).then(function(){ return adb.list().catch(function(){ return cacheAppts; }); })
+      .then(function(l){ cacheAppts = l; renderCalendar();
+        alert('Reminder set for ' + d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}) + '.'); })
+      .catch(function(err){ showError('Could not set reminder: ' + (err.message || err)); });
+  }
+});
+
+/* ---------- new lead form ---------- */
+var leadFormModal = document.getElementById('leadFormModal');
+var ST_CODE = {'alabama':'AL','alaska':'AK','arizona':'AZ','arkansas':'AR','california':'CA','colorado':'CO',
+'connecticut':'CT','delaware':'DE','florida':'FL','georgia':'GA','guam':'GU','hawaii':'HI','idaho':'ID',
+'illinois':'IL','indiana':'IN','iowa':'IA','kansas':'KS','kentucky':'KY','louisiana':'LA','maine':'ME',
+'maryland':'MD','massachusetts':'MA','michigan':'MI','minnesota':'MN','mississippi':'MS','missouri':'MO',
+'montana':'MT','nebraska':'NE','nevada':'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM',
+'new york':'NY','north carolina':'NC','north dakota':'ND','ohio':'OH','oklahoma':'OK','oregon':'OR',
+'pennsylvania':'PA','puerto rico':'PR','rhode island':'RI','south carolina':'SC','south dakota':'SD',
+'tennessee':'TN','texas':'TX','virgin islands':'VI','utah':'UT','vermont':'VT','virginia':'VA',
+'washington':'WA','district of columbia':'DC','west virginia':'WV','wisconsin':'WI','wyoming':'WY'};
+
+function ldContactRow(kind){
+  var opts = kind === 'phone' ? ['Mobile','Home','Work'] : ['Personal','Work','Other'];
+  var div = document.createElement('div');
+  div.className = 'ldrow';
+  div.innerHTML = '<input type="' + (kind === 'phone' ? 'tel' : 'email') + '" placeholder="' +
+    (kind === 'phone' ? 'Phone number' : 'Email address') + '">' +
+    '<select>' + opts.map(function(o){ return '<option>' + o + '</option>'; }).join('') + '</select>';
+  return div;
+}
+function getTeamMembers(){
+  var set = {};
+  Object.keys(DEFAULT_NAMES).forEach(function(e){ set[e] = true; });
+  cacheProjects.concat(cacheRows).forEach(function(r){ if(r.created_by) set[r.created_by] = true; });
+  if(TEAM && currentUser) set[currentUser.email] = true;
+  return Object.keys(set).sort();
+}
+function openLeadForm(){
+  ['ldFirst','ldLast','ldCompany','ldMailing','ldBilling','ldStreet','ldSuite','ldCity','ldZip','ldNotes',
+   'ldApptDate','ldApptStart','ldApptEnd'].forEach(function(id){
+    document.getElementById(id).value = '';
+  });
+  ['ldState','ldCategory','ldWorkType','ldSource','ldPartner'].forEach(function(id){
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('ldPriority').value = 'Normal';
+  document.getElementById('ldStatus').value = 'Not Contacted';
+  document.getElementById('ldInsurance').checked = false;
+  document.getElementById('ldRetail').checked = false;
+  document.getElementById('ldPartnerCk').checked = false;
+  document.getElementById('ldPartnerWrap').style.display = 'none';
+  var ph = document.getElementById('ldPhones'); ph.innerHTML = ''; ph.appendChild(ldContactRow('phone'));
+  var em = document.getElementById('ldEmails'); em.innerHTML = ''; em.appendChild(ldContactRow('email'));
+  document.getElementById('ldAssign').innerHTML = getTeamMembers().map(function(e){
+    var nm = DEFAULT_NAMES[e] || e.split('@')[0];
+    return '<label><input type="checkbox" class="ldassn" value="' + esc(e) + '"' +
+      (TEAM && currentUser && currentUser.email === e ? ' checked' : '') + '> ' + esc(nm) + '</label>';
+  }).join('');
+  document.getElementById('ldError').textContent = '';
+  document.getElementById('ldSugg').style.display = 'none';
+  leadFormModal.style.display = 'block';
+  window.scrollTo(0,0);
+  setTimeout(function(){ document.getElementById('ldFirst').focus(); }, 80);
+}
+document.getElementById('ldAddPhone').addEventListener('click', function(){
+  document.getElementById('ldPhones').appendChild(ldContactRow('phone'));
+});
+document.getElementById('ldAddEmail').addEventListener('click', function(){
+  document.getElementById('ldEmails').appendChild(ldContactRow('email'));
+});
+document.getElementById('ldPartnerCk').addEventListener('change', function(){
+  document.getElementById('ldPartnerWrap').style.display = this.checked ? 'block' : 'none';
+});
+document.getElementById('ldCancel').addEventListener('click', function(){ leadFormModal.style.display = 'none'; });
+
+/* street autocomplete (Photon / OpenStreetMap, free) */
+var ldSuggTimer = null;
+document.getElementById('ldStreet').addEventListener('input', function(){
+  var q = this.value.trim();
+  var box = document.getElementById('ldSugg');
+  clearTimeout(ldSuggTimer);
+  if(q.length < 5){ box.style.display = 'none'; return; }
+  ldSuggTimer = setTimeout(async function(){
+    try{
+      var res = await fetch('https://photon.komoot.io/api/?limit=5&lang=en&q=' + encodeURIComponent(q + ' USA'));
+      if(!res.ok) return;
+      var data = await res.json();
+      var feats = (data.features || []).filter(function(f){
+        var pr = f.properties || {};
+        return pr.countrycode === 'US' && (pr.housenumber || pr.street || pr.name);
+      });
+      if(!feats.length){ box.style.display = 'none'; return; }
+      box.innerHTML = feats.map(function(f, i){
+        var pr = f.properties;
+        var line = [((pr.housenumber || '') + ' ' + (pr.street || pr.name || '')).trim(),
+                    pr.city || pr.county, pr.state, pr.postcode].filter(Boolean).join(', ');
+        return '<div data-i="' + i + '">' + esc(line) + '</div>';
+      }).join('');
+      box.style.display = 'block';
+      box.onclick = function(e){
+        var d = e.target.closest('div[data-i]');
+        if(!d) return;
+        var pr = feats[parseInt(d.getAttribute('data-i'),10)].properties;
+        document.getElementById('ldStreet').value = ((pr.housenumber || '') + ' ' + (pr.street || pr.name || '')).trim();
+        if(pr.city || pr.county) document.getElementById('ldCity').value = pr.city || pr.county;
+        if(pr.postcode) document.getElementById('ldZip').value = pr.postcode;
+        var code = ST_CODE[String(pr.state || '').toLowerCase()];
+        if(code) document.getElementById('ldState').value = code;
+        box.style.display = 'none';
+      };
+    }catch(e){ /* silent — manual entry still works */ }
+  }, 350);
+});
+document.addEventListener('click', function(e){
+  if(!e.target.closest('#ldStreet') && !e.target.closest('#ldSugg')){
+    var b = document.getElementById('ldSugg');
+    if(b) b.style.display = 'none';
+  }
+});
+
+document.getElementById('ldSave').addEventListener('click', async function(){
+  var err = document.getElementById('ldError');
+  var first = document.getElementById('ldFirst').value.trim();
+  var last = document.getElementById('ldLast').value.trim();
+  var street = document.getElementById('ldStreet').value.trim();
+  var city = document.getElementById('ldCity').value.trim();
+  var state = document.getElementById('ldState').value;
+  var zip = document.getElementById('ldZip').value.trim();
+  var missing = [];
+  if(!first) missing.push('First Name');
+  if(!last) missing.push('Last Name');
+  if(!street) missing.push('Street');
+  if(!city) missing.push('City');
+  if(!state) missing.push('State');
+  if(!zip) missing.push('Zip');
+  if(missing.length){ err.textContent = 'Required: ' + missing.join(', '); return; }
+
+  function rows(mountId){
+    return Array.prototype.map.call(document.getElementById(mountId).querySelectorAll('.ldrow'), function(r){
+      return { v: r.querySelector('input').value.trim(), t: r.querySelector('select').value };
+    }).filter(function(x){ return x.v; });
+  }
+  var phones = rows('ldPhones');
+  var emails = rows('ldEmails');
+  var suite = document.getElementById('ldSuite').value.trim();
+  var addr = street + (suite ? ', ' + suite : '') + ', ' + city + ', ' + state + ' ' + zip;
+  var assigned = Array.prototype.map.call(document.querySelectorAll('.ldassn:checked'), function(c){ return c.value; });
+  var lead = {
+    company: document.getElementById('ldCompany').value.trim(),
+    phones: phones, emails: emails,
+    mailing: document.getElementById('ldMailing').value.trim(),
+    billing: document.getElementById('ldBilling').value.trim(),
+    location: { street:street, suite:suite, city:city, state:state, zip:zip, country:'USA' },
+    category: document.getElementById('ldCategory').value,
+    worktype: document.getElementById('ldWorkType').value,
+    source: document.getElementById('ldSource').value,
+    insurance: document.getElementById('ldInsurance').checked,
+    retail: document.getElementById('ldRetail').checked,
+    partner: document.getElementById('ldPartnerCk').checked ? document.getElementById('ldPartner').value : '',
+    assigned: assigned,
+    priority: document.getElementById('ldPriority').value,
+    lead_status: document.getElementById('ldStatus').value,
+    created_at: new Date().toISOString()
+  };
+  var btn = this;
+  btn.disabled = true; btn.textContent = 'Creating\u2026';
+  try{
+    var pid = await pdb.create({
+      name: first + ' ' + last,
+      address: addr,
+      phone: phones.length ? phones[0].v : '',
+      email: emails.length ? emails[0].v : '',
+      notes: document.getElementById('ldNotes').value.trim(),
+      stage: 'Lead',
+      checklist: JSON.stringify({ lead: lead })
+    });
+    var ad = document.getElementById('ldApptDate').value;
+    if(ad){
+      var st = document.getElementById('ldApptStart').value;
+      var en = document.getElementById('ldApptEnd').value;
+      try{
+        await adb.create({ title: 'Initial appointment \u2014 ' + first + ' ' + last,
+          appt_date: ad, appt_time: st || null, project_id: pid || null,
+          notes: en ? ('Until ' + en) : null });
+      }catch(ae){}
+    }
+    await reload();
+    leadFormModal.style.display = 'none';
+    btn.disabled = false; btn.textContent = 'Create Lead';
+    var pr = cacheProjects.find(function(x){ return x.id === pid; });
+    if(pr) openProject(pr.id); else showHome();
+  }catch(e2){
+    btn.disabled = false; btn.textContent = 'Create Lead';
+    err.textContent = 'Could not create lead: ' + (e2.message || e2);
+  }
+});
+
+/* lead details card on overview */
+function renderLeadCard(){
+  var card = document.getElementById('leadCard');
+  if(!currentProject){ card.style.display = 'none'; return; }
+  var L = parseCkAll(currentProject).lead;
+  if(!L){ card.style.display = 'none'; return; }
+  function row(k, v){ return v ? '<div class="llrow"><b>' + k + ':</b> ' + esc(v) + '</div>' : ''; }
+  var flags = [L.insurance ? 'Insurance' : '', L.retail ? 'Retail' : '', L.partner ? ('Partner: ' + L.partner) : '']
+    .filter(Boolean).join(' \u00b7 ');
+  document.getElementById('leadCardBody').innerHTML =
+    '<div class="llrow"><b>Priority:</b> <span class="priochip prio-' + esc(L.priority || 'Normal') + '">' +
+      esc(L.priority || 'Normal') + '</span> &nbsp;<b>Status:</b> ' + esc(L.lead_status || '') + '</div>' +
+    row('Company', L.company) +
+    (L.phones || []).map(function(p2){ return row('Phone (' + p2.t + ')', p2.v); }).join('') +
+    (L.emails || []).map(function(e2){ return row('Email (' + e2.t + ')', e2.v); }).join('') +
+    row('Mailing', L.mailing) + row('Billing', L.billing) +
+    row('Category', L.category) + row('Work Type', L.worktype) + row('Source', L.source) +
+    (flags ? '<div class="llrow"><b>Flags:</b> ' + esc(flags) + '</div>' : '') +
+    ((L.assigned || []).length ? '<div class="llrow"><b>Assigned:</b> ' +
+      esc(L.assigned.map(function(a){ return DEFAULT_NAMES[a] || a.split('@')[0]; }).join(', ')) + '</div>' : '');
+  card.style.display = 'block';
+}
 document.getElementById('pfCancel').addEventListener('click', function(){ projModal.style.display = 'none'; });
 projModal.addEventListener('click', function(e){ if(e.target === projModal) projModal.style.display = 'none'; });
 
