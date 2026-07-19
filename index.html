@@ -1521,7 +1521,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 43 &#8212; team hardened</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 46 &#8212; dock fix</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -6822,29 +6822,38 @@ var profileView = document.getElementById('profileView');
 var clientsView = document.getElementById('clientsView');
 var currentList = null;
 
+window.addEventListener('resize', function(){
+  clearTimeout(window.__dockRz);
+  window.__dockRz = setTimeout(function(){
+    var open = document.body.classList.contains('projopen');
+    setHeaderJobMenu(open);
+  }, 150);
+});
 function setHeaderJobMenu(on){
   var jm = document.getElementById('jobMenuSel');
   var nb = document.getElementById('navBtn');
   if(jm) jm.style.display = on ? 'inline-block' : 'none';
   document.body.classList.toggle('projopen', !!on);
-  /* phones: dock the tab dropdown + the plus button beside the client pill */
+  /* phones: dock the tab dropdown + the plus button beside the client pill.
+     Each element remembers its true home so undocking can never miss. */
   try{
     var rs = document.getElementById('repStrip');
     var nw = document.getElementById('navWrap');
     var pw = document.getElementById('newWrap');
-    var mh = document.querySelector('.masthead');
-    if(rs && nw && pw && mh){
+    if(rs && nw && pw){
+      [nw, pw].forEach(function(el){
+        if(!el.__homeParent){ el.__homeParent = el.parentElement; el.__homeNext = el.nextSibling; }
+      });
       if(on && window.innerWidth <= 700){
         if(nw.parentElement !== rs){ rs.appendChild(nw); rs.appendChild(pw); rs.classList.add('docked'); }
-      }else{
-        if(nw.parentElement === rs){
-          var mb = document.getElementById('navBtn');
-          mh.insertBefore(nw, mb); mh.insertBefore(pw, nw);
-          rs.classList.remove('docked');
-        }
+      }else if(nw.parentElement === rs){
+        [pw, nw].forEach(function(el){
+          el.__homeParent.insertBefore(el, el.__homeNext && el.__homeNext.parentElement === el.__homeParent ? el.__homeNext : null);
+        });
+        rs.classList.remove('docked');
       }
     }
-  }catch(e){}
+  }catch(e){ console.error('header dock', e); }
   if(nb) nb.style.display = on ? 'none' : 'inline-block';
   var rs = document.getElementById('repStrip');
   if(rs){
@@ -9567,7 +9576,7 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
-var BUILD_TAG = '2026-07-19 build 35 \u2014 tab history';
+var BUILD_TAG = '2026-07-19 build 46 \u2014 dock fix';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
