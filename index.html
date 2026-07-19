@@ -637,7 +637,16 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 @media (max-width:640px){
   .projgrid.swipe{display:flex;overflow-x:auto;gap:12px;padding:4px 2px 12px;margin:8px -2px 18px;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
-  .projgrid.swipe .pcard{flex:0 0 76%;scroll-snap-align:start;aspect-ratio:4/3;}
+  .projgrid.swipe .pcard{flex:0 0 40%;scroll-snap-align:start;aspect-ratio:4/3;}
+  .projgrid.swipe .pcard .nm{font-size:13px;}
+  .projgrid.swipe .pcard .ad{font-size:10px;}
+  .projgrid.swipe .pcard .ft{font-size:9px;}
+  .projgrid.swipe.loop{scroll-snap-type:none;}
+  .rowlab{text-align:center;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.05em;
+    color:#2b2b2b;margin:8px 0 6px;}
+  .rowdiv{height:1px;margin:14px 8px;
+    background:linear-gradient(90deg,transparent,#7c1019 30%,#ff5a66 50%,#7c1019 70%,transparent);}
+  .seeall{display:flex;justify-content:center;margin:6px 0 2px;}
   .projgrid.swipe .seeall{flex:0 0 auto;display:flex;align-items:center;padding:0 8px;scroll-snap-align:start;}
 }
 
@@ -950,6 +959,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   /* all cards as wide as the Client Projects box */
   #mainView .wrap{padding-left:8px;padding-right:8px;}
   #mainView section.history{margin:16px 8px 26px;padding:14px;}
+  #mainView section.history .subnote, #mainView section.history .controls{display:none;}
 
   /* red filament above the search card */
   .quickrow::before{content:'';order:-1;height:1px;margin:2px 8px 0;background:linear-gradient(90deg,transparent,#7c1019 30%,#ff5a66 50%,#7c1019 70%,transparent);}
@@ -1013,6 +1023,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   /* title centered between logo and buttons */
   .titlecard{order:2;flex:1;min-width:0;justify-content:center;
     text-align:center;padding:0 4px;}
+  .titlecard h1{font-size:15px !important;letter-spacing:.03em;}
 
   /* + button (no word) beside Menu */
   #newWrap{order:3;}
@@ -3365,6 +3376,87 @@ function docTable(rows){
     '</tr></thead><tbody>' + rows.map(docRowHtml).join('') + '</tbody></table>';
 }
 
+function projCardHtml(pr){
+  var n = cacheRows.filter(function(r){ return r.project_id === pr.id; }).length;
+  var thumb = pr.cover_image
+    ? '<div class="thumb"><img src="' + pr.cover_image + '" alt=""></div>'
+    : '<div class="initial">' + esc((pr.name || '?').trim().charAt(0).toUpperCase()) + '</div>';
+  var by = pr.created_by ? esc(pr.created_by.split('@')[0]) : '';
+  var stg = normStage(pr.stage);
+  return '<div class="pcard" data-proj="' + pr.id + '">' +
+    thumb +
+    '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' + leadAgeChip(pr) +
+    '<span class="favstar' + (isFav(pr) ? ' on' : '') + '" data-fav="' + pr.id + '" title="Favorite / high priority">' +
+      (isFav(pr) ? '\u2B50' : '\u2606') + '</span>' +
+    '<div class="ovl">' +
+      '<div class="nm">' + esc(pr.name || 'Unnamed client') + '</div>' +
+      '<div class="ad">' + esc(pr.address || '') + '</div>' +
+      '<div class="ft"><span>' + n + ' document' + (n === 1 ? '' : 's') +
+        (pr.photos_transferred ? ' \u00b7 \u2713 \uD83D\uDCF7\u2192\uD83D\uDCC4' : '') +
+        '</span><span>' + by + '</span></div>' +
+    '</div></div>';
+}
+function initLoopRow(el){
+  var seg = el.scrollWidth / 3;
+  if(!isFinite(seg) || seg <= 0) return;
+  el.scrollLeft = seg;
+  if(el.__looped) return;
+  el.__looped = true;
+  el.addEventListener('scroll', function(){
+    var s = el.scrollWidth / 3;
+    if(el.scrollLeft < s * 0.25) el.scrollLeft += s;
+    else if(el.scrollLeft > s * 1.75) el.scrollLeft -= s;
+  }, {passive:true});
+}
+/* ---- true "Nearby": GPS + geocoded addresses (cached), zip fallback ---- */
+var __lastNearbyRun = 0;
+function havKm(a, b){
+  var R = 6371, dLa = (b.lat - a.lat) * Math.PI/180, dLo = (b.lon - a.lon) * Math.PI/180;
+  var x = Math.sin(dLa/2)*Math.sin(dLa/2) +
+    Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+function upgradeNearbyRow(cands){
+  if(!('geolocation' in navigator)) return;
+  if(Date.now() - __lastNearbyRun < 300000) return;
+  __lastNearbyRun = Date.now();
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var me = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    var list = cands.slice(0, 25), i = 0, scored = [];
+    function step(){
+      if(i >= list.length){ finish(); return; }
+      var pr = list[i++], addr = (pr.address || '').trim();
+      if(!addr){ step(); return; }
+      var key = 'geo:' + addr, cached = null;
+      try{ cached = JSON.parse(localStorage.getItem(key) || 'null'); }catch(e){}
+      if(cached){ scored.push({ pr: pr, d: havKm(me, cached) }); step(); return; }
+      fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' +
+        encodeURIComponent(addr))
+        .then(function(r){ return r.json(); })
+        .then(function(js){
+          if(js && js[0]){
+            var pt = { lat: +js[0].lat, lon: +js[0].lon };
+            try{ localStorage.setItem(key, JSON.stringify(pt)); }catch(e){}
+            scored.push({ pr: pr, d: havKm(me, pt) });
+          }
+          setTimeout(step, 1100);
+        })
+        .catch(function(){ setTimeout(step, 1100); });
+    }
+    function finish(){
+      if(!scored.length) return;
+      scored.sort(function(a,b){ return a.d - b.d; });
+      var top = scored.slice(0, 5).map(function(s){ return s.pr; });
+      var el = document.getElementById('nearbyRow');
+      if(!el) return;
+      var h = top.map(projCardHtml).join('');
+      el.innerHTML = top.length > 1 ? h + h + h : h;
+      el.classList.toggle('loop', top.length > 1);
+      if(top.length > 1) initLoopRow(el);
+    }
+    step();
+  }, function(){ /* denied/unavailable: zip ranking stays */ }, { maximumAge: 600000, timeout: 8000 });
+}
 function renderHome(){
   var q = searchText.trim().toLowerCase();
   var projs = cacheProjects.filter(function(pr){
@@ -3385,30 +3477,30 @@ function renderHome(){
     var isMobile = window.innerWidth <= 640;
     projs = favSort(projs);
     var totalN = projs.length;
-    if(isMobile && !q) projs = projs.slice(0, 5);
-    out += '<div class="projgrid' + (isMobile ? ' swipe' : '') + '">' + projs.map(function(pr, idx){
-      var n = cacheRows.filter(function(r){ return r.project_id === pr.id; }).length;
-      var thumb = pr.cover_image
-        ? '<div class="thumb"><img src="' + pr.cover_image + '" alt=""></div>'
-        : '<div class="initial">' + esc((pr.name || '?').trim().charAt(0).toUpperCase()) + '</div>';
-      var by = pr.created_by ? esc(pr.created_by.split('@')[0]) : '';
-      var stg = normStage(pr.stage);
-      return '<div class="pcard" data-proj="' + pr.id + '">' +
-        thumb +
-        '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' + leadAgeChip(pr) +
-        '<span class="favstar' + (isFav(pr) ? ' on' : '') + '" data-fav="' + pr.id + '" title="Favorite / high priority">' +
-          (isFav(pr) ? '\u2B50' : '\u2606') + '</span>' +
-        '<div class="ovl">' +
-          '<div class="nm">' + esc(pr.name || 'Unnamed client') + '</div>' +
-          '<div class="ad">' + esc(pr.address || '') + '</div>' +
-          '<div class="ft"><span>' + n + ' document' + (n === 1 ? '' : 's') +
-            (pr.photos_transferred ? ' \u00b7 \u2713 \uD83D\uDCF7\u2192\uD83D\uDCC4' : '') +
-            '</span><span>' + by + '</span></div>' +
-        '</div></div>';
-    }).join('') +
-      (isMobile && !q && totalN > projs.length
-        ? '<div class="seeall"><button class="chipbtn" id="seeAllBtn">See all ' + totalN + ' clients &#8250;</button></div>'
-        : '') + '</div>';
+    var cardHtml = projCardHtml;
+    if(isMobile && !q){
+      var recent = projs.slice().sort(function(a,b){
+        return new Date(b.created_at || b.updated_at || 0) - new Date(a.created_at || a.updated_at || 0);
+      }).slice(0, 5);
+      function zipScore(pr){
+        var m = /\b(\d{5})\b/.exec(pr.address || '');
+        return m ? Math.abs(parseInt(m[1],10) - 45414) : 99999;
+      }
+      var nearby = projs.slice().sort(function(a,b){ return zipScore(a) - zipScore(b); }).slice(0, 5);
+      function rowHtml(list){
+        var h = list.map(cardHtml).join('');
+        return list.length > 1 ? h + h + h : h;
+      }
+      window.__nearCandidates = projs.slice();
+      out += '<div class="rowlab">Most Recent</div>' +
+        '<div class="projgrid swipe' + (recent.length > 1 ? ' loop' : '') + '">' + rowHtml(recent) + '</div>' +
+        '<div class="rowdiv"></div>' +
+        '<div class="rowlab">Nearby</div>' +
+        '<div class="projgrid swipe' + (nearby.length > 1 ? ' loop' : '') + '" id="nearbyRow">' + rowHtml(nearby) + '</div>' +
+        '<div class="seeall"><button class="chipbtn" id="seeAllBtn">See all ' + totalN + ' clients &#8250;</button></div>';
+    }else{
+      out += '<div class="projgrid' + (isMobile ? ' swipe' : '') + '">' + projs.map(cardHtml).join('') + '</div>';
+    }
   }
 
   var loose = cacheRows.filter(function(r){
@@ -3425,6 +3517,12 @@ function renderHome(){
       docTable(loose);
   }
   mount.innerHTML = out;
+  document.querySelectorAll('.projgrid.loop').forEach(initLoopRow);
+  if(window.__nearCandidates){
+    var nc = window.__nearCandidates;
+    window.__nearCandidates = null;
+    upgradeNearbyRow(nc);
+  }
 }
 
 /* ---------- project profile ---------- */
