@@ -789,11 +789,12 @@ html, body{overflow-x:hidden;max-width:100%;}
 .locaddr, .cname, .wstitle, .afbd, .btitle{min-width:0;overflow-wrap:anywhere;}
 .qbtn.qwide{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-.repstrip{width:100%;display:flex;gap:8px;padding:5px 0 8px;}
-.reppill{flex:1 1 0;min-width:0;height:34px;display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:8px;
-  padding:0 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#e8cfc9;letter-spacing:.04em;
+.repstrip{width:100%;display:flex;gap:8px;padding:4px 0 7px;justify-content:center;}
+.reppill{flex:0 1 auto;min-width:0;max-width:260px;height:26px;display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:999px;
+  padding:0 12px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#e8cfc9;letter-spacing:.03em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.reppill:empty{display:none;}
 .reppill b, .reppill small{color:#fff;}
 #headCtx{color:#fff;font-size:13px;}
 #headCtx small{color:#e8b7ba;}
@@ -1012,9 +1013,9 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 /* ---- estimate editor header ---- */
 #backBtn{background:#C8202E;border-color:#C8202E;color:#fff;font-weight:800;flex:0 0 auto;}
-.edchip{display:inline-flex;align-items:center;gap:6px;max-width:220px;height:30px;padding:0 12px;
+.edchip{display:inline-flex;align-items:center;gap:5px;max-width:150px;height:24px;padding:0 10px;
   border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);
-  font:700 12px 'Segoe UI',Arial,sans-serif;color:#f3e9dc;white-space:nowrap;overflow:hidden;
+  font:700 10.5px 'Segoe UI',Arial,sans-serif;color:#f3e9dc;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;flex:0 1 auto;}
 .edchip small{color:#e8b7ba;font-weight:800;}
 .edchip.edlink{border-color:rgba(212,160,23,.65);cursor:pointer;}
@@ -1025,7 +1026,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 #reportTitle::placeholder{color:#a89286;}
 #savedFlash{order:11;}
 @media (max-width:760px){
-  .edchip{height:26px;font-size:11px;padding:0 10px;max-width:36vw;}
+  .edchip{height:22px;font-size:10px;padding:0 8px;max-width:30vw;}
   #backBtn{padding:8px 11px;font-size:13px;}
 }
 
@@ -1645,6 +1646,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
 
     <div id="tab-inspections" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
       <h3 class="projsec">&#128248; Photo Gallery <span id="galSummary" class="projcount">0 / 20</span></h3>
       <p class="subnote">Field photos live on their own page — add, review, and transfer them into an inspection report.</p>
       <div style="margin:6px 0 18px;">
@@ -1659,6 +1661,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
 
     <div id="tab-estimates" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
       <h3 class="projsec">&#128196; Estimates</h3>
       <div style="margin:6px 0 12px;">
         <span id="pEstWrap" style="position:relative;">
@@ -1679,6 +1682,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
 
     <div id="tab-checklists" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
       <h3 class="projsec">&#128203; Checklists</h3>
       <p class="subnote">Job checklists for this client. The Roofing Inspection Checklist must be completed
       before an inspection report can be created &#8212; its core specs feed the report automatically.</p>
@@ -8996,9 +9000,20 @@ try{
    BROWSER HISTORY — back button / swipe navigates inside the app
    ========================================================================= */
 var __histLock = false;
+function __hashFor(st){
+  if(!st) return '#h';
+  if(st.v === 'project' && st.id) return '#p/' + st.id;
+  if(st.v === 'editor' && st.id) return '#e/' + st.id;
+  if(st.v === 'leads') return '#leads' + (st.stg ? '/' + encodeURIComponent(st.stg) : '');
+  if(st.v === 'reports') return '#reports';
+  if(st.v === 'clients') return '#clients';
+  if(st.v === 'feed') return '#feed';
+  if(st.v === 'audit') return '#audit';
+  return '#h';
+}
 function __histPush(st){
   if(__histLock) return;
-  try{ history.pushState(st, ''); }catch(e){}
+  try{ history.pushState(st, '', __hashFor(st)); }catch(e){}
 }
 (function(){
   var _op = openProject;
@@ -9023,7 +9038,42 @@ function __histPush(st){
     if(!__histLock && history.state && history.state.v === 'editor'){ history.back(); return; }
     return _ce();
   };
-  try{ history.replaceState({ v:'home' }, ''); }catch(e){}
+  try{ if(!/^#(p|e)\//.test(location.hash) && !/^#(leads|reports|clients|feed|audit)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
+  var __restored = false, __restoreTries = 0;
+  window.__tryRestoreFromHash = function(){
+    if(__restored) return;
+    var h = location.hash || '';
+    var st = null, m;
+    if((m = /^#p\/(.+)$/.exec(h))) st = { v:'project', id: m[1] };
+    else if((m = /^#e\/(.+)$/.exec(h))) st = { v:'editor', id: m[1] };
+    else if((m = /^#leads(?:\/(.+))?$/.exec(h))) st = { v:'leads', stg: m[1] ? decodeURIComponent(m[1]) : null };
+    else if(h === '#reports') st = { v:'reports' };
+    else if(h === '#clients') st = { v:'clients' };
+    else if(h === '#feed') st = { v:'feed' };
+    else if(h === '#audit') st = { v:'audit' };
+    if(!st){ __restored = true; return; }
+    if((st.v === 'project' || st.v === 'leads') && !cacheProjects.length && __restoreTries < 25){
+      __restoreTries++; setTimeout(window.__tryRestoreFromHash, 350); return;
+    }
+    __restored = true;
+    __histLock = true;
+    try{
+      if(st.v === 'project') _op(st.id);
+      else if(st.v === 'editor') _oe(st.id);
+      else if(st.v === 'leads') _ol(st.stg || undefined);
+      else if(st.v === 'reports') _or();
+      else if(st.v === 'clients') _oc();
+      else if(st.v === 'feed') _of();
+      else if(st.v === 'audit') _oa();
+      history.replaceState(st, '', __hashFor(st));
+    } finally { __histLock = false; }
+  };
+  var _smw = showMain;
+  showMain = function(em){
+    var r = _smw(em);
+    setTimeout(window.__tryRestoreFromHash, 500);
+    return r;
+  };
   window.addEventListener('popstate', async function(e){
     var st = e.state || { v:'home' };
     __histLock = true;
