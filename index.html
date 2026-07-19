@@ -1066,14 +1066,20 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 }
 
 /* ---- docked header row (client open, phone) ---- */
-.repstrip.docked{flex-wrap:nowrap;align-items:center;gap:5px;justify-content:flex-start;padding:4px 0 8px;}
-.repstrip.docked .reppill{flex:0 1 auto;}
-.repstrip.docked #repPill{max-width:24vw;}
-.repstrip.docked #headCtx{max-width:30vw;}
-.repstrip.docked #navWrap{margin-left:auto;flex:0 0 auto;}
-.repstrip.docked .jobmenu-head{max-width:104px;padding:8px 24px 8px 8px;background-position:right 7px center;}
+.repstrip.docked{flex-wrap:nowrap;align-items:center;gap:5px;padding:4px 2px 8px;
+  max-width:100%;overflow:hidden;}
+/* pills flex-share the leftover space — overflow is impossible by construction */
+.repstrip.docked .reppill{flex:1 1 0;min-width:0;max-width:none;}
+.repstrip.docked #repPill{flex:0.8 1 0;}
+.repstrip.docked #navWrap{flex:0 0 auto;margin-left:2px;}
+.repstrip.docked .jobmenu-head{width:118px;max-width:118px;padding:8px 24px 8px 9px;background-position:right 7px center;}
 .repstrip.docked #newWrap{flex:0 0 auto;}
-.repstrip.docked #newWrap .btn, .repstrip.docked #newWrap button{padding:6px 10px;font-size:14px;min-height:34px;}
+/* plus button collapses to a pure icon when docked */
+.repstrip.docked #newWrap .btn, .repstrip.docked #newWrap button{
+  width:40px;height:34px;padding:0;font-size:0;line-height:0;position:relative;}
+.repstrip.docked #newWrap .btn::after, .repstrip.docked #newWrap button::after{
+  content:'+';font-size:22px;line-height:1;position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;}
 
 /* ---- phone: client-profile fit pass ---- */
 @media (max-width:700px){
@@ -1572,7 +1578,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 53 &#8212; app nav bar</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 55 &#8212; header flex-fit</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9667,7 +9673,7 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
-var BUILD_TAG = '2026-07-19 build 53 \u2014 app nav bar';
+var BUILD_TAG = '2026-07-19 build 55 \u2014 header flex-fit';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
@@ -9995,7 +10001,7 @@ function __histPush(st){
   try{ history.pushState(st, '', __hashFor(st)); }catch(e){}
 }
 /* =========================================================================
-   INSTALLED-APP NAVIGATION (standalone: bottom bar + edge swipes)
+   INSTALLED-APP NAVIGATION (standalone: bottom bar + swipes)
    ========================================================================= */
 (function(){
   var standalone = false;
@@ -10004,31 +10010,39 @@ function __histPush(st){
       window.navigator.standalone === true;
   }catch(e){}
   if(standalone) document.body.classList.add('standalone');
-  var bk = document.getElementById('pwaBack');
-  var fw = document.getElementById('pwaFwd');
-  if(bk) bk.addEventListener('click', function(){ history.back(); });
-  if(fw) fw.addEventListener('click', function(){ history.forward(); });
-  var sx = null, sy = null, edge = null;
+  /* delegated: works no matter where the bar sits in the document */
+  document.addEventListener('click', function(e){
+    if(e.target.closest && e.target.closest('#pwaBack')){ history.back(); }
+    else if(e.target.closest && e.target.closest('#pwaFwd')){ history.forward(); }
+  });
+  /* swipes: generous edge zone, plus a long deliberate swipe anywhere */
+  var sx = null, sy = null, edge = null, scrollable = false;
   document.addEventListener('touchstart', function(e){
     if(!document.body.classList.contains('standalone')) return;
-    if(e.touches.length !== 1) return;
+    if(e.touches.length !== 1){ edge = null; return; }
     var t = e.touches[0];
-    if(e.target.closest && e.target.closest('input, textarea, select')) return;
-    if(t.clientX <= 26){ edge = 'L'; sx = t.clientX; sy = t.clientY; }
-    else if(t.clientX >= window.innerWidth - 26){ edge = 'R'; sx = t.clientX; sy = t.clientY; }
-    else edge = null;
+    var tgt = e.target;
+    if(tgt.closest && tgt.closest('input, textarea, select')){ edge = null; return; }
+    scrollable = !!(tgt.closest && tgt.closest('.mssteps, .matmount, table, iframe'));
+    sx = t.clientX; sy = t.clientY;
+    if(sx <= 40) edge = 'L';
+    else if(sx >= window.innerWidth - 40) edge = 'R';
+    else edge = 'M';
   }, { passive: true });
   document.addEventListener('touchend', function(e){
-    if(!edge || sx == null) return;
+    if(sx == null) return;
     var t = e.changedTouches && e.changedTouches[0];
-    if(!t){ edge = null; return; }
+    if(!t){ sx = sy = edge = null; return; }
     var dx = t.clientX - sx, dy = Math.abs(t.clientY - sy);
-    if(edge === 'L' && dx > 70 && dy < 60) history.back();
-    else if(edge === 'R' && dx < -70 && dy < 60) history.forward();
-    edge = null; sx = sy = null;
+    if(edge === 'L' && dx > 60 && dy < 80) history.back();
+    else if(edge === 'R' && dx < -60 && dy < 80) history.forward();
+    else if(edge === 'M' && !scrollable && dy < 50){
+      if(dx > 130) history.back();
+      else if(dx < -130) history.forward();
+    }
+    sx = sy = edge = null; scrollable = false;
   }, { passive: true });
 })();
-
 /* =========================================================================
    AUDIT EVENTS \u2014 who did what, when
    ========================================================================= */
