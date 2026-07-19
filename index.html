@@ -197,9 +197,8 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 }
 @media (max-width:760px){
   .toolbar{padding:8px 10px;gap:6px;}
-  #backBtn{order:-2;flex:0 0 auto;font-weight:800;padding:9px 12px;
-    background:#C8202E;border-color:#C8202E;color:#fff;}
   #editorLogo{order:-1;}
+  #backBtn{order:-2;}
   .toolbar .grow{flex:1 1 100%;order:5;min-width:0;}
   .toolbar .btn{font-size:12px;padding:8px 10px;}
   .toolbar .statuswrap{font-size:11px;}
@@ -938,6 +937,25 @@ html, body{overflow-x:hidden;max-width:100%;}
     border:1px solid #e2d5c3;border-radius:6px;background:#faf3e6;padding:5px 0;}
   .teamcal .minical .calgrid .day.today{border-color:#7c1019;}
 }
+/* ---- estimate editor header ---- */
+#backBtn{background:#C8202E;border-color:#C8202E;color:#fff;font-weight:800;flex:0 0 auto;}
+.edchip{display:inline-flex;align-items:center;gap:6px;max-width:46vw;height:30px;padding:0 12px;
+  border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);
+  font:700 12px 'Segoe UI',Arial,sans-serif;color:#f3e9dc;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;flex:0 1 auto;}
+.edchip small{color:#e8b7ba;font-weight:800;}
+.edchip.edlink{border-color:rgba(212,160,23,.65);cursor:pointer;}
+.edchip.edlink:active{transform:scale(.96);}
+.toolbar .grow{order:10;flex:1 1 100%;}
+#reportTitle{height:34px;font-size:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
+  color:#f3e9dc;border-radius:8px;width:100%;padding:0 12px;box-sizing:border-box;}
+#reportTitle::placeholder{color:#a89286;}
+#savedFlash{order:11;}
+@media (max-width:760px){
+  .edchip{height:26px;font-size:11px;padding:0 10px;max-width:44vw;}
+  #backBtn{padding:8px 11px;font-size:13px;}
+}
+
 /* ---- button tap feedback ---- */
 .btn, .chipbtn, .navopt, .pipebtn, .calnav, .hstat, .ljtab, .ljcard, .pcard{
   -webkit-tap-highlight-color:rgba(200,32,46,.15);}
@@ -2186,7 +2204,9 @@ body:has(#loginView[style*="block"]){background:#fff;}
   <div class="toolbar">
     <img id="editorLogo" alt="Home" title="Save &amp; go home"
          style="display:none;height:40px;width:auto;flex:0 0 auto;cursor:pointer;border-radius:8px;background:#fff;padding:4px;border:2px solid var(--red);">
-    <button class="btn dark" id="backBtn">&larr; Back to history</button>
+    <button class="btn" id="backBtn">&#8249; Client Overview</button>
+    <span class="edchip edlink" id="edClientChip" title="Back to client overview" style="display:none;"></span>
+    <span class="edchip" id="edRepChip" style="display:none;"></span>
     <div class="grow">
       <input id="reportTitle" placeholder="Report title / property address" aria-label="Report title">
     </div>
@@ -7984,6 +8004,24 @@ async function openEditor(id){
   if(!r) return;
   current = { id: r.id, status: r.status, sent_at: r.sent_at };
   titleInput.value = r.title || '';
+  (function(){
+    var pr = cacheProjects.find(function(p){ return p.id === r.project_id; });
+    window.__edPid = pr ? pr.id : null;
+    var cc = document.getElementById('edClientChip');
+    if(cc){
+      if(pr){
+        var po = poOf(pr);
+        cc.innerHTML = (po ? '<small>' + esc(String(po)) + ':</small> ' : '') + esc(pr.name || 'Client');
+        cc.style.display = 'inline-flex';
+      }else{ cc.style.display = 'none'; }
+    }
+    var rc = document.getElementById('edRepChip');
+    if(rc){
+      var em = (currentUser && currentUser.email) || '';
+      if(em){ rc.innerHTML = 'REP \u00b7 <b>' + esc(rptRepName(em)) + '</b>'; rc.style.display = 'inline-flex'; }
+      else{ rc.style.display = 'none'; }
+    }
+  })();
   setEditorStatus(r.status, r.sent_at);
   savedFlash.textContent = '';
   frame.srcdoc = r.html;
@@ -8298,6 +8336,13 @@ async function closeEditor(){
   await reload();
 }
 document.getElementById('backBtn').addEventListener('click', closeEditor);
+document.getElementById('edClientChip').addEventListener('click', async function(){
+  var pid = window.__edPid;
+  await closeEditor();
+  if(pid && (!currentProject || currentProject.id !== pid)){
+    setTimeout(function(){ openProject(pid); }, 80);
+  }
+});
 document.getElementById('editorLogo').addEventListener('click', async function(){
   await closeEditor();
   showHome();
