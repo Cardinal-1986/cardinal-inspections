@@ -1000,14 +1000,14 @@ html, body{overflow-x:hidden;max-width:100%;}
 @media (max-width:700px){
   body.projopen #brandTitle{display:none;}
   body.projopen .jobmenu-head{max-width:130px;}
-  /* milestones fit without side-scroll */
-  .mssteps{overflow-x:visible;min-width:0;}
-  .msstep{min-width:0;padding-top:13px;}
-  .msstep .mc{width:33px;height:33px;font-size:14px;}
-  .msstep small{font-size:9px;letter-spacing:0;}
-  .msstep .dt{font-size:8.5px;}
-  .msstep .dur{font-size:8.5px;top:0;}
-  .msstep::before{top:29px;height:2px;}
+  /* milestones fit without side-scroll (id-anchored: beats base rules regardless of order) */
+  #acxMount .mssteps{overflow-x:visible;min-width:0;}
+  #acxMount .msstep{min-width:0;padding-top:13px;}
+  #acxMount .msstep .mc{width:33px;height:33px;font-size:14px;}
+  #acxMount .msstep small{font-size:9px;letter-spacing:0;}
+  #acxMount .msstep .dt{font-size:8.5px;}
+  #acxMount .msstep .dur{font-size:8.5px;top:0;}
+  #acxMount .msstep::before{top:29px;height:2px;}
   /* document tables become cards \u2014 no side-scroll */
   #historyMount, #estDocsMount, #inspDocsMount, #listMount{overflow-x:visible;}
   #historyMount table.reports, #estDocsMount table.reports,
@@ -1495,7 +1495,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 39 &#8212; reviews lacquer</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 40 &#8212; stepper fits</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
