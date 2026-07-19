@@ -1014,6 +1014,22 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
 
+/* ---- installed-app bottom nav (standalone only) ---- */
+#pwaNav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:160;
+  justify-content:space-between;align-items:center;
+  padding:8px max(16px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right));
+  background:linear-gradient(180deg, rgba(23,15,17,.94) 0%, #170f11 100%);
+  border-top:1px solid rgba(212,160,23,.4);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
+body.standalone #pwaNav{display:flex;}
+#pwaNav button{width:46px;height:46px;border-radius:50%;
+  background:rgba(255,255,255,.07);border:1px solid rgba(212,160,23,.55);
+  color:#f3e9dc;font:600 26px/1 'Segoe UI',Arial,sans-serif;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding-bottom:3px;}
+#pwaNav button:active{transform:scale(.92);background:rgba(200,32,46,.35);}
+body.standalone{padding-bottom:calc(64px + env(safe-area-inset-bottom)) !important;}
+body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-bottom));box-sizing:border-box;}
+
 /* ---- list salesman filter ---- */
 .listctl{display:flex;align-items:center;gap:8px;margin:6px 0 12px;
   font:700 13px 'Segoe UI',Arial,sans-serif;color:#5c4a42;}
@@ -1556,7 +1572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 52 &#8212; salesman filters</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 53 &#8212; app nav bar</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9651,7 +9667,7 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
-var BUILD_TAG = '2026-07-19 build 52 \u2014 salesman filters';
+var BUILD_TAG = '2026-07-19 build 53 \u2014 app nav bar';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
@@ -9978,6 +9994,41 @@ function __histPush(st){
   if(__histLock) return;
   try{ history.pushState(st, '', __hashFor(st)); }catch(e){}
 }
+/* =========================================================================
+   INSTALLED-APP NAVIGATION (standalone: bottom bar + edge swipes)
+   ========================================================================= */
+(function(){
+  var standalone = false;
+  try{
+    standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      window.navigator.standalone === true;
+  }catch(e){}
+  if(standalone) document.body.classList.add('standalone');
+  var bk = document.getElementById('pwaBack');
+  var fw = document.getElementById('pwaFwd');
+  if(bk) bk.addEventListener('click', function(){ history.back(); });
+  if(fw) fw.addEventListener('click', function(){ history.forward(); });
+  var sx = null, sy = null, edge = null;
+  document.addEventListener('touchstart', function(e){
+    if(!document.body.classList.contains('standalone')) return;
+    if(e.touches.length !== 1) return;
+    var t = e.touches[0];
+    if(e.target.closest && e.target.closest('input, textarea, select')) return;
+    if(t.clientX <= 26){ edge = 'L'; sx = t.clientX; sy = t.clientY; }
+    else if(t.clientX >= window.innerWidth - 26){ edge = 'R'; sx = t.clientX; sy = t.clientY; }
+    else edge = null;
+  }, { passive: true });
+  document.addEventListener('touchend', function(e){
+    if(!edge || sx == null) return;
+    var t = e.changedTouches && e.changedTouches[0];
+    if(!t){ edge = null; return; }
+    var dx = t.clientX - sx, dy = Math.abs(t.clientY - sy);
+    if(edge === 'L' && dx > 70 && dy < 60) history.back();
+    else if(edge === 'R' && dx < -70 && dy < 60) history.forward();
+    edge = null; sx = sy = null;
+  }, { passive: true });
+})();
+
 /* =========================================================================
    AUDIT EVENTS \u2014 who did what, when
    ========================================================================= */
@@ -10371,6 +10422,10 @@ async function enableNotifications(){
 })();
 
 </script>
+<div id="pwaNav">
+  <button id="pwaBack" aria-label="Back">&#8249;</button>
+  <button id="pwaFwd" aria-label="Forward">&#8250;</button>
+</div>
 <div id="restoreVeil">
   <div class="rvinner">
     <div class="rvlogo"></div>
