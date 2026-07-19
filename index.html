@@ -937,6 +937,24 @@ html, body{overflow-x:hidden;max-width:100%;}
     border:1px solid #e2d5c3;border-radius:6px;background:#faf3e6;padding:5px 0;}
   .teamcal .minical .calgrid .day.today{border-color:#7c1019;}
 }
+/* ---- activity count strip + AR vertical chart ---- */
+.acthead{border-top:2px solid #C8202E;margin-top:16px;padding-top:8px;
+  font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.actstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:10px;}
+.actbox{background:#fff;border:1px solid #e2dad2;border-radius:6px;padding:10px 6px;text-align:center;}
+.actbox span{display:block;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#6b5a52;line-height:1.3;}
+.actbox b{display:block;font:800 22px 'Segoe UI',Arial,sans-serif;color:#E8722A;margin-top:3px;}
+@media (max-width:900px){ .actstrip{grid-template-columns:repeat(3,1fr);gap:8px;} .actbox b{font-size:19px;} }
+.arhead{font:700 12px 'Segoe UI',Arial,sans-serif;color:#5c4a42;margin-top:8px;}
+.arhead b{font-size:13px;color:#2b2b2b;margin-right:8px;}
+.archart{display:flex;align-items:stretch;gap:8px;height:130px;margin-top:10px;}
+.arcol{flex:1;display:flex;flex-direction:column;min-width:0;}
+.arcol .arplot{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;}
+.arcol .arval{font:700 10.5px 'Segoe UI',Arial,sans-serif;color:#3b2f2a;margin-bottom:3px;white-space:nowrap;}
+.arcol .arbarv{width:72%;background:#F0A32F;border-radius:2px 2px 0 0;}
+.arcol .arx{text-align:center;font:700 10.5px 'Segoe UI',Arial,sans-serif;color:#8a7a72;
+  border-top:1px solid #e5ddd5;padding-top:5px;margin-top:6px;}
+
 /* ---- team portraits ---- */
 .tmav{border-radius:50%;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;
   vertical-align:middle;flex:0 0 auto;}
@@ -1416,6 +1434,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <option value="inspections">Inspections</option>
           <option value="estimates">Estimates</option>
           <option value="materials">Materials</option>
+          <option value="measure">Measurements</option>
         </select>
         <button class="btn ghost" id="navBtn">&#9776; Menu</button>
         <div id="navMenu" style="display:none;">
@@ -1531,6 +1550,8 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <div class="hero-left" style="margin-top:14px;">
           <div id="heroGreeting" class="hero-hi"></div>
         </div>
+        <div class="acthead">Activity Count: Last 30 Days</div>
+        <div class="actstrip" id="actStrip"></div>
       </div>
       <aside class="homeside" style="margin-top:14px;">
         <div class="calcard" id="calCard" style="flex-basis:auto;">
@@ -1663,6 +1684,15 @@ body:has(#loginView[style*="block"]){background:#fff;}
   </div>
 </div>
 
+<!-- ============ TASK MODAL ============ -->
+<div id="tskModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:210;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px;">
+  <div style="background:#fff;border-radius:8px;max-width:620px;width:100%;padding:22px 26px;position:relative;">
+    <span id="tskModalX" style="position:absolute;top:12px;right:16px;font:400 22px Arial;color:#9a8c85;cursor:pointer;">&#10005;</span>
+    <h2 id="tskModalTitle" style="margin:0 0 18px;text-align:center;font:400 26px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;"></h2>
+    <div id="tskModalBody"></div>
+  </div>
+</div>
+
 <!-- ============ TEAM ============ -->
 <div id="teamView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
@@ -1781,6 +1811,45 @@ body:has(#loginView[style*="block"]){background:#fff;}
       </div>
     </div>
 
+    <div id="tab-measure" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
+      <h3 class="projsec">&#128207; Measurements</h3>
+      <p class="subnote">Order aerial measurements, keep every report with the client, and record the numbers your estimates run on.</p>
+
+      <div class="matcard">
+        <div class="mathead collhead matcoll open"><b>&#128200; Measurement Values</b><span class="projcount" id="msValCount"></span><span class="collchev">&#9656;</span></div>
+        <div class="matbody"><div id="msValMount"></div>
+          <button class="chipbtn" id="msValEdit" style="margin-top:8px;">&#9998; Edit values</button>
+        </div>
+      </div>
+
+      <div class="matcard">
+        <div class="mathead collhead matcoll open"><b>&#128312; Roofr</b><span class="projcount" id="msCntRoofr">No reports</span><span class="collchev">&#9656;</span></div>
+        <div class="matbody"><div class="matbtns">
+          <button class="chipbtn msOrder" data-src="Roofr">&#128722; Order on Roofr &#8599;</button>
+          <button class="chipbtn msUp" data-src="Roofr">&#128206; Upload Roofr report</button>
+        </div>
+        <div class="matmount" id="msListRoofr"></div></div>
+      </div>
+
+      <div class="matcard">
+        <div class="mathead collhead matcoll open"><b>&#128313; Hover</b><span class="projcount" id="msCntHover">No reports</span><span class="collchev">&#9656;</span></div>
+        <div class="matbody"><div class="matbtns">
+          <button class="chipbtn msOrder" data-src="Hover">&#128722; Order on Hover &#8599;</button>
+          <button class="chipbtn msUp" data-src="Hover">&#128206; Upload Hover report</button>
+        </div>
+        <div class="matmount" id="msListHover"></div></div>
+      </div>
+
+      <div class="matcard">
+        <div class="mathead collhead matcoll"><b>&#128208; Field / Other</b><span class="projcount" id="msCntField">No reports</span><span class="collchev">&#9656;</span></div>
+        <div class="matbody"><div class="matbtns">
+          <button class="chipbtn msUp" data-src="Field">&#128206; Upload file</button>
+        </div>
+        <div class="matmount" id="msListField"></div></div>
+      </div>
+      <input type="file" id="msFileInput" accept="application/pdf,image/*" style="display:none;">
+    </div>
     <div id="tab-materials" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
       <h3 class="projsec">&#128230; Material Order Lists</h3>
@@ -3993,6 +4062,35 @@ function renderHome(){
 
 
 /* ---------- work schedule + accounts receivable ---------- */
+function renderActivityCount(){
+  var el = document.getElementById('actStrip');
+  if(!el) return;
+  var cut = Date.now() - 30*86400000;
+  function inWin(iso){ return iso && new Date(iso).getTime() >= cut; }
+  var leads = 0, approved = 0, completed = 0, invoiced = 0, closed = 0, collected = 0;
+  cacheProjects.forEach(function(p){
+    var ck = parseCkAll(p);
+    if(inWin(ck.t_Lead || p.created_at)) leads++;
+    if(inWin(ck.t_Approved)) approved++;
+    if(inWin(ck.t_Completed)) completed++;
+    if(inWin(ck.t_Invoiced)) invoiced++;
+    if(inWin(ck.t_Closed)) closed++;
+    var ws = ck.ws || {};
+    Object.keys(ws).forEach(function(k){
+      (ws[k].log || []).forEach(function(en){ if(inWin(en.at)) collected += Number(en.a) || 0; });
+    });
+  });
+  function box(lbl, val){
+    return '<div class="actbox"><span>' + lbl + '</span><b>' + val + '</b></div>';
+  }
+  el.innerHTML =
+    box('New<br>Leads', leads) +
+    box('Jobs<br>Approved', approved) +
+    box('Jobs<br>Completed', completed) +
+    box('Money<br>Collected', '$' + Math.round(collected).toLocaleString('en-US')) +
+    box('Jobs<br>Invoiced', invoiced) +
+    box('Jobs<br>Closed', closed);
+}
 function renderOps(){
   var todayStr = (function(){ var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
@@ -4033,18 +4131,31 @@ function renderOps(){
       if(days >= buckets[i].min && days <= buckets[i].max){ buckets[i].amt += v; break; }
     }
   });
-  var maxAmt = Math.max.apply(null, buckets.map(function(b){ return b.amt; }).concat([1]));
+  var maxAmt = Math.max.apply(null, buckets.map(function(b){ return b.amt; }).concat([0]));
+  function niceCeil(n){
+    if(n <= 0) return 1000;
+    var p = Math.pow(10, Math.floor(Math.log10(n)));
+    var m = n / p;
+    var f = m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10;
+    return f * p;
+  }
+  var scale = niceCeil(maxAmt);
   var wrap = document.getElementById('arWrap');
   if(wrap){
-    wrap.innerHTML = buckets.map(function(b){
-      var w = Math.round(100 * b.amt / maxAmt);
-      return '<div class="arrow2"><span class="arlbl">' + b.lbl + '</span>' +
-        '<span class="arbarbg"><span class="arbar" style="width:' + w + '%;background:' + b.col + ';"></span></span>' +
-        '<span class="aramt">' + fmtMoney(b.amt) + '</span></div>';
-    }).join('');
-    document.getElementById('arTotal').innerHTML = 'Outstanding: <span style="color:#C8202E;">' + fmtMoney(total) + '</span>' +
-      ' &nbsp;<small style="font-weight:600;color:#8a7a72;">from worksheet invoices</small>';
+    wrap.innerHTML =
+      '<div class="arhead"><b>$' + (scale >= 1000 ? Math.round(scale/1000) + 'K' : scale) + '</b>Totals from Worksheet Invoices</div>' +
+      '<div class="archart">' + buckets.map(function(b){
+        var h = Math.round(100 * b.amt / scale);
+        return '<div class="arcol"><div class="arplot">' +
+          (b.amt > 0 ? '<span class="arval">$' + b.amt.toLocaleString('en-US', { maximumFractionDigits: 2 }) + '</span>' : '') +
+          '<span class="arbarv" style="height:' + h + '%;"></span></div>' +
+          '<span class="arx">' + b.lbl + '</span></div>';
+      }).join('') + '</div>';
+    document.getElementById('arTotal').innerHTML = total
+      ? 'Outstanding: <span style="color:#C8202E;">' + fmtMoney(total) + '</span>'
+      : '';
   }
+  renderActivityCount();
 }
 
 
@@ -4253,10 +4364,24 @@ function renderAcxOverview(){
     '<span class="axzero">0</span><span class="axnote">No loan applications have been submitted for this job.</span>' +
     '<button class="axbtn ghost" style="margin-left:8px;">&#127974; Offer Financing</button>' +
     '<span class="axnote">Coming soon.</span></div></div>';
+  var ms = ck.meas || null;
   html +=
   '<div class="acxsec"><div class="acxhead">Measurements</div><div class="acxbody">' +
-    '<div class="acxrow"><span class="axzero">0</span><span class="axnote">No measurements have been created for this job.</span></div>' +
-    '<button class="axbtn ghost" style="margin-top:10px;">Add New</button> <span class="axnote">Coming soon.</span></div></div>';
+    (ms
+      ? '<div class="ackv" style="grid-template-columns:110px 1fr 110px 1fr;">' +
+        '<span>Squares:</span><div><b>' + esc(ms.sq || '\u2014') + '</b></div>' +
+        '<span>Pitch:</span><div><b>' + esc(ms.pitch || '\u2014') + '</b></div>' +
+        '<span>Ridges:</span><div>' + esc(ms.ridge || '\u2014') + ' lf</div>' +
+        '<span>Hips:</span><div>' + esc(ms.hip || '\u2014') + ' lf</div>' +
+        '<span>Valleys:</span><div>' + esc(ms.valley || '\u2014') + ' lf</div>' +
+        '<span>Eaves:</span><div>' + esc(ms.eave || '\u2014') + ' lf</div>' +
+        '</div>'
+      : '<div class="acxrow"><span class="axzero">0</span><span class="axnote">No measurements have been created for this job.</span></div>') +
+    '<div id="acxMeasSummary" class="acxrow" style="margin-top:8px;gap:6px;"></div>' +
+    '<div class="acxrow" style="margin-top:10px;gap:8px;">' +
+      '<button class="axbtn" id="acxMeasAdd">' + (ms ? '\u270E Edit' : 'Add New') + '</button>' +
+      '<button class="chipbtn" id="acxMeasPage">Measurements page &#8250;</button>' +
+    '</div></div></div>';
   var estList = ests.map(function(r){
     return '<div class="tskrow" style="cursor:pointer;" data-doc="' + r.id + '">&#128196; <b>' + esc(r.title || 'Estimate') + '</b>' +
       '<small>' + acxDate(r.created_at) + '</small></div>';
@@ -4295,15 +4420,17 @@ function renderAcxOverview(){
   var myEmail = (currentUser && currentUser.email) || '';
   var openT = tasks.filter(function(t){ return !t.done; });
   var doneT = tasks.filter(function(t){ return t.done; });
-  var mineT = tasks.filter(function(t){ return t.by === myEmail && !t.done; });
+  var mineT = tasks.filter(function(t){ return (t.assignee || t.by) === myEmail && !t.done; });
   var pool = acxTaskTab === 'done' ? doneT : (acxTaskTab === 'mine' ? mineT : openT);
   if(acxTaskView !== 'All') pool = pool.filter(function(t){ return (t.pri || 'Normal') === acxTaskView; });
   var taskRows = pool.length ? pool.map(function(t){
     var i = tasks.indexOf(t);
-    return '<div class="tskrow' + (t.done ? ' done' : '') + '">' +
+    return '<div class="tskrow' + (t.done ? ' done' : '') + '" data-viewtask="' + i + '" style="cursor:pointer;">' +
       '<input type="checkbox" class="cbx" data-task="' + i + '"' + (t.done ? ' checked' : '') + '>' +
-      '<span class="tskpri' + ((t.pri === 'High') ? ' h' : '') + '">' + (t.pri || 'Normal') + '</span> ' + esc(t.t) +
-      '<small>' + esc(rptRepName(t.by || '')) + ' \u00b7 ' + acxDate(t.at) + '</small></div>';
+      '<span class="tskpri' + ((t.pri === 'High') ? ' h' : '') + '">' + (t.pri || 'Normal') + '</span> ' +
+      '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(t.t) + '</span>' +
+      '<small>' + (t.due ? 'Due ' + acxDate(t.due) + ' \u00b7 ' : '') +
+      esc(rptRepName(t.assignee || t.by || '').split(' ')[0]) + '</small></div>';
   }).join('') : '<div class="axnote" style="padding:6px 0;">No Tasks to show you</div>';
   html +=
   '<div class="acxsec"><div class="acxhead">Tasks</div><div class="acxbody">' +
@@ -4408,6 +4535,11 @@ function renderAcxOverview(){
     try{ await patchProjectCk(pr, { manual_value: n }); renderOverview(); renderPipeline(); }
     catch(err){ showError('Could not save: ' + (err.message || err)); }
   }
+  var ma = document.getElementById('acxMeasAdd');
+  if(ma) ma.addEventListener('click', function(){ openMeasModal(pr); });
+  var mp = document.getElementById('acxMeasPage');
+  if(mp) mp.addEventListener('click', function(){ showTab('measure'); });
+  refreshMeasSummary(pr);
   var se = document.getElementById('acxSkipEst');
   if(se) se.addEventListener('click', acxEnterTotal);
   var nw = document.getElementById('acxNewWs');
@@ -4436,6 +4568,8 @@ function renderAcxOverview(){
     }
     ws2[key] = ws2[key] || {};
     ws2[key].paid = (Number(ws2[key].paid) || 0) + n;
+    ws2[key].log = ws2[key].log || [];
+    ws2[key].log.push({ a: n, at: new Date().toISOString() });
     try{ await patchProjectCk(pr, { ws: ws2 }); renderOverview(); }
     catch(err){ showError('Could not record payment: ' + (err.message || err)); }
   });
@@ -4465,19 +4599,22 @@ function renderAcxOverview(){
     b.addEventListener('click', function(){ sendReviewRequest(pr, b.getAttribute('data-rv')); });
   });
   var nt = document.getElementById('acxNewTask');
-  if(nt) nt.addEventListener('click', async function(){
-    var t = prompt('Task description:'); if(!t) return;
-    var hi = confirm('High priority? OK = High, Cancel = Normal');
-    var list = (parseCkAll(pr).tasks || []).slice();
-    list.push({ t: t.trim(), pri: hi ? 'High' : 'Normal', done: false, by: myEmail, at: new Date().toISOString() });
-    try{ await patchProjectCk(pr, { tasks: list }); renderOverview(); }
-    catch(err){ showError('Could not save task: ' + (err.message || err)); }
+  if(nt) nt.addEventListener('click', function(){ openTaskModal(pr, null); });
+  mount.querySelectorAll('[data-viewtask]').forEach(function(row){
+    row.addEventListener('click', function(e){
+      if(e.target.closest('input')) return;
+      openTaskModal(pr, parseInt(row.getAttribute('data-viewtask'), 10));
+    });
   });
   mount.querySelectorAll('[data-task]').forEach(function(cb){
     cb.addEventListener('change', async function(){
       var list = (parseCkAll(pr).tasks || []).slice();
       var i = parseInt(cb.getAttribute('data-task'), 10);
-      if(list[i]){ list[i].done = cb.checked; list[i].doneAt = cb.checked ? new Date().toISOString() : null; }
+      if(list[i]){
+        list[i].done = cb.checked;
+        list[i].doneAt = cb.checked ? new Date().toISOString() : null;
+        list[i].doneBy = cb.checked ? myEmail : null;
+      }
       try{ await patchProjectCk(pr, { tasks: list }); renderOverview(); }
       catch(err){ showError('Could not update task: ' + (err.message || err)); }
     });
@@ -4489,6 +4626,251 @@ function renderAcxOverview(){
     r.addEventListener('change', function(){ acxTaskView = r.value; renderAcxOverview(); });
   });
 }
+var measDb = {
+  list: async function(projectId){
+    if(!TEAM) return [];
+    var r = await sb.from('meas_docs').select('id,name,created_by,created_at').eq('project_id', projectId).order('created_at');
+    if(r.error) throw r.error;
+    return r.data || [];
+  },
+  get: async function(id){
+    var r = await sb.from('meas_docs').select('name,data').eq('id', id).single();
+    if(r.error) throw r.error;
+    return r.data;
+  },
+  add: async function(projectId, name, dataUrl){
+    var r = await sb.from('meas_docs').insert({ project_id: projectId, name: name, data: dataUrl,
+      created_by: (currentUser && currentUser.email) || null });
+    if(r.error) throw r.error;
+  },
+  remove: async function(id){
+    var r = await sb.from('meas_docs').delete().eq('id', id);
+    if(r.error) throw r.error;
+  }
+};
+function openMeasModal(pr){
+  var m = document.getElementById('tskModal');
+  var body = document.getElementById('tskModalBody');
+  document.getElementById('tskModalTitle').textContent = 'Measurements';
+  var ms = parseCkAll(pr).meas || {};
+  var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 14px \'Segoe UI\',Arial,sans-serif;"';
+  function fld(lbl, id, val, ph){
+    return '<div><label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-bottom:3px;">' + lbl + '</label>' +
+      '<input type="text" id="' + id + '" value="' + esc(val || '') + '" placeholder="' + (ph || '') + '" ' + inp + '></div>';
+  }
+  body.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+    fld('Squares', 'msSq', ms.sq, 'e.g. 24.3') +
+    fld('Pitch', 'msPitch', ms.pitch, 'e.g. 6/12') +
+    fld('Ridges (lf)', 'msRidge', ms.ridge) +
+    fld('Hips (lf)', 'msHip', ms.hip) +
+    fld('Valleys (lf)', 'msValley', ms.valley) +
+    fld('Eaves (lf)', 'msEave', ms.eave) +
+    fld('Rakes (lf)', 'msRake', ms.rake) +
+    fld('Source', 'msSource', ms.source, 'Roofr / Hover / field') +
+    '</div>' +
+    '<div style="margin-top:12px;">' + fld('Notes', 'msNote', ms.note) + '</div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">' +
+    '<button class="chipbtn" id="msCancel">Cancel</button>' +
+    '<button class="axbtn" id="msSave">Save</button></div>';
+  m.style.display = 'flex';
+  document.getElementById('msCancel').addEventListener('click', function(){ m.style.display = 'none'; });
+  document.getElementById('msSave').addEventListener('click', async function(){
+    var meas = {
+      sq: document.getElementById('msSq').value.trim() || null,
+      pitch: document.getElementById('msPitch').value.trim() || null,
+      ridge: document.getElementById('msRidge').value.trim() || null,
+      hip: document.getElementById('msHip').value.trim() || null,
+      valley: document.getElementById('msValley').value.trim() || null,
+      eave: document.getElementById('msEave').value.trim() || null,
+      rake: document.getElementById('msRake').value.trim() || null,
+      source: document.getElementById('msSource').value.trim() || null,
+      note: document.getElementById('msNote').value.trim() || null,
+      updated_at: new Date().toISOString()
+    };
+    var any = Object.keys(meas).some(function(k){ return k !== 'updated_at' && meas[k]; });
+    try{
+      await patchProjectCk(pr, { meas: any ? meas : null });
+      m.style.display = 'none';
+      renderOverview();
+      renderMeasureTab();
+    }catch(err){ showError('Could not save: ' + (err.message || err)); }
+  });
+}
+function msSrcOf(name){
+  var m = /^(Roofr|Hover|Field) \u2014 /.exec(name || '');
+  return m ? m[1] : 'Field';
+}
+async function refreshMeasSummary(pr){
+  var el = document.getElementById('acxMeasSummary');
+  if(!el) return;
+  try{
+    var list = await measDb.list(pr.id);
+    if(!currentProject || currentProject.id !== pr.id) return;
+    var c = { Roofr:0, Hover:0, Field:0 };
+    list.forEach(function(d){ c[msSrcOf(d.name)]++; });
+    var chips = [];
+    ['Roofr','Hover','Field'].forEach(function(s){
+      if(c[s]) chips.push('<span class="hstat" style="cursor:pointer;" data-msgo="1">' + s + ' <b>' + c[s] + '</b></span>');
+    });
+    el.innerHTML = chips.length ? 'Reports: ' + chips.join('') : '';
+    el.querySelectorAll('[data-msgo]').forEach(function(ch){
+      ch.addEventListener('click', function(){ showTab('measure'); });
+    });
+  }catch(e){}
+}
+async function renderMeasureTab(){
+  var pr = currentProject;
+  if(!pr || !document.getElementById('msValMount')) return;
+  var ms = parseCkAll(pr).meas || null;
+  document.getElementById('msValCount').textContent = ms ? (ms.sq ? ms.sq + ' squares' : 'recorded') : 'none yet';
+  document.getElementById('msValMount').innerHTML = ms
+    ? '<div class="ackv" style="grid-template-columns:110px 1fr 110px 1fr;max-width:560px;">' +
+      '<span>Squares:</span><div><b>' + esc(ms.sq || '\u2014') + '</b></div>' +
+      '<span>Pitch:</span><div><b>' + esc(ms.pitch || '\u2014') + '</b></div>' +
+      '<span>Ridges:</span><div>' + esc(ms.ridge || '\u2014') + ' lf</div>' +
+      '<span>Hips:</span><div>' + esc(ms.hip || '\u2014') + ' lf</div>' +
+      '<span>Valleys:</span><div>' + esc(ms.valley || '\u2014') + ' lf</div>' +
+      '<span>Eaves:</span><div>' + esc(ms.eave || '\u2014') + ' lf</div>' +
+      '<span>Rakes:</span><div>' + esc(ms.rake || '\u2014') + ' lf</div>' +
+      '<span>Source:</span><div>' + esc(ms.source || '\u2014') + '</div></div>' +
+      (ms.note ? '<div class="subnote" style="margin-top:6px;">' + esc(ms.note) + '</div>' : '')
+    : '<p class="subnote">No measurement values recorded yet.</p>';
+  try{
+    var list = await measDb.list(pr.id);
+    if(!currentProject || currentProject.id !== pr.id) return;
+    var by = { Roofr:[], Hover:[], Field:[] };
+    list.forEach(function(d){ by[msSrcOf(d.name)].push(d); });
+    ['Roofr','Hover','Field'].forEach(function(s){
+      var cnt = document.getElementById('msCnt' + s);
+      if(cnt) cnt.textContent = by[s].length ? by[s].length + ' report' + (by[s].length === 1 ? '' : 's') : 'No reports';
+      var mnt = document.getElementById('msList' + s);
+      if(!mnt) return;
+      mnt.innerHTML = by[s].map(function(d){
+        var nm = (d.name || '').replace(/^(Roofr|Hover|Field) \u2014 /, '');
+        return '<div class="tskrow" style="cursor:pointer;" data-msopen="' + d.id + '">&#128206; <b>' + esc(nm) + '</b>' +
+          '<small>' + esc(rptRepName(d.created_by || '').split(' ')[0]) + ' \u00b7 ' + acxDate(d.created_at) +
+          ' &nbsp;<a href="#" data-msdel="' + d.id + '" style="color:#C8202E;">remove</a></small></div>';
+      }).join('') || '<p class="subnote" style="margin:6px 0 0;">Nothing uploaded yet.</p>';
+    });
+  }catch(e){}
+}
+function openTaskModal(pr, idx){
+  var m = document.getElementById('tskModal');
+  var body = document.getElementById('tskModalBody');
+  var title = document.getElementById('tskModalTitle');
+  var myEmail = (currentUser && currentUser.email) || '';
+  var tasks = (parseCkAll(pr).tasks || []);
+  function kv(k, v){ return '<div style="margin:0 0 13px;font:600 14px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;"><b>' + k + ':</b> ' + v + '</div>'; }
+  if(idx != null && tasks[idx]){
+    var t = tasks[idx];
+    title.textContent = 'View Task';
+    body.innerHTML =
+      kv('Due Date', t.due ? acxDate(t.due) : '\u2014') +
+      kv('Priority', esc((t.pri || 'Normal').toUpperCase())) +
+      kv('Assigned To', esc(rptRepName(t.assignee || t.by || ''))) +
+      kv('Created By', esc(rptRepName(t.by || ''))) +
+      kv('Created Date', acxDate(t.at)) +
+      (t.done ? kv('Completed By', esc(rptRepName(t.doneBy || ''))) + kv('Completed Date', acxDate(t.doneAt)) : '') +
+      kv('Job', '<a href="#" id="tskJobLink" style="color:#C8202E;font-weight:700;text-decoration:none;">' +
+        esc((parseCkAll(pr).po ? parseCkAll(pr).po + ': ' : '') + (pr.name || '')) + ' &#10142;</a>') +
+      '<div style="margin:18px 0 6px;font:700 14px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;">Description:</div>' +
+      '<div style="font:600 14px \'Segoe UI\',Arial,sans-serif;color:#3b2f2a;white-space:pre-wrap;">' + esc(t.t) + '</div>' +
+      '<div style="text-align:right;margin-top:26px;"><button class="axbtn" id="tskCloseBtn">Close</button></div>';
+    m.style.display = 'flex';
+    var jl = document.getElementById('tskJobLink');
+    if(jl) jl.addEventListener('click', function(e){ e.preventDefault(); m.style.display = 'none'; showTab('overview'); });
+    document.getElementById('tskCloseBtn').addEventListener('click', function(){ m.style.display = 'none'; });
+  }else{
+    title.textContent = 'Create Task';
+    var opts = teamEmails().map(function(em){
+      return '<option value="' + esc(em) + '"' + (em === myEmail ? ' selected' : '') + '>' + esc(rptRepName(em)) + '</option>';
+    }).join('');
+    function fld(lbl, inner){ return '<div style="margin-bottom:14px;"><label style="display:block;font:700 12px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-bottom:4px;">' + lbl + '</label>' + inner + '</div>'; }
+    var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 14px \'Segoe UI\',Arial,sans-serif;"';
+    body.innerHTML =
+      fld('Description', '<textarea id="tskDesc" rows="3" ' + inp + '></textarea>') +
+      fld('Due Date', '<input type="date" id="tskDue" ' + inp + '>') +
+      fld('Priority', '<select id="tskPri" ' + inp + '><option>Normal</option><option>High</option></select>') +
+      fld('Assigned To', '<select id="tskAssign" ' + inp + '>' + opts + '</select>') +
+      '<div style="text-align:right;margin-top:20px;display:flex;gap:8px;justify-content:flex-end;">' +
+      '<button class="chipbtn" id="tskCancelBtn">Cancel</button>' +
+      '<button class="axbtn" id="tskSaveBtn">Create Task</button></div>';
+    m.style.display = 'flex';
+    document.getElementById('tskCancelBtn').addEventListener('click', function(){ m.style.display = 'none'; });
+    document.getElementById('tskSaveBtn').addEventListener('click', async function(){
+      var d = document.getElementById('tskDesc').value.trim();
+      if(!d){ alert('Enter a task description.'); return; }
+      var list = (parseCkAll(pr).tasks || []).slice();
+      list.push({
+        t: d,
+        due: document.getElementById('tskDue').value || null,
+        pri: document.getElementById('tskPri').value,
+        assignee: document.getElementById('tskAssign').value || myEmail,
+        done: false, by: myEmail, at: new Date().toISOString()
+      });
+      try{
+        await patchProjectCk(pr, { tasks: list });
+        m.style.display = 'none';
+        renderOverview();
+        var asg = document.getElementById('tskAssign').value;
+        if(asg && asg !== myEmail){
+          notifyTeam([asg], 'New task \u2014 ' + (pr.name || 'client'),
+            '<p>' + esc(rptRepName(myEmail)) + ' assigned you a task on <b>' + esc(pr.name || '') + '</b>:</p><p>' + esc(d) + '</p>');
+        }
+      }catch(err){ showError('Could not save task: ' + (err.message || err)); }
+    });
+  }
+}
+var __msUpSrc = 'Field';
+document.getElementById('tab-measure').addEventListener('click', function(e){
+  var pr = currentProject;
+  if(!pr) return;
+  var ob = e.target.closest('.msOrder');
+  if(ob){
+    var addr = (pr.address || '').trim();
+    if(addr && navigator.clipboard){ navigator.clipboard.writeText(addr).catch(function(){}); }
+    window.open(ob.getAttribute('data-src') === 'Hover' ? 'https://hover.com' : 'https://app.roofr.com', '_blank');
+    if(addr) setTimeout(function(){ alert('Client address copied \u2014 paste it into the order form:\n' + addr); }, 300);
+    return;
+  }
+  var ub = e.target.closest('.msUp');
+  if(ub){ __msUpSrc = ub.getAttribute('data-src') || 'Field'; document.getElementById('msFileInput').click(); return; }
+  var ve = e.target.closest('#msValEdit');
+  if(ve){ openMeasModal(pr); return; }
+  var del = e.target.closest('[data-msdel]');
+  if(del){
+    e.preventDefault(); e.stopPropagation();
+    if(!confirm('Remove this measurement report?')) return;
+    measDb.remove(del.getAttribute('data-msdel')).then(function(){ renderMeasureTab(); refreshMeasSummary(pr); })
+      .catch(function(err){ showError('Could not remove: ' + (err.message || err)); });
+    return;
+  }
+  var row = e.target.closest('[data-msopen]');
+  if(row){
+    measDb.get(row.getAttribute('data-msopen')).then(function(d){
+      var w = window.open('', '_blank');
+      if(w) w.document.write('<iframe src="' + d.data + '" style="border:0;width:100%;height:100vh;"></iframe>');
+    }).catch(function(err){ showError('Could not open: ' + (err.message || err)); });
+  }
+});
+document.getElementById('msFileInput').addEventListener('change', function(){
+  var pr = currentProject;
+  var f = this.files && this.files[0];
+  this.value = '';
+  if(!f || !pr) return;
+  if(f.size > 8*1024*1024){ alert('File is over 8MB \u2014 export a smaller PDF.'); return; }
+  var fr = new FileReader();
+  fr.onload = async function(){
+    try{
+      await measDb.add(pr.id, __msUpSrc + ' \u2014 ' + f.name, fr.result);
+      renderMeasureTab(); refreshMeasSummary(pr);
+    }catch(err){ showError('Upload failed: ' + (err.message || err) + ' \u2014 if this mentions a missing table, run the meas_docs SQL.'); }
+  };
+  fr.readAsDataURL(f);
+});
+document.getElementById('tskModalX').addEventListener('click', function(){ document.getElementById('tskModal').style.display = 'none'; });
+document.getElementById('tskModal').addEventListener('click', function(e){ if(e.target === this) this.style.display = 'none'; });
 /* hook into the existing overview renderer */
 (function(){
   var _rov = renderOverview;
@@ -5168,6 +5550,7 @@ function openProject(id){
   renderCkStatus();
   renderGcStatus();
   renderMaterialsTab();
+  renderMeasureTab();
   showTab('overview');
   hideAllViews();
   projectView.style.display = 'block';
@@ -5186,7 +5569,7 @@ function renderProjectDocs(){
 function showTab(name){
   var sel = document.getElementById('jobMenuSel');
   if(sel && sel.value !== name) sel.value = name;
-  ['overview','inspections','estimates','checklists','materials'].forEach(function(t){
+  ['overview','inspections','estimates','checklists','materials','measure'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
 }
