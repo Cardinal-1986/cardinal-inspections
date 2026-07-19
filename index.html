@@ -1014,6 +1014,12 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
 
+/* ---- audit filters ---- */
+.audfrow{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px;}
+.audf{cursor:pointer;}
+.audf.on{background:#C8202E;color:#fff;border-color:#C8202E;}
+.audrow span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere;}
+
 /* ---- mobile tap-target sizing (44px-friendly) ---- */
 @media (max-width:900px){
   .msmenu .dots{padding:11px 14px;margin:-9px -8px;}
@@ -1538,7 +1544,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 47 &#8212; touch pass</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 48 &#8212; audit events</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4271,7 +4277,7 @@ async function sendReviewRequest(pr, via){
     try{ await navigator.clipboard.writeText(msg); alert('Review message copied \u2014 paste it anywhere.'); }
     catch(e){ prompt('Copy this message:', msg); }
   }
-  try{ await patchProjectCk(pr, { review_requested_at: new Date().toISOString(), review_via: via }); }catch(e){}
+  try{ await patchProjectCk(pr, { review_requested_at: new Date().toISOString(), review_via: via }); auditLog('review', 'Review requested via ' + via + ' \u2014 ' + (pr.name || ''), pr.id); }catch(e){}
   setTimeout(renderOverview, 400);
 }
 var ACX_STEPS = [
@@ -4598,7 +4604,7 @@ async function acxEnterTotalNow(){
   if(v === null) return;
   var n = Number(String(v).replace(/[^\d.]/g,''));
   if(!(n > 0)){ alert('Enter a dollar amount greater than 0.'); return; }
-  try{ await patchProjectCk(c.pr, { manual_value: n }); renderOverview(); renderPipeline(); }
+  try{ await patchProjectCk(c.pr, { manual_value: n }); auditLog('money', 'Manual job total set ' + fmtMoney(n) + ' \u2014 ' + (c.pr.name || ''), c.pr.id); renderOverview(); renderPipeline(); }
   catch(err){ showError('Could not save: ' + (err.message || err)); }
 }
 function acxBindOnce(mount){
@@ -4644,7 +4650,7 @@ function acxBindOnce(mount){
     if((el = hit('#acxClearManual'))){
       e.preventDefault();
       if(!confirm('Clear the manual total? The job value will fall back to estimates/contracts.')) return;
-      try{ await patchProjectCk(pr, { manual_value: null }); renderOverview(); renderPipeline(); }
+      try{ await patchProjectCk(pr, { manual_value: null }); auditLog('money', 'Manual total cleared \u2014 ' + (pr.name || ''), pr.id); renderOverview(); renderPipeline(); }
       catch(err){ showError('Could not clear: ' + (err.message || err)); }
       return;
     }
@@ -4666,7 +4672,7 @@ function acxBindOnce(mount){
       ws2[key].paid = (Number(ws2[key].paid) || 0) + n;
       ws2[key].log = ws2[key].log || [];
       ws2[key].log.push({ a: n, at: new Date().toISOString() });
-      try{ await patchProjectCk(pr, { ws: ws2 }); renderOverview(); }
+      try{ await patchProjectCk(pr, { ws: ws2 }); auditLog('money', fmtMoney(n) + ' payment recorded \u2014 ' + (pr.name || ''), pr.id); renderOverview(); }
       catch(err){ showError('Could not record payment: ' + (err.message || err)); }
       return;
     }
@@ -4715,6 +4721,7 @@ function acxBindOnce(mount){
           review_left_at: on ? new Date().toISOString() : null,
           review_left_by: on ? ((currentUser && currentUser.email) || null) : null
         });
+        if(on) auditLog('review', 'Google review LEFT \u2014 ' + (pr.name || ''), pr.id);
         renderAcxOverview();
       }catch(err){ showError('Could not save: ' + (err.message || err)); }
       return;
@@ -4728,7 +4735,11 @@ function acxBindOnce(mount){
         list2[ix].doneAt = t.checked ? new Date().toISOString() : null;
         list2[ix].doneBy = t.checked ? myEmail : null;
       }
-      try{ await patchProjectCk(pr, { tasks: list2 }); renderOverview(); }
+      try{
+        await patchProjectCk(pr, { tasks: list2 });
+        if(t.checked && list2[ix]) auditLog('task', 'Task completed \u2014 \u201C' + String(list2[ix].t || '').slice(0,60) + '\u201D on ' + (pr.name || ''), pr.id);
+        renderOverview();
+      }
       catch(err){ showError('Could not update task: ' + (err.message || err)); }
       return;
     }
@@ -4920,6 +4931,7 @@ function openTaskModal(pr, idx){
       });
       try{
         await patchProjectCk(pr, { tasks: list });
+        auditLog('task', 'Task created \u2014 \u201C' + d.slice(0,60) + '\u201D on ' + (pr.name || ''), pr.id);
         m.style.display = 'none';
         renderOverview();
         var asg = document.getElementById('tskAssign').value;
@@ -9593,7 +9605,7 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
-var BUILD_TAG = '2026-07-19 build 47 \u2014 touch pass';
+var BUILD_TAG = '2026-07-19 build 48 \u2014 audit events';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
@@ -9662,6 +9674,7 @@ function fmtDur(ms){
   if(m < 60) return m + 'm';
   return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
 }
+var auditFilter = 'all';
 async function openAuditLog(){
   hideAllViews();
   document.getElementById('auditView').style.display = 'block';
@@ -9669,13 +9682,32 @@ async function openAuditLog(){
   if(!TEAM){ mount.innerHTML = '<div class="subnote">Audit log is available in team mode only.</div>'; return; }
   mount.innerHTML = '<div class="subnote">Loading&#8230;</div>';
   try{
-    var r = await sb.from('audit_sessions').select('email,login_at,last_seen')
-      .order('login_at', { ascending: false }).limit(120);
-    if(r.error) throw r.error;
-    var rows = r.data || [];
-    if(!rows.length){ mount.innerHTML = '<div class="subnote">No sessions recorded yet.</div>'; return; }
-    mount.innerHTML = rows.map(function(s){
-      var nm = DEFAULT_NAMES[s.email] || String(s.email || '').split('@')[0];
+    var evQ = sb.from('audit_events').select('at,email,type,detail,project_id')
+      .order('at', { ascending:false }).limit(250);
+    var ssQ = sb.from('audit_sessions').select('email,login_at,last_seen')
+      .order('login_at', { ascending:false }).limit(60);
+    var rs = await Promise.all([evQ, ssQ]);
+    var evErr = rs[0].error, events = rs[0].data || [];
+    var sessions = (rs[1].data) || [];
+    var chips = ['all'].concat(Object.keys(AUDIT_TYPES)).map(function(k){
+      var lbl = k === 'all' ? 'All' : AUDIT_TYPES[k].l;
+      return '<span class="hstat audf' + (auditFilter === k ? ' on' : '') + '" data-audf="' + k + '">' + lbl + '</span>';
+    }).join('');
+    var pool = auditFilter === 'all' ? events : events.filter(function(e){ return e.type === auditFilter; });
+    var evHtml = evErr
+      ? '<div class="subnote">Event audit needs the audit_events table \u2014 run the SQL once. (' + esc(evErr.message || '') + ')</div>'
+      : (pool.length ? pool.map(function(e){
+          var t = AUDIT_TYPES[e.type] || { i:'\u2022', l:e.type };
+          var d = new Date(e.at);
+          var who = rptRepName(e.email || '');
+          return '<div class="audrow"' + (e.project_id ? ' data-audgo="' + e.project_id + '" style="cursor:pointer;"' : '') + '>' +
+            '<b>' + (e.type === 'review' ? GOOGLE_G : t.i) + ' ' + esc(who) + '</b>' +
+            '<span>' + esc(e.detail || '') + '</span>' +
+            '<span><small>' + d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' \u00b7 ' +
+            d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) + '</small></span></div>';
+        }).join('') : '<div class="subnote">No events for this filter yet.</div>');
+    var ssHtml = sessions.map(function(s){
+      var nm = rptRepName(s.email || '');
       var li = new Date(s.login_at), ls = new Date(s.last_seen);
       var online = (Date.now() - ls.getTime()) < 120000;
       return '<div class="audrow"><b>' + esc(nm) + '</b>' +
@@ -9683,9 +9715,18 @@ async function openAuditLog(){
         li.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) + '</span>' +
         '<span><small>active</small> ' + fmtDur(ls - li) + '</span>' +
         (online ? '<span class="aon">&#9679; online</span>' : '') + '</div>';
-    }).join('');
+    }).join('') || '<div class="subnote">No sessions recorded yet.</div>';
+    mount.innerHTML =
+      '<div class="audfrow">' + chips + '</div>' + evHtml +
+      '<h3 class="projsec" style="margin-top:22px;">&#128274; Sign-in sessions</h3>' + ssHtml;
+    mount.querySelectorAll('[data-audf]').forEach(function(ch){
+      ch.addEventListener('click', function(){ auditFilter = ch.getAttribute('data-audf'); openAuditLog(); });
+    });
+    mount.querySelectorAll('[data-audgo]').forEach(function(rw){
+      rw.addEventListener('click', function(){ openProject(rw.getAttribute('data-audgo')); });
+    });
   }catch(err){
-    mount.innerHTML = '<div class="subnote">Could not load audit log \u2014 run the audit migration in Supabase first. (' + esc(err.message || err) + ')</div>';
+    mount.innerHTML = '<div class="subnote">Could not load audit log. (' + esc(err.message || err) + ')</div>';
   }
 }
 window.addEventListener('visibilitychange', function(){
@@ -9861,6 +9902,67 @@ function __histPush(st){
   try{ history.pushState(st, '', __hashFor(st)); }catch(e){}
 }
 /* =========================================================================
+   AUDIT EVENTS \u2014 who did what, when
+   ========================================================================= */
+function auditLog(type, detail, projectId){
+  try{
+    if(!TEAM) return;
+    sb.from('audit_events').insert({
+      email: (currentUser && currentUser.email) || null,
+      type: type, detail: String(detail || '').slice(0, 300),
+      project_id: projectId || null
+    }).then(function(){}, function(){});
+  }catch(e){}
+}
+var AUDIT_TYPES = {
+  lead:     { l:'Lead created',    i:'\uD83D\uDEA9' },
+  client:   { l:'Client created',  i:'\uD83D\uDC64' },
+  stage:    { l:'Stage change',    i:'\u27A1\uFE0F' },
+  money:    { l:'Money',           i:'\uD83D\uDCB0' },
+  task:     { l:'Tasks',           i:'\u2705' },
+  review:   { l:'Reviews',         i:'G' },
+  doc:      { l:'Documents',       i:'\uD83D\uDCC4' },
+  team:     { l:'Team',            i:'\uD83D\uDC65' },
+  delete:   { l:'Deletions',       i:'\uD83D\uDDD1\uFE0F' }
+};
+/* hook: project creation (lead vs client by starting stage) */
+(function(){
+  if(typeof pdb === 'undefined' || !pdb.add) return;
+  var _pa = pdb.add;
+  pdb.add = async function(row){
+    var out = await _pa.apply(pdb, arguments);
+    try{
+      var st = normStage((row && row.stage) || 'Lead');
+      auditLog(st === 'Lead' ? 'lead' : 'client',
+        (row && row.name ? row.name : 'New record') + ' \u2014 entered as ' + st,
+        out && out.id);
+    }catch(e){}
+    return out;
+  };
+})();
+/* hook: stage changes (incl. Dead + reason, Reopen) */
+(function(){
+  var _ss = setStage;
+  setStage = async function(id, v){
+    var pr = cacheProjects.find(function(p){ return p.id === id; });
+    var from = pr ? normStage(pr.stage) : '';
+    var out = await _ss.apply(this, arguments);
+    try{
+      var nm = pr ? pr.name : '';
+      if(v === 'Lost'){
+        var rsn = pr ? (parseCkAll(pr).loss_reason || '') : '';
+        auditLog('stage', nm + ' \u2014 marked DEAD' + (rsn ? ' (' + rsn + ')' : ''), id);
+      }else if(from === 'Lost'){
+        auditLog('stage', nm + ' \u2014 reopened as ' + v, id);
+      }else{
+        auditLog('stage', nm + ': ' + from + ' \u2192 ' + v, id);
+      }
+    }catch(e){}
+    return out;
+  };
+})();
+
+/* =========================================================================
    TEAM PAGE (admin-editable profiles + portraits)
    ========================================================================= */
 function teamEmails(){
@@ -9961,6 +10063,7 @@ document.getElementById('tmMount').addEventListener('click', async function(e){
     try{
       var r = await sb.from('team_profiles').upsert(row, { onConflict: 'email' });
       if(r.error) throw r.error;
+      auditLog('team', 'Profile edited \u2014 ' + (row.name || em), null);
       await loadTeamProfiles(); renderTeamView(); renderActivity(); renderPipeline();
     }catch(err){
       showError('Could not save: ' + (err.message || err) +
