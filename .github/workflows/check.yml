@@ -1,0 +1,82 @@
+name: Sanity check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: index.html exists and is not truncated
+        run: |
+          test -f index.html || { echo "::error::index.html is missing"; exit 1; }
+          SIZE=$(wc -c < index.html)
+          echo "index.html size: $SIZE bytes"
+          if [ "$SIZE" -lt 500000 ]; then
+            echo "::error::index.html is only $SIZE bytes - looks truncated or wrong file (expected ~650KB)"
+            exit 1
+          fi
+          tail -c 200 index.html | grep -q "</html>" || { echo "::error::index.html does not end with </html> - truncated upload"; exit 1; }
+
+      - name: JavaScript inside index.html parses
+        run: |
+          node -e "
+            const fs = require('fs');
+            const src = fs.readFileSync('index.html','utf8');
+            const blocks = [...src.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+            if(!blocks.length){ console.error('::error::no inline script blocks found'); process.exit(1); }
+            const big = blocks.reduce((a,b) => b.length > a.length ? b : a, '');
+            fs.writeFileSync('/tmp/app.js', big);
+          "
+          node --check /tmp/app.js
+          echo "app JS: valid"
+
+      - name: Structural balance (CSS braces, divs)
+        run: |
+          node -e "
+            const src = require('fs').readFileSync('index.html','utf8');
+            const styles = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m => m[1]);
+            for(const s of styles){
+              const open = (s.match(/\{/g)||[]).length, close = (s.match(/\}/g)||[]).length;
+              if(open !== close){ console.error('::error::CSS braces unbalanced: ' + open + ' vs ' + close); process.exit(1); }
+            }
+            const dv = (src.match(/<div/g)||[]).length, dc = (src.match(/<\/div>/g)||[]).length;
+            if(dv !== dc){ console.error('::error::div tags unbalanced: ' + dv + ' vs ' + dc); process.exit(1); }
+            console.log('CSS + div balance: OK');
+          "
+
+      - name: Service worker parses (if present)
+        run: |
+          if [ -f sw.js ]; then node --check sw.js && echo "sw.js: valid"; else echo "sw.js not present - skipping"; fi
+
+      - name: API function parses (if present)
+        run: |
+          if [ -f api/notify.js ]; then node --check api/notify.js && echo "api/notify.js: valid"; else echo "api/notify.js not present - skipping"; fi
+
+      - name: JSON files valid (if present)
+        run: |
+          for f in manifest.json package.json; do
+            if [ -f "$f" ]; then node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "$f: valid"; fi
+          done
+
+      - name: Push keys match between app and API (if both present)
+        run: |
+          if [ -f api/notify.js ]; then
+            node -e "
+              const fs = require('fs');
+              const app = fs.readFileSync('index.html','utf8');
+              const api = fs.readFileSync('api/notify.js','utf8');
+              const a = (app.match(/VAPID_PUBLIC = '([^']+)'/)||[])[1];
+              const b = (api.match(/VAPID_PUBLIC = '([^']+)'/)||[])[1];
+              if(a && b && a !== b){ console.error('::error::VAPID public keys differ between index.html and api/notify.js - push will fail'); process.exit(1); }
+              console.log('VAPID keys: ' + (a && b ? 'matched' : 'not applicable'));
+            "
+          fi
