@@ -376,8 +376,11 @@ footer.site{
 .jobmenu{-webkit-appearance:none;appearance:none;background:#4a4a4a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>') no-repeat right 14px center;
   color:#fff;border:1px solid #333;border-radius:9px;font:700 15px 'Segoe UI',Arial,sans-serif;
   padding:12px 40px 12px 16px;cursor:pointer;min-width:210px;box-shadow:0 2px 8px rgba(0,0,0,.18);}
-.jobmenu-head{padding:9px 34px 9px 13px;min-width:138px;font-size:13.5px;border-radius:9px;
-  background-position:right 11px center;vertical-align:middle;}
+.jobmenu-head{padding:9px 30px 9px 11px;min-width:0;max-width:150px;font-size:13px;border-radius:9px;
+  background-position:right 10px center;vertical-align:middle;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#brandTitle{min-width:0;overflow:hidden;}
+#brandTitle h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .jobmenu:focus{outline:2px solid var(--red);outline-offset:1px;}
 .ptabs{display:flex;gap:6px;margin:18px 0 0;border-bottom:2px solid var(--red);flex-wrap:wrap;}
 .ptab{border:1px solid var(--line);border-bottom:0;background:#f3ecea;color:#6b5a54;
@@ -775,7 +778,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   .titlecard h1{font-size:14px !important;}
   .headactions .btn{padding:0 11px;font-size:13px;}
   #headCtx{font-size:13px;}
-  .jobmenu-head{min-width:112px;font-size:12.5px;}
+  .jobmenu-head{max-width:112px;font-size:12px;padding:8px 26px 8px 9px;background-position:right 8px center;}
 }
 
 /* ---- overflow containment (long emails/addresses, flex shrink) ---- */
@@ -937,6 +940,21 @@ html, body{overflow-x:hidden;max-width:100%;}
     border:1px solid #e2d5c3;border-radius:6px;background:#faf3e6;padding:5px 0;}
   .teamcal .minical .calgrid .day.today{border-color:#7c1019;}
 }
+/* ---- reviews section: black calendar theme ---- */
+.acxsec.rvsec{background:linear-gradient(168deg,#241518 0%,#170f11 48%,#221407 100%);
+  border:1px solid #4a3420;border-top:5px solid #C8202E;
+  box-shadow:0 10px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(212,160,23,.35);
+  position:relative;overflow:hidden;}
+.acxsec.rvsec::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
+  background:linear-gradient(90deg,transparent,#8a5a00 20%,#f5d061 50%,#8a5a00 80%,transparent);}
+.rvsec .acxhead{background:transparent;border-bottom:1px solid rgba(212,160,23,.28);color:#f3e9dc;}
+.rvsec .acxbody .axnote{color:#d8c7ba;}
+.rvsec .axzero{color:#f5d061;}
+.rvsec .rvdone{color:#f5d061;}
+.rvsec .rvswrow{border-top-color:rgba(212,160,23,.22);color:#f3e9dc;}
+.rvsec .rvswitch .trk{background:#4a3a30;}
+.rvsec .chipbtn{background:rgba(255,255,255,.08);border-color:rgba(212,160,23,.5);color:#f3e9dc;}
+
 /* ---- activity count strip + AR vertical chart ---- */
 .acthead{border-top:2px solid #C8202E;margin-top:16px;padding-top:8px;
   font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
@@ -977,6 +995,31 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit label{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a7a72;margin:8px 0 2px;text-transform:uppercase;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
+
+/* ---- phone: client-profile fit pass ---- */
+@media (max-width:700px){
+  body.projopen #brandTitle{display:none;}
+  body.projopen .jobmenu-head{max-width:130px;}
+  /* milestones fit without side-scroll */
+  .mssteps{overflow-x:visible;min-width:0;}
+  .msstep{min-width:0;padding-top:13px;}
+  .msstep .mc{width:33px;height:33px;font-size:14px;}
+  .msstep small{font-size:9px;letter-spacing:0;}
+  .msstep .dt{font-size:8.5px;}
+  .msstep .dur{font-size:8.5px;top:0;}
+  .msstep::before{top:29px;height:2px;}
+  /* document tables become cards \u2014 no side-scroll */
+  #historyMount, #estDocsMount, #inspDocsMount, #listMount{overflow-x:visible;}
+  #historyMount table.reports, #estDocsMount table.reports,
+  #inspDocsMount table.reports, #listMount table.reports{min-width:0;width:100%;display:block;}
+  table.reports thead{display:none;}
+  table.reports tbody{display:block;}
+  table.reports tr{display:block;background:#fff;border:1px solid var(--line);border-radius:10px;
+    margin:0 0 10px;padding:4px 0 8px;}
+  table.reports td{display:block;border-top:0;padding:3px 12px;}
+  table.reports td.title{padding-top:9px;}
+  table.reports td .chipbtn{display:inline-block;margin:3px 6px 0 0;}
+}
 
 /* ---- mobile stability pass ---- */
 @media (max-width:900px){
@@ -1452,7 +1495,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 35 &#8212; tab history</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 39 &#8212; reviews lacquer</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -1754,7 +1797,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
 
     <div id="tab-inspections" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
       <h3 class="projsec">&#128248; Photo Gallery <span id="galSummary" class="projcount">0 / 20</span></h3>
       <p class="subnote">Field photos live on their own page — add, review, and transfer them into an inspection report.</p>
       <div style="margin:6px 0 18px;">
@@ -1769,7 +1812,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
 
     <div id="tab-estimates" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
       <h3 class="projsec">&#128196; Estimates</h3>
       <div style="margin:6px 0 12px;">
         <span id="pEstWrap" style="position:relative;">
@@ -1790,7 +1833,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
 
     <div id="tab-checklists" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
       <h3 class="projsec">&#128203; Checklists</h3>
       <p class="subnote">Job checklists for this client. The Roofing Inspection Checklist must be completed
       before an inspection report can be created &#8212; its core specs feed the report automatically.</p>
@@ -1813,7 +1856,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
 
     <div id="tab-measure" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
       <h3 class="projsec">&#128207; Measurements</h3>
       <p class="subnote">Order aerial measurements, keep every report with the client, and record the numbers your estimates run on.</p>
 
@@ -1852,7 +1895,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
       <input type="file" id="msFileInput" accept="application/pdf,image/*" style="display:none;">
     </div>
     <div id="tab-materials" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
       <h3 class="projsec">&#128230; Material Order Lists</h3>
       <p class="subnote">Import measurements once and auto-generate a material order with quantities and units.
       Quantities include standard waste and are fully editable &#8212; always verify against the scope before ordering.</p>
@@ -4449,7 +4492,7 @@ function renderAcxOverview(){
   var rv = ck.review_requested_at;
   var canAsk = ['Completed','Invoiced','Closed'].indexOf(stg) !== -1;
   html +=
-  '<div class="acxsec"><div class="acxhead">' + GOOGLE_G + ' Google Reviews</div><div class="acxbody">' +
+  '<div class="acxsec rvsec"><div class="acxhead">' + GOOGLE_G + ' Google Reviews</div><div class="acxbody">' +
     (rv
       ? '<div class="acxrow"><span style="color:#5a9e2f;font-size:17px;">&#10004;</span>' +
         '<span class="axnote">Review requested ' + acxDate(rv) + (ck.review_via ? ' via ' + esc(ck.review_via) : '') + '.</span></div>'
@@ -4869,6 +4912,14 @@ document.getElementById('msFileInput').addEventListener('change', function(){
     }catch(err){ showError('Upload failed: ' + (err.message || err) + ' \u2014 if this mentions a missing table, run the meas_docs SQL.'); }
   };
   fr.readAsDataURL(f);
+});
+/* tap anywhere on a document row to open it */
+document.addEventListener('click', function(e){
+  if(e.target.closest('button, a, input, select')) return;
+  var tr = e.target.closest('table.reports tr');
+  if(!tr) return;
+  var ob = tr.querySelector('[data-act="open"][data-id]');
+  if(ob) openEditor(ob.getAttribute('data-id'));
 });
 document.getElementById('tskModalX').addEventListener('click', function(){ document.getElementById('tskModal').style.display = 'none'; });
 document.getElementById('tskModal').addEventListener('click', function(e){ if(e.target === this) this.style.display = 'none'; });
@@ -6727,6 +6778,7 @@ function setHeaderJobMenu(on){
   var jm = document.getElementById('jobMenuSel');
   var nb = document.getElementById('navBtn');
   if(jm) jm.style.display = on ? 'inline-block' : 'none';
+  document.body.classList.toggle('projopen', !!on);
   if(nb) nb.style.display = on ? 'none' : 'inline-block';
   var rs = document.getElementById('repStrip');
   if(rs){
