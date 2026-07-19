@@ -891,7 +891,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 .teamcal .minical .calgrid .day.today{background:#C8202E;color:#fff;font-weight:800;
   box-shadow:0 0 0 2px #d4a017, 0 2px 8px rgba(200,32,46,.35);}
 .teamcal .minical .calgrid .day.today.cur:hover{background:#a5121f;}
-.teamcal .callegend{color:#9c8a72;}
+.teamcal .callegend{color:#3a2e28;font-weight:700;font-size:12px;letter-spacing:.02em;}
 @media (min-width:901px){
   .pipecard.teamcal{padding:16px 18px;}
   .teamcal .minical .calgrid{gap:5px;font-size:13.5px;}
@@ -899,6 +899,23 @@ html, body{overflow-x:hidden;max-width:100%;}
   .teamcal .minical .calgrid .dow{padding:6px 0;font-size:10.5px;}
   .teamcal .minical .calhead b{font-size:17px;}
   .teamcal .minical .calnav{width:32px;height:32px;font-size:18px;}
+}
+
+/* ---- teamcal: red header rule (all sizes) ---- */
+.teamcal .minical .calhead{border-bottom:2px solid #C8202E;padding-bottom:7px;margin-bottom:8px;}
+/* ---- teamcal: square boxed cells (desktop only) ---- */
+@media (min-width:901px){
+  .teamcal .minical .calgrid .day{
+    aspect-ratio:1/1;padding:0;display:flex;align-items:center;justify-content:center;
+    border:1px solid #e2d5c3;border-radius:6px;background:#fff;}
+  .teamcal .minical .calgrid .day.other{border-color:#efe7db;background:#fbf8f3;}
+  .teamcal .minical .calgrid .dow{
+    border:1px solid #e2d5c3;border-radius:6px;background:#faf3e6;padding:5px 0;}
+  .teamcal .minical .calgrid .day.today{border-color:#7c1019;}
+}
+/* ---- hide black sidebar calendar on mobile ---- */
+@media (max-width:900px){
+  #calCard{display:none;}
 }
 
 /* ---- Cardinal-black login theme ---- */
