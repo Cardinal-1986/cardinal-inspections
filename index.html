@@ -1014,13 +1014,28 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
 
+/* ---- mobile tap-target sizing (44px-friendly) ---- */
+@media (max-width:900px){
+  .msmenu .dots{padding:11px 14px;margin:-9px -8px;}
+  .acxpencil{font-size:16px;padding:11px;margin:-11px -11px -11px auto;}
+  .acxtab{padding:12px 14px;}
+  .tsktabs span{padding:9px 2px;}
+  .chipbtn{padding:9px 13px;min-height:38px;}
+  .jastrip .jaitem{min-height:44px;}
+  .cbx{width:20px;height:20px;}
+  .hstat{padding:8px 12px;}
+  [data-msdel], .tskrow small a{display:inline-block;padding:7px 8px;margin:-7px -8px;}
+}
+
 /* ---- docked header row (client open, phone) ---- */
-.repstrip.docked{flex-wrap:nowrap;align-items:center;gap:6px;justify-content:flex-start;padding:4px 0 8px;}
-.repstrip.docked .reppill{flex:0 1 auto;max-width:34vw;}
+.repstrip.docked{flex-wrap:nowrap;align-items:center;gap:5px;justify-content:flex-start;padding:4px 0 8px;}
+.repstrip.docked .reppill{flex:0 1 auto;}
+.repstrip.docked #repPill{max-width:24vw;}
+.repstrip.docked #headCtx{max-width:30vw;}
 .repstrip.docked #navWrap{margin-left:auto;flex:0 0 auto;}
-.repstrip.docked .jobmenu-head{max-width:118px;}
+.repstrip.docked .jobmenu-head{max-width:104px;padding:8px 24px 8px 8px;background-position:right 7px center;}
 .repstrip.docked #newWrap{flex:0 0 auto;}
-.repstrip.docked #newWrap .btn, .repstrip.docked #newWrap button{padding:7px 12px;font-size:15px;}
+.repstrip.docked #newWrap .btn, .repstrip.docked #newWrap button{padding:6px 10px;font-size:14px;min-height:34px;}
 
 /* ---- phone: client-profile fit pass ---- */
 @media (max-width:700px){
@@ -1184,11 +1199,13 @@ body.restoring #restoreVeil{display:flex;}
 }
 
 /* ---- button tap feedback ---- */
-.btn, .chipbtn, .navopt, .pipebtn, .calnav, .hstat, .ljtab, .ljcard, .pcard{
+.btn, .chipbtn, .navopt, .pipebtn, .calnav, .hstat, .ljtab, .ljcard, .pcard,
+.axbtn, .acxtab, .jaitem, .msmenu .dots, .tsktabs span{
   -webkit-tap-highlight-color:rgba(200,32,46,.15);}
-.btn:active, .chipbtn:active, .navopt:active, .calnav:active{
+.btn:active, .chipbtn:active, .navopt:active, .calnav:active,
+.axbtn:active, .acxtab:active, .jaitem:active, .msmenu .dots:active{
   transform:scale(.96);filter:brightness(.92);}
-.btn, .chipbtn, .navopt, .calnav{transition:transform .08s, filter .08s;}
+.btn, .chipbtn, .navopt, .calnav, .axbtn, .acxtab, .jaitem{transition:transform .08s, filter .08s;}
 .btn:disabled, .chipbtn:disabled{opacity:.5;pointer-events:none;}
 
 /* ---- assigned leads & jobs ---- */
@@ -1521,7 +1538,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 46 &#8212; dock fix</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 47 &#8212; touch pass</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9576,7 +9593,7 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
-var BUILD_TAG = '2026-07-19 build 46 \u2014 dock fix';
+var BUILD_TAG = '2026-07-19 build 47 \u2014 touch pass';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
