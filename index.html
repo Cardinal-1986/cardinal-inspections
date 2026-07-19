@@ -545,10 +545,13 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .pipebtn .pmoney{display:block;font:700 12px 'Segoe UI',Arial,sans-serif;color:#555;}
 .pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
 .pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;} .pipe-closed{background:#607D8B;}
-@media (max-width:640px){
-  .piperow{padding:0 8px 6px 0;}
-  .pipebtn{flex:0 0 auto;min-width:86px;}
-  .pipebtn .pcirc{width:58px;height:58px;font-size:26px;}
+@media (max-width:900px){
+  .piperow{padding:0 0 4px;gap:4px;overflow:visible;justify-content:space-between;}
+  .pipebtn{flex:1 1 0;min-width:0;max-width:none;padding:2px 0;}
+  .pipebtn .pcirc{width:46px;height:46px;font-size:21px;}
+  .pipebtn .plabel{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pipebtn .pcount{font-size:16px;}
+  .pipebtn .pmoney{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 }
 /* ---- quick row ---- */
 .quickrow{display:flex;gap:8px;margin-top:14px;}
@@ -941,8 +944,22 @@ html, body{overflow-x:hidden;max-width:100%;}
   section.history h2.sec{justify-content:center;text-align:center;}
 
   /* red filament between activity feed and Client Projects */
-  .homecols::after{content:'';display:block;flex:0 0 auto;height:1px;margin:4px 8px 0;
+  .homecols::after{content:'';display:block;width:100%;flex:0 0 auto;height:1px;margin:4px 0 0;
     background:linear-gradient(90deg,transparent,#7c1019 30%,#ff5a66 50%,#7c1019 70%,transparent);}
+
+  /* all cards as wide as the Client Projects box */
+  #mainView .wrap{padding-left:8px;padding-right:8px;}
+  #mainView section.history{margin:16px 8px 26px;padding:14px;}
+
+  /* red filament above the search card */
+  .quickrow::before{content:'';order:-1;height:1px;margin:2px 8px 0;background:linear-gradient(90deg,transparent,#7c1019 30%,#ff5a66 50%,#7c1019 70%,transparent);}
+
+  /* red filament between pipeline and the calendars */
+  .herorow::before{content:'';height:1px;margin:0 8px;background:linear-gradient(90deg,transparent,#7c1019 30%,#ff5a66 50%,#7c1019 70%,transparent);}
+
+  /* red filaments above and below the greeting quote */
+  .hero-left::before{content:'';width:100%;height:1px;margin-bottom:10px;background:linear-gradient(90deg,transparent,#7c1019 30%,#ff5a66 50%,#7c1019 70%,transparent);}
+  .hero-left::after{content:'';width:100%;height:1px;margin-top:10px;background:linear-gradient(90deg,transparent,#7c1019 30%,#ff5a66 50%,#7c1019 70%,transparent);}
 
   /* Dashboard box: pinned alone under header; search scrolls below in its own card */
   .homemain{display:flex;flex-direction:column;}
@@ -993,14 +1010,14 @@ html, body{overflow-x:hidden;max-width:100%;}
   /* watermark photo off on mobile */
   #mainView .homecols{background-image:none;}
 
-  /* logo + title as one centered unit */
-  .titlecard{order:2;flex:0 1 auto;min-width:0;margin-right:auto;justify-content:flex-start;
-    text-align:left;padding:0 4px 0 8px;}
+  /* title centered between logo and buttons */
+  .titlecard{order:2;flex:1;min-width:0;justify-content:center;
+    text-align:center;padding:0 4px;}
 
   /* + button (no word) beside Menu */
   #newWrap{order:3;}
   #navWrap{order:4;}
-  #brandLogo{order:1;margin-left:auto;}
+  #brandLogo{order:1;}
   #addProjectBtn{font-size:0;padding:8px 12px;}
   #addProjectBtn::after{content:'\FF0B';font-size:17px;font-weight:800;line-height:1;}
 }
@@ -5148,7 +5165,7 @@ function renderClientDirectory(){
   sf.innerHTML = '<span class="hstat' + (cliStageFilter === '' ? ' on' : '') + '" data-stg="">All stages</span>' +
     STAGES.map(function(s){
       var n = cacheProjects.filter(function(pr){ return normStage(pr.stage) === s; }).length;
-      return '<span class="hstat' + (cliStageFilter === s ? ' on' : '') + '" data-stg="' + s + '">' + s + ' <b>' + n + '</b></span>';
+      return '<span class="hstat' + (cliStageFilter === s ? ' on' : '') + '" data-stg="' + s + '">' + (s === 'Closed' ? 'Archived' : s) + ' <b>' + n + '</b></span>';
     }).join('');
   var list = favSort(cacheProjects.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); }))
     .filter(function(pr){
@@ -5487,8 +5504,7 @@ var PIPE_BUCKETS = [
   { key:'Prospect',  label:'PROSPECTS',  cls:'pipe-prospect',  tip:'Estimates out \u2014 awaiting decision' },
   { key:'Approved',  label:'APPROVED',   cls:'pipe-approved',  tip:'Signed contracts (incl. scheduled)' },
   { key:'Completed', label:'COMPLETED',  cls:'pipe-completed', tip:'Work finished \u2014 not yet invoiced' },
-  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' },
-  { key:'Closed',    label:'CLOSED',     letter:'$', cls:'pipe-closed', tip:'Paid \u2014 archived' }
+  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' }
 ];
 function projectValue(pr){
   var best = 0;
