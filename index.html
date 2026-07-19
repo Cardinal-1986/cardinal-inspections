@@ -1452,7 +1452,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 34 &#8212; measurements page</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 35 &#8212; tab history</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9449,7 +9449,7 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
-var BUILD_TAG = '2026-07-19 build 34 \u2014 measurements page';
+var BUILD_TAG = '2026-07-19 build 35 \u2014 tab history';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
@@ -9699,7 +9699,7 @@ try{
 var __histLock = false;
 function __hashFor(st){
   if(!st) return '#h';
-  if(st.v === 'project' && st.id) return '#p/' + st.id;
+  if(st.v === 'project' && st.id) return '#p/' + st.id + (st.tab && st.tab !== 'overview' ? '/' + st.tab : '');
   if(st.v === 'editor' && st.id) return '#e/' + st.id;
   if(st.v === 'leads') return '#leads' + (st.stg ? '/' + encodeURIComponent(st.stg) : '');
   if(st.v === 'reports') return '#reports';
@@ -9718,7 +9718,7 @@ function __histPush(st){
 }
 (function(){
   var _op = openProject;
-  openProject = function(id){ __histPush({ v:'project', id:id }); return _op(id); };
+  openProject = function(id){ __histPush({ v:'project', id:id }); window.__curTab = 'overview'; return _op(id); };
   var _oe = openEditor;
   openEditor = function(id){ __histPush({ v:'editor', id:id }); return _oe(id); };
   var _ol = openLeadsView;
@@ -9735,6 +9735,19 @@ function __histPush(st){
   openScheduleBoard = function(){ __histPush({ v:'board' }); return _obd(); };
   var _oli = openList;
   openList = function(k){ __histPush({ v:'list', k:k }); return _oli(k); };
+  var _stb = showTab;
+  showTab = function(name){
+    var prev = window.__curTab;
+    window.__curTab = name;
+    var pv = document.getElementById('projectView');
+    if(!__histLock && currentProject && pv && pv.style.display !== 'none' && prev && prev !== name){
+      try{
+        history.pushState({ v:'project', id: currentProject.id, tab: name }, '',
+          __hashFor({ v:'project', id: currentProject.id, tab: name }));
+      }catch(e){}
+    }
+    return _stb(name);
+  };
   var _otm = openTeamView;
   openTeamView = function(){ __histPush({ v:'team' }); return _otm(); };
   var _omp = openMyProfile;
@@ -9922,7 +9935,7 @@ async function enableNotifications(){
     if(__restored) return;
     var h = location.hash || '';
     var st = null, m;
-    if((m = /^#p\/(.+)$/.exec(h))) st = { v:'project', id: m[1] };
+    if((m = /^#p\/([^\/]+)(?:\/([a-z]+))?$/.exec(h))) st = { v:'project', id: m[1], tab: m[2] || null };
     else if((m = /^#e\/(.+)$/.exec(h))) st = { v:'editor', id: m[1] };
     else if((m = /^#leads(?:\/(.+))?$/.exec(h))) st = { v:'leads', stg: m[1] ? decodeURIComponent(m[1]) : null };
     else if(h === '#reports') st = { v:'reports' };
@@ -9942,7 +9955,16 @@ async function enableNotifications(){
     __restored = true;
     __histLock = true;
     try{
-      if(st.v === 'project') _op(st.id);
+      if(st.v === 'project'){
+        window.__curTab = 'overview';
+        Promise.resolve(_op(st.id)).then(function(){
+          if(st.tab && st.tab !== 'overview'){
+            __histLock = true;
+            try{ showTab(st.tab); window.__curTab = st.tab; }
+            finally{ __histLock = false; }
+          }
+        });
+      }
       else if(st.v === 'editor') _oe(st.id);
       else if(st.v === 'leads') _ol(st.stg || undefined);
       else if(st.v === 'reports') _or();
@@ -9977,7 +9999,11 @@ async function enableNotifications(){
       if(typeof editor !== 'undefined' && editor.classList.contains('open') && st.v !== 'editor'){
         await closeEditor();
       }
-      if(st.v === 'project' && st.id) _op(st.id);
+      if(st.v === 'project' && st.id){
+        window.__curTab = st.tab || 'overview';
+        await _op(st.id);
+        if(st.tab && st.tab !== 'overview'){ showTab(st.tab); window.__curTab = st.tab; }
+      }
       else if(st.v === 'editor' && st.id) _oe(st.id);
       else if(st.v === 'leads') _ol(st.stg || undefined);
       else if(st.v === 'reports') _or();
