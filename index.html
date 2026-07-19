@@ -1018,6 +1018,8 @@ html, body{overflow-x:hidden;max-width:100%;}
 .audfrow{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px;}
 .audf{cursor:pointer;}
 .audf.on{background:#C8202E;color:#fff;border-color:#C8202E;}
+.audf.zero{opacity:.5;}
+.audf b{margin-left:3px;}
 .audrow span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere;}
 
 /* ---- mobile tap-target sizing (44px-friendly) ---- */
@@ -1544,7 +1546,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 48 &#8212; audit events</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 49 &#8212; audit filters live</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9605,7 +9607,7 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
-var BUILD_TAG = '2026-07-19 build 48 \u2014 audit events';
+var BUILD_TAG = '2026-07-19 build 49 \u2014 audit filters live';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
@@ -9678,34 +9680,49 @@ var auditFilter = 'all';
 async function openAuditLog(){
   hideAllViews();
   document.getElementById('auditView').style.display = 'block';
+  renderAuditLog();
+}
+async function renderAuditLog(){
   var mount = document.getElementById('auditMount');
+  if(!mount) return;
   if(!TEAM){ mount.innerHTML = '<div class="subnote">Audit log is available in team mode only.</div>'; return; }
   mount.innerHTML = '<div class="subnote">Loading&#8230;</div>';
   try{
-    var evQ = sb.from('audit_events').select('at,email,type,detail,project_id')
-      .order('at', { ascending:false }).limit(250);
-    var ssQ = sb.from('audit_sessions').select('email,login_at,last_seen')
-      .order('login_at', { ascending:false }).limit(60);
-    var rs = await Promise.all([evQ, ssQ]);
+    var rs = await Promise.all([
+      sb.from('audit_events').select('at,email,type,detail,project_id').order('at', { ascending:false }).limit(300),
+      sb.from('audit_sessions').select('email,login_at,last_seen').order('login_at', { ascending:false }).limit(60)
+    ]);
     var evErr = rs[0].error, events = rs[0].data || [];
-    var sessions = (rs[1].data) || [];
+    var sessions = rs[1].data || [];
+    var counts = { all: events.length };
+    events.forEach(function(e){ counts[e.type] = (counts[e.type] || 0) + 1; });
     var chips = ['all'].concat(Object.keys(AUDIT_TYPES)).map(function(k){
       var lbl = k === 'all' ? 'All' : AUDIT_TYPES[k].l;
-      return '<span class="hstat audf' + (auditFilter === k ? ' on' : '') + '" data-audf="' + k + '">' + lbl + '</span>';
-    }).join('');
+      var n = counts[k] || 0;
+      return '<span class="hstat audf' + (auditFilter === k ? ' on' : '') + (n || k === 'all' ? '' : ' zero') +
+        '" data-audf="' + k + '">' + lbl + ' <b>' + n + '</b></span>';
+    }).join('') + '<span class="hstat audf" data-audref="1">&#8635; Refresh</span>';
     var pool = auditFilter === 'all' ? events : events.filter(function(e){ return e.type === auditFilter; });
-    var evHtml = evErr
-      ? '<div class="subnote">Event audit needs the audit_events table \u2014 run the SQL once. (' + esc(evErr.message || '') + ')</div>'
-      : (pool.length ? pool.map(function(e){
-          var t = AUDIT_TYPES[e.type] || { i:'\u2022', l:e.type };
-          var d = new Date(e.at);
-          var who = rptRepName(e.email || '');
-          return '<div class="audrow"' + (e.project_id ? ' data-audgo="' + e.project_id + '" style="cursor:pointer;"' : '') + '>' +
-            '<b>' + (e.type === 'review' ? GOOGLE_G : t.i) + ' ' + esc(who) + '</b>' +
-            '<span>' + esc(e.detail || '') + '</span>' +
-            '<span><small>' + d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' \u00b7 ' +
-            d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) + '</small></span></div>';
-        }).join('') : '<div class="subnote">No events for this filter yet.</div>');
+    var evHtml;
+    if(evErr){
+      evHtml = '<div class="subnote">Event audit needs the audit_events table \u2014 run the audit SQL in Supabase once, then Refresh. (' + esc(evErr.message || '') + ')</div>';
+    }else if(!events.length){
+      evHtml = '<div class="subnote">No events recorded yet \u2014 the ledger starts fresh from this build. Create a lead, record a payment, or complete a task and it will appear here with a timestamp.</div>';
+    }else if(!pool.length){
+      var tl = (AUDIT_TYPES[auditFilter] || {}).l || auditFilter;
+      evHtml = '<div class="subnote">No \u201C' + esc(tl) + '\u201D events yet \u2014 they\u2019ll appear here as the team works.</div>';
+    }else{
+      evHtml = pool.map(function(e){
+        var t = AUDIT_TYPES[e.type] || { i:'\u2022', l:e.type };
+        var d = new Date(e.at);
+        var who = rptRepName(e.email || '');
+        return '<div class="audrow"' + (e.project_id ? ' data-audgo="' + e.project_id + '" style="cursor:pointer;"' : '') + '>' +
+          '<b>' + (e.type === 'review' ? GOOGLE_G : t.i) + ' ' + esc(who) + '</b>' +
+          '<span>' + esc(e.detail || '') + '</span>' +
+          '<span><small>' + d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' \u00b7 ' +
+          d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) + '</small></span></div>';
+      }).join('');
+    }
     var ssHtml = sessions.map(function(s){
       var nm = rptRepName(s.email || '');
       var li = new Date(s.login_at), ls = new Date(s.last_seen);
@@ -9720,8 +9737,10 @@ async function openAuditLog(){
       '<div class="audfrow">' + chips + '</div>' + evHtml +
       '<h3 class="projsec" style="margin-top:22px;">&#128274; Sign-in sessions</h3>' + ssHtml;
     mount.querySelectorAll('[data-audf]').forEach(function(ch){
-      ch.addEventListener('click', function(){ auditFilter = ch.getAttribute('data-audf'); openAuditLog(); });
+      ch.addEventListener('click', function(){ auditFilter = ch.getAttribute('data-audf'); renderAuditLog(); });
     });
+    var rf = mount.querySelector('[data-audref]');
+    if(rf) rf.addEventListener('click', function(){ renderAuditLog(); });
     mount.querySelectorAll('[data-audgo]').forEach(function(rw){
       rw.addEventListener('click', function(){ openProject(rw.getAttribute('data-audgo')); });
     });
