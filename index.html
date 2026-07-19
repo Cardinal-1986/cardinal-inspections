@@ -1014,6 +1014,19 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
 
+/* ---- list salesman filter ---- */
+.listctl{display:flex;align-items:center;gap:8px;margin:6px 0 12px;
+  font:700 13px 'Segoe UI',Arial,sans-serif;color:#5c4a42;}
+.listctl select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+  font:700 13.5px 'Segoe UI',Arial,sans-serif;background:#fff;max-width:240px;}
+
+/* ---- settings rows ---- */
+.setrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:#fff;border:1px solid var(--line);border-left:5px solid #C8202E;border-radius:10px;
+  padding:16px 16px;margin:0 0 10px;font:700 15px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;cursor:pointer;}
+.setrow .chev{margin-left:auto;color:#C8202E;font-size:19px;}
+.setrow:active{transform:scale(.985);filter:brightness(.95);}
+
 /* ---- audit filters ---- */
 .audfrow{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px;}
 .audf{cursor:pointer;}
@@ -1079,7 +1092,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   #historyMount, #estDocsMount, #inspDocsMount, #listMount{
     overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
   /* belt-and-suspenders: no view may widen the page */
-  #mainView, #projectView, #clientsView, #activityView, #reportsView, #leadsView, #auditView, #teamView{
+  #mainView, #projectView, #clientsView, #activityView, #reportsView, #leadsView, #auditView, #teamView, #settingsView{
     overflow-x:clip;max-width:100%;}
 }
 /* ---- trades checkboxes: aligned everywhere ---- */
@@ -1537,17 +1550,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="feed">&#9889; Activity Feed</button>
           <button class="navopt" data-nav="reports">&#128200; Graphs &amp; Reports</button>
           <button class="navopt" data-nav="leads">&#128203; Leads &amp; Jobs</button>
-          <button class="navopt" data-nav="notify">&#128276; Enable Notifications</button>
           <button class="navopt" data-nav="board">&#128197; Schedule Board</button>
           <button class="navopt" data-nav="recents">&#128337; Recents</button>
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
-          <button class="navopt" data-nav="audit" id="auditNav" style="display:none;">&#128373; Audit Log</button>
-          <button class="navopt" data-nav="team" id="teamNav" style="display:none;">&#128101; Team</button>
-          <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
-          <button class="navopt" data-nav="profile">&#128100; My Profile</button>
+          <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 50 &#8212; audit reset</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 52 &#8212; salesman filters</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -1777,6 +1786,18 @@ body:has(#loginView[style*="block"]){background:#fff;}
         </div>
       </aside>
     </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS ============ -->
+<div id="settingsView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;max-width:640px;">
+    <h2 class="ljtitle" style="margin:0 0 16px;">&#9881;&#65039; Settings</h2>
+    <button class="setrow" data-set="profile">&#128100; My Profile <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="team" id="teamNav" style="display:none;">&#128101; Team <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="notify">&#128276; Enable Notifications <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="audit" id="auditNav" style="display:none;">&#128373; Audit Log <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="backup" id="backupNav" style="display:none;">&#128190; Backup all data <span class="chev">&#8250;</span></button>
   </div>
 </div>
 
@@ -2036,6 +2057,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
   <div class="wrap" style="padding-top:18px;">
     <h2 id="listTitle" style="margin:16px 0 4px;"></h2>
     <p class="subnote" id="listNote"></p>
+    <div class="listctl">&#128100; Salesman: <select id="listRepSel"></select></div>
     <div id="listMount"><div class="loading">Loading…</div></div>
   </div>
 </div>
@@ -5018,13 +5040,13 @@ document.getElementById('tskModal').addEventListener('click', function(e){ if(e.
 var ljState = { sel:null, sort:'status', tab:'details', open:{}, sets:{} };
 var LJ_GROUPS = [
   { key:'stage',    label:'Milestone Pipeline', get:function(p){ return normStage(p.stage); } },
+  { key:'rep',      label:'Salesman',           get:function(p){ return rptRepName(p.created_by || ''); } },
   { key:'priority', label:'Job Priority',       get:function(p){ return parseCkAll(p).priority || 'Normal'; } },
   { key:'rank',     label:'Lead Rank',          get:function(p){ var r = ljRank(p); return r ? r + ' bar' + (r>1?'s':'') : 'Unavailable'; } },
   { key:'category', label:'Job Category',       get:function(p){ return parseCkAll(p).job_category || ''; } },
   { key:'worktype', label:'Work Type',          get:function(p){ return parseCkAll(p).work_type || ''; } },
   { key:'trade',    label:'Trade',              multi:true, get:function(p){ return ljTrades(p); } },
   { key:'city',     label:'City, State',        get:function(p){ return ljCity(p); } },
-  { key:'rep',      label:'Assigned To',        get:function(p){ return rptRepName(p.created_by || ''); } },
   { key:'source',   label:'Lead Source',        get:function(p){ return parseCkAll(p).lead_source || ''; } }
 ];
 function ljTrades(p){
@@ -6910,6 +6932,7 @@ function hideAllViews(){
   var _rv = document.getElementById('reportsView'); if(_rv) _rv.style.display = 'none';
   var _lv = document.getElementById('leadsView'); if(_lv) _lv.style.display = 'none';
   var _tv = document.getElementById('teamView'); if(_tv) _tv.style.display = 'none';
+  var _sv = document.getElementById('settingsView'); if(_sv) _sv.style.display = 'none';
   boardView.style.display = 'none';
   commsView.style.display = 'none';
   document.getElementById('auditView').style.display = 'none';
@@ -7548,6 +7571,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'audit'){ openAuditLog(); }
   else if(nav === 'notify'){ enableNotifications(); }
   else if(nav === 'team'){ try{ openTeamView(); }catch(err){ alert('Team: ' + (err.message || err)); } }
+  else if(nav === 'settings'){ openSettingsView(); }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
@@ -7575,6 +7599,18 @@ function openList(kind){
     ((kind === 'estimates' && isAdminUser()) ? 'inline-block' : 'none') +
     ';float:right;font-size:12.5px;">&#128202; Backfill totals</button>';
   document.getElementById('listNote').textContent = def.note;
+  /* salesman filter */
+  (function(){
+    var sel = document.getElementById('listRepSel');
+    if(!sel) return;
+    var reps = {};
+    cacheRows.forEach(function(r){ if(r.created_by) reps[r.created_by] = 1; });
+    TEAM_ROSTER.forEach(function(m){ reps[m.email] = 1; });
+    var cur = window.__listRep || 'all';
+    sel.innerHTML = '<option value="all">All salesmen</option>' + Object.keys(reps).sort().map(function(em){
+      return '<option value="' + esc(em) + '"' + (cur === em ? ' selected' : '') + '>' + esc(rptRepName(em)) + '</option>';
+    }).join('');
+  })();
   renderList();
   window.scrollTo(0,0);
 }
@@ -7582,12 +7618,19 @@ function renderList(){
   if(!currentList) return;
   var def = LIST_DEFS[currentList];
   var rows = cacheRows.filter(def.filter).sort(def.sort);
+  var lr = window.__listRep || 'all';
+  if(lr !== 'all') rows = rows.filter(function(r){ return r.created_by === lr; });
   if(def.limit) rows = rows.slice(0, def.limit);
   document.getElementById('listMount').innerHTML = rows.length
     ? docTable(rows)
     : '<div class="empty"><b>Nothing here yet.</b></div>';
 }
 var __listBackBtn = document.getElementById('listBackBtn'); if(__listBackBtn) __listBackBtn.addEventListener('click', showHome);
+var __listRepSel = document.getElementById('listRepSel');
+if(__listRepSel) __listRepSel.addEventListener('change', function(){
+  window.__listRep = this.value;
+  renderList();
+});
 document.getElementById('listMount').addEventListener('click', handleDocAction);
 
 /* ---------- my profile ---------- */
@@ -9608,7 +9651,7 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
-var BUILD_TAG = '2026-07-19 build 50 \u2014 audit reset';
+var BUILD_TAG = '2026-07-19 build 52 \u2014 salesman filters';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
@@ -9928,6 +9971,7 @@ function __hashFor(st){
   if(st.v === 'list' && st.k) return '#list/' + encodeURIComponent(st.k);
   if(st.v === 'me') return '#me';
   if(st.v === 'team') return '#team';
+  if(st.v === 'settings') return '#settings';
   return '#h';
 }
 function __histPush(st){
@@ -10005,6 +10049,21 @@ function teamEmails(){
   cacheProjects.forEach(function(p){ if(p.created_by) set[p.created_by] = 1; });
   return Object.keys(set).sort();
 }
+function openSettingsView(){
+  hideAllViews();
+  document.getElementById('settingsView').style.display = 'block';
+  window.scrollTo(0,0);
+}
+document.getElementById('settingsView').addEventListener('click', function(e){
+  var b = e.target.closest('.setrow');
+  if(!b) return;
+  var k = b.getAttribute('data-set');
+  if(k === 'profile') openMyProfile();
+  else if(k === 'team') openTeamView();
+  else if(k === 'notify') enableNotifications();
+  else if(k === 'audit') openAuditLog();
+  else if(k === 'backup') exportBackup();
+});
 async function openTeamView(){
   try{
     hideAllViews();
@@ -10204,6 +10263,8 @@ async function enableNotifications(){
     }
     return _stb(name);
   };
+  var _ost = openSettingsView;
+  openSettingsView = function(){ __histPush({ v:'settings' }); return _ost(); };
   var _otm = openTeamView;
   openTeamView = function(){ __histPush({ v:'team' }); return _otm(); };
   var _omp = openMyProfile;
@@ -10216,7 +10277,7 @@ async function enableNotifications(){
     if(!__histLock && history.state && history.state.v === 'editor'){ history.back(); return; }
     return _ce();
   };
-  try{ if(!/^#(p|e|list)\//.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
+  try{ if(!/^#(p|e|list)\//.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
   var __restored = false, __restoreTries = 0;
   window.__tryRestoreFromHash = function(){
     if(__restored) return;
@@ -10233,6 +10294,7 @@ async function enableNotifications(){
     else if((m = /^#list\/(.+)$/.exec(h))) st = { v:'list', k: decodeURIComponent(m[1]) };
     else if(h === '#me') st = { v:'me' };
     else if(h === '#team') st = { v:'team' };
+    else if(h === '#settings') st = { v:'settings' };
     if(!st){ __restored = true; document.body.classList.remove('restoring'); return; }
     if((st.v === 'project' || st.v === 'leads') && !cacheProjects.length && __restoreTries < 25){
       __restoreTries++; setTimeout(window.__tryRestoreFromHash, 250);
@@ -10262,6 +10324,7 @@ async function enableNotifications(){
       else if(st.v === 'list' && st.k) _oli(st.k);
       else if(st.v === 'me') _omp();
       else if(st.v === 'team') _otm();
+      else if(st.v === 'settings') _ost();
       history.replaceState(st, '', __hashFor(st));
     } finally {
       __histLock = false;
@@ -10269,7 +10332,7 @@ async function enableNotifications(){
     }
   };
   function __restorableHash(){
-    return /^#(p|e|list)\//.test(location.hash) || /^#(leads|reports|clients|feed|audit|board|me|team)/.test(location.hash);
+    return /^#(p|e|list)\//.test(location.hash) || /^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash);
   }
   var _smw = showMain;
   showMain = function(em){
@@ -10301,6 +10364,7 @@ async function enableNotifications(){
       else if(st.v === 'list' && st.k) _oli(st.k);
       else if(st.v === 'me') _omp();
       else if(st.v === 'team') _otm();
+      else if(st.v === 'settings') _ost();
       else _sh();
     } finally { __histLock = false; }
   });
