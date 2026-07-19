@@ -874,7 +874,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   box-shadow:0 6px 18px rgba(40,20,10,.10), inset 0 1px 0 rgba(212,160,23,.4);
 }
 .pipecard.teamcal::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
-  background:linear-gradient(90deg,transparent,#d4a017 30%,#f5d061 50%,#d4a017 70%,transparent);}
+  background:linear-gradient(90deg,transparent,#2b2320 30%,#000 50%,#2b2320 70%,transparent);}
 .pipecard.teamcal .pipetitle span:first-child{
   font:800 15.5px Georgia,'Times New Roman',serif;letter-spacing:.03em;color:#1c1416;}
 .teamcal .minical .calhead b{
@@ -917,6 +917,13 @@ html, body{overflow-x:hidden;max-width:100%;}
 @media (max-width:900px){
   #calCard{display:none;}
 }
+
+/* ---- home cards: red bar + black filament (matches sign-in framing) ---- */
+.dashcard, .pipecard, .actcard{
+  border-top:5px solid #C8202E;position:relative;overflow:hidden;}
+.dashcard::after, .pipecard::after, .actcard::after{
+  content:'';position:absolute;left:0;right:0;top:5px;height:1px;
+  background:linear-gradient(90deg,transparent,#2b2320 30%,#000 50%,#2b2320 70%,transparent);}
 
 /* ---- Cardinal-black login theme ---- */
 .logincard{
