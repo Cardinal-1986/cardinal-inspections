@@ -198,7 +198,6 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 @media (max-width:760px){
   .toolbar{padding:8px 10px;gap:6px;}
   #editorLogo{order:-1;}
-  #backBtn{order:-2;}
   .toolbar .grow{flex:1 1 100%;order:5;min-width:0;}
   .toolbar .btn{font-size:12px;padding:8px 10px;}
   .toolbar .statuswrap{font-size:11px;}
@@ -1081,7 +1080,6 @@ body.restoring #restoreVeil{display:flex;}
 .gicon{width:15px;height:15px;vertical-align:-2px;display:inline-block;flex:0 0 auto;}
 
 /* ---- estimate editor header ---- */
-#backBtn{background:#C8202E;border-color:#C8202E;color:#fff;font-weight:800;flex:0 0 auto;}
 .edchip{display:inline-flex;align-items:center;gap:5px;max-width:150px;height:24px;padding:0 10px;
   border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);
   font:700 10.5px 'Segoe UI',Arial,sans-serif;color:#f3e9dc;white-space:nowrap;overflow:hidden;
@@ -1096,7 +1094,6 @@ body.restoring #restoreVeil{display:flex;}
 #savedFlash{order:11;}
 @media (max-width:760px){
   .edchip{height:22px;font-size:10px;padding:0 8px;max-width:30vw;}
-  #backBtn{padding:8px 11px;font-size:13px;}
 }
 
 /* ---- button tap feedback ---- */
@@ -1572,8 +1569,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <div class="pipecard" style="margin-top:0;">
       <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
         <span>&#128200; Graphs &amp; Reports</span>
-        <button class="chipbtn" id="rptBackBtn">&#8249; Home</button>
-      </div>
+        </div>
       <div class="rptchips" id="rptRange">
         <span class="hstat" data-r="w">Week</span><span class="hstat on" data-r="m">Month</span>
         <span class="hstat" data-r="3m">3 Mo</span><span class="hstat" data-r="6m">6 Mo</span>
@@ -1628,7 +1624,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
   <div class="wrap" style="padding-top:16px;">
     <div class="ljhead">
       <h2 class="ljtitle">Assigned Leads &amp; Jobs</h2>
-      <button class="chipbtn" id="ljBackBtn">&#8249; Home</button>
     </div>
     <div class="ljtop">
       <input type="search" id="ljSearch" placeholder="Search Results">
@@ -1673,7 +1668,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
   <div class="wrap" style="padding-top:18px;">
     <div class="ljhead">
       <h2 class="ljtitle">&#128101; Team</h2>
-      <button class="chipbtn" id="tmBackBtn">&#8249; Home</button>
     </div>
     <div id="tmMount"></div>
   </div>
@@ -1875,7 +1869,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ DOCUMENT LIST PAGE (recents / inspections / estimates) ============ -->
 <div id="listView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <button class="btn dark" id="listBackBtn">&larr; Home</button>
     <h2 id="listTitle" style="margin:16px 0 4px;"></h2>
     <p class="subnote" id="listNote"></p>
     <div id="listMount"><div class="loading">Loading…</div></div>
@@ -1885,7 +1878,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ MY PROFILE PAGE ============ -->
 <div id="profileView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <button class="btn dark" id="profBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#128100; My Profile</h2>
     <p class="subnote">Your name and contact info appear as &#8220;Prepared By / Inspector&#8221; on every
     estimate and inspection report you create.</p>
@@ -1919,7 +1911,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ CLIENT DIRECTORY ============ -->
 <div id="clientsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <button class="btn dark" id="cliBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#128101; Client Directory</h2>
     <div class="controls" style="margin:8px 0 0;">
       <input type="search" id="cliFilter" placeholder="Filter by name, PO #, address, phone, email, rep&#8230;" aria-label="Filter clients">
@@ -1933,7 +1924,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ ACTIVITY FEED PAGE ============ -->
 <div id="activityView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:1500px;">
-    <button class="btn dark" id="actBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#9889; Activity Feed</h2>
     <p class="subnote">Everything happening across the team, newest first.</p>
     <div id="actFeedFull"></div>
@@ -1966,7 +1956,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
 </div>
 <div id="boardView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:1700px;">
-    <button class="btn dark" id="boardBackBtn">&larr; Home</button>
     <h2 style="margin:16px 0 4px;">&#128197; Schedule Board</h2>
     <p class="subnote">Jobs &#128296;, material drops &#128666;, and appointments &#128197; for the next 14 days. Tap a day to add or edit.</p>
     <div id="boardMount"></div>
@@ -2366,7 +2355,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
   <div class="toolbar">
     <img id="editorLogo" alt="Home" title="Save &amp; go home"
          style="display:none;height:40px;width:auto;flex:0 0 auto;cursor:pointer;border-radius:8px;background:#fff;padding:4px;border:2px solid var(--red);">
-    <button class="btn" id="backBtn">&#8249; Client Overview</button>
     <span class="edchip edlink" id="edClientChip" title="Back to client overview" style="display:none;"></span>
     <span class="edchip" id="edRepChip" style="display:none;"></span>
     <div class="grow">
@@ -4295,7 +4283,9 @@ function renderAcxOverview(){
         (ck.manual_value ? ' <i style="color:#8a7a72;">(manual total \u2014 transferred)</i>' : '') + '</span>'
       : '<span style="color:#C8202E;font-size:18px;">&#10006;</span><span class="axnote">No Worksheet has been created for this job. Sign a contract \u2014 or use \u201CSkip \u2014 enter total\u201D above for transferred clients.</span>') +
     '</div>' +
-    (fin.value ? '<button class="axbtn" id="acxPayBtn" style="margin-top:10px;">\uFF0B Record payment</button>' : '') +
+    (fin.value
+      ? '<button class="axbtn" id="acxPayBtn" style="margin-top:10px;">\uFF0B Record payment</button>'
+      : '<button class="axbtn" id="acxNewWs" style="margin-top:10px;">New Worksheet</button>') +
   '</div></div>';
   html +=
   '<div class="acxsec"><div class="acxhead">Orders</div><div class="acxbody">' +
@@ -4317,7 +4307,7 @@ function renderAcxOverview(){
   }).join('') : '<div class="axnote" style="padding:6px 0;">No Tasks to show you</div>';
   html +=
   '<div class="acxsec"><div class="acxhead">Tasks</div><div class="acxbody">' +
-    '<div class="acxrow"><span class="axzero">' + openT.length + '</span>' +
+    '<div class="acxrow">' +
     '<button class="axbtn" id="acxNewTask">Create Task</button></div>' +
     '<div class="tsktabs">' +
       '<span data-tt="open" class="' + (acxTaskTab==='open'?'on':'') + '">Open (' + openT.length + ')</span>' +
@@ -4409,16 +4399,19 @@ function renderAcxOverview(){
         .catch(function(err){ showError('Could not save: ' + (err.message || err)); });
     });
   });
-  var se = document.getElementById('acxSkipEst');
-  if(se) se.addEventListener('click', async function(){
+  async function acxEnterTotal(){
     var cur = ck.manual_value ? String(ck.manual_value) : '';
-    var v = prompt('Job total for this client ($):\n(Use this to transfer older clients without rebuilding the estimate or contract.)', cur);
+    var v = prompt('Job total for this client ($):\n(Creates the worksheet \u2014 use for transferred clients or jobs without a signed contract.)', cur);
     if(v === null) return;
     var n = Number(String(v).replace(/[^\d.]/g,''));
     if(!(n > 0)){ alert('Enter a dollar amount greater than 0.'); return; }
     try{ await patchProjectCk(pr, { manual_value: n }); renderOverview(); renderPipeline(); }
     catch(err){ showError('Could not save: ' + (err.message || err)); }
-  });
+  }
+  var se = document.getElementById('acxSkipEst');
+  if(se) se.addEventListener('click', acxEnterTotal);
+  var nw = document.getElementById('acxNewWs');
+  if(nw) nw.addEventListener('click', acxEnterTotal);
   var cm = document.getElementById('acxClearManual');
   if(cm) cm.addEventListener('click', async function(ev){
     ev.preventDefault();
@@ -4704,7 +4697,7 @@ function renderLjDetail(){
   });
 }
 /* wiring */
-document.getElementById('ljBackBtn').addEventListener('click', showHome);
+var __ljBackBtn = document.getElementById('ljBackBtn'); if(__ljBackBtn) __ljBackBtn.addEventListener('click', showHome);
 document.getElementById('ljSearch').addEventListener('input', function(){
   clearTimeout(this.__t); this.__t = setTimeout(renderLeadsView, 300);
 });
@@ -5089,7 +5082,7 @@ function renderRptProd(projs, from, to, pfrom, pto){
 }
 
 /* reports UI wiring */
-document.getElementById('rptBackBtn').addEventListener('click', showHome);
+var __rptBackBtn = document.getElementById('rptBackBtn'); if(__rptBackBtn) __rptBackBtn.addEventListener('click', showHome);
 document.getElementById('rptRange').addEventListener('click', function(e){
   var chip = e.target.closest('.hstat'); if(!chip) return;
   this.querySelectorAll('.hstat').forEach(function(c){ c.classList.remove('on'); });
@@ -6945,7 +6938,7 @@ function openClientsDirectory(keepFilter){
     });
   }
 })();
-document.getElementById('cliBackBtn').addEventListener('click', showHome);
+var __cliBackBtn = document.getElementById('cliBackBtn'); if(__cliBackBtn) __cliBackBtn.addEventListener('click', showHome);
 document.getElementById('cliFilter').addEventListener('input', renderClientDirectory);
 document.getElementById('stgFilter').addEventListener('click', function(e){
   var chip = e.target.closest('.hstat');
@@ -7051,7 +7044,7 @@ function renderList(){
     ? docTable(rows)
     : '<div class="empty"><b>Nothing here yet.</b></div>';
 }
-document.getElementById('listBackBtn').addEventListener('click', showHome);
+var __listBackBtn = document.getElementById('listBackBtn'); if(__listBackBtn) __listBackBtn.addEventListener('click', showHome);
 document.getElementById('listMount').addEventListener('click', handleDocAction);
 
 /* ---------- my profile ---------- */
@@ -7081,7 +7074,7 @@ function openMyProfile(){
   profileView.style.display = 'block';
   window.scrollTo(0,0);
 }
-document.getElementById('profBackBtn').addEventListener('click', showHome);
+var __profBackBtn = document.getElementById('profBackBtn'); if(__profBackBtn) __profBackBtn.addEventListener('click', showHome);
 document.getElementById('upSave').addEventListener('click', async function(){
   var first = document.getElementById('upFirst').value.trim();
   var last  = document.getElementById('upLast').value.trim();
@@ -7472,7 +7465,7 @@ function openScheduleBoard(){
   document.getElementById('boardMount').innerHTML = out;
   window.scrollTo(0,0);
 }
-document.getElementById('boardBackBtn').addEventListener('click', showHome);
+var __boardBackBtn = document.getElementById('boardBackBtn'); if(__boardBackBtn) __boardBackBtn.addEventListener('click', showHome);
 document.getElementById('boardMount').addEventListener('click', function(e){
   var day = e.target.closest('.bday');
   if(day){ openApptDay(day.getAttribute('data-day')); }
@@ -7554,7 +7547,7 @@ document.addEventListener('click', function(e){
 });
 document.getElementById('qSearchBtn').addEventListener('click', openClientsDirectory);
 document.getElementById('qSearchBtn').innerHTML='&#128269;<i>Search clients\u2026</i>';
-document.getElementById('actBackBtn').addEventListener('click', showHome);
+var __actBackBtn = document.getElementById('actBackBtn'); if(__actBackBtn) __actBackBtn.addEventListener('click', showHome);
 document.getElementById('actFeedFull').addEventListener('click', function(e){
   var c = e.target.closest('.afcli[data-proj]');
   if(c) openProject(c.getAttribute('data-proj'));
@@ -9003,21 +8996,20 @@ async function closeEditor(){
   current = null;
   await reload();
 }
-document.getElementById('backBtn').addEventListener('click', async function(){
-  var pid = window.__edPid;
-  await closeEditor();
-  setTimeout(function(){
-    if(pid && (!currentProject || currentProject.id !== pid)){ openProject(pid); }
-    else if(currentProject){ showTab('overview'); }
-  }, 140);
-});
+
 document.getElementById('edClientChip').addEventListener('click', async function(){
   var pid = window.__edPid;
-  await closeEditor();
-  setTimeout(function(){
-    if(pid && (!currentProject || currentProject.id !== pid)){ openProject(pid); }
-    else if(currentProject){ showTab('overview'); }
-  }, 140);
+  /* direct route: save+close without touching history, then land on the overview */
+  __histLock = true;
+  try{ await closeEditor(); } finally { __histLock = false; }
+  if(pid){
+    __histLock = true;
+    try{
+      openProject(pid);
+      showTab('overview');
+      history.replaceState({ v:'project', id: pid }, '', __hashFor({ v:'project', id: pid }));
+    } finally { __histLock = false; }
+  }
 });
 document.getElementById('editorLogo').addEventListener('click', async function(){
   await closeEditor();
@@ -9438,7 +9430,7 @@ function tmResize(file){
     fr.readAsDataURL(file);
   });
 }
-document.getElementById('tmBackBtn').addEventListener('click', showHome);
+var __tmBackBtn = document.getElementById('tmBackBtn'); if(__tmBackBtn) __tmBackBtn.addEventListener('click', showHome);
 document.getElementById('tmMount').addEventListener('click', async function(e){
   var card = e.target.closest('.tmcard');
   if(!card) return;
