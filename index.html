@@ -937,6 +937,75 @@ html, body{overflow-x:hidden;max-width:100%;}
     border:1px solid #e2d5c3;border-radius:6px;background:#faf3e6;padding:5px 0;}
   .teamcal .minical .calgrid .day.today{border-color:#7c1019;}
 }
+/* ---- AccuLynx-style client overview ---- */
+#tab-overview > *:not(#acxMount){display:none !important;}
+.acxsec{background:#fff;border:1px solid #ddd6cf;border-radius:6px;margin-bottom:14px;overflow:visible;}
+.acxhead{background:#f3f1ee;border-bottom:1px solid #ddd6cf;padding:9px 14px;
+  font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;display:flex;align-items:center;gap:10px;position:relative;}
+.acxhead .rt{margin-left:auto;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#5c4a42;display:flex;align-items:center;gap:8px;}
+.acxbody{padding:14px;}
+.axbtn{display:inline-flex;align-items:center;gap:7px;background:#C8202E;border:1px solid #a51420;color:#fff;
+  border-radius:6px;padding:9px 16px;font:800 13.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.axbtn.green{background:#7CB342;border-color:#63982e;}
+.axbtn.ghost{background:#f7f4f1;color:#9a8c85;border-color:#ddd6cf;cursor:default;}
+.axnote{font:600 13px 'Segoe UI',Arial,sans-serif;color:#5c4a42;}
+.axzero{font:800 15px 'Segoe UI',Arial,sans-serif;color:#C8202E;margin-right:10px;}
+.acxrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+/* milestones */
+.mswrap{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;}
+.msleft{flex:0 0 200px;}
+.msleft .lbl{font:800 13px 'Segoe UI',Arial,sans-serif;letter-spacing:.02em;}
+.msleft .lbl.green{color:#5a9e2f;} .msleft .lbl.orange{color:#F08A24;} .msleft .lbl.red{color:#C8202E;}
+.msleft .val{color:#2b2b2b;font-weight:700;}
+.mssteps{flex:1;display:flex;align-items:flex-start;min-width:280px;overflow-x:auto;padding:4px 0 2px;}
+.msstep{flex:1;min-width:74px;text-align:center;position:relative;}
+.msstep .mc{width:44px;height:44px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;
+  color:#fff;font:800 20px 'Segoe UI',Arial,sans-serif;background:#c9c2bb;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.msstep small{display:block;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#3b2f2a;margin-top:5px;}
+.msstep .dt{display:block;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#8a7a72;}
+.msstep::before{content:'';position:absolute;top:22px;left:-50%;width:100%;height:3px;background:#d9d2cb;z-index:0;}
+.msstep:first-child::before{display:none;}
+.msstep.hit::before{background:#7CB342;}
+.msstep .mc{position:relative;z-index:1;}
+.msmenu{position:relative;}
+.msmenu .dots{cursor:pointer;font:800 18px/1 'Segoe UI';color:#C8202E;padding:4px 8px;border-radius:6px;}
+.msmenu .dots:hover{background:#efe7e2;}
+.msdrop{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #ddd6cf;border-radius:8px;
+  box-shadow:0 8px 20px rgba(0,0,0,.18);min-width:190px;z-index:40;display:none;}
+.msdrop button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 14px;
+  font:700 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+.msdrop button:hover{background:#faf5ec;}
+.msdrop button.red{color:#C8202E;}
+/* job activity strip */
+.jastrip{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid #eee7e0;}
+.jastrip .jaitem{flex:1 1 110px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:11px 12px;border-right:1px solid #eee7e0;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+.jastrip .jaitem:last-child{border-right:0;}
+.jastrip .jaitem b{font:800 16px 'Segoe UI',Arial,sans-serif;color:#C8202E;}
+.jastrip .jaitem b.zero{color:#b6a89f;}
+/* contact + location */
+.acxcols{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media (max-width:820px){ .acxcols{grid-template-columns:1fr;} .msleft{flex-basis:100%;} }
+.ackv{display:grid;grid-template-columns:110px 1fr;gap:7px 10px;font:600 13px 'Segoe UI',Arial,sans-serif;}
+.ackv span{color:#8a7a72;font-weight:800;}
+.ackv div{color:#2b2b2b;min-width:0;overflow-wrap:anywhere;}
+.ackv a{color:#C8202E;font-weight:800;text-decoration:none;}
+.acxtabs{display:flex;gap:2px;margin:-14px -14px 12px;border-bottom:2px solid #C8202E;}
+.acxtab{padding:9px 14px;font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8a7a72;cursor:pointer;}
+.acxtab.on{color:#C8202E;box-shadow:inset 0 -3px 0 #C8202E;}
+.acxpencil{margin-left:auto;cursor:pointer;color:#C8202E;font-size:15px;}
+/* tasks */
+.tsktabs{display:flex;gap:14px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#8a7a72;margin:10px 0 6px;}
+.tsktabs span{cursor:pointer;padding-bottom:4px;}
+.tsktabs span.on{color:#C8202E;border-bottom:2px solid #C8202E;}
+.tskview{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#5c4a42;display:flex;gap:12px;align-items:center;margin-bottom:8px;}
+.tskrow{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f0e8e2;
+  font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.tskrow small{color:#8a7a72;margin-left:auto;white-space:nowrap;}
+.tskrow.done{opacity:.55;text-decoration:line-through;}
+.tskpri{font:800 10px 'Segoe UI';padding:2px 7px;border-radius:999px;background:#fbe9c8;color:#a86a00;}
+.tskpri.h{background:#fbd3d6;color:#C8202E;}
+
 /* ---- estimate editor header ---- */
 #backBtn{background:#C8202E;border-color:#C8202E;color:#fff;font-weight:800;flex:0 0 auto;}
 .edchip{display:inline-flex;align-items:center;gap:6px;max-width:46vw;height:30px;padding:0 12px;
@@ -1545,6 +1614,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
 
     <div id="tab-overview">
+      <div id="acxMount"></div>
       <div id="stageBanner" class="stagebanner">APPROVED</div>
       <div class="jobvalrow">
         <span><small>Job Value</small><b id="jobValueLbl">--</b></span>
@@ -3879,6 +3949,279 @@ function renderOps(){
   }
 }
 
+
+/* =========================================================================
+   ACCULYNX-STYLE CLIENT OVERVIEW
+   ========================================================================= */
+var acxTaskTab = 'open', acxTaskView = 'All';
+var ACX_STEPS = [
+  { s:'Lead',      l:'L', c:'#E8B10F' },
+  { s:'Prospect',  l:'P', c:'#F08A24' },
+  { s:'Approved',  l:'A', c:'#7CB342' },
+  { s:'Completed', l:'C', c:'#29A3DC' },
+  { s:'Invoiced',  l:'I', c:'#8E6BC1' },
+  { s:'Closed',    l:'\u2713', c:'#607D8B' }
+];
+function acxRank(stg){
+  var order = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
+  return order.indexOf(stg);
+}
+function acxNext(stg){
+  var order = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
+  var i = order.indexOf(stg);
+  return (i >= 0 && i < order.length - 1) ? order[i+1] : null;
+}
+function acxDate(iso){
+  if(!iso) return '';
+  var d = new Date(iso);
+  return (d.getMonth()+1) + '/' + String(d.getDate()).padStart(2,'0') + '/' + d.getFullYear();
+}
+function acxAgo(iso){ return iso ? ljAge(iso) : '\u2014'; }
+async function acxAdvance(pr){
+  var nx = acxNext(normStage(pr.stage));
+  if(!nx) return;
+  try{ await setStage(pr.id, nx); renderOverview(); renderPipeline(); }
+  catch(err){ showError('Could not advance: ' + (err.message || err)); }
+}
+async function acxDead(pr){
+  try{ await setStage(pr.id, 'Lost'); renderOverview(); renderPipeline(); }
+  catch(err){ showError('Could not update: ' + (err.message || err)); }
+}
+function renderAcxOverview(){
+  var mount = document.getElementById('acxMount');
+  if(!mount || !currentProject) return;
+  var pr = currentProject;
+  var ck = parseCkAll(pr);
+  var stg = normStage(pr.stage);
+  var rank = acxRank(stg);
+  var nx = acxNext(stg);
+  var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
+  var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
+  var invs = docs.filter(function(r){ return /^invoice/i.test((r.title||'').trim()); });
+  var appts = cacheAppts.filter(function(a){ return a.project_id === pr.id; })
+    .sort(function(a,b){ return String(a.appt_date||'').localeCompare(String(b.appt_date||'')); });
+  var fin = jobFinance(pr);
+  var tasks = (ck.tasks || []);
+  var otherJobs = cacheProjects.filter(function(p){
+    return p.id !== pr.id && ((pr.phone && p.phone === pr.phone) || (pr.name && p.name === pr.name));
+  }).length;
+  var isLost = stg === 'Lost';
+  /* ---- milestones ---- */
+  var steps = ACX_STEPS.map(function(st){
+    var reached = !isLost && acxRank(st.s) <= (stg === 'Scheduled' && st.s === 'Approved' ? acxRank('Approved') : rank);
+    if(st.s !== 'Lead' && ck['t_' + st.s]) reached = true;
+    if(st.s === 'Lead') reached = true;
+    var dt = st.s === 'Lead' ? (ck.t_Lead || pr.created_at) : ck['t_' + st.s];
+    return '<div class="msstep' + (reached ? ' hit' : '') + '">' +
+      '<span class="mc" style="background:' + (reached ? st.c : '#c9c2bb') + ';">' + st.l + '</span>' +
+      '<small>' + st.s + '</small><span class="dt">' + (reached && dt ? acxDate(dt) : '--') + '</span></div>';
+  }).join('');
+  var menuBtns = '';
+  if(!isLost && nx) menuBtns += '<button data-act="adv">&#9654; Advance to ' + esc(nx) + '</button>';
+  if(!isLost && stg !== 'Closed') menuBtns += '<button class="red" data-act="dead">&#10006; Mark Lead Dead</button>';
+  if(isLost) menuBtns += '<button data-act="reopen">&#8634; Reopen as Lead</button>';
+  var html =
+  '<div class="acxsec"><div class="acxhead">Milestones' +
+    '<span class="rt">In ' + esc(isLost ? 'Lost' : stg) + ' Milestone: <b>&nbsp;' + acxAgo(ck.stage_since || pr.updated_at) + '</b>' +
+    '<span class="msmenu"><span class="dots" id="msDots">&#8226;&#8226;&#8226;</span>' +
+    '<span class="msdrop" id="msDrop">' + menuBtns + '</span></span></span></div>' +
+  '<div class="acxbody"><div class="mswrap">' +
+    '<div class="msleft">' +
+      '<div class="lbl green">STATUS: <span class="val">' + esc(isLost ? 'Lost' + (ck.loss_reason ? ' \u2014 ' + ck.loss_reason : '') : stg) + '</span></div>' +
+      (!isLost && nx ? '<div class="lbl orange" style="margin-top:4px;">NEXT STEP: <span class="val">' + esc(nx) + '</span></div>' : '') +
+      (!isLost && nx ? '<button class="axbtn green" id="acxAdvBtn" style="margin-top:12px;">Advance Job</button>' : '') +
+    '</div>' +
+    '<div class="mssteps">' + steps + '</div>' +
+  '</div></div></div>';
+  /* ---- job activity ---- */
+  function jai(lbl, n, tab){
+    var z = (n === 0 || n === '0');
+    return '<div class="jaitem" data-tab="' + (tab || '') + '">' + lbl +
+      ' <b class="' + (z ? 'zero' : '') + '" ' + (lbl === 'Photos' ? 'id="acxPhotoN"' : '') + '>' + n + '</b></div>';
+  }
+  html +=
+  '<div class="acxsec"><div class="acxhead">Job Activity' +
+    '<span class="rt">Last Touched: <b>&nbsp;' + acxAgo(pr.updated_at || pr.created_at) + '</b></span></div>' +
+  '<div class="jastrip">' +
+    jai('Communications', commsCount(pr), 'checklists') +
+    jai('Estimates', ests.length, 'estimates') +
+    '<div class="jaitem" data-tab="estimates">Worksheet <b class="' + (fin.value ? '' : 'zero') + '">' + (fin.value ? '\u2713' : '\u2716') + '</b></div>' +
+    jai('Invoices', invs.length, 'estimates') +
+    jai('Orders', 0, 'materials') +
+    jai('Photos', '\u2026', 'inspections') +
+    jai('Documents', docs.length, 'inspections') +
+  '</div></div>';
+  /* ---- contact + location ---- */
+  html +=
+  '<div class="acxcols">' +
+  '<div class="acxsec"><div class="acxhead">&#128100; Primary Contact' +
+    '<span class="rt">More Contacts (0) &nbsp;<span class="acxpencil" id="acxEdit1">&#9998;</span></span></div>' +
+  '<div class="acxbody"><div class="ackv">' +
+    '<span>Name:</span><div>' + esc(pr.name || '\u2014') + (otherJobs ? ' <a href="#" style="font-weight:700;">(' + otherJobs + ' other job' + (otherJobs>1?'s':'') + ')</a>' : '') + '</div>' +
+    '<span>Company:</span><div>\u2014</div>' +
+    '<span>Phone:</span><div>' + (pr.phone ? '<a href="tel:' + esc(pr.phone) + '">' + esc(pr.phone) + '</a> : mobile' : '\u2014') + '</div>' +
+    '<span>Email:</span><div>' + (pr.email ? '<a href="mailto:' + esc(pr.email) + '">' + esc(pr.email) + '</a>' : '\u2014') + '</div>' +
+    '<span>Mailing:</span><div>Same as Location</div>' +
+    '<span>Billing:</span><div>Same as Location</div>' +
+    '<span>Cross Reference:</span><div>' + (ck.po ? 'PO ' + esc(String(ck.po)) : '\u2014') + '</div>' +
+  '</div></div></div>' +
+  '<div class="acxsec"><div class="acxhead">&#128205; Location' +
+    '<span class="rt"><span class="acxpencil" id="acxEdit2">&#9998;</span></span></div>' +
+  '<div class="acxbody">' +
+    '<div class="acxtabs"><span class="acxtab on" data-at="loc">Location Info</span>' +
+    '<span class="acxtab" data-at="ins">Insurance</span><span class="acxtab" data-at="adj">Adjuster</span></div>' +
+    '<div id="acxLocPanel"><div class="ackv">' +
+      '<span>Address:</span><div>' + (pr.address ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '" target="_blank">' + esc(pr.address) + ' &#8599;</a>' : '\u2014') + '</div>' +
+      '<span>Category:</span><div>' + esc(ck.job_category || '\u2014') + '</div>' +
+      '<span>Work Type:</span><div>' + esc(ck.work_type || '\u2014') + '</div>' +
+      '<span>Trade:</span><div>' + esc(ljTrades(pr).join(', ') || '\u2014') + '</div>' +
+      '<span>Lead Source:</span><div>' + esc(ck.lead_source || '\u2014') + '</div>' +
+      '<span>Initial Appt:</span><div>' + (appts.length ? acxDate(appts[0].appt_date) : '\u2014') + '</div>' +
+    '</div></div>' +
+    '<div id="acxInsPanel" style="display:none;" class="axnote">No insurance information on file \u2014 coming soon.</div>' +
+    '<div id="acxAdjPanel" style="display:none;" class="axnote">No adjuster on file \u2014 coming soon.</div>' +
+  '</div></div>' +
+  '</div>';
+  /* ---- placeholder + real sections ---- */
+  html +=
+  '<div class="acxsec"><div class="acxhead">Customer Portal</div><div class="acxbody acxrow">' +
+    '<button class="axbtn ghost">&#128179; Enable Add-on</button>' +
+    '<span class="axnote">Give job contacts 24/7 access to a Customer Portal for documents, photos &amp; billing. Coming soon.</span></div></div>';
+  html +=
+  '<div class="acxsec"><div class="acxhead">Financing</div><div class="acxbody acxrow">' +
+    '<span class="axzero">0</span><span class="axnote">No loan applications have been submitted for this job.</span>' +
+    '<button class="axbtn ghost" style="margin-left:8px;">&#127974; Offer Financing</button>' +
+    '<span class="axnote">Coming soon.</span></div></div>';
+  html +=
+  '<div class="acxsec"><div class="acxhead">Measurements</div><div class="acxbody">' +
+    '<div class="acxrow"><span class="axzero">0</span><span class="axnote">No measurements have been created for this job.</span></div>' +
+    '<button class="axbtn ghost" style="margin-top:10px;">Add New</button> <span class="axnote">Coming soon.</span></div></div>';
+  var estList = ests.map(function(r){
+    return '<div class="tskrow" style="cursor:pointer;" data-doc="' + r.id + '">&#128196; <b>' + esc(r.title || 'Estimate') + '</b>' +
+      '<small>' + acxDate(r.created_at) + '</small></div>';
+  }).join('');
+  html +=
+  '<div class="acxsec"><div class="acxhead">Estimates</div><div class="acxbody">' +
+    '<div class="acxrow"><span class="axzero">' + ests.length + '</span>' +
+    '<span class="axnote">' + (ests.length ? '' : 'No estimates have been created for this job.') + '</span></div>' +
+    estList +
+    '<button class="axbtn" id="acxNewEst" style="margin-top:10px;">Add New</button></div></div>';
+  html +=
+  '<div class="acxsec"><div class="acxhead">Worksheet</div><div class="acxbody acxrow">' +
+    (fin.value
+      ? '<span style="color:#5a9e2f;font-size:18px;">&#10004;</span><span class="axnote">Job value <b>' + fmtMoney(fin.value) + '</b> \u00b7 balance <b>' + fmtMoney(fin.balance) + '</b></span>'
+      : '<span style="color:#C8202E;font-size:18px;">&#10006;</span><span class="axnote">No Worksheet has been created for this job.</span>') +
+  '</div></div>';
+  html +=
+  '<div class="acxsec"><div class="acxhead">Orders</div><div class="acxbody">' +
+    '<div class="acxrow"><span class="axzero">0</span><span class="axnote">No orders have been created for this job.</span></div>' +
+    '<button class="axbtn" id="acxOrders" style="margin-top:10px;">New Order</button></div></div>';
+  /* ---- tasks ---- */
+  var myEmail = (currentUser && currentUser.email) || '';
+  var openT = tasks.filter(function(t){ return !t.done; });
+  var doneT = tasks.filter(function(t){ return t.done; });
+  var mineT = tasks.filter(function(t){ return t.by === myEmail && !t.done; });
+  var pool = acxTaskTab === 'done' ? doneT : (acxTaskTab === 'mine' ? mineT : openT);
+  if(acxTaskView !== 'All') pool = pool.filter(function(t){ return (t.pri || 'Normal') === acxTaskView; });
+  var taskRows = pool.length ? pool.map(function(t){
+    var i = tasks.indexOf(t);
+    return '<div class="tskrow' + (t.done ? ' done' : '') + '">' +
+      '<input type="checkbox" class="cbx" data-task="' + i + '"' + (t.done ? ' checked' : '') + '>' +
+      '<span class="tskpri' + ((t.pri === 'High') ? ' h' : '') + '">' + (t.pri || 'Normal') + '</span> ' + esc(t.t) +
+      '<small>' + esc(rptRepName(t.by || '')) + ' \u00b7 ' + acxDate(t.at) + '</small></div>';
+  }).join('') : '<div class="axnote" style="padding:6px 0;">No Tasks to show you</div>';
+  html +=
+  '<div class="acxsec"><div class="acxhead">Tasks</div><div class="acxbody">' +
+    '<div class="acxrow"><span class="axzero">' + openT.length + '</span>' +
+    '<button class="axbtn" id="acxNewTask">Create Task</button></div>' +
+    '<div class="tsktabs">' +
+      '<span data-tt="open" class="' + (acxTaskTab==='open'?'on':'') + '">Open (' + openT.length + ')</span>' +
+      '<span data-tt="done" class="' + (acxTaskTab==='done'?'on':'') + '">Completed (' + doneT.length + ')</span>' +
+      '<span data-tt="mine" class="' + (acxTaskTab==='mine'?'on':'') + '">My Tasks (' + mineT.length + ')</span></div>' +
+    '<div class="tskview">View: ' + ['All','High','Normal'].map(function(v){
+      return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;">' +
+        '<input type="radio" name="tskv" value="' + v + '"' + (acxTaskView===v?' checked':'') + ' style="accent-color:#C8202E;"> ' + v + '</label>';
+    }).join('') + '</div>' + taskRows + '</div></div>';
+  mount.innerHTML = html;
+  /* async photo count */
+  photoDb.listByProject(pr.id).then(function(l){
+    var el = document.getElementById('acxPhotoN');
+    if(el && currentProject && currentProject.id === pr.id){ el.textContent = l.length; el.classList.toggle('zero', !l.length); }
+  }).catch(function(){});
+  /* ---- wiring ---- */
+  var dots = document.getElementById('msDots'), drop = document.getElementById('msDrop');
+  if(dots) dots.addEventListener('click', function(e){ e.stopPropagation(); drop.style.display = drop.style.display === 'block' ? 'none' : 'block'; });
+  document.addEventListener('click', function h(){ if(drop) drop.style.display = 'none'; document.removeEventListener('click', h); });
+  if(drop) drop.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    var act = b.getAttribute('data-act');
+    if(act === 'adv') acxAdvance(pr);
+    else if(act === 'dead') acxDead(pr);
+    else if(act === 'reopen') setStage(pr.id, 'Lead').then(function(){ renderOverview(); renderPipeline(); });
+  });
+  var adv = document.getElementById('acxAdvBtn');
+  if(adv) adv.addEventListener('click', function(){ acxAdvance(pr); });
+  mount.querySelectorAll('.jaitem').forEach(function(el){
+    el.addEventListener('click', function(){ var t = el.getAttribute('data-tab'); if(t) showTab(t); });
+  });
+  ['acxEdit1','acxEdit2'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.addEventListener('click', function(){ openProjModal(pr); });
+  });
+  mount.querySelectorAll('.acxtab').forEach(function(t){
+    t.addEventListener('click', function(){
+      mount.querySelectorAll('.acxtab').forEach(function(x){ x.classList.remove('on'); });
+      t.classList.add('on');
+      var at = t.getAttribute('data-at');
+      document.getElementById('acxLocPanel').style.display = at === 'loc' ? 'block' : 'none';
+      document.getElementById('acxInsPanel').style.display = at === 'ins' ? 'block' : 'none';
+      document.getElementById('acxAdjPanel').style.display = at === 'adj' ? 'block' : 'none';
+    });
+  });
+  var ne = document.getElementById('acxNewEst');
+  if(ne) ne.addEventListener('click', function(){
+    showTab('estimates');
+    var m = document.getElementById('pEstMenu');
+    if(m) setTimeout(function(){ m.style.display = 'block'; }, 60);
+  });
+  var ord = document.getElementById('acxOrders');
+  if(ord) ord.addEventListener('click', function(){ showTab('materials'); });
+  estList && mount.querySelectorAll('[data-doc]').forEach(function(el){
+    el.addEventListener('click', function(){ openEditor(el.getAttribute('data-doc')); });
+  });
+  var nt = document.getElementById('acxNewTask');
+  if(nt) nt.addEventListener('click', async function(){
+    var t = prompt('Task description:'); if(!t) return;
+    var hi = confirm('High priority? OK = High, Cancel = Normal');
+    var list = (parseCkAll(pr).tasks || []).slice();
+    list.push({ t: t.trim(), pri: hi ? 'High' : 'Normal', done: false, by: myEmail, at: new Date().toISOString() });
+    try{ await patchProjectCk(pr, { tasks: list }); renderOverview(); }
+    catch(err){ showError('Could not save task: ' + (err.message || err)); }
+  });
+  mount.querySelectorAll('[data-task]').forEach(function(cb){
+    cb.addEventListener('change', async function(){
+      var list = (parseCkAll(pr).tasks || []).slice();
+      var i = parseInt(cb.getAttribute('data-task'), 10);
+      if(list[i]){ list[i].done = cb.checked; list[i].doneAt = cb.checked ? new Date().toISOString() : null; }
+      try{ await patchProjectCk(pr, { tasks: list }); renderOverview(); }
+      catch(err){ showError('Could not update task: ' + (err.message || err)); }
+    });
+  });
+  mount.querySelectorAll('.tsktabs span').forEach(function(t){
+    t.addEventListener('click', function(){ acxTaskTab = t.getAttribute('data-tt'); renderAcxOverview(); });
+  });
+  mount.querySelectorAll('input[name=tskv]').forEach(function(r){
+    r.addEventListener('change', function(){ acxTaskView = r.value; renderAcxOverview(); });
+  });
+}
+/* hook into the existing overview renderer */
+(function(){
+  var _rov = renderOverview;
+  renderOverview = function(){
+    _rov();
+    try{ renderAcxOverview(); }catch(e){ console.error('acx overview', e); }
+  };
+})();
 
 /* =========================================================================
    ASSIGNED LEADS & JOBS
