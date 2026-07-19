@@ -9,6 +9,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Cardinal">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#170f11">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Cardinal">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Cardinal Client Resources</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -8556,6 +8563,58 @@ try{
     }
   }catch(e){ showLogin(); }
 })();
+
+/* =========================================================================
+   BROWSER HISTORY — back button / swipe navigates inside the app
+   ========================================================================= */
+var __histLock = false;
+function __histPush(st){
+  if(__histLock) return;
+  try{ history.pushState(st, ''); }catch(e){}
+}
+(function(){
+  var _op = openProject;
+  openProject = function(id){ __histPush({ v:'project', id:id }); return _op(id); };
+  var _oe = openEditor;
+  openEditor = function(id){ __histPush({ v:'editor', id:id }); return _oe(id); };
+  var _ol = openLeadsView;
+  openLeadsView = function(stg){ __histPush({ v:'leads', stg:stg || null }); return _ol(stg); };
+  var _or = openReportsView;
+  openReportsView = function(){ __histPush({ v:'reports' }); return _or(); };
+  var _oc = openClientsDirectory;
+  openClientsDirectory = function(a){ __histPush({ v:'clients' }); return _oc(a); };
+  var _of = openActivityFeed;
+  openActivityFeed = function(){ __histPush({ v:'feed' }); return _of(); };
+  var _oa = openAuditLog;
+  openAuditLog = function(){ __histPush({ v:'audit' }); return _oa(); };
+  var _sh = showHome;
+  showHome = function(){ __histPush({ v:'home' }); return _sh(); };
+  /* UI back inside the editor goes through browser history so the two stay in sync */
+  var _ce = closeEditor;
+  closeEditor = async function(){
+    if(!__histLock && history.state && history.state.v === 'editor'){ history.back(); return; }
+    return _ce();
+  };
+  try{ history.replaceState({ v:'home' }, ''); }catch(e){}
+  window.addEventListener('popstate', async function(e){
+    var st = e.state || { v:'home' };
+    __histLock = true;
+    try{
+      if(typeof editor !== 'undefined' && editor.classList.contains('open') && st.v !== 'editor'){
+        await closeEditor();
+      }
+      if(st.v === 'project' && st.id) _op(st.id);
+      else if(st.v === 'editor' && st.id) _oe(st.id);
+      else if(st.v === 'leads') _ol(st.stg || undefined);
+      else if(st.v === 'reports') _or();
+      else if(st.v === 'clients') _oc();
+      else if(st.v === 'feed') _of();
+      else if(st.v === 'audit') _oa();
+      else _sh();
+    } finally { __histLock = false; }
+  });
+})();
+
 </script>
 </body>
 </html>
