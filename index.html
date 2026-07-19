@@ -954,6 +954,24 @@ html, body{overflow-x:hidden;max-width:100%;}
 .rvsec .rvswrow{border-top-color:rgba(212,160,23,.22);color:#f3e9dc;}
 .rvsec .rvswitch .trk{background:#4a3a30;}
 .rvsec .chipbtn{background:rgba(255,255,255,.08);border-color:rgba(212,160,23,.5);color:#f3e9dc;}
+/* lacquer tasks */
+.rvsec .tskrow{border-bottom-color:rgba(212,160,23,.16);color:#f3e9dc;}
+.rvsec .tskrow small{color:#b9a596;}
+.rvsec .tsktabs{color:#cbb9ac;}
+.rvsec .tsktabs span.on{color:#f5d061;border-bottom-color:#f5d061;}
+.rvsec .tskview{color:#d8c7ba;}
+.rvsec .ackv span{color:#b9a596;}
+/* paired sections */
+.acxcols > .acxsec{margin-bottom:0;}
+.acxcols{margin-bottom:14px;}
+/* desktop: spread the review controls across the band */
+@media (min-width:900px){
+  .rvspread .acxbody{display:grid;grid-template-columns:1fr auto;gap:8px 26px;align-items:center;}
+  .rvspread .acxbody > .acxrow:first-child{grid-column:1 / -1;margin:0;}
+  .rvspread .acxbody > .acxrow:not(:first-child){grid-column:1;margin:0 !important;}
+  .rvspread .acxbody > .rvswrow{grid-column:2;border-top:0;padding-top:0;margin:0;justify-self:end;}
+  .rvspread .acxbody > .axnote{grid-column:1;margin:0 !important;}
+}
 
 /* ---- activity count strip + AR vertical chart ---- */
 .acthead{border-top:2px solid #C8202E;margin-top:16px;padding-top:8px;
@@ -4407,6 +4425,7 @@ function renderAcxOverview(){
   '</div></div>' +
   '</div>';
   /* ---- placeholder + real sections ---- */
+  html += '<div class="acxcols">';
   html +=
   '<div class="acxsec"><div class="acxhead">Customer Portal</div><div class="acxbody acxrow">' +
     '<button class="axbtn ghost">&#128179; Enable Add-on</button>' +
@@ -4416,24 +4435,8 @@ function renderAcxOverview(){
     '<span class="axzero">0</span><span class="axnote">No loan applications have been submitted for this job.</span>' +
     '<button class="axbtn ghost" style="margin-left:8px;">&#127974; Offer Financing</button>' +
     '<span class="axnote">Coming soon.</span></div></div>';
-  var ms = ck.meas || null;
-  html +=
-  '<div class="acxsec"><div class="acxhead">Measurements</div><div class="acxbody">' +
-    (ms
-      ? '<div class="ackv" style="grid-template-columns:110px 1fr 110px 1fr;">' +
-        '<span>Squares:</span><div><b>' + esc(ms.sq || '\u2014') + '</b></div>' +
-        '<span>Pitch:</span><div><b>' + esc(ms.pitch || '\u2014') + '</b></div>' +
-        '<span>Ridges:</span><div>' + esc(ms.ridge || '\u2014') + ' lf</div>' +
-        '<span>Hips:</span><div>' + esc(ms.hip || '\u2014') + ' lf</div>' +
-        '<span>Valleys:</span><div>' + esc(ms.valley || '\u2014') + ' lf</div>' +
-        '<span>Eaves:</span><div>' + esc(ms.eave || '\u2014') + ' lf</div>' +
-        '</div>'
-      : '<div class="acxrow"><span class="axzero">0</span><span class="axnote">No measurements have been created for this job.</span></div>') +
-    '<div id="acxMeasSummary" class="acxrow" style="margin-top:8px;gap:6px;"></div>' +
-    '<div class="acxrow" style="margin-top:10px;gap:8px;">' +
-      '<button class="axbtn" id="acxMeasAdd">' + (ms ? '\u270E Edit' : 'Add New') + '</button>' +
-      '<button class="chipbtn" id="acxMeasPage">Measurements page &#8250;</button>' +
-    '</div></div></div>';
+  html += '</div>';
+  html += '<div class="acxcols">';
   var estList = ests.map(function(r){
     return '<div class="tskrow" style="cursor:pointer;" data-doc="' + r.id + '">&#128196; <b>' + esc(r.title || 'Estimate') + '</b>' +
       '<small>' + acxDate(r.created_at) + '</small></div>';
@@ -4452,6 +4455,19 @@ function renderAcxOverview(){
         '<a href="#" id="acxClearManual" style="color:#C8202E;font-weight:800;">clear</a></div>'
       : '') +
     '</div></div>';
+  var inspDocs = docs.filter(function(r){
+    var tt = (r.title || '').trim();
+    return !isEstimateTitle(tt) && !/^invoice|^contract/i.test(tt);
+  });
+  html +=
+  '<div class="acxsec"><div class="acxhead">Inspections</div><div class="acxbody">' +
+    '<div class="acxrow"><span class="axzero">' + inspDocs.length + '</span>' +
+    '<span class="axnote">' + (inspDocs.length ? inspDocs.length + ' inspection document' + (inspDocs.length === 1 ? '' : 's') + ' on file.' : 'No inspections have been created for this job.') + '</span></div>' +
+    '<div class="acxrow" style="margin-top:10px;gap:8px;">' +
+      '<button class="axbtn" id="acxInspPage">Open Inspections</button>' +
+      '<span class="axnote">Section design coming soon.</span>' +
+    '</div></div></div>';
+  html += '</div>';
   html +=
   '<div class="acxsec"><div class="acxhead">Worksheet</div><div class="acxbody">' +
     '<div class="acxrow">' +
@@ -4464,10 +4480,30 @@ function renderAcxOverview(){
       ? '<button class="axbtn" id="acxPayBtn" style="margin-top:10px;">\uFF0B Record payment</button>'
       : '<button class="axbtn" id="acxNewWs" style="margin-top:10px;">New Worksheet</button>') +
   '</div></div>';
+  html += '<div class="acxcols">';
+  var ms = ck.meas || null;
+  html +=
+  '<div class="acxsec"><div class="acxhead">Measurements</div><div class="acxbody">' +
+    (ms
+      ? '<div class="ackv" style="grid-template-columns:110px 1fr 110px 1fr;">' +
+        '<span>Squares:</span><div><b>' + esc(ms.sq || '\u2014') + '</b></div>' +
+        '<span>Pitch:</span><div><b>' + esc(ms.pitch || '\u2014') + '</b></div>' +
+        '<span>Ridges:</span><div>' + esc(ms.ridge || '\u2014') + ' lf</div>' +
+        '<span>Hips:</span><div>' + esc(ms.hip || '\u2014') + ' lf</div>' +
+        '<span>Valleys:</span><div>' + esc(ms.valley || '\u2014') + ' lf</div>' +
+        '<span>Eaves:</span><div>' + esc(ms.eave || '\u2014') + ' lf</div>' +
+        '</div>'
+      : '<div class="acxrow"><span class="axzero">0</span><span class="axnote">No measurements have been created for this job.</span></div>') +
+    '<div id="acxMeasSummary" class="acxrow" style="margin-top:8px;gap:6px;"></div>' +
+    '<div class="acxrow" style="margin-top:10px;gap:8px;">' +
+      '<button class="axbtn" id="acxMeasAdd">' + (ms ? '\u270E Edit' : 'Add New') + '</button>' +
+      '<button class="chipbtn" id="acxMeasPage">Measurements page &#8250;</button>' +
+    '</div></div></div>';
   html +=
   '<div class="acxsec"><div class="acxhead">Orders</div><div class="acxbody">' +
     '<div class="acxrow"><span class="axzero">0</span><span class="axnote">No orders have been created for this job.</span></div>' +
     '<button class="axbtn" id="acxOrders" style="margin-top:10px;">New Order</button></div></div>';
+  html += '</div>';
   /* ---- tasks ---- */
   var myEmail = (currentUser && currentUser.email) || '';
   var openT = tasks.filter(function(t){ return !t.done; });
@@ -4484,8 +4520,9 @@ function renderAcxOverview(){
       '<small>' + (t.due ? 'Due ' + acxDate(t.due) + ' \u00b7 ' : '') +
       esc(rptRepName(t.assignee || t.by || '').split(' ')[0]) + '</small></div>';
   }).join('') : '<div class="axnote" style="padding:6px 0;">No Tasks to show you</div>';
+  html += '<div class="acxcols">';
   html +=
-  '<div class="acxsec"><div class="acxhead">Tasks</div><div class="acxbody">' +
+  '<div class="acxsec rvsec"><div class="acxhead">Tasks</div><div class="acxbody">' +
     '<div class="acxrow">' +
     '<button class="axbtn" id="acxNewTask">Create Task</button></div>' +
     '<div class="tsktabs">' +
@@ -4500,7 +4537,7 @@ function renderAcxOverview(){
   var rv = ck.review_requested_at;
   var canAsk = ['Completed','Invoiced','Closed'].indexOf(stg) !== -1;
   html +=
-  '<div class="acxsec rvsec"><div class="acxhead">' + GOOGLE_G + ' Google Reviews</div><div class="acxbody">' +
+  '<div class="acxsec rvsec rvspread"><div class="acxhead">' + GOOGLE_G + ' Google Reviews</div><div class="acxbody">' +
     (rv
       ? '<div class="acxrow"><span style="color:#5a9e2f;font-size:17px;">&#10004;</span>' +
         '<span class="axnote">Review requested ' + acxDate(rv) + (ck.review_via ? ' via ' + esc(ck.review_via) : '') + '.</span></div>'
@@ -4522,6 +4559,7 @@ function renderAcxOverview(){
         : '<span class="axnote">Flip when their review appears on Google</span>') +
     '</label>' +
   '</div></div>';
+  html += '</div>';
   mount.innerHTML = html;
   /* async photo count */
   photoDb.listByProject(pr.id).then(function(l){
@@ -4622,6 +4660,7 @@ function acxBindOnce(mount){
       return;
     }
     if(hit('#acxOrders')){ showTab('materials'); return; }
+    if(hit('#acxInspPage')){ showTab('inspections'); return; }
     if((el = hit('[data-doc]'))){ openEditor(el.getAttribute('data-doc')); return; }
     if((el = hit('[data-rv]'))){ sendReviewRequest(pr, el.getAttribute('data-rv')); return; }
     if(hit('#acxNewTask')){ openTaskModal(pr, null); return; }
@@ -9795,50 +9834,6 @@ function __histPush(st){
   if(__histLock) return;
   try{ history.pushState(st, '', __hashFor(st)); }catch(e){}
 }
-(function(){
-  var _op = openProject;
-  openProject = function(id){ __histPush({ v:'project', id:id }); window.__curTab = 'overview'; return _op(id); };
-  var _oe = openEditor;
-  openEditor = function(id){ __histPush({ v:'editor', id:id }); return _oe(id); };
-  var _ol = openLeadsView;
-  openLeadsView = function(stg){ __histPush({ v:'leads', stg:stg || null }); return _ol(stg); };
-  var _or = openReportsView;
-  openReportsView = function(){ __histPush({ v:'reports' }); return _or(); };
-  var _oc = openClientsDirectory;
-  openClientsDirectory = function(a){ __histPush({ v:'clients' }); return _oc(a); };
-  var _of = openActivityFeed;
-  openActivityFeed = function(){ __histPush({ v:'feed' }); return _of(); };
-  var _oa = openAuditLog;
-  openAuditLog = function(){ __histPush({ v:'audit' }); return _oa(); };
-  var _obd = openScheduleBoard;
-  openScheduleBoard = function(){ __histPush({ v:'board' }); return _obd(); };
-  var _oli = openList;
-  openList = function(k){ __histPush({ v:'list', k:k }); return _oli(k); };
-  var _stb = showTab;
-  showTab = function(name){
-    var prev = window.__curTab;
-    window.__curTab = name;
-    var pv = document.getElementById('projectView');
-    if(!__histLock && currentProject && pv && pv.style.display !== 'none' && prev && prev !== name){
-      try{
-        history.pushState({ v:'project', id: currentProject.id, tab: name }, '',
-          __hashFor({ v:'project', id: currentProject.id, tab: name }));
-      }catch(e){}
-    }
-    return _stb(name);
-  };
-  var _otm = openTeamView;
-  openTeamView = function(){ __histPush({ v:'team' }); return _otm(); };
-  var _omp = openMyProfile;
-  openMyProfile = function(){ __histPush({ v:'me' }); return _omp(); };
-  var _sh = showHome;
-  showHome = function(){ __histPush({ v:'home' }); return _sh(); };
-  /* UI back inside the editor goes through browser history so the two stay in sync */
-  var _ce = closeEditor;
-  closeEditor = async function(){
-    if(!__histLock && history.state && history.state.v === 'editor'){ history.back(); return; }
-    return _ce();
-  };
 /* =========================================================================
    TEAM PAGE (admin-editable profiles + portraits)
    ========================================================================= */
@@ -10014,6 +10009,51 @@ async function enableNotifications(){
     return _nt(to, subject, bodyHtml);
   };
 })();
+
+(function(){
+  var _op = openProject;
+  openProject = function(id){ __histPush({ v:'project', id:id }); window.__curTab = 'overview'; return _op(id); };
+  var _oe = openEditor;
+  openEditor = function(id){ __histPush({ v:'editor', id:id }); return _oe(id); };
+  var _ol = openLeadsView;
+  openLeadsView = function(stg){ __histPush({ v:'leads', stg:stg || null }); return _ol(stg); };
+  var _or = openReportsView;
+  openReportsView = function(){ __histPush({ v:'reports' }); return _or(); };
+  var _oc = openClientsDirectory;
+  openClientsDirectory = function(a){ __histPush({ v:'clients' }); return _oc(a); };
+  var _of = openActivityFeed;
+  openActivityFeed = function(){ __histPush({ v:'feed' }); return _of(); };
+  var _oa = openAuditLog;
+  openAuditLog = function(){ __histPush({ v:'audit' }); return _oa(); };
+  var _obd = openScheduleBoard;
+  openScheduleBoard = function(){ __histPush({ v:'board' }); return _obd(); };
+  var _oli = openList;
+  openList = function(k){ __histPush({ v:'list', k:k }); return _oli(k); };
+  var _stb = showTab;
+  showTab = function(name){
+    var prev = window.__curTab;
+    window.__curTab = name;
+    var pv = document.getElementById('projectView');
+    if(!__histLock && currentProject && pv && pv.style.display !== 'none' && prev && prev !== name){
+      try{
+        history.pushState({ v:'project', id: currentProject.id, tab: name }, '',
+          __hashFor({ v:'project', id: currentProject.id, tab: name }));
+      }catch(e){}
+    }
+    return _stb(name);
+  };
+  var _otm = openTeamView;
+  openTeamView = function(){ __histPush({ v:'team' }); return _otm(); };
+  var _omp = openMyProfile;
+  openMyProfile = function(){ __histPush({ v:'me' }); return _omp(); };
+  var _sh = showHome;
+  showHome = function(){ __histPush({ v:'home' }); return _sh(); };
+  /* UI back inside the editor goes through browser history so the two stay in sync */
+  var _ce = closeEditor;
+  closeEditor = async function(){
+    if(!__histLock && history.state && history.state.v === 'editor'){ history.back(); return; }
+    return _ce();
+  };
   try{ if(!/^#(p|e|list)\//.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
   var __restored = false, __restoreTries = 0;
   window.__tryRestoreFromHash = function(){
