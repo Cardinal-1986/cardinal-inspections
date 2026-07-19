@@ -1044,6 +1044,18 @@ body.restoring #restoreVeil{display:flex;}
 .tskrow.done{opacity:.55;text-decoration:line-through;}
 .tskpri{font:800 10px 'Segoe UI';padding:2px 7px;border-radius:999px;background:#fbe9c8;color:#a86a00;}
 .tskpri.h{background:#fbd3d6;color:#C8202E;}
+/* review-left switch */
+.rvswrow{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:11px;border-top:1px solid #f0e8e2;
+  font:700 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.rvswitch{position:relative;width:44px;height:24px;flex:0 0 auto;cursor:pointer;}
+.rvswitch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;}
+.rvswitch .trk{position:absolute;inset:0;background:#d9d2cb;border-radius:999px;transition:background .15s;}
+.rvswitch .knb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .15s;}
+.rvswitch input:checked ~ .trk{background:linear-gradient(160deg,#d4a017,#f5d061);}
+.rvswitch input:checked ~ .knb{left:23px;}
+.rvdone{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#a86a00;}
+.gicon{width:15px;height:15px;vertical-align:-2px;display:inline-block;flex:0 0 auto;}
 
 /* ---- estimate editor header ---- */
 #backBtn{background:#C8202E;border-color:#C8202E;color:#fff;font-weight:800;flex:0 0 auto;}
@@ -1574,6 +1586,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
     <div id="rptReps" style="display:none;">
       <div class="pipecard"><div class="pipetitle">&#127942; Rep scoreboard</div><div id="rptRepTable"></div></div>
+      <div class="pipecard"><div class="pipetitle"><svg class="gicon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Google Reviews</div><div id="rptReviews"></div></div>
       <div class="pipecard"><div class="pipetitle">&#128176; Signed revenue by rep</div><canvas id="chRepRev" height="220"></canvas></div>
       <div class="pipecard"><div class="pipetitle">&#9888;&#65039; Stale leads (14+ days untouched)</div><div id="rptStale"></div></div>
     </div>
@@ -4016,6 +4029,30 @@ function renderOps(){
    ACCULYNX-STYLE CLIENT OVERVIEW
    ========================================================================= */
 var acxTaskTab = 'open', acxTaskView = 'All';
+var REVIEW_URL = 'https://g.page/r/CQqAO-p2l8AAEBM/review';
+var GOOGLE_G = '<svg class="gicon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+function reviewMsg(pr){
+  var first = String(pr.name || '').trim().split(' ')[0] || 'there';
+  var rep = rptRepName((currentUser && currentUser.email) || '').split(' ')[0];
+  return 'Hi ' + first + ', thanks for choosing Cardinal Roofing & Renovations! ' +
+    'If you had a great experience, would you mind leaving us a quick Google review? ' +
+    REVIEW_URL + ' \u2014 it really helps our small team. \u2013 ' + rep;
+}
+async function sendReviewRequest(pr, via){
+  var msg = reviewMsg(pr);
+  if(via === 'sms' && pr.phone){
+    location.href = 'sms:' + pr.phone.replace(/[^+\d]/g,'') + '?&body=' + encodeURIComponent(msg);
+  }else if(via === 'email' && pr.email){
+    location.href = 'mailto:' + encodeURIComponent(pr.email) +
+      '?subject=' + encodeURIComponent('How did we do? \u2014 Cardinal Roofing & Renovations') +
+      '&body=' + encodeURIComponent(msg);
+  }else{
+    try{ await navigator.clipboard.writeText(msg); alert('Review message copied \u2014 paste it anywhere.'); }
+    catch(e){ prompt('Copy this message:', msg); }
+  }
+  try{ await patchProjectCk(pr, { review_requested_at: new Date().toISOString(), review_via: via }); }catch(e){}
+  setTimeout(renderOverview, 400);
+}
 var ACX_STEPS = [
   { s:'Lead',      l:'L', c:'#E8B10F' },
   { s:'Prospect',  l:'P', c:'#F08A24' },
@@ -4054,7 +4091,17 @@ function acxAgo(iso){ return iso ? ljAge(iso) : '\u2014'; }
 async function acxAdvance(pr){
   var nx = acxNext(normStage(pr.stage));
   if(!nx) return;
-  try{ await setStage(pr.id, nx); renderOverview(); renderPipeline(); }
+  try{
+    await setStage(pr.id, nx);
+    renderOverview(); renderPipeline();
+    if(nx === 'Completed' && !parseCkAll(pr).review_requested_at && (pr.phone || pr.email)){
+      setTimeout(function(){
+        if(confirm('\uD83C\uDF89 Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?')){
+          sendReviewRequest(pr, pr.phone ? 'sms' : 'email');
+        }
+      }, 300);
+    }
+  }
   catch(err){ showError('Could not advance: ' + (err.message || err)); }
 }
 async function acxDead(pr){
@@ -4233,6 +4280,32 @@ function renderAcxOverview(){
       return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;">' +
         '<input type="radio" name="tskv" value="' + v + '"' + (acxTaskView===v?' checked':'') + ' style="accent-color:#C8202E;"> ' + v + '</label>';
     }).join('') + '</div>' + taskRows + '</div></div>';
+  /* ---- reviews ---- */
+  var rv = ck.review_requested_at;
+  var canAsk = ['Completed','Invoiced','Closed'].indexOf(stg) !== -1;
+  html +=
+  '<div class="acxsec"><div class="acxhead">' + GOOGLE_G + ' Google Reviews</div><div class="acxbody">' +
+    (rv
+      ? '<div class="acxrow"><span style="color:#5a9e2f;font-size:17px;">&#10004;</span>' +
+        '<span class="axnote">Review requested ' + acxDate(rv) + (ck.review_via ? ' via ' + esc(ck.review_via) : '') + '.</span></div>'
+      : '<div class="acxrow"><span class="axzero">0</span><span class="axnote">' +
+        (canAsk ? 'Job is ' + stg.toLowerCase() + ' \u2014 perfect time to ask for a Google review.'
+                : 'No review requested yet. Best asked once the job is completed.') + '</span></div>') +
+    '<div class="acxrow" style="margin-top:10px;gap:8px;">' +
+      (pr.phone ? '<button class="axbtn" data-rv="sms">\uD83D\uDCF1 Text request</button>' : '') +
+      (pr.email ? '<button class="axbtn" data-rv="email">\u2709\uFE0F Email request</button>' : '') +
+      '<button class="chipbtn" data-rv="copy">Copy message</button>' +
+    '</div>' +
+    (rv ? '<div class="axnote" style="margin-top:6px;">Tapping again sends a friendly follow-up.</div>' : '') +
+    '<label class="rvswrow">' +
+      '<span class="rvswitch"><input type="checkbox" id="rvLeftSwitch"' + (ck.review_left_at ? ' checked' : '') + '>' +
+      '<span class="trk"></span><span class="knb"></span></span>' +
+      (ck.review_left_at
+        ? '<span class="rvdone">' + GOOGLE_G + ' Review left on Google! \u2014 marked by ' +
+          esc(rptRepName(ck.review_left_by || '').split(" ")[0] || '?') + ' \u00b7 ' + acxDate(ck.review_left_at) + '</span>'
+        : '<span class="axnote">Flip when their review appears on Google</span>') +
+    '</label>' +
+  '</div></div>';
   mount.innerHTML = html;
   /* async photo count */
   photoDb.listByProject(pr.id).then(function(l){
@@ -4299,6 +4372,20 @@ function renderAcxOverview(){
   if(ord) ord.addEventListener('click', function(){ showTab('materials'); });
   estList && mount.querySelectorAll('[data-doc]').forEach(function(el){
     el.addEventListener('click', function(){ openEditor(el.getAttribute('data-doc')); });
+  });
+  var rvsw = document.getElementById('rvLeftSwitch');
+  if(rvsw) rvsw.addEventListener('change', async function(){
+    var on = this.checked;
+    try{
+      await patchProjectCk(pr, {
+        review_left_at: on ? new Date().toISOString() : null,
+        review_left_by: on ? ((currentUser && currentUser.email) || null) : null
+      });
+      renderAcxOverview();
+    }catch(err){ showError('Could not save: ' + (err.message || err)); }
+  });
+  mount.querySelectorAll('[data-rv]').forEach(function(b){
+    b.addEventListener('click', function(){ sendReviewRequest(pr, b.getAttribute('data-rv')); });
   });
   var nt = document.getElementById('acxNewTask');
   if(nt) nt.addEventListener('click', async function(){
@@ -4846,6 +4933,28 @@ function renderRptReps(projs, from, to){
     datasets:[{ label:'Signed revenue', data: rows.map(function(r){ return r.rev; }), backgroundColor: CARD_RED }] },
     options:{ plugins:{ legend:{ display:false } },
       scales:{ y:{ ticks:{ callback:function(v){ return '$' + (v>=1000? (v/1000)+'k' : v); } } } } } });
+  /* reviews scoreboard */
+  var rvRows = Object.keys(byRep).map(function(e){
+    var list = byRep[e];
+    var asked = list.filter(function(p){ var t = parseCkAll(p).review_requested_at; return t && inR(new Date(t)); }).length;
+    var got = list.filter(function(p){ var t = parseCkAll(p).review_left_at; return t && inR(new Date(t)); }).length;
+    return { e:e, asked:asked, got:got };
+  }).filter(function(r){ return r.asked || r.got; })
+    .sort(function(a,b){ return b.got - a.got || b.asked - a.asked; });
+  var totAsked = rvRows.reduce(function(s,r){ return s + r.asked; }, 0);
+  var totGot = rvRows.reduce(function(s,r){ return s + r.got; }, 0);
+  document.getElementById('rptReviews').innerHTML = rvRows.length
+    ? '<table class="rpttable"><thead><tr><th>Rep</th><th>Requested</th><th>Reviews ' + GOOGLE_G + '</th><th>Conversion</th></tr></thead><tbody>' +
+      rvRows.map(function(r){
+        return '<tr><td><b>' + esc(rptRepName(r.e)) + '</b></td><td>' + r.asked + '</td>' +
+          '<td style="color:#a86a00;font-weight:800;">' + r.got + '</td><td>' + rptPct(r.got, r.asked) + '</td></tr>';
+      }).join('') +
+      '<tr style="border-top:2px solid #C8202E;"><td><b>Whole team</b></td><td><b>' + totAsked + '</b></td>' +
+      '<td style="color:#a86a00;font-weight:800;">' + totGot + '</td><td><b>' + rptPct(totGot, totAsked) + '</b></td></tr>' +
+      '</tbody></table>'
+    : '<div style="font:600 13px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;padding:6px 0;">' +
+      'No review requests in this period yet \u2014 complete a job and the ask flows from there.</div>';
+
   var staleCut = Date.now() - 14*86400000;
   var stale = projs.filter(function(p){
     return ['Lead','Prospect'].indexOf(normStage(p.stage)) !== -1 &&
