@@ -1,5 +1,5 @@
 {
-  "name": "cardinal-inspections",
+  "name": "cardinal-resource",
   "private": true,
   "dependencies": {
     "web-push": "^3.6.7"

@@ -938,6 +938,39 @@ html, body{overflow-x:hidden;max-width:100%;}
     border:1px solid #e2d5c3;border-radius:6px;background:#faf3e6;padding:5px 0;}
   .teamcal .minical .calgrid .day.today{border-color:#7c1019;}
 }
+/* ---- mobile stability pass ---- */
+@media (max-width:900px){
+  /* iOS auto-zoom on focus is the 'sway' — 16px kills it */
+  input, select, textarea{font-size:16px !important;}
+  /* wide doc tables scroll inside their card, not the page */
+  #historyMount, #estDocsMount, #inspDocsMount, #listMount{
+    overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
+  /* belt-and-suspenders: no view may widen the page */
+  #mainView, #projectView, #clientsView, #activityView, #reportsView, #leadsView, #auditView{
+    overflow-x:clip;max-width:100%;}
+}
+/* ---- trades checkboxes: aligned everywhere ---- */
+.projform label.tradeopt{display:flex;align-items:center;gap:8px;margin:0;
+  font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;min-height:26px;}
+.tradegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin:6px 0 12px;}
+.acxtrs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding-top:1px;}
+.acxtrs label{display:flex;align-items:center;gap:7px;min-height:22px;
+  font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+.cbx{width:18px;height:18px;}
+.cbx:checked::before{font-size:12px;}
+
+/* ---- restore veil (no home flash on refresh) ---- */
+#restoreVeil{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;
+  background:linear-gradient(168deg,#241518 0%,#170f11 48%,#221407 100%);}
+body.restoring #restoreVeil{display:flex;}
+.rvinner{text-align:center;}
+.rvtext{font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.08em;
+  background:linear-gradient(160deg,#8a5a00 0%,#d4a017 30%,#f5d061 50%,#c8901c 70%,#7a4f00 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.rvlogo{width:56px;height:56px;margin:0 auto 12px;border-radius:50%;border:3px solid rgba(212,160,23,.25);
+  border-top-color:#d4a017;animation:rvspin 1s linear infinite;}
+@keyframes rvspin{to{transform:rotate(360deg);}}
+
 /* ---- AccuLynx-style client overview ---- */
 #tab-overview > *:not(#acxMount){display:none !important;}
 .acxsec{background:#fff;border:1px solid #ddd6cf;border-radius:6px;margin-bottom:14px;overflow:visible;}
@@ -959,12 +992,14 @@ html, body{overflow-x:hidden;max-width:100%;}
 .msleft .lbl.green{color:#5a9e2f;} .msleft .lbl.orange{color:#F08A24;} .msleft .lbl.red{color:#C8202E;}
 .msleft .val{color:#2b2b2b;font-weight:700;}
 .mssteps{flex:1;display:flex;align-items:flex-start;min-width:280px;overflow-x:auto;padding:4px 0 2px;}
-.msstep{flex:1;min-width:74px;text-align:center;position:relative;}
+.msstep{flex:1;min-width:74px;text-align:center;position:relative;padding-top:16px;}
 .msstep .mc{width:44px;height:44px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;
   color:#fff;font:800 20px 'Segoe UI',Arial,sans-serif;background:#c9c2bb;box-shadow:0 1px 3px rgba(0,0,0,.2);}
 .msstep small{display:block;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#3b2f2a;margin-top:5px;}
 .msstep .dt{display:block;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#8a7a72;}
-.msstep::before{content:'';position:absolute;top:22px;left:-50%;width:100%;height:3px;background:#d9d2cb;z-index:0;}
+.msstep::before{content:'';position:absolute;top:38px;left:-50%;width:100%;height:3px;background:#d9d2cb;z-index:0;}
+.msstep .dur{position:absolute;top:1px;left:-50%;width:100%;
+  font:700 10px 'Segoe UI',Arial,sans-serif;color:#5a9e2f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .msstep:first-child::before{display:none;}
 .msstep.hit::before{background:#7CB342;}
 .msstep .mc{position:relative;z-index:1;}
@@ -997,8 +1032,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 .acxpencil{margin-left:auto;cursor:pointer;color:#C8202E;font-size:15px;}
 .acxsel{border:1px solid #ddd6cf;border-radius:6px;padding:5px 8px;font:700 12.5px 'Segoe UI',Arial,sans-serif;
   color:#2b2b2b;background:#fff;max-width:100%;}
-.acxtrs{display:flex;flex-wrap:wrap;gap:6px 12px;}
-.acxtrs label{display:flex;align-items:center;gap:5px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+
 /* tasks */
 .tsktabs{display:flex;gap:14px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#8a7a72;margin:10px 0 6px;}
 .tsktabs span{cursor:pointer;padding-bottom:4px;}
@@ -1063,7 +1097,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   display:inline-grid;place-content:center;vertical-align:middle;margin:0;}
 .cbx:checked{background:#1b3a6b;}
 .cbx:checked::before{content:'\2713';color:#fff;font:800 11px/1 'Segoe UI',Arial,sans-serif;}
-.tradegrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin:4px 0 10px;}
+
 .tradeopt{display:flex;align-items:center;gap:7px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
 .ljopt .cnt{margin-left:auto;color:#9a8c85;font-weight:700;font-size:11px;}
 .ljrhead{font:800 15px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;margin-bottom:8px;}
@@ -1357,6 +1391,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="feed">&#9889; Activity Feed</button>
           <button class="navopt" data-nav="reports">&#128200; Graphs &amp; Reports</button>
           <button class="navopt" data-nav="leads">&#128203; Leads &amp; Jobs</button>
+          <button class="navopt" data-nav="notify">&#128276; Enable Notifications</button>
           <button class="navopt" data-nav="board">&#128197; Schedule Board</button>
           <button class="navopt" data-nav="recents">&#128337; Recents</button>
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
@@ -2765,6 +2800,12 @@ compromised porch or area until repairs are complete.]</p>
   </div>
 </div>
 
+<div id="restoreVeil">
+  <div class="rvinner">
+    <div class="rvlogo"></div>
+    <div class="rvtext">Loading&#8230;</div>
+  </div>
+</div>
 </body>
 </html>
 `;
@@ -3004,6 +3045,12 @@ including the concealed-conditions change-order process in Section 5.</div>
   </div>
 </div>
 
+<div id="restoreVeil">
+  <div class="rvinner">
+    <div class="rvlogo"></div>
+    <div class="rvtext">Loading&#8230;</div>
+  </div>
+</div>
 </body>
 </html>
 `;
@@ -3134,6 +3181,12 @@ including the concealed-conditions change-order process above.</div>
   </div>
 </div>
 
+<div id="restoreVeil">
+  <div class="rvinner">
+    <div class="rvlogo"></div>
+    <div class="rvtext">Loading&#8230;</div>
+  </div>
+</div>
 </body>
 </html>`;
 
@@ -3980,6 +4033,18 @@ function acxNext(stg){
   var i = order.indexOf(stg);
   return (i >= 0 && i < order.length - 1) ? order[i+1] : null;
 }
+function acxDur(a, b){
+  var ms = b - a;
+  if(ms < 0) return '';
+  var h = ms / 3600000;
+  if(h < 1) return '<1 hour';
+  if(h < 48) return Math.round(h) + (Math.round(h) === 1 ? ' hour' : ' hours');
+  var d = h / 24;
+  if(d < 60) return Math.round(d) + ' days';
+  var mo = d / 30;
+  if(mo < 24) return Math.round(mo) + (Math.round(mo) === 1 ? ' month' : ' months');
+  return Math.round(mo/12) + ' years';
+}
 function acxDate(iso){
   if(!iso) return '';
   var d = new Date(iso);
@@ -4021,14 +4086,24 @@ function renderAcxOverview(){
   }).length;
   var isLost = stg === 'Lost';
   /* ---- milestones ---- */
-  var steps = ACX_STEPS.map(function(st){
+  var stepData = ACX_STEPS.map(function(st){
     var reached = !isLost && acxRank(st.s) <= (stg === 'Scheduled' && st.s === 'Approved' ? acxRank('Approved') : rank);
     if(st.s !== 'Lead' && ck['t_' + st.s]) reached = true;
     if(st.s === 'Lead') reached = true;
     var dt = st.s === 'Lead' ? (ck.t_Lead || pr.created_at) : ck['t_' + st.s];
-    return '<div class="msstep' + (reached ? ' hit' : '') + '">' +
-      '<span class="mc" style="background:' + (reached ? st.c : '#c9c2bb') + ';">' + st.l + '</span>' +
-      '<small>' + st.s + '</small><span class="dt">' + (reached && dt ? acxDate(dt) : '--') + '</span></div>';
+    return { st: st, reached: reached, dt: dt ? new Date(dt) : null };
+  });
+  var steps = stepData.map(function(sd, i){
+    var dur = '';
+    if(i > 0 && sd.reached && sd.dt && stepData[i-1].dt){
+      dur = acxDur(stepData[i-1].dt.getTime(), sd.dt.getTime());
+    } else if(i > 0 && !sd.reached && stepData[i-1].reached && stepData[i-1].dt && acxRank(stepData[i-1].st.s) === (stg === 'Scheduled' ? acxRank('Approved') : rank) && !isLost){
+      dur = acxDur(stepData[i-1].dt.getTime(), Date.now()) + ' so far';
+    }
+    return '<div class="msstep' + (sd.reached ? ' hit' : '') + '">' +
+      (dur ? '<span class="dur">' + dur + '</span>' : '') +
+      '<span class="mc" style="background:' + (sd.reached ? sd.st.c : '#c9c2bb') + ';">' + sd.st.l + '</span>' +
+      '<small>' + sd.st.s + '</small><span class="dt">' + (sd.reached && sd.dt ? acxDate(sd.dt) : '--') + '</span></div>';
   }).join('');
   var menuBtns = '';
   if(!isLost && nx) menuBtns += '<button data-act="adv">&#9654; Advance to ' + esc(nx) + '</button>';
@@ -6735,6 +6810,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'reports'){ openReportsView(); }
   else if(nav === 'leads'){ openLeadsView(); }
   else if(nav === 'audit'){ openAuditLog(); }
+  else if(nav === 'notify'){ enableNotifications(); }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
@@ -6851,7 +6927,18 @@ document.querySelectorAll('.gcsel').forEach(function(sel){
   sel.innerHTML = '<option value="">\u2014 select \u2014</option>' +
     GC_OPTS.map(function(o){ return '<option>' + o + '</option>'; }).join('');
 });
+var __ckCache = new Map();
 function parseCkAll(pr){
+  if(!pr) return {};
+  var key = pr.id, raw = pr.checklist || '';
+  var hit = __ckCache.get(key);
+  if(hit && hit.raw === raw) return hit.val;
+  var val = __parseCkAllRaw(pr);
+  __ckCache.set(key, { raw: raw, val: val });
+  if(__ckCache.size > 500) __ckCache.clear();
+  return val;
+}
+function __parseCkAllRaw(pr){
   try{ return JSON.parse((pr && pr.checklist) || '{}') || {}; }catch(e){ return {}; }
 }
 function getGeneralCk(pr){
@@ -7189,7 +7276,7 @@ document.getElementById('boardMount').addEventListener('click', function(e){
   if(day){ openApptDay(day.getAttribute('data-day')); }
 });
 /* ---------- phone push notifications ---------- */
-var VAPID_PUBLIC = 'BBXZ2x7uHMX3p0j1F4apWn8xS-d9GnZw3BCJORAR4Nhfu1PVGGH2yBf2mbrpKa4Y-J3SLPvJaF9Y2JH6Kd6pxn0';
+var VAPID_PUBLIC = 'BI-nCdPXgT_WzKQA34jhHsX3dYQephRPLDKy7xr__Jyl1WergJWPlliAvbIldjztrds65MPkT5xI0TvDTg-Q_2k';
 function urlB64ToUint8(s){
   var pad = '='.repeat((4 - s.length % 4) % 4);
   var raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
@@ -9009,6 +9096,9 @@ function __hashFor(st){
   if(st.v === 'clients') return '#clients';
   if(st.v === 'feed') return '#feed';
   if(st.v === 'audit') return '#audit';
+  if(st.v === 'board') return '#board';
+  if(st.v === 'list' && st.k) return '#list/' + encodeURIComponent(st.k);
+  if(st.v === 'me') return '#me';
   return '#h';
 }
 function __histPush(st){
@@ -9030,6 +9120,12 @@ function __histPush(st){
   openActivityFeed = function(){ __histPush({ v:'feed' }); return _of(); };
   var _oa = openAuditLog;
   openAuditLog = function(){ __histPush({ v:'audit' }); return _oa(); };
+  var _obd = openScheduleBoard;
+  openScheduleBoard = function(){ __histPush({ v:'board' }); return _obd(); };
+  var _oli = openList;
+  openList = function(k){ __histPush({ v:'list', k:k }); return _oli(k); };
+  var _omp = openMyProfile;
+  openMyProfile = function(){ __histPush({ v:'me' }); return _omp(); };
   var _sh = showHome;
   showHome = function(){ __histPush({ v:'home' }); return _sh(); };
   /* UI back inside the editor goes through browser history so the two stay in sync */
@@ -9038,7 +9134,61 @@ function __histPush(st){
     if(!__histLock && history.state && history.state.v === 'editor'){ history.back(); return; }
     return _ce();
   };
-  try{ if(!/^#(p|e)\//.test(location.hash) && !/^#(leads|reports|clients|feed|audit)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
+/* =========================================================================
+   WEB PUSH NOTIFICATIONS
+   ========================================================================= */
+var VAPID_PUBLIC = 'BG8JTSYJiVSevLqUWTbevdsuXBpdcqYoQ1oNXmU6bwcFghSuJ-dsC2tgpxaxwm-FVy5DvhVrp0JKoMDz90hbYPA';
+function __b64ToU8(s){
+  var pad = '='.repeat((4 - s.length % 4) % 4);
+  var b = (s + pad).replace(/-/g,'+').replace(/_/g,'/');
+  var raw = atob(b), a = new Uint8Array(raw.length);
+  for(var i=0;i<raw.length;i++) a[i] = raw.charCodeAt(i);
+  return a;
+}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
+async function enableNotifications(){
+  try{
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+      alert('Push is not supported here. On iPhone: install the app first (Share \u2192 Add to Home Screen), then enable from inside the installed app.');
+      return;
+    }
+    var perm = await Notification.requestPermission();
+    if(perm !== 'granted'){ alert('Notifications were not allowed.'); return; }
+    var reg = await navigator.serviceWorker.ready;
+    var sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: __b64ToU8(VAPID_PUBLIC)
+    });
+    var em = (currentUser && currentUser.email) || '';
+    if(!em){ alert('Sign in first.'); return; }
+    var j = sub.toJSON();
+    var r = await sb.from('push_subs').upsert({ email: em, endpoint: sub.endpoint, sub: j }, { onConflict: 'endpoint' });
+    if(r.error) throw r.error;
+    alert('\uD83D\uDD14 Notifications enabled on this device.');
+  }catch(err){
+    alert('Could not enable notifications: ' + (err.message || err) +
+      '\n\nIf this mentions a missing table, run the push_subs SQL in Supabase first.');
+  }
+}
+/* every team email event also fires a push */
+(function(){
+  var _nt = notifyTeam;
+  notifyTeam = function(to, subject, bodyHtml){
+    try{
+      var list = Array.isArray(to) ? to : [to];
+      var text = String(bodyHtml || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 240);
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emails: list, title: subject, body: text, url: location.origin + '/' + location.hash })
+      }).catch(function(){});
+    }catch(e){}
+    return _nt(to, subject, bodyHtml);
+  };
+})();
+  try{ if(!/^#(p|e|list)\//.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
   var __restored = false, __restoreTries = 0;
   window.__tryRestoreFromHash = function(){
     if(__restored) return;
@@ -9051,9 +9201,14 @@ function __histPush(st){
     else if(h === '#clients') st = { v:'clients' };
     else if(h === '#feed') st = { v:'feed' };
     else if(h === '#audit') st = { v:'audit' };
-    if(!st){ __restored = true; return; }
+    else if(h === '#board') st = { v:'board' };
+    else if((m = /^#list\/(.+)$/.exec(h))) st = { v:'list', k: decodeURIComponent(m[1]) };
+    else if(h === '#me') st = { v:'me' };
+    if(!st){ __restored = true; document.body.classList.remove('restoring'); return; }
     if((st.v === 'project' || st.v === 'leads') && !cacheProjects.length && __restoreTries < 25){
-      __restoreTries++; setTimeout(window.__tryRestoreFromHash, 350); return;
+      __restoreTries++; setTimeout(window.__tryRestoreFromHash, 250);
+      if(__restoreTries >= 25) document.body.classList.remove('restoring');
+      return;
     }
     __restored = true;
     __histLock = true;
@@ -9065,13 +9220,23 @@ function __histPush(st){
       else if(st.v === 'clients') _oc();
       else if(st.v === 'feed') _of();
       else if(st.v === 'audit') _oa();
+      else if(st.v === 'board') _obd();
+      else if(st.v === 'list' && st.k) _oli(st.k);
+      else if(st.v === 'me') _omp();
       history.replaceState(st, '', __hashFor(st));
-    } finally { __histLock = false; }
+    } finally {
+      __histLock = false;
+      setTimeout(function(){ document.body.classList.remove('restoring'); }, 250);
+    }
   };
+  function __restorableHash(){
+    return /^#(p|e|list)\//.test(location.hash) || /^#(leads|reports|clients|feed|audit|board|me)/.test(location.hash);
+  }
   var _smw = showMain;
   showMain = function(em){
+    if(__restorableHash() && !__restored) document.body.classList.add('restoring');
     var r = _smw(em);
-    setTimeout(window.__tryRestoreFromHash, 500);
+    setTimeout(window.__tryRestoreFromHash, 60);
     return r;
   };
   window.addEventListener('popstate', async function(e){
@@ -9088,11 +9253,20 @@ function __histPush(st){
       else if(st.v === 'clients') _oc();
       else if(st.v === 'feed') _of();
       else if(st.v === 'audit') _oa();
+      else if(st.v === 'board') _obd();
+      else if(st.v === 'list' && st.k) _oli(st.k);
+      else if(st.v === 'me') _omp();
       else _sh();
     } finally { __histLock = false; }
   });
 })();
 
 </script>
+<div id="restoreVeil">
+  <div class="rvinner">
+    <div class="rvlogo"></div>
+    <div class="rvtext">Loading&#8230;</div>
+  </div>
+</div>
 </body>
 </html>

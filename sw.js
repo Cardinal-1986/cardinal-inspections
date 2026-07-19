@@ -1,22 +1,28 @@
-/* Cardinal Client Resources — push notification service worker */
-self.addEventListener('install', function (e) { self.skipWaiting(); });
-self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
+/* Cardinal Resource — service worker (push only; NO caching, so deploys stay instant) */
+self.addEventListener('install', function(){ self.skipWaiting(); });
+self.addEventListener('activate', function(e){ e.waitUntil(self.clients.claim()); });
 
-self.addEventListener('push', function (e) {
-  var d = {};
-  try { d = e.data.json(); } catch (err) { d = { title: 'Cardinal Client Resources', body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Cardinal Client Resources', {
-    body: d.body || '',
+self.addEventListener('push', function(e){
+  var data = {};
+  try{ data = e.data ? e.data.json() : {}; }catch(err){ data = { title:'Cardinal', body: e.data ? e.data.text() : '' }; }
+  var title = data.title || 'Cardinal Resource';
+  var opts = {
+    body: data.body || '',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    data: { url: d.url || '/' }
-  }));
+    data: { url: data.url || '/' },
+    tag: data.tag || undefined
+  };
+  e.waitUntil(self.registration.showNotification(title, opts));
 });
 
-self.addEventListener('notificationclick', function (e) {
+self.addEventListener('notificationclick', function(e){
   e.notification.close();
-  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
-    for (var i = 0; i < list.length; i++) { if ('focus' in list[i]) return list[i].focus(); }
-    return self.clients.openWindow((e.notification.data && e.notification.data.url) || '/');
+  var url = (e.notification.data && e.notification.data.url) || '/';
+  e.waitUntil(clients.matchAll({ type:'window', includeUncontrolled:true }).then(function(list){
+    for(var i=0;i<list.length;i++){
+      if('focus' in list[i]){ list[i].navigate(url); return list[i].focus(); }
+    }
+    return clients.openWindow(url);
   }));
 });
