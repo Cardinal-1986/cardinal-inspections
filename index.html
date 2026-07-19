@@ -1019,6 +1019,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 .audf{cursor:pointer;}
 .audf.on{background:#C8202E;color:#fff;border-color:#C8202E;}
 .audf.zero{opacity:.5;}
+.audf.audreset{margin-left:auto;border-color:#C8202E;color:#C8202E;}
 .audf b{margin-left:3px;}
 .audrow span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere;}
 
@@ -1546,7 +1547,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 49 &#8212; audit filters live</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 50 &#8212; audit reset</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9607,7 +9608,7 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
-var BUILD_TAG = '2026-07-19 build 49 \u2014 audit filters live';
+var BUILD_TAG = '2026-07-19 build 50 \u2014 audit reset';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
@@ -9701,7 +9702,8 @@ async function renderAuditLog(){
       var n = counts[k] || 0;
       return '<span class="hstat audf' + (auditFilter === k ? ' on' : '') + (n || k === 'all' ? '' : ' zero') +
         '" data-audf="' + k + '">' + lbl + ' <b>' + n + '</b></span>';
-    }).join('') + '<span class="hstat audf" data-audref="1">&#8635; Refresh</span>';
+    }).join('') + '<span class="hstat audf" data-audref="1">&#8635; Refresh</span>' +
+      '<span class="hstat audf audreset" data-audreset="1">&#129529; Reset audit</span>';
     var pool = auditFilter === 'all' ? events : events.filter(function(e){ return e.type === auditFilter; });
     var evHtml;
     if(evErr){
@@ -9738,6 +9740,18 @@ async function renderAuditLog(){
       '<h3 class="projsec" style="margin-top:22px;">&#128274; Sign-in sessions</h3>' + ssHtml;
     mount.querySelectorAll('[data-audf]').forEach(function(ch){
       ch.addEventListener('click', function(){ auditFilter = ch.getAttribute('data-audf'); renderAuditLog(); });
+    });
+    var rz = mount.querySelector('[data-audreset]');
+    if(rz) rz.addEventListener('click', async function(){
+      if(!confirm('Reset the ENTIRE audit log?\n\nThis permanently clears all recorded events and sign-in sessions for the whole team.')) return;
+      if(!confirm('Last check \u2014 this cannot be undone. Reset now?')) return;
+      try{
+        await sb.from('audit_events').delete().not('id', 'is', null);
+        await sb.from('audit_sessions').delete().not('id', 'is', null);
+        auditLog('team', 'Audit log reset \u2014 clock restarted');
+        auditFilter = 'all';
+        setTimeout(renderAuditLog, 400);
+      }catch(err){ showError('Could not reset: ' + (err.message || err)); }
     });
     var rf = mount.querySelector('[data-audref]');
     if(rf) rf.addEventListener('click', function(){ renderAuditLog(); });
