@@ -994,6 +994,10 @@ html, body{overflow-x:hidden;max-width:100%;}
 .acxtab{padding:9px 14px;font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8a7a72;cursor:pointer;}
 .acxtab.on{color:#C8202E;box-shadow:inset 0 -3px 0 #C8202E;}
 .acxpencil{margin-left:auto;cursor:pointer;color:#C8202E;font-size:15px;}
+.acxsel{border:1px solid #ddd6cf;border-radius:6px;padding:5px 8px;font:700 12.5px 'Segoe UI',Arial,sans-serif;
+  color:#2b2b2b;background:#fff;max-width:100%;}
+.acxtrs{display:flex;flex-wrap:wrap;gap:6px 12px;}
+.acxtrs label{display:flex;align-items:center;gap:5px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
 /* tasks */
 .tsktabs{display:flex;gap:14px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#8a7a72;margin:10px 0 6px;}
 .tsktabs span{cursor:pointer;padding-bottom:4px;}
@@ -1008,7 +1012,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 /* ---- estimate editor header ---- */
 #backBtn{background:#C8202E;border-color:#C8202E;color:#fff;font-weight:800;flex:0 0 auto;}
-.edchip{display:inline-flex;align-items:center;gap:6px;max-width:46vw;height:30px;padding:0 12px;
+.edchip{display:inline-flex;align-items:center;gap:6px;max-width:220px;height:30px;padding:0 12px;
   border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);
   font:700 12px 'Segoe UI',Arial,sans-serif;color:#f3e9dc;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;flex:0 1 auto;}
@@ -1021,7 +1025,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 #reportTitle::placeholder{color:#a89286;}
 #savedFlash{order:11;}
 @media (max-width:760px){
-  .edchip{height:26px;font-size:11px;padding:0 10px;max-width:44vw;}
+  .edchip{height:26px;font-size:11px;padding:0 10px;max-width:36vw;}
   #backBtn{padding:8px 11px;font-size:13px;}
 }
 
@@ -1697,6 +1701,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
 
     <div id="tab-materials" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Client Overview</button>
       <h3 class="projsec">&#128230; Material Order Lists</h3>
       <p class="subnote">Import measurements once and auto-generate a material order with quantities and units.
       Quantities include standard waste and are fully editable &#8212; always verify against the scope before ordering.</p>
@@ -3987,6 +3992,11 @@ async function acxDead(pr){
   try{ await setStage(pr.id, 'Lost'); renderOverview(); renderPipeline(); }
   catch(err){ showError('Could not update: ' + (err.message || err)); }
 }
+function acxOpts(list, cur){
+  return '<option value="">\u2014</option>' + list.map(function(o){
+    return '<option' + (cur === o ? ' selected' : '') + '>' + o + '</option>';
+  }).join('');
+}
 function renderAcxOverview(){
   var mount = document.getElementById('acxMount');
   if(!mount || !currentProject) return;
@@ -4072,11 +4082,13 @@ function renderAcxOverview(){
     '<span class="acxtab" data-at="ins">Insurance</span><span class="acxtab" data-at="adj">Adjuster</span></div>' +
     '<div id="acxLocPanel"><div class="ackv">' +
       '<span>Address:</span><div>' + (pr.address ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '" target="_blank">' + esc(pr.address) + ' &#8599;</a>' : '\u2014') + '</div>' +
-      '<span>Category:</span><div>' + esc(ck.job_category || '\u2014') + '</div>' +
-      '<span>Work Type:</span><div>' + esc(ck.work_type || '\u2014') + '</div>' +
-      '<span>Trade:</span><div>' + esc(ljTrades(pr).join(', ') || '\u2014') + '</div>' +
-      '<span>Lead Source:</span><div>' + esc(ck.lead_source || '\u2014') + '</div>' +
-      '<span>Initial Appt:</span><div>' + (appts.length ? acxDate(appts[0].appt_date) : '\u2014') + '</div>' +
+      '<span>Category:</span><div><select class="acxsel" id="acxCat">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
+      '<span>Work Type:</span><div><select class="acxsel" id="acxWt">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service'], ck.work_type) + '</select></div>' +
+      '<span>Trade:</span><div class="acxtrs">' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
+        return '<label><input type="checkbox" class="cbx acxTr" value="' + t + '"' + (ljTrades(pr).indexOf(t) !== -1 ? ' checked' : '') + '> ' + t + '</label>';
+      }).join('') + '</div>' +
+      '<span>Lead Source:</span><div><select class="acxsel" id="acxSrc">' + acxOpts(['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social','Other'], ck.lead_source) + '</select></div>' +
+      '<span>Initial Appt:</span><div>' + (ck.t_Prospect ? acxDate(ck.t_Prospect) : '\u2014') + '</div>' +
     '</div></div>' +
     '<div id="acxInsPanel" style="display:none;" class="axnote">No insurance information on file \u2014 coming soon.</div>' +
     '<div id="acxAdjPanel" style="display:none;" class="axnote">No adjuster on file \u2014 coming soon.</div>' +
@@ -4176,6 +4188,26 @@ function renderAcxOverview(){
       document.getElementById('acxLocPanel').style.display = at === 'loc' ? 'block' : 'none';
       document.getElementById('acxInsPanel').style.display = at === 'ins' ? 'block' : 'none';
       document.getElementById('acxAdjPanel').style.display = at === 'adj' ? 'block' : 'none';
+    });
+  });
+  function acxPatchField(key, val){
+    patchProjectCk(pr, (function(){ var o = {}; o[key] = val || null; return o; })())
+      .then(function(){ renderAcxOverview(); })
+      .catch(function(err){ showError('Could not save: ' + (err.message || err)); });
+  }
+  var selCat = document.getElementById('acxCat');
+  if(selCat) selCat.addEventListener('change', function(){ acxPatchField('job_category', this.value); });
+  var selWt = document.getElementById('acxWt');
+  if(selWt) selWt.addEventListener('change', function(){ acxPatchField('work_type', this.value); });
+  var selSrc = document.getElementById('acxSrc');
+  if(selSrc) selSrc.addEventListener('change', function(){ acxPatchField('lead_source', this.value); });
+  mount.querySelectorAll('.acxTr').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      var list = [];
+      mount.querySelectorAll('.acxTr:checked').forEach(function(x){ list.push(x.value); });
+      patchProjectCk(pr, { trades: list.length ? list : null, trade: null })
+        .then(function(){ renderAcxOverview(); })
+        .catch(function(err){ showError('Could not save: ' + (err.message || err)); });
     });
   });
   var ne = document.getElementById('acxNewEst');
@@ -8361,7 +8393,7 @@ async function openEditor(id){
     var rc = document.getElementById('edRepChip');
     if(rc){
       var em = (currentUser && currentUser.email) || '';
-      if(em){ rc.innerHTML = 'REP \u00b7 <b>' + esc(rptRepName(em)) + '</b>'; rc.style.display = 'inline-flex'; }
+      if(em){ rc.innerHTML = 'REP \u00b7 <b>' + esc(rptRepName(em).split(' ')[0]) + '</b>'; rc.style.display = 'inline-flex'; }
       else{ rc.style.display = 'none'; }
     }
   })();
@@ -8678,13 +8710,21 @@ async function closeEditor(){
   current = null;
   await reload();
 }
-document.getElementById('backBtn').addEventListener('click', closeEditor);
+document.getElementById('backBtn').addEventListener('click', async function(){
+  var pid = window.__edPid;
+  await closeEditor();
+  setTimeout(function(){
+    if(pid && (!currentProject || currentProject.id !== pid)){ openProject(pid); }
+    else if(currentProject){ showTab('overview'); }
+  }, 140);
+});
 document.getElementById('edClientChip').addEventListener('click', async function(){
   var pid = window.__edPid;
   await closeEditor();
-  if(pid && (!currentProject || currentProject.id !== pid)){
-    setTimeout(function(){ openProject(pid); }, 80);
-  }
+  setTimeout(function(){
+    if(pid && (!currentProject || currentProject.id !== pid)){ openProject(pid); }
+    else if(currentProject){ showTab('overview'); }
+  }, 140);
 });
 document.getElementById('editorLogo').addEventListener('click', async function(){
   await closeEditor();
