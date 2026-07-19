@@ -11,6 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cardinal Client Resources</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --red:#C8202E;
@@ -507,6 +508,7 @@ footer.site{
 .stg-Completed{background:#ececec;color:#4a6572;}
 .stg-Invoiced{background:#f3e8fb;color:#5b2d91;}
 .stg-Closed{background:#e6ecef;color:#3d5560;}
+.stg-Lost{background:#efe9e9;color:#7a6a6a;}
 .pcard .stagechip{position:absolute;top:10px;left:10px;box-shadow:0 1px 4px rgba(0,0,0,.25);}
 .stgfilter{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;}
 .stgfilter .hstat.on{background:#9c1822;color:#fff;border-color:#9c1822;}
@@ -926,6 +928,30 @@ html, body{overflow-x:hidden;max-width:100%;}
     border:1px solid #e2d5c3;border-radius:6px;background:#faf3e6;padding:5px 0;}
   .teamcal .minical .calgrid .day.today{border-color:#7c1019;}
 }
+/* ---- graphs & reports ---- */
+.rptchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.rptchips .hstat{cursor:pointer;}
+.rptfilters{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.rptfilters select,.rptfilters input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;
+  font:600 13px 'Segoe UI',Arial,sans-serif;background:#fff;color:#2b2b2b;}
+.rptkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0;}
+.rptkpi{background:#fff;border:1px solid var(--line);border-top:5px solid #C8202E;border-radius:12px;
+  padding:10px 12px;position:relative;overflow:hidden;}
+.rptkpi::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
+  background:linear-gradient(90deg,transparent,#2b2320 30%,#000 50%,#2b2320 70%,transparent);}
+.rptkpi b{display:block;font:800 20px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;}
+.rptkpi span{font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a7a72;text-transform:uppercase;letter-spacing:.04em;}
+.rptkpi small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;margin-top:2px;}
+.rptkpi small.up{color:#2e7d32;} .rptkpi small.down{color:#C8202E;}
+.rptconv{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font:700 12px 'Segoe UI',Arial,sans-serif;color:#5c4a42;}
+.rpttable{width:100%;border-collapse:collapse;font:600 12.5px 'Segoe UI',Arial,sans-serif;}
+.rpttable th{text-align:left;padding:6px 8px;border-bottom:2px solid var(--red);font-size:11px;
+  text-transform:uppercase;letter-spacing:.04em;color:#8a7a72;}
+.rpttable td{padding:7px 8px;border-bottom:1px solid #efe7e2;color:#2b2b2b;white-space:nowrap;}
+.rpttable tr:nth-child(even) td{background:#faf7f4;}
+.rptstale{font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;padding:5px 0;border-bottom:1px solid #efe7e2;}
+@media (max-width:640px){ .rpttable{font-size:11.5px;display:block;overflow-x:auto;} }
+
 /* ---- hide black sidebar calendar on mobile ---- */
 @media (max-width:900px){
   #calCard{display:none;}
@@ -1130,6 +1156,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <div id="navMenu" style="display:none;">
           <button class="navopt" data-nav="clients">&#128101; Clients</button>
           <button class="navopt" data-nav="feed">&#9889; Activity Feed</button>
+          <button class="navopt" data-nav="reports">&#128200; Graphs &amp; Reports</button>
           <button class="navopt" data-nav="board">&#128197; Schedule Board</button>
           <button class="navopt" data-nav="recents">&#128337; Recents</button>
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
@@ -1249,6 +1276,62 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
     <div id="historyMount"><div class="loading">Loading…</div></div>
   </section>
+</div>
+
+<!-- ============ GRAPHS & REPORTS ============ -->
+<div id="reportsView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <div class="pipecard" style="margin-top:0;">
+      <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>&#128200; Graphs &amp; Reports</span>
+        <button class="chipbtn" id="rptBackBtn">&#8249; Home</button>
+      </div>
+      <div class="rptchips" id="rptRange">
+        <span class="hstat" data-r="w">Week</span><span class="hstat on" data-r="m">Month</span>
+        <span class="hstat" data-r="3m">3 Mo</span><span class="hstat" data-r="6m">6 Mo</span>
+        <span class="hstat" data-r="y">Year</span><span class="hstat" data-r="all">All</span>
+        <span class="hstat" data-r="custom">Custom</span>
+      </div>
+      <div id="rptCustom" style="display:none;margin-top:8px;">
+        <input type="date" id="rptFrom"> &#8594; <input type="date" id="rptTo">
+        <button class="chipbtn" id="rptApply">Apply</button>
+      </div>
+      <div class="rptfilters">
+        <select id="rptRep"><option value="">All team</option></select>
+        <select id="rptStage"><option value="">All stages</option></select>
+        <select id="rptSource"><option value="">All sources</option></select>
+        <input type="number" id="rptMin" placeholder="Min $" style="width:84px;">
+        <input type="number" id="rptMax" placeholder="Max $" style="width:84px;">
+        <input type="text" id="rptGeo" placeholder="City / ZIP" style="width:110px;">
+      </div>
+      <div class="rptchips" id="rptTabs" style="margin-top:10px;">
+        <span class="hstat on" data-t="company">Company</span>
+        <span class="hstat" data-t="reps">Reps</span>
+        <span class="hstat" data-t="production">Production</span>
+      </div>
+    </div>
+
+    <div id="rptCompany">
+      <div class="rptkpis" id="rptKpis"></div>
+      <div class="pipecard"><div class="pipetitle">&#128176; Revenue over time <small style="font-weight:400;">(signed value &#183; dashed = previous period)</small></div><canvas id="chRevenue" height="230"></canvas></div>
+      <div class="pipecard"><div class="pipetitle">&#128683; Pipeline funnel &amp; conversion</div><canvas id="chFunnel" height="230"></canvas><div id="rptConv" class="rptconv"></div></div>
+      <div class="pipecard"><div class="pipetitle">&#128681; New leads over time</div><canvas id="chLeads" height="200"></canvas></div>
+      <div class="pipecard" id="rptSourceCard" style="display:none;"><div class="pipetitle">&#128269; Leads by source</div><canvas id="chSource" height="220"></canvas></div>
+      <div class="pipecard" id="rptLossCard" style="display:none;"><div class="pipetitle">&#10060; Why we lose bids</div><canvas id="chLoss" height="220"></canvas></div>
+    </div>
+
+    <div id="rptReps" style="display:none;">
+      <div class="pipecard"><div class="pipetitle">&#127942; Rep scoreboard</div><div id="rptRepTable"></div></div>
+      <div class="pipecard"><div class="pipetitle">&#128176; Signed revenue by rep</div><canvas id="chRepRev" height="220"></canvas></div>
+      <div class="pipecard"><div class="pipetitle">&#9888;&#65039; Stale leads (14+ days untouched)</div><div id="rptStale"></div></div>
+    </div>
+
+    <div id="rptProd" style="display:none;">
+      <div class="rptkpis" id="rptProdKpis"></div>
+      <div class="pipecard"><div class="pipetitle">&#128296; Jobs completed over time</div><canvas id="chProd" height="220"></canvas></div>
+      <div class="pipecard" id="rptProfitCard" style="display:none;"><div class="pipetitle">&#128181; Profit margin (jobs with cost entered)</div><div id="rptProfit"></div></div>
+    </div>
+  </div>
 </div>
 
 <!-- ============ PROJECT PROFILE ============ -->
@@ -1548,6 +1631,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <label>Property address<input type="text" id="pfAddress" autocomplete="off"></label>
     <label>Phone number<input type="tel" id="pfPhone" autocomplete="off"></label>
     <label>Email address<input type="email" id="pfEmail" autocomplete="off"></label>
+    <label>Lead source<select id="pfSource">
+      <option value="">— not set —</option>
+      <option>Door knock</option><option>Referral</option><option>Google / website</option>
+      <option>Yard sign</option><option>Repeat customer</option><option>Storm canvass</option>
+      <option>Facebook / social</option><option>Other</option>
+    </select></label>
+    <label>Job cost (materials + labor, $)<input type="number" id="pfJobCost" min="0" step="0.01" placeholder="for profit reports"></label>
     <div style="margin-top:14px;text-align:right;">
       <button class="chipbtn" id="pfCancel">Cancel</button>
       <button class="btn" id="pfSave">Save</button>
@@ -3460,7 +3550,7 @@ function upgradeNearbyRow(cands){
 function renderHome(){
   var q = searchText.trim().toLowerCase();
   var projs = cacheProjects.filter(function(pr){
-    if(!q) return normStage(pr.stage) !== 'Closed'; /* Closed = archive: off the board */
+    if(!q) return ['Closed','Lost'].indexOf(normStage(pr.stage)) === -1; /* archived/lost: off the board */
     var hay = [pr.name, pr.address, pr.phone, pr.email, poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   });
@@ -3524,6 +3614,353 @@ function renderHome(){
     upgradeNearbyRow(nc);
   }
 }
+
+
+/* =========================================================================
+   GRAPHS & REPORTS
+   ========================================================================= */
+var rptState = { range:'m', tab:'company', from:null, to:null };
+var rptCharts = {};
+var CARD_RED = '#C8202E', CARD_GOLD = '#d4a017';
+var RPT_PALETTE = ['#C8202E','#d4a017','#7CB342','#29A3DC','#8E6BC1','#607D8B','#F08A24','#8d6e63'];
+
+function rptCk(pr){ return parseCkAll(pr); }
+function rptStageDate(pr, stg){
+  var ck = rptCk(pr);
+  if(ck['t_' + stg]) return new Date(ck['t_' + stg]);
+  if(normStage(pr.stage) === stg && ck.stage_since) return new Date(ck.stage_since);
+  if(stg === 'Lead' && pr.created_at) return new Date(pr.created_at);
+  return null;
+}
+function rptSignedDate(pr){
+  return rptStageDate(pr,'Approved') || rptStageDate(pr,'Scheduled') || rptStageDate(pr,'Completed') ||
+         rptStageDate(pr,'Invoiced') || rptStageDate(pr,'Closed') ||
+         (pr.updated_at ? new Date(pr.updated_at) : null);
+}
+function rptIsSigned(pr){
+  return ['Approved','Scheduled','Completed','Invoiced','Closed'].indexOf(normStage(pr.stage)) !== -1;
+}
+function rptRangeDates(){
+  var to = rptState.to ? new Date(rptState.to + 'T23:59:59') : new Date();
+  var from;
+  var d = 86400000;
+  if(rptState.range === 'custom' && rptState.from){ from = new Date(rptState.from + 'T00:00:00'); }
+  else if(rptState.range === 'w'){ from = new Date(to.getTime() - 7*d); }
+  else if(rptState.range === 'm'){ from = new Date(to.getTime() - 30*d); }
+  else if(rptState.range === '3m'){ from = new Date(to.getTime() - 91*d); }
+  else if(rptState.range === '6m'){ from = new Date(to.getTime() - 183*d); }
+  else if(rptState.range === 'y'){ from = new Date(to.getTime() - 365*d); }
+  else { from = new Date(2020,0,1); }
+  return { from: from, to: to };
+}
+function rptFilteredProjects(){
+  var rep = document.getElementById('rptRep').value;
+  var stg = document.getElementById('rptStage').value;
+  var srcF = document.getElementById('rptSource').value;
+  var mn = parseFloat(document.getElementById('rptMin').value);
+  var mx = parseFloat(document.getElementById('rptMax').value);
+  var geo = document.getElementById('rptGeo').value.trim().toLowerCase();
+  return cacheProjects.filter(function(pr){
+    if(rep && (pr.created_by || '') !== rep) return false;
+    if(stg && normStage(pr.stage) !== stg) return false;
+    if(srcF && (rptCk(pr).lead_source || '') !== srcF) return false;
+    var v = projectValue(pr);
+    if(!isNaN(mn) && v < mn) return false;
+    if(!isNaN(mx) && v > mx) return false;
+    if(geo && (pr.address || '').toLowerCase().indexOf(geo) === -1) return false;
+    return true;
+  });
+}
+function rptBuckets(from, to){
+  var span = to - from, d = 86400000, unit, step;
+  if(span <= 32*d){ unit = 'day'; step = d; }
+  else if(span <= 190*d){ unit = 'week'; step = 7*d; }
+  else { unit = 'month'; step = 0; }
+  var labels = [], starts = [];
+  if(unit === 'month'){
+    var cur = new Date(from.getFullYear(), from.getMonth(), 1);
+    while(cur <= to){
+      starts.push(new Date(cur));
+      labels.push(cur.toLocaleDateString('en-US', { month:'short', year:'2-digit' }));
+      cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+    }
+  }else{
+    var cur2 = new Date(from);
+    while(cur2 <= to){
+      starts.push(new Date(cur2));
+      labels.push(cur2.toLocaleDateString('en-US', { month:'short', day:'numeric' }));
+      cur2 = new Date(cur2.getTime() + step);
+    }
+  }
+  return { labels: labels, starts: starts, next: function(i){
+    return (i+1 < starts.length) ? starts[i+1] : new Date(to.getTime()+1); } };
+}
+function rptSeries(items, dateOf, valueOf, from, to){
+  var b = rptBuckets(from, to);
+  var vals = b.labels.map(function(){ return 0; });
+  items.forEach(function(it){
+    var dt = dateOf(it);
+    if(!dt || dt < from || dt > to) return;
+    for(var i=0;i<b.starts.length;i++){
+      if(dt >= b.starts[i] && dt < b.next(i)){ vals[i] += valueOf(it); break; }
+    }
+  });
+  return { labels: b.labels, values: vals };
+}
+function rptChart(id, cfg){
+  if(rptCharts[id]){ rptCharts[id].destroy(); }
+  var el = document.getElementById(id);
+  if(!el || typeof Chart === 'undefined') return;
+  rptCharts[id] = new Chart(el.getContext('2d'), cfg);
+}
+function rptRepName(email){
+  if(!email) return 'Unknown';
+  if(typeof DEFAULT_NAMES !== 'undefined' && DEFAULT_NAMES[email]) return DEFAULT_NAMES[email];
+  return email.split('@')[0];
+}
+function rptPct(n, d){ return d ? Math.round(100*n/d) + '%' : '\u2014'; }
+function rptDelta(cur, prev){
+  if(!prev) return '';
+  var p = Math.round(100*(cur - prev)/prev);
+  var cls = p >= 0 ? 'up' : 'down';
+  return '<small class="' + cls + '">' + (p >= 0 ? '\u25B2' : '\u25BC') + ' ' + Math.abs(p) + '% vs prev</small>';
+}
+
+function openReportsView(){
+  hideAllViews();
+  document.getElementById('reportsView').style.display = 'block';
+  /* populate filter dropdowns from live data */
+  var reps = {};
+  cacheProjects.forEach(function(pr){ if(pr.created_by) reps[pr.created_by] = 1; });
+  var rSel = document.getElementById('rptRep');
+  var keep = rSel.value;
+  rSel.innerHTML = '<option value="">All team</option>' + Object.keys(reps).sort().map(function(e){
+    return '<option value="' + esc(e) + '">' + esc(rptRepName(e)) + '</option>'; }).join('');
+  rSel.value = keep;
+  var sSel = document.getElementById('rptStage');
+  var keepS = sSel.value;
+  sSel.innerHTML = '<option value="">All stages</option>' + STAGES.map(function(s){
+    return '<option>' + s + '</option>'; }).join('');
+  sSel.value = keepS;
+  var sources = {};
+  cacheProjects.forEach(function(pr){ var s = rptCk(pr).lead_source; if(s) sources[s] = 1; });
+  var srcSel = document.getElementById('rptSource');
+  var keepSrc = srcSel.value;
+  srcSel.innerHTML = '<option value="">All sources</option>' + Object.keys(sources).sort().map(function(s){
+    return '<option>' + esc(s) + '</option>'; }).join('');
+  srcSel.value = keepSrc;
+  renderReports();
+  window.scrollTo(0,0);
+}
+
+function renderReports(){
+  var R = rptRangeDates(), from = R.from, to = R.to;
+  var span = to - from;
+  var pfrom = new Date(from.getTime() - span), pto = from;
+  var projs = rptFilteredProjects();
+  document.getElementById('rptCompany').style.display = rptState.tab === 'company' ? 'block' : 'none';
+  document.getElementById('rptReps').style.display    = rptState.tab === 'reps'    ? 'block' : 'none';
+  document.getElementById('rptProd').style.display    = rptState.tab === 'production' ? 'block' : 'none';
+  if(rptState.tab === 'company') renderRptCompany(projs, from, to, pfrom, pto);
+  if(rptState.tab === 'reps') renderRptReps(projs, from, to);
+  if(rptState.tab === 'production') renderRptProd(projs, from, to, pfrom, pto);
+}
+
+function renderRptCompany(projs, from, to, pfrom, pto){
+  var inR = function(dt, a, b){ return dt && dt >= a && dt <= b; };
+  var newLeads = projs.filter(function(p){ return inR(rptStageDate(p,'Lead'), from, to); });
+  var newLeadsPrev = projs.filter(function(p){ return inR(rptStageDate(p,'Lead'), pfrom, pto); });
+  var signed = projs.filter(function(p){ return rptIsSigned(p) && inR(rptSignedDate(p), from, to); });
+  var signedPrev = projs.filter(function(p){ return rptIsSigned(p) && inR(rptSignedDate(p), pfrom, pto); });
+  var rev = signed.reduce(function(s,p){ return s + projectValue(p); }, 0);
+  var revPrev = signedPrev.reduce(function(s,p){ return s + projectValue(p); }, 0);
+  var lost = projs.filter(function(p){ return normStage(p.stage) === 'Lost' && inR(rptStageDate(p,'Lost') || (rptCk(p).lost_at ? new Date(rptCk(p).lost_at) : null), from, to); });
+  var winDen = signed.length + lost.length;
+  var pipeVal = projs.filter(function(p){ return ['Lead','Prospect'].indexOf(normStage(p.stage)) !== -1; })
+    .reduce(function(s,p){ return s + projectValue(p); }, 0);
+  var days = [];
+  signed.forEach(function(p){
+    var l = rptStageDate(p,'Lead'), a = rptSignedDate(p);
+    if(l && a && a > l) days.push((a - l)/86400000);
+  });
+  var avgDays = days.length ? Math.round(days.reduce(function(a,b){ return a+b; },0)/days.length) : null;
+  document.getElementById('rptKpis').innerHTML =
+    '<div class="rptkpi"><span>Revenue signed</span><b>' + fmtMoney(rev) + '</b>' + rptDelta(rev, revPrev) + '</div>' +
+    '<div class="rptkpi"><span>New leads</span><b>' + newLeads.length + '</b>' + rptDelta(newLeads.length, newLeadsPrev.length) + '</div>' +
+    '<div class="rptkpi"><span>Deals signed</span><b>' + signed.length + '</b>' + rptDelta(signed.length, signedPrev.length) + '</div>' +
+    '<div class="rptkpi"><span>Win rate</span><b>' + rptPct(signed.length, winDen) + '</b></div>' +
+    '<div class="rptkpi"><span>Avg job size</span><b>' + (signed.length ? fmtMoney(rev/signed.length) : '\u2014') + '</b></div>' +
+    '<div class="rptkpi"><span>Avg days to sign</span><b>' + (avgDays != null ? avgDays : '\u2014') + '</b></div>' +
+    '<div class="rptkpi"><span>Open pipeline $</span><b>' + fmtMoney(pipeVal) + '</b></div>';
+
+  var cur = rptSeries(projs.filter(rptIsSigned), rptSignedDate, projectValue, from, to);
+  var prevRaw = rptSeries(projs.filter(rptIsSigned), rptSignedDate, projectValue, pfrom, pto);
+  rptChart('chRevenue', { type:'line', data:{ labels: cur.labels, datasets:[
+      { label:'This period', data: cur.values, borderColor: CARD_RED, backgroundColor:'rgba(200,32,46,.10)', fill:true, tension:.3 },
+      { label:'Previous', data: prevRaw.values.slice(0, cur.labels.length), borderColor: CARD_GOLD, borderDash:[6,4], fill:false, tension:.3, pointRadius:0 }
+    ]}, options:{ responsive:true, plugins:{ legend:{ labels:{ font:{ weight:'700' } } } },
+      scales:{ y:{ ticks:{ callback:function(v){ return '$' + (v>=1000? (v/1000)+'k' : v); } } } } } });
+
+  var funnelStages = ['Lead','Prospect','Approved','Completed','Invoiced'];
+  var reached = funnelStages.map(function(s, i){
+    return projs.filter(function(p){
+      var idx = STAGES.indexOf(normStage(p.stage));
+      var tgt = STAGES.indexOf(s);
+      if(normStage(p.stage) === 'Lost') return !!rptStageDate(p, s) || s === 'Lead';
+      return idx >= tgt || !!rptStageDate(p, s);
+    }).length;
+  });
+  rptChart('chFunnel', { type:'bar', data:{ labels: funnelStages, datasets:[{
+      label:'Reached stage', data: reached, backgroundColor: RPT_PALETTE.slice(0,5) }] },
+    options:{ indexAxis:'y', plugins:{ legend:{ display:false } } } });
+  var conv = [];
+  for(var i=0;i<funnelStages.length-1;i++){
+    conv.push('<span>' + funnelStages[i] + ' \u2192 ' + funnelStages[i+1] + ': <b>' + rptPct(reached[i+1], reached[i]) + '</b></span>');
+  }
+  document.getElementById('rptConv').innerHTML = conv.join(' &nbsp;\u00b7&nbsp; ');
+
+  var leadsSer = rptSeries(projs, function(p){ return rptStageDate(p,'Lead'); }, function(){ return 1; }, from, to);
+  rptChart('chLeads', { type:'line', data:{ labels: leadsSer.labels, datasets:[{
+      label:'New leads', data: leadsSer.values, borderColor:'#E8B10F', backgroundColor:'rgba(232,177,15,.15)', fill:true, tension:.3 }] },
+    options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ ticks:{ precision:0 } } } } });
+
+  var srcCounts = {};
+  projs.forEach(function(p){ var s = rptCk(p).lead_source; if(s) srcCounts[s] = (srcCounts[s]||0)+1; });
+  var srcKeys = Object.keys(srcCounts);
+  document.getElementById('rptSourceCard').style.display = srcKeys.length ? 'block' : 'none';
+  if(srcKeys.length){
+    rptChart('chSource', { type:'doughnut', data:{ labels: srcKeys, datasets:[{
+        data: srcKeys.map(function(k){ return srcCounts[k]; }), backgroundColor: RPT_PALETTE }] },
+      options:{ plugins:{ legend:{ position:'right' } } } });
+  }
+  var lossCounts = {};
+  projs.forEach(function(p){ if(normStage(p.stage) === 'Lost'){ var r = rptCk(p).loss_reason || 'Unspecified'; lossCounts[r] = (lossCounts[r]||0)+1; } });
+  var lossKeys = Object.keys(lossCounts);
+  document.getElementById('rptLossCard').style.display = lossKeys.length ? 'block' : 'none';
+  if(lossKeys.length){
+    rptChart('chLoss', { type:'bar', data:{ labels: lossKeys, datasets:[{
+        data: lossKeys.map(function(k){ return lossCounts[k]; }), backgroundColor:'#8d8d8d' }] },
+      options:{ indexAxis:'y', plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ precision:0 } } } } });
+  }
+}
+
+function renderRptReps(projs, from, to){
+  var inR = function(dt){ return dt && dt >= from && dt <= to; };
+  var byRep = {};
+  projs.forEach(function(p){
+    var e = p.created_by || '';
+    (byRep[e] = byRep[e] || []).push(p);
+  });
+  var rows = Object.keys(byRep).map(function(e){
+    var list = byRep[e];
+    var leads = list.filter(function(p){ return inR(rptStageDate(p,'Lead')); }).length;
+    var signed = list.filter(function(p){ return rptIsSigned(p) && inR(rptSignedDate(p)); });
+    var lost = list.filter(function(p){ return normStage(p.stage) === 'Lost'; }).length;
+    var rev = signed.reduce(function(s,p){ return s + projectValue(p); }, 0);
+    var docsN = cacheRows.filter(function(r){
+      if((r.created_by || '') !== e) return false;
+      var dt = r.created_at ? new Date(r.created_at) : null;
+      return inR(dt);
+    }).length;
+    var days = [];
+    signed.forEach(function(p){
+      var l = rptStageDate(p,'Lead'), a = rptSignedDate(p);
+      if(l && a && a > l) days.push((a-l)/86400000);
+    });
+    return { e:e, leads:leads, signedN:signed.length, rev:rev, lost:lost, docs:docsN,
+      avgDays: days.length ? Math.round(days.reduce(function(a,b){return a+b;},0)/days.length) : null };
+  }).sort(function(a,b){ return b.rev - a.rev; });
+  document.getElementById('rptRepTable').innerHTML =
+    '<table class="rpttable"><thead><tr><th>Rep</th><th>Leads</th><th>Signed</th><th>Revenue</th>' +
+    '<th>Win %</th><th>Avg days</th><th>Docs</th></tr></thead><tbody>' +
+    rows.map(function(r){
+      return '<tr><td><b>' + esc(rptRepName(r.e)) + '</b></td><td>' + r.leads + '</td><td>' + r.signedN +
+        '</td><td>' + fmtMoney(r.rev) + '</td><td>' + rptPct(r.signedN, r.signedN + r.lost) +
+        '</td><td>' + (r.avgDays != null ? r.avgDays : '\u2014') + '</td><td>' + r.docs + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  rptChart('chRepRev', { type:'bar', data:{ labels: rows.map(function(r){ return rptRepName(r.e); }),
+    datasets:[{ label:'Signed revenue', data: rows.map(function(r){ return r.rev; }), backgroundColor: CARD_RED }] },
+    options:{ plugins:{ legend:{ display:false } },
+      scales:{ y:{ ticks:{ callback:function(v){ return '$' + (v>=1000? (v/1000)+'k' : v); } } } } } });
+  var staleCut = Date.now() - 14*86400000;
+  var stale = projs.filter(function(p){
+    return ['Lead','Prospect'].indexOf(normStage(p.stage)) !== -1 &&
+      new Date(p.updated_at || p.created_at).getTime() < staleCut;
+  }).sort(function(a,b){ return new Date(a.updated_at||a.created_at) - new Date(b.updated_at||b.created_at); });
+  document.getElementById('rptStale').innerHTML = stale.length ? stale.map(function(p){
+      var d = Math.floor((Date.now() - new Date(p.updated_at || p.created_at).getTime())/86400000);
+      return '<div class="rptstale">\u26A0\uFE0F <b>' + esc(p.name || '?') + '</b> \u2014 ' +
+        esc(rptRepName(p.created_by)) + ' \u00b7 ' + normStage(p.stage) + ' \u00b7 <b>' + d + ' days</b> untouched</div>';
+    }).join('') : '<div style="font:600 13px \'Segoe UI\',Arial,sans-serif;color:#7a8a72;">\u2705 Nothing stale \u2014 pipeline is moving.</div>';
+}
+
+function renderRptProd(projs, from, to, pfrom, pto){
+  var inR = function(dt, a, b){ return dt && dt >= a && dt <= b; };
+  var done = projs.filter(function(p){ return inR(rptStageDate(p,'Completed'), from, to); });
+  var donePrev = projs.filter(function(p){ return inR(rptStageDate(p,'Completed'), pfrom, pto); });
+  var backlog = projs.filter(function(p){ return normStage(p.stage) === 'Approved'; });
+  var backlogVal = backlog.reduce(function(s,p){ return s + projectValue(p); }, 0);
+  var schedAhead = (typeof cacheAppts !== 'undefined' ? cacheAppts : []).filter(function(a){
+    return a.appt_date && new Date(a.appt_date + 'T00:00:00') >= new Date();
+  }).length;
+  document.getElementById('rptProdKpis').innerHTML =
+    '<div class="rptkpi"><span>Jobs completed</span><b>' + done.length + '</b>' + rptDelta(done.length, donePrev.length) + '</div>' +
+    '<div class="rptkpi"><span>Backlog (approved)</span><b>' + backlog.length + '</b></div>' +
+    '<div class="rptkpi"><span>Backlog value</span><b>' + fmtMoney(backlogVal) + '</b></div>' +
+    '<div class="rptkpi"><span>Upcoming appts</span><b>' + schedAhead + '</b></div>';
+  var ser = rptSeries(projs, function(p){ return rptStageDate(p,'Completed'); }, function(){ return 1; }, from, to);
+  rptChart('chProd', { type:'bar', data:{ labels: ser.labels, datasets:[{
+      label:'Completed', data: ser.values, backgroundColor:'#29A3DC' }] },
+    options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ ticks:{ precision:0 } } } } });
+  var withCost = projs.filter(function(p){
+    var c = rptCk(p).job_cost;
+    return c != null && c !== '' && rptIsSigned(p) && projectValue(p) > 0;
+  });
+  document.getElementById('rptProfitCard').style.display = withCost.length ? 'block' : 'none';
+  if(withCost.length){
+    document.getElementById('rptProfit').innerHTML =
+      '<table class="rpttable"><thead><tr><th>Job</th><th>Sold</th><th>Cost</th><th>Profit</th><th>Margin</th></tr></thead><tbody>' +
+      withCost.map(function(p){
+        var v = projectValue(p), c = Number(rptCk(p).job_cost), pf = v - c;
+        var m = v ? Math.round(100*pf/v) : 0;
+        return '<tr><td><b>' + esc(p.name || '?') + '</b></td><td>' + fmtMoney(v) + '</td><td>' + fmtMoney(c) +
+          '</td><td style="color:' + (pf >= 0 ? '#2e7d32' : '#C8202E') + ';font-weight:800;">' + fmtMoney(pf) +
+          '</td><td><b>' + m + '%</b></td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+}
+
+/* reports UI wiring */
+document.getElementById('rptBackBtn').addEventListener('click', showHome);
+document.getElementById('rptRange').addEventListener('click', function(e){
+  var chip = e.target.closest('.hstat'); if(!chip) return;
+  this.querySelectorAll('.hstat').forEach(function(c){ c.classList.remove('on'); });
+  chip.classList.add('on');
+  rptState.range = chip.getAttribute('data-r');
+  document.getElementById('rptCustom').style.display = rptState.range === 'custom' ? 'block' : 'none';
+  if(rptState.range !== 'custom') renderReports();
+});
+document.getElementById('rptApply').addEventListener('click', function(){
+  rptState.from = document.getElementById('rptFrom').value || null;
+  rptState.to = document.getElementById('rptTo').value || null;
+  renderReports();
+});
+document.getElementById('rptTabs').addEventListener('click', function(e){
+  var chip = e.target.closest('.hstat'); if(!chip) return;
+  this.querySelectorAll('.hstat').forEach(function(c){ c.classList.remove('on'); });
+  chip.classList.add('on');
+  rptState.tab = chip.getAttribute('data-t');
+  renderReports();
+});
+['rptRep','rptStage','rptSource'].forEach(function(id){
+  document.getElementById(id).addEventListener('change', renderReports);
+});
+['rptMin','rptMax','rptGeo'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', function(){
+    clearTimeout(this.__t); var self = this;
+    this.__t = setTimeout(renderReports, 400);
+  });
+});
 
 /* ---------- project profile ---------- */
 var projectView = document.getElementById('projectView');
@@ -3880,6 +4317,9 @@ function openProjModal(pr){
   document.getElementById('pfAddress').value = pr ? (pr.address || '') : '';
   document.getElementById('pfPhone').value   = pr ? (pr.phone || '')   : '';
   document.getElementById('pfEmail').value   = pr ? (pr.email || '')   : '';
+  var _ck = pr ? parseCkAll(pr) : {};
+  document.getElementById('pfSource').value  = _ck.lead_source || '';
+  document.getElementById('pfJobCost').value = (_ck.job_cost != null) ? _ck.job_cost : '';
   document.getElementById('pfError').textContent = '';
   projModal.style.display = 'block';
   setTimeout(function(){ document.getElementById('pfName').focus(); }, 50);
@@ -4168,7 +4608,7 @@ function jobFinance(pr){
            balance: value - paid, pct: value ? Math.round(paid / value * 100) : 0 };
 }
 var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', Approved:'#7CB342', Scheduled:'#7CB342',
-  Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B' };
+  Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d8d8d' };
 function commsCount(pr){
   var all = parseCkAll(pr);
   return (all.comments || []).length;
@@ -4415,13 +4855,19 @@ document.getElementById('pfSave').addEventListener('click', async function(){
     email:   document.getElementById('pfEmail').value.trim()   || null
   };
   try{
+    var _srcVal = document.getElementById('pfSource').value || null;
+    var _jcRaw = document.getElementById('pfJobCost').value;
+    var _jcVal = _jcRaw === '' ? null : Number(_jcRaw);
     if(pfEditing){
       await pdb.update(pfEditing, fields);
+      var _epr = cacheProjects.find(function(x){ return x.id === pfEditing; });
+      if(_epr) await patchProjectCk(_epr, { lead_source: _srcVal, job_cost: _jcVal });
       projModal.style.display = 'none';
       await reload();
       if(currentProject && currentProject.id === pfEditing) openProject(pfEditing);
     }else{
-      fields.checklist = JSON.stringify({ po: nextPo(), stage_since: new Date().toISOString() });
+      fields.checklist = JSON.stringify({ po: nextPo(), stage_since: new Date().toISOString(),
+        t_Lead: new Date().toISOString(), lead_source: _srcVal, job_cost: _jcVal });
       fields.stage = 'Lead';
       var id = await pdb.create(fields);
       projModal.style.display = 'none';
@@ -4750,6 +5196,7 @@ function hideAllViews(){
   profileView.style.display = 'none';
   clientsView.style.display = 'none';
   activityView.style.display = 'none';
+  var _rv = document.getElementById('reportsView'); if(_rv) _rv.style.display = 'none';
   boardView.style.display = 'none';
   commsView.style.display = 'none';
   document.getElementById('auditView').style.display = 'none';
@@ -5146,7 +5593,8 @@ function renderFavBtn(){
 }
 
 /* ---------- pipeline stages ---------- */
-var STAGES = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
+var STAGES = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
+var LOSS_REASONS = ['Price too high','Went with competitor','Not ready / postponed','Insurance denied','No response','Other'];
 var LEGACY_STAGE = { 'Inspected':'Prospect', 'Estimate Sent':'Prospect', 'Signed':'Approved', 'Complete':'Completed' };
 function normStage(s){
   s = s || 'Lead';
@@ -5189,7 +5637,22 @@ async function setStage(prId, v){
   var prev = normStage(pr.stage);
   await pdb.update(pr.id, { stage: v });
   pr.stage = v;
-  patchProjectCk(pr, { stage_since: new Date().toISOString() }).catch(function(){});
+  var _now = new Date().toISOString();
+  var _ckPatch = { stage_since: _now };
+  _ckPatch['t_' + v] = _now;
+  if(v === 'Lost'){
+    var _rNum = prompt('Why was this lead lost?\n' +
+      LOSS_REASONS.map(function(r,i){ return (i+1) + '. ' + r; }).join('\n') +
+      '\n\nEnter a number (1-' + LOSS_REASONS.length + ') or type a reason:', '1');
+    var _reason = 'Unspecified';
+    if(_rNum !== null){
+      var _idx = parseInt(_rNum, 10);
+      _reason = (_idx >= 1 && _idx <= LOSS_REASONS.length) ? LOSS_REASONS[_idx-1] : (_rNum.trim() || 'Unspecified');
+    }
+    _ckPatch.loss_reason = _reason;
+    _ckPatch.lost_at = _now;
+  }
+  patchProjectCk(pr, _ckPatch).catch(function(){});
   if(currentProject && currentProject.id === pr.id){
     currentProject.stage = v;
     var ss = document.getElementById('stageSel');
@@ -5367,6 +5830,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'profile'){ openMyProfile(); }
   else if(nav === 'clients'){ openClientsDirectory(); }
   else if(nav === 'feed'){ openActivityFeed(); }
+  else if(nav === 'reports'){ openReportsView(); }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
