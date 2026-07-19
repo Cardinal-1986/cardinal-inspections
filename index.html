@@ -190,6 +190,9 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 }
 @media (max-width:760px){
   .toolbar{padding:8px 10px;gap:6px;}
+  #backBtn{order:-2;flex:0 0 auto;font-weight:800;padding:9px 12px;
+    background:#C8202E;border-color:#C8202E;color:#fff;}
+  #editorLogo{order:-1;}
   .toolbar .grow{flex:1 1 100%;order:5;min-width:0;}
   .toolbar .btn{font-size:12px;padding:8px 10px;}
   .toolbar .statuswrap{font-size:11px;}
@@ -928,6 +931,14 @@ html, body{overflow-x:hidden;max-width:100%;}
     border:1px solid #e2d5c3;border-radius:6px;background:#faf3e6;padding:5px 0;}
   .teamcal .minical .calgrid .day.today{border-color:#7c1019;}
 }
+/* ---- button tap feedback ---- */
+.btn, .chipbtn, .navopt, .pipebtn, .calnav, .hstat, .ljtab, .ljcard, .pcard{
+  -webkit-tap-highlight-color:rgba(200,32,46,.15);}
+.btn:active, .chipbtn:active, .navopt:active, .calnav:active{
+  transform:scale(.96);filter:brightness(.92);}
+.btn, .chipbtn, .navopt, .calnav{transition:transform .08s, filter .08s;}
+.btn:disabled, .chipbtn:disabled{opacity:.5;pointer-events:none;}
+
 /* ---- assigned leads & jobs ---- */
 .ljhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;}
 .ljtitle{margin:0;font:800 26px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;letter-spacing:.01em;}
@@ -6317,6 +6328,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'feed'){ openActivityFeed(); }
   else if(nav === 'reports'){ openReportsView(); }
   else if(nav === 'leads'){ openLeadsView(); }
+  else if(nav === 'audit'){ openAuditLog(); }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
