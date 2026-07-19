@@ -996,6 +996,14 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
 
+/* ---- docked header row (client open, phone) ---- */
+.repstrip.docked{flex-wrap:nowrap;align-items:center;gap:6px;justify-content:flex-start;padding:4px 0 8px;}
+.repstrip.docked .reppill{flex:0 1 auto;max-width:34vw;}
+.repstrip.docked #navWrap{margin-left:auto;flex:0 0 auto;}
+.repstrip.docked .jobmenu-head{max-width:118px;}
+.repstrip.docked #newWrap{flex:0 0 auto;}
+.repstrip.docked #newWrap .btn, .repstrip.docked #newWrap button{padding:7px 12px;font-size:15px;}
+
 /* ---- phone: client-profile fit pass ---- */
 @media (max-width:700px){
   body.projopen #brandTitle{display:none;}
@@ -1495,7 +1503,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="backup" id="backupNav" style="display:none;">&#128190; Backup all data</button>
           <button class="navopt" data-nav="profile">&#128100; My Profile</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 40 &#8212; stepper fits</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 43 &#8212; team hardened</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4520,154 +4528,155 @@ function renderAcxOverview(){
     var el = document.getElementById('acxPhotoN');
     if(el && currentProject && currentProject.id === pr.id){ el.textContent = l.length; el.classList.toggle('zero', !l.length); }
   }).catch(function(){});
-  /* ---- wiring ---- */
-  var dots = document.getElementById('msDots'), drop = document.getElementById('msDrop');
-  if(dots) dots.addEventListener('click', function(e){ e.stopPropagation(); drop.style.display = drop.style.display === 'block' ? 'none' : 'block'; });
-  document.addEventListener('click', function h(){ if(drop) drop.style.display = 'none'; document.removeEventListener('click', h); });
-  if(drop) drop.addEventListener('click', function(e){
-    var b = e.target.closest('button'); if(!b) return;
-    var act = b.getAttribute('data-act');
-    if(act === 'adv') acxAdvance(pr);
-    else if(act === 'dead') acxDead(pr);
-    else if(act === 'reopen') setStage(pr.id, 'Lead').then(function(){ renderOverview(); renderPipeline(); });
-  });
-  var adv = document.getElementById('acxAdvBtn');
-  if(adv) adv.addEventListener('click', function(){ acxAdvance(pr); });
-  mount.querySelectorAll('.jaitem').forEach(function(el){
-    el.addEventListener('click', function(){ var t = el.getAttribute('data-tab'); if(t) showTab(t); });
-  });
-  ['acxEdit1','acxEdit2'].forEach(function(id){
-    var el = document.getElementById(id);
-    if(el) el.addEventListener('click', function(){ openProjModal(pr); });
-  });
-  mount.querySelectorAll('.acxtab').forEach(function(t){
-    t.addEventListener('click', function(){
+  refreshMeasSummary(pr);
+  acxBindOnce(mount);
+}
+/* ---- one-time delegated wiring: order-proof, error-proof ---- */
+function acxCtx(){
+  var pr = currentProject;
+  return pr ? { pr: pr, ck: parseCkAll(pr) } : null;
+}
+async function acxEnterTotalNow(){
+  var c = acxCtx(); if(!c) return;
+  var cur = c.ck.manual_value ? String(c.ck.manual_value) : '';
+  var v = prompt('Job total for this client ($):\n(Creates the worksheet \u2014 use for transferred clients or jobs without a signed contract.)', cur);
+  if(v === null) return;
+  var n = Number(String(v).replace(/[^\d.]/g,''));
+  if(!(n > 0)){ alert('Enter a dollar amount greater than 0.'); return; }
+  try{ await patchProjectCk(c.pr, { manual_value: n }); renderOverview(); renderPipeline(); }
+  catch(err){ showError('Could not save: ' + (err.message || err)); }
+}
+function acxBindOnce(mount){
+  if(mount.__acxBound) return;
+  mount.__acxBound = true;
+  mount.addEventListener('click', async function(e){
+    var c = acxCtx(); if(!c) return;
+    var pr = c.pr, ck = c.ck;
+    var t = e.target;
+    var hit = function(sel){ return t.closest(sel); };
+    var el;
+    if((el = hit('#msDots'))){
+      e.stopPropagation();
+      var d = document.getElementById('msDrop');
+      if(d) d.style.display = d.style.display === 'block' ? 'none' : 'block';
+      var closer = function(){ if(d) d.style.display = 'none'; document.removeEventListener('click', closer); };
+      setTimeout(function(){ document.addEventListener('click', closer); }, 0);
+      return;
+    }
+    if((el = hit('#msDrop button'))){
+      var act = el.getAttribute('data-act');
+      if(act === 'adv') acxAdvance(pr);
+      else if(act === 'dead') acxDead(pr);
+      else if(act === 'reopen') setStage(pr.id, 'Lead').then(function(){ renderOverview(); renderPipeline(); });
+      return;
+    }
+    if(hit('#acxAdvBtn')){ acxAdvance(pr); return; }
+    if((el = hit('.jaitem'))){ var tb = el.getAttribute('data-tab'); if(tb) showTab(tb); return; }
+    if(hit('#acxEdit1') || hit('#acxEdit2')){ openProjModal(pr); return; }
+    if((el = hit('.acxtab'))){
       mount.querySelectorAll('.acxtab').forEach(function(x){ x.classList.remove('on'); });
-      t.classList.add('on');
-      var at = t.getAttribute('data-at');
-      document.getElementById('acxLocPanel').style.display = at === 'loc' ? 'block' : 'none';
-      document.getElementById('acxInsPanel').style.display = at === 'ins' ? 'block' : 'none';
-      document.getElementById('acxAdjPanel').style.display = at === 'adj' ? 'block' : 'none';
-    });
+      el.classList.add('on');
+      var at = el.getAttribute('data-at');
+      ['acxLocPanel','acxInsPanel','acxAdjPanel'].forEach(function(pid, ix){
+        var p = document.getElementById(pid);
+        if(p) p.style.display = (['loc','ins','adj'][ix] === at) ? 'block' : 'none';
+      });
+      return;
+    }
+    if(hit('#acxMeasAdd')){ openMeasModal(pr); return; }
+    if(hit('#acxMeasPage') || hit('[data-msgo]')){ showTab('measure'); return; }
+    if(hit('#acxSkipEst') || hit('#acxNewWs')){ acxEnterTotalNow(); return; }
+    if((el = hit('#acxClearManual'))){
+      e.preventDefault();
+      if(!confirm('Clear the manual total? The job value will fall back to estimates/contracts.')) return;
+      try{ await patchProjectCk(pr, { manual_value: null }); renderOverview(); renderPipeline(); }
+      catch(err){ showError('Could not clear: ' + (err.message || err)); }
+      return;
+    }
+    if(hit('#acxPayBtn')){
+      var v = prompt('Payment amount received ($):', '');
+      if(v === null) return;
+      var n = Number(String(v).replace(/[^\d.]/g,''));
+      if(!(n > 0)){ alert('Enter a dollar amount greater than 0.'); return; }
+      var all2 = parseCkAll(pr);
+      var ws2 = all2.ws || {};
+      var key = 'manual';
+      if(!(Number(all2.manual_value) > 0)){
+        var sc = cacheRows.filter(function(r){
+          return r.project_id === pr.id && /^contract/i.test((r.title || '').trim()) && r.signed_at && Number(r.total) > 0;
+        })[0];
+        if(sc) key = sc.id; else { alert('No contract or manual total to apply this payment to.'); return; }
+      }
+      ws2[key] = ws2[key] || {};
+      ws2[key].paid = (Number(ws2[key].paid) || 0) + n;
+      ws2[key].log = ws2[key].log || [];
+      ws2[key].log.push({ a: n, at: new Date().toISOString() });
+      try{ await patchProjectCk(pr, { ws: ws2 }); renderOverview(); }
+      catch(err){ showError('Could not record payment: ' + (err.message || err)); }
+      return;
+    }
+    if(hit('#acxNewEst')){
+      showTab('estimates');
+      var mnu = document.getElementById('pEstMenu');
+      if(mnu) setTimeout(function(){ mnu.style.display = 'block'; }, 60);
+      return;
+    }
+    if(hit('#acxOrders')){ showTab('materials'); return; }
+    if((el = hit('[data-doc]'))){ openEditor(el.getAttribute('data-doc')); return; }
+    if((el = hit('[data-rv]'))){ sendReviewRequest(pr, el.getAttribute('data-rv')); return; }
+    if(hit('#acxNewTask')){ openTaskModal(pr, null); return; }
+    if((el = hit('[data-viewtask]'))){
+      if(t.closest('input')) return;
+      openTaskModal(pr, parseInt(el.getAttribute('data-viewtask'), 10));
+      return;
+    }
+    if((el = hit('.tsktabs span'))){ acxTaskTab = el.getAttribute('data-tt'); renderAcxOverview(); return; }
   });
-  function acxPatchField(key, val){
-    patchProjectCk(pr, (function(){ var o = {}; o[key] = val || null; return o; })())
-      .then(function(){ renderAcxOverview(); })
-      .catch(function(err){ showError('Could not save: ' + (err.message || err)); });
-  }
-  var selCat = document.getElementById('acxCat');
-  if(selCat) selCat.addEventListener('change', function(){ acxPatchField('job_category', this.value); });
-  var selWt = document.getElementById('acxWt');
-  if(selWt) selWt.addEventListener('change', function(){ acxPatchField('work_type', this.value); });
-  var selSrc = document.getElementById('acxSrc');
-  if(selSrc) selSrc.addEventListener('change', function(){ acxPatchField('lead_source', this.value); });
-  mount.querySelectorAll('.acxTr').forEach(function(cb){
-    cb.addEventListener('change', function(){
+  mount.addEventListener('change', async function(e){
+    var c = acxCtx(); if(!c) return;
+    var pr = c.pr;
+    var t = e.target;
+    function saveField(key, val){
+      patchProjectCk(pr, (function(){ var o = {}; o[key] = val || null; return o; })())
+        .then(function(){ renderAcxOverview(); })
+        .catch(function(err){ showError('Could not save: ' + (err.message || err)); });
+    }
+    if(t.id === 'acxCat'){ saveField('job_category', t.value); return; }
+    if(t.id === 'acxWt'){ saveField('work_type', t.value); return; }
+    if(t.id === 'acxSrc'){ saveField('lead_source', t.value); return; }
+    if(t.classList.contains('acxTr')){
       var list = [];
       mount.querySelectorAll('.acxTr:checked').forEach(function(x){ list.push(x.value); });
       patchProjectCk(pr, { trades: list.length ? list : null, trade: null })
         .then(function(){ renderAcxOverview(); })
         .catch(function(err){ showError('Could not save: ' + (err.message || err)); });
-    });
-  });
-  async function acxEnterTotal(){
-    var cur = ck.manual_value ? String(ck.manual_value) : '';
-    var v = prompt('Job total for this client ($):\n(Creates the worksheet \u2014 use for transferred clients or jobs without a signed contract.)', cur);
-    if(v === null) return;
-    var n = Number(String(v).replace(/[^\d.]/g,''));
-    if(!(n > 0)){ alert('Enter a dollar amount greater than 0.'); return; }
-    try{ await patchProjectCk(pr, { manual_value: n }); renderOverview(); renderPipeline(); }
-    catch(err){ showError('Could not save: ' + (err.message || err)); }
-  }
-  var ma = document.getElementById('acxMeasAdd');
-  if(ma) ma.addEventListener('click', function(){ openMeasModal(pr); });
-  var mp = document.getElementById('acxMeasPage');
-  if(mp) mp.addEventListener('click', function(){ showTab('measure'); });
-  refreshMeasSummary(pr);
-  var se = document.getElementById('acxSkipEst');
-  if(se) se.addEventListener('click', acxEnterTotal);
-  var nw = document.getElementById('acxNewWs');
-  if(nw) nw.addEventListener('click', acxEnterTotal);
-  var cm = document.getElementById('acxClearManual');
-  if(cm) cm.addEventListener('click', async function(ev){
-    ev.preventDefault();
-    if(!confirm('Clear the manual total? The job value will fall back to estimates/contracts.')) return;
-    try{ await patchProjectCk(pr, { manual_value: null }); renderOverview(); renderPipeline(); }
-    catch(err){ showError('Could not clear: ' + (err.message || err)); }
-  });
-  var pb = document.getElementById('acxPayBtn');
-  if(pb) pb.addEventListener('click', async function(){
-    var v = prompt('Payment amount received ($):', '');
-    if(v === null) return;
-    var n = Number(String(v).replace(/[^\d.]/g,''));
-    if(!(n > 0)){ alert('Enter a dollar amount greater than 0.'); return; }
-    var all2 = parseCkAll(pr);
-    var ws2 = all2.ws || {};
-    var key = 'manual';
-    if(!(Number(all2.manual_value) > 0)){
-      var sc = cacheRows.filter(function(r){
-        return r.project_id === pr.id && /^contract/i.test((r.title || '').trim()) && r.signed_at && Number(r.total) > 0;
-      })[0];
-      if(sc) key = sc.id; else { alert('No contract or manual total to apply this payment to.'); return; }
+      return;
     }
-    ws2[key] = ws2[key] || {};
-    ws2[key].paid = (Number(ws2[key].paid) || 0) + n;
-    ws2[key].log = ws2[key].log || [];
-    ws2[key].log.push({ a: n, at: new Date().toISOString() });
-    try{ await patchProjectCk(pr, { ws: ws2 }); renderOverview(); }
-    catch(err){ showError('Could not record payment: ' + (err.message || err)); }
-  });
-  var ne = document.getElementById('acxNewEst');
-  if(ne) ne.addEventListener('click', function(){
-    showTab('estimates');
-    var m = document.getElementById('pEstMenu');
-    if(m) setTimeout(function(){ m.style.display = 'block'; }, 60);
-  });
-  var ord = document.getElementById('acxOrders');
-  if(ord) ord.addEventListener('click', function(){ showTab('materials'); });
-  estList && mount.querySelectorAll('[data-doc]').forEach(function(el){
-    el.addEventListener('click', function(){ openEditor(el.getAttribute('data-doc')); });
-  });
-  var rvsw = document.getElementById('rvLeftSwitch');
-  if(rvsw) rvsw.addEventListener('change', async function(){
-    var on = this.checked;
-    try{
-      await patchProjectCk(pr, {
-        review_left_at: on ? new Date().toISOString() : null,
-        review_left_by: on ? ((currentUser && currentUser.email) || null) : null
-      });
-      renderAcxOverview();
-    }catch(err){ showError('Could not save: ' + (err.message || err)); }
-  });
-  mount.querySelectorAll('[data-rv]').forEach(function(b){
-    b.addEventListener('click', function(){ sendReviewRequest(pr, b.getAttribute('data-rv')); });
-  });
-  var nt = document.getElementById('acxNewTask');
-  if(nt) nt.addEventListener('click', function(){ openTaskModal(pr, null); });
-  mount.querySelectorAll('[data-viewtask]').forEach(function(row){
-    row.addEventListener('click', function(e){
-      if(e.target.closest('input')) return;
-      openTaskModal(pr, parseInt(row.getAttribute('data-viewtask'), 10));
-    });
-  });
-  mount.querySelectorAll('[data-task]').forEach(function(cb){
-    cb.addEventListener('change', async function(){
-      var list = (parseCkAll(pr).tasks || []).slice();
-      var i = parseInt(cb.getAttribute('data-task'), 10);
-      if(list[i]){
-        list[i].done = cb.checked;
-        list[i].doneAt = cb.checked ? new Date().toISOString() : null;
-        list[i].doneBy = cb.checked ? myEmail : null;
+    if(t.id === 'rvLeftSwitch'){
+      var on = t.checked;
+      try{
+        await patchProjectCk(pr, {
+          review_left_at: on ? new Date().toISOString() : null,
+          review_left_by: on ? ((currentUser && currentUser.email) || null) : null
+        });
+        renderAcxOverview();
+      }catch(err){ showError('Could not save: ' + (err.message || err)); }
+      return;
+    }
+    if(t.getAttribute && t.getAttribute('data-task') != null){
+      var list2 = (parseCkAll(pr).tasks || []).slice();
+      var ix = parseInt(t.getAttribute('data-task'), 10);
+      var myEmail = (currentUser && currentUser.email) || '';
+      if(list2[ix]){
+        list2[ix].done = t.checked;
+        list2[ix].doneAt = t.checked ? new Date().toISOString() : null;
+        list2[ix].doneBy = t.checked ? myEmail : null;
       }
-      try{ await patchProjectCk(pr, { tasks: list }); renderOverview(); }
+      try{ await patchProjectCk(pr, { tasks: list2 }); renderOverview(); }
       catch(err){ showError('Could not update task: ' + (err.message || err)); }
-    });
-  });
-  mount.querySelectorAll('.tsktabs span').forEach(function(t){
-    t.addEventListener('click', function(){ acxTaskTab = t.getAttribute('data-tt'); renderAcxOverview(); });
-  });
-  mount.querySelectorAll('input[name=tskv]').forEach(function(r){
-    r.addEventListener('change', function(){ acxTaskView = r.value; renderAcxOverview(); });
+      return;
+    }
+    if(t.name === 'tskv'){ acxTaskView = t.value; renderAcxOverview(); return; }
   });
 }
 var measDb = {
@@ -6779,6 +6788,24 @@ function setHeaderJobMenu(on){
   var nb = document.getElementById('navBtn');
   if(jm) jm.style.display = on ? 'inline-block' : 'none';
   document.body.classList.toggle('projopen', !!on);
+  /* phones: dock the tab dropdown + the plus button beside the client pill */
+  try{
+    var rs = document.getElementById('repStrip');
+    var nw = document.getElementById('navWrap');
+    var pw = document.getElementById('newWrap');
+    var mh = document.querySelector('.masthead');
+    if(rs && nw && pw && mh){
+      if(on && window.innerWidth <= 700){
+        if(nw.parentElement !== rs){ rs.appendChild(nw); rs.appendChild(pw); rs.classList.add('docked'); }
+      }else{
+        if(nw.parentElement === rs){
+          var mb = document.getElementById('navBtn');
+          mh.insertBefore(nw, mb); mh.insertBefore(pw, nw);
+          rs.classList.remove('docked');
+        }
+      }
+    }
+  }catch(e){}
   if(nb) nb.style.display = on ? 'none' : 'inline-block';
   var rs = document.getElementById('repStrip');
   if(rs){
@@ -7440,7 +7467,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'leads'){ openLeadsView(); }
   else if(nav === 'audit'){ openAuditLog(); }
   else if(nav === 'notify'){ enableNotifications(); }
-  else if(nav === 'team'){ openTeamView(); }
+  else if(nav === 'team'){ try{ openTeamView(); }catch(err){ alert('Team: ' + (err.message || err)); } }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
@@ -9823,11 +9850,17 @@ function teamEmails(){
   return Object.keys(set).sort();
 }
 async function openTeamView(){
-  hideAllViews();
-  document.getElementById('teamView').style.display = 'block';
-  await loadTeamProfiles();
-  renderTeamView();
-  window.scrollTo(0,0);
+  try{
+    hideAllViews();
+    var tv = document.getElementById('teamView');
+    if(!tv){ showError('Team view missing from this build.'); return; }
+    tv.style.display = 'block';
+    window.scrollTo(0,0);
+    try{ await loadTeamProfiles(); }catch(e){}
+    renderTeamView();
+  }catch(err){
+    showError('Team page error: ' + (err.message || err));
+  }
 }
 function renderTeamView(){
   var isAdmin = currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1;
