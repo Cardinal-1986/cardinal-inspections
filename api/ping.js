@@ -1,4 +1,4 @@
-// Diagnostic ping — upload to api/ping.js, then I'll probe it.
-module.exports = (req, res) => {
+// Diagnostic ping (ESM, matching api/package.json "type": "module")
+export default function handler(req, res) {
   res.status(200).json({ ok: true, node: process.version, time: new Date().toISOString() });
-};
+}

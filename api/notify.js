@@ -1,5 +1,5 @@
 /* Vercel serverless: fan out web-push to team subscriptions stored in Supabase */
-const webpush = require('web-push');
+import webpush from 'web-push';
 
 const SUPA_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPA_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -8,7 +8,7 @@ const VAPID_PRIVATE = process.env.VAPID_PRIVATE || 'vtIkMaIEJxS2yUNI0wgulFiFxze4
 
 webpush.setVapidDetails('mailto:info@cardinalrenovations.net', VAPID_PUBLIC, VAPID_PRIVATE);
 
-module.exports = async function(req, res){
+export default async function handler(req, res){
   if(req.method !== 'POST'){ res.status(405).json({ ok:false, error:'POST only' }); return; }
   try{
     var body = req.body || {};
