@@ -1005,6 +1005,26 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
 
+/* ---- metallic icons: blue->red chrome with shine sweep ---- */
+@supports (-webkit-background-clip:text){
+  .mic{
+    background-image:linear-gradient(115deg,
+      #0a0a0c 0%, #2b2b30 16%, #6b6b72 30%, #f5f2f2 44%,
+      #C8202E 58%, #8f1420 74%, #5c0d15 88%, #17090b 100%);
+    background-size:280% 100%;
+    -webkit-background-clip:text;background-clip:text;
+    color:transparent;-webkit-text-fill-color:transparent;
+    font-size:1.18em;line-height:1;display:inline-block;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));
+    animation:micshine 3.6s ease-in-out infinite;
+  }
+}
+@keyframes micshine{
+  0%,55%{background-position:0% 0;}
+  80%{background-position:100% 0;}
+  100%{background-position:100% 0;}
+}
+
 /* ---- company documents ---- */
 .cdocscats{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 6px;}
 .cdoccat{position:relative;flex:1;min-width:200px;background:#fff;border:1px solid var(--line);border-radius:12px;
@@ -1593,7 +1613,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 67 &#8212; task complete/extend/notes</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 69 &#8212; metallic icons red/black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7788,6 +7808,34 @@ if(__listRepSel) __listRepSel.addEventListener('change', function(){
   renderList();
 });
 document.getElementById('listMount').addEventListener('click', handleDocAction);
+
+/* ---------- metallic icon wrapper ---------- */
+var MIC_SELECTORS = ['#navMenu .navopt', '.pipetitle > span', '.projsec', '.cdoccat',
+  '#companyDocsView h2', '.tabbtn', '.chipbtn', '.hstat'];
+var MIC_RE = /^(\s*)((?:[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{20E3}\u{2190}-\u{21FF}\u{2934}\u{2935}]|[\u{1F1E6}-\u{1F1FF}])+)/u;
+function metallicize(root){
+  try{
+    (root || document).querySelectorAll(MIC_SELECTORS.join(',')).forEach(function(el){
+      var fc = el.firstChild;
+      if(!fc || fc.nodeType !== 3) return;                 /* leading text node only */
+      var m2 = fc.nodeValue.match(MIC_RE);
+      if(!m2 || !m2[2]) return;
+      var sp = document.createElement('span');
+      sp.className = 'mic';
+      sp.textContent = m2[2];
+      fc.nodeValue = fc.nodeValue.slice(m2[0].length);
+      el.insertBefore(sp, fc);
+      if(m2[1]) el.insertBefore(document.createTextNode(m2[1]), sp);
+    });
+  }catch(e){}
+}
+metallicize(document);
+var __micPending = false;
+new MutationObserver(function(){
+  if(__micPending) return;
+  __micPending = true;
+  setTimeout(function(){ __micPending = false; metallicize(document); }, 250);
+}).observe(document.body, { childList:true, subtree:true });
 
 /* ---------- company documents ---------- */
 /* Add documents here. Put the file in a /docs folder in the GitHub repo
