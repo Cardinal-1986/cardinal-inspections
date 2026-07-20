@@ -1,6 +1,9 @@
 {
   "name": "cardinal-resource",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "web-push": "^3.6.7"
   }
