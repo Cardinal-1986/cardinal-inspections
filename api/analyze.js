@@ -31,8 +31,8 @@ export default async function handler(req, res) {
     if (!image || typeof image !== 'string') { res.status(400).json({ error: 'No image' }); return; }
     if (image.length > MAX_IMAGE_BYTES * 1.4) { res.status(413).json({ error: 'Image too large' }); return; }
 
-    const key = process.env.GEMINI_API_KEY;
-    const oaKey = process.env.OPENAI_API_KEY;   // optional backup
+    const key = (process.env.GEMINI_API_KEY || '').trim();
+    const oaKey = (process.env.OPENAI_API_KEY || '').trim();   // optional backup
     if (!key && !oaKey) { res.status(500).json({ error: 'No AI key configured in Vercel' }); return; }
 
     // ---- 3) Ask Gemini ----

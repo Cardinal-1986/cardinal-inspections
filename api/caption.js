@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) {
     res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server' });
     return;
@@ -62,7 +62,8 @@ export default async function handler(req, res) {
     }
 
     // primary model, retry once on overload, then older model, then OpenAI backup
-    const diag = { openai_key_present: !!process.env.OPENAI_API_KEY };
+    const oaKey = (process.env.OPENAI_API_KEY || '').trim();
+    const diag = { openai_key_present: !!oaKey };
     let geminiRes = await askGemini('gemini-3.5-flash');
     diag.gemini35_try1 = geminiRes.status;
     if (geminiRes.status === 503 || geminiRes.status === 429) {
@@ -76,10 +77,10 @@ export default async function handler(req, res) {
       if (alt.ok) geminiRes = alt;
     }
 
-    if (!geminiRes.ok && process.env.OPENAI_API_KEY) {
+    if (!geminiRes.ok && oaKey) {
       const o = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + process.env.OPENAI_API_KEY },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + oaKey },
         body: JSON.stringify({
           model: 'gpt-4o-mini', max_tokens: 60, temperature: 0.4,
           messages: [{ role: 'user', content: [
