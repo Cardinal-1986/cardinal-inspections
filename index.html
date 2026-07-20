@@ -1014,6 +1014,29 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
 
+/* ---- company documents ---- */
+.cdocscats{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 6px;}
+.cdoccat{position:relative;flex:1;min-width:200px;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;cursor:pointer;text-align:left;font:700 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.cdoccat .cdsub{display:block;font:400 12px 'Segoe UI',Arial,sans-serif;color:#8a7d75;margin-top:3px;}
+.cdoccat.active{border-color:#C8202E;box-shadow:0 0 0 2px rgba(200,32,46,.12);}
+.cdoccat.disabled{cursor:default;opacity:.75;}
+.cdsoon{position:absolute;top:10px;right:10px;background:#C8202E;color:#fff;border-radius:20px;
+  padding:3px 10px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.6px;}
+.cdtrades{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;}
+.cdtrade{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;cursor:pointer;
+  font:600 13px 'Segoe UI',Arial,sans-serif;color:#5a5049;}
+.cdtrade.active{background:#C8202E;border-color:#C8202E;color:#fff;}
+.cdoclist{margin-top:10px;}
+.cdocrow{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;margin-bottom:8px;}
+.cdocrow .cdicon{font-size:20px;}
+.cdocrow .cdname{flex:1;font:600 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.cdocrow .cdname small{display:block;font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7d75;margin-top:2px;}
+.cdocrow .btn{padding:7px 13px;font-size:12.5px;}
+.cdsoonpanel{background:#fff;border:1px dashed #c9b8ad;border-radius:12px;padding:26px 18px;text-align:center;
+  font:600 14px 'Segoe UI',Arial,sans-serif;color:#8a7d75;margin-top:12px;}
+
 /* ---- installed-app bottom nav (standalone only) ---- */
 #pwaNav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:160;
   justify-content:space-between;align-items:center;
@@ -1576,9 +1599,10 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="recents">&#128337; Recents</button>
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
+          <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 55 &#8212; header flex-fit</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 58 &#8212; contracts section + siding master</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -1925,6 +1949,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
         </span>
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
+      <h3 class="projsec" style="margin-top:22px;">&#128209; Contracts</h3>
+      <p class="subnote">Client contracts &#8212; prefilled from this profile. Blank print masters live in
+      <b>&#9776; Menu &#8594; Company Documents</b>.</p>
+      <div style="margin:6px 0 12px;">
+        <button class="btn" id="pNewContractBtn">+ New contract</button>
+      </div>
+      <div id="contractDocsMount"><div class="loading">Loading…</div></div>
     </div>
 
     <div id="tab-checklists" style="display:none;">
@@ -2081,6 +2112,29 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <p class="subnote" id="listNote"></p>
     <div class="listctl">&#128100; Salesman: <select id="listRepSel"></select></div>
     <div id="listMount"><div class="loading">Loading…</div></div>
+  </div>
+</div>
+
+<!-- ============ COMPANY DOCUMENTS ============ -->
+<div id="companyDocsView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <h2 style="margin:16px 0 4px;">&#128193; Company Documents</h2>
+    <p class="subnote">Official Cardinal forms and paperwork, organized by category. View or download on any device.<br><b>These are blank master copies for print.</b> For a client contract, open the client's profile and use the approval workflow &#8212; it prefills their info, pulls the job price, and routes for signature.</p>
+    <div class="cdocscats" id="cdCats">
+      <button class="cdoccat active" data-cat="trade">&#128736;&#65039; Trade Documents
+        <span class="cdsub">Contracts &amp; forms by trade &#8212; roofing, siding, gutters&#8230;</span></button>
+      <button class="cdoccat disabled" data-cat="insurance">&#128737;&#65039; Insurance
+        <span class="cdsub">Claims paperwork &amp; carrier forms</span>
+        <span class="cdsoon">COMING SOON</span></button>
+    </div>
+    <div id="cdTradeWrap">
+      <div class="cdtrades" id="cdTrades"></div>
+      <div class="cdoclist" id="cdDocList"></div>
+    </div>
+    <div id="cdSoonWrap" style="display:none;">
+      <div class="cdsoonpanel">&#128737;&#65039; Insurance documents are coming soon.<br>
+      <span style="font-weight:400;">Claims paperwork, carrier forms, and supplement templates will live here.</span></div>
+    </div>
   </div>
 </div>
 
@@ -5733,14 +5787,19 @@ function openProject(id){
   setHeaderJobMenu(true);
   window.scrollTo(0,0);
 }
+function isContractTitle(t){ return /^contract/i.test((t||'').trim()); }
 function renderProjectDocs(){
   var docs = cacheRows.filter(function(r){ return currentProject && r.project_id === currentProject.id; });
-  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title); });
+  var ctrs = docs.filter(function(r){ return isContractTitle(r.title); });
   var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
+  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title); });
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
     : '<div class="empty"><b>No estimates yet.</b><br>Use <b>+ New estimate</b> to pick a template.</div>';
+  var cm = document.getElementById('contractDocsMount');
+  if(cm) cm.innerHTML = ctrs.length ? docTable(ctrs)
+    : '<div class="empty"><b>No contracts yet.</b><br>Use <b>+ New contract</b>, or approve the job from the pipeline to auto-create one.</div>';
 }
 function showTab(name){
   var sel = document.getElementById('jobMenuSel');
@@ -6955,6 +7014,7 @@ function hideAllViews(){
   var _lv = document.getElementById('leadsView'); if(_lv) _lv.style.display = 'none';
   var _tv = document.getElementById('teamView'); if(_tv) _tv.style.display = 'none';
   var _sv = document.getElementById('settingsView'); if(_sv) _sv.style.display = 'none';
+  var _cd = document.getElementById('companyDocsView'); if(_cd) _cd.style.display = 'none';
   boardView.style.display = 'none';
   commsView.style.display = 'none';
   document.getElementById('auditView').style.display = 'none';
@@ -7595,6 +7655,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'team'){ try{ openTeamView(); }catch(err){ alert('Team: ' + (err.message || err)); } }
   else if(nav === 'settings'){ openSettingsView(); }
   else if(nav === 'board'){ openScheduleBoard(); }
+  else if(nav === 'companydocs'){ openCompanyDocs(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
 });
@@ -7654,6 +7715,57 @@ if(__listRepSel) __listRepSel.addEventListener('change', function(){
   renderList();
 });
 document.getElementById('listMount').addEventListener('click', handleDocAction);
+
+/* ---------- company documents ---------- */
+/* Add documents here. Put the file in a /docs folder in the GitHub repo
+   (same place as index.html) and reference it as 'docs/filename.pdf'. */
+var COMPANY_DOCS = [
+  { trade:'Roofing', name:'Construction Agreement (Master)', file:'docs/Cardinal_Roofing_Contract.pdf',
+    note:'Complete package &#8212; contract, Terms &amp; Conditions, and both 3-Day Notice of Cancellation copies &#8212; July 2026' },
+  { trade:'Siding', name:'Siding Construction Agreement (Master)', file:'docs/Cardinal_Siding_Contract.pdf',
+    note:'Complete package &#8212; contract, Terms &amp; Conditions, and both 3-Day Notice of Cancellation copies &#8212; July 2026' }
+];
+var COMPANY_TRADES = ['All','Roofing','Siding','Gutters','Windows','General'];
+var __cdTrade = 'All';
+
+function openCompanyDocs(){
+  hideAllViews();
+  document.getElementById('companyDocsView').style.display = 'block';
+  renderCompanyDocs();
+  window.scrollTo(0,0);
+}
+function renderCompanyDocs(){
+  var tr = document.getElementById('cdTrades');
+  tr.innerHTML = COMPANY_TRADES.map(function(t){
+    var n = (t === 'All') ? COMPANY_DOCS.length : COMPANY_DOCS.filter(function(d){ return d.trade === t; }).length;
+    return '<button class="cdtrade' + (__cdTrade === t ? ' active' : '') + '" data-trade="' + t + '">' +
+      t + (n ? ' (' + n + ')' : '') + '</button>';
+  }).join('');
+  var rows = (__cdTrade === 'All') ? COMPANY_DOCS : COMPANY_DOCS.filter(function(d){ return d.trade === __cdTrade; });
+  document.getElementById('cdDocList').innerHTML = rows.length
+    ? rows.map(function(d){
+        return '<div class="cdocrow"><span class="cdicon">&#128196;</span>' +
+          '<span class="cdname">' + d.name + '<small>' + d.trade + (d.note ? ' &#183; ' + d.note : '') + '</small></span>' +
+          '<a class="btn" href="' + d.file + '" target="_blank" rel="noopener">View</a>' +
+          '<a class="btn ghost" href="' + d.file + '" download>Download</a></div>';
+      }).join('')
+    : '<div class="empty"><b>No ' + __cdTrade.toLowerCase() + ' documents yet.</b><br>Add the file to the /docs folder and list it in COMPANY_DOCS.</div>';
+}
+document.getElementById('cdCats').addEventListener('click', function(e){
+  var b = e.target.closest('.cdoccat');
+  if(!b) return;
+  var cat = b.getAttribute('data-cat');
+  var isIns = (cat === 'insurance');
+  document.querySelectorAll('#cdCats .cdoccat').forEach(function(x){ x.classList.toggle('active', x === b); });
+  document.getElementById('cdTradeWrap').style.display = isIns ? 'none' : 'block';
+  document.getElementById('cdSoonWrap').style.display = isIns ? 'block' : 'none';
+});
+document.getElementById('cdTrades').addEventListener('click', function(e){
+  var b = e.target.closest('.cdtrade');
+  if(!b) return;
+  __cdTrade = b.getAttribute('data-trade');
+  renderCompanyDocs();
+});
 
 /* ---------- my profile ---------- */
 function getUserProfile(){
@@ -7921,6 +8033,29 @@ async function runTotalsBackfill(){
   await reload();
   alert('Backfill complete: ' + fixed + ' total(s) filled in' + (skipped ? ', ' + skipped + ' had no readable total (open and re-save those to set one)' : '') + '. Pipeline dollars are now up to date.');
 }
+async function createContractForCurrent(){
+  var pr = currentProject;
+  if(!pr) return;
+  try{
+    var price = projectValue(pr);
+    var tpl = prefillUserInfo(prefillClientInfo(CONTRACT_TEMPLATE, pr));
+    if(price > 0){
+      var half = price / 2;
+      var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+      tpl = tpl.replace('<span class="ph" data-cprice="1">[0.00]</span>', '$' + f2(price));
+      tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(half));
+      tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(price - half));
+    }
+    var id = await db.create('Contract \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
+    await reload();
+    await openEditor(id);
+  }catch(err){ showError('Could not create contract: ' + (err.message || err)); }
+}
+var __pNewContractBtn = document.getElementById('pNewContractBtn');
+if(__pNewContractBtn) __pNewContractBtn.addEventListener('click', createContractForCurrent);
+var __contractDocsMount = document.getElementById('contractDocsMount');
+if(__contractDocsMount) __contractDocsMount.addEventListener('click', handleDocAction);
+
 async function approveAndContract(prId){
   var pr = cacheProjects.find(function(x){ return String(x.id) === String(prId); });
   if(!pr) return;
