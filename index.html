@@ -482,20 +482,7 @@ footer.site{
 .apptrow .del:hover{color:#C8202E;}
 .apptempty{font:13px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;padding:6px 0;}
 
-/* ---- watermark (homepage + sign-in share one embedded image) ---- */
-#mainView .homecols{
-  background-image:url(/wm-home.jpeg);
-  background-repeat:no-repeat;
-}
-#mainView .homecols{
-  /* x: center of the main column (container minus 320px sidebar + 20px gap) */
-  background-position: calc(50% - 170px) bottom;
-  background-size: min(640px, 44%);
-  min-height: 560px;
-}
-@media (max-width:900px){
-  #mainView .homecols{ background-position:center bottom; background-size:min(440px, 86%); min-height:0; }
-}
+/* ---- watermark (sign-in only; dashboard art removed) ---- */
 .logincard{ --login-wm:url(/wm-login.jpeg); }
 
 .clirow{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;
@@ -1606,7 +1593,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 65 &#8212; prod calendar watermark + boxed cells</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 67 &#8212; task complete/extend/notes</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4990,7 +4977,19 @@ function openTaskModal(pr, idx){
   if(idx != null && tasks[idx]){
     var t = tasks[idx];
     title.textContent = 'View Task';
+    var chip = t.done
+      ? '<span style="background:#e6f4e6;color:#2e7d32;border:1px solid #b7dcb7;border-radius:14px;padding:4px 12px;font:800 11px \'Segoe UI\',Arial,sans-serif;letter-spacing:.05em;">&#10003; COMPLETED</span>'
+      : (String(t.pri || '').toLowerCase() === 'high'
+        ? '<span style="background:#fdecec;color:#C8202E;border:1px solid #f2c3c3;border-radius:14px;padding:4px 12px;font:800 11px \'Segoe UI\',Arial,sans-serif;letter-spacing:.05em;">&#9888; HIGH PRIORITY</span>'
+        : '<span style="background:#fbf4e4;color:#8a6d1a;border:1px solid #e8d9ae;border-radius:14px;padding:4px 12px;font:800 11px \'Segoe UI\',Arial,sans-serif;letter-spacing:.05em;">&#9679; OPEN</span>');
+    var notes = (t.notes || []);
+    var noteRows = notes.length ? notes.map(function(n){
+      return '<div style="border-left:3px solid #e0d3c2;padding:4px 10px;margin-bottom:8px;">' +
+        '<div style="font:600 13.5px \'Segoe UI\',Arial,sans-serif;color:#3b2f2a;white-space:pre-wrap;">' + esc(n.n) + '</div>' +
+        '<div style="font:600 11px \'Segoe UI\',Arial,sans-serif;color:#9a8c85;margin-top:2px;">' + esc(rptRepName(n.by || '')) + ' &#183; ' + acxDate(n.at) + '</div></div>';
+    }).join('') : '<div style="font:600 12.5px \'Segoe UI\',Arial,sans-serif;color:#b3a69d;margin-bottom:8px;">No notes yet.</div>';
     body.innerHTML =
+      '<div style="margin:0 0 14px;">' + chip + '</div>' +
       kv('Due Date', t.due ? acxDate(t.due) : '\u2014') +
       kv('Priority', esc((t.pri || 'Normal').toUpperCase())) +
       kv('Assigned To', esc(rptRepName(t.assignee || t.by || ''))) +
@@ -5001,11 +5000,81 @@ function openTaskModal(pr, idx){
         esc((parseCkAll(pr).po ? parseCkAll(pr).po + ': ' : '') + (pr.name || '')) + ' &#10142;</a>') +
       '<div style="margin:18px 0 6px;font:700 14px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;">Description:</div>' +
       '<div style="font:600 14px \'Segoe UI\',Arial,sans-serif;color:#3b2f2a;white-space:pre-wrap;">' + esc(t.t) + '</div>' +
-      '<div style="text-align:right;margin-top:26px;"><button class="axbtn" id="tskCloseBtn">Close</button></div>';
+      '<div style="margin:18px 0 6px;font:700 14px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;">Notes &amp; Updates:</div>' +
+      noteRows +
+      '<div style="display:flex;gap:8px;margin-top:8px;">' +
+        '<input id="tskNoteInp" placeholder="Add a note or update\u2026" style="flex:1;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;">' +
+        '<button class="chipbtn" id="tskNoteBtn">Add note</button></div>' +
+      '<div id="tskExtRow" style="display:none;gap:8px;margin-top:14px;align-items:center;">' +
+        '<label style="font:700 12px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;">New due date</label>' +
+        '<input type="date" id="tskExtDate" style="border:1px solid #ddd6cf;border-radius:7px;padding:8px 10px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;">' +
+        '<button class="axbtn" id="tskExtSave">Save date</button></div>' +
+      '<div style="text-align:right;margin-top:22px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">' +
+      (t.done
+        ? '<button class="chipbtn" id="tskReopenBtn">&#8617; Reopen</button>'
+        : '<button class="chipbtn" id="tskExtendBtn">&#128197; Extend</button>' +
+          '<button class="axbtn" id="tskDoneBtn" style="background:#2e7d32;border-color:#256428;">&#10003; Complete Task</button>') +
+      '<button class="chipbtn" id="tskCloseBtn">Close</button></div>';
     m.style.display = 'flex';
     var jl = document.getElementById('tskJobLink');
     if(jl) jl.addEventListener('click', function(e){ e.preventDefault(); m.style.display = 'none'; showTab('overview'); });
     document.getElementById('tskCloseBtn').addEventListener('click', function(){ m.style.display = 'none'; });
+    async function patchTask(mut, auditMsg){
+      var list = (parseCkAll(pr).tasks || []).slice();
+      if(!list[idx]) return;
+      mut(list[idx]);
+      try{
+        await patchProjectCk(pr, { tasks: list });
+        if(auditMsg) auditLog('task', auditMsg + ' \u2014 \u201C' + String(list[idx].t || '').slice(0, 60) + '\u201D on ' + (pr.name || ''), pr.id);
+        renderOverview();
+      }catch(err){ showError('Could not update task: ' + (err.message || err)); }
+    }
+    var nb = document.getElementById('tskNoteBtn');
+    if(nb) nb.addEventListener('click', async function(){
+      var inp = document.getElementById('tskNoteInp');
+      var v = (inp.value || '').trim();
+      if(!v) return;
+      await patchTask(function(tk){
+        tk.notes = (tk.notes || []).concat([{ n: v, by: myEmail, at: new Date().toISOString() }]);
+      }, null);
+      openTaskModal(pr, idx);
+    });
+    var eb = document.getElementById('tskExtendBtn');
+    if(eb) eb.addEventListener('click', function(){
+      var row = document.getElementById('tskExtRow');
+      row.style.display = row.style.display === 'none' ? 'flex' : 'none';
+      var di = document.getElementById('tskExtDate');
+      if(!di.value){
+        var base = t.due ? new Date(t.due + 'T12:00:00') : new Date();
+        base.setDate(base.getDate() + 7);
+        di.value = base.toISOString().slice(0, 10);
+      }
+    });
+    var es = document.getElementById('tskExtSave');
+    if(es) es.addEventListener('click', async function(){
+      var nd = document.getElementById('tskExtDate').value;
+      if(!nd){ alert('Pick a new due date.'); return; }
+      await patchTask(function(tk){
+        tk.due = nd;
+        tk.notes = (tk.notes || []).concat([{ n: 'Due date extended to ' + acxDate(nd), by: myEmail, at: new Date().toISOString() }]);
+      }, 'Task extended');
+      openTaskModal(pr, idx);
+    });
+    var db2 = document.getElementById('tskDoneBtn');
+    if(db2) db2.addEventListener('click', async function(){
+      await patchTask(function(tk){
+        tk.done = true; tk.doneAt = new Date().toISOString(); tk.doneBy = myEmail;
+      }, 'Task completed');
+      m.style.display = 'none';
+    });
+    var rb = document.getElementById('tskReopenBtn');
+    if(rb) rb.addEventListener('click', async function(){
+      await patchTask(function(tk){
+        tk.done = false; tk.doneAt = null; tk.doneBy = null;
+        tk.notes = (tk.notes || []).concat([{ n: 'Task reopened', by: myEmail, at: new Date().toISOString() }]);
+      }, 'Task reopened');
+      openTaskModal(pr, idx);
+    });
   }else{
     title.textContent = 'Create Task';
     var opts = teamEmails().map(function(em){
