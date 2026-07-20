@@ -43,26 +43,53 @@ export default async function handler(req, res) {
       'In one concise sentence (under 20 words), describe what the photo shows in ' +
       'plain, professional roofing-inspection language. No preamble, no quotes, just the caption sentence.';
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
+    async function askGemini(model) {
+      return fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify({
+            contents: [
+              { parts: [
                 { text: prompt },
                 { inlineData: { mimeType: mimeType, data: base64Data } }
-              ]
-            }
-          ]
+              ] }
+            ]
+          })
+        }
+      );
+    }
+
+    // primary model, retry once on overload, then older model, then OpenAI backup
+    let geminiRes = await askGemini('gemini-3.5-flash');
+    if (geminiRes.status === 503 || geminiRes.status === 429) {
+      await new Promise(r => setTimeout(r, 1200));
+      geminiRes = await askGemini('gemini-3.5-flash');
+    }
+    if (!geminiRes.ok) {
+      const alt = await askGemini('gemini-2.5-flash');
+      if (alt.ok) geminiRes = alt;
+    }
+
+    if (!geminiRes.ok && process.env.OPENAI_API_KEY) {
+      const o = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + process.env.OPENAI_API_KEY },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini', max_tokens: 60, temperature: 0.4,
+          messages: [{ role: 'user', content: [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: { url: image } }
+          ] }]
         })
+      });
+      const oj = await o.json();
+      if (o.ok) {
+        const cap = oj?.choices?.[0]?.message?.content?.trim();
+        if (cap) { res.status(200).json({ caption: cap, via: 'openai' }); return; }
       }
-    );
+    }
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
