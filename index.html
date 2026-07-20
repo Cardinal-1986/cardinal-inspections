@@ -1602,7 +1602,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 58 &#8212; contracts section + siding master</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 59 &#8212; audit filters</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9877,7 +9877,8 @@ function fmtDur(ms){
   if(m < 60) return m + 'm';
   return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
 }
-var auditFilter = 'all';
+var auditPerson = 'all';
+var auditTypes = {};   /* checked types; none checked = show all */
 async function openAuditLog(){
   hideAllViews();
   document.getElementById('auditView').style.display = 'block';
@@ -9895,24 +9896,43 @@ async function renderAuditLog(){
     ]);
     var evErr = rs[0].error, events = rs[0].data || [];
     var sessions = rs[1].data || [];
-    var counts = { all: events.length };
-    events.forEach(function(e){ counts[e.type] = (counts[e.type] || 0) + 1; });
-    var chips = ['all'].concat(Object.keys(AUDIT_TYPES)).map(function(k){
-      var lbl = k === 'all' ? 'All' : AUDIT_TYPES[k].l;
+
+    /* ---- person dropdown (roster + anyone appearing in the log) ---- */
+    var ppl = {};
+    TEAM_ROSTER.forEach(function(m){ ppl[m.email] = 1; });
+    events.forEach(function(e){ if(e.email) ppl[e.email] = 1; });
+    sessions.forEach(function(s){ if(s.email) ppl[s.email] = 1; });
+    var pSel = '<label style="font:700 13px \'Segoe UI\',Arial,sans-serif;color:#5a5049;">&#128100; Person ' +
+      '<select id="audPersonSel" style="margin-left:6px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;' +
+      'font:600 13px \'Segoe UI\',Arial,sans-serif;background:#fff;max-width:210px;">' +
+      '<option value="all"' + (auditPerson === 'all' ? ' selected' : '') + '>All people</option>' +
+      Object.keys(ppl).sort().map(function(em){
+        return '<option value="' + esc(em) + '"' + (auditPerson === em ? ' selected' : '') + '>' + esc(rptRepName(em)) + '</option>';
+      }).join('') + '</select></label>';
+
+    var pEvents = auditPerson === 'all' ? events : events.filter(function(e){ return (e.email || '') === auditPerson; });
+    var counts = {};
+    pEvents.forEach(function(e){ counts[e.type] = (counts[e.type] || 0) + 1; });
+
+    /* ---- type checkboxes (multi-select; none checked = all) ---- */
+    var cks = Object.keys(AUDIT_TYPES).map(function(k){
       var n = counts[k] || 0;
-      return '<span class="hstat audf' + (auditFilter === k ? ' on' : '') + (n || k === 'all' ? '' : ' zero') +
-        '" data-audf="' + k + '">' + lbl + ' <b>' + n + '</b></span>';
-    }).join('') + '<span class="hstat audf" data-audref="1">&#8635; Refresh</span>' +
-      '<span class="hstat audf audreset" data-audreset="1">&#129529; Reset audit</span>';
-    var pool = auditFilter === 'all' ? events : events.filter(function(e){ return e.type === auditFilter; });
+      return '<label style="display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:18px;' +
+        'padding:6px 12px;font:600 12.5px \'Segoe UI\',Arial,sans-serif;color:' + (n ? '#5a5049' : '#b6a89f') + ';background:#fff;cursor:pointer;">' +
+        '<input type="checkbox" data-audt="' + k + '"' + (auditTypes[k] ? ' checked' : '') + ' style="accent-color:#C8202E;">' +
+        AUDIT_TYPES[k].l + ' <b>' + n + '</b></label>';
+    }).join('');
+
+    var anyChecked = Object.keys(auditTypes).some(function(k){ return auditTypes[k]; });
+    var pool = anyChecked ? pEvents.filter(function(e){ return auditTypes[e.type]; }) : pEvents;
+
     var evHtml;
     if(evErr){
       evHtml = '<div class="subnote">Event audit needs the audit_events table \u2014 run the audit SQL in Supabase once, then Refresh. (' + esc(evErr.message || '') + ')</div>';
     }else if(!events.length){
       evHtml = '<div class="subnote">No events recorded yet \u2014 the ledger starts fresh from this build. Create a lead, record a payment, or complete a task and it will appear here with a timestamp.</div>';
     }else if(!pool.length){
-      var tl = (AUDIT_TYPES[auditFilter] || {}).l || auditFilter;
-      evHtml = '<div class="subnote">No \u201C' + esc(tl) + '\u201D events yet \u2014 they\u2019ll appear here as the team works.</div>';
+      evHtml = '<div class="subnote">No events match the current filters \u2014 try unchecking types or switching back to All people.</div>';
     }else{
       evHtml = pool.map(function(e){
         var t = AUDIT_TYPES[e.type] || { i:'\u2022', l:e.type };
@@ -9925,7 +9945,8 @@ async function renderAuditLog(){
           d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) + '</small></span></div>';
       }).join('');
     }
-    var ssHtml = sessions.map(function(s){
+    var pSessions = auditPerson === 'all' ? sessions : sessions.filter(function(s){ return (s.email || '') === auditPerson; });
+    var ssHtml = pSessions.map(function(s){
       var nm = rptRepName(s.email || '');
       var li = new Date(s.login_at), ls = new Date(s.last_seen);
       var online = (Date.now() - ls.getTime()) < 120000;
@@ -9934,12 +9955,20 @@ async function renderAuditLog(){
         li.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) + '</span>' +
         '<span><small>active</small> ' + fmtDur(ls - li) + '</span>' +
         (online ? '<span class="aon">&#9679; online</span>' : '') + '</div>';
-    }).join('') || '<div class="subnote">No sessions recorded yet.</div>';
+    }).join('') || '<div class="subnote">No sessions recorded' + (auditPerson === 'all' ? '' : ' for this person') + ' yet.</div>';
+
     mount.innerHTML =
-      '<div class="audfrow">' + chips + '</div>' + evHtml +
+      '<div class="audfrow" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' + pSel +
+        '<span class="hstat audf" data-audref="1">&#8635; Refresh</span>' +
+        '<span class="hstat audf audreset" data-audreset="1">&#129529; Reset audit</span></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px;">' + cks + '</div>' +
+      evHtml +
       '<h3 class="projsec" style="margin-top:22px;">&#128274; Sign-in sessions</h3>' + ssHtml;
-    mount.querySelectorAll('[data-audf]').forEach(function(ch){
-      ch.addEventListener('click', function(){ auditFilter = ch.getAttribute('data-audf'); renderAuditLog(); });
+
+    var psl = mount.querySelector('#audPersonSel');
+    if(psl) psl.addEventListener('change', function(){ auditPerson = this.value; renderAuditLog(); });
+    mount.querySelectorAll('[data-audt]').forEach(function(cb){
+      cb.addEventListener('change', function(){ auditTypes[cb.getAttribute('data-audt')] = cb.checked; renderAuditLog(); });
     });
     var rz = mount.querySelector('[data-audreset]');
     if(rz) rz.addEventListener('click', async function(){
@@ -9949,7 +9978,7 @@ async function renderAuditLog(){
         await sb.from('audit_events').delete().not('id', 'is', null);
         await sb.from('audit_sessions').delete().not('id', 'is', null);
         auditLog('team', 'Audit log reset \u2014 clock restarted');
-        auditFilter = 'all';
+        auditPerson = 'all'; auditTypes = {};
         setTimeout(renderAuditLog, 400);
       }catch(err){ showError('Could not reset: ' + (err.message || err)); }
     });
