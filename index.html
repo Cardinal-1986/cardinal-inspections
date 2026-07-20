@@ -448,7 +448,7 @@ footer.site{
 .calgrid .day.other{color:#c9c0bc;}
 .calgrid .day.today{background:var(--red);color:#fff;font-weight:800;}
 .calgrid .day .dot{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
-  width:4px;height:4px;border-radius:50%;background:#C8202E;}
+  width:4px;height:4px;border-radius:50%;background:#141414;}
 .calgrid .day.today .dot{background:#fff;}
 @media (max-width:640px){
   .calcard{flex-basis:100%;} .hero-hi{font-size:16.5px;}
@@ -464,9 +464,9 @@ footer.site{
 .calgrid .day.cur:hover{background:#f7efec;}
 .calgrid .day.today.cur:hover{background:var(--red);}
 .calgrid .day .adot{position:absolute;bottom:2px;left:calc(50% + 5px);transform:translateX(-50%);
-  width:4px;height:4px;border-radius:50%;background:#E8A33D;}
+  width:4px;height:4px;border-radius:50%;background:#141414;}
 .calgrid .day .dot{left:calc(50% - 5px);}
-.calgrid .day.today .adot{background:#ffe2ae;}
+.calgrid .day.today .adot{background:#fff;}
 .callegend{font:11px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;margin-top:8px;}
 .ldot{display:inline-block;width:7px;height:7px;border-radius:50%;vertical-align:middle;}
 .ldot.doc{background:#C8202E;}
@@ -543,8 +543,25 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .pipebtn .plabel{display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
 .pipebtn .pcount{display:block;font:800 20px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;line-height:1.2;}
 .pipebtn .pmoney{display:block;font:700 12px 'Segoe UI',Arial,sans-serif;color:#555;}
-.pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
-.pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;} .pipe-closed{background:#607D8B;}
+/* pipeline stages: original hues, metallic finish */
+.pipe-lead{background-image:linear-gradient(160deg,
+  #fbf1d4 0%, #f5dc93 12%, #E8B10F 38%, #E8B10F 55%, #a77f0b 80%, #745808 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
+.pipe-prospect{background-image:linear-gradient(160deg,
+  #fcead8 0%, #f8ca9c 12%, #F08A24 38%, #F08A24 55%, #ad631a 80%, #784512 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
+.pipe-approved{background-image:linear-gradient(160deg,
+  #e7f1dd 0%, #c4ddaa 12%, #7CB342 38%, #7CB342 55%, #598130 80%, #3e5a21 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
+.pipe-completed{background-image:linear-gradient(160deg,
+  #d8eef9 0%, #9fd6ef 12%, #29A3DC 38%, #29A3DC 55%, #1e759e 80%, #14526e 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
+.pipe-invoiced{background-image:linear-gradient(160deg,
+  #ebe4f4 0%, #ccbce3 12%, #8E6BC1 38%, #8E6BC1 55%, #664d8b 80%, #473660 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
+.pipe-closed{background-image:linear-gradient(160deg,
+  #e2e8ea 0%, #b7c4cb 12%, #607D8B 38%, #607D8B 55%, #455a64 80%, #303e46 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
 @media (max-width:900px){
   .piperow{padding:0 0 4px;gap:4px;overflow:visible;justify-content:space-between;}
   .pipebtn{flex:1 1 0;min-width:0;max-width:none;padding:2px 0;}
@@ -676,9 +693,9 @@ html, body{overflow-x:hidden;max-width:100%;}
 .apprcli{cursor:pointer;color:#1d4f91;}
 .apprdet{display:block;font:12.5px 'Segoe UI',Arial,sans-serif;color:#666;margin-top:2px;}
 
-.adot.jdot{background:#7CB342;}
-.adot.ddot{background:#29A3DC;}
-.adot.tdot{background:#C8202E;}
+.adot.jdot{background:#141414;}
+.adot.ddot{background:#C8202E;}
+.adot.tdot{background:#141414;}
 .bkind{font-size:15px;flex:0 0 auto;}
 
 .agechip{position:absolute;top:38px;left:8px;z-index:2;font:800 10px 'Segoe UI',Arial,sans-serif;
@@ -1009,19 +1026,20 @@ html, body{overflow-x:hidden;max-width:100%;}
 @supports (-webkit-background-clip:text){
   .mic{
     background-image:linear-gradient(115deg,
-      #0a0a0c 0%, #2b2b30 16%, #6b6b72 30%, #f5f2f2 44%,
-      #C8202E 58%, #8f1420 74%, #5c0d15 88%, #17090b 100%);
+      #0b0b0d 0%, #3c3c44 7%, #e2e2e8 13%, #55555e 18%, #101013 26%,
+      #26262c 34%, #050506 42%, #40121a 52%,
+      #7d101b 60%, #C8202E 68%, #ff6a72 74%, #fdfbfb 77%, #ff6a72 80%,
+      #a3131f 86%, #4a0a10 93%, #C8202E 100%);
     background-size:280% 100%;
     -webkit-background-clip:text;background-clip:text;
     color:transparent;-webkit-text-fill-color:transparent;
     font-size:1.18em;line-height:1;display:inline-block;
-    filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));
-    animation:micshine 3.6s ease-in-out infinite;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.45)) drop-shadow(0 0 1px rgba(255,255,255,.15));
+    animation:micshine 2.4s ease-in-out .3s 1 forwards;
   }
 }
 @keyframes micshine{
-  0%,55%{background-position:0% 0;}
-  80%{background-position:100% 0;}
+  0%{background-position:0% 0;}
   100%{background-position:100% 0;}
 }
 
@@ -1613,7 +1631,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 69 &#8212; metallic icons red/black</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 73 &#8212; metallic pipeline circles</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -1680,8 +1698,8 @@ body:has(#loginView[style*="block"]){background:#fff;}
             <div class="pipetitle">&#128197; Work Schedule</div>
             <div class="opsstats">
               <div class="opsstat"><span class="opsc" style="background:#F08A24;" id="opsDone">0</span><small>Completed<br>Today</small></div>
-              <div class="opsstat"><span class="opsc" style="background:#7CB342;" id="opsToday">0</span><small>Jobs<br>Today</small></div>
-              <div class="opsstat"><span class="opsc" style="background:#29A3DC;" id="opsOutlook">0</span><small>30 Day<br>Outlook</small></div>
+              <div class="opsstat"><span class="opsc" style="background:#141414;" id="opsToday">0</span><small>Jobs<br>Today</small></div>
+              <div class="opsstat"><span class="opsc" style="background:#C8202E;" id="opsOutlook">0</span><small>30 Day<br>Outlook</small></div>
             </div>
           </div>
           <div class="pipecard opscard">
@@ -1698,7 +1716,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
               <button class="chipbtn" id="teamAddBtn">&#65291; Add</button>
             </div>
             <div class="minical" id="teamCalMount"></div>
-            <div class="callegend"><span class="ldot" style="background:#C8202E;"></span> team events &#8212; tap a day to add</div>
+            <div class="callegend"><span class="ldot" style="background:#141414;"></span> team events &#8212; tap a day to add</div>
           </div>
           <div class="pipecard teamcal prodcal">
             <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
@@ -1706,7 +1724,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
               <small id="prodCalWho" style="font:700 11px 'Segoe UI',Arial,sans-serif;color:#9a8c85;"></small>
             </div>
             <div class="minical" id="prodCalMount"></div>
-            <div class="callegend"><span class="ldot" style="background:#7CB342;"></span> jobs &nbsp; <span class="ldot" style="background:#29A3DC;"></span> material drops</div>
+            <div class="callegend"><span class="ldot" style="background:#141414;"></span> jobs &nbsp; <span class="ldot" style="background:#C8202E;"></span> material drops</div>
           </div>
         </div>
         <div class="hero-left" style="margin-top:14px;">
@@ -7809,32 +7827,51 @@ if(__listRepSel) __listRepSel.addEventListener('change', function(){
 });
 document.getElementById('listMount').addEventListener('click', handleDocAction);
 
-/* ---------- metallic icon wrapper ---------- */
-var MIC_SELECTORS = ['#navMenu .navopt', '.pipetitle > span', '.projsec', '.cdoccat',
-  '#companyDocsView h2', '.tabbtn', '.chipbtn', '.hstat'];
-var MIC_RE = /^(\s*)((?:[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{20E3}\u{2190}-\u{21FF}\u{2934}\u{2935}]|[\u{1F1E6}-\u{1F1FF}])+)/u;
+/* ---------- metallic icon wrapper: every emoji icon, every page ---------- */
+var MIC_CLUSTER = '(?:[\\u{1F000}-\\u{1FAFF}\\u{2600}-\\u{27BF}\\u{2B00}-\\u{2BFF}\\u{2190}-\\u{21FF}\\u{2700}-\\u{27BF}\\u{FE0F}\\u{200D}\\u{20E3}\\u{2934}\\u{2935}\\u{3030}\\u{303D}\\u{3297}\\u{3299}\\u{00A9}\\u{00AE}\\u{2122}]|[\\u{1F1E6}-\\u{1F1FF}])+';
+var MIC_TEST = new RegExp(MIC_CLUSTER, 'u');
+var MIC_SPLIT = new RegExp('(' + MIC_CLUSTER + ')', 'gu');
+var MIC_SKIP_TAGS = { SCRIPT:1, STYLE:1, NOSCRIPT:1, TEXTAREA:1, SELECT:1, OPTION:1, TITLE:1, IFRAME:1 };
 function metallicize(root){
   try{
-    (root || document).querySelectorAll(MIC_SELECTORS.join(',')).forEach(function(el){
-      var fc = el.firstChild;
-      if(!fc || fc.nodeType !== 3) return;                 /* leading text node only */
-      var m2 = fc.nodeValue.match(MIC_RE);
-      if(!m2 || !m2[2]) return;
-      var sp = document.createElement('span');
-      sp.className = 'mic';
-      sp.textContent = m2[2];
-      fc.nodeValue = fc.nodeValue.slice(m2[0].length);
-      el.insertBefore(sp, fc);
-      if(m2[1]) el.insertBefore(document.createTextNode(m2[1]), sp);
+    var host = root || document.body;
+    if(!host) return;
+    var walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(n){
+        var p = n.parentNode;
+        if(!p || MIC_SKIP_TAGS[p.nodeName]) return NodeFilter.FILTER_REJECT;
+        if(p.classList && p.classList.contains('mic')) return NodeFilter.FILTER_REJECT;
+        if(p.closest && p.closest('[contenteditable], .mic')) return NodeFilter.FILTER_REJECT;
+        return MIC_TEST.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    var nodes = [];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function(tn){
+      var parts = tn.nodeValue.split(MIC_SPLIT);
+      if(parts.length < 2) return;
+      var frag = document.createDocumentFragment();
+      parts.forEach(function(part){
+        if(!part) return;
+        if(MIC_TEST.test(part) && part.replace(new RegExp(MIC_CLUSTER, 'gu'), '') === ''){
+          var sp = document.createElement('span');
+          sp.className = 'mic';
+          sp.textContent = part;
+          frag.appendChild(sp);
+        }else{
+          frag.appendChild(document.createTextNode(part));
+        }
+      });
+      tn.parentNode.replaceChild(frag, tn);
     });
   }catch(e){}
 }
-metallicize(document);
+metallicize(document.body);
 var __micPending = false;
 new MutationObserver(function(){
   if(__micPending) return;
   __micPending = true;
-  setTimeout(function(){ __micPending = false; metallicize(document); }, 250);
+  setTimeout(function(){ __micPending = false; metallicize(document.body); }, 250);
 }).observe(document.body, { childList:true, subtree:true });
 
 /* ---------- company documents ---------- */
