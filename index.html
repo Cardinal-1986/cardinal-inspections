@@ -543,10 +543,8 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .pipebtn .plabel{display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
 .pipebtn .pcount{display:block;font:800 20px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;line-height:1.2;}
 .pipebtn .pmoney{display:block;font:700 12px 'Segoe UI',Arial,sans-serif;color:#555;}
-/* pipeline stages: original hues, metallic finish */
-.pipe-lead{background-image:linear-gradient(160deg,
-  #fbf1d4 0%, #f5dc93 12%, #E8B10F 38%, #E8B10F 55%, #a77f0b 80%, #745808 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
+.pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
+.pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;} .pipe-closed{background:#607D8B;}
 .pipe-prospect{background-image:linear-gradient(160deg,
   #fcead8 0%, #f8ca9c 12%, #F08A24 38%, #F08A24 55%, #ad631a 80%, #784512 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
@@ -1022,25 +1020,37 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
 
-/* ---- metallic icons: blue->red chrome with shine sweep ---- */
+/* ---- unified page headers: centered, serif, brand rule ---- */
+.viewhead{
+  text-align:center;
+  font:800 23px Georgia,'Times New Roman',serif;
+  letter-spacing:.02em;color:#1c1416;
+  margin:18px 0 4px;
+}
+.viewhead::after{
+  content:'';display:block;width:76px;height:3px;
+  margin:9px auto 2px;border-radius:2px;
+  background:linear-gradient(90deg,#C8202E,#d4a017);
+}
+.viewhead + .subnote{text-align:center;max-width:560px;margin-left:auto;margin-right:auto;}
+.ljtitle{
+  text-align:center;
+  font:800 23px Georgia,'Times New Roman',serif;
+  letter-spacing:.02em;color:#1c1416;
+}
+.projsec{font-weight:800;color:#1c1416;}
+.ljsummary h3{font:800 16px Georgia,'Times New Roman',serif;color:#1c1416;margin:0 0 8px;}
+
+/* ---- icons: static two-tone yellow/blue gradient ---- */
 @supports (-webkit-background-clip:text){
   .mic{
-    background-image:linear-gradient(115deg,
-      #0b0b0d 0%, #3c3c44 7%, #e2e2e8 13%, #55555e 18%, #101013 26%,
-      #26262c 34%, #050506 42%, #40121a 52%,
-      #7d101b 60%, #C8202E 68%, #ff6a72 74%, #fdfbfb 77%, #ff6a72 80%,
-      #a3131f 86%, #4a0a10 93%, #C8202E 100%);
-    background-size:280% 100%;
+    background-image:linear-gradient(180deg,
+      #FFD34D 0%, #F5B800 44%, #2E6FD8 56%, #1B3F8F 100%);
     -webkit-background-clip:text;background-clip:text;
     color:transparent;-webkit-text-fill-color:transparent;
-    font-size:1.18em;line-height:1;display:inline-block;
-    filter:drop-shadow(0 1px 1px rgba(0,0,0,.45)) drop-shadow(0 0 1px rgba(255,255,255,.15));
-    animation:micshine 2.4s ease-in-out .3s 1 forwards;
+    font-size:1.15em;line-height:1;display:inline-block;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));
   }
-}
-@keyframes micshine{
-  0%{background-position:0% 0;}
-  100%{background-position:100% 0;}
 }
 
 /* ---- company documents ---- */
@@ -1344,7 +1354,8 @@ body.restoring #restoreVeil{display:flex;}
 .ljbadge{position:absolute;top:9px;right:10px;width:22px;height:22px;border-radius:50%;color:#fff;
   display:flex;align-items:center;justify-content:center;font:800 11px 'Segoe UI',Arial,sans-serif;
   box-shadow:0 1px 3px rgba(0,0,0,.25);}
-.ljages{position:absolute;top:34px;right:10px;text-align:right;font:600 10px 'Segoe UI',Arial,sans-serif;color:#8a7a72;line-height:1.5;}
+.ljcard{padding-right:108px;}
+.ljages{position:absolute;top:34px;right:10px;width:92px;text-align:right;font:600 10px 'Segoe UI',Arial,sans-serif;color:#8a7a72;line-height:1.5;}
 .ljages b{display:block;color:#3b2f2a;font-size:11px;}
 .ljrank{display:inline-flex;gap:2px;vertical-align:middle;}
 .ljrank i{width:10px;height:10px;border-radius:2px;background:#e4dcd6;display:inline-block;}
@@ -1631,7 +1642,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 73 &#8212; metallic pipeline circles</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 75 &#8212; unified headers</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -1689,7 +1700,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <div class="piperow" id="pipeRow"></div>
         </div>
         <div class="pipecard" id="approvalsCard" style="display:none;margin-top:14px;border-left:5px solid #C8202E;">
-          <h3 style="margin:0 0 6px;">&#128276; Approvals &#8212; signed estimates awaiting contract</h3>
+          <h3 class="projsec" style="margin:0 0 8px;">&#128276; Approvals &#8212; signed estimates awaiting contract</h3>
           <div id="approvalsList"></div>
         </div>
         <div class="rowfil"></div>
@@ -1753,7 +1764,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
   </div>
 
   <section class="history wrap">
-    <h2 class="sec"><span class="num">&#9776;</span>Client Projects</h2>
+    <h2 class="viewhead">&#9776; Client Projects</h2>
     <p class="subnote" id="storageNote"></p>
     <div class="controls">
       <input type="search" id="searchBox" placeholder="Search clients by name, address, phone, email…" aria-label="Search projects">
@@ -1851,7 +1862,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
         </div>
         <div id="ljDetails">
           <div class="ljsummary">
-            <h3>Job Summary</h3>
+            <h3 class="projsec" style="border:none;padding:0;">Job Summary</h3>
             <p>Selecting a job from the left will load more details. This preview pane allows quick access to:</p>
             <ul><li>Demographics</li><li>Location</li><li>Stage &amp; priority</li><li>Lead source</li><li>Quick actions</li></ul>
           </div>
@@ -1880,7 +1891,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <div id="tskModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:210;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px;">
   <div style="background:#fff;border-radius:8px;max-width:620px;width:100%;padding:22px 26px;position:relative;">
     <span id="tskModalX" style="position:absolute;top:12px;right:16px;font:400 22px Arial;color:#9a8c85;cursor:pointer;">&#10005;</span>
-    <h2 id="tskModalTitle" style="margin:0 0 18px;text-align:center;font:400 26px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;"></h2>
+    <h2 id="tskModalTitle" style="margin:0 0 18px;text-align:center;font:800 20px Georgia,'Times New Roman',serif;letter-spacing:.02em;color:#1c1416;"></h2>
     <div id="tskModalBody"></div>
   </div>
 </div>
@@ -2113,7 +2124,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <div id="galleryView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
     <button class="btn dark" id="galBackBtn">&larr; Back to client profile</button>
-    <h2 style="margin:16px 0 2px;">&#128248; Photo Gallery <span id="galClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+    <h2 class="viewhead">&#128248; Photo Gallery <span id="galClient" style="color:#8a6f66;font-size:17px;"></span></h2>
       <h3 class="projsec">&#128248; Photo Gallery <span id="galCount" class="projcount">0 / 20</span></h3>
       <p class="subnote">Field photos for this client. Check the ones to use, then transfer them into an
       inspection report — transferred photos are removed from this gallery.</p>
@@ -2137,7 +2148,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ DOCUMENT LIST PAGE (recents / inspections / estimates) ============ -->
 <div id="listView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <h2 id="listTitle" style="margin:16px 0 4px;"></h2>
+    <h2 id="listTitle" class="viewhead"></h2>
     <p class="subnote" id="listNote"></p>
     <div class="listctl">&#128100; Salesman: <select id="listRepSel"></select></div>
     <div id="listMount"><div class="loading">Loading…</div></div>
@@ -2147,7 +2158,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ COMPANY DOCUMENTS ============ -->
 <div id="companyDocsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <h2 style="margin:16px 0 4px;">&#128193; Company Documents</h2>
+    <h2 class="viewhead">&#128193; Company Documents</h2>
     <p class="subnote">Official Cardinal forms and paperwork, organized by category. View or download on any device.<br><b>These are blank master copies for print.</b> For a client contract, open the client's profile and use the approval workflow &#8212; it prefills their info, pulls the job price, and routes for signature.</p>
     <div class="cdocscats" id="cdCats">
       <button class="cdoccat active" data-cat="trade">&#128736;&#65039; Trade Documents
@@ -2170,7 +2181,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ MY PROFILE PAGE ============ -->
 <div id="profileView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <h2 style="margin:16px 0 4px;">&#128100; My Profile</h2>
+    <h2 class="viewhead">&#128100; My Profile</h2>
     <p class="subnote">Your name and contact info appear as &#8220;Prepared By / Inspector&#8221; on every
     estimate and inspection report you create.</p>
     <div class="projform" style="margin:10px 0;max-width:430px;box-shadow:none;border:1px solid var(--line);">
@@ -2203,7 +2214,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ CLIENT DIRECTORY ============ -->
 <div id="clientsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <h2 style="margin:16px 0 4px;">&#128101; Client Directory</h2>
+    <h2 class="viewhead">&#128101; Client Directory</h2>
     <div class="controls" style="margin:8px 0 0;">
       <input type="search" id="cliFilter" placeholder="Filter by name, PO #, address, phone, email, rep&#8230;" aria-label="Filter clients">
       <span class="count" id="cliCount"></span>
@@ -2216,7 +2227,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ ACTIVITY FEED PAGE ============ -->
 <div id="activityView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:1500px;">
-    <h2 style="margin:16px 0 4px;">&#9889; Activity Feed</h2>
+    <h2 class="viewhead">&#9889; Activity Feed</h2>
     <p class="subnote">Everything happening across the team, newest first.</p>
     <div id="actFeedFull"></div>
   </div>
@@ -2226,7 +2237,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <div id="commsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:900px;">
     <button class="btn dark" id="commsBackBtn">&larr; Back</button>
-    <h2 style="margin:16px 0 4px;">&#128172; Communications <span id="commsCli" style="color:#9c1822;"></span></h2>
+    <h2 class="viewhead">&#128172; Communications <span id="commsCli" style="color:#9c1822;"></span></h2>
     <p class="subnote">Notes, call logs, and document activity for this client. Tag a teammate with @name.</p>
     <div class="chatbox">
       <div class="chatthread" id="chatThread"></div>
@@ -2241,14 +2252,14 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ SCHEDULE BOARD ============ -->
 <div id="auditView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:980px;">
-    <h2 style="margin:16px 0 4px;">&#128373; Audit Log</h2>
+    <h2 class="viewhead">&#128373; Audit Log</h2>
     <p class="subnote">Sign-ins across the team and how long each session stayed active. Sessions ping every minute while the app is open; &#8220;online&#8221; means activity in the last 2 minutes.</p>
     <div id="auditMount"></div>
   </div>
 </div>
 <div id="boardView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:1700px;">
-    <h2 style="margin:16px 0 4px;">&#128197; Schedule Board</h2>
+    <h2 class="viewhead">&#128197; Schedule Board</h2>
     <p class="subnote">Jobs &#128296;, material drops &#128666;, and appointments &#128197; for the next 14 days. Tap a day to add or edit.</p>
     <div id="boardMount"></div>
   </div>
