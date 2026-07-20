@@ -1020,6 +1020,26 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
 
+/* ---- quick inspection ---- */
+#qiStream{max-width:680px;margin:0 auto;padding:6px 2px 90px;}
+.qibub{max-width:86%;margin:0 0 10px;padding:11px 14px;border-radius:14px;
+  font:600 14px 'Segoe UI',Arial,sans-serif;line-height:1.45;}
+.qibub.ai{background:#fff;border:1px solid var(--line);color:#3b2f2a;border-bottom-left-radius:4px;}
+.qibub.me{background:#C8202E;color:#fff;margin-left:auto;border-bottom-right-radius:4px;}
+.qibub.ph{background:#fff;border:1px solid var(--line);margin-left:auto;padding:6px;border-bottom-right-radius:4px;}
+.qibub.ph img{display:block;width:100%;max-width:300px;border-radius:9px;}
+.qibub .qicap{display:flex;justify-content:space-between;gap:10px;padding:6px 4px 2px;
+  font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#6d5e56;}
+.qichips{display:flex;gap:7px;flex-wrap:wrap;max-width:680px;margin:0 auto 12px;}
+.qichip{border:1px solid #d9c9b4;background:#fff;border-radius:18px;padding:7px 13px;cursor:pointer;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#5a5049;}
+.qichip.act{background:#C8202E;border-color:#C8202E;color:#fff;}
+.qichip.done{border-color:#7c8f66;color:#4c6b34;background:#f2f7ec;}
+.qibar{position:sticky;bottom:0;background:#f5f0ef;padding:10px 0 14px;max-width:680px;margin:0 auto;
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.qibar input[type=text]{flex:1;min-width:150px;border:1px solid #ddd6cf;border-radius:20px;padding:10px 14px;
+  font:600 14px 'Segoe UI',Arial,sans-serif;}
+
 /* ---- unified page headers: centered, serif, brand rule ---- */
 .viewhead{
   text-align:center;
@@ -1639,10 +1659,11 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="recents">&#128337; Recents</button>
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
+          <button class="navopt" data-nav="quickinsp">&#9889; Quick Inspection</button>
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 75 &#8212; unified headers</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 78 &#8212; map-first quick inspection</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2152,6 +2173,105 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <p class="subnote" id="listNote"></p>
     <div class="listctl">&#128100; Salesman: <select id="listRepSel"></select></div>
     <div id="listMount"><div class="loading">Loading…</div></div>
+  </div>
+</div>
+
+<!-- ============ POST-LOGIN LANDING ============ -->
+<div id="landingView" style="display:none;position:fixed;inset:0;z-index:150;overflow-y:auto;
+  background:radial-gradient(1200px 600px at 50% -10%, #2a1b16 0%, #17100e 55%, #0d0908 100%);">
+  <div style="max-width:520px;margin:0 auto;padding:7vh 22px 40px;text-align:center;">
+    <img src="/wm-login.jpeg" alt="" style="width:120px;height:auto;border-radius:12px;
+      box-shadow:0 8px 30px rgba(0,0,0,.5);margin-bottom:14px;" onerror="this.style.display='none'">
+    <div style="font:800 26px Georgia,'Times New Roman',serif;letter-spacing:.03em;
+      background:linear-gradient(160deg,#a06c08,#d4a017 40%,#f5d061 55%,#c8901c 75%);
+      -webkit-background-clip:text;background-clip:text;color:#d4a017;-webkit-text-fill-color:transparent;">
+      Welcome back<span id="landName"></span></div>
+    <div id="landDate" style="font:600 13px 'Segoe UI',Arial,sans-serif;color:#b7a99e;margin:4px 0 30px;"></div>
+
+    <button id="landQuick" style="display:block;width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
+      background:linear-gradient(160deg,#241512,#1a0f0c);border:1px solid #d4a01755;border-radius:16px;
+      padding:20px 22px;margin-bottom:14px;box-shadow:0 6px 22px rgba(0,0,0,.4);">
+      <div style="font:800 20px Georgia,'Times New Roman',serif;color:#f5d061;">&#9889; Quick Inspection</div>
+      <div style="font:600 13px 'Segoe UI',Arial,sans-serif;color:#c9b8ad;margin-top:5px;">
+        Walk the roof. Shoot guided photos. Attach to a client or new prospect in one tap.</div>
+    </button>
+
+    <button id="landDash" style="display:block;width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
+      background:linear-gradient(160deg,#241512,#1a0f0c);border:1px solid #d4a01755;border-radius:16px;
+      padding:20px 22px;box-shadow:0 6px 22px rgba(0,0,0,.4);">
+      <div style="font:800 20px Georgia,'Times New Roman',serif;color:#f5d061;">&#127963;&#65039; The Source of Truth</div>
+      <div style="font:600 13px 'Segoe UI',Arial,sans-serif;color:#c9b8ad;margin-top:5px;">
+        Dashboard, clients, pipeline, calendars, documents &#8212; the whole operation.</div>
+    </button>
+
+    <div style="margin-top:34px;padding-top:22px;border-top:1px solid #d4a01733;">
+      <div style="font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.24em;color:#8d7a6d;">OUR PURPOSE</div>
+      <div style="font:600 14px Georgia,'Times New Roman',serif;color:#d8c9be;line-height:1.65;margin-top:8px;">
+        One home for every client, every photo, every document &#8212;<br>
+        from the first knock to the final invoice.<br>
+        <span style="color:#f5d061;">The Single Source Of Truth.</span></div>
+    </div>
+    <button id="landSkip" style="background:none;border:none;cursor:pointer;margin-top:26px;
+      font:700 12px 'Segoe UI',Arial,sans-serif;color:#7d6c60;text-decoration:underline;">skip</button>
+  </div>
+</div>
+
+<!-- ============ QUICK INSPECTION ============ -->
+<div id="qiStartView" style="display:none;">
+  <div class="wrap" style="padding-top:12px;">
+    <h2 class="viewhead">&#9889; Quick Inspection</h2>
+    <p class="subnote">First, pin the property. Drag the pin or type the address, then choose the client.</p>
+    <div style="max-width:680px;margin:0 auto;">
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input type="text" id="qiAddrInp" placeholder="Type an address&#8230;" style="flex:1;border:1px solid #ddd6cf;border-radius:8px;padding:10px 12px;font:600 14px 'Segoe UI',Arial,sans-serif;">
+        <button class="chipbtn" id="qiAddrGo">Search</button>
+        <button class="chipbtn" id="qiLocBtn">&#128205; My location</button>
+      </div>
+      <div id="qiMap" style="height:340px;border:1px solid var(--line);border-radius:12px;background:#eee;"></div>
+      <div style="text-align:right;margin-top:12px;">
+        <button class="axbtn" id="qiMapNext">Continue &#10142;</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="quickInspView" style="display:none;">
+  <div class="wrap" style="padding-top:12px;">
+    <h2 class="viewhead">&#9889; Quick Inspection</h2>
+    <p class="subnote" id="qiForLine"></p>
+    <div class="qichips" id="qiChips"></div>
+    <div id="qiStream"></div>
+    <div class="qibar">
+      <button class="btn" id="qiCamBtn">&#128247; Camera</button>
+      <button class="btn ghost" id="qiPickBtn">&#128444;&#65039; Photos</button>
+      <button class="chipbtn" id="qiStampBtn">&#128337; Stamp: OFF</button>
+      <input type="text" id="qiNoteInp" placeholder="Type a note&#8230;">
+      <button class="chipbtn" id="qiNoteBtn">Add</button>
+      <button class="axbtn" id="qiFinishBtn" style="background:#2e7d32;border-color:#256428;">&#10003; Finish</button>
+    </div>
+    <input type="file" id="qiCamInput" accept="image/*" capture="environment" style="display:none;">
+    <input type="file" id="qiPickInput" accept="image/*" multiple style="display:none;">
+  </div>
+</div>
+<div id="qiWhoModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:210;">
+  <div style="background:#fff;border-radius:14px;max-width:430px;margin:8vh auto 0;padding:20px 18px;max-height:80vh;overflow-y:auto;">
+    <h3 class="projsec" style="margin:0 0 4px;border:none;padding:0;">Who is this inspection for?</h3>
+    <p class="subnote" id="qiWhoAddr" style="margin:0 0 12px;"></p>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="chipbtn" id="qiTabExist">&#128101; Existing client</button>
+      <button class="chipbtn" id="qiTabNew">&#128681; New prospect</button>
+    </div>
+    <div id="qiExistPane">
+      <input type="text" id="qiCliSearch" placeholder="Search clients&#8230;" style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:8px;padding:10px 12px;font:600 14px 'Segoe UI',Arial,sans-serif;margin-bottom:8px;">
+      <div id="qiCliList" style="max-height:240px;overflow-y:auto;"></div>
+    </div>
+    <div id="qiNewPane" style="display:none;">
+      <input type="text" id="qiNpName" placeholder="Name *" style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:8px;padding:10px 12px;font:600 14px 'Segoe UI',Arial,sans-serif;margin-bottom:8px;">
+      <input type="text" id="qiNpPhone" placeholder="Phone" style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:8px;padding:10px 12px;font:600 14px 'Segoe UI',Arial,sans-serif;margin-bottom:8px;">
+      <input type="text" id="qiNpAddr" placeholder="Address" style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:8px;padding:10px 12px;font:600 14px 'Segoe UI',Arial,sans-serif;margin-bottom:8px;">
+      <button class="axbtn" id="qiNpCreate">Create prospect &amp; start</button>
+    </div>
+    <div id="qiFinStatus" style="font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#8a7a72;margin-top:10px;"></div>
+    <div style="text-align:right;margin-top:12px;"><button class="chipbtn" id="qiFinClose">Back</button></div>
   </div>
 </div>
 
@@ -7137,6 +7257,8 @@ function hideAllViews(){
   var _tv = document.getElementById('teamView'); if(_tv) _tv.style.display = 'none';
   var _sv = document.getElementById('settingsView'); if(_sv) _sv.style.display = 'none';
   var _cd = document.getElementById('companyDocsView'); if(_cd) _cd.style.display = 'none';
+  var _qi = document.getElementById('quickInspView'); if(_qi) _qi.style.display = 'none';
+  var _qs = document.getElementById('qiStartView'); if(_qs) _qs.style.display = 'none';
   boardView.style.display = 'none';
   commsView.style.display = 'none';
   document.getElementById('auditView').style.display = 'none';
@@ -7778,6 +7900,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'settings'){ openSettingsView(); }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'companydocs'){ openCompanyDocs(); }
+  else if(nav === 'quickinsp'){ openQuickInsp(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
 });
@@ -7837,6 +7960,262 @@ if(__listRepSel) __listRepSel.addEventListener('change', function(){
   renderList();
 });
 document.getElementById('listMount').addEventListener('click', handleDocAction);
+
+/* ---------- quick inspection ---------- */
+var QI_SHOTS = ['Ground shots \u2014 all elevations','Down the gutter line','Shingle layers at the edge',
+  'Current ventilation','Pipe boots & penetrations','Chimney flashing','Wall flashing','Step flashing',
+  'Valleys','Gutters & downspouts','Decking from attic','Damage close-ups'];
+var qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null };
+var qiMap = null, qiPin = null, qiAddr = '';
+
+function openQuickInsp(){
+  hideAllViews();
+  if(qi.projectId){
+    document.getElementById('quickInspView').style.display = 'block';
+    renderQiChips();
+    return;
+  }
+  document.getElementById('qiStartView').style.display = 'block';
+  qiInitMap();
+}
+function qiLoadLeaflet(){
+  return new Promise(function(res, rej){
+    if(window.L) return res();
+    var css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(css);
+    var sc = document.createElement('script');
+    sc.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    sc.onload = res; sc.onerror = rej;
+    document.head.appendChild(sc);
+  });
+}
+async function qiInitMap(){
+  var mapEl = document.getElementById('qiMap');
+  try{ await qiLoadLeaflet(); }
+  catch(e){
+    mapEl.innerHTML = '<div class="subnote" style="padding:20px;">Map unavailable (offline?) \u2014 type the address above and hit Continue.</div>';
+    return;
+  }
+  if(qiMap){ setTimeout(function(){ qiMap.invalidateSize(); }, 100); return; }
+  qiMap = L.map('qiMap').setView([39.7589, -84.1916], 12);   /* Dayton default */
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { maxZoom: 19, attribution: '\u00a9 OpenStreetMap' }).addTo(qiMap);
+  qiPin = L.marker([39.7589, -84.1916], { draggable: true }).addTo(qiMap);
+  qiPin.on('dragend', function(){ qiReverseGeocode(qiPin.getLatLng()); });
+  qiMap.on('click', function(e){ qiPin.setLatLng(e.latlng); qiReverseGeocode(e.latlng); });
+  qiGeolocate();
+}
+function qiGeolocate(){
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var ll = [pos.coords.latitude, pos.coords.longitude];
+    if(qiMap){ qiMap.setView(ll, 17); qiPin.setLatLng(ll); qiReverseGeocode({ lat: ll[0], lng: ll[1] }); }
+  }, function(){}, { enableHighAccuracy: true, timeout: 8000 });
+}
+async function qiReverseGeocode(ll){
+  try{
+    var r = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + ll.lat + '&lon=' + ll.lng);
+    var j = await r.json();
+    var a = j.address || {};
+    qiAddr = [ [a.house_number, a.road].filter(Boolean).join(' '), a.city || a.town || a.village, a.state, a.postcode ]
+      .filter(Boolean).join(', ');
+    if(qiAddr) document.getElementById('qiAddrInp').value = qiAddr;
+  }catch(e){}
+}
+async function qiSearchAddr(){
+  var q = (document.getElementById('qiAddrInp').value || '').trim();
+  if(!q) return;
+  qiAddr = q;
+  if(!window.L || !qiMap) return;
+  try{
+    var r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q));
+    var j = await r.json();
+    if(j && j[0]){
+      var ll = [parseFloat(j[0].lat), parseFloat(j[0].lon)];
+      qiMap.setView(ll, 18); qiPin.setLatLng(ll);
+    }
+  }catch(e){}
+}
+document.getElementById('qiAddrGo').addEventListener('click', qiSearchAddr);
+document.getElementById('qiAddrInp').addEventListener('keydown', function(e){ if(e.key === 'Enter') qiSearchAddr(); });
+document.getElementById('qiLocBtn').addEventListener('click', qiGeolocate);
+document.getElementById('qiMapNext').addEventListener('click', function(){
+  qiAddr = (document.getElementById('qiAddrInp').value || '').trim() || qiAddr;
+  document.getElementById('qiWhoAddr').textContent = qiAddr ? ('\uD83D\uDCCD ' + qiAddr) : '';
+  document.getElementById('qiNpAddr').value = qiAddr;
+  document.getElementById('qiWhoModal').style.display = 'block';
+  qiRenderCliList(qiAddr ? qiAddr.split(',')[0] : '');
+  document.getElementById('qiCliSearch').value = '';
+  qiRenderCliList('');
+});
+document.getElementById('qiFinClose').addEventListener('click', function(){ document.getElementById('qiWhoModal').style.display = 'none'; });
+document.getElementById('qiTabExist').addEventListener('click', function(){
+  document.getElementById('qiExistPane').style.display = 'block';
+  document.getElementById('qiNewPane').style.display = 'none';
+});
+document.getElementById('qiTabNew').addEventListener('click', function(){
+  document.getElementById('qiExistPane').style.display = 'none';
+  document.getElementById('qiNewPane').style.display = 'block';
+});
+function qiRenderCliList(q){
+  var qq = (q || '').toLowerCase();
+  var list = cacheProjects.filter(function(p){
+    return !qq || (p.name || '').toLowerCase().indexOf(qq) >= 0 || (p.address || '').toLowerCase().indexOf(qq) >= 0;
+  }).slice(0, 30);
+  document.getElementById('qiCliList').innerHTML = list.map(function(p){
+    return '<button class="estopt" data-qicli="' + p.id + '" style="display:block;width:100%;text-align:left;">' +
+      esc(p.name || 'Unnamed') + (p.address ? ' <small style="color:#9a8c85;">\u00b7 ' + esc(p.address) + '</small>' : '') + '</button>';
+  }).join('') || '<div class="subnote">No matches.</div>';
+}
+document.getElementById('qiCliSearch').addEventListener('input', function(){ qiRenderCliList(this.value); });
+document.getElementById('qiCliList').addEventListener('click', function(e){
+  var b = e.target.closest('[data-qicli]'); if(!b) return;
+  var p = cacheProjects.find(function(x){ return x.id === b.getAttribute('data-qicli'); });
+  qiBegin(b.getAttribute('data-qicli'), p ? p.name : 'Client');
+});
+document.getElementById('qiNpCreate').addEventListener('click', async function(){
+  var nm = (document.getElementById('qiNpName').value || '').trim();
+  if(!nm){ alert('Name is required.'); return; }
+  var st = document.getElementById('qiFinStatus');
+  st.textContent = 'Creating prospect\u2026';
+  try{
+    var pid = await pdb.create({ name:nm, phone:(document.getElementById('qiNpPhone').value||'').trim(),
+      address:(document.getElementById('qiNpAddr').value||'').trim(), email:'', notes:'', stage:'Lead', checklist:'' });
+    auditLog('lead', 'Lead created via Quick Inspection \u2014 ' + nm, pid);
+    await reload();
+    st.textContent = '';
+    qiBegin(pid, nm);
+  }catch(err){ st.textContent = 'Could not create prospect: ' + (err.message || err); }
+});
+function qiBegin(pid, name){
+  qi.projectId = pid; qi.projectName = name || 'Client';
+  qi.startedAt = new Date().toISOString();
+  document.getElementById('qiWhoModal').style.display = 'none';
+  hideAllViews();
+  document.getElementById('quickInspView').style.display = 'block';
+  document.getElementById('qiForLine').innerHTML = 'Inspecting for <b>' + esc(qi.projectName) + '</b>' +
+    (qiAddr ? ' &nbsp;\u00b7&nbsp; ' + esc(qiAddr) : '');
+  document.getElementById('qiStream').innerHTML = '';
+  qiBubble('ai', 'Locked in for <b>' + esc(qi.projectName) + '</b>. Tap a shot suggestion, then \uD83D\uDCF7 Camera \u2014 photos land here labeled' +
+    ' (turn on \uD83D\uDD51 Stamp for a date/time mark). Hit \u2713 Finish when the walk is done.');
+  renderQiChips();
+  window.scrollTo(0, 0);
+}
+function qiBubble(kind, html){
+  var d = document.createElement('div');
+  d.className = 'qibub ' + kind;
+  d.innerHTML = html;
+  document.getElementById('qiStream').appendChild(d);
+  d.scrollIntoView({ block:'end', behavior:'smooth' });
+}
+function renderQiChips(){
+  var counts = {};
+  qi.photos.forEach(function(p){ if(p.label) counts[p.label] = (counts[p.label]||0)+1; });
+  document.getElementById('qiChips').innerHTML = QI_SHOTS.map(function(s2){
+    var cls = 'qichip' + (qi.label === s2 ? ' act' : '') + (counts[s2] ? ' done' : '');
+    return '<button class="' + cls + '" data-qis="' + esc(s2) + '">' + (counts[s2] ? '\u2713 ' : '') + esc(s2) +
+      (counts[s2] ? ' (' + counts[s2] + ')' : '') + '</button>';
+  }).join('');
+}
+document.getElementById('qiChips').addEventListener('click', function(e){
+  var b = e.target.closest('.qichip'); if(!b) return;
+  qi.label = b.getAttribute('data-qis');
+  renderQiChips();
+  qiBubble('ai', '\uD83D\uDCF8 Next shot: <b>' + esc(qi.label) + '</b>');
+});
+function qiStampImage(dataUrl){
+  return new Promise(function(res){
+    var img = new Image();
+    img.onload = function(){
+      var cv = document.createElement('canvas');
+      cv.width = img.width; cv.height = img.height;
+      var cx = cv.getContext('2d');
+      cx.drawImage(img, 0, 0);
+      var fs = Math.max(15, Math.round(img.height * 0.028));
+      var d2 = new Date();
+      var txt = d2.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + '  ' +
+                d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      cx.font = '600 ' + fs + "px 'Segoe UI',Arial,sans-serif";
+      cx.textBaseline = 'bottom';
+      var pad = Math.round(fs * 0.8);
+      var x = img.width - cx.measureText(txt).width - pad;
+      var y = img.height - pad;
+      cx.lineWidth = Math.max(2, fs / 6);
+      cx.strokeStyle = 'rgba(0,0,0,.75)';
+      cx.strokeText(txt, x, y);
+      cx.fillStyle = '#ffffff';
+      cx.fillText(txt, x, y);
+      res(cv.toDataURL('image/jpeg', 0.85));
+    };
+    img.src = dataUrl;
+  });
+}
+async function qiAddFiles(files){
+  if(!files || !files.length) return;
+  var room = 20 - qi.photos.filter(function(p){ return p.data; }).length;
+  if(room <= 0){ qiBubble('ai', 'Photo limit reached (20 \u2014 the gallery cap). Finish this inspection first.'); return; }
+  var take = Array.prototype.slice.call(files, 0, room);
+  for(var i = 0; i < take.length; i++){
+    try{
+      var du = await resizeImageFile(take[i], 1600, 0.82);
+      if(qi.stamp) du = await qiStampImage(du);
+      var at = new Date();
+      qi.photos.push({ data: du, label: qi.label, at: at.toISOString() });
+      qiBubble('ph', '<img src="' + du + '" alt=""><div class="qicap"><span>' + esc(qi.label || 'Photo') + '</span><span>' +
+        at.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) + '</span></div>');
+    }catch(err){ qiBubble('ai', 'That photo failed to load \u2014 try again. (' + esc(err.message || err) + ')'); }
+  }
+  if(files.length > take.length) qiBubble('ai', (files.length - take.length) + ' photo(s) skipped \u2014 20-photo gallery cap.');
+  renderQiChips();
+}
+document.getElementById('qiCamBtn').addEventListener('click', function(){ document.getElementById('qiCamInput').click(); });
+document.getElementById('qiPickBtn').addEventListener('click', function(){ document.getElementById('qiPickInput').click(); });
+document.getElementById('qiCamInput').addEventListener('change', function(){ qiAddFiles(this.files); this.value=''; });
+document.getElementById('qiPickInput').addEventListener('change', function(){ qiAddFiles(this.files); this.value=''; });
+document.getElementById('qiStampBtn').addEventListener('click', function(){
+  qi.stamp = !qi.stamp;
+  this.innerHTML = '\uD83D\uDD51 Stamp: ' + (qi.stamp ? 'ON' : 'OFF');
+});
+document.getElementById('qiNoteBtn').addEventListener('click', function(){
+  var inp = document.getElementById('qiNoteInp');
+  var v = (inp.value || '').trim(); if(!v) return;
+  qi.photos.push({ note: v, at: new Date().toISOString() });
+  qiBubble('me', esc(v));
+  inp.value = '';
+});
+document.getElementById('qiNoteInp').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') document.getElementById('qiNoteBtn').click();
+});
+document.getElementById('qiFinishBtn').addEventListener('click', async function(){
+  var shots = qi.photos.filter(function(p){ return p.data; });
+  if(!shots.length){ qiBubble('ai', 'No photos yet \u2014 grab at least one before finishing.'); return; }
+  if(!confirm('Finish and upload ' + shots.length + ' photo(s) to ' + qi.projectName + '?')) return;
+  var pid = qi.projectId;
+  try{
+    for(var i = 0; i < shots.length; i++){
+      qiBubble('ai', 'Uploading photo ' + (i+1) + ' of ' + shots.length + '\u2026');
+      await photoDb.add(pid, shots[i].data);
+    }
+    var noteLines = qi.photos.filter(function(p){ return p.note; })
+      .map(function(p){ return '\u2022 ' + p.note; }).join('\n');
+    if(noteLines){
+      try{
+        var prj = cacheProjects.find(function(x){ return x.id === pid; });
+        var oldNotes = (prj && prj.notes) ? prj.notes + '\n' : '';
+        await pdb.update(pid, { notes: oldNotes + 'Quick Inspection ' + new Date().toLocaleDateString() + ':\n' + noteLines });
+      }catch(e2){}
+    }
+    auditLog('doc', 'Quick Inspection \u2014 ' + shots.length + ' photo(s) attached', pid);
+    qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null };
+    await reload();
+    openProject(pid);
+    setTimeout(function(){
+      alert('Photos are in this client\u2019s Photo Gallery.\n\nSame rules as a regular inspection: complete the Roofing Inspection Checklist, then transfer the gallery photos into a new inspection report.');
+    }, 600);
+  }catch(err){ qiBubble('ai', 'Upload failed: ' + esc(err.message || err) + ' \u2014 your photos are still here; try Finish again.'); }
+});
 
 /* ---------- metallic icon wrapper: every emoji icon, every page ---------- */
 var MIC_CLUSTER = '(?:[\\u{1F000}-\\u{1FAFF}\\u{2600}-\\u{27BF}\\u{2B00}-\\u{2BFF}\\u{2190}-\\u{21FF}\\u{2700}-\\u{27BF}\\u{FE0F}\\u{200D}\\u{20E3}\\u{2934}\\u{2935}\\u{3030}\\u{303D}\\u{3297}\\u{3299}\\u{00A9}\\u{00AE}\\u{2122}]|[\\u{1F1E6}-\\u{1F1FF}])+';
@@ -10166,6 +10545,26 @@ window.addEventListener('visibilitychange', function(){
   }
 });
 
+function showLanding(userEmail){
+  var lv = document.getElementById('landingView');
+  var nm = '';
+  try{ nm = currentUser ? (', ' + String(displayNameFor(currentUser)).split(' ')[0]) : ''; }catch(e){}
+  document.getElementById('landName').textContent = nm;
+  document.getElementById('landDate').textContent = new Date().toLocaleDateString('en-US',
+    { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  lv.style.display = 'block';
+}
+document.getElementById('landDash').addEventListener('click', function(){
+  document.getElementById('landingView').style.display = 'none';
+});
+document.getElementById('landSkip').addEventListener('click', function(){
+  document.getElementById('landingView').style.display = 'none';
+});
+document.getElementById('landQuick').addEventListener('click', function(){
+  document.getElementById('landingView').style.display = 'none';
+  openQuickInsp();
+});
+
 function showMain(userEmail){
   var hd = document.querySelector('header.site');
   if(hd) hd.style.display = '';
@@ -10184,6 +10583,7 @@ function showMain(userEmail){
   if(leadOpt) leadOpt.style.display = (PRODUCTION_EMAILS.indexOf(userEmail) !== -1) ? 'none' : 'block';
   hideAllViews();
   mainView.style.display = 'block';
+  showLanding(userEmail);
   if(TEAM){
     whoami.textContent = currentUser ? displayNameFor(currentUser) : (userEmail || '');
     whoami.title = (userEmail || '') + ' \u2014 click to set your display name';
