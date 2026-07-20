@@ -62,13 +62,17 @@ export default async function handler(req, res) {
     }
 
     // primary model, retry once on overload, then older model, then OpenAI backup
+    const diag = { openai_key_present: !!process.env.OPENAI_API_KEY };
     let geminiRes = await askGemini('gemini-3.5-flash');
+    diag.gemini35_try1 = geminiRes.status;
     if (geminiRes.status === 503 || geminiRes.status === 429) {
       await new Promise(r => setTimeout(r, 1200));
       geminiRes = await askGemini('gemini-3.5-flash');
+      diag.gemini35_try2 = geminiRes.status;
     }
     if (!geminiRes.ok) {
       const alt = await askGemini('gemini-2.5-flash');
+      diag.gemini25 = alt.status;
       if (alt.ok) geminiRes = alt;
     }
 
@@ -85,15 +89,18 @@ export default async function handler(req, res) {
         })
       });
       const oj = await o.json();
+      diag.openai = o.status;
       if (o.ok) {
         const cap = oj?.choices?.[0]?.message?.content?.trim();
         if (cap) { res.status(200).json({ caption: cap, via: 'openai' }); return; }
+      } else {
+        diag.openai_error = (oj?.error?.message || '').slice(0, 160);
       }
     }
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      res.status(502).json({ error: 'Gemini request failed', detail: errText });
+      res.status(502).json({ error: 'All AI providers failed', diag, detail: errText.slice(0, 300) });
       return;
     }
 
