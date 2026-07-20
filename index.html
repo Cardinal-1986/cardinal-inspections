@@ -1663,7 +1663,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 78 &#8212; map-first quick inspection</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 79 &#8212; secure AI analysis</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2244,6 +2244,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
       <button class="btn" id="qiCamBtn">&#128247; Camera</button>
       <button class="btn ghost" id="qiPickBtn">&#128444;&#65039; Photos</button>
       <button class="chipbtn" id="qiStampBtn">&#128337; Stamp: OFF</button>
+      <button class="chipbtn" id="qiAiBtn">&#129302; AI: OFF</button>
       <input type="text" id="qiNoteInp" placeholder="Type a note&#8230;">
       <button class="chipbtn" id="qiNoteBtn">Add</button>
       <button class="axbtn" id="qiFinishBtn" style="background:#2e7d32;border-color:#256428;">&#10003; Finish</button>
@@ -7965,7 +7966,7 @@ document.getElementById('listMount').addEventListener('click', handleDocAction);
 var QI_SHOTS = ['Ground shots \u2014 all elevations','Down the gutter line','Shingle layers at the edge',
   'Current ventilation','Pipe boots & penetrations','Chimney flashing','Wall flashing','Step flashing',
   'Valleys','Gutters & downspouts','Decking from attic','Damage close-ups'];
-var qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null };
+var qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null, ai:false };
 var qiMap = null, qiPin = null, qiAddr = '';
 
 function openQuickInsp(){
@@ -8162,9 +8163,12 @@ async function qiAddFiles(files){
       var du = await resizeImageFile(take[i], 1600, 0.82);
       if(qi.stamp) du = await qiStampImage(du);
       var at = new Date();
+      var pidx = qi.photos.length;
       qi.photos.push({ data: du, label: qi.label, at: at.toISOString() });
-      qiBubble('ph', '<img src="' + du + '" alt=""><div class="qicap"><span>' + esc(qi.label || 'Photo') + '</span><span>' +
+      qiBubble('ph', '<img src="' + du + '" alt=""><div class="qicap"><span>' + esc(qi.label || 'Photo') + '</span>' +
+        '<span><button class="chipbtn" data-qiai="' + pidx + '" style="padding:3px 10px;font-size:11px;">&#128269; Analyze</button> ' +
         at.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) + '</span></div>');
+      if(qi.ai) qiAnalyze(pidx);
     }catch(err){ qiBubble('ai', 'That photo failed to load \u2014 try again. (' + esc(err.message || err) + ')'); }
   }
   if(files.length > take.length) qiBubble('ai', (files.length - take.length) + ' photo(s) skipped \u2014 20-photo gallery cap.');
@@ -8178,6 +8182,40 @@ document.getElementById('qiStampBtn').addEventListener('click', function(){
   qi.stamp = !qi.stamp;
   this.innerHTML = '\uD83D\uDD51 Stamp: ' + (qi.stamp ? 'ON' : 'OFF');
 });
+document.getElementById('qiAiBtn').addEventListener('click', function(){
+  qi.ai = !qi.ai;
+  this.innerHTML = '\uD83E\uDD16 AI: ' + (qi.ai ? 'ON' : 'OFF');
+  if(qi.ai) qiBubble('ai', 'AI is on \u2014 each new photo gets an automatic read. You can also tap \uD83D\uDD0D Analyze on any photo.');
+});
+document.getElementById('qiStream').addEventListener('click', function(e){
+  var b = e.target.closest('[data-qiai]');
+  if(b) qiAnalyze(parseInt(b.getAttribute('data-qiai'), 10));
+});
+async function qiAnalyze(idx){
+  var p = qi.photos[idx];
+  if(!p || !p.data) return;
+  if(p.analyzing) return;
+  p.analyzing = true;
+  qiBubble('ai', '\uD83D\uDD0D Looking at the ' + esc((p.label || 'photo').toLowerCase()) + '\u2026');
+  try{
+    var sess = await sb.auth.getSession();
+    var tok = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var b64 = p.data.split(',')[1];
+    var r = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
+      body: JSON.stringify({ image: b64, mime: 'image/jpeg', label: p.label || '' })
+    });
+    var j = await r.json();
+    if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    p.aiText = j.text;
+    qiBubble('ai', '\uD83E\uDD16 ' + esc(j.text));
+  }catch(err){
+    qiBubble('ai', 'AI could not analyze that photo: ' + esc(err.message || err) +
+      (String(err.message||'').indexOf('not configured') >= 0 ? ' \u2014 add GEMINI_API_KEY in Vercel settings.' : ''));
+  }
+  p.analyzing = false;
+}
 document.getElementById('qiNoteBtn').addEventListener('click', function(){
   var inp = document.getElementById('qiNoteInp');
   var v = (inp.value || '').trim(); if(!v) return;
@@ -8199,7 +8237,9 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
       await photoDb.add(pid, shots[i].data);
     }
     var noteLines = qi.photos.filter(function(p){ return p.note; })
-      .map(function(p){ return '\u2022 ' + p.note; }).join('\n');
+      .map(function(p){ return '\u2022 ' + p.note; })
+      .concat(qi.photos.filter(function(p){ return p.aiText; })
+      .map(function(p){ return '\u2022 [AI \u2014 ' + (p.label || 'photo') + '] ' + p.aiText; })).join('\n');
     if(noteLines){
       try{
         var prj = cacheProjects.find(function(x){ return x.id === pid; });
@@ -8208,7 +8248,7 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
       }catch(e2){}
     }
     auditLog('doc', 'Quick Inspection \u2014 ' + shots.length + ' photo(s) attached', pid);
-    qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null };
+    qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null, ai:false };
     await reload();
     openProject(pid);
     setTimeout(function(){
