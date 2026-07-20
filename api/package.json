@@ -1,5 +1,8 @@
 {
   "name": "cardinal-inspections",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
 }

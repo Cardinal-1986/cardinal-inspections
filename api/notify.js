@@ -1,15 +1,20 @@
 /* Vercel serverless: fan out web-push to team subscriptions stored in Supabase */
-import webpush from 'web-push';
-
 const SUPA_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPA_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
 const VAPID_PUBLIC = 'BI-nCdPXgT_WzKQA34jhHsX3dYQephRPLDKy7xr__Jyl1WergJWPlliAvbIldjztrds65MPkT5xI0TvDTg-Q_2k';
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE || 'vtIkMaIEJxS2yUNI0wgulFiFxze4w3dfcRXFzsG-3qU';
-
-webpush.setVapidDetails('mailto:info@cardinalrenovations.net', VAPID_PUBLIC, VAPID_PRIVATE);
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || process.env.VAPID_PRIVATE ||
+  'vtIkMaIEJxS2yUNI0wgulFiFxze4w3dfcRXFzsG-3qU';
 
 export default async function handler(req, res){
   if(req.method !== 'POST'){ res.status(405).json({ ok:false, error:'POST only' }); return; }
+  let webpush;
+  try{
+    webpush = (await import('web-push')).default;
+    webpush.setVapidDetails('mailto:info@cardinalrenovations.net', VAPID_PUBLIC, VAPID_PRIVATE);
+  }catch(e){
+    res.status(500).json({ ok:false, error: 'push library unavailable: ' + (e.message || e) });
+    return;
+  }
   try{
     var body = req.body || {};
     var emails = Array.isArray(body.emails) ? body.emails.filter(Boolean) : [];
