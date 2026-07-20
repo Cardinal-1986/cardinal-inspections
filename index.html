@@ -1664,7 +1664,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 83 &#8212; map/modal stacking fix</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 86 &#8212; supabase storage photos</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4095,7 +4095,7 @@ var pdb = {
   }
 };
 
-var GAL_MAX = 20;
+var GAL_MAX = 50;
 var GKEY = 'cardinal_project_photos_v1';
 function glsLoad(){ try{ return JSON.parse(localStorage.getItem(GKEY)) || []; }catch(e){ return []; } }
 function glsSave(l){ localStorage.setItem(GKEY, JSON.stringify(l)); }
@@ -4115,11 +4115,32 @@ var photoDb = {
   add: async function(projectId, dataUrl){
     if(TEAM){
       var user = (await sb.auth.getUser()).data.user;
+      var store = dataUrl;
+      var spath = null;
+      try{
+        /* upload to Supabase Storage; fall back to inline base64 if the
+           bucket isn't set up yet */
+        var blob = await (await fetch(dataUrl)).blob();
+        spath = 'projects/' + projectId + '/' + Date.now() + '-' +
+                Math.random().toString(36).slice(2, 9) + '.jpg';
+        var up = await sb.storage.from('photos').upload(spath, blob,
+                 { contentType: 'image/jpeg', cacheControl: '31536000' });
+        if(up.error) throw up.error;
+        store = sb.storage.from('photos').getPublicUrl(spath).data.publicUrl;
+      }catch(stErr){ spath = null; store = dataUrl; }
       var r = await sb.from('project_photos').insert({
-        project_id: projectId, data: dataUrl,
+        project_id: projectId, data: store, storage_path: spath,
         created_by: user ? user.email : null
       });
-      if(r.error) throw r.error;
+      if(r.error){
+        if(spath){ try{ await sb.storage.from('photos').remove([spath]); }catch(e3){} }
+        /* storage_path column may not exist yet: retry without it */
+        var r2 = await sb.from('project_photos').insert({
+          project_id: projectId, data: store,
+          created_by: user ? user.email : null
+        });
+        if(r2.error) throw r2.error;
+      }
       return;
     }
     var l = glsLoad();
@@ -4129,6 +4150,12 @@ var photoDb = {
   },
   remove: async function(id){
     if(TEAM){
+      try{
+        var row = await sb.from('project_photos').select('storage_path').eq('id', id).single();
+        if(row.data && row.data.storage_path){
+          await sb.storage.from('photos').remove([row.data.storage_path]);
+        }
+      }catch(e4){}
       var r = await sb.from('project_photos').delete().eq('id', id);
       if(r.error) throw r.error;
       return;
@@ -6261,32 +6288,34 @@ galXferMenu.addEventListener('click', async function(e){
     if(docId === '__new__'){
       var cl2 = getChecklist(currentProject);
       if(!cl2){
-        alert('Complete the Roofing Inspection Checklist first \u2014 its baseline specs feed directly into the report.');
-        galleryView.style.display = 'none';
-        projectView.style.display = 'block';
-        setHeaderJobMenu(true);
-        showTab('checklists');
-        openChecklist();
-        return;
+        if(!confirm('No Roofing Inspection Checklist on file \u2014 its baseline specs normally feed the report.\n\n' +
+                    'OK = create the report anyway (blank specs, fill by hand)\nCancel = go complete the checklist first')){
+          galleryView.style.display = 'none';
+          projectView.style.display = 'block';
+          setHeaderJobMenu(true);
+          showTab('checklists');
+          openChecklist();
+          return;
+        }
       }
       var title = prompt('Report title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
       if(title === null) return;
-      docId = await db.create(title.trim() || 'Untitled inspection',
-                              injectChecklistFindings(prefillChecklist(prefillUserInfo(prefillClientInfo(REPORT_TEMPLATE, currentProject)), cl2), cl2),
+      var tpl2 = prefillUserInfo(prefillClientInfo(REPORT_TEMPLATE, currentProject));
+      if(cl2) tpl2 = injectChecklistFindings(prefillChecklist(tpl2, cl2), cl2);
+      docId = await db.create(title.trim() || 'Untitled inspection', tpl2,
                               currentProject.name, currentProject.id);
       await reload();
     }
     var picked = currentPhotos.filter(function(x){ return galChecked[x.id]; });
     status.textContent = 'Transferring ' + picked.length + ' photo' + (picked.length===1?'':'s') + '\u2026';
     await transferPhotosToReport(docId, picked);
-    for(var i = 0; i < picked.length; i++){ await photoDb.remove(picked[i].id); }
     try{
       await pdb.update(currentProject.id, { photos_transferred: true });
       currentProject.photos_transferred = true;
       var cpx = cacheProjects.find(function(x){ return x.id === currentProject.id; });
       if(cpx) cpx.photos_transferred = true;
     }catch(e2){}
-    status.textContent = '\u2713 Transferred \u2014 photos removed from gallery.';
+    status.textContent = '\u2713 Transferred into the report \u2014 photos kept in the gallery.';
     setTimeout(function(){ status.textContent = ''; }, 4000);
     await reload();
     await loadGallery();
@@ -8010,9 +8039,42 @@ var QI_SHOTS = ['Ground shots \u2014 all elevations','Down the gutter line','Shi
   'Valleys','Gutters & downspouts','Decking from attic','Damage close-ups'];
 var qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null, ai:false };
 var qiMap = null, qiPin = null, qiAddr = '';
+function qiSave(){
+  try{
+    if(!qi.projectId){ localStorage.removeItem('qi_session'); return; }
+    localStorage.setItem('qi_session', JSON.stringify({
+      projectId: qi.projectId, projectName: qi.projectName, addr: qiAddr,
+      startedAt: qi.startedAt, up: qi.photos.filter(function(p){ return p.data && p.uploaded; }).length,
+      labels: qi.photos.filter(function(p){ return p.data; }).map(function(p){ return p.label || ''; }),
+      notes: qi.photos.filter(function(p){ return p.note; }).map(function(p){ return p.note; })
+    }));
+  }catch(e){}
+}
+function qiRestore(){
+  try{
+    var s = JSON.parse(localStorage.getItem('qi_session') || 'null');
+    if(!s || !s.projectId) return false;
+    qi.projectId = s.projectId; qi.projectName = s.projectName || 'Client';
+    qi.startedAt = s.startedAt; qiAddr = s.addr || '';
+    (s.notes || []).forEach(function(n2){ qi.photos.push({ note: n2, at: qi.startedAt, restored: true }); });
+    qi._restoredUp = s.up || 0;
+    qi._restoredLabels = s.labels || [];
+    return true;
+  }catch(e){ return false; }
+}
 
 function openQuickInsp(){
   hideAllViews();
+  if(!qi.projectId && qiRestore()){
+    document.getElementById('quickInspView').style.display = 'block';
+    document.getElementById('qiForLine').innerHTML = 'Inspecting for <b>' + esc(qi.projectName) + '</b>' +
+      (qiAddr ? ' &nbsp;\u00b7&nbsp; ' + esc(qiAddr) : '');
+    qiBubble('ai', '\u21BB Resumed your inspection for <b>' + esc(qi.projectName) + '</b>' +
+      (qi._restoredUp ? ' \u2014 ' + qi._restoredUp + ' photo(s) already uploaded and safe in the gallery.' : '.') +
+      ' Keep shooting, or hit \u2713 Finish to wrap up.');
+    renderQiChips();
+    return;
+  }
   if(qi.projectId){
     document.getElementById('quickInspView').style.display = 'block';
     renderQiChips();
@@ -8141,6 +8203,7 @@ function qiBegin(pid, name){
   document.getElementById('qiForLine').innerHTML = 'Inspecting for <b>' + esc(qi.projectName) + '</b>' +
     (qiAddr ? ' &nbsp;\u00b7&nbsp; ' + esc(qiAddr) : '');
   document.getElementById('qiStream').innerHTML = '';
+  qiSave();
   qiBubble('ai', 'Locked in for <b>' + esc(qi.projectName) + '</b>. Tap a shot suggestion, then \uD83D\uDCF7 Camera \u2014 photos land here labeled' +
     ' (turn on \uD83D\uDD51 Stamp for a date/time mark). Hit \u2713 Finish when the walk is done.');
   renderQiChips();
@@ -8155,6 +8218,7 @@ function qiBubble(kind, html){
 }
 function renderQiChips(){
   var counts = {};
+  (qi._restoredLabels || []).forEach(function(lb){ if(lb) counts[lb] = (counts[lb]||0)+1; });
   qi.photos.forEach(function(p){ if(p.label) counts[p.label] = (counts[p.label]||0)+1; });
   document.getElementById('qiChips').innerHTML = QI_SHOTS.map(function(s2){
     var cls = 'qichip' + (qi.label === s2 ? ' act' : '') + (counts[s2] ? ' done' : '');
@@ -8197,8 +8261,8 @@ function qiStampImage(dataUrl){
 }
 async function qiAddFiles(files){
   if(!files || !files.length) return;
-  var room = 20 - qi.photos.filter(function(p){ return p.data; }).length;
-  if(room <= 0){ qiBubble('ai', 'Photo limit reached (20 \u2014 the gallery cap). Finish this inspection first.'); return; }
+  var room = GAL_MAX - (qi._restoredUp || 0) - qi.photos.filter(function(p){ return p.data; }).length;
+  if(room <= 0){ qiBubble('ai', 'Photo limit reached (' + GAL_MAX + ' \u2014 the gallery cap). Finish this inspection first.'); return; }
   var take = Array.prototype.slice.call(files, 0, room);
   for(var i = 0; i < take.length; i++){
     try{
@@ -8206,15 +8270,32 @@ async function qiAddFiles(files){
       if(qi.stamp) du = await qiStampImage(du);
       var at = new Date();
       var pidx = qi.photos.length;
-      qi.photos.push({ data: du, label: qi.label, at: at.toISOString() });
-      qiBubble('ph', '<img src="' + du + '" alt=""><div class="qicap"><span>' + esc(qi.label || 'Photo') + '</span>' +
+      qi.photos.push({ data: du, label: qi.label, at: at.toISOString(), uploaded: false });
+      qiBubble('ph', '<img src="' + du + '" alt=""><div class="qicap"><span>' + esc(qi.label || 'Photo') +
+        ' <em id="qiup' + pidx + '" style="font-style:normal;color:#b3924a;">\u23F3</em></span>' +
         '<span><button class="chipbtn" data-qiai="' + pidx + '" style="padding:3px 10px;font-size:11px;">&#128269; Analyze</button> ' +
         at.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) + '</span></div>');
+      qiUpload(pidx);
       if(qi.ai) qiAnalyze(pidx);
     }catch(err){ qiBubble('ai', 'That photo failed to load \u2014 try again. (' + esc(err.message || err) + ')'); }
   }
-  if(files.length > take.length) qiBubble('ai', (files.length - take.length) + ' photo(s) skipped \u2014 20-photo gallery cap.');
+  if(files.length > take.length) qiBubble('ai', (files.length - take.length) + ' photo(s) skipped \u2014 ' + GAL_MAX + '-photo gallery cap.');
   renderQiChips();
+}
+async function qiUpload(idx){
+  var p = qi.photos[idx];
+  if(!p || !p.data || p.uploaded || p.uploading) return;
+  p.uploading = true;
+  var tag = document.getElementById('qiup' + idx);
+  try{
+    await photoDb.add(qi.projectId, p.data);
+    p.uploaded = true;
+    if(tag){ tag.textContent = '\u2713'; tag.style.color = '#2e7d32'; }
+    qiSave();
+  }catch(err){
+    if(tag){ tag.textContent = '\u26A0 not saved \u2014 will retry at Finish'; tag.style.color = '#C8202E'; }
+  }
+  p.uploading = false;
 }
 document.getElementById('qiCamBtn').addEventListener('click', function(){ document.getElementById('qiCamInput').click(); });
 document.getElementById('qiPickBtn').addEventListener('click', function(){ document.getElementById('qiPickInput').click(); });
@@ -8264,19 +8345,23 @@ document.getElementById('qiNoteBtn').addEventListener('click', function(){
   qi.photos.push({ note: v, at: new Date().toISOString() });
   qiBubble('me', esc(v));
   inp.value = '';
+  qiSave();
 });
 document.getElementById('qiNoteInp').addEventListener('keydown', function(e){
   if(e.key === 'Enter') document.getElementById('qiNoteBtn').click();
 });
 document.getElementById('qiFinishBtn').addEventListener('click', async function(){
   var shots = qi.photos.filter(function(p){ return p.data; });
-  if(!shots.length){ qiBubble('ai', 'No photos yet \u2014 grab at least one before finishing.'); return; }
-  if(!confirm('Finish and upload ' + shots.length + ' photo(s) to ' + qi.projectName + '?')) return;
+  var total = shots.length + (qi._restoredUp || 0);
+  if(!total){ qiBubble('ai', 'No photos yet \u2014 grab at least one before finishing.'); return; }
+  if(!confirm('Finish the inspection for ' + qi.projectName + '? (' + total + ' photo(s))')) return;
   var pid = qi.projectId;
   try{
-    for(var i = 0; i < shots.length; i++){
-      qiBubble('ai', 'Uploading photo ' + (i+1) + ' of ' + shots.length + '\u2026');
-      await photoDb.add(pid, shots[i].data);
+    var pending = qi.photos.map(function(p, i2){ return p.data && !p.uploaded ? i2 : -1; }).filter(function(i2){ return i2 >= 0; });
+    for(var i = 0; i < pending.length; i++){
+      qiBubble('ai', 'Saving remaining photo ' + (i+1) + ' of ' + pending.length + '\u2026');
+      await photoDb.add(pid, qi.photos[pending[i]].data);
+      qi.photos[pending[i]].uploaded = true;
     }
     var noteLines = qi.photos.filter(function(p){ return p.note; })
       .map(function(p){ return '\u2022 ' + p.note; })
@@ -8289,7 +8374,8 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
         await pdb.update(pid, { notes: oldNotes + 'Quick Inspection ' + new Date().toLocaleDateString() + ':\n' + noteLines });
       }catch(e2){}
     }
-    auditLog('doc', 'Quick Inspection \u2014 ' + shots.length + ' photo(s) attached', pid);
+    auditLog('doc', 'Quick Inspection \u2014 ' + total + ' photo(s) attached', pid);
+    localStorage.removeItem('qi_session');
     qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null, ai:false };
     await reload();
     openProject(pid);
@@ -10634,6 +10720,14 @@ function showLanding(userEmail){
   document.getElementById('landName').textContent = nm;
   document.getElementById('landDate').textContent = new Date().toLocaleDateString('en-US',
     { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  try{
+    var qs = JSON.parse(localStorage.getItem('qi_session') || 'null');
+    var sub = document.querySelector('#landQuick div:last-child');
+    if(qs && qs.projectId && sub){
+      sub.innerHTML = '\u21BB <b style="color:#f5d061;">Resume:</b> ' + esc(qs.projectName || 'inspection') +
+        (qs.up ? ' \u2014 ' + qs.up + ' photo(s) already saved' : '');
+    }
+  }catch(e){}
   lv.style.display = 'block';
 }
 document.getElementById('landDash').addEventListener('click', function(){
