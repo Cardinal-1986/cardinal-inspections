@@ -902,9 +902,12 @@ html, body{overflow-x:hidden;max-width:100%;}
 }
 .pipecard.teamcal::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
   background:linear-gradient(90deg,transparent,#2b2320 30%,#000 50%,#2b2320 70%,transparent);}
-.pipecard.teamcal::before{content:'';position:absolute;inset:0;
+.pipecard.teamcal:not(.prodcal)::before{content:'';position:absolute;inset:0;
   background:url(/cardinal-board.png) center 58% / 68% no-repeat;
   opacity:.17;filter:saturate(1.35);pointer-events:none;z-index:5;}
+.pipecard.prodcal::before{content:'';position:absolute;inset:0;
+  background:url(/cardinal-prod.png) center 60% / 74% no-repeat;
+  opacity:.17;filter:saturate(1.2);pointer-events:none;z-index:5;}
 .pipecard.teamcal .pipetitle span:first-child{
   font:800 15.5px Georgia,'Times New Roman',serif;letter-spacing:.03em;color:#1c1416;}
 .teamcal .minical .calhead b{
@@ -933,16 +936,14 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 /* ---- teamcal: red header rule (all sizes) ---- */
 .teamcal .minical .calhead{border-bottom:2px solid #C8202E;padding-bottom:7px;margin-bottom:8px;}
-/* ---- teamcal: square boxed cells (desktop only) ---- */
-@media (min-width:901px){
-  .teamcal .minical .calgrid .day{
-    aspect-ratio:1/1;padding:0;display:flex;align-items:center;justify-content:center;
-    border:1px solid #e2d5c3;border-radius:6px;background:#fff;}
-  .teamcal .minical .calgrid .day.other{border-color:#efe7db;background:#fbf8f3;}
-  .teamcal .minical .calgrid .dow{
-    border:1px solid #e2d5c3;border-radius:6px;background:#faf3e6;padding:5px 0;}
-  .teamcal .minical .calgrid .day.today{border-color:#7c1019;}
-}
+/* ---- teamcal: square boxed cells, thicker borders (all sizes) ---- */
+.teamcal .minical .calgrid .day{
+  aspect-ratio:1/1;padding:0;display:flex;align-items:center;justify-content:center;
+  border:1.8px solid #d9c9b4;border-radius:6px;background:#fff;}
+.teamcal .minical .calgrid .day.other{border-color:#ece2d4;background:#fbf8f3;}
+.teamcal .minical .calgrid .dow{
+  border:1.8px solid #d9c9b4;border-radius:6px;background:#faf3e6;padding:5px 0;}
+.teamcal .minical .calgrid .day.today{border-color:#7c1019;border-width:2.2px;}
 /* ---- reviews section: black calendar theme ---- */
 .acxsec.rvsec{background:linear-gradient(168deg,#241518 0%,#170f11 48%,#221407 100%);
   border:1px solid #4a3420;border-top:5px solid #C8202E;
@@ -1605,7 +1606,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 64 &#8212; calendar watermark in front</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 65 &#8212; prod calendar watermark + boxed cells</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -1692,7 +1693,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
             <div class="minical" id="teamCalMount"></div>
             <div class="callegend"><span class="ldot" style="background:#C8202E;"></span> team events &#8212; tap a day to add</div>
           </div>
-          <div class="pipecard teamcal">
+          <div class="pipecard teamcal prodcal">
             <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
               <span><img src="/cardinal-hammer.png" alt="" style="height:22px;width:auto;vertical-align:-5px;margin-right:4px;"> Production Calendar</span>
               <small id="prodCalWho" style="font:700 11px 'Segoe UI',Arial,sans-serif;color:#9a8c85;"></small>
