@@ -1061,14 +1061,15 @@ html, body{overflow-x:hidden;max-width:100%;}
 .projsec{font-weight:800;color:#1c1416;}
 .ljsummary h3{font:800 16px Georgia,'Times New Roman',serif;color:#1c1416;margin:0 0 8px;}
 
-/* ---- icons: static two-tone yellow/blue gradient ---- */
+/* ---- icons: native colors everywhere; quick inspection keeps the gradient ---- */
+.mic{font-size:1.15em;line-height:1;display:inline-block;}
 @supports (-webkit-background-clip:text){
-  .mic{
+  #quickInspView .mic, #qiStartView .mic, #qiWhoModal .mic,
+  [data-nav="quickinsp"] .mic, #landQuick .mic{
     background-image:linear-gradient(180deg,
       #FFD34D 0%, #F5B800 44%, #2E6FD8 56%, #1B3F8F 100%);
     -webkit-background-clip:text;background-clip:text;
     color:transparent;-webkit-text-fill-color:transparent;
-    font-size:1.15em;line-height:1;display:inline-block;
     filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));
   }
 }
@@ -1336,7 +1337,7 @@ body.restoring #restoreVeil{display:flex;}
 
 /* ---- assigned leads & jobs ---- */
 .ljhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;}
-.ljtitle{margin:0;font:800 26px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;letter-spacing:.01em;}
+.ljtitle{margin:0;text-align:center;font:800 23px Georgia,'Times New Roman',serif;color:#1c1416;letter-spacing:.02em;}
 .ljtop{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
 .ljtop input[type=search]{flex:1;min-width:180px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;
   font:600 13.5px 'Segoe UI',Arial,sans-serif;}
@@ -1663,7 +1664,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 79 &#8212; secure AI analysis</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 81 &#8212; native icon colors</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2362,6 +2363,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <p class="subnote">Notes, call logs, and document activity for this client. Tag a teammate with @name.</p>
     <div class="chatbox">
       <div class="chatthread" id="chatThread"></div>
+      <div id="chatTagRow" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px 0;"></div>
       <div class="chatinput">
         <input type="text" id="chatText" placeholder="Write a note&#8230; use @name to tag" autocomplete="off">
         <button class="btn" id="chatSend">Send</button>
@@ -4668,7 +4670,7 @@ function renderAcxOverview(){
   '<div class="acxsec"><div class="acxhead">Job Activity' +
     '<span class="rt">Last Touched: <b>&nbsp;' + acxAgo(pr.updated_at || pr.created_at) + '</b></span></div>' +
   '<div class="jastrip">' +
-    jai('Communications', commsCount(pr), 'checklists') +
+    jai('Communications', commsCount(pr), 'comms') +
     jai('Estimates', ests.length, 'estimates') +
     '<div class="jaitem" data-tab="estimates">Worksheet <b class="' + (fin.value ? '' : 'zero') + '">' + (fin.value ? '\u2713' : '\u2716') + '</b></div>' +
     jai('Invoices', invs.length, 'estimates') +
@@ -4894,7 +4896,7 @@ function acxBindOnce(mount){
       return;
     }
     if(hit('#acxAdvBtn')){ acxAdvance(pr); return; }
-    if((el = hit('.jaitem'))){ var tb = el.getAttribute('data-tab'); if(tb) showTab(tb); return; }
+    if((el = hit('.jaitem'))){ var tb = el.getAttribute('data-tab'); if(tb === 'comms'){ openCommunications(); } else if(tb) showTab(tb); return; }
     if(hit('#acxEdit1') || hit('#acxEdit2')){ openProjModal(pr); return; }
     if((el = hit('.acxtab'))){
       mount.querySelectorAll('.acxtab').forEach(function(x){ x.classList.remove('on'); });
@@ -6800,9 +6802,22 @@ function openCommunications(){
   hideAllViews();
   commsView.style.display = 'block';
   document.getElementById('commsCli').textContent = '\u2014 ' + (currentProject.name || '');
+  var tr = document.getElementById('chatTagRow');
+  var me = TEAM && currentUser ? currentUser.email : '';
+  tr.innerHTML = TEAM_ROSTER.filter(function(mbr){ return mbr.email !== me; }).map(function(mbr){
+    var first = (mbr.name || '').trim().split(/\s+/)[0];
+    return '<button class="chipbtn" data-tag="' + esc(first.toLowerCase()) + '" style="padding:4px 11px;font-size:11.5px;">@' + esc(first) + '</button>';
+  }).join('');
   renderChat();
   window.scrollTo(0, 0);
 }
+document.getElementById('commsView').addEventListener('click', function(e){
+  var b = e.target.closest('[data-tag]');
+  if(!b) return;
+  var inp = document.getElementById('chatText');
+  inp.value = (inp.value ? inp.value.replace(/\s*$/, ' ') : '') + '@' + b.getAttribute('data-tag') + ' ';
+  inp.focus();
+});
 document.getElementById('commsBackBtn').addEventListener('click', function(){
   if(currentProject) openProject(currentProject.id); else showHome();
 });
@@ -6978,7 +6993,34 @@ async function sendChat(){
     await saveCkPatch({ comments: msgs });
     inp.value = '';
     renderChat();
+    if(mentions.length){
+      var to = [];
+      TEAM_ROSTER.forEach(function(mbr){
+        var first = (mbr.name || '').trim().split(/\s+/)[0].toLowerCase();
+        var pre = (mbr.email || '').split('@')[0].toLowerCase();
+        if(mentions.some(function(mn){ return mn === first || mn === pre || first.indexOf(mn) === 0; })){
+          if(mbr.email && to.indexOf(mbr.email) < 0 && mbr.email !== msg.by) to.push(mbr.email);
+        }
+      });
+      if(to.length){
+        notifyTeam(to,
+          '\uD83D\uDCAC ' + msg.name + ' tagged you \u2014 ' + (currentProject.name || 'a client'),
+          '<p><b>' + esc(msg.name) + '</b> tagged you on <b>' + esc(currentProject.name || '') + '</b>:</p>' +
+          '<blockquote>' + esc(text) + '</blockquote>' +
+          '<p>Open the client\u2019s Communications page in Cardinal Resource to reply.</p>');
+        qcNotified(to);
+      }
+    }
   }catch(err){ showError('Could not post: ' + (err.message || err)); }
+}
+function qcNotified(to){
+  var names = to.map(function(em){ return rptRepName(em); }).join(', ');
+  var th = document.getElementById('chatThread');
+  var d = document.createElement('div');
+  d.className = 'chatempty';
+  d.textContent = '\uD83D\uDD14 Notified ' + names;
+  th.appendChild(d);
+  th.scrollTop = th.scrollHeight;
 }
 document.getElementById('chatSend').addEventListener('click', sendChat);
 document.getElementById('chatText').addEventListener('keydown', function(e){
