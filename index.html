@@ -348,6 +348,16 @@ footer.site{
 .projform select{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;background:#fff;}
 .projform input{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;
   border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;}
+/* checkboxes/radios must never inherit the full-width text-field look */
+.projform input[type="checkbox"], .projform input[type="radio"]{
+  width:18px;height:18px;min-width:18px;flex:0 0 auto;
+  margin:0;padding:0;box-shadow:none;accent-color:#C8202E;
+}
+.projform .ckinline label{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;}
+.tradegrid label{display:flex;align-items:center;gap:8px;min-width:0;
+  font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+.tradegrid label span, .tradegrid label{overflow:hidden;text-overflow:ellipsis;}
+
 @media (max-width:640px){ .projcover{flex:0 0 104px;min-height:100px;} .projinfo{padding:12px 13px 32px;} }
 
 .brand{display:flex;align-items:center;gap:14px;}
@@ -1664,7 +1674,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 87 &#8212; window master contract</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 89 &#8212; mobile checkbox fix</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9575,6 +9585,49 @@ async function autoCaptionPhoto(dataUrl, captionEl){
   }
 }
 
+function wireReanalyzeButtons(doc){
+  var secs = doc.querySelectorAll('h2.sec');
+  secs.forEach(function(h){
+    if(h.getAttribute('data-rewired')) return;
+    /* collect this section's photo frames (siblings until the next section header) */
+    var frames = [];
+    var n = h.nextElementSibling;
+    while(n && !(n.tagName === 'H2' && n.classList.contains('sec'))){
+      if(n.querySelectorAll) frames = frames.concat(Array.prototype.slice.call(n.querySelectorAll('.fig .frame')));
+      if(n.classList && n.classList.contains('fig')) frames = frames.concat(Array.prototype.slice.call(n.querySelectorAll('.frame')));
+      n = n.nextElementSibling;
+    }
+    frames = frames.filter(function(f, i){ return frames.indexOf(f) === i; });
+    if(!frames.length) return;
+    h.setAttribute('data-rewired', '1');
+    var btn = doc.createElement('button');
+    btn.type = 'button';
+    btn.className = 'reanalyzeBtn';
+    btn.setAttribute('contenteditable', 'false');
+    btn.textContent = '\uD83D\uDD04 Re-analyze';
+    btn.style.cssText = 'float:right;margin-left:10px;padding:4px 12px;border:1px solid #C8202E;' +
+      'border-radius:14px;background:#fff;color:#C8202E;font:700 11px Arial,sans-serif;cursor:pointer;';
+    btn.addEventListener('click', async function(e){
+      e.stopPropagation(); e.preventDefault();
+      var shots = frames.map(function(f){
+        var img = f.querySelector('img');
+        var cap = f.parentElement ? f.parentElement.querySelector('.cap .ph') : null;
+        return img && img.src && cap ? { src: img.src, cap: cap } : null;
+      }).filter(Boolean);
+      if(!shots.length){ alert('No photos in this section yet.'); return; }
+      btn.disabled = true;
+      for(var i = 0; i < shots.length; i++){
+        btn.textContent = 'Analyzing ' + (i + 1) + ' / ' + shots.length + '\u2026';
+        shots[i].cap.textContent = 'Captioning\u2026';
+        await autoCaptionPhoto(shots[i].src, shots[i].cap);
+      }
+      btn.disabled = false;
+      btn.textContent = '\uD83D\uDD04 Re-analyze';
+    });
+    h.appendChild(btn);
+  });
+}
+
 function wireSummaryDraftButton(doc){
   var heading = doc.querySelector('[data-cardinal-summary-heading]');
   if(!heading || heading.getAttribute('data-wired')) return;
@@ -9783,6 +9836,7 @@ function placePhotoInSection(doc, num, dataUrl, caption){
   var cap = frame.parentElement ? frame.parentElement.querySelector('.cap .ph') : null;
   if(cap && caption) cap.textContent = caption;
   wirePhotoFrames(doc);
+  wireReanalyzeButtons(doc);
   return true;
 }
 function addNoteToSection(doc, num, sentence){
@@ -10170,6 +10224,7 @@ async function openEditor(id){
       hint.textContent = 'Editing mode — click any text to type over it. Yellow highlights are fill-in fields. Use the toolbar above to Save or Print/PDF.';
       doc.body.insertBefore(hint, doc.body.firstChild);
       wirePhotoFrames(doc);
+      wireReanalyzeButtons(doc);
       wireSummaryDraftButton(doc);
       wireCoverPhoto(doc);
       wireEstimateCalc(doc);
@@ -10189,6 +10244,8 @@ function serializeFrame(){
   var hint = clone.querySelector('[data-cardinal-hint]');
   if(hint) hint.remove();
   clone.querySelectorAll('.fig .frame button, .fig .frame input[type=file]').forEach(function(el){ el.remove(); });
+  clone.querySelectorAll('.reanalyzeBtn').forEach(function(el){ el.remove(); });
+  clone.querySelectorAll('h2.sec[data-rewired]').forEach(function(el){ el.removeAttribute('data-rewired'); });
   clone.querySelectorAll('.fig .frame[data-wired]').forEach(function(el){ el.removeAttribute('data-wired'); });
   var coverPhoto = clone.querySelector('.cover-photo[data-wired]');
   if(coverPhoto){
