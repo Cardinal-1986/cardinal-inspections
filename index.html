@@ -1664,7 +1664,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 82 &#8212; landing logo</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 83 &#8212; map/modal stacking fix</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2228,7 +2228,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <button class="chipbtn" id="qiAddrGo">Search</button>
         <button class="chipbtn" id="qiLocBtn">&#128205; My location</button>
       </div>
-      <div id="qiMap" style="height:340px;border:1px solid var(--line);border-radius:12px;background:#eee;"></div>
+      <div id="qiMap" style="height:340px;border:1px solid var(--line);border-radius:12px;background:#eee;position:relative;z-index:1;isolation:isolate;overflow:hidden;"></div>
       <div style="text-align:right;margin-top:12px;">
         <button class="axbtn" id="qiMapNext">Continue &#10142;</button>
       </div>
@@ -2254,7 +2254,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <input type="file" id="qiPickInput" accept="image/*" multiple style="display:none;">
   </div>
 </div>
-<div id="qiWhoModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:210;">
+<div id="qiWhoModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:6000;">
   <div style="background:#fff;border-radius:14px;max-width:430px;margin:8vh auto 0;padding:20px 18px;max-height:80vh;overflow-y:auto;">
     <h3 class="projsec" style="margin:0 0 4px;border:none;padding:0;">Who is this inspection for?</h3>
     <p class="subnote" id="qiWhoAddr" style="margin:0 0 12px;"></p>
