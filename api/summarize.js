@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { captions } = req.body || {};
+    const { captions, section } = req.body || {};
     const list = Array.isArray(captions) ? captions.filter(Boolean) : [];
 
     if (list.length === 0) {
@@ -32,15 +32,24 @@ export default async function handler(req, res) {
       return;
     }
 
-    const prompt =
-      'You are a professional roof inspector drafting the "Overall Condition Assessment" ' +
-      'paragraph of an inspection report, based only on the photo observations below. ' +
-      'Write one factual, specific paragraph (4-6 sentences) covering: general wear, ' +
-      'granule loss (if relevant), fastener condition, brittleness, remaining serviceable ' +
-      'life, and whether repair or full replacement is recommended. Do not invent details ' +
-      'not supported by the observations. No preamble, just the paragraph.\n\n' +
-      'Photo observations:\n' +
-      list.map((c, i) => `${i + 1}. ${c}`).join('\n');
+    const secName = section ? String(section).slice(0, 100) : '';
+    const prompt = secName
+      ? ('You are a professional roof inspector writing the body narrative for the "' + secName + '" ' +
+         'section of an inspection report, based only on the photo observations below. ' +
+         'Write 2-4 factual, specific sentences in precise roofing terms describing what was ' +
+         'observed in this section. Do not invent details not supported by the observations, ' +
+         'do not repeat the section title, and do not make repair-vs-replacement calls here. ' +
+         'No preamble, just the sentences.\n\n' +
+         'Photo observations:\n' +
+         list.map((c, i) => `${i + 1}. ${c}`).join('\n'))
+      : ('You are a professional roof inspector drafting the "Overall Condition Assessment" ' +
+         'paragraph of an inspection report, based only on the photo observations below. ' +
+         'Write one factual, specific paragraph (4-6 sentences) covering: general wear, ' +
+         'granule loss (if relevant), fastener condition, brittleness, remaining serviceable ' +
+         'life, and whether repair or full replacement is recommended. Do not invent details ' +
+         'not supported by the observations. No preamble, just the paragraph.\n\n' +
+         'Photo observations:\n' +
+         list.map((c, i) => `${i + 1}. ${c}`).join('\n'));
 
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,

@@ -99,10 +99,57 @@ export default async function handler(req, res) {
     if (!rows.length) { res.status(404).send('This link is no longer available.'); return; }
 
     let html = rows[0].html;
-    // Client-facing cleanup: never show the editor help panel; never print unused photo boxes.
+    // Client-facing cleanup: hide the editor help panel, unused photo boxes,
+    // unfilled placeholders, and empty sections - on screen AND in the client's own print.
     const FIX = '<style id="shareFix">.howto{display:none !important}' +
-      '@media print{.fig:has(.frame:not(:has(img))),.figrow:not(:has(.frame img)),' +
-      '.cover-photo:not(:has(img)){display:none !important}}</style>';
+      '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important}' +
+      '@media print{.page-break{display:none !important}h2.sec{break-after:avoid}' +
+      '.figrow,.fig,tr{break-inside:avoid}' +
+      '@page{@bottom-center{content:"5735 Webster St, Dayton OH 45414  \u00b7  937.576.6753  \u00b7  Admin@cardinalrenovations.net";' +
+      'font-family:\'Segoe UI\',Arial,sans-serif;font-size:8pt;color:#8a8a8a}}}</style>' +
+      '<script>(function(){function run(){var d=document;' +
+      'd.querySelectorAll(".fig, .cover-photo").forEach(function(f){' +
+      'var fr=f.classList.contains("cover-photo")?f:f.querySelector(".frame");' +
+      'if(fr&&!fr.querySelector("img"))f.setAttribute("data-emptyfig","1");});' +
+      'd.querySelectorAll(".figrow").forEach(function(r){if(!r.querySelector(".frame img"))r.setAttribute("data-emptyrow","1");});' +
+      'if(!d.querySelector("[data-cardinal-summary-heading]"))return;' +
+      'd.querySelectorAll(".ph").forEach(function(el){if((el.textContent||"").trim().charAt(0)==="[")el.setAttribute("data-emptyph","1");});' +
+      'function blank(el){var c=el.cloneNode(true);' +
+      'c.querySelectorAll("[data-emptyph],[data-emptyfig],[data-emptyrow],button,input").forEach(function(x){x.remove();});' +
+      'return !c.textContent.replace(/\\u00a0/g," ").trim();}' +
+      'd.querySelectorAll("p, li").forEach(function(el){if(el.closest(".fig"))return;' +
+      'if(blank(el))el.setAttribute("data-emptyblock","1");});' +
+      'd.querySelectorAll("tr").forEach(function(tr){if(!tr.querySelector("[data-emptyph]"))return;' +
+      'var cells=Array.prototype.filter.call(tr.querySelectorAll("td"),function(td){' +
+      'return !td.classList.contains("k")&&!td.classList.contains("n")&&!td.classList.contains("pr");});' +
+      'if(!cells.length)return;for(var i=0;i<cells.length;i++){if(!blank(cells[i]))return;}' +
+      'tr.setAttribute("data-emptyblock","1");});' +
+      'var secs=Array.prototype.slice.call(d.querySelectorAll("h2.sec"));var hiddenTitles=[];' +
+      'secs.forEach(function(h){var nodes=[],el=h.nextElementSibling;' +
+      'while(el&&!(el.tagName==="H2"&&el.classList.contains("sec"))){nodes.push(el);el=el.nextElementSibling;}' +
+      'var has=false;for(var i=0;i<nodes.length;i++){var nd=nodes[i];' +
+      'if(nd.classList&&nd.classList.contains("page-break"))continue;' +
+      'if(nd.getAttribute("data-emptyblock")||nd.getAttribute("data-emptyrow")||nd.getAttribute("data-emptyfig")||nd.getAttribute("data-emptyph"))continue;' +
+      'var c=nd.cloneNode(true);' +
+      'c.querySelectorAll("[data-emptyph],[data-emptyblock],[data-emptyrow],[data-emptyfig],button,input").forEach(function(x){x.remove();});' +
+      'if(c.querySelector&&c.querySelector("img")){has=true;break;}' +
+      'if(c.textContent.replace(/\\u00a0/g," ").trim()){has=true;break;}}' +
+      'var hc=h.cloneNode(true);hc.querySelectorAll(".num, button").forEach(function(x){x.remove();});' +
+      'if(!has){h.setAttribute("data-emptysec","1");' +
+      'nodes.forEach(function(nd){if(nd.setAttribute)nd.setAttribute("data-emptysec","1");});' +
+      'var prev=h.previousElementSibling;' +
+      'if(prev&&prev.classList&&prev.classList.contains("page-break"))prev.setAttribute("data-emptysec","1");' +
+      'hiddenTitles.push(hc.textContent.replace(/\\u00a0/g," ").trim());}});' +
+      'var num=0;secs.forEach(function(h){var sp=h.querySelector(".num");' +
+      'if(!sp||h.getAttribute("data-emptysec"))return;num++;sp.textContent=String(num);});' +
+      'var tocNum=0;d.querySelectorAll(".toc-row").forEach(function(row){' +
+      'var t=row.querySelector(".t");if(!t)return;' +
+      'var title=t.textContent.replace(/\\u00a0/g," ").replace(/^\\s*\\d+\\s*/,"").trim();' +
+      'for(var i=0;i<hiddenTitles.length;i++){var ht=hiddenTitles[i];' +
+      'if(ht&&(title.indexOf(ht)===0||ht.indexOf(title)===0)){row.setAttribute("data-emptysec","1");return;}}' +
+      'tocNum++;t.textContent=t.textContent.replace(/^\\s*\\d+/,String(tocNum));});}' +
+      'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",run);else run();' +
+      '})();</scr' + 'ipt>';
     html = html.includes('</head>') ? html.replace('</head>', FIX + '\n</head>') : FIX + html;
     const signable = SIGN_RX.test(html) && !html.includes('data-clientsigned');
     if (signable) {
