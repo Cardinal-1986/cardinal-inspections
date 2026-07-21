@@ -99,6 +99,11 @@ export default async function handler(req, res) {
     if (!rows.length) { res.status(404).send('This link is no longer available.'); return; }
 
     let html = rows[0].html;
+    // Client-facing cleanup: never show the editor help panel; never print unused photo boxes.
+    const FIX = '<style id="shareFix">.howto{display:none !important}' +
+      '@media print{.fig:has(.frame:not(:has(img))),.figrow:not(:has(.frame img)),' +
+      '.cover-photo:not(:has(img)){display:none !important}}</style>';
+    html = html.includes('</head>') ? html.replace('</head>', FIX + '\n</head>') : FIX + html;
     const signable = SIGN_RX.test(html) && !html.includes('data-clientsigned');
     if (signable) {
       const ui = signUi(t);
