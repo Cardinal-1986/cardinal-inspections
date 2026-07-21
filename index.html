@@ -315,7 +315,7 @@ footer.site{
 /* ---- profile ---- */
 .projhead{display:flex;gap:12px;margin:16px 0 8px;align-items:flex-start;flex-wrap:nowrap;position:relative;}
 .projinfo{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:12px;
-  padding:13px 15px 42px;position:relative;transition:box-shadow .18s, border-color .18s;}
+  padding:13px 15px 14px;position:relative;transition:box-shadow .18s, border-color .18s;}
 .projinfo:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);border-color:#d9b8b0;}
 .projinfo h2{margin:0 0 9px;font-size:20px;line-height:1.15;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .namestar{cursor:pointer;font-size:20px;color:#c9bfb9;user-select:none;line-height:1;}
@@ -323,11 +323,12 @@ footer.site{
 .mrow{display:flex;gap:10px;align-items:baseline;font:600 14px/1.45 'Segoe UI',Arial,sans-serif;color:#1b1b1b;margin-bottom:3px;}
 .mrow a{color:#1d4f91;text-decoration:none;font-weight:700;}
 .mlbl{flex:0 0 60px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;color:#9a8c85;}
-.editpencil{position:absolute;bottom:8px;right:8px;border:1px solid var(--line);background:#faf7f5;
-  border-radius:9px;width:34px;height:30px;font-size:15px;cursor:pointer;color:#8a6f66;z-index:2;
-  display:inline-flex;align-items:center;justify-content:center;}
+.mrow .poval{color:#B57EDC;font-weight:800;}
+.editpencil{margin-left:10px;border:1px solid var(--line);background:#faf7f5;
+  border-radius:8px;width:30px;height:26px;font-size:14px;cursor:pointer;color:#8a6f66;
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;}
 .editpencil:hover{background:#f3e9e4;color:#9c1822;}
-.projcover{position:relative;flex:0 0 104px;align-self:flex-start;width:104px;height:104px;min-height:0;border:1.5px dashed #d5c8c2;border-radius:12px;
+.projcover{position:relative;flex:0 0 100px;align-self:stretch;width:100px;min-height:0;border:1.5px dashed #d5c8c2;border-radius:12px;
   background:linear-gradient(160deg,#f6f1ee,#ece3de);display:flex;align-items:center;justify-content:center;color:#b3a49d;
   font:700 11px 'Segoe UI',Arial,sans-serif;overflow:hidden;transition:box-shadow .18s;}
 .projcover:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);}
@@ -361,7 +362,7 @@ footer.site{
   font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
 .tradegrid label span, .tradegrid label{overflow:hidden;text-overflow:ellipsis;}
 
-@media (max-width:640px){ .projcover{flex:0 0 92px;width:92px;height:92px;} .projinfo{padding:12px 13px 40px;} }
+@media (max-width:640px){ .projcover{flex:0 0 88px;width:88px;height:88px;} .projinfo{padding:12px 13px 13px;} }
 
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
@@ -1032,8 +1033,6 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit label{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a7a72;margin:8px 0 2px;text-transform:uppercase;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
-.tmrole.sl{background:#dbeaf7;color:#1f5e8f;}
-.tmedit select{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;background:#fff;}
 
 /* ---- quick inspection ---- */
 #qiStream{max-width:680px;margin:0 auto;padding:6px 2px 90px;}
@@ -1247,9 +1246,10 @@ body.restoring #restoreVeil{display:flex;}
 .jabox{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
   padding:14px 11px;cursor:pointer;font:700 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
   min-width:0;-webkit-user-select:none;user-select:none;}
-.jabox .jbl{flex:1;min-width:0;overflow-wrap:break-word;line-height:1.2;}
-.jabox > b{flex:0 0 auto;margin-left:6px;}
-@media (max-width:380px){ .jabox{font-size:13px;padding:13px 9px;} }
+.jabox .jbl{flex:1;min-width:0;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:clamp(12px,3.5vw,14px);}
+.jabox > b{flex:0 0 auto;margin-left:6px;align-self:center;}
+@media (max-width:380px){ .jabox{padding:13px 8px;gap:6px;} .jabox .jbl{font-size:12px;} }
 .jabox:active{background:#f6f3f0;}
 .jabox .jan{margin-left:auto;font:800 17px 'Segoe UI',Arial,sans-serif;color:#F7941E;}
 .jabox .jan.zero{color:#c9c9c9;}
@@ -1651,15 +1651,34 @@ body.restoring #restoreVeil{display:flex;}
   #addProjectBtn{font-size:0;padding:8px 12px;}
   #addProjectBtn::after{content:'\FF0B';font-size:17px;font-weight:800;line-height:1;}
 
-  /* CLIENT header (single clean row, mirrors home):
-     [logo] [+] ... [centered PO+name] ... [Overview dropdown right] — no Menu */
+  /* CLIENT header row: [logo left] .. [Overview centered] .. [+ right].
+     The PO#/name lives in the dark banner directly below (like home's Dashboard). */
   body.projopen .headactions{flex-wrap:nowrap;row-gap:0;}
   body.projopen #brandLogo{order:1;}
-  body.projopen #newWrap{order:2;}                       /* + on the left, right after logo */
-  body.projopen #brandCtx{order:3;flex:1 1 auto;min-width:0;text-align:center;}
-  body.projopen #navWrap{order:4;margin-left:0;}         /* dropdown on the right */
-  body.projopen #navBtn{display:none !important;}        /* Menu belongs to home only */
-  body.projopen .jobmenu-head{max-width:132px;margin:0;}
+  body.projopen #navWrap{order:2;flex:1 1 auto;display:flex;justify-content:center;margin:0;}
+  body.projopen #newWrap{order:3;margin-left:auto;}      /* + on the right */
+  body.projopen #brandCtx{display:none !important;}       /* name is in the banner now */
+  body.projopen #navBtn{display:none !important;}         /* Menu belongs to home only */
+  body.projopen .jobmenu-head{max-width:150px;margin:0;}
+}
+
+/* client banner (mirrors the home Dashboard strip) */
+.clientbanner{display:none;}
+.clientbanner #cbCtx{font:800 17px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+.clientbanner #cbCtx small{color:#B57EDC;font-weight:800;}
+@media (max-width:900px){
+  body.projopen .clientbanner{display:flex;position:fixed;top:var(--headh,110px);left:0;right:0;z-index:80;
+    align-items:center;justify-content:center;gap:2px;text-align:center;padding:11px 14px;
+    box-shadow:0 8px 14px -8px rgba(0,0,0,.45);
+    background:linear-gradient(168deg,#241518 0%,#170f11 48%,#221407 100%);
+    border-top:5px solid #C8202E;border-bottom:5px solid #C8202E;overflow:hidden;}
+  body.projopen .clientbanner::before{content:'';position:absolute;left:0;right:0;bottom:5px;height:1px;
+    background:linear-gradient(90deg,transparent,#d4a017 30%,#f5d061 50%,#d4a017 70%,transparent);}
+  body.projopen .clientbanner #cbCtx{color:#fff;font-size:17px;letter-spacing:.02em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  body.projopen .clientbanner #cbCtx small{color:#B57EDC;}
+  /* push the profile content below the fixed banner */
+  body.projopen #projectView > .wrap{padding-top:70px;}
 }
 
 /* ---- Cardinal-black login theme ---- */
@@ -1771,7 +1790,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 102 &#8212; team roles</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 105 &#8212; client banner header</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2039,6 +2058,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
 <!-- ============ PROJECT PROFILE ============ -->
 <div id="projectView" style="display:none;">
+  <div class="clientbanner" id="clientBanner"><span id="cbCtx"></span></div>
   <div class="wrap" style="padding-top:18px;">
     <div class="projhead">
       <div class="projinfo">
@@ -2048,7 +2068,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <select id="stageSel" style="display:none;"></select>
           <button class="btn" id="contactedBtn" style="display:none;">&#10003; Contacted &#8594; Prospect</button>
         </div>
-        <button id="projEditBtn" class="editpencil" title="Edit client info">&#9998;</button>
       </div>
       <div class="projcover" id="projCover">
         <span id="projCoverEmpty">&#128247;<br>Add photo</span>
@@ -4905,10 +4924,10 @@ function renderAcxOverview(){
   }
   html += '<h3 class="projsec" style="margin:18px 0 10px;">Job Menu</h3>' +
     '<div class="jaboxrow">' +
-      jt(dbIc('comms'), 'Communications', commsCount(pr), 'comms') +
+      jt(dbIc('comms'), 'Communication', commsCount(pr), 'comms') +
       jt(dbIc('bell'), 'Notifications', mentions, 'notifs') +
     '</div><div class="jaboxrow">' +
-      jt(dbIc('camera'), 'Photos / Videos', '\u2026', 'album', 'dbPhotoN') +
+      jt(dbIc('camera'), 'Photos', '\u2026', 'album', 'dbPhotoN') +
       jt(dbIc('tasks'), 'Tasks', openTasks, 'tasks') +
     '</div><div class="jaboxrow">' +
       jt(dbIc('ruler'), 'Measurements', '\u2026', 'measure', 'dbMeasN') +
@@ -4986,7 +5005,7 @@ function renderAcxOverview(){
     '<span class="dbrep">&#128100; <b>' + esc(rptRepName(rep) || rep || 'Unassigned') + '</b></span>' +
     (isAdminUser() ? '<select id="dbAssignSel" class="acxsel" style="margin-left:auto;">' +
       '<option value="">reassign\u2026</option>' +
-      liveRoster().map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
+      TEAM_ROSTER.map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
     '</select>' : '') +
   '</div></div>';
   mount.innerHTML = html;
@@ -6197,7 +6216,10 @@ function openProject(id){
     esc(pr.name || 'Unnamed client') +
     '<span id="favStar" class="namestar" title="Favorite / high priority">\u2606</span>';
   document.getElementById('projMeta').innerHTML =
-    (poOf(pr) ? '<div class="mrow"><span class="mlbl">PO</span><span>#' + poOf(pr) + '</span></div>' : '') +
+    '<div class="mrow"><span class="mlbl">PO</span>' +
+      '<span class="poval">' + (poOf(pr) ? '#' + poOf(pr) : '\u2014') + '</span>' +
+      '<button id="projEditBtn" class="editpencil" title="Edit client info">&#9998;</button>' +
+    '</div>' +
     (pr.address ? '<div class="mrow"><span class="mlbl">ADDRESS</span><span>' + esc(pr.address) + '</span></div>' : '');
   var cov = document.getElementById('projCover');
   var img = cov.querySelector('img');
@@ -6218,8 +6240,10 @@ function openProject(id){
   var hpo = poOf(pr);
   document.getElementById('dangerZone').style.display = isAdminUser() ? 'block' : 'none';
   setTimeout(fixHeadPad, 50);
-  document.getElementById('headCtx').innerHTML =
-    (hpo ? '<small>' + hpo + ':</small> ' : '') + esc(pr.name || '');
+  var ctxHtml = (hpo ? '<small>' + hpo + ':</small> ' : '') + esc(pr.name || '');
+  document.getElementById('headCtx').innerHTML = ctxHtml;
+  var cb = document.getElementById('cbCtx');
+  if(cb) cb.innerHTML = ctxHtml;
   renderOverview();
   renderChat();
   renderLeadCard();
@@ -7162,7 +7186,7 @@ function openLeadForm(){
   if(isAdminUser()){
     assignBox.style.display = 'block';
     var mySel = TEAM && currentUser ? currentUser.email : '';
-    document.getElementById('ldAssignSel').innerHTML = liveRoster().map(function(m){
+    document.getElementById('ldAssignSel').innerHTML = TEAM_ROSTER.map(function(m){
       return '<option value="' + esc(m.email) + '"' + (m.email === mySel ? ' selected' : '') + '>' +
         esc(m.name) + '</option>';
     }).join('');
@@ -7520,7 +7544,7 @@ function openCommunications(){
   document.getElementById('commsCli').textContent = '\u2014 ' + (currentProject.name || '');
   var tr = document.getElementById('chatTagRow');
   var me = TEAM && currentUser ? currentUser.email : '';
-  tr.innerHTML = liveRoster().filter(function(mbr){ return mbr.email !== me; }).map(function(mbr){
+  tr.innerHTML = TEAM_ROSTER.filter(function(mbr){ return mbr.email !== me; }).map(function(mbr){
     var first = (mbr.name || '').trim().split(/\s+/)[0];
     return '<button class="chipbtn" data-tag="' + esc(first.toLowerCase()) + '" style="padding:4px 11px;font-size:11.5px;">@' + esc(first) + '</button>';
   }).join('');
@@ -7639,8 +7663,8 @@ document.getElementById('pfSave').addEventListener('click', async function(){
   }
 });
 
-document.getElementById('projEditBtn').addEventListener('click', function(){
-  if(currentProject) openProjModal(currentProject);
+document.getElementById('projMeta').addEventListener('click', function(e){
+  if(e.target.closest('#projEditBtn') && currentProject) openProjModal(currentProject);
 });
 
 /* cover photo */
@@ -7711,7 +7735,7 @@ async function sendChat(){
     renderChat();
     if(mentions.length){
       var to = [];
-      liveRoster().forEach(function(mbr){
+      TEAM_ROSTER.forEach(function(mbr){
         var first = (mbr.name || '').trim().split(/\s+/)[0].toLowerCase();
         var pre = (mbr.email || '').split('@')[0].toLowerCase();
         if(mentions.some(function(mn){ return mn === first || mn === pre || first.indexOf(mn) === 0; })){
@@ -8677,7 +8701,7 @@ function openList(kind){
     if(!sel) return;
     var reps = {};
     cacheRows.forEach(function(r){ if(r.created_by) reps[r.created_by] = 1; });
-    liveRoster().forEach(function(m){ reps[m.email] = 1; });
+    TEAM_ROSTER.forEach(function(m){ reps[m.email] = 1; });
     var cur = window.__listRep || 'all';
     sel.innerHTML = '<option value="all">All salesmen</option>' + Object.keys(reps).sort().map(function(em){
       return '<option value="' + esc(em) + '"' + (cur === em ? ' selected' : '') + '>' + esc(rptRepName(em)) + '</option>';
@@ -9994,7 +10018,7 @@ function makeMiniCal(mountId, dayKinds, onDay){
 function prodVisibleAppt(a){
   if(a.kind !== 'job' && a.kind !== 'drop') return false;
   var me = (currentUser && currentUser.email) || '';
-  if(roleFor(me) !== 'sales') return true;
+  if(ADMIN_EMAILS.indexOf(me) !== -1 || PRODUCTION_EMAILS.indexOf(me) !== -1) return true;
   var pr = cacheProjects.find(function(p){ return p.id === a.project_id; });
   return !!pr && assignedRepOf(pr) === me;
 }
@@ -10023,7 +10047,8 @@ function renderTeamCal(){
   var who = document.getElementById('prodCalWho');
   if(who){
     var me = (currentUser && currentUser.email) || '';
-    who.textContent = (roleFor(me) !== 'sales') ? 'all jobs' : 'your jobs';
+    who.textContent = (ADMIN_EMAILS.indexOf(me) !== -1 || PRODUCTION_EMAILS.indexOf(me) !== -1)
+      ? 'all jobs' : 'your jobs';
   }
 }
 document.getElementById('teamAddBtn').addEventListener('click', function(){
@@ -11467,36 +11492,15 @@ var TEAM_ROSTER = [
 ];
 var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
-function roleFor(email){
-  var p = cacheTeam ? cacheTeam[email] : null;
-  if(p && p.role) return String(p.role).toLowerCase();
-  if(ADMIN_EMAILS.indexOf(email) !== -1) return 'admin';
-  if(PRODUCTION_EMAILS.indexOf(email) !== -1) return 'production';
-  return 'sales';
-}
-function isAdminEmail(email){ return roleFor(email) === 'admin'; }
-function isProductionEmail(email){ return roleFor(email) === 'production'; }
-function isAdminUser(){ return TEAM && currentUser && isAdminEmail(currentUser.email); }
-function isProductionUser(){ return TEAM && currentUser && isProductionEmail(currentUser.email); }
-function liveRoster(){
-  var seen = {}, out = [];
-  TEAM_ROSTER.forEach(function(m){
-    seen[m.email] = 1;
-    out.push({ email: m.email, name: (cacheTeam[m.email] && cacheTeam[m.email].name) || m.name });
-  });
-  Object.keys(cacheTeam || {}).forEach(function(em){
-    if(seen[em]) return; seen[em] = 1;
-    out.push({ email: em, name: cacheTeam[em].name || em.split('@')[0] });
-  });
-  return out;
-}
+function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
+function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
 var BUILD_TAG = '2026-07-19 build 55 \u2014 header flex-fit';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
   if(!TEAM) return;
   try{
-    var r = await sb.from('team_profiles').select('email,name,title,phone,photo,role');
+    var r = await sb.from('team_profiles').select('email,name,title,phone,photo');
     if(!r.error && Array.isArray(r.data)){
       cacheTeam = {};
       r.data.forEach(function(p){ cacheTeam[p.email] = p; });
@@ -11581,7 +11585,7 @@ async function renderAuditLog(){
 
     /* ---- person dropdown (roster + anyone appearing in the log) ---- */
     var ppl = {};
-    liveRoster().forEach(function(m){ ppl[m.email] = 1; });
+    TEAM_ROSTER.forEach(function(m){ ppl[m.email] = 1; });
     events.forEach(function(e){ if(e.email) ppl[e.email] = 1; });
     sessions.forEach(function(s){ if(s.email) ppl[s.email] = 1; });
     var pSel = '<label style="font:700 13px \'Segoe UI\',Arial,sans-serif;color:#5a5049;">&#128100; Person ' +
@@ -11707,14 +11711,6 @@ document.getElementById('landQuick').addEventListener('click', function(){
   openQuickInsp(true);
 });
 
-function applyRoleUi(userEmail){
-  document.getElementById('backupNav').style.display = isAdminEmail(userEmail) ? 'block' : 'none';
-  document.getElementById('auditNav').style.display =
-    (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
-  document.getElementById('teamNav').style.display = isAdminEmail(userEmail) ? 'block' : 'none';
-  var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
-  if(leadOpt) leadOpt.style.display = isProductionEmail(userEmail) ? 'none' : 'block';
-}
 function showMain(userEmail){
   var hd = document.querySelector('header.site');
   if(hd) hd.style.display = '';
@@ -11724,7 +11720,13 @@ function showMain(userEmail){
   mainView.style.display = 'block';
   addProjBtn.style.display = 'inline-block';
   document.getElementById('navWrap').style.display = 'inline-block';
-  applyRoleUi(userEmail);
+  document.getElementById('backupNav').style.display =
+    (ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
+  document.getElementById('auditNav').style.display =
+    (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
+  document.getElementById('teamNav').style.display = document.getElementById('auditNav').style.display;
+  var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
+  if(leadOpt) leadOpt.style.display = (PRODUCTION_EMAILS.indexOf(userEmail) !== -1) ? 'none' : 'block';
   hideAllViews();
   mainView.style.display = 'block';
   showLanding(userEmail);
@@ -11733,7 +11735,7 @@ function showMain(userEmail){
     whoami.title = (userEmail || '') + ' \u2014 click to set your display name';
     whoami.style.cursor = 'pointer';
     signOutBtn.style.display = 'block';
-    storageNote.innerHTML = 'Each card is a client profile holding their info, notes, photos, inspection reports and estimates. You see the projects you created' + (isAdminEmail(userEmail) ? ' — and as admin, everyone else\u2019s too' : '; the admin sees all') + '. Use <b>Download</b> to keep a standalone copy.';
+    storageNote.innerHTML = 'Each card is a client profile holding their info, notes, photos, inspection reports and estimates. You see the projects you created' + (ADMIN_EMAILS.indexOf(userEmail) !== -1 ? ' — and as admin, everyone else\u2019s too' : '; the admin sees all') + '. Use <b>Download</b> to keep a standalone copy.';
     document.getElementById('bannerMount').innerHTML = '';
   }else{
     storageNote.innerHTML = 'All inspection projects, newest first. Reports are stored in this browser — use <b>Download</b> to keep a standalone copy of any report.';
@@ -12020,29 +12022,14 @@ async function openTeamView(){
   }
 }
 function renderTeamView(){
-  var isAdmin = isAdminUser();
+  var isAdmin = currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1;
   var mount = document.getElementById('tmMount');
-  var addCard = isAdmin ? '<div class="tmcard" id="tmAddCard">' +
-    '<div class="tmrow"><span class="tminfo"><b>\u2795 Add team member</b>' +
-    '<span>Create a sign-in and set their access role</span></span>' +
-    '<button class="chipbtn" data-addtoggle="1">Open</button></div>' +
-    '<div class="tmedit">' +
-    '<label>Email</label><input type="text" class="naEmail" placeholder="name@cardinalrenovations.net" autocapitalize="none">' +
-    '<label>Full name</label><input type="text" class="naName" placeholder="First Last">' +
-    '<label>Access role</label><select class="naRole"><option value="sales">Sales</option><option value="production">Production</option><option value="admin">Admin</option></select>' +
-    '<label>Temporary password</label><input type="text" class="naPass" placeholder="min 8 characters" autocapitalize="none">' +
-    '<div class="acxrow" style="gap:8px;margin-top:12px;">' +
-    '<button class="axbtn" data-addsave="1">Create member</button>' +
-    '<button class="chipbtn" data-addcancel="1">Cancel</button></div>' +
-    '<div style="font:600 11.5px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-top:8px;">They sign in at app.cardinalroster.com with this email + temporary password, and can change it any time via \u201cForgot password\u201d.</div>' +
-    '</div></div>' : '';
-  mount.innerHTML = addCard + teamEmails().map(function(em){
+  mount.innerHTML = teamEmails().map(function(em){
     var p = cacheTeam[em] || {};
     var nm = p.name || DEFAULT_NAMES[em] || em.split('@')[0];
-    var rl = roleFor(em);
-    var roles = rl === 'admin' ? '<span class="tmrole">ADMIN</span>' :
-      rl === 'production' ? '<span class="tmrole pr">PRODUCTION</span>' :
-      '<span class="tmrole sl">SALES</span>';
+    var roles = '';
+    if(ADMIN_EMAILS.indexOf(em) !== -1) roles += '<span class="tmrole">ADMIN</span>';
+    if(PRODUCTION_EMAILS.indexOf(em) !== -1) roles += '<span class="tmrole pr">PRODUCTION</span>';
     return '<div class="tmcard" data-em="' + esc(em) + '">' +
       '<div class="tmrow">' + avatarHtml(em, 64) +
         '<span class="tminfo"><b>' + esc(nm) + ' ' + roles + '</b>' +
@@ -12055,11 +12042,6 @@ function renderTeamView(){
         '<label>Display name</label><input type="text" class="tmName" value="' + esc(p.name || nm) + '">' +
         '<label>Title / role</label><input type="text" class="tmTitle" value="' + esc(p.title || '') + '" placeholder="e.g. Outside Sales">' +
         '<label>Phone</label><input type="tel" class="tmPhone" value="' + esc(p.phone || '') + '">' +
-        '<label>Access role</label><select class="tmRoleSel">' +
-          ['sales','production','admin'].map(function(rv){
-            return '<option value="' + rv + '"' + (rl === rv ? ' selected' : '') + '>' +
-              rv.charAt(0).toUpperCase() + rv.slice(1) + '</option>';
-          }).join('') + '</select>' +
         '<label>Portrait</label>' +
         '<div class="acxrow" style="gap:8px;">' +
           '<button class="chipbtn" data-photo="1">\uD83D\uDCF7 ' + (p.photo ? 'Change photo' : 'Upload photo') + '</button>' +
@@ -12069,39 +12051,9 @@ function renderTeamView(){
         '<div class="acxrow" style="gap:8px;margin-top:12px;">' +
           '<button class="axbtn" data-save="1">Save</button>' +
           '<button class="chipbtn" data-cancel="1">Cancel</button>' +
-          (DEFAULT_NAMES[em] ? '' : '<button class="chipbtn" data-remove="1" style="color:#C8202E;margin-left:auto;">\uD83D\uDDD1 Remove</button>') +
         '</div></div>' : '') +
     '</div>';
   }).join('');
-}
-async function tmCreateMember(card){
-  var email = card.querySelector('.naEmail').value.trim().toLowerCase();
-  var name = card.querySelector('.naName').value.trim();
-  var role = card.querySelector('.naRole').value;
-  var pass = card.querySelector('.naPass').value;
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showError('Enter a valid email address.'); return; }
-  if(pass.length < 8){ showError('Temporary password needs at least 8 characters.'); return; }
-  var btn = card.querySelector('[data-addsave]');
-  btn.disabled = true; btn.textContent = 'Creating\u2026';
-  try{
-    var sess = await sb.auth.getSession();
-    var token = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
-    var resp = await fetch('/api/invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ email: email, name: name, role: role, password: pass })
-    });
-    var j = null; try{ j = await resp.json(); }catch(e){}
-    if(!resp.ok) throw new Error((j && j.error) || ('Invite failed (HTTP ' + resp.status + ') \u2014 is api/invite.js deployed?'));
-    auditLog('team', 'Team member added \u2014 ' + email + ' (' + role + ')', null);
-    await loadTeamProfiles(); renderTeamView(); renderActivity();
-    alert((j && j.existed)
-      ? '\u2705 ' + email + ' already had a sign-in \u2014 role set to ' + role + '.'
-      : '\u2705 ' + email + ' created as ' + role + '. Give them the temporary password to sign in.');
-  }catch(err){
-    showError('Could not add member: ' + (err.message || err));
-    btn.disabled = false; btn.textContent = 'Create member';
-  }
 }
 function tmResize(file){
   return new Promise(function(res, rej){
@@ -12126,19 +12078,6 @@ document.getElementById('tmMount').addEventListener('click', async function(e){
   var card = e.target.closest('.tmcard');
   if(!card) return;
   var em = card.getAttribute('data-em');
-  if(e.target.closest('[data-addtoggle]')){ card.classList.toggle('editing'); return; }
-  if(e.target.closest('[data-addcancel]')){ card.classList.remove('editing'); return; }
-  if(e.target.closest('[data-addsave]')){ await tmCreateMember(card); return; }
-  if(e.target.closest('[data-remove]')){
-    if(!confirm('Remove ' + em + ' from the team list?\n\nTheir sign-in still exists (delete it in Supabase \u2192 Authentication if needed) and their access drops back to Sales.')) return;
-    try{
-      var dr = await sb.from('team_profiles').delete().eq('email', em);
-      if(dr.error) throw dr.error;
-      auditLog('team', 'Team member removed \u2014 ' + em, null);
-      await loadTeamProfiles(); renderTeamView(); renderActivity();
-    }catch(err){ showError('Could not remove: ' + (err.message || err)); }
-    return;
-  }
   if(e.target.closest('[data-edit]')){ card.classList.toggle('editing'); return; }
   if(e.target.closest('[data-cancel]')){ card.classList.remove('editing'); renderTeamView(); return; }
   if(e.target.closest('[data-photo]')){ card.querySelector('.tmFile').click(); return; }
@@ -12150,18 +12089,13 @@ document.getElementById('tmMount').addEventListener('click', async function(e){
     return;
   }
   if(e.target.closest('[data-save]')){
-    var rsel = card.querySelector('.tmRoleSel');
     var row = {
       email: em,
       name: card.querySelector('.tmName').value.trim() || null,
       title: card.querySelector('.tmTitle').value.trim() || null,
       phone: card.querySelector('.tmPhone').value.trim() || null,
-      role: rsel ? rsel.value : null,
       updated_at: new Date().toISOString()
     };
-    if(currentUser && em === currentUser.email && roleFor(em) === 'admin' && row.role !== 'admin'){
-      if(!confirm('You are removing your OWN admin access \u2014 you will lose the Team page and admin menus. Continue?')) return;
-    }
     try{
       var r = await sb.from('team_profiles').upsert(row, { onConflict: 'email' });
       if(r.error) throw r.error;
@@ -12349,10 +12283,7 @@ async function enableNotifications(){
     if(__restorableHash() && !__restored) document.body.classList.add('restoring');
     var r = _smw(em);
     setTimeout(window.__tryRestoreFromHash, 60);
-    loadTeamProfiles().then(function(){
-      try{ renderActivity(); }catch(e){}
-      try{ if(currentUser) applyRoleUi(currentUser.email); }catch(e){}
-    });
+    loadTeamProfiles().then(function(){ try{ renderActivity(); }catch(e){} });
     return r;
   };
   window.addEventListener('popstate', async function(e){
