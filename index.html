@@ -1235,6 +1235,14 @@ body.restoring #restoreVeil{display:flex;}
 /* ---- AccuLynx-style client overview ---- */
 #tab-overview > *:not(#acxMount){display:none !important;}
 .acxsec{background:#fff;border:1px solid #ddd6cf;border-radius:6px;margin-bottom:14px;overflow:visible;}
+/* AccuLynx-style activity tiles (photo album / inspections) */
+.jaboxrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.jabox{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
+  padding:16px 18px;cursor:pointer;font:700 15.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
+  -webkit-user-select:none;user-select:none;}
+.jabox:active{background:#f6f3f0;}
+.jabox .jan{margin-left:auto;font:800 17px 'Segoe UI',Arial,sans-serif;color:#F7941E;}
+.jabox .jan.zero{color:#c9c9c9;}
 .acxhead{background:#f3f1ee;border-bottom:1px solid #ddd6cf;padding:9px 14px;
   font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;display:flex;align-items:center;gap:10px;position:relative;}
 .acxhead .rt{margin-left:auto;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#5c4a42;display:flex;align-items:center;gap:8px;}
@@ -1674,7 +1682,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 92 &#8212; compact print + AI narratives</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 93 &#8212; photo album + inspection photo set</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -1989,11 +1997,9 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
     <div id="tab-inspections" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <h3 class="projsec">&#128248; Photo Gallery <span id="galSummary" class="projcount">0 / 20</span></h3>
-      <p class="subnote">Field photos live on their own page — add, review, and transfer them into an inspection report.</p>
-      <div style="margin:6px 0 18px;">
-        <button class="btn" id="galOpenBtn">Open photo gallery &rarr;</button>
-      </div>
+      <div class="jabox" id="inspGalBox" style="max-width:430px;margin:0 0 8px;">&#128247; Photo Gallery <b class="jan zero" id="inspGalN">0</b></div>
+      <p class="subnote">Photos transferred for this client&#8217;s inspections (max 30). The full album lives in
+      <b>&#128247; Photo Album</b> on the Overview.</p>
 
       <h3 class="projsec">&#128196; Inspection Reports</h3>
       <div style="margin:6px 0 12px;">
@@ -2156,13 +2162,15 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <div id="galleryView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
     <button class="btn dark" id="galBackBtn">&larr; Back to client profile</button>
-    <h2 class="viewhead">&#128248; Photo Gallery <span id="galClient" style="color:#8a6f66;font-size:17px;"></span></h2>
-      <h3 class="projsec">&#128248; Photo Gallery <span id="galCount" class="projcount">0 / 20</span></h3>
-      <p class="subnote">Field photos for this client. Check the ones to use, then transfer them into an
-      inspection report — transferred photos are removed from this gallery.</p>
+    <h2 class="viewhead"><span id="galTitle">&#128247; Photo Album</span>
+      <span id="galClient" style="color:#8a6f66;font-size:17px;"></span>
+      <span id="galCount" class="projcount" style="vertical-align:middle;">0</span></h2>
+      <p class="subnote" id="galHint">Every photo for this client.</p>
       <div style="margin:6px 0 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <button class="chipbtn" id="galAddBtn">&#43; Add photos</button>
         <button class="chipbtn" id="galCamBtn" style="background:#C8202E;color:#fff;border-color:#C8202E;">&#128247; Take photo</button>
+        <button class="btn" id="galInspBtn">&#10145;&#65039; Add checked to Inspection Photos</button>
+        <button class="btn" id="galInspRmBtn" style="display:none;">&#10060; Remove checked from Inspection</button>
         <span id="galXferWrap" style="position:relative;">
           <button class="btn" id="galXferBtn">Transfer checked to report &#9662;</button>
           <div id="galXferMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
@@ -4715,7 +4723,7 @@ function renderAcxOverview(){
     '<div class="jaitem" data-tab="estimates">Worksheet <b class="' + (fin.value ? '' : 'zero') + '">' + (fin.value ? '\u2713' : '\u2716') + '</b></div>' +
     jai('Invoices', invs.length, 'estimates') +
     jai('Orders', 0, 'materials') +
-    jai('Photos', '\u2026', 'inspections') +
+    jai('Photos', '\u2026', 'album') +
     jai('Documents', docs.length, 'inspections') +
   '</div></div>';
   /* ---- contact + location ---- */
@@ -4752,17 +4760,15 @@ function renderAcxOverview(){
   '</div></div>' +
   '</div>';
   /* ---- placeholder + real sections ---- */
-  html += '<div class="acxcols">';
-  html +=
-  '<div class="acxsec"><div class="acxhead">Customer Portal</div><div class="acxbody acxrow">' +
-    '<button class="axbtn ghost">&#128179; Enable Add-on</button>' +
-    '<span class="axnote">Give job contacts 24/7 access to a Customer Portal for documents, photos &amp; billing. Coming soon.</span></div></div>';
-  html +=
-  '<div class="acxsec"><div class="acxhead">Financing</div><div class="acxbody acxrow">' +
-    '<span class="axzero">0</span><span class="axnote">No loan applications have been submitted for this job.</span>' +
-    '<button class="axbtn ghost" style="margin-left:8px;">&#127974; Offer Financing</button>' +
-    '<span class="axnote">Coming soon.</span></div></div>';
-  html += '</div>';
+  /* ---- photo album + inspections tiles (AccuLynx style) ---- */
+  var inspDocsN = docs.filter(function(r){
+    var tt = (r.title || '').trim();
+    return !isEstimateTitle(tt) && !/^invoice|^contract/i.test(tt);
+  }).length;
+  html += '<div class="jaboxrow">' +
+    '<div class="jabox" id="acxAlbumBox">&#128247; Photo Album <b class="jan zero" id="acxAlbumN">&#8230;</b></div>' +
+    '<div class="jabox" id="acxInspBox">&#128269; Inspections <b class="jan' + (inspDocsN ? '' : ' zero') + '">' + inspDocsN + '</b></div>' +
+  '</div>';
   html += '<div class="acxcols">';
   var estList = ests.map(function(r){
     return '<div class="tskrow" style="cursor:pointer;" data-doc="' + r.id + '">&#128196; <b>' + esc(r.title || 'Estimate') + '</b>' +
@@ -4782,18 +4788,11 @@ function renderAcxOverview(){
         '<a href="#" id="acxClearManual" style="color:#C8202E;font-weight:800;">clear</a></div>'
       : '') +
     '</div></div>';
-  var inspDocs = docs.filter(function(r){
-    var tt = (r.title || '').trim();
-    return !isEstimateTitle(tt) && !/^invoice|^contract/i.test(tt);
-  });
   html +=
-  '<div class="acxsec"><div class="acxhead">Inspections</div><div class="acxbody">' +
-    '<div class="acxrow"><span class="axzero">' + inspDocs.length + '</span>' +
-    '<span class="axnote">' + (inspDocs.length ? inspDocs.length + ' inspection document' + (inspDocs.length === 1 ? '' : 's') + ' on file.' : 'No inspections have been created for this job.') + '</span></div>' +
-    '<div class="acxrow" style="margin-top:10px;gap:8px;">' +
-      '<button class="axbtn" id="acxInspPage">Open Inspections</button>' +
-      '<span class="axnote">Section design coming soon.</span>' +
-    '</div></div></div>';
+  '<div class="acxsec"><div class="acxhead">Financing</div><div class="acxbody acxrow">' +
+    '<span class="axzero">0</span><span class="axnote">No loan applications have been submitted for this job.</span>' +
+    '<button class="axbtn ghost" style="margin-left:8px;">&#127974; Offer Financing</button>' +
+    '<span class="axnote">Coming soon.</span></div></div>';
   html += '</div>';
   html +=
   '<div class="acxsec"><div class="acxhead">Worksheet</div><div class="acxbody">' +
@@ -4890,8 +4889,11 @@ function renderAcxOverview(){
   mount.innerHTML = html;
   /* async photo count */
   photoDb.listByProject(pr.id).then(function(l){
+    if(!currentProject || currentProject.id !== pr.id) return;
     var el = document.getElementById('acxPhotoN');
-    if(el && currentProject && currentProject.id === pr.id){ el.textContent = l.length; el.classList.toggle('zero', !l.length); }
+    if(el){ el.textContent = l.length; el.classList.toggle('zero', !l.length); }
+    var ab = document.getElementById('acxAlbumN');
+    if(ab){ ab.textContent = l.length; ab.classList.toggle('zero', !l.length); }
   }).catch(function(){});
   refreshMeasSummary(pr);
   acxBindOnce(mount);
@@ -4936,7 +4938,7 @@ function acxBindOnce(mount){
       return;
     }
     if(hit('#acxAdvBtn')){ acxAdvance(pr); return; }
-    if((el = hit('.jaitem'))){ var tb = el.getAttribute('data-tab'); if(tb === 'comms'){ openCommunications(); } else if(tb) showTab(tb); return; }
+    if((el = hit('.jaitem'))){ var tb = el.getAttribute('data-tab'); if(tb === 'comms'){ openCommunications(); } else if(tb === 'album'){ openGalleryMode('all'); } else if(tb) showTab(tb); return; }
     if(hit('#acxEdit1') || hit('#acxEdit2')){ openProjModal(pr); return; }
     if((el = hit('.acxtab'))){
       mount.querySelectorAll('.acxtab').forEach(function(x){ x.classList.remove('on'); });
@@ -4988,6 +4990,8 @@ function acxBindOnce(mount){
     }
     if(hit('#acxOrders')){ showTab('materials'); return; }
     if(hit('#acxInspPage')){ showTab('inspections'); return; }
+    if(hit('#acxAlbumBox')){ openGalleryMode('all'); return; }
+    if(hit('#acxInspBox')){ showTab('inspections'); return; }
     if((el = hit('[data-doc]'))){ openEditor(el.getAttribute('data-doc')); return; }
     if((el = hit('[data-rv]'))){ sendReviewRequest(pr, el.getAttribute('data-rv')); return; }
     if(hit('#acxNewTask')){ openTaskModal(pr, null); return; }
@@ -6092,6 +6096,7 @@ function showTab(name){
   ['overview','inspections','estimates','checklists','materials','measure'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
+  if(name === 'inspections') refreshInspGalN();
 }
 document.getElementById('jobMenuSel').addEventListener('change', function(){
   showTab(this.value);
@@ -6166,6 +6171,10 @@ async function loadGallery(){
   grid.innerHTML = '<div class="loading">Loading photos…</div>';
   try{
     currentPhotos = await photoDb.listByProject(currentProject.id);
+    if(galMode === 'insp'){
+      var __set = getInspPhotoIds(currentProject);
+      currentPhotos = currentPhotos.filter(function(p){ return __set.indexOf(String(p.id)) !== -1; });
+    }
   }catch(e){
     currentPhotos = [];
     grid.innerHTML = '<div class="galempty">Could not load photos: ' + esc(e.message || e) + '</div>';
@@ -6176,11 +6185,14 @@ async function loadGallery(){
 }
 function renderGallery(){
   var grid = document.getElementById('galGrid');
-  document.getElementById('galCount').textContent = currentPhotos.length + ' / ' + GAL_MAX;
-  var sum = document.getElementById('galSummary');
-  if(sum) sum.textContent = currentPhotos.length + ' / ' + GAL_MAX;
+  document.getElementById('galCount').textContent =
+    galMode === 'insp' ? (currentPhotos.length + ' / ' + INSP_MAX)
+                       : (currentPhotos.length + ' / ' + GAL_MAX);
+  refreshInspGalN();
   if(!currentPhotos.length){
-    grid.innerHTML = '<div class="galempty">No photos yet — use <b>+ Add photos</b> or <b>&#128247; Take photo</b>.</div>';
+    grid.innerHTML = galMode === 'insp'
+      ? '<div class="galempty">No inspection photos yet \u2014 open the \uD83D\uDCF7 Photo Album, check photos, and tap \u27A1\uFE0F Add checked to Inspection Photos.</div>'
+      : '<div class="galempty">No photos yet \u2014 use <b>+ Add photos</b> or <b>\uD83D\uDCF7 Take photo</b>.</div>';
     return;
   }
   grid.innerHTML = currentPhotos.map(function(ph){
@@ -6197,11 +6209,25 @@ document.getElementById('galGrid').addEventListener('click', async function(e){
   if(!card) return;
   var id = card.getAttribute('data-gid');
   if(e.target.closest('.gdel')){
+    if(galMode === 'insp'){
+      try{
+        var left = getInspPhotoIds(currentProject).filter(function(x){ return x !== String(id); });
+        await patchProjectCk(currentProject, { insp_photos: left });
+        currentPhotos = currentPhotos.filter(function(x){ return String(x.id) !== String(id); });
+        delete galChecked[id];
+        renderGallery();
+      }catch(err){ showError('Could not remove from Inspection Photos: ' + (err.message || err)); }
+      return;
+    }
     if(!confirm('Delete this photo from the gallery?')) return;
     try{
       await photoDb.remove(id);
       currentPhotos = currentPhotos.filter(function(x){ return x.id !== id; });
       delete galChecked[id];
+      var left2 = getInspPhotoIds(currentProject).filter(function(x){ return x !== String(id); });
+      if(left2.length !== getInspPhotoIds(currentProject).length){
+        try{ await patchProjectCk(currentProject, { insp_photos: left2 }); }catch(e2){}
+      }
       renderGallery();
     }catch(err){ showError('Could not delete photo: ' + (err.message || err)); }
     return;
@@ -6233,19 +6259,46 @@ async function addGalleryFiles(files){
     }
   }
   status.textContent = skipped > 0
-    ? ('Added ' + take.length + ' \u2014 ' + skipped + ' skipped (20-photo limit).')
+    ? ('Added ' + take.length + ' \u2014 ' + skipped + ' skipped (' + GAL_MAX + '-photo limit).')
     : ('Added ' + take.length + ' photo' + (take.length === 1 ? '' : 's') + '.');
   setTimeout(function(){ status.textContent = ''; }, 4000);
   await loadGallery();
 }
 var galleryView = document.getElementById('galleryView');
-document.getElementById('galOpenBtn').addEventListener('click', function(){
+var galMode = 'all';
+var INSP_MAX = 30;
+function getInspPhotoIds(pr){
+  try{
+    var j = JSON.parse((pr && pr.checklist) || '{}') || {};
+    return Array.isArray(j.insp_photos) ? j.insp_photos.map(String) : [];
+  }catch(e){ return []; }
+}
+function refreshInspGalN(){
+  var el = document.getElementById('inspGalN');
+  if(el && currentProject){
+    var n = getInspPhotoIds(currentProject).length;
+    el.textContent = n;
+    el.classList.toggle('zero', !n);
+  }
+}
+function openGalleryMode(mode){
   if(!currentProject) return;
+  galMode = (mode === 'insp') ? 'insp' : 'all';
   document.getElementById('galClient').textContent = '\u2014 ' + (currentProject.name || '');
+  document.getElementById('galTitle').innerHTML =
+    galMode === 'insp' ? '&#128247; Inspection Photos' : '&#128247; Photo Album';
+  document.getElementById('galHint').textContent = galMode === 'insp'
+    ? 'The curated set for this client\u2019s inspections (max ' + INSP_MAX + '). Check photos to transfer into a report, or remove them from the set \u2014 removing never deletes from the album.'
+    : 'Every photo for this client. Check photos, then send them to Inspection Photos or straight into a report \u2014 the album always keeps the originals.';
+  document.getElementById('galAddBtn').style.display = galMode === 'insp' ? 'none' : '';
+  document.getElementById('galCamBtn').style.display = galMode === 'insp' ? 'none' : '';
+  document.getElementById('galInspBtn').style.display = galMode === 'insp' ? 'none' : '';
+  document.getElementById('galInspRmBtn').style.display = galMode === 'insp' ? '' : 'none';
   projectView.style.display = 'none';
   galleryView.style.display = 'block';
   window.scrollTo(0,0);
-});
+  loadGallery();
+}
 document.getElementById('galBackBtn').addEventListener('click', function(){
   galleryView.style.display = 'none';
   projectView.style.display = 'block';
@@ -6264,6 +6317,58 @@ document.getElementById('galFileInput').addEventListener('change', function(){
 document.getElementById('galCamInput').addEventListener('change', function(){
   addGalleryFiles(this.files); this.value = '';
 });
+document.getElementById('galInspBtn').addEventListener('click', async function(){
+  if(!currentProject) return;
+  var ids = Object.keys(galChecked).map(String);
+  var status = document.getElementById('galStatus');
+  if(!ids.length){
+    status.textContent = 'Check at least one photo first.';
+    setTimeout(function(){ status.textContent = ''; }, 3000);
+    return;
+  }
+  var cur = getInspPhotoIds(currentProject);
+  var add = ids.filter(function(x){ return cur.indexOf(x) === -1; });
+  if(!add.length){
+    status.textContent = 'Those photos are already in Inspection Photos.';
+    setTimeout(function(){ status.textContent = ''; }, 3500);
+    return;
+  }
+  var room = INSP_MAX - cur.length;
+  if(room <= 0){
+    status.textContent = 'Inspection Photos is full (' + INSP_MAX + ' max) \u2014 remove some first.';
+    setTimeout(function(){ status.textContent = ''; }, 4000);
+    return;
+  }
+  var take = add.slice(0, room);
+  try{
+    await patchProjectCk(currentProject, { insp_photos: cur.concat(take) });
+    galChecked = {};
+    renderGallery();
+    status.textContent = '\u2713 Added ' + take.length +
+      (add.length > take.length ? ' \u2014 ' + (add.length - take.length) + ' skipped (' + INSP_MAX + ' max)' : '') +
+      ' \u00b7 Inspection Photos now ' + (cur.length + take.length) + ' / ' + INSP_MAX + '.';
+    setTimeout(function(){ status.textContent = ''; }, 5000);
+  }catch(err){ showError('Could not add to Inspection Photos: ' + (err.message || err)); }
+});
+document.getElementById('galInspRmBtn').addEventListener('click', async function(){
+  if(!currentProject) return;
+  var ids = Object.keys(galChecked).map(String);
+  var status = document.getElementById('galStatus');
+  if(!ids.length){
+    status.textContent = 'Check at least one photo first.';
+    setTimeout(function(){ status.textContent = ''; }, 3000);
+    return;
+  }
+  try{
+    var left = getInspPhotoIds(currentProject).filter(function(x){ return ids.indexOf(x) === -1; });
+    await patchProjectCk(currentProject, { insp_photos: left });
+    galChecked = {};
+    await loadGallery();
+    status.textContent = '\u2713 Removed ' + ids.length + ' \u2014 still in the Photo Album.';
+    setTimeout(function(){ status.textContent = ''; }, 4000);
+  }catch(err){ showError('Could not remove: ' + (err.message || err)); }
+});
+document.getElementById('inspGalBox').addEventListener('click', function(){ openGalleryMode('insp'); });
 
 /* ---------- transfer checked photos into an inspection report ---------- */
 var galXferMenu = document.getElementById('galXferMenu');
@@ -6811,7 +6916,7 @@ document.getElementById('jaGrid').addEventListener('click', function(e){
   var act = t.getAttribute('data-ja');
   if(act === 'comms'){ openCommunications(); }
   else if(act === 'board'){ openScheduleBoard(); }
-  else if(act === 'photos'){ showTab('inspections'); }
+  else if(act === 'photos'){ openGalleryMode('all'); }
   else{ showTab(act); }
 });
 function mapsUrl(addr){
