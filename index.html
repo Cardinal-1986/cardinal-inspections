@@ -1032,6 +1032,8 @@ html, body{overflow-x:hidden;max-width:100%;}
 .tmedit label{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a7a72;margin:8px 0 2px;text-transform:uppercase;}
 .tmedit input[type=text], .tmedit input[type=tel]{width:100%;box-sizing:border-box;border:1px solid var(--line);
   border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;}
+.tmrole.sl{background:#dbeaf7;color:#1f5e8f;}
+.tmedit select{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:600 14px 'Segoe UI',Arial,sans-serif;background:#fff;}
 
 /* ---- quick inspection ---- */
 #qiStream{max-width:680px;margin:0 auto;padding:6px 2px 90px;}
@@ -1769,7 +1771,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 101 &#8212; lavender PO#</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 102 &#8212; team roles</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4984,7 +4986,7 @@ function renderAcxOverview(){
     '<span class="dbrep">&#128100; <b>' + esc(rptRepName(rep) || rep || 'Unassigned') + '</b></span>' +
     (isAdminUser() ? '<select id="dbAssignSel" class="acxsel" style="margin-left:auto;">' +
       '<option value="">reassign\u2026</option>' +
-      TEAM_ROSTER.map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
+      liveRoster().map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
     '</select>' : '') +
   '</div></div>';
   mount.innerHTML = html;
@@ -7160,7 +7162,7 @@ function openLeadForm(){
   if(isAdminUser()){
     assignBox.style.display = 'block';
     var mySel = TEAM && currentUser ? currentUser.email : '';
-    document.getElementById('ldAssignSel').innerHTML = TEAM_ROSTER.map(function(m){
+    document.getElementById('ldAssignSel').innerHTML = liveRoster().map(function(m){
       return '<option value="' + esc(m.email) + '"' + (m.email === mySel ? ' selected' : '') + '>' +
         esc(m.name) + '</option>';
     }).join('');
@@ -7518,7 +7520,7 @@ function openCommunications(){
   document.getElementById('commsCli').textContent = '\u2014 ' + (currentProject.name || '');
   var tr = document.getElementById('chatTagRow');
   var me = TEAM && currentUser ? currentUser.email : '';
-  tr.innerHTML = TEAM_ROSTER.filter(function(mbr){ return mbr.email !== me; }).map(function(mbr){
+  tr.innerHTML = liveRoster().filter(function(mbr){ return mbr.email !== me; }).map(function(mbr){
     var first = (mbr.name || '').trim().split(/\s+/)[0];
     return '<button class="chipbtn" data-tag="' + esc(first.toLowerCase()) + '" style="padding:4px 11px;font-size:11.5px;">@' + esc(first) + '</button>';
   }).join('');
@@ -7709,7 +7711,7 @@ async function sendChat(){
     renderChat();
     if(mentions.length){
       var to = [];
-      TEAM_ROSTER.forEach(function(mbr){
+      liveRoster().forEach(function(mbr){
         var first = (mbr.name || '').trim().split(/\s+/)[0].toLowerCase();
         var pre = (mbr.email || '').split('@')[0].toLowerCase();
         if(mentions.some(function(mn){ return mn === first || mn === pre || first.indexOf(mn) === 0; })){
@@ -8675,7 +8677,7 @@ function openList(kind){
     if(!sel) return;
     var reps = {};
     cacheRows.forEach(function(r){ if(r.created_by) reps[r.created_by] = 1; });
-    TEAM_ROSTER.forEach(function(m){ reps[m.email] = 1; });
+    liveRoster().forEach(function(m){ reps[m.email] = 1; });
     var cur = window.__listRep || 'all';
     sel.innerHTML = '<option value="all">All salesmen</option>' + Object.keys(reps).sort().map(function(em){
       return '<option value="' + esc(em) + '"' + (cur === em ? ' selected' : '') + '>' + esc(rptRepName(em)) + '</option>';
@@ -9992,7 +9994,7 @@ function makeMiniCal(mountId, dayKinds, onDay){
 function prodVisibleAppt(a){
   if(a.kind !== 'job' && a.kind !== 'drop') return false;
   var me = (currentUser && currentUser.email) || '';
-  if(ADMIN_EMAILS.indexOf(me) !== -1 || PRODUCTION_EMAILS.indexOf(me) !== -1) return true;
+  if(roleFor(me) !== 'sales') return true;
   var pr = cacheProjects.find(function(p){ return p.id === a.project_id; });
   return !!pr && assignedRepOf(pr) === me;
 }
@@ -10021,8 +10023,7 @@ function renderTeamCal(){
   var who = document.getElementById('prodCalWho');
   if(who){
     var me = (currentUser && currentUser.email) || '';
-    who.textContent = (ADMIN_EMAILS.indexOf(me) !== -1 || PRODUCTION_EMAILS.indexOf(me) !== -1)
-      ? 'all jobs' : 'your jobs';
+    who.textContent = (roleFor(me) !== 'sales') ? 'all jobs' : 'your jobs';
   }
 }
 document.getElementById('teamAddBtn').addEventListener('click', function(){
@@ -11466,15 +11467,36 @@ var TEAM_ROSTER = [
 ];
 var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
-function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
-function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
+function roleFor(email){
+  var p = cacheTeam ? cacheTeam[email] : null;
+  if(p && p.role) return String(p.role).toLowerCase();
+  if(ADMIN_EMAILS.indexOf(email) !== -1) return 'admin';
+  if(PRODUCTION_EMAILS.indexOf(email) !== -1) return 'production';
+  return 'sales';
+}
+function isAdminEmail(email){ return roleFor(email) === 'admin'; }
+function isProductionEmail(email){ return roleFor(email) === 'production'; }
+function isAdminUser(){ return TEAM && currentUser && isAdminEmail(currentUser.email); }
+function isProductionUser(){ return TEAM && currentUser && isProductionEmail(currentUser.email); }
+function liveRoster(){
+  var seen = {}, out = [];
+  TEAM_ROSTER.forEach(function(m){
+    seen[m.email] = 1;
+    out.push({ email: m.email, name: (cacheTeam[m.email] && cacheTeam[m.email].name) || m.name });
+  });
+  Object.keys(cacheTeam || {}).forEach(function(em){
+    if(seen[em]) return; seen[em] = 1;
+    out.push({ email: em, name: cacheTeam[em].name || em.split('@')[0] });
+  });
+  return out;
+}
 var BUILD_TAG = '2026-07-19 build 55 \u2014 header flex-fit';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
 async function loadTeamProfiles(){
   if(!TEAM) return;
   try{
-    var r = await sb.from('team_profiles').select('email,name,title,phone,photo');
+    var r = await sb.from('team_profiles').select('email,name,title,phone,photo,role');
     if(!r.error && Array.isArray(r.data)){
       cacheTeam = {};
       r.data.forEach(function(p){ cacheTeam[p.email] = p; });
@@ -11559,7 +11581,7 @@ async function renderAuditLog(){
 
     /* ---- person dropdown (roster + anyone appearing in the log) ---- */
     var ppl = {};
-    TEAM_ROSTER.forEach(function(m){ ppl[m.email] = 1; });
+    liveRoster().forEach(function(m){ ppl[m.email] = 1; });
     events.forEach(function(e){ if(e.email) ppl[e.email] = 1; });
     sessions.forEach(function(s){ if(s.email) ppl[s.email] = 1; });
     var pSel = '<label style="font:700 13px \'Segoe UI\',Arial,sans-serif;color:#5a5049;">&#128100; Person ' +
@@ -11685,6 +11707,14 @@ document.getElementById('landQuick').addEventListener('click', function(){
   openQuickInsp(true);
 });
 
+function applyRoleUi(userEmail){
+  document.getElementById('backupNav').style.display = isAdminEmail(userEmail) ? 'block' : 'none';
+  document.getElementById('auditNav').style.display =
+    (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
+  document.getElementById('teamNav').style.display = isAdminEmail(userEmail) ? 'block' : 'none';
+  var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
+  if(leadOpt) leadOpt.style.display = isProductionEmail(userEmail) ? 'none' : 'block';
+}
 function showMain(userEmail){
   var hd = document.querySelector('header.site');
   if(hd) hd.style.display = '';
@@ -11694,13 +11724,7 @@ function showMain(userEmail){
   mainView.style.display = 'block';
   addProjBtn.style.display = 'inline-block';
   document.getElementById('navWrap').style.display = 'inline-block';
-  document.getElementById('backupNav').style.display =
-    (ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
-  document.getElementById('auditNav').style.display =
-    (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
-  document.getElementById('teamNav').style.display = document.getElementById('auditNav').style.display;
-  var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
-  if(leadOpt) leadOpt.style.display = (PRODUCTION_EMAILS.indexOf(userEmail) !== -1) ? 'none' : 'block';
+  applyRoleUi(userEmail);
   hideAllViews();
   mainView.style.display = 'block';
   showLanding(userEmail);
@@ -11709,7 +11733,7 @@ function showMain(userEmail){
     whoami.title = (userEmail || '') + ' \u2014 click to set your display name';
     whoami.style.cursor = 'pointer';
     signOutBtn.style.display = 'block';
-    storageNote.innerHTML = 'Each card is a client profile holding their info, notes, photos, inspection reports and estimates. You see the projects you created' + (ADMIN_EMAILS.indexOf(userEmail) !== -1 ? ' — and as admin, everyone else\u2019s too' : '; the admin sees all') + '. Use <b>Download</b> to keep a standalone copy.';
+    storageNote.innerHTML = 'Each card is a client profile holding their info, notes, photos, inspection reports and estimates. You see the projects you created' + (isAdminEmail(userEmail) ? ' — and as admin, everyone else\u2019s too' : '; the admin sees all') + '. Use <b>Download</b> to keep a standalone copy.';
     document.getElementById('bannerMount').innerHTML = '';
   }else{
     storageNote.innerHTML = 'All inspection projects, newest first. Reports are stored in this browser — use <b>Download</b> to keep a standalone copy of any report.';
@@ -11996,14 +12020,29 @@ async function openTeamView(){
   }
 }
 function renderTeamView(){
-  var isAdmin = currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1;
+  var isAdmin = isAdminUser();
   var mount = document.getElementById('tmMount');
-  mount.innerHTML = teamEmails().map(function(em){
+  var addCard = isAdmin ? '<div class="tmcard" id="tmAddCard">' +
+    '<div class="tmrow"><span class="tminfo"><b>\u2795 Add team member</b>' +
+    '<span>Create a sign-in and set their access role</span></span>' +
+    '<button class="chipbtn" data-addtoggle="1">Open</button></div>' +
+    '<div class="tmedit">' +
+    '<label>Email</label><input type="text" class="naEmail" placeholder="name@cardinalrenovations.net" autocapitalize="none">' +
+    '<label>Full name</label><input type="text" class="naName" placeholder="First Last">' +
+    '<label>Access role</label><select class="naRole"><option value="sales">Sales</option><option value="production">Production</option><option value="admin">Admin</option></select>' +
+    '<label>Temporary password</label><input type="text" class="naPass" placeholder="min 8 characters" autocapitalize="none">' +
+    '<div class="acxrow" style="gap:8px;margin-top:12px;">' +
+    '<button class="axbtn" data-addsave="1">Create member</button>' +
+    '<button class="chipbtn" data-addcancel="1">Cancel</button></div>' +
+    '<div style="font:600 11.5px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-top:8px;">They sign in at app.cardinalroster.com with this email + temporary password, and can change it any time via \u201cForgot password\u201d.</div>' +
+    '</div></div>' : '';
+  mount.innerHTML = addCard + teamEmails().map(function(em){
     var p = cacheTeam[em] || {};
     var nm = p.name || DEFAULT_NAMES[em] || em.split('@')[0];
-    var roles = '';
-    if(ADMIN_EMAILS.indexOf(em) !== -1) roles += '<span class="tmrole">ADMIN</span>';
-    if(PRODUCTION_EMAILS.indexOf(em) !== -1) roles += '<span class="tmrole pr">PRODUCTION</span>';
+    var rl = roleFor(em);
+    var roles = rl === 'admin' ? '<span class="tmrole">ADMIN</span>' :
+      rl === 'production' ? '<span class="tmrole pr">PRODUCTION</span>' :
+      '<span class="tmrole sl">SALES</span>';
     return '<div class="tmcard" data-em="' + esc(em) + '">' +
       '<div class="tmrow">' + avatarHtml(em, 64) +
         '<span class="tminfo"><b>' + esc(nm) + ' ' + roles + '</b>' +
@@ -12016,6 +12055,11 @@ function renderTeamView(){
         '<label>Display name</label><input type="text" class="tmName" value="' + esc(p.name || nm) + '">' +
         '<label>Title / role</label><input type="text" class="tmTitle" value="' + esc(p.title || '') + '" placeholder="e.g. Outside Sales">' +
         '<label>Phone</label><input type="tel" class="tmPhone" value="' + esc(p.phone || '') + '">' +
+        '<label>Access role</label><select class="tmRoleSel">' +
+          ['sales','production','admin'].map(function(rv){
+            return '<option value="' + rv + '"' + (rl === rv ? ' selected' : '') + '>' +
+              rv.charAt(0).toUpperCase() + rv.slice(1) + '</option>';
+          }).join('') + '</select>' +
         '<label>Portrait</label>' +
         '<div class="acxrow" style="gap:8px;">' +
           '<button class="chipbtn" data-photo="1">\uD83D\uDCF7 ' + (p.photo ? 'Change photo' : 'Upload photo') + '</button>' +
@@ -12025,9 +12069,39 @@ function renderTeamView(){
         '<div class="acxrow" style="gap:8px;margin-top:12px;">' +
           '<button class="axbtn" data-save="1">Save</button>' +
           '<button class="chipbtn" data-cancel="1">Cancel</button>' +
+          (DEFAULT_NAMES[em] ? '' : '<button class="chipbtn" data-remove="1" style="color:#C8202E;margin-left:auto;">\uD83D\uDDD1 Remove</button>') +
         '</div></div>' : '') +
     '</div>';
   }).join('');
+}
+async function tmCreateMember(card){
+  var email = card.querySelector('.naEmail').value.trim().toLowerCase();
+  var name = card.querySelector('.naName').value.trim();
+  var role = card.querySelector('.naRole').value;
+  var pass = card.querySelector('.naPass').value;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showError('Enter a valid email address.'); return; }
+  if(pass.length < 8){ showError('Temporary password needs at least 8 characters.'); return; }
+  var btn = card.querySelector('[data-addsave]');
+  btn.disabled = true; btn.textContent = 'Creating\u2026';
+  try{
+    var sess = await sb.auth.getSession();
+    var token = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var resp = await fetch('/api/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ email: email, name: name, role: role, password: pass })
+    });
+    var j = null; try{ j = await resp.json(); }catch(e){}
+    if(!resp.ok) throw new Error((j && j.error) || ('Invite failed (HTTP ' + resp.status + ') \u2014 is api/invite.js deployed?'));
+    auditLog('team', 'Team member added \u2014 ' + email + ' (' + role + ')', null);
+    await loadTeamProfiles(); renderTeamView(); renderActivity();
+    alert((j && j.existed)
+      ? '\u2705 ' + email + ' already had a sign-in \u2014 role set to ' + role + '.'
+      : '\u2705 ' + email + ' created as ' + role + '. Give them the temporary password to sign in.');
+  }catch(err){
+    showError('Could not add member: ' + (err.message || err));
+    btn.disabled = false; btn.textContent = 'Create member';
+  }
 }
 function tmResize(file){
   return new Promise(function(res, rej){
@@ -12052,6 +12126,19 @@ document.getElementById('tmMount').addEventListener('click', async function(e){
   var card = e.target.closest('.tmcard');
   if(!card) return;
   var em = card.getAttribute('data-em');
+  if(e.target.closest('[data-addtoggle]')){ card.classList.toggle('editing'); return; }
+  if(e.target.closest('[data-addcancel]')){ card.classList.remove('editing'); return; }
+  if(e.target.closest('[data-addsave]')){ await tmCreateMember(card); return; }
+  if(e.target.closest('[data-remove]')){
+    if(!confirm('Remove ' + em + ' from the team list?\n\nTheir sign-in still exists (delete it in Supabase \u2192 Authentication if needed) and their access drops back to Sales.')) return;
+    try{
+      var dr = await sb.from('team_profiles').delete().eq('email', em);
+      if(dr.error) throw dr.error;
+      auditLog('team', 'Team member removed \u2014 ' + em, null);
+      await loadTeamProfiles(); renderTeamView(); renderActivity();
+    }catch(err){ showError('Could not remove: ' + (err.message || err)); }
+    return;
+  }
   if(e.target.closest('[data-edit]')){ card.classList.toggle('editing'); return; }
   if(e.target.closest('[data-cancel]')){ card.classList.remove('editing'); renderTeamView(); return; }
   if(e.target.closest('[data-photo]')){ card.querySelector('.tmFile').click(); return; }
@@ -12063,13 +12150,18 @@ document.getElementById('tmMount').addEventListener('click', async function(e){
     return;
   }
   if(e.target.closest('[data-save]')){
+    var rsel = card.querySelector('.tmRoleSel');
     var row = {
       email: em,
       name: card.querySelector('.tmName').value.trim() || null,
       title: card.querySelector('.tmTitle').value.trim() || null,
       phone: card.querySelector('.tmPhone').value.trim() || null,
+      role: rsel ? rsel.value : null,
       updated_at: new Date().toISOString()
     };
+    if(currentUser && em === currentUser.email && roleFor(em) === 'admin' && row.role !== 'admin'){
+      if(!confirm('You are removing your OWN admin access \u2014 you will lose the Team page and admin menus. Continue?')) return;
+    }
     try{
       var r = await sb.from('team_profiles').upsert(row, { onConflict: 'email' });
       if(r.error) throw r.error;
@@ -12257,7 +12349,10 @@ async function enableNotifications(){
     if(__restorableHash() && !__restored) document.body.classList.add('restoring');
     var r = _smw(em);
     setTimeout(window.__tryRestoreFromHash, 60);
-    loadTeamProfiles().then(function(){ try{ renderActivity(); }catch(e){} });
+    loadTeamProfiles().then(function(){
+      try{ renderActivity(); }catch(e){}
+      try{ if(currentUser) applyRoleUi(currentUser.email); }catch(e){}
+    });
     return r;
   };
   window.addEventListener('popstate', async function(e){
