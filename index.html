@@ -313,20 +313,21 @@ footer.site{
 .pcard .ft{font:700 11px 'Segoe UI',Arial,sans-serif;opacity:.85;margin-top:5px;display:flex;justify-content:space-between;gap:8px;}
 
 /* ---- profile ---- */
-.projhead{display:flex;gap:14px;margin:16px 0 8px;align-items:stretch;flex-wrap:wrap;}
-.projinfo{flex:1;min-width:240px;background:#fff;border:1px solid var(--line);border-radius:12px;
-  padding:13px 15px 34px;position:relative;transition:box-shadow .18s, border-color .18s, transform .18s;}
-.projinfo:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);border-color:#d9b8b0;transform:translateY(-1px);}
-.projinfo h2{margin:0 0 7px;font-size:21px;display:flex;align-items:center;gap:8px;}
+.projhead{display:flex;gap:12px;margin:16px 0 8px;align-items:flex-start;flex-wrap:nowrap;position:relative;}
+.projinfo{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:13px 15px 42px;position:relative;transition:box-shadow .18s, border-color .18s;}
+.projinfo:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);border-color:#d9b8b0;}
+.projinfo h2{margin:0 0 9px;font-size:20px;line-height:1.15;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .namestar{cursor:pointer;font-size:20px;color:#c9bfb9;user-select:none;line-height:1;}
 .namestar.on{color:#e8a900;}
-.mrow{display:flex;gap:10px;align-items:baseline;font:600 14px/1.75 'Segoe UI',Arial,sans-serif;color:#1b1b1b;}
+.mrow{display:flex;gap:10px;align-items:baseline;font:600 14px/1.45 'Segoe UI',Arial,sans-serif;color:#1b1b1b;margin-bottom:3px;}
 .mrow a{color:#1d4f91;text-decoration:none;font-weight:700;}
-.mlbl{flex:0 0 68px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.07em;color:#9a8c85;}
-.editpencil{position:absolute;bottom:9px;right:10px;border:1px solid var(--line);background:#faf7f5;
-  border-radius:9px;width:36px;height:32px;font-size:15px;cursor:pointer;color:#8a6f66;}
+.mlbl{flex:0 0 60px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;color:#9a8c85;}
+.editpencil{position:absolute;bottom:8px;right:8px;border:1px solid var(--line);background:#faf7f5;
+  border-radius:9px;width:34px;height:30px;font-size:15px;cursor:pointer;color:#8a6f66;z-index:2;
+  display:inline-flex;align-items:center;justify-content:center;}
 .editpencil:hover{background:#f3e9e4;color:#9c1822;}
-.projcover{position:relative;flex:0 0 116px;align-self:flex-start;width:116px;height:116px;min-height:0;border:1.5px dashed #d5c8c2;border-radius:12px;
+.projcover{position:relative;flex:0 0 104px;align-self:flex-start;width:104px;height:104px;min-height:0;border:1.5px dashed #d5c8c2;border-radius:12px;
   background:linear-gradient(160deg,#f6f1ee,#ece3de);display:flex;align-items:center;justify-content:center;color:#b3a49d;
   font:700 11px 'Segoe UI',Arial,sans-serif;overflow:hidden;transition:box-shadow .18s;}
 .projcover:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);}
@@ -360,7 +361,7 @@ footer.site{
   font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
 .tradegrid label span, .tradegrid label{overflow:hidden;text-overflow:ellipsis;}
 
-@media (max-width:640px){ .projcover{flex:0 0 100px;width:100px;height:100px;} .projinfo{padding:12px 13px 32px;} }
+@media (max-width:640px){ .projcover{flex:0 0 92px;width:92px;height:92px;} .projinfo{padding:12px 13px 40px;} }
 
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
@@ -1412,7 +1413,11 @@ body.restoring #restoreVeil{display:flex;}
 .ljcols{display:grid;grid-template-columns:230px minmax(300px,1.1fr) minmax(300px,1fr);gap:14px;align-items:start;}
 .ljfilters{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;position:sticky;top:calc(var(--headh,110px) + 10px);
   max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
-.ljfhead{font:800 16px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;margin-bottom:6px;}
+.ljfhead{font:800 16px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;margin-bottom:6px;cursor:pointer;user-select:none;}
+.ljfchev{display:inline-block;font-size:12px;color:#C8202E;transition:transform .18s;transform:rotate(90deg);}
+.ljfilters.ljcollapsed .ljfchev{transform:rotate(0deg);}
+.ljfilters.ljcollapsed #ljFilterBody{display:none;}
+.ljfilters.ljcollapsed .ljfhead{margin-bottom:0;}
 .ljgroup{margin-top:10px;border-top:1px solid #f0e8e2;padding-top:8px;}
 .ljgroup > b{display:block;font:800 12px 'Segoe UI',Arial,sans-serif;color:#C8202E;cursor:pointer;
   text-transform:none;letter-spacing:.01em;}
@@ -1609,10 +1614,19 @@ body.restoring #restoreVeil{display:flex;}
   /* watermark photo off on mobile */
   #mainView .homecols{background-image:none;}
 
-  /* title centered between logo and buttons */
+  /* title / client-name centered between logo and buttons */
   .titlecard{order:2;flex:1;min-width:0;justify-content:center;
     text-align:center;padding:0 4px;}
+  #brandCtx{order:2;}
   .titlecard h1{font-size:15px !important;letter-spacing:.03em;}
+  /* project open on phones: the client name takes the whole first row,
+     the section dropdown + Menu + New wrap onto a tidy second row */
+  body.projopen .headactions{flex-wrap:wrap;row-gap:6px;}
+  body.projopen #brandCtx{order:2;flex:1 1 100%;}
+  body.projopen #brandLogo{order:1;}
+  body.projopen #navWrap{order:3;margin-left:0;}
+  body.projopen #newWrap{order:4;margin-left:auto;}
+  body.projopen .jobmenu-head{max-width:150px;}
 
   /* + button (no word) beside Menu */
   #newWrap{order:3;}
@@ -1731,7 +1745,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 96 &#8212; header + layout fixes</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 98 &#8212; header menu + profile card</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -1935,9 +1949,12 @@ body:has(#loginView[style*="block"]){background:#fff;}
       </select>
     </div>
     <div class="ljcols">
-      <aside class="ljfilters" id="ljFilters">
-        <div class="ljfhead">Filters <button class="chipbtn" id="ljClearBtn" style="float:right;">Clear</button></div>
-        <div id="ljFilterMount"></div>
+      <aside class="ljfilters ljcollapsed" id="ljFilters">
+        <div class="ljfhead" id="ljFHead"><span class="ljfchev">&#9656;</span> Filters
+          <button class="chipbtn" id="ljClearBtn" style="float:right;">Clear</button></div>
+        <div id="ljFilterBody">
+          <div id="ljFilterMount"></div>
+        </div>
       </aside>
       <section class="ljresults">
         <div class="ljrhead">Results (<span id="ljCount">0</span>)</div>
@@ -2005,8 +2022,8 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <select id="stageSel" style="display:none;"></select>
           <button class="btn" id="contactedBtn" style="display:none;">&#10003; Contacted &#8594; Prospect</button>
         </div>
-      </div>
         <button id="projEditBtn" class="editpencil" title="Edit client info">&#9998;</button>
+      </div>
       <div class="projcover" id="projCover">
         <span id="projCoverEmpty">&#128247;<br>Add photo</span>
         <button class="chipbtn" id="projCoverBtn">&#128247;</button>
@@ -5700,6 +5717,10 @@ document.getElementById('ljSort').addEventListener('change', function(){
 document.getElementById('ljClearBtn').addEventListener('click', function(){
   ljState.sets = {}; document.getElementById('ljSearch').value = ''; renderLeadsView();
 });
+document.getElementById('ljFHead').addEventListener('click', function(e){
+  if(e.target.closest('#ljClearBtn')) return;
+  document.getElementById('ljFilters').classList.toggle('ljcollapsed');
+});
 document.getElementById('ljFilterMount').addEventListener('click', function(e){
   var hdr = e.target.closest('.ljgroup > b');
   if(hdr){
@@ -7904,27 +7925,11 @@ function setHeaderJobMenu(on){
   var nb = document.getElementById('navBtn');
   if(jm) jm.style.display = on ? 'inline-block' : 'none';
   document.body.classList.toggle('projopen', !!on);
-  /* phones: dock the tab dropdown + the plus button beside the client pill.
-     Each element remembers its true home so undocking can never miss. */
-  try{
-    var rs = document.getElementById('repStrip');
-    var nw = document.getElementById('navWrap');
-    var pw = document.getElementById('newWrap');
-    if(rs && nw && pw){
-      [nw, pw].forEach(function(el){
-        if(!el.__homeParent){ el.__homeParent = el.parentElement; el.__homeNext = el.nextSibling; }
-      });
-      if(on && window.innerWidth <= 700){
-        if(nw.parentElement !== rs){ rs.appendChild(nw); rs.appendChild(pw); rs.classList.add('docked'); }
-      }else if(nw.parentElement === rs){
-        [pw, nw].forEach(function(el){
-          el.__homeParent.insertBefore(el, el.__homeNext && el.__homeNext.parentElement === el.__homeParent ? el.__homeNext : null);
-        });
-        rs.classList.remove('docked');
-      }
-    }
-  }catch(e){ console.error('header dock', e); }
-  if(nb) nb.style.display = on ? 'none' : 'inline-block';
+  /* Menu button and + stay in the masthead the whole time; only the brand
+     center swaps between the CARDINAL title and the client PO/name. */
+  if(nb) nb.style.display = 'inline-block';
+  var nw = document.getElementById('navWrap');
+  if(nw) nw.style.display = 'inline-block';
   var bt = document.getElementById('brandTitle');
   var bc = document.getElementById('brandCtx');
   if(bt) bt.style.display = on ? 'none' : 'flex';
@@ -8594,7 +8599,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'settings'){ openSettingsView(); }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'companydocs'){ openCompanyDocs(); }
-  else if(nav === 'quickinsp'){ openQuickInsp(); }
+  else if(nav === 'quickinsp'){ qiFreshStart(); }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
 });
@@ -8685,9 +8690,22 @@ function qiRestore(){
   }catch(e){ return false; }
 }
 
-function openQuickInsp(){
+function qiFreshStart(){
+  /* menu entry always begins a brand-new inspection (never the last client) */
+  try{ localStorage.removeItem('qi_session'); }catch(e){}
+  qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null, ai:false };
+  qiAddr = '';
+  var stream = document.getElementById('qiStream');
+  if(stream) stream.innerHTML = '';
+  var chips = document.getElementById('qiChips');
+  if(chips) chips.innerHTML = '';
+  var forLine = document.getElementById('qiForLine');
+  if(forLine) forLine.innerHTML = '';
+  openQuickInsp(false);
+}
+function openQuickInsp(allowResume){
   hideAllViews();
-  if(!qi.projectId && qiRestore()){
+  if(allowResume && !qi.projectId && qiRestore()){
     document.getElementById('quickInspView').style.display = 'block';
     document.getElementById('qiForLine').innerHTML = 'Inspecting for <b>' + esc(qi.projectName) + '</b>' +
       (qiAddr ? ' &nbsp;\u00b7&nbsp; ' + esc(qiAddr) : '');
@@ -11621,7 +11639,7 @@ document.getElementById('landSkip').addEventListener('click', function(){
 });
 document.getElementById('landQuick').addEventListener('click', function(){
   document.getElementById('landingView').style.display = 'none';
-  openQuickInsp();
+  openQuickInsp(true);
 });
 
 function showMain(userEmail){
