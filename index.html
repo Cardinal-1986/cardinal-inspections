@@ -326,15 +326,17 @@ footer.site{
 .editpencil{position:absolute;bottom:9px;right:10px;border:1px solid var(--line);background:#faf7f5;
   border-radius:9px;width:36px;height:32px;font-size:15px;cursor:pointer;color:#8a6f66;}
 .editpencil:hover{background:#f3e9e4;color:#9c1822;}
-.projcover{position:relative;flex:0 0 104px;align-self:flex-start;height:104px;min-height:0;border:1.5px dashed #d5c8c2;border-radius:12px;
+.projcover{position:relative;flex:0 0 116px;align-self:flex-start;width:116px;height:116px;min-height:0;border:1.5px dashed #d5c8c2;border-radius:12px;
   background:linear-gradient(160deg,#f6f1ee,#ece3de);display:flex;align-items:center;justify-content:center;color:#b3a49d;
-  font:700 12px 'Segoe UI',Arial,sans-serif;overflow:hidden;transition:box-shadow .18s;}
+  font:700 11px 'Segoe UI',Arial,sans-serif;overflow:hidden;transition:box-shadow .18s;}
 .projcover:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);}
 .projcover.hasimg{border-style:solid;border-color:var(--line);}
 .projcover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;transition:transform .35s;}
 .projcover:hover img{transform:scale(1.05);}
-.projcover .chipbtn{position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,.95);padding:5px 9px;z-index:2;
-  border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+.projcover .chipbtn{position:absolute;bottom:5px;right:5px;background:rgba(255,255,255,.95);padding:4px 7px;z-index:2;
+  border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.2);font-size:13px;line-height:1;max-width:calc(100% - 10px);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#projCoverEmpty{text-align:center;line-height:1.35;padding:0 6px;}
 .projinfo h2{margin:2px 0 6px;font-size:24px;}
 .projmeta{font:14px/1.7 'Segoe UI',Arial,sans-serif;color:#444;}
 .projmeta b{display:inline-block;min-width:76px;color:#8a6f66;font-weight:700;}
@@ -358,7 +360,7 @@ footer.site{
   font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
 .tradegrid label span, .tradegrid label{overflow:hidden;text-overflow:ellipsis;}
 
-@media (max-width:640px){ .projcover{flex:0 0 88px;height:88px;} .projinfo{padding:12px 13px 32px;} }
+@media (max-width:640px){ .projcover{flex:0 0 100px;width:100px;height:100px;} .projinfo{padding:12px 13px 32px;} }
 
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
@@ -755,9 +757,10 @@ html, body{overflow-x:hidden;max-width:100%;}
 .locaddr{font:600 14.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;flex:1;}
 .locgo{font:700 13px 'Segoe UI',Arial,sans-serif;color:#1d4f91;white-space:nowrap;}
 
-#headCtx{flex:1;text-align:center;font:800 15.5px 'Segoe UI',Arial,sans-serif;color:#fff;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;padding:0 6px;}
-#headCtx small{color:#e8b7ba;font-weight:700;}
+#brandCtx{flex:1;min-width:0;}
+#headCtx{display:block;text-align:center;font-size:17px;font-weight:800;color:#fff;letter-spacing:.02em;
+  font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+#headCtx small{color:#e8b7ba;font-weight:700;font-size:inherit;}
 
 .payring{width:86px;height:86px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
   background:conic-gradient(#7CB342 0%, #d9d9d9 0);}
@@ -789,7 +792,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 @media (max-width:640px){
   .titlecard h1{font-size:14px !important;}
   .headactions .btn{padding:0 11px;font-size:13px;}
-  #headCtx{font-size:13px;}
+  #headCtx{font-size:14px;}
   .jobmenu-head{max-width:112px;font-size:12px;padding:8px 26px 8px 9px;background-position:right 8px center;}
 }
 
@@ -810,8 +813,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .reppill:empty{display:none;}
 .reppill b, .reppill small{color:#fff;}
-#headCtx{color:#fff;font-size:13px;}
-#headCtx small{color:#e8b7ba;}
+
 
 .collhead{cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .collhead:hover{color:#9c1822;}
@@ -1164,7 +1166,7 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 /* pills flex-share the leftover space — overflow is impossible by construction */
 .repstrip.docked .reppill{flex:1 1 0;min-width:0;max-width:none;}
 #repPill{display:none !important;}
-.repstrip.docked #headCtx{flex:1 1 auto;max-width:none;}
+
 .repstrip.docked #navWrap{flex:0 0 auto;margin-left:2px;}
 .repstrip.docked .jobmenu-head{width:118px;max-width:118px;padding:8px 24px 8px 9px;background-position:right 7px center;}
 .repstrip.docked #newWrap{flex:0 0 auto;}
@@ -1178,6 +1180,7 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 /* ---- phone: client-profile fit pass ---- */
 @media (max-width:700px){
   body.projopen #brandTitle{display:none;}
+  body.projopen #brandCtx{display:flex !important;}
   body.projopen .jobmenu-head{max-width:130px;}
   /* milestones fit without side-scroll (id-anchored: beats base rules regardless of order) */
   #acxMount .mssteps{overflow-x:visible;min-width:0;}
@@ -1238,20 +1241,23 @@ body.restoring #restoreVeil{display:flex;}
 .acxsec{background:#fff;border:1px solid #ddd6cf;border-radius:6px;margin-bottom:14px;overflow:visible;}
 /* AccuLynx-style activity tiles (photo album / inspections) */
 .jaboxrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px;}
-.jabox{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
-  padding:15px 13px;cursor:pointer;font:700 14.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
+.jabox{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
+  padding:14px 11px;cursor:pointer;font:700 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
   min-width:0;-webkit-user-select:none;user-select:none;}
-.jabox > b{flex:0 0 auto;}
+.jabox .jbl{flex:1;min-width:0;overflow-wrap:break-word;line-height:1.2;}
+.jabox > b{flex:0 0 auto;margin-left:6px;}
+@media (max-width:380px){ .jabox{font-size:13px;padding:13px 9px;} }
 .jabox:active{background:#f6f3f0;}
 .jabox .jan{margin-left:auto;font:800 17px 'Segoe UI',Arial,sans-serif;color:#F7941E;}
 .jabox .jan.zero{color:#c9c9c9;}
 /* client dashboard */
-.dbstage{display:flex;align-items:center;gap:6px;color:#fff;border-radius:8px;padding:11px 10px;margin:0 0 12px;}
+.dbstage{display:flex;align-items:center;gap:4px;color:#fff;border-radius:8px;padding:12px 6px;margin:0 0 12px;}
 .dbstgmid{flex:1;text-align:center;min-width:0;}
-.dbstgmid b{display:block;font:800 18px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;}
-.dbstgmid small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;opacity:.85;margin-top:1px;}
-.dbstgarr{flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);
-  border:1px solid rgba(255,255,255,.55);color:#fff;font:800 21px/1 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.dbstgmid b{display:block;font:800 19px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;}
+.dbstgmid small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;opacity:.9;margin-top:1px;}
+.dbstgarr{flex:0 0 auto;width:34px;height:44px;background:none;border:none;color:#fff;
+  font:800 30px/1 'Segoe UI',Arial,sans-serif;cursor:pointer;opacity:.92;padding:0;}
+.dbstgarr:active{opacity:.6;}
 .dbstgarr.ghost{visibility:hidden;}
 .dbic2{width:21px;height:21px;flex:0 0 auto;color:#23507e;}
 .dbic1{flex:0 0 auto;width:22px;text-align:center;color:#23507e;font:800 21px 'Segoe UI',Arial,sans-serif;}
@@ -1701,6 +1707,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
         </div>
       </span>
       <div class="titlecard" id="brandTitle"><h1>CARDINAL <span>RESOURCE</span></h1></div>
+      <div class="titlecard" id="brandCtx" style="display:none;"><span id="headCtx"></span></div>
       <span id="navWrap" style="display:none;">
         <select id="jobMenuSel" class="jobmenu jobmenu-head" style="display:none;">
           <option value="overview">Overview</option>
@@ -1724,14 +1731,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 95 &#8212; dashboard polish</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 96 &#8212; header + layout fixes</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
     </div>
     <div id="repStrip" class="repstrip" style="display:none;">
       <span class="reppill" id="repPill"></span>
-      <span class="reppill" id="headCtx"></span>
     </div>
   </div>
 </header>
@@ -4845,8 +4851,8 @@ function renderAcxOverview(){
   /* ---- job menu ---- */
   function jt(ic, label, n, act, idn){
     var zero = (n === 0 || n === '0' || n === '');
-    return '<div class="jabox" data-jm="' + act + '">' + ic + ' ' + label +
-      ' <b class="jan' + (zero ? ' zero' : '') + '"' + (idn ? ' id="' + idn + '"' : '') + '>' + n + '</b></div>';
+    return '<div class="jabox" data-jm="' + act + '">' + ic + '<span class="jbl">' + label + '</span>' +
+      '<b class="jan' + (zero ? ' zero' : '') + '"' + (idn ? ' id="' + idn + '"' : '') + '>' + n + '</b></div>';
   }
   html += '<h3 class="projsec" style="margin:18px 0 10px;">Job Menu</h3>' +
     '<div class="jaboxrow">' +
@@ -6137,8 +6143,9 @@ function openProject(id){
     im.src = pr.cover_image;
     cov.insertBefore(im, cov.firstChild);
   }
-  document.getElementById('projCoverBtn').textContent =
-    pr.cover_image ? '\u21BB Replace cover photo' : '\uD83D\uDCF7 Add cover photo';
+  var _cvBtn = document.getElementById('projCoverBtn');
+  _cvBtn.textContent = pr.cover_image ? '\u21BB' : '\uD83D\uDCF7';
+  _cvBtn.title = pr.cover_image ? 'Replace cover photo' : 'Add cover photo';
   document.getElementById('stageSel').value = normStage(pr.stage);
   renderFavBtn();
   document.getElementById('contactedBtn').style.display = (normStage(pr.stage) === 'Lead') ? 'inline-block' : 'none';
@@ -7918,15 +7925,12 @@ function setHeaderJobMenu(on){
     }
   }catch(e){ console.error('header dock', e); }
   if(nb) nb.style.display = on ? 'none' : 'inline-block';
+  var bt = document.getElementById('brandTitle');
+  var bc = document.getElementById('brandCtx');
+  if(bt) bt.style.display = on ? 'none' : 'flex';
+  if(bc) bc.style.display = on ? 'flex' : 'none';
   var rs = document.getElementById('repStrip');
-  if(rs){
-    rs.style.display = on ? 'flex' : 'none';
-    if(on && currentProject){
-      var rep = assignedRepOf(currentProject);
-      var nm = rep ? (DEFAULT_NAMES[rep] || String(rep).split('@')[0]) : '\u2014';
-      document.getElementById('repPill').innerHTML = 'REP \u00b7 <b>' + esc(nm) + '</b>';
-    }
-  }
+  if(rs) rs.style.display = 'none';
   setTimeout(fixHeadPad, 40);
 }
 function hideAllViews(){
