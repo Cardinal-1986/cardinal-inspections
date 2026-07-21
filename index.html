@@ -1243,6 +1243,42 @@ body.restoring #restoreVeil{display:flex;}
 .jabox:active{background:#f6f3f0;}
 .jabox .jan{margin-left:auto;font:800 17px 'Segoe UI',Arial,sans-serif;color:#F7941E;}
 .jabox .jan.zero{color:#c9c9c9;}
+/* client dashboard */
+.dbstage{display:flex;align-items:center;gap:10px;color:#fff;border-radius:8px;padding:12px 14px;margin:0 0 12px;
+  font:800 17px 'Segoe UI',Arial,sans-serif;}
+.dbstage small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;opacity:.85;}
+.dbadv{margin-left:auto;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.55);color:#fff;
+  border-radius:14px;padding:6px 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.dbcover{width:52px;height:52px;border-radius:8px;object-fit:cover;margin-left:auto;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.6);}
+.dbadv + .msmenu, .dbcover + .dbadv{margin-left:10px;}
+.dbmoney{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #ddd6cf;
+  border-radius:8px;padding:14px 16px;margin-bottom:12px;}
+.dbmoney small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a8078;letter-spacing:.04em;}
+.dbmoney b{font:800 19px 'Segoe UI',Arial,sans-serif;}
+.dbring{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.dbringin{width:58px;height:58px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+  font:800 14px 'Segoe UI',Arial,sans-serif;}
+.dbrow{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #ddd6cf;border-radius:8px;
+  padding:14px 16px;margin-bottom:12px;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none;}
+.dbrow:active{background:#f6f3f0;}
+.dbrow .dbgo{margin-left:auto;color:#4a90d9;font-size:22px;font-weight:800;}
+.rt2{float:right;font:700 12.5px 'Segoe UI',Arial,sans-serif;}
+.rt2 a{color:#4a90d9;text-decoration:none;}
+.dbprim small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a8078;}
+.dbprim b{font:800 17px 'Segoe UI',Arial,sans-serif;}
+.dbcbtns{display:flex;gap:10px;margin-top:11px;flex-wrap:wrap;}
+.dbcb{flex:1;min-width:88px;text-align:center;background:#fff;border:1.5px solid #4a90d9;color:#4a90d9;border-radius:8px;
+  padding:10px 6px;font:700 13.5px 'Segoe UI',Arial,sans-serif;text-decoration:none;}
+.dbcb.off{opacity:.35;border-color:#bbb;color:#888;}
+.dbmap{height:172px;border-radius:8px;overflow:hidden;background:#ece7e2;position:relative;z-index:0;}
+.dbassign{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.dbrep{font:700 15px 'Segoe UI',Arial,sans-serif;}
+.dbmore .dbmrow{padding:9px 0 0;margin-top:9px;border-top:1px solid #eee7e0;font:600 13.5px 'Segoe UI',Arial,sans-serif;}
+.payhead{display:flex;justify-content:space-between;background:#eef1f4;padding:12px 14px;
+  font:800 16px 'Segoe UI',Arial,sans-serif;color:#23405e;border-radius:6px;margin:10px 0 6px;}
+.paynet{background:#e9ecef;padding:12px 14px;border-radius:6px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#555;margin-top:14px;}
+.paynet b{font-size:17px;color:#222;}
 .acxhead{background:#f3f1ee;border-bottom:1px solid #ddd6cf;padding:9px 14px;
   font:800 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;display:flex;align-items:center;gap:10px;position:relative;}
 .acxhead .rt{margin-left:auto;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#5c4a42;display:flex;align-items:center;gap:8px;}
@@ -1682,7 +1718,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 93 &#8212; photo album + inspection photo set</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 94 &#8212; client dashboard</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -1977,8 +2013,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <span style="text-align:right;"><small>Balance Due</small><b id="balanceLbl" style="color:#C8202E;">--</b></span>
       </div>
 
-      <h3 class="projsec" style="margin-top:18px;">&#128178; Worksheet</h3>
-      <div id="wsMount"></div>
 
       <h3 class="projsec" style="margin-top:20px;">Job Activity</h3>
       <div class="jagrid" id="jaGrid"></div>
@@ -2182,6 +2216,91 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <input type="file" id="galCamInput" accept="image/*" capture="environment" style="display:none;">
       </div>
       <div id="galGrid" class="galgrid"></div>
+  </div>
+</div>
+
+<!-- ============ PAYMENTS PAGE ============ -->
+<div id="paymentsView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <button class="btn dark" id="payBackBtn">&larr; Back to client profile</button>
+    <h2 class="viewhead">&#128178; Payments <span id="payClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+    <div id="paySummary"></div>
+    <h3 class="projsec" style="margin-top:22px;">&#128200; Contract Worksheet</h3>
+    <p class="subnote">Contract totals and payments received against them. Signed contracts set the Job Value.</p>
+    <div id="wsMount"></div>
+    <h3 class="projsec" style="margin-top:22px;">&#128203; Payment Log</h3>
+    <div style="margin:6px 0 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select id="payKind" class="acxsel">
+        <option value="in">Received (money in)</option>
+        <option value="out">Paid out</option>
+        <option value="exp">Additional job expense</option>
+      </select>
+      <input id="payAmt" class="acxsel" type="number" inputmode="decimal" placeholder="$ amount" style="width:110px;">
+      <input id="payNote" class="acxsel" type="text" placeholder="note (check #, vendor&#8230;)" style="flex:1;min-width:140px;">
+      <button class="btn" id="payAddBtn">Add</button>
+      <span id="payStatus" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#666;"></span>
+    </div>
+    <div id="payLog"></div>
+  </div>
+</div>
+
+<!-- ============ TASKS PAGE ============ -->
+<div id="tasksView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <button class="btn dark" id="tskBackBtn">&larr; Back to client profile</button>
+    <h2 class="viewhead">&#128204; Tasks <span id="tskClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+    <div style="margin:6px 0 12px;">
+      <button class="btn" id="tskNewBtn">+ New task</button>
+    </div>
+    <div id="tskMount"></div>
+  </div>
+</div>
+
+<!-- ============ JOB DOCUMENTS PAGE ============ -->
+<div id="docsView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <button class="btn dark" id="jdBackBtn">&larr; Back to client profile</button>
+    <h2 class="viewhead">&#128193; Job Documents <span id="jdClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+    <p class="subnote">Receipts, delivery tickets, signed paperwork, voice memos &#8212; anything for this job.
+    Scans and uploads are visible to the whole team.</p>
+    <div style="margin:6px 0 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="chipbtn" id="jdScanBtn" style="background:#C8202E;color:#fff;border-color:#C8202E;">&#128247; Scan document</button>
+      <button class="chipbtn" id="jdUploadBtn">&#11014;&#65039; Upload files</button>
+      <span id="jdStatus" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#666;"></span>
+      <input type="file" id="jdScanInput" accept="image/*" capture="environment" style="display:none;">
+      <input type="file" id="jdFileInput" accept="*/*" multiple style="display:none;">
+    </div>
+    <div id="jdMount"><div class="loading">Loading&#8230;</div></div>
+  </div>
+</div>
+
+<!-- ============ APPOINTMENTS PAGE ============ -->
+<div id="apptsView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;">
+    <button class="btn dark" id="apBackBtn">&larr; Back to client profile</button>
+    <h2 class="viewhead">&#128197; Appointments <span id="apClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+    <p class="subnote">Everything scheduled for this job &#8212; these also show on the team calendar.</p>
+    <div class="acxsec"><div class="acxbody" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+      <label style="font:700 12px 'Segoe UI',Arial,sans-serif;color:#6b5f58;">Type<br>
+        <select id="apKind" class="acxsel">
+          <option value="Inspection">&#128269; Inspection</option>
+          <option value="Client meeting">&#129309; Client meeting</option>
+          <option value="Adjuster appointment">&#128188; Adjuster appointment</option>
+          <option value="Material delivery">&#128666; Material delivery</option>
+          <option value="Job start">&#128296; Job start</option>
+          <option value="Final walk-around">&#9989; Final walk-around</option>
+          <option value="Follow-up">&#9200; Follow-up</option>
+          <option value="Other">&#128197; Other</option>
+        </select></label>
+      <label style="font:700 12px 'Segoe UI',Arial,sans-serif;color:#6b5f58;">Date<br>
+        <input type="date" id="apDate" class="acxsel"></label>
+      <label style="font:700 12px 'Segoe UI',Arial,sans-serif;color:#6b5f58;">Time<br>
+        <input type="time" id="apTime" class="acxsel"></label>
+      <input type="text" id="apNotes" class="acxsel" placeholder="notes (optional)" style="flex:1;min-width:130px;">
+      <button class="btn" id="apAddBtn">Add</button>
+    </div></div>
+    <span id="apStatus" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#666;"></span>
+    <div id="apMount" style="margin-top:12px;"></div>
   </div>
 </div>
 
@@ -4658,244 +4777,174 @@ function renderAcxOverview(){
   var pr = currentProject;
   var ck = parseCkAll(pr);
   var stg = normStage(pr.stage);
-  var rank = acxRank(stg);
   var nx = acxNext(stg);
   var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
   var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
-  var invs = docs.filter(function(r){ return /^invoice/i.test((r.title||'').trim()); });
-  var appts = cacheAppts.filter(function(a){ return a.project_id === pr.id; })
-    .sort(function(a,b){ return String(a.appt_date||'').localeCompare(String(b.appt_date||'')); });
-  var fin = jobFinance(pr);
-  var tasks = (ck.tasks || []);
-  var otherJobs = cacheProjects.filter(function(p){
-    return p.id !== pr.id && ((pr.phone && p.phone === pr.phone) || (pr.name && p.name === pr.name));
-  }).length;
-  var isLost = stg === 'Lost';
-  /* ---- milestones ---- */
-  var stepData = ACX_STEPS.map(function(st){
-    var reached = !isLost && acxRank(st.s) <= (stg === 'Scheduled' && st.s === 'Approved' ? acxRank('Approved') : rank);
-    if(st.s !== 'Lead' && ck['t_' + st.s]) reached = true;
-    if(st.s === 'Lead') reached = true;
-    var dt = st.s === 'Lead' ? (ck.t_Lead || pr.created_at) : ck['t_' + st.s];
-    return { st: st, reached: reached, dt: dt ? new Date(dt) : null };
-  });
-  var steps = stepData.map(function(sd, i){
-    var dur = '';
-    if(i > 0 && sd.reached && sd.dt && stepData[i-1].dt){
-      dur = acxDur(stepData[i-1].dt.getTime(), sd.dt.getTime());
-    } else if(i > 0 && !sd.reached && stepData[i-1].reached && stepData[i-1].dt && acxRank(stepData[i-1].st.s) === (stg === 'Scheduled' ? acxRank('Approved') : rank) && !isLost){
-      dur = acxDur(stepData[i-1].dt.getTime(), Date.now()) + ' so far';
-    }
-    return '<div class="msstep' + (sd.reached ? ' hit' : '') + '">' +
-      (dur ? '<span class="dur">' + dur + '</span>' : '') +
-      '<span class="mc" style="background:' + (sd.reached ? sd.st.c : '#c9c2bb') + ';">' + sd.st.l + '</span>' +
-      '<small>' + sd.st.s + '</small><span class="dt">' + (sd.reached && sd.dt ? acxDate(sd.dt) : '--') + '</span></div>';
-  }).join('');
-  var menuBtns = '';
-  if(!isLost && nx) menuBtns += '<button data-act="adv">&#9654; Advance to ' + esc(nx) + '</button>';
-  if(!isLost && stg !== 'Closed') menuBtns += '<button class="red" data-act="dead">&#10006; Mark Lead Dead</button>';
-  if(isLost) menuBtns += '<button data-act="reopen">&#8634; Reopen as Lead</button>';
-  var html =
-  '<div class="acxsec"><div class="acxhead">Milestones' +
-    '<span class="rt">In ' + esc(isLost ? 'Lost' : stg) + ' Milestone: <b>&nbsp;' + acxAgo(ck.stage_since || pr.updated_at) + '</b>' +
-    '<span class="msmenu"><span class="dots" id="msDots">&#8226;&#8226;&#8226;</span>' +
-    '<span class="msdrop" id="msDrop">' + menuBtns + '</span></span></span></div>' +
-  '<div class="acxbody"><div class="mswrap">' +
-    '<div class="msleft">' +
-      '<div class="lbl green">STATUS: <span class="val">' + esc(isLost ? 'Lost' + (ck.loss_reason ? ' \u2014 ' + ck.loss_reason : '') : stg) + '</span></div>' +
-      (!isLost && nx ? '<div class="lbl orange" style="margin-top:4px;">NEXT STEP: <span class="val">' + esc(nx) + '</span></div>' : '') +
-      (!isLost && nx ? '<button class="axbtn green" id="acxAdvBtn" style="margin-top:12px;">Advance Job</button>' : '') +
-    '</div>' +
-    '<div class="mssteps">' + steps + '</div>' +
-  '</div></div></div>';
-  /* ---- job activity ---- */
-  function jai(lbl, n, tab){
-    var z = (n === 0 || n === '0');
-    return '<div class="jaitem" data-tab="' + (tab || '') + '">' + lbl +
-      ' <b class="' + (z ? 'zero' : '') + '" ' + (lbl === 'Photos' ? 'id="acxPhotoN"' : '') + '>' + n + '</b></div>';
-  }
-  html +=
-  '<div class="acxsec"><div class="acxhead">Job Activity' +
-    '<span class="rt">Last Touched: <b>&nbsp;' + acxAgo(pr.updated_at || pr.created_at) + '</b></span></div>' +
-  '<div class="jastrip">' +
-    jai('Communications', commsCount(pr), 'comms') +
-    jai('Estimates', ests.length, 'estimates') +
-    '<div class="jaitem" data-tab="estimates">Worksheet <b class="' + (fin.value ? '' : 'zero') + '">' + (fin.value ? '\u2713' : '\u2716') + '</b></div>' +
-    jai('Invoices', invs.length, 'estimates') +
-    jai('Orders', 0, 'materials') +
-    jai('Photos', '\u2026', 'album') +
-    jai('Documents', docs.length, 'inspections') +
-  '</div></div>';
-  /* ---- contact + location ---- */
-  html +=
-  '<div class="acxcols">' +
-  '<div class="acxsec"><div class="acxhead">&#128100; Primary Contact' +
-    '<span class="rt">More Contacts (0) &nbsp;<span class="acxpencil" id="acxEdit1">&#9998;</span></span></div>' +
-  '<div class="acxbody"><div class="ackv">' +
-    '<span>Name:</span><div>' + esc(pr.name || '\u2014') + (otherJobs ? ' <a href="#" style="font-weight:700;">(' + otherJobs + ' other job' + (otherJobs>1?'s':'') + ')</a>' : '') + '</div>' +
-    '<span>Company:</span><div>\u2014</div>' +
-    '<span>Phone:</span><div>' + (pr.phone ? '<a href="tel:' + esc(pr.phone) + '">' + esc(pr.phone) + '</a> : mobile' : '\u2014') + '</div>' +
-    '<span>Email:</span><div>' + (pr.email ? '<a href="mailto:' + esc(pr.email) + '">' + esc(pr.email) + '</a>' : '\u2014') + '</div>' +
-    '<span>Mailing:</span><div>Same as Location</div>' +
-    '<span>Billing:</span><div>Same as Location</div>' +
-    '<span>Cross Reference:</span><div>' + (ck.po ? 'PO ' + esc(String(ck.po)) : '\u2014') + '</div>' +
-  '</div></div></div>' +
-  '<div class="acxsec"><div class="acxhead">&#128205; Location' +
-    '<span class="rt"><span class="acxpencil" id="acxEdit2">&#9998;</span></span></div>' +
-  '<div class="acxbody">' +
-    '<div class="acxtabs"><span class="acxtab on" data-at="loc">Location Info</span>' +
-    '<span class="acxtab" data-at="ins">Insurance</span><span class="acxtab" data-at="adj">Adjuster</span></div>' +
-    '<div id="acxLocPanel"><div class="ackv">' +
-      '<span>Address:</span><div>' + (pr.address ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '" target="_blank">' + esc(pr.address) + ' &#8599;</a>' : '\u2014') + '</div>' +
-      '<span>Category:</span><div><select class="acxsel" id="acxCat">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
-      '<span>Work Type:</span><div><select class="acxsel" id="acxWt">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service'], ck.work_type) + '</select></div>' +
-      '<span>Trade:</span><div class="acxtrs">' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
-        return '<label><input type="checkbox" class="cbx acxTr" value="' + t + '"' + (ljTrades(pr).indexOf(t) !== -1 ? ' checked' : '') + '> ' + t + '</label>';
-      }).join('') + '</div>' +
-      '<span>Lead Source:</span><div><select class="acxsel" id="acxSrc">' + acxOpts(['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social','Other'], ck.lead_source) + '</select></div>' +
-      '<span>Initial Appt:</span><div>' + (ck.t_Prospect ? acxDate(ck.t_Prospect) : '\u2014') + '</div>' +
-    '</div></div>' +
-    '<div id="acxInsPanel" style="display:none;" class="axnote">No insurance information on file \u2014 coming soon.</div>' +
-    '<div id="acxAdjPanel" style="display:none;" class="axnote">No adjuster on file \u2014 coming soon.</div>' +
-  '</div></div>' +
-  '</div>';
-  /* ---- placeholder + real sections ---- */
-  /* ---- photo album + inspections tiles (AccuLynx style) ---- */
-  var inspDocsN = docs.filter(function(r){
+  var fileDocs = docs.filter(function(r){ return /^file:/i.test((r.title || '').trim()); });
+  var inspN = docs.filter(function(r){
     var tt = (r.title || '').trim();
-    return !isEstimateTitle(tt) && !/^invoice|^contract/i.test(tt);
+    return !isEstimateTitle(tt) && !/^invoice|^contract|^file:/i.test(tt);
   }).length;
-  html += '<div class="jaboxrow">' +
-    '<div class="jabox" id="acxAlbumBox">&#128247; Photo Album <b class="jan zero" id="acxAlbumN">&#8230;</b></div>' +
-    '<div class="jabox" id="acxInspBox">&#128269; Inspections <b class="jan' + (inspDocsN ? '' : ' zero') + '">' + inspDocsN + '</b></div>' +
+  var appts = cacheAppts.filter(function(a){ return a.project_id === pr.id; }).length;
+  var fin = jobFinance(pr);
+  var tasks = ck.tasks || [];
+  var openTasks = tasks.filter(function(t){ return !t.done; }).length;
+  var me = (currentUser && currentUser.email) || '';
+  var myFirst = String(rptRepName(me) || '').split(' ')[0] || '';
+  var mentions = (ck.comments || []).filter(function(m){
+    return myFirst && String(m.text || '').toLowerCase().indexOf('@' + myFirst.toLowerCase()) !== -1;
+  }).length;
+  var html = '';
+  /* ---- stage bar (+ small cover photo) ---- */
+  html += '<div class="dbstage" style="background:' + (STAGE_COLORS[stg] || '#607D8B') + ';">' +
+    '<span><b>' + esc(stg.toUpperCase()) + '</b><small>' + esc(stageAgo(ck.stage_since || pr.updated_at || pr.created_at) || '') + '</small></span>' +
+    '<img id="dbCover" class="dbcover" style="display:none;" alt="">' +
+    (nx ? '<button id="acxAdvBtn" class="dbadv">' + esc(nx) + ' &#8250;</button>' : '') +
+    '<span class="msmenu" style="position:relative;"><span class="dots" id="msDots" style="cursor:pointer;font-size:22px;color:#fff;padding:0 6px;">&#8942;</span>' +
+    '<div id="msDrop" style="display:none;position:absolute;right:0;top:130%;z-index:70;background:#fff;border:1px solid #c9c2bf;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);min-width:180px;overflow:hidden;">' +
+      (nx ? '<button class="estopt" data-act="adv">Advance to ' + esc(nx) + '</button>' : '') +
+      (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">Mark Lost</button>' : '') +
+      (stg === 'Lost' || stg === 'Closed' ? '<button class="estopt" data-act="reopen">Reopen as Lead</button>' : '') +
+    '</div></span>' +
   '</div>';
-  html += '<div class="acxcols">';
-  var estList = ests.map(function(r){
-    return '<div class="tskrow" style="cursor:pointer;" data-doc="' + r.id + '">&#128196; <b>' + esc(r.title || 'Estimate') + '</b>' +
-      '<small>' + acxDate(r.created_at) + '</small></div>';
-  }).join('');
-  html +=
-  '<div class="acxsec"><div class="acxhead">Estimates</div><div class="acxbody">' +
-    '<div class="acxrow"><span class="axzero">' + ests.length + '</span>' +
-    '<span class="axnote">' + (ests.length ? '' : 'No estimates have been created for this job.') + '</span></div>' +
-    estList +
-    '<div class="acxrow" style="margin-top:10px;gap:8px;">' +
-      '<button class="axbtn" id="acxNewEst">Add New</button>' +
-      '<button class="chipbtn" id="acxSkipEst">' + (ck.manual_value ? '\u270E Edit manual total' : 'Skip \u2014 enter total instead') + '</button>' +
+  /* ---- money strip ---- */
+  html += '<div class="dbmoney">' +
+    '<span><small>Job Value</small><b>' + (fin.value ? fmtMoney(fin.value) : '$0.00') + '</b></span>' +
+    '<span class="dbring" style="background:conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0);"><span class="dbringin">' + fin.pct + '%</span></span>' +
+    '<span style="text-align:right;"><small>Balance Due</small><b style="color:' + (fin.balance > 0 ? '#C8202E' : '#7CB342') + ';">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
+  '</div>';
+  /* ---- payment information ---- */
+  html += '<div class="dbrow" id="dbPayRow"><span style="color:#4a90d9;font-size:19px;">&#128178;</span> Payment Information<span class="dbgo">&#8250;</span></div>';
+  /* ---- job menu ---- */
+  function jt(ic, label, n, act, idn){
+    var zero = (n === 0 || n === '0' || n === '');
+    return '<div class="jabox" data-jm="' + act + '">' + ic + ' ' + label +
+      ' <b class="jan' + (zero ? ' zero' : '') + '"' + (idn ? ' id="' + idn + '"' : '') + '>' + n + '</b></div>';
+  }
+  html += '<h3 class="projsec" style="margin:18px 0 10px;">Job Menu</h3>' +
+    '<div class="jaboxrow">' +
+      jt('&#128172;', 'Communications', commsCount(pr), 'comms') +
+      jt('&#128276;', 'Notifications', mentions, 'notifs') +
+    '</div><div class="jaboxrow">' +
+      jt('&#128247;', 'Photos / Videos', '\u2026', 'album', 'dbPhotoN') +
+      jt('&#128204;', 'Tasks', openTasks, 'tasks') +
+    '</div><div class="jaboxrow">' +
+      jt('&#128207;', 'Measurements', '\u2026', 'measure', 'dbMeasN') +
+      jt('&#128176;', 'Estimates', ests.length, 'estimates') +
+    '</div><div class="jaboxrow">' +
+      jt('&#128193;', 'Documents', fileDocs.length, 'docs') +
+      jt('&#128197;', 'Appointments', appts, 'appts') +
+    '</div><div class="jaboxrow">' +
+      jt('&#128269;', 'Inspections', inspN, 'inspections') +
+      jt('&#128230;', 'Orders', '', 'materials') +
+    '</div>';
+  /* ---- contacts ---- */
+  var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
+  var extra = ck.contacts || [];
+  html += '<h3 class="projsec" style="margin:20px 0 10px;">Contacts' +
+    '<span class="rt2"><a href="#" id="dbSwitchPrim">Switch Primary</a>&nbsp;&nbsp;<a href="#" id="dbAddContact">Add</a></span></h3>' +
+  '<div class="acxsec"><div class="acxbody">' +
+    '<div class="dbprim"><small>Primary Contact</small><b>' + esc(pr.name || '\u2014') + '</b>' +
+    ((pr.phone || pr.email) ? '<small style="margin-top:2px;">' + esc(pr.phone || '') + (pr.phone && pr.email ? ' \u00b7 ' : '') + esc(pr.email || '') + '</small>' : '') + '</div>' +
+    '<div class="dbcbtns">' +
+      (tel ? '<a class="dbcb" href="tel:' + tel + '">&#128222; Phone</a>' : '<span class="dbcb off">&#128222; Phone</span>') +
+      (tel ? '<a class="dbcb" href="sms:' + tel + '">&#128172; Text</a>' : '<span class="dbcb off">&#128172; Text</span>') +
+      (pr.email ? '<a class="dbcb" href="mailto:' + esc(pr.email) + '">&#9993;&#65039; Email</a>' : '<span class="dbcb off">&#9993;&#65039; Email</span>') +
     '</div>' +
-    (ck.manual_value
-      ? '<div class="axnote" style="margin-top:8px;">Manual job total <b>' + fmtMoney(Number(ck.manual_value)) + '</b> (transferred client) \u00b7 ' +
-        '<a href="#" id="acxClearManual" style="color:#C8202E;font-weight:800;">clear</a></div>'
-      : '') +
-    '</div></div>';
-  html +=
-  '<div class="acxsec"><div class="acxhead">Financing</div><div class="acxbody acxrow">' +
-    '<span class="axzero">0</span><span class="axnote">No loan applications have been submitted for this job.</span>' +
-    '<button class="axbtn ghost" style="margin-left:8px;">&#127974; Offer Financing</button>' +
-    '<span class="axnote">Coming soon.</span></div></div>';
-  html += '</div>';
-  html +=
-  '<div class="acxsec"><div class="acxhead">Worksheet</div><div class="acxbody">' +
-    '<div class="acxrow">' +
-    (fin.value
-      ? '<span style="color:#5a9e2f;font-size:18px;">&#10004;</span><span class="axnote">Job value <b>' + fmtMoney(fin.value) + '</b> \u00b7 paid <b>' + fmtMoney(fin.paid) + '</b> \u00b7 balance <b>' + fmtMoney(fin.balance) + '</b>' +
-        (ck.manual_value ? ' <i style="color:#8a7a72;">(manual total \u2014 transferred)</i>' : '') + '</span>'
-      : '<span style="color:#C8202E;font-size:18px;">&#10006;</span><span class="axnote">No Worksheet has been created for this job. Sign a contract \u2014 or use \u201CSkip \u2014 enter total\u201D above for transferred clients.</span>') +
-    '</div>' +
-    (fin.value
-      ? '<button class="axbtn" id="acxPayBtn" style="margin-top:10px;">\uFF0B Record payment</button>'
-      : '<button class="axbtn" id="acxNewWs" style="margin-top:10px;">New Worksheet</button>') +
+    (extra.length ? '<div class="dbmore">' + extra.map(function(c){
+      return '<div class="dbmrow">&#128100; ' + esc(c.name || '\u2014') +
+        (c.phone ? ' \u00b7 ' + esc(c.phone) : '') + (c.email ? ' \u00b7 ' + esc(c.email) : '') + '</div>';
+    }).join('') + '</div>' : '') +
   '</div></div>';
-  html += '<div class="acxcols">';
-  var ms = ck.meas || null;
-  html +=
-  '<div class="acxsec"><div class="acxhead">Measurements</div><div class="acxbody">' +
-    (ms
-      ? '<div class="ackv" style="grid-template-columns:110px 1fr 110px 1fr;">' +
-        '<span>Squares:</span><div><b>' + esc(ms.sq || '\u2014') + '</b></div>' +
-        '<span>Pitch:</span><div><b>' + esc(ms.pitch || '\u2014') + '</b></div>' +
-        '<span>Ridges:</span><div>' + esc(ms.ridge || '\u2014') + ' lf</div>' +
-        '<span>Hips:</span><div>' + esc(ms.hip || '\u2014') + ' lf</div>' +
-        '<span>Valleys:</span><div>' + esc(ms.valley || '\u2014') + ' lf</div>' +
-        '<span>Eaves:</span><div>' + esc(ms.eave || '\u2014') + ' lf</div>' +
-        '</div>'
-      : '<div class="acxrow"><span class="axzero">0</span><span class="axnote">No measurements have been created for this job.</span></div>') +
-    '<div id="acxMeasSummary" class="acxrow" style="margin-top:8px;gap:6px;"></div>' +
-    '<div class="acxrow" style="margin-top:10px;gap:8px;">' +
-      '<button class="axbtn" id="acxMeasAdd">' + (ms ? '\u270E Edit' : 'Add New') + '</button>' +
-      '<button class="chipbtn" id="acxMeasPage">Measurements page &#8250;</button>' +
-    '</div></div></div>';
-  html +=
-  '<div class="acxsec"><div class="acxhead">Orders</div><div class="acxbody">' +
-    '<div class="acxrow"><span class="axzero">0</span><span class="axnote">No orders have been created for this job.</span></div>' +
-    '<button class="axbtn" id="acxOrders" style="margin-top:10px;">New Order</button></div></div>';
-  html += '</div>';
-  /* ---- tasks ---- */
-  var myEmail = (currentUser && currentUser.email) || '';
-  var openT = tasks.filter(function(t){ return !t.done; });
-  var doneT = tasks.filter(function(t){ return t.done; });
-  var mineT = tasks.filter(function(t){ return (t.assignee || t.by) === myEmail && !t.done; });
-  var pool = acxTaskTab === 'done' ? doneT : (acxTaskTab === 'mine' ? mineT : openT);
-  if(acxTaskView !== 'All') pool = pool.filter(function(t){ return (t.pri || 'Normal') === acxTaskView; });
-  var taskRows = pool.length ? pool.map(function(t){
-    var i = tasks.indexOf(t);
-    return '<div class="tskrow' + (t.done ? ' done' : '') + '" data-viewtask="' + i + '" style="cursor:pointer;">' +
-      '<input type="checkbox" class="cbx" data-task="' + i + '"' + (t.done ? ' checked' : '') + '>' +
-      '<span class="tskpri' + ((t.pri === 'High') ? ' h' : '') + '">' + (t.pri || 'Normal') + '</span> ' +
-      '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(t.t) + '</span>' +
-      '<small>' + (t.due ? 'Due ' + acxDate(t.due) + ' \u00b7 ' : '') +
-      esc(rptRepName(t.assignee || t.by || '').split(' ')[0]) + '</small></div>';
-  }).join('') : '<div class="axnote" style="padding:6px 0;">No Tasks to show you</div>';
-  html += '<div class="acxcols">';
-  html +=
-  '<div class="acxsec rvsec"><div class="acxhead">Tasks</div><div class="acxbody">' +
-    '<div class="acxrow">' +
-    '<button class="axbtn" id="acxNewTask">Create Task</button></div>' +
-    '<div class="tsktabs">' +
-      '<span data-tt="open" class="' + (acxTaskTab==='open'?'on':'') + '">Open (' + openT.length + ')</span>' +
-      '<span data-tt="done" class="' + (acxTaskTab==='done'?'on':'') + '">Completed (' + doneT.length + ')</span>' +
-      '<span data-tt="mine" class="' + (acxTaskTab==='mine'?'on':'') + '">My Tasks (' + mineT.length + ')</span></div>' +
-    '<div class="tskview">View: ' + ['All','High','Normal'].map(function(v){
-      return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;">' +
-        '<input type="radio" name="tskv" value="' + v + '"' + (acxTaskView===v?' checked':'') + ' style="accent-color:#C8202E;"> ' + v + '</label>';
-    }).join('') + '</div>' + taskRows + '</div></div>';
-  /* ---- reviews ---- */
-  var rv = ck.review_requested_at;
-  var canAsk = ['Completed','Invoiced','Closed'].indexOf(stg) !== -1;
-  html +=
-  '<div class="acxsec rvsec rvspread"><div class="acxhead">' + GOOGLE_G + ' Google Reviews</div><div class="acxbody">' +
-    (rv
-      ? '<div class="acxrow"><span style="color:#5a9e2f;font-size:17px;">&#10004;</span>' +
-        '<span class="axnote">Review requested ' + acxDate(rv) + (ck.review_via ? ' via ' + esc(ck.review_via) : '') + '.</span></div>'
-      : '<div class="acxrow"><span class="axzero">0</span><span class="axnote">' +
-        (canAsk ? 'Job is ' + stg.toLowerCase() + ' \u2014 perfect time to ask for a Google review.'
-                : 'No review requested yet. Best asked once the job is completed.') + '</span></div>') +
-    '<div class="acxrow" style="margin-top:10px;gap:8px;">' +
-      (pr.phone ? '<button class="axbtn" data-rv="sms">\uD83D\uDCF1 Text request</button>' : '') +
-      (pr.email ? '<button class="axbtn" data-rv="email">\u2709\uFE0F Email request</button>' : '') +
-      '<button class="chipbtn" data-rv="copy">Copy message</button>' +
-    '</div>' +
-    (rv ? '<div class="axnote" style="margin-top:6px;">Tapping again sends a friendly follow-up.</div>' : '') +
-    '<label class="rvswrow">' +
-      '<span class="rvswitch"><input type="checkbox" id="rvLeftSwitch"' + (ck.review_left_at ? ' checked' : '') + '>' +
-      '<span class="trk"></span><span class="knb"></span></span>' +
-      (ck.review_left_at
-        ? '<span class="rvdone">' + GOOGLE_G + ' Review left on Google! \u2014 marked by ' +
-          esc(rptRepName(ck.review_left_by || '').split(" ")[0] || '?') + ' \u00b7 ' + acxDate(ck.review_left_at) + '</span>'
-        : '<span class="axnote">Flip when their review appears on Google</span>') +
-    '</label>' +
+  /* ---- location ---- */
+  html += '<h3 class="projsec" style="margin:20px 0 10px;">Location' +
+    '<span class="rt2"><span class="acxpencil" id="acxEdit2">&#9998;</span></span></h3>' +
+  '<div class="acxsec"><div class="acxbody">' +
+    '<div id="dbMap" class="dbmap"></div>' +
+    '<div style="margin-top:9px;">' + (pr.address
+      ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '" target="_blank" style="font-weight:700;">&#128205; ' + esc(pr.address) + ' &#8599;</a>'
+      : '<span class="axnote">No address on file \u2014 tap the pencil to add one.</span>') + '</div>' +
   '</div></div>';
-  html += '</div>';
+  /* ---- job details ---- */
+  html += '<h3 class="projsec" style="margin:20px 0 10px;">Job Details</h3>' +
+  '<div class="acxsec"><div class="acxbody"><div class="ackv">' +
+    '<span>Category:</span><div><select class="acxsel" id="acxCat">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
+    '<span>Work Type:</span><div><select class="acxsel" id="acxWt">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service'], ck.work_type) + '</select></div>' +
+    '<span>Trade:</span><div class="acxtrs">' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
+      return '<label><input type="checkbox" class="cbx acxTr" value="' + t + '"' + (ljTrades(pr).indexOf(t) !== -1 ? ' checked' : '') + '> ' + t + '</label>';
+    }).join('') + '</div>' +
+    '<span>Lead Source:</span><div><select class="acxsel" id="acxSrc">' + acxOpts(['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social','Other'], ck.lead_source) + '</select></div>' +
+    '<span>Initial Appt:</span><div>' + (ck.t_Prospect ? acxDate(ck.t_Prospect) : '\u2014') + '</div>' +
+  '</div></div></div>';
+  /* ---- google review ---- */
+  html += '<div class="acxsec"><div class="acxbody acxrow" style="flex-wrap:wrap;gap:8px;align-items:center;">' +
+    '<b style="font:700 14px \'Segoe UI\',Arial,sans-serif;">&#11088; Google review</b>' +
+    (pr.phone ? '<button class="chipbtn" data-rv="sms">Request by text</button>' : '') +
+    (pr.email ? '<button class="chipbtn" data-rv="email">Request by email</button>' : '') +
+    '<label style="margin-left:auto;font:600 12.5px \'Segoe UI\',Arial,sans-serif;"><input type="checkbox" id="rvLeftSwitch"' + (ck.review_left_at ? ' checked' : '') + '> Review left' +
+    (ck.review_left_at ? ' \u00b7 ' + acxDate(ck.review_left_at) : '') + '</label>' +
+  '</div></div>';
+  /* ---- assigned to ---- */
+  var rep = assignedRepOf(pr);
+  html += '<h3 class="projsec" style="margin:20px 0 10px;">Assigned To</h3>' +
+  '<div class="acxsec"><div class="acxbody dbassign">' +
+    '<span class="dbrep">&#128100; <b>' + esc(rptRepName(rep) || rep || 'Unassigned') + '</b></span>' +
+    (isAdminUser() ? '<select id="dbAssignSel" class="acxsel" style="margin-left:auto;">' +
+      '<option value="">reassign\u2026</option>' +
+      TEAM_ROSTER.map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
+    '</select>' : '') +
+  '</div></div>';
   mount.innerHTML = html;
-  /* async photo count */
+  /* async: photo count + cover thumb */
   photoDb.listByProject(pr.id).then(function(l){
     if(!currentProject || currentProject.id !== pr.id) return;
-    var el = document.getElementById('acxPhotoN');
+    var el = document.getElementById('dbPhotoN');
     if(el){ el.textContent = l.length; el.classList.toggle('zero', !l.length); }
-    var ab = document.getElementById('acxAlbumN');
-    if(ab){ ab.textContent = l.length; ab.classList.toggle('zero', !l.length); }
+    var cv = document.getElementById('dbCover');
+    if(cv && l.length){ cv.src = l[0].data; cv.style.display = ''; }
+    var legacy = document.getElementById('acxPhotoN');
+    if(legacy){ legacy.textContent = l.length; }
   }).catch(function(){});
-  refreshMeasSummary(pr);
+  /* async: measurement count */
+  measDb.list(pr.id).then(function(l){
+    if(!currentProject || currentProject.id !== pr.id) return;
+    var el = document.getElementById('dbMeasN');
+    if(el){ el.textContent = l.length; el.classList.toggle('zero', !l.length); }
+  }).catch(function(){
+    var el = document.getElementById('dbMeasN');
+    if(el){ el.textContent = '0'; el.classList.add('zero'); }
+  });
+  /* mini map */
+  dbInitMiniMap(pr);
+  /* fresh-element direct wiring (innerHTML replaced everything) */
+  mount.querySelectorAll('[data-jm]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var act = b.getAttribute('data-jm');
+      if(act === 'comms' || act === 'notifs'){ openCommunications(); }
+      else if(act === 'album'){ openGalleryMode('all'); }
+      else if(act === 'tasks'){ openTasksPage(); }
+      else if(act === 'docs'){ openDocsPage(); }
+      else if(act === 'appts'){ openApptsPage(); }
+      else{ showTab(act); }
+    });
+  });
+  var pRow = document.getElementById('dbPayRow');
+  if(pRow) pRow.addEventListener('click', openPaymentsPage);
+  var sw = document.getElementById('dbSwitchPrim');
+  if(sw) sw.addEventListener('click', function(e){ e.preventDefault(); dbSwitchPrimary(pr); });
+  var ad = document.getElementById('dbAddContact');
+  if(ad) ad.addEventListener('click', function(e){ e.preventDefault(); dbAddContact(pr); });
+  var asg = document.getElementById('dbAssignSel');
+  if(asg) asg.addEventListener('change', async function(){
+    if(!asg.value) return;
+    var L = parseCkAll(pr).lead || {};
+    L.assigned = [asg.value];
+    try{
+      await patchProjectCk(pr, { lead: L });
+      auditLog('assign', 'Job reassigned to ' + (rptRepName(asg.value) || asg.value) + ' \u2014 ' + (pr.name || ''), pr.id);
+      renderOverview();
+    }catch(err){ showError('Could not reassign: ' + (err.message || err)); }
+  });
   acxBindOnce(mount);
 }
 /* ---- one-time delegated wiring: order-proof, error-proof ---- */
@@ -6081,7 +6130,7 @@ function renderProjectDocs(){
   var docs = cacheRows.filter(function(r){ return currentProject && r.project_id === currentProject.id; });
   var ctrs = docs.filter(function(r){ return isContractTitle(r.title); });
   var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
-  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title); });
+  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title) && !/^file:/i.test((r.title || '').trim()); });
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
@@ -6370,6 +6419,409 @@ document.getElementById('galInspRmBtn').addEventListener('click', async function
 });
 document.getElementById('inspGalBox').addEventListener('click', function(){ openGalleryMode('insp'); });
 
+/* =========================================================================
+   CLIENT DASHBOARD PAGES — payments / tasks / job documents / appointments
+   ========================================================================= */
+var paymentsView = document.getElementById('paymentsView');
+var tasksView = document.getElementById('tasksView');
+var docsView = document.getElementById('docsView');
+var apptsView = document.getElementById('apptsView');
+function dbCloseTo(){
+  [paymentsView, tasksView, docsView, apptsView].forEach(function(v){ if(v) v.style.display = 'none'; });
+  projectView.style.display = 'block';
+  setHeaderJobMenu(true);
+  renderOverview();
+  window.scrollTo(0,0);
+}
+/* ---------- mini map ---------- */
+var dbMiniMap = null;
+async function dbInitMiniMap(pr){
+  var el = document.getElementById('dbMap');
+  if(!el) return;
+  if(!pr.address){ el.innerHTML = '<div class="axnote" style="padding:20px;">Add an address to see the map.</div>'; return; }
+  try{ await qiLoadLeaflet(); }
+  catch(e){ el.innerHTML = '<div class="axnote" style="padding:20px;">Map unavailable (offline?).</div>'; return; }
+  var ck = parseCkAll(pr);
+  var geo = ck.geo && ck.geo.addr === pr.address ? ck.geo : null;
+  if(!geo){
+    try{
+      var r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(pr.address));
+      var j = await r.json();
+      if(j && j[0]){
+        geo = { lat: parseFloat(j[0].lat), lon: parseFloat(j[0].lon), addr: pr.address };
+        try{ await patchProjectCk(pr, { geo: geo }); }catch(e2){}
+      }
+    }catch(e3){}
+  }
+  if(!currentProject || currentProject.id !== pr.id) return;
+  var el2 = document.getElementById('dbMap');
+  if(!el2) return;
+  if(!geo){ el2.innerHTML = '<div class="axnote" style="padding:20px;">Could not pin this address.</div>'; return; }
+  el2.innerHTML = '';
+  if(dbMiniMap){ try{ dbMiniMap.remove(); }catch(e4){} dbMiniMap = null; }
+  dbMiniMap = L.map(el2, { zoomControl:false, dragging:false, scrollWheelZoom:false, doubleClickZoom:false,
+                           boxZoom:false, keyboard:false, touchZoom:false, attributionControl:false })
+    .setView([geo.lat, geo.lon], 16);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(dbMiniMap);
+  L.marker([geo.lat, geo.lon]).addTo(dbMiniMap);
+  el2.style.cursor = 'pointer';
+  el2.onclick = function(){ window.open(mapsUrl(pr.address), '_blank'); };
+  setTimeout(function(){ try{ dbMiniMap.invalidateSize(); }catch(e5){} }, 200);
+}
+/* ---------- contacts ---------- */
+async function dbAddContact(pr){
+  var name = prompt('Contact name:');
+  if(name === null || !name.trim()) return;
+  var phone = prompt('Phone (optional):') || '';
+  var email = prompt('Email (optional):') || '';
+  var list = (parseCkAll(pr).contacts || []).slice();
+  list.push({ name: name.trim(), phone: phone.trim() || null, email: email.trim() || null });
+  try{ await patchProjectCk(pr, { contacts: list }); renderOverview(); }
+  catch(err){ showError('Could not add contact: ' + (err.message || err)); }
+}
+async function dbSwitchPrimary(pr){
+  var list = (parseCkAll(pr).contacts || []).slice();
+  if(!list.length){ alert('Add another contact first (Contacts \u2192 Add), then switch.'); return; }
+  var menu = list.map(function(c, i){ return (i + 1) + '. ' + (c.name || '\u2014') + (c.phone ? ' \u00b7 ' + c.phone : ''); }).join('\n');
+  var pick = prompt('Make which contact primary?\n' + menu + '\n\nEnter a number:');
+  if(pick === null) return;
+  var ix = parseInt(pick, 10) - 1;
+  if(isNaN(ix) || !list[ix]){ alert('No contact #' + pick); return; }
+  var chosen = list.splice(ix, 1)[0];
+  list.push({ name: pr.name || null, phone: pr.phone || null, email: pr.email || null });
+  try{
+    await pdb.update(pr.id, { name: chosen.name || pr.name, phone: chosen.phone, email: chosen.email });
+    pr.name = chosen.name || pr.name; pr.phone = chosen.phone; pr.email = chosen.email;
+    var cp = cacheProjects.find(function(x){ return x.id === pr.id; });
+    if(cp){ cp.name = pr.name; cp.phone = pr.phone; cp.email = pr.email; }
+    await patchProjectCk(pr, { contacts: list });
+    renderOverview();
+  }catch(err){ showError('Could not switch primary: ' + (err.message || err)); }
+}
+/* ---------- payments ---------- */
+function payTotals(pr){
+  var fin = jobFinance(pr);
+  var log = parseCkAll(pr).payments || [];
+  var out = 0, exp = 0;
+  log.forEach(function(p){
+    var a = Number(p.amt) || 0;
+    if(p.dir === 'out') out += a;
+    else if(p.dir === 'exp') exp += a;
+  });
+  return { recv: fin.paid, out: out, exp: exp, net: fin.paid - (out + exp), log: log, fin: fin };
+}
+function renderPayments(){
+  if(!currentProject) return;
+  var t = payTotals(currentProject);
+  document.getElementById('paySummary').innerHTML =
+    '<div class="payhead"><span>Received</span><b>' + fmtMoney(t.recv) + '</b></div>' +
+    '<div class="payhead"><span>Paid</span><b>' + fmtMoney(t.out) + '</b></div>' +
+    '<div class="payhead"><span>Additional Job Expenses</span><b>' + fmtMoney(t.exp) + '</b></div>' +
+    '<div class="paynet">Job Net (Received &#8722; (Paid + Additional Job Expenses))<br><b>' + fmtMoney(t.net) + '</b></div>';
+  var mount = document.getElementById('payLog');
+  mount.innerHTML = t.log.length ? t.log.slice().reverse().map(function(p, ri){
+    var i = t.log.length - 1 - ri;
+    var lbl = p.dir === 'in' ? '&#11015;&#65039; Received' : (p.dir === 'out' ? '&#11014;&#65039; Paid out' : '&#129534; Expense');
+    return '<div class="tskrow" style="display:flex;align-items:center;gap:8px;">' +
+      '<span style="flex:1;">' + lbl + ' <b>' + fmtMoney(Number(p.amt) || 0) + '</b>' +
+      (p.note ? ' \u00b7 ' + esc(p.note) : '') +
+      '<small style="display:block;">' + acxDate(p.at) + (p.by ? ' \u00b7 ' + esc(rptRepName(p.by) || p.by) : '') + '</small></span>' +
+      '<button class="chipbtn paydel" data-pi="' + i + '">&#10005;</button></div>';
+  }).join('') : '<div class="axnote">No manual entries yet. Contract payments entered on the worksheet above count as Received automatically.</div>';
+}
+function openPaymentsPage(){
+  if(!currentProject) return;
+  document.getElementById('payClient').textContent = '\u2014 ' + (currentProject.name || '');
+  projectView.style.display = 'none';
+  paymentsView.style.display = 'block';
+  window.scrollTo(0,0);
+  renderWorksheet(currentProject, jobFinance(currentProject));
+  renderPayments();
+}
+document.getElementById('payBackBtn').addEventListener('click', dbCloseTo);
+document.getElementById('payAddBtn').addEventListener('click', async function(){
+  if(!currentProject) return;
+  var amt = parseFloat(document.getElementById('payAmt').value);
+  var st = document.getElementById('payStatus');
+  if(!amt || amt <= 0){ st.textContent = 'Enter an amount first.'; setTimeout(function(){ st.textContent = ''; }, 3000); return; }
+  var log = (parseCkAll(currentProject).payments || []).slice();
+  log.push({ dir: document.getElementById('payKind').value, amt: amt,
+             note: document.getElementById('payNote').value.trim() || null,
+             at: new Date().toISOString(), by: (currentUser && currentUser.email) || null });
+  try{
+    await patchProjectCk(currentProject, { payments: log });
+    document.getElementById('payAmt').value = '';
+    document.getElementById('payNote').value = '';
+    renderPayments();
+    renderWorksheet(currentProject, jobFinance(currentProject));
+    st.textContent = '\u2713 Saved.';
+    setTimeout(function(){ st.textContent = ''; }, 2500);
+  }catch(err){ showError('Could not save payment: ' + (err.message || err)); }
+});
+document.getElementById('payLog').addEventListener('click', async function(e){
+  var b = e.target.closest('.paydel');
+  if(!b || !currentProject) return;
+  if(!confirm('Delete this payment entry?')) return;
+  var log = (parseCkAll(currentProject).payments || []).slice();
+  log.splice(parseInt(b.getAttribute('data-pi'), 10), 1);
+  try{
+    await patchProjectCk(currentProject, { payments: log });
+    renderPayments();
+  }catch(err){ showError('Could not delete: ' + (err.message || err)); }
+});
+/* ---------- tasks ---------- */
+function renderTasksPage(){
+  if(!currentProject) return;
+  var tasks = parseCkAll(currentProject).tasks || [];
+  var mount = document.getElementById('tskMount');
+  if(!tasks.length){ mount.innerHTML = '<div class="axnote">No tasks yet \u2014 tap + New task.</div>'; return; }
+  mount.innerHTML = tasks.map(function(tk, i){
+    return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;' + (tk.done ? 'opacity:.55;' : '') + '">' +
+      '<input type="checkbox" class="cbx" data-tki="' + i + '"' + (tk.done ? ' checked' : '') + '>' +
+      '<span style="flex:1;cursor:pointer;' + (tk.done ? 'text-decoration:line-through;' : '') + '" data-tkv="' + i + '">' +
+        '<b>' + esc(tk.t || '') + '</b>' +
+        '<small style="display:block;">' + (tk.due ? 'Due ' + esc(String(tk.due)) + ' \u00b7 ' : '') +
+        (tk.by ? esc(rptRepName(tk.by) || tk.by) : '') + '</small></span>' +
+      '<button class="chipbtn" data-tkd="' + i + '">&#10005;</button></div>';
+  }).join('');
+}
+function openTasksPage(){
+  if(!currentProject) return;
+  document.getElementById('tskClient').textContent = '\u2014 ' + (currentProject.name || '');
+  projectView.style.display = 'none';
+  tasksView.style.display = 'block';
+  window.scrollTo(0,0);
+  renderTasksPage();
+}
+document.getElementById('tskBackBtn').addEventListener('click', dbCloseTo);
+document.getElementById('tskNewBtn').addEventListener('click', function(){
+  if(!currentProject) return;
+  if(typeof openTaskModal === 'function'){ openTaskModal(currentProject, null); return; }
+  var t = prompt('Task:');
+  if(t === null || !t.trim()) return;
+  var list = (parseCkAll(currentProject).tasks || []).slice();
+  list.push({ t: t.trim(), done: false, by: (currentUser && currentUser.email) || null, at: new Date().toISOString() });
+  patchProjectCk(currentProject, { tasks: list }).then(renderTasksPage)
+    .catch(function(err){ showError('Could not add task: ' + (err.message || err)); });
+});
+document.getElementById('tskMount').addEventListener('change', async function(e){
+  var cb = e.target.closest('[data-tki]');
+  if(!cb || !currentProject) return;
+  var list = (parseCkAll(currentProject).tasks || []).slice();
+  var ix = parseInt(cb.getAttribute('data-tki'), 10);
+  if(!list[ix]) return;
+  list[ix].done = cb.checked;
+  list[ix].doneAt = cb.checked ? new Date().toISOString() : null;
+  list[ix].doneBy = cb.checked ? ((currentUser && currentUser.email) || null) : null;
+  try{
+    await patchProjectCk(currentProject, { tasks: list });
+    if(cb.checked) auditLog('task', 'Task completed \u2014 \u201C' + String(list[ix].t || '').slice(0, 60) + '\u201D on ' + (currentProject.name || ''), currentProject.id);
+    renderTasksPage();
+  }catch(err){ showError('Could not update task: ' + (err.message || err)); }
+});
+document.getElementById('tskMount').addEventListener('click', async function(e){
+  var del = e.target.closest('[data-tkd]');
+  if(del && currentProject){
+    if(!confirm('Delete this task?')) return;
+    var list = (parseCkAll(currentProject).tasks || []).slice();
+    list.splice(parseInt(del.getAttribute('data-tkd'), 10), 1);
+    try{ await patchProjectCk(currentProject, { tasks: list }); renderTasksPage(); }
+    catch(err){ showError('Could not delete task: ' + (err.message || err)); }
+    return;
+  }
+  var view = e.target.closest('[data-tkv]');
+  if(view && currentProject && typeof openTaskModal === 'function'){
+    openTaskModal(currentProject, parseInt(view.getAttribute('data-tkv'), 10));
+  }
+});
+/* ---------- job documents ---------- */
+function jobFileDocs(){
+  return cacheRows.filter(function(r){
+    return currentProject && r.project_id === currentProject.id && /^file:/i.test((r.title || '').trim());
+  });
+}
+function jdIcon(name){
+  var n = String(name || '').toLowerCase();
+  if(/\.pdf$/.test(n)) return '\uD83D\uDCC4';
+  if(/\.(png|jpe?g|gif|webp|heic)$/.test(n)) return '\uD83D\uDDBC\uFE0F';
+  if(/\.(m4a|mp3|wav|aac|ogg|caf)$/.test(n)) return '\uD83C\uDF99\uFE0F';
+  if(/\.(mp4|mov|webm)$/.test(n)) return '\uD83C\uDFA5';
+  return '\uD83D\uDCCE';
+}
+function renderDocsPage(){
+  var mount = document.getElementById('jdMount');
+  var files = jobFileDocs().sort(function(a, b){ return String(b.created_at || '').localeCompare(String(a.created_at || '')); });
+  if(!files.length){ mount.innerHTML = '<div class="axnote">Nothing here yet \u2014 scan or upload the first document.</div>'; return; }
+  mount.innerHTML = files.map(function(r){
+    var nm = String(r.title || '').replace(/^file:\s*/i, '');
+    return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;">' +
+      '<span style="font-size:21px;">' + jdIcon(nm) + '</span>' +
+      '<span style="flex:1;cursor:pointer;font-weight:700;" data-jdopen="' + r.id + '">' + esc(nm) +
+      '<small style="display:block;font-weight:400;">' + acxDate(r.created_at) +
+      (r.created_by ? ' \u00b7 ' + esc(rptRepName(r.created_by) || r.created_by) : '') + '</small></span>' +
+      '<button class="chipbtn" data-jddel="' + r.id + '">&#10005;</button></div>';
+  }).join('');
+}
+async function openJobFile(id){
+  try{
+    var row = await db.get(id);
+    var meta = JSON.parse(row.html);
+    var b64 = String(meta.data).split(',')[1] || '';
+    var bin = atob(b64);
+    var arr = new Uint8Array(bin.length);
+    for(var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    var blob = new Blob([arr], { type: meta.mime || 'application/octet-stream' });
+    var url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  }catch(err){ showError('Could not open file: ' + (err.message || err)); }
+}
+async function addJobFiles(files){
+  if(!currentProject || !files || !files.length) return;
+  var st = document.getElementById('jdStatus');
+  var added = 0;
+  for(var i = 0; i < files.length; i++){
+    var f = files[i];
+    if(f.size > 10 * 1024 * 1024){
+      st.textContent = '\u201C' + f.name + '\u201D skipped \u2014 over the 10 MB limit.';
+      continue;
+    }
+    st.textContent = 'Uploading ' + (i + 1) + ' of ' + files.length + '\u2026';
+    try{
+      var dataUrl = await new Promise(function(res, rej){
+        var rd = new FileReader();
+        rd.onload = function(){ res(rd.result); };
+        rd.onerror = function(){ rej(new Error('could not read file')); };
+        rd.readAsDataURL(f);
+      });
+      var payload = JSON.stringify({ file: 1, name: f.name, mime: f.type || '', size: f.size, data: dataUrl });
+      await db.create('File: ' + f.name, payload, currentProject.name, currentProject.id);
+      added++;
+    }catch(err){
+      st.textContent = 'Upload failed: ' + (err.message || err);
+      break;
+    }
+  }
+  if(added){
+    st.textContent = '\u2713 Added ' + added + ' file' + (added === 1 ? '' : 's') + '.';
+    setTimeout(function(){ st.textContent = ''; }, 3500);
+    try{ await reload(); }catch(e){}
+  }
+  renderDocsPage();
+}
+function openDocsPage(){
+  if(!currentProject) return;
+  document.getElementById('jdClient').textContent = '\u2014 ' + (currentProject.name || '');
+  projectView.style.display = 'none';
+  docsView.style.display = 'block';
+  window.scrollTo(0,0);
+  renderDocsPage();
+}
+document.getElementById('jdBackBtn').addEventListener('click', dbCloseTo);
+document.getElementById('jdScanBtn').addEventListener('click', function(){ document.getElementById('jdScanInput').click(); });
+document.getElementById('jdUploadBtn').addEventListener('click', function(){ document.getElementById('jdFileInput').click(); });
+document.getElementById('jdScanInput').addEventListener('change', function(){
+  var fl = Array.prototype.slice.call(this.files || []);
+  this.value = '';
+  if(!fl.length) return;
+  var d = new Date();
+  var stamp = (d.getMonth() + 1) + '-' + d.getDate() + ' ' + d.toTimeString().slice(0, 5).replace(':', '.');
+  var named = fl.map(function(f, i){
+    try{ return new File([f], 'Scan ' + stamp + (fl.length > 1 ? ' (' + (i + 1) + ')' : '') + '.jpg', { type: f.type || 'image/jpeg' }); }
+    catch(e){ return f; }
+  });
+  addJobFiles(named);
+});
+document.getElementById('jdFileInput').addEventListener('change', function(){
+  addJobFiles(this.files); this.value = '';
+});
+document.getElementById('jdMount').addEventListener('click', function(e){
+  var op = e.target.closest('[data-jdopen]');
+  if(op){ openJobFile(op.getAttribute('data-jdopen')); return; }
+  var del = e.target.closest('[data-jddel]');
+  if(del){
+    if(!confirm('Delete this file for everyone?')) return;
+    db.remove(del.getAttribute('data-jddel'))
+      .then(function(){ return reload(); })
+      .then(renderDocsPage)
+      .catch(function(err){ showError('Could not delete: ' + (err.message || err)); });
+  }
+});
+/* ---------- appointments ---------- */
+function renderApptsPage(){
+  var mount = document.getElementById('apMount');
+  var aps = cacheAppts.filter(function(a){ return currentProject && a.project_id === currentProject.id; })
+    .sort(function(a, b){
+      return String(b.appt_date || '').localeCompare(String(a.appt_date || '')) ||
+             String(b.appt_time || '').localeCompare(String(a.appt_time || ''));
+    });
+  if(!aps.length){ mount.innerHTML = '<div class="axnote">Nothing scheduled for this job yet.</div>'; return; }
+  mount.innerHTML = aps.map(function(a){
+    var ic = a.kind === 'drop' ? '\uD83D\uDE9A' : (a.kind === 'job' ? '\uD83D\uDD28' : '\uD83D\uDCC5');
+    return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;">' +
+      '<span style="font-size:19px;">' + ic + '</span>' +
+      '<span style="flex:1;"><b>' + esc(a.title || 'Appointment') + '</b>' +
+      '<small style="display:block;">' + esc(a.appt_date || '') +
+      (a.appt_time ? ' \u00b7 ' + esc(a.appt_time) : '') +
+      (a.notes ? ' \u00b7 ' + esc(a.notes) : '') +
+      (a.created_by ? ' \u00b7 ' + esc(rptRepName(a.created_by) || '') : '') + '</small></span>' +
+      '<button class="chipbtn" data-apdel="' + a.id + '">&#10005;</button></div>';
+  }).join('');
+}
+function openApptsPage(){
+  if(!currentProject) return;
+  document.getElementById('apClient').textContent = '\u2014 ' + (currentProject.name || '');
+  projectView.style.display = 'none';
+  apptsView.style.display = 'block';
+  window.scrollTo(0,0);
+  renderApptsPage();
+}
+document.getElementById('apBackBtn').addEventListener('click', dbCloseTo);
+document.getElementById('apAddBtn').addEventListener('click', async function(){
+  if(!currentProject) return;
+  var st = document.getElementById('apStatus');
+  var kind = document.getElementById('apKind').value;
+  var date = document.getElementById('apDate').value;
+  if(!date){ st.textContent = 'Pick a date first.'; setTimeout(function(){ st.textContent = ''; }, 3000); return; }
+  var mapped = kind === 'Material delivery' ? 'drop' : (kind === 'Job start' ? 'job' : 'appt');
+  try{
+    await adb.create({
+      title: kind + ' \u2014 ' + (currentProject.name || ''),
+      appt_date: date,
+      appt_time: document.getElementById('apTime').value || null,
+      project_id: currentProject.id,
+      notes: document.getElementById('apNotes').value.trim() || null,
+      kind: mapped
+    });
+    cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
+    document.getElementById('apNotes').value = '';
+    renderApptsPage();
+    st.textContent = '\u2713 Added \u2014 it\u2019s on the team calendar too.';
+    setTimeout(function(){ st.textContent = ''; }, 3500);
+  }catch(err){ showError('Could not add appointment: ' + (err.message || err)); }
+});
+document.getElementById('apMount').addEventListener('click', async function(e){
+  var del = e.target.closest('[data-apdel]');
+  if(!del) return;
+  if(!confirm('Delete this appointment?')) return;
+  try{
+    await adb.remove(del.getAttribute('data-apdel'));
+    cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
+    renderApptsPage();
+  }catch(err){ showError('Could not delete: ' + (err.message || err)); }
+});
+/* keep open pages fresh when data changes elsewhere */
+var __dbOrigRenderAcx = renderAcxOverview;
+renderAcxOverview = function(){
+  __dbOrigRenderAcx();
+  try{
+    if(tasksView && tasksView.style.display !== 'none') renderTasksPage();
+    if(paymentsView && paymentsView.style.display !== 'none') renderPayments();
+    if(docsView && docsView.style.display !== 'none') renderDocsPage();
+    if(apptsView && apptsView.style.display !== 'none') renderApptsPage();
+  }catch(e){}
+};
+
 /* ---------- transfer checked photos into an inspection report ---------- */
 var galXferMenu = document.getElementById('galXferMenu');
 function isEstimateTitle(t){
@@ -6384,7 +6836,7 @@ document.getElementById('galXferBtn').addEventListener('click', function(e){
     return;
   }
   var reports = cacheRows.filter(function(r){
-    return currentProject && r.project_id === currentProject.id && !isEstimateTitle(r.title);
+    return currentProject && r.project_id === currentProject.id && !isEstimateTitle(r.title) && !/^file:/i.test((r.title || '').trim());
   });
   galXferMenu.innerHTML =
     reports.map(function(r){
@@ -6775,6 +7227,9 @@ function jobFinance(pr){
     value += mv;
     paid += Number((ws.manual || {}).paid) || 0;
   }
+  (all.payments || []).forEach(function(p){
+    if(p.dir === 'in') paid += Number(p.amt) || 0;
+  });
   if(paid > value) paid = value;
   return { contracts: contracts, value: value, paid: paid,
            balance: value - paid, pct: value ? Math.round(paid / value * 100) : 0 };
@@ -8099,7 +8554,7 @@ var LIST_DEFS = {
   recents: { title:'\uD83D\uDD52 Recents', note:'Your most recently updated documents across every client.',
     filter:function(r){ return true; }, sort:function(a,b){ return String(b.updated_at||b.created_at).localeCompare(String(a.updated_at||a.created_at)); }, limit:25 },
   inspections: { title:'\uD83D\uDD0D Inspections', note:'Every inspection report you can see, newest first.',
-    filter:function(r){ return !isEstimateTitle(r.title); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } },
+    filter:function(r){ return !isEstimateTitle(r.title) && !/^file:/i.test((r.title || '').trim()); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } },
   estimates: { title:'\uD83D\uDCB0 Estimates', note:'Every estimate you can see, newest first.',
     filter:function(r){ return isEstimateTitle(r.title); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } }
 };
@@ -10361,6 +10816,8 @@ function lockTemplate(doc){
 }
 
 async function openEditor(id){
+  var __fmeta = cacheRows.find(function(r){ return String(r.id) === String(id); });
+  if(__fmeta && /^file:/i.test((__fmeta.title || '').trim())){ openJobFile(id); return; }
   var r;
   try{ r = await db.get(id); }
   catch(err){ showError('Could not open report: ' + (err.message || err)); return; }
