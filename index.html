@@ -761,7 +761,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 #brandCtx{flex:1;min-width:0;}
 #headCtx{display:block;text-align:center;font-size:17px;font-weight:800;color:#fff;letter-spacing:.02em;
   font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-#headCtx small{color:#e8b7ba;font-weight:700;font-size:inherit;}
+#headCtx small{color:#B57EDC;font-weight:800;font-size:inherit;}
 
 .payring{width:86px;height:86px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
   background:conic-gradient(#7CB342 0%, #d9d9d9 0);}
@@ -1374,6 +1374,30 @@ body.restoring #restoreVeil{display:flex;}
 .rvswitch input:checked ~ .knb{left:23px;}
 .rvdone{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#a86a00;}
 .gicon{width:15px;height:15px;vertical-align:-2px;display:inline-block;flex:0 0 auto;}
+/* per-client Google review card (dark, matches desktop) */
+.rvcard{background:#171717;border:1px solid #2c2c2c;border-radius:12px;overflow:hidden;margin:14px 0;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);}
+.rvcard .rvtop{display:flex;align-items:center;gap:9px;background:#111;padding:13px 15px;
+  border-top:3px solid #C8202E;font:800 15px 'Segoe UI',Arial,sans-serif;color:#fff;}
+.rvcard .rvtop .gicon{width:20px;height:20px;vertical-align:0;}
+.rvcard .rvbody{padding:14px 15px 15px;}
+.rvstatus{display:flex;align-items:center;gap:8px;font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#d9d9d9;margin-bottom:12px;}
+.rvstatus .rvchk{color:#37c26b;font-weight:800;font-size:15px;}
+.rvstatus.none{color:#9a9a9a;}
+.rvbtns{display:flex;gap:10px;flex-wrap:wrap;}
+.rvbtn{flex:1;min-width:130px;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  border-radius:9px;padding:12px 10px;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;border:1px solid transparent;}
+.rvbtn.text{background:#C8202E;color:#fff;border-color:#C8202E;}
+.rvbtn.text:active{background:#a81826;}
+.rvbtn.copy{background:transparent;color:#f0c674;border-color:#6b5a2e;}
+.rvbtn.copy:active{background:#241f11;}
+.rvhint{font:500 12.5px 'Segoe UI',Arial,sans-serif;color:#8f8f8f;margin-top:9px;}
+.rvflip{display:flex;align-items:center;gap:11px;margin-top:14px;padding-top:13px;border-top:1px solid #2a2a2a;
+  font:600 13px 'Segoe UI',Arial,sans-serif;color:#cfcfcf;cursor:pointer;-webkit-user-select:none;user-select:none;}
+.rvtog{flex:0 0 auto;width:42px;height:24px;border-radius:12px;background:#3a3a3a;position:relative;transition:background .18s;}
+.rvtog::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .18s;}
+.rvflip.on .rvtog{background:#37c26b;}
+.rvflip.on .rvtog::after{transform:translateX(18px);}
 
 /* ---- estimate editor header ---- */
 .edchip{display:inline-flex;align-items:center;gap:5px;max-width:150px;height:24px;padding:0 10px;
@@ -1614,26 +1638,26 @@ body.restoring #restoreVeil{display:flex;}
   /* watermark photo off on mobile */
   #mainView .homecols{background-image:none;}
 
-  /* title / client-name centered between logo and buttons */
+  /* HOME header: logo | + | centered CARDINAL title | Menu (right) */
   .titlecard{order:2;flex:1;min-width:0;justify-content:center;
     text-align:center;padding:0 4px;}
   #brandCtx{order:2;}
   .titlecard h1{font-size:15px !important;letter-spacing:.03em;}
-  /* project open on phones: the client name takes the whole first row,
-     the section dropdown + Menu + New wrap onto a tidy second row */
-  body.projopen .headactions{flex-wrap:wrap;row-gap:6px;}
-  body.projopen #brandCtx{order:2;flex:1 1 100%;}
-  body.projopen #brandLogo{order:1;}
-  body.projopen #navWrap{order:3;margin-left:0;}
-  body.projopen #newWrap{order:4;margin-left:auto;}
-  body.projopen .jobmenu-head{max-width:150px;}
-
-  /* + button (no word) beside Menu */
   #newWrap{order:3;}
   #navWrap{order:4;}
   #brandLogo{order:1;}
   #addProjectBtn{font-size:0;padding:8px 12px;}
   #addProjectBtn::after{content:'\FF0B';font-size:17px;font-weight:800;line-height:1;}
+
+  /* CLIENT header (single clean row, mirrors home):
+     [logo] [+] ... [centered PO+name] ... [Overview dropdown right] — no Menu */
+  body.projopen .headactions{flex-wrap:nowrap;row-gap:0;}
+  body.projopen #brandLogo{order:1;}
+  body.projopen #newWrap{order:2;}                       /* + on the left, right after logo */
+  body.projopen #brandCtx{order:3;flex:1 1 auto;min-width:0;text-align:center;}
+  body.projopen #navWrap{order:4;margin-left:0;}         /* dropdown on the right */
+  body.projopen #navBtn{display:none !important;}        /* Menu belongs to home only */
+  body.projopen .jobmenu-head{max-width:132px;margin:0;}
 }
 
 /* ---- Cardinal-black login theme ---- */
@@ -1745,7 +1769,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 98 &#8212; header menu + profile card</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 101 &#8212; lavender PO#</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4718,15 +4742,21 @@ function renderOps(){
 var acxTaskTab = 'open', acxTaskView = 'All';
 var REVIEW_URL = 'https://g.page/r/CQqAO-p2l8AAEBM/review';
 var GOOGLE_G = '<svg class="gicon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
-function reviewMsg(pr){
+function reviewMsg(pr, followup){
   var first = String(pr.name || '').trim().split(' ')[0] || 'there';
   var rep = rptRepName((currentUser && currentUser.email) || '').split(' ')[0];
+  if(followup){
+    return 'Hi ' + first + ', just following up \u2014 if you have a quick minute, ' +
+      'a Google review would mean a lot to our small team at Cardinal Roofing & Renovations. ' +
+      REVIEW_URL + ' \u2014 thank you! \u2013 ' + rep;
+  }
   return 'Hi ' + first + ', thanks for choosing Cardinal Roofing & Renovations! ' +
     'If you had a great experience, would you mind leaving us a quick Google review? ' +
     REVIEW_URL + ' \u2014 it really helps our small team. \u2013 ' + rep;
 }
 async function sendReviewRequest(pr, via){
-  var msg = reviewMsg(pr);
+  var alreadyAsked = !!parseCkAll(pr).review_requested_at;
+  var msg = reviewMsg(pr, alreadyAsked);
   if(via === 'sms' && pr.phone){
     location.href = 'sms:' + pr.phone.replace(/[^+\d]/g,'') + '?&body=' + encodeURIComponent(msg);
   }else if(via === 'email' && pr.email){
@@ -4926,14 +4956,27 @@ function renderAcxOverview(){
     '<span>Lead Source:</span><div><select class="acxsel" id="acxSrc">' + acxOpts(['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social','Other'], ck.lead_source) + '</select></div>' +
     '<span>Initial Appt:</span><div>' + (ck.t_Prospect ? acxDate(ck.t_Prospect) : '\u2014') + '</div>' +
   '</div></div></div>';
-  /* ---- google review ---- */
-  html += '<div class="acxsec"><div class="acxbody acxrow" style="flex-wrap:wrap;gap:8px;align-items:center;">' +
-    '<b style="font:700 14px \'Segoe UI\',Arial,sans-serif;">&#11088; Google review</b>' +
-    (pr.phone ? '<button class="chipbtn" data-rv="sms">Request by text</button>' : '') +
-    (pr.email ? '<button class="chipbtn" data-rv="email">Request by email</button>' : '') +
-    '<label style="margin-left:auto;font:600 12.5px \'Segoe UI\',Arial,sans-serif;"><input type="checkbox" id="rvLeftSwitch"' + (ck.review_left_at ? ' checked' : '') + '> Review left' +
-    (ck.review_left_at ? ' \u00b7 ' + acxDate(ck.review_left_at) : '') + '</label>' +
-  '</div></div>';
+  /* ---- google review (dark card) ---- */
+  var rvAt = ck.review_requested_at, rvVia = ck.review_via;
+  var rvViaLabel = rvVia === 'sms' ? 'text' : (rvVia === 'email' ? 'email' : 'copy');
+  html += '<div class="rvcard">' +
+    '<div class="rvtop">' + GOOGLE_G + ' Google Reviews</div>' +
+    '<div class="rvbody">' +
+      '<div class="rvstatus' + (rvAt ? '' : ' none') + '">' +
+        (rvAt ? '<span class="rvchk">&#10003;</span> Review requested ' + acxDate(rvAt) + ' via ' + rvViaLabel + '.'
+              : 'No review request sent yet.') +
+      '</div>' +
+      '<div class="rvbtns">' +
+        (pr.phone ? '<button class="rvbtn text" data-rv="sms">&#128241; Text request</button>' : '') +
+        '<button class="rvbtn copy" data-rv="copy">Copy message</button>' +
+      '</div>' +
+      (rvAt ? '<div class="rvhint">Tapping again sends a friendly follow-up.</div>' : '') +
+      '<div class="rvflip' + (ck.review_left_at ? ' on' : '') + '" id="rvLeftSwitch" role="switch" aria-checked="' + (ck.review_left_at ? 'true' : 'false') + '">' +
+        '<span class="rvtog"></span> Flip when their review appears on Google' +
+        (ck.review_left_at ? ' \u00b7 ' + acxDate(ck.review_left_at) : '') +
+      '</div>' +
+    '</div>' +
+  '</div>';
   /* ---- assigned to ---- */
   var rep = assignedRepOf(pr);
   html += '<h3 class="projsec" style="margin:20px 0 10px;">Assigned To</h3>' +
@@ -5103,6 +5146,18 @@ function acxBindOnce(mount){
     if(hit('#acxInspBox')){ showTab('inspections'); return; }
     if((el = hit('[data-doc]'))){ openEditor(el.getAttribute('data-doc')); return; }
     if((el = hit('[data-rv]'))){ sendReviewRequest(pr, el.getAttribute('data-rv')); return; }
+    if(hit('#rvLeftSwitch')){
+      var wasOn = !!parseCkAll(pr).review_left_at;
+      try{
+        await patchProjectCk(pr, {
+          review_left_at: wasOn ? null : new Date().toISOString(),
+          review_left_by: wasOn ? null : ((currentUser && currentUser.email) || null)
+        });
+        if(!wasOn) auditLog('review', 'Google review LEFT \u2014 ' + (pr.name || ''), pr.id);
+        renderAcxOverview();
+      }catch(err){ showError('Could not save: ' + (err.message || err)); }
+      return;
+    }
     if(hit('#acxNewTask')){ openTaskModal(pr, null); return; }
     if((el = hit('[data-viewtask]'))){
       if(t.closest('input')) return;
@@ -5129,18 +5184,6 @@ function acxBindOnce(mount){
       patchProjectCk(pr, { trades: list.length ? list : null, trade: null })
         .then(function(){ renderAcxOverview(); })
         .catch(function(err){ showError('Could not save: ' + (err.message || err)); });
-      return;
-    }
-    if(t.id === 'rvLeftSwitch'){
-      var on = t.checked;
-      try{
-        await patchProjectCk(pr, {
-          review_left_at: on ? new Date().toISOString() : null,
-          review_left_by: on ? ((currentUser && currentUser.email) || null) : null
-        });
-        if(on) auditLog('review', 'Google review LEFT \u2014 ' + (pr.name || ''), pr.id);
-        renderAcxOverview();
-      }catch(err){ showError('Could not save: ' + (err.message || err)); }
       return;
     }
     if(t.getAttribute && t.getAttribute('data-task') != null){
@@ -7927,7 +7970,7 @@ function setHeaderJobMenu(on){
   document.body.classList.toggle('projopen', !!on);
   /* Menu button and + stay in the masthead the whole time; only the brand
      center swaps between the CARDINAL title and the client PO/name. */
-  if(nb) nb.style.display = 'inline-block';
+  if(nb) nb.style.display = on ? 'none' : 'inline-block';
   var nw = document.getElementById('navWrap');
   if(nw) nw.style.display = 'inline-block';
   var bt = document.getElementById('brandTitle');
