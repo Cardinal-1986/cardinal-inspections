@@ -1667,9 +1667,11 @@ body.restoring #restoreVeil{display:flex;}
 .clientbanner #cbCtx{font:800 17px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
 .clientbanner #cbCtx small{color:#B57EDC;font-weight:800;}
 @media (max-width:900px){
-  body.projopen .clientbanner{display:flex;position:fixed;top:var(--headh,110px);left:0;right:0;z-index:80;
-    align-items:center;justify-content:center;gap:2px;text-align:center;padding:11px 14px;
-    box-shadow:0 8px 14px -8px rgba(0,0,0,.45);
+  /* in-flow dark strip directly under the header \u2014 scrolls with the page,
+     so it can never overlap the client name */
+  body.projopen .clientbanner{display:flex;position:relative;left:auto;right:auto;top:auto;
+    margin:0 0 4px;align-items:center;justify-content:center;gap:2px;text-align:center;padding:11px 14px;
+    box-shadow:0 6px 12px -8px rgba(0,0,0,.4);
     background:linear-gradient(168deg,#241518 0%,#170f11 48%,#221407 100%);
     border-top:5px solid #C8202E;border-bottom:5px solid #C8202E;overflow:hidden;}
   body.projopen .clientbanner::before{content:'';position:absolute;left:0;right:0;bottom:5px;height:1px;
@@ -1677,8 +1679,8 @@ body.restoring #restoreVeil{display:flex;}
   body.projopen .clientbanner #cbCtx{color:#fff;font-size:17px;letter-spacing:.02em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
   body.projopen .clientbanner #cbCtx small{color:#B57EDC;}
-  /* push the profile content below the fixed banner */
-  body.projopen #projectView > .wrap{padding-top:78px;}
+  /* content sits right below the in-flow banner \u2014 no fixed-overlap offset needed */
+  body.projopen #projectView > .wrap{padding-top:12px;}
 }
 
 /* ---- Cardinal-black login theme ---- */
@@ -1790,7 +1792,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 106 &#8212; banner clearance</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 109 &#8212; transparent cardinal png</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2059,7 +2061,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ PROJECT PROFILE ============ -->
 <div id="projectView" style="display:none;">
   <div class="clientbanner" id="clientBanner"><span id="cbCtx"></span></div>
-  <div class="wrap" style="padding-top:18px;">
+  <div class="wrap">
     <div class="projhead">
       <div class="projinfo">
         <h2 id="projName"></h2>
@@ -2393,7 +2395,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
   background:radial-gradient(1200px 600px at 50% -10%, #2a1b16 0%, #17100e 55%, #0d0908 100%);">
   <div style="max-width:520px;margin:0 auto;padding:7vh 22px 40px;text-align:center;">
     <img src="/cardinal-landing.PNG" alt="" style="width:min(78vw,340px);height:auto;
-      filter:drop-shadow(0 10px 28px rgba(0,0,0,.55));margin-bottom:10px;" onerror="this.style.display='none'">
+      filter:drop-shadow(0 8px 24px rgba(0,0,0,.45));margin-bottom:10px;" onerror="this.style.display='none'">
     <div style="font:800 26px Georgia,'Times New Roman',serif;letter-spacing:.03em;
       background:linear-gradient(160deg,#a06c08,#d4a017 40%,#f5d061 55%,#c8901c 75%);
       -webkit-background-clip:text;background-clip:text;color:#d4a017;-webkit-text-fill-color:transparent;">
