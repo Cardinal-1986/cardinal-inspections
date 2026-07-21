@@ -326,7 +326,7 @@ footer.site{
 .editpencil{position:absolute;bottom:9px;right:10px;border:1px solid var(--line);background:#faf7f5;
   border-radius:9px;width:36px;height:32px;font-size:15px;cursor:pointer;color:#8a6f66;}
 .editpencil:hover{background:#f3e9e4;color:#9c1822;}
-.projcover{position:relative;flex:0 0 148px;align-self:stretch;min-height:112px;border:1.5px dashed #d5c8c2;border-radius:12px;
+.projcover{position:relative;flex:0 0 104px;align-self:flex-start;height:104px;min-height:0;border:1.5px dashed #d5c8c2;border-radius:12px;
   background:linear-gradient(160deg,#f6f1ee,#ece3de);display:flex;align-items:center;justify-content:center;color:#b3a49d;
   font:700 12px 'Segoe UI',Arial,sans-serif;overflow:hidden;transition:box-shadow .18s;}
 .projcover:hover{box-shadow:0 8px 22px rgba(0,0,0,.12);}
@@ -358,7 +358,7 @@ footer.site{
   font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
 .tradegrid label span, .tradegrid label{overflow:hidden;text-overflow:ellipsis;}
 
-@media (max-width:640px){ .projcover{flex:0 0 104px;min-height:100px;} .projinfo{padding:12px 13px 32px;} }
+@media (max-width:640px){ .projcover{flex:0 0 88px;height:88px;} .projinfo{padding:12px 13px 32px;} }
 
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
@@ -1163,7 +1163,8 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
   max-width:100%;overflow:hidden;}
 /* pills flex-share the leftover space — overflow is impossible by construction */
 .repstrip.docked .reppill{flex:1 1 0;min-width:0;max-width:none;}
-.repstrip.docked #repPill{flex:0.8 1 0;}
+#repPill{display:none !important;}
+.repstrip.docked #headCtx{flex:1 1 auto;max-width:none;}
 .repstrip.docked #navWrap{flex:0 0 auto;margin-left:2px;}
 .repstrip.docked .jobmenu-head{width:118px;max-width:118px;padding:8px 24px 8px 9px;background-position:right 7px center;}
 .repstrip.docked #newWrap{flex:0 0 auto;}
@@ -1236,40 +1237,45 @@ body.restoring #restoreVeil{display:flex;}
 #tab-overview > *:not(#acxMount){display:none !important;}
 .acxsec{background:#fff;border:1px solid #ddd6cf;border-radius:6px;margin-bottom:14px;overflow:visible;}
 /* AccuLynx-style activity tiles (photo album / inspections) */
-.jaboxrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
-.jabox{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
-  padding:16px 18px;cursor:pointer;font:700 15.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
-  -webkit-user-select:none;user-select:none;}
+.jaboxrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px;}
+.jabox{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
+  padding:15px 13px;cursor:pointer;font:700 14.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
+  min-width:0;-webkit-user-select:none;user-select:none;}
+.jabox > b{flex:0 0 auto;}
 .jabox:active{background:#f6f3f0;}
 .jabox .jan{margin-left:auto;font:800 17px 'Segoe UI',Arial,sans-serif;color:#F7941E;}
 .jabox .jan.zero{color:#c9c9c9;}
 /* client dashboard */
-.dbstage{display:flex;align-items:center;gap:10px;color:#fff;border-radius:8px;padding:12px 14px;margin:0 0 12px;
-  font:800 17px 'Segoe UI',Arial,sans-serif;}
-.dbstage small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;opacity:.85;}
-.dbadv{margin-left:auto;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.55);color:#fff;
-  border-radius:14px;padding:6px 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
-.dbcover{width:52px;height:52px;border-radius:8px;object-fit:cover;margin-left:auto;
-  box-shadow:0 2px 8px rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.6);}
-.dbadv + .msmenu, .dbcover + .dbadv{margin-left:10px;}
-.dbmoney{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #ddd6cf;
-  border-radius:8px;padding:14px 16px;margin-bottom:12px;}
+.dbstage{display:flex;align-items:center;gap:6px;color:#fff;border-radius:8px;padding:11px 10px;margin:0 0 12px;}
+.dbstgmid{flex:1;text-align:center;min-width:0;}
+.dbstgmid b{display:block;font:800 18px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;}
+.dbstgmid small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;opacity:.85;margin-top:1px;}
+.dbstgarr{flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);
+  border:1px solid rgba(255,255,255,.55);color:#fff;font:800 21px/1 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.dbstgarr.ghost{visibility:hidden;}
+.dbic2{width:21px;height:21px;flex:0 0 auto;color:#23507e;}
+.dbic1{flex:0 0 auto;width:22px;text-align:center;color:#23507e;font:800 21px 'Segoe UI',Arial,sans-serif;}
+.dbmoney{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid #ddd6cf;
+  border-radius:8px;padding:14px 14px;margin-bottom:12px;}
+.dbmoney > span{min-width:0;}
 .dbmoney small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a8078;letter-spacing:.04em;}
-.dbmoney b{font:800 19px 'Segoe UI',Arial,sans-serif;}
+.dbmoney b{font:800 clamp(14px,4.4vw,19px) 'Segoe UI',Arial,sans-serif;overflow-wrap:anywhere;}
 .dbring{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
 .dbringin{width:58px;height:58px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
   font:800 14px 'Segoe UI',Arial,sans-serif;}
 .dbrow{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #ddd6cf;border-radius:8px;
   padding:14px 16px;margin-bottom:12px;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none;}
 .dbrow:active{background:#f6f3f0;}
-.dbrow .dbgo{margin-left:auto;color:#4a90d9;font-size:22px;font-weight:800;}
+.dbrow .dbgo{margin-left:auto;color:#23507e;font-size:22px;font-weight:800;}
 .rt2{float:right;font:700 12.5px 'Segoe UI',Arial,sans-serif;}
 .rt2 a{color:#4a90d9;text-decoration:none;}
 .dbprim small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a8078;}
 .dbprim b{font:800 17px 'Segoe UI',Arial,sans-serif;}
 .dbcbtns{display:flex;gap:10px;margin-top:11px;flex-wrap:wrap;}
-.dbcb{flex:1;min-width:88px;text-align:center;background:#fff;border:1.5px solid #4a90d9;color:#4a90d9;border-radius:8px;
+.dbcb{flex:1;min-width:88px;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  background:#fff;border:1.5px solid #23507e;color:#23507e;border-radius:8px;
   padding:10px 6px;font:700 13.5px 'Segoe UI',Arial,sans-serif;text-decoration:none;}
+.dbcb .dbic2{width:17px;height:17px;color:inherit;}
 .dbcb.off{opacity:.35;border-color:#bbb;color:#888;}
 .dbmap{height:172px;border-radius:8px;overflow:hidden;background:#ece7e2;position:relative;z-index:0;}
 .dbassign{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
@@ -1718,7 +1724,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 94 &#8212; client dashboard</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 95 &#8212; dashboard polish</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2031,7 +2037,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
     <div id="tab-inspections" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <div class="jabox" id="inspGalBox" style="max-width:430px;margin:0 0 8px;">&#128247; Photo Gallery <b class="jan zero" id="inspGalN">0</b></div>
+      <div class="jabox" id="inspGalBox" style="max-width:430px;margin:0 0 8px;"><svg class="dbic2" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9.4 4h5.2l1.3 2h3.6A1.5 1.5 0 0 1 21 7.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5v-11A1.5 1.5 0 0 1 4.5 6h3.6l1.3-2zm2.6 5.2a4.3 4.3 0 1 0 0 8.6 4.3 4.3 0 0 0 0-8.6zm0 2a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6z"/></svg> Photo Gallery <b class="jan zero" id="inspGalN">0</b></div>
       <p class="subnote">Photos transferred for this client&#8217;s inspections (max 30). The full album lives in
       <b>&#128247; Photo Album</b> on the Overview.</p>
 
@@ -4771,6 +4777,25 @@ function acxOpts(list, cur){
     return '<option' + (cur === o ? ' selected' : '') + '>' + o + '</option>';
   }).join('');
 }
+var DB_ICONS = {
+  comms:'M3 4.5A1.5 1.5 0 0 1 4.5 3h15A1.5 1.5 0 0 1 21 4.5v10a1.5 1.5 0 0 1-1.5 1.5H9.4L3 21V4.5z',
+  bell:'M12 22.2c1.2 0 2.2-1 2.2-2.2H9.8c0 1.2 1 2.2 2.2 2.2zM19 17H5v-1.2l1.8-2V9.5c0-2.5 1.6-4.7 4.2-5.2V3a1 1 0 1 1 2 0v1.3c2.6.5 4.2 2.7 4.2 5.2v4.3l1.8 2V17z',
+  camera:'M9.4 4h5.2l1.3 2h3.6A1.5 1.5 0 0 1 21 7.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5v-11A1.5 1.5 0 0 1 4.5 6h3.6l1.3-2zm2.6 5.2a4.3 4.3 0 1 0 0 8.6 4.3 4.3 0 0 0 0-8.6zm0 2a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6z',
+  tasks:'M4.5 3h15A1.5 1.5 0 0 1 21 4.5v15a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-15A1.5 1.5 0 0 1 4.5 3zm5.9 13.4l7.2-8.2-1.5-1.3-5.8 6.6-2.9-2.5-1.3 1.5 4.3 3.9z',
+  ruler:'M16.9 2.9l4.2 4.2L7.1 21.1 2.9 16.9 16.9 2.9zm-.7 3.5l1.4 1.4 1.1-1.1-1.4-1.4-1.1 1.1zm-2.8 2.8l1.4 1.4 1.1-1.1-1.4-1.4-1.1 1.1zm-2.8 2.8l1.4 1.4 1.1-1.1-1.4-1.4-1.1 1.1zm-2.8 2.8l1.4 1.4 1.1-1.1-1.4-1.4-1.1 1.1z',
+  estimates:'M6 2h7.2L19 7.8V21a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm2.2 10h7.6v1.7H8.2V12zm0 3.6h7.6v1.7H8.2v-1.7zm0-7.2h4v1.7h-4V8.4z',
+  docs:'M3 5.5A1.5 1.5 0 0 1 4.5 4h5.1l2 2.4h7.9A1.5 1.5 0 0 1 21 7.9v10.6a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5v-13z',
+  appts:'M7 2h2v2h6V2h2v2h2.5A1.5 1.5 0 0 1 21 5.5v14a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-14A1.5 1.5 0 0 1 4.5 4H7V2zM5 9v10h14V9H5zm2 2.5h3v3H7v-3z',
+  insp:'M10.5 2a8.5 8.5 0 1 0 5.3 15.2l4.5 4.5 1.7-1.7-4.5-4.5A8.5 8.5 0 0 0 10.5 2zm0 2.6a5.9 5.9 0 1 1 0 11.8 5.9 5.9 0 0 1 0-11.8z',
+  orders:'M3 3h2.3l.6 2H21l-2.4 8H8.2L6.1 5H3V3zm6.2 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7.6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z',
+  phone:'M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.3.2 2.5.57 3.6a1 1 0 0 1-.25 1l-2.22 2.2z',
+  text:'M3 4.5A1.5 1.5 0 0 1 4.5 3h15A1.5 1.5 0 0 1 21 4.5v10a1.5 1.5 0 0 1-1.5 1.5H9.4L3 21V4.5zm4.5 4.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm4.5 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm4.5 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z',
+  mail:'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 7L4 6v2l8 5 8-5V6l-8 5z'
+};
+function dbIc(n){
+  return '<svg class="dbic2" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" ' +
+    'xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="' + (DB_ICONS[n] || '') + '"/></svg>';
+}
 function renderAcxOverview(){
   var mount = document.getElementById('acxMount');
   if(!mount || !currentProject) return;
@@ -4795,11 +4820,13 @@ function renderAcxOverview(){
     return myFirst && String(m.text || '').toLowerCase().indexOf('@' + myFirst.toLowerCase()) !== -1;
   }).length;
   var html = '';
-  /* ---- stage bar (+ small cover photo) ---- */
+  /* ---- stage bar: centered stage, back/forward arrows with confirmation ---- */
+  var ORD = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
+  var pvStage = ORD.indexOf(stg) > 0 ? ORD[ORD.indexOf(stg) - 1] : null;
   html += '<div class="dbstage" style="background:' + (STAGE_COLORS[stg] || '#607D8B') + ';">' +
-    '<span><b>' + esc(stg.toUpperCase()) + '</b><small>' + esc(stageAgo(ck.stage_since || pr.updated_at || pr.created_at) || '') + '</small></span>' +
-    '<img id="dbCover" class="dbcover" style="display:none;" alt="">' +
-    (nx ? '<button id="acxAdvBtn" class="dbadv">' + esc(nx) + ' &#8250;</button>' : '') +
+    (pvStage ? '<button class="dbstgarr" id="dbStgBack" title="Back to ' + esc(pvStage) + '">&#8249;</button>' : '<span class="dbstgarr ghost"></span>') +
+    '<span class="dbstgmid"><b>' + esc(stg.toUpperCase()) + '</b><small>' + esc(stageAgo(ck.stage_since || pr.updated_at || pr.created_at) || '') + '</small></span>' +
+    (nx ? '<button class="dbstgarr" id="dbStgFwd" title="Advance to ' + esc(nx) + '">&#8250;</button>' : '<span class="dbstgarr ghost"></span>') +
     '<span class="msmenu" style="position:relative;"><span class="dots" id="msDots" style="cursor:pointer;font-size:22px;color:#fff;padding:0 6px;">&#8942;</span>' +
     '<div id="msDrop" style="display:none;position:absolute;right:0;top:130%;z-index:70;background:#fff;border:1px solid #c9c2bf;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);min-width:180px;overflow:hidden;">' +
       (nx ? '<button class="estopt" data-act="adv">Advance to ' + esc(nx) + '</button>' : '') +
@@ -4814,7 +4841,7 @@ function renderAcxOverview(){
     '<span style="text-align:right;"><small>Balance Due</small><b style="color:' + (fin.balance > 0 ? '#C8202E' : '#7CB342') + ';">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
   '</div>';
   /* ---- payment information ---- */
-  html += '<div class="dbrow" id="dbPayRow"><span style="color:#4a90d9;font-size:19px;">&#128178;</span> Payment Information<span class="dbgo">&#8250;</span></div>';
+  html += '<div class="dbrow" id="dbPayRow"><span class="dbic1">$</span> Payment Information<span class="dbgo">&#8250;</span></div>';
   /* ---- job menu ---- */
   function jt(ic, label, n, act, idn){
     var zero = (n === 0 || n === '0' || n === '');
@@ -4823,20 +4850,20 @@ function renderAcxOverview(){
   }
   html += '<h3 class="projsec" style="margin:18px 0 10px;">Job Menu</h3>' +
     '<div class="jaboxrow">' +
-      jt('&#128172;', 'Communications', commsCount(pr), 'comms') +
-      jt('&#128276;', 'Notifications', mentions, 'notifs') +
+      jt(dbIc('comms'), 'Communications', commsCount(pr), 'comms') +
+      jt(dbIc('bell'), 'Notifications', mentions, 'notifs') +
     '</div><div class="jaboxrow">' +
-      jt('&#128247;', 'Photos / Videos', '\u2026', 'album', 'dbPhotoN') +
-      jt('&#128204;', 'Tasks', openTasks, 'tasks') +
+      jt(dbIc('camera'), 'Photos / Videos', '\u2026', 'album', 'dbPhotoN') +
+      jt(dbIc('tasks'), 'Tasks', openTasks, 'tasks') +
     '</div><div class="jaboxrow">' +
-      jt('&#128207;', 'Measurements', '\u2026', 'measure', 'dbMeasN') +
-      jt('&#128176;', 'Estimates', ests.length, 'estimates') +
+      jt(dbIc('ruler'), 'Measurements', '\u2026', 'measure', 'dbMeasN') +
+      jt(dbIc('estimates'), 'Estimates', ests.length, 'estimates') +
     '</div><div class="jaboxrow">' +
-      jt('&#128193;', 'Documents', fileDocs.length, 'docs') +
-      jt('&#128197;', 'Appointments', appts, 'appts') +
+      jt(dbIc('docs'), 'Documents', fileDocs.length, 'docs') +
+      jt(dbIc('appts'), 'Appointments', appts, 'appts') +
     '</div><div class="jaboxrow">' +
-      jt('&#128269;', 'Inspections', inspN, 'inspections') +
-      jt('&#128230;', 'Orders', '', 'materials') +
+      jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
+      jt(dbIc('orders'), 'Orders', '', 'materials') +
     '</div>';
   /* ---- contacts ---- */
   var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
@@ -4847,9 +4874,9 @@ function renderAcxOverview(){
     '<div class="dbprim"><small>Primary Contact</small><b>' + esc(pr.name || '\u2014') + '</b>' +
     ((pr.phone || pr.email) ? '<small style="margin-top:2px;">' + esc(pr.phone || '') + (pr.phone && pr.email ? ' \u00b7 ' : '') + esc(pr.email || '') + '</small>' : '') + '</div>' +
     '<div class="dbcbtns">' +
-      (tel ? '<a class="dbcb" href="tel:' + tel + '">&#128222; Phone</a>' : '<span class="dbcb off">&#128222; Phone</span>') +
-      (tel ? '<a class="dbcb" href="sms:' + tel + '">&#128172; Text</a>' : '<span class="dbcb off">&#128172; Text</span>') +
-      (pr.email ? '<a class="dbcb" href="mailto:' + esc(pr.email) + '">&#9993;&#65039; Email</a>' : '<span class="dbcb off">&#9993;&#65039; Email</span>') +
+      (tel ? '<a class="dbcb" href="tel:' + tel + '">' + dbIc('phone') + ' Phone</a>' : '<span class="dbcb off">' + dbIc('phone') + ' Phone</span>') +
+      (tel ? '<a class="dbcb" href="sms:' + tel + '">' + dbIc('text') + ' Text</a>' : '<span class="dbcb off">' + dbIc('text') + ' Text</span>') +
+      (pr.email ? '<a class="dbcb" href="mailto:' + esc(pr.email) + '">' + dbIc('mail') + ' Email</a>' : '<span class="dbcb off">' + dbIc('mail') + ' Email</span>') +
     '</div>' +
     (extra.length ? '<div class="dbmore">' + extra.map(function(c){
       return '<div class="dbmrow">&#128100; ' + esc(c.name || '\u2014') +
@@ -4900,11 +4927,21 @@ function renderAcxOverview(){
     if(!currentProject || currentProject.id !== pr.id) return;
     var el = document.getElementById('dbPhotoN');
     if(el){ el.textContent = l.length; el.classList.toggle('zero', !l.length); }
-    var cv = document.getElementById('dbCover');
-    if(cv && l.length){ cv.src = l[0].data; cv.style.display = ''; }
     var legacy = document.getElementById('acxPhotoN');
     if(legacy){ legacy.textContent = l.length; }
   }).catch(function(){});
+  /* stage arrows with confirmation */
+  var bk = document.getElementById('dbStgBack');
+  if(bk) bk.addEventListener('click', async function(){
+    if(!confirm('Move ' + (pr.name || 'this job') + ' back to ' + pvStage + '?')) return;
+    try{ await setStage(pr.id, pvStage); renderOverview(); renderPipeline(); }
+    catch(err){ showError('Could not update: ' + (err.message || err)); }
+  });
+  var fw = document.getElementById('dbStgFwd');
+  if(fw) fw.addEventListener('click', function(){
+    if(!confirm('Advance ' + (pr.name || 'this job') + ' to ' + nx + '?')) return;
+    acxAdvance(pr);
+  });
   /* async: measurement count */
   measDb.list(pr.id).then(function(l){
     if(!currentProject || currentProject.id !== pr.id) return;
@@ -6121,6 +6158,10 @@ function openProject(id){
   renderMeasureTab();
   showTab('overview');
   hideAllViews();
+  ['paymentsView','tasksView','docsView','apptsView'].forEach(function(v){
+    var el = document.getElementById(v);
+    if(el) el.style.display = 'none';
+  });
   projectView.style.display = 'block';
   setHeaderJobMenu(true);
   window.scrollTo(0,0);
@@ -7893,6 +7934,10 @@ function hideAllViews(){
   mainView.style.display = 'none';
   projectView.style.display = 'none';
   document.getElementById('galleryView').style.display = 'none';
+  ['paymentsView','tasksView','docsView','apptsView'].forEach(function(v){
+    var el = document.getElementById(v);
+    if(el) el.style.display = 'none';
+  });
   listView.style.display = 'none';
   profileView.style.display = 'none';
   clientsView.style.display = 'none';
