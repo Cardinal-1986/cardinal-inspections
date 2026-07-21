@@ -1674,7 +1674,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 91 &#8212; print cleanup + inspection speed</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 92 &#8212; compact print + AI narratives</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2906,7 +2906,7 @@ body{
     font-family:"Segoe UI",Arial,sans-serif; font-size:8pt; color:#8a8a8a;
   }
   @bottom-center{
-    content:"[COMPANY ADDRESS]  ·  [PHONE]  ·  [EMAIL / WEBSITE]";
+    content:"5735 Webster St, Dayton OH 45414  ·  937.576.6753  ·  Admin@cardinalrenovations.net";
     font-family:"Segoe UI",Arial,sans-serif; font-size:8pt; color:#8a8a8a;
   }
   @bottom-right{
@@ -9649,6 +9649,40 @@ function wireReanalyzeButtons(doc){
         shots[i].cap.textContent = 'Captioning\u2026';
         await autoCaptionPhoto(shots[i].src, shots[i].cap);
       }
+      /* then draft this section's narrative from the fresh captions */
+      try{
+        btn.textContent = 'Drafting narrative\u2026';
+        var caps = shots.map(function(sh){
+          var t = (sh.cap.textContent || '').trim();
+          return t && t.charAt(0) !== '[' ? t : null;
+        }).filter(Boolean);
+        var el2 = h.nextElementSibling, tgt2 = null, marked2 = null;
+        while(el2 && !(el2.tagName === 'H2' && el2.classList.contains('sec'))){
+          if(el2.hasAttribute('data-ai-narrative')){ marked2 = el2; break; }
+          if(!tgt2 && el2.tagName === 'P' && el2.classList.contains('ph')) tgt2 = el2;
+          el2 = el2.nextElementSibling;
+        }
+        /* never clobber a narrative the rep typed by hand */
+        if(tgt2 && !marked2 && (tgt2.textContent || '').trim().charAt(0) !== '[') tgt2 = null;
+        tgt2 = marked2 || tgt2;
+        if(caps.length && tgt2){
+          var hc2 = h.cloneNode(true);
+          hc2.querySelectorAll('.num, button').forEach(function(x){ x.remove(); });
+          var r2 = await fetch('/api/summarize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ captions: caps, section: hc2.textContent.trim() })
+          });
+          var j2 = null;
+          try{ j2 = await r2.json(); }catch(e2){}
+          if(r2.ok && j2 && j2.summary){
+            tgt2.textContent = j2.summary;
+            tgt2.classList.remove('ph');
+            tgt2.classList.add('fill');
+            tgt2.setAttribute('data-ai-narrative','1');
+          }
+        }
+      }catch(e3){}
       btn.disabled = false;
       btn.textContent = '\uD83D\uDD04 Re-analyze';
     });
@@ -9661,8 +9695,15 @@ function wireSummaryDraftButton(doc){
   if(!heading || heading.getAttribute('data-wired')) return;
   heading.setAttribute('data-wired','1');
 
-  var summaryPara = heading.nextElementSibling;
-  if(!summaryPara) return;
+  function summaryTarget(){
+    var el = heading.nextElementSibling, phPara = null, marked = null;
+    while(el && !/^H[23]$/.test(el.tagName)){
+      if(el.hasAttribute('data-ai-summary')){ marked = el; break; }
+      if(!phPara && el.tagName === 'P' && el.classList.contains('ph')) phPara = el;
+      el = el.nextElementSibling;
+    }
+    return marked || phPara;
+  }
 
   var btn = doc.createElement('button');
   btn.type = 'button';
@@ -9694,7 +9735,18 @@ function wireSummaryDraftButton(doc){
         throw new Error(String(detail).slice(0, 400));
       }
       if(data && data.summary){
-        summaryPara.textContent = data.summary;
+        var tgt = summaryTarget();
+        if(tgt && !tgt.hasAttribute('data-ai-summary') &&
+           (tgt.textContent || '').trim().charAt(0) !== '['){
+          alert('The summary paragraph already has hand-written text \u2014 edit it directly, or clear it back to blank to re-draft.');
+        }else if(tgt){
+          tgt.textContent = data.summary;
+          tgt.classList.remove('ph');
+          tgt.classList.add('fill');
+          tgt.setAttribute('data-ai-summary','1');
+        }else{
+          alert('Could not find the summary paragraph to write into.');
+        }
       }
     }catch(e){
       alert('Could not draft the summary: ' + (e.message || e));
@@ -10291,8 +10343,17 @@ function serializeFrame(){
   if(estTable) estTable.removeAttribute('data-wired');
   var pf = clone.querySelector('#printFix');
   if(pf) pf.remove();
-  clone.querySelectorAll('[data-emptyfig]').forEach(function(el){ el.removeAttribute('data-emptyfig'); });
-  clone.querySelectorAll('[data-emptyrow]').forEach(function(el){ el.removeAttribute('data-emptyrow'); });
+  ['data-emptyfig','data-emptyrow','data-emptyph','data-emptyblock','data-emptysec'].forEach(function(a){
+    clone.querySelectorAll('[' + a + ']').forEach(function(el){ el.removeAttribute(a); });
+  });
+  clone.querySelectorAll('h2.sec .num[data-orignum]').forEach(function(sp){
+    sp.textContent = sp.getAttribute('data-orignum');
+    sp.removeAttribute('data-orignum');
+  });
+  clone.querySelectorAll('.toc-row .t[data-origtoc]').forEach(function(t){
+    t.textContent = t.getAttribute('data-origtoc');
+    t.removeAttribute('data-origtoc');
+  });
   var sf = clone.querySelector('#screenFix');
   if(sf) sf.remove();
   clone.querySelectorAll('.cbx[data-cbx]').forEach(function(el){ el.removeAttribute('data-cbx'); });
@@ -10507,31 +10568,135 @@ document.getElementById('sigApply').addEventListener('click', async function(){
   }catch(e){}
 });
 
+function compactForPrint(d){
+  /* photo boxes: never print an empty frame (all document types) */
+  d.querySelectorAll('.fig, .cover-photo').forEach(function(f){
+    var fr = f.classList.contains('cover-photo') ? f : f.querySelector('.frame');
+    if(fr && !fr.querySelector('img')) f.setAttribute('data-emptyfig','1');
+    else f.removeAttribute('data-emptyfig');
+  });
+  d.querySelectorAll('.figrow').forEach(function(row){
+    if(!row.querySelector('.frame img')) row.setAttribute('data-emptyrow','1');
+    else row.removeAttribute('data-emptyrow');
+  });
+  /* the deep cleanup below is for inspection reports only \u2014 contracts and
+     estimates keep every line so reps can print blanks to hand-fill */
+  if(!d.querySelector('[data-cardinal-summary-heading]')) return;
+  /* unfilled yellow placeholders never print */
+  d.querySelectorAll('.ph').forEach(function(el){
+    var t = (el.textContent || '').trim();
+    if(t.charAt(0) === '[') el.setAttribute('data-emptyph','1');
+    else el.removeAttribute('data-emptyph');
+  });
+  function blank(el){
+    var c = el.cloneNode(true);
+    c.querySelectorAll('[data-emptyph],[data-emptyfig],[data-emptyrow],button,input').forEach(function(x){ x.remove(); });
+    return !c.textContent.replace(/\u00a0/g, ' ').trim();
+  }
+  d.querySelectorAll('p, li').forEach(function(el){
+    if(el.closest('.fig')){ el.removeAttribute('data-emptyblock'); return; }
+    if(blank(el)) el.setAttribute('data-emptyblock','1');
+    else el.removeAttribute('data-emptyblock');
+  });
+  d.querySelectorAll('tr').forEach(function(tr){
+    tr.removeAttribute('data-emptyblock');
+    if(!tr.querySelector('[data-emptyph]')) return;
+    var cells = Array.prototype.filter.call(tr.querySelectorAll('td'), function(td){
+      return !td.classList.contains('k') && !td.classList.contains('n') && !td.classList.contains('pr');
+    });
+    if(!cells.length) return;
+    var allBlank = true;
+    for(var i = 0; i < cells.length; i++){ if(!blank(cells[i])){ allBlank = false; break; } }
+    if(allBlank) tr.setAttribute('data-emptyblock','1');
+  });
+  /* collapse sections with nothing left to show, then renumber body + contents */
+  var secs = Array.prototype.slice.call(d.querySelectorAll('h2.sec'));
+  var hiddenTitles = [];
+  secs.forEach(function(h){
+    var nodes = [], el = h.nextElementSibling;
+    while(el && !(el.tagName === 'H2' && el.classList.contains('sec'))){ nodes.push(el); el = el.nextElementSibling; }
+    var hasContent = false;
+    for(var i = 0; i < nodes.length; i++){
+      var nd = nodes[i];
+      if(nd.classList && nd.classList.contains('page-break')) continue;
+      if(nd.getAttribute('data-emptyblock') || nd.getAttribute('data-emptyrow') ||
+         nd.getAttribute('data-emptyfig') || nd.getAttribute('data-emptyph')) continue;
+      var c = nd.cloneNode(true);
+      c.querySelectorAll('[data-emptyph],[data-emptyblock],[data-emptyrow],[data-emptyfig],button,input').forEach(function(x){ x.remove(); });
+      if(c.querySelector && c.querySelector('img')){ hasContent = true; break; }
+      if(c.textContent.replace(/\u00a0/g, ' ').trim()){ hasContent = true; break; }
+    }
+    var hc = h.cloneNode(true);
+    hc.querySelectorAll('.num, button').forEach(function(x){ x.remove(); });
+    if(!hasContent){
+      h.setAttribute('data-emptysec','1');
+      nodes.forEach(function(nd){ if(nd.setAttribute) nd.setAttribute('data-emptysec','1'); });
+      var prev = h.previousElementSibling;
+      if(prev && prev.classList && prev.classList.contains('page-break')) prev.setAttribute('data-emptysec','1');
+      hiddenTitles.push(hc.textContent.replace(/\u00a0/g, ' ').trim());
+    } else {
+      h.removeAttribute('data-emptysec');
+      nodes.forEach(function(nd){ if(nd.removeAttribute) nd.removeAttribute('data-emptysec'); });
+    }
+  });
+  var num = 0;
+  secs.forEach(function(h){
+    var sp = h.querySelector('.num');
+    if(!sp || h.getAttribute('data-emptysec')) return;
+    num++;
+    if(!sp.getAttribute('data-orignum')) sp.setAttribute('data-orignum', sp.textContent);
+    sp.textContent = String(num);
+  });
+  var tocNum = 0;
+  d.querySelectorAll('.toc-row').forEach(function(row){
+    var t = row.querySelector('.t');
+    if(!t) return;
+    var title = t.textContent.replace(/\u00a0/g, ' ').replace(/^\s*\d+\s*/, '').trim();
+    var hidden = false;
+    for(var i = 0; i < hiddenTitles.length; i++){
+      var ht = hiddenTitles[i];
+      if(ht && (title.indexOf(ht) === 0 || ht.indexOf(title) === 0)){ hidden = true; break; }
+    }
+    if(hidden){ row.setAttribute('data-emptysec','1'); return; }
+    row.removeAttribute('data-emptysec');
+    tocNum++;
+    if(!t.getAttribute('data-origtoc')) t.setAttribute('data-origtoc', t.textContent);
+    t.textContent = t.getAttribute('data-origtoc').replace(/^\s*\d+/, String(tocNum));
+  });
+}
+function restorePrintMarks(d){
+  if(!d) return;
+  d.querySelectorAll('h2.sec .num[data-orignum]').forEach(function(sp){
+    sp.textContent = sp.getAttribute('data-orignum');
+    sp.removeAttribute('data-orignum');
+  });
+  d.querySelectorAll('.toc-row .t[data-origtoc]').forEach(function(t){
+    t.textContent = t.getAttribute('data-origtoc');
+    t.removeAttribute('data-origtoc');
+  });
+}
 document.getElementById('printBtn').addEventListener('click', async function(){
-  await saveCurrent();
+  await saveCurrent(); /* save first, so the stored document stays clean */
   try{
     var d = frame.contentDocument;
     if(d && d.head && !d.getElementById('printFix')){
       var st = d.createElement('style');
       st.id = 'printFix';
       st.textContent = '@media print{body{width:auto !important;margin:0 !important;padding:0 !important;}' +
-        '[data-emptyfig],[data-emptyrow]{display:none !important;}}';
+        '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important;}' +
+        '.page-break{display:none !important;}' +
+        'h2.sec{break-after:avoid;}' +
+        '.figrow,.fig,tr{break-inside:avoid;}' +
+        '.reanalyzeBtn,[data-cardinal-hint],.fig .frame button,.fig .frame input,' +
+        '.cover-photo button,.cover-photo input{display:none !important;}}' +
+        '@page{@bottom-center{content:"5735 Webster St, Dayton OH 45414  \u00b7  937.576.6753  \u00b7  Admin@cardinalrenovations.net";' +
+        'font-family:"Segoe UI",Arial,sans-serif;font-size:8pt;color:#8a8a8a;}}';
       d.head.appendChild(st);
     }
-    /* hide unused photo boxes in the printout \u2014 marks are stripped on save */
-    if(d){
-      d.querySelectorAll('.fig, .cover-photo').forEach(function(f){
-        var fr = f.classList.contains('cover-photo') ? f : f.querySelector('.frame');
-        if(fr && !fr.querySelector('img')) f.setAttribute('data-emptyfig','1');
-        else f.removeAttribute('data-emptyfig');
-      });
-      d.querySelectorAll('.figrow').forEach(function(row){
-        if(!row.querySelector('.frame img')) row.setAttribute('data-emptyrow','1');
-        else row.removeAttribute('data-emptyrow');
-      });
-    }
+    if(d) compactForPrint(d);
     frame.contentWindow.focus();
     frame.contentWindow.print();
+    if(d) restorePrintMarks(d);
   }
   catch(e){ showError('Print failed: ' + e.message); }
 });
