@@ -1674,7 +1674,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 90 &#8212; editor veil fix</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 91 &#8212; print cleanup + inspection speed</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2191,7 +2191,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <div id="landingView" style="display:none;position:fixed;inset:0;z-index:150;overflow-y:auto;
   background:radial-gradient(1200px 600px at 50% -10%, #2a1b16 0%, #17100e 55%, #0d0908 100%);">
   <div style="max-width:520px;margin:0 auto;padding:7vh 22px 40px;text-align:center;">
-    <img src="/cardinal-landing.png" alt="" style="width:min(78vw,340px);height:auto;
+    <img src="/cardinal-landing.PNG" alt="" style="width:min(78vw,340px);height:auto;
       filter:drop-shadow(0 10px 28px rgba(0,0,0,.55));margin-bottom:10px;" onerror="this.style.display='none'">
     <div style="font:800 26px Georgia,'Times New Roman',serif;letter-spacing:.03em;
       background:linear-gradient(160deg,#a06c08,#d4a017 40%,#f5d061 55%,#c8901c 75%);
@@ -2926,7 +2926,14 @@ p{margin:0 0 10px;}
 /* ---------- non-printing help panel (delete or ignore) ---------- */
 .no-print{}
 @media print{ .no-print{display:none !important;} }
+/* unused photo boxes never print (modern browsers) */
+@media print{
+  .fig:has(.frame:not(:has(img))){display:none !important;}
+  .figrow:not(:has(.frame img)){display:none !important;}
+  .cover-photo:not(:has(img)){display:none !important;}
+}
 .howto{
+  display:none; /* only the Cardinal editor reveals this panel */
   border:2px dashed var(--red); background:#fff4f4; color:#7a1119;
   padding:14px 18px; margin:0 0 26px; border-radius:8px; font-size:10pt;
 }
@@ -3019,20 +3026,16 @@ small.hint{color:#b06a00;font-size:8.5pt;}
 <body>
 
 <!-- =======================================================================
-     HOW TO USE THIS TEMPLATE  (this red panel does NOT print / export to PDF)
+     HOW TO USE THIS TEMPLATE  (editor-only helper \u2014 hidden on print, PDF, and client share links)
      ======================================================================= -->
 <div class="howto no-print">
-  <h4>How to use this Cardinal inspection-report template</h4>
-  Everything highlighted in <span class="ph">yellow</span> is a fill-in field — type over it and delete the highlight.
+  <h4>How to fill out this Cardinal inspection report</h4>
+  Everything highlighted in <span class="ph">yellow</span> is a fill-in field &mdash; tap it and type over it. This red panel only shows inside the Cardinal editor; it never prints, never exports to PDF, and never appears on a client share link.
   <ul>
-    <li><b>Add a photo:</b> inside a <code>&lt;div class="frame"&gt;</code>, replace the placeholder text with
-        <code>&lt;img src="photo.jpg"&gt;</code> (keep the photo file in the same folder as this HTML).</li>
-    <li><b>Add another photo pair:</b> copy any block between the <code>&#9660; COPY FIGURE BLOCK &#9660;</code> markers.</li>
-    <li><b>Add another finding row:</b> copy a <code>&lt;tr&gt;</code> in the Areas of Concern table and set its chip to
-        <code>high</code> / <code>mod</code> / <code>mon</code>.</li>
-    <li><b>Add a whole section:</b> copy a block between the <code>&#9660; COPY SECTION &#9660;</code> markers and renumber it.</li>
-    <li><b>Make the PDF:</b> open this file in a browser &rarr; Print &rarr; <em>Save as PDF</em> (margins: Default, background graphics: ON).</li>
-    <li>Update the footer contact line (address / phone / email) in the <code>@page</code> CSS at the top once, and it repeats on every page.</li>
+    <li><b>Photos:</b> use a photo box&rsquo;s <b>Replace photo</b> button, or send shots over from the client&rsquo;s Photo Gallery (&ldquo;Transfer to report&rdquo;). Any photo box you leave empty is automatically left out of the printed / PDF copy.</li>
+    <li><b>Specs &amp; findings:</b> the Roofing Inspection Checklist fills the baseline specs and Areas of Concern rows automatically when the report is created.</li>
+    <li><b>AI drafting:</b> tap a section&rsquo;s re-analyze button to draft that section&rsquo;s narrative from its photos.</li>
+    <li><b>Finish:</b> <b>Print / PDF</b> makes the paper or PDF copy; <b>Share link</b> or <b>Send</b> delivers it to the client.</li>
   </ul>
 </div>
 
@@ -8435,11 +8438,33 @@ function metallicize(root){
   }catch(e){}
 }
 metallicize(document.body);
+/* perf: re-metallicize only the subtrees that actually changed, never the whole page */
+var __micQueue = [];
 var __micPending = false;
-new MutationObserver(function(){
-  if(__micPending) return;
+new MutationObserver(function(records){
+  for(var i = 0; i < records.length; i++){
+    var added = records[i].addedNodes;
+    for(var j = 0; j < added.length; j++){
+      var n = added[j];
+      if(n.nodeType === 1) __micQueue.push(n);
+      else if(n.nodeType === 3 && n.parentNode && n.parentNode.nodeType === 1) __micQueue.push(n.parentNode);
+    }
+  }
+  if(__micPending || !__micQueue.length) return;
   __micPending = true;
-  setTimeout(function(){ __micPending = false; metallicize(document.body); }, 250);
+  setTimeout(function(){
+    __micPending = false;
+    var roots = __micQueue.splice(0, __micQueue.length);
+    var kept = [];
+    for(var a = 0; a < roots.length; a++){
+      var r = roots[a];
+      if(!r.isConnected || (r.classList && r.classList.contains('mic'))) continue;
+      var covered = false;
+      for(var b = 0; b < kept.length; b++){ if(kept[b].contains(r)){ covered = true; break; } }
+      if(!covered) kept.push(r);
+    }
+    for(var c = 0; c < kept.length; c++) metallicize(kept[c]);
+  }, 250);
 }).observe(document.body, { childList:true, subtree:true });
 
 /* ---------- company documents ---------- */
@@ -9416,16 +9441,19 @@ document.getElementById('pNewReportBtn').addEventListener('click', async functio
   if(!currentProject) return;
   var cl = getChecklist(currentProject);
   if(!cl){
-    alert('Complete the Roofing Inspection Checklist first \u2014 its baseline specs feed directly into the report.');
-    showTab('checklists');
-    openChecklist();
-    return;
+    if(!confirm('No Roofing Inspection Checklist on file \u2014 its baseline specs normally feed the report.\n\n' +
+                'OK = create the report anyway (blank specs, fill by hand)\nCancel = go complete the checklist first')){
+      showTab('checklists');
+      openChecklist();
+      return;
+    }
   }
   var title = prompt('Report title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
   if(title === null) return;
   try{
-    var id = await db.create(title.trim() || 'Untitled inspection',
-                             injectChecklistFindings(prefillChecklist(prefillUserInfo(prefillClientInfo(REPORT_TEMPLATE, currentProject)), cl), cl),
+    var tpl0 = prefillUserInfo(prefillClientInfo(REPORT_TEMPLATE, currentProject));
+    if(cl) tpl0 = injectChecklistFindings(prefillChecklist(tpl0, cl), cl);
+    var id = await db.create(title.trim() || 'Untitled inspection', tpl0,
                              currentProject.name, currentProject.id);
     await reload();
     await openEditor(id);
@@ -10213,7 +10241,8 @@ async function openEditor(id){
         sfx.textContent = '@media screen{body{max-width:900px;width:auto !important;margin:0 auto;padding:22px 16px !important;box-sizing:border-box;}}' +
           '@media screen and (max-width:640px){.figrow{flex-direction:column;}.fig .frame{height:auto;aspect-ratio:4/3;}' +
           '.cover-photo{height:auto;aspect-ratio:4/3;}table{font-size:10.5pt;}body{font-size:11.5pt;line-height:1.65;}}' +
-          '@media screen{body{background:#fff;}table.facts td,table.concerns td,table.meta td,table.items td,.cover-meta td{border-color:#1b1b1b !important;}}';
+          '@media screen{body{background:#fff;}table.facts td,table.concerns td,table.meta td,table.items td,.cover-meta td{border-color:#1b1b1b !important;}}' +
+          '@media screen{.howto{display:block !important;}}';
         doc.head.appendChild(sfx);
       }
       doc.body.setAttribute('spellcheck','true');
@@ -10262,6 +10291,8 @@ function serializeFrame(){
   if(estTable) estTable.removeAttribute('data-wired');
   var pf = clone.querySelector('#printFix');
   if(pf) pf.remove();
+  clone.querySelectorAll('[data-emptyfig]').forEach(function(el){ el.removeAttribute('data-emptyfig'); });
+  clone.querySelectorAll('[data-emptyrow]').forEach(function(el){ el.removeAttribute('data-emptyrow'); });
   var sf = clone.querySelector('#screenFix');
   if(sf) sf.remove();
   clone.querySelectorAll('.cbx[data-cbx]').forEach(function(el){ el.removeAttribute('data-cbx'); });
@@ -10483,8 +10514,21 @@ document.getElementById('printBtn').addEventListener('click', async function(){
     if(d && d.head && !d.getElementById('printFix')){
       var st = d.createElement('style');
       st.id = 'printFix';
-      st.textContent = '@media print{body{width:auto !important;margin:0 !important;padding:0 !important;}}';
+      st.textContent = '@media print{body{width:auto !important;margin:0 !important;padding:0 !important;}' +
+        '[data-emptyfig],[data-emptyrow]{display:none !important;}}';
       d.head.appendChild(st);
+    }
+    /* hide unused photo boxes in the printout \u2014 marks are stripped on save */
+    if(d){
+      d.querySelectorAll('.fig, .cover-photo').forEach(function(f){
+        var fr = f.classList.contains('cover-photo') ? f : f.querySelector('.frame');
+        if(fr && !fr.querySelector('img')) f.setAttribute('data-emptyfig','1');
+        else f.removeAttribute('data-emptyfig');
+      });
+      d.querySelectorAll('.figrow').forEach(function(row){
+        if(!row.querySelector('.frame img')) row.setAttribute('data-emptyrow','1');
+        else row.removeAttribute('data-emptyrow');
+      });
     }
     frame.contentWindow.focus();
     frame.contentWindow.print();
