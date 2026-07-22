@@ -2085,6 +2085,77 @@ body:has(#loginView[style*="block"]){background:#fff;}
   max-width:840px;margin:0 auto;
   padding:24px 18px 60px;
 }
+
+/* Insurance Clients directory — mirrors main directory layout in the insurance theme */
+#insClientsView .ins-search{display:flex;align-items:center;gap:10px;margin:8px 0 10px;}
+#insClientsView .ins-search input{
+  flex:1;background:rgba(255,255,255,.06);border:1px solid #2f3a4c;color:#e8ecf1;
+  padding:11px 16px;border-radius:20px;font:14px 'Segoe UI',Arial,sans-serif;outline:none;
+  -webkit-appearance:none;appearance:none;
+}
+#insClientsView .ins-search input:focus{border-color:#4a6fa5;background:rgba(255,255,255,.09);}
+#insClientsView .ins-search input::placeholder{color:#8b95a5;}
+#insClientsView .ins-count{color:#8b95a5;font:700 12px 'Segoe UI',Arial,sans-serif;padding:0 6px;white-space:nowrap;}
+
+#insClientsView .ins-stgfilter{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px;}
+#insClientsView .ins-hstat{
+  font:700 12px 'Segoe UI',Arial,sans-serif;
+  background:rgba(255,255,255,.05);color:#cfd6e0;border:1px solid #2f3a4c;
+  padding:7px 12px;border-radius:16px;cursor:pointer;
+  -webkit-tap-highlight-color:rgba(74,111,165,.25);touch-action:manipulation;
+  transition:background .12s, border-color .12s;
+}
+#insClientsView .ins-hstat:hover{background:rgba(255,255,255,.09);border-color:#4a6fa5;}
+#insClientsView .ins-hstat.on{background:#4a6fa5;color:#fff;border-color:#4a6fa5;}
+#insClientsView .ins-hstat b{color:#f5d061;margin-left:3px;}
+#insClientsView .ins-hstat.on b{color:#fff;}
+
+#insClientsView .ins-clirow{
+  display:flex;align-items:center;gap:12px;
+  border:1px solid #2f3a4c;border-radius:10px;
+  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
+  padding:10px 14px;margin:8px 0;cursor:pointer;
+  transition:box-shadow .15s, border-color .15s, background .12s;
+  -webkit-tap-highlight-color:rgba(74,111,165,.2);touch-action:manipulation;min-height:52px;
+}
+#insClientsView .ins-clirow:hover{border-color:#4a6fa5;box-shadow:0 4px 14px rgba(74,111,165,.22);}
+#insClientsView .ins-clirow:active{background:#1a1f2e;}
+#insClientsView .ins-clirow .mini{
+  flex:0 0 44px;width:44px;height:44px;border-radius:50%;overflow:hidden;
+  background:rgba(74,111,165,.18);
+  display:flex;align-items:center;justify-content:center;
+  font:800 18px 'Segoe UI',Arial,sans-serif;color:#7fa6d6;
+}
+#insClientsView .ins-clirow .mini img{width:100%;height:100%;object-fit:cover;}
+#insClientsView .ins-clirow .bd{flex:1;min-width:0;}
+#insClientsView .ins-clirow .bd b{
+  font:800 15px 'Segoe UI',Arial,sans-serif;color:#e8ecf1;
+  margin-right:6px;
+}
+#insClientsView .ins-clirow .bd small{
+  display:block;font:12.5px 'Segoe UI',Arial,sans-serif;color:#8b95a5;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;
+}
+#insClientsView .ins-clirow .chev{color:#7fa6d6;font-size:20px;font-weight:800;}
+#insClientsView .ins-clirow .favstar{color:#6b7a90;padding:4px;font-size:19px;cursor:pointer;line-height:1;}
+#insClientsView .ins-clirow .favstar.on{color:#f5d061;}
+
+/* Stage chips in insurance-themed dark palette (overrides default light stage chip colors) */
+#insClientsView .stagechip{border:1px solid rgba(127,166,214,.28);}
+#insClientsView .stagechip.stg-Lead{background:rgba(93,161,243,.18);color:#a3c7fa;border-color:rgba(93,161,243,.35);}
+#insClientsView .stagechip.stg-Prospect{background:rgba(230,145,45,.18);color:#f5b880;border-color:rgba(230,145,45,.35);}
+#insClientsView .stagechip.stg-Approved{background:rgba(76,175,113,.18);color:#8fdfa8;border-color:rgba(76,175,113,.35);}
+#insClientsView .stagechip.stg-Scheduled{background:rgba(200,32,46,.2);color:#f4a7ae;border-color:rgba(200,32,46,.35);}
+#insClientsView .stagechip.stg-Completed{background:rgba(150,150,150,.18);color:#c8c8c8;border-color:rgba(150,150,150,.32);}
+#insClientsView .stagechip.stg-Invoiced{background:rgba(140,90,190,.18);color:#c4a3f0;border-color:rgba(140,90,190,.35);}
+#insClientsView .stagechip.stg-Closed{background:rgba(120,140,160,.18);color:#a5b8ce;border-color:rgba(120,140,160,.32);}
+#insClientsView .stagechip.stg-Lost{background:rgba(140,120,120,.2);color:#c4a8a8;border-color:rgba(140,120,120,.32);}
+
+#insClientsView .ins-empty{
+  text-align:center;padding:32px 20px;color:#8b95a5;
+  border:1px dashed #2f3a4c;border-radius:10px;font:600 14px 'Segoe UI',Arial,sans-serif;
+}
+
 .ins-h1{
   margin:8px 0 12px;
   font:800 30px Georgia,'Times New Roman',serif;
@@ -2333,7 +2404,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 133 &#8212; Collapsible Insurance Info panel with 6 primary fields + RCV/ACV added; PO# auto-populates on Quick Inspection prospects</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 134 &#8212; Insurance Clients directory now matches main directory layout with search, stage filters, and favorites — in insurance dark theme</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3066,6 +3137,11 @@ body:has(#loginView[style*="block"]){background:#fff;}
       <h1>Insurance Clients</h1>
       <p>All clients on the insurance side. Tap any card to open the profile.</p>
     </div>
+    <div class="ins-search">
+      <input type="search" id="icFilter" placeholder="Filter by name, PO #, address, phone&#8230;" aria-label="Filter insurance clients">
+      <span class="ins-count" id="icCount"></span>
+    </div>
+    <div class="ins-stgfilter" id="icStgFilter"></div>
     <div id="insClientsList"></div>
   </div>
 </div>
@@ -15201,40 +15277,112 @@ function showInsuranceClients(){
   renderInsuranceClientsList();
   window.scrollTo(0, 0);
 }
+var icStageFilter = '';
 function renderInsuranceClientsList(){
   var mount = document.getElementById('insClientsList');
+  var stgWrap = document.getElementById('icStgFilter');
+  var countEl = document.getElementById('icCount');
+  var filterInput = document.getElementById('icFilter');
   if(!mount) return;
+
   var insClients = (cacheProjects || []).filter(function(p){ return projClaimType(p) === 'insurance'; });
-  if(!insClients.length){
-    mount.innerHTML =
-      '<div class="ins-card ins-cardstub" style="cursor:default;">' +
-        '<div class="ins-cardtitle">No insurance clients yet</div>' +
-        '<div class="ins-cardsub">Create a new lead with claim type set to Insurance and it will show up here.</div>' +
-      '</div>';
+
+  /* stage filter chips — count only within the insurance subset */
+  if(stgWrap){
+    var STAGES_ALL = (typeof STAGES !== 'undefined' && STAGES && STAGES.length)
+      ? STAGES
+      : ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
+    stgWrap.innerHTML = '<span class="ins-hstat' + (icStageFilter === '' ? ' on' : '') + '" data-stg="">All stages</span>' +
+      STAGES_ALL.map(function(s){
+        var n = insClients.filter(function(pr){ return normStage(pr.stage) === s; }).length;
+        var lbl = (s === 'Closed' ? 'Archived' : s);
+        return '<span class="ins-hstat' + (icStageFilter === s ? ' on' : '') + '" data-stg="' + s + '">' +
+          lbl + ' <b>' + n + '</b></span>';
+      }).join('');
+  }
+
+  /* apply search + stage filter */
+  var q = (filterInput && filterInput.value || '').trim().toLowerCase();
+  var list = insClients.slice().sort(function(a, b){ return (a.name || '').localeCompare(b.name || ''); });
+  /* favorites first, matching main directory sort */
+  if(typeof favSort === 'function') list = favSort(list);
+  list = list.filter(function(pr){
+    if(icStageFilter && normStage(pr.stage) !== icStageFilter) return false;
+    if(!q) return true;
+    var I = projInsurance(pr) || {};
+    var adj = I.adjuster || {};
+    var hay = [
+      pr.name, pr.address, pr.phone, pr.email, pr.created_by,
+      poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : '',
+      I.carrier, I.claim_number, I.policy_number, adj.name, adj.phone
+    ].join(' ').toLowerCase();
+    return hay.indexOf(q) !== -1;
+  });
+
+  if(countEl) countEl.textContent = list.length + ' client' + (list.length === 1 ? '' : 's');
+
+  if(!list.length){
+    mount.innerHTML = insClients.length
+      ? '<div class="ins-empty">No matches for that filter.</div>'
+      : '<div class="ins-empty"><b>No insurance clients yet.</b><br>Create a new lead with claim type Insurance and it will appear here.</div>';
     return;
   }
-  mount.innerHTML = insClients.map(function(p){
-    var I = projInsurance(p) || {};
-    var adj = I.adjuster || {};
-    var stg = normStage(p.stage) || 'Lead';
-    return '<button class="ins-card" data-icpid="' + esc(p.id) + '" style="cursor:pointer;margin-bottom:12px;">' +
-      '<div class="ins-cardtitle">' + esc(p.name || 'Unnamed client') + '</div>' +
-      '<div class="ins-cardsub" style="color:#a5b0c0;">' +
-        (p.address ? esc(p.address) + '<br>' : '') +
-        '<b style="color:#7fa6d6;">Stage:</b> ' + esc(stg) +
-        (I.carrier ? ' &nbsp;&middot;&nbsp; <b style="color:#7fa6d6;">Carrier:</b> ' + esc(I.carrier) : '') +
-        (I.claim_number ? ' &nbsp;&middot;&nbsp; <b style="color:#7fa6d6;">Claim #:</b> ' + esc(I.claim_number) : '') +
-        (adj.name ? '<br><b style="color:#7fa6d6;">Adjuster:</b> ' + esc(adj.name) : '') +
-      '</div>' +
-      '<div class="ins-cardgo">Open profile &rsaquo;</div>' +
-    '</button>';
+
+  mount.innerHTML = list.map(function(pr){
+    var mini = pr.cover_image
+      ? '<img src="' + esc(pr.cover_image) + '" alt="">'
+      : esc((pr.name || '?').trim().charAt(0).toUpperCase());
+    var stg = normStage(pr.stage) || 'Lead';
+    var I = projInsurance(pr) || {};
+    var subParts = [];
+    if(pr.address) subParts.push(esc(pr.address));
+    if(I.carrier) subParts.push(esc(I.carrier));
+    var sub = subParts.join(' \u00b7 ');
+    var isFavPr = (typeof isFav === 'function') ? isFav(pr) : false;
+    return '<div class="ins-clirow" data-icpid="' + esc(pr.id) + '">' +
+      '<span class="mini">' + mini + '</span>' +
+      '<span class="bd"><b>' + esc(pr.name || 'Unnamed client') + '</b>' +
+        '<span class="stagechip ' + (typeof stageClass === 'function' ? stageClass(stg) : 'stg-' + stg) + '">' + esc(stg) + '</span>' +
+        (sub ? '<small>' + sub + '</small>' : '') + '</span>' +
+      '<span class="favstar' + (isFavPr ? ' on' : '') + '" data-icfav="' + esc(pr.id) + '">' + (isFavPr ? '\u2B50' : '\u2606') + '</span>' +
+      '<span class="chev">&#8250;</span>' +
+    '</div>';
   }).join('');
-  mount.addEventListener('click', mount._insClickHandler || (mount._insClickHandler = function(e){
-    var b = e.target.closest('[data-icpid]'); if(!b) return;
-    var pid = b.getAttribute('data-icpid');
-    document.getElementById('insClientsView').style.display = 'none';
-    openProject(pid);
-  }), { once: false });
+
+  /* wire once — delegated click on mount handles rows, stars, and stage chips + search */
+  if(!mount._insWired){
+    mount._insWired = true;
+    mount.addEventListener('click', function(e){
+      var star = e.target.closest('[data-icfav]');
+      if(star){
+        e.stopPropagation();
+        if(typeof toggleFav === 'function'){
+          toggleFav(star.getAttribute('data-icfav'));
+          renderInsuranceClientsList();
+        }
+        return;
+      }
+      var row = e.target.closest('[data-icpid]');
+      if(row){
+        var pid = row.getAttribute('data-icpid');
+        document.getElementById('insClientsView').style.display = 'none';
+        openProject(pid);
+      }
+    });
+  }
+  if(stgWrap && !stgWrap._insWired){
+    stgWrap._insWired = true;
+    stgWrap.addEventListener('click', function(e){
+      var chip = e.target.closest('.ins-hstat');
+      if(!chip) return;
+      icStageFilter = chip.getAttribute('data-stg') || '';
+      renderInsuranceClientsList();
+    });
+  }
+  if(filterInput && !filterInput._insWired){
+    filterInput._insWired = true;
+    filterInput.addEventListener('input', renderInsuranceClientsList);
+  }
 }
 function backToLanding(){
   document.getElementById('cardinalTruthView').style.display = 'none';
