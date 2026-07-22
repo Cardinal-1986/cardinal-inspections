@@ -444,8 +444,16 @@ body.claim-insurance .projinfo .projLandChip:hover{background:rgba(74,111,165,.2
 
 
 /* -- Extend insurance theme to the full client-profile content -- */
-/* Slight blue-tinted page background so cards read as one theme */
-body.claim-insurance #projectView{background:linear-gradient(180deg,#eef1f7 0%,#e3e8f1 100%);}
+/* Solid dark background matching Cardinal Truth so the profile reads as one theme */
+body.claim-insurance #projectView{background:#1a1f2e;}
+body.claim-insurance{background:#1a1f2e;}
+
+/* Two-tone the Cardinal Roofing logo — greyscale it then tint toward light blue
+   so it reads as "grey and light blue" against the dark insurance header */
+body.claim-insurance #brandLogo{
+  filter:grayscale(1) sepia(.7) hue-rotate(170deg) saturate(1.7) brightness(1.05) contrast(1.05);
+  transition:filter .18s;
+}
 
 /* Section headers with light text + steel-blue rule (subtle, no full dark bar) */
 body.claim-insurance #projectView .projsec{color:#e8ecf1;border-bottom-color:#4a6fa5;
@@ -2454,7 +2462,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 137 &#8212; Insurance profile: PO# in lavender before name, Landing chip on cover, header rule steel-blue, logo → Cardinal Truth</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 138 &#8212; Cardinal Truth: dropped RL card, added Insurance Resources at bottom; insurance profile bg dark to match; brand logo grey/blue two-tone in insurance mode</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3151,11 +3159,6 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <h1 class="ins-h1">Cardinal Truth</h1>
     <p class="ins-lede">Every claim tells a story. Cardinal Truth is where the story gets straight &mdash; the code, the regulation, the field evidence, the paper trail. Adjusters read what's in the file. Make sure the file says what you mean.</p>
     <div class="ins-grid">
-      <button class="ins-card" data-ctnav="library">
-        <div class="ins-cardtitle">&#128218; Resource Library</div>
-        <div class="ins-cardsub">Ohio roofing code, insurance regulations, claim scenarios, documentation standards, and city amendments.</div>
-        <div class="ins-cardgo">Open &rsaquo;</div>
-      </button>
       <button class="ins-card" data-ctnav="clients">
         <div class="ins-cardtitle">&#128203; Insurance Clients</div>
         <div class="ins-cardsub">All clients on the insurance side &mdash; carrier, claim #, adjuster, deductible &mdash; at a glance. Tap any to open the profile.</div>
@@ -3169,6 +3172,11 @@ body:has(#loginView[style*="block"]){background:#fff;}
       <button class="ins-card" data-ctnav="supplements">
         <div class="ins-cardtitle">&#128206; Supplement Templates</div>
         <div class="ins-cardsub">Pre-formatted supplements for the most common denials: ice barrier, decking, ventilation, matching, flashings, related property damage.</div>
+        <div class="ins-cardgo">Open &rsaquo;</div>
+      </button>
+      <button class="ins-card" data-ctnav="insurance-resources">
+        <div class="ins-cardtitle">&#128218; Insurance Resources</div>
+        <div class="ins-cardsub">Ohio insurance law, policy provisions, documentation standards, claim tips, do &amp; don't, truck cheat sheet &mdash; the insurance side of the resource library.</div>
         <div class="ins-cardgo">Open &rsaquo;</div>
       </button>
     </div>
@@ -15537,7 +15545,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     else if(nav === 'clients') showInsuranceClients();
     else if(nav === 'home') backToLanding();
   });
-  /* also let the cards on the Cardinal Truth page route to library / clients / supplements */
+  /* also let the cards on the Cardinal Truth page route to library / clients / supplements / insurance-resources */
   document.getElementById('cardinalTruthView').addEventListener('click', function(e){
     var b = e.target.closest('.ins-card[data-ctnav]'); if(!b) return;
     var nav = b.getAttribute('data-ctnav');
@@ -15546,6 +15554,10 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     else if(nav === 'supplements'){
       showResourceLibrary();
       if(window._rlShowPage) window._rlShowPage('rlPageSup');
+    }
+    else if(nav === 'insurance-resources'){
+      showResourceLibrary();
+      if(window._rlShowPage) window._rlShowPage('rlPageInsHub');
     }
   });
 })();
@@ -15680,7 +15692,7 @@ showResourceLibrary = function(){
 
 /* remember if RL was opened from Cardinal Truth so Back can return there */
 document.getElementById('cardinalTruthView').addEventListener('click', function(e){
-  if(e.target.closest('[data-ctnav="library"]') || e.target.closest('[data-ctnav="supplements"]')){
+  if(e.target.closest('[data-ctnav="library"]') || e.target.closest('[data-ctnav="supplements"]') || e.target.closest('[data-ctnav="insurance-resources"]')){
     document.getElementById('cardinalTruthView').setAttribute('data-was-open', '1');
   }
 });
