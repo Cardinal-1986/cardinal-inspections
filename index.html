@@ -2152,7 +2152,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 122 &#8212; Mastering Roof Inspections page added under General (paired with Measurements)</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 124 &#8212; Header self-heal in hideAllViews + load-time check; catches any lingering hidden state</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8391,6 +8391,7 @@ document.getElementById('rptTabs').addEventListener('click', function(e){
 /* ---------- project profile ---------- */
 var projectView = document.getElementById('projectView');
 function showHome(){
+  var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   var hc = document.getElementById('headCtx');
   if(hc) hc.textContent = '';
   setTimeout(fixHeadPad, 50);
@@ -8408,6 +8409,7 @@ function showHome(){
 function openProject(id){
   var pr = cacheProjects.find(function(x){ return x.id === id; });
   if(!pr) return;
+  var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   currentProject = pr;
   document.getElementById('projName').innerHTML =
     esc(pr.name || 'Unnamed client') +
@@ -10661,6 +10663,10 @@ function setHeaderJobMenu(on){
   setTimeout(fixHeadPad, 40);
 }
 function hideAllViews(){
+  /* Self-heal: whenever we're about to show a main-app view, make sure the
+     site header is visible. Anything upstream that left it hidden gets fixed here. */
+  var _hd = document.querySelector('header.site');
+  if(_hd && _hd.style.display === 'none') _hd.style.display = '';
   setHeaderJobMenu(false);
   mainView.style.display = 'none';
   projectView.style.display = 'none';
@@ -11299,6 +11305,24 @@ function fixHeadPad(){
 fixHeadPad();
 setTimeout(fixHeadPad, 300); /* after fonts/logo settle */
 setTimeout(fixHeadPad, 900);
+/* Load-time self-heal: if we're past the login screen, the header must be visible.
+   Cheap idempotent check that fixes any stuck session state from an older build. */
+(function ensureHeaderVisibleWhenLoggedIn(){
+  var check = function(){
+    var lv = document.getElementById('loginView');
+    var loggedIn = lv && !lv.classList.contains('open');
+    if(!loggedIn) return;
+    var hd = document.querySelector('header.site');
+    if(hd && hd.style.display === 'none'){
+      hd.style.display = '';
+      fixHeadPad();
+    }
+  };
+  check();
+  setTimeout(check, 500);
+  setTimeout(check, 1500);
+  setTimeout(check, 3000);
+})();
 window.addEventListener('load', fixHeadPad);
 var blImg = document.getElementById('brandLogo');
 if(blImg) blImg.addEventListener('load', fixHeadPad);
@@ -14403,21 +14427,26 @@ function showLanding(userEmail){
 }
 document.getElementById('landDash').addEventListener('click', function(){
   document.getElementById('landingView').style.display = 'none';
+  var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
 });
 document.getElementById('landSkip').addEventListener('click', function(){
   document.getElementById('landingView').style.display = 'none';
+  var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
 });
 document.getElementById('landQuick').addEventListener('click', function(){
   document.getElementById('landingView').style.display = 'none';
+  var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   openQuickInsp(true);
 });
 
 /* ---- Insurance section: Cardinal Truth + Resource Library ---- */
+/* Site header is z-index 90; insurance views are 155-157 and cover it visually,
+   so we never touch header.site.style — leaving it alone means going back to
+   the main app never leaves us with a hidden header. */
 function showCardinalTruth(){
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
   var rl = document.getElementById('resourceLibraryView'); if(rl) rl.style.display = 'none';
   var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
-  var hd = document.querySelector('header.site'); if(hd) hd.style.display = 'none';
   document.getElementById('cardinalTruthView').style.display = 'block';
   window.scrollTo(0, 0);
 }
@@ -14425,7 +14454,6 @@ function showResourceLibrary(){
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
   var ct = document.getElementById('cardinalTruthView'); if(ct) ct.style.display = 'none';
   var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
-  var hd = document.querySelector('header.site'); if(hd) hd.style.display = 'none';
   document.getElementById('resourceLibraryView').style.display = 'block';
   window.scrollTo(0, 0);
 }
@@ -14433,7 +14461,6 @@ function showInsuranceClients(){
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
   var ct = document.getElementById('cardinalTruthView'); if(ct) ct.style.display = 'none';
   var rl = document.getElementById('resourceLibraryView'); if(rl) rl.style.display = 'none';
-  var hd = document.querySelector('header.site'); if(hd) hd.style.display = 'none';
   document.getElementById('insClientsView').style.display = 'block';
   renderInsuranceClientsList();
   window.scrollTo(0, 0);
@@ -14469,9 +14496,7 @@ function renderInsuranceClientsList(){
   mount.addEventListener('click', mount._insClickHandler || (mount._insClickHandler = function(e){
     var b = e.target.closest('[data-icpid]'); if(!b) return;
     var pid = b.getAttribute('data-icpid');
-    /* leaving the insurance section entirely — return the site header for the main profile */
     document.getElementById('insClientsView').style.display = 'none';
-    var hd = document.querySelector('header.site'); if(hd) hd.style.display = '';
     openProject(pid);
   }), { once: false });
 }
@@ -14479,7 +14504,6 @@ function backToLanding(){
   document.getElementById('cardinalTruthView').style.display = 'none';
   document.getElementById('resourceLibraryView').style.display = 'none';
   var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
-  var hd = document.querySelector('header.site'); if(hd) hd.style.display = 'none';
   document.getElementById('landingView').style.display = 'block';
   window.scrollTo(0, 0);
 }
