@@ -2111,6 +2111,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 .ins-plus:active{background:var(--ins-blue-dk);}
 .ins-plus:hover{background:var(--ins-blue-lt);color:#fff;}
 .ins-hspacer{width:44px;flex:0 0 auto;}
+.ins-hbtn.ins-logo-mini{
+  padding:4px;background:rgba(255,255,255,.06);
+}
+.ins-hbtn.ins-logo-mini img{
+  width:100%;height:100%;object-fit:contain;display:block;
+}
+.ins-hbtn.ins-logo-mini:hover{background:rgba(255,255,255,.12);}
 .ins-dropdown,.ins-plusmenu{
   display:none;position:absolute;z-index:11;top:64px;
   background:var(--ins-panel);
@@ -2462,7 +2469,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 139 &#8212; Fix: Source of Truth from landing now explicitly renders dashboard instead of assuming mainView is already visible</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 140 &#8212; Retail directory: Home button + Cardinal logo → Cardinal Truth. Insurance directory: mini Cardinal logo → retail directory</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3186,7 +3193,10 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ INSURANCE CLIENTS LIST ============ -->
 <div id="insClientsView" style="display:none;position:fixed;inset:0;z-index:157;background:#1a1f2e;overflow-y:auto;color:#e8ecf1;">
   <div class="ins-header">
-    <button class="ins-hbtn" id="icBackBtn" aria-label="Back">&larr;</button>
+    <button class="ins-hbtn" id="icBackBtn" aria-label="Back to Cardinal Truth" title="Back to Cardinal Truth">&larr;</button>
+    <button class="ins-hbtn ins-logo-mini" id="icLogoBtn" aria-label="Go to retail Client Directory" title="Go to retail Client Directory">
+      <img src="/cardinal-transparent.png" alt="Cardinal">
+    </button>
     <div class="ins-title">Insurance Clients</div>
     <button class="ins-hbtn ins-plus" id="icAddBtn" aria-label="Add insurance client">+</button>
   </div>
@@ -5329,7 +5339,10 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ CLIENT DIRECTORY ============ -->
 <div id="clientsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <h2 class="viewhead">&#128101; Client Directory</h2>
+    <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
+      <h2 class="viewhead" style="margin:0;flex:1;">&#128101; Client Directory</h2>
+      <button class="btn ghost" id="cliHomeBtn" style="padding:8px 14px;font-size:13px;">&#127968; Home</button>
+    </div>
     <div class="controls" style="margin:8px 0 0;">
       <input type="search" id="cliFilter" placeholder="Filter by name, PO #, address, phone, email, rep&#8230;" aria-label="Filter clients">
       <span class="count" id="cliCount"></span>
@@ -9988,7 +10001,9 @@ function openProjModal(pr){
 var newMenu = document.getElementById('newMenu');
 document.getElementById('brandLogo').addEventListener('click', function(){
   if(!(currentUser || !TEAM)) return;
-  if(document.body.classList.contains('claim-insurance') && typeof showCardinalTruth === 'function'){
+  var cliView = document.getElementById('clientsView');
+  var onCliView = cliView && cliView.style.display !== 'none';
+  if((onCliView || document.body.classList.contains('claim-insurance')) && typeof showCardinalTruth === 'function'){
     showCardinalTruth();
   } else {
     showHome();
@@ -12133,7 +12148,9 @@ function openClientsDirectory(keepFilter){
     brand.title = 'Home';
     brand.addEventListener('click', function(){
       if(!(mainView && document.getElementById('navWrap').style.display !== 'none')) return;
-      if(document.body.classList.contains('claim-insurance') && typeof showCardinalTruth === 'function'){
+      var cliView = document.getElementById('clientsView');
+      var onCliView = cliView && cliView.style.display !== 'none';
+      if((onCliView || document.body.classList.contains('claim-insurance')) && typeof showCardinalTruth === 'function'){
         showCardinalTruth();
       } else {
         showHome();
@@ -12142,6 +12159,7 @@ function openClientsDirectory(keepFilter){
   }
 })();
 var __cliBackBtn = document.getElementById('cliBackBtn'); if(__cliBackBtn) __cliBackBtn.addEventListener('click', showHome);
+var __cliHomeBtn = document.getElementById('cliHomeBtn'); if(__cliHomeBtn) __cliHomeBtn.addEventListener('click', showHome);
 document.getElementById('cliFilter').addEventListener('input', renderClientDirectory);
 document.getElementById('stgFilter').addEventListener('click', function(e){
   var chip = e.target.closest('.hstat');
@@ -15503,6 +15521,12 @@ function goToLanding(){
   if(icBack) icBack.addEventListener('click', function(){
     document.getElementById('insClientsView').style.display = 'none';
     showCardinalTruth();
+  });
+  var icLogo = document.getElementById('icLogoBtn');
+  if(icLogo) icLogo.addEventListener('click', function(){
+    document.getElementById('insClientsView').style.display = 'none';
+    if(typeof openClientsDirectory === 'function') openClientsDirectory();
+    else if(typeof showHome === 'function') showHome();
   });
   var icAdd = document.getElementById('icAddBtn');
   if(icAdd) icAdd.addEventListener('click', function(){
