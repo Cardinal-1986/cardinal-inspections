@@ -782,6 +782,20 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .insPanel .insEdit{padding:4px 12px;border:1px solid #4a6fa5;background:#fff;color:#2d4468;
   border-radius:14px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
 .insPanel .insEdit:hover{background:#4a6fa5;color:#fff;}
+/* Collapse toggle chevron in the panel header */
+.insPanel .insHead{cursor:pointer;-webkit-tap-highlight-color:rgba(74,111,165,.15);touch-action:manipulation;}
+.insPanel .insToggle{background:none;border:none;color:#4a6fa5;font:800 20px 'Segoe UI',Arial,sans-serif;
+  cursor:pointer;padding:0 4px 0 10px;line-height:1;transition:transform .2s;}
+.insPanel.collapsed .insToggle{transform:rotate(-90deg);}
+.insPanel.collapsed .insBody{display:none;}
+.insPanel.collapsed .insHead{margin-bottom:0;padding-bottom:0;border-bottom:0;}
+/* "More details" secondary toggle */
+.insPanel .insMoreBtn{background:transparent;border:0;color:#4a6fa5;
+  font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;
+  padding:8px 0 4px;margin-top:6px;letter-spacing:.03em;
+  -webkit-tap-highlight-color:rgba(74,111,165,.15);touch-action:manipulation;}
+.insPanel .insMoreBtn:hover{color:#2d4468;text-decoration:underline;}
+.insPanel .insMore{margin-top:6px;padding-top:10px;border-top:1px dashed #d0dae8;}
 
 /* Insurance Documents section */
 .insDocsBox{margin:8px 0 14px;padding:12px 12px;
@@ -2319,7 +2333,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 132 &#8212; Insurance clients: full-profile theme + Work Type auto-selects Insurance</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 133 &#8212; Collapsible Insurance Info panel with 6 primary fields + RCV/ACV added; PO# auto-populates on Quick Inspection prospects</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10066,6 +10080,10 @@ function openInsuranceEditor(pr, isTypeChange){
   if(adjEmail === null) return;
   var ded       = prompt('Deductible ($):', existing.deductible !== null && existing.deductible !== undefined ? String(existing.deductible) : '');
   if(ded === null) return;
+  var rcv       = prompt('RCV Amount ($) \u2014 Replacement Cost Value:', existing.rcv !== null && existing.rcv !== undefined ? String(existing.rcv) : '');
+  if(rcv === null) return;
+  var acv       = prompt('ACV Amount ($) \u2014 Actual Cash Value:', existing.acv !== null && existing.acv !== undefined ? String(existing.acv) : '');
+  if(acv === null) return;
   var cov       = prompt('Coverage Type (RCV or ACV):', existing.coverage_type || '');
   if(cov === null) return;
   var ordLaw    = confirm('Does the policy have Ordinance & Law coverage?\n\nOK = Yes, Cancel = No');
@@ -10078,6 +10096,8 @@ function openInsuranceEditor(pr, isTypeChange){
     date_of_loss: dol.trim(),
     adjuster: { name: adjName.trim(), phone: adjPhone.trim(), email: adjEmail.trim() },
     deductible: ded === '' ? null : (parseFloat(ded) || null),
+    rcv: rcv === '' ? null : (parseFloat(rcv) || null),
+    acv: acv === '' ? null : (parseFloat(acv) || null),
     coverage_type: cov.trim().toUpperCase(),
     ord_law: !!ordLaw,
     notes: notes.trim()
@@ -10687,32 +10707,81 @@ function renderInsurancePanel(){
       (isEmpty ? '&mdash;' : esc(String(val))) + '</div></div>';
   }
   var adj = I.adjuster || {};
+  /* remember collapse state per session so it persists across renders */
+  var storedCollapsed = false;
+  try{ storedCollapsed = sessionStorage.getItem('insPanelCollapsed') === '1'; }catch(_e){}
+  var moreOpen = false;
+  try{ moreOpen = sessionStorage.getItem('insPanelMoreOpen') === '1'; }catch(_e){}
   mount.innerHTML =
     '<h3 class="projsec" style="margin-top:20px;">&#128737;&#65039; Insurance Information</h3>' +
-    '<div class="insPanel">' +
-      '<div class="insHead">' +
+    '<div class="insPanel' + (storedCollapsed ? ' collapsed' : '') + '" id="insPanelEl">' +
+      '<div class="insHead" id="insHeadRow" role="button" tabindex="0" aria-label="Toggle insurance details">' +
         '<span class="insTitle">Claim Details</span>' +
         '<button class="insEdit" id="insEditBtn">&#9998; Edit</button>' +
+        '<button class="insToggle" id="insToggleBtn" aria-label="Expand or collapse">&#9662;</button>' +
       '</div>' +
-      '<div class="insGrid">' +
-        cell('Carrier',         I.carrier) +
-        cell('Policy Number',   I.policy_number) +
-        cell('Claim Number',    I.claim_number) +
-        cell('Date of Loss',    I.date_of_loss ? fmtDay(I.date_of_loss) : '') +
-        cell('Deductible',      fmtInsMoney(I.deductible)) +
-        cell('Coverage Type',   I.coverage_type) +
-        cell('Ord. & Law',      I.ord_law ? 'Yes' : (I.ord_law === false ? 'No' : '')) +
-        cell('',                '') +
-        cell('Adjuster Name',   adj.name) +
-        cell('Adjuster Phone',  adj.phone) +
-        cell('Adjuster Email',  adj.email) +
-        cell('',                '') +
+      '<div class="insBody">' +
+        '<div class="insGrid">' +
+          cell('Insurance Company', I.carrier) +
+          cell('Claims Handler',    adj.name) +
+          cell('Phone #',           adj.phone) +
+          cell('RCV Amount',        fmtInsMoney(I.rcv)) +
+          cell('ACV Amount',        fmtInsMoney(I.acv)) +
+          cell('Deductible',        fmtInsMoney(I.deductible)) +
+        '</div>' +
+        '<button class="insMoreBtn" id="insMoreBtn" aria-expanded="' + (moreOpen ? 'true' : 'false') + '">' +
+          (moreOpen ? '&#9652; Hide more details' : '&#9662; More details') +
+        '</button>' +
+        '<div class="insMore" id="insMoreBlock" style="' + (moreOpen ? '' : 'display:none;') + '">' +
+          '<div class="insGrid">' +
+            cell('Policy Number',   I.policy_number) +
+            cell('Claim Number',    I.claim_number) +
+            cell('Date of Loss',    I.date_of_loss ? fmtDay(I.date_of_loss) : '') +
+            cell('Coverage Type',   I.coverage_type) +
+            cell('Ord. &amp; Law',  I.ord_law ? 'Yes' : (I.ord_law === false ? 'No' : '')) +
+            cell('Adjuster Email',  adj.email) +
+          '</div>' +
+          (I.notes ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #d0dae8;font-size:13px;color:#3b4a60;"><b style="color:#2d4468;">Notes:</b> ' + esc(I.notes) + '</div>' : '') +
+        '</div>' +
       '</div>' +
-      (I.notes ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #d0dae8;font-size:13px;color:#3b4a60;"><b style="color:#2d4468;">Notes:</b> ' + esc(I.notes) + '</div>' : '') +
     '</div>';
   mount.style.display = 'block';
   var editBtn = document.getElementById('insEditBtn');
-  if(editBtn) editBtn.addEventListener('click', function(){ openInsuranceEditor(currentProject); });
+  if(editBtn) editBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    openInsuranceEditor(currentProject);
+  });
+  /* toggle whole panel */
+  function toggleCollapse(){
+    var p = document.getElementById('insPanelEl');
+    if(!p) return;
+    p.classList.toggle('collapsed');
+    try{ sessionStorage.setItem('insPanelCollapsed', p.classList.contains('collapsed') ? '1' : '0'); }catch(_e){}
+  }
+  var headRow = document.getElementById('insHeadRow');
+  if(headRow) headRow.addEventListener('click', function(e){
+    if(e.target.closest('.insEdit')) return; /* edit button doesn't toggle */
+    toggleCollapse();
+  });
+  /* toggle "more details" sub-block */
+  var moreBtn = document.getElementById('insMoreBtn');
+  if(moreBtn) moreBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var block = document.getElementById('insMoreBlock');
+    if(!block) return;
+    var open = block.style.display !== 'none';
+    if(open){
+      block.style.display = 'none';
+      moreBtn.innerHTML = '\u25BE More details';
+      moreBtn.setAttribute('aria-expanded', 'false');
+      try{ sessionStorage.setItem('insPanelMoreOpen', '0'); }catch(_e){}
+    } else {
+      block.style.display = '';
+      moreBtn.innerHTML = '\u25B4 Hide more details';
+      moreBtn.setAttribute('aria-expanded', 'true');
+      try{ sessionStorage.setItem('insPanelMoreOpen', '1'); }catch(_e){}
+    }
+  });
   var chip = document.getElementById('claimTypeChip');
   if(chip) chip.addEventListener('click', function(){ openClaimTypeMenu(currentProject); });
 }
@@ -10799,6 +10868,7 @@ function openSolReviewModal(extracted, fileName){
   var currentIns = projInsurance(pr) || {};
   var curAdj = currentIns.adjuster || {};
   var eAdj = (extracted && extracted.adjuster) || {};
+  var eTot = (extracted && extracted.totals) || {};
 
   summ.innerHTML = '<b>' + esc(fileName || 'SOL') + '</b>' +
     (extracted && extracted.summary ? ' &mdash; ' + esc(extracted.summary) : '');
@@ -10810,6 +10880,8 @@ function openSolReviewModal(extracted, fileName){
     ['Claim Number',    'claim_number',       extracted.claim_number,   currentIns.claim_number],
     ['Date of Loss',    'date_of_loss',       extracted.date_of_loss,   currentIns.date_of_loss],
     ['Deductible',      'deductible',         extracted.deductible,     currentIns.deductible],
+    ['RCV Amount',      'rcv',                eTot.rcv,                 currentIns.rcv],
+    ['ACV Amount',      'acv',                eTot.acv,                 currentIns.acv],
     ['Coverage Type',   'coverage_type',      extracted.coverage_type,  currentIns.coverage_type],
     ['Ord. & Law',      'ord_law',            extracted.ord_law,        currentIns.ord_law],
     ['Adjuster Name',   'adjuster.name',      eAdj.name,                curAdj.name],
@@ -10887,7 +10959,7 @@ function applySolExtraction(){
       var path = b.getAttribute('data-solpath');
       var val = b.getAttribute('data-solval');
       /* type-coerce a few known fields */
-      if(path === 'deductible'){
+      if(path === 'deductible' || path === 'rcv' || path === 'acv'){
         var n = parseFloat(val); val = isNaN(n) ? null : n;
       } else if(path === 'ord_law'){
         val = (val === 'true');
@@ -12236,7 +12308,8 @@ document.getElementById('qiNpCreate').addEventListener('click', async function()
   st.textContent = 'Creating prospect\u2026';
   try{
     var pid = await pdb.create({ name:nm, phone:(document.getElementById('qiNpPhone').value||'').trim(),
-      address:(document.getElementById('qiNpAddr').value||'').trim(), email:'', notes:'', stage:'Lead', checklist:'' });
+      address:(document.getElementById('qiNpAddr').value||'').trim(), email:'', notes:'', stage:'Lead',
+      checklist: JSON.stringify({ po: nextPo(), stage_since: new Date().toISOString() }) });
     auditLog('lead', 'Lead created via Quick Inspection \u2014 ' + nm, pid);
     await reload();
     st.textContent = '';
