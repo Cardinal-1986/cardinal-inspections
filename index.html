@@ -2125,8 +2125,88 @@ body:has(#loginView[style*="block"]){background:#fff;}
 }
 .ins-hbtn.ins-logo-mini img{
   width:100%;height:100%;object-fit:contain;display:block;
+  filter:grayscale(1) sepia(.7) hue-rotate(170deg) saturate(1.7) brightness(1.05) contrast(1.05);
 }
 .ins-hbtn.ins-logo-mini:hover{background:rgba(255,255,255,.12);}
+
+/* -- Cardinal Truth header styled to match the site header look from client profiles -- */
+#cardinalTruthView .ins-header{
+  background:var(--ink,#141414);
+  border-bottom:4px solid #4a6fa5;
+  box-shadow:0 2px 12px rgba(74,111,165,.25);
+}
+
+/* Cardinal Truth: header left group (logo + section dropdown) */
+.ins-headleft{
+  display:flex;align-items:center;gap:8px;flex:1;min-width:0;
+}
+.ins-navsel{
+  -webkit-appearance:none;appearance:none;
+  background:#3a3a3a
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>')
+    no-repeat right 12px center;
+  color:#fff;
+  border:1px solid #333;border-radius:10px;
+  font:700 14px 'Segoe UI',Arial,sans-serif;letter-spacing:.02em;
+  padding:10px 32px 10px 14px;cursor:pointer;
+  min-width:0;flex:1;max-width:240px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  min-height:44px;box-sizing:border-box;
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+  -webkit-tap-highlight-color:rgba(74,111,165,.25);touch-action:manipulation;
+}
+.ins-navsel:focus{outline:2px solid #7fa6d6;outline-offset:1px;}
+.ins-navsel:hover{background-color:#4a4a4a;}
+.ins-navsel option{background:#1a1f2e;color:#e8ecf1;}
+
+/* Cardinal Truth: banner strip below the header, mirrors the client banner from profiles */
+.ct-dashbanner{
+  position:relative;overflow:hidden;
+  padding:12px 14px;margin:0;
+  display:flex;align-items:center;justify-content:center;gap:2px;
+  text-align:center;
+  background:linear-gradient(168deg,#1e2534 0%,#141824 48%,#1a2233 100%);
+  border-top:5px solid #4a6fa5;border-bottom:5px solid #4a6fa5;
+  box-shadow:0 6px 12px -8px rgba(0,0,0,.5);
+}
+.ct-dashbanner::before{
+  content:'';position:absolute;left:0;right:0;bottom:5px;height:1px;
+  background:linear-gradient(90deg,transparent,#7fa6d6 30%,#cfe0f5 50%,#7fa6d6 70%,transparent);
+}
+.ct-dashbanner::after{
+  content:'';position:absolute;left:0;right:0;top:5px;height:1px;
+  background:linear-gradient(90deg,transparent,#7fa6d6 30%,#cfe0f5 50%,#7fa6d6 70%,transparent);
+}
+.ct-banner-title{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+}
+.ct-dashtitle{
+  background:linear-gradient(160deg,#3a5a8c 0%,#7fa6d6 30%,#cfe0f5 50%,#7fa6d6 70%,#3a5a8c 100%);
+  -webkit-background-clip:text;background-clip:text;color:#7fa6d6;-webkit-text-fill-color:transparent;
+  font:800 18px Georgia,'Times New Roman',serif;letter-spacing:.05em;
+}
+.ct-dashclock{
+  color:#fff;font:800 12.5px 'Segoe UI',Arial,sans-serif;
+  font-variant-numeric:tabular-nums;white-space:normal;
+}
+/* Home + Landing chips overlaid on the banner top-right corner */
+.ct-banner-chips{
+  position:absolute;top:10px;right:10px;z-index:3;
+  display:flex;gap:6px;align-items:center;
+}
+.ct-banner-chips button{
+  background:rgba(74,111,165,.18);border:1px solid #4a6fa5;color:#7fa6d6;
+  padding:4px 10px;border-radius:14px;
+  font:700 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;cursor:pointer;
+  -webkit-tap-highlight-color:rgba(74,111,165,.3);touch-action:manipulation;
+  transition:background .12s, color .12s;
+}
+.ct-banner-chips button:hover{background:rgba(74,111,165,.32);color:#e8ecf1;}
+.ct-banner-chips button:active{background:rgba(74,111,165,.4);}
+@media(max-width:520px){
+  .ct-banner-chips{position:static;justify-content:center;margin-top:8px;}
+  .ct-dashbanner{flex-direction:column;padding:14px;}
+}
 .ins-dropdown,.ins-plusmenu{
   display:none;position:absolute;z-index:11;top:64px;
   background:var(--ins-panel);
@@ -2478,7 +2558,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 142 &#8212; Cardinal logo now always goes to Cardinal Truth (except from insurance context, where it goes to Home)</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 144 &#8212; Cardinal Truth header restyled black-with-blue-rule; banner reads "Dashboard"; Home + Landing chips in banner corner</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3156,14 +3236,28 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ CARDINAL TRUTH (Insurance Hub) ============ -->
 <div id="cardinalTruthView" style="display:none;position:fixed;inset:0;z-index:155;background:#1a1f2e;overflow-y:auto;color:#e8ecf1;">
   <div class="ins-header">
-    <button class="ins-hbtn" id="ctDropBtn" aria-label="Menu">&#9776;</button>
-    <div class="ins-title">Cardinal Truth</div>
+    <div class="ins-headleft">
+      <button class="ins-hbtn ins-logo-mini" id="ctLogoBtn" aria-label="Home" title="Home">
+        <img src="/cardinal-transparent.png" alt="Cardinal">
+      </button>
+      <select class="ins-navsel" id="ctSectionSel" aria-label="Cardinal Truth sections">
+        <option value="ct">Cardinal Truth</option>
+        <option value="clients">Insurance Clients</option>
+        <option value="supplements">Supplement Templates</option>
+        <option value="insurance-resources">Insurance Resources</option>
+      </select>
+    </div>
     <button class="ins-hbtn ins-plus" id="ctPlusBtn" aria-label="Add">+</button>
   </div>
-  <div class="ins-dropdown" id="ctDropdown">
-    <button class="ins-dropitem" data-ctnav="clients">&#128203; Insurance Clients</button>
-    <button class="ins-dropitem" data-ctnav="library">&#128218; Resource Library</button>
-    <button class="ins-dropitem" data-ctnav="home">&#127968; Back to Landing</button>
+  <div class="ct-dashbanner">
+    <div class="ct-banner-chips">
+      <button id="ctHomeChip" title="Go to Home">&#127968; Home</button>
+      <button id="ctLandChip" title="Back to Landing">&#127968; Landing</button>
+    </div>
+    <div class="ct-banner-title">
+      <div class="ct-dashtitle">Dashboard</div>
+      <div class="ct-dashclock" id="ctClock"></div>
+    </div>
   </div>
   <div class="ins-plusmenu" id="ctPlusMenu">
     <div class="ins-plusheader">Add to Insurance</div>
@@ -13589,6 +13683,8 @@ function tickHomeClock(){
   if(lc) lc.textContent = txt;
   var hc = document.getElementById('heroClock');
   if(hc) hc.textContent = txt;
+  var ctc = document.getElementById('ctClock');
+  if(ctc) ctc.textContent = txt;
 }
 tickHomeClock();
 setInterval(tickHomeClock, 1000);
@@ -15573,32 +15669,54 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
 
 /* Cardinal Truth header wiring */
 (function(){
-  var dropBtn = document.getElementById('ctDropBtn');
+  var logoBtn = document.getElementById('ctLogoBtn');
   var plusBtn = document.getElementById('ctPlusBtn');
-  var dropdown = document.getElementById('ctDropdown');
+  var sectionSel = document.getElementById('ctSectionSel');
   var plusMenu = document.getElementById('ctPlusMenu');
-  if(!dropBtn) return;
-  dropBtn.addEventListener('click', function(e){
+  if(!logoBtn && !sectionSel) return;
+  /* Cardinal logo → Home (Dashboard) */
+  if(logoBtn) logoBtn.addEventListener('click', function(e){
     e.stopPropagation();
-    plusMenu.classList.remove('open');
-    dropdown.classList.toggle('open');
+    if(typeof showHome === 'function') showHome();
   });
-  plusBtn.addEventListener('click', function(e){
+  /* Banner Home chip → Dashboard (main app) */
+  var ctHome = document.getElementById('ctHomeChip');
+  if(ctHome) ctHome.addEventListener('click', function(e){
     e.stopPropagation();
-    dropdown.classList.remove('open');
-    plusMenu.classList.toggle('open');
+    if(typeof showHome === 'function') showHome();
+  });
+  /* Banner Landing chip → the four-button landing page */
+  var ctLand = document.getElementById('ctLandChip');
+  if(ctLand) ctLand.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(typeof goToLanding === 'function') goToLanding();
+  });
+  /* Section dropdown navigates within the insurance section */
+  if(sectionSel) sectionSel.addEventListener('change', function(){
+    var v = this.value;
+    /* Reset to 'ct' visually so the dropdown always shows "Cardinal Truth" as label
+       — since navigation leaves this page, the option state won't be visible anyway,
+       but it prevents stale selection when returning. */
+    this.value = 'ct';
+    if(v === 'clients') showInsuranceClients();
+    else if(v === 'supplements'){
+      showResourceLibrary();
+      if(window._rlShowPage) window._rlShowPage('rlPageSup');
+    }
+    else if(v === 'insurance-resources'){
+      showResourceLibrary();
+      if(window._rlShowPage) window._rlShowPage('rlPageInsHub');
+    }
+    /* 'ct' means stay here — nothing to do */
+  });
+  if(plusBtn) plusBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(plusMenu) plusMenu.classList.toggle('open');
   });
   document.addEventListener('click', function(e){
-    if(!dropdown.contains(e.target) && e.target !== dropBtn){ dropdown.classList.remove('open'); }
-    if(!plusMenu.contains(e.target) && e.target !== plusBtn){ plusMenu.classList.remove('open'); }
-  });
-  dropdown.addEventListener('click', function(e){
-    var b = e.target.closest('[data-ctnav]'); if(!b) return;
-    dropdown.classList.remove('open');
-    var nav = b.getAttribute('data-ctnav');
-    if(nav === 'library') showResourceLibrary();
-    else if(nav === 'clients') showInsuranceClients();
-    else if(nav === 'home') backToLanding();
+    if(plusMenu && !plusMenu.contains(e.target) && e.target !== plusBtn){
+      plusMenu.classList.remove('open');
+    }
   });
   /* also let the cards on the Cardinal Truth page route to library / clients / supplements / insurance-resources */
   document.getElementById('cardinalTruthView').addEventListener('click', function(e){
