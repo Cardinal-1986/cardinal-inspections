@@ -398,6 +398,71 @@ body.claim-insurance .projInsBlock{
 body.claim-insurance .projInsBlock .mrow{margin-bottom:2px;}
 body.claim-insurance .projInsBlock .mrow a{color:#7fa6d6;text-decoration:underline;}
 
+/* -- Extend insurance theme to the full client-profile content -- */
+/* Slight blue-tinted page background so cards read as one theme */
+body.claim-insurance #projectView{background:linear-gradient(180deg,#eef1f7 0%,#e3e8f1 100%);}
+
+/* Section headers with light text + steel-blue rule (subtle, no full dark bar) */
+body.claim-insurance #projectView .projsec{color:#e8ecf1;border-bottom-color:#4a6fa5;
+  padding:6px 10px 4px;background:rgba(35,43,61,.85);border-radius:6px 6px 0 0;
+  border-bottom-width:3px;}
+
+/* Job Value / Balance Due strip */
+body.claim-insurance .dbmoney{
+  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
+  border:1px solid #2f3a4c;border-left:3px solid #4a6fa5;color:#e8ecf1;}
+body.claim-insurance .dbmoney small{color:#8b95a5;}
+body.claim-insurance .dbmoney b{color:#e8ecf1;}
+body.claim-insurance .dbmoney .dbringin{color:#f5d061;}
+
+/* Payment Information row */
+body.claim-insurance .dbrow{
+  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
+  border:1px solid #2f3a4c;border-left:3px solid #4a6fa5;color:#e8ecf1;}
+body.claim-insurance .dbrow:active{background:#1a1f2e;}
+body.claim-insurance .dbrow .dbic1{color:#7fa6d6;}
+body.claim-insurance .dbrow .dbgo{color:#7fa6d6;}
+
+/* Job Menu boxes (Communication / Photos / Tasks / etc.) */
+body.claim-insurance .jabox{
+  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
+  border:1px solid #2f3a4c;color:#e8ecf1;}
+body.claim-insurance .jabox:active{background:#1a1f2e;}
+body.claim-insurance .jabox .jbl{color:#cfd6e0;}
+body.claim-insurance .jabox svg{color:#7fa6d6;}
+body.claim-insurance .jabox .jan{color:#f5d061;}
+body.claim-insurance .jabox .jan.zero{color:#6b7a90;}
+
+/* Overview accordions/sections (Job Details, Job Activity, Contacts, Location, Assigned To) —
+   don't repaint the Google Reviews card (.rvsec) which is already themed. */
+body.claim-insurance .acxsec:not(.rvsec){
+  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
+  border:1px solid #2f3a4c;color:#e8ecf1;}
+body.claim-insurance .acxsec:not(.rvsec) .acxbody{color:#cfd6e0;}
+body.claim-insurance .acxsec:not(.rvsec) .ackv > span{color:#8b95a5;}
+body.claim-insurance .acxsec:not(.rvsec) .ackv > div{color:#e8ecf1;}
+body.claim-insurance .acxsec:not(.rvsec) .ackv a{color:#7fa6d6;}
+body.claim-insurance .acxsec:not(.rvsec) .acxtrs label{color:#cfd6e0;}
+body.claim-insurance .acxsec:not(.rvsec) .axnote{color:#8b95a5;}
+body.claim-insurance .acxsec:not(.rvsec) a[href^="https://maps"]{color:#7fa6d6;}
+body.claim-insurance .acxsec:not(.rvsec) .dbassign{color:#e8ecf1;}
+body.claim-insurance .acxsec:not(.rvsec) .dbrep b{color:#e8ecf1;}
+body.claim-insurance .acxsec:not(.rvsec) .dbprim small{color:#8b95a5;}
+body.claim-insurance .acxsec:not(.rvsec) .dbprim b{color:#e8ecf1;}
+body.claim-insurance .acxsec:not(.rvsec) .rt2 a{color:#7fa6d6;}
+
+/* Selects and inputs inside the themed sections */
+body.claim-insurance .acxsec:not(.rvsec) .acxsel{
+  background:rgba(255,255,255,.06);border-color:#4a6fa5;color:#e8ecf1;}
+
+/* Lead Details card (renderLeadCard) */
+body.claim-insurance #leadCard #leadCardBody.ldbox{
+  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%) !important;
+  border:1px solid #2f3a4c;border-left:3px solid #4a6fa5;color:#cfd6e0;}
+body.claim-insurance #leadCard .llrow{color:#cfd6e0;}
+body.claim-insurance #leadCard .llrow b{color:#e8ecf1;}
+
+
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
 .logincard .loginlogo{display:block;margin:0 auto 16px;max-width:250px;height:auto;}
@@ -2254,7 +2319,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 130 &#8212; Insurance Documents section on insurance client profiles: 6 typed upload slots</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 132 &#8212; Insurance clients: full-profile theme + Work Type auto-selects Insurance</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7503,6 +7568,12 @@ function renderAcxOverview(){
   if(!mount || !currentProject) return;
   var pr = currentProject;
   var ck = parseCkAll(pr);
+  /* Auto-set Work Type to "Insurance" for insurance clients if not already set.
+     Persists in the background so the next render sees the value and skips. */
+  if((typeof projClaimType === 'function') && projClaimType(pr) === 'insurance' && !ck.work_type){
+    ck.work_type = 'Insurance';
+    try{ patchProjectCk(pr, { work_type: 'Insurance' }).catch(function(){}); }catch(_e){}
+  }
   var stg = normStage(pr.stage);
   var nx = acxNext(stg);
   var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
@@ -9895,6 +9966,12 @@ function updateClaimTypeUi(){
   });
   var box = document.getElementById('ldInsBox');
   if(box) box.style.display = (val === 'insurance') ? 'block' : 'none';
+  /* Auto-select "Insurance" in the Work Type dropdown when the claim type flips
+     to insurance and the user hasn't already chosen a work type. */
+  var wt = document.getElementById('ldWorkType');
+  if(val === 'insurance' && wt && !wt.value){
+    wt.value = 'Insurance';
+  }
 }
 document.querySelectorAll('input[name="ldClaimType"]').forEach(function(r){
   r.addEventListener('change', updateClaimTypeUi);
@@ -15481,7 +15558,91 @@ function __histPush(st){
       window.navigator.standalone === true;
   }catch(e){}
   if(standalone) document.body.classList.add('standalone');
-  /* delegated: works no matter where the bar sits in the document */
+
+  /* --- In-app history so the bottom arrows actually walk through views --- */
+  var _navRestoring = false;
+  function navRestore(state){
+    if(!state || state.app !== 'cardinal-nav') return;
+    _navRestoring = true;
+    try{
+      switch(state.view){
+        case 'landing':         if(typeof goToLanding === 'function') goToLanding(); break;
+        case 'home':            if(typeof showHome === 'function') showHome(); break;
+        case 'project':         if(state.data && state.data.projectId && typeof openProject === 'function') openProject(state.data.projectId); break;
+        case 'cardinalTruth':   if(typeof showCardinalTruth === 'function') showCardinalTruth(); break;
+        case 'resourceLibrary': if(typeof showResourceLibrary === 'function') showResourceLibrary(); break;
+        case 'insClients':      if(typeof showInsuranceClients === 'function') showInsuranceClients(); break;
+        case 'clients':         if(typeof openClientsDirectory === 'function') openClientsDirectory(); break;
+        case 'feed':            if(typeof openActivityFeed === 'function') openActivityFeed(); break;
+        case 'reports':         if(typeof openReportsView === 'function') openReportsView(); break;
+        case 'leads':           if(typeof openLeadsView === 'function') openLeadsView(); break;
+        case 'board':           if(typeof openScheduleBoard === 'function') openScheduleBoard(); break;
+        case 'settings':        if(typeof openSettingsView === 'function') openSettingsView(); break;
+        case 'audit':           if(typeof openAuditLog === 'function') openAuditLog(); break;
+        case 'companydocs':     if(typeof openCompanyDocs === 'function') openCompanyDocs(); break;
+        case 'profile':         if(typeof openMyProfile === 'function') openMyProfile(); break;
+      }
+    }catch(_e){}
+    setTimeout(function(){ _navRestoring = false; }, 30);
+  }
+  /* Called by wrapped nav functions to record the new state */
+  window.navSetView = function(view, data){
+    if(_navRestoring) return;
+    var st = { app: 'cardinal-nav', view: view, data: data || null };
+    var cur = history.state;
+    if(cur && cur.app === 'cardinal-nav' && cur.view === view &&
+       JSON.stringify(cur.data || null) === JSON.stringify(data || null)){
+      return; /* already at this state; no double-push */
+    }
+    try{
+      if(!cur || cur.app !== 'cardinal-nav'){
+        /* first app state — replace the empty initial entry so back doesn't exit */
+        history.replaceState(st, '');
+      } else {
+        history.pushState(st, '');
+      }
+    }catch(_e){}
+  };
+  window.addEventListener('popstate', function(e){
+    if(e.state && e.state.app === 'cardinal-nav'){
+      navRestore(e.state);
+    }
+  });
+  /* Wrap the main navigation functions so every entry to a view records state.
+     Runs deferred so all the target functions are defined first. */
+  function wrapNav(fnName, viewName, dataFn){
+    var orig = window[fnName];
+    if(typeof orig !== 'function') return;
+    window[fnName] = function(){
+      var out = orig.apply(this, arguments);
+      try{
+        var data = dataFn ? dataFn.apply(this, arguments) : null;
+        window.navSetView(viewName, data);
+      }catch(_e){}
+      return out;
+    };
+  }
+  setTimeout(function(){
+    wrapNav('goToLanding',         'landing');
+    wrapNav('backToLanding',       'landing');
+    wrapNav('showHome',            'home');
+    wrapNav('openProject',         'project', function(id){ return { projectId: id }; });
+    wrapNav('showCardinalTruth',   'cardinalTruth');
+    wrapNav('showResourceLibrary', 'resourceLibrary');
+    wrapNav('showInsuranceClients','insClients');
+    wrapNav('openClientsDirectory','clients');
+    wrapNav('openActivityFeed',    'feed');
+    wrapNav('openReportsView',     'reports');
+    wrapNav('openLeadsView',       'leads');
+    wrapNav('openScheduleBoard',   'board');
+    wrapNav('openSettingsView',    'settings');
+    wrapNav('openAuditLog',        'audit');
+    wrapNav('openCompanyDocs',     'companydocs');
+    wrapNav('openMyProfile',       'profile');
+  }, 0);
+
+  /* delegated: the buttons themselves — history.back/forward fires popstate,
+     which our handler above turns into an in-app view restore */
   document.addEventListener('click', function(e){
     if(e.target.closest && e.target.closest('#pwaBack')){ history.back(); }
     else if(e.target.closest && e.target.closest('#pwaFwd')){ history.forward(); }
