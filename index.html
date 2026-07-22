@@ -1848,7 +1848,11 @@ body:has(#loginView[style*="block"]){background:#fff;}
 .ins-header{
   position:sticky;top:0;z-index:10;
   display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px;gap:10px;
+  padding:12px 16px;
+  padding-top:calc(12px + env(safe-area-inset-top, 0px));
+  padding-left:calc(16px + env(safe-area-inset-left, 0px));
+  padding-right:calc(16px + env(safe-area-inset-right, 0px));
+  gap:10px;
   background:linear-gradient(180deg,#1e2432 0%,#141824 100%);
   border-bottom:1px solid var(--ins-border);
   box-shadow:0 2px 12px rgba(0,0,0,.35);
@@ -1859,16 +1863,21 @@ body:has(#loginView[style*="block"]){background:#fff;}
   color:var(--ins-blue-lt);
 }
 .ins-hbtn{
-  width:42px;height:42px;border-radius:10px;
+  width:44px;height:44px;min-width:44px;min-height:44px;border-radius:10px;
   border:1px solid var(--ins-border);background:transparent;
-  color:var(--ins-blue-lt);font:700 20px Arial,sans-serif;
+  color:var(--ins-blue-lt);font:700 22px Arial,sans-serif;line-height:1;
   cursor:pointer;padding:0;display:flex;
   align-items:center;justify-content:center;flex:0 0 auto;
+  -webkit-tap-highlight-color:rgba(127,166,214,.3);
+  touch-action:manipulation;
+  -webkit-appearance:none;appearance:none;
 }
+.ins-hbtn:active{background:var(--ins-panel-2);}
 .ins-hbtn:hover{background:var(--ins-panel);border-color:var(--ins-blue);}
-.ins-plus{background:var(--ins-blue);color:#fff;border-color:var(--ins-blue-dk);font-size:24px;font-weight:400;}
+.ins-plus{background:var(--ins-blue);color:#fff;border-color:var(--ins-blue-dk);font-size:26px;font-weight:400;}
+.ins-plus:active{background:var(--ins-blue-dk);}
 .ins-plus:hover{background:var(--ins-blue-lt);color:#fff;}
-.ins-hspacer{width:42px;flex:0 0 auto;}
+.ins-hspacer{width:44px;flex:0 0 auto;}
 .ins-dropdown,.ins-plusmenu{
   display:none;position:absolute;z-index:11;top:64px;
   background:var(--ins-panel);
@@ -1919,7 +1928,11 @@ body:has(#loginView[style*="block"]){background:#fff;}
   color:var(--ins-text);cursor:pointer;
   font-family:'Segoe UI',Arial,sans-serif;
   transition:border-color .15s, transform .15s;
+  -webkit-tap-highlight-color:rgba(127,166,214,.25);
+  touch-action:manipulation;
+  -webkit-appearance:none;appearance:none;
 }
+.ins-card:active{background:var(--ins-panel-2);}
 .ins-card:hover{border-color:var(--ins-blue-lt);transform:translateY(-1px);}
 .ins-cardtitle{
   font:800 18px Georgia,'Times New Roman',serif;
@@ -2022,7 +2035,11 @@ body:has(#loginView[style*="block"]){background:#fff;}
   border-radius:12px;padding:18px 16px;min-height:160px;
   color:var(--ins-text);font-family:'Segoe UI',Arial,sans-serif;
   transition:border-color .15s, transform .15s, box-shadow .15s;
+  -webkit-tap-highlight-color:rgba(127,166,214,.25);
+  touch-action:manipulation;
+  -webkit-appearance:none;appearance:none;
 }
+#resourceLibraryView .rl-box:active{background:var(--ins-panel-2);}
 #resourceLibraryView .rl-box:hover{border-color:var(--ins-blue-lt);transform:translateY(-1px);box-shadow:0 4px 12px rgba(74,111,165,.25);}
 #resourceLibraryView .rl-box .rl-boxicon{
   font-size:28px;line-height:1;margin-bottom:8px;
@@ -2135,7 +2152,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 117 &#8212; AI Scope of Loss reader on every client profile; auto-populates insurance fields with review step</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 119 &#8212; Mobile fixes: bigger tap targets, universal arrow glyph, safe-area padding, no tap delay</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2854,9 +2871,9 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ INSURANCE CLIENTS LIST ============ -->
 <div id="insClientsView" style="display:none;position:fixed;inset:0;z-index:157;background:#1a1f2e;overflow-y:auto;color:#e8ecf1;">
   <div class="ins-header">
-    <button class="ins-hbtn" id="icBackBtn" aria-label="Back">&lsaquo;</button>
+    <button class="ins-hbtn" id="icBackBtn" aria-label="Back">&larr;</button>
     <div class="ins-title">Insurance Clients</div>
-    <span class="ins-hspacer">&nbsp;</span>
+    <button class="ins-hbtn ins-plus" id="icAddBtn" aria-label="Add insurance client">+</button>
   </div>
   <div class="ins-body">
     <div class="rl-pagehead">
@@ -2870,7 +2887,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 <!-- ============ RESOURCE LIBRARY ============ -->
 <div id="resourceLibraryView" style="display:none;position:fixed;inset:0;z-index:156;background:#1a1f2e;overflow-y:auto;color:#e8ecf1;">
   <div class="ins-header">
-    <button class="ins-hbtn" id="rlBackBtn" aria-label="Back">&lsaquo;</button>
+    <button class="ins-hbtn" id="rlBackBtn" aria-label="Back">&larr;</button>
     <div class="ins-title">Resource Library</div>
     <span class="ins-hspacer">&nbsp;</span>
   </div>
@@ -13564,6 +13581,18 @@ function backToLanding(){
   if(icBack) icBack.addEventListener('click', function(){
     document.getElementById('insClientsView').style.display = 'none';
     showCardinalTruth();
+  });
+  var icAdd = document.getElementById('icAddBtn');
+  if(icAdd) icAdd.addEventListener('click', function(){
+    /* Sales/admin only — production accounts can't create leads */
+    if(typeof isProductionUser === 'function' && isProductionUser()){
+      alert('Lead creation is for sales and admins \u2014 production accounts can add Contacts, Tasks, and Reminders.');
+      return;
+    }
+    openLeadForm();
+    /* pre-select Insurance so the details section is already showing */
+    var ins = document.querySelector('input[name="ldClaimType"][value="insurance"]');
+    if(ins){ ins.checked = true; if(typeof updateClaimTypeUi === 'function') updateClaimTypeUi(); }
   });
 })();
 document.getElementById('landClaims').addEventListener('click', showCardinalTruth);
