@@ -2478,7 +2478,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 141 &#8212; Client profile: Home chip added next to Landing chip. Cardinal logo swap: retail client → Cardinal Truth, insurance client → Dashboard</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 142 &#8212; Cardinal logo now always goes to Cardinal Truth (except from insurance context, where it goes to Home)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10025,22 +10025,15 @@ function openProjModal(pr){
 var newMenu = document.getElementById('newMenu');
 document.getElementById('brandLogo').addEventListener('click', function(){
   if(!(currentUser || !TEAM)) return;
-  var cliView = document.getElementById('clientsView');
-  var onCliView = cliView && cliView.style.display !== 'none';
   var onInsurance = document.body.classList.contains('claim-insurance');
   if(onInsurance){
     /* Insurance client / context — Cardinal logo jumps to the retail Home (Dashboard) */
     showHome();
-  } else if(onCliView){
-    /* Retail Client Directory — Cardinal logo jumps to Cardinal Truth */
-    if(typeof showCardinalTruth === 'function') showCardinalTruth();
-    else showHome();
-  } else if(currentProject){
-    /* Retail client profile (not insurance) — Cardinal logo jumps to Cardinal Truth */
-    if(typeof showCardinalTruth === 'function') showCardinalTruth();
-    else showHome();
   } else {
-    showHome();
+    /* Every other view (Dashboard, retail client, retail directory, everywhere else)
+       — Cardinal logo jumps to Cardinal Truth */
+    if(typeof showCardinalTruth === 'function') showCardinalTruth();
+    else showHome();
   }
 });
 document.getElementById('addProjectBtn').addEventListener('click', function(e){
@@ -12179,22 +12172,15 @@ function openClientsDirectory(keepFilter){
   var brand = document.querySelector('.brand');
   if(brand){
     brand.style.cursor = 'pointer';
-    brand.title = 'Home';
+    brand.title = 'Cardinal Truth';
     brand.addEventListener('click', function(){
       if(!(mainView && document.getElementById('navWrap').style.display !== 'none')) return;
-      var cliView = document.getElementById('clientsView');
-      var onCliView = cliView && cliView.style.display !== 'none';
       var onInsurance = document.body.classList.contains('claim-insurance');
       if(onInsurance){
         showHome();
-      } else if(onCliView){
-        if(typeof showCardinalTruth === 'function') showCardinalTruth();
-        else showHome();
-      } else if(currentProject){
-        if(typeof showCardinalTruth === 'function') showCardinalTruth();
-        else showHome();
       } else {
-        showHome();
+        if(typeof showCardinalTruth === 'function') showCardinalTruth();
+        else showHome();
       }
     });
   }
