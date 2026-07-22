@@ -2152,7 +2152,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 121 &#8212; Measurements section under General: 7 trades, hand + reports for each (Windows/Doors direct to hand)</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 122 &#8212; Mastering Roof Inspections page added under General (paired with Measurements)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3008,11 +3008,17 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-divider"></div>
 
-      <div class="rl-boxgrid rl-single">
+      <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr">
           <div class="rl-boxicon">&#128207;</div>
           <div class="rl-boxtitle">Measurements</div>
           <div class="rl-boxsub">How to take-off every trade &mdash; roof, siding, windows, gutters, fascia, soffit, doors. Hand measurements plus how to read Hover, Roofr, EagleView.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="insp">
+          <div class="rl-boxicon">&#128269;</div>
+          <div class="rl-boxtitle">Roof Inspections</div>
+          <div class="rl-boxsub">Mastering the walk. Safety, systematic approach, damage patterns, documentation. Foundation for every job.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
       </div>
@@ -3699,6 +3705,102 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <p><b>TAMKO</b> &mdash; Pro Certified Contractor program. Heritage architectural line.</p>
         <p><b>Atlas</b> &mdash; PRO Plus and Signature Select. Pinnacle Pristine and StormMaster.</p>
         <div class="rl-use"><b>Use it when:</b> Homeowner asks about alternatives or matching an existing non-Big-3 roof. Cardinal's Big-3 focus doesn't preclude working with these manufacturers, but the warranty tier programs and installation specs need to be checked per project.</div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SUB-PAGE: MASTERING ROOF INSPECTIONS
+         ========================================================= -->
+    <div class="rl-page" id="rlPageInsp" data-rltitle="Mastering Roof Inspections">
+      <div class="rl-pagehead">
+        <h1>Mastering Roof Inspections</h1>
+        <p>Every job on the roof &mdash; sales, repair, insurance, warranty &mdash; starts with an inspection. What separates a great inspection from a mediocre one is a systematic approach, honest observation, and disciplined documentation. The inspection is where the job is won or lost.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="mindset discipline approach">
+        <h3>The Inspector's Mindset</h3>
+        <p>A good inspection accomplishes four things at once: an accurate scope of work, defensible documentation, homeowner trust, and (on insurance work) claim leverage. Rushing kills all four. Approach every roof the same way &mdash; whether it's a $500 repair or a $30,000 insurance claim &mdash; because the discipline is what makes the difference.</p>
+        <div class="rl-use"><b>The mindset:</b> you're not selling. You're not defending. You're looking. What you find, you photograph and record. What you don't find, you say honestly. Homeowners and adjusters both smell overselling &mdash; and both trust an inspector who calls it straight.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="safety ladder harness weather slope">
+        <h3>Safety First</h3>
+        <p>Never inspect a roof you can't safely walk. No sale is worth a fall.</p>
+        <ul>
+          <li><b>Ladder:</b> extended at least 3 feet above the eave, footed 1 foot back for every 4 feet up. Tie off if unattended.</li>
+          <li><b>Footwear:</b> soft-soled, non-slip. No boots you'd wear on the ground.</li>
+          <li><b>Weather:</b> dew, frost, rain, snow, wet leaves all void the day. Reschedule.</li>
+          <li><b>Slope:</b> 8/12 and steeper needs a rope/harness setup or a ladder-and-camera approach from below.</li>
+          <li><b>Storm damage:</b> never walk a roof after a hail or wind event without first checking decking integrity from the attic. Storm-damaged roofs can have compromised sheathing that looks fine on top.</li>
+          <li><b>Storm-damaged trees, live wires, unstable eaves</b> &mdash; walk the perimeter first. If it looks wrong, it is.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="systematic walk sequence approach ground perimeter roof attic">
+        <h3>The Systematic Walk</h3>
+        <p>Same sequence every time so nothing gets missed:</p>
+        <ol>
+          <li><b>Ground shots</b> &mdash; four elevations. Establishes property identity and general condition. Every inspection has these.</li>
+          <li><b>Perimeter walk</b> &mdash; soft metals first: gutters, downspouts, HVAC fins, garage door, screens. Hail damage shows on soft metals before it shows on shingles.</li>
+          <li><b>Ladder up</b> &mdash; eave inspection: starter, drip edge, first course of shingles, gutter attachment.</li>
+          <li><b>Systematic roof walk</b> &mdash; each slope corner to corner, top to bottom. Don't skip slopes because they look OK from the ground.</li>
+          <li><b>Ridge and hips</b> &mdash; cap condition, ridge vent function, ridge cap displacement patterns.</li>
+          <li><b>Penetrations</b> &mdash; each chimney, skylight, pipe boot, roof vent, dormer flashing.</li>
+          <li><b>Valleys and sidewall flashings</b> &mdash; step flashing at wall-to-roof junctions is where a lot of hidden failures live.</li>
+          <li><b>Attic</b> (if accessible) &mdash; the story from the inside: decking condition, insulation depth, ventilation actually working, active or historical leaks.</li>
+        </ol>
+      </div>
+
+      <div class="rl-card" data-rltags="damage patterns wind hail age installation recognition">
+        <h3>What to Look For</h3>
+        <p>Pattern recognition is what turns an inspector into a diagnostician.</p>
+        <ul>
+          <li><b>Wind:</b> creased shingles (crease line visible from the side), lifted seal strips, missing shingles, ridge cap displacement in directional patterns.</li>
+          <li><b>Hail:</b> circular impacts with granule displacement, fractured mat visible under raking light, soft-metal spatter (garage door, HVAC fins, downspout elbows). Chalked 10&times;10 test square gives you a hit count.</li>
+          <li><b>Age:</b> brittleness (snap a granule off &mdash; is the mat rigid?), curling, cupping, exposed nail heads, granule loss visible in gutters.</li>
+          <li><b>Installation defects:</b> nail placement above vs. below the seal strip, 4-nail vs. 6-nail patterns visible on lifted or blown-off shingles, exposed underlayment at edges, missing drip edge.</li>
+          <li><b>Ventilation problems:</b> heat blistering (small round bubbles in the granule surface from trapped attic heat), missing or blocked soffit intake, non-functional ridge vent.</li>
+          <li><b>Decking issues:</b> sagging between rafters (rot from below), soft spots underfoot, fastener pops visible in the shingle plane.</li>
+        </ul>
+        <div class="rl-use"><b>Cross-reference:</b> full damage-pattern detail with photo templates lives in the <b>Documentation Checklist</b> under Insurance. This card is the field summary.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="attic interior ceiling insulation ventilation leaks">
+        <h3>Attic &amp; Interior</h3>
+        <p>The attic tells you what the top of the roof can't. Skipping it is the most common inspection shortcut &mdash; and the most consequential.</p>
+        <ul>
+          <li><b>Decking from below</b> &mdash; look for water staining, delamination, mold, active drip locations.</li>
+          <li><b>Ventilation actually working</b> &mdash; on a warm day, is the attic significantly hotter than outside? Baffles present at soffit intake? Ridge vent visible from below?</li>
+          <li><b>Insulation depth and condition</b> &mdash; compressed or displaced insulation often marks where water has entered.</li>
+          <li><b>Nails visible from below</b> &mdash; if you can see shiny nail points through the decking, they're missing the shingle above and marking areas of high wind vulnerability.</li>
+          <li><b>Interior ceilings</b> &mdash; walk each room. Discolored ceilings, bubbled paint, or water stains on drywall connect to roof issues even when the homeowner says "no leaks."</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="documentation photos notes discipline scale date">
+        <h3>Documentation Discipline</h3>
+        <p>The inspection is only as good as what you left behind on the phone. If it wasn't photographed, it didn't happen.</p>
+        <ul>
+          <li><b>Overall then close-up</b> for every notable finding. Establishes location, then shows the detail.</li>
+          <li><b>Scale in the frame</b> &mdash; ruler, tape measure, coin, chalk square &mdash; on any damage close-up.</li>
+          <li><b>Date and location tag</b> on every photo (phone location services on).</li>
+          <li><b>Notes:</b> anything not obvious in photos &mdash; homeowner observations, storm date, prior repair history, adjuster comments if present.</li>
+          <li><b>Attic photos</b> matter as much as roof photos. Adjusters rarely go up there.</li>
+          <li><b>Related property damage</b> &mdash; siding, screens, HVAC, gutters, fascia, soffit. Photograph even when out of Cardinal's trade &mdash; those photos strengthen a hail claim.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="mistakes common errors avoid">
+        <h3>Common Mistakes to Avoid</h3>
+        <ul>
+          <li><b>Skipping the attic</b> because "the ladder's in the truck." Go get it.</li>
+          <li><b>Inspecting only the damage-side slope</b> when the storm hit multiple slopes. Walk them all.</li>
+          <li><b>Rushing in bad light</b> &mdash; hail damage shows best in raking light, mid-morning or late afternoon. Overhead sun washes it out.</li>
+          <li><b>Photos without scale.</b> An adjuster can't judge the size of an impact from a photo without a reference object.</li>
+          <li><b>Verbal-only notes.</b> "The homeowner said the leak is over the master bedroom" needs to be in the file, not just in your head.</li>
+          <li><b>Skipping the sidewall</b> between a one-story addition and a two-story main house. Step flashing failures live there.</li>
+          <li><b>Assuming intent.</b> Wear-and-tear damage on an old roof and hail impact can coexist. Document both honestly. Overselling storm damage on an aged roof gets caught &mdash; and it damages Cardinal's credibility on every future claim in the neighborhood.</li>
+        </ul>
       </div>
     </div>
 
@@ -14463,6 +14565,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     rlPageCheat:      'rlPageInsHub',
     rlPageCode:       'rlPageGenHub',
     rlPageMfg:        'rlPageGenHub',
+    rlPageInsp:       'rlPageGenHub',
     /* Measurements tree */
     rlPageMsr:                 'rlPageGenHub',
     rlPageMsrRoof:             'rlPageMsr',
@@ -14515,6 +14618,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
       pitfalls:  'rlPagePitfalls',
       cheat:     'rlPageCheat',
       mfg:       'rlPageMfg',
+      insp:      'rlPageInsp',
       /* Measurements */
       msr:                'rlPageMsr',
       msr_roof:           'rlPageMsrRoof',
