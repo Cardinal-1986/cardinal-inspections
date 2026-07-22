@@ -2152,7 +2152,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 124 &#8212; Header self-heal in hideAllViews + load-time check; catches any lingering hidden state</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 125 &#8212; Supplement Templates page: 5 categories, ~18 pre-written templates with sample wording</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2859,11 +2859,11 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <div class="ins-cardsub">Carriers and adjusters you've worked with, what they'll fight over, and their inspection habits.</div>
         <div class="ins-cardgo ins-soon">Coming soon</div>
       </div>
-      <div class="ins-card ins-cardstub">
+      <button class="ins-card" data-ctnav="supplements">
         <div class="ins-cardtitle">&#128206; Supplement Templates</div>
-        <div class="ins-cardsub">Pre-formatted supplements for the most common denials: ice barrier, decking, ventilation, matching.</div>
-        <div class="ins-cardgo ins-soon">Coming soon</div>
-      </div>
+        <div class="ins-cardsub">Pre-formatted supplements for the most common denials: ice barrier, decking, ventilation, matching, flashings, related property damage.</div>
+        <div class="ins-cardgo">Open &rsaquo;</div>
+      </button>
     </div>
   </div>
 </div>
@@ -2977,6 +2977,17 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <div class="rl-boxicon">&#128203;</div>
           <div class="rl-boxtitle">Truck Cheat Sheet</div>
           <div class="rl-boxsub">One-page summary of the three levers, code cites, and the line you don't cross. Print for the truck.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid rl-single">
+        <button class="rl-box" data-rlgoto="sup">
+          <div class="rl-boxicon">&#128206;</div>
+          <div class="rl-boxtitle">Supplement Templates</div>
+          <div class="rl-boxsub">Pre-written supplement requests for the most common denials &mdash; ice barrier, decking, ventilation, matching, flashings, and related property damage. Copy the wording, add the photos, send.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
       </div>
@@ -3803,6 +3814,319 @@ body:has(#loginView[style*="block"]){background:#fff;}
         </ul>
       </div>
     </div>
+
+    <!-- =========================================================
+         SUB-PAGE: SUPPLEMENT TEMPLATES
+         ========================================================= -->
+    <div class="rl-page" id="rlPageSup" data-rltitle="Supplement Templates">
+      <div class="rl-pagehead">
+        <h1>Supplement Templates</h1>
+        <p>Pre-written supplement requests for the denials that come up most often. Each template has (1) when to use it, (2) the specific scope items to add, (3) the documentation to attach, and (4) sample wording you can paste into the supplement and adapt to the specific claim. All citations are Ohio-specific.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="how to use supplement send format">
+        <h3>How to Use These</h3>
+        <p>A supplement is a formal request to expand the adjuster's approved scope. It goes to the adjuster in writing (email, portal, or Xactimate SP) and needs three things to land:</p>
+        <ul>
+          <li><b>A code or policy citation</b> that explains why the item is required, not optional.</li>
+          <li><b>Photo evidence</b> of the condition being addressed, taken during Cardinal's inspection.</li>
+          <li><b>Clear line items with prices</b> that match Xactimate or regional market rates.</li>
+        </ul>
+        <div class="rl-use"><b>Paste, don't parrot.</b> The sample wording is a starting point &mdash; adapt it to the specific claim, adjuster, and property. Adjusters recognize a form supplement and discount it. A personalized supplement with the correct citation lands harder.</div>
+      </div>
+
+      <div class="rl-groupsep">Code-Required Upgrades</div>
+
+      <div class="rl-card" data-rltags="ice barrier eave 24 inches wall line supplement">
+        <h3>Ice Barrier &mdash; Extension to Wall Line</h3>
+        <span class="rl-cite">RCO R905.1.2</span>
+        <p>Adjuster's scope shows ice &amp; water membrane only at the drip edge (usually 3 feet) instead of the code-required extension to 24 inches past the exterior wall line, measured along the slope.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Ice &amp; water shield &mdash; additional linear feet to extend coverage to 24&Prime; past exterior wall line (measured along the slope).</li>
+            <li>On slopes &ge; 8:12: minimum 36&Prime; up the slope from the eave.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R905.1.2, ice barrier is required to extend from the eave edge to a point at least 24 inches inside the exterior wall line, measured along the slope. The current scope provides only a 3-foot strip at the eave, which does not meet code. The overhang on this property is [X inches], requiring [Y linear feet] of additional ice &amp; water shield to bring the installation to code. Please add [Y LF] to the approved scope.&rdquo;</i></div>
+        <div class="rl-tags"><span>underlayment</span><span>eave</span><span>code required</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="drip edge eave rake supplement">
+        <h3>Drip Edge &mdash; All Eaves and Rakes</h3>
+        <span class="rl-cite">RCO R905.2.8.5</span>
+        <p>Adjuster's scope excludes new drip edge on a full re-roof, or only includes it at eaves and not rakes.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Drip edge &mdash; total eave LF plus total rake LF.</li>
+            <li>On homes without existing drip edge: mark as required-by-code addition.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R905.2.8.5, drip edge is required at both eaves and rakes of shingle roofs on all new installations. The current scope [excludes drip edge / includes it only at eaves]. This property has [X LF of eaves] and [Y LF of rakes], and drip edge is required on all [X+Y] linear feet. Please add [X+Y LF] of drip edge to the approved scope.&rdquo;</i></div>
+      </div>
+
+      <div class="rl-card" data-rltags="underlayment double layer low slope supplement">
+        <h3>Underlayment &mdash; Double Layer on Low Slope</h3>
+        <span class="rl-cite">RCO R905.1.1</span>
+        <p>Roof has one or more slopes between 2:12 and 4:12 (porch roofs, dormers, additions) and the adjuster's scope specs single-layer underlayment.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Double-layer underlayment on all slopes under 4:12, or self-adhering underlayment throughout on those slopes.</li>
+            <li>Additional labor for two-layer application.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R905.1.1 and Table R905.1.1(2), asphalt shingle underlayment on slopes of 2:12 up to less than 4:12 must be installed in two layers (or self-adhering underlayment throughout). This property has [describe slopes: porch roof / dormer / addition] at a measured pitch of [X:12], below the 4:12 threshold. Please add double-layer underlayment for [X squares] of low-slope area to the approved scope.&rdquo;</i></div>
+      </div>
+
+      <div class="rl-card" data-rltags="ventilation code r806 balanced ridge soffit supplement">
+        <h3>Attic Ventilation to Code</h3>
+        <span class="rl-cite">RCO R806</span>
+        <p>Existing ventilation is out of compliance (blocked soffit intake, gable-only, single-source, or insufficient net free area) and the adjuster excludes upgrades as &ldquo;betterment.&rdquo;</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Ridge vent LF (or box vent count) sized for the attic square footage.</li>
+            <li>Soffit vent installation or reconditioning &mdash; count of vents or LF of continuous soffit vent.</li>
+            <li>Baffle installation at each rafter bay if required to maintain airflow.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R806, attic ventilation must provide net free area of 1/150 of the ventilated space, reducible to 1/300 when at least 40% and not more than 50% is upper vent (balanced ridge-and-soffit configuration). The existing attic ventilation on this property is [describe: gable only / blocked soffit / undersized ridge], which does not meet the 1/300 balanced requirement. Reinstalling the existing non-compliant system on the new roof would violate code. Please add [ridge vent LF, soffit intake, and baffles] to the approved scope. Ordinance &amp; Law coverage applies if included in the policy.&rdquo;</i></div>
+      </div>
+
+      <div class="rl-card" data-rltags="enhanced fastening high wind six nail supplement">
+        <h3>Enhanced Fastening / High-Wind Installation</h3>
+        <span class="rl-cite">RCO R905.2.5</span>
+        <span class="rl-cite rl-gold">Mfg Spec</span>
+        <p>The specified shingle line requires 6-nail installation for its wind warranty, and the adjuster's scope specifies 4-nail (standard).</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Enhanced fastening / 6-nail installation labor rate (typically ~15% above standard).</li>
+            <li>Additional fasteners.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R905.2.5, the code minimum is 4 nails per shingle in standard wind zones, with 6-nail installation required in high-wind zones or where manufacturer specifications require it. The specified shingle line, [product name], requires 6-nail installation per manufacturer specification to qualify for the [warranty tier] wind warranty. Please update the approved scope to include enhanced-fastening installation for the full roof area of [X squares].&rdquo;</i></div>
+      </div>
+
+      <div class="rl-card" data-rltags="starter strip manufacturer accessory system supplement">
+        <h3>Starter Strip &amp; Manufacturer Accessories</h3>
+        <span class="rl-cite">Mfg Spec</span>
+        <span class="rl-cite">RCO R905.2</span>
+        <p>Adjuster's scope specifies generic 3-tab starter (or omits starter entirely) instead of the manufacturer-branded starter required for system warranty.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Manufacturer-specific starter strip (e.g., GAF Pro-Start, OC Starter, CertainTeed SwiftStart) &mdash; total eave LF.</li>
+            <li>Manufacturer hip &amp; ridge cap &mdash; total ridge + hip LF.</li>
+            <li>Manufacturer synthetic underlayment.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The system warranty on the specified shingle line requires the full manufacturer accessory kit &mdash; starter strip, underlayment, hip &amp; ridge cap, and ice barrier &mdash; from the same manufacturer. Mixing accessories voids the enhanced warranty and drops coverage to the standard material warranty. The current scope specifies [generic starter / mixed accessories]. Please update to [manufacturer]-specific accessories to preserve the system warranty the homeowner is paying for.&rdquo;</i></div>
+      </div>
+
+      <div class="rl-groupsep">Structural &mdash; Discovered During Work</div>
+
+      <div class="rl-card" data-rltags="decking replacement rot ordinance law supplement">
+        <h3>Decking Replacement</h3>
+        <span class="rl-cite">RCO R803</span>
+        <span class="rl-cite">RCO R908.3</span>
+        <span class="rl-cite rl-gold">Coverage D</span>
+        <p>Deteriorated decking discovered during tear-off. Adjuster wants to exclude as &ldquo;maintenance&rdquo; or pre-existing.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Deck replacement &mdash; square feet of 7/16&Prime; or 1/2&Prime; OSB or plywood matching existing.</li>
+            <li>Fasteners and labor for deck replacement.</li>
+            <li>Dumpster surcharge if additional load.</li>
+          </ul>
+        </div>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Photo of each section of failed decking with a ruler or tape measure in frame for scale.</li>
+            <li>Total square footage measurement per replaced section.</li>
+            <li>Photo of the attic view showing the underside of the same area, if accessible.</li>
+            <li>If possible: physical sample of removed board.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;During tear-off on [date], Cardinal identified [X square feet] of deteriorated roof sheathing that will not hold fasteners and cannot serve as an adequate base for new roofing. Per RCO R908.3, a re-cover over unsound decking is prohibited; per RCO R803, sheathing must be structurally sound. This deck replacement is code-required. If the policy includes Ordinance &amp; Law (Coverage D), this work is covered under that coverage. Please add [X sqft] of deck replacement to the approved scope, priced at [$X per sqft]. Documentation photos with scale are attached.&rdquo;</i></div>
+        <div class="rl-tags"><span>discovered</span><span>ordinance &amp; law</span><span>tear-off</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="full tear off layers r908 supplement">
+        <h3>Full Tear-Off Required by Code</h3>
+        <span class="rl-cite">RCO R908.3</span>
+        <p>Roof has two or more existing layers, or the existing first layer is deteriorated. Adjuster's scope specifies a recover / overlay.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Full tear-off labor (replacing overlay scope).</li>
+            <li>Additional dumpster / disposal fees.</li>
+            <li>Additional protective measures for landscaping, siding, gutters during tear-off.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R908.3, roof recover (overlay) is not permitted where the existing roof has two or more applications of roof covering, or where the existing covering is water-soaked or deteriorated. This property currently has [X existing layers / a deteriorated first layer, documented in attached photos]. A recover is not code-compliant on this roof. Please update the approved scope from recover to full tear-off, adding [$X for tear-off labor and disposal].&rdquo;</i></div>
+        <div class="rl-tags"><span>2+ layers</span><span>overlay prohibited</span></div>
+      </div>
+
+      <div class="rl-groupsep">Matching / Slope Replacement</div>
+
+      <div class="rl-card" data-rltags="line of sight matching oac 3901 supplement">
+        <h3>Line-of-Sight Mismatch &mdash; Full Slope Replacement</h3>
+        <span class="rl-cite">OAC 3901-1-54(I)(1)(b)</span>
+        <span class="rl-cite rl-gold">Ohio Reg</span>
+        <p>Adjuster approved partial replacement (damaged area only) but the repair will not produce a reasonably comparable appearance due to color mismatch, weathering differences, or line-of-sight visibility with adjacent slopes.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Full slope replacement rather than partial &mdash; additional squares to complete the affected slope.</li>
+            <li>Additional labor and disposal for the expanded area.</li>
+          </ul>
+        </div>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Photo of an unweathered replacement shingle (test shingle from same lot) placed adjacent to the aged field shingles, taken under matched lighting.</li>
+            <li>Wide-angle photo showing the affected slope in line-of-sight relation to other visible slopes.</li>
+            <li>Manufacturer confirmation that the exact shingle line is discontinued or the color has been reformulated, if applicable.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per OAC 3901-1-54(I)(1)(b), when a covered loss requires replacement and the replaced item will not match the quality, color, or size of the item suffering the loss, the insurer shall replace as much of the item as necessary to result in a reasonably comparable appearance. On this property, a partial replacement of the damaged area will not produce a reasonably comparable appearance because [describe: shingle line is discontinued, color has weathered, damaged area is in direct line-of-sight from the street/adjacent slope]. Attached photos document the mismatch. Please expand the approved scope to full slope replacement, adding [X squares].&rdquo;</i></div>
+        <div class="rl-tags"><span>matching</span><span>partial replacement</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="discontinued shingle full roof replacement supplement">
+        <h3>Discontinued Shingle &mdash; Full Roof Replacement</h3>
+        <span class="rl-cite">OAC 3901-1-54(I)(1)(b)</span>
+        <p>The exact shingle line on the property is discontinued and no comparable replacement is available. Adjuster is offering partial or single-slope replacement.</p>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Manufacturer confirmation letter or product-status page showing the shingle line is discontinued.</li>
+            <li>Attempts to source matching product from independent suppliers, with responses.</li>
+            <li>Photo comparison of closest available match placed against the existing field.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per OAC 3901-1-54(I)(1)(b), replacement must produce a reasonably comparable appearance. The existing shingle on this property is [Product Line, Manufacturer, Color], which was discontinued in [year]. Attached is manufacturer confirmation that no comparable replacement is available. Partial or single-slope replacement will result in a visibly mismatched roof with no reasonably comparable appearance possible. Please approve full roof replacement for total [X squares].&rdquo;</i></div>
+      </div>
+
+      <div class="rl-card" data-rltags="spatter matching endorsement cosmetic supplement">
+        <h3>Spatter with Matching Endorsement</h3>
+        <span class="rl-cite">OAC 3901-1-54(I)(1)(b)</span>
+        <span class="rl-cite">Policy Endorsement</span>
+        <p>Hail spatter marks are present without functional damage. Policy includes a matching endorsement that expands beyond the state regulation.</p>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Photos of spatter marks across multiple slopes and elevations, wide and close-up.</li>
+            <li>Copy of the matching endorsement from the policy declarations.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The policy on this property includes a matching endorsement [reference specific endorsement number if known]. Hail spatter marks are documented across multiple slopes of the roof. Under the matching endorsement, the insurer's obligation to produce uniform appearance requires replacement of the affected slopes even where individual impacts do not affect functional performance. Please approve replacement of the affected slopes totaling [X squares].&rdquo;</i></div>
+        <div class="rl-doc"><b>Note:</b> if the policy has a cosmetic damage exclusion, this template does not apply &mdash; the exclusion typically strips matching for spatter-only impacts.</div>
+      </div>
+
+      <div class="rl-groupsep">Flashings</div>
+
+      <div class="rl-card" data-rltags="step counter flashing wall chimney supplement">
+        <h3>Step &amp; Counter Flashing</h3>
+        <span class="rl-cite">RCO R905.2.8</span>
+        <span class="rl-cite">RCO R903.2</span>
+        <p>Adjuster's scope excludes new step and counter flashings, or specifies &ldquo;reuse existing.&rdquo;</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>New step flashing at all sidewalls &mdash; count of pieces or total LF.</li>
+            <li>New counter flashing at masonry chimneys &mdash; LF.</li>
+            <li>Additional labor for cut-in of counter flashing on masonry (if not already surface-mounted).</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R905.2.8, flashings must be corrosion-resistant metal, sized and installed to prevent water intrusion, integrated shingle-by-shingle at sidewalls. Reusing existing step flashing during tear-off is not code-compliant because removal of the existing shingles typically damages the flashing and disrupts the integration with the underlayment. The current scope [excludes new flashing / specifies reuse]. Please add new step flashing at all sidewall intersections and new counter flashing at the chimney(s), totaling [X LF].&rdquo;</i></div>
+        <div class="rl-tags"><span>flashing</span><span>reuse denied</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="skylight flashing kit supplement">
+        <h3>Skylight Flashing Kit</h3>
+        <span class="rl-cite">RCO R905.2.8</span>
+        <span class="rl-cite">Mfg Warranty</span>
+        <p>Adjuster's scope includes new roofing but excludes the manufacturer skylight flashing kit.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Manufacturer skylight flashing kit &mdash; one per skylight, sized to the skylight opening.</li>
+            <li>Additional labor for skylight flashing install.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The property has [X skylights, manufacturer if known]. The skylight manufacturer's warranty requires new flashing with any new roof; installing new roofing over the existing flashing kit voids the skylight warranty. Additionally, existing flashings are typically damaged during shingle tear-off, making them non-compliant with RCO R905.2.8 water-intrusion requirements. Please add [X skylight flashing kits] to the approved scope.&rdquo;</i></div>
+      </div>
+
+      <div class="rl-card" data-rltags="chimney cricket saddle supplement">
+        <h3>Chimney Cricket / Saddle</h3>
+        <span class="rl-cite">RCO R903.2.1</span>
+        <p>Property has a chimney more than 30&Prime; wide (measured perpendicular to the ridge) that lacks a cricket, or has a failed cricket that needs replacement.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Chimney cricket construction &mdash; framing, sheathing, flashing.</li>
+            <li>Additional labor.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R903.2.1, saddles (crickets) are required on the ridge-side of any chimney more than 30 inches wide. The chimney on this property measures [X inches wide] and [has no cricket / has a failed cricket that needs replacement]. Please add cricket construction to the approved scope at [$X].&rdquo;</i></div>
+      </div>
+
+      <div class="rl-card" data-rltags="pipe boot vent replacement supplement">
+        <h3>Pipe Boot Replacement</h3>
+        <span class="rl-cite">RCO R905.2.8</span>
+        <p>Adjuster's scope includes new roofing but excludes new pipe boots for existing vent stack penetrations.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>New pipe boots &mdash; count per size (1.5&Prime;, 2&Prime;, 3&Prime;, 4&Prime;).</li>
+            <li>Additional labor for boot installation.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The property has [X vent stack penetrations of the following sizes: ...]. Existing pipe boots on this roof are [years] old with visible UV degradation and cracked rubber seals (documented in attached photos). Reusing degraded boots on the new roof will produce failures within the warranty period. Per RCO R905.2.8, flashings must be sized and installed to prevent water intrusion. Please add [X new pipe boots] to the approved scope.&rdquo;</i></div>
+      </div>
+
+      <div class="rl-groupsep">Related Property Damage</div>
+
+      <div class="rl-card" data-rltags="related property damage siding hail supplement">
+        <h3>Siding &amp; Trim</h3>
+        <p>Same storm event damaged siding, wraps, band boards, or trim. Adjuster's scope covers only the roof.</p>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Wide-angle elevation photos showing distribution of damage across each affected wall.</li>
+            <li>Close-up photos of representative damage with ruler or coin for scale.</li>
+            <li>Test-square photos on each elevation showing hail hit count (mirror the roof test-square methodology).</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The storm event that damaged the roof also produced damage to the [elevation(s)] of the property. Attached are documented [hail/wind] impacts on the [siding type], including a test-square hit count of [X per 10&times;10 square]. This damage is contemporaneous with the roof loss and requires replacement of the affected elevations to produce a reasonably comparable appearance. Please add [X squares] of siding replacement to the approved scope, plus associated trim, J-channel, and corner posts.&rdquo;</i></div>
+        <div class="rl-tags"><span>siding</span><span>related damage</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="gutters downspouts damage hail supplement">
+        <h3>Gutters &amp; Downspouts</h3>
+        <p>Gutters and/or downspouts are dented or dislodged from the same storm event. Common with hail (dents in the trough) and wind (dislodged straps and elbows).</p>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Close-up photos of dents / dislodgement.</li>
+            <li>Photos showing distribution around the property.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The gutters on this property show documented [hail dents / wind displacement] contemporaneous with the storm event on [date]. Attached photos show the damage distribution across [X elevations]. Please add gutter replacement for [X LF] and downspout replacement for [Y count] to the approved scope. Aluminum coil color to match existing.&rdquo;</i></div>
+      </div>
+
+      <div class="rl-card" data-rltags="hvac coil condenser fin damage supplement">
+        <h3>HVAC Condenser Fin Damage</h3>
+        <p>Hail damaged the aluminum fins on the outdoor HVAC condenser. Fin damage reduces heat-transfer efficiency and shortens the compressor's lifespan.</p>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Close-up photo of the condenser fins showing bent/flattened areas.</li>
+            <li>Wide photo showing the unit's location and orientation (to correlate with storm-track direction).</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The outdoor HVAC condenser on this property has documented hail damage to the coil fins on the [north/south/east/west] side, matching the storm-track direction of the [date] event. Attached photos show the extent of fin damage. HVAC fin repair (combing) or condenser coil replacement is required to restore heat-transfer efficiency. Please add [combing / coil replacement / full condenser replacement per HVAC contractor estimate] to the approved scope, referring to a licensed HVAC contractor for final assessment.&rdquo;</i></div>
+        <div class="rl-doc"><b>Note:</b> HVAC repairs generally require a licensed HVAC contractor's assessment. Cardinal documents the damage and refers, rather than pricing the repair directly.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="screens window frames wrap damage supplement">
+        <h3>Screens &amp; Window Frames</h3>
+        <p>Window screens are torn, punctured, or dislodged. Aluminum window wraps and cap flashings show hail dents.</p>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Photo of each damaged screen (torn mesh, bent frame).</li>
+            <li>Close-ups of dented aluminum wrap / cap flashings.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The property has [X damaged screens] and [Y linear feet of dented aluminum window wrap] contemporaneous with the storm event. Attached photos document each damaged item. Please add screen replacement for [X units] and aluminum wrap replacement for [Y LF] to the approved scope.&rdquo;</i></div>
+      </div>
+    </div>
+
 
     <!-- =========================================================
          MEASUREMENTS HUB — 7 trades
@@ -14559,12 +14883,16 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     else if(nav === 'clients') showInsuranceClients();
     else if(nav === 'home') backToLanding();
   });
-  /* also let the cards on the Cardinal Truth page route to library / clients */
+  /* also let the cards on the Cardinal Truth page route to library / clients / supplements */
   document.getElementById('cardinalTruthView').addEventListener('click', function(e){
     var b = e.target.closest('.ins-card[data-ctnav]'); if(!b) return;
     var nav = b.getAttribute('data-ctnav');
     if(nav === 'library') showResourceLibrary();
     else if(nav === 'clients') showInsuranceClients();
+    else if(nav === 'supplements'){
+      showResourceLibrary();
+      if(window._rlShowPage) window._rlShowPage('rlPageSup');
+    }
   });
 })();
 
@@ -14587,6 +14915,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     rlPageTips:       'rlPageInsHub',
     rlPagePitfalls:   'rlPageInsHub',
     rlPageCheat:      'rlPageInsHub',
+    rlPageSup:        'rlPageInsHub',
     rlPageCode:       'rlPageGenHub',
     rlPageMfg:        'rlPageGenHub',
     rlPageInsp:       'rlPageGenHub',
@@ -14641,6 +14970,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
       tips:      'rlPageTips',
       pitfalls:  'rlPagePitfalls',
       cheat:     'rlPageCheat',
+      sup:       'rlPageSup',
       mfg:       'rlPageMfg',
       insp:      'rlPageInsp',
       /* Measurements */
@@ -14696,7 +15026,7 @@ showResourceLibrary = function(){
 
 /* remember if RL was opened from Cardinal Truth so Back can return there */
 document.getElementById('cardinalTruthView').addEventListener('click', function(e){
-  if(e.target.closest('[data-ctnav="library"]')){
+  if(e.target.closest('[data-ctnav="library"]') || e.target.closest('[data-ctnav="supplements"]')){
     document.getElementById('cardinalTruthView').setAttribute('data-was-open', '1');
   }
 });
