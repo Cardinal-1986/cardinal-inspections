@@ -1792,7 +1792,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-19 build 109 &#8212; transparent cardinal png</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 110 &#8212; QI: no dup uploads on Finish, client-search prefill fixed</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8862,9 +8862,11 @@ document.getElementById('qiMapNext').addEventListener('click', function(){
   document.getElementById('qiWhoAddr').textContent = qiAddr ? ('\uD83D\uDCCD ' + qiAddr) : '';
   document.getElementById('qiNpAddr').value = qiAddr;
   document.getElementById('qiWhoModal').style.display = 'block';
-  qiRenderCliList(qiAddr ? qiAddr.split(',')[0] : '');
-  document.getElementById('qiCliSearch').value = '';
-  qiRenderCliList('');
+  /* prefill the client search with the pinned address's street portion so
+     the list is scoped to nearby matches -- user can edit or clear to widen */
+  var streetPart = qiAddr ? qiAddr.split(',')[0] : '';
+  document.getElementById('qiCliSearch').value = streetPart;
+  qiRenderCliList(streetPart);
 });
 document.getElementById('qiFinClose').addEventListener('click', function(){ document.getElementById('qiWhoModal').style.display = 'none'; });
 document.getElementById('qiTabExist').addEventListener('click', function(){
@@ -9068,7 +9070,16 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
   if(!confirm('Finish the inspection for ' + qi.projectName + '? (' + total + ' photo(s))')) return;
   var pid = qi.projectId;
   try{
-    var pending = qi.photos.map(function(p, i2){ return p.data && !p.uploaded ? i2 : -1; }).filter(function(i2){ return i2 >= 0; });
+    /* wait for any in-flight per-shot uploads to settle before we retry --
+       otherwise a photo still uploading would get uploaded a SECOND time here
+       and end up duplicated in the gallery */
+    var waited = 0;
+    while(qi.photos.some(function(p){ return p.uploading; }) && waited < 15000){
+      qiBubble('ai', 'Waiting for in-flight uploads to finish\u2026');
+      await new Promise(function(r){ setTimeout(r, 500); });
+      waited += 500;
+    }
+    var pending = qi.photos.map(function(p, i2){ return p.data && !p.uploaded && !p.uploading ? i2 : -1; }).filter(function(i2){ return i2 >= 0; });
     for(var i = 0; i < pending.length; i++){
       qiBubble('ai', 'Saving remaining photo ' + (i+1) + ' of ' + pending.length + '\u2026');
       await photoDb.add(pid, qi.photos[pending[i]].data);
