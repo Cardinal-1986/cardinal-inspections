@@ -364,6 +364,40 @@ footer.site{
 
 @media (max-width:640px){ .projcover{flex:0 0 88px;width:88px;height:88px;} .projinfo{padding:12px 13px 13px;} }
 
+/* Insurance client — cover card gets the dark grey/blue theme so the profile
+   context is unmistakable at a glance. Matches Cardinal Truth palette. */
+body.claim-insurance .projinfo{
+  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
+  border:1px solid #2f3a4c;border-left:3px solid #4a6fa5;
+  color:#e8ecf1;
+}
+body.claim-insurance .projinfo:hover{border-color:#7fa6d6;box-shadow:0 8px 22px rgba(74,111,165,.2);}
+body.claim-insurance .projinfo h2{color:#e8ecf1;}
+body.claim-insurance .projinfo .namestar{color:#6b7a90;}
+body.claim-insurance .projinfo .namestar.on{color:#f5d061;}
+body.claim-insurance .projinfo .mrow{color:#cfd6e0;}
+body.claim-insurance .projinfo .mrow a{color:#7fa6d6;}
+body.claim-insurance .projinfo .mlbl{color:#8b95a5;}
+body.claim-insurance .projinfo .mrow .poval{color:#d4a017;}
+body.claim-insurance .editpencil{background:rgba(255,255,255,.06);border-color:#2f3a4c;color:#7fa6d6;}
+body.claim-insurance .editpencil:hover{background:rgba(127,166,214,.15);color:#e8ecf1;}
+/* small blue "INSURANCE" badge above the name */
+.insBadge{display:none;}
+body.claim-insurance .insBadge{
+  display:inline-block;padding:3px 10px;border-radius:10px;
+  background:rgba(127,166,214,.15);border:1px solid #4a6fa5;
+  color:#7fa6d6;font:800 10.5px 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.12em;margin-bottom:8px;
+}
+/* insurance info block inside the card — spans the 2 mrow columns */
+.projInsBlock{display:none;}
+body.claim-insurance .projInsBlock{
+  display:block;margin-top:10px;padding-top:8px;
+  border-top:1px solid #2f3a4c;
+}
+body.claim-insurance .projInsBlock .mrow{margin-bottom:2px;}
+body.claim-insurance .projInsBlock .mrow a{color:#7fa6d6;text-decoration:underline;}
+
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
 .logincard .loginlogo{display:block;margin:0 auto 16px;max-width:250px;height:auto;}
@@ -684,6 +718,40 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   border-radius:14px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
 .insPanel .insEdit:hover{background:#4a6fa5;color:#fff;}
 
+/* Insurance Documents section */
+.insDocsBox{margin:8px 0 14px;padding:12px 12px;
+  border:1px solid #d0dae8;border-left:3px solid #4a6fa5;
+  background:linear-gradient(180deg,#f4f7fb 0%,#eef3f9 100%);
+  border-radius:10px;}
+.insdocrow{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:#fff;border:1px solid #d0dae8;border-radius:8px;margin-bottom:8px;
+  min-height:44px;}
+.insdocrow:last-child{margin-bottom:0;}
+.insdocrow.filled{border-color:#7fa6d6;box-shadow:0 1px 3px rgba(74,111,165,.08);}
+.insdocic{font-size:20px;flex:0 0 auto;line-height:1;width:26px;text-align:center;}
+.insdoctxt{flex:1;min-width:0;}
+.insdoctxt b{display:block;font:700 13.5px 'Segoe UI',Arial,sans-serif;color:#2d4468;}
+.insdoctxt small{display:block;font-size:11.5px;color:#4a6fa5;margin-top:2px;word-break:break-word;line-height:1.35;}
+.insdoctxt small.muted{color:#a4b0c0;font-style:italic;}
+.insdocupload,.insdocreplace,.insdocview{
+  background:#4a6fa5;color:#fff;border:none;border-radius:6px;
+  padding:6px 12px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;
+  flex:0 0 auto;-webkit-tap-highlight-color:rgba(74,111,165,.3);touch-action:manipulation;
+  letter-spacing:.03em;}
+.insdocreplace{background:transparent;color:#4a6fa5;border:1px solid #4a6fa5;}
+.insdocview{background:#fff;color:#4a6fa5;border:1px solid #4a6fa5;}
+.insdocupload:hover,.insdocreplace:hover{background:#2d4468;color:#fff;border-color:#2d4468;}
+.insdocview:hover{background:#eef3f9;}
+.insdocdel{background:transparent;color:#c05541;border:1px solid #d0a5a0;
+  border-radius:6px;padding:6px 10px;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;
+  flex:0 0 auto;line-height:1;-webkit-tap-highlight-color:rgba(192,85,65,.25);touch-action:manipulation;}
+.insdocdel:hover{background:rgba(192,85,65,.12);border-color:#c05541;}
+@media (max-width:480px){
+  .insdocrow{flex-wrap:wrap;gap:6px 8px;padding:10px 10px;}
+  .insdocrow .insdoctxt{flex:1 1 100%;min-width:0;order:2;}
+  .insdocrow .insdocic{order:1;}
+  .insdocrow button{order:3;padding:5px 10px;font-size:11px;}
+}
 /* SOL (Scope of Loss) reader card */
 .solCard{margin:14px 0;padding:14px 16px;border:1px dashed #b0bdd4;background:#f0f4fa;
   border-radius:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
@@ -903,8 +971,21 @@ html, body{overflow-x:hidden;max-width:100%;}
 #headSearch::placeholder{color:#c9b8b4;}
 #headSearch:focus{outline:2px solid var(--red);background:rgba(255,255,255,.16);}
 .dashcard{flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:10px;
-  background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 18px;}
+  background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 18px;
+  position:relative;}
 .dashcard b{font:800 16.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;letter-spacing:.02em;}
+
+/* Small "back to landing" chip in the dashcard corner */
+.dashLandBtn{
+  position:absolute;top:6px;right:8px;z-index:2;
+  background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.14);
+  color:#5c4a42;padding:4px 10px;border-radius:14px;
+  font:700 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;cursor:pointer;
+  -webkit-tap-highlight-color:rgba(212,160,23,.25);touch-action:manipulation;
+  transition:background .12s, border-color .12s;
+}
+.dashLandBtn:hover{background:rgba(0,0,0,.09);border-color:rgba(0,0,0,.22);}
+.dashLandBtn:active{background:rgba(212,160,23,.2);}
 #qClock{font:800 14.5px 'Segoe UI',Arial,sans-serif;color:#5c4a42;font-variant-numeric:tabular-nums;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 @media (max-width:640px){
@@ -1350,6 +1431,19 @@ body.restoring #restoreVeil{display:flex;}
   padding:14px 16px;margin-bottom:12px;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none;}
 .dbrow:active{background:#f6f3f0;}
 .dbrow .dbgo{margin-left:auto;color:#23507e;font-size:22px;font-weight:800;}
+
+/* Convert to Insurance — matches dbrow but in insurance blue theme */
+.convertins{display:flex;align-items:center;gap:10px;background:#f2f4f8;
+  border:1px solid #d0dae8;border-left:3px solid #4a6fa5;
+  border-radius:8px;padding:12px 14px;margin:4px 0 12px;cursor:pointer;
+  -webkit-tap-highlight-color:rgba(74,111,165,.25);touch-action:manipulation;
+  transition:background .12s, border-color .12s;}
+.convertins:active{background:#e5eaf3;}
+.convertins:hover{background:#e9eef7;border-color:#7fa6d6;}
+.convertins .cvic{flex:0 0 auto;width:24px;text-align:center;font-size:20px;line-height:1;}
+.convertins .cvtxt{flex:1;font:700 14px 'Segoe UI',Arial,sans-serif;color:#2d4468;}
+.convertins .cvtxt small{display:block;font-weight:600;font-size:11.5px;color:#6b7a90;margin-top:2px;letter-spacing:.01em;}
+.convertins .cvgo{margin-left:auto;color:#4a6fa5;font-size:22px;font-weight:800;}
 .rt2{float:right;font:700 12.5px 'Segoe UI',Arial,sans-serif;}
 .rt2 a{color:#4a90d9;text-decoration:none;}
 .dbprim small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a8078;}
@@ -1678,6 +1772,13 @@ body.restoring #restoreVeil{display:flex;}
   .dashcard::after{background:linear-gradient(90deg,transparent,#d4a017 30%,#f5d061 50%,#d4a017 70%,transparent);}
   .dashcard::before{content:'';position:absolute;left:0;right:0;bottom:5px;height:1px;
     background:linear-gradient(90deg,transparent,#d4a017 30%,#f5d061 50%,#d4a017 70%,transparent);}
+  .dashcard .dashLandBtn{
+    top:6px;right:8px;
+    background:rgba(0,0,0,.35);border-color:rgba(212,160,23,.45);
+    color:#f5d061;
+  }
+  .dashcard .dashLandBtn:hover{background:rgba(212,160,23,.15);border-color:#d4a017;}
+  .dashcard .dashLandBtn:active{background:rgba(212,160,23,.28);}
   .dashcard b{
     background:linear-gradient(160deg,#8a5a00 0%,#d4a017 30%,#f5d061 50%,#c8901c 70%,#7a4f00 100%);
     -webkit-background-clip:text;background-clip:text;color:#d4a017;-webkit-text-fill-color:transparent;
@@ -2140,6 +2241,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
         </select>
         <button class="btn ghost" id="navBtn">&#9776; Menu</button>
         <div id="navMenu" style="display:none;">
+          <button class="navopt" data-nav="landing">&#127968; Landing</button>
           <button class="navopt" data-nav="clients">&#128101; Clients</button>
           <button class="navopt" data-nav="feed">&#9889; Activity Feed</button>
           <button class="navopt" data-nav="reports">&#128200; Graphs &amp; Reports</button>
@@ -2152,7 +2254,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 125 &#8212; Supplement Templates page: 5 categories, ~18 pre-written templates with sample wording</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 130 &#8212; Insurance Documents section on insurance client profiles: 6 typed upload slots</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2202,7 +2304,10 @@ body:has(#loginView[style*="block"]){background:#fff;}
       <div class="homemain">
         <div class="quickrow">
           <button class="qbtn qsq" id="qSearchBtn" title="Search clients">&#128269;</button>
-          <div class="dashcard"><b>Dashboard</b><span id="qClock"></span></div>
+          <div class="dashcard">
+            <button class="dashLandBtn" id="qLandBtn" title="Back to landing">&#127968; Landing</button>
+            <b>Dashboard</b><span id="qClock"></span>
+          </div>
         </div>
         <div class="pipecard" style="margin-top:12px;">
           <div class="pipetitle">&#128202; Cardinal Pipeline</div>
@@ -2466,6 +2571,8 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div id="solCard"></div>
       <div id="insCard" style="display:none;"></div>
+      <div id="insDocsCard" style="display:none;"></div>
+      <input type="file" id="insDocFileInput" style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.heic">
     </div>
 
     <div id="tab-inspections" style="display:none;">
@@ -7415,6 +7522,15 @@ function renderAcxOverview(){
     return myFirst && String(m.text || '').toLowerCase().indexOf('@' + myFirst.toLowerCase()) !== -1;
   }).length;
   var html = '';
+  /* ---- Convert to Insurance (shown only when this client is Retail or Unknown) ---- */
+  var _ct = (typeof projClaimType === 'function') ? projClaimType(pr) : 'unknown';
+  if(_ct !== 'insurance'){
+    html += '<div class="convertins" id="dbConvertIns" role="button" tabindex="0">' +
+      '<span class="cvic">&#128737;&#65039;</span>' +
+      '<span class="cvtxt">Convert to Insurance<small>Add carrier, claim #, adjuster contact &amp; policy info</small></span>' +
+      '<span class="cvgo">&#8250;</span>' +
+    '</div>';
+  }
   /* ---- stage bar: centered stage, back/forward arrows with confirmation ---- */
   var ORD = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
   var pvStage = ORD.indexOf(stg) > 0 ? ORD[ORD.indexOf(stg) - 1] : null;
@@ -7575,6 +7691,10 @@ function renderAcxOverview(){
   });
   var pRow = document.getElementById('dbPayRow');
   if(pRow) pRow.addEventListener('click', openPaymentsPage);
+  var civBtn = document.getElementById('dbConvertIns');
+  if(civBtn) civBtn.addEventListener('click', function(){
+    if(typeof changeClaimType === 'function') changeClaimType(currentProject, 'insurance');
+  });
   var sw = document.getElementById('dbSwitchPrim');
   if(sw) sw.addEventListener('click', function(e){ e.preventDefault(); dbSwitchPrimary(pr); });
   var ad = document.getElementById('dbAddContact');
@@ -8735,15 +8855,43 @@ function openProject(id){
   if(!pr) return;
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   currentProject = pr;
+  /* Repaint the cover card in the insurance theme when this client is an insurance claim. */
+  var _projCT = (typeof projClaimType === 'function') ? projClaimType(pr) : 'unknown';
+  document.body.classList.toggle('claim-insurance', _projCT === 'insurance');
   document.getElementById('projName').innerHTML =
+    '<span class="insBadge">&#128737;&#65039; INSURANCE</span>' +
     esc(pr.name || 'Unnamed client') +
     '<span id="favStar" class="namestar" title="Favorite / high priority">\u2606</span>';
+  /* PO + Address rows, plus insurance rows when applicable. */
+  var _insHtml = '';
+  if(_projCT === 'insurance'){
+    var _I = (typeof projInsurance === 'function') ? (projInsurance(pr) || {}) : {};
+    var _adj = _I.adjuster || {};
+    function _row(lbl, val){
+      if(val === null || val === undefined || val === '') return '';
+      return '<div class="mrow"><span class="mlbl">' + esc(lbl) + '</span><span>' + esc(String(val)) + '</span></div>';
+    }
+    function _rowLink(lbl, val, href){
+      if(!val) return '';
+      return '<div class="mrow"><span class="mlbl">' + esc(lbl) + '</span><a href="' + href + '">' + esc(val) + '</a></div>';
+    }
+    var _adjLine = [_adj.name, _adj.phone].filter(Boolean).join(' \u00b7 ');
+    _insHtml = '<div class="projInsBlock">' +
+      _row('CARRIER', _I.carrier) +
+      _row('CLAIM #', _I.claim_number) +
+      _row('POLICY #', _I.policy_number) +
+      _row('DEDUCTIBLE', (typeof fmtInsMoney === 'function' && _I.deductible) ? fmtInsMoney(_I.deductible) : (_I.deductible || '')) +
+      (_adjLine ? '<div class="mrow"><span class="mlbl">ADJUSTER</span><span>' + esc(_adjLine) + '</span></div>' : '') +
+      (_adj.email ? _rowLink('EMAIL', _adj.email, 'mailto:' + _adj.email) : '') +
+      '</div>';
+  }
   document.getElementById('projMeta').innerHTML =
     '<div class="mrow"><span class="mlbl">PO</span>' +
       '<span class="poval">' + (poOf(pr) ? '#' + poOf(pr) : '\u2014') + '</span>' +
       '<button id="projEditBtn" class="editpencil" title="Edit client info">&#9998;</button>' +
     '</div>' +
-    (pr.address ? '<div class="mrow"><span class="mlbl">ADDRESS</span><span>' + esc(pr.address) + '</span></div>' : '');
+    (pr.address ? '<div class="mrow"><span class="mlbl">ADDRESS</span><span>' + esc(pr.address) + '</span></div>' : '') +
+    _insHtml;
   var cov = document.getElementById('projCover');
   var img = cov.querySelector('img');
   if(img) img.remove();
@@ -10345,6 +10493,109 @@ function renderLeadCard(){
   card.style.display = 'block';
   renderSolCard();
   renderInsurancePanel();
+  renderInsuranceDocsCard();
+}
+
+/* ---------- Insurance Documents (upload + list) ---------- */
+var INS_DOC_TYPES = [
+  { key: 'authorization',     icon: '\u270D\uFE0F',       label: 'Authorization Form' },
+  { key: 'service_agreement', icon: '\uD83D\uDCC4',       label: 'Insurance Service Agreement' },
+  { key: 'three_day_right',   icon: '\uD83D\uDDD3\uFE0F', label: '3-Day Right' },
+  { key: 'itell',             icon: '\uD83D\uDCCB',       label: 'iTell Form &mdash; Received' },
+  { key: 'scope_of_loss',     icon: '\uD83C\uDFE0',       label: 'Scope of Loss' },
+  { key: 'policy',            icon: '\uD83D\uDCD1',       label: 'Policy' }
+];
+function findInsuranceDoc(projectId, typeKey){
+  var patt = new RegExp('^Insurance Doc \\[' + typeKey + '\\]:');
+  var hits = (cacheRows || []).filter(function(r){
+    return r.project_id === projectId && patt.test(String(r.title || ''));
+  });
+  hits.sort(function(a, b){ return String(b.created_at || '').localeCompare(String(a.created_at || '')); });
+  return hits[0] || null;
+}
+function renderInsuranceDocsCard(){
+  var mount = document.getElementById('insDocsCard');
+  if(!mount || !currentProject){ if(mount){ mount.style.display = 'none'; mount.innerHTML = ''; } return; }
+  var ct = (typeof projClaimType === 'function') ? projClaimType(currentProject) : 'unknown';
+  if(ct !== 'insurance'){ mount.style.display = 'none'; mount.innerHTML = ''; return; }
+
+  var pid = currentProject.id;
+  var rowsHtml = INS_DOC_TYPES.map(function(dt){
+    var doc = findInsuranceDoc(pid, dt.key);
+    if(doc){
+      var filename = String(doc.title || '').replace(/^Insurance Doc \[\w+\]:\s*/, '');
+      var when = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '';
+      return '<div class="insdocrow filled">' +
+        '<span class="insdocic">' + dt.icon + '</span>' +
+        '<div class="insdoctxt"><b>' + dt.label + '</b>' +
+          '<small>\u2713 ' + esc(filename) + (when ? ' &middot; ' + esc(when) : '') + '</small></div>' +
+        '<button class="insdocview" data-insdocview="' + esc(doc.id) + '">View</button>' +
+        '<button class="insdocreplace" data-insdocreplace="' + esc(dt.key) + '">Replace</button>' +
+        '<button class="insdocdel" data-insdocdel="' + esc(doc.id) + '" title="Delete">&times;</button>' +
+      '</div>';
+    }
+    return '<div class="insdocrow empty">' +
+      '<span class="insdocic">' + dt.icon + '</span>' +
+      '<div class="insdoctxt"><b>' + dt.label + '</b>' +
+        '<small class="muted">Not uploaded</small></div>' +
+      '<button class="insdocupload" data-insdocupload="' + esc(dt.key) + '">&#128228; Upload</button>' +
+    '</div>';
+  }).join('');
+  mount.innerHTML =
+    '<h3 class="projsec" style="margin-top:20px;">&#128193; Insurance Documents</h3>' +
+    '<div class="insDocsBox">' + rowsHtml + '</div>';
+  mount.style.display = 'block';
+
+  mount.querySelectorAll('[data-insdocupload]').forEach(function(b){
+    b.addEventListener('click', function(){ pickAndUploadInsDoc(b.getAttribute('data-insdocupload')); });
+  });
+  mount.querySelectorAll('[data-insdocreplace]').forEach(function(b){
+    b.addEventListener('click', function(){ pickAndUploadInsDoc(b.getAttribute('data-insdocreplace')); });
+  });
+  mount.querySelectorAll('[data-insdocview]').forEach(function(b){
+    b.addEventListener('click', function(){ openJobFile(b.getAttribute('data-insdocview')); });
+  });
+  mount.querySelectorAll('[data-insdocdel]').forEach(function(b){
+    b.addEventListener('click', function(){
+      if(!confirm('Delete this insurance document?')) return;
+      var id = b.getAttribute('data-insdocdel');
+      db.remove(id)
+        .then(function(){ return reload(); })
+        .then(function(){ renderInsuranceDocsCard(); })
+        .catch(function(err){ alert('Could not delete: ' + (err.message || err)); });
+    });
+  });
+}
+function pickAndUploadInsDoc(typeKey){
+  var input = document.getElementById('insDocFileInput');
+  if(!input) return;
+  input.onchange = async function(){
+    var f = this.files && this.files[0];
+    this.value = '';
+    if(!f) return;
+    try{
+      await uploadInsuranceDoc(typeKey, f);
+      renderInsuranceDocsCard();
+    }catch(err){
+      alert('Upload failed: ' + (err.message || err));
+    }
+  };
+  input.click();
+}
+async function uploadInsuranceDoc(typeKey, file){
+  if(!currentProject) throw new Error('No client selected');
+  if(file.size > 10 * 1024 * 1024) throw new Error('File is over the 10 MB limit');
+  var dataUrl = await new Promise(function(res, rej){
+    var rd = new FileReader();
+    rd.onload = function(){ res(rd.result); };
+    rd.onerror = function(){ rej(new Error('could not read file')); };
+    rd.readAsDataURL(file);
+  });
+  var payload = JSON.stringify({ file: 1, name: file.name, mime: file.type || '', size: file.size, data: dataUrl });
+  var title = 'Insurance Doc [' + typeKey + ']: ' + file.name;
+  await db.create(title, payload, currentProject.name || '', currentProject.id);
+  try{ await reload(); }catch(_e){}
+  try{ auditLog('doc', 'Insurance document uploaded: ' + typeKey + ' (' + file.name + ')', currentProject.id); }catch(_e){}
 }
 
 function renderInsurancePanel(){
@@ -10991,6 +11242,9 @@ function hideAllViews(){
      site header is visible. Anything upstream that left it hidden gets fixed here. */
   var _hd = document.querySelector('header.site');
   if(_hd && _hd.style.display === 'none') _hd.style.display = '';
+  /* Also drop the claim-insurance theme; openProject will re-apply if the next
+     project is an insurance client. */
+  document.body.classList.remove('claim-insurance');
   setHeaderJobMenu(false);
   mainView.style.display = 'none';
   projectView.style.display = 'none';
@@ -11663,6 +11917,7 @@ navMenu.addEventListener('click', function(e){
   navMenu.style.display = 'none';
   var nav = opt.getAttribute('data-nav');
   if(nav === 'home'){ showHome(); }
+  else if(nav === 'landing'){ goToLanding(); }
   else if(nav === 'profile'){ openMyProfile(); }
   else if(nav === 'clients'){ openClientsDirectory(); }
   else if(nav === 'feed'){ openActivityFeed(); }
@@ -12756,6 +13011,13 @@ document.addEventListener('click', function(e){
 });
 document.getElementById('qSearchBtn').addEventListener('click', openClientsDirectory);
 document.getElementById('qSearchBtn').innerHTML='&#128269;<i>Search clients\u2026</i>';
+(function(){
+  var lb = document.getElementById('qLandBtn');
+  if(lb) lb.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(typeof goToLanding === 'function') goToLanding();
+  });
+})();
 var __actBackBtn = document.getElementById('actBackBtn'); if(__actBackBtn) __actBackBtn.addEventListener('click', showHome);
 document.getElementById('actFeedFull').addEventListener('click', function(e){
   var c = e.target.closest('.afcli[data-proj]');
@@ -14825,6 +15087,16 @@ function renderInsuranceClientsList(){
   }), { once: false });
 }
 function backToLanding(){
+  document.getElementById('cardinalTruthView').style.display = 'none';
+  document.getElementById('resourceLibraryView').style.display = 'none';
+  var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
+  document.getElementById('landingView').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+/* Same as backToLanding, but called from the app menu — also clears main-app views
+   so the transition is clean. */
+function goToLanding(){
+  try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_e){}
   document.getElementById('cardinalTruthView').style.display = 'none';
   document.getElementById('resourceLibraryView').style.display = 'none';
   var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
