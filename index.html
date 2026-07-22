@@ -398,6 +398,51 @@ body.claim-insurance .projInsBlock{
 body.claim-insurance .projInsBlock .mrow{margin-bottom:2px;}
 body.claim-insurance .projInsBlock .mrow a{color:#7fa6d6;text-decoration:underline;}
 
+/* -- Insurance mode: repaint the site header rule and the accents to steel-blue -- */
+body.claim-insurance header.site{border-bottom-color:#4a6fa5;box-shadow:0 2px 12px rgba(74,111,165,.28);}
+body.claim-insurance header.site .brand h1 span,
+body.claim-insurance header.site .titlecard h1 span{color:#7fa6d6 !important;}
+body.claim-insurance header.site .btn{background:#4a6fa5;}
+body.claim-insurance header.site .btn:hover{background:#3a5a8c;}
+body.claim-insurance header.site .btn.ghost{border-color:rgba(127,166,214,.55);}
+body.claim-insurance header.site .btn.ghost:hover{background:rgba(127,166,214,.12);}
+body.claim-insurance .clientbanner::before{background:linear-gradient(90deg,transparent,#4a6fa5 30%,#7fa6d6 50%,#4a6fa5 70%,transparent) !important;}
+body.claim-insurance .clientbanner{border-color:#4a6fa5 !important;}
+
+/* Reserve top-right space in the projinfo h2 for the Landing chip in the corner */
+.projinfo h2{padding-right:100px;}
+@media(max-width:640px){ .projinfo h2{padding-right:88px;} }
+
+/* PO prefix in lavender, placed before the client name in the cover card */
+.projinfo .poPfx{
+  display:inline-block;color:#B57EDC;font:800 15px 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.02em;margin-right:8px;padding:2px 9px;
+  background:rgba(181,126,220,.12);border:1px solid rgba(181,126,220,.35);border-radius:8px;
+  vertical-align:middle;
+}
+body.claim-insurance .projinfo .poPfx{
+  color:#c9a3ee;background:rgba(181,126,220,.16);border-color:rgba(181,126,220,.5);
+}
+.projinfo .poPfx.empty{color:#c9bfb9;background:transparent;border-style:dashed;font-weight:700;font-size:13px;}
+body.claim-insurance .projinfo .poPfx.empty{color:#8b95a5;border-color:#4a6fa5;}
+
+/* Landing chip in top-right of client cover card, mirrors the one on the dashboard */
+.projinfo .projLandChip{
+  position:absolute;top:8px;right:10px;z-index:2;
+  background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.14);
+  color:#5c4a42;padding:4px 10px;border-radius:14px;
+  font:700 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;cursor:pointer;
+  -webkit-tap-highlight-color:rgba(212,160,23,.25);touch-action:manipulation;
+  transition:background .12s, border-color .12s;
+}
+.projinfo .projLandChip:hover{background:rgba(0,0,0,.09);border-color:rgba(0,0,0,.22);}
+.projinfo .projLandChip:active{background:rgba(212,160,23,.2);}
+body.claim-insurance .projinfo .projLandChip{
+  background:rgba(74,111,165,.15);border-color:#4a6fa5;color:#7fa6d6;
+}
+body.claim-insurance .projinfo .projLandChip:hover{background:rgba(74,111,165,.25);color:#e8ecf1;}
+
+
 /* -- Extend insurance theme to the full client-profile content -- */
 /* Slight blue-tinted page background so cards read as one theme */
 body.claim-insurance #projectView{background:linear-gradient(180deg,#eef1f7 0%,#e3e8f1 100%);}
@@ -2136,6 +2181,11 @@ body:has(#loginView[style*="block"]){background:#fff;}
   display:block;font:12.5px 'Segoe UI',Arial,sans-serif;color:#8b95a5;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;
 }
+#insClientsView .ins-clirow .bd small.ins-detline{
+  color:#7fa6d6;font:700 11.5px 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.02em;margin-top:3px;
+}
+#insClientsView .ins-clirow .bd small.ins-detline.ins-nodata{color:#6b7a90;font-style:italic;font-weight:600;}
 #insClientsView .ins-clirow .chev{color:#7fa6d6;font-size:20px;font-weight:800;}
 #insClientsView .ins-clirow .favstar{color:#6b7a90;padding:4px;font-size:19px;cursor:pointer;line-height:1;}
 #insClientsView .ins-clirow .favstar.on{color:#f5d061;}
@@ -2404,7 +2454,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 135 &#8212; Fix: insurance theme class was being stripped by hideAllViews inside openProject — re-applied after</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 137 &#8212; Insurance profile: PO# in lavender before name, Landing chip on cover, header rule steel-blue, logo → Cardinal Truth</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9019,11 +9069,18 @@ function openProject(id){
   /* Repaint the cover card in the insurance theme when this client is an insurance claim. */
   var _projCT = (typeof projClaimType === 'function') ? projClaimType(pr) : 'unknown';
   document.body.classList.toggle('claim-insurance', _projCT === 'insurance');
+  var _po = poOf(pr);
+  var _poPfx = _po
+    ? '<span class="poPfx">#' + esc(String(_po)) + '</span>'
+    : '<span class="poPfx empty">#\u2014</span>';
   document.getElementById('projName').innerHTML =
     '<span class="insBadge">&#128737;&#65039; INSURANCE</span>' +
+    _poPfx +
     esc(pr.name || 'Unnamed client') +
-    '<span id="favStar" class="namestar" title="Favorite / high priority">\u2606</span>';
-  /* PO + Address rows, plus insurance rows when applicable. */
+    '<span id="favStar" class="namestar" title="Favorite / high priority">\u2606</span>' +
+    '<button id="projEditBtn" class="editpencil" title="Edit client info" style="margin-left:8px;">&#9998;</button>' +
+    '<button id="projLandChip" class="projLandChip" title="Back to landing">&#127968; Landing</button>';
+  /* Address + insurance rows (PO now lives inline with the name above) */
   var _insHtml = '';
   if(_projCT === 'insurance'){
     var _I = (typeof projInsurance === 'function') ? (projInsurance(pr) || {}) : {};
@@ -9047,10 +9104,6 @@ function openProject(id){
       '</div>';
   }
   document.getElementById('projMeta').innerHTML =
-    '<div class="mrow"><span class="mlbl">PO</span>' +
-      '<span class="poval">' + (poOf(pr) ? '#' + poOf(pr) : '\u2014') + '</span>' +
-      '<button id="projEditBtn" class="editpencil" title="Edit client info">&#9998;</button>' +
-    '</div>' +
     (pr.address ? '<div class="mrow"><span class="mlbl">ADDRESS</span><span>' + esc(pr.address) + '</span></div>' : '') +
     _insHtml;
   var cov = document.getElementById('projCover');
@@ -9069,6 +9122,12 @@ function openProject(id){
   document.getElementById('stageSel').value = normStage(pr.stage);
   renderFavBtn();
   document.getElementById('contactedBtn').style.display = (normStage(pr.stage) === 'Lead') ? 'inline-block' : 'none';
+  /* Landing chip on cover card — same behavior as the dashboard's Landing chip */
+  var _plc = document.getElementById('projLandChip');
+  if(_plc) _plc.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(typeof goToLanding === 'function') goToLanding();
+  });
   var hpo = poOf(pr);
   document.getElementById('dangerZone').style.display = isAdminUser() ? 'block' : 'none';
   setTimeout(fixHeadPad, 50);
@@ -9920,7 +9979,12 @@ function openProjModal(pr){
 /* ---------- +New menu ---------- */
 var newMenu = document.getElementById('newMenu');
 document.getElementById('brandLogo').addEventListener('click', function(){
-  if(currentUser || !TEAM) showHome();
+  if(!(currentUser || !TEAM)) return;
+  if(document.body.classList.contains('claim-insurance') && typeof showCardinalTruth === 'function'){
+    showCardinalTruth();
+  } else {
+    showHome();
+  }
 });
 document.getElementById('addProjectBtn').addEventListener('click', function(e){
   e.stopPropagation();
@@ -12060,7 +12124,12 @@ function openClientsDirectory(keepFilter){
     brand.style.cursor = 'pointer';
     brand.title = 'Home';
     brand.addEventListener('click', function(){
-      if(mainView && document.getElementById('navWrap').style.display !== 'none') showHome();
+      if(!(mainView && document.getElementById('navWrap').style.display !== 'none')) return;
+      if(document.body.classList.contains('claim-insurance') && typeof showCardinalTruth === 'function'){
+        showCardinalTruth();
+      } else {
+        showHome();
+      }
     });
   }
 })();
@@ -15338,16 +15407,27 @@ function renderInsuranceClientsList(){
       : esc((pr.name || '?').trim().charAt(0).toUpperCase());
     var stg = normStage(pr.stage) || 'Lead';
     var I = projInsurance(pr) || {};
-    var subParts = [];
-    if(pr.address) subParts.push(esc(pr.address));
-    if(I.carrier) subParts.push(esc(I.carrier));
-    var sub = subParts.join(' \u00b7 ');
+    var adj = I.adjuster || {};
+    /* Line 1: address · phone (matches main directory) */
+    var line1Parts = [];
+    if(pr.address) line1Parts.push(esc(pr.address));
+    if(pr.phone) line1Parts.push(esc(pr.phone));
+    var line1 = line1Parts.join(' \u00b7 ');
+    /* Line 2: insurance-specific — carrier, claim #, adjuster */
+    var insParts = [];
+    if(I.carrier) insParts.push('&#128737;&#65039; ' + esc(I.carrier));
+    if(I.claim_number) insParts.push('Claim #' + esc(I.claim_number));
+    if(adj.name) insParts.push(esc(adj.name));
+    var insLine = insParts.join(' &nbsp;&middot;&nbsp; ');
     var isFavPr = (typeof isFav === 'function') ? isFav(pr) : false;
     return '<div class="ins-clirow" data-icpid="' + esc(pr.id) + '">' +
       '<span class="mini">' + mini + '</span>' +
       '<span class="bd"><b>' + esc(pr.name || 'Unnamed client') + '</b>' +
         '<span class="stagechip ' + (typeof stageClass === 'function' ? stageClass(stg) : 'stg-' + stg) + '">' + esc(stg) + '</span>' +
-        (sub ? '<small>' + sub + '</small>' : '') + '</span>' +
+        (line1 ? '<small>' + line1 + '</small>' : '') +
+        (insLine ? '<small class="ins-detline">' + insLine + '</small>' :
+                   '<small class="ins-detline ins-nodata">No insurance details yet</small>') +
+      '</span>' +
       '<span class="favstar' + (isFavPr ? ' on' : '') + '" data-icfav="' + esc(pr.id) + '">' + (isFavPr ? '\u2B50' : '\u2606') + '</span>' +
       '<span class="chev">&#8250;</span>' +
     '</div>';
