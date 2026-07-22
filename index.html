@@ -2152,7 +2152,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 119 &#8212; Mobile fixes: bigger tap targets, universal arrow glyph, safe-area padding, no tap delay</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 121 &#8212; Measurements section under General: 7 trades, hand + reports for each (Windows/Doors direct to hand)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2894,15 +2894,43 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <div class="ins-body">
 
     <!-- =========================================================
-         LANDING: grid of boxes with dividers between rows
+         LANDING: two hubs (Insurance / General) with a divider
          ========================================================= -->
     <div class="rl-page rl-pageActive" id="rlLanding" data-rltitle="Resource Library">
       <div class="rl-pagehead">
         <h1>Resource Library</h1>
-        <p>Ohio roofing codes and insurance regulations. Pick a section &mdash; each opens its own page. Cheat sheet is one tap away for a truck-ready summary.</p>
+        <p>Two hubs. Insurance is everything you need working a claim. General is codes, materials, and manufacturer specs. Pick a side.</p>
       </div>
 
-      <button class="rl-cheatlink" data-rlgoto="cheat">&#128203; Truck Cheat Sheet</button>
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="ins_hub">
+          <div class="rl-boxicon">&#128737;&#65039;</div>
+          <div class="rl-boxtitle">Insurance</div>
+          <div class="rl-boxsub">Ohio insurance law, policy provisions, documentation standards, claim tips, do &amp; don't, and the truck cheat sheet.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="gen_hub">
+          <div class="rl-boxicon">&#128218;</div>
+          <div class="rl-boxtitle">General</div>
+          <div class="rl-boxsub">Construction codes (residential, commercial, municipal) and manufacturer installation guidelines.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
+      <div class="rl-foot">
+        <p><b>Cardinal Roofing &amp; Renovations, LLC</b> &mdash; 5735 Webster St, Dayton OH 45414 &middot; 937.576.6753 &middot; Admin@cardinalrenovations.net</p>
+        <p>Resource Library v3 &middot; July 2026 &middot; Sources: 2019 Residential Code of Ohio, 2024 Ohio Building Code, Ohio Admin. Code Title 4101:8, Ohio Admin. Code 3901-1-54, Ohio Revised Code Chapters 3901, 3951, 1345. Not legal advice.</p>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         INSURANCE HUB
+         ========================================================= -->
+    <div class="rl-page" id="rlPageInsHub" data-rltitle="Insurance">
+      <div class="rl-pagehead">
+        <h1>Insurance</h1>
+        <p>Working a claim &mdash; from the code you cite to the way you document the file to the way you keep yourself on the right side of ORC Ch. 3951.</p>
+      </div>
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="insurance">
@@ -2911,27 +2939,27 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <div class="rl-boxsub">Matching regulation, unfair claims practices, public adjuster rules, and the 3-day rescission.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
-        <button class="rl-box" data-rlgoto="code">
-          <div class="rl-boxicon">&#128736;&#65039;</div>
-          <div class="rl-boxtitle">Construction Codes</div>
-          <div class="rl-boxsub">Residential (RCO Ch. 9), commercial (OBC Ch. 15), and Miami Valley municipal amendments.</div>
-          <div class="rl-boxgo">Open &rsaquo;</div>
-        </button>
-      </div>
-
-      <div class="rl-divider"></div>
-
-      <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="policy">
           <div class="rl-boxicon">&#9989;</div>
           <div class="rl-boxtitle">Policy Provisions</div>
           <div class="rl-boxsub">Ordinance &amp; Law, RCV vs. ACV, matching endorsements &mdash; what to check on the dec page.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
+      </div>
+
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="docs">
           <div class="rl-boxicon">&#128194;</div>
           <div class="rl-boxtitle">Documentation Checklist</div>
           <div class="rl-boxsub">Per-inspection photo standard, damage-type templates, and the paper trail every claim file needs.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="tips">
+          <div class="rl-boxicon">&#128161;</div>
+          <div class="rl-boxtitle">Claim Tips</div>
+          <div class="rl-boxsub">Scenario playbook &mdash; the adjuster shortcut and the code cite that answers it. Plus carrier-specific patterns.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
       </div>
@@ -2939,23 +2967,37 @@ body:has(#loginView[style*="block"]){background:#fff;}
       <div class="rl-divider"></div>
 
       <div class="rl-boxgrid">
-        <button class="rl-box" data-rlgoto="tips">
-          <div class="rl-boxicon">&#128161;</div>
-          <div class="rl-boxtitle">Claim Tips</div>
-          <div class="rl-boxsub">Scenario playbook &mdash; the adjuster shortcut and the code cite that answers it. Plus carrier-specific patterns.</div>
-          <div class="rl-boxgo">Open &rsaquo;</div>
-        </button>
         <button class="rl-box" data-rlgoto="pitfalls">
           <div class="rl-boxicon">&#9888;&#65039;</div>
           <div class="rl-boxtitle">Do &amp; Don't</div>
           <div class="rl-boxsub">Field practices on one side, ways this goes sideways on the other. Split-screen reference.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
+        <button class="rl-box" data-rlgoto="cheat">
+          <div class="rl-boxicon">&#128203;</div>
+          <div class="rl-boxtitle">Truck Cheat Sheet</div>
+          <div class="rl-boxsub">One-page summary of the three levers, code cites, and the line you don't cross. Print for the truck.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         GENERAL HUB
+         ========================================================= -->
+    <div class="rl-page" id="rlPageGenHub" data-rltitle="General">
+      <div class="rl-pagehead">
+        <h1>General</h1>
+        <p>The construction side. Code is what the roof has to meet. Manufacturer specs are what the warranty demands. Both matter on every job.</p>
       </div>
 
-      <div class="rl-divider"></div>
-
-      <div class="rl-boxgrid rl-single">
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="code">
+          <div class="rl-boxicon">&#128736;&#65039;</div>
+          <div class="rl-boxtitle">Construction Codes</div>
+          <div class="rl-boxsub">Residential (RCO Ch. 9), commercial (OBC Ch. 15), and Miami Valley municipal amendments.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
         <button class="rl-box" data-rlgoto="mfg">
           <div class="rl-boxicon">&#127981;</div>
           <div class="rl-boxtitle">Manufacturer Guidelines</div>
@@ -2964,9 +3006,15 @@ body:has(#loginView[style*="block"]){background:#fff;}
         </button>
       </div>
 
-      <div class="rl-foot">
-        <p><b>Cardinal Roofing &amp; Renovations, LLC</b> &mdash; 5735 Webster St, Dayton OH 45414 &middot; 937.576.6753 &middot; Admin@cardinalrenovations.net</p>
-        <p>Resource Library v2 &middot; July 2026 &middot; Sources: 2019 Residential Code of Ohio, 2024 Ohio Building Code, Ohio Admin. Code Title 4101:8, Ohio Admin. Code 3901-1-54, Ohio Revised Code Chapters 3901, 3951, 1345. Not legal advice.</p>
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid rl-single">
+        <button class="rl-box" data-rlgoto="msr">
+          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxtitle">Measurements</div>
+          <div class="rl-boxsub">How to take-off every trade &mdash; roof, siding, windows, gutters, fascia, soffit, doors. Hand measurements plus how to read Hover, Roofr, EagleView.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
       </div>
     </div>
 
@@ -3653,6 +3701,764 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <div class="rl-use"><b>Use it when:</b> Homeowner asks about alternatives or matching an existing non-Big-3 roof. Cardinal's Big-3 focus doesn't preclude working with these manufacturers, but the warranty tier programs and installation specs need to be checked per project.</div>
       </div>
     </div>
+
+    <!-- =========================================================
+         MEASUREMENTS HUB — 7 trades
+         ========================================================= -->
+    <div class="rl-page" id="rlPageMsr" data-rltitle="Measurements">
+      <div class="rl-pagehead">
+        <h1>Measurements</h1>
+        <p>Every trade has two ways to measure it: by hand and by report. Both matter. Reports are faster; hands never lie. This section covers both for every trade Cardinal touches.</p>
+      </div>
+
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="msr_roof">
+          <div class="rl-boxicon">&#127968;</div>
+          <div class="rl-boxtitle">Roof</div>
+          <div class="rl-boxsub">Squares, slope, waste factor. Hand measurements and how to read a Hover, Roofr, or EagleView roof report.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="msr_siding">
+          <div class="rl-boxicon">&#129717;</div>
+          <div class="rl-boxtitle">Siding</div>
+          <div class="rl-boxsub">Squares by elevation, openings deduction, corner and trim linear feet. Hand and report methods.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="msr_windows">
+          <div class="rl-boxicon">&#128273;</div>
+          <div class="rl-boxtitle">Windows</div>
+          <div class="rl-boxsub">Rough opening vs. exact frame size, standard size conventions, measure from inside vs. outside.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="msr_doors">
+          <div class="rl-boxicon">&#128682;</div>
+          <div class="rl-boxtitle">Doors</div>
+          <div class="rl-boxsub">Rough opening vs. slab size, prehung vs. slab, handing, standard sizes, patio doors.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="msr_gutters">
+          <div class="rl-boxicon">&#128167;</div>
+          <div class="rl-boxtitle">Gutters</div>
+          <div class="rl-boxsub">Eave linear feet, downspout locations and count, elbows and inside/outside miters. Hand and report methods.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="msr_fascia">
+          <div class="rl-boxicon">&#129686;</div>
+          <div class="rl-boxtitle">Fascia</div>
+          <div class="rl-boxsub">Board width, linear feet, wrap vs. paint, and corner returns. Hand and report methods.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid rl-single">
+        <button class="rl-box" data-rlgoto="msr_soffit">
+          <div class="rl-boxicon">&#128737;&#65039;</div>
+          <div class="rl-boxtitle">Soffit</div>
+          <div class="rl-boxsub">Width from wall to fascia, linear feet, vented vs. solid areas, corner geometry. Hand and report methods.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         ROOF sub-hub
+         ========================================================= -->
+    <div class="rl-page" id="rlPageMsrRoof" data-rltitle="Roof Measurements">
+      <div class="rl-pagehead">
+        <h1>Roof</h1>
+        <p>Choose your source of measurements. Both matter &mdash; and disagreements between them are how discrepancies get caught.</p>
+      </div>
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="msr_roof_hand">
+          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxtitle">Hand Measurements</div>
+          <div class="rl-boxsub">Boots-on-the-roof approach: perimeter, slope, squares, waste, accessory counts.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="msr_roof_reports">
+          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxtitle">Reading Reports</div>
+          <div class="rl-boxsub">Hover, Roofr, EagleView, GAF QuickMeasure &mdash; what to trust, what to verify.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrRoofHand" data-rltitle="Roof &mdash; Hand Measurements">
+      <div class="rl-pagehead">
+        <h1>Roof &mdash; Hand Measurements</h1>
+        <p>Slow, deliberate, honest. Nothing beats a rep on the roof with a tape and a slope gauge for accuracy on complicated cut-ups.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="perimeter eave rake ridge">
+        <h3>Perimeter &amp; Facet Basics</h3>
+        <p>Every roof breaks down into facets (flat planes). For each facet, measure the eave length (bottom edge) and rake length (side edge from eave to ridge). The area of a simple rectangular facet is <b>eave &times; rake</b>. For irregular shapes, break into rectangles and triangles and add them up.</p>
+        <ul>
+          <li>Eave: bottom edge, horizontal.</li>
+          <li>Rake: sloped side edge, gable end.</li>
+          <li>Ridge: top edge where two facets meet.</li>
+          <li>Hip: where two facets meet at an outside corner going down.</li>
+          <li>Valley: where two facets meet at an inside corner going down.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="slope pitch 4/12 8/12 measurement">
+        <h3>Slope / Pitch</h3>
+        <p>Pitch is expressed as rise-over-run in inches per foot. A 6/12 pitch rises 6 inches for every 12 inches of horizontal run.</p>
+        <ul>
+          <li><b>Slope gauge or pitch finder</b> &mdash; a rafter square with a level. Set on the roof or against a rake board.</li>
+          <li><b>Phone level app</b> &mdash; iPhone Measure or any level app. Lay against sheathing or shingle plane. Accurate to about &plusmn;0.5&deg;.</li>
+          <li><b>Rafter/joist trick</b> &mdash; measure 12&Prime; horizontally from the rake, then measure vertically to the rake board. That vertical is the rise per 12&Prime; run.</li>
+        </ul>
+        <div class="rl-use"><b>Why it matters:</b> Slope determines square footage. A 6/12 roof is about 12&percnt; more surface than the footprint; a 12/12 is about 41&percnt; more. Same footprint, very different materials.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="squares square footage calculation area">
+        <h3>Squares (100 sqft units)</h3>
+        <p>Roofing is sold and priced by the <b>square</b> &mdash; 100 square feet of roof surface. Every calculation ends here.</p>
+        <ul>
+          <li><b>Footprint &times; slope factor</b>: multiply flat footprint area by the slope multiplier.
+            <br>4/12 = 1.054 &nbsp;|&nbsp; 6/12 = 1.118 &nbsp;|&nbsp; 8/12 = 1.202 &nbsp;|&nbsp; 10/12 = 1.302 &nbsp;|&nbsp; 12/12 = 1.414</li>
+          <li>Then divide by 100 to get squares.</li>
+        </ul>
+        <p><b>Example:</b> 40&prime; &times; 30&prime; footprint at 8/12: (40 &times; 30) &times; 1.202 = 1442.4 sq ft &divide; 100 = <b>14.42 squares</b>.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="waste factor cut up dumpster material overage">
+        <h3>Waste Factor</h3>
+        <p>Add for cuts, breakage, and starter shingles. Adjust based on complexity:</p>
+        <ul>
+          <li><b>Simple gable, no valleys:</b> 5&ndash;7&percnt; waste.</li>
+          <li><b>Standard cut-up (hips, dormers, valleys):</b> 10&ndash;12&percnt; waste.</li>
+          <li><b>Complex (multiple dormers, cricket, steep):</b> 15&percnt; or more.</li>
+          <li><b>Metal panels:</b> often less than 5&percnt; if pre-cut; more if bending on site.</li>
+        </ul>
+        <div class="rl-use"><b>Underorder:</b> job stops mid-day for material. <b>Overorder:</b> you eat the return trip and restocking fee. Split the difference by knowing the complexity honestly.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="linear feet ridge hip valley starter drip edge">
+        <h3>Linear Feet &mdash; Ridge, Hip, Valley, Edge</h3>
+        <p>Accessories are sold by the linear foot. Measure each:</p>
+        <ul>
+          <li><b>Ridge cap</b> &mdash; total ridge LF plus total hip LF (both use ridge cap).</li>
+          <li><b>Valley</b> &mdash; total valley LF (open or closed valley material).</li>
+          <li><b>Starter</b> &mdash; total eave LF (starter shingle runs the full eave).</li>
+          <li><b>Drip edge</b> &mdash; total eave LF plus total rake LF (both edges get drip edge per code).</li>
+          <li><b>Ice &amp; water barrier</b> &mdash; total eave LF &times; (eave-to-24&Prime;-past-wall-line coverage). Not the whole eave &mdash; measure up the slope.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="accessories vents pipe boots skylights count">
+        <h3>Accessory Counts</h3>
+        <p>Walk and count. Don't estimate.</p>
+        <ul>
+          <li>Ridge vent LF (or box vent count).</li>
+          <li>Pipe boots (1.5&Prime;, 2&Prime;, 3&Prime;, 4&Prime; &mdash; note each size).</li>
+          <li>Bathroom fan / dryer vents.</li>
+          <li>Skylights (measure exterior dimensions; note manufacturer and glass type if visible).</li>
+          <li>Chimney flashings (count sides needing counter-flashing; note if chase or masonry).</li>
+          <li>Solar tubes / dormer flashings.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrRoofReports" data-rltitle="Roof &mdash; Reading Reports">
+      <div class="rl-pagehead">
+        <h1>Roof &mdash; Reading Reports</h1>
+        <p>Reports are fast and mostly accurate. But adjusters read them too, so knowing where they go wrong is how you defend your scope.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="hover measurement 3d photo based accuracy">
+        <h3>Hover</h3>
+        <p>Photo-based measurement service. Homeowner or rep uploads phone photos from ground level; Hover reconstructs a 3D model and returns roof + siding measurements. Turnaround typically hours.</p>
+        <ul>
+          <li><b>Trust:</b> total roof area, individual facet areas, ridge/hip/valley/eave/rake linear feet on visible planes.</li>
+          <li><b>Verify:</b> slope on complex roofs (Hover's slope estimation can miss on multiple pitches), chimneys and dormers (small features get lumped in), roofs behind trees or obstructions.</li>
+          <li><b>Common issue:</b> back porches / attached structures may be measured as separate roofs; check the diagram.</li>
+        </ul>
+        <div class="rl-doc"><b>Field notes to fill in:</b> Cardinal's typical Hover accuracy, when it's failed on our jobs, best-practice photo capture pattern.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="roofr aerial report accuracy verify">
+        <h3>Roofr</h3>
+        <p>Roofr aerial reports pull from satellite imagery. Faster and cheaper than EagleView; accuracy is competitive on simple to moderate roofs.</p>
+        <ul>
+          <li><b>Trust:</b> total squares, pitch on primary facets, LF for ridge/hip/valley/eave/rake.</li>
+          <li><b>Verify:</b> the report's stated waste-factor recommendation is generic &mdash; adjust up for your specific cut-up complexity.</li>
+          <li><b>Watch for:</b> low-slope porches misread as steeper; second-story or hidden facets may be missed if satellite angle is bad.</li>
+        </ul>
+        <div class="rl-doc"><b>Field notes to fill in:</b> Cardinal's typical Roofr experience.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="eagleview premium report benchmark standard">
+        <h3>EagleView</h3>
+        <p>The industry-standard aerial measurement service. Used by many carriers and adjusters. Reports are highly detailed and generally accepted without dispute.</p>
+        <ul>
+          <li><b>Trust:</b> pretty much everything &mdash; total area, per-facet area, pitch, LF for all edge types, drawing accuracy.</li>
+          <li><b>Verify:</b> ground-level features the aerials can't see: chimney counter-flashing extent, sidewall step flashing, condition of ridge vent, active leaks.</li>
+          <li><b>Adjuster tie-in:</b> if the adjuster uses EagleView too, both scopes will start from the same measurements &mdash; discrepancies then are about materials and coverage, not area.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="gaf quickmeasure certainteed reports">
+        <h3>Other Reports</h3>
+        <p>Manufacturer-branded reports are usually just relabeled EagleView or similar:</p>
+        <ul>
+          <li><b>GAF QuickMeasure</b> &mdash; comparable to EagleView, sometimes discounted for GAF-Certified contractors.</li>
+          <li><b>CertainTeed roof reports</b> &mdash; typically third-party sourced.</li>
+          <li><b>Xactimate sketch</b> &mdash; the adjuster's own sketch. Verify slope and per-facet dimensions against your own; discrepancies here are the most common source of scope disputes.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="verifying report disagreement discrepancy">
+        <h3>When a Report Seems Wrong</h3>
+        <p>If a Hover, Roofr, or EagleView measurement disagrees with your hand measurements by more than a couple of squares:</p>
+        <ul>
+          <li>Recheck your hand measurement &mdash; especially slope on the specific facet in question.</li>
+          <li>Look for hidden or missed facets in the report's diagram.</li>
+          <li>For aerial reports, check that all porches and additions were included.</li>
+          <li>Request a re-measurement from the service if the discrepancy is significant.</li>
+        </ul>
+        <div class="rl-use"><b>On insurance jobs:</b> if the adjuster's Xactimate has different measurements than your report, the source that generated Xactimate matters. Ask if it was manual sketch, aerial report, or EagleView-fed.</div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SIDING sub-hub + pages
+         ========================================================= -->
+    <div class="rl-page" id="rlPageMsrSiding" data-rltitle="Siding Measurements">
+      <div class="rl-pagehead">
+        <h1>Siding</h1>
+        <p>Choose your source of measurements.</p>
+      </div>
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="msr_siding_hand">
+          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxtitle">Hand Measurements</div>
+          <div class="rl-boxsub">Wall by wall: squares, openings, corners, trim.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="msr_siding_reports">
+          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxtitle">Reading Reports</div>
+          <div class="rl-boxsub">Hover for siding &mdash; what's accurate, what to verify.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrSidingHand" data-rltitle="Siding &mdash; Hand Measurements">
+      <div class="rl-pagehead">
+        <h1>Siding &mdash; Hand Measurements</h1>
+        <p>Elevation by elevation. Nothing shortcuts a wall-by-wall walk.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="wall squares elevation">
+        <h3>Wall Area (Squares)</h3>
+        <p>Measure each wall's height and width. Multiply for area. Convert to squares (100 sqft = 1 square).</p>
+        <ul>
+          <li><b>Height:</b> foundation to eave line (or to the top plate for gables + gable triangle separately).</li>
+          <li><b>Width:</b> corner to corner along the wall.</li>
+          <li><b>Gable triangles:</b> base &times; height &divide; 2. Height is peak height above the top plate line.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="openings windows doors deduction">
+        <h3>Deducting Openings</h3>
+        <p>Standard practice: <b>don't deduct openings under 33 sqft</b> (one typical window). Waste factor accounts for cut-around. Larger openings (patio doors, big picture windows) get deducted at full opening size.</p>
+        <ul>
+          <li>Standard windows: don't deduct.</li>
+          <li>Patio doors: deduct.</li>
+          <li>Large fixed panels (over 33 sqft): deduct.</li>
+          <li>Garage doors: deduct at full opening size, but add back the header/jamb trim LF.</li>
+        </ul>
+        <div class="rl-use"><b>Insurance nuance:</b> some carriers require every opening be deducted regardless of size. Read the adjuster's scope method before disputing.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="corner post j channel trim linear feet">
+        <h3>Corner Posts, J-Channel, Trim</h3>
+        <p>All sold by the linear foot.</p>
+        <ul>
+          <li><b>Outside corners:</b> corner posts run wall-height. Count corners &times; wall height.</li>
+          <li><b>Inside corners:</b> J-channel. Same measurement approach.</li>
+          <li><b>Window/door surrounds:</b> J-channel around each opening. Perimeter of each opening.</li>
+          <li><b>Under soffit / above foundation:</b> J-channel or utility trim for the top and bottom of each wall run.</li>
+          <li><b>Starter strip:</b> bottom of each wall, full width.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="vertical siding horizontal orientation">
+        <h3>Vertical vs. Horizontal Siding</h3>
+        <p>Most siding is horizontal; some accent walls or full elevations get vertical. Measurement is the same for area, but:</p>
+        <ul>
+          <li><b>Vertical:</b> may need horizontal furring strips (extra material). Consider fastening plane.</li>
+          <li><b>Board &amp; batten:</b> count vertical LF plus battens separately.</li>
+          <li><b>Shake or shingle siding:</b> more waste (10&ndash;15&percnt;) than lap siding.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="waste factor siding lap material">
+        <h3>Waste Factor</h3>
+        <ul>
+          <li><b>Vinyl lap:</b> 10&percnt; on simple walls, 15&percnt; on cut-ups with many openings.</li>
+          <li><b>Fiber cement (Hardie):</b> 10&percnt; typical; 15&percnt; on complex.</li>
+          <li><b>Cedar shingle siding:</b> 15&percnt; minimum; 20&percnt; on cut-ups.</li>
+          <li><b>Metal panels:</b> 5&ndash;10&percnt; if pre-cut; higher for site cutting.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrSidingReports" data-rltitle="Siding &mdash; Reading Reports">
+      <div class="rl-pagehead">
+        <h1>Siding &mdash; Reading Reports</h1>
+        <p>Hover is the dominant report source for siding. Aerial reports are less useful because they can't see side elevations.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="hover siding elevation report">
+        <h3>Hover for Siding</h3>
+        <p>Hover reconstructs each elevation from ground photos and returns square footage per elevation with openings marked and deducted.</p>
+        <ul>
+          <li><b>Trust:</b> total siding area, per-elevation area, opening deductions, corner LF, trim LF.</li>
+          <li><b>Verify:</b> heights on complex gables (Hover's estimation can be off &plusmn;1&prime;), band-board detail (may be included in wall area or listed separately).</li>
+          <li><b>Photo capture:</b> quality depends heavily on how photos are taken &mdash; walk the perimeter, keep camera level, include ground-to-eave in each shot.</li>
+        </ul>
+        <div class="rl-doc"><b>Field notes to fill in:</b> Cardinal's photo-capture routine for best Hover accuracy.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="eagleview aerial siding limited">
+        <h3>EagleView / Aerial Reports</h3>
+        <p>Aerial imagery can't measure vertical wall area. EagleView offers a siding add-on that uses street-view imagery, but coverage is limited to visible elevations.</p>
+        <div class="rl-use"><b>Bottom line:</b> for siding, Hover is generally the better report. Aerial-only is for roof.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="verify siding report accuracy">
+        <h3>Verifying the Report</h3>
+        <ul>
+          <li>Walk each elevation and confirm the report's numbers within roughly 5&percnt;.</li>
+          <li>Compare openings against your walk-through count.</li>
+          <li>Check that band boards, water tables, and detail trim are called out (or not) consistently with what you plan to install.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         WINDOWS — direct to hand measurements
+         ========================================================= -->
+    <div class="rl-page" id="rlPageMsrWindowsHand" data-rltitle="Windows &mdash; Measurements">
+      <div class="rl-pagehead">
+        <h1>Windows &mdash; Measurements</h1>
+        <p>Windows have two dimensions that matter: the rough opening and the exact frame size. Confusing them is the fastest way to get a wrong window on the truck.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="rough opening exact frame size difference">
+        <h3>Rough Opening vs. Exact Size</h3>
+        <p><b>Rough Opening (RO):</b> the framed opening in the wall &mdash; stud-to-stud width, header-to-sill height. This is what you cut in new construction and what you'd see with the drywall off.</p>
+        <p><b>Exact Size / Frame Size:</b> the outside dimensions of the window unit itself &mdash; the actual frame you're installing.</p>
+        <p>The RO is <b>always larger</b> than the exact size, to allow for shimming, plumbing, and squaring the window. Typical clearance is <b>1/2&Prime; total</b> width and <b>1/2&Prime; to 3/4&Prime; total</b> height (extra height leaves room for the sill sloping).</p>
+        <div class="rl-use"><b>Rule of thumb:</b>
+          <ul>
+            <li>Rough Opening = Exact Size + 1/2&Prime; wider + 1/2&Prime; taller (minimum).</li>
+            <li>When ordering a replacement window, you almost always want <b>exact size</b> for the new window &mdash; the RO already exists.</li>
+            <li>For new construction or full frame replacement, you specify the <b>rough opening</b> you're framing.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="standard size window naming convention 3050 2440">
+        <h3>Standard Window Sizes &amp; Notation</h3>
+        <p>Manufacturers use a callout notation: <b>WxxHxx</b> or <b>WWHH</b> in feet-and-inches.</p>
+        <ul>
+          <li><b>3050</b> = 3&prime;0&Prime; wide &times; 5&prime;0&Prime; tall (exact size).</li>
+          <li><b>2440</b> = 2&prime;4&Prime; wide &times; 4&prime;0&Prime; tall.</li>
+          <li><b>3040</b> = 3&prime;0&Prime; &times; 4&prime;0&Prime;.</li>
+          <li><b>2036</b> = 2&prime;0&Prime; &times; 3&prime;6&Prime;.</li>
+        </ul>
+        <p>Common increments are 2&Prime;. Custom sizes are available from most manufacturers with lead time and cost premium (typically 2&ndash;3 weeks and 15&ndash;30&percnt; over standard).</p>
+      </div>
+
+      <div class="rl-card" data-rltags="measure inside outside replacement">
+        <h3>Measuring for a Replacement</h3>
+        <p>For a <b>replacement window</b> (insert or pocket install &mdash; where the existing frame stays), measure the exact opening you're inserting into:</p>
+        <ul>
+          <li><b>Width:</b> measure at three points &mdash; top, middle, bottom. Use the <b>smallest</b> measurement.</li>
+          <li><b>Height:</b> measure at three points &mdash; left, center, right. Use the <b>smallest</b> measurement.</li>
+          <li><b>Deduct 1/4&Prime;</b> from smallest measurements. That's your order size.</li>
+        </ul>
+        <p>For a <b>full-frame replacement</b> (removing the existing frame back to the RO), measure the rough opening as if for new construction: stud-to-stud width, header-to-sill height.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="egress code bedroom window size">
+        <h3>Egress Requirements</h3>
+        <p>Under RCO R310, every sleeping room must have at least one egress-compliant window:</p>
+        <ul>
+          <li>Minimum <b>net clear opening area</b>: 5.7 sqft (5.0 sqft on grade-level basements).</li>
+          <li>Minimum net clear opening <b>height</b>: 24&Prime;.</li>
+          <li>Minimum net clear opening <b>width</b>: 20&Prime;.</li>
+          <li>Sill height: maximum 44&Prime; from finished floor.</li>
+        </ul>
+        <div class="rl-use"><b>Watch out:</b> replacing a bedroom egress window with a smaller unit is a code violation. Even if it's just a "like for like" swap, if the old window is undersized (which is common on 1950s and older homes), the replacement must meet current egress requirements or be flagged as a variance issue.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="glass type u factor low e argon">
+        <h3>Glass &amp; Frame Specifications</h3>
+        <p>Not measurements but part of the takeoff:</p>
+        <ul>
+          <li><b>U-Factor:</b> insulation rating. Lower is better. 0.30 or below for Ohio's ENERGY STAR zone.</li>
+          <li><b>SHGC:</b> solar heat gain coefficient. 0.40 or below typical for Ohio.</li>
+          <li><b>Low-E, double-pane, argon-fill:</b> standard for most quality replacement windows.</li>
+          <li><b>Frame material:</b> vinyl (most common), fiberglass, aluminum-clad wood, all-wood. Cost and lifespan vary.</li>
+          <li><b>Grid/muntin pattern:</b> match existing or match architectural style (colonial 6-lite, prairie, etc.).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         DOORS — direct to hand measurements
+         ========================================================= -->
+    <div class="rl-page" id="rlPageMsrDoorsHand" data-rltitle="Doors &mdash; Measurements">
+      <div class="rl-pagehead">
+        <h1>Doors &mdash; Measurements</h1>
+        <p>Same rough-opening-vs-exact confusion as windows, plus handing (which way it swings) is easy to get wrong.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="rough opening exact slab prehung door">
+        <h3>Rough Opening vs. Slab Size vs. Frame Size</h3>
+        <p><b>Slab size:</b> just the door itself (no frame). Standard slab sizes: 30&Prime;, 32&Prime;, 34&Prime;, 36&Prime; wide &times; 80&Prime; tall (6&prime;8&Prime;). Also 84&Prime; and 96&Prime; heights for tall doors.</p>
+        <p><b>Frame size (prehung):</b> outside of the door jamb. Adds 2&Prime; total to width and 1&Prime; to height for a standard 4-9/16&Prime; jamb.</p>
+        <p><b>Rough opening:</b> the framed opening. Add another 2&Prime; total width and 2&Prime; height over the frame size to allow shimming.</p>
+        <div class="rl-use"><b>Quick math for standard 36&Prime; prehung entry door:</b>
+          <ul>
+            <li>Slab: 36&Prime; &times; 80&Prime;</li>
+            <li>Frame: 38&Prime; &times; 81&Prime; (approx)</li>
+            <li>Rough Opening: 38-1/2&Prime; &times; 82-1/2&Prime; (approx &mdash; check the manufacturer's spec)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="prehung slab replacement door installation">
+        <h3>Prehung vs. Slab Replacement</h3>
+        <p><b>Prehung:</b> door + jamb + hinges + strike assembled at the factory. What you install into the rough opening. Standard for new construction and full-frame replacement. Cardinal's default for entry door replacements where the existing frame is damaged or rotted.</p>
+        <p><b>Slab only:</b> just the door itself, no jamb. Used when the existing jamb is sound and only the door needs replacement. Requires cutting hinge mortises and drilling knob/deadbolt holes on-site (or ordering pre-machined).</p>
+        <div class="rl-use"><b>Prefer prehung</b> when practical. Field-fitting a slab to an existing frame is difficult and rarely produces a properly-sealed door.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="handing left right inswing outswing door">
+        <h3>Handing (Left-Hand vs. Right-Hand, Inswing vs. Outswing)</h3>
+        <p>Stand outside the door looking in.</p>
+        <ul>
+          <li><b>Right-hand:</b> hinges on your right.</li>
+          <li><b>Left-hand:</b> hinges on your left.</li>
+          <li><b>Inswing:</b> door swings toward you (into the house).</li>
+          <li><b>Outswing:</b> door swings away from you (outward).</li>
+        </ul>
+        <p>Full handing callout: <b>LHI</b> (Left-Hand Inswing), <b>RHI</b> (Right-Hand Inswing), <b>LHO</b>, <b>RHO</b>. Most residential entry doors are inswing.</p>
+        <div class="rl-use"><b>Common mistake:</b> ordering a right-hand door for a left-hand opening. It doesn't fit &mdash; it's not just cosmetic. Always confirm handing when standing at the actual doorway.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="patio door sliding french size">
+        <h3>Patio &amp; Sliding Doors</h3>
+        <p>Two common styles:</p>
+        <ul>
+          <li><b>Sliding glass patio door</b> &mdash; two or three panels, one or more move on a track. Standard sizes: 5&prime;0&Prime;, 6&prime;0&Prime;, 8&prime;0&Prime;, 9&prime;0&Prime; wide &times; 80&Prime; tall.</li>
+          <li><b>French / hinged patio door</b> &mdash; two hinged panels meeting in the middle. Standard: 5&prime;0&Prime; and 6&prime;0&Prime; wide.</li>
+        </ul>
+        <p>Handing on sliders: which panel is <b>fixed</b> vs. which <b>slides</b>. From outside looking in: <b>OX</b> (fixed left, slider right), <b>XO</b> (slider left, fixed right), <b>OXO</b> (three-panel with slider in middle).</p>
+      </div>
+
+      <div class="rl-card" data-rltags="storm door screen size">
+        <h3>Storm Doors</h3>
+        <ul>
+          <li>Standard slab sizes match entry doors: 32&Prime;, 34&Prime;, 36&Prime; wide &times; 80&Prime; tall.</li>
+          <li>Handing: match the swing of the entry door underneath (usually).</li>
+          <li>Verify existing jamb depth is compatible &mdash; standard storm door frames fit 3-1/4&Prime; jambs; deeper jambs may need spacers.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="entry door fire rating garage house">
+        <h3>Fire-Rated Doors (Garage-to-House)</h3>
+        <p>The door between an attached garage and the living space must be fire-rated per RCO R302.5.1: 20-minute minimum, self-closing hinges, tight fit. Metal-clad or solid wood 1-3/8&Prime; minimum thickness. Applies to any garage-to-house door regardless of original installation date.</p>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         GUTTERS sub-hub + pages
+         ========================================================= -->
+    <div class="rl-page" id="rlPageMsrGutters" data-rltitle="Gutter Measurements">
+      <div class="rl-pagehead">
+        <h1>Gutters</h1>
+        <p>Choose your source of measurements.</p>
+      </div>
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="msr_gutters_hand">
+          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxtitle">Hand Measurements</div>
+          <div class="rl-boxsub">Eave LF, downspout count and placement, corners, guards.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="msr_gutters_reports">
+          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxtitle">Reading Reports</div>
+          <div class="rl-boxsub">What the roof reports give you and what you still need to walk.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrGuttersHand" data-rltitle="Gutters &mdash; Hand Measurements">
+      <div class="rl-pagehead">
+        <h1>Gutters &mdash; Hand Measurements</h1>
+        <p>Gutters follow the eave line. Ground measurement with a long tape works fine for most residential jobs.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="eave linear feet run">
+        <h3>Total Eave Linear Feet</h3>
+        <p>Walk each eave and record LF. Total for the whole house. Gutters typically run in continuous sections between corners and end caps.</p>
+        <ul>
+          <li>Standard sizes: <b>5&Prime; K-style</b> (residential) or <b>6&Prime; K-style</b> (heavier residential / lower-slope commercial). Confirm what's on the house now.</li>
+          <li>Half-round or box gutter: less common; note if present.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="downspouts count placement rule of thumb">
+        <h3>Downspouts &mdash; Count &amp; Placement</h3>
+        <p>Rule of thumb: <b>one downspout per 30&prime; of gutter run</b> for standard residential rainfall. More on steep roofs, heavy tree cover, or bigger square footage draining to a single run.</p>
+        <ul>
+          <li>Walk and count existing downspouts.</li>
+          <li>Note where they discharge: grade, splash block, buried leader, ground gutter.</li>
+          <li>Note diameter: <b>2&Prime; &times; 3&Prime;</b> (standard) or <b>3&Prime; &times; 4&Prime;</b> (heavy flow).</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="elbows corners miters count">
+        <h3>Corners, Elbows, End Caps</h3>
+        <ul>
+          <li><b>Inside miters:</b> where two gutter runs meet at an inside corner. Count.</li>
+          <li><b>Outside miters:</b> outside corners. Count.</li>
+          <li><b>End caps:</b> where a gutter run terminates without a corner. Count.</li>
+          <li><b>Elbows:</b> two per downspout is standard (A elbow at gutter to route out, B elbow at the wall). Add offset elbows for tricky routing.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="gutter guard protection LF">
+        <h3>Gutter Guards / Leaf Protection</h3>
+        <p>Sold by the LF. Equals total gutter LF unless partial coverage.</p>
+        <ul>
+          <li><b>Screen / mesh:</b> low-cost, DIY-friendly.</li>
+          <li><b>Solid cover (K-guard, LeafFilter, etc.):</b> higher performance, higher cost.</li>
+          <li><b>Micro-mesh:</b> premium tier, near-total leaf exclusion.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="pitch slope grade half inch">
+        <h3>Slope / Fall</h3>
+        <p>Not a takeoff number but important: gutters need <b>1/16&Prime; to 1/4&Prime; per 10&prime; of fall</b> toward each downspout. On existing gutters, verify with a hose or a level &mdash; sagging gutters (standing water) are a code and warranty problem worth calling out in the scope.</p>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrGuttersReports" data-rltitle="Gutters &mdash; Reading Reports">
+      <div class="rl-pagehead">
+        <h1>Gutters &mdash; Reading Reports</h1>
+        <p>Aerial roof reports give you the eave LF you need. Downspouts and corners still require a ground walk.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="eave LF report roof gutter">
+        <h3>What Roof Reports Give You</h3>
+        <p>Any roof report (Hover, Roofr, EagleView) provides total eave linear feet. That's the gutter LF number &mdash; use it directly.</p>
+        <div class="rl-use"><b>Trust:</b> total eave LF from a report is accurate within roughly 1&percnt;.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="downspout corners field verify">
+        <h3>What You Still Need to Walk</h3>
+        <ul>
+          <li>Downspout count and placement (reports don't identify existing downspouts).</li>
+          <li>Downspout <b>discharge routing</b> &mdash; grade, splash blocks, buried leaders. Impacts scope pricing.</li>
+          <li>Existing gutter <b>condition</b> &mdash; is this a re-line or full replace?</li>
+          <li>Corner count (inside vs. outside miters).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FASCIA sub-hub + pages
+         ========================================================= -->
+    <div class="rl-page" id="rlPageMsrFascia" data-rltitle="Fascia Measurements">
+      <div class="rl-pagehead">
+        <h1>Fascia</h1>
+        <p>Choose your source of measurements.</p>
+      </div>
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="msr_fascia_hand">
+          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxtitle">Hand Measurements</div>
+          <div class="rl-boxsub">LF, width, wrap vs. paint, corner returns.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="msr_fascia_reports">
+          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxtitle">Reading Reports</div>
+          <div class="rl-boxsub">Fascia LF from roof reports; width from the walk.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrFasciaHand" data-rltitle="Fascia &mdash; Hand Measurements">
+      <div class="rl-pagehead">
+        <h1>Fascia &mdash; Hand Measurements</h1>
+        <p>Fascia runs along the eaves and rakes. Match existing profile unless replacing everything.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="fascia LF eave rake linear feet">
+        <h3>Total Fascia Linear Feet</h3>
+        <p>Fascia LF equals total eave LF plus total rake LF (for houses with sub-fascia at the rakes). Some houses have fascia only at the eaves and gable-end trim at rakes &mdash; walk it.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="width profile 1x6 1x8 2x8">
+        <h3>Width / Profile</h3>
+        <p>Standard fascia widths on residential:</p>
+        <ul>
+          <li><b>1x6</b> (5-1/2&Prime; face) &mdash; older / smaller homes.</li>
+          <li><b>1x8</b> (7-1/4&Prime; face) &mdash; most common on modern residential.</li>
+          <li><b>2x8 or 2x10</b> &mdash; heavier profile, some modern styles, commercial.</li>
+        </ul>
+        <p>Measure the face of the existing fascia to match. If replacing wood with aluminum wrap or PVC, order the wrap sized for the existing width.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="material wood aluminum wrap PVC composite">
+        <h3>Material Options</h3>
+        <ul>
+          <li><b>Wood (pine, cedar) with paint:</b> traditional, requires periodic repainting.</li>
+          <li><b>Aluminum coil wrap over existing wood:</b> low-maintenance overlay. LF of coil.</li>
+          <li><b>Solid aluminum fascia:</b> replacement fascia in aluminum. LF.</li>
+          <li><b>PVC / cellular composite:</b> premium, paintable, rot-proof. LF.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="corner returns gable ends rake">
+        <h3>Corners &amp; Returns</h3>
+        <p>Where the eave fascia meets the rake fascia at a gable end, there's a mitered return. Count these transitions &mdash; each is a labor factor and a small material factor for the miter.</p>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrFasciaReports" data-rltitle="Fascia &mdash; Reading Reports">
+      <div class="rl-pagehead">
+        <h1>Fascia &mdash; Reading Reports</h1>
+        <p>Aerial reports give you fascia LF but not width or profile.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="report fascia LF verify width">
+        <h3>What Reports Give You</h3>
+        <ul>
+          <li><b>Eave LF</b> &mdash; direct fascia number for eaves.</li>
+          <li><b>Rake LF</b> &mdash; use if the house has fascia at the rakes; not all do.</li>
+        </ul>
+        <div class="rl-use"><b>Still need to walk:</b> fascia width, material, condition (wrap-over vs. full replace), corner return count.</div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SOFFIT sub-hub + pages
+         ========================================================= -->
+    <div class="rl-page" id="rlPageMsrSoffit" data-rltitle="Soffit Measurements">
+      <div class="rl-pagehead">
+        <h1>Soffit</h1>
+        <p>Choose your source of measurements.</p>
+      </div>
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="msr_soffit_hand">
+          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxtitle">Hand Measurements</div>
+          <div class="rl-boxsub">Width (wall to fascia), LF, area, vented vs. solid, corners.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="msr_soffit_reports">
+          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxtitle">Reading Reports</div>
+          <div class="rl-boxsub">Some reports include soffit area; verify the width assumption.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrSoffitHand" data-rltitle="Soffit &mdash; Hand Measurements">
+      <div class="rl-pagehead">
+        <h1>Soffit &mdash; Hand Measurements</h1>
+        <p>Soffit is the horizontal underside of the eave overhang. Width is what surprises people.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="width wall fascia overhang">
+        <h3>Soffit Width</h3>
+        <p>Measure from the exterior wall out to the back of the fascia. This is the width of the soffit panel run.</p>
+        <ul>
+          <li><b>12&Prime;</b> &mdash; typical minimal overhang.</li>
+          <li><b>16&Prime;&ndash;24&Prime;</b> &mdash; standard residential.</li>
+          <li><b>36&Prime; or more</b> &mdash; deep-overhang modern or ranch styles.</li>
+        </ul>
+        <p>The wider the overhang, the more soffit material per LF of eave.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="linear feet area calculation soffit">
+        <h3>Linear Feet &amp; Area</h3>
+        <p>Soffit runs the total eave LF (same as gutters and fascia). Total soffit area = <b>eave LF &times; soffit width</b>.</p>
+        <p><b>Example:</b> 180 LF of eaves with a 24&Prime; (2&prime;) soffit = 360 sqft of soffit.</p>
+        <div class="rl-use"><b>Order in LF for aluminum coil</b> (which is sold by LF of coil, then covers a given width). <b>Order in square feet for vinyl or aluminum panel soffit</b> which is sold by the square foot or 20&prime; panel unit.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="vented solid soffit ventilation intake">
+        <h3>Vented vs. Solid</h3>
+        <p>Soffit is where attic intake ventilation happens under a balanced ridge-and-soffit system. Vented soffit panels have perforations; solid panels don't.</p>
+        <ul>
+          <li>Most retrofits use <b>vented panels along the full eave</b> for maximum intake (unless there's a specific reason to limit).</li>
+          <li>If the existing soffit is solid without gable vents or ridge vent, the attic likely doesn't meet current R806 ventilation requirements &mdash; note this as a code-driven scope adjustment.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="corner soffit hip mitered boxed geometry">
+        <h3>Corner Geometry</h3>
+        <p>At outside corners of the house, soffit runs meet in one of two ways:</p>
+        <ul>
+          <li><b>Mitered corner:</b> soffit meets at a 45&deg; miter. More labor, cleaner look.</li>
+          <li><b>Boxed corner (also called hip return):</b> soffit runs straight to the corner and returns square. Faster labor.</li>
+        </ul>
+        <p>Count corners so labor is priced correctly.</p>
+      </div>
+    </div>
+
+    <div class="rl-page" id="rlPageMsrSoffitReports" data-rltitle="Soffit &mdash; Reading Reports">
+      <div class="rl-pagehead">
+        <h1>Soffit &mdash; Reading Reports</h1>
+        <p>Some Hover reports include soffit area directly. Aerial reports do not.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="hover soffit report area include">
+        <h3>Hover for Soffit</h3>
+        <p>Hover's siding-inclusive reports can include soffit area when the photo capture includes upward-looking shots that show the eave underside. Coverage varies by report tier.</p>
+        <div class="rl-use"><b>Verify:</b> the report's stated soffit width against what you measure. Reports may default to a standard overhang assumption if the width isn't clearly captured.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="calculate soffit from eave LF report">
+        <h3>Calculating from an Aerial Report</h3>
+        <p>Aerial reports give eave LF but not soffit width. Combine:</p>
+        <ul>
+          <li>Get eave LF from the roof report.</li>
+          <li>Walk the house and measure soffit width at a few representative points.</li>
+          <li>Multiply. Add corners.</li>
+        </ul>
+      </div>
+    </div>
+
 
   </div>
 
@@ -13644,23 +14450,63 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
   var backBtn = document.getElementById('rlBackBtn');
   var pages = Array.prototype.slice.call(scope.querySelectorAll('.rl-page'));
 
+  /* Two-level tree: landing → hub → category. Back walks up the chain. */
+  var parentOf = {
+    rlLanding:        null,          /* top level, back exits RL */
+    rlPageInsHub:     'rlLanding',
+    rlPageGenHub:     'rlLanding',
+    rlPageInsurance:  'rlPageInsHub',
+    rlPagePolicy:     'rlPageInsHub',
+    rlPageDocs:       'rlPageInsHub',
+    rlPageTips:       'rlPageInsHub',
+    rlPagePitfalls:   'rlPageInsHub',
+    rlPageCheat:      'rlPageInsHub',
+    rlPageCode:       'rlPageGenHub',
+    rlPageMfg:        'rlPageGenHub',
+    /* Measurements tree */
+    rlPageMsr:                 'rlPageGenHub',
+    rlPageMsrRoof:             'rlPageMsr',
+    rlPageMsrRoofHand:         'rlPageMsrRoof',
+    rlPageMsrRoofReports:      'rlPageMsrRoof',
+    rlPageMsrSiding:           'rlPageMsr',
+    rlPageMsrSidingHand:       'rlPageMsrSiding',
+    rlPageMsrSidingReports:    'rlPageMsrSiding',
+    rlPageMsrWindowsHand:      'rlPageMsr',
+    rlPageMsrDoorsHand:        'rlPageMsr',
+    rlPageMsrGutters:          'rlPageMsr',
+    rlPageMsrGuttersHand:      'rlPageMsrGutters',
+    rlPageMsrGuttersReports:   'rlPageMsrGutters',
+    rlPageMsrFascia:           'rlPageMsr',
+    rlPageMsrFasciaHand:       'rlPageMsrFascia',
+    rlPageMsrFasciaReports:    'rlPageMsrFascia',
+    rlPageMsrSoffit:           'rlPageMsr',
+    rlPageMsrSoffitHand:       'rlPageMsrSoffit',
+    rlPageMsrSoffitReports:    'rlPageMsrSoffit'
+  };
+
+  function currentPageId(){
+    var active = scope.querySelector('.rl-page.rl-pageActive');
+    return active ? active.id : 'rlLanding';
+  }
+
   function showPage(id){
     pages.forEach(function(p){ p.classList.toggle('rl-pageActive', p.id === id); });
     var active = document.getElementById(id);
     if(active && titleEl){
-      /* header shows sub-page title when not on the landing grid */
-      titleEl.innerHTML = (id === 'rlLanding') ? 'Resource Library' : (active.getAttribute('data-rltitle') || 'Resource Library');
+      titleEl.innerHTML = active.getAttribute('data-rltitle') || 'Resource Library';
     }
     window.scrollTo(0, 0);
   }
   window._rlShowPage = showPage;
 
-  /* clicks on landing boxes and the cheat-sheet link route to sub-pages */
+  /* clicks on landing / hub boxes route to sub-pages or hubs */
   scope.addEventListener('click', function(e){
     var b = e.target.closest('[data-rlgoto]');
     if(!b) return;
     var target = b.getAttribute('data-rlgoto');
     var map = {
+      ins_hub:   'rlPageInsHub',
+      gen_hub:   'rlPageGenHub',
       insurance: 'rlPageInsurance',
       code:      'rlPageCode',
       policy:    'rlPagePolicy',
@@ -13668,17 +14514,36 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
       tips:      'rlPageTips',
       pitfalls:  'rlPagePitfalls',
       cheat:     'rlPageCheat',
-      mfg:       'rlPageMfg'
+      mfg:       'rlPageMfg',
+      /* Measurements */
+      msr:                'rlPageMsr',
+      msr_roof:           'rlPageMsrRoof',
+      msr_roof_hand:      'rlPageMsrRoofHand',
+      msr_roof_reports:   'rlPageMsrRoofReports',
+      msr_siding:         'rlPageMsrSiding',
+      msr_siding_hand:    'rlPageMsrSidingHand',
+      msr_siding_reports: 'rlPageMsrSidingReports',
+      msr_windows:        'rlPageMsrWindowsHand',   /* direct — no sub-hub */
+      msr_doors:          'rlPageMsrDoorsHand',     /* direct — no sub-hub */
+      msr_gutters:        'rlPageMsrGutters',
+      msr_gutters_hand:   'rlPageMsrGuttersHand',
+      msr_gutters_reports:'rlPageMsrGuttersReports',
+      msr_fascia:         'rlPageMsrFascia',
+      msr_fascia_hand:    'rlPageMsrFasciaHand',
+      msr_fascia_reports: 'rlPageMsrFasciaReports',
+      msr_soffit:         'rlPageMsrSoffit',
+      msr_soffit_hand:    'rlPageMsrSoffitHand',
+      msr_soffit_reports: 'rlPageMsrSoffitReports'
     };
     if(map[target]) showPage(map[target]);
   });
 
-  /* back button: from sub-page → landing; from landing → out of RL */
+  /* back button: walk up the parent chain; from landing, exit RL entirely */
   if(backBtn) backBtn.addEventListener('click', function(){
-    var landing = document.getElementById('rlLanding');
-    var onLanding = landing && landing.classList.contains('rl-pageActive');
-    if(!onLanding){
-      showPage('rlLanding');
+    var cur = currentPageId();
+    var parent = parentOf[cur];
+    if(parent){
+      showPage(parent);
       return;
     }
     /* leaving RL entirely */
