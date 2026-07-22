@@ -658,6 +658,80 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .prio-Urgent{background:#fdecea;color:#9c1822;}
 .prio-Normal{background:#ececec;color:#555;}
 
+/* Claim Type tri-state radio (New Lead modal) */
+.ldctopt{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;
+  border:1px solid var(--line);border-radius:22px;background:#fff;cursor:pointer;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#3b2f2a;transition:all .12s;}
+.ldctopt:hover{border-color:#9c1822;}
+.ldctopt input[type="radio"]{width:16px;height:16px;margin:0;accent-color:#C8202E;}
+.ldctopt.ldctselect{background:#fdf1f0;border-color:#C8202E;color:#9c1822;}
+
+/* Insurance panel on client Overview */
+.insPanel{margin:14px 0;padding:14px 16px;border:1px solid #d0dae8;
+  border-left:3px solid #4a6fa5;background:linear-gradient(180deg,#f4f7fb 0%,#eef3f9 100%);
+  border-radius:10px;}
+.insPanel .insHead{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #d0dae8;}
+.insPanel .insTitle{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2d4468;letter-spacing:.03em;}
+.insPanel .insGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 14px;
+  font:13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
+@media(max-width:520px){.insPanel .insGrid{grid-template-columns:1fr;}}
+.insPanel .insGrid .lbl{color:#6b7a90;font-weight:600;font-size:11px;letter-spacing:.05em;
+  text-transform:uppercase;margin-top:4px;}
+.insPanel .insGrid .val{font-weight:600;color:#1e2432;margin-bottom:2px;word-break:break-word;}
+.insPanel .insGrid .val.empty{color:#9aa4b5;font-weight:400;font-style:italic;}
+.insPanel .insEdit{padding:4px 12px;border:1px solid #4a6fa5;background:#fff;color:#2d4468;
+  border-radius:14px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.insPanel .insEdit:hover{background:#4a6fa5;color:#fff;}
+
+/* SOL (Scope of Loss) reader card */
+.solCard{margin:14px 0;padding:14px 16px;border:1px dashed #b0bdd4;background:#f0f4fa;
+  border-radius:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.solCard .solIcon{font-size:26px;flex:0 0 auto;}
+.solCard .solText{flex:1;min-width:180px;}
+.solCard .solTitle{font:700 14px 'Segoe UI',Arial,sans-serif;color:#2d4468;margin-bottom:3px;}
+.solCard .solSub{font-size:12.5px;color:#556;line-height:1.4;}
+.solCard .solBtn{background:#4a6fa5;color:#fff;border:none;border-radius:8px;
+  padding:8px 16px;font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;flex:0 0 auto;}
+.solCard .solBtn:hover{background:#2d4468;}
+.solCard .solBtn:disabled{background:#8090a5;cursor:progress;}
+.solCard.solLoading{background:#eaf0f9;border-style:solid;border-color:#4a6fa5;}
+
+/* SOL review modal */
+#solModal{display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);
+  z-index:230;overflow:auto;padding:4vh 12px;}
+#solModal .solBox{max-width:640px;margin:0 auto;background:#fff;border-radius:14px;
+  padding:18px 20px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+#solModal h3{margin:0 0 6px;font:800 18px Georgia,'Times New Roman',serif;color:#2d4468;}
+#solModal .solSummary{background:#eef3f9;border-left:3px solid #4a6fa5;padding:10px 12px;
+  border-radius:6px;font-size:13px;color:#334;margin:8px 0 14px;line-height:1.5;}
+#solModal .solRow{display:grid;grid-template-columns:130px 1fr auto;gap:10px;
+  padding:8px 0;border-bottom:1px solid #eee;align-items:baseline;}
+#solModal .solRow:last-of-type{border-bottom:none;}
+#solModal .solLbl{font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#6b7a90;
+  letter-spacing:.03em;text-transform:uppercase;}
+#solModal .solOld{font-size:12px;color:#a99;text-decoration:line-through;
+  display:block;margin-bottom:2px;}
+#solModal .solNew{font-size:14px;color:#1e2432;font-weight:600;word-break:break-word;}
+#solModal .solNew.solEmpty{color:#a5a5a5;font-weight:400;font-style:italic;}
+#solModal .solChk{width:20px;height:20px;flex:0 0 auto;accent-color:#4a6fa5;cursor:pointer;}
+#solModal .solActions{margin-top:16px;text-align:right;display:flex;gap:8px;justify-content:flex-end;}
+#solModal .solBtnPri{background:#4a6fa5;color:#fff;border:none;border-radius:8px;
+  padding:9px 18px;font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#solModal .solBtnPri:hover{background:#2d4468;}
+#solModal .solBtnSec{background:#fff;color:#4a6fa5;border:1px solid #4a6fa5;border-radius:8px;
+  padding:9px 18px;font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#solModal .solBtnSec:hover{background:#eef3f9;}
+#solModal .solNoFields{padding:20px;text-align:center;color:#6b5a52;font-size:13px;}
+
+/* Claim Type chip on client header */
+.claimchip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;
+  border-radius:10px;font:700 10.5px 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.05em;cursor:pointer;margin-left:8px;vertical-align:middle;}
+.claimchip.ct-insurance{background:#eaf0f8;color:#2d4468;border:1px solid #7fa6d6;}
+.claimchip.ct-retail{background:#f0ebe4;color:#6b4a24;border:1px solid #d4a017;}
+.claimchip.ct-unknown{background:#efeae5;color:#6b5a52;border:1px solid #c9c2bf;}
+
 .favstar{cursor:pointer;user-select:none;font-size:19px;line-height:1;}
 .pcard .favstar{position:absolute;top:8px;right:9px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6);z-index:2;}
 .pcard .favstar.on{text-shadow:0 1px 5px rgba(0,0,0,.5);}
@@ -1932,6 +2006,92 @@ body:has(#loginView[style*="block"]){background:#fff;}
 #resourceLibraryView .rl-foot{margin-top:40px;padding:20px;text-align:center;border-top:1px solid var(--ins-border);color:var(--ins-muted);font-size:12.5px;}
 #resourceLibraryView .rl-foot b{color:var(--ins-blue-lt);}
 
+/* ---- RL landing: grid of boxes with blue-to-gold divider lines between rows ---- */
+#resourceLibraryView .rl-boxgrid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+}
+@media(max-width:380px){
+  #resourceLibraryView .rl-boxgrid{grid-template-columns:1fr;}
+}
+#resourceLibraryView .rl-boxgrid.rl-single{grid-template-columns:1fr;}
+#resourceLibraryView .rl-box{
+  display:flex;flex-direction:column;justify-content:space-between;
+  width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
+  background:linear-gradient(160deg,var(--ins-panel) 0%,var(--ins-panel-2) 100%);
+  border:1px solid var(--ins-border);border-left:3px solid var(--ins-blue);
+  border-radius:12px;padding:18px 16px;min-height:160px;
+  color:var(--ins-text);font-family:'Segoe UI',Arial,sans-serif;
+  transition:border-color .15s, transform .15s, box-shadow .15s;
+}
+#resourceLibraryView .rl-box:hover{border-color:var(--ins-blue-lt);transform:translateY(-1px);box-shadow:0 4px 12px rgba(74,111,165,.25);}
+#resourceLibraryView .rl-box .rl-boxicon{
+  font-size:28px;line-height:1;margin-bottom:8px;
+}
+#resourceLibraryView .rl-box .rl-boxtitle{
+  font:800 17px Georgia,'Times New Roman',serif;color:var(--ins-blue-lt);margin-bottom:6px;
+}
+#resourceLibraryView .rl-box .rl-boxsub{
+  font-size:12.5px;color:#a5b0c0;line-height:1.45;margin-bottom:10px;flex:1;
+}
+#resourceLibraryView .rl-box .rl-boxgo{
+  font:700 11.5px 'Segoe UI',Arial,sans-serif;color:var(--ins-blue-lt);letter-spacing:.05em;margin-top:auto;
+}
+#resourceLibraryView .rl-divider{
+  height:3px;margin:20px 0;border-radius:2px;
+  background:linear-gradient(90deg,transparent 0%,var(--ins-blue) 15%,var(--ins-blue-lt) 45%,var(--ins-gold) 75%,transparent 100%);
+  box-shadow:0 0 8px rgba(127,166,214,.35);
+}
+#resourceLibraryView .rl-cheatlink{
+  display:inline-block;margin:0 0 18px;padding:8px 16px;
+  background:var(--ins-panel);border:1px solid var(--ins-border);border-radius:8px;
+  color:var(--ins-blue-lt);text-decoration:none;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;cursor:pointer;
+}
+#resourceLibraryView .rl-cheatlink:hover{background:var(--ins-panel-2);border-color:var(--ins-blue-lt);}
+
+/* ---- RL sub-pages ---- */
+#resourceLibraryView .rl-page{display:none;}
+#resourceLibraryView .rl-page.rl-pageActive{display:block;}
+#resourceLibraryView .rl-pagehead{margin-bottom:18px;}
+#resourceLibraryView .rl-pagehead h1{
+  font:800 26px Georgia,'Times New Roman',serif;color:var(--ins-blue-lt);
+  margin:0 0 6px;letter-spacing:.02em;
+}
+#resourceLibraryView .rl-pagehead p{font-size:14px;color:#c9cfd9;margin:0;line-height:1.55;}
+#resourceLibraryView .rl-groupsep{
+  margin:22px 0 10px;padding-bottom:6px;
+  border-bottom:1px solid var(--ins-border);
+  font:800 12px 'Segoe UI',Arial,sans-serif;
+  color:var(--ins-blue-lt);letter-spacing:.15em;text-transform:uppercase;
+}
+
+/* ---- Do / Don't split page ---- */
+#resourceLibraryView .rl-dodont{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;
+}
+@media(max-width:720px){
+  #resourceLibraryView .rl-dodont{grid-template-columns:1fr;}
+}
+#resourceLibraryView .rl-ddhead{
+  padding:10px 14px;border-radius:10px 10px 0 0;
+  font:800 14px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;
+  text-align:center;
+}
+#resourceLibraryView .rl-ddhead.rl-do{background:#2a4a3a;color:#a8dcb9;border:1px solid #3a6a4c;border-bottom:none;}
+#resourceLibraryView .rl-ddhead.rl-dont{background:#4a2a2a;color:#e8a8a8;border:1px solid #6a3a3a;border-bottom:none;}
+#resourceLibraryView .rl-ddcol{display:flex;flex-direction:column;gap:10px;}
+#resourceLibraryView .rl-ddcard{
+  background:#f8f6f0;color:#2b2320;padding:14px 16px;border-radius:8px;
+  border-left:3px solid #4a9d5a;font-size:13.5px;line-height:1.55;
+  box-shadow:0 3px 8px rgba(0,0,0,.2);
+}
+#resourceLibraryView .rl-ddcard.rl-dontcard{border-left-color:#c05541;}
+#resourceLibraryView .rl-ddcard h4{
+  margin:0 0 6px;font:700 14px Georgia,'Times New Roman',serif;color:#170f11;
+}
+#resourceLibraryView .rl-ddcard.rl-dontcard h4{color:#8a2020;}
+#resourceLibraryView .rl-ddcard.rl-docard h4{color:#1a5a2a;}
+
 </style>
 </head>
 <body>
@@ -1975,7 +2135,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 113 &#8212; Cardinal Truth + Resource Library added; landing reorganized; transparent cardinal PNG</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 117 &#8212; AI Scope of Loss reader on every client profile; auto-populates insurance fields with review step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2286,6 +2446,9 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <h3 class="projsec">&#128681; Lead Details</h3>
         <div class="ldbox" id="leadCardBody" style="background:#fff;"></div>
       </div>
+
+      <div id="solCard"></div>
+      <div id="insCard" style="display:none;"></div>
     </div>
 
     <div id="tab-inspections" style="display:none;">
@@ -2629,6 +2792,19 @@ body:has(#loginView[style*="block"]){background:#fff;}
   </div>
 </div>
 
+<!-- ============ SOL REVIEW MODAL ============ -->
+<div id="solModal">
+  <div class="solBox">
+    <h3>&#128194; Scope of Loss &mdash; Review Extraction</h3>
+    <div class="solSummary" id="solSummary"></div>
+    <div id="solRows"></div>
+    <div class="solActions">
+      <button class="solBtnSec" id="solCancelBtn">Cancel</button>
+      <button class="solBtnPri" id="solApplyBtn">Apply Selected</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ CARDINAL TRUTH (Insurance Hub) ============ -->
 <div id="cardinalTruthView" style="display:none;position:fixed;inset:0;z-index:155;background:#1a1f2e;overflow-y:auto;color:#e8ecf1;">
   <div class="ins-header">
@@ -2637,6 +2813,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <button class="ins-hbtn ins-plus" id="ctPlusBtn" aria-label="Add">+</button>
   </div>
   <div class="ins-dropdown" id="ctDropdown">
+    <button class="ins-dropitem" data-ctnav="clients">&#128203; Insurance Clients</button>
     <button class="ins-dropitem" data-ctnav="library">&#128218; Resource Library</button>
     <button class="ins-dropitem" data-ctnav="home">&#127968; Back to Landing</button>
   </div>
@@ -2655,11 +2832,11 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <div class="ins-cardsub">Ohio roofing code, insurance regulations, claim scenarios, documentation standards, and city amendments.</div>
         <div class="ins-cardgo">Open &rsaquo;</div>
       </button>
-      <div class="ins-card ins-cardstub">
-        <div class="ins-cardtitle">&#128203; Active Claims</div>
-        <div class="ins-cardsub">Track every open claim from FNOL through appraisal. Adjuster contact, deadline log, supplement history.</div>
-        <div class="ins-cardgo ins-soon">Coming soon</div>
-      </div>
+      <button class="ins-card" data-ctnav="clients">
+        <div class="ins-cardtitle">&#128203; Insurance Clients</div>
+        <div class="ins-cardsub">All clients on the insurance side &mdash; carrier, claim #, adjuster, deductible &mdash; at a glance. Tap any to open the profile.</div>
+        <div class="ins-cardgo" id="ctInsClientsGo">Open &rsaquo;</div>
+      </button>
       <div class="ins-card ins-cardstub">
         <div class="ins-cardtitle">&#128100; Adjuster Directory</div>
         <div class="ins-cardsub">Carriers and adjusters you've worked with, what they'll fight over, and their inspection habits.</div>
@@ -2674,6 +2851,22 @@ body:has(#loginView[style*="block"]){background:#fff;}
   </div>
 </div>
 
+<!-- ============ INSURANCE CLIENTS LIST ============ -->
+<div id="insClientsView" style="display:none;position:fixed;inset:0;z-index:157;background:#1a1f2e;overflow-y:auto;color:#e8ecf1;">
+  <div class="ins-header">
+    <button class="ins-hbtn" id="icBackBtn" aria-label="Back">&lsaquo;</button>
+    <div class="ins-title">Insurance Clients</div>
+    <span class="ins-hspacer">&nbsp;</span>
+  </div>
+  <div class="ins-body">
+    <div class="rl-pagehead">
+      <h1>Insurance Clients</h1>
+      <p>All clients on the insurance side. Tap any card to open the profile.</p>
+    </div>
+    <div id="insClientsList"></div>
+  </div>
+</div>
+
 <!-- ============ RESOURCE LIBRARY ============ -->
 <div id="resourceLibraryView" style="display:none;position:fixed;inset:0;z-index:156;background:#1a1f2e;overflow-y:auto;color:#e8ecf1;">
   <div class="ins-header">
@@ -2681,508 +2874,771 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <div class="ins-title">Resource Library</div>
     <span class="ins-hspacer">&nbsp;</span>
   </div>
-  <div class="ins-body">
+    <div class="ins-body">
 
-    <div class="rl-intro">
-      <h2>Ohio Roofing Codes &amp; Insurance Regulations</h2>
-      <p>Field reference for Cardinal reps and inspectors. Two kinds of law govern every insurance claim on a roof: the <b>construction code</b> that says how the roof must be built (Ohio Residential Code), and the <b>insurance regulation</b> that says how the carrier must handle the claim (Ohio Administrative Code, Title 3901). Both matter. Neither one alone wins a claim.</p>
-      <p>Everything below points to the current Ohio adoption &mdash; the 2019 Residential Code of Ohio (RCO), based on the 2018 IRC &mdash; unless noted otherwise. Local jurisdictions may add amendments; when the local building department disagrees with what's on this page, the local department wins.</p>
-      <div class="rl-warn"><b>Not legal advice.</b> This document is a working reference for on-site conversations with homeowners and adjusters. When a claim goes to appraisal or lawsuit, hand it to an attorney.</div>
+    <!-- =========================================================
+         LANDING: grid of boxes with dividers between rows
+         ========================================================= -->
+    <div class="rl-page rl-pageActive" id="rlLanding" data-rltitle="Resource Library">
+      <div class="rl-pagehead">
+        <h1>Resource Library</h1>
+        <p>Ohio roofing codes and insurance regulations. Pick a section &mdash; each opens its own page. Cheat sheet is one tap away for a truck-ready summary.</p>
+      </div>
+
+      <button class="rl-cheatlink" data-rlgoto="cheat">&#128203; Truck Cheat Sheet</button>
+
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="insurance">
+          <div class="rl-boxicon">&#128737;&#65039;</div>
+          <div class="rl-boxtitle">Ohio Insurance Law</div>
+          <div class="rl-boxsub">Matching regulation, unfair claims practices, public adjuster rules, and the 3-day rescission.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="code">
+          <div class="rl-boxicon">&#128736;&#65039;</div>
+          <div class="rl-boxtitle">Construction Codes</div>
+          <div class="rl-boxsub">Residential (RCO Ch. 9), commercial (OBC Ch. 15), and Miami Valley municipal amendments.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="policy">
+          <div class="rl-boxicon">&#9989;</div>
+          <div class="rl-boxtitle">Policy Provisions</div>
+          <div class="rl-boxsub">Ordinance &amp; Law, RCV vs. ACV, matching endorsements &mdash; what to check on the dec page.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="docs">
+          <div class="rl-boxicon">&#128194;</div>
+          <div class="rl-boxtitle">Documentation Checklist</div>
+          <div class="rl-boxsub">Per-inspection photo standard, damage-type templates, and the paper trail every claim file needs.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid">
+        <button class="rl-box" data-rlgoto="tips">
+          <div class="rl-boxicon">&#128161;</div>
+          <div class="rl-boxtitle">Claim Tips</div>
+          <div class="rl-boxsub">Scenario playbook &mdash; the adjuster shortcut and the code cite that answers it. Plus carrier-specific patterns.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="pitfalls">
+          <div class="rl-boxicon">&#9888;&#65039;</div>
+          <div class="rl-boxtitle">Do &amp; Don't</div>
+          <div class="rl-boxsub">Field practices on one side, ways this goes sideways on the other. Split-screen reference.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid rl-single">
+        <button class="rl-box" data-rlgoto="mfg">
+          <div class="rl-boxicon">&#127981;</div>
+          <div class="rl-boxtitle">Manufacturer Guidelines</div>
+          <div class="rl-boxsub">Owens Corning, GAF, CertainTeed installation specs, warranty tiers, and do-not-mix rules. Cite-able the same way code is.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
+      <div class="rl-foot">
+        <p><b>Cardinal Roofing &amp; Renovations, LLC</b> &mdash; 5735 Webster St, Dayton OH 45414 &middot; 937.576.6753 &middot; Admin@cardinalrenovations.net</p>
+        <p>Resource Library v2 &middot; July 2026 &middot; Sources: 2019 Residential Code of Ohio, 2024 Ohio Building Code, Ohio Admin. Code Title 4101:8, Ohio Admin. Code 3901-1-54, Ohio Revised Code Chapters 3901, 3951, 1345. Not legal advice.</p>
+      </div>
     </div>
 
-    <div class="rl-search">
-      <input type="text" id="rlQ" placeholder="Search: matching, ice barrier, decking, tear off, ventilation&hellip;" autocomplete="off">
+    <!-- =========================================================
+         SUB-PAGE: OHIO INSURANCE LAW
+         ========================================================= -->
+    <div class="rl-page" id="rlPageInsurance" data-rltitle="Ohio Insurance Law">
+      <div class="rl-pagehead">
+        <h1>Ohio Insurance Law</h1>
+        <p>How Ohio regulates the way carriers must handle roof claims. Insurance-side citations govern the claim process; construction-code citations govern the roof itself. Both matter.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="matching appearance oac 3901 unfair claims">
+        <h3>Ohio Matching Regulation</h3>
+        <span class="rl-cite">OAC 3901-1-54(I)(1)(b)</span>
+        <span class="rl-cite rl-gold">Insurance side</span>
+        <p>When an interior or exterior loss requires replacement of an item and the replaced item does not match the quality, color or size of the item suffering the loss, the insurer shall replace as much of the item as necessary to result in a <b>reasonably comparable appearance</b>.</p>
+        <div class="rl-use"><b>Use it when:</b> An adjuster is offering to replace only the damaged slope or a patch of shingles, and the discontinued shingle, faded field, or line-of-sight mismatch means the repair will not blend. Frame the argument around <i>reasonably comparable appearance</i>. Document with dated photos of the field vs. any test shingles from the same lot.</div>
+        <div class="rl-doc"><b>What limits it:</b> <i>Wright v. State Farm</i> (6th Cir. 2014) held that this rule does not automatically require full-roof replacement for any mismatch. The insured must show the proposed repair would <i>not</i> produce a reasonably comparable appearance &mdash; not just that a mismatch exists.</div>
+        <div class="rl-tags"><span>partial replacement</span><span>discontinued shingle</span><span>line-of-sight</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="unfair claims practices bad faith 3901 handling">
+        <h3>Unfair Claims Settlement Practices</h3>
+        <span class="rl-cite">ORC Chapter 3901.20</span>
+        <span class="rl-cite">OAC 3901-1-54 (whole rule)</span>
+        <span class="rl-cite rl-gold">Insurance side</span>
+        <p>Ohio prohibits carriers from misrepresenting facts or policy provisions, failing to acknowledge or act reasonably promptly on communications, refusing to pay claims without conducting a reasonable investigation, or compelling insureds to litigate to recover amounts due under the policy.</p>
+        <div class="rl-use"><b>Use it when:</b> An adjuster ignores your supplement, denies without inspecting, or delays past what's reasonable. Document every contact &mdash; date, name, what was said. A pattern of delay or non-response is the foundation for a bad-faith claim later.</div>
+        <div class="rl-doc"><b>Practical:</b> Send every meaningful communication in writing (email or portal message). Verbal claims of denial are hard to enforce later; written ones are not.</div>
+        <div class="rl-tags"><span>bad faith</span><span>delay</span><span>denial</span><span>documentation</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="public adjuster license 3951">
+        <h3>Public Adjuster Licensing</h3>
+        <span class="rl-cite">ORC Chapter 3951</span>
+        <span class="rl-cite rl-gold">Insurance side</span>
+        <p>Public adjusters represent the policyholder, not the carrier, and must be licensed in Ohio. A roofer is <b>not</b> a public adjuster and cannot legally negotiate scope or price on the homeowner's behalf. That is the line: roofers document damage and provide their own estimate; public adjusters or attorneys negotiate with the carrier.</p>
+        <div class="rl-use"><b>Use it when:</b> A claim is stuck and you're being asked to negotiate. Refer the homeowner to a licensed public adjuster or attorney &mdash; both to protect them and to protect Cardinal from an unlicensed-practice complaint. Providing your written scope is fine. Arguing for coverage is not.</div>
+        <div class="rl-tags"><span>scope</span><span>negotiation</span><span>referral</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="right rescission cancel 1345 solicitation">
+        <h3>Home Solicitation 3-Day Right of Rescission</h3>
+        <span class="rl-cite">ORC &sect;1345.23(B)(2)</span>
+        <span class="rl-cite rl-ink">Contract side</span>
+        <p>Contracts signed at the buyer's home for goods or services over $25 include a mandatory 3 business day right to cancel. Cardinal's roofing, siding, and window contracts include the ORC-compliant notice on the signature page and duplicate copies attached.</p>
+        <div class="rl-use"><b>Use it when:</b> Reminding a homeowner that the 3-day window has started; explaining why work cannot begin until day 4 unless the homeowner waives the right in a genuine emergency (rare and narrow).</div>
+        <div class="rl-tags"><span>contract</span><span>cancellation</span></div>
+      </div>
     </div>
 
-    <div class="rl-jumpnav">
-      <a href="#rlIns">Insurance Law</a>
-      <a href="#rlCode">Construction Code</a>
-      <a href="#rlPlays">Claim Scenarios</a>
-      <a href="#rlDocs">Documentation</a>
-      <a href="#rlPolicy">Policy Provisions</a>
-      <a href="#rlCarriers">Carrier Tactics</a>
-      <a href="#rlMuni">Municipal</a>
-      <a href="#rlPitfalls">Pitfalls</a>
-      <a href="#rlCheat">Cheat Sheet</a>
-    </div>
+    <!-- =========================================================
+         SUB-PAGE: CONSTRUCTION CODES (residential + commercial + municipal)
+         ========================================================= -->
+    <div class="rl-page" id="rlPageCode" data-rltitle="Construction Codes">
+      <div class="rl-pagehead">
+        <h1>Construction Codes</h1>
+        <p>Residential work is governed by the 2019 Residential Code of Ohio (RCO), based on the 2018 IRC. Commercial and multi-family fall under the 2024 Ohio Building Code (OBC). Municipal jurisdictions can amend either.</p>
+      </div>
 
-    <!-- ============ SECTION A: INSURANCE LAW ============ -->
-    <div class="rl-sect" id="rlIns"><h2>Ohio Insurance Law</h2><p class="rl-subtitle">How Ohio regulates the way carriers must handle roof claims</p></div>
+      <div class="rl-groupsep">Residential &mdash; RCO Chapter 9</div>
 
-    <div class="rl-card" data-rltags="matching appearance oac 3901 unfair claims">
-      <h3>Ohio Matching Regulation</h3>
-      <span class="rl-cite">OAC 3901-1-54(I)(1)(b)</span>
-      <span class="rl-cite rl-gold">Insurance side</span>
-      <p>When an interior or exterior loss requires replacement of an item and the replaced item does not match the quality, color or size of the item suffering the loss, the insurer shall replace as much of the item as necessary to result in a <b>reasonably comparable appearance</b>.</p>
-      <div class="rl-use"><b>Use it when:</b> An adjuster is offering to replace only the damaged slope or a patch of shingles, and the discontinued shingle, faded field, or line-of-sight mismatch means the repair will not blend. Frame the argument around <i>reasonably comparable appearance</i>. Document with dated photos of the field vs. any test shingles from the same lot.</div>
-      <div class="rl-doc"><b>What limits it:</b> <i>Wright v. State Farm</i> (6th Cir. 2014) held that this rule does not automatically require full-roof replacement for any mismatch. The insured must show the proposed repair would <i>not</i> produce a reasonably comparable appearance &mdash; not just that a mismatch exists.</div>
-      <div class="rl-tags"><span>partial replacement</span><span>discontinued shingle</span><span>line-of-sight</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="unfair claims practices bad faith 3901 handling">
-      <h3>Unfair Claims Settlement Practices</h3>
-      <span class="rl-cite">ORC Chapter 3901.20</span>
-      <span class="rl-cite">OAC 3901-1-54 (whole rule)</span>
-      <span class="rl-cite rl-gold">Insurance side</span>
-      <p>Ohio prohibits carriers from misrepresenting facts or policy provisions, failing to acknowledge or act reasonably promptly on communications, refusing to pay claims without conducting a reasonable investigation, or compelling insureds to litigate to recover amounts due under the policy.</p>
-      <div class="rl-use"><b>Use it when:</b> An adjuster ignores your supplement, denies without inspecting, or delays past what's reasonable. Document every contact &mdash; date, name, what was said. A pattern of delay or non-response is the foundation for a bad-faith claim later.</div>
-      <div class="rl-doc"><b>Practical:</b> Send every meaningful communication in writing (email or portal message). Verbal claims of denial are hard to enforce later; written ones are not.</div>
-      <div class="rl-tags"><span>bad faith</span><span>delay</span><span>denial</span><span>documentation</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="public adjuster license 3951">
-      <h3>Public Adjuster Licensing</h3>
-      <span class="rl-cite">ORC Chapter 3951</span>
-      <span class="rl-cite rl-gold">Insurance side</span>
-      <p>Public adjusters represent the policyholder, not the carrier, and must be licensed in Ohio. A roofer is <b>not</b> a public adjuster and cannot legally negotiate scope or price on the homeowner's behalf. That is the line: roofers document damage and provide their own estimate; public adjusters or attorneys negotiate with the carrier.</p>
-      <div class="rl-use"><b>Use it when:</b> A claim is stuck and you're being asked to negotiate. Refer the homeowner to a licensed public adjuster or attorney &mdash; both to protect them and to protect Cardinal from an unlicensed-practice complaint. Providing your written scope is fine. Arguing for coverage is not.</div>
-      <div class="rl-tags"><span>scope</span><span>negotiation</span><span>referral</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="right rescission cancel 1345 solicitation">
-      <h3>Home Solicitation 3-Day Right of Rescission</h3>
-      <span class="rl-cite">ORC &sect;1345.23(B)(2)</span>
-      <span class="rl-cite rl-ink">Contract side</span>
-      <p>Contracts signed at the buyer's home for goods or services over $25 include a mandatory 3 business day right to cancel. Cardinal's roofing, siding, and window contracts include the ORC-compliant notice on the signature page and duplicate copies attached.</p>
-      <div class="rl-use"><b>Use it when:</b> Reminding a homeowner that the 3-day window has started; explaining why work cannot begin until day 4 unless the homeowner waives the right in a genuine emergency (rare and narrow).</div>
-      <div class="rl-tags"><span>contract</span><span>cancellation</span></div>
-    </div>
-
-    <!-- ============ SECTION B: CONSTRUCTION CODE ============ -->
-    <div class="rl-sect" id="rlCode"><h2>Ohio Construction Code</h2><p class="rl-subtitle">2019 Residential Code of Ohio &mdash; Chapter 9 Roof Assemblies</p></div>
-
-    <div class="rl-card" data-rltags="tear off recover layers deteriorated slate">
-      <h3>When Roof Recover is Prohibited</h3>
-      <span class="rl-cite">RCO R908.3</span>
-      <span class="rl-cite">OAC 4101:8-9-01</span>
-      <p>A roof recover (layover) is <b>not permitted</b> where any of the following apply:</p>
-      <ul>
-        <li>The existing roof or covering is water-soaked or has deteriorated to the point that it is not adequate as a base for additional roofing.</li>
-        <li>The existing covering is slate, clay, cement or asbestos-cement tile.</li>
-        <li>The existing roof has <b>two or more applications</b> of any type of roof covering.</li>
-        <li>Wood shingle or shake without a gypsum/mineral-fiber barrier.</li>
-      </ul>
-      <div class="rl-use"><b>Use it when:</b> Adjuster is proposing a layover on a house with two existing layers, or partial repair on a roof with a deteriorated first layer. Code compels tear-off. This is the single biggest lever for turning a repair scope into a full-replacement scope where Ordinance &amp; Law coverage applies.</div>
-      <div class="rl-doc"><b>Document:</b> Photo the shingle edge showing layer count. Photo any water-staining, blistering, or delamination on the first layer visible from attic or lifted edge. Note visible layer count in the inspection report.</div>
-      <div class="rl-tags"><span>tear-off</span><span>2+ layers</span><span>full replacement</span><span>ordinance &amp; law</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="ice barrier eave 24 inches wall line">
-      <h3>Ice Barrier Requirement</h3>
-      <span class="rl-cite">RCO R905.1.2</span>
-      <p>Ohio's Table 301.2(1) designates the entire state as an ice-forming region. An ice barrier is required on new asphalt shingle, metal shingle, mineral-surfaced roll, slate, wood shingle, and wood shake roofs. The barrier must be either two layers of underlayment cemented together, or a self-adhering polymer-modified bitumen sheet. It must extend from the eave edge to a point <b>at least 24 inches inside the exterior wall line</b> of the building, measured along the slope.</p>
-      <p>On roofs with slope &ge; 8:12, the barrier extends 36 inches up the slope from the eave.</p>
-      <div class="rl-use"><b>Use it when:</b> An adjuster's scope for a re-roof doesn't include ice &amp; water membrane, or only shows a strip at the eave without the full wall-line coverage. Code requires it. Add the line item and cite R905.1.2.</div>
-      <div class="rl-doc"><b>Document:</b> Note the overhang depth in inches (drip edge to exterior wall). This determines how far up the slope the barrier must extend. Include in the measurement worksheet.</div>
-      <div class="rl-tags"><span>ice &amp; water</span><span>eave</span><span>underlayment</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="underlayment felt synthetic slope 2 12 4 12">
-      <h3>Underlayment Requirements</h3>
-      <span class="rl-cite">RCO R905.1.1</span>
-      <span class="rl-cite">RCO Table R905.1.1(2)</span>
-      <p>Asphalt shingle underlayment must conform to ASTM D226, D4869, or D6757 (synthetic). Application depends on slope:</p>
-      <ul>
-        <li><b>2:12 up to &lt; 4:12:</b> Two layers of underlayment required (or self-adhering underlayment throughout).</li>
-        <li><b>4:12 and steeper:</b> One layer of underlayment required.</li>
-      </ul>
-      <div class="rl-use"><b>Use it when:</b> Adjuster's scope shows single-layer felt on a low-slope section. Code requires double-layer or self-adhering for anything under 4:12. Common on porch roofs, dormers, and additions.</div>
-      <div class="rl-tags"><span>felt</span><span>synthetic</span><span>low slope</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="nails fasteners four six shingle wind">
-      <h3>Asphalt Shingle Fastening</h3>
-      <span class="rl-cite">RCO R905.2.5</span>
-      <p>Fasteners must be galvanized steel, stainless, aluminum, or copper, minimum 12-gauge shank with a minimum 3/8-inch diameter head. Length must penetrate through the roofing material and at least 3/4 inch into the sheathing (or fully through sheathing less than 3/4 inch thick).</p>
-      <p>Minimum count: <b>4 nails per strip shingle</b> in standard wind zones; <b>6 nails</b> in high-wind zones (roof slope &gt; 21:12 or where manufacturer requires it). Manufacturer's instructions may require more &mdash; the code minimum is a floor, not a ceiling.</p>
-      <div class="rl-use"><b>Use it when:</b> Documenting installation failures on the existing roof (nail placement above the seal strip, exposed nails, blow-off patterns from under-nailing). Also for defending your own scope when an adjuster tries to strip out a "high-wind installation" line item.</div>
-      <div class="rl-doc"><b>Document:</b> Close-up photo of exposed nail failure, blown-off shingles showing nail count and placement. Note manufacturer of existing shingle if identifiable; call their tech line for the nailing spec.</div>
-      <div class="rl-tags"><span>nails</span><span>wind damage</span><span>installation defect</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="drip edge overhang eave rake">
-      <h3>Drip Edge</h3>
-      <span class="rl-cite">RCO R905.2.8.5</span>
-      <p>Drip edge is required at eaves and rakes of shingle roofs. It must be corrosion-resistant metal, extend at least 1/4 inch below the sheathing, and extend back onto the roof deck a minimum of 2 inches. Adjacent segments overlap at least 2 inches. Fasten at intervals not exceeding 16 inches on center. At eaves, underlayment is installed <b>over</b> the drip edge; at rakes, underlayment is installed <b>under</b> the drip edge.</p>
-      <div class="rl-use"><b>Use it when:</b> Adjuster's scope excludes new drip edge on a full re-roof. Code requires it on every eave and rake. Legacy roofs installed before drip edge was required often lack it entirely &mdash; document that and add it as required-by-code.</div>
-      <div class="rl-tags"><span>drip edge</span><span>eave</span><span>rake</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="flashing step counter valley chimney wall">
-      <h3>Flashings &mdash; Step, Wall, Valley, Chimney</h3>
-      <span class="rl-cite">RCO R905.2.8</span>
-      <span class="rl-cite">RCO R903.2</span>
-      <p>Base, cap, and step flashing must be corrosion-resistant metal, sized and installed to prevent water intrusion at wall intersections, chimneys, skylights, and roof penetrations. Step flashing at sidewalls must be a minimum of 4 inches high and 4 inches wide, integrated shingle-by-shingle, and covered by the wall covering above (siding, brick, or counter-flashing at masonry).</p>
-      <div class="rl-use"><b>Use it when:</b> Adjuster is proposing to reuse existing flashings on a re-roof, or excludes chimney counter-flashing. Reuse is functionally impossible without damaging the flashing during shingle removal; code demands new integrated flashings on new installations.</div>
-      <div class="rl-doc"><b>Document:</b> Photo the existing step flashing condition (rusted, sealed with caulk, short-length, or missing entirely). Note whether counter-flashing is cut into masonry or surface-sealed.</div>
-      <div class="rl-tags"><span>step flashing</span><span>counter flashing</span><span>chimney</span><span>reuse</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="ventilation attic intake exhaust 1 150 1 300">
-      <h3>Attic Ventilation</h3>
-      <span class="rl-cite">RCO R806</span>
-      <p>Enclosed attics and rafter spaces must have cross-ventilation. Minimum net free ventilation area is <b>1/150</b> of the ventilated space, reducible to <b>1/300</b> when at least 40&percnt; and not more than 50&percnt; of the ventilation is in the upper portion of the space (i.e., balanced ridge + soffit intake).</p>
-      <div class="rl-use"><b>Use it when:</b> Existing roof shows heat blistering, premature granule loss, or ice damming caused by inadequate ventilation. Re-roof scope should include bringing ventilation to code. Adjusters often exclude ventilation upgrades as "improvement" &mdash; the counter is that installing a non-compliant assembly on the new roof would violate code.</div>
-      <div class="rl-doc"><b>Document:</b> Photo existing ventilation type (ridge, box, gable, power). Check for soffit intake &mdash; blocked or absent soffit vents are the most common defect. Note attic temperature vs outdoor if inspecting on a warm day.</div>
-      <div class="rl-tags"><span>ventilation</span><span>ridge vent</span><span>soffit</span><span>ice damming</span></div>
-    </div>
-
-    <div class="rl-card" data-rltags="decking sheathing osb plywood spaced">
-      <h3>Roof Decking / Sheathing</h3>
-      <span class="rl-cite">RCO R803</span>
-      <span class="rl-cite">RCO R908.3</span>
-      <p>Sheathing must be structurally sound and capable of holding fasteners. Wood structural panels (OSB, plywood) must meet the span rating for the framing. Spaced or plank sheathing is acceptable on many older homes but limits fastener options and may require overlay. Deteriorated, delaminated, or rotted decking must be replaced before installing new roof covering &mdash; a re-cover over unsound decking is prohibited.</p>
-      <div class="rl-use"><b>Use it when:</b> Discovering rot or delamination during tear-off. Photograph before covering. Ohio code makes decking replacement a code-required scope item when the existing sheathing cannot support new roofing; Ordinance &amp; Law coverage often pays for this even when standard coverage doesn't. Verify the homeowner's policy has O&amp;L coverage before promising anything.</div>
-      <div class="rl-doc"><b>Document:</b> Photo each section of failed decking with a tape measure or ruler in frame for scale. Log square footage replaced. Save the removed board as evidence when reasonable.</div>
-      <div class="rl-tags"><span>decking</span><span>rot</span><span>ordinance &amp; law</span></div>
-    </div>
-
-    <!-- ============ SECTION C: CLAIM SCENARIOS ============ -->
-    <div class="rl-sect" id="rlPlays"><h2>Claim Scenarios</h2><p class="rl-subtitle">The most common adjuster shortcuts and the code cite that answers them</p></div>
-
-    <div class="rl-card" data-rltags="scenario partial slope one side wind hail">
-      <h3>&ldquo;We'll only pay for the damaged slope&rdquo;</h3>
-      <p>Adjuster acknowledges wind or hail damage but scopes only the affected slope, leaving the other slopes with the original shingles.</p>
-      <div class="rl-use"><b>Answer:</b>
+      <div class="rl-card" data-rltags="tear off recover layers deteriorated slate">
+        <h3>When Roof Recover is Prohibited</h3>
+        <span class="rl-cite">RCO R908.3</span>
+        <span class="rl-cite">OAC 4101:8-9-01</span>
+        <p>A roof recover (layover) is <b>not permitted</b> where any of the following apply:</p>
         <ul>
-          <li>If shingle line is discontinued or field is significantly weathered, cite <b>OAC 3901-1-54(I)(1)(b)</b> &mdash; reasonably comparable appearance.</li>
-          <li>Document color-match failure with photos of a manufacturer sample vs field shingles under matched lighting.</li>
-          <li>If the roof has 2+ layers, cite <b>RCO R908.3</b> &mdash; recover is prohibited, so partial replacement on top of the existing bottom layer is not code-compliant either.</li>
+          <li>The existing roof or covering is water-soaked or has deteriorated to the point that it is not adequate as a base for additional roofing.</li>
+          <li>The existing covering is slate, clay, cement or asbestos-cement tile.</li>
+          <li>The existing roof has <b>two or more applications</b> of any type of roof covering.</li>
+          <li>Wood shingle or shake without a gypsum/mineral-fiber barrier.</li>
+        </ul>
+        <div class="rl-use"><b>Use it when:</b> Adjuster is proposing a layover on a house with two existing layers, or partial repair on a roof with a deteriorated first layer. Code compels tear-off. This is the single biggest lever for turning a repair scope into a full-replacement scope where Ordinance &amp; Law coverage applies.</div>
+        <div class="rl-doc"><b>Document:</b> Photo the shingle edge showing layer count. Photo any water-staining, blistering, or delamination on the first layer visible from attic or lifted edge. Note visible layer count in the inspection report.</div>
+        <div class="rl-tags"><span>tear-off</span><span>2+ layers</span><span>full replacement</span><span>ordinance &amp; law</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="ice barrier eave 24 inches wall line">
+        <h3>Ice Barrier Requirement</h3>
+        <span class="rl-cite">RCO R905.1.2</span>
+        <p>Ohio's Table 301.2(1) designates the entire state as an ice-forming region. An ice barrier is required on new asphalt shingle, metal shingle, mineral-surfaced roll, slate, wood shingle, and wood shake roofs. The barrier must be either two layers of underlayment cemented together, or a self-adhering polymer-modified bitumen sheet. It must extend from the eave edge to a point <b>at least 24 inches inside the exterior wall line</b> of the building, measured along the slope.</p>
+        <p>On roofs with slope &ge; 8:12, the barrier extends 36 inches up the slope from the eave.</p>
+        <div class="rl-use"><b>Use it when:</b> An adjuster's scope for a re-roof doesn't include ice &amp; water membrane, or only shows a strip at the eave without the full wall-line coverage. Code requires it. Add the line item and cite R905.1.2.</div>
+        <div class="rl-doc"><b>Document:</b> Note the overhang depth in inches (drip edge to exterior wall). This determines how far up the slope the barrier must extend. Include in the measurement worksheet.</div>
+        <div class="rl-tags"><span>ice &amp; water</span><span>eave</span><span>underlayment</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="underlayment felt synthetic slope 2 12 4 12">
+        <h3>Underlayment Requirements</h3>
+        <span class="rl-cite">RCO R905.1.1</span>
+        <span class="rl-cite">RCO Table R905.1.1(2)</span>
+        <p>Asphalt shingle underlayment must conform to ASTM D226, D4869, or D6757 (synthetic). Application depends on slope:</p>
+        <ul>
+          <li><b>2:12 up to &lt; 4:12:</b> Two layers of underlayment required (or self-adhering underlayment throughout).</li>
+          <li><b>4:12 and steeper:</b> One layer of underlayment required.</li>
+        </ul>
+        <div class="rl-use"><b>Use it when:</b> Adjuster's scope shows single-layer felt on a low-slope section. Code requires double-layer or self-adhering for anything under 4:12. Common on porch roofs, dormers, and additions.</div>
+        <div class="rl-tags"><span>felt</span><span>synthetic</span><span>low slope</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="nails fasteners four six shingle wind">
+        <h3>Asphalt Shingle Fastening</h3>
+        <span class="rl-cite">RCO R905.2.5</span>
+        <p>Fasteners must be galvanized steel, stainless, aluminum, or copper, minimum 12-gauge shank with a minimum 3/8-inch diameter head. Length must penetrate through the roofing material and at least 3/4 inch into the sheathing (or fully through sheathing less than 3/4 inch thick).</p>
+        <p>Minimum count: <b>4 nails per strip shingle</b> in standard wind zones; <b>6 nails</b> in high-wind zones (roof slope &gt; 21:12 or where manufacturer requires it). Manufacturer's instructions may require more &mdash; the code minimum is a floor, not a ceiling.</p>
+        <div class="rl-use"><b>Use it when:</b> Documenting installation failures on the existing roof (nail placement above the seal strip, exposed nails, blow-off patterns from under-nailing). Also for defending your own scope when an adjuster tries to strip out a "high-wind installation" line item.</div>
+        <div class="rl-doc"><b>Document:</b> Close-up photo of exposed nail failure, blown-off shingles showing nail count and placement. Note manufacturer of existing shingle if identifiable; call their tech line for the nailing spec.</div>
+        <div class="rl-tags"><span>nails</span><span>wind damage</span><span>installation defect</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="drip edge overhang eave rake">
+        <h3>Drip Edge</h3>
+        <span class="rl-cite">RCO R905.2.8.5</span>
+        <p>Drip edge is required at eaves and rakes of shingle roofs. It must be corrosion-resistant metal, extend at least 1/4 inch below the sheathing, and extend back onto the roof deck a minimum of 2 inches. Adjacent segments overlap at least 2 inches. Fasten at intervals not exceeding 16 inches on center. At eaves, underlayment is installed <b>over</b> the drip edge; at rakes, underlayment is installed <b>under</b> the drip edge.</p>
+        <div class="rl-use"><b>Use it when:</b> Adjuster's scope excludes new drip edge on a full re-roof. Code requires it on every eave and rake. Legacy roofs installed before drip edge was required often lack it entirely &mdash; document that and add it as required-by-code.</div>
+        <div class="rl-tags"><span>drip edge</span><span>eave</span><span>rake</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="flashing step counter valley chimney wall">
+        <h3>Flashings &mdash; Step, Wall, Valley, Chimney</h3>
+        <span class="rl-cite">RCO R905.2.8</span>
+        <span class="rl-cite">RCO R903.2</span>
+        <p>Base, cap, and step flashing must be corrosion-resistant metal, sized and installed to prevent water intrusion at wall intersections, chimneys, skylights, and roof penetrations. Step flashing at sidewalls must be a minimum of 4 inches high and 4 inches wide, integrated shingle-by-shingle, and covered by the wall covering above (siding, brick, or counter-flashing at masonry).</p>
+        <div class="rl-use"><b>Use it when:</b> Adjuster is proposing to reuse existing flashings on a re-roof, or excludes chimney counter-flashing. Reuse is functionally impossible without damaging the flashing during shingle removal; code demands new integrated flashings on new installations.</div>
+        <div class="rl-doc"><b>Document:</b> Photo the existing step flashing condition (rusted, sealed with caulk, short-length, or missing entirely). Note whether counter-flashing is cut into masonry or surface-sealed.</div>
+        <div class="rl-tags"><span>step flashing</span><span>counter flashing</span><span>chimney</span><span>reuse</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="ventilation attic intake exhaust 1 150 1 300">
+        <h3>Attic Ventilation</h3>
+        <span class="rl-cite">RCO R806</span>
+        <p>Enclosed attics and rafter spaces must have cross-ventilation. Minimum net free ventilation area is <b>1/150</b> of the ventilated space, reducible to <b>1/300</b> when at least 40&percnt; and not more than 50&percnt; of the ventilation is in the upper portion of the space (i.e., balanced ridge + soffit intake).</p>
+        <div class="rl-use"><b>Use it when:</b> Existing roof shows heat blistering, premature granule loss, or ice damming caused by inadequate ventilation. Re-roof scope should include bringing ventilation to code. Adjusters often exclude ventilation upgrades as "improvement" &mdash; the counter is that installing a non-compliant assembly on the new roof would violate code.</div>
+        <div class="rl-doc"><b>Document:</b> Photo existing ventilation type (ridge, box, gable, power). Check for soffit intake &mdash; blocked or absent soffit vents are the most common defect. Note attic temperature vs outdoor if inspecting on a warm day.</div>
+        <div class="rl-tags"><span>ventilation</span><span>ridge vent</span><span>soffit</span><span>ice damming</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="decking sheathing osb plywood spaced">
+        <h3>Roof Decking / Sheathing</h3>
+        <span class="rl-cite">RCO R803</span>
+        <span class="rl-cite">RCO R908.3</span>
+        <p>Sheathing must be structurally sound and capable of holding fasteners. Wood structural panels (OSB, plywood) must meet the span rating for the framing. Spaced or plank sheathing is acceptable on many older homes but limits fastener options and may require overlay. Deteriorated, delaminated, or rotted decking must be replaced before installing new roof covering &mdash; a re-cover over unsound decking is prohibited.</p>
+        <div class="rl-use"><b>Use it when:</b> Discovering rot or delamination during tear-off. Photograph before covering. Ohio code makes decking replacement a code-required scope item when the existing sheathing cannot support new roofing; Ordinance &amp; Law coverage often pays for this even when standard coverage doesn't. Verify the homeowner's policy has O&amp;L coverage before promising anything.</div>
+        <div class="rl-doc"><b>Document:</b> Photo each section of failed decking with a tape measure or ruler in frame for scale. Log square footage replaced. Save the removed board as evidence when reasonable.</div>
+        <div class="rl-tags"><span>decking</span><span>rot</span><span>ordinance &amp; law</span></div>
+      </div>
+
+      <div class="rl-groupsep">Commercial &mdash; OBC Chapter 15</div>
+
+      <div class="rl-card" data-rltags="obc ohio building code chapter 15 commercial">
+        <h3>2024 Ohio Building Code &mdash; Chapter 15</h3>
+        <span class="rl-cite">OBC Chapter 15</span>
+        <span class="rl-cite">OAC 4101:1</span>
+        <p>Commercial and multi-family structures fall under the Ohio Building Code (adopted from IBC 2021), administered by the Ohio Board of Building Standards. Chapter 15 (Roof Assemblies and Rooftop Structures) parallels the residential Chapter 9 but with heavier structural, drainage, and fire-resistance requirements.</p>
+        <p>Key differences from residential:</p>
+        <ul>
+          <li>Class A/B/C roof covering ratings mandatory (UL 790 or ASTM E108).</li>
+          <li>Wind uplift resistance per ASCE 7 (FM 4470, UL 580, or Miami-Dade approval).</li>
+          <li>Overflow scupper or secondary drainage required.</li>
+          <li>Minimum 1/4:12 positive drainage on low-slope assemblies (with reroof exception per OBC 1511).</li>
+        </ul>
+        <div class="rl-use"><b>Use it when:</b> Estimating on a commercial property (mixed-use, apartments over 3 units, retail, industrial). Insurance claims on commercial roofs go through commercial adjusters who expect commercial-code compliance and commercial documentation standards (RS Means, formal moisture surveys, roof condition reports).</div>
+      </div>
+
+      <div class="rl-card" data-rltags="obc 1511 reroof commercial recover replacement">
+        <h3>Commercial Reroofing Rules</h3>
+        <span class="rl-cite">OBC 1511</span>
+        <p>Similar to residential R908, but applies to modified bitumen, TPO, EPDM, PVC, built-up, and metal panel systems. Recover is prohibited where the existing membrane is water-soaked, has two or more roof assemblies present, or where the existing insulation cannot be dried. Slate, clay, and cement tile also prohibit recover.</p>
+        <div class="rl-use"><b>Use it when:</b> Documenting flat-roof claims on light commercial or multi-family properties. Moisture surveys (infrared or capacitance) become the standard evidence rather than shingle test squares.</div>
+      </div>
+
+      <div class="rl-groupsep">Miami Valley &mdash; Municipal Amendments</div>
+
+      <div class="rl-card" data-rltags="dayton city permit residential inspector">
+        <h3>City of Dayton</h3>
+        <p>Dayton enforces the 2019 Residential Code of Ohio through the Division of Building Services. Roof replacement typically does not require a permit if it does not involve structural work, alteration of the roof geometry, or replacement of more than 50&percnt; of the sheathing. Structural repairs, additions, or full deck replacement do require a permit.</p>
+        <div class="rl-use"><b>Check with:</b> Dayton Division of Building Services for the specific project. Local enforcement practice varies, especially in older neighborhoods where legacy structure is common. Historic-district properties may have additional review requirements.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="kettering permit residential reroof sheathing 50">
+        <h3>City of Kettering</h3>
+        <p>Kettering's Building Department distinguishes four re-roofing tiers, with permit and inspection required only for total replacement (defined as tear-off with more than 50&percnt; of sheathing replacement). Tear-offs without significant deck work do not require a permit but must still comply with the RCO. Applications and inspections are handled through the online portal.</p>
+        <div class="rl-tags"><span>tier system</span><span>online portal</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="huber heights permit residential">
+        <h3>Huber Heights</h3>
+        <p>Huber Heights enforces the 2019 RCO. Roofing permits are required for full replacements with structural work; simple tear-off/recover generally does not require a permit but must be code-compliant. Reach out to the Huber Heights Division of Development for project-specific determination.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="beavercreek centerville springboro moraine general miami valley">
+        <h3>Other Miami Valley Jurisdictions</h3>
+        <p>Beavercreek, Centerville, Springboro, Moraine, Trotwood, West Carrollton, and Vandalia all enforce the RCO with similar local variance around permit thresholds. As a rule for the region:</p>
+        <ul>
+          <li>Simple tear-off and re-cover with matching materials generally does not require a permit.</li>
+          <li>Any structural work &mdash; rafters, trusses, dormers, deck replacement over 50&percnt; &mdash; requires a permit.</li>
+          <li>Historic-district or overlay-zoned properties require review before work begins.</li>
+        </ul>
+        <div class="rl-use"><b>Practice:</b> Call the AHJ (Authority Having Jurisdiction) before signing the contract if there's any doubt. A denied permit mid-job costs more than a five-minute phone call.</div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SUB-PAGE: POLICY PROVISIONS
+         ========================================================= -->
+    <div class="rl-page" id="rlPagePolicy" data-rltitle="Policy Provisions">
+      <div class="rl-pagehead">
+        <h1>Policy Provisions</h1>
+        <p>Three coverages that turn a partial claim into a full one. Check the declarations page and endorsements before making any promises.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="ordinance law coverage d code upgrade">
+        <h3>Ordinance &amp; Law Coverage</h3>
+        <p>Often listed as Coverage D or Increased Cost of Construction on HO-3 policies. Pays for costs incurred to bring the property into current code compliance as part of a covered loss. Without it, the carrier only owes the pre-loss condition &mdash; code-required upgrades come out of the homeowner's pocket.</p>
+        <div class="rl-use"><b>Check for:</b> percentage of Coverage A dwelling amount (10&percnt;, 25&percnt;, 50&percnt;), or a flat dollar limit. Some policies exclude it entirely, some include it automatically. If absent, decking replacement and ventilation upgrades required by code become the homeowner's cost.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="rcv acv depreciation recoverable">
+        <h3>RCV vs ACV Settlement</h3>
+        <p>Replacement Cost Value: carrier pays the full cost to replace with like kind and quality, minus deductible. Depreciation is initially withheld and released upon completion of the work.</p>
+        <p>Actual Cash Value: carrier pays RCV minus depreciation. Depreciation is not recoverable.</p>
+        <div class="rl-use"><b>Common trap:</b> A roof-age endorsement can convert an otherwise-RCV policy to ACV on the roof specifically after a certain roof age (often 15 or 20 years). Homeowner may not know this. Read the endorsement pages, not just the declarations.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="matching endorsement uniform appearance">
+        <h3>Matching Endorsement</h3>
+        <p>Some carriers offer an optional endorsement that expands the state matching regulation and explicitly requires uniform-appearance repairs including full replacement of undamaged sections when necessary. Others explicitly limit matching to a single slope or single side of a wall.</p>
+        <div class="rl-use"><b>Check for:</b> "matching," "uniform appearance," "cosmetic" language in the policy schedule and any endorsements. Some carriers add a cosmetic-damage exclusion that specifically strips matching for hail spatter without functional damage.</div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SUB-PAGE: DOCUMENTATION CHECKLIST
+         ========================================================= -->
+    <div class="rl-page" id="rlPageDocs" data-rltitle="Documentation Checklist">
+      <div class="rl-pagehead">
+        <h1>Documentation Checklist</h1>
+        <p>Photos, notes, and paper that make or break a claim. The adjuster reads what's in the file &mdash; make sure the file says what you mean.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="documentation photos inspection">
+        <h3>Per-Inspection Documentation Standard</h3>
+        <p>Every insurance inspection should include:</p>
+        <ul>
+          <li><b>Ground shots of all elevations</b> &mdash; establishes property identity, general condition.</li>
+          <li><b>Shingle layer count</b> &mdash; edge photo showing visible layers.</li>
+          <li><b>Test square</b> &mdash; chalked 10x10 for hail, hit count per slope.</li>
+          <li><b>Damage close-ups</b> &mdash; ruler or coin in frame for scale.</li>
+          <li><b>Ventilation type &amp; condition</b> &mdash; ridge, box, gable, power. Soffit intake status.</li>
+          <li><b>Flashing condition</b> &mdash; step, wall, chimney, skylight, pipe boots.</li>
+          <li><b>Gutter line</b> &mdash; downspouts for granule accumulation.</li>
+          <li><b>Attic access</b> &mdash; decking from below, insulation depth, ventilation from inside, active leaks.</li>
+          <li><b>Related property damage</b> &mdash; siding, screens, HVAC, gutters, fascia, soffit, downspouts. Photograph even if not this claim's scope.</li>
+          <li><b>Date &amp; time stamp</b> on all photos.</li>
+        </ul>
+      </div>
+
+      <div class="rl-card" data-rltags="photo template hail wind test square raking light">
+        <h3>Photo Templates by Damage Type</h3>
+        <p><b>Hail:</b></p>
+        <ul>
+          <li>One overall of each slope from ground.</li>
+          <li>One chalked 10&times;10 test square per slope with hit count written on chalk or paper card in frame.</li>
+          <li>Close-up of representative impact showing fractured mat, granule displacement, and matted circular pattern &mdash; ruler in frame for scale.</li>
+          <li>Ridge/hip cap close-up if impacted &mdash; hail rounds often show best on ridges.</li>
+          <li>Soft metals for corroboration: gutter, downspout elbow, vent hood, cap flashing, HVAC fins, screens, garage door.</li>
+        </ul>
+        <p><b>Wind:</b></p>
+        <ul>
+          <li>Missing shingle areas photographed with something for scale.</li>
+          <li>Lifted/creased shingles &mdash; from the side showing the crease line.</li>
+          <li>Seal strip failure &mdash; underside of lifted shingle showing broken seal.</li>
+          <li>Ridge cap displacement patterns.</li>
+          <li>Overall pattern shot showing directional damage consistent with wind vector.</li>
+        </ul>
+        <p><b>Water intrusion (from a storm event):</b></p>
+        <ul>
+          <li>Interior ceiling staining with dated photo.</li>
+          <li>Attic sheathing staining, streak marks, mold.</li>
+          <li>Insulation compression at leak locations.</li>
+          <li>Corresponding exterior condition &mdash; failed flashing, missing shingle, damaged boot.</li>
+        </ul>
+        <div class="rl-use"><b>Use it when:</b> Building a claim file for supplement or appraisal. Adjusters weigh volume and pattern; a scattershot of impacts across slopes tells a very different story than three lonely photos.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="documentation paperwork policy declarations">
+        <h3>Paper Trail</h3>
+        <ul>
+          <li>Copy of policy declarations page &mdash; note coverage limits, deductible, RCV vs ACV, Ordinance &amp; Law coverage limit.</li>
+          <li>Sworn statement in proof of loss (if requested).</li>
+          <li>Cardinal's written scope with line-item pricing.</li>
+          <li>Adjuster's scope (Xactimate, Symbility, or PDF).</li>
+          <li>Line-by-line comparison &mdash; every discrepancy noted with photo or code cite.</li>
+          <li>Every written communication with the adjuster &mdash; email chain, portal messages.</li>
         </ul>
       </div>
     </div>
 
-    <div class="rl-card" data-rltags="scenario layover two layers three third layer">
-      <h3>&ldquo;Just layer new shingles over the existing&rdquo;</h3>
-      <p>Adjuster proposes an overlay to save money.</p>
-      <div class="rl-use"><b>Answer:</b>
-        <ul>
-          <li>Count the layers. If two or more, cite <b>RCO R908.3</b> &mdash; recover is not permitted.</li>
-          <li>If first layer is water-damaged, cite same section &mdash; unsuitable base prohibits recover regardless of layer count.</li>
-          <li>Point out that a code violation is a policy problem for the carrier: the homeowner would be occupying a non-code-compliant structure funded by the claim.</li>
-        </ul>
+    <!-- =========================================================
+         SUB-PAGE: CLAIM TIPS (scenarios + carrier patterns)
+         ========================================================= -->
+    <div class="rl-page" id="rlPageTips" data-rltitle="Claim Tips">
+      <div class="rl-pagehead">
+        <h1>Claim Tips</h1>
+        <p>The most common adjuster shortcuts and the code cite that answers each. Plus patterns we see from specific carriers &mdash; not accusations, just field observations to prepare for.</p>
+      </div>
+
+      <div class="rl-groupsep">Claim Scenarios</div>
+
+      <div class="rl-card" data-rltags="scenario partial slope one side wind hail">
+        <h3>&ldquo;We'll only pay for the damaged slope&rdquo;</h3>
+        <p>Adjuster acknowledges wind or hail damage but scopes only the affected slope, leaving the other slopes with the original shingles.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>If shingle line is discontinued or field is significantly weathered, cite <b>OAC 3901-1-54(I)(1)(b)</b> &mdash; reasonably comparable appearance.</li>
+            <li>Document color-match failure with photos of a manufacturer sample vs field shingles under matched lighting.</li>
+            <li>If the roof has 2+ layers, cite <b>RCO R908.3</b> &mdash; recover is prohibited, so partial replacement on top of the existing bottom layer is not code-compliant either.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="scenario layover two layers three third layer">
+        <h3>&ldquo;Just layer new shingles over the existing&rdquo;</h3>
+        <p>Adjuster proposes an overlay to save money.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>Count the layers. If two or more, cite <b>RCO R908.3</b> &mdash; recover is not permitted.</li>
+            <li>If first layer is water-damaged, cite same section &mdash; unsuitable base prohibits recover regardless of layer count.</li>
+            <li>Point out that a code violation is a policy problem for the carrier: the homeowner would be occupying a non-code-compliant structure funded by the claim.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="scenario decking rot found during tear off">
+        <h3>&ldquo;Decking replacement is not covered&rdquo;</h3>
+        <p>Deteriorated decking is discovered during tear-off. Adjuster wants to exclude it as maintenance.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>If the policy has <b>Ordinance &amp; Law (Coverage D)</b>, deck replacement required by code is covered under that coverage even if not covered by dwelling coverage.</li>
+            <li>Cite <b>RCO R908.3</b> and <b>R803</b> &mdash; recovering over unsound sheathing is prohibited.</li>
+            <li>Photograph every replaced board with scale, log square footage, submit as supplement with dated photos.</li>
+            <li>Check the policy declarations page before promising O&amp;L coverage &mdash; not every homeowner has it.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="scenario ice water eave only strip">
+        <h3>&ldquo;A strip of ice &amp; water at the eave is enough&rdquo;</h3>
+        <p>Adjuster's scope includes ice &amp; water at the drip edge only, not the full 24-inch-past-wall-line coverage.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>Cite <b>RCO R905.1.2</b> &mdash; the barrier must extend from the eave edge to a point at least 24 inches inside the exterior wall line, measured along the slope.</li>
+            <li>Measure the overhang depth: eave-to-wall distance plus 24 inches gives you the required coverage measured up the slope.</li>
+            <li>Slope 8:12 or steeper needs 36 inches up the slope minimum.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="scenario flashing reuse chimney wall skylight">
+        <h3>&ldquo;Reuse the existing flashings&rdquo;</h3>
+        <p>Common on step flashings, chimney counter-flashings, and skylight kits.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>Cite <b>RCO R905.2.8</b> &mdash; flashings must be sized and installed to prevent water intrusion. Reused flashings damaged during tear-off do not satisfy this requirement.</li>
+            <li>Photograph the existing condition to preempt the argument: rust, caulk-sealed joints, missing counter-flashing on masonry, undersized step flashing.</li>
+            <li>New skylight flashing kit is standard scope on any re-roof; the skylight manufacturer's warranty typically requires new flashing with any new roof.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="scenario ventilation upgrade improvement betterment">
+        <h3>&ldquo;Ventilation upgrade is a betterment&rdquo;</h3>
+        <p>Adjuster excludes new ridge vent, soffit intake, or box vent replacement as an improvement not caused by the loss.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>If the existing ventilation is out of compliance with <b>RCO R806</b> (1/150 or 1/300 balanced), reinstalling the same non-compliant system on a code-triggered re-roof is a code violation.</li>
+            <li>Ordinance &amp; Law coverage applies if the policy includes it.</li>
+            <li>If the existing system was itself damaged by the storm (ridge cap blown off, box vent housing hail-struck), that alone is covered damage regardless of code.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="scenario brittle test aging denied wear tear">
+        <h3>&ldquo;It's just wear and tear&rdquo;</h3>
+        <p>Adjuster denies hail damage as normal aging or wear, or claims granule loss is not impact-related.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>Document impact patterns with the HAAG-style test square (a chalked 10-foot square, count of hits per slope).</li>
+            <li>Document circular, offset, or spatter patterns distinguishing hail from mechanical or manufacturing defects.</li>
+            <li>For an aged roof that also has hail impact, granule loss at impact sites (fractured mat under the impact) is diagnostic of storm damage. Photograph in raking light.</li>
+            <li>Brittleness test on a cool day is more reliable than on hot; document date and temperature.</li>
+            <li>Request the carrier's engineer report if damage is denied on that basis.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="scenario roof age exclusion depreciation acv rcv">
+        <h3>&ldquo;Roof is too old for full replacement value&rdquo;</h3>
+        <p>Adjuster settles on Actual Cash Value only, or applies a roof-age depreciation schedule that reduces the payment significantly.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>Check the policy: does it pay Replacement Cost Value (RCV) with recoverable depreciation, or ACV only? If RCV, the homeowner recovers depreciation upon completion of the work.</li>
+            <li>If ACV only (common on older roofs under some HO-3 endorsements), the recoverable depreciation is not available. Advise the homeowner in writing.</li>
+            <li>Depreciation schedules can be challenged if they exceed the actual condition. A roof rated at 30 years and depreciated at 25 years remaining useful life may be challenged if it was maintained and shows better condition.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-groupsep">Carrier-Specific Patterns</div>
+
+      <div class="rl-card" data-rltags="carrier state farm engineer report denial">
+        <h3>State Farm &mdash; Engineer Reports on Denials</h3>
+        <p>Pattern: On disputed hail claims, especially where the initial adjuster acknowledges damage, State Farm frequently orders an independent engineer inspection whose report concludes wear-and-tear or normal aging rather than storm impact.</p>
+        <div class="rl-use"><b>Prepare for it by:</b>
+          <ul>
+            <li>Documenting extensively on the first inspection with test squares, dated raking-light close-ups, and matched-lighting field photos.</li>
+            <li>Reviewing the engineer report for methodology &mdash; date of inspection vs. storm date, weather at inspection, whether the engineer actually walked the roof or used photos.</li>
+            <li>Rebuttal via independent engineer or licensed public adjuster on high-value claims.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="carrier allstate cosmetic exclusion endorsement">
+        <h3>Allstate &mdash; Cosmetic Damage Endorsement</h3>
+        <p>Pattern: Some Allstate HO-3 policies (increasingly, on renewals) include a cosmetic-damage exclusion for hail impact on roofing and metals when the damage does not affect functional performance. Under this endorsement, spatter marks on shingles, dented caps and vents, and minor bruising can be excluded even when clearly caused by hail.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>Read the declarations page carefully &mdash; the endorsement is often an add-on that's easy to miss.</li>
+            <li>Document functional impact separately from cosmetic: granule loss, mat exposure, seal-strip failure, reduced service life.</li>
+            <li>If the roof is otherwise near end of life, cosmetic exclusion + age depreciation can gut the claim; advise the homeowner honestly.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="carrier tpa network preferred contractor pricing">
+        <h3>Third-Party Administrators &amp; Preferred Networks</h3>
+        <p>Pattern: Some carriers (Erie, Nationwide, others) use third-party administrators or "preferred contractor" networks whose scopes tend to run below fair-market pricing and whose supplements go to a specific approver rather than the original adjuster. Contractors outside the network are asked to match TPA pricing.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>Homeowners are not obligated to use the preferred network. Cardinal's price is Cardinal's price.</li>
+            <li>Document with local material and labor comparables. Regional RS Means, Xactimate published rates, and manufacturer MSRPs are all cite-able.</li>
+            <li>If the TPA declines a supplement without inspection, that's a bad-faith foundation &mdash; escalate to the carrier direct.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rl-card" data-rltags="carrier progressive travelers depreciation age schedule">
+        <h3>Aggressive Depreciation Schedules</h3>
+        <p>Pattern: Some carriers apply steep age-based depreciation to roofs at 10&ndash;15 years despite the roof being maintained and in serviceable condition. Recoverable-depreciation withholdings can approach 50&percnt; of RCV in extreme cases.</p>
+        <div class="rl-use"><b>Answer:</b>
+          <ul>
+            <li>Depreciation is not automatic &mdash; it should reflect actual remaining useful life.</li>
+            <li>Photograph the pre-loss condition of the roof to establish the depreciation baseline.</li>
+            <li>Cite the manufacturer's original service-life rating (30-year, 50-year architectural) as a ceiling; carrier can't depreciate faster than the roof's rated life.</li>
+          </ul>
+        </div>
       </div>
     </div>
 
-    <div class="rl-card" data-rltags="scenario decking rot found during tear off">
-      <h3>&ldquo;Decking replacement is not covered&rdquo;</h3>
-      <p>Deteriorated decking is discovered during tear-off. Adjuster wants to exclude it as maintenance.</p>
-      <div class="rl-use"><b>Answer:</b>
-        <ul>
-          <li>If the policy has <b>Ordinance &amp; Law (Coverage D)</b>, deck replacement required by code is covered under that coverage even if not covered by dwelling coverage.</li>
-          <li>Cite <b>RCO R908.3</b> and <b>R803</b> &mdash; recovering over unsound sheathing is prohibited.</li>
-          <li>Photograph every replaced board with scale, log square footage, submit as supplement with dated photos.</li>
-          <li>Check the policy declarations page before promising O&amp;L coverage &mdash; not every homeowner has it.</li>
-        </ul>
+    <!-- =========================================================
+         SUB-PAGE: DO / DON'T (split screen)
+         ========================================================= -->
+    <div class="rl-page" id="rlPagePitfalls" data-rltitle="Do &amp; Don't">
+      <div class="rl-pagehead">
+        <h1>Do &amp; Don't</h1>
+        <p>Field practices on the left. Ways this goes sideways on the right. Print or screenshot for the truck.</p>
+      </div>
+
+      <div class="rl-dodont">
+        <div class="rl-ddcol">
+          <div class="rl-ddhead rl-do">&#9989; DO</div>
+          <div class="rl-ddcard rl-docard">
+            <h4>Read the policy first</h4>
+            Declarations, endorsements, limits, deductibles &mdash; before you scope, before you make promises. What's covered on the paper is what matters, not what feels fair.
+          </div>
+          <div class="rl-ddcard rl-docard">
+            <h4>Document everything on the first visit</h4>
+            Layer count, ventilation, flashings, decking from the attic, damage close-ups with scale, related property. Second trips are how details get missed and how adjusters get a foothold to argue the claim.
+          </div>
+          <div class="rl-ddcard rl-docard">
+            <h4>Cite specific code sections</h4>
+            &ldquo;RCO R908.3&rdquo; lands harder than &ldquo;code says.&rdquo; Adjusters respect precision; homeowners trust it. Keep the citations from the Construction Codes page handy in the truck.
+          </div>
+          <div class="rl-ddcard rl-docard">
+            <h4>Write a defensible scope</h4>
+            Every line item ties back to a code section, documented damage, or a manufacturer requirement. If you can't defend it, don't put it in. A tight, honest scope beats an inflated one on appraisal every time.
+          </div>
+          <div class="rl-ddcard rl-docard">
+            <h4>Communicate in writing</h4>
+            Email, portal, text with timestamps. Verbal denials and verbal approvals both disappear when the claim gets contested. Written ones do not.
+          </div>
+          <div class="rl-ddcard rl-docard">
+            <h4>Meet the adjuster on the roof</h4>
+            Being physically present when the adjuster inspects changes the conversation. You can point to the damage; they can't ignore what they've seen. If they show up without you, they're documenting on their terms.
+          </div>
+          <div class="rl-ddcard rl-docard">
+            <h4>Refer when the claim needs it</h4>
+            Public adjuster or attorney for negotiation over coverage. It protects the homeowner from a bad settlement and it protects Cardinal from unlicensed-practice risk under ORC Ch. 3951.
+          </div>
+        </div>
+
+        <div class="rl-ddcol">
+          <div class="rl-ddhead rl-dont">&#10060; DON'T</div>
+          <div class="rl-ddcard rl-dontcard">
+            <h4>Waive or absorb the deductible</h4>
+            Ohio doesn't have a specific anti-rebating statute, but waiving a homeowner's deductible on an insurance-paid job is an unfair business practice and can be treated as fraud. Some carriers require proof of deductible payment before releasing recoverable depreciation.
+          </div>
+          <div class="rl-ddcard rl-dontcard">
+            <h4>Rely on Assignment of Benefits</h4>
+            AOBs transfer the homeowner's right to receive payment to the roofer. Ohio recognizes them but carriers have grown resistant and some policies now include anti-AOB provisions. Get legal advice before adopting AOBs as standard practice.
+          </div>
+          <div class="rl-ddcard rl-dontcard">
+            <h4>Inflate the scope</h4>
+            Every line item should be defensible with a code cite, manufacturer requirement, or documented damage. Adding items that don't clear that bar invites the carrier to reject the whole supplement and can invite fraud allegations.
+          </div>
+          <div class="rl-ddcard rl-dontcard">
+            <h4>Negotiate the claim yourself</h4>
+            Roofers document damage and provide their own scope. Roofers do not tell the adjuster what the carrier should pay, argue coverage under the policy, or represent the homeowner in settlement. That's public-adjuster or attorney work under ORC Ch. 3951.
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="rl-card" data-rltags="scenario ice water eave only strip">
-      <h3>&ldquo;A strip of ice &amp; water at the eave is enough&rdquo;</h3>
-      <p>Adjuster's scope includes ice &amp; water at the drip edge only, not the full 24-inch-past-wall-line coverage.</p>
-      <div class="rl-use"><b>Answer:</b>
+    <!-- =========================================================
+         SUB-PAGE: TRUCK CHEAT SHEET
+         ========================================================= -->
+    <div class="rl-page" id="rlPageCheat" data-rltitle="Truck Cheat Sheet">
+      <div class="rl-pagehead">
+        <h1>Truck Cheat Sheet</h1>
+        <p>One-card summary for the field. Prints on a single page. Take it in the truck.</p>
+      </div>
+
+      <div class="rl-card" data-rltags="cheat sheet summary truck field one page">
+        <h3>Cardinal One-Page Field Card</h3>
+        <p><b>The three levers for full replacement:</b></p>
         <ul>
-          <li>Cite <b>RCO R905.1.2</b> &mdash; the barrier must extend from the eave edge to a point at least 24 inches inside the exterior wall line, measured along the slope.</li>
-          <li>Measure the overhang depth: eave-to-wall distance plus 24 inches gives you the required coverage measured up the slope.</li>
-          <li>Slope 8:12 or steeper needs 36 inches up the slope minimum.</li>
+          <li>2+ layers &rarr; <b>RCO R908.3</b> forbids recover.</li>
+          <li>Deteriorated first layer &rarr; <b>RCO R908.3</b> forbids recover.</li>
+          <li>Shingle discontinued &rarr; <b>OAC 3901-1-54(I)(1)(b)</b> requires reasonably comparable appearance.</li>
         </ul>
+        <p><b>Code-required scope adjusters try to strip out:</b></p>
+        <ul>
+          <li>Ice barrier 24&Prime; past wall line &mdash; <b>RCO R905.1.2</b></li>
+          <li>New drip edge on all eaves/rakes &mdash; <b>RCO R905.2.8.5</b></li>
+          <li>New step/counter flashing &mdash; <b>RCO R905.2.8</b></li>
+          <li>Ventilation to 1/300 balanced &mdash; <b>RCO R806</b></li>
+          <li>Double underlayment on &lt; 4:12 slope &mdash; <b>RCO R905.1.1</b></li>
+          <li>4-nail (or 6 in high-wind) fastening &mdash; <b>RCO R905.2.5</b></li>
+        </ul>
+        <p><b>Ordinance &amp; Law coverage (Coverage D):</b> check the declarations page. Percentage of Coverage A. Pays for code-driven upgrades. If it's not there, decking replacement is on the homeowner.</p>
+        <p><b>Documentation minimums:</b> ground of all elevations, layer count at edge, test square per slope, damage close-ups with scale, ventilation type &amp; condition, flashing condition, attic if accessible, dated on every photo.</p>
+        <p><b>The line you don't cross:</b> Cardinal documents damage and provides its own scope. Cardinal does not negotiate coverage under the policy. That's public adjuster or attorney work &mdash; <b>ORC Chapter 3951</b>.</p>
       </div>
     </div>
 
-    <div class="rl-card" data-rltags="scenario flashing reuse chimney wall skylight">
-      <h3>&ldquo;Reuse the existing flashings&rdquo;</h3>
-      <p>Common on step flashings, chimney counter-flashings, and skylight kits.</p>
-      <div class="rl-use"><b>Answer:</b>
-        <ul>
-          <li>Cite <b>RCO R905.2.8</b> &mdash; flashings must be sized and installed to prevent water intrusion. Reused flashings damaged during tear-off do not satisfy this requirement.</li>
-          <li>Photograph the existing condition to preempt the argument: rust, caulk-sealed joints, missing counter-flashing on masonry, undersized step flashing.</li>
-          <li>New skylight flashing kit is standard scope on any re-roof; the skylight manufacturer's warranty typically requires new flashing with any new roof.</li>
-        </ul>
+    <!-- =========================================================
+         SUB-PAGE: MANUFACTURER GUIDELINES
+         ========================================================= -->
+    <div class="rl-page" id="rlPageMfg" data-rltitle="Manufacturer Guidelines">
+      <div class="rl-pagehead">
+        <h1>Manufacturer Guidelines</h1>
+        <p>Manufacturer installation specs are cite-able the same way code is. They set nailing patterns, starter and ridge requirements, ventilation ratios, and <i>do-not-mix</i> rules that govern warranty validity. When an adjuster strips out an accessory line item, the manufacturer's system-warranty spec is often the answer.</p>
       </div>
-    </div>
 
-    <div class="rl-card" data-rltags="scenario ventilation upgrade improvement betterment">
-      <h3>&ldquo;Ventilation upgrade is a betterment&rdquo;</h3>
-      <p>Adjuster excludes new ridge vent, soffit intake, or box vent replacement as an improvement not caused by the loss.</p>
-      <div class="rl-use"><b>Answer:</b>
-        <ul>
-          <li>If the existing ventilation is out of compliance with <b>RCO R806</b> (1/150 or 1/300 balanced), reinstalling the same non-compliant system on a code-triggered re-roof is a code violation.</li>
-          <li>Ordinance &amp; Law coverage applies if the policy includes it.</li>
-          <li>If the existing system was itself damaged by the storm (ridge cap blown off, box vent housing hail-struck), that alone is covered damage regardless of code.</li>
-        </ul>
+      <div class="rl-card" data-rltags="pdf upload manufacturer specs source">
+        <h3>&#128228; PDFs Pending</h3>
+        <p>The specific do-not-mix language, current nailing patterns, and system-warranty accessory requirements for each manufacturer will be populated from the PDFs Theo is uploading. Until then, the cards below capture the general structure &mdash; program tiers, product lines, warranty names &mdash; but not the authoritative technical spec language you'd cite in a supplement or homeowner conversation.</p>
+        <div class="rl-use"><b>To fill this in:</b> upload the OC, GAF, and CertainTeed installation guides / do-not-mix documents you have. Each manufacturer's current PDF gets a card with exact quotes, section numbers, and effective dates so the citations are precise.</div>
       </div>
-    </div>
 
-    <div class="rl-card" data-rltags="scenario brittle test aging denied wear tear">
-      <h3>&ldquo;It's just wear and tear&rdquo;</h3>
-      <p>Adjuster denies hail damage as normal aging or wear, or claims granule loss is not impact-related.</p>
-      <div class="rl-use"><b>Answer:</b>
-        <ul>
-          <li>Document impact patterns with the HAAG-style test square (a chalked 10-foot square, count of hits per slope).</li>
-          <li>Document circular, offset, or spatter patterns distinguishing hail from mechanical or manufacturing defects.</li>
-          <li>For an aged roof that also has hail impact, granule loss at impact sites (fractured mat under the impact) is diagnostic of storm damage. Photograph in raking light.</li>
-          <li>Brittleness test on a cool day is more reliable than on hot; document date and temperature.</li>
-          <li>Request the carrier's engineer report if damage is denied on that basis.</li>
-        </ul>
+      <div class="rl-groupsep">Cross-Cutting Rules</div>
+
+      <div class="rl-card" data-rltags="impact resistant class 4 ul 2218 discount">
+        <h3>Class 4 Impact-Resistant &mdash; Insurance Premium Discounts</h3>
+        <p>Shingles rated Class 4 under <b>UL 2218</b> (the steel ball impact test) qualify for premium discounts on homeowner's insurance with most Ohio carriers &mdash; typically 10&ndash;30&percnt; off the wind/hail portion of the policy. The discount is per-carrier and requires the roofer to provide certification of Class 4 rating.</p>
+        <div class="rl-use"><b>Use it when:</b> Quoting a re-roof after a hail event. If the homeowner's carrier has the discount, upgrading to Class 4 often pays for itself over the depreciation window. Available in all three major lines: OC Duration FLEX, GAF Timberline AS II, CertainTeed Landmark IR.</div>
+        <div class="rl-tags"><span>UL 2218</span><span>Class 4</span><span>insurance discount</span></div>
       </div>
-    </div>
 
-    <div class="rl-card" data-rltags="scenario roof age exclusion depreciation acv rcv">
-      <h3>&ldquo;Roof is too old for full replacement value&rdquo;</h3>
-      <p>Adjuster settles on Actual Cash Value only, or applies a roof-age depreciation schedule that reduces the payment significantly.</p>
-      <div class="rl-use"><b>Answer:</b>
-        <ul>
-          <li>Check the policy: does it pay Replacement Cost Value (RCV) with recoverable depreciation, or ACV only? If RCV, the homeowner recovers depreciation upon completion of the work.</li>
-          <li>If ACV only (common on older roofs under some HO-3 endorsements), the recoverable depreciation is not available. Advise the homeowner in writing.</li>
-          <li>Depreciation schedules can be challenged if they exceed the actual condition. A roof rated at 30 years and depreciated at 25 years remaining useful life may be challenged if it was maintained and shows better condition.</li>
-        </ul>
+      <div class="rl-card" data-rltags="system warranty accessory starter ridge cap enhanced">
+        <h3>System Warranty Prerequisites</h3>
+        <p>Every manufacturer's top-tier warranty (Golden Pledge, Platinum Protection, SureStart PLUS) requires that the full accessory kit come from the same manufacturer &mdash; starter, underlayment, hip &amp; ridge, leak barrier, and often ventilation. Mixing brands typically drops coverage back to the standard material warranty (which is much weaker on labor).</p>
+        <div class="rl-use"><b>Use it when:</b> Defending accessory line items in a scope. If the homeowner has a system warranty on the current roof, replacing with mixed components voids that coverage. If Cardinal is offering a system warranty on the new roof, the whole accessory kit is not optional &mdash; it's a warranty prerequisite. Adjusters often try to strip starter, ridge, or underlayment lines; this is the answer.</div>
+        <div class="rl-doc"><b>Document:</b> Photo the existing warranty registration paperwork if available. Note which manufacturer's system is being installed in the scope. Save receipts for accessory components as part of the job file.</div>
+        <div class="rl-tags"><span>accessory kit</span><span>starter</span><span>ridge cap</span><span>warranty</span></div>
       </div>
-    </div>
 
-    <!-- ============ SECTION D: DOCUMENTATION ============ -->
-    <div class="rl-sect" id="rlDocs"><h2>Documentation Checklist</h2><p class="rl-subtitle">Photos, notes, and paper that make or break a claim</p></div>
-
-    <div class="rl-card" data-rltags="documentation photos inspection">
-      <h3>Per-Inspection Documentation Standard</h3>
-      <p>Every insurance inspection should include:</p>
-      <ul>
-        <li><b>Ground shots of all elevations</b> &mdash; establishes property identity, general condition.</li>
-        <li><b>Shingle layer count</b> &mdash; edge photo showing visible layers.</li>
-        <li><b>Test square</b> &mdash; chalked 10x10 for hail, hit count per slope.</li>
-        <li><b>Damage close-ups</b> &mdash; ruler or coin in frame for scale.</li>
-        <li><b>Ventilation type &amp; condition</b> &mdash; ridge, box, gable, power. Soffit intake status.</li>
-        <li><b>Flashing condition</b> &mdash; step, wall, chimney, skylight, pipe boots.</li>
-        <li><b>Gutter line</b> &mdash; downspouts for granule accumulation.</li>
-        <li><b>Attic access</b> &mdash; decking from below, insulation depth, ventilation from inside, active leaks.</li>
-        <li><b>Related property damage</b> &mdash; siding, screens, HVAC, gutters, fascia, soffit, downspouts. Photograph even if not this claim's scope.</li>
-        <li><b>Date &amp; time stamp</b> on all photos.</li>
-      </ul>
-    </div>
-
-    <div class="rl-card" data-rltags="photo template hail wind test square raking light">
-      <h3>Photo Templates by Damage Type</h3>
-      <p><b>Hail:</b></p>
-      <ul>
-        <li>One overall of each slope from ground.</li>
-        <li>One chalked 10&times;10 test square per slope with hit count written on chalk or paper card in frame.</li>
-        <li>Close-up of representative impact showing fractured mat, granule displacement, and matted circular pattern &mdash; ruler in frame for scale.</li>
-        <li>Ridge/hip cap close-up if impacted &mdash; hail rounds often show best on ridges.</li>
-        <li>Soft metals for corroboration: gutter, downspout elbow, vent hood, cap flashing, HVAC fins, screens, garage door.</li>
-      </ul>
-      <p><b>Wind:</b></p>
-      <ul>
-        <li>Missing shingle areas photographed with something for scale.</li>
-        <li>Lifted/creased shingles &mdash; from the side showing the crease line.</li>
-        <li>Seal strip failure &mdash; underside of lifted shingle showing broken seal.</li>
-        <li>Ridge cap displacement patterns.</li>
-        <li>Overall pattern shot showing directional damage consistent with wind vector.</li>
-      </ul>
-      <p><b>Water intrusion (from a storm event):</b></p>
-      <ul>
-        <li>Interior ceiling staining with dated photo.</li>
-        <li>Attic sheathing staining, streak marks, mold.</li>
-        <li>Insulation compression at leak locations.</li>
-        <li>Corresponding exterior condition &mdash; failed flashing, missing shingle, damaged boot.</li>
-      </ul>
-      <div class="rl-use"><b>Use it when:</b> Building a claim file for supplement or appraisal. Adjusters weigh volume and pattern; a scattershot of impacts across slopes tells a very different story than three lonely photos.</div>
-    </div>
-
-    <div class="rl-card" data-rltags="documentation paperwork policy declarations">
-      <h3>Paper Trail</h3>
-      <ul>
-        <li>Copy of policy declarations page &mdash; note coverage limits, deductible, RCV vs ACV, Ordinance &amp; Law coverage limit.</li>
-        <li>Sworn statement in proof of loss (if requested).</li>
-        <li>Cardinal's written scope with line-item pricing.</li>
-        <li>Adjuster's scope (Xactimate, Symbility, or PDF).</li>
-        <li>Line-by-line comparison &mdash; every discrepancy noted with photo or code cite.</li>
-        <li>Every written communication with the adjuster &mdash; email chain, portal messages.</li>
-      </ul>
-    </div>
-
-    <!-- ============ SECTION E: POLICY PROVISIONS ============ -->
-    <div class="rl-sect" id="rlPolicy"><h2>Policy Provisions to Check</h2><p class="rl-subtitle">The three coverages that turn a partial claim into a full one</p></div>
-
-    <div class="rl-card" data-rltags="ordinance law coverage d code upgrade">
-      <h3>Ordinance &amp; Law Coverage</h3>
-      <p>Often listed as Coverage D or Increased Cost of Construction on HO-3 policies. Pays for costs incurred to bring the property into current code compliance as part of a covered loss. Without it, the carrier only owes the pre-loss condition &mdash; code-required upgrades come out of the homeowner's pocket.</p>
-      <div class="rl-use"><b>Check for:</b> percentage of Coverage A dwelling amount (10&percnt;, 25&percnt;, 50&percnt;), or a flat dollar limit. Some policies exclude it entirely, some include it automatically. If absent, decking replacement and ventilation upgrades required by code become the homeowner's cost.</div>
-    </div>
-
-    <div class="rl-card" data-rltags="rcv acv depreciation recoverable">
-      <h3>RCV vs ACV Settlement</h3>
-      <p>Replacement Cost Value: carrier pays the full cost to replace with like kind and quality, minus deductible. Depreciation is initially withheld and released upon completion of the work.</p>
-      <p>Actual Cash Value: carrier pays RCV minus depreciation. Depreciation is not recoverable.</p>
-      <div class="rl-use"><b>Common trap:</b> A roof-age endorsement can convert an otherwise-RCV policy to ACV on the roof specifically after a certain roof age (often 15 or 20 years). Homeowner may not know this. Read the endorsement pages, not just the declarations.</div>
-    </div>
-
-    <div class="rl-card" data-rltags="matching endorsement uniform appearance">
-      <h3>Matching Endorsement</h3>
-      <p>Some carriers offer an optional endorsement that expands the state matching regulation and explicitly requires uniform-appearance repairs including full replacement of undamaged sections when necessary. Others explicitly limit matching to a single slope or single side of a wall.</p>
-      <div class="rl-use"><b>Check for:</b> "matching," "uniform appearance," "cosmetic" language in the policy schedule and any endorsements. Some carriers add a cosmetic-damage exclusion that specifically strips matching for hail spatter without functional damage.</div>
-    </div>
-
-    <!-- ============ SECTION F: CARRIER TACTICS ============ -->
-    <div class="rl-sect" id="rlCarriers"><h2>Carrier-Specific Patterns</h2><p class="rl-subtitle">Trends we see repeatedly &mdash; not accusations, just field observations to anticipate</p></div>
-
-    <div class="rl-card" data-rltags="carrier state farm engineer report denial">
-      <h3>State Farm &mdash; Engineer Reports on Denials</h3>
-      <p>Pattern: On disputed hail claims, especially where the initial adjuster acknowledges damage, State Farm frequently orders an independent engineer inspection whose report concludes wear-and-tear or normal aging rather than storm impact.</p>
-      <div class="rl-use"><b>Prepare for it by:</b>
-        <ul>
-          <li>Documenting extensively on the first inspection with test squares, dated raking-light close-ups, and matched-lighting field photos.</li>
-          <li>Reviewing the engineer report for methodology &mdash; date of inspection vs. storm date, weather at inspection, whether the engineer actually walked the roof or used photos.</li>
-          <li>Rebuttal via independent engineer or licensed public adjuster on high-value claims.</li>
-        </ul>
+      <div class="rl-card" data-rltags="enhanced fastening six nail high wind pattern">
+        <h3>Enhanced Fastening / High-Wind Installation</h3>
+        <p>Beyond the RCO minimum of 4 nails per shingle, most manufacturers require <b>6 nails</b> for high-wind installations and for the enhanced-warranty programs. The nail zone is above the seal strip and clearly marked on modern shingles (LayerLock on GAF, SureNail on OC).</p>
+        <div class="rl-use"><b>Use it when:</b> Adjuster strips out a "high-wind installation" line item. Answer with (a) the code minimum in the fastening code card, and (b) the manufacturer's requirement for the specific product line being installed. When the shingle is a premium product with an enhanced warranty, 6-nail is not upgrade &mdash; it's spec.</div>
+        <div class="rl-tags"><span>6-nail</span><span>high wind</span><span>enhanced warranty</span></div>
       </div>
-    </div>
 
-    <div class="rl-card" data-rltags="carrier allstate cosmetic exclusion endorsement">
-      <h3>Allstate &mdash; Cosmetic Damage Endorsement</h3>
-      <p>Pattern: Some Allstate HO-3 policies (increasingly, on renewals) include a cosmetic-damage exclusion for hail impact on roofing and metals when the damage does not affect functional performance. Under this endorsement, spatter marks on shingles, dented caps and vents, and minor bruising can be excluded even when clearly caused by hail.</p>
-      <div class="rl-use"><b>Answer:</b>
-        <ul>
-          <li>Read the declarations page carefully &mdash; the endorsement is often an add-on that's easy to miss.</li>
-          <li>Document functional impact separately from cosmetic: granule loss, mat exposure, seal-strip failure, reduced service life.</li>
-          <li>If the roof is otherwise near end of life, cosmetic exclusion + age depreciation can gut the claim; advise the homeowner honestly.</li>
-        </ul>
+      <div class="rl-groupsep">Owens Corning</div>
+
+      <div class="rl-card" data-rltags="owens corning oc products lines duration flex trudefinition sureNail">
+        <h3>Product Lines &amp; SureNail</h3>
+        <p>Main lines: <b>TruDefinition Duration</b> (standard architectural), <b>Duration Storm</b> (SBS-modified impact-resistant), <b>Duration FLEX</b> (Class 4 UL 2218). All feature the <b>SureNail</b> reinforced nail zone &mdash; a fabric strip that gives the fastener double-thickness engagement and makes the 6-nail installation the manufacturer default for most enhanced warranties.</p>
+        <div class="rl-tags"><span>SureNail</span><span>Duration</span><span>Class 4</span></div>
       </div>
-    </div>
 
-    <div class="rl-card" data-rltags="carrier tpa network preferred contractor pricing">
-      <h3>Third-Party Administrators &amp; Preferred Networks</h3>
-      <p>Pattern: Some carriers (Erie, Nationwide, others) use third-party administrators or "preferred contractor" networks whose scopes tend to run below fair-market pricing and whose supplements go to a specific approver rather than the original adjuster. Contractors outside the network are asked to match TPA pricing.</p>
-      <div class="rl-use"><b>Answer:</b>
+      <div class="rl-card" data-rltags="oc contractor program tiers preferred platinum invitation">
+        <h3>Contractor Program &amp; Warranty Tiers</h3>
+        <p>Tiers:</p>
         <ul>
-          <li>Homeowners are not obligated to use the preferred network. Cardinal's price is Cardinal's price.</li>
-          <li>Document with local material and labor comparables. Regional RS Means, Xactimate published rates, and manufacturer MSRPs are all cite-able.</li>
-          <li>If the TPA declines a supplement without inspection, that's a bad-faith foundation &mdash; escalate to the carrier direct.</li>
+          <li><b>OC Preferred Contractor</b> &mdash; entry level, standard warranty access.</li>
+          <li><b>OC Platinum Preferred</b> &mdash; top tier, invitation-only, approximately 1&percnt; of OC contractors. Unlocks the <b>Platinum Protection Limited Warranty</b>, which includes non-prorated system coverage, algae resistance, and wind damage.</li>
+          <li><b>Top of the House</b> &mdash; elite recognition for high-performing Platinum Preferred contractors.</li>
         </ul>
+        <p>Platinum Protection requires the full <b>Total Protection Roofing System</b> &mdash; OC starter, ice &amp; water barrier (WeatherLock or equivalent), underlayment (ProArmor), hip &amp; ridge (ProEdge Hip &amp; Ridge or DecoRidge), and ventilation.</p>
+        <div class="rl-use"><b>Cardinal status:</b> [to fill in &mdash; current OC contractor tier goes here for reference in scopes and homeowner conversations].</div>
+        <div class="rl-tags"><span>Platinum Preferred</span><span>Total Protection System</span></div>
       </div>
-    </div>
 
-    <div class="rl-card" data-rltags="carrier progressive travelers depreciation age schedule">
-      <h3>Aggressive Depreciation Schedules</h3>
-      <p>Pattern: Some carriers apply steep age-based depreciation to roofs at 10&ndash;15 years despite the roof being maintained and in serviceable condition. Recoverable-depreciation withholdings can approach 50&percnt; of RCV in extreme cases.</p>
-      <div class="rl-use"><b>Answer:</b>
+      <div class="rl-card" data-rltags="owens corning do not mix pending pdf">
+        <h3>Do-Not-Mix Rules</h3>
+        <p style="color:var(--ins-muted);font-style:italic;">Awaiting the OC installation guide PDF. Once uploaded, this card will hold the specific mixing prohibitions and the section numbers to cite &mdash; e.g., which underlayments cannot be used with which shingle lines, ventilation kit requirements for the Total Protection warranty, and starter-strip substitutions that void the enhanced warranty.</p>
+      </div>
+
+      <div class="rl-groupsep">GAF</div>
+
+      <div class="rl-card" data-rltags="gaf timberline hdz uhdz as ii stainguard products">
+        <h3>Product Lines &amp; LayerLock</h3>
+        <p>Main lines: <b>Timberline HDZ</b> (most common architectural, the industry volume leader), <b>Timberline UHDZ</b> (thicker profile, premium look), <b>Timberline AS II</b> (Class 4 impact-resistant). <b>StainGuard Plus</b> algae protection is standard on most lines. The <b>LayerLock</b> reinforced nail zone runs across the nail area and enables straightforward 6-nail installation with wide placement tolerance.</p>
+        <div class="rl-tags"><span>LayerLock</span><span>StainGuard Plus</span><span>Timberline</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="gaf contractor program certified master elite golden pledge">
+        <h3>Contractor Program &amp; Warranty Tiers</h3>
+        <p>Tiers:</p>
         <ul>
-          <li>Depreciation is not automatic &mdash; it should reflect actual remaining useful life.</li>
-          <li>Photograph the pre-loss condition of the roof to establish the depreciation baseline.</li>
-          <li>Cite the manufacturer's original service-life rating (30-year, 50-year architectural) as a ceiling; carrier can't depreciate faster than the roof's rated life.</li>
+          <li><b>GAF Certified</b> &mdash; entry level, offers the <b>System Plus</b> warranty (50-year materials, 10-year workmanship).</li>
+          <li><b>Gold Elite</b> &mdash; mid-tier designation, prerequisite for Master Elite in some markets.</li>
+          <li><b>Master Elite</b> &mdash; top tier, roughly 2&ndash;3&percnt; of contractors. Requires state licensing, insurance, business tenure, and ongoing training. Unlocks the <b>Golden Pledge</b> warranty &mdash; GAF's strongest coverage: 50-year non-prorated materials, 25-year workmanship, and manufacturer inspection.</li>
         </ul>
+        <p>Silver Pledge and Golden Pledge require the full <b>Lifetime Roofing System</b>: GAF starter (Pro-Start or StarterMatch), leak barrier (WeatherWatch or StormGuard), underlayment (FeltBuster, Deck-Armor, or Tiger Paw), hip &amp; ridge (Seal-A-Ridge, TimberTex, or Ridglass), and attic ventilation.</p>
+        <div class="rl-use"><b>Cardinal status:</b> [to fill in &mdash; current GAF contractor tier goes here].</div>
+        <div class="rl-tags"><span>Master Elite</span><span>Golden Pledge</span><span>Lifetime System</span></div>
       </div>
-    </div>
 
-    <!-- ============ SECTION G: MUNICIPAL ============ -->
-    <div class="rl-sect" id="rlMuni"><h2>Municipal Amendments &mdash; Miami Valley</h2><p class="rl-subtitle">Local rules that override or supplement the RCO in Cardinal's core service area</p></div>
+      <div class="rl-card" data-rltags="gaf do not mix pending pdf">
+        <h3>Do-Not-Mix Rules</h3>
+        <p style="color:var(--ins-muted);font-style:italic;">Awaiting the GAF Pro Field Guide / Installation Instructions PDF. Once uploaded, this card will hold the specific mixing prohibitions and their section references &mdash; underlayment compatibility, ridge system substitutions, and the exact accessory kits that qualify for each Pledge tier.</p>
+      </div>
 
-    <div class="rl-card" data-rltags="dayton city permit residential inspector">
-      <h3>City of Dayton</h3>
-      <p>Dayton enforces the 2019 Residential Code of Ohio through the Division of Building Services. Roof replacement typically does not require a permit if it does not involve structural work, alteration of the roof geometry, or replacement of more than 50&percnt; of the sheathing. Structural repairs, additions, or full deck replacement do require a permit.</p>
-      <div class="rl-use"><b>Check with:</b> Dayton Division of Building Services for the specific project. Local enforcement practice varies, especially in older neighborhoods where legacy structure is common. Historic-district properties may have additional review requirements.</div>
-    </div>
+      <div class="rl-groupsep">CertainTeed</div>
 
-    <div class="rl-card" data-rltags="kettering permit residential reroof sheathing 50">
-      <h3>City of Kettering</h3>
-      <p>Kettering's Building Department distinguishes four re-roofing tiers, with permit and inspection required only for total replacement (defined as tear-off with more than 50&percnt; of sheathing replacement). Tear-offs without significant deck work do not require a permit but must still comply with the RCO. Applications and inspections are handled through the online portal.</p>
-      <div class="rl-tags"><span>tier system</span><span>online portal</span></div>
-    </div>
+      <div class="rl-card" data-rltags="certainteed landmark grand manor carriage house products">
+        <h3>Product Lines</h3>
+        <p>Main lines: <b>Landmark</b> (standard architectural), <b>Landmark PRO</b> (mid-tier upgrade), <b>Landmark Premium</b>, <b>Landmark IR</b> (Class 4 impact-resistant). Luxury lines: <b>Grand Manor</b>, <b>Carriage House</b>, <b>Presidential</b>. <b>NailTrak</b> is the reinforced nail zone that gives fastener placement tolerance and supports enhanced-fastening installations.</p>
+        <div class="rl-tags"><span>Landmark</span><span>Grand Manor</span><span>NailTrak</span></div>
+      </div>
 
-    <div class="rl-card" data-rltags="huber heights permit residential">
-      <h3>Huber Heights</h3>
-      <p>Huber Heights enforces the 2019 RCO. Roofing permits are required for full replacements with structural work; simple tear-off/recover generally does not require a permit but must be code-compliant. Reach out to the Huber Heights Division of Development for project-specific determination.</p>
-    </div>
+      <div class="rl-card" data-rltags="certainteed contractor program shinglemaster select sarp master applicator">
+        <h3>Contractor Program &amp; Warranty Tiers</h3>
+        <p>Tiers:</p>
+        <ul>
+          <li><b>Credentialed Contractor</b> &mdash; entry level, verified licensing and insurance.</li>
+          <li><b>ShingleMaster</b> &mdash; at least one crew member has completed CertainTeed's <b>SARP</b> (Shingle Applicator Roofer Program) training. Offers <b>SureStart</b> warranty.</li>
+          <li><b>SELECT ShingleMaster</b> &mdash; top tier, requires two or more SARP-certified crew members and demonstrated CertainTeed installation track record. Unlocks <b>SureStart PLUS</b> &mdash; 50-year materials, 25-year workmanship, comprehensive labor coverage.</li>
+          <li><b>Master Applicator</b> &mdash; invitation-only elite tier for contractors installing across multiple CertainTeed product families.</li>
+        </ul>
+        <p>SureStart PLUS requires the full CertainTeed system: DiamondDeck or RoofRunner underlayment, WinterGuard ice &amp; water, SwiftStart starter, MountainRidge or ShadowRidge hip &amp; ridge, and CertainTeed ventilation.</p>
+        <div class="rl-use"><b>Cardinal status:</b> [to fill in &mdash; current CertainTeed contractor tier goes here].</div>
+        <div class="rl-tags"><span>SELECT ShingleMaster</span><span>SureStart PLUS</span><span>SARP</span></div>
+      </div>
 
-    <div class="rl-card" data-rltags="beavercreek centerville springboro moraine general miami valley">
-      <h3>Other Miami Valley Jurisdictions</h3>
-      <p>Beavercreek, Centerville, Springboro, Moraine, Trotwood, West Carrollton, and Vandalia all enforce the RCO with similar local variance around permit thresholds. As a rule for the region:</p>
-      <ul>
-        <li>Simple tear-off and re-cover with matching materials generally does not require a permit.</li>
-        <li>Any structural work &mdash; rafters, trusses, dormers, deck replacement over 50&percnt; &mdash; requires a permit.</li>
-        <li>Historic-district or overlay-zoned properties require review before work begins.</li>
-      </ul>
-      <div class="rl-use"><b>Practice:</b> Call the AHJ (Authority Having Jurisdiction) before signing the contract if there's any doubt. A denied permit mid-job costs more than a five-minute phone call.</div>
-    </div>
+      <div class="rl-card" data-rltags="certainteed do not mix pending pdf">
+        <h3>Do-Not-Mix Rules</h3>
+        <p style="color:var(--ins-muted);font-style:italic;">Awaiting the CertainTeed Master Shingle Applicator's Manual PDF. Once uploaded, this card will hold the specific mixing prohibitions and their section references, including any product-line-specific accessory requirements for the SELECT tier warranties.</p>
+      </div>
 
-    <!-- ============ SECTION H: COMMERCIAL ============ -->
-    <div class="rl-sect" id="rlComm"><h2>Commercial &mdash; Ohio Building Code</h2><p class="rl-subtitle">Different code applies for commercial and multi-family structures</p></div>
+      <div class="rl-groupsep">Other Manufacturers</div>
 
-    <div class="rl-card" data-rltags="obc ohio building code chapter 15 commercial">
-      <h3>2024 Ohio Building Code &mdash; Chapter 15</h3>
-      <span class="rl-cite">OBC Chapter 15</span>
-      <span class="rl-cite">OAC 4101:1</span>
-      <p>Commercial and multi-family structures fall under the Ohio Building Code (adopted from IBC 2021), administered by the Ohio Board of Building Standards. Chapter 15 (Roof Assemblies and Rooftop Structures) parallels the residential Chapter 9 but with heavier structural, drainage, and fire-resistance requirements.</p>
-      <p>Key differences from residential:</p>
-      <ul>
-        <li>Class A/B/C roof covering ratings mandatory (UL 790 or ASTM E108).</li>
-        <li>Wind uplift resistance per ASCE 7 (FM 4470, UL 580, or Miami-Dade approval).</li>
-        <li>Overflow scupper or secondary drainage required.</li>
-        <li>Minimum 1/4:12 positive drainage on low-slope assemblies (with reroof exception per OBC 1511).</li>
-      </ul>
-      <div class="rl-use"><b>Use it when:</b> Estimating on a commercial property (mixed-use, apartments over 3 units, retail, industrial). Insurance claims on commercial roofs go through commercial adjusters who expect commercial-code compliance and commercial documentation standards (RS Means, formal moisture surveys, roof condition reports).</div>
-    </div>
-
-    <div class="rl-card" data-rltags="obc 1511 reroof commercial recover replacement">
-      <h3>Commercial Reroofing Rules</h3>
-      <span class="rl-cite">OBC 1511</span>
-      <p>Similar to residential R908, but applies to modified bitumen, TPO, EPDM, PVC, built-up, and metal panel systems. Recover is prohibited where the existing membrane is water-soaked, has two or more roof assemblies present, or where the existing insulation cannot be dried. Slate, clay, and cement tile also prohibit recover.</p>
-      <div class="rl-use"><b>Use it when:</b> Documenting flat-roof claims on light commercial or multi-family properties. Moisture surveys (infrared or capacitance) become the standard evidence rather than shingle test squares.</div>
-    </div>
-
-    <!-- ============ SECTION I: PITFALLS ============ -->
-    <div class="rl-sect" id="rlPitfalls"><h2>Pitfalls</h2><p class="rl-subtitle">Ways this goes wrong that we've seen before</p></div>
-
-    <div class="rl-card" data-rltags="pitfall waiver deductible illegal">
-      <h3>Never waive or absorb the deductible</h3>
-      <p>Ohio does not have a specific anti-rebating statute for insurance deductibles the way some states do, but waiving or absorbing a homeowner's deductible on an insurance-paid job is an unfair business practice and can be treated as insurance fraud if the invoice shows the full loss but the homeowner never paid the deductible. Some carriers explicitly require proof of deductible payment before releasing recoverable depreciation. Do not offer to eat the deductible as a sales tactic.</p>
-    </div>
-
-    <div class="rl-card" data-rltags="pitfall assignment benefits AOB">
-      <h3>Be careful with Assignment of Benefits</h3>
-      <p>An AOB transfers the homeowner's right to receive claim payment directly to the roofer. Ohio law recognizes AOBs but carriers have grown resistant, and some policies now include anti-AOB provisions. AOBs can also expose Cardinal to bad-faith arguments if the claim goes sideways. Get legal advice before adopting AOBs as a standard practice.</p>
-    </div>
-
-    <div class="rl-card" data-rltags="pitfall photos scope inflate xactimate">
-      <h3>Don't inflate the scope</h3>
-      <p>Cardinal's estimate should reflect the actual code-compliant work required to restore the property. Adding line items that aren't code-required, aren't damaged, or aren't standard trade practice invites the carrier to reject the whole supplement and can invite fraud allegations. Every line item should be defensible with a code cite, a manufacturer requirement, or documented damage.</p>
-    </div>
-
-    <div class="rl-card" data-rltags="pitfall unlicensed practice negotiating adjuster">
-      <h3>Don't negotiate the claim</h3>
-      <p>Roofers document damage, provide their own scope, and answer factual questions from the adjuster about installation and code. Roofers do not tell the adjuster what the carrier should pay, argue coverage under the policy, or represent the homeowner in settlement discussions. That's public adjuster or attorney work under <b>ORC Chapter 3951</b>. Crossing that line risks an unlicensed-practice complaint and undermines any bad-faith claim the homeowner may later raise.</p>
-    </div>
-
-    <!-- ============ SECTION J: CHEAT SHEET ============ -->
-    <div class="rl-sect" id="rlCheat"><h2>Truck Cheat Sheet</h2><p class="rl-subtitle">One-card summary for the field &mdash; prints on a single page</p></div>
-
-    <div class="rl-card" data-rltags="cheat sheet summary truck field one page">
-      <h3>Cardinal One-Page Field Card</h3>
-      <p style="font-size:13px;color:#5a4520;background:#fff8e6;border-left:4px solid #d4a017;padding:8px 12px;border-radius:4px;">Print this card. Keep it in the truck.</p>
-      <p><b>The three levers for full replacement:</b></p>
-      <ul>
-        <li>2+ layers &rarr; <b>RCO R908.3</b> forbids recover.</li>
-        <li>Deteriorated first layer &rarr; <b>RCO R908.3</b> forbids recover.</li>
-        <li>Shingle discontinued &rarr; <b>OAC 3901-1-54(I)(1)(b)</b> requires reasonably comparable appearance.</li>
-      </ul>
-      <p><b>Code-required scope adjusters try to strip out:</b></p>
-      <ul>
-        <li>Ice barrier 24&Prime; past wall line &mdash; <b>RCO R905.1.2</b></li>
-        <li>New drip edge on all eaves/rakes &mdash; <b>RCO R905.2.8.5</b></li>
-        <li>New step/counter flashing &mdash; <b>RCO R905.2.8</b></li>
-        <li>Ventilation to 1/300 balanced &mdash; <b>RCO R806</b></li>
-        <li>Double underlayment on &lt; 4:12 slope &mdash; <b>RCO R905.1.1</b></li>
-        <li>4-nail (or 6 in high-wind) fastening &mdash; <b>RCO R905.2.5</b></li>
-      </ul>
-      <p><b>Ordinance &amp; Law coverage (Coverage D):</b> check the declarations page. Percentage of Coverage A. Pays for code-driven upgrades. If it's not there, decking replacement is on the homeowner.</p>
-      <p><b>Documentation minimums:</b> ground of all elevations, layer count at edge, test square per slope, damage close-ups with scale, ventilation type &amp; condition, flashing condition, attic if accessible, dated on every photo.</p>
-      <p><b>The line you don't cross:</b> Cardinal documents damage and provides its own scope. Cardinal does not negotiate coverage under the policy. That's public adjuster or attorney work &mdash; <b>ORC Chapter 3951</b>.</p>
-    </div>
-
-    <div class="rl-foot">
-      <p><b>Cardinal Roofing &amp; Renovations, LLC</b> &mdash; 5735 Webster St, Dayton OH 45414 &middot; 937.576.6753 &middot; Admin@cardinalrenovations.net</p>
-      <p>Resource Library v1 &middot; July 2026 &middot; Sources: 2019 Residential Code of Ohio, 2024 Ohio Building Code, Ohio Admin. Code Title 4101:8, Ohio Admin. Code 3901-1-54, Ohio Revised Code Chapters 3901, 3951, 1345. Not legal advice.</p>
+      <div class="rl-card" data-rltags="iko malarkey tamko atlas dynasty other manufacturers">
+        <h3>IKO, Malarkey, Tamko, Atlas</h3>
+        <p><b>IKO</b> &mdash; ROOFPRO contractor program (Contractor, Premium, Elite Premium tiers). Cambridge and Dynasty architectural lines. Nordic (impact-resistant).</p>
+        <p><b>Malarkey</b> &mdash; Emerald Pro certification. Vista and Legacy architectural lines. Highlander NEX (SBS impact-modified) common in hail markets.</p>
+        <p><b>TAMKO</b> &mdash; Pro Certified Contractor program. Heritage architectural line.</p>
+        <p><b>Atlas</b> &mdash; PRO Plus and Signature Select. Pinnacle Pristine and StormMaster.</p>
+        <div class="rl-use"><b>Use it when:</b> Homeowner asks about alternatives or matching an existing non-Big-3 roof. Cardinal's Big-3 focus doesn't preclude working with these manufacturers, but the warranty tier programs and installation specs need to be checked per project.</div>
+      </div>
     </div>
 
   </div>
+
 </div>
 
 <!-- ============ QUICK INSPECTION ============ -->
@@ -3647,15 +4103,53 @@ body:has(#loginView[style*="block"]){background:#fff;}
             <option>Non Profit</option><option>Other</option><option>Previous Customer</option>
             <option>Real-estate</option><option>Real-estate: Kitty Hawk</option><option>Referral</option>
             <option>Roofle</option><option>Telemarketing</option><option>Truck</option><option>Yard Sign</option></select></label>
+
+        <label style="margin-top:12px;font-weight:700;">Claim Type <span style="color:#C8202E;">*</span></label>
+        <div class="ldctgrp" style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+          <label class="ldctopt"><input type="radio" name="ldClaimType" value="insurance"> &#128737;&#65039; Insurance</label>
+          <label class="ldctopt"><input type="radio" name="ldClaimType" value="retail"> &#127968; Retail</label>
+          <label class="ldctopt"><input type="radio" name="ldClaimType" value="unknown" checked> &#10067; Don't know yet</label>
+        </div>
+
         <div class="ckinline" style="margin-top:12px;">
-          <label><input type="checkbox" id="ldInsurance"> Insurance</label>
-          <label><input type="checkbox" id="ldRetail"> Retail</label>
           <label><input type="checkbox" id="ldPartnerCk"> Partnership organization</label>
         </div>
         <label id="ldPartnerWrap" style="display:none;">Partner organization
           <select id="ldPartner"><option value="">&#8212; select &#8212;</option>
             <option>Habitat For Humanity</option><option>Rebuilding Together</option><option>County Corp</option>
             <option>Community Action</option><option>Kitty Hawk Realty</option><option>Dayton Home Repair Network</option></select></label>
+      </div>
+
+      <!-- Insurance Details: shown only when Claim Type = Insurance -->
+      <div class="ldbox" id="ldInsBox" style="display:none;border-left:3px solid #4a6fa5;background:#f2f4f8;">
+        <div class="ldhead" style="color:#2d4468;">&#128737;&#65039; Insurance Details</div>
+        <div class="ckrow">
+          <label>Insurance Carrier<input type="text" id="ldInsCarrier" placeholder="State Farm, Allstate&hellip;"></label>
+          <label>Policy Number<input type="text" id="ldInsPolicy"></label>
+        </div>
+        <div class="ckrow">
+          <label>Claim Number<input type="text" id="ldInsClaim"></label>
+          <label>Date of Loss<input type="date" id="ldInsDOL"></label>
+        </div>
+        <div class="ckrow">
+          <label>Adjuster Name<input type="text" id="ldInsAdjName"></label>
+          <label>Adjuster Phone<input type="tel" id="ldInsAdjPhone" inputmode="tel"></label>
+        </div>
+        <label>Adjuster Email<input type="email" id="ldInsAdjEmail" autocomplete="off"></label>
+        <div class="ckrow">
+          <label>Deductible ($)<input type="number" id="ldInsDeductible" inputmode="decimal" step="0.01"></label>
+          <label>Coverage Type
+            <select id="ldInsCoverage">
+              <option value="">&mdash; select &mdash;</option>
+              <option value="RCV">RCV (Replacement Cost Value)</option>
+              <option value="ACV">ACV (Actual Cash Value)</option>
+            </select></label>
+        </div>
+        <div class="ckinline" style="margin-top:8px;">
+          <label><input type="checkbox" id="ldInsOrdLaw"> Ordinance &amp; Law Coverage present</label>
+        </div>
+        <label style="margin-top:8px;">Insurance Notes<textarea id="ldInsNotes" rows="2" style="width:100%;box-sizing:border-box;margin-top:4px;
+          padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;resize:vertical;"></textarea></label>
       </div>
 
       <div class="ldbox" id="ldAssignBox">
@@ -7946,18 +8440,23 @@ function getTeamMembers(){
 }
 function openLeadForm(){
   ['ldFirst','ldLast','ldCompany','ldMailing','ldBilling','ldStreet','ldSuite','ldCity','ldZip','ldNotes',
-   'ldApptDate','ldApptStart','ldApptEnd'].forEach(function(id){
-    document.getElementById(id).value = '';
+   'ldApptDate','ldApptStart','ldApptEnd',
+   'ldInsCarrier','ldInsPolicy','ldInsClaim','ldInsDOL','ldInsAdjName','ldInsAdjPhone',
+   'ldInsAdjEmail','ldInsDeductible','ldInsNotes'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
   });
-  ['ldState','ldCategory','ldWorkType','ldSource','ldPartner'].forEach(function(id){
-    document.getElementById(id).value = '';
+  ['ldState','ldCategory','ldWorkType','ldSource','ldPartner','ldInsCoverage'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
   });
   document.getElementById('ldPriority').value = 'Normal';
   document.getElementById('ldStatus').value = 'Not Contacted';
-  document.getElementById('ldInsurance').checked = false;
-  document.getElementById('ldRetail').checked = false;
   document.getElementById('ldPartnerCk').checked = false;
   document.getElementById('ldPartnerWrap').style.display = 'none';
+  document.getElementById('ldInsOrdLaw').checked = false;
+  /* default claim type: Don't know yet */
+  var radios = document.querySelectorAll('input[name="ldClaimType"]');
+  radios.forEach(function(r){ r.checked = (r.value === 'unknown'); });
+  updateClaimTypeUi();
   var ph = document.getElementById('ldPhones'); ph.innerHTML = ''; ph.appendChild(ldContactRow('phone'));
   var em = document.getElementById('ldEmails'); em.innerHTML = ''; em.appendChild(ldContactRow('email'));
   var assignBox = document.getElementById('ldAssignBox');
@@ -7986,6 +8485,136 @@ document.getElementById('ldAddEmail').addEventListener('click', function(){
 document.getElementById('ldPartnerCk').addEventListener('change', function(){
   document.getElementById('ldPartnerWrap').style.display = this.checked ? 'block' : 'none';
 });
+
+/* Claim Type tri-state: show/hide the Insurance Details box + selected chip styling */
+function updateClaimTypeUi(){
+  var val = '';
+  document.querySelectorAll('input[name="ldClaimType"]').forEach(function(r){
+    if(r.checked) val = r.value;
+    var lab = r.closest('.ldctopt');
+    if(lab) lab.classList.toggle('ldctselect', r.checked);
+  });
+  var box = document.getElementById('ldInsBox');
+  if(box) box.style.display = (val === 'insurance') ? 'block' : 'none';
+}
+document.querySelectorAll('input[name="ldClaimType"]').forEach(function(r){
+  r.addEventListener('change', updateClaimTypeUi);
+});
+/* ---------- Change claim type + edit insurance details ---------- */
+async function updateProjectLead(pr, mutator){
+  /* deep-copy to avoid mutating the parseCkAll cache */
+  var full = JSON.parse(JSON.stringify(parseCkAll(pr) || {}));
+  var L = full.lead || {};
+  mutator(L);
+  full.lead = L;
+  await patchProjectCk(pr, full);
+  await reload();
+  var fresh = cacheProjects.find(function(x){ return x.id === pr.id; });
+  if(fresh){ currentProject = fresh; openProject(fresh.id); }
+}
+
+function openClaimTypeMenu(pr){
+  if(!pr) return;
+  var current = projClaimType(pr);
+  var choice = prompt(
+    'Change Claim Type for ' + (pr.name || 'this client') + '.\n' +
+    'Current: ' + current.toUpperCase() + '\n\n' +
+    'Type one:\n  insurance\n  retail\n  unknown\n\n(Leave blank to cancel)',
+    current
+  );
+  if(!choice) return;
+  choice = choice.trim().toLowerCase();
+  if(['insurance','retail','unknown'].indexOf(choice) === -1){
+    alert('Not a valid claim type. Choose insurance, retail, or unknown.');
+    return;
+  }
+  if(choice === current) return;
+  changeClaimType(pr, choice);
+}
+
+async function changeClaimType(pr, newType){
+  var current = projClaimType(pr);
+  var hasInsData = !!projInsurance(pr);
+  /* Insurance -> Retail/Unknown: DELETE insurance data, per spec */
+  if(current === 'insurance' && newType !== 'insurance' && hasInsData){
+    var ok = confirm(
+      'Switching to ' + newType.toUpperCase() + ' will PERMANENTLY DELETE ' +
+      'the insurance data on file:\n\n' +
+      '\u2022 Carrier, policy #, claim #\n' +
+      '\u2022 Adjuster name / phone / email\n' +
+      '\u2022 Date of loss, deductible, coverage type, notes\n\n' +
+      'This cannot be undone. Continue?'
+    );
+    if(!ok) return;
+    await updateProjectLead(pr, function(L){
+      L.claim_type = newType;
+      L.insurance = null;
+      /* also clear the legacy boolean flags */
+      L.retail = (newType === 'retail');
+    });
+    auditLog('lead', 'Claim type changed insurance \u2192 ' + newType + ' (insurance data deleted)', pr.id);
+    return;
+  }
+  /* Anything -> Insurance: open the editor to collect fields, then save */
+  if(newType === 'insurance' && !hasInsData){
+    openInsuranceEditor(pr, true /* changing type */);
+    return;
+  }
+  /* Retail <-> Unknown or Insurance keeping data: just flip the type */
+  await updateProjectLead(pr, function(L){
+    L.claim_type = newType;
+    if(newType === 'insurance'){ L.retail = false; }
+    if(newType === 'retail'){ L.retail = true; }
+    if(newType === 'unknown'){ L.retail = false; }
+  });
+  auditLog('lead', 'Claim type changed ' + current + ' \u2192 ' + newType, pr.id);
+}
+
+function openInsuranceEditor(pr, isTypeChange){
+  if(!pr) return;
+  var existing = projInsurance(pr) || {};
+  var adj = existing.adjuster || {};
+  var carrier   = prompt('Insurance Carrier:', existing.carrier || '');
+  if(carrier === null) return;
+  var policy    = prompt('Policy Number:', existing.policy_number || '');
+  if(policy === null) return;
+  var claim     = prompt('Claim Number:', existing.claim_number || '');
+  if(claim === null) return;
+  var dol       = prompt('Date of Loss (YYYY-MM-DD):', existing.date_of_loss || '');
+  if(dol === null) return;
+  var adjName   = prompt('Adjuster Name:', adj.name || '');
+  if(adjName === null) return;
+  var adjPhone  = prompt('Adjuster Phone:', adj.phone || '');
+  if(adjPhone === null) return;
+  var adjEmail  = prompt('Adjuster Email:', adj.email || '');
+  if(adjEmail === null) return;
+  var ded       = prompt('Deductible ($):', existing.deductible !== null && existing.deductible !== undefined ? String(existing.deductible) : '');
+  if(ded === null) return;
+  var cov       = prompt('Coverage Type (RCV or ACV):', existing.coverage_type || '');
+  if(cov === null) return;
+  var ordLaw    = confirm('Does the policy have Ordinance & Law coverage?\n\nOK = Yes, Cancel = No');
+  var notes     = prompt('Insurance notes (optional):', existing.notes || '');
+  if(notes === null) return;
+  var insObj = {
+    carrier: carrier.trim(),
+    policy_number: policy.trim(),
+    claim_number: claim.trim(),
+    date_of_loss: dol.trim(),
+    adjuster: { name: adjName.trim(), phone: adjPhone.trim(), email: adjEmail.trim() },
+    deductible: ded === '' ? null : (parseFloat(ded) || null),
+    coverage_type: cov.trim().toUpperCase(),
+    ord_law: !!ordLaw,
+    notes: notes.trim()
+  };
+  updateProjectLead(pr, function(L){
+    L.claim_type = 'insurance';
+    L.insurance = insObj;
+    L.retail = false;
+  }).then(function(){
+    auditLog('lead', (isTypeChange ? 'Claim type changed to insurance; ' : '') + 'insurance details saved', pr.id);
+  });
+}
+
 document.getElementById('ldCancel').addEventListener('click', function(){ leadFormModal.style.display = 'none'; });
 
 /* street autocomplete (Photon / OpenStreetMap, free) */
@@ -8074,8 +8703,31 @@ document.getElementById('ldSave').addEventListener('click', async function(){
     category: document.getElementById('ldCategory').value,
     worktype: document.getElementById('ldWorkType').value,
     source: document.getElementById('ldSource').value,
-    insurance: document.getElementById('ldInsurance').checked,
-    retail: document.getElementById('ldRetail').checked,
+    claim_type: (function(){
+      var v = 'unknown';
+      document.querySelectorAll('input[name="ldClaimType"]').forEach(function(r){ if(r.checked) v = r.value; });
+      return v;
+    })(),
+    insurance: (function(){
+      var ct = 'unknown';
+      document.querySelectorAll('input[name="ldClaimType"]').forEach(function(r){ if(r.checked) ct = r.value; });
+      if(ct !== 'insurance') return null;
+      return {
+        carrier: document.getElementById('ldInsCarrier').value.trim(),
+        policy_number: document.getElementById('ldInsPolicy').value.trim(),
+        claim_number: document.getElementById('ldInsClaim').value.trim(),
+        date_of_loss: document.getElementById('ldInsDOL').value,
+        adjuster: {
+          name: document.getElementById('ldInsAdjName').value.trim(),
+          phone: document.getElementById('ldInsAdjPhone').value.trim(),
+          email: document.getElementById('ldInsAdjEmail').value.trim()
+        },
+        deductible: parseFloat(document.getElementById('ldInsDeductible').value) || null,
+        coverage_type: document.getElementById('ldInsCoverage').value,
+        ord_law: document.getElementById('ldInsOrdLaw').checked,
+        notes: document.getElementById('ldInsNotes').value.trim()
+      };
+    })(),
     partner: document.getElementById('ldPartnerCk').checked ? document.getElementById('ldPartner').value : '',
     assigned: assigned,
     priority: document.getElementById('ldPriority').value,
@@ -8108,7 +8760,16 @@ document.getElementById('ldSave').addEventListener('click', async function(){
     leadFormModal.style.display = 'none';
     btn.disabled = false; btn.textContent = 'Create Lead';
     var pr = cacheProjects.find(function(x){ return x.id === pid; });
-    if(pr) openProject(pr.id); else showHome();
+    if(pr){
+      /* Insurance leads land on the insurance side; retail/unknown open the profile as usual */
+      if(lead.claim_type === 'insurance'){
+        showInsuranceClients();
+      } else {
+        openProject(pr.id);
+      }
+    } else {
+      showHome();
+    }
   }catch(e2){
     btn.disabled = false; btn.textContent = 'Create Lead';
     err.textContent = 'Could not create lead: ' + (e2.message || e2);
@@ -8377,27 +9038,316 @@ document.addEventListener('visibilitychange', async function(){
   }catch(err){}
 });
 
+/* Read a project's claim type. Handles migration from old insurance/retail booleans. */
+function projClaimType(pr){
+  var L = pr ? parseCkAll(pr).lead : null;
+  if(!L) return 'unknown';
+  if(L.claim_type) return L.claim_type;
+  if(L.insurance) return 'insurance';
+  if(L.retail) return 'retail';
+  return 'unknown';
+}
+function projInsurance(pr){
+  var L = pr ? parseCkAll(pr).lead : null;
+  return (L && L.insurance && typeof L.insurance === 'object') ? L.insurance : null;
+}
+function claimTypeChip(ct){
+  var label = ct === 'insurance' ? '\uD83D\uDEE1\uFE0F Insurance'
+           : (ct === 'retail'    ? '\uD83C\uDFE0 Retail'
+           :                       '\u2753 Unknown');
+  return '<span class="claimchip ct-' + ct + '" id="claimTypeChip" title="Tap to change claim type">' + label + '</span>';
+}
+function fmtInsMoney(v){
+  if(v === null || v === undefined || v === '') return '';
+  var n = Number(v); if(isNaN(n)) return '';
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function renderLeadCard(){
   var card = document.getElementById('leadCard');
-  if(!currentProject){ card.style.display = 'none'; return; }
+  var insCardMount = document.getElementById('insCard');
+  if(!currentProject){
+    card.style.display = 'none';
+    if(insCardMount) insCardMount.style.display = 'none';
+    return;
+  }
   var L = parseCkAll(currentProject).lead;
-  if(!L){ card.style.display = 'none'; return; }
+  if(!L){
+    card.style.display = 'none';
+    if(insCardMount) insCardMount.style.display = 'none';
+    return;
+  }
   function row(k, v){ return v ? '<div class="llrow"><b>' + k + ':</b> ' + esc(v) + '</div>' : ''; }
-  var flags = [L.insurance ? 'Insurance' : '', L.retail ? 'Retail' : '', L.partner ? ('Partner: ' + L.partner) : '']
-    .filter(Boolean).join(' \u00b7 ');
+  var ct = projClaimType(currentProject);
   document.getElementById('leadCardBody').innerHTML =
     '<div class="llrow"><b>Priority:</b> <span class="priochip prio-' + esc(L.priority || 'Normal') + '">' +
       esc(L.priority || 'Normal') + '</span> &nbsp;<b>Status:</b> ' + esc(L.lead_status || '') + '</div>' +
+    '<div class="llrow"><b>Claim Type:</b> ' + claimTypeChip(ct) + '</div>' +
     row('Company', L.company) +
     (L.phones || []).map(function(p2){ return row('Phone (' + p2.t + ')', p2.v); }).join('') +
     (L.emails || []).map(function(e2){ return row('Email (' + e2.t + ')', e2.v); }).join('') +
     row('Mailing', L.mailing) + row('Billing', L.billing) +
     row('Category', L.category) + row('Work Type', L.worktype) + row('Source', L.source) +
-    (flags ? '<div class="llrow"><b>Flags:</b> ' + esc(flags) + '</div>' : '') +
+    (L.partner ? '<div class="llrow"><b>Partner:</b> ' + esc(L.partner) + '</div>' : '') +
     ((L.assigned || []).length ? '<div class="llrow"><b>Assigned:</b> ' +
       esc(L.assigned.map(function(a){ return DEFAULT_NAMES[a] || a.split('@')[0]; }).join(', ')) + '</div>' : '');
   card.style.display = 'block';
+  renderSolCard();
+  renderInsurancePanel();
 }
+
+function renderInsurancePanel(){
+  var mount = document.getElementById('insCard');
+  if(!mount || !currentProject){ if(mount) mount.style.display = 'none'; return; }
+  var ct = projClaimType(currentProject);
+  if(ct !== 'insurance'){ mount.style.display = 'none'; mount.innerHTML = ''; return; }
+  var I = projInsurance(currentProject) || {};
+  function cell(lbl, val){
+    var isEmpty = (val === null || val === undefined || val === '');
+    return '<div><div class="lbl">' + esc(lbl) + '</div><div class="val' + (isEmpty ? ' empty' : '') + '">' +
+      (isEmpty ? '&mdash;' : esc(String(val))) + '</div></div>';
+  }
+  var adj = I.adjuster || {};
+  mount.innerHTML =
+    '<h3 class="projsec" style="margin-top:20px;">&#128737;&#65039; Insurance Information</h3>' +
+    '<div class="insPanel">' +
+      '<div class="insHead">' +
+        '<span class="insTitle">Claim Details</span>' +
+        '<button class="insEdit" id="insEditBtn">&#9998; Edit</button>' +
+      '</div>' +
+      '<div class="insGrid">' +
+        cell('Carrier',         I.carrier) +
+        cell('Policy Number',   I.policy_number) +
+        cell('Claim Number',    I.claim_number) +
+        cell('Date of Loss',    I.date_of_loss ? fmtDay(I.date_of_loss) : '') +
+        cell('Deductible',      fmtInsMoney(I.deductible)) +
+        cell('Coverage Type',   I.coverage_type) +
+        cell('Ord. & Law',      I.ord_law ? 'Yes' : (I.ord_law === false ? 'No' : '')) +
+        cell('',                '') +
+        cell('Adjuster Name',   adj.name) +
+        cell('Adjuster Phone',  adj.phone) +
+        cell('Adjuster Email',  adj.email) +
+        cell('',                '') +
+      '</div>' +
+      (I.notes ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #d0dae8;font-size:13px;color:#3b4a60;"><b style="color:#2d4468;">Notes:</b> ' + esc(I.notes) + '</div>' : '') +
+    '</div>';
+  mount.style.display = 'block';
+  var editBtn = document.getElementById('insEditBtn');
+  if(editBtn) editBtn.addEventListener('click', function(){ openInsuranceEditor(currentProject); });
+  var chip = document.getElementById('claimTypeChip');
+  if(chip) chip.addEventListener('click', function(){ openClaimTypeMenu(currentProject); });
+}
+
+/* ---------- Scope of Loss reader ---------- */
+function renderSolCard(){
+  var mount = document.getElementById('solCard');
+  if(!mount || !currentProject){ if(mount) mount.innerHTML = ''; return; }
+  var hasIns = !!projInsurance(currentProject);
+  mount.innerHTML =
+    '<div class="solCard" id="solCardEl">' +
+      '<div class="solIcon">&#128194;</div>' +
+      '<div class="solText">' +
+        '<div class="solTitle">' + (hasIns ? 'Update from Scope of Loss' : 'Scope of Loss Reader (AI)') + '</div>' +
+        '<div class="solSub">' +
+          (hasIns
+            ? 'Upload a new SOL PDF or image and the AI will re-extract insurance fields for review.'
+            : 'Upload the adjuster\u2019s SOL (PDF or image) and the AI will fill in carrier, claim #, adjuster contact, and everything else it can read. You approve each field before saving.') +
+        '</div>' +
+      '</div>' +
+      '<button class="solBtn" id="solBtn">&#128228; Upload SOL</button>' +
+      '<input type="file" id="solFileInput" accept="application/pdf,image/*" style="display:none;">' +
+    '</div>';
+  document.getElementById('solBtn').addEventListener('click', function(){
+    document.getElementById('solFileInput').click();
+  });
+  document.getElementById('solFileInput').addEventListener('change', function(){
+    var f = this.files && this.files[0];
+    this.value = '';
+    if(f) readScopeOfLoss(f);
+  });
+}
+
+async function readScopeOfLoss(file){
+  var card = document.getElementById('solCardEl');
+  var btn  = document.getElementById('solBtn');
+  if(!currentProject) return;
+  if(file.size > 12 * 1024 * 1024){
+    alert('That file is bigger than 12 MB. Try compressing the PDF or splitting it.');
+    return;
+  }
+  if(card) card.classList.add('solLoading');
+  if(btn){ btn.disabled = true; btn.textContent = 'Reading\u2026'; }
+  try{
+    /* file → base64 */
+    var dataUrl = await new Promise(function(resolve, reject){
+      var fr = new FileReader();
+      fr.onload = function(){ resolve(fr.result); };
+      fr.onerror = function(){ reject(new Error('Could not read file')); };
+      fr.readAsDataURL(file);
+    });
+    var b64 = (dataUrl || '').split(',')[1] || '';
+    var mime = file.type || 'application/pdf';
+
+    var sess = await sb.auth.getSession();
+    var tok = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
+    var r = await fetch('/api/sol', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
+      body: JSON.stringify({ file: b64, mime: mime })
+    });
+    var j = null;
+    try{ j = await r.json(); }catch(pe){}
+    if(!r.ok){
+      var detail = (j && (j.detail || j.error)) ? (j.detail || j.error) : ('HTTP ' + r.status);
+      throw new Error(String(detail).slice(0, 250));
+    }
+    openSolReviewModal(j.extracted || {}, file.name);
+    auditLog('doc', 'SOL uploaded and read (' + file.name + ')', currentProject.id);
+  }catch(err){
+    alert('Could not read the Scope of Loss: ' + (err.message || err) +
+      '\n\nTry a different file, or add insurance info by hand.');
+  }
+  if(card) card.classList.remove('solLoading');
+  if(btn){ btn.disabled = false; btn.textContent = '\uD83D\uDCE4 Upload SOL'; }
+}
+
+function openSolReviewModal(extracted, fileName){
+  var modal = document.getElementById('solModal');
+  var rows  = document.getElementById('solRows');
+  var summ  = document.getElementById('solSummary');
+  var pr = currentProject;
+  if(!pr){ modal.style.display = 'none'; return; }
+  var currentIns = projInsurance(pr) || {};
+  var curAdj = currentIns.adjuster || {};
+  var eAdj = (extracted && extracted.adjuster) || {};
+
+  summ.innerHTML = '<b>' + esc(fileName || 'SOL') + '</b>' +
+    (extracted && extracted.summary ? ' &mdash; ' + esc(extracted.summary) : '');
+
+  /* Field definitions: label, path (dotted), extracted value, current value */
+  var fields = [
+    ['Carrier',         'carrier',            extracted.carrier,        currentIns.carrier],
+    ['Policy Number',   'policy_number',      extracted.policy_number,  currentIns.policy_number],
+    ['Claim Number',    'claim_number',       extracted.claim_number,   currentIns.claim_number],
+    ['Date of Loss',    'date_of_loss',       extracted.date_of_loss,   currentIns.date_of_loss],
+    ['Deductible',      'deductible',         extracted.deductible,     currentIns.deductible],
+    ['Coverage Type',   'coverage_type',      extracted.coverage_type,  currentIns.coverage_type],
+    ['Ord. & Law',      'ord_law',            extracted.ord_law,        currentIns.ord_law],
+    ['Adjuster Name',   'adjuster.name',      eAdj.name,                curAdj.name],
+    ['Adjuster Phone',  'adjuster.phone',     eAdj.phone,               curAdj.phone],
+    ['Adjuster Email',  'adjuster.email',     eAdj.email,               curAdj.email]
+  ];
+
+  function fmt(v){
+    if(v === null || v === undefined || v === '') return '';
+    if(v === true) return 'Yes';
+    if(v === false) return 'No';
+    return String(v);
+  }
+
+  var anyExtracted = false;
+  var html = fields.map(function(f, i){
+    var lbl = f[0], path = f[1], newV = f[2], oldV = f[3];
+    var hasNew = newV !== null && newV !== undefined && newV !== '';
+    if(hasNew) anyExtracted = true;
+    var changed = hasNew && fmt(newV) !== fmt(oldV);
+    var oldStr = fmt(oldV);
+    return '<div class="solRow">' +
+      '<div class="solLbl">' + esc(lbl) + '</div>' +
+      '<div>' +
+        (oldStr ? '<span class="solOld">was: ' + esc(oldStr) + '</span>' : '') +
+        '<span class="solNew' + (hasNew ? '' : ' solEmpty') + '">' +
+          (hasNew ? esc(fmt(newV)) : '(not found)') +
+        '</span>' +
+      '</div>' +
+      '<div>' + (hasNew
+        ? '<input type="checkbox" class="solChk" data-solpath="' + esc(path) + '" data-solval="' +
+            esc(typeof newV === 'boolean' ? (newV ? 'true' : 'false') : String(newV)) +
+            '"' + (changed ? ' checked' : '') + '>'
+        : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  /* summary / notes toggle */
+  if(anyExtracted){
+    html += '<div class="solRow" style="border-top:1px solid #ddd;padding-top:10px;">' +
+      '<div class="solLbl">Add summary<br>to notes</div>' +
+      '<div><span class="solNew">' + esc(extracted.summary || '') + '</span></div>' +
+      '<div>' + (extracted.summary
+        ? '<input type="checkbox" class="solChk" data-solpath="notes_append" data-solval="' +
+            esc(extracted.summary) + '" checked>'
+        : '') + '</div>' +
+    '</div>';
+  }
+
+  if(!anyExtracted){
+    html = '<div class="solNoFields">The AI could not find any insurance fields in that document. ' +
+      'It may not be a Scope of Loss, or the scan may be too poor to read.' +
+      (extracted.summary ? '<br><br><i>' + esc(extracted.summary) + '</i>' : '') + '</div>';
+    document.getElementById('solApplyBtn').disabled = true;
+  } else {
+    document.getElementById('solApplyBtn').disabled = false;
+  }
+
+  rows.innerHTML = html;
+  modal.style.display = 'block';
+}
+
+function applySolExtraction(){
+  var pr = currentProject; if(!pr) return;
+  var boxes = document.querySelectorAll('#solRows .solChk:checked');
+  if(!boxes.length){ document.getElementById('solModal').style.display = 'none'; return; }
+
+  updateProjectLead(pr, function(L){
+    if(!L.insurance || typeof L.insurance !== 'object'){
+      L.insurance = { adjuster: {} };
+    }
+    if(!L.insurance.adjuster) L.insurance.adjuster = {};
+    boxes.forEach(function(b){
+      var path = b.getAttribute('data-solpath');
+      var val = b.getAttribute('data-solval');
+      /* type-coerce a few known fields */
+      if(path === 'deductible'){
+        var n = parseFloat(val); val = isNaN(n) ? null : n;
+      } else if(path === 'ord_law'){
+        val = (val === 'true');
+      } else if(path === 'coverage_type'){
+        val = String(val).toUpperCase();
+      }
+      if(path === 'notes_append'){
+        var existing = L.insurance.notes || '';
+        var stamp = 'SOL ' + new Date().toLocaleDateString() + ': ';
+        L.insurance.notes = existing
+          ? (existing + '\n' + stamp + val)
+          : (stamp + val);
+        return;
+      }
+      var parts = path.split('.');
+      if(parts.length === 1){
+        L.insurance[parts[0]] = val;
+      } else {
+        if(!L.insurance[parts[0]]) L.insurance[parts[0]] = {};
+        L.insurance[parts[0]][parts[1]] = val;
+      }
+    });
+    /* if we\u2019re applying insurance data, the claim type is by definition insurance */
+    L.claim_type = 'insurance';
+    L.retail = false;
+  }).then(function(){
+    auditLog('lead', 'Insurance fields applied from SOL extraction (' + boxes.length + ' field(s))', pr.id);
+  });
+  document.getElementById('solModal').style.display = 'none';
+}
+
+(function(){
+  var apply = document.getElementById('solApplyBtn');
+  var cancel = document.getElementById('solCancelBtn');
+  var modal = document.getElementById('solModal');
+  if(apply) apply.addEventListener('click', applySolExtraction);
+  if(cancel) cancel.addEventListener('click', function(){ modal.style.display = 'none'; });
+  if(modal) modal.addEventListener('click', function(e){ if(e.target === modal) modal.style.display = 'none'; });
+})();
 document.getElementById('pfCancel').addEventListener('click', function(){ projModal.style.display = 'none'; });
 projModal.addEventListener('click', function(e){ if(e.target === projModal) projModal.style.display = 'none'; });
 
@@ -12541,6 +13491,7 @@ document.getElementById('landQuick').addEventListener('click', function(){
 function showCardinalTruth(){
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
   var rl = document.getElementById('resourceLibraryView'); if(rl) rl.style.display = 'none';
+  var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
   var hd = document.querySelector('header.site'); if(hd) hd.style.display = 'none';
   document.getElementById('cardinalTruthView').style.display = 'block';
   window.scrollTo(0, 0);
@@ -12548,17 +13499,73 @@ function showCardinalTruth(){
 function showResourceLibrary(){
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
   var ct = document.getElementById('cardinalTruthView'); if(ct) ct.style.display = 'none';
+  var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
   var hd = document.querySelector('header.site'); if(hd) hd.style.display = 'none';
   document.getElementById('resourceLibraryView').style.display = 'block';
   window.scrollTo(0, 0);
 }
+function showInsuranceClients(){
+  var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
+  var ct = document.getElementById('cardinalTruthView'); if(ct) ct.style.display = 'none';
+  var rl = document.getElementById('resourceLibraryView'); if(rl) rl.style.display = 'none';
+  var hd = document.querySelector('header.site'); if(hd) hd.style.display = 'none';
+  document.getElementById('insClientsView').style.display = 'block';
+  renderInsuranceClientsList();
+  window.scrollTo(0, 0);
+}
+function renderInsuranceClientsList(){
+  var mount = document.getElementById('insClientsList');
+  if(!mount) return;
+  var insClients = (cacheProjects || []).filter(function(p){ return projClaimType(p) === 'insurance'; });
+  if(!insClients.length){
+    mount.innerHTML =
+      '<div class="ins-card ins-cardstub" style="cursor:default;">' +
+        '<div class="ins-cardtitle">No insurance clients yet</div>' +
+        '<div class="ins-cardsub">Create a new lead with claim type set to Insurance and it will show up here.</div>' +
+      '</div>';
+    return;
+  }
+  mount.innerHTML = insClients.map(function(p){
+    var I = projInsurance(p) || {};
+    var adj = I.adjuster || {};
+    var stg = normStage(p.stage) || 'Lead';
+    return '<button class="ins-card" data-icpid="' + esc(p.id) + '" style="cursor:pointer;margin-bottom:12px;">' +
+      '<div class="ins-cardtitle">' + esc(p.name || 'Unnamed client') + '</div>' +
+      '<div class="ins-cardsub" style="color:#a5b0c0;">' +
+        (p.address ? esc(p.address) + '<br>' : '') +
+        '<b style="color:#7fa6d6;">Stage:</b> ' + esc(stg) +
+        (I.carrier ? ' &nbsp;&middot;&nbsp; <b style="color:#7fa6d6;">Carrier:</b> ' + esc(I.carrier) : '') +
+        (I.claim_number ? ' &nbsp;&middot;&nbsp; <b style="color:#7fa6d6;">Claim #:</b> ' + esc(I.claim_number) : '') +
+        (adj.name ? '<br><b style="color:#7fa6d6;">Adjuster:</b> ' + esc(adj.name) : '') +
+      '</div>' +
+      '<div class="ins-cardgo">Open profile &rsaquo;</div>' +
+    '</button>';
+  }).join('');
+  mount.addEventListener('click', mount._insClickHandler || (mount._insClickHandler = function(e){
+    var b = e.target.closest('[data-icpid]'); if(!b) return;
+    var pid = b.getAttribute('data-icpid');
+    /* leaving the insurance section entirely — return the site header for the main profile */
+    document.getElementById('insClientsView').style.display = 'none';
+    var hd = document.querySelector('header.site'); if(hd) hd.style.display = '';
+    openProject(pid);
+  }), { once: false });
+}
 function backToLanding(){
   document.getElementById('cardinalTruthView').style.display = 'none';
   document.getElementById('resourceLibraryView').style.display = 'none';
+  var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
   var hd = document.querySelector('header.site'); if(hd) hd.style.display = 'none';
   document.getElementById('landingView').style.display = 'block';
   window.scrollTo(0, 0);
 }
+/* Insurance Clients back button */
+(function(){
+  var icBack = document.getElementById('icBackBtn');
+  if(icBack) icBack.addEventListener('click', function(){
+    document.getElementById('insClientsView').style.display = 'none';
+    showCardinalTruth();
+  });
+})();
 document.getElementById('landClaims').addEventListener('click', showCardinalTruth);
 document.getElementById('landLibrary').addEventListener('click', showResourceLibrary);
 
@@ -12588,22 +13595,66 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     dropdown.classList.remove('open');
     var nav = b.getAttribute('data-ctnav');
     if(nav === 'library') showResourceLibrary();
+    else if(nav === 'clients') showInsuranceClients();
     else if(nav === 'home') backToLanding();
   });
-  /* also let the cards on the Cardinal Truth page route to library */
+  /* also let the cards on the Cardinal Truth page route to library / clients */
   document.getElementById('cardinalTruthView').addEventListener('click', function(e){
     var b = e.target.closest('.ins-card[data-ctnav]'); if(!b) return;
-    if(b.getAttribute('data-ctnav') === 'library') showResourceLibrary();
+    var nav = b.getAttribute('data-ctnav');
+    if(nav === 'library') showResourceLibrary();
+    else if(nav === 'clients') showInsuranceClients();
   });
 })();
 
-/* Resource Library back button + search */
+/* Resource Library sub-page router */
 (function(){
+  var scope = document.getElementById('resourceLibraryView');
+  if(!scope) return;
+  var titleEl = scope.querySelector('.ins-title');
   var backBtn = document.getElementById('rlBackBtn');
+  var pages = Array.prototype.slice.call(scope.querySelectorAll('.rl-page'));
+
+  function showPage(id){
+    pages.forEach(function(p){ p.classList.toggle('rl-pageActive', p.id === id); });
+    var active = document.getElementById(id);
+    if(active && titleEl){
+      /* header shows sub-page title when not on the landing grid */
+      titleEl.innerHTML = (id === 'rlLanding') ? 'Resource Library' : (active.getAttribute('data-rltitle') || 'Resource Library');
+    }
+    window.scrollTo(0, 0);
+  }
+  window._rlShowPage = showPage;
+
+  /* clicks on landing boxes and the cheat-sheet link route to sub-pages */
+  scope.addEventListener('click', function(e){
+    var b = e.target.closest('[data-rlgoto]');
+    if(!b) return;
+    var target = b.getAttribute('data-rlgoto');
+    var map = {
+      insurance: 'rlPageInsurance',
+      code:      'rlPageCode',
+      policy:    'rlPagePolicy',
+      docs:      'rlPageDocs',
+      tips:      'rlPageTips',
+      pitfalls:  'rlPagePitfalls',
+      cheat:     'rlPageCheat',
+      mfg:       'rlPageMfg'
+    };
+    if(map[target]) showPage(map[target]);
+  });
+
+  /* back button: from sub-page → landing; from landing → out of RL */
   if(backBtn) backBtn.addEventListener('click', function(){
-    /* if user came from Cardinal Truth, go there; otherwise landing */
+    var landing = document.getElementById('rlLanding');
+    var onLanding = landing && landing.classList.contains('rl-pageActive');
+    if(!onLanding){
+      showPage('rlLanding');
+      return;
+    }
+    /* leaving RL entirely */
     var ct = document.getElementById('cardinalTruthView');
-    document.getElementById('resourceLibraryView').style.display = 'none';
+    scope.style.display = 'none';
     if(ct && ct.getAttribute('data-was-open') === '1'){
       ct.removeAttribute('data-was-open');
       ct.style.display = 'block';
@@ -12612,32 +13663,14 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     }
     window.scrollTo(0, 0);
   });
-  var q = document.getElementById('rlQ');
-  if(!q) return;
-  var scope = document.getElementById('resourceLibraryView');
-  var cards = Array.prototype.slice.call(scope.querySelectorAll('.rl-card'));
-  var sects = Array.prototype.slice.call(scope.querySelectorAll('.rl-sect'));
-  q.addEventListener('input', function(){
-    var v = q.value.trim().toLowerCase();
-    if(!v){
-      cards.forEach(function(c){ c.classList.remove('rl-hidden'); });
-      sects.forEach(function(s){ s.classList.remove('rl-hidden'); });
-      return;
-    }
-    cards.forEach(function(c){
-      var hay = (c.textContent + ' ' + (c.getAttribute('data-rltags') || '')).toLowerCase();
-      c.classList.toggle('rl-hidden', hay.indexOf(v) === -1);
-    });
-    sects.forEach(function(s){
-      var next = s.nextElementSibling, anyVisible = false;
-      while(next && !next.classList.contains('rl-sect')){
-        if(next.classList.contains('rl-card') && !next.classList.contains('rl-hidden')){ anyVisible = true; break; }
-        next = next.nextElementSibling;
-      }
-      s.classList.toggle('rl-hidden', !anyVisible);
-    });
-  });
 })();
+
+/* whenever RL is opened, reset to landing */
+var _origShowResLib = showResourceLibrary;
+showResourceLibrary = function(){
+  _origShowResLib();
+  if(window._rlShowPage) window._rlShowPage('rlLanding');
+};
 
 /* remember if RL was opened from Cardinal Truth so Back can return there */
 document.getElementById('cardinalTruthView').addEventListener('click', function(e){
