@@ -2404,7 +2404,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 134 &#8212; Insurance Clients directory now matches main directory layout with search, stage filters, and favorites — in insurance dark theme</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 135 &#8212; Fix: insurance theme class was being stripped by hideAllViews inside openProject — re-applied after</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9087,6 +9087,10 @@ function openProject(id){
   renderMeasureTab();
   showTab('overview');
   hideAllViews();
+  /* Re-apply the insurance theme class — hideAllViews() strips it as a defensive
+     reset, so we set it again here based on the current project's claim type,
+     right before the profile actually becomes visible. */
+  document.body.classList.toggle('claim-insurance', _projCT === 'insurance');
   ['paymentsView','tasksView','docsView','apptsView'].forEach(function(v){
     var el = document.getElementById(v);
     if(el) el.style.display = 'none';
