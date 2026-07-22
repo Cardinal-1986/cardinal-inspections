@@ -2462,7 +2462,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 138 &#8212; Cardinal Truth: dropped RL card, added Insurance Resources at bottom; insurance profile bg dark to match; brand logo grey/blue two-tone in insurance mode</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 139 &#8212; Fix: Source of Truth from landing now explicitly renders dashboard instead of assuming mainView is already visible</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15321,10 +15321,14 @@ function showLanding(userEmail){
 document.getElementById('landDash').addEventListener('click', function(){
   document.getElementById('landingView').style.display = 'none';
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
+  /* Explicitly render the dashboard — don't rely on mainView already being visible.
+     Earlier navigation (Cardinal Truth, a client profile, etc.) may have hidden it. */
+  if(typeof showHome === 'function') showHome();
 });
 document.getElementById('landSkip').addEventListener('click', function(){
   document.getElementById('landingView').style.display = 'none';
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
+  if(typeof showHome === 'function') showHome();
 });
 document.getElementById('landQuick').addEventListener('click', function(){
   document.getElementById('landingView').style.display = 'none';
