@@ -2558,7 +2558,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 144 &#8212; Cardinal Truth header restyled black-with-blue-rule; banner reads "Dashboard"; Home + Landing chips in banner corner</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-22 build 145 &#8212; Fix: home logo actually goes home (hideAllViews now dismisses insurance overlays); dropdown label reads "☰ Menu"</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3241,7 +3241,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <img src="/cardinal-transparent.png" alt="Cardinal">
       </button>
       <select class="ins-navsel" id="ctSectionSel" aria-label="Cardinal Truth sections">
-        <option value="ct">Cardinal Truth</option>
+        <option value="" selected>&#9776; Menu</option>
         <option value="clients">Insurance Clients</option>
         <option value="supplements">Supplement Templates</option>
         <option value="insurance-resources">Insurance Resources</option>
@@ -11682,6 +11682,11 @@ function hideAllViews(){
   /* Also drop the claim-insurance theme; openProject will re-apply if the next
      project is an insurance client. */
   document.body.classList.remove('claim-insurance');
+  /* Hide the insurance-section overlay views too — they're z-index 155+ and
+     will keep covering the newly-shown main-app view otherwise. */
+  var _ct = document.getElementById('cardinalTruthView'); if(_ct) _ct.style.display = 'none';
+  var _rl = document.getElementById('resourceLibraryView'); if(_rl) _rl.style.display = 'none';
+  var _ic = document.getElementById('insClientsView'); if(_ic) _ic.style.display = 'none';
   setHeaderJobMenu(false);
   mainView.style.display = 'none';
   projectView.style.display = 'none';
@@ -15694,10 +15699,8 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
   /* Section dropdown navigates within the insurance section */
   if(sectionSel) sectionSel.addEventListener('change', function(){
     var v = this.value;
-    /* Reset to 'ct' visually so the dropdown always shows "Cardinal Truth" as label
-       — since navigation leaves this page, the option state won't be visible anyway,
-       but it prevents stale selection when returning. */
-    this.value = 'ct';
+    /* Reset to '' so the visible label stays "Menu" for the next visit */
+    this.value = '';
     if(v === 'clients') showInsuranceClients();
     else if(v === 'supplements'){
       showResourceLibrary();
@@ -15707,7 +15710,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
       showResourceLibrary();
       if(window._rlShowPage) window._rlShowPage('rlPageInsHub');
     }
-    /* 'ct' means stay here — nothing to do */
+    /* empty value ('') means stay here — nothing to do */
   });
   if(plusBtn) plusBtn.addEventListener('click', function(e){
     e.stopPropagation();
