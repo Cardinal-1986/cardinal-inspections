@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 163 &#8212; Universal home button in site header (visible on every page, adapts to theme)</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 164 &#8212; Portal chip auto-syncs to Cardinal Truth or Community Hub when you navigate into them</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -28099,6 +28099,98 @@ body.claim-insurance #brandLogo{
       childList:true, subtree:true,
       attributes:true, attributeFilter:['style','class']
     });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: portal_view_sync.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — PORTAL VIEW SYNC
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ The portal chip in the header used to reflect only the setting in
+ localStorage — not the view you actually navigated to. So opening
+ Cardinal Truth from a Community-portal context left the chip
+ saying COMMUNITY while you were staring at insurance content, and
+ vice versa. That was the "CRM selector acting funny."
+
+ This module wraps the CRM-entry functions so entering a CRM
+ automatically syncs the chip to match:
+   showCardinalTruth()        → portal = insurance
+   CardinalCommunityHub.show()→ portal = community
+
+ The sync is SILENT — set(portal, false) so it just updates the
+ chip label + body class without re-triggering go(portal) and
+ causing a navigation loop.
+
+ Home is intentionally NOT synced. Home is portal-neutral (it's the
+ retail dashboard, but usable from any portal). Whatever portal you
+ were on before Home is preserved.
+
+ INSTALL: paste after home_button_universal.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<script id="cr-portal-sync-script">
+(function () {
+  'use strict';
+
+  function silentSet(portal){
+    if(!window.CardinalPortal || typeof window.CardinalPortal.set !== 'function') return;
+    var cur;
+    try{ cur = window.CardinalPortal.get(); }catch(e){ cur = null; }
+    if(cur === portal) return;                // already in sync — no-op
+    try{ window.CardinalPortal.set(portal, false); }catch(e){}   // false = don't navigate
+  }
+
+  function hookCardinalTruth(){
+    if(typeof window.showCardinalTruth !== 'function') return false;
+    if(window.showCardinalTruth.__crPortalSync) return true;
+    var orig = window.showCardinalTruth;
+    var wrapped = function(){
+      // Sync BEFORE the view renders so the chip is right when the header paints.
+      silentSet('insurance');
+      return orig.apply(this, arguments);
+    };
+    wrapped.__crPortalSync = true;
+    window.showCardinalTruth = wrapped;
+    return true;
+  }
+
+  function hookCommunityHub(){
+    var hub = window.CardinalCommunityHub;
+    if(!hub || typeof hub.show !== 'function') return false;
+    if(hub.show.__crPortalSync) return true;
+    var orig = hub.show;
+    var wrapped = function(){
+      silentSet('community');
+      return orig.apply(this, arguments);
+    };
+    wrapped.__crPortalSync = true;
+    hub.show = wrapped;
+    return true;
+  }
+
+  function tryHooks(){
+    var a = hookCardinalTruth();
+    var b = hookCommunityHub();
+    return a && b;
+  }
+
+  function start(){
+    tryHooks();
+    // Both hooks can miss on the first tick because the target functions
+    // load after this module. Retry for a few seconds then give up.
+    var n = 0;
+    var iv = setInterval(function(){
+      if(tryHooks() || ++n > 40) clearInterval(iv);
+    }, 200);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
