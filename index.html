@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 165 &#8212; Insurance tint scoped to Cardinal Truth view; auto-transition suggestions (contract signed &#8594; Approved, payment &#8594; Invoiced)</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 166 &#8212; Retail Home header cleanup: no more Landing chip, "Dashboard" word, duplicate search, or home icon on Home. Brand title fits.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -28483,6 +28483,145 @@ body.claim-insurance #brandLogo{
     check: firedRule,
     render: renderBanner,
   };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: retail_home_cleanup.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — RETAIL HOME HEADER CLEANUP
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ The retail Home header was carrying too many redundant affordances
+ and the brand title was truncating to "CA…" because everything
+ competed for space. This module:
+
+   1. Hides the "🏠 Landing" chip in the dashcard row.
+      (You can still reach Landing via burger Menu.)
+
+   2. Hides the "Dashboard" word in the dashcard row.
+      The clock alone is enough context.
+
+   3. Hides the client-search bar (qSearchBtn) on Home.
+      The header Search button + / shortcut cover the same
+      ground with the added ability to search docs and partners.
+
+   4. Hides the universal Home button on Home.
+      (Nothing to go back to — you're already there.)
+
+   5. Universal: brand title now flex-shrinks with an ellipsis
+      instead of getting clipped to two letters, and the header's
+      + / Menu / Search / chip buttons stay flex-shrink:0 so they
+      never disappear off the right edge.
+
+ INSTALL: paste after auto_transitions.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-home-cleanup-styles">
+  /* ─── 1) Hide Landing chip in Home dashboard banner ─────── */
+  #qLandBtn{ display:none !important; }
+
+  /* ─── 2) Hide "Dashboard" word (keep clock) ─────────────── */
+  .dashcard > b{ display:none !important; }
+  /* Clock stands alone — remove the leading margin so it isn't
+     dangling in the middle of the dashcard. */
+  #qClock{ margin-left:0 !important; }
+
+  /* ─── 3) Hide the qSearchBtn on Home ────────────────────── */
+  #qSearchBtn{ display:none !important; }
+  /* The quickrow was designed around it — collapse the gap so the
+     dashcard doesn't feel indented. */
+  .quickrow{ gap:8px !important; }
+
+  /* ─── 4) Hide universal Home button on Home ─────────────── */
+  /* (Handled below by JS since it depends on which view is
+     visible, not just a class we can style on load.) */
+
+  /* ─── 5) Universal header tightening ────────────────────── */
+  /* Brand title takes remaining space with an ellipsis, so
+     "CARDINAL RESOURCE" doesn't clip to "CA…" the second the
+     header adds a chip or a button. */
+  header.site .titlecard{
+    min-width:0; flex:1 1 auto; overflow:hidden;
+  }
+  header.site .titlecard h1,
+  header.site .brand h1{
+    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  /* Every interactive header element gets flex-shrink:0 so they
+     never disappear off the right edge — the title yields first. */
+  header.site .btn,
+  header.site .cr-portal-chip,
+  header.site #navBtn,
+  header.site #addProjectBtn,
+  header.site #cr-home-btn,
+  header.site #cr-search-btn{
+    flex-shrink:0;
+  }
+  /* Tighter defaults on mobile so buttons don't consume the whole row. */
+  @media (max-width:640px){
+    header.site .btn,
+    header.site .cr-portal-chip{
+      padding:5px 9px;
+    }
+    header.site #addProjectBtn{
+      padding:5px 12px;
+    }
+  }
+</style>
+
+<script id="cr-home-cleanup-script">
+(function () {
+  'use strict';
+
+  // Hide the universal home button while mainView (Home) is visible.
+  // Keep it on client profiles, list views, activity, reports, etc. —
+  // basically anywhere it's actually helpful to have a one-tap Home.
+  function isOnHome(){
+    var mv = document.getElementById('mainView');
+    if(!mv) return false;
+    var d = mv.style.display;
+    if(d === 'none') return false;
+    // Also treat the login/landing views as "not on home" so we don't
+    // fight the base app's own visibility rules.
+    var lv = document.getElementById('landingView');
+    if(lv && lv.style.display !== 'none' && lv.style.display !== '') return false;
+    return true;
+  }
+
+  function updateHomeBtn(){
+    var btn = document.getElementById('cr-home-btn');
+    if(!btn) return;
+    // Don't override the overlay-hidden state — only hide extra when
+    // we're on mainView. The universal module already handles the
+    // Cardinal-Truth / Resource-Library / etc. case.
+    if(isOnHome()){
+      btn.style.display = 'none';
+    }
+    // If we're NOT on home, let the universal module's own logic
+    // control it (it re-runs on every mutation and will set inline-flex
+    // when appropriate). We just quietly stop overriding.
+  }
+
+  var ticking = false;
+  function schedule(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){ ticking = false; try{ updateHomeBtn(); }catch(e){} });
+  }
+  function start(){
+    updateHomeBtn();
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:true,
+      attributes:true, attributeFilter:['style','class']
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();
 </script>
 
