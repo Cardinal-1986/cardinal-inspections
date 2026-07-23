@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 168 &#8212; + New Estimate no longer a broken stub; Home header actually tightened (search icon hidden, buttons trimmed on mobile)</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 169 &#8212; Estimates audit: Templates + stat cells + manual rows wired, Save/Send messaging honest</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -28952,6 +28952,229 @@ body.claim-insurance #brandLogo{
       childList:true, subtree:true,
       attributes:true, attributeFilter:['style','class']
     });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: estimates_audit_fixes.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — ESTIMATES AUDIT FIXES
+ v2026-07-23 · handler-level fixes after the full-flow trace
+────────────────────────────────────────────────────────────────────
+ The + New Estimate fix (build 168) was one symptom of a bigger
+ pattern. Tracing every button in the plugin's three templates —
+ cr-tmpl-list, cr-tmpl-ai-create, cr-tmpl-ai-output — turned up
+ these additional issues:
+
+   BROKEN / MISLEADING
+   • Templates button      — has no click handler at all
+   • Pipeline stat cells   — displayed only, not clickable
+   • Manual row clicks     — call window.openManualEstimate which
+                             is nowhere defined; clicks do nothing
+   • AI Save button        — just shows toast; the AI estimate is
+                             already persisted at generation time,
+                             so this button is decorative
+   • AI Send button        — updates status to 'sent' in the DB
+                             but never calls /api/senddoc; the
+                             success toast promises email/SMS
+                             delivery that isn't wired up
+   • AI Convert button     — depends on window.openContractEditor
+                             which doesn't exist; falls back to
+                             showList silently
+
+   OK
+   • + New AI, Back, template tiles, chips, photo picker,
+     Generate, Regenerate, Discard, filter tabs (all wired,
+     verified real handlers)
+
+ What this module does:
+   1. Wires Templates → opens AI Create (template picker lives there)
+   2. Wires pipeline stat cells → clicking filters by that status
+   3. Reroutes manual row clicks → closes the plugin and opens the
+      project profile the estimate belongs to (project id === row id)
+   4. Save button toast honest ("Already saved — AI estimates save
+      on generation")
+   5. Send button now confirms with a note that only status updates
+      (no actual email/SMS integration yet)
+
+ What it does NOT fix (needs bigger work):
+   • Actual email/SMS send integration — needs /api/senddoc
+     integration with the ai_estimates payload shape
+   • Manual estimate creation flow — needs a whole editor
+   • Contract editor for AI Convert — needs a definition of
+     window.openContractEditor
+
+ INSTALL: paste after estimates_new_fix.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-eaf-styles">
+  /* Make pipeline stat cells look clickable */
+  #cr-estimates-mount .cr-stat[data-cr-clickable="1"]{
+    cursor:pointer;
+    transition:background .1s, transform .08s;
+  }
+  #cr-estimates-mount .cr-stat[data-cr-clickable="1"]:hover{
+    background:#f7f7f7;
+  }
+  #cr-estimates-mount .cr-stat[data-cr-clickable="1"]:active{
+    transform:scale(.97);
+  }
+</style>
+
+<script id="cr-eaf-script">
+(function () {
+  'use strict';
+
+  var MOUNT_ID = 'cr-estimates-mount';
+
+  function mount(){ return document.getElementById(MOUNT_ID); }
+  function mountVisible(){
+    var m = mount();
+    return !!(m && m.style.display && m.style.display !== 'none');
+  }
+
+  // 1) Templates button — was not wired. Route to AI Create where
+  //    the template picker actually lives.
+  function wireTemplates(){
+    if(!mountVisible()) return;
+    var btn = mount().querySelector('[data-act="templates"]');
+    if(!btn || btn.dataset.crEafFixed === '1') return;
+    btn.dataset.crEafFixed = '1';
+    btn.onclick = function(e){
+      e.stopPropagation();
+      if(window.CardinalEstimates && typeof window.CardinalEstimates.openAI === 'function'){
+        window.CardinalEstimates.openAI();
+      }
+    };
+  }
+
+  // 2) Pipeline stat cells — clickable filters.
+  //    data-status values in template: "", "draft", "sent", "approved", "converted"
+  //    Filter tab values:              "all",   "pending",  "pending",  "approved", "converted"
+  function wireStats(){
+    if(!mountVisible()) return;
+    var stats = mount().querySelectorAll('.cr-stat[data-status]');
+    if(!stats.length) return;
+    var STATUS_TO_TAB = {
+      '':          'all',
+      'draft':     'pending',    // pending = draft/sent/viewed
+      'sent':      'pending',
+      'approved':  'approved',
+      'converted': 'converted',
+    };
+    stats.forEach(function(cell){
+      if(cell.dataset.crEafFixed === '1') return;
+      cell.dataset.crEafFixed = '1';
+      cell.setAttribute('data-cr-clickable', '1');
+      cell.onclick = function(e){
+        e.stopPropagation();
+        var tab = STATUS_TO_TAB[cell.dataset.status] || 'all';
+        var target = mount().querySelector('[data-filter="' + tab + '"]');
+        if(target){ target.click(); }
+      };
+    });
+  }
+
+  // 3) Manual estimate row clicks — the plugin sets these to
+  //    call window.openManualEstimate, which doesn't exist.
+  //    These rows come from the `projects` table (source !== 'ai'),
+  //    and the row's data-id IS the project's id. So the useful
+  //    fallback is to close the plugin and open that project's
+  //    profile — where the user can actually see the estimate.
+  function wireManualRows(){
+    if(!mountVisible()) return;
+    var rows = mount().querySelectorAll('.cr-row');
+    rows.forEach(function(row){
+      if(row.dataset.crEafFixed === '1') return;
+      if(row.dataset.source === 'ai') return;    // AI rows work already
+      row.dataset.crEafFixed = '1';
+      row.onclick = function(e){
+        e.stopPropagation();
+        var id = row.dataset.id;
+        if(!id) return;
+        // Close every plugin mount, then open the project profile
+        if(typeof window.crCloseAll === 'function'){
+          try{ window.crCloseAll(); }catch(err){}
+        }
+        // Give showHome a beat to run so hideAllViews doesn't stomp
+        // on the projectView we're about to open.
+        setTimeout(function(){
+          if(typeof window.openProject === 'function') window.openProject(id);
+        }, 60);
+      };
+    });
+  }
+
+  // 4) AI Save button — was decorative toast. Make the message honest.
+  //    AI estimates are already saved to ai_estimates on generation.
+  //    Nothing to save from the output view.
+  function wireSave(){
+    if(!mountVisible()) return;
+    var btn = mount().querySelector('[data-act="save"]');
+    if(!btn || btn.dataset.crEafFixed === '1') return;
+    btn.dataset.crEafFixed = '1';
+    btn.onclick = function(e){
+      e.stopPropagation();
+      var toastFn = window.toast || function(msg){ alert(msg); };
+      try{ toastFn('Already saved \u2014 AI estimates save on generation', 'success'); }
+      catch(err){ alert('Already saved.'); }
+    };
+  }
+
+  // 5) AI Send button — was misleading. Confirm first with a note
+  //    that email/SMS isn't wired up yet, then let the original
+  //    handler update the DB status.
+  function wireSend(){
+    if(!mountVisible()) return;
+    var btn = mount().querySelector('[data-act="send"]');
+    if(!btn || btn.dataset.crEafFixed === '1') return;
+    btn.dataset.crEafFixed = '1';
+    var orig = btn.onclick;
+    btn.onclick = function(e){
+      e.stopPropagation();
+      var ok = confirm(
+        'Mark this estimate as sent?\n\n' +
+        'Heads up: Email / SMS delivery isn\'t integrated yet. ' +
+        'This will only change the status in the database — you\'ll ' +
+        'still need to email or text the client separately for now.'
+      );
+      if(!ok) return;
+      if(typeof orig === 'function'){ orig.call(this, e); }
+    };
+  }
+
+  function tick(){
+    try{ wireTemplates();  }catch(e){}
+    try{ wireStats();      }catch(e){}
+    try{ wireManualRows(); }catch(e){}
+    try{ wireSave();       }catch(e){}
+    try{ wireSend();       }catch(e){}
+  }
+  var ticking = false;
+  function schedule(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){ ticking = false; tick(); });
+  }
+  function start(){
+    tick();
+    // Watch the mount for template swaps + the whole plugin for
+    // display toggles. The plugin re-mounts a new template each
+    // showList / showAICreate / showOutput call, so we need to
+    // re-wire against fresh elements every time.
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:true,
+      attributes:true, attributeFilter:['style']
+    });
+    // Also poll for a few seconds on boot in case the mount lands late.
+    var n = 0, iv = setInterval(function(){ tick(); if(++n > 20) clearInterval(iv); }, 400);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
