@@ -1,0 +1,576 @@
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: community_hub.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — COMMUNITY HUB
+ v2026-07-23 · Community's own dashboard view
+────────────────────────────────────────────────────────────────────
+ The Community CRM's landing surface. Mirrors the pattern used by
+ Cardinal Truth for Insurance — a full-view section injected into
+ the DOM, shown/hidden via hideAllViews() coordination.
+
+ LAYOUT (top to bottom)
+   1. Community banner (green/beige, matches portal palette)
+   2. PIPELINE STRIP — sticky at top of the view, counts per stage
+      in bidding vocabulary (Bid Requested / Submitted / Awarded …)
+   3. NEEDS ATTENTION card — Bids to submit, bids awaiting decision,
+      awards to schedule. Each row opens a drilldown modal with the
+      matching projects.
+   4. PARTNERS grid — grouped by non-profit vs property manager,
+      active-job count per partner. Clicking a partner opens a
+      drilldown modal with their active projects. "Manage Partners"
+      tile opens the directory.
+
+ DATA
+   Pulled from window.cacheProjects filtered to projClaimType ==
+   'community', joined against window.CardinalCommunityPartners.
+   No new tables, no new Supabase queries.
+
+ NAV
+   Adds a "Community" nav option to the burger menu when the current
+   portal is Community or All. Clicking shows the hub. Uses the app's
+   existing hideAllViews() so navigating anywhere else hides the hub
+   cleanly.
+
+ INSTALL: paste after community_stages.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-chub-styles">
+  /* ── View shell ─────────────────────────────────────────── */
+  #communityHubView{
+    display:none; background:#f7f2e7; min-height:100vh;
+    padding:0 0 40px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  #communityHubView .cr-chub-wrap{
+    max-width:960px; margin:0 auto; padding:0 14px;
+  }
+
+  /* ── Banner ─────────────────────────────────────────────── */
+  .cr-chub-banner{
+    position:relative;
+    background:linear-gradient(160deg,#2f5f3b,#4a8c5a 55%,#3d7a4c);
+    color:#f5f2e7; padding:26px 22px 30px;
+    border-bottom:3px solid #d4a017;
+  }
+  .cr-chub-banner::before{
+    content:''; position:absolute; left:0; right:0; bottom:-3px; height:3px;
+    background:linear-gradient(90deg,transparent,#4a8c5a 30%,#d4a017 50%,#4a8c5a 70%,transparent);
+  }
+  .cr-chub-banner h1{
+    margin:0; font:800 26px Georgia,'Times New Roman',serif;
+    letter-spacing:.02em; color:#f7f2e7;
+  }
+  .cr-chub-banner h1 span{
+    background:linear-gradient(160deg,#a8d5b4,#f5d061 45%,#7fc98f);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:#f5d061;
+  }
+  .cr-chub-banner p{
+    margin:6px 0 0; font:600 12.5px 'Segoe UI',Arial,sans-serif;
+    color:#c9d9c9; line-height:1.55; max-width:640px;
+  }
+  .cr-chub-banner .cr-chub-back{
+    position:absolute; top:16px; right:16px;
+    background:rgba(255,255,255,.13); color:#f7f2e7;
+    border:1px solid rgba(255,255,255,.32); border-radius:7px;
+    padding:6px 12px; cursor:pointer;
+    font:800 10px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em; text-transform:uppercase;
+  }
+  .cr-chub-banner .cr-chub-back:hover{ background:rgba(255,255,255,.22); }
+
+  /* ── Sticky pipeline strip ──────────────────────────────── */
+  .cr-chub-pipeline{
+    position:sticky; top:0; z-index:40;
+    background:#fffdf7; border-bottom:1px solid #ded3bf;
+    box-shadow:0 4px 12px rgba(0,0,0,.06);
+    padding:11px 14px;
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+  }
+  .cr-chub-pipeline .rail{
+    display:flex; gap:8px; min-width:max-content; padding:2px 0;
+  }
+  .cr-chub-pcell{
+    display:flex; flex-direction:column; align-items:flex-start;
+    padding:8px 12px; border-radius:8px;
+    background:#fff; border:1px solid #e2d7bf;
+    cursor:pointer; user-select:none; min-width:112px;
+    transition:transform .1s, border-color .1s;
+  }
+  .cr-chub-pcell:hover{ border-color:#3d7a4c; }
+  .cr-chub-pcell:active{ transform:scale(.98); }
+  .cr-chub-pcell .k{
+    font:800 8.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em;
+    text-transform:uppercase; color:#8a7a5a;
+  }
+  .cr-chub-pcell .v{
+    font:800 20px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    font-variant-numeric:tabular-nums; margin-top:2px;
+  }
+  .cr-chub-pcell .v.zero{ color:#c4b697; }
+  .cr-chub-pcell.active{ background:#eef7f0; border-color:#3d7a4c; }
+  .cr-chub-pcell.active .v{ color:#3d7a4c; }
+
+  /* ── Body cards ─────────────────────────────────────────── */
+  .cr-chub-card{
+    background:#fffdf7; border:1px solid #ded3bf; border-radius:12px;
+    padding:16px 18px; margin:16px 0;
+  }
+  .cr-chub-card h3{
+    margin:0 0 12px; font:800 12px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase; color:#3d7a4c;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .cr-chub-card h3 .cr-chub-total{
+    font:800 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.06em;
+    color:#8a7a5a; text-transform:none;
+  }
+
+  /* ── Needs attention rows ───────────────────────────────── */
+  .cr-chub-nrow{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 12px; border:1px solid #e2d7bf; border-radius:9px;
+    background:#fff; margin-bottom:7px; cursor:pointer;
+    transition:border-color .1s;
+  }
+  .cr-chub-nrow:hover{ border-color:#3d7a4c; }
+  .cr-chub-nrow .nk{ font:700 13.5px 'Segoe UI',Arial,sans-serif; color:#2c2c2c; }
+  .cr-chub-nrow .ndesc{ font:600 11.5px 'Segoe UI',Arial,sans-serif; color:#8a7a5a; margin-top:2px; }
+  .cr-chub-nrow .nv{
+    font:800 22px 'Segoe UI',Arial,sans-serif; color:#3d7a4c;
+    font-variant-numeric:tabular-nums; padding-left:12px;
+  }
+  .cr-chub-nrow .nv.zero{ color:#c4b697; }
+  .cr-chub-nrow.done{ background:#f5f2e7; }
+  .cr-chub-nrow.done .nk{ color:#8a7a5a; }
+
+  /* ── Partners grid ──────────────────────────────────────── */
+  .cr-chub-pgroup{ margin-bottom:12px; }
+  .cr-chub-pgroup:last-child{ margin-bottom:0; }
+  .cr-chub-pgroup h4{
+    margin:0 0 8px; font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase; color:#6b7a55;
+  }
+  .cr-chub-prow{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:12px 14px; border:1px solid #e2d7bf; border-radius:9px;
+    background:#fff; margin-bottom:7px; cursor:pointer;
+    transition:border-color .1s;
+  }
+  .cr-chub-prow:hover{ border-color:#3d7a4c; }
+  .cr-chub-prow .pname{ font:700 14px 'Segoe UI',Arial,sans-serif; color:#2c2c2c; }
+  .cr-chub-prow .pmeta{ font:600 11.5px 'Segoe UI',Arial,sans-serif; color:#8a7a5a; margin-top:2px; }
+  .cr-chub-prow .pcount{
+    font:800 16px 'Segoe UI',Arial,sans-serif; color:#3d7a4c;
+    font-variant-numeric:tabular-nums; padding-left:12px;
+    white-space:nowrap;
+  }
+  .cr-chub-prow .pcount small{
+    font:700 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em;
+    text-transform:uppercase; color:#8a7a5a; margin-left:4px;
+  }
+  .cr-chub-prow .pcount.zero{ color:#c4b697; }
+
+  .cr-chub-manage{
+    display:block; width:100%; margin-top:10px;
+    background:transparent; color:#3d7a4c;
+    border:1px dashed #a6c1ad; border-radius:9px;
+    padding:11px; cursor:pointer;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em; text-transform:uppercase;
+  }
+  .cr-chub-manage:hover{ background:rgba(61,122,76,.08); }
+
+  .cr-chub-empty{
+    padding:22px 12px; text-align:center; color:#8a7a5a;
+    font:600 13px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-chub-empty small{ display:block; margin-top:6px; color:#a89a7a; font-size:11.5px; }
+
+  /* ── Drilldown modal (reused for stage lists + partner lists) ── */
+  .cr-chub-shell{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9500;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:32px 12px; overflow-y:auto;
+  }
+  .cr-chub-shell .cr-chub-box{
+    width:100%; max-width:520px; background:#fffdf7;
+    border:1px solid #ded3bf; border-radius:14px;
+    box-shadow:0 12px 44px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .cr-chub-shell .cr-chub-mhd{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; border-bottom:1px solid #ede3ce;
+    background:linear-gradient(180deg,#f5efdf,#efe6cd);
+  }
+  .cr-chub-shell .cr-chub-mhd h3{
+    margin:0; font:800 15px Georgia,'Times New Roman',serif;
+    color:#3d7a4c; letter-spacing:.02em;
+  }
+  .cr-chub-shell .cr-chub-mx{
+    background:none; border:0; font-size:22px; color:#7a6a4a; cursor:pointer;
+    line-height:1; padding:0 4px;
+  }
+  .cr-chub-shell .cr-chub-mbd{ padding:14px 18px 18px; max-height:70vh; overflow-y:auto; }
+  .cr-chub-shell .prow{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 12px; border:1px solid #e2d7bf; border-radius:9px;
+    background:#fff; margin-bottom:7px; cursor:pointer;
+    transition:border-color .1s;
+  }
+  .cr-chub-shell .prow:hover{ border-color:#3d7a4c; }
+  .cr-chub-shell .prow .n{ font:700 13.5px 'Segoe UI',Arial,sans-serif; color:#2c2c2c; }
+  .cr-chub-shell .prow .m{ font:600 11.5px 'Segoe UI',Arial,sans-serif; color:#8a7a5a; margin-top:2px; }
+  .cr-chub-shell .prow .stg{
+    font:800 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.12em;
+    text-transform:uppercase; color:#3d7a4c;
+    padding:3px 8px; border-radius:6px; background:#eef7f0;
+    white-space:nowrap;
+  }
+</style>
+
+<script id="cr-chub-script">
+(function () {
+  'use strict';
+
+  // Stored -> display label (matches community_stages.html)
+  var LABEL = {
+    'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'Approved':'Awarded',
+    'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Invoiced',
+    'Closed':'Closed', 'Lost':'Not Awarded'
+  };
+  var STAGES_SHOW = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced'];
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function typeLabel(t){
+    return t === 'property_manager' ? 'Property Manager' : t === 'nonprofit' ? 'Non-profit' : t;
+  }
+  function projClaimType(pr){
+    try{ return window.projClaimType ? window.projClaimType(pr) : 'unknown'; }
+    catch(e){ return 'unknown'; }
+  }
+  function partnerIdOf(pr){
+    try{
+      var ck = window.parseCkAll ? window.parseCkAll(pr) : {};
+      return (ck && ck.lead && ck.lead.partner_id) || null;
+    }catch(e){ return null; }
+  }
+  function isActive(pr){
+    var s = String(pr.stage || '');
+    return s !== 'Closed' && s !== 'Lost';
+  }
+  function communityProjects(){
+    var all = window.cacheProjects || [];
+    return all.filter(function(pr){ return projClaimType(pr) === 'community'; });
+  }
+
+  // ── View element (created on first show) ──────────────────
+  function ensureView(){
+    var v = document.getElementById('communityHubView');
+    if(v) return v;
+    v = document.createElement('section');
+    v.id = 'communityHubView';
+    v.innerHTML =
+      '<div class="cr-chub-banner">' +
+        '<button class="cr-chub-back" data-act="back">&larr; Home</button>' +
+        '<h1>Community <span>Partnership</span></h1>' +
+        '<p>Bids, awards, and partner portfolios in one place. ' +
+           'Non-profits Cardinal bids on and property managers with recurring work.</p>' +
+      '</div>' +
+      '<div class="cr-chub-pipeline"><div class="rail" id="chubPipe"></div></div>' +
+      '<div class="cr-chub-wrap">' +
+        '<div class="cr-chub-card" id="chubAttn">' +
+          '<h3>Needs Attention</h3>' +
+          '<div id="chubAttnBody"></div>' +
+        '</div>' +
+        '<div class="cr-chub-card" id="chubPartners">' +
+          '<h3>Partners <span class="cr-chub-total" id="chubPTotal"></span></h3>' +
+          '<div id="chubPartnersBody"></div>' +
+          '<button class="cr-chub-manage" data-act="manage">Manage Partners &rarr;</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(v);
+
+    v.querySelector('[data-act="back"]').onclick = function(){
+      if(typeof window.hideAllViews === 'function') window.hideAllViews();
+      if(typeof window.renderHome === 'function') window.renderHome();
+      var main = document.getElementById('mainView') || window.mainView;
+      if(main) main.style.display = '';
+    };
+    v.querySelector('[data-act="manage"]').onclick = function(){
+      if(window.CardinalCommunityPartners) window.CardinalCommunityPartners.openDirectory();
+    };
+    return v;
+  }
+
+  // ── Render pipeline strip ─────────────────────────────────
+  function renderPipeline(projs){
+    var host = document.getElementById('chubPipe');
+    if(!host) return;
+    var counts = {};
+    projs.forEach(function(p){ counts[p.stage] = (counts[p.stage] || 0) + 1; });
+    host.innerHTML = STAGES_SHOW.map(function(s){
+      var n = counts[s] || 0;
+      return '<div class="cr-chub-pcell' + (n ? ' active' : '') + '" data-stage="' + esc(s) + '">' +
+               '<div class="k">' + esc(LABEL[s] || s) + '</div>' +
+               '<div class="v' + (n ? '' : ' zero') + '">' + n + '</div>' +
+             '</div>';
+    }).join('');
+    host.querySelectorAll('.cr-chub-pcell').forEach(function(cell){
+      cell.onclick = function(){
+        var stage = cell.dataset.stage;
+        var matches = projs.filter(function(p){ return p.stage === stage; });
+        openList(LABEL[stage] || stage, matches);
+      };
+    });
+  }
+
+  // ── Render needs-attention card ───────────────────────────
+  function renderNeedsAttention(projs){
+    var host = document.getElementById('chubAttnBody');
+    if(!host) return;
+    var toSubmit = projs.filter(function(p){ return p.stage === 'Lead'; });
+    var awaiting = projs.filter(function(p){ return p.stage === 'Prospect'; });
+    var toSched  = projs.filter(function(p){ return p.stage === 'Approved'; });
+    var rows = [
+      { key:'submit',  title:'Bids to submit',        desc:'Prep and send the bid package',            list:toSubmit },
+      { key:'waiting', title:'Bids awaiting decision', desc:'Follow up if it\u2019s been a while',     list:awaiting },
+      { key:'sched',   title:'Awards to schedule',     desc:'Get these on the production calendar',    list:toSched  },
+    ];
+    host.innerHTML = rows.map(function(r){
+      var n = r.list.length;
+      return '<div class="cr-chub-nrow' + (n ? '' : ' done') + '" data-key="' + r.key + '">' +
+               '<div>' +
+                 '<div class="nk">' + esc(r.title) + '</div>' +
+                 '<div class="ndesc">' + esc(r.desc) + '</div>' +
+               '</div>' +
+               '<div class="nv' + (n ? '' : ' zero') + '">' + n + '</div>' +
+             '</div>';
+    }).join('');
+    host.querySelectorAll('.cr-chub-nrow').forEach(function(row){
+      row.onclick = function(){
+        var r = rows.filter(function(x){ return x.key === row.dataset.key; })[0];
+        if(!r) return;
+        openList(r.title, r.list);
+      };
+    });
+  }
+
+  // ── Render partners card ──────────────────────────────────
+  function renderPartners(projs){
+    var host = document.getElementById('chubPartnersBody');
+    if(!host) return;
+    var partners = (window.CardinalCommunityPartners && window.CardinalCommunityPartners.list())
+                    ? window.CardinalCommunityPartners.list() : [];
+    var byPid = {};
+    projs.filter(isActive).forEach(function(p){
+      var pid = partnerIdOf(p);
+      if(!pid) return;
+      (byPid[pid] = byPid[pid] || []).push(p);
+    });
+    var totalPartners = partners.length;
+    var t = document.getElementById('chubPTotal');
+    if(t) t.textContent = totalPartners ? (totalPartners + ' total') : '';
+
+    if(!totalPartners){
+      host.innerHTML =
+        '<div class="cr-chub-empty">No partners yet.' +
+          '<small>Tap "Manage Partners" below to add Habitat, ReBuild, DHRN, or a property manager.</small>' +
+        '</div>';
+      return;
+    }
+    function grp(label, arr){
+      if(!arr.length) return '';
+      var rows = arr.map(function(p){
+        var jobs = byPid[p.id] || [];
+        return '<div class="cr-chub-prow" data-pid="' + esc(p.id) + '">' +
+                 '<div>' +
+                   '<div class="pname">' + esc(p.name) + '</div>' +
+                   (p.contact_name ? '<div class="pmeta">' + esc(p.contact_name) + '</div>' : '') +
+                 '</div>' +
+                 '<div class="pcount' + (jobs.length ? '' : ' zero') + '">' + jobs.length +
+                   '<small>' + (jobs.length === 1 ? 'active' : 'active') + '</small>' +
+                 '</div>' +
+               '</div>';
+      }).join('');
+      return '<div class="cr-chub-pgroup"><h4>' + esc(label) + '</h4>' + rows + '</div>';
+    }
+    var non = partners.filter(function(p){ return p.partner_type === 'nonprofit'; });
+    var pm  = partners.filter(function(p){ return p.partner_type === 'property_manager'; });
+    host.innerHTML = grp('Non-profits', non) + grp('Property Managers', pm);
+
+    host.querySelectorAll('.cr-chub-prow').forEach(function(row){
+      row.onclick = function(){
+        var pid = row.dataset.pid;
+        var p = window.CardinalCommunityPartners.get(pid);
+        var jobs = byPid[pid] || [];
+        openList((p ? p.name : 'Partner') + ' \u2014 Active Jobs', jobs);
+      };
+    });
+  }
+
+  // ── Drilldown modal ───────────────────────────────────────
+  function openList(title, projs){
+    closeShell();
+    var host = document.createElement('div');
+    host.className = 'cr-chub-shell';
+    var rows = projs.length ? projs.map(function(p){
+      var addr = p.address || (p.location && p.location.street) || '';
+      var stg  = LABEL[p.stage] || p.stage || '';
+      return '<div class="prow" data-id="' + esc(p.id) + '">' +
+               '<div>' +
+                 '<div class="n">' + esc(p.name || 'Unnamed') + '</div>' +
+                 (addr ? '<div class="m">' + esc(addr) + '</div>' : '') +
+               '</div>' +
+               '<span class="stg">' + esc(stg) + '</span>' +
+             '</div>';
+    }).join('') : '<div class="cr-chub-empty">Nothing here yet.</div>';
+
+    host.innerHTML =
+      '<div class="cr-chub-box">' +
+        '<div class="cr-chub-mhd">' +
+          '<h3>' + esc(title) + '</h3>' +
+          '<button class="cr-chub-mx" aria-label="Close">&times;</button>' +
+        '</div>' +
+        '<div class="cr-chub-mbd">' + rows + '</div>' +
+      '</div>';
+    document.body.appendChild(host);
+    host.querySelector('.cr-chub-mx').onclick = closeShell;
+    host.addEventListener('click', function(e){ if(e.target === host) closeShell(); });
+    host.querySelectorAll('.prow').forEach(function(row){
+      row.onclick = function(){
+        var id = row.dataset.id;
+        closeShell();
+        hide();   // hide the hub so openProject's view swap lands cleanly
+        if(typeof window.openProject === 'function') window.openProject(id);
+      };
+    });
+  }
+  function closeShell(){
+    var s = document.querySelector('.cr-chub-shell');
+    if(s) s.parentNode.removeChild(s);
+  }
+
+  // ── Show / hide ───────────────────────────────────────────
+  function show(){
+    wrapHideAll();
+    if(typeof window.hideAllViews === 'function') window.hideAllViews();
+    var v = ensureView();
+    v.style.display = 'block';
+    render();
+    // scroll to top
+    try{ window.scrollTo({ top:0, behavior:'instant' }); }catch(e){ window.scrollTo(0,0); }
+  }
+  function hide(){
+    var v = document.getElementById('communityHubView');
+    if(v) v.style.display = 'none';
+  }
+
+  function render(){
+    var projs = communityProjects();
+    renderPipeline(projs);
+    renderNeedsAttention(projs);
+    // partners may still be loading — kick a load then render
+    if(window.CardinalCommunityPartners){
+      window.CardinalCommunityPartners.load().then(function(){ renderPartners(projs); });
+    }else{
+      renderPartners(projs);
+    }
+  }
+
+  // ── Wrap hideAllViews so navigation hides us cleanly ──────
+  function wrapHideAll(){
+    if(typeof window.hideAllViews !== 'function') return;
+    if(window.hideAllViews.__crChub) return;
+    var orig = window.hideAllViews;
+    var wrapped = function(){
+      var out = orig.apply(this, arguments);
+      hide();
+      return out;
+    };
+    wrapped.__crChub = true;
+    window.hideAllViews = wrapped;
+  }
+
+  // ── Menu integration ──────────────────────────────────────
+  function ensureMenuOption(){
+    var menu = document.getElementById('navMenu') || document.querySelector('#navMenu, .navmenu');
+    if(!menu) return;
+    var portal = null;
+    try{ portal = window.CardinalPortal && window.CardinalPortal.get(); }catch(_){ }
+    var wanted = (portal === 'community' || portal === 'all');
+    var existing = menu.querySelector('[data-nav="communityhub"]');
+    if(wanted && !existing){
+      var btn = document.createElement('button');
+      btn.className = 'navopt';
+      btn.setAttribute('data-nav', 'communityhub');
+      btn.innerHTML = '\uD83C\uDFD8\uFE0F Community';
+      btn.onclick = function(e){
+        e.stopPropagation();
+        // close the menu the way other navopts do
+        var m = document.getElementById('navMenu');
+        if(m) m.style.display = 'none';
+        show();
+      };
+      // insert before the "Community Partners" entry if it exists, else append
+      var partnersEntry = menu.querySelector('[data-nav="community-partners"]');
+      if(partnersEntry) menu.insertBefore(btn, partnersEntry);
+      else              menu.appendChild(btn);
+    }else if(!wanted && existing){
+      existing.parentNode.removeChild(existing);
+    }
+  }
+
+  // ── React to portal switches ──────────────────────────────
+  function onPortalChange(){
+    // If we're currently showing but the portal is no longer community/all,
+    // don't stay on screen.
+    var v = document.getElementById('communityHubView');
+    if(!v || v.style.display === 'none') return;
+    var portal = null;
+    try{ portal = window.CardinalPortal && window.CardinalPortal.get(); }catch(_){ }
+    if(portal !== 'community' && portal !== 'all') hide();
+  }
+
+  // ── Boot ──────────────────────────────────────────────────
+  var ticking = false;
+  function tick(){
+    if(ticking) return;
+    ticking = true;
+    try{
+      ensureMenuOption();
+      onPortalChange();
+      // if hub is visible, re-render so counts stay fresh
+      var v = document.getElementById('communityHubView');
+      if(v && v.style.display !== 'none') render();
+    } finally { ticking = false; }
+  }
+  var scheduled = false;
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){ scheduled = false; tick(); });
+  }
+  function start(){
+    tick();
+    new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true });
+    var n = 0, iv = setInterval(function(){ tick(); if(++n > 20) clearInterval(iv); }, 300);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalCommunityHub = {
+    show: show, hide: hide, render: render,
+    isOpen: function(){
+      var v = document.getElementById('communityHubView');
+      return !!(v && v.style.display !== 'none');
+    }
+  };
+})();
+</script>
