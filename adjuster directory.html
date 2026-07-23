@@ -1,0 +1,503 @@
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — ADJUSTER DIRECTORY
+ v2026-07-22 · build 146
+────────────────────────────────────────────────────────────────────
+ Fills the "Adjuster Directory — Coming soon" stub on the Cardinal
+ Truth dashboard. No new tables: everything is derived from
+ insurance_claims + insurance_supplements.
+
+ WHAT IT SHOWS
+   Per adjuster, aggregated across every claim they've touched:
+     • carrier / IA firm, phone, email (tap to call or write)
+     • claims worked, total approved RCV, last seen
+     • WRITE RATIO — approved RCV vs Cardinal's own estimate.
+       Under 100% means they habitually cut scope; that is the single
+       most useful number to know before an inspection.
+     • SUPPLEMENT RATE — of supplements filed against their claims,
+       how many came back approved or partial.
+     • denials
+
+ INSTALL: paste after insurance_hub_bridge.html.
+
+ API: CardinalAdjusters.open()  /  .openOne(key)  /  .close()
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-adj-styles">
+  #cr-adjusters-mount{
+    --cr-red:#D9282A; --cr-red-dark:#B01F21; --cr-red-tint:#FDECEC; --cr-red-tint-2:#FEF7F7;
+    --cr-amber:#C87A00; --cr-amber-tint:#FBEFDA;
+    --cr-green:#2E7D32; --cr-green-tint:#E7F2E7;
+    --cr-blue:#1976D2;  --cr-blue-tint:#E3F0FB;
+    --cr-purple:#6A3AB0; --cr-purple-tint:#EEE6F7;
+    --cr-black:#1a1a1a; --cr-text:#2a2a2a; --cr-muted:#6b6b6b; --cr-muted-2:#a8a8a8;
+    --cr-border:#e5e5e5; --cr-border-2:#efefef; --cr-bg:#fff; --cr-bg-subtle:#fafafa;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--cr-text); background:var(--cr-bg); -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  #cr-adjusters-mount *{ box-sizing:border-box; }
+  #cr-adjusters-mount .cr-a-app{ max-width:800px; margin:0 auto; padding:24px 22px 100px; }
+
+  #cr-adjusters-mount .cr-a-back{ display:inline-flex; gap:6px; color:var(--cr-muted); font-size:11px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; cursor:pointer; margin-bottom:20px; }
+  #cr-adjusters-mount .cr-a-back:hover{ color:var(--cr-red); }
+  #cr-adjusters-mount .cr-a-eyebrow{ font-size:11px; font-weight:700; letter-spacing:2.5px; color:var(--cr-muted); text-transform:uppercase; margin-bottom:10px; }
+  #cr-adjusters-mount .cr-a-title{ font-size:34px; font-weight:700; color:var(--cr-black); letter-spacing:-.6px; margin:0; line-height:1.1; }
+  #cr-adjusters-mount .cr-a-rule{ height:3px; background:var(--cr-red); margin:16px 0 22px; }
+
+  #cr-adjusters-mount .cr-a-facts{ display:grid; grid-template-columns:1fr 1fr; gap:18px 30px; margin-bottom:24px; }
+  #cr-adjusters-mount .cr-a-fact .lbl{ font-size:10px; font-weight:700; color:var(--cr-red); letter-spacing:1.8px; text-transform:uppercase; margin-bottom:4px; }
+  #cr-adjusters-mount .cr-a-fact .val{ font-size:15px; font-weight:500; line-height:1.35; }
+  #cr-adjusters-mount .cr-a-fact .val strong{ font-weight:700; color:var(--cr-black); }
+
+  #cr-adjusters-mount .cr-a-toolbar{ display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+  #cr-adjusters-mount .cr-a-search{ flex:1; min-width:180px; padding:10px 14px; border:1px solid var(--cr-border); border-radius:4px; font-size:14px; font-family:inherit; color:var(--cr-text); }
+  #cr-adjusters-mount .cr-a-search:focus{ outline:none; border-color:var(--cr-red); box-shadow:0 0 0 3px var(--cr-red-tint); }
+  #cr-adjusters-mount .cr-a-sel{ padding:10px 12px; border:1px solid var(--cr-border); border-radius:4px; font-size:13px; font-family:inherit; background:#fff; color:var(--cr-text); }
+
+  #cr-adjusters-mount .cr-a-row{ padding:16px 4px 14px; border-bottom:1px solid var(--cr-border-2); cursor:pointer; }
+  #cr-adjusters-mount .cr-a-row:hover{ background:var(--cr-bg-subtle); }
+  #cr-adjusters-mount .cr-a-row-top{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  #cr-adjusters-mount .cr-a-row-name{ font-size:17px; font-weight:700; color:var(--cr-black); letter-spacing:-.3px; }
+  #cr-adjusters-mount .cr-a-row-co{ font-size:10px; color:var(--cr-red); font-weight:700; letter-spacing:1.8px; text-transform:uppercase; margin-top:3px; }
+  #cr-adjusters-mount .cr-a-row-rcv{ font-size:18px; font-weight:700; color:var(--cr-black); font-variant-numeric:tabular-nums; }
+  #cr-adjusters-mount .cr-a-row-meta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:9px; font-size:11px; color:var(--cr-muted); letter-spacing:.3px; }
+  #cr-adjusters-mount .cr-a-row-meta b{ color:var(--cr-black); font-weight:700; }
+
+  #cr-adjusters-mount .cr-a-pill{ display:inline-flex; align-items:center; font-size:9px; font-weight:700; padding:3px 8px; border-radius:10px; letter-spacing:1px; text-transform:uppercase; }
+  #cr-adjusters-mount .cr-a-pill.good{ background:var(--cr-green-tint); color:var(--cr-green); }
+  #cr-adjusters-mount .cr-a-pill.mid { background:var(--cr-amber-tint); color:var(--cr-amber); }
+  #cr-adjusters-mount .cr-a-pill.bad { background:var(--cr-red-tint);  color:var(--cr-red); }
+  #cr-adjusters-mount .cr-a-pill.na  { background:var(--cr-bg-subtle); color:var(--cr-muted); border:1px solid var(--cr-border); }
+
+  #cr-adjusters-mount .cr-a-section{ margin-top:30px; }
+  #cr-adjusters-mount .cr-a-section-h{ display:flex; align-items:baseline; gap:12px; font-size:20px; font-weight:700; color:var(--cr-black); letter-spacing:-.3px; }
+  #cr-adjusters-mount .cr-a-section-h .num{ color:var(--cr-red); }
+  #cr-adjusters-mount .cr-a-section-rule{ height:2px; background:var(--cr-red); margin:10px 0 16px; }
+
+  #cr-adjusters-mount .cr-a-scorecard{ background:linear-gradient(135deg,#1a1a1a,#2a2a2a); color:#fff; border-radius:6px; padding:20px; margin-bottom:22px; }
+  #cr-adjusters-mount .cr-a-scorecard .h{ font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; opacity:.6; margin-bottom:14px; }
+  #cr-adjusters-mount .cr-a-scoregrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media(max-width:620px){ #cr-adjusters-mount .cr-a-scoregrid{ grid-template-columns:repeat(2,1fr); } }
+  #cr-adjusters-mount .cr-a-scorecell .lbl{ font-size:9px; color:#999; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; }
+  #cr-adjusters-mount .cr-a-scorecell .val{ font-size:21px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; letter-spacing:-.5px; }
+  #cr-adjusters-mount .cr-a-scorecell .val.pos{ color:#7cd18d; }
+  #cr-adjusters-mount .cr-a-scorecell .val.warn{ color:#f5b657; }
+  #cr-adjusters-mount .cr-a-scorecell .val.neg{ color:#ff8a80; }
+  #cr-adjusters-mount .cr-a-scorecell .sub{ font-size:10px; color:#888; margin-top:2px; }
+
+  #cr-adjusters-mount .cr-a-read{ background:var(--cr-bg-subtle); border-left:3px solid var(--cr-red); padding:12px 14px; border-radius:0 4px 4px 0; font-size:13.5px; line-height:1.55; color:var(--cr-text); margin-bottom:20px; }
+  #cr-adjusters-mount .cr-a-read strong{ color:var(--cr-black); font-weight:700; }
+
+  #cr-adjusters-mount .cr-a-info{ display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; }
+  @media(max-width:620px){ #cr-adjusters-mount .cr-a-info{ grid-template-columns:1fr; } }
+  #cr-adjusters-mount .cr-a-info-item .lbl{ font-size:10px; font-weight:700; color:var(--cr-red); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3px; }
+  #cr-adjusters-mount .cr-a-info-item .val{ font-size:14px; font-weight:500; }
+  #cr-adjusters-mount .cr-a-info-item .val a{ color:var(--cr-blue); text-decoration:none; }
+  #cr-adjusters-mount .cr-a-info-item .val a:hover{ text-decoration:underline; }
+  #cr-adjusters-mount .cr-a-info-item .val.empty{ color:var(--cr-muted-2); font-style:italic; }
+
+  #cr-adjusters-mount .cr-a-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  #cr-adjusters-mount .cr-a-table th{ text-align:left; padding:8px 10px; font-size:10px; font-weight:700; color:var(--cr-muted); letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid var(--cr-border); }
+  #cr-adjusters-mount .cr-a-table td{ padding:10px; border-bottom:1px solid var(--cr-border-2); vertical-align:top; }
+  #cr-adjusters-mount .cr-a-table tr.clickable{ cursor:pointer; }
+  #cr-adjusters-mount .cr-a-table tr.clickable:hover td{ background:var(--cr-bg-subtle); }
+  #cr-adjusters-mount .cr-a-table td.amt{ text-align:right; font-variant-numeric:tabular-nums; font-weight:700; color:var(--cr-black); white-space:nowrap; }
+
+  #cr-adjusters-mount .cr-a-empty{ text-align:center; padding:50px 20px; color:var(--cr-muted); font-size:13px; }
+  #cr-adjusters-mount .cr-a-empty small{ display:block; margin-top:6px; color:var(--cr-muted-2); font-size:11px; }
+  #cr-adjusters-mount .cr-a-loading{ text-align:center; padding:60px 20px; color:var(--cr-muted); font-size:13px; letter-spacing:1px; text-transform:uppercase; font-weight:700; }
+  #cr-adjusters-mount .cr-a-footer{ text-align:center; font-size:10px; color:var(--cr-muted-2); margin-top:40px; padding-top:18px; border-top:1px solid var(--cr-border-2); text-transform:uppercase; font-weight:600; letter-spacing:1px; }
+</style>
+
+<div id="cr-adjusters-mount" style="display:none;"></div>
+
+<script id="cr-adj-script">
+(function () {
+  'use strict';
+
+  var MOUNT = document.getElementById('cr-adjusters-mount');
+  var state = { rows: [], search: '', carrier: '', sort: 'claims', openedFromHub: false };
+
+  function esc(s){ return String(s==null?'':s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function money(n){ return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+  function fmtDate(d){ return d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'; }
+
+  // ── Aggregate adjusters out of claim history ───────────────
+  async function loadAdjusters(){
+    var claims = await window.supa
+      .from('insurance_claims')
+      .select('id, adjuster_name, adjuster_phone, adjuster_email, adjuster_company, carrier, claim_number, homeowner_name, property_address, approved_rcv, our_estimate_total, status, created_at, date_of_loss')
+      .limit(1000);
+    if (claims.error) throw claims.error;
+    var rows = claims.data || [];
+
+    var sups = await window.supa
+      .from('insurance_supplements')
+      .select('claim_id, status, amount_requested, amount_approved')
+      .limit(2000);
+    var supsByClaim = {};
+    (sups.data || []).forEach(function(s){
+      (supsByClaim[s.claim_id] = supsByClaim[s.claim_id] || []).push(s);
+    });
+
+    // Group by adjuster name (case/space-insensitive)
+    var map = {};
+    rows.forEach(function(c){
+      var name = (c.adjuster_name || '').trim();
+      if (!name) return;                       // skip claims with no adjuster recorded
+      var key = name.toLowerCase().replace(/\s+/g,' ');
+      var a = map[key];
+      if (!a){
+        a = map[key] = {
+          key: key, name: name,
+          company: c.adjuster_company || '', carrier: c.carrier || '',
+          phone: c.adjuster_phone || '', email: c.adjuster_email || '',
+          carriers: {}, claims: [],
+          approved: 0, ourEstimate: 0, matchedPairs: 0,
+          supsFiled: 0, supsWon: 0, supsRequested: 0, supsApproved: 0,
+          denials: 0, lastSeen: null,
+        };
+      }
+      // keep the most complete contact details we've seen
+      if (!a.phone   && c.adjuster_phone)   a.phone   = c.adjuster_phone;
+      if (!a.email   && c.adjuster_email)   a.email   = c.adjuster_email;
+      if (!a.company && c.adjuster_company) a.company = c.adjuster_company;
+      if (c.carrier) a.carriers[c.carrier] = (a.carriers[c.carrier]||0) + 1;
+
+      a.claims.push(c);
+      a.approved += Number(c.approved_rcv || 0);
+      if (c.approved_rcv && c.our_estimate_total){
+        a.ourEstimate += Number(c.our_estimate_total);
+        a.matchedPairs++;
+      }
+      if (c.status === 'denied') a.denials++;
+      var d = c.date_of_loss || c.created_at;
+      if (d && (!a.lastSeen || new Date(d) > new Date(a.lastSeen))) a.lastSeen = d;
+
+      (supsByClaim[c.id] || []).forEach(function(s){
+        a.supsFiled++;
+        a.supsRequested += Number(s.amount_requested || 0);
+        if (s.status === 'approved' || s.status === 'partial'){
+          a.supsWon++;
+          a.supsApproved += Number(s.amount_approved || 0);
+        }
+      });
+    });
+
+    return Object.keys(map).map(function(k){
+      var a = map[k];
+      a.claimCount  = a.claims.length;
+      // Write ratio: what they approved vs what Cardinal estimated.
+      // Only counts claims where BOTH numbers exist, else it's meaningless.
+      a.writeRatio  = a.matchedPairs > 0 && a.ourEstimate > 0
+                        ? (a.approved / a.ourEstimate) : null;
+      a.supRate     = a.supsFiled > 0 ? (a.supsWon / a.supsFiled) : null;
+      a.topCarrier  = Object.keys(a.carriers).sort(function(x,y){
+                        return a.carriers[y]-a.carriers[x]; })[0] || a.carrier || '';
+      a.claims.sort(function(x,y){
+        return new Date(y.created_at) - new Date(x.created_at); });
+      return a;
+    });
+  }
+
+  // ── Rating helpers ─────────────────────────────────────────
+  function ratioPill(r){
+    if (r == null) return '<span class="cr-a-pill na">No estimate on file</span>';
+    var pct = Math.round(r*100);
+    var cls = r >= 0.95 ? 'good' : r >= 0.80 ? 'mid' : 'bad';
+    return '<span class="cr-a-pill '+cls+'">Writes '+pct+'%</span>';
+  }
+  function supPill(r, filed){
+    if (r == null || !filed) return '<span class="cr-a-pill na">No supplements</span>';
+    var pct = Math.round(r*100);
+    var cls = r >= 0.66 ? 'good' : r >= 0.34 ? 'mid' : 'bad';
+    return '<span class="cr-a-pill '+cls+'">'+pct+'% supp. approved</span>';
+  }
+
+  // ── LIST ───────────────────────────────────────────────────
+  async function showList(){
+    MOUNT.style.display = 'block';
+    MOUNT.innerHTML = '<div class="cr-a-app"><div class="cr-a-loading">Loading adjusters…</div></div>';
+
+    var rows;
+    try { rows = await loadAdjusters(); }
+    catch (e){
+      MOUNT.innerHTML = '<div class="cr-a-app"><div class="cr-a-back" data-act="back">← Back</div>'
+        + '<div class="cr-a-empty">Couldn\'t load adjusters.<small>'+esc(e.message||'')+'</small></div></div>';
+      wireBack(); return;
+    }
+    state.rows = rows;
+    renderList();
+  }
+
+  function renderList(){
+    var rows = state.rows;
+    var carriers = {};
+    rows.forEach(function(a){ Object.keys(a.carriers).forEach(function(c){ carriers[c]=1; }); });
+
+    var totalClaims = rows.reduce(function(s,a){ return s+a.claimCount; }, 0);
+    var totalRcv    = rows.reduce(function(s,a){ return s+a.approved; }, 0);
+    var withRatio   = rows.filter(function(a){ return a.writeRatio != null; });
+    var avgRatio    = withRatio.length
+      ? withRatio.reduce(function(s,a){ return s+a.writeRatio; },0)/withRatio.length : null;
+
+    MOUNT.innerHTML =
+      '<div class="cr-a-app">' +
+        '<div class="cr-a-back" data-act="back">← Back to Cardinal Truth</div>' +
+        '<div class="cr-a-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS</div>' +
+        '<h1 class="cr-a-title">Adjuster Directory</h1>' +
+        '<div class="cr-a-rule"></div>' +
+        '<div class="cr-a-facts">' +
+          '<div class="cr-a-fact"><div class="lbl">Adjusters</div><div class="val"><strong>'+rows.length+'</strong> on file</div></div>' +
+          '<div class="cr-a-fact"><div class="lbl">Claims Worked</div><div class="val"><strong>'+totalClaims+'</strong></div></div>' +
+          '<div class="cr-a-fact"><div class="lbl">Approved Through Them</div><div class="val"><strong>$'+money(totalRcv)+'</strong></div></div>' +
+          '<div class="cr-a-fact"><div class="lbl">Avg Write Ratio</div><div class="val"><strong>'+
+             (avgRatio!=null ? Math.round(avgRatio*100)+'%' : '—')+'</strong></div></div>' +
+        '</div>' +
+        '<div class="cr-a-toolbar">' +
+          '<input class="cr-a-search" data-search placeholder="Search name, carrier, firm…" value="'+esc(state.search)+'">' +
+          '<select class="cr-a-sel" data-carrier><option value="">All carriers</option>' +
+            Object.keys(carriers).sort().map(function(c){
+              return '<option value="'+esc(c)+'"'+(state.carrier===c?' selected':'')+'>'+esc(c)+'</option>'; }).join('') +
+          '</select>' +
+          '<select class="cr-a-sel" data-sort>' +
+            '<option value="claims"'+(state.sort==='claims'?' selected':'')+'>Most claims</option>' +
+            '<option value="rcv"'+(state.sort==='rcv'?' selected':'')+'>Highest $ approved</option>' +
+            '<option value="ratio"'+(state.sort==='ratio'?' selected':'')+'>Toughest first</option>' +
+            '<option value="recent"'+(state.sort==='recent'?' selected':'')+'>Most recent</option>' +
+          '</select>' +
+        '</div>' +
+        '<div data-list></div>' +
+        '<div class="cr-a-footer">v2026-07-22 build 146 · Adjuster Directory</div>' +
+      '</div>';
+
+    wireBack();
+    MOUNT.querySelector('[data-search]').oninput  = function(e){ state.search  = e.target.value; renderRows(); };
+    MOUNT.querySelector('[data-carrier]').onchange = function(e){ state.carrier = e.target.value; renderRows(); };
+    MOUNT.querySelector('[data-sort]').onchange    = function(e){ state.sort    = e.target.value; renderRows(); };
+    renderRows();
+  }
+
+  function renderRows(){
+    var el = MOUNT.querySelector('[data-list]');
+    if (!el) return;
+    var q = state.search.toLowerCase();
+    var rows = state.rows.filter(function(a){
+      if (state.carrier && !a.carriers[state.carrier]) return false;
+      if (!q) return true;
+      return (a.name+' '+a.company+' '+a.topCarrier+' '+(a.email||'')).toLowerCase().indexOf(q) !== -1;
+    });
+
+    rows.sort(function(x,y){
+      if (state.sort === 'rcv')    return y.approved - x.approved;
+      if (state.sort === 'recent') return new Date(y.lastSeen||0) - new Date(x.lastSeen||0);
+      if (state.sort === 'ratio'){
+        var a = x.writeRatio == null ? 2 : x.writeRatio;
+        var b = y.writeRatio == null ? 2 : y.writeRatio;
+        return a - b;                       // lowest ratio = toughest, first
+      }
+      return y.claimCount - x.claimCount;
+    });
+
+    if (!rows.length){
+      el.innerHTML = '<div class="cr-a-empty">No adjusters match.' +
+        '<small>Adjusters appear here automatically once you record a name on a claim.</small></div>';
+      return;
+    }
+
+    el.innerHTML = rows.map(function(a){
+      return '<div class="cr-a-row" data-key="'+esc(a.key)+'">' +
+        '<div class="cr-a-row-top">' +
+          '<div><div class="cr-a-row-name">'+esc(a.name)+'</div>' +
+          '<div class="cr-a-row-co">'+esc(a.company || a.topCarrier || 'Independent')+'</div></div>' +
+          '<div class="cr-a-row-rcv">$'+money(a.approved)+'</div>' +
+        '</div>' +
+        '<div class="cr-a-row-meta">' +
+          '<span><b>'+a.claimCount+'</b> claim'+(a.claimCount===1?'':'s')+'</span>' +
+          (a.topCarrier ? '<span>'+esc(a.topCarrier)+'</span>' : '') +
+          '<span>Last '+fmtDate(a.lastSeen)+'</span>' +
+          (a.denials ? '<span><b>'+a.denials+'</b> denied</span>' : '') +
+        '</div>' +
+        '<div class="cr-a-row-meta" style="margin-top:8px;gap:6px;">' +
+          ratioPill(a.writeRatio) + supPill(a.supRate, a.supsFiled) +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    el.querySelectorAll('.cr-a-row').forEach(function(r){
+      r.onclick = function(){ showDetail(r.dataset.key); };
+    });
+  }
+
+  // ── DETAIL ─────────────────────────────────────────────────
+  function showDetail(key){
+    var a = state.rows.filter(function(x){ return x.key === key; })[0];
+    if (!a) return showList();
+
+    var ratioPct = a.writeRatio != null ? Math.round(a.writeRatio*100) : null;
+    var gap      = a.writeRatio != null ? (a.ourEstimate - a.approved) : null;
+    var supPct   = a.supRate != null ? Math.round(a.supRate*100) : null;
+
+    // Plain-language read on how to approach them
+    var read;
+    if (ratioPct == null){
+      read = 'No Cardinal estimate has been recorded alongside these claims yet, so there\'s no write ratio to compare. ' +
+             'Fill in <strong>Our Estimate</strong> on a claim and this fills itself in.';
+    } else if (ratioPct >= 95){
+      read = 'Writes at <strong>'+ratioPct+'%</strong> of Cardinal\'s estimate — approves close to full scope. ' +
+             'Straightforward to work with; documentation is being accepted as submitted.';
+    } else if (ratioPct >= 80){
+      read = 'Writes at <strong>'+ratioPct+'%</strong> of Cardinal\'s estimate — trims roughly <strong>$'+money(gap/Math.max(1,a.matchedPairs))+'</strong> per claim. ' +
+             'Worth photographing marginal line items thoroughly before they arrive.';
+    } else {
+      read = 'Writes at <strong>'+ratioPct+'%</strong> of Cardinal\'s estimate — cuts an average of <strong>$'+money(gap/Math.max(1,a.matchedPairs))+'</strong> per claim. ' +
+             'Expect scope to be contested. Have code citations and close-up documentation ready at the inspection.';
+    }
+    if (supPct != null){
+      read += ' Supplements against their claims come back approved <strong>'+supPct+'%</strong> of the time' +
+              (supPct >= 50 ? ' — filing is usually worth it.' : ' — build the case carefully before filing.');
+    }
+
+    MOUNT.innerHTML =
+      '<div class="cr-a-app">' +
+        '<div class="cr-a-back" data-act="list">← All adjusters</div>' +
+        '<div class="cr-a-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS · ADJUSTER</div>' +
+        '<h1 class="cr-a-title">'+esc(a.name)+'</h1>' +
+        '<div class="cr-a-rule"></div>' +
+
+        '<div class="cr-a-scorecard">' +
+          '<div class="h">Track Record</div>' +
+          '<div class="cr-a-scoregrid">' +
+            '<div class="cr-a-scorecell"><div class="lbl">Claims Worked</div><div class="val">'+a.claimCount+'</div>' +
+              '<div class="sub">'+(a.denials? a.denials+' denied':'none denied')+'</div></div>' +
+            '<div class="cr-a-scorecell"><div class="lbl">Approved Total</div><div class="val">$'+money(a.approved)+'</div>' +
+              '<div class="sub">across all claims</div></div>' +
+            '<div class="cr-a-scorecell"><div class="lbl">Write Ratio</div>' +
+              '<div class="val '+(ratioPct==null?'':ratioPct>=95?'pos':ratioPct>=80?'warn':'neg')+'">' +
+                (ratioPct!=null? ratioPct+'%' : '—')+'</div>' +
+              '<div class="sub">'+(a.matchedPairs? 'vs our estimate ('+a.matchedPairs+')':'no estimates logged')+'</div></div>' +
+            '<div class="cr-a-scorecell"><div class="lbl">Supplements Won</div>' +
+              '<div class="val '+(supPct==null?'':supPct>=66?'pos':supPct>=34?'warn':'neg')+'">' +
+                (supPct!=null? supPct+'%' : '—')+'</div>' +
+              '<div class="sub">'+(a.supsFiled? a.supsWon+' of '+a.supsFiled+' filed':'none filed')+'</div></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="cr-a-read">'+read+'</div>' +
+
+        '<div class="cr-a-section">' +
+          '<div class="cr-a-section-h"><span class="num">1</span><span>Contact</span></div>' +
+          '<div class="cr-a-section-rule"></div>' +
+          '<div class="cr-a-info">' +
+            '<div class="cr-a-info-item"><div class="lbl">Firm</div><div class="val '+(a.company?'':'empty')+'">'+esc(a.company||'Direct carrier')+'</div></div>' +
+            '<div class="cr-a-info-item"><div class="lbl">Primary Carrier</div><div class="val '+(a.topCarrier?'':'empty')+'">'+esc(a.topCarrier||'Not set')+'</div></div>' +
+            '<div class="cr-a-info-item"><div class="lbl">Phone</div><div class="val '+(a.phone?'':'empty')+'">'+
+              (a.phone? '<a href="tel:'+esc(a.phone)+'">'+esc(a.phone)+'</a>':'Not set')+'</div></div>' +
+            '<div class="cr-a-info-item"><div class="lbl">Email</div><div class="val '+(a.email?'':'empty')+'">'+
+              (a.email? '<a href="mailto:'+esc(a.email)+'">'+esc(a.email)+'</a>':'Not set')+'</div></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="cr-a-section">' +
+          '<div class="cr-a-section-h"><span class="num">2</span><span>Claims Worked</span></div>' +
+          '<div class="cr-a-section-rule"></div>' +
+          '<table class="cr-a-table">' +
+            '<thead><tr><th>Homeowner</th><th>Carrier · Claim #</th><th class="amt">Approved</th></tr></thead>' +
+            '<tbody>' + a.claims.map(function(c){
+              return '<tr class="clickable" data-claim="'+esc(c.id)+'">' +
+                '<td>'+esc(c.homeowner_name||'—')+'<br><small style="color:#8a8a8a;">'+fmtDate(c.created_at)+'</small></td>' +
+                '<td>'+esc(c.carrier||'—')+(c.claim_number? '<br><small style="color:#8a8a8a;">#'+esc(c.claim_number)+'</small>':'')+'</td>' +
+                '<td class="amt">$'+money(c.approved_rcv)+
+                  (c.our_estimate_total? '<br><small style="font-weight:400;color:#8a8a8a;">est $'+money(c.our_estimate_total)+'</small>':'')+'</td>' +
+              '</tr>';
+            }).join('') + '</tbody>' +
+          '</table>' +
+        '</div>' +
+
+        '<div class="cr-a-footer">v2026-07-22 build 146 · Adjuster Directory</div>' +
+      '</div>';
+
+    MOUNT.querySelector('[data-act="list"]').onclick = renderList;
+    MOUNT.querySelectorAll('[data-claim]').forEach(function(tr){
+      tr.onclick = function(){
+        if (window.CardinalClaims && window.CardinalClaims.openOne){
+          MOUNT.style.display = 'none';
+          window.CardinalClaims.openOne(tr.dataset.claim);
+        }
+      };
+    });
+  }
+
+  // ── Nav ────────────────────────────────────────────────────
+  function wireBack(){
+    var b = MOUNT.querySelector('[data-act="back"]');
+    if (b) b.onclick = close;
+  }
+  function close(){
+    MOUNT.style.display = 'none';
+    MOUNT.innerHTML = '';
+    if (state.openedFromHub){
+      state.openedFromHub = false;
+      var h = document.getElementById('cardinalTruthView');
+      if (h) h.style.display = 'block';
+    } else if (typeof window.showHome === 'function'){
+      window.showHome();
+    }
+  }
+
+  window.CardinalAdjusters = {
+    open: function(fromHub){
+      state.openedFromHub = !!fromHub;
+      MOUNT.style.position='fixed'; MOUNT.style.inset='0';
+      MOUNT.style.zIndex='200'; MOUNT.style.overflowY='auto'; MOUNT.style.background='#fff';
+      if (window.crHideOtherMounts) window.crHideOtherMounts('cr-adjusters-mount');
+      showList();
+    },
+    openOne: showDetail,
+    close: close,
+  };
+
+  // ── Light up the "Adjuster Directory — Coming soon" stub ────
+  function activateStub(){
+    var hub = document.getElementById('cardinalTruthView');
+    if (!hub) return;
+    var stubs = hub.querySelectorAll('.ins-card.ins-cardstub');
+    for (var i=0;i<stubs.length;i++){
+      var t = (stubs[i].textContent||'').toLowerCase();
+      if (t.indexOf('adjuster directory') === -1) continue;
+      if (stubs[i].dataset.crWired) return;
+
+      var card = document.createElement('button');
+      card.className = 'ins-card';
+      card.setAttribute('data-ctnav','cr-adjusters');
+      card.innerHTML =
+        '<div class="ins-cardtitle">&#128100; Adjuster Directory</div>' +
+        '<div class="ins-cardsub">Everyone who has adjusted a Cardinal claim &mdash; what they approve against our estimate, ' +
+          'how often supplements land, and how to reach them.</div>' +
+        '<div class="ins-cardgo">Open &rsaquo;</div>';
+      card.dataset.crWired = '1';
+      stubs[i].parentNode.replaceChild(card, stubs[i]);
+
+      if (!hub.dataset.crAdjWired){
+        hub.addEventListener('click', function(e){
+          var b = e.target.closest('.ins-card[data-ctnav="cr-adjusters"]');
+          if (!b) return;
+          e.stopPropagation();
+          window.CardinalAdjusters.open(true);
+        });
+        hub.dataset.crAdjWired = '1';
+      }
+      return;
+    }
+  }
+
+  function start(){
+    activateStub();
+    new MutationObserver(activateStub).observe(document.body, { childList:true, subtree:true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>

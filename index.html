@@ -16596,6 +16596,109 @@ async function enableNotifications(){
    arrows all still navigate home/landing, so nothing is lost.
    To bring them back, delete this rule.                              */
 .projinfo .projTopBtns{ display: none !important; }
+
+
+/* ── Insurance theme: legible text on the client sub-pages ───────
+   body.claim-insurance sets a dark #1a1f2e background globally, but
+   the theme's text rules were scoped to #projectView / .projinfo /
+   .acxsec only. The sub-pages (Payments, Tasks, Job Documents,
+   Appointments, Photos) inherited the dark background while keeping
+   their dark default text — near-unreadable.
+
+   These rules recolor ONLY the text that sits directly on the dark
+   background. Cards that carry their own light background
+   (.payhead, .paynet, .acxsec, .ldbox, worksheet boxes) are left
+   untouched so they keep reading correctly.                          */
+body.claim-insurance #paymentsView,
+body.claim-insurance #tasksView,
+body.claim-insurance #docsView,
+body.claim-insurance #apptsView,
+body.claim-insurance #galleryView{
+  background:#1a1f2e;
+}
+
+/* Page heading + the "— Client Name" suffix (suffix has an inline color) */
+body.claim-insurance #paymentsView .viewhead,
+body.claim-insurance #tasksView    .viewhead,
+body.claim-insurance #docsView     .viewhead,
+body.claim-insurance #apptsView    .viewhead,
+body.claim-insurance #galleryView  .viewhead{ color:#e8ecf1; }
+
+body.claim-insurance #paymentsView .viewhead span,
+body.claim-insurance #tasksView    .viewhead span,
+body.claim-insurance #docsView     .viewhead span,
+body.claim-insurance #apptsView    .viewhead span,
+body.claim-insurance #galleryView  .viewhead span{ color:#8b95a5 !important; }
+
+/* Section headers — same steel-blue treatment used inside #projectView */
+body.claim-insurance #paymentsView .projsec,
+body.claim-insurance #tasksView    .projsec,
+body.claim-insurance #docsView     .projsec,
+body.claim-insurance #apptsView    .projsec,
+body.claim-insurance #galleryView  .projsec{
+  color:#e8ecf1; border-bottom-color:#4a6fa5; border-bottom-width:3px;
+  padding:6px 10px 4px; background:rgba(35,43,61,.85); border-radius:6px 6px 0 0;
+}
+
+/* Explanatory / empty-state / loading copy */
+body.claim-insurance #paymentsView .subnote,
+body.claim-insurance #paymentsView .axnote,
+body.claim-insurance #paymentsView .loading,
+body.claim-insurance #tasksView    .subnote,
+body.claim-insurance #tasksView    .axnote,
+body.claim-insurance #tasksView    .loading,
+body.claim-insurance #docsView     .subnote,
+body.claim-insurance #docsView     .axnote,
+body.claim-insurance #docsView     .loading,
+body.claim-insurance #apptsView    .subnote,
+body.claim-insurance #apptsView    .axnote,
+body.claim-insurance #apptsView    .loading,
+body.claim-insurance #galleryView  .subnote,
+body.claim-insurance #galleryView  .axnote,
+body.claim-insurance #galleryView  .loading{ color:#a9b3c2; }
+
+/* Log / list rows (payment log, task rows) — no background of their own */
+body.claim-insurance #paymentsView .tskrow,
+body.claim-insurance #tasksView    .tskrow,
+body.claim-insurance #docsView     .tskrow{
+  color:#e8ecf1; border-bottom-color:#2f3a4c;
+}
+body.claim-insurance #paymentsView .tskrow small,
+body.claim-insurance #tasksView    .tskrow small,
+body.claim-insurance #docsView     .tskrow small{ color:#8b95a5; }
+
+/* Inline status text (color:#666 set inline, so !important is required) */
+body.claim-insurance #payStatus,
+body.claim-insurance #jdStatus,
+body.claim-insurance #tskStatus{ color:#8b95a5 !important; }
+
+
+/* ── Insurance theme: purpose-built two-tone Cardinal logo ───────
+   The old approach filtered the gold logo:
+     filter: grayscale(1) sepia(.7) hue-rotate(170deg) saturate(1.7) ...
+   A filter recolours everything uniformly — the wordmark, the bird and
+   the white backing plate all shifted together, leaving a muddy blue
+   blob with no separation between the mark and its background.
+
+   Replaced with a recoloured copy of the same SVG, so each part of the
+   mark gets its own colour:
+     CARDINAL wordmark      #d9dee6  (light grey)
+     the cardinal bird      #bfaee6  (lavender)
+     ROOFING & RENOVATIONS  #9aa5b5  (dimmer grey)
+     roof / house shapes    #8e9bb0  (grey-blue)
+   sitting on the theme's panel blue #232b3d with the steel-blue rule.
+   `filter:none` removes the old treatment; `content:` overrides both the
+   JS-set src and the mobile @media content rule.                      */
+body.claim-insurance #brandLogo{
+  content: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI1LjQuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA2ODAgNDAwIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA2ODAgNDAwOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6I2Q5ZGVlNjt9Cgkuc3Qxe2ZpbGw6IzlhYTViNTt9Cgkuc3Qye2ZpbGw6IzhlOWJiMDt9Cgkuc3Qze2ZpbGw6I2JmYWVlNjt9Cjwvc3R5bGU+CjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZ2lsZCIgeDE9IjAiIHkxPSIwIiB4Mj0iMC4zNSIgeTI9IjEiPgo8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4YTVhMDAiLz48c3RvcCBvZmZzZXQ9IjAuMyIgc3RvcC1jb2xvcj0iI2Q0YTAxNyIvPgo8c3RvcCBvZmZzZXQ9IjAuNSIgc3RvcC1jb2xvcj0iI2Y1ZDA2MSIvPjxzdG9wIG9mZnNldD0iMC43IiBzdG9wLWNvbG9yPSIjYzg5MDFjIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzdhNGYwMCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPgo8ZyBmaWxsPSIjOGU5YmIwIj4KCTxnPgoJCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0xMDguOTUsMjkzLjc4djIuNjljMCwxMy42OS0xLjQxLDE4LjQzLTYuNjUsMjMuMDRjLTIuOTQsMi41Ni03LjU1LDQuNzMtMTEuOSw1LjUKCQkJYy0yLjgyLDAuNTEtOS44NSwwLjc3LTE4LjU2LDAuNzdjLTE2LjI1LDAtMjAuODYtMS4wMi0yNy4xMy02LjAxYy00LjIyLTMuMzMtNy40Mi05LjM0LTguMTktMTUuNjEKCQkJYy0wLjY0LTUuNS0xLjE1LTE2Ljc2LTEuMTUtMjguNjdjMC0xNS44NywxLjkyLTIyLjkxLDcuNjgtMjguNDFjNi42NS02LjQsMTMuMTgtNy45NCwzMy41My03Ljk0YzExLjksMCwxNS44NywwLjUxLDIwLjYsMi42OQoJCQljNS44OSwyLjY5LDkuMDksNy4xNywxMC4zNywxNC41OWMwLjUxLDIuODIsMC42NCw0Ljk5LDAuOSwxMi45M0g4OC44NmMtMC4xMy02LjE0LTAuMzgtNy40Mi0xLjQxLTkuMzQKCQkJYy0xLjY2LTIuOTQtNC45OS0zLjg0LTEzLjk1LTMuODRjLTguNDUsMC0xMi40MSwwLjktMTQuNzIsMy4yYy0yLjY5LDIuODItMy4wNyw1LjYzLTMuMDcsMjMuOGMwLDE0LjcyLDAuMzgsMTcuNzksMi4zLDIxLjEyCgkJCWMxLjkyLDMuNDYsNS43Niw0LjYxLDE0Ljg1LDQuNjFjOS42LDAsMTMuODItMS4yOCwxNS40OC00Ljc0YzEuMDItMi4wNSwxLjE1LTMuMzMsMS4xNS04Ljd2LTEuNjZIMTA4Ljk1eiIvPgoJCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0xMzYuODUsMzA5LjY1bC00Ljc0LDE1LjQ4aC0yMC40OGwyNy04NS4zNmgyOS41NmwyNy4zOSw4NS4zNmgtMjAuMjJsLTQuODYtMTUuNDhIMTM2Ljg1eiBNMTUzLjc0LDI1NC42MgoJCQlsLTEyLjU0LDQwLjU3aDI1LjIxTDE1My43NCwyNTQuNjJ6Ii8+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTIwMi4yNCwyMzkuNzhoNDIuNDljOC44MywwLDE0LjU5LDAuOSwxOC41NiwyLjk0YzcuNTUsMy43MSwxMC40OSwxMC4yNCwxMC40OSwyMi45MQoJCQljMCwxNy43OS0yLjY5LDIyLjE0LTE1Ljc0LDI1LjA4djAuNjRjMTAuMTEsMC42NCwxNS4xLDYuMjcsMTQuOTcsMTYuNzd2MTcuMDJoLTE5Ljk2di0xMy4zMWMwLjI2LTguNTctMy4zMy0xMi40MS0xMS4xMy0xMi4xNgoJCQloLTE5Ljk2djI1LjQ3aC0xOS43MVYyMzkuNzh6IE0yNDIuNDIsMjgyLjljOS4yMSwwLDExLjI2LTIuNTYsMTEuMjYtMTMuOTVjMC0xMC4yNC0xLjc5LTEyLjI5LTExLjI2LTEyLjI5aC0yMC40OHYyNi4yNEgyNDIuNDJ6IgoJCQkvPgoJCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0yODUuMTcsMjM5Ljc4aDQzLjM4YzIzLjAzLDAsMzIuNjMsOS44NSwzMi42MywzMy42NmMwLDI0LjQ0LTAuNjQsMzEuNjEtMy4zMywzNy41CgkJCWMtNC43Myw5Ljk4LTEzLjQ0LDE0LjItMjkuNjksMTQuMmgtNDNWMjM5Ljc4eiBNMzI1LjYxLDMwOC4yNGM2Ljc4LDAsMTAuMjQtMS40MSwxMi41NC00Ljk5YzIuMy0zLjU4LDIuOTQtOC4zMiwyLjk0LTIxLjUKCQkJYzAtMTIuMjgtMC42NC0xNy4xNS0yLjgyLTIwLjM1Yy0yLjA1LTMuMi01LjUtNC40OC0xMi4xNi00LjQ4aC0yMS4yNHY1MS4zMkgzMjUuNjF6Ii8+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTM5Mi40LDMyNS4xM0gzNzIuN3YtODUuMzZoMTkuNzFWMzI1LjEzeiIvPgoJCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik00ODkuMTUsMzI1LjEzaC0zMy4yN2wtMTguODEtNDEuMzRjLTIuMy01LjEyLTMuNDYtNy45NC04LjE5LTIwLjM1bC0yLjY5LTYuNzhoLTAuNzcKCQkJYzAuNTEsMTEuNzcsMC43NywyMC43MywwLjc3LDI3LjEzdjQxLjM0aC0xOS4zMnYtODUuMzZoMzMuMDJsMTcuNzksMzkuNTRjMy45Nyw4LjgzLDQuMjIsOS40Nyw4Ljk2LDIxLjM3bDIuOTQsNy4wNGgwLjc3CgkJCWwtMC4yNi02LjY1Yy0wLjUxLTkuNi0wLjUxLTEwLjc1LTAuNTEtMTkuODR2LTQxLjQ2aDE5LjU4VjMyNS4xM3oiLz4KCQk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNNTIxLjc4LDMwOS42NWwtNC43NCwxNS40OGgtMjAuNDhsMjctODUuMzZoMjkuNTZsMjcuMzksODUuMzZINTYwLjNsLTQuODYtMTUuNDhINTIxLjc4eiBNNTM4LjY3LDI1NC42MgoJCQlsLTEyLjU0LDQwLjU3aDI1LjIxTDUzOC42NywyNTQuNjJ6Ii8+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTYwNi44OCwzMDguMTFoMzcuNzV2MTcuMDJoLTU3LjQ2di04NS4zNmgxOS43MVYzMDguMTF6Ii8+Cgk8L2c+Cgk8Zz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMzUuNTIsMzM4LjAzaDE1Ljc1YzcuNDYsMCwxMC4wNCwyLjQ5LDEwLjA0LDkuNTFjMCw2LjI0LTEuMjIsOC4wOS01Ljc1LDguOTJ2MC4xNQoJCQljMy41NiwwLjE5LDUuNDEsMi4zOSw1LjM2LDYuMjl2Ny42Nkg1NS45di02LjU4YzAuMS0zLjg1LTEuNjEtNS40Ni01LjUxLTUuMzFoLTkuOXYxMS45aC00Ljk3VjMzOC4wM3ogTTUwLjE0LDM1NC4zNgoJCQljMi4xOSwwLDMuNjEtMC4yOSw0LjU0LTAuOTdjMS4yNy0wLjg4LDEuNjEtMS45NSwxLjYxLTQuNzhjMC0zLjgtMC4zNC00LjkyLTEuNzYtNS43MWMtMC43My0wLjM5LTEuOTUtMC41OC0zLjU2LTAuNThINDAuNDkKCQkJdjEyLjA0SDUwLjE0eiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik05MC44MiwzMzguODFjMi44MywxLjIyLDQuMzksMy42MSw0Ljk3LDcuNTZjMC4yNCwxLjQ2LDAuMjksMi45NywwLjI5LDcuMzFjMCw2LjUzLTAuMSw3Ljg1LTAuNTksMTAuMjQKCQkJYy0wLjYzLDIuODMtMi4xOSw0Ljc4LTQuNTgsNS44Yy0yLjEsMC44OC00LjEsMS4xMi04Ljc4LDEuMTJjLTUuMzYsMC03LjIyLTAuMjQtOS4zNi0xLjE3Yy0yLjM0LTEuMDItMy44LTIuOTMtNC40NC01LjcxCgkJCWMtMC41NC0yLjI5LTAuNjMtMy41Ni0wLjYzLTkuNjVjMC03Ljg1LDAuMjktOS45NSwxLjc2LTEyLjM5YzEuMTctMS45NSwzLjE3LTMuMjcsNS45LTMuOGMxLjE3LTAuMjQsMy44NS0wLjM5LDYuNzMtMC4zOQoJCQlDODYuODcsMzM3LjczLDg4LjkxLDMzNy45OCw5MC44MiwzMzguODF6IE05MS4wNiwzNTQuMjJ2LTQuNTNjMC0zLjU2LTAuNzgtNS45LTIuMjQtNi43OGMtMS4yMi0wLjczLTIuNTgtMC44OC03LjQ2LTAuODgKCQkJYy01LjcsMC03LjEyLDAuNTQtOC4wNSwzLjE3Yy0wLjU0LDEuNjEtMC41OSwyLjItMC41OSw5LjEyYzAsNi4wNSwwLDYuMDUsMC4yNCw3LjdjMC4zNCwyLjEsMS4xMiwzLjM2LDIuNTQsMy45CgkJCWMxLjIyLDAuNDksMi41NCwwLjYzLDYuNDQsMC42M2M0LjQ0LDAsNS45LTAuMiw3LjAyLTEuMDJjMS4zMi0wLjkzLDIuMS0zLjQxLDIuMS02Ljc4VjM1NC4yMnoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMTI1LjU0LDMzOC44MWMyLjgzLDEuMjIsNC4zOSwzLjYxLDQuOTcsNy41NmMwLjI0LDEuNDYsMC4yOSwyLjk3LDAuMjksNy4zMWMwLDYuNTMtMC4xLDcuODUtMC41OSwxMC4yNAoJCQljLTAuNjMsMi44My0yLjE5LDQuNzgtNC41OCw1LjhjLTIuMSwwLjg4LTQuMSwxLjEyLTguNzgsMS4xMmMtNS4zNiwwLTcuMjItMC4yNC05LjM2LTEuMTdjLTIuMzQtMS4wMi0zLjgtMi45My00LjQ0LTUuNzEKCQkJYy0wLjU0LTIuMjktMC42My0zLjU2LTAuNjMtOS42NWMwLTcuODUsMC4yOS05Ljk1LDEuNzYtMTIuMzljMS4xNy0xLjk1LDMuMTctMy4yNyw1LjktMy44YzEuMTctMC4yNCwzLjg1LTAuMzksNi43My0wLjM5CgkJCUMxMjEuNTksMzM3LjczLDEyMy42NCwzMzcuOTgsMTI1LjU0LDMzOC44MXogTTEyNS43OCwzNTQuMjJ2LTQuNTNjMC0zLjU2LTAuNzgtNS45LTIuMjQtNi43OGMtMS4yMi0wLjczLTIuNTgtMC44OC03LjQ2LTAuODgKCQkJYy01LjcsMC03LjEyLDAuNTQtOC4wNSwzLjE3Yy0wLjU0LDEuNjEtMC41OSwyLjItMC41OSw5LjEyYzAsNi4wNSwwLDYuMDUsMC4yNCw3LjdjMC4zNCwyLjEsMS4xMiwzLjM2LDIuNTQsMy45CgkJCWMxLjIyLDAuNDksMi41NCwwLjYzLDYuNDQsMC42M2M0LjQ0LDAsNS45LTAuMiw3LjAyLTEuMDJjMS4zMi0wLjkzLDIuMS0zLjQxLDIuMS02Ljc4VjM1NC4yMnoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMTQzLjE1LDM1Mi4yN2gxNS4xNnY0LjE1aC0xNS4xNnYxNC4xNGgtNC45N3YtMzIuNTJoMjAuNzd2NC4xOWgtMTUuOFYzNTIuMjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTE3MC4xNywzNzAuNTVoLTQuOTd2LTMyLjUyaDQuOTdWMzcwLjU1eiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0yMDcuNTcsMzcwLjU1aC04LjM0bC0xMS40MS0xOS44OWMtMC41OS0xLjA3LTEuMTctMi4yNC0zLjI3LTYuMjlsLTEuMDItMi4wNWgtMC4xOWwwLjA1LDEuNjZsMC4wNSwxLjcxCgkJCWMwLjA1LDAuMSwwLjA1LDEuOCwwLjA1LDMuNDF2MjEuNDZoLTQuOTJ2LTMyLjUyaDguMjlsMTAuMDksMTcuOWMxLjEyLDIsMS43MSwzLjA3LDQuMjQsNy44bDEuMzcsMi41OGgwLjE1di0xLjY2bC0wLjA1LTEuNjYKCQkJYy0wLjA1LTAuMjQtMC4wNS0xLjg1LTAuMDUtMy4zNnYtMjEuNmg0Ljk3VjM3MC41NXoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjQyLjM5LDM1My44M2MwLjEsMS41NiwwLjEsMiwwLjEsMy45NWMwLDUuOS0wLjIsNy40Ni0xLjIyLDkuMjZjLTAuODgsMS41Ni0yLjI0LDIuNjMtNC4xOSwzLjE3CgkJCWMtMS40MSwwLjQ0LTQuMTUsMC42My04LjQ4LDAuNjNjLTQuNTgsMC02LjQ4LTAuMjQtOC40NC0xLjAyYy0yLjU0LTEuMDItMy45LTIuNTgtNC43My01LjQxYy0wLjQ5LTEuNTYtMC42My0zLjMyLTAuNjMtNy4wMgoJCQljMC05LjEyLDAuMDUtOS45NSwwLjU5LTEyLjQ4YzAuNzgtMy41NiwyLjczLTUuNzEsNS45NS02LjU4YzEuNDYtMC40NCwzLjQ2LTAuNTksNy41Ni0wLjU5YzYuOTcsMCw4LjM5LDAuMTksMTAuNjMsMS41NgoJCQljMS4yMiwwLjc4LDIuMTksMi4yNCwyLjU0LDMuODVjMC4yNCwxLjI3LDAuMzQsMi4xOSwwLjM0LDQuNDloLTQuOTdjLTAuMTUtNS4yNy0wLjc4LTUuNjYtOC45Ny01LjY2Yy01LjEyLDAtNi45MiwwLjU0LTcuOCwyLjQ0CgkJCWMtMC42OCwxLjUxLTAuODMsMy4zMi0wLjgzLDkuNzVjMCw2LjkyLDAuMTUsOC41MywwLjgzLDEwYzAuODgsMS45LDIuNzgsMi40NCw4LjYzLDIuNDRjMy45LDAsNS42Ni0wLjI0LDYuNzMtMS4wMgoJCQljMS4wMi0wLjY4LDEuNTEtMi43OCwxLjUxLTYuMjljMC0wLjI0LDAtMC44OC0wLjA1LTEuNTZoLTkuMjJ2LTMuOUgyNDIuMzl6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI5MC4yOCwzNTUuNTN2MC45N2MwLDMuNDYtMC4xLDQuODgtMC40OSw2LjY4bDUuMTcsNC4zNGwtMi40NCwzLjA3bC00LjM5LTMuNjYKCQkJYy0wLjczLDEuMzctMS40NiwyLjE1LTIuNTgsMi42OGMtMS45LDAuOTgtMy41NiwxLjIyLTguMjksMS4yMmMtNi4yOSwwLTguODMtMC40NC0xMC43My0xLjk1Yy0xLjgtMS40MS0yLjY4LTQuMTQtMi42OC04LjQ0CgkJCWMwLTMuODUsMC43OC02LDIuNTgtNy4yN2MwLjc4LTAuNTQsMS4zNy0wLjczLDMuODUtMS4xN2MtMi4zOS0yLjA1LTIuODMtMi45My0yLjgzLTUuNzVjMC02LjE0LDIuMjktNy45NSwxMC4wOS03Ljk1CgkJCWM3LjUxLDAsOS44LDEuOSw5LjgsOC4wNWMwLDAuMjksMCwxLjEyLTAuMDUsMS44NWgtNC41NHYtMS4wN2MtMC4wNS00LjM0LTAuNTktNC44OC01LjIyLTQuODhjLTQuMzksMC01LjM2LDAuNjgtNS4zNiwzLjY2CgkJCWMwLDIuMTksMC4yOSwyLjc4LDIuNTgsNC42M2wxMS4wNyw5LjM2di0yLjF2LTIuMjlIMjkwLjI4eiBNMjczLjA3LDM1NC40MWMtMy43NSwwLjczLTQuNDQsMS42Ni00LjQ0LDUuOQoJCQljMCwyLjY4LDAuMzQsNC4zNCwxLjEyLDUuMzFjMC44MywwLjk3LDIuMTksMS4yMiw2Ljg4LDEuMjJjNS43NSwwLDYuODMtMC4zNCw4LjA5LTIuNzNMMjczLjA3LDM1NC40MXoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMzE1LjIxLDMzOC4wM2gxNS43NWM3LjQ2LDAsMTAuMDQsMi40OSwxMC4wNCw5LjUxYzAsNi4yNC0xLjIyLDguMDktNS43NSw4LjkydjAuMTUKCQkJYzMuNTYsMC4xOSw1LjQxLDIuMzksNS4zNiw2LjI5djcuNjZoLTUuMDJ2LTYuNThjMC4xLTMuODUtMS42MS01LjQ2LTUuNTEtNS4zMWgtOS45djExLjloLTQuOTdWMzM4LjAzeiBNMzI5LjgzLDM1NC4zNgoJCQljMi4xOSwwLDMuNjEtMC4yOSw0LjU0LTAuOTdjMS4yNy0wLjg4LDEuNjEtMS45NSwxLjYxLTQuNzhjMC0zLjgtMC4zNC00LjkyLTEuNzYtNS43MWMtMC43My0wLjM5LTEuOTUtMC41OC0zLjU2LTAuNThoLTEwLjQ4CgkJCXYxMi4wNEgzMjkuODN6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTM1My4yNCwzNTEuOTJoMTUuODV2My44NWgtMTUuODV2MTAuNThoMTYuNjh2NC4xOWgtMjEuNjV2LTMyLjUyaDIxLjU1djQuMTloLTE2LjU4VjM1MS45MnoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNDA2LjAxLDM3MC41NWgtOC4zNGwtMTEuNDEtMTkuODljLTAuNTktMS4wNy0xLjE3LTIuMjQtMy4yNy02LjI5bC0xLjAyLTIuMDVoLTAuMTlsMC4wNSwxLjY2bDAuMDUsMS43MQoJCQljMC4wNSwwLjEsMC4wNSwxLjgsMC4wNSwzLjQxdjIxLjQ2SDM3N3YtMzIuNTJoOC4yOWwxMC4wOSwxNy45YzEuMTIsMiwxLjcxLDMuMDcsNC4yNCw3LjhsMS4zNywyLjU4aDAuMTV2LTEuNjZsLTAuMDUtMS42NgoJCQljLTAuMDUtMC4yNC0wLjA1LTEuODUtMC4wNS0zLjM2di0yMS42aDQuOTdWMzcwLjU1eiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik00MzYuMzQsMzM4LjgxYzIuODMsMS4yMiw0LjM5LDMuNjEsNC45Nyw3LjU2YzAuMjQsMS40NiwwLjI5LDIuOTcsMC4yOSw3LjMxYzAsNi41My0wLjEsNy44NS0wLjU5LDEwLjI0CgkJCWMtMC42MywyLjgzLTIuMTksNC43OC00LjU4LDUuOGMtMi4xLDAuODgtNC4xLDEuMTItOC43OCwxLjEyYy01LjM2LDAtNy4yMi0wLjI0LTkuMzYtMS4xN2MtMi4zNC0xLjAyLTMuOC0yLjkzLTQuNDQtNS43MQoJCQljLTAuNTQtMi4yOS0wLjYzLTMuNTYtMC42My05LjY1YzAtNy44NSwwLjI5LTkuOTUsMS43Ni0xMi4zOWMxLjE3LTEuOTUsMy4xNy0zLjI3LDUuOS0zLjhjMS4xNy0wLjI0LDMuODUtMC4zOSw2LjczLTAuMzkKCQkJQzQzMi4zOSwzMzcuNzMsNDM0LjQ0LDMzNy45OCw0MzYuMzQsMzM4LjgxeiBNNDM2LjU5LDM1NC4yMnYtNC41M2MwLTMuNTYtMC43OC01LjktMi4yNC02Ljc4Yy0xLjIyLTAuNzMtMi41OC0wLjg4LTcuNDYtMC44OAoJCQljLTUuNywwLTcuMTIsMC41NC04LjA1LDMuMTdjLTAuNTQsMS42MS0wLjU5LDIuMi0wLjU5LDkuMTJjMCw2LjA1LDAsNi4wNSwwLjI0LDcuN2MwLjM0LDIuMSwxLjEyLDMuMzYsMi41NCwzLjkKCQkJYzEuMjIsMC40OSwyLjU0LDAuNjMsNi40NCwwLjYzYzQuNDQsMCw1LjktMC4yLDcuMDItMS4wMmMxLjMyLTAuOTMsMi4xLTMuNDEsMi4xLTYuNzhWMzU0LjIyeiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik00NzQuOTIsMzM4LjAzTDQ2NCwzNzAuNTVoLTcuNDZsLTEwLjk3LTMyLjUyaDUuMjJsNy4zMSwyMS4zNmMwLjU4LDEuOCwxLjUxLDQuOTIsMi4xNCw3LjAyaDAuMQoJCQljMC44My0yLjk4LDEuNTEtNS4xNywyLjEtNi45N2w3LjIyLTIxLjQxSDQ3NC45MnoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNDgyLjA0LDM2NC4wMmwtMi4yNCw2LjUzaC01LjI3bDExLjM2LTMyLjUyaDcuMjdsMTEuNTEsMzIuNTJoLTUuMTdsLTIuMjktNi41M0g0ODIuMDR6IE00ODkuNiwzNDEuOTMKCQkJbC02LjI5LDE4LjI5aDEyLjY4TDQ4OS42LDM0MS45M3oiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNTE5LjIsMzcwLjU1aC00Ljk3di0yOC4wNGgtOS45NXYtNC40OWgyNS4wMXY0LjU0bC0xMC4wOS0wLjA1VjM3MC41NXoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNTQwLjIyLDM3MC41NWgtNC45N3YtMzIuNTJoNC45N1YzNzAuNTV6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTU3MC43LDMzOC44MWMyLjgzLDEuMjIsNC4zOSwzLjYxLDQuOTcsNy41NmMwLjI0LDEuNDYsMC4yOSwyLjk3LDAuMjksNy4zMWMwLDYuNTMtMC4xLDcuODUtMC41OSwxMC4yNAoJCQljLTAuNjMsMi44My0yLjE5LDQuNzgtNC41OCw1LjhjLTIuMSwwLjg4LTQuMSwxLjEyLTguNzgsMS4xMmMtNS4zNiwwLTcuMjItMC4yNC05LjM2LTEuMTdjLTIuMzQtMS4wMi0zLjgtMi45My00LjQ0LTUuNzEKCQkJYy0wLjU0LTIuMjktMC42My0zLjU2LTAuNjMtOS42NWMwLTcuODUsMC4yOS05Ljk1LDEuNzYtMTIuMzljMS4xNy0xLjk1LDMuMTctMy4yNyw1LjktMy44YzEuMTctMC4yNCwzLjg1LTAuMzksNi43My0wLjM5CgkJCUM1NjYuNzUsMzM3LjczLDU2OC44LDMzNy45OCw1NzAuNywzMzguODF6IE01NzAuOTUsMzU0LjIydi00LjUzYzAtMy41Ni0wLjc4LTUuOS0yLjI0LTYuNzhjLTEuMjItMC43My0yLjU4LTAuODgtNy40Ni0wLjg4CgkJCWMtNS43LDAtNy4xMiwwLjU0LTguMDUsMy4xN2MtMC41NCwxLjYxLTAuNTksMi4yLTAuNTksOS4xMmMwLDYuMDUsMCw2LjA1LDAuMjQsNy43YzAuMzQsMi4xLDEuMTIsMy4zNiwyLjU0LDMuOQoJCQljMS4yMiwwLjQ5LDIuNTQsMC42Myw2LjQ0LDAuNjNjNC40NCwwLDUuOS0wLjIsNy4wMi0xLjAyYzEuMzItMC45MywyLjEtMy40MSwyLjEtNi43OFYzNTQuMjJ6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTYxMi4zNSwzNzAuNTVoLTguMzRsLTExLjQxLTE5Ljg5Yy0wLjU5LTEuMDctMS4xNy0yLjI0LTMuMjctNi4yOWwtMS4wMi0yLjA1aC0wLjE5bDAuMDUsMS42NmwwLjA1LDEuNzEKCQkJYzAuMDUsMC4xLDAuMDUsMS44LDAuMDUsMy40MXYyMS40NmgtNC45MnYtMzIuNTJoOC4yOWwxMC4wOSwxNy45YzEuMTIsMiwxLjcxLDMuMDcsNC4yNCw3LjhsMS4zNywyLjU4aDAuMTV2LTEuNjZsLTAuMDUtMS42NgoJCQljLTAuMDUtMC4yNC0wLjA1LTEuODUtMC4wNS0zLjM2di0yMS42aDQuOTdWMzcwLjU1eiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik02MzkuMDgsMzQ3LjE5YzAtMi4xOS0wLjE1LTIuOTctMC42My0zLjc1Yy0wLjc4LTEuMjItMi4xOS0xLjYxLTYuMDktMS42MWMtNi43MywwLTgsMC43OC04LDUuMDcKCQkJYzAsMi41OCwwLjYzLDMuODUsMi4yNCw0LjM5YzAuOTMsMC4zNCwxLjM3LDAuMzksNi40NCwwLjYzYzUuNzUsMC4yOSw3LjU2LDAuNjMsOS4xMiwxLjc2YzEuOCwxLjM3LDIuNDksMy4zNiwyLjQ5LDcuMjcKCQkJYzAsNC43My0wLjgzLDcuMDItMi45Nyw4LjM5Yy0xLjksMS4xNy00LjI0LDEuNTEtMTAuNDgsMS41MWMtNS4xMiwwLTYuOTItMC4yOS04LjkyLTEuNDZjLTEuMjItMC43My0yLjI5LTIuMjktMi42My0zLjk1CgkJCWMtMC4yOS0xLjQ2LTAuMzQtMi4zOS0wLjM5LTUuMDdoNC44OGMwLDIuOTMsMC4xNSwzLjY2LDAuNzMsNC42OGMwLjgzLDEuNDYsMS43MSwxLjY2LDcuMTcsMS42NmM2Ljg4LDAsNy43LTAuNjMsNy43LTUuOAoJCQljMC0yLjQ0LTAuNTQtMy41Ni0xLjktNC4xYy0wLjg4LTAuMzQtMC44OC0wLjM0LTYuNTMtMC42OGMtNS45LTAuMjktNi41OC0wLjQ0LTguMjQtMS4yMmMtMi41OC0xLjI3LTMuNjYtMy41Ni0zLjY2LTcuODUKCQkJYzAtMy43NSwwLjc4LTYuMTQsMi40OS03LjQxYzEuOTUtMS40Niw0LjM5LTEuOSwxMC4xOS0xLjljNi40NCwwLDguOTcsMC42OCwxMC41MywyLjg4YzAuOTMsMS4zNywxLjM3LDMuMTIsMS4zNyw1LjYxdjAuOTcKCQkJSDYzOS4wOHoiLz4KCTwvZz4KCTxnPgoJCTxnPgoJCQk8Zz4KCQkJCTxwb2x5Z29uIGNsYXNzPSJzdDMiIHBvaW50cz0iMzk2LjYxLDIyNi4yMyAzOTMuMDMsMTk3LjQyIDM4My4wMSwyMDAuNTIgMzg5LjI2LDIyNS43MSAJCQkJIi8+CgkJCQk8cG9seWdvbiBjbGFzcz0ic3QzIiBwb2ludHM9IjQxNi4xMiwyMjcuNjMgNDEyLjYsMTk5LjMzIDQwMi41OCwyMDIuNDMgNDA4LjY4LDIyNy4xIAkJCQkiLz4KCQkJPC9nPgoJCQk8cGF0aCBjbGFzcz0ic3QzIiBkPSJNNDQ1Ljk2LDE0MC40NmMwLDAtMi43LTUuNS0xMC4zNS02LjI0YzAsMCwyLjQyLTUuMjUtMS43OC05LjIyYy0yLjg3LTIuNzItMzAuNzItMjYuNzItMzAuNzItMjYuNzIKCQkJCWwtMC42MywxMS41M2wxMS41NiwxNC4wNmwtMTAuNjMtNS4zNGMwLDAtNS4yNiwxMi42Mi0xNC43OSwyNC43MmMzLjcyLDQuNjksMy4yMywxMS4yLDMuMjMsMTEuMnMtMi41MS00LjktNi43NS02Ljk3CgkJCQljMCwwLTkuMzUtNS4wNi0yMC40MiwyLjgzYy0xMS4wNyw3Ljg5LTU2LjA0LDQ5LjA3LTU2LjA0LDQ5LjA3bDczLjU0LTE3LjNsLTUwLjcyLDE5LjcybC0zOS4wMSwyNi4xOWw0LjIzLDAuMwoJCQkJYzUuMjQsMC4zOCwxMC40Ni0wLjkxLDE0LjkyLTMuNjlsMjkuMTktMTguMTVsLTI1LjcxLDIzLjE2aDBjNi4yMSwwLjQ1LDEyLjM1LTEuNDQsMTcuMjItNS4zMWM3LjU3LTYsMTguNzMtMTQuODIsMjMuMzctMTguMjYKCQkJCWM2LjI3LTQuNjUsMTIuMzEtNS4xMSwxNy4xNC0yLjQ1YzcuMDgsMy45MSwxMS4yMiw2Ljk0LDIxLjk2LDcuODdjMC4wMS0wLjAxLTAuMDEsMC4wMSwwLDBsLTEuMDktOS4xbDYuMDcsOS4xNgoJCQkJYzE0LjA1LTAuNjksMjkuNzctOS4wNywzMy41Mi0zMi44NWMyLjc4LTE3LjY3LTIuMDYtMjkuNjUtMi4wNi0yOS42NVM0MzcuOTMsMTQyLjc1LDQ0NS45NiwxNDAuNDZ6IE00MjMuNzgsMTM4Ljc5CgkJCQljLTIuMjMtMC4yMi0zLjg1LTIuMi0zLjY0LTQuNDJjMC4yMi0yLjIzLDIuMi0zLjg2LDQuNDItMy42NGMyLjIzLDAuMjIsMy44NiwyLjIsMy42NCw0LjQzCgkJCQlDNDI3Ljk5LDEzNy4zOCw0MjYuMDEsMTM5LjAxLDQyMy43OCwxMzguNzl6Ii8+CgkJPC9nPgoJCTxwb2x5Z29uIHBvaW50cz0iNDAyLjMsMjkuMTYgMjk2LjkzLDEzNC41MyAzMTUuNDQsMTUzLjE2IDQwMi4zLDY2LjMgNTYzLjk4LDIyNy45OSA2MDEuMTMsMjI3Ljk5IAkJIi8+CgkJPGc+CgkJCTxwb2x5Z29uIGNsYXNzPSJzdDIiIHBvaW50cz0iNDAyLjMsODQuMTUgNTQwLjUxLDIyMi4zNiAzNDUuMjcsMjIzLjIyIDMzOS4xNywyMjcuOTkgNTU0LjYsMjI3Ljk5IDQwMi4zLDc1LjY4IDMyMC4xMiwxNTcuODYgCgkJCQkzMjQuMzQsMTYyLjExIAkJCSIvPgoJCTwvZz4KCQk8cmVjdCB4PSIyMDMuMTciIHk9IjE5Ni42NyIgd2lkdGg9IjIzLjEzIiBoZWlnaHQ9IjIzLjEzIi8+CgkJPHJlY3QgeD0iMjMyLjUiIHk9IjE5Ni42NyIgd2lkdGg9IjIzLjEzIiBoZWlnaHQ9IjIzLjEzIi8+CgkJPHBvbHlnb24gcG9pbnRzPSIxNDkuNDgsMTc1LjU0IDEyMi4yNSwxOTIuMzMgMTIyLjI1LDEzOC44MSAxNDkuNDgsMTM4LjgxIAkJIi8+CgkJPHJlY3QgeD0iMTE2Ljk0IiB5PSIxMjQuODEiIHdpZHRoPSIzNy44NiIgaGVpZ2h0PSI3Ljk4Ii8+CgkJPHBhdGggZD0iTTIyOS40LDE2MC43M0wyMjkuNCwxNjAuNzNjLTE0LjM4LDAtMjYuMDMsMTEuNjUtMjYuMDMsMjYuMDN2My43MWg1Mi4wNnYtMy43MUMyNTUuNDMsMTcyLjM4LDI0My43NywxNjAuNzMsMjI5LjQsMTYwLjczCgkJCXoiLz4KCQk8cG9seWdvbiBwb2ludHM9IjU4Ny45NywyMTQuODMgNjMxLjkzLDIyNy45OSA2MDEuMTMsMjI3Ljk5IAkJIi8+CgkJPGc+CgkJCTxwYXRoIGQ9Ik0zMTEuMzksMTg2LjI1YzQuOTUtNC40MywxMC4xLTkuMDEsMTUuMTMtMTMuNDVMMjI5LjQsNzUuNjhMODkuNTYsMjE1LjUybDAsMGwtMTIuNDYsMTIuNDZoMjguNThMMjI5LjQsMTA0LjI2CgkJCQlMMzExLjM5LDE4Ni4yNXoiLz4KCQkJPHBhdGggY2xhc3M9InN0MiIgZD0iTTIyOS40LDExOGw3NC43NSw3NC43NWMxLjEyLTEuMDEsMi4yNy0yLjA0LDMuNDMtMy4wOWwtNzguMTktNzguMTlMMTEyLjg5LDIyNy45OWg2LjUyTDIyOS40LDExOHoiLz4KCQkJPHBvbHlnb24gcG9pbnRzPSI4OS41NiwyMTUuNTIgNDguMjIsMjI3Ljk5IDc3LjA5LDIyNy45OSAJCQkiLz4KCQk8L2c+CgkJPHBvbHlnb24gY2xhc3M9InN0MiIgcG9pbnRzPSIyMjkuNCwxMTggMTE5LjQxLDIyNy45OSAxMjIuMjUsMjI4LjE0IDIyOS40LDEyMC45OSAzMDIuNjUsMTk0LjI1IDMwNC4xNSwxOTIuNzUgCQkiLz4KCTwvZz4KPC9nPgo8L3N2Zz4K") !important;
+  filter: none !important;
+  background: #232b3d !important;
+  border: 1px solid #4a6fa5 !important;
+  border-radius: 8px !important;
+  padding: 4px 6px !important;
+  object-fit: contain !important;
+  box-sizing: border-box !important;
+}
 </style>
 
 <script id="cr-shim">
@@ -17355,7 +17458,10 @@ async function enableNotifications(){
     const approvalRate = rows.length ? Math.round(approved.length / rows.length * 100) : 0;
     const avgTicket = rows.length ? Math.round(rows.reduce((s, r) => s + r.amount, 0) / rows.length) : 0;
 
-    MOUNT.querySelector('[data-facts]').innerHTML = `
+    // View may have been closed while the query was in flight
+    const factsEl = MOUNT.querySelector('[data-facts]');
+    if (!factsEl) return;
+    factsEl.innerHTML = `
       <div class="cr-fact"><div class="lbl">Outstanding</div><div class="val">$${fmt(outstanding)}</div></div>
       <div class="cr-fact"><div class="lbl">Active Pipeline</div><div class="val">${rows.length} estimates</div></div>
       <div class="cr-fact"><div class="lbl">Approval Rate</div><div class="val">${approvalRate}%</div></div>
@@ -17372,10 +17478,14 @@ async function enableNotifications(){
 
   async function renderRows() {
     const listEl = MOUNT.querySelector('[data-list]');
+    if (!listEl) return;
     listEl.innerHTML = '<div class="cr-loading">Loading estimates…</div>';
     let rows;
     try { rows = await loadList(state.filter); }
-    catch (e) { listEl.innerHTML = `<div class="cr-empty">Failed to load: ${escape(e.message)}</div>`; return; }
+    catch (e) { if (listEl.isConnected) listEl.innerHTML = `<div class="cr-empty">Failed to load: ${escape(e.message)}</div>`; return; }
+
+    // Bail if the view was closed or re-rendered while loading
+    if (!listEl.isConnected) return;
 
     if (!rows.length) { listEl.innerHTML = '<div class="cr-empty">No estimates match.</div>'; return; }
 
@@ -17565,6 +17675,9 @@ async function enableNotifications(){
       estimate = data.estimate;
     }
     state.estimate = { id, ...estimate };
+
+    // View may have been closed while the query was in flight
+    if (!MOUNT.querySelector('[data-meta]')) return;
 
     // Meta
     MOUNT.querySelector('[data-meta]').innerHTML = `
@@ -17946,6 +18059,7 @@ async function enableNotifications(){
       .order('sort_order', { ascending: true })
       .order('name', { ascending: true });
     if (error) { saveStatus('Load failed', 'error'); return; }
+    if (!MOUNT.querySelector('[data-items]')) return;   // closed mid-load
     state.items = data;
     renderItems();
   }
@@ -17969,6 +18083,7 @@ async function enableNotifications(){
 
   // ── Render summary ──
   function renderSummary() {
+    if (!MOUNT.querySelector('[data-summary]')) return;
     const enabled = state.items.filter(i => i.enabled).length;
     const total = state.items.length;
     const rates = state.items.filter(i => i.enabled).map(i => Number(i.rate));
@@ -17985,8 +18100,9 @@ async function enableNotifications(){
 
   // ── Render items grouped by category (using pricing_categories for order) ──
   function renderItems() {
-    renderSummary();
     const container = MOUNT.querySelector('[data-items]');
+    if (!container) return;
+    renderSummary();
     const q = state.search.toLowerCase();
     let items = state.items;
     if (q) items = items.filter(i =>
@@ -19548,9 +19664,12 @@ async function enableNotifications(){
   async function renderRows() {
     const listEl = MOUNT.querySelector('[data-list]');
     const factsEl = MOUNT.querySelector('[data-facts]');
+    if (!listEl || !factsEl) return;
     listEl.innerHTML = '<div class="cr-c-loading">Loading claims…</div>';
 
     const all = await loadClaims();
+    // Bail if the view was closed while the query was in flight
+    if (!listEl.isConnected) return;
     let rows = all;
     const me = window.my_email?.() || '';
     const activeStatuses = ['filed','adjuster_pending','adjuster_met','approved','in_progress','completed'];
@@ -19626,6 +19745,7 @@ async function enableNotifications(){
     `;
     MOUNT.querySelector('[data-act="back"]').onclick = showList;
     const claim = await loadClaim(id);
+    if (MOUNT.style.display === 'none') return;   // closed mid-load
     if (!claim) { toast('Claim not found', 'error'); return showList(); }
     renderDetail();
   }
@@ -20780,6 +20900,779 @@ async function enableNotifications(){
     forEstimate,
     forContract,
   };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: insurance_hub_bridge.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — INSURANCE HUB BRIDGE
+ Ties the new Claims tracker into the existing Cardinal Truth section.
+ v2026-07-22 · build 146
+────────────────────────────────────────────────────────────────────
+ WHAT THIS WIRES:
+
+ 1. Cardinal Truth dashboard — adds a "Claims Tracker" card as the
+    first tile in the grid (money first), matching the existing
+    .ins-card styling.
+
+ 2. Section dropdown (☰ Menu inside Cardinal Truth) — adds a
+    "Claims Tracker" option.
+
+ 3. The "📋 New Claim — soon" item in the + menu becomes live and
+    opens the new-claim modal.
+
+ 4. Back-navigation awareness — a claim opened FROM the hub returns
+    to the hub. Opened from the main ☰ menu, it returns to the app.
+
+ 5. Client cards — the CARRIER / CLAIM # / DEDUCTIBLE block on an
+    insurance client now carries a live claim card underneath
+    (financials + received progress, or a Create/Link prompt).
+
+ INSTALL: paste after cross_links.html. No SQL changes.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-hub-bridge-styles">
+  /* The Claims card inherits .ins-card from the app; these are just
+     the accents that mark it as the live/primary tile. */
+  #cardinalTruthView .ins-card.cr-claims-card{
+    border-color:#4a6fa5;
+    box-shadow:inset 0 0 0 1px rgba(74,111,165,.35);
+  }
+  #cardinalTruthView .ins-card.cr-claims-card .ins-cardtitle{ color:#bfaee6; }
+  #cardinalTruthView .ins-card.cr-claims-card .cr-claims-stat{
+    display:flex; gap:14px; flex-wrap:wrap;
+    margin-top:8px; font:700 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.06em; text-transform:uppercase; color:#8b95a5;
+  }
+  #cardinalTruthView .ins-card.cr-claims-card .cr-claims-stat b{
+    color:#e8ecf1; font-size:13px; letter-spacing:0;
+  }
+  #cardinalTruthView .ins-card.cr-claims-card .cr-claims-stat .pos{ color:#7cd18d; }
+
+  /* Slot for the claim card injected under the client's insurance block */
+  .cr-projclaim-slot{ margin-top:10px; }
+  .cr-projclaim-slot .cr-xl-card{ margin:0; }
+</style>
+
+<script id="cr-hub-bridge">
+(function () {
+  'use strict';
+
+  var HUB    = 'cardinalTruthView';
+  var MOUNT  = 'cr-claims-mount';
+  var openedFromHub = false;
+
+  function $(id){ return document.getElementById(id); }
+  function hubOpen(){ var h=$(HUB); return h && h.style.display !== 'none' && h.style.display !== ''; }
+
+  // ── 1. Open claims, remembering where we came from ─────────
+  function openClaimsFromHub(){
+    openedFromHub = true;
+    // Deliberately NOT calling hideAllViews() — the hub stays mounted
+    // underneath so Back can return to it instantly.
+    if (window.crHideOtherMounts) window.crHideOtherMounts(MOUNT);
+    var m = $(MOUNT);
+    if (m) { m.style.display='block'; m.style.zIndex='200'; }
+    if (window.CardinalClaims) window.CardinalClaims.open();
+  }
+  window.crOpenClaimsFromHub = openClaimsFromHub;
+
+  function newClaimFromHub(projectId){
+    openedFromHub = hubOpen();
+    if (window.crHideOtherMounts) window.crHideOtherMounts(MOUNT);
+    var m = $(MOUNT);
+    if (m) { m.style.display='block'; m.style.zIndex='200'; }
+    if (window.CardinalClaims) window.CardinalClaims.new(projectId || null);
+  }
+  window.crNewClaimFromHub = newClaimFromHub;
+
+  // ── 2. Wrap CardinalClaims.close so Back returns to the hub ─
+  function wrapClose(){
+    if (!window.CardinalClaims || window.CardinalClaims.__crWrapped) return false;
+    var origClose = window.CardinalClaims.close;
+    window.CardinalClaims.close = function(){
+      origClose.apply(this, arguments);
+      if (openedFromHub) {
+        openedFromHub = false;
+        var h = $(HUB);
+        if (h) h.style.display = 'block';        // hub is still mounted
+      } else if (typeof window.showHome === 'function') {
+        window.showHome();
+      }
+    };
+    window.CardinalClaims.__crWrapped = true;
+    return true;
+  }
+
+  // ── 3. Inject the Claims Tracker card into the hub grid ────
+  function injectHubCard(){
+    var grid = document.querySelector('#' + HUB + ' .ins-grid');
+    if (!grid || grid.querySelector('.cr-claims-card')) return;
+
+    var card = document.createElement('button');
+    card.className = 'ins-card cr-claims-card';
+    card.setAttribute('data-ctnav', 'claims');
+    card.innerHTML =
+      '<div class="ins-cardtitle">&#128737;&#65039; Claims Tracker</div>' +
+      '<div class="ins-cardsub">Every open claim with the money attached &mdash; approved RCV, the ACV already paid, ' +
+        'depreciation still held back, deductible, and every check logged as it lands. Supplements tracked from filed to approved.</div>' +
+      '<div class="cr-claims-stat" data-claims-stat><span>Loading&hellip;</span></div>' +
+      '<div class="ins-cardgo">Open &rsaquo;</div>';
+
+    grid.insertBefore(card, grid.firstChild);   // money first
+    loadHubStats();
+  }
+
+  // ── 4. Live totals on the hub card ─────────────────────────
+  async function loadHubStats(){
+    var el = document.querySelector('[data-claims-stat]');
+    if (!el || !window.supa) return;
+    try {
+      var res = await window.supa
+        .from('insurance_claims')
+        .select('id, status, approved_rcv')
+        .limit(500);
+      if (res.error) throw res.error;
+      var rows = res.data || [];
+
+      var pay = await window.supa.from('insurance_payments').select('amount').limit(2000);
+      var received = (pay.data || []).reduce(function(s,p){ return s + Number(p.amount||0); }, 0);
+      var approved = rows.reduce(function(s,r){ return s + Number(r.approved_rcv||0); }, 0);
+      var openStatuses = ['filed','adjuster_pending','adjuster_met','approved','in_progress','completed','awaiting_rcv'];
+      var openCount = rows.filter(function(r){ return openStatuses.indexOf(r.status) !== -1; }).length;
+      var outstanding = Math.max(0, approved - received);
+
+      if (!el.isConnected) return;
+      el.innerHTML =
+        '<span><b>' + openCount + '</b> open</span>' +
+        '<span>Approved <b>$' + money(approved) + '</b></span>' +
+        '<span>Outstanding <b class="pos">$' + money(outstanding) + '</b></span>';
+    } catch (e) {
+      if (el.isConnected) el.innerHTML = '<span>Run insurance_claims_setup.sql to enable</span>';
+    }
+  }
+  function money(n){
+    return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
+
+  // ── 5. Add the dropdown option ─────────────────────────────
+  function injectDropdownOption(){
+    var sel = $('ctSectionSel');
+    if (!sel || sel.querySelector('option[value="cr-claims"]')) return;
+    var opt = document.createElement('option');
+    opt.value = 'cr-claims';
+    opt.textContent = 'Claims Tracker';
+    // sit it directly under "Insurance Clients"
+    var after = sel.querySelector('option[value="clients"]');
+    if (after && after.nextSibling) sel.insertBefore(opt, after.nextSibling);
+    else sel.appendChild(opt);
+
+    sel.addEventListener('change', function(){
+      if (sel.value === 'cr-claims'){
+        sel.value = '';
+        openClaimsFromHub();
+      }
+    });
+  }
+
+  // ── 6. Activate the "New Claim — soon" item in the + menu ──
+  function activatePlusMenu(){
+    var menu = $('ctPlusMenu');
+    if (!menu || menu.dataset.crWired) return;
+    var items = menu.querySelectorAll('.ins-dropitem');
+    for (var i = 0; i < items.length; i++){
+      var t = (items[i].textContent || '').toLowerCase();
+      if (t.indexOf('new claim') !== -1){
+        items[i].innerHTML = '&#128203; New Claim';
+        items[i].addEventListener('click', function(e){
+          e.stopPropagation();
+          menu.classList.remove('open');
+          newClaimFromHub();
+        });
+        menu.dataset.crWired = '1';
+        break;
+      }
+    }
+  }
+
+  // ── 7. Route the hub card click ────────────────────────────
+  function wireHubCardClick(){
+    var hub = $(HUB);
+    if (!hub || hub.dataset.crClaimsWired) return;
+    // Separate listener — the app's own handler ignores unknown nav values,
+    // so this composes cleanly rather than replacing anything.
+    hub.addEventListener('click', function(e){
+      var b = e.target.closest('.ins-card[data-ctnav="claims"]');
+      if (!b) return;
+      e.stopPropagation();
+      openClaimsFromHub();
+    });
+    hub.dataset.crClaimsWired = '1';
+  }
+
+  // ── 8. Claim card under the client's insurance block ───────
+  function mountProjectClaim(){
+    var block = document.querySelector('.projInsBlock');
+    if (!block) return;
+    if (!document.body.classList.contains('claim-insurance')) return;
+
+    var pid = (window.currentProject && window.currentProject.id) || null;
+    if (!pid) return;
+
+    var slot = block.querySelector('.cr-projclaim-slot');
+    if (slot && slot.dataset.pid === pid) return;   // already mounted for this client
+    if (!slot){
+      slot = document.createElement('div');
+      slot.className = 'cr-projclaim-slot';
+      block.appendChild(slot);
+    }
+    slot.dataset.pid = pid;
+    slot.innerHTML = '';
+    if (window.CardinalCrossLinks && window.CardinalCrossLinks.forProject){
+      window.CardinalCrossLinks.forProject(pid, slot);
+    }
+  }
+
+  // ── Boot ───────────────────────────────────────────────────
+  function boot(){
+    wrapClose();
+    injectHubCard();
+    injectDropdownOption();
+    activatePlusMenu();
+    wireHubCardClick();
+  }
+
+  // The hub and client card are rendered lazily, so watch for them.
+  var mo = new MutationObserver(function(){
+    if ($(HUB)) { injectHubCard(); injectDropdownOption(); activatePlusMenu(); wireHubCardClick(); }
+    mountProjectClaim();
+  });
+
+  function start(){
+    boot();
+    mo.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
+    // Retry wrapping in case the claims module loads after this one
+    var tries = 0;
+    var iv = setInterval(function(){
+      if (wrapClose() || ++tries > 40) clearInterval(iv);
+    }, 150);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: adjuster_directory.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — ADJUSTER DIRECTORY
+ v2026-07-22 · build 146
+────────────────────────────────────────────────────────────────────
+ Fills the "Adjuster Directory — Coming soon" stub on the Cardinal
+ Truth dashboard. No new tables: everything is derived from
+ insurance_claims + insurance_supplements.
+
+ WHAT IT SHOWS
+   Per adjuster, aggregated across every claim they've touched:
+     • carrier / IA firm, phone, email (tap to call or write)
+     • claims worked, total approved RCV, last seen
+     • WRITE RATIO — approved RCV vs Cardinal's own estimate.
+       Under 100% means they habitually cut scope; that is the single
+       most useful number to know before an inspection.
+     • SUPPLEMENT RATE — of supplements filed against their claims,
+       how many came back approved or partial.
+     • denials
+
+ INSTALL: paste after insurance_hub_bridge.html.
+
+ API: CardinalAdjusters.open()  /  .openOne(key)  /  .close()
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-adj-styles">
+  #cr-adjusters-mount{
+    --cr-red:#D9282A; --cr-red-dark:#B01F21; --cr-red-tint:#FDECEC; --cr-red-tint-2:#FEF7F7;
+    --cr-amber:#C87A00; --cr-amber-tint:#FBEFDA;
+    --cr-green:#2E7D32; --cr-green-tint:#E7F2E7;
+    --cr-blue:#1976D2;  --cr-blue-tint:#E3F0FB;
+    --cr-purple:#6A3AB0; --cr-purple-tint:#EEE6F7;
+    --cr-black:#1a1a1a; --cr-text:#2a2a2a; --cr-muted:#6b6b6b; --cr-muted-2:#a8a8a8;
+    --cr-border:#e5e5e5; --cr-border-2:#efefef; --cr-bg:#fff; --cr-bg-subtle:#fafafa;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--cr-text); background:var(--cr-bg); -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  #cr-adjusters-mount *{ box-sizing:border-box; }
+  #cr-adjusters-mount .cr-a-app{ max-width:800px; margin:0 auto; padding:24px 22px 100px; }
+
+  #cr-adjusters-mount .cr-a-back{ display:inline-flex; gap:6px; color:var(--cr-muted); font-size:11px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; cursor:pointer; margin-bottom:20px; }
+  #cr-adjusters-mount .cr-a-back:hover{ color:var(--cr-red); }
+  #cr-adjusters-mount .cr-a-eyebrow{ font-size:11px; font-weight:700; letter-spacing:2.5px; color:var(--cr-muted); text-transform:uppercase; margin-bottom:10px; }
+  #cr-adjusters-mount .cr-a-title{ font-size:34px; font-weight:700; color:var(--cr-black); letter-spacing:-.6px; margin:0; line-height:1.1; }
+  #cr-adjusters-mount .cr-a-rule{ height:3px; background:var(--cr-red); margin:16px 0 22px; }
+
+  #cr-adjusters-mount .cr-a-facts{ display:grid; grid-template-columns:1fr 1fr; gap:18px 30px; margin-bottom:24px; }
+  #cr-adjusters-mount .cr-a-fact .lbl{ font-size:10px; font-weight:700; color:var(--cr-red); letter-spacing:1.8px; text-transform:uppercase; margin-bottom:4px; }
+  #cr-adjusters-mount .cr-a-fact .val{ font-size:15px; font-weight:500; line-height:1.35; }
+  #cr-adjusters-mount .cr-a-fact .val strong{ font-weight:700; color:var(--cr-black); }
+
+  #cr-adjusters-mount .cr-a-toolbar{ display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+  #cr-adjusters-mount .cr-a-search{ flex:1; min-width:180px; padding:10px 14px; border:1px solid var(--cr-border); border-radius:4px; font-size:14px; font-family:inherit; color:var(--cr-text); }
+  #cr-adjusters-mount .cr-a-search:focus{ outline:none; border-color:var(--cr-red); box-shadow:0 0 0 3px var(--cr-red-tint); }
+  #cr-adjusters-mount .cr-a-sel{ padding:10px 12px; border:1px solid var(--cr-border); border-radius:4px; font-size:13px; font-family:inherit; background:#fff; color:var(--cr-text); }
+
+  #cr-adjusters-mount .cr-a-row{ padding:16px 4px 14px; border-bottom:1px solid var(--cr-border-2); cursor:pointer; }
+  #cr-adjusters-mount .cr-a-row:hover{ background:var(--cr-bg-subtle); }
+  #cr-adjusters-mount .cr-a-row-top{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  #cr-adjusters-mount .cr-a-row-name{ font-size:17px; font-weight:700; color:var(--cr-black); letter-spacing:-.3px; }
+  #cr-adjusters-mount .cr-a-row-co{ font-size:10px; color:var(--cr-red); font-weight:700; letter-spacing:1.8px; text-transform:uppercase; margin-top:3px; }
+  #cr-adjusters-mount .cr-a-row-rcv{ font-size:18px; font-weight:700; color:var(--cr-black); font-variant-numeric:tabular-nums; }
+  #cr-adjusters-mount .cr-a-row-meta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:9px; font-size:11px; color:var(--cr-muted); letter-spacing:.3px; }
+  #cr-adjusters-mount .cr-a-row-meta b{ color:var(--cr-black); font-weight:700; }
+
+  #cr-adjusters-mount .cr-a-pill{ display:inline-flex; align-items:center; font-size:9px; font-weight:700; padding:3px 8px; border-radius:10px; letter-spacing:1px; text-transform:uppercase; }
+  #cr-adjusters-mount .cr-a-pill.good{ background:var(--cr-green-tint); color:var(--cr-green); }
+  #cr-adjusters-mount .cr-a-pill.mid { background:var(--cr-amber-tint); color:var(--cr-amber); }
+  #cr-adjusters-mount .cr-a-pill.bad { background:var(--cr-red-tint);  color:var(--cr-red); }
+  #cr-adjusters-mount .cr-a-pill.na  { background:var(--cr-bg-subtle); color:var(--cr-muted); border:1px solid var(--cr-border); }
+
+  #cr-adjusters-mount .cr-a-section{ margin-top:30px; }
+  #cr-adjusters-mount .cr-a-section-h{ display:flex; align-items:baseline; gap:12px; font-size:20px; font-weight:700; color:var(--cr-black); letter-spacing:-.3px; }
+  #cr-adjusters-mount .cr-a-section-h .num{ color:var(--cr-red); }
+  #cr-adjusters-mount .cr-a-section-rule{ height:2px; background:var(--cr-red); margin:10px 0 16px; }
+
+  #cr-adjusters-mount .cr-a-scorecard{ background:linear-gradient(135deg,#1a1a1a,#2a2a2a); color:#fff; border-radius:6px; padding:20px; margin-bottom:22px; }
+  #cr-adjusters-mount .cr-a-scorecard .h{ font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; opacity:.6; margin-bottom:14px; }
+  #cr-adjusters-mount .cr-a-scoregrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media(max-width:620px){ #cr-adjusters-mount .cr-a-scoregrid{ grid-template-columns:repeat(2,1fr); } }
+  #cr-adjusters-mount .cr-a-scorecell .lbl{ font-size:9px; color:#999; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; }
+  #cr-adjusters-mount .cr-a-scorecell .val{ font-size:21px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; letter-spacing:-.5px; }
+  #cr-adjusters-mount .cr-a-scorecell .val.pos{ color:#7cd18d; }
+  #cr-adjusters-mount .cr-a-scorecell .val.warn{ color:#f5b657; }
+  #cr-adjusters-mount .cr-a-scorecell .val.neg{ color:#ff8a80; }
+  #cr-adjusters-mount .cr-a-scorecell .sub{ font-size:10px; color:#888; margin-top:2px; }
+
+  #cr-adjusters-mount .cr-a-read{ background:var(--cr-bg-subtle); border-left:3px solid var(--cr-red); padding:12px 14px; border-radius:0 4px 4px 0; font-size:13.5px; line-height:1.55; color:var(--cr-text); margin-bottom:20px; }
+  #cr-adjusters-mount .cr-a-read strong{ color:var(--cr-black); font-weight:700; }
+
+  #cr-adjusters-mount .cr-a-info{ display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; }
+  @media(max-width:620px){ #cr-adjusters-mount .cr-a-info{ grid-template-columns:1fr; } }
+  #cr-adjusters-mount .cr-a-info-item .lbl{ font-size:10px; font-weight:700; color:var(--cr-red); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3px; }
+  #cr-adjusters-mount .cr-a-info-item .val{ font-size:14px; font-weight:500; }
+  #cr-adjusters-mount .cr-a-info-item .val a{ color:var(--cr-blue); text-decoration:none; }
+  #cr-adjusters-mount .cr-a-info-item .val a:hover{ text-decoration:underline; }
+  #cr-adjusters-mount .cr-a-info-item .val.empty{ color:var(--cr-muted-2); font-style:italic; }
+
+  #cr-adjusters-mount .cr-a-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  #cr-adjusters-mount .cr-a-table th{ text-align:left; padding:8px 10px; font-size:10px; font-weight:700; color:var(--cr-muted); letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid var(--cr-border); }
+  #cr-adjusters-mount .cr-a-table td{ padding:10px; border-bottom:1px solid var(--cr-border-2); vertical-align:top; }
+  #cr-adjusters-mount .cr-a-table tr.clickable{ cursor:pointer; }
+  #cr-adjusters-mount .cr-a-table tr.clickable:hover td{ background:var(--cr-bg-subtle); }
+  #cr-adjusters-mount .cr-a-table td.amt{ text-align:right; font-variant-numeric:tabular-nums; font-weight:700; color:var(--cr-black); white-space:nowrap; }
+
+  #cr-adjusters-mount .cr-a-empty{ text-align:center; padding:50px 20px; color:var(--cr-muted); font-size:13px; }
+  #cr-adjusters-mount .cr-a-empty small{ display:block; margin-top:6px; color:var(--cr-muted-2); font-size:11px; }
+  #cr-adjusters-mount .cr-a-loading{ text-align:center; padding:60px 20px; color:var(--cr-muted); font-size:13px; letter-spacing:1px; text-transform:uppercase; font-weight:700; }
+  #cr-adjusters-mount .cr-a-footer{ text-align:center; font-size:10px; color:var(--cr-muted-2); margin-top:40px; padding-top:18px; border-top:1px solid var(--cr-border-2); text-transform:uppercase; font-weight:600; letter-spacing:1px; }
+</style>
+
+<div id="cr-adjusters-mount" style="display:none;"></div>
+
+<script id="cr-adj-script">
+(function () {
+  'use strict';
+
+  var MOUNT = document.getElementById('cr-adjusters-mount');
+  var state = { rows: [], search: '', carrier: '', sort: 'claims', openedFromHub: false };
+
+  function esc(s){ return String(s==null?'':s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function money(n){ return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+  function fmtDate(d){ return d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'; }
+
+  // ── Aggregate adjusters out of claim history ───────────────
+  async function loadAdjusters(){
+    var claims = await window.supa
+      .from('insurance_claims')
+      .select('id, adjuster_name, adjuster_phone, adjuster_email, adjuster_company, carrier, claim_number, homeowner_name, property_address, approved_rcv, our_estimate_total, status, created_at, date_of_loss')
+      .limit(1000);
+    if (claims.error) throw claims.error;
+    var rows = claims.data || [];
+
+    var sups = await window.supa
+      .from('insurance_supplements')
+      .select('claim_id, status, amount_requested, amount_approved')
+      .limit(2000);
+    var supsByClaim = {};
+    (sups.data || []).forEach(function(s){
+      (supsByClaim[s.claim_id] = supsByClaim[s.claim_id] || []).push(s);
+    });
+
+    // Group by adjuster name (case/space-insensitive)
+    var map = {};
+    rows.forEach(function(c){
+      var name = (c.adjuster_name || '').trim();
+      if (!name) return;                       // skip claims with no adjuster recorded
+      var key = name.toLowerCase().replace(/\s+/g,' ');
+      var a = map[key];
+      if (!a){
+        a = map[key] = {
+          key: key, name: name,
+          company: c.adjuster_company || '', carrier: c.carrier || '',
+          phone: c.adjuster_phone || '', email: c.adjuster_email || '',
+          carriers: {}, claims: [],
+          approved: 0, ourEstimate: 0, matchedPairs: 0,
+          supsFiled: 0, supsWon: 0, supsRequested: 0, supsApproved: 0,
+          denials: 0, lastSeen: null,
+        };
+      }
+      // keep the most complete contact details we've seen
+      if (!a.phone   && c.adjuster_phone)   a.phone   = c.adjuster_phone;
+      if (!a.email   && c.adjuster_email)   a.email   = c.adjuster_email;
+      if (!a.company && c.adjuster_company) a.company = c.adjuster_company;
+      if (c.carrier) a.carriers[c.carrier] = (a.carriers[c.carrier]||0) + 1;
+
+      a.claims.push(c);
+      a.approved += Number(c.approved_rcv || 0);
+      if (c.approved_rcv && c.our_estimate_total){
+        a.ourEstimate += Number(c.our_estimate_total);
+        a.matchedPairs++;
+      }
+      if (c.status === 'denied') a.denials++;
+      var d = c.date_of_loss || c.created_at;
+      if (d && (!a.lastSeen || new Date(d) > new Date(a.lastSeen))) a.lastSeen = d;
+
+      (supsByClaim[c.id] || []).forEach(function(s){
+        a.supsFiled++;
+        a.supsRequested += Number(s.amount_requested || 0);
+        if (s.status === 'approved' || s.status === 'partial'){
+          a.supsWon++;
+          a.supsApproved += Number(s.amount_approved || 0);
+        }
+      });
+    });
+
+    return Object.keys(map).map(function(k){
+      var a = map[k];
+      a.claimCount  = a.claims.length;
+      // Write ratio: what they approved vs what Cardinal estimated.
+      // Only counts claims where BOTH numbers exist, else it's meaningless.
+      a.writeRatio  = a.matchedPairs > 0 && a.ourEstimate > 0
+                        ? (a.approved / a.ourEstimate) : null;
+      a.supRate     = a.supsFiled > 0 ? (a.supsWon / a.supsFiled) : null;
+      a.topCarrier  = Object.keys(a.carriers).sort(function(x,y){
+                        return a.carriers[y]-a.carriers[x]; })[0] || a.carrier || '';
+      a.claims.sort(function(x,y){
+        return new Date(y.created_at) - new Date(x.created_at); });
+      return a;
+    });
+  }
+
+  // ── Rating helpers ─────────────────────────────────────────
+  function ratioPill(r){
+    if (r == null) return '<span class="cr-a-pill na">No estimate on file</span>';
+    var pct = Math.round(r*100);
+    var cls = r >= 0.95 ? 'good' : r >= 0.80 ? 'mid' : 'bad';
+    return '<span class="cr-a-pill '+cls+'">Writes '+pct+'%</span>';
+  }
+  function supPill(r, filed){
+    if (r == null || !filed) return '<span class="cr-a-pill na">No supplements</span>';
+    var pct = Math.round(r*100);
+    var cls = r >= 0.66 ? 'good' : r >= 0.34 ? 'mid' : 'bad';
+    return '<span class="cr-a-pill '+cls+'">'+pct+'% supp. approved</span>';
+  }
+
+  // ── LIST ───────────────────────────────────────────────────
+  async function showList(){
+    MOUNT.style.display = 'block';
+    MOUNT.innerHTML = '<div class="cr-a-app"><div class="cr-a-loading">Loading adjusters…</div></div>';
+
+    var rows;
+    try { rows = await loadAdjusters(); }
+    catch (e){
+      MOUNT.innerHTML = '<div class="cr-a-app"><div class="cr-a-back" data-act="back">← Back</div>'
+        + '<div class="cr-a-empty">Couldn\'t load adjusters.<small>'+esc(e.message||'')+'</small></div></div>';
+      wireBack(); return;
+    }
+    state.rows = rows;
+    renderList();
+  }
+
+  function renderList(){
+    var rows = state.rows;
+    var carriers = {};
+    rows.forEach(function(a){ Object.keys(a.carriers).forEach(function(c){ carriers[c]=1; }); });
+
+    var totalClaims = rows.reduce(function(s,a){ return s+a.claimCount; }, 0);
+    var totalRcv    = rows.reduce(function(s,a){ return s+a.approved; }, 0);
+    var withRatio   = rows.filter(function(a){ return a.writeRatio != null; });
+    var avgRatio    = withRatio.length
+      ? withRatio.reduce(function(s,a){ return s+a.writeRatio; },0)/withRatio.length : null;
+
+    MOUNT.innerHTML =
+      '<div class="cr-a-app">' +
+        '<div class="cr-a-back" data-act="back">← Back to Cardinal Truth</div>' +
+        '<div class="cr-a-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS</div>' +
+        '<h1 class="cr-a-title">Adjuster Directory</h1>' +
+        '<div class="cr-a-rule"></div>' +
+        '<div class="cr-a-facts">' +
+          '<div class="cr-a-fact"><div class="lbl">Adjusters</div><div class="val"><strong>'+rows.length+'</strong> on file</div></div>' +
+          '<div class="cr-a-fact"><div class="lbl">Claims Worked</div><div class="val"><strong>'+totalClaims+'</strong></div></div>' +
+          '<div class="cr-a-fact"><div class="lbl">Approved Through Them</div><div class="val"><strong>$'+money(totalRcv)+'</strong></div></div>' +
+          '<div class="cr-a-fact"><div class="lbl">Avg Write Ratio</div><div class="val"><strong>'+
+             (avgRatio!=null ? Math.round(avgRatio*100)+'%' : '—')+'</strong></div></div>' +
+        '</div>' +
+        '<div class="cr-a-toolbar">' +
+          '<input class="cr-a-search" data-search placeholder="Search name, carrier, firm…" value="'+esc(state.search)+'">' +
+          '<select class="cr-a-sel" data-carrier><option value="">All carriers</option>' +
+            Object.keys(carriers).sort().map(function(c){
+              return '<option value="'+esc(c)+'"'+(state.carrier===c?' selected':'')+'>'+esc(c)+'</option>'; }).join('') +
+          '</select>' +
+          '<select class="cr-a-sel" data-sort>' +
+            '<option value="claims"'+(state.sort==='claims'?' selected':'')+'>Most claims</option>' +
+            '<option value="rcv"'+(state.sort==='rcv'?' selected':'')+'>Highest $ approved</option>' +
+            '<option value="ratio"'+(state.sort==='ratio'?' selected':'')+'>Toughest first</option>' +
+            '<option value="recent"'+(state.sort==='recent'?' selected':'')+'>Most recent</option>' +
+          '</select>' +
+        '</div>' +
+        '<div data-list></div>' +
+        '<div class="cr-a-footer">v2026-07-22 build 146 · Adjuster Directory</div>' +
+      '</div>';
+
+    wireBack();
+    MOUNT.querySelector('[data-search]').oninput  = function(e){ state.search  = e.target.value; renderRows(); };
+    MOUNT.querySelector('[data-carrier]').onchange = function(e){ state.carrier = e.target.value; renderRows(); };
+    MOUNT.querySelector('[data-sort]').onchange    = function(e){ state.sort    = e.target.value; renderRows(); };
+    renderRows();
+  }
+
+  function renderRows(){
+    var el = MOUNT.querySelector('[data-list]');
+    if (!el) return;
+    var q = state.search.toLowerCase();
+    var rows = state.rows.filter(function(a){
+      if (state.carrier && !a.carriers[state.carrier]) return false;
+      if (!q) return true;
+      return (a.name+' '+a.company+' '+a.topCarrier+' '+(a.email||'')).toLowerCase().indexOf(q) !== -1;
+    });
+
+    rows.sort(function(x,y){
+      if (state.sort === 'rcv')    return y.approved - x.approved;
+      if (state.sort === 'recent') return new Date(y.lastSeen||0) - new Date(x.lastSeen||0);
+      if (state.sort === 'ratio'){
+        var a = x.writeRatio == null ? 2 : x.writeRatio;
+        var b = y.writeRatio == null ? 2 : y.writeRatio;
+        return a - b;                       // lowest ratio = toughest, first
+      }
+      return y.claimCount - x.claimCount;
+    });
+
+    if (!rows.length){
+      el.innerHTML = '<div class="cr-a-empty">No adjusters match.' +
+        '<small>Adjusters appear here automatically once you record a name on a claim.</small></div>';
+      return;
+    }
+
+    el.innerHTML = rows.map(function(a){
+      return '<div class="cr-a-row" data-key="'+esc(a.key)+'">' +
+        '<div class="cr-a-row-top">' +
+          '<div><div class="cr-a-row-name">'+esc(a.name)+'</div>' +
+          '<div class="cr-a-row-co">'+esc(a.company || a.topCarrier || 'Independent')+'</div></div>' +
+          '<div class="cr-a-row-rcv">$'+money(a.approved)+'</div>' +
+        '</div>' +
+        '<div class="cr-a-row-meta">' +
+          '<span><b>'+a.claimCount+'</b> claim'+(a.claimCount===1?'':'s')+'</span>' +
+          (a.topCarrier ? '<span>'+esc(a.topCarrier)+'</span>' : '') +
+          '<span>Last '+fmtDate(a.lastSeen)+'</span>' +
+          (a.denials ? '<span><b>'+a.denials+'</b> denied</span>' : '') +
+        '</div>' +
+        '<div class="cr-a-row-meta" style="margin-top:8px;gap:6px;">' +
+          ratioPill(a.writeRatio) + supPill(a.supRate, a.supsFiled) +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    el.querySelectorAll('.cr-a-row').forEach(function(r){
+      r.onclick = function(){ showDetail(r.dataset.key); };
+    });
+  }
+
+  // ── DETAIL ─────────────────────────────────────────────────
+  function showDetail(key){
+    var a = state.rows.filter(function(x){ return x.key === key; })[0];
+    if (!a) return showList();
+
+    var ratioPct = a.writeRatio != null ? Math.round(a.writeRatio*100) : null;
+    var gap      = a.writeRatio != null ? (a.ourEstimate - a.approved) : null;
+    var supPct   = a.supRate != null ? Math.round(a.supRate*100) : null;
+
+    // Plain-language read on how to approach them
+    var read;
+    if (ratioPct == null){
+      read = 'No Cardinal estimate has been recorded alongside these claims yet, so there\'s no write ratio to compare. ' +
+             'Fill in <strong>Our Estimate</strong> on a claim and this fills itself in.';
+    } else if (ratioPct >= 95){
+      read = 'Writes at <strong>'+ratioPct+'%</strong> of Cardinal\'s estimate — approves close to full scope. ' +
+             'Straightforward to work with; documentation is being accepted as submitted.';
+    } else if (ratioPct >= 80){
+      read = 'Writes at <strong>'+ratioPct+'%</strong> of Cardinal\'s estimate — trims roughly <strong>$'+money(gap/Math.max(1,a.matchedPairs))+'</strong> per claim. ' +
+             'Worth photographing marginal line items thoroughly before they arrive.';
+    } else {
+      read = 'Writes at <strong>'+ratioPct+'%</strong> of Cardinal\'s estimate — cuts an average of <strong>$'+money(gap/Math.max(1,a.matchedPairs))+'</strong> per claim. ' +
+             'Expect scope to be contested. Have code citations and close-up documentation ready at the inspection.';
+    }
+    if (supPct != null){
+      read += ' Supplements against their claims come back approved <strong>'+supPct+'%</strong> of the time' +
+              (supPct >= 50 ? ' — filing is usually worth it.' : ' — build the case carefully before filing.');
+    }
+
+    MOUNT.innerHTML =
+      '<div class="cr-a-app">' +
+        '<div class="cr-a-back" data-act="list">← All adjusters</div>' +
+        '<div class="cr-a-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS · ADJUSTER</div>' +
+        '<h1 class="cr-a-title">'+esc(a.name)+'</h1>' +
+        '<div class="cr-a-rule"></div>' +
+
+        '<div class="cr-a-scorecard">' +
+          '<div class="h">Track Record</div>' +
+          '<div class="cr-a-scoregrid">' +
+            '<div class="cr-a-scorecell"><div class="lbl">Claims Worked</div><div class="val">'+a.claimCount+'</div>' +
+              '<div class="sub">'+(a.denials? a.denials+' denied':'none denied')+'</div></div>' +
+            '<div class="cr-a-scorecell"><div class="lbl">Approved Total</div><div class="val">$'+money(a.approved)+'</div>' +
+              '<div class="sub">across all claims</div></div>' +
+            '<div class="cr-a-scorecell"><div class="lbl">Write Ratio</div>' +
+              '<div class="val '+(ratioPct==null?'':ratioPct>=95?'pos':ratioPct>=80?'warn':'neg')+'">' +
+                (ratioPct!=null? ratioPct+'%' : '—')+'</div>' +
+              '<div class="sub">'+(a.matchedPairs? 'vs our estimate ('+a.matchedPairs+')':'no estimates logged')+'</div></div>' +
+            '<div class="cr-a-scorecell"><div class="lbl">Supplements Won</div>' +
+              '<div class="val '+(supPct==null?'':supPct>=66?'pos':supPct>=34?'warn':'neg')+'">' +
+                (supPct!=null? supPct+'%' : '—')+'</div>' +
+              '<div class="sub">'+(a.supsFiled? a.supsWon+' of '+a.supsFiled+' filed':'none filed')+'</div></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="cr-a-read">'+read+'</div>' +
+
+        '<div class="cr-a-section">' +
+          '<div class="cr-a-section-h"><span class="num">1</span><span>Contact</span></div>' +
+          '<div class="cr-a-section-rule"></div>' +
+          '<div class="cr-a-info">' +
+            '<div class="cr-a-info-item"><div class="lbl">Firm</div><div class="val '+(a.company?'':'empty')+'">'+esc(a.company||'Direct carrier')+'</div></div>' +
+            '<div class="cr-a-info-item"><div class="lbl">Primary Carrier</div><div class="val '+(a.topCarrier?'':'empty')+'">'+esc(a.topCarrier||'Not set')+'</div></div>' +
+            '<div class="cr-a-info-item"><div class="lbl">Phone</div><div class="val '+(a.phone?'':'empty')+'">'+
+              (a.phone? '<a href="tel:'+esc(a.phone)+'">'+esc(a.phone)+'</a>':'Not set')+'</div></div>' +
+            '<div class="cr-a-info-item"><div class="lbl">Email</div><div class="val '+(a.email?'':'empty')+'">'+
+              (a.email? '<a href="mailto:'+esc(a.email)+'">'+esc(a.email)+'</a>':'Not set')+'</div></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="cr-a-section">' +
+          '<div class="cr-a-section-h"><span class="num">2</span><span>Claims Worked</span></div>' +
+          '<div class="cr-a-section-rule"></div>' +
+          '<table class="cr-a-table">' +
+            '<thead><tr><th>Homeowner</th><th>Carrier · Claim #</th><th class="amt">Approved</th></tr></thead>' +
+            '<tbody>' + a.claims.map(function(c){
+              return '<tr class="clickable" data-claim="'+esc(c.id)+'">' +
+                '<td>'+esc(c.homeowner_name||'—')+'<br><small style="color:#8a8a8a;">'+fmtDate(c.created_at)+'</small></td>' +
+                '<td>'+esc(c.carrier||'—')+(c.claim_number? '<br><small style="color:#8a8a8a;">#'+esc(c.claim_number)+'</small>':'')+'</td>' +
+                '<td class="amt">$'+money(c.approved_rcv)+
+                  (c.our_estimate_total? '<br><small style="font-weight:400;color:#8a8a8a;">est $'+money(c.our_estimate_total)+'</small>':'')+'</td>' +
+              '</tr>';
+            }).join('') + '</tbody>' +
+          '</table>' +
+        '</div>' +
+
+        '<div class="cr-a-footer">v2026-07-22 build 146 · Adjuster Directory</div>' +
+      '</div>';
+
+    MOUNT.querySelector('[data-act="list"]').onclick = renderList;
+    MOUNT.querySelectorAll('[data-claim]').forEach(function(tr){
+      tr.onclick = function(){
+        if (window.CardinalClaims && window.CardinalClaims.openOne){
+          MOUNT.style.display = 'none';
+          window.CardinalClaims.openOne(tr.dataset.claim);
+        }
+      };
+    });
+  }
+
+  // ── Nav ────────────────────────────────────────────────────
+  function wireBack(){
+    var b = MOUNT.querySelector('[data-act="back"]');
+    if (b) b.onclick = close;
+  }
+  function close(){
+    MOUNT.style.display = 'none';
+    MOUNT.innerHTML = '';
+    if (state.openedFromHub){
+      state.openedFromHub = false;
+      var h = document.getElementById('cardinalTruthView');
+      if (h) h.style.display = 'block';
+    } else if (typeof window.showHome === 'function'){
+      window.showHome();
+    }
+  }
+
+  window.CardinalAdjusters = {
+    open: function(fromHub){
+      state.openedFromHub = !!fromHub;
+      MOUNT.style.position='fixed'; MOUNT.style.inset='0';
+      MOUNT.style.zIndex='200'; MOUNT.style.overflowY='auto'; MOUNT.style.background='#fff';
+      if (window.crHideOtherMounts) window.crHideOtherMounts('cr-adjusters-mount');
+      showList();
+    },
+    openOne: showDetail,
+    close: close,
+  };
+
+  // ── Light up the "Adjuster Directory — Coming soon" stub ────
+  function activateStub(){
+    var hub = document.getElementById('cardinalTruthView');
+    if (!hub) return;
+    var stubs = hub.querySelectorAll('.ins-card.ins-cardstub');
+    for (var i=0;i<stubs.length;i++){
+      var t = (stubs[i].textContent||'').toLowerCase();
+      if (t.indexOf('adjuster directory') === -1) continue;
+      if (stubs[i].dataset.crWired) return;
+
+      var card = document.createElement('button');
+      card.className = 'ins-card';
+      card.setAttribute('data-ctnav','cr-adjusters');
+      card.innerHTML =
+        '<div class="ins-cardtitle">&#128100; Adjuster Directory</div>' +
+        '<div class="ins-cardsub">Everyone who has adjusted a Cardinal claim &mdash; what they approve against our estimate, ' +
+          'how often supplements land, and how to reach them.</div>' +
+        '<div class="ins-cardgo">Open &rsaquo;</div>';
+      card.dataset.crWired = '1';
+      stubs[i].parentNode.replaceChild(card, stubs[i]);
+
+      if (!hub.dataset.crAdjWired){
+        hub.addEventListener('click', function(e){
+          var b = e.target.closest('.ins-card[data-ctnav="cr-adjusters"]');
+          if (!b) return;
+          e.stopPropagation();
+          window.CardinalAdjusters.open(true);
+        });
+        hub.dataset.crAdjWired = '1';
+      }
+      return;
+    }
+  }
+
+  function start(){
+    activateStub();
+    new MutationObserver(activateStub).observe(document.body, { childList:true, subtree:true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();
 </script>
 

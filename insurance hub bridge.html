@@ -1,0 +1,260 @@
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — INSURANCE HUB BRIDGE
+ Ties the new Claims tracker into the existing Cardinal Truth section.
+ v2026-07-22 · build 146
+────────────────────────────────────────────────────────────────────
+ WHAT THIS WIRES:
+
+ 1. Cardinal Truth dashboard — adds a "Claims Tracker" card as the
+    first tile in the grid (money first), matching the existing
+    .ins-card styling.
+
+ 2. Section dropdown (☰ Menu inside Cardinal Truth) — adds a
+    "Claims Tracker" option.
+
+ 3. The "📋 New Claim — soon" item in the + menu becomes live and
+    opens the new-claim modal.
+
+ 4. Back-navigation awareness — a claim opened FROM the hub returns
+    to the hub. Opened from the main ☰ menu, it returns to the app.
+
+ 5. Client cards — the CARRIER / CLAIM # / DEDUCTIBLE block on an
+    insurance client now carries a live claim card underneath
+    (financials + received progress, or a Create/Link prompt).
+
+ INSTALL: paste after cross_links.html. No SQL changes.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-hub-bridge-styles">
+  /* The Claims card inherits .ins-card from the app; these are just
+     the accents that mark it as the live/primary tile. */
+  #cardinalTruthView .ins-card.cr-claims-card{
+    border-color:#4a6fa5;
+    box-shadow:inset 0 0 0 1px rgba(74,111,165,.35);
+  }
+  #cardinalTruthView .ins-card.cr-claims-card .ins-cardtitle{ color:#bfaee6; }
+  #cardinalTruthView .ins-card.cr-claims-card .cr-claims-stat{
+    display:flex; gap:14px; flex-wrap:wrap;
+    margin-top:8px; font:700 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.06em; text-transform:uppercase; color:#8b95a5;
+  }
+  #cardinalTruthView .ins-card.cr-claims-card .cr-claims-stat b{
+    color:#e8ecf1; font-size:13px; letter-spacing:0;
+  }
+  #cardinalTruthView .ins-card.cr-claims-card .cr-claims-stat .pos{ color:#7cd18d; }
+
+  /* Slot for the claim card injected under the client's insurance block */
+  .cr-projclaim-slot{ margin-top:10px; }
+  .cr-projclaim-slot .cr-xl-card{ margin:0; }
+</style>
+
+<script id="cr-hub-bridge">
+(function () {
+  'use strict';
+
+  var HUB    = 'cardinalTruthView';
+  var MOUNT  = 'cr-claims-mount';
+  var openedFromHub = false;
+
+  function $(id){ return document.getElementById(id); }
+  function hubOpen(){ var h=$(HUB); return h && h.style.display !== 'none' && h.style.display !== ''; }
+
+  // ── 1. Open claims, remembering where we came from ─────────
+  function openClaimsFromHub(){
+    openedFromHub = true;
+    // Deliberately NOT calling hideAllViews() — the hub stays mounted
+    // underneath so Back can return to it instantly.
+    if (window.crHideOtherMounts) window.crHideOtherMounts(MOUNT);
+    var m = $(MOUNT);
+    if (m) { m.style.display='block'; m.style.zIndex='200'; }
+    if (window.CardinalClaims) window.CardinalClaims.open();
+  }
+  window.crOpenClaimsFromHub = openClaimsFromHub;
+
+  function newClaimFromHub(projectId){
+    openedFromHub = hubOpen();
+    if (window.crHideOtherMounts) window.crHideOtherMounts(MOUNT);
+    var m = $(MOUNT);
+    if (m) { m.style.display='block'; m.style.zIndex='200'; }
+    if (window.CardinalClaims) window.CardinalClaims.new(projectId || null);
+  }
+  window.crNewClaimFromHub = newClaimFromHub;
+
+  // ── 2. Wrap CardinalClaims.close so Back returns to the hub ─
+  function wrapClose(){
+    if (!window.CardinalClaims || window.CardinalClaims.__crWrapped) return false;
+    var origClose = window.CardinalClaims.close;
+    window.CardinalClaims.close = function(){
+      origClose.apply(this, arguments);
+      if (openedFromHub) {
+        openedFromHub = false;
+        var h = $(HUB);
+        if (h) h.style.display = 'block';        // hub is still mounted
+      } else if (typeof window.showHome === 'function') {
+        window.showHome();
+      }
+    };
+    window.CardinalClaims.__crWrapped = true;
+    return true;
+  }
+
+  // ── 3. Inject the Claims Tracker card into the hub grid ────
+  function injectHubCard(){
+    var grid = document.querySelector('#' + HUB + ' .ins-grid');
+    if (!grid || grid.querySelector('.cr-claims-card')) return;
+
+    var card = document.createElement('button');
+    card.className = 'ins-card cr-claims-card';
+    card.setAttribute('data-ctnav', 'claims');
+    card.innerHTML =
+      '<div class="ins-cardtitle">&#128737;&#65039; Claims Tracker</div>' +
+      '<div class="ins-cardsub">Every open claim with the money attached &mdash; approved RCV, the ACV already paid, ' +
+        'depreciation still held back, deductible, and every check logged as it lands. Supplements tracked from filed to approved.</div>' +
+      '<div class="cr-claims-stat" data-claims-stat><span>Loading&hellip;</span></div>' +
+      '<div class="ins-cardgo">Open &rsaquo;</div>';
+
+    grid.insertBefore(card, grid.firstChild);   // money first
+    loadHubStats();
+  }
+
+  // ── 4. Live totals on the hub card ─────────────────────────
+  async function loadHubStats(){
+    var el = document.querySelector('[data-claims-stat]');
+    if (!el || !window.supa) return;
+    try {
+      var res = await window.supa
+        .from('insurance_claims')
+        .select('id, status, approved_rcv')
+        .limit(500);
+      if (res.error) throw res.error;
+      var rows = res.data || [];
+
+      var pay = await window.supa.from('insurance_payments').select('amount').limit(2000);
+      var received = (pay.data || []).reduce(function(s,p){ return s + Number(p.amount||0); }, 0);
+      var approved = rows.reduce(function(s,r){ return s + Number(r.approved_rcv||0); }, 0);
+      var openStatuses = ['filed','adjuster_pending','adjuster_met','approved','in_progress','completed','awaiting_rcv'];
+      var openCount = rows.filter(function(r){ return openStatuses.indexOf(r.status) !== -1; }).length;
+      var outstanding = Math.max(0, approved - received);
+
+      if (!el.isConnected) return;
+      el.innerHTML =
+        '<span><b>' + openCount + '</b> open</span>' +
+        '<span>Approved <b>$' + money(approved) + '</b></span>' +
+        '<span>Outstanding <b class="pos">$' + money(outstanding) + '</b></span>';
+    } catch (e) {
+      if (el.isConnected) el.innerHTML = '<span>Run insurance_claims_setup.sql to enable</span>';
+    }
+  }
+  function money(n){
+    return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
+
+  // ── 5. Add the dropdown option ─────────────────────────────
+  function injectDropdownOption(){
+    var sel = $('ctSectionSel');
+    if (!sel || sel.querySelector('option[value="cr-claims"]')) return;
+    var opt = document.createElement('option');
+    opt.value = 'cr-claims';
+    opt.textContent = 'Claims Tracker';
+    // sit it directly under "Insurance Clients"
+    var after = sel.querySelector('option[value="clients"]');
+    if (after && after.nextSibling) sel.insertBefore(opt, after.nextSibling);
+    else sel.appendChild(opt);
+
+    sel.addEventListener('change', function(){
+      if (sel.value === 'cr-claims'){
+        sel.value = '';
+        openClaimsFromHub();
+      }
+    });
+  }
+
+  // ── 6. Activate the "New Claim — soon" item in the + menu ──
+  function activatePlusMenu(){
+    var menu = $('ctPlusMenu');
+    if (!menu || menu.dataset.crWired) return;
+    var items = menu.querySelectorAll('.ins-dropitem');
+    for (var i = 0; i < items.length; i++){
+      var t = (items[i].textContent || '').toLowerCase();
+      if (t.indexOf('new claim') !== -1){
+        items[i].innerHTML = '&#128203; New Claim';
+        items[i].addEventListener('click', function(e){
+          e.stopPropagation();
+          menu.classList.remove('open');
+          newClaimFromHub();
+        });
+        menu.dataset.crWired = '1';
+        break;
+      }
+    }
+  }
+
+  // ── 7. Route the hub card click ────────────────────────────
+  function wireHubCardClick(){
+    var hub = $(HUB);
+    if (!hub || hub.dataset.crClaimsWired) return;
+    // Separate listener — the app's own handler ignores unknown nav values,
+    // so this composes cleanly rather than replacing anything.
+    hub.addEventListener('click', function(e){
+      var b = e.target.closest('.ins-card[data-ctnav="claims"]');
+      if (!b) return;
+      e.stopPropagation();
+      openClaimsFromHub();
+    });
+    hub.dataset.crClaimsWired = '1';
+  }
+
+  // ── 8. Claim card under the client's insurance block ───────
+  function mountProjectClaim(){
+    var block = document.querySelector('.projInsBlock');
+    if (!block) return;
+    if (!document.body.classList.contains('claim-insurance')) return;
+
+    var pid = (window.currentProject && window.currentProject.id) || null;
+    if (!pid) return;
+
+    var slot = block.querySelector('.cr-projclaim-slot');
+    if (slot && slot.dataset.pid === pid) return;   // already mounted for this client
+    if (!slot){
+      slot = document.createElement('div');
+      slot.className = 'cr-projclaim-slot';
+      block.appendChild(slot);
+    }
+    slot.dataset.pid = pid;
+    slot.innerHTML = '';
+    if (window.CardinalCrossLinks && window.CardinalCrossLinks.forProject){
+      window.CardinalCrossLinks.forProject(pid, slot);
+    }
+  }
+
+  // ── Boot ───────────────────────────────────────────────────
+  function boot(){
+    wrapClose();
+    injectHubCard();
+    injectDropdownOption();
+    activatePlusMenu();
+    wireHubCardClick();
+  }
+
+  // The hub and client card are rendered lazily, so watch for them.
+  var mo = new MutationObserver(function(){
+    if ($(HUB)) { injectHubCard(); injectDropdownOption(); activatePlusMenu(); wireHubCardClick(); }
+    mountProjectClaim();
+  });
+
+  function start(){
+    boot();
+    mo.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
+    // Retry wrapping in case the claims module loads after this one
+    var tries = 0;
+    var iv = setInterval(function(){
+      if (wrapClose() || ++tries > 40) clearInterval(iv);
+    }, 150);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
