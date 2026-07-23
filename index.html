@@ -18334,7 +18334,7 @@ body.claim-insurance #brandLogo{
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    (document.getElementById("cr-pricing-mount")||document.body).appendChild(modal);   // scoped CSS lives under #cr-pricing-mount
     const close = () => modal.remove();
     modal.querySelector('[data-act="cancel"]').onclick = close;
     modal.onclick = (e) => { if (e.target === modal) close(); };
@@ -18394,7 +18394,7 @@ body.claim-insurance #brandLogo{
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    (document.getElementById("cr-pricing-mount")||document.body).appendChild(modal);   // scoped CSS lives under #cr-pricing-mount
     const close = () => { modal.remove(); loadCategories().then(renderItems); };
     modal.querySelector('[data-act="close"]').onclick = close;
     modal.onclick = (e) => { if (e.target === modal) close(); };
@@ -18544,7 +18544,7 @@ body.claim-insurance #brandLogo{
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    (document.getElementById("cr-pricing-mount")||document.body).appendChild(modal);   // scoped CSS lives under #cr-pricing-mount
     const close = () => modal.remove();
     modal.querySelector('[data-act="close"]').onclick = close;
     modal.onclick = (e) => { if (e.target === modal) close(); };
@@ -18891,7 +18891,7 @@ body.claim-insurance #brandLogo{
     const modal = document.createElement('div');
     modal.className = 'cr-p-modal-bg';
     modal.innerHTML = `<div class="cr-p-modal wide" data-body></div>`;
-    document.body.appendChild(modal);
+    (document.getElementById("cr-pricing-mount")||document.body).appendChild(modal);   // scoped CSS lives under #cr-pricing-mount
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 
     saveStatus('Loading current catalog…', 'saving');
@@ -20037,7 +20037,7 @@ body.claim-insurance #brandLogo{
   }
 
   // ── NEW/EDIT CLAIM MODAL ──────────────────────────────────
-  function openNewClaimModal(existing = null) {
+  function openNewClaimModal(existing = null, seedProjectId = null) {
     const c = existing || {};
     const isEdit = !!existing;
     const modal = document.createElement('div');
@@ -20139,7 +20139,7 @@ body.claim-insurance #brandLogo{
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    MOUNT.appendChild(modal);   // must live inside #cr-claims-mount or its CSS never matches
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
     modal.querySelector('[data-act="cancel"]').onclick = () => modal.remove();
 
@@ -20181,6 +20181,7 @@ body.claim-insurance #brandLogo{
         renderDetail();
       } else {
         payload.created_by = window.my_email?.() || 'unknown';
+        if (seedProjectId) payload.project_id = seedProjectId;
         const { data, error } = await window.supa.from('insurance_claims').insert(payload).select('id').single();
         if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
         toast('Claim created', 'success');
@@ -20228,7 +20229,7 @@ body.claim-insurance #brandLogo{
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    MOUNT.appendChild(modal);   // must live inside #cr-claims-mount or its CSS never matches
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
     modal.querySelector('[data-act="cancel"]').onclick = () => modal.remove();
 
@@ -20319,7 +20320,7 @@ body.claim-insurance #brandLogo{
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    MOUNT.appendChild(modal);   // must live inside #cr-claims-mount or its CSS never matches
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
     modal.querySelector('[data-act="cancel"]').onclick = () => modal.remove();
 
@@ -20363,7 +20364,12 @@ body.claim-insurance #brandLogo{
   window.CardinalClaims = {
     open:    showList,
     openOne: showDetail,
-    new:     (projectId) => openNewClaimModal(projectId ? { project_id: projectId } : null),
+    new:     (projectId) => {
+      // Render the list underneath first, otherwise the mount is a blank
+      // white sheet behind the modal.
+      showList().then(function(){ openNewClaimModal(null, projectId || null); })
+                .catch(function(){ openNewClaimModal(null, projectId || null); });
+    },
     close,
   };
 })();
@@ -22393,6 +22399,42 @@ body.claim-insurance #brandLogo{
   }
   .cr-pcard, .cr-psheet, .cr-plabel{ max-width:100%; }
   .cr-pcard{ overflow:hidden; }
+
+  /* ── Per-portal dashboard themes ─────────────────────────
+     The dashboard is built on CSS variables (var(--red) 53x,
+     var(--line) 84x), so each CRM gets its own skin by overriding
+     those rather than duplicating the page three times. One
+     dashboard, three identities, nothing to keep in sync.
+
+     Retail keeps the Cardinal red/gold and needs no override.   */
+
+  /* Insurance — steel blue */
+  body.portal-insurance{
+    --red:#4a6fa5; --red-dk:#3d5d8c;
+    --amber:#7fa6d6; --slate:#5b6b7b;
+  }
+  body.portal-insurance .titlecard h1,
+  body.portal-insurance .ct-dashtitle{ color:#7fa6d6; }
+
+  /* Community — green primary, blue secondary, beige surfaces */
+  body.portal-community{
+    --red:#3d7a4c; --red-dk:#2f5f3b;
+    --amber:#c9a227; --slate:#4a6fa5;
+    --line:#ded3bf;
+  }
+  body.portal-community .wrap,
+  body.portal-community #homeView{ background:#f7f2e7; }
+  body.portal-community .card,
+  body.portal-community .projinfo,
+  body.portal-community .acxsec{ background:#fffdf7; border-color:#ded3bf; }
+  body.portal-community .titlecard h1{ color:#3d7a4c; }
+  body.portal-community .titlecard h1 span{
+    background:linear-gradient(160deg,#2f5f3b,#4a8c5a 40%,#7fc98f 60%,#3d7a4c);
+    -webkit-background-clip:text; background-clip:text;
+    color:#4a8c5a !important; -webkit-text-fill-color:transparent;
+  }
+  /* keep the two-tone dot vocabulary readable on beige */
+  body.portal-community .dot.red{ background:#3d7a4c; }
 </style>
 
 <script id="cr-portal-script">
@@ -22515,6 +22557,13 @@ body.claim-insurance #brandLogo{
       : '\u25C9 All <span class="sw">\u25BE</span>';
     // Only touch the DOM when something actually changed — writing
     // unconditionally re-triggers the MutationObserver below and spins.
+    // Tag <body> so the dashboard picks up this portal's palette
+    var want = 'portal-' + cur;
+    ['portal-retail','portal-insurance','portal-community','portal-all'].forEach(function(c){
+      if(c !== want && document.body.classList.contains(c)) document.body.classList.remove(c);
+    });
+    if(!document.body.classList.contains(want)) document.body.classList.add(want);
+
     if(chip.className !== cls)  chip.className = cls;
     if(chip.innerHTML !== html) chip.innerHTML = html;
   }
@@ -22546,12 +22595,15 @@ body.claim-insurance #brandLogo{
   function go(portal){
     var land = document.getElementById('landingView');
     if(land) land.style.display = 'none';
+    // Insurance has its own home (Cardinal Truth). Every other portal lands
+    // on the dashboard — that IS the CRM for that book of business, now that
+    // the portal filter is applied. The client list is one tap from there.
     if(portal === 'insurance' && typeof window.showCardinalTruth === 'function'){
       window.showCardinalTruth();
-    } else if(typeof window.openClientsDirectory === 'function'){
-      window.openClientsDirectory();
     } else if(typeof window.showHome === 'function'){
       window.showHome();
+    } else if(typeof window.openClientsDirectory === 'function'){
+      window.openClientsDirectory();
     }
   }
 
