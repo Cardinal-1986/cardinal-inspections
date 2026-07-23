@@ -1,0 +1,431 @@
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: claims_form_fixes.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — CLAIMS FORM FIXES + SCOPE OF LOSS UPLOAD
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ Three fixes to the New / Edit Insurance Claim modal:
+
+ 1. VIEWPORT CENTERING — insurance_claims_module opens the modal as
+    a child of #cr-claims-mount, which is a fixed scroll container.
+    iOS Safari + -webkit-overflow-scrolling: touch makes fixed
+    children misbehave (they anchor to the scroll container, not the
+    viewport). The result: the modal is shifted left and its left
+    column of labels gets clipped off-screen.
+    Fix: move the modal to document.body on creation. Duplicate the
+    essential modal CSS at body scope since the original
+    "#cr-claims-mount .cr-c-modal" selectors no longer match.
+
+ 2. STICKY CLOSE — Cancel/Create Claim only render at the very
+    bottom of a very tall form, so on mobile you have to scroll to
+    dismiss. Add a sticky header with a large × button.
+
+ 3. SCOPE OF LOSS UPLOAD — the existing /api/sol endpoint already
+    extracts all the same fields the claim form asks for (carrier,
+    claim #, adjuster contact, RCV/ACV, deductible, dates, cause).
+    Wire an "Upload Scope of Loss" button at the top of the New
+    Claim form that calls the endpoint and auto-fills every field.
+    User still reviews and edits before saving.
+
+ REUSES: /api/sol (existing), window.supa, window.CardinalClaims
+
+ INSTALL: paste after community_portal_theme.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-claims-fx-styles">
+  /* ── Modal styles duplicated at body scope ─────────────────
+     The insurance claims module scopes all modal CSS under
+     #cr-claims-mount. Once we move the modal to body those
+     selectors stop matching, so we re-declare the essentials
+     with hard-coded colors (no CSS-var dependency). */
+  body > .cr-c-modal-bg{
+    position:fixed !important;
+    top:0 !important; left:0 !important; right:0 !important; bottom:0 !important;
+    width:100vw !important; height:100vh !important;
+    background:rgba(0,0,0,0.5);
+    z-index:9800;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:14px; box-sizing:border-box;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  body > .cr-c-modal-bg .cr-c-modal{
+    background:#fff; border-radius:8px; padding:0 24px 24px;
+    max-width:480px; width:100%;
+    box-shadow:0 12px 44px rgba(0,0,0,0.25);
+    margin:8px auto 24px;
+  }
+  body > .cr-c-modal-bg .cr-c-modal.wide{
+    max-width:min(700px, calc(100vw - 28px));
+  }
+  body > .cr-c-modal-bg .cr-c-modal h3{
+    margin:0 0 4px; font-size:20px; font-weight:700;
+    color:#1a1a1a; letter-spacing:-0.3px;
+  }
+  body > .cr-c-modal-bg .cr-c-modal .sub{
+    color:#6b6b6b; font-size:13px; margin-bottom:20px;
+  }
+  body > .cr-c-modal-bg .cr-c-modal label{
+    display:block; font-size:10px; font-weight:700; color:#D9282A;
+    letter-spacing:1.5px; text-transform:uppercase; margin:12px 0 4px;
+  }
+  body > .cr-c-modal-bg .cr-c-modal input,
+  body > .cr-c-modal-bg .cr-c-modal select,
+  body > .cr-c-modal-bg .cr-c-modal textarea{
+    width:100%; padding:10px 12px;
+    border:1px solid #e5e5e5; border-radius:4px;
+    font-size:14px; font-family:inherit; color:#2a2a2a;
+    box-sizing:border-box;
+  }
+  body > .cr-c-modal-bg .cr-c-modal textarea{ min-height:80px; resize:vertical; }
+  body > .cr-c-modal-bg .cr-c-modal input:focus,
+  body > .cr-c-modal-bg .cr-c-modal select:focus,
+  body > .cr-c-modal-bg .cr-c-modal textarea:focus{
+    outline:none; border-color:#D9282A;
+    box-shadow:0 0 0 3px #FDECEC;
+  }
+  body > .cr-c-modal-bg .cr-c-modal-row{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  }
+  @media(max-width:480px){
+    body > .cr-c-modal-bg .cr-c-modal-row{ grid-template-columns:1fr; gap:0; }
+  }
+  body > .cr-c-modal-bg .cr-c-modal-err{
+    color:#D9282A; font-size:12px; margin-top:8px;
+  }
+  body > .cr-c-modal-bg .cr-c-modal-actions{
+    display:flex; gap:10px; justify-content:flex-end; margin-top:20px;
+  }
+  body > .cr-c-modal-bg .cr-c-modal-btn{
+    padding:10px 18px; border-radius:4px; font-size:12px; font-weight:700;
+    cursor:pointer; background:#fff; border:1px solid #e5e5e5;
+    font-family:inherit; letter-spacing:1.2px; text-transform:uppercase;
+    color:#2a2a2a;
+  }
+  body > .cr-c-modal-bg .cr-c-modal-btn.primary{
+    background:#D9282A; color:#fff; border-color:#D9282A;
+  }
+  body > .cr-c-modal-bg .cr-c-modal-btn.primary:hover{ background:#B01F21; }
+
+  /* ── Sticky header with big × close button ───────────────── */
+  body > .cr-c-modal-bg .cr-c-modalhd{
+    position:sticky; top:0; z-index:5;
+    background:#fff; margin:0 -24px 12px;
+    padding:16px 22px 12px;
+    border-bottom:1px solid #efefef;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border-radius:8px 8px 0 0;
+  }
+  body > .cr-c-modal-bg .cr-c-modalhd h3{
+    margin:0 !important; font-size:18px !important;
+  }
+  body > .cr-c-modal-bg .cr-c-modalhd .cr-c-close{
+    background:transparent; border:0; font-size:30px; line-height:1;
+    color:#6b6b6b; cursor:pointer; padding:0 4px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  }
+  body > .cr-c-modal-bg .cr-c-modalhd .cr-c-close:hover{ color:#D9282A; }
+
+  /* ── Scope of Loss upload button ─────────────────────────── */
+  body > .cr-c-modal-bg .cr-c-solbtn{
+    display:flex; align-items:flex-start; gap:12px;
+    width:100%; padding:14px 16px; margin:6px 0 18px;
+    background:linear-gradient(180deg,#f0f4fa,#e3ecf8);
+    border:1px dashed #4a6fa5; border-radius:8px;
+    color:#2d4468; font-family:inherit;
+    cursor:pointer; text-align:left;
+  }
+  body > .cr-c-modal-bg .cr-c-solbtn:hover{ background:#e3ecf8; }
+  body > .cr-c-modal-bg .cr-c-solbtn:disabled{ opacity:.7; cursor:progress; }
+  body > .cr-c-modal-bg .cr-c-solbtn .ic{ font-size:22px; line-height:1; flex:0 0 auto; }
+  body > .cr-c-modal-bg .cr-c-solbtn .body{ flex:1; min-width:0; }
+  body > .cr-c-modal-bg .cr-c-solbtn .lbl{
+    font-size:13.5px; font-weight:700; line-height:1.3;
+  }
+  body > .cr-c-modal-bg .cr-c-solbtn small{
+    display:block; font-weight:400; color:#556; font-size:11.5px;
+    margin-top:3px; line-height:1.35;
+  }
+  body > .cr-c-modal-bg .cr-c-solbtn.success{
+    background:#e7f2e7; border-style:solid; border-color:#2e7d32; color:#2e7d32;
+  }
+  body > .cr-c-modal-bg .cr-c-solbtn.error{
+    background:#fdecec; border-style:solid; border-color:#D9282A; color:#B01F21;
+  }
+
+  /* Fields that got autofilled flash a soft green background */
+  body > .cr-c-modal-bg .cr-c-modal input.autofilled,
+  body > .cr-c-modal-bg .cr-c-modal select.autofilled,
+  body > .cr-c-modal-bg .cr-c-modal textarea.autofilled{
+    background:#f2faf3; border-color:#8fc891;
+  }
+</style>
+
+<script id="cr-claims-fx-script">
+(function () {
+  'use strict';
+
+  function enhanceModal(modal){
+    if(!modal || modal.dataset.crFxDone) return;
+    modal.dataset.crFxDone = '1';
+
+    // 1. Move to body so it's viewport-anchored, not scroll-container-anchored
+    if(modal.parentNode !== document.body){
+      document.body.appendChild(modal);
+    }
+
+    var inner = modal.querySelector('.cr-c-modal');
+    if(!inner) return;
+    var h3 = inner.querySelector('h3');
+    if(!h3) return;
+
+    var titleText = h3.textContent.trim();
+    var isNewClaim  = /new insurance claim/i.test(titleText);
+    var isEditClaim = /edit claim/i.test(titleText);
+
+    // 2. Sticky header + close × (all claim modals get this, not just New)
+    var oldSub = inner.querySelector('.sub');
+    var hd = document.createElement('div');
+    hd.className = 'cr-c-modalhd';
+    hd.innerHTML =
+      '<h3>' + escText(titleText) + '</h3>' +
+      '<button class="cr-c-close" aria-label="Close" title="Close">&times;</button>';
+    inner.insertBefore(hd, inner.firstChild);
+    h3.style.display = 'none';   // sticky header renders the title now
+    hd.querySelector('.cr-c-close').onclick = function(){
+      var cancelBtn = inner.querySelector('[data-act="cancel"]');
+      if(cancelBtn) cancelBtn.click();
+      else modal.remove();
+    };
+
+    // 3. SOL upload button only on New Insurance Claim
+    if(isNewClaim && oldSub){
+      injectSolButton(inner, oldSub);
+    }
+  }
+
+  function injectSolButton(inner, subEl){
+    var wrap = document.createElement('div');
+    wrap.style.marginBottom = '0';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cr-c-solbtn';
+    btn.innerHTML =
+      '<span class="ic">\uD83D\uDCC4</span>' +
+      '<span class="body">' +
+        '<span class="lbl">Upload Scope of Loss</span>' +
+        '<small>PDF or image \u2014 AI reads carrier, claim #, ' +
+          'adjuster, RCV/ACV, deductible, dates and pre-fills the form.</small>' +
+      '</span>';
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'application/pdf,image/*';
+    fileInput.style.display = 'none';
+    btn.onclick = function(){ fileInput.click(); };
+    fileInput.onchange = function(){
+      var f = this.files && this.files[0];
+      this.value = '';
+      if(f) handleSolUpload(f, inner, btn);
+    };
+    wrap.appendChild(btn);
+    wrap.appendChild(fileInput);
+    // Insert AFTER the sub line
+    subEl.parentNode.insertBefore(wrap, subEl.nextSibling);
+  }
+
+  async function handleSolUpload(file, inner, btn){
+    if(file.size > 12 * 1024 * 1024){
+      alert('That file is bigger than 12 MB. Try compressing the PDF or splitting it.');
+      return;
+    }
+    btn.disabled = true;
+    var origHtml = btn.innerHTML;
+    btn.innerHTML =
+      '<span class="ic">\u23F3</span>' +
+      '<span class="body"><span class="lbl">Reading with AI\u2026</span>' +
+        '<small>' + escText(file.name) + '</small></span>';
+
+    try{
+      var dataUrl = await new Promise(function(resolve, reject){
+        var fr = new FileReader();
+        fr.onload  = function(){ resolve(fr.result); };
+        fr.onerror = function(){ reject(new Error('Could not read file')); };
+        fr.readAsDataURL(file);
+      });
+      var b64  = (dataUrl || '').split(',')[1] || '';
+      var mime = file.type || 'application/pdf';
+
+      var sess = window.supa ? await window.supa.auth.getSession() : null;
+      var tok  = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
+
+      var r = await fetch('/api/sol', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
+        body: JSON.stringify({ file: b64, mime: mime })
+      });
+      var j = null;
+      try{ j = await r.json(); }catch(_){ }
+      if(!r.ok){
+        var detail = (j && (j.detail || j.error)) ? (j.detail || j.error) : ('HTTP ' + r.status);
+        throw new Error(String(detail).slice(0, 250));
+      }
+      var count = populateFromSol(inner, j.extracted || j || {});
+
+      btn.disabled = false;
+      btn.className = 'cr-c-solbtn success';
+      btn.innerHTML =
+        '<span class="ic">\u2713</span>' +
+        '<span class="body">' +
+          '<span class="lbl">Pre-filled ' + count + ' field' + (count === 1 ? '' : 's') +
+            ' from Scope of Loss</span>' +
+          '<small>Review each field below \u2014 highlighted in green \u2014 ' +
+            'and edit anything the AI got wrong before saving.</small>' +
+        '</span>';
+    }catch(err){
+      btn.disabled = false;
+      btn.className = 'cr-c-solbtn error';
+      btn.innerHTML =
+        '<span class="ic">!</span>' +
+        '<span class="body">' +
+          '<span class="lbl">Could not read that file</span>' +
+          '<small>' + escText(err.message || String(err)) +
+          ' \u2014 tap to try another file.</small>' +
+        '</span>';
+      // click again = re-open file picker
+      btn.onclick = function(){
+        btn.className = 'cr-c-solbtn';
+        btn.innerHTML = origHtml;
+        var fi = inner.querySelector('.cr-c-solbtn').nextSibling;
+        // simpler: just find the sibling input
+        var input = btn.parentNode.querySelector('input[type="file"]');
+        if(input) input.click();
+      };
+    }
+  }
+
+  function populateFromSol(inner, ex){
+    // Map extracted field variants -> the form's data-f names
+    var adj = (ex.adjuster && typeof ex.adjuster === 'object') ? ex.adjuster : {};
+    var mapping = {
+      homeowner_name  : first(ex.homeowner_name, ex.owner_name, ex.insured_name, ex.insured),
+      property_address: first(ex.property_address, ex.address, ex.loss_address, ex.risk_address),
+      carrier         : first(ex.carrier, ex.insurance_carrier, ex.insurer),
+      claim_number    : first(ex.claim_number, ex.claim_no, ex.claim),
+      policy_number   : first(ex.policy_number, ex.policy_no, ex.policy),
+      cause_of_loss   : first(ex.cause_of_loss, ex.cause, ex.peril),
+      date_of_loss    : normalizeDate(first(ex.date_of_loss, ex.loss_date, ex.dol)),
+      filed_at        : normalizeDate(first(ex.filed_at, ex.filed_date, ex.date_filed)),
+      adjuster_name   : first(ex.adjuster_name, adj.name),
+      adjuster_phone  : first(ex.adjuster_phone, adj.phone),
+      adjuster_email  : first(ex.adjuster_email, adj.email),
+      approved_rcv    : normalizeMoney(first(ex.approved_rcv, ex.rcv, ex.replacement_cost_value)),
+      approved_acv    : normalizeMoney(first(ex.approved_acv, ex.acv, ex.actual_cash_value)),
+      deductible      : normalizeMoney(first(ex.deductible, ex.deductible_amount)),
+    };
+
+    var filled = 0;
+    Object.keys(mapping).forEach(function(f){
+      var v = mapping[f];
+      if(v == null || v === '') return;
+      var el = inner.querySelector('[data-f="' + f + '"]');
+      if(!el) return;
+
+      if(el.tagName === 'SELECT'){
+        // Case-insensitive match against option value or text
+        var target = String(v).trim().toLowerCase();
+        var matchedOpt = null;
+        for(var i = 0; i < el.options.length; i++){
+          var opt = el.options[i];
+          if(!opt.value) continue;
+          if(String(opt.value).toLowerCase() === target ||
+             String(opt.textContent).trim().toLowerCase() === target){
+            matchedOpt = opt; break;
+          }
+        }
+        // Fuzzy fallback: substring match
+        if(!matchedOpt){
+          for(var k = 0; k < el.options.length; k++){
+            var o = el.options[k];
+            if(!o.value) continue;
+            var ovt = String(o.textContent).trim().toLowerCase();
+            if(ovt.indexOf(target) !== -1 || target.indexOf(ovt) !== -1){
+              matchedOpt = o; break;
+            }
+          }
+        }
+        if(matchedOpt){
+          el.value = matchedOpt.value;
+          el.classList.add('autofilled');
+          filled++;
+        }
+      }else{
+        el.value = String(v);
+        el.classList.add('autofilled');
+        filled++;
+      }
+    });
+    return filled;
+  }
+
+  function first(){
+    for(var i = 0; i < arguments.length; i++){
+      var v = arguments[i];
+      if(v != null && v !== '') return v;
+    }
+    return null;
+  }
+  function normalizeDate(d){
+    if(!d) return '';
+    try{
+      // Accept YYYY-MM-DD passthrough
+      if(/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return String(d);
+      var dt = new Date(d);
+      if(isNaN(dt.getTime())) return '';
+      return dt.toISOString().slice(0, 10);
+    }catch(e){ return ''; }
+  }
+  function normalizeMoney(v){
+    if(v == null || v === '') return '';
+    // Strip $ , and whitespace
+    var s = String(v).replace(/[\$,\s]/g, '');
+    if(s === '') return '';
+    var n = parseFloat(s);
+    return isNaN(n) ? '' : String(n);
+  }
+  function escText(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // ── Watch for modal creation ─────────────────────────────
+  function scanFor(root){
+    if(!root || root.nodeType !== 1) return;
+    if(root.classList && root.classList.contains('cr-c-modal-bg')){
+      enhanceModal(root);
+      return;
+    }
+    if(root.querySelectorAll){
+      root.querySelectorAll('.cr-c-modal-bg').forEach(enhanceModal);
+    }
+  }
+  new MutationObserver(function(muts){
+    for(var i = 0; i < muts.length; i++){
+      var m = muts[i];
+      for(var j = 0; j < m.addedNodes.length; j++){
+        scanFor(m.addedNodes[j]);
+      }
+    }
+  }).observe(document.body, { childList:true, subtree:true });
+
+  // Also scan on boot in case a modal is already open
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ scanFor(document.body); });
+  }else{
+    scanFor(document.body);
+  }
+})();
+</script>
