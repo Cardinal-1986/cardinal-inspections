@@ -37,7 +37,7 @@ const CONTRACTOR = {
 
 // ── Warranty defaults by contract type ──────────────────────
 const WARRANTIES = {
-  roofing:  'Manufacturer warranty per GAF Timberline HDZ / TimberTex system (limited lifetime, non-prorated first 10 years). Cardinal Roofing & Renovations workmanship warranty: 10 years on installation labor, workmanship, and flashing details. Transferable one time to a subsequent homeowner.',
+  roofing:  'Owens Corning Total Protection Roofing System — TruDefinition Duration shingles with SureNail Technology, ProEdge hip & ridge, WeatherLock ice & water barrier, synthetic underlayment, starter strip and VentSure ventilation. Cardinal Roofing & Renovations is an Owens Corning Roofing Preferred Contractor; where a qualifying system is installed Cardinal will register the Preferred Protection Limited Warranty (limited lifetime material coverage plus 10 years of workmanship coverage) within 60 days of completion. Shingle wind coverage is 130 mph per the TruDefinition Duration limited warranty. Manufacturer warranty terms are set by Owens Corning and govern; a copy is provided at completion.',
   siding:   'Manufacturer warranty per siding product spec (typically limited lifetime). Cardinal Roofing & Renovations workmanship warranty: 5 years on installation.',
   windows:  'Manufacturer warranty per window product spec (typically limited lifetime glass seal, 20-year frame). Cardinal Roofing & Renovations workmanship warranty: 5 years on installation and capping.',
 };
