@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 162 &#8212; Menu bulletproof, global search (press /), recent clients, Hub analytics, partner properties</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 163 &#8212; Universal home button in site header (visible on every page, adapts to theme)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -27953,6 +27953,155 @@ body.claim-insurance #brandLogo{
     openDirectory: openDirectory,
     onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
   };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: home_button_universal.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — UNIVERSAL HOME BUTTON
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ A small gold-outlined house icon in the site header, sitting just
+ before the Search button. Available on every page that shows the
+ site header. Falls out of the way when full-screen overlays are
+ showing (Cardinal Truth, Resource Library, Insurance Clients,
+ Editor) because those overlays cover the site header and carry
+ their own Home affordance.
+
+ Complements — not replaces — the Community Hub's own banner icon
+ (which lives inside that view's decorative header) and the
+ burger-menu Home option (which still works for keyboard-nav users).
+
+ INSTALL: paste after community_properties.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-home-btn-styles">
+  #cr-home-btn{
+    background:transparent;
+    border:1px solid rgba(212,160,23,.6);
+    color:#d4a017;
+    border-radius:8px;
+    padding:5px 8px;
+    cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    margin-right:6px; flex:0 0 auto;
+    transition:background .12s, border-color .12s, transform .1s, color .12s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #cr-home-btn:hover{
+    background:rgba(212,160,23,.15);
+    border-color:#d4a017;
+  }
+  #cr-home-btn:active{ transform:scale(.94); }
+  #cr-home-btn svg{ display:block; }
+
+  /* Adapt on the pale-green Community Hub header for legibility */
+  body.viewing-community-hub #cr-home-btn{
+    color:#a67c0a;
+    border-color:rgba(166,124,10,.5);
+  }
+  body.viewing-community-hub #cr-home-btn:hover{
+    background:rgba(166,124,10,.15);
+    border-color:#a67c0a;
+  }
+
+  /* Adapt on the navy-blue insurance-client header */
+  body.claim-insurance #cr-home-btn{
+    color:#f5d061;
+    border-color:rgba(245,208,97,.5);
+  }
+  body.claim-insurance #cr-home-btn:hover{
+    background:rgba(245,208,97,.15);
+    border-color:#f5d061;
+  }
+</style>
+
+<script id="cr-home-btn-script">
+(function () {
+  'use strict';
+
+  // Overlays that cover the site header AND have their own Home
+  // affordance — hiding our button when these are open avoids
+  // duplication and prevents pointer collisions.
+  var OVERLAY_IDS = ['cardinalTruthView', 'resourceLibraryView',
+                     'insClientsView',   'editorView'];
+
+  function anyOverlayVisible(){
+    for(var i = 0; i < OVERLAY_IDS.length; i++){
+      var el = document.getElementById(OVERLAY_IDS[i]);
+      if(el && el.style.display !== 'none' && el.style.display !== '') return true;
+      // Some overlays default to display:none via CSS and only set display
+      // when shown (Cardinal Truth uses inline style="display:none" initially,
+      // then swaps to block). Trust getComputedStyle as the tiebreaker.
+      if(el && el.style.display && el.style.display !== 'none') return true;
+    }
+    return false;
+  }
+
+  function ensureButton(){
+    var wrap = document.getElementById('navWrap');
+    if(!wrap) return;
+    // navWrap itself is hidden until signed-in; matching its visibility
+    // is exactly what we want.
+    if(wrap.style.display === 'none') return removeButton();
+
+    var btn = document.getElementById('cr-home-btn');
+    if(!btn){
+      btn = document.createElement('button');
+      btn.id = 'cr-home-btn';
+      btn.className = 'btn ghost';   // pick up the base app's hover feel
+      btn.setAttribute('aria-label', 'Home');
+      btn.setAttribute('title', 'Home');
+      btn.type = 'button';
+      btn.innerHTML =
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" ' +
+             'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" ' +
+             'stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2z"/>' +
+          '<path d="M9 22 V12 h6 v10"/>' +
+        '</svg>';
+      btn.onclick = function(e){
+        e.stopPropagation();
+        if(typeof window.showHome === 'function'){ window.showHome(); return; }
+        if(typeof window.hideAllViews === 'function') window.hideAllViews();
+      };
+      // Insert BEFORE the search button (if present), otherwise before Menu
+      var target = document.getElementById('cr-search-btn')
+                || document.getElementById('navBtn');
+      if(target && target.parentNode === wrap) wrap.insertBefore(btn, target);
+      else wrap.appendChild(btn);
+    }
+
+    btn.style.display = anyOverlayVisible() ? 'none' : 'inline-flex';
+  }
+
+  function removeButton(){
+    var btn = document.getElementById('cr-home-btn');
+    if(btn && btn.parentNode) btn.parentNode.removeChild(btn);
+  }
+
+  function start(){
+    ensureButton();
+    var ticking = false;
+    new MutationObserver(function(){
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){
+        ticking = false;
+        try{ ensureButton(); }catch(e){}
+      });
+    }).observe(document.body, {
+      childList:true, subtree:true,
+      attributes:true, attributeFilter:['style','class']
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();
 </script>
 
