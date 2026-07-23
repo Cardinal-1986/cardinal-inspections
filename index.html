@@ -16587,6 +16587,17 @@ async function enableNotifications(){
      Bridges the new modules' expected globals to this app's names.
      MUST load before estimates/pricing/claims modules.
      ════════════════════════════════════════════════════════════ -->
+
+<style id="cr-layout-fixes">
+/* ── Hide the Home / Landing chips on the client cover card ──────
+   #projHomeChip + #projLandChip were position:absolute in the card's
+   top-right corner and overlapped the INSURANCE badge on phones.
+   Removed per request — the header logo, the ☰ Menu, and the bottom
+   arrows all still navigate home/landing, so nothing is lost.
+   To bring them back, delete this rule.                              */
+.projinfo .projTopBtns{ display: none !important; }
+</style>
+
 <script id="cr-shim">
 (function () {
   'use strict';
