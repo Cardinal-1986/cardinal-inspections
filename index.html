@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 159 &#8212; Calendar fit fix, rogue Home button removed, Cardinal Truth gets portal switcher, Home/Landing chips hidden</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 162 &#8212; Menu bulletproof, global search (press /), recent clients, Hub analytics, partner properties</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22421,18 +22421,23 @@ body.claim-insurance #brandLogo{
   body.portal-insurance .ct-dashtitle{ color:#7fa6d6; }
 
   /* Community — green primary, blue secondary, beige surfaces */
-  body.portal-community{
+  /* Scoped to VIEW (viewing-community-hub) not the portal chip, so retail
+     Home stays retail-styled even when the user's current portal is
+     Community. The Hub toggles body.viewing-community-hub in show/hide;
+     community clients get their own theme via body.claim-community in
+     the community_client_view module. */
+  body.viewing-community-hub{
     --red:#3d7a4c; --red-dk:#2f5f3b;
     --amber:#c9a227; --slate:#4a6fa5;
     --line:#ded3bf;
   }
-  body.portal-community .wrap,
-  body.portal-community #homeView{ background:#f7f2e7; }
-  body.portal-community .card,
-  body.portal-community .projinfo,
-  body.portal-community .acxsec{ background:#fffdf7; border-color:#ded3bf; }
-  body.portal-community .titlecard h1{ color:#3d7a4c; }
-  body.portal-community .titlecard h1 span{
+  body.viewing-community-hub .wrap,
+  body.viewing-community-hub #homeView{ background:#f7f2e7; }
+  body.viewing-community-hub .card,
+  body.viewing-community-hub .projinfo,
+  body.viewing-community-hub .acxsec{ background:#fffdf7; border-color:#ded3bf; }
+  body.viewing-community-hub .titlecard h1{ color:#3d7a4c; }
+  body.viewing-community-hub .titlecard h1 span{
     background:linear-gradient(160deg,#2f5f3b,#4a8c5a 40%,#7fc98f 60%,#3d7a4c);
     -webkit-background-clip:text; background-clip:text;
     color:#4a8c5a !important; -webkit-text-fill-color:transparent;
@@ -23911,6 +23916,23 @@ body.claim-insurance #brandLogo{
     margin:6px 0 0; font:600 12.5px 'Segoe UI',Arial,sans-serif;
     color:#c9d9c9; line-height:1.55; max-width:640px;
   }
+  .cr-chub-banner .cr-chub-hbtn{
+    position:absolute; top:14px; right:14px;
+    background:rgba(0,0,0,.10);
+    border:1px solid rgba(212,160,23,.55);
+    color:#d4a017;
+    border-radius:8px;
+    padding:6px 7px; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    transition:background .12s, border-color .12s, transform .1s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cr-chub-banner .cr-chub-hbtn:hover{
+    background:rgba(212,160,23,.16);
+    border-color:#d4a017;
+  }
+  .cr-chub-banner .cr-chub-hbtn:active{ transform:scale(.94); }
+  .cr-chub-banner .cr-chub-hbtn svg{ display:block; }
   .cr-chub-banner .cr-chub-back{
     position:absolute; top:16px; right:16px;
     background:rgba(255,255,255,.13); color:#f7f2e7;
@@ -24263,8 +24285,7 @@ body.claim-insurance #brandLogo{
     background:#d4a017; margin:0 4px 0 6px; vertical-align:middle;
   }
 
-  /* ── Activity Board ─────────────────────────────────────── */
-  .cr-chub-actrow{
+  /* ── Activity Board ─────────────────────────────────────── */  .cr-chub-actrow{
     display:flex; gap:10px; padding:9px 4px;
     border-bottom:1px solid #ede3ce; cursor:pointer;
     transition:background .1s;
@@ -24294,6 +24315,57 @@ body.claim-insurance #brandLogo{
     flex:0 0 auto; font:700 9.5px 'Segoe UI',Arial,sans-serif;
     color:#8a7a5a; white-space:nowrap; padding-top:2px;
   }
+
+  /* ── Analytics ──────────────────────────────────────────── */
+  .cr-chub-analytics .stat-row{
+    display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px;
+    margin-bottom:14px;
+  }
+  @media(max-width:560px){
+    .cr-chub-analytics .stat-row{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  }
+  .cr-chub-analytics .stat{
+    padding:10px 12px; background:#fff; border:1px solid #e2d7bf;
+    border-radius:8px; min-width:0;
+  }
+  .cr-chub-analytics .stat .k{
+    font:800 8.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.13em;
+    text-transform:uppercase; color:#6b7a55;
+  }
+  .cr-chub-analytics .stat .v{
+    font:800 18px 'Segoe UI',Arial,sans-serif; color:#1a2a1e;
+    margin-top:2px; font-variant-numeric:tabular-nums; letter-spacing:-.3px;
+  }
+  .cr-chub-analytics .stat.hot .v{ color:#3d7a4c; }
+  .cr-chub-analytics .chart{ margin-top:12px; }
+  .cr-chub-analytics .chart h4{
+    margin:0 0 6px; font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#6b7a55;
+  }
+  .cr-chub-analytics .chart-row{
+    display:grid; grid-template-columns:140px 1fr auto; gap:10px;
+    align-items:center; padding:5px 0;
+  }
+  @media(max-width:560px){
+    .cr-chub-analytics .chart-row{ grid-template-columns:100px 1fr auto; }
+  }
+  .cr-chub-analytics .chart-row .lbl{
+    font:700 12px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
+  }
+  .cr-chub-analytics .chart-row .bar{
+    height:11px; background:#f5efdf; border-radius:6px; overflow:hidden;
+    min-width:0;
+  }
+  .cr-chub-analytics .chart-row .bar i{
+    display:block; height:100%; background:#4a8c5a; border-radius:6px;
+  }
+  .cr-chub-analytics .chart-row .bar.gold i{ background:#d4a017; }
+  .cr-chub-analytics .chart-row .val{
+    font:800 12px 'Segoe UI',Arial,sans-serif; color:#3d7a4c;
+    font-variant-numeric:tabular-nums; white-space:nowrap;
+  }
+  .cr-chub-analytics .chart-row .val.gold{ color:#a67c0a; }
 </style>
 
 <script id="cr-chub-script">
@@ -24343,6 +24415,14 @@ body.claim-insurance #brandLogo{
     v.id = 'communityHubView';
     v.innerHTML =
       '<div class="cr-chub-banner">' +
+        '<button class="cr-chub-hbtn" data-act="home" aria-label="Home" title="Home">' +
+          '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" ' +
+               'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+               'stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2z"/>' +
+            '<path d="M9 22 V12 h6 v10"/>' +
+          '</svg>' +
+        '</button>' +
         '<h1>Community <span>Partnership</span></h1>' +
         '<p>Bids, awards, and partner portfolios in one place. ' +
            'Non-profits Cardinal bids on and property managers with recurring work.</p>' +
@@ -24374,6 +24454,10 @@ body.claim-insurance #brandLogo{
             '</div>' +
           '</div>' +
         '</div>' +
+        '<div class="cr-chub-card cr-chub-analytics" id="chubAnalytics">' +
+          '<h3>Analytics</h3>' +
+          '<div id="chubAnalyticsBody"></div>' +
+        '</div>' +
         '<div class="cr-chub-card" id="chubPartners">' +
           '<h3>Partners <span class="cr-chub-total" id="chubPTotal"></span></h3>' +
           '<div id="chubPartnersBody"></div>' +
@@ -24388,6 +24472,13 @@ body.claim-insurance #brandLogo{
       '</div>';
     document.body.appendChild(v);
 
+    v.querySelector('[data-act="home"]').onclick = function(){
+      // Full flow (see showHome() in source): hideAllViews, mainView.display,
+      // renderHome, renderHero, renderCalendar, renderPipeline, renderActivity,
+      // scrollTo(0,0). Wrapped hideAllViews also clears viewing-community-hub.
+      if(typeof window.showHome === 'function'){ window.showHome(); return; }
+      if(typeof window.hideAllViews === 'function') window.hideAllViews();
+    };
     v.querySelector('[data-act="manage"]').onclick = function(){
       if(window.CardinalCommunityPartners) window.CardinalCommunityPartners.openDirectory();
     };
@@ -24866,6 +24957,121 @@ body.claim-insurance #brandLogo{
       { minimumFractionDigits:0, maximumFractionDigits:0 });
   }
 
+  // ── Render Analytics (win rate, revenue by partner, etc.) ─
+  function renderAnalytics(projs){
+    var host = document.getElementById('chubAnalyticsBody');
+    if(!host) return;
+    var partners = (window.CardinalCommunityPartners && window.CardinalCommunityPartners.list())
+                    ? window.CardinalCommunityPartners.list() : [];
+    var byPartner = {};
+    partners.forEach(function(p){
+      byPartner[p.id] = { partner:p, bids:0, won:0, lost:0, revenue:0, times:[] };
+    });
+
+    // Aggregate. "Won" = anything past bid decision (Approved through Closed).
+    projs.forEach(function(pr){
+      var pid = null;
+      try{
+        var ck = window.parseCkAll ? window.parseCkAll(pr) : {};
+        pid = ck.lead && ck.lead.partner_id;
+      }catch(e){}
+      if(!pid || !byPartner[pid]) return;
+      var b = byPartner[pid];
+      b.bids++;
+      var stage = pr.stage;
+      var wonStages = ['Approved','Scheduled','Completed','Invoiced','Closed'];
+      if(wonStages.indexOf(stage) !== -1){
+        b.won++;
+        if(typeof window.jobFinance === 'function'){
+          try{ b.revenue += Number(window.jobFinance(pr).value || 0); }catch(e){}
+        }
+        // Time to award — rough: created_at → stage_since (the last stage move).
+        // Not perfect (assumes the stage_since is when Approved was reached),
+        // but useful directional signal.
+        try{
+          var ck2 = window.parseCkAll ? window.parseCkAll(pr) : {};
+          var awardedAt = (ck2 && ck2.stage_since) || pr.updated_at;
+          if(pr.created_at && awardedAt){
+            var days = Math.round((new Date(awardedAt).getTime() -
+                                   new Date(pr.created_at).getTime()) / 86400000);
+            if(days > 0 && days < 365) b.times.push(days);
+          }
+        }catch(e){}
+      }else if(stage === 'Lost'){
+        b.lost++;
+      }
+    });
+
+    // Global stats
+    var stats = { totalBids:0, won:0, lost:0, revenue:0, avgDays:0 };
+    var allTimes = [];
+    Object.keys(byPartner).forEach(function(k){
+      var b = byPartner[k];
+      stats.totalBids += b.bids;
+      stats.won      += b.won;
+      stats.lost     += b.lost;
+      stats.revenue  += b.revenue;
+      allTimes = allTimes.concat(b.times);
+    });
+    var winRate = stats.totalBids > 0 ? Math.round(stats.won / stats.totalBids * 100) : 0;
+    if(allTimes.length){
+      stats.avgDays = Math.round(
+        allTimes.reduce(function(s,d){ return s + d; }, 0) / allTimes.length);
+    }
+
+    var html =
+      '<div class="stat-row">' +
+        '<div class="stat"><div class="k">Total Bids</div><div class="v">' + stats.totalBids + '</div></div>' +
+        '<div class="stat' + (stats.totalBids > 0 ? ' hot' : '') + '"><div class="k">Win Rate</div><div class="v">' + winRate + '%</div></div>' +
+        '<div class="stat"><div class="k">Avg Days to Award</div><div class="v">' + (stats.avgDays || '\u2014') + '</div></div>' +
+        '<div class="stat"><div class="k">Total Revenue</div><div class="v">' + money(stats.revenue) + '</div></div>' +
+      '</div>';
+
+    var activePartners = Object.keys(byPartner).map(function(k){ return byPartner[k]; })
+                          .filter(function(b){ return b.bids > 0; });
+
+    // Revenue by partner (top 5)
+    var byRev = activePartners.slice().sort(function(a,b){ return b.revenue - a.revenue; }).slice(0, 5);
+    if(byRev.length && byRev[0].revenue > 0){
+      var maxRev = byRev[0].revenue;
+      html += '<div class="chart"><h4>Revenue by Partner</h4>';
+      byRev.forEach(function(b){
+        var pct = Math.round(b.revenue / maxRev * 100);
+        html += '<div class="chart-row">' +
+                  '<div class="lbl">' + esc(b.partner.name) + '</div>' +
+                  '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
+                  '<div class="val">' + money(b.revenue) + '</div>' +
+                '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Win rate by partner (top 5, only those with 2+ bids)
+    var byWin = activePartners.filter(function(b){ return b.bids >= 2; })
+                              .sort(function(a,b){ return (b.won/b.bids) - (a.won/a.bids); })
+                              .slice(0, 5);
+    if(byWin.length){
+      html += '<div class="chart"><h4>Win Rate by Partner</h4>';
+      byWin.forEach(function(b){
+        var wr = Math.round(b.won / b.bids * 100);
+        html += '<div class="chart-row">' +
+                  '<div class="lbl">' + esc(b.partner.name) + '</div>' +
+                  '<div class="bar gold"><i style="width:' + wr + '%"></i></div>' +
+                  '<div class="val gold">' + wr + '% (' + b.won + '/' + b.bids + ')</div>' +
+                '</div>';
+      });
+      html += '</div>';
+    }
+
+    if(!activePartners.length || (!byRev.length && !byWin.length)){
+      html += '<div class="cr-chub-empty">Analytics fill in once bids move ' +
+              'through the pipeline.<small>Track wins across partners, ' +
+              'time-to-award, and revenue at a glance.</small></div>';
+    }
+
+    host.innerHTML = html;
+  }
+
   // ── Render clients list (Community's own client directory) ────
   function clientRowHtml(pr){
     var addr = pr.address || (pr.location && pr.location.street) || '';
@@ -24984,6 +25190,10 @@ body.claim-insurance #brandLogo{
   function show(){
     wrapHideAll();
     if(typeof window.hideAllViews === 'function') window.hideAllViews();
+    // Add the view-scope class AFTER hideAllViews (which is wrapped to
+    // remove it). Sets the pale-green header + retint variables that
+    // are otherwise off — retail Home stays retail-styled without this.
+    document.body.classList.add('viewing-community-hub');
     var v = ensureView();
     v.style.display = 'block';
     render();
@@ -24993,6 +25203,7 @@ body.claim-insurance #brandLogo{
   function hide(){
     var v = document.getElementById('communityHubView');
     if(v) v.style.display = 'none';
+    document.body.classList.remove('viewing-community-hub');
   }
 
   function render(){
@@ -25017,10 +25228,12 @@ body.claim-insurance #brandLogo{
       window.CardinalCommunityPartners.load().then(function(){
         renderPartners(projs);
         renderClients(projs);
+        renderAnalytics(projs);
       });
     }else{
       renderPartners(projs);
       renderClients(projs);
+      renderAnalytics(projs);
     }
   }
 
@@ -25467,26 +25680,30 @@ body.claim-insurance #brandLogo{
 -->
 
 <style id="cr-comtheme-styles">
-  /* ═══ PALE GREEN HEADER ═══════════════════════════════════ */
-  body.portal-community header.site{
+  /* ═══ PALE GREEN HEADER — ONLY ON COMMUNITY HUB ═══════════
+     These rules apply only when the Community Hub is actually
+     visible. Retail Home viewed while in Community portal keeps
+     the default retail styling, matching the "insurance clients
+     only live in insurance CRM" principle applied to Home too. */
+  body.viewing-community-hub header.site{
     background:#e8f2e5;
     border-bottom-color:#4a8c5a;
     box-shadow:0 2px 14px rgba(74,140,90,.22);
   }
 
   /* Dark text everywhere on the header (base rules use color:#fff !important) */
-  body.portal-community header.site .brand h1,
-  body.portal-community header.site .brand .co{
+  body.viewing-community-hub header.site .brand h1,
+  body.viewing-community-hub header.site .brand .co{
     color:#2f5f3b !important;
   }
-  body.portal-community header.site .brand h1 span{
+  body.viewing-community-hub header.site .brand h1 span{
     background:linear-gradient(160deg,#b8860b,#d4a017 45%,#a67c0a);
     -webkit-background-clip:text; background-clip:text;
     -webkit-text-fill-color:transparent; color:#b8860b !important;
   }
-  body.portal-community header.site .brand .co small,
-  body.portal-community header.site .tag,
-  body.portal-community header.site .whoami{
+  body.viewing-community-hub header.site .brand .co small,
+  body.viewing-community-hub header.site .tag,
+  body.viewing-community-hub header.site .whoami{
     color:#4a6b4f !important;
   }
 
@@ -25494,42 +25711,44 @@ body.claim-insurance #brandLogo{
      was pushing the portal chip + Menu button off the right edge in
      narrow viewports. Constrain the title to shrink first — everything
      else in the masthead should stay reachable. */
-  body.portal-community header.site .titlecard{
+  body.viewing-community-hub header.site .titlecard{
     min-width:0; flex:1 1 auto; overflow:hidden;
   }
-  body.portal-community header.site .titlecard h1{
+  body.viewing-community-hub header.site .titlecard h1{
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     min-width:0;
   }
   /* Keep the interactive elements above any decorative overlays and
      make sure they can actually receive taps on mobile. */
-  body.portal-community header.site .btn,
-  body.portal-community header.site .cr-portal-chip,
-  body.portal-community header.site #navBtn,
-  body.portal-community header.site #addProjectBtn{
+  body.viewing-community-hub header.site .btn,
+  body.viewing-community-hub header.site .cr-portal-chip,
+  body.viewing-community-hub header.site #navBtn,
+  body.viewing-community-hub header.site #addProjectBtn{
     position:relative; z-index:2; pointer-events:auto;
     flex-shrink:0;
   }
 
   /* Solid buttons: green with white text */
-  body.portal-community header.site .btn{
+  body.viewing-community-hub header.site .btn{
     background:#4a8c5a;
     color:#ffffff !important;
     border-color:transparent;
   }
-  body.portal-community header.site .btn:hover{ background:#3d7a4c; }
+  body.viewing-community-hub header.site .btn:hover{ background:#3d7a4c; }
 
   /* Ghost buttons (Menu, etc): dark text on pale green — the whole point */
-  body.portal-community header.site .btn.ghost{
+  body.viewing-community-hub header.site .btn.ghost{
     background:transparent;
     color:#2f5f3b !important;
     border:1px solid rgba(47,95,59,.45);
   }
-  body.portal-community header.site .btn.ghost:hover{
+  body.viewing-community-hub header.site .btn.ghost:hover{
     background:rgba(47,95,59,.09);
   }
 
-  /* Portal chip: white track so the toggle actually shows on pale green */
+  /* Portal chip and burger menu tint stay on portal-community — the
+     chip is visible on every view, and the burger menu can open over
+     any view. */
   body.portal-community .cr-portal-chip{
     background:rgba(255,255,255,.7);
     border-color:rgba(47,95,59,.4);
@@ -25569,10 +25788,12 @@ body.claim-insurance #brandLogo{
   function updateBrandTitle(){
     var el = document.getElementById('brandTitle');
     if(!el) return;
-    var isCommunity = document.body.classList.contains('portal-community');
-    var wantMode = isCommunity ? 'community' : 'default';
+    // Swap when the Community Hub is actively visible. Retail Home
+    // stays "CARDINAL RESOURCE" even if the user's portal is Community.
+    var isHub = document.body.classList.contains('viewing-community-hub');
+    var wantMode = isHub ? 'community' : 'default';
     if(el.dataset.crMode === wantMode) return;      // already correct
-    el.innerHTML = isCommunity ? TITLE_COMMUNITY : TITLE_DEFAULT;
+    el.innerHTML = isHub ? TITLE_COMMUNITY : TITLE_DEFAULT;
     el.dataset.crMode = wantMode;
   }
 
@@ -26630,6 +26851,1108 @@ body.claim-insurance #brandLogo{
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: menu_bulletproof.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — MENU BULLETPROOF
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ The site header's Menu button was the single point of failure for
+ exiting ~15 views. When body.projopen was set (client profile
+ open), the base rule `body.projopen #navBtn { display:none }` hid
+ it entirely, forcing users to rely on brandLogo + jobMenuSel alone.
+
+ This module reverses that. Menu stays visible on every view. On
+ mobile the button + brand + jobmenu compete for space; we ease
+ that with slightly tighter padding and a smaller logo footprint
+ when a project is open.
+
+ INSTALL: paste after cardinal_truth_fixes.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-menu-bulletproof-styles">
+  /* Reinstate the burger Menu button in project-open mode. */
+  body.projopen #navBtn{
+    display:inline-block !important;
+  }
+  /* Give it slightly tighter dimensions when the profile header is
+     also showing brandLogo + jobMenuSel + newWrap — otherwise the
+     row wraps and the layout gets choppy on narrow phones. */
+  @media (max-width:640px){
+    body.projopen #navBtn{
+      font-size:11.5px; padding:5px 10px; letter-spacing:.02em;
+    }
+    body.projopen #brandLogo{
+      height:32px !important; width:44px !important;
+    }
+    body.projopen .jobmenu-head{ max-width:110px; }
+  }
+</style>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: recent_clients.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — RECENT CLIENTS STRIP
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ Tracks the last 6 clients you opened and renders a horizontal
+ scrollable strip on Home so you can jump back with one tap. No
+ SQL — everything lives in localStorage per signed-in email.
+
+ API on window.CardinalRecents:
+   push(id)  · list()  · clear()
+
+ INSTALL: paste after menu_bulletproof.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-recents-styles">
+  #cr-recents{
+    max-width:1180px; margin:14px auto 0; padding:0 14px;
+  }
+  #cr-recents h4{
+    margin:0 0 6px; font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase; color:#8a7a5a;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  #cr-recents h4 button{
+    background:transparent; border:0; color:#8a7a5a; cursor:pointer;
+    font:700 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.1em;
+    text-transform:uppercase;
+  }
+  #cr-recents h4 button:hover{ color:#c8202e; }
+  #cr-recents .rail{
+    display:flex; gap:8px; overflow-x:auto;
+    padding:2px 2px 8px; -webkit-overflow-scrolling:touch;
+  }
+  #cr-recents .rc-card{
+    flex:0 0 auto; min-width:190px; max-width:230px;
+    background:#fff; border:1px solid #e2d7bf; border-radius:9px;
+    padding:9px 12px; cursor:pointer;
+    transition:border-color .12s, transform .1s;
+  }
+  #cr-recents .rc-card:hover{ border-color:#c8202e; }
+  #cr-recents .rc-card:active{ transform:scale(.98); }
+  #cr-recents .rc-n{
+    font:700 13px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  #cr-recents .rc-a{
+    font:600 11px 'Segoe UI',Arial,sans-serif; color:#8a7a5a;
+    margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  #cr-recents .rc-badge{
+    display:inline-block; font:800 8.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:1px 5px; border-radius:4px; margin-left:5px;
+    vertical-align:middle;
+  }
+  #cr-recents .rc-badge.retail    { background:#f0ebe4; color:#6b4a24; }
+  #cr-recents .rc-badge.insurance { background:#eaf0f8; color:#2d4468; }
+  #cr-recents .rc-badge.community { background:#e2f2e6; color:#2e6b3f; }
+  #cr-recents .rc-badge.unknown   { background:#efeae5; color:#6b5a52; }
+</style>
+
+<script id="cr-recents-script">
+(function () {
+  'use strict';
+
+  var KEY = 'cardinal.recent.';
+  var MAX = 6;
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function me(){
+    try{ return (window.currentUser && window.currentUser.email) || 'anon'; }
+    catch(e){ return 'anon'; }
+  }
+  function load(){
+    try{ return JSON.parse(localStorage.getItem(KEY + me()) || '[]'); }
+    catch(e){ return []; }
+  }
+  function save(list){
+    try{ localStorage.setItem(KEY + me(), JSON.stringify(list)); }catch(e){}
+  }
+
+  function push(id){
+    if(!id) return;
+    var pr = (window.cacheProjects || []).filter(function(x){ return x.id === id; })[0];
+    if(!pr) return;
+    var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(pr) : 'unknown';
+    var list = load().filter(function(x){ return x.id !== id; });
+    list.unshift({
+      id: id, name: pr.name || 'Unnamed',
+      address: pr.address || (pr.location && pr.location.street) || '',
+      ct: ct, at: Date.now()
+    });
+    if(list.length > MAX) list = list.slice(0, MAX);
+    save(list);
+    scheduleRender();
+  }
+  function clear(){ save([]); scheduleRender(); }
+
+  // ── Hook openProject to track opens ─────────────────────────
+  function hook(){
+    if(typeof window.openProject !== 'function') return false;
+    if(window.openProject.__crRecents) return true;
+    var orig = window.openProject;
+    var wrapped = function(id){
+      var out = orig.apply(this, arguments);
+      try{ push(id); }catch(e){}
+      return out;
+    };
+    wrapped.__crRecents = true;
+    window.openProject = wrapped;
+    return true;
+  }
+
+  // ── Render / remove strip ─────────────────────────────────
+  function typeLabel(ct){
+    return ct === 'insurance' ? 'INS'
+         : ct === 'community' ? 'COM'
+         : ct === 'retail'    ? 'RET'
+         :                      '';
+  }
+  function ensureStrip(){
+    // Only show on Home (mainView visible, no project open)
+    var mv = document.getElementById('mainView');
+    if(!mv || mv.style.display === 'none' || document.body.classList.contains('projopen')){
+      return removeStrip();
+    }
+    var list = load();
+    if(!list.length){ return removeStrip(); }
+
+    var strip = document.getElementById('cr-recents');
+    var sig = list.map(function(x){ return x.id + ':' + x.ct; }).join('|');
+    if(strip){
+      if(strip.dataset.sig === sig) return;   // no change → no re-render (avoid observer thrash)
+    }else{
+      strip = document.createElement('div');
+      strip.id = 'cr-recents';
+      // Insert as first child of mainView so it sits right below the header
+      var hv = document.getElementById('homeView') || mv;
+      hv.parentNode.insertBefore(strip, hv);
+    }
+    strip.dataset.sig = sig;
+    strip.innerHTML =
+      '<h4>Recent Clients ' +
+        '<button data-act="clear" title="Clear recents">Clear</button>' +
+      '</h4>' +
+      '<div class="rail">' +
+        list.map(function(r){
+          var lbl = typeLabel(r.ct);
+          return '<div class="rc-card" data-id="' + esc(r.id) + '">' +
+                   '<div class="rc-n">' + esc(r.name) +
+                     (lbl ? ' <span class="rc-badge ' + esc(r.ct) + '">' + lbl + '</span>' : '') +
+                   '</div>' +
+                   (r.address ? '<div class="rc-a">' + esc(r.address) + '</div>' : '') +
+                 '</div>';
+        }).join('') +
+      '</div>';
+    strip.querySelectorAll('.rc-card').forEach(function(card){
+      card.onclick = function(){
+        if(typeof window.openProject === 'function') window.openProject(card.dataset.id);
+      };
+    });
+    var cl = strip.querySelector('[data-act="clear"]');
+    if(cl) cl.onclick = function(){ clear(); };
+  }
+  function removeStrip(){
+    var strip = document.getElementById('cr-recents');
+    if(strip) strip.remove();
+  }
+
+  var scheduled = false;
+  function scheduleRender(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){ scheduled = false; ensureStrip(); });
+  }
+
+  function start(){
+    var n = 0, iv = setInterval(function(){ if(hook() || ++n > 30) clearInterval(iv); }, 200);
+    scheduleRender();
+    new MutationObserver(scheduleRender).observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['class','style'] });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalRecents = { push: push, list: load, clear: clear };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: global_search.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — GLOBAL SEARCH
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ A single search box that finds clients, documents, and community
+ partners across the entire app. Accessible via a small button in
+ the header (before the Menu button) or by pressing / anywhere.
+
+ Reads from window.cacheProjects (clients), window.cacheRows
+ (documents / contracts / inspections) and
+ window.CardinalCommunityPartners.list() (partners). No SQL, no
+ index — since everything is in memory this is O(n·m) per keystroke,
+ which is fine for the size of your data (thousands, not millions).
+
+ PUBLIC API on window.CardinalSearch:
+   open()  · close()  · search(query)
+
+ INSTALL: paste after recent_clients.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-search-styles">
+  /* Header trigger button */
+  #cr-search-btn{
+    background:transparent; border:1px solid rgba(255,255,255,.4);
+    color:#fff; border-radius:8px; padding:5px 11px 5px 9px; cursor:pointer;
+    font:700 11.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.03em;
+    display:inline-flex; align-items:center; gap:5px;
+    margin-right:6px; flex:0 0 auto;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #cr-search-btn:hover{ background:rgba(255,255,255,.09); }
+  #cr-search-btn:active{ transform:scale(.97); }
+  #cr-search-btn svg{ display:block; }
+  #cr-search-btn kbd{
+    display:inline-block; margin-left:5px;
+    font:700 9.5px 'Segoe UI',Arial,sans-serif;
+    background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.25);
+    color:#fff; padding:1px 5px; border-radius:4px;
+  }
+  body.viewing-community-hub #cr-search-btn{
+    color:#2f5f3b; border-color:rgba(47,95,59,.45);
+  }
+  body.viewing-community-hub #cr-search-btn:hover{ background:rgba(47,95,59,.09); }
+  body.viewing-community-hub #cr-search-btn kbd{
+    background:rgba(47,95,59,.14); border-color:rgba(47,95,59,.35); color:#2f5f3b;
+  }
+  @media (max-width:640px){
+    #cr-search-btn kbd{ display:none; }
+    #cr-search-btn span.lbl{ display:none; }
+    #cr-search-btn{ padding:6px 8px; }
+  }
+
+  /* Modal */
+  .cr-srch-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9600;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:11vh 14px 20px; box-sizing:border-box;
+    -webkit-overflow-scrolling:touch;
+  }
+  @media (max-width:640px){ .cr-srch-bg{ padding-top:8vh; } }
+  .cr-srch-box{
+    width:100%; max-width:640px; background:#fff; border-radius:14px;
+    box-shadow:0 24px 60px rgba(0,0,0,.44); overflow:hidden;
+    display:flex; flex-direction:column;
+    max-height:78vh;
+  }
+  .cr-srch-head{
+    display:flex; align-items:center;
+    border-bottom:1px solid #eee;
+  }
+  .cr-srch-head .ic{
+    padding:0 4px 0 18px; color:#8a7a5a; display:flex;
+  }
+  .cr-srch-inp{
+    flex:1; border:0; padding:16px 20px 16px 12px;
+    font:600 15.5px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c; box-sizing:border-box; outline:none; background:transparent;
+  }
+  .cr-srch-esc{
+    background:transparent; border:0; cursor:pointer;
+    padding:8px 16px; color:#8a7a5a;
+    font:800 10px 'Segoe UI',Arial,sans-serif; letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+  .cr-srch-esc:hover{ color:#c8202e; }
+  .cr-srch-results{
+    overflow-y:auto; flex:1;
+    -webkit-overflow-scrolling:touch;
+  }
+  .cr-srch-grp{ border-bottom:1px solid #f0eae4; }
+  .cr-srch-grp:last-child{ border-bottom:0; }
+  .cr-srch-grp h5{
+    margin:0; padding:9px 20px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase; color:#8a7a5a;
+    background:#faf6ef;
+  }
+  .cr-srch-row{
+    padding:11px 20px; cursor:pointer;
+    border-top:1px solid #f7f1ea;
+  }
+  .cr-srch-row:hover, .cr-srch-row.active{ background:#faf6ef; }
+  .cr-srch-row .n{
+    font:700 13.5px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    display:flex; align-items:center; gap:6px;
+  }
+  .cr-srch-row .m{
+    font:600 11.5px 'Segoe UI',Arial,sans-serif; color:#8a7a5a; margin-top:2px;
+  }
+  .cr-srch-row .type-badge{
+    display:inline-block; font:800 8.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:1px 6px; border-radius:4px;
+  }
+  .cr-srch-row .type-badge.retail    { background:#f0ebe4; color:#6b4a24; }
+  .cr-srch-row .type-badge.insurance { background:#eaf0f8; color:#2d4468; }
+  .cr-srch-row .type-badge.community { background:#e2f2e6; color:#2e6b3f; }
+  .cr-srch-row .type-badge.unknown   { background:#efeae5; color:#6b5a52; }
+  .cr-srch-empty{
+    padding:32px 20px; text-align:center; color:#8a7a5a;
+    font:600 13px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-srch-empty small{
+    display:block; margin-top:8px; font-size:11px; color:#a89a8a;
+  }
+</style>
+
+<script id="cr-search-script">
+(function () {
+  'use strict';
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function typeLabel(ct){
+    return ct === 'insurance' ? 'INS'
+         : ct === 'community' ? 'COM'
+         : ct === 'retail'    ? 'RET'
+         :                      '';
+  }
+
+  function search(q){
+    q = String(q || '').toLowerCase().trim();
+    if(!q) return { clients:[], docs:[], partners:[] };
+
+    var clients = [];
+    (window.cacheProjects || []).forEach(function(p){
+      var s = ((p.name || '') + ' ' +
+               (p.address || '') + ' ' +
+               (p.phone || '') + ' ' +
+               (p.email || '') + ' ' +
+               ((p.location && p.location.street) || '')).toLowerCase();
+      if(s.indexOf(q) !== -1){
+        var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(p) : 'unknown';
+        clients.push({ id:p.id, name:p.name || 'Unnamed',
+                       address:p.address || '', ct:ct });
+      }
+    });
+    clients = clients.slice(0, 12);
+
+    var docs = [];
+    (window.cacheRows || []).forEach(function(r){
+      if(String(r.title || '').toLowerCase().indexOf(q) !== -1){
+        docs.push({ id:r.id, title:r.title || 'Untitled',
+                    project_id:r.project_id });
+      }
+    });
+    docs = docs.slice(0, 10);
+
+    var partners = [];
+    try{
+      if(window.CardinalCommunityPartners && window.CardinalCommunityPartners.list){
+        var all = window.CardinalCommunityPartners.list() || [];
+        all.forEach(function(p){
+          if(String(p.name || '').toLowerCase().indexOf(q) !== -1){
+            partners.push(p);
+          }
+        });
+        partners = partners.slice(0, 5);
+      }
+    }catch(e){}
+
+    return { clients:clients, docs:docs, partners:partners };
+  }
+
+  var currentBg = null;
+  var currentActive = -1;
+
+  function open(){
+    close();
+    var bg = document.createElement('div');
+    bg.className = 'cr-srch-bg';
+    bg.innerHTML =
+      '<div class="cr-srch-box">' +
+        '<div class="cr-srch-head">' +
+          '<span class="ic">' +
+            '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" ' +
+                 'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+                 'stroke-linejoin="round">' +
+              '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>' +
+            '</svg>' +
+          '</span>' +
+          '<input class="cr-srch-inp" placeholder="Search clients, documents, partners\u2026" autocomplete="off" spellcheck="false">' +
+          '<button class="cr-srch-esc" data-act="esc">Esc</button>' +
+        '</div>' +
+        '<div class="cr-srch-results"></div>' +
+      '</div>';
+    document.body.appendChild(bg);
+    currentBg = bg;
+
+    bg.onclick = function(e){ if(e.target === bg) close(); };
+    bg.querySelector('[data-act="esc"]').onclick = close;
+
+    var inp = bg.querySelector('.cr-srch-inp');
+    var res = bg.querySelector('.cr-srch-results');
+
+    function pickRow(row){
+      if(!row) return;
+      var t = row.dataset.t;
+      close();
+      if(t === 'c' && typeof window.openProject === 'function'){
+        window.openProject(row.dataset.id);
+      }else if(t === 'd' && typeof window.openProject === 'function' && row.dataset.pid){
+        window.openProject(row.dataset.pid);
+      }else if(t === 'p' && window.CardinalCommunityPartners){
+        window.CardinalCommunityPartners.openDirectory();
+      }
+    }
+
+    function render(q){
+      var r = search(q);
+      currentActive = -1;
+      var html = '';
+      if(r.clients.length){
+        html += '<div class="cr-srch-grp"><h5>Clients \u00b7 ' + r.clients.length + '</h5>';
+        r.clients.forEach(function(c, i){
+          html += '<div class="cr-srch-row" data-t="c" data-id="' + esc(c.id) + '" data-i="' + i + '">' +
+                    '<div class="n">' + esc(c.name) +
+                      (typeLabel(c.ct) ? ' <span class="type-badge ' + esc(c.ct) + '">' + typeLabel(c.ct) + '</span>' : '') +
+                    '</div>' +
+                    (c.address ? '<div class="m">' + esc(c.address) + '</div>' : '') +
+                  '</div>';
+        });
+        html += '</div>';
+      }
+      if(r.docs.length){
+        html += '<div class="cr-srch-grp"><h5>Documents \u00b7 ' + r.docs.length + '</h5>';
+        r.docs.forEach(function(d){
+          html += '<div class="cr-srch-row" data-t="d" data-id="' + esc(d.id) + '" data-pid="' + esc(d.project_id) + '">' +
+                    '<div class="n">' + esc(d.title) + '</div>' +
+                  '</div>';
+        });
+        html += '</div>';
+      }
+      if(r.partners.length){
+        html += '<div class="cr-srch-grp"><h5>Community Partners \u00b7 ' + r.partners.length + '</h5>';
+        r.partners.forEach(function(p){
+          html += '<div class="cr-srch-row" data-t="p" data-id="' + esc(p.id) + '">' +
+                    '<div class="n">' + esc(p.name) + '</div>' +
+                    '<div class="m">' + esc(p.partner_type === 'nonprofit' ? 'Non-profit' : 'Property manager') + '</div>' +
+                  '</div>';
+        });
+        html += '</div>';
+      }
+      if(!html){
+        html = '<div class="cr-srch-empty">' +
+                 (q ? 'No matches for &ldquo;' + esc(q) + '&rdquo;' : 'Start typing to search') +
+                 '<small>Searches names, addresses, phones, emails, document titles, and partner names.</small>' +
+               '</div>';
+      }
+      res.innerHTML = html;
+      res.querySelectorAll('.cr-srch-row').forEach(function(row){
+        row.onclick = function(){ pickRow(row); };
+      });
+    }
+
+    var timer = null;
+    inp.addEventListener('input', function(){
+      clearTimeout(timer);
+      timer = setTimeout(function(){ render(inp.value); }, 80);
+    });
+
+    // Arrow-key nav + Enter to open
+    inp.addEventListener('keydown', function(e){
+      var rows = res.querySelectorAll('.cr-srch-row');
+      if(e.key === 'ArrowDown'){
+        e.preventDefault();
+        currentActive = Math.min(currentActive + 1, rows.length - 1);
+        setActive(rows);
+      }else if(e.key === 'ArrowUp'){
+        e.preventDefault();
+        currentActive = Math.max(currentActive - 1, 0);
+        setActive(rows);
+      }else if(e.key === 'Enter'){
+        e.preventDefault();
+        var row = currentActive >= 0 ? rows[currentActive] : rows[0];
+        if(row) pickRow(row);
+      }else if(e.key === 'Escape'){
+        e.preventDefault();
+        close();
+      }
+    });
+    function setActive(rows){
+      rows.forEach(function(r, i){ r.classList.toggle('active', i === currentActive); });
+      if(rows[currentActive]) rows[currentActive].scrollIntoView({ block:'nearest' });
+    }
+
+    inp.focus();
+    render('');
+    document.addEventListener('keydown', escOnly);
+  }
+
+  function escOnly(e){
+    if(e.key === 'Escape' && currentBg){ e.preventDefault(); close(); }
+  }
+  function close(){
+    if(currentBg && currentBg.parentNode) currentBg.parentNode.removeChild(currentBg);
+    currentBg = null;
+    document.removeEventListener('keydown', escOnly);
+  }
+
+  // ── Header trigger button ──────────────────────────────────
+  function ensureButton(){
+    var wrap = document.getElementById('navWrap');
+    if(!wrap || wrap.style.display === 'none') return;
+    if(document.getElementById('cr-search-btn')) return;
+    var btn = document.createElement('button');
+    btn.id = 'cr-search-btn';
+    btn.className = 'btn ghost';   // pick up base app hover/active
+    btn.setAttribute('aria-label', 'Search');
+    btn.setAttribute('title', 'Search (press /)');
+    btn.innerHTML =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" ' +
+           'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" ' +
+           'stroke-linejoin="round" aria-hidden="true">' +
+        '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>' +
+      '</svg>' +
+      '<span class="lbl">Search</span><kbd>/</kbd>';
+    btn.onclick = open;
+    // Insert before navBtn (Menu) if it exists
+    var navBtn = document.getElementById('navBtn');
+    if(navBtn && navBtn.parentNode === wrap) wrap.insertBefore(btn, navBtn);
+    else wrap.appendChild(btn);
+  }
+
+  // ── Keyboard shortcut ──────────────────────────────────────
+  document.addEventListener('keydown', function(e){
+    if(e.key !== '/') return;
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    var t = e.target;
+    if(!t) return;
+    var tag = t.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || t.isContentEditable) return;
+    e.preventDefault();
+    open();
+  });
+
+  function start(){
+    ensureButton();
+    var ticking = false;
+    new MutationObserver(function(){
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){ ticking = false; try{ ensureButton(); }catch(e){} });
+    }).observe(document.body, { childList:true, subtree:true });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalSearch = { open: open, close: close, search: search };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: community_properties.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — COMMUNITY PROPERTIES
+ v2026-07-23 · one partner → many properties → many jobs
+────────────────────────────────────────────────────────────────────
+ Companion to community_properties table (see
+ community_properties_setup.sql). Fixes the "flat client list"
+ problem: property managers like Kitty Hawk have many addresses,
+ each of which generates multiple jobs over time. Storing each job
+ as its own retail-style client meant no way to say "show me every
+ job we've done at 1234 Elm."
+
+ STORAGE MODEL
+   Property rows live in public.community_properties, keyed by
+   partner_id. A community project points to its property via:
+     checklist.lead.property_id  →  community_properties.id
+   Same JSON path convention as partner_id / assigned rep.
+
+ PUBLIC API on window.CardinalCommunityProperties:
+   load(partnerId, force)  · list(partnerId)  · get(id)
+   save(property)          · archive(id)
+   pickProperty(partnerId, cb)
+   propertyIdForProject(pr) · setPropertyForProject(pr, propertyId)
+   openDirectory(partnerId)
+
+ UI hooks
+   • Adds a "Property" row on Community-typed client profiles when
+     the client has a partner attached — same styling as the Partner
+     row, sits under it.
+   • Manage Partners directory in community_partners gets a per-row
+     "Properties" button that opens this module's directory.
+
+ INSTALL: paste after community_hub.html. Run
+ community_properties_setup.sql in Supabase before or after — the
+ module survives a missing table (it just returns []).
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-cprop-styles">
+  /* Attach-property row on client profile (visual sibling of .cr-cp-attach) */
+  .cr-cprop-attach{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:11px; padding:9px 12px; margin:0 0 9px;
+    background:rgba(212,160,23,.08);
+    border:1px solid rgba(212,160,23,.35); border-radius:9px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-cprop-attach .lbl{
+    font:800 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.16em;
+    text-transform:uppercase; color:#8a5a00;
+  }
+  .cr-cprop-attach .val{ font:700 13px 'Segoe UI',Arial,sans-serif; color:#2c2c2c; }
+  .cr-cprop-attach .val.empty{ color:#8a7a5a; font-style:italic; font-weight:600; }
+  .cr-cprop-attach .val small{
+    display:block; font:600 11.5px 'Segoe UI',Arial,sans-serif;
+    color:#8a7a5a; font-style:normal; margin-top:1px;
+  }
+  .cr-cprop-attach .acts button{
+    background:transparent; border:1px solid #d4a017; color:#8a5a00;
+    border-radius:6px; padding:4px 9px; cursor:pointer;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase;
+    margin-left:6px;
+  }
+  .cr-cprop-attach .acts button:hover{ background:rgba(212,160,23,.14); }
+</style>
+
+<script id="cr-cprop-script">
+(function () {
+  'use strict';
+
+  var TABLE = 'community_properties';
+  // Per-partner in-memory cache: { partnerId: [rows] }
+  var CACHE   = {};
+  var LOADED  = {};
+  var LOADING = {};
+  var LISTENERS = [];
+
+  function sb(){ return window.supa || window.sb || null; }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // ── Load / cache ─────────────────────────────────────────
+  async function load(partnerId, force){
+    if(!partnerId) return [];
+    if(LOADED[partnerId] && !force && CACHE[partnerId]) return CACHE[partnerId];
+    if(LOADING[partnerId] && !force) return LOADING[partnerId];
+    var client = sb();
+    if(!client){ CACHE[partnerId] = []; return CACHE[partnerId]; }
+    LOADING[partnerId] = (async function(){
+      try{
+        var r = await client.from(TABLE)
+          .select('*')
+          .eq('partner_id', partnerId)
+          .eq('archived', false)
+          .order('address', { ascending:true });
+        if(r.error){ console.warn('[cprop] load', r.error.message); }
+        CACHE[partnerId] = r.data || [];
+        LOADED[partnerId] = true;
+      }catch(e){
+        console.warn('[cprop] load ex', e);
+        CACHE[partnerId] = CACHE[partnerId] || [];
+      }finally{
+        delete LOADING[partnerId];
+      }
+      LISTENERS.forEach(function(fn){ try{ fn(partnerId, CACHE[partnerId]); }catch(_){ } });
+      return CACHE[partnerId];
+    })();
+    return LOADING[partnerId];
+  }
+  function list(partnerId){ return CACHE[partnerId] || []; }
+  function get(id){
+    if(!id) return null;
+    var found = null;
+    Object.keys(CACHE).some(function(pid){
+      var hit = CACHE[pid].filter(function(p){ return p.id === id; })[0];
+      if(hit){ found = hit; return true; }
+      return false;
+    });
+    return found;
+  }
+
+  async function save(property){
+    var client = sb();
+    if(!client) return null;
+    if(!property.partner_id){
+      console.warn('[cprop] save: missing partner_id'); return null;
+    }
+    var row = {
+      partner_id  : property.partner_id,
+      address     : (property.address || '').trim(),
+      unit        : (property.unit || '').trim() || null,
+      owner_name  : (property.owner_name || '').trim() || null,
+      owner_phone : (property.owner_phone || '').trim() || null,
+      owner_email : (property.owner_email || '').trim() || null,
+      notes       : (property.notes || '').trim() || null,
+    };
+    try{
+      var r;
+      if(property.id){
+        r = await client.from(TABLE).update(row).eq('id', property.id).select().single();
+      }else{
+        r = await client.from(TABLE).insert(row).select().single();
+      }
+      if(r.error){ console.warn('[cprop] save', r.error.message); return null; }
+      await load(property.partner_id, true);
+      return r.data;
+    }catch(e){ console.warn('[cprop] save ex', e); return null; }
+  }
+
+  async function archive(id){
+    var client = sb();
+    if(!client) return false;
+    var p = get(id);
+    try{
+      var r = await client.from(TABLE).update({ archived:true }).eq('id', id);
+      if(r.error){ console.warn('[cprop] archive', r.error.message); return false; }
+      if(p) await load(p.partner_id, true);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // ── Project ↔ property linkage ────────────────────────────
+  function propertyIdForProject(pr){
+    if(!pr) return null;
+    try{
+      var ck = window.parseCkAll ? window.parseCkAll(pr) : {};
+      return (ck && ck.lead && ck.lead.property_id) || null;
+    }catch(e){ return null; }
+  }
+  async function setPropertyForProject(pr, propertyId){
+    if(!pr || !pr.id) return false;
+    var client = sb(); if(!client) return false;
+    try{
+      var raw = pr.checklist || '{}';
+      var ck; try{ ck = JSON.parse(raw); }catch(_){ ck = {}; }
+      if(!ck.lead) ck.lead = {};
+      if(propertyId) ck.lead.property_id = propertyId;
+      else           delete ck.lead.property_id;
+      var next = JSON.stringify(ck);
+      var r = await client.from('projects').update({ checklist: next }).eq('id', pr.id);
+      if(r.error){ console.warn('[cprop] setProperty', r.error.message); return false; }
+      pr.checklist = next;
+      if(window.currentProject && window.currentProject.id === pr.id){
+        window.currentProject.checklist = next;
+      }
+      if(typeof window.renderOverview === 'function'){
+        try{ window.renderOverview(); }catch(_){ }
+      }
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // ── Modal shell (reuses community_partners shell classes) ─
+  function shell(title, bodyHtml){
+    closeShell();
+    var host = document.createElement('div');
+    host.className = 'cr-cp-shell';
+    host.innerHTML =
+      '<div class="cr-cp-box">' +
+        '<div class="cr-cp-hd"><h3>' + esc(title) + '</h3>' +
+          '<button class="cr-cp-x" aria-label="Close">&times;</button></div>' +
+        '<div class="cr-cp-bd">' + bodyHtml + '</div>' +
+      '</div>';
+    document.body.appendChild(host);
+    host.querySelector('.cr-cp-x').onclick = closeShell;
+    host.addEventListener('click', function(e){ if(e.target === host) closeShell(); });
+    return host;
+  }
+  function closeShell(){
+    var s = document.querySelector('.cr-cp-shell');
+    if(s) s.parentNode.removeChild(s);
+  }
+
+  // ── Directory ─────────────────────────────────────────────
+  async function openDirectory(partnerId){
+    if(!partnerId){
+      alert('Open a partner first to see its properties.');
+      return;
+    }
+    await load(partnerId);
+    var partner = (window.CardinalCommunityPartners && window.CardinalCommunityPartners.get)
+                    ? window.CardinalCommunityPartners.get(partnerId) : null;
+    var host = shell((partner ? partner.name + ' — Properties' : 'Properties'),
+                     '<div>Loading\u2026</div>');
+    renderDirectory(host, partnerId);
+  }
+  function renderDirectory(host, partnerId){
+    var props = list(partnerId).slice();
+    var bd = host.querySelector('.cr-cp-bd');
+    if(!props.length){
+      bd.innerHTML =
+        '<div class="cr-cp-empty">No properties yet.<br>' +
+          '<small style="display:block;margin-top:6px;color:#8a7a5a;">' +
+            'Add each address this partner owns or manages.</small>' +
+        '</div>' +
+        '<button class="cr-cp-addbtn" data-act="add">+ Add Property</button>';
+    }else{
+      bd.innerHTML =
+        props.map(function(p){
+          return '<div class="cr-cp-row" data-id="' + esc(p.id) + '">' +
+                   '<div>' +
+                     '<div class="n">' + esc(p.address) + (p.unit ? ' \u00b7 ' + esc(p.unit) : '') + '</div>' +
+                     (p.owner_name || p.owner_phone
+                       ? '<div class="m">' + esc([p.owner_name, p.owner_phone].filter(Boolean).join(' \u00b7 ')) + '</div>'
+                       : '') +
+                   '</div>' +
+                   '<div class="btns">' +
+                     '<button data-act="edit">Edit</button>' +
+                     '<button data-act="archive" class="dang">Archive</button>' +
+                   '</div>' +
+                 '</div>';
+        }).join('') +
+        '<button class="cr-cp-addbtn" data-act="add">+ Add Property</button>';
+    }
+    bd.querySelector('[data-act="add"]').onclick = function(){ openEditor(partnerId, null); };
+    bd.querySelectorAll('.cr-cp-row').forEach(function(row){
+      var id = row.dataset.id;
+      row.querySelector('[data-act="edit"]').onclick = function(){ openEditor(partnerId, get(id)); };
+      row.querySelector('[data-act="archive"]').onclick = async function(){
+        if(!confirm('Archive this property? It will no longer appear in pickers.')) return;
+        await archive(id);
+        openDirectory(partnerId);
+      };
+    });
+  }
+
+  // ── Editor ────────────────────────────────────────────────
+  function openEditor(partnerId, property){
+    var p = property || { partner_id: partnerId };
+    var title = property ? 'Edit Property' : 'Add Property';
+    var html =
+      '<form class="cr-cp-form" id="cpropForm">' +
+        '<div class="err" id="cpropErr" style="display:none;"></div>' +
+        '<label>Address' +
+          '<input name="address" required value="' + esc(p.address || '') + '" />' +
+        '</label>' +
+        '<div class="row2">' +
+          '<label>Unit / Suite' +
+            '<input name="unit" value="' + esc(p.unit || '') + '" />' +
+          '</label>' +
+          '<label>Owner Name' +
+            '<input name="owner_name" value="' + esc(p.owner_name || '') + '" />' +
+          '</label>' +
+        '</div>' +
+        '<div class="row2">' +
+          '<label>Owner Phone' +
+            '<input name="owner_phone" value="' + esc(p.owner_phone || '') + '" />' +
+          '</label>' +
+          '<label>Owner Email' +
+            '<input name="owner_email" type="email" value="' + esc(p.owner_email || '') + '" />' +
+          '</label>' +
+        '</div>' +
+        '<label>Notes' +
+          '<textarea name="notes">' + esc(p.notes || '') + '</textarea>' +
+        '</label>' +
+        '<div class="actions">' +
+          '<button type="button" class="ghost" data-act="cancel">Cancel</button>' +
+          '<button type="submit" class="primary">' + (property ? 'Save' : 'Add') + '</button>' +
+        '</div>' +
+      '</form>';
+    var host = shell(title, html);
+    var form = host.querySelector('#cpropForm');
+    var err  = host.querySelector('#cpropErr');
+    host.querySelector('[data-act="cancel"]').onclick = function(){
+      openDirectory(partnerId);
+    };
+    form.onsubmit = async function(e){
+      e.preventDefault();
+      var fd = new FormData(form);
+      var next = {
+        id          : p.id,
+        partner_id  : partnerId,
+        address     : fd.get('address'),
+        unit        : fd.get('unit'),
+        owner_name  : fd.get('owner_name'),
+        owner_phone : fd.get('owner_phone'),
+        owner_email : fd.get('owner_email'),
+        notes       : fd.get('notes'),
+      };
+      if(!next.address || !String(next.address).trim()){
+        err.style.display = 'block'; err.textContent = 'Address is required.';
+        return;
+      }
+      err.style.display = 'none';
+      var saved = await save(next);
+      if(!saved){
+        err.style.display = 'block'; err.textContent = 'Save failed. Try again.';
+        return;
+      }
+      openDirectory(partnerId);
+    };
+  }
+
+  // ── Picker ────────────────────────────────────────────────
+  async function pickProperty(partnerId, cb){
+    if(!partnerId){ alert('Attach a partner first.'); return; }
+    await load(partnerId);
+    var props = list(partnerId).slice();
+    var partner = (window.CardinalCommunityPartners && window.CardinalCommunityPartners.get)
+                    ? window.CardinalCommunityPartners.get(partnerId) : null;
+    var html = props.length ?
+      props.map(function(p){
+        return '<div class="cr-cp-row" data-id="' + esc(p.id) + '" style="cursor:pointer;">' +
+                 '<div>' +
+                   '<div class="n">' + esc(p.address) + (p.unit ? ' \u00b7 ' + esc(p.unit) : '') + '</div>' +
+                   (p.owner_name ? '<div class="m">' + esc(p.owner_name) + '</div>' : '') +
+                 '</div>' +
+                 '<div class="btns"><button data-act="pick">Select</button></div>' +
+               '</div>';
+      }).join('')
+      : '<div class="cr-cp-empty">No properties yet for this partner.</div>';
+    html += '<button class="cr-cp-addbtn" data-act="add">+ New Property</button>';
+
+    var host = shell('Select a Property' + (partner ? ' \u2014 ' + partner.name : ''), html);
+    var bd = host.querySelector('.cr-cp-bd');
+
+    bd.querySelector('[data-act="add"]').onclick = function(){ openEditor(partnerId, null); };
+    bd.querySelectorAll('.cr-cp-row').forEach(function(row){
+      var id = row.dataset.id;
+      var choose = function(){ closeShell(); try{ cb && cb(get(id)); }catch(_){ } };
+      row.onclick = choose;
+      row.querySelector('[data-act="pick"]').onclick = function(e){ e.stopPropagation(); choose(); };
+    });
+  }
+
+  // ── Attach-property row on Community client profile ───────
+  function ensureAttachRow(){
+    var pr = window.currentProject;
+    if(!pr) return removeAttachRow();
+    var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(pr) : null;
+    if(ct !== 'community') return removeAttachRow();
+
+    // Only show if a partner is attached — property is a sub-concept.
+    var partnerId = null;
+    try{
+      partnerId = window.CardinalCommunityPartners &&
+                  window.CardinalCommunityPartners.partnerIdForProject(pr);
+    }catch(e){}
+    if(!partnerId) return removeAttachRow();
+
+    // Insertion point — after the partner row so ordering is
+    // stage → bid strip → partner → property
+    var partnerRow = document.querySelector('.cr-cp-attach');
+    var bidStrip   = document.querySelector('.cr-bidstrip');
+    var stageBar   = document.querySelector('.dbstage');
+    var anchor = partnerRow || bidStrip || stageBar;
+    if(!anchor) return;
+
+    var propertyId = propertyIdForProject(pr);
+    var propObj    = propertyId ? get(propertyId) : null;
+
+    // Idempotency sig — same pattern as attach partner row
+    var sig = pr.id + '|' + partnerId + '|' + (propertyId || '') +
+              '|' + (propObj ? propObj.address + '|' + (propObj.unit || '') : 'none');
+    var row = document.querySelector('.cr-cprop-attach');
+    if(row && row.dataset.sig === sig) return;
+    if(!row){
+      row = document.createElement('div');
+      row.className = 'cr-cprop-attach';
+      anchor.insertAdjacentElement('afterend', row);
+    }
+    row.dataset.sig = sig;
+
+    if(propObj){
+      row.innerHTML =
+        '<div>' +
+          '<div class="lbl">Property</div>' +
+          '<div class="val">' + esc(propObj.address) + (propObj.unit ? ' \u00b7 ' + esc(propObj.unit) : '') +
+            (propObj.owner_name ? '<small>' + esc(propObj.owner_name) + '</small>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="acts">' +
+          '<button data-act="change">Change</button>' +
+          '<button data-act="clear">Clear</button>' +
+        '</div>';
+    }else{
+      row.innerHTML =
+        '<div>' +
+          '<div class="lbl">Property</div>' +
+          '<div class="val empty">' + (propertyId ? 'Unknown property id' : 'No property attached') + '</div>' +
+        '</div>' +
+        '<div class="acts">' +
+          '<button data-act="change">' + (propertyId ? 'Change' : 'Attach') + '</button>' +
+        '</div>';
+    }
+    // Ensure partner properties are loaded before wiring buttons
+    load(partnerId);
+
+    var chg = row.querySelector('[data-act="change"]');
+    if(chg) chg.onclick = function(){
+      pickProperty(partnerId, function(chosen){
+        if(chosen) setPropertyForProject(pr, chosen.id);
+      });
+    };
+    var clr = row.querySelector('[data-act="clear"]');
+    if(clr) clr.onclick = function(){
+      if(!confirm('Remove the property link from this client?')) return;
+      setPropertyForProject(pr, null);
+    };
+  }
+  function removeAttachRow(){
+    var row = document.querySelector('.cr-cprop-attach');
+    if(row) row.parentNode.removeChild(row);
+  }
+
+  // ── Boot ──────────────────────────────────────────────────
+  function tick(){ try{ ensureAttachRow(); }catch(e){} }
+  var ticking = false;
+  function schedule(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){ ticking = false; tick(); });
+  }
+  function start(){
+    tick();
+    new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true });
+    var n = 0, iv = setInterval(function(){ tick(); if(++n > 20) clearInterval(iv); }, 300);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalCommunityProperties = {
+    load: load, list: list, get: get,
+    save: save, archive: archive,
+    pickProperty: pickProperty,
+    propertyIdForProject: propertyIdForProject,
+    setPropertyForProject: setPropertyForProject,
+    openDirectory: openDirectory,
+    onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
+  };
 })();
 </script>
 
