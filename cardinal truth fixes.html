@@ -1,0 +1,139 @@
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: cardinal_truth_fixes.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — CARDINAL TRUTH POLISH
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ Cardinal Truth is a full-screen fixed overlay (position:fixed;
+ inset:0; z-index:155) so the site header (with the portal chip and
+ the burger menu) is HIDDEN UNDERNEATH it. That's why the Insurance
+ CRM has no visible portal switcher today.
+
+ Two things this module does:
+
+   1. Hides the redundant "Home" and "Landing" chips baked into the
+      Cardinal Truth banner. The portal chip below replaces them.
+
+   2. Injects a portal chip into Cardinal Truth's own .ins-header.
+      Clicking it opens the same portal picker CardinalPortal.pick()
+      that the main-app chip uses, so users can jump directly to
+      Retail / Community / All without dropping out of the Insurance
+      view first.
+
+ The chip appears/disappears in lock-step with the Cardinal Truth
+ view via a MutationObserver on the view's style attribute.
+
+ INSTALL: paste after community_client_view.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-ctfx-styles">
+  /* Hide the redundant Home + Landing chips in the Cardinal Truth banner —
+     the portal switcher below replaces them. */
+  #ctHomeChip, #ctLandChip{
+    display:none !important;
+  }
+
+  /* Portal chip inside the Cardinal Truth header */
+  #ctPortalChip{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 12px; border-radius:14px; cursor:pointer;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    background:rgba(74,111,165,.18);
+    border:1px solid #4a6fa5;
+    color:#7fa6d6;
+    white-space:nowrap; user-select:none;
+    margin-left:auto; margin-right:10px;
+    transition:background .15s, transform .1s;
+  }
+  #ctPortalChip:hover{ background:rgba(74,111,165,.28); }
+  #ctPortalChip:active{ transform:scale(.97); }
+  #ctPortalChip .sw{ opacity:.6; font-size:9px; }
+
+  /* Layout: give the ins-header enough room for the chip.
+     The existing rule is `display:flex; justify-content:space-between`,
+     and margin-left:auto on the chip pushes it to the right,
+     next to the + button. */
+  .ins-header{ flex-wrap:wrap; }
+</style>
+
+<script id="cr-ctfx-script">
+(function () {
+  'use strict';
+
+  var CT_VIEW_ID  = 'cardinalTruthView';
+  var CHIP_ID     = 'ctPortalChip';
+
+  function currentPortal(){
+    try{ return window.CardinalPortal && window.CardinalPortal.get(); }
+    catch(e){ return 'all'; }
+  }
+
+  function chipHtml(){
+    var cur = currentPortal();
+    var meta = {
+      retail:    { icon:'\uD83C\uDFE0',       label:'Retail'    },
+      insurance: { icon:'\uD83D\uDEE1\uFE0F', label:'Insurance' },
+      community: { icon:'\uD83C\uDFD8\uFE0F', label:'Community' },
+      all:       { icon:'\u25C9',             label:'All'       },
+    };
+    var m = meta[cur] || meta.all;
+    return m.icon + ' ' + m.label + ' <span class="sw">\u25BE</span>';
+  }
+
+  function ensureChip(){
+    var view = document.getElementById(CT_VIEW_ID);
+    if(!view || view.style.display === 'none') { removeChip(); return; }
+
+    var header = view.querySelector('.ins-header');
+    if(!header) return;
+
+    var chip = document.getElementById(CHIP_ID);
+    if(!chip){
+      chip = document.createElement('span');
+      chip.id = CHIP_ID;
+      chip.title = 'Switch CRM';
+      chip.onclick = function(e){
+        e.stopPropagation();
+        if(window.CardinalPortal && typeof window.CardinalPortal.pick === 'function'){
+          window.CardinalPortal.pick();
+        }
+      };
+      // Insert BEFORE the plus button so it sits next to it on the right side.
+      var plus = header.querySelector('.ins-plus');
+      if(plus) header.insertBefore(chip, plus);
+      else     header.appendChild(chip);
+    }
+    var want = chipHtml();
+    if(chip.innerHTML !== want) chip.innerHTML = want;
+  }
+
+  function removeChip(){
+    var chip = document.getElementById(CHIP_ID);
+    if(chip && chip.parentNode) chip.parentNode.removeChild(chip);
+  }
+
+  function start(){
+    ensureChip();
+    // Watch the Cardinal Truth view for display changes (show/hide).
+    var view = document.getElementById(CT_VIEW_ID);
+    if(view){
+      new MutationObserver(function(){ try{ ensureChip(); }catch(_){} })
+        .observe(view, { attributes:true, attributeFilter:['style'] });
+    }
+    // Also watch body class for portal switches so the chip label refreshes.
+    new MutationObserver(function(){ try{ ensureChip(); }catch(_){} })
+      .observe(document.body, { attributes:true, attributeFilter:['class'] });
+    // Poll a few times on boot in case the view isn't in the DOM yet.
+    var n = 0, iv = setInterval(function(){
+      ensureChip();
+      if(++n > 20) clearInterval(iv);
+    }, 300);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>

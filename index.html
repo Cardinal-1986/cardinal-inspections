@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 158 &#8212; Bug audit: chip click restored, Create Lead has Community option, Hub perf fix, back button, ordering</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 159 &#8212; Calendar fit fix, rogue Home button removed, Cardinal Truth gets portal switcher, Home/Landing chips hidden</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24224,13 +24224,19 @@ body.claim-insurance #brandLogo{
     color:#3d7a4c; text-align:center; margin-bottom:8px;
   }
   .cr-chub-calgrid{
-    display:grid; grid-template-columns:repeat(7,1fr); gap:3px;
+    /* minmax(0, 1fr) is the standard grid overflow fix — without the
+       min:0 the cells refuse to shrink below their content, and the
+       aspect-ratio then blows them up so the whole calendar overflows. */
+    display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:3px;
+    width:100%; max-width:100%; box-sizing:border-box;
   }
   .cr-chub-calgrid .cal-dow{
+    min-width:0;
     font:800 8.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.06em;
     color:#6b7a55; text-align:center; padding:4px 0;
   }
   .cr-chub-calgrid .cal-day{
+    min-width:0;
     position:relative; aspect-ratio:1/1; display:flex;
     align-items:center; justify-content:center;
     font:700 11px 'Segoe UI',Arial,sans-serif; color:#3d4a2c;
@@ -24337,7 +24343,6 @@ body.claim-insurance #brandLogo{
     v.id = 'communityHubView';
     v.innerHTML =
       '<div class="cr-chub-banner">' +
-        '<button class="cr-chub-back" data-act="back">&larr; Home</button>' +
         '<h1>Community <span>Partnership</span></h1>' +
         '<p>Bids, awards, and partner portfolios in one place. ' +
            'Non-profits Cardinal bids on and property managers with recurring work.</p>' +
@@ -24383,19 +24388,6 @@ body.claim-insurance #brandLogo{
       '</div>';
     document.body.appendChild(v);
 
-    v.querySelector('[data-act="back"]').onclick = function(){
-      // showHome() is the full flow (hideAllViews, mainView.display=block,
-      // renderHome, renderHero, renderCalendar, renderPipeline, renderActivity,
-      // scrollTo(0,0)) — call it directly instead of piecing it together.
-      if(typeof window.showHome === 'function'){
-        window.showHome();
-        return;
-      }
-      if(typeof window.hideAllViews === 'function') window.hideAllViews();
-      if(typeof window.renderHome === 'function') window.renderHome();
-      var main = document.getElementById('mainView') || window.mainView;
-      if(main) main.style.display = 'block';
-    };
     v.querySelector('[data-act="manage"]').onclick = function(){
       if(window.CardinalCommunityPartners) window.CardinalCommunityPartners.openDirectory();
     };
@@ -25498,6 +25490,27 @@ body.claim-insurance #brandLogo{
     color:#4a6b4f !important;
   }
 
+  /* "COMMUNITY PARTNERSHIPS" is longer than "CARDINAL RESOURCE" and
+     was pushing the portal chip + Menu button off the right edge in
+     narrow viewports. Constrain the title to shrink first — everything
+     else in the masthead should stay reachable. */
+  body.portal-community header.site .titlecard{
+    min-width:0; flex:1 1 auto; overflow:hidden;
+  }
+  body.portal-community header.site .titlecard h1{
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    min-width:0;
+  }
+  /* Keep the interactive elements above any decorative overlays and
+     make sure they can actually receive taps on mobile. */
+  body.portal-community header.site .btn,
+  body.portal-community header.site .cr-portal-chip,
+  body.portal-community header.site #navBtn,
+  body.portal-community header.site #addProjectBtn{
+    position:relative; z-index:2; pointer-events:auto;
+    flex-shrink:0;
+  }
+
   /* Solid buttons: green with white text */
   body.portal-community header.site .btn{
     background:#4a8c5a;
@@ -26476,6 +26489,147 @@ body.claim-insurance #brandLogo{
     renderBidStrip: renderBidStrip,
     saveBid: saveBid,
   };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: cardinal_truth_fixes.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — CARDINAL TRUTH POLISH
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ Cardinal Truth is a full-screen fixed overlay (position:fixed;
+ inset:0; z-index:155) so the site header (with the portal chip and
+ the burger menu) is HIDDEN UNDERNEATH it. That's why the Insurance
+ CRM has no visible portal switcher today.
+
+ Two things this module does:
+
+   1. Hides the redundant "Home" and "Landing" chips baked into the
+      Cardinal Truth banner. The portal chip below replaces them.
+
+   2. Injects a portal chip into Cardinal Truth's own .ins-header.
+      Clicking it opens the same portal picker CardinalPortal.pick()
+      that the main-app chip uses, so users can jump directly to
+      Retail / Community / All without dropping out of the Insurance
+      view first.
+
+ The chip appears/disappears in lock-step with the Cardinal Truth
+ view via a MutationObserver on the view's style attribute.
+
+ INSTALL: paste after community_client_view.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-ctfx-styles">
+  /* Hide the redundant Home + Landing chips in the Cardinal Truth banner —
+     the portal switcher below replaces them. */
+  #ctHomeChip, #ctLandChip{
+    display:none !important;
+  }
+
+  /* Portal chip inside the Cardinal Truth header */
+  #ctPortalChip{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 12px; border-radius:14px; cursor:pointer;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    background:rgba(74,111,165,.18);
+    border:1px solid #4a6fa5;
+    color:#7fa6d6;
+    white-space:nowrap; user-select:none;
+    margin-left:auto; margin-right:10px;
+    transition:background .15s, transform .1s;
+  }
+  #ctPortalChip:hover{ background:rgba(74,111,165,.28); }
+  #ctPortalChip:active{ transform:scale(.97); }
+  #ctPortalChip .sw{ opacity:.6; font-size:9px; }
+
+  /* Layout: give the ins-header enough room for the chip.
+     The existing rule is `display:flex; justify-content:space-between`,
+     and margin-left:auto on the chip pushes it to the right,
+     next to the + button. */
+  .ins-header{ flex-wrap:wrap; }
+</style>
+
+<script id="cr-ctfx-script">
+(function () {
+  'use strict';
+
+  var CT_VIEW_ID  = 'cardinalTruthView';
+  var CHIP_ID     = 'ctPortalChip';
+
+  function currentPortal(){
+    try{ return window.CardinalPortal && window.CardinalPortal.get(); }
+    catch(e){ return 'all'; }
+  }
+
+  function chipHtml(){
+    var cur = currentPortal();
+    var meta = {
+      retail:    { icon:'\uD83C\uDFE0',       label:'Retail'    },
+      insurance: { icon:'\uD83D\uDEE1\uFE0F', label:'Insurance' },
+      community: { icon:'\uD83C\uDFD8\uFE0F', label:'Community' },
+      all:       { icon:'\u25C9',             label:'All'       },
+    };
+    var m = meta[cur] || meta.all;
+    return m.icon + ' ' + m.label + ' <span class="sw">\u25BE</span>';
+  }
+
+  function ensureChip(){
+    var view = document.getElementById(CT_VIEW_ID);
+    if(!view || view.style.display === 'none') { removeChip(); return; }
+
+    var header = view.querySelector('.ins-header');
+    if(!header) return;
+
+    var chip = document.getElementById(CHIP_ID);
+    if(!chip){
+      chip = document.createElement('span');
+      chip.id = CHIP_ID;
+      chip.title = 'Switch CRM';
+      chip.onclick = function(e){
+        e.stopPropagation();
+        if(window.CardinalPortal && typeof window.CardinalPortal.pick === 'function'){
+          window.CardinalPortal.pick();
+        }
+      };
+      // Insert BEFORE the plus button so it sits next to it on the right side.
+      var plus = header.querySelector('.ins-plus');
+      if(plus) header.insertBefore(chip, plus);
+      else     header.appendChild(chip);
+    }
+    var want = chipHtml();
+    if(chip.innerHTML !== want) chip.innerHTML = want;
+  }
+
+  function removeChip(){
+    var chip = document.getElementById(CHIP_ID);
+    if(chip && chip.parentNode) chip.parentNode.removeChild(chip);
+  }
+
+  function start(){
+    ensureChip();
+    // Watch the Cardinal Truth view for display changes (show/hide).
+    var view = document.getElementById(CT_VIEW_ID);
+    if(view){
+      new MutationObserver(function(){ try{ ensureChip(); }catch(_){} })
+        .observe(view, { attributes:true, attributeFilter:['style'] });
+    }
+    // Also watch body class for portal switches so the chip label refreshes.
+    new MutationObserver(function(){ try{ ensureChip(); }catch(_){} })
+      .observe(document.body, { attributes:true, attributeFilter:['class'] });
+    // Poll a few times on boot in case the view isn't in the DOM yet.
+    var n = 0, iv = setInterval(function(){
+      ensureChip();
+      if(++n > 20) clearInterval(iv);
+    }, 300);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();
 </script>
 
