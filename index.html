@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 166 &#8212; Retail Home header cleanup: no more Landing chip, "Dashboard" word, duplicate search, or home icon on Home. Brand title fits.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 167 &#8212; Plugin mounts (Estimates, Claims, Pricing, Coach) get a Home button; audit of every view complete</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -28618,6 +28618,168 @@ body.claim-insurance #brandLogo{
     new MutationObserver(schedule).observe(document.body, {
       childList:true, subtree:true,
       attributes:true, attributeFilter:['style','class']
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: plugin_mount_exit.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — PLUGIN MOUNT EXIT
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ The Estimates, Claims, Pricing, and Coach modules mount into full-
+ viewport containers at z-index 200 — that fully covers the site
+ header. Their own UI ships with "Back to <list>" links for internal
+ navigation, but none of them expose a "close the whole plugin and
+ go Home" affordance in their main list view. That's the "no way
+ out" the Estimates page was hitting.
+
+ This module injects a small gold house icon into the top-right of
+ whichever plugin mount is currently visible. One tap:
+   • Hides every plugin mount (Estimates, Claims, Pricing, Coach)
+   • Calls showHome() to restore the main app + site header
+
+ Uses window.crCloseAll when it exists (Estimates/Claims/Pricing
+ already register there), and falls back to a manual close for
+ CardinalCoach since it isn't in the crCloseAll registry.
+
+ INSTALL: paste after retail_home_cleanup.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-pme-styles">
+  .cr-pme-exit{
+    position:fixed !important;
+    top:14px; right:14px;
+    z-index:220;                       /* above the mount (200) */
+    background:rgba(0,0,0,.85);
+    border:1px solid #d4a017;
+    color:#d4a017;
+    border-radius:10px;
+    padding:8px 10px;
+    cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    box-shadow:0 4px 14px rgba(0,0,0,.35);
+    transition:background .12s, border-color .12s, transform .1s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cr-pme-exit:hover{
+    background:rgba(212,160,23,.25);
+  }
+  .cr-pme-exit:active{ transform:scale(.94); }
+  .cr-pme-exit svg{ display:block; }
+  @media (max-width:640px){
+    .cr-pme-exit{
+      padding:7px 9px;
+      top:calc(env(safe-area-inset-top, 0px) + 10px);
+      right:10px;
+    }
+    .cr-pme-exit .lbl{ display:none; }
+  }
+</style>
+
+<script id="cr-pme-script">
+(function () {
+  'use strict';
+
+  var MOUNT_IDS = ['cr-estimates-mount', 'cr-claims-mount',
+                   'cr-pricing-mount',   'cr-coach-mount'];
+  var EXIT_ID = 'cr-pme-exit-btn';
+
+  function visibleMount(){
+    for(var i = 0; i < MOUNT_IDS.length; i++){
+      var el = document.getElementById(MOUNT_IDS[i]);
+      if(!el) continue;
+      var d = el.style.display;
+      if(d && d !== 'none') return el;
+    }
+    return null;
+  }
+
+  function closePlugins(){
+    // Prefer the base app's crCloseAll — it hides the registered
+    // mounts and calls showHome() in one shot. Fall back to manually
+    // hiding + showHome for any mount it doesn't cover (CardinalCoach).
+    var hadCrCloseAll = false;
+    if(typeof window.crCloseAll === 'function'){
+      try{ window.crCloseAll(); hadCrCloseAll = true; }catch(e){}
+    }
+    // Also hide any mount not in the registry, then re-show Home
+    // if crCloseAll didn't already do it.
+    MOUNT_IDS.forEach(function(id){
+      var el = document.getElementById(id);
+      if(el){ el.style.display = 'none'; }
+    });
+    if(!hadCrCloseAll && typeof window.showHome === 'function'){
+      try{ window.showHome(); }catch(e){}
+    }
+    removeButton();
+  }
+
+  function ensureButton(){
+    var mount = visibleMount();
+    if(!mount){ removeButton(); return; }
+
+    var btn = document.getElementById(EXIT_ID);
+    if(!btn){
+      btn = document.createElement('button');
+      btn.id = EXIT_ID;
+      btn.className = 'cr-pme-exit';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Home');
+      btn.setAttribute('title', 'Home');
+      btn.innerHTML =
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" ' +
+             'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" ' +
+             'stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2z"/>' +
+          '<path d="M9 22 V12 h6 v10"/>' +
+        '</svg>' +
+        '<span class="lbl">Home</span>';
+      btn.onclick = function(e){ e.stopPropagation(); closePlugins(); };
+      document.body.appendChild(btn);
+    }
+    // Pin to the currently visible mount so scroll containers still work.
+    btn.style.display = 'inline-flex';
+  }
+  function removeButton(){
+    var btn = document.getElementById(EXIT_ID);
+    if(btn && btn.parentNode) btn.parentNode.removeChild(btn);
+  }
+
+  var ticking = false;
+  function schedule(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){ ticking = false; try{ ensureButton(); }catch(e){} });
+  }
+  function start(){
+    ensureButton();
+    // Watch each mount's style attribute so we react the instant a
+    // plugin opens or crCloseAll fires.
+    MOUNT_IDS.forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      new MutationObserver(schedule).observe(el, {
+        attributes:true, attributeFilter:['style']
+      });
+    });
+    // Also watch the body in case a mount is added later (defensive).
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:false
+    });
+    // ESC key closes the visible plugin — matches every other modal in the app.
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && visibleMount()){ e.preventDefault(); closePlugins(); }
     });
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
