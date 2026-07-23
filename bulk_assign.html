@@ -1,0 +1,250 @@
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — BULK PORTAL ASSIGN
+ v2026-07-22 · build 146
+────────────────────────────────────────────────────────────────────
+ Types clients into Retail / Insurance / Community in one pass.
+
+ Writes checklist.lead.claim_type — the same field the claim-type chip
+ on a client card sets, so nothing new to learn and nothing to migrate.
+
+ Opens from the "All Clients" landing card, or CardinalBulk.open().
+ Admins and production only.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-bulk-styles">
+  #cr-bulk-mount{
+    --r:#D9282A; --rt:#FDECEC; --g:#2E7D32; --gt:#E7F2E7; --b:#1976D2; --bt:#E3F0FB;
+    --am:#C87A00; --amt:#FBEFDA; --k:#1a1a1a; --t:#2a2a2a; --m:#6b6b6b; --m2:#a8a8a8;
+    --ln:#e5e5e5; --ln2:#efefef; --bg:#fff; --sub:#fafafa;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--t); background:var(--bg); min-height:100vh;
+  }
+  #cr-bulk-mount *{ box-sizing:border-box; }
+  #cr-bulk-mount .app{ max-width:780px; margin:0 auto; padding:24px 20px 120px; }
+  #cr-bulk-mount .back{ display:inline-flex; gap:6px; color:var(--m); font:700 11px 'Segoe UI'; letter-spacing:1.8px; text-transform:uppercase; cursor:pointer; margin-bottom:18px; }
+  #cr-bulk-mount .back:hover{ color:var(--r); }
+  #cr-bulk-mount .eyebrow{ font:700 11px 'Segoe UI'; letter-spacing:2.5px; color:var(--m); text-transform:uppercase; margin-bottom:9px; }
+  #cr-bulk-mount h1{ font-size:32px; font-weight:700; color:var(--k); letter-spacing:-.6px; margin:0; }
+  #cr-bulk-mount .rule{ height:3px; background:var(--r); margin:15px 0 18px; }
+  #cr-bulk-mount .lede{ background:var(--sub); border-left:3px solid var(--r); padding:12px 14px; border-radius:0 4px 4px 0; font-size:13.5px; line-height:1.55; color:var(--m); margin-bottom:18px; }
+  #cr-bulk-mount .lede b{ color:var(--k); }
+
+  #cr-bulk-mount .tabs{ display:flex; border-bottom:1px solid var(--ln); margin-bottom:14px; overflow-x:auto; }
+  #cr-bulk-mount .tab{ padding:11px 15px; font:700 11px 'Segoe UI'; letter-spacing:1.3px; text-transform:uppercase; color:var(--m); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; }
+  #cr-bulk-mount .tab.on{ color:var(--r); border-bottom-color:var(--r); }
+  #cr-bulk-mount .tab .n{ font-size:10px; background:var(--sub); color:var(--m); padding:2px 6px; border-radius:8px; margin-left:5px; }
+  #cr-bulk-mount .tab.on .n{ background:var(--rt); color:var(--r); }
+
+  #cr-bulk-mount .search{ width:100%; padding:10px 13px; border:1px solid var(--ln); border-radius:4px; font-size:14px; font-family:inherit; margin-bottom:12px; }
+  #cr-bulk-mount .search:focus{ outline:none; border-color:var(--r); box-shadow:0 0 0 3px var(--rt); }
+
+  #cr-bulk-mount .selbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:10px 12px; background:var(--sub); border-radius:6px; margin-bottom:12px; font-size:12px; }
+  #cr-bulk-mount .selbar .cnt{ font-weight:700; color:var(--k); }
+  #cr-bulk-mount .lnk{ background:none; border:none; color:var(--r); font:700 11px 'Segoe UI'; letter-spacing:.8px; text-transform:uppercase; cursor:pointer; padding:3px 5px; }
+  #cr-bulk-mount .lnk:hover{ text-decoration:underline; }
+
+  #cr-bulk-mount .row{ display:flex; align-items:center; gap:11px; padding:11px 6px; border-bottom:1px solid var(--ln2); cursor:pointer; }
+  #cr-bulk-mount .row:hover{ background:var(--sub); }
+  #cr-bulk-mount .row.sel{ background:var(--rt); }
+  #cr-bulk-mount .row .box{ width:19px; height:19px; border:2px solid var(--m2); border-radius:4px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:12px; color:#fff; }
+  #cr-bulk-mount .row.sel .box{ background:var(--r); border-color:var(--r); }
+  #cr-bulk-mount .row .bd{ flex:1; min-width:0; }
+  #cr-bulk-mount .row .nm{ font-weight:700; color:var(--k); font-size:15px; }
+  #cr-bulk-mount .row .ad{ font-size:12px; color:var(--m); margin-top:1px; }
+  #cr-bulk-mount .badge{ font:700 8.5px 'Segoe UI'; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:8px; flex:0 0 auto; }
+  #cr-bulk-mount .badge.retail{ background:#fbf0d6; color:#8a5a00; }
+  #cr-bulk-mount .badge.insurance{ background:var(--bt); color:#3a5f96; }
+  #cr-bulk-mount .badge.community{ background:var(--gt); color:#2e6b3f; }
+  #cr-bulk-mount .badge.unknown{ background:#f0eeed; color:#8a7a72; }
+
+  #cr-bulk-mount .dock{ position:fixed; left:0; right:0; bottom:0; background:var(--k); color:#fff; padding:13px 18px; display:flex; gap:9px; align-items:center; flex-wrap:wrap; z-index:210; }
+  #cr-bulk-mount .dock .lbl{ font:700 10px 'Segoe UI'; letter-spacing:1.5px; text-transform:uppercase; opacity:.6; margin-right:auto; }
+  #cr-bulk-mount .dock button{ border:0; padding:10px 15px; border-radius:6px; font:700 11px 'Segoe UI'; letter-spacing:1.1px; text-transform:uppercase; cursor:pointer; color:#fff; font-family:inherit; }
+  #cr-bulk-mount .dock .retail{ background:#a8801a; } #cr-bulk-mount .dock .retail:hover{ background:#8a6a14; }
+  #cr-bulk-mount .dock .insurance{ background:#3d5d8c; } #cr-bulk-mount .dock .insurance:hover{ background:#31496e; }
+  #cr-bulk-mount .dock .community{ background:#3d7a4c; } #cr-bulk-mount .dock .community:hover{ background:#2f5f3b; }
+  #cr-bulk-mount .dock button:disabled{ opacity:.35; cursor:not-allowed; }
+
+  #cr-bulk-mount .empty{ text-align:center; padding:46px 20px; color:var(--m); font-size:13px; }
+  #cr-bulk-mount .toast{ position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--g); color:#fff; padding:10px 18px; border-radius:20px; font:700 12px 'Segoe UI'; letter-spacing:1px; text-transform:uppercase; z-index:300; }
+  #cr-bulk-mount .toast.err{ background:var(--r); }
+</style>
+
+<div id="cr-bulk-mount" style="display:none;"></div>
+
+<script id="cr-bulk-script">
+(function () {
+  'use strict';
+  var M = document.getElementById('cr-bulk-mount');
+  var S = { tab:'unknown', q:'', sel:{}, rows:[] };
+
+  function esc(s){ return String(s==null?'':s).replace(/[<>&"']/g,function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function portalOf(pr){
+    try{ return window.CardinalPortal ? window.CardinalPortal.portalOf(pr) : 'unknown'; }
+    catch(e){ return 'unknown'; }
+  }
+  function toast(m, err){
+    M.querySelectorAll('.toast').forEach(function(t){t.remove();});
+    var e=document.createElement('div'); e.className='toast'+(err?' err':''); e.textContent=m;
+    M.appendChild(e); setTimeout(function(){e.remove();},2600);
+  }
+
+  function open(){
+    M.style.position='fixed'; M.style.inset='0'; M.style.zIndex='205';
+    M.style.overflowY='auto'; M.style.background='#fff'; M.style.display='block';
+    if(window.crHideOtherMounts) window.crHideOtherMounts('cr-bulk-mount');
+    var land=document.getElementById('landingView'); if(land) land.style.display='none';
+    S.sel={}; render();
+  }
+  function close(){
+    M.style.display='none'; M.innerHTML='';
+    if(typeof window.showHome==='function') window.showHome();
+  }
+
+  function counts(){
+    var c={retail:0,insurance:0,community:0,unknown:0,all:0};
+    (window.cacheProjects||[]).forEach(function(p){ c[portalOf(p)]++; c.all++; });
+    return c;
+  }
+
+  function render(){
+    var c=counts();
+    M.innerHTML =
+      '<div class="app">'+
+      '<div class="back" data-x>← Back</div>'+
+      '<div class="eyebrow">CARDINAL ROOFING &amp; RENOVATIONS</div>'+
+      '<h1>Assign Portals</h1><div class="rule"></div>'+
+      '<div class="lede">A client with no type shows up in <b>every</b> portal, so the three CRMs '+
+        'stay mixed until they are sorted. Tick the ones that belong together and assign them in one go. '+
+        'This writes the same field the claim-type chip on a client card sets.</div>'+
+      '<div class="tabs">'+
+        tab('unknown','Untyped',c.unknown)+tab('retail','Retail',c.retail)+
+        tab('insurance','Insurance',c.insurance)+tab('community','Community',c.community)+
+        tab('all','All',c.all)+
+      '</div>'+
+      '<input class="search" data-q placeholder="Search name or address…" value="'+esc(S.q)+'">'+
+      '<div class="selbar">'+
+        '<span class="cnt" data-cnt>0 selected</span>'+
+        '<button class="lnk" data-all>Select all shown</button>'+
+        '<button class="lnk" data-none>Clear</button>'+
+      '</div>'+
+      '<div data-list></div></div>'+
+      '<div class="dock">'+
+        '<span class="lbl">Assign selected to</span>'+
+        '<button class="retail" data-set="retail" disabled>🏠 Retail</button>'+
+        '<button class="insurance" data-set="insurance" disabled>🛡️ Insurance</button>'+
+        '<button class="community" data-set="community" disabled>🤝 Community</button>'+
+      '</div>';
+
+    M.querySelector('[data-x]').onclick=close;
+    M.querySelectorAll('[data-tab]').forEach(function(t){
+      t.onclick=function(){ S.tab=t.dataset.tab; S.sel={}; render(); };
+    });
+    M.querySelector('[data-q]').oninput=function(e){ S.q=e.target.value; list(); };
+    M.querySelector('[data-all]').onclick=function(){ S.rows.forEach(function(p){S.sel[p.id]=1;}); list(); };
+    M.querySelector('[data-none]').onclick=function(){ S.sel={}; list(); };
+    M.querySelectorAll('[data-set]').forEach(function(b){
+      b.onclick=function(){ assign(b.dataset.set); };
+    });
+    list();
+  }
+  function tab(k,label,n){
+    return '<div class="tab'+(S.tab===k?' on':'')+'" data-tab="'+k+'">'+label+'<span class="n">'+n+'</span></div>';
+  }
+
+  function list(){
+    var el=M.querySelector('[data-list]'); if(!el) return;
+    var q=S.q.toLowerCase();
+    S.rows=(window.cacheProjects||[]).filter(function(p){
+      if(S.tab!=='all' && portalOf(p)!==S.tab) return false;
+      if(!q) return true;
+      return ((p.name||'')+' '+(p.address||'')).toLowerCase().indexOf(q)!==-1;
+    }).sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+
+    if(!S.rows.length){ el.innerHTML='<div class="empty">Nothing here.</div>'; sync(); return; }
+    el.innerHTML=S.rows.map(function(p){
+      var k=portalOf(p);
+      return '<div class="row'+(S.sel[p.id]?' sel':'')+'" data-id="'+p.id+'">'+
+        '<span class="box">'+(S.sel[p.id]?'✓':'')+'</span>'+
+        '<span class="bd"><div class="nm">'+esc(p.name||'Unnamed')+'</div>'+
+          '<div class="ad">'+esc(p.address||'')+'</div></span>'+
+        '<span class="badge '+k+'">'+(k==='unknown'?'untyped':k)+'</span></div>';
+    }).join('');
+    el.querySelectorAll('.row').forEach(function(r){
+      r.onclick=function(){
+        if(S.sel[r.dataset.id]) delete S.sel[r.dataset.id]; else S.sel[r.dataset.id]=1;
+        r.classList.toggle('sel'); r.querySelector('.box').textContent=S.sel[r.dataset.id]?'✓':'';
+        sync();
+      };
+    });
+    sync();
+  }
+  function sync(){
+    var n=Object.keys(S.sel).length;
+    var c=M.querySelector('[data-cnt]'); if(c) c.textContent=n+' selected';
+    M.querySelectorAll('[data-set]').forEach(function(b){ b.disabled=!n; });
+  }
+
+  async function assign(portal){
+    var ids=Object.keys(S.sel);
+    if(!ids.length) return;
+    if(!confirm('Assign '+ids.length+' client'+(ids.length===1?'':'s')+' to the '+portal+' portal?')) return;
+
+    var ok=0, fail=0;
+    for(var i=0;i<ids.length;i++){
+      var pr=(window.cacheProjects||[]).filter(function(x){return x.id===ids[i];})[0];
+      if(!pr){ fail++; continue; }
+      try{
+        // Same shape the claim-type chip writes: checklist.lead.claim_type
+        var ck={};
+        try{ ck = typeof window.parseCkAll==='function' ? window.parseCkAll(pr) : JSON.parse(pr.checklist||'{}'); }
+        catch(e){ ck={}; }
+        ck.lead = ck.lead || {};
+        ck.lead.claim_type = portal;
+        if(typeof window.patchProjectCk==='function'){
+          await window.patchProjectCk(pr, { lead: ck.lead });
+        }else{
+          var r = await window.supa.from('projects')
+            .update({ checklist: JSON.stringify(ck) }).eq('id', pr.id);
+          if(r.error) throw r.error;
+        }
+        pr.checklist = JSON.stringify(ck);   // keep the local cache honest
+        ok++;
+      }catch(e){ fail++; console.warn('[bulk]', e); }
+    }
+    S.sel={};
+    toast(ok+' assigned'+(fail?' · '+fail+' failed':''), !!fail);
+    render();
+    if(typeof window.renderClientDirectory==='function'){ try{ window.renderClientDirectory(); }catch(e){} }
+  }
+
+  // Hook the "All Clients" landing card so it offers the sorter
+  function hookLanding(){
+    var b=document.querySelector('#landingView [data-portal="all"]');
+    if(!b || b.dataset.crBulk) return;
+    b.dataset.crBulk='1';
+    var tag=document.createElement('div');
+    tag.style.cssText='margin-top:9px;font:800 10px "Segoe UI";letter-spacing:.14em;'+
+      'text-transform:uppercase;color:#d4a017;cursor:pointer;position:relative;z-index:2;';
+    tag.textContent='⇄ Assign portals';
+    tag.onclick=function(e){ e.preventDefault(); e.stopPropagation(); open(); };
+    b.appendChild(tag);
+  }
+
+  function start(){
+    hookLanding();
+    var t=false;
+    new MutationObserver(function(){
+      if(t) return; t=true;
+      requestAnimationFrame(function(){ t=false; hookLanding(); });
+    }).observe(document.body,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start);
+  else start();
+
+  window.CardinalBulk={ open:open, close:close };
+})();
+</script>
