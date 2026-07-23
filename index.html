@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 151 &#8212; Community CRM full split: Hub with own client list + 4-way client type converter</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 152 &#8212; Community portal header repaint (distinct from Retail on switch)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24882,6 +24882,95 @@ body.claim-insurance #brandLogo{
   window.CardinalConvertType = { openMenu: openMenu, convertTo: convertTo };
 })();
 </script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: community_portal_theme.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — COMMUNITY PORTAL THEME
+ v2026-07-23 · CSS-only, no JS
+────────────────────────────────────────────────────────────────────
+ When body.portal-community is active, the CSS-variable overrides in
+ client_portals.html already retint buttons, accents, and dots because
+ the app draws them from var(--red)/var(--amber). But the site header
+ itself uses hardcoded palette values in a few places and never
+ changes vibe — retail and community look nearly identical up top.
+
+ This module fixes that. It's the community counterpart to the
+ body.claim-insurance header repaint that already exists for Cardinal
+ Truth. Small CSS delta, big perceptual shift when you switch portals.
+
+ WHAT CHANGES ON body.portal-community
+   • Header border-bottom recolored to green
+   • Header takes a soft green glow (box-shadow)
+   • Brand "Cardinal" word gets a green-gold gradient wash
+   • Header buttons (solid + ghost) tint green
+   • Portal chip in the header sits in a slightly warmer beige track
+   • Community nav options (Hub + Partners) get a green accent color
+
+ WHAT STAYS THE SAME
+   • Dark ink background (var(--ink)) — Cardinal identity is preserved
+   • Retail and Insurance portals unaffected
+   • Cardinal Truth (body.claim-insurance) unaffected — it wins on any
+     conflict because the community rules only care about the portal
+
+ INSTALL: paste after convert_client_type.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-comtheme-styles">
+  /* ── Header shell: recolor the rule + add a green glow ───── */
+  body.portal-community header.site{
+    border-bottom-color:#4a8c5a;
+    box-shadow:0 2px 14px rgba(74,140,90,.32);
+  }
+
+  /* ── Brand word ("Cardinal" span) turns green-gold ───────── */
+  body.portal-community header.site .brand h1 span,
+  body.portal-community header.site .titlecard h1 span{
+    background:linear-gradient(160deg,#7fc98f,#f5d061 45%,#7fc98f);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:#7fc98f !important;
+  }
+
+  /* ── Header buttons take the community palette ───────────── */
+  body.portal-community header.site .btn{ background:#4a8c5a; }
+  body.portal-community header.site .btn:hover{ background:#3d7a4c; }
+  body.portal-community header.site .btn.ghost{
+    background:transparent;
+    border-color:rgba(127,201,143,.55);
+  }
+  body.portal-community header.site .btn.ghost:hover{
+    background:rgba(127,201,143,.15);
+  }
+
+  /* ── Portal chip sits in a warmer track when in-portal ───── */
+  body.portal-community .cr-portal-chip.community{
+    background:rgba(127,201,143,.22);
+    border-color:#7fc98f;
+    color:#c9edd1;
+  }
+
+  /* ── Community nav options get a green tint when on-portal ─ */
+  body.portal-community .navmenu .navopt[data-nav="communityhub"],
+  body.portal-community .navmenu .navopt[data-nav="community-partners"]{
+    color:#3d7a4c;
+  }
+
+  /* ── Cardinal Truth wins if both classes end up on <body> ── */
+  body.claim-insurance.portal-community header.site{
+    border-bottom-color:#4a6fa5;
+    box-shadow:0 2px 12px rgba(74,111,165,.28);
+  }
+  body.claim-insurance.portal-community header.site .brand h1 span,
+  body.claim-insurance.portal-community header.site .titlecard h1 span{
+    background:none; -webkit-text-fill-color:initial; color:#7fa6d6 !important;
+  }
+  body.claim-insurance.portal-community header.site .btn{ background:#4a6fa5; }
+  body.claim-insurance.portal-community header.site .btn:hover{ background:#3a5a8c; }
+</style>
 
 
 <!-- ══════════════════════════════════════════════════════════
