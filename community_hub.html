@@ -229,6 +229,52 @@
     padding:3px 8px; border-radius:6px; background:#eef7f0;
     white-space:nowrap;
   }
+
+  /* ── Clients section (Community's own client list) ──────── */
+  .cr-chub-search{
+    width:100%; box-sizing:border-box;
+    padding:10px 12px; margin-bottom:12px;
+    border:1px solid #d6c9ab; border-radius:8px;
+    background:#fff; color:#2c2c2c;
+    font:600 13.5px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-chub-search:focus{ outline:none; border-color:#3d7a4c; }
+  .cr-chub-clgroup{ margin-bottom:14px; }
+  .cr-chub-clgroup:last-child{ margin-bottom:0; }
+  .cr-chub-clgroup h4{
+    margin:0 0 8px; font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase; color:#6b7a55;
+  }
+  .cr-chub-clpartner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:7px 4px; margin-top:6px; border-bottom:1px solid #ede3ce;
+  }
+  .cr-chub-clpartner .pn{
+    font:800 12px 'Segoe UI',Arial,sans-serif; color:#3d7a4c;
+    letter-spacing:.02em;
+  }
+  .cr-chub-clpartner .pc{
+    font:700 10.5px 'Segoe UI',Arial,sans-serif; color:#8a7a5a;
+  }
+  .cr-chub-clhint{
+    font:600 11px 'Segoe UI',Arial,sans-serif; color:#8a7a5a;
+    padding:0 4px 8px; font-style:italic;
+  }
+  .cr-chub-clrow{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 12px; border:1px solid #e2d7bf; border-radius:8px;
+    background:#fff; margin:6px 0; cursor:pointer;
+    transition:border-color .1s;
+  }
+  .cr-chub-clrow:hover{ border-color:#3d7a4c; }
+  .cr-chub-clrow .cn{ font:700 13px 'Segoe UI',Arial,sans-serif; color:#2c2c2c; }
+  .cr-chub-clrow .cm{ font:600 11px 'Segoe UI',Arial,sans-serif; color:#8a7a5a; margin-top:2px; }
+  .cr-chub-clrow .cs{
+    font:800 8.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.12em;
+    text-transform:uppercase; color:#3d7a4c;
+    padding:3px 7px; border-radius:5px; background:#eef7f0;
+    white-space:nowrap;
+  }
 </style>
 
 <script id="cr-chub-script">
@@ -294,6 +340,12 @@
           '<div id="chubPartnersBody"></div>' +
           '<button class="cr-chub-manage" data-act="manage">Manage Partners &rarr;</button>' +
         '</div>' +
+        '<div class="cr-chub-card" id="chubClients">' +
+          '<h3>Clients <span class="cr-chub-total" id="chubClientsTotal"></span></h3>' +
+          '<input type="text" class="cr-chub-search" id="chubClientsSearch" ' +
+            'placeholder="Search name or address\u2026" autocomplete="off" />' +
+          '<div id="chubClientsBody"></div>' +
+        '</div>' +
       '</div>';
     document.body.appendChild(v);
 
@@ -306,6 +358,17 @@
     v.querySelector('[data-act="manage"]').onclick = function(){
       if(window.CardinalCommunityPartners) window.CardinalCommunityPartners.openDirectory();
     };
+    // Live search — debounced so typing feels instant without thrashing renders
+    var searchEl = v.querySelector('#chubClientsSearch');
+    if(searchEl){
+      var searchTimer = null;
+      searchEl.addEventListener('input', function(){
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function(){
+          renderClients(communityProjects());
+        }, 120);
+      });
+    }
     return v;
   }
 
@@ -457,6 +520,115 @@
     if(s) s.parentNode.removeChild(s);
   }
 
+  // ── Render clients list (Community's own client directory) ────
+  function clientRowHtml(pr){
+    var addr = pr.address || (pr.location && pr.location.street) || '';
+    var stg  = LABEL[pr.stage] || pr.stage || '';
+    return '<div class="cr-chub-clrow" data-id="' + esc(pr.id) + '">' +
+             '<div>' +
+               '<div class="cn">' + esc(pr.name || 'Unnamed') + '</div>' +
+               (addr ? '<div class="cm">' + esc(addr) + '</div>' : '') +
+             '</div>' +
+             '<span class="cs">' + esc(stg) + '</span>' +
+           '</div>';
+  }
+  function wireClientRows(host){
+    host.querySelectorAll('.cr-chub-clrow').forEach(function(row){
+      row.onclick = function(){
+        var id = row.dataset.id;
+        hide();
+        if(typeof window.openProject === 'function') window.openProject(id);
+      };
+    });
+  }
+  function sortByRecent(a, b){
+    return String(b.updated_at || b.created_at || '')
+             .localeCompare(String(a.updated_at || a.created_at || ''));
+  }
+  function renderClients(projs){
+    var host = document.getElementById('chubClientsBody');
+    if(!host) return;
+    var totalEl = document.getElementById('chubClientsTotal');
+    if(totalEl) totalEl.textContent = projs.length ? (projs.length + ' total') : '';
+
+    var searchEl = document.getElementById('chubClientsSearch');
+    var q = (searchEl && searchEl.value || '').trim().toLowerCase();
+
+    if(!projs.length){
+      host.innerHTML = '<div class="cr-chub-empty">No community clients yet.' +
+        '<small>Open any client and tap the type chip to convert them to Community.</small></div>';
+      return;
+    }
+
+    // Search: flat filtered listing, ungrouped
+    if(q){
+      var matches = projs.filter(function(p){
+        var s = (p.name || '') + ' ' +
+                (p.address || '') + ' ' +
+                ((p.location && p.location.street) || '') + ' ' +
+                (p.phone || '');
+        return s.toLowerCase().indexOf(q) !== -1;
+      }).sort(sortByRecent);
+      if(!matches.length){
+        host.innerHTML = '<div class="cr-chub-empty">No matches.</div>';
+        return;
+      }
+      host.innerHTML = matches.map(clientRowHtml).join('');
+      wireClientRows(host);
+      return;
+    }
+
+    // Grouped: partner_type -> partner -> clients, with Unassigned last
+    var partners = (window.CardinalCommunityPartners && window.CardinalCommunityPartners.list()) || [];
+    var partnerById = {};
+    partners.forEach(function(p){ partnerById[p.id] = p; });
+
+    var byPid = {};
+    var unassigned = [];
+    projs.forEach(function(pr){
+      var pid = partnerIdOf(pr);
+      if(pid && partnerById[pid]) (byPid[pid] = byPid[pid] || []).push(pr);
+      else                        unassigned.push(pr);
+    });
+    Object.keys(byPid).forEach(function(k){ byPid[k].sort(sortByRecent); });
+    unassigned.sort(sortByRecent);
+
+    function typeGroup(label, arr){
+      var withClients = arr.filter(function(p){ return byPid[p.id] && byPid[p.id].length; });
+      if(!withClients.length) return '';
+      var html = '<div class="cr-chub-clgroup"><h4>' + esc(label) + '</h4>';
+      withClients.forEach(function(p){
+        var jobs = byPid[p.id];
+        html += '<div class="cr-chub-clpartner">' +
+                  '<span class="pn">' + esc(p.name) + '</span>' +
+                  '<span class="pc">' + jobs.length + '</span>' +
+                '</div>';
+        jobs.forEach(function(pr){ html += clientRowHtml(pr); });
+      });
+      html += '</div>';
+      return html;
+    }
+    var nonProfits = partners.filter(function(p){ return p.partner_type === 'nonprofit';        });
+    var pmgrs      = partners.filter(function(p){ return p.partner_type === 'property_manager'; });
+
+    var html = '';
+    html += typeGroup('Non-profits',       nonProfits);
+    html += typeGroup('Property Managers', pmgrs);
+    if(unassigned.length){
+      html += '<div class="cr-chub-clgroup"><h4>Unassigned</h4>' +
+              '<div class="cr-chub-clhint">Community clients without a partner attached. ' +
+                'Open a client and use the Partner row to link one.</div>' +
+              unassigned.map(clientRowHtml).join('') +
+              '</div>';
+    }
+    if(!html){
+      host.innerHTML = '<div class="cr-chub-empty">No community clients yet.</div>';
+      return;
+    }
+    host.innerHTML = html;
+    wireClientRows(host);
+  }
+
   // ── Show / hide ───────────────────────────────────────────
   function show(){
     wrapHideAll();
@@ -476,11 +648,16 @@
     var projs = communityProjects();
     renderPipeline(projs);
     renderNeedsAttention(projs);
-    // partners may still be loading — kick a load then render
+    // partners may still be loading — kick a load then render the two
+    // sections that depend on partner data
     if(window.CardinalCommunityPartners){
-      window.CardinalCommunityPartners.load().then(function(){ renderPartners(projs); });
+      window.CardinalCommunityPartners.load().then(function(){
+        renderPartners(projs);
+        renderClients(projs);
+      });
     }else{
       renderPartners(projs);
+      renderClients(projs);
     }
   }
 

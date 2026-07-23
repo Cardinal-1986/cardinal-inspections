@@ -1,0 +1,304 @@
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: convert_client_type.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — CONVERT CLIENT TYPE
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ Replaces the prompt()-based openClaimTypeMenu with a modal that
+ supports all four types: Retail · Insurance · Community · Unassigned.
+
+ Also teaches claimTypeChip() to render a green Community chip.
+
+ REUSES existing helpers instead of reimplementing:
+   updateProjectLead(pr, fn)     — writes checklist.lead + reloads
+   openInsuranceEditor(pr, true) — collects insurance fields on convert
+   projInsurance(pr)             — returns insurance object or null
+   projClaimType(pr)             — 'retail' | 'insurance' | 'community' | 'unknown'
+   auditLog(type, detail, pid)   — writes an audit row
+
+ CONVERSION SEMANTICS
+   → insurance   : if no insurance data yet, opens the editor to collect it.
+   → community   : sets claim_type, then offers to attach a partner.
+   → retail      : simple flip; if leaving community, clears partner_id.
+   → unknown     : simple flip; if leaving community, clears partner_id.
+
+   Insurance → anything : same DELETE-insurance-data warning as before.
+   Community → anything : clears checklist.lead.partner_id silently.
+
+ INSTALL: paste after community_hub.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-cct-styles">
+  /* Community chip color (matches portal palette) */
+  .claimchip.ct-community{
+    background:#e2f2e6; color:#2e6b3f; border:1px solid #4a8c5a;
+  }
+  body.claim-insurance .claimchip.ct-community{
+    background:rgba(74,140,90,.2); color:#87c99a; border-color:#4a8c5a;
+  }
+
+  /* Modal shell */
+  .cr-cct-shell{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9600;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:32px 12px; overflow-y:auto;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-cct-box{
+    width:100%; max-width:460px; background:#fffdf7;
+    border:1px solid #ded3bf; border-radius:14px;
+    box-shadow:0 12px 44px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .cr-cct-hd{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; border-bottom:1px solid #ede3ce;
+    background:linear-gradient(180deg,#f5efdf,#efe6cd);
+  }
+  .cr-cct-hd h3{
+    margin:0; font:800 15px Georgia,'Times New Roman',serif;
+    color:#3d4a2c; letter-spacing:.02em;
+  }
+  .cr-cct-hd .cr-cct-x{
+    background:none; border:0; font-size:22px; color:#7a6a4a; cursor:pointer;
+    line-height:1; padding:0 4px;
+  }
+  .cr-cct-bd{ padding:12px 14px 14px; }
+  .cr-cct-lede{
+    font:600 12px 'Segoe UI',Arial,sans-serif; color:#7a6a4a;
+    padding:2px 4px 10px; line-height:1.5;
+  }
+
+  /* Type option tiles */
+  .cr-cct-opt{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 14px; margin-bottom:8px; cursor:pointer;
+    background:#fff; border:1px solid #e2d7bf; border-radius:11px;
+    transition:transform .1s, border-color .1s;
+  }
+  .cr-cct-opt:hover{ border-color:#3d4a2c; }
+  .cr-cct-opt:active{ transform:scale(.98); }
+  .cr-cct-opt.current{ background:#f5efdf; border-color:#b8a276; cursor:default; }
+  .cr-cct-opt.current:hover{ transform:none; }
+  .cr-cct-opt .ic{
+    width:38px; height:38px; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:10px; font-size:20px;
+  }
+  .cr-cct-opt.retail    .ic{ background:#fbf0d6; color:#8a5a00; border:1px solid #d4a017; }
+  .cr-cct-opt.insurance .ic{ background:#e3ecf8; color:#3a5f96; border:1px solid #4a6fa5; }
+  .cr-cct-opt.community .ic{ background:#e2f2e6; color:#2e6b3f; border:1px solid #4a8c5a; }
+  .cr-cct-opt.unknown   .ic{ background:#efeae5; color:#6b5a52; border:1px solid #c9c2bf; }
+  .cr-cct-opt .body{ flex:1 1 auto; min-width:0; }
+  .cr-cct-opt .n{
+    font:800 14px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    letter-spacing:.02em;
+  }
+  .cr-cct-opt .d{
+    font:600 11.5px 'Segoe UI',Arial,sans-serif; color:#7a6a4a;
+    margin-top:2px; line-height:1.45;
+  }
+  .cr-cct-opt .mark{
+    font:800 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.15em;
+    text-transform:uppercase; color:#7a6a4a;
+    padding:3px 8px; border-radius:6px; background:#efe6cd;
+    white-space:nowrap;
+  }
+</style>
+
+<script id="cr-cct-script">
+(function () {
+  'use strict';
+
+  var TYPES = [
+    { key:'retail',    icon:'\uD83C\uDFE0',        name:'Retail',
+      desc:'Homeowner-paid work — roofs, siding, windows, gutters.' },
+    { key:'insurance', icon:'\uD83D\uDEE1\uFE0F',  name:'Insurance',
+      desc:'Storm and claim work — carrier, adjuster, ACV/RCV.' },
+    { key:'community', icon:'\uD83C\uDFD8\uFE0F',  name:'Community',
+      desc:'Non-profits (bidding) and property-manager portfolios.' },
+    { key:'unknown',   icon:'\u2753',              name:'Unassigned',
+      desc:'Not yet classified.' },
+  ];
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // ── Extend claimTypeChip so community-typed clients get a chip ────
+  (function patchChip(){
+    var orig = window.claimTypeChip;
+    window.claimTypeChip = function(ct){
+      if(ct === 'community'){
+        return '<span class="claimchip ct-community" id="claimTypeChip" ' +
+               'title="Tap to change client type">\uD83C\uDFD8\uFE0F Community</span>';
+      }
+      if(typeof orig === 'function') return orig(ct);
+      // very defensive fallback
+      return '<span class="claimchip ct-' + esc(ct || 'unknown') + '" id="claimTypeChip">' + esc(ct || 'unknown') + '</span>';
+    };
+  })();
+
+  // ── Modal shell helpers ──────────────────────────────────────────
+  function closeShell(){
+    var s = document.querySelector('.cr-cct-shell');
+    if(s) s.parentNode.removeChild(s);
+  }
+  function shell(title, bodyHtml){
+    closeShell();
+    var host = document.createElement('div');
+    host.className = 'cr-cct-shell';
+    host.innerHTML =
+      '<div class="cr-cct-box">' +
+        '<div class="cr-cct-hd"><h3>' + esc(title) + '</h3>' +
+          '<button class="cr-cct-x" aria-label="Close">&times;</button></div>' +
+        '<div class="cr-cct-bd">' + bodyHtml + '</div>' +
+      '</div>';
+    document.body.appendChild(host);
+    host.querySelector('.cr-cct-x').onclick = closeShell;
+    host.addEventListener('click', function(e){ if(e.target === host) closeShell(); });
+    return host;
+  }
+
+  // ── Conversion machinery ─────────────────────────────────────────
+  async function convertTo(pr, newType, current){
+    if(!pr || !newType || newType === current){ closeShell(); return; }
+
+    var hasIns   = !!(window.projInsurance && window.projInsurance(pr));
+    var goingIns = newType === 'insurance';
+    var leavingIns = current === 'insurance';
+
+    // Insurance -> anything else: warn about permanent data deletion.
+    if(leavingIns && !goingIns && hasIns){
+      var ok = confirm(
+        'Switching from Insurance to ' + newType.toUpperCase() + ' will PERMANENTLY DELETE ' +
+        'the insurance data on file:\n\n' +
+        '  • Carrier, policy #, claim #\n' +
+        '  • Adjuster name / phone / email\n' +
+        '  • Date of loss, deductible, RCV/ACV, coverage type, notes\n\n' +
+        'This cannot be undone. Continue?'
+      );
+      if(!ok) return;
+    }
+
+    // -> Insurance and no data yet: hand off to the existing editor.
+    if(goingIns && !hasIns){
+      closeShell();
+      if(typeof window.openInsuranceEditor === 'function'){
+        window.openInsuranceEditor(pr, true /* changing type */);
+      }else{
+        alert('Insurance editor is unavailable in this build.');
+      }
+      return;
+    }
+
+    // -> Community: flip, then offer to attach a partner.
+    if(newType === 'community'){
+      await window.updateProjectLead(pr, function(L){
+        L.claim_type = 'community';
+        L.retail = false;
+        if(leavingIns) L.insurance = null;
+      });
+      if(typeof window.auditLog === 'function'){
+        window.auditLog('lead', 'Claim type changed ' + current + ' \u2192 community', pr.id);
+      }
+      closeShell();
+      // updateProjectLead reloads and re-opens the project, so we defer
+      // the partner offer until the new render settles.
+      setTimeout(function(){
+        if(!window.CardinalCommunityPartners) return;
+        var fresh = (window.cacheProjects || []).filter(function(x){ return x.id === pr.id; })[0] || pr;
+        var already = window.CardinalCommunityPartners.partnerIdForProject(fresh);
+        if(already) return;   // partner already there (rare, but possible)
+        var wantAttach = confirm(
+          'Client set to Community. Attach a partner now?\n\n' +
+          'Non-profits: Habitat, ReBuild, DHRN\n' +
+          'Property managers: Kitty Hawk Realty'
+        );
+        if(!wantAttach) return;
+        window.CardinalCommunityPartners.pickPartner(function(chosen){
+          if(chosen) window.CardinalCommunityPartners.setPartnerForProject(fresh, chosen.id);
+        });
+      }, 500);
+      return;
+    }
+
+    // -> Retail / Unknown: simple flip. Clear partner_id if leaving community.
+    await window.updateProjectLead(pr, function(L){
+      L.claim_type = newType;
+      L.retail = (newType === 'retail');
+      if(current === 'community' && L.partner_id) delete L.partner_id;
+      if(leavingIns) L.insurance = null;
+    });
+    if(typeof window.auditLog === 'function'){
+      window.auditLog('lead', 'Claim type changed ' + current + ' \u2192 ' + newType, pr.id);
+    }
+    closeShell();
+  }
+
+  // ── The new menu (overrides openClaimTypeMenu) ───────────────────
+  function openMenu(pr){
+    if(!pr) return;
+    var current = (typeof window.projClaimType === 'function')
+                    ? window.projClaimType(pr) : 'unknown';
+    var name = pr.name || 'this client';
+
+    var html =
+      '<div class="cr-cct-lede">' +
+        'Change how <b>' + esc(name) + '</b> is classified. ' +
+        'Current: <b>' + esc(current.toUpperCase()) + '</b>.' +
+      '</div>';
+
+    html += TYPES.map(function(t){
+      var isCur = (t.key === current);
+      return '<div class="cr-cct-opt ' + t.key + (isCur ? ' current' : '') + '"' +
+             (isCur ? '' : ' data-choose="' + t.key + '"') + '>' +
+               '<div class="ic">' + t.icon + '</div>' +
+               '<div class="body">' +
+                 '<div class="n">' + esc(t.name) + '</div>' +
+                 '<div class="d">' + esc(t.desc) + '</div>' +
+               '</div>' +
+               (isCur ? '<span class="mark">Current</span>' : '') +
+             '</div>';
+    }).join('');
+
+    var host = shell('Change Client Type', html);
+    host.querySelectorAll('[data-choose]').forEach(function(opt){
+      opt.onclick = function(){ convertTo(pr, opt.dataset.choose, current); };
+    });
+  }
+  window.openClaimTypeMenu = openMenu;
+
+  // ── Also re-render the current profile's chip on boot so an ─────
+  //     already-open community client shows the green chip without a reload.
+  function rerenderChipIfNeeded(){
+    var chip = document.getElementById('claimTypeChip');
+    if(!chip) return;
+    if(!window.currentProject) return;
+    var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(window.currentProject) : 'unknown';
+    if(ct !== 'community') return;                  // existing paths already handle retail/ins/unknown
+    if(chip.classList.contains('ct-community')) return;
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = window.claimTypeChip('community');
+    var next = wrapper.firstChild;
+    if(next && chip.parentNode) chip.parentNode.replaceChild(next, chip);
+  }
+
+  function start(){
+    rerenderChipIfNeeded();
+    // Chip is re-rendered by the app on renderOverview; MutationObserver
+    // catches it so community chips paint even before the profile refreshes.
+    new MutationObserver(function(){ try{ rerenderChipIfNeeded(); }catch(_){ } })
+      .observe(document.body, { childList:true, subtree:true });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalConvertType = { openMenu: openMenu, convertTo: convertTo };
+})();
+</script>
