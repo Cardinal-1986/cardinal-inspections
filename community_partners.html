@@ -1,0 +1,606 @@
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: community_partners.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — COMMUNITY PARTNERS
+ v2026-07-23 · directory + attach-to-project
+────────────────────────────────────────────────────────────────────
+ Companion to the community_partners table (see
+ community_partners_setup.sql).
+
+ WHAT IT DOES
+   • Loads partners from Supabase, caches in memory.
+   • Directory modal (Partners grouped by non-profit / property mgr).
+   • Add / edit / archive a partner.
+   • Picker used from lead creation and client profiles.
+   • Attach-partner row on Community client profiles (writes
+     checklist.lead.partner_id — no `projects` schema change).
+   • Adds a "Community Partners" nav option to the burger menu when
+     the current portal is Community or All.
+
+ STORAGE MODEL
+   Partner rows live in public.community_partners.
+   The link from a project to a partner is:
+     project.checklist  ->  { lead: { partner_id: '<uuid>' } }
+   Same JSON path convention as sales assignment.
+
+ PUBLIC API
+   window.CardinalCommunityPartners = {
+     load, list, get, byType, save, archive,
+     openDirectory, openEditor, pickPartner,
+     partnerIdForProject, setPartnerForProject,
+     onChange
+   }
+
+ INSTALL: paste after insurance_stages.html. Run
+ community_partners_setup.sql in Supabase before or after — the
+ module survives a missing table (it just returns []).
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-cpartners-styles">
+  /* ── Modal shell (shared by directory / editor / picker) ── */
+  .cr-cp-shell{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9500;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:32px 12px; overflow-y:auto;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-cp-box{
+    width:100%; max-width:520px; background:#fffdf7;
+    border:1px solid #ded3bf; border-radius:14px;
+    box-shadow:0 12px 44px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .cr-cp-hd{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; border-bottom:1px solid #ede3ce;
+    background:linear-gradient(180deg,#f5efdf,#efe6cd);
+  }
+  .cr-cp-hd h3{
+    margin:0; font:800 15px Georgia,'Times New Roman',serif;
+    color:#3d7a4c; letter-spacing:.02em;
+  }
+  .cr-cp-hd .cr-cp-x{
+    background:none; border:0; font-size:22px; color:#7a6a4a; cursor:pointer;
+    line-height:1; padding:0 4px;
+  }
+  .cr-cp-bd{ padding:14px 18px 18px; }
+
+  /* ── Directory list ── */
+  .cr-cp-group{ margin-bottom:14px; }
+  .cr-cp-group h4{
+    margin:0 0 8px; font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase; color:#6b7a55;
+  }
+  .cr-cp-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 12px; border:1px solid #e2d7bf; border-radius:9px;
+    background:#fff; margin-bottom:7px;
+  }
+  .cr-cp-row .n{ font:700 14px 'Segoe UI',Arial,sans-serif; color:#2c2c2c; }
+  .cr-cp-row .m{ font:600 11.5px 'Segoe UI',Arial,sans-serif; color:#8a7a5a; margin-top:2px; }
+  .cr-cp-row .btns{ display:flex; gap:6px; flex-shrink:0; }
+  .cr-cp-row .btns button{
+    background:#f0ebe0; border:1px solid #ded3bf; color:#5a4d33;
+    border-radius:6px; padding:5px 10px; cursor:pointer;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.1em; text-transform:uppercase;
+  }
+  .cr-cp-row .btns button:hover{ background:#e5dfd0; }
+  .cr-cp-row .btns button.dang{ color:#8a3d3d; }
+
+  .cr-cp-addbtn{
+    display:block; width:100%; margin-top:6px;
+    background:#3d7a4c; color:#fff; border:0; border-radius:8px;
+    padding:11px; cursor:pointer;
+    font:800 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em; text-transform:uppercase;
+  }
+  .cr-cp-addbtn:hover{ background:#316340; }
+  .cr-cp-empty{
+    padding:22px 12px; text-align:center; color:#8a7a5a;
+    font:600 12.5px 'Segoe UI',Arial,sans-serif;
+  }
+
+  /* ── Editor form ── */
+  .cr-cp-form label{
+    display:block; margin-bottom:11px;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em;
+    text-transform:uppercase; color:#6b7a55;
+  }
+  .cr-cp-form label input,
+  .cr-cp-form label select,
+  .cr-cp-form label textarea{
+    display:block; width:100%; box-sizing:border-box; margin-top:5px;
+    padding:9px 11px; border:1px solid #d6c9ab; border-radius:7px;
+    background:#fff; color:#2c2c2c;
+    font:600 13.5px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-cp-form textarea{ min-height:64px; resize:vertical; }
+  .cr-cp-form .row2{ display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+  @media(max-width:420px){ .cr-cp-form .row2{ grid-template-columns:1fr; } }
+  .cr-cp-form .actions{
+    display:flex; gap:8px; justify-content:flex-end; margin-top:4px;
+  }
+  .cr-cp-form .actions button{
+    padding:9px 15px; border-radius:7px; cursor:pointer;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em; text-transform:uppercase;
+  }
+  .cr-cp-form .actions .primary{ background:#3d7a4c; color:#fff; border:0; }
+  .cr-cp-form .actions .primary:hover{ background:#316340; }
+  .cr-cp-form .actions .ghost{
+    background:transparent; color:#6b5a3a; border:1px solid #d6c9ab;
+  }
+  .cr-cp-form .err{
+    color:#a04040; font:700 11px 'Segoe UI',Arial,sans-serif;
+    margin:6px 0 10px;
+  }
+
+  /* ── Attach-to-project row on client profile ── */
+  .cr-cp-attach{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:11px; padding:9px 12px; margin:9px 0 11px;
+    background:rgba(74,140,90,.08);
+    border:1px solid rgba(61,122,76,.35); border-radius:9px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-cp-attach .lbl{
+    font:800 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.16em;
+    text-transform:uppercase; color:#3d7a4c;
+  }
+  .cr-cp-attach .val{
+    font:700 13px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+  }
+  .cr-cp-attach .val.empty{ color:#8a7a5a; font-style:italic; font-weight:600; }
+  .cr-cp-attach .badge{
+    display:inline-block; margin-left:6px; padding:1px 7px; border-radius:8px;
+    font:800 8.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.1em;
+    text-transform:uppercase; background:#e2f2e6; color:#2e6b3f;
+  }
+  .cr-cp-attach .badge.pm{ background:#eaf0f8; color:#3a5f96; }
+  .cr-cp-attach .acts button{
+    background:transparent; border:1px solid #a6c1ad; color:#3d7a4c;
+    border-radius:6px; padding:4px 9px; cursor:pointer;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase;
+    margin-left:6px;
+  }
+  .cr-cp-attach .acts button:hover{ background:rgba(61,122,76,.1); }
+</style>
+
+<script id="cr-cpartners-script">
+(function () {
+  'use strict';
+
+  var TABLE = 'community_partners';
+  var CACHE = null;
+  var LOADED = false;
+  var LOAD_PROMISE = null;
+  var LISTENERS = [];
+
+  function sb(){ return window.supa || window.sb || null; }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function typeLabel(t){
+    return t === 'property_manager' ? 'Property Manager' : t === 'nonprofit' ? 'Non-profit' : t;
+  }
+  function typeBadgeClass(t){ return t === 'property_manager' ? 'pm' : ''; }
+
+  // ── Load / cache ──────────────────────────────────────────
+  async function load(force){
+    if(LOADED && !force && CACHE) return CACHE;
+    if(LOAD_PROMISE && !force) return LOAD_PROMISE;
+    var client = sb();
+    if(!client){ CACHE = []; return CACHE; }
+    LOAD_PROMISE = (async function(){
+      try{
+        var r = await client.from(TABLE)
+          .select('*')
+          .eq('archived', false)
+          .order('partner_type', { ascending:true })
+          .order('name',        { ascending:true });
+        if(r.error){ console.warn('[cpartners] load', r.error.message); }
+        CACHE = r.data || [];
+        LOADED = true;
+      }catch(e){
+        console.warn('[cpartners] load ex', e);
+        CACHE = CACHE || [];
+      }finally{
+        LOAD_PROMISE = null;
+      }
+      LISTENERS.forEach(function(fn){ try{ fn(CACHE); }catch(_){ } });
+      return CACHE;
+    })();
+    return LOAD_PROMISE;
+  }
+  function list(){ return CACHE || []; }
+  function get(id){ return (CACHE || []).filter(function(p){ return p.id === id; })[0] || null; }
+  function byType(t){ return (CACHE || []).filter(function(p){ return p.partner_type === t; }); }
+
+  async function save(partner){
+    var client = sb();
+    if(!client) return null;
+    var row = {
+      name          : (partner.name || '').trim(),
+      partner_type  : partner.partner_type,
+      contact_name  : (partner.contact_name  || '').trim() || null,
+      contact_email : (partner.contact_email || '').trim() || null,
+      contact_phone : (partner.contact_phone || '').trim() || null,
+      address       : (partner.address       || '').trim() || null,
+      notes         : (partner.notes         || '').trim() || null,
+    };
+    try{
+      var r;
+      if(partner.id){
+        r = await client.from(TABLE).update(row).eq('id', partner.id).select().single();
+      }else{
+        r = await client.from(TABLE).insert(row).select().single();
+      }
+      if(r.error){ console.warn('[cpartners] save', r.error.message); return null; }
+      await load(true);
+      return r.data;
+    }catch(e){ console.warn('[cpartners] save ex', e); return null; }
+  }
+
+  async function archive(id){
+    var client = sb();
+    if(!client) return false;
+    try{
+      var r = await client.from(TABLE).update({ archived:true }).eq('id', id);
+      if(r.error){ console.warn('[cpartners] archive', r.error.message); return false; }
+      await load(true);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // ── Attach to a project via checklist.lead.partner_id ─────
+  function partnerIdForProject(pr){
+    if(!pr) return null;
+    try{
+      var ck = window.parseCkAll ? window.parseCkAll(pr) : {};
+      return (ck && ck.lead && ck.lead.partner_id) || null;
+    }catch(e){ return null; }
+  }
+
+  async function setPartnerForProject(pr, partnerId){
+    if(!pr || !pr.id) return false;
+    var client = sb(); if(!client) return false;
+    try{
+      var raw = pr.checklist || '{}';
+      var ck; try{ ck = JSON.parse(raw); }catch(_){ ck = {}; }
+      if(!ck.lead) ck.lead = {};
+      if(partnerId) ck.lead.partner_id = partnerId;
+      else          delete ck.lead.partner_id;
+      var next = JSON.stringify(ck);
+      var r = await client.from('projects').update({ checklist: next }).eq('id', pr.id);
+      if(r.error){ console.warn('[cpartners] setPartner', r.error.message); return false; }
+      pr.checklist = next;                               // keep in-memory copy fresh
+      if(window.currentProject && window.currentProject.id === pr.id){
+        window.currentProject.checklist = next;
+      }
+      if(typeof window.renderOverview === 'function'){
+        try{ window.renderOverview(); }catch(_){ }
+      }
+      return true;
+    }catch(e){ console.warn('[cpartners] setPartner ex', e); return false; }
+  }
+
+  // ── Shell helpers ─────────────────────────────────────────
+  function shell(title, bodyHtml){
+    closeShell();
+    var host = document.createElement('div');
+    host.className = 'cr-cp-shell';
+    host.innerHTML =
+      '<div class="cr-cp-box">' +
+        '<div class="cr-cp-hd"><h3>' + esc(title) + '</h3>' +
+          '<button class="cr-cp-x" aria-label="Close">&times;</button></div>' +
+        '<div class="cr-cp-bd">' + bodyHtml + '</div>' +
+      '</div>';
+    document.body.appendChild(host);
+    host.querySelector('.cr-cp-x').onclick = closeShell;
+    host.addEventListener('click', function(e){ if(e.target === host) closeShell(); });
+    return host;
+  }
+  function closeShell(){
+    var s = document.querySelector('.cr-cp-shell');
+    if(s) s.parentNode.removeChild(s);
+  }
+
+  // ── Directory modal ───────────────────────────────────────
+  async function openDirectory(){
+    await load();
+    var host = shell('Community Partners', '<div class="cr-cp-list">Loading…</div>');
+    renderDirectory(host);
+  }
+  function renderDirectory(host){
+    var list = (CACHE || []).slice();
+    var non = list.filter(function(p){ return p.partner_type === 'nonprofit'; });
+    var pm  = list.filter(function(p){ return p.partner_type === 'property_manager'; });
+
+    function grp(title, arr){
+      if(!arr.length) return '';
+      var rows = arr.map(function(p){
+        return '<div class="cr-cp-row" data-id="' + esc(p.id) + '">' +
+          '<div>' +
+            '<div class="n">' + esc(p.name) + '</div>' +
+            (p.contact_name || p.contact_phone ?
+              '<div class="m">' + esc([p.contact_name, p.contact_phone].filter(Boolean).join(' · ')) + '</div>' : '') +
+          '</div>' +
+          '<div class="btns">' +
+            '<button data-act="edit">Edit</button>' +
+            '<button data-act="archive" class="dang">Archive</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      return '<div class="cr-cp-group"><h4>' + esc(title) + '</h4>' + rows + '</div>';
+    }
+
+    var html = '';
+    if(!list.length){
+      html = '<div class="cr-cp-empty">No partners yet. Add one to get started.</div>';
+    }else{
+      html += grp('Non-profits',      non);
+      html += grp('Property Managers', pm);
+    }
+    html += '<button class="cr-cp-addbtn" data-act="add">+ Add Partner</button>';
+
+    var bd = host.querySelector('.cr-cp-bd');
+    bd.innerHTML = html;
+
+    bd.querySelector('[data-act="add"]').onclick = function(){ openEditor(null); };
+    bd.querySelectorAll('.cr-cp-row').forEach(function(row){
+      var id = row.dataset.id;
+      row.querySelector('[data-act="edit"]').onclick = function(){ openEditor(get(id)); };
+      row.querySelector('[data-act="archive"]').onclick = async function(){
+        if(!confirm('Archive this partner? They will no longer appear in pickers.')) return;
+        await archive(id);
+        openDirectory();   // re-render
+      };
+    });
+  }
+
+  // ── Editor modal ──────────────────────────────────────────
+  function openEditor(partner){
+    var p = partner || { partner_type:'nonprofit' };
+    var title = partner ? 'Edit Partner' : 'Add Partner';
+    var html =
+      '<form class="cr-cp-form" id="cpForm">' +
+        '<div class="err" id="cpErr" style="display:none;"></div>' +
+        '<label>Name' +
+          '<input name="name" required value="' + esc(p.name || '') + '" />' +
+        '</label>' +
+        '<label>Type' +
+          '<select name="partner_type">' +
+            '<option value="nonprofit"'        + (p.partner_type==='nonprofit'       ?' selected':'') + '>Non-profit</option>' +
+            '<option value="property_manager"' + (p.partner_type==='property_manager'?' selected':'') + '>Property Manager</option>' +
+          '</select>' +
+        '</label>' +
+        '<div class="row2">' +
+          '<label>Contact Name' +
+            '<input name="contact_name" value="' + esc(p.contact_name || '') + '" />' +
+          '</label>' +
+          '<label>Contact Phone' +
+            '<input name="contact_phone" value="' + esc(p.contact_phone || '') + '" />' +
+          '</label>' +
+        '</div>' +
+        '<label>Contact Email' +
+          '<input name="contact_email" type="email" value="' + esc(p.contact_email || '') + '" />' +
+        '</label>' +
+        '<label>Address' +
+          '<input name="address" value="' + esc(p.address || '') + '" />' +
+        '</label>' +
+        '<label>Notes' +
+          '<textarea name="notes">' + esc(p.notes || '') + '</textarea>' +
+        '</label>' +
+        '<div class="actions">' +
+          '<button type="button" class="ghost" data-act="cancel">Cancel</button>' +
+          '<button type="submit" class="primary">' + (partner ? 'Save' : 'Add Partner') + '</button>' +
+        '</div>' +
+      '</form>';
+
+    var host = shell(title, html);
+    var form = host.querySelector('#cpForm');
+    var err  = host.querySelector('#cpErr');
+
+    host.querySelector('[data-act="cancel"]').onclick = function(){
+      if(CACHE && CACHE.length) openDirectory(); else closeShell();
+    };
+    form.onsubmit = async function(e){
+      e.preventDefault();
+      var fd = new FormData(form);
+      var next = {
+        id           : p.id,
+        name         : fd.get('name'),
+        partner_type : fd.get('partner_type'),
+        contact_name : fd.get('contact_name'),
+        contact_email: fd.get('contact_email'),
+        contact_phone: fd.get('contact_phone'),
+        address      : fd.get('address'),
+        notes        : fd.get('notes'),
+      };
+      if(!next.name || !String(next.name).trim()){
+        err.style.display = 'block';
+        err.textContent   = 'Name is required.';
+        return;
+      }
+      err.style.display = 'none';
+      var saved = await save(next);
+      if(!saved){
+        err.style.display = 'block';
+        err.textContent   = 'Save failed. Check your connection and try again.';
+        return;
+      }
+      openDirectory();
+    };
+  }
+
+  // ── Picker (returns the chosen partner via callback) ──────
+  async function pickPartner(cb){
+    await load();
+    var list = (CACHE || []).slice();
+    var non = list.filter(function(p){ return p.partner_type === 'nonprofit'; });
+    var pm  = list.filter(function(p){ return p.partner_type === 'property_manager'; });
+
+    function grp(title, arr){
+      if(!arr.length) return '';
+      var rows = arr.map(function(p){
+        return '<div class="cr-cp-row" data-id="' + esc(p.id) + '" style="cursor:pointer;">' +
+          '<div><div class="n">' + esc(p.name) + '</div>' +
+            (p.contact_name ? '<div class="m">' + esc(p.contact_name) + '</div>' : '') +
+          '</div>' +
+          '<div class="btns"><button data-act="pick">Select</button></div>' +
+        '</div>';
+      }).join('');
+      return '<div class="cr-cp-group"><h4>' + esc(title) + '</h4>' + rows + '</div>';
+    }
+
+    var html = '';
+    if(!list.length){
+      html = '<div class="cr-cp-empty">No partners yet.</div>';
+    }else{
+      html += grp('Non-profits',      non);
+      html += grp('Property Managers', pm);
+    }
+    html += '<button class="cr-cp-addbtn" data-act="add">+ New Partner</button>';
+
+    var host = shell('Select a Partner', html);
+    var bd = host.querySelector('.cr-cp-bd');
+
+    bd.querySelector('[data-act="add"]').onclick = function(){ openEditor(null); };
+    bd.querySelectorAll('.cr-cp-row').forEach(function(row){
+      var id = row.dataset.id;
+      var choose = function(){ closeShell(); try{ cb && cb(get(id)); }catch(_){ } };
+      row.onclick = choose;
+      row.querySelector('[data-act="pick"]').onclick = function(e){ e.stopPropagation(); choose(); };
+    });
+  }
+
+  // ── Attach-partner row on Community client profile ────────
+  function ensureAttachRow(){
+    var pr = window.currentProject;
+    if(!pr) return removeAttachRow();
+
+    var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(pr) : null;
+    if(ct !== 'community') return removeAttachRow();
+
+    // find a stable insertion point — right below the stage bar,
+    // matches where insurance_stages inserts its claim strip.
+    var anchor = document.querySelector('.dbstage');
+    if(!anchor) return;
+
+    var row = document.querySelector('.cr-cp-attach');
+    if(!row){
+      row = document.createElement('div');
+      row.className = 'cr-cp-attach';
+      anchor.insertAdjacentElement('afterend', row);
+    }
+    var pid = partnerIdForProject(pr);
+    var p   = pid ? get(pid) : null;
+
+    if(p){
+      row.innerHTML =
+        '<div>' +
+          '<div class="lbl">Partner</div>' +
+          '<div class="val">' + esc(p.name) +
+            '<span class="badge ' + typeBadgeClass(p.partner_type) + '">' +
+              esc(typeLabel(p.partner_type)) +
+            '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="acts">' +
+          '<button data-act="change">Change</button>' +
+          '<button data-act="clear">Clear</button>' +
+        '</div>';
+    }else{
+      row.innerHTML =
+        '<div>' +
+          '<div class="lbl">Partner</div>' +
+          '<div class="val empty">' + (pid ? 'Unknown partner id' : 'No partner attached') + '</div>' +
+        '</div>' +
+        '<div class="acts">' +
+          '<button data-act="change">' + (pid ? 'Change' : 'Attach') + '</button>' +
+        '</div>';
+    }
+
+    var chg = row.querySelector('[data-act="change"]');
+    if(chg) chg.onclick = function(){
+      pickPartner(function(chosen){
+        if(chosen) setPartnerForProject(pr, chosen.id);
+      });
+    };
+    var clr = row.querySelector('[data-act="clear"]');
+    if(clr) clr.onclick = function(){
+      if(!confirm('Remove the partner link from this client?')) return;
+      setPartnerForProject(pr, null);
+    };
+  }
+  function removeAttachRow(){
+    var row = document.querySelector('.cr-cp-attach');
+    if(row) row.parentNode.removeChild(row);
+  }
+
+  // ── Menu integration ──────────────────────────────────────
+  function ensureMenuOption(){
+    var menu = document.getElementById('navMenu') || document.querySelector('#navMenu, .navmenu');
+    if(!menu) return;
+    if(menu.querySelector('[data-nav="community-partners"]')) return;
+
+    // Only show when the current portal is community or all.
+    var portal = null;
+    try{ portal = window.CardinalPortal && window.CardinalPortal.get(); }catch(_){ }
+    if(portal && portal !== 'community' && portal !== 'all') return;
+
+    var btn = document.createElement('button');
+    btn.className = 'navopt';
+    btn.setAttribute('data-nav', 'community-partners');
+    btn.innerHTML = '\uD83E\uDD1D Community Partners';
+    btn.onclick = function(){ openDirectory(); };
+    menu.appendChild(btn);
+  }
+  function pruneMenuOption(){
+    // If the user switches away from community/all, drop the entry.
+    var portal = null;
+    try{ portal = window.CardinalPortal && window.CardinalPortal.get(); }catch(_){ }
+    if(portal === 'community' || portal === 'all') return;
+    var existing = document.querySelector('.navopt[data-nav="community-partners"]');
+    if(existing) existing.parentNode.removeChild(existing);
+  }
+
+  // ── Boot ──────────────────────────────────────────────────
+  function tick(){
+    try{
+      ensureMenuOption();
+      pruneMenuOption();
+      ensureAttachRow();
+    }catch(e){ /* silent */ }
+  }
+  var ticking = false;
+  function schedule(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){ ticking = false; tick(); });
+  }
+
+  function start(){
+    load();          // warm the cache
+    tick();
+    new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true });
+    var n = 0, iv = setInterval(function(){ tick(); if(++n > 20) clearInterval(iv); }, 300);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalCommunityPartners = {
+    load: load, list: list, get: get, byType: byType,
+    save: save, archive: archive,
+    openDirectory: openDirectory,
+    openEditor: openEditor,
+    pickPartner: pickPartner,
+    partnerIdForProject: partnerIdForProject,
+    setPartnerForProject: setPartnerForProject,
+    onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
+  };
+})();
+</script>

@@ -1,0 +1,161 @@
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: community_stages.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — COMMUNITY PIPELINE STAGES
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ On a community-typed client, the pipeline reads in bidding language.
+
+ SAME DESIGN CHOICE AS insurance_stages.html
+   The stored projects.stage value is NOT changed. Lead / Prospect /
+   Approved / … stay exactly as they are in Supabase, so the Schedule
+   Board, Leads & Jobs, Graphs & Reports, stage filters and the
+   "Approved -> email Curtis" notification all keep working.
+
+   Only the LABEL changes, and only on community clients:
+
+     Lead       ->  Bid Requested
+     Prospect   ->  Bid Submitted
+     Approved   ->  Awarded
+     Scheduled  ->  Scheduled
+     Completed  ->  Build Complete
+     Invoiced   ->  Invoiced
+     Closed     ->  Closed
+     Lost       ->  Not Awarded
+
+   Retail and Insurance pipelines are untouched.
+
+ SCOPE NOTE
+   v1 uses non-profit bidding vocabulary for all community projects
+   because that is the more distinctive intake. Property-manager
+   variants (Work Order / Quoted / Approved …) can be layered later
+   by branching on partner_type, but that requires the partner cache
+   to be loaded first — deferred until it's actually a problem.
+
+ INSTALL: paste after community_partners.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<script id="cr-comstage-script">
+(function () {
+  'use strict';
+
+  var COM_LABEL = {
+    'Lead':      'Bid Requested',
+    'Prospect':  'Bid Submitted',
+    'Approved':  'Awarded',
+    'Scheduled': 'Scheduled',
+    'Completed': 'Build Complete',
+    'Invoiced':  'Invoiced',
+    'Closed':    'Closed',
+    'Lost':      'Not Awarded',
+  };
+
+  function onCommunity(){
+    try{
+      if(typeof window.projClaimType !== 'function') return false;
+      var pr = window.currentProject;
+      if(!pr) return false;
+      return window.projClaimType(pr) === 'community';
+    }catch(e){ return false; }
+  }
+  function label(stored){ return COM_LABEL[stored] || stored; }
+  function titleCase(s){
+    s = String(s || '').toLowerCase();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  // ── Relabel the rendered stage bar ────────────────────────
+  function relabel(){
+    if(!onCommunity()) return;
+
+    // centre pill
+    var mid = document.querySelector('.dbstage .dbstgmid b');
+    if(mid){
+      var want = (COM_LABEL[titleCase(mid.textContent)] || '').toUpperCase();
+      if(want && mid.textContent !== want) mid.textContent = want;
+    }
+
+    // back / forward arrow tooltips
+    var bk = document.getElementById('dbStgBack');
+    if(bk && bk.title){
+      var m = bk.title.match(/^Back to (.+)$/);
+      if(m && COM_LABEL[m[1]]) bk.title = 'Back to ' + COM_LABEL[m[1]];
+    }
+    var fw = document.getElementById('dbStgFwd');
+    if(fw && fw.title){
+      var m2 = fw.title.match(/^Advance to (.+)$/);
+      if(m2 && COM_LABEL[m2[1]]) fw.title = 'Advance to ' + COM_LABEL[m2[1]];
+    }
+
+    // the ⋮ dropdown
+    document.querySelectorAll('#msDrop .estopt').forEach(function(b){
+      var t = b.textContent || '';
+      var a = t.match(/^Advance to (.+)$/);
+      if(a && COM_LABEL[a[1]]){ b.textContent = 'Advance to ' + COM_LABEL[a[1]]; return; }
+      if(t === 'Mark Lost')      b.textContent = 'Mark Not Awarded';
+      if(t === 'Reopen as Lead') b.textContent = 'Reopen as Bid Request';
+    });
+
+    // the hidden <select> used by the profile tab
+    var sel = document.getElementById('stageSel');
+    if(sel && !sel.dataset.crComLabelled){
+      Array.prototype.forEach.call(sel.options, function(o){
+        if(COM_LABEL[o.value || o.textContent]) o.textContent = COM_LABEL[o.value || o.textContent];
+      });
+      sel.dataset.crComLabelled = '1';
+    }
+  }
+
+  // Undo the select relabel when leaving a community client
+  function restoreSelect(){
+    var sel = document.getElementById('stageSel');
+    if(sel && sel.dataset.crComLabelled){
+      Array.prototype.forEach.call(sel.options, function(o){ o.textContent = o.value; });
+      delete sel.dataset.crComLabelled;
+    }
+  }
+
+  // ── Wrap renderOverview so this runs after every card render ──
+  function hook(){
+    if(typeof window.renderOverview !== 'function') return false;
+    if(window.renderOverview.__crComStage) return true;
+    var orig = window.renderOverview;
+    var wrapped = function(){
+      var out = orig.apply(this, arguments);
+      try{
+        if(onCommunity()) relabel();
+        else              restoreSelect();
+      }catch(e){ console.warn('[com-stage]', e); }
+      return out;
+    };
+    wrapped.__crComStage = true;
+    window.renderOverview = wrapped;
+    return true;
+  }
+
+  function start(){
+    var n = 0;
+    var iv = setInterval(function(){
+      if(hook() || ++n > 40) clearInterval(iv);
+    }, 150);
+    // Catch renders that happen through other paths
+    var ticking = false;
+    new MutationObserver(function(){
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){
+        ticking = false;
+        try{ if(onCommunity()) relabel(); }catch(_){ }
+      });
+    }).observe(document.body, { childList:true, subtree:true });
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalComStages = { LABELS: COM_LABEL, label: label, relabel: relabel };
+})();
+</script>
