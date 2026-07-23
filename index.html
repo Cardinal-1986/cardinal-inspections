@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 169 &#8212; Estimates audit: Templates + stat cells + manual rows wired, Save/Send messaging honest</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 170 &#8212; Claims + Pricing + Coach audit; openContractEditor stub fixes both Estimates Convert and Claims data-link contract</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29178,6 +29178,192 @@ body.claim-insurance #brandLogo{
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: plugin_audit_fixes.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — CLAIMS · PRICING · COACH AUDIT FIXES
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ After the Estimates audit, traced every data-act button in the
+ remaining three plugins. Findings:
+
+ CLAIMS  (cr-claims-mount, 12 data-act values across list + detail
+          + payment + supplement + import views)
+   • new · close · back · edit · add-payment · add-supplement ·
+     cancel · save · delete · done · import · add — ALL WIRED
+     to real handlers ✓
+   • data-link "estimate" → CardinalEstimates.openOne ✓
+   • data-link "project"  → openProject ✓
+   • data-link "contract" → window.openContractEditor which IS
+     NEVER DEFINED anywhere in the source. Silent fail. Same
+     issue that hits Estimates Convert. ❌
+   • data-link (anything else) → an error toast advising to
+     wire it. Fine as-is — that's a developer hint, not user UX.
+
+ PRICING (cr-pricing-mount, 16 data-act values across list +
+          add-item + categories + history + import modals)
+   • add · categories · history · back · close · up · down ·
+     toggle · item-history · add-cat · del-cat · cancel · save ·
+     delete · done · import — ALL WIRED to real handlers ✓
+   • back → returns to Estimates (intentional; Pricing lives
+     under Estimates as a sub-tool)
+   • RUNTIME DEPENDENCY: pricing_items, pricing_categories,
+     pricing_history Supabase tables. If they aren't set up,
+     the plugin will show empty state / DB errors. Nothing to
+     fix in the client code — you need to run the pricing setup
+     SQL in Supabase.
+
+ COACH   (cr-coach-mount, 14 data-act values across deck + drill
+          + board + log + entry views)
+   • back · x · list · drill · board · log · deck · skip ·
+     grade · again · retry · add · cancel · save — ALL WIRED
+     to real handlers ✓
+   • wireBack() (line 21653) uniformly attaches close to every
+     "x" back button across templates — clean pattern
+   • Graceful degradation: if the deck fails to load, shows a
+     "Run objection_coach_setup.sql in Supabase" hint. Well done.
+   • RUNTIME DEPENDENCY: objection_coach schema in Supabase +
+     Gemini/OpenAI keys configured for grading
+
+ WHAT THIS FIX DOES:
+   1. Defines a working window.openContractEditor stub that:
+      - Explains the contract was successfully created (that
+        part works — the DB row is written)
+      - Offers to open the project profile so you can see the
+        contract listed with the client's other docs
+      - Beats the silent showList() fallback
+   2. That single stub fixes both:
+      - Claims data-link "contract" clicks
+      - Estimates AI Convert-to-Contract flow
+
+ WHAT THIS FIX DOES NOT DO:
+   • Build a real contract editor (needs to be a proper view)
+   • Verify pricing_items / pricing_categories tables exist
+     (that's a Supabase deployment task)
+   • Verify objection_coach schema is set up (also Supabase)
+
+ INSTALL: paste after estimates_audit_fixes.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-paf-styles">
+  .cr-paf-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9700;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .cr-paf-box{
+    background:#fff; border-radius:14px; max-width:460px; width:100%;
+    padding:22px 22px 18px; box-shadow:0 20px 60px rgba(0,0,0,.4);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-paf-box h3{
+    margin:0 0 8px; font:800 15px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c;
+  }
+  .cr-paf-box p{
+    margin:0 0 12px; font:600 12.5px 'Segoe UI',Arial,sans-serif;
+    color:#6b6b6b; line-height:1.5;
+  }
+  .cr-paf-box p b{ color:#2c2c2c; }
+  .cr-paf-box .info{
+    background:#f7f7f7; padding:10px 12px; border-radius:8px;
+    font:600 11.5px 'Segoe UI',Arial,sans-serif; color:#6b6b6b;
+    margin:0 0 14px; border-left:3px solid #d4a017;
+  }
+  .cr-paf-box .acts{
+    display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;
+  }
+  .cr-paf-box button{
+    border:0; border-radius:6px; padding:8px 14px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; cursor:pointer;
+    font-family:inherit;
+  }
+  .cr-paf-box button.primary{
+    background:#D9282A; color:#fff;
+  }
+  .cr-paf-box button.primary:hover{ background:#B01F21; }
+  .cr-paf-box button.ghost{
+    background:transparent; color:#6b6b6b;
+    border:1px solid #d0d0d0;
+  }
+  .cr-paf-box button.ghost:hover{ background:#f7f7f7; }
+</style>
+
+<script id="cr-paf-script">
+(function () {
+  'use strict';
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function showContractCreatedModal(contract, onGoToProject){
+    var bg = document.createElement('div');
+    bg.className = 'cr-paf-bg';
+    // Best-effort readable identifier. Contract shape varies by source
+    // (Claims fetches from `contracts`, Estimates hands a full built
+    // object) so we hedge on which fields exist.
+    var num = '';
+    if(contract){
+      num = contract.contract_number || contract.number || contract.id || '';
+    }
+    var canOpenProject = contract && contract.project_id &&
+                         typeof window.openProject === 'function';
+    bg.innerHTML =
+      '<div class="cr-paf-box">' +
+        '<h3>Contract created</h3>' +
+        '<p>The contract' + (num ? ' <b>' + esc(String(num)) + '</b>' : '') +
+          ' was written to the database successfully.</p>' +
+        '<div class="info">A dedicated contract editor isn\'t shipped yet. ' +
+          'Open the project to view the contract alongside the client\'s ' +
+          'other documents.</div>' +
+        '<div class="acts">' +
+          '<button class="ghost" data-act="close">Close</button>' +
+          (canOpenProject
+            ? '<button class="primary" data-act="open">Open Project</button>'
+            : '') +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(bg);
+    var close = function(){ if(bg.parentNode) bg.parentNode.removeChild(bg); };
+    bg.onclick = function(e){ if(e.target === bg) close(); };
+    bg.querySelector('[data-act="close"]').onclick = close;
+    var openBtn = bg.querySelector('[data-act="open"]');
+    if(openBtn){
+      openBtn.onclick = function(){
+        close();
+        if(typeof onGoToProject === 'function') onGoToProject();
+      };
+    }
+  }
+
+  // Define window.openContractEditor. Referenced by:
+  //   • Estimates AI Convert-to-Contract (line 17830)
+  //   • Claims data-link "contract" (line 19929)
+  // Both check `typeof window.openContractEditor === 'function'` before
+  // calling, so defining it activates both flows.
+  if(typeof window.openContractEditor !== 'function'){
+    window.openContractEditor = function(contract){
+      var pid = contract && contract.project_id;
+      showContractCreatedModal(contract, function(){
+        if(!pid || typeof window.openProject !== 'function') return;
+        // Close every plugin mount so projectView can take over
+        if(typeof window.crCloseAll === 'function'){
+          try{ window.crCloseAll(); }catch(e){}
+        }
+        setTimeout(function(){ window.openProject(pid); }, 60);
+      });
+    };
+  }
 })();
 </script>
 
