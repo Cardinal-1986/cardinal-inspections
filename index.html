@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 157 &#8212; Community client theme + bid strip; Hub gets Work Schedule, Activity, AR, Mini Calendar</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 158 &#8212; Bug audit: chip click restored, Create Lead has Community option, Hub perf fix, back button, ordering</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -5807,6 +5807,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <div class="ldctgrp" style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="insurance"> &#128737;&#65039; Insurance</label>
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="retail"> &#127968; Retail</label>
+          <label class="ldctopt"><input type="radio" name="ldClaimType" value="community"> &#127960;&#65039; Community</label>
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="unknown" checked> &#10067; Don't know yet</label>
         </div>
 
@@ -23543,19 +23544,28 @@ body.claim-insurance #brandLogo{
     var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(pr) : null;
     if(ct !== 'community') return removeAttachRow();
 
-    // find a stable insertion point — right below the stage bar,
-    // matches where insurance_stages inserts its claim strip.
-    var anchor = document.querySelector('.dbstage');
+    // Insertion point — prefer to sit AFTER the bid strip so the
+    // ordering is deterministic (dbstage → bid strip → attach row).
+    // Falls back to sitting right after .dbstage if there's no bid strip.
+    var anchor = document.querySelector('.cr-bidstrip') || document.querySelector('.dbstage');
     if(!anchor) return;
 
     var row = document.querySelector('.cr-cp-attach');
+    var pid = partnerIdForProject(pr);
+    var p   = pid ? get(pid) : null;
+
+    // Idempotency signature — bail out early if the visible state
+    // hasn't changed. Every DOM mutation would otherwise cause this
+    // to re-innerHTML the row and thrash click handlers at 60fps.
+    var sig = pr.id + '|' + (pid || '') + '|' + (p ? p.partner_type + '|' + p.name : 'none');
+    if(row && row.dataset.sig === sig) return;
+
     if(!row){
       row = document.createElement('div');
       row.className = 'cr-cp-attach';
       anchor.insertAdjacentElement('afterend', row);
     }
-    var pid = partnerIdForProject(pr);
-    var p   = pid ? get(pid) : null;
+    row.dataset.sig = sig;
 
     if(p){
       row.innerHTML =
@@ -24374,10 +24384,17 @@ body.claim-insurance #brandLogo{
     document.body.appendChild(v);
 
     v.querySelector('[data-act="back"]').onclick = function(){
+      // showHome() is the full flow (hideAllViews, mainView.display=block,
+      // renderHome, renderHero, renderCalendar, renderPipeline, renderActivity,
+      // scrollTo(0,0)) — call it directly instead of piecing it together.
+      if(typeof window.showHome === 'function'){
+        window.showHome();
+        return;
+      }
       if(typeof window.hideAllViews === 'function') window.hideAllViews();
       if(typeof window.renderHome === 'function') window.renderHome();
       var main = document.getElementById('mainView') || window.mainView;
-      if(main) main.style.display = '';
+      if(main) main.style.display = 'block';
     };
     v.querySelector('[data-act="manage"]').onclick = function(){
       if(window.CardinalCommunityPartners) window.CardinalCommunityPartners.openDirectory();
@@ -25077,9 +25094,11 @@ body.claim-insurance #brandLogo{
     try{
       ensureMenuOption();
       onPortalChange();
-      // if hub is visible, re-render so counts stay fresh
-      var v = document.getElementById('communityHubView');
-      if(v && v.style.display !== 'none') render();
+      // NB: intentionally NOT re-rendering the whole hub on every
+      // mutation. That would burn CPU + battery — each render() does
+      // 8 innerHTML rewrites which themselves fire the observer.
+      // render() is called explicitly by show() and by a periodic
+      // interval below while the hub is visible.
     } finally { ticking = false; }
   }
   var scheduled = false;
@@ -25092,6 +25111,12 @@ body.claim-insurance #brandLogo{
     tick();
     new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true });
     var n = 0, iv = setInterval(function(){ tick(); if(++n > 20) clearInterval(iv); }, 300);
+    // Refresh the hub every 30s while it's open — catches stage moves
+    // and new clients added in another tab or by a teammate.
+    setInterval(function(){
+      var v = document.getElementById('communityHubView');
+      if(v && v.style.display !== 'none') render();
+    }, 30000);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
@@ -25385,17 +25410,24 @@ body.claim-insurance #brandLogo{
 
   // ── Also re-render the current profile's chip on boot so an ─────
   //     already-open community client shows the green chip without a reload.
+  //     CRITICAL: update the element IN PLACE. Using replaceChild would
+  //     discard the click listener the app attached via addEventListener
+  //     when it rendered the lead card, which is exactly what makes the
+  //     chip stop opening the type-change dialog.
   function rerenderChipIfNeeded(){
     var chip = document.getElementById('claimTypeChip');
     if(!chip) return;
     if(!window.currentProject) return;
     var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(window.currentProject) : 'unknown';
     if(ct !== 'community') return;                  // existing paths already handle retail/ins/unknown
-    if(chip.classList.contains('ct-community')) return;
-    var wrapper = document.createElement('div');
-    wrapper.innerHTML = window.claimTypeChip('community');
-    var next = wrapper.firstChild;
-    if(next && chip.parentNode) chip.parentNode.replaceChild(next, chip);
+    if(chip.classList.contains('ct-community') &&
+       !chip.classList.contains('ct-unknown') &&
+       !chip.classList.contains('ct-retail') &&
+       !chip.classList.contains('ct-insurance')) return;
+    // In-place update: same node, new classes/content — click listener preserved.
+    chip.className = 'claimchip ct-community';
+    chip.innerHTML = '\uD83C\uDFD8\uFE0F Community';
+    chip.title = 'Tap to change client type';
   }
 
   function start(){
@@ -26274,12 +26306,10 @@ body.claim-insurance #brandLogo{
   }
 
   // ── Bid strip ────────────────────────────────────────────
-  var lastPid = null;
   function renderBidStrip(){
     if(!onCommunity()){
       var e = document.querySelector('.cr-bidstrip');
       if(e) e.remove();
-      lastPid = null;
       return;
     }
     var bar = document.querySelector('.dbstage');
@@ -26287,9 +26317,21 @@ body.claim-insurance #brandLogo{
     var pr = window.currentProject;
     if(!pr) return;
 
+    var bid = bidOf(pr) || {};
+    var submitted = Number(bid.submitted_amount || 0);
+    var awarded   = Number(bid.awarded_amount   || 0);
+    var fin = (typeof window.jobFinance === 'function') ? window.jobFinance(pr) : { value:0, paid:0, balance:0, pct:0 };
+    var paid = Number(fin.paid || 0);
+
+    // Idempotency signature — if these numbers haven't changed, don't
+    // touch the DOM. Every innerHTML write triggers the MutationObserver
+    // and would otherwise cause a 60fps re-render loop.
+    var sig = pr.id + '|' + submitted + '|' + awarded + '|' + paid + '|' + Number(fin.value || 0);
     var host = document.querySelector('.cr-bidstrip');
+    if(host && host.dataset.sig === sig) return;
+
     if(host && host.dataset.pid === pr.id){
-      // just re-render inside the same host
+      // reuse for same project
     }else{
       if(host) host.remove();
       host = document.createElement('div');
@@ -26297,13 +26339,7 @@ body.claim-insurance #brandLogo{
       host.dataset.pid = pr.id;
       bar.insertAdjacentElement('afterend', host);
     }
-
-    var bid = bidOf(pr) || {};
-    var submitted = Number(bid.submitted_amount || 0);
-    var awarded   = Number(bid.awarded_amount   || 0);
-
-    var fin = (typeof window.jobFinance === 'function') ? window.jobFinance(pr) : { value:0, paid:0, balance:0, pct:0 };
-    var paid = Number(fin.paid || 0);
+    host.dataset.sig = sig;
 
     // Basis for balance: prefer awarded → submitted → contract value
     var basis   = awarded || submitted || Number(fin.value || 0);
