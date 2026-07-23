@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 164 &#8212; Portal chip auto-syncs to Cardinal Truth or Community Hub when you navigate into them</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 165 &#8212; Insurance tint scoped to Cardinal Truth view; auto-transition suggestions (contract signed &#8594; Approved, payment &#8594; Invoiced)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22413,12 +22413,17 @@ body.claim-insurance #brandLogo{
      Retail keeps the Cardinal red/gold and needs no override.   */
 
   /* Insurance — steel blue */
-  body.portal-insurance{
+  /* Scoped to VIEW (viewing-cardinal-truth) not the portal chip, so
+     retail Home stays retail-styled even when the user's current
+     portal is Insurance. Cardinal Truth toggles the class in show/
+     hideAllViews via the portal_view_sync module. Insurance clients
+     get their own theme via body.claim-insurance in the base app. */
+  body.viewing-cardinal-truth{
     --red:#4a6fa5; --red-dk:#3d5d8c;
     --amber:#7fa6d6; --slate:#5b6b7b;
   }
-  body.portal-insurance .titlecard h1,
-  body.portal-insurance .ct-dashtitle{ color:#7fa6d6; }
+  body.viewing-cardinal-truth .titlecard h1,
+  body.viewing-cardinal-truth .ct-dashtitle{ color:#7fa6d6; }
 
   /* Community — green primary, blue secondary, beige surfaces */
   /* Scoped to VIEW (viewing-community-hub) not the portal chip, so retail
@@ -28156,6 +28161,10 @@ body.claim-insurance #brandLogo{
     var wrapped = function(){
       // Sync BEFORE the view renders so the chip is right when the header paints.
       silentSet('insurance');
+      // Also flag the view so the base app's CSS variable overrides
+      // (--red → steel blue, etc.) apply for the CT view only. Retail Home
+      // stays retail-styled when the user's portal is Insurance.
+      document.body.classList.add('viewing-cardinal-truth');
       return orig.apply(this, arguments);
     };
     wrapped.__crPortalSync = true;
@@ -28177,10 +28186,28 @@ body.claim-insurance #brandLogo{
     return true;
   }
 
+  // Wrap hideAllViews so `viewing-cardinal-truth` gets removed on any
+  // navigation away from Cardinal Truth. Mirrors what community_hub does
+  // for `viewing-community-hub`.
+  function hookHideAllViews(){
+    if(typeof window.hideAllViews !== 'function') return false;
+    if(window.hideAllViews.__crViewScope) return true;
+    var orig = window.hideAllViews;
+    var wrapped = function(){
+      var out = orig.apply(this, arguments);
+      document.body.classList.remove('viewing-cardinal-truth');
+      return out;
+    };
+    wrapped.__crViewScope = true;
+    window.hideAllViews = wrapped;
+    return true;
+  }
+
   function tryHooks(){
     var a = hookCardinalTruth();
     var b = hookCommunityHub();
-    return a && b;
+    var c = hookHideAllViews();
+    return a && b && c;
   }
 
   function start(){
@@ -28194,6 +28221,268 @@ body.claim-insurance #brandLogo{
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: auto_transitions.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — AUTO-TRANSITION SUGGESTIONS
+ v2026-07-23 · rule-driven stage-change hints
+────────────────────────────────────────────────────────────────────
+ Watches the current project against a small set of rules and, when
+ one fires, shows a green suggestion banner above the stage bar with
+ an Apply button. Never moves stage on its own — always requires the
+ user to click Apply. That way the Schedule Board / production
+ queue / "Approved → email Curtis" workflow never fires from a
+ surprise auto-move.
+
+ RULES (in JS, easy to extend):
+   • Lead|Prospect + signed contract on file → Move to Approved
+   • Completed + at least one payment logged   → Move to Invoiced
+
+ The stage stored on projects.stage is the same value across all
+ three CRMs; only the visible label is rewritten per-portal by
+ community_stages / insurance_stages. So one rule fits all three
+ pipelines — no separate community/insurance/retail branching.
+
+ Dismissed suggestions come back the next time you open the client
+ (in-memory only, on purpose — the underlying condition is still
+ true, so the suggestion should keep asking).
+
+ INSTALL: paste after portal_view_sync.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-autotrans-styles">
+  .cr-autotrans{
+    background:linear-gradient(135deg,#eef7f0,#d9ecd4);
+    border:1px solid #4a8c5a; border-radius:10px;
+    padding:11px 14px; margin:0 0 12px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    display:flex; align-items:center; gap:12px; justify-content:space-between;
+  }
+  .cr-autotrans .body{ flex:1; min-width:0; }
+  .cr-autotrans .icon{ font-size:16px; line-height:1; }
+  .cr-autotrans .title{
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#2f5f3b;
+    display:flex; align-items:center; gap:6px;
+  }
+  .cr-autotrans .desc{
+    font:600 12.5px 'Segoe UI',Arial,sans-serif; color:#3d4a2c;
+    margin-top:3px; line-height:1.4;
+  }
+  .cr-autotrans .actions{
+    display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .cr-autotrans button{
+    background:#4a8c5a; color:#fff; border:0; border-radius:6px;
+    padding:7px 12px; cursor:pointer;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    font-family:inherit; white-space:nowrap;
+  }
+  .cr-autotrans button:hover{ background:#3d7a4c; }
+  .cr-autotrans button:disabled{
+    background:#8ba892; cursor:wait;
+  }
+  .cr-autotrans button.ghost{
+    background:transparent; color:#3d7a4c;
+    border:1px solid rgba(74,140,90,.5);
+  }
+  .cr-autotrans button.ghost:hover{ background:rgba(74,140,90,.12); }
+
+  /* Adapt to insurance client / Cardinal Truth per-client theme */
+  body.claim-insurance .cr-autotrans{
+    background:linear-gradient(135deg,rgba(74,111,165,.14),rgba(74,111,165,.24));
+    border-color:#4a6fa5;
+  }
+  body.claim-insurance .cr-autotrans .title{ color:#7fa6d6; }
+  body.claim-insurance .cr-autotrans .desc { color:#c0d0e5; }
+  body.claim-insurance .cr-autotrans button{
+    background:#4a6fa5;
+  }
+  body.claim-insurance .cr-autotrans button:hover{ background:#3d5d8c; }
+  body.claim-insurance .cr-autotrans button.ghost{
+    background:transparent; color:#7fa6d6;
+    border-color:rgba(127,166,214,.5);
+  }
+  body.claim-insurance .cr-autotrans button.ghost:hover{
+    background:rgba(127,166,214,.12);
+  }
+</style>
+
+<script id="cr-autotrans-script">
+(function () {
+  'use strict';
+
+  // Per-tab dismissed rules — reset on reload. Persisted dismissal is a
+  // trap: if the condition is still true after a reload, we want to keep
+  // asking. Otherwise a stale "not now" from three weeks ago blocks a
+  // very-relevant suggestion today.
+  var DISMISSED = {};
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function isContractSigned(pr){
+    if(!pr) return false;
+    if(typeof window.isContractTitle !== 'function') return false;
+    var rows = (window.cacheRows || []).filter(function(r){
+      return r.project_id === pr.id;
+    });
+    return rows.some(function(r){
+      return window.isContractTitle(r.title) &&
+             r.signed_at &&
+             Number(r.total) > 0;
+    });
+  }
+
+  function anyPayment(pr){
+    if(!pr) return false;
+    if(typeof window.jobFinance !== 'function') return false;
+    try{ return Number(window.jobFinance(pr).paid || 0) > 0; }
+    catch(e){ return false; }
+  }
+
+  var RULES = [
+    {
+      key   : 'sign-to-approved',
+      icon  : '\u2713',                     // ✓
+      title : 'Contract signed',
+      desc  : 'Move this client to Approved so it appears in the production queue.',
+      action: 'Move to Approved',
+      target: 'Approved',
+      when  : function(pr){
+        if(pr.stage !== 'Lead' && pr.stage !== 'Prospect') return false;
+        return isContractSigned(pr);
+      },
+    },
+    {
+      key   : 'paid-to-invoiced',
+      icon  : '\uD83D\uDCB0',               // 💰
+      title : 'Payment received',
+      desc  : 'A payment is on file. Move this client to Invoiced?',
+      action: 'Move to Invoiced',
+      target: 'Invoiced',
+      when  : function(pr){
+        if(pr.stage !== 'Completed') return false;
+        return anyPayment(pr);
+      },
+    },
+  ];
+
+  function firedRule(pr){
+    for(var i = 0; i < RULES.length; i++){
+      var r = RULES[i];
+      if(DISMISSED[pr.id + ':' + r.key]) continue;
+      try{ if(r.when(pr)) return r; }catch(e){}
+    }
+    return null;
+  }
+
+  function renderBanner(){
+    var pr = window.currentProject;
+    if(!pr) return removeBanner();
+    var rule = firedRule(pr);
+    if(!rule) return removeBanner();
+
+    var stageBar = document.querySelector('.dbstage');
+    if(!stageBar) return;
+
+    // Idempotency — same rule for same project → skip
+    var sig = pr.id + ':' + rule.key;
+    var host = document.querySelector('.cr-autotrans');
+    if(host && host.dataset.sig === sig) return;
+
+    if(host) host.remove();
+    host = document.createElement('div');
+    host.className = 'cr-autotrans';
+    host.dataset.sig = sig;
+    host.innerHTML =
+      '<div class="body">' +
+        '<div class="title"><span class="icon">' + rule.icon + '</span> ' +
+          esc(rule.title) + '</div>' +
+        '<div class="desc">' + esc(rule.desc) + '</div>' +
+      '</div>' +
+      '<div class="actions">' +
+        '<button class="ghost" data-act="dismiss">Not now</button>' +
+        '<button data-act="apply">' + esc(rule.action) + '</button>' +
+      '</div>';
+    // Sits ABOVE the stage bar — attention-grabbing, and doesn't compete
+    // with the bid strip / attach partner / attach property rows that
+    // all sit BELOW the stage bar.
+    stageBar.insertAdjacentElement('beforebegin', host);
+
+    host.querySelector('[data-act="dismiss"]').onclick = function(){
+      DISMISSED[sig] = true;
+      removeBanner();
+    };
+    host.querySelector('[data-act="apply"]').onclick = async function(){
+      var btn = host.querySelector('[data-act="apply"]');
+      btn.disabled = true;
+      btn.textContent = 'Working\u2026';
+      try{
+        if(typeof window.setStage !== 'function'){
+          throw new Error('setStage function unavailable');
+        }
+        await window.setStage(pr.id, rule.target);
+        if(typeof window.auditLog === 'function'){
+          try{
+            window.auditLog('stage',
+              'Auto-transition (' + rule.key + '): ' + pr.stage + ' \u2192 ' + rule.target,
+              pr.id);
+          }catch(_){ }
+        }
+        removeBanner();
+      }catch(e){
+        alert('Could not change stage: ' + (e.message || e));
+        btn.disabled = false;
+        btn.textContent = rule.action;
+      }
+    };
+  }
+  function removeBanner(){
+    var host = document.querySelector('.cr-autotrans');
+    if(host) host.remove();
+  }
+
+  // Hook renderOverview — same pattern as other project-profile modules.
+  function hook(){
+    if(typeof window.renderOverview !== 'function') return false;
+    if(window.renderOverview.__crAutoTrans) return true;
+    var orig = window.renderOverview;
+    var wrapped = function(){
+      var out = orig.apply(this, arguments);
+      try{ renderBanner(); }catch(err){ console.warn('[auto-trans]', err); }
+      return out;
+    };
+    wrapped.__crAutoTrans = true;
+    window.renderOverview = wrapped;
+    return true;
+  }
+
+  function start(){
+    var n = 0, iv = setInterval(function(){
+      if(hook() || ++n > 40) clearInterval(iv);
+    }, 200);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalAutoTransitions = {
+    rules: RULES,
+    check: firedRule,
+    render: renderBanner,
+  };
 })();
 </script>
 
