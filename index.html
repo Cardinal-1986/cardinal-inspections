@@ -22386,6 +22386,20 @@ body.claim-insurance #brandLogo{
   .cr-chero img{ display:block; width:100%; height:auto;
     filter:drop-shadow(0 6px 18px rgba(0,0,0,.5)); }
 
+
+  /* ── Mobile overflow guard ───────────────────────────────
+     The header is a flex row; adding the portal chip pushed the
+     masthead wider than the viewport and the whole app started
+     scrolling sideways. Clamp the page and let the chip shrink. */
+  html, body{ max-width:100%; overflow-x:hidden; }
+  header.site .masthead{ max-width:100%; }
+  .cr-portal-chip{
+    flex:0 1 auto; min-width:0; max-width:42vw;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-size:9px; padding:4px 9px;
+  }
+  .cr-pcard, .cr-psheet, .cr-plabel{ max-width:100%; }
+  .cr-pcard{ overflow:hidden; }
 </style>
 
 <script id="cr-portal-script">
@@ -22410,12 +22424,16 @@ body.claim-insurance #brandLogo{
     try{ var v = localStorage.getItem(KEY + '.' + me()); if(v && (PORTALS[v] || v==='all')) return v; }catch(e){}
     return canSeeAll() ? 'all' : 'retail';
   }
-  function set(p){
+  function set(p, navigate){
     try{ localStorage.setItem(KEY + '.' + me(), p); }catch(e){}
     paintChip();
     if(typeof window.renderClientDirectory === 'function'){
       try{ window.renderClientDirectory(); }catch(e){}
     }
+    // Switching portal while sitting on a page that isn't the client list
+    // used to change nothing on screen. Take the user somewhere the change
+    // is actually visible.
+    if(navigate) go(p);
   }
 
   // ── Which portal is a project in? ──────────────────────────
@@ -22527,8 +22545,21 @@ body.claim-insurance #brandLogo{
     document.body.appendChild(bg);
     bg.onclick = function(e){ if(e.target === bg) bg.remove(); };
     bg.querySelectorAll('[data-p]').forEach(function(b){
-      b.onclick = function(){ set(b.dataset.p); bg.remove(); };
+      b.onclick = function(){ bg.remove(); set(b.dataset.p, true); };
     });
+  }
+
+  // ── Where a portal takes you ──────────────────────────────
+  function go(portal){
+    var land = document.getElementById('landingView');
+    if(land) land.style.display = 'none';
+    if(portal === 'insurance' && typeof window.showCardinalTruth === 'function'){
+      window.showCardinalTruth();
+    } else if(typeof window.openClientsDirectory === 'function'){
+      window.openClientsDirectory();
+    } else if(typeof window.showHome === 'function'){
+      window.showHome();
+    }
   }
 
   // ── Rebuild the landing page as a portal hub ──────────────
@@ -22591,20 +22622,23 @@ body.claim-insurance #brandLogo{
     holder.innerHTML = html;
     while(holder.firstChild) dash.parentNode.insertBefore(holder.firstChild, dash);
 
+    // The old "Insurance Claims" landing card now duplicates the Insurance
+    // CRM portal above it — both land on Cardinal Truth. Retire it.
+    var dupe = document.getElementById('landClaims');
+    if(dupe) dupe.style.display = 'none';
+
     // Re-label the existing dashboard card so it reads as a tool, not a portal
     var t = dash.querySelector('div');
     if(t) t.innerHTML = '\uD83C\uDFDB\uFE0F The Source of Truth';
 
     land.querySelectorAll('[data-portal]').forEach(function(b){
-      b.onclick = function(){
+      b.onclick = function(e){
+        e.preventDefault(); e.stopPropagation();
         set(b.dataset.portal);
-        if(b.dataset.portal === 'insurance' && typeof window.showCardinalTruth === 'function'){
-          window.showCardinalTruth();
-        } else if(typeof window.openClientsDirectory === 'function'){
-          window.openClientsDirectory();
-        } else if(typeof window.showHome === 'function'){
-          window.showHome();
-        }
+        // hideAllViews() does NOT dismiss #landingView, so the click was
+        // firing but the landing stayed on top and nothing looked to happen.
+        land.style.display = 'none';
+        go(b.dataset.portal);
       };
     });
 
