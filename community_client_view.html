@@ -1,0 +1,460 @@
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: community_client_view.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — COMMUNITY CLIENT VIEW
+ v2026-07-23 · per-client theme + bid strip
+────────────────────────────────────────────────────────────────────
+ The community equivalent of Cardinal Truth's per-client treatment
+ (body.claim-insurance). When body.claim-community is set:
+
+   • Body background flips to warm beige
+   • Client profile card (.projinfo, .acxsec, .jabox, .dbrow) get
+     the green/cream palette instead of retail red/gold
+   • Site header takes the same pale-green paint the portal theme
+     uses, but keyed to the client rather than the portal — so a
+     community client accessed via a mention from another portal
+     still reads "you are on a community client"
+
+ Also injects a BID STRIP under the stage bar, mirroring the shape
+ of insurance's claim strip:
+
+   Bid Submitted  ·  Awarded  ·  Deposit Received  ·  Balance Due
+   Progress bar + Log/Edit buttons
+
+ Bid data lives at checklist.bid = { submitted_amount, submitted_at,
+ awarded_amount, awarded_at }. Deposit/paid comes from jobFinance().
+
+ The body.claim-community class is toggled by patches in the base
+ index.html (three sites: openProject, showTab pre-reveal, and
+ hideAllViews).
+
+ INSTALL: paste after claims_form_fixes.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-comclient-styles">
+  /* ═══ BODY REPAINT WHEN VIEWING A COMMUNITY CLIENT ═══════ */
+  body.claim-community{ background:#f7f2e7; }
+  body.claim-community #projectView{ background:#f7f2e7; }
+
+  /* Site header: pale-green treatment, same as portal-community */
+  body.claim-community header.site{
+    background:#e8f2e5;
+    border-bottom-color:#4a8c5a;
+    box-shadow:0 2px 14px rgba(74,140,90,.22);
+  }
+  body.claim-community header.site .brand h1,
+  body.claim-community header.site .brand .co,
+  body.claim-community header.site .whoami{ color:#2f5f3b !important; }
+  body.claim-community header.site .brand h1 span,
+  body.claim-community header.site .titlecard h1 span{
+    background:linear-gradient(160deg,#b8860b,#d4a017 45%,#a67c0a);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:#b8860b !important;
+  }
+  body.claim-community header.site .brand .co small,
+  body.claim-community header.site .tag{ color:#4a6b4f !important; }
+  body.claim-community header.site .btn{
+    background:#4a8c5a; color:#ffffff !important; border-color:transparent;
+  }
+  body.claim-community header.site .btn:hover{ background:#3d7a4c; }
+  body.claim-community header.site .btn.ghost{
+    background:transparent; color:#2f5f3b !important;
+    border:1px solid rgba(47,95,59,.45);
+  }
+  body.claim-community header.site .btn.ghost:hover{
+    background:rgba(47,95,59,.09);
+  }
+
+  /* Client cover card */
+  body.claim-community .projinfo{
+    background:#fffdf7; border-color:#c9dcbf;
+    box-shadow:0 6px 22px rgba(74,140,90,.14);
+  }
+  body.claim-community .projinfo:hover{
+    border-color:#7fc98f;
+    box-shadow:0 8px 26px rgba(74,140,90,.22);
+  }
+  body.claim-community .projinfo h2{ color:#1a2a1e; }
+  body.claim-community .projinfo .namestar{ color:#a8b09a; }
+  body.claim-community .projinfo .namestar.on{ color:#d4a017; }
+  body.claim-community .projinfo .mrow{ color:#3d4a2c; }
+  body.claim-community .projinfo .mrow a{ color:#3d7a4c; }
+  body.claim-community .projinfo .mlbl{ color:#6b7a55; }
+  body.claim-community .projinfo .mrow .poval{ color:#b8860b; }
+  body.claim-community .editpencil{
+    background:rgba(74,140,90,.09); border-color:#c9dcbf; color:#3d7a4c;
+  }
+  body.claim-community .editpencil:hover{
+    background:rgba(74,140,90,.18); color:#1a2a1e;
+  }
+
+  /* "COMMUNITY" badge over the name (mirrors "INSURANCE" badge) */
+  body.claim-community .comBadge{
+    display:inline-block; padding:2px 8px; border-radius:4px;
+    background:#4a8c5a; color:#fff;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    margin-right:8px; vertical-align:middle;
+  }
+
+  body.claim-community .projinfo .poPfx{
+    color:#3d7a4c; border-color:#c9dcbf;
+  }
+  body.claim-community .projinfo .poPfx.empty{
+    color:#6b7a55; border-color:#4a8c5a;
+  }
+  body.claim-community .projinfo .projLandChip,
+  body.claim-community .projinfo .projHomeChip{
+    background:rgba(74,140,90,.08); color:#3d7a4c; border-color:#c9dcbf;
+  }
+  body.claim-community .projinfo .projLandChip:hover,
+  body.claim-community .projinfo .projHomeChip:hover{
+    background:rgba(74,140,90,.18); color:#1a2a1e;
+  }
+
+  /* Section headers under the cover */
+  body.claim-community #projectView .projsec{
+    color:#1a2a1e; border-bottom-color:#4a8c5a;
+  }
+
+  /* Money strip */
+  body.claim-community .dbmoney{
+    background:#fffdf7; border:1px solid #c9dcbf; border-radius:8px;
+    padding:12px 14px;
+  }
+  body.claim-community .dbmoney small{ color:#6b7a55; }
+  body.claim-community .dbmoney b{ color:#1a2a1e; }
+  body.claim-community .dbmoney .dbringin{ color:#b8860b; }
+
+  /* Job menu tiles */
+  body.claim-community .jabox{
+    background:#fffdf7; border:1px solid #c9dcbf;
+  }
+  body.claim-community .jabox:active{ background:#f2ebd6; }
+  body.claim-community .jabox .jbl{ color:#3d4a2c; }
+  body.claim-community .jabox svg{ color:#3d7a4c; }
+  body.claim-community .jabox .jan{ color:#b8860b; }
+  body.claim-community .jabox .jan.zero{ color:#a8b09a; }
+
+  /* Row buttons in the client card */
+  body.claim-community .dbrow{
+    background:#fffdf7; border:1px solid #c9dcbf; color:#3d4a2c;
+  }
+  body.claim-community .dbrow:active{ background:#f2ebd6; }
+  body.claim-community .dbrow .dbic1{ color:#3d7a4c; }
+  body.claim-community .dbrow .dbgo{ color:#3d7a4c; }
+
+  /* Sections (acxsec) */
+  body.claim-community .acxsec:not(.rvsec){
+    background:#fffdf7; border:1px solid #c9dcbf;
+  }
+  body.claim-community .acxsec:not(.rvsec) .acxbody{ color:#3d4a2c; }
+  body.claim-community .acxsec:not(.rvsec) .ackv > span{ color:#6b7a55; }
+  body.claim-community .acxsec:not(.rvsec) .ackv > div{ color:#1a2a1e; }
+  body.claim-community .acxsec:not(.rvsec) .ackv a{ color:#3d7a4c; }
+  body.claim-community .acxsec:not(.rvsec) .acxtrs label{ color:#3d4a2c; }
+  body.claim-community .acxsec:not(.rvsec) .axnote{ color:#6b7a55; }
+  body.claim-community .acxsec:not(.rvsec) a[href^="https://maps"]{ color:#3d7a4c; }
+  body.claim-community .acxsec:not(.rvsec) .dbassign{ color:#1a2a1e; }
+  body.claim-community .acxsec:not(.rvsec) .dbrep b{ color:#1a2a1e; }
+  body.claim-community .acxsec:not(.rvsec) .dbprim small{ color:#6b7a55; }
+  body.claim-community .acxsec:not(.rvsec) .dbprim b{ color:#1a2a1e; }
+
+  body.claim-community #leadCard #leadCardBody.ldbox{
+    background:#fffdf7; border:1px solid #c9dcbf;
+  }
+  body.claim-community #leadCard .llrow{ color:#3d4a2c; }
+  body.claim-community #leadCard .llrow b{ color:#1a2a1e; }
+
+  /* ═══ BID STRIP (analog to insurance claim strip) ═══════ */
+  .cr-bidstrip{
+    background:linear-gradient(135deg,#eef7f0,#d9ecd4);
+    border:1px solid #4a8c5a; border-radius:10px;
+    padding:14px 16px; margin:0 0 12px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-bidstrip .hd{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    margin-bottom:11px; flex-wrap:wrap;
+  }
+  .cr-bidstrip .hd .lbl{
+    font:800 9.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.18em;
+    text-transform:uppercase; color:#2f5f3b;
+  }
+  .cr-bidstrip .hd .who{ font:600 11px 'Segoe UI',Arial,sans-serif; color:#6b7a55; }
+  .cr-bidstrip .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media(max-width:560px){ .cr-bidstrip .grid{ grid-template-columns:repeat(2,1fr); } }
+  .cr-bidstrip .cell .k{
+    font:700 8.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.13em;
+    text-transform:uppercase; color:#6b7a55;
+  }
+  .cr-bidstrip .cell .v{
+    font:800 17px 'Segoe UI',Arial,sans-serif; color:#1a2a1e;
+    margin-top:3px; font-variant-numeric:tabular-nums; letter-spacing:-.4px;
+  }
+  .cr-bidstrip .cell .v.warn{ color:#a67c0a; }
+  .cr-bidstrip .cell .v.neg { color:#c8202e; }
+  .cr-bidstrip .cell .v.pos { color:#2e7d32; }
+  .cr-bidstrip .cell .v.muted{ color:#8a9080; font-weight:700; }
+  .cr-bidstrip .bar{
+    height:5px; background:rgba(47,95,59,.14); border-radius:3px;
+    overflow:hidden; margin-top:12px;
+  }
+  .cr-bidstrip .bar i{ display:block; height:100%; background:#4a8c5a; }
+  .cr-bidstrip .foot{
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    font:600 11px 'Segoe UI',Arial,sans-serif; color:#3d4a2c; margin-top:7px;
+  }
+  .cr-bidstrip .foot b{ color:#1a2a1e; }
+  .cr-bidstrip .acts{
+    display:flex; gap:8px; margin-top:11px; flex-wrap:wrap;
+  }
+  .cr-bidstrip .acts button{
+    background:#4a8c5a; color:#fff; border:0; border-radius:6px;
+    padding:8px 12px; cursor:pointer;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    font-family:inherit;
+  }
+  .cr-bidstrip .acts button:hover{ background:#3d7a4c; }
+  .cr-bidstrip .acts button.ghost{
+    background:transparent; color:#3d7a4c;
+    border:1px solid rgba(74,140,90,.5);
+  }
+  .cr-bidstrip .acts button.ghost:hover{ background:rgba(74,140,90,.1); }
+  .cr-bidstrip.empty{ background:rgba(74,140,90,.07); }
+  .cr-bidstrip.empty .msg{
+    font:600 13px 'Segoe UI',Arial,sans-serif; color:#3d4a2c; line-height:1.5;
+  }
+</style>
+
+<script id="cr-comclient-script">
+(function () {
+  'use strict';
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function money(n){
+    return '$' + Number(n || 0).toLocaleString('en-US',
+      { minimumFractionDigits:0, maximumFractionDigits:0 });
+  }
+  function onCommunity(){
+    try{
+      if(typeof window.projClaimType !== 'function') return false;
+      var pr = window.currentProject;
+      if(!pr) return false;
+      return window.projClaimType(pr) === 'community';
+    }catch(e){ return false; }
+  }
+  function bidOf(pr){
+    try{
+      var ck = window.parseCkAll ? window.parseCkAll(pr) : {};
+      return ck.bid || null;
+    }catch(e){ return null; }
+  }
+  async function saveBid(pr, next){
+    if(!pr) return;
+    try{
+      var ck = window.parseCkAll ? window.parseCkAll(pr) : {};
+      var b = Object.assign({}, ck.bid || {}, next);
+      // strip nulls so we don't clutter storage
+      Object.keys(b).forEach(function(k){ if(b[k] == null || b[k] === '') delete b[k]; });
+      await window.patchProjectCk(pr, { bid: b });
+      if(window.currentProject && window.currentProject.id === pr.id){
+        renderBidStrip();
+      }
+      if(typeof window.auditLog === 'function'){
+        window.auditLog('lead', 'Bid info updated', pr.id);
+      }
+    }catch(e){ console.warn('[bid-strip] save', e); alert('Could not save: ' + (e.message || e)); }
+  }
+
+  // ── COMMUNITY badge over the client name ─────────────────
+  function ensureCommunityBadge(){
+    if(!onCommunity()) return;
+    var name = document.getElementById('projName');
+    if(!name) return;
+    if(name.querySelector('.comBadge')) return;
+    // Only inject if there's no INSURANCE badge already (shouldn't happen)
+    if(name.querySelector('.insBadge')) return;
+    var badge = document.createElement('span');
+    badge.className = 'comBadge';
+    badge.innerHTML = '\uD83C\uDFD8\uFE0F COMMUNITY';
+    name.insertBefore(badge, name.firstChild);
+  }
+
+  // ── Bid strip ────────────────────────────────────────────
+  var lastPid = null;
+  function renderBidStrip(){
+    if(!onCommunity()){
+      var e = document.querySelector('.cr-bidstrip');
+      if(e) e.remove();
+      lastPid = null;
+      return;
+    }
+    var bar = document.querySelector('.dbstage');
+    if(!bar) return;
+    var pr = window.currentProject;
+    if(!pr) return;
+
+    var host = document.querySelector('.cr-bidstrip');
+    if(host && host.dataset.pid === pr.id){
+      // just re-render inside the same host
+    }else{
+      if(host) host.remove();
+      host = document.createElement('div');
+      host.className = 'cr-bidstrip';
+      host.dataset.pid = pr.id;
+      bar.insertAdjacentElement('afterend', host);
+    }
+
+    var bid = bidOf(pr) || {};
+    var submitted = Number(bid.submitted_amount || 0);
+    var awarded   = Number(bid.awarded_amount   || 0);
+
+    var fin = (typeof window.jobFinance === 'function') ? window.jobFinance(pr) : { value:0, paid:0, balance:0, pct:0 };
+    var paid = Number(fin.paid || 0);
+
+    // Basis for balance: prefer awarded → submitted → contract value
+    var basis   = awarded || submitted || Number(fin.value || 0);
+    var outstanding = Math.max(0, basis - paid);
+    var pct     = basis > 0 ? Math.min(100, Math.round(paid / basis * 100)) : 0;
+
+    if(!submitted && !awarded && !fin.value){
+      host.className = 'cr-bidstrip empty';
+      host.innerHTML =
+        '<div class="hd"><span class="lbl">\uD83E\uDD1D Bid</span></div>' +
+        '<div class="msg">No bid info yet \u2014 log the amount submitted and, once you know it, the amount awarded.</div>' +
+        '<div class="acts">' +
+          '<button data-act="log-sub">+ Log Bid Submitted</button>' +
+          '<button data-act="log-awd" class="ghost">+ Log Awarded</button>' +
+        '</div>';
+      wireActs(host, pr);
+      return;
+    }
+
+    host.className = 'cr-bidstrip';
+    host.innerHTML =
+      '<div class="hd">' +
+        '<span class="lbl">\uD83E\uDD1D Bid</span>' +
+        (bid.submitted_at
+          ? '<span class="who">Submitted ' + esc(fmtDate(bid.submitted_at)) + '</span>'
+          : '') +
+      '</div>' +
+      '<div class="grid">' +
+        '<div class="cell"><div class="k">Bid Submitted</div>' +
+          '<div class="v' + (submitted ? '' : ' muted') + '">' + (submitted ? money(submitted) : '—') + '</div></div>' +
+        '<div class="cell"><div class="k">Awarded</div>' +
+          '<div class="v' + (awarded ? ' pos' : ' muted') + '">' + (awarded ? money(awarded) : '—') + '</div></div>' +
+        '<div class="cell"><div class="k">Received</div>' +
+          '<div class="v">' + money(paid) + '</div></div>' +
+        '<div class="cell"><div class="k">Outstanding</div>' +
+          '<div class="v' + (outstanding > 0 ? ' neg' : ' pos') + '">' + money(outstanding) + '</div></div>' +
+      '</div>' +
+      '<div class="bar"><i style="width:' + pct + '%;"></i></div>' +
+      '<div class="foot">' +
+        '<span><b>' + money(paid) + '</b> of ' + money(basis) + ' \u00b7 ' + pct + '%</span>' +
+        (awarded && submitted && awarded !== submitted
+          ? '<span>' + (awarded < submitted ? 'Adjusted down' : 'Adjusted up') + ' ' +
+              money(Math.abs(awarded - submitted)) + '</span>'
+          : '') +
+      '</div>' +
+      '<div class="acts">' +
+        '<button data-act="log-sub" class="ghost">' + (submitted ? 'Edit Submitted' : '+ Log Submitted') + '</button>' +
+        '<button data-act="log-awd" class="ghost">' + (awarded ? 'Edit Awarded' : '+ Log Awarded') + '</button>' +
+      '</div>';
+    wireActs(host, pr);
+  }
+  function wireActs(host, pr){
+    var s = host.querySelector('[data-act="log-sub"]');
+    if(s) s.onclick = function(){ promptForBid(pr, 'submitted'); };
+    var a = host.querySelector('[data-act="log-awd"]');
+    if(a) a.onclick = function(){ promptForBid(pr, 'awarded'); };
+  }
+  function promptForBid(pr, kind){
+    var bid = bidOf(pr) || {};
+    var cur = kind === 'submitted' ? bid.submitted_amount : bid.awarded_amount;
+    var label = kind === 'submitted' ? 'Bid Submitted' : 'Amount Awarded';
+    var v = prompt(label + ' ($):', cur != null ? String(cur) : '');
+    if(v == null) return;
+    v = String(v).replace(/[\$,\s]/g, '');
+    if(v === ''){
+      // clear the field
+      var patch = {};
+      patch[kind + '_amount'] = null;
+      patch[kind + '_at']     = null;
+      saveBid(pr, patch);
+      return;
+    }
+    var n = parseFloat(v);
+    if(isNaN(n) || n < 0){ alert('That doesn\'t look like a dollar amount.'); return; }
+    var patch = {};
+    patch[kind + '_amount'] = +n.toFixed(2);
+    patch[kind + '_at']     = (bid[kind + '_at']) || new Date().toISOString();
+    saveBid(pr, patch);
+  }
+  function fmtDate(iso){
+    if(!iso) return '';
+    try{
+      var d = new Date(iso);
+      if(isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    }catch(e){ return ''; }
+  }
+
+  // ── Wrap renderOverview so we run after each profile render ─
+  function hook(){
+    if(typeof window.renderOverview !== 'function') return false;
+    if(window.renderOverview.__crCommClient) return true;
+    var orig = window.renderOverview;
+    var wrapped = function(){
+      var out = orig.apply(this, arguments);
+      try{
+        if(onCommunity()){
+          ensureCommunityBadge();
+          renderBidStrip();
+        }else{
+          var e = document.querySelector('.cr-bidstrip');
+          if(e) e.remove();
+        }
+      }catch(err){ console.warn('[com-client]', err); }
+      return out;
+    };
+    wrapped.__crCommClient = true;
+    window.renderOverview = wrapped;
+    return true;
+  }
+
+  function start(){
+    var n = 0;
+    var iv = setInterval(function(){
+      if(hook() || ++n > 40) clearInterval(iv);
+    }, 150);
+    // MutationObserver catches profile renders from other paths
+    var ticking = false;
+    new MutationObserver(function(){
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){
+        ticking = false;
+        try{
+          if(onCommunity()){ ensureCommunityBadge(); renderBidStrip(); }
+        }catch(e){}
+      });
+    }).observe(document.body, { childList:true, subtree:true });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalCommunityClient = {
+    renderBidStrip: renderBidStrip,
+    saveBid: saveBid,
+  };
+})();
+</script>
