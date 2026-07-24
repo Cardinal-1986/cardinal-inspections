@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 209 &#8212; Estimate rebuild Increment 1b: Unified Estimate Editor. New Estimate button on every client profile, editor pulls from Line Item Library, auto-totals, live deposit calc, saves to estimates table with auto-generated EST-YYYY-NNNN.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 210 &#8212; Estimate rebuild Increment 1c: Unified Photo Gallery. &#128247; Photos button on every client profile, sections (Inspection / Post-Inspection / Before / After / General), upload from device, AI captions via /api/caption, bulk-move between sections, doubles as picker in the estimate editor.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38670,6 +38670,915 @@ body.claim-insurance #brandLogo{
 
 
 <!-- ══════════════════════════════════════════════════════════
+     MODULE: photo_gallery.html · v2026-07-24
+     ══════════════════════════════════════════════════════════
+     Increment 1c: Unified Photo Gallery.
+
+     One gallery per client, sectioned:
+       Inspection · Post-Inspection · Before · After · General
+
+     Existing Quick Inspection photos default to 'Inspection'.
+
+     Access:
+       Client profile: 📷 Photos button (auto-injected).
+       CardinalPhotos.open(project) from console.
+
+     Also serves as a picker (multi-select) when called from the
+     estimate editor:
+       CardinalPhotos.openPicker(project, existingIds, onDone)
+
+     Reuses existing infrastructure:
+       · project_photos table (with new section + caption columns)
+       · photos storage bucket
+       · /api/caption for AI captions (Gemini vision)
+
+     Requires photo_gallery_setup.sql run in Supabase.
+────────────────────────────────────────────────────────────── -->
+
+<style id="cr-pg-styles">
+  /* ═══ Client-profile button ════════════════════════════ */
+  #cr-pg-nav-btn{
+    display:inline-block;
+    background:linear-gradient(135deg,#e8dfc8,#d9cfaf);
+    color:#2c2c2c; border:1px solid #c9b98c;
+    padding:8px 14px; border-radius:6px;
+    font:800 12px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.06em; cursor:pointer;
+    margin-left:6px; margin-bottom:4px;
+    font-family:inherit;
+  }
+  #cr-pg-nav-btn:hover{ background:#e8dfc8; }
+  #cr-pg-nav-btn .cnt{
+    margin-left:6px;
+    background:#8a5a00; color:#fdfcf7;
+    font-size:10.5px; letter-spacing:0;
+    padding:1px 6px; border-radius:8px;
+  }
+
+  /* ═══ Full-screen gallery view ══════════════════════════ */
+  #cr-pg-view{
+    display:none;
+    position:fixed; inset:0;
+    background:#fdfcf7; color:#2c2c2c;
+    z-index:9450;
+    flex-direction:column;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  #cr-pg-view.open{ display:flex; }
+
+  .cr-pg-head{
+    padding:14px 16px 12px;
+    padding-top:calc(14px + env(safe-area-inset-top, 0px));
+    background:linear-gradient(120deg,#2c2c2c,#1a1a1a);
+    color:#f5efe0;
+    display:flex; align-items:center; gap:10px;
+    flex:0 0 auto;
+  }
+  .cr-pg-head h2{
+    margin:0; flex:1;
+    font:800 15px Georgia,serif;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .cr-pg-head button{
+    background:transparent; border:1px solid rgba(212,160,23,.5);
+    color:#f5d061; padding:6px 12px; border-radius:6px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+    flex:0 0 auto;
+  }
+  .cr-pg-head button:hover{ background:rgba(212,160,23,.14); }
+  .cr-pg-head button.primary{
+    background:#d4a017; color:#1a1a1a; border-color:#d4a017;
+  }
+  .cr-pg-head button.primary:hover{ background:#e8ba15; }
+
+  .cr-pg-tabs{
+    padding:8px 12px 10px; background:#fdfcf7;
+    display:flex; gap:6px; flex:0 0 auto;
+    border-bottom:1px solid #e8dfc8;
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .cr-pg-tabs::-webkit-scrollbar{ display:none; }
+  .cr-pg-tabs button{
+    background:#f0e8d0; color:#8a7a5a; border:0;
+    padding:8px 14px; border-radius:8px;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+    white-space:nowrap;
+    transition:background .12s, color .12s;
+  }
+  .cr-pg-tabs button.active{ background:#d4a017; color:#1a1a1a; }
+  .cr-pg-tabs .count{
+    display:inline-block; margin-left:5px;
+    background:rgba(0,0,0,.15); padding:1px 6px;
+    border-radius:8px; font-size:9.5px;
+  }
+  .cr-pg-tabs button.active .count{
+    background:rgba(0,0,0,.22); color:#1a1a1a;
+  }
+
+  .cr-pg-toolbar{
+    padding:8px 16px; background:#fdfcf7;
+    border-bottom:1px solid #e8dfc8;
+    display:flex; align-items:center; gap:8px;
+    flex:0 0 auto;
+    flex-wrap:wrap;
+  }
+  .cr-pg-toolbar button{
+    padding:7px 12px; border-radius:6px; border:0;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.06em; cursor:pointer;
+    font-family:inherit;
+  }
+  .cr-pg-toolbar .upload{
+    background:#d4a017; color:#1a1a1a;
+  }
+  .cr-pg-toolbar .upload:hover{ background:#e8ba15; }
+  .cr-pg-toolbar .select{
+    background:transparent; color:#8a5a00;
+    border:1px solid #d4a017;
+  }
+  .cr-pg-toolbar .select:hover{ background:rgba(212,160,23,.1); }
+  .cr-pg-toolbar .select.active{
+    background:#d4a017; color:#1a1a1a;
+  }
+  .cr-pg-toolbar .status{
+    flex:1;
+    font:600 12px 'Segoe UI',Arial,sans-serif;
+    color:#8a7a5a;
+    text-align:right;
+  }
+
+  .cr-pg-grid{
+    flex:1; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:12px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+    background:#fff;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+    gap:10px;
+    align-content:start;
+  }
+  .cr-pg-thumb{
+    position:relative;
+    aspect-ratio:1/1;
+    background:#f0e8d0;
+    border-radius:8px;
+    overflow:hidden;
+    cursor:pointer;
+    border:2px solid transparent;
+    transition:border .1s, transform .1s;
+  }
+  .cr-pg-thumb:hover{ border-color:#d4a017; }
+  .cr-pg-thumb img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .cr-pg-thumb .cap-badge{
+    position:absolute; bottom:0; left:0; right:0;
+    background:linear-gradient(180deg, transparent, rgba(0,0,0,.7));
+    color:#fdfcf7;
+    font:600 10.5px 'Segoe UI',Arial,sans-serif;
+    padding:16px 8px 6px;
+    max-height:50%;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    line-height:1.3;
+  }
+  .cr-pg-thumb .sec-badge{
+    position:absolute; top:6px; right:6px;
+    background:rgba(0,0,0,.65); color:#f5d061;
+    font:800 8.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.08em; text-transform:uppercase;
+    padding:2px 6px; border-radius:4px;
+  }
+  .cr-pg-thumb .check{
+    position:absolute; top:6px; left:6px;
+    width:22px; height:22px;
+    border-radius:50%;
+    background:rgba(255,255,255,.85);
+    border:2px solid #8a7a5a;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    font-size:14px; color:transparent;
+    box-shadow:0 1px 4px rgba(0,0,0,.25);
+  }
+  #cr-pg-view.select-mode .cr-pg-thumb .check{ display:flex; }
+  #cr-pg-view.picker-mode .cr-pg-thumb .check{ display:flex; }
+  .cr-pg-thumb.checked .check{
+    background:#d4a017;
+    border-color:#8a5a00;
+    color:#1a1a1a;
+  }
+  .cr-pg-thumb.checked::after{
+    content:''; position:absolute; inset:0;
+    background:rgba(212,160,23,.2);
+    pointer-events:none;
+  }
+  .cr-pg-thumb.checked .check::before{ content:'\2713'; }
+
+  .cr-pg-empty{
+    grid-column:1 / -1;
+    padding:60px 20px; text-align:center;
+    color:#8a7a5a;
+    font:600 13.5px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-pg-empty b{ color:#2c2c2c; }
+  .cr-pg-empty small{
+    display:block; margin-top:8px; font-weight:400; color:#a89e88;
+  }
+
+  /* Multi-select action bar */
+  .cr-pg-actionbar{
+    display:none;
+    padding:12px 16px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+    background:linear-gradient(180deg,#1a1a1a,#0a0a0a);
+    color:#f5efe0;
+    border-top:1px solid #333;
+    flex:0 0 auto;
+    align-items:center; gap:10px;
+    flex-wrap:wrap;
+  }
+  #cr-pg-view.select-mode .cr-pg-actionbar,
+  #cr-pg-view.picker-mode .cr-pg-actionbar{ display:flex; }
+  .cr-pg-actionbar .count{
+    flex:1;
+    font:800 12px 'Segoe UI',Arial,sans-serif;
+    color:#f5d061;
+  }
+  .cr-pg-actionbar select,
+  .cr-pg-actionbar button{
+    padding:8px 14px; border-radius:6px;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.08em;
+    cursor:pointer; font-family:inherit;
+    border:0;
+  }
+  .cr-pg-actionbar .move-to{
+    background:#2c2c2c; color:#f5d061;
+    border:1px solid #d4a017;
+  }
+  .cr-pg-actionbar .del{
+    background:transparent; color:#e8b8ba;
+    border:1px solid #9c1822;
+  }
+  .cr-pg-actionbar .del:hover{ background:rgba(156,24,34,.2); }
+  .cr-pg-actionbar .confirm{
+    background:#d4a017; color:#1a1a1a;
+  }
+  .cr-pg-actionbar .confirm:hover{ background:#e8ba15; }
+  .cr-pg-actionbar .cancel{
+    background:transparent; color:#a89e88;
+    border:1px solid #333;
+  }
+
+  /* ═══ Detail modal (single photo) ══════════════════════ */
+  #cr-pg-detail{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.85);
+    z-index:9460;
+    justify-content:center; align-items:center;
+    padding:0;
+  }
+  #cr-pg-detail.open{ display:flex; }
+  #cr-pg-detail .box{
+    background:#fdfcf7;
+    max-width:min(680px, 100%);
+    max-height:100%;
+    width:100%;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    border-radius:0;
+  }
+  @media (min-width:680px){
+    #cr-pg-detail .box{
+      border-radius:12px;
+      max-height:92vh; max-height:92dvh;
+    }
+  }
+  #cr-pg-detail .imgwrap{
+    background:#1a1a1a;
+    display:flex; align-items:center; justify-content:center;
+    aspect-ratio:4/3;
+    max-height:50vh;
+  }
+  #cr-pg-detail .imgwrap img{
+    max-width:100%; max-height:100%; object-fit:contain;
+  }
+  #cr-pg-detail .info{
+    padding:14px 16px;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom, 0px));
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  #cr-pg-detail label{
+    display:block;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:#8a7a5a; margin:10px 0 4px;
+  }
+  #cr-pg-detail label:first-child{ margin-top:0; }
+  #cr-pg-detail textarea,
+  #cr-pg-detail select{
+    width:100%; box-sizing:border-box;
+    padding:9px 12px;
+    border:1px solid #d9cfaf; border-radius:8px;
+    font-family:inherit; font-size:14px;
+    background:#fff; color:#2c2c2c;
+    outline:none;
+  }
+  #cr-pg-detail textarea{
+    min-height:70px; resize:vertical; line-height:1.5;
+  }
+  #cr-pg-detail textarea:focus,
+  #cr-pg-detail select:focus{
+    border-color:#d4a017;
+    box-shadow:0 0 0 3px rgba(212,160,23,.22);
+  }
+  #cr-pg-detail .actions{
+    display:flex; gap:8px; flex-wrap:wrap;
+    margin-top:14px;
+    padding-top:12px;
+    border-top:1px solid #e8dfc8;
+  }
+  #cr-pg-detail .actions button{
+    padding:8px 14px; border-radius:6px;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.08em;
+    cursor:pointer; font-family:inherit;
+    border:0;
+  }
+  #cr-pg-detail .ai{
+    background:linear-gradient(135deg,#d4a017,#c88a0f);
+    color:#1a1a1a;
+  }
+  #cr-pg-detail .ai:hover{ background:linear-gradient(135deg,#e8ba15,#d4a017); }
+  #cr-pg-detail .ai:disabled{ opacity:.55; cursor:wait; }
+  #cr-pg-detail .save{
+    background:#2c2c2c; color:#f5d061;
+    border:1px solid #d4a017;
+    margin-left:auto;
+  }
+  #cr-pg-detail .del{
+    background:transparent; color:#9c1822;
+    border:1px solid #e8b8ba;
+  }
+  #cr-pg-detail .del:hover{ background:#fdecec; }
+  #cr-pg-detail .close{
+    background:transparent; color:#8a7a5a;
+    border:1px solid #d9cfaf;
+  }
+  #cr-pg-detail .ai-status{
+    font:600 12px 'Segoe UI',Arial,sans-serif;
+    color:#8a5a00; margin:8px 0 0;
+    display:none;
+  }
+  #cr-pg-detail .ai-status.show{ display:block; }
+</style>
+
+<script id="cr-pg-script">
+(function(){
+  'use strict';
+
+  var SECTIONS = ['Inspection', 'Post-Inspection', 'Before', 'After', 'General'];
+
+  var view = null;
+  var detail = null;
+  var fileInput = null;
+  var state = {
+    project        : null,
+    photos         : [],
+    activeSection  : 'all',
+    selectMode     : false,
+    selected       : new Set(),   // photo ids
+    pickerMode     : false,
+    pickerExisting : new Set(),   // photo ids already on the estimate (pre-checked)
+    pickerCallback : null,        // fn(selectedPhotos)
+  };
+
+  // ── helpers ───────────────────────────────────────
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function myEmail(){
+    return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+  }
+  function toast(msg){
+    if(window.toast){ try{ window.toast(msg); return; }catch(_){} }
+    // Cheap fallback
+    console.log('[photos]', msg);
+  }
+
+  // ── data ──────────────────────────────────────────
+  async function loadPhotos(projectId){
+    if(!window.supa || !projectId){ state.photos = []; return; }
+    try{
+      var r = await window.supa.from('project_photos')
+        .select('id, project_id, data, storage_path, section, caption, created_at, created_by')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending:false });
+      if(r.error){ console.warn('[photos] load:', r.error.message); state.photos = []; }
+      else state.photos = r.data || [];
+    }catch(e){ console.warn('[photos] load failed:', e); state.photos = []; }
+  }
+
+  async function updateOne(id, changes){
+    if(!window.supa) return;
+    try{
+      var r = await window.supa.from('project_photos').update(changes).eq('id', id);
+      if(r.error) throw r.error;
+      // Update local cache
+      var p = state.photos.find(function(x){ return x.id === id; });
+      if(p) Object.assign(p, changes);
+    }catch(e){
+      alert('Update failed: ' + (e.message || e));
+    }
+  }
+
+  async function deleteOne(id){
+    if(!window.supa) return;
+    try{
+      // Fetch storage_path to clean up bucket
+      var p = state.photos.find(function(x){ return x.id === id; });
+      var r = await window.supa.from('project_photos').delete().eq('id', id);
+      if(r.error) throw r.error;
+      if(p && p.storage_path){
+        try{ await window.supa.storage.from('photos').remove([p.storage_path]); }catch(_){}
+      }
+      state.photos = state.photos.filter(function(x){ return x.id !== id; });
+    }catch(e){
+      alert('Delete failed: ' + (e.message || e));
+    }
+  }
+
+  async function uploadFiles(files, section){
+    if(!window.supa || !state.project || !state.project.id){
+      alert('No project selected.');
+      return;
+    }
+    if(!files || !files.length) return;
+
+    var projectId = state.project.id;
+    setStatus('Uploading 0/' + files.length + '\u2026');
+
+    var okCount = 0;
+    for(var i = 0; i < files.length; i++){
+      var f = files[i];
+      setStatus('Uploading ' + (i + 1) + '/' + files.length + '\u2026');
+      try{
+        var blob = f;
+        // Compute a stable path in the existing bucket
+        var ts = Date.now();
+        var rand = Math.random().toString(36).slice(2, 9);
+        var ext = (f.name || 'photo.jpg').split('.').pop().toLowerCase();
+        if(['jpg','jpeg','png','webp','gif','heic'].indexOf(ext) < 0) ext = 'jpg';
+        var spath = 'projects/' + projectId + '/' + ts + '-' + rand + '.' + ext;
+
+        var up = await window.supa.storage.from('photos').upload(spath, blob, {
+          contentType: f.type || 'image/jpeg',
+          cacheControl: '31536000',
+        });
+        if(up.error) throw up.error;
+
+        var pub = window.supa.storage.from('photos').getPublicUrl(spath).data.publicUrl;
+
+        var ins = await window.supa.from('project_photos').insert({
+          project_id  : projectId,
+          data        : pub,
+          storage_path: spath,
+          section     : section || 'General',
+          created_by  : myEmail() || null,
+        }).select().single();
+        if(ins.error) throw ins.error;
+        state.photos.unshift(ins.data);
+        okCount++;
+      }catch(e){
+        console.warn('[photos] upload one failed:', e);
+      }
+    }
+    setStatus(okCount + '/' + files.length + ' uploaded');
+    setTimeout(function(){ setStatus(''); }, 3000);
+    render();
+  }
+
+  async function aiCaption(photo, cb){
+    if(!photo || !photo.data){ cb(new Error('No photo data')); return; }
+    try{
+      var res = await fetch('/api/caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: photo.data }),
+      });
+      var body = null;
+      try{ body = await res.json(); }catch(_){}
+      if(!res.ok){
+        var msg = (body && (body.detail || body.error)) || ('HTTP ' + res.status);
+        cb(new Error(msg));
+        return;
+      }
+      var caption = (body && body.caption) || '';
+      cb(null, caption);
+    }catch(e){ cb(e); }
+  }
+
+  // ── rendering ─────────────────────────────────────
+  function ensureView(){
+    if(view) return view;
+    view = document.createElement('div');
+    view.id = 'cr-pg-view';
+    document.body.appendChild(view);
+    // Hidden file input for upload
+    fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.multiple = true;
+    fileInput.style.display = 'none';
+    fileInput.onchange = function(){
+      var files = Array.from(fileInput.files || []);
+      fileInput.value = '';
+      if(!files.length) return;
+      var sec = state.activeSection === 'all' ? 'General' : state.activeSection;
+      uploadFiles(files, sec);
+    };
+    document.body.appendChild(fileInput);
+    return view;
+  }
+
+  function setStatus(text){
+    if(!view) return;
+    var el = view.querySelector('.cr-pg-toolbar .status');
+    if(el) el.textContent = text || '';
+  }
+
+  function render(){
+    if(!view) return;
+
+    // Count photos by section
+    var counts = { all: state.photos.length };
+    SECTIONS.forEach(function(s){ counts[s] = 0; });
+    state.photos.forEach(function(p){
+      var s = p.section || 'General';
+      counts[s] = (counts[s] || 0) + 1;
+    });
+
+    // Filter for active section
+    var shown = state.activeSection === 'all'
+      ? state.photos
+      : state.photos.filter(function(p){ return (p.section || 'General') === state.activeSection; });
+
+    var clientName = state.project && (state.project.name || state.project.client_name) || 'Client';
+
+    view.classList.toggle('select-mode', state.selectMode);
+    view.classList.toggle('picker-mode', state.pickerMode);
+
+    // Build tab HTML
+    var tabsHtml =
+      '<button data-tab="all"' + (state.activeSection === 'all' ? ' class="active"' : '') + ' type="button">' +
+        'All <span class="count">' + counts.all + '</span>' +
+      '</button>' +
+      SECTIONS.map(function(s){
+        return '<button data-tab="' + esc(s) + '"' + (state.activeSection === s ? ' class="active"' : '') + ' type="button">' +
+          esc(s) + ' <span class="count">' + (counts[s] || 0) + '</span>' +
+        '</button>';
+      }).join('');
+
+    // Build toolbar (upload disabled in picker mode)
+    var toolbarHtml =
+      (state.pickerMode
+        ? '<span class="status">Pick photos to attach. Tap to toggle.</span>'
+        : '<button class="upload" data-act="upload" type="button">\uD83D\uDCF7 Upload</button>' +
+          '<button class="select" data-act="toggle-select" type="button">' +
+            (state.selectMode ? 'Cancel' : 'Select') +
+          '</button>' +
+          '<span class="status"></span>');
+
+    // Build grid
+    var gridHtml = shown.length
+      ? shown.map(function(p){
+          var checked = state.selected.has(p.id) || (state.pickerMode && state.pickerExisting.has(p.id));
+          var url = p.data || '';
+          var cap = p.caption || '';
+          var sec = p.section || 'General';
+          return '<div class="cr-pg-thumb' + (checked ? ' checked' : '') + '" data-id="' + esc(p.id) + '">' +
+            '<img src="' + esc(url) + '" alt="" loading="lazy" />' +
+            (state.activeSection === 'all'
+              ? '<span class="sec-badge">' + esc(sec) + '</span>'
+              : '') +
+            (cap ? '<div class="cap-badge">' + esc(cap) + '</div>' : '') +
+            '<div class="check" aria-hidden="true"></div>' +
+          '</div>';
+        }).join('')
+      : '<div class="cr-pg-empty">' +
+          '<b>No photos in ' + (state.activeSection === 'all' ? 'this gallery' : esc(state.activeSection)) + ' yet.</b>' +
+          '<small>' + (state.pickerMode
+            ? 'Close the picker and add photos from the client profile.'
+            : 'Tap 📷 Upload to add some.') +
+          '</small>' +
+        '</div>';
+
+    // Build action bar (select + picker modes)
+    var abHtml = '';
+    if(state.selectMode){
+      abHtml = '<span class="count">' + state.selected.size + ' selected</span>' +
+        '<select class="move-to" data-act="bulk-move">' +
+          '<option value="">Move to\u2026</option>' +
+          SECTIONS.map(function(s){ return '<option value="' + esc(s) + '">' + esc(s) + '</option>'; }).join('') +
+        '</select>' +
+        '<button class="del" data-act="bulk-del" type="button">Delete</button>' +
+        '<button class="cancel" data-act="cancel-select" type="button">Done</button>';
+    } else if(state.pickerMode){
+      abHtml = '<span class="count">' + state.selected.size + ' selected</span>' +
+        '<button class="cancel" data-act="cancel-picker" type="button">Cancel</button>' +
+        '<button class="confirm" data-act="confirm-picker" type="button">Attach</button>';
+    }
+
+    view.innerHTML =
+      '<div class="cr-pg-head">' +
+        '<h2>' + esc(clientName) + ' \u00b7 Photos</h2>' +
+        '<button data-act="close" type="button">' +
+          (state.pickerMode ? 'Cancel' : 'Close') +
+        '</button>' +
+      '</div>' +
+      '<div class="cr-pg-tabs">' + tabsHtml + '</div>' +
+      '<div class="cr-pg-toolbar">' + toolbarHtml + '</div>' +
+      '<div class="cr-pg-grid">' + gridHtml + '</div>' +
+      '<div class="cr-pg-actionbar">' + abHtml + '</div>';
+
+    wire();
+  }
+
+  function wire(){
+    if(!view) return;
+    view.querySelector('[data-act="close"]').onclick = function(){
+      if(state.pickerMode && state.pickerCallback){ state.pickerCallback(null); }
+      close();
+    };
+    view.querySelectorAll('.cr-pg-tabs button').forEach(function(btn){
+      btn.onclick = function(){
+        state.activeSection = btn.dataset.tab;
+        render();
+      };
+    });
+    var up = view.querySelector('[data-act="upload"]');
+    if(up) up.onclick = function(){ fileInput.click(); };
+    var tsel = view.querySelector('[data-act="toggle-select"]');
+    if(tsel) tsel.onclick = function(){
+      state.selectMode = !state.selectMode;
+      state.selected = new Set();
+      render();
+    };
+    var cancelSelect = view.querySelector('[data-act="cancel-select"]');
+    if(cancelSelect) cancelSelect.onclick = function(){
+      state.selectMode = false; state.selected = new Set(); render();
+    };
+    var bulkMove = view.querySelector('[data-act="bulk-move"]');
+    if(bulkMove) bulkMove.onchange = async function(e){
+      var to = e.target.value;
+      if(!to) return;
+      var ids = Array.from(state.selected);
+      setStatus('Moving ' + ids.length + '\u2026');
+      for(var i = 0; i < ids.length; i++){
+        await updateOne(ids[i], { section: to });
+      }
+      setStatus('Moved ' + ids.length);
+      setTimeout(function(){ setStatus(''); }, 2000);
+      state.selectMode = false; state.selected = new Set();
+      render();
+    };
+    var bulkDel = view.querySelector('[data-act="bulk-del"]');
+    if(bulkDel) bulkDel.onclick = async function(){
+      var ids = Array.from(state.selected);
+      if(!ids.length) return;
+      if(!confirm('Delete ' + ids.length + ' photo' + (ids.length === 1 ? '' : 's') + '? This can\'t be undone.')) return;
+      setStatus('Deleting\u2026');
+      for(var i = 0; i < ids.length; i++){ await deleteOne(ids[i]); }
+      setStatus('Deleted ' + ids.length);
+      setTimeout(function(){ setStatus(''); }, 2000);
+      state.selectMode = false; state.selected = new Set();
+      render();
+    };
+    var cancelPicker = view.querySelector('[data-act="cancel-picker"]');
+    if(cancelPicker) cancelPicker.onclick = function(){
+      if(state.pickerCallback) state.pickerCallback(null);
+      close();
+    };
+    var confirmPicker = view.querySelector('[data-act="confirm-picker"]');
+    if(confirmPicker) confirmPicker.onclick = function(){
+      var selectedPhotos = state.photos.filter(function(p){ return state.selected.has(p.id); });
+      if(state.pickerCallback) state.pickerCallback(selectedPhotos);
+      close();
+    };
+
+    view.querySelectorAll('.cr-pg-thumb').forEach(function(el){
+      el.onclick = function(){
+        var id = el.dataset.id;
+        if(state.selectMode || state.pickerMode){
+          if(state.selected.has(id)) state.selected.delete(id);
+          else state.selected.add(id);
+          el.classList.toggle('checked');
+          // Update count in action bar
+          var cnt = view.querySelector('.cr-pg-actionbar .count');
+          if(cnt) cnt.textContent = state.selected.size + ' selected';
+        }else{
+          openDetail(id);
+        }
+      };
+    });
+  }
+
+  // ══════════════════════════════════════════════════
+  // Detail modal
+  // ══════════════════════════════════════════════════
+  function ensureDetail(){
+    if(detail) return detail;
+    detail = document.createElement('div');
+    detail.id = 'cr-pg-detail';
+    detail.onclick = function(e){ if(e.target === detail) closeDetail(); };
+    document.body.appendChild(detail);
+    return detail;
+  }
+
+  function openDetail(photoId){
+    var photo = state.photos.find(function(x){ return x.id === photoId; });
+    if(!photo) return;
+    ensureDetail();
+    detail.innerHTML =
+      '<div class="box">' +
+        '<div class="imgwrap"><img src="' + esc(photo.data || '') + '" alt="" /></div>' +
+        '<div class="info">' +
+          '<label>Caption</label>' +
+          '<textarea data-f="caption" placeholder="What does this photo show?">' + esc(photo.caption || '') + '</textarea>' +
+          '<div class="ai-status" data-slot="ai-status"></div>' +
+
+          '<label>Section</label>' +
+          '<select data-f="section">' +
+            SECTIONS.map(function(s){
+              return '<option value="' + esc(s) + '"' + ((photo.section || 'General') === s ? ' selected' : '') + '>' + esc(s) + '</option>';
+            }).join('') +
+          '</select>' +
+
+          '<div class="actions">' +
+            '<button class="ai"    data-act="ai"    type="button">\u2728 AI Caption</button>' +
+            '<button class="del"   data-act="del"   type="button">Delete</button>' +
+            '<button class="close" data-act="close" type="button">Close</button>' +
+            '<button class="save"  data-act="save"  type="button">Save</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    detail.classList.add('open');
+
+    detail.querySelector('[data-act="close"]').onclick = closeDetail;
+    detail.querySelector('[data-act="save"]').onclick = async function(){
+      var cap = detail.querySelector('[data-f="caption"]').value.trim();
+      var sec = detail.querySelector('[data-f="section"]').value;
+      await updateOne(photoId, { caption: cap || null, section: sec });
+      closeDetail();
+      render();
+    };
+    detail.querySelector('[data-act="del"]').onclick = async function(){
+      if(!confirm('Delete this photo?')) return;
+      await deleteOne(photoId);
+      closeDetail();
+      render();
+    };
+    detail.querySelector('[data-act="ai"]').onclick = function(){
+      var aiBtn = detail.querySelector('[data-act="ai"]');
+      var stEl  = detail.querySelector('[data-slot="ai-status"]');
+      aiBtn.disabled = true; aiBtn.textContent = 'Thinking\u2026';
+      stEl.classList.add('show'); stEl.textContent = 'Asking Gemini vision\u2026';
+      aiCaption(photo, function(err, caption){
+        aiBtn.disabled = false; aiBtn.textContent = '\u2728 AI Caption';
+        if(err){
+          stEl.textContent = 'Caption failed: ' + err.message;
+          return;
+        }
+        detail.querySelector('[data-f="caption"]').value = caption;
+        stEl.textContent = 'Done. Edit if needed, then Save.';
+      });
+    };
+  }
+
+  function closeDetail(){
+    if(detail) detail.classList.remove('open');
+  }
+
+  // ══════════════════════════════════════════════════
+  // Public open() / picker
+  // ══════════════════════════════════════════════════
+  async function open(project){
+    ensureView();
+    state.project = project;
+    state.activeSection = 'all';
+    state.selectMode = false;
+    state.pickerMode = false;
+    state.selected = new Set();
+    state.pickerCallback = null;
+    render();
+    view.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    await loadPhotos(project.id);
+    render();
+  }
+
+  function close(){
+    if(view) view.classList.remove('open');
+    document.body.style.overflow = '';
+    state.pickerMode = false;
+    state.selectMode = false;
+    state.selected = new Set();
+    state.pickerCallback = null;
+  }
+
+  async function openPicker(project, existingIds, cb){
+    ensureView();
+    state.project = project;
+    state.activeSection = 'all';
+    state.selectMode = false;
+    state.pickerMode = true;
+    state.selected = new Set(existingIds || []);
+    state.pickerExisting = new Set(existingIds || []);
+    state.pickerCallback = cb;
+    render();
+    view.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    await loadPhotos(project.id);
+    // Re-seed selection with existing after load (photo IDs must exist in loaded data)
+    state.selected = new Set(existingIds || []);
+    render();
+  }
+
+  // ══════════════════════════════════════════════════
+  // Client-profile button injection
+  // ══════════════════════════════════════════════════
+  function injectOnProfile(){
+    var proj = window.currentProject;
+    if(!proj || !proj.id) return;
+    var anchor = document.getElementById('pNewEstimateBtn') ||
+                 document.getElementById('cr-est-new-btn');
+    if(!anchor) return;
+    if(document.getElementById('cr-pg-nav-btn')) return;
+    var btn = document.createElement('button');
+    btn.id = 'cr-pg-nav-btn';
+    btn.type = 'button';
+    btn.innerHTML = '\uD83D\uDCF7 Photos';
+    btn.title = 'Photo gallery for this client';
+    btn.onclick = function(e){
+      e.preventDefault(); e.stopPropagation();
+      open(window.currentProject);
+    };
+    // Insert after the anchor's parent group (so it sits on the same row as the estimate buttons)
+    anchor.parentNode.insertBefore(btn, anchor.nextSibling);
+  }
+
+  var scheduled = false;
+  function scheduleScan(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){
+      scheduled = false;
+      try{ injectOnProfile(); }catch(e){}
+    });
+  }
+  function start(){
+    scheduleScan();
+    new MutationObserver(scheduleScan).observe(document.body, {
+      childList:true, subtree:true,
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  // ══════════════════════════════════════════════════
+  // Public API
+  // ══════════════════════════════════════════════════
+  window.CardinalPhotos = {
+    open           : open,
+    close          : close,
+    openPicker     : openPicker,
+    loadForProject : async function(pid){
+      state.project = { id: pid };
+      await loadPhotos(pid);
+      return state.photos.slice();
+    },
+    sections       : function(){ return SECTIONS.slice(); },
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
      MODULE: estimate_editor.html · v2026-07-24
      ══════════════════════════════════════════════════════════
      Increment 1b of the unified estimate rebuild.
@@ -38954,6 +39863,57 @@ body.claim-insurance #brandLogo{
     font:600 13px 'Segoe UI',Arial,sans-serif;
   }
 
+  /* ═══ Photos grid on the estimate ══════════════════════ */
+  .cr-est-photos{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+    gap:10px;
+  }
+  .cr-est-photo{
+    background:#fff;
+    border:1px solid #e8d9a8;
+    border-radius:10px;
+    overflow:hidden;
+    position:relative;
+  }
+  .cr-est-photo .thumb{
+    background:#f0e8d0;
+    aspect-ratio:1/1;
+    overflow:hidden;
+    display:block;
+  }
+  .cr-est-photo .thumb img{
+    width:100%; height:100%;
+    object-fit:cover; display:block;
+  }
+  .cr-est-photo .caption{
+    padding:6px 8px;
+    font:600 11.5px 'Segoe UI',Arial,sans-serif;
+    color:#4a4a4a;
+    line-height:1.4;
+    border:0; outline:none;
+    resize:none;
+    width:100%; box-sizing:border-box;
+    background:#fff;
+    font-family:inherit;
+    min-height:38px;
+  }
+  .cr-est-photo .caption:focus{
+    background:#faf5e9;
+  }
+  .cr-est-photo .del{
+    position:absolute; top:5px; right:5px;
+    width:24px; height:24px;
+    border-radius:50%;
+    background:rgba(0,0,0,.55);
+    color:#fdfcf7; border:0;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px;
+    padding:0;
+  }
+  .cr-est-photo .del:hover{ background:rgba(156,24,34,.85); }
+
   /* ═══ Totals ══════════════════════════════════════════ */
   .cr-est-totals{
     background:#faf5e9; border:1px solid #e8d9a8;
@@ -39217,6 +40177,7 @@ body.claim-insurance #brandLogo{
         lines          : (existing.line_items || []).map(function(l){
                            return Object.assign({ _lid: newLineId() }, l);
                          }),
+        photos         : (existing.photos || []).slice(),
         discount       : Number(existing.discount) || 0,
         deposit_pct    : Number(existing.deposit_pct) || 30,
         valid_days     : Number(existing.valid_days) || 30,
@@ -39232,6 +40193,7 @@ body.claim-insurance #brandLogo{
         title          : buildDefaultTitle(project),
         status         : 'draft',
         lines          : [],
+        photos         : [],
         discount       : 0,
         deposit_pct    : 30,
         valid_days     : 30,
@@ -39317,6 +40279,15 @@ body.claim-insurance #brandLogo{
             : '<div class="cr-est-empty-items">No line items yet. Tap <b>+ From Library</b> to pick from your catalog, or <b>+ Custom</b> to type a one-off item.</div>')
         + '</div>' +
 
+        // Photos
+        '<div class="cr-est-items-head" style="margin-top:26px;">' +
+          '<h3>Photos <span style="opacity:.6;font-weight:600;">' +
+            (s.photos.length ? '(' + s.photos.length + ')' : '') +
+          '</span></h3>' +
+          '<button class="add-lib"    data-act="pick-photos" type="button">+ Attach Photos</button>' +
+        '</div>' +
+        renderPhotos(s.photos) +
+
         // Totals
         renderTotals(t) +
 
@@ -39350,6 +40321,21 @@ body.claim-insurance #brandLogo{
         '<input type="number" data-lf="unit_price" value="' + esc(l.unit_price != null ? l.unit_price : 0) + '" step="0.01" min="0" inputmode="decimal" placeholder="Unit $" />' +
         '<div class="amount" data-slot="amount">' + money(amt) + '</div>' +
       '</div>' +
+    '</div>';
+  }
+
+  function renderPhotos(photos){
+    if(!photos || !photos.length){
+      return '<div class="cr-est-empty-items">No photos attached. Tap <b>+ Attach Photos</b> to pick from the client\u2019s gallery.</div>';
+    }
+    return '<div class="cr-est-photos">' +
+      photos.map(function(p, i){
+        return '<div class="cr-est-photo" data-pi="' + i + '">' +
+          '<div class="thumb"><img src="' + esc(p.url || '') + '" alt="" loading="lazy" /></div>' +
+          '<textarea class="caption" data-pf="caption" placeholder="Add a caption\u2026">' + esc(p.caption || '') + '</textarea>' +
+          '<button class="del" data-act="del-photo" title="Remove">\u2715</button>' +
+        '</div>';
+      }).join('') +
     '</div>';
   }
 
@@ -39442,6 +40428,52 @@ body.claim-insurance #brandLogo{
       render();
     };
 
+    // Photo picker button
+    var pickPhotosBtn = view.querySelector('[data-act="pick-photos"]');
+    if(pickPhotosBtn) pickPhotosBtn.onclick = function(){
+      if(!window.CardinalPhotos || typeof window.CardinalPhotos.openPicker !== 'function'){
+        alert('Photo gallery not available yet — reload the app.');
+        return;
+      }
+      var existingIds = state.photos
+        .map(function(p){ return p.photo_id; })
+        .filter(Boolean);
+      window.CardinalPhotos.openPicker(state.project, existingIds, function(selected){
+        if(!selected) return;    // canceled
+        // Rebuild photos array: keep already-attached photos that are still selected + add new ones
+        var selectedIds = new Set(selected.map(function(p){ return p.id; }));
+        var kept = state.photos.filter(function(ep){
+          return selectedIds.has(ep.photo_id);
+        });
+        var keptIds = new Set(kept.map(function(k){ return k.photo_id; }));
+        var added = selected
+          .filter(function(p){ return !keptIds.has(p.id); })
+          .map(function(p){
+            return {
+              photo_id : p.id,
+              url      : p.data,
+              caption  : p.caption || '',   // seed from master caption
+            };
+          });
+        state.photos = kept.concat(added);
+        render();
+      });
+    };
+
+    // Per-photo controls
+    view.querySelectorAll('.cr-est-photo').forEach(function(el){
+      var idx = Number(el.dataset.pi);
+      var capEl = el.querySelector('[data-pf="caption"]');
+      if(capEl) capEl.oninput = function(e){
+        if(state.photos[idx]) state.photos[idx].caption = e.target.value;
+      };
+      var delBtn = el.querySelector('[data-act="del-photo"]');
+      if(delBtn) delBtn.onclick = function(){
+        state.photos.splice(idx, 1);
+        render();
+      };
+    });
+
     // Line row fields
     view.querySelectorAll('.cr-est-lineitem').forEach(function(row){
       var lid = row.dataset.lid;
@@ -39490,6 +40522,7 @@ body.claim-insurance #brandLogo{
       title                : s.title.trim(),
       status               : s.status || 'draft',
       line_items           : linesForDb,
+      photos               : s.photos || [],
       subtotal             : totals.subtotal.toFixed(2),
       discount             : totals.discount.toFixed(2),
       total                : totals.total.toFixed(2),
@@ -39651,9 +40684,11 @@ body.claim-insurance #brandLogo{
       rows.map(function(e){
         var st = (e.status || 'draft').toLowerCase();
         var stCls = ['draft','sent','accepted','declined'].indexOf(st) >= 0 ? st : 'draft';
+        var photoCount = Array.isArray(e.photos) ? e.photos.length : 0;
         return '<div class="cr-est-saved-row" data-eid="' + esc(e.id) + '">' +
           '<span class="num">' + esc(e.estimate_number || '') + '</span>' +
           '<span class="title">' + esc(e.title || 'Untitled') + '</span>' +
+          (photoCount ? '<span style="flex:0 0 auto;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a5a00;">\uD83D\uDCF7 ' + photoCount + '</span>' : '') +
           '<span class="status ' + stCls + '">' + esc(st) + '</span>' +
           '<span class="amount">' + money(e.total) + '</span>' +
         '</div>';
