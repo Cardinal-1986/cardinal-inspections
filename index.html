@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 213 &#8212; Photo Album fixes: picker mode no longer latches on (Back button now clears it, so Add photos / Take photo return), gallery opens via the base app&#8217;s own view switcher so the client profile is properly hidden, and the broken CSS escape that printed &#8220;u25FB Picker u00b7&#8221; in the title is gone.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 214 &#8212; Photo Album: fixed the stuck bottom bar that blocked scrolling and taps app-wide (it was showing outside the gallery whenever picker mode latched), and hardened the album so &#8220;+ Add photos&#8221; / &#8220;Take photo&#8221; can never stay hidden.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -36106,6 +36106,15 @@ if(typeof window.renderGallery === 'function') window.renderGallery();
 };
 });
 }
+function enforceAlbumButtons(){
+if(pickerMode) return;   // legitimately hidden while picking
+['galAddBtn', 'galCamBtn', 'galInspBtn', 'galXferWrap'].forEach(function(id){
+var el = document.getElementById(id);
+if(el && el.style.display === 'none') el.style.display = '';
+});
+var view = document.getElementById('galleryView');
+if(view) view.classList.remove('cr-pae-pickermode');
+}
 function renderEnhancedGrid(){
 var grid = document.getElementById('galGrid');
 if(!grid) return;
@@ -36178,6 +36187,7 @@ try{ window.refreshInspGalN(); }catch(_){}
 if((window.galMode || 'all') !== 'all'){
 return origRenderGallery.apply(this, arguments);
 }
+enforceAlbumButtons();
 renderTabs();
 renderEnhancedGrid();
 }catch(e){
@@ -36202,21 +36212,20 @@ var galChecked = window.galChecked || {};
 var checkedIds = Object.keys(galChecked).filter(function(id){ return galChecked[id]; });
 var view = document.getElementById('galleryView');
 var isGalleryOpen = view && view.style.display !== 'none' && view.offsetParent !== null;
-if(!isGalleryOpen || !checkedIds.length){
+if(!isGalleryOpen){
 actionBar.classList.remove('show');
 if(view) view.classList.remove('cr-pae-selectmode');
-if(pickerMode){
-actionBar.classList.add('show');
-renderPickerActionBar();
-}
+if(pickerMode && !pickerCallback) clearPickerMode();
 return;
 }
-if(view) view.classList.add('cr-pae-selectmode');
-if(pickerMode){
-renderPickerActionBar();
-}else{
-renderBulkActionBar(checkedIds);
+if(!pickerMode && !checkedIds.length){
+actionBar.classList.remove('show');
+view.classList.remove('cr-pae-selectmode');
+return;
 }
+view.classList.add('cr-pae-selectmode');
+if(pickerMode) renderPickerActionBar();
+else           renderBulkActionBar(checkedIds);
 actionBar.classList.add('show');
 }
 function renderBulkActionBar(checkedIds){
