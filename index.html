@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 179 &#8212; Community header darker green for legibility; site footer strip hidden on Hub view</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 181 &#8212; Hide recent-clients strip on retail Home; hide Cardinal Truth dashbanner that was floating away from the sticky header</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25785,6 +25785,18 @@ body.claim-insurance #brandLogo{
     border-color:#f5d061 !important;
   }
 
+  /* Brand logo (the Cardinal bird) — two-tone green/white on Community.
+     Mirrors the insurance approach (grayscale + sepia + hue-rotate to
+     re-tint into the theme color). Insurance uses hue-rotate(170deg)
+     for blue; here we use ~75deg to land in green. Also swap the
+     logo background from white to light cream so the green tint reads
+     cleanly instead of fighting a pure-white plate. */
+  body.viewing-community-hub #brandLogo{
+    filter:grayscale(1) sepia(.8) hue-rotate(75deg) saturate(2) brightness(1.05) contrast(1.05) !important;
+    background:#f5f0e3 !important;
+    transition:filter .18s, background .18s;
+  }
+
   /* Portal chip and burger menu tint stay on portal-community — the
      chip is visible on every view, and the burger menu can open over
      any view. */
@@ -26789,6 +26801,53 @@ body.claim-insurance #brandLogo{
      the portal switcher below replaces them. */
   #ctHomeChip, #ctLandChip{
     display:none !important;
+  }
+
+  /* Hide the Cardinal Truth "Dashboard" banner strip.
+     The .ins-header above it is position:sticky (line 2091 of base
+     source), but .ct-dashbanner isn't — so when you scroll the
+     content, the banner drifts up under the sticky header, leaving
+     a visible "floating away" gap between the header and the
+     Cardinal Truth heading below. Hiding it removes both the gap
+     and the redundant title/clock (the same content is visible on
+     the retail Home dashboard). */
+  .ct-dashbanner{
+    display:none !important;
+  }
+
+  /* Cardinal Truth logo button (top-left).
+     Base app makes it 44×44 with 4px padding and object-fit:contain,
+     which shrinks the actual Cardinal image to about 30×30 inside the
+     button. Bump the button to 52×52 and drop the padding so the
+     Cardinal mark actually reads at a glance, and give it slightly
+     more presence via a subtle inner gold rule matching the ins theme. */
+  #cardinalTruthView .ins-hbtn.ins-logo-mini,
+  #insClientsView   .ins-hbtn.ins-logo-mini{
+    width:52px !important;
+    height:52px !important;
+    min-width:52px !important;
+    min-height:52px !important;
+    padding:2px !important;
+    background:#232b3d !important;
+    border:1px solid #4a6fa5 !important;
+    border-radius:9px !important;
+  }
+  #cardinalTruthView .ins-hbtn.ins-logo-mini img,
+  #insClientsView   .ins-hbtn.ins-logo-mini img{
+    width:100% !important;
+    height:100% !important;
+    padding:0 !important;
+    object-fit:contain !important;
+    display:block !important;
+  }
+  @media (max-width:640px){
+    #cardinalTruthView .ins-hbtn.ins-logo-mini,
+    #insClientsView   .ins-hbtn.ins-logo-mini{
+      width:46px !important;
+      height:46px !important;
+      min-width:46px !important;
+      min-height:46px !important;
+    }
   }
 
   /* Portal chip inside the Cardinal Truth header */
@@ -28570,6 +28629,13 @@ body.claim-insurance #brandLogo{
   /* The quickrow was designed around it — collapse the gap so the
      dashcard doesn't feel indented. */
   .quickrow{ gap:8px !important; }
+
+  /* ─── 3b) Hide the Recent Clients strip on Home ─────────── */
+  /* Added in build 162 as a discoverability aid but reads as
+     clutter on the retail dashboard. Global search + burger menu
+     Recents cover the same use case without taking permanent
+     header-adjacent real estate. */
+  #cr-recents{ display:none !important; }
 
   /* ─── 4) Hide universal Home button on Home ─────────────── */
   /* (Handled below by JS since it depends on which view is
