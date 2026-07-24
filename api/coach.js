@@ -1,217 +1,165 @@
 // api/coach.js
-// ─────────────────────────────────────────────────────────────
-// Objection Coach — grades a rep's answer against Cardinal's own
-// word track and returns specific, actionable feedback.
+// ═════════════════════════════════════════════════════════════════════
+// Objection Coach — grade a rep's answer against the ideal response
+// using Gemini. Returns { score, ideal, feedback: { verdict, strengths,
+// gaps, fix } } to match what the client (CardinalCoach) expects.
 //
-// POST { objection_id, answer }
-//   -> { score, feedback:{strengths[],gaps[],fix,verdict}, ideal, attempt_id }
+// REQUIRES these Vercel env vars:
+//   GEMINI_API_KEY              — Google AI Studio key with billing on
+//   SUPABASE_URL                — e.g. https://yipslubcptjoarblzbpl.supabase.co
+//   SUPABASE_ANON_KEY           — public anon key (already in index.html)
+//   SUPABASE_SERVICE_ROLE_KEY   — sensitive, from Supabase → Settings → API
 //
-// Uses the same provider ladder as estimate.js:
-//   gemini-3.5-flash -> 1.2s wait -> gemini-2.5-flash -> gpt-4o-mini
+// The service-role key lets this function read the objection card and
+// save the attempt row even if RLS is set strict. RLS on the attempts
+// table only allows self-writes when using user tokens, but by using
+// the service role from a trusted server (Vercel) we can safely record
+// the attempt with any user_email we verify.
 //
-// ES MODULE — api/package.json has "type":"module".
-// ─────────────────────────────────────────────────────────────
+// Per project rules: ES module, `export default async function handler`.
+// ═════════════════════════════════════════════════════════════════════
 
-import { createClient } from '@supabase/supabase-js';
+const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-export const config = { maxDuration: 30, regions: ['iad1'] };
-
-const GEMINI_KEY   = (process.env.GEMINI_API_KEY || '').trim();
-const OPENAI_KEY   = (process.env.OPENAI_API_KEY || '').trim();
-const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
-const SUPABASE_SRV = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
-
-const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash'];
-const RETRY_WAIT_MS = 1200;
-const GEMINI_URL    = (m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
-const ROSTER_DOMAIN = '@cardinalrenovations.net';
-
-const MIN_ANSWER = 15;
-const MAX_ANSWER = 2000;
-
-// ═══ Prompt ══════════════════════════════════════════════════
-function buildPrompt({ category, objection, ideal, proTip, answer }) {
-  return `
-You are a sales coach for Cardinal Roofing & Renovations, a roofing, siding and window contractor in Dayton, Ohio. You are grading one rep's spoken response to a homeowner objection during a role-play drill.
-
-Cardinal's method: acknowledge the objection honestly, reframe it around something concrete the homeowner can verify, and end on a question that hands control back to the rep. Never a memorised script. Never pressure. Never anything that would be illegal in Ohio (for example, waiving or absorbing an insurance deductible).
-
-CATEGORY: ${category}
-
-THE OBJECTION THE HOMEOWNER RAISED:
-"${objection}"
-
-CARDINAL'S REFERENCE WORD TRACK (the target, not the only right answer):
-"${ideal}"
-${proTip ? `\nWHY THAT WORKS: ${proTip}` : ''}
-
-THE REP ACTUALLY SAID:
-"${answer}"
-
-GRADE IT. Rules:
-1. Score 0-100. Be a real coach, not a cheerleader — a generic or defensive answer should land in the 40s, a solid answer in the 70s, an answer that acknowledges + reframes + ends on a question in the high 80s or 90s. Reserve 95+ for genuinely excellent.
-2. A different approach than the reference can still score high if it acknowledges honestly, gives the homeowner something concrete, and keeps control. Do NOT reward mere paraphrasing of the reference.
-3. Penalise heavily: arguing with the homeowner, discounting to escape the objection, vague "you get what you pay for" filler, anything legally risky, and any answer that does not end with a question.
-4. "fix" must be ONE specific sentence the rep could say differently next time — actual words, not advice about words.
-5. Keep every string short. strengths/gaps are at most 2 items each, one short clause per item.
-6. Return ONLY valid JSON matching the schema. No markdown, no code fences, no preamble.
-
-SCHEMA:
-{
-  "score": 0,
-  "verdict": "one short line, max 12 words",
-  "strengths": ["..."],
-  "gaps": ["..."],
-  "fix": "one sentence the rep could actually say",
-  "ended_with_question": true
-}
-`.trim();
-}
-
-// ═══ Providers ═══════════════════════════════════════════════
-async function callGemini(model, prompt) {
-  const r = await fetch(GEMINI_URL(model), {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.3,
-        responseMimeType: 'application/json',
-        maxOutputTokens: 900,
-      },
-    }),
-  });
-  if (!r.ok) {
-    const t = await r.text().catch(() => '');
-    throw new Error(`Gemini ${model} -> ${r.status} ${t.slice(0, 160)}`);
-  }
-  const data = await r.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (!text) throw new Error(`Gemini ${model} -> empty`);
-  return text;
-}
-
-async function callOpenAI(prompt) {
-  const r = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { authorization: `Bearer ${OPENAI_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: 'You output only valid JSON matching the schema in the user message. No prose, no code fences.' },
-        { role: 'user', content: prompt },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-    }),
-  });
-  if (!r.ok) {
-    const t = await r.text().catch(() => '');
-    throw new Error(`OpenAI -> ${r.status} ${t.slice(0, 160)}`);
-  }
-  const data = await r.json();
-  return data?.choices?.[0]?.message?.content || '';
-}
-
-// ═══ HANDLER ═════════════════════════════════════════════════
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-
-  const jwt = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-  if (!jwt) return res.status(401).json({ error: 'No session' });
-
-  const supa = createClient(SUPABASE_URL, SUPABASE_SRV, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-  const { data: userRes, error: authErr } = await supa.auth.getUser(jwt);
-  if (authErr || !userRes?.user) return res.status(401).json({ error: 'Invalid session' });
-  const repEmail = userRes.user.email || '';
-  if (!repEmail.endsWith(ROSTER_DOMAIN)) return res.status(403).json({ error: 'Not on the roster' });
-
-  const { objection_id, answer } = req.body || {};
-  if (!objection_id) return res.status(400).json({ error: 'objection_id required' });
-  const ans = String(answer || '').trim();
-  if (ans.length < MIN_ANSWER) return res.status(400).json({ error: `Give it a real shot — at least ${MIN_ANSWER} characters.` });
-  if (ans.length > MAX_ANSWER) return res.status(400).json({ error: 'Answer too long' });
-
-  // Load the card
-  const { data: card, error: cardErr } = await supa
-    .from('objections')
-    .select('id, category, objection, response, pro_tip')
-    .eq('id', objection_id)
-    .single();
-  if (cardErr || !card) return res.status(404).json({ error: 'Objection not found' });
-
-  const t0 = Date.now();
-  const prompt = buildPrompt({
-    category: card.category,
-    objection: card.objection,
-    ideal: card.response,
-    proTip: card.pro_tip,
-    answer: ans,
-  });
-
-  // Provider ladder
-  let raw = null, modelUsed = null, lastErr = null;
-  for (let i = 0; i < GEMINI_MODELS.length; i++) {
-    try {
-      raw = await callGemini(GEMINI_MODELS[i], prompt);
-      modelUsed = GEMINI_MODELS[i];
-      break;
-    } catch (e) {
-      lastErr = e;
-      console.warn(`[coach] ${GEMINI_MODELS[i]} failed: ${e.message}`);
-      if (i === 0) await new Promise((r) => setTimeout(r, RETRY_WAIT_MS));
-    }
-  }
-  if (!raw) {
-    try {
-      raw = await callOpenAI(prompt);
-      modelUsed = 'openai:gpt-4o-mini';
-    } catch (e) {
-      return res.status(502).json({ error: 'Coach unavailable', detail: `${lastErr?.message || ''} | ${e.message}` });
-    }
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'POST only' });
   }
 
-  let g;
-  try { g = JSON.parse(raw); }
-  catch { return res.status(502).json({ error: 'Coach returned invalid JSON', raw_preview: String(raw).slice(0, 300) }); }
+  const { objection_id, answer } = (req.body || {});
+  if (!objection_id || typeof objection_id !== 'string') {
+    return res.status(400).json({ error: 'objection_id required' });
+  }
+  if (!answer || typeof answer !== 'string' || answer.trim().length < 15) {
+    return res.status(400).json({ error: 'answer required (min 15 chars)' });
+  }
 
-  // Clamp + normalise
-  const score = Math.max(0, Math.min(100, Math.round(Number(g.score) || 0)));
-  const feedback = {
-    verdict:   String(g.verdict || '').slice(0, 140),
-    strengths: (Array.isArray(g.strengths) ? g.strengths : []).slice(0, 3).map(s => String(s).slice(0, 180)),
-    gaps:      (Array.isArray(g.gaps)      ? g.gaps      : []).slice(0, 3).map(s => String(s).slice(0, 180)),
-    fix:       String(g.fix || '').slice(0, 400),
-    ended_with_question: !!g.ended_with_question,
-  };
+  const authHeader = req.headers.authorization || '';
+  const userToken = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!userToken) return res.status(401).json({ error: 'Not signed in' });
 
-  const latency = Date.now() - t0;
+  const SUPABASE_URL = (process.env.SUPABASE_URL || '').trim();
+  const ANON_KEY     = (process.env.SUPABASE_ANON_KEY || '').trim();
+  const SERVICE_KEY  = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+  const GEMINI_KEY   = (process.env.GEMINI_API_KEY || '').trim();
 
-  const { data: saved } = await supa
-    .from('objection_attempts')
-    .insert({
-      rep_email: repEmail,
-      objection_id: card.id,
-      objection_snapshot: card.objection,
-      answer: ans,
-      score,
-      feedback,
-      model_used: modelUsed,
-      latency_ms: latency,
-    })
-    .select('id')
-    .single();
+  if (!SUPABASE_URL || !ANON_KEY || !SERVICE_KEY) {
+    return res.status(500).json({ error: 'Supabase env not configured' });
+  }
+  if (!GEMINI_KEY) return res.status(500).json({ error: 'GEMINI_API_KEY not set' });
+
+  // 1. Verify the user's token
+  let userEmail;
+  try {
+    const userResp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { authorization: `Bearer ${userToken}`, apikey: ANON_KEY },
+    });
+    if (!userResp.ok) return res.status(401).json({ error: 'Invalid session' });
+    const user = await userResp.json();
+    userEmail = user?.email;
+    if (!userEmail) return res.status(401).json({ error: 'No email in session' });
+  } catch (e) {
+    return res.status(502).json({ error: 'Auth check failed: ' + e.message });
+  }
+
+  // 2. Fetch the objection card (service-role bypasses RLS)
+  let card;
+  try {
+    const cardResp = await fetch(
+      `${SUPABASE_URL}/rest/v1/objections?id=eq.${encodeURIComponent(objection_id)}&select=id,category,difficulty,quote,context,ideal_response,rubric`,
+      { headers: { apikey: SERVICE_KEY, authorization: `Bearer ${SERVICE_KEY}` } }
+    );
+    if (!cardResp.ok) return res.status(502).json({ error: 'Card fetch failed' });
+    const rows = await cardResp.json();
+    card = rows[0];
+    if (!card) return res.status(404).json({ error: 'Objection card not found' });
+  } catch (e) {
+    return res.status(502).json({ error: 'Card lookup failed: ' + e.message });
+  }
+
+  // 3. Build the Gemini prompt
+  const rubricItems = Array.isArray(card.rubric?.looks_for) ? card.rubric.looks_for : [];
+  const prompt =
+    'You are a strict but fair sales coach grading a Cardinal Roofing sales rep\'s answer ' +
+    'to a customer objection. You always respond with a single valid JSON object and nothing else.\n\n' +
+    `CUSTOMER OBJECTION (category: ${card.category}, difficulty: ${card.difficulty}/3):\n"${card.quote}"\n\n` +
+    `CONTEXT: ${card.context || 'General customer objection.'}\n\n` +
+    `CARDINAL'S IDEAL RESPONSE:\n${card.ideal_response}\n\n` +
+    'RUBRIC — what a great answer hits:\n- ' + rubricItems.join('\n- ') + '\n\n' +
+    `REP'S ANSWER:\n"${answer}"\n\n` +
+    'Grade the rep\'s answer from 0 to 100 based on how well it:\n' +
+    '1. Actually addresses the objection (doesn\'t dodge or change the subject)\n' +
+    '2. Hits the rubric items above\n' +
+    '3. Sounds natural — a real human talking to a homeowner, not a script\n' +
+    '4. Would actually work in the field with a skeptical customer\n\n' +
+    'Be honest. A wooden or manipulative answer should score low even if it hits the rubric. ' +
+    'A creative answer that hits the rubric in unexpected ways should score high. ' +
+    'Ideal responses match or beat the reference and score 85+.\n\n' +
+    'Respond ONLY with this JSON structure:\n' +
+    '{\n' +
+    '  "score": <integer 0-100>,\n' +
+    '  "feedback": {\n' +
+    '    "verdict": "<one sentence overall take>",\n' +
+    '    "strengths": ["<what worked>", "..."],\n' +
+    '    "gaps": ["<what was missing or weak>", "..."],\n' +
+    '    "fix": "<one short paragraph — the single most important thing to change>"\n' +
+    '  }\n' +
+    '}';
+
+  // 4. Call Gemini
+  let parsed;
+  try {
+    const gemResp = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(GEMINI_KEY)}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.4,
+          responseMimeType: 'application/json',
+        },
+      }),
+    });
+    if (!gemResp.ok) {
+      const errText = await gemResp.text().catch(() => '');
+      return res.status(502).json({ error: 'Gemini error: ' + errText.slice(0, 200) });
+    }
+    const gem = await gemResp.json();
+    const text = gem?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    parsed = JSON.parse(text);
+  } catch (e) {
+    return res.status(502).json({ error: 'Grading failed: ' + e.message });
+  }
+
+  const score = Math.max(0, Math.min(100, parseInt(parsed.score, 10) || 0));
+  const feedback = parsed.feedback && typeof parsed.feedback === 'object' ? parsed.feedback : {};
+
+  // 5. Save the attempt (fire-and-forget)
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/objection_attempts`, {
+      method: 'POST',
+      headers: {
+        apikey: SERVICE_KEY,
+        authorization: `Bearer ${SERVICE_KEY}`,
+        'content-type': 'application/json',
+        prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        objection_id,
+        user_email: userEmail,
+        answer,
+        score,
+        feedback,
+      }),
+    });
+  } catch (_) {
+    // Non-fatal — grading result still returns to the client
+  }
 
   return res.status(200).json({
-    attempt_id: saved?.id || null,
     score,
+    ideal: card.ideal_response,
     feedback,
-    ideal: card.response,
-    pro_tip: card.pro_tip,
-    model_used: modelUsed,
-    latency_ms: latency,
   });
 }
