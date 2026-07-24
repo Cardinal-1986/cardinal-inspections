@@ -1,4 +1,4 @@
-// api/coach.js
+// api/coach.js  [v3 · 2026-07-24]
 // ═════════════════════════════════════════════════════════════════════
 // Objection Coach — grade a rep's answer against the ideal response
 // using Gemini. Returns { score, ideal, feedback: { verdict, strengths,
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
       // the client toast (the client only reads .error, not .supabase_said).
       return res.status(502).json({
         error:
-          `HTTP ${cardResp.status} from Supabase. ` +
+          `[v3] HTTP ${cardResp.status} from Supabase. ` +
           `Body: ${detail || '(empty)'}. ` +
           `URL: ${cardUrl.replace(/([?&]apikey=)[^&]+/, '$1REDACTED')}`,
       });
