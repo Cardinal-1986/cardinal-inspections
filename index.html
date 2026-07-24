@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 212 &#8212; Estimate Increment 1d: Publish button generates a print-ready Cardinal document (line items, deposit block, photos with captions, signature block) and pushes it into the base app&#8217;s doc system &#8212; inheriting share link, email-to-client, client signature, and PDF/print. Modules now minified on build (~140 KB reclaimed).</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 213 &#8212; Photo Album fixes: picker mode no longer latches on (Back button now clears it, so Add photos / Take photo return), gallery opens via the base app&#8217;s own view switcher so the client profile is properly hidden, and the broken CSS escape that printed &#8220;u25FB Picker u00b7&#8221; in the title is gone.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35936,16 +35936,18 @@ margin-left:8px;
 #galleryView.cr-pae-pickermode #galCamBtn,
 #galleryView.cr-pae-pickermode #galInspBtn,
 #galleryView.cr-pae-pickermode #galInspRmBtn,
-#galleryView.cr-pae-pickermode #galXferWrap,
-#galleryView.cr-pae-pickermode #galFileInput,
-#galleryView.cr-pae-pickermode #galCamInput{
+#galleryView.cr-pae-pickermode #galXferWrap{
 display:none !important;
 }
-#galleryView.cr-pae-pickermode #galTitle::before{
-content:'\u25FB Picker \u00b7 ';
-color:#8a5a00;
-margin-right:4px;
+.cr-pae-pickerbanner{
+display:none;
+background:#faf5e9; border:1px solid #d4a017;
+border-left:4px solid #d4a017;
+border-radius:6px; padding:9px 13px; margin:0 0 12px;
+font:700 12.5px 'Segoe UI',Arial,sans-serif;
+color:#5a4a1a;
 }
+#galleryView.cr-pae-pickermode .cr-pae-pickerbanner{ display:block; }
 #cr-pae-cap-modal{
 display:none;
 position:fixed; inset:0;
@@ -36415,42 +36417,78 @@ updateActionBar();
 }
 setInterval(pollChecked, 250);
 function openAsPicker(project, existingIds, cb){
-if(typeof window.openGallery !== 'function' && typeof window.loadGallery !== 'function'){
-alert('Photo Album not available yet.');
-return;
-}
 pickerMode = true;
 pickerCallback = cb;
 pickerPreselect = new Set((existingIds || []).map(String));
 if(project) window.currentProject = project;
-if(typeof window.openGallery === 'function'){
-try{ window.openGallery('all'); }catch(_){}
-}else if(typeof window.showGallery === 'function'){
-try{ window.showGallery('all'); }catch(_){}
+if(typeof window.openGalleryMode === 'function'){
+try{ window.openGalleryMode('all'); }
+catch(e){ console.warn('[pae] openGalleryMode failed:', e); }
 }else{
-var view = document.getElementById('galleryView');
-if(view) view.style.display = 'block';
+var pv = document.getElementById('projectView');
+var gv = document.getElementById('galleryView');
+if(pv) pv.style.display = 'none';
+if(gv) gv.style.display = 'block';
+window.scrollTo(0, 0);
 if(typeof window.loadGallery === 'function') window.loadGallery();
 }
 var view = document.getElementById('galleryView');
 if(view) view.classList.add('cr-pae-pickermode');
+ensurePickerBanner();
 setTimeout(function(){
 window.galChecked = window.galChecked || {};
 pickerPreselect.forEach(function(id){ window.galChecked[id] = true; });
 if(typeof window.renderGallery === 'function') window.renderGallery();
 updateActionBar();
-}, 400);
+}, 450);
+}
+function ensurePickerBanner(){
+if(document.getElementById('cr-pae-picker-banner')) return;
+var tabs = document.getElementById('cr-pae-tabs');
+var grid = document.getElementById('galGrid');
+var anchor = tabs || grid;
+if(!anchor || !anchor.parentNode) return;
+var b = document.createElement('div');
+b.id = 'cr-pae-picker-banner';
+b.className = 'cr-pae-pickerbanner';
+b.textContent = 'Picking photos for an estimate \u2014 tap photos to select, then Attach at the bottom.';
+anchor.parentNode.insertBefore(b, anchor);
 }
 function completePicker(selectedPhotos){
-var view = document.getElementById('galleryView');
-if(view) view.classList.remove('cr-pae-pickermode');
+clearPickerMode();
 var cb = pickerCallback;
-pickerMode = false;
 pickerCallback = null;
 window.galChecked = {};
 var backBtn = document.getElementById('galBackBtn');
 if(backBtn){ try{ backBtn.click(); }catch(_){} }
 if(cb) cb(selectedPhotos);
+}
+function clearPickerMode(){
+pickerMode = false;
+pickerPreselect = new Set();
+var view = document.getElementById('galleryView');
+if(view) view.classList.remove('cr-pae-pickermode', 'cr-pae-selectmode');
+var banner = document.getElementById('cr-pae-picker-banner');
+if(banner && banner.parentNode) banner.parentNode.removeChild(banner);
+if(actionBar) actionBar.classList.remove('show');
+}
+function hookBackButton(){
+var back = document.getElementById('galBackBtn');
+if(!back || back.dataset.crPaeHooked === '1') return false;
+back.dataset.crPaeHooked = '1';
+back.addEventListener('click', function(){
+if(pickerMode && pickerCallback){
+var cb = pickerCallback;
+pickerCallback = null;
+clearPickerMode();
+window.galChecked = {};
+try{ cb(null); }catch(_){}
+}else{
+clearPickerMode();
+window.galChecked = {};
+}
+});
+return true;
 }
 function tryWrap(){
 if(wrapRenderGallery()) return true;
@@ -36462,14 +36500,19 @@ var n = 0, iv = setInterval(function(){
 if(tryWrap() || ++n > 40) clearInterval(iv);
 }, 300);
 }
+if(!hookBackButton()){
+var m = 0, iv2 = setInterval(function(){
+if(hookBackButton() || ++m > 40) clearInterval(iv2);
+}, 300);
+}
 var view = document.getElementById('galleryView');
 if(view){
 new MutationObserver(function(){
-if(view.style.display !== 'none' && typeof window.renderGallery === 'function'){
+var visible = view.style.display !== 'none';
+if(visible){
 renderTabs();
-}else{
-if(pickerMode && pickerCallback){
-}
+}else if(pickerMode && !pickerCallback){
+clearPickerMode();
 }
 }).observe(view, { attributes:true, attributeFilter:['style'] });
 }
