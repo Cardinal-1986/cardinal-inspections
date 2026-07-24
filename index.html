@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 207 &#8212; Removed Manual Estimates + All Estimates modules. The base app&#8217;s + New estimate templates + General repair estimate cover the same ground and are more polished (client signature, email-to-client, share link, PDF/print). Cleaner one-flow UX.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 208 &#8212; Estimate rebuild Increment 1a: Line Item Library. Menu &rarr; Admin &rarr; &#128203; manages a reusable catalog seeded with 12 real Cardinal line items. Foundation SQL creates estimates + templates tables for 1b/1c/1d.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37970,6 +37970,700 @@ body.claim-insurance #brandLogo{
   window.CardinalPO = {
     generate: generate,
     from    : from,
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: line_item_library.html · v2026-07-24
+     ══════════════════════════════════════════════════════════
+     Increment 1a of the unified estimate rebuild.
+     Admin-only CRUD for the reusable line-item catalog that will
+     back the new unified estimate editor (Increment 1b).
+
+     Access:
+       Menu → Admin → 📋 Line Item Library  (theo/joan only)
+       CardinalLineItems.open() from the console
+
+     Public API:
+       CardinalLineItems.open()
+       CardinalLineItems.close()
+       CardinalLineItems.load()                 — fetch fresh
+       CardinalLineItems.all()                  — cached list
+       CardinalLineItems.byCategory(cat)        — filter
+       CardinalLineItems.byId(id)               — single item lookup
+
+     Requires estimate_system_setup.sql run in Supabase.
+────────────────────────────────────────────────────────────── -->
+
+<style id="cr-lil-styles">
+  #cr-lil-view{
+    display:none;
+    position:fixed; inset:0;
+    background:#fdfcf7; color:#2c2c2c;
+    z-index:9400;
+    flex-direction:column;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  #cr-lil-view.open{ display:flex; }
+
+  .cr-lil-head{
+    padding:14px 16px 12px;
+    padding-top:calc(14px + env(safe-area-inset-top, 0px));
+    background:linear-gradient(120deg,#2c2c2c,#1a1a1a);
+    color:#f5efe0;
+    display:flex; align-items:center; gap:12px;
+    flex:0 0 auto;
+  }
+  .cr-lil-head h2{
+    margin:0; flex:1;
+    font:800 15px Georgia,'Times New Roman',serif;
+    letter-spacing:.02em;
+  }
+  .cr-lil-head button{
+    background:transparent; border:1px solid rgba(212,160,23,.5);
+    color:#f5d061; padding:6px 12px; border-radius:6px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+  }
+  .cr-lil-head button:hover{ background:rgba(212,160,23,.14); }
+  .cr-lil-head button.primary{
+    background:#d4a017; color:#1a1a1a; border-color:#d4a017;
+  }
+  .cr-lil-head button.primary:hover{ background:#e8ba15; }
+
+  .cr-lil-search{
+    padding:10px 16px; background:#fdfcf7;
+    border-bottom:1px solid #e8dfc8; flex:0 0 auto;
+  }
+  .cr-lil-search input{
+    width:100%; box-sizing:border-box;
+    padding:9px 12px 9px 34px;
+    border:1px solid #d9cfaf; border-radius:22px;
+    font-size:14px; outline:none;
+    background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;
+    font-family:inherit;
+  }
+  .cr-lil-search input:focus{
+    border-color:#d4a017; box-shadow:0 0 0 3px rgba(212,160,23,.22);
+  }
+
+  .cr-lil-tabs{
+    padding:0 12px 12px; background:#fdfcf7;
+    display:flex; gap:6px; flex:0 0 auto;
+    border-bottom:1px solid #e8dfc8;
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .cr-lil-tabs::-webkit-scrollbar{ display:none; }
+  .cr-lil-tabs button{
+    background:#f0e8d0; color:#8a7a5a; border:0;
+    padding:8px 14px; border-radius:8px;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+    white-space:nowrap;
+    transition:background .12s, color .12s;
+  }
+  .cr-lil-tabs button.active{
+    background:#d4a017; color:#1a1a1a;
+  }
+  .cr-lil-tabs .count{
+    display:inline-block; margin-left:5px;
+    background:rgba(0,0,0,.15); padding:1px 6px;
+    border-radius:8px; font-size:9.5px;
+  }
+  .cr-lil-tabs button.active .count{
+    background:rgba(0,0,0,.22); color:#1a1a1a;
+  }
+
+  .cr-lil-list{
+    overflow-y:auto; flex:1;
+    -webkit-overflow-scrolling:touch;
+    background:#fff;
+  }
+  .cr-lil-row{
+    padding:14px 16px;
+    border-bottom:1px solid #f0e8d0;
+    cursor:pointer;
+    transition:background .1s;
+  }
+  .cr-lil-row:hover{ background:#faf5e9; }
+  .cr-lil-row .top{
+    display:flex; align-items:baseline; gap:10px;
+    margin-bottom:4px;
+  }
+  .cr-lil-row .name{
+    flex:1;
+    font:800 14.5px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+  .cr-lil-row .price{
+    flex:0 0 auto;
+    font:800 14px 'Segoe UI',Arial,sans-serif;
+    color:#8a5a00;
+    white-space:nowrap;
+  }
+  .cr-lil-row .desc{
+    font:400 12.5px 'Segoe UI',Arial,sans-serif;
+    color:#6b6b6b;
+    line-height:1.4;
+    max-height:2.8em;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+  }
+  .cr-lil-row .meta{
+    margin-top:6px;
+    font:600 10.5px 'Segoe UI',Arial,sans-serif;
+    color:#8a7a5a;
+    letter-spacing:.06em;
+  }
+  .cr-lil-row .meta .cat{
+    display:inline-block; padding:2px 8px;
+    background:#faf5e9; border:1px solid #d9cfaf;
+    border-radius:10px; margin-right:6px;
+    color:#8a5a00;
+    text-transform:uppercase;
+  }
+  .cr-lil-row .meta .unit{ color:#6b6b6b; }
+
+  .cr-lil-empty{
+    padding:40px 20px; text-align:center;
+    color:#8a7a5a;
+    font:600 13.5px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-lil-empty small{
+    display:block; margin-top:8px; font-weight:400;
+    color:#a89e88;
+  }
+
+  /* Editor modal */
+  .cr-lil-editor{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:9410;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    padding-top:max(20px, env(safe-area-inset-top, 0px));
+    padding-bottom:max(20px, env(safe-area-inset-bottom, 0px));
+  }
+  .cr-lil-editor.open{ display:flex; }
+  .cr-lil-editor .box{
+    background:#fdfcf7;
+    border-radius:12px;
+    width:min(560px, 100%);
+    max-height:100%;
+    display:flex; flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .cr-lil-editor .box-head{
+    padding:14px 18px;
+    background:#faf5e9;
+    border-bottom:1px solid #e8d9a8;
+    display:flex; align-items:center; gap:12px;
+    flex:0 0 auto;
+  }
+  .cr-lil-editor .box-head h3{
+    margin:0; flex:1;
+    font:800 14px Georgia,'Times New Roman',serif;
+    color:#2c2c2c;
+  }
+  .cr-lil-editor .box-head button{
+    background:transparent; border:0; cursor:pointer;
+    font-size:22px; line-height:1; color:#8a7a5a;
+    padding:2px 6px;
+  }
+  .cr-lil-editor .box-body{
+    padding:16px 18px; overflow-y:auto; flex:1;
+    -webkit-overflow-scrolling:touch;
+  }
+  .cr-lil-editor label{
+    display:block;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:#8a7a5a; margin:12px 0 4px;
+  }
+  .cr-lil-editor label:first-child{ margin-top:0; }
+  .cr-lil-editor input[type=text],
+  .cr-lil-editor input[type=number],
+  .cr-lil-editor select,
+  .cr-lil-editor textarea{
+    width:100%; box-sizing:border-box;
+    padding:9px 12px;
+    border:1px solid #d9cfaf; border-radius:8px;
+    font-family:inherit; font-size:14px;
+    background:#fff;
+    outline:none;
+  }
+  .cr-lil-editor input:focus,
+  .cr-lil-editor select:focus,
+  .cr-lil-editor textarea:focus{
+    border-color:#d4a017;
+    box-shadow:0 0 0 3px rgba(212,160,23,.22);
+  }
+  .cr-lil-editor textarea{
+    min-height:120px; resize:vertical;
+    line-height:1.5;
+    font-size:13.5px;
+  }
+  .cr-lil-editor .row2{
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:0 12px;
+  }
+  .cr-lil-editor .box-foot{
+    padding:12px 18px;
+    background:#faf5e9;
+    border-top:1px solid #e8d9a8;
+    display:flex; gap:8px; justify-content:space-between;
+    flex:0 0 auto;
+  }
+  .cr-lil-editor .box-foot .right{
+    display:flex; gap:8px;
+  }
+  .cr-lil-editor .box-foot button{
+    padding:9px 16px; border-radius:6px; cursor:pointer;
+    font:800 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    font-family:inherit;
+    border:0;
+  }
+  .cr-lil-editor .box-foot .cancel{
+    background:transparent; color:#8a7a5a;
+    border:1px solid #d9cfaf;
+  }
+  .cr-lil-editor .box-foot .save{
+    background:#d4a017; color:#1a1a1a;
+  }
+  .cr-lil-editor .box-foot .save:hover{ background:#e8ba15; }
+  .cr-lil-editor .box-foot .save:disabled{ opacity:.5; cursor:wait; }
+  .cr-lil-editor .box-foot .delete{
+    background:transparent; color:#9c1822;
+    border:1px solid #e8b8ba;
+  }
+  .cr-lil-editor .box-foot .delete:hover{
+    background:#fdecec;
+  }
+
+  /* Non-admin lockout */
+  .cr-lil-locked{
+    padding:40px 24px; text-align:center;
+  }
+  .cr-lil-locked h3{
+    font:800 15px Georgia,serif; color:#2c2c2c;
+    margin:0 0 8px;
+  }
+  .cr-lil-locked p{
+    font:400 13px 'Segoe UI',Arial,sans-serif;
+    color:#6b6b6b; margin:0;
+  }
+</style>
+
+<script id="cr-lil-script">
+(function(){
+  'use strict';
+
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+  var CATEGORIES = ['Roofing', 'Siding', 'Windows', 'Gutters', 'Codes', 'Repair', 'General'];
+  var UNITS      = ['', 'SQ', 'LF', 'EA', 'LS'];
+
+  var view = null;
+  var editor = null;
+  var items = [];
+  var currentCategory = 'all';
+  var currentQuery = '';
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function money(n){
+    var v = Number(n) || 0;
+    return '$' + v.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+  function myEmail(){
+    return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+  }
+  function isAdmin(){
+    return ADMIN_EMAILS.indexOf(myEmail()) !== -1;
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Data
+  // ═════════════════════════════════════════════════════
+  async function loadItems(){
+    if(!window.supa){ items = []; render(); return; }
+    try{
+      var r = await window.supa.from('estimate_line_items')
+        .select('*').eq('active', true)
+        .order('category').order('sort_order').order('name');
+      if(r.error){
+        console.warn('[lil] load:', r.error.message);
+        items = [];
+      }else{
+        items = r.data || [];
+      }
+    }catch(e){
+      console.warn('[lil] load failed:', e);
+      items = [];
+    }
+    render();
+  }
+
+  async function saveItem(payload, id){
+    if(!window.supa) throw new Error('No connection');
+    payload.created_by = payload.created_by || myEmail() || null;
+    var r;
+    if(id){
+      r = await window.supa.from('estimate_line_items').update(payload).eq('id', id).select().single();
+    }else{
+      r = await window.supa.from('estimate_line_items').insert(payload).select().single();
+    }
+    if(r.error) throw r.error;
+    return r.data;
+  }
+
+  async function deleteItem(id){
+    // Soft delete (active=false) so estimates referencing it still resolve if we
+    // ever look up historical rows. Real archive.
+    var r = await window.supa.from('estimate_line_items').update({ active:false }).eq('id', id);
+    if(r.error) throw r.error;
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Filter + render
+  // ═════════════════════════════════════════════════════
+  function filtered(){
+    var out = items;
+    if(currentCategory !== 'all'){
+      out = out.filter(function(i){ return i.category === currentCategory; });
+    }
+    if(currentQuery){
+      var q = currentQuery.toLowerCase();
+      out = out.filter(function(i){
+        return (i.name || '').toLowerCase().indexOf(q) !== -1
+            || (i.description || '').toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    return out;
+  }
+
+  function render(){
+    if(!view) return;
+
+    // Tab counts
+    var byCat = {};
+    items.forEach(function(i){
+      byCat[i.category] = (byCat[i.category] || 0) + 1;
+    });
+    view.querySelectorAll('.cr-lil-tabs button').forEach(function(btn){
+      var c = btn.dataset.cat;
+      var n = c === 'all' ? items.length : (byCat[c] || 0);
+      var pill = btn.querySelector('.count');
+      if(pill) pill.textContent = n;
+      btn.classList.toggle('active', c === currentCategory);
+    });
+
+    // List
+    var list = view.querySelector('.cr-lil-list');
+    var rows = filtered();
+    if(!rows.length){
+      list.innerHTML = '<div class="cr-lil-empty">' +
+        (currentQuery
+          ? 'No items match &ldquo;' + esc(currentQuery) + '&rdquo;.'
+          : (currentCategory === 'all'
+              ? 'The library is empty. Tap + to add your first item.'
+              : 'No items in ' + esc(currentCategory) + ' yet.')) +
+        '<small>Tap + at the top to add one.</small>' +
+      '</div>';
+      return;
+    }
+    list.innerHTML = rows.map(function(i){
+      var priceStr = Number(i.default_price) > 0
+        ? money(i.default_price)
+        : '<span style="color:#a89e88;font-style:italic;">no default</span>';
+      var descStr = i.description
+        ? esc(i.description).replace(/\n/g, ' \u00b7 ')
+        : '<span style="color:#a89e88;font-style:italic;">no description</span>';
+      return '<div class="cr-lil-row" data-id="' + esc(i.id) + '">' +
+        '<div class="top">' +
+          '<div class="name">' + esc(i.name) + '</div>' +
+          '<div class="price">' + priceStr + '</div>' +
+        '</div>' +
+        '<div class="desc">' + descStr + '</div>' +
+        '<div class="meta">' +
+          '<span class="cat">' + esc(i.category || 'General') + '</span>' +
+          (i.unit ? '<span class="unit">Unit: ' + esc(i.unit) + '</span>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+    list.querySelectorAll('.cr-lil-row').forEach(function(row){
+      row.onclick = function(){
+        var item = items.find(function(i){ return i.id === row.dataset.id; });
+        if(item) openEditor(item);
+      };
+    });
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Editor modal
+  // ═════════════════════════════════════════════════════
+  function ensureEditor(){
+    if(editor) return editor;
+    editor = document.createElement('div');
+    editor.className = 'cr-lil-editor';
+    editor.innerHTML =
+      '<div class="box">' +
+        '<div class="box-head">' +
+          '<h3 data-title>Edit line item</h3>' +
+          '<button data-act="close" type="button" aria-label="Close">\u2715</button>' +
+        '</div>' +
+        '<div class="box-body">' +
+          '<label>Name</label>' +
+          '<input type="text" data-f="name" placeholder="e.g. OC Duration 3D Shingle System" />' +
+
+          '<label>Description</label>' +
+          '<textarea data-f="description" placeholder="What&apos;s included &mdash; scope, materials, brands, warranty, color options, etc."></textarea>' +
+
+          '<div class="row2">' +
+            '<div>' +
+              '<label>Default price</label>' +
+              '<input type="number" data-f="default_price" step="0.01" min="0" placeholder="0.00" inputmode="decimal" />' +
+            '</div>' +
+            '<div>' +
+              '<label>Unit</label>' +
+              '<select data-f="unit">' +
+                UNITS.map(function(u){
+                  return '<option value="' + esc(u) + '">' + (u || '— none —') + '</option>';
+                }).join('') +
+              '</select>' +
+            '</div>' +
+          '</div>' +
+
+          '<label>Category</label>' +
+          '<select data-f="category">' +
+            CATEGORIES.map(function(c){
+              return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
+            }).join('') +
+          '</select>' +
+        '</div>' +
+        '<div class="box-foot">' +
+          '<button class="delete" data-act="delete" type="button" style="display:none;">Delete</button>' +
+          '<div class="right">' +
+            '<button class="cancel" data-act="cancel" type="button">Cancel</button>' +
+            '<button class="save"   data-act="save"   type="button">Save</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(editor);
+    editor.querySelector('[data-act="close"]').onclick  = closeEditor;
+    editor.querySelector('[data-act="cancel"]').onclick = closeEditor;
+    editor.querySelector('[data-act="save"]').onclick   = handleSave;
+    editor.querySelector('[data-act="delete"]').onclick = handleDelete;
+    return editor;
+  }
+
+  var currentEditingId = null;
+  function openEditor(item){
+    ensureEditor();
+    currentEditingId = item ? item.id : null;
+    editor.querySelector('[data-title]').textContent = item ? 'Edit line item' : 'New line item';
+    editor.querySelector('[data-f="name"]').value          = item ? (item.name || '') : '';
+    editor.querySelector('[data-f="description"]').value   = item ? (item.description || '') : '';
+    editor.querySelector('[data-f="default_price"]').value = item ? (item.default_price || '') : '';
+    editor.querySelector('[data-f="unit"]').value          = item ? (item.unit || '') : '';
+    editor.querySelector('[data-f="category"]').value      = item ? (item.category || 'General') : 'General';
+    editor.querySelector('[data-act="delete"]').style.display = item ? '' : 'none';
+    editor.querySelector('[data-act="save"]').disabled = false;
+    editor.querySelector('[data-act="save"]').textContent = 'Save';
+    editor.classList.add('open');
+    setTimeout(function(){ editor.querySelector('[data-f="name"]').focus(); }, 60);
+  }
+  function closeEditor(){
+    currentEditingId = null;
+    if(editor) editor.classList.remove('open');
+  }
+
+  async function handleSave(){
+    var name  = editor.querySelector('[data-f="name"]').value.trim();
+    var desc  = editor.querySelector('[data-f="description"]').value.trim();
+    var price = Number(editor.querySelector('[data-f="default_price"]').value) || 0;
+    var unit  = editor.querySelector('[data-f="unit"]').value.trim();
+    var cat   = editor.querySelector('[data-f="category"]').value;
+    if(!name){ alert('Give the item a name.'); return; }
+    var saveBtn = editor.querySelector('[data-act="save"]');
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026';
+    try{
+      var payload = {
+        name          : name,
+        description   : desc || null,
+        default_price : price,
+        unit          : unit || null,
+        category      : cat,
+      };
+      await saveItem(payload, currentEditingId);
+      closeEditor();
+      await loadItems();
+    }catch(e){
+      alert('Save failed: ' + (e.message || e));
+      saveBtn.disabled = false; saveBtn.textContent = 'Save';
+    }
+  }
+
+  async function handleDelete(){
+    if(!currentEditingId) return;
+    var item = items.find(function(i){ return i.id === currentEditingId; });
+    if(!confirm('Remove "' + (item ? item.name : 'this item') + '" from the library?')) return;
+    try{
+      await deleteItem(currentEditingId);
+      closeEditor();
+      await loadItems();
+    }catch(e){
+      alert('Delete failed: ' + (e.message || e));
+    }
+  }
+
+  // ═════════════════════════════════════════════════════
+  // View shell
+  // ═════════════════════════════════════════════════════
+  function ensureView(){
+    if(view) return view;
+    view = document.createElement('div');
+    view.id = 'cr-lil-view';
+    var tabsHtml =
+      '<button data-cat="all" class="active">All <span class="count">0</span></button>' +
+      CATEGORIES.map(function(c){
+        return '<button data-cat="' + esc(c) + '">' + esc(c) +
+               ' <span class="count">0</span></button>';
+      }).join('');
+    view.innerHTML =
+      '<div class="cr-lil-head">' +
+        '<h2>Line Item Library</h2>' +
+        '<button data-act="add" class="primary" type="button">+ Add</button>' +
+        '<button data-act="close" type="button">Close</button>' +
+      '</div>' +
+      '<div class="cr-lil-search">' +
+        '<input type="search" placeholder="Search name or description\u2026" autocomplete="off" />' +
+      '</div>' +
+      '<div class="cr-lil-tabs">' + tabsHtml + '</div>' +
+      '<div class="cr-lil-list"></div>';
+    document.body.appendChild(view);
+    view.querySelector('[data-act="close"]').onclick = close;
+    view.querySelector('[data-act="add"]').onclick   = function(){ openEditor(null); };
+    view.querySelector('.cr-lil-search input').oninput = function(e){
+      currentQuery = e.target.value;
+      render();
+    };
+    view.querySelectorAll('.cr-lil-tabs button').forEach(function(btn){
+      btn.onclick = function(){
+        currentCategory = btn.dataset.cat;
+        render();
+      };
+    });
+    return view;
+  }
+
+  function open(){
+    if(!isAdmin()){
+      alert('The Line Item Library is admin-only. Ask Theo or Joan to add items you need.');
+      return;
+    }
+    ensureView();
+    view.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    render();
+    loadItems();
+  }
+  function close(){
+    if(view) view.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Burger menu integration — Admin section
+  // ═════════════════════════════════════════════════════
+  function addToMenu(){
+    if(!isAdmin()) return true;   // don't spam retry for non-admins
+    var menu = document.getElementById('navMenu');
+    if(!menu) return false;
+    if(document.getElementById('cr-lil-nav')) return true;
+    // Try to insert near Health Check (admin) or under Admin section header
+    var anchor =
+      document.getElementById('cr-nav-healthcheck') ||
+      menu.querySelector('.navopt[data-nav="reports"]') ||
+      menu.querySelector('.navopt[data-nav="activity"]');
+    if(!anchor){
+      // Fall back to bottom of Admin section
+      var sec = null;
+      menu.querySelectorAll('.navsec').forEach(function(s){
+        if(s.textContent.trim().toLowerCase() === 'admin') sec = s;
+      });
+      if(!sec) return false;
+      anchor = sec;
+      // Walk to end of section
+      var walker = sec.nextElementSibling;
+      while(walker && !walker.classList.contains('navsec')){
+        anchor = walker;
+        walker = walker.nextElementSibling;
+      }
+    }
+    var btn = document.createElement('button');
+    btn.id = 'cr-lil-nav';
+    btn.className = 'navopt';
+    btn.type = 'button';
+    btn.innerHTML = '\uD83D\uDCCB Line Item Library';
+    btn.onclick = function(e){
+      e.stopPropagation();
+      menu.style.display = 'none';
+      setTimeout(open, 60);
+    };
+    anchor.parentNode.insertBefore(btn, anchor.nextSibling);
+    return true;
+  }
+
+  function tryMenu(){
+    if(!addToMenu()){
+      var n = 0, iv = setInterval(function(){
+        if(addToMenu() || ++n > 60) clearInterval(iv);
+      }, 200);
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tryMenu);
+  else tryMenu();
+
+  // Preload the catalog once so the future estimate editor can read from
+  // CardinalLineItems.all() immediately without waiting for a fetch.
+  setTimeout(function(){
+    if(window.supa) loadItems();
+  }, 800);
+
+  // ═════════════════════════════════════════════════════
+  // Public API
+  // ═════════════════════════════════════════════════════
+  window.CardinalLineItems = {
+    open        : open,
+    close       : close,
+    load        : loadItems,
+    all         : function(){ return items.slice(); },
+    byCategory  : function(cat){
+      return items.filter(function(i){ return i.category === cat; });
+    },
+    byId        : function(id){
+      return items.find(function(i){ return i.id === id; });
+    },
+    categories  : function(){ return CATEGORIES.slice(); },
+    units       : function(){ return UNITS.slice(); },
   };
 })();
 </script>
