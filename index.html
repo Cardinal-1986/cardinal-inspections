@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 203 &#8212; Changelog catches up (builds 187–202); Community Hub instant-refresh after saving new bid; PO# auto-assigned to every client (format PO-YYYYMMDD-HHMM based on created_at)</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 204 &#8212; Menu: narrower width (max 300px), better scroll reach, removed stray legacy Community item at the bottom</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25364,6 +25364,10 @@ body.claim-insurance #brandLogo{
     var portal = null;
     try{ portal = window.CardinalPortal && window.CardinalPortal.get(); }catch(_){ }
     var wanted = (portal === 'community' || portal === 'all');
+    // Defer to menu_condense.html's clean CRMs-section Community Hub
+    // entry when it's present. Otherwise fall back to the old auto-added
+    // button at the end of the menu.
+    if(document.getElementById('cr-nav-communityhub')) return;
     var existing = menu.querySelector('[data-nav="communityhub"]');
     if(wanted && !existing){
       var btn = document.createElement('button');
@@ -35224,6 +35228,15 @@ body.claim-insurance #brandLogo{
 -->
 <style id="cr-menu-styles">
   #navMenu{
+    /* Narrow width on mobile. The base app forces full-width via
+       `#navMenu{left:10px;right:10px}` inside a media query — we
+       clear that with `left:auto` and an explicit small width. */
+    left:auto !important;
+    right:10px !important;
+    width:min(300px, calc(100vw - 20px)) !important;
+    max-width:none !important;
+    min-width:0 !important;
+
     /* Explicit overflow overrides beat the base app's `overflow:hidden` */
     overflow-y:auto !important;
     overflow-x:hidden !important;
@@ -35233,9 +35246,11 @@ body.claim-insurance #brandLogo{
     /* Two-line max-height: vh fallback for old iOS, dvh for modern.
        dvh (dynamic viewport height) tracks the actual visible viewport
        after the URL bar collapses, which vh does not. */
-    max-height:75vh !important;
-    max-height:calc(100dvh - 130px - env(safe-area-inset-bottom, 0px)) !important;
-    padding-bottom:calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    max-height:72vh !important;
+    max-height:calc(100dvh - 150px - env(safe-area-inset-bottom, 0px)) !important;
+    /* Generous bottom padding so the LAST item can scroll clear of the
+       iOS home indicator, not disappear behind it. */
+    padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px)) !important;
     /* Force a compositing layer to work around iOS scroll bugs */
     -webkit-transform:translateZ(0);
     transform:translateZ(0);
@@ -35338,9 +35353,18 @@ body.claim-insurance #brandLogo{
 
   // Add Community Hub + Community Partners to the (renamed) CRMs section
   function addCommunityItems(){
-    if(document.getElementById('cr-nav-communityhub')) return;
+    // Legacy: community_hub.html has an older ensureMenuOption() that
+    // appends its own [data-nav="communityhub"] button at the END of
+    // the menu when it can't find its expected anchor. That collides
+    // with our clean CRMs-section entry. Sweep any stray copies.
     var menu = document.getElementById('navMenu');
     if(!menu) return;
+    Array.prototype.forEach.call(
+      menu.querySelectorAll('[data-nav="communityhub"]'),
+      function(el){ el.remove(); }
+    );
+
+    if(document.getElementById('cr-nav-communityhub')) return;
     // Find Cardinal Truth item (data-nav="cardinaltruth"); insert after it
     var ct = menu.querySelector('.navopt[data-nav="cardinaltruth"]');
     if(!ct) return;
