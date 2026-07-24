@@ -70,10 +70,27 @@ export default async function handler(req, res) {
       `${SUPABASE_URL}/rest/v1/objections?id=eq.${encodeURIComponent(objection_id)}&select=id,category,difficulty,quote,context,ideal_response,rubric`,
       { headers: { apikey: SERVICE_KEY, authorization: `Bearer ${SERVICE_KEY}` } }
     );
-    if (!cardResp.ok) return res.status(502).json({ error: 'Card fetch failed' });
+    if (!cardResp.ok) {
+      const detail = await cardResp.text().catch(() => '');
+      return res.status(502).json({
+        error: `Card fetch failed: HTTP ${cardResp.status}`,
+        supabase_said: detail.slice(0, 400),
+        hint: cardResp.status === 401
+          ? 'SUPABASE_SERVICE_ROLE_KEY is wrong or missing — check Vercel env vars'
+          : cardResp.status === 404
+          ? 'objections table not found — run objection_coach_setup.sql in Supabase'
+          : cardResp.status === 400
+          ? 'Query rejected — usually a bad SUPABASE_URL (needs https://, no trailing slash)'
+          : undefined,
+      });
+    }
     const rows = await cardResp.json();
     card = rows[0];
-    if (!card) return res.status(404).json({ error: 'Objection card not found' });
+    if (!card) return res.status(404).json({
+      error: 'Objection card not found',
+      hint: 'The client sent an objection_id that isn\'t in the seeded deck. Re-run objection_coach_setup.sql and reload the app.',
+      objection_id,
+    });
   } catch (e) {
     return res.status(502).json({ error: 'Card lookup failed: ' + e.message });
   }
