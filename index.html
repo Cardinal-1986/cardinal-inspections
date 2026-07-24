@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 187 &#8212; Burger menu reorganized: renamed CRMs (with Community Hub + Partners), Resources, new Admin section for theo/joan, ⌘K quick-jump hint, scrollable + safe-area aware</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 189 &#8212; Added NACHI Roof Mastery sub-category under Mastering Roof Inspections with NACHI 1-3 Accessing A Roof (InterNACHI Parts 1, 3, 4)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35342,6 +35342,943 @@ body.claim-insurance #brandLogo{
       var n = 0, iv = setInterval(function(){
         if(apply() || ++n > 60) clearInterval(iv);
       }, 200);
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
+
+
+<!-- MODULE: resource_library_toc.html · v2026-07-24
+     Floating "📖 TOC" button in the bottom-left of the Resource Library
+     view. Opens a modal with three top-level hubs: Insurance,
+     Manufacturer (broken out as its own section, grouped by brand),
+     and General / Measurements. Search filters titles across all
+     sections; matches auto-expand. Clicking a topic navigates to the
+     right sub-page via the base app's window._rlShowPage() and scrolls
+     to the specific card, briefly highlighting it. -->
+<style id="cr-rltoc-styles">
+  /* Floating trigger button — mirrors dark-mode toggle but bottom-LEFT */
+  #cr-rltoc-btn{
+    display:none;
+    position:fixed;
+    bottom:24px; left:24px;
+    z-index:9400;
+    width:auto; padding:9px 14px 9px 12px;
+    height:44px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#232b3d,#1a2233);
+    color:#cfe0f5;
+    border:1px solid #4a6fa5;
+    cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+    font:800 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    box-shadow:0 6px 18px rgba(0,0,0,.45);
+    -webkit-tap-highlight-color:rgba(74,111,165,.3);
+    font-family:inherit;
+    transition:transform .12s, box-shadow .12s;
+  }
+  #cr-rltoc-btn:hover{
+    transform:translateY(-1px);
+    background:linear-gradient(135deg,#2a3550,#232b3d);
+  }
+  #cr-rltoc-btn:active{ transform:translateY(0); }
+  /* Only visible when the Resource Library view is showing */
+  body:not(.viewing-rl) #cr-rltoc-btn{ display:none; }
+  body.viewing-rl #cr-rltoc-btn{ display:flex; }
+
+  /* Modal */
+  .cr-rltoc-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.72);
+    z-index:9450;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:5vh 16px 5vh;
+    -webkit-overflow-scrolling:touch;
+  }
+  .cr-rltoc-box{
+    background:#1a1f2e; color:#e8ecf1;
+    border-radius:12px; width:100%; max-width:640px;
+    max-height:90vh; display:flex; flex-direction:column;
+    box-shadow:0 24px 60px rgba(0,0,0,.6);
+    border:1px solid #4a6fa5;
+    overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-rltoc-head{
+    padding:14px 20px 10px;
+    border-bottom:1px solid rgba(74,111,165,.35);
+    background:linear-gradient(135deg,#232b3d,#1a1f2e);
+  }
+  .cr-rltoc-head h3{
+    margin:0 0 8px; font:800 13px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:#cfe0f5; display:flex; align-items:center; gap:8px;
+  }
+  .cr-rltoc-search{
+    width:100%; box-sizing:border-box;
+    background:#232b3d; color:#e8ecf1;
+    border:1px solid #4a6fa5; border-radius:8px;
+    padding:9px 12px; font-size:14px;
+    outline:none; font-family:inherit;
+  }
+  .cr-rltoc-search:focus{
+    border-color:#7fa6d6;
+    box-shadow:0 0 0 3px rgba(74,111,165,.25);
+  }
+  .cr-rltoc-search::placeholder{ color:#8a9bb0; }
+
+  .cr-rltoc-body{ overflow-y:auto; flex:1; padding:8px 8px 12px; }
+  .cr-rltoc-empty{
+    padding:40px 20px; text-align:center; color:#8a9bb0;
+    font:600 13px 'Segoe UI',Arial,sans-serif;
+  }
+
+  .cr-rltoc-hub{
+    margin:8px 0 4px;
+    padding:8px 12px;
+    background:linear-gradient(135deg,rgba(74,111,165,.15),transparent);
+    border-left:3px solid #4a6fa5;
+    border-radius:0 6px 6px 0;
+    font:800 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase;
+    color:#7fa6d6;
+    display:flex; align-items:center; gap:8px;
+  }
+  .cr-rltoc-hub .hub-icon{ font-size:14px; }
+
+  .cr-rltoc-page{
+    margin:0 4px 2px;
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .cr-rltoc-page-head{
+    padding:8px 12px 8px 22px;
+    cursor:pointer;
+    display:flex; align-items:center; gap:8px;
+    font:700 12.5px 'Segoe UI',Arial,sans-serif;
+    color:#cfe0f5;
+    background:transparent;
+    border:0; width:100%; text-align:left;
+    -webkit-tap-highlight-color:rgba(74,111,165,.2);
+    font-family:inherit;
+  }
+  .cr-rltoc-page-head:hover{ background:rgba(74,111,165,.12); }
+  .cr-rltoc-page-head .caret{
+    font-size:10px; color:#7fa6d6;
+    transition:transform .18s;
+    flex:0 0 auto; width:12px;
+  }
+  .cr-rltoc-page.expanded .caret{ transform:rotate(90deg); }
+  .cr-rltoc-page-head .title{ flex:1; min-width:0; }
+  .cr-rltoc-page-head .count{
+    color:#7fa6d6; font-weight:800; font-size:10px;
+    letter-spacing:.08em;
+  }
+
+  .cr-rltoc-cards{ display:none; padding:2px 0 6px 42px; }
+  .cr-rltoc-page.expanded .cr-rltoc-cards{ display:block; }
+  .cr-rltoc-card{
+    display:block; width:100%; text-align:left;
+    padding:6px 10px 6px 0;
+    background:transparent; border:0; cursor:pointer;
+    font:600 12px 'Segoe UI',Arial,sans-serif;
+    color:#b8c5d8;
+    border-radius:4px;
+    -webkit-tap-highlight-color:rgba(74,111,165,.2);
+    font-family:inherit;
+  }
+  .cr-rltoc-card:hover{ color:#fff; background:rgba(74,111,165,.14); padding-left:6px; }
+  .cr-rltoc-card .m{ color:#f5d061; }  /* search match highlight */
+
+  /* Sub-groups within Manufacturer (Owens Corning / GAF / etc) */
+  .cr-rltoc-subgroup{
+    margin:4px 0 2px;
+    padding:4px 8px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    color:#8ba4c4;
+    background:rgba(74,111,165,.08);
+    border-radius:4px;
+  }
+
+  /* Close button in header */
+  .cr-rltoc-close{
+    margin-left:auto;
+    background:transparent; border:0; color:#8a9bb0;
+    cursor:pointer; font-size:20px; padding:0 4px;
+    font-family:inherit;
+    line-height:1;
+  }
+  .cr-rltoc-close:hover{ color:#fff; }
+
+  /* Card highlight (post-navigation) */
+  #resourceLibraryView .rl-card.cr-rltoc-flash{
+    animation:cr-rltoc-flash 2.5s ease;
+    scroll-margin-top:80px;
+  }
+  @keyframes cr-rltoc-flash{
+    0%,100% { background:transparent; box-shadow:none; }
+    15%     { background:rgba(245,208,97,.22); box-shadow:0 0 0 3px rgba(245,208,97,.4); }
+    70%     { background:rgba(245,208,97,.12); box-shadow:0 0 0 2px rgba(245,208,97,.25); }
+  }
+</style>
+
+<script id="cr-rltoc-script">
+(function(){
+  'use strict';
+
+  // ── Data model ──────────────────────────────────────────
+  // Structure of the resource library, extracted from the actual DOM.
+  // pageId = base app's rl-page ID.
+  // Cards are matched to their h3 heading text (used to find the card
+  // in the target page after navigation for scroll + highlight).
+  var TOC = [
+    { hub:'Insurance', icon:'\uD83D\uDEE1\uFE0F', pages:[
+      { pid:'rlPageInsurance', title:'Ohio Insurance Law', cards:[
+        'Ohio Matching Regulation',
+        'Unfair Claims Settlement Practices',
+        'Public Adjuster Licensing',
+        'Home Solicitation 3-Day Right of Rescission',
+      ]},
+      { pid:'rlPageCode', title:'Construction Codes', cards:[
+        'When Roof Recover is Prohibited',
+        'Ice Barrier Requirement',
+        'Underlayment Requirements',
+        'Asphalt Shingle Fastening',
+        'Drip Edge',
+        'Flashings \u2014 Step, Wall, Valley, Chimney',
+        'Attic Ventilation',
+        'Roof Decking / Sheathing',
+        '2024 Ohio Building Code \u2014 Chapter 15',
+        'Commercial Reroofing Rules',
+        'City of Dayton',
+        'City of Kettering',
+        'Huber Heights',
+        'Other Miami Valley Jurisdictions',
+      ]},
+      { pid:'rlPagePolicy', title:'Policy Provisions', cards:[
+        'Ordinance & Law Coverage',
+        'RCV vs ACV Settlement',
+        'Matching Endorsement',
+      ]},
+      { pid:'rlPageDocs', title:'Documentation Checklist', cards:[
+        'Per-Inspection Documentation Standard',
+        'Photo Templates by Damage Type',
+        'Paper Trail',
+      ]},
+      { pid:'rlPageTips', title:'Claim Tips', cards:[
+        '\u201CWe\u2019ll only pay for the damaged slope\u201D',
+        '\u201CJust layer new shingles over the existing\u201D',
+        '\u201CDecking replacement is not covered\u201D',
+        '\u201CA strip of ice & water at the eave is enough\u201D',
+        '\u201CReuse the existing flashings\u201D',
+        '\u201CVentilation upgrade is a betterment\u201D',
+        '\u201CIt\u2019s just wear and tear\u201D',
+        '\u201CRoof is too old for full replacement value\u201D',
+        'State Farm \u2014 Engineer Reports on Denials',
+        'Allstate \u2014 Cosmetic Damage Endorsement',
+        'Third-Party Administrators & Preferred Networks',
+        'Aggressive Depreciation Schedules',
+      ]},
+      { pid:'rlPagePitfalls', title:'Do & Don\u2019t', cards:[] },
+      { pid:'rlPageCheat', title:'Truck Cheat Sheet', cards:[
+        'Cardinal One-Page Field Card',
+      ]},
+      { pid:'rlPageInsp', title:'Mastering Roof Inspections', cards:[
+        'The Inspector\u2019s Mindset',
+        'Safety First',
+        'The Systematic Walk',
+        'What to Look For',
+        'Attic & Interior',
+        'Documentation Discipline',
+        'Common Mistakes to Avoid',
+      ]},
+      { pid:'rlPageNachiMastery', title:'NACHI Roof Mastery (hub)', cards:[
+        '1-3 Accessing A Roof',
+      ]},
+      { pid:'rlPageNachiAccessing', title:'NACHI 1-3 Accessing A Roof', cards:[
+        'Part 1 \u2014 Roof Safety, Risk, Pitch & Boots',
+        'Part 3 \u2014 Gaining Access, Choosing a Ladder & Ladder Safety Rules',
+        'Part 4 \u2014 Ladder Length, Material, Standing an Extension Ladder',
+      ]},
+      { pid:'rlPageSup', title:'Supplement Templates', cards:[
+        'How to Use These',
+        'Ice Barrier \u2014 Extension to Wall Line',
+        'Drip Edge \u2014 All Eaves and Rakes',
+        'Underlayment \u2014 Double Layer on Low Slope',
+        'Attic Ventilation to Code',
+        'Enhanced Fastening / High-Wind Installation',
+        'Starter Strip & Manufacturer Accessories',
+        'Decking Replacement',
+        'Full Tear-Off Required by Code',
+        'Line-of-Sight Mismatch \u2014 Full Slope Replacement',
+        'Discontinued Shingle \u2014 Full Roof Replacement',
+        'Spatter with Matching Endorsement',
+        'Step & Counter Flashing',
+        'Skylight Flashing Kit',
+        'Chimney Cricket / Saddle',
+        'Pipe Boot Replacement',
+        'Siding & Trim',
+        'Gutters & Downspouts',
+        'HVAC Condenser Fin Damage',
+        'Screens & Window Frames',
+      ]},
+    ]},
+    { hub:'Manufacturer', icon:'\uD83C\uDFED', pages:[
+      { pid:'rlPageMfg', title:'Overview & Standards', cards:[
+        '\uD83D\uDCE4 PDFs Pending',
+        'Class 4 Impact-Resistant \u2014 Insurance Premium Discounts',
+        'System Warranty Prerequisites',
+        'Enhanced Fastening / High-Wind Installation',
+      ]},
+      { pid:'rlPageMfg', title:'Owens Corning', cards:[
+        'Product Lines & SureNail',
+        // The next two Contractor / Do-Not-Mix cards are ambiguous
+        // between brands (same title used 3x on the page). We tag with
+        // brand context for the search match; navigation still lands
+        // on the first occurrence — user scrolls if there's a specific
+        // brand they want. As you upload real content per brand, we
+        // can split rlPageMfg into rlPageMfgOC / rlPageMfgGAF / etc.
+      ]},
+      { pid:'rlPageMfg', title:'GAF', cards:[
+        'Product Lines & LayerLock',
+      ]},
+      { pid:'rlPageMfg', title:'CertainTeed', cards:[
+        'Product Lines',
+      ]},
+      { pid:'rlPageMfg', title:'Others', cards:[
+        'IKO, Malarkey, Tamko, Atlas',
+      ]},
+      { pid:'rlPageMfg', title:'Shared — All Brands', cards:[
+        'Contractor Program & Warranty Tiers',
+        'Do-Not-Mix Rules',
+      ]},
+    ]},
+    { hub:'General \u2014 Measurements', icon:'\uD83D\uDCD0', pages:[
+      { pid:'rlPageMsrRoofHand', title:'Roof \u2014 Hand Measurements', cards:[
+        'Perimeter & Facet Basics',
+        'Slope / Pitch',
+        'Squares (100 sqft units)',
+        'Waste Factor',
+        'Linear Feet \u2014 Ridge, Hip, Valley, Edge',
+        'Accessory Counts',
+      ]},
+      { pid:'rlPageMsrRoofReports', title:'Roof \u2014 Reading Reports', cards:[
+        'Hover',
+        'Roofr',
+        'EagleView',
+        'Other Reports',
+        'When a Report Seems Wrong',
+      ]},
+      { pid:'rlPageMsrSidingHand', title:'Siding \u2014 Hand Measurements', cards:[
+        'Wall Area (Squares)',
+        'Deducting Openings',
+        'Corner Posts, J-Channel, Trim',
+        'Vertical vs. Horizontal Siding',
+        'Waste Factor',
+      ]},
+      { pid:'rlPageMsrSidingReports', title:'Siding \u2014 Reading Reports', cards:[
+        'Hover for Siding',
+        'EagleView / Aerial Reports',
+        'Verifying the Report',
+      ]},
+      { pid:'rlPageMsrWindowsHand', title:'Windows \u2014 Measurements', cards:[
+        'Rough Opening vs. Exact Size',
+        'Standard Window Sizes & Notation',
+        'Measuring for a Replacement',
+        'Egress Requirements',
+        'Glass & Frame Specifications',
+      ]},
+      { pid:'rlPageMsrDoorsHand', title:'Doors \u2014 Measurements', cards:[
+        'Rough Opening vs. Slab Size vs. Frame Size',
+        'Prehung vs. Slab Replacement',
+        'Handing (Left-Hand vs. Right-Hand, Inswing vs. Outswing)',
+        'Patio & Sliding Doors',
+        'Storm Doors',
+        'Fire-Rated Doors (Garage-to-House)',
+      ]},
+      { pid:'rlPageMsrGuttersHand', title:'Gutters \u2014 Hand Measurements', cards:[
+        'Total Eave Linear Feet',
+        'Downspouts \u2014 Count & Placement',
+        'Corners, Elbows, End Caps',
+        'Gutter Guards / Leaf Protection',
+        'Slope / Fall',
+      ]},
+      { pid:'rlPageMsrGuttersReports', title:'Gutters \u2014 Reading Reports', cards:[
+        'What Roof Reports Give You',
+        'What You Still Need to Walk',
+      ]},
+      { pid:'rlPageMsrFasciaHand', title:'Fascia \u2014 Hand Measurements', cards:[
+        'Total Fascia Linear Feet',
+        'Width / Profile',
+        'Material Options',
+        'Corners & Returns',
+      ]},
+      { pid:'rlPageMsrFasciaReports', title:'Fascia \u2014 Reading Reports', cards:[
+        'What Reports Give You',
+      ]},
+      { pid:'rlPageMsrSoffitHand', title:'Soffit \u2014 Hand Measurements', cards:[
+        'Soffit Width',
+        'Linear Feet & Area',
+        'Vented vs. Solid',
+        'Corner Geometry',
+      ]},
+      { pid:'rlPageMsrSoffitReports', title:'Soffit \u2014 Reading Reports', cards:[
+        'Hover for Soffit',
+        'Calculating from an Aerial Report',
+      ]},
+    ]},
+  ];
+
+  var expanded = new Set();     // page indices currently expanded
+  var query = '';
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function matches(q, t){
+    if(!q) return true;
+    return String(t || '').toLowerCase().indexOf(q.toLowerCase()) !== -1;
+  }
+  function highlight(text, q){
+    if(!q) return esc(text);
+    var lower = text.toLowerCase();
+    var qlower = q.toLowerCase();
+    var idx = lower.indexOf(qlower);
+    if(idx === -1) return esc(text);
+    return esc(text.slice(0, idx)) +
+      '<span class="m">' + esc(text.slice(idx, idx + q.length)) + '</span>' +
+      esc(text.slice(idx + q.length));
+  }
+
+  function renderTOC(host){
+    var q = query.trim();
+    var html = '';
+    var totalMatches = 0;
+
+    TOC.forEach(function(hubBlock, hubIdx){
+      var hubHasMatch = false;
+      var pagesHtml = '';
+
+      hubBlock.pages.forEach(function(page, pIdx){
+        var pageKey = hubIdx + '-' + pIdx;
+        var pageMatches = q ? matches(q, page.title) : false;
+        var matchingCards = q ?
+          page.cards.filter(function(c){ return matches(q, c); }) :
+          page.cards;
+        var cardsToShow = q ? matchingCards : page.cards;
+        // Skip pages that match nothing when searching
+        if(q && !pageMatches && matchingCards.length === 0) return;
+        hubHasMatch = true;
+        totalMatches += (pageMatches ? 1 : 0) + matchingCards.length;
+
+        // Auto-expand when there's an active query
+        var isExpanded = q ? true : expanded.has(pageKey);
+
+        var cardsHtml = cardsToShow.map(function(cardTitle){
+          return '<button class="cr-rltoc-card" ' +
+            'data-pid="' + esc(page.pid) + '" ' +
+            'data-card="' + esc(cardTitle) + '" ' +
+            'type="button">' +
+            highlight(cardTitle, q) +
+          '</button>';
+        }).join('');
+
+        pagesHtml +=
+          '<div class="cr-rltoc-page' + (isExpanded ? ' expanded' : '') + '" ' +
+               'data-key="' + esc(pageKey) + '">' +
+            '<button class="cr-rltoc-page-head" ' +
+              'data-key="' + esc(pageKey) + '" ' +
+              'data-pid="' + esc(page.pid) + '" ' +
+              'type="button">' +
+              '<span class="caret">\u25B6</span>' +
+              '<span class="title">' + highlight(page.title, q) + '</span>' +
+              (page.cards.length ? '<span class="count">' + page.cards.length + '</span>' : '') +
+            '</button>' +
+            (cardsHtml ? '<div class="cr-rltoc-cards">' + cardsHtml + '</div>' : '') +
+          '</div>';
+      });
+
+      if(hubHasMatch || !q){
+        html +=
+          '<div class="cr-rltoc-hub">' +
+            '<span class="hub-icon">' + hubBlock.icon + '</span>' +
+            esc(hubBlock.hub) +
+          '</div>' +
+          pagesHtml;
+      }
+    });
+
+    if(q && totalMatches === 0){
+      host.innerHTML = '<div class="cr-rltoc-empty">' +
+        'No topics match "' + esc(q) + '"</div>';
+    }else{
+      host.innerHTML = html;
+    }
+    wireItems(host);
+  }
+
+  function wireItems(host){
+    // Page header toggles expansion (unless we're searching — then it navigates)
+    host.querySelectorAll('.cr-rltoc-page-head').forEach(function(btn){
+      btn.onclick = function(e){
+        var key = btn.dataset.key;
+        var pid = btn.dataset.pid;
+        if(query.trim()){
+          // Search-mode: header click navigates to the page
+          navigateTo(pid, null);
+        }else{
+          if(expanded.has(key)) expanded.delete(key);
+          else expanded.add(key);
+          btn.closest('.cr-rltoc-page').classList.toggle('expanded');
+        }
+      };
+    });
+    // Card click navigates + scrolls to card
+    host.querySelectorAll('.cr-rltoc-card').forEach(function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        navigateTo(btn.dataset.pid, btn.dataset.card);
+      };
+    });
+  }
+
+  function navigateTo(pageId, cardTitle){
+    close();
+    setTimeout(function(){
+      try{
+        if(typeof window._rlShowPage === 'function'){
+          window._rlShowPage(pageId);
+        }else{
+          // Fallback: toggle .rl-pageActive manually
+          document.querySelectorAll('#resourceLibraryView .rl-page').forEach(function(p){
+            p.classList.toggle('rl-pageActive', p.id === pageId);
+          });
+          window.scrollTo(0, 0);
+        }
+        if(cardTitle){
+          // Give the page render a beat, then find the matching card
+          setTimeout(function(){ scrollToCard(pageId, cardTitle); }, 120);
+        }
+      }catch(e){ console.warn('[rl-toc]', e); }
+    }, 60);
+  }
+  function scrollToCard(pageId, cardTitle){
+    var page = document.getElementById(pageId);
+    if(!page) return;
+    // Normalize both sides for a lenient comparison (dashes, quotes, whitespace)
+    var norm = function(s){
+      return String(s || '')
+        .replace(/[\u2018\u2019\u201C\u201D]/g, '"')
+        .replace(/[\u2014\u2013\-]/g, '-')
+        .replace(/\s+/g, ' ')
+        .trim().toLowerCase();
+    };
+    var target = norm(cardTitle);
+    var cards = page.querySelectorAll('.rl-card');
+    var match = null;
+    for(var i = 0; i < cards.length; i++){
+      var h3 = cards[i].querySelector('h3');
+      if(h3 && norm(h3.textContent).indexOf(target) !== -1){
+        match = cards[i]; break;
+      }
+    }
+    if(match){
+      match.scrollIntoView({ behavior:'smooth', block:'start' });
+      match.classList.remove('cr-rltoc-flash');
+      // Force reflow so animation restarts if same card is re-clicked
+      void match.offsetWidth;
+      match.classList.add('cr-rltoc-flash');
+      setTimeout(function(){ match.classList.remove('cr-rltoc-flash'); }, 2600);
+    }
+  }
+
+  // ── Modal open / close ──────────────────────────────────
+  var backdrop = null;
+  function open(){
+    if(backdrop) return;
+    backdrop = document.createElement('div');
+    backdrop.className = 'cr-rltoc-bg';
+    backdrop.innerHTML =
+      '<div class="cr-rltoc-box">' +
+        '<div class="cr-rltoc-head">' +
+          '<h3>\uD83D\uDCD6 Resource Library ' +
+            '<button class="cr-rltoc-close" type="button" aria-label="Close">\u2715</button>' +
+          '</h3>' +
+          '<input class="cr-rltoc-search" type="text" ' +
+            'placeholder="Search all topics\u2026" autocomplete="off" />' +
+        '</div>' +
+        '<div class="cr-rltoc-body"></div>' +
+      '</div>';
+    document.body.appendChild(backdrop);
+    var body = backdrop.querySelector('.cr-rltoc-body');
+    var search = backdrop.querySelector('.cr-rltoc-search');
+    search.value = query;
+    renderTOC(body);
+    search.oninput = function(){
+      query = search.value;
+      renderTOC(body);
+    };
+    search.onkeydown = function(e){
+      if(e.key === 'Escape') close();
+    };
+    backdrop.querySelector('.cr-rltoc-close').onclick = close;
+    backdrop.onclick = function(e){ if(e.target === backdrop) close(); };
+    setTimeout(function(){ search.focus(); }, 60);
+  }
+  function close(){
+    if(backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+    backdrop = null;
+  }
+
+  // ── Trigger button visibility (only when Resource Library open) ─
+  function updateViewClass(){
+    var v = document.getElementById('resourceLibraryView');
+    var open = v && getComputedStyle(v).display !== 'none';
+    document.body.classList.toggle('viewing-rl', !!open);
+  }
+  function ensureButton(){
+    if(document.getElementById('cr-rltoc-btn')) return;
+    var b = document.createElement('button');
+    b.id = 'cr-rltoc-btn';
+    b.type = 'button';
+    b.innerHTML = '<span>\uD83D\uDCD6</span> TOC';
+    b.title = 'Open Table of Contents';
+    b.onclick = open;
+    document.body.appendChild(b);
+  }
+  function start(){
+    ensureButton();
+    updateViewClass();
+    // Watch the RL view's style attribute to know when it opens/closes
+    var v = document.getElementById('resourceLibraryView');
+    if(v){
+      new MutationObserver(updateViewClass).observe(v, { attributes:true, attributeFilter:['style'] });
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalRLTOC = { open: open, close: close };
+})();
+</script>
+
+
+<!-- MODULE: nachi_roof_mastery.html · v2026-07-24
+     Adds a "NACHI Roof Mastery" sub-category under Mastering Roof
+     Inspections in the Resource Library. Under it, adds "NACHI 1-3
+     Accessing A Roof" containing InterNACHI Parts 1, 3, and 4 of
+     the "Accessing the Roof" series by Kenton Shepard and Nick
+     Gromicko, CMI.
+
+     Approach: on Resource Library ready, insert two new rl-page
+     divs into #resourceLibraryView so the base app's navigation
+     picks them up automatically. Also inserts a nav card into
+     rlPageInsp so users can find their way in from Mastering Roof
+     Inspections.
+
+     Long-form article content is content-in-code for now. When
+     Cardinal starts uploading many of these, we should build a
+     proper article-upload workflow (Supabase table + form) so
+     you're not editing HTML for each addition. -->
+<style id="cr-nachi-styles">
+  /* Nav card that appears on Mastering Roof Inspections + hub pages */
+  #resourceLibraryView .rl-navcard{
+    display:block;
+    background:linear-gradient(135deg,rgba(74,111,165,.12),rgba(74,111,165,.05));
+    border:1px solid #3d5875;
+    border-left:4px solid #7fa6d6;
+    border-radius:8px;
+    padding:14px 16px;
+    margin:14px 0;
+    text-decoration:none;
+    cursor:pointer;
+    color:#cfe0f5;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    transition:background .12s, transform .1s;
+    text-align:left;
+    width:100%;
+    box-sizing:border-box;
+    font-family:inherit;
+  }
+  #resourceLibraryView .rl-navcard:hover{
+    background:linear-gradient(135deg,rgba(74,111,165,.22),rgba(74,111,165,.09));
+    transform:translateY(-1px);
+  }
+  #resourceLibraryView .rl-navcard h3{
+    margin:0 0 4px;
+    font:800 15px Georgia,'Times New Roman',serif;
+    color:#e8ecf1;
+  }
+  #resourceLibraryView .rl-navcard p{
+    margin:0;
+    font-size:13px;
+    color:#a0b0c8;
+  }
+  #resourceLibraryView .rl-navcard .rl-boxgo{
+    margin-top:8px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase;
+    color:#7fa6d6;
+  }
+
+  /* Article body — extra readability inside cards */
+  #resourceLibraryView .rl-article h4{
+    margin:14px 0 6px;
+    font:700 15px Georgia,'Times New Roman',serif;
+    color:#cfe0f5;
+    letter-spacing:.02em;
+  }
+  #resourceLibraryView .rl-article h5{
+    margin:10px 0 4px;
+    font:700 13px 'Segoe UI',Arial,sans-serif;
+    color:#a8bcd4;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+  #resourceLibraryView .rl-article p{
+    margin:0 0 10px;
+    font-size:13.5px; line-height:1.6;
+    color:#c9d3df;
+  }
+  #resourceLibraryView .rl-article ul{
+    margin:6px 0 12px 0;
+    padding-left:22px;
+  }
+  #resourceLibraryView .rl-article li{
+    margin:5px 0;
+    font-size:13.5px; line-height:1.55;
+    color:#c9d3df;
+  }
+  #resourceLibraryView .rl-article li b{ color:#e8ecf1; }
+  #resourceLibraryView .rl-article .rl-attribution{
+    margin-top:16px; padding-top:10px;
+    border-top:1px dashed rgba(127,166,214,.3);
+    font-size:11.5px;
+    color:#8a9bb0;
+    font-style:italic;
+  }
+</style>
+
+<script id="cr-nachi-script">
+(function(){
+  'use strict';
+
+  // ── Article content ────────────────────────────────────
+  // Kept concise but preserves the sub-headings, key rules, and
+  // the specific numeric/technical points that matter to a roof
+  // inspector on-site (pitches walked, load ratings, distances,
+  // clearances). If you want the full verbatim text later, I can
+  // expand — this is the operationally useful summary.
+  var PART_1 = ''
+    + '<p><i>Accessing and walking the roof are the most dangerous parts of the inspection. This article develops the judgment and skills needed to safely mount and walk a roof, once you\'ve decided whether to walk it.</i></p>'
+    + '<h4>Roof Safety</h4>'
+    + '<p>Deciding whether to walk a roof is a skill developed with study and practice. Materials and conditions vary by home, region, and season. Key factors: your risk tolerance, roof pitch, exposure, condition of covering materials, and equipment.</p>'
+    + '<h4>Risk Tolerance</h4>'
+    + '<p>Each year people are injured or killed falling from roofs. Confidence grows with experience — fear of heights fades with time on roofs.</p>'
+    + '<p>Your walking skills improve on two levels:</p>'
+    + '<ul>'
+    +   '<li>Understanding what combinations of <b>materials and conditions</b> are safe</li>'
+    +   '<li>Understanding your own <b>agility limits</b> — balance, reaction time, range of movement</li>'
+    + '</ul>'
+    + '<p>Fear creates tension; tension interferes with balance. Learning to relax while walking improves stability.</p>'
+    + '<h4>Pitch</h4>'
+    + '<p>Steeper roofs are more dangerous than flatter ones — but even low-slope roofs can be dangerous. Damp, moss-covered wood, and especially wet metal, can slide you off a low slope.</p>'
+    + '<p>Roof-covering material matters as much as pitch. A 6/12 asphalt on a warm day walks easily; a 6/12 smooth metal is far more dangerous.</p>'
+    + '<h5>Typical maximum pitches walked</h5>'
+    + '<ul>'
+    +   '<li><b>Asphalt shingles:</b> 8/12 single-story · 6/12 two-story</li>'
+    +   '<li><b>Wood roofs:</b> 6/12</li>'
+    +   '<li><b>Metal roofs:</b> 5/12</li>'
+    + '</ul>'
+    + '<h4>Roof Boots</h4>'
+    + '<p>Special roof-walking boots and shoes with high-traction soles are available.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Mastering Roof Inspections: Accessing the Roof, Part 1</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var PART_3 = ''
+    + '<h4>Gaining Access to the Roof</h4>'
+    + '<h5>Access by Window</h5>'
+    + '<p>Climbing out a window can be the safest method — no ladder — but be careful not to damage screens, walls, or window trim. You can sometimes access from a deck or balcony too, climbing over a rail onto an adjacent slope or setting a ladder there.</p>'
+    + '<h4>Ladders, Part 1</h4>'
+    + '<p>The typical method is a ladder resting on the ground and leaning against the roof edge. Stabilizing your ladder matters — ladders become more unstable as you climb. Stepping from roof onto ladder is one of the most common serious fall hazards.</p>'
+    + '<p>Placement tips:</p>'
+    + '<ul>'
+    +   '<li>Set your ladder at an <b>inside corner or against a wall</b> for a margin of safety</li>'
+    +   '<li>Use an <b>inconspicuous location</b> (side of home) since it\'s easy to scratch gutters</li>'
+    +   '<li>Rest against an <b>eave</b>, not a rake</li>'
+    +   '<li>If forced to choose between a scratched gutter and safety — choose safety</li>'
+    + '</ul>'
+    + '<h4>Choosing a Ladder</h4>'
+    + '<p><b>Never use a ladder you find on-site.</b> Use your own — know its operation, know its condition, never use a damaged one.</p>'
+    + '<p>Read the label. Ladders are rated by load capacity:</p>'
+    + '<ul>'
+    +   '<li><b>Type I Industrial:</b> heavy-duty, 250 lb load-capacity limit</li>'
+    +   '<li><b>Type II Commercial:</b> medium-duty, no more than 225 lb</li>'
+    +   '<li><b>Type III Household:</b> light-duty, 200 lb max — <b>not appropriate for inspection work</b></li>'
+    + '</ul>'
+    + '<p>Specialty ladders exist rated for up to 375 lb. Buy the best you can afford — low-quality ladders are cheaper but less sturdy, durable, and safe.</p>'
+    + '<h4>Safety Rules for All Ladders</h4>'
+    + '<ul>'
+    +   '<li><b>Keep it clean.</b> Free of grease, oil, other slip hazards.</li>'
+    +   '<li><b>Don\'t overload it.</b> Never load beyond labeled capacity.</li>'
+    +   '<li><b>Beware of electrical dangers.</b> Never use metal ladders around exposed electrical wiring.</li>'
+    +   '<li><b>Follow correct use.</b> Only for designated purpose — no scaffold planks.</li>'
+    +   '<li><b>Ensure a stable setup.</b> Confirm stability before climbing.</li>'
+    +   '<li><b>Move it safely.</b> Don\'t rock or bounce a ladder while you\'re on it.</li>'
+    +   '<li><b>Be healthy.</b> No ladders under influence of alcohol, drugs, medication, or when you feel unwell.</li>'
+    +   '<li><b>If you must dismount unexpectedly</b> — feeling sick, dizzy, or panicky — don\'t rush down. Wait until you feel better, then climb down slowly and carefully.</li>'
+    + '</ul>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Mastering Roof Inspections: Accessing the Roof, Part 3</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var PART_4 = ''
+    + '<h4>Ladders, Part 2</h4>'
+    + '<h5>Ladder Length</h5>'
+    + '<p>Extension ladders are the standard choice for leaning against a roof. Typically available <b>16 ft to 40 ft in 4-ft increments</b>. Length is a personal choice.</p>'
+    + '<p>Extension ladders come in two overlapping parts — the length given is not the extended length. A 16-ft extension ladder has two 8-ft sections but reaches only <b>~13 ft when fully extended</b>.</p>'
+    + '<h5>Extension Ladder Material</h5>'
+    + '<ul>'
+    +   '<li><b>Fiberglass:</b> strong, doesn\'t conduct electricity. In humid climates, lacquer or paste wax extends outdoor service life.</li>'
+    +   '<li><b>Steel:</b> strong but conducts electricity — shock/electrocution risk with overhead wires. Also corrodes over time.</li>'
+    +   '<li><b>Aluminum:</b> lightweight but not as strong; flexes more. Also conducts electricity.</li>'
+    +   '<li><b>Wooden:</b> no longer common. Can be strong if well-maintained. Look for cracks and loose rungs; needs a finish coat.</li>'
+    + '</ul>'
+    + '<h4>Standing an Extension Ladder</h4>'
+    + '<p>Proper procedure when doing it alone:</p>'
+    + '<ol style="padding-left:22px;margin:6px 0 12px;font-size:13.5px;line-height:1.55;color:#c9d3df;">'
+    +   '<li style="margin:5px 0;">Choose a <b>level area</b> for the base.</li>'
+    +   '<li style="margin:5px 0;">Check overhead — plenty of clearance from overhead wires.</li>'
+    +   '<li style="margin:5px 0;">While still unextended, lay the ladder on the ground, base against the wall, top pointing away.</li>'
+    +   '<li style="margin:5px 0;">Starting at the top, lift the end over your head and walk under the ladder to the wall, moving hands rung-to-rung.</li>'
+    +   '<li style="margin:5px 0;">When vertical against the roof, move the base back to <b>~1/4 the vertical distance</b> from ground to the point of support (usually the gutter or fascia).</li>'
+    +   '<li style="margin:5px 0;">Ladder must be <b>straight and secure</b>. If it leans, place firm material under the low foot. <b>Never dig holes in the lawn</b> to level it.</li>'
+    +   '<li style="margin:5px 0;">On smooth concrete, use a non-skid mat or brace the base. If you can\'t make it safe, don\'t climb.</li>'
+    +   '<li style="margin:5px 0;">Never set up in <b>high wind</b>, especially lightweight ladders.</li>'
+    +   '<li style="margin:5px 0;">Never set up <b>in front of a door</b> unless the door is locked or a guard is posted. Hang a notice on the inside.</li>'
+    +   '<li style="margin:5px 0;"><b>Tie off the ladder</b> so it can\'t blow over. Carry clamps and bungee cords. Don\'t rely on the tie-off to prevent movement when you step on/off. <b>Don\'t nail anything to the roof.</b></li>'
+    + '</ol>'
+    + '<p>The top of the ladder should extend <b>at least 3 feet above the roof edge</b>. To take it down, reverse the process — you\'ll be walking backwards, so check for obstacles.</p>'
+    + '<h4>Shoes</h4>'
+    + '<p>Extension ladder shoes pivot so the bottom stays in contact with the surface — better stability on hard surfaces like concrete. Rubber soles grip and protect decks/balcony planking. Pivoted all the way back, shoes lock with the sharp end down (the <b>spur</b>) to prevent slipping.</p>'
+    + '<h4>Ladder Levelers</h4>'
+    + '<p>Adjustable leg extensions are available for setting a ladder up on surfaces that aren\'t level.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Mastering Roof Inspections: Accessing the Roof, Part 4</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  // ── Page templates ─────────────────────────────────────
+  function tmplPageNachiMastery(){
+    return ''
+      + '<div class="rl-pagehead">'
+      +   '<h1>NACHI Roof Mastery</h1>'
+      +   '<p>Curated selections from InterNACHI\'s roof-inspection curriculum. Choose a series to dive in.</p>'
+      + '</div>'
+      + '<button type="button" class="rl-navcard" data-cr-goto="rlPageNachiAccessing">'
+      +   '<h3>1-3 &nbsp;Accessing A Roof</h3>'
+      +   '<p>The InterNACHI series on how to gain access and mount the roof safely. Roof safety fundamentals, ladders, and setup procedures.</p>'
+      +   '<div class="rl-boxgo">Open &rsaquo;</div>'
+      + '</button>';
+  }
+  function tmplPageAccessing(){
+    return ''
+      + '<div class="rl-pagehead">'
+      +   '<h1>NACHI 1-3 &mdash; Accessing A Roof</h1>'
+      +   '<p>From InterNACHI\'s <i>Mastering Roof Inspections</i> series by Kenton Shepard and Nick Gromicko, CMI. Three articles: fundamentals, ladder selection, and ladder setup.</p>'
+      + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 1 pitch safety risk boots">'
+      +   '<h3>Part 1 &mdash; Roof Safety, Risk, Pitch &amp; Boots</h3>'
+      +   PART_1
+      + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 3 ladders access window choosing ladder safety rules">'
+      +   '<h3>Part 3 &mdash; Gaining Access, Choosing a Ladder &amp; Ladder Safety Rules</h3>'
+      +   PART_3
+      + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 4 ladder length material standing shoes levelers extension">'
+      +   '<h3>Part 4 &mdash; Ladder Length, Material, Standing an Extension Ladder</h3>'
+      +   PART_4
+      + '</div>';
+  }
+
+  // ── Insertion ──────────────────────────────────────────
+  function ensurePage(id, title, htmlBuilder){
+    if(document.getElementById(id)) return document.getElementById(id);
+    var view = document.getElementById('resourceLibraryView');
+    if(!view) return null;
+    var page = document.createElement('div');
+    page.className = 'rl-page';
+    page.id = id;
+    page.setAttribute('data-rltitle', title);
+    page.innerHTML = htmlBuilder();
+    view.appendChild(page);
+    return page;
+  }
+
+  function wireGotoButtons(){
+    // Click handler on any button with data-cr-goto attribute
+    document.querySelectorAll('#resourceLibraryView [data-cr-goto]').forEach(function(el){
+      if(el.dataset.crWired === '1') return;
+      el.dataset.crWired = '1';
+      el.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var target = el.getAttribute('data-cr-goto');
+        if(typeof window._rlShowPage === 'function'){
+          window._rlShowPage(target);
+        }else{
+          document.querySelectorAll('#resourceLibraryView .rl-page').forEach(function(p){
+            p.classList.toggle('rl-pageActive', p.id === target);
+          });
+          window.scrollTo(0, 0);
+        }
+      });
+    });
+  }
+
+  function insertNavCardOnInspections(){
+    var insp = document.getElementById('rlPageInsp');
+    if(!insp) return;
+    if(document.getElementById('cr-nav-nachi-mastery')) return;
+    var card = document.createElement('button');
+    card.type = 'button';
+    card.id = 'cr-nav-nachi-mastery';
+    card.className = 'rl-navcard';
+    card.setAttribute('data-cr-goto', 'rlPageNachiMastery');
+    card.innerHTML =
+      '<h3>\uD83D\uDCDA NACHI Roof Mastery</h3>' +
+      '<p>InterNACHI curriculum: Accessing the Roof (Parts 1&ndash;4), safety, ladders, and more.</p>' +
+      '<div class="rl-boxgo">Open series &rsaquo;</div>';
+    // Insert near the top of the page, after the page head
+    var head = insp.querySelector('.rl-pagehead');
+    if(head && head.nextSibling){
+      head.parentNode.insertBefore(card, head.nextSibling);
+    }else{
+      insp.appendChild(card);
+    }
+  }
+
+  function tryInstall(){
+    var view = document.getElementById('resourceLibraryView');
+    if(!view) return false;
+    if(!document.getElementById('rlPageInsp')) return false;
+    ensurePage('rlPageNachiMastery',  'NACHI Roof Mastery', tmplPageNachiMastery);
+    ensurePage('rlPageNachiAccessing', 'NACHI 1-3 Accessing A Roof', tmplPageAccessing);
+    insertNavCardOnInspections();
+    wireGotoButtons();
+    return true;
+  }
+
+  function start(){
+    if(!tryInstall()){
+      var n = 0, iv = setInterval(function(){
+        if(tryInstall() || ++n > 60) clearInterval(iv);
+      }, 250);
+    }
+    // Also handle new pages appearing (e.g. via Cardinal RLTOC nav)
+    var view = document.getElementById('resourceLibraryView');
+    if(view){
+      new MutationObserver(function(){ tryInstall(); wireGotoButtons(); })
+        .observe(view, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
     }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
