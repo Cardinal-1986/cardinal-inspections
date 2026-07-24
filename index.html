@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 210 &#8212; Estimate rebuild Increment 1c: Unified Photo Gallery. &#128247; Photos button on every client profile, sections (Inspection / Post-Inspection / Before / After / General), upload from device, AI captions via /api/caption, bulk-move between sections, doubles as picker in the estimate editor.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 211 &#8212; Photo Album unified: base app&#8217;s gallery enhanced with section tabs (All / Inspection / Post-Inspection / Before / After / General), date-grouped grid, initials badges, per-photo AI captions, bulk move-to-section. All existing workflows preserved (Add photos, Take photo, Add to Inspection Photos, Transfer to report). Retired v210 parallel gallery.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38670,98 +38670,46 @@ body.claim-insurance #brandLogo{
 
 
 <!-- ══════════════════════════════════════════════════════════
-     MODULE: photo_gallery.html · v2026-07-24
+     MODULE: photo_album_enhance.html · v2026-07-24
      ══════════════════════════════════════════════════════════
-     Increment 1c: Unified Photo Gallery.
+     Replaces the v210 photo_gallery.html.
+     Enhances the base app's Photo Album view (#galleryView) with
+     CompanyCam-style polish while preserving every existing button
+     and workflow (Add photos / Take photo / Add checked to Inspection
+     Photos / Transfer to report / delete).
 
-     One gallery per client, sectioned:
-       Inspection · Post-Inspection · Before · After · General
+     Adds:
+       · Section tabs — All / Inspection / Post-Inspection / Before / After / General
+       · Date-grouped headers within the grid
+       · Initials badge on each photo (from created_by)
+       · AI caption sparkle button per photo
+       · Bulk-move-to-section action bar
+       · Picker mode (called by the estimate editor's + Attach Photos)
 
-     Existing Quick Inspection photos default to 'Inspection'.
+     Preserved as-is:
+       · window.renderGallery (wrapped, not replaced)
+       · window.currentPhotos + window.galChecked (still consulted)
+       · patchProjectCk / photoDb functions (still used)
+       · .gph / .gchk / .gdel classes (kept so base click handlers fire)
+       · #galGrid element (grid still renders here)
+       · #galAddBtn / #galCamBtn / #galInspBtn / #galXferBtn (still wired)
 
-     Access:
-       Client profile: 📷 Photos button (auto-injected).
-       CardinalPhotos.open(project) from console.
-
-     Also serves as a picker (multi-select) when called from the
-     estimate editor:
-       CardinalPhotos.openPicker(project, existingIds, onDone)
-
-     Reuses existing infrastructure:
-       · project_photos table (with new section + caption columns)
-       · photos storage bucket
-       · /api/caption for AI captions (Gemini vision)
-
-     Requires photo_gallery_setup.sql run in Supabase.
+     Requires photo_gallery_setup.sql (v210) which added
+     project_photos.section and project_photos.caption columns.
 ────────────────────────────────────────────────────────────── -->
 
-<style id="cr-pg-styles">
-  /* ═══ Client-profile button ════════════════════════════ */
-  #cr-pg-nav-btn{
-    display:inline-block;
-    background:linear-gradient(135deg,#e8dfc8,#d9cfaf);
-    color:#2c2c2c; border:1px solid #c9b98c;
-    padding:8px 14px; border-radius:6px;
-    font:800 12px 'Segoe UI',Arial,sans-serif;
-    letter-spacing:.06em; cursor:pointer;
-    margin-left:6px; margin-bottom:4px;
-    font-family:inherit;
-  }
-  #cr-pg-nav-btn:hover{ background:#e8dfc8; }
-  #cr-pg-nav-btn .cnt{
-    margin-left:6px;
-    background:#8a5a00; color:#fdfcf7;
-    font-size:10.5px; letter-spacing:0;
-    padding:1px 6px; border-radius:8px;
-  }
-
-  /* ═══ Full-screen gallery view ══════════════════════════ */
-  #cr-pg-view{
-    display:none;
-    position:fixed; inset:0;
-    background:#fdfcf7; color:#2c2c2c;
-    z-index:9450;
-    flex-direction:column;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
-  }
-  #cr-pg-view.open{ display:flex; }
-
-  .cr-pg-head{
-    padding:14px 16px 12px;
-    padding-top:calc(14px + env(safe-area-inset-top, 0px));
-    background:linear-gradient(120deg,#2c2c2c,#1a1a1a);
-    color:#f5efe0;
-    display:flex; align-items:center; gap:10px;
-    flex:0 0 auto;
-  }
-  .cr-pg-head h2{
-    margin:0; flex:1;
-    font:800 15px Georgia,serif;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .cr-pg-head button{
-    background:transparent; border:1px solid rgba(212,160,23,.5);
-    color:#f5d061; padding:6px 12px; border-radius:6px;
-    font:800 10px 'Segoe UI',Arial,sans-serif;
-    letter-spacing:.14em; text-transform:uppercase;
-    cursor:pointer; font-family:inherit;
-    flex:0 0 auto;
-  }
-  .cr-pg-head button:hover{ background:rgba(212,160,23,.14); }
-  .cr-pg-head button.primary{
-    background:#d4a017; color:#1a1a1a; border-color:#d4a017;
-  }
-  .cr-pg-head button.primary:hover{ background:#e8ba15; }
-
-  .cr-pg-tabs{
-    padding:8px 12px 10px; background:#fdfcf7;
-    display:flex; gap:6px; flex:0 0 auto;
-    border-bottom:1px solid #e8dfc8;
+<style id="cr-pae-styles">
+  /* ═══ Section tabs above the gallery grid ═════════════ */
+  #cr-pae-tabs{
+    display:flex; gap:6px;
+    padding:8px 0 12px;
     overflow-x:auto; -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
+    border-bottom:1px solid #e8dfc8;
+    margin:0 0 12px;
   }
-  .cr-pg-tabs::-webkit-scrollbar{ display:none; }
-  .cr-pg-tabs button{
+  #cr-pae-tabs::-webkit-scrollbar{ display:none; }
+  #cr-pae-tabs button{
     background:#f0e8d0; color:#8a7a5a; border:0;
     padding:8px 14px; border-radius:8px;
     font:800 10.5px 'Segoe UI',Arial,sans-serif;
@@ -38770,60 +38718,35 @@ body.claim-insurance #brandLogo{
     white-space:nowrap;
     transition:background .12s, color .12s;
   }
-  .cr-pg-tabs button.active{ background:#d4a017; color:#1a1a1a; }
-  .cr-pg-tabs .count{
+  #cr-pae-tabs button.active{ background:#d4a017; color:#1a1a1a; }
+  #cr-pae-tabs .count{
     display:inline-block; margin-left:5px;
     background:rgba(0,0,0,.15); padding:1px 6px;
     border-radius:8px; font-size:9.5px;
   }
-  .cr-pg-tabs button.active .count{
+  #cr-pae-tabs button.active .count{
     background:rgba(0,0,0,.22); color:#1a1a1a;
   }
 
-  .cr-pg-toolbar{
-    padding:8px 16px; background:#fdfcf7;
-    border-bottom:1px solid #e8dfc8;
-    display:flex; align-items:center; gap:8px;
-    flex:0 0 auto;
-    flex-wrap:wrap;
+  /* ═══ Grid re-style — override base .galgrid ══════════ */
+  #galGrid.galgrid{
+    display:grid !important;
+    grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap:10px !important;
+    align-content:start !important;
   }
-  .cr-pg-toolbar button{
-    padding:7px 12px; border-radius:6px; border:0;
-    font:800 10.5px 'Segoe UI',Arial,sans-serif;
-    letter-spacing:.06em; cursor:pointer;
-    font-family:inherit;
-  }
-  .cr-pg-toolbar .upload{
-    background:#d4a017; color:#1a1a1a;
-  }
-  .cr-pg-toolbar .upload:hover{ background:#e8ba15; }
-  .cr-pg-toolbar .select{
-    background:transparent; color:#8a5a00;
-    border:1px solid #d4a017;
-  }
-  .cr-pg-toolbar .select:hover{ background:rgba(212,160,23,.1); }
-  .cr-pg-toolbar .select.active{
-    background:#d4a017; color:#1a1a1a;
-  }
-  .cr-pg-toolbar .status{
-    flex:1;
-    font:600 12px 'Segoe UI',Arial,sans-serif;
+  #galGrid .cr-pae-datehead{
+    grid-column:1 / -1;
+    font:800 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
     color:#8a7a5a;
-    text-align:right;
+    margin:14px 0 2px;
+    padding:0 2px;
   }
+  #galGrid .cr-pae-datehead:first-child{ margin-top:0; }
 
-  .cr-pg-grid{
-    flex:1; overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    padding:12px;
-    padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
-    background:#fff;
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
-    gap:10px;
-    align-content:start;
-  }
-  .cr-pg-thumb{
+  /* Enhanced photo card — keeps .gph class so base handlers work */
+  #galGrid .gph{
     position:relative;
     aspect-ratio:1/1;
     background:#f0e8d0;
@@ -38831,593 +38754,542 @@ body.claim-insurance #brandLogo{
     overflow:hidden;
     cursor:pointer;
     border:2px solid transparent;
-    transition:border .1s, transform .1s;
+    transition:border .1s;
   }
-  .cr-pg-thumb:hover{ border-color:#d4a017; }
-  .cr-pg-thumb img{
+  #galGrid .gph:hover{ border-color:#d4a017; }
+  #galGrid .gph.checked{
+    border-color:#d4a017;
+    box-shadow:0 0 0 3px rgba(212,160,23,.3);
+  }
+  #galGrid .gph img{
     width:100%; height:100%;
     object-fit:cover;
     display:block;
   }
-  .cr-pg-thumb .cap-badge{
-    position:absolute; bottom:0; left:0; right:0;
-    background:linear-gradient(180deg, transparent, rgba(0,0,0,.7));
-    color:#fdfcf7;
-    font:600 10.5px 'Segoe UI',Arial,sans-serif;
-    padding:16px 8px 6px;
-    max-height:50%;
-    overflow:hidden;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    line-height:1.3;
+  /* Initials badge — bottom-left */
+  #galGrid .cr-pae-initials{
+    position:absolute; bottom:6px; left:6px;
+    width:24px; height:24px;
+    border-radius:50%;
+    background:#fdfcf7; color:#1a1a1a;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 4px rgba(0,0,0,.4);
+    letter-spacing:.02em;
   }
-  .cr-pg-thumb .sec-badge{
-    position:absolute; top:6px; right:6px;
+  /* Section badge — top-left, only in "All" tab */
+  #galGrid .cr-pae-secbadge{
+    position:absolute; top:6px; left:6px;
     background:rgba(0,0,0,.65); color:#f5d061;
     font:800 8.5px 'Segoe UI',Arial,sans-serif;
     letter-spacing:.08em; text-transform:uppercase;
     padding:2px 6px; border-radius:4px;
   }
-  .cr-pg-thumb .check{
-    position:absolute; top:6px; left:6px;
-    width:22px; height:22px;
-    border-radius:50%;
-    background:rgba(255,255,255,.85);
-    border:2px solid #8a7a5a;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    font-size:14px; color:transparent;
-    box-shadow:0 1px 4px rgba(0,0,0,.25);
-  }
-  #cr-pg-view.select-mode .cr-pg-thumb .check{ display:flex; }
-  #cr-pg-view.picker-mode .cr-pg-thumb .check{ display:flex; }
-  .cr-pg-thumb.checked .check{
-    background:#d4a017;
-    border-color:#8a5a00;
-    color:#1a1a1a;
-  }
-  .cr-pg-thumb.checked::after{
-    content:''; position:absolute; inset:0;
-    background:rgba(212,160,23,.2);
+  /* Caption preview — bottom overlay */
+  #galGrid .cr-pae-cap{
+    position:absolute; bottom:0; left:0; right:0;
+    padding:24px 8px 6px 38px;
+    background:linear-gradient(180deg, transparent, rgba(0,0,0,.75));
+    color:#fdfcf7;
+    font:600 10.5px 'Segoe UI',Arial,sans-serif;
+    line-height:1.3;
+    max-height:60%;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
     pointer-events:none;
   }
-  .cr-pg-thumb.checked .check::before{ content:'\2713'; }
-
-  .cr-pg-empty{
-    grid-column:1 / -1;
-    padding:60px 20px; text-align:center;
-    color:#8a7a5a;
-    font:600 13.5px 'Segoe UI',Arial,sans-serif;
+  /* AI sparkle button — top-right */
+  #galGrid .cr-pae-ai{
+    position:absolute; top:6px; right:38px;
+    width:26px; height:26px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#d4a017,#c88a0f);
+    color:#1a1a1a; border:0;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px;
+    padding:0;
+    box-shadow:0 1px 4px rgba(0,0,0,.35);
+    z-index:2;
   }
-  .cr-pg-empty b{ color:#2c2c2c; }
-  .cr-pg-empty small{
-    display:block; margin-top:8px; font-weight:400; color:#a89e88;
+  #galGrid .cr-pae-ai:hover{ background:linear-gradient(135deg,#e8ba15,#d4a017); }
+  #galGrid .cr-pae-ai:disabled{ opacity:.55; cursor:wait; }
+  /* Existing base .gchk styling — override to fit the corner */
+  #galGrid .gph .gchk{
+    top:6px !important; left:6px !important;
+    width:22px !important; height:22px !important;
+    border-radius:50% !important;
+    background:rgba(255,255,255,.9) !important;
+    color:transparent !important;
+    border:2px solid #8a7a5a !important;
+    font-size:14px !important;
+    display:none !important;
+    align-items:center !important;
+    justify-content:center !important;
+    box-shadow:0 1px 4px rgba(0,0,0,.25) !important;
   }
-
-  /* Multi-select action bar */
-  .cr-pg-actionbar{
+  /* Show checkbox only in select-mode or when picker-mode */
+  #galleryView.cr-pae-selectmode #galGrid .gph .gchk,
+  #galleryView.cr-pae-pickermode #galGrid .gph .gchk{
+    display:flex !important;
+  }
+  #galGrid .gph.checked .gchk{
+    background:#d4a017 !important;
+    border-color:#8a5a00 !important;
+    color:#1a1a1a !important;
+  }
+  /* Section badge hidden when we're already filtering by section */
+  #galleryView[data-cr-tab="Inspection"]      #galGrid .cr-pae-secbadge,
+  #galleryView[data-cr-tab="Post-Inspection"] #galGrid .cr-pae-secbadge,
+  #galleryView[data-cr-tab="Before"]          #galGrid .cr-pae-secbadge,
+  #galleryView[data-cr-tab="After"]           #galGrid .cr-pae-secbadge,
+  #galleryView[data-cr-tab="General"]         #galGrid .cr-pae-secbadge{
     display:none;
-    padding:12px 16px;
-    padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ═══ Bulk-action bar (bottom-fixed when items checked) ═══ */
+  #cr-pae-actionbar{
+    display:none;
+    position:fixed; left:0; right:0; bottom:0;
     background:linear-gradient(180deg,#1a1a1a,#0a0a0a);
     color:#f5efe0;
+    padding:12px 16px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
     border-top:1px solid #333;
-    flex:0 0 auto;
+    z-index:80;
     align-items:center; gap:10px;
     flex-wrap:wrap;
+    box-shadow:0 -6px 20px rgba(0,0,0,.35);
   }
-  #cr-pg-view.select-mode .cr-pg-actionbar,
-  #cr-pg-view.picker-mode .cr-pg-actionbar{ display:flex; }
-  .cr-pg-actionbar .count{
+  #cr-pae-actionbar.show{ display:flex; }
+  #cr-pae-actionbar .count{
     flex:1;
     font:800 12px 'Segoe UI',Arial,sans-serif;
     color:#f5d061;
   }
-  .cr-pg-actionbar select,
-  .cr-pg-actionbar button{
+  #cr-pae-actionbar select,
+  #cr-pae-actionbar button{
     padding:8px 14px; border-radius:6px;
     font:800 10.5px 'Segoe UI',Arial,sans-serif;
     letter-spacing:.08em;
     cursor:pointer; font-family:inherit;
     border:0;
   }
-  .cr-pg-actionbar .move-to{
+  #cr-pae-actionbar .move-to{
     background:#2c2c2c; color:#f5d061;
     border:1px solid #d4a017;
   }
-  .cr-pg-actionbar .del{
-    background:transparent; color:#e8b8ba;
-    border:1px solid #9c1822;
-  }
-  .cr-pg-actionbar .del:hover{ background:rgba(156,24,34,.2); }
-  .cr-pg-actionbar .confirm{
+  #cr-pae-actionbar .confirm{
     background:#d4a017; color:#1a1a1a;
   }
-  .cr-pg-actionbar .confirm:hover{ background:#e8ba15; }
-  .cr-pg-actionbar .cancel{
+  #cr-pae-actionbar .confirm:hover{ background:#e8ba15; }
+  #cr-pae-actionbar .clear{
     background:transparent; color:#a89e88;
     border:1px solid #333;
   }
+  #cr-pae-actionbar .status{
+    color:#f5d061; font-size:12px; font-weight:600;
+    margin-left:8px;
+  }
 
-  /* ═══ Detail modal (single photo) ══════════════════════ */
-  #cr-pg-detail{
+  /* ═══ Picker mode — hide workflow buttons ═════════════ */
+  #galleryView.cr-pae-pickermode #galAddBtn,
+  #galleryView.cr-pae-pickermode #galCamBtn,
+  #galleryView.cr-pae-pickermode #galInspBtn,
+  #galleryView.cr-pae-pickermode #galInspRmBtn,
+  #galleryView.cr-pae-pickermode #galXferWrap,
+  #galleryView.cr-pae-pickermode #galFileInput,
+  #galleryView.cr-pae-pickermode #galCamInput{
+    display:none !important;
+  }
+  #galleryView.cr-pae-pickermode #galTitle::before{
+    content:'\u25FB Picker \u00b7 ';
+    color:#8a5a00;
+    margin-right:4px;
+  }
+
+  /* Small caption editor modal (opens when the caption preview is tapped
+     via long-press or when the sparkle finishes) */
+  #cr-pae-cap-modal{
     display:none;
     position:fixed; inset:0;
-    background:rgba(0,0,0,.85);
-    z-index:9460;
+    background:rgba(0,0,0,.55);
+    z-index:9520;
     justify-content:center; align-items:center;
-    padding:0;
+    padding:20px;
+    padding-bottom:max(20px, env(safe-area-inset-bottom, 0px));
   }
-  #cr-pg-detail.open{ display:flex; }
-  #cr-pg-detail .box{
+  #cr-pae-cap-modal.open{ display:flex; }
+  #cr-pae-cap-modal .box{
     background:#fdfcf7;
-    max-width:min(680px, 100%);
-    max-height:100%;
-    width:100%;
-    display:flex; flex-direction:column;
+    border-radius:12px;
+    max-width:480px; width:100%;
     overflow:hidden;
-    border-radius:0;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
   }
-  @media (min-width:680px){
-    #cr-pg-detail .box{
-      border-radius:12px;
-      max-height:92vh; max-height:92dvh;
-    }
-  }
-  #cr-pg-detail .imgwrap{
+  #cr-pae-cap-modal .imgwrap{
     background:#1a1a1a;
-    display:flex; align-items:center; justify-content:center;
     aspect-ratio:4/3;
-    max-height:50vh;
+    display:flex; align-items:center; justify-content:center;
   }
-  #cr-pg-detail .imgwrap img{
+  #cr-pae-cap-modal .imgwrap img{
     max-width:100%; max-height:100%; object-fit:contain;
   }
-  #cr-pg-detail .info{
+  #cr-pae-cap-modal .form{
     padding:14px 16px;
-    padding-bottom:calc(14px + env(safe-area-inset-bottom, 0px));
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
   }
-  #cr-pg-detail label{
+  #cr-pae-cap-modal label{
     display:block;
     font:800 10px 'Segoe UI',Arial,sans-serif;
     letter-spacing:.14em; text-transform:uppercase;
     color:#8a7a5a; margin:10px 0 4px;
   }
-  #cr-pg-detail label:first-child{ margin-top:0; }
-  #cr-pg-detail textarea,
-  #cr-pg-detail select{
+  #cr-pae-cap-modal label:first-child{ margin-top:0; }
+  #cr-pae-cap-modal textarea,
+  #cr-pae-cap-modal select{
     width:100%; box-sizing:border-box;
     padding:9px 12px;
     border:1px solid #d9cfaf; border-radius:8px;
     font-family:inherit; font-size:14px;
-    background:#fff; color:#2c2c2c;
+    background:#fff;
     outline:none;
   }
-  #cr-pg-detail textarea{
+  #cr-pae-cap-modal textarea{
     min-height:70px; resize:vertical; line-height:1.5;
   }
-  #cr-pg-detail textarea:focus,
-  #cr-pg-detail select:focus{
+  #cr-pae-cap-modal textarea:focus,
+  #cr-pae-cap-modal select:focus{
     border-color:#d4a017;
     box-shadow:0 0 0 3px rgba(212,160,23,.22);
   }
-  #cr-pg-detail .actions{
-    display:flex; gap:8px; flex-wrap:wrap;
-    margin-top:14px;
-    padding-top:12px;
-    border-top:1px solid #e8dfc8;
+  #cr-pae-cap-modal .actions{
+    display:flex; gap:8px; margin-top:14px;
+    padding-top:12px; border-top:1px solid #e8dfc8;
   }
-  #cr-pg-detail .actions button{
-    padding:8px 14px; border-radius:6px;
+  #cr-pae-cap-modal .actions button{
+    padding:8px 14px; border-radius:6px; cursor:pointer;
     font:800 10.5px 'Segoe UI',Arial,sans-serif;
     letter-spacing:.08em;
-    cursor:pointer; font-family:inherit;
+    font-family:inherit;
     border:0;
   }
-  #cr-pg-detail .ai{
-    background:linear-gradient(135deg,#d4a017,#c88a0f);
-    color:#1a1a1a;
+  #cr-pae-cap-modal .ai{
+    background:linear-gradient(135deg,#d4a017,#c88a0f); color:#1a1a1a;
   }
-  #cr-pg-detail .ai:hover{ background:linear-gradient(135deg,#e8ba15,#d4a017); }
-  #cr-pg-detail .ai:disabled{ opacity:.55; cursor:wait; }
-  #cr-pg-detail .save{
+  #cr-pae-cap-modal .save{
     background:#2c2c2c; color:#f5d061;
     border:1px solid #d4a017;
     margin-left:auto;
   }
-  #cr-pg-detail .del{
-    background:transparent; color:#9c1822;
-    border:1px solid #e8b8ba;
-  }
-  #cr-pg-detail .del:hover{ background:#fdecec; }
-  #cr-pg-detail .close{
+  #cr-pae-cap-modal .close{
     background:transparent; color:#8a7a5a;
     border:1px solid #d9cfaf;
   }
-  #cr-pg-detail .ai-status{
+  #cr-pae-cap-modal .ai-status{
     font:600 12px 'Segoe UI',Arial,sans-serif;
     color:#8a5a00; margin:8px 0 0;
-    display:none;
+    min-height:14px;
   }
-  #cr-pg-detail .ai-status.show{ display:block; }
 </style>
 
-<script id="cr-pg-script">
+<script id="cr-pae-script">
 (function(){
   'use strict';
 
   var SECTIONS = ['Inspection', 'Post-Inspection', 'Before', 'After', 'General'];
-
-  var view = null;
-  var detail = null;
-  var fileInput = null;
-  var state = {
-    project        : null,
-    photos         : [],
-    activeSection  : 'all',
-    selectMode     : false,
-    selected       : new Set(),   // photo ids
-    pickerMode     : false,
-    pickerExisting : new Set(),   // photo ids already on the estimate (pre-checked)
-    pickerCallback : null,        // fn(selectedPhotos)
+  var ROSTER = {
+    'theo@cardinalrenovations.net':    { name:'Theo Dorion',  initials:'TD' },
+    'joan@cardinalrenovations.net':    { name:'Joan',         initials:'JV' },
+    'curtis@cardinalrenovations.net':  { name:'Curtis',       initials:'CW' },
+    'scottie@cardinalrenovations.net': { name:'Scottie',      initials:'SB' },
+    'nick@cardinalrenovations.net':    { name:'Nick',         initials:'NP' },
+    'joey@cardinalrenovations.net':    { name:'Joey',         initials:'JC' },
+    'jacob@cardinalrenovations.net':   { name:'Jacob',        initials:'JM' },
   };
 
-  // ── helpers ───────────────────────────────────────
+  var activeTab = 'all';   // 'all' or one of SECTIONS
+  var pickerMode = false;
+  var pickerCallback = null;
+  var pickerPreselect = new Set();
+  var origRenderGallery = null;
+
+  // ─── helpers ─────────────────────────────────────
   function esc(s){
     return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
       return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
     });
   }
-  function myEmail(){
-    return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+  function initialsFor(email){
+    if(!email) return '?';
+    var e = String(email).toLowerCase().trim();
+    if(ROSTER[e]) return ROSTER[e].initials;
+    var prefix = e.split('@')[0] || '';
+    if(!prefix) return '?';
+    return (prefix.charAt(0) + (prefix.charAt(1) || '')).toUpperCase();
   }
-  function toast(msg){
-    if(window.toast){ try{ window.toast(msg); return; }catch(_){} }
-    // Cheap fallback
-    console.log('[photos]', msg);
-  }
-
-  // ── data ──────────────────────────────────────────
-  async function loadPhotos(projectId){
-    if(!window.supa || !projectId){ state.photos = []; return; }
-    try{
-      var r = await window.supa.from('project_photos')
-        .select('id, project_id, data, storage_path, section, caption, created_at, created_by')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending:false });
-      if(r.error){ console.warn('[photos] load:', r.error.message); state.photos = []; }
-      else state.photos = r.data || [];
-    }catch(e){ console.warn('[photos] load failed:', e); state.photos = []; }
+  function dateGroupKey(iso){
+    if(!iso) return 'Unknown date';
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return 'Unknown date';
+    return d.toLocaleDateString('en-US', {
+      month:'short', day:'numeric', year:'numeric',
+    });
   }
 
-  async function updateOne(id, changes){
-    if(!window.supa) return;
-    try{
-      var r = await window.supa.from('project_photos').update(changes).eq('id', id);
-      if(r.error) throw r.error;
-      // Update local cache
-      var p = state.photos.find(function(x){ return x.id === id; });
-      if(p) Object.assign(p, changes);
-    }catch(e){
-      alert('Update failed: ' + (e.message || e));
-    }
+  // ─── section tabs injection ──────────────────────
+  function ensureTabs(){
+    var view = document.getElementById('galleryView');
+    if(!view) return null;
+    var tabs = document.getElementById('cr-pae-tabs');
+    if(tabs) return tabs;
+    var grid = document.getElementById('galGrid');
+    if(!grid) return null;
+    tabs = document.createElement('div');
+    tabs.id = 'cr-pae-tabs';
+    grid.parentNode.insertBefore(tabs, grid);
+    return tabs;
   }
 
-  async function deleteOne(id){
-    if(!window.supa) return;
-    try{
-      // Fetch storage_path to clean up bucket
-      var p = state.photos.find(function(x){ return x.id === id; });
-      var r = await window.supa.from('project_photos').delete().eq('id', id);
-      if(r.error) throw r.error;
-      if(p && p.storage_path){
-        try{ await window.supa.storage.from('photos').remove([p.storage_path]); }catch(_){}
-      }
-      state.photos = state.photos.filter(function(x){ return x.id !== id; });
-    }catch(e){
-      alert('Delete failed: ' + (e.message || e));
-    }
+  function renderTabs(){
+    var tabs = ensureTabs();
+    if(!tabs) return;
+    var allPhotos = Array.isArray(window.currentPhotos) ? window.currentPhotos : [];
+    var counts = { all: allPhotos.length };
+    SECTIONS.forEach(function(s){ counts[s] = 0; });
+    allPhotos.forEach(function(p){
+      var sec = p.section || 'Inspection';
+      counts[sec] = (counts[sec] || 0) + 1;
+    });
+    var mk = function(id, label){
+      return '<button data-tab="' + esc(id) + '"' + (activeTab === id ? ' class="active"' : '') + ' type="button">' +
+        esc(label) + ' <span class="count">' + (counts[id] || 0) + '</span>' +
+      '</button>';
+    };
+    tabs.innerHTML =
+      mk('all', 'All') +
+      SECTIONS.map(function(s){ return mk(s, s); }).join('');
+    tabs.querySelectorAll('button').forEach(function(btn){
+      btn.onclick = function(){
+        activeTab = btn.dataset.tab;
+        document.getElementById('galleryView').setAttribute('data-cr-tab', activeTab);
+        if(typeof window.renderGallery === 'function') window.renderGallery();
+      };
+    });
   }
 
-  async function uploadFiles(files, section){
-    if(!window.supa || !state.project || !state.project.id){
-      alert('No project selected.');
+  // ─── enhanced render: replace #galGrid contents ──
+  function renderEnhancedGrid(){
+    var grid = document.getElementById('galGrid');
+    if(!grid) return;
+    var allPhotos = Array.isArray(window.currentPhotos) ? window.currentPhotos : [];
+
+    // Filter by tab
+    var shown = activeTab === 'all'
+      ? allPhotos
+      : allPhotos.filter(function(p){ return (p.section || 'Inspection') === activeTab; });
+
+    // Sort newest first
+    shown = shown.slice().sort(function(a, b){
+      return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+    });
+
+    if(!shown.length){
+      grid.innerHTML = '<div class="galempty">' +
+        (activeTab === 'all'
+          ? 'No photos yet \u2014 use <b>+ Add photos</b> or <b>\uD83D\uDCF7 Take photo</b>.'
+          : 'No photos in <b>' + esc(activeTab) + '</b> yet.') +
+      '</div>';
+      updateActionBar();
       return;
     }
-    if(!files || !files.length) return;
 
-    var projectId = state.project.id;
-    setStatus('Uploading 0/' + files.length + '\u2026');
-
-    var okCount = 0;
-    for(var i = 0; i < files.length; i++){
-      var f = files[i];
-      setStatus('Uploading ' + (i + 1) + '/' + files.length + '\u2026');
-      try{
-        var blob = f;
-        // Compute a stable path in the existing bucket
-        var ts = Date.now();
-        var rand = Math.random().toString(36).slice(2, 9);
-        var ext = (f.name || 'photo.jpg').split('.').pop().toLowerCase();
-        if(['jpg','jpeg','png','webp','gif','heic'].indexOf(ext) < 0) ext = 'jpg';
-        var spath = 'projects/' + projectId + '/' + ts + '-' + rand + '.' + ext;
-
-        var up = await window.supa.storage.from('photos').upload(spath, blob, {
-          contentType: f.type || 'image/jpeg',
-          cacheControl: '31536000',
-        });
-        if(up.error) throw up.error;
-
-        var pub = window.supa.storage.from('photos').getPublicUrl(spath).data.publicUrl;
-
-        var ins = await window.supa.from('project_photos').insert({
-          project_id  : projectId,
-          data        : pub,
-          storage_path: spath,
-          section     : section || 'General',
-          created_by  : myEmail() || null,
-        }).select().single();
-        if(ins.error) throw ins.error;
-        state.photos.unshift(ins.data);
-        okCount++;
-      }catch(e){
-        console.warn('[photos] upload one failed:', e);
-      }
-    }
-    setStatus(okCount + '/' + files.length + ' uploaded');
-    setTimeout(function(){ setStatus(''); }, 3000);
-    render();
-  }
-
-  async function aiCaption(photo, cb){
-    if(!photo || !photo.data){ cb(new Error('No photo data')); return; }
-    try{
-      var res = await fetch('/api/caption', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: photo.data }),
-      });
-      var body = null;
-      try{ body = await res.json(); }catch(_){}
-      if(!res.ok){
-        var msg = (body && (body.detail || body.error)) || ('HTTP ' + res.status);
-        cb(new Error(msg));
-        return;
-      }
-      var caption = (body && body.caption) || '';
-      cb(null, caption);
-    }catch(e){ cb(e); }
-  }
-
-  // ── rendering ─────────────────────────────────────
-  function ensureView(){
-    if(view) return view;
-    view = document.createElement('div');
-    view.id = 'cr-pg-view';
-    document.body.appendChild(view);
-    // Hidden file input for upload
-    fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.multiple = true;
-    fileInput.style.display = 'none';
-    fileInput.onchange = function(){
-      var files = Array.from(fileInput.files || []);
-      fileInput.value = '';
-      if(!files.length) return;
-      var sec = state.activeSection === 'all' ? 'General' : state.activeSection;
-      uploadFiles(files, sec);
-    };
-    document.body.appendChild(fileInput);
-    return view;
-  }
-
-  function setStatus(text){
-    if(!view) return;
-    var el = view.querySelector('.cr-pg-toolbar .status');
-    if(el) el.textContent = text || '';
-  }
-
-  function render(){
-    if(!view) return;
-
-    // Count photos by section
-    var counts = { all: state.photos.length };
-    SECTIONS.forEach(function(s){ counts[s] = 0; });
-    state.photos.forEach(function(p){
-      var s = p.section || 'General';
-      counts[s] = (counts[s] || 0) + 1;
+    // Group by date
+    var groups = [];
+    var byKey = {};
+    shown.forEach(function(p){
+      var key = dateGroupKey(p.created_at);
+      if(!byKey[key]){ byKey[key] = { date:key, photos:[] }; groups.push(byKey[key]); }
+      byKey[key].photos.push(p);
     });
 
-    // Filter for active section
-    var shown = state.activeSection === 'all'
-      ? state.photos
-      : state.photos.filter(function(p){ return (p.section || 'General') === state.activeSection; });
-
-    var clientName = state.project && (state.project.name || state.project.client_name) || 'Client';
-
-    view.classList.toggle('select-mode', state.selectMode);
-    view.classList.toggle('picker-mode', state.pickerMode);
-
-    // Build tab HTML
-    var tabsHtml =
-      '<button data-tab="all"' + (state.activeSection === 'all' ? ' class="active"' : '') + ' type="button">' +
-        'All <span class="count">' + counts.all + '</span>' +
-      '</button>' +
-      SECTIONS.map(function(s){
-        return '<button data-tab="' + esc(s) + '"' + (state.activeSection === s ? ' class="active"' : '') + ' type="button">' +
-          esc(s) + ' <span class="count">' + (counts[s] || 0) + '</span>' +
-        '</button>';
-      }).join('');
-
-    // Build toolbar (upload disabled in picker mode)
-    var toolbarHtml =
-      (state.pickerMode
-        ? '<span class="status">Pick photos to attach. Tap to toggle.</span>'
-        : '<button class="upload" data-act="upload" type="button">\uD83D\uDCF7 Upload</button>' +
-          '<button class="select" data-act="toggle-select" type="button">' +
-            (state.selectMode ? 'Cancel' : 'Select') +
-          '</button>' +
-          '<span class="status"></span>');
-
-    // Build grid
-    var gridHtml = shown.length
-      ? shown.map(function(p){
-          var checked = state.selected.has(p.id) || (state.pickerMode && state.pickerExisting.has(p.id));
-          var url = p.data || '';
-          var cap = p.caption || '';
-          var sec = p.section || 'General';
-          return '<div class="cr-pg-thumb' + (checked ? ' checked' : '') + '" data-id="' + esc(p.id) + '">' +
-            '<img src="' + esc(url) + '" alt="" loading="lazy" />' +
-            (state.activeSection === 'all'
-              ? '<span class="sec-badge">' + esc(sec) + '</span>'
-              : '') +
-            (cap ? '<div class="cap-badge">' + esc(cap) + '</div>' : '') +
-            '<div class="check" aria-hidden="true"></div>' +
+    var galChecked = window.galChecked || {};
+    var html = '';
+    groups.forEach(function(g){
+      html += '<div class="cr-pae-datehead">' + esc(g.date) + '</div>';
+      g.photos.forEach(function(ph){
+        var isChecked = !!galChecked[ph.id];
+        var initials = initialsFor(ph.created_by);
+        var sec = ph.section || 'Inspection';
+        var cap = ph.caption || '';
+        html +=
+          '<div class="gph' + (isChecked ? ' checked' : '') + '" data-gid="' + esc(ph.id) + '">' +
+            '<img src="' + esc(ph.data || '') + '" alt="" loading="lazy">' +
+            '<span class="cr-pae-secbadge">' + esc(sec) + '</span>' +
+            '<button class="cr-pae-ai" data-cr-ai="1" title="AI Caption">\u2728</button>' +
+            '<div class="gchk">' + (isChecked ? '\u2713' : '') + '</div>' +
+            '<button class="gdel" title="Delete photo">\u2715</button>' +
+            '<span class="cr-pae-initials" title="' + esc((ROSTER[String(ph.created_by || '').toLowerCase()] || {}).name || ph.created_by || 'Unknown') + '">' + esc(initials) + '</span>' +
+            (cap ? '<div class="cr-pae-cap">' + esc(cap) + '</div>' : '') +
           '</div>';
-        }).join('')
-      : '<div class="cr-pg-empty">' +
-          '<b>No photos in ' + (state.activeSection === 'all' ? 'this gallery' : esc(state.activeSection)) + ' yet.</b>' +
-          '<small>' + (state.pickerMode
-            ? 'Close the picker and add photos from the client profile.'
-            : 'Tap 📷 Upload to add some.') +
-          '</small>' +
-        '</div>';
-
-    // Build action bar (select + picker modes)
-    var abHtml = '';
-    if(state.selectMode){
-      abHtml = '<span class="count">' + state.selected.size + ' selected</span>' +
-        '<select class="move-to" data-act="bulk-move">' +
-          '<option value="">Move to\u2026</option>' +
-          SECTIONS.map(function(s){ return '<option value="' + esc(s) + '">' + esc(s) + '</option>'; }).join('') +
-        '</select>' +
-        '<button class="del" data-act="bulk-del" type="button">Delete</button>' +
-        '<button class="cancel" data-act="cancel-select" type="button">Done</button>';
-    } else if(state.pickerMode){
-      abHtml = '<span class="count">' + state.selected.size + ' selected</span>' +
-        '<button class="cancel" data-act="cancel-picker" type="button">Cancel</button>' +
-        '<button class="confirm" data-act="confirm-picker" type="button">Attach</button>';
-    }
-
-    view.innerHTML =
-      '<div class="cr-pg-head">' +
-        '<h2>' + esc(clientName) + ' \u00b7 Photos</h2>' +
-        '<button data-act="close" type="button">' +
-          (state.pickerMode ? 'Cancel' : 'Close') +
-        '</button>' +
-      '</div>' +
-      '<div class="cr-pg-tabs">' + tabsHtml + '</div>' +
-      '<div class="cr-pg-toolbar">' + toolbarHtml + '</div>' +
-      '<div class="cr-pg-grid">' + gridHtml + '</div>' +
-      '<div class="cr-pg-actionbar">' + abHtml + '</div>';
-
-    wire();
+      });
+    });
+    grid.innerHTML = html;
+    updateActionBar();
   }
 
-  function wire(){
-    if(!view) return;
-    view.querySelector('[data-act="close"]').onclick = function(){
-      if(state.pickerMode && state.pickerCallback){ state.pickerCallback(null); }
-      close();
-    };
-    view.querySelectorAll('.cr-pg-tabs button').forEach(function(btn){
-      btn.onclick = function(){
-        state.activeSection = btn.dataset.tab;
-        render();
-      };
-    });
-    var up = view.querySelector('[data-act="upload"]');
-    if(up) up.onclick = function(){ fileInput.click(); };
-    var tsel = view.querySelector('[data-act="toggle-select"]');
-    if(tsel) tsel.onclick = function(){
-      state.selectMode = !state.selectMode;
-      state.selected = new Set();
-      render();
-    };
-    var cancelSelect = view.querySelector('[data-act="cancel-select"]');
-    if(cancelSelect) cancelSelect.onclick = function(){
-      state.selectMode = false; state.selected = new Set(); render();
-    };
-    var bulkMove = view.querySelector('[data-act="bulk-move"]');
-    if(bulkMove) bulkMove.onchange = async function(e){
-      var to = e.target.value;
-      if(!to) return;
-      var ids = Array.from(state.selected);
-      setStatus('Moving ' + ids.length + '\u2026');
-      for(var i = 0; i < ids.length; i++){
-        await updateOne(ids[i], { section: to });
-      }
-      setStatus('Moved ' + ids.length);
-      setTimeout(function(){ setStatus(''); }, 2000);
-      state.selectMode = false; state.selected = new Set();
-      render();
-    };
-    var bulkDel = view.querySelector('[data-act="bulk-del"]');
-    if(bulkDel) bulkDel.onclick = async function(){
-      var ids = Array.from(state.selected);
-      if(!ids.length) return;
-      if(!confirm('Delete ' + ids.length + ' photo' + (ids.length === 1 ? '' : 's') + '? This can\'t be undone.')) return;
-      setStatus('Deleting\u2026');
-      for(var i = 0; i < ids.length; i++){ await deleteOne(ids[i]); }
-      setStatus('Deleted ' + ids.length);
-      setTimeout(function(){ setStatus(''); }, 2000);
-      state.selectMode = false; state.selected = new Set();
-      render();
-    };
-    var cancelPicker = view.querySelector('[data-act="cancel-picker"]');
-    if(cancelPicker) cancelPicker.onclick = function(){
-      if(state.pickerCallback) state.pickerCallback(null);
-      close();
-    };
-    var confirmPicker = view.querySelector('[data-act="confirm-picker"]');
-    if(confirmPicker) confirmPicker.onclick = function(){
-      var selectedPhotos = state.photos.filter(function(p){ return state.selected.has(p.id); });
-      if(state.pickerCallback) state.pickerCallback(selectedPhotos);
-      close();
-    };
-
-    view.querySelectorAll('.cr-pg-thumb').forEach(function(el){
-      el.onclick = function(){
-        var id = el.dataset.id;
-        if(state.selectMode || state.pickerMode){
-          if(state.selected.has(id)) state.selected.delete(id);
-          else state.selected.add(id);
-          el.classList.toggle('checked');
-          // Update count in action bar
-          var cnt = view.querySelector('.cr-pg-actionbar .count');
-          if(cnt) cnt.textContent = state.selected.size + ' selected';
-        }else{
-          openDetail(id);
+  // ─── wrap window.renderGallery ───────────────────
+  function wrapRenderGallery(){
+    if(typeof window.renderGallery !== 'function') return false;
+    if(window.renderGallery.__crPaeWrapped) return true;
+    origRenderGallery = window.renderGallery;
+    window.renderGallery = function(){
+      // Keep the base app's side effects (count updates, refreshInspGalN)
+      try{
+        var grid = document.getElementById('galGrid');
+        var countEl = document.getElementById('galCount');
+        if(countEl && Array.isArray(window.currentPhotos)){
+          var galMode = window.galMode || 'all';
+          var INSP_MAX = window.INSP_MAX || 30;
+          var GAL_MAX  = window.GAL_MAX  || 50;
+          countEl.textContent = galMode === 'insp'
+            ? (window.currentPhotos.length + ' / ' + INSP_MAX)
+            : (window.currentPhotos.length + ' / ' + GAL_MAX);
         }
-      };
-    });
+        if(typeof window.refreshInspGalN === 'function'){
+          try{ window.refreshInspGalN(); }catch(_){}
+        }
+        // Only take over in album mode. Inspection Photos mode uses base render.
+        if((window.galMode || 'all') !== 'all'){
+          return origRenderGallery.apply(this, arguments);
+        }
+        renderTabs();
+        renderEnhancedGrid();
+      }catch(e){
+        console.warn('[pae] renderGallery override failed, falling back:', e);
+        try{ origRenderGallery.apply(this, arguments); }catch(_){}
+      }
+    };
+    window.renderGallery.__crPaeWrapped = true;
+    return true;
   }
 
-  // ══════════════════════════════════════════════════
-  // Detail modal
-  // ══════════════════════════════════════════════════
-  function ensureDetail(){
-    if(detail) return detail;
-    detail = document.createElement('div');
-    detail.id = 'cr-pg-detail';
-    detail.onclick = function(e){ if(e.target === detail) closeDetail(); };
-    document.body.appendChild(detail);
-    return detail;
+  // ─── bulk action bar ─────────────────────────────
+  var actionBar = null;
+  function ensureActionBar(){
+    if(actionBar) return actionBar;
+    actionBar = document.createElement('div');
+    actionBar.id = 'cr-pae-actionbar';
+    document.body.appendChild(actionBar);
+    return actionBar;
+  }
+  function updateActionBar(){
+    ensureActionBar();
+    var galChecked = window.galChecked || {};
+    var checkedIds = Object.keys(galChecked).filter(function(id){ return galChecked[id]; });
+    var view = document.getElementById('galleryView');
+    var isGalleryOpen = view && view.style.display !== 'none' && view.offsetParent !== null;
+    if(!isGalleryOpen || !checkedIds.length){
+      actionBar.classList.remove('show');
+      if(view) view.classList.remove('cr-pae-selectmode');
+      // But if in picker mode always show the bar
+      if(pickerMode){
+        actionBar.classList.add('show');
+        renderPickerActionBar();
+      }
+      return;
+    }
+    if(view) view.classList.add('cr-pae-selectmode');
+    if(pickerMode){
+      renderPickerActionBar();
+    }else{
+      renderBulkActionBar(checkedIds);
+    }
+    actionBar.classList.add('show');
+  }
+  function renderBulkActionBar(checkedIds){
+    actionBar.innerHTML =
+      '<span class="count">' + checkedIds.length + ' selected</span>' +
+      '<select class="move-to" data-act="bulk-move">' +
+        '<option value="">Move to section\u2026</option>' +
+        SECTIONS.map(function(s){
+          return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
+        }).join('') +
+      '</select>' +
+      '<span class="status" data-slot="status"></span>' +
+      '<button class="clear" data-act="clear" type="button">Clear</button>';
+    actionBar.querySelector('[data-act="bulk-move"]').onchange = onBulkMove;
+    actionBar.querySelector('[data-act="clear"]').onclick = function(){
+      window.galChecked = {};
+      if(typeof window.renderGallery === 'function') window.renderGallery();
+    };
+  }
+  function renderPickerActionBar(){
+    var galChecked = window.galChecked || {};
+    var n = Object.keys(galChecked).filter(function(id){ return galChecked[id]; }).length;
+    actionBar.innerHTML =
+      '<span class="count">' + n + ' selected for estimate</span>' +
+      '<button class="clear" data-act="cancel" type="button">Cancel</button>' +
+      '<button class="confirm" data-act="confirm" type="button">Attach</button>';
+    actionBar.querySelector('[data-act="cancel"]').onclick = function(){
+      completePicker(null);
+    };
+    actionBar.querySelector('[data-act="confirm"]').onclick = function(){
+      var galChecked2 = window.galChecked || {};
+      var ids = Object.keys(galChecked2).filter(function(id){ return galChecked2[id]; });
+      var selectedPhotos = (window.currentPhotos || []).filter(function(p){ return ids.indexOf(String(p.id)) !== -1 || ids.indexOf(p.id) !== -1; });
+      completePicker(selectedPhotos);
+    };
   }
 
-  function openDetail(photoId){
-    var photo = state.photos.find(function(x){ return x.id === photoId; });
+  async function onBulkMove(e){
+    var to = e.target.value;
+    if(!to) return;
+    if(!window.supa){ alert('No connection.'); return; }
+    var galChecked = window.galChecked || {};
+    var ids = Object.keys(galChecked).filter(function(id){ return galChecked[id]; });
+    if(!ids.length) return;
+    var statusEl = actionBar.querySelector('[data-slot="status"]');
+    if(statusEl) statusEl.textContent = 'Moving ' + ids.length + '\u2026';
+    var ok = 0;
+    for(var i = 0; i < ids.length; i++){
+      try{
+        var r = await window.supa.from('project_photos').update({ section: to }).eq('id', ids[i]);
+        if(!r.error) ok++;
+        // Update local currentPhotos cache
+        var lp = (window.currentPhotos || []).find(function(x){ return String(x.id) === String(ids[i]); });
+        if(lp) lp.section = to;
+      }catch(_){}
+    }
+    if(statusEl) statusEl.textContent = 'Moved ' + ok + ' / ' + ids.length;
+    // Clear selection + refresh
+    window.galChecked = {};
+    if(typeof window.renderGallery === 'function') window.renderGallery();
+    setTimeout(function(){
+      var s = actionBar.querySelector('[data-slot="status"]');
+      if(s) s.textContent = '';
+    }, 2500);
+  }
+
+  // ─── AI caption per photo ────────────────────────
+  var capModal = null;
+  function ensureCapModal(){
+    if(capModal) return capModal;
+    capModal = document.createElement('div');
+    capModal.id = 'cr-pae-cap-modal';
+    capModal.onclick = function(e){ if(e.target === capModal) closeCapModal(); };
+    document.body.appendChild(capModal);
+    return capModal;
+  }
+  function openCapModal(photoId){
+    ensureCapModal();
+    var photo = (window.currentPhotos || []).find(function(x){ return String(x.id) === String(photoId); });
     if(!photo) return;
-    ensureDetail();
-    detail.innerHTML =
+    capModal.innerHTML =
       '<div class="box">' +
-        '<div class="imgwrap"><img src="' + esc(photo.data || '') + '" alt="" /></div>' +
-        '<div class="info">' +
+        '<div class="imgwrap"><img src="' + esc(photo.data || '') + '" alt=""></div>' +
+        '<div class="form">' +
           '<label>Caption</label>' +
           '<textarea data-f="caption" placeholder="What does this photo show?">' + esc(photo.caption || '') + '</textarea>' +
           '<div class="ai-status" data-slot="ai-status"></div>' +
@@ -39425,154 +39297,212 @@ body.claim-insurance #brandLogo{
           '<label>Section</label>' +
           '<select data-f="section">' +
             SECTIONS.map(function(s){
-              return '<option value="' + esc(s) + '"' + ((photo.section || 'General') === s ? ' selected' : '') + '>' + esc(s) + '</option>';
+              return '<option value="' + esc(s) + '"' + ((photo.section || 'Inspection') === s ? ' selected' : '') + '>' + esc(s) + '</option>';
             }).join('') +
           '</select>' +
 
           '<div class="actions">' +
-            '<button class="ai"    data-act="ai"    type="button">\u2728 AI Caption</button>' +
-            '<button class="del"   data-act="del"   type="button">Delete</button>' +
+            '<button class="ai"   data-act="ai"   type="button">\u2728 AI Caption</button>' +
             '<button class="close" data-act="close" type="button">Close</button>' +
-            '<button class="save"  data-act="save"  type="button">Save</button>' +
+            '<button class="save" data-act="save" type="button">Save</button>' +
           '</div>' +
         '</div>' +
       '</div>';
-    detail.classList.add('open');
-
-    detail.querySelector('[data-act="close"]').onclick = closeDetail;
-    detail.querySelector('[data-act="save"]').onclick = async function(){
-      var cap = detail.querySelector('[data-f="caption"]').value.trim();
-      var sec = detail.querySelector('[data-f="section"]').value;
-      await updateOne(photoId, { caption: cap || null, section: sec });
-      closeDetail();
-      render();
+    capModal.classList.add('open');
+    capModal.querySelector('[data-act="close"]').onclick = closeCapModal;
+    capModal.querySelector('[data-act="save"]').onclick = async function(){
+      var cap = capModal.querySelector('[data-f="caption"]').value.trim();
+      var sec = capModal.querySelector('[data-f="section"]').value;
+      try{
+        var r = await window.supa.from('project_photos').update({
+          caption: cap || null,
+          section: sec,
+        }).eq('id', photoId);
+        if(r.error) throw r.error;
+        // Update local cache
+        photo.caption = cap;
+        photo.section = sec;
+      }catch(e){
+        alert('Save failed: ' + (e.message || e));
+        return;
+      }
+      closeCapModal();
+      if(typeof window.renderGallery === 'function') window.renderGallery();
     };
-    detail.querySelector('[data-act="del"]').onclick = async function(){
-      if(!confirm('Delete this photo?')) return;
-      await deleteOne(photoId);
-      closeDetail();
-      render();
-    };
-    detail.querySelector('[data-act="ai"]').onclick = function(){
-      var aiBtn = detail.querySelector('[data-act="ai"]');
-      var stEl  = detail.querySelector('[data-slot="ai-status"]');
+    capModal.querySelector('[data-act="ai"]').onclick = async function(){
+      var aiBtn = capModal.querySelector('[data-act="ai"]');
+      var statusEl = capModal.querySelector('[data-slot="ai-status"]');
       aiBtn.disabled = true; aiBtn.textContent = 'Thinking\u2026';
-      stEl.classList.add('show'); stEl.textContent = 'Asking Gemini vision\u2026';
-      aiCaption(photo, function(err, caption){
-        aiBtn.disabled = false; aiBtn.textContent = '\u2728 AI Caption';
-        if(err){
-          stEl.textContent = 'Caption failed: ' + err.message;
-          return;
+      statusEl.textContent = 'Asking AI\u2026';
+      try{
+        var res = await fetch('/api/caption', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ image: photo.data }),
+        });
+        var body = null;
+        try{ body = await res.json(); }catch(_){}
+        if(!res.ok){
+          statusEl.textContent = 'AI failed: ' + ((body && (body.detail || body.error)) || ('HTTP ' + res.status));
+        }else{
+          capModal.querySelector('[data-f="caption"]').value = (body && body.caption) || '';
+          statusEl.textContent = 'Done. Edit if needed, then Save.';
         }
-        detail.querySelector('[data-f="caption"]').value = caption;
-        stEl.textContent = 'Done. Edit if needed, then Save.';
+      }catch(e){
+        statusEl.textContent = 'AI failed: ' + (e.message || e);
+      }
+      aiBtn.disabled = false; aiBtn.textContent = '\u2728 AI Caption';
+    };
+  }
+  function closeCapModal(){
+    if(capModal) capModal.classList.remove('open');
+  }
+
+  // ─── inline sparkle (quick caption from grid) ────
+  async function inlineAiCaption(photoId, btnEl){
+    if(!window.supa) return;
+    var photo = (window.currentPhotos || []).find(function(x){ return String(x.id) === String(photoId); });
+    if(!photo) return;
+    btnEl.disabled = true;
+    btnEl.textContent = '\u2026';
+    try{
+      var res = await fetch('/api/caption', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ image: photo.data }),
       });
-    };
+      var body = null;
+      try{ body = await res.json(); }catch(_){}
+      if(!res.ok){
+        alert('AI caption failed: ' + ((body && (body.detail || body.error)) || ('HTTP ' + res.status)));
+        return;
+      }
+      var caption = (body && body.caption) || '';
+      var upd = await window.supa.from('project_photos').update({ caption: caption }).eq('id', photoId);
+      if(upd.error) throw upd.error;
+      photo.caption = caption;
+      if(typeof window.renderGallery === 'function') window.renderGallery();
+    }catch(e){
+      alert('AI caption error: ' + (e.message || e));
+    }finally{
+      btnEl.disabled = false;
+      btnEl.innerHTML = '\u2728';
+    }
   }
 
-  function closeDetail(){
-    if(detail) detail.classList.remove('open');
-  }
-
-  // ══════════════════════════════════════════════════
-  // Public open() / picker
-  // ══════════════════════════════════════════════════
-  async function open(project){
-    ensureView();
-    state.project = project;
-    state.activeSection = 'all';
-    state.selectMode = false;
-    state.pickerMode = false;
-    state.selected = new Set();
-    state.pickerCallback = null;
-    render();
-    view.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    await loadPhotos(project.id);
-    render();
-  }
-
-  function close(){
-    if(view) view.classList.remove('open');
-    document.body.style.overflow = '';
-    state.pickerMode = false;
-    state.selectMode = false;
-    state.selected = new Set();
-    state.pickerCallback = null;
-  }
-
-  async function openPicker(project, existingIds, cb){
-    ensureView();
-    state.project = project;
-    state.activeSection = 'all';
-    state.selectMode = false;
-    state.pickerMode = true;
-    state.selected = new Set(existingIds || []);
-    state.pickerExisting = new Set(existingIds || []);
-    state.pickerCallback = cb;
-    render();
-    view.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    await loadPhotos(project.id);
-    // Re-seed selection with existing after load (photo IDs must exist in loaded data)
-    state.selected = new Set(existingIds || []);
-    render();
-  }
-
-  // ══════════════════════════════════════════════════
-  // Client-profile button injection
-  // ══════════════════════════════════════════════════
-  function injectOnProfile(){
-    var proj = window.currentProject;
-    if(!proj || !proj.id) return;
-    var anchor = document.getElementById('pNewEstimateBtn') ||
-                 document.getElementById('cr-est-new-btn');
-    if(!anchor) return;
-    if(document.getElementById('cr-pg-nav-btn')) return;
-    var btn = document.createElement('button');
-    btn.id = 'cr-pg-nav-btn';
-    btn.type = 'button';
-    btn.innerHTML = '\uD83D\uDCF7 Photos';
-    btn.title = 'Photo gallery for this client';
-    btn.onclick = function(e){
+  // ─── click delegation for new controls ───────────
+  document.addEventListener('click', function(e){
+    // AI sparkle
+    var ai = e.target.closest('#galGrid .cr-pae-ai');
+    if(ai){
       e.preventDefault(); e.stopPropagation();
-      open(window.currentProject);
-    };
-    // Insert after the anchor's parent group (so it sits on the same row as the estimate buttons)
-    anchor.parentNode.insertBefore(btn, anchor.nextSibling);
+      var card = ai.closest('.gph');
+      if(card) inlineAiCaption(card.dataset.gid, ai);
+      return;
+    }
+    // Long-press or ctrl-click on caption area → open cap modal
+    // (Simpler: double-click on card opens the modal)
+  }, true);
+
+  document.addEventListener('dblclick', function(e){
+    var card = e.target.closest('#galGrid .gph');
+    if(card){
+      e.preventDefault(); e.stopPropagation();
+      openCapModal(card.dataset.gid);
+    }
+  }, true);
+
+  // Watch galChecked mutations to refresh action bar
+  var lastCheckedSig = '';
+  function pollChecked(){
+    var g = window.galChecked || {};
+    var sig = Object.keys(g).filter(function(k){ return g[k]; }).sort().join(',');
+    if(sig !== lastCheckedSig){
+      lastCheckedSig = sig;
+      updateActionBar();
+    }
+  }
+  setInterval(pollChecked, 250);
+
+  // ─── picker mode API for estimate editor ─────────
+  function openAsPicker(project, existingIds, cb){
+    if(typeof window.openGallery !== 'function' && typeof window.loadGallery !== 'function'){
+      alert('Photo Album not available yet.');
+      return;
+    }
+    pickerMode = true;
+    pickerCallback = cb;
+    pickerPreselect = new Set((existingIds || []).map(String));
+    // Set currentProject so gallery loads for the right client
+    if(project) window.currentProject = project;
+    // Open the base app's gallery view
+    if(typeof window.openGallery === 'function'){
+      try{ window.openGallery('all'); }catch(_){}
+    }else if(typeof window.showGallery === 'function'){
+      try{ window.showGallery('all'); }catch(_){}
+    }else{
+      // Fallback: manually show view + load
+      var view = document.getElementById('galleryView');
+      if(view) view.style.display = 'block';
+      if(typeof window.loadGallery === 'function') window.loadGallery();
+    }
+    var view = document.getElementById('galleryView');
+    if(view) view.classList.add('cr-pae-pickermode');
+    // Pre-check existing selections after a brief tick (load may be async)
+    setTimeout(function(){
+      window.galChecked = window.galChecked || {};
+      pickerPreselect.forEach(function(id){ window.galChecked[id] = true; });
+      if(typeof window.renderGallery === 'function') window.renderGallery();
+      updateActionBar();
+    }, 400);
+  }
+  function completePicker(selectedPhotos){
+    var view = document.getElementById('galleryView');
+    if(view) view.classList.remove('cr-pae-pickermode');
+    var cb = pickerCallback;
+    pickerMode = false;
+    pickerCallback = null;
+    window.galChecked = {};
+    // Close the gallery view (return to profile)
+    var backBtn = document.getElementById('galBackBtn');
+    if(backBtn){ try{ backBtn.click(); }catch(_){} }
+    if(cb) cb(selectedPhotos);
   }
 
-  var scheduled = false;
-  function scheduleScan(){
-    if(scheduled) return;
-    scheduled = true;
-    requestAnimationFrame(function(){
-      scheduled = false;
-      try{ injectOnProfile(); }catch(e){}
-    });
+  // ─── boot ────────────────────────────────────────
+  function tryWrap(){
+    if(wrapRenderGallery()) return true;
+    return false;
   }
   function start(){
-    scheduleScan();
-    new MutationObserver(scheduleScan).observe(document.body, {
-      childList:true, subtree:true,
-    });
+    if(!tryWrap()){
+      var n = 0, iv = setInterval(function(){
+        if(tryWrap() || ++n > 40) clearInterval(iv);
+      }, 300);
+    }
+    // Also observe gallery-view show/hide to re-render when opened
+    var view = document.getElementById('galleryView');
+    if(view){
+      new MutationObserver(function(){
+        if(view.style.display !== 'none' && typeof window.renderGallery === 'function'){
+          renderTabs();
+        }else{
+          // Reset picker mode + tabs when leaving
+          if(pickerMode && pickerCallback){
+            // don't complete on view hide — user must explicitly cancel/confirm
+          }
+        }
+      }).observe(view, { attributes:true, attributeFilter:['style'] });
+    }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 
-  // ══════════════════════════════════════════════════
-  // Public API
-  // ══════════════════════════════════════════════════
-  window.CardinalPhotos = {
-    open           : open,
-    close          : close,
-    openPicker     : openPicker,
-    loadForProject : async function(pid){
-      state.project = { id: pid };
-      await loadPhotos(pid);
-      return state.photos.slice();
-    },
-    sections       : function(){ return SECTIONS.slice(); },
+  // ─── Public API ─────────────────────────────────
+  window.CardinalPhotoAlbum = {
+    openAsPicker : openAsPicker,
+    // Utility for estimate editor / other modules to inspect the current set
+    photosFor    : function(){ return (window.currentPhotos || []).slice(); },
   };
 })();
 </script>
@@ -40431,33 +40361,44 @@ body.claim-insurance #brandLogo{
     // Photo picker button
     var pickPhotosBtn = view.querySelector('[data-act="pick-photos"]');
     if(pickPhotosBtn) pickPhotosBtn.onclick = function(){
-      if(!window.CardinalPhotos || typeof window.CardinalPhotos.openPicker !== 'function'){
-        alert('Photo gallery not available yet — reload the app.');
+      var picker = (window.CardinalPhotoAlbum && window.CardinalPhotoAlbum.openAsPicker) ||
+                   (window.CardinalPhotos && window.CardinalPhotos.openPicker);
+      if(!picker){
+        alert('Photo Album not available. Reload the app and retry.');
         return;
       }
       var existingIds = state.photos
         .map(function(p){ return p.photo_id; })
         .filter(Boolean);
-      window.CardinalPhotos.openPicker(state.project, existingIds, function(selected){
-        if(!selected) return;    // canceled
-        // Rebuild photos array: keep already-attached photos that are still selected + add new ones
-        var selectedIds = new Set(selected.map(function(p){ return p.id; }));
+      // Cache state so we can restore the editor after the picker closes
+      // (the base gallery view takes over the screen while picking).
+      var savedState = state;
+      picker(state.project, existingIds, function(selected){
+        state = savedState;
+        // Reopen the estimate editor
+        view.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        if(!selected){ render(); return; }    // canceled
+        var selectedIds = new Set(selected.map(function(p){ return String(p.id); }));
         var kept = state.photos.filter(function(ep){
-          return selectedIds.has(ep.photo_id);
+          return selectedIds.has(String(ep.photo_id));
         });
-        var keptIds = new Set(kept.map(function(k){ return k.photo_id; }));
+        var keptIds = new Set(kept.map(function(k){ return String(k.photo_id); }));
         var added = selected
-          .filter(function(p){ return !keptIds.has(p.id); })
+          .filter(function(p){ return !keptIds.has(String(p.id)); })
           .map(function(p){
             return {
               photo_id : p.id,
               url      : p.data,
-              caption  : p.caption || '',   // seed from master caption
+              caption  : p.caption || '',
             };
           });
         state.photos = kept.concat(added);
         render();
       });
+      // Hide the editor while the base gallery view is up
+      view.classList.remove('open');
+      document.body.style.overflow = '';
     };
 
     // Per-photo controls
