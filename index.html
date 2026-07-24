@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 172 &#8212; Handler smoke check: broken plugin buttons auto-marked + click-intercepted; CardinalHealth.print() in console</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 173 &#8212; Smoke check extended to community/insurance modules + hides broken buttons by default; admin-only schema + env-var health badge in header</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -30079,11 +30079,28 @@ body.claim-insurance #brandLogo{
 (function () {
   'use strict';
 
-  var WATCHED_IDS = [
+  var WATCHED_MOUNT_IDS = [
     'cr-estimates-mount',
     'cr-claims-mount',
     'cr-pricing-mount',
     'cr-coach-mount',
+    'communityHubView',           // Community CRM home
+  ];
+
+  // Additional container selectors — my community/insurance modules
+  // create modals + inline strips that also need coverage.
+  var WATCHED_SELECTORS = [
+    '.cr-cp-shell',               // Community Partners / Properties directory + editor + picker
+    '.cr-cct-shell',              // Convert Client Type modal
+    '.cr-chub-shell',              // Community Hub drilldown modals (stage, needs-attn, partner)
+    '.cr-em-bg',                  // Estimates "+ New" fallback modal
+    '.cr-paf-bg',                 // Plugin-audit-fix modal (contract-created hop)
+    '.cr-bidstrip',               // Bid strip on community client profile
+    '.cr-autotrans',              // Auto-transition suggestion banner
+    '.cr-cp-attach',              // Attach-partner row on client profile
+    '.cr-cprop-attach',           // Attach-property row on client profile
+    '#cardinalTruthView .ins-header', // Cardinal Truth header (my portal chip lives here)
+    '#cr-ce-view',                // Contract editor
   ];
 
   var SEL = '[data-act], [data-link]';
@@ -30091,14 +30108,33 @@ body.claim-insurance #brandLogo{
   var CHECKED   = 0;
   var scheduled = false;
 
+  // ── Mode: prod hides broken buttons, dev marks them with a badge ──
+  //    Override with ?health=dev in URL or localStorage['cardinal.health.mode']='dev'
+  var MODE = (function(){
+    try{
+      var url = new URLSearchParams(location.search);
+      var q = url.get('health');
+      if(q === 'dev' || q === 'prod') return q;
+    }catch(e){}
+    try{
+      var s = localStorage.getItem('cardinal.health.mode');
+      if(s === 'dev' || s === 'prod') return s;
+    }catch(e){}
+    return 'prod';              // Default: hide broken buttons from users
+  })();
+
   function esc(s){
     return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
   }
 
   function containerOf(el){
-    for(var i = 0; i < WATCHED_IDS.length; i++){
-      var m = document.getElementById(WATCHED_IDS[i]);
-      if(m && m.contains(el)) return WATCHED_IDS[i];
+    for(var i = 0; i < WATCHED_MOUNT_IDS.length; i++){
+      var m = document.getElementById(WATCHED_MOUNT_IDS[i]);
+      if(m && m.contains(el)) return WATCHED_MOUNT_IDS[i];
+    }
+    for(var j = 0; j < WATCHED_SELECTORS.length; j++){
+      var closest = el.closest(WATCHED_SELECTORS[j]);
+      if(closest) return WATCHED_SELECTORS[j];
     }
     return null;
   }
@@ -30115,31 +30151,35 @@ body.claim-insurance #brandLogo{
   function markBroken(el, info){
     if(el.dataset.crBroken === '1') return;
     el.dataset.crBroken = '1';
-    el.setAttribute('title',
-      'Not wired up yet — Cardinal health check ' +
-      '(data-act="' + (info.act || 'null') +
-      '", data-link="' + (info.link || 'null') + '")');
-
-    // Intercept clicks so users get feedback instead of nothing.
-    // Capture phase so we run before the (missing) target-phase handler.
-    el.addEventListener('click', function(e){
-      // Re-check at click time — a handler may have been attached late.
-      if(el.onclick != null){
-        // False positive; let the click through
-        return;
-      }
-      e.stopPropagation();
-      e.preventDefault();
-      var msg = 'This action isn\'t connected yet';
-      if(typeof window.toast === 'function'){
-        try{ window.toast(msg, 'error'); return; }catch(_){ }
-      }
-      alert(msg);
-    }, true);
 
     REPORTS.push(info);
     console.warn('[Cardinal health] Broken button in ' +
                  info.mount + ': "' + info.label + '"', info);
+
+    if(MODE === 'prod'){
+      // Hide entirely — user never sees a button that doesn't work.
+      // Store the previous display so rescan can restore.
+      el.dataset.crPrevDisplay = el.style.display || '';
+      el.style.display = 'none';
+      info.hidden = true;
+    }else{
+      // Dev mode: mark visually + intercept the click so the maintainer
+      // sees the badge and gets an explicit "not connected" message.
+      el.setAttribute('title',
+        'Not wired up yet — Cardinal health check ' +
+        '(data-act="' + (info.act || 'null') +
+        '", data-link="' + (info.link || 'null') + '")');
+      el.addEventListener('click', function(e){
+        if(el.onclick != null){ return; }         // late-wired; let through
+        e.stopPropagation();
+        e.preventDefault();
+        var msg = 'This action isn\'t connected yet';
+        if(typeof window.toast === 'function'){
+          try{ window.toast(msg, 'error'); return; }catch(_){ }
+        }
+        alert(msg);
+      }, true);
+    }
   }
 
   function checkOne(el){
@@ -30169,14 +30209,21 @@ body.claim-insurance #brandLogo{
   }
 
   function scan(){
-    WATCHED_IDS.forEach(function(id){
+    // Mount-id containers (visible only — hidden mounts have templates
+    // pre-loaded but no handlers wired yet)
+    WATCHED_MOUNT_IDS.forEach(function(id){
       var m = document.getElementById(id);
       if(!m) return;
-      // Skip mounts that are hidden — their templates are pre-loaded
-      // but the plugin hasn't run its show* function yet, so no
-      // handlers would be attached anyway.
       if(m.style.display === 'none') return;
       m.querySelectorAll(SEL).forEach(checkOne);
+    });
+    // Selector-based containers (community modals + inline strips).
+    // These are typically only in the DOM while visible, so no
+    // display check needed.
+    WATCHED_SELECTORS.forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(container){
+        container.querySelectorAll(SEL).forEach(checkOne);
+      });
     });
   }
 
@@ -30200,13 +30247,25 @@ body.claim-insurance #brandLogo{
 
   // ── Public API ──────────────────────────────────────────
   window.CardinalHealth = {
+    mode: function(){ return MODE; },
+    setMode: function(m){
+      if(m !== 'dev' && m !== 'prod') return 'Invalid mode; use dev or prod';
+      try{ localStorage.setItem('cardinal.health.mode', m); }catch(e){}
+      return 'Mode saved. Reload to apply.';
+    },
     report: function(){ return REPORTS.slice(); },
     status: function(){
       var byMount = {};
-      REPORTS.forEach(function(r){ byMount[r.mount] = (byMount[r.mount] || 0) + 1; });
+      var hiddenCount = 0;
+      REPORTS.forEach(function(r){
+        byMount[r.mount] = (byMount[r.mount] || 0) + 1;
+        if(r.hidden) hiddenCount++;
+      });
       return {
+        mode   : MODE,
         checked: CHECKED,
         broken : REPORTS.length,
+        hidden : hiddenCount,
         mounts : byMount,
       };
     },
@@ -30214,13 +30273,15 @@ body.claim-insurance #brandLogo{
       console.group('%c[Cardinal Health] Handler Smoke Check',
                     'font-weight:800; color:#d4a017;');
       var s = this.status();
+      console.log('Mode: ' + s.mode + '  (dev = show badge, prod = hide broken)');
       console.log('Checked ' + s.checked + ' buttons across ' +
-                  WATCHED_IDS.length + ' plugin mounts.');
+                  (WATCHED_MOUNT_IDS.length + WATCHED_SELECTORS.length) + ' containers.');
       if(!REPORTS.length){
         console.log('%c\u2713 All checked buttons have handlers.',
                     'color:#2e7d32; font-weight:700;');
       }else{
-        console.warn(REPORTS.length + ' broken button(s):');
+        console.warn(REPORTS.length + ' broken button(s)' +
+                     (s.hidden ? ' (' + s.hidden + ' hidden from users)' : '') + ':');
         var byMount = {};
         REPORTS.forEach(function(r){
           (byMount[r.mount] = byMount[r.mount] || []).push(r);
@@ -30230,7 +30291,8 @@ body.claim-insurance #brandLogo{
           byMount[m].forEach(function(r){
             console.warn('  \u2022 "' + r.label + '"  ' +
                          '[data-act="' + (r.act || 'null') +
-                         '"] [data-link="' + (r.link || 'null') + '"]');
+                         '"] [data-link="' + (r.link || 'null') + '"]' +
+                         (r.hidden ? '  \u2192 hidden' : ''));
           });
           console.groupEnd();
         });
@@ -30241,13 +30303,17 @@ body.claim-insurance #brandLogo{
     rescan: function(){
       REPORTS.length = 0;
       CHECKED = 0;
-      // Clear markers so the check can flag them again if still broken
+      // Restore any hidden buttons + clear all markers
       document.querySelectorAll('[data-cr-checked]').forEach(function(el){
         delete el.dataset.crChecked;
       });
       document.querySelectorAll('[data-cr-broken]').forEach(function(el){
         delete el.dataset.crBroken;
         el.removeAttribute('title');
+        if('crPrevDisplay' in el.dataset){
+          el.style.display = el.dataset.crPrevDisplay;
+          delete el.dataset.crPrevDisplay;
+        }
       });
       schedule();
       return 'Rescan scheduled';
@@ -30266,6 +30332,515 @@ body.claim-insurance #brandLogo{
       try{ window.CardinalHealth.print(); }catch(e){}
     }
   }, 3000);
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: admin_health_check.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — ADMIN HEALTH CHECK
+ v2026-07-23 · runtime schema + env-var checker (admin-only)
+────────────────────────────────────────────────────────────────────
+ Boot check that pings every required Supabase table and surfaces
+ missing pieces to admins only, with the exact setup SQL / env-var
+ fix advised inline. Everyone else sees nothing.
+
+ Runs once ~2 seconds after boot (after auth settles so we know
+ who's signed in). Admin = anyone whose email is in ADMIN_EMAILS —
+ currently theo@ and joan@, matching the base app's own admin
+ roster convention.
+
+ If any table check fails (Supabase returns an error other than
+ "table has zero rows"), a small gold shield icon appears next to
+ the burger Menu button. Green if clean, gold if warnings, red if
+ critical (multiple tables missing).
+
+ Click the shield → modal listing every requirement:
+   • ✓ table healthy  (with row count)
+   • ⚠ table returned an error  (with the error + suggested fix)
+
+ Also lists environment-variable-shaped issues we can INFER
+ client-side:
+   • Digest email — infer from recent audit_events; if no
+     digest_sent event in 3 days, likely a Resend / verified-
+     sender issue
+   • Gemini AI — infer from ai_estimates failures; if the last N
+     ai_estimates all show errors, likely a key / billing issue
+
+ Can't check server-only env vars directly, but can flag when the
+ features that depend on them stop working.
+
+ Console API:
+   CardinalAdminHealth.check()   → runs the check and returns results
+   CardinalAdminHealth.show()    → opens the modal (admin-only)
+   CardinalAdminHealth.results() → last check results
+
+ INSTALL: paste after handler_smoke_check.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-ahc-styles">
+  #cr-ahc-badge{
+    display:none;
+    background:transparent;
+    border:1px solid rgba(212,160,23,.55);
+    color:#d4a017;
+    border-radius:8px;
+    padding:5px 8px;
+    cursor:pointer;
+    margin-right:6px; flex:0 0 auto;
+    align-items:center; justify-content:center;
+    transition:background .12s, border-color .12s, transform .1s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #cr-ahc-badge.show{ display:inline-flex; }
+  #cr-ahc-badge:hover{ background:rgba(212,160,23,.15); }
+  #cr-ahc-badge:active{ transform:scale(.94); }
+  #cr-ahc-badge svg{ display:block; }
+  #cr-ahc-badge.warn{ color:#c87a00; border-color:#c87a00; }
+  #cr-ahc-badge.crit{ color:#c8202e; border-color:#c8202e; animation:cr-ahc-pulse 1.6s ease-in-out infinite; }
+  #cr-ahc-badge.ok  { color:#2e7d32; border-color:#2e7d32; }
+  @keyframes cr-ahc-pulse{
+    0%,100% { box-shadow:0 0 0 0 rgba(200,32,46,.4); }
+    50%     { box-shadow:0 0 0 4px rgba(200,32,46,0); }
+  }
+
+  .cr-ahc-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9800;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:8vh 14px 20px; box-sizing:border-box; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .cr-ahc-box{
+    width:100%; max-width:600px; background:#fff; border-radius:14px;
+    box-shadow:0 24px 60px rgba(0,0,0,.44); overflow:hidden;
+    max-height:82vh; display:flex; flex-direction:column;
+  }
+  .cr-ahc-head{
+    padding:16px 20px; background:linear-gradient(135deg,#1a0f0c,#241512);
+    color:#f7f2ea; border-bottom:2px solid #d4a017;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .cr-ahc-head h3{
+    margin:0; font:800 13px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.18em; text-transform:uppercase; color:#d4a017;
+  }
+  .cr-ahc-head .close{
+    background:transparent; border:0; color:#d4a017; cursor:pointer;
+    font:800 18px 'Segoe UI',Arial,sans-serif; padding:0 4px;
+    line-height:1;
+  }
+  .cr-ahc-body{
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding:12px 4px 16px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c;
+  }
+  .cr-ahc-section{
+    margin:0 0 12px; padding:0 16px;
+  }
+  .cr-ahc-section h4{
+    margin:12px 0 8px; font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.18em; text-transform:uppercase; color:#8a7a5a;
+  }
+  .cr-ahc-row{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:8px 10px; margin:2px 0; border-radius:8px;
+    background:#faf6ef;
+  }
+  .cr-ahc-row.ok  { background:#e7f4e7; }
+  .cr-ahc-row.warn{ background:#fdf1e2; }
+  .cr-ahc-row.crit{ background:#fbe4e6; }
+  .cr-ahc-row .ico{
+    flex:0 0 auto; width:20px; height:20px;
+    display:inline-flex; align-items:center; justify-content:center;
+    border-radius:4px; font-size:13px; font-weight:800;
+  }
+  .cr-ahc-row .ico.ok  { background:#2e7d32; color:#fff; }
+  .cr-ahc-row .ico.warn{ background:#c87a00; color:#fff; }
+  .cr-ahc-row .ico.crit{ background:#c8202e; color:#fff; }
+  .cr-ahc-row .body{ flex:1; min-width:0; }
+  .cr-ahc-row .name{
+    font:700 12.5px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+  }
+  .cr-ahc-row .name b{ font-family:'SF Mono',Menlo,Consolas,monospace; }
+  .cr-ahc-row .desc{
+    font:600 11.5px 'Segoe UI',Arial,sans-serif; color:#6b6b6b;
+    margin-top:1px;
+  }
+  .cr-ahc-row .fix{
+    margin-top:4px; padding:4px 8px; background:rgba(0,0,0,.05);
+    border-radius:4px; font:600 11px 'SF Mono',Menlo,Consolas,monospace;
+    color:#4a4a4a; word-break:break-word;
+  }
+  .cr-ahc-summary{
+    padding:12px 16px; border-top:1px solid #eee;
+    font:700 12px 'Segoe UI',Arial,sans-serif; color:#6b6b6b;
+    text-align:center;
+  }
+  .cr-ahc-summary b{ color:#2c2c2c; }
+</style>
+
+<script id="cr-ahc-script">
+(function () {
+  'use strict';
+
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+
+  // ── Requirements catalog ────────────────────────────────
+  // Each entry describes something the app depends on. `check` runs
+  // client-side and returns { status: 'ok'|'warn'|'crit', message, fix }.
+  var REQUIREMENTS = [
+    // ─ Core base-app tables ─
+    { key:'projects',            group:'Core',      purpose:'Client / project records' },
+    { key:'meas_docs',           group:'Core',      purpose:'Estimates, contracts, inspections, reports' },
+    { key:'project_photos',      group:'Core',      purpose:'Client photo galleries' },
+    { key:'appointments',        group:'Core',      purpose:'Calendar / schedule board' },
+    { key:'team_profiles',       group:'Core',      purpose:'Team roster + assignments' },
+    { key:'audit_events',        group:'Core',      purpose:'Audit log for every state change' },
+    { key:'audit_sessions',      group:'Core',      purpose:'Sign-in / device tracking' },
+    { key:'push_subscriptions',  group:'Core',      purpose:'Web-push notifications' },
+
+    // ─ Plugin-specific tables ─
+    { key:'ai_estimates',        group:'Estimates', purpose:'AI-generated estimates' },
+    { key:'contracts',           group:'Estimates', purpose:'Contracts (converted from estimates)' },
+    { key:'insurance_claims',    group:'Claims',    purpose:'Insurance claim records' },
+    { key:'payments',            group:'Claims',    purpose:'Payments logged on claims' },
+    { key:'supplements',         group:'Claims',    purpose:'Supplement filings on claims' },
+    { key:'pricing_items',       group:'Pricing',   purpose:'Line-item pricing catalog',
+      fix:'Run pricing_setup.sql in Supabase SQL editor.' },
+    { key:'pricing_categories',  group:'Pricing',   purpose:'Pricing category grouping + order',
+      fix:'Run pricing_setup.sql in Supabase SQL editor.' },
+    { key:'pricing_history',     group:'Pricing',   purpose:'Price change history',
+      fix:'Run pricing_setup.sql in Supabase SQL editor.' },
+
+    // ─ Community CRM tables (my modules) ─
+    { key:'community_partners',  group:'Community', purpose:'Community partner directory',
+      fix:'Run community_partners_setup.sql in Supabase SQL editor.' },
+    { key:'community_properties',group:'Community', purpose:'Partner-owned properties',
+      fix:'Run community_properties_setup.sql in Supabase SQL editor.' },
+  ];
+
+  var LAST_RESULTS = null;
+
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return window.currentUser.email;
+      if(typeof window.my_email === 'function') return window.my_email();
+    }catch(e){}
+    return '';
+  }
+  function isAdmin(){
+    var email = currentEmail();
+    return ADMIN_EMAILS.indexOf((email || '').toLowerCase()) !== -1;
+  }
+
+  // ── Checkers ────────────────────────────────────────────
+  async function checkTable(name){
+    if(!window.supa) return { status:'crit', message:'Supabase client unavailable', fix:'Reload the page.' };
+    try{
+      var r = await window.supa.from(name)
+        .select('id', { count:'exact', head:true })
+        .limit(1);
+      if(r.error){
+        // 42P01 is "undefined_table" in postgres — table doesn't exist
+        var missing = /does not exist|42P01/i.test(r.error.message || '');
+        return {
+          status : missing ? 'crit' : 'warn',
+          message: r.error.message || 'Query failed',
+          fix    : missing
+            ? 'The ' + name + ' table doesn\'t exist yet. Run the corresponding setup SQL in Supabase.'
+            : 'Check RLS policies for ' + name + '.',
+        };
+      }
+      return { status:'ok', message:'Reachable · ' + (r.count == null ? '?' : r.count) + ' rows' };
+    }catch(e){
+      return { status:'crit', message:e.message || 'Unknown error', fix:'Check network + Supabase URL.' };
+    }
+  }
+
+  // Infer env-var health from data:
+  async function checkDigestEmail(){
+    // Look for a recent audit_events row indicating the digest was
+    // sent. If nothing in 3 days, likely a Resend / verified sender
+    // issue. Silent-pass if audit_events itself failed above.
+    if(!window.supa) return { status:'warn', message:'Cannot verify', fix:'' };
+    try{
+      var threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
+      var r = await window.supa.from('audit_events')
+        .select('id')
+        .gte('created_at', threeDaysAgo)
+        .ilike('event_type', '%digest%')
+        .limit(1);
+      if(r.error){
+        return { status:'warn', message:'Could not verify: ' + r.error.message,
+                 fix:'' };
+      }
+      if(!r.data || !r.data.length){
+        return {
+          status:'warn',
+          message:'No digest email sent in the last 3 days',
+          fix:'Likely cause: Resend sender domain not verified. ' +
+              'Verify cardinalrenovations.net (or your chosen domain) in Resend dashboard, ' +
+              'then set the sender in api/digest.js to a verified address.',
+        };
+      }
+      return { status:'ok', message:'Digest sent within 3 days' };
+    }catch(e){
+      return { status:'warn', message:e.message, fix:'' };
+    }
+  }
+
+  async function checkAI(){
+    // If the last several ai_estimates all show errors / null estimate,
+    // the AI provider is likely down or the key is missing.
+    if(!window.supa) return { status:'warn', message:'Cannot verify', fix:'' };
+    try{
+      var r = await window.supa.from('ai_estimates')
+        .select('id, status, estimate, created_at')
+        .order('created_at', { ascending:false })
+        .limit(5);
+      if(r.error){
+        // Table missing — already caught by the ai_estimates row above.
+        return { status:'warn', message:'Cannot verify (see ai_estimates row)', fix:'' };
+      }
+      var rows = r.data || [];
+      if(!rows.length){
+        return { status:'ok', message:'No estimates yet — nothing to verify' };
+      }
+      var failed = rows.filter(function(x){
+        return x.status === 'error' || !x.estimate;
+      }).length;
+      if(failed === rows.length){
+        return {
+          status:'crit',
+          message:'The last ' + rows.length + ' AI estimate(s) all failed to produce output',
+          fix:'Likely cause: Gemini API key missing or throttled. ' +
+              'Verify GEMINI_API_KEY is set in Vercel env, ' +
+              'and attach billing to unlock the free-tier ceiling.',
+        };
+      }
+      if(failed > 0){
+        return {
+          status:'warn',
+          message:failed + ' of the last ' + rows.length + ' AI estimates failed',
+          fix:'Check Gemini quota / billing status.',
+        };
+      }
+      return { status:'ok', message:'Recent AI estimates producing output' };
+    }catch(e){
+      return { status:'warn', message:e.message, fix:'' };
+    }
+  }
+
+  // ── Run all ─────────────────────────────────────────────
+  async function runAll(){
+    var results = { requirements:[], env:[] };
+    for(var i = 0; i < REQUIREMENTS.length; i++){
+      var req = REQUIREMENTS[i];
+      var res = await checkTable(req.key);
+      results.requirements.push(Object.assign({}, req, res, {
+        // Prefer the requirement's specific `fix` if the check
+        // came back with the generic "table missing" fallback.
+        fix: (res.fix && !req.fix) ? res.fix : (req.fix || res.fix || ''),
+      }));
+    }
+    var digest = await checkDigestEmail();
+    results.env.push(Object.assign({ key:'RESEND_SENDER_DOMAIN', purpose:'Daily digest emails' }, digest));
+    var ai = await checkAI();
+    results.env.push(Object.assign({ key:'GEMINI_API_KEY', purpose:'AI Estimate generation, photo analysis' }, ai));
+
+    LAST_RESULTS = results;
+    return results;
+  }
+
+  function severityOf(results){
+    var crit = 0, warn = 0;
+    var all = results.requirements.concat(results.env);
+    all.forEach(function(r){
+      if(r.status === 'crit') crit++;
+      else if(r.status === 'warn') warn++;
+    });
+    if(crit >= 2) return 'crit';
+    if(crit === 1 || warn >= 2) return 'warn';
+    if(warn === 1) return 'warn';
+    return 'ok';
+  }
+
+  // ── Badge in header ─────────────────────────────────────
+  function ensureBadge(){
+    if(!isAdmin()) return null;
+    var wrap = document.getElementById('navWrap');
+    if(!wrap || wrap.style.display === 'none') return null;
+    var b = document.getElementById('cr-ahc-badge');
+    if(b) return b;
+    b = document.createElement('button');
+    b.id = 'cr-ahc-badge';
+    b.className = 'btn ghost';
+    b.setAttribute('aria-label', 'System health');
+    b.setAttribute('title', 'System health');
+    b.innerHTML =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" ' +
+           'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" ' +
+           'stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M12 2 L4 5 v6 c0 5 4 9 8 11 c4-2 8-6 8-11 V5 z"/>' +
+      '</svg>';
+    b.onclick = function(e){ e.stopPropagation(); showModal(); };
+    // Insert before home button / search button / navBtn
+    var target = document.getElementById('cr-home-btn') ||
+                 document.getElementById('cr-search-btn') ||
+                 document.getElementById('navBtn');
+    if(target && target.parentNode === wrap) wrap.insertBefore(b, target);
+    else wrap.appendChild(b);
+    return b;
+  }
+  function updateBadge(){
+    var b = ensureBadge();
+    if(!b) return;
+    if(!LAST_RESULTS){ b.className = 'btn ghost'; b.classList.remove('show'); return; }
+    var sev = severityOf(LAST_RESULTS);
+    b.classList.remove('ok','warn','crit');
+    b.classList.add(sev);
+    b.classList.add('show');
+    var counts = { ok:0, warn:0, crit:0 };
+    LAST_RESULTS.requirements.concat(LAST_RESULTS.env).forEach(function(r){
+      counts[r.status] = (counts[r.status] || 0) + 1;
+    });
+    b.setAttribute('title', 'System health: ' + sev.toUpperCase() +
+      ' \u2014 ' + counts.ok + ' ok, ' + counts.warn + ' warnings, ' +
+      counts.crit + ' critical');
+  }
+
+  // ── Modal ───────────────────────────────────────────────
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function iconFor(status){ return status === 'ok' ? '\u2713' : status === 'warn' ? '!' : '\u00d7'; }
+
+  function showModal(){
+    if(!LAST_RESULTS){ alert('Health check not yet complete.'); return; }
+    var bg = document.createElement('div');
+    bg.className = 'cr-ahc-bg';
+
+    var byGroup = {};
+    LAST_RESULTS.requirements.forEach(function(r){
+      (byGroup[r.group] = byGroup[r.group] || []).push(r);
+    });
+
+    var reqHtml = Object.keys(byGroup).map(function(g){
+      var rows = byGroup[g].map(function(r){
+        return '<div class="cr-ahc-row ' + r.status + '">' +
+                 '<span class="ico ' + r.status + '">' + iconFor(r.status) + '</span>' +
+                 '<div class="body">' +
+                   '<div class="name"><b>' + esc(r.key) + '</b> \u00b7 ' + esc(r.purpose) + '</div>' +
+                   '<div class="desc">' + esc(r.message) + '</div>' +
+                   (r.fix ? '<div class="fix">' + esc(r.fix) + '</div>' : '') +
+                 '</div>' +
+               '</div>';
+      }).join('');
+      return '<div class="cr-ahc-section"><h4>' + esc(g) + '</h4>' + rows + '</div>';
+    }).join('');
+
+    var envHtml = LAST_RESULTS.env.map(function(r){
+      return '<div class="cr-ahc-row ' + r.status + '">' +
+               '<span class="ico ' + r.status + '">' + iconFor(r.status) + '</span>' +
+               '<div class="body">' +
+                 '<div class="name"><b>' + esc(r.key) + '</b> \u00b7 ' + esc(r.purpose) + '</div>' +
+                 '<div class="desc">' + esc(r.message) + '</div>' +
+                 (r.fix ? '<div class="fix">' + esc(r.fix) + '</div>' : '') +
+               '</div>' +
+             '</div>';
+    }).join('');
+
+    var counts = { ok:0, warn:0, crit:0 };
+    LAST_RESULTS.requirements.concat(LAST_RESULTS.env).forEach(function(r){
+      counts[r.status]++;
+    });
+    var total = counts.ok + counts.warn + counts.crit;
+
+    bg.innerHTML =
+      '<div class="cr-ahc-box">' +
+        '<div class="cr-ahc-head">' +
+          '<h3>System Health</h3>' +
+          '<button class="close" data-act="close">\u00d7</button>' +
+        '</div>' +
+        '<div class="cr-ahc-body">' +
+          reqHtml +
+          '<div class="cr-ahc-section"><h4>Environment (inferred)</h4>' +
+            envHtml +
+          '</div>' +
+        '</div>' +
+        '<div class="cr-ahc-summary">' +
+          '<b>' + counts.ok + '</b> healthy \u00b7 ' +
+          '<b>' + counts.warn + '</b> warning' + (counts.warn === 1 ? '' : 's') + ' \u00b7 ' +
+          '<b>' + counts.crit + '</b> critical \u00b7 ' +
+          total + ' checked' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(bg);
+    var close = function(){ if(bg.parentNode) bg.parentNode.removeChild(bg); };
+    bg.onclick = function(e){ if(e.target === bg) close(); };
+    bg.querySelector('[data-act="close"]').onclick = close;
+    document.addEventListener('keydown', function esc(e){
+      if(e.key === 'Escape'){ close(); document.removeEventListener('keydown', esc); }
+    });
+  }
+
+  // ── Boot ────────────────────────────────────────────────
+  async function boot(){
+    if(!isAdmin()) return;
+    // Wait a few seconds so auth + cache + supa client all settle
+    setTimeout(async function(){
+      try{
+        await runAll();
+        updateBadge();
+        var sev = severityOf(LAST_RESULTS);
+        if(sev !== 'ok'){
+          console.group('%c[Cardinal Admin Health]',
+                        'font-weight:800; color:#d4a017;');
+          console.warn('Overall: ' + sev.toUpperCase());
+          LAST_RESULTS.requirements.concat(LAST_RESULTS.env).forEach(function(r){
+            if(r.status === 'ok') return;
+            console.warn('  ' + r.key + ' \u2014 ' + r.message);
+            if(r.fix) console.log('    Fix: ' + r.fix);
+          });
+          console.groupEnd();
+        }
+      }catch(e){ console.warn('[Cardinal Admin Health] boot failed:', e); }
+    }, 2000);
+  }
+
+  function start(){
+    boot();
+    // Keep the badge in the header even if the user navigates around
+    var ticking = false;
+    new MutationObserver(function(){
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){
+        ticking = false;
+        try{ if(LAST_RESULTS) updateBadge(); }catch(e){}
+      });
+    }).observe(document.body, { childList:true, subtree:true,
+                                attributes:true, attributeFilter:['style'] });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalAdminHealth = {
+    check   : runAll,
+    show    : showModal,
+    results : function(){ return LAST_RESULTS; },
+    isAdmin : isAdmin,
+  };
 })();
 </script>
 
