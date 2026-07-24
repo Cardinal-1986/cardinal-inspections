@@ -1,15 +1,20 @@
-// api/coach.js  [v8 · 2026-07-24]
+// api/coach.js  [v9 · 2026-07-24]
 // ═════════════════════════════════════════════════════════════════════
-// Objection Coach — grade a rep's answer against the ideal response
-// using Gemini. Returns { score, ideal, feedback: { verdict, strengths,
-// gaps, fix } } to match what the client (CardinalCoach) expects.
+// Objection Coach — grade a rep's answer against the ideal response.
+// Returns { score, ideal, feedback: { verdict, strengths, gaps, fix },
+// _graded_by } to match what the client (CardinalCoach) expects.
 //
-// v8: Uses gemini-3.5-flash (current GA as of May 2026 — top Flash model).
-//     Prior model versions I picked were from stale docs. The 2.x family
-//     is deprecated. Google I/O 2026 shipped the 3.5 Flash generation.
-//     Consider migrating to `gemini-flash-latest` if you want auto-updates.
+// AI backend ladder (mirrors Cardinal's analyze.js / caption.js pattern):
+//   1. Gemini 3.5 Flash — primary. Retries 503 twice with backoff.
+//   2. OpenAI gpt-4o-mini — automatic fallback if Gemini errors.
+//
+// So the coach keeps working through Gemini load spikes, model
+// deprecations, or key issues, as long as either provider is healthy.
+//
+// v9: Added OpenAI backup, kept Gemini retry, added _graded_by tag.
+// v8: Model → gemini-3.5-flash (2.x sunset).
 // v5: Uses x-goog-api-key HEADER (required for new AQ.-format keys).
-// v4: Recognized `objection` column, tolerated missing ideal_response.
+// v4: Recognizes `objection` column, tolerates missing ideal_response.
 // gaps, fix } } to match what the client (CardinalCoach) expects.
 //
 // REQUIRES these Vercel env vars:
@@ -174,16 +179,17 @@ export default async function handler(req, res) {
     '  }\n' +
     '}';
 
-  // 4. Call Gemini
-  //
-  // IMPORTANT: Cardinal's Gemini key is the new AQ.-format key which
-  // MUST be sent as the x-goog-api-key HEADER, not the ?key= URL param.
-  // Sending an AQ. key via ?key= produces a 400 or 403 with unhelpful
-  // messages. Old-format AIza keys accept either style; new ones require
-  // the header.
-  let parsed;
-  try {
-    const gemResp = await fetch(GEMINI_URL, {
+  // ─────────────────────────────────────────────────────────────
+  // 4. Grade — try Gemini first, fall back to OpenAI on failure.
+  // ─────────────────────────────────────────────────────────────
+
+  const OPENAI_KEY = (process.env.OPENAI_API_KEY || '').trim();
+
+  // Try Gemini 3.5 Flash. Retries transient 503 (Google's "high demand"
+  // response) twice with backoff before giving up. Returns parsed JSON
+  // on success, or throws with the last error text.
+  async function tryGemini() {
+    const call = () => fetch(GEMINI_URL, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -197,15 +203,62 @@ export default async function handler(req, res) {
         },
       }),
     });
-    if (!gemResp.ok) {
-      const errText = await gemResp.text().catch(() => '');
-      return res.status(502).json({ error: '[v8] Gemini error: ' + errText.slice(0, 400) });
-    }
-    const gem = await gemResp.json();
+    let r = await call();
+    if (r.status === 503) { await new Promise(x => setTimeout(x, 1500)); r = await call(); }
+    if (r.status === 503) { await new Promise(x => setTimeout(x, 3000)); r = await call(); }
+    if (!r.ok) throw new Error(`Gemini ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    const gem = await r.json();
     const text = gem?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    parsed = JSON.parse(text);
+    return JSON.parse(text);
+  }
+
+  // OpenAI fallback. Uses gpt-4o-mini for cheap, fast JSON grading —
+  // matches the pattern used by analyze.js and caption.js. Response
+  // format is forced to JSON so we don't have to strip fences.
+  async function tryOpenAI() {
+    if (!OPENAI_KEY) throw new Error('OpenAI backup not configured');
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${OPENAI_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        temperature: 0.4,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: 'You are a strict but fair sales coach. Respond only with valid JSON.' },
+          { role: 'user', content: prompt },
+        ],
+      }),
+    });
+    if (!r.ok) throw new Error(`OpenAI ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    const oai = await r.json();
+    const text = oai?.choices?.[0]?.message?.content || '';
+    return JSON.parse(text);
+  }
+
+  let parsed = null;
+  let usedBackend = 'gemini';
+  let geminiError = null;
+  try {
+    parsed = await tryGemini();
   } catch (e) {
-    return res.status(502).json({ error: '[v8] Grading failed: ' + e.message });
+    geminiError = e.message;
+  }
+  if (!parsed) {
+    try {
+      parsed = await tryOpenAI();
+      usedBackend = 'openai';
+    } catch (openaiError) {
+      return res.status(502).json({
+        error:
+          `[v9] Both AI providers failed. ` +
+          `Gemini: ${geminiError || 'skipped'}. ` +
+          `OpenAI: ${openaiError.message}.`,
+      });
+    }
   }
 
   const score = Math.max(0, Math.min(100, parseInt(parsed.score, 10) || 0));
@@ -237,5 +290,6 @@ export default async function handler(req, res) {
     score,
     ideal: cardIdeal,
     feedback,
+    _graded_by: usedBackend,   // 'gemini' | 'openai' — informational
   });
 }
