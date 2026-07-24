@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 177 &#8212; Two-row header (brand + Menu + New on row 1, utility buttons on row 2), + button back to icon-only, cpartners gated on auth</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 178 &#8212; Header rewrite v2: CSS grid on real .headactions, brand title fits, + button icon-only, utility strip on row 2</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32853,293 +32853,272 @@ body.claim-insurance #brandLogo{
      ══════════════════════════════════════════════════════════ -->
 <!--
 ════════════════════════════════════════════════════════════════════
- CARDINAL — TWO-ROW HEADER
+ CARDINAL — TWO-ROW HEADER  (v2 rewrite)
  v2026-07-23
 ────────────────────────────────────────────────────────────────────
- The single-row header hit the "too many controls competing for
- space" wall. Even after v166 removed the Landing chip, Dashboard
- text, and duplicate search, we still had: logo, brand title,
- portal chip, admin health badge, home icon, search icon, Menu,
- and + New — eight elements trying to share one row on a phone.
- Result: brand title truncated to "CARDINAL.R", + button wrapped
- to "+ New +" stacked across three lines.
+ The v1 (build 177) failed because I guessed the header structure.
+ Actual structure (base app line 2521+):
 
- This module rebuilds the header as two clean rows:
+   <header class="site">
+     <div class="wrap masthead">
+       <div class="headactions">              ← real container
+         <span class="whoami">
+         <img id="brandLogo">
+         <span id="newWrap">                   ← wraps + button
+           <button id="addProjectBtn">＋ New
+           <div id="newMenu">                  ← dropdown
+         <div id="brandTitle"><h1>...
+         <div id="brandCtx">
+         <span id="navWrap">                   ← wraps Menu button
+           <select id="jobMenuSel">
+           <button id="navBtn">Menu
+           <div id="navMenu">                  ← burger menu
+         <input id="headSearch">
 
-   Row 1 (identity + primary): logo + title + Menu + + New
-   Row 2 (utility): portal chip + home + search + health badge
+ Utility buttons (portal chip, home, search, health badge) all live
+ inside #navWrap once their modules inject them.
 
- Each row has room to breathe. Brand title fits fully. Buttons
- don't compete. Row 2 tint is subtly darker so it reads as a
- secondary strip.
+ v2 uses CSS grid on .headactions to lay it out as:
 
- Works by moving specific buttons from #navWrap into a new
- #cr-hdr-row2 container, then keeping them there via a
- MutationObserver — because other modules (home button, portal
- sync, admin health) create their buttons directly in #navWrap
- and would otherwise pull them back onto row 1.
+   ┌──────┬────────────────────────┬────────────┐
+   │ logo │       brand title      │  + button  │  row 1
+   ├──────┴────────────────────────┴────────────┤
+   │           navWrap (all utility)             │  row 2
+   └────────────────────────────────────────────┘
 
- Also fixes the "+ New +" stacking bug by resetting font-size:0
- on #addProjectBtn (returning it to icon-only behavior from the
- base app) and forcing white-space:nowrap defensively.
+ Only applies when the user is authenticated (checked via
+ #navWrap's visibility). Also aggressively normalizes the +
+ button so font-size:0 wins over every accumulated override.
 
  INSTALL: paste after e2e_smoke_walk.html. No SQL required.
 ════════════════════════════════════════════════════════════════════
 -->
 
-<style id="cr-hdr2row-styles">
-  /* ─── Reshape the header into a flex-column ─────────────── */
+<style id="cr-hdr2-v2-styles">
   header.site{
     padding:0 !important;
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:stretch !important;
-    gap:0 !important;
+    display:block !important;
   }
 
-  /* ─── Row 1 — brand + primary CTAs ─────────────────────── */
-  #cr-hdr-row1{
+  header.site .headactions .whoami,
+  header.site .headactions #headSearch{
+    display:none !important;
+  }
+
+  header.site .headactions{
     display:flex;
     align-items:center;
     gap:8px;
     padding:6px 12px;
-    min-height:44px;
     box-sizing:border-box;
   }
-  #cr-hdr-row1 .brand,
-  #cr-hdr-row1 .brand-mark,
-  #cr-hdr-row1 .brand-wrap,
-  #cr-hdr-row1 #brandTitle{
-    flex:1 1 auto; min-width:0;
-    display:flex; align-items:center; gap:8px;
+  header.site .headactions #brandLogo{
+    max-height:32px; width:auto; flex:0 0 auto;
   }
-  #cr-hdr-row1 #brandTitle{
-    overflow:hidden;
+  header.site .headactions #brandTitle,
+  header.site .headactions #brandCtx{
+    flex:1 1 auto; min-width:0; overflow:hidden;
   }
-  #cr-hdr-row1 #brandTitle h1{
+  header.site .headactions #brandTitle h1,
+  header.site .headactions #brandCtx h1{
+    margin:0; font-size:15px;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    min-width:0; margin:0;
+    min-width:0;
+  }
+
+  body.cr-auth-active header.site .headactions{
+    display:grid !important;
+    grid-template-columns:auto minmax(0, 1fr) auto !important;
+    grid-template-rows:auto auto !important;
+    grid-template-areas:
+      "logo title primary"
+      "utility utility utility" !important;
+    row-gap:0 !important;
+    column-gap:10px !important;
+    padding:6px 12px 0 !important;
+    align-items:center !important;
+  }
+  body.cr-auth-active header.site .headactions #brandLogo{
+    grid-area:logo !important;
+    max-height:32px !important;
+  }
+  body.cr-auth-active header.site .headactions #brandTitle,
+  body.cr-auth-active header.site .headactions #brandCtx{
+    grid-area:title !important;
+    min-width:0 !important; overflow:hidden !important;
+  }
+  body.cr-auth-active header.site .headactions #brandTitle h1,
+  body.cr-auth-active header.site .headactions #brandCtx h1{
     font-size:15px !important;
+    overflow:hidden !important; text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    min-width:0 !important; margin:0 !important;
   }
-  #cr-hdr-row1 #brandLogo{
-    flex:0 0 auto;
-    max-height:32px; width:auto;
+  body.cr-auth-active header.site .headactions #newWrap{
+    grid-area:primary !important;
+    position:relative !important;
   }
-  #cr-hdr-row1 .cr-primary-slot{
-    flex:0 0 auto;
-    display:flex; align-items:center; gap:6px;
+  body.cr-auth-active header.site .headactions #navWrap{
+    grid-area:utility !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:6px !important;
+    padding:6px 8px !important;
+    margin:6px -12px 0 !important;
+    background:rgba(0,0,0,.16) !important;
+    border-top:1px solid rgba(255,255,255,.06) !important;
+    flex-wrap:wrap !important;
+    min-height:38px !important;
+  }
+  body.cr-auth-active header.site .headactions #navWrap > *{
+    flex:0 0 auto !important;
+  }
+  body.cr-auth-active header.site .headactions #navWrap #jobMenuSel{
+    max-width:120px !important;
+    font-size:11px !important;
   }
 
-  /* ─── Row 2 — utility strip ─────────────────────────────── */
-  #cr-hdr-row2{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    padding:5px 10px 7px;
-    background:rgba(0,0,0,.18);
-    border-top:1px solid rgba(255,255,255,.06);
-    min-height:38px;
-    box-sizing:border-box;
-    flex-wrap:wrap;
-  }
-  #cr-hdr-row2 > *{ flex:0 0 auto; }
-
-  /* ─── Button sizing normalization ───────────────────────── */
-  /* + New: undo the font-size override from estimates_new_fix so
-     the button returns to icon-only mode. base app CSS uses
-     font-size:0 + ::after "+" for the visible glyph. */
-  header.site #addProjectBtn{
+  /* + button — icon-only, no text stacking.
+     Very high specificity so no prior module can leak "+ New" back
+     into the visible text. */
+  html body header.site .headactions #newWrap #addProjectBtn{
     font-size:0 !important;
-    padding:6px 12px !important;
+    padding:6px 14px !important;
     line-height:1 !important;
     min-width:auto !important;
     white-space:nowrap !important;
+    letter-spacing:0 !important;
   }
-  header.site #addProjectBtn::after{
-    font-size:18px !important;
+  html body header.site .headactions #newWrap #addProjectBtn::after{
+    content:'\FF0B' !important;
+    font-size:19px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    display:inline-block !important;
   }
-  /* If any base rule shows the "New" text again, hide it explicitly */
-  header.site #addProjectBtn > *{ display:none !important; }
-
-  /* Menu button — consistent size */
-  header.site #navBtn{
-    padding:6px 10px !important;
-    font-size:13px !important;
-    white-space:nowrap;
-  }
-
-  /* Utility buttons on row 2 — small + uniform */
-  #cr-hdr-row2 button,
-  #cr-hdr-row2 .cr-portal-chip{
-    padding:5px 9px !important;
-    font-size:10px !important;
-    letter-spacing:.12em !important;
-    white-space:nowrap;
-  }
-  #cr-hdr-row2 .cr-portal-chip{
-    padding:5px 11px !important;
-  }
-
-  /* Hide the original navWrap since we're distributing its children
-     across the two rows. */
-  header.site > #navWrap{
+  html body header.site .headactions #newWrap #addProjectBtn > *{
     display:none !important;
   }
 
-  /* Restore visibility when the buttons live inside row1/row2 */
-  #cr-hdr-row1 button,
-  #cr-hdr-row2 button,
-  #cr-hdr-row1 .cr-portal-chip,
-  #cr-hdr-row2 .cr-portal-chip{
-    display:inline-flex !important;
+  body.cr-auth-active header.site .headactions #navWrap #navBtn{
+    padding:6px 12px !important;
+    font-size:12px !important;
+    white-space:nowrap !important;
   }
 
-  /* Never leak the two-row layout under full-screen overlays */
-  body.viewing-community-hub #cr-hdr-row2,
-  body.viewing-cardinal-truth #cr-hdr-row2{
-    /* Overlays cover the site header anyway; no visual concern.
-       Left as pass-through so the observer keeps working. */
+  body.cr-auth-active header.site .headactions #navWrap #cr-home-btn,
+  body.cr-auth-active header.site .headactions #navWrap #cr-search-btn,
+  body.cr-auth-active header.site .headactions #navWrap #cr-ahc-badge{
+    padding:5px 9px !important;
+  }
+  body.cr-auth-active header.site .headactions #navWrap .cr-portal-chip{
+    padding:4px 11px !important;
+    font-size:10px !important;
+    letter-spacing:.14em !important;
   }
 
-  /* Landing / logged-out state — hide both rows' chrome cleanly */
-  body:not(.logged-in) #cr-hdr-row2{ display:none; }
-
-  /* Slightly smaller on very narrow screens */
   @media (max-width:380px){
-    #cr-hdr-row1{ padding:5px 10px; min-height:40px; }
-    #cr-hdr-row1 #brandTitle h1{ font-size:13.5px !important; }
-    #cr-hdr-row1 #brandLogo{ max-height:28px; }
-    #cr-hdr-row2{ padding:4px 8px 6px; gap:5px; }
-    #cr-hdr-row2 button,
-    #cr-hdr-row2 .cr-portal-chip{
-      padding:4px 7px !important;
-      font-size:9.5px !important;
+    body.cr-auth-active header.site .headactions{
+      column-gap:8px !important;
+      padding:5px 10px 0 !important;
     }
+    body.cr-auth-active header.site .headactions #brandTitle h1,
+    body.cr-auth-active header.site .headactions #brandCtx h1{
+      font-size:13.5px !important;
+    }
+    body.cr-auth-active header.site .headactions #brandLogo{
+      max-height:28px !important;
+    }
+    body.cr-auth-active header.site .headactions #navWrap{
+      padding:5px 6px !important;
+      gap:5px !important;
+    }
+  }
+
+  /* Clean up v177 orphan divs if the module ran previously */
+  #cr-hdr-row1:empty,
+  #cr-hdr-row2:empty{
+    display:none !important;
   }
 </style>
 
-<script id="cr-hdr2row-script">
+<script id="cr-hdr2-v2-script">
 (function () {
   'use strict';
 
-  // Buttons that live on row 1 (primary): brand identity is already
-  // in header.site, we just add the primary-action slot.
-  var ROW1_PRIMARY_IDS = ['navBtn', 'addProjectBtn'];
-
-  // Buttons that get moved to row 2 (utility).
-  var ROW2_IDS = ['crPortalChip', 'cr-home-btn', 'cr-search-btn', 'cr-ahc-badge'];
-
-  function findOrCreateRow1(){
-    var header = document.querySelector('header.site');
-    if(!header) return null;
-    var row1 = document.getElementById('cr-hdr-row1');
-    if(row1) return row1;
-    row1 = document.createElement('div');
-    row1.id = 'cr-hdr-row1';
-    // Insert as first child
-    header.insertBefore(row1, header.firstChild);
-    return row1;
+  function isAuthed(){
+    var nav = document.getElementById('navWrap');
+    if(!nav) return false;
+    var d = nav.style.display;
+    if(d === 'none') return false;
+    if(!d){
+      var cs = getComputedStyle(nav);
+      return cs.display !== 'none';
+    }
+    return true;
   }
 
-  function findOrCreateRow2(){
-    var header = document.querySelector('header.site');
-    if(!header) return null;
-    var row2 = document.getElementById('cr-hdr-row2');
-    if(row2) return row2;
-    row2 = document.createElement('div');
-    row2.id = 'cr-hdr-row2';
-    header.appendChild(row2);
-    return row2;
+  function updateAuthClass(){
+    var authed = isAuthed();
+    document.body.classList.toggle('cr-auth-active', authed);
   }
 
-  function findOrCreatePrimarySlot(row1){
-    var slot = row1.querySelector('.cr-primary-slot');
-    if(slot) return slot;
-    slot = document.createElement('div');
-    slot.className = 'cr-primary-slot';
-    row1.appendChild(slot);
-    return slot;
-  }
+  // Clean up v177 orphan row1/row2 divs and put their contents back
+  // where the new grid can find them.
+  function unwrapV1(){
+    var v1Row1 = document.getElementById('cr-hdr-row1');
+    var v1Row2 = document.getElementById('cr-hdr-row2');
+    if(!v1Row1 && !v1Row2) return;
 
-  function moveBrandToRow1(row1){
-    var header = document.querySelector('header.site');
-    if(!header) return;
-    // Base app puts .brand or #brandTitle or #brandLogo directly in header.
-    // Move whatever's there into row1 (idempotent).
-    var candidates = ['.brand', '.brand-wrap', '.brand-mark',
-                      '#brandLogo', '#brandTitle'];
-    candidates.forEach(function(sel){
-      var el = header.querySelector(':scope > ' + sel);
-      if(el && el.parentNode !== row1){
-        row1.insertBefore(el, row1.querySelector('.cr-primary-slot') || null);
-      }
+    var headactions = document.querySelector('header.site .headactions');
+    if(!headactions) return;
+
+    [v1Row1, v1Row2].forEach(function(row){
+      if(!row) return;
+      var moveIds = ['brandLogo', 'brandTitle', 'brandCtx', 'newWrap',
+                     'navWrap', 'addProjectBtn', 'navBtn',
+                     'crPortalChip', 'cr-home-btn', 'cr-search-btn',
+                     'cr-ahc-badge'];
+      moveIds.forEach(function(id){
+        var el = row.querySelector('#' + (CSS && CSS.escape ? CSS.escape(id) : id));
+        if(!el) return;
+        if(id === 'addProjectBtn'){
+          var nw = document.getElementById('newWrap');
+          if(nw && el.parentNode !== nw) nw.insertBefore(el, nw.firstChild);
+        }else if(id === 'navBtn' || id === 'crPortalChip' ||
+                 id === 'cr-home-btn' || id === 'cr-search-btn' ||
+                 id === 'cr-ahc-badge'){
+          var nvw = document.getElementById('navWrap');
+          if(nvw && el.parentNode !== nvw) nvw.appendChild(el);
+        }else{
+          if(el.parentNode !== headactions) headactions.appendChild(el);
+        }
+      });
+      if(row.parentNode) row.parentNode.removeChild(row);
     });
   }
 
-  function distributeButtons(row1Slot, row2){
-    // Primary buttons → row 1 slot
-    ROW1_PRIMARY_IDS.forEach(function(id){
-      var el = document.getElementById(id);
-      if(el && el.parentNode !== row1Slot) row1Slot.appendChild(el);
-    });
-    // Utility buttons → row 2
-    ROW2_IDS.forEach(function(id){
-      var el = document.getElementById(id);
-      if(el && el.parentNode !== row2) row2.appendChild(el);
-    });
-  }
-
-  function restructure(){
-    var header = document.querySelector('header.site');
-    if(!header) return;
-    var row1 = findOrCreateRow1();
-    var row2 = findOrCreateRow2();
-    if(!row1 || !row2) return;
-    moveBrandToRow1(row1);
-    var slot = findOrCreatePrimarySlot(row1);
-    distributeButtons(slot, row2);
-  }
-
-  // Also mark <body> as logged-in when navWrap is displayed —
-  // gives the CSS a hook for the pre-auth landing state.
-  function updateLoggedInFlag(){
-    var wrap = document.getElementById('navWrap');
-    var visible = wrap && wrap.style.display !== 'none';
-    document.body.classList.toggle('logged-in', !!visible);
-  }
-
-  var ticking = false;
+  var scheduled = false;
   function schedule(){
-    if(ticking) return;
-    ticking = true;
+    if(scheduled) return;
+    scheduled = true;
     requestAnimationFrame(function(){
-      ticking = false;
+      scheduled = false;
       try{
-        restructure();
-        updateLoggedInFlag();
+        unwrapV1();
+        updateAuthClass();
       }catch(e){}
     });
   }
 
   function start(){
     schedule();
-    // Watch the header specifically — other modules add children into
-    // navWrap and we need to relocate them. Observing the whole body
-    // would work but is heavier; header-only is the minimum needed.
     var header = document.querySelector('header.site');
     if(header){
       new MutationObserver(schedule).observe(header, {
         childList:true, subtree:true,
-        attributes:true, attributeFilter:['style']
-      });
-    }
-    // Also observe #navWrap for late children (portal chip, home button,
-    // health badge — those get added after their modules load)
-    var wrap = document.getElementById('navWrap');
-    if(wrap){
-      new MutationObserver(schedule).observe(wrap, {
-        childList:true
+        attributes:true, attributeFilter:['style','class']
       });
     }
   }
