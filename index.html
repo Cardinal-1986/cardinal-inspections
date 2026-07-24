@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 178 &#8212; Header rewrite v2: CSS grid on real .headactions, brand title fits, + button icon-only, utility strip on row 2</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 179 &#8212; Community header darker green for legibility; site footer strip hidden on Hub view</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25690,37 +25690,54 @@ body.claim-insurance #brandLogo{
 -->
 
 <style id="cr-comtheme-styles">
-  /* ═══ PALE GREEN HEADER — ONLY ON COMMUNITY HUB ═══════════
+  /* ═══ DARK GREEN HEADER — ONLY ON COMMUNITY HUB ═══════════
      These rules apply only when the Community Hub is actually
      visible. Retail Home viewed while in Community portal keeps
      the default retail styling, matching the "insurance clients
      only live in insurance CRM" principle applied to Home too. */
-  body.viewing-community-hub header.site{
-    background:#e8f2e5;
-    border-bottom-color:#4a8c5a;
-    box-shadow:0 2px 14px rgba(74,140,90,.22);
+  body.viewing-community-hub header.site,
+  body.viewing-community-hub header.site .headactions{
+    background:#2f5f3b !important;
+    border-bottom-color:#7fc98f !important;
+    box-shadow:0 2px 14px rgba(47,95,59,.35);
+  }
+  /* Utility strip (row 2 from header_two_row) — slightly darker
+     so it reads as a secondary band on the dark green ground. */
+  body.viewing-community-hub.cr-auth-active header.site .headactions #navWrap{
+    background:rgba(0,0,0,.22) !important;
+    border-top-color:rgba(255,255,255,.10) !important;
   }
 
-  /* Dark text everywhere on the header (base rules use color:#fff !important) */
-  body.viewing-community-hub header.site .brand h1,
-  body.viewing-community-hub header.site .brand .co{
-    color:#2f5f3b !important;
+  /* Hide the site footer strip ("Cardinal Roofing & Renovations —
+     Client Resources: profiles, inspections & estimates.") that
+     otherwise renders BETWEEN the header and the Hub banner because
+     the Hub is inline content that comes after <footer.site> in the
+     DOM. The footer belongs at the actual bottom of a normal page,
+     but on the Hub view it just clutters the top. */
+  body.viewing-community-hub footer.site{
+    display:none !important;
   }
-  body.viewing-community-hub header.site .brand h1 span{
-    background:linear-gradient(160deg,#b8860b,#d4a017 45%,#a67c0a);
+
+  /* Light text on the dark green ground */
+  body.viewing-community-hub header.site .brand h1,
+  body.viewing-community-hub header.site .brand .co,
+  body.viewing-community-hub header.site #brandTitle h1,
+  body.viewing-community-hub header.site #brandCtx h1{
+    color:#ffffff !important;
+  }
+  body.viewing-community-hub header.site .brand h1 span,
+  body.viewing-community-hub header.site #brandTitle h1 span{
+    background:linear-gradient(160deg,#f5d061,#d4a017 45%,#f5d061);
     -webkit-background-clip:text; background-clip:text;
-    -webkit-text-fill-color:transparent; color:#b8860b !important;
+    -webkit-text-fill-color:transparent; color:#f5d061 !important;
   }
   body.viewing-community-hub header.site .brand .co small,
   body.viewing-community-hub header.site .tag,
   body.viewing-community-hub header.site .whoami{
-    color:#4a6b4f !important;
+    color:rgba(255,255,255,.75) !important;
   }
 
-  /* "COMMUNITY PARTNERSHIPS" is longer than "CARDINAL RESOURCE" and
-     was pushing the portal chip + Menu button off the right edge in
-     narrow viewports. Constrain the title to shrink first — everything
-     else in the masthead should stay reachable. */
+  /* Title still shrinks first when the viewport is tight. */
   body.viewing-community-hub header.site .titlecard{
     min-width:0; flex:1 1 auto; overflow:hidden;
   }
@@ -25728,8 +25745,6 @@ body.claim-insurance #brandLogo{
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     min-width:0;
   }
-  /* Keep the interactive elements above any decorative overlays and
-     make sure they can actually receive taps on mobile. */
   body.viewing-community-hub header.site .btn,
   body.viewing-community-hub header.site .cr-portal-chip,
   body.viewing-community-hub header.site #navBtn,
@@ -25738,22 +25753,36 @@ body.claim-insurance #brandLogo{
     flex-shrink:0;
   }
 
-  /* Solid buttons: green with white text */
+  /* Solid buttons: lighter green so they pop off the dark ground */
   body.viewing-community-hub header.site .btn{
     background:#4a8c5a;
     color:#ffffff !important;
     border-color:transparent;
   }
-  body.viewing-community-hub header.site .btn:hover{ background:#3d7a4c; }
+  body.viewing-community-hub header.site .btn:hover{ background:#5ea56d; }
 
-  /* Ghost buttons (Menu, etc): dark text on pale green — the whole point */
+  /* Ghost buttons (Menu + utility icons): light text with soft border */
   body.viewing-community-hub header.site .btn.ghost{
     background:transparent;
-    color:#2f5f3b !important;
-    border:1px solid rgba(47,95,59,.45);
+    color:#ffffff !important;
+    border:1px solid rgba(255,255,255,.5);
   }
   body.viewing-community-hub header.site .btn.ghost:hover{
-    background:rgba(47,95,59,.09);
+    background:rgba(255,255,255,.12);
+  }
+  /* Home / search / health icons — light gold outline for visibility */
+  body.viewing-community-hub header.site #cr-home-btn,
+  body.viewing-community-hub header.site #cr-search-btn,
+  body.viewing-community-hub header.site #cr-ahc-badge{
+    color:#f5d061 !important;
+    border-color:rgba(245,208,97,.55) !important;
+    background:transparent !important;
+  }
+  body.viewing-community-hub header.site #cr-home-btn:hover,
+  body.viewing-community-hub header.site #cr-search-btn:hover,
+  body.viewing-community-hub header.site #cr-ahc-badge:hover{
+    background:rgba(245,208,97,.15) !important;
+    border-color:#f5d061 !important;
   }
 
   /* Portal chip and burger menu tint stay on portal-community — the
