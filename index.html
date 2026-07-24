@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 182 &#8212; Community Hub + opens a streamlined New Bid form (partner, property, work type, amount, due date, scope) instead of the full New Lead sheet</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 183 &#8212; New Bid form adds Homeowner / Site Contact section (name, phone, email); homeowner name becomes the primary client display name when provided</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25534,6 +25534,24 @@ body.claim-insurance #brandLogo{
             'placeholder="Property address or job location" />' +
         '</div>' +
 
+        '<div class="rule" style="margin-top:14px;"></div>' +
+        '<label style="margin-top:2px;">Homeowner / Site Contact</label>' +
+        '<input type="text" data-field="homeowner_name" ' +
+          'placeholder="Full name" autocomplete="name" />' +
+        '<div class="cr-nbid-row" style="margin-top:8px;">' +
+          '<div>' +
+            '<label style="margin-top:0;">Phone</label>' +
+            '<input type="tel" data-field="homeowner_phone" ' +
+              'placeholder="(555) 555-5555" autocomplete="tel" inputmode="tel" />' +
+          '</div>' +
+          '<div>' +
+            '<label style="margin-top:0;">Email</label>' +
+            '<input type="email" data-field="homeowner_email" ' +
+              'placeholder="name@example.com" autocomplete="email" inputmode="email" />' +
+          '</div>' +
+        '</div>' +
+        '<div class="rule" style="margin-top:14px;"></div>' +
+
         '<div class="cr-nbid-row">' +
           '<div>' +
             '<label>Work Type</label>' +
@@ -25642,6 +25660,9 @@ body.claim-insurance #brandLogo{
       var propSel   = bg.querySelector('[data-field="property_id"]');
       var propId    = propSel ? propSel.value : '';
       var address   = addrInput ? addrInput.value.trim() : '';
+      var hoName    = bg.querySelector('[data-field="homeowner_name"]').value.trim();
+      var hoPhone   = bg.querySelector('[data-field="homeowner_phone"]').value.trim();
+      var hoEmail   = bg.querySelector('[data-field="homeowner_email"]').value.trim();
       var workType  = bg.querySelector('[data-field="work_type"]').value;
       var bidAmount = money(bg.querySelector('[data-field="bid_amount"]').value);
       var bidDueAt  = bg.querySelector('[data-field="bid_due_at"]').value;
@@ -25653,27 +25674,35 @@ body.claim-insurance #brandLogo{
 
       try{
         var email = (window.currentUser && window.currentUser.email) || '';
-        var clientName = address
-          ? partner.name + ' \u2014 ' + address
-          : partner.name + ' bid';
+        // Client-directory display name — prefer the homeowner name when
+        // provided (that's what reps recognize on a bid). Otherwise fall
+        // back to partner + address, then partner alone.
+        var clientName = hoName
+          ? hoName + ' \u2014 ' + partner.name
+          : (address
+              ? partner.name + ' \u2014 ' + address
+              : partner.name + ' bid');
         var projectData = {
           client_name : clientName,
           address     : address,
           stage       : 'Lead',
           checklist   : {
             lead: {
-              claim_type   : 'community',
-              partner_id   : partner.id,
-              partner_name : partner.name,
-              property_id  : propId && propId !== '__other__' ? propId : null,
-              work_type    : workType,
-              bid_amount   : bidAmount,
-              bid_due_at   : bidDueAt || null,
-              scope        : scope,
-              notes        : notes,
-              assigned     : email ? [email] : [],
-              source       : 'community-bid',
-              created_at   : new Date().toISOString(),
+              claim_type      : 'community',
+              partner_id      : partner.id,
+              partner_name    : partner.name,
+              property_id     : propId && propId !== '__other__' ? propId : null,
+              homeowner_name  : hoName,
+              homeowner_phone : hoPhone,
+              homeowner_email : hoEmail,
+              work_type       : workType,
+              bid_amount      : bidAmount,
+              bid_due_at      : bidDueAt || null,
+              scope           : scope,
+              notes           : notes,
+              assigned        : email ? [email] : [],
+              source          : 'community-bid',
+              created_at      : new Date().toISOString(),
             },
           },
           created_by  : email || null,
