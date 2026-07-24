@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 189 &#8212; Added NACHI Roof Mastery sub-category under Mastering Roof Inspections with NACHI 1-3 Accessing A Roof (InterNACHI Parts 1, 3, 4)</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 190 &#8212; NACHI Roof Mastery: added Accessing Part 5 + new Asphalt Composition Shingles series (Parts 1-4)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35597,11 +35597,19 @@ body.claim-insurance #brandLogo{
       ]},
       { pid:'rlPageNachiMastery', title:'NACHI Roof Mastery (hub)', cards:[
         '1-3 Accessing A Roof',
+        'Asphalt Composition Shingles',
       ]},
       { pid:'rlPageNachiAccessing', title:'NACHI 1-3 Accessing A Roof', cards:[
         'Part 1 \u2014 Roof Safety, Risk, Pitch & Boots',
-        'Part 3 \u2014 Gaining Access, Choosing a Ladder & Ladder Safety Rules',
-        'Part 4 \u2014 Ladder Length, Material, Standing an Extension Ladder',
+        'Part 3 \u2014 Gaining Access, Choosing a Ladder & Safety Rules',
+        'Part 4 \u2014 Length, Material, Standing an Extension Ladder',
+        'Part 5 \u2014 Climbing, Maintenance & Step-Ladders',
+      ]},
+      { pid:'rlPageNachiAsphalt', title:'NACHI Asphalt Composition Shingles', cards:[
+        'Part 1 \u2014 Components, Mat & Fiberglass vs Organic',
+        'Part 2 \u2014 Organic Shingles & Distortion',
+        'Part 3 \u2014 Asphalt, Crude Oil, Filler & ASTM Standards',
+        'Part 4 \u2014 Back-Surfacing & Granules',
       ]},
       { pid:'rlPageSup', title:'Supplement Templates', cards:[
         'How to Use These',
@@ -35969,24 +35977,16 @@ body.claim-insurance #brandLogo{
 
 
 <!-- MODULE: nachi_roof_mastery.html · v2026-07-24
-     Adds a "NACHI Roof Mastery" sub-category under Mastering Roof
-     Inspections in the Resource Library. Under it, adds "NACHI 1-3
-     Accessing A Roof" containing InterNACHI Parts 1, 3, and 4 of
-     the "Accessing the Roof" series by Kenton Shepard and Nick
-     Gromicko, CMI.
+     Adds "NACHI Roof Mastery" sub-category under Mastering Roof
+     Inspections in the Resource Library. Currently contains:
+       · NACHI 1-3 Accessing A Roof (Parts 1, 3, 4, 5)
+       · NACHI Asphalt Composition Shingles (Parts 1-4)
+     Both are InterNACHI series by Kenton Shepard & Nick Gromicko, CMI.
 
-     Approach: on Resource Library ready, insert two new rl-page
-     divs into #resourceLibraryView so the base app's navigation
-     picks them up automatically. Also inserts a nav card into
-     rlPageInsp so users can find their way in from Mastering Roof
-     Inspections.
-
-     Long-form article content is content-in-code for now. When
-     Cardinal starts uploading many of these, we should build a
-     proper article-upload workflow (Supabase table + form) so
-     you're not editing HTML for each addition. -->
+     Content-in-code for now; when Cardinal starts uploading many of
+     these, we should build a proper article-upload workflow (Supabase
+     table + form + admin-only) so you're not editing HTML per addition. -->
 <style id="cr-nachi-styles">
-  /* Nav card that appears on Mastering Roof Inspections + hub pages */
   #resourceLibraryView .rl-navcard{
     display:block;
     background:linear-gradient(135deg,rgba(74,111,165,.12),rgba(74,111,165,.05));
@@ -36015,9 +36015,7 @@ body.claim-insurance #brandLogo{
     color:#e8ecf1;
   }
   #resourceLibraryView .rl-navcard p{
-    margin:0;
-    font-size:13px;
-    color:#a0b0c8;
+    margin:0; font-size:13px; color:#a0b0c8;
   }
   #resourceLibraryView .rl-navcard .rl-boxgo{
     margin-top:8px;
@@ -36025,42 +36023,31 @@ body.claim-insurance #brandLogo{
     letter-spacing:.16em; text-transform:uppercase;
     color:#7fa6d6;
   }
-
-  /* Article body — extra readability inside cards */
   #resourceLibraryView .rl-article h4{
     margin:14px 0 6px;
     font:700 15px Georgia,'Times New Roman',serif;
-    color:#cfe0f5;
-    letter-spacing:.02em;
+    color:#cfe0f5; letter-spacing:.02em;
   }
   #resourceLibraryView .rl-article h5{
     margin:10px 0 4px;
     font:700 13px 'Segoe UI',Arial,sans-serif;
-    color:#a8bcd4;
-    letter-spacing:.04em;
-    text-transform:uppercase;
+    color:#a8bcd4; letter-spacing:.04em; text-transform:uppercase;
   }
   #resourceLibraryView .rl-article p{
-    margin:0 0 10px;
-    font-size:13.5px; line-height:1.6;
-    color:#c9d3df;
+    margin:0 0 10px; font-size:13.5px; line-height:1.6; color:#c9d3df;
   }
-  #resourceLibraryView .rl-article ul{
-    margin:6px 0 12px 0;
-    padding-left:22px;
+  #resourceLibraryView .rl-article ul,
+  #resourceLibraryView .rl-article ol{
+    margin:6px 0 12px 0; padding-left:22px;
   }
   #resourceLibraryView .rl-article li{
-    margin:5px 0;
-    font-size:13.5px; line-height:1.55;
-    color:#c9d3df;
+    margin:5px 0; font-size:13.5px; line-height:1.55; color:#c9d3df;
   }
   #resourceLibraryView .rl-article li b{ color:#e8ecf1; }
   #resourceLibraryView .rl-article .rl-attribution{
     margin-top:16px; padding-top:10px;
     border-top:1px dashed rgba(127,166,214,.3);
-    font-size:11.5px;
-    color:#8a9bb0;
-    font-style:italic;
+    font-size:11.5px; color:#8a9bb0; font-style:italic;
   }
 </style>
 
@@ -36068,12 +36055,9 @@ body.claim-insurance #brandLogo{
 (function(){
   'use strict';
 
-  // ── Article content ────────────────────────────────────
-  // Kept concise but preserves the sub-headings, key rules, and
-  // the specific numeric/technical points that matter to a roof
-  // inspector on-site (pitches walked, load ratings, distances,
-  // clearances). If you want the full verbatim text later, I can
-  // expand — this is the operationally useful summary.
+  // ═════════════════════════════════════════════════════
+  // ACCESSING THE ROOF — Parts 1, 3, 4, 5
+  // ═════════════════════════════════════════════════════
   var PART_1 = ''
     + '<p><i>Accessing and walking the roof are the most dangerous parts of the inspection. This article develops the judgment and skills needed to safely mount and walk a roof, once you\'ve decided whether to walk it.</i></p>'
     + '<h4>Roof Safety</h4>'
@@ -36102,10 +36086,9 @@ body.claim-insurance #brandLogo{
   var PART_3 = ''
     + '<h4>Gaining Access to the Roof</h4>'
     + '<h5>Access by Window</h5>'
-    + '<p>Climbing out a window can be the safest method — no ladder — but be careful not to damage screens, walls, or window trim. You can sometimes access from a deck or balcony too, climbing over a rail onto an adjacent slope or setting a ladder there.</p>'
+    + '<p>Climbing out a window can be the safest method — no ladder — but be careful not to damage screens, walls, or window trim. You can sometimes access from a deck or balcony too.</p>'
     + '<h4>Ladders, Part 1</h4>'
     + '<p>The typical method is a ladder resting on the ground and leaning against the roof edge. Stabilizing your ladder matters — ladders become more unstable as you climb. Stepping from roof onto ladder is one of the most common serious fall hazards.</p>'
-    + '<p>Placement tips:</p>'
     + '<ul>'
     +   '<li>Set your ladder at an <b>inside corner or against a wall</b> for a margin of safety</li>'
     +   '<li>Use an <b>inconspicuous location</b> (side of home) since it\'s easy to scratch gutters</li>'
@@ -36120,7 +36103,7 @@ body.claim-insurance #brandLogo{
     +   '<li><b>Type II Commercial:</b> medium-duty, no more than 225 lb</li>'
     +   '<li><b>Type III Household:</b> light-duty, 200 lb max — <b>not appropriate for inspection work</b></li>'
     + '</ul>'
-    + '<p>Specialty ladders exist rated for up to 375 lb. Buy the best you can afford — low-quality ladders are cheaper but less sturdy, durable, and safe.</p>'
+    + '<p>Specialty ladders exist rated for up to 375 lb. Buy the best you can afford.</p>'
     + '<h4>Safety Rules for All Ladders</h4>'
     + '<ul>'
     +   '<li><b>Keep it clean.</b> Free of grease, oil, other slip hazards.</li>'
@@ -36132,42 +36115,154 @@ body.claim-insurance #brandLogo{
     +   '<li><b>Be healthy.</b> No ladders under influence of alcohol, drugs, medication, or when you feel unwell.</li>'
     +   '<li><b>If you must dismount unexpectedly</b> — feeling sick, dizzy, or panicky — don\'t rush down. Wait until you feel better, then climb down slowly and carefully.</li>'
     + '</ul>'
-    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Mastering Roof Inspections: Accessing the Roof, Part 3</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Accessing the Roof, Part 3</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
 
   var PART_4 = ''
-    + '<h4>Ladders, Part 2</h4>'
-    + '<h5>Ladder Length</h5>'
-    + '<p>Extension ladders are the standard choice for leaning against a roof. Typically available <b>16 ft to 40 ft in 4-ft increments</b>. Length is a personal choice.</p>'
-    + '<p>Extension ladders come in two overlapping parts — the length given is not the extended length. A 16-ft extension ladder has two 8-ft sections but reaches only <b>~13 ft when fully extended</b>.</p>'
+    + '<h4>Ladders, Part 2 &mdash; Ladder Length</h4>'
+    + '<p>Extension ladders are the standard choice. Typically <b>16 ft to 40 ft in 4-ft increments</b>. Two overlapping parts, so the length given is not the extended length. A 16-ft extension ladder has two 8-ft sections but reaches only <b>~13 ft when fully extended</b>.</p>'
     + '<h5>Extension Ladder Material</h5>'
     + '<ul>'
     +   '<li><b>Fiberglass:</b> strong, doesn\'t conduct electricity. In humid climates, lacquer or paste wax extends outdoor service life.</li>'
-    +   '<li><b>Steel:</b> strong but conducts electricity — shock/electrocution risk with overhead wires. Also corrodes over time.</li>'
-    +   '<li><b>Aluminum:</b> lightweight but not as strong; flexes more. Also conducts electricity.</li>'
-    +   '<li><b>Wooden:</b> no longer common. Can be strong if well-maintained. Look for cracks and loose rungs; needs a finish coat.</li>'
+    +   '<li><b>Steel:</b> strong but conducts electricity — shock/electrocution risk with overhead wires. Corrodes over time.</li>'
+    +   '<li><b>Aluminum:</b> lightweight but not as strong; flexes more. Conducts electricity.</li>'
+    +   '<li><b>Wooden:</b> no longer common. Can be strong if well-maintained. Look for cracks and loose rungs.</li>'
     + '</ul>'
     + '<h4>Standing an Extension Ladder</h4>'
-    + '<p>Proper procedure when doing it alone:</p>'
-    + '<ol style="padding-left:22px;margin:6px 0 12px;font-size:13.5px;line-height:1.55;color:#c9d3df;">'
-    +   '<li style="margin:5px 0;">Choose a <b>level area</b> for the base.</li>'
-    +   '<li style="margin:5px 0;">Check overhead — plenty of clearance from overhead wires.</li>'
-    +   '<li style="margin:5px 0;">While still unextended, lay the ladder on the ground, base against the wall, top pointing away.</li>'
-    +   '<li style="margin:5px 0;">Starting at the top, lift the end over your head and walk under the ladder to the wall, moving hands rung-to-rung.</li>'
-    +   '<li style="margin:5px 0;">When vertical against the roof, move the base back to <b>~1/4 the vertical distance</b> from ground to the point of support (usually the gutter or fascia).</li>'
-    +   '<li style="margin:5px 0;">Ladder must be <b>straight and secure</b>. If it leans, place firm material under the low foot. <b>Never dig holes in the lawn</b> to level it.</li>'
-    +   '<li style="margin:5px 0;">On smooth concrete, use a non-skid mat or brace the base. If you can\'t make it safe, don\'t climb.</li>'
-    +   '<li style="margin:5px 0;">Never set up in <b>high wind</b>, especially lightweight ladders.</li>'
-    +   '<li style="margin:5px 0;">Never set up <b>in front of a door</b> unless the door is locked or a guard is posted. Hang a notice on the inside.</li>'
-    +   '<li style="margin:5px 0;"><b>Tie off the ladder</b> so it can\'t blow over. Carry clamps and bungee cords. Don\'t rely on the tie-off to prevent movement when you step on/off. <b>Don\'t nail anything to the roof.</b></li>'
+    + '<ol>'
+    +   '<li>Choose a <b>level area</b> for the base.</li>'
+    +   '<li>Check overhead — plenty of clearance from wires.</li>'
+    +   '<li>While unextended, lay ladder on ground, base against wall, top pointing away.</li>'
+    +   '<li>Starting at the top, lift end over head and walk under the ladder to the wall, rung by rung.</li>'
+    +   '<li>When vertical against roof, move base back <b>~1/4 the vertical distance</b> from ground to point of support (gutter or fascia).</li>'
+    +   '<li>Ladder must be <b>straight and secure</b>. If it leans, place firm material under the low foot. <b>Never dig holes in the lawn</b>.</li>'
+    +   '<li>On smooth concrete, use a non-skid mat or brace the base. If you can\'t make it safe, don\'t climb.</li>'
+    +   '<li>Never set up in <b>high wind</b>.</li>'
+    +   '<li>Never set up <b>in front of a door</b> unless locked or a guard is posted.</li>'
+    +   '<li><b>Tie off the ladder</b> so it can\'t blow over. Carry clamps and bungee cords. <b>Don\'t nail anything to the roof.</b></li>'
     + '</ol>'
-    + '<p>The top of the ladder should extend <b>at least 3 feet above the roof edge</b>. To take it down, reverse the process — you\'ll be walking backwards, so check for obstacles.</p>'
-    + '<h4>Shoes</h4>'
-    + '<p>Extension ladder shoes pivot so the bottom stays in contact with the surface — better stability on hard surfaces like concrete. Rubber soles grip and protect decks/balcony planking. Pivoted all the way back, shoes lock with the sharp end down (the <b>spur</b>) to prevent slipping.</p>'
-    + '<h4>Ladder Levelers</h4>'
-    + '<p>Adjustable leg extensions are available for setting a ladder up on surfaces that aren\'t level.</p>'
-    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Mastering Roof Inspections: Accessing the Roof, Part 4</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+    + '<p>Top of ladder should extend <b>at least 3 feet above the roof edge</b>.</p>'
+    + '<h4>Shoes &amp; Ladder Levelers</h4>'
+    + '<p>Extension ladder shoes pivot for surface contact. Rubber soles grip. Pivoted back, shoes lock with sharp end down (the <b>spur</b>). Adjustable leg extensions available for un-level surfaces.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Accessing the Roof, Part 4</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
 
-  // ── Page templates ─────────────────────────────────────
+  var PART_5 = ''
+    + '<h4>Ladders, Part 3 &mdash; Climbing an Extension Ladder</h4>'
+    + '<ul>'
+    +   '<li><b>Face the ladder.</b> Always face it climbing up or down.</li>'
+    +   '<li><b>Grasp the rungs</b> — not the rails. Better chance of catching yourself if you slip.</li>'
+    +   '<li><b>Maintain a three-point connection.</b> Only one hand or foot off the ladder at a time.</li>'
+    +   '<li><b>3 feet above the roof.</b> Ladder should extend at least 3 ft above the roof edge.</li>'
+    +   '<li><b>Stay off the top rungs.</b> Do not step on the top three rungs.</li>'
+    +   '<li><b>Keep weight below the roof line.</b> Loading above the roof makes ladder less stable and more likely to slide.</li>'
+    +   '<li><b>Maintain stability.</b> Keep belt buckle positioned between the rails — avoid over-reaching.</li>'
+    +   '<li><b>Keep others off.</b> You can\'t vouch for their ability; you may be liable if they\'re injured.</li>'
+    +   '<li><b>Adjust from the ground.</b> Never extend from the roof. If unstable, climb down first.</li>'
+    +   '<li><b>Move from the ground.</b> Never move the ladder while you\'re on the roof.</li>'
+    + '</ul>'
+    + '<h4>Extension Ladder Maintenance</h4>'
+    + '<ol>'
+    +   '<li>Locks and flippers operate smoothly. Using only one lock will overload the rail.</li>'
+    +   '<li>Rails free of cracks and other damage.</li>'
+    +   '<li>Rungs fit tightly.</li>'
+    +   '<li>Ropes in good condition — replace if frayed or badly worn.</li>'
+    +   '<li>Keep ladders clean.</li>'
+    +   '<li>Never use a metal or fiberglass ladder exposed to fire or strong chemicals. <b>Destroy and discard</b> — otherwise someone will salvage it.</li>'
+    +   '<li>Store fiberglass ladders away from sunlight and UV.</li>'
+    +   '<li>Properly support and secure ladders in transit. Vibration and bumping cause damage.</li>'
+    +   '<li>Store on racks. Poor support long-term causes damage.</li>'
+    + '</ol>'
+    + '<h4>Step-Ladders</h4>'
+    + '<p>Step-ladders are designed to be used open, so they\'re not a good choice for accessing roofs. Safety rules:</p>'
+    + '<ol>'
+    +   '<li>Never use a step-ladder over <b>20 feet</b> long.</li>'
+    +   '<li>Always open completely; ensure spreader is locked before use.</li>'
+    +   '<li>Spreaders and top cap are crucial to stability. Never substitute wire or rope — manufacturers often send replacement parts free.</li>'
+    +   '<li>Do not stand higher than the <b>second step from the top</b>. Don\'t stand on top cap, pail shelf, or backside.</li>'
+    +   '<li>Don\'t straddle the front and back of a step-ladder.</li>'
+    +   '<li>Don\'t leave tools or materials on top. Falling tools injure people below (and expose you to liability).</li>'
+    + '</ol>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Accessing the Roof, Part 5</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  // ═════════════════════════════════════════════════════
+  // ASPHALT COMPOSITION SHINGLES — Parts 1-4
+  // ═════════════════════════════════════════════════════
+  var ASPHALT_1 = ''
+    + '<p><i>This and other articles in the series will help you recognize and identify defects and damage in asphalt composition shingles, determine sources of problems, and make good recommendations.</i></p>'
+    + '<p>Covered here: standards and best practices for shingle manufacture and installation, different types of shingles and performance characteristics, related components (underlayment, flashing, fasteners), industry-accepted installation methods, and how to tell when shingles are near end of useful life.</p>'
+    + '<p>Different names for the same thing are used in different parts of North America. Which terms you choose matters less than explaining them clearly.</p>'
+    + '<h4>Asphalt Shingle Components</h4>'
+    + '<p>"Asphalt shingle" and "composition shingle" are general terms for the same thing. "Composition" is used because the shingles are a composite product — mat + asphalt + minerals — as opposed to a single material like wood or clay tile.</p>'
+    + '<p>All modern shingles manufactured in North America have mats made of <b>interwoven fiberglass strands</b>, so you may hear them called "fiberglass" shingles. A modern shingle: fiberglass mat embedded in asphalt, covered with granules on the weather face.</p>'
+    + '<p>In the past, shingles were also made with cellulose-based mats — these are called "organic" shingles.</p>'
+    + '<h4>Mat</h4>'
+    + '<p>The mat provides reinforcement that resists splitting, tearing, and pulling over fastener heads.</p>'
+    + '<p>Although the mat is <b>less than 2% of the shingle\'s weight</b>, a small difference in mat thickness makes a big difference in tear strength.</p>'
+    + '<h4>More Resistant to Heat and Humidity</h4>'
+    + '<p>Fiberglass shingles are more resistant than organic shingles to heat and humidity. Warm air holds more moisture. Because fiberglass absorbs less moisture, it deforms less as it ages — more stable in warm or damp climates.</p>'
+    + '<p>Fiberglass mats don\'t absorb moisture. As fiberglass shingles age and lose <b>volatiles</b>, they deform less than cellulose shingles. Volatiles are compounds in asphalt that keep shingles waterproof, flexible and durable — they dissipate over time, mostly through evaporation from overheating.</p>'
+    + '<h4>Variations in Performance</h4>'
+    + '<p>The downside of fiberglass shingles: wide variations in performance between similar shingles from different manufacturers.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Asphalt Composition Shingles, Part 1</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var ASPHALT_2 = ''
+    + '<h4>Organic Shingles</h4>'
+    + '<p>Organic shingles have not been manufactured since about <b>2008</b>, but many were installed and you\'ll continue to see them.</p>'
+    + '<p>Cellulose for shingle mat comes from wood chips and recycled cardboard, rags, and paper. Cellulose mat — also called <b>felt</b> — is typically thicker than fiberglass.</p>'
+    + '<p>Production: the cellulose mat was first saturated with a thinner asphalt to about <b>170% by weight</b>, then sandwiched inside a second coat of thicker asphalt — an asphalt sandwich.</p>'
+    + '<p>Because of their thicker, double-asphalt layer, organic shingles can be <b>more durable in cold climates</b> than fiberglass. Repair is often possible — replace a damaged section rather than the whole slope. But finding matching batches is increasingly difficult.</p>'
+    + '<h4>Distortion</h4>'
+    + '<p>As organic shingles age, they slowly lose volatiles (compounds that boil at low temperature and dissipate through evaporation). Volatiles keep shingles flexible, durable, and waterproof.</p>'
+    + '<p>Loss is faster in <b>warm climates</b> and homes with <b>poor roof ventilation</b>.</p>'
+    + '<p>As volatiles dissipate, the cellulose mat becomes dryer and more absorbent. <b>Absorbing moisture causes shingles to expand and distort.</b> Organic shingles near end of life can hold considerably more moisture than fiberglass — expect extreme distortion.</p>'
+    + '<p><b>Moisture cycling</b> — repeated wetting and drying — causes distortion of the mat. Deterioration of the asphalt layer weakens the bond between asphalt layers and causes widespread <b>delamination</b>.</p>'
+    + '<h4>Batch-to-Batch Variation</h4>'
+    + '<p>Organic shingles on the same roof commonly deteriorate at different rates. The pattern typically appears as a <b>diagonal across the roof</b>, caused by mixing shingles from different batches. The diagonal is created by the offset of successive courses during install. Different batches have small differences in asphalt quality and thickness that cause them to age at different rates.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Asphalt Composition Shingles, Part 2</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var ASPHALT_3 = ''
+    + '<h4>Asphalt Composition</h4>'
+    + '<p>Asphalt used to manufacture shingles may be blended by the shingle manufacturer or bought already blended. Mixing and applying methods are <b>proprietary</b> — manufacturers do not disclose either process.</p>'
+    + '<p>Performance characteristics vary with the type and proportion of ingredients.</p>'
+    + '<h4>Crude Oil</h4>'
+    + '<p>Crude oil quality affects asphalt quality. Crude may be:</p>'
+    + '<ul>'
+    +   '<li><b>Heavy or light</b> — light crude flows more easily</li>'
+    +   '<li><b>Sweet or sour</b> — sour crude has higher sulfur</li>'
+    + '</ul>'
+    + '<p><b>Heavy, sour crude is lower quality.</b> Asphalt quality depends on both the crude\'s chemical composition and the refining process.</p>'
+    + '<p>Asphalt is one of the lower-value products from crude. As oil prices rise, manufacturers extract more higher-value products per barrel — asphalt prices increase, and cost-control pressure grows. Some solutions <b>reduce asphalt quality</b> — e.g., excessive filler.</p>'
+    + '<h4>Filler</h4>'
+    + '<p>Asphalt alone is not durable enough for shingles. Finely-ground minerals are added as filler (sometimes called "<b>stabilizer</b>") to toughen the asphalt and improve resistance to cracking. Common fillers: <b>limestone and dolomite</b>.</p>'
+    + '<p>High-performance fillers maximize heat transfer, keeping shingles cooler and extending lifespan.</p>'
+    + '<p>Filler also reduces manufacturing cost. <b>Up to 70% filler may be added</b>. Too much filler reduces shingle quality.</p>'
+    + '<h4>Quality Control</h4>'
+    + '<p>Measurement, addition, and blending — once controlled by people — are now <b>all computer-controlled</b>. Ingredient-proportion problems that used to exist no longer do.</p>'
+    + '<h4>Asphalt Standards</h4>'
+    + '<p>The <b>ASTM</b> provides standards for asphalt used in shingles, but <b>compliance is not mandatory</b> — you can\'t tell by looking whether shingles comply. The <b>2010 standards</b> address the softening point of the asphalt and the minimum filler amount.</p>'
+    + '<h4>Thickness</h4>'
+    + '<p>Asphalt layer thickness affects performance — thicker layers resist fracture better. Thickness varies by manufacturer and even between products from the same manufacturer.</p>'
+    + '<p>ASTM standards require a <b>minimum of 15 lbs of asphalt per 100 sq ft of shingle material</b> (of actual shingle material, not per installed square).</p>'
+    + '<p>You can\'t judge asphalt quality by looking — just be aware quality varies.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Asphalt Composition Shingles, Part 3</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var ASPHALT_4 = ''
+    + '<h4>Back-Surfacing</h4>'
+    + '<p>"Back-surfacing" is a coat of finely pulverized mineral — <b>talc, sand, or limestone</b> — applied to the backs of shingles to prevent sticking to manufacturing equipment during production and sticking to each other in the stack. Rub the back of the mat — you can feel the gritty back-surfacing.</p>'
+    + '<h4>Granules</h4>'
+    + '<p>Granules on the weather surface are made from <b>fine-grain, opaque, crushed rock particles</b>. Opaque granules don\'t allow light to pass through.</p>'
+    + '<p>After screening for uniform size, they\'re covered with a <b>colored ceramic coating</b>. Uniformity of application affects appearance on the roof.</p>'
+    + '<h5>Granules have four main purposes:</h5>'
+    + '<ol>'
+    +   '<li><b>Reflect sunlight</b> — keeps the roof cooler, slows volatile loss, protects asphalt from UV. High-tech coatings originally developed to make military tanks less visible to radar are now used on granules — reflect up to <b>3× the light</b> of conventional granules. Cooler roofs = longer service life and lower home cooling costs. In cold climates, however, this may interfere with the adhesive strip fully bonding.</li>'
+    +   '<li><b>Add weight</b> — helps the adhesive strip bond well and improves wind-resistance.</li>'
+    +   '<li><b>Increase durability</b> — protect shingles from weathering and abrasion.</li>'
+    +   '<li><b>Improve fire-resistance</b>.</li>'
+    + '</ol>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Asphalt Composition Shingles, Part 4</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  // ═════════════════════════════════════════════════════
+  // Page templates
+  // ═════════════════════════════════════════════════════
   function tmplPageNachiMastery(){
     return ''
       + '<div class="rl-pagehead">'
@@ -36176,31 +36271,43 @@ body.claim-insurance #brandLogo{
       + '</div>'
       + '<button type="button" class="rl-navcard" data-cr-goto="rlPageNachiAccessing">'
       +   '<h3>1-3 &nbsp;Accessing A Roof</h3>'
-      +   '<p>The InterNACHI series on how to gain access and mount the roof safely. Roof safety fundamentals, ladders, and setup procedures.</p>'
+      +   '<p>InterNACHI Parts 1, 3, 4, and 5. Roof safety fundamentals, ladder selection, ladder setup, and climbing / maintenance.</p>'
+      +   '<div class="rl-boxgo">Open &rsaquo;</div>'
+      + '</button>'
+      + '<button type="button" class="rl-navcard" data-cr-goto="rlPageNachiAsphalt">'
+      +   '<h3>Asphalt Composition Shingles</h3>'
+      +   '<p>InterNACHI Parts 1-4. Shingle components, organic vs fiberglass mats, asphalt composition, crude oil, filler, standards, back-surfacing, and granules.</p>'
       +   '<div class="rl-boxgo">Open &rsaquo;</div>'
       + '</button>';
   }
+
   function tmplPageAccessing(){
     return ''
       + '<div class="rl-pagehead">'
       +   '<h1>NACHI 1-3 &mdash; Accessing A Roof</h1>'
-      +   '<p>From InterNACHI\'s <i>Mastering Roof Inspections</i> series by Kenton Shepard and Nick Gromicko, CMI. Three articles: fundamentals, ladder selection, and ladder setup.</p>'
+      +   '<p>From InterNACHI\'s <i>Mastering Roof Inspections</i> series by Kenton Shepard and Nick Gromicko, CMI.</p>'
       + '</div>'
-      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 1 pitch safety risk boots">'
-      +   '<h3>Part 1 &mdash; Roof Safety, Risk, Pitch &amp; Boots</h3>'
-      +   PART_1
-      + '</div>'
-      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 3 ladders access window choosing ladder safety rules">'
-      +   '<h3>Part 3 &mdash; Gaining Access, Choosing a Ladder &amp; Ladder Safety Rules</h3>'
-      +   PART_3
-      + '</div>'
-      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 4 ladder length material standing shoes levelers extension">'
-      +   '<h3>Part 4 &mdash; Ladder Length, Material, Standing an Extension Ladder</h3>'
-      +   PART_4
-      + '</div>';
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 1 pitch safety risk boots"><h3>Part 1 &mdash; Roof Safety, Risk, Pitch &amp; Boots</h3>' + PART_1 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 3 ladders access window choosing"><h3>Part 3 &mdash; Gaining Access, Choosing a Ladder &amp; Safety Rules</h3>' + PART_3 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 4 ladder length material standing shoes"><h3>Part 4 &mdash; Length, Material, Standing an Extension Ladder</h3>' + PART_4 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 5 climbing maintenance step ladders"><h3>Part 5 &mdash; Climbing, Maintenance &amp; Step-Ladders</h3>' + PART_5 + '</div>';
   }
 
-  // ── Insertion ──────────────────────────────────────────
+  function tmplPageAsphalt(){
+    return ''
+      + '<div class="rl-pagehead">'
+      +   '<h1>NACHI &mdash; Asphalt Composition Shingles</h1>'
+      +   '<p>From InterNACHI\'s <i>Mastering Roof Inspections</i> series by Kenton Shepard and Nick Gromicko, CMI. Four articles covering shingle anatomy, materials science, and manufacture.</p>'
+      + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="asphalt shingle mat fiberglass organic composition components"><h3>Part 1 &mdash; Components, Mat &amp; Fiberglass vs Organic</h3>' + ASPHALT_1 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="asphalt shingle organic cellulose felt distortion volatiles delamination batch"><h3>Part 2 &mdash; Organic Shingles &amp; Distortion</h3>' + ASPHALT_2 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="asphalt composition crude oil filler ASTM thickness standards"><h3>Part 3 &mdash; Asphalt, Crude Oil, Filler &amp; ASTM Standards</h3>' + ASPHALT_3 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="asphalt back-surfacing granules ceramic reflective fire resistance"><h3>Part 4 &mdash; Back-Surfacing &amp; Granules</h3>' + ASPHALT_4 + '</div>';
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Insertion + wiring
+  // ═════════════════════════════════════════════════════
   function ensurePage(id, title, htmlBuilder){
     if(document.getElementById(id)) return document.getElementById(id);
     var view = document.getElementById('resourceLibraryView');
@@ -36215,7 +36322,6 @@ body.claim-insurance #brandLogo{
   }
 
   function wireGotoButtons(){
-    // Click handler on any button with data-cr-goto attribute
     document.querySelectorAll('#resourceLibraryView [data-cr-goto]').forEach(function(el){
       if(el.dataset.crWired === '1') return;
       el.dataset.crWired = '1';
@@ -36246,9 +36352,8 @@ body.claim-insurance #brandLogo{
     card.setAttribute('data-cr-goto', 'rlPageNachiMastery');
     card.innerHTML =
       '<h3>\uD83D\uDCDA NACHI Roof Mastery</h3>' +
-      '<p>InterNACHI curriculum: Accessing the Roof (Parts 1&ndash;4), safety, ladders, and more.</p>' +
+      '<p>InterNACHI curriculum: Accessing the Roof, Asphalt Composition Shingles, and more.</p>' +
       '<div class="rl-boxgo">Open series &rsaquo;</div>';
-    // Insert near the top of the page, after the page head
     var head = insp.querySelector('.rl-pagehead');
     if(head && head.nextSibling){
       head.parentNode.insertBefore(card, head.nextSibling);
@@ -36261,8 +36366,9 @@ body.claim-insurance #brandLogo{
     var view = document.getElementById('resourceLibraryView');
     if(!view) return false;
     if(!document.getElementById('rlPageInsp')) return false;
-    ensurePage('rlPageNachiMastery',  'NACHI Roof Mastery', tmplPageNachiMastery);
+    ensurePage('rlPageNachiMastery',   'NACHI Roof Mastery', tmplPageNachiMastery);
     ensurePage('rlPageNachiAccessing', 'NACHI 1-3 Accessing A Roof', tmplPageAccessing);
+    ensurePage('rlPageNachiAsphalt',   'NACHI Asphalt Composition Shingles', tmplPageAsphalt);
     insertNavCardOnInspections();
     wireGotoButtons();
     return true;
@@ -36274,7 +36380,6 @@ body.claim-insurance #brandLogo{
         if(tryInstall() || ++n > 60) clearInterval(iv);
       }, 250);
     }
-    // Also handle new pages appearing (e.g. via Cardinal RLTOC nav)
     var view = document.getElementById('resourceLibraryView');
     if(view){
       new MutationObserver(function(){ tryInstall(); wireGotoButtons(); })
