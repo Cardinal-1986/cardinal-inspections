@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 185 &#8212; General Contractor partner type + confidential flag (hides name &amp; contact from sales); seed SQL for James Construction and C.G. Egli Inc</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 187 &#8212; Burger menu reorganized: renamed CRMs (with Community Hub + Partners), Resources, new Admin section for theo/joan, ⌘K quick-jump hint, scrollable + safe-area aware</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33862,6 +33862,951 @@ body.claim-insurance #brandLogo{
 </script>
 
 
+<!-- MODULE: print_stylesheets.html · v2026-07-24
+     Clean printable output via browser print. Hides chrome, expands content,
+     sets serif for legibility, uses page-break-inside:avoid on cards + rows. -->
+<style id="cr-print-styles">
+  @media print {
+    body{
+      background:#fff !important; color:#000 !important;
+      font:12pt/1.45 Georgia,'Times New Roman',serif !important;
+    }
+    /* Kill every piece of app chrome */
+    header.site, footer.site,
+    #navMenu, #newMenu,
+    .dbstage, .cr-portal-chip,
+    #navBtn, #cr-home-btn, #cr-search-btn, #cr-ahc-badge,
+    #addProjectBtn, #cr-recents,
+    .cr-bidstrip, .cr-autotrans,
+    .cr-cp-attach, .cr-cprop-attach,
+    .cr-wo-section,
+    .cr-hdr-row1, .cr-hdr-row2,
+    #ctPortalChip, #cr-dark-toggle,
+    #cr-offline, #cr-bulk-bar,
+    .cr-undo-toast, .cr-pme-exit,
+    .whoami, #headSearch,
+    button.btn, button.chipbtn,
+    .ct-banner-chips, .ins-header{
+      display:none !important;
+    }
+    /* Editor prints clean too */
+    #editorView .toolbar, #editorView button{ display:none !important; }
+    /* Full-width content */
+    .wrap, main{ max-width:100% !important; padding:0 !important; margin:0 !important; }
+    /* Doc frames unadorned */
+    #reportFrame, .doc-content{ border:none !important; box-shadow:none !important; }
+    /* Break-avoid on important blocks */
+    h1, h2, h3{ page-break-after:avoid; }
+    tr, .cr-cp-row, .card, .pipecard{ page-break-inside:avoid; }
+    /* Show absolute URLs after external links (informative) */
+    a[href^="http"]::after{
+      content:" ("attr(href) ")";
+      font-size:10pt; color:#666;
+    }
+  }
+</style>
+
+
+<!-- MODULE: offline_indicator.html · v2026-07-24
+     Shows a small "OFFLINE" pill at the top-center when navigator.onLine
+     flips false. Uses online/offline events; no polling. -->
+<style id="cr-offline-styles">
+  #cr-offline{
+    display:none;
+    position:fixed;
+    top:calc(env(safe-area-inset-top, 0px) + 6px);
+    left:50%; transform:translateX(-50%);
+    background:#c8202e; color:#fff;
+    padding:4px 12px; border-radius:12px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase;
+    z-index:10000;
+    box-shadow:0 2px 10px rgba(0,0,0,.4);
+    animation:cr-offline-pulse 2s ease-in-out infinite;
+  }
+  #cr-offline.show{ display:block; }
+  @keyframes cr-offline-pulse{
+    0%,100% { opacity:1; }
+    50%     { opacity:.65; }
+  }
+</style>
+<script id="cr-offline-script">
+(function(){
+  'use strict';
+  var badge;
+  function ensure(){
+    if(badge) return badge;
+    badge = document.createElement('div');
+    badge.id = 'cr-offline';
+    badge.textContent = '\u26A0 Offline';
+    badge.title = 'No internet — changes will sync when you\'re back online';
+    document.body.appendChild(badge);
+    return badge;
+  }
+  function update(){
+    var b = ensure();
+    if(navigator.onLine) b.classList.remove('show');
+    else b.classList.add('show');
+  }
+  window.addEventListener('online',  update);
+  window.addEventListener('offline', update);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', update);
+  else update();
+  window.CardinalOffline = { isOffline: function(){ return !navigator.onLine; } };
+})();
+</script>
+
+
+<!-- MODULE: undo_toast.html · v2026-07-24
+     Bottom-centered undo toast with 5s countdown ring. Exposes
+     CardinalUndo.enqueue(message, undoFn, [duration]) so any
+     destructive action anywhere can offer undo. -->
+<style id="cr-undo-styles">
+  .cr-undo-toast{
+    position:fixed; left:50%; bottom:24px;
+    transform:translateX(-50%);
+    background:#1a1a1a; color:#fff;
+    padding:12px 16px; border-radius:10px;
+    display:flex; align-items:center; gap:12px;
+    z-index:10000; max-width:92vw;
+    box-shadow:0 8px 30px rgba(0,0,0,.55);
+    font:600 13px 'Segoe UI',Arial,sans-serif;
+    animation:cr-undo-in .2s ease;
+  }
+  @keyframes cr-undo-in{
+    from{ transform:translate(-50%,20px); opacity:0; }
+    to  { transform:translate(-50%,0);    opacity:1; }
+  }
+  .cr-undo-toast .msg{ flex:1; min-width:0; }
+  .cr-undo-toast .btn{
+    background:transparent; border:1px solid #d4a017;
+    color:#d4a017; padding:5px 11px; border-radius:6px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+  }
+  .cr-undo-toast .btn:hover{ background:rgba(212,160,23,.15); }
+  .cr-undo-toast .timer{
+    width:22px; height:22px; border-radius:50%;
+    background:conic-gradient(#d4a017 0deg, rgba(255,255,255,.15) 0deg);
+    flex:0 0 auto;
+    animation:cr-undo-ring var(--dur,5s) linear;
+  }
+  @keyframes cr-undo-ring{
+    to{ background:conic-gradient(#d4a017 360deg, rgba(255,255,255,.15) 360deg); }
+  }
+</style>
+<script id="cr-undo-script">
+(function(){
+  'use strict';
+  var toast = null, tId = null;
+  function dismiss(){
+    if(toast && toast.parentNode) toast.parentNode.removeChild(toast);
+    toast = null;
+    if(tId){ clearTimeout(tId); tId = null; }
+  }
+  function enqueue(message, undoFn, duration){
+    duration = duration || 5000;
+    dismiss();
+    var el = document.createElement('div');
+    el.className = 'cr-undo-toast';
+    el.style.setProperty('--dur', (duration / 1000) + 's');
+    var safeMsg = String(message || '').replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+    el.innerHTML =
+      '<span class="timer"></span>' +
+      '<span class="msg">' + safeMsg + '</span>' +
+      '<button class="btn" type="button">Undo</button>';
+    el.querySelector('.btn').onclick = function(){
+      dismiss();
+      if(typeof undoFn === 'function') try{ undoFn(); }catch(e){ console.warn(e); }
+    };
+    document.body.appendChild(el);
+    toast = el;
+    tId = setTimeout(dismiss, duration);
+  }
+  window.CardinalUndo = { enqueue: enqueue, dismiss: dismiss };
+})();
+</script>
+
+
+<!-- MODULE: command_palette.html · v2026-07-24
+     Cmd/Ctrl+K opens a quick-jump modal: fuzzy-search across views,
+     actions, and clients. Arrow keys navigate, Enter executes,
+     Escape closes. On mobile, opens from CardinalPalette.open(). -->
+<style id="cr-palette-styles">
+  .cr-pal-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.5);
+    z-index:9800; display:flex; align-items:flex-start;
+    justify-content:center; padding:8vh 16px 20px;
+  }
+  .cr-pal-modal{
+    background:#fff; border-radius:12px; width:100%; max-width:560px;
+    max-height:70vh; display:flex; flex-direction:column;
+    box-shadow:0 24px 60px rgba(0,0,0,.5); overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-pal-modal input{
+    border:0; padding:16px 20px; font-size:16px;
+    outline:none; border-bottom:1px solid #eee;
+    width:100%; box-sizing:border-box;
+    font-family:inherit;
+  }
+  .cr-pal-list{ overflow-y:auto; flex:1; }
+  .cr-pal-item{
+    display:flex; align-items:center; gap:12px;
+    padding:9px 20px; cursor:pointer;
+  }
+  .cr-pal-item.active{ background:#f5efe0; }
+  .cr-pal-item .icon{
+    font-size:16px; width:24px; text-align:center; flex:0 0 auto;
+  }
+  .cr-pal-item .label{
+    flex:1; min-width:0;
+    font:600 13px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .cr-pal-item .label small{ color:#999; font-weight:500; }
+  .cr-pal-section{
+    padding:6px 20px; font:800 9px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; color:#999; text-transform:uppercase;
+    background:#fafafa; border-bottom:1px solid #eee;
+  }
+  .cr-pal-empty{
+    padding:40px; text-align:center; color:#999;
+    font:600 13px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-pal-hint{
+    padding:8px 20px; font:600 10.5px 'Segoe UI',Arial,sans-serif;
+    color:#999; letter-spacing:.08em; background:#fafafa;
+    border-top:1px solid #eee;
+  }
+  .cr-pal-hint kbd{
+    background:#eee; padding:1px 5px; border-radius:3px;
+    font:800 9px 'SF Mono',Menlo,Consolas,monospace;
+    color:#666;
+  }
+</style>
+<script id="cr-palette-script">
+(function(){
+  'use strict';
+  // Static commands — resilient to missing base functions via typeof guards.
+  var COMMANDS = [
+    { icon:'\uD83C\uDFE0', label:'Home',                    section:'Views',   run:function(){ if(typeof window.showHome==='function') window.showHome(); } },
+    { icon:'\uD83D\uDC65', label:'All Clients',             section:'Views',   run:function(){ if(typeof window.showClientsView==='function') window.showClientsView(); else if(typeof window.showClients==='function') window.showClients(); } },
+    { icon:'\uD83D\uDCCB', label:'Leads & Jobs',            section:'Views',   run:function(){ if(typeof window.showLeadsView==='function') window.showLeadsView(); else if(typeof window.showLeads==='function') window.showLeads(); } },
+    { icon:'\uD83D\uDCC5', label:'Schedule Board',          section:'Views',   run:function(){ if(typeof window.showBoardView==='function') window.showBoardView(); else if(typeof window.showBoard==='function') window.showBoard(); } },
+    { icon:'\uD83D\uDEE1\uFE0F', label:'Cardinal Truth',    section:'Views',   run:function(){ if(typeof window.showCardinalTruth==='function') window.showCardinalTruth(); } },
+    { icon:'\uD83C\uDFD8\uFE0F', label:'Community Hub',     section:'Views',   run:function(){ if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show==='function') window.CardinalCommunityHub.show(); } },
+    { icon:'\uD83D\uDCC8', label:'Reports',                 section:'Views',   run:function(){ if(typeof window.openReportsView==='function') window.openReportsView(); } },
+    { icon:'\u26A1',       label:'Quick Inspection',        section:'Actions', run:function(){ if(typeof window.showQuickInsp==='function') window.showQuickInsp(); else if(typeof window.startQuickInsp==='function') window.startQuickInsp(); } },
+    { icon:'\u26A1',       label:'AI Estimates',            section:'Actions', run:function(){ if(typeof window.crOpenEstimates==='function') window.crOpenEstimates(); } },
+    { icon:'\uD83D\uDEE1\uFE0F', label:'Insurance Claims',  section:'Actions', run:function(){ if(typeof window.crOpenClaims==='function') window.crOpenClaims(); } },
+    { icon:'\uD83D\uDCB0', label:'Pricing Catalog',         section:'Actions', run:function(){ if(typeof window.crOpenPricing==='function') window.crOpenPricing('roofing'); } },
+    { icon:'\uD83C\uDFAF', label:'Objection Coach',         section:'Actions', run:function(){ if(window.CardinalCoach && typeof window.CardinalCoach.open==='function') window.CardinalCoach.open(); } },
+    { icon:'\uD83C\uDFE2', label:'Community Partners',      section:'Actions', run:function(){ if(window.CardinalCommunityPartners && typeof window.CardinalCommunityPartners.openDirectory==='function') window.CardinalCommunityPartners.openDirectory(); } },
+    { icon:'\uD83D\uDD0D', label:'Global Search',           section:'Actions', run:function(){ if(window.CardinalSearch && typeof window.CardinalSearch.open==='function') window.CardinalSearch.open(); } },
+  ];
+
+  var visible = false, currentBg = null, results = [], sel = 0;
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function fuzzy(q, t){
+    if(!q) return true;
+    q = q.toLowerCase(); t = String(t || '').toLowerCase();
+    var qi = 0;
+    for(var i = 0; i < t.length && qi < q.length; i++){
+      if(t[i] === q[qi]) qi++;
+    }
+    return qi === q.length;
+  }
+
+  function render(input){
+    if(!currentBg) return;
+    var list = currentBg.querySelector('.cr-pal-list');
+    var q = input.value.trim();
+    var cmds = COMMANDS.filter(function(c){ return fuzzy(q, c.label); });
+    var clients = [];
+    if(q.length >= 2 && Array.isArray(window.cacheProjects)){
+      clients = window.cacheProjects.filter(function(p){
+        var hay = (p.client_name || '') + ' ' + (p.address || '');
+        return fuzzy(q, hay);
+      }).slice(0, 8);
+    }
+    results = cmds.map(function(c){ return { type:'command', data:c }; })
+              .concat(clients.map(function(c){ return { type:'client', data:c }; }));
+    if(sel >= results.length) sel = 0;
+
+    if(!results.length){
+      list.innerHTML = '<div class="cr-pal-empty">No matches</div>';
+      return;
+    }
+    var currentSection = '', html = '';
+    results.forEach(function(r, i){
+      var section = r.type === 'command' ? (r.data.section || 'Actions') : 'Clients';
+      if(section !== currentSection){
+        html += '<div class="cr-pal-section">' + esc(section) + '</div>';
+        currentSection = section;
+      }
+      if(r.type === 'command'){
+        html += '<div class="cr-pal-item ' + (i === sel ? 'active' : '') + '" data-idx="' + i + '">' +
+          '<span class="icon">' + r.data.icon + '</span>' +
+          '<span class="label">' + esc(r.data.label) + '</span></div>';
+      }else{
+        var p = r.data;
+        html += '<div class="cr-pal-item ' + (i === sel ? 'active' : '') + '" data-idx="' + i + '">' +
+          '<span class="icon">\uD83D\uDC64</span>' +
+          '<span class="label">' + esc(p.client_name || 'Unnamed') +
+            (p.address ? ' <small>' + esc(p.address) + '</small>' : '') +
+          '</span></div>';
+      }
+    });
+    list.innerHTML = html;
+    list.querySelectorAll('.cr-pal-item').forEach(function(el){
+      el.onmouseenter = function(){ sel = parseInt(el.dataset.idx, 10); paintActive(); };
+      el.onclick = function(){ sel = parseInt(el.dataset.idx, 10); execute(); };
+    });
+  }
+  function paintActive(){
+    if(!currentBg) return;
+    currentBg.querySelectorAll('.cr-pal-item').forEach(function(el, i){
+      el.classList.toggle('active', parseInt(el.dataset.idx, 10) === sel);
+    });
+  }
+  function execute(){
+    var r = results[sel];
+    if(!r) return;
+    close();
+    setTimeout(function(){
+      try{
+        if(r.type === 'command'){ r.data.run(); }
+        else if(r.type === 'client' && typeof window.openProject === 'function'){
+          window.openProject(r.data.id);
+        }
+      }catch(e){ console.warn('[palette]', e); }
+    }, 60);
+  }
+  function open(){
+    if(visible) return;
+    visible = true; sel = 0;
+    var bg = document.createElement('div');
+    bg.className = 'cr-pal-bg';
+    bg.innerHTML =
+      '<div class="cr-pal-modal">' +
+        '<input type="text" placeholder="Jump to a view, action, or client\u2026" autocomplete="off" />' +
+        '<div class="cr-pal-list"></div>' +
+        '<div class="cr-pal-hint">' +
+          '<kbd>\u2191\u2193</kbd> navigate  \u00b7  <kbd>\u21B5</kbd> select  \u00b7  <kbd>Esc</kbd> close' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(bg);
+    currentBg = bg;
+    var input = bg.querySelector('input');
+    input.oninput  = function(){ sel = 0; render(input); };
+    input.onkeydown = function(e){
+      if(e.key === 'Escape'){ e.preventDefault(); close(); }
+      else if(e.key === 'ArrowDown'){ e.preventDefault(); sel = Math.min(sel + 1, results.length - 1); paintActive(); scrollToActive(); }
+      else if(e.key === 'ArrowUp'){ e.preventDefault(); sel = Math.max(sel - 1, 0); paintActive(); scrollToActive(); }
+      else if(e.key === 'Enter'){ e.preventDefault(); execute(); }
+    };
+    bg.onclick = function(e){ if(e.target === bg) close(); };
+    render(input);
+    setTimeout(function(){ input.focus(); }, 50);
+  }
+  function scrollToActive(){
+    if(!currentBg) return;
+    var el = currentBg.querySelector('.cr-pal-item.active');
+    if(el && el.scrollIntoView) el.scrollIntoView({ block:'nearest' });
+  }
+  function close(){
+    visible = false;
+    if(currentBg && currentBg.parentNode) currentBg.parentNode.removeChild(currentBg);
+    currentBg = null;
+  }
+  document.addEventListener('keydown', function(e){
+    if((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')){
+      e.preventDefault();
+      if(visible) close(); else open();
+    }
+  });
+  window.CardinalPalette = { open: open, close: close };
+})();
+</script>
+
+
+<!-- MODULE: csv_export.html · v2026-07-24
+     Adds "⬇ CSV" button to the client list controls that exports the
+     visible cache to a CSV file. Exposes CardinalCsv.download(rows,name)
+     as a general helper any module can use. -->
+<style id="cr-csv-styles">
+  .cr-csv-btn{
+    background:transparent;
+    border:1px solid #d4a017;
+    color:#8a5a00;
+    padding:5px 10px; border-radius:5px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    cursor:pointer; margin-left:8px;
+    font-family:inherit;
+  }
+  .cr-csv-btn:hover{ background:rgba(212,160,23,.14); }
+</style>
+<script id="cr-csv-script">
+(function(){
+  'use strict';
+  function toCsv(rows){
+    if(!rows || !rows.length) return '';
+    var keys = Object.keys(rows[0]);
+    var out = [keys.join(',')];
+    rows.forEach(function(row){
+      out.push(keys.map(function(k){
+        var v = row[k];
+        if(v == null) return '';
+        v = String(v);
+        // Quote if contains comma, quote, or newline
+        if(v.indexOf(',') !== -1 || v.indexOf('"') !== -1 || v.indexOf('\n') !== -1){
+          v = '"' + v.replace(/"/g, '""') + '"';
+        }
+        return v;
+      }).join(','));
+    });
+    return out.join('\n');
+  }
+  function download(rows, filename){
+    var csv = toCsv(rows);
+    var blob = new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename || 'export.csv';
+    a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 200);
+  }
+  function exportClients(){
+    if(!Array.isArray(window.cacheProjects) || !window.cacheProjects.length){
+      alert('No clients loaded yet.');
+      return;
+    }
+    var rows = window.cacheProjects.map(function(p){
+      var lead = (p.checklist && p.checklist.lead) || {};
+      var phones = Array.isArray(lead.phones) ? lead.phones : [];
+      var emails = Array.isArray(lead.emails) ? lead.emails : [];
+      return {
+        client_name: p.client_name || '',
+        address    : p.address || '',
+        stage      : p.stage || '',
+        claim_type : lead.claim_type || 'retail',
+        phone      : (phones[0] && (phones[0].value || phones[0])) || '',
+        email      : (emails[0] && (emails[0].value || emails[0])) || '',
+        assigned   : (Array.isArray(lead.assigned) ? lead.assigned.join('; ') : (lead.assigned || '')),
+        created_at : p.created_at || '',
+      };
+    });
+    var name = 'cardinal-clients-' + new Date().toISOString().slice(0, 10) + '.csv';
+    download(rows, name);
+  }
+  function ensureButton(){
+    var section = document.querySelector('.history');
+    if(!section) return;
+    if(document.getElementById('cr-csv-clients')) return;
+    var controls = section.querySelector('.controls') || section;
+    var btn = document.createElement('button');
+    btn.id = 'cr-csv-clients';
+    btn.className = 'cr-csv-btn';
+    btn.type = 'button';
+    btn.textContent = '\u2B07 CSV';
+    btn.title = 'Export all clients as CSV';
+    btn.onclick = exportClients;
+    controls.appendChild(btn);
+  }
+  var scheduled = false;
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){
+      scheduled = false;
+      try{ ensureButton(); }catch(e){}
+    });
+  }
+  function start(){
+    schedule();
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:true,
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+  window.CardinalCsv = { download: download, toCsv: toCsv, exportClients: exportClients };
+})();
+</script>
+
+
+<!-- MODULE: dark_mode.html · v2026-07-24
+     Night-friendly UI toggled via a floating button. Preference lives
+     in localStorage. Uses `body.cr-dark` selector overrides on the
+     main surfaces only — doesn't try to invert everything, just
+     enough to reduce eye strain at night. -->
+<style id="cr-dark-styles">
+  body.cr-dark{
+    background:#181818 !important; color:#e0e0e0 !important;
+  }
+  body.cr-dark .wrap,
+  body.cr-dark main,
+  body.cr-dark #mainView,
+  body.cr-dark #homeView,
+  body.cr-dark .history{
+    background:#181818 !important; color:#e0e0e0 !important;
+  }
+  body.cr-dark .pipecard,
+  body.cr-dark .dashcard,
+  body.cr-dark .opscard,
+  body.cr-dark .accountscard,
+  body.cr-dark .card,
+  body.cr-dark .projform,
+  body.cr-dark .projsec,
+  body.cr-dark .clientcard,
+  body.cr-dark .rc-card{
+    background:#242424 !important; color:#e0e0e0 !important;
+    border-color:#3a3a3a !important;
+  }
+  body.cr-dark h1, body.cr-dark h2,
+  body.cr-dark h3, body.cr-dark h4,
+  body.cr-dark .pipetitle, body.cr-dark .dbtitle{
+    color:#f0f0f0 !important;
+  }
+  body.cr-dark input, body.cr-dark select, body.cr-dark textarea{
+    background:#2a2a2a !important; color:#e0e0e0 !important;
+    border-color:#4a4a4a !important;
+  }
+  body.cr-dark input::placeholder{ color:#888 !important; }
+  body.cr-dark .subnote,
+  body.cr-dark .empty,
+  body.cr-dark small{ color:#999 !important; }
+  body.cr-dark table{ background:#242424 !important; color:#e0e0e0 !important; }
+  body.cr-dark td, body.cr-dark th{ border-color:#3a3a3a !important; }
+  body.cr-dark a{ color:#f5d061 !important; }
+
+  #cr-dark-toggle{
+    position:fixed; bottom:24px; right:24px;
+    z-index:9500;
+    width:44px; height:44px; border-radius:50%;
+    background:rgba(0,0,0,.82); color:#f0f0f0;
+    border:1px solid #d4a017;
+    cursor:pointer; font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);
+    transition:transform .12s, background .12s;
+  }
+  #cr-dark-toggle:hover{ transform:scale(1.06); }
+  #cr-dark-toggle:active{ transform:scale(.94); }
+  body.cr-dark #cr-dark-toggle{
+    background:rgba(240,240,240,.94); color:#1a1a1a;
+  }
+  /* Print doesn't need the toggle */
+  @media print{ #cr-dark-toggle{ display:none !important; } }
+</style>
+<script id="cr-dark-script">
+(function(){
+  'use strict';
+  var KEY = 'cardinal.dark.enabled';
+  function isEnabled(){
+    try{ return localStorage.getItem(KEY) === '1'; }catch(e){ return false; }
+  }
+  function setEnabled(v){
+    try{ localStorage.setItem(KEY, v ? '1' : '0'); }catch(e){}
+    apply();
+  }
+  function apply(){
+    document.body.classList.toggle('cr-dark', isEnabled());
+    var btn = document.getElementById('cr-dark-toggle');
+    if(btn) btn.textContent = isEnabled() ? '\u2600' : '\uD83C\uDF19';
+  }
+  function toggle(){ setEnabled(!isEnabled()); }
+  function ensureButton(){
+    if(document.getElementById('cr-dark-toggle')) return;
+    var btn = document.createElement('button');
+    btn.id = 'cr-dark-toggle';
+    btn.type = 'button';
+    btn.title = 'Toggle dark mode';
+    btn.setAttribute('aria-label', 'Toggle dark mode');
+    btn.textContent = isEnabled() ? '\u2600' : '\uD83C\uDF19';
+    btn.onclick = toggle;
+    document.body.appendChild(btn);
+  }
+  function start(){ ensureButton(); apply(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+  window.CardinalDark = { toggle:toggle, isEnabled:isEnabled, setEnabled:setEnabled };
+})();
+</script>
+
+
+<!-- MODULE: changelog_modal.html · v2026-07-24
+     Shows a "What's New" modal after each build bump. Tracks the last
+     build the user has seen via localStorage; only shows entries newer
+     than that. First-time users just record the current build silently
+     so they don't get bombarded on first login. -->
+<style id="cr-cl-styles">
+  .cr-cl-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.6);
+    z-index:9700; display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .cr-cl-box{
+    background:#fff; border-radius:14px;
+    max-width:480px; width:100%; max-height:80vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-cl-head{
+    padding:16px 20px;
+    background:linear-gradient(120deg,#d4a017,#f5d061 60%,#d4a017);
+    color:#1a1a1a;
+    border-radius:14px 14px 0 0;
+  }
+  .cr-cl-head h3{
+    margin:0; font:800 14px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase;
+  }
+  .cr-cl-body{ padding:16px 20px; overflow-y:auto; flex:1; }
+  .cr-cl-entry{ padding:10px 0; border-bottom:1px solid #eee; }
+  .cr-cl-entry:last-child{ border-bottom:0; }
+  .cr-cl-build{
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; color:#8a5a00; margin-bottom:3px;
+  }
+  .cr-cl-desc{
+    font:600 12.5px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c; line-height:1.45;
+  }
+  .cr-cl-acts{
+    padding:12px 20px; border-top:1px solid #eee;
+    display:flex; justify-content:flex-end;
+  }
+  .cr-cl-acts button{
+    background:#d4a017; color:#fff; border:0;
+    padding:8px 16px; border-radius:6px; cursor:pointer;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    font-family:inherit;
+  }
+  .cr-cl-acts button:hover{ background:#b8860b; }
+</style>
+<script id="cr-cl-script">
+(function(){
+  'use strict';
+  var KEY = 'cardinal.changelog.lastSeen';
+  // Newest first. Only user-facing highlights.
+  var CHANGELOG = [
+    { build:186, note:'\uD83D\uDEE0\uFE0F Quality-of-life pack: Dark mode, ⌘K command palette, CSV export, undo toasts, offline indicator, print stylesheets, bulk operations, this changelog' },
+    { build:185, note:'\uD83D\uDC65 General Contractor partner type + confidential flag; James Construction and C.G. Egli Inc as concealed partners' },
+    { build:184, note:'\uD83C\uDFE2 Kitty Hawk workflow: renter contact fields on New Bid; work orders upload (admin + production only)' },
+    { build:183, note:'\uD83C\uDFE0 Homeowner / Site Contact fields on the New Bid form' },
+    { build:182, note:'\uD83D\uDEA9 Community Hub + button opens streamlined New Bid form (was full New Lead sheet)' },
+    { build:181, note:'\uD83E\uDDF9 Hidden the recent-clients strip on retail Home; hidden Cardinal Truth dashbanner that was floating' },
+    { build:180, note:'\uD83C\uDFA8 Cardinal logo two-tone green on Community view; Cardinal Truth top-left icon sized bigger' },
+    { build:179, note:'\uD83C\uDF32 Community header darker green for legibility; site footer strip hidden on Hub view' },
+    { build:178, note:'\uD83D\uDCD0 Header rewrite v2: CSS grid layout, brand title fits, + button icon-only, utility strip on row 2' },
+    { build:176, note:'\uD83D\uDEE1\uFE0F Storage bucket test, duplicate lead detection, perf watchdog, E2E smoke walk, build-size gate' },
+    { build:175, note:'\uD83D\uDC64 Auth roster match check: flags missing team members and unrecognized sign-ins' },
+    { build:174, note:'\uD83D\uDEA8 Runtime error capture + 10 admin data-invariant checks in the health badge' },
+    { build:173, note:'\uD83D\uDD0D Smoke check extended to community/insurance modules; admin-only schema + env-var health badge' },
+    { build:171, note:'\uD83D\uDCC4 Real contract editor: full-page viewer with Print/Copy Link/Send/Sign' },
+    { build:169, note:'\uD83D\uDCB0 Estimates audit fixes: templates + stat cells + manual rows wired' },
+    { build:167, note:'\uD83C\uDFE0 Plugin mounts get a Home button (Estimates, Claims, Pricing, Coach)' },
+    { build:166, note:'\uD83E\uDDF9 Retail Home header cleanup: Landing chip, Dashboard word, duplicate search removed' },
+  ];
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function currentBuild(){
+    // Find "build NNN" in the footer text — that's the source of truth.
+    var footer = document.querySelector('.menu-footer, [data-cr-footer]');
+    var scan = footer ? footer.textContent : document.body.textContent.slice(0, 40000);
+    var m = String(scan || '').match(/build\s+(\d+)/i);
+    return m ? parseInt(m[1], 10) : null;
+  }
+  function getLastSeen(){
+    try{ return parseInt(localStorage.getItem(KEY) || '0', 10) || 0; }
+    catch(e){ return 0; }
+  }
+  function setLastSeen(build){
+    try{ localStorage.setItem(KEY, String(build)); }catch(e){}
+  }
+  function show(){
+    var cur = currentBuild();
+    var lastSeen = getLastSeen();
+    // If nothing new, show the last 5 as a general "recent" view.
+    var newBuilds = CHANGELOG.filter(function(e){ return e.build > lastSeen; });
+    if(!newBuilds.length) newBuilds = CHANGELOG.slice(0, 5);
+    var bg = document.createElement('div');
+    bg.className = 'cr-cl-bg';
+    bg.innerHTML =
+      '<div class="cr-cl-box">' +
+        '<div class="cr-cl-head"><h3>\uD83C\uDF89 What\'s New</h3></div>' +
+        '<div class="cr-cl-body">' +
+          newBuilds.map(function(e){
+            return '<div class="cr-cl-entry">' +
+              '<div class="cr-cl-build">Build ' + e.build + '</div>' +
+              '<div class="cr-cl-desc">' + esc(e.note) + '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+        '<div class="cr-cl-acts"><button data-act="close" type="button">Got it</button></div>' +
+      '</div>';
+    document.body.appendChild(bg);
+    var close = function(){
+      if(bg.parentNode) bg.parentNode.removeChild(bg);
+      if(cur) setLastSeen(cur);
+    };
+    bg.onclick = function(e){ if(e.target === bg) close(); };
+    bg.querySelector('[data-act="close"]').onclick = close;
+    document.addEventListener('keydown', function esc(e){
+      if(e.key === 'Escape'){ close(); document.removeEventListener('keydown', esc); }
+    });
+  }
+  function autoShow(){
+    // Wait 3s after boot so the app has settled and the footer is in DOM.
+    setTimeout(function(){
+      var cur = currentBuild();
+      var lastSeen = getLastSeen();
+      if(!cur) return;
+      if(lastSeen === 0){
+        // First-time user — record and don't bombard them
+        setLastSeen(cur);
+        return;
+      }
+      if(cur > lastSeen) show();
+    }, 3000);
+  }
+  window.CardinalChangelog = { show:show, setLastSeen:setLastSeen };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoShow);
+  else autoShow();
+})();
+</script>
+
+
+<!-- MODULE: bulk_operations.html · v2026-07-24
+     Toggle "Select" mode on the client list. Checkboxes appear on
+     each card. Bottom action bar shows count + Reassign / Archive.
+     Sequential Supabase updates so we don't blast the DB. -->
+<style id="cr-bulk-styles">
+  #cr-bulk-toggle{
+    background:transparent;
+    border:1px solid #4a6fa5;
+    color:#4a6fa5;
+    padding:5px 10px; border-radius:5px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    cursor:pointer; margin-left:8px;
+    font-family:inherit;
+  }
+  #cr-bulk-toggle:hover{ background:rgba(74,111,165,.12); }
+  body.cr-bulk-mode #cr-bulk-toggle{
+    background:#4a6fa5; color:#fff;
+  }
+  .cr-bulk-checkbox{
+    display:none;
+    margin-right:8px;
+    transform:scale(1.3);
+    cursor:pointer;
+    vertical-align:middle;
+    accent-color:#d4a017;
+  }
+  body.cr-bulk-mode .cr-bulk-checkbox{ display:inline-block; }
+  .cr-bulk-bar{
+    position:fixed; bottom:0; left:0; right:0;
+    background:#1a1a1a; color:#fff;
+    padding:14px 20px 18px;
+    padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px));
+    display:none; align-items:center; gap:10px;
+    z-index:9500;
+    box-shadow:0 -4px 16px rgba(0,0,0,.4);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-bulk-bar.show{ display:flex; }
+  .cr-bulk-count{
+    font:800 12px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    flex:1; min-width:0;
+  }
+  .cr-bulk-bar button{
+    background:transparent;
+    border:1px solid #d4a017;
+    color:#d4a017;
+    padding:7px 12px; border-radius:5px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+    white-space:nowrap;
+  }
+  .cr-bulk-bar button:hover{ background:rgba(212,160,23,.15); }
+  .cr-bulk-bar button.danger{ border-color:#c8202e; color:#c8202e; }
+  .cr-bulk-bar button.danger:hover{ background:rgba(200,32,46,.15); }
+  .cr-bulk-bar button:disabled{ opacity:.5; cursor:wait; }
+</style>
+<script id="cr-bulk-script">
+(function(){
+  'use strict';
+  var selected = new Set();
+
+  function updateBar(){
+    var bar = document.getElementById('cr-bulk-bar');
+    if(!bar) return;
+    if(selected.size === 0){
+      bar.classList.remove('show');
+    }else{
+      bar.classList.add('show');
+      var c = bar.querySelector('.cr-bulk-count');
+      if(c) c.textContent = selected.size + ' selected';
+    }
+  }
+  function exitMode(){
+    document.body.classList.remove('cr-bulk-mode');
+    selected.clear();
+    document.querySelectorAll('.cr-bulk-checkbox').forEach(function(cb){
+      cb.checked = false;
+    });
+    updateBar();
+    var toggle = document.getElementById('cr-bulk-toggle');
+    if(toggle) toggle.textContent = '\u2610 Select';
+  }
+  function enterMode(){
+    document.body.classList.add('cr-bulk-mode');
+    var toggle = document.getElementById('cr-bulk-toggle');
+    if(toggle) toggle.textContent = '\u2716 Cancel';
+    ensureCheckboxes();
+  }
+  function toggleMode(){
+    if(document.body.classList.contains('cr-bulk-mode')) exitMode();
+    else enterMode();
+  }
+
+  function ensureCheckboxes(){
+    // Client cards in the main list. Cover both #historyMount and .history .card.
+    var cards = document.querySelectorAll('#historyMount .card, .history .card');
+    cards.forEach(function(card){
+      var id = card.dataset.id || card.dataset.projid ||
+               card.getAttribute('data-projid') || card.getAttribute('data-id');
+      if(!id) return;
+      if(card.querySelector('.cr-bulk-checkbox')) return;
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'cr-bulk-checkbox';
+      cb.onclick = function(e){
+        e.stopPropagation();
+        if(cb.checked) selected.add(id);
+        else selected.delete(id);
+        updateBar();
+      };
+      // Also prevent card click from bubbling when checkbox is clicked
+      card.insertBefore(cb, card.firstChild);
+    });
+  }
+  function ensureToggle(){
+    var section = document.querySelector('.history');
+    if(!section) return;
+    if(document.getElementById('cr-bulk-toggle')) return;
+    var controls = section.querySelector('.controls') || section;
+    var btn = document.createElement('button');
+    btn.id = 'cr-bulk-toggle';
+    btn.type = 'button';
+    btn.textContent = '\u2610 Select';
+    btn.title = 'Enter selection mode';
+    btn.onclick = toggleMode;
+    controls.appendChild(btn);
+  }
+  function ensureBar(){
+    if(document.getElementById('cr-bulk-bar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'cr-bulk-bar';
+    bar.className = 'cr-bulk-bar';
+    bar.innerHTML =
+      '<div class="cr-bulk-count">0 selected</div>' +
+      '<button data-act="reassign" type="button">Reassign</button>' +
+      '<button data-act="archive" type="button" class="danger">Archive</button>' +
+      '<button data-act="cancel" type="button">Cancel</button>';
+    document.body.appendChild(bar);
+    bar.querySelector('[data-act="cancel"]').onclick = exitMode;
+    bar.querySelector('[data-act="reassign"]').onclick = async function(){
+      var email = prompt('Reassign to email (e.g. nick@cardinalrenovations.net):');
+      if(!email) return;
+      email = email.trim().toLowerCase();
+      if(!/@/.test(email)){ alert('That doesn\'t look like an email.'); return; }
+      if(!confirm('Reassign ' + selected.size + ' client(s) to ' + email + '?')) return;
+      var ids = Array.from(selected);
+      var btns = bar.querySelectorAll('button');
+      btns.forEach(function(b){ b.disabled = true; });
+      var ok = 0, fail = 0;
+      for(var i = 0; i < ids.length; i++){
+        try{
+          var pr = (window.cacheProjects || []).find(function(p){ return p.id === ids[i]; });
+          if(!pr){ fail++; continue; }
+          var ck = Object.assign({}, pr.checklist || {});
+          ck.lead = Object.assign({}, ck.lead || {});
+          ck.lead.assigned = [email];
+          var r = await window.supa.from('projects').update({ checklist: ck }).eq('id', ids[i]);
+          if(r.error) fail++; else ok++;
+        }catch(e){ fail++; }
+      }
+      alert('Reassigned ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
+      exitMode();
+      if(typeof window.reload === 'function') window.reload();
+    };
+    bar.querySelector('[data-act="archive"]').onclick = async function(){
+      if(!confirm('Archive ' + selected.size + ' client(s)? They\'ll be hidden from the main list.')) return;
+      var ids = Array.from(selected);
+      var btns = bar.querySelectorAll('button');
+      btns.forEach(function(b){ b.disabled = true; });
+      var ok = 0, fail = 0;
+      for(var i = 0; i < ids.length; i++){
+        try{
+          var r = await window.supa.from('projects').update({ archived: true }).eq('id', ids[i]);
+          if(r.error) fail++; else ok++;
+        }catch(e){ fail++; }
+      }
+      alert('Archived ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
+      exitMode();
+      if(typeof window.reload === 'function') window.reload();
+    };
+  }
+  var scheduled = false;
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){
+      scheduled = false;
+      try{
+        ensureToggle();
+        ensureBar();
+        if(document.body.classList.contains('cr-bulk-mode')) ensureCheckboxes();
+      }catch(e){}
+    });
+  }
+  function start(){
+    schedule();
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:true,
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+  window.CardinalBulk = { enterMode:enterMode, exitMode:exitMode, toggleMode:toggleMode };
+})();
+</script>
+
+
 <!-- ══════════════════════════════════════════════════════════
      MODULE: header_two_row.html
      ══════════════════════════════════════════════════════════ -->
@@ -34134,6 +35079,269 @@ body.claim-insurance #brandLogo{
         childList:true, subtree:true,
         attributes:true, attributeFilter:['style','class']
       });
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
+
+
+<!-- MODULE: menu_condense.html · v2026-07-24
+     Reorganizes the burger menu:
+       • Renames "Insurance" section → "CRMs" and adds Community Hub +
+         Community Partners underneath Cardinal Truth
+       • Renames "Office" section → "Resources" and keeps only Pricing +
+         Company Documents (the daily-use resources everyone needs)
+       • Creates an "Admin" section (theo/joan only) that houses
+         Graphs & Reports, Activity Feed, Health Check, Settings
+       • Hides Recents everywhere (⌘K palette replaces it)
+       • Adds a "🔍 Quick jump ⌘K" hint at the bottom of the menu
+       • Makes the menu scrollable and respects the iOS safe-area
+         so the sign-out button never gets hidden behind the OS bar
+-->
+<style id="cr-menu-styles">
+  #navMenu{
+    max-height:calc(100vh - 90px) !important;
+    overflow-y:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding-bottom:calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  #navMenu .navopt{
+    padding:9px 14px !important;
+    font-size:13px !important;
+  }
+  #navMenu .navsec{
+    padding:8px 14px 4px !important;
+  }
+  /* Admin section header — small gold accent so it's visibly different */
+  #navMenu #cr-nav-sec-admin{
+    border-top:1px dashed #e6d9c8;
+    color:#8a5a00 !important;
+    background:#faf5e9;
+  }
+  /* ⌘K hint at the bottom */
+  #cr-nav-palette-hint{
+    display:flex; align-items:center; gap:8px;
+    padding:9px 14px;
+    font:700 12px 'Segoe UI',Arial,sans-serif;
+    color:#5a5a5a;
+    background:#faf7f6;
+    border-top:1px solid #f0e8e2;
+    cursor:pointer;
+    -webkit-tap-highlight-color:rgba(212,160,23,.2);
+    font-family:inherit;
+    width:100%;
+    text-align:left;
+    border-left:0; border-right:0; border-bottom:0;
+  }
+  #cr-nav-palette-hint:hover{ background:#f5efe0; }
+  #cr-nav-palette-hint .lbl{ flex:1; min-width:0; }
+  #cr-nav-palette-hint kbd{
+    background:#eee; padding:2px 6px; border-radius:4px;
+    font:800 9.5px 'SF Mono',Menlo,Consolas,monospace;
+    color:#666; letter-spacing:.06em;
+  }
+</style>
+<script id="cr-menu-script">
+(function(){
+  'use strict';
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return String(window.currentUser.email).toLowerCase();
+      if(typeof window.my_email === 'function') return String(window.my_email() || '').toLowerCase();
+    }catch(e){}
+    return '';
+  }
+  function isAdmin(){ return ADMIN_EMAILS.indexOf(currentEmail()) !== -1; }
+
+  function hideOpt(dataNav){
+    var el = document.querySelector('#navMenu .navopt[data-nav="' + dataNav + '"]');
+    if(el) el.style.display = 'none';
+  }
+  function findSec(labelText){
+    var found = null;
+    document.querySelectorAll('#navMenu .navsec').forEach(function(sec){
+      if(sec.textContent.trim().toLowerCase() === labelText.toLowerCase()) found = sec;
+    });
+    return found;
+  }
+  function renameSec(fromLabel, toLabel){
+    var sec = findSec(fromLabel);
+    if(sec) sec.textContent = toLabel;
+  }
+  function closeMenu(){
+    var m = document.getElementById('navMenu');
+    if(m) m.style.display = 'none';
+  }
+  function makeOpt(id, html, onClick){
+    var b = document.createElement('button');
+    b.className = 'navopt';
+    b.id = id;
+    b.type = 'button';
+    b.innerHTML = html;
+    b.onclick = function(e){
+      e.stopPropagation();
+      closeMenu();
+      // Slight defer so the menu closes visually before the target renders
+      setTimeout(function(){ try{ onClick(); }catch(err){ console.warn(err); } }, 50);
+    };
+    return b;
+  }
+  function makeSec(id, text){
+    var d = document.createElement('div');
+    d.className = 'navsec';
+    d.id = id;
+    d.textContent = text;
+    return d;
+  }
+  function insertAfter(referenceNode, newNode){
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+  }
+
+  // Add Community Hub + Community Partners to the (renamed) CRMs section
+  function addCommunityItems(){
+    if(document.getElementById('cr-nav-communityhub')) return;
+    var menu = document.getElementById('navMenu');
+    if(!menu) return;
+    // Find Cardinal Truth item (data-nav="cardinaltruth"); insert after it
+    var ct = menu.querySelector('.navopt[data-nav="cardinaltruth"]');
+    if(!ct) return;
+    var hub = makeOpt('cr-nav-communityhub',
+      '\uD83C\uDFD8\uFE0F Community Hub',
+      function(){
+        if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){
+          window.CardinalCommunityHub.show();
+        }
+      });
+    var partners = makeOpt('cr-nav-communitypartners',
+      '\uD83E\uDD1D Community Partners',
+      function(){
+        if(window.CardinalCommunityPartners && typeof window.CardinalCommunityPartners.openDirectory === 'function'){
+          window.CardinalCommunityPartners.openDirectory();
+        }
+      });
+    insertAfter(ct, hub);
+    insertAfter(hub, partners);
+  }
+
+  // Add Admin section (theo/joan only) housing the office/admin items
+  function addAdminSection(){
+    if(!isAdmin()) return;
+    if(document.getElementById('cr-nav-sec-admin')) return;
+    var menu = document.getElementById('navMenu');
+    if(!menu) return;
+    // Insert BEFORE the current "Account" section (which holds Settings)
+    var acctSec = findSec('account') || findSec('admin');
+    var adminSec = makeSec('cr-nav-sec-admin', 'Admin');
+    var reports = menu.querySelector('.navopt[data-nav="reports"]');
+    var feed    = menu.querySelector('.navopt[data-nav="feed"]');
+    var settings= menu.querySelector('.navopt[data-nav="settings"]');
+    var health  = makeOpt('cr-nav-health',
+      '\uD83E\uDE7A Health Check',
+      function(){
+        if(window.CardinalAdminHealth && typeof window.CardinalAdminHealth.show === 'function'){
+          window.CardinalAdminHealth.show();
+        }
+      });
+
+    // Insertion point: before Account section header (if present),
+    // otherwise before Sign Out button.
+    var anchor = acctSec || document.getElementById('signOutBtn');
+    if(anchor){
+      anchor.parentNode.insertBefore(adminSec, anchor);
+      // Move existing admin items into the new section (in order):
+      // reports, feed, health, settings
+      if(reports)  { reports.style.display  = ''; anchor.parentNode.insertBefore(reports, anchor); }
+      if(feed)     { feed.style.display     = ''; anchor.parentNode.insertBefore(feed, anchor); }
+      anchor.parentNode.insertBefore(health, anchor);
+      if(settings) { settings.style.display = ''; anchor.parentNode.insertBefore(settings, anchor); }
+      // Remove now-empty "Account" section header (Settings moved out)
+      if(acctSec) acctSec.style.display = 'none';
+    }
+  }
+
+  // Non-admin cleanup: hide the admin-only items entirely
+  function hideAdminItemsForNonAdmin(){
+    if(isAdmin()) return;
+    hideOpt('reports');
+    hideOpt('feed');
+    hideOpt('settings');
+    // Hide the Account section header (Settings was its only member)
+    var acct = findSec('account');
+    if(acct) acct.style.display = 'none';
+  }
+
+  // Add the ⌘K palette hint at the very bottom, just before the version footer
+  function addPaletteHint(){
+    if(document.getElementById('cr-nav-palette-hint')) return;
+    var menu = document.getElementById('navMenu');
+    if(!menu) return;
+    var hint = document.createElement('button');
+    hint.type = 'button';
+    hint.id = 'cr-nav-palette-hint';
+    // On mobile, showing ⌘K is technically misleading (no cmd key), but
+    // it's the universally understood shortcut symbol and tapping the
+    // hint opens the palette on any platform.
+    hint.innerHTML =
+      '<span>\uD83D\uDD0D</span>' +
+      '<span class="lbl">Quick jump</span>' +
+      '<kbd>\u2318K</kbd>';
+    hint.onclick = function(e){
+      e.stopPropagation();
+      closeMenu();
+      setTimeout(function(){
+        if(window.CardinalPalette && typeof window.CardinalPalette.open === 'function'){
+          window.CardinalPalette.open();
+        }
+      }, 60);
+    };
+    // Insert BEFORE the version footer <div> (last child that starts with "v2026-")
+    var footer = null;
+    Array.from(menu.children).forEach(function(child){
+      if(child.textContent && /^v2026-/.test(child.textContent.trim())) footer = child;
+    });
+    if(footer) menu.insertBefore(hint, footer);
+    else menu.appendChild(hint);
+  }
+
+  function apply(){
+    var menu = document.getElementById('navMenu');
+    if(!menu) return false;
+    if(!menu.querySelector('.navopt')) return false;
+
+    // Rename existing sections to reflect the new organization
+    renameSec('insurance', 'CRMs');
+    renameSec('office', 'Resources');
+
+    // Recents is redundant with ⌘K palette + past-chats — hide for all
+    hideOpt('recents');
+
+    // Add Community items in the CRMs section
+    addCommunityItems();
+
+    // Reorganize for admin vs everyone else
+    if(isAdmin()){
+      addAdminSection();
+    }else{
+      hideAdminItemsForNonAdmin();
+    }
+
+    // Palette hint at the bottom
+    addPaletteHint();
+
+    return true;
+  }
+
+  function start(){
+    if(!apply()){
+      var n = 0, iv = setInterval(function(){
+        if(apply() || ++n > 60) clearInterval(iv);
+      }, 200);
     }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
