@@ -1,14 +1,15 @@
-// api/coach.js  [v4 · 2026-07-24]
+// api/coach.js  [v6 · 2026-07-24]
 // ═════════════════════════════════════════════════════════════════════
 // Objection Coach — grade a rep's answer against the ideal response
 // using Gemini. Returns { score, ideal, feedback: { verdict, strengths,
 // gaps, fix } } to match what the client (CardinalCoach) expects.
 //
-// v4:
-// - Recognizes `objection` column (Cardinal's actual live schema)
-// - Grades even when no ideal_response field exists — Gemini uses
-//   general sales-coaching principles as the yardstick
-// - Every error includes the actual row column names for debugging
+// v6: Switched from deprecated gemini-2.0-flash-exp to gemini-2.0-flash.
+//     The -exp variant was an experimental preview that Google has since
+//     removed. The stable -flash model is the same speed and quality.
+//
+// v5: Uses x-goog-api-key HEADER (required for new AQ.-format keys).
+// v4: Recognized `objection` column, tolerated missing ideal_response.
 // gaps, fix } } to match what the client (CardinalCoach) expects.
 //
 // REQUIRES these Vercel env vars:
@@ -26,7 +27,7 @@
 // Per project rules: ES module, `export default async function handler`.
 // ═════════════════════════════════════════════════════════════════════
 
-const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+const GEMINI_MODEL = 'gemini-2.0-flash';
 const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export default async function handler(req, res) {
@@ -174,11 +175,20 @@ export default async function handler(req, res) {
     '}';
 
   // 4. Call Gemini
+  //
+  // IMPORTANT: Cardinal's Gemini key is the new AQ.-format key which
+  // MUST be sent as the x-goog-api-key HEADER, not the ?key= URL param.
+  // Sending an AQ. key via ?key= produces a 400 or 403 with unhelpful
+  // messages. Old-format AIza keys accept either style; new ones require
+  // the header.
   let parsed;
   try {
-    const gemResp = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(GEMINI_KEY)}`, {
+    const gemResp = await fetch(GEMINI_URL, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        'x-goog-api-key': GEMINI_KEY,
+      },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
@@ -189,13 +199,13 @@ export default async function handler(req, res) {
     });
     if (!gemResp.ok) {
       const errText = await gemResp.text().catch(() => '');
-      return res.status(502).json({ error: 'Gemini error: ' + errText.slice(0, 200) });
+      return res.status(502).json({ error: '[v6] Gemini error: ' + errText.slice(0, 400) });
     }
     const gem = await gemResp.json();
     const text = gem?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     parsed = JSON.parse(text);
   } catch (e) {
-    return res.status(502).json({ error: 'Grading failed: ' + e.message });
+    return res.status(502).json({ error: '[v6] Grading failed: ' + e.message });
   }
 
   const score = Math.max(0, Math.min(100, parseInt(parsed.score, 10) || 0));
