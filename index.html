@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 208 &#8212; Estimate rebuild Increment 1a: Line Item Library. Menu &rarr; Admin &rarr; &#128203; manages a reusable catalog seeded with 12 real Cardinal line items. Foundation SQL creates estimates + templates tables for 1b/1c/1d.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 209 &#8212; Estimate rebuild Increment 1b: Unified Estimate Editor. New Estimate button on every client profile, editor pulls from Line Item Library, auto-totals, live deposit calc, saves to estimates table with auto-generated EST-YYYY-NNNN.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38664,6 +38664,1080 @@ body.claim-insurance #brandLogo{
     },
     categories  : function(){ return CATEGORIES.slice(); },
     units       : function(){ return UNITS.slice(); },
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: estimate_editor.html · v2026-07-24
+     ══════════════════════════════════════════════════════════
+     Increment 1b of the unified estimate rebuild.
+
+     Adds a "📄 New Estimate" button next to the base app's existing
+     "+ New estimate" dropdown on every client profile, plus a saved-
+     estimates list below the buttons. Tap either to open the editor.
+
+     Editor:
+       · Title (auto-fills from client + trade)
+       · Valid Through (auto +30 days)
+       · Deposit % (default 30) → auto-computes $
+       · Line items pulled from CardinalLineItems catalog OR custom
+       · Live subtotal / discount / total / deposit
+       · Notes + payment instructions
+       · Save inserts or updates row in `estimates` table with
+         auto-generated EST-YYYY-NNNN number (Postgres sequence).
+
+     Depends on:
+       · estimate_system_setup.sql (line_items, estimates tables)
+       · line_item_library.html loaded first (CardinalLineItems API)
+
+     Public API:
+       CardinalEstimates.openEditor(project, existingEstimate?)
+       CardinalEstimates.close()
+       CardinalEstimates.loadForProject(projectId) → Promise<rows>
+────────────────────────────────────────────────────────────── -->
+
+<style id="cr-est-styles">
+  /* ═══ Client-profile button + saved list ═══════════════ */
+  #cr-est-new-btn{
+    display:inline-block;
+    background:linear-gradient(135deg,#d4a017,#c88a0f);
+    color:#1a1a1a; border:0;
+    padding:9px 14px; border-radius:6px;
+    font:800 12px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.06em; cursor:pointer;
+    margin-left:6px; margin-bottom:4px;
+    font-family:inherit;
+  }
+  #cr-est-new-btn:hover{ background:linear-gradient(135deg,#e8ba15,#d4a017); }
+  .cr-est-saved-list{
+    margin:12px 0 4px;
+  }
+  .cr-est-saved-list .head{
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:#8a7a5a; margin:0 0 6px;
+  }
+  .cr-est-saved-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px;
+    background:#faf5e9; border:1px solid #e8d9a8;
+    border-radius:8px; margin-bottom:6px;
+    cursor:pointer;
+    transition:background .12s;
+  }
+  .cr-est-saved-row:hover{ background:#f5efd8; }
+  .cr-est-saved-row .num{
+    flex:0 0 auto;
+    font:800 11px 'SF Mono',Menlo,Consolas,monospace;
+    color:#8a5a00;
+  }
+  .cr-est-saved-row .title{
+    flex:1;
+    font:700 13px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .cr-est-saved-row .status{
+    flex:0 0 auto;
+    padding:2px 8px; border-radius:10px;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+  }
+  .cr-est-saved-row .status.draft{    background:#e8e0c8; color:#7a6a4a; }
+  .cr-est-saved-row .status.sent{     background:#cfe0f5; color:#3d5d8c; }
+  .cr-est-saved-row .status.accepted{ background:#c8e6cc; color:#2a6b3c; }
+  .cr-est-saved-row .status.declined{ background:#f5cfd0; color:#8c3d3f; }
+  .cr-est-saved-row .amount{
+    flex:0 0 auto;
+    font:800 13px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c;
+  }
+
+  /* ═══ Editor full-screen view ═══════════════════════════ */
+  #cr-est-view{
+    display:none;
+    position:fixed; inset:0;
+    background:#fdfcf7; color:#2c2c2c;
+    z-index:9500;
+    flex-direction:column;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  #cr-est-view.open{ display:flex; }
+
+  .cr-est-head{
+    padding:14px 16px 12px;
+    padding-top:calc(14px + env(safe-area-inset-top, 0px));
+    background:linear-gradient(120deg,#2c2c2c,#1a1a1a);
+    color:#f5efe0;
+    display:flex; align-items:center; gap:10px;
+    flex:0 0 auto;
+  }
+  .cr-est-head h2{
+    margin:0; flex:1;
+    font:800 14px Georgia,'Times New Roman',serif;
+    letter-spacing:.02em;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .cr-est-head .estnum{
+    font:800 10.5px 'SF Mono',Menlo,monospace;
+    color:#f5d061; margin-right:8px;
+  }
+  .cr-est-head button{
+    background:transparent; border:1px solid rgba(212,160,23,.5);
+    color:#f5d061; padding:6px 12px; border-radius:6px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+    flex:0 0 auto;
+  }
+  .cr-est-head button:hover{ background:rgba(212,160,23,.14); }
+  .cr-est-head button.primary{
+    background:#d4a017; color:#1a1a1a; border-color:#d4a017;
+  }
+  .cr-est-head button.primary:hover{ background:#e8ba15; }
+  .cr-est-head button.primary:disabled{ opacity:.55; cursor:wait; }
+
+  .cr-est-body{
+    flex:1; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:14px 16px 40px;
+    padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));
+    background:#fdfcf7;
+  }
+  .cr-est-clientcard{
+    background:#faf5e9; border:1px solid #e8d9a8;
+    border-radius:10px; padding:12px 14px;
+    margin-bottom:14px;
+  }
+  .cr-est-clientcard .name{
+    font:800 14px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+  }
+  .cr-est-clientcard .addr{
+    font:600 12.5px 'Segoe UI',Arial,sans-serif; color:#8a7a5a;
+    margin-top:2px;
+  }
+
+  .cr-est-body label{
+    display:block;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:#8a7a5a; margin:12px 0 4px;
+  }
+  .cr-est-body input[type=text],
+  .cr-est-body input[type=number],
+  .cr-est-body input[type=date],
+  .cr-est-body select,
+  .cr-est-body textarea{
+    width:100%; box-sizing:border-box;
+    padding:9px 12px;
+    border:1px solid #d9cfaf; border-radius:8px;
+    font-family:inherit; font-size:14px;
+    background:#fff; color:#2c2c2c;
+    outline:none;
+  }
+  .cr-est-body input:focus,
+  .cr-est-body select:focus,
+  .cr-est-body textarea:focus{
+    border-color:#d4a017;
+    box-shadow:0 0 0 3px rgba(212,160,23,.22);
+  }
+  .cr-est-body textarea{
+    min-height:70px; resize:vertical; line-height:1.5;
+  }
+  .cr-est-row3{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:0 12px;
+  }
+  @media (max-width:520px){
+    .cr-est-row3{ grid-template-columns:1fr; }
+  }
+
+  /* ═══ Line items ══════════════════════════════════════ */
+  .cr-est-items-head{
+    display:flex; align-items:baseline; gap:10px;
+    margin:22px 0 8px;
+  }
+  .cr-est-items-head h3{
+    margin:0; flex:1;
+    font:800 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:#8a7a5a;
+  }
+  .cr-est-items-head button{
+    padding:7px 12px; border-radius:6px; border:0;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.06em; cursor:pointer;
+    font-family:inherit;
+  }
+  .cr-est-items-head .add-lib{
+    background:#d4a017; color:#1a1a1a;
+    margin-right:6px;
+  }
+  .cr-est-items-head .add-lib:hover{ background:#e8ba15; }
+  .cr-est-items-head .add-custom{
+    background:transparent; color:#8a5a00;
+    border:1px solid #d4a017;
+  }
+  .cr-est-items-head .add-custom:hover{ background:rgba(212,160,23,.1); }
+
+  .cr-est-lineitem{
+    background:#fff;
+    border:1px solid #e8d9a8; border-radius:10px;
+    padding:12px 14px; margin-bottom:10px;
+    position:relative;
+  }
+  .cr-est-lineitem .name-input{
+    font:800 14px 'Segoe UI',Arial,sans-serif;
+    padding:6px 8px; border:1px solid transparent;
+    border-radius:6px; background:transparent;
+  }
+  .cr-est-lineitem .name-input:focus,
+  .cr-est-lineitem .name-input:hover{
+    border-color:#d9cfaf; background:#fdfcf7;
+  }
+  .cr-est-lineitem .desc-input{
+    font:400 12.5px 'Segoe UI',Arial,sans-serif;
+    line-height:1.45; color:#4a4a4a;
+    padding:6px 8px; margin-top:4px;
+    border:1px solid transparent; border-radius:6px;
+    background:transparent;
+    min-height:20px; resize:vertical;
+    width:100%; box-sizing:border-box;
+    font-family:inherit;
+  }
+  .cr-est-lineitem .desc-input:focus,
+  .cr-est-lineitem .desc-input:hover{
+    border-color:#d9cfaf; background:#fdfcf7;
+  }
+  .cr-est-lineitem .pricing{
+    display:grid;
+    grid-template-columns:80px 60px 110px 1fr;
+    gap:8px; align-items:center;
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px dashed #e8d9a8;
+  }
+  .cr-est-lineitem .pricing .lbl{
+    grid-column:1 / -1;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    color:#8a7a5a; display:none;
+  }
+  .cr-est-lineitem .pricing input,
+  .cr-est-lineitem .pricing select{
+    padding:6px 8px; font-size:13px;
+    text-align:right;
+  }
+  .cr-est-lineitem .pricing .unit-sel{ text-align:left; }
+  .cr-est-lineitem .pricing .amount{
+    text-align:right;
+    font:800 14px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c; padding:6px 8px;
+  }
+  .cr-est-lineitem .del{
+    position:absolute; top:8px; right:8px;
+    background:transparent; border:0;
+    cursor:pointer;
+    color:#a89e88; font-size:18px; line-height:1;
+    padding:4px 8px;
+  }
+  .cr-est-lineitem .del:hover{ color:#9c1822; }
+
+  .cr-est-empty-items{
+    background:#faf5e9; border:1px dashed #d9cfaf;
+    border-radius:10px; padding:24px;
+    text-align:center;
+    color:#8a7a5a;
+    font:600 13px 'Segoe UI',Arial,sans-serif;
+  }
+
+  /* ═══ Totals ══════════════════════════════════════════ */
+  .cr-est-totals{
+    background:#faf5e9; border:1px solid #e8d9a8;
+    border-radius:10px; padding:14px 16px;
+    margin:20px 0 4px;
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:8px 20px;
+    align-items:baseline;
+  }
+  .cr-est-totals .lbl{
+    font:700 12.5px 'Segoe UI',Arial,sans-serif;
+    color:#6b6b6b;
+  }
+  .cr-est-totals .val{
+    font:800 14px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .cr-est-totals .val input{
+    text-align:right; padding:4px 8px;
+    width:110px; font-size:13px;
+  }
+  .cr-est-totals .grand-lbl{
+    font:800 13.5px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c;
+    letter-spacing:.02em;
+  }
+  .cr-est-totals .grand-val{
+    font:800 20px Georgia,'Times New Roman',serif;
+    color:#8a5a00;
+  }
+  .cr-est-totals .rule{
+    grid-column:1 / -1;
+    border-top:1px solid #e8d9a8;
+    margin:2px 0;
+  }
+  .cr-est-totals .deposit{
+    grid-column:1 / -1;
+    background:#fff; border:1px solid #d4a017;
+    border-radius:6px; padding:9px 12px;
+    display:grid;
+    grid-template-columns:auto 60px 1fr;
+    gap:6px 10px;
+    align-items:baseline;
+    margin-top:6px;
+  }
+  .cr-est-totals .deposit .pct{
+    padding:4px 8px; width:60px; text-align:center;
+    font:800 13px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-est-totals .deposit .amt{
+    text-align:right;
+    font:800 15px 'Segoe UI',Arial,sans-serif;
+    color:#8a5a00;
+  }
+
+  /* ═══ Library picker modal ═════════════════════════════ */
+  #cr-est-picker{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:9510;
+    justify-content:center;
+    align-items:flex-end;
+  }
+  #cr-est-picker.open{ display:flex; }
+  #cr-est-picker .box{
+    background:#fdfcf7;
+    width:100%; max-width:640px;
+    max-height:85vh; max-height:85dvh;
+    border-radius:14px 14px 0 0;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 -8px 40px rgba(0,0,0,.35);
+  }
+  #cr-est-picker .box-head{
+    padding:14px 18px 10px;
+    background:#faf5e9;
+    border-bottom:1px solid #e8d9a8;
+    display:flex; align-items:center; gap:10px;
+    flex:0 0 auto;
+  }
+  #cr-est-picker .box-head h3{
+    margin:0; flex:1;
+    font:800 13px Georgia,serif; color:#2c2c2c;
+  }
+  #cr-est-picker .box-head button{
+    background:transparent; border:0; cursor:pointer;
+    color:#8a7a5a; font-size:22px; line-height:1;
+    padding:2px 8px;
+  }
+  #cr-est-picker .box-search{
+    padding:10px 14px; background:#fdfcf7;
+    flex:0 0 auto;
+  }
+  #cr-est-picker .box-search input{
+    width:100%; box-sizing:border-box;
+    padding:9px 12px 9px 34px;
+    border:1px solid #d9cfaf; border-radius:22px;
+    font-size:14px; outline:none;
+    font-family:inherit;
+    background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;
+  }
+  #cr-est-picker .box-list{
+    flex:1; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    background:#fff;
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+  }
+  #cr-est-picker .cat-header{
+    padding:10px 16px 5px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:#8a7a5a;
+    background:#faf5e9;
+    border-top:1px solid #e8d9a8;
+    border-bottom:1px solid #f0e8d0;
+  }
+  #cr-est-picker .p-item{
+    padding:12px 16px;
+    border-bottom:1px solid #f0e8d0;
+    cursor:pointer;
+    transition:background .1s;
+  }
+  #cr-est-picker .p-item:hover{ background:#faf5e9; }
+  #cr-est-picker .p-item .top{
+    display:flex; align-items:baseline; gap:10px;
+    margin-bottom:3px;
+  }
+  #cr-est-picker .p-item .name{
+    flex:1;
+    font:800 13.5px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c;
+  }
+  #cr-est-picker .p-item .price{
+    font:800 12.5px 'Segoe UI',Arial,sans-serif;
+    color:#8a5a00;
+  }
+  #cr-est-picker .p-item .desc{
+    font:400 11.5px 'Segoe UI',Arial,sans-serif;
+    color:#8a7a5a;
+    max-height:2.6em; overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+  }
+  #cr-est-picker .empty{
+    padding:32px 20px; text-align:center;
+    color:#8a7a5a; font:600 13px 'Segoe UI',Arial,sans-serif;
+  }
+</style>
+
+<script id="cr-est-script">
+(function(){
+  'use strict';
+
+  var UNITS = ['', 'SQ', 'LF', 'EA', 'LS'];
+  var STATUSES = [
+    { v:'draft',    label:'Draft'    },
+    { v:'sent',     label:'Sent'     },
+    { v:'accepted', label:'Accepted' },
+    { v:'declined', label:'Declined' },
+  ];
+
+  var view = null;
+  var picker = null;
+  var state = null;
+
+  // ── helpers ─────────────────────────────────────────
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function money(n){
+    var v = Number(n) || 0;
+    return '$' + v.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+  function myEmail(){
+    return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+  }
+  function todayISO(offsetDays){
+    var d = new Date();
+    if(offsetDays) d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().slice(0, 10);
+  }
+  function fmtDateShort(iso){
+    if(!iso) return '';
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  }
+  function newLineId(){ return 'l_' + Math.random().toString(36).slice(2, 10); }
+
+  // ── data ───────────────────────────────────────────
+  async function loadForProject(projectId){
+    if(!window.supa || !projectId) return [];
+    try{
+      var r = await window.supa.from('estimates')
+        .select('*').eq('project_id', projectId).eq('archived', false)
+        .order('created_at', { ascending:false });
+      return r.data || [];
+    }catch(e){
+      console.warn('[est] loadForProject:', e);
+      return [];
+    }
+  }
+
+  async function saveEstimate(payload, existingId){
+    if(!window.supa) throw new Error('No connection');
+    payload.updated_at = new Date().toISOString();
+    if(existingId){
+      var u = await window.supa.from('estimates').update(payload).eq('id', existingId).select().single();
+      if(u.error) throw u.error;
+      return u.data;
+    }
+    payload.created_by = myEmail() || null;
+    var i = await window.supa.from('estimates').insert(payload).select().single();
+    if(i.error) throw i.error;
+    return i.data;
+  }
+
+  // ── totals math ────────────────────────────────────
+  function computeTotals(s){
+    var subtotal = 0;
+    (s.lines || []).forEach(function(l){
+      var amt = (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
+      l.amount = amt;
+      subtotal += amt;
+    });
+    var discount = Number(s.discount) || 0;
+    var total = Math.max(0, subtotal - discount);
+    var pct = Math.max(0, Math.min(100, Number(s.deposit_pct) || 0));
+    var deposit = total * pct / 100;
+    return { subtotal:subtotal, discount:discount, total:total, deposit:deposit, deposit_pct:pct };
+  }
+
+  // ══════════════════════════════════════════════════
+  // Editor
+  // ══════════════════════════════════════════════════
+  function ensureView(){
+    if(view) return view;
+    view = document.createElement('div');
+    view.id = 'cr-est-view';
+    document.body.appendChild(view);
+    return view;
+  }
+
+  function openEditor(project, existing){
+    ensureView();
+    // seed state
+    if(existing){
+      state = {
+        id             : existing.id,
+        project        : project,
+        estimate_number: existing.estimate_number || '',
+        title          : existing.title || '',
+        status         : existing.status || 'draft',
+        lines          : (existing.line_items || []).map(function(l){
+                           return Object.assign({ _lid: newLineId() }, l);
+                         }),
+        discount       : Number(existing.discount) || 0,
+        deposit_pct    : Number(existing.deposit_pct) || 30,
+        valid_days     : Number(existing.valid_days) || 30,
+        valid_through  : existing.valid_through || todayISO((Number(existing.valid_days) || 30)),
+        notes          : existing.notes || '',
+        payment_instructions: existing.payment_instructions || defaultPayInstr(),
+      };
+    }else{
+      state = {
+        id             : null,
+        project        : project,
+        estimate_number: '',
+        title          : buildDefaultTitle(project),
+        status         : 'draft',
+        lines          : [],
+        discount       : 0,
+        deposit_pct    : 30,
+        valid_days     : 30,
+        valid_through  : todayISO(30),
+        notes          : '',
+        payment_instructions: defaultPayInstr(),
+      };
+    }
+    render();
+    view.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close(){
+    if(view) view.classList.remove('open');
+    document.body.style.overflow = '';
+    state = null;
+  }
+
+  function buildDefaultTitle(project){
+    var who = (project && (project.name || project.client_name || '')) || 'Client';
+    return 'Estimate — ' + who;
+  }
+  function defaultPayInstr(){
+    return 'A 30% deposit is due at contract signing. Balance due at completion of work. Cardinal Roofing & Renovations, LLC is responsible for the clean-up and disposal of all job-related debris.';
+  }
+
+  function render(){
+    if(!view || !state) return;
+    var s = state;
+    var t = computeTotals(s);
+
+    view.innerHTML =
+      // ── Header ─────────────────────────────
+      '<div class="cr-est-head">' +
+        '<button data-act="close" type="button">Cancel</button>' +
+        '<span class="estnum">' + esc(s.estimate_number || (s.id ? '' : 'new')) + '</span>' +
+        '<h2>' + esc(s.id ? 'Edit Estimate' : 'New Estimate') + '</h2>' +
+        '<button class="primary" data-act="save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
+      '</div>' +
+
+      // ── Body ───────────────────────────────
+      '<div class="cr-est-body">' +
+
+        // Client card
+        '<div class="cr-est-clientcard">' +
+          '<div class="name">' + esc((s.project && (s.project.name || s.project.client_name)) || 'Untitled client') + '</div>' +
+          (s.project && s.project.address
+            ? '<div class="addr">' + esc(s.project.address) + '</div>'
+            : '') +
+        '</div>' +
+
+        '<label>Estimate Title</label>' +
+        '<input type="text" data-f="title" value="' + esc(s.title) + '" placeholder="Roof Replacement — Jane Smith" />' +
+
+        '<div class="cr-est-row3">' +
+          '<div>' +
+            '<label>Status</label>' +
+            '<select data-f="status">' +
+              STATUSES.map(function(o){
+                return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '>' + o.label + '</option>';
+              }).join('') +
+            '</select>' +
+          '</div>' +
+          '<div>' +
+            '<label>Valid Through</label>' +
+            '<input type="date" data-f="valid_through" value="' + esc(s.valid_through) + '" />' +
+          '</div>' +
+          '<div>' +
+            '<label>Deposit %</label>' +
+            '<input type="number" data-f="deposit_pct" value="' + esc(s.deposit_pct) + '" min="0" max="100" step="0.5" inputmode="decimal" />' +
+          '</div>' +
+        '</div>' +
+
+        // Line items
+        '<div class="cr-est-items-head">' +
+          '<h3>Line Items</h3>' +
+          '<button class="add-lib"    data-act="add-lib"    type="button">+ From Library</button>' +
+          '<button class="add-custom" data-act="add-custom" type="button">+ Custom</button>' +
+        '</div>' +
+        '<div data-slot="lines">' +
+          (s.lines.length
+            ? s.lines.map(renderLine).join('')
+            : '<div class="cr-est-empty-items">No line items yet. Tap <b>+ From Library</b> to pick from your catalog, or <b>+ Custom</b> to type a one-off item.</div>')
+        + '</div>' +
+
+        // Totals
+        renderTotals(t) +
+
+        // Notes + payment
+        '<label>Scope Notes (optional)</label>' +
+        '<textarea data-f="notes" placeholder="Additional details for the crew or homeowner\u2026">' + esc(s.notes) + '</textarea>' +
+
+        '<label>Payment Instructions</label>' +
+        '<textarea data-f="payment_instructions">' + esc(s.payment_instructions) + '</textarea>' +
+
+      '</div>';
+
+    wire();
+  }
+
+  function renderLine(l){
+    var amt = (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
+    return '<div class="cr-est-lineitem" data-lid="' + esc(l._lid) + '">' +
+      '<button class="del" data-act="del-line" title="Remove">\u2715</button>' +
+      '<input type="text" class="name-input" data-lf="name" ' +
+             'value="' + esc(l.name || '') + '" placeholder="Item name" />' +
+      '<textarea class="desc-input" data-lf="description" ' +
+                'placeholder="Description (optional) — what\u2019s included, materials, warranty">' + esc(l.description || '') + '</textarea>' +
+      '<div class="pricing">' +
+        '<input type="number" data-lf="qty" value="' + esc(l.qty != null ? l.qty : 1) + '" step="0.01" min="0" inputmode="decimal" placeholder="Qty" />' +
+        '<select class="unit-sel" data-lf="unit">' +
+          UNITS.map(function(u){
+            return '<option value="' + esc(u) + '"' + ((l.unit || '') === u ? ' selected' : '') + '>' + (u || '—') + '</option>';
+          }).join('') +
+        '</select>' +
+        '<input type="number" data-lf="unit_price" value="' + esc(l.unit_price != null ? l.unit_price : 0) + '" step="0.01" min="0" inputmode="decimal" placeholder="Unit $" />' +
+        '<div class="amount" data-slot="amount">' + money(amt) + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderTotals(t){
+    return '<div class="cr-est-totals" data-slot="totals">' +
+      '<span class="lbl">Subtotal</span>' +
+      '<span class="val" data-t="subtotal">' + money(t.subtotal) + '</span>' +
+
+      '<span class="lbl">Discount</span>' +
+      '<span class="val"><input type="number" data-f="discount" value="' + (Number(state.discount) || 0) + '" step="0.01" min="0" inputmode="decimal" /></span>' +
+
+      '<span class="rule"></span>' +
+
+      '<span class="grand-lbl">Total</span>' +
+      '<span class="grand-val" data-t="total">' + money(t.total) + '</span>' +
+
+      '<div class="deposit">' +
+        '<span style="font:800 11px \'Segoe UI\',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8a5a00;">Deposit</span>' +
+        '<input type="number" class="pct" data-f="deposit_pct" value="' + t.deposit_pct + '" min="0" max="100" step="0.5" />' +
+        '<span class="amt" data-t="deposit">' + money(t.deposit) + '</span>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // Recompute totals in place without full re-render (keeps focus, avoids input jitter)
+  function refreshTotals(){
+    if(!view || !state) return;
+    var t = computeTotals(state);
+    view.querySelectorAll('[data-t="subtotal"]').forEach(function(el){ el.textContent = money(t.subtotal); });
+    view.querySelectorAll('[data-t="total"]').forEach(function(el){ el.textContent = money(t.total); });
+    view.querySelectorAll('[data-t="deposit"]').forEach(function(el){ el.textContent = money(t.deposit); });
+    // Also update each line's amount cell
+    view.querySelectorAll('.cr-est-lineitem').forEach(function(row){
+      var l = state.lines.find(function(x){ return x._lid === row.dataset.lid; });
+      if(!l) return;
+      var amt = (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
+      var cell = row.querySelector('[data-slot="amount"]');
+      if(cell) cell.textContent = money(amt);
+    });
+  }
+
+  function wire(){
+    if(!view) return;
+    // Top-level fields
+    view.querySelector('[data-act="close"]').onclick = function(){
+      // If dirty, warn? Skipped for MVP; users can Cancel deliberately.
+      close();
+    };
+    view.querySelector('[data-act="save"]').onclick = handleSave;
+
+    var titleEl = view.querySelector('[data-f="title"]');
+    if(titleEl) titleEl.oninput = function(e){ state.title = e.target.value; };
+    var statusEl = view.querySelector('[data-f="status"]');
+    if(statusEl) statusEl.onchange = function(e){ state.status = e.target.value; };
+    var vtEl = view.querySelector('[data-f="valid_through"]');
+    if(vtEl) vtEl.onchange = function(e){ state.valid_through = e.target.value; };
+
+    view.querySelectorAll('[data-f="deposit_pct"]').forEach(function(el){
+      el.oninput = function(e){
+        state.deposit_pct = Number(e.target.value) || 0;
+        // Keep both inputs (top + totals) in sync
+        view.querySelectorAll('[data-f="deposit_pct"]').forEach(function(other){
+          if(other !== e.target) other.value = state.deposit_pct;
+        });
+        refreshTotals();
+      };
+    });
+    var discEl = view.querySelector('[data-f="discount"]');
+    if(discEl) discEl.oninput = function(e){
+      state.discount = Number(e.target.value) || 0;
+      refreshTotals();
+    };
+    var notesEl = view.querySelector('[data-f="notes"]');
+    if(notesEl) notesEl.oninput = function(e){ state.notes = e.target.value; };
+    var payEl = view.querySelector('[data-f="payment_instructions"]');
+    if(payEl) payEl.oninput = function(e){ state.payment_instructions = e.target.value; };
+
+    // Line item buttons
+    view.querySelector('[data-act="add-lib"]').onclick = openPicker;
+    view.querySelector('[data-act="add-custom"]').onclick = function(){
+      state.lines.push({
+        _lid: newLineId(),
+        name: '',
+        description: '',
+        qty: 1,
+        unit: '',
+        unit_price: 0,
+        amount: 0,
+      });
+      render();
+    };
+
+    // Line row fields
+    view.querySelectorAll('.cr-est-lineitem').forEach(function(row){
+      var lid = row.dataset.lid;
+      var line = state.lines.find(function(l){ return l._lid === lid; });
+      if(!line) return;
+      row.querySelector('[data-act="del-line"]').onclick = function(){
+        state.lines = state.lines.filter(function(l){ return l._lid !== lid; });
+        render();
+      };
+      row.querySelectorAll('[data-lf]').forEach(function(inp){
+        var field = inp.dataset.lf;
+        inp.oninput = function(e){
+          var v = e.target.value;
+          if(field === 'qty' || field === 'unit_price'){
+            line[field] = Number(v) || 0;
+            refreshTotals();
+          }else{
+            line[field] = v;
+          }
+        };
+        inp.onchange = inp.oninput;
+      });
+    });
+  }
+
+  async function handleSave(){
+    var s = state;
+    if(!s) return;
+    if(!s.project || !s.project.id){
+      alert('Estimate is not attached to a project.');
+      return;
+    }
+    if(!s.title.trim()){
+      alert('Give the estimate a title.');
+      return;
+    }
+    var totals = computeTotals(s);
+    // Strip the transient _lid before persisting
+    var linesForDb = s.lines.map(function(l){
+      var out = {};
+      Object.keys(l).forEach(function(k){ if(k !== '_lid') out[k] = l[k]; });
+      return out;
+    });
+    var payload = {
+      project_id           : s.project.id,
+      title                : s.title.trim(),
+      status               : s.status || 'draft',
+      line_items           : linesForDb,
+      subtotal             : totals.subtotal.toFixed(2),
+      discount             : totals.discount.toFixed(2),
+      total                : totals.total.toFixed(2),
+      deposit_pct          : totals.deposit_pct,
+      deposit_amount       : totals.deposit.toFixed(2),
+      valid_days           : Number(s.valid_days) || 30,
+      valid_through        : s.valid_through || null,
+      notes                : s.notes || null,
+      payment_instructions : s.payment_instructions || null,
+    };
+    var saveBtn = view.querySelector('[data-act="save"]');
+    if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026'; }
+    try{
+      var saved = await saveEstimate(payload, s.id);
+      if(typeof window.auditLog === 'function'){
+        try{ window.auditLog('estimate_save',
+          (s.id ? 'Updated ' : 'Created ') + 'estimate ' + (saved.estimate_number || '') + ': ' + payload.title,
+          s.project.id); }catch(_){ }
+      }
+      close();
+      // Refresh saved list on the profile if it's showing
+      refreshSavedList(s.project.id);
+      alert((s.id ? 'Estimate updated. ' : 'Estimate saved as ' + saved.estimate_number + '. ') + 'Total: ' + money(totals.total));
+    }catch(e){
+      alert('Save failed: ' + (e.message || e));
+      if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = s.id ? 'Save' : 'Save Draft'; }
+    }
+  }
+
+  // ══════════════════════════════════════════════════
+  // Line-item library picker
+  // ══════════════════════════════════════════════════
+  var pickerQuery = '';
+  function ensurePicker(){
+    if(picker) return picker;
+    picker = document.createElement('div');
+    picker.id = 'cr-est-picker';
+    picker.onclick = function(e){ if(e.target === picker) closePicker(); };
+    picker.innerHTML =
+      '<div class="box">' +
+        '<div class="box-head">' +
+          '<h3>Add from Library</h3>' +
+          '<button data-act="close" type="button" aria-label="Close">\u2715</button>' +
+        '</div>' +
+        '<div class="box-search">' +
+          '<input type="search" placeholder="Search library\u2026" autocomplete="off" />' +
+        '</div>' +
+        '<div class="box-list"></div>' +
+      '</div>';
+    document.body.appendChild(picker);
+    picker.querySelector('[data-act="close"]').onclick = closePicker;
+    picker.querySelector('.box-search input').oninput = function(e){
+      pickerQuery = e.target.value;
+      renderPicker();
+    };
+    return picker;
+  }
+
+  function openPicker(){
+    ensurePicker();
+    pickerQuery = '';
+    var input = picker.querySelector('.box-search input');
+    if(input) input.value = '';
+    renderPicker();
+    picker.classList.add('open');
+    setTimeout(function(){ if(input) input.focus(); }, 100);
+    // Warm the catalog if it's not loaded yet
+    if(window.CardinalLineItems && !window.CardinalLineItems.all().length){
+      window.CardinalLineItems.load();
+    }
+  }
+  function closePicker(){
+    if(picker) picker.classList.remove('open');
+  }
+
+  function renderPicker(){
+    if(!picker) return;
+    var items = (window.CardinalLineItems && window.CardinalLineItems.all()) || [];
+    if(pickerQuery){
+      var q = pickerQuery.toLowerCase();
+      items = items.filter(function(i){
+        return (i.name || '').toLowerCase().indexOf(q) !== -1
+            || (i.description || '').toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    var list = picker.querySelector('.box-list');
+    if(!items.length){
+      list.innerHTML = '<div class="empty">' +
+        (pickerQuery
+          ? 'No items match &ldquo;' + esc(pickerQuery) + '&rdquo;.'
+          : 'The library is empty. Add items in Menu &rarr; Admin &rarr; Line Item Library.') +
+        '</div>';
+      return;
+    }
+    // Group by category
+    var groups = {};
+    items.forEach(function(i){
+      var c = i.category || 'General';
+      (groups[c] = groups[c] || []).push(i);
+    });
+    var cats = Object.keys(groups).sort();
+    list.innerHTML = cats.map(function(cat){
+      return '<div class="cat-header">' + esc(cat) + '</div>' +
+        groups[cat].map(function(i){
+          var priceStr = Number(i.default_price) > 0
+            ? money(i.default_price) + (i.unit ? ' / ' + esc(i.unit) : '')
+            : '';
+          return '<div class="p-item" data-id="' + esc(i.id) + '">' +
+            '<div class="top">' +
+              '<div class="name">' + esc(i.name) + '</div>' +
+              (priceStr ? '<div class="price">' + priceStr + '</div>' : '') +
+            '</div>' +
+            (i.description ? '<div class="desc">' + esc(i.description) + '</div>' : '') +
+          '</div>';
+        }).join('');
+    }).join('');
+    list.querySelectorAll('.p-item').forEach(function(el){
+      el.onclick = function(){
+        var id = el.dataset.id;
+        var lib = window.CardinalLineItems && window.CardinalLineItems.byId(id);
+        if(!lib) return;
+        state.lines.push({
+          _lid       : newLineId(),
+          library_id : lib.id,
+          name       : lib.name,
+          description: lib.description || '',
+          qty        : 1,
+          unit       : lib.unit || '',
+          unit_price : Number(lib.default_price) || 0,
+          amount     : Number(lib.default_price) || 0,
+        });
+        closePicker();
+        render();
+      };
+    });
+  }
+
+  // ══════════════════════════════════════════════════
+  // Client-profile injection: New Estimate button + saved list
+  // ══════════════════════════════════════════════════
+  function currentProjectId(){
+    var p = window.currentProject;
+    return p && p.id ? p.id : null;
+  }
+
+  async function refreshSavedList(projectId){
+    var pid = projectId || currentProjectId();
+    if(!pid) return;
+    var host = document.getElementById('cr-est-saved-slot');
+    if(!host) return;
+    host.innerHTML = '<div class="head">Loading estimates\u2026</div>';
+    var rows = await loadForProject(pid);
+    if(!rows.length){
+      host.innerHTML = '';
+      return;
+    }
+    host.innerHTML =
+      '<div class="head">Saved Estimates (' + rows.length + ')</div>' +
+      rows.map(function(e){
+        var st = (e.status || 'draft').toLowerCase();
+        var stCls = ['draft','sent','accepted','declined'].indexOf(st) >= 0 ? st : 'draft';
+        return '<div class="cr-est-saved-row" data-eid="' + esc(e.id) + '">' +
+          '<span class="num">' + esc(e.estimate_number || '') + '</span>' +
+          '<span class="title">' + esc(e.title || 'Untitled') + '</span>' +
+          '<span class="status ' + stCls + '">' + esc(st) + '</span>' +
+          '<span class="amount">' + money(e.total) + '</span>' +
+        '</div>';
+      }).join('');
+    host.querySelectorAll('.cr-est-saved-row').forEach(function(row){
+      row.onclick = async function(){
+        var eid = row.dataset.eid;
+        var full = rows.find(function(x){ return x.id === eid; });
+        if(!full) return;
+        openEditor(window.currentProject, full);
+      };
+    });
+  }
+
+  function injectOnProfile(){
+    var proj = window.currentProject;
+    if(!proj || !proj.id) return;
+    var anchor = document.getElementById('pNewEstimateBtn');
+    if(!anchor) return;
+    // Add the "📄 New Estimate" button once
+    if(!document.getElementById('cr-est-new-btn')){
+      var btn = document.createElement('button');
+      btn.id = 'cr-est-new-btn';
+      btn.type = 'button';
+      btn.innerHTML = '\uD83D\uDCC4 New Estimate';
+      btn.title = 'Unified estimate (v2 flow)';
+      btn.onclick = function(e){
+        e.preventDefault(); e.stopPropagation();
+        openEditor(window.currentProject, null);
+      };
+      anchor.parentNode.insertBefore(btn, anchor.nextSibling);
+    }
+    // Add / refresh saved-estimates slot right after the buttons' container
+    if(!document.getElementById('cr-est-saved-slot')){
+      var slot = document.createElement('div');
+      slot.id = 'cr-est-saved-slot';
+      slot.className = 'cr-est-saved-list';
+      // Insert after the estimates buttons area — climb to the section container
+      var host = anchor.closest('section, .projform, div');
+      if(host && host.parentNode){
+        host.parentNode.insertBefore(slot, host.nextSibling);
+      }else{
+        anchor.parentNode.appendChild(slot);
+      }
+      refreshSavedList(proj.id);
+    }else{
+      // If we already have the slot but the currently-viewed project changed,
+      // reload it.
+      var slot2 = document.getElementById('cr-est-saved-slot');
+      if(slot2.dataset.pid !== proj.id){
+        slot2.dataset.pid = proj.id;
+        refreshSavedList(proj.id);
+      }
+    }
+  }
+
+  var scanScheduled = false;
+  function scheduleScan(){
+    if(scanScheduled) return;
+    scanScheduled = true;
+    requestAnimationFrame(function(){
+      scanScheduled = false;
+      try{ injectOnProfile(); }catch(e){}
+    });
+  }
+
+  function start(){
+    scheduleScan();
+    new MutationObserver(scheduleScan).observe(document.body, {
+      childList:true, subtree:true,
+      attributes:true, attributeFilter:['style','class'],
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  // ══════════════════════════════════════════════════
+  // Public API
+  // ══════════════════════════════════════════════════
+  window.CardinalEstimates = {
+    openEditor       : openEditor,
+    close            : close,
+    loadForProject   : loadForProject,
+    refreshSavedList : refreshSavedList,
   };
 })();
 </script>
