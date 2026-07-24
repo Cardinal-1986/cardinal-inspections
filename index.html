@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 175 &#8212; Auth roster match check: flags missing roster members, unrecognized sign-ins (the nickc@ vs nick@ silent-visibility bug)</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 177 &#8212; Two-row header (brand + Menu + New on row 1, utility buttons on row 2), + button back to icon-only, cpartners gated on auth</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -23263,6 +23263,11 @@ body.claim-insurance #brandLogo{
     if(LOAD_PROMISE && !force) return LOAD_PROMISE;
     var client = sb();
     if(!client){ CACHE = []; return CACHE; }
+    // Skip loading before the user is authenticated. The pre-auth
+    // Supabase call surfaces a DataCloneError on iOS Safari because
+    // of how the auth-js client handles session-less queries against
+    // RLS-guarded tables. No user, no data anyway.
+    if(!window.currentUser){ CACHE = CACHE || []; return CACHE; }
     LOAD_PROMISE = (async function(){
       try{
         var r = await client.from(TABLE)
@@ -28823,17 +28828,15 @@ body.claim-insurance #brandLogo{
      and gives the title room to breathe. */
   body.on-home-view #cr-search-btn{ display:none !important; }
 
-  /* Universal mobile header tightening — the + button and Menu
-     button were the widest fixed-width elements. Reducing their
-     padding gives 40-60px back to the title. */
+  /* Universal mobile header tightening — trim padding to give
+     the brand title room. NOTE: previous version set
+     font-size:16px on #addProjectBtn which overrode the base
+     app's font-size:0 (icon-only design), causing "+ New +" to
+     stack vertically. The + button is now handled properly by
+     header_two_row.html; leave padding alone here. */
   @media (max-width:640px){
-    header.site #addProjectBtn{
-      padding:6px 12px !important;
-      font-size:16px !important;
-    }
     header.site #navBtn{
       padding:6px 10px !important;
-      font-size:12px !important;
     }
     header.site .cr-portal-chip{
       padding:4px 9px !important;
@@ -31925,6 +31928,1223 @@ body.claim-insurance #brandLogo{
       if(integrate() || ++n > 30) clearInterval(iv);
     }, 200);
   }
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: admin_extra_checks.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — STORAGE BUCKET TEST + DUPLICATE LEAD DETECTION
+ v2026-07-23 · admin-only, extends CardinalAdminHealth
+────────────────────────────────────────────────────────────────────
+ Two checks that don't fit the "table exists" or "invariant satisfied"
+ patterns:
+
+ (1) STORAGE BUCKET TEST — writes a tiny probe blob to the `photos`
+     bucket, reads it back, deletes it. If any step fails, that's
+     the concrete signal cardinal_storage_setup.sql hasn't been run
+     OR the bucket policies are misconfigured. Different from just
+     checking that the bucket "exists" — this proves it actually
+     works end-to-end for authenticated writes and public reads.
+
+ (2) DUPLICATE LEAD DETECTION — scans projects for near-duplicate
+     addresses within a 7-day window. Case where two reps
+     accidentally create leads for the same house on the same day.
+     Also flags exact-address duplicates regardless of time (older
+     leads that got re-created). Surfaces the top 20 pairs so
+     admins can merge them.
+
+ Both integrate into CardinalAdminHealth via the same wrap-and-push
+ pattern used by data_invariant_checks and auth_roster_check.
+ Admin-only (theo@ / joan@).
+
+ Console APIs:
+   CardinalStorage.run()   / .results() / .print()
+   CardinalDupeLeads.run() / .results() / .print()
+
+ INSTALL: paste after auth_roster_check.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<script id="cr-extra-checks-script">
+(function () {
+  'use strict';
+
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return window.currentUser.email;
+      if(typeof window.my_email === 'function') return window.my_email();
+    }catch(e){}
+    return '';
+  }
+  function isAdmin(){
+    return ADMIN_EMAILS.indexOf((currentEmail() || '').toLowerCase()) !== -1;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // #4 STORAGE BUCKET END-TO-END TEST
+  // ═══════════════════════════════════════════════════════════
+  var STORAGE_LAST = null;
+
+  async function runStorage(){
+    var findings = [];
+    if(!window.supa || !window.supa.storage){
+      var f = {
+        key   : 'storage-unavailable',
+        label : 'Photos bucket end-to-end',
+        status: 'crit',
+        message: 'Supabase storage client not available',
+        fix   : 'Ensure the Supabase JS client is loaded with storage enabled.',
+      };
+      STORAGE_LAST = [f];
+      return [f];
+    }
+
+    var probeKey = '_healthcheck/probe-' + Date.now() + '.txt';
+    var probeBody = 'cardinal-health-probe';
+    var stage = 'init';
+
+    try{
+      stage = 'upload';
+      var up = await window.supa.storage
+        .from('photos')
+        .upload(probeKey, new Blob([probeBody], { type:'text/plain' }), { upsert:true });
+      if(up.error){
+        var missing = /not found|does not exist|no such bucket/i.test(up.error.message || '');
+        findings.push({
+          key    : 'storage-write',
+          label  : 'Photos bucket write test',
+          status : missing ? 'crit' : 'warn',
+          message: 'Write failed: ' + up.error.message,
+          fix    : missing
+            ? 'The photos bucket doesn\'t exist. Run cardinal_storage_setup.sql in Supabase.'
+            : 'Check the bucket\'s authenticated-write policy.',
+        });
+        STORAGE_LAST = findings;
+        return findings;
+      }
+
+      stage = 'download';
+      var down = await window.supa.storage.from('photos').download(probeKey);
+      if(down.error){
+        findings.push({
+          key    : 'storage-read',
+          label  : 'Photos bucket read test',
+          status : 'warn',
+          message: 'Read failed: ' + down.error.message,
+          fix    : 'Bucket write works but read fails \u2014 check public-read policy.',
+        });
+      }
+
+      stage = 'delete';
+      var del = await window.supa.storage.from('photos').remove([probeKey]);
+      if(del.error){
+        findings.push({
+          key    : 'storage-delete',
+          label  : 'Photos bucket cleanup',
+          status : 'warn',
+          message: 'Probe file left behind (delete failed): ' + del.error.message,
+          fix    : 'The probe file at ' + probeKey + ' will accumulate. ' +
+                   'Add a delete policy or manually clean the _healthcheck/ folder.',
+        });
+      }
+
+      if(!findings.length){
+        findings.push({
+          key    : 'storage-ok',
+          label  : 'Photos bucket end-to-end',
+          status : 'ok',
+          message: 'Write / read / delete all worked',
+          fix    : '',
+        });
+      }
+    }catch(e){
+      findings.push({
+        key    : 'storage-exception',
+        label  : 'Photos bucket ' + stage,
+        status : 'warn',
+        message: 'Threw at ' + stage + ' step: ' + (e.message || e),
+        fix    : '',
+      });
+    }
+    STORAGE_LAST = findings;
+    return findings;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // #5 DUPLICATE LEAD DETECTION
+  // ═══════════════════════════════════════════════════════════
+  var DUPES_LAST = null;
+
+  function normalizeAddress(s){
+    return String(s || '')
+      .toLowerCase()
+      .replace(/[.,#]/g, ' ')
+      .replace(/\bstreet\b/g,  'st')
+      .replace(/\bavenue\b/g,  'ave')
+      .replace(/\bboulevard\b/g,'blvd')
+      .replace(/\bdrive\b/g,   'dr')
+      .replace(/\broad\b/g,    'rd')
+      .replace(/\bcourt\b/g,   'ct')
+      .replace(/\bplace\b/g,   'pl')
+      .replace(/\blane\b/g,    'ln')
+      .replace(/\bapartment\b/g,'apt')
+      .replace(/\bnorth\b/g,   'n')
+      .replace(/\bsouth\b/g,   's')
+      .replace(/\beast\b/g,    'e')
+      .replace(/\bwest\b/g,    'w')
+      .replace(/\s+/g,         ' ')
+      .trim();
+  }
+
+  async function runDupeLeads(){
+    if(!window.supa){
+      var f = { key:'dupes-unavailable', label:'Duplicate lead scan',
+                status:'warn', message:'Supabase unavailable', fix:'' };
+      DUPES_LAST = [f];
+      return [f];
+    }
+    try{
+      var r = await window.supa.from('projects')
+        .select('id, client_name, address, created_at, created_by, stage')
+        .not('address', 'is', null)
+        .order('created_at', { ascending:false })
+        .limit(2000);
+      if(r.error){
+        var f = { key:'dupes-query', label:'Duplicate lead scan',
+                  status:'warn', message:'Query failed: ' + r.error.message,
+                  fix:'' };
+        DUPES_LAST = [f];
+        return [f];
+      }
+      var rows = r.data || [];
+      var byAddr = {};
+      rows.forEach(function(p){
+        var k = normalizeAddress(p.address);
+        if(!k || k.length < 5) return;
+        (byAddr[k] = byAddr[k] || []).push(p);
+      });
+      var pairs = [];
+      Object.keys(byAddr).forEach(function(k){
+        var group = byAddr[k];
+        if(group.length < 2) return;
+        // Sort by created_at descending
+        group.sort(function(a,b){
+          return String(b.created_at).localeCompare(String(a.created_at));
+        });
+        pairs.push({
+          normalized: k,
+          rows      : group,
+          within7d  : (function(){
+            for(var i = 0; i < group.length - 1; i++){
+              var d1 = new Date(group[i].created_at).getTime();
+              var d2 = new Date(group[i+1].created_at).getTime();
+              if(Math.abs(d1 - d2) < 7 * 86400000) return true;
+            }
+            return false;
+          })(),
+        });
+      });
+      // Sort so most-recent-collision goes first
+      pairs.sort(function(a,b){
+        if(a.within7d && !b.within7d) return -1;
+        if(b.within7d && !a.within7d) return 1;
+        return String(b.rows[0].created_at).localeCompare(String(a.rows[0].created_at));
+      });
+
+      if(!pairs.length){
+        DUPES_LAST = [{
+          key:'dupes-scan', label:'Duplicate lead scan', status:'ok',
+          message: 'No duplicate addresses found across ' + rows.length + ' projects',
+          fix:'',
+        }];
+        return DUPES_LAST;
+      }
+      var recent = pairs.filter(function(p){ return p.within7d; });
+      var sample = pairs.slice(0, 3).map(function(p){
+        var names = p.rows.map(function(r){
+          return (r.client_name || '?') + '/' + (r.stage || '?') +
+                 '/' + ((r.created_by || '').split('@')[0] || '?');
+        }).join(' + ');
+        return p.rows[0].address + ' \u2192 ' + names;
+      }).join(' | ');
+      DUPES_LAST = [{
+        key    : 'dupes-scan',
+        label  : 'Duplicate lead scan',
+        status : recent.length ? 'warn' : 'warn',
+        message: pairs.length + ' address collision(s)' +
+                 (recent.length ? ', ' + recent.length + ' within 7 days' : '') +
+                 ' \u2014 e.g. ' + sample,
+        fix    : 'Open each pair, confirm they\'re the same client, ' +
+                 'then move activity onto the primary and archive the other. ' +
+                 (recent.length ? 'The 7-day-window cases are highest priority \u2014 two reps ' +
+                                  'may have created leads without seeing each other\'s work.' : ''),
+      }];
+      return DUPES_LAST;
+    }catch(e){
+      var f = { key:'dupes-exception', label:'Duplicate lead scan',
+                status:'warn', message:'Threw: ' + e.message, fix:'' };
+      DUPES_LAST = [f];
+      return [f];
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Public APIs
+  // ═══════════════════════════════════════════════════════════
+  function printer(name, getLast){
+    return function(){
+      console.group('%c[Cardinal ' + name + ']',
+                    'font-weight:800; color:#d4a017;');
+      var last = getLast();
+      if(!last){ console.log('Not yet run.'); }
+      else{
+        last.forEach(function(r){
+          var fn = r.status === 'crit' ? 'error' :
+                   r.status === 'warn' ? 'warn' : 'log';
+          console[fn]('  \u2022 ' + r.label + ' \u2014 ' + r.message);
+          if(r.fix) console.log('    Fix: ' + r.fix);
+        });
+      }
+      console.groupEnd();
+      return last;
+    };
+  }
+  window.CardinalStorage   = { run: runStorage,   results: function(){ return STORAGE_LAST; },
+                               print: printer('Storage',   function(){ return STORAGE_LAST; }) };
+  window.CardinalDupeLeads = { run: runDupeLeads, results: function(){ return DUPES_LAST; },
+                               print: printer('Dupe Leads', function(){ return DUPES_LAST; }) };
+
+  // ═══════════════════════════════════════════════════════════
+  // Extend CardinalAdminHealth
+  // ═══════════════════════════════════════════════════════════
+  function integrate(){
+    var A = window.CardinalAdminHealth;
+    if(!A || typeof A.check !== 'function') return false;
+    if(A.__crExtraHooked) return true;
+    A.__crExtraHooked = true;
+
+    var origCheck = A.check;
+    A.check = async function(){
+      var results = await origCheck.apply(this, arguments);
+      if(isAdmin()){
+        try{
+          var storage = await runStorage();
+          storage.forEach(function(r){
+            results.env.push({
+              key: 'storage:' + r.key, purpose: r.label, status: r.status,
+              message: r.message, fix: r.fix, __storage: true,
+            });
+          });
+        }catch(e){}
+        try{
+          var dupes = await runDupeLeads();
+          dupes.forEach(function(r){
+            results.env.push({
+              key: 'dupes:' + r.key, purpose: r.label, status: r.status,
+              message: r.message, fix: r.fix, __dupes: true,
+            });
+          });
+        }catch(e){}
+      }
+      return results;
+    };
+    return true;
+  }
+  if(!integrate()){
+    var n = 0, iv = setInterval(function(){
+      if(integrate() || ++n > 30) clearInterval(iv);
+    }, 200);
+  }
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: perf_watchdog.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — PERFORMANCE WATCHDOG
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ Two performance guardrails:
+
+ (1) TIME TO INTERACTIVE — measures ms from page load to when the
+     home dashboard first renders. Logs to console once. If > 3000ms
+     on mobile, warns. Handy for catching new modules that slow
+     the boot path.
+
+ (2) RE-RENDER LOOP DETECTION — MutationObserver counts subtree
+     mutations per 1s window. If a container sustains > 60/sec for
+     5+ consecutive seconds, that's a rAF-repaint loop (my previous
+     bug in community_client_view before build 158). Logs the
+     offending container path. Would have caught the 60fps loop
+     without a human noticing performance degradation.
+
+ Everyone runs #1. #2 runs silently in the background and only
+ surfaces via console + CardinalPerf.status().
+
+ Console API:
+   CardinalPerf.status()       → { tti, loops, mutationsPerSec }
+   CardinalPerf.startWatching() → force restart the mutation watcher
+   CardinalPerf.stopWatching()  → pause (useful during heavy renders)
+
+ INSTALL: paste after admin_extra_checks.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<script id="cr-perf-script">
+(function () {
+  'use strict';
+
+  var TTI            = null;                 // ms
+  var LOOPS_SEEN     = [];                   // { path, mutationsPerSec, sustainedFor, at }
+  var WINDOW_MS      = 1000;
+  var HIGH_THRESH    = 60;                   // mutations / sec suggesting a rAF loop
+  var SUSTAIN_TICKS  = 5;                    // 5 consecutive windows
+  var MUTATION_LOG   = [];                   // ring buffer of recent mutations
+  var TICK_COUNTS    = {};                   // container path → consecutive high ticks
+  var observer       = null;
+
+  // ── #1 Time to interactive ─────────────────────────────
+  function measureTTI(){
+    if(TTI != null) return;
+    // Home dashboard = presence of a stage bubble in the pipeline
+    // (the "L" leads bubble). If that's rendered, the app is usable.
+    var hint = document.querySelector('.pipetitle') ||
+               document.querySelector('#pipeRow') ||
+               document.querySelector('.pipecard');
+    if(!hint) return;
+    TTI = Math.round(performance.now());
+    var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    var budget = isMobile ? 3000 : 2000;
+    if(TTI > budget){
+      console.warn('%c[Cardinal Perf] TTI ' + TTI + 'ms exceeds ' + budget + 'ms budget for ' +
+                   (isMobile ? 'mobile' : 'desktop'),
+                   'font-weight:800; color:#c87a00;');
+    }else{
+      console.log('%c[Cardinal Perf] TTI ' + TTI + 'ms',
+                  'font-weight:600; color:#2e7d32;');
+    }
+  }
+
+  // Poll for the dashboard hint appearing
+  var ttiPoll = 0;
+  var ttiIv = setInterval(function(){
+    measureTTI();
+    if(TTI != null || ++ttiPoll > 100){ clearInterval(ttiIv); }
+  }, 100);
+
+  // ── #2 Re-render loop detection ────────────────────────
+  function pathOf(el){
+    // Compact CSS-like path for the offending container
+    var parts = [];
+    var n = el;
+    for(var i = 0; i < 4 && n && n.nodeType === 1; i++){
+      var tag = n.tagName.toLowerCase();
+      var id  = n.id ? '#' + n.id : '';
+      var cls = (n.className || '');
+      cls = typeof cls === 'string' && cls.length ? '.' + cls.split(' ').slice(0,2).join('.') : '';
+      parts.unshift(tag + id + cls);
+      n = n.parentNode;
+    }
+    return parts.join(' > ');
+  }
+
+  function onMutations(mutations){
+    var now = performance.now();
+    // Group mutations by nearest [id]-bearing parent (5 levels up)
+    // so the report points at a real container, not orphan text nodes.
+    for(var i = 0; i < mutations.length; i++){
+      var m = mutations[i];
+      var target = m.target;
+      var host = target;
+      for(var k = 0; k < 5 && host && host.nodeType === 1; k++){
+        if(host.id) break;
+        host = host.parentNode;
+      }
+      if(!host || host.nodeType !== 1) host = target.nodeType === 1 ? target : target.parentNode;
+      if(!host || host.nodeType !== 1) continue;
+      MUTATION_LOG.push({ path: pathOf(host), at: now });
+    }
+    // Trim to last WINDOW_MS
+    var cutoff = now - WINDOW_MS;
+    while(MUTATION_LOG.length && MUTATION_LOG[0].at < cutoff) MUTATION_LOG.shift();
+  }
+
+  var evalIv = null;
+  function evaluate(){
+    var byPath = {};
+    MUTATION_LOG.forEach(function(m){
+      byPath[m.path] = (byPath[m.path] || 0) + 1;
+    });
+    var flagged = [];
+    Object.keys(byPath).forEach(function(path){
+      var rate = byPath[path];  // per WINDOW_MS window (1s)
+      if(rate >= HIGH_THRESH){
+        TICK_COUNTS[path] = (TICK_COUNTS[path] || 0) + 1;
+        if(TICK_COUNTS[path] === SUSTAIN_TICKS){
+          var entry = { path: path, mutationsPerSec: rate, sustainedFor: SUSTAIN_TICKS, at: new Date().toISOString() };
+          LOOPS_SEEN.push(entry);
+          console.warn('%c[Cardinal Perf] Re-render loop detected: ' + path,
+                       'font-weight:800; color:#c8202e;');
+          console.warn('  ~' + rate + ' mutations/sec sustained for ' + SUSTAIN_TICKS + 's');
+          console.warn('  Look for a wire function that runs on every render without a dataset.sig guard, ' +
+                       'or a MutationObserver on that container that itself triggers a re-render.');
+        }
+        flagged.push(path);
+      }else{
+        TICK_COUNTS[path] = 0;
+      }
+    });
+  }
+
+  function startWatching(){
+    if(observer) return;
+    observer = new MutationObserver(onMutations);
+    observer.observe(document.body, { childList:true, subtree:true, characterData:false });
+    evalIv = setInterval(evaluate, WINDOW_MS);
+  }
+  function stopWatching(){
+    if(observer){ observer.disconnect(); observer = null; }
+    if(evalIv){ clearInterval(evalIv); evalIv = null; }
+  }
+
+  // Kick off after a beat so we don't count the boot storm as a loop
+  setTimeout(startWatching, 4000);
+
+  window.CardinalPerf = {
+    status: function(){
+      var byPath = {};
+      MUTATION_LOG.forEach(function(m){
+        byPath[m.path] = (byPath[m.path] || 0) + 1;
+      });
+      return {
+        tti           : TTI,
+        loops         : LOOPS_SEEN.slice(),
+        mutationsPerSec: byPath,
+      };
+    },
+    startWatching: startWatching,
+    stopWatching : stopWatching,
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: e2e_smoke_walk.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — E2E SMOKE WALK
+ v2026-07-23 · admin-triggered scripted navigation
+────────────────────────────────────────────────────────────────────
+ Admin-only scripted click-through that opens each plugin, verifies
+ an expected element renders, tries one interaction, and closes.
+ Catches the class of bug where I break navigation and nobody
+ notices for a week. No assertions on data — pure "does the app
+ not crash walking these paths."
+
+ Steps:
+   1. Snapshot: capture current view
+   2. Open Estimates       → wait for [data-act="new-ai"] → check
+      → click [data-act="new-ai"] → wait for [data-act="generate"]
+      → click [data-act="back"] → close
+   3. Open Claims          → wait for [data-act="new"] → close
+   4. Open Pricing         → wait for [data-act="add"] → close
+   5. Open Coach           → wait for coach mount visible → close
+   6. Open Community Hub   → wait for #cardinalCommunityHubView → close
+   7. Restore snapshot: return to Home
+   8. Report each step: passed / failed / errored
+
+ Runs `window.onerror` + `unhandledrejection` capture during the
+ walk so we know if anything threw silently.
+
+ Trigger:
+   • Console:  CardinalWalk.run()
+   • UI:       CardinalWalk.showRunner() — opens a small confirm
+               dialog, then a live results modal
+
+ Duration: 10-15 seconds. User cannot interact during the walk.
+
+ INSTALL: paste after perf_watchdog.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-walk-styles">
+  .cr-walk-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9900;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-walk-box{
+    background:#fff; border-radius:14px; max-width:520px; width:100%;
+    padding:22px; box-shadow:0 24px 60px rgba(0,0,0,.44);
+    max-height:80vh; display:flex; flex-direction:column;
+  }
+  .cr-walk-box h3{
+    margin:0 0 8px; font:800 13px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase; color:#2c2c2c;
+  }
+  .cr-walk-box p{
+    margin:0 0 14px; font:600 12.5px 'Segoe UI',Arial,sans-serif;
+    color:#6b6b6b; line-height:1.5;
+  }
+  .cr-walk-steps{
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    max-height:50vh;
+    margin:0 0 14px; padding-right:4px;
+  }
+  .cr-walk-step{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; margin:2px 0; border-radius:8px;
+    background:#faf6ef; font:600 12.5px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-walk-step.pass{ background:#e7f4e7; color:#1e5e20; }
+  .cr-walk-step.fail{ background:#fbe4e6; color:#8a1620; }
+  .cr-walk-step.running{ background:#fdf1e2; color:#6b4a00; }
+  .cr-walk-step .ico{
+    flex:0 0 auto; width:22px; height:22px;
+    display:inline-flex; align-items:center; justify-content:center;
+    border-radius:5px; font-size:12px; font-weight:800;
+    background:#d0cec8; color:#fff;
+  }
+  .cr-walk-step.pass .ico{ background:#2e7d32; }
+  .cr-walk-step.fail .ico{ background:#c8202e; }
+  .cr-walk-step.running .ico{ background:#c87a00; }
+  .cr-walk-step .body{ flex:1; min-width:0; }
+  .cr-walk-step .name{ font-weight:800; }
+  .cr-walk-step .detail{
+    font:600 11px 'Segoe UI',Arial,sans-serif; color:#6b6b6b; margin-top:2px;
+  }
+  .cr-walk-step.pass .detail,
+  .cr-walk-step.fail .detail{ color:inherit; opacity:.75; }
+  .cr-walk-acts{
+    display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;
+  }
+  .cr-walk-acts button{
+    border:0; border-radius:6px; padding:8px 14px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; cursor:pointer;
+  }
+  .cr-walk-acts button.primary{ background:#D9282A; color:#fff; }
+  .cr-walk-acts button.primary:hover{ background:#B01F21; }
+  .cr-walk-acts button.ghost{
+    background:transparent; color:#6b6b6b; border:1px solid #d0d0d0;
+  }
+  .cr-walk-acts button.ghost:hover{ background:#f7f7f7; }
+  .cr-walk-acts button:disabled{ opacity:.5; cursor:wait; }
+</style>
+
+<script id="cr-walk-script">
+(function () {
+  'use strict';
+
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return window.currentUser.email;
+      if(typeof window.my_email === 'function') return window.my_email();
+    }catch(e){}
+    return '';
+  }
+  function isAdmin(){
+    return ADMIN_EMAILS.indexOf((currentEmail() || '').toLowerCase()) !== -1;
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  async function waitFor(fn, timeout){
+    var start = performance.now();
+    while(performance.now() - start < (timeout || 5000)){
+      try{ var v = fn(); if(v) return v; }catch(e){}
+      await sleep(80);
+    }
+    return null;
+  }
+
+  function visible(el){
+    return el && el.offsetParent != null && getComputedStyle(el).display !== 'none';
+  }
+
+  // ── The steps ───────────────────────────────────────────
+  var STEPS = [
+    {
+      name  : 'Open Estimates plugin',
+      detail: 'crOpenEstimates() → wait for + New AI',
+      run   : async function(){
+        if(typeof window.crOpenEstimates !== 'function') throw new Error('crOpenEstimates not defined');
+        window.crOpenEstimates();
+        var mount = await waitFor(function(){
+          var m = document.getElementById('cr-estimates-mount');
+          return visible(m) ? m : null;
+        }, 6000);
+        if(!mount) throw new Error('Estimates mount never visible');
+        var newAi = await waitFor(function(){
+          return mount.querySelector('[data-act="new-ai"]');
+        }, 4000);
+        if(!newAi) throw new Error('[data-act="new-ai"] never rendered');
+      },
+    },
+    {
+      name  : 'Tap + New AI',
+      detail: 'Enter AI Create view, verify Generate button, back out',
+      run   : async function(){
+        var mount = document.getElementById('cr-estimates-mount');
+        var newAi = mount && mount.querySelector('[data-act="new-ai"]');
+        if(!newAi) throw new Error('[data-act="new-ai"] missing');
+        newAi.click();
+        var gen = await waitFor(function(){
+          return document.querySelector('[data-act="generate"]');
+        }, 5000);
+        if(!gen) throw new Error('AI Create view never rendered [data-act="generate"]');
+        var back = document.querySelector('#cr-estimates-mount [data-act="back"]');
+        if(!back) throw new Error('Back button not rendered on AI Create');
+        back.click();
+        var listAgain = await waitFor(function(){
+          return document.querySelector('#cr-estimates-mount [data-act="new-ai"]');
+        }, 3000);
+        if(!listAgain) throw new Error('List did not re-render after Back');
+      },
+    },
+    {
+      name  : 'Close Estimates',
+      detail: 'crCloseAll() → return to Home',
+      run   : async function(){
+        if(typeof window.crCloseAll === 'function') window.crCloseAll();
+        else if(typeof window.showHome === 'function') window.showHome();
+        await sleep(200);
+        var mount = document.getElementById('cr-estimates-mount');
+        if(visible(mount)) throw new Error('Estimates still visible after crCloseAll');
+      },
+    },
+    {
+      name  : 'Open Claims plugin',
+      detail: 'crOpenClaims() → wait for + New',
+      run   : async function(){
+        if(typeof window.crOpenClaims !== 'function') throw new Error('crOpenClaims not defined');
+        window.crOpenClaims();
+        var mount = await waitFor(function(){
+          var m = document.getElementById('cr-claims-mount');
+          return visible(m) ? m : null;
+        }, 6000);
+        if(!mount) throw new Error('Claims mount never visible');
+        var newBtn = await waitFor(function(){
+          return mount.querySelector('[data-act="new"]');
+        }, 4000);
+        if(!newBtn) throw new Error('[data-act="new"] never rendered');
+        if(typeof window.crCloseAll === 'function') window.crCloseAll();
+        await sleep(200);
+      },
+    },
+    {
+      name  : 'Open Pricing plugin',
+      detail: 'crOpenPricing("roofing") → wait for + Add',
+      run   : async function(){
+        if(typeof window.crOpenPricing !== 'function') throw new Error('crOpenPricing not defined');
+        window.crOpenPricing('roofing');
+        var mount = await waitFor(function(){
+          var m = document.getElementById('cr-pricing-mount');
+          return visible(m) ? m : null;
+        }, 6000);
+        if(!mount) throw new Error('Pricing mount never visible');
+        var addBtn = await waitFor(function(){
+          return mount.querySelector('[data-act="add"]');
+        }, 4000);
+        if(!addBtn) throw new Error('[data-act="add"] never rendered');
+        if(typeof window.crCloseAll === 'function') window.crCloseAll();
+        await sleep(200);
+      },
+    },
+    {
+      name  : 'Open Coach plugin',
+      detail: 'CardinalCoach.open() → wait for mount',
+      run   : async function(){
+        if(!window.CardinalCoach || typeof window.CardinalCoach.open !== 'function'){
+          throw new Error('CardinalCoach.open not defined');
+        }
+        window.CardinalCoach.open();
+        var mount = await waitFor(function(){
+          var m = document.getElementById('cr-coach-mount');
+          return visible(m) ? m : null;
+        }, 6000);
+        if(!mount) throw new Error('Coach mount never visible');
+        // Close via any back button
+        var back = mount.querySelector('[data-act="x"], [data-act="back"]');
+        if(back) back.click();
+        else if(typeof window.crCloseAll === 'function') window.crCloseAll();
+        else if(typeof window.showHome === 'function') window.showHome();
+        await sleep(200);
+      },
+    },
+    {
+      name  : 'Open Community Hub',
+      detail: 'CardinalCommunityHub.show() → verify header',
+      run   : async function(){
+        if(!window.CardinalCommunityHub || typeof window.CardinalCommunityHub.show !== 'function'){
+          throw new Error('CardinalCommunityHub.show not defined');
+        }
+        window.CardinalCommunityHub.show();
+        var view = await waitFor(function(){
+          var v = document.getElementById('communityHubView') ||
+                  document.querySelector('.viewing-community-hub');
+          return visible(v) ? v : null;
+        }, 6000);
+        if(!view) throw new Error('Community Hub never became visible');
+      },
+    },
+    {
+      name  : 'Return Home',
+      detail: 'showHome() → verify pipeline card visible',
+      run   : async function(){
+        if(typeof window.showHome === 'function') window.showHome();
+        var pipe = await waitFor(function(){
+          return document.querySelector('.pipetitle');
+        }, 5000);
+        if(!pipe) throw new Error('Home dashboard did not restore');
+      },
+    },
+  ];
+
+  // ── Runner ──────────────────────────────────────────────
+  var RESULTS = null;
+
+  async function run(reportFn){
+    RESULTS = [];
+    var errors = [];
+    var origErr = window.onerror;
+    var origRej = window.onunhandledrejection;
+    var errHandler = function(e){ errors.push(String(e && e.message || e)); };
+    window.addEventListener('error', errHandler);
+    window.addEventListener('unhandledrejection', errHandler);
+
+    var t0 = performance.now();
+    for(var i = 0; i < STEPS.length; i++){
+      var step = STEPS[i];
+      var entry = { name: step.name, detail: step.detail, status: 'running',
+                    ms: 0, error: null };
+      RESULTS.push(entry);
+      if(reportFn) reportFn(RESULTS, i);
+      var s0 = performance.now();
+      try{
+        await step.run();
+        entry.status = 'pass';
+      }catch(e){
+        entry.status = 'fail';
+        entry.error  = e && e.message || String(e);
+      }
+      entry.ms = Math.round(performance.now() - s0);
+      if(reportFn) reportFn(RESULTS, i);
+    }
+    // Detach listeners
+    window.removeEventListener('error', errHandler);
+    window.removeEventListener('unhandledrejection', errHandler);
+
+    var total = Math.round(performance.now() - t0);
+    var passed = RESULTS.filter(function(r){ return r.status === 'pass'; }).length;
+    var failed = RESULTS.filter(function(r){ return r.status === 'fail'; }).length;
+    console.group('%c[Cardinal E2E]', 'font-weight:800; color:#d4a017;');
+    console.log(passed + ' passed, ' + failed + ' failed, ' + errors.length +
+                ' uncaught error(s) in ' + total + 'ms');
+    RESULTS.forEach(function(r){
+      var fn = r.status === 'pass' ? 'log' : 'warn';
+      console[fn]('  ' + (r.status === 'pass' ? '\u2713' : '\u2717') +
+                  ' ' + r.name + ' (' + r.ms + 'ms)' +
+                  (r.error ? ' \u2014 ' + r.error : ''));
+    });
+    if(errors.length){
+      console.warn('Uncaught during walk:');
+      errors.forEach(function(e){ console.warn('  \u2022 ' + e); });
+    }
+    console.groupEnd();
+    return { results: RESULTS, errors: errors, ms: total };
+  }
+
+  // ── UI ──────────────────────────────────────────────────
+  function stepHtml(step, idx){
+    var iconChar = step.status === 'pass' ? '\u2713' :
+                   step.status === 'fail' ? '\u2717' :
+                   step.status === 'running' ? '\u2026' : (idx + 1);
+    return '<div class="cr-walk-step ' + step.status + '">' +
+             '<span class="ico">' + iconChar + '</span>' +
+             '<div class="body">' +
+               '<div class="name">' + esc(step.name) + '</div>' +
+               '<div class="detail">' +
+                 esc(step.detail) +
+                 (step.status !== 'running' && step.status ? ' \u2014 ' + step.ms + 'ms' : '') +
+                 (step.error ? '<br><b>Error:</b> ' + esc(step.error) : '') +
+               '</div>' +
+             '</div>' +
+           '</div>';
+  }
+
+  function renderResults(bg, results, activeIdx){
+    var stepsHtml = STEPS.map(function(s, i){
+      var r = results && results[i];
+      var step = r ? r : { name: s.name, detail: s.detail, status: 'pending', ms: 0, error: null };
+      return stepHtml(step, i);
+    }).join('');
+    bg.querySelector('.cr-walk-steps').innerHTML = stepsHtml;
+  }
+
+  function showRunner(){
+    if(!isAdmin()){ alert('Admin only.'); return; }
+
+    var bg = document.createElement('div');
+    bg.className = 'cr-walk-bg';
+    bg.innerHTML =
+      '<div class="cr-walk-box">' +
+        '<h3>E2E Smoke Walk</h3>' +
+        '<p>This will navigate through Estimates, Claims, Pricing, Coach, and Community Hub. ' +
+          'Takes 10-15 seconds. You can\'t interact with the app during the walk.</p>' +
+        '<div class="cr-walk-steps"></div>' +
+        '<div class="cr-walk-acts">' +
+          '<button class="ghost" data-act="close">Close</button>' +
+          '<button class="primary" data-act="run">Start walk</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(bg);
+    renderResults(bg, null);
+
+    var close = function(){ if(bg.parentNode) bg.parentNode.removeChild(bg); };
+    bg.querySelector('[data-act="close"]').onclick = close;
+    bg.querySelector('[data-act="run"]').onclick = async function(){
+      var runBtn = bg.querySelector('[data-act="run"]');
+      runBtn.disabled = true;
+      runBtn.textContent = 'Running\u2026';
+      await run(function(results){
+        renderResults(bg, results);
+      });
+      runBtn.disabled = false;
+      runBtn.textContent = 'Run again';
+    };
+  }
+
+  window.CardinalWalk = {
+    run       : run,
+    results   : function(){ return RESULTS; },
+    showRunner: showRunner,
+    steps     : function(){ return STEPS.map(function(s){ return { name:s.name, detail:s.detail }; }); },
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: header_two_row.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — TWO-ROW HEADER
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ The single-row header hit the "too many controls competing for
+ space" wall. Even after v166 removed the Landing chip, Dashboard
+ text, and duplicate search, we still had: logo, brand title,
+ portal chip, admin health badge, home icon, search icon, Menu,
+ and + New — eight elements trying to share one row on a phone.
+ Result: brand title truncated to "CARDINAL.R", + button wrapped
+ to "+ New +" stacked across three lines.
+
+ This module rebuilds the header as two clean rows:
+
+   Row 1 (identity + primary): logo + title + Menu + + New
+   Row 2 (utility): portal chip + home + search + health badge
+
+ Each row has room to breathe. Brand title fits fully. Buttons
+ don't compete. Row 2 tint is subtly darker so it reads as a
+ secondary strip.
+
+ Works by moving specific buttons from #navWrap into a new
+ #cr-hdr-row2 container, then keeping them there via a
+ MutationObserver — because other modules (home button, portal
+ sync, admin health) create their buttons directly in #navWrap
+ and would otherwise pull them back onto row 1.
+
+ Also fixes the "+ New +" stacking bug by resetting font-size:0
+ on #addProjectBtn (returning it to icon-only behavior from the
+ base app) and forcing white-space:nowrap defensively.
+
+ INSTALL: paste after e2e_smoke_walk.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-hdr2row-styles">
+  /* ─── Reshape the header into a flex-column ─────────────── */
+  header.site{
+    padding:0 !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:0 !important;
+  }
+
+  /* ─── Row 1 — brand + primary CTAs ─────────────────────── */
+  #cr-hdr-row1{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 12px;
+    min-height:44px;
+    box-sizing:border-box;
+  }
+  #cr-hdr-row1 .brand,
+  #cr-hdr-row1 .brand-mark,
+  #cr-hdr-row1 .brand-wrap,
+  #cr-hdr-row1 #brandTitle{
+    flex:1 1 auto; min-width:0;
+    display:flex; align-items:center; gap:8px;
+  }
+  #cr-hdr-row1 #brandTitle{
+    overflow:hidden;
+  }
+  #cr-hdr-row1 #brandTitle h1{
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    min-width:0; margin:0;
+    font-size:15px !important;
+  }
+  #cr-hdr-row1 #brandLogo{
+    flex:0 0 auto;
+    max-height:32px; width:auto;
+  }
+  #cr-hdr-row1 .cr-primary-slot{
+    flex:0 0 auto;
+    display:flex; align-items:center; gap:6px;
+  }
+
+  /* ─── Row 2 — utility strip ─────────────────────────────── */
+  #cr-hdr-row2{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:5px 10px 7px;
+    background:rgba(0,0,0,.18);
+    border-top:1px solid rgba(255,255,255,.06);
+    min-height:38px;
+    box-sizing:border-box;
+    flex-wrap:wrap;
+  }
+  #cr-hdr-row2 > *{ flex:0 0 auto; }
+
+  /* ─── Button sizing normalization ───────────────────────── */
+  /* + New: undo the font-size override from estimates_new_fix so
+     the button returns to icon-only mode. base app CSS uses
+     font-size:0 + ::after "+" for the visible glyph. */
+  header.site #addProjectBtn{
+    font-size:0 !important;
+    padding:6px 12px !important;
+    line-height:1 !important;
+    min-width:auto !important;
+    white-space:nowrap !important;
+  }
+  header.site #addProjectBtn::after{
+    font-size:18px !important;
+  }
+  /* If any base rule shows the "New" text again, hide it explicitly */
+  header.site #addProjectBtn > *{ display:none !important; }
+
+  /* Menu button — consistent size */
+  header.site #navBtn{
+    padding:6px 10px !important;
+    font-size:13px !important;
+    white-space:nowrap;
+  }
+
+  /* Utility buttons on row 2 — small + uniform */
+  #cr-hdr-row2 button,
+  #cr-hdr-row2 .cr-portal-chip{
+    padding:5px 9px !important;
+    font-size:10px !important;
+    letter-spacing:.12em !important;
+    white-space:nowrap;
+  }
+  #cr-hdr-row2 .cr-portal-chip{
+    padding:5px 11px !important;
+  }
+
+  /* Hide the original navWrap since we're distributing its children
+     across the two rows. */
+  header.site > #navWrap{
+    display:none !important;
+  }
+
+  /* Restore visibility when the buttons live inside row1/row2 */
+  #cr-hdr-row1 button,
+  #cr-hdr-row2 button,
+  #cr-hdr-row1 .cr-portal-chip,
+  #cr-hdr-row2 .cr-portal-chip{
+    display:inline-flex !important;
+  }
+
+  /* Never leak the two-row layout under full-screen overlays */
+  body.viewing-community-hub #cr-hdr-row2,
+  body.viewing-cardinal-truth #cr-hdr-row2{
+    /* Overlays cover the site header anyway; no visual concern.
+       Left as pass-through so the observer keeps working. */
+  }
+
+  /* Landing / logged-out state — hide both rows' chrome cleanly */
+  body:not(.logged-in) #cr-hdr-row2{ display:none; }
+
+  /* Slightly smaller on very narrow screens */
+  @media (max-width:380px){
+    #cr-hdr-row1{ padding:5px 10px; min-height:40px; }
+    #cr-hdr-row1 #brandTitle h1{ font-size:13.5px !important; }
+    #cr-hdr-row1 #brandLogo{ max-height:28px; }
+    #cr-hdr-row2{ padding:4px 8px 6px; gap:5px; }
+    #cr-hdr-row2 button,
+    #cr-hdr-row2 .cr-portal-chip{
+      padding:4px 7px !important;
+      font-size:9.5px !important;
+    }
+  }
+</style>
+
+<script id="cr-hdr2row-script">
+(function () {
+  'use strict';
+
+  // Buttons that live on row 1 (primary): brand identity is already
+  // in header.site, we just add the primary-action slot.
+  var ROW1_PRIMARY_IDS = ['navBtn', 'addProjectBtn'];
+
+  // Buttons that get moved to row 2 (utility).
+  var ROW2_IDS = ['crPortalChip', 'cr-home-btn', 'cr-search-btn', 'cr-ahc-badge'];
+
+  function findOrCreateRow1(){
+    var header = document.querySelector('header.site');
+    if(!header) return null;
+    var row1 = document.getElementById('cr-hdr-row1');
+    if(row1) return row1;
+    row1 = document.createElement('div');
+    row1.id = 'cr-hdr-row1';
+    // Insert as first child
+    header.insertBefore(row1, header.firstChild);
+    return row1;
+  }
+
+  function findOrCreateRow2(){
+    var header = document.querySelector('header.site');
+    if(!header) return null;
+    var row2 = document.getElementById('cr-hdr-row2');
+    if(row2) return row2;
+    row2 = document.createElement('div');
+    row2.id = 'cr-hdr-row2';
+    header.appendChild(row2);
+    return row2;
+  }
+
+  function findOrCreatePrimarySlot(row1){
+    var slot = row1.querySelector('.cr-primary-slot');
+    if(slot) return slot;
+    slot = document.createElement('div');
+    slot.className = 'cr-primary-slot';
+    row1.appendChild(slot);
+    return slot;
+  }
+
+  function moveBrandToRow1(row1){
+    var header = document.querySelector('header.site');
+    if(!header) return;
+    // Base app puts .brand or #brandTitle or #brandLogo directly in header.
+    // Move whatever's there into row1 (idempotent).
+    var candidates = ['.brand', '.brand-wrap', '.brand-mark',
+                      '#brandLogo', '#brandTitle'];
+    candidates.forEach(function(sel){
+      var el = header.querySelector(':scope > ' + sel);
+      if(el && el.parentNode !== row1){
+        row1.insertBefore(el, row1.querySelector('.cr-primary-slot') || null);
+      }
+    });
+  }
+
+  function distributeButtons(row1Slot, row2){
+    // Primary buttons → row 1 slot
+    ROW1_PRIMARY_IDS.forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && el.parentNode !== row1Slot) row1Slot.appendChild(el);
+    });
+    // Utility buttons → row 2
+    ROW2_IDS.forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && el.parentNode !== row2) row2.appendChild(el);
+    });
+  }
+
+  function restructure(){
+    var header = document.querySelector('header.site');
+    if(!header) return;
+    var row1 = findOrCreateRow1();
+    var row2 = findOrCreateRow2();
+    if(!row1 || !row2) return;
+    moveBrandToRow1(row1);
+    var slot = findOrCreatePrimarySlot(row1);
+    distributeButtons(slot, row2);
+  }
+
+  // Also mark <body> as logged-in when navWrap is displayed —
+  // gives the CSS a hook for the pre-auth landing state.
+  function updateLoggedInFlag(){
+    var wrap = document.getElementById('navWrap');
+    var visible = wrap && wrap.style.display !== 'none';
+    document.body.classList.toggle('logged-in', !!visible);
+  }
+
+  var ticking = false;
+  function schedule(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      ticking = false;
+      try{
+        restructure();
+        updateLoggedInFlag();
+      }catch(e){}
+    });
+  }
+
+  function start(){
+    schedule();
+    // Watch the header specifically — other modules add children into
+    // navWrap and we need to relocate them. Observing the whole body
+    // would work but is heavier; header-only is the minimum needed.
+    var header = document.querySelector('header.site');
+    if(header){
+      new MutationObserver(schedule).observe(header, {
+        childList:true, subtree:true,
+        attributes:true, attributeFilter:['style']
+      });
+    }
+    // Also observe #navWrap for late children (portal chip, home button,
+    // health badge — those get added after their modules load)
+    var wrap = document.getElementById('navWrap');
+    if(wrap){
+      new MutationObserver(schedule).observe(wrap, {
+        childList:true
+      });
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();
 </script>
 
