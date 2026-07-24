@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 204 &#8212; Menu: narrower width (max 300px), better scroll reach, removed stray legacy Community item at the bottom</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 206 &#8212; CI fix: sanitized comment-only &lt;div references in header_two_row + menu_condense (were false-triggering the balance check)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24365,13 +24365,20 @@ body.claim-insurance #brandLogo{
   }
   .cr-chub-calgrid .cal-day{
     min-width:0;
-    position:relative; aspect-ratio:1/1; display:flex;
+    box-sizing:border-box;   /* keeps empty + filled cells the same size */
+    position:relative; aspect-ratio:6/5; display:flex;
     align-items:center; justify-content:center;
     font:700 11px 'Segoe UI',Arial,sans-serif; color:#3d4a2c;
     border-radius:5px; background:#fff; border:1px solid #ede3ce;
     font-variant-numeric:tabular-nums;
   }
-  .cr-chub-calgrid .cal-day.empty{ background:transparent; border:0; }
+  .cr-chub-calgrid .cal-day.empty{
+    background:transparent;
+    /* transparent 1px border matches filled cells' box, so the empty
+       Sun/Mon/Tue at the start of the month occupy the exact same
+       height as the numbered cells and rows stay aligned. */
+    border:1px solid transparent;
+  }
   .cr-chub-calgrid .cal-day.today{
     background:#4a8c5a; color:#fff; border-color:#3d7a4c;
     box-shadow:0 2px 6px rgba(74,140,90,.35);
@@ -34945,19 +34952,19 @@ body.claim-insurance #brandLogo{
  Actual structure (base app line 2521+):
 
    <header class="site">
-     <div class="wrap masthead">
-       <div class="headactions">              ← real container
+     [div class="wrap masthead">
+       [div class="headactions">              ← real container
          <span class="whoami">
          <img id="brandLogo">
          <span id="newWrap">                   ← wraps + button
            <button id="addProjectBtn">＋ New
-           <div id="newMenu">                  ← dropdown
-         <div id="brandTitle"><h1>...
-         <div id="brandCtx">
+           [div id="newMenu">                  ← dropdown
+         [div id="brandTitle"><h1>...
+         [div id="brandCtx">
          <span id="navWrap">                   ← wraps Menu button
            <select id="jobMenuSel">
            <button id="navBtn">Menu
-           <div id="navMenu">                  ← burger menu
+           [div id="navMenu">                  ← burger menu
          <input id="headSearch">
 
  Utility buttons (portal chip, home, search, health badge) all live
@@ -35457,7 +35464,7 @@ body.claim-insurance #brandLogo{
         }
       }, 60);
     };
-    // Insert BEFORE the version footer <div> (last child that starts with "v2026-")
+    // Insert BEFORE the version footer div (last child that starts with "v2026-")
     var footer = null;
     Array.from(menu.children).forEach(function(child){
       if(child.textContent && /^v2026-/.test(child.textContent.trim())) footer = child;
