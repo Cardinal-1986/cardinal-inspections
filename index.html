@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 170 &#8212; Claims + Pricing + Coach audit; openContractEditor stub fixes both Estimates Convert and Claims data-link contract</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 172 &#8212; Handler smoke check: broken plugin buttons auto-marked + click-intercepted; CardinalHealth.print() in console</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29364,6 +29364,908 @@ body.claim-insurance #brandLogo{
       });
     };
   }
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: contract_editor.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — CONTRACT EDITOR
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ Defines window.openContractEditor(contract) as a real editor,
+ replacing the "contract created — open project" stub from
+ plugin_audit_fixes (which still ships as the fallback if this
+ module fails to load).
+
+ Called from:
+   • Estimates AI Convert-to-Contract (line 17830 in source)
+   • Claims data-link "contract" (line 19929 in source)
+
+ The contract argument is a JSON object with the built contract
+ shape produced by /api/estimate_to_contract. The exact schema
+ varies by template (roofing / siding / windows), so this editor
+ introspects the data — it renders whichever fields exist and
+ gracefully skips those that don't. No hardcoded template shape.
+
+ THIS BUILD (v1):
+   • Full-page overlay (z-index 210 — above the plugin mounts)
+   • Renders every top-level section of the contract as a card:
+     Homeowner, Property, Scope, Pricing, Payment Schedule, Terms,
+     ORC 3-Day Notice — plus any other section the JSON carries
+   • Actions:
+       Print         — browser print (produces a printable copy)
+       Copy Link     — copies the share URL if a share_token exists
+       Send by Email — opens mailto: with the share link preloaded
+       Sign          — hands off to the base app's sigModal
+       Close         — dismiss overlay, returns to caller
+   • Read-only. Field editing writes are deliberately deferred to
+     v2 because the JSON shape needs to be validated per template
+     before we let users mutate it.
+
+ NEXT (v2):
+   • Inline field editing that writes back to contracts.contract
+   • PDF generation via existing Python/ReportLab pipeline
+   • Server-side send via /api/senddoc when the endpoint accepts
+     the contract payload shape
+
+ INSTALL: paste after plugin_audit_fixes.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-ce-styles">
+  #cr-ce-view{
+    display:none;
+    position:fixed; inset:0; z-index:210;
+    background:#f7f2ea;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c;
+  }
+  #cr-ce-view.open{ display:block; }
+
+  #cr-ce-view .ce-header{
+    background:linear-gradient(135deg,#1a0f0c,#241512 55%,#1a0f0c);
+    color:#f7f2ea;
+    padding:16px 20px;
+    border-bottom:4px solid #d4a017;
+    position:sticky; top:0; z-index:2;
+    display:flex; align-items:center; gap:12px;
+    box-shadow:0 4px 18px rgba(0,0,0,.35);
+  }
+  #cr-ce-view .ce-header .ce-back{
+    background:transparent; color:#f7f2ea;
+    border:1px solid rgba(212,160,23,.6); border-radius:8px;
+    padding:6px 10px; cursor:pointer;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    display:inline-flex; align-items:center; gap:4px;
+    flex:0 0 auto;
+  }
+  #cr-ce-view .ce-header .ce-back:hover{ background:rgba(212,160,23,.15); }
+  #cr-ce-view .ce-header .ce-titlebox{
+    flex:1; min-width:0;
+  }
+  #cr-ce-view .ce-header .ce-eyebrow{
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.2em; text-transform:uppercase;
+    color:#d4a017; opacity:.9;
+  }
+  #cr-ce-view .ce-header h1{
+    margin:2px 0 0; font:700 20px Georgia,'Times New Roman',serif;
+    background:linear-gradient(160deg,#b8860b,#d4a017 45%,#f5d061 60%,#c8901c);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:#d4a017;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  #cr-ce-view .ce-header h1 small{
+    font:600 12px 'Segoe UI',Arial,sans-serif; color:#a89a8a;
+    -webkit-text-fill-color:#a89a8a; margin-left:8px;
+    letter-spacing:.02em;
+  }
+  #cr-ce-view .ce-status{
+    display:inline-block; padding:3px 9px; border-radius:5px;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase;
+    flex:0 0 auto;
+  }
+  #cr-ce-view .ce-status.draft    { background:rgba(212,160,23,.18); color:#f5d061; border:1px solid #d4a017; }
+  #cr-ce-view .ce-status.sent     { background:rgba(74,111,165,.2);  color:#7fa6d6; border:1px solid #4a6fa5; }
+  #cr-ce-view .ce-status.signed   { background:rgba(46,125,50,.24);  color:#8bc38e; border:1px solid #2e7d32; }
+  #cr-ce-view .ce-status.other    { background:rgba(255,255,255,.08); color:#c8c0b0; border:1px solid #56463a; }
+
+  #cr-ce-view .ce-wrap{
+    max-width:760px; margin:0 auto; padding:20px 18px 120px;
+  }
+
+  #cr-ce-view .ce-card{
+    background:#fffdf7;
+    border:1px solid #ded3bf;
+    border-radius:10px;
+    padding:16px 18px;
+    margin:0 0 14px;
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+  }
+  #cr-ce-view .ce-card h2{
+    margin:0 0 12px; font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.18em; text-transform:uppercase; color:#8a5a00;
+    border-bottom:1px solid #ded3bf; padding-bottom:8px;
+  }
+  #cr-ce-view .ce-kv{
+    display:grid; grid-template-columns:140px 1fr; gap:8px 14px;
+    font:600 13px 'Segoe UI',Arial,sans-serif;
+    align-items:baseline;
+  }
+  @media (max-width:520px){
+    #cr-ce-view .ce-kv{ grid-template-columns:110px 1fr; gap:6px 10px; font-size:12.5px; }
+  }
+  #cr-ce-view .ce-kv .k{
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#8a7a5a;
+  }
+  #cr-ce-view .ce-kv .v{
+    color:#2c2c2c; overflow-wrap:break-word; min-width:0;
+  }
+  #cr-ce-view .ce-kv .v.num{
+    font-variant-numeric:tabular-nums; font-weight:700; color:#8a5a00;
+  }
+  #cr-ce-view .ce-kv .v.empty{ color:#a89a8a; font-style:italic; }
+  #cr-ce-view .ce-prose{
+    font:600 13px Georgia,'Times New Roman',serif; color:#2c2c2c;
+    line-height:1.6; white-space:pre-wrap;
+  }
+  #cr-ce-view .ce-list{
+    margin:0; padding-left:20px;
+    font:600 13px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    line-height:1.6;
+  }
+  #cr-ce-view .ce-list li{ margin-bottom:4px; }
+
+  /* Total line at the bottom of pricing */
+  #cr-ce-view .ce-total{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-top:14px; padding-top:12px; border-top:2px solid #d4a017;
+    font:800 15px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+  }
+  #cr-ce-view .ce-total .amt{
+    color:#8a5a00; font-variant-numeric:tabular-nums;
+  }
+
+  /* Action bar at the bottom, sticky */
+  #cr-ce-view .ce-actions{
+    position:fixed; left:0; right:0; bottom:0; z-index:3;
+    background:rgba(26,15,12,.96); backdrop-filter:blur(8px);
+    border-top:2px solid #d4a017;
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
+    box-shadow:0 -4px 18px rgba(0,0,0,.35);
+  }
+  #cr-ce-view .ce-actions button{
+    background:transparent; color:#d4a017;
+    border:1px solid #d4a017; border-radius:8px;
+    padding:8px 13px; cursor:pointer;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:inherit;
+    transition:background .12s, transform .1s;
+  }
+  #cr-ce-view .ce-actions button:hover{ background:rgba(212,160,23,.15); }
+  #cr-ce-view .ce-actions button:active{ transform:scale(.96); }
+  #cr-ce-view .ce-actions button.primary{
+    background:#d4a017; color:#1a0f0c; border-color:#d4a017;
+  }
+  #cr-ce-view .ce-actions button.primary:hover{
+    background:#f5d061; border-color:#f5d061;
+  }
+  #cr-ce-view .ce-actions button:disabled{
+    opacity:.4; cursor:not-allowed;
+  }
+
+  /* Print mode: hide chrome, show only the contract */
+  @media print{
+    body > *:not(#cr-ce-view){ display:none !important; }
+    #cr-ce-view{ position:static !important; }
+    #cr-ce-view .ce-header,
+    #cr-ce-view .ce-actions{ display:none !important; }
+    #cr-ce-view .ce-wrap{ max-width:100%; padding:0; }
+    #cr-ce-view .ce-card{
+      box-shadow:none; border-color:#ccc; page-break-inside:avoid;
+    }
+  }
+</style>
+
+<script id="cr-ce-script">
+(function () {
+  'use strict';
+
+  var VIEW_ID = 'cr-ce-view';
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function money(n){
+    var v = Number(n);
+    if(!isFinite(v)) return '';
+    return '$' + v.toLocaleString('en-US',
+      { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+  function fmtDate(iso){
+    if(!iso) return '';
+    try{
+      var d = new Date(iso);
+      if(isNaN(d.getTime())) return String(iso);
+      return d.toLocaleDateString('en-US',
+        { month:'long', day:'numeric', year:'numeric' });
+    }catch(e){ return String(iso); }
+  }
+  function pick(obj /* ...keys */){
+    var args = Array.prototype.slice.call(arguments, 1);
+    for(var i = 0; i < args.length; i++){
+      var v = obj && obj[args[i]];
+      if(v != null && v !== '') return v;
+    }
+    return '';
+  }
+
+  function ensureView(){
+    var v = document.getElementById(VIEW_ID);
+    if(v) return v;
+    v = document.createElement('section');
+    v.id = VIEW_ID;
+    v.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(v);
+    return v;
+  }
+
+  // ── Section renderers ───────────────────────────────────
+  // Each returns the HTML for a card, or '' if the section has no data.
+  function kvRow(k, v, mods){
+    if(v == null || v === '') return '';
+    var cls = 'v' + (mods ? ' ' + mods : '');
+    return '<div class="k">' + esc(k) + '</div>' +
+           '<div class="' + cls + '">' + esc(v) + '</div>';
+  }
+
+  function sectionHomeowner(hw){
+    if(!hw || typeof hw !== 'object') return '';
+    var rows =
+      kvRow('Name',    pick(hw, 'name', 'full_name')) +
+      kvRow('Phone',   pick(hw, 'phone', 'telephone')) +
+      kvRow('Email',   pick(hw, 'email')) +
+      kvRow('Address', pick(hw, 'address', 'mailing_address'));
+    if(!rows) return '';
+    return '<div class="ce-card"><h2>Homeowner</h2>' +
+           '<div class="ce-kv">' + rows + '</div></div>';
+  }
+
+  function sectionProperty(prop, fallback){
+    var address = pick(prop || {}, 'address', 'property_address') ||
+                  fallback || '';
+    if(!prop && !address) return '';
+    var p = prop || {};
+    var rows =
+      kvRow('Address',  address) +
+      kvRow('City',     pick(p, 'city')) +
+      kvRow('State',    pick(p, 'state')) +
+      kvRow('ZIP',      pick(p, 'zip', 'postal_code')) +
+      kvRow('Parcel #', pick(p, 'parcel', 'parcel_number'));
+    if(!rows) return '';
+    return '<div class="ce-card"><h2>Property</h2>' +
+           '<div class="ce-kv">' + rows + '</div></div>';
+  }
+
+  function sectionScope(scope){
+    if(!scope) return '';
+    // scope may be a string, array of strings, or array of {item, ...}
+    var body = '';
+    if(typeof scope === 'string'){
+      body = '<div class="ce-prose">' + esc(scope) + '</div>';
+    }else if(Array.isArray(scope)){
+      if(!scope.length) return '';
+      body = '<ul class="ce-list">' + scope.map(function(item){
+        if(typeof item === 'string') return '<li>' + esc(item) + '</li>';
+        if(item && typeof item === 'object'){
+          var label = pick(item, 'description', 'label', 'name', 'item') ||
+                      JSON.stringify(item);
+          return '<li>' + esc(label) + '</li>';
+        }
+        return '<li>' + esc(String(item)) + '</li>';
+      }).join('') + '</ul>';
+    }else{
+      return '';
+    }
+    return '<div class="ce-card"><h2>Scope of Work</h2>' + body + '</div>';
+  }
+
+  function sectionPricing(contract){
+    // Support several likely shapes: {line_items:[...], total},
+    // {items:[...], subtotal, tax, total}, or a bare total.
+    var items = contract.line_items || contract.items || null;
+    var total = contract.total != null ? contract.total :
+                (contract.pricing && contract.pricing.total);
+    var subtotal = contract.subtotal || (contract.pricing && contract.pricing.subtotal);
+    var tax      = contract.tax      || (contract.pricing && contract.pricing.tax);
+    if(!items && !total && !subtotal) return '';
+
+    var html = '<div class="ce-card"><h2>Pricing</h2>';
+    if(Array.isArray(items) && items.length){
+      html += '<div class="ce-kv">';
+      items.forEach(function(it){
+        var label = typeof it === 'string' ? it :
+                    pick(it, 'description', 'label', 'name', 'item') ||
+                    JSON.stringify(it);
+        var amount = it && (it.amount != null ? it.amount :
+                            it.price != null ? it.price :
+                            it.total != null ? it.total : '');
+        html += '<div class="k">' + esc(label) + '</div>' +
+                '<div class="v num">' + (amount === '' ? '' : money(amount)) + '</div>';
+      });
+      html += '</div>';
+    }
+    if(subtotal != null || tax != null){
+      html += '<div class="ce-kv" style="margin-top:10px;">';
+      if(subtotal != null) html += kvRow('Subtotal', money(subtotal), 'num');
+      if(tax != null)      html += kvRow('Tax',      money(tax),      'num');
+      html += '</div>';
+    }
+    if(total != null){
+      html += '<div class="ce-total"><span>Total</span>' +
+              '<span class="amt">' + esc(money(total)) + '</span></div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function sectionPayment(sched){
+    if(!sched) return '';
+    var text = typeof sched === 'string' ? sched :
+               (Array.isArray(sched) ? sched.join('\n') :
+                (sched.text || JSON.stringify(sched, null, 2)));
+    return '<div class="ce-card"><h2>Payment Schedule</h2>' +
+           '<div class="ce-prose">' + esc(text) + '</div></div>';
+  }
+
+  function sectionTerms(terms){
+    if(!terms) return '';
+    var text = typeof terms === 'string' ? terms :
+               (Array.isArray(terms) ? terms.join('\n\n') :
+                JSON.stringify(terms, null, 2));
+    return '<div class="ce-card"><h2>Terms &amp; Conditions</h2>' +
+           '<div class="ce-prose">' + esc(text) + '</div></div>';
+  }
+
+  function sectionNotice(contract){
+    // Cardinal contracts always include the ORC §1345.23(B)(2)
+    // 3-Day Notice — pull from the JSON if present, else render
+    // the canonical language so a signed copy always carries it.
+    var provided = contract.notice_of_cancellation || contract.orc_notice;
+    var text = provided || (
+      'NOTICE OF CANCELLATION\n\n' +
+      'You may cancel this transaction, without any penalty or obligation, ' +
+      'within three business days from the above date.\n\n' +
+      'If you cancel, any payments made by you under the contract or sale, ' +
+      'and any negotiable instrument executed by you will be returned within ' +
+      'ten business days following receipt by the seller of your cancellation ' +
+      'notice, and any security interest arising out of the transaction will ' +
+      'be canceled.\n\n' +
+      '— O.R.C. §1345.23(B)(2)'
+    );
+    return '<div class="ce-card"><h2>Notice of Cancellation (3-Day)</h2>' +
+           '<div class="ce-prose">' + esc(text) + '</div></div>';
+  }
+
+  function sectionRaw(contract){
+    // Fallback: if the contract carries fields we don't recognize,
+    // dump them so nothing gets hidden. Keys already handled above
+    // are excluded.
+    var handled = {
+      homeowner:1, property:1, address:1, property_address:1,
+      scope:1, scope_of_work:1, scope_summary:1,
+      items:1, line_items:1, pricing:1, subtotal:1, tax:1, total:1,
+      payment_schedule:1, schedule:1,
+      terms:1, terms_and_conditions:1, tandc:1,
+      notice_of_cancellation:1, orc_notice:1,
+      template:1, contract_number:1, number:1, status:1, id:1,
+      project_id:1, source_ai_estimate_id:1,
+      created_at:1, updated_at:1, signed_at:1, sent_at:1,
+      share_token:1
+    };
+    var extras = [];
+    Object.keys(contract).forEach(function(k){
+      if(handled[k]) return;
+      var v = contract[k];
+      if(v == null || v === '') return;
+      var display = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      extras.push(kvRow(k.replace(/_/g, ' '), display));
+    });
+    if(!extras.length) return '';
+    return '<div class="ce-card"><h2>Additional Fields</h2>' +
+           '<div class="ce-kv">' + extras.join('') + '</div></div>';
+  }
+
+  // ── Editor state ────────────────────────────────────────
+  var CURRENT = null;   // the contract object being viewed
+
+  function statusLabel(s){
+    s = String(s || 'draft').toLowerCase();
+    if(s === 'signed' || s === 'executed') return { cls:'signed', text:'Signed' };
+    if(s === 'sent' || s === 'viewed')     return { cls:'sent',   text:s === 'viewed' ? 'Viewed' : 'Sent' };
+    if(s === 'draft')                       return { cls:'draft',  text:'Draft' };
+    return { cls:'other', text:s };
+  }
+
+  function scopeSummaryFrom(contract){
+    // Prefer scope_of_work, fall back to scope_summary
+    return contract.scope_of_work || contract.scope_summary || contract.scope;
+  }
+
+  function paymentScheduleFrom(contract){
+    return contract.payment_schedule || contract.schedule;
+  }
+
+  function termsFrom(contract){
+    return contract.terms_and_conditions || contract.tandc || contract.terms;
+  }
+
+  function render(contract){
+    var v = ensureView();
+    var homeowner = contract.homeowner || contract.client || {};
+    var property  = contract.property || contract.property_details;
+    var propertyAddr = pick(contract, 'property_address') ||
+                       pick(homeowner, 'address');
+    var scope = scopeSummaryFrom(contract);
+    var sched = paymentScheduleFrom(contract);
+    var terms = termsFrom(contract);
+
+    var num      = pick(contract, 'contract_number', 'number') || contract.id || '';
+    var template = pick(contract, 'template');
+    var st       = statusLabel(contract.status);
+
+    var bodyHtml =
+      sectionHomeowner(homeowner) +
+      sectionProperty(property, propertyAddr) +
+      sectionScope(scope) +
+      sectionPricing(contract) +
+      sectionPayment(sched) +
+      sectionTerms(terms) +
+      sectionNotice(contract) +
+      sectionRaw(contract);
+
+    if(!bodyHtml){
+      bodyHtml = '<div class="ce-card"><h2>Contract data</h2>' +
+                 '<div class="ce-prose">' +
+                 esc(JSON.stringify(contract, null, 2)) +
+                 '</div></div>';
+    }
+
+    v.innerHTML =
+      '<div class="ce-header">' +
+        '<button class="ce-back" data-act="close" aria-label="Close">' +
+          '&larr; Close</button>' +
+        '<div class="ce-titlebox">' +
+          '<div class="ce-eyebrow">Cardinal Roofing &amp; Renovations</div>' +
+          '<h1>Contract' +
+            (num ? '<small>#' + esc(String(num)) + '</small>' : '') +
+            (template ? '<small>' + esc(String(template)) + '</small>' : '') +
+          '</h1>' +
+        '</div>' +
+        '<span class="ce-status ' + st.cls + '">' + esc(st.text) + '</span>' +
+      '</div>' +
+      '<div class="ce-wrap">' + bodyHtml + '</div>' +
+      '<div class="ce-actions">' +
+        '<button data-act="print">\uD83D\uDDA8 Print</button>' +
+        (contract.share_token
+          ? '<button data-act="copy">\uD83D\uDD17 Copy Link</button>' +
+            '<button data-act="mail" class="primary">\u2709 Send by Email</button>'
+          : '') +
+        (typeof window.openSigner === 'function' || document.getElementById('sigModal')
+          ? '<button data-act="sign">\u270D Sign</button>'
+          : '') +
+        '<button data-act="close">Close</button>' +
+      '</div>';
+    wireActions(v);
+    v.classList.add('open');
+    v.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    try{ window.scrollTo({ top:0, behavior:'instant' }); }catch(e){ window.scrollTo(0,0); }
+  }
+
+  function wireActions(v){
+    v.querySelectorAll('[data-act]').forEach(function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        var act = btn.dataset.act;
+        if(act === 'close')      close();
+        else if(act === 'print') doPrint();
+        else if(act === 'copy')  doCopy();
+        else if(act === 'mail')  doMail();
+        else if(act === 'sign')  doSign();
+      };
+    });
+  }
+
+  function close(){
+    var v = document.getElementById(VIEW_ID);
+    if(!v) return;
+    v.classList.remove('open');
+    v.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    CURRENT = null;
+  }
+
+  function doPrint(){
+    try{ window.print(); }
+    catch(e){ alert('Could not open print dialog: ' + (e.message || e)); }
+  }
+
+  function shareUrl(){
+    if(!CURRENT || !CURRENT.share_token) return '';
+    return location.origin + '/?share=' + encodeURIComponent(CURRENT.share_token);
+  }
+  function doCopy(){
+    var url = shareUrl();
+    if(!url){ alert('This contract has no share link yet.'); return; }
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(function(){
+          flash('Link copied');
+        }).catch(function(){ prompt('Copy this link:', url); });
+      }else{
+        prompt('Copy this link:', url);
+      }
+    }catch(e){ prompt('Copy this link:', url); }
+  }
+  function doMail(){
+    var url = shareUrl();
+    if(!url){ alert('This contract has no share link yet.'); return; }
+    var hw = CURRENT.homeowner || CURRENT.client || {};
+    var to = hw.email || '';
+    var num = CURRENT.contract_number || CURRENT.number || CURRENT.id || '';
+    var subject = 'Your Cardinal Roofing contract' + (num ? ' \u2014 #' + num : '');
+    var body = 'Hi' + (hw.name ? ' ' + hw.name : '') + ',\n\n' +
+               'Please review your contract at the link below and sign electronically.\n\n' +
+               url + '\n\n' +
+               'Reply to this email or call us with any questions.\n\n' +
+               '\u2014 Cardinal Roofing &amp; Renovations';
+    var href = 'mailto:' + encodeURIComponent(to) +
+               '?subject=' + encodeURIComponent(subject) +
+               '&body='    + encodeURIComponent(body);
+    location.href = href;
+  }
+  function doSign(){
+    // Hand off to the base app's signer if available. sigModal exists
+    // in the source at line 5919, and openSigner may be defined at
+    // runtime as the wrapper that opens it with a specific doc.
+    if(typeof window.openSigner === 'function'){
+      window.openSigner(CURRENT);
+      return;
+    }
+    var sig = document.getElementById('sigModal');
+    if(sig){
+      // Fall back to showing the raw modal — imperfect since it
+      // wants a specific document context, but at least surfaces
+      // the signer UI so the user can see the intent.
+      sig.style.display = 'block';
+      return;
+    }
+    alert('Signature workflow is not available in this build.');
+  }
+
+  function flash(msg){
+    // Tiny toast in the middle-top of the viewer
+    var v = ensureView();
+    var t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText =
+      'position:fixed; top:80px; left:50%; transform:translateX(-50%);' +
+      'background:#1a0f0c; color:#d4a017;' +
+      'border:1px solid #d4a017; border-radius:8px;' +
+      'padding:8px 14px; font:800 11px \'Segoe UI\',Arial,sans-serif;' +
+      'letter-spacing:.14em; text-transform:uppercase;' +
+      'z-index:250; box-shadow:0 4px 14px rgba(0,0,0,.35);' +
+      'pointer-events:none;';
+    document.body.appendChild(t);
+    setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 1600);
+  }
+
+  // ── Public API ──────────────────────────────────────────
+  window.openContractEditor = function(contract){
+    if(!contract){
+      alert('No contract data to display.');
+      return;
+    }
+    CURRENT = contract;
+    render(contract);
+  };
+  window.closeContractEditor = close;
+
+  // ESC closes
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    var v = document.getElementById(VIEW_ID);
+    if(v && v.classList.contains('open')) close();
+  });
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: handler_smoke_check.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — HANDLER SMOKE CHECK
+ v2026-07-23 · automated version of the manual plugin audit
+────────────────────────────────────────────────────────────────────
+ Automates what humans should never have to do again. Watches the
+ four plugin mounts (Estimates, Claims, Pricing, Coach), and for
+ every element with [data-act] or [data-link] that appears inside
+ them, verifies at boot / mount time that a click handler exists.
+
+ If a button is missing its handler, the check:
+   1. Marks it visually with a gold "!" corner badge + reduced
+      opacity + not-allowed cursor
+   2. Intercepts click and shows "This action isn't connected yet"
+      via toast (or alert fallback) — beats a click that appears
+      to work but silently does nothing
+   3. Logs to console with plugin name, label, and data attributes
+      for the maintainer
+   4. Adds the report entry to CardinalHealth.report()
+
+ Explicit design tradeoffs:
+   • Only detects handlers assigned via .onclick = fn. Handlers
+     added via addEventListener() are invisible to this check —
+     accepted because the four plugins use .onclick uniformly.
+   • Cannot detect "handler exists but references nonexistent
+     function" (like the openManualEstimate case). That needs a
+     runtime trace, not a static check. This tool catches the
+     more common "no handler at all" pattern.
+   • Scoped to the four plugin mounts to avoid noise from the
+     base app's own buttons (many of which use addEventListener
+     and would false-positive).
+
+ Console API:
+   CardinalHealth.report()  → array of broken button entries
+   CardinalHealth.print()   → console.group summary
+   CardinalHealth.rescan()  → reset markers and re-scan
+   CardinalHealth.status()  → { checked, broken, mounts }
+
+ In each check I ran manually, this would have caught:
+   Estimates: + New, Templates, pipeline stat cells (not-wired)
+   Claims:    (none — Claims was fully wired at handler level;
+              the openContractEditor gap is a nested-function
+              issue this tool can't detect)
+   Pricing:   (none)
+   Coach:     (none)
+
+ INSTALL: paste after contract_editor.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-health-styles">
+  [data-cr-broken="1"]{
+    opacity:.55 !important;
+    cursor:not-allowed !important;
+    filter:grayscale(40%);
+    position:relative !important;
+  }
+  [data-cr-broken="1"]::after{
+    content:"!";
+    position:absolute; top:-6px; right:-6px;
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:14px; height:14px; padding:0 3px;
+    background:#d4a017; color:#1a0f0c;
+    font:800 9px 'Segoe UI',Arial,sans-serif;
+    border-radius:8px;
+    line-height:1; pointer-events:none;
+    box-shadow:0 1px 3px rgba(0,0,0,.35);
+    z-index:2;
+  }
+  /* Badge falls inside for tab/stat cells where a -6px offset would clip */
+  .cr-tab[data-cr-broken="1"]::after,
+  .cr-stat[data-cr-broken="1"]::after,
+  [data-status][data-cr-broken="1"]::after{
+    top:3px; right:3px;
+  }
+</style>
+
+<script id="cr-health-script">
+(function () {
+  'use strict';
+
+  var WATCHED_IDS = [
+    'cr-estimates-mount',
+    'cr-claims-mount',
+    'cr-pricing-mount',
+    'cr-coach-mount',
+  ];
+
+  var SEL = '[data-act], [data-link]';
+  var REPORTS   = [];
+  var CHECKED   = 0;
+  var scheduled = false;
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  }
+
+  function containerOf(el){
+    for(var i = 0; i < WATCHED_IDS.length; i++){
+      var m = document.getElementById(WATCHED_IDS[i]);
+      if(m && m.contains(el)) return WATCHED_IDS[i];
+    }
+    return null;
+  }
+
+  function labelOf(el){
+    // Prefer visible text; fall back to data-act / data-link / tag
+    var text = esc(el.textContent).slice(0, 60);
+    if(text) return text;
+    if(el.dataset.act)  return '<' + el.dataset.act  + '>';
+    if(el.dataset.link) return '<link:' + el.dataset.link + '>';
+    return el.tagName.toLowerCase();
+  }
+
+  function markBroken(el, info){
+    if(el.dataset.crBroken === '1') return;
+    el.dataset.crBroken = '1';
+    el.setAttribute('title',
+      'Not wired up yet — Cardinal health check ' +
+      '(data-act="' + (info.act || 'null') +
+      '", data-link="' + (info.link || 'null') + '")');
+
+    // Intercept clicks so users get feedback instead of nothing.
+    // Capture phase so we run before the (missing) target-phase handler.
+    el.addEventListener('click', function(e){
+      // Re-check at click time — a handler may have been attached late.
+      if(el.onclick != null){
+        // False positive; let the click through
+        return;
+      }
+      e.stopPropagation();
+      e.preventDefault();
+      var msg = 'This action isn\'t connected yet';
+      if(typeof window.toast === 'function'){
+        try{ window.toast(msg, 'error'); return; }catch(_){ }
+      }
+      alert(msg);
+    }, true);
+
+    REPORTS.push(info);
+    console.warn('[Cardinal health] Broken button in ' +
+                 info.mount + ': "' + info.label + '"', info);
+  }
+
+  function checkOne(el){
+    if(el.dataset.crChecked === '1') return;
+    // Give the plugin's wiring code a moment. Plugins mount a template
+    // and immediately assign handlers in the same tick — so one rAF is
+    // enough, but two protects against double-frame patterns.
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        if(el.dataset.crChecked === '1') return;
+        el.dataset.crChecked = '1';
+        CHECKED++;
+
+        if(el.onclick == null){
+          var mount = containerOf(el);
+          if(!mount) return;   // outside watched scope; leave alone
+          markBroken(el, {
+            mount : mount,
+            act   : el.dataset.act  || null,
+            link  : el.dataset.link || null,
+            label : labelOf(el),
+            tag   : el.tagName.toLowerCase(),
+          });
+        }
+      });
+    });
+  }
+
+  function scan(){
+    WATCHED_IDS.forEach(function(id){
+      var m = document.getElementById(id);
+      if(!m) return;
+      // Skip mounts that are hidden — their templates are pre-loaded
+      // but the plugin hasn't run its show* function yet, so no
+      // handlers would be attached anyway.
+      if(m.style.display === 'none') return;
+      m.querySelectorAll(SEL).forEach(checkOne);
+    });
+  }
+
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){ scheduled = false; scan(); });
+  }
+
+  function start(){
+    schedule();
+    // MutationObserver catches template swaps (plugin remounts a
+    // new template) AND mount-visibility toggles.
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:true,
+      attributes:true, attributeFilter:['style']
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  // ── Public API ──────────────────────────────────────────
+  window.CardinalHealth = {
+    report: function(){ return REPORTS.slice(); },
+    status: function(){
+      var byMount = {};
+      REPORTS.forEach(function(r){ byMount[r.mount] = (byMount[r.mount] || 0) + 1; });
+      return {
+        checked: CHECKED,
+        broken : REPORTS.length,
+        mounts : byMount,
+      };
+    },
+    print: function(){
+      console.group('%c[Cardinal Health] Handler Smoke Check',
+                    'font-weight:800; color:#d4a017;');
+      var s = this.status();
+      console.log('Checked ' + s.checked + ' buttons across ' +
+                  WATCHED_IDS.length + ' plugin mounts.');
+      if(!REPORTS.length){
+        console.log('%c\u2713 All checked buttons have handlers.',
+                    'color:#2e7d32; font-weight:700;');
+      }else{
+        console.warn(REPORTS.length + ' broken button(s):');
+        var byMount = {};
+        REPORTS.forEach(function(r){
+          (byMount[r.mount] = byMount[r.mount] || []).push(r);
+        });
+        Object.keys(byMount).forEach(function(m){
+          console.group(m + ' (' + byMount[m].length + ')');
+          byMount[m].forEach(function(r){
+            console.warn('  \u2022 "' + r.label + '"  ' +
+                         '[data-act="' + (r.act || 'null') +
+                         '"] [data-link="' + (r.link || 'null') + '"]');
+          });
+          console.groupEnd();
+        });
+      }
+      console.groupEnd();
+      return REPORTS.length;
+    },
+    rescan: function(){
+      REPORTS.length = 0;
+      CHECKED = 0;
+      // Clear markers so the check can flag them again if still broken
+      document.querySelectorAll('[data-cr-checked]').forEach(function(el){
+        delete el.dataset.crChecked;
+      });
+      document.querySelectorAll('[data-cr-broken]').forEach(function(el){
+        delete el.dataset.crBroken;
+        el.removeAttribute('title');
+      });
+      schedule();
+      return 'Rescan scheduled';
+    },
+  };
+
+  // Delayed auto-print at boot so it appears in the console after any
+  // plugin the user opens on landing (Estimates/Claims/etc). Fires
+  // once; call CardinalHealth.print() manually anytime for a fresh
+  // roll-up.
+  var printedOnce = false;
+  setTimeout(function(){
+    if(printedOnce) return;
+    printedOnce = true;
+    if(REPORTS.length > 0){
+      try{ window.CardinalHealth.print(); }catch(e){}
+    }
+  }, 3000);
 })();
 </script>
 
