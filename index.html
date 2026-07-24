@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 201 &#8212; Hardened every module to use projects.name (the real column) instead of client_name in SELECTs + reads. If v200 wasn&#8217;t enough, v201 is comprehensive.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 203 &#8212; Changelog catches up (builds 187–202); Community Hub instant-refresh after saving new bid; PO# auto-assigned to every client (format PO-YYYYMMDD-HHMM based on created_at)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25850,6 +25850,7 @@ body.claim-insurance #brandLogo{
           address     : address,
           stage       : 'Lead',
           checklist   : {
+            po_number       : (window.CardinalPO ? window.CardinalPO.generate(new Date()) : ''),
             lead: {
               claim_type      : 'community',
               partner_id      : partner.id,
@@ -25875,6 +25876,23 @@ body.claim-insurance #brandLogo{
         };
         var r = await window.supa.from('projects').insert(projectData).select().single();
         if(r.error) throw r.error;
+
+        // Push the fresh row into the cache immediately so the Community
+        // Hub (and any other list) sees the new client on this render,
+        // not after the next full reload. Also kick off a background
+        // reload() so we get server-truth (server-computed fields, joins)
+        // shortly after.
+        if(r.data){
+          if(Array.isArray(window.cacheProjects)){
+            var already = window.cacheProjects.find(function(p){ return p.id === r.data.id; });
+            if(!already) window.cacheProjects.unshift(r.data);
+          }
+          if(typeof window.reload === 'function'){
+            setTimeout(function(){
+              try{ window.reload(); }catch(_){}
+            }, 300);
+          }
+        }
 
         // Log the bid amount via the same log helper the bid strip uses if it
         // exists so the amount shows up on the client profile bid card.
@@ -34595,6 +34613,22 @@ body.claim-insurance #brandLogo{
   var KEY = 'cardinal.changelog.lastSeen';
   // Newest first. Only user-facing highlights.
   var CHANGELOG = [
+    { build:202, note:'\uD83D\uDCF1 Mobile menu now scrolls properly (iOS PWA fix)' },
+    { build:201, note:'\uD83D\uDC1B Comprehensive fix for projects.name column references across all diagnostic modules' },
+    { build:200, note:'\uD83D\uDC1B Fixed New Bid save error \u2014 was writing to wrong column name' },
+    { build:199, note:'\uD83D\uDDFA\uFE0F Google Places address autocomplete on every form + satellite property maps on client profiles' },
+    { build:198, note:'\uD83D\uDC65 Assign To dropdown on New Bid form (defaults to current user)' },
+    { build:197, note:'\uD83D\uDCB0 Estimate editor: hide-units + include-tax toggles + status select. New All Estimates view under Sell menu with pending/done tabs and running total' },
+    { build:196, note:'\uD83D\uDCDD Manual estimates with 6 templates \u2014 Roof Replacement / Roof Repair / Siding / Windows / Gutters / Blank' },
+    { build:195, note:'\uD83C\uDFE0 All Clients landing card stays on the hub instead of navigating to Home; gold ring shows it\'s active' },
+    { build:194, note:'\uD83D\uDC65 All Clients now visible to everyone (sales sees their own across all three CRMs, filtered by assignment)' },
+    { build:193, note:'\uD83D\uDD04 Portal chip auto-syncs to RETAIL on Home; switcher gets Landing/Hub option (replaces admin-only All Clients)' },
+    { build:192, note:'\u270F\uFE0F NACHI content admin gains rich text editor, image upload, and one-click Import Baseline for the 12 hardcoded articles' },
+    { build:191, note:'\uD83D\uDCBE NACHI content admin: add/edit/archive series + articles from the Resource Library, no code required' },
+    { build:190, note:'\uD83D\uDCDA NACHI Asphalt Composition Shingles (Parts 1-4) + Accessing the Roof Part 5' },
+    { build:189, note:'\uD83D\uDCD6 NACHI Roof Mastery under Mastering Roof Inspections: 1-3 Accessing A Roof (Parts 1, 3, 4)' },
+    { build:188, note:'\uD83D\uDD0D Resource Library TOC: floating button (bottom-left) opens searchable modal with Insurance / Manufacturer / General hubs' },
+    { build:187, note:'\uD83C\uDF54 Burger menu reorganized \u2014 renamed CRMs section (with Community), Resources section, new Admin section for theo/joan, \u2318K quick-jump hint' },
     { build:186, note:'\uD83D\uDEE0\uFE0F Quality-of-life pack: Dark mode, ⌘K command palette, CSV export, undo toasts, offline indicator, print stylesheets, bulk operations, this changelog' },
     { build:185, note:'\uD83D\uDC65 General Contractor partner type + confidential flag; James Construction and C.G. Egli Inc as concealed partners' },
     { build:184, note:'\uD83C\uDFE2 Kitty Hawk workflow: renter contact fields on New Bid; work orders upload (admin + production only)' },
@@ -35190,10 +35224,21 @@ body.claim-insurance #brandLogo{
 -->
 <style id="cr-menu-styles">
   #navMenu{
-    max-height:calc(100vh - 90px) !important;
+    /* Explicit overflow overrides beat the base app's `overflow:hidden` */
     overflow-y:auto !important;
+    overflow-x:hidden !important;
     -webkit-overflow-scrolling:touch !important;
-    padding-bottom:calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+    overscroll-behavior:contain !important;
+    touch-action:pan-y !important;
+    /* Two-line max-height: vh fallback for old iOS, dvh for modern.
+       dvh (dynamic viewport height) tracks the actual visible viewport
+       after the URL bar collapses, which vh does not. */
+    max-height:75vh !important;
+    max-height:calc(100dvh - 130px - env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    /* Force a compositing layer to work around iOS scroll bugs */
+    -webkit-transform:translateZ(0);
+    transform:translateZ(0);
   }
   #navMenu .navopt{
     padding:9px 14px !important;
@@ -35430,6 +35475,21 @@ body.claim-insurance #brandLogo{
       var n = 0, iv = setInterval(function(){
         if(apply() || ++n > 60) clearInterval(iv);
       }, 200);
+    }
+    // Reset scroll to top every time the menu opens. Without this, the
+    // menu remembers wherever it was scrolled last, so opening it can
+    // land you mid-list (e.g. Schedule Board instead of Home).
+    var btn = document.getElementById('navBtn');
+    if(btn && btn.dataset.crMenuScrollReset !== '1'){
+      btn.dataset.crMenuScrollReset = '1';
+      btn.addEventListener('click', function(){
+        requestAnimationFrame(function(){
+          var m = document.getElementById('navMenu');
+          if(m && m.style.display === 'block'){
+            try{ m.scrollTop = 0; }catch(_){}
+          }
+        });
+      });
     }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
@@ -38958,6 +39018,145 @@ body.claim-insurance #brandLogo{
     insertMap        : insertMap,
     getKey           : function(){ return API_KEY; },
     isConfigured     : function(){ return !!API_KEY; },
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: po_number.html · v2026-07-24
+     ══════════════════════════════════════════════════════════
+     Auto-assigns a PO# to every client based on their creation
+     date/time. Format: PO-YYYYMMDD-HHMM (e.g. PO-20260724-1042).
+
+     · Works for retail, insurance, and community clients
+     · Existing clients get PO# computed from created_at
+     · New community bids also STORE it at checklist.po_number
+       (so the number stays stable even if timestamps were ever
+       edited); other creates compute on demand
+     · Displays as a gold badge next to the client name on the
+       project profile view
+
+     Public API:
+       CardinalPO.generate(date?)  - build a PO# from a Date/ISO/now
+       CardinalPO.from(project)    - get PO# for a project (stored or
+                                     computed from created_at)
+────────────────────────────────────────────────────────────── -->
+
+<style id="cr-po-styles">
+  .cr-po-badge{
+    display:inline-block;
+    padding:3px 9px;
+    margin:0 0 0 8px;
+    background:linear-gradient(135deg,#faf5e9,#f5efe0);
+    border:1px solid #d4a017;
+    border-radius:4px;
+    font:800 11px 'SF Mono',Menlo,Consolas,monospace;
+    color:#8a5a00;
+    letter-spacing:.06em;
+    vertical-align:middle;
+    white-space:nowrap;
+    user-select:all;
+    -webkit-user-select:all;
+  }
+  .cr-po-badge::before{ content:''; }
+  .cr-po-badge:hover{
+    background:linear-gradient(135deg,#f5efe0,#f0e8d0);
+  }
+  @media print{
+    .cr-po-badge{
+      background:transparent !important;
+      border:1px solid #000 !important;
+      color:#000 !important;
+    }
+  }
+</style>
+
+<script id="cr-po-script">
+(function(){
+  'use strict';
+
+  function pad(n){ return String(n).padStart(2, '0'); }
+
+  function generate(date){
+    var d;
+    if(date instanceof Date) d = date;
+    else if(date) d = new Date(date);
+    else d = new Date();
+    if(isNaN(d.getTime())) return '';
+    return 'PO-' +
+      d.getFullYear() +
+      pad(d.getMonth() + 1) +
+      pad(d.getDate()) + '-' +
+      pad(d.getHours()) +
+      pad(d.getMinutes());
+  }
+
+  function from(project){
+    if(!project) return '';
+    // Prefer stored value if present — stays stable even if timestamps
+    // ever get edited or migrated.
+    if(project.checklist && project.checklist.po_number) return project.checklist.po_number;
+    return generate(project.created_at);
+  }
+
+  // ── Auto-inject on project profile view ─────────────────
+  function injectOnProfile(){
+    var view = document.getElementById('projView');
+    if(!view || getComputedStyle(view).display === 'none') return;
+    var proj = window.currentProject;
+    if(!proj) return;
+    var po = from(proj);
+    if(!po) return;
+    // Idempotent for this project — if the badge already reflects the
+    // current PO#, do nothing. If the project changed and the badge is
+    // stale, replace it.
+    var existing = view.querySelector('.cr-po-badge');
+    if(existing){
+      if(existing.textContent === po) return;
+      existing.remove();
+    }
+    // Find a heading to attach to. Try several candidates in order of
+    // preference. If nothing sticks, do nothing (badge is optional).
+    var target =
+      view.querySelector('.clientcard h1') ||
+      view.querySelector('.clientcard h2') ||
+      view.querySelector('.cliname') ||
+      view.querySelector('.projform h2') ||
+      view.querySelector('.projform h3') ||
+      view.querySelector('h1') ||
+      view.querySelector('h2');
+    if(!target) return;
+    var badge = document.createElement('span');
+    badge.className = 'cr-po-badge';
+    badge.textContent = po;
+    badge.title = 'PO# \u2014 tap to select/copy. Auto-assigned from creation date/time.';
+    target.appendChild(badge);
+  }
+
+  var scheduled = false;
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){
+      scheduled = false;
+      try{ injectOnProfile(); }catch(e){}
+    });
+  }
+
+  function start(){
+    schedule();
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:true,
+      attributes:true, attributeFilter:['style','class'],
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalPO = {
+    generate: generate,
+    from    : from,
   };
 })();
 </script>
