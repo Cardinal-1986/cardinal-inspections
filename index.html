@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 183 &#8212; New Bid form adds Homeowner / Site Contact section (name, phone, email); homeowner name becomes the primary client display name when provided</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 185 &#8212; General Contractor partner type + confidential flag (hides name &amp; contact from sales); seed SQL for James Construction and C.G. Egli Inc</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -23289,9 +23289,70 @@ body.claim-insurance #brandLogo{
     })();
     return LOAD_PROMISE;
   }
-  function list(){ return CACHE || []; }
-  function get(id){ return (CACHE || []).filter(function(p){ return p.id === id; })[0] || null; }
-  function byType(t){ return (CACHE || []).filter(function(p){ return p.partner_type === t; }); }
+  // ── Confidentiality masking ────────────────────────────────
+  //   Some partners (e.g. GCs Cardinal doesn't want to share contact
+  //   info for) are flagged confidential in the DB. Non-admin/non-
+  //   production users see a masked stand-in name and no contact info.
+  //   Sales can still work bids sourced from these partners — they
+  //   just don't see who they are.
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+  var PROD_EMAILS = [
+    'curtis@cardinalrenovations.net',
+    'scottie@cardinalrenovations.net',
+  ];
+  function currentEmailLower(){
+    try{
+      if(window.currentUser && window.currentUser.email) return String(window.currentUser.email).toLowerCase();
+      if(typeof window.my_email === 'function') return String(window.my_email() || '').toLowerCase();
+    }catch(e){}
+    return '';
+  }
+  function isPrivileged(){
+    var e = currentEmailLower();
+    return ADMIN_EMAILS.indexOf(e) !== -1 || PROD_EMAILS.indexOf(e) !== -1;
+  }
+  var MASK_NAMES = {
+    general_contractor: 'Confidential GC Partner',
+    nonprofit         : 'Confidential Partner',
+    property_manager  : 'Confidential Property Manager',
+  };
+  function maskIfConfidential(p){
+    if(!p || !p.confidential) return p;
+    if(isPrivileged()) return p;
+    return {
+      id            : p.id,
+      name          : MASK_NAMES[p.partner_type] || 'Confidential Partner',
+      partner_type  : p.partner_type,
+      contact_name  : null,
+      contact_email : null,
+      contact_phone : null,
+      address       : null,
+      notes         : null,
+      archived      : p.archived,
+      created_at    : p.created_at,
+      confidential  : true,
+      __masked      : true,
+    };
+  }
+
+  function list(){ return (CACHE || []).map(maskIfConfidential); }
+  function get(id){
+    var p = (CACHE || []).filter(function(x){ return x.id === id; })[0] || null;
+    return maskIfConfidential(p);
+  }
+  function byType(t){
+    return (CACHE || [])
+      .filter(function(p){ return p.partner_type === t; })
+      .map(maskIfConfidential);
+  }
+  // Raw variants — bypass masking. Only call from admin-gated code
+  // (the editor for existing partners, health-check tooling, etc.).
+  function getRaw(id){
+    return (CACHE || []).filter(function(x){ return x.id === id; })[0] || null;
+  }
 
   async function save(partner){
     var client = sb();
@@ -23299,6 +23360,7 @@ body.claim-insurance #brandLogo{
     var row = {
       name          : (partner.name || '').trim(),
       partner_type  : partner.partner_type,
+      confidential  : !!partner.confidential,
       contact_name  : (partner.contact_name  || '').trim() || null,
       contact_email : (partner.contact_email || '').trim() || null,
       contact_phone : (partner.contact_phone || '').trim() || null,
@@ -23389,22 +23451,32 @@ body.claim-insurance #brandLogo{
     renderDirectory(host);
   }
   function renderDirectory(host){
-    var list = (CACHE || []).slice();
-    var non = list.filter(function(p){ return p.partner_type === 'nonprofit'; });
-    var pm  = list.filter(function(p){ return p.partner_type === 'property_manager'; });
+    // Apply masking via the public list() so confidential partners
+    // display as their masked stand-in for non-privileged viewers.
+    var listRows = list().slice();
+    var non = listRows.filter(function(p){ return p.partner_type === 'nonprofit'; });
+    var pm  = listRows.filter(function(p){ return p.partner_type === 'property_manager'; });
+    var gc  = listRows.filter(function(p){ return p.partner_type === 'general_contractor'; });
 
     function grp(title, arr){
       if(!arr.length) return '';
       var rows = arr.map(function(p){
+        var meta = (p.contact_name || p.contact_phone)
+          ? '<div class="m">' + esc([p.contact_name, p.contact_phone].filter(Boolean).join(' · ')) + '</div>'
+          : '';
+        var lockChip = p.confidential
+          ? ' <span style="font:800 8.5px \'Segoe UI\',Arial,sans-serif;letter-spacing:.14em;background:#8a5a00;color:#fff;padding:1px 6px;border-radius:8px;vertical-align:middle;margin-left:6px;">\uD83D\uDD12 CONFIDENTIAL</span>'
+          : '';
         return '<div class="cr-cp-row" data-id="' + esc(p.id) + '">' +
           '<div>' +
-            '<div class="n">' + esc(p.name) + '</div>' +
-            (p.contact_name || p.contact_phone ?
-              '<div class="m">' + esc([p.contact_name, p.contact_phone].filter(Boolean).join(' · ')) + '</div>' : '') +
+            '<div class="n">' + esc(p.name) + lockChip + '</div>' +
+            meta +
           '</div>' +
           '<div class="btns">' +
-            '<button data-act="edit">Edit</button>' +
-            '<button data-act="archive" class="dang">Archive</button>' +
+            (p.__masked
+              ? ''  // Non-privileged viewers can't edit or archive confidential partners
+              : '<button data-act="edit">Edit</button>' +
+                '<button data-act="archive" class="dang">Archive</button>') +
           '</div>' +
         '</div>';
       }).join('');
@@ -23412,11 +23484,12 @@ body.claim-insurance #brandLogo{
     }
 
     var html = '';
-    if(!list.length){
+    if(!listRows.length){
       html = '<div class="cr-cp-empty">No partners yet. Add one to get started.</div>';
     }else{
-      html += grp('Non-profits',      non);
-      html += grp('Property Managers', pm);
+      html += grp('Non-profits',        non);
+      html += grp('Property Managers',  pm);
+      html += grp('General Contractors', gc);
     }
     html += '<button class="cr-cp-addbtn" data-act="add">+ Add Partner</button>';
 
@@ -23437,8 +23510,13 @@ body.claim-insurance #brandLogo{
 
   // ── Editor modal ──────────────────────────────────────────
   function openEditor(partner){
+    // If editing an existing partner, pull the RAW record — non-privileged
+    // users shouldn't reach this UI in the first place, but defense in
+    // depth: use raw so admin sees actual name/contact, not masked.
+    if(partner && partner.id) partner = getRaw(partner.id) || partner;
     var p = partner || { partner_type:'nonprofit' };
     var title = partner ? 'Edit Partner' : 'Add Partner';
+    var canFlagConfidential = isPrivileged();
     var html =
       '<form class="cr-cp-form" id="cpForm">' +
         '<div class="err" id="cpErr" style="display:none;"></div>' +
@@ -23447,10 +23525,19 @@ body.claim-insurance #brandLogo{
         '</label>' +
         '<label>Type' +
           '<select name="partner_type">' +
-            '<option value="nonprofit"'        + (p.partner_type==='nonprofit'       ?' selected':'') + '>Non-profit</option>' +
-            '<option value="property_manager"' + (p.partner_type==='property_manager'?' selected':'') + '>Property Manager</option>' +
+            '<option value="nonprofit"'         + (p.partner_type==='nonprofit'         ?' selected':'') + '>Non-profit</option>' +
+            '<option value="property_manager"'  + (p.partner_type==='property_manager'  ?' selected':'') + '>Property Manager</option>' +
+            '<option value="general_contractor"'+ (p.partner_type==='general_contractor'?' selected':'') + '>General Contractor</option>' +
           '</select>' +
         '</label>' +
+        (canFlagConfidential
+          ? '<label class="cr-cp-conf" style="display:flex;align-items:center;gap:8px;font:600 12.5px \'Segoe UI\',Arial,sans-serif;margin-top:4px;">' +
+              '<input type="checkbox" name="confidential" ' +
+                (p.confidential ? 'checked ' : '') +
+                'style="width:auto;margin:0;transform:scale(1.2);cursor:pointer;" />' +
+              '<span>🔒 Confidential — hide name &amp; contact info from sales reps</span>' +
+            '</label>'
+          : '') +
         '<div class="row2">' +
           '<label>Contact Name' +
             '<input name="contact_name" value="' + esc(p.contact_name || '') + '" />' +
@@ -23470,7 +23557,7 @@ body.claim-insurance #brandLogo{
         '</label>' +
         '<div class="actions">' +
           '<button type="button" class="ghost" data-act="cancel">Cancel</button>' +
-          '<button type="submit" class="primary">' + (partner ? 'Save' : 'Add Partner') + '</button>' +
+          '<button type="submit" class="primary">' + (partner && partner.id ? 'Save' : 'Add Partner') + '</button>' +
         '</div>' +
       '</form>';
 
@@ -23488,6 +23575,7 @@ body.claim-insurance #brandLogo{
         id           : p.id,
         name         : fd.get('name'),
         partner_type : fd.get('partner_type'),
+        confidential : canFlagConfidential ? !!fd.get('confidential') : !!p.confidential,
         contact_name : fd.get('contact_name'),
         contact_email: fd.get('contact_email'),
         contact_phone: fd.get('contact_phone'),
@@ -25550,6 +25638,26 @@ body.claim-insurance #brandLogo{
               'placeholder="name@example.com" autocomplete="email" inputmode="email" />' +
           '</div>' +
         '</div>' +
+
+        // Renter section — hidden by default, revealed when a
+        // property_manager partner is selected (Kitty Hawk et al.).
+        '<div data-renter-section style="display:none;">' +
+          '<label style="margin-top:14px;">Renter / Tenant</label>' +
+          '<input type="text" data-field="renter_name" ' +
+            'placeholder="Full name" autocomplete="off" />' +
+          '<div class="cr-nbid-row" style="margin-top:8px;">' +
+            '<div>' +
+              '<label style="margin-top:0;">Phone</label>' +
+              '<input type="tel" data-field="renter_phone" ' +
+                'placeholder="(555) 555-5555" inputmode="tel" />' +
+            '</div>' +
+            '<div>' +
+              '<label style="margin-top:0;">Email</label>' +
+              '<input type="email" data-field="renter_email" ' +
+                'placeholder="name@example.com" inputmode="email" />' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
         '<div class="rule" style="margin-top:14px;"></div>' +
 
         '<div class="cr-nbid-row">' +
@@ -25603,10 +25711,20 @@ body.claim-insurance #brandLogo{
 
     // Partner change → if that partner has known properties, swap the free
     // address input for a dropdown of them (with "Other" as an escape hatch).
+    // Also reveal/hide the renter section based on partner type — property
+    // managers (Kitty Hawk et al.) manage rentals so both the owner AND
+    // the renter need contact info.
     var partnerSel = bg.querySelector('[data-field="partner_id"]');
     var propsSlot  = bg.querySelector('[data-props-slot]');
+    var renterSect = bg.querySelector('[data-renter-section]');
+    function updateRenterVisibility(pid){
+      var p = partners.find(function(x){ return x.id === pid; });
+      var isPropMgr = !!(p && p.partner_type === 'property_manager');
+      renterSect.style.display = isPropMgr ? 'block' : 'none';
+    }
     partnerSel.onchange = async function(){
       var pid = partnerSel.value;
+      updateRenterVisibility(pid);
       if(!pid){
         propsSlot.innerHTML = '<input type="text" data-field="address" ' +
           'placeholder="Property address or job location" />';
@@ -25663,6 +25781,12 @@ body.claim-insurance #brandLogo{
       var hoName    = bg.querySelector('[data-field="homeowner_name"]').value.trim();
       var hoPhone   = bg.querySelector('[data-field="homeowner_phone"]').value.trim();
       var hoEmail   = bg.querySelector('[data-field="homeowner_email"]').value.trim();
+      var rtNameEl  = bg.querySelector('[data-field="renter_name"]');
+      var rtPhoneEl = bg.querySelector('[data-field="renter_phone"]');
+      var rtEmailEl = bg.querySelector('[data-field="renter_email"]');
+      var rtName    = rtNameEl  ? rtNameEl.value.trim()  : '';
+      var rtPhone   = rtPhoneEl ? rtPhoneEl.value.trim() : '';
+      var rtEmail   = rtEmailEl ? rtEmailEl.value.trim() : '';
       var workType  = bg.querySelector('[data-field="work_type"]').value;
       var bidAmount = money(bg.querySelector('[data-field="bid_amount"]').value);
       var bidDueAt  = bg.querySelector('[data-field="bid_due_at"]').value;
@@ -25695,6 +25819,9 @@ body.claim-insurance #brandLogo{
               homeowner_name  : hoName,
               homeowner_phone : hoPhone,
               homeowner_email : hoEmail,
+              renter_name     : rtName,
+              renter_phone    : rtPhone,
+              renter_email    : rtEmail,
               work_type       : workType,
               bid_amount      : bidAmount,
               bid_due_at      : bidDueAt || null,
@@ -25773,6 +25900,368 @@ body.claim-insurance #brandLogo{
   else start();
 
   window.CardinalNewBid = { open: showBidModal };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: community_work_orders.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — WORK ORDERS (Community, admin + production only)
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ On community client profiles, adds a "Work Orders" section that
+ only admins (theo, joan) and production (curtis, scottie) can
+ see. Sales reps (nick, joey, jacob) don't see it at all — no
+ empty section, no header, nothing that hints it exists.
+
+ Kitty Hawk (and any other property_manager partner) drops PDF
+ or scanned work orders directly on the client's Cardinal profile
+ so production knows what was requested before they show up. This
+ section is where those live.
+
+ Files upload to the existing `photos` bucket under
+   work_orders/{project_id}/{timestamp}_{safe_filename}
+ References are stored in project.checklist.work_orders as
+   [{ name, path, uploaded_by, uploaded_at, size, type }, ...]
+
+ Placement: right after the bid strip / attach rows on community
+ client profiles. Only renders when:
+   • project.claim_type === 'community'
+   • current user is admin or production
+
+ INSTALL: paste after community_new_bid.html. No SQL required.
+   Uses existing photos bucket.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-wo-styles">
+  .cr-wo-section{
+    background:#fffdf7;
+    border:1px solid #cfe0c9;
+    border-left:4px solid #4a8c5a;
+    border-radius:10px;
+    padding:14px 16px;
+    margin:0 0 14px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-wo-title{
+    margin:0 0 4px; font:800 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase; color:#2f5f3b;
+    display:flex; align-items:center; gap:8px;
+  }
+  .cr-wo-title .badge{
+    background:#4a8c5a; color:#fff;
+    padding:2px 7px; border-radius:10px;
+    font:800 9px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em;
+  }
+  .cr-wo-title .lock{
+    margin-left:auto; font:700 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.1em; color:#8a7a5a; text-transform:none;
+  }
+  .cr-wo-hint{
+    margin:0 0 10px; font:600 11.5px 'Segoe UI',Arial,sans-serif;
+    color:#6b7d69;
+  }
+  .cr-wo-list{
+    display:flex; flex-direction:column; gap:6px;
+    margin:0 0 10px;
+  }
+  .cr-wo-empty{
+    padding:14px; text-align:center;
+    font:600 12px 'Segoe UI',Arial,sans-serif; color:#8a9a83;
+    background:#f4f0e3; border-radius:8px;
+  }
+  .cr-wo-item{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px; background:#f6faf6;
+    border:1px solid #d9e6d5; border-radius:8px;
+  }
+  .cr-wo-item .body{ flex:1; min-width:0; }
+  .cr-wo-item .name{
+    font:800 12.5px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .cr-wo-item .meta{
+    font:600 11px 'Segoe UI',Arial,sans-serif; color:#6b7d69;
+    margin-top:1px;
+  }
+  .cr-wo-item .acts{ display:flex; gap:4px; flex:0 0 auto; }
+  .cr-wo-item button{
+    background:transparent; border:1px solid #4a8c5a; color:#4a8c5a;
+    border-radius:6px; padding:5px 10px; cursor:pointer;
+    font:800 9.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+    font-family:inherit;
+  }
+  .cr-wo-item button:hover{ background:rgba(74,140,90,.12); }
+  .cr-wo-item button.danger{ border-color:#c8202e; color:#c8202e; }
+  .cr-wo-item button.danger:hover{ background:rgba(200,32,46,.08); }
+  .cr-wo-upload{
+    display:flex; justify-content:flex-end;
+    padding-top:2px;
+  }
+  .cr-wo-upload button{
+    background:#4a8c5a; color:#fff; border:0;
+    border-radius:6px; padding:8px 14px; cursor:pointer;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    font-family:inherit;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .cr-wo-upload button:hover{ background:#3d7a4c; }
+  .cr-wo-upload button:disabled{ background:#8ba892; cursor:wait; }
+</style>
+
+<script id="cr-wo-script">
+(function () {
+  'use strict';
+
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+  var PROD_EMAILS = [
+    'curtis@cardinalrenovations.net',
+    'scottie@cardinalrenovations.net',
+  ];
+
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return window.currentUser.email;
+      if(typeof window.my_email === 'function') return window.my_email();
+    }catch(e){}
+    return '';
+  }
+  function canSee(){
+    var email = (currentEmail() || '').toLowerCase();
+    return ADMIN_EMAILS.indexOf(email) !== -1 || PROD_EMAILS.indexOf(email) !== -1;
+  }
+  function isCommunityClient(pr){
+    if(!pr) return false;
+    if(typeof window.projClaimType === 'function'){
+      return window.projClaimType(pr) === 'community';
+    }
+    var ck = pr.checklist || {};
+    return !!(ck.lead && ck.lead.claim_type === 'community');
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function fmtDate(iso){
+    if(!iso) return '';
+    try{
+      var d = new Date(iso);
+      return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'2-digit' });
+    }catch(e){ return ''; }
+  }
+  function fmtSize(bytes){
+    if(!bytes) return '';
+    if(bytes < 1024) return bytes + ' B';
+    if(bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  function removeSection(){
+    var s = document.querySelector('.cr-wo-section');
+    if(s && s.parentNode) s.parentNode.removeChild(s);
+  }
+
+  function renderSection(){
+    var pr = window.currentProject;
+    if(!pr || !isCommunityClient(pr) || !canSee()){
+      removeSection();
+      return;
+    }
+    var orders = (pr.checklist && pr.checklist.work_orders) || [];
+    var sig = pr.id + ':wo:' + orders.length + ':' +
+              (orders[0] ? orders[0].uploaded_at : '');
+
+    var existing = document.querySelector('.cr-wo-section');
+    if(existing && existing.dataset.sig === sig) return;
+
+    // Place after the bid strip if present, otherwise after the stage bar.
+    var anchor = document.querySelector('.cr-bidstrip') ||
+                 document.querySelector('.dbstage');
+    if(!anchor) return;
+
+    if(existing) existing.remove();
+    var section = document.createElement('div');
+    section.className = 'cr-wo-section';
+    section.dataset.sig = sig;
+
+    var itemsHtml;
+    if(!orders.length){
+      itemsHtml = '<div class="cr-wo-empty">No work orders on file yet.</div>';
+    }else{
+      itemsHtml = orders.map(function(wo, i){
+        var by = String(wo.uploaded_by || '').split('@')[0];
+        var meta = [by, fmtDate(wo.uploaded_at), fmtSize(wo.size)]
+                   .filter(Boolean).join(' \u00b7 ');
+        return '<div class="cr-wo-item" data-idx="' + i + '">' +
+                 '<div class="body">' +
+                   '<div class="name">' + esc(wo.name || 'Work Order') + '</div>' +
+                   '<div class="meta">' + esc(meta) + '</div>' +
+                 '</div>' +
+                 '<div class="acts">' +
+                   '<button data-act="view">Open</button>' +
+                   '<button data-act="delete" class="danger">Del</button>' +
+                 '</div>' +
+               '</div>';
+      }).join('');
+    }
+
+    section.innerHTML =
+      '<h3 class="cr-wo-title">' +
+        '\uD83D\uDCCB Work Orders ' +
+        '<span class="badge">' + orders.length + '</span>' +
+        '<span class="lock">\uD83D\uDD12 Admin + Production</span>' +
+      '</h3>' +
+      '<p class="cr-wo-hint">Property-manager work orders (Kitty Hawk et al.). ' +
+        'Sales reps can\'t see this section.</p>' +
+      '<div class="cr-wo-list">' + itemsHtml + '</div>' +
+      '<div class="cr-wo-upload">' +
+        '<input type="file" data-wo-file style="display:none;" ' +
+          'accept=".pdf,.png,.jpg,.jpeg,.heic,.heif,.doc,.docx" />' +
+        '<button data-act="upload">\uD83D\uDCCE Upload work order</button>' +
+      '</div>';
+    anchor.insertAdjacentElement('afterend', section);
+    wireSection(section, orders);
+  }
+
+  function wireSection(section, orders){
+    var uploadBtn = section.querySelector('[data-act="upload"]');
+    var fileInput = section.querySelector('[data-wo-file]');
+    uploadBtn.onclick = function(){ fileInput.click(); };
+    fileInput.onchange = async function(){
+      var f = fileInput.files[0];
+      if(!f) return;
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading\u2026';
+      try{ await uploadFile(f); }
+      catch(e){ alert('Upload failed: ' + (e.message || e)); }
+      finally{
+        fileInput.value = '';
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '\uD83D\uDCCE Upload work order';
+      }
+    };
+    section.querySelectorAll('.cr-wo-item').forEach(function(item){
+      var idx = parseInt(item.dataset.idx, 10);
+      var v = item.querySelector('[data-act="view"]');
+      var d = item.querySelector('[data-act="delete"]');
+      if(v) v.onclick = function(){ viewFile(orders[idx]); };
+      if(d) d.onclick = function(){ deleteFile(orders[idx], idx); };
+    });
+  }
+
+  async function uploadFile(file){
+    var pr = window.currentProject;
+    if(!pr || !window.supa) throw new Error('Not ready');
+    var ts = Date.now();
+    var safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+    var path = 'work_orders/' + pr.id + '/' + ts + '_' + safe;
+
+    var up = await window.supa.storage.from('photos').upload(path, file, {
+      cacheControl: '3600', upsert: false, contentType: file.type || undefined,
+    });
+    if(up.error) throw up.error;
+
+    var ck = pr.checklist || {};
+    ck.work_orders = ck.work_orders || [];
+    ck.work_orders.unshift({
+      name        : file.name,
+      path        : path,
+      uploaded_by : currentEmail() || null,
+      uploaded_at : new Date().toISOString(),
+      size        : file.size,
+      type        : file.type,
+    });
+    var r = await window.supa.from('projects').update({ checklist: ck }).eq('id', pr.id);
+    if(r.error) throw r.error;
+    pr.checklist = ck;
+
+    if(typeof window.auditLog === 'function'){
+      try{ window.auditLog('work_order_upload',
+        'Uploaded work order: ' + file.name, pr.id); }catch(_){ }
+    }
+    renderSection();
+  }
+
+  function viewFile(wo){
+    if(!wo || !window.supa) return;
+    try{
+      var res = window.supa.storage.from('photos').getPublicUrl(wo.path);
+      var url = res && res.data && res.data.publicUrl;
+      if(url) window.open(url, '_blank', 'noopener,noreferrer');
+      else alert('Could not generate URL for ' + wo.name);
+    }catch(e){
+      alert('Could not open: ' + (e.message || e));
+    }
+  }
+
+  async function deleteFile(wo, idx){
+    if(!wo) return;
+    if(!confirm('Delete "' + wo.name + '"? This can\'t be undone.')) return;
+    var pr = window.currentProject;
+    if(!pr) return;
+    try{
+      var del = await window.supa.storage.from('photos').remove([wo.path]);
+      if(del.error){
+        // Storage delete failed — still remove the reference so it doesn't
+        // stay dangling in the UI. Log the storage failure so an admin can
+        // clean up manually if needed.
+        console.warn('[work-orders] storage delete failed:', del.error);
+      }
+      var ck = pr.checklist || {};
+      ck.work_orders = ck.work_orders || [];
+      ck.work_orders.splice(idx, 1);
+      var r = await window.supa.from('projects').update({ checklist: ck }).eq('id', pr.id);
+      if(r.error) throw r.error;
+      pr.checklist = ck;
+      if(typeof window.auditLog === 'function'){
+        try{ window.auditLog('work_order_delete',
+          'Deleted work order: ' + wo.name, pr.id); }catch(_){ }
+      }
+      renderSection();
+    }catch(e){
+      alert('Delete failed: ' + (e.message || e));
+    }
+  }
+
+  // Hook renderOverview so the section renders after the project profile
+  // draws. Same pattern used by bid strip, auto-transitions, etc.
+  function hook(){
+    if(typeof window.renderOverview !== 'function') return false;
+    if(window.renderOverview.__crWO) return true;
+    var orig = window.renderOverview;
+    var wrapped = function(){
+      var out = orig.apply(this, arguments);
+      try{ renderSection(); }catch(e){ console.warn('[work-orders]', e); }
+      return out;
+    };
+    wrapped.__crWO = true;
+    window.renderOverview = wrapped;
+    return true;
+  }
+  function start(){
+    var n = 0, iv = setInterval(function(){
+      if(hook() || ++n > 40) clearInterval(iv);
+    }, 200);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalWorkOrders = {
+    render: renderSection,
+    canSee: canSee,
+  };
 })();
 </script>
 
