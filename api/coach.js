@@ -1,7 +1,14 @@
-// api/coach.js
+// api/coach.js  [v4 · 2026-07-24]
 // ═════════════════════════════════════════════════════════════════════
 // Objection Coach — grade a rep's answer against the ideal response
 // using Gemini. Returns { score, ideal, feedback: { verdict, strengths,
+// gaps, fix } } to match what the client (CardinalCoach) expects.
+//
+// v4:
+// - Recognizes `objection` column (Cardinal's actual live schema)
+// - Grades even when no ideal_response field exists — Gemini uses
+//   general sales-coaching principles as the yardstick
+// - Every error includes the actual row column names for debugging
 // gaps, fix } } to match what the client (CardinalCoach) expects.
 //
 // REQUIRES these Vercel env vars:
@@ -39,7 +46,12 @@ export default async function handler(req, res) {
   const userToken = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!userToken) return res.status(401).json({ error: 'Not signed in' });
 
-  const SUPABASE_URL = (process.env.SUPABASE_URL || '').trim();
+  const SUPABASE_URL_RAW = (process.env.SUPABASE_URL || '').trim();
+  // Normalize: prepend https:// if the user pasted a bare hostname, and
+  // strip any trailing slash so URL concatenation stays clean.
+  const SUPABASE_URL = SUPABASE_URL_RAW
+    ? (SUPABASE_URL_RAW.match(/^https?:\/\//i) ? SUPABASE_URL_RAW : 'https://' + SUPABASE_URL_RAW).replace(/\/+$/, '')
+    : '';
   const ANON_KEY     = (process.env.SUPABASE_ANON_KEY || '').trim();
   const SERVICE_KEY  = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
   const GEMINI_KEY   = (process.env.GEMINI_API_KEY || '').trim();
@@ -63,56 +75,93 @@ export default async function handler(req, res) {
     return res.status(502).json({ error: 'Auth check failed: ' + e.message });
   }
 
-  // 2. Fetch the objection card (service-role bypasses RLS)
+  // 2. Fetch the objection card (service-role bypasses RLS).
+  // We select * because the objections table schema may vary — an earlier
+  // module version used {title, question, answer} while our SQL uses
+  // {quote, ideal_response}. Grab everything, then pick fields by name.
   let card;
+  const cardUrl = `${SUPABASE_URL}/rest/v1/objections?id=eq.${encodeURIComponent(objection_id)}&select=*`;
   try {
     const cardResp = await fetch(
-      `${SUPABASE_URL}/rest/v1/objections?id=eq.${encodeURIComponent(objection_id)}&select=id,category,difficulty,quote,context,ideal_response,rubric`,
+      cardUrl,
       { headers: { apikey: SERVICE_KEY, authorization: `Bearer ${SERVICE_KEY}` } }
     );
     if (!cardResp.ok) {
-      const detail = await cardResp.text().catch(() => '');
+      const detail = (await cardResp.text().catch(() => '')).slice(0, 300);
+      // Fold everything into the top-level error string so it shows up in
+      // the client toast (the client only reads .error, not .supabase_said).
       return res.status(502).json({
-        error: `Card fetch failed: HTTP ${cardResp.status}`,
-        supabase_said: detail.slice(0, 400),
-        hint: cardResp.status === 401
-          ? 'SUPABASE_SERVICE_ROLE_KEY is wrong or missing — check Vercel env vars'
-          : cardResp.status === 404
-          ? 'objections table not found — run objection_coach_setup.sql in Supabase'
-          : cardResp.status === 400
-          ? 'Query rejected — usually a bad SUPABASE_URL (needs https://, no trailing slash)'
-          : undefined,
+        error:
+          `[v3] HTTP ${cardResp.status} from Supabase. ` +
+          `Body: ${detail || '(empty)'}. ` +
+          `URL: ${cardUrl.replace(/([?&]apikey=)[^&]+/, '$1REDACTED')}`,
       });
     }
     const rows = await cardResp.json();
     card = rows[0];
     if (!card) return res.status(404).json({
-      error: 'Objection card not found',
-      hint: 'The client sent an objection_id that isn\'t in the seeded deck. Re-run objection_coach_setup.sql and reload the app.',
-      objection_id,
+      error: `No objection with id ${objection_id} in the deck. Table exists but the id from the client doesn't match a row.`,
     });
   } catch (e) {
-    return res.status(502).json({ error: 'Card lookup failed: ' + e.message });
+    return res.status(502).json({ error: 'Card lookup network error: ' + e.message });
+  }
+
+  // Normalize field names — different schema versions of the objections
+  // table use different column names for the same concept.
+  const pick = (row, keys) => {
+    for (const k of keys) if (row[k] != null && row[k] !== '') return row[k];
+    return '';
+  };
+  const cardCategory   = pick(card, ['category', 'topic', 'section', 'group', 'type']);
+  const cardDifficulty = pick(card, ['difficulty', 'level', 'tier']) || 2;
+  const cardQuote      = pick(card, ['objection', 'quote', 'question', 'title', 'prompt', 'homeowner_says', 'customer_says']);
+  const cardContext    = pick(card, ['context', 'scenario', 'setting', 'notes', 'description', 'situation', 'background']);
+  const cardIdeal      = pick(card, [
+    'ideal_response', 'ideal_answer', 'ideal', 'answer', 'response',
+    'model_answer', 'good_answer', 'ideal_line', 'sample_response',
+    'best_response', 'reply', 'suggested_response', 'coach_response',
+  ]);
+  const cardRubric     = card.rubric || card.criteria || card.looks_for || card.grading_notes || {};
+
+  // Only fail if we can't even get the QUESTION. Grading works without an
+  // ideal reference — Gemini can score against general sales principles.
+  if (!cardQuote) {
+    return res.status(500).json({
+      error:
+        `[v4] Objections row has no recognized question field. ` +
+        `Row columns: ${Object.keys(card).join(', ')}. ` +
+        `Expected one of: objection, quote, question, title, prompt.`,
+    });
   }
 
   // 3. Build the Gemini prompt
-  const rubricItems = Array.isArray(card.rubric?.looks_for) ? card.rubric.looks_for : [];
+  const rubricItems = Array.isArray(cardRubric?.looks_for)
+    ? cardRubric.looks_for
+    : Array.isArray(cardRubric)
+    ? cardRubric
+    : [];
+  const idealBlock = cardIdeal
+    ? `CARDINAL'S IDEAL RESPONSE (the reference to grade against):\n${cardIdeal}\n\n`
+    : `NOTE: No reference response is stored for this card — grade against general roofing-sales best practices.\n\n`;
   const prompt =
     'You are a strict but fair sales coach grading a Cardinal Roofing sales rep\'s answer ' +
     'to a customer objection. You always respond with a single valid JSON object and nothing else.\n\n' +
-    `CUSTOMER OBJECTION (category: ${card.category}, difficulty: ${card.difficulty}/3):\n"${card.quote}"\n\n` +
-    `CONTEXT: ${card.context || 'General customer objection.'}\n\n` +
-    `CARDINAL'S IDEAL RESPONSE:\n${card.ideal_response}\n\n` +
-    'RUBRIC — what a great answer hits:\n- ' + rubricItems.join('\n- ') + '\n\n' +
+    `CUSTOMER OBJECTION (category: ${cardCategory || 'general'}, difficulty: ${cardDifficulty}/3):\n"${cardQuote}"\n\n` +
+    `CONTEXT: ${cardContext || 'General customer objection.'}\n\n` +
+    idealBlock +
+    (rubricItems.length
+      ? 'RUBRIC — what a great answer hits:\n- ' + rubricItems.join('\n- ') + '\n\n'
+      : '') +
     `REP'S ANSWER:\n"${answer}"\n\n` +
     'Grade the rep\'s answer from 0 to 100 based on how well it:\n' +
     '1. Actually addresses the objection (doesn\'t dodge or change the subject)\n' +
-    '2. Hits the rubric items above\n' +
+    '2. Acknowledges the homeowner\'s concern without being defensive\n' +
     '3. Sounds natural — a real human talking to a homeowner, not a script\n' +
-    '4. Would actually work in the field with a skeptical customer\n\n' +
-    'Be honest. A wooden or manipulative answer should score low even if it hits the rubric. ' +
-    'A creative answer that hits the rubric in unexpected ways should score high. ' +
-    'Ideal responses match or beat the reference and score 85+.\n\n' +
+    '4. Ends with a question or clear next step\n' +
+    '5. Would actually work in the field with a skeptical customer\n\n' +
+    'Be honest. A wooden or manipulative answer should score low. ' +
+    'A creative answer that addresses the objection in unexpected but effective ways should score high. ' +
+    'A one-line dismissive reply ("Yea probably so") is a clear zero — no acknowledgment, no substance, no question.\n\n' +
     'Respond ONLY with this JSON structure:\n' +
     '{\n' +
     '  "score": <integer 0-100>,\n' +
@@ -176,7 +225,7 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     score,
-    ideal: card.ideal_response,
+    ideal: cardIdeal,
     feedback,
   });
 }
