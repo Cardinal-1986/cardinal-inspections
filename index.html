@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 181 &#8212; Hide recent-clients strip on retail Home; hide Cardinal Truth dashbanner that was floating away from the sticky header</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 182 &#8212; Community Hub + opens a streamlined New Bid form (partner, property, work type, amount, due date, scope) instead of the full New Lead sheet</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25343,6 +25343,407 @@ body.claim-insurance #brandLogo{
       return !!(v && v.style.display !== 'none');
     }
   };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: community_new_bid.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — NEW BID (Community Hub +)
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ On the Community Hub, the base app's "+ New" flow opens the retail
+ New Lead form — with First/Last name, Company, Phone, Mailing +
+ Billing addresses, Job Category, Lead Source, Assign to, Initial
+ Appointment, insurance-vs-community-vs-partnership radios. None of
+ that fits how community bidding actually works:
+
+   • The partner is already in the directory
+   • Bids are property-scoped, not homeowner-scoped
+   • Lead source is always "we know this partner"
+   • The stage is always "Bid Requested" (= stored as Lead)
+
+ This module intercepts the + button click when
+ body.viewing-community-hub is set and opens a dedicated
+ "New Bid" modal with the fields that actually matter:
+
+   • Partner (dropdown from community_partners)
+   • Property / address (free text — pre-fills if the partner
+     only has one property, otherwise blank)
+   • Work type (Roofing / Siding / Windows / Gutters / Multi / Other)
+   • Bid amount
+   • Bid due date
+   • Scope of work
+   • Notes
+
+ Save writes a projects row with claim_type='community',
+ stage='Lead' (renders as "Bid Requested" via the community
+ stages label overlay from build 155), and the bid meta stored
+ in checklist.lead.
+
+ Non-Community-Hub views keep the original + New behavior.
+
+ INSTALL: paste after community_hub.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<style id="cr-nbid-styles">
+  .cr-nbid-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9600;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:6vh 12px 20px; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .cr-nbid-box{
+    background:#fdfcf7; border-radius:14px; max-width:520px; width:100%;
+    padding:22px 22px 20px;
+    box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-nbid-box h3{
+    margin:0 0 4px; font:800 15px 'Segoe UI',Arial,sans-serif;
+    color:#2f5f3b; letter-spacing:.04em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .cr-nbid-box .subline{
+    font:600 12px 'Segoe UI',Arial,sans-serif;
+    color:#6b7d69; margin:0 0 6px;
+  }
+  .cr-nbid-box .rule{
+    height:1px; background:linear-gradient(90deg,transparent,#4a8c5a 30%,#4a8c5a 70%,transparent);
+    margin:8px 0 6px;
+  }
+  .cr-nbid-box label{
+    display:block; font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#5a6b57;
+    margin:12px 0 4px;
+  }
+  .cr-nbid-box label .req{ color:#c8202e; margin-left:2px; }
+  .cr-nbid-box input,
+  .cr-nbid-box select,
+  .cr-nbid-box textarea{
+    width:100%; box-sizing:border-box;
+    padding:9px 11px; border:1px solid #d0cebf; border-radius:8px;
+    font:600 13px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c; background:#fff;
+  }
+  .cr-nbid-box input:focus,
+  .cr-nbid-box select:focus,
+  .cr-nbid-box textarea:focus{
+    outline:none; border-color:#4a8c5a;
+    box-shadow:0 0 0 3px rgba(74,140,90,.15);
+  }
+  .cr-nbid-box textarea{
+    min-height:64px; resize:vertical; font-family:inherit;
+  }
+  .cr-nbid-row{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  }
+  @media (max-width:420px){
+    .cr-nbid-row{ grid-template-columns:1fr; gap:0; }
+  }
+  .cr-nbid-acts{
+    display:flex; gap:8px; justify-content:flex-end;
+    margin-top:20px; flex-wrap:wrap;
+  }
+  .cr-nbid-acts button{
+    border:0; border-radius:6px; padding:9px 16px; cursor:pointer;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    font-family:inherit;
+  }
+  .cr-nbid-acts button.primary{ background:#4a8c5a; color:#fff; }
+  .cr-nbid-acts button.primary:hover{ background:#3d7a4c; }
+  .cr-nbid-acts button.primary:disabled{ background:#8ba892; cursor:wait; }
+  .cr-nbid-acts button.ghost{
+    background:transparent; color:#5a6b57;
+    border:1px solid #d0cebf;
+  }
+  .cr-nbid-acts button.ghost:hover{ background:#f0eee3; }
+</style>
+
+<script id="cr-nbid-script">
+(function () {
+  'use strict';
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function money(v){
+    var n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+  }
+  function isCommunityHubActive(){
+    return document.body.classList.contains('viewing-community-hub');
+  }
+
+  async function loadPartners(){
+    if(!window.CardinalCommunityPartners) return [];
+    try{
+      var all = await window.CardinalCommunityPartners.load();
+      var filtered = (all || []).filter(function(p){ return !p.archived; });
+      filtered.sort(function(a,b){
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+      return filtered;
+    }catch(e){ return []; }
+  }
+
+  async function loadPropertiesFor(partnerId){
+    if(!partnerId || !window.CardinalCommunityProperties) return [];
+    try{
+      var fn = window.CardinalCommunityProperties.forPartner ||
+               window.CardinalCommunityProperties.byPartner ||
+               window.CardinalCommunityProperties.list;
+      if(!fn) return [];
+      var props = await fn.call(window.CardinalCommunityProperties, partnerId);
+      return (props || []).filter(function(p){ return !p.archived; });
+    }catch(e){ return []; }
+  }
+
+  async function showBidModal(){
+    var partners = await loadPartners();
+
+    var bg = document.createElement('div');
+    bg.className = 'cr-nbid-bg';
+    bg.innerHTML =
+      '<div class="cr-nbid-box">' +
+        '<h3>\uD83D\uDEA9 New Bid</h3>' +
+        '<p class="subline">Create a community bid opportunity. ' +
+          'It\'ll appear as <b>Bid Requested</b> on the Hub pipeline.</p>' +
+        '<div class="rule"></div>' +
+
+        '<label>Partner <span class="req">*</span></label>' +
+        '<select data-field="partner_id" required>' +
+          '<option value="">\u2014 select a partner \u2014</option>' +
+          partners.map(function(p){
+            return '<option value="' + esc(p.id) + '">' +
+              esc(p.name) +
+              (p.partner_type ? ' \u00b7 ' + esc(p.partner_type.replace(/_/g, ' ')) : '') +
+            '</option>';
+          }).join('') +
+        '</select>' +
+
+        '<label>Property / Address</label>' +
+        '<div data-props-slot>' +
+          '<input type="text" data-field="address" ' +
+            'placeholder="Property address or job location" />' +
+        '</div>' +
+
+        '<div class="cr-nbid-row">' +
+          '<div>' +
+            '<label>Work Type</label>' +
+            '<select data-field="work_type">' +
+              '<option value="">\u2014 select \u2014</option>' +
+              '<option value="Roofing">Roofing</option>' +
+              '<option value="Siding">Siding</option>' +
+              '<option value="Windows">Windows</option>' +
+              '<option value="Gutters">Gutters</option>' +
+              '<option value="Multi-trade">Multi-trade</option>' +
+              '<option value="Other">Other</option>' +
+            '</select>' +
+          '</div>' +
+          '<div>' +
+            '<label>Bid Amount</label>' +
+            '<input type="number" data-field="bid_amount" ' +
+              'placeholder="0.00" step="0.01" min="0" inputmode="decimal" />' +
+          '</div>' +
+        '</div>' +
+
+        '<label>Bid Due Date</label>' +
+        '<input type="date" data-field="bid_due_at" />' +
+
+        '<label>Scope of Work</label>' +
+        '<textarea data-field="scope" ' +
+          'placeholder="What are we bidding on? (spec, quantities, timeline)"></textarea>' +
+
+        '<label>Notes</label>' +
+        '<textarea data-field="notes" ' +
+          'placeholder="Optional \u2014 partner preferences, contact context, etc."></textarea>' +
+
+        '<div class="cr-nbid-acts">' +
+          '<button class="ghost" data-act="cancel">Cancel</button>' +
+          '<button class="primary" data-act="save">Save Bid</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(bg);
+
+    var close = function(){
+      if(bg.parentNode) bg.parentNode.removeChild(bg);
+      document.removeEventListener('keydown', escHandler);
+    };
+    var escHandler = function(e){
+      if(e.key === 'Escape') close();
+    };
+    document.addEventListener('keydown', escHandler);
+    bg.onclick = function(e){ if(e.target === bg) close(); };
+    bg.querySelector('[data-act="cancel"]').onclick = close;
+
+    // Partner change → if that partner has known properties, swap the free
+    // address input for a dropdown of them (with "Other" as an escape hatch).
+    var partnerSel = bg.querySelector('[data-field="partner_id"]');
+    var propsSlot  = bg.querySelector('[data-props-slot]');
+    partnerSel.onchange = async function(){
+      var pid = partnerSel.value;
+      if(!pid){
+        propsSlot.innerHTML = '<input type="text" data-field="address" ' +
+          'placeholder="Property address or job location" />';
+        return;
+      }
+      var props = await loadPropertiesFor(pid);
+      if(!props.length){
+        propsSlot.innerHTML = '<input type="text" data-field="address" ' +
+          'placeholder="Property address or job location" />';
+        return;
+      }
+      propsSlot.innerHTML =
+        '<select data-field="property_id">' +
+          '<option value="">\u2014 property \u2014</option>' +
+          props.map(function(p){
+            return '<option value="' + esc(p.id) + '" ' +
+                   'data-address="' + esc(p.address || '') + '">' +
+              esc(p.nickname || p.address || 'property') +
+            '</option>';
+          }).join('') +
+          '<option value="__other__">Other / new property\u2026</option>' +
+        '</select>' +
+        '<input type="text" data-field="address" ' +
+          'placeholder="Address" style="margin-top:8px;display:none;" />';
+      var propSel   = propsSlot.querySelector('[data-field="property_id"]');
+      var addrInput = propsSlot.querySelector('[data-field="address"]');
+      propSel.onchange = function(){
+        if(propSel.value === '__other__'){
+          addrInput.style.display = 'block';
+          addrInput.focus();
+        }else{
+          addrInput.style.display = 'none';
+          var opt = propSel.selectedOptions[0];
+          addrInput.value = opt ? opt.dataset.address : '';
+        }
+      };
+    };
+
+    setTimeout(function(){ partnerSel.focus(); }, 60);
+
+    bg.querySelector('[data-act="save"]').onclick = async function(){
+      var saveBtn = bg.querySelector('[data-act="save"]');
+      var partnerId = partnerSel.value;
+      if(!partnerId){
+        alert('Please select a partner.');
+        partnerSel.focus();
+        return;
+      }
+      var partner = partners.find(function(p){ return p.id === partnerId; });
+      var addrInput = bg.querySelector('[data-field="address"]');
+      var propSel   = bg.querySelector('[data-field="property_id"]');
+      var propId    = propSel ? propSel.value : '';
+      var address   = addrInput ? addrInput.value.trim() : '';
+      var workType  = bg.querySelector('[data-field="work_type"]').value;
+      var bidAmount = money(bg.querySelector('[data-field="bid_amount"]').value);
+      var bidDueAt  = bg.querySelector('[data-field="bid_due_at"]').value;
+      var scope     = bg.querySelector('[data-field="scope"]').value.trim();
+      var notes     = bg.querySelector('[data-field="notes"]').value.trim();
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving\u2026';
+
+      try{
+        var email = (window.currentUser && window.currentUser.email) || '';
+        var clientName = address
+          ? partner.name + ' \u2014 ' + address
+          : partner.name + ' bid';
+        var projectData = {
+          client_name : clientName,
+          address     : address,
+          stage       : 'Lead',
+          checklist   : {
+            lead: {
+              claim_type   : 'community',
+              partner_id   : partner.id,
+              partner_name : partner.name,
+              property_id  : propId && propId !== '__other__' ? propId : null,
+              work_type    : workType,
+              bid_amount   : bidAmount,
+              bid_due_at   : bidDueAt || null,
+              scope        : scope,
+              notes        : notes,
+              assigned     : email ? [email] : [],
+              source       : 'community-bid',
+              created_at   : new Date().toISOString(),
+            },
+          },
+          created_by  : email || null,
+        };
+        var r = await window.supa.from('projects').insert(projectData).select().single();
+        if(r.error) throw r.error;
+
+        // Log the bid amount via the same log helper the bid strip uses if it
+        // exists so the amount shows up on the client profile bid card.
+        try{
+          if(bidAmount > 0 && window.CardinalCommunityBid && window.CardinalCommunityBid.logSubmitted){
+            window.CardinalCommunityBid.logSubmitted(r.data.id, bidAmount);
+          }
+        }catch(_){ }
+
+        close();
+
+        if(r.data && typeof window.openProject === 'function'){
+          setTimeout(function(){ window.openProject(r.data.id); }, 80);
+        }else if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){
+          setTimeout(function(){ window.CardinalCommunityHub.show(); }, 80);
+        }
+      }catch(e){
+        alert('Could not create bid: ' + (e.message || e));
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Bid';
+      }
+    };
+  }
+
+  // Intercept the + button in capture phase so we run BEFORE the base
+  // app's click handler that shows the newMenu dropdown. Only fire when
+  // Community Hub is the active view — every other view keeps the base
+  // behavior intact.
+  function hookAddButton(){
+    var btn = document.getElementById('addProjectBtn');
+    if(!btn) return;
+    if(btn.dataset.crBidHooked === '1') return;
+    btn.dataset.crBidHooked = '1';
+    btn.addEventListener('click', function(e){
+      if(!isCommunityHubActive()) return;
+      e.stopPropagation();
+      if(typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+      e.preventDefault();
+      // Hide newMenu if it was already open from a prior click
+      var nm = document.getElementById('newMenu');
+      if(nm && nm.style.display !== 'none') nm.style.display = 'none';
+      showBidModal();
+    }, true);
+  }
+
+  var scheduled = false;
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){
+      scheduled = false;
+      try{ hookAddButton(); }catch(e){}
+    });
+  }
+  function start(){
+    schedule();
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:true
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalNewBid = { open: showBidModal };
 })();
 </script>
 
