@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 188 &#8212; Resource Library TOC: floating button opens searchable modal with Insurance / Manufacturer / General hubs; Manufacturer broken out as its own section</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 201 &#8212; Hardened every module to use projects.name (the real column) instead of client_name in SELECTs + reads. If v200 wasn&#8217;t enough, v201 is comprehensive.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22353,6 +22353,8 @@ body.claim-insurance #brandLogo{
   .cr-pcard.community{ background:linear-gradient(160deg,#16241a,#0f1a12); border-color:#4a8c5a55; }
   .cr-pcard.community .t{ color:#7fc98f; } .cr-pcard.community .d,.cr-pcard.community .n{ color:#a3c4ac; }
   .cr-pcard.all      { background:linear-gradient(160deg,#20201f,#141413); border-color:#8a8a8a44; }
+  .cr-pcard.cr-pcard-active{ border-color:#f5d061 !important; box-shadow:0 0 0 2px rgba(245,208,97,.35), 0 8px 20px rgba(245,208,97,.15) !important; }
+  .cr-pcard.cr-pcard-active .t{ color:#f5d061 !important; }
   .cr-pcard.all       .t{ color:#dcdcdc; } .cr-pcard.all .d,.cr-pcard.all .n{ color:#a8a8a8; }
 
   .cr-plabel{
@@ -22591,11 +22593,9 @@ body.claim-insurance #brandLogo{
         '<div class="t">' + m.icon + ' ' + m.title + '</div>' +
         '<div class="d">' + m.desc + '</div></button>';
     }).join('');
-    if(canSeeAll()){
-      opts += '<button class="cr-pcard all" data-p="all">' +
-        '<div class="t">\u25C9 All Clients</div>' +
-        '<div class="d">Every client across all three portals in one list, badged by type. Production and admin only.</div></button>';
-    }
+    opts += '<button class="cr-pcard landing" data-cr-landing type="button">' +
+      '<div class="t">\uD83C\uDFE0 Landing / Hub</div>' +
+      '<div class="d">Back to the landing hub with all three CRMs and quick tools.</div></button>';
     bg.innerHTML = '<div class="cr-psheet"><h4>Switch portal</h4>' + opts + '</div>';
     document.body.appendChild(bg);
     bg.onclick = function(e){ if(e.target === bg) bg.remove(); };
@@ -22668,14 +22668,12 @@ body.claim-insurance #brandLogo{
         '<div class="n">' + counts[k] + ' client' + (counts[k]===1?'':'s') + '</div>' +
       '</button>';
     });
-    if(canSeeAll()){
-      var tot = counts.retail + counts.insurance + counts.community + counts.unknown;
-      html += '<button class="cr-pcard all" data-portal="all">' +
-        '<div class="t">\u25C9 All Clients</div>' +
-        '<div class="d">Every client across all three portals in one list, badged by type \u2014 so production never hunts.</div>' +
-        '<div class="n">' + tot + ' total' + (counts.unknown ? ' \u00b7 ' + counts.unknown + ' untyped' : '') + '</div>' +
-      '</button>';
-    }
+    var tot = counts.retail + counts.insurance + counts.community + counts.unknown;
+    html += '<button class="cr-pcard all" data-portal="all">' +
+      '<div class="t">\u25C9 All Clients</div>' +
+      '<div class="d">Every client you have access to, across all three portals \u2014 badged by type.</div>' +
+      '<div class="n">' + tot + ' total' + (counts.unknown ? ' \u00b7 ' + counts.unknown + ' untyped' : '') + '</div>' +
+    '</button>';
     html += '<div class="cr-plabel">Tools</div>';
 
     var holder = document.createElement('div');
@@ -22699,8 +22697,18 @@ body.claim-insurance #brandLogo{
       b.onclick = function(e){
         e.preventDefault(); e.stopPropagation();
         set(b.dataset.portal);
-        // hideAllViews() does NOT dismiss #landingView, so the click was
-        // firing but the landing stayed on top and nothing looked to happen.
+        // 'All Clients' is a filter, not a destination — stay on the
+        // landing hub so users can then pick which CRM to enter with
+        // the cross-CRM view already active. A small visual selected
+        // state is added so the click doesn't feel like a no-op.
+        if(b.dataset.portal === 'all'){
+          land.querySelectorAll('.cr-pcard.cr-pcard-active').forEach(function(el){
+            el.classList.remove('cr-pcard-active');
+          });
+          b.classList.add('cr-pcard-active');
+          return;
+        }
+        // Any other portal card navigates to its home destination.
         land.style.display = 'none';
         go(b.dataset.portal);
       };
@@ -25680,8 +25688,25 @@ body.claim-insurance #brandLogo{
           '</div>' +
         '</div>' +
 
-        '<label>Bid Due Date</label>' +
-        '<input type="date" data-field="bid_due_at" />' +
+        '<div class="cr-nbid-row">' +
+          '<div>' +
+            '<label>Bid Due Date</label>' +
+            '<input type="date" data-field="bid_due_at" />' +
+          '</div>' +
+          '<div>' +
+            '<label>Assign To</label>' +
+            '<select data-field="assigned_to">' +
+              '<option value="">\u2014 unassigned \u2014</option>' +
+              '<option value="theo@cardinalrenovations.net">Theo (admin)</option>' +
+              '<option value="joan@cardinalrenovations.net">Joan (admin)</option>' +
+              '<option value="curtis@cardinalrenovations.net">Curtis (production)</option>' +
+              '<option value="scottie@cardinalrenovations.net">Scottie (production)</option>' +
+              '<option value="nick@cardinalrenovations.net">Nick (sales)</option>' +
+              '<option value="joey@cardinalrenovations.net">Joey (sales)</option>' +
+              '<option value="jacob@cardinalrenovations.net">Jacob (sales)</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>' +
 
         '<label>Scope of Work</label>' +
         '<textarea data-field="scope" ' +
@@ -25717,6 +25742,19 @@ body.claim-insurance #brandLogo{
     var partnerSel = bg.querySelector('[data-field="partner_id"]');
     var propsSlot  = bg.querySelector('[data-props-slot]');
     var renterSect = bg.querySelector('[data-renter-section]');
+
+    // Default the Assign To dropdown to whoever is currently signed in
+    // (matches the pre-Assign-To behavior of auto-assigning to the creator).
+    var assignedSel = bg.querySelector('[data-field="assigned_to"]');
+    if(assignedSel){
+      var meEmail = ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+      if(meEmail){
+        var found = Array.prototype.some.call(assignedSel.options, function(o){
+          return o.value.toLowerCase() === meEmail;
+        });
+        if(found) assignedSel.value = meEmail;
+      }
+    }
     function updateRenterVisibility(pid){
       var p = partners.find(function(x){ return x.id === pid; });
       var isPropMgr = !!(p && p.partner_type === 'property_manager');
@@ -25790,6 +25828,7 @@ body.claim-insurance #brandLogo{
       var workType  = bg.querySelector('[data-field="work_type"]').value;
       var bidAmount = money(bg.querySelector('[data-field="bid_amount"]').value);
       var bidDueAt  = bg.querySelector('[data-field="bid_due_at"]').value;
+      var assignedTo = bg.querySelector('[data-field="assigned_to"]').value.trim();
       var scope     = bg.querySelector('[data-field="scope"]').value.trim();
       var notes     = bg.querySelector('[data-field="notes"]').value.trim();
 
@@ -25807,7 +25846,7 @@ body.claim-insurance #brandLogo{
               ? partner.name + ' \u2014 ' + address
               : partner.name + ' bid');
         var projectData = {
-          client_name : clientName,
+          name        : clientName,
           address     : address,
           stage       : 'Lead',
           checklist   : {
@@ -25827,7 +25866,7 @@ body.claim-insurance #brandLogo{
               bid_due_at      : bidDueAt || null,
               scope           : scope,
               notes           : notes,
-              assigned        : email ? [email] : [],
+              assigned        : assignedTo ? [assignedTo] : (email ? [email] : []),
               source          : 'community-bid',
               created_at      : new Date().toISOString(),
             },
@@ -29215,11 +29254,60 @@ body.claim-insurance #brandLogo{
     return true;
   }
 
+  // Wrap showHome so the chip flips to 'retail' whenever we land on the
+  // dashboard. Home visually IS the retail dashboard (red/gold branding,
+  // Cardinal Pipeline, retail Work Schedule) — the previous behavior of
+  // "Home preserves whatever portal you were on" left the chip saying
+  // INSURANCE while staring at retail content, which reads as a bug.
+  function hookShowHome(){
+    if(typeof window.showHome !== 'function') return false;
+    if(window.showHome.__crPortalSync) return true;
+    var orig = window.showHome;
+    var wrapped = function(){
+      silentSet('retail');
+      return orig.apply(this, arguments);
+    };
+    wrapped.__crPortalSync = true;
+    window.showHome = wrapped;
+    return true;
+  }
+
+  // Delegated click handler for the "Landing / Hub" button injected into
+  // the portal switcher modal (source-patched in splice.py — replaces
+  // the "All Clients" button). Uses a distinct attribute so it doesn't
+  // collide with the base app's data-p handler.
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-cr-landing]');
+    if(!btn) return;
+    e.stopPropagation();
+    e.preventDefault();
+    // Close the switcher sheet
+    var bg = btn.closest('.cr-pbg') || btn.closest('.cr-psheet-bg');
+    if(!bg){
+      // Fallback: search up for a fixed-positioned backdrop
+      var p = btn.parentElement;
+      while(p && p !== document.body){
+        var cs = getComputedStyle(p);
+        if(cs.position === 'fixed'){ bg = p; break; }
+        p = p.parentElement;
+      }
+    }
+    if(bg && bg.parentNode) bg.parentNode.removeChild(bg);
+    // Navigate to landing
+    if(typeof window.showLanding === 'function'){
+      try{ window.showLanding(); }catch(err){ console.warn('[portal-sync] showLanding failed:', err); }
+    }else{
+      var land = document.getElementById('landingView');
+      if(land) land.style.display = 'block';
+    }
+  }, true);
+
   function tryHooks(){
     var a = hookCardinalTruth();
     var b = hookCommunityHub();
     var c = hookHideAllViews();
-    return a && b && c;
+    var d = hookShowHome();
+    return a && b && c && d;
   }
 
   function start(){
@@ -32227,7 +32315,7 @@ body.claim-insurance #brandLogo{
     }
     try{
       var pr = await window.supa.from('projects')
-        .select('id, client_name, stage')
+        .select('id, name, stage')
         .in('stage', advanced);
       if(pr.error) return skipIfErr({error:pr.error.message}, 'projects');
       var ids = (pr.data || []).map(function(p){ return p.id; });
@@ -32250,7 +32338,7 @@ body.claim-insurance #brandLogo{
       if(!missing.length) return { status:'ok', count:0, message:'None found', fix:'' };
 
       var sample = missing.slice(0, 3)
-        .map(function(p){ return (p.client_name || p.id.slice(0,8)) + ' [' + p.stage + ']'; })
+        .map(function(p){ return (p.name || p.id.slice(0,8)) + ' [' + p.stage + ']'; })
         .join(', ');
       return {
         status : missing.length >= 5 ? 'crit' : 'warn',
@@ -32304,7 +32392,7 @@ body.claim-insurance #brandLogo{
     var VALID = { retail:1, insurance:1, community:1, unknown:1 };
     if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
     try{
-      var r = await window.supa.from('projects').select('id, client_name, checklist').limit(1000);
+      var r = await window.supa.from('projects').select('id, name, checklist').limit(1000);
       if(r.error) return { status:'warn', message:'Cannot verify: ' + r.error.message, fix:'' };
       var bad = (r.data || []).filter(function(p){
         var ct = p.checklist && p.checklist.lead && p.checklist.lead.claim_type;
@@ -32314,7 +32402,7 @@ body.claim-insurance #brandLogo{
       if(!bad.length) return { status:'ok', count:0, message:'None found', fix:'' };
       var sample = bad.slice(0, 3).map(function(p){
         var ct = p.checklist.lead.claim_type;
-        return (p.client_name || p.id.slice(0,8)) + '="' + ct + '"';
+        return (p.name || p.id.slice(0,8)) + '="' + ct + '"';
       }).join(', ');
       return {
         status : 'warn',
@@ -32389,7 +32477,7 @@ body.claim-insurance #brandLogo{
     if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
     try{
       var pr = await window.supa.from('projects')
-        .select('id, client_name, checklist')
+        .select('id, name, checklist')
         .limit(1000);
       if(pr.error) return skipIfErr({error:pr.error.message}, 'projects');
       var ins = (pr.data || []).filter(function(p){
@@ -32411,7 +32499,7 @@ body.claim-insurance #brandLogo{
       var missing = ins.filter(function(p){ return !have[p.id]; });
       if(!missing.length) return { status:'ok', count:0, message:'None found', fix:'' };
       var sample = missing.slice(0, 3)
-        .map(function(p){ return p.client_name || p.id.slice(0,8); }).join(', ');
+        .map(function(p){ return p.name || p.id.slice(0,8); }).join(', ');
       return {
         status : 'warn',
         count  : missing.length,
@@ -33127,7 +33215,7 @@ body.claim-insurance #brandLogo{
     }
     try{
       var r = await window.supa.from('projects')
-        .select('id, client_name, address, created_at, created_by, stage')
+        .select('id, name, address, created_at, created_by, stage')
         .not('address', 'is', null)
         .order('created_at', { ascending:false })
         .limit(2000);
@@ -33184,7 +33272,7 @@ body.claim-insurance #brandLogo{
       var recent = pairs.filter(function(p){ return p.within7d; });
       var sample = pairs.slice(0, 3).map(function(p){
         var names = p.rows.map(function(r){
-          return (r.client_name || '?') + '/' + (r.stage || '?') +
+          return (r.name || '?') + '/' + (r.stage || '?') +
                  '/' + ((r.created_by || '').split('@')[0] || '?');
         }).join(' + ');
         return p.rows[0].address + ' \u2192 ' + names;
@@ -34134,7 +34222,7 @@ body.claim-insurance #brandLogo{
     var clients = [];
     if(q.length >= 2 && Array.isArray(window.cacheProjects)){
       clients = window.cacheProjects.filter(function(p){
-        var hay = (p.client_name || '') + ' ' + (p.address || '');
+        var hay = (p.name || '') + ' ' + (p.address || '');
         return fuzzy(q, hay);
       }).slice(0, 8);
     }
@@ -34161,7 +34249,7 @@ body.claim-insurance #brandLogo{
         var p = r.data;
         html += '<div class="cr-pal-item ' + (i === sel ? 'active' : '') + '" data-idx="' + i + '">' +
           '<span class="icon">\uD83D\uDC64</span>' +
-          '<span class="label">' + esc(p.client_name || 'Unnamed') +
+          '<span class="label">' + esc(p.name || 'Unnamed') +
             (p.address ? ' <small>' + esc(p.address) + '</small>' : '') +
           '</span></div>';
       }
@@ -34300,7 +34388,7 @@ body.claim-insurance #brandLogo{
       var phones = Array.isArray(lead.phones) ? lead.phones : [];
       var emails = Array.isArray(lead.emails) ? lead.emails : [];
       return {
-        client_name: p.client_name || '',
+        client_name: p.name || p.client_name || '',
         address    : p.address || '',
         stage      : p.stage || '',
         claim_type : lead.claim_type || 'retail',
@@ -35595,6 +35683,22 @@ body.claim-insurance #brandLogo{
         'Documentation Discipline',
         'Common Mistakes to Avoid',
       ]},
+      { pid:'rlPageNachiMastery', title:'NACHI Roof Mastery (hub)', cards:[
+        '1-3 Accessing A Roof',
+        'Asphalt Composition Shingles',
+      ]},
+      { pid:'rlPageNachiAccessing', title:'NACHI 1-3 Accessing A Roof', cards:[
+        'Part 1 \u2014 Roof Safety, Risk, Pitch & Boots',
+        'Part 3 \u2014 Gaining Access, Choosing a Ladder & Safety Rules',
+        'Part 4 \u2014 Length, Material, Standing an Extension Ladder',
+        'Part 5 \u2014 Climbing, Maintenance & Step-Ladders',
+      ]},
+      { pid:'rlPageNachiAsphalt', title:'NACHI Asphalt Composition Shingles', cards:[
+        'Part 1 \u2014 Components, Mat & Fiberglass vs Organic',
+        'Part 2 \u2014 Organic Shingles & Distortion',
+        'Part 3 \u2014 Asphalt, Crude Oil, Filler & ASTM Standards',
+        'Part 4 \u2014 Back-Surfacing & Granules',
+      ]},
       { pid:'rlPageSup', title:'Supplement Templates', cards:[
         'How to Use These',
         'Ice Barrier \u2014 Extension to Wall Line',
@@ -35726,6 +35830,8 @@ body.claim-insurance #brandLogo{
 
   var expanded = new Set();     // page indices currently expanded
   var query = '';
+  var EXTRA_PAGES = [];         // Registered dynamically by other modules
+                                // via CardinalRLTOC.addSection(hubName, page)
 
   function esc(s){
     return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
@@ -35753,10 +35859,15 @@ body.claim-insurance #brandLogo{
     var totalMatches = 0;
 
     TOC.forEach(function(hubBlock, hubIdx){
+      // Merge in any dynamically-registered pages for this hub
+      var extraPagesForHub = EXTRA_PAGES.filter(function(e){
+        return e.hub === hubBlock.hub;
+      }).map(function(e){ return e.page; });
+      var allPages = hubBlock.pages.concat(extraPagesForHub);
       var hubHasMatch = false;
       var pagesHtml = '';
 
-      hubBlock.pages.forEach(function(page, pIdx){
+      allPages.forEach(function(page, pIdx){
         var pageKey = hubIdx + '-' + pIdx;
         var pageMatches = q ? matches(q, page.title) : false;
         var matchingCards = q ?
@@ -35955,7 +36066,2899 @@ body.claim-insurance #brandLogo{
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 
-  window.CardinalRLTOC = { open: open, close: close };
+  window.CardinalRLTOC = {
+    open: open,
+    close: close,
+    // Register a page dynamically under a hub. Called by
+    // nachi_content_admin after loading DB series so they appear
+    // in the TOC alongside the hardcoded pages.
+    addSection: function(hubName, page){
+      if(!hubName || !page || !page.pid) return;
+      EXTRA_PAGES = EXTRA_PAGES.filter(function(x){ return x.page.pid !== page.pid; });
+      EXTRA_PAGES.push({ hub: hubName, page: page });
+      if(backdrop){
+        var body = backdrop.querySelector('.cr-rltoc-body');
+        if(body) renderTOC(body);
+      }
+    },
+    clearExtras: function(){
+      EXTRA_PAGES = [];
+      if(backdrop){
+        var body = backdrop.querySelector('.cr-rltoc-body');
+        if(body) renderTOC(body);
+      }
+    },
+  };
+})();
+</script>
+
+
+<!-- MODULE: nachi_roof_mastery.html · v2026-07-24
+     Adds "NACHI Roof Mastery" sub-category under Mastering Roof
+     Inspections in the Resource Library. Currently contains:
+       · NACHI 1-3 Accessing A Roof (Parts 1, 3, 4, 5)
+       · NACHI Asphalt Composition Shingles (Parts 1-4)
+     Both are InterNACHI series by Kenton Shepard & Nick Gromicko, CMI.
+
+     Content-in-code for now; when Cardinal starts uploading many of
+     these, we should build a proper article-upload workflow (Supabase
+     table + form + admin-only) so you're not editing HTML per addition. -->
+<style id="cr-nachi-styles">
+  #resourceLibraryView .rl-navcard{
+    display:block;
+    background:linear-gradient(135deg,rgba(74,111,165,.12),rgba(74,111,165,.05));
+    border:1px solid #3d5875;
+    border-left:4px solid #7fa6d6;
+    border-radius:8px;
+    padding:14px 16px;
+    margin:14px 0;
+    text-decoration:none;
+    cursor:pointer;
+    color:#cfe0f5;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    transition:background .12s, transform .1s;
+    text-align:left;
+    width:100%;
+    box-sizing:border-box;
+    font-family:inherit;
+  }
+  #resourceLibraryView .rl-navcard:hover{
+    background:linear-gradient(135deg,rgba(74,111,165,.22),rgba(74,111,165,.09));
+    transform:translateY(-1px);
+  }
+  #resourceLibraryView .rl-navcard h3{
+    margin:0 0 4px;
+    font:800 15px Georgia,'Times New Roman',serif;
+    color:#e8ecf1;
+  }
+  #resourceLibraryView .rl-navcard p{
+    margin:0; font-size:13px; color:#a0b0c8;
+  }
+  #resourceLibraryView .rl-navcard .rl-boxgo{
+    margin-top:8px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.16em; text-transform:uppercase;
+    color:#7fa6d6;
+  }
+  #resourceLibraryView .rl-article h4{
+    margin:14px 0 6px;
+    font:700 15px Georgia,'Times New Roman',serif;
+    color:#cfe0f5; letter-spacing:.02em;
+  }
+  #resourceLibraryView .rl-article h5{
+    margin:10px 0 4px;
+    font:700 13px 'Segoe UI',Arial,sans-serif;
+    color:#a8bcd4; letter-spacing:.04em; text-transform:uppercase;
+  }
+  #resourceLibraryView .rl-article p{
+    margin:0 0 10px; font-size:13.5px; line-height:1.6; color:#c9d3df;
+  }
+  #resourceLibraryView .rl-article ul,
+  #resourceLibraryView .rl-article ol{
+    margin:6px 0 12px 0; padding-left:22px;
+  }
+  #resourceLibraryView .rl-article li{
+    margin:5px 0; font-size:13.5px; line-height:1.55; color:#c9d3df;
+  }
+  #resourceLibraryView .rl-article li b{ color:#e8ecf1; }
+  #resourceLibraryView .rl-article .rl-attribution{
+    margin-top:16px; padding-top:10px;
+    border-top:1px dashed rgba(127,166,214,.3);
+    font-size:11.5px; color:#8a9bb0; font-style:italic;
+  }
+</style>
+
+<script id="cr-nachi-script">
+(function(){
+  'use strict';
+
+  // ═════════════════════════════════════════════════════
+  // ACCESSING THE ROOF — Parts 1, 3, 4, 5
+  // ═════════════════════════════════════════════════════
+  var PART_1 = ''
+    + '<p><i>Accessing and walking the roof are the most dangerous parts of the inspection. This article develops the judgment and skills needed to safely mount and walk a roof, once you\'ve decided whether to walk it.</i></p>'
+    + '<h4>Roof Safety</h4>'
+    + '<p>Deciding whether to walk a roof is a skill developed with study and practice. Materials and conditions vary by home, region, and season. Key factors: your risk tolerance, roof pitch, exposure, condition of covering materials, and equipment.</p>'
+    + '<h4>Risk Tolerance</h4>'
+    + '<p>Each year people are injured or killed falling from roofs. Confidence grows with experience — fear of heights fades with time on roofs.</p>'
+    + '<p>Your walking skills improve on two levels:</p>'
+    + '<ul>'
+    +   '<li>Understanding what combinations of <b>materials and conditions</b> are safe</li>'
+    +   '<li>Understanding your own <b>agility limits</b> — balance, reaction time, range of movement</li>'
+    + '</ul>'
+    + '<p>Fear creates tension; tension interferes with balance. Learning to relax while walking improves stability.</p>'
+    + '<h4>Pitch</h4>'
+    + '<p>Steeper roofs are more dangerous than flatter ones — but even low-slope roofs can be dangerous. Damp, moss-covered wood, and especially wet metal, can slide you off a low slope.</p>'
+    + '<p>Roof-covering material matters as much as pitch. A 6/12 asphalt on a warm day walks easily; a 6/12 smooth metal is far more dangerous.</p>'
+    + '<h5>Typical maximum pitches walked</h5>'
+    + '<ul>'
+    +   '<li><b>Asphalt shingles:</b> 8/12 single-story · 6/12 two-story</li>'
+    +   '<li><b>Wood roofs:</b> 6/12</li>'
+    +   '<li><b>Metal roofs:</b> 5/12</li>'
+    + '</ul>'
+    + '<h4>Roof Boots</h4>'
+    + '<p>Special roof-walking boots and shoes with high-traction soles are available.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Mastering Roof Inspections: Accessing the Roof, Part 1</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var PART_3 = ''
+    + '<h4>Gaining Access to the Roof</h4>'
+    + '<h5>Access by Window</h5>'
+    + '<p>Climbing out a window can be the safest method — no ladder — but be careful not to damage screens, walls, or window trim. You can sometimes access from a deck or balcony too.</p>'
+    + '<h4>Ladders, Part 1</h4>'
+    + '<p>The typical method is a ladder resting on the ground and leaning against the roof edge. Stabilizing your ladder matters — ladders become more unstable as you climb. Stepping from roof onto ladder is one of the most common serious fall hazards.</p>'
+    + '<ul>'
+    +   '<li>Set your ladder at an <b>inside corner or against a wall</b> for a margin of safety</li>'
+    +   '<li>Use an <b>inconspicuous location</b> (side of home) since it\'s easy to scratch gutters</li>'
+    +   '<li>Rest against an <b>eave</b>, not a rake</li>'
+    +   '<li>If forced to choose between a scratched gutter and safety — choose safety</li>'
+    + '</ul>'
+    + '<h4>Choosing a Ladder</h4>'
+    + '<p><b>Never use a ladder you find on-site.</b> Use your own — know its operation, know its condition, never use a damaged one.</p>'
+    + '<p>Read the label. Ladders are rated by load capacity:</p>'
+    + '<ul>'
+    +   '<li><b>Type I Industrial:</b> heavy-duty, 250 lb load-capacity limit</li>'
+    +   '<li><b>Type II Commercial:</b> medium-duty, no more than 225 lb</li>'
+    +   '<li><b>Type III Household:</b> light-duty, 200 lb max — <b>not appropriate for inspection work</b></li>'
+    + '</ul>'
+    + '<p>Specialty ladders exist rated for up to 375 lb. Buy the best you can afford.</p>'
+    + '<h4>Safety Rules for All Ladders</h4>'
+    + '<ul>'
+    +   '<li><b>Keep it clean.</b> Free of grease, oil, other slip hazards.</li>'
+    +   '<li><b>Don\'t overload it.</b> Never load beyond labeled capacity.</li>'
+    +   '<li><b>Beware of electrical dangers.</b> Never use metal ladders around exposed electrical wiring.</li>'
+    +   '<li><b>Follow correct use.</b> Only for designated purpose — no scaffold planks.</li>'
+    +   '<li><b>Ensure a stable setup.</b> Confirm stability before climbing.</li>'
+    +   '<li><b>Move it safely.</b> Don\'t rock or bounce a ladder while you\'re on it.</li>'
+    +   '<li><b>Be healthy.</b> No ladders under influence of alcohol, drugs, medication, or when you feel unwell.</li>'
+    +   '<li><b>If you must dismount unexpectedly</b> — feeling sick, dizzy, or panicky — don\'t rush down. Wait until you feel better, then climb down slowly and carefully.</li>'
+    + '</ul>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Accessing the Roof, Part 3</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var PART_4 = ''
+    + '<h4>Ladders, Part 2 &mdash; Ladder Length</h4>'
+    + '<p>Extension ladders are the standard choice. Typically <b>16 ft to 40 ft in 4-ft increments</b>. Two overlapping parts, so the length given is not the extended length. A 16-ft extension ladder has two 8-ft sections but reaches only <b>~13 ft when fully extended</b>.</p>'
+    + '<h5>Extension Ladder Material</h5>'
+    + '<ul>'
+    +   '<li><b>Fiberglass:</b> strong, doesn\'t conduct electricity. In humid climates, lacquer or paste wax extends outdoor service life.</li>'
+    +   '<li><b>Steel:</b> strong but conducts electricity — shock/electrocution risk with overhead wires. Corrodes over time.</li>'
+    +   '<li><b>Aluminum:</b> lightweight but not as strong; flexes more. Conducts electricity.</li>'
+    +   '<li><b>Wooden:</b> no longer common. Can be strong if well-maintained. Look for cracks and loose rungs.</li>'
+    + '</ul>'
+    + '<h4>Standing an Extension Ladder</h4>'
+    + '<ol>'
+    +   '<li>Choose a <b>level area</b> for the base.</li>'
+    +   '<li>Check overhead — plenty of clearance from wires.</li>'
+    +   '<li>While unextended, lay ladder on ground, base against wall, top pointing away.</li>'
+    +   '<li>Starting at the top, lift end over head and walk under the ladder to the wall, rung by rung.</li>'
+    +   '<li>When vertical against roof, move base back <b>~1/4 the vertical distance</b> from ground to point of support (gutter or fascia).</li>'
+    +   '<li>Ladder must be <b>straight and secure</b>. If it leans, place firm material under the low foot. <b>Never dig holes in the lawn</b>.</li>'
+    +   '<li>On smooth concrete, use a non-skid mat or brace the base. If you can\'t make it safe, don\'t climb.</li>'
+    +   '<li>Never set up in <b>high wind</b>.</li>'
+    +   '<li>Never set up <b>in front of a door</b> unless locked or a guard is posted.</li>'
+    +   '<li><b>Tie off the ladder</b> so it can\'t blow over. Carry clamps and bungee cords. <b>Don\'t nail anything to the roof.</b></li>'
+    + '</ol>'
+    + '<p>Top of ladder should extend <b>at least 3 feet above the roof edge</b>.</p>'
+    + '<h4>Shoes &amp; Ladder Levelers</h4>'
+    + '<p>Extension ladder shoes pivot for surface contact. Rubber soles grip. Pivoted back, shoes lock with sharp end down (the <b>spur</b>). Adjustable leg extensions available for un-level surfaces.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Accessing the Roof, Part 4</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var PART_5 = ''
+    + '<h4>Ladders, Part 3 &mdash; Climbing an Extension Ladder</h4>'
+    + '<ul>'
+    +   '<li><b>Face the ladder.</b> Always face it climbing up or down.</li>'
+    +   '<li><b>Grasp the rungs</b> — not the rails. Better chance of catching yourself if you slip.</li>'
+    +   '<li><b>Maintain a three-point connection.</b> Only one hand or foot off the ladder at a time.</li>'
+    +   '<li><b>3 feet above the roof.</b> Ladder should extend at least 3 ft above the roof edge.</li>'
+    +   '<li><b>Stay off the top rungs.</b> Do not step on the top three rungs.</li>'
+    +   '<li><b>Keep weight below the roof line.</b> Loading above the roof makes ladder less stable and more likely to slide.</li>'
+    +   '<li><b>Maintain stability.</b> Keep belt buckle positioned between the rails — avoid over-reaching.</li>'
+    +   '<li><b>Keep others off.</b> You can\'t vouch for their ability; you may be liable if they\'re injured.</li>'
+    +   '<li><b>Adjust from the ground.</b> Never extend from the roof. If unstable, climb down first.</li>'
+    +   '<li><b>Move from the ground.</b> Never move the ladder while you\'re on the roof.</li>'
+    + '</ul>'
+    + '<h4>Extension Ladder Maintenance</h4>'
+    + '<ol>'
+    +   '<li>Locks and flippers operate smoothly. Using only one lock will overload the rail.</li>'
+    +   '<li>Rails free of cracks and other damage.</li>'
+    +   '<li>Rungs fit tightly.</li>'
+    +   '<li>Ropes in good condition — replace if frayed or badly worn.</li>'
+    +   '<li>Keep ladders clean.</li>'
+    +   '<li>Never use a metal or fiberglass ladder exposed to fire or strong chemicals. <b>Destroy and discard</b> — otherwise someone will salvage it.</li>'
+    +   '<li>Store fiberglass ladders away from sunlight and UV.</li>'
+    +   '<li>Properly support and secure ladders in transit. Vibration and bumping cause damage.</li>'
+    +   '<li>Store on racks. Poor support long-term causes damage.</li>'
+    + '</ol>'
+    + '<h4>Step-Ladders</h4>'
+    + '<p>Step-ladders are designed to be used open, so they\'re not a good choice for accessing roofs. Safety rules:</p>'
+    + '<ol>'
+    +   '<li>Never use a step-ladder over <b>20 feet</b> long.</li>'
+    +   '<li>Always open completely; ensure spreader is locked before use.</li>'
+    +   '<li>Spreaders and top cap are crucial to stability. Never substitute wire or rope — manufacturers often send replacement parts free.</li>'
+    +   '<li>Do not stand higher than the <b>second step from the top</b>. Don\'t stand on top cap, pail shelf, or backside.</li>'
+    +   '<li>Don\'t straddle the front and back of a step-ladder.</li>'
+    +   '<li>Don\'t leave tools or materials on top. Falling tools injure people below (and expose you to liability).</li>'
+    + '</ol>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Accessing the Roof, Part 5</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  // ═════════════════════════════════════════════════════
+  // ASPHALT COMPOSITION SHINGLES — Parts 1-4
+  // ═════════════════════════════════════════════════════
+  var ASPHALT_1 = ''
+    + '<p><i>This and other articles in the series will help you recognize and identify defects and damage in asphalt composition shingles, determine sources of problems, and make good recommendations.</i></p>'
+    + '<p>Covered here: standards and best practices for shingle manufacture and installation, different types of shingles and performance characteristics, related components (underlayment, flashing, fasteners), industry-accepted installation methods, and how to tell when shingles are near end of useful life.</p>'
+    + '<p>Different names for the same thing are used in different parts of North America. Which terms you choose matters less than explaining them clearly.</p>'
+    + '<h4>Asphalt Shingle Components</h4>'
+    + '<p>"Asphalt shingle" and "composition shingle" are general terms for the same thing. "Composition" is used because the shingles are a composite product — mat + asphalt + minerals — as opposed to a single material like wood or clay tile.</p>'
+    + '<p>All modern shingles manufactured in North America have mats made of <b>interwoven fiberglass strands</b>, so you may hear them called "fiberglass" shingles. A modern shingle: fiberglass mat embedded in asphalt, covered with granules on the weather face.</p>'
+    + '<p>In the past, shingles were also made with cellulose-based mats — these are called "organic" shingles.</p>'
+    + '<h4>Mat</h4>'
+    + '<p>The mat provides reinforcement that resists splitting, tearing, and pulling over fastener heads.</p>'
+    + '<p>Although the mat is <b>less than 2% of the shingle\'s weight</b>, a small difference in mat thickness makes a big difference in tear strength.</p>'
+    + '<h4>More Resistant to Heat and Humidity</h4>'
+    + '<p>Fiberglass shingles are more resistant than organic shingles to heat and humidity. Warm air holds more moisture. Because fiberglass absorbs less moisture, it deforms less as it ages — more stable in warm or damp climates.</p>'
+    + '<p>Fiberglass mats don\'t absorb moisture. As fiberglass shingles age and lose <b>volatiles</b>, they deform less than cellulose shingles. Volatiles are compounds in asphalt that keep shingles waterproof, flexible and durable — they dissipate over time, mostly through evaporation from overheating.</p>'
+    + '<h4>Variations in Performance</h4>'
+    + '<p>The downside of fiberglass shingles: wide variations in performance between similar shingles from different manufacturers.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Asphalt Composition Shingles, Part 1</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var ASPHALT_2 = ''
+    + '<h4>Organic Shingles</h4>'
+    + '<p>Organic shingles have not been manufactured since about <b>2008</b>, but many were installed and you\'ll continue to see them.</p>'
+    + '<p>Cellulose for shingle mat comes from wood chips and recycled cardboard, rags, and paper. Cellulose mat — also called <b>felt</b> — is typically thicker than fiberglass.</p>'
+    + '<p>Production: the cellulose mat was first saturated with a thinner asphalt to about <b>170% by weight</b>, then sandwiched inside a second coat of thicker asphalt — an asphalt sandwich.</p>'
+    + '<p>Because of their thicker, double-asphalt layer, organic shingles can be <b>more durable in cold climates</b> than fiberglass. Repair is often possible — replace a damaged section rather than the whole slope. But finding matching batches is increasingly difficult.</p>'
+    + '<h4>Distortion</h4>'
+    + '<p>As organic shingles age, they slowly lose volatiles (compounds that boil at low temperature and dissipate through evaporation). Volatiles keep shingles flexible, durable, and waterproof.</p>'
+    + '<p>Loss is faster in <b>warm climates</b> and homes with <b>poor roof ventilation</b>.</p>'
+    + '<p>As volatiles dissipate, the cellulose mat becomes dryer and more absorbent. <b>Absorbing moisture causes shingles to expand and distort.</b> Organic shingles near end of life can hold considerably more moisture than fiberglass — expect extreme distortion.</p>'
+    + '<p><b>Moisture cycling</b> — repeated wetting and drying — causes distortion of the mat. Deterioration of the asphalt layer weakens the bond between asphalt layers and causes widespread <b>delamination</b>.</p>'
+    + '<h4>Batch-to-Batch Variation</h4>'
+    + '<p>Organic shingles on the same roof commonly deteriorate at different rates. The pattern typically appears as a <b>diagonal across the roof</b>, caused by mixing shingles from different batches. The diagonal is created by the offset of successive courses during install. Different batches have small differences in asphalt quality and thickness that cause them to age at different rates.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Asphalt Composition Shingles, Part 2</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var ASPHALT_3 = ''
+    + '<h4>Asphalt Composition</h4>'
+    + '<p>Asphalt used to manufacture shingles may be blended by the shingle manufacturer or bought already blended. Mixing and applying methods are <b>proprietary</b> — manufacturers do not disclose either process.</p>'
+    + '<p>Performance characteristics vary with the type and proportion of ingredients.</p>'
+    + '<h4>Crude Oil</h4>'
+    + '<p>Crude oil quality affects asphalt quality. Crude may be:</p>'
+    + '<ul>'
+    +   '<li><b>Heavy or light</b> — light crude flows more easily</li>'
+    +   '<li><b>Sweet or sour</b> — sour crude has higher sulfur</li>'
+    + '</ul>'
+    + '<p><b>Heavy, sour crude is lower quality.</b> Asphalt quality depends on both the crude\'s chemical composition and the refining process.</p>'
+    + '<p>Asphalt is one of the lower-value products from crude. As oil prices rise, manufacturers extract more higher-value products per barrel — asphalt prices increase, and cost-control pressure grows. Some solutions <b>reduce asphalt quality</b> — e.g., excessive filler.</p>'
+    + '<h4>Filler</h4>'
+    + '<p>Asphalt alone is not durable enough for shingles. Finely-ground minerals are added as filler (sometimes called "<b>stabilizer</b>") to toughen the asphalt and improve resistance to cracking. Common fillers: <b>limestone and dolomite</b>.</p>'
+    + '<p>High-performance fillers maximize heat transfer, keeping shingles cooler and extending lifespan.</p>'
+    + '<p>Filler also reduces manufacturing cost. <b>Up to 70% filler may be added</b>. Too much filler reduces shingle quality.</p>'
+    + '<h4>Quality Control</h4>'
+    + '<p>Measurement, addition, and blending — once controlled by people — are now <b>all computer-controlled</b>. Ingredient-proportion problems that used to exist no longer do.</p>'
+    + '<h4>Asphalt Standards</h4>'
+    + '<p>The <b>ASTM</b> provides standards for asphalt used in shingles, but <b>compliance is not mandatory</b> — you can\'t tell by looking whether shingles comply. The <b>2010 standards</b> address the softening point of the asphalt and the minimum filler amount.</p>'
+    + '<h4>Thickness</h4>'
+    + '<p>Asphalt layer thickness affects performance — thicker layers resist fracture better. Thickness varies by manufacturer and even between products from the same manufacturer.</p>'
+    + '<p>ASTM standards require a <b>minimum of 15 lbs of asphalt per 100 sq ft of shingle material</b> (of actual shingle material, not per installed square).</p>'
+    + '<p>You can\'t judge asphalt quality by looking — just be aware quality varies.</p>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Asphalt Composition Shingles, Part 3</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  var ASPHALT_4 = ''
+    + '<h4>Back-Surfacing</h4>'
+    + '<p>"Back-surfacing" is a coat of finely pulverized mineral — <b>talc, sand, or limestone</b> — applied to the backs of shingles to prevent sticking to manufacturing equipment during production and sticking to each other in the stack. Rub the back of the mat — you can feel the gritty back-surfacing.</p>'
+    + '<h4>Granules</h4>'
+    + '<p>Granules on the weather surface are made from <b>fine-grain, opaque, crushed rock particles</b>. Opaque granules don\'t allow light to pass through.</p>'
+    + '<p>After screening for uniform size, they\'re covered with a <b>colored ceramic coating</b>. Uniformity of application affects appearance on the roof.</p>'
+    + '<h5>Granules have four main purposes:</h5>'
+    + '<ol>'
+    +   '<li><b>Reflect sunlight</b> — keeps the roof cooler, slows volatile loss, protects asphalt from UV. High-tech coatings originally developed to make military tanks less visible to radar are now used on granules — reflect up to <b>3× the light</b> of conventional granules. Cooler roofs = longer service life and lower home cooling costs. In cold climates, however, this may interfere with the adhesive strip fully bonding.</li>'
+    +   '<li><b>Add weight</b> — helps the adhesive strip bond well and improves wind-resistance.</li>'
+    +   '<li><b>Increase durability</b> — protect shingles from weathering and abrasion.</li>'
+    +   '<li><b>Improve fire-resistance</b>.</li>'
+    + '</ol>'
+    + '<div class="rl-attribution">Source: InterNACHI &mdash; <b>Asphalt Composition Shingles, Part 4</b> by Kenton Shepard and Nick Gromicko, CMI.</div>';
+
+  // ═════════════════════════════════════════════════════
+  // Page templates
+  // ═════════════════════════════════════════════════════
+  function tmplPageNachiMastery(){
+    return ''
+      + '<div class="rl-pagehead">'
+      +   '<h1>NACHI Roof Mastery</h1>'
+      +   '<p>Curated selections from InterNACHI\'s roof-inspection curriculum. Choose a series to dive in.</p>'
+      + '</div>'
+      + '<button type="button" class="rl-navcard" data-cr-goto="rlPageNachiAccessing">'
+      +   '<h3>1-3 &nbsp;Accessing A Roof</h3>'
+      +   '<p>InterNACHI Parts 1, 3, 4, and 5. Roof safety fundamentals, ladder selection, ladder setup, and climbing / maintenance.</p>'
+      +   '<div class="rl-boxgo">Open &rsaquo;</div>'
+      + '</button>'
+      + '<button type="button" class="rl-navcard" data-cr-goto="rlPageNachiAsphalt">'
+      +   '<h3>Asphalt Composition Shingles</h3>'
+      +   '<p>InterNACHI Parts 1-4. Shingle components, organic vs fiberglass mats, asphalt composition, crude oil, filler, standards, back-surfacing, and granules.</p>'
+      +   '<div class="rl-boxgo">Open &rsaquo;</div>'
+      + '</button>';
+  }
+
+  function tmplPageAccessing(){
+    return ''
+      + '<div class="rl-pagehead">'
+      +   '<h1>NACHI 1-3 &mdash; Accessing A Roof</h1>'
+      +   '<p>From InterNACHI\'s <i>Mastering Roof Inspections</i> series by Kenton Shepard and Nick Gromicko, CMI.</p>'
+      + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 1 pitch safety risk boots"><h3>Part 1 &mdash; Roof Safety, Risk, Pitch &amp; Boots</h3>' + PART_1 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 3 ladders access window choosing"><h3>Part 3 &mdash; Gaining Access, Choosing a Ladder &amp; Safety Rules</h3>' + PART_3 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 4 ladder length material standing shoes"><h3>Part 4 &mdash; Length, Material, Standing an Extension Ladder</h3>' + PART_4 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="nachi accessing part 5 climbing maintenance step ladders"><h3>Part 5 &mdash; Climbing, Maintenance &amp; Step-Ladders</h3>' + PART_5 + '</div>';
+  }
+
+  function tmplPageAsphalt(){
+    return ''
+      + '<div class="rl-pagehead">'
+      +   '<h1>NACHI &mdash; Asphalt Composition Shingles</h1>'
+      +   '<p>From InterNACHI\'s <i>Mastering Roof Inspections</i> series by Kenton Shepard and Nick Gromicko, CMI. Four articles covering shingle anatomy, materials science, and manufacture.</p>'
+      + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="asphalt shingle mat fiberglass organic composition components"><h3>Part 1 &mdash; Components, Mat &amp; Fiberglass vs Organic</h3>' + ASPHALT_1 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="asphalt shingle organic cellulose felt distortion volatiles delamination batch"><h3>Part 2 &mdash; Organic Shingles &amp; Distortion</h3>' + ASPHALT_2 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="asphalt composition crude oil filler ASTM thickness standards"><h3>Part 3 &mdash; Asphalt, Crude Oil, Filler &amp; ASTM Standards</h3>' + ASPHALT_3 + '</div>'
+      + '<div class="rl-card rl-article" data-rltags="asphalt back-surfacing granules ceramic reflective fire resistance"><h3>Part 4 &mdash; Back-Surfacing &amp; Granules</h3>' + ASPHALT_4 + '</div>';
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Insertion + wiring
+  // ═════════════════════════════════════════════════════
+  function ensurePage(id, title, htmlBuilder){
+    if(document.getElementById(id)) return document.getElementById(id);
+    var view = document.getElementById('resourceLibraryView');
+    if(!view) return null;
+    var page = document.createElement('div');
+    page.className = 'rl-page';
+    page.id = id;
+    page.setAttribute('data-rltitle', title);
+    page.innerHTML = htmlBuilder();
+    view.appendChild(page);
+    return page;
+  }
+
+  function wireGotoButtons(){
+    document.querySelectorAll('#resourceLibraryView [data-cr-goto]').forEach(function(el){
+      if(el.dataset.crWired === '1') return;
+      el.dataset.crWired = '1';
+      el.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var target = el.getAttribute('data-cr-goto');
+        if(typeof window._rlShowPage === 'function'){
+          window._rlShowPage(target);
+        }else{
+          document.querySelectorAll('#resourceLibraryView .rl-page').forEach(function(p){
+            p.classList.toggle('rl-pageActive', p.id === target);
+          });
+          window.scrollTo(0, 0);
+        }
+      });
+    });
+  }
+
+  function insertNavCardOnInspections(){
+    var insp = document.getElementById('rlPageInsp');
+    if(!insp) return;
+    if(document.getElementById('cr-nav-nachi-mastery')) return;
+    var card = document.createElement('button');
+    card.type = 'button';
+    card.id = 'cr-nav-nachi-mastery';
+    card.className = 'rl-navcard';
+    card.setAttribute('data-cr-goto', 'rlPageNachiMastery');
+    card.innerHTML =
+      '<h3>\uD83D\uDCDA NACHI Roof Mastery</h3>' +
+      '<p>InterNACHI curriculum: Accessing the Roof, Asphalt Composition Shingles, and more.</p>' +
+      '<div class="rl-boxgo">Open series &rsaquo;</div>';
+    var head = insp.querySelector('.rl-pagehead');
+    if(head && head.nextSibling){
+      head.parentNode.insertBefore(card, head.nextSibling);
+    }else{
+      insp.appendChild(card);
+    }
+  }
+
+  function tryInstall(){
+    var view = document.getElementById('resourceLibraryView');
+    if(!view) return false;
+    if(!document.getElementById('rlPageInsp')) return false;
+    ensurePage('rlPageNachiMastery',   'NACHI Roof Mastery', tmplPageNachiMastery);
+    ensurePage('rlPageNachiAccessing', 'NACHI 1-3 Accessing A Roof', tmplPageAccessing);
+    ensurePage('rlPageNachiAsphalt',   'NACHI Asphalt Composition Shingles', tmplPageAsphalt);
+    insertNavCardOnInspections();
+    wireGotoButtons();
+    return true;
+  }
+
+  function start(){
+    if(!tryInstall()){
+      var n = 0, iv = setInterval(function(){
+        if(tryInstall() || ++n > 60) clearInterval(iv);
+      }, 250);
+    }
+    var view = document.getElementById('resourceLibraryView');
+    if(view){
+      new MutationObserver(function(){ tryInstall(); wireGotoButtons(); })
+        .observe(view, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  // ═════════════════════════════════════════════════════
+  // Expose baseline content so the DB-driven admin module can
+  // offer a "Migrate baseline into DB" one-click import.
+  // Also expose a hardcoded slug → page-id map so the admin
+  // module can hide hardcoded pages once a DB version exists.
+  // ═════════════════════════════════════════════════════
+  window.CardinalNachi = window.CardinalNachi || {};
+  window.CardinalNachi.baseline = {
+    hardcodedPageIds: {
+      'accessing-roof' : 'rlPageNachiAccessing',
+      'asphalt-shingles': 'rlPageNachiAsphalt',
+    },
+    series: [
+      { slug:'accessing-roof',
+        title:'NACHI 1-3 Accessing A Roof',
+        description:'InterNACHI series on how to gain access and mount the roof safely.',
+        sort_key:1 },
+      { slug:'asphalt-shingles',
+        title:'NACHI Asphalt Composition Shingles',
+        description:'InterNACHI series on shingle anatomy, materials, and manufacture.',
+        sort_key:2 },
+    ],
+    articles: [
+      { series_slug:'accessing-roof', sort_key:1,
+        title:'Part 1 \u2014 Roof Safety, Risk, Pitch & Boots',
+        html_content: PART_1,
+        tags:'nachi accessing part 1 pitch safety risk boots',
+        source:'InterNACHI \u2014 Accessing the Roof, Part 1 by Kenton Shepard and Nick Gromicko, CMI.' },
+      { series_slug:'accessing-roof', sort_key:3,
+        title:'Part 3 \u2014 Gaining Access, Choosing a Ladder & Safety Rules',
+        html_content: PART_3,
+        tags:'nachi accessing part 3 ladders access window choosing',
+        source:'InterNACHI \u2014 Accessing the Roof, Part 3 by Kenton Shepard and Nick Gromicko, CMI.' },
+      { series_slug:'accessing-roof', sort_key:4,
+        title:'Part 4 \u2014 Length, Material, Standing an Extension Ladder',
+        html_content: PART_4,
+        tags:'nachi accessing part 4 ladder length material standing shoes',
+        source:'InterNACHI \u2014 Accessing the Roof, Part 4 by Kenton Shepard and Nick Gromicko, CMI.' },
+      { series_slug:'accessing-roof', sort_key:5,
+        title:'Part 5 \u2014 Climbing, Maintenance & Step-Ladders',
+        html_content: PART_5,
+        tags:'nachi accessing part 5 climbing maintenance step ladders',
+        source:'InterNACHI \u2014 Accessing the Roof, Part 5 by Kenton Shepard and Nick Gromicko, CMI.' },
+      { series_slug:'asphalt-shingles', sort_key:1,
+        title:'Part 1 \u2014 Components, Mat & Fiberglass vs Organic',
+        html_content: ASPHALT_1,
+        tags:'asphalt shingle mat fiberglass organic composition components',
+        source:'InterNACHI \u2014 Asphalt Composition Shingles, Part 1 by Kenton Shepard and Nick Gromicko, CMI.' },
+      { series_slug:'asphalt-shingles', sort_key:2,
+        title:'Part 2 \u2014 Organic Shingles & Distortion',
+        html_content: ASPHALT_2,
+        tags:'asphalt shingle organic cellulose felt distortion volatiles delamination batch',
+        source:'InterNACHI \u2014 Asphalt Composition Shingles, Part 2 by Kenton Shepard and Nick Gromicko, CMI.' },
+      { series_slug:'asphalt-shingles', sort_key:3,
+        title:'Part 3 \u2014 Asphalt, Crude Oil, Filler & ASTM Standards',
+        html_content: ASPHALT_3,
+        tags:'asphalt composition crude oil filler ASTM thickness standards',
+        source:'InterNACHI \u2014 Asphalt Composition Shingles, Part 3 by Kenton Shepard and Nick Gromicko, CMI.' },
+      { series_slug:'asphalt-shingles', sort_key:4,
+        title:'Part 4 \u2014 Back-Surfacing & Granules',
+        html_content: ASPHALT_4,
+        tags:'asphalt back-surfacing granules ceramic reflective fire resistance',
+        source:'InterNACHI \u2014 Asphalt Composition Shingles, Part 4 by Kenton Shepard and Nick Gromicko, CMI.' },
+    ],
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: nachi_content_admin.html · v2 (2026-07-24)
+     ══════════════════════════════════════════════════════════
+     Admin-managed NACHI content, DB-driven. Adds:
+       · Rich text editor with visual/HTML toggle
+       · Image upload → photos bucket → inserted at cursor
+       · One-click "Import Baseline" to migrate the 12 hardcoded
+         articles into the DB (idempotent)
+       · Auto-registers DB series in the Resource Library TOC
+       · Hides hardcoded pages when a DB series with the same slug
+         exists, so nothing shows up duplicated after migration
+
+     Public API:
+       CardinalNachiContent.reload()        - re-fetch DB, re-render
+       CardinalNachiContent.openManage()    - open the admin modal
+       CardinalNachiContent.series()        - current DB series
+       CardinalNachiContent.articles()      - current DB articles
+
+     Requires: nachi_content_setup.sql to be run in Supabase.
+────────────────────────────────────────────────────────────── -->
+
+<style id="cr-nachi-cm-styles">
+  #cr-nachi-mgr-btn{
+    display:none;
+    position:fixed; bottom:78px; left:24px; z-index:9400;
+    height:44px; padding:9px 14px 9px 12px; border-radius:22px;
+    background:linear-gradient(135deg,#3a2d1a,#2a1f0e);
+    color:#f5d061; border:1px solid #d4a017;
+    cursor:pointer; align-items:center; gap:6px;
+    font:800 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    box-shadow:0 6px 18px rgba(0,0,0,.45);
+    -webkit-tap-highlight-color:rgba(212,160,23,.3);
+    transition:transform .12s; font-family:inherit;
+  }
+  #cr-nachi-mgr-btn:hover{ transform:translateY(-1px); }
+  body:not(.viewing-rl) #cr-nachi-mgr-btn,
+  body:not(.cr-is-admin) #cr-nachi-mgr-btn{ display:none; }
+  body.viewing-rl.cr-is-admin #cr-nachi-mgr-btn{ display:flex; }
+
+  .cr-cm-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:9450;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:4vh 12px; -webkit-overflow-scrolling:touch;
+  }
+  .cr-cm-box{
+    background:#1a1f2e; color:#e8ecf1; border-radius:12px;
+    width:100%; max-width:680px; max-height:92vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 24px 60px rgba(0,0,0,.6);
+    border:1px solid #4a6fa5; overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-cm-head{
+    padding:14px 20px 12px;
+    border-bottom:1px solid rgba(74,111,165,.35);
+    background:linear-gradient(135deg,#232b3d,#1a1f2e);
+    display:flex; align-items:center; gap:10px;
+  }
+  .cr-cm-head h3{
+    margin:0; flex:1; font:800 13px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#cfe0f5;
+  }
+  .cr-cm-head .back,
+  .cr-cm-head .close{
+    background:transparent; border:1px solid transparent;
+    color:#7fa6d6; padding:5px 10px; border-radius:5px; cursor:pointer;
+    font-family:inherit;
+  }
+  .cr-cm-head .back{
+    border-color:#4a6fa5;
+    font:800 10px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em;
+  }
+  .cr-cm-head .close{
+    color:#8a9bb0; font-size:20px; padding:0 6px; line-height:1;
+  }
+  .cr-cm-head .close:hover{ color:#fff; }
+  .cr-cm-body{ overflow-y:auto; flex:1; padding:12px 16px 16px; }
+
+  .cr-cm-list-item{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 14px; margin:6px 0;
+    background:rgba(74,111,165,.09); border:1px solid rgba(74,111,165,.28);
+    border-radius:8px; cursor:pointer; transition:background .1s;
+  }
+  .cr-cm-list-item:hover{ background:rgba(74,111,165,.18); }
+  .cr-cm-list-item .info{ flex:1; min-width:0; }
+  .cr-cm-list-item .info .t{
+    font:700 14px 'Segoe UI',Arial,sans-serif; color:#e8ecf1;
+    display:flex; align-items:center; gap:8px;
+  }
+  .cr-cm-list-item .info .m{
+    font:600 11px 'Segoe UI',Arial,sans-serif; color:#8a9bb0; margin-top:2px;
+  }
+  .cr-cm-list-item .info .m .pnum{
+    background:rgba(212,160,23,.2); color:#f5d061;
+    padding:1px 6px; border-radius:8px; font-weight:800; letter-spacing:.1em;
+  }
+  .cr-cm-empty{
+    padding:32px 20px; text-align:center; color:#8a9bb0;
+    font:600 13px 'Segoe UI',Arial,sans-serif;
+  }
+  .cr-cm-actionbar{
+    display:flex; gap:8px; margin:4px 0 14px; flex-wrap:wrap;
+  }
+  .cr-cm-actionbar button, .cr-cm-form .actions button{
+    background:#d4a017; color:#1a1a1a; border:0;
+    padding:8px 14px; border-radius:6px;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+  }
+  .cr-cm-actionbar button:hover,
+  .cr-cm-form .actions button.primary:hover{ background:#f5d061; }
+  .cr-cm-actionbar button.ghost,
+  .cr-cm-form .actions button.ghost{
+    background:transparent; color:#7fa6d6; border:1px solid #4a6fa5;
+  }
+  .cr-cm-actionbar button.ghost:hover{ background:rgba(74,111,165,.15); }
+  .cr-cm-form .actions button.danger{
+    background:transparent; color:#e88a90; border:1px solid #c8202e;
+  }
+  .cr-cm-form label{
+    display:block; margin:12px 0 4px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#8a9bb0;
+  }
+  .cr-cm-form input, .cr-cm-form textarea{
+    width:100%; box-sizing:border-box;
+    background:#232b3d; color:#e8ecf1;
+    border:1px solid #4a6fa5; border-radius:6px;
+    padding:9px 11px; font-size:13.5px; outline:none; font-family:inherit;
+  }
+  .cr-cm-form input:focus, .cr-cm-form textarea:focus{
+    border-color:#7fa6d6; box-shadow:0 0 0 3px rgba(74,111,165,.22);
+  }
+  .cr-cm-form textarea.html{
+    min-height:220px; resize:vertical;
+    font:600 12.5px/1.5 'SF Mono',Menlo,Consolas,monospace;
+  }
+  .cr-cm-form .hint{
+    margin-top:3px; font:600 11px 'Segoe UI',Arial,sans-serif;
+    color:#8a9bb0; font-style:italic;
+  }
+  .cr-cm-form .actions{
+    display:flex; gap:8px; margin-top:16px;
+    justify-content:flex-end; flex-wrap:wrap;
+  }
+
+  /* ─── Rich text editor ─────────────────────────── */
+  .cr-cm-editor{ margin-top:2px; }
+  .cr-cm-toolbar{
+    display:flex; flex-wrap:wrap; gap:2px;
+    background:#232b3d; border:1px solid #4a6fa5; border-radius:6px 6px 0 0;
+    padding:5px; border-bottom:0;
+  }
+  .cr-cm-toolbar button{
+    background:transparent; color:#cfe0f5;
+    border:1px solid transparent; padding:5px 9px; border-radius:4px;
+    font:700 12px 'Segoe UI',Arial,sans-serif; cursor:pointer;
+    min-width:30px; font-family:inherit;
+  }
+  .cr-cm-toolbar button:hover{
+    background:rgba(74,111,165,.2); border-color:#4a6fa5;
+  }
+  .cr-cm-toolbar button.on{ background:rgba(212,160,23,.2); color:#f5d061; }
+  .cr-cm-toolbar .sep{
+    width:1px; background:rgba(74,111,165,.4); margin:2px 4px;
+  }
+  .cr-cm-visual{
+    background:#131824; color:#e8ecf1;
+    border:1px solid #4a6fa5; border-top:0; border-radius:0 0 6px 6px;
+    padding:12px 14px; min-height:220px;
+    font:400 13.5px/1.6 -apple-system,'Segoe UI',Arial,sans-serif;
+    outline:none;
+  }
+  .cr-cm-visual:focus{
+    border-color:#7fa6d6;
+    box-shadow:0 0 0 3px rgba(74,111,165,.22);
+  }
+  .cr-cm-visual h4{
+    margin:14px 0 6px;
+    font:700 15px Georgia,'Times New Roman',serif; color:#cfe0f5;
+  }
+  .cr-cm-visual h5{
+    margin:10px 0 4px;
+    font:700 13px 'Segoe UI',Arial,sans-serif; color:#a8bcd4;
+    letter-spacing:.04em; text-transform:uppercase;
+  }
+  .cr-cm-visual p{ margin:0 0 10px; }
+  .cr-cm-visual ul, .cr-cm-visual ol{
+    margin:6px 0 12px; padding-left:22px;
+  }
+  .cr-cm-visual li{ margin:5px 0; }
+  .cr-cm-visual img{
+    max-width:100%; height:auto; border-radius:6px; margin:8px 0;
+  }
+  .cr-cm-visual a{ color:#f5d061; }
+  .cr-cm-preview{
+    margin-top:8px; padding:12px; border-radius:8px;
+    background:#131824; border:1px dashed #4a6fa5;
+    max-height:200px; overflow-y:auto;
+  }
+  .cr-cm-preview h5{
+    margin:0 0 8px; font:800 9px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#8a9bb0;
+  }
+</style>
+
+<script id="cr-nachi-cm-script">
+(function(){
+  'use strict';
+
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return String(window.currentUser.email).toLowerCase();
+      if(typeof window.my_email === 'function') return String(window.my_email() || '').toLowerCase();
+    }catch(e){}
+    return '';
+  }
+  function isAdmin(){ return ADMIN_EMAILS.indexOf(currentEmail()) !== -1; }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function slugify(s){
+    return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '').slice(0, 60);
+  }
+  function safeSlug(s){
+    return String(s || '').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 40);
+  }
+  function pageIdForSeries(series){ return 'rlPageNachiDB_' + safeSlug(series.slug); }
+
+  var DB_SERIES = [];
+  var DB_ARTICLES = [];
+  function articlesForSeries(sid){
+    return DB_ARTICLES.filter(function(a){ return a.series_id === sid; });
+  }
+
+  // ═════════════════════════════════════════════════════
+  // DB Load + render into Resource Library
+  // ═════════════════════════════════════════════════════
+  async function loadFromDb(){
+    if(!window.supa || !currentEmail()) return;
+    try{
+      var s = await window.supa.from('nachi_series').select('*').eq('archived', false).order('sort_key');
+      var a = await window.supa.from('nachi_articles').select('*').eq('archived', false).order('sort_key');
+      if(s.error) console.warn('[nachi-content]', s.error.message);
+      if(a.error) console.warn('[nachi-content]', a.error.message);
+      DB_SERIES = s.data || [];
+      DB_ARTICLES = a.data || [];
+      renderDbContent();
+      registerWithToc();
+      hideConflictingHardcoded();
+    }catch(e){ console.warn('[nachi-content] load failed:', e); }
+  }
+
+  function renderDbContent(){
+    var view = document.getElementById('resourceLibraryView');
+    if(!view) return;
+    DB_SERIES.forEach(function(series){
+      renderSeriesPage(pageIdForSeries(series), series, articlesForSeries(series.id));
+    });
+    updateHubNavCards();
+    document.querySelectorAll('#resourceLibraryView [data-cr-goto]').forEach(function(el){
+      if(el.dataset.crWired === '1') return;
+      el.dataset.crWired = '1';
+      el.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var target = el.getAttribute('data-cr-goto');
+        if(typeof window._rlShowPage === 'function') window._rlShowPage(target);
+        else{
+          document.querySelectorAll('#resourceLibraryView .rl-page').forEach(function(p){
+            p.classList.toggle('rl-pageActive', p.id === target);
+          });
+          window.scrollTo(0, 0);
+        }
+      });
+    });
+  }
+
+  function renderSeriesPage(pageId, series, articles){
+    var view = document.getElementById('resourceLibraryView');
+    if(!view) return;
+    var articlesHtml = articles.map(function(a){
+      return '<div class="rl-card rl-article" data-rltags="' + esc(a.tags || '') + '">' +
+        '<h3>' + esc(a.title) + '</h3>' +
+        (a.html_content || '') +
+        (a.source ? '<div class="rl-attribution">Source: ' + esc(a.source) + '</div>' : '') +
+      '</div>';
+    }).join('');
+    var pageHtml =
+      '<div class="rl-pagehead">' +
+        '<h1>' + esc(series.title) + '</h1>' +
+        (series.description ? '<p>' + esc(series.description) + '</p>' : '') +
+      '</div>' +
+      (articlesHtml || '<div class="rl-card"><p style="color:#8a9bb0;text-align:center;padding:20px;">No articles yet. Add some via the manage panel.</p></div>');
+    var existing = document.getElementById(pageId);
+    if(existing){
+      var wasActive = existing.classList.contains('rl-pageActive');
+      existing.innerHTML = pageHtml;
+      if(wasActive) existing.classList.add('rl-pageActive');
+      return;
+    }
+    var page = document.createElement('div');
+    page.className = 'rl-page'; page.id = pageId;
+    page.setAttribute('data-rltitle', series.title);
+    page.innerHTML = pageHtml;
+    view.appendChild(page);
+  }
+
+  function updateHubNavCards(){
+    var hub = document.getElementById('rlPageNachiMastery');
+    if(!hub) return;
+    hub.querySelectorAll('[data-cr-nachi-db-card]').forEach(function(c){ c.remove(); });
+    DB_SERIES.forEach(function(series){
+      var articles = articlesForSeries(series.id);
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'rl-navcard';
+      card.setAttribute('data-cr-goto', pageIdForSeries(series));
+      card.setAttribute('data-cr-nachi-db-card', '1');
+      card.dataset.crWired = '';
+      card.innerHTML =
+        '<h3>' + esc(series.title) + '</h3>' +
+        '<p>' + esc(series.description || '') + ' \u00b7 ' +
+          articles.length + ' article' + (articles.length === 1 ? '' : 's') + '</p>' +
+        '<div class="rl-boxgo">Open \u203A</div>';
+      hub.appendChild(card);
+    });
+  }
+
+  // Hide hardcoded pages/nav cards when a DB series with the same slug exists
+  function hideConflictingHardcoded(){
+    var baseline = (window.CardinalNachi && window.CardinalNachi.baseline) || {};
+    var map = baseline.hardcodedPageIds || {};
+    // First: reset (unhide anything we previously hid)
+    document.querySelectorAll('#resourceLibraryView .cr-hidden-by-db').forEach(function(el){
+      el.classList.remove('cr-hidden-by-db');
+      el.style.display = '';
+    });
+    DB_SERIES.forEach(function(dbS){
+      var hcId = map[dbS.slug];
+      if(!hcId) return;
+      var page = document.getElementById(hcId);
+      if(page){
+        page.classList.add('cr-hidden-by-db');
+        page.style.display = 'none';
+      }
+      document.querySelectorAll('#rlPageNachiMastery [data-cr-goto="' + hcId + '"]').forEach(function(c){
+        c.classList.add('cr-hidden-by-db');
+        c.style.display = 'none';
+      });
+    });
+  }
+
+  // Register DB series with the RLTOC so they show up in the searchable TOC
+  function registerWithToc(){
+    if(!window.CardinalRLTOC || typeof window.CardinalRLTOC.addSection !== 'function') return;
+    if(typeof window.CardinalRLTOC.clearExtras === 'function') window.CardinalRLTOC.clearExtras();
+    DB_SERIES.forEach(function(series){
+      var articles = articlesForSeries(series.id);
+      window.CardinalRLTOC.addSection('Insurance', {
+        pid: pageIdForSeries(series),
+        title: series.title,
+        cards: articles.map(function(a){ return a.title; }),
+      });
+    });
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Rich text editor
+  // ═════════════════════════════════════════════════════
+  function setupEditor(container, initialHtml, onChange){
+    container.innerHTML =
+      '<div class="cr-cm-toolbar">' +
+        '<button type="button" data-cmd="bold" title="Bold"><b>B</b></button>' +
+        '<button type="button" data-cmd="italic" title="Italic"><i>I</i></button>' +
+        '<span class="sep"></span>' +
+        '<button type="button" data-cmd="formatBlock" data-arg="h4" title="Sub-section">H4</button>' +
+        '<button type="button" data-cmd="formatBlock" data-arg="h5" title="Small header">H5</button>' +
+        '<button type="button" data-cmd="formatBlock" data-arg="p" title="Paragraph">\u00B6</button>' +
+        '<span class="sep"></span>' +
+        '<button type="button" data-cmd="insertUnorderedList" title="Bullet list">\u2022 List</button>' +
+        '<button type="button" data-cmd="insertOrderedList" title="Numbered list">1. List</button>' +
+        '<span class="sep"></span>' +
+        '<button type="button" data-cmd="createLink" title="Insert link">\uD83D\uDD17</button>' +
+        '<button type="button" data-act="image" title="Upload image">\uD83D\uDDBC</button>' +
+        '<span class="sep"></span>' +
+        '<button type="button" data-act="html-toggle" title="Toggle HTML">\uD83D\uDCDD HTML</button>' +
+      '</div>' +
+      '<div class="cr-cm-visual" contenteditable="true"></div>' +
+      '<textarea class="html" style="display:none;margin-top:0;border-radius:0 0 6px 6px;border-top:0;"></textarea>';
+
+    var toolbar = container.querySelector('.cr-cm-toolbar');
+    var visual  = container.querySelector('.cr-cm-visual');
+    var html    = container.querySelector('textarea.html');
+    visual.innerHTML = initialHtml || '';
+    html.value = initialHtml || '';
+    var mode = 'visual';
+
+    function fire(){
+      // Sync visual → html and notify listener
+      if(mode === 'visual') html.value = visual.innerHTML;
+      else                  visual.innerHTML = html.value;
+      if(typeof onChange === 'function') onChange(html.value);
+    }
+    visual.addEventListener('input', fire);
+    html.addEventListener('input',   fire);
+
+    toolbar.querySelectorAll('button').forEach(function(btn){
+      btn.addEventListener('mousedown', function(e){ e.preventDefault(); });
+      btn.addEventListener('click', function(){
+        var cmd = btn.dataset.cmd;
+        var arg = btn.dataset.arg;
+        var act = btn.dataset.act;
+        if(cmd === 'createLink'){
+          var url = prompt('Enter URL (include https://):');
+          if(url) document.execCommand('createLink', false, url);
+        }else if(act === 'image'){
+          uploadImage();
+        }else if(act === 'html-toggle'){
+          if(mode === 'visual'){
+            html.value = visual.innerHTML;
+            visual.style.display = 'none';
+            html.style.display = '';
+            mode = 'html';
+            btn.innerHTML = '\uD83D\uDCDD Visual';
+          }else{
+            visual.innerHTML = html.value;
+            visual.style.display = '';
+            html.style.display = 'none';
+            mode = 'visual';
+            btn.innerHTML = '\uD83D\uDCDD HTML';
+          }
+        }else if(cmd){
+          document.execCommand(cmd, false, arg || null);
+        }
+        if(mode === 'visual') visual.focus();
+        fire();
+      });
+    });
+
+    async function uploadImage(){
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async function(){
+        var file = input.files && input.files[0];
+        if(!file) return;
+        if(!window.supa){ alert('No connection.'); return; }
+        var ts = Date.now();
+        var safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 60);
+        var path = 'nachi/' + ts + '_' + safe;
+        try{
+          var up = await window.supa.storage.from('photos').upload(path, file, {
+            cacheControl:'3600', upsert:false, contentType:file.type || undefined
+          });
+          if(up.error){ alert('Upload failed: ' + up.error.message); return; }
+          var urlRes = window.supa.storage.from('photos').getPublicUrl(path);
+          var url = urlRes && urlRes.data && urlRes.data.publicUrl;
+          if(!url){ alert('Could not get URL.'); return; }
+          if(mode === 'visual'){
+            visual.focus();
+            document.execCommand('insertHTML', false,
+              '<img src="' + url + '" alt="" />'
+            );
+          }else{
+            var pos = html.selectionStart || html.value.length;
+            html.value = html.value.slice(0, pos) +
+              '<img src="' + url + '" alt="" />' + html.value.slice(pos);
+          }
+          fire();
+        }catch(e){ alert('Upload error: ' + e.message); }
+      };
+      input.click();
+    }
+
+    return {
+      getHtml: function(){ return mode === 'visual' ? visual.innerHTML : html.value; },
+      setHtml: function(h){
+        if(mode === 'visual') visual.innerHTML = h || '';
+        else                  html.value       = h || '';
+        fire();
+      },
+    };
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Migrate baseline (import 12 hardcoded articles into DB)
+  // ═════════════════════════════════════════════════════
+  async function migrateBaseline(){
+    var baseline = (window.CardinalNachi && window.CardinalNachi.baseline);
+    if(!baseline){ alert('Baseline data not available.'); return; }
+    var seriesCount = baseline.series.length;
+    var articleCount = baseline.articles.length;
+    if(!confirm(
+      'Import ' + seriesCount + ' baseline series and ' + articleCount +
+      ' articles into the database?\n\n' +
+      'Duplicates (matching slug for series, matching title for articles) will be skipped, so it\'s safe to run.'
+    )) return;
+
+    var slugToId = {};
+    DB_SERIES.forEach(function(s){ slugToId[s.slug] = s.id; });
+
+    var newSeries = 0;
+    for(var i = 0; i < baseline.series.length; i++){
+      var s = baseline.series[i];
+      if(slugToId[s.slug]) continue;
+      var r = await window.supa.from('nachi_series').insert({
+        slug: s.slug, title: s.title,
+        description: s.description || '', sort_key: s.sort_key || 0,
+        created_by: currentEmail(),
+      }).select().single();
+      if(r.error){ console.warn('[migrate] series', s.slug, r.error); continue; }
+      slugToId[s.slug] = r.data.id;
+      newSeries++;
+    }
+
+    // Refresh so the new series IDs are known
+    var s2 = await window.supa.from('nachi_series').select('*').eq('archived', false);
+    if(s2.data){
+      DB_SERIES = s2.data;
+      DB_SERIES.forEach(function(s){ slugToId[s.slug] = s.id; });
+    }
+    var a2 = await window.supa.from('nachi_articles').select('*').eq('archived', false);
+    if(a2.data) DB_ARTICLES = a2.data;
+
+    var newArticles = 0;
+    for(var j = 0; j < baseline.articles.length; j++){
+      var a = baseline.articles[j];
+      var sid = slugToId[a.series_slug];
+      if(!sid) continue;
+      var dup = DB_ARTICLES.find(function(x){ return x.series_id === sid && x.title === a.title; });
+      if(dup) continue;
+      var r2 = await window.supa.from('nachi_articles').insert({
+        series_id: sid, title: a.title, sort_key: a.sort_key || 0,
+        html_content: a.html_content, tags: a.tags || '', source: a.source || '',
+        created_by: currentEmail(),
+      });
+      if(r2.error){ console.warn('[migrate] article', a.title, r2.error); continue; }
+      newArticles++;
+    }
+
+    await loadFromDb();
+    render();
+    alert('Imported ' + newSeries + ' new series and ' + newArticles + ' new articles.\n' +
+          'The hardcoded copies are now hidden — DB versions take over.');
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Admin management modal
+  // ═════════════════════════════════════════════════════
+  var modal = null;
+  var view = 'series-list';
+  var editingSeries = null;
+  var editingArticle = null;
+  var currentEditor = null;
+
+  function open(){
+    if(modal) return;
+    if(!isAdmin()){ alert('Admin only.'); return; }
+    modal = document.createElement('div');
+    modal.className = 'cr-cm-bg';
+    document.body.appendChild(modal);
+    modal.onclick = function(e){ if(e.target === modal) close(); };
+    view = 'series-list';
+    render();
+  }
+  function close(){
+    if(modal && modal.parentNode) modal.parentNode.removeChild(modal);
+    modal = null; view = 'series-list';
+    editingSeries = null; editingArticle = null; currentEditor = null;
+  }
+  function render(){
+    if(!modal) return;
+    if(view === 'series-list')    renderSeriesList();
+    else if(view === 'series-edit')   renderSeriesEdit();
+    else if(view === 'series-detail') renderSeriesDetail();
+    else if(view === 'article-edit')  renderArticleEdit();
+  }
+  function shell(title, bodyHtml, back){
+    modal.innerHTML =
+      '<div class="cr-cm-box">' +
+        '<div class="cr-cm-head">' +
+          (back ? '<button class="back" data-act="back" type="button">\u2039 Back</button>' : '') +
+          '<h3>' + esc(title) + '</h3>' +
+          '<button class="close" data-act="close" type="button">\u2715</button>' +
+        '</div>' +
+        '<div class="cr-cm-body">' + bodyHtml + '</div>' +
+      '</div>';
+    modal.querySelector('[data-act="close"]').onclick = close;
+    var b = modal.querySelector('[data-act="back"]');
+    if(b) b.onclick = back;
+  }
+
+  function renderSeriesList(){
+    var itemsHtml = DB_SERIES.length ? DB_SERIES.map(function(s){
+      var count = articlesForSeries(s.id).length;
+      return '<div class="cr-cm-list-item" data-sid="' + esc(s.id) + '">' +
+        '<div class="info">' +
+          '<div class="t">' + esc(s.title) + '</div>' +
+          '<div class="m">' + count + ' article' + (count === 1 ? '' : 's') +
+            ' \u00b7 slug: ' + esc(s.slug) + ' \u00b7 sort: ' + s.sort_key + '</div>' +
+        '</div>' +
+        '<div style="color:#7fa6d6;">\u203A</div>' +
+      '</div>';
+    }).join('') : '<div class="cr-cm-empty">No custom series yet. Add one or import the baseline.</div>';
+    shell('Manage NACHI Content',
+      '<div class="cr-cm-actionbar">' +
+        '<button data-act="new-series" type="button">+ New Series</button>' +
+        '<button class="ghost" data-act="migrate" type="button">\u21BB Import Baseline</button>' +
+      '</div>' + itemsHtml, null);
+    modal.querySelector('[data-act="new-series"]').onclick = function(){
+      editingSeries = null; view = 'series-edit'; render();
+    };
+    modal.querySelector('[data-act="migrate"]').onclick = migrateBaseline;
+    modal.querySelectorAll('.cr-cm-list-item').forEach(function(el){
+      el.onclick = function(){
+        editingSeries = DB_SERIES.find(function(s){ return s.id === el.dataset.sid; });
+        view = 'series-detail'; render();
+      };
+    });
+  }
+
+  function renderSeriesEdit(){
+    var s = editingSeries || { title:'', slug:'', description:'', sort_key:(DB_SERIES.length + 1) };
+    var isNew = !editingSeries;
+    var back = function(){ view = isNew ? 'series-list' : 'series-detail'; render(); };
+    shell(isNew ? 'New Series' : 'Edit Series',
+      '<form class="cr-cm-form" onsubmit="return false;">' +
+        '<label>Title *</label>' +
+        '<input name="title" value="' + esc(s.title) + '" required placeholder="e.g. NACHI Roof Framing" />' +
+        '<label>Slug (URL-safe id)</label>' +
+        '<input name="slug" value="' + esc(s.slug) + '" placeholder="auto from title" pattern="[a-z0-9-]+" />' +
+        '<p class="hint">Only lowercase letters, numbers, and dashes. Auto-generated from title if blank.</p>' +
+        '<label>Description</label>' +
+        '<input name="description" value="' + esc(s.description || '') + '" placeholder="Short blurb for the hub card" />' +
+        '<label>Sort Order</label>' +
+        '<input name="sort_key" type="number" value="' + s.sort_key + '" step="1" />' +
+        '<p class="hint">Lower = shown first. Use 10, 20, 30 to leave room.</p>' +
+        '<div class="actions">' +
+          (isNew ? '' : '<button class="danger" data-act="archive" type="button">Archive</button>') +
+          '<button class="ghost" data-act="cancel" type="button">Cancel</button>' +
+          '<button class="primary" data-act="save" type="button">' + (isNew ? 'Create' : 'Save') + '</button>' +
+        '</div>' +
+      '</form>', back);
+    var form = modal.querySelector('form');
+    modal.querySelector('[data-act="cancel"]').onclick = back;
+    if(!isNew){
+      modal.querySelector('[data-act="archive"]').onclick = async function(){
+        if(!confirm('Archive "' + s.title + '"?')) return;
+        var r = await window.supa.from('nachi_series').update({ archived:true }).eq('id', s.id);
+        if(r.error){ alert('Archive failed: ' + r.error.message); return; }
+        await loadFromDb();
+        editingSeries = null; view = 'series-list'; render();
+      };
+    }
+    modal.querySelector('[data-act="save"]').onclick = async function(){
+      var title = form.querySelector('[name="title"]').value.trim();
+      if(!title){ alert('Title required.'); return; }
+      var slug = form.querySelector('[name="slug"]').value.trim() || slugify(title);
+      var payload = {
+        title:title, slug:slug,
+        description:form.querySelector('[name="description"]').value.trim(),
+        sort_key:parseInt(form.querySelector('[name="sort_key"]').value, 10) || 0,
+      };
+      var r;
+      if(isNew){
+        payload.created_by = currentEmail();
+        r = await window.supa.from('nachi_series').insert(payload).select().single();
+      }else{
+        r = await window.supa.from('nachi_series').update(payload).eq('id', s.id).select().single();
+      }
+      if(r.error){ alert('Save failed: ' + r.error.message); return; }
+      await loadFromDb();
+      editingSeries = r.data;
+      view = 'series-detail'; render();
+    };
+  }
+
+  function renderSeriesDetail(){
+    var s = editingSeries;
+    var articles = articlesForSeries(s.id);
+    var articlesHtml = articles.length ? articles.map(function(a){
+      var pn = a.sort_key ? '<span class="pnum">P' + a.sort_key + '</span>' : '';
+      return '<div class="cr-cm-list-item" data-aid="' + esc(a.id) + '">' +
+        '<div class="info">' +
+          '<div class="t">' + esc(a.title) + '</div>' +
+          '<div class="m">' + pn + ' ' + (a.tags ? esc(a.tags).slice(0, 60) : '<i>no tags</i>') + '</div>' +
+        '</div>' +
+        '<div style="color:#7fa6d6;">\u203A</div>' +
+      '</div>';
+    }).join('') : '<div class="cr-cm-empty">No articles in this series yet.</div>';
+    shell(s.title,
+      '<div class="cr-cm-actionbar">' +
+        '<button data-act="edit-series" type="button">Edit Series</button>' +
+        '<button data-act="new-article" type="button">+ New Article</button>' +
+      '</div>' + articlesHtml,
+      function(){ view='series-list'; editingSeries=null; render(); });
+    modal.querySelector('[data-act="edit-series"]').onclick = function(){
+      view = 'series-edit'; render();
+    };
+    modal.querySelector('[data-act="new-article"]').onclick = function(){
+      editingArticle = null; view = 'article-edit'; render();
+    };
+    modal.querySelectorAll('.cr-cm-list-item').forEach(function(el){
+      el.onclick = function(){
+        editingArticle = DB_ARTICLES.find(function(a){ return a.id === el.dataset.aid; });
+        view = 'article-edit'; render();
+      };
+    });
+  }
+
+  function renderArticleEdit(){
+    var s = editingSeries;
+    var a = editingArticle || { title:'', sort_key:(articlesForSeries(s.id).length + 1),
+                                html_content:'', tags:'', source:'' };
+    var isNew = !editingArticle;
+    var back = function(){ view='series-detail'; editingArticle=null; currentEditor=null; render(); };
+    shell(isNew ? 'New Article \u2014 ' + s.title : 'Edit Article',
+      '<form class="cr-cm-form" onsubmit="return false;">' +
+        '<label>Title *</label>' +
+        '<input name="title" value="' + esc(a.title) + '" required placeholder="e.g. Part 5 \u2014 Climbing, Maintenance & Step-Ladders" />' +
+        '<label>Part / Sort Order</label>' +
+        '<input name="sort_key" type="number" value="' + a.sort_key + '" step="1" />' +
+        '<label>Content *</label>' +
+        '<div class="cr-cm-editor" data-editor></div>' +
+        '<p class="hint">Use the toolbar for formatting. Toggle to HTML for direct editing. \uD83D\uDDBC uploads images to the photos bucket.</p>' +
+        '<label>Tags</label>' +
+        '<input name="tags" value="' + esc(a.tags || '') + '" placeholder="nachi shingle warranty class-4" />' +
+        '<label>Source / Attribution</label>' +
+        '<input name="source" value="' + esc(a.source || '') + '" placeholder="e.g. InterNACHI \u2014 Author Name" />' +
+        '<label>Live Preview</label>' +
+        '<div class="cr-cm-preview" data-preview>' +
+          '<div class="rl-article"></div>' +
+        '</div>' +
+        '<div class="actions">' +
+          (isNew ? '' : '<button class="danger" data-act="archive" type="button">Archive</button>') +
+          '<button class="ghost" data-act="cancel" type="button">Cancel</button>' +
+          '<button class="primary" data-act="save" type="button">' + (isNew ? 'Create' : 'Save') + '</button>' +
+        '</div>' +
+      '</form>', back);
+
+    var form = modal.querySelector('form');
+    var editorHost = form.querySelector('[data-editor]');
+    var preview = form.querySelector('[data-preview] .rl-article');
+    // Attach the rich editor
+    currentEditor = setupEditor(editorHost, a.html_content, function(html){
+      preview.innerHTML = html || '<i style="color:#8a9bb0;">Preview updates as you type.</i>';
+    });
+    preview.innerHTML = a.html_content || '<i style="color:#8a9bb0;">Preview updates as you type.</i>';
+
+    modal.querySelector('[data-act="cancel"]').onclick = back;
+    if(!isNew){
+      modal.querySelector('[data-act="archive"]').onclick = async function(){
+        if(!confirm('Archive "' + a.title + '"?')) return;
+        var r = await window.supa.from('nachi_articles').update({ archived:true }).eq('id', a.id);
+        if(r.error){ alert('Archive failed: ' + r.error.message); return; }
+        await loadFromDb();
+        view = 'series-detail'; editingArticle=null; currentEditor=null; render();
+      };
+    }
+    modal.querySelector('[data-act="save"]').onclick = async function(){
+      var title = form.querySelector('[name="title"]').value.trim();
+      var html = currentEditor ? currentEditor.getHtml() : '';
+      if(!title){ alert('Title required.'); return; }
+      if(!html.trim()){ alert('Content required.'); return; }
+      var payload = {
+        series_id: s.id, title: title,
+        sort_key: parseInt(form.querySelector('[name="sort_key"]').value, 10) || 0,
+        html_content: html,
+        tags: form.querySelector('[name="tags"]').value.trim(),
+        source: form.querySelector('[name="source"]').value.trim(),
+      };
+      var r;
+      if(isNew){
+        payload.created_by = currentEmail();
+        r = await window.supa.from('nachi_articles').insert(payload).select().single();
+      }else{
+        r = await window.supa.from('nachi_articles').update(payload).eq('id', a.id).select().single();
+      }
+      if(r.error){ alert('Save failed: ' + r.error.message); return; }
+      await loadFromDb();
+      view = 'series-detail'; editingArticle=null; currentEditor=null; render();
+    };
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Boot
+  // ═════════════════════════════════════════════════════
+  function ensureButton(){
+    if(document.getElementById('cr-nachi-mgr-btn')) return;
+    var b = document.createElement('button');
+    b.id = 'cr-nachi-mgr-btn';
+    b.type = 'button';
+    b.innerHTML = '<span>\uD83D\uDEE0</span> Manage';
+    b.title = 'Manage NACHI content (admin only)';
+    b.onclick = open;
+    document.body.appendChild(b);
+  }
+  function updateAdminClass(){
+    document.body.classList.toggle('cr-is-admin', isAdmin());
+  }
+  function start(){
+    ensureButton();
+    updateAdminClass();
+    var attempts = 0;
+    var iv = setInterval(function(){
+      updateAdminClass();
+      if(currentEmail()){ clearInterval(iv); loadFromDb(); }
+      else if(++attempts > 50){ clearInterval(iv); }
+    }, 400);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalNachiContent = {
+    reload: loadFromDb,
+    openManage: open,
+    series: function(){ return DB_SERIES.slice(); },
+    articles: function(){ return DB_ARTICLES.slice(); },
+    migrateBaseline: migrateBaseline,
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: manual_estimates.html · v2026-07-24
+     ══════════════════════════════════════════════════════════
+     Manual estimates with templates. Adds a "📝 Manual" button
+     next to "+ New AI" in the Estimates plugin. Templates:
+        · Roof Replacement
+        · Roof Repair
+        · Siding Replacement
+        · Window Replacement
+        · Gutter Replacement
+        · Blank / Custom
+
+     Each template pre-loads line items with industry-standard
+     defaults you edit before saving. Live totals with tax rate.
+     Persists to manual_estimates table (SQL: manual_estimates_setup.sql).
+
+     Public API:
+       CardinalManualEst.pickTemplate() - opens template picker
+       CardinalManualEst.openEditor(templateKey, project) - direct
+────────────────────────────────────────────────────────────── -->
+
+<style id="cr-me-styles">
+  #cr-me-manual-btn{
+    background:linear-gradient(135deg,#f5d061,#d4a017);
+    color:#1a1a1a; border:0;
+    padding:8px 14px; border-radius:6px;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer; margin-left:8px;
+    font-family:inherit;
+    box-shadow:0 2px 8px rgba(212,160,23,.35);
+  }
+  #cr-me-manual-btn:hover{ background:linear-gradient(135deg,#f5d061,#e8ba15); }
+
+  .cr-me-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.68); z-index:9600;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:5vh 12px; -webkit-overflow-scrolling:touch;
+  }
+  .cr-me-box{
+    background:#fdfcf7; color:#2c2c2c;
+    border-radius:14px; width:100%; max-width:720px;
+    max-height:90vh; display:flex; flex-direction:column;
+    box-shadow:0 24px 60px rgba(0,0,0,.55);
+    overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  .cr-me-head{
+    padding:14px 20px 12px;
+    background:linear-gradient(120deg,#d4a017,#f5d061 60%,#d4a017);
+    color:#1a1a1a;
+    display:flex; align-items:center; gap:10px;
+  }
+  .cr-me-head h3{
+    margin:0; flex:1;
+    font:800 14px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+  }
+  .cr-me-head .back, .cr-me-head .close{
+    background:rgba(0,0,0,.15); border:0;
+    color:#1a1a1a; padding:5px 11px; border-radius:5px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; cursor:pointer;
+    font-family:inherit;
+  }
+  .cr-me-head .close{ padding:4px 10px; font-size:16px; line-height:1; }
+  .cr-me-head .back:hover, .cr-me-head .close:hover{ background:rgba(0,0,0,.25); }
+  .cr-me-body{ overflow-y:auto; flex:1; padding:16px 20px; }
+
+  /* ─── Template picker grid ───────────────────────────── */
+  .cr-me-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:12px;
+  }
+  .cr-me-template{
+    background:#fff; border:1px solid #d9cfaf;
+    border-left:5px solid #d4a017;
+    border-radius:10px; padding:14px 16px;
+    cursor:pointer; text-align:left;
+    font-family:inherit;
+    transition:transform .12s, box-shadow .12s;
+    box-shadow:0 2px 6px rgba(0,0,0,.05);
+  }
+  .cr-me-template:hover{
+    transform:translateY(-2px);
+    box-shadow:0 6px 16px rgba(212,160,23,.25);
+  }
+  .cr-me-template .ic{ font-size:22px; margin-bottom:6px; display:block; }
+  .cr-me-template .t{
+    font:800 14px Georgia,'Times New Roman',serif;
+    color:#2c2c2c; margin-bottom:4px;
+  }
+  .cr-me-template .d{
+    font:600 11.5px 'Segoe UI',Arial,sans-serif;
+    color:#8a7a5a;
+  }
+  .cr-me-template .n{
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; color:#d4a017;
+    margin-top:6px; text-transform:uppercase;
+  }
+
+  /* ─── Editor ───────────────────────────────────────── */
+  .cr-me-editor label{
+    display:block; margin:12px 0 4px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#8a7a5a;
+  }
+  .cr-me-editor input, .cr-me-editor textarea, .cr-me-editor select{
+    width:100%; box-sizing:border-box;
+    background:#fff; color:#2c2c2c;
+    border:1px solid #d9cfaf; border-radius:6px;
+    padding:8px 10px; font-size:13.5px;
+    outline:none; font-family:inherit;
+  }
+  .cr-me-editor input:focus, .cr-me-editor textarea:focus, .cr-me-editor select:focus{
+    border-color:#d4a017;
+    box-shadow:0 0 0 3px rgba(212,160,23,.22);
+  }
+  .cr-me-editor textarea{ min-height:70px; resize:vertical; }
+
+  .cr-me-optsrow{
+    display:grid;
+    grid-template-columns:minmax(160px,1fr) 1fr 1fr;
+    gap:10px 14px; align-items:center;
+    padding:10px 12px; margin:10px 0 4px;
+    background:#faf5e9; border:1px solid #e8d9a8;
+    border-radius:8px;
+  }
+  .cr-me-optsrow .opt select{ margin:0; }
+  .cr-me-chk{
+    display:flex; align-items:center; gap:8px;
+    font:600 12px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    margin:0 !important; text-transform:none !important;
+    letter-spacing:normal !important;
+    cursor:pointer;
+  }
+  .cr-me-chk input[type=checkbox]{
+    width:16px !important; height:16px; margin:0;
+    accent-color:#d4a017;
+    flex:0 0 auto;
+  }
+  .cr-me-chk span{ line-height:1.35; }
+  @media (max-width:520px){
+    .cr-me-optsrow{ grid-template-columns:1fr; }
+  }
+
+  .cr-me-info{
+    background:#faf5e9; border:1px solid #e8d9a8;
+    border-radius:8px; padding:10px 14px;
+    margin-bottom:12px;
+    font:600 12.5px 'Segoe UI',Arial,sans-serif; color:#5a4a1a;
+  }
+  .cr-me-info b{ color:#2c2c2c; }
+
+  .cr-me-lines{
+    border:1px solid #d9cfaf; border-radius:8px;
+    overflow:hidden; margin-top:6px;
+  }
+  .cr-me-line-head{
+    display:grid;
+    grid-template-columns:1fr 60px 55px 90px 80px 30px;
+    gap:6px;
+    background:#faf5e9; padding:8px 10px;
+    font:800 9px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#8a7a5a;
+  }
+  .cr-me-line-head span{ text-align:right; }
+  .cr-me-line-head span:first-child{ text-align:left; }
+  .cr-me-line{
+    display:grid;
+    grid-template-columns:1fr 60px 55px 90px 80px 30px;
+    gap:6px; align-items:center;
+    padding:6px 10px; background:#fff;
+    border-top:1px solid #f0e8c9;
+  }
+  .cr-me-line input, .cr-me-line select{
+    padding:5px 7px; font-size:12.5px; border-radius:4px;
+    text-align:right;
+  }
+  .cr-me-line input[data-f="desc"]{ text-align:left; }
+  .cr-me-line .total{
+    font:800 12.5px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c; text-align:right;
+  }
+  .cr-me-line .del{
+    background:transparent; border:0; color:#c8202e;
+    cursor:pointer; font-size:16px; padding:0;
+    font-family:inherit; line-height:1;
+  }
+  .cr-me-line .del:hover{ color:#a01822; }
+
+  .cr-me-addline{
+    background:transparent; border:1px dashed #d4a017;
+    color:#8a5a00; padding:8px 12px;
+    border-radius:6px; cursor:pointer; margin-top:8px;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    font-family:inherit; width:100%;
+  }
+  .cr-me-addline:hover{ background:rgba(212,160,23,.08); }
+
+  .cr-me-totals{
+    background:#faf5e9; border:1px solid #e8d9a8;
+    border-radius:8px; padding:12px 16px;
+    margin-top:14px;
+    display:grid; grid-template-columns:1fr auto; gap:6px 20px;
+    font:600 13px 'Segoe UI',Arial,sans-serif; color:#2c2c2c;
+    align-items:center;
+  }
+  .cr-me-totals label{
+    margin:0; text-align:right;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#8a7a5a;
+  }
+  .cr-me-totals .val{ text-align:right; min-width:120px; }
+  .cr-me-totals input{ text-align:right; max-width:90px; padding:5px 7px; font-size:13px; }
+  .cr-me-totals .grand{
+    font:800 18px Georgia,'Times New Roman',serif;
+    color:#8a5a00;
+  }
+
+  .cr-me-actions{
+    display:flex; justify-content:flex-end; gap:8px;
+    margin-top:16px; flex-wrap:wrap;
+  }
+  .cr-me-actions button{
+    padding:9px 16px; border-radius:6px; border:0; cursor:pointer;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    font-family:inherit;
+  }
+  .cr-me-actions button.primary{
+    background:#d4a017; color:#1a1a1a;
+  }
+  .cr-me-actions button.primary:hover{ background:#e8ba15; }
+  .cr-me-actions button.primary:disabled{ background:#c9b070; cursor:wait; }
+  .cr-me-actions button.ghost{
+    background:transparent; color:#8a7a5a;
+    border:1px solid #d9cfaf;
+  }
+  .cr-me-actions button.ghost:hover{ background:#f5efe0; }
+
+  @media (max-width:520px){
+    .cr-me-line-head, .cr-me-line{
+      grid-template-columns:1fr 50px 45px 70px 65px 26px;
+      font-size:10.5px;
+    }
+    .cr-me-line input, .cr-me-line select{ font-size:11.5px; padding:4px 5px; }
+  }
+</style>
+
+<script id="cr-me-script">
+(function(){
+  'use strict';
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function money(n){
+    var v = Number(n) || 0;
+    return '$' + v.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return window.currentUser.email;
+      if(typeof window.my_email === 'function') return window.my_email();
+    }catch(e){}
+    return '';
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Templates — hardcoded starting points with industry-typical
+  // defaults. Users edit before saving. Prices are order-of-
+  // magnitude reasonable for Dayton/Miami Valley in 2026 —
+  // adjust in the editor for the actual job.
+  // ═════════════════════════════════════════════════════
+  var TEMPLATES = {
+    roof_replacement: {
+      icon:'\uD83C\uDFE0', title:'Roof Replacement',
+      desc:'Full tear-off and re-roof with architectural shingles.',
+      lines:[
+        { desc:'Tear-off existing shingles',                qty:20,  unit:'SQ',  price:75 },
+        { desc:'Synthetic underlayment',                    qty:20,  unit:'SQ',  price:45 },
+        { desc:'Ice & water shield (eaves and valleys)',    qty:200, unit:'LF',  price:3.50 },
+        { desc:'Starter strip',                             qty:200, unit:'LF',  price:2.25 },
+        { desc:'Architectural shingles (color TBD)',        qty:20,  unit:'SQ',  price:175 },
+        { desc:'Ridge cap shingles',                        qty:60,  unit:'LF',  price:8 },
+        { desc:'Drip edge (aluminum)',                      qty:200, unit:'LF',  price:2.50 },
+        { desc:'Pipe boots (replace)',                      qty:3,   unit:'EA',  price:55 },
+        { desc:'Step & wall flashing (materials + labor)',  qty:1,   unit:'LOT', price:350 },
+        { desc:'Dumpster & disposal',                       qty:1,   unit:'LOT', price:475 },
+        { desc:'Cleanup + magnet sweep',                    qty:1,   unit:'LOT', price:150 },
+        { desc:'Labor (installation)',                      qty:20,  unit:'SQ',  price:225 },
+      ],
+    },
+    roof_repair: {
+      icon:'\uD83D\uDD27', title:'Roof Repair',
+      desc:'Partial repair for storm or wear damage.',
+      lines:[
+        { desc:'Damage inspection & documentation',         qty:1, unit:'LOT', price:150 },
+        { desc:'Replace damaged shingles',                  qty:2, unit:'SQ',  price:375 },
+        { desc:'Replace pipe boot',                         qty:1, unit:'EA',  price:150 },
+        { desc:'Reseal flashing',                           qty:1, unit:'LOT', price:200 },
+        { desc:'Cleanup',                                   qty:1, unit:'LOT', price:100 },
+      ],
+    },
+    siding: {
+      icon:'\uD83C\uDFD8\uFE0F', title:'Siding Replacement',
+      desc:'Full siding replacement with house wrap.',
+      lines:[
+        { desc:'Remove existing siding',                    qty:1500, unit:'SF',  price:1.75 },
+        { desc:'House wrap (Tyvek)',                        qty:1500, unit:'SF',  price:0.80 },
+        { desc:'Vinyl siding installation',                 qty:1500, unit:'SF',  price:6.75 },
+        { desc:'Corner posts, J-channel, trim',             qty:1,    unit:'LOT', price:850 },
+        { desc:'Cleanup & disposal',                        qty:1,    unit:'LOT', price:425 },
+      ],
+    },
+    windows: {
+      icon:'\uD83D\uDDBC\uFE0F', title:'Window Replacement',
+      desc:'Vinyl double-pane replacement windows.',
+      lines:[
+        { desc:'Vinyl double-pane window (installed)',      qty:10, unit:'EA',  price:675 },
+        { desc:'Trim & J-channel',                          qty:10, unit:'EA',  price:75 },
+        { desc:'Caulk & weatherseal',                       qty:10, unit:'EA',  price:25 },
+        { desc:'Disposal of old windows',                   qty:1,  unit:'LOT', price:225 },
+      ],
+    },
+    gutters: {
+      icon:'\uD83C\uDF27\uFE0F', title:'Gutter Replacement',
+      desc:'Seamless K-style gutters with downspouts.',
+      lines:[
+        { desc:'Remove existing gutters',                   qty:200, unit:'LF',  price:1.50 },
+        { desc:'5" seamless K-style gutter (installed)',    qty:200, unit:'LF',  price:8.75 },
+        { desc:'Downspouts (3" \u00d7 4")',                 qty:6,   unit:'EA',  price:95 },
+        { desc:'End caps, elbows, splash blocks',           qty:1,   unit:'LOT', price:225 },
+        { desc:'Cleanup',                                   qty:1,   unit:'LOT', price:100 },
+      ],
+    },
+    blank: {
+      icon:'\uD83D\uDCDD', title:'Blank / Custom',
+      desc:'Start from scratch — no pre-loaded lines.',
+      lines:[],
+    },
+  };
+
+  var TEMPLATE_ORDER = ['roof_replacement','roof_repair','siding','windows','gutters','blank'];
+  var UNITS = ['SQ','SF','LF','EA','LOT','HR','DAY'];
+
+  // ═════════════════════════════════════════════════════
+  // State
+  // ═════════════════════════════════════════════════════
+  var modal = null;
+  var editorState = null;   // { project, title, template_key, lines, notes, tax_rate, id? }
+
+  function open(){
+    // Guess project from currentProject if on a project profile
+    var proj = window.currentProject || null;
+    if(!proj){
+      alert('Open a client profile first — manual estimates need a project to attach to.');
+      return;
+    }
+    openTemplatePicker(proj);
+  }
+  function close(){
+    if(modal && modal.parentNode) modal.parentNode.removeChild(modal);
+    modal = null;
+    editorState = null;
+  }
+
+  function shell(title, body, back){
+    if(!modal){
+      modal = document.createElement('div');
+      modal.className = 'cr-me-bg';
+      modal.onclick = function(e){ if(e.target === modal) close(); };
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML =
+      '<div class="cr-me-box">' +
+        '<div class="cr-me-head">' +
+          (back ? '<button class="back" data-act="back">\u2039 Back</button>' : '') +
+          '<h3>' + esc(title) + '</h3>' +
+          '<button class="close" data-act="close">\u2715</button>' +
+        '</div>' +
+        '<div class="cr-me-body">' + body + '</div>' +
+      '</div>';
+    modal.querySelector('[data-act="close"]').onclick = close;
+    var b = modal.querySelector('[data-act="back"]');
+    if(b) b.onclick = back;
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Template picker
+  // ═════════════════════════════════════════════════════
+  function openTemplatePicker(project){
+    var cardsHtml = TEMPLATE_ORDER.map(function(key){
+      var t = TEMPLATES[key];
+      var n = t.lines.length;
+      return '<button class="cr-me-template" data-tpl="' + esc(key) + '" type="button">' +
+        '<span class="ic">' + t.icon + '</span>' +
+        '<div class="t">' + esc(t.title) + '</div>' +
+        '<div class="d">' + esc(t.desc) + '</div>' +
+        '<div class="n">' + (n ? n + ' line' + (n === 1 ? '' : 's') : 'Empty') + '</div>' +
+      '</button>';
+    }).join('');
+    shell('New Manual Estimate',
+      '<div class="cr-me-info">Client: <b>' + esc(project.name || project.client_name || 'Untitled project') + '</b>' +
+        (project.address ? ' \u00b7 ' + esc(project.address) : '') + '</div>' +
+      '<label style="display:block;margin:0 0 8px;font:800 10px \'Segoe UI\',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a7a5a;">Pick a template</label>' +
+      '<div class="cr-me-grid">' + cardsHtml + '</div>', null);
+    modal.querySelectorAll('[data-tpl]').forEach(function(el){
+      el.onclick = function(){
+        openEditor(el.getAttribute('data-tpl'), project);
+      };
+    });
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Editor
+  // ═════════════════════════════════════════════════════
+  function openEditor(templateKey, project, existing){
+    var tpl = TEMPLATES[templateKey] || TEMPLATES.blank;
+    editorState = existing ? {
+      id           : existing.id,
+      project      : project,
+      title        : existing.title,
+      template_key : existing.template_key,
+      lines        : Array.isArray(existing.line_items) ? existing.line_items.slice() : [],
+      notes        : existing.notes || '',
+      tax_rate     : Number(existing.tax_rate) || 0,
+      tax_enabled  : existing.tax_enabled !== false,       // default true when absent
+      hide_units   : !!existing.hide_units,
+      status       : existing.status || 'draft',
+    } : {
+      project      : project,
+      title        : tpl.title + ' \u2014 ' + (project.name || project.client_name || 'Untitled'),
+      template_key : templateKey,
+      lines        : tpl.lines.map(function(l){ return Object.assign({}, l); }),
+      notes        : '',
+      tax_rate     : 7.5,   // Default OH sales tax on materials — user edits
+      tax_enabled  : true,
+      hide_units   : false,
+      status       : 'draft',
+    };
+    renderEditor();
+  }
+
+  function renderEditor(){
+    var s = editorState;
+    var linesHtml = s.lines.map(function(l, i){ return renderLineRow(l, i); }).join('');
+    var body =
+      '<div class="cr-me-info">Client: <b>' + esc(s.project.name || s.project.client_name || 'Untitled') + '</b>' +
+        (s.project.address ? ' \u00b7 ' + esc(s.project.address) : '') + '</div>' +
+      '<div class="cr-me-editor">' +
+        '<label>Estimate Title</label>' +
+        '<input data-f="title" value="' + esc(s.title) + '" />' +
+
+        '<div class="cr-me-optsrow">' +
+          '<div class="opt">' +
+            '<label style="margin:0 0 4px;">Status</label>' +
+            '<select data-f="status">' +
+              '<option value="draft"'   +(s.status==='draft'   ?' selected':'')+'>Draft (unsent)</option>' +
+              '<option value="sent"'    +(s.status==='sent'    ?' selected':'')+'>Sent</option>' +
+              '<option value="accepted"'+(s.status==='accepted'?' selected':'')+'>Accepted</option>' +
+              '<option value="declined"'+(s.status==='declined'?' selected':'')+'>Declined</option>' +
+            '</select>' +
+          '</div>' +
+          '<label class="cr-me-chk"><input type="checkbox" data-f="hide_units"'  + (s.hide_units  ? ' checked' : '') + ' /> <span>Hide unit labels (SQ / LF / EA) in client output</span></label>' +
+          '<label class="cr-me-chk"><input type="checkbox" data-f="tax_enabled"' + (s.tax_enabled ? ' checked' : '') + ' /> <span>Include tax</span></label>' +
+        '</div>' +
+
+        '<label>Line Items</label>' +
+        '<div class="cr-me-lines">' +
+          '<div class="cr-me-line-head">' +
+            '<span>Description</span>' +
+            '<span>Qty</span>' +
+            '<span>Unit</span>' +
+            '<span>Unit $</span>' +
+            '<span>Line $</span>' +
+            '<span></span>' +
+          '</div>' +
+          '<div data-lines>' + linesHtml + '</div>' +
+        '</div>' +
+        '<button class="cr-me-addline" data-act="add-line" type="button">+ Add Line</button>' +
+
+        renderTotals() +
+
+        '<label style="margin-top:14px;">Notes / Scope of Work</label>' +
+        '<textarea data-f="notes" placeholder="Scope details, exclusions, warranty terms\u2026">' + esc(s.notes) + '</textarea>' +
+
+        '<div class="cr-me-actions">' +
+          (s.id ? '<button class="ghost" data-act="delete" type="button">Archive</button>' : '') +
+          '<button class="ghost" data-act="cancel" type="button">Cancel</button>' +
+          '<button class="primary" data-act="save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
+        '</div>' +
+      '</div>';
+    shell(s.id ? 'Edit Estimate' : 'New Manual Estimate', body,
+      function(){ openTemplatePicker(s.project); });
+    wireEditor();
+  }
+
+  function renderLineRow(l, i){
+    var lineTotal = (Number(l.qty) || 0) * (Number(l.price) || 0);
+    var unitOpts = UNITS.map(function(u){
+      return '<option value="' + u + '"' + (u === l.unit ? ' selected' : '') + '>' + u + '</option>';
+    }).join('');
+    return '<div class="cr-me-line" data-i="' + i + '">' +
+      '<input data-f="desc" value="' + esc(l.desc || '') + '" placeholder="Line item" />' +
+      '<input data-f="qty" type="number" step="0.01" value="' + (l.qty || 0) + '" inputmode="decimal" />' +
+      '<select data-f="unit">' + unitOpts + '</select>' +
+      '<input data-f="price" type="number" step="0.01" value="' + (l.price || 0) + '" inputmode="decimal" />' +
+      '<div class="total">' + money(lineTotal) + '</div>' +
+      '<button class="del" data-act="del-line" type="button" title="Remove line">\u00d7</button>' +
+    '</div>';
+  }
+
+  function renderTotals(){
+    var s = editorState;
+    var subtotal = s.lines.reduce(function(sum, l){
+      return sum + (Number(l.qty) || 0) * (Number(l.price) || 0);
+    }, 0);
+    var taxAmt = s.tax_enabled ? (subtotal * (Number(s.tax_rate) || 0) / 100) : 0;
+    var total = subtotal + taxAmt;
+    var taxRows = s.tax_enabled ?
+      ('<label>Tax rate (%)</label><div class="val"><input data-f="tax_rate" type="number" step="0.001" value="' + s.tax_rate + '" inputmode="decimal" /></div>' +
+       '<label>Tax</label><div class="val">' + money(taxAmt) + '</div>') : '';
+    return '<div class="cr-me-totals">' +
+      '<label>Subtotal</label><div class="val">' + money(subtotal) + '</div>' +
+      taxRows +
+      '<label style="font-size:11px;">Total</label><div class="val grand">' + money(total) + '</div>' +
+    '</div>';
+  }
+
+  function wireEditor(){
+    var form = modal.querySelector('.cr-me-editor');
+    if(!form) return;
+
+    // Title + notes syncing
+    form.querySelector('[data-f="title"]').oninput = function(e){
+      editorState.title = e.target.value;
+    };
+    var notesEl = form.querySelector('[data-f="notes"]');
+    if(notesEl) notesEl.oninput = function(e){ editorState.notes = e.target.value; };
+
+    // Status select
+    var statusEl = form.querySelector('[data-f="status"]');
+    if(statusEl) statusEl.onchange = function(e){ editorState.status = e.target.value; };
+
+    // Hide units checkbox (persists — takes effect on print/share)
+    var hideUnitsEl = form.querySelector('[data-f="hide_units"]');
+    if(hideUnitsEl) hideUnitsEl.onchange = function(e){ editorState.hide_units = !!e.target.checked; };
+
+    // Include tax checkbox — re-renders the whole editor so tax rows appear/disappear
+    var taxEnEl = form.querySelector('[data-f="tax_enabled"]');
+    if(taxEnEl) taxEnEl.onchange = function(e){
+      editorState.tax_enabled = !!e.target.checked;
+      renderEditor();
+    };
+
+    // Tax rate: re-render totals only (avoid full editor re-render on every keystroke)
+    var taxEl = form.querySelector('[data-f="tax_rate"]');
+    if(taxEl) taxEl.oninput = function(e){
+      editorState.tax_rate = Number(e.target.value) || 0;
+      updateTotalsDom();
+    };
+
+    // Line item edits — delegated
+    var linesEl = form.querySelector('[data-lines]');
+    linesEl.oninput = function(e){
+      var t = e.target;
+      var row = t.closest('.cr-me-line');
+      if(!row) return;
+      var i = parseInt(row.dataset.i, 10);
+      var line = editorState.lines[i];
+      if(!line) return;
+      var f = t.dataset.f;
+      if(f === 'qty' || f === 'price') line[f] = Number(t.value) || 0;
+      else line[f] = t.value;
+      // Update this row's line total + totals block
+      var lineTotal = (Number(line.qty) || 0) * (Number(line.price) || 0);
+      var totalEl = row.querySelector('.total');
+      if(totalEl) totalEl.textContent = money(lineTotal);
+      updateTotalsDom();
+    };
+    linesEl.addEventListener('change', function(e){
+      // Handle unit select
+      if(e.target.dataset.f === 'unit'){
+        var row = e.target.closest('.cr-me-line');
+        var i = parseInt(row.dataset.i, 10);
+        if(editorState.lines[i]) editorState.lines[i].unit = e.target.value;
+      }
+    });
+
+    // Add line
+    form.querySelector('[data-act="add-line"]').onclick = function(){
+      editorState.lines.push({ desc:'', qty:1, unit:'EA', price:0 });
+      renderEditor();  // Full re-render to add the new row
+      // Focus the new row's description
+      setTimeout(function(){
+        var rows = modal.querySelectorAll('.cr-me-line');
+        var last = rows[rows.length - 1];
+        if(last){
+          var descInput = last.querySelector('[data-f="desc"]');
+          if(descInput) descInput.focus();
+        }
+      }, 30);
+    };
+
+    // Delete line — delegated
+    linesEl.addEventListener('click', function(e){
+      var btn = e.target.closest('[data-act="del-line"]');
+      if(!btn) return;
+      var row = btn.closest('.cr-me-line');
+      var i = parseInt(row.dataset.i, 10);
+      editorState.lines.splice(i, 1);
+      renderEditor();
+    });
+
+    // Actions
+    form.querySelector('[data-act="cancel"]').onclick = close;
+    form.querySelector('[data-act="save"]').onclick = saveEstimate;
+    var delBtn = form.querySelector('[data-act="delete"]');
+    if(delBtn) delBtn.onclick = archiveEstimate;
+  }
+
+  function updateTotalsDom(){
+    var totalsEl = modal.querySelector('.cr-me-totals');
+    if(totalsEl && totalsEl.parentNode){
+      var newHtml = renderTotals();
+      var wrapper = document.createElement('div');
+      wrapper.innerHTML = newHtml;
+      var replacement = wrapper.firstElementChild;
+      // Preserve focus on tax input
+      var active = document.activeElement;
+      var wasTaxFocused = active && active.dataset.f === 'tax_rate';
+      var caret = wasTaxFocused ? active.selectionStart : null;
+      totalsEl.parentNode.replaceChild(replacement, totalsEl);
+      if(wasTaxFocused){
+        var newTax = replacement.querySelector('[data-f="tax_rate"]');
+        if(newTax){
+          newTax.focus();
+          if(caret != null){ try{ newTax.setSelectionRange(caret, caret); }catch(e){} }
+        }
+      }
+      // Re-wire tax input listener since it got recreated
+      var taxEl = replacement.querySelector('[data-f="tax_rate"]');
+      if(taxEl){
+        taxEl.oninput = function(e){
+          editorState.tax_rate = Number(e.target.value) || 0;
+          updateTotalsDom();
+        };
+      }
+    }
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Save
+  // ═════════════════════════════════════════════════════
+  async function saveEstimate(){
+    var s = editorState;
+    if(!s || !s.project){ alert('No project.'); return; }
+    if(!window.supa){ alert('No connection.'); return; }
+    var subtotal = s.lines.reduce(function(sum, l){
+      return sum + (Number(l.qty) || 0) * (Number(l.price) || 0);
+    }, 0);
+    var taxAmt = s.tax_enabled ? (subtotal * (Number(s.tax_rate) || 0) / 100) : 0;
+    var total = subtotal + taxAmt;
+    var payload = {
+      project_id  : s.project.id,
+      title       : s.title || 'Untitled estimate',
+      template_key: s.template_key,
+      line_items  : s.lines,
+      subtotal    : subtotal.toFixed(2),
+      tax_rate    : s.tax_rate,
+      tax_amount  : taxAmt.toFixed(2),
+      total       : total.toFixed(2),
+      notes       : s.notes || '',
+      status      : s.status || 'draft',
+      hide_units  : !!s.hide_units,
+      tax_enabled : s.tax_enabled !== false,
+    };
+    var saveBtn = modal.querySelector('[data-act="save"]');
+    if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026'; }
+    try{
+      var r;
+      if(s.id){
+        r = await window.supa.from('manual_estimates').update(payload).eq('id', s.id).select().single();
+      }else{
+        payload.created_by = currentEmail() || null;
+        r = await window.supa.from('manual_estimates').insert(payload).select().single();
+      }
+      if(r.error) throw r.error;
+      if(typeof window.auditLog === 'function'){
+        try{ window.auditLog('manual_estimate_save',
+          (s.id ? 'Updated ' : 'Created ') + 'manual estimate: ' + payload.title,
+          s.project.id); }catch(_){ }
+      }
+      close();
+      alert((s.id ? 'Estimate updated. ' : 'Estimate saved. ') + 'Total: ' + money(total));
+      // Refresh the project profile if we're on one
+      if(typeof window.renderOverview === 'function'){
+        try{ window.renderOverview(); }catch(_){ }
+      }
+    }catch(e){
+      alert('Save failed: ' + (e.message || e));
+      if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = s.id ? 'Save' : 'Save Draft'; }
+    }
+  }
+
+  async function archiveEstimate(){
+    var s = editorState;
+    if(!s || !s.id) return;
+    if(!confirm('Archive this estimate?')) return;
+    try{
+      var r = await window.supa.from('manual_estimates').update({ archived:true }).eq('id', s.id);
+      if(r.error) throw r.error;
+      close();
+      if(typeof window.renderOverview === 'function'){
+        try{ window.renderOverview(); }catch(_){ }
+      }
+    }catch(e){
+      alert('Archive failed: ' + (e.message || e));
+    }
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Trigger button in Estimates plugin
+  // ═════════════════════════════════════════════════════
+  function ensureButton(){
+    var mount = document.getElementById('cr-estimates-mount');
+    if(!mount) return;
+    if(mount.querySelector('#cr-me-manual-btn')) return;
+    // Find the "+ New AI" button and add our button next to it
+    var newAi = mount.querySelector('[data-act="new-ai"]');
+    if(!newAi) return;
+    var btn = document.createElement('button');
+    btn.id = 'cr-me-manual-btn';
+    btn.type = 'button';
+    btn.innerHTML = '\uD83D\uDCDD Manual';
+    btn.title = 'Create a manual estimate from a template';
+    btn.onclick = function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      open();
+    };
+    newAi.parentNode.insertBefore(btn, newAi.nextSibling);
+  }
+
+  var scheduled = false;
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){
+      scheduled = false;
+      try{ ensureButton(); }catch(e){}
+    });
+  }
+  function start(){
+    schedule();
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:true,
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  window.CardinalManualEst = {
+    pickTemplate: open,
+    openEditor  : openEditor,
+    templates   : function(){ return Object.assign({}, TEMPLATES); },
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: all_estimates.html · v2026-07-24
+     ══════════════════════════════════════════════════════════
+     Global "All Estimates" view. Full-screen list of every
+     manual estimate across all projects with:
+       · Pending / Done filter tabs
+       · Search across title, client name, address
+       · Status tag on each row (Unsent · Sent · Accepted · Declined)
+       · Sequential #number (newest highest, computed at render)
+       · Running total at the bottom for the filtered set
+       · Tap a row to open its editor with that estimate loaded
+
+     Access:
+       · Adds a "📊 All Estimates" item under Sell in the burger menu
+       · CardinalAllEstimates.open() from the console
+
+     Depends on manual_estimates_setup.sql (project_id, status, total,
+     hide_units, tax_enabled).
+────────────────────────────────────────────────────────────── -->
+
+<style id="cr-ae-styles">
+  #cr-ae-view{
+    display:none;
+    position:fixed; inset:0;
+    background:#fdfcf7; color:#2c2c2c;
+    z-index:9350;
+    flex-direction:column;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  #cr-ae-view.open{ display:flex; }
+
+  .cr-ae-head{
+    padding:14px 16px 12px;
+    padding-top:calc(14px + env(safe-area-inset-top, 0px));
+    background:linear-gradient(120deg,#2c2c2c,#1a1a1a);
+    color:#f5efe0;
+    display:flex; align-items:center; gap:12px;
+    flex:0 0 auto;
+  }
+  .cr-ae-head h2{
+    margin:0; flex:1;
+    font:800 15px Georgia,'Times New Roman',serif;
+    letter-spacing:.02em;
+  }
+  .cr-ae-head button{
+    background:transparent; border:1px solid rgba(212,160,23,.5);
+    color:#f5d061; padding:6px 12px; border-radius:6px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+  }
+  .cr-ae-head button:hover{ background:rgba(212,160,23,.14); }
+
+  .cr-ae-search{
+    padding:10px 16px; background:#fdfcf7;
+    border-bottom:1px solid #e8dfc8; flex:0 0 auto;
+  }
+  .cr-ae-search input{
+    width:100%; box-sizing:border-box;
+    padding:9px 12px 9px 34px;
+    border:1px solid #d9cfaf; border-radius:22px;
+    font-size:14px; outline:none;
+    background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;
+    font-family:inherit;
+  }
+  .cr-ae-search input:focus{
+    border-color:#d4a017;
+    box-shadow:0 0 0 3px rgba(212,160,23,.22);
+  }
+
+  .cr-ae-tabs{
+    padding:0 16px 12px; background:#fdfcf7;
+    display:flex; gap:6px; flex:0 0 auto;
+    border-bottom:1px solid #e8dfc8;
+  }
+  .cr-ae-tabs button{
+    flex:1;
+    background:#f0e8d0; color:#8a7a5a; border:0;
+    padding:9px 14px; border-radius:8px;
+    font:800 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+    transition:background .12s, color .12s;
+  }
+  .cr-ae-tabs button.active{
+    background:#d4a017; color:#1a1a1a;
+    box-shadow:0 2px 8px rgba(212,160,23,.35);
+  }
+  .cr-ae-tabs .count{
+    display:inline-block; margin-left:6px;
+    background:rgba(0,0,0,.15); padding:1px 6px;
+    border-radius:8px; font-size:10px;
+  }
+  .cr-ae-tabs button.active .count{
+    background:rgba(0,0,0,.22); color:#1a1a1a;
+  }
+
+  .cr-ae-list{
+    overflow-y:auto; flex:1;
+    -webkit-overflow-scrolling:touch;
+    background:#fff;
+  }
+  .cr-ae-row{
+    display:flex; align-items:flex-start; gap:12px;
+    padding:14px 16px;
+    border-bottom:1px solid #f0e8d0;
+    cursor:pointer;
+    transition:background .1s;
+  }
+  .cr-ae-row:hover{ background:#faf5e9; }
+  .cr-ae-row .left{ flex:1; min-width:0; }
+  .cr-ae-row .title{
+    font:800 14.5px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c; margin-bottom:4px;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+  .cr-ae-row .title .num{
+    color:#8a7a5a; font-weight:800; margin-right:6px;
+  }
+  .cr-ae-row .sub{
+    font:600 12px 'Segoe UI',Arial,sans-serif;
+    color:#8a7a5a;
+  }
+  .cr-ae-row .right{
+    text-align:right; flex:0 0 auto;
+  }
+  .cr-ae-row .amount{
+    font:800 15px 'Segoe UI',Arial,sans-serif;
+    color:#2c2c2c; margin-bottom:4px;
+  }
+  .cr-ae-tag{
+    display:inline-block;
+    padding:2px 8px; border-radius:10px;
+    font:800 10px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.12em; text-transform:uppercase;
+  }
+  .cr-ae-tag.draft{ background:#e8e0c8; color:#7a6a4a; }
+  .cr-ae-tag.sent{ background:#cfe0f5; color:#3d5d8c; }
+  .cr-ae-tag.accepted{ background:#c8e6cc; color:#2a6b3c; }
+  .cr-ae-tag.declined{ background:#f5cfd0; color:#8c3d3f; }
+
+  .cr-ae-empty{
+    padding:40px 20px; text-align:center;
+    color:#8a7a5a;
+    font:600 13.5px 'Segoe UI',Arial,sans-serif;
+  }
+
+  .cr-ae-foot{
+    background:#faf5e9;
+    border-top:1px solid #e8d9a8;
+    padding:12px 16px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+    display:flex; align-items:center; justify-content:space-between;
+    flex:0 0 auto;
+  }
+  .cr-ae-foot .label{
+    font:800 11px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase; color:#8a7a5a;
+  }
+  .cr-ae-foot .amount{
+    font:800 20px Georgia,'Times New Roman',serif;
+    color:#8a5a00;
+  }
+</style>
+
+<script id="cr-ae-script">
+(function(){
+  'use strict';
+
+  var view = null;
+  var estimates = [];
+  var projectsById = {};
+  var currentTab = 'pending';
+  var currentQuery = '';
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function money(n){
+    var v = Number(n) || 0;
+    return '$' + v.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+  function fmtDate(iso){
+    if(!iso) return '';
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  }
+  function statusMeta(s){
+    switch(s){
+      case 'sent':     return { label:'Sent',     cls:'sent' };
+      case 'accepted': return { label:'Accepted', cls:'accepted' };
+      case 'declined': return { label:'Declined', cls:'declined' };
+      case 'draft':
+      default:         return { label:'Unsent',   cls:'draft' };
+    }
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Data load — estimates + related projects
+  // ═════════════════════════════════════════════════════
+  async function loadData(){
+    if(!window.supa){ return; }
+    try{
+      var r = await window.supa.from('manual_estimates')
+        .select('*').eq('archived', false)
+        .order('created_at', { ascending: false });
+      if(r.error){
+        console.warn('[all-estimates] load:', r.error.message);
+        estimates = [];
+      }else{
+        estimates = r.data || [];
+      }
+      // Load matching projects for client name + address
+      var pids = Array.from(new Set(estimates.map(function(e){ return e.project_id; }).filter(Boolean)));
+      projectsById = {};
+      if(pids.length){
+        var p = await window.supa.from('projects')
+          .select('id, name, address')
+          .in('id', pids);
+        if(p.data){
+          p.data.forEach(function(pr){ projectsById[pr.id] = pr; });
+        }
+      }
+    }catch(e){ console.warn('[all-estimates] load failed:', e); }
+    render();
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Filter + render
+  // ═════════════════════════════════════════════════════
+  function filterEstimates(){
+    var pendingStatuses = ['draft', 'sent'];
+    var doneStatuses    = ['accepted', 'declined'];
+    var wanted = currentTab === 'done' ? doneStatuses : pendingStatuses;
+    var filtered = estimates.filter(function(e){
+      return wanted.indexOf(e.status || 'draft') !== -1;
+    });
+    if(currentQuery){
+      var q = currentQuery.toLowerCase();
+      filtered = filtered.filter(function(e){
+        var pr = projectsById[e.project_id] || {};
+        var hay = (
+          (e.title || '') + ' ' +
+          (pr.name || '') + ' ' +
+          (pr.address || '')
+        ).toLowerCase();
+        return hay.indexOf(q) !== -1;
+      });
+    }
+    return filtered;
+  }
+
+  function render(){
+    if(!view) return;
+    var filtered = filterEstimates();
+    var total = filtered.reduce(function(sum, e){ return sum + Number(e.total || 0); }, 0);
+
+    // Sequential #: newest first, highest number goes to newest (matches
+    // the industry-standard "estimate #866" convention shown in the ask).
+    // We count from the ordinal position within the ENTIRE list (not the
+    // filtered subset) so a number is stable regardless of tab / search.
+    var indexById = {};
+    estimates.forEach(function(e, idx){
+      indexById[e.id] = estimates.length - idx;    // desc order → newest highest
+    });
+
+    // Update tab counts
+    var pendingCount = estimates.filter(function(e){ return ['draft','sent'].indexOf(e.status||'draft')!==-1; }).length;
+    var doneCount    = estimates.filter(function(e){ return ['accepted','declined'].indexOf(e.status||'')!==-1; }).length;
+    var pTab = view.querySelector('[data-tab="pending"] .count');
+    var dTab = view.querySelector('[data-tab="done"] .count');
+    if(pTab) pTab.textContent = pendingCount;
+    if(dTab) dTab.textContent = doneCount;
+
+    var listEl = view.querySelector('.cr-ae-list');
+    if(!filtered.length){
+      listEl.innerHTML = '<div class="cr-ae-empty">' +
+        (currentQuery
+          ? 'No estimates match &ldquo;' + esc(currentQuery) + '&rdquo;.'
+          : 'No ' + esc(currentTab) + ' estimates yet.') +
+      '</div>';
+    }else{
+      listEl.innerHTML = filtered.map(function(e){
+        var pr = projectsById[e.project_id] || {};
+        var meta = statusMeta(e.status);
+        var num = indexById[e.id] || 0;
+        var clientLine = pr.name || 'Unknown client';
+        if(pr.address) clientLine += ' \u00b7 ' + pr.address;
+        // Prefer the estimate title when it differs from the auto-generated one
+        var showTitle = e.title && e.title !== (clientLine) ? e.title : clientLine;
+        return '<div class="cr-ae-row" data-eid="' + esc(e.id) + '">' +
+          '<div class="left">' +
+            '<div class="title"><span class="num">#' + num + '</span>' + esc(showTitle) + '</div>' +
+            '<div class="sub">' + esc(clientLine) + ' \u00b7 ' + fmtDate(e.created_at) + '</div>' +
+          '</div>' +
+          '<div class="right">' +
+            '<div class="amount">' + money(e.total) + '</div>' +
+            '<span class="cr-ae-tag ' + meta.cls + '">' + meta.label + '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      // Wire row clicks
+      listEl.querySelectorAll('.cr-ae-row').forEach(function(row){
+        row.onclick = function(){ openRow(row.dataset.eid); };
+      });
+    }
+    var footAmt = view.querySelector('.cr-ae-foot .amount');
+    if(footAmt) footAmt.textContent = money(total);
+  }
+
+  async function openRow(estimateId){
+    var e = estimates.find(function(x){ return x.id === estimateId; });
+    if(!e) return;
+    var project = projectsById[e.project_id];
+    // Need a fuller project object for the editor's currentProject compat.
+    // Fetch it now (small, one row).
+    try{
+      var r = await window.supa.from('projects').select('*').eq('id', e.project_id).single();
+      if(r.data) project = r.data;
+    }catch(err){}
+    if(!project){ alert('Project not found for this estimate.'); return; }
+    close();
+    // Open the editor — passes the full estimate as `existing` so the
+    // form pre-populates and Save updates instead of inserts.
+    if(window.CardinalManualEst && typeof window.CardinalManualEst.openEditor === 'function'){
+      window.CardinalManualEst.openEditor(e.template_key, project, e);
+    }else{
+      alert('Estimate editor not loaded.');
+    }
+  }
+
+  // ═════════════════════════════════════════════════════
+  // View shell
+  // ═════════════════════════════════════════════════════
+  function ensureView(){
+    if(view) return view;
+    view = document.createElement('div');
+    view.id = 'cr-ae-view';
+    view.innerHTML =
+      '<div class="cr-ae-head">' +
+        '<h2>All Estimates</h2>' +
+        '<button data-act="close" type="button">Close</button>' +
+      '</div>' +
+      '<div class="cr-ae-search">' +
+        '<input type="search" placeholder="Search estimates\u2026" autocomplete="off" />' +
+      '</div>' +
+      '<div class="cr-ae-tabs">' +
+        '<button data-tab="pending" class="active" type="button">Pending <span class="count">0</span></button>' +
+        '<button data-tab="done" type="button">Done <span class="count">0</span></button>' +
+      '</div>' +
+      '<div class="cr-ae-list"></div>' +
+      '<div class="cr-ae-foot">' +
+        '<span class="label">Total (visible)</span>' +
+        '<span class="amount">$0.00</span>' +
+      '</div>';
+    document.body.appendChild(view);
+    view.querySelector('[data-act="close"]').onclick = close;
+    view.querySelector('.cr-ae-search input').oninput = function(e){
+      currentQuery = e.target.value;
+      render();
+    };
+    view.querySelectorAll('.cr-ae-tabs button').forEach(function(btn){
+      btn.onclick = function(){
+        currentTab = btn.dataset.tab;
+        view.querySelectorAll('.cr-ae-tabs button').forEach(function(b){
+          b.classList.toggle('active', b === btn);
+        });
+        render();
+      };
+    });
+    return view;
+  }
+
+  function open(){
+    ensureView();
+    view.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    render();       // Immediate render with cached data
+    loadData();     // Refresh from DB
+  }
+  function close(){
+    if(view) view.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // ═════════════════════════════════════════════════════
+  // Burger menu integration — inject "All Estimates" under Sell
+  // ═════════════════════════════════════════════════════
+  function addToMenu(){
+    var menu = document.getElementById('navMenu');
+    if(!menu) return false;
+    if(document.getElementById('cr-ae-nav')) return true;
+    // Insert after existing "Estimates" navopt if present, else at end of Sell
+    var estOpt = menu.querySelector('.navopt[data-nav="estimates"]');
+    var sellSec = null;
+    menu.querySelectorAll('.navsec').forEach(function(s){
+      if(s.textContent.trim().toLowerCase() === 'sell') sellSec = s;
+    });
+    if(!estOpt && !sellSec) return false;
+    var btn = document.createElement('button');
+    btn.id = 'cr-ae-nav';
+    btn.className = 'navopt';
+    btn.type = 'button';
+    btn.innerHTML = '\uD83D\uDCCA All Estimates';
+    btn.onclick = function(e){
+      e.stopPropagation();
+      menu.style.display = 'none';
+      setTimeout(open, 60);
+    };
+    var anchor = estOpt || sellSec;
+    // Walk to the LAST item in the Sell section so we insert at the end
+    if(!estOpt && sellSec){
+      var walker = sellSec.nextElementSibling;
+      while(walker && !walker.classList.contains('navsec')){
+        anchor = walker;
+        walker = walker.nextElementSibling;
+      }
+    }
+    anchor.parentNode.insertBefore(btn, anchor.nextSibling);
+    return true;
+  }
+
+  function tryMenu(){
+    if(!addToMenu()){
+      var n = 0, iv = setInterval(function(){
+        if(addToMenu() || ++n > 60) clearInterval(iv);
+      }, 200);
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tryMenu);
+  else tryMenu();
+
+  window.CardinalAllEstimates = { open: open, close: close, reload: loadData };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: google_maps_places.html · v2026-07-24
+     ══════════════════════════════════════════════════════════
+     Google Places address autocomplete + Google Maps static
+     property maps with directions.
+
+     WHAT IT DOES
+       · Auto-attaches Google Places Autocomplete to every
+         address-looking input field on every form (Quick Inspection,
+         New Lead, New Bid, Community Property, etc.)
+       · Inserts a satellite-view static map + Directions / View on
+         Maps buttons at the top of every client project profile
+       · Public API on window.CardinalMaps for manual attach + URLs
+
+     REQUIRES
+       · Google Cloud project with 3 APIs enabled:
+           - Maps JavaScript API
+           - Places API
+           - Maps Static API
+       · Vercel env var GOOGLE_MAPS_API_KEY set to the domain-
+         restricted key (referrer: app.cardinalroster.com/*)
+       · api/config.js in the repo (returns the key to the client)
+
+     The key IS visible in the client's browser — that's normal for
+     Google Maps. HTTP-referrer restrictions on the key prevent
+     abuse from other origins.
+────────────────────────────────────────────────────────────── -->
+
+<style id="cr-gmap-styles">
+  /* Autocomplete dropdown — restyled to match Cardinal cream/gold */
+  .pac-container{
+    background:#fdfcf7 !important;
+    border:1px solid #d9cfaf !important;
+    box-shadow:0 8px 24px rgba(0,0,0,.18) !important;
+    border-radius:8px !important;
+    z-index:100000 !important;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif !important;
+    margin-top:4px;
+  }
+  .pac-item{
+    padding:9px 12px !important;
+    cursor:pointer !important;
+    border-top:1px solid #f0e8c9 !important;
+    font-size:13.5px !important;
+    color:#5a4a1a !important;
+  }
+  .pac-item:first-child{ border-top:0 !important; }
+  .pac-item:hover, .pac-item-selected{ background:#faf5e9 !important; }
+  .pac-item-query{ color:#2c2c2c !important; font-weight:800 !important; }
+  .pac-icon{ display:none !important; }
+  .pac-logo::after{ opacity:.4; }
+
+  /* Property map card on client profiles */
+  .cr-gmap-block{
+    background:#fdfcf7;
+    border:1px solid #d9cfaf;
+    border-radius:12px;
+    overflow:hidden;
+    margin:8px 0 14px;
+    box-shadow:0 3px 10px rgba(0,0,0,.06);
+  }
+  .cr-gmap-imgwrap{
+    display:block; background:#f0e8d0;
+    line-height:0;
+  }
+  .cr-gmap-imgwrap img{
+    width:100%; height:auto; max-height:240px;
+    object-fit:cover; display:block;
+  }
+  .cr-gmap-actions{
+    display:flex; gap:8px;
+    padding:10px 12px;
+    background:#faf5e9;
+    border-top:1px solid #e8d9a8;
+  }
+  .cr-gmap-btn{
+    flex:1;
+    padding:9px 14px; border-radius:6px;
+    background:#d4a017; color:#1a1a1a;
+    text-decoration:none; text-align:center;
+    font:800 10.5px 'Segoe UI',Arial,sans-serif;
+    letter-spacing:.14em; text-transform:uppercase;
+    font-family:inherit;
+  }
+  .cr-gmap-btn:hover{ background:#e8ba15; }
+  .cr-gmap-btn.ghost{
+    background:transparent; color:#8a5a00;
+    border:1px solid #d4a017;
+  }
+  .cr-gmap-btn.ghost:hover{ background:rgba(212,160,23,.1); }
+
+  /* Small config-missing hint for admins */
+  .cr-gmap-hint{
+    background:#fef7d6; border:1px dashed #d4a017;
+    color:#5a4a1a; padding:10px 14px; border-radius:8px;
+    font:600 12px 'Segoe UI',Arial,sans-serif;
+    margin:8px 0;
+  }
+  .cr-gmap-hint b{ color:#2c2c2c; }
+</style>
+
+<script id="cr-gmap-script">
+(function(){
+  'use strict';
+
+  var API_KEY   = null;   // '' means config fetched but empty; null = not fetched yet
+  var configPromise = null;
+  var mapsPromise   = null;
+
+  // ── Config ──────────────────────────────────────────────
+  function loadConfig(){
+    if(configPromise) return configPromise;
+    configPromise = fetch('/api/config').then(function(r){
+      if(!r.ok) throw new Error('config ' + r.status);
+      return r.json();
+    }).then(function(j){
+      API_KEY = String((j && j.googleMapsKey) || '').trim();
+      return API_KEY;
+    }).catch(function(e){
+      console.warn('[gmap] config fetch failed:', e && e.message);
+      API_KEY = '';
+      return '';
+    });
+    return configPromise;
+  }
+
+  // ── Maps script loader (lazy) ───────────────────────────
+  function loadMaps(){
+    if(mapsPromise) return mapsPromise;
+    mapsPromise = loadConfig().then(function(key){
+      if(!key) throw new Error('no google maps key configured');
+      if(window.google && window.google.maps && window.google.maps.places){
+        return window.google;
+      }
+      return new Promise(function(resolve, reject){
+        window.__crGmapsReady = function(){
+          resolve(window.google);
+          try{ delete window.__crGmapsReady; }catch(_){}
+        };
+        var s = document.createElement('script');
+        s.async = true; s.defer = true;
+        s.src = 'https://maps.googleapis.com/maps/api/js?key=' +
+          encodeURIComponent(key) +
+          '&libraries=places&callback=__crGmapsReady&loading=async';
+        s.onerror = function(){ reject(new Error('maps script failed')); };
+        document.head.appendChild(s);
+      });
+    });
+    return mapsPromise;
+  }
+
+  // ── Address input detection ─────────────────────────────
+  function isAddressInput(el){
+    if(!el || el.tagName !== 'INPUT') return false;
+    if(el.dataset.crGmap === 'skip') return false;
+    var t = (el.type || 'text').toLowerCase();
+    if(!(t === 'text' || t === 'search' || t === '')) return false;
+    // Explicit opt-in via data attribute
+    if(el.dataset.field === 'address') return true;
+    if(el.dataset.crGmap === 'address') return true;
+    // Common id patterns in the base app
+    if(/^(ldStreet|qiAddrInp|qiNpAddr)$/.test(el.id || '')) return true;
+    // Placeholder / name heuristics — must contain "address" or "location"
+    var probe = (el.placeholder || '') + ' ' + (el.name || '') + ' ' + (el.id || '');
+    probe = probe.toLowerCase();
+    if(/address|location/.test(probe)){
+      // Exclude search boxes that live in list-filters (search across many fields)
+      if(/search|filter|find/.test(probe)) return false;
+      return true;
+    }
+    return false;
+  }
+
+  async function attachAutocomplete(input){
+    if(!input || input.dataset.crAutocomplete === '1') return;
+    input.dataset.crAutocomplete = '1';
+    try{
+      await loadMaps();
+      var ac = new google.maps.places.Autocomplete(input, {
+        types: ['address'],
+        componentRestrictions: { country: 'us' },
+        fields: ['formatted_address', 'geometry', 'address_components', 'name']
+      });
+      ac.addListener('place_changed', function(){
+        var place = ac.getPlace();
+        var addr = place.formatted_address || place.name || input.value;
+        // Set the input value + fire downstream events so existing form
+        // logic (validation, geocode fill, etc.) picks it up naturally.
+        input.value = addr;
+        input.dispatchEvent(new Event('input',  { bubbles:true }));
+        input.dispatchEvent(new Event('change', { bubbles:true }));
+        var loc = place.geometry && place.geometry.location;
+        input.dispatchEvent(new CustomEvent('cr-place-selected', {
+          detail: {
+            address: addr,
+            lat: loc ? loc.lat() : null,
+            lng: loc ? loc.lng() : null,
+            place: place,
+          },
+          bubbles: true,
+        }));
+      });
+    }catch(e){
+      console.warn('[gmap] autocomplete failed on', input.id || input.name, e && e.message);
+      input.dataset.crAutocomplete = '';  // allow retry later
+    }
+  }
+
+  // ── Static map + directions URLs ───────────────────────
+  function staticMapUrl(address, opts){
+    opts = opts || {};
+    if(!API_KEY || !address) return '';
+    var params = [
+      'center='   + encodeURIComponent(address),
+      'zoom='     + (opts.zoom || 18),
+      'size='     + (opts.size || '640x260'),
+      'scale=2',
+      'maptype='  + (opts.maptype || 'satellite'),
+      'markers=color:red|' + encodeURIComponent(address),
+      'key='      + encodeURIComponent(API_KEY),
+    ];
+    return 'https://maps.googleapis.com/maps/api/staticmap?' + params.join('&');
+  }
+  function directionsUrl(address){
+    return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(address);
+  }
+  function viewMapUrl(address){
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address);
+  }
+
+  // ── Insert map block into a container ──────────────────
+  async function insertMap(container, address, opts){
+    if(!container || !address) return;
+    var key = await loadConfig();
+    if(!key) return;
+    // Idempotent per (container, address)
+    var existing = container.querySelector('.cr-gmap-block[data-cr-addr="' + CSS.escape(address) + '"]');
+    if(existing) return existing;
+    var url = staticMapUrl(address, opts);
+    var block = document.createElement('div');
+    block.className = 'cr-gmap-block';
+    block.setAttribute('data-cr-addr', address);
+    block.innerHTML =
+      '<a class="cr-gmap-imgwrap" href="' + viewMapUrl(address) + '" target="_blank" rel="noopener">' +
+        '<img src="' + url + '" alt="Property map" loading="lazy" />' +
+      '</a>' +
+      '<div class="cr-gmap-actions">' +
+        '<a class="cr-gmap-btn" href="' + directionsUrl(address) + '" target="_blank" rel="noopener">\uD83D\uDE97 Directions</a>' +
+        '<a class="cr-gmap-btn ghost" href="' + viewMapUrl(address) + '" target="_blank" rel="noopener">\uD83C\uDF0E View on Maps</a>' +
+      '</div>';
+    container.appendChild(block);
+    return block;
+  }
+
+  // ── Scanning ───────────────────────────────────────────
+  var scanScheduled = false;
+  function scan(){
+    if(scanScheduled) return;
+    scanScheduled = true;
+    requestAnimationFrame(function(){
+      scanScheduled = false;
+      try{
+        document.querySelectorAll('input').forEach(function(input){
+          if(input.dataset.crAutocomplete === '1') return;
+          if(isAddressInput(input)) attachAutocomplete(input);
+        });
+        maybeInsertProfileMap();
+      }catch(e){ console.warn('[gmap] scan error:', e); }
+    });
+  }
+
+  // Auto-insert the property map at the top of the client project view.
+  // Idempotent: only inserts once per (view, address).
+  function maybeInsertProfileMap(){
+    var view = document.getElementById('projView');
+    if(!view || getComputedStyle(view).display === 'none') return;
+    var proj = window.currentProject;
+    var address = proj && proj.address;
+    if(!address) return;
+    if(view.querySelector('.cr-gmap-block[data-cr-addr="' + CSS.escape(address) + '"]')) return;
+    // Insert near the top — before the first .projsec or .projform section
+    var anchor = view.querySelector('.projsec, .projform, .clientcard');
+    if(!anchor) return;
+    // Remove any older map block that might be for a stale address
+    view.querySelectorAll('.cr-gmap-block').forEach(function(b){ b.remove(); });
+    // Build & insert
+    var url = staticMapUrl(address);
+    if(!url) return;
+    var block = document.createElement('div');
+    block.className = 'cr-gmap-block';
+    block.setAttribute('data-cr-addr', address);
+    block.innerHTML =
+      '<a class="cr-gmap-imgwrap" href="' + viewMapUrl(address) + '" target="_blank" rel="noopener">' +
+        '<img src="' + url + '" alt="Property map" loading="lazy" />' +
+      '</a>' +
+      '<div class="cr-gmap-actions">' +
+        '<a class="cr-gmap-btn" href="' + directionsUrl(address) + '" target="_blank" rel="noopener">\uD83D\uDE97 Directions</a>' +
+        '<a class="cr-gmap-btn ghost" href="' + viewMapUrl(address) + '" target="_blank" rel="noopener">\uD83C\uDF0E View on Maps</a>' +
+      '</div>';
+    anchor.parentNode.insertBefore(block, anchor);
+  }
+
+  // ── Boot ────────────────────────────────────────────────
+  function start(){
+    // Kick off config fetch so API_KEY is populated for static maps
+    loadConfig().then(scan);
+    // Initial scan
+    scan();
+    // Observe the DOM for new forms + profile changes
+    new MutationObserver(scan).observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class'],
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+
+  // ── Public API ─────────────────────────────────────────
+  window.CardinalMaps = {
+    loadConfig       : loadConfig,
+    loadMaps         : loadMaps,
+    attachAutocomplete: attachAutocomplete,
+    scan             : scan,
+    staticMapUrl     : staticMapUrl,
+    directionsUrl    : directionsUrl,
+    viewMapUrl       : viewMapUrl,
+    insertMap        : insertMap,
+    getKey           : function(){ return API_KEY; },
+    isConfigured     : function(){ return !!API_KEY; },
+  };
 })();
 </script>
 
