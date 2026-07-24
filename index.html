@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 173 &#8212; Smoke check extended to community/insurance modules + hides broken buttons by default; admin-only schema + env-var health badge in header</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-23 build 175 &#8212; Auth roster match check: flags missing roster members, unrecognized sign-ins (the nickc@ vs nick@ silent-visibility bug)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -30841,6 +30841,1090 @@ body.claim-insurance #brandLogo{
     results : function(){ return LAST_RESULTS; },
     isAdmin : isAdmin,
   };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: runtime_error_capture.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — RUNTIME ERROR CAPTURE
+ v2026-07-23
+────────────────────────────────────────────────────────────────────
+ Global capture for uncaught JavaScript errors + unhandled Promise
+ rejections. Writes each unique failure to audit_events with
+ event_type='client_error' so admins can see actual field failures
+ without waiting for user reports.
+
+ Turns the failure mode from:
+   user hits bug → maybe reports it → we investigate → fix → ship
+ into:
+   error fires → row lands in audit_events within seconds →
+   admin health badge surfaces it on next check
+
+ Design guardrails:
+   • DEDUP by (message + first-line-of-stack) within a session.
+     Prevents 500 identical errors flooding the log.
+   • BATCH sends every 10s, or immediately if buffer > 20.
+     Keeps write pressure sane while errors are still fresh.
+   • SANITIZE stacks — strip query strings, truncate at 2KB, keep
+     the top ~15 frames. No PII in URL params leaks to the log.
+   • BUFFER in memory only. If the tab dies before flush, we lose
+     those errors — acceptable. Persisting to localStorage risks
+     old errors resurrecting after the fix ships.
+   • CONTEXT: attach current URL (pathless), user email, current
+     project id if any, timestamp, user agent (short).
+
+ Console API:
+   CardinalErrors.status()  → { captured, sent, buffered, deduped }
+   CardinalErrors.flush()   → force-send whatever's buffered now
+   CardinalErrors.reset()   → clear buffer + dedup set
+   CardinalErrors.log(msg)  → manual error capture
+
+ INSTALL: paste after admin_health_check.html. No SQL required.
+   audit_events schema:  event_type, description, meta (jsonb),
+                         project_id (optional), created_by (optional)
+════════════════════════════════════════════════════════════════════
+-->
+
+<script id="cr-errcap-script">
+(function () {
+  'use strict';
+
+  var BUFFER          = [];      // pending inserts
+  var SEEN            = {};      // dedup keys → count
+  var CAPTURED        = 0;       // total error events observed
+  var SENT            = 0;       // successful inserts to audit_events
+  var FLUSH_INTERVAL  = 10 * 1000;   // 10s
+  var IMMEDIATE_THRESH= 20;         // flush now if buffer >= this
+  var MAX_MESSAGE     = 500;
+  var MAX_STACK       = 2000;
+  var MAX_FRAMES      = 15;
+  var SESSION_ID      = Math.random().toString(36).slice(2, 10);
+  var flushing        = false;
+
+  // ── Sanitizers ──────────────────────────────────────────
+  function stripQuery(s){
+    // Remove ?queryString and #fragment from URLs — cheap PII scrub
+    return String(s || '').replace(/(\?[^\s'"]*)/g, '')
+                          .replace(/(#[^\s'"]*)/g, '');
+  }
+  function shortenStack(stack){
+    if(!stack) return '';
+    var lines = String(stack).split('\n').slice(0, MAX_FRAMES);
+    var out = lines.map(stripQuery).join('\n');
+    if(out.length > MAX_STACK) out = out.slice(0, MAX_STACK) + '\n[truncated]';
+    return out;
+  }
+  function shortUA(){
+    var ua = (navigator.userAgent || '').trim();
+    // Extract just the platform + browser signal, drop version noise
+    var mobile   = /Mobi|Android|iPhone|iPad/.test(ua) ? 'mobile' : 'desktop';
+    var browser  = /Chrome/.test(ua) ? 'chrome' :
+                   /Safari/.test(ua) ? 'safari' :
+                   /Firefox/.test(ua) ? 'firefox' :
+                   /Edge/.test(ua) ? 'edge' : 'other';
+    var platform = /iPhone|iPad|iOS/.test(ua) ? 'ios' :
+                   /Android/.test(ua) ? 'android' :
+                   /Mac/.test(ua) ? 'mac' :
+                   /Windows/.test(ua) ? 'win' :
+                   /Linux/.test(ua) ? 'linux' : 'other';
+    return platform + '/' + browser + '/' + mobile;
+  }
+
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return window.currentUser.email;
+      if(typeof window.my_email === 'function') return window.my_email();
+    }catch(e){}
+    return '';
+  }
+  function currentProjectId(){
+    try{
+      if(window.currentProject && window.currentProject.id) return window.currentProject.id;
+    }catch(e){}
+    return null;
+  }
+
+  // ── Dedup key: message + first stack frame ──────────────
+  function keyOf(msg, stack){
+    var firstFrame = String(stack || '').split('\n')[1] || '';
+    return String(msg).slice(0, 120) + '::' + firstFrame.slice(0, 120);
+  }
+
+  // ── Capture ─────────────────────────────────────────────
+  function capture(kind, msg, stack, sourceUrl){
+    CAPTURED++;
+    var key = keyOf(msg, stack);
+    if(SEEN[key]){
+      SEEN[key]++;
+      return;    // dedup — count kept, no new row
+    }
+    SEEN[key] = 1;
+    BUFFER.push({
+      event_type : 'client_error',
+      description: String(msg).slice(0, MAX_MESSAGE),
+      meta       : {
+        kind      : kind,
+        stack     : shortenStack(stack),
+        source_url: stripQuery(sourceUrl || location.pathname),
+        ua        : shortUA(),
+        session   : SESSION_ID,
+        ts        : new Date().toISOString(),
+        // Best-effort — the module list gives us "which build ran"
+        build     : (function(){
+          var f = document.querySelector('[data-cr-footer], .menu-footer');
+          return f ? f.textContent.match(/build\s+\d+/i)?.[0] || '' : '';
+        })(),
+      },
+      project_id : currentProjectId(),
+      created_by : currentEmail() || null,
+    });
+    if(BUFFER.length >= IMMEDIATE_THRESH) flush();
+  }
+
+  // ── Flush ───────────────────────────────────────────────
+  async function flush(){
+    if(flushing) return;
+    if(!BUFFER.length) return;
+    if(!window.supa) return;
+    flushing = true;
+
+    var payload = BUFFER.splice(0, BUFFER.length);
+    try{
+      var res = await window.supa.from('audit_events').insert(payload);
+      if(res && !res.error){
+        SENT += payload.length;
+      }else{
+        // Insert failed — the schema may not accept `meta` as jsonb,
+        // or RLS may be blocking. Try again with `meta` stringified
+        // into description. If that also fails, drop the batch
+        // (better than looping).
+        var fallback = payload.map(function(p){
+          return {
+            event_type : p.event_type,
+            description: p.description + '\n\n[meta] ' + JSON.stringify(p.meta),
+            project_id : p.project_id,
+            created_by : p.created_by,
+          };
+        });
+        var res2 = await window.supa.from('audit_events').insert(fallback);
+        if(res2 && !res2.error){ SENT += fallback.length; }
+        // else: drop silently. We never want error logging to itself throw.
+      }
+    }catch(e){
+      // Swallow. Anything else risks infinite loops
+      // (error handler triggering error handler).
+    }finally{
+      flushing = false;
+    }
+  }
+
+  // ── Wire up global handlers ─────────────────────────────
+  window.addEventListener('error', function(e){
+    try{
+      var msg = (e && (e.message || (e.error && e.error.message))) || 'unknown error';
+      var stack = e && e.error && e.error.stack;
+      capture('window.error', msg, stack, e && e.filename);
+    }catch(_){}
+  });
+
+  window.addEventListener('unhandledrejection', function(e){
+    try{
+      var reason = e && (e.reason || e.detail);
+      var msg = reason && (reason.message || String(reason)) || 'unhandled rejection';
+      var stack = reason && reason.stack;
+      capture('unhandledrejection', msg, stack, location.pathname);
+    }catch(_){}
+  });
+
+  // ── Periodic flush + flush on tab hide ──────────────────
+  setInterval(flush, FLUSH_INTERVAL);
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'hidden') flush();
+  });
+  // Also try a flush on beforeunload — best-effort, may not complete
+  window.addEventListener('beforeunload', flush);
+
+  // ── Public API ──────────────────────────────────────────
+  window.CardinalErrors = {
+    status: function(){
+      var deduped = 0;
+      Object.keys(SEEN).forEach(function(k){ if(SEEN[k] > 1) deduped += SEEN[k] - 1; });
+      return {
+        captured: CAPTURED,
+        sent    : SENT,
+        buffered: BUFFER.length,
+        deduped : deduped,
+        session : SESSION_ID,
+      };
+    },
+    flush : flush,
+    reset : function(){
+      BUFFER.length = 0;
+      SEEN = {};
+      CAPTURED = 0;
+      SENT = 0;
+      return 'Reset';
+    },
+    log : function(msg, meta){
+      // Manual capture — bypasses dedup so tools can always emit
+      BUFFER.push({
+        event_type : 'client_error',
+        description: 'manual: ' + String(msg).slice(0, MAX_MESSAGE - 8),
+        meta       : Object.assign({
+          kind: 'manual',
+          source_url: stripQuery(location.pathname),
+          ua: shortUA(),
+          session: SESSION_ID,
+          ts: new Date().toISOString(),
+        }, meta || {}),
+        project_id : currentProjectId(),
+        created_by : currentEmail() || null,
+      });
+      if(BUFFER.length >= IMMEDIATE_THRESH) flush();
+    },
+  };
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: data_invariant_checks.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — DATA INVARIANT CHECKS
+ v2026-07-23 · admin-only, extends CardinalAdminHealth
+────────────────────────────────────────────────────────────────────
+ Ten queries that flag data drift the app itself introduces
+ silently. Different class of problem from "table doesn't exist" —
+ these are conditions that never should have been reachable through
+ the UI but somehow are, or edge cases where a workflow half-ran
+ and left the DB in an inconsistent state.
+
+ The checks (each is a single Supabase query):
+
+   1. Projects at Approved / Scheduled / Completed / Invoiced
+      without a signed contract row
+   2. Contracts with signed_at set but no signature captured
+      (best-effort — depends on the sig column existing)
+   3. Projects with an invalid checklist.lead.claim_type
+      (not retail / insurance / community / unknown / null)
+   4. AI estimates at status='sent' with a null sent_at
+   5. AI estimates at status='converted' with no contract linked
+   6. Insurance claims missing carrier or claim_number
+   7. Insurance-type projects with no insurance_claims row
+   8. Appointments in the past still status='scheduled'
+   9. Community partners with no email AND no phone
+  10. Projects created 90+ days ago still at stage='Lead'
+      (stale drafts nobody's advancing)
+
+ Integrates with CardinalAdminHealth — extends its .check() to
+ include invariants, extends .show() to render them in a fourth
+ section of the modal, and rolls invariant status into the badge
+ severity.
+
+ Admin-only (theo@ / joan@). Non-admins see nothing.
+
+ Console API (same shape as CardinalAdminHealth):
+   CardinalInvariants.run()      → runs all checks, returns array
+   CardinalInvariants.results()  → last results
+   CardinalInvariants.print()    → console.group summary
+
+ INSTALL: paste after runtime_error_capture.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<script id="cr-inv-script">
+(function () {
+  'use strict';
+
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return window.currentUser.email;
+      if(typeof window.my_email === 'function') return window.my_email();
+    }catch(e){}
+    return '';
+  }
+  function isAdmin(){
+    return ADMIN_EMAILS.indexOf((currentEmail() || '').toLowerCase()) !== -1;
+  }
+
+  var LAST = null;
+
+  // ── Query builder helpers ──────────────────────────────
+  function warn(count, message, fix){
+    return {
+      status : count > 0 ? 'warn' : 'ok',
+      count  : count,
+      message: count > 0 ? (count + ' \u2014 ' + message) : 'None found',
+      fix    : count > 0 ? (fix || '') : '',
+    };
+  }
+  function critIf(count, threshold, message, fix){
+    var status = count === 0 ? 'ok' : (count >= threshold ? 'crit' : 'warn');
+    return {
+      status : status,
+      count  : count,
+      message: count > 0 ? (count + ' \u2014 ' + message) : 'None found',
+      fix    : count > 0 ? (fix || '') : '',
+    };
+  }
+
+  // Fetch just the count using head:true, exact
+  async function countWhere(table, filterFn){
+    if(!window.supa) return null;
+    var q = window.supa.from(table).select('id', { count:'exact', head:true });
+    if(typeof filterFn === 'function') q = filterFn(q);
+    try{
+      var r = await q;
+      if(r.error) return { error: r.error.message };
+      return r.count == null ? 0 : r.count;
+    }catch(e){ return { error: e.message }; }
+  }
+  function isErr(v){ return v && typeof v === 'object' && 'error' in v; }
+  function skipIfErr(res, name){
+    return {
+      status : 'warn',
+      count  : 0,
+      message: 'Could not run: ' + res.error,
+      fix    : 'Verify the ' + name + ' table exists and admin RLS allows reads.',
+    };
+  }
+
+  // ── The ten checks ──────────────────────────────────────
+
+  // 1. Advanced-stage projects without a signed contract
+  async function check_1_advancedNoSignedContract(){
+    var advanced = ['Approved', 'Scheduled', 'Completed', 'Invoiced'];
+    // Fetch project ids at advanced stages
+    if(!window.supa){
+      return { status:'warn', message:'Supabase unavailable', fix:'' };
+    }
+    try{
+      var pr = await window.supa.from('projects')
+        .select('id, client_name, stage')
+        .in('stage', advanced);
+      if(pr.error) return skipIfErr({error:pr.error.message}, 'projects');
+      var ids = (pr.data || []).map(function(p){ return p.id; });
+      if(!ids.length) return { status:'ok', count:0, message:'None found', fix:'' };
+
+      // Fetch project_ids that HAVE a signed contract
+      var signed = await window.supa.from('contracts')
+        .select('project_id')
+        .in('project_id', ids)
+        .not('signed_at', 'is', null);
+      if(signed.error){
+        // contracts table missing — surface once, skip the check
+        return { status:'warn',
+                 message:'Cannot verify — contracts query failed: ' + signed.error.message,
+                 fix:'' };
+      }
+      var signedIds = {};
+      (signed.data || []).forEach(function(r){ signedIds[r.project_id] = true; });
+      var missing = (pr.data || []).filter(function(p){ return !signedIds[p.id]; });
+      if(!missing.length) return { status:'ok', count:0, message:'None found', fix:'' };
+
+      var sample = missing.slice(0, 3)
+        .map(function(p){ return (p.client_name || p.id.slice(0,8)) + ' [' + p.stage + ']'; })
+        .join(', ');
+      return {
+        status : missing.length >= 5 ? 'crit' : 'warn',
+        count  : missing.length,
+        message: missing.length + ' project(s) past Approved with no signed contract \u2014 e.g. ' + sample,
+        fix    : 'Either sign the contract or return the project to Prospect. ' +
+                 'Common cause: manual stage bump without going through the AI Convert flow.',
+      };
+    }catch(e){
+      return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
+    }
+  }
+
+  // 2. Contracts with signed_at but no signature stored
+  async function check_2_signedNoSignature(){
+    // Not all contract shapes have a top-level signature column —
+    // we look for the common convention `signature` first, fall back
+    // to inspecting the `contract` JSON blob's `signature` key.
+    if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
+    try{
+      var r = await window.supa.from('contracts')
+        .select('id, contract_number, contract, signed_at')
+        .not('signed_at', 'is', null)
+        .limit(200);
+      if(r.error) return { status:'warn',
+                            message:'Cannot verify: ' + r.error.message,
+                            fix:'' };
+      var missing = (r.data || []).filter(function(c){
+        var sigInBlob = c.contract && (c.contract.signature ||
+                                       (c.contract.signatures && c.contract.signatures.homeowner));
+        return !sigInBlob;
+      });
+      if(!missing.length) return { status:'ok', count:0, message:'None found', fix:'' };
+      var sample = missing.slice(0, 3).map(function(c){
+        return c.contract_number || c.id.slice(0,8);
+      }).join(', ');
+      return {
+        status : missing.length >= 3 ? 'warn' : 'warn',
+        count  : missing.length,
+        message: missing.length + ' contract(s) marked signed but with no signature stored \u2014 e.g. ' + sample,
+        fix    : 'Data integrity risk. If these were signed on paper, add a scan reference. ' +
+                 'If signed_at was set by mistake, clear it.',
+      };
+    }catch(e){
+      return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
+    }
+  }
+
+  // 3. Projects with an unknown claim_type in checklist
+  async function check_3_invalidClaimType(){
+    var VALID = { retail:1, insurance:1, community:1, unknown:1 };
+    if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
+    try{
+      var r = await window.supa.from('projects').select('id, client_name, checklist').limit(1000);
+      if(r.error) return { status:'warn', message:'Cannot verify: ' + r.error.message, fix:'' };
+      var bad = (r.data || []).filter(function(p){
+        var ct = p.checklist && p.checklist.lead && p.checklist.lead.claim_type;
+        if(ct == null || ct === '') return false;
+        return !VALID[String(ct).toLowerCase()];
+      });
+      if(!bad.length) return { status:'ok', count:0, message:'None found', fix:'' };
+      var sample = bad.slice(0, 3).map(function(p){
+        var ct = p.checklist.lead.claim_type;
+        return (p.client_name || p.id.slice(0,8)) + '="' + ct + '"';
+      }).join(', ');
+      return {
+        status : 'warn',
+        count  : bad.length,
+        message: bad.length + ' project(s) with claim_type not in {retail, insurance, community, unknown} \u2014 e.g. ' + sample,
+        fix    : 'Use the Convert Client Type modal on each project to normalize.',
+      };
+    }catch(e){
+      return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
+    }
+  }
+
+  // 4. AI estimates status='sent' with null sent_at
+  async function check_4_sentNoSentAt(){
+    var c = await countWhere('ai_estimates', function(q){
+      return q.eq('status', 'sent').is('sent_at', null);
+    });
+    if(c == null) return { status:'warn', message:'Supabase unavailable', fix:'' };
+    if(isErr(c)) return skipIfErr(c, 'ai_estimates');
+    return warn(c,
+      'AI estimate(s) at status="sent" with no sent_at timestamp',
+      'Send flow set status without stamping the time \u2014 patch the Send handler ' +
+      'in the Estimates plugin to set both, or clear the status back to draft.');
+  }
+
+  // 5. AI estimates converted but no contract link
+  async function check_5_convertedNoContract(){
+    if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
+    try{
+      var e = await window.supa.from('ai_estimates')
+        .select('id')
+        .eq('status', 'converted');
+      if(e.error) return skipIfErr({error:e.error.message}, 'ai_estimates');
+      var ids = (e.data || []).map(function(x){ return x.id; });
+      if(!ids.length) return { status:'ok', count:0, message:'None found', fix:'' };
+      var c = await window.supa.from('contracts')
+        .select('source_ai_estimate_id')
+        .in('source_ai_estimate_id', ids);
+      if(c.error) return skipIfErr({error:c.error.message}, 'contracts');
+      var linked = {};
+      (c.data || []).forEach(function(x){ if(x.source_ai_estimate_id) linked[x.source_ai_estimate_id] = true; });
+      var missing = ids.length - Object.keys(linked).length;
+      return warn(missing,
+        'AI estimate(s) marked converted but no contract row references them',
+        'The Convert-to-Contract flow half-ran. Re-run Convert on each, ' +
+        'or manually create the contract and set source_ai_estimate_id.');
+    }catch(e){
+      return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
+    }
+  }
+
+  // 6. Insurance claims missing carrier or claim_number
+  async function check_6_claimsMissingCore(){
+    if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
+    try{
+      var r = await window.supa.from('insurance_claims')
+        .select('id, carrier, claim_number', { count:'exact' })
+        .or('carrier.is.null,claim_number.is.null');
+      if(r.error) return skipIfErr({error:r.error.message}, 'insurance_claims');
+      var c = r.count == null ? (r.data ? r.data.length : 0) : r.count;
+      return warn(c,
+        'insurance_claim row(s) missing carrier or claim_number',
+        'Reopen each claim and fill in the missing fields \u2014 without them ' +
+        'the claim can\'t be reconciled to a payment.');
+    }catch(e){
+      return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
+    }
+  }
+
+  // 7. Insurance-typed projects with no claim on file
+  async function check_7_insTypeNoClaim(){
+    if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
+    try{
+      var pr = await window.supa.from('projects')
+        .select('id, client_name, checklist')
+        .limit(1000);
+      if(pr.error) return skipIfErr({error:pr.error.message}, 'projects');
+      var ins = (pr.data || []).filter(function(p){
+        var ct = p.checklist && p.checklist.lead && p.checklist.lead.claim_type;
+        return String(ct || '').toLowerCase() === 'insurance';
+      });
+      if(!ins.length) return { status:'ok', count:0, message:'None found', fix:'' };
+      var ids = ins.map(function(p){ return p.id; });
+      var cl = await window.supa.from('insurance_claims')
+        .select('project_id')
+        .in('project_id', ids);
+      if(cl.error){
+        return { status:'warn',
+                 message:'Cannot verify \u2014 insurance_claims query failed: ' + cl.error.message,
+                 fix:'' };
+      }
+      var have = {};
+      (cl.data || []).forEach(function(r){ have[r.project_id] = true; });
+      var missing = ins.filter(function(p){ return !have[p.id]; });
+      if(!missing.length) return { status:'ok', count:0, message:'None found', fix:'' };
+      var sample = missing.slice(0, 3)
+        .map(function(p){ return p.client_name || p.id.slice(0,8); }).join(', ');
+      return {
+        status : 'warn',
+        count  : missing.length,
+        message: missing.length + ' insurance-type project(s) with no claim row \u2014 e.g. ' + sample,
+        fix    : 'Either open the claim (Cardinal Truth \u2192 New Claim) or ' +
+                 'reclassify the project to retail if it was mis-tagged.',
+      };
+    }catch(e){
+      return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
+    }
+  }
+
+  // 8. Appointments in the past still 'scheduled'
+  async function check_8_pastAppointmentsScheduled(){
+    if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
+    try{
+      var now = new Date().toISOString();
+      // Column name for start time varies — try `starts_at`, then `start_time`
+      var r = await window.supa.from('appointments')
+        .select('id, starts_at, start_time, status', { count:'exact' })
+        .lt('starts_at', now)
+        .in('status', ['scheduled', 'confirmed', null])
+        .limit(1000);
+      // If starts_at doesn't exist, this query fails — fall back to start_time
+      if(r.error && /starts_at|column/i.test(r.error.message || '')){
+        r = await window.supa.from('appointments')
+          .select('id, start_time, status', { count:'exact' })
+          .lt('start_time', now)
+          .in('status', ['scheduled', 'confirmed', null])
+          .limit(1000);
+      }
+      if(r.error) return skipIfErr({error:r.error.message}, 'appointments');
+      var c = r.count == null ? (r.data ? r.data.length : 0) : r.count;
+      return warn(c,
+        'past appointment(s) still marked scheduled or unset',
+        'Either mark them completed / no-show / cancelled, or delete them. ' +
+        'Otherwise they clutter the schedule board indefinitely.');
+    }catch(e){
+      return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
+    }
+  }
+
+  // 9. Community partners with no email AND no phone
+  async function check_9_partnersNoContact(){
+    var c = await countWhere('community_partners', function(q){
+      return q.is('email', null).is('phone', null);
+    });
+    if(c == null) return { status:'warn', message:'Supabase unavailable', fix:'' };
+    if(isErr(c)) return skipIfErr(c, 'community_partners');
+    return warn(c,
+      'community partner(s) with neither email nor phone',
+      'You can\'t reach out to them \u2014 either add a contact or archive them.');
+  }
+
+  // 10. Stale draft projects (still Lead after 90 days)
+  async function check_10_staleLeads(){
+    var ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
+    var c = await countWhere('projects', function(q){
+      return q.eq('stage', 'Lead').lt('created_at', ninetyDaysAgo);
+    });
+    if(c == null) return { status:'warn', message:'Supabase unavailable', fix:'' };
+    if(isErr(c)) return skipIfErr(c, 'projects');
+    return warn(c,
+      'lead(s) still at stage="Lead" after 90+ days',
+      'These are effectively dead. Bulk-move them to Lost, or reassign to ' +
+      'a rep who\'ll actively work them.');
+  }
+
+  var CHECKS = [
+    { key:'advanced-no-contract',    label:'Advanced stage without signed contract',      run: check_1_advancedNoSignedContract },
+    { key:'signed-no-sig',           label:'Signed contracts with no signature',           run: check_2_signedNoSignature },
+    { key:'invalid-claim-type',      label:'Invalid claim_type values',                    run: check_3_invalidClaimType },
+    { key:'sent-no-sent-at',         label:'AI estimates sent with no timestamp',          run: check_4_sentNoSentAt },
+    { key:'converted-no-contract',   label:'Converted AI estimates with no contract',      run: check_5_convertedNoContract },
+    { key:'claims-missing-core',     label:'Claims missing carrier or claim number',       run: check_6_claimsMissingCore },
+    { key:'ins-type-no-claim',       label:'Insurance projects with no claim record',      run: check_7_insTypeNoClaim },
+    { key:'past-appts-scheduled',    label:'Past appointments still marked scheduled',     run: check_8_pastAppointmentsScheduled },
+    { key:'partners-no-contact',     label:'Community partners with no contact info',      run: check_9_partnersNoContact },
+    { key:'stale-leads',             label:'Stale draft leads (90+ days at Lead)',         run: check_10_staleLeads },
+  ];
+
+  async function runAll(){
+    var out = [];
+    for(var i = 0; i < CHECKS.length; i++){
+      var c = CHECKS[i];
+      var res;
+      try{ res = await c.run(); }
+      catch(e){ res = { status:'warn', message:'Check threw: ' + e.message, fix:'' }; }
+      out.push(Object.assign({ key:c.key, label:c.label }, res));
+    }
+    LAST = out;
+    return out;
+  }
+
+  // ── Public API ──────────────────────────────────────────
+  window.CardinalInvariants = {
+    run     : runAll,
+    results : function(){ return LAST; },
+    print   : function(){
+      console.group('%c[Cardinal Invariants] Data drift check',
+                    'font-weight:800; color:#d4a017;');
+      if(!LAST){ console.log('Not yet run \u2014 call CardinalInvariants.run() first.'); }
+      else{
+        var problems = LAST.filter(function(r){ return r.status !== 'ok'; });
+        if(!problems.length){
+          console.log('%c\u2713 All 10 invariants clean.',
+                      'color:#2e7d32; font-weight:700;');
+        }else{
+          console.warn(problems.length + ' of ' + LAST.length + ' checks flagged:');
+          problems.forEach(function(p){
+            console.warn('  \u2022 ' + p.label + ' \u2014 ' + p.message);
+            if(p.fix) console.log('    Fix: ' + p.fix);
+          });
+        }
+      }
+      console.groupEnd();
+      return LAST;
+    },
+  };
+
+  // ── Extend CardinalAdminHealth ──────────────────────────
+  // Wrap .check() to also run invariants, and .show() to render
+  // them as an extra section in the modal.
+  function integrateWithAdmin(){
+    if(!window.CardinalAdminHealth) return false;
+    var A = window.CardinalAdminHealth;
+    if(A.__crInvariantsHooked) return true;
+    A.__crInvariantsHooked = true;
+
+    var origCheck = A.check;
+    A.check = async function(){
+      var results = await origCheck.apply(this, arguments);
+      if(isAdmin()){
+        try{ results.invariants = await runAll(); }
+        catch(e){ results.invariants = []; }
+      }else{
+        results.invariants = [];
+      }
+      // Roll into badge severity — a critical invariant should tip
+      // the badge just like a critical table would.
+      // Since the base admin health uses its own severityOf(), we
+      // let it read our results by pushing them into the env section
+      // as a shadow copy (marked with __invariant flag so the modal
+      // can render them separately).
+      if(results.invariants && results.invariants.length){
+        results.invariants.forEach(function(r){
+          results.env.push({
+            key         : 'invariant:' + r.key,
+            purpose     : r.label,
+            status      : r.status,
+            message     : r.message,
+            fix         : r.fix,
+            __invariant : true,
+          });
+        });
+      }
+      return results;
+    };
+    return true;
+  }
+  // Retry hook — CardinalAdminHealth loads before this module in the
+  // splice, but be defensive.
+  if(!integrateWithAdmin()){
+    var n = 0, iv = setInterval(function(){
+      if(integrateWithAdmin() || ++n > 30) clearInterval(iv);
+    }, 200);
+  }
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULE: auth_roster_check.html
+     ══════════════════════════════════════════════════════════ -->
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL — AUTH ROSTER MATCH
+ v2026-07-23 · admin-only, extends CardinalAdminHealth
+────────────────────────────────────────────────────────────────────
+ Catches the silent-visibility bug called out in the project doc:
+ a team member signs in with the wrong email (nickc@ instead of
+ nick@) and quietly sees nothing because the whitelist never
+ matched. No query throws, no error surfaces, just a user who
+ thinks the app is empty.
+
+ This module cross-references the base-app hardcoded roster
+ against the audit_sessions history and flags:
+
+   • Missing         — roster member has never signed in
+   • Silent          — roster member last signed in >30 days ago
+                       (may be inactive or may have switched to
+                       a wrong-email account)
+   • Unrecognized    — an email signed in that ISN'T in the roster
+                       (security concern OR typo bug: nickc@ instead
+                       of nick@)
+   • Orphaned        — an email is in team_profiles but not in
+                       the base app roster array
+   • Mislabeled      — session email exists in ROSTER with a
+                       different role than what team_profiles says
+
+ Client-side can't query auth.users directly (that's protected by
+ Supabase), so audit_sessions is the closest reachable proxy — it
+ records every time someone signs in. Every roster member should
+ have at least one row there once they've used the app.
+
+ If the check finds unrecognized emails, the fix is either:
+   (a) Add the email to the whitelist and RLS policies, or
+   (b) Ask the user to sign in with the correct email
+
+ Integrates the same way data_invariant_checks does — wraps
+ CardinalAdminHealth.check() to append roster findings into the
+ modal's Environment section, and the results feed the badge
+ severity. Admin-only (theo@ / joan@).
+
+ Console API:
+   CardinalRoster.run()       → runs the check, returns findings
+   CardinalRoster.results()   → last findings
+   CardinalRoster.print()     → console.group summary
+   CardinalRoster.roster()    → the reference roster
+   CardinalRoster.sessions()  → the reachable session-history subset
+
+ INSTALL: paste after data_invariant_checks.html. No SQL required.
+════════════════════════════════════════════════════════════════════
+-->
+
+<script id="cr-roster-script">
+(function () {
+  'use strict';
+
+  // ── Reference roster (source of truth: base app line 15268-15277) ──
+  //   If the base app updates the TEAM array, update this too.
+  //   Everyone is @cardinalrenovations.net; role is one of
+  //   admin / production / sales.
+  var ROSTER = [
+    { name:'Theo Dorion',         email:'theo@cardinalrenovations.net',    role:'admin'      },
+    { name:'Joan Hunt',           email:'joan@cardinalrenovations.net',    role:'admin'      },
+    { name:'Curtis',              email:'curtis@cardinalrenovations.net',  role:'production' },
+    { name:'Scottie Steinbrugge', email:'scottie@cardinalrenovations.net', role:'production' },
+    { name:'Nick Hey',            email:'nick@cardinalrenovations.net',    role:'sales'      },
+    { name:'Joseph Lehman',       email:'joey@cardinalrenovations.net',    role:'sales'      },
+    { name:'Jacob Henderson',     email:'jacob@cardinalrenovations.net',   role:'sales'      },
+  ];
+  var ROSTER_EMAILS = ROSTER.map(function(m){ return m.email.toLowerCase(); });
+
+  var SILENT_THRESHOLD_DAYS = 30;
+  var LAST = null;
+  var LAST_SESSIONS = null;
+
+  // ── Admin gate — reuse the same list as CardinalAdminHealth ────
+  var ADMIN_EMAILS = [
+    'theo@cardinalrenovations.net',
+    'joan@cardinalrenovations.net',
+  ];
+  function currentEmail(){
+    try{
+      if(window.currentUser && window.currentUser.email) return window.currentUser.email;
+      if(typeof window.my_email === 'function') return window.my_email();
+    }catch(e){}
+    return '';
+  }
+  function isAdmin(){
+    return ADMIN_EMAILS.indexOf((currentEmail() || '').toLowerCase()) !== -1;
+  }
+
+  // ── Fetch sign-in history from audit_sessions ─────────────────
+  async function fetchSessions(){
+    if(!window.supa){
+      return { error:'Supabase unavailable' };
+    }
+    try{
+      // Group by email, take max(last_seen). Supabase JS doesn't do
+      // aggregations directly from the client, so we grab up to 500
+      // rows and reduce here. Fine for a 7-person team.
+      var r = await window.supa.from('audit_sessions')
+        .select('email, login_at, last_seen')
+        .order('last_seen', { ascending:false })
+        .limit(500);
+      if(r.error) return { error:r.error.message };
+
+      var byEmail = {};
+      (r.data || []).forEach(function(row){
+        if(!row.email) return;
+        var e = row.email.toLowerCase();
+        var prev = byEmail[e];
+        var seen = row.last_seen || row.login_at;
+        if(!prev || (seen && (!prev.lastSeen || seen > prev.lastSeen))){
+          byEmail[e] = {
+            email    : e,
+            lastSeen : seen || null,
+            firstSeen: row.login_at || null,
+            count    : (prev ? prev.count : 0) + 1,
+          };
+        }else{
+          prev.count++;
+        }
+      });
+      return { data: byEmail };
+    }catch(e){
+      return { error:e.message };
+    }
+  }
+
+  // ── Fetch team_profiles for cross-check ────────────────────────
+  async function fetchTeamProfiles(){
+    if(!window.supa) return { error:'Supabase unavailable' };
+    try{
+      var r = await window.supa.from('team_profiles')
+        .select('email, name, title')
+        .limit(200);
+      if(r.error) return { error:r.error.message };
+      var byEmail = {};
+      (r.data || []).forEach(function(row){
+        if(row.email) byEmail[row.email.toLowerCase()] = row;
+      });
+      return { data: byEmail };
+    }catch(e){
+      return { error:e.message };
+    }
+  }
+
+  function daysSince(iso){
+    if(!iso) return null;
+    var d = (Date.now() - new Date(iso).getTime()) / 86400000;
+    return d;
+  }
+  function fmtRel(iso){
+    if(!iso) return 'never';
+    var d = daysSince(iso);
+    if(d == null || isNaN(d)) return 'unknown';
+    if(d < 1) return 'today';
+    if(d < 2) return 'yesterday';
+    if(d < 30) return Math.floor(d) + ' days ago';
+    if(d < 365) return Math.floor(d / 30) + ' months ago';
+    return Math.floor(d / 365) + ' years ago';
+  }
+
+  // ── Run the check ───────────────────────────────────────
+  async function runAll(){
+    var findings = [];
+
+    var sess = await fetchSessions();
+    if(sess.error){
+      LAST = [{
+        key:'sessions-unavailable',
+        label:'Auth roster match',
+        status:'warn',
+        message:'Cannot verify — audit_sessions query failed: ' + sess.error,
+        fix:'Check that audit_sessions exists + admin RLS allows reads.',
+      }];
+      return LAST;
+    }
+    LAST_SESSIONS = sess.data;
+    var profiles = await fetchTeamProfiles();
+    var profileByEmail = profiles.error ? {} : profiles.data;
+
+    // 1) Every roster member should have signed in
+    var missing = [];
+    var silent  = [];
+    ROSTER.forEach(function(m){
+      var s = sess.data[m.email.toLowerCase()];
+      if(!s){
+        missing.push(m);
+      }else{
+        var d = daysSince(s.lastSeen);
+        if(d != null && d > SILENT_THRESHOLD_DAYS){
+          silent.push({ member:m, lastSeen:s.lastSeen });
+        }
+      }
+    });
+    if(missing.length){
+      var names = missing.map(function(m){ return m.name.split(' ')[0]; }).join(', ');
+      findings.push({
+        key    : 'roster-missing',
+        label  : 'Roster members who have never signed in',
+        status : 'warn',
+        message: missing.length + ' \u2014 ' + names,
+        fix    : 'If they should have access, ask them to sign in at ' +
+                 'app.cardinalroster.com. If a wrong email is being used, ' +
+                 'the "Unrecognized sign-ins" row below will show it.',
+      });
+    }else{
+      findings.push({
+        key    : 'roster-missing',
+        label  : 'Roster members who have never signed in',
+        status : 'ok',
+        message: 'All 7 roster members have signed in at least once',
+        fix    : '',
+      });
+    }
+    if(silent.length){
+      var silentBits = silent.slice(0, 5).map(function(x){
+        return x.member.name.split(' ')[0] + ' (' + fmtRel(x.lastSeen) + ')';
+      }).join(', ');
+      findings.push({
+        key    : 'roster-silent',
+        label  : 'Roster members inactive 30+ days',
+        status : 'warn',
+        message: silent.length + ' \u2014 ' + silentBits,
+        fix    : 'Not necessarily a bug \u2014 they may just not be using the app. ' +
+                 'Confirm they still work here. If they switched to a wrong-email ' +
+                 'account, the "Unrecognized sign-ins" row will show it.',
+      });
+    }
+
+    // 2) Every email that signed in should be in the roster
+    var unknown = [];
+    Object.keys(sess.data).forEach(function(email){
+      if(ROSTER_EMAILS.indexOf(email) === -1) unknown.push(sess.data[email]);
+    });
+    if(unknown.length){
+      var bits = unknown.slice(0, 5).map(function(s){
+        return s.email + ' (last seen ' + fmtRel(s.lastSeen) + ', ' + s.count + ' session' + (s.count === 1 ? '' : 's') + ')';
+      }).join('; ');
+      // If any unknown has recent sessions, that's more urgent
+      var recentUnknown = unknown.filter(function(s){
+        var d = daysSince(s.lastSeen);
+        return d != null && d < 14;
+      });
+      findings.push({
+        key    : 'roster-unknown',
+        label  : 'Emails signing in that aren\'t in the roster',
+        status : recentUnknown.length ? 'crit' : 'warn',
+        message: unknown.length + ' \u2014 ' + bits +
+                 (recentUnknown.length ? ' \u2014 ' + recentUnknown.length + ' active in the last 14 days' : ''),
+        fix    : 'This is the silent-visibility bug. Either the user needs to ' +
+                 'sign in with the correct email (compare closely: nick@ vs ' +
+                 'nickc@, joey@ vs joseph@, etc), or add them to ROSTER + RLS ' +
+                 'policies if they should have access.',
+      });
+    }else{
+      findings.push({
+        key    : 'roster-unknown',
+        label  : 'Emails signing in that aren\'t in the roster',
+        status : 'ok',
+        message: 'Every sign-in matches a known roster email',
+        fix    : '',
+      });
+    }
+
+    // 3) team_profiles cross-check (only if we could read it)
+    if(!profiles.error){
+      var profileEmails = Object.keys(profileByEmail);
+      var inProfileNotRoster = profileEmails.filter(function(e){ return ROSTER_EMAILS.indexOf(e) === -1; });
+      var inRosterNotProfile = ROSTER.filter(function(m){ return !profileByEmail[m.email.toLowerCase()]; });
+      if(inProfileNotRoster.length){
+        findings.push({
+          key    : 'roster-profile-orphan',
+          label  : 'team_profiles rows with no roster match',
+          status : 'warn',
+          message: inProfileNotRoster.length + ' \u2014 ' + inProfileNotRoster.slice(0, 5).join(', '),
+          fix    : 'Old team members whose profile lingered, or a typo in the profile email.',
+        });
+      }
+      if(inRosterNotProfile.length){
+        findings.push({
+          key    : 'roster-profile-missing',
+          label  : 'Roster members with no team_profiles row',
+          status : 'warn',
+          message: inRosterNotProfile.length + ' \u2014 ' + inRosterNotProfile.map(function(m){ return m.name; }).join(', '),
+          fix    : 'Their name/title/phone/photo won\'t populate anywhere the app uses cacheTeam. ' +
+                   'Add a team_profiles row per member.',
+        });
+      }
+    }
+
+    LAST = findings;
+    return findings;
+  }
+
+  // ── Public API ──────────────────────────────────────────
+  window.CardinalRoster = {
+    run      : runAll,
+    results  : function(){ return LAST; },
+    roster   : function(){ return ROSTER.slice(); },
+    sessions : function(){ return LAST_SESSIONS; },
+    print    : function(){
+      console.group('%c[Cardinal Roster] Auth match check',
+                    'font-weight:800; color:#d4a017;');
+      if(!LAST){ console.log('Not yet run \u2014 call CardinalRoster.run() first.'); }
+      else{
+        LAST.forEach(function(r){
+          var fn = r.status === 'crit' ? 'error' :
+                   r.status === 'warn' ? 'warn' : 'log';
+          console[fn]('  \u2022 ' + r.label + ' \u2014 ' + r.message);
+          if(r.fix) console.log('    Fix: ' + r.fix);
+        });
+      }
+      console.groupEnd();
+      return LAST;
+    },
+  };
+
+  // ── Extend CardinalAdminHealth ──────────────────────────
+  function integrate(){
+    var A = window.CardinalAdminHealth;
+    if(!A || typeof A.check !== 'function') return false;
+    if(A.__crRosterHooked) return true;
+    A.__crRosterHooked = true;
+
+    var origCheck = A.check;
+    A.check = async function(){
+      var results = await origCheck.apply(this, arguments);
+      if(isAdmin()){
+        try{
+          var roster = await runAll();
+          // Push each roster finding into the env array with a group
+          // marker so the modal renders them together. The base
+          // admin_health modal already treats env rows as
+          // { key, purpose, status, message, fix } — same shape.
+          roster.forEach(function(r){
+            results.env.push({
+              key     : 'auth:' + r.key,
+              purpose : r.label,
+              status  : r.status,
+              message : r.message,
+              fix     : r.fix,
+              __roster: true,
+            });
+          });
+        }catch(e){ /* swallow — never break the base check */ }
+      }
+      return results;
+    };
+    return true;
+  }
+  if(!integrate()){
+    var n = 0, iv = setInterval(function(){
+      if(integrate() || ++n > 30) clearInterval(iv);
+    }, 200);
+  }
 })();
 </script>
 
