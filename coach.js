@@ -68,11 +68,14 @@ export default async function handler(req, res) {
     return res.status(502).json({ error: 'Auth check failed: ' + e.message });
   }
 
-  // 2. Fetch the objection card (service-role bypasses RLS)
+  // 2. Fetch the objection card (service-role bypasses RLS).
+  // We select * because the objections table schema may vary — an earlier
+  // module version used {title, question, answer} while our SQL uses
+  // {quote, ideal_response}. Grab everything, then pick fields by name.
   let card;
   try {
     const cardResp = await fetch(
-      `${SUPABASE_URL}/rest/v1/objections?id=eq.${encodeURIComponent(objection_id)}&select=id,category,difficulty,quote,context,ideal_response,rubric`,
+      `${SUPABASE_URL}/rest/v1/objections?id=eq.${encodeURIComponent(objection_id)}&select=*`,
       { headers: { apikey: SERVICE_KEY, authorization: `Bearer ${SERVICE_KEY}` } }
     );
     if (!cardResp.ok) {
@@ -85,7 +88,7 @@ export default async function handler(req, res) {
           : cardResp.status === 404
           ? 'objections table not found — run objection_coach_setup.sql in Supabase'
           : cardResp.status === 400
-          ? 'Query rejected — usually a bad SUPABASE_URL (needs https://, no trailing slash)'
+          ? 'Bad request — check SUPABASE_URL formatting or table permissions'
           : undefined,
       });
     }
@@ -93,22 +96,49 @@ export default async function handler(req, res) {
     card = rows[0];
     if (!card) return res.status(404).json({
       error: 'Objection card not found',
-      hint: 'The client sent an objection_id that isn\'t in the seeded deck. Re-run objection_coach_setup.sql and reload the app.',
+      hint: 'The client sent an objection_id that isn\'t in the deck.',
       objection_id,
     });
   } catch (e) {
     return res.status(502).json({ error: 'Card lookup failed: ' + e.message });
   }
 
+  // Normalize field names — different schema versions of the objections
+  // table use different column names for the same concept.
+  const pick = (row, keys) => {
+    for (const k of keys) if (row[k] != null && row[k] !== '') return row[k];
+    return '';
+  };
+  const cardCategory   = pick(card, ['category', 'topic', 'section', 'group']);
+  const cardDifficulty = pick(card, ['difficulty', 'level']) || 2;
+  const cardQuote      = pick(card, ['quote', 'question', 'objection', 'title', 'prompt']);
+  const cardContext    = pick(card, ['context', 'scenario', 'setting', 'notes', 'description']);
+  const cardIdeal      = pick(card, ['ideal_response', 'ideal', 'answer', 'response', 'model_answer', 'good_answer']);
+  const cardRubric     = card.rubric || card.criteria || card.looks_for || {};
+
+  if (!cardQuote || !cardIdeal) {
+    return res.status(500).json({
+      error: 'Card schema unrecognized',
+      hint: 'The objections row is missing a quote/question and/or ideal response field. Check the column names in your objections table.',
+      row_columns: Object.keys(card),
+    });
+  }
+
   // 3. Build the Gemini prompt
-  const rubricItems = Array.isArray(card.rubric?.looks_for) ? card.rubric.looks_for : [];
+  const rubricItems = Array.isArray(cardRubric?.looks_for)
+    ? cardRubric.looks_for
+    : Array.isArray(cardRubric)
+    ? cardRubric
+    : [];
   const prompt =
     'You are a strict but fair sales coach grading a Cardinal Roofing sales rep\'s answer ' +
     'to a customer objection. You always respond with a single valid JSON object and nothing else.\n\n' +
-    `CUSTOMER OBJECTION (category: ${card.category}, difficulty: ${card.difficulty}/3):\n"${card.quote}"\n\n` +
-    `CONTEXT: ${card.context || 'General customer objection.'}\n\n` +
-    `CARDINAL'S IDEAL RESPONSE:\n${card.ideal_response}\n\n` +
-    'RUBRIC — what a great answer hits:\n- ' + rubricItems.join('\n- ') + '\n\n' +
+    `CUSTOMER OBJECTION (category: ${cardCategory || 'general'}, difficulty: ${cardDifficulty}/3):\n"${cardQuote}"\n\n` +
+    `CONTEXT: ${cardContext || 'General customer objection.'}\n\n` +
+    `CARDINAL'S IDEAL RESPONSE:\n${cardIdeal}\n\n` +
+    (rubricItems.length
+      ? 'RUBRIC — what a great answer hits:\n- ' + rubricItems.join('\n- ') + '\n\n'
+      : '') +
     `REP'S ANSWER:\n"${answer}"\n\n` +
     'Grade the rep\'s answer from 0 to 100 based on how well it:\n' +
     '1. Actually addresses the objection (doesn\'t dodge or change the subject)\n' +
@@ -181,7 +211,7 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     score,
-    ideal: card.ideal_response,
+    ideal: cardIdeal,
     feedback,
   });
 }
