@@ -73,34 +73,30 @@ export default async function handler(req, res) {
   // module version used {title, question, answer} while our SQL uses
   // {quote, ideal_response}. Grab everything, then pick fields by name.
   let card;
+  const cardUrl = `${SUPABASE_URL}/rest/v1/objections?id=eq.${encodeURIComponent(objection_id)}&select=*`;
   try {
     const cardResp = await fetch(
-      `${SUPABASE_URL}/rest/v1/objections?id=eq.${encodeURIComponent(objection_id)}&select=*`,
+      cardUrl,
       { headers: { apikey: SERVICE_KEY, authorization: `Bearer ${SERVICE_KEY}` } }
     );
     if (!cardResp.ok) {
-      const detail = await cardResp.text().catch(() => '');
+      const detail = (await cardResp.text().catch(() => '')).slice(0, 300);
+      // Fold everything into the top-level error string so it shows up in
+      // the client toast (the client only reads .error, not .supabase_said).
       return res.status(502).json({
-        error: `Card fetch failed: HTTP ${cardResp.status}`,
-        supabase_said: detail.slice(0, 400),
-        hint: cardResp.status === 401
-          ? 'SUPABASE_SERVICE_ROLE_KEY is wrong or missing — check Vercel env vars'
-          : cardResp.status === 404
-          ? 'objections table not found — run objection_coach_setup.sql in Supabase'
-          : cardResp.status === 400
-          ? 'Bad request — check SUPABASE_URL formatting or table permissions'
-          : undefined,
+        error:
+          `HTTP ${cardResp.status} from Supabase. ` +
+          `Body: ${detail || '(empty)'}. ` +
+          `URL: ${cardUrl.replace(/([?&]apikey=)[^&]+/, '$1REDACTED')}`,
       });
     }
     const rows = await cardResp.json();
     card = rows[0];
     if (!card) return res.status(404).json({
-      error: 'Objection card not found',
-      hint: 'The client sent an objection_id that isn\'t in the deck.',
-      objection_id,
+      error: `No objection with id ${objection_id} in the deck. Table exists but the id from the client doesn't match a row.`,
     });
   } catch (e) {
-    return res.status(502).json({ error: 'Card lookup failed: ' + e.message });
+    return res.status(502).json({ error: 'Card lookup network error: ' + e.message });
   }
 
   // Normalize field names — different schema versions of the objections
