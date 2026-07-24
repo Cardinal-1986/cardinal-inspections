@@ -1,7 +1,14 @@
-// api/coach.js  [v3 · 2026-07-24]
+// api/coach.js  [v4 · 2026-07-24]
 // ═════════════════════════════════════════════════════════════════════
 // Objection Coach — grade a rep's answer against the ideal response
 // using Gemini. Returns { score, ideal, feedback: { verdict, strengths,
+// gaps, fix } } to match what the client (CardinalCoach) expects.
+//
+// v4:
+// - Recognizes `objection` column (Cardinal's actual live schema)
+// - Grades even when no ideal_response field exists — Gemini uses
+//   general sales-coaching principles as the yardstick
+// - Every error includes the actual row column names for debugging
 // gaps, fix } } to match what the client (CardinalCoach) expects.
 //
 // REQUIRES these Vercel env vars:
@@ -105,18 +112,25 @@ export default async function handler(req, res) {
     for (const k of keys) if (row[k] != null && row[k] !== '') return row[k];
     return '';
   };
-  const cardCategory   = pick(card, ['category', 'topic', 'section', 'group']);
-  const cardDifficulty = pick(card, ['difficulty', 'level']) || 2;
-  const cardQuote      = pick(card, ['quote', 'question', 'objection', 'title', 'prompt']);
-  const cardContext    = pick(card, ['context', 'scenario', 'setting', 'notes', 'description']);
-  const cardIdeal      = pick(card, ['ideal_response', 'ideal', 'answer', 'response', 'model_answer', 'good_answer']);
-  const cardRubric     = card.rubric || card.criteria || card.looks_for || {};
+  const cardCategory   = pick(card, ['category', 'topic', 'section', 'group', 'type']);
+  const cardDifficulty = pick(card, ['difficulty', 'level', 'tier']) || 2;
+  const cardQuote      = pick(card, ['objection', 'quote', 'question', 'title', 'prompt', 'homeowner_says', 'customer_says']);
+  const cardContext    = pick(card, ['context', 'scenario', 'setting', 'notes', 'description', 'situation', 'background']);
+  const cardIdeal      = pick(card, [
+    'ideal_response', 'ideal_answer', 'ideal', 'answer', 'response',
+    'model_answer', 'good_answer', 'ideal_line', 'sample_response',
+    'best_response', 'reply', 'suggested_response', 'coach_response',
+  ]);
+  const cardRubric     = card.rubric || card.criteria || card.looks_for || card.grading_notes || {};
 
-  if (!cardQuote || !cardIdeal) {
+  // Only fail if we can't even get the QUESTION. Grading works without an
+  // ideal reference — Gemini can score against general sales principles.
+  if (!cardQuote) {
     return res.status(500).json({
-      error: 'Card schema unrecognized',
-      hint: 'The objections row is missing a quote/question and/or ideal response field. Check the column names in your objections table.',
-      row_columns: Object.keys(card),
+      error:
+        `[v4] Objections row has no recognized question field. ` +
+        `Row columns: ${Object.keys(card).join(', ')}. ` +
+        `Expected one of: objection, quote, question, title, prompt.`,
     });
   }
 
@@ -126,24 +140,28 @@ export default async function handler(req, res) {
     : Array.isArray(cardRubric)
     ? cardRubric
     : [];
+  const idealBlock = cardIdeal
+    ? `CARDINAL'S IDEAL RESPONSE (the reference to grade against):\n${cardIdeal}\n\n`
+    : `NOTE: No reference response is stored for this card — grade against general roofing-sales best practices.\n\n`;
   const prompt =
     'You are a strict but fair sales coach grading a Cardinal Roofing sales rep\'s answer ' +
     'to a customer objection. You always respond with a single valid JSON object and nothing else.\n\n' +
     `CUSTOMER OBJECTION (category: ${cardCategory || 'general'}, difficulty: ${cardDifficulty}/3):\n"${cardQuote}"\n\n` +
     `CONTEXT: ${cardContext || 'General customer objection.'}\n\n` +
-    `CARDINAL'S IDEAL RESPONSE:\n${cardIdeal}\n\n` +
+    idealBlock +
     (rubricItems.length
       ? 'RUBRIC — what a great answer hits:\n- ' + rubricItems.join('\n- ') + '\n\n'
       : '') +
     `REP'S ANSWER:\n"${answer}"\n\n` +
     'Grade the rep\'s answer from 0 to 100 based on how well it:\n' +
     '1. Actually addresses the objection (doesn\'t dodge or change the subject)\n' +
-    '2. Hits the rubric items above\n' +
+    '2. Acknowledges the homeowner\'s concern without being defensive\n' +
     '3. Sounds natural — a real human talking to a homeowner, not a script\n' +
-    '4. Would actually work in the field with a skeptical customer\n\n' +
-    'Be honest. A wooden or manipulative answer should score low even if it hits the rubric. ' +
-    'A creative answer that hits the rubric in unexpected ways should score high. ' +
-    'Ideal responses match or beat the reference and score 85+.\n\n' +
+    '4. Ends with a question or clear next step\n' +
+    '5. Would actually work in the field with a skeptical customer\n\n' +
+    'Be honest. A wooden or manipulative answer should score low. ' +
+    'A creative answer that addresses the objection in unexpected but effective ways should score high. ' +
+    'A one-line dismissive reply ("Yea probably so") is a clear zero — no acknowledgment, no substance, no question.\n\n' +
     'Respond ONLY with this JSON structure:\n' +
     '{\n' +
     '  "score": <integer 0-100>,\n' +
