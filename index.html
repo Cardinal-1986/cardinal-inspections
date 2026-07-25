@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 246 &#8212; Fixed HTTP 413 on scope uploads. The app allowed 12&nbsp;MB but the server accepts about 3&nbsp;MB once encoded. Photos are now compressed automatically before upload, and oversize PDFs get a message that says what to do instead.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 247 &#8212; Scope uploads up to 20&nbsp;MB. Files too big to send through the API now upload to storage first and the reader fetches them from there, so the old 4.5&nbsp;MB request limit no longer applies. Needs the updated api/sol.js.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35926,7 +35926,8 @@ loaded  : function(){ return loaded; },
 <script id="cr-suf-script">
 (function(){
 'use strict';
-var MAX_BYTES  = 3.1 * 1024 * 1024;
+var MAX_INLINE = 3.1 * 1024 * 1024;
+var MAX_STORED = 20 * 1024 * 1024;
 var MAX_EDGE   = 2200;
 var JPEG_Q     = 0.82;
 function mb(bytes){ return (bytes / 1024 / 1024).toFixed(1); }
@@ -35966,31 +35967,50 @@ img.onerror = function(){ URL.revokeObjectURL(url); resolve(file); };
 img.src = url;
 });
 }
+async function toStorageUrl(file){
+if(!window.supa) throw new Error('No connection');
+var safe = (file.name || 'scope')
+.replace(/[^a-z0-9._-]+/gi, '-')
+.replace(/^-+|-+$/g, '')
+.slice(-60);
+var path = 'scopes/' + Date.now() + '-' +
+Math.random().toString(36).slice(2, 8) + '-' + safe;
+var up = await window.supa.storage.from('photos')
+.upload(path, file, { contentType: file.type || 'application/pdf', upsert:false });
+if(up.error) throw new Error('Upload failed: ' + up.error.message);
+var sig = await window.supa.storage.from('photos').createSignedUrl(path, 600);
+if(!sig.error && sig.data && sig.data.signedUrl){
+return { url: sig.data.signedUrl, path: path };
+}
+var pub = window.supa.storage.from('photos').getPublicUrl(path);
+if(pub && pub.data && pub.data.publicUrl){
+return { url: pub.data.publicUrl, path: path };
+}
+throw new Error('Could not create a link to the uploaded file');
+}
 async function prepare(file){
 if(!file) return null;
 if(isImage(file)){
-var out = file.size > MAX_BYTES ? await compressImage(file) : file;
-if(out.size > MAX_BYTES){
-out = await compressAt(file, 1600, 0.72);
-}
-if(out.size > MAX_BYTES){
-alert('That image is still ' + mb(out.size) + ' MB after compressing, which is ' +
-'over the ' + mb(MAX_BYTES) + ' MB the reader accepts.\n\n' +
+var out = file.size > MAX_INLINE ? await compressImage(file) : file;
+if(out.size > MAX_INLINE) out = await compressAt(file, 1600, 0.72);
+if(out.size <= MAX_INLINE) return { file: out };
+if(out.size > MAX_STORED){
+alert('That image is ' + mb(out.size) + ' MB even after compressing. ' +
 'Try photographing one page at a time.');
 return null;
 }
-return out;
+return await toStorageUrl(out);
 }
-if(file.size > MAX_BYTES){
+if(file.size > MAX_STORED){
 alert('That PDF is ' + mb(file.size) + ' MB. The reader accepts up to ' +
-mb(MAX_BYTES) + ' MB.\n\n' +
-'Options:\n' +
-'  \u2022 Photograph the pages instead \u2014 photos get compressed automatically\n' +
-'  \u2022 Export or "print to PDF" at a lower quality\n' +
-'  \u2022 Split it and upload the scope pages only');
+mb(MAX_STORED) + ' MB.\n\n' +
+'Split it and upload the scope pages only.');
 return null;
 }
-return file;
+if(file.size > MAX_INLINE){
+return await toStorageUrl(file);
+}
+return { file: file };
 }
 function compressAt(file, edge, q){
 return new Promise(function(resolve){
@@ -36023,11 +36043,52 @@ var orig = window.readScopeOfLoss;
 var wrapped = async function(file){
 var ready = await prepare(file);
 if(!ready) return;
-return orig.call(this, ready);
+if(ready.file) return orig.call(this, ready.file);
+var card = document.getElementById('solCardEl');
+var btn  = document.getElementById('solBtn');
+if(card) card.classList.add('solLoading');
+if(btn){ btn.disabled = true; btn.textContent = 'Reading\u2026'; }
+try{
+var extracted = await extractFromUrl(ready.url);
+if(typeof window.openSolReviewModal === 'function'){
+window.openSolReviewModal(extracted || {}, file.name);
+}
+if(typeof window.auditLog === 'function' && window.currentProject){
+try{ window.auditLog('doc',
+'SOL uploaded and read (' + file.name + ')',
+window.currentProject.id); }catch(_){}
+}
+}catch(e){
+alert('Could not read the Scope of Loss: ' + (e.message || e));
+}finally{
+if(card) card.classList.remove('solLoading');
+if(btn){ btn.disabled = false; btn.textContent = '\uD83D\uDCE4 Upload SOL'; }
+}
 };
 wrapped.__crFixed = true;
 window.readScopeOfLoss = wrapped;
 return true;
+}
+async function extractFromUrl(url){
+var tok = '';
+try{
+var sess = await window.supa.auth.getSession();
+tok = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
+}catch(_){}
+var r = await fetch('/api/sol', {
+method:'POST',
+headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
+body: JSON.stringify({ url: url }),
+});
+var j = null;
+try{ j = await r.json(); }catch(_){}
+if(!r.ok){
+if(r.status === 400){
+throw new Error('The extractor doesn\u2019t accept links yet \u2014 deploy the updated api/sol.js.');
+}
+throw new Error(String((j && (j.detail || j.error)) || ('HTTP ' + r.status)).slice(0, 240));
+}
+return j.extracted || {};
 }
 if(!wrap()){
 var n = 0, iv = setInterval(function(){
@@ -36035,11 +36096,13 @@ if(wrap() || ++n > 60) clearInterval(iv);
 }, 250);
 }
 window.CardinalSolUpload = {
-prepare  : prepare,
-maxBytes : MAX_BYTES,
+prepare        : prepare,
+extractFromUrl : extractFromUrl,
+maxInline      : MAX_INLINE,
+maxStored      : MAX_STORED,
 describe : function(){
-return 'Images are compressed automatically. PDFs must be under ' +
-mb(MAX_BYTES) + ' MB.';
+return 'Images are compressed automatically. Files over ' + mb(MAX_INLINE) +
+' MB upload to storage first; the limit is ' + mb(MAX_STORED) + ' MB.';
 },
 };
 })();
@@ -36126,10 +36189,12 @@ if(el) el.classList.remove('open');
 document.body.style.overflow = '';
 }
 async function readScope(file){
+var viaUrl = null;
 if(window.CardinalSolUpload && typeof window.CardinalSolUpload.prepare === 'function'){
 var ready = await window.CardinalSolUpload.prepare(file);
 if(!ready) return;
-file = ready;
+if(ready.file) file = ready.file;
+else viaUrl = ready.url;
 }else if(file.size > 3.1 * 1024 * 1024){
 alert('That file is too big for the reader. Photograph the pages instead \u2014 ' +
 'photos get compressed automatically.');
@@ -36141,6 +36206,11 @@ shell('\uD83D\uDCC4 Reading the scope',
 'Reading <b>' + esc(fileName) + '</b>\u2026<br>' +
 'This usually takes ten to twenty seconds.</div>');
 try{
+if(viaUrl){
+extracted = await window.CardinalSolUpload.extractFromUrl(viaUrl);
+review();
+return;
+}
 var dataUrl = await new Promise(function(res, rej){
 var fr = new FileReader();
 fr.onload = function(){ res(fr.result); };
