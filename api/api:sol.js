@@ -66,6 +66,42 @@ The mailing address and the loss location are often different — take the
 loss location.
 `.trim();
 
+// Reading a CRM screen (AccuLynx and similar) to migrate a client across.
+// Phone screenshots of a desktop CRM are cluttered — labels, nav, buttons —
+// so the model is told explicitly to take values, not labels.
+const CLIENT_PROMPT = `
+You are reading a screenshot or photo of a contractor CRM customer record
+(AccuLynx, JobNimbus, or similar) so the record can be copied into another
+system. Extract only what is actually printed on screen. Never invent or
+infer. If a field is not visible, return null.
+
+Ignore navigation, buttons, column headers and field labels. Return the
+VALUES, not the labels.
+
+Return ONLY a JSON object, no markdown fences, no commentary:
+
+{
+  "name":          "customer or homeowner full name",
+  "address":       "full street address including city, state and zip if shown",
+  "phone":         "primary phone, digits and dashes only",
+  "phone_alt":     "second phone if one is shown",
+  "email":         "email address",
+  "job_number":    "job or project number if shown",
+  "trade":         "roofing, siding, windows, gutters, or whatever is stated",
+  "stage":         "the pipeline stage or status as printed",
+  "rep":           "assigned sales rep or salesperson name",
+  "carrier":       "insurance company, only if this is a claim",
+  "claim_number":  "claim number, only if shown",
+  "policy_number": "policy number, only if shown",
+  "adjuster":      "adjuster name, only if shown",
+  "deductible":    "deductible as a plain number, no currency symbol",
+  "notes":         "any free-text notes, description or job summary, joined into one string"
+}
+
+If both a mailing and a job/property address appear, take the job address.
+Money must be plain numbers: 1500 not "$1,500.00".
+`.trim();
+
 function jsonOut(res, status, body) {
   res.status(status).setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify(body));
@@ -97,14 +133,14 @@ function stripFences(t) {
   return String(t || '').replace(/```json\s*/gi, '').replace(/```/g, '').trim();
 }
 
-async function callGemini(b64, mime) {
+async function callGemini(b64, mime, prompt) {
   const key = (process.env.GEMINI_API_KEY || '').trim();
   if (!key) throw new Error('GEMINI_API_KEY is not set');
 
   const body = {
     contents: [{
       parts: [
-        { text: SCHEMA_PROMPT },
+        { text: prompt || SCHEMA_PROMPT },
         { inline_data: { mime_type: mime, data: b64 } },
       ],
     }],
@@ -124,7 +160,7 @@ async function callGemini(b64, mime) {
   if (r.status === 503) {
     // Capacity spike — one retry is usually enough
     await new Promise((s) => setTimeout(s, 1500));
-    return callGemini(b64, mime);
+    return callGemini(b64, mime, prompt);
   }
   if (!r.ok) {
     const t = await r.text().catch(() => '');
@@ -136,7 +172,7 @@ async function callGemini(b64, mime) {
   return JSON.parse(stripFences(text));
 }
 
-async function callOpenAI(b64, mime) {
+async function callOpenAI(b64, mime, prompt) {
   const key = (process.env.OPENAI_API_KEY || '').trim();
   if (!key) throw new Error('OPENAI_API_KEY is not set');
   if (mime === 'application/pdf') {
@@ -152,7 +188,7 @@ async function callOpenAI(b64, mime) {
       messages: [{
         role: 'user',
         content: [
-          { type: 'text', text: SCHEMA_PROMPT },
+          { type: 'text', text: prompt || SCHEMA_PROMPT },
           { type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } },
         ],
       }],
@@ -171,7 +207,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return jsonOut(res, 405, { error: 'POST only' });
 
   try {
-    const { url, file, mime } = req.body || {};
+    const { url, file, mime, mode } = req.body || {};
+    // mode 'client' reads a CRM record for migration; anything else
+    // reads a scope of loss, which is the original behaviour.
+    const prompt = mode === 'client' ? CLIENT_PROMPT : SCHEMA_PROMPT;
     let b64, type;
 
     if (url) {
@@ -187,11 +226,11 @@ export default async function handler(req, res) {
 
     let extracted;
     try {
-      extracted = await callGemini(b64, type);
+      extracted = await callGemini(b64, type, prompt);
     } catch (ge) {
       console.warn('[sol] Gemini failed, trying OpenAI:', ge.message);
       try {
-        extracted = await callOpenAI(b64, type);
+        extracted = await callOpenAI(b64, type, prompt);
       } catch (oe) {
         return jsonOut(res, 502, {
           error: 'Could not read the document',
