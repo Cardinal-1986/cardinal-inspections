@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 240 &#8212; On mobile the CRM switcher now sits between the back and forward arrows at the bottom, where your thumb already is, instead of crowding the header. Restored to the header when the app is opened in a browser tab.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 241 &#8212; Cardinal Truth home rebuilt as a claims recovery ledger: what carriers owe you leads, the stage rail carries dollars at each node, and the two stages where money waits on a carrier are flagged. Supplements are now tracked with an average-increase figure.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35754,6 +35754,271 @@ build();
 },
 quotes  : QUOTES,
 today   : function(){ return QUOTES[dayOfYear(new Date()) % QUOTES.length]; },
+};
+})();
+</script>
+
+
+<style id="cr-cth-styles">#cardinalTruthView .ins-body.cr-cth{background:#121722;padding:0}.cr-cth-wrap{position:relative;max-width:580px;margin:0 auto;padding:22px 18px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#dfe5ee}.cr-cth-wrap::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(760px 380px at 50% -12%,rgba(74,111,165,.15) 0%,transparent 64%)}.cr-cth-wrap>*{position:relative}.cr-cth-owed{position:relative;background:linear-gradient(165deg,#212a3c,#1a2130);border:1px solid rgba(224,164,88,.34);border-radius:14px;padding:22px 22px 20px;overflow:hidden}.cr-cth-owed::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#e0a458}.cr-cth-owed .lbl{font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#e0a458}.cr-cth-owed .fig{font:700 clamp(36px,10.5vw,50px)/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.03em;color:#f2e2cc;margin:10px 0 8px}.cr-cth-owed .note{font-size:13px;line-height:1.5;color:#8697b0}.cr-cth-owed .note b{color:#dfe5ee;font-weight:700}.cr-cth-owed .split{display:flex;gap:18px;margin-top:14px;padding-top:13px;border-top:1px solid rgba(224,164,88,.2)}.cr-cth-owed .split div{flex:1;min-width:0}.cr-cth-owed .split .k{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#5c6b82}.cr-cth-owed .split .v{font:700 16px ui-monospace,'SF Mono',Menlo,monospace;color:#e8d6bd;margin-top:4px}.cr-cth-stats{display:grid;gap:9px;margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.cr-cth-stat{background:#1a2130;border:1px solid rgba(74,111,165,.22);border-radius:11px;padding:14px 15px;min-width:0}.cr-cth-stat .l{font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#5c6b82}.cr-cth-stat .v{font:700 21px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.02em;margin-top:6px;color:#dfe5ee}.cr-cth-stat.up .v{color:#6fae86}.cr-cth-stat .s{font-size:11px;color:#5c6b82;margin-top:3px;line-height:1.35}.cr-cth-rule{display:flex;align-items:center;gap:12px;margin:28px 0 4px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#5c6b82}.cr-cth-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(74,111,165,.4),transparent)}.cr-cth-rail{position:relative;padding-left:6px}.cr-cth-stage{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:15px 14px 15px 30px;background:transparent;border:0;text-align:left;cursor:pointer;font-family:inherit;color:#dfe5ee;border-radius:10px;transition:background .15s}.cr-cth-stage:hover{background:rgba(74,111,165,.09)}.cr-cth-stage:focus-visible{outline:2px solid #4a6fa5;outline-offset:-2px}.cr-cth-stage::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:#121722;border:2px solid #4a6fa5;z-index:1}.cr-cth-stage::after{content:'';position:absolute;left:10px;top:50%;bottom:-50%;width:1px;background:rgba(74,111,165,.32)}.cr-cth-stage:last-of-type::after{display:none}.cr-cth-stage .nm{flex:1;min-width:0}.cr-cth-stage .nm b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15.5px;letter-spacing:.01em;line-height:1.25}.cr-cth-stage .nm small{display:block;font-size:11.5px;color:#5c6b82;margin-top:2px;line-height:1.4}.cr-cth-stage .ct{flex:0 0 auto;min-width:26px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:#7fa6d6}.cr-cth-stage .amt{flex:0 0 auto;min-width:88px;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:#8697b0;letter-spacing:-.01em}.cr-cth-stage .amt.zero{color:#3f4c5f}.cr-cth-stage.flag::before{background:#e0a458;border-color:#e0a458;box-shadow:0 0 0 4px rgba(224,164,88,.16)}.cr-cth-stage.flag{background:rgba(224,164,88,.07)}.cr-cth-stage.flag .nm b{color:#f2e2cc}.cr-cth-stage.flag .amt{color:#e0a458}.cr-cth-stage .tag{position:absolute;right:14px;top:8px;font:800 7.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#e0a458;opacity:.8}.cr-cth-term{display:flex;gap:9px;margin-top:14px;padding-left:6px}.cr-cth-term button{flex:1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:#1a2130;border:1px solid rgba(74,111,165,.2);border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;color:#8697b0;transition:border-color .15s,color .15s}.cr-cth-term button:hover{border-color:rgba(74,111,165,.5);color:#dfe5ee}.cr-cth-term button b{font:700 12px inherit;letter-spacing:.02em}.cr-cth-term button span{font:700 15px ui-monospace,'SF Mono',Menlo,monospace}.cr-cth-term button.denied b,.cr-cth-term button.denied span{color:#c8635f}.cr-cth-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.cr-cth-tools button{display:flex;align-items:center;gap:10px;background:#1a2130;border:1px solid rgba(74,111,165,.2);border-radius:11px;padding:15px 14px;cursor:pointer;font-family:inherit;color:#dfe5ee;text-align:left;transition:border-color .15s,background .15s}.cr-cth-tools button:hover{border-color:rgba(74,111,165,.55);background:#212a3c}.cr-cth-tools button.primary{border-color:rgba(127,166,214,.5);background:#212a3c}.cr-cth-tools button .i{font-size:17px;flex:0 0 auto}.cr-cth-tools button .x{flex:1;min-width:0}.cr-cth-tools button .x b{display:block;font:700 13px inherit}.cr-cth-tools button .x small{display:block;font-size:11px;color:#5c6b82;margin-top:2px}@media (prefers-reduced-motion:no-preference){.cr-cth-owed,.cr-cth-stats,.cr-cth-stage,.cr-cth-term,.cr-cth-tools{opacity:0;animation:crCthRise .44s cubic-bezier(.22,.9,.3,1) forwards}.cr-cth-owed{animation-delay:.04s}.cr-cth-stats{animation-delay:.10s}.cr-cth-stage:nth-of-type(1){animation-delay:.20s}.cr-cth-stage:nth-of-type(2){animation-delay:.25s}.cr-cth-stage:nth-of-type(3){animation-delay:.30s}.cr-cth-stage:nth-of-type(4){animation-delay:.35s}.cr-cth-stage:nth-of-type(5){animation-delay:.40s}.cr-cth-stage:nth-of-type(6){animation-delay:.45s}.cr-cth-stage:nth-of-type(7){animation-delay:.50s}.cr-cth-stage:nth-of-type(8){animation-delay:.55s}.cr-cth-term{animation-delay:.62s}.cr-cth-tools{animation-delay:.68s}@keyframes crCthRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}</style>
+<script id="cr-cth-script">
+(function(){
+'use strict';
+var RAIL = [
+{ key:'Lead',       label:'Claim Filed',
+hint:'Waiting on the carrier to assign an adjuster', money:false },
+{ key:'Prospect',   label:'Adjuster Pending',
+hint:'Inspection scheduled or scope under review',   money:false },
+{ key:'Approved',   label:'Scope Approved',
+hint:'Carrier issued the scope \u2014 check it line by line', money:true },
+{ key:'supplement', label:'Supplement Filed',
+hint:'Submitted with photos and code cites \u2014 awaiting a decision',
+money:true, flag:true, tag:'chasing' },
+{ key:'Scheduled',  label:'Scheduled',
+hint:'On the production calendar', money:true },
+{ key:'Completed',  label:'Build Complete',
+hint:'Invoice the carrier to release depreciation', money:true },
+{ key:'Invoiced',   label:'Awaiting Depreciation\u00a0/ Supplements',
+hint:'Invoiced \u2014 final money not yet recovered',
+money:true, flag:true, tag:'chasing' },
+{ key:'Closed',     label:'Closed', hint:'Paid in full', money:false },
+];
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function usd(n){
+var v = Number(n) || 0;
+return '$' + Math.round(v).toLocaleString('en-US');
+}
+function normStage(s){
+if(typeof window.normStage === 'function'){
+try{ return window.normStage(s); }catch(_){}
+}
+return s;
+}
+var claimsByProject = {};
+var stats = null;
+async function loadClaims(){
+if(!window.supa) return;
+try{
+var r = await window.supa.from('insurance_claims')
+.select('project_id, approved_rcv, approved_acv, approved_depreciation, ' +
+'deductible, deductible_waived, supplement_status, ' +
+'supplement_filed, supplement_approved');
+if(!r.error && r.data){
+claimsByProject = {};
+r.data.forEach(function(c){
+if(c.project_id) claimsByProject[c.project_id] = c;
+});
+}
+}catch(e){ console.warn('[truth] claims load:', e); }
+try{
+var s = await window.supa.rpc('supplement_stats');
+if(!s.error && s.data && s.data.length) stats = s.data[0];
+}catch(_){ /* migration may not be run yet — the tile just hides */ }
+}
+function insuranceProjects(){
+var list = window.cacheProjects || [];
+return list.filter(function(pr){
+if(typeof window.projClaimType !== 'function') return false;
+return window.projClaimType(pr) === 'insurance';
+});
+}
+function railKeyFor(pr){
+var st = normStage(pr.stage);
+var c  = claimsByProject[pr.id];
+if(c && c.supplement_status === 'filed' &&
+(st === 'Approved' || st === 'Prospect')){
+return 'supplement';
+}
+return st;
+}
+function compute(){
+var projects = insuranceProjects();
+var byKey = {};
+RAIL.forEach(function(r){ byKey[r.key] = { n:0, amt:0 }; });
+var denied = 0;
+var owedDep = 0, owedSupp = 0, acvReleased = 0, dedDue = 0, dedCount = 0;
+projects.forEach(function(pr){
+var st = normStage(pr.stage);
+if(st === 'Lost'){ denied++; return; }
+var key = railKeyFor(pr);
+var bucket = byKey[key];
+var c = claimsByProject[pr.id] || {};
+var amt = 0;
+if(key === 'supplement')      amt = Number(c.supplement_filed) || 0;
+else if(st === 'Invoiced')    amt = (Number(c.approved_depreciation) || 0) +
+(Number(c.supplement_approved) || 0);
+else                           amt = Number(c.approved_rcv) || 0;
+if(bucket){ bucket.n++; bucket.amt += amt; }
+if(st === 'Invoiced'){
+owedDep  += Number(c.approved_depreciation) || 0;
+owedSupp += Number(c.supplement_approved) || 0;
+}
+if(c.supplement_status === 'filed'){
+owedSupp += Number(c.supplement_filed) || 0;
+}
+acvReleased += Number(c.approved_acv) || 0;
+if(!c.deductible_waived && Number(c.deductible) > 0){
+dedDue += Number(c.deductible); dedCount++;
+}
+});
+return {
+byKey:byKey, denied:denied, total:projects.length,
+owedDep:owedDep, owedSupp:owedSupp,
+acvReleased:acvReleased, dedDue:dedDue, dedCount:dedCount,
+};
+}
+function render(){
+var host = document.querySelector('#cardinalTruthView .ins-body');
+if(!host) return false;
+var d = compute();
+var owed = d.owedDep + d.owedSupp;
+var owedClaims = 0;
+Object.keys(d.byKey).forEach(function(k){
+if(k === 'supplement' || k === 'Invoiced') owedClaims += d.byKey[k].n;
+});
+var avg = stats && stats.avg_increase_pct != null
+? Number(stats.avg_increase_pct) : null;
+var railHtml = RAIL.map(function(r){
+var b = d.byKey[r.key] || { n:0, amt:0 };
+var amtCell = (r.money && b.amt > 0)
+? '<span class="amt">' + usd(b.amt) + '</span>'
+: '<span class="amt zero">\u2014</span>';
+var flagged = r.flag && b.amt > 0;
+return '<button class="cr-cth-stage' + (flagged ? ' flag' : '') +
+'" data-stage="' + esc(r.key) + '" type="button">' +
+(flagged && r.tag ? '<span class="tag">' + esc(r.tag) + '</span>' : '') +
+'<span class="nm"><b>' + r.label + '</b><small>' + r.hint + '</small></span>' +
+'<span class="ct">' + b.n + '</span>' + amtCell +
+'</button>';
+}).join('');
+host.classList.add('cr-cth');
+host.innerHTML =
+'<div class="cr-cth-wrap">' +
+'<div class="cr-cth-owed">' +
+'<div class="lbl">Owed by carriers</div>' +
+'<div class="fig">' + usd(owed) + '</div>' +
+'<div class="note">Across <b>' + owedClaims + ' claim' +
+(owedClaims === 1 ? '' : 's') + '</b>. Depreciation releases on invoice; ' +
+'supplements release when the carrier approves them.</div>' +
+'<div class="split">' +
+'<div><div class="k">Depreciation</div><div class="v">' + usd(d.owedDep) + '</div></div>' +
+'<div><div class="k">Supplements</div><div class="v">' + usd(d.owedSupp) + '</div></div>' +
+'</div>' +
+'</div>' +
+'<div class="cr-cth-stats">' +
+(avg != null
+? '<div class="cr-cth-stat up">' +
+'<div class="l">Avg supplement</div>' +
+'<div class="v">+' + avg + '%</div>' +
+'<div class="s">added to the carrier\u2019s first scope</div>' +
+'</div>'
+: '') +
+'<div class="cr-cth-stat">' +
+'<div class="l">ACV released</div>' +
+'<div class="v">' + usd(d.acvReleased) + '</div>' +
+'<div class="s">already collected</div>' +
+'</div>' +
+'<div class="cr-cth-stat">' +
+'<div class="l">Deductibles due</div>' +
+'<div class="v">' + usd(d.dedDue) + '</div>' +
+'<div class="s">' + d.dedCount + ' unwaived</div>' +
+'</div>' +
+'</div>' +
+'<div class="cr-cth-rule">The pipeline</div>' +
+'<div class="cr-cth-rail">' + railHtml + '</div>' +
+'<div class="cr-cth-term">' +
+'<button class="denied" data-stage="Lost" type="button">' +
+'<b>Denied</b><span>' + d.denied + '</span></button>' +
+'<button data-go="clients" type="button">' +
+'<b>All claims</b><span>' + d.total + '</span></button>' +
+'</div>' +
+'<div class="cr-cth-rule">Tools</div>' +
+'<div class="cr-cth-tools">' +
+'<button class="primary" data-go="clients" type="button"><span class="i">\uD83D\uDEE1\uFE0F</span>' +
+'<span class="x"><b>Insurance Clients</b><small>Every claim, searchable</small></span></button>' +
+'<button data-go="sol" type="button"><span class="i">\uD83D\uDCC4</span>' +
+'<span class="x"><b>Scope of Loss</b><small>Extract a carrier scope</small></span></button>' +
+'<button data-go="library" type="button"><span class="i">\uD83D\uDCDA</span>' +
+'<span class="x"><b>Resource Library</b><small>Ohio code &amp; carrier rules</small></span></button>' +
+'<button data-go="board" type="button"><span class="i">\uD83D\uDCC5</span>' +
+'<span class="x"><b>Schedule Board</b><small>Crews and material drops</small></span></button>' +
+'</div>' +
+'</div>';
+wire(host);
+return true;
+}
+function wire(host){
+host.querySelectorAll('[data-stage]').forEach(function(b){
+b.onclick = function(){
+var k = b.dataset.stage;
+if(typeof window.showInsuranceClients === 'function'){
+try{
+window.icStageFilter = (k === 'supplement') ? '' : k;
+window.showInsuranceClients();
+return;
+}catch(_){}
+}
+};
+});
+host.querySelectorAll('[data-go]').forEach(function(b){
+b.onclick = function(){
+var d = b.dataset.go;
+if(d === 'clients' && typeof window.showInsuranceClients === 'function'){
+window.icStageFilter = '';
+window.showInsuranceClients(); return;
+}
+if(d === 'library' && typeof window.showResourceLibrary === 'function'){
+window.showResourceLibrary(); return;
+}
+if(d === 'sol'){
+var sol = document.getElementById('solModal');
+if(sol){ sol.style.display = 'flex'; return; }
+}
+if(d === 'board'){
+if(typeof window.showHome === 'function') window.showHome();
+var nav = document.querySelector('.navopt[data-nav="board"]');
+if(nav) setTimeout(function(){ try{ nav.click(); }catch(_){} }, 60);
+}
+};
+});
+}
+var built = false;
+async function build(){
+var view = document.getElementById('cardinalTruthView');
+if(!view || view.style.display === 'none') return;
+if(!built){
+await loadClaims();
+built = true;
+}
+render();
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{ build(); }catch(e){ console.warn('[truth]', e); }
+});
+}
+function start(){
+var view = document.getElementById('cardinalTruthView');
+if(view){
+new MutationObserver(function(){
+if(view.style.display !== 'none') scan();
+}).observe(view, { attributes:true, attributeFilter:['style'] });
+if(view.style.display !== 'none') scan();
+}
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalTruthHome = {
+refresh : async function(){ built = false; await build(); },
+stats   : function(){ return stats; },
+compute : compute,
 };
 })();
 </script>
