@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 221 &#8212; What&#8217;s New caught up through build 220: estimate library, editor, publish, contract generation, photo album rebuild, photo editor, and the pipeline sync.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 224 &#8212; The + menu no longer runs off the right edge on desktop. It was anchored by its left edge to a button pinned top-right, so the options ran past the screen. Now right-anchored, and capped to the space below the button so a long list scrolls instead of overflowing.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10153,12 +10153,18 @@ document.getElementById('addProjectBtn').addEventListener('click', function(e){
   var r = this.getBoundingClientRect();
   newMenu.style.top = Math.round(r.bottom + 6) + 'px';
   if(window.innerWidth > 640){
-    newMenu.style.left = Math.round(r.left) + 'px';
-    newMenu.style.right = 'auto';
+    /* The + button sits at the top-right, so anchoring the menu by its
+       LEFT edge pushed it off the screen. Anchor by the right edge and
+       let it grow leftward, clamped to the viewport. */
+    newMenu.style.left = 'auto';
+    newMenu.style.right = Math.max(10, Math.round(window.innerWidth - r.right)) + 'px';
   }else{
     newMenu.style.left = '10px';
     newMenu.style.right = '10px';
   }
+  /* Never taller than the space below the button */
+  newMenu.style.maxHeight = Math.max(200, window.innerHeight - Math.round(r.bottom) - 24) + 'px';
+  newMenu.style.overflowY = 'auto';
   newMenu.style.display = 'block';
 });
 document.addEventListener('click', function(){ newMenu.style.display = 'none'; });
@@ -35958,8 +35964,6 @@ border:1px solid #333;
 color:#f5d061; font-size:12px; font-weight:600;
 margin-left:8px;
 }
-#galleryView.cr-pae-pickermode #galAddBtn,
-#galleryView.cr-pae-pickermode #galCamBtn,
 #galleryView.cr-pae-pickermode #galInspBtn,
 #galleryView.cr-pae-pickermode #galInspRmBtn,
 #galleryView.cr-pae-pickermode #galXferWrap{
@@ -36135,13 +36139,37 @@ if(typeof window.renderGallery === 'function') window.renderGallery();
 });
 }
 function enforceAlbumButtons(){
-if(pickerMode) return;   // legitimately hidden while picking
-['galAddBtn', 'galCamBtn', 'galInspBtn', 'galXferWrap'].forEach(function(id){
+['galAddBtn', 'galCamBtn'].forEach(function(id){
+var el = document.getElementById(id);
+if(el && el.style.display === 'none') el.style.display = '';
+});
+if(pickerMode) return;   // report/inspection routing stays hidden while picking
+['galInspBtn', 'galXferWrap'].forEach(function(id){
 var el = document.getElementById(id);
 if(el && el.style.display === 'none') el.style.display = '';
 });
 var view = document.getElementById('galleryView');
 if(view) view.classList.remove('cr-pae-pickermode');
+}
+var seenIds = null;
+function autoCheckNewUploads(){
+if(!pickerMode){ seenIds = null; return; }
+var all = Array.isArray(window.currentPhotos) ? window.currentPhotos : [];
+if(seenIds === null){
+seenIds = new Set(all.map(function(p){ return String(p.id); }));
+return;
+}
+var added = false;
+all.forEach(function(p){
+var id = String(p.id);
+if(!seenIds.has(id)){
+seenIds.add(id);
+window.galChecked = window.galChecked || {};
+window.galChecked[p.id] = true;
+added = true;
+}
+});
+if(added && typeof window.renderGallery === 'function') window.renderGallery();
 }
 function renderEnhancedGrid(){
 var grid = document.getElementById('galGrid');
@@ -36587,6 +36615,7 @@ if(sig !== lastCheckedSig){
 lastCheckedSig = sig;
 updateActionBar();
 }
+autoCheckNewUploads();
 }
 setInterval(pollChecked, 250);
 function openAsPicker(project, existingIds, cb){
@@ -36624,7 +36653,7 @@ if(!anchor || !anchor.parentNode) return;
 var b = document.createElement('div');
 b.id = 'cr-pae-picker-banner';
 b.className = 'cr-pae-pickerbanner';
-b.textContent = 'Picking photos for an estimate \u2014 tap photos to select, then Attach at the bottom.';
+b.textContent = 'Picking photos for an estimate \u2014 tap to select, or add new ones and they\u2019ll be included automatically. Attach at the bottom when done.';
 anchor.parentNode.insertBefore(b, anchor);
 }
 function completePicker(selectedPhotos){
@@ -38987,6 +39016,56 @@ window.CardinalEstimateStageSync = {
 sync         : syncStageFor,
 statusStage  : STATUS_STAGE,
 };
+})();
+</script>
+
+
+<script id="cr-wtd-script">
+(function(){
+'use strict';
+var REDUNDANT = ['Insurance', 'Retail'];
+var TARGETS   = ['ldWorkType', 'pfWorkType'];
+function dedupe(sel){
+if(!sel || sel.dataset.crWtDeduped === '1') return;
+var currentVal = sel.value;
+Array.prototype.slice.call(sel.options).forEach(function(o){
+var v = (o.value || o.textContent || '').trim();
+if(REDUNDANT.indexOf(v) === -1) return;
+if(v === currentVal) return;
+o.remove();
+});
+sel.dataset.crWtDeduped = '1';
+if(REDUNDANT.indexOf(currentVal) !== -1){
+var opt = Array.prototype.slice.call(sel.options).find(function(o){
+return (o.value || o.textContent || '').trim() === currentVal;
+});
+if(opt && opt.textContent.indexOf('legacy') === -1){
+opt.textContent = currentVal + ' (legacy \u2014 set Claim Type instead)';
+}
+}
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+TARGETS.forEach(function(id){
+try{ dedupe(document.getElementById(id)); }catch(_){}
+});
+});
+}
+function start(){
+scan();
+new MutationObserver(scan).observe(document.body, {
+childList:true, subtree:true,
+attributes:true, attributeFilter:['value','style'],
+});
+setInterval(scan, 1200);
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalWorkTypeDedupe = { run: scan, redundant: REDUNDANT };
 })();
 </script>
 
