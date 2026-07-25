@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 238 &#8212; The back and forward arrows work again in the installed app. The Resource Library button was covering Back and the dark mode toggle was covering Forward &#8212; both now sit above the bar instead of on top of it.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 239 &#8212; Fixed Landing / Hub in the CRM switcher. The new landing dropped two elements that showLanding() writes to without checking they exist, so it threw before showing the view and the option silently did nothing.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35582,6 +35582,7 @@ var c = counts();
 var seeAll = canSeeAll();
 var tot = c.retail + c.insurance + c.community + c.unknown;
 lv.innerHTML =
+'<span id="landName" hidden></span><span id="landDate" hidden></span>' +
 '<div class="cr-lr">' +
 '<div class="cr-lr-eyebrow">' +
 '<span class="dot"></span><span>Dayton, Ohio</span>' +
