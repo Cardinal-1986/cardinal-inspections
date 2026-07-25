@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 214 &#8212; Photo Album: fixed the stuck bottom bar that blocked scrolling and taps app-wide (it was showing outside the gallery whenever picker mode latched), and hardened the album so &#8220;+ Add photos&#8221; / &#8220;Take photo&#8221; can never stay hidden.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 216 &#8212; Photo Album: check photos and tap &#11015; Save to send them to the iPhone share sheet (Save to Photos / AirDrop / Messages) or download on desktop. Single-photo Save in the detail view too. Section badge now hides correctly on first open.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35920,6 +35920,12 @@ border:0;
 background:#2c2c2c; color:#f5d061;
 border:1px solid #d4a017;
 }
+#cr-pae-actionbar .dl{
+background:#2c2c2c; color:#f5d061;
+border:1px solid #d4a017;
+}
+#cr-pae-actionbar .dl:hover{ background:#3c3c3c; }
+#cr-pae-actionbar .dl:disabled{ opacity:.55; cursor:wait; }
 #cr-pae-actionbar .confirm{
 background:#d4a017; color:#1a1a1a;
 }
@@ -36083,6 +36089,8 @@ return tabs;
 function renderTabs(){
 var tabs = ensureTabs();
 if(!tabs) return;
+var gv = document.getElementById('galleryView');
+if(gv) gv.setAttribute('data-cr-tab', activeTab);
 var allPhotos = Array.isArray(window.currentPhotos) ? window.currentPhotos : [];
 var counts = { all: allPhotos.length };
 SECTIONS.forEach(function(s){ counts[s] = 0; });
@@ -36237,9 +36245,11 @@ SECTIONS.map(function(s){
 return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
 }).join('') +
 '</select>' +
+'<button class="dl" data-act="bulk-download" type="button">\u2B07 Save</button>' +
 '<span class="status" data-slot="status"></span>' +
 '<button class="clear" data-act="clear" type="button">Clear</button>';
 actionBar.querySelector('[data-act="bulk-move"]').onchange = onBulkMove;
+actionBar.querySelector('[data-act="bulk-download"]').onclick = onBulkDownload;
 actionBar.querySelector('[data-act="clear"]').onclick = function(){
 window.galChecked = {};
 if(typeof window.renderGallery === 'function') window.renderGallery();
@@ -36261,6 +36271,83 @@ var ids = Object.keys(galChecked2).filter(function(id){ return galChecked2[id]; 
 var selectedPhotos = (window.currentPhotos || []).filter(function(p){ return ids.indexOf(String(p.id)) !== -1 || ids.indexOf(p.id) !== -1; });
 completePicker(selectedPhotos);
 };
+}
+function safeName(s){
+return String(s || '').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+}
+function fileNameFor(photo, index){
+var client = safeName((window.currentProject &&
+(window.currentProject.name || window.currentProject.client_name)) || 'client');
+var sec    = safeName(photo.section || 'photo');
+var date   = (photo.created_at || '').slice(0, 10) || 'undated';
+return 'Cardinal_' + client + '_' + sec + '_' + date + '_' + (index + 1) + '.jpg';
+}
+async function onBulkDownload(){
+var galChecked = window.galChecked || {};
+var ids = Object.keys(galChecked).filter(function(id){ return galChecked[id]; });
+if(!ids.length) return;
+var photos = (window.currentPhotos || []).filter(function(p){
+return ids.indexOf(String(p.id)) !== -1 || ids.indexOf(p.id) !== -1;
+});
+if(!photos.length) return;
+var statusEl = actionBar.querySelector('[data-slot="status"]');
+var setStat = function(t){ if(statusEl) statusEl.textContent = t || ''; };
+var btn = actionBar.querySelector('[data-act="bulk-download"]');
+if(btn){ btn.disabled = true; btn.textContent = 'Preparing\u2026'; }
+try{
+setStat('Fetching ' + photos.length + '\u2026');
+var files = [];
+for(var i = 0; i < photos.length; i++){
+setStat('Fetching ' + (i + 1) + '/' + photos.length + '\u2026');
+try{
+var res  = await fetch(photos[i].data);
+var blob = await res.blob();
+files.push(new File([blob], fileNameFor(photos[i], i),
+{ type: blob.type || 'image/jpeg' }));
+}catch(e){
+console.warn('[pae] fetch failed for photo', photos[i].id, e);
+}
+}
+if(!files.length){
+setStat('');
+alert('Could not fetch the photos. Try opening one and using your browser\u2019s save option.');
+return;
+}
+if(navigator.canShare && navigator.share){
+try{
+if(navigator.canShare({ files: files })){
+setStat('');
+await navigator.share({
+files: files,
+title: 'Cardinal photos',
+});
+return;
+}
+}catch(e){
+if(e && e.name === 'AbortError'){ setStat(''); return; }
+}
+}
+setStat('Saving ' + files.length + '\u2026');
+for(var j = 0; j < files.length; j++){
+var url = URL.createObjectURL(files[j]);
+var a = document.createElement('a');
+a.href = url;
+a.download = files[j].name;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+setTimeout((function(u){ return function(){ URL.revokeObjectURL(u); }; })(url), 20000);
+if(j < files.length - 1) await new Promise(function(r){ setTimeout(r, 350); });
+}
+setStat('Saved ' + files.length);
+setTimeout(function(){ setStat(''); }, 3000);
+}catch(e){
+setStat('');
+alert('Save failed: ' + (e.message || e));
+}finally{
+var b = actionBar.querySelector('[data-act="bulk-download"]');
+if(b){ b.disabled = false; b.innerHTML = '\u2B07 Save'; }
+}
 }
 async function onBulkMove(e){
 var to = e.target.value;
@@ -36316,6 +36403,7 @@ return '<option value="' + esc(s) + '"' + ((photo.section || 'Inspection') === s
 '</select>' +
 '<div class="actions">' +
 '<button class="ai"   data-act="ai"   type="button">\u2728 AI Caption</button>' +
+'<button class="close" data-act="dl"  type="button">\u2B07 Save</button>' +
 '<button class="close" data-act="close" type="button">Close</button>' +
 '<button class="save" data-act="save" type="button">Save</button>' +
 '</div>' +
@@ -36323,6 +36411,28 @@ return '<option value="' + esc(s) + '"' + ((photo.section || 'Inspection') === s
 '</div>';
 capModal.classList.add('open');
 capModal.querySelector('[data-act="close"]').onclick = closeCapModal;
+capModal.querySelector('[data-act="dl"]').onclick = async function(){
+var dlBtn = capModal.querySelector('[data-act="dl"]');
+dlBtn.disabled = true; dlBtn.textContent = 'Preparing\u2026';
+try{
+var res  = await fetch(photo.data);
+var blob = await res.blob();
+var file = new File([blob], fileNameFor(photo, 0), { type: blob.type || 'image/jpeg' });
+if(navigator.canShare && navigator.share && navigator.canShare({ files:[file] })){
+await navigator.share({ files:[file], title:'Cardinal photo' });
+}else{
+var url = URL.createObjectURL(file);
+var a = document.createElement('a');
+a.href = url; a.download = file.name;
+document.body.appendChild(a); a.click(); document.body.removeChild(a);
+setTimeout(function(){ URL.revokeObjectURL(url); }, 20000);
+}
+}catch(e){
+if(!(e && e.name === 'AbortError')) alert('Save failed: ' + (e.message || e));
+}finally{
+dlBtn.disabled = false; dlBtn.innerHTML = '\u2B07 Save';
+}
+};
 capModal.querySelector('[data-act="save"]').onclick = async function(){
 var cap = capModal.querySelector('[data-f="caption"]').value.trim();
 var sec = capModal.querySelector('[data-f="section"]').value;
@@ -37974,6 +38084,208 @@ window.CardinalEstimatePublish = {
 buildDocHtml : buildDocHtml,
 publish      : publish,
 openDoc      : openDoc,
+};
+})();
+</script>
+
+
+<style id="cr-e2c-styles">
+#cr-e2c-btn{
+background:transparent;
+color:#f5d061;
+border:1px solid rgba(212,160,23,.5);
+padding:6px 12px; border-radius:6px;
+font:800 10px 'Segoe UI',Arial,sans-serif;
+letter-spacing:.14em; text-transform:uppercase;
+cursor:pointer; font-family:inherit;
+flex:0 0 auto;
+}
+#cr-e2c-btn:hover{ background:rgba(212,160,23,.14); }
+#cr-e2c-btn:disabled{ opacity:.5; cursor:wait; }
+</style>
+<script id="cr-e2c-script">
+(function(){
+'use strict';
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function money2(n){
+return (Number(n) || 0).toLocaleString('en-US', {
+minimumFractionDigits:2, maximumFractionDigits:2,
+});
+}
+function nl2br(s){ return esc(s).replace(/\n/g, '<br>'); }
+function buildScopeHtml(est){
+var lines = Array.isArray(est.line_items) ? est.line_items : [];
+if(!lines.length && !est.notes){
+return '<span class="ph">[Describe the work \u2014 no line items were on the estimate.]</span>';
+}
+var out = '';
+if(est.estimate_number){
+out += '<p style="margin:0 0 8px;"><b>Per estimate ' + esc(est.estimate_number) + '</b>' +
+(est.title ? ' \u2014 ' + esc(est.title) : '') + '</p>';
+}
+lines.forEach(function(l){
+var qtyBit = '';
+var qty = Number(l.qty) || 0;
+if(qty && (qty !== 1 || l.unit)){
+qtyBit = ' <span style="color:#666;">(' + qty + (l.unit ? ' ' + esc(l.unit) : '') + ')</span>';
+}
+out += '<p style="margin:0 0 6px;"><b>' + esc(l.name || 'Item') + '</b>' + qtyBit + '</p>';
+if(l.description){
+out += '<p style="margin:0 0 10px;padding-left:12px;font-size:10pt;line-height:1.45;">' +
+nl2br(l.description) +
+'</p>';
+}
+});
+if(est.notes){
+out += '<p style="margin:10px 0 0;"><b>Additional notes:</b><br>' + nl2br(est.notes) + '</p>';
+}
+return out;
+}
+async function generate(est, project){
+var missing = [];
+if(typeof window.CONTRACT_TEMPLATE !== 'string') missing.push('CONTRACT_TEMPLATE');
+if(typeof window.prefillClientInfo !== 'function') missing.push('prefillClientInfo');
+if(typeof window.prefillUserInfo   !== 'function') missing.push('prefillUserInfo');
+if(!window.db || typeof window.db.create !== 'function') missing.push('db.create');
+if(missing.length){
+alert('Cannot generate contract \u2014 missing: ' + missing.join(', ') +
+'.\n\nUse "+ New contract" on the client profile instead.');
+return null;
+}
+var tpl = window.prefillUserInfo(window.prefillClientInfo(window.CONTRACT_TEMPLATE, project));
+var scopeHtml = buildScopeHtml(est);
+var openTag  = '<' + 'div class="descbox">';
+var closeTag = '<' + '/div>';
+var scopeRe = /[<]div class="descbox">[<]span class="ph">\[Describe the work[\s\S]*?[<]\/span>[<]\/div>/;
+if(scopeRe.test(tpl)){
+tpl = tpl.replace(scopeRe, openTag + scopeHtml + closeTag);
+}else{
+tpl = tpl.replace(/[<]div class="descbox">[\s\S]*?[<]\/div>/,
+openTag + scopeHtml + closeTag);
+}
+var total   = Number(est.total) || 0;
+var pct     = Number(est.deposit_pct);
+if(!(pct >= 0 && pct <= 100)) pct = 50;
+var deposit = Number(est.deposit_amount);
+if(!(deposit > 0)) deposit = total * pct / 100;
+var balance = Math.max(0, total - deposit);
+var pctLabel = (Math.round(pct * 10) / 10) + '%';
+var balPct   = (Math.round((100 - pct) * 10) / 10) + '%';
+tpl = tpl.replace('Deposit (50%)',       'Deposit (' + pctLabel + ')');
+tpl = tpl.replace('Final balance (50%)', 'Final balance (' + balPct + ')');
+if(total > 0){
+tpl = tpl.replace('<span class="ph" data-cprice="1">[0.00]</span>', '$' + money2(total));
+tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + money2(deposit));
+tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + money2(balance));
+}
+var title = 'Contract \u2014 ' + ((project && (project.name || project.client_name)) || 'Client');
+var docId = await window.db.create(title, tpl,
+(project && (project.name || project.client_name)) || '', project.id);
+if(window.supa && est.id){
+try{
+await window.supa.from('estimates')
+.update({ contract_doc_id: docId }).eq('id', est.id);
+}catch(_){ /* column may not exist yet — non-fatal */ }
+}
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('estimate_to_contract',
+'Generated contract from ' + (est.estimate_number || 'estimate'),
+project.id); }catch(_){}
+}
+return docId;
+}
+function injectButton(){
+var head = document.querySelector('#cr-est-view .cr-est-head');
+if(!head) return;
+if(document.getElementById('cr-e2c-btn')) return;
+var pubBtn = document.getElementById('cr-epub-btn');
+var anchor = pubBtn || head.querySelector('[data-act="save"]');
+if(!anchor) return;
+var btn = document.createElement('button');
+btn.id = 'cr-e2c-btn';
+btn.type = 'button';
+btn.textContent = '\u2192 Contract';
+btn.title = 'Save, then generate a contract prefilled from this estimate';
+btn.onclick = handleClick;
+anchor.parentNode.insertBefore(btn, anchor);
+}
+async function handleClick(){
+var btn = document.getElementById('cr-e2c-btn');
+var saveBtn = document.querySelector('#cr-est-view [data-act="save"]');
+if(!btn || !saveBtn) return;
+var statusSel = document.querySelector('#cr-est-view [data-f="status"]');
+var status = statusSel ? statusSel.value : 'draft';
+if(status !== 'accepted'){
+var go = confirm(
+'This estimate is marked "' + status + '", not Accepted.\n\n' +
+'Generate a contract from it anyway?'
+);
+if(!go) return;
+}
+var project = window.currentProject;
+if(!project || !project.id){ alert('No client loaded.'); return; }
+btn.disabled = true; btn.textContent = 'Working\u2026';
+try{
+saveBtn.click();
+var closed = await waitForEditorClose(9000);
+if(!closed) return;   // save failed; editor already showed the error
+var rows = await window.CardinalEstimates.loadForProject(project.id);
+if(!rows.length){ alert('Could not find the saved estimate.'); return; }
+var est = rows[0];
+var docId = await generate(est, project);
+if(!docId) return;
+if(typeof window.reload === 'function'){
+try{ await window.reload(); }catch(_){}
+}
+if(typeof window.openEditor === 'function'){
+try{ await window.openEditor(docId); }catch(_){}
+}
+alert('Contract created from ' + (est.estimate_number || 'the estimate') + '.\n\n' +
+'Scope and payment schedule are prefilled. Review the terms, then have the ' +
+'client sign \u2014 in person or by share link. The 3-Day Notice is included.');
+}catch(e){
+alert('Could not generate contract: ' + (e.message || e));
+}finally{
+var b = document.getElementById('cr-e2c-btn');
+if(b){ b.disabled = false; b.textContent = '\u2192 Contract'; }
+}
+}
+function waitForEditorClose(timeoutMs){
+return new Promise(function(resolve){
+var view = document.getElementById('cr-est-view');
+if(!view || !view.classList.contains('open')) return resolve(true);
+var elapsed = 0;
+var iv = setInterval(function(){
+elapsed += 150;
+if(!view.classList.contains('open')){ clearInterval(iv); resolve(true); }
+else if(elapsed >= timeoutMs){ clearInterval(iv); resolve(false); }
+}, 150);
+});
+}
+var scheduled = false;
+function scheduleInject(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{ injectButton(); }catch(_){}
+});
+}
+function start(){
+scheduleInject();
+new MutationObserver(scheduleInject).observe(document.body, {
+childList:true, subtree:true,
+});
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalEstimateToContract = {
+generate      : generate,
+buildScopeHtml: buildScopeHtml,
 };
 })();
 </script>
