@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 259 &#8212; Cleared the haze in Cardinal Truth. The card tints were translucent amber over blue-grey, which computes to a washed grey rather than a colour, and a fixed gradient was sitting over the top of the screen permanently. Both gone, surfaces are solid now.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 260 &#8212; Cardinal Truth header rebuilt: &#8220;Cardinal Claims&#8221; centred in graphite-to-gold, the full app menu on the right beside the +, and the CRM switcher on the left beside the logo. The old four-option dropdown is retired &#8212; you can reach the whole app from inside insurance now.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38415,6 +38415,126 @@ refresh : async function(){ await build(); },
 stats   : function(){ return stats; },
 compute : compute,
 };
+})();
+</script>
+
+
+<style id="cr-ih-styles">#cardinalTruthView #ctSectionSel{display:none !important}#cardinalTruthView .ins-header{display:flex;align-items:center;gap:8px}#cardinalTruthView .ins-headleft{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-title{flex:1 1 auto;min-width:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(15px,4.4vw,21px);letter-spacing:.005em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;background:linear-gradient(100deg,#5a6674 0%,#8d99a8 22%,#f5d061 58%,#d4a017 100%);-webkit-background-clip:text;background-clip:text;color:#d4a017;-webkit-text-fill-color:transparent}#cr-ih-right{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-menu{background:transparent;color:#eef2f7;border:1px solid rgba(238,242,247,.35);border-radius:8px;padding:7px 12px;cursor:pointer;font:700 12px 'Segoe UI',Arial,sans-serif;font-family:inherit;white-space:nowrap;flex:0 0 auto}#cr-ih-menu:hover{border-color:#f5d061;color:#f5d061}#cardinalTruthView .ins-headleft #crPortalChip{padding:7px 12px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(238,242,247,.3);color:#eef2f7;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;cursor:pointer;max-width:34vw;overflow:hidden;text-overflow:ellipsis}#cardinalTruthView .ins-headleft #crPortalChip .sw{margin-left:4px;opacity:.7;font-size:9px}@media (max-width:420px){#cr-ih-menu{padding:7px 9px}#cardinalTruthView .ins-headleft #crPortalChip{max-width:26vw;padding:7px 9px;letter-spacing:.06em}}</style>
+<script id="cr-ih-script">
+(function(){
+'use strict';
+var chipHome = null;
+function view(){ return document.getElementById('cardinalTruthView'); }
+function isOpen(){
+var v = view();
+return !!(v && v.style.display !== 'none');
+}
+function build(){
+var v = view();
+if(!v) return false;
+var head = v.querySelector('.ins-header');
+if(!head) return false;
+if(head.dataset.crIhBuilt === '1') return true;
+var left = head.querySelector('.ins-headleft');
+var plus = head.querySelector('#ctPlusBtn');
+if(!left) return false;
+var title = document.createElement('div');
+title.id = 'cr-ih-title';
+title.textContent = 'Cardinal Claims';
+left.parentNode.insertBefore(title, left.nextSibling);
+var right = document.createElement('div');
+right.id = 'cr-ih-right';
+if(plus && plus.parentNode) right.appendChild(plus);
+var menu = document.createElement('button');
+menu.id = 'cr-ih-menu';
+menu.type = 'button';
+menu.innerHTML = '\u2630 Menu';
+menu.onclick = openNavMenu;
+right.appendChild(menu);
+head.appendChild(right);
+head.dataset.crIhBuilt = '1';
+return true;
+}
+function openNavMenu(e){
+e.stopPropagation();
+var nav = document.getElementById('navMenu');
+if(!nav){ alert('Menu not available \u2014 reload the app.'); return; }
+if(nav.style.display === 'block'){ nav.style.display = 'none'; return; }
+var r = this.getBoundingClientRect();
+nav.style.top = Math.round(r.bottom + 6) + 'px';
+if(window.innerWidth > 640){
+nav.style.right = Math.max(10, Math.round(window.innerWidth - r.right)) + 'px';
+nav.style.left = 'auto';
+}else{
+nav.style.right = '';
+nav.style.left = '';
+}
+nav.style.zIndex = '9995';
+nav.style.display = 'block';
+}
+function claimChip(){
+var chip = document.getElementById('crPortalChip');
+var v = view();
+if(!chip || !v) return;
+var left = v.querySelector('.ins-headleft');
+if(!left) return;
+if(chip.parentNode === left) return;
+if(!chipHome){
+chipHome = { parent: chip.parentNode, next: chip.nextSibling };
+}
+left.appendChild(chip);
+}
+function releaseChip(){
+var chip = document.getElementById('crPortalChip');
+if(!chip || !chipHome) return;
+var v = view();
+if(v && chip.parentNode && v.contains(chip)){
+if(window.CardinalNavClearance && window.CardinalNavClearance.placeChip){
+if(chipHome.next && chipHome.next.parentNode === chipHome.parent){
+chipHome.parent.insertBefore(chip, chipHome.next);
+}else{
+chipHome.parent.appendChild(chip);
+}
+try{ window.CardinalNavClearance.placeChip(); }catch(_){}
+}else if(chipHome.next && chipHome.next.parentNode === chipHome.parent){
+chipHome.parent.insertBefore(chip, chipHome.next);
+}else{
+chipHome.parent.appendChild(chip);
+}
+}
+chipHome = null;
+}
+function sync(){
+if(isOpen()){
+if(build()) claimChip();
+}else{
+releaseChip();
+}
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{ sync(); }catch(e){ console.warn('[ins-head]', e); }
+});
+}
+function start(){
+scan();
+var v = view();
+if(v){
+new MutationObserver(scan).observe(v, {
+attributes:true, attributeFilter:['style'],
+});
+}
+new MutationObserver(scan).observe(document.body, {
+childList:true, subtree:true,
+});
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalInsHeader = { build: build, sync: sync };
 })();
 </script>
 
