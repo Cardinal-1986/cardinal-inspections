@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 225 &#8212; Create Lead form: Mailing and Billing Address are now tucked behind a &#8220;Different mailing or billing address?&#8221; toggle instead of sitting above the autocompleting property address. Auto-opens when a lead already has different values.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 226 &#8212; Estimates get a Preview button (see the finished document and Print/PDF without saving), and Publish now actually opens the document. Publish had been probing for openDoc/editDoc/showDoc &#8212; none of which exist &#8212; so it created the document then left you to find it.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38255,6 +38255,32 @@ openEditor       : openEditor,
 close            : close,
 loadForProject   : loadForProject,
 refreshSavedList : refreshSavedList,
+currentState     : function(){
+if(!state) return null;
+var t = computeTotals(state);
+return {
+id             : state.id,
+estimate_number: state.estimate_number || 'PREVIEW',
+title          : state.title,
+status         : state.status,
+line_items     : state.lines.map(function(l){
+var o = {};
+Object.keys(l).forEach(function(k){ if(k !== '_lid') o[k] = l[k]; });
+return o;
+}),
+photos         : (state.photos || []).slice(),
+subtotal       : t.subtotal,
+discount       : t.discount,
+total          : t.total,
+deposit_pct    : t.deposit_pct,
+deposit_amount : t.deposit,
+valid_through  : state.valid_through,
+notes          : state.notes,
+payment_instructions: state.payment_instructions,
+created_at     : new Date().toISOString(),
+};
+},
+currentProject   : function(){ return state ? state.project : null; },
 };
 })();
 </script>
@@ -38273,6 +38299,61 @@ flex:0 0 auto;
 }
 #cr-epub-btn:hover{ background:#3c3c3c; }
 #cr-epub-btn:disabled{ opacity:.55; cursor:wait; }
+#cr-epub-preview-btn{
+background:transparent;
+color:#f5d061;
+border:1px solid rgba(212,160,23,.5);
+padding:6px 12px; border-radius:6px;
+font:800 10px 'Segoe UI',Arial,sans-serif;
+letter-spacing:.14em; text-transform:uppercase;
+cursor:pointer; font-family:inherit;
+flex:0 0 auto;
+}
+#cr-epub-preview-btn:hover{ background:rgba(212,160,23,.14); }
+#cr-epub-preview{
+display:none;
+position:fixed; inset:0;
+background:#3a3a3a;
+z-index:9550;
+flex-direction:column;
+}
+#cr-epub-preview.open{ display:flex; }
+#cr-epub-preview .pv-head{
+padding:12px 14px;
+padding-top:calc(12px + env(safe-area-inset-top, 0px));
+background:#1a1a1a; color:#f5efe0;
+display:flex; align-items:center; gap:10px;
+flex:0 0 auto;
+}
+#cr-epub-preview .pv-head h3{
+margin:0; flex:1; text-align:center;
+font:800 13px Georgia,serif;
+}
+#cr-epub-preview .pv-head button{
+background:transparent; border:1px solid rgba(212,160,23,.5);
+color:#f5d061; padding:6px 12px; border-radius:6px;
+font:800 10px 'Segoe UI',Arial,sans-serif;
+letter-spacing:.12em; text-transform:uppercase;
+cursor:pointer; font-family:inherit; flex:0 0 auto;
+}
+#cr-epub-preview .pv-head button.primary{
+background:#d4a017; color:#1a1a1a; border-color:#d4a017;
+}
+#cr-epub-preview .pv-body{
+flex:1; overflow:auto;
+-webkit-overflow-scrolling:touch;
+background:#5a5a5a;
+padding:14px;
+padding-bottom:calc(14px + env(safe-area-inset-bottom, 0px));
+}
+#cr-epub-preview iframe{
+display:block;
+width:8.5in; max-width:100%;
+min-height:11in;
+margin:0 auto;
+border:0; background:#fff;
+box-shadow:0 6px 30px rgba(0,0,0,.45);
+}
 .cr-epub-note{
 background:#faf5e9; border:1px solid #e8d9a8;
 border-left:4px solid #d4a017;
@@ -38533,24 +38614,73 @@ try{ window.auditLog('estimate_publish',
 return docId;
 }
 function openDoc(docId){
-if(typeof window.openDoc === 'function' && window.openDoc !== openDoc){
-try{ window.openDoc(docId); return true; }catch(_){}
-}
-var candidates = ['editDoc', 'showDoc', 'loadDoc', 'openDocument'];
-for(var i = 0; i < candidates.length; i++){
-var fn = window[candidates[i]];
-if(typeof fn === 'function'){
-try{ fn(docId); return true; }catch(_){}
-}
+if(typeof window.openEditor === 'function'){
+try{ window.openEditor(docId); return true; }
+catch(e){ console.warn('[epub] openEditor threw:', e); }
 }
 return false;
+}
+var previewEl = null;
+function ensurePreview(){
+if(previewEl) return previewEl;
+previewEl = document.createElement('div');
+previewEl.id = 'cr-epub-preview';
+previewEl.innerHTML =
+'<div class="pv-head">' +
+'<button data-act="pv-close" type="button">Close</button>' +
+'<h3>Preview</h3>' +
+'<button class="primary" data-act="pv-print" type="button">\uD83D\uDDA8 Print / PDF</button>' +
+'</div>' +
+'<div class="pv-body"><iframe data-slot="pv-frame" title="Estimate preview"></iframe></div>';
+document.body.appendChild(previewEl);
+previewEl.querySelector('[data-act="pv-close"]').onclick = closePreview;
+previewEl.querySelector('[data-act="pv-print"]').onclick = function(){
+var f = previewEl.querySelector('[data-slot="pv-frame"]');
+if(!f || !f.contentWindow) return;
+try{
+f.contentWindow.focus();
+f.contentWindow.print();
+}catch(e){
+alert('Print failed: ' + (e.message || e));
+}
+};
+return previewEl;
+}
+function openPreview(){
+if(!window.CardinalEstimates ||
+typeof window.CardinalEstimates.currentState !== 'function'){
+alert('Open an estimate first.');
+return;
+}
+var est = window.CardinalEstimates.currentState();
+var project = window.CardinalEstimates.currentProject() || window.currentProject;
+if(!est || !project){ alert('Open an estimate first.'); return; }
+ensurePreview();
+var html = buildDocHtml(est, project);
+var frame = previewEl.querySelector('[data-slot="pv-frame"]');
+frame.srcdoc = html;
+previewEl.classList.add('open');
+document.body.style.overflow = 'hidden';
+}
+function closePreview(){
+if(previewEl) previewEl.classList.remove('open');
+document.body.style.overflow = 'hidden';   // editor is still open behind it
 }
 function injectButton(){
 var head = document.querySelector('#cr-est-view .cr-est-head');
 if(!head) return;
-if(document.getElementById('cr-epub-btn')) return;
 var saveBtn = head.querySelector('[data-act="save"]');
 if(!saveBtn) return;
+if(!document.getElementById('cr-epub-preview-btn')){
+var pv = document.createElement('button');
+pv.id = 'cr-epub-preview-btn';
+pv.type = 'button';
+pv.textContent = 'Preview';
+pv.title = 'See the finished document without saving';
+pv.onclick = openPreview;
+saveBtn.parentNode.insertBefore(pv, saveBtn);
+}
+if(document.getElementById('cr-epub-btn')) return;
 var btn = document.createElement('button');
 btn.id = 'cr-epub-btn';
 btn.type = 'button';
