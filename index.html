@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 224 &#8212; The + menu no longer runs off the right edge on desktop. It was anchored by its left edge to a button pinned top-right, so the options ran past the screen. Now right-anchored, and capped to the space below the button so a long list scrolls instead of overflowing.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 225 &#8212; Create Lead form: Mailing and Billing Address are now tucked behind a &#8220;Different mailing or billing address?&#8221; toggle instead of sitting above the autocompleting property address. Auto-opens when a lead already has different values.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39066,6 +39066,117 @@ setInterval(scan, 1200);
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
 window.CardinalWorkTypeDedupe = { run: scan, redundant: REDUNDANT };
+})();
+</script>
+
+
+<style id="cr-lac-styles">
+#cr-lac-toggle{
+display:block;
+width:100%;
+margin:10px 0 2px;
+padding:9px 12px;
+background:#faf5e9;
+border:1px dashed #d9cfaf;
+border-radius:8px;
+color:#8a5a00;
+font:700 12.5px 'Segoe UI',Arial,sans-serif;
+text-align:left;
+cursor:pointer;
+font-family:inherit;
+}
+#cr-lac-toggle:hover{
+background:#f5efd8;
+border-color:#d4a017;
+}
+#cr-lac-toggle .chev{
+float:right;
+color:#a89e88;
+font-weight:800;
+}
+#cr-lac-wrap[hidden]{ display:none !important; }
+#cr-lac-wrap{
+border-left:3px solid #e8d9a8;
+padding-left:10px;
+margin-top:6px;
+}
+#cr-lac-note{
+font:600 11.5px 'Segoe UI',Arial,sans-serif;
+color:#8a7a5a;
+margin:2px 0 8px;
+}
+</style>
+<script id="cr-lac-script">
+(function(){
+'use strict';
+function labelFor(input){
+return input ? input.closest('label') : null;
+}
+function apply(){
+var mail = document.getElementById('ldMailing');
+var bill = document.getElementById('ldBilling');
+if(!mail || !bill) return false;
+if(document.getElementById('cr-lac-toggle')) return true;
+var mailLbl = labelFor(mail);
+var billLbl = labelFor(bill);
+if(!mailLbl || !billLbl || !mailLbl.parentNode) return false;
+var wrap = document.createElement('div');
+wrap.id = 'cr-lac-wrap';
+wrap.hidden = true;
+mailLbl.parentNode.insertBefore(wrap, mailLbl);
+var note = document.createElement('div');
+note.id = 'cr-lac-note';
+note.textContent = 'Leave blank to use the property address below.';
+wrap.appendChild(note);
+wrap.appendChild(mailLbl);
+wrap.appendChild(billLbl);
+var btn = document.createElement('button');
+btn.id = 'cr-lac-toggle';
+btn.type = 'button';
+btn.innerHTML = 'Different mailing or billing address?' +
+'<span class="chev">\u25BE</span>';
+wrap.parentNode.insertBefore(btn, wrap);
+btn.onclick = function(e){
+e.preventDefault();
+var show = wrap.hidden;
+wrap.hidden = !show;
+btn.innerHTML = (show
+? 'Mailing / billing address'
+: 'Different mailing or billing address?') +
+'<span class="chev">' + (show ? '\u25B4' : '\u25BE') + '</span>';
+};
+return true;
+}
+function autoExpandIfFilled(){
+var wrap = document.getElementById('cr-lac-wrap');
+var btn  = document.getElementById('cr-lac-toggle');
+if(!wrap || !btn || !wrap.hidden) return;
+var mail = document.getElementById('ldMailing');
+var bill = document.getElementById('ldBilling');
+var filled = (mail && mail.value.trim()) || (bill && bill.value.trim());
+if(filled) btn.click();
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{
+if(apply()) autoExpandIfFilled();
+}catch(_){}
+});
+}
+function start(){
+scan();
+new MutationObserver(scan).observe(document.body, {
+childList:true, subtree:true,
+});
+setInterval(scan, 1200);
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalLeadAddress = { apply: scan };
 })();
 </script>
 
