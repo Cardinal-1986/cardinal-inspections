@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 237 &#8212; Two fixes found by audit: the Select-mode bar could stay pinned over a client profile after you navigated away with items checked, and closing an estimate Preview could leave the page unscrollable.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 238 &#8212; The back and forward arrows work again in the installed app. The Resource Library button was covering Back and the dark mode toggle was covering Forward &#8212; both now sit above the bar instead of on top of it.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35753,6 +35753,51 @@ build();
 },
 quotes  : QUOTES,
 today   : function(){ return QUOTES[dayOfYear(new Date()) % QUOTES.length]; },
+};
+})();
+</script>
+
+
+<style id="cr-pnc-styles">body.standalone #cr-rltoc-btn{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-dark-toggle{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-nachi-mgr-btn{bottom:calc(133px + env(safe-area-inset-bottom,0px)) !important}body.standalone #pwaNav{z-index:9990 !important}body.standalone #pwaNav button{position:relative;z-index:1}</style>
+<script id="cr-pnc-script">
+(function(){
+'use strict';
+function ensureStandaloneClass(){
+var standalone = false;
+try{
+standalone = window.matchMedia('(display-mode: standalone)').matches ||
+window.navigator.standalone === true;
+}catch(_){}
+if(standalone && !document.body.classList.contains('standalone')){
+document.body.classList.add('standalone');
+}
+}
+function auditNavReach(){
+if(!document.body.classList.contains('standalone')) return null;
+var out = [];
+['pwaBack', 'pwaFwd'].forEach(function(id){
+var b = document.getElementById(id);
+if(!b) return;
+var r = b.getBoundingClientRect();
+if(!r.width) return;
+var top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+if(top && !b.contains(top) && top !== b){
+out.push({ button:id, blockedBy:(top.id || top.className || top.tagName) });
+}
+});
+return out;
+}
+function start(){
+ensureStandaloneClass();
+window.addEventListener('focus', ensureStandaloneClass);
+document.addEventListener('visibilitychange', function(){
+if(!document.hidden) ensureStandaloneClass();
+});
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalNavClearance = {
+audit: auditNavReach,
 };
 })();
 </script>
