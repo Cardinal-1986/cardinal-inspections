@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 244 &#8212; Insurance data consolidated: insurance_claims is now the single store, with the profile JSON kept in sync so nothing breaks. Fixed the old landing flashing before the new one, and Cardinal Truth figures now refresh each time you open it.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 245 &#8212; Supplements can now be filed and decided from the client profile, showing what each one added to the carrier&#8217;s scope. Also fixed the Scope of Loss upload never appearing on clients with no lead details.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -36185,6 +36185,264 @@ if(btn){ btn.disabled = false; btn.textContent = 'Create claim'; }
 }
 }
 window.CardinalSolIntake = { open: open, close: close };
+})();
+</script>
+
+
+<style id="cr-sp-styles">.cr-sp-card{margin:14px 0;padding:0;border:1px solid #d9cfaf;border-radius:11px;background:#fff;overflow:hidden}.cr-sp-hd{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(180deg,#f7f4ec,#f1ece0);border-bottom:1px solid #e6dcc6}.cr-sp-hd .t{flex:1;min-width:0;font:800 13px 'Segoe UI',Arial,sans-serif;color:#2d4468;letter-spacing:.01em}.cr-sp-hd .pill{flex:0 0 auto;padding:4px 10px;border-radius:20px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.13em;text-transform:uppercase}.cr-sp-hd .pill.none{background:#eee;color:#888}.cr-sp-hd .pill.filed{background:#fdf1dd;color:#8a5a00}.cr-sp-hd .pill.approved{background:#e4f3ea;color:#2f7048}.cr-sp-hd .pill.partial{background:#e9f0f9;color:#2d4468}.cr-sp-hd .pill.denied{background:#fbe9e8;color:#9c1822}.cr-sp-bd{padding:15px 16px}.cr-sp-empty{font:400 13px 'Segoe UI',Arial,sans-serif;color:#6b7a90;line-height:1.55;margin:0 0 13px}.cr-sp-figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:11px;margin-bottom:13px}.cr-sp-fig .k{font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8a7a5a}.cr-sp-fig .v{font:800 18px ui-monospace,'SF Mono',Menlo,monospace;color:#1e2432;margin-top:4px;letter-spacing:-.01em}.cr-sp-fig .v.up{color:#2f7048}.cr-sp-fig .v.mute{color:#a5a5a5;font-weight:400}.cr-sp-note{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:#6b7a90;line-height:1.5;padding-top:11px;border-top:1px solid #efe8d8}.cr-sp-acts{display:flex;gap:8px;flex-wrap:wrap}.cr-sp-acts button{padding:9px 15px;border-radius:8px;cursor:pointer;font:700 12.5px 'Segoe UI',Arial,sans-serif;font-family:inherit;border:1px solid #4a6fa5;background:#4a6fa5;color:#fff}.cr-sp-acts button:hover{background:#3a5a8c}.cr-sp-acts button.ghost{background:transparent;color:#4a6fa5}.cr-sp-acts button.ghost:hover{background:rgba(74,111,165,.09)}#cr-sp-modal{display:none;position:fixed;inset:0;background:rgba(20,16,14,.6);z-index:9570;justify-content:center;align-items:center;padding:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-sp-modal.open{display:flex}#cr-sp-modal .box{background:#fff;border-radius:13px;width:min(430px,100%);max-height:100%;overflow-y:auto;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.35)}#cr-sp-modal h3{margin:0 0 5px;font:800 17px Georgia,'Times New Roman',serif;color:#2d4468}#cr-sp-modal .sub{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:#6b7a90;line-height:1.5;margin:0 0 15px}#cr-sp-modal label{display:block;margin:13px 0 5px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase;color:#8a7a5a}#cr-sp-modal input,#cr-sp-modal textarea,#cr-sp-modal select{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d9cfaf;border-radius:8px;font:400 14px 'Segoe UI',Arial,sans-serif;font-family:inherit;outline:none;background:#fff;color:#1e2432}#cr-sp-modal input:focus,#cr-sp-modal textarea:focus,#cr-sp-modal select:focus{border-color:#4a6fa5;box-shadow:0 0 0 3px rgba(74,111,165,.16)}#cr-sp-modal textarea{min-height:66px;resize:vertical}#cr-sp-modal .hint{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7a5a;margin-top:5px}#cr-sp-modal .ft{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}#cr-sp-modal .ft button{padding:10px 16px;border-radius:8px;cursor:pointer;font:700 12.5px 'Segoe UI',Arial,sans-serif;font-family:inherit;border:0}#cr-sp-modal .ft .cancel{background:transparent;color:#6b7a90;border:1px solid #d9cfaf}#cr-sp-modal .ft .save{background:#4a6fa5;color:#fff}#cr-sp-modal .ft .save:disabled{opacity:.55;cursor:wait}</style>
+<script id="cr-sp-script">
+(function(){
+'use strict';
+var STATUS_LABEL = {
+none:'No supplement', filed:'Filed', approved:'Approved',
+partial:'Partial', denied:'Denied',
+};
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function usd(n){
+var v = Number(n) || 0;
+return '$' + v.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function num(v){
+if(v == null || v === '') return null;
+var n = Number(String(v).replace(/[^0-9.\-]/g, ''));
+return isNaN(n) ? null : n;
+}
+function isInsurance(pr){
+if(!pr) return false;
+if(typeof window.projClaimType !== 'function') return false;
+return window.projClaimType(pr) === 'insurance';
+}
+function claimOf(pr){
+if(window.CardinalInsurance && typeof window.CardinalInsurance.claim === 'function'){
+return window.CardinalInsurance.claim(pr.id);
+}
+return null;
+}
+function render(){
+var pr = window.currentProject;
+var host = document.getElementById('cr-sp-mount');
+if(!pr || !isInsurance(pr)){
+if(host) host.remove();
+return;
+}
+if(!host){
+var anchor = document.getElementById('insDocsCard') ||
+document.getElementById('insCard');
+if(!anchor || !anchor.parentNode) return;
+host = document.createElement('div');
+host.id = 'cr-sp-mount';
+anchor.parentNode.insertBefore(host, anchor);
+}
+var c = claimOf(pr) || {};
+var st = c.supplement_status || 'none';
+var filed    = Number(c.supplement_filed) || 0;
+var approved = Number(c.supplement_approved) || 0;
+var rcv      = Number(c.approved_rcv) || 0;
+var pct = (approved > 0 && rcv > 0) ? (approved / rcv * 100) : null;
+var body;
+if(st === 'none'){
+body =
+'<p class="cr-sp-empty">Nothing filed yet. If the carrier\u2019s scope came up short, ' +
+'file a supplement with the photos and code cites that justify it.</p>' +
+'<div class="cr-sp-acts">' +
+'<button data-act="file" type="button">File a supplement</button>' +
+'</div>';
+}else{
+body =
+'<div class="cr-sp-figs">' +
+'<div class="cr-sp-fig"><div class="k">Filed</div>' +
+'<div class="v">' + usd(filed) + '</div></div>' +
+'<div class="cr-sp-fig"><div class="k">Approved</div>' +
+'<div class="v' + (approved > 0 ? ' up' : ' mute') + '">' +
+(approved > 0 ? usd(approved) : 'pending') + '</div></div>' +
+(pct != null
+? '<div class="cr-sp-fig"><div class="k">Added to scope</div>' +
+'<div class="v up">+' + pct.toFixed(1) + '%</div></div>'
+: '') +
+'</div>' +
+(c.supplement_notes
+? '<div class="cr-sp-note">' + esc(c.supplement_notes) + '</div>'
+: '') +
+'<div class="cr-sp-acts" style="margin-top:13px;">' +
+(st === 'filed'
+? '<button data-act="decide" type="button">Record the decision</button>'
+: '') +
+'<button class="ghost" data-act="file" type="button">' +
+(st === 'filed' ? 'Edit' : 'File another') + '</button>' +
+'</div>';
+}
+host.innerHTML =
+'<div class="cr-sp-card">' +
+'<div class="cr-sp-hd">' +
+'<span class="t">\uD83D\uDCC8 Supplement</span>' +
+'<span class="pill ' + esc(st) + '">' + (STATUS_LABEL[st] || st) + '</span>' +
+'</div>' +
+'<div class="cr-sp-bd">' + body + '</div>' +
+'</div>';
+host.querySelectorAll('[data-act]').forEach(function(b){
+b.onclick = function(){ openModal(b.dataset.act, pr, c); };
+});
+}
+var modal = null;
+function ensureModal(){
+if(modal) return modal;
+modal = document.createElement('div');
+modal.id = 'cr-sp-modal';
+modal.onclick = function(e){ if(e.target === modal) closeModal(); };
+document.body.appendChild(modal);
+return modal;
+}
+function closeModal(){
+if(modal) modal.classList.remove('open');
+document.body.style.overflow = '';
+}
+function openModal(mode, pr, c){
+ensureModal();
+var filing = mode === 'file';
+var rcv = Number(c.approved_rcv) || 0;
+modal.innerHTML =
+'<div class="box">' +
+'<h3>' + (filing ? 'File a supplement' : 'Record the decision') + '</h3>' +
+'<p class="sub">' +
+(filing
+? 'What you\u2019re asking the carrier for, on top of their approved scope' +
+(rcv > 0 ? ' of ' + usd(rcv) : '') + '.'
+: 'What the carrier actually granted. Approving less than filed is normal \u2014 ' +
+'record the real figure so the averages mean something.') +
+'</p>' +
+(filing
+? '<label>Amount filed</label>' +
+'<input type="text" inputmode="decimal" data-f="filed" ' +
+'value="' + (c.supplement_filed > 0 ? c.supplement_filed : '') + '" placeholder="0.00">' +
+'<label>What it covers</label>' +
+'<textarea data-f="notes" placeholder="Missing ridge vent, ice &amp; water to code, ' +
+'drip edge \u2014 photos attached">' + esc(c.supplement_notes || '') + '</textarea>'
+: '<label>Outcome</label>' +
+'<select data-f="status">' +
+'<option value="approved">Approved in full</option>' +
+'<option value="partial">Approved in part</option>' +
+'<option value="denied">Denied</option>' +
+'</select>' +
+'<label>Amount approved</label>' +
+'<input type="text" inputmode="decimal" data-f="approved" ' +
+'value="' + (c.supplement_filed > 0 ? c.supplement_filed : '') + '" placeholder="0.00">' +
+'<div class="hint">Filed: ' + usd(c.supplement_filed) + '</div>') +
+'<div class="ft">' +
+'<button class="cancel" data-act="cancel" type="button">Cancel</button>' +
+'<button class="save" data-act="save" type="button">' +
+(filing ? 'File it' : 'Save') + '</button>' +
+'</div>' +
+'</div>';
+modal.querySelector('[data-act="cancel"]').onclick = closeModal;
+modal.querySelector('[data-act="save"]').onclick = function(){ save(mode, pr, c); };
+var sel = modal.querySelector('[data-f="status"]');
+if(sel) sel.onchange = function(){
+var amt = modal.querySelector('[data-f="approved"]');
+if(!amt) return;
+if(sel.value === 'denied'){ amt.value = '0'; amt.disabled = true; }
+else { amt.disabled = false; }
+};
+modal.classList.add('open');
+document.body.style.overflow = 'hidden';
+setTimeout(function(){
+var first = modal.querySelector('input, select');
+if(first) first.focus();
+}, 80);
+}
+async function save(mode, pr, c){
+var btn = modal.querySelector('[data-act="save"]');
+var g = function(f){
+var i = modal.querySelector('[data-f="' + f + '"]');
+return i ? i.value : '';
+};
+var patch = {};
+if(mode === 'file'){
+var amt = num(g('filed'));
+if(!amt || amt <= 0){ alert('Enter the amount you\u2019re filing for.'); return; }
+patch.supplement_filed    = amt;
+patch.supplement_status   = 'filed';
+patch.supplement_notes    = g('notes').trim() || null;
+patch.supplement_filed_at = new Date().toISOString();
+}else{
+var status = g('status') || 'approved';
+var got = status === 'denied' ? 0 : num(g('approved'));
+if(status !== 'denied' && (got == null || got < 0)){
+alert('Enter the amount the carrier approved.'); return;
+}
+patch.supplement_status     = status;
+patch.supplement_approved   = got || 0;
+patch.supplement_decided_at = new Date().toISOString();
+}
+btn.disabled = true; btn.textContent = 'Saving\u2026';
+try{
+if(!window.supa) throw new Error('No connection');
+var claim = claimOf(pr);
+if(claim && claim.id){
+var u = await window.supa.from('insurance_claims')
+.update(patch).eq('id', claim.id);
+if(u.error) throw u.error;
+}else{
+patch.project_id     = pr.id;
+patch.homeowner_name = pr.name || null;
+patch.status         = 'filed';
+patch.created_by     = ((window.currentUser && window.currentUser.email) || '').toLowerCase() || null;
+var i2 = await window.supa.from('insurance_claims').insert(patch);
+if(i2.error) throw i2.error;
+}
+if(window.CardinalInsurance && typeof window.CardinalInsurance.refresh === 'function'){
+await window.CardinalInsurance.refresh();
+}
+if(typeof window.auditLog === 'function'){
+try{
+window.auditLog('supplement',
+mode === 'file'
+? 'Filed a supplement for ' + usd(patch.supplement_filed)
+: 'Supplement ' + patch.supplement_status + ' \u2014 ' + usd(patch.supplement_approved),
+pr.id);
+}catch(_){}
+}
+closeModal();
+render();
+}catch(e){
+alert('Could not save: ' + (e.message || e) +
+(String(e.message || '').indexOf('supplement_') !== -1
+? '\n\nRun supplement_setup.sql if you haven\u2019t yet.' : ''));
+btn.disabled = false;
+btn.textContent = mode === 'file' ? 'File it' : 'Save';
+}
+}
+function ensureSolCard(){
+var pr = window.currentProject;
+if(!pr || !isInsurance(pr)) return;
+var mount = document.getElementById('solCard');
+if(!mount) return;
+if(mount.querySelector('#solCardEl')) return;
+if(typeof window.renderSolCard === 'function'){
+try{ window.renderSolCard(); }catch(e){ console.warn('[supp] solCard:', e); }
+}
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{ ensureSolCard(); render(); }catch(e){ console.warn('[supp]', e); }
+});
+}
+function start(){
+scan();
+new MutationObserver(scan).observe(document.body, {
+childList:true, subtree:true,
+});
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalSupplement = { render: render, open: openModal };
 })();
 </script>
 
