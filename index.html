@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 235 &#8212; Landing redesigned. The four portals are laid as shingle courses that lay in bottom-up on load, the cardinal image is replaced by a typographic lockup, and a daily quote rotates by date so the whole crew sees the same one. 31 quotes, most written for this trade.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 236 &#8212; What&#8217;s New caught up through build 235: the new landing, estimate preview and cover photos, photo editing, bulk delete, and the assigned-to filter.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29973,6 +29973,19 @@ window.CardinalDark = { toggle:toggle, isEnabled:isEnabled, setEnabled:setEnable
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:235, note:'\u2728 New landing page \u2014 the portals are laid like shingle courses, and a quote rotates daily so the whole crew sees the same one' },
+{ build:234, note:'\uD83C\uDFE0 The logo now always goes to the landing, whichever CRM you\u2019re in. All three portal headers share one look, with only the colour changing' },
+{ build:234, note:'\uD83D\uDC65 Filter the client list by who it\u2019s assigned to \u2014 Everyone, Me, Unassigned, or any teammate' },
+{ build:233, note:'\uD83E\uDDF9 Select all in the client list, plus a permanent Delete for admins \u2014 for clearing out test clients' },
+{ build:232, note:'\uD83D\uDDBC\uFE0F Estimate photos print whole instead of cropped, and line items and photos can be reordered with the arrows' },
+{ build:230, note:'\uD83D\uDCF8 Star any estimate photo as the cover \u2014 it prints large above the pricing. Items priced at zero print blank instead of $0.00' },
+{ build:229, note:'\uD83D\uDCC4 Estimates carry the full company block top-right \u2014 address, phone, email, website' },
+{ build:228, note:'\uD83D\uDD22 Qty / unit toggle on estimates \u2014 turn it off for lump-sum pricing and the client sees a description and one amount' },
+{ build:226, note:'\uD83D\uDC41\uFE0F Preview button on estimates \u2014 see the finished document and Print/PDF without saving. Publish now opens the document properly' },
+{ build:225, note:'\uD83D\uDCEC Mailing and Billing address tucked behind a toggle on Create Lead, so the property address is the one you fill in' },
+{ build:224, note:'\uD83D\uDC1B The + menu no longer runs off the edge of the screen on desktop' },
+{ build:223, note:'\uD83E\uDDF9 Work Type no longer offers Insurance and Retail \u2014 that\u2019s Claim Type, right below it' },
+{ build:222, note:'\uD83D\uDCF7 Add or shoot photos while picking them for an estimate, instead of backing out first' },
 { build:220, note:'\uD83D\uDC1B Property maps and PO# badges now actually appear on client profiles \u2014 both had been silently failing since they shipped' },
 { build:219, note:'\uD83D\uDD01 Estimate status drives the pipeline: mark one Sent and the client moves to Bid Submitted, Accepted moves it to Awarded. No more double entry' },
 { build:218, note:'\uD83D\uDCF1 \u27A1\uFE0F To Inspection and \u2192 Report now sit in the bottom bar when you check photos, instead of scrolling out of reach' },
