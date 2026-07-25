@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 234 &#8212; Logo now goes to the landing hub from every CRM instead of toggling between retail and insurance. All three portal headers share one design with only the accent colour changing &#8212; insurance no longer swaps in a different logo. Client directory gains an Assigned filter.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 235 &#8212; Landing redesigned. The four portals are laid as shingle courses that lay in bottom-up on load, the cardinal image is replaced by a typographic lockup, and a daily quote rotates by date so the whole crew sees the same one. 31 quotes, most written for this trade.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35437,6 +35437,297 @@ attributes:true, attributeFilter:['class'],
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
+})();
+</script>
+
+
+<style id="cr-lr-styles">#landingView{background:#14100e !important}#landingView::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 420px at 50% -8%,rgba(212,160,23,.13) 0%,transparent 62%),radial-gradient(700px 340px at 82% 8%,rgba(200,32,46,.07) 0%,transparent 60%);pointer-events:none}.cr-lr{position:relative;max-width:560px;margin:0 auto;padding:max(30px,env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e8ded4}.cr-lr-eyebrow{display:flex;align-items:center;gap:10px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.22em;text-transform:uppercase;color:#9c8b7e;margin-bottom:26px}.cr-lr-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:#C8202E;flex:0 0 auto}.cr-lr-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(212,160,23,.4),transparent)}.cr-lr-mark{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(38px,12vw,58px);line-height:.92;letter-spacing:-.025em;margin:0;color:#e8ded4}.cr-lr-mark em{font-style:normal;color:#C8202E}.cr-lr-sub{font:600 10.5px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:#d4a017;margin:9px 0 0}.cr-lr-greet{margin:34px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(21px,5.6vw,27px);font-weight:400;line-height:1.25;color:#e8ded4}.cr-lr-greet strong{font-weight:700;color:#d4a017}.cr-lr-stamp{margin:7px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9c8b7e}.cr-lr-quote{position:relative;margin:28px 0 34px;padding:20px 20px 20px 24px;background:linear-gradient(180deg,rgba(212,160,23,.055),transparent 70%);border-left:2px solid #d4a017}.cr-lr-quote p{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(16px,4.4vw,19px);line-height:1.5;color:#f0e6da}.cr-lr-quote cite{display:block;margin-top:11px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9c8b7e;font-style:normal}.cr-lr-roof{border-radius:12px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5)}.cr-lr-course{position:relative;display:flex;align-items:center;gap:15px;width:100%;padding:19px 18px;border:0;text-align:left;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#241b17 0%,#1d1613 88%);color:#e8ded4;transition:background .16s ease,transform .16s ease}.cr-lr-course + .cr-lr-course{border-top:1px solid rgba(255,255,255,.055);box-shadow:inset 0 3px 7px -4px rgba(0,0,0,.75)}.cr-lr-course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,#d4a017)}.cr-lr-course:hover{background:linear-gradient(180deg,#2b211c 0%,#221a16 88%)}.cr-lr-course:active{transform:translateY(1px)}.cr-lr-course:focus-visible{outline:2px solid #d4a017;outline-offset:-2px}.cr-lr-course .ic{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.045)}.cr-lr-course .tx{flex:1;min-width:0}.cr-lr-course .tt{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--acc,#d4a017);line-height:1.2}.cr-lr-course .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}.cr-lr-course .n{margin-top:5px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7d6f63}.cr-lr-course .go{flex:0 0 auto;font-size:15px;color:#5f5248;transition:color .16s,transform .16s}.cr-lr-course:hover .go{color:var(--acc,#d4a017);transform:translateX(2px)}.cr-lr-course.lead{padding:22px 18px;background:linear-gradient(180deg,#2e2119 0%,#241a14 88%)}.cr-lr-course.lead .tt{font-size:19px}.cr-lr-minor{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}.cr-lr-minor button{flex:1 1 auto;min-width:96px;padding:13px 12px;background:transparent;border:1px solid rgba(212,160,23,.24);border-radius:9px;color:#9c8b7e;font:600 11.5px -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;cursor:pointer;transition:border-color .16s,color .16s,background .16s}.cr-lr-minor button:hover{border-color:rgba(212,160,23,.55);color:#e8ded4;background:rgba(212,160,23,.05)}.cr-lr-foot{margin-top:34px;padding-top:18px;border-top:1px solid rgba(212,160,23,.16);display:flex;align-items:baseline;justify-content:space-between;gap:12px}.cr-lr-foot .pp{font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.55;color:#8d7f73}.cr-lr-foot .pp b{color:#d4a017;font-weight:700}.cr-lr-foot .sk{flex:0 0 auto;background:none;border:0;cursor:pointer;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#6b5d52;padding:4px}.cr-lr-foot .sk:hover{color:#e8ded4}@media (prefers-reduced-motion:no-preference){.cr-lr-course,.cr-lr-quote,.cr-lr-minor,.cr-lr-foot{opacity:0;animation:crLrLay .42s cubic-bezier(.22,.9,.3,1) forwards}.cr-lr-quote{animation-delay:.06s}.cr-lr-course:nth-child(1){animation-delay:.30s}.cr-lr-course:nth-child(2){animation-delay:.24s}.cr-lr-course:nth-child(3){animation-delay:.18s}.cr-lr-course:nth-child(4){animation-delay:.12s}.cr-lr-minor{animation-delay:.36s}.cr-lr-foot{animation-delay:.42s}@keyframes crLrLay{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}}</style>
+<script id="cr-lr-script">
+(function(){
+'use strict';
+var QUOTES = [
+{ t:'Measure twice. Tear off once.', c:'House rule' },
+{ t:"The roof doesn't care how tired you are. Neither does the rain.", c:'House rule' },
+{ t:'Price is what you pay. Value is what you get.', c:'Warren Buffett' },
+{ t:'Nobody buys a roof. They buy not worrying about the roof.', c:'House rule' },
+{ t:'Do the hard jobs first. The easy jobs will take care of themselves.', c:'Dale Carnegie' },
+{ t:'An objection is a request for more information wearing a disguise.', c:'House rule' },
+{ t:'Quality means doing it right when no one is looking.', c:'Henry Ford' },
+{ t:'The deck tells the truth. The shingles just cover for it.', c:'House rule' },
+{ t:"You don't close a homeowner. You give them a reason to say yes.", c:'House rule' },
+{ t:'Show up on time. Half of this trade is just showing up on time.', c:'House rule' },
+{ t:'Success is the sum of small efforts repeated day in and day out.', c:'Robert Collier' },
+{ t:"If you don't photograph it, it didn't happen.", c:'House rule' },
+{ t:'The best time to ask for the referral is while the crew is still cleaning up.', c:'House rule' },
+{ t:"Hard work beats talent when talent doesn't work hard.", c:'Tim Notke' },
+{ t:'Every storm sends someone knocking. Be the one they remember.', c:'House rule' },
+{ t:'A deductible is not a discount. Say it kindly, say it once.', c:'House rule' },
+{ t:'Well done is better than well said.', c:'Benjamin Franklin' },
+{ t:'Ice and water to the wall line. Every valley. No exceptions.', c:'Ohio code' },
+{ t:'The sale is made in the attic, not at the kitchen table.', c:'House rule' },
+{ t:'Opportunity is missed by most people because it is dressed in overalls and looks like work.', c:'Thomas Edison' },
+{ t:"Don't quote a number you can't defend line by line.", c:'House rule' },
+{ t:'Slow is smooth. Smooth is fast.', c:'House rule' },
+{ t:"People don't care how much you know until they know how much you care.", c:'Theodore Roosevelt' },
+{ t:'Magnetic sweep before you pull out. Every single time.', c:'House rule' },
+{ t:'The follow-up call is the job. The rest is paperwork.', c:'House rule' },
+{ t:'Whatever you are, be a good one.', c:'Abraham Lincoln' },
+{ t:"A supplement isn't a fight. It's the policy language read out loud.", c:'House rule' },
+{ t:'Leave the property better than the day you found it.', c:'House rule' },
+{ t:'Courage is what it takes to stand up and speak. Courage is also what it takes to sit down and listen.', c:'Winston Churchill' },
+{ t:'Twenty-five years on the shingle. Ten on us. Both of those are promises.', c:'House rule' },
+{ t:"You can't sell from the truck.", c:'House rule' }
+];
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function dayOfYear(d){
+return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+}
+function greeting(h){
+if(h < 12) return 'Good morning';
+if(h < 17) return 'Good afternoon';
+return 'Good evening';
+}
+function firstName(){
+try{
+if(window.currentUser && typeof window.displayNameFor === 'function'){
+return String(window.displayNameFor(window.currentUser)).split(' ')[0];
+}
+var e = (window.currentUser && window.currentUser.email) || '';
+var p = e.split('@')[0];
+return p ? p.charAt(0).toUpperCase() + p.slice(1) : '';
+}catch(_){ return ''; }
+}
+function canSeeAll(){
+try{
+if(window.CardinalPortal && typeof window.CardinalPortal.canSeeAll === 'function'){
+return !!window.CardinalPortal.canSeeAll();
+}
+}catch(_){}
+return false;
+}
+function counts(){
+var out = { retail:0, insurance:0, community:0, unknown:0 };
+try{
+var list = window.cacheProjects || [];
+list.forEach(function(pr){
+var t = 'unknown';
+if(typeof window.projClaimType === 'function'){
+t = window.projClaimType(pr) || 'unknown';
+}
+if(out[t] === undefined) t = 'unknown';
+out[t]++;
+});
+}catch(_){}
+return out;
+}
+function leave(){
+var lv = document.getElementById('landingView');
+if(lv) lv.style.display = 'none';
+var hd = document.querySelector('header.site');
+if(hd && hd.style.display === 'none') hd.style.display = '';
+}
+function setPortal(p){
+try{
+if(window.CardinalPortal && typeof window.CardinalPortal.set === 'function'){
+window.CardinalPortal.set(p, false);
+}
+}catch(_){}
+}
+function qiResume(){
+try{
+var qs = JSON.parse(localStorage.getItem('qi_session') || 'null');
+if(qs && qs.projectId){
+return '\u21BB Resume: ' + (qs.projectName || 'inspection') +
+(qs.up ? ' \u2014 ' + qs.up + ' photo' + (qs.up === 1 ? '' : 's') + ' saved' : '');
+}
+}catch(_){}
+return null;
+}
+function build(){
+var lv = document.getElementById('landingView');
+if(!lv) return false;
+if(lv.dataset.crLrBuilt === '1'){ paint(); return true; }
+lv.dataset.crPortalBuilt = '1';
+var c = counts();
+var seeAll = canSeeAll();
+var tot = c.retail + c.insurance + c.community + c.unknown;
+lv.innerHTML =
+'<div class="cr-lr">' +
+'<div class="cr-lr-eyebrow">' +
+'<span class="dot"></span><span>Dayton, Ohio</span>' +
+'<span class="ln"></span><span>Est. 1986</span>' +
+'</div>' +
+'<h1 class="cr-lr-mark">Cardinal<em>.</em></h1>' +
+'<p class="cr-lr-sub">Roofing &amp; Renovations</p>' +
+'<p class="cr-lr-greet"><span data-slot="hello">Good morning</span>' +
+'<span data-slot="comma"></span><strong data-slot="who"></strong>.</p>' +
+'<p class="cr-lr-stamp" data-slot="stamp"></p>' +
+'<blockquote class="cr-lr-quote">' +
+'<p data-slot="qt"></p><cite data-slot="qc"></cite>' +
+'</blockquote>' +
+'<div class="cr-lr-roof">' +
+'<button class="cr-lr-course lead" data-go="qi" style="--acc:#f5d061;">' +
+'<span class="ic">\u26A1</span>' +
+'<span class="tx">' +
+'<span class="tt">Quick Inspection</span>' +
+'<span class="sb" data-slot="qisub">Walk the roof, shoot the photos, attach it before you\u2019re off the ladder.</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
+'<button class="cr-lr-course" data-go="retail" style="--acc:#d4a017;">' +
+'<span class="ic">\uD83C\uDFE0</span>' +
+'<span class="tx">' +
+'<span class="tt">Retail</span>' +
+'<span class="sb">Homeowner work \u2014 roofs, siding, windows, gutters.</span>' +
+'<span class="n">' + c.retail + ' client' + (c.retail === 1 ? '' : 's') + '</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
+'<button class="cr-lr-course" data-go="insurance" style="--acc:#7fa6d6;">' +
+'<span class="ic">\uD83D\uDEE1\uFE0F</span>' +
+'<span class="tx">' +
+'<span class="tt">Cardinal Truth</span>' +
+'<span class="sb">Storm and claim work \u2014 carriers, adjusters, supplements.</span>' +
+'<span class="n">' + c.insurance + ' client' + (c.insurance === 1 ? '' : 's') + '</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
+'<button class="cr-lr-course" data-go="community" style="--acc:#7fbf8c;">' +
+'<span class="ic">\uD83C\uDFD8\uFE0F</span>' +
+'<span class="tx">' +
+'<span class="tt">Community</span>' +
+'<span class="sb">Partners, non-profits, HOAs \u2014 bids and awards.</span>' +
+'<span class="n">' + c.community + ' client' + (c.community === 1 ? '' : 's') + '</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
+'</div>' +
+'<div class="cr-lr-minor">' +
+(seeAll
+? '<button data-go="all">All clients \u00b7 ' + tot + '</button>'
+: '') +
+'<button data-go="library">Resource Library</button>' +
+'<button data-go="board">Schedule Board</button>' +
+'</div>' +
+'<div class="cr-lr-foot">' +
+'<div class="pp">Every client, every photo, every document.<br>' +
+'<b>One source of truth.</b></div>' +
+'<button class="sk" data-go="skip">Skip</button>' +
+'</div>' +
+'</div>';
+wire(lv);
+lv.dataset.crLrBuilt = '1';
+paint();
+return true;
+}
+function wire(lv){
+lv.querySelectorAll('[data-go]').forEach(function(b){
+b.onclick = function(e){
+e.preventDefault(); e.stopPropagation();
+var d = b.dataset.go;
+if(d === 'qi'){
+leave();
+if(typeof window.openQuickInsp === 'function') window.openQuickInsp(true);
+return;
+}
+if(d === 'retail'){
+setPortal('retail'); leave();
+if(typeof window.showHome === 'function') window.showHome();
+return;
+}
+if(d === 'insurance'){
+setPortal('insurance'); leave();
+if(typeof window.showCardinalTruth === 'function') window.showCardinalTruth();
+else if(typeof window.showHome === 'function') window.showHome();
+return;
+}
+if(d === 'community'){
+setPortal('community'); leave();
+if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){
+window.CardinalCommunityHub.show();
+}else if(typeof window.showHome === 'function') window.showHome();
+return;
+}
+if(d === 'all'){
+setPortal('all'); leave();
+if(typeof window.showHome === 'function') window.showHome();
+return;
+}
+if(d === 'library'){
+leave();
+if(typeof window.showResourceLibrary === 'function') window.showResourceLibrary();
+return;
+}
+if(d === 'board'){
+leave();
+if(typeof window.showHome === 'function') window.showHome();
+var nav = document.querySelector('.navopt[data-nav="board"]');
+if(nav) setTimeout(function(){ try{ nav.click(); }catch(_){} }, 60);
+return;
+}
+if(d === 'skip'){
+leave();
+if(typeof window.showHome === 'function') window.showHome();
+}
+};
+});
+}
+function paint(){
+var lv = document.getElementById('landingView');
+if(!lv || lv.dataset.crLrBuilt !== '1') return;
+var now = new Date();
+var q = QUOTES[dayOfYear(now) % QUOTES.length];
+var qt = lv.querySelector('[data-slot="qt"]');
+var qc = lv.querySelector('[data-slot="qc"]');
+if(qt) qt.textContent = '\u201C' + q.t + '\u201D';
+if(qc) qc.textContent = q.c;
+var hello = lv.querySelector('[data-slot="hello"]');
+if(hello) hello.textContent = greeting(now.getHours());
+var nm = firstName();
+var comma = lv.querySelector('[data-slot="comma"]');
+var who = lv.querySelector('[data-slot="who"]');
+if(comma) comma.textContent = nm ? ', ' : '';
+if(who) who.textContent = nm;
+var stamp = lv.querySelector('[data-slot="stamp"]');
+if(stamp){
+stamp.textContent =
+now.toLocaleDateString('en-US', { weekday:'long' }) + ' \u00b7 ' +
+now.toLocaleDateString('en-US', { month:'long', day:'numeric' });
+}
+var r = qiResume();
+var qs = lv.querySelector('[data-slot="qisub"]');
+if(qs && r) qs.textContent = r;
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{ build(); }catch(e){ console.warn('[landing]', e); }
+});
+}
+function start(){
+scan();
+var lv = document.getElementById('landingView');
+if(lv){
+new MutationObserver(function(){
+if(lv.style.display !== 'none') { build(); paint(); }
+}).observe(lv, { attributes:true, attributeFilter:['style'] });
+}
+new MutationObserver(scan).observe(document.body, { childList:true, subtree:true });
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalLanding = {
+rebuild : function(){
+var lv = document.getElementById('landingView');
+if(lv) delete lv.dataset.crLrBuilt;
+build();
+},
+quotes  : QUOTES,
+today   : function(){ return QUOTES[dayOfYear(new Date()) % QUOTES.length]; },
+};
 })();
 </script>
 
