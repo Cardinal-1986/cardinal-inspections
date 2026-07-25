@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 247 &#8212; Scope uploads up to 20&nbsp;MB. Files too big to send through the API now upload to storage first and the reader fetches them from there, so the old 4.5&nbsp;MB request limit no longer applies. Needs the updated api/sol.js.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 249 &#8212; New Sales Floor page (Menu &rarr; &#127919; Sales Floor): an objection of the day, 13 objections written as what-they-say / what-you-say with the reasoning behind each, talk tracks for the door, the roof, the table and the follow-up call, proof points, and one-tap access to the Objection Coach.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -31649,15 +31649,17 @@ if(up.error){ alert('Upload failed: ' + up.error.message); return; }
 var urlRes = window.supa.storage.from('photos').getPublicUrl(path);
 var url = urlRes && urlRes.data && urlRes.data.publicUrl;
 if(!url){ alert('Could not get URL.'); return; }
+var caption = prompt('Caption for this image (optional):', '') || '';
+var markup = (window.CardinalResourceImages &&
+typeof window.CardinalResourceImages.figureHtml === 'function')
+? window.CardinalResourceImages.figureHtml(url, caption.trim())
+: '<img src="' + url + '" alt="' + caption.trim().replace(/"/g, '&quot;') + '" />';
 if(mode === 'visual'){
 visual.focus();
-document.execCommand('insertHTML', false,
-'<img src="' + url + '" alt="" />'
-);
+document.execCommand('insertHTML', false, markup);
 }else{
 var pos = html.selectionStart || html.value.length;
-html.value = html.value.slice(0, pos) +
-'<img src="' + url + '" alt="" />' + html.value.slice(pos);
+html.value = html.value.slice(0, pos) + markup + html.value.slice(pos);
 }
 fire();
 }catch(e){ alert('Upload error: ' + e.message); }
@@ -35918,6 +35920,389 @@ refresh : async function(){ await load(); return Object.keys(cache).length; },
 claim   : function(pid){ return cache[pid] || null; },
 all     : function(){ return cache; },
 loaded  : function(){ return loaded; },
+};
+})();
+</script>
+
+
+<style id="cr-ri-styles">.rl-card img,.rl-article img,.rl-page img:not(.rl-navcard img){display:block;max-width:100%;height:auto;margin:16px auto;border-radius:9px;border:1px solid #e0d8c8;background:#faf8f3;cursor:zoom-in}.rl-card figure,.rl-article figure{margin:18px 0;padding:0}.rl-card figure img,.rl-article figure img{margin:0 auto 0}.rl-card figcaption,.rl-article figcaption{margin-top:8px;padding:0 4px;font:600 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.5;color:#6b7a90;text-align:center}.rl-card .rl-imgrow,.rl-article .rl-imgrow{display:grid;grid-template-columns:1fr;gap:12px;margin:18px 0}@media (min-width:620px){.rl-card .rl-imgrow,.rl-article .rl-imgrow{grid-template-columns:1fr 1fr}}.rl-imgrow figure{margin:0}#cr-ri-zoom{display:none;position:fixed;inset:0;background:rgba(10,8,7,.92);z-index:9800;align-items:center;justify-content:center;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));cursor:zoom-out}#cr-ri-zoom.open{display:flex;flex-direction:column}#cr-ri-zoom img{max-width:100%;max-height:calc(100% - 56px);object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.55)}#cr-ri-zoom .cap{margin-top:14px;max-width:640px;font:600 13px 'Segoe UI',Arial,sans-serif;line-height:1.5;color:#d8cfc4;text-align:center}#cr-ri-zoom .close{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;border:0;cursor:pointer;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center}#cr-ri-zoom .close:hover{background:rgba(255,255,255,.24)}@media print{.rl-card img,.rl-article img{max-width:100%;break-inside:avoid;cursor:default}.rl-card figure,.rl-article figure{break-inside:avoid}#cr-ri-zoom{display:none !important}}</style>
+<script id="cr-ri-script">
+(function(){
+'use strict';
+var zoom = null;
+function ensureZoom(){
+if(zoom) return zoom;
+zoom = document.createElement('div');
+zoom.id = 'cr-ri-zoom';
+zoom.innerHTML =
+'<button class="close" type="button" aria-label="Close">\u2715</button>' +
+'<img alt=""><div class="cap"></div>';
+zoom.onclick = close;
+document.body.appendChild(zoom);
+return zoom;
+}
+function close(){
+if(zoom) zoom.classList.remove('open');
+document.body.style.overflow = '';
+}
+function open(src, caption){
+ensureZoom();
+zoom.querySelector('img').src = src;
+var cap = zoom.querySelector('.cap');
+cap.textContent = caption || '';
+cap.style.display = caption ? '' : 'none';
+zoom.classList.add('open');
+document.body.style.overflow = 'hidden';
+}
+document.addEventListener('click', function(e){
+var img = e.target.closest &&
+e.target.closest('.rl-card img, .rl-article img');
+if(!img) return;
+if(img.closest('.rl-navcard')) return;
+e.preventDefault();
+var fig = img.closest('figure');
+var cap = fig ? fig.querySelector('figcaption') : null;
+open(img.currentSrc || img.src, cap ? cap.textContent : (img.alt || ''));
+});
+document.addEventListener('keydown', function(e){
+if(e.key === 'Escape' && zoom && zoom.classList.contains('open')) close();
+});
+function figureHtml(url, caption){
+return '<figure>' +
+'<img src="' + url + '" alt="' + (caption || '').replace(/"/g, '&quot;') + '">' +
+(caption ? '<figcaption>' + caption.replace(/[<>&]/g, function(c){
+return { '<':'&lt;', '>':'&gt;', '&':'&amp;' }[c];
+}) + '</figcaption>' : '') +
+'</figure>';
+}
+window.CardinalResourceImages = {
+open       : open,
+close      : close,
+figureHtml : figureHtml,
+};
+})();
+</script>
+
+
+<style id="cr-sf-styles">#cr-sf{display:none;position:fixed;inset:0;background:#17120f;z-index:9500;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#efe6dc}#cr-sf.open{display:block}.cr-sf-wrap{max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 18px calc(60px + env(safe-area-inset-bottom,0px))}.cr-sf-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}.cr-sf-back{flex:0 0 auto;background:transparent;border:1px solid rgba(239,230,220,.22);color:#b9aa9c;width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:17px;line-height:1;margin-top:4px}.cr-sf-back:hover{border-color:#C8202E;color:#efe6dc}.cr-sf-ttl{flex:1;min-width:0}.cr-sf-ttl h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(27px,7.5vw,38px);letter-spacing:-.02em;line-height:1;color:#efe6dc}.cr-sf-ttl h1 span{color:#C8202E}.cr-sf-ttl p{margin:7px 0 0;font:600 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.26em;text-transform:uppercase;color:#7e7168}.cr-sf-today{position:relative;margin:22px 0 26px;background:linear-gradient(160deg,#221a16,#1b1512);border:1px solid rgba(200,32,46,.4);border-radius:13px;padding:20px 20px 18px;overflow:hidden}.cr-sf-today::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#C8202E}.cr-sf-today .k{font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#C8202E}.cr-sf-today .q{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:clamp(17px,4.6vw,20px);line-height:1.45;color:#f4ece2;margin:11px 0 13px}.cr-sf-today .a{font-size:13.5px;line-height:1.6;color:#b9aa9c;padding-top:13px;border-top:1px solid rgba(239,230,220,.13)}.cr-sf-today .a b{color:#efe6dc}.cr-sf-coach{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-bottom:8px}.cr-sf-coach button{display:flex;align-items:center;gap:10px;background:#221a16;border:1px solid rgba(239,230,220,.14);border-radius:10px;padding:14px 14px;cursor:pointer;font-family:inherit;color:#efe6dc;text-align:left;transition:border-color .15s,background .15s}.cr-sf-coach button:hover{border-color:#C8202E;background:#2a201b}.cr-sf-coach button.hero{background:#C8202E;border-color:#C8202E;color:#fff;grid-column:1 / -1}.cr-sf-coach button.hero:hover{background:#a81826}.cr-sf-coach button .i{font-size:17px;flex:0 0 auto}.cr-sf-coach button .x{flex:1;min-width:0}.cr-sf-coach button .x b{display:block;font:700 13.5px inherit}.cr-sf-coach button .x small{display:block;font-size:11.5px;margin-top:2px;color:#8d7f74;line-height:1.4}.cr-sf-coach button.hero .x small{color:rgba(255,255,255,.72)}.cr-sf-rule{display:flex;align-items:baseline;gap:12px;margin:34px 0 6px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#7e7168}.cr-sf-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.5),transparent)}.cr-sf-lede{font-size:13px;line-height:1.6;color:#8d7f74;margin:0 0 4px}.cr-sf-tabs{display:flex;gap:6px;margin:16px 0 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-sf-tabs::-webkit-scrollbar{display:none}.cr-sf-tabs button{flex:0 0 auto;padding:9px 15px;border-radius:20px;cursor:pointer;background:transparent;border:1px solid rgba(239,230,220,.18);color:#8d7f74;font:700 11.5px inherit;white-space:nowrap;font-family:inherit;transition:all .15s}.cr-sf-tabs button:hover{color:#efe6dc;border-color:rgba(239,230,220,.4)}.cr-sf-tabs button.on{background:#C8202E;border-color:#C8202E;color:#fff}.cr-sf-cr{margin:14px 0 0;padding:0 0 16px;border-bottom:1px solid rgba(239,230,220,.09)}.cr-sf-cr:last-child{border-bottom:0}.cr-sf-cr .them{display:block;position:relative;margin-left:0;padding:0 0 0 18px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15.5px;line-height:1.5;color:#a2938a}.cr-sf-cr .them::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:2px;background:rgba(239,230,220,.2)}.cr-sf-cr .you{display:block;position:relative;margin:12px 0 0 18px;padding:0 0 0 18px;font-size:14.5px;line-height:1.6;color:#efe6dc}.cr-sf-cr .you::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:2px;background:#C8202E}.cr-sf-cr .why{display:block;margin:9px 0 0 36px;font:600 11.5px inherit;line-height:1.5;color:#7e7168}.cr-sf-cr .why b{color:#C8202E;font-weight:800}.cr-sf-block{background:#1e1714;border:1px solid rgba(239,230,220,.1);border-radius:11px;padding:16px 17px;margin-top:11px}.cr-sf-block h4{margin:0 0 8px;font-family:Georgia,serif;font-weight:700;font-size:15px;color:#efe6dc}.cr-sf-block p{margin:0 0 9px;font-size:13.5px;line-height:1.62;color:#b9aa9c}.cr-sf-block p:last-child{margin-bottom:0}.cr-sf-block b{color:#efe6dc}.cr-sf-block .say{font-family:Georgia,serif;font-size:14.5px;line-height:1.55;color:#f4ece2;padding-left:16px;border-left:2px solid #C8202E;margin:10px 0}.cr-sf-block ul{margin:8px 0 0;padding-left:19px}.cr-sf-block li{font-size:13.5px;line-height:1.6;color:#b9aa9c;margin-bottom:5px}.cr-sf-links{display:grid;gap:8px;margin-top:11px}.cr-sf-links button{display:flex;align-items:center;gap:11px;background:transparent;border:1px solid rgba(239,230,220,.14);border-radius:10px;padding:13px 15px;cursor:pointer;font-family:inherit;color:#b9aa9c;text-align:left;transition:border-color .15s,color .15s}.cr-sf-links button:hover{border-color:#C8202E;color:#efe6dc}.cr-sf-links button .i{font-size:15px;flex:0 0 auto}.cr-sf-links button b{flex:1;font:700 13px inherit}.cr-sf-links button .go{color:#5f544c;font-size:14px}.cr-sf-foot{margin-top:36px;padding-top:16px;border-top:1px solid rgba(239,230,220,.12);font:600 10px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#5f544c;text-align:center}@media (prefers-reduced-motion:no-preference){#cr-sf.open .cr-sf-today,#cr-sf.open .cr-sf-coach{animation:crSfIn .4s cubic-bezier(.22,.9,.3,1) backwards}#cr-sf.open .cr-sf-coach{animation-delay:.07s}@keyframes crSfIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}}</style>
+<script id="cr-sf-script">
+(function(){
+'use strict';
+var OBJECTIONS = {
+door: [
+{ them:'I already had someone look at it.',
+you:'Good — then you\u2019ve got a second opinion coming for free. What did they tell you they found?',
+why:'Doesn\u2019t fight the other contractor. Gets them talking, and most can\u2019t answer specifically.' },
+{ them:'I\u2019m not interested.',
+you:'Fair enough. I\u2019m only knocking because the wind came through here on the 14th and I\u2019ve pulled shingles off three roofs on this street. Two minutes and I\u2019ll tell you if yours is fine.',
+why:'Gives a reason you\u2019re there that isn\u2019t about selling, and a defined end point.' },
+{ them:'My roof is fine, it doesn\u2019t leak.',
+you:'Most of the ones I condemn don\u2019t leak yet. By the time it\u2019s inside, the deck is already gone. Storm damage shows on the surface a year or two before it shows on the ceiling.',
+why:'Reframes leaking as the last symptom, not the first.' },
+],
+table: [
+{ them:'That\u2019s more than I expected.',
+you:'Compared to what? If it\u2019s another bid, let\u2019s put them side by side — I\u2019ll show you line for line where the difference is. Usually it\u2019s the underlayment and the ventilation.',
+why:'Turns a number objection into a scope conversation, which you win.' },
+{ them:'I need to think about it.',
+you:'Of course. What specifically do you want to think through — the price, the timing, or whether it needs doing at all?',
+why:'"Think about it" is three different objections. Find out which one before you answer it.' },
+{ them:'I want to get two more quotes.',
+you:'Smart. Ask both of them three things: is ice and water going to the wall line in every valley, what\u2019s the workmanship warranty, and are they pulling the permit. If they dodge any of those, you\u2019ve learned something.',
+why:'Sets the criteria you already win on, and you look confident rather than threatened.' },
+{ them:'Can you do better on the price?',
+you:'I can change the scope, or I can change the timing. I can\u2019t change the price for the same work \u2014 what\u2019s in there is what it costs to do it right. Which would you rather move?',
+why:'Holds the number without saying no. Offers two real levers instead.' },
+],
+claim: [
+{ them:'I don\u2019t want my rates to go up.',
+you:'Storm claims are act-of-God \u2014 they\u2019re not rated against you the way an at-fault claim is. And everyone in the zip code got the same storm, so the rate change happens whether you file or not.',
+why:'The single most common reason a valid claim never gets filed.' },
+{ them:'My deductible is too high to bother.',
+you:'The deductible is your share of a job the carrier is paying for. On a full replacement you\u2019re putting up a fraction of the value. It\u2019s the cheapest a new roof will ever be for you.',
+why:'Reframes the deductible from a cost into a co-pay on a much larger number.' },
+{ them:'The adjuster said it\u2019s just wear and tear.',
+you:'That happens. Adjusters cover a lot of ground fast. I document each hit with a photo and the code section it violates, and we file a supplement. They approve them more often than people think.',
+why:'A denial is an opening position, not a verdict. Say so calmly.' },
+{ them:'Can you just waive my deductible?',
+you:'No \u2014 that\u2019s insurance fraud in Ohio, and it puts your claim at risk, not just my license. What I can do is make sure every line you\u2019re owed is in the scope.',
+why:'Say it kindly, say it once, and move straight to what you can do.' },
+],
+close: [
+{ them:'I need to talk to my spouse.',
+you:'Absolutely \u2014 is now a good time to get them on the phone? I\u2019d rather answer their questions directly than have you relay mine.',
+why:'Either you get the decision-maker, or you find out it wasn\u2019t a real objection.' },
+{ them:'Let me sleep on it.',
+you:'That\u2019s fine. Can I ask \u2014 if you woke up tomorrow feeling good about it, what would have made the difference overnight?',
+why:'Surfaces the actual hesitation, which is almost never sleep.' },
+],
+};
+var TABS = [
+{ id:'door',  label:'At the door' },
+{ id:'table', label:'At the table' },
+{ id:'claim', label:'Insurance' },
+{ id:'close', label:'Closing' },
+{ id:'talk',  label:'Talk tracks' },
+{ id:'proof', label:'Proof' },
+];
+var activeTab = 'door';
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function dayOfYear(d){
+return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+}
+function allObjections(){
+var out = [];
+Object.keys(OBJECTIONS).forEach(function(k){
+OBJECTIONS[k].forEach(function(o){ out.push(o); });
+});
+return out;
+}
+function todaysObjection(){
+var all = allObjections();
+return all[dayOfYear(new Date()) % all.length];
+}
+function talkTracks(){
+return '' +
+'<div class="cr-sf-block">' +
+'<h4>At the door</h4>' +
+'<p>Name the storm, name the street, give an end point. Never open with a question they can say no to.</p>' +
+'<div class="say">"Hi \u2014 Nick with Cardinal Roofing, we\u2019re out of Dayton. The wind that came through on the 14th took shingles off three houses on this block. I\u2019m checking the rest of the street. Takes me about ten minutes from the ground \u2014 want me to look at yours while I\u2019m here?"</div>' +
+'<p>Then stop talking. The first person to speak after the ask usually loses.</p>' +
+'</div>' +
+'<div class="cr-sf-block">' +
+'<h4>Coming off the roof</h4>' +
+'<p>Lead with what you found, not what you\u2019re selling. Show the photos on the phone before you say a number.</p>' +
+'<div class="say">"I want to show you three things. This is a bruise \u2014 that\u2019s hail, the mat\u2019s fractured underneath even though it looks fine. This is your valley, there\u2019s no ice and water under it. And this is the pipe boot, which is cracked and is going to leak this winter regardless of the storm."</div>' +
+'<p>Three findings is the number. One sounds thin, five sounds like you\u2019re padding.</p>' +
+'</div>' +
+'<div class="cr-sf-block">' +
+'<h4>At the kitchen table</h4>' +
+'<p>Put the estimate face down until you\u2019ve walked the scope. Price lands differently after they understand what\u2019s in it.</p>' +
+'<div class="say">"Before I turn this over \u2014 here\u2019s what we\u2019re doing. Full tear-off to the deck, any rotten sheeting replaced, ice and water in every valley and up to the wall line, synthetic underlayment, new boots, ridge vent, and we haul everything. Twenty-five years on the shingle, ten on our work. Now here\u2019s the number."</div>' +
+'</div>' +
+'<div class="cr-sf-block">' +
+'<h4>The follow-up call</h4>' +
+'<p>Never call to "check in." Call with something they don\u2019t have yet.</p>' +
+'<div class="say">"I pulled the manufacturer sheet on the shingle we spec\u2019d so you can see the wind rating in writing \u2014 want me to text it over? While I\u2019ve got you, did anything come up when you talked it through?"</div>' +
+'<p>The reason for the call is the sheet. The question is the actual call.</p>' +
+'</div>';
+}
+function proof(){
+return '' +
+'<div class="cr-sf-block">' +
+'<h4>The company</h4>' +
+'<ul>' +
+'<li>Dayton, Ohio. <b>Roofing since 1986.</b></li>' +
+'<li>Licensed and insured \u2014 certificate on request, before they ask.</li>' +
+'<li>We pull the permit. Ask a competitor whether they do.</li>' +
+'<li>Magnetic sweep before we pull out. Every job, every time.</li>' +
+'</ul>' +
+'</div>' +
+'<div class="cr-sf-block">' +
+'<h4>The warranty</h4>' +
+'<p><b>25 years</b> on the shingle from the manufacturer. <b>10 years</b> on our workmanship from us.</p>' +
+'<p>Both of those are promises. The second one is the one that matters \u2014 a manufacturer defect is rare, and bad installation is not.</p>' +
+'</div>' +
+'<div class="cr-sf-block">' +
+'<h4>What goes on the roof</h4>' +
+'<ul>' +
+'<li>Full tear-off to the deck \u2014 no layovers.</li>' +
+'<li>Rotten sheeting replaced, priced per sheet up front so there\u2019s no surprise.</li>' +
+'<li>Ice and water shield in every valley and to the wall line.</li>' +
+'<li>Synthetic underlayment, not felt.</li>' +
+'<li>New pipe boots. Reusing old boots is where leaks come back.</li>' +
+'<li>Proper intake and exhaust ventilation \u2014 this is what most bids leave out.</li>' +
+'</ul>' +
+'</div>' +
+'<div class="cr-sf-block">' +
+'<h4>Their rights, before they ask</h4>' +
+'<p>Ohio gives a homeowner <b>three business days</b> to cancel a contract signed at their home \u2014 ORC \u00a71345.23. Two copies of that notice are in every contract we hand over.</p>' +
+'<p>Bring it up yourself. Saying it first is worth more than the three days cost you.</p>' +
+'</div>';
+}
+function renderTab(){
+if(activeTab === 'talk')  return talkTracks();
+if(activeTab === 'proof') return proof();
+var list = OBJECTIONS[activeTab] || [];
+return list.map(function(o){
+return '<div class="cr-sf-cr">' +
+'<span class="them">\u201C' + esc(o.them) + '\u201D</span>' +
+'<span class="you">' + esc(o.you) + '</span>' +
+'<span class="why"><b>Why:</b> ' + esc(o.why) + '</span>' +
+'</div>';
+}).join('');
+}
+var el = null;
+function ensure(){
+if(el) return el;
+el = document.createElement('div');
+el.id = 'cr-sf';
+document.body.appendChild(el);
+return el;
+}
+function render(){
+ensure();
+var t = todaysObjection();
+el.innerHTML =
+'<div class="cr-sf-wrap">' +
+'<div class="cr-sf-top">' +
+'<button class="cr-sf-back" data-act="back" type="button">\u2190</button>' +
+'<div class="cr-sf-ttl">' +
+'<h1>Sales <span>Floor</span></h1>' +
+'<p>Cardinal Roofing \u00b7 Field Guide</p>' +
+'</div>' +
+'</div>' +
+'<div class="cr-sf-today">' +
+'<div class="k">Today\u2019s objection</div>' +
+'<div class="q">\u201C' + esc(t.them) + '\u201D</div>' +
+'<div class="a"><b>' + esc(t.you) + '</b></div>' +
+'</div>' +
+'<div class="cr-sf-coach">' +
+'<button class="hero" data-go="drill" type="button"><span class="i">\uD83C\uDFAF</span>' +
+'<span class="x"><b>Practice a drill</b>' +
+'<small>Random objection, you answer, the AI grades it</small></span></button>' +
+'<button data-go="deck" type="button"><span class="i">\uD83D\uDCC7</span>' +
+'<span class="x"><b>The deck</b><small>Browse every card</small></span></button>' +
+'<button data-go="board" type="button"><span class="i">\uD83C\uDFC6</span>' +
+'<span class="x"><b>Leaderboard</b><small>How the team scores</small></span></button>' +
+'<button data-go="log" type="button"><span class="i">\uD83D\uDCDD</span>' +
+'<span class="x"><b>Log a real one</b><small>Something you heard today</small></span></button>' +
+'</div>' +
+'<div class="cr-sf-rule">Objections</div>' +
+'<p class="cr-sf-lede">What they say, what you say, and why it lands.</p>' +
+'<div class="cr-sf-tabs">' +
+TABS.map(function(tb){
+return '<button data-tab="' + tb.id + '"' +
+(tb.id === activeTab ? ' class="on"' : '') + ' type="button">' +
+tb.label + '</button>';
+}).join('') +
+'</div>' +
+'<div data-slot="tab">' + renderTab() + '</div>' +
+'<div class="cr-sf-rule">Reference</div>' +
+'<p class="cr-sf-lede">The technical pages that come up mid-pitch.</p>' +
+'<div class="cr-sf-links">' +
+'<button data-rl="Do &amp; Don\'t" type="button"><span class="i">\u2696\uFE0F</span>' +
+'<b>Do &amp; Don\u2019t</b><span class="go">\u2192</span></button>' +
+'<button data-rl="Claim Tips" type="button"><span class="i">\uD83D\uDCA1</span>' +
+'<b>Claim Tips</b><span class="go">\u2192</span></button>' +
+'<button data-rl="Ohio Insurance Law" type="button"><span class="i">\u2696\uFE0F</span>' +
+'<b>Ohio Insurance Law</b><span class="go">\u2192</span></button>' +
+'<button data-rl="Policy Provisions" type="button"><span class="i">\uD83D\uDCC4</span>' +
+'<b>Policy Provisions</b><span class="go">\u2192</span></button>' +
+'<button data-rl="Manufacturer Guidelines" type="button"><span class="i">\uD83C\uDFED</span>' +
+'<b>Manufacturer Guidelines</b><span class="go">\u2192</span></button>' +
+'<button data-go="library" type="button"><span class="i">\uD83D\uDCDA</span>' +
+'<b>Full Resource Library</b><span class="go">\u2192</span></button>' +
+'</div>' +
+'<div class="cr-sf-foot">You can\u2019t sell from the truck</div>' +
+'</div>';
+wire();
+}
+function wire(){
+el.querySelector('[data-act="back"]').onclick = close;
+el.querySelectorAll('[data-tab]').forEach(function(b){
+b.onclick = function(){
+activeTab = b.dataset.tab;
+el.querySelectorAll('[data-tab]').forEach(function(x){
+x.classList.toggle('on', x === b);
+});
+var slot = el.querySelector('[data-slot="tab"]');
+if(slot) slot.innerHTML = renderTab();
+};
+});
+el.querySelectorAll('[data-go]').forEach(function(b){
+b.onclick = function(){
+var d = b.dataset.go;
+var C = window.CardinalCoach;
+if(d === 'drill' && C && C.practice){ close(); C.practice(true); return; }
+if(d === 'deck'  && C && C.open){     close(); C.open(true);     return; }
+if(d === 'board' && C && C.board){    close(); C.board();        return; }
+if(d === 'log'   && C && C.logFor){   close(); C.logFor(null);   return; }
+if(d === 'library' && typeof window.showResourceLibrary === 'function'){
+close(); window.showResourceLibrary(); return;
+}
+alert('That isn\u2019t available yet.');
+};
+});
+el.querySelectorAll('[data-rl]').forEach(function(b){
+b.onclick = function(){
+var title = b.dataset.rl;
+close();
+if(typeof window.showResourceLibrary === 'function') window.showResourceLibrary();
+setTimeout(function(){
+var page = document.querySelector('[data-rltitle="' + title.replace(/"/g,'') + '"]');
+if(page){
+document.querySelectorAll('.rl-page').forEach(function(p){
+p.classList.remove('rl-pageActive');
+});
+page.classList.add('rl-pageActive');
+page.scrollIntoView({ block:'start' });
+}
+}, 140);
+};
+});
+}
+function open(){
+render();
+if(typeof window.hideAllViews === 'function'){
+try{ window.hideAllViews(); }catch(_){}
+}
+el.classList.add('open');
+document.body.style.overflow = 'hidden';
+el.scrollTop = 0;
+}
+function close(){
+if(el) el.classList.remove('open');
+document.body.style.overflow = '';
+if(typeof window.showHome === 'function') window.showHome();
+}
+function addMenuItem(){
+if(document.getElementById('cr-nav-salesfloor')) return true;
+var menu = document.getElementById('navMenu');
+if(!menu) return false;
+var anchor = Array.prototype.slice.call(menu.querySelectorAll('.navopt'))
+.find(function(b){ return /resource library/i.test(b.textContent || ''); });
+var btn = document.createElement('button');
+btn.className = 'navopt';
+btn.id = 'cr-nav-salesfloor';
+btn.type = 'button';
+btn.innerHTML = '\uD83C\uDFAF Sales Floor';
+btn.onclick = function(e){
+e.stopPropagation();
+var m = document.getElementById('navMenu');
+if(m) m.style.display = 'none';
+open();
+};
+if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor);
+else menu.appendChild(btn);
+return true;
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{ addMenuItem(); }catch(_){}
+});
+}
+function start(){
+scan();
+new MutationObserver(scan).observe(document.body, {
+childList:true, subtree:true,
+});
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalSalesFloor = {
+open  : open,
+close : close,
+today : todaysObjection,
+objections : OBJECTIONS,
 };
 })();
 </script>
