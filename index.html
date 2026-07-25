@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 230 &#8212; Estimate documents: line items priced at zero now print a blank amount instead of $0.00, and any attached photo can be starred as the cover &#8212; it prints large above the pricing so the homeowner sees their roof before the number.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 227 &#8212; Estimates: a Qty / unit toggle in the Line Items header. Turn it off for lump-sum pricing &#8212; each line becomes a description and one amount, and the document drops those columns too. Library descriptions now expand to fit instead of hiding in a two-line box.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37338,19 +37338,14 @@ gap:0 12px;
 .cr-est-row3{ grid-template-columns:1fr; }
 }
 .cr-est-items-head{
-display:flex; align-items:baseline; gap:8px;
-flex-wrap:wrap;
+display:flex; align-items:baseline; gap:10px;
 margin:22px 0 8px;
 }
 .cr-est-items-head h3{
-margin:0;
-flex:1 1 100%;
+margin:0; flex:1;
 font:800 11px 'Segoe UI',Arial,sans-serif;
 letter-spacing:.14em; text-transform:uppercase;
 color:#8a7a5a;
-}
-@media (min-width:560px){
-.cr-est-items-head h3{ flex:1 1 auto; }
 }
 .cr-est-items-head button{
 padding:7px 12px; border-radius:6px; border:0;
@@ -37400,21 +37395,15 @@ font-family:inherit;
 border-color:#d9cfaf; background:#fdfcf7;
 }
 .cr-est-itemchk{
-display:inline-flex; align-items:center; gap:6px;
-padding:6px 11px;
-background:#faf5e9;
-border:1px solid #d9cfaf;
-border-radius:6px;
+display:flex; align-items:center; gap:6px;
+margin-right:8px;
 font:700 11px 'Segoe UI',Arial,sans-serif;
-color:#8a5a00; cursor:pointer;
+color:#8a7a5a; cursor:pointer;
 white-space:nowrap;
-flex:0 0 auto;
 }
-.cr-est-itemchk:hover{ background:#f5efd8; border-color:#d4a017; }
 .cr-est-itemchk input{
 width:15px !important; height:15px; margin:0;
 accent-color:#d4a017;
-flex:0 0 auto;
 }
 .cr-est-lineitem .pricing.lump{
 grid-template-columns:auto 1fr;
@@ -37519,35 +37508,6 @@ font-size:12px;
 padding:0;
 }
 .cr-est-photo .del:hover{ background:rgba(156,24,34,.85); }
-.cr-est-photo.is-cover{
-border-color:#d4a017;
-box-shadow:0 0 0 2px rgba(212,160,23,.35);
-}
-.cr-est-photo .cover-btn{
-position:absolute; top:5px; left:5px;
-width:26px; height:26px;
-border-radius:50%;
-background:rgba(0,0,0,.55);
-color:#f5d061; border:0;
-cursor:pointer;
-display:flex; align-items:center; justify-content:center;
-font-size:15px; line-height:1;
-padding:0;
-}
-.cr-est-photo .cover-btn:hover{ background:rgba(212,160,23,.85); color:#1a1a1a; }
-.cr-est-photo.is-cover .cover-btn{ background:#d4a017; color:#1a1a1a; }
-.cr-est-photo .cover-tag{
-position:absolute; top:36px; left:5px;
-background:#d4a017; color:#1a1a1a;
-font:800 8.5px 'Segoe UI',Arial,sans-serif;
-letter-spacing:.12em; text-transform:uppercase;
-padding:2px 6px; border-radius:4px;
-}
-.cr-est-photohint{
-margin-top:8px;
-font:600 11.5px 'Segoe UI',Arial,sans-serif;
-color:#8a7a5a; line-height:1.4;
-}
 .cr-est-totals{
 background:#faf5e9; border:1px solid #e8d9a8;
 border-radius:10px; padding:14px 16px;
@@ -37947,26 +37907,14 @@ function renderPhotos(photos){
 if(!photos || !photos.length){
 return '<div class="cr-est-empty-items">No photos attached. Tap <b>+ Attach Photos</b> to pick from the client\u2019s gallery.</div>';
 }
-var hasCover = photos.some(function(p){ return p.cover; });
 return '<div class="cr-est-photos">' +
 photos.map(function(p, i){
-var isCover = !!p.cover;
-return '<div class="cr-est-photo' + (isCover ? ' is-cover' : '') + '" data-pi="' + i + '">' +
+return '<div class="cr-est-photo" data-pi="' + i + '">' +
 '<div class="thumb"><img src="' + esc(p.url || '') + '" alt="" loading="lazy" /></div>' +
-'<button class="cover-btn" data-act="set-cover" title="' +
-(isCover ? 'Cover photo \u2014 tap to unset' : 'Use as cover photo') + '">' +
-(isCover ? '\u2605' : '\u2606') +
-'</button>' +
-(isCover ? '<span class="cover-tag">Cover</span>' : '') +
 '<textarea class="caption" data-pf="caption" placeholder="Add a caption\u2026">' + esc(p.caption || '') + '</textarea>' +
 '<button class="del" data-act="del-photo" title="Remove">\u2715</button>' +
 '</div>';
 }).join('') +
-'</div>' +
-'<div class="cr-est-photohint">' +
-(hasCover
-? 'The cover photo prints large above the pricing. The rest appear in Photo Documentation.'
-: 'Tap \u2606 on a photo to make it the cover \u2014 it prints large above the pricing.') +
 '</div>';
 }
 function renderTotals(t){
@@ -38091,13 +38039,6 @@ if(state.photos[idx]) state.photos[idx].caption = e.target.value;
 var delBtn = el.querySelector('[data-act="del-photo"]');
 if(delBtn) delBtn.onclick = function(){
 state.photos.splice(idx, 1);
-render();
-};
-var coverBtn = el.querySelector('[data-act="set-cover"]');
-if(coverBtn) coverBtn.onclick = function(){
-var was = !!state.photos[idx].cover;
-state.photos.forEach(function(p){ delete p.cover; });
-if(!was) state.photos[idx].cover = true;
 render();
 };
 });
@@ -38553,13 +38494,12 @@ var itemRows = lines.map(function(l){
 var qty  = Number(l.qty) || 0;
 var rate = Number(l.unit_price) || 0;
 var amt  = itemized ? (qty * rate) : (Number(l.amount) || 0);
-var amtCell = amt ? money(amt) : '';
 var desc = '<b>' + esc(l.name || 'Item') + '</b>' +
 (l.description ? '<br><span style="font-size:9.5pt;color:#555;">' + nl2br(l.description) + '</span>' : '');
 if(!itemized){
 return '<tr class="avoid-break">' +
 '<td>' + desc + '</td>' +
-'<td class="rate">' + amtCell + '</td>' +
+'<td class="rate">' + money(amt) + '</td>' +
 '</tr>';
 }
 return '<tr class="avoid-break">' +
@@ -38567,7 +38507,7 @@ return '<tr class="avoid-break">' +
 '<td class="qty">' + (qty || '') + '</td>' +
 '<td class="unit">' + esc(l.unit || '') + '</td>' +
 '<td class="rate">' + (rate ? money(rate) : '') + '</td>' +
-'<td class="rate">' + amtCell + '</td>' +
+'<td class="rate">' + money(amt) + '</td>' +
 '</tr>';
 }).join('');
 var COLS = itemized ? 5 : 2;
@@ -38601,18 +38541,10 @@ var depositBlock = depAmt > 0
 '</table>' +
 '</div>'
 : '';
-var cover = photos.filter(function(p){ return p.cover; })[0] || null;
-var gridPhotos = photos.filter(function(p){ return p !== cover; });
-var coverBlock = cover
-? '<figure class="coverfig avoid-break">' +
-'<img src="' + esc(cover.url || '') + '" alt="">' +
-(cover.caption ? '<figcaption>' + nl2br(cover.caption) + '</figcaption>' : '') +
-'</figure>'
-: '';
-var photoSection = gridPhotos.length
+var photoSection = photos.length
 ? '<h2 class="sec"><span class="num">' + (est.notes ? '4' : '3') + '</span>Photo Documentation</h2>' +
 '<div class="photogrid">' +
-gridPhotos.map(function(p){
+photos.map(function(p){
 return '<figure class="pfig avoid-break">' +
 '<img src="' + esc(p.url || '') + '" alt="">' +
 (p.caption
@@ -38643,12 +38575,11 @@ return '<!DOCTYPE html>\n' +
 'body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);font-size:11pt;line-height:1.5;width:8.5in;margin:0 auto;padding:0.75in 0.65in 0.9in;background:#fff;}\n' +
 '@page{size:Letter;margin:0.75in 0.65in 0.9in;}\n' +
 '@media print{.no-print{display:none!important;}body{width:auto;margin:0;padding:0;}}\n' +
-'.est-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:8px;}\n' +
-'.est-brand{flex:0 0 auto;}\n' +
-'.est-logo{width:2.4in;max-width:100%;display:block;}\n' +
-'.est-co{flex:0 0 auto;text-align:right;font-size:9.5pt;line-height:1.45;color:#333;}\n' +
-'.est-co .co-name{font-weight:800;font-size:10.5pt;color:var(--ink);margin-bottom:2px;}\n' +
-'.est-title{font-size:22pt;font-weight:800;letter-spacing:1px;text-align:right;margin:2px 0;}\n' +
+'.est-head{text-align:center;margin-bottom:14px;}\n' +
+'.est-logo{width:2.6in;max-width:60%;display:block;margin:0 auto 8px;}\n' +
+'.est-title{font-size:24pt;font-weight:800;letter-spacing:1px;margin:2mm 0 1mm;}\n' +
+'.est-title span{color:var(--red);}\n' +
+'.est-sub{font-size:11pt;color:var(--muted);margin:0 0 6px;}\n' +
 '.rule{height:3px;background:var(--red);border:0;margin:8px 0 14px;}\n' +
 'table.meta{border-collapse:collapse;width:100%;margin:6px 0 12px;font-size:10.5pt;}\n' +
 'table.meta td{border:1px solid var(--line);padding:7px 10px;vertical-align:top;}\n' +
@@ -38671,9 +38602,6 @@ return '<!DOCTYPE html>\n' +
 'table.dep td{padding:4px 0;}\n' +
 'table.dep td.k{font-weight:700;}\n' +
 'table.dep td.v{text-align:right;font-weight:800;white-space:nowrap;font-size:12pt;}\n' +
-'.coverfig{margin:0 0 16px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafafa;}\n' +
-'.coverfig img{width:100%;height:3.1in;object-fit:cover;display:block;}\n' +
-'.coverfig figcaption{padding:7px 11px;font-size:9.5pt;line-height:1.4;color:#333;background:#fff;border-top:1px solid var(--line);}\n' +
 '.photogrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;}\n' +
 '.pfig{margin:0;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:#fafafa;}\n' +
 '.pfig img{width:100%;height:2.4in;object-fit:cover;display:block;}\n' +
@@ -38689,19 +38617,10 @@ return '<!DOCTYPE html>\n' +
 '</head>\n' +
 '<body>\n' +
 '<div class="est-head">' +
-'<div class="est-brand">' +
 (logo ? '<img class="est-logo" src="' + logo + '" alt="Cardinal Roofing &amp; Renovations">' : '') +
-'</div>' +
-'<div class="est-co">' +
-'<div class="co-name">Cardinal Roofing &amp; Renovations, LLC</div>' +
-'5735 Webster Street<br>' +
-'Dayton, Ohio 45414<br>' +
-'Office # (937) 576-6753<br>' +
-'Admin@cardinalrenovations.net<br>' +
-'www.cardinalrenovations.net' +
-'</div>' +
-'</div>' +
 '<div class="est-title">ESTIMATE</div>' +
+'<p class="est-sub">Cardinal Roofing &amp; Renovations, LLC</p>' +
+'</div>' +
 '<hr class="rule">' +
 '<table class="meta">' +
 '<tr>' +
@@ -38718,8 +38637,11 @@ return '<!DOCTYPE html>\n' +
 '<td class="k">Valid Through</td>' +
 '<td>' + esc(fmtDate(est.valid_through)) + '</td>' +
 '</tr>' +
+'<tr>' +
+'<td class="k">Prepared By</td>' +
+'<td colspan="3">Cardinal Roofing &amp; Renovations, LLC \u00b7 5735 Webster St, Dayton OH 45414 \u00b7 (937) 576-6753 \u00b7 Admin@cardinalrenovations.net</td>' +
+'</tr>' +
 '</table>' +
-coverBlock +
 '<h2 class="sec"><span class="num">1</span>Scope of Work &amp; Pricing</h2>' +
 '<table class="items">' +
 '<thead>' + headRow + '</thead>' +
@@ -38741,7 +38663,7 @@ photoSection +
 '<div class="lbl">Client Signature &amp; Date</div>' +
 '</div>' +
 '</div>' +
-'<div class="foot">Cardinal Roofing &amp; Renovations, LLC \u00b7 5735 Webster Street, Dayton, Ohio 45414 \u00b7 (937) 576-6753 \u00b7 www.cardinalrenovations.net</div>' +
+'<div class="foot">Cardinal Roofing &amp; Renovations, LLC \u00b7 Dayton, Ohio \u00b7 Serving the Miami Valley since 1986</div>' +
 '</body>\n</html>';
 }
 async function publish(est, project, opts){
