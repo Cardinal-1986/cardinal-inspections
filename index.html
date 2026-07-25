@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 245 &#8212; Supplements can now be filed and decided from the client profile, showing what each one added to the carrier&#8217;s scope. Also fixed the Scope of Loss upload never appearing on clients with no lead details.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 246 &#8212; Fixed HTTP 413 on scope uploads. The app allowed 12&nbsp;MB but the server accepts about 3&nbsp;MB once encoded. Photos are now compressed automatically before upload, and oversize PDFs get a message that says what to do instead.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35923,6 +35923,129 @@ loaded  : function(){ return loaded; },
 </script>
 
 
+<script id="cr-suf-script">
+(function(){
+'use strict';
+var MAX_BYTES  = 3.1 * 1024 * 1024;
+var MAX_EDGE   = 2200;
+var JPEG_Q     = 0.82;
+function mb(bytes){ return (bytes / 1024 / 1024).toFixed(1); }
+function isImage(file){
+return file && /^image\//.test(file.type || '');
+}
+function compressImage(file){
+return new Promise(function(resolve){
+var url = URL.createObjectURL(file);
+var img = new Image();
+img.onload = function(){
+try{
+var w = img.naturalWidth, h = img.naturalHeight;
+var scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+var cw = Math.round(w * scale), ch = Math.round(h * scale);
+var cv = document.createElement('canvas');
+cv.width = cw; cv.height = ch;
+var cx = cv.getContext('2d');
+cx.fillStyle = '#fff';
+cx.fillRect(0, 0, cw, ch);
+cx.drawImage(img, 0, 0, cw, ch);
+cv.toBlob(function(blob){
+URL.revokeObjectURL(url);
+if(!blob || blob.size >= file.size){ resolve(file); return; }
+var out = new File([blob],
+(file.name || 'scope').replace(/\.[^.]+$/, '') + '.jpg',
+{ type:'image/jpeg' });
+console.log('[sol] compressed ' + mb(file.size) + ' MB -> ' + mb(out.size) + ' MB');
+resolve(out);
+}, 'image/jpeg', JPEG_Q);
+}catch(e){
+URL.revokeObjectURL(url);
+resolve(file);
+}
+};
+img.onerror = function(){ URL.revokeObjectURL(url); resolve(file); };
+img.src = url;
+});
+}
+async function prepare(file){
+if(!file) return null;
+if(isImage(file)){
+var out = file.size > MAX_BYTES ? await compressImage(file) : file;
+if(out.size > MAX_BYTES){
+out = await compressAt(file, 1600, 0.72);
+}
+if(out.size > MAX_BYTES){
+alert('That image is still ' + mb(out.size) + ' MB after compressing, which is ' +
+'over the ' + mb(MAX_BYTES) + ' MB the reader accepts.\n\n' +
+'Try photographing one page at a time.');
+return null;
+}
+return out;
+}
+if(file.size > MAX_BYTES){
+alert('That PDF is ' + mb(file.size) + ' MB. The reader accepts up to ' +
+mb(MAX_BYTES) + ' MB.\n\n' +
+'Options:\n' +
+'  \u2022 Photograph the pages instead \u2014 photos get compressed automatically\n' +
+'  \u2022 Export or "print to PDF" at a lower quality\n' +
+'  \u2022 Split it and upload the scope pages only');
+return null;
+}
+return file;
+}
+function compressAt(file, edge, q){
+return new Promise(function(resolve){
+var url = URL.createObjectURL(file);
+var img = new Image();
+img.onload = function(){
+try{
+var scale = Math.min(1, edge / Math.max(img.naturalWidth, img.naturalHeight));
+var cw = Math.round(img.naturalWidth * scale);
+var ch = Math.round(img.naturalHeight * scale);
+var cv = document.createElement('canvas');
+cv.width = cw; cv.height = ch;
+var cx = cv.getContext('2d');
+cx.fillStyle = '#fff'; cx.fillRect(0, 0, cw, ch);
+cx.drawImage(img, 0, 0, cw, ch);
+cv.toBlob(function(b){
+URL.revokeObjectURL(url);
+resolve(b ? new File([b], 'scope.jpg', { type:'image/jpeg' }) : file);
+}, 'image/jpeg', q);
+}catch(e){ URL.revokeObjectURL(url); resolve(file); }
+};
+img.onerror = function(){ URL.revokeObjectURL(url); resolve(file); };
+img.src = url;
+});
+}
+function wrap(){
+if(typeof window.readScopeOfLoss !== 'function') return false;
+if(window.readScopeOfLoss.__crFixed) return true;
+var orig = window.readScopeOfLoss;
+var wrapped = async function(file){
+var ready = await prepare(file);
+if(!ready) return;
+return orig.call(this, ready);
+};
+wrapped.__crFixed = true;
+window.readScopeOfLoss = wrapped;
+return true;
+}
+if(!wrap()){
+var n = 0, iv = setInterval(function(){
+if(wrap() || ++n > 60) clearInterval(iv);
+}, 250);
+}
+window.CardinalSolUpload = {
+prepare  : prepare,
+maxBytes : MAX_BYTES,
+describe : function(){
+return 'Images are compressed automatically. PDFs must be under ' +
+mb(MAX_BYTES) + ' MB.';
+},
+};
+})();
+</script>
+
+
 <style id="cr-sol-styles">#cr-sol{display:none;position:fixed;inset:0;background:rgba(10,14,22,.78);z-index:9560;justify-content:center;align-items:center;padding:18px;padding-bottom:max(18px,env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-sol.open{display:flex}#cr-sol .box{background:#1a2130;color:#dfe5ee;border:1px solid rgba(74,111,165,.35);border-radius:14px;width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55)}#cr-sol .hd{padding:16px 18px 14px;border-bottom:1px solid rgba(74,111,165,.25);display:flex;align-items:center;gap:12px;flex:0 0 auto}#cr-sol .hd h3{margin:0;flex:1;font:700 16px Georgia,'Times New Roman',serif;color:#dfe5ee}#cr-sol .hd .x{background:transparent;border:0;cursor:pointer;color:#5c6b82;font-size:22px;line-height:1;padding:2px 6px}#cr-sol .hd .x:hover{color:#dfe5ee}#cr-sol .bd{padding:18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}#cr-sol .lede{font-size:13px;line-height:1.55;color:#8697b0;margin:0 0 16px}#cr-sol .pick{display:flex;align-items:center;gap:14px;width:100%;background:#212a3c;border:1px solid rgba(74,111,165,.28);border-radius:11px;padding:16px 16px;margin-bottom:10px;cursor:pointer;text-align:left;font-family:inherit;color:#dfe5ee;transition:border-color .15s,background .15s}#cr-sol .pick:hover{border-color:rgba(127,166,214,.6);background:#263044}#cr-sol .pick .i{font-size:22px;flex:0 0 auto}#cr-sol .pick .t{flex:1;min-width:0}#cr-sol .pick .t b{display:block;font:700 14.5px Georgia,serif;color:#dfe5ee}#cr-sol .pick .t small{display:block;font-size:12px;color:#8697b0;margin-top:3px;line-height:1.45}#cr-sol label{display:block;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#5c6b82;margin:13px 0 5px}#cr-sol label:first-child{margin-top:0}#cr-sol input[type=text]{width:100%;box-sizing:border-box;padding:10px 12px;background:#121722;color:#dfe5ee;border:1px solid rgba(74,111,165,.3);border-radius:8px;font-family:inherit;font-size:14px;outline:none}#cr-sol input[type=text]:focus{border-color:#4a6fa5;box-shadow:0 0 0 3px rgba(74,111,165,.22)}#cr-sol input[type=text]::placeholder{color:#4a5568}#cr-sol .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}#cr-sol .req{color:#e0a458}#cr-sol .found{background:#121722;border:1px solid rgba(111,174,134,.3);border-left:3px solid #6fae86;border-radius:8px;padding:12px 14px;margin:4px 0 14px;font-size:12.5px;line-height:1.6;color:#8697b0}#cr-sol .found b{color:#dfe5ee;font-weight:700}#cr-sol .found .miss{color:#5c6b82;font-style:italic}#cr-sol .busy{text-align:center;padding:34px 20px;color:#8697b0;font-size:13.5px;line-height:1.6}#cr-sol .busy .sp{width:26px;height:26px;margin:0 auto 14px;border:2px solid rgba(74,111,165,.3);border-top-color:#7fa6d6;border-radius:50%;animation:crSolSpin .8s linear infinite}@keyframes crSolSpin{to{transform:rotate(360deg)}}#cr-sol .ft{padding:13px 18px;padding-bottom:calc(13px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(74,111,165,.25);display:flex;gap:8px;justify-content:flex-end;flex:0 0 auto}#cr-sol .ft button{padding:10px 16px;border-radius:8px;cursor:pointer;font:700 12px inherit;letter-spacing:.06em;font-family:inherit;border:0}#cr-sol .ft .cancel{background:transparent;color:#8697b0;border:1px solid rgba(74,111,165,.3)}#cr-sol .ft .go{background:#4a6fa5;color:#fff}#cr-sol .ft .go:hover{background:#5a83c0}#cr-sol .ft .go:disabled{opacity:.5;cursor:wait}</style>
 <script id="cr-sol-script">
 (function(){
@@ -36003,8 +36126,13 @@ if(el) el.classList.remove('open');
 document.body.style.overflow = '';
 }
 async function readScope(file){
-if(file.size > 12 * 1024 * 1024){
-alert('That file is bigger than 12 MB. Try compressing the PDF or splitting it.');
+if(window.CardinalSolUpload && typeof window.CardinalSolUpload.prepare === 'function'){
+var ready = await window.CardinalSolUpload.prepare(file);
+if(!ready) return;
+file = ready;
+}else if(file.size > 3.1 * 1024 * 1024){
+alert('That file is too big for the reader. Photograph the pages instead \u2014 ' +
+'photos get compressed automatically.');
 return;
 }
 fileName = file.name || 'scope';
@@ -36034,6 +36162,10 @@ body: JSON.stringify({ file:b64, mime:mime }),
 var j = null;
 try{ j = await r.json(); }catch(_){}
 if(!r.ok){
+if(r.status === 413){
+throw new Error('The file was still too large once encoded for upload. ' +
+'Photograph the pages instead \u2014 photos are compressed automatically.');
+}
 throw new Error(String((j && (j.detail || j.error)) || ('HTTP ' + r.status)).slice(0, 240));
 }
 extracted = j.extracted || {};
