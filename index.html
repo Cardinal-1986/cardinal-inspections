@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 263 &#8212; Cardinal Truth uses the whole screen on desktop now: money summary left, pipeline right. New Chase list shows every claim waiting on a carrier, longest wait first, with the days flagged red past 30.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 266 &#8212; Insurance Clients rebuilt: rows now carry what&#8217;s owed and how long it&#8217;s been waiting, sortable by owed / waiting / name, search covers carrier, claim number and adjuster. Two columns on desktop. Last insurance surface off base-app styling.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38475,7 +38475,7 @@ compute : compute,
 </script>
 
 
-<style id="cr-ih-styles">#cardinalTruthView #ctSectionSel{display:none !important}#cardinalTruthView .ins-header{display:flex;align-items:center;gap:8px}#cardinalTruthView .ins-headleft{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-title{flex:1 1 auto;min-width:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(15px,4.4vw,21px);letter-spacing:.005em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;background:linear-gradient(100deg,#5a6674 0%,#8d99a8 22%,#f5d061 58%,#d4a017 100%);-webkit-background-clip:text;background-clip:text;color:#d4a017;-webkit-text-fill-color:transparent}#cr-ih-right{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-menu{background:transparent;color:#ffffff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:7px 12px;cursor:pointer;font:700 12px 'Segoe UI',Arial,sans-serif;font-family:inherit;white-space:nowrap;flex:0 0 auto}#cr-ih-menu:hover{border-color:#f5d061;color:#f5d061}#cardinalTruthView .ins-headleft #crPortalChip{padding:7px 12px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);color:#ffffff;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;cursor:pointer;max-width:34vw;overflow:hidden;text-overflow:ellipsis}#cardinalTruthView .ins-headleft #crPortalChip .sw{margin-left:4px;opacity:.7;font-size:9px}@media (max-width:420px){#cr-ih-menu{padding:7px 9px}#cardinalTruthView .ins-headleft #crPortalChip{max-width:26vw;padding:7px 9px;letter-spacing:.06em}}</style>
+<style id="cr-ih-styles">#cardinalTruthView #ctSectionSel{display:none !important}#cardinalTruthView>.ins-header{display:none !important}#cr-ih-bar{position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:8px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-left:calc(16px + env(safe-area-inset-left,0px));padding-right:calc(16px + env(safe-area-inset-right,0px));background:linear-gradient(180deg,#0d1f24,#08161a);border-bottom:1px solid transparent;border-image:linear-gradient(90deg,#2dd4bf,#a3e635) 1;box-shadow:0 2px 16px rgba(45,212,191,.14)}#cr-ih-bar .logo{flex:0 0 auto;width:40px;height:38px;padding:0;background:transparent;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center}#cr-ih-bar .logo img{max-width:100%;max-height:100%;object-fit:contain}#cr-ih-bar .plus{flex:0 0 auto;width:40px;height:38px;background:#2dd4bf;color:#062b26;border:0;border-radius:9px;font-size:24px;line-height:1;cursor:pointer}#cr-ih-bar .plus:hover{background:#5eead4}#cr-ih-left{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-title{flex:1 1 auto;min-width:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(15px,4.4vw,21px);letter-spacing:.005em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;background:linear-gradient(100deg,#5a6674 0%,#8d99a8 22%,#f5d061 58%,#d4a017 100%);-webkit-background-clip:text;background-clip:text;color:#d4a017;-webkit-text-fill-color:transparent}#cr-ih-right{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-menu{background:transparent;color:#ffffff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:7px 12px;cursor:pointer;font:700 12px 'Segoe UI',Arial,sans-serif;font-family:inherit;white-space:nowrap;flex:0 0 auto}#cr-ih-menu:hover{border-color:#f5d061;color:#f5d061}#cr-ih-left #crPortalChip{padding:7px 12px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);color:#ffffff;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;cursor:pointer;max-width:34vw;overflow:hidden;text-overflow:ellipsis}#cr-ih-left #crPortalChip .sw{margin-left:4px;opacity:.7;font-size:9px}#cr-ih-title .long{display:inline}#cr-ih-title .short{display:none}@media (max-width:560px){#cr-ih-title .long{display:none}#cr-ih-title .short{display:inline}#cr-ih-title{font-size:16px}#cr-ih-menu{padding:7px 10px;font-size:11px}#cr-ih-left #crPortalChip{max-width:30vw;padding:6px 9px;letter-spacing:.05em;font-size:9.5px}#cardinalTruthView .ins-header{gap:6px;padding-left:10px;padding-right:10px}}@media (max-width:390px){#cr-ih-title{display:none}/* the switcher already says where you are */}#cardinalTruthView,#insClientsView{--ins-bg:#08161a;--ins-blue:#2dd4bf;--ins-border:#1d3b42;--ins-gold:#fcd34d;--ins-muted:#7ba39d;--ins-panel:#0f2228;--ins-text:#ffffff}#insClientsView .ins-search input:focus{border-color:#2dd4bf !important}#insClientsView .ins-hstat:hover{border-color:#2dd4bf !important}#insClientsView .ins-hstat.on{background:#2dd4bf !important;border-color:#2dd4bf !important;color:#062b26 !important}#insClientsView .ins-clirow:hover{border-color:#2dd4bf !important;box-shadow:0 4px 14px rgba(45,212,191,.22) !important}</style>
 <script id="cr-ih-script">
 (function(){
 'use strict';
@@ -38488,27 +38488,33 @@ return !!(v && v.style.display !== 'none');
 function build(){
 var v = view();
 if(!v) return false;
-var head = v.querySelector('.ins-header');
-if(!head) return false;
-if(head.dataset.crIhBuilt === '1') return true;
-var left = head.querySelector('.ins-headleft');
-var plus = head.querySelector('#ctPlusBtn');
-if(!left) return false;
+var base = v.querySelector(':scope > .ins-header');
+if(!base) return false;
+if(document.getElementById('cr-ih-bar')) return true;
+var logo = base.querySelector('#ctLogoBtn');
+var plus = base.querySelector('#ctPlusBtn');
+var bar = document.createElement('div');
+bar.id = 'cr-ih-bar';
+var left = document.createElement('div');
+left.id = 'cr-ih-left';
+if(logo){ logo.className = 'logo'; left.appendChild(logo); }
+bar.appendChild(left);
 var title = document.createElement('div');
 title.id = 'cr-ih-title';
-title.textContent = 'Cardinal Claims';
-left.parentNode.insertBefore(title, left.nextSibling);
+title.innerHTML = '<span class="long">Cardinal Claims</span>' +
+'<span class="short">Claims</span>';
+bar.appendChild(title);
 var right = document.createElement('div');
 right.id = 'cr-ih-right';
-if(plus && plus.parentNode) right.appendChild(plus);
+if(plus){ plus.className = 'plus'; right.appendChild(plus); }
 var menu = document.createElement('button');
 menu.id = 'cr-ih-menu';
 menu.type = 'button';
 menu.innerHTML = '\u2630 Menu';
 menu.onclick = openNavMenu;
 right.appendChild(menu);
-head.appendChild(right);
-head.dataset.crIhBuilt = '1';
+bar.appendChild(right);
+base.parentNode.insertBefore(bar, base);
 return true;
 }
 function openNavMenu(e){
@@ -38538,7 +38544,7 @@ if(all[i].parentNode) all[i].parentNode.removeChild(all[i]);
 var chip = document.getElementById('crPortalChip');
 var v = view();
 if(!chip || !v) return;
-var left = v.querySelector('.ins-headleft');
+var left = document.getElementById('cr-ih-left');
 if(!left) return;
 if(chip.parentNode === left) return;
 if(!chipHome){
@@ -38597,6 +38603,215 @@ childList:true, subtree:true,
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
 window.CardinalInsHeader = { build: build, sync: sync };
+})();
+</script>
+
+
+<style id="cr-ic-styles">#insClientsView>.ins-header{display:none !important}#insClientsView .ins-body{display:none !important}#insClientsView.cr-ic-live{background:#08161a !important;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#cr-ic-bar{position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:8px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:linear-gradient(180deg,#0d1f24,#08161a);border-bottom:1px solid transparent;border-image:linear-gradient(90deg,#2dd4bf,#a3e635) 1;box-shadow:0 2px 16px rgba(45,212,191,.14)}#cr-ic-bar button.nav{flex:0 0 auto;width:38px;height:38px;border-radius:9px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#bcdad6;cursor:pointer;font-size:17px;line-height:1}#cr-ic-bar button.nav:hover{border-color:#2dd4bf;color:#ffffff}#cr-ic-bar h2{flex:1;min-width:0;margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(15px,4.4vw,20px);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(100deg,#2dd4bf,#5eead4 42%,#a3e635);-webkit-background-clip:text;background-clip:text;color:#5eead4;-webkit-text-fill-color:transparent}#cr-ic-bar .count{flex:0 0 auto;font:700 12px ui-monospace,'SF Mono',Menlo,monospace;color:#7ba39d;min-width:34px;text-align:right}.cr-ic-wrap{max-width:1180px;margin:0 auto;padding:14px 16px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#ffffff}#cr-ic-search{width:100%;box-sizing:border-box;padding:11px 14px;background:#0f2228;color:#ffffff;border:1px solid #1d3b42;border-radius:10px;font:400 14.5px inherit;font-family:inherit;outline:none}#cr-ic-search:focus{border-color:#2dd4bf;box-shadow:0 0 0 3px rgba(45,212,191,.18)}#cr-ic-search::placeholder{color:#5c8880}.cr-ic-chips{display:flex;gap:6px;margin-top:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-ic-chips::-webkit-scrollbar{display:none}.cr-ic-chips button{flex:0 0 auto;padding:8px 13px;border-radius:18px;cursor:pointer;background:#0f2228;border:1px solid #1d3b42;color:#7ba39d;font:700 11.5px inherit;font-family:inherit;white-space:nowrap}.cr-ic-chips button:hover{border-color:#2a5259;color:#bcdad6}.cr-ic-chips button.on{background:#2dd4bf;border-color:#2dd4bf;color:#062b26}.cr-ic-chips button b{margin-left:5px;opacity:.75}.cr-ic-sort{display:flex;align-items:center;gap:8px;margin-top:10px;font:700 10px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#5c8880}.cr-ic-sort button{background:transparent;border:0;cursor:pointer;padding:2px 0;font:inherit;font-family:inherit;color:#5c8880;border-bottom:1px solid transparent}.cr-ic-sort button.on{color:#a3e635;border-bottom-color:#a3e635}.cr-ic-list{margin-top:14px;display:grid;gap:8px}@media (min-width:900px){.cr-ic-list{grid-template-columns:1fr 1fr}}.cr-ic-row{display:block;width:100%;text-align:left;cursor:pointer;background:linear-gradient(#0f2228,#0f2228) padding-box,linear-gradient(125deg,#2dd4bf,#a3e635) border-box;border:1px solid transparent;border-radius:12px;padding:14px 15px;font-family:inherit;color:#ffffff;transition:background .15s}.cr-ic-row:hover{background:linear-gradient(#163038,#163038) padding-box,linear-gradient(125deg,#2dd4bf,#a3e635) border-box}.cr-ic-row .top{display:flex;align-items:baseline;gap:10px}.cr-ic-row .nm{flex:1;min-width:0;font:700 15px inherit;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .owed{flex:0 0 auto;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:#a3e635}.cr-ic-row .owed.none{color:#3d5a55}.cr-ic-row .ad{font-size:12px;color:#7ba39d;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}.cr-ic-row .carrier{font-size:11.5px;color:#bcdad6;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .stg{flex:0 0 auto;padding:3px 8px;border-radius:5px;font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.11em;text-transform:uppercase;background:#132a2b;color:#5eead4}.cr-ic-row .stg.warn{background:#2e2a17;color:#fcd34d}.cr-ic-row .stg.bad{background:#2e1b1b;color:#f87171}.cr-ic-row .age{flex:0 0 auto;font:700 10.5px ui-monospace,'SF Mono',Menlo,monospace;color:#7ba39d}.cr-ic-row .age.stale{color:#f87171}.cr-ic-empty{padding:44px 20px;text-align:center;font-size:13.5px;line-height:1.6;color:#5c8880}</style>
+<script id="cr-ic-script">
+(function(){
+'use strict';
+var sortBy = 'owed';
+var query  = '';
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function usd(n){
+var v = Number(n) || 0;
+return '$' + Math.round(v).toLocaleString('en-US');
+}
+function normStage(s){
+if(typeof window.normStage === 'function'){
+try{ return window.normStage(s); }catch(_){}
+}
+return s;
+}
+function ck(pr){
+try{ return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {}); }
+catch(_){ return pr.checklist || {}; }
+}
+function claimOf(pr){
+if(window.CardinalInsurance && window.CardinalInsurance.claim){
+return window.CardinalInsurance.claim(pr.id) || {};
+}
+return {};
+}
+function daysSince(iso){
+if(!iso) return null;
+var d = new Date(iso);
+if(isNaN(d)) return null;
+return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+var LABEL = {
+'Lead':'Claim Filed', 'Prospect':'Adjuster Pending',
+'Approved':'Scope Approved', 'Scheduled':'Scheduled',
+'Completed':'Build Complete', 'Invoiced':'Awaiting RCV',
+'Closed':'Archived', 'Lost':'Denied',
+};
+var CHIPS = ['Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
+function clients(){
+return (window.cacheProjects || []).filter(function(pr){
+if(typeof window.projClaimType !== 'function') return false;
+return window.projClaimType(pr) === 'insurance';
+});
+}
+function owedOn(pr){
+var st = normStage(pr.stage), c = claimOf(pr);
+if(st === 'Invoiced'){
+return (Number(c.approved_depreciation) || 0) + (Number(c.supplement_approved) || 0);
+}
+if(c.supplement_status === 'filed') return Number(c.supplement_filed) || 0;
+if(st === 'Closed' || st === 'Lost') return 0;
+return Number(c.approved_rcv) || 0;
+}
+function waitOn(pr){
+var st = normStage(pr.stage), c = claimOf(pr), k = ck(pr) || {};
+if(c.supplement_status === 'filed') return daysSince(c.supplement_filed_at);
+if(st === 'Invoiced') return daysSince(k.stage_since || pr.updated_at);
+return null;
+}
+function matches(pr, q){
+if(!q) return true;
+var c = claimOf(pr);
+var hay = [pr.name, pr.address, pr.phone, pr.email,
+c.carrier, c.claim_number, c.policy_number, c.adjuster_name]
+.join(' ').toLowerCase();
+return hay.indexOf(q) !== -1;
+}
+function rowHtml(pr){
+var st = normStage(pr.stage);
+var c  = claimOf(pr);
+var owed = owedOn(pr);
+var wait = waitOn(pr);
+var tone = st === 'Lost' ? ' bad'
+: (st === 'Invoiced' || c.supplement_status === 'filed') ? ' warn' : '';
+var carrier = [c.carrier, c.claim_number ? '#' + c.claim_number : '']
+.filter(Boolean).join(' \u00b7 ');
+return '<button class="cr-ic-row" data-pid="' + esc(pr.id) + '" type="button">' +
+'<span class="top">' +
+'<span class="nm">' + esc(pr.name || 'Unnamed') + '</span>' +
+'<span class="owed' + (owed > 0 ? '' : ' none') + '">' +
+(owed > 0 ? usd(owed) : '\u2014') + '</span>' +
+'</span>' +
+'<span class="ad">' + esc(pr.address || 'No address') + '</span>' +
+'<span class="meta">' +
+'<span class="carrier">' + (carrier ? esc(carrier) : 'No carrier recorded') + '</span>' +
+(wait != null
+? '<span class="age' + (wait >= 30 ? ' stale' : '') + '">' + wait + 'd</span>'
+: '') +
+'<span class="stg' + tone + '">' + esc(LABEL[st] || st) + '</span>' +
+'</span>' +
+'</button>';
+}
+function render(){
+var v = document.getElementById('insClientsView');
+if(!v) return;
+var host = document.getElementById('cr-ic-wrap');
+if(!host){
+v.classList.add('cr-ic-live');
+var bar = document.createElement('div');
+bar.id = 'cr-ic-bar';
+bar.innerHTML =
+'<button class="nav" data-act="back" type="button">\u2190</button>' +
+'<h2>Insurance Clients</h2>' +
+'<span class="count" data-slot="count"></span>';
+v.insertBefore(bar, v.firstChild);
+host = document.createElement('div');
+host.id = 'cr-ic-wrap';
+host.className = 'cr-ic-wrap';
+v.appendChild(host);
+bar.querySelector('[data-act="back"]').onclick = function(){
+if(typeof window.showCardinalTruth === 'function') window.showCardinalTruth();
+};
+}
+var all = clients();
+var stage = window.icStageFilter || '';
+var q = query.trim().toLowerCase();
+var list = all.filter(function(pr){
+if(stage && normStage(pr.stage) !== stage) return false;
+return matches(pr, q);
+});
+if(sortBy === 'owed')      list.sort(function(a,b){ return owedOn(b) - owedOn(a); });
+else if(sortBy === 'wait') list.sort(function(a,b){ return (waitOn(b)||0) - (waitOn(a)||0); });
+else                       list.sort(function(a,b){
+return String(a.name||'').localeCompare(String(b.name||''));
+});
+var cnt = document.querySelector('#cr-ic-bar [data-slot="count"]');
+if(cnt) cnt.textContent = list.length;
+host.innerHTML =
+'<input type="search" id="cr-ic-search" placeholder="Name, address, carrier, claim #, adjuster\u2026" ' +
+'value="' + esc(query) + '">' +
+'<div class="cr-ic-chips">' +
+'<button data-stg="" class="' + (stage === '' ? 'on' : '') + '" type="button">' +
+'All<b>' + all.length + '</b></button>' +
+CHIPS.map(function(s){
+var n = all.filter(function(pr){ return normStage(pr.stage) === s; }).length;
+return '<button data-stg="' + s + '" class="' + (stage === s ? 'on' : '') +
+'" type="button">' + esc(LABEL[s] || s) + '<b>' + n + '</b></button>';
+}).join('') +
+'</div>' +
+'<div class="cr-ic-sort">' +
+'<span>Sort</span>' +
+'<button data-sort="owed" class="' + (sortBy==='owed'?'on':'') + '" type="button">Owed</button>' +
+'<button data-sort="wait" class="' + (sortBy==='wait'?'on':'') + '" type="button">Waiting</button>' +
+'<button data-sort="name" class="' + (sortBy==='name'?'on':'') + '" type="button">Name</button>' +
+'</div>' +
+(list.length
+? '<div class="cr-ic-list">' + list.map(rowHtml).join('') + '</div>'
+: '<div class="cr-ic-empty">' +
+(q || stage ? 'Nothing matches that.' : 'No insurance clients yet.') +
+'</div>');
+wire(host);
+}
+function wire(host){
+var s = host.querySelector('#cr-ic-search');
+if(s){
+s.oninput = function(){
+query = s.value;
+var pos = s.selectionStart;
+render();
+var s2 = document.getElementById('cr-ic-search');
+if(s2){ s2.focus(); try{ s2.setSelectionRange(pos, pos); }catch(_){} }
+};
+}
+host.querySelectorAll('[data-stg]').forEach(function(b){
+b.onclick = function(){ window.icStageFilter = b.dataset.stg || ''; render(); };
+});
+host.querySelectorAll('[data-sort]').forEach(function(b){
+b.onclick = function(){ sortBy = b.dataset.sort; render(); };
+});
+host.querySelectorAll('[data-pid]').forEach(function(b){
+b.onclick = function(){
+if(typeof window.openProject === 'function') window.openProject(b.dataset.pid);
+};
+});
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+var v = document.getElementById('insClientsView');
+if(v && v.style.display !== 'none'){
+try{ render(); }catch(e){ console.warn('[ins-clients]', e); }
+}
+});
+}
+function start(){
+var v = document.getElementById('insClientsView');
+if(v){
+new MutationObserver(function(){
+if(v.style.display !== 'none') scan();
+}).observe(v, { attributes:true, attributeFilter:['style'] });
+if(v.style.display !== 'none') scan();
+}
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; render(); } };
 })();
 </script>
 
