@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 219 &#8212; Estimate status now drives the pipeline. Marking an estimate Sent moves the client to Bid Submitted, Accepted moves it to Awarded, Declined offers Not Awarded. Forward-only, so a re-sent estimate never rewinds a scheduled job. This is what makes the Community Hub&#8217;s bid counters populate. Also: gallery poller idles when closed.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 221 &#8212; What&#8217;s New caught up through build 220: estimate library, editor, publish, contract generation, photo album rebuild, photo editor, and the pipeline sync.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32232,6 +32232,21 @@ font-family:inherit;
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:220, note:'\uD83D\uDC1B Property maps and PO# badges now actually appear on client profiles \u2014 both had been silently failing since they shipped' },
+{ build:219, note:'\uD83D\uDD01 Estimate status drives the pipeline: mark one Sent and the client moves to Bid Submitted, Accepted moves it to Awarded. No more double entry' },
+{ build:218, note:'\uD83D\uDCF1 \u27A1\uFE0F To Inspection and \u2192 Report now sit in the bottom bar when you check photos, instead of scrolling out of reach' },
+{ build:217, note:'\u270F\uFE0F Photo editor \u2014 rotate sideways shots, and mark up damage with pen, arrows, circles and text. Originals are always kept' },
+{ build:216, note:'\u2B07 Check photos and Save them straight to your phone (Photos, AirDrop, Messages) or download on desktop' },
+{ build:215, note:'\uD83D\uDCDD \u2192 Contract button builds a contract from an estimate \u2014 line items become the scope, your deposit % replaces the 50/50 default' },
+{ build:214, note:'\uD83D\uDC1B Fixed a stuck bottom bar in the Photo Album that was blocking scrolling and taps' },
+{ build:212, note:'\uD83D\uDCC4 Publish an estimate to get a branded document with share link, email to client, signature, and PDF' },
+{ build:211, note:'\uD83D\uDCF7 Photo Album rebuilt \u2014 section tabs (Inspection / Post-Inspection / Before / After / General), date grouping, who-took-it initials, AI captions, bulk move' },
+{ build:209, note:'\uD83E\uDDFE New Estimate editor \u2014 pull items from the library, live totals, automatic deposit, auto-numbered EST-2026-####' },
+{ build:208, note:'\uD83D\uDCCB Line Item Library (Menu \u2192 Admin) \u2014 save your common scopes once and reuse them on every estimate' },
+{ build:207, note:'\uD83E\uDDF9 Retired the duplicate Manual Estimates screen \u2014 the original + New estimate templates do the same job better' },
+{ build:205, note:'\uD83D\uDCC5 Community Hub calendar cells line up properly again' },
+{ build:204, note:'\uD83C\uDF54 Menu is narrower and scrolls to the last item; removed a duplicate Community entry' },
+{ build:203, note:'\uD83C\uDFF7\uFE0F PO# on every client (PO-YYYYMMDD-HHMM); Community Hub refreshes instantly after saving a bid' },
 { build:202, note:'\uD83D\uDCF1 Mobile menu now scrolls properly (iOS PWA fix)' },
 { build:201, note:'\uD83D\uDC1B Comprehensive fix for projects.name column references across all diagnostic modules' },
 { build:200, note:'\uD83D\uDC1B Fixed New Bid save error \u2014 was writing to wrong column name' },
@@ -34984,7 +34999,7 @@ maybeInsertProfileMap();
 });
 }
 function maybeInsertProfileMap(){
-var view = document.getElementById('projView');
+var view = document.getElementById('projectView');
 if(!view || getComputedStyle(view).display === 'none') return;
 var proj = window.currentProject;
 var address = proj && proj.address;
@@ -35087,7 +35102,7 @@ if(project.checklist && project.checklist.po_number) return project.checklist.po
 return generate(project.created_at);
 }
 function injectOnProfile(){
-var view = document.getElementById('projView');
+var view = document.getElementById('projectView');
 if(!view || getComputedStyle(view).display === 'none') return;
 var proj = window.currentProject;
 if(!proj) return;
