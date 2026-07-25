@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 216 &#8212; Photo Album: check photos and tap &#11015; Save to send them to the iPhone share sheet (Save to Photos / AirDrop / Messages) or download on desktop. Single-photo Save in the detail view too. Section badge now hides correctly on first open.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 217 &#8212; Photo editor: rotate 90&deg; left/right plus markup (pen, arrow, circle, text) in six colors with undo. Double-tap a photo &rarr; &#9999;&#65039; Edit. Rotation saves in place; markup saves as a new photo so the clean original is always kept.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -36403,6 +36403,7 @@ return '<option value="' + esc(s) + '"' + ((photo.section || 'Inspection') === s
 '</select>' +
 '<div class="actions">' +
 '<button class="ai"   data-act="ai"   type="button">\u2728 AI Caption</button>' +
+'<button class="close" data-act="edit" type="button">\u270F\uFE0F Edit</button>' +
 '<button class="close" data-act="dl"  type="button">\u2B07 Save</button>' +
 '<button class="close" data-act="close" type="button">Close</button>' +
 '<button class="save" data-act="save" type="button">Save</button>' +
@@ -36411,6 +36412,14 @@ return '<option value="' + esc(s) + '"' + ((photo.section || 'Inspection') === s
 '</div>';
 capModal.classList.add('open');
 capModal.querySelector('[data-act="close"]').onclick = closeCapModal;
+capModal.querySelector('[data-act="edit"]').onclick = function(){
+if(!window.CardinalPhotoEditor){
+alert('Photo editor not loaded \u2014 reload the app.');
+return;
+}
+closeCapModal();
+window.CardinalPhotoEditor.open(photo);
+};
 capModal.querySelector('[data-act="dl"]').onclick = async function(){
 var dlBtn = capModal.querySelector('[data-act="dl"]');
 dlBtn.disabled = true; dlBtn.textContent = 'Preparing\u2026';
@@ -36642,6 +36651,464 @@ window.CardinalPhotoAlbum = {
 openAsPicker : openAsPicker,
 photosFor    : function(){ return (window.currentPhotos || []).slice(); },
 };
+})();
+</script>
+
+
+<style id="cr-ped-styles">
+#cr-ped{
+display:none;
+position:fixed; inset:0;
+background:#101010;
+z-index:9600;
+flex-direction:column;
+font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+touch-action:none;
+}
+#cr-ped.open{ display:flex; }
+.cr-ped-head{
+padding:12px 14px;
+padding-top:calc(12px + env(safe-area-inset-top, 0px));
+background:#1a1a1a;
+color:#f5efe0;
+display:flex; align-items:center; gap:8px;
+flex:0 0 auto;
+border-bottom:1px solid #2c2c2c;
+}
+.cr-ped-head h3{
+margin:0; flex:1;
+font:800 13px Georgia,serif;
+overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.cr-ped-head button{
+background:transparent; border:1px solid rgba(212,160,23,.5);
+color:#f5d061; padding:6px 12px; border-radius:6px;
+font:800 10px 'Segoe UI',Arial,sans-serif;
+letter-spacing:.12em; text-transform:uppercase;
+cursor:pointer; font-family:inherit; flex:0 0 auto;
+}
+.cr-ped-head button.primary{
+background:#d4a017; color:#1a1a1a; border-color:#d4a017;
+}
+.cr-ped-head button.primary:disabled{ opacity:.5; cursor:wait; }
+.cr-ped-stage{
+flex:1; position:relative;
+display:flex; align-items:center; justify-content:center;
+overflow:hidden;
+background:#0a0a0a;
+padding:10px;
+}
+#cr-ped-canvas{
+max-width:100%; max-height:100%;
+display:block;
+touch-action:none;
+cursor:crosshair;
+box-shadow:0 4px 24px rgba(0,0,0,.6);
+}
+.cr-ped-loading{
+color:#8a7a5a;
+font:600 13px 'Segoe UI',Arial,sans-serif;
+}
+.cr-ped-tools{
+background:#1a1a1a;
+border-top:1px solid #2c2c2c;
+padding:10px 12px;
+padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+flex:0 0 auto;
+display:flex; flex-direction:column; gap:9px;
+}
+.cr-ped-row{
+display:flex; align-items:center; gap:7px;
+overflow-x:auto; -webkit-overflow-scrolling:touch;
+scrollbar-width:none;
+}
+.cr-ped-row::-webkit-scrollbar{ display:none; }
+.cr-ped-tool{
+background:#2c2c2c; color:#c9bfa8;
+border:1px solid #3c3c3c;
+padding:9px 13px; border-radius:8px;
+font:700 12px 'Segoe UI',Arial,sans-serif;
+cursor:pointer; font-family:inherit;
+white-space:nowrap; flex:0 0 auto;
+display:flex; align-items:center; gap:5px;
+}
+.cr-ped-tool:hover{ background:#3c3c3c; }
+.cr-ped-tool.active{
+background:#d4a017; color:#1a1a1a; border-color:#d4a017;
+}
+.cr-ped-tool.ghost{
+background:transparent; border-color:#3c3c3c; color:#8a7a5a;
+}
+.cr-ped-tool.ghost:hover{ background:#2c2c2c; color:#c9bfa8; }
+.cr-ped-tool:disabled{ opacity:.4; cursor:default; }
+.cr-ped-swatch{
+width:30px; height:30px; border-radius:50%;
+border:2px solid #3c3c3c;
+cursor:pointer; flex:0 0 auto;
+padding:0;
+}
+.cr-ped-swatch.active{
+border-color:#fdfcf7;
+box-shadow:0 0 0 2px #d4a017;
+}
+.cr-ped-sep{
+width:1px; height:26px; background:#3c3c3c;
+flex:0 0 auto; margin:0 3px;
+}
+.cr-ped-hint{
+color:#6b6b6b;
+font:600 10.5px 'Segoe UI',Arial,sans-serif;
+letter-spacing:.04em;
+flex:1; text-align:right;
+white-space:nowrap;
+}
+</style>
+<script id="cr-ped-script">
+(function(){
+'use strict';
+var COLORS = ['#e02020', '#f5c518', '#22a06b', '#2d7ff9', '#ffffff', '#1a1a1a'];
+var TOOLS  = [
+{ id:'pen',     label:'\u270F\uFE0F Pen'    },
+{ id:'arrow',   label:'\u2197 Arrow'         },
+{ id:'ellipse', label:'\u25EF Circle'        },
+{ id:'text',    label:'T Text'               },
+];
+var el = null, canvas = null, ctx = null;
+var photo = null;
+var baseImg = null;          // HTMLImageElement, current orientation
+var baseW = 0, baseH = 0;    // natural dims of baseImg after rotations
+var rotation = 0;            // net degrees applied, 0/90/180/270
+var strokes = [];            // annotation objects
+var tool = 'pen';
+var color = COLORS[0];
+var drawing = false;
+var current = null;
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function myEmail(){
+return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+}
+function ensureEl(){
+if(el) return el;
+el = document.createElement('div');
+el.id = 'cr-ped';
+el.innerHTML =
+'<div class="cr-ped-head">' +
+'<button data-act="cancel" type="button">Cancel</button>' +
+'<h3 data-slot="title">Edit photo</h3>' +
+'<button class="primary" data-act="save" type="button">Save</button>' +
+'</div>' +
+'<div class="cr-ped-stage">' +
+'<div class="cr-ped-loading" data-slot="loading">Loading\u2026</div>' +
+'<canvas id="cr-ped-canvas" style="display:none;"></canvas>' +
+'</div>' +
+'<div class="cr-ped-tools">' +
+'<div class="cr-ped-row" data-slot="toolrow"></div>' +
+'<div class="cr-ped-row" data-slot="colorrow"></div>' +
+'</div>';
+document.body.appendChild(el);
+canvas = el.querySelector('#cr-ped-canvas');
+ctx = canvas.getContext('2d');
+el.querySelector('[data-act="cancel"]').onclick = close;
+el.querySelector('[data-act="save"]').onclick   = save;
+var tr = el.querySelector('[data-slot="toolrow"]');
+tr.innerHTML =
+'<button class="cr-ped-tool ghost" data-rot="-90" type="button">\u21BA Left</button>' +
+'<button class="cr-ped-tool ghost" data-rot="90"  type="button">\u21BB Right</button>' +
+'<span class="cr-ped-sep"></span>' +
+TOOLS.map(function(t){
+return '<button class="cr-ped-tool" data-tool="' + t.id + '" type="button">' + t.label + '</button>';
+}).join('') +
+'<span class="cr-ped-sep"></span>' +
+'<button class="cr-ped-tool ghost" data-act="undo"  type="button">\u21A9 Undo</button>' +
+'<button class="cr-ped-tool ghost" data-act="clear" type="button">Clear</button>';
+tr.querySelectorAll('[data-rot]').forEach(function(b){
+b.onclick = function(){ rotate(Number(b.dataset.rot)); };
+});
+tr.querySelectorAll('[data-tool]').forEach(function(b){
+b.onclick = function(){
+tool = b.dataset.tool;
+tr.querySelectorAll('[data-tool]').forEach(function(x){
+x.classList.toggle('active', x === b);
+});
+};
+});
+tr.querySelector('[data-act="undo"]').onclick = function(){
+strokes.pop(); redraw();
+};
+tr.querySelector('[data-act="clear"]').onclick = function(){
+if(strokes.length && !confirm('Remove all markup?')) return;
+strokes = []; redraw();
+};
+var cr = el.querySelector('[data-slot="colorrow"]');
+cr.innerHTML =
+COLORS.map(function(c){
+return '<button class="cr-ped-swatch" data-color="' + c + '" ' +
+'style="background:' + c + ';" type="button" aria-label="' + c + '"></button>';
+}).join('') +
+'<span class="cr-ped-hint" data-slot="hint"></span>';
+cr.querySelectorAll('[data-color]').forEach(function(b){
+b.onclick = function(){
+color = b.dataset.color;
+cr.querySelectorAll('[data-color]').forEach(function(x){
+x.classList.toggle('active', x === b);
+});
+};
+});
+wirePointer();
+return el;
+}
+function setActive(sel, val){
+el.querySelectorAll(sel).forEach(function(b){
+b.classList.toggle('active', b.dataset.tool === val || b.dataset.color === val);
+});
+}
+function setHint(t){
+var h = el.querySelector('[data-slot="hint"]');
+if(h) h.textContent = t || '';
+}
+function open(p){
+ensureEl();
+photo = p;
+strokes = [];
+rotation = 0;
+tool = 'pen';
+color = COLORS[0];
+setActive('[data-tool]', 'pen');
+setActive('[data-color]', COLORS[0]);
+el.querySelector('[data-slot="title"]').textContent =
+'Edit \u00b7 ' + (p.section || 'Photo');
+el.querySelector('[data-slot="loading"]').style.display = '';
+canvas.style.display = 'none';
+setHint('');
+el.classList.add('open');
+document.body.style.overflow = 'hidden';
+var img = new Image();
+img.crossOrigin = 'anonymous';
+img.onload = function(){
+baseImg = img;
+baseW = img.naturalWidth;
+baseH = img.naturalHeight;
+canvas.width = baseW;
+canvas.height = baseH;
+el.querySelector('[data-slot="loading"]').style.display = 'none';
+canvas.style.display = '';
+redraw();
+setHint(baseW + '\u00d7' + baseH);
+};
+img.onerror = function(){
+el.querySelector('[data-slot="loading"]').textContent =
+'Could not load this photo for editing.';
+};
+img.src = p.data;
+}
+function close(){
+if(el) el.classList.remove('open');
+document.body.style.overflow = '';
+photo = null; baseImg = null; strokes = [];
+}
+function redraw(){
+if(!baseImg) return;
+canvas.width = baseW;
+canvas.height = baseH;
+ctx.drawImage(baseImg, 0, 0, baseW, baseH);
+strokes.forEach(drawStroke);
+if(current) drawStroke(current);
+}
+function lw(){ return Math.max(3, Math.round(Math.max(baseW, baseH) / 320)); }
+function drawStroke(s){
+ctx.save();
+ctx.strokeStyle = s.color;
+ctx.fillStyle   = s.color;
+ctx.lineWidth   = s.w || lw();
+ctx.lineCap     = 'round';
+ctx.lineJoin    = 'round';
+if(s.type === 'pen'){
+if(s.pts.length < 2){ ctx.restore(); return; }
+ctx.beginPath();
+ctx.moveTo(s.pts[0].x, s.pts[0].y);
+for(var i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i].x, s.pts[i].y);
+ctx.stroke();
+}else if(s.type === 'arrow'){
+var a = s.pts[0], b = s.pts[1];
+if(!b){ ctx.restore(); return; }
+ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+var ang  = Math.atan2(b.y - a.y, b.x - a.x);
+var head = Math.max(14, (s.w || lw()) * 4);
+ctx.beginPath();
+ctx.moveTo(b.x, b.y);
+ctx.lineTo(b.x - head * Math.cos(ang - Math.PI / 7), b.y - head * Math.sin(ang - Math.PI / 7));
+ctx.lineTo(b.x - head * Math.cos(ang + Math.PI / 7), b.y - head * Math.sin(ang + Math.PI / 7));
+ctx.closePath(); ctx.fill();
+}else if(s.type === 'ellipse'){
+var p0 = s.pts[0], p1 = s.pts[1];
+if(!p1){ ctx.restore(); return; }
+var cx = (p0.x + p1.x) / 2, cy = (p0.y + p1.y) / 2;
+var rx = Math.abs(p1.x - p0.x) / 2, ry = Math.abs(p1.y - p0.y) / 2;
+ctx.beginPath();
+ctx.ellipse(cx, cy, Math.max(rx, 2), Math.max(ry, 2), 0, 0, Math.PI * 2);
+ctx.stroke();
+}else if(s.type === 'text'){
+var size = Math.max(20, Math.round(Math.max(baseW, baseH) / 26));
+ctx.font = '800 ' + size + 'px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif';
+ctx.textBaseline = 'top';
+ctx.lineWidth = Math.max(3, size / 7);
+ctx.strokeStyle = (s.color === '#ffffff' || s.color === '#f5c518') ? '#1a1a1a' : '#ffffff';
+ctx.strokeText(s.text, s.pts[0].x, s.pts[0].y);
+ctx.fillStyle = s.color;
+ctx.fillText(s.text, s.pts[0].x, s.pts[0].y);
+}
+ctx.restore();
+}
+function rotate(deg){
+if(!baseImg) return;
+var cw = deg > 0;   // clockwise
+var off = document.createElement('canvas');
+off.width  = baseH;
+off.height = baseW;
+var octx = off.getContext('2d');
+octx.translate(off.width / 2, off.height / 2);
+octx.rotate((cw ? 90 : -90) * Math.PI / 180);
+octx.drawImage(baseImg, -baseW / 2, -baseH / 2);
+var oldW = baseW, oldH = baseH;
+var newImg = new Image();
+newImg.onload = function(){
+baseImg = newImg;
+baseW = oldH; baseH = oldW;
+strokes.forEach(function(s){
+s.pts = s.pts.map(function(p){
+return cw ? { x: oldH - p.y, y: p.x }
+: { x: p.y,        y: oldW - p.x };
+});
+});
+rotation = (rotation + (cw ? 90 : -90) + 360) % 360;
+redraw();
+setHint(baseW + '\u00d7' + baseH + (rotation ? ' \u00b7 rotated' : ''));
+};
+newImg.src = off.toDataURL('image/jpeg', 0.95);
+}
+function toImg(e){
+var r = canvas.getBoundingClientRect();
+return {
+x: (e.clientX - r.left) * (canvas.width  / r.width),
+y: (e.clientY - r.top)  * (canvas.height / r.height),
+};
+}
+function wirePointer(){
+canvas.addEventListener('pointerdown', function(e){
+if(!baseImg) return;
+e.preventDefault();
+var p = toImg(e);
+if(tool === 'text'){
+var t = prompt('Text to add:');
+if(t && t.trim()){
+strokes.push({ type:'text', color:color, w:lw(), text:t.trim(), pts:[p] });
+redraw();
+}
+return;
+}
+drawing = true;
+canvas.setPointerCapture(e.pointerId);
+current = { type:tool, color:color, w:lw(), pts:[p] };
+if(tool !== 'pen') current.pts.push(p);
+});
+canvas.addEventListener('pointermove', function(e){
+if(!drawing || !current) return;
+e.preventDefault();
+var p = toImg(e);
+if(current.type === 'pen') current.pts.push(p);
+else current.pts[1] = p;
+redraw();
+});
+function end(e){
+if(!drawing) return;
+drawing = false;
+try{ canvas.releasePointerCapture(e.pointerId); }catch(_){}
+if(current){
+var keep = current.type === 'pen'
+? current.pts.length > 1
+: (Math.abs(current.pts[1].x - current.pts[0].x) > 4 ||
+Math.abs(current.pts[1].y - current.pts[0].y) > 4);
+if(keep) strokes.push(current);
+}
+current = null;
+redraw();
+}
+canvas.addEventListener('pointerup', end);
+canvas.addEventListener('pointercancel', end);
+}
+function canvasBlob(quality){
+return new Promise(function(resolve){
+canvas.toBlob(function(b){ resolve(b); }, 'image/jpeg', quality || 0.9);
+});
+}
+async function save(){
+if(!photo || !baseImg) return;
+if(!window.supa){ alert('No connection.'); return; }
+var rotatedOnly = rotation !== 0 && strokes.length === 0;
+var nothing     = rotation === 0 && strokes.length === 0;
+if(nothing){ close(); return; }
+var btn = el.querySelector('[data-act="save"]');
+btn.disabled = true; btn.textContent = 'Saving\u2026';
+try{
+var blob = await canvasBlob(0.9);
+if(!blob) throw new Error('Could not encode the image');
+if(rotatedOnly && photo.storage_path){
+var up = await window.supa.storage.from('photos')
+.upload(photo.storage_path, blob, {
+contentType:'image/jpeg', upsert:true, cacheControl:'3600',
+});
+if(up.error) throw up.error;
+var base = String(photo.data).split('?')[0];
+var fresh = base + '?v=' + Date.now();
+var r = await window.supa.from('project_photos')
+.update({ data: fresh }).eq('id', photo.id);
+if(r.error) throw r.error;
+photo.data = fresh;
+if(Array.isArray(window.currentPhotos)){
+var lp = window.currentPhotos.find(function(x){ return String(x.id) === String(photo.id); });
+if(lp) lp.data = fresh;
+}
+}else{
+var pid  = photo.project_id ||
+(window.currentProject && window.currentProject.id);
+if(!pid) throw new Error('No project for this photo');
+var path = 'projects/' + pid + '/' + Date.now() + '-' +
+Math.random().toString(36).slice(2, 8) + '-marked.jpg';
+var up2 = await window.supa.storage.from('photos')
+.upload(path, blob, { contentType:'image/jpeg', cacheControl:'31536000' });
+if(up2.error) throw up2.error;
+var pub = window.supa.storage.from('photos').getPublicUrl(path).data.publicUrl;
+var cap = photo.caption ? ('Marked up \u2014 ' + photo.caption) : 'Marked up';
+var ins = await window.supa.from('project_photos').insert({
+project_id  : pid,
+data        : pub,
+storage_path: path,
+section     : photo.section || 'General',
+caption     : cap,
+created_by  : myEmail() || null,
+}).select().single();
+if(ins.error) throw ins.error;
+if(Array.isArray(window.currentPhotos)) window.currentPhotos.unshift(ins.data);
+}
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('photo_edit',
+rotatedOnly ? 'Rotated a photo' : 'Added markup to a photo',
+photo.project_id); }catch(_){}
+}
+close();
+if(typeof window.renderGallery === 'function') window.renderGallery();
+}catch(e){
+alert('Save failed: ' + (e.message || e));
+}finally{
+var b = el && el.querySelector('[data-act="save"]');
+if(b){ b.disabled = false; b.textContent = 'Save'; }
+}
+}
+window.CardinalPhotoEditor = { open: open, close: close };
 })();
 </script>
 
