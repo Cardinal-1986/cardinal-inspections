@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 239 &#8212; Fixed Landing / Hub in the CRM switcher. The new landing dropped two elements that showLanding() writes to without checking they exist, so it threw before showing the view and the option silently did nothing.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 240 &#8212; On mobile the CRM switcher now sits between the back and forward arrows at the bottom, where your thumb already is, instead of crowding the header. Restored to the header when the app is opened in a browser tab.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35759,7 +35759,7 @@ today   : function(){ return QUOTES[dayOfYear(new Date()) % QUOTES.length]; },
 </script>
 
 
-<style id="cr-pnc-styles">body.standalone #cr-rltoc-btn{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-dark-toggle{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-nachi-mgr-btn{bottom:calc(133px + env(safe-area-inset-bottom,0px)) !important}body.standalone #pwaNav{z-index:9990 !important}body.standalone #pwaNav button{position:relative;z-index:1}</style>
+<style id="cr-pnc-styles">body.standalone #cr-rltoc-btn{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-dark-toggle{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-nachi-mgr-btn{bottom:calc(133px + env(safe-area-inset-bottom,0px)) !important}body.standalone #pwaNav{z-index:9990 !important}body.standalone #pwaNav button{position:relative;z-index:1}body.standalone #pwaNav #crPortalChip{flex:0 1 auto;min-width:0;max-width:calc(100% - 128px);/* never crowd the two 46px arrows */ margin:0 10px;padding:9px 14px;border-radius:22px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(255,255,255,.07);border:1px solid rgba(212,160,23,.55);color:#f3e9dc;cursor:pointer;position:relative;z-index:1}body.standalone #pwaNav #crPortalChip:active{transform:scale(.96)}body.standalone #pwaNav #crPortalChip .sw{margin-left:5px;opacity:.7;font-size:10px}body.standalone #pwaNav #crPortalChip.retail{border-color:rgba(212,160,23,.75);color:#f5d061}body.standalone #pwaNav #crPortalChip.insurance{border-color:rgba(74,111,165,.85);color:#7fa6d6}body.standalone #pwaNav #crPortalChip.community{border-color:rgba(74,140,90,.85);color:#7fbf8c}body.standalone #pwaNav #crPortalChip.all{border-color:rgba(220,220,220,.5);color:#dcdcdc}</style>
 <script id="cr-pnc-script">
 (function(){
 'use strict';
@@ -35771,6 +35771,32 @@ window.navigator.standalone === true;
 }catch(_){}
 if(standalone && !document.body.classList.contains('standalone')){
 document.body.classList.add('standalone');
+}
+}
+var homeParent = null;
+var homeNext   = null;
+function placeChip(){
+var chip = document.getElementById('crPortalChip');
+var nav  = document.getElementById('pwaNav');
+if(!chip) return;
+var standalone = document.body.classList.contains('standalone');
+if(standalone && nav){
+if(chip.parentNode === nav) return;
+if(!homeParent){
+homeParent = chip.parentNode;
+homeNext   = chip.nextSibling;
+}
+var fwd = document.getElementById('pwaFwd');
+if(fwd) nav.insertBefore(chip, fwd);
+else    nav.appendChild(chip);
+return;
+}
+if(homeParent && chip.parentNode !== homeParent){
+if(homeNext && homeNext.parentNode === homeParent){
+homeParent.insertBefore(chip, homeNext);
+}else{
+homeParent.insertBefore(chip, homeParent.firstChild);
+}
 }
 }
 function auditNavReach(){
@@ -35788,17 +35814,31 @@ out.push({ button:id, blockedBy:(top.id || top.className || top.tagName) });
 });
 return out;
 }
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{ ensureStandaloneClass(); placeChip(); }catch(_){}
+});
+}
 function start(){
 ensureStandaloneClass();
-window.addEventListener('focus', ensureStandaloneClass);
+scan();
+new MutationObserver(scan).observe(document.body, {
+childList:true, subtree:true,
+});
+window.addEventListener('focus', scan);
 document.addEventListener('visibilitychange', function(){
-if(!document.hidden) ensureStandaloneClass();
+if(!document.hidden) scan();
 });
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
 window.CardinalNavClearance = {
-audit: auditNavReach,
+audit      : auditNavReach,
+placeChip  : placeChip,
 };
 })();
 </script>
