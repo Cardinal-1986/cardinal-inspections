@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 217 &#8212; Photo editor: rotate 90&deg; left/right plus markup (pen, arrow, circle, text) in six colors with undo. Double-tap a photo &rarr; &#9999;&#65039; Edit. Rotation saves in place; markup saves as a new photo so the clean original is always kept.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 219 &#8212; Estimate status now drives the pipeline. Marking an estimate Sent moves the client to Bid Submitted, Accepted moves it to Awarded, Declined offers Not Awarded. Forward-only, so a re-sent estimate never rewinds a scheduled job. This is what makes the Community Hub&#8217;s bid counters populate. Also: gallery poller idles when closed.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35926,6 +35926,11 @@ border:1px solid #d4a017;
 }
 #cr-pae-actionbar .dl:hover{ background:#3c3c3c; }
 #cr-pae-actionbar .dl:disabled{ opacity:.55; cursor:wait; }
+#cr-pae-actionbar .wf{
+background:#d4a017; color:#1a1a1a;
+border:1px solid #d4a017;
+}
+#cr-pae-actionbar .wf:hover{ background:#e8ba15; }
 #cr-pae-actionbar .confirm{
 background:#d4a017; color:#1a1a1a;
 }
@@ -36237,8 +36242,16 @@ else           renderBulkActionBar(checkedIds);
 actionBar.classList.add('show');
 }
 function renderBulkActionBar(checkedIds){
+var hasInsp  = !!document.getElementById('galInspBtn');
+var hasXfer  = !!document.getElementById('galXferBtn');
 actionBar.innerHTML =
 '<span class="count">' + checkedIds.length + ' selected</span>' +
+(hasInsp
+? '<button class="wf" data-act="to-insp" type="button">\u27A1\uFE0F To Inspection</button>'
+: '') +
+(hasXfer
+? '<button class="wf" data-act="to-report" type="button">\u2192 Report</button>'
+: '') +
 '<select class="move-to" data-act="bulk-move">' +
 '<option value="">Move to section\u2026</option>' +
 SECTIONS.map(function(s){
@@ -36253,6 +36266,18 @@ actionBar.querySelector('[data-act="bulk-download"]').onclick = onBulkDownload;
 actionBar.querySelector('[data-act="clear"]').onclick = function(){
 window.galChecked = {};
 if(typeof window.renderGallery === 'function') window.renderGallery();
+};
+var insp = actionBar.querySelector('[data-act="to-insp"]');
+if(insp) insp.onclick = function(){
+var real = document.getElementById('galInspBtn');
+if(real) real.click();
+};
+var rep = actionBar.querySelector('[data-act="to-report"]');
+if(rep) rep.onclick = function(){
+var real = document.getElementById('galXferBtn');
+if(!real) return;
+real.scrollIntoView({ behavior:'smooth', block:'center' });
+setTimeout(function(){ real.click(); }, 320);
 };
 }
 function renderPickerActionBar(){
@@ -36536,6 +36561,11 @@ openCapModal(card.dataset.gid);
 }, true);
 var lastCheckedSig = '';
 function pollChecked(){
+var view = document.getElementById('galleryView');
+if(!view || view.style.display === 'none'){
+if(lastCheckedSig !== ''){ lastCheckedSig = ''; updateActionBar(); }
+return;
+}
 var g = window.galChecked || {};
 var sig = Object.keys(g).filter(function(k){ return g[k]; }).sort().join(',');
 if(sig !== lastCheckedSig){
@@ -38753,6 +38783,194 @@ else start();
 window.CardinalEstimateToContract = {
 generate      : generate,
 buildScopeHtml: buildScopeHtml,
+};
+})();
+</script>
+
+
+<style id="cr-ess-styles">
+.cr-ess-toast{
+position:fixed;
+left:50%; transform:translateX(-50%);
+bottom:calc(24px + env(safe-area-inset-bottom, 0px));
+background:#1a1a1a; color:#f5efe0;
+border:1px solid #d4a017;
+border-radius:10px;
+padding:12px 18px;
+font:700 13px 'Segoe UI',Arial,sans-serif;
+box-shadow:0 8px 30px rgba(0,0,0,.4);
+z-index:9700;
+max-width:calc(100vw - 32px);
+text-align:center;
+opacity:0; pointer-events:none;
+transition:opacity .2s, transform .2s;
+}
+.cr-ess-toast.show{
+opacity:1;
+transform:translateX(-50%) translateY(-4px);
+}
+.cr-ess-toast b{ color:#f5d061; }
+</style>
+<script id="cr-ess-script">
+(function(){
+'use strict';
+var ORDER = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
+var STATUS_STAGE = {
+sent     : 'Prospect',
+accepted : 'Approved',
+};
+function rank(stage){
+var i = ORDER.indexOf(stage);
+return i === -1 ? -1 : i;
+}
+function displayStage(stage){
+try{
+if(window.CardinalComStages && typeof window.CardinalComStages.label === 'function'){
+var t = window.projClaimType && window.projClaimType(window.currentProject);
+if(t === 'community'){
+var l = window.CardinalComStages.label(stage);
+if(l) return l;
+}
+}
+}catch(_){}
+try{
+if(window.CardinalInsStages && typeof window.CardinalInsStages.label === 'function'){
+var t2 = window.projClaimType && window.projClaimType(window.currentProject);
+if(t2 === 'insurance'){
+var l2 = window.CardinalInsStages.label(stage);
+if(l2) return l2;
+}
+}
+}catch(_){}
+return stage;
+}
+var toastEl = null;
+function toast(html, ms){
+if(!toastEl){
+toastEl = document.createElement('div');
+toastEl.className = 'cr-ess-toast';
+document.body.appendChild(toastEl);
+}
+toastEl.innerHTML = html;
+toastEl.classList.add('show');
+clearTimeout(toastEl._t);
+toastEl._t = setTimeout(function(){
+toastEl.classList.remove('show');
+}, ms || 4200);
+}
+async function syncStageFor(project, status){
+if(!project || !project.id) return;
+if(typeof window.setStage !== 'function') return;
+var current = project.stage;
+if(typeof window.normStage === 'function'){
+try{ current = window.normStage(current); }catch(_){}
+}
+if(status === 'declined'){
+if(current === 'Lost') return;
+var ok = confirm(
+'This estimate is marked Declined.\n\n' +
+'Move ' + (project.name || 'this client') + ' to ' +
+displayStage('Lost') + '?'
+);
+if(!ok) return;
+try{
+await window.setStage(project.id, 'Lost');
+toast('Moved to <b>' + displayStage('Lost') + '</b>');
+}catch(e){
+console.warn('[ess] setStage Lost failed:', e);
+}
+return;
+}
+var target = STATUS_STAGE[status];
+if(!target) return;                       // draft — nothing to do
+if(current === target) return;            // already there
+if(current === 'Lost') return;            // don't resurrect silently
+if(rank(current) >= rank(target)) return;
+try{
+await window.setStage(project.id, target);
+toast('Pipeline moved to <b>' + displayStage(target) + '</b>');
+}catch(e){
+console.warn('[ess] setStage failed:', e);
+}
+}
+function hookEditor(){
+var view = document.getElementById('cr-est-view');
+if(!view) return false;
+var saveBtn = view.querySelector('[data-act="save"]');
+if(!saveBtn) return false;
+if(saveBtn.dataset.crEssHooked === '1') return true;
+saveBtn.dataset.crEssHooked = '1';
+saveBtn.addEventListener('click', function(){
+var statusSel = view.querySelector('[data-f="status"]');
+var status = statusSel ? statusSel.value : null;
+var project = window.currentProject;
+if(!status || !project) return;
+var elapsed = 0;
+var iv = setInterval(function(){
+elapsed += 150;
+if(!view.classList.contains('open')){
+clearInterval(iv);
+setTimeout(function(){ syncStageFor(project, status); }, 250);
+}else if(elapsed > 9000){
+clearInterval(iv);
+}
+}, 150);
+}, true);
+return true;
+}
+function hookPublish(){
+var btn = document.getElementById('cr-epub-btn');
+if(!btn || btn.dataset.crEssHooked === '1') return false;
+btn.dataset.crEssHooked = '1';
+btn.addEventListener('click', function(){
+var view = document.getElementById('cr-est-view');
+if(!view) return;
+var statusSel = view.querySelector('[data-f="status"]');
+if(!statusSel || statusSel.value !== 'draft') return;
+var project = window.currentProject;
+var elapsed = 0;
+var iv = setInterval(function(){
+elapsed += 200;
+if(!view.classList.contains('open')){
+clearInterval(iv);
+setTimeout(async function(){
+if(!confirm('Estimate published.\n\nMark it as Sent and move the pipeline forward?')) return;
+try{
+var rows = await window.CardinalEstimates.loadForProject(project.id);
+if(rows.length && window.supa){
+await window.supa.from('estimates')
+.update({ status:'sent' }).eq('id', rows[0].id);
+}
+}catch(e){ console.warn('[ess] status bump failed:', e); }
+syncStageFor(project, 'sent');
+}, 900);
+}else if(elapsed > 12000){
+clearInterval(iv);
+}
+}, 200);
+}, true);
+return true;
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{ hookEditor(); hookPublish(); }catch(_){}
+});
+}
+function start(){
+scan();
+new MutationObserver(scan).observe(document.body, {
+childList:true, subtree:true,
+});
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalEstimateStageSync = {
+sync         : syncStageFor,
+statusStage  : STATUS_STAGE,
 };
 })();
 </script>
