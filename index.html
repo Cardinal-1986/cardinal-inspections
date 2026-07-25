@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 226 &#8212; Estimates get a Preview button (see the finished document and Print/PDF without saving), and Publish now actually opens the document. Publish had been probing for openDoc/editDoc/showDoc &#8212; none of which exist &#8212; so it created the document then left you to find it.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 227 &#8212; Estimates: a Qty / unit toggle in the Line Items header. Turn it off for lump-sum pricing &#8212; each line becomes a description and one amount, and the document drops those columns too. Library descriptions now expand to fit instead of hiding in a two-line box.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37384,13 +37384,40 @@ line-height:1.45; color:#4a4a4a;
 padding:6px 8px; margin-top:4px;
 border:1px solid transparent; border-radius:6px;
 background:transparent;
-min-height:20px; resize:vertical;
+min-height:38px;
+overflow:hidden;
+resize:vertical;
 width:100%; box-sizing:border-box;
 font-family:inherit;
 }
 .cr-est-lineitem .desc-input:focus,
 .cr-est-lineitem .desc-input:hover{
 border-color:#d9cfaf; background:#fdfcf7;
+}
+.cr-est-itemchk{
+display:flex; align-items:center; gap:6px;
+margin-right:8px;
+font:700 11px 'Segoe UI',Arial,sans-serif;
+color:#8a7a5a; cursor:pointer;
+white-space:nowrap;
+}
+.cr-est-itemchk input{
+width:15px !important; height:15px; margin:0;
+accent-color:#d4a017;
+}
+.cr-est-lineitem .pricing.lump{
+grid-template-columns:auto 1fr;
+gap:10px;
+}
+.cr-est-lineitem .pricing.lump .lump-lbl{
+font:800 10px 'Segoe UI',Arial,sans-serif;
+letter-spacing:.14em; text-transform:uppercase;
+color:#8a7a5a;
+}
+.cr-est-lineitem .pricing.lump input{
+text-align:right;
+font:800 14px 'Segoe UI',Arial,sans-serif;
+color:#2c2c2c;
 }
 .cr-est-lineitem .pricing{
 display:grid;
@@ -37694,9 +37721,12 @@ if(i.error) throw i.error;
 return i.data;
 }
 function computeTotals(s){
+var itemized = s.itemized !== false;
 var subtotal = 0;
 (s.lines || []).forEach(function(l){
-var amt = (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
+var amt = itemized
+? (Number(l.qty) || 0) * (Number(l.unit_price) || 0)
+: (Number(l.amount) || 0);
 l.amount = amt;
 subtotal += amt;
 });
@@ -37726,6 +37756,7 @@ lines          : (existing.line_items || []).map(function(l){
 return Object.assign({ _lid: newLineId() }, l);
 }),
 photos         : (existing.photos || []).slice(),
+itemized       : existing.itemized !== false,
 discount       : Number(existing.discount) || 0,
 deposit_pct    : Number(existing.deposit_pct) || 30,
 valid_days     : Number(existing.valid_days) || 30,
@@ -37742,6 +37773,7 @@ title          : buildDefaultTitle(project),
 status         : 'draft',
 lines          : [],
 photos         : [],
+itemized       : true,
 discount       : 0,
 deposit_pct    : 30,
 valid_days     : 30,
@@ -37806,6 +37838,10 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 '</div>' +
 '<div class="cr-est-items-head">' +
 '<h3>Line Items</h3>' +
+'<label class="cr-est-itemchk" title="Turn off for lump-sum pricing \u2014 the client sees a description and one amount">' +
+'<input type="checkbox" data-f="itemized"' + (s.itemized !== false ? ' checked' : '') + ' /> ' +
+'<span>Qty / unit</span>' +
+'</label>' +
 '<button class="add-lib"    data-act="add-lib"    type="button">+ From Library</button>' +
 '<button class="add-custom" data-act="add-custom" type="button">+ Custom</button>' +
 '</div>' +
@@ -37830,24 +37866,42 @@ renderTotals(t) +
 wire();
 }
 function renderLine(l){
-var amt = (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
+var itemized = state.itemized !== false;
+var amt = itemized
+? (Number(l.qty) || 0) * (Number(l.unit_price) || 0)
+: (Number(l.amount) || 0);
+var pricing = itemized
+? '<div class="pricing">' +
+'<input type="number" data-lf="qty" value="' + esc(l.qty != null ? l.qty : 1) + '" step="0.01" min="0" inputmode="decimal" placeholder="Qty" />' +
+'<select class="unit-sel" data-lf="unit">' +
+UNITS.map(function(u){
+return '<option value="' + esc(u) + '"' + ((l.unit || '') === u ? ' selected' : '') + '>' + (u || '\u2014') + '</option>';
+}).join('') +
+'</select>' +
+'<input type="number" data-lf="unit_price" value="' + esc(l.unit_price != null ? l.unit_price : 0) + '" step="0.01" min="0" inputmode="decimal" placeholder="Unit $" />' +
+'<div class="amount" data-slot="amount">' + money(amt) + '</div>' +
+'</div>'
+: '<div class="pricing lump">' +
+'<span class="lump-lbl">Amount</span>' +
+'<input type="number" data-lf="amount" value="' + esc(l.amount != null ? l.amount : 0) + '" step="0.01" min="0" inputmode="decimal" placeholder="0.00" />' +
+'</div>';
 return '<div class="cr-est-lineitem" data-lid="' + esc(l._lid) + '">' +
 '<button class="del" data-act="del-line" title="Remove">\u2715</button>' +
 '<input type="text" class="name-input" data-lf="name" ' +
 'value="' + esc(l.name || '') + '" placeholder="Item name" />' +
 '<textarea class="desc-input" data-lf="description" ' +
-'placeholder="Description (optional) — what\u2019s included, materials, warranty">' + esc(l.description || '') + '</textarea>' +
-'<div class="pricing">' +
-'<input type="number" data-lf="qty" value="' + esc(l.qty != null ? l.qty : 1) + '" step="0.01" min="0" inputmode="decimal" placeholder="Qty" />' +
-'<select class="unit-sel" data-lf="unit">' +
-UNITS.map(function(u){
-return '<option value="' + esc(u) + '"' + ((l.unit || '') === u ? ' selected' : '') + '>' + (u || '—') + '</option>';
-}).join('') +
-'</select>' +
-'<input type="number" data-lf="unit_price" value="' + esc(l.unit_price != null ? l.unit_price : 0) + '" step="0.01" min="0" inputmode="decimal" placeholder="Unit $" />' +
-'<div class="amount" data-slot="amount">' + money(amt) + '</div>' +
-'</div>' +
+'placeholder="Description (optional) \u2014 what\u2019s included, materials, warranty">' + esc(l.description || '') + '</textarea>' +
+pricing +
 '</div>';
+}
+function autoGrow(ta){
+if(!ta) return;
+ta.style.height = 'auto';
+ta.style.height = Math.min(600, Math.max(38, ta.scrollHeight + 2)) + 'px';
+}
+function autoGrowAll(){
+if(!view) return;
+view.querySelectorAll('.desc-input').forEach(autoGrow);
 }
 function renderPhotos(photos){
 if(!photos || !photos.length){
@@ -37888,9 +37942,12 @@ view.querySelectorAll('[data-t="deposit"]').forEach(function(el){ el.textContent
 view.querySelectorAll('.cr-est-lineitem').forEach(function(row){
 var l = state.lines.find(function(x){ return x._lid === row.dataset.lid; });
 if(!l) return;
-var amt = (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
 var cell = row.querySelector('[data-slot="amount"]');
-if(cell) cell.textContent = money(amt);
+if(!cell) return;   // lump-sum rows have no computed cell
+var amt = state.itemized !== false
+? (Number(l.qty) || 0) * (Number(l.unit_price) || 0)
+: (Number(l.amount) || 0);
+cell.textContent = money(amt);
 });
 }
 function wire(){
@@ -37985,6 +38042,18 @@ state.photos.splice(idx, 1);
 render();
 };
 });
+var itemChk = view.querySelector('[data-f="itemized"]');
+if(itemChk) itemChk.onchange = function(e){
+state.itemized = !!e.target.checked;
+if(!state.itemized){
+state.lines.forEach(function(l){
+if(l.amount == null || l.amount === 0){
+l.amount = (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
+}
+});
+}
+render();
+};
 view.querySelectorAll('.cr-est-lineitem').forEach(function(row){
 var lid = row.dataset.lid;
 var line = state.lines.find(function(l){ return l._lid === lid; });
@@ -37997,16 +38066,18 @@ row.querySelectorAll('[data-lf]').forEach(function(inp){
 var field = inp.dataset.lf;
 inp.oninput = function(e){
 var v = e.target.value;
-if(field === 'qty' || field === 'unit_price'){
+if(field === 'qty' || field === 'unit_price' || field === 'amount'){
 line[field] = Number(v) || 0;
 refreshTotals();
 }else{
 line[field] = v;
+if(field === 'description') autoGrow(e.target);
 }
 };
 inp.onchange = inp.oninput;
 });
 });
+autoGrowAll();
 }
 async function handleSave(){
 var s = state;
@@ -38031,6 +38102,7 @@ title                : s.title.trim(),
 status               : s.status || 'draft',
 line_items           : linesForDb,
 photos               : s.photos || [],
+itemized             : s.itemized !== false,
 subtotal             : totals.subtotal.toFixed(2),
 discount             : totals.discount.toFixed(2),
 total                : totals.total.toFixed(2),
@@ -38269,6 +38341,7 @@ Object.keys(l).forEach(function(k){ if(k !== '_lid') o[k] = l[k]; });
 return o;
 }),
 photos         : (state.photos || []).slice(),
+itemized       : state.itemized !== false,
 subtotal       : t.subtotal,
 discount       : t.discount,
 total          : t.total,
@@ -38416,12 +38489,19 @@ var total    = Number(est.total) || 0;
 var depPct   = Number(est.deposit_pct) || 0;
 var depAmt   = Number(est.deposit_amount) || 0;
 var balance  = Math.max(0, total - depAmt);
+var itemized = est.itemized !== false;
 var itemRows = lines.map(function(l){
 var qty  = Number(l.qty) || 0;
 var rate = Number(l.unit_price) || 0;
-var amt  = qty * rate;
+var amt  = itemized ? (qty * rate) : (Number(l.amount) || 0);
 var desc = '<b>' + esc(l.name || 'Item') + '</b>' +
 (l.description ? '<br><span style="font-size:9.5pt;color:#555;">' + nl2br(l.description) + '</span>' : '');
+if(!itemized){
+return '<tr class="avoid-break">' +
+'<td>' + desc + '</td>' +
+'<td class="rate">' + money(amt) + '</td>' +
+'</tr>';
+}
 return '<tr class="avoid-break">' +
 '<td>' + desc + '</td>' +
 '<td class="qty">' + (qty || '') + '</td>' +
@@ -38430,12 +38510,23 @@ return '<tr class="avoid-break">' +
 '<td class="rate">' + money(amt) + '</td>' +
 '</tr>';
 }).join('');
+var COLS = itemized ? 5 : 2;
+var SPAN = COLS - 2;   // blank cells before the label column in totals
+var headRow = itemized
+? '<tr>' +
+'<th>Description</th><th style="text-align:right;">Qty</th>' +
+'<th style="text-align:center;">Unit</th>' +
+'<th style="text-align:right;">Unit Price</th>' +
+'<th style="text-align:right;">Amount</th>' +
+'</tr>'
+: '<tr><th>Description</th><th style="text-align:right;">Amount</th></tr>';
+var pad = SPAN > 0 ? '<td colspan="' + SPAN + '"></td>' : '';
 var totalsRows =
-'<tr class="totals"><td colspan="3"></td><td class="lbl">Subtotal</td><td class="val">' + money(subtotal) + '</td></tr>' +
+'<tr class="totals">' + pad + '<td class="lbl">Subtotal</td><td class="val">' + money(subtotal) + '</td></tr>' +
 (discount > 0
-? '<tr class="totals"><td colspan="3"></td><td class="lbl">Discount</td><td class="val">\u2212' + money(discount) + '</td></tr>'
+? '<tr class="totals">' + pad + '<td class="lbl">Discount</td><td class="val">\u2212' + money(discount) + '</td></tr>'
 : '') +
-'<tr class="totals grand"><td colspan="3"></td><td class="lbl">Total</td><td class="val">' + money(total) + '</td></tr>';
+'<tr class="totals grand">' + pad + '<td class="lbl">Total</td><td class="val">' + money(total) + '</td></tr>';
 var depositBlock = depAmt > 0
 ? '<div class="deposit-box avoid-break">' +
 '<table class="dep">' +
@@ -38553,13 +38644,8 @@ return '<!DOCTYPE html>\n' +
 '</table>' +
 '<h2 class="sec"><span class="num">1</span>Scope of Work &amp; Pricing</h2>' +
 '<table class="items">' +
-'<thead><tr>' +
-'<th>Description</th><th style="text-align:right;">Qty</th>' +
-'<th style="text-align:center;">Unit</th>' +
-'<th style="text-align:right;">Unit Price</th>' +
-'<th style="text-align:right;">Amount</th>' +
-'</tr></thead>' +
-'<tbody>' + (itemRows || '<tr><td colspan="5" style="color:#999;font-style:italic;">No line items.</td></tr>') + '</tbody>' +
+'<thead>' + headRow + '</thead>' +
+'<tbody>' + (itemRows || '<tr><td colspan="' + COLS + '" style="color:#999;font-style:italic;">No line items.</td></tr>') + '</tbody>' +
 '<tfoot>' + totalsRows + '</tfoot>' +
 '</table>' +
 '<h2 class="sec"><span class="num">2</span>Payment Terms</h2>' +
