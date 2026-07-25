@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 241 &#8212; Cardinal Truth home rebuilt as a claims recovery ledger: what carriers owe you leads, the stage rail carries dollars at each node, and the two stages where money waits on a carrier are flagged. Supplements are now tracked with an average-increase figure.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 244 &#8212; Insurance data consolidated: insurance_claims is now the single store, with the profile JSON kept in sync so nothing breaks. Fixed the old landing flashing before the new one, and Cardinal Truth figures now refresh each time you open it.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29973,6 +29973,11 @@ window.CardinalDark = { toggle:toggle, isEnabled:isEnabled, setEnabled:setEnable
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:241, note:'\uD83D\uDEE1\uFE0F Cardinal Truth rebuilt \u2014 what carriers owe you leads, each stage shows the money sitting there, and the two stages waiting on a carrier are flagged' },
+{ build:241, note:'\uD83D\uDCC8 Supplements are tracked properly now: filed vs approved, and what your supplements add to the carrier\u2019s first scope on average' },
+{ build:240, note:'\uD83D\uDCF1 The CRM switcher moved to the bottom bar between the arrows, where your thumb already is' },
+{ build:239, note:'\uD83D\uDC1B Landing / Hub works again from the CRM switcher' },
+{ build:238, note:'\u2B05\uFE0F The back and forward arrows work again in the installed app \u2014 two buttons were sitting on top of them' },
 { build:235, note:'\u2728 New landing page \u2014 the portals are laid like shingle courses, and a quote rotates daily so the whole crew sees the same one' },
 { build:234, note:'\uD83C\uDFE0 The logo now always goes to the landing, whichever CRM you\u2019re in. All three portal headers share one look, with only the colour changing' },
 { build:234, note:'\uD83D\uDC65 Filter the client list by who it\u2019s assigned to \u2014 Everyone, Me, Unassigned, or any teammate' },
@@ -35725,6 +35730,7 @@ var r = qiResume();
 var qs = lv.querySelector('[data-slot="qisub"]');
 if(qs && r) qs.textContent = r;
 }
+try{ build(); }catch(e){ console.warn('[landing] initial build:', e); }
 var scheduled = false;
 function scan(){
 if(scheduled) return;
@@ -35755,6 +35761,430 @@ build();
 quotes  : QUOTES,
 today   : function(){ return QUOTES[dayOfYear(new Date()) % QUOTES.length]; },
 };
+})();
+</script>
+
+
+<script id="cr-iu-script">
+(function(){
+'use strict';
+var cache = {};
+var loaded = false;
+function n(v){
+if(v === null || v === undefined || v === '') return null;
+var x = Number(v);
+return isNaN(x) ? null : x;
+}
+function shape(row){
+if(!row) return null;
+return {
+carrier:       row.carrier       || null,
+policy_number: row.policy_number || null,
+claim_number:  row.claim_number  || null,
+date_of_loss:  row.date_of_loss  || null,
+coverage_type: row.coverage_type || null,
+ord_law:       row.ord_law       || null,
+deductible:    n(row.deductible),
+deductible_waived: !!row.deductible_waived,
+rcv:           n(row.approved_rcv),
+acv:           n(row.approved_acv),
+depreciation:  n(row.approved_depreciation),
+adjuster: {
+name:  row.adjuster_name  || null,
+phone: row.adjuster_phone || null,
+email: row.adjuster_email || null,
+},
+supplement: {
+status:   row.supplement_status   || 'none',
+filed:    n(row.supplement_filed),
+approved: n(row.supplement_approved),
+},
+_claimId: row.id,
+_source:  'table',
+};
+}
+async function load(){
+if(!window.supa) return;
+try{
+var r = await window.supa.from('insurance_claims').select('*');
+if(r.error){ console.warn('[ins] load:', r.error.message); return; }
+cache = {};
+(r.data || []).forEach(function(row){
+if(row.project_id) cache[row.project_id] = row;
+});
+loaded = true;
+}catch(e){ console.warn('[ins] load failed:', e); }
+}
+var origProjInsurance = null;
+function unified(pr){
+if(!pr) return null;
+var row = cache[pr.id];
+if(row) return shape(row);
+if(typeof origProjInsurance === 'function'){
+try{ return origProjInsurance(pr); }catch(_){}
+}
+try{
+var L = (window.parseCkAll ? window.parseCkAll(pr).lead : (pr.checklist || {}).lead) || {};
+return (L.insurance && typeof L.insurance === 'object') ? L.insurance : null;
+}catch(_){ return null; }
+}
+function wrap(){
+if(typeof window.projInsurance !== 'function') return false;
+if(window.projInsurance.__crUnified) return true;
+origProjInsurance = window.projInsurance;
+unified.__crUnified = true;
+window.projInsurance = unified;
+return true;
+}
+async function save(project, fields){
+if(!project || !project.id || !window.supa) return null;
+var f = fields || {};
+var adj = f.adjuster || {};
+var payload = {
+project_id:     project.id,
+homeowner_name: project.name || null,
+carrier:        f.carrier       != null ? f.carrier       : undefined,
+policy_number:  f.policy_number != null ? f.policy_number : undefined,
+claim_number:   f.claim_number  != null ? f.claim_number  : undefined,
+date_of_loss:   f.date_of_loss  != null ? f.date_of_loss  : undefined,
+coverage_type:  f.coverage_type != null ? f.coverage_type : undefined,
+ord_law:        f.ord_law       != null ? f.ord_law       : undefined,
+deductible:     f.deductible    != null ? n(f.deductible) : undefined,
+approved_rcv:   f.rcv           != null ? n(f.rcv)        : undefined,
+approved_acv:   f.acv           != null ? n(f.acv)        : undefined,
+adjuster_name:  adj.name  != null ? adj.name  : undefined,
+adjuster_phone: adj.phone != null ? adj.phone : undefined,
+adjuster_email: adj.email != null ? adj.email : undefined,
+};
+Object.keys(payload).forEach(function(k){
+if(payload[k] === undefined) delete payload[k];
+});
+var rcv = payload.approved_rcv, acv = payload.approved_acv;
+if(rcv != null && acv != null){
+payload.approved_depreciation = +(rcv - acv).toFixed(2);
+}
+var existing = cache[project.id];
+var row = null;
+try{
+if(existing && existing.id){
+var u = await window.supa.from('insurance_claims')
+.update(payload).eq('id', existing.id).select().single();
+if(u.error) throw u.error;
+row = u.data;
+}else{
+payload.status = payload.status || 'filed';
+payload.created_by = ((window.currentUser && window.currentUser.email) || '').toLowerCase() || null;
+var i = await window.supa.from('insurance_claims')
+.insert(payload).select().single();
+if(i.error) throw i.error;
+row = i.data;
+}
+if(row) cache[project.id] = row;
+}catch(e){
+console.warn('[ins] save failed:', e.message || e);
+throw e;
+}
+try{
+if(typeof window.patchProjectCk === 'function'){
+var mirror = shape(row);
+if(mirror){ delete mirror._claimId; delete mirror._source; }
+await window.patchProjectCk(project, { lead_insurance_mirror: true });
+var L = (window.parseCkAll ? window.parseCkAll(project).lead : {}) || {};
+L.insurance = Object.assign({}, L.insurance || {}, mirror);
+await window.patchProjectCk(project, { lead: L });
+}
+}catch(me){ console.warn('[ins] mirror:', me.message || me); }
+return row;
+}
+async function start(){
+if(!wrap()){
+var n1 = 0, iv = setInterval(function(){
+if(wrap() || ++n1 > 40) clearInterval(iv);
+}, 250);
+}
+await load();
+try{
+if(window.CardinalTruthHome && typeof window.CardinalTruthHome.refresh === 'function'){
+window.CardinalTruthHome.refresh();
+}
+}catch(_){}
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalInsurance = {
+get     : unified,
+save    : save,
+refresh : async function(){ await load(); return Object.keys(cache).length; },
+claim   : function(pid){ return cache[pid] || null; },
+all     : function(){ return cache; },
+loaded  : function(){ return loaded; },
+};
+})();
+</script>
+
+
+<style id="cr-sol-styles">#cr-sol{display:none;position:fixed;inset:0;background:rgba(10,14,22,.78);z-index:9560;justify-content:center;align-items:center;padding:18px;padding-bottom:max(18px,env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-sol.open{display:flex}#cr-sol .box{background:#1a2130;color:#dfe5ee;border:1px solid rgba(74,111,165,.35);border-radius:14px;width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55)}#cr-sol .hd{padding:16px 18px 14px;border-bottom:1px solid rgba(74,111,165,.25);display:flex;align-items:center;gap:12px;flex:0 0 auto}#cr-sol .hd h3{margin:0;flex:1;font:700 16px Georgia,'Times New Roman',serif;color:#dfe5ee}#cr-sol .hd .x{background:transparent;border:0;cursor:pointer;color:#5c6b82;font-size:22px;line-height:1;padding:2px 6px}#cr-sol .hd .x:hover{color:#dfe5ee}#cr-sol .bd{padding:18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}#cr-sol .lede{font-size:13px;line-height:1.55;color:#8697b0;margin:0 0 16px}#cr-sol .pick{display:flex;align-items:center;gap:14px;width:100%;background:#212a3c;border:1px solid rgba(74,111,165,.28);border-radius:11px;padding:16px 16px;margin-bottom:10px;cursor:pointer;text-align:left;font-family:inherit;color:#dfe5ee;transition:border-color .15s,background .15s}#cr-sol .pick:hover{border-color:rgba(127,166,214,.6);background:#263044}#cr-sol .pick .i{font-size:22px;flex:0 0 auto}#cr-sol .pick .t{flex:1;min-width:0}#cr-sol .pick .t b{display:block;font:700 14.5px Georgia,serif;color:#dfe5ee}#cr-sol .pick .t small{display:block;font-size:12px;color:#8697b0;margin-top:3px;line-height:1.45}#cr-sol label{display:block;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#5c6b82;margin:13px 0 5px}#cr-sol label:first-child{margin-top:0}#cr-sol input[type=text]{width:100%;box-sizing:border-box;padding:10px 12px;background:#121722;color:#dfe5ee;border:1px solid rgba(74,111,165,.3);border-radius:8px;font-family:inherit;font-size:14px;outline:none}#cr-sol input[type=text]:focus{border-color:#4a6fa5;box-shadow:0 0 0 3px rgba(74,111,165,.22)}#cr-sol input[type=text]::placeholder{color:#4a5568}#cr-sol .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}#cr-sol .req{color:#e0a458}#cr-sol .found{background:#121722;border:1px solid rgba(111,174,134,.3);border-left:3px solid #6fae86;border-radius:8px;padding:12px 14px;margin:4px 0 14px;font-size:12.5px;line-height:1.6;color:#8697b0}#cr-sol .found b{color:#dfe5ee;font-weight:700}#cr-sol .found .miss{color:#5c6b82;font-style:italic}#cr-sol .busy{text-align:center;padding:34px 20px;color:#8697b0;font-size:13.5px;line-height:1.6}#cr-sol .busy .sp{width:26px;height:26px;margin:0 auto 14px;border:2px solid rgba(74,111,165,.3);border-top-color:#7fa6d6;border-radius:50%;animation:crSolSpin .8s linear infinite}@keyframes crSolSpin{to{transform:rotate(360deg)}}#cr-sol .ft{padding:13px 18px;padding-bottom:calc(13px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(74,111,165,.25);display:flex;gap:8px;justify-content:flex-end;flex:0 0 auto}#cr-sol .ft button{padding:10px 16px;border-radius:8px;cursor:pointer;font:700 12px inherit;letter-spacing:.06em;font-family:inherit;border:0}#cr-sol .ft .cancel{background:transparent;color:#8697b0;border:1px solid rgba(74,111,165,.3)}#cr-sol .ft .go{background:#4a6fa5;color:#fff}#cr-sol .ft .go:hover{background:#5a83c0}#cr-sol .ft .go:disabled{opacity:.5;cursor:wait}</style>
+<script id="cr-sol-script">
+(function(){
+'use strict';
+var el = null, fileInput = null, extracted = null, fileName = '';
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function myEmail(){
+return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+}
+function num(v){
+if(v == null || v === '') return null;
+var n = Number(String(v).replace(/[^0-9.\-]/g, ''));
+return isNaN(n) ? null : n;
+}
+function ensure(){
+if(el) return el;
+el = document.createElement('div');
+el.id = 'cr-sol';
+el.onclick = function(e){ if(e.target === el) close(); };
+document.body.appendChild(el);
+fileInput = document.createElement('input');
+fileInput.type = 'file';
+fileInput.accept = 'application/pdf,image/*';
+fileInput.style.display = 'none';
+fileInput.onchange = function(){
+var f = fileInput.files && fileInput.files[0];
+fileInput.value = '';
+if(f) readScope(f);
+};
+document.body.appendChild(fileInput);
+return el;
+}
+function shell(title, body, footer){
+el.innerHTML =
+'<div class="box">' +
+'<div class="hd"><h3>' + title + '</h3>' +
+'<button class="x" data-act="close" type="button">\u2715</button></div>' +
+'<div class="bd">' + body + '</div>' +
+(footer ? '<div class="ft">' + footer + '</div>' : '') +
+'</div>';
+var x = el.querySelector('[data-act="close"]');
+if(x) x.onclick = close;
+}
+function open(){
+ensure();
+extracted = null; fileName = '';
+shell('\uD83D\uDCC4 Scope of Loss',
+'<p class="lede">Upload the adjuster\u2019s scope and the AI reads the carrier, ' +
+'claim number, adjuster contact, RCV, ACV and deductible off it.</p>' +
+'<button class="pick" data-act="new" type="button">' +
+'<span class="i">\u2795</span>' +
+'<span class="t"><b>Start a new claim</b>' +
+'<small>Read the scope first, then create the client from what it says</small></span>' +
+'</button>' +
+'<button class="pick" data-act="existing" type="button">' +
+'<span class="i">\uD83D\uDD0D</span>' +
+'<span class="t"><b>Add to an existing claim</b>' +
+'<small>Open the client, then use the Scope of Loss card on their profile</small></span>' +
+'</button>'
+);
+el.querySelector('[data-act="new"]').onclick = function(){ fileInput.click(); };
+el.querySelector('[data-act="existing"]').onclick = function(){
+close();
+if(typeof window.showInsuranceClients === 'function'){
+window.icStageFilter = '';
+window.showInsuranceClients();
+}
+};
+el.classList.add('open');
+document.body.style.overflow = 'hidden';
+}
+function close(){
+if(el) el.classList.remove('open');
+document.body.style.overflow = '';
+}
+async function readScope(file){
+if(file.size > 12 * 1024 * 1024){
+alert('That file is bigger than 12 MB. Try compressing the PDF or splitting it.');
+return;
+}
+fileName = file.name || 'scope';
+shell('\uD83D\uDCC4 Reading the scope',
+'<div class="busy"><div class="sp"></div>' +
+'Reading <b>' + esc(fileName) + '</b>\u2026<br>' +
+'This usually takes ten to twenty seconds.</div>');
+try{
+var dataUrl = await new Promise(function(res, rej){
+var fr = new FileReader();
+fr.onload = function(){ res(fr.result); };
+fr.onerror = function(){ rej(new Error('Could not read the file')); };
+fr.readAsDataURL(file);
+});
+var b64  = String(dataUrl).split(',')[1];
+var mime = String(dataUrl).slice(5).split(';')[0];
+var tok = '';
+try{
+var sess = await window.supa.auth.getSession();
+tok = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
+}catch(_){}
+var r = await fetch('/api/sol', {
+method:'POST',
+headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
+body: JSON.stringify({ file:b64, mime:mime }),
+});
+var j = null;
+try{ j = await r.json(); }catch(_){}
+if(!r.ok){
+throw new Error(String((j && (j.detail || j.error)) || ('HTTP ' + r.status)).slice(0, 240));
+}
+extracted = j.extracted || {};
+review();
+}catch(err){
+shell('\uD83D\uDCC4 Scope of Loss',
+'<p class="lede">Could not read that file.<br><br>' +
+esc(err.message || err) + '</p>',
+'<button class="cancel" data-act="close2" type="button">Close</button>' +
+'<button class="go" data-act="retry" type="button">Try another file</button>');
+el.querySelector('[data-act="close2"]').onclick = close;
+el.querySelector('[data-act="retry"]').onclick = function(){ fileInput.click(); };
+}
+}
+function review(){
+var e   = extracted || {};
+var adj = e.adjuster || {};
+var tot = e.totals || {};
+var name = e.insured_name || e.homeowner_name || e.insured || '';
+var addr = e.loss_location || e.property_address || e.address || '';
+function line(label, val){
+return '<div>' + label + ': ' +
+(val ? '<b>' + esc(val) + '</b>' : '<span class="miss">not found</span>') +
+'</div>';
+}
+shell('\uD83D\uDCC4 Start a claim',
+'<p class="lede">Read from <b>' + esc(fileName) + '</b>. ' +
+'Check the client details, then create the claim.</p>' +
+'<label>Client name <span class="req">*</span></label>' +
+'<input type="text" data-f="name" value="' + esc(name) + '" placeholder="Insured name from the scope">' +
+'<label>Property address <span class="req">*</span></label>' +
+'<input type="text" data-f="address" value="' + esc(addr) + '" placeholder="Loss location">' +
+'<div class="row2">' +
+'<div><label>Phone</label><input type="text" data-f="phone" placeholder="Optional"></div>' +
+'<div><label>Email</label><input type="text" data-f="email" placeholder="Optional"></div>' +
+'</div>' +
+'<label style="margin-top:18px;">Read from the scope</label>' +
+'<div class="found">' +
+line('Carrier',      e.carrier) +
+line('Claim #',      e.claim_number) +
+line('Policy #',     e.policy_number) +
+line('Date of loss', e.date_of_loss) +
+line('RCV',          tot.rcv) +
+line('ACV',          tot.acv) +
+line('Deductible',   e.deductible) +
+line('Adjuster',     adj.name) +
+'</div>',
+'<button class="cancel" data-act="cancel" type="button">Cancel</button>' +
+'<button class="go" data-act="create" type="button">Create claim</button>'
+);
+el.querySelector('[data-act="cancel"]').onclick = close;
+el.querySelector('[data-act="create"]').onclick = create;
+setTimeout(function(){
+var n = el.querySelector('[data-f="name"]');
+if(n && !n.value) n.focus();
+}, 80);
+}
+async function create(){
+var g = function(f){
+var i = el.querySelector('[data-f="' + f + '"]');
+return i ? i.value.trim() : '';
+};
+var name = g('name'), addr = g('address');
+if(!name){ alert('The claim needs a client name.'); return; }
+var btn = el.querySelector('[data-act="create"]');
+btn.disabled = true; btn.textContent = 'Creating\u2026';
+var e   = extracted || {};
+var adj = e.adjuster || {};
+var tot = e.totals || {};
+try{
+var insurance = {
+carrier:       e.carrier || null,
+policy_number: e.policy_number || null,
+claim_number:  e.claim_number || null,
+date_of_loss:  e.date_of_loss || null,
+deductible:    num(e.deductible),
+rcv:           num(tot.rcv),
+acv:           num(tot.acv),
+coverage_type: e.coverage_type || null,
+ord_law:       e.ord_law || null,
+adjuster: {
+name:  adj.name  || null,
+phone: adj.phone || null,
+email: adj.email || null,
+},
+source: 'scope-of-loss',
+};
+var proj = {
+name    : name,
+address : addr || null,
+stage   : 'Lead',
+checklist: {
+lead: {
+claim_type : 'insurance',
+phone      : g('phone') || null,
+email      : g('email') || null,
+insurance  : insurance,
+assigned   : myEmail() ? [myEmail()] : [],
+source     : 'Scope of Loss',
+created_at : new Date().toISOString(),
+},
+},
+created_by: myEmail() || null,
+};
+var pr = await window.supa.from('projects').insert(proj).select().single();
+if(pr.error) throw pr.error;
+var project = pr.data;
+var rcv = num(tot.rcv), acv = num(tot.acv);
+var claim = {
+project_id:     project.id,
+homeowner_name: name,
+carrier:        e.carrier || null,
+claim_number:   e.claim_number || null,
+adjuster_name:  adj.name  || null,
+adjuster_phone: adj.phone || null,
+adjuster_email: adj.email || null,
+approved_rcv:   rcv,
+approved_acv:   acv,
+deductible:     num(e.deductible),
+status:         'filed',
+notes:          'Created from ' + fileName,
+created_by:     myEmail() || 'unknown',
+};
+if(rcv != null && acv != null){
+claim.approved_depreciation = +(rcv - acv).toFixed(2);
+}
+try{
+var cr = await window.supa.from('insurance_claims').insert(claim);
+if(cr.error) console.warn('[sol] claim row:', cr.error.message);
+}catch(ce){ console.warn('[sol] claim row failed:', ce); }
+if(Array.isArray(window.cacheProjects)) window.cacheProjects.unshift(project);
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('sol_intake',
+'Created claim from scope of loss: ' + name, project.id); }catch(_){}
+}
+close();
+if(typeof window.reload === 'function'){
+setTimeout(function(){ try{ window.reload(); }catch(_){} }, 300);
+}
+if(typeof window.openProject === 'function'){
+try{ window.openProject(project.id); }catch(_){}
+}
+alert('Claim created for ' + name + '.' +
+(e.carrier ? '\n\nCarrier: ' + e.carrier : '') +
+(e.claim_number ? '\nClaim #: ' + e.claim_number : ''));
+}catch(err){
+alert('Could not create the claim: ' + (err.message || err));
+if(btn){ btn.disabled = false; btn.textContent = 'Create claim'; }
+}
+}
+window.CardinalSolIntake = { open: open, close: close };
 })();
 </script>
 
@@ -35974,8 +36404,13 @@ if(d === 'library' && typeof window.showResourceLibrary === 'function'){
 window.showResourceLibrary(); return;
 }
 if(d === 'sol'){
-var sol = document.getElementById('solModal');
-if(sol){ sol.style.display = 'flex'; return; }
+if(window.CardinalSolIntake && typeof window.CardinalSolIntake.open === 'function'){
+window.CardinalSolIntake.open();
+}else if(typeof window.showInsuranceClients === 'function'){
+window.icStageFilter = '';
+window.showInsuranceClients();
+}
+return;
 }
 if(d === 'board'){
 if(typeof window.showHome === 'function') window.showHome();
@@ -35985,14 +36420,11 @@ if(nav) setTimeout(function(){ try{ nav.click(); }catch(_){} }, 60);
 };
 });
 }
-var built = false;
 async function build(){
 var view = document.getElementById('cardinalTruthView');
 if(!view || view.style.display === 'none') return;
-if(!built){
+render();
 await loadClaims();
-built = true;
-}
 render();
 }
 var scheduled = false;
@@ -36016,7 +36448,7 @@ if(view.style.display !== 'none') scan();
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
 window.CardinalTruthHome = {
-refresh : async function(){ built = false; await build(); },
+refresh : async function(){ await build(); },
 stats   : function(){ return stats; },
 compute : compute,
 };
