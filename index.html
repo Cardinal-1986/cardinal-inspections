@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 227 &#8212; Estimates: a Qty / unit toggle in the Line Items header. Turn it off for lump-sum pricing &#8212; each line becomes a description and one amount, and the document drops those columns too. Library descriptions now expand to fit instead of hiding in a two-line box.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 228 &#8212; The Qty / unit toggle is now visible on mobile. The Line Items header was a non-wrapping row, so adding the toggle pushed it past the screen edge on a phone. The row wraps now and the toggle reads as a proper control.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37338,14 +37338,19 @@ gap:0 12px;
 .cr-est-row3{ grid-template-columns:1fr; }
 }
 .cr-est-items-head{
-display:flex; align-items:baseline; gap:10px;
+display:flex; align-items:baseline; gap:8px;
+flex-wrap:wrap;
 margin:22px 0 8px;
 }
 .cr-est-items-head h3{
-margin:0; flex:1;
+margin:0;
+flex:1 1 100%;
 font:800 11px 'Segoe UI',Arial,sans-serif;
 letter-spacing:.14em; text-transform:uppercase;
 color:#8a7a5a;
+}
+@media (min-width:560px){
+.cr-est-items-head h3{ flex:1 1 auto; }
 }
 .cr-est-items-head button{
 padding:7px 12px; border-radius:6px; border:0;
@@ -37395,15 +37400,21 @@ font-family:inherit;
 border-color:#d9cfaf; background:#fdfcf7;
 }
 .cr-est-itemchk{
-display:flex; align-items:center; gap:6px;
-margin-right:8px;
+display:inline-flex; align-items:center; gap:6px;
+padding:6px 11px;
+background:#faf5e9;
+border:1px solid #d9cfaf;
+border-radius:6px;
 font:700 11px 'Segoe UI',Arial,sans-serif;
-color:#8a7a5a; cursor:pointer;
+color:#8a5a00; cursor:pointer;
 white-space:nowrap;
+flex:0 0 auto;
 }
+.cr-est-itemchk:hover{ background:#f5efd8; border-color:#d4a017; }
 .cr-est-itemchk input{
 width:15px !important; height:15px; margin:0;
 accent-color:#d4a017;
+flex:0 0 auto;
 }
 .cr-est-lineitem .pricing.lump{
 grid-template-columns:auto 1fr;
