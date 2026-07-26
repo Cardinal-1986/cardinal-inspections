@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 280 &#8212; The new Community screen actually appears now. Its view is built when the hub first opens rather than existing at startup, so looking for it at load found nothing and nothing ever rendered.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 281 &#8212; Community buttons respond on the first tap. The new screens were watching the page for changes and also changing it, so every render triggered another one and buttons were replaced under your finger.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38939,6 +38939,13 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 'use strict';
 var pane   = 'bids';
 var psort  = 'owed';
+var painting = false;
+function paintStart(){ painting = true; }
+function paintEnd(){
+requestAnimationFrame(function(){
+requestAnimationFrame(function(){ painting = false; });
+});
+}
 function esc(s){
 return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
 return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
@@ -39100,6 +39107,7 @@ view.appendChild(host);
 var d = compute();
 var dueTot = d.due.reduce(function(a,x){ return a + (x.amt||0); }, 0);
 var ps = partners();
+paintStart();
 host.innerHTML =
 '<div class="top">' +
 '<button class="back" data-act="back" type="button">\u2190</button>' +
@@ -39183,6 +39191,7 @@ return '<button class="pjob" data-open="' + esc(j.pr.id) + '" type="button">' +
 '</div>';
 clock(host);
 wire(host);
+paintEnd();
 }
 function clock(host){
 var n = new Date();
@@ -39245,6 +39254,7 @@ if(scheduled) return;
 scheduled = true;
 requestAnimationFrame(function(){
 scheduled = false;
+if(painting) return;
 if(!isOpen()) return;
 try{ if(missing()) render(); else render(); }
 catch(e){ console.error('[community] render failed:', e); }
@@ -39289,6 +39299,13 @@ var tab = 'thread';
 var loadedFor = null;
 var estimates = [], events = [], contacts = [];
 var busy = false;
+var painting = false;
+function paintStart(){ painting = true; }
+function paintEnd(){
+requestAnimationFrame(function(){
+requestAnimationFrame(function(){ painting = false; });
+});
+}
 function esc(s){
 return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
 return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
@@ -39490,6 +39507,7 @@ var l = lead(pr), est = liveEstimate();
 var due = daysTo(l.bid_due_at);
 var amt = est ? est.total : (Number(l.bid_amount) || 0);
 var st  = normStage(pr.stage);
+paintStart();
 mount.innerHTML =
 '<div class="pin">' +
 '<div class="t"><span class="nm"><b>' + esc(pr.name || 'Unnamed') + '</b>' +
@@ -39522,6 +39540,7 @@ threadHtml(pr) + contactsHtml(pr) +
 bidHtml(pr) + contactsHtml(pr) +
 '</div>';
 wire(mount, pr);
+paintEnd();
 }
 function wire(mount, pr){
 mount.querySelectorAll('[data-t]').forEach(function(b){
@@ -39559,6 +39578,7 @@ if(scheduled) return;
 scheduled = true;
 requestAnimationFrame(function(){
 scheduled = false;
+if(painting) return;
 Promise.resolve().then(check)
 .catch(function(e){ console.error('[community client] failed:', e); });
 });
@@ -39569,7 +39589,7 @@ new MutationObserver(scan).observe(document.body, { childList:true, subtree:true
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
-window.CardinalCommunityClient = {
+window.CardinalCommunityJob = {
 refresh : async function(){
 var pr = window.currentProject;
 if(pr){ await load(pr.id); render(); }
