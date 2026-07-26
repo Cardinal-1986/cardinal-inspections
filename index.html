@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 285 &#8212; Fixed the blank client profile. The community page hid the cards it replaces before checking it could render, so a failure left the page empty. It now hides nothing until its own content is on screen, and restores the profile if anything goes wrong.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 287 &#8212; Performance logs are readable on a phone now &#8212; they used to print their own styling as text because mobile consoles don&#8217;t support it.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29300,12 +29300,10 @@ TTI = Math.round(performance.now());
 var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 var budget = isMobile ? 3000 : 2000;
 if(TTI > budget){
-console.warn('%c[Cardinal Perf] TTI ' + TTI + 'ms exceeds ' + budget + 'ms budget for ' +
-(isMobile ? 'mobile' : 'desktop'),
-'font-weight:800; color:#c87a00;');
+console.warn('[Cardinal Perf] TTI ' + TTI + 'ms exceeds ' + budget +
+'ms budget for ' + (isMobile ? 'mobile' : 'desktop'));
 }else{
-console.log('%c[Cardinal Perf] TTI ' + TTI + 'ms',
-'font-weight:600; color:#2e7d32;');
+console.log('[Cardinal Perf] TTI ' + TTI + 'ms');
 }
 }
 var ttiPoll = 0;
@@ -29357,8 +29355,7 @@ TICK_COUNTS[path] = (TICK_COUNTS[path] || 0) + 1;
 if(TICK_COUNTS[path] === SUSTAIN_TICKS){
 var entry = { path: path, mutationsPerSec: rate, sustainedFor: SUSTAIN_TICKS, at: new Date().toISOString() };
 LOOPS_SEEN.push(entry);
-console.warn('%c[Cardinal Perf] Re-render loop detected: ' + path,
-'font-weight:800; color:#c8202e;');
+console.warn('[Cardinal Perf] Re-render loop detected: ' + path);
 console.warn('  ~' + rate + ' mutations/sec sustained for ' + SUSTAIN_TICKS + 's');
 console.warn('  Look for a wire function that runs on every render without a dataset.sig guard, ' +
 'or a MutationObserver on that container that itself triggers a re-render.');
@@ -39519,17 +39516,19 @@ if(mount) mount.remove();
 return;
 }
 if(!mount){
-var host = document.getElementById('tab-overview') ||
-(document.getElementById('leadCard') || {}).parentNode ||
-(document.getElementById('solCard') || {}).parentNode ||
-document.getElementById('projectView');
-if(!host){
+var view = document.getElementById('projectView');
+if(!view){
 takeOver(false);
 return;
 }
 mount = document.createElement('div');
 mount.id = 'cr-cc';
-host.insertBefore(mount, host.firstChild);
+var banner = document.getElementById('clientBanner');
+if(banner && banner.parentNode === view){
+view.insertBefore(mount, banner.nextSibling);
+}else{
+view.insertBefore(mount, view.firstChild);
+}
 }
 var l = lead(pr), est = liveEstimate();
 var due = daysTo(l.bid_due_at);
@@ -39567,7 +39566,7 @@ threadHtml(pr) + contactsHtml(pr) +
 bidHtml(pr) + contactsHtml(pr) +
 '</div>';
 wire(mount, pr);
-takeOver(mount.childNodes.length > 0);
+takeOver(mount.childNodes.length > 0 && mount.offsetParent !== null);
 lastSig = signature();
 }
 function wire(mount, pr){
@@ -39674,6 +39673,9 @@ controls:[
 { name:'Production', open:function(){
 if(window.CardinalProduction) window.CardinalProduction.open();
 },
+close:function(){
+if(window.CardinalProduction) window.CardinalProduction.close(false);
+},
 controls:[
 ['#cr-pb [data-jump="blocked"]', 'Blocked tile'],
 ['#cr-pb [data-jump="punch"]',   'Open items tile'],
@@ -39683,6 +39685,9 @@ controls:[
 ] },
 { name:'Sales Floor', open:function(){
 if(window.CardinalSalesFloor) window.CardinalSalesFloor.open();
+},
+close:function(){
+if(window.CardinalSalesFloor) window.CardinalSalesFloor.close(false);
 },
 controls:[
 ['#cr-sf [data-go="drill"]',  'Practice a drill'],
@@ -39780,6 +39785,7 @@ continue;
 }
 await new Promise(function(r){ setTimeout(r, 420); });
 results = results.concat(await checkList(s.controls, s.name));
+try{ if(s.close) s.close(); }catch(_){}
 }
 results = results.concat(await checkList(ALWAYS, 'always-on'));
 last = results;
