@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 278 &#8212; Community rebuilt: two tabs, opening on Bids. Bids leads with what&#8217;s due then everything else waiting on you; Partners shows each relationship sorted by what they owe.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 279 &#8212; Community client page rebuilt with Thread and Bid tabs. Bids use the existing estimate builder and its line-item catalog rather than a second pricing tool, and site contacts read as held by admin for anyone who isn&#8217;t one.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39267,6 +39267,305 @@ else start();
 window.CardinalCommunityHome = {
 render : render,
 tab    : function(k){ pane = k; render(); },
+};
+})();
+</script>
+
+
+<style id="cr-cc-styles">#cr-cc{--ground:#0b0f0b;--card:#141a14;--raise:#1d261d;--ink:#fff;--mute:#c8d6c8;--dim:#7d8f7d;--a1:#39ff88;--a2:#ffd24a;--accent:#6dffa8;--warn:#ffd24a;--good:#39ff88;--bad:#ff7a7a;--heroA:#16221a;--urgent:#241a12;--line:rgba(57,255,136,.16);--glow:0 0 0 1px rgba(57,255,136,.22),0 0 22px rgba(255,210,74,.16);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:14px 0;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11.5px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 20px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:10px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}#cr-cc .pin .facts .v{font:700 12.5px var(--mono);margin-top:4px}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc .tabbar{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}#cr-cc .tabbar button{flex:1;position:relative;background:transparent;border:0;cursor:pointer;padding:11px 8px 12px;font-family:inherit;color:var(--dim);font:700 12.5px inherit}#cr-cc .tabbar button.on{color:var(--ink)}#cr-cc .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--urgent),var(--urgent)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}#cr-cc .ev .eh{display:flex;align-items:baseline;gap:9px}#cr-cc .ev .eh b{flex:1;font:700 13px inherit}#cr-cc .ev .eh .when{font:700 10px var(--mono);color:var(--dim);white-space:nowrap}#cr-cc .ev .txt{font-size:12.5px;color:var(--mute);line-height:1.55;margin-top:5px}#cr-cc .ev .who{font-size:10.5px;color:var(--dim);margin-top:6px}#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 8px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:12px;color:var(--accent)}#cr-cc .sheet .lines{padding:5px 7px}#cr-cc .sheet .ln{display:flex;align-items:baseline;gap:11px;padding:10px 10px;border-radius:7px}#cr-cc .sheet .ln:nth-child(odd){background:rgba(255,255,255,.02)}#cr-cc .sheet .ln .d{flex:1;min-width:0}#cr-cc .sheet .ln .d b{display:block;font:600 13px inherit}#cr-cc .sheet .ln .d small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}#cr-cc .sheet .ln .q{flex:0 0 auto;font:700 11.5px var(--mono);color:var(--dim)}#cr-cc .sheet .ln .p{flex:0 0 auto;min-width:72px;text-align:right;font:700 12.5px var(--mono);color:var(--mute)}#cr-cc .sheet .tot{display:flex;align-items:baseline;gap:12px;padding:14px 16px;border-top:1px solid var(--line);background:var(--raise)}#cr-cc .sheet .tot .k{flex:1;font:800 9px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .tot .v{font:700 24px var(--mono);letter-spacing:-.02em;color:var(--good)}#cr-cc .sheet .duebar{display:flex;align-items:center;gap:11px;padding:12px 16px;background:var(--urgent);border-top:1px solid var(--line)}#cr-cc .sheet .duebar .d{font:700 19px var(--mono);color:var(--warn);line-height:1}#cr-cc .sheet .duebar .x{flex:1;font-size:11.5px;color:var(--mute);line-height:1.4}#cr-cc .sheet .duebar button{background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:9px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit;white-space:nowrap}#cr-cc .nobid{padding:26px 18px;text-align:center}#cr-cc .nobid p{font-size:13px;color:var(--dim);line-height:1.6;margin:0 0 14px}#cr-cc .nobid button{background:linear-gradient(120deg,var(--a1),var(--a2));color:#08240f;border:0;border-radius:8px;padding:11px 18px;cursor:pointer;font:800 12.5px inherit;font-family:inherit}#cr-cc .cts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}#cr-cc .ct{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ct .k{font:800 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}#cr-cc .ct .v{font:700 13px inherit;margin-top:5px}#cr-cc .ct .v a{color:var(--accent);text-decoration:none;font-weight:400;font-size:11.5px;display:block;margin-top:2px}#cr-cc .ct .held{font:400 11.5px inherit;color:var(--dim);margin-top:5px;line-height:1.45}#cr-cc .ct.none .v{color:var(--dim);opacity:.6}</style>
+<script id="cr-cc-script">
+(function(){
+'use strict';
+var tab = 'thread';
+var loadedFor = null;
+var estimates = [], events = [], contacts = [];
+var busy = false;
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function usd(n){ return '$' + Math.round(Number(n) || 0).toLocaleString('en-US'); }
+function ck(pr){
+try{ return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {}); }
+catch(_){ return (pr && pr.checklist) || {}; }
+}
+function lead(pr){ return (ck(pr) || {}).lead || {}; }
+function isCommunity(pr){
+return pr && typeof window.projClaimType === 'function' &&
+window.projClaimType(pr) === 'community';
+}
+function normStage(s){
+if(typeof window.normStage === 'function'){
+try{ return window.normStage(s); }catch(_){}
+}
+return s;
+}
+function daysTo(iso){
+if(!iso) return null;
+var d = new Date(iso);
+if(isNaN(d)) return null;
+return Math.floor((d.getTime() - Date.now()) / 86400000);
+}
+function ago(iso){
+if(!iso) return '';
+var d = new Date(iso);
+if(isNaN(d)) return '';
+var n = Math.floor((Date.now() - d.getTime()) / 86400000);
+if(n <= 0) return 'today';
+if(n === 1) return 'yesterday';
+if(n < 30) return n + ' days ago';
+return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+var LABEL = {
+'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'Approved':'Awarded',
+'Scheduled':'Scheduled', 'Completed':'Build Complete',
+'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded',
+};
+async function load(pid){
+estimates = []; events = []; contacts = [];
+if(!window.supa || !pid) return;
+if(window.CardinalEstimates && window.CardinalEstimates.loadForProject){
+try{ estimates = await window.CardinalEstimates.loadForProject(pid) || []; }
+catch(e){ console.warn('[cc] estimates:', e); }
+}
+try{
+var r = await window.supa.from('audit_events')
+.select('at,email,type,detail,project_id')
+.eq('project_id', pid).order('at', { ascending:false }).limit(60);
+events = r.data || [];
+}catch(e){ console.warn('[cc] events:', e); }
+try{
+var c = await window.supa.from('community_contacts')
+.select('*').eq('project_id', pid);
+contacts = c.data || [];
+}catch(_){ contacts = []; }
+loadedFor = pid;
+}
+function liveEstimate(){
+if(!estimates.length) return null;
+var open = estimates.filter(function(e){
+return e.status !== 'declined' && e.status !== 'archived';
+});
+return open[0] || estimates[0];
+}
+function threadHtml(pr){
+var st = normStage(pr.stage), l = lead(pr), est = liveEstimate();
+var due = daysTo(l.bid_due_at);
+var out = [];
+if(st === 'Lead'){
+out.push({ now:true, title: est ? 'Bid ready to submit' : 'Bid needs pricing',
+when:'now',
+txt: est
+? 'Priced at ' + usd(est.total) + ' across ' +
+((est.line_items || []).length || 0) + ' line items.' +
+(due != null ? ' Due in ' + due + ' days.' : '')
+: 'Invited to bid' + (due != null ? ', due in ' + due + ' days' : '') +
+'. Nothing priced yet.',
+act: est ? 'Submit the bid' : 'Price it' });
+}else if(st === 'Prospect'){
+out.push({ now:true, title:'Waiting on a decision', when:'now',
+txt:'Submitted' + (est ? ' at ' + usd(est.total) : '') +
+'. Nothing back from the partner yet.', act:'Log the outcome' });
+}else if(st === 'Approved'){
+out.push({ now:true, title:'Awarded \u2014 needs scheduling', when:'now',
+txt:'Won' + (est ? ' at ' + usd(est.total) : '') +
+'. No crew or date set.', act:'Get on the calendar' });
+}else if(st === 'Completed'){
+out.push({ now:true, title:'Ready to invoice', when:'now',
+txt:'Build complete. The partner hasn\u2019t been invoiced yet.',
+act:'Invoice the partner' });
+}
+events.forEach(function(e){
+out.push({
+title: e.detail || e.type,
+when: ago(e.at),
+who: e.email ? String(e.email).split('@')[0] : '',
+});
+});
+if(out.length <= 1){
+out.push({ title:'Bid requested', when: ago(pr.created_at),
+txt:'Invited by ' + (l.partner_name || 'the partner') + '.' +
+(l.scope ? ' ' + l.scope : ''),
+who: l.partner_name || '' });
+}
+return '<div class="thread">' + out.map(function(e){
+return '<div class="ev' + (e.now ? ' now' : '') + '"><div class="box">' +
+'<div class="eh"><b>' + esc(e.title) + '</b>' +
+'<span class="when">' + esc(e.when) + '</span></div>' +
+(e.txt ? '<div class="txt">' + esc(e.txt) + '</div>' : '') +
+(e.who ? '<div class="who">' + esc(e.who) + '</div>' : '') +
+(e.act ? '<button class="doit" data-act="live" type="button">' +
+esc(e.act) + '</button>' : '') +
+'</div></div>';
+}).join('') + '</div>';
+}
+function bidHtml(pr){
+var est = liveEstimate(), l = lead(pr);
+var due = daysTo(l.bid_due_at);
+if(!est){
+return '<div class="sheet"><div class="nobid">' +
+'<p>No bid priced yet.<br>Bids use the estimate builder \u2014 same ' +
+'line-item catalog as everything else, so your numbers stay consistent.</p>' +
+'<button data-act="newbid" type="button">Build the bid</button>' +
+'</div></div>';
+}
+var items = est.line_items || [];
+return '<div class="sheet">' +
+'<div class="lh">' +
+'<div class="for">Bid prepared for</div>' +
+'<h4>' + esc(pr.name || 'Unnamed') + '</h4>' +
+(l.partner_name ? '<div class="via">via ' + esc(l.partner_name) + '</div>' : '') +
+'</div>' +
+(items.length
+? '<div class="lines">' + items.map(function(it){
+return '<div class="ln">' +
+'<span class="d"><b>' + esc(it.name || it.title || 'Item') + '</b>' +
+(it.description ? '<small>' + esc(it.description) + '</small>' : '') +
+'</span>' +
+'<span class="q">' + esc((it.qty || 1) + ' ' + (it.unit || '')) + '</span>' +
+'<span class="p">' + usd((it.qty || 1) * (it.price || 0)) + '</span>' +
+'</div>';
+}).join('') + '</div>'
+: '') +
+'<div class="tot"><span class="k">Bid total</span>' +
+'<span class="v">' + usd(est.total) + '</span></div>' +
+(normStage(pr.stage) === 'Lead'
+? '<div class="duebar">' +
+'<span class="d">' + (due == null ? '\u2013' : due + 'd') + '</span>' +
+'<span class="x">' + (due == null ? 'No due date set.' :
+'Due to the partner.') + '<br>Not yet submitted.</span>' +
+'<button data-act="open" type="button">Open bid</button>' +
+'</div>'
+: '<div class="duebar"><span class="x">' +
+esc(LABEL[normStage(pr.stage)] || pr.stage) +
+'</span><button data-act="open" type="button">Open bid</button></div>') +
+'</div>';
+}
+function contactsHtml(pr){
+var l = lead(pr);
+var site = contacts.find(function(c){ return c.kind === 'site'; });
+var held = !contacts.length;
+var homeowner = l.no_homeowner
+? '<div class="ct none"><div class="k">Homeowner</div>' +
+'<div class="v">None on this job</div></div>'
+: '<div class="ct"><div class="k">Homeowner</div>' +
+'<div class="v">' + esc(l.homeowner_name || 'Not recorded') +
+(l.homeowner_phone ? '<a href="tel:' + esc(l.homeowner_phone) + '">' +
+esc(l.homeowner_phone) + '</a>' : '') + '</div></div>';
+return '<div class="cts">' + homeowner +
+(site
+? '<div class="ct"><div class="k">Site contact</div>' +
+'<div class="v">' + esc(site.name || 'Admin') +
+(site.phone ? '<a href="tel:' + esc(site.phone) + '">' +
+esc(site.phone) + '</a>' : '') + '</div></div>'
+: '<div class="ct"><div class="k">Site contact</div>' +
+'<div class="held">' + (held
+? 'Held by admin.'
+: 'Not set.') + '</div></div>') +
+'</div>';
+}
+function render(){
+var pr = window.currentProject;
+var mount = document.getElementById('cr-cc');
+if(!pr || !isCommunity(pr)){ if(mount) mount.remove(); return; }
+if(!mount){
+var anchor = document.getElementById('solCard') ||
+document.getElementById('insCard');
+if(!anchor || !anchor.parentNode) return;
+mount = document.createElement('div');
+mount.id = 'cr-cc';
+anchor.parentNode.insertBefore(mount, anchor);
+}
+var l = lead(pr), est = liveEstimate();
+var due = daysTo(l.bid_due_at);
+var amt = est ? est.total : (Number(l.bid_amount) || 0);
+var st  = normStage(pr.stage);
+mount.innerHTML =
+'<div class="pin">' +
+'<div class="t"><span class="nm"><b>' + esc(pr.name || 'Unnamed') + '</b>' +
+'<small>' + esc(pr.address || 'No address') +
+(l.partner_name ? ' \u00b7 ' + esc(l.partner_name) : '') + '</small></span>' +
+(amt ? '<span class="amt"><b>' + usd(amt) + '</b><small>bid</small></span>' : '') +
+'</div>' +
+'<div class="facts">' +
+'<div><div class="k">Due</div><div class="v' +
+(due != null && due <= 3 ? ' hot' : '') + '">' +
+(due == null ? '\u2014' : due + 'd') + '</div></div>' +
+'<div><div class="k">Stage</div><div class="v">' +
+esc((LABEL[st] || st || '').split(' ')[0]) + '</div></div>' +
+'<div><div class="k">Work</div><div class="v">' +
+esc(l.work_type || l.worktype || '\u2014') + '</div></div>' +
+'<div><div class="k">Terms</div><div class="v">' +
+esc(l.terms || 'Net 30') + '</div></div>' +
+'</div>' +
+'</div>' +
+'<div class="tabbar">' +
+'<button data-t="thread" class="' + (tab==='thread'?'on':'') +
+'" type="button">Thread</button>' +
+'<button data-t="bid" class="' + (tab==='bid'?'on':'') +
+'" type="button">Bid</button>' +
+'</div>' +
+'<div data-cpane="thread" class="' + (tab==='thread'?'on':'') + '">' +
+threadHtml(pr) + contactsHtml(pr) +
+'</div>' +
+'<div data-cpane="bid" class="' + (tab==='bid'?'on':'') + '">' +
+bidHtml(pr) + contactsHtml(pr) +
+'</div>';
+wire(mount, pr);
+}
+function wire(mount, pr){
+mount.querySelectorAll('[data-t]').forEach(function(b){
+b.onclick = function(){ tab = b.dataset.t; render(); };
+});
+mount.querySelectorAll('[data-act]').forEach(function(b){
+b.onclick = function(){
+if(window.CardinalEstimates && window.CardinalEstimates.openEditor){
+window.CardinalEstimates.openEditor(pr.id);
+}else{
+alert('Estimate builder not loaded \u2014 reload the app.');
+}
+};
+});
+}
+async function check(){
+var pr = window.currentProject;
+var view = document.getElementById('projectView');
+if(!pr || !view || view.style.display === 'none' || !isCommunity(pr)){
+var m = document.getElementById('cr-cc');
+if(m) m.remove();
+loadedFor = null;
+return;
+}
+if(loadedFor === pr.id){ render(); return; }
+if(busy) return;
+busy = true;
+tab = 'thread';
+try{ await load(pr.id); render(); }
+finally{ busy = false; }
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+Promise.resolve().then(check)
+.catch(function(e){ console.error('[community client] failed:', e); });
+});
+}
+function start(){
+scan();
+new MutationObserver(scan).observe(document.body, { childList:true, subtree:true });
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalCommunityClient = {
+refresh : async function(){
+var pr = window.currentProject;
+if(pr){ await load(pr.id); render(); }
+},
+tab : function(k){ tab = k; render(); },
 };
 })();
 </script>
