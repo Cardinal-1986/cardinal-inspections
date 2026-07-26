@@ -2555,7 +2555,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 312 &#8212; Import boxes white with black lettering; header titles sized to the bar. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 314 &#8212; Manual estimate button works from AI Estimates: pick a client, the editor opens on their job. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17486,16 +17486,46 @@ body.claim-insurance #brandLogo{
     return MOUNT;
   }
 
-  async function showList() {
+  async function showManualPick() {
+state.view = 'manual-pick';
+var esc2 = function(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); };
+var rows = (window.cacheProjects || []).slice().sort(function(a, b){
+return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+});
+MOUNT.innerHTML = '<div style="padding:18px;max-width:640px;margin:0 auto;">' +
+'<button data-act="back" style="background:none;border:1px solid rgba(212,160,23,.4);color:inherit;border-radius:9px;padding:8px 12px;cursor:pointer;font:inherit;">\u2190 Back</button>' +
+'<h3 style="font:800 18px Georgia,serif;margin:14px 0 6px;">Manual estimate</h3>' +
+'<p style="opacity:.75;font-size:13px;margin:0 0 12px;">Pick the client \u2014 the estimate editor opens on their job.</p>' +
+'<input data-mq placeholder="Search clients\u2026" style="width:100%;box-sizing:border-box;padding:11px 13px;border-radius:9px;border:1px solid rgba(212,160,23,.35);background:rgba(255,255,255,.04);color:inherit;font:inherit;margin-bottom:10px;">' +
+'<div data-mrows></div></div>';
+MOUNT.querySelector('[data-act="back"]').onclick = showList;
+var q = '';
+function paint(){
+var list = rows.filter(function(p){
+return !q || String((p.name || '') + ' ' + (p.address || '')).toLowerCase().indexOf(q) !== -1;
+}).slice(0, 40);
+MOUNT.querySelector('[data-mrows]').innerHTML = list.length ? list.map(function(p){
+return '<button data-mpick="' + esc2(p.id) + '" style="display:block;width:100%;box-sizing:border-box;text-align:left;padding:12px 13px;margin-bottom:7px;border:1px solid rgba(212,160,23,.35);border-radius:10px;background:rgba(255,255,255,.03);color:inherit;cursor:pointer;font:inherit;">' +
+'<b>' + esc2(p.name || 'Unnamed') + '</b><br><small style="opacity:.65;">' + esc2(p.address || 'No address') + '</small></button>';
+}).join('') : '<p style="opacity:.6;">No clients match.</p>';
+MOUNT.querySelectorAll('[data-mpick]').forEach(function(b){
+b.onclick = function(){
+if (window.CardinalEstimates && window.CardinalEstimates.openEditor){
+window.CardinalEstimates.openEditor(b.getAttribute('data-mpick'));
+}
+};
+});
+}
+var inp = MOUNT.querySelector('[data-mq]');
+inp.oninput = function(){ q = inp.value.trim().toLowerCase(); paint(); };
+paint();
+}
+function showList() {
     state.view = 'list';
     mount('cr-tmpl-list');
     // Wire actions
     MOUNT.querySelector('[data-act="new-ai"]').onclick = showAICreate;
-    MOUNT.querySelector('[data-act="new-manual"]').onclick = () => {
-      // Delegate to existing manual estimate flow — replace with real hook
-      if (typeof window.openManualEstimate === 'function') window.openManualEstimate();
-      else toast('Wire manual estimate flow here');
-    };
+    MOUNT.querySelector('[data-act="new-manual"]').onclick = showManualPick;
     MOUNT.querySelectorAll('[data-filter]').forEach(t => {
       t.onclick = () => {
         MOUNT.querySelectorAll('.cr-tab').forEach(x => x.classList.remove('active'));
@@ -29107,6 +29137,16 @@ window.CardinalDark = { toggle:toggle, isEnabled:isEnabled, setEnabled:setEnable
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:312, note:'\uD83C\uDFA8 Bigger screen titles up top, and the AccuLynx import pop-up matches the dark retail look \u2014 white cards, gold trim' },
+{ build:311, note:'\uD83C\uDFA8 No more white flash when you over-scroll Community or Claims \u2014 the page behind is dark now' },
+{ build:309, note:'\u26A1 Logging in lands straight on the hub \u2014 no flash of the old screen. Cardinal Truth and Community wear their true colors on the landing and the switcher, and the Landing card is gold' },
+{ build:308, note:'\uD83D\uDC1B AI estimate buttons work again \u2014 two modules had been overwriting each other and nine buttons were silently dead' },
+{ build:307, note:'\uD83D\uDD28 Community client pages: the Job Menu mirrors the real tiles \u2014 Photos, Tasks, Estimates and the rest all open from the community page, and the map and Google Reviews are pulled in live' },
+{ build:306, note:'\u2744\uFE0F Community client pages are fully Frost \u2014 dark ice-blue end to end, no more base page bleeding through' },
+{ build:304, note:'\uD83C\uDFA8 Retail went dark iron \u2014 every red line and border is gold, the daily quote reads in gradient gold, and the client list stays a white card' },
+{ build:301, note:'\uD83C\uDFE0 One header everywhere: the screen\u2019s own name up top, a gold home button in the banner, the switcher and shield in the bottom bar. The old insurance headers are retired' },
+{ build:299, note:'\u2744\uFE0F New Community home in Frost \u2014 Bids with live due-day countdowns, Partners grouped by type, Clients by stage. Totals are admin-only' },
+{ build:299, note:'\uD83D\uDD12 Sales now see only their own bids and estimates \u2014 enforced at the database, not just hidden' },
 { build:289, note:'\uD83E\uDDF9 App header rebuilt \u2014 one row, Menu left, title centre, + right. Long client names truncate instead of pushing buttons off screen, and each CRM colours it properly' },
 { build:288, note:'\uD83E\uDDF9 Logo removed from the top-left. Four different modules were moving it around and it took space the title needed on a phone' },
 { build:286, note:'\uD83D\uDC1B Community client page shows properly \u2014 it was rendering into a tab that hides when another is open' },
