@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 268 &#8212; The claims home actually renders now. A missing helper was throwing inside an async function, where the surrounding try/catch could never see it &#8212; so it failed silently and the old layout stayed. Verified against a real DOM this time.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 271 &#8212; Community bids now get the app&#8217;s sequential PO and a stage_since timestamp. They had neither &#8212; which meant no findable PO and no age on the Chase list, Production board or Community hub.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24810,7 +24810,10 @@ name        : clientName,
 address     : address,
 stage       : 'Lead',
 checklist   : {
-po_number       : (window.CardinalPO ? window.CardinalPO.generate(new Date()) : ''),
+po              : (window.CardinalPO && window.CardinalPO.next)
+? window.CardinalPO.next()
+: (typeof window.nextPo === 'function' ? window.nextPo() : null),
+stage_since     : new Date().toISOString(),
 lead: {
 claim_type      : 'community',
 partner_id      : partner.id,
@@ -32240,24 +32243,49 @@ isConfigured     : function(){ return !!API_KEY; },
 <script id="cr-po-script">
 (function(){
 'use strict';
-function pad(n){ return String(n).padStart(2, '0'); }
-function generate(date){
-var d;
-if(date instanceof Date) d = date;
-else if(date) d = new Date(date);
-else d = new Date();
-if(isNaN(d.getTime())) return '';
-return 'PO-' +
-d.getFullYear() +
-pad(d.getMonth() + 1) +
-pad(d.getDate()) + '-' +
-pad(d.getHours()) +
-pad(d.getMinutes());
-}
 function from(project){
-if(!project) return '';
-if(project.checklist && project.checklist.po_number) return project.checklist.po_number;
-return generate(project.created_at);
+if(!project) return null;
+try{
+var ck = window.parseCkAll ? window.parseCkAll(project) : (project.checklist || {});
+var po = ck && ck.po;
+return (typeof po === 'number' && po > 0) ? po : null;
+}catch(_){ return null; }
+}
+function nextNumber(){
+if(typeof window.nextPo === 'function'){
+try{ return window.nextPo(); }catch(_){}
+}
+var mx = 1001;
+(window.cacheProjects || []).forEach(function(pr){
+var n = from(pr);
+if(n && n > mx) mx = n;
+});
+return mx + 1;
+}
+var assigning = {};
+async function ensure(project){
+if(!project || !project.id) return null;
+var have = from(project);
+if(have) return have;
+if(assigning[project.id]) return null;
+assigning[project.id] = true;
+var po = nextNumber();
+try{
+if(typeof window.patchProjectCk === 'function'){
+await window.patchProjectCk(project, { po: po });
+}else if(window.supa){
+var ck = window.parseCkAll ? window.parseCkAll(project) : (project.checklist || {});
+ck.po = po;
+await window.supa.from('projects').update({ checklist: ck }).eq('id', project.id);
+project.checklist = ck;
+}
+return po;
+}catch(e){
+console.warn('[po] could not assign:', e);
+return null;
+}finally{
+delete assigning[project.id];
+}
 }
 function injectOnProfile(){
 var view = document.getElementById('projectView');
@@ -32265,7 +32293,10 @@ if(!view || getComputedStyle(view).display === 'none') return;
 var proj = window.currentProject;
 if(!proj) return;
 var po = from(proj);
-if(!po) return;
+if(!po){
+ensure(proj).then(function(n){ if(n) injectOnProfile(); });
+return;
+}
 var existing = view.querySelector('.cr-po-badge');
 if(existing){
 if(existing.textContent === po) return;
@@ -32282,7 +32313,7 @@ view.querySelector('h2');
 if(!target) return;
 var badge = document.createElement('span');
 badge.className = 'cr-po-badge';
-badge.textContent = po;
+badge.textContent = 'PO ' + po;
 badge.title = 'PO# \u2014 tap to select/copy. Auto-assigned from creation date/time.';
 target.appendChild(badge);
 }
@@ -32304,10 +32335,7 @@ attributes:true, attributeFilter:['style','class'],
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
-window.CardinalPO = {
-generate: generate,
-from    : from,
-};
+window.CardinalPO = { from: from, next: nextNumber, ensure: ensure };
 })();
 </script>
 
@@ -37286,6 +37314,15 @@ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
 return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
 });
 }
+function nextPo(){
+if(window.CardinalPO && window.CardinalPO.next){
+try{ return window.CardinalPO.next(); }catch(_){}
+}
+if(typeof window.nextPo === 'function'){
+try{ return window.nextPo(); }catch(_){}
+}
+return null;
+}
 function myEmail(){
 return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
 }
@@ -37495,6 +37532,8 @@ name    : name,
 address : addr || null,
 stage   : 'Lead',
 checklist: {
+po: nextPo(),
+stage_since: new Date().toISOString(),
 lead: {
 claim_type : 'insurance',
 phone      : g('phone') || null,
@@ -37568,6 +37607,15 @@ function esc(s){
 return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
 return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
 });
+}
+function nextPo(){
+if(window.CardinalPO && window.CardinalPO.next){
+try{ return window.CardinalPO.next(); }catch(_){}
+}
+if(typeof window.nextPo === 'function'){
+try{ return window.nextPo(); }catch(_){}
+}
+return null;
 }
 function myEmail(){
 return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
@@ -37810,7 +37858,7 @@ name    : name,
 address : g('address') || null,
 stage   : 'Lead',
 notes   : g('notes') || null,
-checklist : { lead: lead },
+checklist : { lead: lead, po: nextPo(), stage_since: new Date().toISOString() },
 created_by: myEmail() || null,
 };
 var r = await window.supa.from('projects').insert(proj).select().single();
@@ -38486,7 +38534,7 @@ compute : compute,
 </script>
 
 
-<style id="cr-ih-styles">#cardinalTruthView #ctSectionSel{display:none !important}#cardinalTruthView>.ins-header{display:none !important}#cr-ih-bar{position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:8px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-left:calc(16px + env(safe-area-inset-left,0px));padding-right:calc(16px + env(safe-area-inset-right,0px));background:linear-gradient(180deg,#0d1f24,#08161a);border-bottom:1px solid transparent;border-image:linear-gradient(90deg,#2dd4bf,#a3e635) 1;box-shadow:0 2px 16px rgba(45,212,191,.14)}#cr-ih-bar .logo{flex:0 0 auto;width:40px;height:38px;padding:0;background:transparent;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center}#cr-ih-bar .logo img{max-width:100%;max-height:100%;object-fit:contain}#cr-ih-bar .plus{flex:0 0 auto;width:40px;height:38px;background:#2dd4bf;color:#062b26;border:0;border-radius:9px;font-size:24px;line-height:1;cursor:pointer}#cr-ih-bar .plus:hover{background:#5eead4}#cr-ih-left{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-title{flex:1 1 auto;min-width:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(15px,4.4vw,21px);letter-spacing:.005em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;background:linear-gradient(100deg,#5a6674 0%,#8d99a8 22%,#f5d061 58%,#d4a017 100%);-webkit-background-clip:text;background-clip:text;color:#d4a017;-webkit-text-fill-color:transparent}#cr-ih-right{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-menu{background:transparent;color:#ffffff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:7px 12px;cursor:pointer;font:700 12px 'Segoe UI',Arial,sans-serif;font-family:inherit;white-space:nowrap;flex:0 0 auto}#cr-ih-menu:hover{border-color:#f5d061;color:#f5d061}#cr-ih-left #crPortalChip{padding:7px 12px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);color:#ffffff;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;cursor:pointer;max-width:34vw;overflow:hidden;text-overflow:ellipsis}#cr-ih-left #crPortalChip .sw{margin-left:4px;opacity:.7;font-size:9px}#cr-ih-title .long{display:inline}#cr-ih-title .short{display:none}@media (max-width:560px){#cr-ih-title .long{display:none}#cr-ih-title .short{display:inline}#cr-ih-title{font-size:16px}#cr-ih-menu{padding:7px 10px;font-size:11px}#cr-ih-left #crPortalChip{max-width:30vw;padding:6px 9px;letter-spacing:.05em;font-size:9.5px}#cardinalTruthView .ins-header{gap:6px;padding-left:10px;padding-right:10px}}@media (max-width:390px){#cr-ih-title{display:none}/* the switcher already says where you are */}#cardinalTruthView,#insClientsView{--ins-bg:#08161a;--ins-blue:#2dd4bf;--ins-border:#1d3b42;--ins-gold:#fcd34d;--ins-muted:#7ba39d;--ins-panel:#0f2228;--ins-text:#ffffff}#insClientsView .ins-search input:focus{border-color:#2dd4bf !important}#insClientsView .ins-hstat:hover{border-color:#2dd4bf !important}#insClientsView .ins-hstat.on{background:#2dd4bf !important;border-color:#2dd4bf !important;color:#062b26 !important}#insClientsView .ins-clirow:hover{border-color:#2dd4bf !important;box-shadow:0 4px 14px rgba(45,212,191,.22) !important}</style>
+<style id="cr-ih-styles">#cardinalTruthView #ctSectionSel{display:none !important}#cardinalTruthView>.ins-header{display:none !important}#cr-ih-bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-left:calc(16px + env(safe-area-inset-left,0px));padding-right:calc(16px + env(safe-area-inset-right,0px));background:linear-gradient(180deg,#0d1f24,#08161a);border-bottom:1px solid transparent;border-image:linear-gradient(90deg,#2dd4bf,#a3e635) 1;box-shadow:0 2px 16px rgba(45,212,191,.14)}#cr-ih-bar .logo{flex:0 0 auto;width:40px;height:38px;padding:0;background:transparent;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center}#cr-ih-bar .logo img{max-width:100%;max-height:100%;object-fit:contain}#cr-ih-bar .plus{flex:0 0 auto;width:40px;height:38px;background:#2dd4bf;color:#062b26;border:0;border-radius:9px;font-size:24px;line-height:1;cursor:pointer}#cr-ih-bar .plus:hover{background:#5eead4}#cr-ih-left{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-title{flex:1 1 auto;min-width:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(15px,4.4vw,21px);letter-spacing:.005em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;background:linear-gradient(100deg,#5a6674 0%,#8d99a8 22%,#f5d061 58%,#d4a017 100%);-webkit-background-clip:text;background-clip:text;color:#d4a017;-webkit-text-fill-color:transparent}#cr-ih-right{display:flex;align-items:center;gap:8px;flex:0 0 auto}#cr-ih-menu{background:transparent;color:#ffffff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:7px 12px;cursor:pointer;font:700 12px 'Segoe UI',Arial,sans-serif;font-family:inherit;white-space:nowrap;flex:0 0 auto}#cr-ih-menu:hover{border-color:#f5d061;color:#f5d061}#cr-ih-left #crPortalChip{padding:7px 12px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);color:#ffffff;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;cursor:pointer;max-width:34vw;overflow:hidden;text-overflow:ellipsis}#cr-ih-left #crPortalChip .sw{margin-left:4px;opacity:.7;font-size:9px}#cr-ih-title .long{display:inline}#cr-ih-title .short{display:none}@media (max-width:560px){#cr-ih-title .long{display:none}#cr-ih-title .short{display:inline}#cr-ih-title{font-size:16px}#cr-ih-menu{padding:7px 10px;font-size:11px}#cr-ih-left #crPortalChip{max-width:30vw;padding:6px 9px;letter-spacing:.05em;font-size:9.5px}#cardinalTruthView .ins-header{gap:6px;padding-left:10px;padding-right:10px}}@media (max-width:390px){#cr-ih-title{display:none}/* the switcher already says where you are */}#cardinalTruthView,#insClientsView{--ins-bg:#08161a;--ins-blue:#2dd4bf;--ins-border:#1d3b42;--ins-gold:#fcd34d;--ins-muted:#7ba39d;--ins-panel:#0f2228;--ins-text:#ffffff}#insClientsView .ins-search input:focus{border-color:#2dd4bf !important}#insClientsView .ins-hstat:hover{border-color:#2dd4bf !important}#insClientsView .ins-hstat.on{background:#2dd4bf !important;border-color:#2dd4bf !important;color:#062b26 !important}#insClientsView .ins-clirow:hover{border-color:#2dd4bf !important;box-shadow:0 4px 14px rgba(45,212,191,.22) !important}#cardinalTruthView .ins-plusmenu{z-index:14 !important;top:var(--cr-ih-h,64px) !important}</style>
 <script id="cr-ih-script">
 (function(){
 'use strict';
@@ -38526,7 +38574,29 @@ menu.onclick = openNavMenu;
 right.appendChild(menu);
 bar.appendChild(right);
 base.parentNode.insertBefore(bar, base);
+requestAnimationFrame(function(){
+var h = bar.getBoundingClientRect().height;
+if(h) v.style.setProperty('--cr-ih-h', Math.round(h + 4) + 'px');
+});
 return true;
+}
+var menuHome = null;
+function liftMenu(){
+var nav = document.getElementById('navMenu');
+if(!nav || nav.parentNode === document.body) return;
+menuHome = { parent: nav.parentNode, next: nav.nextSibling };
+document.body.appendChild(nav);
+}
+function dropMenu(){
+var nav = document.getElementById('navMenu');
+if(!nav || !menuHome) return;
+nav.style.display = 'none';
+if(menuHome.next && menuHome.next.parentNode === menuHome.parent){
+menuHome.parent.insertBefore(nav, menuHome.next);
+}else{
+menuHome.parent.appendChild(nav);
+}
+menuHome = null;
 }
 function openNavMenu(e){
 e.stopPropagation();
@@ -38585,9 +38655,10 @@ chipHome = null;
 }
 function sync(){
 if(isOpen()){
-if(build()) claimChip();
+if(build()){ claimChip(); liftMenu(); }
 }else{
 releaseChip();
+dropMenu();
 }
 }
 var scheduled = false;
