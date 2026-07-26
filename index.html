@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 277 &#8212; New Bid asks for the homeowner only, with a &#8220;no homeowner&#8221; box for churches and vacant units. Site and partner contacts move to admin-held, enforced in the database rather than hidden in the interface.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 278 &#8212; Community rebuilt: two tabs, opening on Bids. Bids leads with what&#8217;s due then everything else waiting on you; Partners shows each relationship sorted by what they owe.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38929,6 +38929,345 @@ if(v.style.display !== 'none') scan();
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
 window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; render(); } };
+})();
+</script>
+
+
+<style id="cr-ch2-styles">#communityHubView.cr-ch2-live{background:#0b0f0b !important;color:#ffffff;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#communityHubView.cr-ch2-live>*:not(#cr-ch2){display:none !important}#cr-ch2{--ground:#0b0f0b;--card:#141a14;--raise:#1d261d;--ink:#fff;--mute:#c8d6c8;--dim:#7d8f7d;--a1:#39ff88;--a2:#ffd24a;--accent:#6dffa8;--warn:#ffd24a;--good:#39ff88;--heroA:#16221a;--urgent:#241a12;--line:rgba(57,255,136,.16);--glow:0 0 0 1px rgba(57,255,136,.22),0 0 22px rgba(255,210,74,.16);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;max-width:640px;margin:0 auto;padding:0 18px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ink)}#cr-ch2 .gb{background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-ch2 .top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:16px 0 12px}#cr-ch2 .top .back{flex:0 0 auto;width:36px;height:36px;border-radius:9px;background:transparent;border:1px solid var(--line);color:var(--mute);cursor:pointer;font-size:16px;margin-top:2px}#cr-ch2 .brand{flex:1;min-width:0}#cr-ch2 .brand h1{margin:0;font-family:var(--serif);font-weight:700;font-size:clamp(25px,7vw,33px);letter-spacing:-.015em;line-height:1;background:linear-gradient(100deg,#39ff88,#9dffbe 38%,#ffd24a);-webkit-background-clip:text;background-clip:text;color:var(--accent);-webkit-text-fill-color:transparent}#cr-ch2 .brand p{margin:6px 0 0;font:600 9.5px var(--mono);letter-spacing:.26em;text-transform:uppercase;color:var(--dim)}#cr-ch2 .clock{text-align:right;flex:0 0 auto}#cr-ch2 .clock .d{font:700 11px var(--mono);letter-spacing:.1em;color:var(--mute);text-transform:uppercase}#cr-ch2 .clock .t{font:700 19px var(--mono);color:var(--accent);margin-top:2px}#cr-ch2 .strip{display:flex;border-radius:11px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-ch2 .strip div{flex:1;padding:12px 8px;text-align:center;border-right:1px solid var(--line)}#cr-ch2 .strip div:last-child{border-right:0}#cr-ch2 .strip .k{font:800 8px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}#cr-ch2 .strip .val{font:700 16px var(--mono);margin-top:5px;letter-spacing:-.02em}#cr-ch2 .strip .val.win{color:var(--good)}#cr-ch2 .strip .val.owed{color:var(--warn)}#cr-ch2 .tabs{position:sticky;top:0;z-index:5;background:var(--ground);padding:12px 0 0;margin-top:12px}#cr-ch2 .tabbar{display:flex;border-bottom:1px solid var(--line)}#cr-ch2 .tabbar button{flex:1;position:relative;background:transparent;border:0;cursor:pointer;padding:12px 8px 13px;font-family:inherit;color:var(--dim);font:700 13px inherit;display:flex;align-items:center;justify-content:center;gap:8px}#cr-ch2 .tabbar button .n{font:700 10px var(--mono);padding:2px 7px;border-radius:10px;background:var(--raise);color:var(--dim)}#cr-ch2 .tabbar button.on{color:var(--ink)}#cr-ch2 .tabbar button.on .n{background:var(--urgent);color:var(--warn)}#cr-ch2 .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}#cr-ch2 [data-pane]{display:none;padding-top:16px}#cr-ch2 [data-pane].on{display:block}#cr-ch2 .rule{display:flex;align-items:center;gap:12px;margin:22px 0 8px;font:800 9.5px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}#cr-ch2 .rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--a1),var(--a2),transparent);opacity:.5}#cr-ch2 .lede{font-size:12.5px;line-height:1.55;color:var(--dim);margin:0 0 10px}#cr-ch2 .empty{padding:30px 16px;text-align:center;font-size:13px;line-height:1.6;color:var(--dim)}#cr-ch2 .due{border-radius:14px;overflow:hidden;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-ch2 .due .hd{display:flex;align-items:baseline;gap:10px;padding:15px 17px 3px}#cr-ch2 .due .hd .k{flex:1;font:800 9.5px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--warn)}#cr-ch2 .due .hd .tot{font:700 14px var(--mono);color:var(--mute)}#cr-ch2 .due .n{padding:0 17px;font-size:12.5px;color:var(--dim);line-height:1.5;margin-top:5px}#cr-ch2 .due .list{padding:8px 8px 10px}#cr-ch2 .row{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border-radius:8px;background:transparent;border:0;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left}#cr-ch2 .row:hover{background:var(--raise)}#cr-ch2 .row.hot{background:var(--urgent)}#cr-ch2 .days{flex:0 0 auto;min-width:48px;text-align:center;border-radius:8px;padding:6px 4px;background:var(--raise)}#cr-ch2 .days b{display:block;font:700 18px var(--mono);line-height:1;color:var(--accent)}#cr-ch2 .days small{display:block;font:700 7.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:3px}#cr-ch2 .row.hot .days b{color:var(--warn)}#cr-ch2 .who{flex:1;min-width:0}#cr-ch2 .who b{display:block;font:700 13.5px inherit;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cr-ch2 .who small{display:block;font-size:11px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cr-ch2 .amt{flex:0 0 auto;font:700 13.5px var(--mono);color:var(--good)}#cr-ch2 .qblock{border-radius:12px;margin-bottom:9px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-ch2 .qblock .qh{display:flex;align-items:baseline;gap:10px;padding:13px 15px 9px}#cr-ch2 .qblock .qh .verb{flex:1;font-family:var(--serif);font-weight:700;font-size:16px}#cr-ch2 .qblock .qh .n{font:700 19px var(--mono);color:var(--accent)}#cr-ch2 .qblock .qh .sum{font:700 11.5px var(--mono);color:var(--dim)}#cr-ch2 .qblock .qlist{padding:0 6px 8px}#cr-ch2 .qrow{display:flex;align-items:center;gap:11px;width:100%;padding:10px 11px;border-radius:8px;background:transparent;border:0;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left}#cr-ch2 .qrow:hover{background:var(--raise)}#cr-ch2 .qrow .t{flex:1;min-width:0}#cr-ch2 .qrow .t b{display:block;font:600 13px inherit;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cr-ch2 .qrow .t small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}#cr-ch2 .qrow .when{flex:0 0 auto;font:700 11px var(--mono);color:var(--dim)}#cr-ch2 .qrow .when.hot{color:var(--warn)}#cr-ch2 .qrow .a{flex:0 0 auto;font:700 12.5px var(--mono);color:var(--good)}#cr-ch2 .psort{display:flex;gap:9px;align-items:center;margin-bottom:12px;font:700 9.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}#cr-ch2 .psort button{background:transparent;border:0;cursor:pointer;padding:3px 0;font:inherit;font-family:inherit;color:var(--dim);border-bottom:1px solid transparent}#cr-ch2 .psort button.on{color:var(--warn);border-bottom-color:var(--warn)}#cr-ch2 .pcard{border-radius:13px;margin-bottom:10px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-ch2 .pcard .ph{display:flex;align-items:center;gap:12px;padding:14px 16px 12px;background:linear-gradient(150deg,var(--heroA),transparent);cursor:pointer}#cr-ch2 .pcard .ph .nm{flex:1;min-width:0}#cr-ch2 .pcard .ph .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:15.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cr-ch2 .pcard .ph .nm small{display:block;font-size:10.5px;color:var(--dim);margin-top:3px}#cr-ch2 .pcard .ph .win{flex:0 0 auto;text-align:right}#cr-ch2 .pcard .ph .win b{display:block;font:700 17px var(--mono);color:var(--good);line-height:1}#cr-ch2 .pcard .ph .win small{display:block;font:700 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:3px}#cr-ch2 .pnums{display:flex;border-top:1px solid var(--line)}#cr-ch2 .pnums div{flex:1;padding:10px 10px;text-align:center;border-right:1px solid var(--line)}#cr-ch2 .pnums div:last-child{border-right:0}#cr-ch2 .pnums .k{font:800 7.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}#cr-ch2 .pnums .val{font:700 13px var(--mono);margin-top:4px}#cr-ch2 .pnums .val.owed{color:var(--warn)}#cr-ch2 .pnums .val.zero{color:var(--dim);opacity:.5}#cr-ch2 .pjobs{padding:5px 7px 9px;border-top:1px solid var(--line)}#cr-ch2 .pjob{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border-radius:8px;background:transparent;border:0;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left}#cr-ch2 .pjob:hover{background:var(--raise)}#cr-ch2 .pjob .tag{flex:0 0 auto;font:800 7.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;border-radius:4px;background:var(--raise);color:var(--dim);min-width:58px;text-align:center}#cr-ch2 .pjob .tag.out{background:var(--urgent);color:var(--warn)}#cr-ch2 .pjob .tag.won{background:rgba(57,255,136,.14);color:var(--good)}#cr-ch2 .pjob .t{flex:1;min-width:0;font:600 12.5px inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cr-ch2 .pjob .a{flex:0 0 auto;font:700 12px var(--mono);color:var(--mute)}#cr-ch2 .pquiet{padding:13px 16px;font-size:11.5px;color:var(--dim);line-height:1.5}#cr-ch2 .tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}#cr-ch2 .tools button{display:flex;align-items:center;gap:10px;border-radius:8px;padding:15px 14px;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-ch2 .tools button.primary{box-shadow:var(--glow)}#cr-ch2 .tools button .i{font-size:17px;flex:0 0 auto}#cr-ch2 .tools button .x b{display:block;font:700 13px inherit}#cr-ch2 .tools button .x small{display:block;font-size:11px;color:var(--dim);margin-top:2px}@media (min-width:900px){#cr-ch2{max-width:1100px}#cr-ch2 .cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}}</style>
+<script id="cr-ch2-script">
+(function(){
+'use strict';
+var pane   = 'bids';
+var psort  = 'owed';
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+function usd(n){ return '$' + Math.round(Number(n) || 0).toLocaleString('en-US'); }
+function ck(pr){
+try{ return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {}); }
+catch(_){ return (pr && pr.checklist) || {}; }
+}
+function lead(pr){ return (ck(pr) || {}).lead || {}; }
+function normStage(s){
+if(typeof window.normStage === 'function'){
+try{ return window.normStage(s); }catch(_){}
+}
+return s;
+}
+function days(iso){
+if(!iso) return null;
+var d = new Date(iso);
+if(isNaN(d)) return null;
+return Math.floor((d.getTime() - Date.now()) / 86400000);
+}
+function since(iso){
+if(!iso) return null;
+var d = new Date(iso);
+if(isNaN(d)) return null;
+return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+function projects(){
+return (window.cacheProjects || []).filter(function(pr){
+if(typeof window.projClaimType !== 'function') return false;
+return window.projClaimType(pr) === 'community';
+});
+}
+function bidAmt(pr){
+var l = lead(pr);
+return Number(l.bid_amount) || 0;
+}
+function partnerOf(pr){
+var l = lead(pr);
+return l.partner_name || 'No partner recorded';
+}
+function compute(){
+var all = projects();
+var out = 0, owed = 0, won = 0, lost = 0;
+var due = [], chase = [], sched = [], inv = [];
+all.forEach(function(pr){
+var st = normStage(pr.stage), l = lead(pr), amt = bidAmt(pr);
+if(st === 'Lead'){
+out += amt;
+due.push({ pr:pr, d:days(l.bid_due_at), amt:amt });
+}
+if(st === 'Prospect'){
+out += amt;
+chase.push({ pr:pr, d:since(ck(pr).stage_since), amt:amt });
+}
+if(st === 'Approved') sched.push({ pr:pr, d:since(ck(pr).stage_since), amt:amt });
+if(st === 'Completed') inv.push({ pr:pr, d:since(ck(pr).stage_since), amt:amt });
+if(st === 'Invoiced') owed += amt;
+if(st === 'Approved' || st === 'Scheduled' || st === 'Completed' ||
+st === 'Invoiced' || st === 'Closed') won++;
+if(st === 'Lost') lost++;
+});
+due.sort(function(a,b){
+if(a.d == null) return 1;
+if(b.d == null) return -1;
+return a.d - b.d;
+});
+chase.sort(function(a,b){ return (b.d||0) - (a.d||0); });
+sched.sort(function(a,b){ return (b.d||0) - (a.d||0); });
+inv.sort(function(a,b){ return (b.d||0) - (a.d||0); });
+var decided = won + lost;
+return {
+all:all, out:out, owed:owed,
+win: decided ? Math.round(won / decided * 100) : null,
+won:won, decided:decided,
+due:due, chase:chase, sched:sched, inv:inv,
+};
+}
+function partners(){
+var byName = {};
+projects().forEach(function(pr){
+var n = partnerOf(pr), st = normStage(pr.stage), amt = bidAmt(pr);
+var p = byName[n] || (byName[n] = {
+name:n, out:0, awarded:0, owed:0, won:0, decided:0, jobs:[],
+});
+if(st === 'Lead' || st === 'Prospect'){
+p.out += amt;
+p.jobs.push({ pr:pr, tag:'bid out', amt:amt });
+}
+if(st === 'Approved' || st === 'Scheduled'){
+p.awarded += amt;
+p.jobs.push({ pr:pr, tag:'awarded', amt:amt });
+}
+if(st === 'Completed'){ p.awarded += amt; }
+if(st === 'Invoiced'){
+p.awarded += amt; p.owed += amt;
+p.jobs.push({ pr:pr, tag:'invoiced', amt:amt });
+}
+if(st === 'Closed') p.awarded += amt;
+if(st !== 'Lead' && st !== 'Prospect'){
+p.decided++;
+if(st !== 'Lost') p.won++;
+}
+});
+var list = Object.keys(byName).map(function(k){
+var p = byName[k];
+p.win = p.decided ? Math.round(p.won / p.decided * 100) : null;
+return p;
+});
+if(psort === 'owed')      list.sort(function(a,b){ return b.owed - a.owed; });
+else if(psort === 'win')  list.sort(function(a,b){ return (b.win||0) - (a.win||0); });
+else                      list.sort(function(a,b){ return a.name.localeCompare(b.name); });
+return list;
+}
+function bidRow(x){
+var hot = (x.d != null && x.d <= 3);
+return '<button class="row' + (hot ? ' hot' : '') +
+'" data-open="' + esc(x.pr.id) + '" type="button">' +
+'<span class="days"><b>' + (x.d == null ? '\u2013' : x.d) + '</b>' +
+'<small>' + (x.d == null ? 'no date' : 'days') + '</small></span>' +
+'<span class="who"><b>' + esc(x.pr.name || 'Unnamed') + '</b>' +
+'<small>' + esc(partnerOf(x.pr)) + '</small></span>' +
+'<span class="amt">' + (x.amt ? usd(x.amt) : '') + '</span>' +
+'</button>';
+}
+function qBlock(verb, list, unit){
+if(!list.length) return '';
+var tot = list.reduce(function(a, x){ return a + (x.amt || 0); }, 0);
+return '<div class="qblock"><div class="qh">' +
+'<span class="verb">' + verb + '</span>' +
+'<span class="n">' + list.length + '</span>' +
+'<span class="sum">' + usd(tot) + '</span></div>' +
+'<div class="qlist">' +
+list.slice(0, 5).map(function(x){
+var hot = (x.d != null && x.d >= 21);
+return '<button class="qrow" data-open="' + esc(x.pr.id) + '" type="button">' +
+'<span class="t"><b>' + esc(x.pr.name || 'Unnamed') + '</b>' +
+'<small>' + esc(partnerOf(x.pr)) +
+(x.d != null ? ' \u00b7 ' + x.d + ' days ' + unit : '') + '</small></span>' +
+(x.d != null ? '<span class="when' + (hot ? ' hot' : '') + '">' +
+x.d + 'd</span>' : '') +
+'<span class="a">' + (x.amt ? usd(x.amt) : '') + '</span>' +
+'</button>';
+}).join('') +
+'</div></div>';
+}
+function render(){
+var host = document.getElementById('cr-ch2');
+var view = document.getElementById('communityHubView');
+if(!view) return;
+if(!host){
+view.classList.add('cr-ch2-live');
+host = document.createElement('div');
+host.id = 'cr-ch2';
+view.appendChild(host);
+}
+var d = compute();
+var dueTot = d.due.reduce(function(a,x){ return a + (x.amt||0); }, 0);
+var ps = partners();
+host.innerHTML =
+'<div class="top">' +
+'<button class="back" data-act="back" type="button">\u2190</button>' +
+'<div class="brand"><h1>Community</h1><p>Partners &amp; Bids</p></div>' +
+'<div class="clock"><div class="d" data-slot="d"></div>' +
+'<div class="t" data-slot="t"></div></div>' +
+'</div>' +
+'<div class="strip">' +
+'<div><div class="k">Out for pricing</div><div class="val">' + usd(d.out) + '</div></div>' +
+'<div><div class="k">Win rate</div><div class="val win">' +
+(d.win == null ? '\u2014' : d.win + '%') + '</div></div>' +
+'<div><div class="k">Owed to us</div><div class="val owed">' + usd(d.owed) + '</div></div>' +
+'</div>' +
+'<div class="tabs"><div class="tabbar">' +
+'<button data-pane="bids" class="' + (pane==='bids'?'on':'') + '" type="button">' +
+'Bids' + (d.due.length ? ' <span class="n">' + d.due.length + ' due</span>' : '') + '</button>' +
+'<button data-pane="partners" class="' + (pane==='partners'?'on':'') + '" type="button">' +
+'Partners <span class="n">' + ps.length + '</span></button>' +
+'</div></div>' +
+'<div data-pane="bids" class="' + (pane==='bids'?'on':'') + '">' +
+(d.due.length
+? '<div class="due"><div class="hd"><span class="k">Bids due</span>' +
+'<span class="tot">' + usd(dueTot) + '</span></div>' +
+'<div class="n">' + d.due.length + ' out for pricing.' +
+(d.due[0] && d.due[0].d != null && d.due[0].d <= 3
+? ' The top one closes in ' + d.due[0].d + ' days.' : '') + '</div>' +
+'<div class="list">' + d.due.map(bidRow).join('') + '</div></div>'
+: '<div class="due"><div class="hd"><span class="k">Bids due</span></div>' +
+'<div class="empty">Nothing out for pricing right now.</div></div>') +
+(d.chase.length || d.sched.length || d.inv.length
+? '<div class="rule">Then</div>' +
+'<p class="lede">Everything else waiting on you.</p>' +
+qBlock('Chase a decision',  d.chase, 'ago') +
+qBlock('Get on the calendar', d.sched, 'ago') +
+qBlock('Invoice the partner', d.inv,  'ago')
+: '') +
+'</div>' +
+'<div data-pane="partners" class="' + (pane==='partners'?'on':'') + '">' +
+'<div class="psort"><span>Sort</span>' +
+'<button data-sort="owed" class="' + (psort==='owed'?'on':'') + '" type="button">Owed</button>' +
+'<button data-sort="win" class="' + (psort==='win'?'on':'') + '" type="button">Win rate</button>' +
+'<button data-sort="name" class="' + (psort==='name'?'on':'') + '" type="button">Name</button>' +
+'</div>' +
+(ps.length ? ps.map(function(p){
+return '<div class="pcard">' +
+'<div class="ph"><span class="nm"><b>' + esc(p.name) + '</b>' +
+'<small>' + p.jobs.length + ' live \u00b7 ' + p.decided + ' decided</small></span>' +
+'<span class="win"><b>' + (p.win == null ? '\u2014' : p.win + '%') + '</b>' +
+'<small>win</small></span></div>' +
+'<div class="pnums">' +
+'<div><div class="k">Out</div><div class="val' + (p.out?'':' zero') + '">' +
+(p.out ? usd(p.out) : '\u2014') + '</div></div>' +
+'<div><div class="k">Awarded</div><div class="val' + (p.awarded?'':' zero') + '">' +
+(p.awarded ? usd(p.awarded) : '\u2014') + '</div></div>' +
+'<div><div class="k">Owed</div><div class="val ' +
+(p.owed ? 'owed' : 'zero') + '">' +
+(p.owed ? usd(p.owed) : '\u2014') + '</div></div>' +
+'</div>' +
+(p.jobs.length
+? '<div class="pjobs">' + p.jobs.slice(0,4).map(function(j){
+var cls = j.tag === 'bid out' ? 'out' : 'won';
+return '<button class="pjob" data-open="' + esc(j.pr.id) + '" type="button">' +
+'<span class="tag ' + cls + '">' + j.tag + '</span>' +
+'<span class="t">' + esc(j.pr.name || 'Unnamed') + '</span>' +
+'<span class="a">' + (j.amt ? usd(j.amt) : '') + '</span></button>';
+}).join('') + '</div>'
+: '<div class="pquiet">Nothing out and nothing owed.</div>') +
+'</div>';
+}).join('') : '<div class="empty">No partners yet.</div>') +
+'</div>' +
+'<div class="rule">Tools</div>' +
+'<div class="tools">' +
+'<button class="primary" data-go="newbid" type="button"><span class="i">\uD83D\uDCDD</span>' +
+'<span class="x"><b>New Bid</b><small>Price a request</small></span></button>' +
+'<button data-go="props" type="button"><span class="i">\uD83C\uDFE0</span>' +
+'<span class="x"><b>Properties</b><small>Units and addresses</small></span></button>' +
+'<button data-go="wo" type="button"><span class="i">\uD83D\uDCCB</span>' +
+'<span class="x"><b>Work Orders</b><small>Open and scheduled</small></span></button>' +
+'<button data-go="partners" type="button"><span class="i">\uD83D\uDC65</span>' +
+'<span class="x"><b>All Partners</b><small>Contacts and terms</small></span></button>' +
+'</div>';
+clock(host);
+wire(host);
+}
+function clock(host){
+var n = new Date();
+var d = host.querySelector('[data-slot="d"]');
+var t = host.querySelector('[data-slot="t"]');
+if(d) d.textContent = n.toLocaleDateString('en-US',
+{ weekday:'short', month:'short', day:'numeric' });
+if(t) t.textContent = n.toLocaleTimeString('en-US',
+{ hour:'numeric', minute:'2-digit' });
+}
+function wire(host){
+var b = host.querySelector('[data-act="back"]');
+if(b) b.onclick = function(){
+if(typeof window.goToLanding === 'function') window.goToLanding();
+else if(typeof window.showHome === 'function') window.showHome();
+};
+host.querySelectorAll('[data-pane]').forEach(function(el){
+if(el.tagName !== 'BUTTON') return;
+el.onclick = function(){ pane = el.dataset.pane; render(); };
+});
+host.querySelectorAll('[data-sort]').forEach(function(el){
+el.onclick = function(){ psort = el.dataset.sort; render(); };
+});
+host.querySelectorAll('[data-open]').forEach(function(el){
+el.onclick = function(){
+if(typeof window.openProject === 'function') window.openProject(el.dataset.open);
+};
+});
+host.querySelectorAll('[data-go]').forEach(function(el){
+el.onclick = function(){
+var k = el.dataset.go;
+if(k === 'newbid' && window.CardinalNewBid && window.CardinalNewBid.open){
+window.CardinalNewBid.open(); return;
+}
+if(k === 'props' && window.CardinalCommunityProps && window.CardinalCommunityProps.open){
+window.CardinalCommunityProps.open(); return;
+}
+if(k === 'wo' && window.CardinalWorkOrders && window.CardinalWorkOrders.open){
+window.CardinalWorkOrders.open(); return;
+}
+if(k === 'partners' && window.CardinalCommunityPartners &&
+window.CardinalCommunityPartners.open){
+window.CardinalCommunityPartners.open(); return;
+}
+alert('Not available yet.');
+};
+});
+}
+function isOpen(){
+var v = document.getElementById('communityHubView');
+return !!(v && v.style.display !== 'none');
+}
+function missing(){
+var v = document.getElementById('communityHubView');
+return !v || !v.querySelector('#cr-ch2');
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+if(!isOpen()) return;
+try{ if(missing()) render(); else render(); }
+catch(e){ console.error('[community] render failed:', e); }
+});
+}
+function start(){
+var v = document.getElementById('communityHubView');
+if(v){
+new MutationObserver(function(){ if(isOpen()) scan(); })
+.observe(v, { attributes:true, attributeFilter:['style'] });
+if(isOpen()) scan();
+}
+setInterval(function(){
+var h = document.getElementById('cr-ch2');
+if(h && isOpen()) clock(h);
+}, 30000);
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalCommunityHome = {
+render : render,
+tab    : function(k){ pane = k; render(); },
+};
 })();
 </script>
 
