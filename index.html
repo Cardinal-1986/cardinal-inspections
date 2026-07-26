@@ -2555,7 +2555,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 306 &#8212; Community client fully Frost: real takeover, mint header gone, job menu self-heals, reviews adopted. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 308 &#8212; CardinalEstimates APIs merged instead of overwritten; AI estimate buttons restored. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17867,12 +17867,12 @@ body.claim-insurance #brandLogo{
   function escape(s) { return String(s == null ? '' : s).replace(/[<>&"']/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c])); }
 
   // ── Public API ────────────────────────────────────────────
-  window.CardinalEstimates = {
+  window.CardinalEstimates = Object.assign(window.CardinalEstimates || {}, {
     open:     showList,
     openAI:   () => showAICreate(),
     openOne:  (id) => showOutput(id),
     close:    () => { MOUNT.style.display = 'none'; MOUNT.innerHTML = ''; state = { view: null, sessionId: null, session: null, estimate: null, filter: 'all' }; },
-  };
+  });
 })();
 </script>
 
@@ -33482,7 +33482,7 @@ attributes:true, attributeFilter:['style','class'],
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
-window.CardinalEstimates = {
+window.CardinalEstimates = Object.assign(window.CardinalEstimates || {}, {
 openEditor       : openEditor,
 close            : close,
 loadForProject   : loadForProject,
@@ -33514,7 +33514,7 @@ created_at     : new Date().toISOString(),
 };
 },
 currentProject   : function(){ return state ? state.project : null; },
-};
+});
 })();
 </script>
 
@@ -38717,7 +38717,7 @@ var jmTries = 0;
 function syncJobMenu(){
 var jm = document.getElementById('cr-cc-jm');
 if(!jm) return;
-var boxes = Array.prototype.slice.call(document.querySelectorAll('#jaGrid .jabox'));
+var boxes = Array.prototype.slice.call(document.querySelectorAll('#jaGrid .jatile'));
 if(!boxes.length){
 if(!jm.querySelector('.cc-jmb')){
 jm.innerHTML = '<div class="cc-quiet">Job menu is loading\u2026</div>';
@@ -38730,12 +38730,13 @@ return;
 }
 jmTries = 0;
 jm.innerHTML = boxes.map(function(b, i){
-var lb = b.querySelector('.jbl');
-var ct = b.querySelector('.jan');
+var lb = b.firstElementChild;
+var ct = b.querySelector('.jn');
 var n = ct ? ct.textContent.trim() : '';
+var z = (ct && ct.classList.contains('zero')) || n === '0';
 return '<button class="cc-jmb" data-jm="' + i + '" type="button">' +
 '<span class="l">' + esc(lb ? lb.textContent.trim() : 'Item') + '</span>' +
-(n !== '' ? '<span class="n' + (n === '0' ? ' z' : '') + '">' + esc(n) + '</span>' : '') +
+(n !== '' ? '<span class="n' + (z ? ' z' : '') + '">' + esc(n) + '</span>' : '') +
 '</button>';
 }).join('');
 jm.querySelectorAll('[data-jm]').forEach(function(t){
