@@ -15,56 +15,124 @@ jobs:
         with:
           node-version: 20
 
+      # ─────────────────────────────────────────────────────
+      # NEW — Vercel rejects the ENTIRE build if any function
+      # filename contains a space. It fails at deploy time, not
+      # commit time, so without this it's invisible until
+      # something stops working in production.
+      # ─────────────────────────────────────────────────────
+      - name: API filenames are Vercel-safe
+        run: |
+          if [ -d api ]; then
+            BAD=$(ls api/ | grep ' ' || true)
+            if [ -n "$BAD" ]; then
+              echo "::error::api/ contains filename(s) with spaces - Vercel will reject the build"
+              echo "$BAD"
+              exit 1
+            fi
+          fi
+          echo "api/ filenames: OK"
+
+      # ─────────────────────────────────────────────────────
+      # NEW — api/package.json sets "type": "module". A single
+      # CommonJS file makes EVERY function fail with
+      # FUNCTION_INVOCATION_FAILED.
+      # ─────────────────────────────────────────────────────
+      - name: API functions use ES modules
+        run: |
+          if [ -d api ]; then
+            BAD=$(grep -l 'module\.exports' api/*.js 2>/dev/null || true)
+            if [ -n "$BAD" ]; then
+              echo "::error::api/ function(s) use module.exports - this breaks ALL functions"
+              echo "$BAD"
+              exit 1
+            fi
+          fi
+          echo "api/ module style: OK"
+
       - name: index.html exists and is not truncated
         run: |
           test -f index.html || { echo "::error::index.html is missing"; exit 1; }
           SIZE=$(wc -c < index.html)
           echo "index.html size: $SIZE bytes"
-          if [ "$SIZE" -lt 500000 ]; then
-            echo "::error::index.html is only $SIZE bytes - looks truncated or wrong file (expected ~650KB)"
+          if [ "$SIZE" -lt 1000000 ]; then
+            echo "::error::index.html is only $SIZE bytes - truncated or wrong file (expected ~2.1MB)"
             exit 1
           fi
           tail -c 200 index.html | grep -q "</html>" || { echo "::error::index.html does not end with </html> - truncated upload"; exit 1; }
 
-      - name: JavaScript inside index.html parses
+      # ─────────────────────────────────────────────────────
+      # FIXED — the old regex was /<script>...<\/script>/ which
+      # only matches a script tag with NO attributes. Every
+      # spliced module uses <script id="cr-xxx-script">, so all
+      # of them were skipped. It then checked only the single
+      # largest block. This checks every inline script.
+      # ─────────────────────────────────────────────────────
+      - name: Every inline script parses
         run: |
           node -e "
             const fs = require('fs');
             const src = fs.readFileSync('index.html','utf8');
-            const blocks = [...src.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+            const blocks = [...src.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
             if(!blocks.length){ console.error('::error::no inline script blocks found'); process.exit(1); }
-            const big = blocks.reduce((a,b) => b.length > a.length ? b : a, '');
-            fs.writeFileSync('/tmp/app.js', big);
+            let bad = 0;
+            blocks.forEach((b, i) => {
+              try { new Function(b); }
+              catch (e) { bad++; console.error('::error::syntax error in inline script #' + i + ': ' + e.message); }
+            });
+            if (bad) process.exit(1);
+            console.log('all ' + blocks.length + ' inline scripts parse OK');
           "
-          node --check /tmp/app.js
-          echo "app JS: valid"
 
-      - name: Structural balance (CSS braces, divs)
+      - name: Structural balance (CSS braces, divs, scripts)
         run: |
           node -e "
             const src = require('fs').readFileSync('index.html','utf8');
             const styles = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m => m[1]);
-            for(const s of styles){
+            for (const s of styles) {
               const open = (s.match(/\{/g)||[]).length, close = (s.match(/\}/g)||[]).length;
-              if(open !== close){ console.error('::error::CSS braces unbalanced: ' + open + ' vs ' + close); process.exit(1); }
+              if (open !== close) { console.error('::error::CSS braces unbalanced: ' + open + ' vs ' + close); process.exit(1); }
             }
             const dv = (src.match(/<div/g)||[]).length, dc = (src.match(/<\/div>/g)||[]).length;
-            if(dv !== dc){ console.error('::error::div tags unbalanced: ' + dv + ' vs ' + dc); process.exit(1); }
-            console.log('CSS + div balance: OK');
+            if (dv !== dc) { console.error('::error::div tags unbalanced: ' + dv + ' vs ' + dc); process.exit(1); }
+            const so = (src.match(/<script/g)||[]).length, sc = (src.match(/<\/script>/g)||[]).length;
+            if (so !== sc) { console.error('::error::script tags unbalanced: ' + so + ' vs ' + sc); process.exit(1); }
+            console.log('CSS + div + script balance: OK');
           "
 
       - name: Service worker parses (if present)
         run: |
           if [ -f sw.js ]; then node --check sw.js && echo "sw.js: valid"; else echo "sw.js not present - skipping"; fi
 
-      - name: API function parses (if present)
+      # ─────────────────────────────────────────────────────
+      # FIXED — used to check api/notify.js only. Everything
+      # else in that folder could be broken and CI stayed green.
+      # ─────────────────────────────────────────────────────
+      - name: Every API function parses
         run: |
-          if [ -f api/notify.js ]; then node --check api/notify.js && echo "api/notify.js: valid"; else echo "api/notify.js not present - skipping"; fi
+          if [ -d api ]; then
+            FAIL=0
+            for f in api/*.js; do
+              [ -e "$f" ] || continue
+              if ! node --input-type=module --eval "$(cat "$f")" >/dev/null 2>&1; then
+                if ! node --check "$f" >/dev/null 2>&1; then
+                  echo "::error::$f failed to parse"
+                  FAIL=1
+                fi
+              fi
+            done
+            [ "$FAIL" -eq 0 ] || exit 1
+            echo "api/ functions parse: OK"
+          else
+            echo "api/ not present - skipping"
+          fi
 
       - name: JSON files valid (if present)
         run: |
-          for f in manifest.json package.json; do
-            if [ -f "$f" ]; then node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "$f: valid"; fi
+          for f in manifest.json package.json vercel.json api/package.json; do
+            if [ -f "$f" ]; then
+              node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "$f: valid"
+            fi
           done
 
       - name: Push keys match between app and API (if both present)
