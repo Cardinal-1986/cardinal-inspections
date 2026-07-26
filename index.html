@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 282 &#8212; Community buttons work on the first tap. The screens were redrawing every time anything on the page changed &#8212; including other parts of the app &#8212; so buttons kept being replaced mid-tap. They now redraw only when something actually changes.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 283 &#8212; A community client now opens on the new page rather than the old one with a panel bolted on. The overview cards it replaces are hidden while you&#8217;re on a community job and come straight back on any other client.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39496,17 +39496,41 @@ esc(site.phone) + '</a>' : '') + '</div></div>'
 : 'Not set.') + '</div></div>') +
 '</div>';
 }
+var TAKEOVER = ['stageBanner','jaGrid','contactRow','locRow',
+'leadCard','solCard','insCard','insDocsCard','acxMount'];
+function takeOver(on){
+TAKEOVER.forEach(function(id){
+var el = document.getElementById(id);
+if(!el) return;
+if(on){
+if(el.dataset.crCcHid !== '1'){
+el.dataset.crCcPrev = el.style.display || '';
+el.dataset.crCcHid = '1';
+el.style.display = 'none';
+}
+}else if(el.dataset.crCcHid === '1'){
+el.style.display = el.dataset.crCcPrev || '';
+delete el.dataset.crCcHid;
+delete el.dataset.crCcPrev;
+}
+});
+}
 function render(){
 var pr = window.currentProject;
 var mount = document.getElementById('cr-cc');
-if(!pr || !isCommunity(pr)){ if(mount) mount.remove(); return; }
+if(!pr || !isCommunity(pr)){
+takeOver(false);
+if(mount) mount.remove();
+return;
+}
+takeOver(true);
 if(!mount){
-var anchor = document.getElementById('solCard') ||
-document.getElementById('insCard');
-if(!anchor || !anchor.parentNode) return;
+var host = document.getElementById('tab-overview') ||
+(document.getElementById('solCard') || {}).parentNode;
+if(!host) return;
 mount = document.createElement('div');
 mount.id = 'cr-cc';
-anchor.parentNode.insertBefore(mount, anchor);
+host.insertBefore(mount, host.firstChild);
 }
 var l = lead(pr), est = liveEstimate();
 var due = daysTo(l.bid_due_at);
@@ -39564,6 +39588,7 @@ async function check(){
 var pr = window.currentProject;
 var view = document.getElementById('projectView');
 if(!pr || !view || view.style.display === 'none' || !isCommunity(pr)){
+takeOver(false);
 var m = document.getElementById('cr-cc');
 if(m) m.remove();
 loadedFor = null;
