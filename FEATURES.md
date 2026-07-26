@@ -6,7 +6,7 @@
 
 **Rule: read this before proposing any new feature.** If something related already exists, extend it — don't build alongside it.
 
-*Last updated: build 213 · July 24, 2026*
+*Last updated: build 276 · July 24, 2026*
 
 ---
 
@@ -35,7 +35,9 @@ When adding a feature, **check the base app first.** It's older, less obvious, a
 | Convert client type | `convert_client_type.html` | Move a client between CRMs |
 | Recent clients | `recent_clients.html` | Quick-access list |
 | Global search | `global_search.html` | Cross-entity search |
-| PO numbers | `po_number.html` | `PO-YYYYMMDD-HHMM` from `created_at`. `window.CardinalPO` |
+| PO numbers | `po_number.html` | Shows the app's **stored sequential** `checklist.po`. Assigns one if a creation path skipped it. Never invent a second format — see below |
+| Filter by assigned rep | `rep_filter.html` | Everyone / Me / Unassigned / teammate |
+| Landing page | `landing_redesign.html` | Portal courses, daily quote, Production + Sales Floor |
 
 **Key gotcha:** the `projects` table column for the client's name is **`name`**, not `client_name`. This broke multiple modules in v200.
 
@@ -58,6 +60,9 @@ Insurance-side estimate generation with auto-deposit and payment schedule. Mount
 | Line item catalog | `line_item_library.html` | Admin CRUD. Menu → Admin → 📋. `window.CardinalLineItems` |
 | Estimate editor | `estimate_editor.html` | 📄 New Estimate button. Auto-totals, deposit calc. `window.CardinalEstimates` |
 | Publish | `estimate_publish.html` | Generates a doc, pushes into base app doc system. `window.CardinalEstimatePublish` |
+| Preview + publish | `estimate_publish.html` | Preview without saving; publish into the doc system |
+| Estimate → contract | `estimate_to_contract.html` | Line items become the scope, deposit % replaces the 50/50 |
+| Status drives the pipeline | `estimate_stage_sync.html` | Sent → Prospect, Accepted → Approved, forward only |
 | Fixes | `estimates_new_fix.html`, `estimates_audit_fixes.html` | Patches to base app estimate flows |
 
 **Tables:** `estimate_line_items`, `estimates`, `estimate_templates`
@@ -98,6 +103,8 @@ Contract templates live in the base app (Roofing / Siding / Window), each a 4-pa
 | Inspection Photos (curated, max 30) | base app, `openGalleryMode('insp')` |
 | Section tabs, date grouping, initials, AI captions, bulk move | `photo_album_enhance.html` |
 | Picker mode (for estimates) | `photo_album_enhance.html` → `CardinalPhotoAlbum.openAsPicker` |
+| Rotate + markup (pen, arrow, circle, text) | `photo_editor.html` — rotation saves in place, markup saves a new photo |
+| Save to device / iOS share sheet | `photo_album_enhance.html` |
 
 **Tables:** `project_photos` (columns: `id, project_id, data, storage_path, section, caption, created_by, created_at`)
 **Storage:** `photos` bucket, path `projects/{project_id}/`
@@ -136,17 +143,71 @@ Contract templates live in the base app (Roofing / Siding / Window), each a 4-pa
 
 ---
 
-## Insurance CRM (Cardinal Truth)
+## Insurance CRM (Cardinal Claims)
 
-| Feature | Where |
+**Rebuilt end to end at builds 241–271. Almost none of this is base-app code any more.**
+
+| Feature | Module |
 |---|---|
-| Cardinal Truth dashboard | base app |
-| Stage label overlay | `insurance_stages.html` (base) — rewrites labels only, `projects.stage` unchanged |
-| Claim strip (RCV/ACV/depreciation/deductible) | `insurance_stages.html` |
+| Claims home — owed hero, stage rail, chase list | `cardinal_truth_home.html` |
+| Header — title, full app menu, portal chip | `insurance_header.html` |
+| Claims list — sortable, money + wait per row | `insurance_clients.html` |
+| Scope of Loss intake — read a scope, start a claim | `sol_intake.html` |
+| Supplement filing + decision | `supplement_panel.html` |
+| Unified insurance data layer | `insurance_unify.html` |
+| Stage label overlay + claim strip | `insurance_stages.html` (base) |
 | Claims form fixes | `claims_form_fixes.html` |
-| Truth view fixes | `cardinal_truth_fixes.html` |
 
-**Table:** `insurance_claims`
+**The home page is a recovery ledger, not a dashboard.** The lead figure is what carriers owe you — withheld depreciation plus approved supplements — because that's money earned and uncollected. The stage rail carries dollars at each node, and the two stages where money waits on a carrier are flagged.
+
+**Chase list** — every claim waiting on a carrier, longest first, red past 30 days. Built from `supplement_filed_at` and `checklist.stage_since`.
+
+**Tables:** `insurance_claims` (authoritative since v244), with `checklist.lead.insurance` mirrored for older readers.
+
+**Do not restyle these by overriding base CSS.** They replace the base markup rather than sitting on top of it — that was the fix after the header kept reverting to the old palette.
+
+---
+
+## Production
+
+| Feature | Module |
+|---|---|
+| Job board with computed blockers | `production_board.html` |
+| Punch list on the client profile | `punch_profile.html` |
+
+**Cross-CRM by design.** A punch item is a punch item regardless of which portal the job came from — each row carries a coloured dot for its CRM and that's the only distinction.
+
+**The board shows what's *blocking* each job**, not what stage it's in: Needs scheduling · Should have started · N punch items · Ready to invoice. Blocked sorts to the top.
+
+**Board vs profile:** the board is a work queue (open only, done drops off); the profile is a permanent record (completed items fold behind a count).
+
+**Table:** `punch_items` — kinds are `punch` | `ticket` | `callback`.
+
+---
+
+## Sales
+
+| Feature | Module |
+|---|---|
+| Sales Floor — objections, talk tracks, proof | `sales_floor.html` |
+| Objection Coach | base app + `/api/coach.js` |
+
+**Sales Floor is written content, not moved content.** The Resource Library is almost entirely technical — measurements, codes, policy provisions. Only "Do & Don't" and "Claim Tips" were sales-adjacent, and both are linked from it.
+
+13 objections as what-they-say / what-you-say / why-it-works, across four situations. One surfaces daily, keyed to the date so the whole team sees the same one.
+
+**`CardinalCoach.practice(true)` means Cardinal Truth, not "the hub."** Register `window.__crCoachReturn` to come back somewhere else.
+
+---
+
+## Client intake
+
+| Feature | Module |
+|---|---|
+| Import from an AccuLynx screenshot | `client_import.html` |
+| Start a claim from a scope of loss | `sol_intake.html` |
+
+Both use `/api/sol` — `mode:'client'` reads a CRM record, otherwise a scope. Both check for duplicates by name and address before saving, and both must set `checklist.po`, `checklist.stage_since` and `claim_type`.
 
 ---
 
@@ -181,6 +242,7 @@ Contract templates live in the base app (Roofing / Siding / Window), each a 4-pa
 
 | Feature | Module |
 |---|---|
+| Self Check — hit-tests every control on every screen | `self_check.html` — Menu → 🩺, or `CardinalSelfCheck.run()` |
 | Health Check | `admin_health_check.html` — `window.CardinalAdminHealth` |
 | Handler smoke check | `handler_smoke_check.html` — `window.CardinalHealth` |
 | Runtime error capture | `runtime_error_capture.html` — `window.CardinalErrors` |
@@ -258,6 +320,20 @@ SALES        = ['nick@', 'joey@', 'jacob@']
 Admins + production see all clients. Sales see only projects they created or leads assigned to them (`checklist.lead.assigned[0]`).
 
 Helper fns: `is_full_access()`, `my_email()`, `project_assigned_rep()`, `is_admin()`
+
+---
+
+## Fields every creation path must set
+
+Missing any of these breaks something **silently**:
+
+| Field | Set with | Breaks if missing |
+|---|---|---|
+| `checklist.po` | `nextPo()` | Client shows no PO, isn't findable by it, invoice numbers fall back to `INV` |
+| `checklist.stage_since` | `new Date().toISOString()` | No stage aging anywhere — Chase list, Production blockers, Community hub |
+| `checklist.lead.claim_type` | `retail`/`insurance`/`community` | Client doesn't appear in any portal |
+
+This list exists because each one was missed at least once and nothing complained.
 
 ---
 

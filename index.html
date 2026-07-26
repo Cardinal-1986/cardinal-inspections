@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 275 &#8212; Self Check no longer reports controls below the fold as unreachable. It scrolls to them first, the way you would, and only flags a position problem if they still can&#8217;t be reached.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 276 &#8212; What&#8217;s New caught up through 275: the claims rebuild, Chase list, punch items on client profiles, PO number fixes, and Self Check.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -30009,6 +30009,18 @@ window.CardinalDark = { toggle:toggle, isEnabled:isEnabled, setEnabled:setEnable
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:275, note:'\uD83E\uDE7A New Self Check (Menu \u2192 \uD83E\uDE7A) \u2014 opens every screen and tells you if any button can\u2019t actually be tapped' },
+{ build:271, note:'\uD83D\uDD22 Community bids now get a proper PO number and a start date, so they show an age on the Chase list and Production board' },
+{ build:270, note:'\uD83D\uDC1B PO numbers fixed \u2014 the profile was showing a different number to the one in the client list and search. Clients created by import or from a scope now get one' },
+{ build:269, note:'\uD83D\uDC1B The + and Menu buttons work on the claims home. Both were opening behind something' },
+{ build:268, note:'\uD83D\uDC1B The claims home shows its new layout \u2014 it had been silently failing to render and falling back to the old one' },
+{ build:266, note:'\uD83D\uDEE1\uFE0F Insurance Clients rebuilt \u2014 rows show what\u2019s owed and how long it\u2019s waited, sortable, and search covers carrier, claim number and adjuster' },
+{ build:265, note:'\uD83C\uDFA8 Claims header rebuilt: \u201CCardinal Claims\u201D centred, the full app menu, and the CRM switcher' },
+{ build:263, note:'\uD83D\uDCBB Cardinal Truth fills the screen on desktop, and a new Chase list shows every claim waiting on a carrier \u2014 longest wait first, red past 30 days' },
+{ build:262, note:'\uD83C\uDFA8 Insurance moved to a deep teal theme with gradient borders' },
+{ build:258, note:'\uD83D\uDD28 Punch items now show on the client profile too. Completed ones fold away, so the job keeps a record of what was fixed and when' },
+{ build:257, note:'\uD83D\uDD28 Production: tap Blocked or To invoice to filter, punch items open their job, and ticking one leaves it on screen instead of vanishing' },
+{ build:255, note:'\u26A1 Fixed the stutter when scrolling Cardinal Truth' },
 { build:254, note:'\uD83D\uDD35 Insurance client filters drop Lead and Prospect, and now read Scope Approved / Awaiting RCV / Denied instead of the raw stage names' },
 { build:253, note:'\uD83C\uDFA8 Cardinal Truth recoloured \u2014 same blue-grey, a good deal lighter than before. The Awaiting Depreciation figure is green now, since that money is earned' },
 { build:252, note:'\uD83D\uDCF7 Import a client by photographing an AccuLynx screen \u2014 name, address, phones, notes and the insurance block get read off it. Saves and reopens the camera for the next one' },
