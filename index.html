@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 276 &#8212; What&#8217;s New caught up through 275: the claims rebuild, Chase list, punch items on client profiles, PO number fixes, and Self Check.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 277 &#8212; New Bid asks for the homeowner only, with a &#8220;no homeowner&#8221; box for churches and vacant units. Site and partner contacts move to admin-held, enforced in the database rather than hidden in the interface.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24552,7 +24552,7 @@ return !!(v && v.style.display !== 'none');
 </script>
 
 
-<style id="cr-nbid-styles">.cr-nbid-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9600;display:flex;align-items:flex-start;justify-content:center;padding:6vh 12px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch}.cr-nbid-box{background:#fdfcf7;border-radius:14px;max-width:520px;width:100%;padding:22px 22px 20px;box-shadow:0 24px 60px rgba(0,0,0,.45);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-nbid-box h3{margin:0 0 4px;font:800 15px 'Segoe UI',Arial,sans-serif;color:#2f5f3b;letter-spacing:.04em;display:flex;align-items:center;gap:8px}.cr-nbid-box .subline{font:600 12px 'Segoe UI',Arial,sans-serif;color:#6b7d69;margin:0 0 6px}.cr-nbid-box .rule{height:1px;background:linear-gradient(90deg,transparent,#4a8c5a 30%,#4a8c5a 70%,transparent);margin:8px 0 6px}.cr-nbid-box label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5a6b57;margin:12px 0 4px}.cr-nbid-box label .req{color:#c8202e;margin-left:2px}.cr-nbid-box input,.cr-nbid-box select,.cr-nbid-box textarea{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #d0cebf;border-radius:8px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;background:#fff}.cr-nbid-box input:focus,.cr-nbid-box select:focus,.cr-nbid-box textarea:focus{outline:none;border-color:#4a8c5a;box-shadow:0 0 0 3px rgba(74,140,90,.15)}.cr-nbid-box textarea{min-height:64px;resize:vertical;font-family:inherit}.cr-nbid-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:420px){.cr-nbid-row{grid-template-columns:1fr;gap:0}}.cr-nbid-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}.cr-nbid-acts button{border:0;border-radius:6px;padding:9px 16px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit}.cr-nbid-acts button.primary{background:#4a8c5a;color:#fff}.cr-nbid-acts button.primary:hover{background:#3d7a4c}.cr-nbid-acts button.primary:disabled{background:#8ba892;cursor:wait}.cr-nbid-acts button.ghost{background:transparent;color:#5a6b57;border:1px solid #d0cebf}.cr-nbid-acts button.ghost:hover{background:#f0eee3}</style>
+<style id="cr-nbid-styles">.cr-nbid-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9600;display:flex;align-items:flex-start;justify-content:center;padding:6vh 12px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch}.cr-nbid-box{background:#fdfcf7;border-radius:14px;max-width:520px;width:100%;padding:22px 22px 20px;box-shadow:0 24px 60px rgba(0,0,0,.45);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-nbid-box h3{margin:0 0 4px;font:800 15px 'Segoe UI',Arial,sans-serif;color:#2f5f3b;letter-spacing:.04em;display:flex;align-items:center;gap:8px}.cr-nbid-box .subline{font:600 12px 'Segoe UI',Arial,sans-serif;color:#6b7d69;margin:0 0 6px}.cr-nbid-box .rule{height:1px;background:linear-gradient(90deg,transparent,#4a8c5a 30%,#4a8c5a 70%,transparent);margin:8px 0 6px}.cr-nbid-box label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5a6b57;margin:12px 0 4px}.cr-nbid-box label .req{color:#c8202e;margin-left:2px}.cr-nbid-box input,.cr-nbid-box select,.cr-nbid-box textarea{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #d0cebf;border-radius:8px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;background:#fff}.cr-nbid-box input:focus,.cr-nbid-box select:focus,.cr-nbid-box textarea:focus{outline:none;border-color:#4a8c5a;box-shadow:0 0 0 3px rgba(74,140,90,.15)}.cr-nbid-box textarea{min-height:64px;resize:vertical;font-family:inherit}.cr-nbid-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:420px){.cr-nbid-row{grid-template-columns:1fr;gap:0}}.cr-nbid-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}.cr-nbid-acts button{border:0;border-radius:6px;padding:9px 16px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit}.cr-nbid-acts button.primary{background:#4a8c5a;color:#fff}.cr-nbid-acts button.primary:hover{background:#3d7a4c}.cr-nbid-acts button.primary:disabled{background:#8ba892;cursor:wait}.cr-nbid-acts button.ghost{background:transparent;color:#5a6b57;border:1px solid #d0cebf}.cr-nbid-acts button.ghost:hover{background:#f0eee3}.cr-nbid-check{display:flex;align-items:center;gap:9px;margin:0 0 10px;padding:9px 11px;background:#f6f3ea;border:1px solid #ddd6cf;border-radius:8px;cursor:pointer;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#5a4a2a}.cr-nbid-check input{width:17px;height:17px;margin:0;flex:0 0 auto;cursor:pointer}[data-homeowner-section].off{display:none}</style>
 <script id="cr-nbid-script">
 (function () {
 'use strict';
@@ -24616,7 +24616,12 @@ esc(p.name) +
 'placeholder="Property address or job location" />' +
 '</div>' +
 '<div class="rule" style="margin-top:14px;"></div>' +
-'<label style="margin-top:2px;">Homeowner / Site Contact</label>' +
+'<label style="margin-top:2px;">Homeowner</label>' +
+'<label class="cr-nbid-check">' +
+'<input type="checkbox" data-field="no_homeowner" />' +
+'<span>No homeowner on this job</span>' +
+'</label>' +
+'<div data-homeowner-section>' +
 '<input type="text" data-field="homeowner_name" ' +
 'placeholder="Full name" autocomplete="name" />' +
 '<div class="cr-nbid-row" style="margin-top:8px;">' +
@@ -24629,6 +24634,7 @@ esc(p.name) +
 '<label style="margin-top:0;">Email</label>' +
 '<input type="email" data-field="homeowner_email" ' +
 'placeholder="name@example.com" autocomplete="email" inputmode="email" />' +
+'</div>' +
 '</div>' +
 '</div>' +
 '<div data-renter-section style="display:none;">' +
@@ -24709,6 +24715,7 @@ if(e.key === 'Escape') close();
 document.addEventListener('keydown', escHandler);
 bg.onclick = function(e){ if(e.target === bg) close(); };
 bg.querySelector('[data-act="cancel"]').onclick = close;
+wireNoHomeowner(bg);
 var partnerSel = bg.querySelector('[data-field="partner_id"]');
 var propsSlot  = bg.querySelector('[data-props-slot]');
 var renterSect = bg.querySelector('[data-renter-section]');
@@ -24820,6 +24827,7 @@ partner_id      : partner.id,
 partner_name    : partner.name,
 property_id     : propId && propId !== '__other__' ? propId : null,
 homeowner_name  : hoName,
+no_homeowner    : !!(bg.querySelector('[data-field="no_homeowner"]') || {}).checked,
 homeowner_phone : hoPhone,
 homeowner_email : hoEmail,
 renter_name     : rtName,
@@ -24865,6 +24873,21 @@ setTimeout(function(){ window.CardinalCommunityHub.show(); }, 80);
 alert('Could not create bid: ' + (e.message || e));
 saveBtn.disabled = false;
 saveBtn.textContent = 'Save Bid';
+}
+};
+}
+function wireNoHomeowner(root){
+if(!root) return;
+var box = root.querySelector('[data-field="no_homeowner"]');
+var sec = root.querySelector('[data-homeowner-section]');
+if(!box || !sec) return;
+box.onchange = function(){
+sec.classList.toggle('off', box.checked);
+if(box.checked){
+['homeowner_name','homeowner_phone','homeowner_email'].forEach(function(f){
+var i = root.querySelector('[data-field="' + f + '"]');
+if(i) i.value = '';
+});
 }
 };
 }
