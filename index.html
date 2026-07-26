@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 266 &#8212; Insurance Clients rebuilt: rows now carry what&#8217;s owed and how long it&#8217;s been waiting, sortable by owed / waiting / name, search covers carrier, claim number and adjuster. Two columns on desktop. Last insurance surface off base-app styling.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 267 &#8212; Fixed the claims home showing its old layout. A guard added to stop double-rendering only compared the numbers, so if they hadn&#8217;t changed it skipped painting entirely &#8212; even when our layout wasn&#8217;t on screen at all.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38429,6 +38429,10 @@ if(nav) setTimeout(function(){ try{ nav.click(); }catch(_){} }, 60);
 });
 }
 var lastSig = '';
+function missing(){
+var host = document.querySelector('#cardinalTruthView .ins-body');
+return !host || !host.querySelector('.cr-cth-wrap');
+}
 function sigOf(){
 var d = compute();
 return [d.total, d.denied, d.owedDep, d.owedSupp, d.acvReleased, d.dedDue,
@@ -38441,10 +38445,10 @@ var view = document.getElementById('cardinalTruthView');
 if(!view || view.style.display === 'none') return;
 view.classList.add('cr-cth-host');
 var sig = sigOf();
-if(sig !== lastSig){ lastSig = sig; render(); }
+if(missing() || sig !== lastSig){ lastSig = sig; render(); }
 await loadClaims();
 var sig2 = sigOf();
-if(sig2 !== lastSig){ lastSig = sig2; render(); }
+if(missing() || sig2 !== lastSig){ lastSig = sig2; render(); }
 }
 var scheduled = false;
 function scan(){
