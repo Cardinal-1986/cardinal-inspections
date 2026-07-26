@@ -2538,7 +2538,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="quickinsp">&#9889; Quick Inspection</button>
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
-          <button class="navopt" data-nav="aiestimates">&#9889; AI Estimates</button>
+          <button class="navopt" data-nav="aiestimates">&#9889; AI Estimates</button> <button class="navopt" data-nav="abcsupply">&#129521; ABC Supply</button>
           <button class="navopt" data-nav="coach">&#127919; Objection Coach</button>
 
           <div class="navsec">Insurance</div>
@@ -2555,7 +2555,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 326 &#8212; Estimates, Contracts, Inspections, Materials and Checklists work from community clients, with a Back to bid view pill; Communications wears Frost. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 327 &#8212; ABC Supply: live catalog search, branch pricing and frequent items, ready to connect. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12383,7 +12383,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'companydocs'){ openCompanyDocs(); }
   else if(nav === 'quickinsp'){ qiFreshStart(); }
-  else if(nav === 'aiestimates'){ if(window.crOpenEstimates) window.crOpenEstimates(); }
+  else if(nav === 'aiestimates'){ if(window.crOpenEstimates) window.crOpenEstimates(); } else if(nav === 'abcsupply'){ if(window.CardinalABC) window.CardinalABC.open(); }
   else if(nav === 'claims'){ if(window.crOpenClaims) window.crOpenClaims(); }
   else if(nav === 'pricing'){ if(window.crOpenPricing) window.crOpenPricing('roofing'); }
   else if(nav === 'coach'){ if(window.CardinalCoach) window.CardinalCoach.open(); }
@@ -39840,5 +39840,146 @@ placeChip  : placeChip,
 </script>
 
 
+<style id="cr-abc-styles">
+#cr-abc{display:none;position:fixed;inset:0;z-index:9600;background:rgba(18,14,12,.85);align-items:flex-end;justify-content:center}
+#cr-abc .sheet{background:#202329;color:#e8ebef;width:100%;max-width:640px;max-height:92vh;border-radius:18px 18px 0 0;border:1px solid #d4a017;border-bottom:0;display:flex;flex-direction:column;overflow:hidden}
+#cr-abc .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(180deg,#2a2e35,#22262c);border-bottom:1px solid #3a2f22}
+#cr-abc .hd h3{margin:0;flex:1;font:800 17px Georgia,'Times New Roman',serif;color:#f5d061}
+#cr-abc .hd .env{font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#f5d061;background:rgba(212,160,23,.15);padding:4px 9px;border-radius:10px}
+#cr-abc .hd .x{background:none;border:0;color:#d8c9a8;font-size:21px;cursor:pointer;padding:2px 6px}
+#cr-abc .bd{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px calc(120px + env(safe-area-inset-bottom,0px))}
+#cr-abc .note{background:#fff;color:#2c2c2c;border:1px solid #d4a017;border-radius:11px;padding:12px 13px;font-size:13px;line-height:1.5;margin-bottom:12px}
+#cr-abc .note b{color:#8a5a00}
+#cr-abc label{display:block;margin:10px 0 4px;font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#d4a017}
+#cr-abc input{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid rgba(212,160,23,.45);border-radius:9px;background:#fff;color:#2c2c2c;font:inherit}
+#cr-abc .row2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+#cr-abc .row2>div{min-width:0}
+#cr-abc .btn2{display:inline-block;border:1px solid #d4a017;background:#d4a017;color:#1a1a1a;font:700 13.5px inherit;padding:10px 15px;border-radius:9px;cursor:pointer;margin:10px 8px 0 0}
+#cr-abc .btn2.ghost{background:transparent;color:#f5d061}
+#cr-abc .item{background:#fff;color:#2c2c2c;border:1px solid rgba(212,160,23,.4);border-radius:11px;padding:11px 12px;margin-bottom:9px}
+#cr-abc .item b{display:block;font-size:13.5px}
+#cr-abc .item small{color:#6b6357;font-size:11.5px}
+#cr-abc .item .pr{float:right;font:800 15px ui-monospace,Menlo,monospace;color:#1a6b3c}
+#cr-abc .item .pr.zero{color:#8a5a00;font-size:11px;max-width:120px;text-align:right}
+#cr-abc .quiet{color:#9aa4b0;font-size:12.5px;padding:8px 2px}
+#cr-abc .sect{margin:16px 0 7px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.22em;text-transform:uppercase;color:#d4a017}
+</style>
+<script id="cr-abc-script">
+(function(){
+'use strict';
+var KEY = 'cardinal.abc';
+function cfg(){ try{ return JSON.parse(localStorage.getItem(KEY) || '{}'); }catch(_){ return {}; } }
+function save(c){ try{ localStorage.setItem(KEY, JSON.stringify(c)); }catch(_){} }
+function esc(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function usd(n){ var v = Number(n); return isNaN(v) ? '' : '$' + v.toFixed(2); }
+async function api(body){
+var r = await fetch('/api/abc', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+var j = null; try{ j = await r.json(); }catch(_){}
+if(!r.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
+return j || {};
+}
+var el = null;
+function ensure(){
+if(el) return el;
+el = document.createElement('div');
+el.id = 'cr-abc';
+el.innerHTML =
+'<div class="sheet">' +
+'<div class="hd"><h3>&#129521; ABC Supply</h3><span class="env" data-env>&hellip;</span>' +
+'<button class="x" data-act="close" type="button">&times;</button></div>' +
+'<div class="bd">' +
+'<div data-status></div>' +
+'<div class="sect">Account</div>' +
+'<div class="row2">' +
+'<div><label>Ship-To #</label><input data-f="shipTo" inputmode="numeric"></div>' +
+'<div><label>Bill-To #</label><input data-f="billTo" inputmode="numeric"></div>' +
+'<div><label>Branch #</label><input data-f="branch" inputmode="numeric"></div>' +
+'</div>' +
+'<button class="btn2 ghost" data-act="test" type="button">Test connection</button>' +
+'<button class="btn2 ghost" data-act="freq" type="button">Frequent items</button>' +
+'<div class="sect">Catalog</div>' +
+'<input data-q placeholder="Search ABC catalog\u2026 e.g. Duration shingles">' +
+'<button class="btn2" data-act="search" type="button">Search my branch</button>' +
+'<div data-results></div>' +
+'</div></div>';
+document.body.appendChild(el);
+var c = cfg();
+el.querySelectorAll('[data-f]').forEach(function(i){
+i.value = c[i.getAttribute('data-f')] || '';
+i.oninput = function(){ var cc = cfg(); cc[i.getAttribute('data-f')] = i.value.trim(); save(cc); };
+});
+el.querySelector('[data-act="close"]').onclick = close;
+el.addEventListener('click', function(e){ if(e.target === el) close(); });
+el.querySelector('[data-act="test"]').onclick = refreshStatus;
+el.querySelector('[data-act="search"]').onclick = doSearch;
+el.querySelector('[data-act="freq"]').onclick = doFrequents;
+return el;
+}
+function statusBox(html){ ensure().querySelector('[data-status]').innerHTML = html; }
+async function refreshStatus(){
+statusBox('<div class="quiet">Checking connection\u2026</div>');
+try{
+var s = await api({ action:'status' });
+ensure().querySelector('[data-env]').textContent = s.env || '?';
+if(!s.configured){
+statusBox('<div class="note"><b>Not connected yet.</b> Register at <b>apidocs.abcsupply.com</b> (Individual Business track), then add <b>ABC_CLIENT_ID</b> and <b>ABC_CLIENT_SECRET</b> to Vercel env vars and redeploy. Sandbox first \u2014 see the ABC setup checklist.</div>');
+}else{
+statusBox('<div class="note"><b>Connected</b> \u2014 ' + esc(s.env) + ' environment. Enter your Ship-To, Bill-To and Branch numbers, then search.</div>');
+}
+}catch(e){
+statusBox('<div class="note"><b>Connection error:</b> ' + esc(e.message || e) + '</div>');
+}
+}
+function rows(items){
+var box = ensure().querySelector('[data-results]');
+if(!items || !items.length){ box.innerHTML = '<div class="quiet">No items.</div>'; return; }
+box.innerHTML = items.slice(0, 25).map(function(it, i){
+var num = it.itemNumber || it.number || it.id || '';
+var nm = it.itemDescription || it.description || it.name || ('Item ' + num);
+var uom = (it.unitsOfMeasure && it.unitsOfMeasure.stocking) || it.stockingUom || it.uom || '';
+return '<div class="item" data-i="' + i + '"><span class="pr" data-pr></span><b>' + esc(nm) + '</b>' +
+'<small>#' + esc(num) + (uom ? ' \u00b7 ' + esc(uom) : '') + '</small><br>' +
+'<button class="btn2 ghost" data-price="' + esc(String(num)) + '" type="button" style="padding:7px 12px;font-size:12px;margin-top:8px;">Price at my branch</button></div>';
+}).join('');
+box.querySelectorAll('[data-price]').forEach(function(b){
+b.onclick = async function(){
+var c = cfg();
+if(!c.shipTo || !c.branch){ alert('Enter your Ship-To and Branch numbers first.'); return; }
+var host = b.closest('.item'); var pr = host.querySelector('[data-pr]');
+pr.textContent = '\u2026';
+try{
+var j = await api({ action:'priceItems', shipTo:c.shipTo, branchNumber:c.branch, items:[{ itemNumber:b.getAttribute('data-price'), quantity:1 }] });
+var arr = j.items || j.prices || (Array.isArray(j) ? j : []);
+var p = arr[0] || {};
+var val = Number(p.price != null ? p.price : (p.unitPrice != null ? p.unitPrice : NaN));
+if(!isNaN(val) && val > 0){ pr.className = 'pr'; pr.textContent = usd(val); }
+else { pr.className = 'pr zero'; pr.textContent = 'Branch will price \u2014 call them'; }
+}catch(e){ pr.className = 'pr zero'; pr.textContent = esc(String(e.message || e).slice(0, 60)); }
+};
+});
+}
+async function doSearch(){
+var c = cfg(), q = ensure().querySelector('[data-q]').value.trim();
+if(!q){ return; }
+ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">Searching\u2026</div>';
+try{
+var j = await api({ action:'searchItems', query:q, branchNumber:c.branch || undefined });
+rows(j.items || j.results || (Array.isArray(j) ? j : []));
+}catch(e){ ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">' + esc(e.message || e) + '</div>'; }
+}
+async function doFrequents(){
+var c = cfg();
+if(!c.billTo){ alert('Enter your Bill-To number first.'); return; }
+ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">Loading frequent items\u2026</div>';
+try{
+var j = await api({ action:'frequents', billTo:c.billTo });
+rows(j.items || (Array.isArray(j) ? j : []));
+}catch(e){ ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">' + esc(e.message || e) + '</div>'; }
+}
+function open(){ ensure().style.display = 'flex'; refreshStatus(); }
+function close(){ if(el) el.style.display = 'none'; }
+window.CardinalABC = { open: open, close: close };
+})();
+</script>
 </body>
 </html>
