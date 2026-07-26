@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 272 &#8212; Added CardinalSelfCheck: run it in the console and it hit-tests every important control on every screen, using the real browser. Catches a button that&#8217;s covered by something &#8212; the class of bug no build-time check can see.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 273 &#8212; Self Check now runs from the menu with results on screen, so it works on the phone rather than needing a desktop console. It opens each screen and reports any control a tap can&#8217;t actually reach.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38898,6 +38898,7 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 </script>
 
 
+<style id="cr-sc-styles">#cr-sc-panel{display:none;position:fixed;inset:0;z-index:9700;background:#12161c;color:#e8ecf1;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-sc-panel.open{display:block}#cr-sc-panel .hd{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:#171d25;border-bottom:1px solid #2a333f}#cr-sc-panel .hd h3{flex:1;margin:0;font:700 15px Georgia,serif;color:#e8ecf1}#cr-sc-panel .hd button{background:transparent;border:1px solid #3a4552;color:#9fb0c4;border-radius:8px;padding:7px 12px;cursor:pointer;font:700 11.5px inherit;font-family:inherit}#cr-sc-panel .hd button.go{background:#4a8c5a;border-color:#4a8c5a;color:#fff}#cr-sc-panel .bd{padding:14px 16px calc(40px + env(safe-area-inset-bottom,0px))}#cr-sc-panel .lede{font-size:13px;line-height:1.55;color:#8b9aab;margin:0 0 14px}#cr-sc-panel .sum{border-radius:11px;padding:14px 16px;margin-bottom:14px;font:700 14px inherit}#cr-sc-panel .sum.pass{background:#16301f;border:1px solid #2f6b41;color:#8fe0a8}#cr-sc-panel .sum.fail{background:#331a1a;border:1px solid #7a3535;color:#f0a3a3}#cr-sc-panel .grp{font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#63748a;margin:16px 0 6px}#cr-sc-panel .row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:9px;background:#1a212a;margin-bottom:6px}#cr-sc-panel .row.bad{background:#2a1c1c}#cr-sc-panel .row .ic{flex:0 0 auto;font-size:13px;line-height:1.5}#cr-sc-panel .row.ok .ic{color:#6cc98a}#cr-sc-panel .row.bad .ic{color:#e88}#cr-sc-panel .row .tx{flex:1;min-width:0}#cr-sc-panel .row .tx b{display:block;font:600 13.5px inherit}#cr-sc-panel .row .tx small{display:block;font-size:11.5px;color:#8b9aab;margin-top:2px}#cr-sc-panel .busy{text-align:center;padding:40px 20px;color:#8b9aab;font-size:13.5px}</style>
 <script id="cr-sc-script">
 (function(){
 'use strict';
@@ -39019,9 +39020,8 @@ var results = checkList(found.concat(ALWAYS), name);
 last = results;
 return print(results);
 }
-async function run(){
+async function collect(){
 var results = [];
-console.log('Cardinal self-check \u2014 hit-testing every control\n');
 for(var i = 0; i < SURFACES.length; i++){
 var s = SURFACES[i];
 try{ s.open(); }catch(e){
@@ -39034,14 +39034,125 @@ results = results.concat(checkList(s.controls, s.name));
 }
 results = results.concat(checkList(ALWAYS, 'always-on'));
 last = results;
-return print(results);
+return results;
+}
+async function run(){
+console.log('Cardinal self-check \u2014 hit-testing every control\n');
+return print(await collect());
 }
 function report(){
 if(!last.length){ console.log('nothing run yet \u2014 try CardinalSelfCheck.run()'); return; }
 return print(last);
 }
+var panel = null;
+function ensurePanel(){
+if(panel) return panel;
+panel = document.createElement('div');
+panel.id = 'cr-sc-panel';
+document.body.appendChild(panel);
+return panel;
+}
+function paint(results, running){
+ensurePanel();
+var bad = results.filter(function(r){ return !r.ok; });
+var bySurface = {};
+results.forEach(function(r){
+(bySurface[r.surface] = bySurface[r.surface] || []).push(r);
+});
+panel.innerHTML =
+'<div class="hd">' +
+'<h3>\uD83E\uDE7A Self Check</h3>' +
+'<button class="go" data-act="run" type="button">Run again</button>' +
+'<button data-act="close" type="button">Close</button>' +
+'</div>' +
+'<div class="bd">' +
+(running
+? '<div class="busy">Opening each screen and testing every control\u2026</div>'
+: '<p class="lede">Each control is tested by asking the browser what a tap ' +
+'at its centre would actually hit. A failure means something is covering it.</p>' +
+'<div class="sum ' + (bad.length ? 'fail' : 'pass') + '">' +
+(bad.length
+? bad.length + ' of ' + results.length + ' controls are unreachable'
+: 'All ' + results.length + ' controls reachable') +
+'</div>' +
+Object.keys(bySurface).map(function(k){
+return '<div class="grp">' + k + '</div>' +
+bySurface[k].map(function(r){
+return '<div class="row ' + (r.ok ? 'ok' : 'bad') + '">' +
+'<span class="ic">' + (r.ok ? '\u2713' : '\u2715') + '</span>' +
+'<span class="tx"><b>' + r.label + '</b>' +
+(r.ok ? '' : '<small>' + r.why + '</small>') +
+'</span></div>';
+}).join('');
+}).join('')
+) +
+'</div>';
+panel.querySelector('[data-act="close"]').onclick = close;
+var again = panel.querySelector('[data-act="run"]');
+if(again) again.onclick = function(){ openAndRun(); };
+}
+function close(){
+if(panel) panel.classList.remove('open');
+document.body.style.overflow = '';
+}
+async function openAndRun(){
+ensurePanel();
+paint([], true);
+panel.classList.add('open');
+document.body.style.overflow = 'hidden';
+panel.style.visibility = 'hidden';
+var results = [];
+try{ results = await collect(); }
+finally{
+panel.style.visibility = '';
+panel.classList.add('open');
+document.body.style.overflow = 'hidden';
+}
+paint(results, false);
+return results;
+}
+function addMenuItem(){
+if(document.getElementById('cr-nav-selfcheck')) return true;
+var menu = document.getElementById('navMenu');
+if(!menu) return false;
+var anchor = Array.prototype.slice.call(menu.querySelectorAll('.navopt'))
+.find(function(b){ return /health check|admin|audit/i.test(b.textContent || ''); });
+var btn = document.createElement('button');
+btn.className = 'navopt';
+btn.id = 'cr-nav-selfcheck';
+btn.type = 'button';
+btn.innerHTML = '\uD83E\uDE7A Self Check';
+btn.onclick = function(e){
+e.stopPropagation();
+var m = document.getElementById('navMenu');
+if(m) m.style.display = 'none';
+openAndRun();
+};
+if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor.nextSibling);
+else menu.appendChild(btn);
+return true;
+}
+var scheduled = false;
+function scan(){
+if(scheduled) return;
+scheduled = true;
+requestAnimationFrame(function(){
+scheduled = false;
+try{ addMenuItem(); }catch(_){}
+});
+}
+if(document.readyState === 'loading'){
+document.addEventListener('DOMContentLoaded', function(){
+scan();
+new MutationObserver(scan).observe(document.body, { childList:true, subtree:true });
+});
+}else{
+scan();
+new MutationObserver(scan).observe(document.body, { childList:true, subtree:true });
+}
 window.CardinalSelfCheck = {
 run    : run,
+open   : openAndRun,
 here   : here,
 report : report,
 probe  : probe,
