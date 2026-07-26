@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 284 &#8212; Fixed client profiles being left broken. Community jobs hide the overview cards they replace, but that was done element by element &#8212; a single missed restore left every other client&#8217;s profile damaged. It&#8217;s one class now, which can&#8217;t half-fail.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 285 &#8212; Fixed the blank client profile. The community page hid the cards it replaces before checking it could render, so a failure left the page empty. It now hides nothing until its own content is on screen, and restores the profile if anything goes wrong.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39501,6 +39501,16 @@ var v = document.getElementById('projectView');
 if(v) v.classList.toggle('cr-cc-own', !!on);
 }
 function render(){
+try{
+renderInner();
+}catch(e){
+console.error('[community client] render failed, restoring profile:', e);
+takeOver(false);
+var m = document.getElementById('cr-cc');
+if(m) m.remove();
+}
+}
+function renderInner(){
 var pr = window.currentProject;
 var mount = document.getElementById('cr-cc');
 if(!pr || !isCommunity(pr)){
@@ -39508,11 +39518,15 @@ takeOver(false);
 if(mount) mount.remove();
 return;
 }
-takeOver(true);
 if(!mount){
 var host = document.getElementById('tab-overview') ||
-(document.getElementById('solCard') || {}).parentNode;
-if(!host) return;
+(document.getElementById('leadCard') || {}).parentNode ||
+(document.getElementById('solCard') || {}).parentNode ||
+document.getElementById('projectView');
+if(!host){
+takeOver(false);
+return;
+}
 mount = document.createElement('div');
 mount.id = 'cr-cc';
 host.insertBefore(mount, host.firstChild);
@@ -39553,6 +39567,7 @@ threadHtml(pr) + contactsHtml(pr) +
 bidHtml(pr) + contactsHtml(pr) +
 '</div>';
 wire(mount, pr);
+takeOver(mount.childNodes.length > 0);
 lastSig = signature();
 }
 function wire(mount, pr){
