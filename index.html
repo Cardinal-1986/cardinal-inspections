@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 279 &#8212; Community client page rebuilt with Thread and Bid tabs. Bids use the existing estimate builder and its line-item catalog rather than a second pricing tool, and site contacts read as held by admin for anyone who isn&#8217;t one.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 280 &#8212; The new Community screen actually appears now. Its view is built when the hub first opens rather than existing at startup, so looking for it at load found nothing and nothing ever rendered.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39251,12 +39251,21 @@ catch(e){ console.error('[community] render failed:', e); }
 });
 }
 function start(){
+var attached = false;
+function attach(){
+if(attached) return;
 var v = document.getElementById('communityHubView');
-if(v){
+if(!v) return;
+attached = true;
 new MutationObserver(function(){ if(isOpen()) scan(); })
 .observe(v, { attributes:true, attributeFilter:['style'] });
 if(isOpen()) scan();
 }
+attach();
+new MutationObserver(function(){
+attach();
+if(isOpen()) scan();
+}).observe(document.body, { childList:true, subtree:true });
 setInterval(function(){
 var h = document.getElementById('cr-ch2');
 if(h && isOpen()) clock(h);
