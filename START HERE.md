@@ -1,14 +1,14 @@
 # Cardinal Resource App — Start Here
 
-**Read this before doing anything.** It replaces `Cardinal_Project_Knowledge.pdf`, which is from build 90 and would send you down several wrong paths.
+**Read this before doing anything.**
 
-**Current build: 276 · July 24, 2026 · 2.19 MB (63% of budget) · 72 modules · 6 source patches**
+**Current build: 323 · July 26, 2026 · ~2.19 MB · 83 inline script blocks**
 
 ---
 
 ## What this is
 
-A single-file web app (`index.html`) for **Cardinal Roofing & Renovations, LLC** — Dayton, Ohio, roofing since 1986. Team CRM, inspections, estimates, contracts, photos, production, claims. Deployed on Vercel from GitHub, installable as a PWA.
+A single-file web app (`index.html`) for **Cardinal Roofing & Renovations, LLC** — Dayton, Ohio. Team CRM, inspections, estimates, contracts, photos, production, claims. Deployed on Vercel from GitHub (Cardinal-1986/cardinal-inspections) to app.cardinalroster.com, installable as a PWA. Supabase backend.
 
 **Owner:** Theo Dorion · theo@cardinalrenovations.net
 
@@ -18,203 +18,153 @@ A single-file web app (`index.html`) for **Cardinal Roofing & Renovations, LLC**
 | Production | curtis@, scottie@ |
 | Sales | nick@, joey@, jacob@ |
 
-Admins and production see all clients; sales see only what they created or are assigned.
+Admins + production see all clients; sales see only what they created or are assigned (database-enforced). **Totals are admin-only** — production sees rows for scheduling but no stats strips or partner money (presentation-gated); sales see their own numbers computed from the only rows RLS gives them.
 
 ---
 
-## The one mistake that keeps happening
+## How builds work now (changed this session — the splice pipeline is gone)
 
-**Building something the app already has.** It happened four times in one session:
-
-| Built | Already existed as |
-|---|---|
-| Manual Estimates | `+ New estimate` templates, with signature, email, share link, print |
-| Photo Gallery | the Photo Album, wired into the inspection-report pipeline |
-| PO numbers (`PO-YYYYMMDD-HHMM`) | `nextPo()` → `checklist.po`, sequential, searchable, used for invoice numbers |
-| `stage_since` on community bids | the field seven other things compute aging from |
-
-Every time, the tell was the same: **I grepped for a term I invented instead of asking what the base already calls it.**
-
-The check that actually finds these isn't a search — it's a comparison. *What does the base write here, and do I write the same?* Run it before building anything that creates or updates a record:
-
-```bash
-# what the base sets on project create vs what your path sets
-grep -A20 "from('projects').insert" <module> 
-grep -A20 "pdb.create(" /mnt/user-data/uploads/index.html
-```
-
-Read **`FEATURES.md`** first, every time.
-
----
-
-## Four more that cost real time
-
-### Never guess a function or selector name
-
-| Guessed | Reality | Cost |
-|---|---|---|
-| `#projView` | `#projectView` | Maps and PO badges never rendered, for weeks |
-| `openDoc` / `editDoc` / `showDoc` | `openEditor(id)` | Publish made documents then never opened them |
-| `gemini-2.0-flash-exp` | `gemini-3.5-flash` | Hours of 404s on a deprecated model |
-| `CardinalCoach.practice(true)` | `true` means *Cardinal Truth*, not "the hub" | Back from the Coach landed on the wrong CRM |
-
-All four passed every syntax check. Grep the base and confirm. For external APIs, **search the web** — training data goes stale.
-
-**And beware verifying with a bad pattern.** `grep "var ck"` matched `var ck2 = ck(pr)` — a *usage*. I confirmed a function existed by finding the line that proved it didn't.
-
-### The document system gives you four features free
-
-Any HTML through `window.db.create(title, html, projectName, projectId)` gets **share link · email to client · client signature · print/PDF**. Table: `inspection_reports` (misleading name — holds all documents). Never rebuild that stack.
-
-### Deploy has two landmines
-
-- **No spaces in `api/` filenames.** Vercel rejects the *entire build*, at deploy time, silently. Cost two days.
-- **`api/package.json` is `"type": "module"`.** One `module.exports` breaks *all* functions.
-
-Both are now CI-checked. See "Safeguards" below.
-
-### `write_text()` truncates before it encodes
-
-A `UnicodeEncodeError` mid-write reduced `splice.py` itself to **zero bytes**. Use HTML entities (`&#127919;`) in the footer string, never surrogate escapes (`\uD83C\uDFAF`). The build writes atomically now, and backs itself up.
-
----
-
-## Safeguards in place
-
-**Every build runs:** lint → splice → integrity → smoke, and fails on any of them.
-
-| Layer | Catches | File |
-|---|---|---|
-| **Lint** | `try{ asyncFn(); }catch` — a catch that can never fire | `/home/claude/lint.py` |
-| **Integrity** | script/div balance, JS parse of all 82 blocks, size budget | in `splice.py` |
-| **Smoke** | each major view actually renders, against a real DOM | `/home/claude/smoke.js` |
-| **CI** | filenames with spaces, `module.exports`, truncated uploads | `.github/workflows/check.yml` |
-| **Self Check** | a control that exists but can't be tapped | Menu → 🩺, `self_check.html` |
-
-**The smoke test is the important one.** Every other check reads the source. A plain `ReferenceError` thrown inside an `async` function hid for six builds — syntactically perfect, silently dead, old layout left on screen. Only running the code found it.
-
-**Its limit:** jsdom has no layout engine. It catches *does this work*, never *does this look right*. Stacking, spacing and colour bugs are invisible to it.
-
-**That gap is what Self Check fills.** It runs in the real browser and asks `document.elementFromPoint` what a tap at each control's centre would actually hit — a real hit test, with real CSS applied. It would have caught both dead menu buttons in one call. Menu → 🩺 Self Check, or `CardinalSelfCheck.run()`.
-
-Writing it took three rounds of fixing *the checker*, not the app: unscoped selectors matched hidden elements from closed views, then below-the-fold controls were called unreachable. Expect that. A checker that cries wolf gets ignored, so chase every false positive down or delete the check — as I did with a lint that produced 178 of them.
-
-**When you add a full-screen view, add it to `CASES` in `smoke.js`.** Otherwise it isn't covered.
-
-**Backups** written on every successful build: `/tmp/splice_backup.py`, `/tmp/index_work_backup.html`, `/tmp/minify_backup.py`, `/tmp/smoke_backup.js`. `index_work.html` is the pristine base every source patch anchors to — without it the build cannot be reconstructed.
-
----
-
-## How builds work
+There is no `splice.py`, no module folder, no pristine base. **All work is direct surgery on the shipped built file.**
 
 ```
-/mnt/user-data/uploads/index.html   ← pristine base (never edit)
-              ↓
-        splice.py                    ← 6 source patches + 71 modules + minify
-              ↓
-/mnt/user-data/outputs/index.html    ← what ships
+/home/claude/app/index_v{N}.html      ← lineage, one file per build
+        ↓  python patch script
+/home/claude/app/index_v{N+1}.html    ← atomic temp-file-then-rename
+        ↓  gates (below)
+/mnt/user-data/outputs/cardinal_v{N+1}_index.html   ← unique filename, Theo uploads as index.html
 ```
 
-**Source patches** are exact string replacements. Each raises `SystemExit` if its anchor isn't found — a whitespace mismatch aborts the build rather than silently dropping the fix. That has already saved one build.
+Rules that are non-negotiable:
+- **Every edit is exact-match** with `assert src.count(old) == 1` (or an explicit expected count). A failed assert aborts before the write — the previous build is never corrupted. This fired repeatedly today and saved the build every time.
+- **The patch helper is literal string splicing. It does NOT expand regex backreferences.** Passing `\1` into it wrote literal `\1` into the CSS and destroyed five skin rules (build 302). Use `re.sub` for backrefs or reconstruct strings whole.
+- **Bump the build label every build** — search `v2026-` to find the string. "The build shows 297" cost a debugging round.
+- **Unique output filename every build** (`cardinal_v308_index.html`) — mobile browsers serve cached downloads on repeated names.
+- **Deploy order: SQL first, then index.html.** After deploy, fully close and reopen the PWA twice — the service worker serves stale builds.
 
-**Order matters.** `pwa_nav_clearance.html` splices last so its `!important` clearance wins.
+**Gates run on every build, in order:**
+1. `node --check` on all 83 inline script blocks (extracted individually)
+2. Tag balance (`<script>/<style>` pairs) and CSS brace balance on any touched style block
+3. **Whole-string assertions** — gates must assert entire rules/structures, never fragments. A fragment check passed while the rule around it was destroyed (build 302→303).
+4. jsdom functional harness: boot the file, mock `cacheProjects`/`currentUser`/chainable `sb`, shim `offsetParent` (`Object.defineProperty(HTMLElement.prototype,'offsetParent',{get(){return this.parentNode}})` — jsdom has no layout), filter jsdom "Not implemented" noise (canvas, scrollTo) without failing on it, then exercise the changed surface with **structural proofs** (`matches()`, parentage, counts) — never programmatic clicks alone, which succeed on hidden elements.
+5. **Harnesses must replicate the real structure.** A harness seeded from the author's assumption validated pure fiction twice today (`jabox` vs the real `.jatile` grid). Read the real builder, copy its markup and its delegation, then test.
+6. **Dupe-API check** (new after build 308): no `window.Cardinal*` may be plainly assigned twice. Grep `window\.(Cardinal\w+)\s*=` — any name appearing more than once must use `Object.assign(window.X || {}, {...})`.
+7. Stage to outputs **only on green**.
 
-**Handing files over:** always a uniquely named file — `cardinal_v271_index.html`. Mobile browsers serve cached downloads when the filename repeats; that once cost a full session while Theo sat on build 188.
-
----
-
-## Architecture
-
-**Three CRMs, one database.** Discriminator is `checklist.lead.claim_type` — `retail` | `insurance` | `community` | `unknown`.
-
-| Surface | Accent | Ground |
-|---|---|---|
-| Retail | gold `#d4a017` | light |
-| Insurance ("Cardinal Claims") | teal→lime gradient | `#08161a` |
-| Community | green `#4a8c5a` | light |
-| Sales Floor | red `#C8202E` | `#17120f` |
-| Production | hi-vis `#f5a623` | `#14171b` |
-
-**Stage labels are render-time only.** `projects.stage` stores eight canonical values — `Lead`, `Prospect`, `Approved`, `Scheduled`, `Completed`, `Invoiced`, `Closed`, `Lost`. Insurance and community rewrite the *displayed* label. **Never translate the stored value**; Schedule Board, reports, filters and notifications all read it.
-
-Same principle covers supplements: a claim in `Approved` with `supplement_status='filed'` *renders* on the Supplement Filed node. No ninth stage.
-
-**Fields every creation path must set:** `checklist.po` (via `nextPo()`), `checklist.stage_since`, `checklist.lead.claim_type`. Missing any of these breaks search, aging or portal routing — silently.
-
-**Gotcha:** the client name column on `projects` is **`name`**, not `client_name`.
+**jsdom's limit is unchanged: it proves *does this work*, never *does this look right*.** Misalignment testing is Menu → 🩺 Self Check on the phone plus Theo's eyes. Say so instead of pretending.
 
 ---
 
-## Bug classes that recur
+## Patch vs replace — the doctrine, plus today's ledger
 
-**Overriding base CSS is a trap past a few properties.** The insurance header kept reverting because the base styles it separately and every rule I didn't think to override kept winning. Once you're fighting more than a handful, **replace the element** instead — hide the base one and render your own. You stop guessing what you missed.
+The rule stands: **when there's a choice, say so before starting, with an honest cost on each.** Today's audit against it:
 
-**z-index only ranks siblings within a stacking context.** `#navMenu` lives inside `header.site` (z-90); the insurance views are z-155. No value on the menu could lift it out — it had to be reparented to `<body>`. "Raise the number" and "move the element" are different fixes.
+- **True replacements (clean):** Frost community home (old module deleted wholesale, API surface preserved), header script v3, insurance chrome (cr-ih stubbed with exports intact, phoenix headers retired, views repositioned under the one header).
+- **Deletions at source (clean):** 12 legacy `body.claim-* header.site` theme rules, 6 title tints, phantom-plus rules, old button sizing rules. Deleted, not out-specificity'd.
+- **Sanctioned patches:** beating inline `z-index:155` with `!important` (the one case where it's correct), one-or-two-property geometry fixes.
+- **The community client page** hides the base profile to show its own — normally a replace-trigger, but it sits in the written exception: the base profile is the shared surface of all three CRMs, and forking it means maintaining two copies of the most complex screen. So it **borrows the engine** (see "Adoption pattern" below). The cost: mirror-coupling breaks when base internals change (`jatile` rename class of failure), and the job-menu retry masks that failure as "loading". Known trade.
 
-**Fixed-position bars showing outside their context.** Hit twice. If an element is `position: fixed` and toggled by a class, it *must* check its host is visible.
+### NEXT SESSION STARTS WITH RETAIL-B (decided July 26, end of day)
 
-**A caching guard must check the cache is still valid**, not just that the input is unchanged. A signature comparison skipped rendering while our markup wasn't even on screen.
+The override layer crossed ~10 rules and the entire late-session bug trickle (invisible subnotes, invisible headings, white panels, white overscroll, light popup) was the layer meeting unpainted corners one screenshot at a time. The look is settled: black + gold, dark iron. Next build session: commit the dark theme at the base, delete the override layer, add the **light-on-paper print override**, full previewed pass. This kills the seam bug class permanently.
 
-**A close function that also navigates can't be reused for a handoff.** Both new pages take `close(goHome)`.
+### The retail tripwire (decided, written down)
 
-**Replacing innerHTML orphans handlers and elements.** `showLanding()` writes to `#landName` *without null guards* before showing the view — removing it threw and the switcher's Landing option silently did nothing.
-
-**Translucent warm tints over cool grounds go muddy.** 13% amber over `#434e5c` computes to washed grey. Use solid values.
-
----
-
-## Database
-
-Supabase. Tables: `projects`, `inspection_reports`, `project_photos`, `appointments`, `audit_events`, `team_profiles`, `insurance_claims`, `punch_items`, `community_partners`, `community_properties`, `objections`, `objection_attempts`, `objection_logs`, `estimates`, `estimate_line_items`, `estimate_templates`, `nachi_series`, `nachi_articles`.
-
-Storage bucket `photos`, prefixes: `projects/{id}/`, `scopes/`, `punch/`, `nachi/`.
-
-**14 SQL migrations** in outputs, all idempotent and **all run as of build 276**. Verify rather than assume:
-
-```sql
-select column_name from information_schema.columns
-where table_schema='public' and table_name='<table>';
-```
-
-**Insurance data was consolidated at v244.** `insurance_claims` is authoritative; `checklist.lead.insurance` is mirrored for the old readers and can be dropped once nothing uses it.
+Retail's dark-iron theme is currently an **override layer** (~8 rules in the hd2 style block restyling the light base). Decision: **stay on A (layering)** while the design iterates. **Commit at source (B)** when ANY of: the layer needs its first `!important` · it exceeds ~15 rules · Theo declares the retail look final. B costs 2–3 builds against the app's biggest blast radius and **must include a light-on-paper print override** — print styles assume light, and dark-iron invoices to customers are not acceptable.
 
 ---
 
-## API functions
+## One header, everywhere
 
-`analyze` · `caption` · `coach` · `ai-status` · `config` · `senddoc` · `share` · `clientsign` · `notify` · `digest` · `sol` · `organize` · `hover` · `summarize` · `roofr` · `ping` · `estimate-to-contract`
+`cr-hd2` owns all chrome. Bar: ☰ (38px) · centered gradient title naming the screen (**Retail / Claims / Community / Production / Sales Floor**, per-CRM `--tgrad`, clamp(21px,6vw,26px), absolutely centered with `pointer-events:none`) · search (34px) · ＋ (34px). Ribbon below: **gold home button** (38px, SVG house, gold outline, aligned to the burger) at far left; clock on CRM homes; lavender `PO:` + client name when a client is open (`body.projopen` toggles `#qClock`/`#cbCtx`).
 
-**`sol.js` does double duty** — `mode:'client'` reads an AccuLynx record for import, anything else reads a scope of loss. Accepts `{url}` (preferred, ~20 MB) or `{file, mime}` (legacy, ~3 MB ceiling — Vercel caps the request body at 4.5 MB and base64 inflates by a third).
+Skins live as custom properties on `.site` per `body[data-crm]`, set by `skin()` from `crmNow()`. **Retail chrome is black + gold**: `--hbg:#1a1215`, gold gradient `border-image` divider under the bar, gold ribbon edge. Community is Frost (`#0e1a29`, ice-blue), insurance Aurora teal.
 
-**Gemini keys are `AQ.` format** — send as an `x-goog-api-key` **header**, not `?key=`.
+The bottom bar (`#pwaNav`) hosts the portal switcher chip, the **health-badge shield** (`cr-ahc-badge`, relocated), back/forward. The chip no longer defers to Cardinal Truth (guard removed) — it lives in the bottom bar on every screen.
 
-**`/api/ai-status`** returns live health for Gemini, OpenAI and Supabase. Hit it first when AI misbehaves.
+**Retired:** `cr-ih` (the phoenix insurance header — script stubbed, `CardinalInsHeader` export preserved as no-op), `cr-home-btn` (hidden; ribbon home owns the job), all `body.claim-*` header themes. Insurance views (`cardinalTruthView`, `insClientsView`, `resourceLibraryView`) sit at `top:var(--headh) !important; z-index:60 !important` — they no longer need stacking supremacy, so menus (95), sheets (150), and the nav (9990) all clear them. Their in-view headers are hidden; navigation runs through the global chrome, in-page tiles, and the bottom-bar history arrows. Cardinal Truth's old header quick-actions (New Claim / Adjuster note / Supplement) went with its bar — those actions live on client profiles; restore as a global + menu section if missed.
+
+**Retail surface:** page ground `#202329` (dark iron), `--red`/`--red-dk` remapped to gold under `body[data-crm="retail"]` — **157 literal reds in stylesheets were converted to `var(--red)`** (the 5 variable definitions protected), so every line, cap, border and chip follows one mechanism. **JS-painted reds (chart colors) remain red by design** — convert individually on request. Card borders gold; hero quote, `.acthead`, and `#projectView .projsec` headings render gradient-gold; `section.history` stays a white card.
+
+---
+
+## Community CRM at build 308
+
+**Home** (`cr-ch2`, Frost): three tabs — Bids (due ladder with live countdowns, Then-blocks, tools), Partners (grouped by the app's real vocabulary `nonprofit / property_manager / general_contractor` via a two-column-only read of `community_partners`, collapsible cards), Clients (grouped by stage). Strip is admin-total / sales-own ("Your pipeline — your bids only") / hidden for production; partner money and row amounts hidden for production. Masthead removed — title and clock live in the chrome. `footer.site` hidden while the view is open (it sat in document flow above the body-appended view — that was the cream strip).
+
+**Client page** (`cr-cc`, Frost): a **real takeover** — `#projectView.cr-cc-own>*:not(#cr-cc){display:none !important}`, dark ground, `body.cr-cc-open` hides the footer. Thread/Bid tabs, then:
+- **Job Menu**: mirrors the base `.jatile` grid in `#jaGrid` (labels with icons, `.jn` counts, zero-dim) — taps call `tile.click()`, which bubbles to the base's **delegated** listener on `#jaGrid`. Retries up to 12×450ms while the base builds.
+- **Location** and **Reviews**: the base's live map accordion (`#dbMap`'s `.acxsec`) and `.rvsec` card are **adopted** — moved, not copied.
+
+### The adoption pattern (use this whenever borrowing live base elements)
+
+`mount.innerHTML =` destroys adopted children. So: record original parent + nextSibling on adopt; **release home before every wipe and on every exit path** — including the observer-driven `check()` exit, which is easy to miss (it was missed; the gate caught it). Dispatch a window `resize` after adopting a Leaflet map. The gate must prove the full lifecycle: adopt → survive re-render as a single instance → return home intact on unmount.
+
+`bid_due_at` is captured in the New Bid form and proven to flow into the due-ladder countdowns. The New Bid modal sits at z-10500 (above the nav), scrolls contained, and its grid cells carry `min-width:0` so the date input can't shove into Assign To.
+
+---
+
+## Permissions (as run, v3 migration)
+
+- `estimates` and `punch_items`: SELECT policies recreated — `is_full_access() OR exists(projects pr where pr.id = X.project_id)` (transitive through the proven projects RLS).
+- `estimate_line_items` is **exempt on purpose**: it is the shared pricing catalog (no estimate linkage exists); everyone authenticated reads the price book, admins write. Scoping it would break the estimate editor for sales.
+- `punch_open_counts` is `security_invoker = true`.
+- Anonymous probe against the live API returns **zero rows** on estimates, line items, punch, projects, partners.
+- Partner contacts remain admin-held in the database. The home's meta fetch reads only `name,partner_type` so confidential contact fields never enter sales browser memory.
+
+---
+
+## Bug classes that recur — today's additions
+
+- **Splice helpers don't expand backreferences.** `\1` written literally into CSS killed five skin rules while a fragment-level gate "passed" on the wreckage. Whole-string assertions only.
+- **A harness seeded from your own assumption validates fiction.** Twice: preview tab-hide bug re-typed into the shipped module (programmatic clicks pass on hidden buttons), and `jabox` tiles that never existed. Replicate the real builder; prove visibility structurally.
+- **Overwriting `window.Cardinal*` silently kills the loser's callers.** Two modules each assigned `CardinalEstimates`; nine AI-estimate call sites hit undefined. Merge with `Object.assign(window.X || {}, {...})`. Gate check added.
+- **Legacy per-claim themes fire only with a client open** — correct home + wrong client page is the signature. Grep `body.claim-` before trusting any chrome fix.
+- **Inline z-index supremacy strands overlays.** Views pinned at inline z-155 put menus (95) and sheets (150) behind the page. If a view sits below the header spatially, it doesn't need stacking supremacy — lower it.
+- **Dead layout serving hidden elements.** `.projinfo h2` reserved 170px of padding for buttons another rule hides with `!important` — invisible until the layout around it changed, then every name wrapped. When an element is retired, retire the space that was reserved for it.
+- **Timid visual increments read as ignored requests.** Three title bumps of 4–6px each; the user asked five times. For approved sizes: preview options in a real mock, ship the pick as a fixed value.
+- **`getElementById` on duplicated ids**: safe when the reads are `doc.`/`contentDocument.` scoped to the isolated contract iframes (restoreVeil, estTotal) — fragile everywhere else. The shared-template id pattern (`estTotal` ×6 etc.) works one-live-at-a-time; don't add main-document reads against those names.
+- Earlier classes still apply: never guess a function/selector name; verify with a good pattern; hide the base in CSS not JS; don't mount inside `#tab-overview`; re-entrancy guards need content signatures.
 
 ---
 
 ## Open items
 
 **Blocking:**
-- **OpenAI quota exceeded** (429) — the Coach's fallback provider is down until credit is added
-- **Resend sender domain unverified** — the 11:00 digest has been 403ing since ~July 18. Verify `cardinalrenovations.net` (3 DNS records), then swap the from-address in `digest.js`
+- OpenAI quota exceeded (429) — Coach fallback down until credit added
+- Resend sender domain unverified — daily digest 403s; verify `cardinalrenovations.net` DNS then swap the from-address in `digest.js`
+
+**Verify on device (build 308):**
+- Menu → 🩺 Self Check on Retail, Claims, Community home, community client — the machine battery cannot see pixels
+- AI-estimate buttons (open / openAI / openOne) actually open again after the merge fix
+- Estimate editor end to end on device: hydrated client + address (316), no sway (316), scrolls clear (318)
+- Client head card one-line name + aligned cover (320)
+
+**Diagnosed, designed, not built:**
+- **Community tab-tiles open invisibly**: Estimates / Documents / Tasks tiles on community clients call `showTab()` into the base profile the takeover hides. Fix designed (suspend-and-return with a "back to bid view" pill) — build it before or with the community feature pass.
+
+**Admin-only (Theo, ~15 min, two of these are down features):**
+- OpenAI credit (Coach fallback 429s) · Resend domain DNS (digest 403s) · Gemini key rotation + billing · repo junk deletion (`api/api/`, `api/index.html`, `api/vercel.json`) · contract PDF masters → `docs/`
 
 **Housekeeping:**
-- Rotate the Gemini key (it appeared in a chat once)
-- Verify `auth.users` emails match the hardcoded roster
-- Delete repo junk: `api/api/`, `api/index.html`, `api/vercel.json`, the throwaway `cardinal-app` Vercel project
-- Confirm Supabase point-in-time recovery is on — nothing currently protects the data, and bulk delete exists
-- `header_two_row.html` carries 64 `!important` declarations, the heaviest override in the app. A candidate for replace-don't-patch, but it's the app-wide header — do it deliberately with a preview, never as part of a sweep
+- $10,000,000 Approved value in retail pipeline (test data; scrub on request)
+- "Get on the calendar" shows $0 while the job won at $10,000 — sched rows don't read the accepted estimate total
+- Lead claim_type stamping from the active portal (+ New Lead creates typeless clients)
+- Rotate the Gemini key; attach billing (free tier 503s)
+- Delete repo junk: `api/api/`, `api/index.html`, `api/vercel.json`
+- Contract PDF masters upload to `docs/`
+- Confirm Supabase point-in-time recovery is on
+- Confirm "Est. 2023" on the landing
+- Community analytics, activity feed and calendar (removed with the old hub) still not rebuilt
+- Ghost back-button reads (`ljBackBtn`, `cliBackBtn`, five more) are null-guarded dead code — delete on a slow day
+- Old landing markup: never paints (309) but still in the file for its boot writers — delete both together on a slow day
+- Retail print styles: **required inside retail-B** — dark invoices to customers are not acceptable
+- Header title is a **fixed 34px by user approval** (preview A, build 322) — do not convert back to viewport math
 
 ---
 
 ## Working with Theo
 
-- **Terse, honest reporting.** He's called out overconfident claims more than once, and he's been right.
-- **Mobile-first.** He tests on an iPhone; most screenshots come from a phone.
-- **One thing at a time,** verified, then the next.
-- Say what's broken and why, rather than describing what should happen.
-- **Offer a preview before shipping anything visual.** Toggles between options work well for colour decisions — he picks quickly from a good set.
-- When he reports a bug, **reproduce it before theorising.** Several times today the obvious explanation was wrong and a five-minute test found the real one.
+Unchanged and reaffirmed: never state an inferred fact as fact; terse honest reporting; reproduce before theorising (screenshots root-caused four bugs today that theory got wrong); one thing at a time, verified; offer patch-vs-replace with real costs; preview before shipping visual changes; mobile-first; bump the label; remind about the service worker. New: **when a gate fails, fix the gate or the app — never stage on red, never hand over with a failing check.** The staged-on-green pattern (`if [ $? -eq 0 ]`) is now standard.
 
 ---
 
@@ -222,11 +172,8 @@ where table_schema='public' and table_name='<table>';
 
 | File | What it is |
 |---|---|
-| `FEATURES.md` | Every feature and where it lives — **read before building** |
-| `cardinal_build_log.md` | One line per build |
-| `cardinal_session_summary.md` | Narrative of the July 24 session |
-| `check.yml` | The corrected CI workflow |
+| `FEATURES.md` | Every feature and where it lives — read before building |
+| `cardinal_build_log.md` | One line per build (298–308 appended) |
+| `cardinal_session_summary.md` | Narrative of the July 26 session |
 
----
-
-*Written at build 276. Update the build number and open items when things change.*
+*Written at build 308, refreshed at 323. Update the build number and open items when things change.*
