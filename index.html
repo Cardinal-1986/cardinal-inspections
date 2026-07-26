@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 267 &#8212; Fixed the claims home showing its old layout. A guard added to stop double-rendering only compared the numbers, so if they hadn&#8217;t changed it skipped painting entirely &#8212; even when our layout wasn&#8217;t on screen at all.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 268 &#8212; The claims home actually renders now. A missing helper was throwing inside an async function, where the surrounding try/catch could never see it &#8212; so it failed silently and the old layout stayed. Verified against a real DOM this time.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37067,7 +37067,8 @@ if(scheduled) return;
 scheduled = true;
 requestAnimationFrame(function(){
 scheduled = false;
-try{ check(); }catch(e){ console.warn('[punch]', e); }
+Promise.resolve().then(check)
+.catch(function(e){ console.error('[punch] failed:', e); });
 });
 }
 function start(){
@@ -38172,6 +38173,10 @@ function usd(n){
 var v = Number(n) || 0;
 return '$' + Math.round(v).toLocaleString('en-US');
 }
+function ck(pr){
+try{ return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {}); }
+catch(_){ return (pr && pr.checklist) || {}; }
+}
 function normStage(s){
 if(typeof window.normStage === 'function'){
 try{ return window.normStage(s); }catch(_){}
@@ -38456,7 +38461,9 @@ if(scheduled) return;
 scheduled = true;
 requestAnimationFrame(function(){
 scheduled = false;
-try{ build(); }catch(e){ console.warn('[truth]', e); }
+Promise.resolve()
+.then(build)
+.catch(function(e){ console.error('[truth] render failed:', e); });
 });
 }
 function start(){
