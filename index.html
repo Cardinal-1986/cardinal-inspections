@@ -2572,7 +2572,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 273 &#8212; Self Check now runs from the menu with results on screen, so it works on the phone rather than needing a desktop console. It opens each screen and reports any control a tap can&#8217;t actually reach.</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-24 build 274 &#8212; Self Check was reporting four false failures. Its selectors weren&#8217;t scoped, so they matched hidden elements belonging to closed screens &#8212; five modules use the same back-button attribute. Every selector is now scoped to its own container.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38907,23 +38907,24 @@ var SURFACES = [
 if(typeof window.showLanding === 'function') window.showLanding();
 },
 controls:[
-['[data-go="qi"]',         'Quick Inspection'],
-['[data-go="retail"]',     'Retail portal'],
-['[data-go="insurance"]',  'Insurance portal'],
-['[data-go="community"]',  'Community portal'],
-['[data-go="production"]', 'Production'],
-['[data-go="sales"]',      'Sales Floor'],
+['#landingView [data-go="qi"]',         'Quick Inspection'],
+['#landingView [data-go="retail"]',     'Retail portal'],
+['#landingView [data-go="insurance"]',  'Insurance portal'],
+['#landingView [data-go="community"]',  'Community portal'],
+['#landingView [data-go="production"]', 'Production'],
+['#landingView [data-go="sales"]',      'Sales Floor'],
 ] },
 { name:'Cardinal Claims', open:function(){
 if(typeof window.showCardinalTruth === 'function') window.showCardinalTruth();
 },
 controls:[
-['#ctLogoBtn',    'logo'],
-['#crPortalChip', 'CRM switcher'],
-['#ctPlusBtn',    'add (+)'],
-['#cr-ih-menu',   'menu'],
-['.cr-cth-stage', 'a pipeline stage'],
-['[data-go="clients"]', 'Insurance Clients tile'],
+['#cr-ih-bar #ctLogoBtn',            'logo'],
+['#cr-ih-bar #crPortalChip',         'CRM switcher'],
+['#cr-ih-bar #ctPlusBtn',            'add (+)'],
+['#cr-ih-menu',                      'menu'],
+['#cardinalTruthView .cr-cth-stage', 'a pipeline stage'],
+['#cardinalTruthView .cr-cth-tools [data-go="clients"]', 'Insurance Clients tile'],
+['#cardinalTruthView .cr-cth-chase', 'chase list'],
 ] },
 { name:'Insurance Clients', open:function(){
 if(typeof window.showInsuranceClients === 'function'){
@@ -38932,29 +38933,29 @@ window.showInsuranceClients();
 }
 },
 controls:[
-['#cr-ic-search',   'search box'],
-['[data-stg]',      'a stage chip'],
-['[data-sort]',     'a sort control'],
-['[data-act="back"]', 'back'],
+['#cr-ic-search',              'search box'],
+['#cr-ic-wrap [data-stg]',     'a stage chip'],
+['#cr-ic-wrap [data-sort]',    'a sort control'],
+['#cr-ic-bar [data-act="back"]', 'back'],
 ] },
 { name:'Production', open:function(){
 if(window.CardinalProduction) window.CardinalProduction.open();
 },
 controls:[
-['[data-jump="blocked"]', 'Blocked tile'],
-['[data-jump="punch"]',   'Open items tile'],
-['[data-filter]',         'a punch filter'],
-['.cr-pb-fab',            'add punch item'],
-['[data-act="back"]',     'back'],
+['#cr-pb [data-jump="blocked"]', 'Blocked tile'],
+['#cr-pb [data-jump="punch"]',   'Open items tile'],
+['#cr-pb [data-filter]',         'a punch filter'],
+['.cr-pb-fab',                   'add punch item'],
+['#cr-pb [data-act="back"]',     'back'],
 ] },
 { name:'Sales Floor', open:function(){
 if(window.CardinalSalesFloor) window.CardinalSalesFloor.open();
 },
 controls:[
-['[data-go="drill"]', 'Practice a drill'],
-['[data-go="deck"]',  'The deck'],
-['[data-tab]',        'an objection tab'],
-['[data-act="back"]', 'back'],
+['#cr-sf [data-go="drill"]',  'Practice a drill'],
+['#cr-sf [data-go="deck"]',   'The deck'],
+['#cr-sf [data-tab]',         'an objection tab'],
+['#cr-sf [data-act="back"]',  'back'],
 ] },
 ];
 var ALWAYS = [
@@ -38970,7 +38971,12 @@ return el.id ? '#' + el.id
 : el.tagName.toLowerCase());
 }
 function probe(sel, label){
-var el = document.querySelector(sel);
+var all = document.querySelectorAll(sel);
+var el = null;
+for(var i = 0; i < all.length; i++){
+if(all[i].offsetParent !== null){ el = all[i]; break; }
+}
+if(!el) el = all[0];
 if(!el) return { sel:sel, label:label, ok:false, why:'not present' };
 var r = el.getBoundingClientRect();
 if(!r.width || !r.height){
