@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 360 &#8212; Community tabs restored &#8212; the pane-hiding rule was also matching the tab buttons; scoped to panes only. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 361 &#8212; Punch &amp; Repairs &#8212; urgent strip on every CRM home plus one unified page across all three, sorted and filtered like the client directory. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2642,7 +2642,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
   <span class="cbn" data-go="track">Track</span>
   <span class="cbn" data-go="reports">Reports</span>
   <span class="cbn cbdd" data-dd="prod">Production <b class="car">&#9660;</b>
-    <span class="cbmenu"><span class="cbi" data-go="prodboard">&#127959; Production Board</span><span class="cbi" data-go="schedule">&#128197; Schedule Board</span></span>
+    <span class="cbmenu"><span class="cbi" data-go="prodboard">&#127959; Production Board</span><span class="cbi" data-go="punch">&#128296; Punch &amp; Repairs</span><span class="cbi" data-go="schedule">&#128197; Schedule Board</span></span>
   </span>
   <span class="cbn cbdd" data-dd="tools">Tools <b class="car">&#9660;</b>
     <span class="cbmenu">
@@ -2741,6 +2741,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <div class="pipecard"><div class="pipetitle">&#128293; Recent leads</div><div id="kpLeadsList"></div></div>
           <div class="pipecard"><div class="pipetitle">&#128197; Today</div><div id="kpTodayList"></div></div>
         </div>
+        <div id="kpPunchStrip"></div>
         <div class="herorow" style="margin-top:14px;">
           <div class="pipecard teamcal">
             <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
@@ -2899,6 +2900,41 @@ body:has(#loginView[style*="block"]){background:#fff;}
   <div class="ljsheet" id="ljShSub"><div class="panel">
     <div class="ph"><button id="ljSubBack">&#8249; Back</button><span class="t" id="ljSubTitle"></span><button class="ap" id="ljSubApply">Apply</button></div>
     <div id="ljSubList"></div>
+  </div></div>
+</div>
+
+<!-- ============ PUNCH & REPAIRS (build 361) ============ -->
+<div id="punchView" style="display:none;">
+  <div class="pu-wrap">
+    <div class="pu-head"><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2></div>
+    <p class="pu-sub" id="puSub">&mdash;</p>
+    <div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Search item, client, address&#8230;" aria-label="Search punch items"></div>
+    <div class="pu-ctl"><span class="sl">Sort by</span>
+      <button class="pu-chip" id="puSortChip">Urgency</button>
+      <div class="right">
+        <div class="pu-ico" id="puDirBtn" title="Reverse order">&#8645;</div>
+        <div class="pu-ico" id="puFunnel" title="Filters">&#9923;<span class="bdg" id="puBadge">0</span></div>
+      </div>
+    </div>
+    <div class="pu-lay">
+      <aside class="pu-rail-wrap"><div class="pu-rail" id="puRail"></div>
+        <select class="pu-sel" id="puSortSel" style="display:none;"></select>
+      </aside>
+      <div><div id="puList"></div></div>
+    </div>
+  </div>
+  <div class="pu-sheet" id="puShSort"><div class="panel">
+    <div class="ph"><span class="t">Sort by</span><button id="puSortClose">Close</button></div>
+    <div id="puSortList"></div>
+  </div></div>
+  <div class="pu-sheet" id="puShFilter"><div class="panel">
+    <div class="ph"><button id="puFDone">Done</button><span class="t" id="puFTitle">Filters (0)</span><span style="width:44px"></span></div>
+    <button class="pu-clr" id="puClearAll">Clear all</button>
+    <div id="puCatList"></div>
+  </div></div>
+  <div class="pu-sheet" id="puShSub"><div class="panel">
+    <div class="ph"><button id="puSubBack">&#8249; Back</button><span class="t" id="puSubTitle"></span><button class="ap" id="puSubApply">Apply</button></div>
+    <div id="puSubList"></div>
   </div></div>
 </div>
 
@@ -12043,6 +12079,7 @@ function hideAllViews(){
   var _tv = document.getElementById('teamView'); if(_tv) _tv.style.display = 'none';
   var _sv = document.getElementById('settingsView'); if(_sv) _sv.style.display = 'none';
   var _phv = document.getElementById('photosView'); if(_phv) _phv.style.display = 'none';
+  var _puv = document.getElementById('punchView'); if(_puv) _puv.style.display = 'none';
   var _cd = document.getElementById('companyDocsView'); if(_cd) _cd.style.display = 'none';
   var _qi = document.getElementById('quickInspView'); if(_qi) _qi.style.display = 'none';
   var _qs = document.getElementById('qiStartView'); if(_qs) _qs.style.display = 'none';
@@ -13975,6 +14012,7 @@ function renderActivity(){
       '<span class="tm">' + timeAgo(x.t) + '</span></span></div>';
   }).join('') : '<div class="chatempty">No activity yet.</div>';
   if(typeof renderKpHomeRow === 'function') renderKpHomeRow();
+  if(typeof renderPunchStrips === 'function') renderPunchStrips();
 }
 var activityView = document.getElementById('activityView');
 function openActivityFeed(){
@@ -39309,6 +39347,7 @@ fold('partners', 'Partners', ps.length, partnersBody) +
 fold('week', 'Waiting on you', null, weekBody) +
 '</div>' +
 fold('allbids', 'All bids', d.all.length, allBidsBody, false) +
+'<div data-cc-punch></div>' +
 '</div>';
 
 /* ---- PARTNERS ---- */
@@ -39400,6 +39439,7 @@ h.parentNode.classList.toggle('open');
 });
 clock(host);
 wire(host);
+if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips();
 lastSig = signature();
 }
 
@@ -41395,6 +41435,7 @@ var ROUTES = {
   track:     'CardinalEstimates.open',
   reports:   'openReportsView',
   prodboard: 'CardinalProduction.open',
+  punch:     'openPunchView',
   schedule:  'openScheduleBoard',
   aiest:     'CardinalEstimates.open',
   pricing:   'CardinalPricing.open',
@@ -41774,6 +41815,454 @@ if(typeof _origOLF === 'function'){
     return _origOLF.apply(this, arguments);
   };
 }
+})();
+</script>
+<style id="cr-punch-styles">
+/* ── Punch & Repairs: unified page + per-CRM home strip (build 361, retail iron+gold) ── */
+#punchView{display:none;min-height:100vh;background:#202329;}
+.pu-wrap{max-width:1320px;margin:0 auto;padding:16px 16px 150px;}
+.pu-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}
+.pu-title{margin:0;flex:1;font:800 21px Georgia,'Times New Roman',serif;
+  background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#d4a017;}
+.pu-sub{margin:1px 0 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
+.pu-srch{display:flex;align-items:center;gap:8px;background:#2a2e35;border:1px solid #3a3f47;border-radius:6px;
+  padding:8px 12px;margin-bottom:10px;color:#8a919b;font-size:13px;}
+.pu-srch input{flex:1;background:none;border:0;outline:0;color:#e9e6df;font:600 13px 'Segoe UI',Arial,sans-serif;min-width:0;}
+.pu-ctl{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
+.pu-ctl .sl{font:600 12px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
+.pu-chip{color:#d4a017;font:700 13px 'Segoe UI',Arial,sans-serif;background:none;border:0;padding:2px;cursor:pointer;
+  border-bottom:1px dashed rgba(212,160,23,.45);}
+.pu-ico{width:34px;height:34px;border:1px solid #3a3f47;background:#2a2e35;color:#cfd6df;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;position:relative;}
+.pu-ico.on{border-color:#d4a017;color:#f5d061;}
+.pu-ico .bdg{position:absolute;top:-6px;right:-6px;background:#d4a017;color:#17181b;
+  font:800 9.5px ui-monospace,Menlo,monospace;border-radius:999px;padding:1px 5px;display:none;}
+.pu-ico .bdg.show{display:block;}
+.pu-ctl .right{margin-left:auto;display:flex;gap:8px;}
+.pu-lay{display:block;}
+.pu-rail{display:none;}
+.pu-card{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;
+  border-radius:12px;margin-bottom:10px;padding:11px 13px;display:flex;gap:11px;align-items:flex-start;
+  position:relative;overflow:hidden;cursor:pointer;}
+.pu-card::before{content:'';position:absolute;left:0;top:10%;height:80%;width:3px;border-radius:3px;background:var(--pc,#8a93a1);}
+.pu-card.urgent::before{background:#e2574a;box-shadow:0 0 7px rgba(226,87,74,.6);}
+.pu-card.done{opacity:.55;}
+.pu-box{width:22px;height:22px;border:1.6px solid #5a6069;border-radius:6px;flex:0 0 auto;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;font:800 12px inherit;color:#17181b;}
+.pu-card.done .pu-box{background:#3fae6a;border-color:#3fae6a;}
+.pu-bd{flex:1;min-width:0;padding-left:5px;}
+.pu-t{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#e9e6df;}
+.pu-card.done .pu-t{text-decoration:line-through;}
+.pu-cl{font-size:11.5px;font-weight:800;background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
+.pu-m{font-size:10.5px;color:#8b929c;margin-top:2px;}
+.pu-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px;}
+.pu-tag{font:700 8.5px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;
+  padding:2.5px 8px;border-radius:999px;border:1px solid #4a4f58;color:#b5bcc4;white-space:nowrap;}
+.pu-tag.urg{border-color:#e2574a;color:#f2a08a;}
+.pu-tag.crm-retail{border-color:#d4a017;color:#f5d061;}
+.pu-tag.crm-insurance{border-color:#2dd4bf;color:#7ef0dc;}
+.pu-tag.crm-community{border-color:#8ad0f5;color:#bfe3fa;}
+.pu-who{margin-left:auto;font-size:10.5px;font-weight:800;color:#e8c23a;}
+.pu-empty{border:1px dashed #4a4f58;border-radius:11px;padding:16px;text-align:center;color:#8b929c;
+  font:600 12.5px 'Segoe UI',Arial,sans-serif;}
+.pu-grp{font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#d4a017;
+  margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid #3a3f47;display:flex;align-items:center;gap:8px;}
+.pu-grp .n{background:#3a3f47;color:#cfd6df;border-radius:999px;padding:1px 8px;font-size:9.5px;}
+.pu-sheet{position:fixed;inset:0;background:rgba(8,9,11,.7);display:none;z-index:9997;}
+.pu-sheet.open{display:flex;align-items:flex-start;justify-content:center;}
+.pu-sheet .panel{background:#22262d;border:1px solid #3a3f47;border-top:0;border-radius:0 0 16px 16px;width:100%;
+  max-width:560px;max-height:86%;overflow:auto;}
+.pu-sheet .ph{display:flex;align-items:center;padding:13px 15px;border-bottom:1px solid #33383f;position:sticky;top:0;background:#22262d;}
+.pu-sheet .ph .t{font:800 14px 'Segoe UI',Arial,sans-serif;color:#f2ede3;flex:1;text-align:center;}
+.pu-sheet .ph button{background:none;border:0;color:#d4a017;font:700 13.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:4px 6px;}
+.pu-sheet .ph button.ap{color:#3fae6a;}
+.pu-srow{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #2c3038;cursor:pointer;
+  font:600 14px 'Segoe UI',Arial,sans-serif;color:#d9d2c4;}
+.pu-srow .ck{width:20px;color:#3fae6a;font-weight:800;visibility:hidden;}
+.pu-srow.on .ck{visibility:visible;}
+.pu-srow .chev{margin-left:auto;color:#5d646e;}
+.pu-srow .cnt{margin-left:auto;font:700 10.5px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;
+  border-radius:999px;padding:2px 8px;display:none;}
+.pu-srow .cnt.show{display:block;}
+.pu-clr{display:block;background:none;border:0;color:#e08a7a;font:700 12.5px 'Segoe UI',Arial,sans-serif;
+  padding:10px 16px;cursor:pointer;text-align:left;width:100%;}
+/* home strip, one per CRM */
+.pu-strip{margin:14px 0;}
+.pu-strip .sh{display:flex;align-items:center;gap:9px;margin-bottom:8px;cursor:pointer;}
+.pu-strip .sh b{font:800 13px Georgia,'Times New Roman',serif;
+  background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#d4a017;}
+.pu-strip .sh .n{font:700 10px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;border-radius:999px;padding:2px 8px;}
+.pu-strip .sh .all{margin-left:auto;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#d4a017;}
+body[data-crm="insurance"] .pu-strip .sh b{background:none;-webkit-text-fill-color:#7ef0dc;color:#7ef0dc;}
+body[data-crm="insurance"] .pu-strip .sh .all{color:#7ef0dc;}
+body[data-crm="community"] .pu-strip .sh b,body.viewing-community-hub .pu-strip .sh b{background:none;-webkit-text-fill-color:#2b6cb0;color:#2b6cb0;}
+body.viewing-community-hub .pu-strip .pu-card{background:#fafbfc;border-color:#b8c2ca;}
+body.viewing-community-hub .pu-strip .pu-t{color:#2d3338;}
+body.viewing-community-hub .pu-strip .pu-cl{background:none;-webkit-text-fill-color:#8d5231;color:#8d5231;}
+body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
+@media (min-width:901px){
+  .pu-ctl .pu-chip,.pu-ctl .sl,#puFunnel{display:none;}
+  .pu-lay{display:grid;grid-template-columns:230px 1fr;gap:14px;align-items:start;}
+  .pu-rail{display:block;background:#1a1d22;border:1px solid #2c3038;border-radius:12px;padding:13px;
+    position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
+  .pu-sel{width:100%;background:#2a2e35;border:1px solid #3a3f47;color:#d9d2c4;border-radius:9px;padding:8px 10px;
+    font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-bottom:10px;}
+  .pu-fg{margin-top:10px;border-top:1px solid #2c3038;padding-top:8px;}
+  .pu-fg .ft{font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#d4a017;margin-bottom:7px;}
+  .pu-fr{display:flex;align-items:center;gap:8px;padding:5px 2px;color:#c9c3b6;font-size:12.5px;cursor:pointer;}
+  .pu-fr .bx{width:15px;height:15px;border:1.4px solid #4a4d52;border-radius:4px;display:flex;align-items:center;
+    justify-content:center;font-size:10px;color:#15171b;flex:0 0 auto;}
+  .pu-fr.on .bx{background:#3fae6a;border-color:#3fae6a;font-weight:800;}
+  .pu-fr .c{margin-left:auto;font:700 10px ui-monospace,Menlo,monospace;color:#6d6a63;}
+}
+@media print{#punchView{background:#fff;color:#000;}}
+</style>
+<script id="cr-punch-script">
+(function(){
+'use strict';
+/* ── shared punch data layer: one query, one write path, reused by every surface ── */
+var _rows = [];
+async function reload(){
+  if(!window.supa) return _rows;
+  try{
+    var r = await window.supa.from('punch_items').select('*').order('created_at', { ascending:false });
+    if(r.error){
+      if(!/does not exist|schema cache/i.test(r.error.message || '')) console.warn('[punch] load:', r.error.message);
+      return _rows;
+    }
+    _rows = r.data || [];
+  }catch(e){ console.warn('[punch] load failed:', e); }
+  return _rows;
+}
+async function toggle(id){
+  var it = _rows.filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!it) return;
+  var done = it.status !== 'done';
+  var me = (window.currentUser && window.currentUser.email) || null;
+  var patch = done
+    ? { status:'done', done_at:new Date().toISOString(), done_by:me }
+    : { status:'open', done_at:null, done_by:null };
+  Object.assign(it, patch);
+  try{
+    var r = await window.supa.from('punch_items').update(patch).eq('id', it.id);
+    if(r.error) throw r.error;
+    if(typeof window.auditLog === 'function'){
+      try{ window.auditLog('punch', (done ? 'Closed: ' : 'Reopened: ') + it.title, it.project_id); }catch(_){}
+    }
+    if(window.CardinalProduction && window.CardinalProduction.refresh){ try{ window.CardinalProduction.refresh(); }catch(_){} }
+    if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){ try{ window.CardinalPunchProfile.refresh(); }catch(_){} }
+  }catch(e){
+    Object.assign(it, done ? { status:'open', done_at:null, done_by:null } : { status:'done' });
+    alert('Could not save: ' + (e.message || e));
+  }
+}
+window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
+  rows   : function(){ return _rows.slice(); },
+  reload : reload,
+  toggle : toggle,
+  openCount : function(){ return _rows.filter(function(i){ return i.status !== 'done'; }).length; }
+});
+var PU = { sort:'urgent', dir:1, sets:{}, q:'' };
+var puSheet = { cat:null, pend:[] };
+var PU_SORTS = [
+  { k:'urgent',  l:'Urgency' },
+  { k:'newest',  l:'Newest first' },
+  { k:'oldest',  l:'Oldest first' },
+  { k:'client',  l:'Client name' }
+];
+var CRM_LABEL = { retail:'Retail', insurance:'Claims', community:'Community' };
+
+function rows(){ return (window.CardinalPunch && window.CardinalPunch.rows) ? window.CardinalPunch.rows() : []; }
+function projOf(pid){
+  return (window.cacheProjects || []).find(function(p){ return String(p.id) === String(pid); });
+}
+function crmOf(pr){
+  if(!pr) return 'retail';
+  var t = '';
+  try{ t = ((window.parseCkAll(pr) || {}).lead || {}).claim_type || ''; }catch(e){}
+  return (t === 'insurance' || t === 'community') ? t : 'retail';
+}
+function isUrgent(it){ return it.priority === 'high' && it.status !== 'done'; }
+function kindOf(it){ return it.kind || 'punch'; }
+function ageDays(iso){
+  if(!iso) return null;
+  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
+}
+function match(it){
+  var pr = projOf(it.project_id);
+  var crm = crmOf(pr);
+  var s = PU.sets;
+  if((s.crm || []).length && s.crm.indexOf(crm) === -1) return false;
+  if((s.kind || []).length && s.kind.indexOf(kindOf(it)) === -1) return false;
+  if((s.status || []).length){
+    var st = it.status === 'done' ? 'Closed' : (isUrgent(it) ? 'Urgent' : 'Open');
+    if(s.status.indexOf(st) === -1) return false;
+  }
+  if((s.who || []).length){
+    var w = it.assigned_to || 'Unassigned';
+    if(s.who.indexOf(w) === -1) return false;
+  }
+  if(PU.q){
+    var hay = [it.title, it.detail, it.assigned_to, pr && pr.name, pr && pr.address].join(' ').toLowerCase();
+    if(hay.indexOf(PU.q) === -1) return false;
+  }
+  return true;
+}
+function sorted(list){
+  var d = PU.dir;
+  return list.slice().sort(function(a, b){
+    var r = 0;
+    if(PU.sort === 'urgent'){
+      var av = (a.status === 'done' ? 2 : 0) + (isUrgent(a) ? -1 : 0);
+      var bv = (b.status === 'done' ? 2 : 0) + (isUrgent(b) ? -1 : 0);
+      r = av - bv || String(b.created_at || '').localeCompare(String(a.created_at || ''));
+    } else if(PU.sort === 'newest'){ r = String(b.created_at || '').localeCompare(String(a.created_at || '')); }
+    else if(PU.sort === 'oldest'){ r = String(a.created_at || '').localeCompare(String(b.created_at || '')); }
+    else {
+      var an = (projOf(a.project_id) || {}).name || '';
+      var bn = (projOf(b.project_id) || {}).name || '';
+      r = an.localeCompare(bn);
+    }
+    return d * r;
+  });
+}
+function cardHtml(it, showCrm){
+  var pr = projOf(it.project_id);
+  var crm = crmOf(pr);
+  var done = it.status === 'done';
+  var urg = isUrgent(it);
+  var age = ageDays(it.created_at);
+  return '<div class="pu-card' + (urg ? ' urgent' : '') + (done ? ' done' : '') + '" data-pu="' + esc(String(it.id)) + '"' +
+    ' data-proj="' + esc(String(it.project_id || '')) + '" style="--pc:' + (done ? '#3fae6a' : urg ? '#e2574a' : '#8a93a1') + '">' +
+    '<span class="pu-box" data-putoggle="' + esc(String(it.id)) + '">' + (done ? '\u2713' : '') + '</span>' +
+    '<div class="pu-bd">' +
+      '<div class="pu-t">' + esc(it.title || 'Untitled item') + '</div>' +
+      '<div class="pu-cl">' + esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</div>' +
+      (it.detail ? '<div class="pu-m">' + esc(it.detail) + '</div>' : '') +
+      '<div class="pu-tags">' +
+        '<span class="pu-tag">' + esc(kindOf(it)) + '</span>' +
+        (urg ? '<span class="pu-tag urg">urgent</span>' : '') +
+        (showCrm ? '<span class="pu-tag crm-' + crm + '">' + CRM_LABEL[crm] + '</span>' : '') +
+        (done ? '<span class="pu-tag">done</span>' : (age != null ? '<span class="pu-tag">' + age + 'd open</span>' : '')) +
+        '<span class="pu-who">' + esc(it.assigned_to || 'Unassigned') + '</span>' +
+      '</div>' +
+    '</div></div>';
+}
+function whoList(){
+  var out = [];
+  rows().forEach(function(i){
+    var w = i.assigned_to || 'Unassigned';
+    if(out.indexOf(w) === -1) out.push(w);
+  });
+  return out.sort();
+}
+var CATS = function(){ return {
+  crm:    { label:'CRM',     vals:['retail','insurance','community'], lab:function(v){ return CRM_LABEL[v]; } },
+  status: { label:'Status',  vals:['Urgent','Open','Closed'],         lab:function(v){ return v; } },
+  kind:   { label:'Type',    vals:['punch','ticket','callback'],      lab:function(v){ return v; } },
+  who:    { label:'Assigned To', vals:whoList(),                      lab:function(v){ return v; } }
+}; };
+function count(){ var n = 0; for(var k in PU.sets) n += PU.sets[k].length; return n; }
+
+function render(){
+  var all = rows();
+  var vis = sorted(all.filter(match));
+  var open = vis.filter(function(i){ return i.status !== 'done'; });
+  var done = vis.filter(function(i){ return i.status === 'done'; });
+  var urgent = open.filter(isUrgent);
+  var normal = open.filter(function(i){ return !isUrgent(i); });
+
+  document.getElementById('puSub').textContent =
+    vis.length + ' of ' + all.length + ' items \u00b7 ' + urgent.length + ' urgent \u00b7 ' + open.length + ' open';
+  var html = '';
+  if(urgent.length) html += '<div class="pu-grp">Urgent <span class="n">' + urgent.length + '</span></div>' + urgent.map(function(i){ return cardHtml(i, true); }).join('');
+  if(normal.length) html += '<div class="pu-grp">Open <span class="n">' + normal.length + '</span></div>' + normal.map(function(i){ return cardHtml(i, true); }).join('');
+  if(done.length)   html += '<div class="pu-grp">Completed <span class="n">' + done.length + '</span></div>' + done.map(function(i){ return cardHtml(i, true); }).join('');
+  document.getElementById('puList').innerHTML = html ||
+    '<div class="pu-empty">' + (all.length ? 'Nothing matches these filters.' : 'No punch items or repairs yet.') + '</div>';
+
+  var n = count();
+  var bdg = document.getElementById('puBadge');
+  bdg.textContent = n; bdg.classList.toggle('show', n > 0);
+  document.getElementById('puFTitle').textContent = 'Filters (' + n + ')';
+  document.getElementById('puSortChip').textContent =
+    (PU_SORTS.filter(function(s){ return s.k === PU.sort; })[0] || PU_SORTS[0]).l;
+  document.getElementById('puSortSel').innerHTML = PU_SORTS.map(function(s){
+    return '<option value="' + s.k + '"' + (s.k === PU.sort ? ' selected' : '') + '>' + s.l + '</option>';
+  }).join('');
+
+  var C = CATS();
+  document.getElementById('puRail').innerHTML = Object.keys(C).map(function(k){
+    var g = C[k], on = PU.sets[k] || [];
+    if(!g.vals.length) return '';
+    return '<div class="pu-fg"><div class="ft">' + g.label + '</div>' + g.vals.map(function(v){
+      var c = rows().filter(function(it){
+        if(k === 'crm') return crmOf(projOf(it.project_id)) === v;
+        if(k === 'kind') return kindOf(it) === v;
+        if(k === 'who') return (it.assigned_to || 'Unassigned') === v;
+        return (it.status === 'done' ? 'Closed' : (isUrgent(it) ? 'Urgent' : 'Open')) === v;
+      }).length;
+      return '<label class="pu-fr' + (on.indexOf(v) !== -1 ? ' on' : '') + '" data-g="' + k + '" data-v="' + esc(v) + '">' +
+        '<span class="bx">' + (on.indexOf(v) !== -1 ? '\u2713' : '') + '</span>' + esc(g.lab(v)) +
+        '<span class="c">' + c + '</span></label>';
+    }).join('') + '</div>';
+  }).join('');
+
+  document.getElementById('puSortList').innerHTML = PU_SORTS.map(function(s){
+    return '<div class="pu-srow' + (s.k === PU.sort ? ' on' : '') + '" data-sort="' + s.k + '">' +
+      '<span class="ck">\u2713</span><span>' + s.l + '</span></div>';
+  }).join('');
+  document.getElementById('puCatList').innerHTML = Object.keys(C).map(function(k){
+    var m = (PU.sets[k] || []).length;
+    return '<div class="pu-srow" data-cat="' + k + '"><span>' + C[k].label + '</span>' +
+      '<span class="cnt' + (m ? ' show' : '') + '">' + m + '</span><span class="chev">\u203A</span></div>';
+  }).join('');
+}
+function paintSub(){
+  var C = CATS(), g = C[puSheet.cat];
+  document.getElementById('puSubTitle').textContent = g.label;
+  document.getElementById('puSubList').innerHTML = g.vals.map(function(v){
+    return '<div class="pu-srow' + (puSheet.pend.indexOf(v) !== -1 ? ' on' : '') + '" data-opt="' + esc(v) + '">' +
+      '<span class="ck">\u2713</span><span>' + esc(g.lab(v)) + '</span></div>';
+  }).join('');
+}
+async function openPunchView(preset){
+  if(typeof hideAllViews === 'function') hideAllViews();
+  document.getElementById('punchView').style.display = 'block';
+  window.scrollTo(0, 0);
+  PU.q = ''; document.getElementById('puSearch').value = '';
+  if(preset && preset.crm){ PU.sets = { crm:[preset.crm] }; }
+  else if(preset === 'urgent'){ PU.sets = { status:['Urgent'] }; }
+  document.getElementById('puList').innerHTML = '<div class="pu-empty">Loading\u2026</div>';
+  try{ if(window.CardinalPunch && window.CardinalPunch.reload) await window.CardinalPunch.reload(); }catch(e){}
+  render();
+}
+window.openPunchView = openPunchView;
+window.renderPunchView = render;
+
+/* ── per-CRM home strip: the most urgent, with a door to the full page ── */
+function stripHtml(crm){
+  var list = rows().filter(function(it){
+    return it.status !== 'done' && crmOf(projOf(it.project_id)) === crm;
+  });
+  list.sort(function(a, b){
+    return (isUrgent(b) ? 1 : 0) - (isUrgent(a) ? 1 : 0) ||
+      String(a.created_at || '').localeCompare(String(b.created_at || ''));
+  });
+  var urg = list.filter(isUrgent).length;
+  return '<div class="pu-strip" data-pustrip="' + crm + '">' +
+    '<div class="sh"><b>\uD83D\uDD28 Punch &amp; Repairs</b>' +
+    '<span class="n">' + list.length + (urg ? ' \u00b7 ' + urg + ' urgent' : '') + '</span>' +
+    '<span class="all" data-puall="' + crm + '">See all \u203A</span></div>' +
+    (list.length ? list.slice(0, 3).map(function(i){ return cardHtml(i, false); }).join('')
+                 : '<div class="pu-empty">Nothing open right now.</div>') +
+  '</div>';
+}
+window.CardinalPunchStrip = { html: stripHtml };
+
+document.addEventListener('click', function(e){
+  var all = e.target.closest('[data-puall]');
+  if(all){ openPunchView({ crm: all.getAttribute('data-puall') }); return; }
+  var tg = e.target.closest('[data-putoggle]');
+  if(tg){
+    e.stopPropagation();
+    if(window.CardinalPunch && window.CardinalPunch.toggle){
+      Promise.resolve(window.CardinalPunch.toggle(tg.getAttribute('data-putoggle'))).then(function(){
+        if(document.getElementById('punchView').style.display === 'block') render();
+      }).catch(function(){});
+    }
+    return;
+  }
+  var card = e.target.closest('#puList .pu-card, .pu-strip .pu-card');
+  if(card){
+    var pid = card.getAttribute('data-proj');
+    if(pid && typeof openProject === 'function') openProject(pid);
+  }
+}, false);
+
+document.getElementById('puSearch').addEventListener('input', function(){
+  PU.q = this.value.trim().toLowerCase();
+  clearTimeout(this.__t); this.__t = setTimeout(render, 200);
+});
+document.getElementById('puSortSel').addEventListener('change', function(){ PU.sort = this.value; render(); });
+document.getElementById('puDirBtn').addEventListener('click', function(){
+  PU.dir = -PU.dir; this.classList.toggle('on', PU.dir === -1); render();
+});
+document.getElementById('puSortChip').addEventListener('click', function(){ document.getElementById('puShSort').classList.add('open'); });
+document.getElementById('puFunnel').addEventListener('click', function(){ document.getElementById('puShFilter').classList.add('open'); });
+document.getElementById('puSortClose').addEventListener('click', function(){ document.getElementById('puShSort').classList.remove('open'); });
+document.getElementById('puFDone').addEventListener('click', function(){ document.getElementById('puShFilter').classList.remove('open'); });
+document.getElementById('puClearAll').addEventListener('click', function(){ PU.sets = {}; render(); });
+document.getElementById('puRail').addEventListener('click', function(e){
+  var r = e.target.closest('[data-g]'); if(!r) return;
+  e.preventDefault();
+  var g = r.getAttribute('data-g'), v = r.getAttribute('data-v');
+  var set = PU.sets[g] = PU.sets[g] || [];
+  var i = set.indexOf(v);
+  if(i === -1) set.push(v); else set.splice(i, 1);
+  if(!set.length) delete PU.sets[g];
+  render();
+});
+document.getElementById('puSortList').addEventListener('click', function(e){
+  var r = e.target.closest('[data-sort]'); if(!r) return;
+  PU.sort = r.getAttribute('data-sort'); render();
+  document.getElementById('puShSort').classList.remove('open');
+});
+document.getElementById('puCatList').addEventListener('click', function(e){
+  var r = e.target.closest('[data-cat]'); if(!r) return;
+  puSheet.cat = r.getAttribute('data-cat');
+  puSheet.pend = (PU.sets[puSheet.cat] || []).slice();
+  paintSub();
+  document.getElementById('puShFilter').classList.remove('open');
+  document.getElementById('puShSub').classList.add('open');
+});
+document.getElementById('puSubBack').addEventListener('click', function(){
+  document.getElementById('puShSub').classList.remove('open');
+  document.getElementById('puShFilter').classList.add('open');
+});
+document.getElementById('puSubApply').addEventListener('click', function(){
+  if(puSheet.pend.length) PU.sets[puSheet.cat] = puSheet.pend.slice();
+  else delete PU.sets[puSheet.cat];
+  render();
+  document.getElementById('puShSub').classList.remove('open');
+  document.getElementById('puShFilter').classList.add('open');
+});
+document.getElementById('puSubList').addEventListener('click', function(e){
+  var r = e.target.closest('[data-opt]'); if(!r) return;
+  var v = r.getAttribute('data-opt');
+  var i = puSheet.pend.indexOf(v);
+  if(i !== -1) puSheet.pend.splice(i, 1); else puSheet.pend.push(v);
+  r.classList.toggle('on', i === -1);
+});
+})();
+</script>
+<script id="cr-punchstrip-script">
+(function(){
+'use strict';
+var MOUNTS = [
+  { id:'kpPunchStrip',  crm:'retail' },
+  { id:'insPunchStrip', crm:'insurance' }
+];
+async function paint(){
+  if(!window.CardinalPunchStrip) return;
+  var need = MOUNTS.some(function(m){ return document.getElementById(m.id); }) ||
+             !!document.querySelector('[data-cc-punch]');
+  if(!need) return;
+  if(window.CardinalPunch && !window.CardinalPunch.rows().length){
+    try{ await window.CardinalPunch.reload(); }catch(e){}
+  }
+  MOUNTS.forEach(function(m){
+    var el = document.getElementById(m.id);
+    if(el) el.innerHTML = window.CardinalPunchStrip.html(m.crm);
+  });
+  var cc = document.querySelector('[data-cc-punch]');
+  if(cc) cc.innerHTML = window.CardinalPunchStrip.html('community');
+}
+window.renderPunchStrips = function(){ paint().catch(function(){}); };
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(window.renderPunchStrips, 1200); });
 })();
 </script>
 </body>
