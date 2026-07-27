@@ -2619,7 +2619,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 339 &#8212; Retail-B 3: Estimates status lanes (Unsent &#8594; Sent &#8594; Accepted) &#8212; working Status/Rep/Trade filters, no caps, no auto-archive, dual-pane desktop with pipeline sums. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 341 &#8212; Retail-B 5: unified Client Directory (Brass) &#8212; one directory across all three CRMs, per-CRM milestone filters, CRM bottom bar, admin multi-select delete. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -5503,21 +5503,57 @@ body:has(#loginView[style*="block"]){background:#fff;}
   </div>
 </div>
 
-<!-- ============ CLIENT DIRECTORY ============ -->
+<!-- ============ CLIENT DIRECTORY (retail-B, build 341 — Brass, all three CRMs) ============ -->
 <div id="clientsView" style="display:none;">
-  <div class="wrap" style="padding-top:18px;">
-    <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
-      <h2 class="viewhead" style="margin:0;flex:1;">&#128101; Client Directory</h2>
+  <div class="wrap cd-wrap" style="padding-top:18px;">
+    <div class="cd-head">
+      <h2 class="cd-title">Clients</h2>
       <button class="btn ghost" id="cliHomeBtn" style="padding:8px 14px;font-size:13px;">&#127968; Home</button>
     </div>
-    <div class="controls" style="margin:8px 0 0;">
-      <input type="search" id="cliFilter" placeholder="Filter by name, PO #, address, phone, email, rep&#8230;" aria-label="Filter clients">
-      <span class="count" id="cliCount"></span>
+    <p class="cd-sub" id="cdSub"></p>
+    <div class="cd-search">&#128269;&#65039; <input type="search" id="cliFilter" placeholder="Search name, address, PO&#8230;" aria-label="Search clients"></div>
+    <div class="cd-ctl"><span class="sl">Sort by</span>
+      <button class="cd-chip" id="cdSortChip">Client name</button>
+      <div class="right">
+        <button class="cd-selbtn" id="cdSelBtn" style="display:none;">&#9745; Select <span class="cd-admtag">ADMIN</span></button>
+        <div class="cd-ico" id="cdDirBtn" title="Reverse order">&#8645;</div>
+        <div class="cd-ico" id="cdFunnelBtn" title="Filters">&#9923;<span class="bdg" id="cdFBadge">0</span></div>
+      </div>
     </div>
-    <div class="stgfilter" id="stgFilter"></div>
-    <div id="cliList"></div>
+    <div class="cd-lay">
+      <aside class="cd-rail">
+        <select class="cd-sortsel" id="cdSortSel"></select>
+        <div class="cd-selrow">
+          <button class="cd-selall" id="cdSelAll">&#9745; Select all</button>
+          <button class="cd-clr" id="cdClearBtn">Clear all</button>
+        </div>
+        <div class="cd-note">Nothing checked = everything shows.</div>
+        <div id="cdRailMount"></div>
+      </aside>
+      <div class="cd-main"><div id="cliList"></div></div>
+    </div>
   </div>
+  <div class="cd-delbar" id="cdDelBar">
+    <button class="cd-delgo" id="cdDelGo"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete (<span id="cdDelN">0</span>)</button>
+    <span class="cd-admtag">ADMIN ONLY</span>
+    <button class="cd-delcancel" id="cdDelCancel">Cancel</button>
+  </div>
+  <div class="cd-crmbar" id="cdCrmBar"></div>
+  <div class="cd-sheet" id="cdShSort"><div class="panel">
+    <div class="ph"><span class="t">Sort by</span><button id="cdSortClose">Close</button></div>
+    <div id="cdSortList"></div>
+  </div></div>
+  <div class="cd-sheet" id="cdShFilter"><div class="panel">
+    <div class="ph"><button id="cdFDone">Done</button><span class="t" id="cdFTitle">Filters (0)</span><span style="width:44px"></span></div>
+    <button class="cd-clearall" id="cdClearAll">Clear all</button>
+    <div id="cdCatList"></div>
+  </div></div>
+  <div class="cd-sheet" id="cdShSub"><div class="panel">
+    <div class="ph"><button id="cdSubBack">&#8249; Back</button><span class="t" id="cdSubTitle"></span><button class="ap" id="cdSubApply">Apply</button></div>
+    <div id="cdSubList"></div>
+  </div></div>
 </div>
+
 
 <!-- ============ ACTIVITY FEED PAGE ============ -->
 <div id="activityView" style="display:none;">
@@ -12430,43 +12466,236 @@ async function openFollowUp(){
   }catch(err){ showError('Could not schedule: ' + (err.message || err)); }
 }
 
-var cliStageFilter = '';
+
 
 /* ---------- client directory ---------- */
-function renderClientDirectory(){
+/* ---------- Client Directory: one directory, all three CRMs (retail-B, build 341) ---------- */
+var cdState = { sort:'name', dir:1, crm:'All', sets:{}, selMode:false, sel:[] };
+var cdSheet = { cat:null, pend:[] };
+var CD_CRMS = [
+  { key:'retail',    label:'Retail',    color:'#c9a227' },
+  { key:'insurance', label:'Claims',    color:'#4db8a8' },
+  { key:'community', label:'Community', color:'#8fb4d8' }
+];
+/* Render-time label maps mirror cr-insstage / cr-comstage — stored values never change. */
+var CD_STAGE_LABEL = {
+  retail:    { 'Closed':'Archived' },
+  insurance: { 'Lead':'Claim Filed', 'Prospect':'Adjuster Pending', 'Approved':'Scope Approved',
+               'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Awaiting RCV',
+               'Closed':'Closed', 'Lost':'Denied' },
+  community: { 'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'Approved':'Awarded',
+               'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Invoiced',
+               'Closed':'Closed', 'Lost':'Not Awarded' }
+};
+var CD_SORTS = [
+  { key:'name',    label:'Client name' },
+  { key:'newest',  label:'Newest first' },
+  { key:'touched', label:'Last touched' },
+  { key:'po',      label:'PO number' }
+];
+function cdCrmOf(pr){
+  var t = ((parseCkAll(pr) || {}).lead || {}).claim_type || '';
+  return (t === 'insurance' || t === 'community') ? t : 'retail';
+}
+function cdCrmMeta(k){ return CD_CRMS.filter(function(c){ return c.key === k; })[0] || CD_CRMS[0]; }
+function cdStageLabel(crm, s){ return (CD_STAGE_LABEL[crm] || {})[s] || s; }
+function cdCount(){ var n = 0; for(var k in cdState.sets){ n += (cdState.sets[k] || []).length; } return n; }
+function cdReps(){
+  var out = [];
+  cacheProjects.forEach(function(pr){
+    var r = rptRepName(pr.created_by || '');
+    if(r && out.indexOf(r) === -1) out.push(r);
+  });
+  return out.sort();
+}
+function cdTradeVals(){
+  var out = [];
+  cacheProjects.forEach(function(pr){
+    ljTrades(pr).forEach(function(t){ if(t && out.indexOf(t) === -1) out.push(t); });
+  });
+  return out.sort();
+}
+function cdMatch(pr){
+  var crm = cdCrmOf(pr);
+  if(cdState.crm !== 'All' && crm !== cdState.crm) return false;
+  var ms = cdState.sets.stage || [];
+  if(ms.length && ms.indexOf(crm + '|' + normStage(pr.stage)) === -1) return false;
+  var rs = cdState.sets.rep || [];
+  if(rs.length && rs.indexOf(rptRepName(pr.created_by || '')) === -1) return false;
+  var ts = cdState.sets.trade || [];
+  if(ts.length && !ljTrades(pr).some(function(t){ return ts.indexOf(t) !== -1; })) return false;
   var q = (document.getElementById('cliFilter').value || '').trim().toLowerCase();
-  var sf = document.getElementById('stgFilter');
-  sf.innerHTML = '<span class="hstat' + (cliStageFilter === '' ? ' on' : '') + '" data-stg="">All stages</span>' +
-    STAGES.map(function(s){
-      var n = cacheProjects.filter(function(pr){ return normStage(pr.stage) === s; }).length;
-      return '<span class="hstat' + (cliStageFilter === s ? ' on' : '') + '" data-stg="' + s + '">' + (s === 'Closed' ? 'Archived' : s) + ' <b>' + n + '</b></span>';
-    }).join('');
-  var list = favSort(cacheProjects.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); }))
-    .filter(function(pr){
-      if(cliStageFilter && normStage(pr.stage) !== cliStageFilter) return false;
-      if(!q) return true;
-      return [pr.name, pr.address, pr.phone, pr.email, pr.created_by, poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase().indexOf(q) !== -1;
+  if(q){
+    var hay = [pr.name, pr.address, pr.phone, pr.email, pr.created_by,
+      poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
+    if(hay.indexOf(q) === -1) return false;
+  }
+  return true;
+}
+function cdSorted(list){
+  var s = cdState.sort, d = cdState.dir;
+  var out = list.slice().sort(function(a, b){
+    var r = 0;
+    if(s === 'newest') r = String(b.created_at || '').localeCompare(String(a.created_at || ''));
+    else if(s === 'touched') r = String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || ''));
+    else if(s === 'po') r = (Number(poOf(a)) || 1e9) - (Number(poOf(b)) || 1e9);
+    else r = String(a.name || '').localeCompare(String(b.name || ''));
+    return d * (r || String(a.name || '').localeCompare(String(b.name || '')));
+  });
+  return favSort(out); /* favourites stay pinned on top — existing feature */
+}
+function cdCardHtml(pr){
+  var crm = cdCrmOf(pr);
+  var meta = cdCrmMeta(crm);
+  var stg = normStage(pr.stage);
+  var sc = (typeof STAGE_COLORS !== 'undefined' && STAGE_COLORS[stg]) ? STAGE_COLORS[stg] : '#8a93a1';
+  var tel = (pr.phone || '').replace(/[^+\d]/g, '');
+  var on = cdState.sel.indexOf(pr.id) !== -1;
+  var po = poOf(pr);
+  return '<div class="cd-card' + (on ? ' selon' : '') + '" data-proj="' + pr.id + '" style="--cc:' + meta.color + ';--sc:' + sc + '">' +
+    '<span class="cd-selck">' + (on ? '\u2713' : '') + '</span>' +
+    '<div class="bd">' +
+      '<div class="nmrow">' + (po ? '<span class="cd-po">' + esc(String(po)) + ':</span>' : '') +
+        '<span class="cd-name">' + esc(pr.name || 'Unnamed client') + '</span>' +
+        '<span class="favstar cd-star' + (isFav(pr) ? ' on' : '') + '" data-fav="' + pr.id + '">' + (isFav(pr) ? '\u2B50' : '\u2606') + '</span>' +
+        '<span class="cd-crmtag">' + meta.label + '</span></div>' +
+      (pr.address ? '<div class="cd-addr">' + esc(pr.address) + '</div>' : '') +
+      '<div class="cd-meta"><span class="cd-stchip">' + esc(cdStageLabel(crm, stg)) + '</span>' +
+        '<span class="cd-tch">touched ' + ljAge(pr.updated_at || pr.created_at) + '</span>' +
+        '<span class="cd-rep">' + esc(rptRepName(pr.created_by || '')) + '</span></div>' +
+    '</div>' +
+    (tel ? '<div class="cd-cta">' +
+      '<a class="cd-abtn" href="tel:' + tel + '" title="Call" data-act>' + ljPhoneSvg() + '</a>' +
+      '<a class="cd-abtn" href="sms:' + tel + '" title="Text" data-act>' + ljSmsSvg() + '</a></div>' : '') +
+  '</div>';
+}
+function renderClientDirectory(){
+  /* CRM bottom bar */
+  var bar = document.getElementById('cdCrmBar');
+  var chips = [{ key:'All', label:'All', color:null }].concat(CD_CRMS);
+  bar.innerHTML = chips.map(function(c){
+    var cnt = c.key === 'All' ? cacheProjects.length
+      : cacheProjects.filter(function(pr){ return cdCrmOf(pr) === c.key; }).length;
+    return '<span class="cd-crmchip' + (cdState.crm === c.key ? ' on' : '') + '" data-crm="' + c.key + '">' +
+      (c.color ? '<span class="cd-dot" style="background:' + c.color + '"></span>' : '') +
+      c.label + ' <b>' + cnt + '</b></span>';
+  }).join('');
+
+  var list = cdSorted(cacheProjects.filter(cdMatch));
+  var n = cdCount();
+
+  /* one-line stats with CRM dots */
+  var stats = CD_CRMS.map(function(c){
+    var cnt = cacheProjects.filter(function(pr){ return cdCrmOf(pr) === c.key; }).length;
+    return '<span class="cd-dot" style="background:' + c.color + '"></span>' + c.label + ' ' + cnt;
+  }).join('');
+  document.getElementById('cdSub').innerHTML = list.length + ' of ' + cacheProjects.length + ' clients' + stats +
+    (n ? ' \u00b7 ' + n + ' filter' + (n > 1 ? 's' : '') : '');
+
+  var badge = document.getElementById('cdFBadge');
+  badge.textContent = n;
+  badge.classList.toggle('show', n > 0);
+  document.getElementById('cdFTitle').textContent = 'Filters (' + n + ')';
+  document.getElementById('cdSortChip').textContent = (CD_SORTS.filter(function(s){ return s.key === cdState.sort; })[0] || CD_SORTS[0]).label;
+  var sel = document.getElementById('cdSortSel');
+  sel.innerHTML = CD_SORTS.map(function(s){
+    return '<option value="' + s.key + '"' + (s.key === cdState.sort ? ' selected' : '') + '>' + s.label + '</option>';
+  }).join('');
+  var sb = document.getElementById('cdSelBtn');
+  sb.style.display = (typeof isAdminUser === 'function' && isAdminUser()) ? 'flex' : 'none';
+  sb.classList.toggle('on', cdState.selMode);
+
+  /* desktop rail — Milestone sectioned per CRM, then Assigned To, Trade */
+  var mount = document.getElementById('cdRailMount');
+  var msOn = cdState.sets.stage || [];
+  var railHtml = '<div class="cd-grp"><div class="ft">Milestone' + (msOn.length ? ' <span class="n">' + msOn.length + '</span>' : '') + '</div>';
+  CD_CRMS.forEach(function(c){
+    railHtml += '<div class="cd-fsec" style="color:' + c.color + '"><span class="cd-dot" style="background:' + c.color + '"></span>' + c.label + '</div>';
+    STAGES.forEach(function(st){
+      var key = c.key + '|' + st;
+      var cnt = cacheProjects.filter(function(pr){ return cdCrmOf(pr) === c.key && normStage(pr.stage) === st; }).length;
+      if(!cnt) return;
+      railHtml += '<label class="cd-frow' + (msOn.indexOf(key) !== -1 ? ' on' : '') + '" data-g="stage" data-v="' + esc(key) + '">' +
+        '<span class="bx">' + (msOn.indexOf(key) !== -1 ? '\u2713' : '') + '</span>' + esc(cdStageLabel(c.key, st)) +
+        '<span class="c">' + cnt + '</span></label>';
     });
-  document.getElementById('cliCount').textContent = list.length + ' client' + (list.length === 1 ? '' : 's');
-  document.getElementById('cliList').innerHTML = list.length ? list.map(function(pr){
-    var mini = pr.cover_image ? '<img src="' + pr.cover_image + '" alt="">'
-                              : esc((pr.name || '?').trim().charAt(0).toUpperCase());
-    var sub = [pr.address, pr.phone].filter(Boolean).join(' \u00b7 ');
-    var stg = normStage(pr.stage);
-    return '<div class="clirow" data-proj="' + pr.id + '">' +
-      '<span class="mini">' + mini + '</span>' +
-      '<span class="bd"><b>' + esc(pr.name || 'Unnamed client') + '</b> ' +
-        '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' +
-        (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
-      '<span class="favstar' + (isFav(pr) ? ' on' : '') + '" data-fav="' + pr.id + '">' + (isFav(pr) ? '\u2B50' : '\u2606') + '</span>' +
-      '<span class="chev">&#8250;</span></div>';
-  }).join('') : '<div class="empty"><b>No clients match.</b></div>';
+  });
+  railHtml += '</div>';
+  [{ key:'rep', label:'Assigned To', vals: cdReps(), of:function(pr){ return [rptRepName(pr.created_by || '')]; } },
+   { key:'trade', label:'Trade', vals: cdTradeVals(), of:ljTrades }].forEach(function(g){
+    var on = cdState.sets[g.key] || [];
+    if(!g.vals.length) return;
+    railHtml += '<div class="cd-grp"><div class="ft">' + g.label + (on.length ? ' <span class="n">' + on.length + '</span>' : '') + '</div>' +
+      g.vals.map(function(v){
+        var cnt = cacheProjects.filter(function(pr){ return g.of(pr).indexOf(v) !== -1; }).length;
+        return '<label class="cd-frow' + (on.indexOf(v) !== -1 ? ' on' : '') + '" data-g="' + g.key + '" data-v="' + esc(v) + '">' +
+          '<span class="bx">' + (on.indexOf(v) !== -1 ? '\u2713' : '') + '</span>' + esc(v) + '<span class="c">' + cnt + '</span></label>';
+      }).join('') + '</div>';
+  });
+  mount.innerHTML = railHtml;
+
+  /* cards */
+  document.getElementById('cliList').innerHTML = list.length
+    ? list.map(cdCardHtml).join('')
+    : '<div class="cd-empty">No clients match these filters.</div>';
+
+  /* sheets */
+  document.getElementById('cdSortList').innerHTML = CD_SORTS.map(function(s){
+    return '<div class="cd-srow' + (s.key === cdState.sort ? ' on' : '') + '" data-sort="' + s.key + '">' +
+      '<span class="ck">\u2713</span><span>' + s.label + '</span></div>';
+  }).join('');
+  document.getElementById('cdCatList').innerHTML = [
+    { key:'stage', label:'Milestone' }, { key:'rep', label:'Assigned To' }, { key:'trade', label:'Trade' }
+  ].map(function(g){
+    var k = (cdState.sets[g.key] || []).length;
+    return '<div class="cd-srow" data-cat="' + g.key + '"><span>' + g.label + '</span>' +
+      '<span class="cnt2' + (k ? ' show' : '') + '">' + k + '</span><span class="chev">\u203a</span></div>';
+  }).join('');
+
+  cdSyncSel();
+}
+renderClientDirectory.__crPortal = true; /* opt out of the portal pre-filter — this directory owns its CRM switcher */
+function cdSyncSel(){
+  document.getElementById('clientsView').classList.toggle('cd-selmode', cdState.selMode);
+  document.getElementById('cdDelBar').classList.toggle('has', cdState.selMode && cdState.sel.length > 0);
+  document.getElementById('cdDelN').textContent = cdState.sel.length;
+}
+function cdPaintSub(){
+  var el = document.getElementById('cdSubList');
+  document.getElementById('cdSubTitle').textContent =
+    cdSheet.cat === 'stage' ? 'Milestone' : (cdSheet.cat === 'rep' ? 'Assigned To' : 'Trade');
+  if(cdSheet.cat === 'stage'){
+    var html = '';
+    CD_CRMS.forEach(function(c){
+      html += '<div class="cd-ssec" style="color:' + c.color + '"><span class="cd-dot" style="background:' + c.color + '"></span>' + c.label + '</div>';
+      STAGES.forEach(function(st){
+        var key = c.key + '|' + st;
+        var cnt = cacheProjects.filter(function(pr){ return cdCrmOf(pr) === c.key && normStage(pr.stage) === st; }).length;
+        if(!cnt) return;
+        html += '<div class="cd-srow' + (cdSheet.pend.indexOf(key) !== -1 ? ' on' : '') + '" data-opt="' + esc(key) + '">' +
+          '<span class="ck">\u2713</span><span>' + esc(cdStageLabel(c.key, st)) + '</span>' +
+          '<span class="cnt2 show" style="background:#1b1d20;color:#8f8a80;">' + cnt + '</span></div>';
+      });
+    });
+    el.innerHTML = html;
+    return;
+  }
+  var g = cdSheet.cat === 'rep'
+    ? { vals: cdReps(), of:function(pr){ return [rptRepName(pr.created_by || '')]; } }
+    : { vals: cdTradeVals(), of:ljTrades };
+  el.innerHTML = g.vals.map(function(v){
+    var cnt = cacheProjects.filter(function(pr){ return g.of(pr).indexOf(v) !== -1; }).length;
+    return '<div class="cd-srow' + (cdSheet.pend.indexOf(v) !== -1 ? ' on' : '') + '" data-opt="' + esc(v) + '">' +
+      '<span class="ck">\u2713</span><span>' + esc(v) + '</span>' +
+      '<span class="cnt2 show" style="background:#1b1d20;color:#8f8a80;">' + cnt + '</span></div>';
+  }).join('');
 }
 function openClientsDirectory(keepFilter){
   hideAllViews();
   clientsView.style.display = 'block';
   document.getElementById('cliFilter').value = '';
-  if(keepFilter !== true) cliStageFilter = '';
+  if(keepFilter !== true){ cdState.sets = {}; cdState.crm = 'All'; }
+  cdState.selMode = false; cdState.sel = [];
   renderClientDirectory();
   window.scrollTo(0,0);
   setTimeout(function(){ document.getElementById('cliFilter').focus(); }, 80);
@@ -12490,17 +12719,115 @@ function openClientsDirectory(keepFilter){
 })();
 var __cliHomeBtn = document.getElementById('cliHomeBtn'); if(__cliHomeBtn) __cliHomeBtn.addEventListener('click', showHome);
 document.getElementById('cliFilter').addEventListener('input', renderClientDirectory);
-document.getElementById('stgFilter').addEventListener('click', function(e){
-  var chip = e.target.closest('.hstat');
-  if(!chip) return;
-  cliStageFilter = chip.getAttribute('data-stg') || '';
+document.getElementById('cdSortSel').addEventListener('change', function(){ cdState.sort = this.value; renderClientDirectory(); });
+document.getElementById('cdDirBtn').addEventListener('click', function(){
+  cdState.dir = -cdState.dir;
+  this.classList.toggle('on', cdState.dir === -1);
   renderClientDirectory();
 });
+document.getElementById('cdSortChip').addEventListener('click', function(){ document.getElementById('cdShSort').classList.add('open'); });
+document.getElementById('cdFunnelBtn').addEventListener('click', function(){ document.getElementById('cdShFilter').classList.add('open'); });
+document.getElementById('cdSortClose').addEventListener('click', function(){ document.getElementById('cdShSort').classList.remove('open'); });
+document.getElementById('cdFDone').addEventListener('click', function(){ document.getElementById('cdShFilter').classList.remove('open'); });
+document.getElementById('cdClearAll').addEventListener('click', function(){ cdState.sets = {}; renderClientDirectory(); });
+document.getElementById('cdSelAll').addEventListener('click', function(){
+  var st = [];
+  CD_CRMS.forEach(function(c){
+    STAGES.forEach(function(s){
+      if(cacheProjects.some(function(pr){ return cdCrmOf(pr) === c.key && normStage(pr.stage) === s; })) st.push(c.key + '|' + s);
+    });
+  });
+  cdState.sets = { stage: st, rep: cdReps(), trade: cdTradeVals() };
+  renderClientDirectory();
+});
+document.getElementById('cdClearBtn').addEventListener('click', function(){
+  cdState.sets = {}; document.getElementById('cliFilter').value = ''; renderClientDirectory();
+});
+document.getElementById('cdRailMount').addEventListener('click', function(e){
+  var r = e.target.closest('[data-g]');
+  if(!r) return;
+  e.preventDefault();
+  var g = r.getAttribute('data-g'), v = r.getAttribute('data-v');
+  var set = cdState.sets[g] = cdState.sets[g] || [];
+  var i = set.indexOf(v);
+  if(i === -1) set.push(v); else set.splice(i, 1);
+  if(!set.length) delete cdState.sets[g];
+  renderClientDirectory();
+});
+document.getElementById('cdSortList').addEventListener('click', function(e){
+  var r = e.target.closest('[data-sort]');
+  if(!r) return;
+  cdState.sort = r.getAttribute('data-sort');
+  renderClientDirectory();
+  document.getElementById('cdShSort').classList.remove('open');
+});
+document.getElementById('cdCatList').addEventListener('click', function(e){
+  var r = e.target.closest('[data-cat]');
+  if(!r) return;
+  cdSheet.cat = r.getAttribute('data-cat');
+  cdSheet.pend = (cdState.sets[cdSheet.cat] || []).slice();
+  cdPaintSub();
+  document.getElementById('cdShFilter').classList.remove('open');
+  document.getElementById('cdShSub').classList.add('open');
+});
+document.getElementById('cdSubBack').addEventListener('click', function(){
+  document.getElementById('cdShSub').classList.remove('open');
+  document.getElementById('cdShFilter').classList.add('open');
+});
+document.getElementById('cdSubApply').addEventListener('click', function(){
+  if(cdSheet.pend.length) cdState.sets[cdSheet.cat] = cdSheet.pend.slice();
+  else delete cdState.sets[cdSheet.cat];
+  renderClientDirectory();
+  document.getElementById('cdShSub').classList.remove('open');
+  document.getElementById('cdShFilter').classList.add('open');
+});
+document.getElementById('cdSubList').addEventListener('click', function(e){
+  var r = e.target.closest('[data-opt]');
+  if(!r) return;
+  var v = r.getAttribute('data-opt');
+  var i = cdSheet.pend.indexOf(v);
+  if(i !== -1) cdSheet.pend.splice(i, 1); else cdSheet.pend.push(v);
+  r.classList.toggle('on', i === -1);
+});
+document.getElementById('cdCrmBar').addEventListener('click', function(e){
+  var chip = e.target.closest('[data-crm]');
+  if(!chip) return;
+  cdState.crm = chip.getAttribute('data-crm');
+  renderClientDirectory();
+});
+document.getElementById('cdSelBtn').addEventListener('click', function(){
+  if(typeof isAdminUser === 'function' && !isAdminUser()) return;
+  cdState.selMode = !cdState.selMode;
+  if(!cdState.selMode) cdState.sel = [];
+  renderClientDirectory();
+});
+document.getElementById('cdDelCancel').addEventListener('click', function(){
+  cdState.selMode = false; cdState.sel = [];
+  renderClientDirectory();
+});
+document.getElementById('cdDelGo').addEventListener('click', function(){
+  var list = cacheProjects.filter(function(pr){ return cdState.sel.indexOf(pr.id) !== -1; });
+  if(!list.length) return;
+  CardinalClientDelete.many(list, { after: function(){
+    cdState.selMode = false; cdState.sel = [];
+    clientsView.style.display = 'block';
+    renderClientDirectory();
+  } }).catch(function(err){ showError('Delete failed: ' + (err.message || err)); });
+});
 document.getElementById('cliList').addEventListener('click', function(e){
+  if(e.target.closest('[data-act]')) return; /* call / text anchors */
+  var card = e.target.closest('.cd-card');
+  if(cdState.selMode){
+    if(!card) return;
+    var id = card.getAttribute('data-proj');
+    var i = cdState.sel.indexOf(id);
+    if(i !== -1) cdState.sel.splice(i, 1); else cdState.sel.push(id);
+    renderClientDirectory();
+    return;
+  }
   var star = e.target.closest('.favstar');
   if(star){ toggleFav(star.getAttribute('data-fav')); return; }
-  var row = e.target.closest('.clirow');
-  if(row) openProject(row.getAttribute('data-proj'));
+  if(card) openProject(card.getAttribute('data-proj'));
 });
 var navMenu = document.getElementById('navMenu');
 document.getElementById('navBtn').addEventListener('click', function(e){
@@ -14010,16 +14337,7 @@ async function cardinalDeleteClient(pr, opts){
     return false;
   }
   try{
-    var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
-    for(var i = 0; i < docs.length; i++){ try{ await db.remove(docs[i].id); }catch(e){} }
-    try{
-      var phs = await photoDb.listByProject(pr.id);
-      for(var j = 0; j < phs.length; j++){ try{ await photoDb.remove(phs[j].id); }catch(e){} }
-    }catch(e){}
-    var aps = cacheAppts.filter(function(a){ return a.project_id === pr.id; });
-    for(var k = 0; k < aps.length; k++){ try{ await adb.remove(aps[k].id); }catch(e){} }
-    await pdb.remove(pr.id);
-    if(currentProject && currentProject.id === pr.id) currentProject = null;
+    await cardinalDeepDelete(pr);
     await reload();
     if(typeof opts.after === 'function'){ opts.after(); } else { showHome(); }
     alert('Client deleted.');
@@ -14029,7 +14347,40 @@ async function cardinalDeleteClient(pr, opts){
     return false;
   }
 }
-window.CardinalClientDelete = Object.assign(window.CardinalClientDelete || {}, { run: cardinalDeleteClient });
+async function cardinalDeepDelete(pr){
+  var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
+  for(var i = 0; i < docs.length; i++){ try{ await db.remove(docs[i].id); }catch(e){} }
+  try{
+    var phs = await photoDb.listByProject(pr.id);
+    for(var j = 0; j < phs.length; j++){ try{ await photoDb.remove(phs[j].id); }catch(e){} }
+  }catch(e){}
+  var aps = cacheAppts.filter(function(a){ return a.project_id === pr.id; });
+  for(var k = 0; k < aps.length; k++){ try{ await adb.remove(aps[k].id); }catch(e){} }
+  await pdb.remove(pr.id);
+  if(currentProject && currentProject.id === pr.id) currentProject = null;
+}
+async function cardinalDeleteMany(list, opts){
+  opts = opts || {};
+  if(!list || !list.length || !isAdminUser()) return false;
+  if(!confirm('Delete ' + list.length + ' client' + (list.length > 1 ? 's' : '') + '?\n\nThis permanently removes their profiles, ALL documents, photos, and appointments. This cannot be undone.')) return false;
+  var typed = prompt('Type DELETE to confirm removing ' + list.length + ' client' + (list.length > 1 ? 's' : '') + ':', '');
+  if(typed === null) return false;
+  if(typed.trim().toUpperCase() !== 'DELETE'){
+    alert('Confirmation did not match \u2014 nothing was deleted.');
+    return false;
+  }
+  try{
+    for(var i = 0; i < list.length; i++){ await cardinalDeepDelete(list[i]); }
+    await reload();
+    if(typeof opts.after === 'function'){ opts.after(); }
+    alert(list.length + ' client' + (list.length > 1 ? 's' : '') + ' deleted.');
+    return true;
+  }catch(err){
+    showError('Delete failed: ' + (err.message || err));
+    return false;
+  }
+}
+window.CardinalClientDelete = Object.assign(window.CardinalClientDelete || {}, { run: cardinalDeleteClient, many: cardinalDeleteMany });
 document.getElementById('delClientBtn').addEventListener('click', function(){
   var btn = this, label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Deleting\u2026';
@@ -39494,11 +39845,13 @@ if(!home){
 home = document.createElement('button');
 home.id = 'cr-hd2-home';
 home.type = 'button';
-home.title = 'Landing';
+home.title = 'Home';
 home.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.8 21v-6h4.4v6"/></svg>';
 home.onclick = function(){
-if(typeof window.goToLanding === 'function') window.goToLanding();
-else if(typeof window.showHome === 'function') window.showHome();
+var crm = crmNow();
+if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ window.showCardinalTruth(); }
+else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
+else if(typeof window.showHome === 'function'){ window.showHome(); }
 };
 rib.insertBefore(home, rib.firstChild);
 }
@@ -40585,5 +40938,99 @@ function close(){ if(el) el.style.display = 'none'; }
 window.CardinalCommunityAnalytics = { open: open, close: close, render: render };
 })();
 </script>
+<style id="cr-cdir-styles">
+/* ── Client Directory — Brass (retail-B, build 341). Matte black, thin lines, no gradients, no glow. ── */
+#clientsView{background:#141517;min-height:100vh;}
+.cd-wrap{padding-bottom:150px;}
+.cd-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}
+.cd-title{margin:0;flex:1;font:700 21px Georgia,'Times New Roman',serif;color:#f2ede3;}
+#clientsView .btn.ghost{background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;}
+.cd-sub{margin:1px 0 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f8a80;}
+.cd-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 4px 0 10px;vertical-align:middle;}
+.cd-search{display:flex;align-items:center;gap:8px;background:#1b1d20;border:1px solid #2e3136;border-radius:11px;padding:9px 12px;margin-bottom:10px;color:#8f8a80;font-size:13px;}
+.cd-search input{flex:1;background:none;border:0;outline:0;color:#e9e6df;font:600 13.5px 'Segoe UI',Arial,sans-serif;}
+.cd-ctl{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
+.cd-ctl .sl{font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f8a80;}
+.cd-chip{color:#c9a227;font:700 13px 'Segoe UI',Arial,sans-serif;background:none;border:0;padding:2px;cursor:pointer;border-bottom:1px dashed rgba(201,162,39,.4);}
+.cd-ico{width:34px;height:34px;border:1px solid #2e3136;background:#1b1d20;color:#b5ad9e;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;position:relative;}
+.cd-ico.on{border-color:#c9a227;color:#c9a227;}
+.cd-ico .bdg{position:absolute;top:-6px;right:-6px;background:#c9a227;color:#15171b;font:800 9.5px ui-monospace,Menlo,monospace;border-radius:999px;padding:1px 5px;display:none;}
+.cd-ico .bdg.show{display:block;}
+.cd-ctl .right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.cd-selbtn{display:flex;gap:7px;align-items:center;border:1px solid #2e3136;background:#1b1d20;color:#b5ad9e;border-radius:9px;padding:7px 11px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.cd-selbtn.on{border-color:#e2574a;color:#f2a08a;}
+.cd-admtag{font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;background:#3a2f22;color:#d8c9a8;border-radius:999px;padding:2px 8px;}
+.cd-lay{display:block;}
+.cd-rail{display:none;}
+.cd-card{background:#1b1d20;border:1px solid #2e3136;border-radius:13px;margin-bottom:11px;display:flex;align-items:center;gap:0;cursor:pointer;position:relative;overflow:hidden;box-shadow:none;}
+.cd-card::before{content:'';position:absolute;left:0;top:8%;height:84%;width:2px;border-radius:3px;background:var(--cc,#c9a227);box-shadow:none;}
+.cd-card .bd{flex:1;min-width:0;padding:11px 12px 11px 15px;}
+.cd-card .nmrow{display:flex;align-items:center;gap:8px;}
+.cd-po{font-weight:800;color:#c9a227;}
+.cd-name{font-weight:800;font-size:14px;color:var(--cc,#c9a227);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cd-star{cursor:pointer;user-select:none;font-size:15px;line-height:1;color:#5a5145;padding:2px;}
+.cd-star.on{color:#e8a900;}
+.cd-crmtag{margin-left:auto;font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--cc,#c9a227);}
+.cd-addr{font-size:11.5px;color:#77726a;}
+.cd-meta{display:flex;gap:7px;align-items:center;margin-top:5px;flex-wrap:wrap;}
+.cd-stchip{display:inline-block;font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;padding:2.5px 9px;border-radius:999px;background:transparent;border:1px solid var(--sc,#4a4d52);color:var(--sc,#b5ad9e);}
+.cd-tch{font-size:10px;color:#8f8a80;}
+.cd-rep{font-size:10.5px;font-weight:800;color:#e2574a;margin-left:auto;}
+.cd-cta{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;align-self:center;margin-right:11px;}
+.cd-abtn{width:36px;height:36px;border:1px solid #3a3325;border-radius:10px;background:transparent;display:flex;align-items:center;justify-content:center;text-decoration:none;}
+.cd-abtn svg{width:17px;height:17px;stroke:#c9a227;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.cd-selck{width:20px;height:20px;border:1.6px solid #5a5145;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:11px;color:#15171b;flex:0 0 auto;margin-left:12px;}
+.cd-selmode .cd-selck{display:flex;}
+.cd-card.selon .cd-selck{background:#e2574a;border-color:#e2574a;font-weight:800;}
+.cd-empty{border:1px dashed #3a3d42;border-radius:11px;padding:14px;text-align:center;color:#8f8a80;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-bottom:12px;}
+.cd-crmbar{position:fixed;left:0;right:0;bottom:calc(104px + env(safe-area-inset-bottom,0px));display:flex;gap:7px;flex-wrap:wrap;justify-content:center;padding:10px 12px;background:rgba(16,17,19,.95);border-top:1px solid #26282c;backdrop-filter:blur(4px);z-index:9995;}
+.cd-crmchip{display:inline-flex;align-items:center;gap:6px;background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;border-radius:999px;padding:6px 13px;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.cd-crmchip b{font:800 10px ui-monospace,Menlo,monospace;opacity:.7;}
+.cd-crmchip.on{border-color:#c9a227;color:#c9a227;background:transparent;}
+.cd-delbar{position:fixed;left:0;right:0;bottom:calc(152px + env(safe-area-inset-bottom,0px));display:none;gap:9px;justify-content:center;align-items:center;padding:9px 12px;background:rgba(20,16,15,.95);border-top:1px solid #4a2c26;z-index:9996;}
+.cd-delbar.has{display:flex;}
+.cd-delgo{border:1px solid #6e3129;background:rgba(226,87,74,.12);color:#f2a08a;border-radius:10px;padding:8px 16px;font:700 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;display:flex;gap:7px;align-items:center;}
+.cd-delgo svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.cd-delcancel{background:none;border:0;color:#b5ad9e;font:700 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:6px 8px;}
+.cd-sortsel{width:100%;background:#1b1d20;border:1px solid #2e3136;color:#d9d2c4;border-radius:9px;padding:8px 10px;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-bottom:10px;}
+.cd-selrow{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.cd-selall{flex:1;border:1px solid #2e3136;background:#1b1d20;color:#d9d2c4;border-radius:9px;padding:7px 6px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;text-align:center;}
+.cd-selall:hover{border-color:#c9a227;color:#c9a227;}
+.cd-clr{background:none;border:0;color:#e08a7a;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:2px 6px;}
+.cd-note{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6d6a63;margin:0 0 10px;line-height:1.45;}
+.cd-grp{margin-top:10px;border-top:1px solid #26282c;padding-top:8px;}
+.cd-grp .ft{font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#c9a227;margin-bottom:7px;display:flex;align-items:center;gap:7px;}
+.cd-grp .ft .n{background:#3a2f22;color:#d8c9a8;border-radius:999px;padding:1px 7px;font-size:9.5px;}
+.cd-fsec{font:800 9px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;margin:8px 0 3px;display:flex;align-items:center;gap:6px;}
+.cd-fsec .cd-dot{margin:0;}
+.cd-frow{display:flex;align-items:center;gap:8px;padding:5px 2px;color:#c9c3b6;font-size:12.5px;cursor:pointer;}
+.cd-frow .bx{width:15px;height:15px;border:1.4px solid #4a4d52;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#15171b;flex:0 0 auto;}
+.cd-frow.on .bx{background:#3fae6a;border-color:#3fae6a;font-weight:800;}
+.cd-frow .c{margin-left:auto;font:700 10px ui-monospace,Menlo,monospace;color:#6d6a63;}
+.cd-sheet{position:fixed;inset:0;background:rgba(8,9,11,.7);display:none;z-index:9997;}
+.cd-sheet.open{display:flex;align-items:flex-start;justify-content:center;}
+.cd-sheet .panel{background:#17181b;border:1px solid #2e3136;border-top:0;border-radius:0 0 16px 16px;width:100%;max-width:560px;max-height:86%;overflow:auto;}
+.cd-sheet .ph{display:flex;align-items:center;padding:13px 15px;border-bottom:1px solid #26282c;position:sticky;top:0;background:#17181b;z-index:1;}
+.cd-sheet .ph .t{font:800 14px 'Segoe UI',Arial,sans-serif;color:#f2ede3;flex:1;text-align:center;}
+.cd-sheet .ph button{background:none;border:0;color:#c9a227;font:700 13.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:4px 6px;}
+.cd-sheet .ph button.ap{color:#3fae6a;}
+.cd-srow{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #202226;cursor:pointer;font:600 14px 'Segoe UI',Arial,sans-serif;color:#d9d2c4;}
+.cd-srow .ck{width:20px;color:#3fae6a;font-weight:800;visibility:hidden;}
+.cd-srow.on .ck{visibility:visible;}
+.cd-srow .chev{margin-left:auto;color:#5d646e;}
+.cd-srow .cnt2{margin-left:auto;font:700 10.5px ui-monospace,Menlo,monospace;background:#2f5a3c;color:#8fe0ae;border-radius:999px;padding:2px 8px;display:none;}
+.cd-srow .cnt2.show{display:block;}
+.cd-ssec{font:800 9px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;padding:10px 16px 3px;display:flex;align-items:center;gap:6px;background:#1b1d20;}
+.cd-ssec .cd-dot{margin:0;}
+.cd-clearall{display:block;background:none;border:0;color:#e08a7a;font:700 12.5px 'Segoe UI',Arial,sans-serif;padding:10px 16px;cursor:pointer;text-align:left;width:100%;}
+@media (min-width:901px){
+  .cd-ctl .cd-chip{display:none;}
+  .cd-ctl .sl{display:none;}
+  #cdFunnelBtn{display:none;}
+  .cd-lay{display:grid;grid-template-columns:215px 1fr;gap:14px;align-items:start;}
+  .cd-rail{display:block;background:#101113;border:1px solid #26282c;border-radius:12px;padding:13px;position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
+}
+</style>
+
 </body>
 </html>
