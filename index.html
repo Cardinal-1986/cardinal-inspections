@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 347 &#8212; Home calendar watermarks recolored &#8212; the cardinal art now renders as the committed red&#8594;gold gradient masks on both calendars. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 348 &#8212; Keeper 2/3: Location above the Job Menu as a live Map/Satellite card with Directions; Contacts section retired into the hero (Switch Primary / Add / extras preserved). </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2969,11 +2969,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
       <h3 class="projsec" style="margin-top:20px;">Job Activity</h3>
       <div class="jagrid" id="jaGrid"></div>
 
-      <h3 class="projsec" style="margin-top:20px;">Contacts</h3>
-      <div class="contactrow" id="contactRow"></div>
+      <!-- Legacy static rows: retired by Keeper (build 348) but kept in the DOM
+           because boot-time listeners attach to them unguarded. -->
+      <h3 class="projsec" style="margin-top:20px;display:none;">Contacts</h3>
+      <div class="contactrow" id="contactRow" style="display:none;"></div>
 
-      <h3 class="projsec" style="margin-top:20px;">Location</h3>
-      <div class="locrow" id="locRow"></div>
+      <h3 class="projsec" style="margin-top:20px;display:none;">Location</h3>
+      <div class="locrow" id="locRow" style="display:none;"></div>
 
       <div id="leadCard" style="display:none;margin-top:20px;">
         <h3 class="projsec">&#128681; Lead Details</h3>
@@ -8038,6 +8040,17 @@ function renderAcxOverview(){
     return '<div class="jabox" data-jm="' + act + '">' + ic + '<span class="jbl">' + label + '</span>' +
       '<b class="jan' + (zero ? ' zero' : '') + '"' + (idn ? ' id="' + idn + '"' : '') + '>' + n + '</b></div>';
   }
+  /* ---- location (Keeper: above the Job Menu, live Map/Satellite) ---- */
+  html += '<h3 class="projsec" style="margin:20px 0 10px;">Location' +
+    '<span class="rt2"><span class="acxpencil" id="acxEdit2">&#9998;</span></span></h3>' +
+  '<div class="acxsec"><div class="acxbody">' +
+    '<div class="dbmtabs"><button type="button" class="on" data-dbm="map">Map</button><button type="button" data-dbm="sat">Satellite</button>' +
+      (pr.address ? '<a class="dbmdir" target="_blank" href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '">Directions &#8599;</a>' : '') + '</div>' +
+    '<div id="dbMap" class="dbmap"></div>' +
+    '<div style="margin-top:9px;">' + (pr.address
+      ? '<span style="font-weight:700;">&#128205; ' + esc(pr.address) + '</span>'
+      : '<span class="axnote">No address on file \u2014 tap the pencil to add one.</span>') + '</div>' +
+  '</div></div>';
   html += '<h3 class="projsec" style="margin:18px 0 10px;">Job Menu</h3>' +
     '<div class="jaboxrow">' +
       jt(dbIc('comms'), 'Communication', commsCount(pr), 'comms') +
@@ -8055,33 +8068,8 @@ function renderAcxOverview(){
       jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
       jt(dbIc('orders'), 'Orders', '', 'materials') +
     '</div>';
-  /* ---- contacts ---- */
-  var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
+  /* ---- contacts: retired to the hero name row (Keeper, build 348). dbSwitchPrimary + add-contact live there now. ---- */
   var extra = ck.contacts || [];
-  html += '<h3 class="projsec" style="margin:20px 0 10px;">Contacts' +
-    '<span class="rt2"><a href="#" id="dbSwitchPrim">Switch Primary</a>&nbsp;&nbsp;<a href="#" id="dbAddContact">Add</a></span></h3>' +
-  '<div class="acxsec"><div class="acxbody">' +
-    '<div class="dbprim"><small>Primary Contact</small><b>' + esc(pr.name || '\u2014') + '</b>' +
-    ((pr.phone || pr.email) ? '<small style="margin-top:2px;">' + esc(pr.phone || '') + (pr.phone && pr.email ? ' \u00b7 ' : '') + esc(pr.email || '') + '</small>' : '') + '</div>' +
-    '<div class="dbcbtns">' +
-      (tel ? '<a class="dbcb" href="tel:' + tel + '">' + dbIc('phone') + ' Phone</a>' : '<span class="dbcb off">' + dbIc('phone') + ' Phone</span>') +
-      (tel ? '<a class="dbcb" href="sms:' + tel + '">' + dbIc('text') + ' Text</a>' : '<span class="dbcb off">' + dbIc('text') + ' Text</span>') +
-      (pr.email ? '<a class="dbcb" href="mailto:' + esc(pr.email) + '">' + dbIc('mail') + ' Email</a>' : '<span class="dbcb off">' + dbIc('mail') + ' Email</span>') +
-    '</div>' +
-    (extra.length ? '<div class="dbmore">' + extra.map(function(c){
-      return '<div class="dbmrow">&#128100; ' + esc(c.name || '\u2014') +
-        (c.phone ? ' \u00b7 ' + esc(c.phone) : '') + (c.email ? ' \u00b7 ' + esc(c.email) : '') + '</div>';
-    }).join('') + '</div>' : '') +
-  '</div></div>';
-  /* ---- location ---- */
-  html += '<h3 class="projsec" style="margin:20px 0 10px;">Location' +
-    '<span class="rt2"><span class="acxpencil" id="acxEdit2">&#9998;</span></span></h3>' +
-  '<div class="acxsec"><div class="acxbody">' +
-    '<div id="dbMap" class="dbmap"></div>' +
-    '<div style="margin-top:9px;">' + (pr.address
-      ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '" target="_blank" style="font-weight:700;">&#128205; ' + esc(pr.address) + ' &#8599;</a>'
-      : '<span class="axnote">No address on file \u2014 tap the pencil to add one.</span>') + '</div>' +
-  '</div></div>';
   /* ---- job details ---- */
   html += '<h3 class="projsec" style="margin:20px 0 10px;">Job Details</h3>' +
   '<div class="acxsec"><div class="acxbody"><div class="ackv">' +
@@ -9484,7 +9472,15 @@ function openProject(id){
     ((pr.phone || pr.email) ? '<span class="hcontact">' +
       (pr.phone ? '<a class="hph" href="tel:' + _heroTel + '">' + esc(pr.phone) + '</a>' : '') +
       (pr.email ? '<a class="hem" href="mailto:' + esc(pr.email) + '">' + esc(pr.email) + '</a>' : '') +
-    '</span>' : '');
+    '</span>' : '') +
+    '<span class="hmanage"><a href="#" id="dbSwitchPrim">Switch Primary</a> \u00b7 <a href="#" id="dbAddContact">Add contact</a></span>' +
+    (function(){
+      var _xc = (parseCkAll(pr).contacts || []);
+      return _xc.length ? '<span class="hxtras">' + _xc.map(function(c){
+        return '<span>&#128100; ' + esc(c.name || '\u2014') +
+          (c.phone ? ' \u00b7 ' + esc(c.phone) : '') + (c.email ? ' \u00b7 ' + esc(c.email) : '') + '</span>';
+      }).join('') + '</span>' : '';
+    })();
   var _hero = document.querySelector('#projectView .projinfo');
   if(_hero && typeof LJ_SPINE !== 'undefined'){
     _hero.style.setProperty('--spn', LJ_SPINE[normStage(pr.stage)] || '#dbe7f7');
@@ -41321,6 +41317,47 @@ document.getElementById('phGrid').addEventListener('click', function(e){
   if(!c) return;
   var pid = c.getAttribute('data-pid');
   if(pid && typeof openProject === 'function') openProject(pid);
+});
+})();
+</script>
+<style id="cr-keeper2-styles">
+/* ── Keeper 2/3 (build 348): location card + hero contact management ── */
+.dbmtabs{display:flex;align-items:center;gap:0;border:1px solid #3a3f47;border-radius:8px;overflow:hidden;
+  background:rgba(16,18,24,.85);margin-bottom:8px;width:max-content;max-width:100%;}
+.dbmtabs button{background:none;border:0;color:#aab1ba;font:700 10.5px 'Segoe UI',Arial,sans-serif;
+  padding:6px 12px;cursor:pointer;}
+.dbmtabs button.on{background:#d4a017;color:#17181b;}
+.dbmtabs .dbmdir{margin-left:6px;padding:6px 11px;font:700 10.5px 'Segoe UI',Arial,sans-serif;
+  color:#f5d061;text-decoration:none;border-left:1px solid #3a3f47;}
+.hmanage{flex-basis:100%;font:700 10.5px 'Segoe UI',Arial,sans-serif;margin-top:2px;}
+.hmanage a{color:#9aa0a8;text-decoration:none;}
+.hmanage a:hover{color:#f5d061;}
+.hxtras{flex-basis:100%;display:flex;flex-direction:column;gap:1px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;margin-top:2px;}
+body.claim-insurance .hmanage a{color:#8b95a5;}
+</style>
+<script id="cr-keeper2-script">
+(function(){
+'use strict';
+var satLayer = null;
+document.addEventListener('click', function(e){
+  var b = e.target.closest('.dbmtabs button[data-dbm]');
+  if(!b) return;
+  var wrap = b.closest('.dbmtabs');
+  Array.prototype.forEach.call(wrap.querySelectorAll('button'), function(x){
+    x.classList.toggle('on', x === b);
+  });
+  if(typeof L === 'undefined' || !window.dbMiniMap) return;
+  try{
+    if(b.getAttribute('data-dbm') === 'sat'){
+      if(!satLayer){
+        satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          { maxZoom: 19, attribution: 'Esri' });
+      }
+      satLayer.addTo(window.dbMiniMap);
+    } else if(satLayer){
+      window.dbMiniMap.removeLayer(satLayer);
+    }
+  }catch(err){}
 });
 })();
 </script>
