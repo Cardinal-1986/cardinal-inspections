@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 362 &#8212; Pipeline circle labels made readable &#8212; counts in white, stage names light, dollar lines lifted off the dark ground. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 364 &#8212; Community cards get depth and a slate-gradient edge; desktop scrolling fixed (a modal scroll lock was surviving navigation). </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -6131,6 +6131,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </span>
     <button class="btn" id="saveBtn">Save</button>
     <button class="btn dark" id="printBtn">Print / PDF</button>
+     <button class="btn dark" id="dlBtn">&#11015; Download</button>
     <button class="btn dark" id="emailDocBtn">&#128231; Email to client</button>
     <button class="btn dark" id="sigBtn" style="display:none;">&#9997;&#65039; Client signature</button>
     <button class="btn dark" id="shareBtn">&#128279; Share link</button>
@@ -12048,6 +12049,9 @@ function setHeaderJobMenu(on){
   setTimeout(fixHeadPad, 40);
 }
 function hideAllViews(){
+  /* Release any scroll lock a modal or viewer left behind (build 364) — otherwise
+     the next view opens unscrollable on desktop. */
+  if(document.body.style.overflow === 'hidden') document.body.style.overflow = '';
   /* Self-heal: whenever we're about to show a main-app view, make sure the
      site header is visible. Anything upstream that left it hidden gets fixed here. */
   var _hd = document.querySelector('header.site');
@@ -15841,6 +15845,12 @@ function restorePrintMarks(d){
     t.removeAttribute('data-origtoc');
   });
 }
+document.getElementById('dlBtn').addEventListener('click', async function(){
+  await saveCurrent();
+  var t = (document.getElementById('docTitle') && document.getElementById('docTitle').value) ||
+          (window.currentDoc && window.currentDoc.title) || 'Cardinal document';
+  if(window.CardinalDownload) window.CardinalDownload.frame(frame, t);
+});
 document.getElementById('printBtn').addEventListener('click', async function(){
   await saveCurrent(); /* save first, so the stored document stays clean */
   try{
@@ -27619,6 +27629,7 @@ v.innerHTML =
 '<div class="ce-wrap">' + bodyHtml + '</div>' +
 '<div class="ce-actions">' +
 '<button data-act="print">\uD83D\uDDA8 Print</button>' +
+'<button data-act="download">\u2B07 Download</button>' +
 (contract.share_token
 ? '<button data-act="copy">\uD83D\uDD17 Copy Link</button>' +
 '<button data-act="mail" class="primary">\u2709 Send by Email</button>'
@@ -27641,6 +27652,7 @@ e.stopPropagation();
 var act = btn.dataset.act;
 if(act === 'close')      close();
 else if(act === 'print') doPrint();
+else if(act === 'download') doDownload();
 else if(act === 'copy')  doCopy();
 else if(act === 'mail')  doMail();
 else if(act === 'sign')  doSign();
@@ -27658,6 +27670,14 @@ CURRENT = null;
 function doPrint(){
 try{ window.print(); }
 catch(e){ alert('Could not open print dialog: ' + (e.message || e)); }
+}
+function doDownload(){
+if(!window.CardinalDownload) return;
+var v = document.getElementById(VIEW_ID);
+var body = v && v.querySelector('.ce-wrap');
+var name = (CURRENT && (CURRENT.title || CURRENT.name)) ||
+('Cardinal Contract' + (CURRENT && CURRENT.number ? ' #' + CURRENT.number : ''));
+if(body) window.CardinalDownload.html(body.innerHTML, name);
 }
 function shareUrl(){
 if(!CURRENT || !CURRENT.share_token) return '';
@@ -38799,7 +38819,8 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 
 
 <style id="cr-ch2-styles">#communityHubView{display:none;min-height:100vh;padding:0 0 40px;background:#e9ecef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
-#communityHubView.cr-ch2-live{background:#e9ecef !important;color:#2d3338;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#communityHubView.cr-ch2-live{background:#e9ecef !important;color:#2d3338;overflow:visible;-webkit-overflow-scrolling:touch}
+body.viewing-community-hub{overflow-y:auto !important}
 body.viewing-community-hub section.history{display:none}
 #cr-ch2{--ground:#e9ecef;--card:#fafbfc;--line:#b8c2ca;--line2:#ccd4da;--ink:#2d3338;--mute:#6f7a83;
 --acc:#b06a42;--acc2:#8d5231;--bar:#3b444c;--chip:#dbe1e6;--chipink:#4e5a63;--good:#3a6b4f;--goodbg:#d5e6db;
@@ -38818,11 +38839,19 @@ border-bottom:3px solid transparent;margin-bottom:-1px}
 .cc-tabs button.on{border-bottom-color:var(--acc);background:var(--card);border-radius:7px 7px 0 0}
 .cc-sep{font:800 21px Georgia,serif;color:var(--bar);padding:0 2px;line-height:1}
 .cc-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
-.cc-kpi div{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:7px;padding:10px 13px;min-width:0}
+.cc-kpi div{background:linear-gradient(180deg,#ffffff,#f2f5f8);border:1px solid var(--line);
+border-left:3px solid var(--acc);border-radius:8px;padding:10px 13px;min-width:0;
+box-shadow:0 5px 13px rgba(45,51,56,.12),0 1px 2px rgba(45,51,56,.08)}
 .cc-kpi .k{font:800 8.5px var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--mute)}
 .cc-kpi .v{font:700 19px var(--mono);color:var(--ink);margin-top:2px}
 .cc-mine{font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:-8px 2px 10px;text-align:right}
-.cc-card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:14px;min-width:0}
+.cc-card{background:linear-gradient(180deg,#ffffff,#f2f5f8);border:1px solid transparent;border-radius:10px;
+padding:13px 15px;margin-bottom:14px;min-width:0;position:relative;
+background-origin:border-box;
+background-image:linear-gradient(180deg,#ffffff,#f2f5f8),linear-gradient(140deg,#3b444c,#7d8b97 45%,#b8c2ca);
+background-clip:padding-box,border-box;
+box-shadow:0 6px 16px rgba(45,51,56,.13),0 1px 3px rgba(45,51,56,.10)}
+.cc-card:hover{box-shadow:0 10px 24px rgba(45,51,56,.17),0 2px 5px rgba(45,51,56,.12)}
 .cc-fh{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
 .cc-fh b{font:800 13px inherit;color:var(--acc2)}
 .cc-cnt{font:700 10px var(--mono);background:var(--chip);color:var(--chipink);border-radius:999px;padding:2px 8px}
@@ -38869,13 +38898,18 @@ border-radius:4px;background:var(--chip);color:var(--chipink);white-space:nowrap
 .cc-rule{font:800 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--mute);margin:20px 0 10px;
 padding-top:12px;border-top:1px solid var(--line)}
 #cr-ch2 .tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
-#cr-ch2 .tools button{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
-border-radius:8px;padding:12px 14px;text-align:left;color:var(--ink)}
+#cr-ch2 .tools button{display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,#ffffff,#f2f5f8);
+border:1px solid var(--line);border-radius:9px;padding:12px 14px;text-align:left;color:var(--ink);
+box-shadow:0 5px 13px rgba(45,51,56,.11),0 1px 2px rgba(45,51,56,.07)}
+#cr-ch2 .tools button:hover{box-shadow:0 9px 20px rgba(45,51,56,.16)}
 #cr-ch2 .tools button.primary{border-color:var(--acc);border-left:3px solid var(--acc)}
 #cr-ch2 .tools .i{font-size:18px;flex:0 0 auto}
 #cr-ch2 .tools .x b{display:block;font:800 13px inherit}
 #cr-ch2 .tools .x small{display:block;font-size:10.5px;color:var(--mute);margin-top:1px}
-#cr-ch2 .pc{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--acc);border-radius:8px;padding:13px 15px}
+#cr-ch2 .pc{background:linear-gradient(180deg,#ffffff,#f2f5f8);border:1px solid var(--line);
+border-top:3px solid var(--acc);border-radius:9px;padding:13px 15px;
+box-shadow:0 6px 16px rgba(45,51,56,.13),0 1px 3px rgba(45,51,56,.09)}
+#cr-ch2 .pc:hover{box-shadow:0 10px 24px rgba(45,51,56,.17)}
 #cr-ch2 .pc .chip{font:700 9px var(--mono);background:var(--chip);color:var(--chipink);border-radius:999px;padding:2px 8px}
 #cr-ch2 .pnums{display:flex;flex-wrap:wrap;gap:10px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line2)}
 #cr-ch2 .pnums div{min-width:70px;flex:1}
@@ -38899,7 +38933,9 @@ border-radius:8px;padding:12px 14px;text-align:left;color:var(--ink)}
 .cc-repnm{display:inline}
 .cc-tbl,.cc-tbl thead,.cc-tbl tbody,.cc-tbl tr,.cc-tbl td{display:block;width:100%}
 .cc-tbl thead{display:none}
-.cc-tbl tbody tr{background:var(--ground);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:7px;padding:9px 11px;margin-bottom:9px}
+.cc-tbl tbody tr{background:linear-gradient(180deg,#ffffff,#f2f5f8);border:1px solid var(--line);
+border-left:3px solid var(--acc);border-radius:8px;padding:9px 11px;margin-bottom:9px;
+box-shadow:0 4px 11px rgba(45,51,56,.11)}
 .cc-tbl tbody tr:hover td{background:none}
 .cc-tbl td{border-top:0;padding:3px 0;display:flex;align-items:flex-start;gap:8px}
 .cc-tbl td::before{content:attr(data-l);font:800 8px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);flex:0 0 56px;padding-top:4px}
@@ -42263,6 +42299,53 @@ async function paint(){
 }
 window.renderPunchStrips = function(){ paint().catch(function(){}); };
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(window.renderPunchStrips, 1200); });
+})();
+</script>
+<script id="cr-dl-script">
+(function(){
+'use strict';
+function safe(name){
+  return String(name || 'Cardinal document').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 90);
+}
+/* Save the rendered document as a standalone .html file — opens in any browser,
+   prints to PDF from there, and keeps working offline. */
+function downloadHtml(html, title){
+  try{
+    var doc = '<!doctype html><html><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + safe(title) + '</title></head><body>' + html + '</body></html>';
+    var blob = new Blob([doc], { type:'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = safe(title) + '.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
+    return true;
+  }catch(e){
+    alert('Could not download: ' + (e.message || e));
+    return false;
+  }
+}
+function downloadFrame(frame, title){
+  try{
+    var d = frame && (frame.contentDocument || (frame.contentWindow && frame.contentWindow.document));
+    if(!d) return false;
+    return downloadHtml(d.documentElement ? d.documentElement.outerHTML : d.body.innerHTML, title);
+  }catch(e){ alert('Could not download: ' + (e.message || e)); return false; }
+}
+function downloadUrl(url, title){
+  var a = document.createElement('a');
+  a.href = url; a.download = safe(title); a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ a.remove(); }, 1500);
+  return true;
+}
+window.CardinalDownload = Object.assign(window.CardinalDownload || {}, {
+  html : downloadHtml,
+  frame: downloadFrame,
+  url  : downloadUrl,
+  safe : safe
+});
 })();
 </script>
 </body>
