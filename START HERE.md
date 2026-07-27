@@ -2,7 +2,7 @@
 
 **Read this before doing anything.**
 
-**Current build: 323 · July 26, 2026 · ~2.19 MB · 83 inline script blocks**
+**Current build: 332 · July 27, 2026 · ~2.21 MB · 85 inline script blocks**
 
 ---
 
@@ -48,7 +48,9 @@ Rules that are non-negotiable:
 4. jsdom functional harness: boot the file, mock `cacheProjects`/`currentUser`/chainable `sb`, shim `offsetParent` (`Object.defineProperty(HTMLElement.prototype,'offsetParent',{get(){return this.parentNode}})` — jsdom has no layout), filter jsdom "Not implemented" noise (canvas, scrollTo) without failing on it, then exercise the changed surface with **structural proofs** (`matches()`, parentage, counts) — never programmatic clicks alone, which succeed on hidden elements.
 5. **Harnesses must replicate the real structure.** A harness seeded from the author's assumption validated pure fiction twice today (`jabox` vs the real `.jatile` grid). Read the real builder, copy its markup and its delegation, then test.
 6. **Dupe-API check** (new after build 308): no `window.Cardinal*` may be plainly assigned twice. Grep `window\.(Cardinal\w+)\s*=` — any name appearing more than once must use `Object.assign(window.X || {}, {...})`.
-7. Stage to outputs **only on green**.
+7. **Negative control before belief** (new, build 330): a gate that has never failed proves nothing. Run the same gate against the *previous* build and confirm it fails there before trusting a pass. Build 330's first attempt staged a stale file containing none of the fix while the gate reported green — it was matching an unrelated query elsewhere in the app.
+8. **Assert on the artifact you just wrote.** Check the marker string is in the output file, not just that the patch script "ran".
+9. Stage to outputs **only on green**.
 
 **jsdom's limit is unchanged: it proves *does this work*, never *does this look right*.** Misalignment testing is Menu → 🩺 Self Check on the phone plus Theo's eyes. Say so instead of pretending.
 
@@ -121,6 +123,8 @@ The bottom bar (`#pwaNav`) hosts the portal switcher chip, the **health-badge sh
 - **Legacy per-claim themes fire only with a client open** — correct home + wrong client page is the signature. Grep `body.claim-` before trusting any chrome fix.
 - **Inline z-index supremacy strands overlays.** Views pinned at inline z-155 put menus (95) and sheets (150) behind the page. If a view sits below the header spatially, it doesn't need stacking supremacy — lower it.
 - **Dead layout serving hidden elements.** `.projinfo h2` reserved 170px of padding for buttons another rule hides with `!important` — invisible until the layout around it changed, then every name wrapped. When an element is retired, retire the space that was reserved for it.
+- **A green gate proves nothing until it has been seen to fail.** Build 330 staged a file with none of the fix in it; the gate passed on an unrelated query. Negative-control every gate against the prior build.
+- **Dynamic elements aren't in the markup.** `communityHubView` is created by `CardinalCommunityHub.show()`, so a harness that sets `getElementById('communityHubView').style` is writing to null and testing nothing. Navigate the way the app navigates.
 - **Timid visual increments read as ignored requests.** Three title bumps of 4–6px each; the user asked five times. For approved sizes: preview options in a real mock, ship the pick as a fixed value.
 - **`getElementById` on duplicated ids**: safe when the reads are `doc.`/`contentDocument.` scoped to the isolated contract iframes (restoreVeil, estTotal) — fragile everywhere else. The shared-template id pattern (`estTotal` ×6 etc.) works one-live-at-a-time; don't add main-document reads against those names.
 - Earlier classes still apply: never guess a function/selector name; verify with a good pattern; hide the base in CSS not JS; don't mount inside `#tab-overview`; re-entrancy guards need content signatures.
@@ -139,28 +143,33 @@ The bottom bar (`#pwaNav`) hosts the portal switcher chip, the **health-badge sh
 - Estimate editor end to end on device: hydrated client + address (316), no sway (316), scrolls clear (318)
 - Client head card one-line name + aligned cover (320)
 
-**Diagnosed, designed, not built:**
-- **Community tab-tiles open invisibly**: Estimates / Documents / Tasks tiles on community clients call `showTab()` into the base profile the takeover hides. Fix designed (suspend-and-return with a "back to bid view" pill) — build it before or with the community feature pass.
-
-**Admin-only (Theo, ~15 min, two of these are down features):**
+**Admin-only (Theo — these are the real blockers now):**
+- **ABC Supply 401**: app registered ("Cardinal Resource App"), credentials in Vercel, `api/abc.js` deployed and reachable, but ABC's auth server rejects the client-credentials pair on **both** sandbox and production. Next: clean re-paste of both values via the portal's clipboard icons (check they aren't swapped), redeploy; if it persists, email **apisupport@abcsupply.com** — freshly created apps may need enablement. Also grab Ship-To / Bill-To numbers from an invoice, myABCsupply, or the branch.
 - OpenAI credit (Coach fallback 429s) · Resend domain DNS (digest 403s) · Gemini key rotation + billing · repo junk deletion (`api/api/`, `api/index.html`, `api/vercel.json`) · contract PDF masters → `docs/`
+- **$10,000,000 test value**: it is *database data*, not code (zero occurrences in the file) — edit or delete that client's bid amount in the app.
 
 **Housekeeping:**
-- $10,000,000 Approved value in retail pipeline (test data; scrub on request)
-- "Get on the calendar" shows $0 while the job won at $10,000 — sched rows don't read the accepted estimate total
-- Lead claim_type stamping from the active portal (+ New Lead creates typeless clients)
+- ~~$0 scheduling rollup~~ — fixed at 330
+- ~~Claim-type stamping~~ — fixed at 331 (**existing** typeless clients are NOT backfilled; a backfill would have to guess and could mislabel — separate decision)
 - Rotate the Gemini key; attach billing (free tier 503s)
 - Delete repo junk: `api/api/`, `api/index.html`, `api/vercel.json`
 - Contract PDF masters upload to `docs/`
 - Confirm Supabase point-in-time recovery is on
 - Confirm "Est. 2023" on the landing
-- Community analytics, activity feed and calendar (removed with the old hub) still not rebuilt
-- Ghost back-button reads (`ljBackBtn`, `cliBackBtn`, five more) are null-guarded dead code — delete on a slow day
+- Community activity feed is **team-wide**; a community-only filter is an optional enhancement
 - Old landing markup: never paints (309) but still in the file for its boot writers — delete both together on a slow day
 - Retail print styles: **required inside retail-B** — dark invoices to customers are not acceptable
 - Header title is a **fixed 34px by user approval** (preview A, build 322) — do not convert back to viewport math
 
 ---
+
+## ABC Supply integration (build 327) — where it stands
+
+`api/abc.js` is a serverless proxy using **Client Credentials for Individuals and Businesses**. Env: `ABC_CLIENT_ID`, `ABC_CLIENT_SECRET`, `ABC_ENV` (`sandbox`|`production`), optional `ABC_API_BASE` if the portal's host differs from the assumed `sandbox.api.partners.abcsupply.com` / `api.partners.abcsupply.com` (**the one value never verified from outside**). Tokens live 30 min, cached 25. In-app: burger → 🧱 ABC Supply.
+
+Business-model facts that shape the code: **Ship-To** = pricing and ordering account; **Bill-To** = frequents/recents/invoices; branches set their own prices and offerings, so availability should be checked before pricing; a **$0 price is a valid response** meaning the branch prices manually. Orders must be validated in their sandbox with ABC's API support before production.
+
+Phase 2 when credentials work: tune response-shape mappings against real sandbox data, put "+ ABC Supply" inside the estimate editor line items, then ordering + webhooks to the production board. A "Find my accounts" button via Search Accounts would remove the manual Ship-To/Bill-To entry.
 
 ## Working with Theo
 
@@ -176,4 +185,4 @@ Unchanged and reaffirmed: never state an inferred fact as fact; terse honest rep
 | `cardinal_build_log.md` | One line per build (298–308 appended) |
 | `cardinal_session_summary.md` | Narrative of the July 26 session |
 
-*Written at build 308, refreshed at 323. Update the build number and open items when things change.*
+*Written at build 308, refreshed at 332. Update the build number and open items when things change.*

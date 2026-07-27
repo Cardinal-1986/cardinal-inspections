@@ -2,7 +2,7 @@
 
 **Purpose:** a map of what already exists, so nobody (human or AI) builds a second version of something that's already here. Rule: **read this before proposing any new feature.** If something related exists, extend it.
 
-*Last updated: build 323 · July 26, 2026. The splice/module pipeline is gone — the file is patched directly; see START_HERE for the workflow.*
+*Last updated: build 332 · July 27, 2026. The splice/module pipeline is gone — the file is patched directly; see START_HERE for the workflow.*
 
 ---
 
@@ -44,10 +44,12 @@ Unchanged from 297 (base directory, profile `#projectView`, create/delete, porta
 | New Bid (incl. **Bid Due Date** → `lead.bid_due_at`) | `cr-nbid` — `CardinalNewBid.open()`; modal z-10500, contained scroll |
 | Partners directory (masked, GC confidential, **Type picker exists in its editor**) | `cr-cpartners` — vocabulary `nonprofit/property_manager/general_contractor` |
 | Properties / Work orders | `cr-cprop` / `cr-wo` |
+| **Analytics** (admin-only) | `cr-can` — `CardinalCommunityAnalytics{open,close,render}`; tools tile `data-go="analytics"` |
+| **Activity / Calendar tiles** | tools tiles → the app's existing `openActivityFeed()` / `openScheduleBoard()` — no duplicate surfaces |
 
 Home details: due ladder counts down from `bid_due_at` (proven live); strip admin-total / sales-own / hidden-for-production; partner cards group by `partner_type` via a `select('name,partner_type')` read (confidential fields never fetched); stage labels render-time only (`Lead→Bid Requested` etc.) — never translate the stored value. Masthead removed; chrome carries title+clock. `footer.site` hidden while open.
 
-Client page details: real takeover (`.cr-cc-own` direct-child hide + dark ground + `body.cr-cc-open`); **Job Menu proxies the `.jatile` grid** (tile.click() bubbles to the delegated handler; retries while base builds); **Location and Reviews are adopted live base nodes** with a stash-and-return lifecycle released on every exit path. Bids ARE estimates — same table, same pipeline; never build a second pricing tool. **KNOWN GAP:** tab-based Job Menu tiles (Estimates/Documents/Tasks) open invisibly behind the takeover — see START_HERE open items.
+Client page details: real takeover (`.cr-cc-own` direct-child hide + dark ground + `body.cr-cc-open`); **Job Menu proxies the `.jatile` grid** (tile.click() bubbles to the delegated handler; retries while base builds); **Location and Reviews are adopted live base nodes** with a stash-and-return lifecycle released on every exit path. Bids ARE estimates — same table, same pipeline; never build a second pricing tool. **Tab tiles use suspend-and-return since 326**: anything outside `['comms','board','photos']` releases adopted nodes, drops the takeover and raises `#cr-cc-return` ("❄ Back to bid view"); suspension is keyed to the captured project id, not `loadedFor`.
 
 ---
 
@@ -58,6 +60,8 @@ Content modules unchanged (`cardinal_truth_home`, `insurance_clients`, `sol_inta
 ---
 
 ## Estimates
+
+**New Lead stamps claim type from the active portal since 331** — `crmNow()` decides the default radio; Production/Sales leave it "unknown". Pre-331 typeless clients are not backfilled.
 
 **Editor accepts a project id or object since 316** — `openEditor(pid)` hydrates name/address/title from `cacheProjects` itself; Price-it and the manual picker both pass ids. **Manual estimates from the global surface since 314**: burger → AI Estimates → New Manual Estimate → searchable client picker → editor.
 
@@ -82,9 +86,17 @@ Anon probe: zero rows on all sensitive tables. Presentation gating (production: 
 
 ---
 
+## ABC Supply (build 327)
+
+`api/abc.js` proxy + `cr-abc` sheet (burger → 🧱 ABC Supply). `window.CardinalABC{open,close}`. Actions: `status`, `searchItems`, `priceItems`, `frequents`, `recents`, `templates`, `branches`, `itemAvailability`, `placeOrder`, `getOrder`. Ship-To/Bill-To/Branch persist in `localStorage['cardinal.abc']`. **A $0 price is valid** — the branch prices it manually; the UI says so rather than showing free. Blocked on credentials (401 from ABC on both environments).
+
+## Money math (community)
+
+`bidAmt(pr)` = `checklist.lead.bid_amount` **or** the project's estimate total from `estTot` (fetched once per project-set; accepted status preferred over newer drafts) **or** 0. This one function feeds the due ladder, "Get on the calendar", "Invoice the partner", partner awarded totals and Analytics — fix money bugs there, not per-block.
+
 ## Everything else
 
-Photos, Inspections, Documents/contracts (isolated iframes — duplicated template ids like `restoreVeil`/`estTotal` resolve per-iframe; keep main-document reads away from those names), Production board + punch, Sales Floor + Coach, Scheduling, Admin/observability (Self Check 🩺 is the only misalignment test), QoL modules — unchanged from the 297 inventory. Known-dead-but-safe: seven null-guarded ghost back-button reads from removed layouts.
+Photos, Inspections, Documents/contracts (isolated iframes — duplicated template ids like `restoreVeil`/`estTotal` resolve per-iframe; keep main-document reads away from those names), Production board + punch, Sales Floor + Coach, Scheduling, Admin/observability (Self Check 🩺 is the only misalignment test), QoL modules — unchanged from the 297 inventory. Eight ghost back-button handlers were deleted at 332; `galBackBtn`, `commsBackBtn`, `apBackBtn`, `icBackBtn`, `jdBackBtn`, `payBackBtn`, `rlBackBtn`, `tskBackBtn` are **live** — don't "clean" those.
 
 ---
 

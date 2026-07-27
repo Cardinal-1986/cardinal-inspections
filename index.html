@@ -2555,7 +2555,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 329 &#8212; Activity and Calendar reachable from the Community tools row. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 332 &#8212; Housekeeping: eight dead back-button handlers from retired layouts removed. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8745,7 +8745,6 @@ function renderLjDetail(){
   });
 }
 /* wiring */
-var __ljBackBtn = document.getElementById('ljBackBtn'); if(__ljBackBtn) __ljBackBtn.addEventListener('click', showHome);
 document.getElementById('ljSearch').addEventListener('input', function(){
   clearTimeout(this.__t); this.__t = setTimeout(renderLeadsView, 300);
 });
@@ -9134,7 +9133,6 @@ function renderRptProd(projs, from, to, pfrom, pto){
 }
 
 /* reports UI wiring */
-var __rptBackBtn = document.getElementById('rptBackBtn'); if(__rptBackBtn) __rptBackBtn.addEventListener('click', showHome);
 document.getElementById('rptRange').addEventListener('click', function(e){
   var chip = e.target.closest('.hstat'); if(!chip) return;
   this.querySelectorAll('.hstat').forEach(function(c){ c.classList.remove('on'); });
@@ -10227,9 +10225,15 @@ function openLeadForm(){
   document.getElementById('ldPartnerCk').checked = false;
   document.getElementById('ldPartnerWrap').style.display = 'none';
   document.getElementById('ldInsOrdLaw').checked = false;
-  /* default claim type: Don't know yet */
+  /* default claim type: follow the portal you're standing in */
+  var __ldDef = (function(){
+    try{
+      var c = (window.CardinalHeader && window.CardinalHeader.crm) ? window.CardinalHeader.crm() : '';
+      return (c === 'insurance' || c === 'community' || c === 'retail') ? c : 'unknown';
+    }catch(_){ return 'unknown'; }
+  })();
   var radios = document.querySelectorAll('input[name="ldClaimType"]');
-  radios.forEach(function(r){ r.checked = (r.value === 'unknown'); });
+  radios.forEach(function(r){ r.checked = (r.value === __ldDef); });
   updateClaimTypeUi();
   var ph = document.getElementById('ldPhones'); ph.innerHTML = ''; ph.appendChild(ldContactRow('phone'));
   var em = document.getElementById('ldEmails'); em.innerHTML = ''; em.appendChild(ldContactRow('email'));
@@ -12287,7 +12291,6 @@ function openClientsDirectory(keepFilter){
     });
   }
 })();
-var __cliBackBtn = document.getElementById('cliBackBtn'); if(__cliBackBtn) __cliBackBtn.addEventListener('click', showHome);
 var __cliHomeBtn = document.getElementById('cliHomeBtn'); if(__cliHomeBtn) __cliHomeBtn.addEventListener('click', showHome);
 document.getElementById('cliFilter').addEventListener('input', renderClientDirectory);
 document.getElementById('stgFilter').addEventListener('click', function(e){
@@ -12440,7 +12443,6 @@ function renderList(){
     ? docTable(rows)
     : '<div class="empty"><b>Nothing here yet.</b></div>';
 }
-var __listBackBtn = document.getElementById('listBackBtn'); if(__listBackBtn) __listBackBtn.addEventListener('click', showHome);
 var __listRepSel = document.getElementById('listRepSel');
 if(__listRepSel) __listRepSel.addEventListener('change', function(){
   window.__listRep = this.value;
@@ -12974,7 +12976,6 @@ function openMyProfile(){
   profileView.style.display = 'block';
   window.scrollTo(0,0);
 }
-var __profBackBtn = document.getElementById('profBackBtn'); if(__profBackBtn) __profBackBtn.addEventListener('click', showHome);
 document.getElementById('upSave').addEventListener('click', async function(){
   var first = document.getElementById('upFirst').value.trim();
   var last  = document.getElementById('upLast').value.trim();
@@ -13388,7 +13389,6 @@ function openScheduleBoard(){
   document.getElementById('boardMount').innerHTML = out;
   window.scrollTo(0,0);
 }
-var __boardBackBtn = document.getElementById('boardBackBtn'); if(__boardBackBtn) __boardBackBtn.addEventListener('click', showHome);
 document.getElementById('boardMount').addEventListener('click', function(e){
   var day = e.target.closest('.bday');
   if(day){ openApptDay(day.getAttribute('data-day')); }
@@ -13477,7 +13477,6 @@ document.getElementById('qSearchBtn').innerHTML='&#128269;<i>Search clients\u202
     if(typeof goToLanding === 'function') goToLanding();
   });
 })();
-var __actBackBtn = document.getElementById('actBackBtn'); if(__actBackBtn) __actBackBtn.addEventListener('click', showHome);
 document.getElementById('actFeedFull').addEventListener('click', function(e){
   var c = e.target.closest('.afcli[data-proj]');
   if(c) openProject(c.getAttribute('data-proj'));
@@ -16353,7 +16352,6 @@ function tmResize(file){
     fr.readAsDataURL(file);
   });
 }
-var __tmBackBtn = document.getElementById('tmBackBtn'); if(__tmBackBtn) __tmBackBtn.addEventListener('click', showHome);
 document.getElementById('tmMount').addEventListener('click', async function(e){
   var card = e.target.closest('.tmcard');
   if(!card) return;
@@ -37931,6 +37929,8 @@ var closedStamp = 0;
 var metaByName = null;
 var metaTried = false;
 var metaStamp = 0;
+var estTot = {};
+var estSig = '';
 var lastSig = '';
 var ADMINS = ['theo@cardinalrenovations.net','joan@cardinalrenovations.net'];
 var PRODS  = ['curtis@cardinalrenovations.net','scottie@cardinalrenovations.net'];
@@ -37990,7 +37990,7 @@ return window.projClaimType(pr) === 'community';
 }
 function bidAmt(pr){
 var l = lead(pr);
-return Number(l.bid_amount) || 0;
+return Number(l.bid_amount) || Number(estTot[pr.id]) || 0;
 }
 function partnerOf(pr){
 var l = lead(pr);
@@ -38038,6 +38038,35 @@ v = String(v || '').toLowerCase();
 if(v === 'pm' || v.indexOf('propert') !== -1 || v.indexOf('realty') !== -1) return 'pm';
 if(v === 'gc' || v.indexOf('contract') !== -1) return 'gc';
 return 'program';
+}
+function loadEst(){
+if(!window.sb || !window.sb.from) return;
+var ids = projects().map(function(p){ return p.id; }).filter(Boolean);
+if(!ids.length) return;
+var sig = ids.slice().sort().join(',');
+if(sig === estSig) return;
+estSig = sig;
+try{
+window.sb.from('estimates').select('project_id,total,status,created_at').in('project_id', ids).then(function(r){
+if(r && r.data){
+var best = {};
+r.data.forEach(function(row){
+var pid = row.project_id; if(!pid) return;
+var amt = Number(row.total) || 0; if(!amt) return;
+var acc = String(row.status || '').toLowerCase() === 'accepted';
+var cur = best[pid];
+if(!cur || (acc && !cur.acc) || (acc === cur.acc && String(row.created_at || '') > String(cur.at || ''))){
+best[pid] = { acc:acc, at:row.created_at, amt:amt };
+}
+});
+estTot = {};
+Object.keys(best).forEach(function(k){ estTot[k] = best[k].amt; });
+}
+metaStamp++;
+lastSig = '';
+scan();
+}, function(){ metaStamp++; });
+}catch(_){}
 }
 function loadMeta(){
 if(metaTried) return;
@@ -38414,6 +38443,7 @@ document.body.classList.add('viewing-community-hub');
 var v = ensureView();
 v.style.display = 'block';
 loadMeta();
+loadEst();
 render();
 try{ window.scrollTo({ top:0, behavior:'instant' }); }
 catch(_){ window.scrollTo(0, 0); }
