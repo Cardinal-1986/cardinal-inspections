@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 364 &#8212; Community cards get depth and a slate-gradient edge; desktop scrolling fixed (a modal scroll lock was surviving navigation). </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 365 &#8212; Client Projects scrolls sideways for real &#8212; the gallery rule now targets the card rows, not the section wrapper. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41771,15 +41771,21 @@ document.addEventListener('click', function(e){
 section.history > .viewhead{background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
 section.history > .subnote{color:#9aa0a8;}
-/* Client Projects as a horizontal gallery on desktop (build 357) — 10 newest, scroll for the rest of the row */
+/* Client Projects rides as a horizontal gallery on desktop (build 365) — the card
+   rows scroll sideways; the mount itself stays a normal stacked column. */
 @media (min-width:901px){
-  #historyMount{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:14px;padding:4px 2px 12px;
+  #historyMount .projgrid{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:14px;
+    padding:4px 2px 14px;margin:8px 0 18px;grid-template-columns:none;
     scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
-  #historyMount > *{flex:0 0 300px;max-width:300px;scroll-snap-align:start;}
-  #historyMount > *:nth-child(n+11){display:none;}
-  #historyMount::-webkit-scrollbar{height:8px;}
-  #historyMount::-webkit-scrollbar-thumb{background:#3a3f47;border-radius:999px;}
-  #historyMount::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:999px;}
+  #historyMount .projgrid > .pcard{flex:0 0 250px;max-width:250px;width:250px;
+    scroll-snap-align:start;aspect-ratio:4/3;}
+  #historyMount .projgrid > .pcard:nth-child(n+11){display:none;}
+  #historyMount .projgrid.loop > .pcard:nth-child(n+11){display:block;}
+  #historyMount .projgrid > .seeall{flex:0 0 auto;display:flex;align-items:center;padding:0 10px;}
+  #historyMount .projgrid::-webkit-scrollbar{height:9px;}
+  #historyMount .projgrid::-webkit-scrollbar-thumb{background:#4a5058;border-radius:999px;}
+  #historyMount .projgrid::-webkit-scrollbar-thumb:hover{background:#5d646e;}
+  #historyMount .projgrid::-webkit-scrollbar-track{background:rgba(255,255,255,.05);border-radius:999px;}
 }
 </style>
 <script id="cr-kphome-script">
