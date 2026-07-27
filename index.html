@@ -1759,24 +1759,28 @@ body.restoring #restoreVeil{display:flex;}
 .ljrail{display:none;}
 .ljrhead{font:800 15px 'Segoe UI',Arial,sans-serif;color:#f5d061;margin-bottom:8px;}
 .ljcard{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;
-  border-radius:13px;margin-bottom:11px;display:flex;align-items:center;gap:11px;
-  padding:10px 12px 10px 15px;cursor:pointer;position:relative;
+  border-radius:13px;margin-bottom:12px;display:flex;align-items:stretch;cursor:pointer;position:relative;
   box-shadow:0 7px 18px rgba(0,0,0,.45),0 2px 5px rgba(0,0,0,.35);}
 .ljcard::before{content:'';position:absolute;left:0;top:8%;height:84%;width:3px;border-radius:3px;
   background:var(--spn,#dbe7f7);box-shadow:0 0 6px var(--spn,#dbe7f7),0 0 14px var(--spn,#dbe7f7);}
-.ljcard.sel{box-shadow:0 0 0 2px #d4a017,0 7px 18px rgba(0,0,0,.45);}
-.ljmain{flex:1;min-width:0;}
-.ljnm{font:800 14.5px 'Segoe UI',Arial,sans-serif;
+.ljcard.sel{border-color:#d4a017;}
+.ljrl{flex:0 0 84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 6px;position:relative;}
+.ljrl::after{content:'';position:absolute;right:0;top:10%;height:80%;width:1px;background:#3a3f47;}
+.ljmc{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font:800 11px ui-monospace,Menlo,monospace;color:#15171b;background:var(--slc,#8a93a1);margin-bottom:3px;}
+.ljkl{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#9aa0a8;}
+.ljkv{font:800 11.5px 'Segoe UI',Arial,sans-serif;color:#e9e6df;}
+.ljmain{flex:1;min-width:0;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;}
+.ljnm{font-weight:800;font-size:14.5px;
   background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
 .ljpo{font-weight:800;background:linear-gradient(100deg,#d0564a,#caa030);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#caa030;opacity:.9;}
-.ljl2,.ljl3{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;margin-top:2px;}
-.ljrep{color:#e8c23a;font-weight:800;}
-.ljl4{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6d747e;margin-top:3px;}
-.ljl4 b{color:#c8cdd4;}
-.ljcta{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;}
-.ljbtn{width:36px;height:36px;border:1px solid #3a3f47;border-radius:10px;background:#2a2e35;
+.ljad{font-size:11.5px;color:#9aa0a8;}
+.ljct{font-size:10.5px;color:#b8bec7;margin-top:3px;}
+.ljrep{font-size:10.5px;font-weight:800;color:#e8c23a;}
+.ljcta{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;align-self:center;margin-right:11px;}
+.ljbtn{width:36px;height:36px;border:1px solid #4a4030;border-radius:10px;background:rgba(212,160,23,.08);
   display:flex;align-items:center;justify-content:center;text-decoration:none;}
 .ljbtn svg{width:17px;height:17px;stroke:#f5d061;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 .ljempty{border:1px dashed #4a4f58;border-radius:11px;padding:14px;text-align:center;color:#8b929c;
@@ -1805,29 +1809,38 @@ body.restoring #restoreVeil{display:flex;}
 .ljopt .cnt{margin-left:auto;font:700 10px ui-monospace,Menlo,monospace;color:#6d747e;}
 .ljdetail{display:none;background:#1a1d22;border:1px solid #2c3038;border-radius:12px;overflow:hidden;
   position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
-.ljprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px 0;}
-.ljpname{font:800 19px 'Segoe UI',Arial,sans-serif;
+.ljprow{display:flex;align-items:center;gap:10px;padding:14px 16px 0;}
+.ljpname{flex:1;min-width:0;font:800 19px Georgia,'Times New Roman',serif;
   background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
-.ljpsub{padding:4px 16px 0;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
-.ljpact{display:flex;gap:8px;padding:12px 16px;flex-wrap:wrap;}
-.ljfacts{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 16px 12px;}
-.ljfact{background:#22262d;border:1px solid #2c3038;border-radius:10px;padding:8px 10px;}
-.ljfact span{display:block;font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#6d747e;margin-bottom:3px;}
-.ljfact b{font:800 13px 'Segoe UI',Arial,sans-serif;color:#e9e6df;}
-.ljptabs{display:flex;border-bottom:2px solid #d4a017;position:sticky;top:0;background:#1a1d22;z-index:2;}
-.ljptab{flex:1;text-align:center;padding:10px 6px;font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8a919b;cursor:pointer;}
-.ljptab.on{color:#f5d061;box-shadow:inset 0 -3px 0 #d4a017;}
-.ljframe{margin:12px 16px 16px;border:1px solid #2c3038;border-radius:10px;overflow:hidden;}
-.ljmapframe{width:100%;height:380px;border:0;display:block;}
-.ljcomms{padding:6px 16px 16px;}
-.ljcmsg{margin:10px 0;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#c8cdd4;line-height:1.5;}
-.ljcmsg .who{color:#f5d061;font-weight:800;}
-.ljcmsg .when{color:#6d747e;font-size:10.5px;margin-left:6px;}
+.ljmpill{display:inline-block;font:800 10.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;
+  text-transform:uppercase;color:#15171b;border-radius:999px;padding:4px 14px;background:var(--slc,#8a93a1);}
+.ljpsub{padding:2px 16px 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
+.ljpsub .po{color:#d8a94f;font-weight:800;}
+.ljpact{display:flex;gap:8px;padding:0 16px 13px;}
+.ljab{border:1px solid #4a4030;background:rgba(212,160,23,.08);color:#f5d061;border-radius:10px;
+  padding:8px 10px;display:flex;gap:7px;align-items:center;justify-content:center;
+  font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;text-decoration:none;}
+.ljab svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.ljab.pri{flex:1;background:#d4a017;color:#17181b;border-color:transparent;}
+.ljfacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 13px;}
+.ljfact{background:#2a2e35;border:1px solid #3a3f47;border-radius:10px;padding:8px 10px;}
+.ljfact span{display:block;font:700 8.5px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9aa0a8;}
+.ljfact b{display:block;font:800 13px 'Segoe UI',Arial,sans-serif;color:#e9e6df;margin-top:2px;}
+.ljmap{position:relative;margin:0 16px 16px;border:1px solid #3a3f47;border-radius:12px;overflow:hidden;}
+.ljmaptabs{position:absolute;top:9px;left:9px;display:flex;border:1px solid #3a3f47;border-radius:8px;overflow:hidden;background:rgba(16,18,24,.85);z-index:2;}
+.ljmaptabs button{background:none;border:0;color:#aab1ba;font:700 10.5px 'Segoe UI',Arial,sans-serif;padding:6px 11px;cursor:pointer;}
+.ljmaptabs button.on{background:#d4a017;color:#17181b;}
+.ljmapframe{width:100%;height:300px;border:0;display:block;}
+.ljmap.cms{border-color:transparent;background:none;overflow:visible;}
+.ljmap.cms .ljmapframe{display:none;}
+.ljcomms{display:none;}
+.ljmap.cms .ljcomms{display:block;padding:46px 0 0;}
+.ljcmsg{background:#2a2e35;border:1px solid #3a3f47;border-radius:10px;padding:8px 10px;margin-bottom:7px;
+  font:600 12px 'Segoe UI',Arial,sans-serif;color:#c8cdd4;line-height:1.5;}
+.ljcmsg .who{font-weight:800;color:#f5d061;font-size:11px;}
+.ljcmsg .when{color:#6d747e;font-size:10.5px;margin-left:6px;font-weight:600;}
 .ljsummary{padding:16px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
-.ljrank{display:inline-flex;gap:2px;vertical-align:middle;}
-.ljrank i{width:10px;height:10px;border-radius:2px;background:#3a3f47;display:inline-block;}
-.ljrank i.on{background:#3fae6a;}
 .ljsheet{position:fixed;inset:0;background:rgba(10,12,16,.66);display:none;z-index:9996;}
 .ljsheet.open{display:flex;align-items:flex-start;justify-content:center;}
 .ljsheet .panel{background:#1c2027;border:1px solid #333842;border-top:0;border-radius:0 0 16px 16px;width:100%;max-width:560px;max-height:86%;overflow:auto;}
@@ -2601,7 +2614,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 336 &#8212; Retail-B 2: All Leads &amp; Jobs rebuilt &#8212; Rail Left cards, 10 sorts, 7 filter categories, tri-pane desktop with Map/Satellite/Communications pane. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 337 &#8212; Retail-B 2b: leads view matched to the committed spec &#8212; rail cards with milestone circle, address line, gold actions, spec pane (Milestone/Estimate facts, in-map tabs). </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8623,25 +8636,12 @@ var LJ_GROUPS = [
 ];
 var LJ_SPINE = { Lead:'#dbe7f7', Prospect:'#ffd84d', Approved:'#3dff9a', Scheduled:'#3dff9a',
   Completed:'#6fc3ff', Invoiced:'#c9a2ff', Closed:'#9aa4af', Lost:'#ff8a7a' };
+var LJ_SOLID = { Lead:'#8a93a1', Prospect:'#d4a017', Approved:'#3fae6a', Scheduled:'#3fae6a',
+  Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d6e63' };
 function ljTrades(p){
   var ck = parseCkAll(p);
   if(ck.trades && ck.trades.length) return ck.trades;
   return ck.trade ? [ck.trade] : [];
-}
-function ljRank(p){
-  var n = 0;
-  if(p.phone) n++;
-  if(p.email) n++;
-  if(cacheRows.some(function(r){ return r.project_id === p.id; })) n++;
-  if(projectValue(p) > 0) n++;
-  return n;
-}
-function ljRankHtml(p){
-  var n = ljRank(p);
-  if(!n) return '<i style="font-style:normal;color:#6d747e;font-size:11px;">Unavailable</i>';
-  var h = '<span class="ljrank">';
-  for(var i=1;i<=4;i++) h += '<i class="' + (i<=n ? 'on' : '') + '"></i>';
-  return h + '</span>';
 }
 function ljAge(iso){
   if(!iso) return '\u2014';
@@ -8653,7 +8653,6 @@ function ljAge(iso){
   var y = Math.floor(mo/12);
   return y + ' year' + (y===1?'':'s');
 }
-function ljPrioColor(p){ return p === 'Urgent' ? '#ff6b5e' : (p === 'High' ? '#ffb04d' : '#8fe0ae'); }
 function ljActiveCount(){
   var n = 0;
   for(var k in ljState.sets){ n += (ljState.sets[k] || []).length; }
@@ -8738,16 +8737,18 @@ function ljCardHtml(p){
   var ck = parseCkAll(p);
   var stg = normStage(p.stage);
   var spine = LJ_SPINE[stg] || '#9aa4af';
-  var pieces = [ck.job_category, ljTrades(p).join(', ')].filter(Boolean).join(' \u00b7 ');
+  var solid = LJ_SOLID[stg] || '#8a93a1';
+  var cat = [ck.job_category, ljTrades(p).join(', ')].filter(Boolean).join(' \u00b7 ');
   var tel = (p.phone || '').replace(/[^+\d]/g, '');
-  return '<div class="ljcard' + (ljState.sel === p.id ? ' sel' : '') + '" data-lj="' + p.id + '" style="--spn:' + spine + '" title="' + esc(stg) + '">' +
+  return '<div class="ljcard' + (ljState.sel === p.id ? ' sel' : '') + '" data-lj="' + p.id + '" style="--spn:' + spine + ';--slc:' + solid + '" title="' + esc(stg) + '">' +
+    '<div class="ljrl"><div class="ljmc">' + esc(stg.charAt(0)) + '</div>' +
+      '<span class="ljkl">In status</span><span class="ljkv">' + ljAge(ck.stage_since || p.updated_at) + '</span>' +
+      '<span class="ljkl">Touched</span><span class="ljkv">' + ljAge(p.updated_at || p.created_at) + '</span></div>' +
     '<div class="ljmain">' +
-      '<div class="ljnm">' + esc(p.name || 'Unnamed') + '</div>' +
-      '<div class="ljl2">' + (ck.po ? '<span class="ljpo">' + esc(String(ck.po)) + '</span>' + (pieces ? ' \u00b7 ' : '') : '') + esc(pieces) + '</div>' +
-      '<div class="ljl3"><b class="ljrep">' + esc(rptRepName(p.created_by || '')) + '</b>' +
-        (ck.lead_source ? ' \u00b7 ' + esc(ck.lead_source) : '') +
-        ' \u00b7 <b style="color:' + ljPrioColor(ck.priority) + ';">' + esc(ck.priority || 'Normal') + '</b></div>' +
-      '<div class="ljl4">In status <b>' + ljAge(ck.stage_since || p.updated_at) + '</b> \u00b7 touched <b>' + ljAge(p.updated_at || p.created_at) + '</b></div>' +
+      '<div>' + (ck.po ? '<span class="ljpo">' + esc(String(ck.po)) + ':</span> ' : '') + '<span class="ljnm">' + esc(p.name || 'Unnamed') + '</span></div>' +
+      (p.address ? '<div class="ljad">' + esc(p.address) + '</div>' : '') +
+      (cat ? '<div class="ljct">' + esc(cat) + '</div>' : '') +
+      '<div class="ljrep">' + esc(rptRepName(p.created_by || '')) + '</div>' +
     '</div>' +
     (tel ? '<div class="ljcta">' +
       '<a class="ljbtn" href="tel:' + tel + '" title="Call">' + ljPhoneSvg() + '</a>' +
@@ -8818,48 +8819,42 @@ function renderLjPane(){
   }
   var ck = parseCkAll(p);
   var stg = normStage(p.stage);
+  var solid = LJ_SOLID[stg] || '#8a93a1';
   var tel = (p.phone || '').replace(/[^+\d]/g, '');
-  var meta = [ck.job_category, ljTrades(p).join(', '), ck.work_type].filter(Boolean).join(' \u00b7 ');
-  var tab = ljState.tab;
   var addr = (p.address || '').trim();
-  var body;
-  if(tab === 'comms'){
-    var msgs = (ck.comments || []).slice();
-    if(p.notes && !msgs.some(function(m){ return m.legacy; })){
-      msgs.unshift({ legacy:true, name:'Notes', at:p.created_at, text:p.notes });
-    }
-    body = '<div class="ljcomms">' + (msgs.length ? msgs.map(function(m){
-      return '<div class="ljcmsg"><span class="who">' + esc(m.name || m.by || '') + '</span>' +
-        '<span class="when">' + (m.at ? timeAgo(m.at) : '') + '</span><br>' + fmtChatText(m.text || '') + '</div>';
-    }).join('') : '<div class="ljcmsg" style="color:#6d747e;">No notes yet \u2014 the thread starts on the client profile.</div>') + '</div>';
-  } else {
-    body = addr
-      ? '<div class="ljframe"><iframe class="ljmapframe" loading="lazy" src="https://maps.google.com/maps?q=' +
-        encodeURIComponent(addr) + '&t=' + (tab === 'sat' ? 'k' : 'm') + '&z=17&output=embed"></iframe></div>'
-      : '<div class="ljsummary"><p>No address on file for this job.</p></div>';
+  var tab = ljState.tab;
+  var val = projectValue(p);
+  var msgs = (ck.comments || []).slice();
+  if(p.notes && !msgs.some(function(m){ return m.legacy; })){
+    msgs.unshift({ legacy:true, name:'Notes', at:p.created_at, text:p.notes });
   }
+  var comms = '<div class="ljcomms">' + (msgs.length ? msgs.map(function(m){
+    return '<div class="ljcmsg"><span class="who">' + esc(m.name || m.by || '') + '</span>' +
+      '<span class="when">' + (m.at ? timeAgo(m.at) : '') + '</span><br>' + fmtChatText(m.text || '') + '</div>';
+  }).join('') : '<div class="ljcmsg" style="color:#6d747e;">No notes yet \u2014 the thread starts on the client profile.</div>') + '</div>';
+  var mapInner = addr
+    ? '<iframe class="ljmapframe" loading="lazy" src="https://maps.google.com/maps?q=' +
+      encodeURIComponent(addr) + '&t=' + (tab === 'sat' ? 'k' : 'm') + '&z=17&output=embed"></iframe>'
+    : '<div class="ljsummary" style="padding-top:46px;">No address on file for this job.</div>';
   pane.innerHTML =
     '<div class="ljprow"><span class="ljpname">' + esc(p.name || 'Unnamed') + '</span>' +
-      '<span class="stagechip ' + stageClass(stg) + '">' + (stg === 'Closed' ? 'Archived' : stg) + '</span></div>' +
-    '<div class="ljpsub">' + (ck.po ? '<span class="ljpo">' + esc(String(ck.po)) + '</span> \u00b7 ' : '') + esc(addr || 'No address') + '</div>' +
+      '<span class="ljmpill" style="background:' + solid + ';">' + (stg === 'Closed' ? 'Archived' : stg) + '</span></div>' +
+    '<div class="ljpsub">' + (ck.po ? '<span class="po">' + esc(String(ck.po)) + '</span> \u00b7 ' : '') + esc(addr || 'No address') + '</div>' +
     '<div class="ljpact">' +
-      (tel ? '<a class="chipbtn" href="tel:' + tel + '">\ud83d\udcde Call</a><a class="chipbtn" href="sms:' + tel + '">\ud83d\udcac Text</a>' : '') +
-      '<button class="btn" id="ljOpenBtn">Open profile</button>' +
-      '<button class="chipbtn" id="ljEditBtn">\u270e Edit</button></div>' +
+      (tel ? '<a class="ljab" href="tel:' + tel + '">' + ljPhoneSvg() + 'Call</a>' +
+             '<a class="ljab" href="sms:' + tel + '">' + ljSmsSvg() + 'Text</a>' : '') +
+      '<button class="ljab pri" id="ljOpenBtn">Open profile \u2192</button></div>' +
     '<div class="ljfacts">' +
-      '<div class="ljfact"><span>In Status</span><b>' + ljAge(ck.stage_since || p.updated_at) + '</b></div>' +
-      '<div class="ljfact"><span>Last Touched</span><b>' + ljAge(p.updated_at || p.created_at) + '</b></div>' +
-      '<div class="ljfact"><span>Priority</span><select id="ljPrio" style="background:#2a2e35;border:1px solid #3a3f47;border-radius:6px;padding:3px 6px;font:700 12px \'Segoe UI\',Arial,sans-serif;color:' + ljPrioColor(ck.priority) + ';">' +
-        ['Normal','High','Urgent'].map(function(x){ return '<option' + ((ck.priority||'Normal')===x?' selected':'') + '>' + x + '</option>'; }).join('') +
-      '</select></div>' +
-      '<div class="ljfact"><span>Lead Rank</span><b>' + ljRankHtml(p) + '</b></div></div>' +
-    (meta ? '<div class="ljpsub" style="padding-bottom:12px;">' + esc(meta) +
-      (ck.lead_source ? ' \u00b7 Source: <b style="color:#c8cdd4;">' + esc(ck.lead_source) + '</b>' : '') + '</div>' : '') +
-    '<div class="ljptabs">' +
-      '<span class="ljptab' + (tab==='map'?' on':'') + '" data-lt="map">Map</span>' +
-      '<span class="ljptab' + (tab==='sat'?' on':'') + '" data-lt="sat">Satellite</span>' +
-      '<span class="ljptab' + (tab==='comms'?' on':'') + '" data-lt="comms">Communications</span></div>' +
-    body;
+      '<div class="ljfact"><span>Milestone</span><b style="color:#e5c463;">' + (stg === 'Closed' ? 'Archived' : stg) + '</b></div>' +
+      '<div class="ljfact"><span>Estimate</span><b style="color:#8fe0ae;">' + (val ? fmtMoney(val) : '\u2014') + '</b></div>' +
+      '<div class="ljfact"><span>In status</span><b>' + ljAge(ck.stage_since || p.updated_at) + '</b></div>' +
+      '<div class="ljfact"><span>Last touched</span><b>' + ljAge(p.updated_at || p.created_at) + '</b></div></div>' +
+    '<div class="ljmap' + (tab === 'comms' ? ' cms' : '') + '">' +
+      '<div class="ljmaptabs">' +
+        '<button class="' + (tab === 'map' ? 'on' : '') + '" data-lt="map">Map</button>' +
+        '<button class="' + (tab === 'sat' ? 'on' : '') + '" data-lt="sat">Satellite</button>' +
+        '<button class="' + (tab === 'comms' ? 'on' : '') + '" data-lt="comms">Communications</button></div>' +
+      (tab === 'comms' ? comms : mapInner) + '</div>';
 }
 /* ---- sheets ---- */
 function ljOpenSheet(id){ document.getElementById(id).classList.add('open'); }
@@ -8969,20 +8964,12 @@ document.getElementById('ljList').addEventListener('click', function(e){
   }
 });
 document.getElementById('ljPane').addEventListener('click', function(e){
-  var t = e.target.closest('.ljptab');
+  var t = e.target.closest('[data-lt]');
   if(t){ ljState.tab = t.getAttribute('data-lt'); renderLjPane(); return; }
-  var p = cacheProjects.find(function(x){ return x.id === ljState.sel; });
-  if(!p) return;
-  if(e.target.closest('#ljOpenBtn')){ openProject(p.id); return; }
-  if(e.target.closest('#ljEditBtn')){ openProjModal(p); return; }
-});
-document.getElementById('ljPane').addEventListener('change', function(e){
-  if(e.target.id !== 'ljPrio') return;
-  var p = cacheProjects.find(function(x){ return x.id === ljState.sel; });
-  if(!p) return;
-  var v = e.target.value;
-  patchProjectCk(p, { priority: v }).then(function(){ renderLeadsView(); })
-    .catch(function(err){ showError('Could not save priority: ' + (err.message || err)); });
+  if(e.target.closest('#ljOpenBtn')){
+    var p = cacheProjects.find(function(x){ return x.id === ljState.sel; });
+    if(p) openProject(p.id);
+  }
 });
 
 /* =========================================================================
