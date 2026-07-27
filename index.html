@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 359 &#8212; Community home rebuilt (Slate &amp; Clay) &#8212; light desktop-wide layout, collapsible panels, partner colour coding, rep avatars; Bids | Partners | Clients. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 360 &#8212; Community tabs restored &#8212; the pane-hiding rule was also matching the tab buttons; scoped to panes only. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38770,8 +38770,9 @@ body.viewing-community-hub section.history{display:none}
 --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
 max-width:1320px;margin:0 auto;padding:14px 16px 60px;color:var(--ink)}
 #cr-ch2 button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#cr-ch2 [data-pane]{display:none}
-#cr-ch2 [data-pane].on{display:block}
+#cr-ch2 > div[data-pane]{display:none}
+#cr-ch2 > div[data-pane].on{display:block}
+#cr-ch2 .tabbar [data-pane]{display:inline-block}
 .cc-tabs{margin:0 0 14px;border-bottom:1px solid var(--line)}
 .cc-tabs .tabbar{display:flex;align-items:center}
 .cc-tabs button{background:none;border:0;padding:11px 22px;font:800 14.5px inherit;color:var(--bar);
