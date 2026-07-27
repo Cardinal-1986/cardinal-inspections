@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 355 &#8212; The + follows the CRM &#8212; community's add-button takeover releases when you leave the hub, so Claims (and retail) get their own forms; community keeps its bid form on its clients. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 356 &#8212; Community bids are editable &#8212; pencil on the Hub's bid rows opens the bid form pre-filled; saving updates the bid in place (partner, amounts, dates, contacts, scope). </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24588,13 +24588,15 @@ var props = await fn.call(window.CardinalCommunityProperties, partnerId);
 return (props || []).filter(function(p){ return !p.archived; });
 }catch(e){ return []; }
 }
-async function showBidModal(){
+async function showBidModal(editPr){
+if(editPr && (editPr.target || editPr.type)) editPr = null; /* guard: called as an event handler */
+var editLead = editPr ? ((parseCkAll(editPr) || {}).lead || {}) : null;
 var partners = await loadPartners();
 var bg = document.createElement('div');
 bg.className = 'cr-nbid-bg';
 bg.innerHTML =
 '<div class="cr-nbid-box">' +
-'<h3>\uD83D\uDEA9 New Bid</h3>' +
+'<h3>' + (editPr ? '\u270F\uFE0F Edit Bid' : '\uD83D\uDEA9 New Bid') + '</h3>' +
 '<p class="subline">Create a community bid opportunity. ' +
 'It\'ll appear as <b>Bid Requested</b> on the Hub pipeline.</p>' +
 '<div class="rule"></div>' +
@@ -24773,6 +24775,28 @@ addrInput.value = opt ? opt.dataset.address : '';
 };
 };
 setTimeout(function(){ partnerSel.focus(); }, 60);
+if(editPr){
+  var EF = function(f){ return bg.querySelector('[data-field="' + f + '"]'); };
+  if(editLead.partner_id){
+    partnerSel.value = editLead.partner_id;
+    if(typeof partnerSel.onchange === 'function') partnerSel.onchange();
+  }
+  ['homeowner_name','homeowner_phone','homeowner_email','renter_name','renter_phone','renter_email',
+   'work_type','bid_amount','bid_due_at','assigned_to','scope','notes'].forEach(function(f){
+    var el = EF(f);
+    if(el && editLead[f] != null && editLead[f] !== '') el.value = editLead[f];
+  });
+  var nh = EF('no_homeowner');
+  if(nh){ nh.checked = !!editLead.no_homeowner; if(typeof nh.onchange === 'function') nh.onchange(); }
+  setTimeout(function(){
+    var ps = EF('property_id');
+    if(ps && editLead.property_id) ps.value = editLead.property_id;
+    var ad = EF('address');
+    if(ad && !ad.value) ad.value = editPr.address || '';
+  }, 450);
+  var sv = bg.querySelector('[data-act="save"]');
+  if(sv) sv.textContent = 'Save Changes';
+}
 bg.querySelector('[data-act="save"]').onclick = async function(){
 var saveBtn = bg.querySelector('[data-act="save"]');
 var partnerId = partnerSel.value;
@@ -24810,6 +24834,33 @@ var clientName = hoName
 : (address
 ? partner.name + ' \u2014 ' + address
 : partner.name + ' bid');
+if(editPr){
+  var mergedLead = Object.assign({}, editLead, {
+    claim_type      : 'community',
+    partner_id      : partner.id,
+    partner_name    : partner.name,
+    property_id     : propId && propId !== '__other__' ? propId : null,
+    homeowner_name  : hoName,
+    no_homeowner    : !!(bg.querySelector('[data-field="no_homeowner"]') || {}).checked,
+    homeowner_phone : hoPhone,
+    homeowner_email : hoEmail,
+    renter_name     : rtName,
+    renter_phone    : rtPhone,
+    renter_email    : rtEmail,
+    work_type       : workType,
+    bid_amount      : bidAmount,
+    bid_due_at      : bidDueAt,
+    assigned_to     : assignedTo,
+    scope           : scope,
+    notes           : notes
+  });
+  await patchProjectCk(editPr, { lead: mergedLead });
+  await pdb.update(editPr.id, { name: clientName, address: address, phone: hoPhone || editPr.phone || null });
+  if(typeof window.reload === 'function'){ try{ await window.reload(); }catch(_r){} }
+  close();
+  if(typeof window.openProject === 'function'){ setTimeout(function(){ window.openProject(editPr.id); }, 80); }
+  return;
+}
 var projectData = {
 name        : clientName,
 address     : address,
@@ -24921,7 +24972,22 @@ childList:true, subtree:true
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
-window.CardinalNewBid = { open: showBidModal };
+document.addEventListener('click', function(e){
+  var p = e.target.closest('[data-cc-editbid]');
+  if(!p) return;
+  e.preventDefault();
+  e.stopPropagation();
+  var id = p.getAttribute('data-cc-editbid');
+  var pr = (window.cacheProjects || []).find(function(x){ return x.id === id; });
+  if(pr) showBidModal(pr);
+}, true);
+window.CardinalNewBid = {
+  open: function(){ showBidModal(); },
+  edit: function(id){
+    var pr = (window.cacheProjects || []).find(function(x){ return x.id === id; });
+    if(pr) showBidModal(pr);
+  }
+};
 })();
 </script>
 
@@ -39049,6 +39115,7 @@ return '<button class="row' + (hot ? ' hot' : '') +
 '<span class="who"><b>' + esc(x.pr.name || 'Unnamed') + '</b>' +
 '<small>' + esc(partnerOf(x.pr)) + '</small></span>' +
 '<span class="amt">' + (x.amt ? usd(x.amt) : '') + '</span>' +
+'<span data-cc-editbid="' + esc(x.pr.id) + '" title="Edit bid" style="margin-left:8px;opacity:.7;font-size:13px;">\u270F\uFE0F</span>' +
 '</button>';
 }
 function qBlock(verb, list, unit){
