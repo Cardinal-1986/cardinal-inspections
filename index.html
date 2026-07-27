@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 367 &#8212; Browser Back fixed &#8212; a legacy hash router was hijacking every Back and forcing Home; it now yields, and the newer views record history too. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 369 &#8212; CRM switcher responds on the first click &#8212; it was re-reading the old CRM before the header updated; banner handlers hardened against odd click targets. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2915,6 +2915,10 @@ body:has(#loginView[style*="block"]){background:#fff;}
         <div class="pu-ico" id="puDirBtn" title="Reverse order">&#8645;</div>
         <div class="pu-ico" id="puFunnel" title="Filters">&#9923;<span class="bdg" id="puBadge">0</span></div>
       </div>
+    </div>
+    <div class="pu-tabs" id="puTabs">
+      <button class="pu-tab on" data-putab="active">Active <span class="n" id="puNActive">0</span></button>
+      <button class="pu-tab" data-putab="scheduled">Scheduled <span class="n" id="puNSched">0</span></button>
     </div>
     <div class="pu-lay">
       <aside class="pu-rail-wrap"><div class="pu-rail" id="puRail"></div>
@@ -41534,6 +41538,7 @@ function closeMenus(){
   Array.prototype.forEach.call(B.querySelectorAll('.cbdd.open'), function(x){ x.classList.remove('open'); });
 }
 B.addEventListener('click', function(e){
+  if(!e.target || !e.target.closest) return;
   var item = e.target.closest('[data-go]');
   if(item){
     var r = ROUTES[item.getAttribute('data-go')];
@@ -41553,7 +41558,7 @@ B.addEventListener('click', function(e){
   }
 });
 document.addEventListener('click', function(e){
-  if(!e.target.closest('#crBanner')) closeMenus();
+  if(!e.target || !e.target.closest || !e.target.closest('#crBanner')) closeMenus();
 });
 var CRM_GO = {
   retail: function(){ if(typeof window.showHome === 'function') window.showHome(); },
@@ -41567,14 +41572,20 @@ function cbCrmSync(){
   });
 }
 B.addEventListener('click', function(e){
-  var c = e.target.closest('[data-crm-go]');
+  var c = e.target && e.target.closest ? e.target.closest('[data-crm-go]') : null;
   if(!c) return;
   var k = c.getAttribute('data-crm-go');
+  /* Build 369: mark the choice immediately. cbCrmSync() reads body[data-crm], which the
+     header's skin() only updates a beat later — so the chip used to snap back and the
+     switch looked dead until a second click. Set the truth first, then route. */
+  Array.prototype.forEach.call(B.querySelectorAll('[data-crm-go]'), function(x){
+    x.classList.toggle('on', x === c);
+  });
+  try{ document.body.dataset.crm = k; }catch(_e){}
   try{
     if(window.CardinalPortal && typeof window.CardinalPortal.set === 'function') window.CardinalPortal.set(k, false);
   }catch(err){}
   if(CRM_GO[k]) CRM_GO[k]();
-  cbCrmSync();
 });
 var cbCrmPending = false;
 new MutationObserver(function(){
@@ -41997,6 +42008,43 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
   .pu-fr.on .bx{background:#3fae6a;border-color:#3fae6a;font-weight:800;}
   .pu-fr .c{margin-left:auto;font:700 10px ui-monospace,Menlo,monospace;color:#6d6a63;}
 }
+/* priority colours: urgent red · normal orange · low yellow */
+.pu-tag.prio-high{border-color:#e2574a;color:#f2a08a;}
+.pu-tag.prio-normal{border-color:#d98324;color:#f0a962;}
+.pu-tag.prio-low{border-color:#d4a017;color:#f5d061;}
+.pu-card.prio-high::before{background:#e2574a;box-shadow:0 0 7px rgba(226,87,74,.6);}
+.pu-card.prio-normal::before{background:#d98324;}
+.pu-card.prio-low::before{background:#d4a017;}
+/* scheduled / active tabs */
+.pu-tabs{display:flex;align-items:center;gap:0;border-bottom:1px solid #3a3f47;margin:0 0 13px;}
+.pu-tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 18px;cursor:pointer;
+  font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;margin-bottom:-1px;}
+.pu-tab.on{color:#f5d061;border-bottom-color:#d4a017;}
+.pu-tab .n{font:700 10px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;border-radius:999px;
+  padding:2px 7px;margin-left:7px;}
+.pu-sched{font:700 10px ui-monospace,Menlo,monospace;color:#8fe0ae;margin-top:3px;}
+/* photo evidence */
+.pud-ph{margin-top:13px;}
+.pud-ph .k{display:flex;align-items:center;gap:8px;font:800 8px ui-monospace,Menlo,monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:#8b929c;margin-bottom:6px;}
+.pud-ph .k b{font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.06em;padding:2px 8px;border-radius:999px;
+  background:#3a3f47;color:#cfd6df;}
+.pud-ph .k b.ok{background:#2f5a3c;color:#8fe0ae;}
+.pud-ph .k b.short{background:#4a2c26;color:#f2a08a;}
+.pud-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:7px;}
+.pud-thumb{position:relative;aspect-ratio:1;border:1px solid #4a4f58;border-radius:8px;overflow:hidden;background:#1c1f24;}
+.pud-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.pud-thumb .rm{position:absolute;top:2px;right:2px;background:rgba(10,12,16,.8);color:#f2a08a;border:0;
+  border-radius:6px;font:800 11px inherit;cursor:pointer;padding:1px 6px;}
+.pud-add{aspect-ratio:1;border:1px dashed #5a6069;border-radius:8px;background:rgba(255,255,255,.03);
+  color:#9aa0a8;font:700 10.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;}
+.pud-add span{font-size:17px;}
+.pud-f select{width:100%;background:#1c1f24;border:1px solid #4a4f58;color:#e9e6df;border-radius:7px;
+  padding:5px 8px;font:600 12.5px 'Segoe UI',Arial,sans-serif;}
+.pud-f select.prio-high{color:#f2a08a;border-color:#6e3129;}
+.pud-f select.prio-normal{color:#f0a962;border-color:#6b4a1e;}
+.pud-f select.prio-low{color:#f5d061;border-color:#6b5a1e;}
 /* item detail sheet */
 .pu-detail{position:fixed;inset:0;background:rgba(8,9,11,.72);display:none;z-index:9998;
   align-items:flex-start;justify-content:center;padding:5vh 14px;overflow-y:auto;}
@@ -42093,12 +42141,12 @@ async function update(id, patch){
       /* a column that isn't in the schema yet: keep what we can, tell the truth about the rest */
       if(/column .* does not exist|schema cache/i.test(r.error.message || '')){
         var slim = {};
-        Object.keys(patch).forEach(function(k){ if(k !== 'scheduled_at') slim[k] = patch[k]; });
+        Object.keys(patch).forEach(function(k){ if(k !== 'scheduled_at' && k !== 'photos') slim[k] = patch[k]; });
         if(Object.keys(slim).length){
           var r2 = await window.supa.from('punch_items').update(slim).eq('id', it.id);
           if(r2.error) throw r2.error;
         }
-        return { ok:true, partial:true, missing:'scheduled_at' };
+        return { ok:true, partial:true, missing:'scheduled_at / photos' };
       }
       throw r.error;
     }
@@ -42117,7 +42165,8 @@ window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
   update : update,
   openCount : function(){ return _rows.filter(function(i){ return i.status !== 'done'; }).length; }
 });
-var PU = { sort:'urgent', dir:1, sets:{}, q:'' };
+var PU = { sort:'urgent', dir:1, sets:{}, q:'', tab:'active' };
+var PHOTO_MIN = 5;
 var puSheet = { cat:null, pend:[] };
 var PU_SORTS = [
   { k:'urgent',  l:'Urgency' },
@@ -42138,6 +42187,27 @@ function crmOf(pr){
   return (t === 'insurance' || t === 'community') ? t : 'retail';
 }
 function isUrgent(it){ return it.priority === 'high' && it.status !== 'done'; }
+function prioOf(it){
+  var p = String(it.priority || 'normal').toLowerCase();
+  return (p === 'high' || p === 'low') ? p : 'normal';
+}
+function prioLabel(p){ return p === 'high' ? 'Urgent' : (p === 'low' ? 'Low' : 'Normal'); }
+function photosOf(it){
+  var v = it.photos;
+  if(!v) return [];
+  if(Array.isArray(v)) return v;
+  try{ var a = JSON.parse(v); return Array.isArray(a) ? a : []; }catch(e){ return []; }
+}
+function isScheduled(it){ return !!it.scheduled_at && it.status !== 'done'; }
+function teamList(){
+  var out = [];
+  (window.TEAM_ROSTER || []).forEach(function(m){ out.push({ email:m.email, name:m.name }); });
+  rows().forEach(function(it){
+    var a = it.assigned_to;
+    if(a && !out.some(function(m){ return m.email === a || m.name === a; })) out.push({ email:a, name:a });
+  });
+  return out;
+}
 function kindOf(it){ return it.kind || 'punch'; }
 function ageDays(iso){
   if(!iso) return null;
@@ -42187,8 +42257,10 @@ function cardHtml(it, showCrm){
   var done = it.status === 'done';
   var urg = isUrgent(it);
   var age = ageDays(it.created_at);
-  return '<div class="pu-card' + (urg ? ' urgent' : '') + (done ? ' done' : '') + '" data-pu="' + esc(String(it.id)) + '"' +
-    ' data-proj="' + esc(String(it.project_id || '')) + '" style="--pc:' + (done ? '#3fae6a' : urg ? '#e2574a' : '#8a93a1') + '">' +
+  var prio = prioOf(it);
+  var ph = photosOf(it).length;
+  return '<div class="pu-card prio-' + prio + (urg ? ' urgent' : '') + (done ? ' done' : '') + '" data-pu="' + esc(String(it.id)) + '"' +
+    ' data-proj="' + esc(String(it.project_id || '')) + '"' + (done ? ' style="--pc:#3fae6a"' : '') + '>' +
     '<span class="pu-box" data-putoggle="' + esc(String(it.id)) + '">' + (done ? '\u2713' : '') + '</span>' +
     '<div class="pu-bd">' +
       '<div class="pu-t">' + esc(it.title || 'Untitled item') + '</div>' +
@@ -42196,11 +42268,13 @@ function cardHtml(it, showCrm){
       (it.detail ? '<div class="pu-m">' + esc(it.detail) + '</div>' : '') +
       '<div class="pu-tags">' +
         '<span class="pu-tag">' + esc(kindOf(it)) + '</span>' +
-        (urg ? '<span class="pu-tag urg">urgent</span>' : '') +
+        '<span class="pu-tag prio-' + prio + '">' + prioLabel(prio) + '</span>' +
         (showCrm ? '<span class="pu-tag crm-' + crm + '">' + CRM_LABEL[crm] + '</span>' : '') +
         (done ? '<span class="pu-tag">done</span>' : (age != null ? '<span class="pu-tag">' + age + 'd open</span>' : '')) +
+        (ph ? '<span class="pu-tag">' + ph + '/' + PHOTO_MIN + ' photos</span>' : '') +
         '<span class="pu-who">' + esc(it.assigned_to || 'Unassigned') + '</span>' +
       '</div>' +
+      (it.scheduled_at && !done ? '<div class="pu-sched">\uD83D\uDCC5 scheduled ' + fmtDate(it.scheduled_at) + '</div>' : '') +
     '</div></div>';
 }
 function whoList(){
@@ -42221,7 +42295,16 @@ function count(){ var n = 0; for(var k in PU.sets) n += PU.sets[k].length; retur
 
 function render(){
   var all = rows();
-  var vis = sorted(all.filter(match));
+  var schedAll = all.filter(isScheduled);
+  var vis = sorted(all.filter(match).filter(function(it){
+    return PU.tab === 'scheduled' ? isScheduled(it) : !isScheduled(it);
+  }));
+  var na = document.getElementById('puNActive'), ns = document.getElementById('puNSched');
+  if(na) na.textContent = all.filter(function(it){ return !isScheduled(it) && it.status !== 'done'; }).length;
+  if(ns) ns.textContent = schedAll.length;
+  document.querySelectorAll('#puTabs .pu-tab').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-putab') === PU.tab);
+  });
   var open = vis.filter(function(i){ return i.status !== 'done'; });
   var done = vis.filter(function(i){ return i.status === 'done'; });
   var urgent = open.filter(isUrgent);
@@ -42230,11 +42313,19 @@ function render(){
   document.getElementById('puSub').textContent =
     vis.length + ' of ' + all.length + ' items \u00b7 ' + urgent.length + ' urgent \u00b7 ' + open.length + ' open';
   var html = '';
-  if(urgent.length) html += '<div class="pu-grp">Urgent <span class="n">' + urgent.length + '</span></div>' + urgent.map(function(i){ return cardHtml(i, true); }).join('');
-  if(normal.length) html += '<div class="pu-grp">Open <span class="n">' + normal.length + '</span></div>' + normal.map(function(i){ return cardHtml(i, true); }).join('');
-  if(done.length)   html += '<div class="pu-grp">Completed <span class="n">' + done.length + '</span></div>' + done.map(function(i){ return cardHtml(i, true); }).join('');
-  document.getElementById('puList').innerHTML = html ||
-    '<div class="pu-empty">' + (all.length ? 'Nothing matches these filters.' : 'No punch items or repairs yet.') + '</div>';
+  if(PU.tab === 'scheduled'){
+    var byDate = vis.slice().sort(function(a, b){ return String(a.scheduled_at).localeCompare(String(b.scheduled_at)); });
+    html += byDate.length ? '<div class="pu-grp">On the schedule <span class="n">' + byDate.length + '</span></div>' +
+      byDate.map(function(i){ return cardHtml(i, true); }).join('') : '';
+    document.getElementById('puList').innerHTML = html ||
+      '<div class="pu-empty">Nothing scheduled yet \u2014 set a date on an item and it lands here.</div>';
+  } else {
+    if(urgent.length) html += '<div class="pu-grp">Urgent <span class="n">' + urgent.length + '</span></div>' + urgent.map(function(i){ return cardHtml(i, true); }).join('');
+    if(normal.length) html += '<div class="pu-grp">Open <span class="n">' + normal.length + '</span></div>' + normal.map(function(i){ return cardHtml(i, true); }).join('');
+    if(done.length)   html += '<div class="pu-grp">Completed <span class="n">' + done.length + '</span></div>' + done.map(function(i){ return cardHtml(i, true); }).join('');
+    document.getElementById('puList').innerHTML = html ||
+      '<div class="pu-empty">' + (all.length ? 'Nothing matches these filters.' : 'No punch items or repairs yet.') + '</div>';
+  }
 
   var n = count();
   var bdg = document.getElementById('puBadge');
@@ -42354,15 +42445,39 @@ function openDetail(id){
             (pr.address ? '<a target="_blank" href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '">' +
               esc(pr.address) + ' \u2197</a>' : '<b>\u2014</b>') + '</div>' +
           '<div class="pud-f"><span class="k">Sales rep</span><b>' + esc(repName(pr.created_by)) + '</b></div>' +
-          '<div class="pud-f"><span class="k">Assigned to</span><b>' + esc(it.assigned_to || 'Unassigned') + '</b></div>' +
+          '<div class="pud-f"><span class="k">Assigned to</span>' +
+            '<select id="puWho"><option value="">Unassigned</option>' +
+            teamList().map(function(m){
+              var sel = (it.assigned_to === m.email || it.assigned_to === m.name) ? ' selected' : '';
+              return '<option value="' + esc(m.email) + '"' + sel + '>' + esc(m.name) + '</option>';
+            }).join('') + '</select></div>' +
           '<div class="pud-f"><span class="k">Type</span><b>' + esc(kindOf(it)) + '</b></div>' +
-          '<div class="pud-f"><span class="k">Priority</span><b>' + (it.priority === 'high' ? 'Urgent' : 'Normal') + '</b></div>' +
+          '<div class="pud-f"><span class="k">Priority</span>' +
+            '<select id="puPrio" class="prio-' + prioOf(it) + '">' +
+            ['high','normal','low'].map(function(p){
+              return '<option value="' + p + '"' + (prioOf(it) === p ? ' selected' : '') + '>' + prioLabel(p) + '</option>';
+            }).join('') + '</select></div>' +
           '<div class="pud-f"><span class="k">Date created</span><b>' + fmtDate(it.created_at) + '</b></div>' +
           '<div class="pud-f"><span class="k">Date scheduled</span>' +
             '<input type="date" id="puSched" value="' + esc(String(it.scheduled_at || '').slice(0,10)) + '"></div>' +
           (done ? '<div class="pud-f pud-wide"><span class="k">Closed</span><b>' + fmtDate(it.done_at) +
                   (it.done_by ? ' \u00b7 ' + esc(repName(it.done_by)) : '') + '</b></div>' : '') +
         '</div>' +
+        (function(){
+          var ph = photosOf(it);
+          var enough = ph.length >= PHOTO_MIN;
+          return '<div class="pud-ph"><div class="k">Photos ' +
+            '<b class="' + (enough ? 'ok' : 'short') + '">' + ph.length + ' of ' + PHOTO_MIN + ' required</b></div>' +
+            '<div class="pud-strip">' +
+              ph.map(function(u, i){
+                return '<div class="pud-thumb"><img src="' + esc(u) + '" alt="">' +
+                  '<button class="rm" data-pud="rmphoto" data-i="' + i + '">\u2715</button></div>';
+              }).join('') +
+              '<button class="pud-add" data-pud="addphoto"><span>\uD83D\uDCF7</span>Add</button>' +
+            '</div>' +
+            '<input type="file" id="puPhotoInput" accept="image/*" multiple capture="environment" style="display:none;">' +
+          '</div>';
+        })() +
         '<div class="pud-note"><span class="k">Notes / description</span>' +
           '<textarea id="puNote" rows="5" placeholder="What needs doing, what was found, what the customer said\u2026">' +
           esc(it.detail || '') + '</textarea></div>' +
@@ -42397,6 +42512,13 @@ document.addEventListener('click', function(e){
       }
       if(a === 'status'){
         e.preventDefault();
+        var cur = rows().filter(function(x){ return String(x.id) === String(id); })[0];
+        if(cur && cur.status !== 'done' && photosOf(cur).length < PHOTO_MIN){
+          document.getElementById('puMsg').textContent =
+            'Add at least ' + PHOTO_MIN + ' photos before closing this out \u2014 ' +
+            photosOf(cur).length + ' so far.';
+          return;
+        }
         if(window.CardinalPunch && window.CardinalPunch.toggle){
           Promise.resolve(window.CardinalPunch.toggle(id)).then(function(){
             openDetail(id);
@@ -42406,12 +42528,28 @@ document.addEventListener('click', function(e){
         }
         return;
       }
+      if(a === 'addphoto'){
+        document.getElementById('puPhotoInput').click();
+        return;
+      }
+      if(a === 'rmphoto'){
+        var idx = parseInt(act.getAttribute('data-i'), 10);
+        var cur2 = rows().filter(function(x){ return String(x.id) === String(id); })[0];
+        var list = photosOf(cur2);
+        list.splice(idx, 1);
+        Promise.resolve(window.CardinalPunch.update(id, { photos: list })).then(function(){ openDetail(id); });
+        return;
+      }
       if(a === 'save'){
         var note = document.getElementById('puNote').value;
         var sched = document.getElementById('puSched').value || null;
+        var who = document.getElementById('puWho').value || null;
+        var prio = document.getElementById('puPrio').value;
         var msg = document.getElementById('puMsg');
         msg.textContent = 'Saving\u2026';
-        Promise.resolve(window.CardinalPunch.update(id, { detail: note, scheduled_at: sched })).then(function(res){
+        Promise.resolve(window.CardinalPunch.update(id, {
+          detail: note, scheduled_at: sched, assigned_to: who, priority: prio
+        })).then(function(res){
           if(!res.ok){ msg.textContent = 'Could not save: ' + (res.error || 'unknown error'); return; }
           if(res.partial){
             msg.textContent = 'Notes saved. The scheduled date needs a one-time database column (scheduled_at) \u2014 see the setup note.';
@@ -42442,6 +42580,57 @@ document.addEventListener('click', function(e){
   }
 }, false);
 
+document.addEventListener('change', function(e){
+  if(e.target && e.target.id === 'puPrio'){
+    e.target.className = 'prio-' + e.target.value;
+    return;
+  }
+  if(e.target && e.target.id === 'puPhotoInput'){
+    var m = document.getElementById('puDetail');
+    var id = m && m.getAttribute('data-id');
+    var files = Array.prototype.slice.call(e.target.files || []);
+    if(!id || !files.length) return;
+    var msg = document.getElementById('puMsg');
+    msg.textContent = 'Uploading ' + files.length + ' photo' + (files.length > 1 ? 's' : '') + '\u2026';
+    var cur = rows().filter(function(x){ return String(x.id) === String(id); })[0];
+    var have = photosOf(cur);
+    var reads = files.map(function(f){
+      return new Promise(function(res){
+        var fr = new FileReader();
+        fr.onload = function(){ res(fr.result); };
+        fr.onerror = function(){ res(null); };
+        fr.readAsDataURL(f);
+      });
+    });
+    Promise.all(reads).then(async function(urls){
+      var out = have.slice();
+      for(var i = 0; i < urls.length; i++){
+        var dataUrl = urls[i];
+        if(!dataUrl) continue;
+        var store = dataUrl;
+        try{
+          var blob = await (await fetch(dataUrl)).blob();
+          var p = 'punch/' + id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+          var up = await window.supa.storage.from('photos').upload(p, blob,
+                   { contentType: blob.type || 'image/jpeg', cacheControl: '31536000' });
+          if(up.error) throw up.error;
+          store = window.supa.storage.from('photos').getPublicUrl(p).data.publicUrl;
+        }catch(err){ /* storage unavailable: keep the inline copy */ }
+        out.push(store);
+      }
+      var res = await window.CardinalPunch.update(id, { photos: out });
+      if(!res.ok){ msg.textContent = 'Could not save photos: ' + (res.error || 'unknown error'); return; }
+      openDetail(id);
+      if(document.getElementById('punchView').style.display === 'block') render();
+    });
+  }
+});
+document.getElementById('puTabs').addEventListener('click', function(e){
+  var b = e.target.closest('[data-putab]');
+  if(!b) return;
+  PU.tab = b.getAttribute('data-putab');
+  render();
+});
 document.getElementById('puSearch').addEventListener('input', function(){
   PU.q = this.value.trim().toLowerCase();
   clearTimeout(this.__t); this.__t = setTimeout(render, 200);
