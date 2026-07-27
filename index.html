@@ -1213,11 +1213,15 @@ html, body{overflow-x:hidden;max-width:100%;}
 .pipecard.teamcal::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
   background:linear-gradient(90deg,transparent,#2b2320 30%,#000 50%,#2b2320 70%,transparent);}
 .pipecard.teamcal:not(.prodcal)::before{content:'';position:absolute;inset:0;
-  background:url(/cardinal-board.png) center 58% / 68% no-repeat;
-  opacity:.17;filter:saturate(1.35);pointer-events:none;z-index:5;}
+  background:linear-gradient(125deg,#e2574a 20%,#d4a017 58%,#f5d061);
+  -webkit-mask:url(/cardinal-board.png) center 58% / 68% no-repeat;
+  mask:url(/cardinal-board.png) center 58% / 68% no-repeat;
+  opacity:.22;pointer-events:none;z-index:5;}
 .pipecard.prodcal::before{content:'';position:absolute;inset:0;
-  background:url(/cardinal-prod.png) center 60% / 74% no-repeat;
-  opacity:.17;filter:saturate(1.2);pointer-events:none;z-index:5;}
+  background:linear-gradient(125deg,#e2574a 20%,#d4a017 58%,#f5d061);
+  -webkit-mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
+  mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
+  opacity:.22;pointer-events:none;z-index:5;}
 .pipecard.teamcal .pipetitle span:first-child{
   font:800 15.5px Georgia,'Times New Roman',serif;letter-spacing:.03em;color:#1c1416;}
 .teamcal .minical .calhead b{
@@ -2619,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 346 &#8212; Banner rides with the header &#8212; moved inside the fixed header block; the height compensator keeps content clear on every width. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 347 &#8212; Home calendar watermarks recolored &#8212; the cardinal art now renders as the committed red&#8594;gold gradient masks on both calendars. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
