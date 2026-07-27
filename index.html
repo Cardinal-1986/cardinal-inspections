@@ -2619,7 +2619,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 341 &#8212; Retail-B 5: unified Client Directory (Brass) &#8212; one directory across all three CRMs, per-CRM milestone filters, CRM bottom bar, admin multi-select delete. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 343 &#8212; What&#8217;s New updated for the retail-B run and Keeper 1 (builds 335&#8211;342 logged). </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9427,16 +9427,25 @@ function openProject(id){
   var _poPfx = _po
     ? '<span class="poPfx">#' + esc(String(_po)) + '</span>'
     : '<span class="poPfx empty">#\u2014</span>';
+  var _heroTel = String(pr.phone || '').replace(/[^0-9+]/g, '');
   document.getElementById('projName').innerHTML =
     '<span class="insBadge">&#128737;&#65039; INSURANCE</span>' +
     _poPfx +
-    esc(pr.name || 'Unnamed client') +
+    '<span class="heroNm">' + esc(pr.name || 'Unnamed client') + '</span>' +
     '<span id="favStar" class="namestar" title="Favorite / high priority">\u2606</span>' +
     '<button id="projEditBtn" class="editpencil" title="Edit client info" style="margin-left:8px;">&#9998;</button>' +
     '<span class="projTopBtns">' +
       '<button id="projHomeChip" class="projHomeChip" title="Back to home">&#127968; Home</button>' +
       '<button id="projLandChip" class="projLandChip" title="Back to landing">&#127968; Landing</button>' +
-    '</span>';
+    '</span>' +
+    ((pr.phone || pr.email) ? '<span class="hcontact">' +
+      (pr.phone ? '<a class="hph" href="tel:' + _heroTel + '">' + esc(pr.phone) + '</a>' : '') +
+      (pr.email ? '<a class="hem" href="mailto:' + esc(pr.email) + '">' + esc(pr.email) + '</a>' : '') +
+    '</span>' : '');
+  var _hero = document.querySelector('#projectView .projinfo');
+  if(_hero && typeof LJ_SPINE !== 'undefined'){
+    _hero.style.setProperty('--spn', LJ_SPINE[normStage(pr.stage)] || '#dbe7f7');
+  }
   /* Address + insurance rows (PO now lives inline with the name above) */
   var _insHtml = '';
   if(_projCT === 'insurance'){
@@ -29552,7 +29561,7 @@ steps     : function(){ return STEPS.map(function(s){ return { name:s.name, deta
 </script>
 
 
-<style id="cr-print-styles">@media print{body{background:#fff !important;color:#000 !important;font:12pt/1.45 Georgia,'Times New Roman',serif !important}header.site,footer.site,#navMenu,#newMenu,.dbstage,.cr-portal-chip,#navBtn,#cr-home-btn,#cr-search-btn,#cr-ahc-badge,#addProjectBtn,#cr-recents,.cr-bidstrip,.cr-autotrans,.cr-cp-attach,.cr-cprop-attach,.cr-wo-section,.cr-hdr-row1,.cr-hdr-row2,#ctPortalChip,#cr-dark-toggle,#cr-offline,#cr-bulk-bar,.cr-undo-toast,.cr-pme-exit,.whoami,#headSearch,button.btn,button.chipbtn,.ct-banner-chips,.ins-header{display:none !important}#editorView .toolbar,#editorView button{display:none !important}.wrap,main{max-width:100% !important;padding:0 !important;margin:0 !important}#reportFrame,.doc-content{border:none !important;box-shadow:none !important}h1,h2,h3{page-break-after:avoid}tr,.cr-cp-row,.card,.pipecard{page-break-inside:avoid}a[href^="http"]::after{content:" ("attr(href) ")";font-size:10pt;color:#666}:root{--red:#C8202E;--red-dk:#9c1822;--bg:#fff}.ljtitle,#listView #listTitle,#projectView .projsec,.hero-hi,.hero-hi *,.acthead{background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;-webkit-text-fill-color:#1b1b1b !important;color:#1b1b1b !important}#projectView .projsec a{-webkit-text-fill-color:#9c1822 !important;color:#9c1822 !important}#projectView .subnote,#listView #listNote{color:#5c5c5c !important}#leadsView .ljrhead{color:#1b1b1b !important}#listView label,#listView .listlbl,#listView .listctl{color:#5c4a42 !important}.dashcard,section.history{border-color:#d9d9d9 !important;border-top-color:#C8202E !important}.cr-est-saved-list{background:transparent !important}}</style>
+<style id="cr-print-styles">@media print{body{background:#fff !important;color:#000 !important;font:12pt/1.45 Georgia,'Times New Roman',serif !important}header.site,footer.site,#navMenu,#newMenu,.dbstage,.cr-portal-chip,#navBtn,#cr-home-btn,#cr-search-btn,#cr-ahc-badge,#addProjectBtn,#cr-recents,.cr-bidstrip,.cr-autotrans,.cr-cp-attach,.cr-cprop-attach,.cr-wo-section,.cr-hdr-row1,.cr-hdr-row2,#ctPortalChip,#cr-dark-toggle,#cr-offline,#cr-bulk-bar,.cr-undo-toast,.cr-pme-exit,.whoami,#headSearch,button.btn,button.chipbtn,.ct-banner-chips,.ins-header{display:none !important}#editorView .toolbar,#editorView button{display:none !important}.wrap,main{max-width:100% !important;padding:0 !important;margin:0 !important}#reportFrame,.doc-content{border:none !important;box-shadow:none !important}h1,h2,h3{page-break-after:avoid}tr,.cr-cp-row,.card,.pipecard{page-break-inside:avoid}a[href^="http"]::after{content:" ("attr(href) ")";font-size:10pt;color:#666}:root{--red:#C8202E;--red-dk:#9c1822;--bg:#fff}.ljtitle,#listView #listTitle,#projectView .projsec,.heroNm,#projectView .poPfx,.hero-hi,.hero-hi *,.acthead{background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;-webkit-text-fill-color:#1b1b1b !important;color:#1b1b1b !important}#projectView .projsec a{-webkit-text-fill-color:#9c1822 !important;color:#9c1822 !important}#projectView .subnote,#listView #listNote{color:#5c5c5c !important}#leadsView .ljrhead{color:#1b1b1b !important}#listView label,#listView .listlbl,#listView .listctl{color:#5c4a42 !important}.dashcard,section.history{border-color:#d9d9d9 !important;border-top-color:#C8202E !important}.cr-est-saved-list{background:transparent !important}}</style>
 
 
 <style id="cr-offline-styles">#cr-offline{display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:4px 12px;border-radius:12px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;z-index:10000;box-shadow:0 2px 10px rgba(0,0,0,.4);animation:cr-offline-pulse 2s ease-in-out infinite}#cr-offline.show{display:block}@keyframes cr-offline-pulse{0%,100%{opacity:1}50%{opacity:.65}}</style>
@@ -29902,6 +29911,14 @@ window.CardinalDark = { toggle:toggle, isEnabled:isEnabled, setEnabled:setEnable
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:342, note:'\uD83C\uDFA8 Client profile hero re-dressed \u2014 iron card with a neon stage spine, gradient name, tap-to-call phone + email right on the name row' },
+{ build:341, note:'\uD83D\uDC65 One Clients directory for all three CRMs \u2014 brass look, per-CRM milestone filters, CRM switcher bar at the bottom, admin multi-select delete' },
+{ build:340, note:'\uD83C\uDFE0 Gold home button now returns to whichever CRM you are in \u2014 Retail, Claims, or Frost' },
+{ build:339, note:'\uD83D\uDCB0 Estimates rebuilt as status lanes \u2014 Unsent \u2192 Sent \u2192 Accepted, working Status/Rep/Trade filters, \u2691 flags anything waiting 5+ days' },
+{ build:338, note:'\uD83D\uDDD1 One admin delete path everywhere \u2014 delete from the leads pane, and community clients can finally be deleted' },
+{ build:337, note:'\uD83D\uDCC7 All Leads & Jobs cards matched to the committed design \u2014 milestone rail with day counts, address line, gold call/text buttons' },
+{ build:336, note:'\uD83D\uDCCB Assigned Leads & Jobs is now All Leads & Jobs \u2014 10 sorts, 7 drill-in filter categories, map/satellite/communications preview pane' },
+{ build:335, note:'\uD83C\uDF11 Retail goes dark for real \u2014 the iron base is committed at the source and paper printouts stay light' },
 { build:322, note:'\uD83C\uDFA8 Screen titles locked at their approved size on every device' },
 { build:320, note:'\uD83D\uDC1B Client head card fixed \u2014 names were wrapping because of padding reserved for buttons that no longer exist. Card is tighter and the cover photo lines up with it' },
 { build:318, note:'\uD83D\uDC1B The estimate editor scrolls all the way down now \u2014 the bottom was hiding under the nav bar' },
@@ -41032,5 +41049,28 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 }
 </style>
 
+<style id="cr-keeper-styles">
+/* ── Retail client profile · Keeper re-dress (build 342). Guarded: insurance/community keep their skins. ── */
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;border-radius:14px;box-shadow:0 7px 18px rgba(0,0,0,.45);overflow:hidden;}
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo:hover{box-shadow:0 7px 18px rgba(0,0,0,.45);border-color:#454b55;}
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo::before{content:'';position:absolute;left:0;top:8%;height:84%;width:3px;border-radius:3px;background:var(--spn,#dbe7f7);box-shadow:0 0 6px var(--spn,#dbe7f7),0 0 14px var(--spn,#dbe7f7);}
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo h2{color:#e9e6df;}
+body:not(.claim-insurance):not(.claim-community) #projectView .projmeta{color:#9aa0a8;}
+body:not(.claim-insurance):not(.claim-community) #projectView .namestar{color:#5a5145;}
+body:not(.claim-insurance):not(.claim-community) #projectView .namestar.on{color:#e8a900;}
+body:not(.claim-insurance):not(.claim-community) #projectView .stagebanner{border-radius:11px;font:800 18px ui-monospace,Menlo,monospace;letter-spacing:.1em;padding:12px;}
+body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow{background:linear-gradient(180deg,#2b2f36,#24282e);border:1px solid #3d434c;border-radius:12px;}
+body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow small{font:700 9px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9aa0a8;}
+body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow b{font:800 21px ui-monospace,Menlo,monospace;color:#8fe0ae;}
+body:not(.claim-insurance):not(.claim-community) #projectView .jabox{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;border-radius:11px;color:#e9e6df;box-shadow:0 4px 10px rgba(0,0,0,.35);}
+body:not(.claim-insurance):not(.claim-community) #projectView .jabox .jbl{color:#e9e6df;}
+body:not(.claim-insurance):not(.claim-community) #projectView .jan{font:700 10px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;border-radius:999px;padding:1px 8px;}
+body:not(.claim-insurance):not(.claim-community) #projectView .jan.zero{opacity:.55;}
+.heroNm{font:800 19px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;min-width:0;}
+#projectView .poPfx{font-weight:800;background:linear-gradient(100deg,#d0564a,#caa030);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#caa030;opacity:.9;}
+.hcontact{margin-left:auto;text-align:right;flex:0 0 auto;line-height:1.35;display:flex;flex-direction:column;align-items:flex-end;}
+.hcontact .hph{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#f5d061;text-decoration:none;}
+.hcontact .hem{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;text-decoration:none;margin-top:1px;}
+</style>
 </body>
 </html>
