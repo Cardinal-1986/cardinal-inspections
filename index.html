@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 349 &#8212; Keeper 3/3: Payments and History as opening pills (History in the Cardinal-red timeline), punch card in the committed shell &#8212; the Keeper profile is complete. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 350 &#8212; Home: Recent leads + Today band &#8212; newest retail clients in the committed card rows beside today\u2019s schedule, both tap-through. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2732,6 +2732,10 @@ body:has(#loginView[style*="block"]){background:#fff;}
           </div>
         </div>
         <div class="rowfil"></div>
+        <div class="kphomerow">
+          <div class="pipecard"><div class="pipetitle">&#128293; Recent leads</div><div id="kpLeadsList"></div></div>
+          <div class="pipecard"><div class="pipetitle">&#128197; Today</div><div id="kpTodayList"></div></div>
+        </div>
         <div class="herorow" style="margin-top:14px;">
           <div class="pipecard teamcal">
             <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
@@ -13952,6 +13956,7 @@ function renderActivity(){
       (x.cli && x.detail ? ' \u00b7 ' + esc(x.cli) : '') +
       '<span class="tm">' + timeAgo(x.t) + '</span></span></div>';
   }).join('') : '<div class="chatempty">No activity yet.</div>';
+  if(typeof renderKpHomeRow === 'function') renderKpHomeRow();
 }
 var activityView = document.getElementById('activityView');
 function openActivityFeed(){
@@ -41440,6 +41445,76 @@ document.addEventListener('click', function(e){
   if(!b) return;
   var t = document.querySelector('#jaGrid [data-ja="payments"], #jaGrid [data-jm="payments"]');
   b.style.display = t ? 'inline-block' : 'none';
+});
+})();
+</script>
+<style id="cr-kphome-styles">
+/* ── Home: Recent leads + Today band (build 350) ── */
+.kphomerow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+@media (max-width:900px){ .kphomerow{grid-template-columns:1fr;} }
+.kplrow{display:flex;align-items:center;gap:9px;background:linear-gradient(180deg,#2e333b,#262a31);
+  border:1px solid #454b55;border-radius:10px;padding:8px 10px;margin-top:8px;position:relative;cursor:pointer;overflow:hidden;}
+.kplrow::before{content:'';position:absolute;left:0;top:16%;height:68%;width:3px;border-radius:3px;
+  background:var(--sc,#dbe7f7);box-shadow:0 0 6px var(--sc,#dbe7f7);}
+.kplrow .nm{flex:1;min-width:0;font:800 12.5px 'Segoe UI',Arial,sans-serif;padding-left:6px;
+  background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#d4a017;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kplrow .po{font-weight:800;font-size:11px;background:linear-gradient(100deg,#d0564a,#caa030);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#caa030;opacity:.9;}
+.kplrow .stc{font:700 8px ui-monospace,Menlo,monospace;letter-spacing:.04em;text-transform:uppercase;
+  padding:2.5px 8px;border-radius:999px;border:1px solid var(--sc,#4a4d52);color:var(--sc,#9aa0a8);white-space:nowrap;}
+.kplrow .rp{font-size:10.5px;font-weight:800;color:#e8c23a;}
+.kptrow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid #33383f;font-size:12px;cursor:pointer;}
+.kptrow:last-child{border-bottom:0;}
+.kptrow .tm2{font:800 11px ui-monospace,Menlo,monospace;color:#f5d061;width:66px;flex:0 0 auto;}
+.kptrow .ti2{font-weight:700;color:#dfe3e8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kptrow .m3{font-size:10.5px;color:#6d747e;}
+.kpempty{border:1px dashed #4a4f58;border-radius:10px;padding:11px;text-align:center;color:#8b929c;
+  font:600 11.5px 'Segoe UI',Arial,sans-serif;margin-top:10px;}
+</style>
+<script id="cr-kphome-script">
+(function(){
+'use strict';
+function crmOfSafe(pr){
+  try{ return (typeof cdCrmOf === 'function') ? cdCrmOf(pr) : 'retail'; }catch(e){ return 'retail'; }
+}
+window.renderKpHomeRow = function(){
+  var lm = document.getElementById('kpLeadsList');
+  var tm = document.getElementById('kpTodayList');
+  if(!lm || !tm) return;
+  var leads = (window.cacheProjects || []).filter(function(p){ return crmOfSafe(p) === 'retail'; })
+    .slice().sort(function(a, b){ return String(b.created_at || '').localeCompare(String(a.created_at || '')); })
+    .slice(0, 6);
+  lm.innerHTML = leads.length ? leads.map(function(p){
+    var st = normStage(p.stage);
+    var sc = (typeof LJ_SPINE !== 'undefined' && LJ_SPINE[st]) ? LJ_SPINE[st] : '#dbe7f7';
+    var po = poOf(p);
+    return '<div class="kplrow" data-proj="' + p.id + '" style="--sc:' + sc + '">' +
+      '<span class="nm">' + esc(p.name || 'Unnamed client') + '</span>' +
+      (po ? '<span class="po">' + esc(String(po)) + '</span>' : '') +
+      '<span class="stc">' + esc(st === 'Closed' ? 'Archived' : st) + '</span>' +
+      '<span class="rp">' + esc(rptRepName(p.created_by || '')) + '</span></div>';
+  }).join('') : '<div class="kpempty">No retail clients yet.</div>';
+  var today = new Date();
+  function sameDay(ds){
+    if(!ds) return false;
+    var d = new Date(String(ds).indexOf('T') === -1 ? String(ds) + 'T12:00:00' : ds);
+    return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+  }
+  var appts = (window.cacheAppts || []).filter(function(a){ return sameDay(a.appt_date); })
+    .slice().sort(function(a, b){ return String(a.appt_time || '').localeCompare(String(b.appt_time || '')); });
+  tm.innerHTML = appts.length ? appts.map(function(a){
+    var pr = a.project_id ? (window.cacheProjects || []).find(function(x){ return x.id === a.project_id; }) : null;
+    return '<div class="kptrow"' + (pr ? ' data-proj="' + pr.id + '"' : '') + '>' +
+      '<span class="tm2">' + esc(a.appt_time ? (typeof fmtApptTime === 'function' ? fmtApptTime(a.appt_time) : a.appt_time) : '\u2014') + '</span>' +
+      '<span style="flex:1;min-width:0;"><span class="ti2">' + esc(a.title || 'Appointment') + '</span>' +
+        (pr ? '<div class="m3">' + esc(pr.name || '') + '</div>' : '') + '</span></div>';
+  }).join('') : '<div class="kpempty">Nothing on the calendar today.</div>';
+};
+document.addEventListener('click', function(e){
+  var r = e.target.closest('.kplrow[data-proj], .kptrow[data-proj]');
+  if(!r) return;
+  if(typeof openProject === 'function') openProject(r.getAttribute('data-proj'));
 });
 })();
 </script>
