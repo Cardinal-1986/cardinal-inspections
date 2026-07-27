@@ -2619,7 +2619,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 343 &#8212; What&#8217;s New updated for the retail-B run and Keeper 1 (builds 335&#8211;342 logged). </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 344 &#8212; Universal banner nav on all three CRMs &#8212; Contacts/Leads/Track/Reports + Production and Tools dropdowns + square search, per-CRM skin, resolve-or-hide routing. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2629,6 +2629,34 @@ body:has(#loginView[style*="block"]){background:#fff;}
     </div>
   </div>
 </header>
+
+<!-- ============ UNIVERSAL BANNER NAV (build 344) ============ -->
+<nav id="crBanner" aria-label="Sections">
+  <span class="cbn" data-go="home">Home</span>
+  <span class="cbn" data-go="contacts">Contacts</span>
+  <span class="cbn" data-go="leads">Leads</span>
+  <span class="cbn" data-go="track">Track</span>
+  <span class="cbn" data-go="reports">Reports</span>
+  <span class="cbn cbdd" data-dd="prod">Production <b class="car">&#9660;</b>
+    <span class="cbmenu"><span class="cbi" data-go="prodboard">&#127959; Production Board</span><span class="cbi" data-go="schedule">&#128197; Schedule Board</span></span>
+  </span>
+  <span class="cbn cbdd" data-dd="tools">Tools <b class="car">&#9660;</b>
+    <span class="cbmenu">
+      <small>Selling</small>
+      <span class="cbi" data-go="aiest">&#9889; AI Estimates</span>
+      <span class="cbi" data-go="pricing">&#128178; Pricing Catalog</span>
+      <span class="cbi" data-go="coach">&#127919; Objection Coach</span>
+      <span class="cbi" data-go="adjusters">&#127963; Adjuster Directory</span>
+      <small>Supply</small>
+      <span class="cbi" data-go="abc">&#129521; ABC Supply</span>
+      <small>App</small>
+      <span class="cbi" data-go="selfcheck">&#129658; Self Check</span>
+      <span class="cbi" data-go="whatsnew">&#10024; What's New</span>
+      <span class="cbi" data-go="settings">&#9881;&#65039; Settings</span>
+    </span>
+  </span>
+  <span class="cbsrch"><input id="cbSearch" type="search" placeholder="Client, PO # or address"><b class="go"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></b></span>
+</nav>
 
 <!-- ============ LOGIN (team mode only) ============ -->
 <div id="loginView">
@@ -41072,5 +41100,119 @@ body:not(.claim-insurance):not(.claim-community) #projectView .jan.zero{opacity:
 .hcontact .hph{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#f5d061;text-decoration:none;}
 .hcontact .hem{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;text-decoration:none;margin-top:1px;}
 </style>
+<style id="cr-banner-styles">
+/* ── Universal banner nav (build 344) — skinned per CRM via body[data-crm] ── */
+#crBanner{--bacc:#d4a017;--bacclt:#f5d061;--bink:#22262d;--bline:#3a3f47;
+  display:flex;align-items:center;flex-wrap:wrap;padding:0 8px;background:#15171b;border-bottom:1px solid #262a31;}
+body[data-crm="insurance"] #crBanner{--bacc:#2dd4bf;--bacclt:#7ef0dc;--bink:#142723;--bline:#265048;background:#0e1a19;border-color:#1d3833;}
+body[data-crm="community"] #crBanner{--bacc:#8ad0f5;--bacclt:#dbe7f7;--bink:#101f35;--bline:#28466e;background:#0b1826;border-color:#1b3050;}
+#crBanner .cbn{position:relative;display:flex;align-items:center;gap:5px;padding:11px 12px;color:#c8cdd4;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;border-bottom:3px solid transparent;user-select:none;}
+#crBanner .cbn:hover{color:var(--bacclt);}
+#crBanner .cbn.here{color:var(--bacclt);border-bottom-color:var(--bacc);}
+#crBanner .car{font-size:9px;color:#6d747e;transition:transform .15s;}
+#crBanner .cbdd.open .car{transform:rotate(180deg);}
+#crBanner .cbmenu{display:none;position:absolute;top:100%;left:0;min-width:215px;background:var(--bink);
+  border:1px solid var(--bline);border-radius:0 0 12px 12px;box-shadow:0 18px 40px rgba(0,0,0,.55);z-index:210;padding:6px 0;}
+#crBanner .cbdd.open .cbmenu{display:block;}
+#crBanner .cbi{display:flex;align-items:center;gap:9px;padding:9px 15px;color:#dfe3e8;
+  font:600 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#crBanner .cbi:hover{background:rgba(255,255,255,.05);color:var(--bacclt);}
+#crBanner .cbmenu small{display:block;padding:7px 15px 2px;font:800 9px ui-monospace,Menlo,monospace;
+  letter-spacing:.18em;color:#6d747e;text-transform:uppercase;}
+#crBanner .cbsrch{margin-left:auto;display:flex;align-items:center;background:var(--bink);
+  border:1px solid var(--bline);border-radius:6px;height:31px;min-width:220px;overflow:hidden;margin:5px 4px;}
+#crBanner .cbsrch input{flex:1;background:none;border:0;outline:0;color:#dfe3e8;
+  font:600 12px 'Segoe UI',Arial,sans-serif;padding:0 11px;min-width:0;}
+#crBanner .cbsrch input::placeholder{color:#77808c;}
+#crBanner .cbsrch .go{width:33px;height:100%;display:flex;align-items:center;justify-content:center;
+  border-left:1px solid var(--bline);cursor:pointer;}
+#crBanner .cbsrch .go svg{width:13px;height:13px;stroke:var(--bacclt);fill:none;stroke-width:2;stroke-linecap:round;}
+@media (max-width:900px){
+  #crBanner{padding:2px 4px;}
+  #crBanner .cbn{padding:9px 9px;font-size:12px;}
+  #crBanner .cbsrch{flex:1 1 100%;order:9;margin:4px 4px 8px;}
+}
+@media print{ #crBanner{display:none !important;} }
+</style>
+<script id="cr-banner-script">
+(function(){
+'use strict';
+var B = document.getElementById('crBanner');
+if(!B) return;
+function fn(path){
+  var parts = path.split('.');
+  var o = window[parts[0]];
+  if(parts.length === 1) return (typeof o === 'function') ? o : null;
+  return (o && typeof o[parts[1]] === 'function') ? o[parts[1]].bind(o) : null;
+}
+var ROUTES = {
+  home: function(){
+    var crm = document.body.dataset.crm || 'retail';
+    if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ window.showCardinalTruth(); }
+    else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
+    else if(typeof window.showHome === 'function'){ window.showHome(); }
+  },
+  contacts:  'openClientsDirectory',
+  leads:     'openLeadsView',
+  track:     'CardinalEstimates.open',
+  reports:   'openReportsView',
+  prodboard: 'CardinalProduction.open',
+  schedule:  'openScheduleBoard',
+  aiest:     'CardinalEstimates.open',
+  pricing:   'CardinalPricing.open',
+  coach:     'CardinalCoach.open',
+  adjusters: 'CardinalAdjusters.open',
+  abc:       'CardinalABC.open',
+  selfcheck: 'CardinalSelfCheck.open',
+  whatsnew:  'CardinalChangelog.show',
+  settings:  'openSettingsView'
+};
+/* resolve-or-hide: an item only shows if its destination exists */
+Array.prototype.forEach.call(B.querySelectorAll('[data-go]'), function(el){
+  var r = ROUTES[el.getAttribute('data-go')];
+  if(typeof r === 'function') return;
+  if(!r || !fn(r)) el.style.display = 'none';
+});
+function closeMenus(){
+  Array.prototype.forEach.call(B.querySelectorAll('.cbdd.open'), function(x){ x.classList.remove('open'); });
+}
+B.addEventListener('click', function(e){
+  var item = e.target.closest('[data-go]');
+  if(item){
+    var r = ROUTES[item.getAttribute('data-go')];
+    closeMenus();
+    try{
+      if(typeof r === 'function'){ r(); }
+      else { var f = fn(r); if(f) f(); }
+    }catch(err){ if(typeof showError === 'function') showError('Could not open: ' + (err.message || err)); }
+    return;
+  }
+  var dd = e.target.closest('.cbdd');
+  if(dd){
+    e.stopPropagation();
+    var was = dd.classList.contains('open');
+    closeMenus();
+    if(!was) dd.classList.add('open');
+  }
+});
+document.addEventListener('click', function(e){
+  if(!e.target.closest('#crBanner')) closeMenus();
+});
+var si = document.getElementById('cbSearch');
+si.addEventListener('keydown', function(e){
+  if(e.key !== 'Enter') return;
+  var q = si.value.trim();
+  if(typeof openClientsDirectory !== 'function') return;
+  openClientsDirectory(true);
+  var cf = document.getElementById('cliFilter');
+  if(cf){ cf.value = q; }
+  if(typeof renderClientDirectory === 'function') renderClientDirectory();
+});
+B.querySelector('.cbsrch .go').addEventListener('click', function(){
+  si.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+});
+})();
+</script>
 </body>
 </html>
