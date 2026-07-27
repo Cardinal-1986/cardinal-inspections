@@ -2619,7 +2619,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 344 &#8212; Universal banner nav on all three CRMs &#8212; Contacts/Leads/Track/Reports + Production and Tools dropdowns + square search, per-CRM skin, resolve-or-hide routing. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 345 &#8212; Global Photo Activity page &#8212; every photo across every job, grouped by day, client search, tap-through to the profile; Photos joins the banner. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2635,6 +2635,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
   <span class="cbn" data-go="home">Home</span>
   <span class="cbn" data-go="contacts">Contacts</span>
   <span class="cbn" data-go="leads">Leads</span>
+  <span class="cbn" data-go="photos">Photos</span>
   <span class="cbn" data-go="track">Track</span>
   <span class="cbn" data-go="reports">Reports</span>
   <span class="cbn cbdd" data-dd="prod">Production <b class="car">&#9660;</b>
@@ -2886,6 +2887,16 @@ body:has(#loginView[style*="block"]){background:#fff;}
     <div class="ph"><button id="ljSubBack">&#8249; Back</button><span class="t" id="ljSubTitle"></span><button class="ap" id="ljSubApply">Apply</button></div>
     <div id="ljSubList"></div>
   </div></div>
+</div>
+
+<!-- ============ GLOBAL PHOTO ACTIVITY (build 345) ============ -->
+<div id="photosView" style="display:none;">
+  <div class="wrap" style="padding-top:16px;">
+    <div class="ljhead"><h2 class="ljtitle">Photo Activity</h2></div>
+    <div class="ljsub">Every photo &middot; every job &middot; <span id="phShown">&mdash;</span></div>
+    <div class="ljtop"><input type="search" id="phSearch" placeholder="Search by client"></div>
+    <div id="phGrid"></div>
+  </div>
 </div>
 
 <!-- ============ SETTINGS ============ -->
@@ -11980,6 +11991,7 @@ function hideAllViews(){
   var _lv = document.getElementById('leadsView'); if(_lv) _lv.style.display = 'none';
   var _tv = document.getElementById('teamView'); if(_tv) _tv.style.display = 'none';
   var _sv = document.getElementById('settingsView'); if(_sv) _sv.style.display = 'none';
+  var _phv = document.getElementById('photosView'); if(_phv) _phv.style.display = 'none';
   var _cd = document.getElementById('companyDocsView'); if(_cd) _cd.style.display = 'none';
   var _qi = document.getElementById('quickInspView'); if(_qi) _qi.style.display = 'none';
   var _qs = document.getElementById('qiStartView'); if(_qs) _qs.style.display = 'none';
@@ -41155,6 +41167,7 @@ var ROUTES = {
   },
   contacts:  'openClientsDirectory',
   leads:     'openLeadsView',
+  photos:    'openPhotosView',
   track:     'CardinalEstimates.open',
   reports:   'openReportsView',
   prodboard: 'CardinalProduction.open',
@@ -41168,12 +41181,17 @@ var ROUTES = {
   whatsnew:  'CardinalChangelog.show',
   settings:  'openSettingsView'
 };
-/* resolve-or-hide: an item only shows if its destination exists */
-Array.prototype.forEach.call(B.querySelectorAll('[data-go]'), function(el){
-  var r = ROUTES[el.getAttribute('data-go')];
-  if(typeof r === 'function') return;
-  if(!r || !fn(r)) el.style.display = 'none';
-});
+/* resolve-or-hide: an item only shows if its destination exists.
+   Deferred to DOMContentLoaded so modules defined later in the document count. */
+function resolveHide(){
+  Array.prototype.forEach.call(B.querySelectorAll('[data-go]'), function(el){
+    var r = ROUTES[el.getAttribute('data-go')];
+    if(typeof r === 'function') return;
+    el.style.display = (!r || !fn(r)) ? 'none' : '';
+  });
+}
+if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', resolveHide); }
+else { resolveHide(); }
 function closeMenus(){
   Array.prototype.forEach.call(B.querySelectorAll('.cbdd.open'), function(x){ x.classList.remove('open'); });
 }
@@ -41211,6 +41229,94 @@ si.addEventListener('keydown', function(e){
 });
 B.querySelector('.cbsrch .go').addEventListener('click', function(){
   si.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+});
+})();
+</script>
+<style id="cr-photos-styles">
+/* ── Global photo activity (build 345) ── */
+#phGrid .phday{font:800 10.5px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;
+  color:#f5d061;margin:16px 0 8px;border-bottom:1px solid #2c3038;padding-bottom:5px;}
+#phGrid .phday b{color:#6d747e;font-weight:700;}
+.phcells{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;}
+.phc{position:relative;border:1px solid #454b55;border-radius:10px;overflow:hidden;cursor:pointer;background:#22262d;aspect-ratio:1;}
+.phc img{width:100%;height:100%;object-fit:cover;display:block;}
+.phc .phn{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(10,12,16,.9));
+  color:#f5d061;font:700 10px 'Segoe UI',Arial,sans-serif;padding:14px 7px 5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.phnote{border:1px dashed #4a4f58;border-radius:11px;padding:14px;text-align:center;color:#8b929c;
+  font:600 12.5px 'Segoe UI',Arial,sans-serif;margin:14px 0;}
+</style>
+<script id="cr-photos-script">
+(function(){
+'use strict';
+var phRows = [];
+function phDayLabel(d){
+  var now = new Date();
+  if(d.toDateString() === now.toDateString()) return 'Today';
+  if(d.toDateString() === new Date(now.getTime() - 86400000).toDateString()) return 'Yesterday';
+  var opts = { month:'short', day:'numeric' };
+  if(d.getFullYear() !== now.getFullYear()) opts.year = 'numeric';
+  return d.toLocaleDateString(undefined, opts);
+}
+function renderPhotosView(){
+  var grid = document.getElementById('phGrid');
+  var q = (document.getElementById('phSearch').value || '').trim().toLowerCase();
+  var byId = {};
+  (window.cacheProjects || []).forEach(function(p){ byId[p.id] = p; });
+  var vis = phRows.filter(function(r){
+    if(!q) return true;
+    var p = byId[r.project_id];
+    return !!p && String(p.name || '').toLowerCase().indexOf(q) !== -1;
+  });
+  document.getElementById('phShown').textContent = vis.length + ' of ' + phRows.length + ' recent photos';
+  if(!vis.length){
+    grid.innerHTML = '<div class="phnote">' + (phRows.length ? 'No photos match that client.' : 'No photos yet \u2014 they land here as the crew uploads.') + '</div>';
+    return;
+  }
+  var groups = [], map = {};
+  vis.forEach(function(r){
+    var d = new Date(r.created_at);
+    var key = d.toDateString();
+    if(!map[key]){ map[key] = { label: phDayLabel(d), items: [] }; groups.push(map[key]); }
+    map[key].items.push(r);
+  });
+  grid.innerHTML = groups.map(function(g){
+    return '<div class="phday">' + g.label + ' <b>(' + g.items.length + ')</b></div><div class="phcells">' +
+      g.items.map(function(r){
+        var p = byId[r.project_id];
+        return '<div class="phc" data-pid="' + esc(String(r.project_id || '')) + '">' +
+          '<img loading="lazy" src="' + esc(String(r.data || '')) + '" alt="">' +
+          '<span class="phn">' + esc(p ? (p.name || '') : 'Unknown client') + '</span></div>';
+      }).join('') + '</div>';
+  }).join('');
+}
+window.renderPhotosView = renderPhotosView;
+window.openPhotosView = function(){
+  hideAllViews();
+  document.getElementById('photosView').style.display = 'block';
+  window.scrollTo(0, 0);
+  var grid = document.getElementById('phGrid');
+  grid.innerHTML = '<div class="phnote">Loading photos\u2026</div>';
+  var p = TEAM
+    ? sb.from('project_photos').select('id,project_id,data,created_by,created_at')
+        .order('created_at', { ascending: false }).limit(200)
+    : Promise.resolve({ data: [], error: null });
+  Promise.resolve(p).then(function(r){
+    if(r && r.error) throw r.error;
+    phRows = (r && r.data) || [];
+    renderPhotosView();
+  }).catch(function(err){
+    if(grid.isConnected) grid.innerHTML = '<div class="phnote">Could not load photos: ' + esc(err.message || String(err)) + '</div>';
+  });
+};
+document.getElementById('phSearch').addEventListener('input', function(){
+  clearTimeout(this.__t); this.__t = setTimeout(renderPhotosView, 250);
+});
+document.getElementById('phGrid').addEventListener('click', function(e){
+  var c = e.target.closest('.phc');
+  if(!c) return;
+  var pid = c.getAttribute('data-pid');
+  if(pid && typeof openProject === 'function') openProject(pid);
 });
 })();
 </script>
