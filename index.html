@@ -1736,76 +1736,122 @@ body.restoring #restoreVeil{display:flex;}
 .btn:disabled, .chipbtn:disabled{opacity:.5;pointer-events:none;}
 
 /* ---- assigned leads & jobs ---- */
-.ljhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;}
-.ljtitle{margin:0;text-align:center;font:800 23px Georgia,'Times New Roman',serif;color:#1c1416;letter-spacing:.02em;}
-.ljtop{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
-.ljtop input[type=search]{flex:1;min-width:180px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;
-  font:600 13.5px 'Segoe UI',Arial,sans-serif;}
-.ljtop select{border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:700 13px 'Segoe UI',Arial,sans-serif;
-  color:var(--red);background:#fff;}
-.ljcols{display:grid;grid-template-columns:230px minmax(300px,1.1fr) minmax(300px,1fr);gap:14px;align-items:start;}
-.ljfilters{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;position:sticky;top:calc(var(--headh,110px) + 10px);
-  max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
-.ljfhead{font:800 16px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;margin-bottom:6px;cursor:pointer;user-select:none;}
-.ljfchev{display:inline-block;font-size:12px;color:var(--red);transition:transform .18s;transform:rotate(90deg);}
-.ljfilters.ljcollapsed .ljfchev{transform:rotate(0deg);}
-.ljfilters.ljcollapsed #ljFilterBody{display:none;}
-.ljfilters.ljcollapsed .ljfhead{margin-bottom:0;}
-.ljgroup{margin-top:10px;border-top:1px solid #f0e8e2;padding-top:8px;}
-.ljgroup > b{display:block;font:800 12px 'Segoe UI',Arial,sans-serif;color:var(--red);cursor:pointer;
-  text-transform:none;letter-spacing:.01em;}
-.ljgroup > b::before{content:'\25BE ';font-size:10px;}
-.ljgroup.closed > b::before{content:'\25B8 ';}
+.ljhead{display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:2px;}
+.ljtitle{margin:0;text-align:center;font:800 23px Georgia,'Times New Roman',serif;letter-spacing:.02em;
+  background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
+.ljsub{text-align:center;font:600 12px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;margin:2px 0 10px;}
+.ljtop{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.ljtop input[type=search]{flex:1;min-width:180px;border:1px solid #3a3f47;border-radius:8px;padding:9px 12px;
+  font:600 13.5px 'Segoe UI',Arial,sans-serif;background:#2a2e35;color:#e9e6df;}
+.ljctl{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
+.ljctl .sl{font:600 12px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
+.ljsortchip{color:#6db3f2;font:700 13px 'Segoe UI',Arial,sans-serif;background:none;border:0;padding:2px;cursor:pointer;
+  border-bottom:1px dashed rgba(109,179,242,.5);}
+.ljico{width:34px;height:34px;border:1px solid #3a3f47;background:#2a2e35;color:#cfd6df;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;position:relative;}
+.ljico.on{border-color:#d4a017;color:#f5d061;}
+.ljico .bdg{position:absolute;top:-6px;right:-6px;background:#d4a017;color:#17181b;
+  font:800 9.5px ui-monospace,Menlo,monospace;border-radius:999px;padding:1px 5px;display:none;}
+.ljico .bdg.show{display:block;}
+.ljctl .right{margin-left:auto;display:flex;gap:8px;}
+.ljcols{display:grid;grid-template-columns:1fr;gap:14px;align-items:start;}
+.ljrail{display:none;}
+.ljrhead{font:800 15px 'Segoe UI',Arial,sans-serif;color:#f5d061;margin-bottom:8px;}
+.ljcard{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;
+  border-radius:13px;margin-bottom:11px;display:flex;align-items:center;gap:11px;
+  padding:10px 12px 10px 15px;cursor:pointer;position:relative;
+  box-shadow:0 7px 18px rgba(0,0,0,.45),0 2px 5px rgba(0,0,0,.35);}
+.ljcard::before{content:'';position:absolute;left:0;top:8%;height:84%;width:3px;border-radius:3px;
+  background:var(--spn,#dbe7f7);box-shadow:0 0 6px var(--spn,#dbe7f7),0 0 14px var(--spn,#dbe7f7);}
+.ljcard.sel{box-shadow:0 0 0 2px #d4a017,0 7px 18px rgba(0,0,0,.45);}
+.ljmain{flex:1;min-width:0;}
+.ljnm{font:800 14.5px 'Segoe UI',Arial,sans-serif;
+  background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
+.ljpo{font-weight:800;background:linear-gradient(100deg,#d0564a,#caa030);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#caa030;opacity:.9;}
+.ljl2,.ljl3{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;margin-top:2px;}
+.ljrep{color:#e8c23a;font-weight:800;}
+.ljl4{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6d747e;margin-top:3px;}
+.ljl4 b{color:#c8cdd4;}
+.ljcta{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;}
+.ljbtn{width:36px;height:36px;border:1px solid #3a3f47;border-radius:10px;background:#2a2e35;
+  display:flex;align-items:center;justify-content:center;text-decoration:none;}
+.ljbtn svg{width:17px;height:17px;stroke:#f5d061;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.ljempty{border:1px dashed #4a4f58;border-radius:11px;padding:14px;text-align:center;color:#8b929c;
+  font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-bottom:12px;}
+.ljsortsel{width:100%;background:#2a2e35;border:1px solid #3a3f47;color:#e9e6df;border-radius:9px;
+  padding:8px 10px;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-bottom:10px;}
+.ljselrow{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.ljselbtn{flex:1;border:1px solid #3a3f47;background:#2a2e35;color:#c8cdd4;border-radius:9px;
+  padding:7px 6px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;text-align:center;}
+.ljselbtn:hover{border-color:#d4a017;color:#f5d061;}
+.ljclearbtn{background:none;border:0;color:#e08a7a;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:2px 6px;}
+.ljrailnote{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6d747e;margin:0 0 10px;line-height:1.45;}
+.ljgroup{margin-top:10px;border-top:1px solid #2c3038;padding-top:8px;}
+.ljgroup>b{display:flex;align-items:center;gap:7px;font:800 10.5px ui-monospace,Menlo,monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:#f5d061;cursor:pointer;}
+.ljgroup>b::before{content:'\25BE';font-size:10px;}
+.ljgroup.closed>b::before{content:'\25B8';}
 .ljgroup.closed .ljopts{display:none;}
-.ljopt{display:flex;align-items:center;gap:7px;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#3b2f2a;
-  padding:4px 0;cursor:pointer;}
-.cbx{appearance:none;-webkit-appearance:none;width:17px;height:17px;flex:0 0 auto;
-  border:2px solid #1b3a6b;border-radius:4px;background:#fff;cursor:pointer;
-  display:inline-grid;place-content:center;vertical-align:middle;margin:0;}
-.cbx:checked{background:#1b3a6b;}
-.cbx:checked::before{content:'\2713';color:#fff;font:800 11px/1 'Segoe UI',Arial,sans-serif;}
+.ljgroup .gbdg{font:700 9.5px ui-monospace,Menlo,monospace;background:#2f5a3c;color:#8fe0ae;border-radius:999px;padding:1px 7px;display:none;}
+.ljgroup .gbdg.show{display:inline-block;}
+.ljopt{display:flex;align-items:center;gap:8px;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#c8cdd4;padding:5px 0;cursor:pointer;}
+.cbx{appearance:none;-webkit-appearance:none;width:15px;height:15px;flex:0 0 auto;border:1.4px solid #4a505a;border-radius:4px;
+  background:transparent;cursor:pointer;display:inline-grid;place-content:center;vertical-align:middle;margin:0;}
+.cbx:checked{background:#3fae6a;border-color:#3fae6a;}
+.cbx:checked::before{content:'\2713';color:#17181b;font:800 10px/1 'Segoe UI',Arial,sans-serif;}
+.ljopt .cnt{margin-left:auto;font:700 10px ui-monospace,Menlo,monospace;color:#6d747e;}
+.ljdetail{display:none;background:#1a1d22;border:1px solid #2c3038;border-radius:12px;overflow:hidden;
+  position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
+.ljprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px 0;}
+.ljpname{font:800 19px 'Segoe UI',Arial,sans-serif;
+  background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
+.ljpsub{padding:4px 16px 0;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
+.ljpact{display:flex;gap:8px;padding:12px 16px;flex-wrap:wrap;}
+.ljfacts{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 16px 12px;}
+.ljfact{background:#22262d;border:1px solid #2c3038;border-radius:10px;padding:8px 10px;}
+.ljfact span{display:block;font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#6d747e;margin-bottom:3px;}
+.ljfact b{font:800 13px 'Segoe UI',Arial,sans-serif;color:#e9e6df;}
+.ljptabs{display:flex;border-bottom:2px solid #d4a017;position:sticky;top:0;background:#1a1d22;z-index:2;}
+.ljptab{flex:1;text-align:center;padding:10px 6px;font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8a919b;cursor:pointer;}
+.ljptab.on{color:#f5d061;box-shadow:inset 0 -3px 0 #d4a017;}
+.ljframe{margin:12px 16px 16px;border:1px solid #2c3038;border-radius:10px;overflow:hidden;}
+.ljmapframe{width:100%;height:380px;border:0;display:block;}
+.ljcomms{padding:6px 16px 16px;}
+.ljcmsg{margin:10px 0;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#c8cdd4;line-height:1.5;}
+.ljcmsg .who{color:#f5d061;font-weight:800;}
+.ljcmsg .when{color:#6d747e;font-size:10.5px;margin-left:6px;}
+.ljsummary{padding:16px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
+.ljrank{display:inline-flex;gap:2px;vertical-align:middle;}
+.ljrank i{width:10px;height:10px;border-radius:2px;background:#3a3f47;display:inline-block;}
+.ljrank i.on{background:#3fae6a;}
+.ljsheet{position:fixed;inset:0;background:rgba(10,12,16,.66);display:none;z-index:9996;}
+.ljsheet.open{display:flex;align-items:flex-start;justify-content:center;}
+.ljsheet .panel{background:#1c2027;border:1px solid #333842;border-top:0;border-radius:0 0 16px 16px;width:100%;max-width:560px;max-height:86%;overflow:auto;}
+.ljsheet .ph{display:flex;align-items:center;padding:13px 15px;border-bottom:1px solid #2c3038;position:sticky;top:0;background:#1c2027;z-index:1;}
+.ljsheet .ph .t{font:800 14px 'Segoe UI',Arial,sans-serif;color:#f5d061;flex:1;text-align:center;}
+.ljsheet .ph button{background:none;border:0;color:#6db3f2;font:700 13.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:4px 6px;}
+.ljsheet .ph button.ap{color:#3fae6a;}
+.ljsrow{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #262b32;cursor:pointer;
+  font:600 14px 'Segoe UI',Arial,sans-serif;color:#dfe3e8;}
+.ljsrow .ck{width:20px;color:#3fae6a;font-weight:800;visibility:hidden;}
+.ljsrow.on .ck{visibility:visible;}
+.ljsrow .chev{margin-left:auto;color:#5d646e;}
+.ljsrow .cnt2{margin-left:auto;font:700 10.5px ui-monospace,Menlo,monospace;background:#2f5a3c;color:#8fe0ae;border-radius:999px;padding:2px 8px;display:none;}
+.ljsrow .cnt2.show{display:block;}
+.ljclearall{display:block;background:none;border:0;color:#e08a7a;font:700 12.5px 'Segoe UI',Arial,sans-serif;padding:10px 16px;cursor:pointer;text-align:left;width:100%;}
+@media (min-width:901px){
+  .ljctl{display:none;}
+  .ljcols{grid-template-columns:230px minmax(300px,1.05fr) minmax(320px,1fr);}
+  .ljrail{display:block;background:#1a1d22;border:1px solid #2c3038;border-radius:12px;padding:13px;
+    position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
+  .ljdetail{display:block;}
+}
 
 .tradeopt{display:flex;align-items:center;gap:7px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
-.ljopt .cnt{margin-left:auto;color:#9a8c85;font-weight:700;font-size:11px;}
-.ljrhead{font:800 15px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;margin-bottom:8px;}
-.ljcard{background:#fff;border:1px solid var(--line);border-left:4px solid transparent;border-radius:10px;
-  padding:11px 12px;margin-bottom:9px;cursor:pointer;transition:box-shadow .12s;position:relative;}
-.ljcard:hover{box-shadow:0 4px 12px rgba(0,0,0,.12);}
-.ljcard.sel{border-left-color:var(--red);box-shadow:0 0 0 1px var(--red) inset, 0 4px 12px rgba(200,32,46,.15);}
-.ljcard .nm{font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--red);}
-.ljcard .ph, .ljcard .ad{font:600 12px 'Segoe UI',Arial,sans-serif;color:#5c4a42;}
-.ljcard .meta{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#3b2f2a;margin-top:5px;}
-.ljcard .meta b{font-weight:800;}
-.ljbadge{position:absolute;top:9px;right:10px;width:22px;height:22px;border-radius:50%;color:#fff;
-  display:flex;align-items:center;justify-content:center;font:800 11px 'Segoe UI',Arial,sans-serif;
-  box-shadow:0 1px 3px rgba(0,0,0,.25);}
-.ljcard{padding-right:108px;}
-.ljages{position:absolute;top:34px;right:10px;width:92px;text-align:right;font:600 10px 'Segoe UI',Arial,sans-serif;color:#8a7a72;line-height:1.5;}
-.ljages b{display:block;color:#3b2f2a;font-size:11px;}
-.ljrank{display:inline-flex;gap:2px;vertical-align:middle;}
-.ljrank i{width:10px;height:10px;border-radius:2px;background:#e4dcd6;display:inline-block;}
-.ljrank i.on{background:#7CB342;}
-.ljdetail{background:#fff;border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden;
-  position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
-.ljtabs{display:flex;border-bottom:2px solid var(--red);position:sticky;top:0;background:#fff;z-index:2;}
-.ljtab{flex:1;text-align:center;padding:10px 6px;font:800 13px 'Segoe UI',Arial,sans-serif;color:#8a7a72;cursor:pointer;}
-.ljtab.on{color:var(--red);box-shadow:inset 0 -3px 0 var(--red);}
-.ljsummary{padding:16px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#5c4a42;}
-.ljsummary h3{margin:0 0 6px;font:800 18px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;}
-.ljsec{padding:12px 16px;border-bottom:1px solid #f0e8e2;}
-.ljsec h4{margin:0 0 8px;font:800 13px 'Segoe UI',Arial,sans-serif;color:var(--red);border-bottom:1px solid #f0e8e2;padding-bottom:5px;}
-.ljkv{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;font:600 12.5px 'Segoe UI',Arial,sans-serif;}
-.ljkv span{color:#9a8c85;}
-.ljkv div{color:#2b2b2b;}
-.ljactions{padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;}
-.ljmapframe{width:100%;height:420px;border:0;display:block;}
-@media (max-width:1100px){ .ljcols{grid-template-columns:200px 1fr;} .ljdetail{grid-column:1 / -1;position:static;max-height:none;} }
-@media (max-width:700px){
-  .ljcols{grid-template-columns:1fr;}
-  .ljfilters{position:static;max-height:none;}
-  .ljfilters .ljgroup{margin-top:6px;}
-  .ljtitle{font-size:20px;}
-}
 
 /* ---- work schedule + AR row ---- */
 .rowfil{height:1px;margin:14px 8px;background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#f5d061 50%,var(--red-dk) 70%,transparent);}
@@ -2555,7 +2601,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 335 &#8212; Retail-B 1: dark iron base committed at source, retail override layer deleted, light-on-paper print override. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 336 &#8212; Retail-B 2: All Leads &amp; Jobs rebuilt &#8212; Rail Left cards, 10 sorts, 7 filter categories, tri-pane desktop with Map/Satellite/Communications pane. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2746,51 +2792,54 @@ body:has(#loginView[style*="block"]){background:#fff;}
   </div>
 </div>
 
-<!-- ============ ASSIGNED LEADS & JOBS ============ -->
+<!-- ============ ALL LEADS & JOBS (retail-B, build 336) ============ -->
 <div id="leadsView" style="display:none;">
   <div class="wrap" style="padding-top:16px;">
     <div class="ljhead">
-      <h2 class="ljtitle">Assigned Leads &amp; Jobs</h2>
+      <h2 class="ljtitle">All Leads &amp; Jobs</h2>
     </div>
+    <div class="ljsub">Retail only &middot; <span id="ljShown">&mdash;</span></div>
     <div class="ljtop">
       <input type="search" id="ljSearch" placeholder="Search Results">
-      <select id="ljSort">
-        <option value="status">Sorted by Age In Status</option>
-        <option value="touched">Sorted by Last Touched</option>
-        <option value="newest">Sorted by Newest</option>
-        <option value="name">Sorted by Name</option>
-      </select>
+    </div>
+    <div class="ljctl">
+      <span class="sl">Sort by</span>
+      <button class="ljsortchip" id="ljSortChip">Age in Status</button>
+      <div class="right">
+        <div class="ljico" id="ljDirBtn" title="Reverse order">&#8645;</div>
+        <div class="ljico" id="ljFunnelBtn" title="Filters">&#9923;<span class="bdg" id="ljFBadge">0</span></div>
+      </div>
     </div>
     <div class="ljcols">
-      <aside class="ljfilters ljcollapsed" id="ljFilters">
-        <div class="ljfhead" id="ljFHead"><span class="ljfchev">&#9656;</span> Filters
-          <button class="chipbtn" id="ljClearBtn" style="float:right;">Clear</button></div>
-        <div id="ljFilterBody">
-          <div id="ljFilterMount"></div>
+      <aside class="ljrail">
+        <select class="ljsortsel" id="ljSortSel"></select>
+        <div class="ljselrow">
+          <button class="ljselbtn" id="ljSelAll">&#9745; Select all</button>
+          <button class="ljclearbtn" id="ljClearBtn">Clear all</button>
         </div>
+        <div class="ljrailnote">Nothing checked = everything shows.</div>
+        <div id="ljRailMount"></div>
       </aside>
       <section class="ljresults">
         <div class="ljrhead">Results (<span id="ljCount">0</span>)</div>
         <div id="ljList"></div>
       </section>
-      <aside class="ljdetail">
-        <div class="ljtabs">
-          <span class="ljtab on" data-lt="details">&#128205; Details</span>
-          <span class="ljtab" data-lt="map">&#128506;&#65039; Map</span>
-        </div>
-        <div id="ljDetails">
-          <div class="ljsummary">
-            <h3 class="projsec" style="border:none;padding:0;">Job Summary</h3>
-            <p>Selecting a job from the left will load more details. This preview pane allows quick access to:</p>
-            <ul><li>Demographics</li><li>Location</li><li>Stage &amp; priority</li><li>Lead source</li><li>Quick actions</li></ul>
-          </div>
-        </div>
-        <div id="ljMap" style="display:none;">
-          <div class="ljsummary"><p>Select a job to see it on the map.</p></div>
-        </div>
-      </aside>
+      <aside class="ljdetail" id="ljPane"></aside>
     </div>
   </div>
+  <div class="ljsheet" id="ljShSort"><div class="panel">
+    <div class="ph"><span class="t">Sort by</span><button id="ljSortClose">Close</button></div>
+    <div id="ljSortList"></div>
+  </div></div>
+  <div class="ljsheet" id="ljShFilter"><div class="panel">
+    <div class="ph"><button id="ljFDone">Done</button><span class="t" id="ljFTitle">Filters (0)</span><span style="width:44px"></span></div>
+    <button class="ljclearall" id="ljClearAll">Clear all</button>
+    <div id="ljCatList"></div>
+  </div></div>
+  <div class="ljsheet" id="ljShSub"><div class="panel">
+    <div class="ph"><button id="ljSubBack">&#8249; Back</button><span class="t" id="ljSubTitle"></span><button class="ap" id="ljSubApply">Apply</button></div>
+    <div id="ljSubList"></div>
+  </div></div>
 </div>
 
 <!-- ============ SETTINGS ============ -->
@@ -8549,18 +8598,31 @@ document.getElementById('tskModal').addEventListener('click', function(e){ if(e.
 /* =========================================================================
    ASSIGNED LEADS & JOBS
    ========================================================================= */
-var ljState = { sel:null, sort:'status', tab:'details', open:{}, sets:{} };
-var LJ_GROUPS = [
-  { key:'stage',    label:'Milestone Pipeline', get:function(p){ return normStage(p.stage); } },
-  { key:'rep',      label:'Salesman',           get:function(p){ return rptRepName(p.created_by || ''); } },
-  { key:'priority', label:'Job Priority',       get:function(p){ return parseCkAll(p).priority || 'Normal'; } },
-  { key:'rank',     label:'Lead Rank',          get:function(p){ var r = ljRank(p); return r ? r + ' bar' + (r>1?'s':'') : 'Unavailable'; } },
-  { key:'category', label:'Job Category',       get:function(p){ return parseCkAll(p).job_category || ''; } },
-  { key:'worktype', label:'Work Type',          get:function(p){ return parseCkAll(p).work_type || ''; } },
-  { key:'trade',    label:'Trade',              multi:true, get:function(p){ return ljTrades(p); } },
-  { key:'city',     label:'City, State',        get:function(p){ return ljCity(p); } },
-  { key:'source',   label:'Lead Source',        get:function(p){ return parseCkAll(p).lead_source || ''; } }
+var ljState = { sel:null, sort:'status', dir:1, tab:'map', open:{}, sets:{} };
+var ljSheetState = { cat:null, pend:[] };
+var LJ_SORTS = [
+  { key:'status',   label:'Age in Status' },
+  { key:'jobname',  label:'Job#/Lead Name' },
+  { key:'category', label:'Job Category' },
+  { key:'priority', label:'Job Priority' },
+  { key:'touched',  label:'Last Touched' },
+  { key:'source',   label:'Lead Source' },
+  { key:'stage',    label:'Milestone (Pipeline)' },
+  { key:'rep',      label:'Representative' },
+  { key:'trade',    label:'Trade' },
+  { key:'worktype', label:'Work Type' }
 ];
+var LJ_GROUPS = [
+  { key:'stage',    label:'Milestone',    get:function(p){ return normStage(p.stage); } },
+  { key:'rep',      label:'Assigned To',  get:function(p){ return rptRepName(p.created_by || ''); } },
+  { key:'priority', label:'Job Priority', get:function(p){ return parseCkAll(p).priority || 'Normal'; } },
+  { key:'category', label:'Job Category', get:function(p){ return parseCkAll(p).job_category || ''; } },
+  { key:'worktype', label:'Work Type',    get:function(p){ return parseCkAll(p).work_type || ''; } },
+  { key:'trade',    label:'Trade',        multi:true, get:function(p){ return ljTrades(p); } },
+  { key:'source',   label:'Lead Source',  get:function(p){ return parseCkAll(p).lead_source || ''; } }
+];
+var LJ_SPINE = { Lead:'#dbe7f7', Prospect:'#ffd84d', Approved:'#3dff9a', Scheduled:'#3dff9a',
+  Completed:'#6fc3ff', Invoiced:'#c9a2ff', Closed:'#9aa4af', Lost:'#ff8a7a' };
 function ljTrades(p){
   var ck = parseCkAll(p);
   if(ck.trades && ck.trades.length) return ck.trades;
@@ -8572,21 +8634,14 @@ function ljRank(p){
   if(p.email) n++;
   if(cacheRows.some(function(r){ return r.project_id === p.id; })) n++;
   if(projectValue(p) > 0) n++;
-  return n; /* 0..4, 0 = Unavailable */
+  return n;
 }
 function ljRankHtml(p){
   var n = ljRank(p);
-  if(!n) return '<i style="font-style:normal;color:#9a8c85;font-size:11px;">Unavailable</i>';
+  if(!n) return '<i style="font-style:normal;color:#6d747e;font-size:11px;">Unavailable</i>';
   var h = '<span class="ljrank">';
   for(var i=1;i<=4;i++) h += '<i class="' + (i<=n ? 'on' : '') + '"></i>';
   return h + '</span>';
-}
-function ljCity(p){
-  var a = p.address || '';
-  var m = /,\s*([A-Za-z .'-]+?)\s*,?\s*(?:OH|Ohio)?\s*,?\s*\d{5}/.exec(a);
-  if(m) return m[1].trim() + ', OH';
-  var parts = a.split(',');
-  return parts.length > 1 ? parts[1].trim() : '';
 }
 function ljAge(iso){
   if(!iso) return '\u2014';
@@ -8597,6 +8652,12 @@ function ljAge(iso){
   if(mo < 12) return mo + ' month' + (mo===1?'':'s');
   var y = Math.floor(mo/12);
   return y + ' year' + (y===1?'':'s');
+}
+function ljPrioColor(p){ return p === 'Urgent' ? '#ff6b5e' : (p === 'High' ? '#ffb04d' : '#8fe0ae'); }
+function ljActiveCount(){
+  var n = 0;
+  for(var k in ljState.sets){ n += (ljState.sets[k] || []).length; }
+  return n;
 }
 function ljMatches(p){
   var q = document.getElementById('ljSearch').value.trim().toLowerCase();
@@ -8616,16 +8677,33 @@ function ljMatches(p){
   }
   return true;
 }
+function ljCmp(a, b){
+  var s = ljState.sort, ca = parseCkAll(a), cb = parseCkAll(b), r = 0;
+  function alpha(x, y){ return String(x||'').localeCompare(String(y||'')); }
+  if(s === 'status'){
+    r = alpha(ca.stage_since || a.updated_at || a.created_at, cb.stage_since || b.updated_at || b.created_at);
+  } else if(s === 'jobname'){
+    var pa = Number(ca.po) || 0, pb = Number(cb.po) || 0;
+    r = (pa && pb) ? pa - pb : alpha(a.name, b.name);
+  } else if(s === 'category'){ r = alpha(ca.job_category, cb.job_category); }
+  else if(s === 'priority'){
+    var ord = ['Urgent','High','Normal'];
+    r = ord.indexOf(ca.priority || 'Normal') - ord.indexOf(cb.priority || 'Normal');
+  }
+  else if(s === 'touched'){ r = alpha(b.updated_at || b.created_at, a.updated_at || a.created_at); }
+  else if(s === 'source'){ r = alpha(ca.lead_source, cb.lead_source); }
+  else if(s === 'stage'){ r = STAGES.indexOf(normStage(a.stage)) - STAGES.indexOf(normStage(b.stage)); }
+  else if(s === 'rep'){ r = alpha(rptRepName(a.created_by||''), rptRepName(b.created_by||'')); }
+  else if(s === 'trade'){ r = alpha(ljTrades(a)[0], ljTrades(b)[0]); }
+  else if(s === 'worktype'){ r = alpha(ca.work_type, cb.work_type); }
+  return r || alpha(a.name, b.name);
+}
 function ljSorted(list){
-  var s = ljState.sort;
-  return list.slice().sort(function(a,b){
-    if(s === 'name') return String(a.name||'').localeCompare(String(b.name||''));
-    if(s === 'newest') return String(b.created_at||'').localeCompare(String(a.created_at||''));
-    if(s === 'touched') return String(a.updated_at||a.created_at||'').localeCompare(String(b.updated_at||b.created_at||''));
-    var sa = parseCkAll(a).stage_since || a.updated_at || a.created_at || '';
-    var sb = parseCkAll(b).stage_since || b.updated_at || b.created_at || '';
-    return String(sa).localeCompare(String(sb)); /* oldest in status first */
-  });
+  return list.slice().sort(function(a,b){ return ljState.dir * ljCmp(a,b); });
+}
+function ljSortLabel(){
+  var f = LJ_SORTS.filter(function(x){ return x.key === ljState.sort; })[0];
+  return f ? f.label : 'Age in Status';
 }
 function openLeadsView(stageKey){
   hideAllViews();
@@ -8635,139 +8713,239 @@ function openLeadsView(stageKey){
   renderLeadsView();
   window.scrollTo(0,0);
 }
+function ljGroupCounts(g){
+  var counts = {};
+  cacheProjects.forEach(function(p){
+    var vs = g.multi ? (g.get(p) || []) : [g.get(p) || ''];
+    vs.forEach(function(v){ if(v) counts[v] = (counts[v]||0) + 1; });
+  });
+  return counts;
+}
+function ljGroupKeys(g, counts){
+  var keys = Object.keys(counts);
+  if(g.key === 'stage') return STAGES.filter(function(s){ return counts[s]; });
+  if(g.key === 'priority') return ['Urgent','High','Normal'].filter(function(s){ return counts[s]; });
+  keys.sort();
+  return keys;
+}
+function ljPhoneSvg(){
+  return '<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.9.6 2.8a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.5 2.8.6a2 2 0 0 1 1.8 2.1z"/></svg>';
+}
+function ljSmsSvg(){
+  return '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+}
+function ljCardHtml(p){
+  var ck = parseCkAll(p);
+  var stg = normStage(p.stage);
+  var spine = LJ_SPINE[stg] || '#9aa4af';
+  var pieces = [ck.job_category, ljTrades(p).join(', ')].filter(Boolean).join(' \u00b7 ');
+  var tel = (p.phone || '').replace(/[^+\d]/g, '');
+  return '<div class="ljcard' + (ljState.sel === p.id ? ' sel' : '') + '" data-lj="' + p.id + '" style="--spn:' + spine + '" title="' + esc(stg) + '">' +
+    '<div class="ljmain">' +
+      '<div class="ljnm">' + esc(p.name || 'Unnamed') + '</div>' +
+      '<div class="ljl2">' + (ck.po ? '<span class="ljpo">' + esc(String(ck.po)) + '</span>' + (pieces ? ' \u00b7 ' : '') : '') + esc(pieces) + '</div>' +
+      '<div class="ljl3"><b class="ljrep">' + esc(rptRepName(p.created_by || '')) + '</b>' +
+        (ck.lead_source ? ' \u00b7 ' + esc(ck.lead_source) : '') +
+        ' \u00b7 <b style="color:' + ljPrioColor(ck.priority) + ';">' + esc(ck.priority || 'Normal') + '</b></div>' +
+      '<div class="ljl4">In status <b>' + ljAge(ck.stage_since || p.updated_at) + '</b> \u00b7 touched <b>' + ljAge(p.updated_at || p.created_at) + '</b></div>' +
+    '</div>' +
+    (tel ? '<div class="ljcta">' +
+      '<a class="ljbtn" href="tel:' + tel + '" title="Call">' + ljPhoneSvg() + '</a>' +
+      '<a class="ljbtn" href="sms:' + tel + '" title="Text">' + ljSmsSvg() + '</a>' +
+    '</div>' : '') +
+  '</div>';
+}
 function renderLeadsView(){
-  /* ---- filters rail with live counts ---- */
-  var mount = document.getElementById('ljFilterMount');
+  var all = cacheProjects.length;
+  var list = ljSorted(cacheProjects.filter(ljMatches));
+  var n = ljActiveCount();
+
+  document.getElementById('ljCount').textContent = list.length;
+  document.getElementById('ljShown').textContent = list.length + ' shown of ' + all +
+    (n ? ' \u00b7 ' + n + ' filter' + (n > 1 ? 's' : '') + ' active' : '');
+  var badge = document.getElementById('ljFBadge');
+  badge.textContent = n;
+  badge.classList.toggle('show', n > 0);
+  document.getElementById('ljFTitle').textContent = 'Filters (' + n + ')';
+  document.getElementById('ljSortChip').textContent = ljSortLabel();
+
+  /* desktop rail */
+  var sel = document.getElementById('ljSortSel');
+  sel.innerHTML = LJ_SORTS.map(function(s){
+    return '<option value="' + s.key + '"' + (s.key === ljState.sort ? ' selected' : '') + '>' + s.label + '</option>';
+  }).join('');
+  var mount = document.getElementById('ljRailMount');
   mount.innerHTML = LJ_GROUPS.map(function(g){
-    var counts = {};
-    cacheProjects.forEach(function(p){
-      var vs = g.multi ? (g.get(p) || []) : [g.get(p) || ''];
-      vs.forEach(function(v){ if(v) counts[v] = (counts[v]||0) + 1; });
-    });
-    var keys = Object.keys(counts);
-    if(g.key === 'stage'){ keys = STAGES.filter(function(s){ return counts[s]; }); }
-    else if(g.key === 'priority'){ keys = ['Urgent','High','Normal'].filter(function(s){ return counts[s]; }); }
-    else if(g.key === 'rank'){ keys.sort().reverse(); }
-    else keys.sort();
+    var counts = ljGroupCounts(g);
+    var keys = ljGroupKeys(g, counts);
     if(!keys.length) return '';
     var set = ljState.sets[g.key] || [];
     var closed = ljState.open[g.key] === false;
-    return '<div class="ljgroup' + (closed ? ' closed' : '') + '" data-g="' + g.key + '"><b>' + g.label + '</b>' +
+    return '<div class="ljgroup' + (closed ? ' closed' : '') + '" data-g="' + g.key + '"><b><span>' + g.label + '</span>' +
+      '<span class="gbdg' + (set.length ? ' show' : '') + '">' + set.length + '</span></b>' +
       '<div class="ljopts">' + keys.map(function(k){
-        var lbl = (g.key === 'stage' && k === 'Closed') ? 'Archived' : k;
         return '<label class="ljopt"><input type="checkbox" class="cbx" data-g="' + g.key + '" value="' + esc(k) + '"' +
-          (set.indexOf(k) !== -1 ? ' checked' : '') + '> ' + esc(lbl) +
+          (set.indexOf(k) !== -1 ? ' checked' : '') + '> ' + esc(k) +
           '<span class="cnt">' + counts[k] + '</span></label>';
       }).join('') + '</div></div>';
   }).join('');
 
-  /* ---- results ---- */
-  var list = ljSorted(cacheProjects.filter(ljMatches));
-  document.getElementById('ljCount').textContent = list.length;
-  document.getElementById('ljList').innerHTML = list.length ? list.map(function(p){
-    var ck = parseCkAll(p);
-    var stg = normStage(p.stage);
-    var col = (typeof STAGE_COLORS !== 'undefined' && STAGE_COLORS[stg]) ? STAGE_COLORS[stg] : ljStageColor(stg);
-    var pieces = [ck.job_category, ljTrades(p).join(', ')].filter(Boolean).join(' \u00b7 ');
-    return '<div class="ljcard' + (ljState.sel === p.id ? ' sel' : '') + '" data-lj="' + p.id + '">' +
-      '<span class="ljbadge" style="background:' + col + ';" title="' + stg + '">' + stg.charAt(0) + '</span>' +
-      '<div class="ljages"><span>In Status</span><b>' + ljAge(ck.stage_since || p.updated_at) + '</b>' +
-      '<span>Last Touched</span><b>' + ljAge(p.updated_at || p.created_at) + '</b></div>' +
-      '<div class="nm">' + (ck.po ? '<span class="ljpo">' + esc(String(ck.po)) + ':</span> ' : '') + esc(p.name || 'Unnamed') + '</div>' +
-      (p.phone ? '<div class="ph">' + esc(p.phone) + '</div>' : '') +
-      (p.address ? '<div class="ad">' + esc(p.address) + '</div>' : '') +
-      '<div class="meta">' + (pieces ? '<b>' + esc(pieces) + '</b><br>' : '') +
-      esc(rptRepName(p.created_by || '')) +
-      (ck.lead_source ? ' &nbsp;\u00b7&nbsp; Source: <b>' + esc(ck.lead_source) + '</b>' : '') +
-      ' &nbsp;\u00b7&nbsp; Priority: <b style="color:' + ljPrioColor(ck.priority) + ';">' + esc(ck.priority || 'Normal') + '</b>' +
-      ' &nbsp;\u00b7&nbsp; Rank: ' + ljRankHtml(p) + '</div></div>';
-  }).join('') : '<div class="ljsummary">No results match these filters.</div>';
+  /* cards */
+  document.getElementById('ljList').innerHTML = list.length
+    ? list.map(ljCardHtml).join('')
+    : '<div class="ljempty">Nothing here with these filters.</div>';
 
-  renderLjDetail();
+  /* mobile sheets */
+  document.getElementById('ljSortList').innerHTML = LJ_SORTS.map(function(s){
+    return '<div class="ljsrow' + (s.key === ljState.sort ? ' on' : '') + '" data-sort="' + s.key + '">' +
+      '<span class="ck">\u2713</span><span>' + s.label + '</span></div>';
+  }).join('');
+  document.getElementById('ljCatList').innerHTML = LJ_GROUPS.map(function(g){
+    var k = (ljState.sets[g.key] || []).length;
+    return '<div class="ljsrow" data-cat="' + g.key + '"><span>' + g.label + '</span>' +
+      '<span class="cnt2' + (k ? ' show' : '') + '">' + k + '</span><span class="chev">\u203a</span></div>';
+  }).join('');
+
+  renderLjPane();
 }
-function ljStageColor(s){
-  var m = { Lead:'#E8B10F', Prospect:'#F08A24', Approved:'#7CB342', Scheduled:'#7CB342',
-    Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d8d8d' };
-  return m[s] || '#607D8B';
-}
-function ljPrioColor(p){ return p === 'Urgent' ? '#C8202E' : (p === 'High' ? '#F08A24' : '#7CB342'); }
-function renderLjDetail(){
-  var det = document.getElementById('ljDetails'), map = document.getElementById('ljMap');
-  det.style.display = ljState.tab === 'details' ? 'block' : 'none';
-  map.style.display = ljState.tab === 'map' ? 'block' : 'none';
+function renderLjPane(){
+  var pane = document.getElementById('ljPane');
   var p = cacheProjects.find(function(x){ return x.id === ljState.sel; });
   if(!p){
-    det.innerHTML = '<div class="ljsummary"><h3>Job Summary</h3>' +
-      '<p>Selecting a job from the left will load more details. This preview pane allows quick access to:</p>' +
-      '<ul><li>Demographics</li><li>Location</li><li>Stage &amp; priority</li><li>Lead source</li><li>Quick actions</li></ul></div>';
-    map.innerHTML = '<div class="ljsummary"><p>Select a job to see it on the map.</p></div>';
+    pane.innerHTML = '<div class="ljsummary"><h3 style="margin:0 0 6px;color:#f5d061;">Job Summary</h3>' +
+      '<p>Select a job from the list to preview its contact info, stage, and location \u2014 or open the full profile.</p></div>';
     return;
   }
   var ck = parseCkAll(p);
   var stg = normStage(p.stage);
-  det.innerHTML =
-    '<div class="ljsec"><h4>' + esc(p.name || 'Unnamed') + ' &nbsp;<span class="stagechip ' + stageClass(stg) + '">' +
-      (stg === 'Closed' ? 'Archived' : stg) + '</span></h4>' +
-      '<div class="ljkv"><span>Job Priority</span><div><select id="ljPrio" style="border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:700 12px \'Segoe UI\';color:' + ljPrioColor(ck.priority) + ';">' +
+  var tel = (p.phone || '').replace(/[^+\d]/g, '');
+  var meta = [ck.job_category, ljTrades(p).join(', '), ck.work_type].filter(Boolean).join(' \u00b7 ');
+  var tab = ljState.tab;
+  var addr = (p.address || '').trim();
+  var body;
+  if(tab === 'comms'){
+    var msgs = (ck.comments || []).slice();
+    if(p.notes && !msgs.some(function(m){ return m.legacy; })){
+      msgs.unshift({ legacy:true, name:'Notes', at:p.created_at, text:p.notes });
+    }
+    body = '<div class="ljcomms">' + (msgs.length ? msgs.map(function(m){
+      return '<div class="ljcmsg"><span class="who">' + esc(m.name || m.by || '') + '</span>' +
+        '<span class="when">' + (m.at ? timeAgo(m.at) : '') + '</span><br>' + fmtChatText(m.text || '') + '</div>';
+    }).join('') : '<div class="ljcmsg" style="color:#6d747e;">No notes yet \u2014 the thread starts on the client profile.</div>') + '</div>';
+  } else {
+    body = addr
+      ? '<div class="ljframe"><iframe class="ljmapframe" loading="lazy" src="https://maps.google.com/maps?q=' +
+        encodeURIComponent(addr) + '&t=' + (tab === 'sat' ? 'k' : 'm') + '&z=17&output=embed"></iframe></div>'
+      : '<div class="ljsummary"><p>No address on file for this job.</p></div>';
+  }
+  pane.innerHTML =
+    '<div class="ljprow"><span class="ljpname">' + esc(p.name || 'Unnamed') + '</span>' +
+      '<span class="stagechip ' + stageClass(stg) + '">' + (stg === 'Closed' ? 'Archived' : stg) + '</span></div>' +
+    '<div class="ljpsub">' + (ck.po ? '<span class="ljpo">' + esc(String(ck.po)) + '</span> \u00b7 ' : '') + esc(addr || 'No address') + '</div>' +
+    '<div class="ljpact">' +
+      (tel ? '<a class="chipbtn" href="tel:' + tel + '">\ud83d\udcde Call</a><a class="chipbtn" href="sms:' + tel + '">\ud83d\udcac Text</a>' : '') +
+      '<button class="btn" id="ljOpenBtn">Open profile</button>' +
+      '<button class="chipbtn" id="ljEditBtn">\u270e Edit</button></div>' +
+    '<div class="ljfacts">' +
+      '<div class="ljfact"><span>In Status</span><b>' + ljAge(ck.stage_since || p.updated_at) + '</b></div>' +
+      '<div class="ljfact"><span>Last Touched</span><b>' + ljAge(p.updated_at || p.created_at) + '</b></div>' +
+      '<div class="ljfact"><span>Priority</span><select id="ljPrio" style="background:#2a2e35;border:1px solid #3a3f47;border-radius:6px;padding:3px 6px;font:700 12px \'Segoe UI\',Arial,sans-serif;color:' + ljPrioColor(ck.priority) + ';">' +
         ['Normal','High','Urgent'].map(function(x){ return '<option' + ((ck.priority||'Normal')===x?' selected':'') + '>' + x + '</option>'; }).join('') +
       '</select></div>' +
-      '<span>Lead Rank</span><div>' + ljRankHtml(p) + '</div></div></div>' +
-    '<div class="ljsec"><h4>Primary Contact</h4><div class="ljkv">' +
-      '<span>Name</span><div>' + esc(p.name || '\u2014') + '</div>' +
-      '<span>Phone</span><div>' + (p.phone ? '<a href="tel:' + esc(p.phone) + '" style="color:var(--red);font-weight:800;">' + esc(p.phone) + '</a>' : '\u2014') + '</div>' +
-      '<span>Email</span><div>' + (p.email ? '<a href="mailto:' + esc(p.email) + '" style="color:var(--red);">' + esc(p.email) + '</a>' : '\u2014') + '</div></div></div>' +
-    '<div class="ljsec"><h4>Location Information</h4><div class="ljkv">' +
-      '<span>Location Address</span><div>' + esc(p.address || '\u2014') + '</div>' +
-      '<span>Job Categories</span><div>' + esc(ck.job_category || '\u2014') + '</div>' +
-      '<span>Work Types</span><div>' + esc(ck.work_type || '\u2014') + '</div>' +
-      '<span>Job Trades</span><div>' + esc(ljTrades(p).join(', ') || '\u2014') + '</div>' +
-      '<span>Lead Source</span><div>' + esc(ck.lead_source || '\u2014') + '</div>' +
-      '<span>Job Created</span><div>' + (p.created_at ? new Date(p.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '\u2014') + '</div>' +
-      '<span>Assigned To</span><div>' + esc(rptRepName(p.created_by || '')) + '</div>' +
-      '<span>In Status</span><div>' + stg + (ck.stage_since ? ' \u00b7 ' + new Date(ck.stage_since).toLocaleDateString() : '') + '</div>' +
-      (ck.loss_reason ? '<span>Loss Reason</span><div>' + esc(ck.loss_reason) + '</div>' : '') + '</div></div>' +
-    '<div class="ljactions">' +
-      '<button class="btn" id="ljOpenBtn">Open full profile</button>' +
-      '<button class="chipbtn" id="ljEditBtn">&#9998; Edit info</button></div>';
-  var addr = (p.address || '').trim();
-  map.innerHTML = addr
-    ? '<iframe class="ljmapframe" loading="lazy" src="https://maps.google.com/maps?q=' + encodeURIComponent(addr) + '&t=k&z=18&output=embed"></iframe>' +
-      '<div class="ljsummary" style="padding:10px 16px;"><b>' + esc(p.name || '') + '</b> \u2014 ' + esc(addr) + '</div>'
-    : '<div class="ljsummary"><p>No address on file for this job.</p></div>';
-  var ob = document.getElementById('ljOpenBtn');
-  if(ob) ob.addEventListener('click', function(){ openProject(p.id); });
-  var eb = document.getElementById('ljEditBtn');
-  if(eb) eb.addEventListener('click', function(){ openProjModal(p); });
-  var ps = document.getElementById('ljPrio');
-  if(ps) ps.addEventListener('change', async function(){
-    try{ await patchProjectCk(p, { priority: this.value }); renderLeadsView(); }
-    catch(err){ showError('Could not save priority: ' + (err.message || err)); }
-  });
+      '<div class="ljfact"><span>Lead Rank</span><b>' + ljRankHtml(p) + '</b></div></div>' +
+    (meta ? '<div class="ljpsub" style="padding-bottom:12px;">' + esc(meta) +
+      (ck.lead_source ? ' \u00b7 Source: <b style="color:#c8cdd4;">' + esc(ck.lead_source) + '</b>' : '') + '</div>' : '') +
+    '<div class="ljptabs">' +
+      '<span class="ljptab' + (tab==='map'?' on':'') + '" data-lt="map">Map</span>' +
+      '<span class="ljptab' + (tab==='sat'?' on':'') + '" data-lt="sat">Satellite</span>' +
+      '<span class="ljptab' + (tab==='comms'?' on':'') + '" data-lt="comms">Communications</span></div>' +
+    body;
 }
-/* wiring */
+/* ---- sheets ---- */
+function ljOpenSheet(id){ document.getElementById(id).classList.add('open'); }
+function ljCloseSheet(id){ document.getElementById(id).classList.remove('open'); }
+function ljPaintSub(){
+  var g = LJ_GROUPS.filter(function(x){ return x.key === ljSheetState.cat; })[0];
+  if(!g) return;
+  document.getElementById('ljSubTitle').textContent = g.label;
+  var counts = ljGroupCounts(g);
+  var keys = ljGroupKeys(g, counts);
+  document.getElementById('ljSubList').innerHTML = keys.map(function(k){
+    return '<div class="ljsrow' + (ljSheetState.pend.indexOf(k) !== -1 ? ' on' : '') + '" data-opt="' + esc(k) + '">' +
+      '<span class="ck">\u2713</span><span>' + esc(k) + '</span>' +
+      '<span class="cnt2 show" style="background:#2a2e35;color:#9aa0a8;">' + counts[k] + '</span></div>';
+  }).join('');
+}
+/* ---- wiring ---- */
 document.getElementById('ljSearch').addEventListener('input', function(){
   clearTimeout(this.__t); this.__t = setTimeout(renderLeadsView, 300);
 });
-document.getElementById('ljSort').addEventListener('change', function(){
+document.getElementById('ljSortSel').addEventListener('change', function(){
   ljState.sort = this.value; renderLeadsView();
+});
+document.getElementById('ljDirBtn').addEventListener('click', function(){
+  ljState.dir = -ljState.dir;
+  this.classList.toggle('on', ljState.dir === -1);
+  renderLeadsView();
+});
+document.getElementById('ljSortChip').addEventListener('click', function(){ ljOpenSheet('ljShSort'); });
+document.getElementById('ljFunnelBtn').addEventListener('click', function(){ ljOpenSheet('ljShFilter'); });
+document.getElementById('ljSortClose').addEventListener('click', function(){ ljCloseSheet('ljShSort'); });
+document.getElementById('ljFDone').addEventListener('click', function(){ ljCloseSheet('ljShFilter'); });
+document.getElementById('ljClearAll').addEventListener('click', function(){
+  ljState.sets = {}; renderLeadsView();
+});
+document.getElementById('ljSortList').addEventListener('click', function(e){
+  var r = e.target.closest('[data-sort]');
+  if(!r) return;
+  ljState.sort = r.getAttribute('data-sort');
+  renderLeadsView();
+  ljCloseSheet('ljShSort');
+});
+document.getElementById('ljCatList').addEventListener('click', function(e){
+  var r = e.target.closest('[data-cat]');
+  if(!r) return;
+  ljSheetState.cat = r.getAttribute('data-cat');
+  ljSheetState.pend = (ljState.sets[ljSheetState.cat] || []).slice();
+  ljPaintSub();
+  ljCloseSheet('ljShFilter');
+  ljOpenSheet('ljShSub');
+});
+document.getElementById('ljSubBack').addEventListener('click', function(){
+  ljCloseSheet('ljShSub'); ljOpenSheet('ljShFilter');
+});
+document.getElementById('ljSubApply').addEventListener('click', function(){
+  if(ljSheetState.pend.length) ljState.sets[ljSheetState.cat] = ljSheetState.pend.slice();
+  else delete ljState.sets[ljSheetState.cat];
+  renderLeadsView();
+  ljCloseSheet('ljShSub'); ljOpenSheet('ljShFilter');
+});
+document.getElementById('ljSubList').addEventListener('click', function(e){
+  var r = e.target.closest('[data-opt]');
+  if(!r) return;
+  var v = r.getAttribute('data-opt');
+  var i = ljSheetState.pend.indexOf(v);
+  if(i !== -1) ljSheetState.pend.splice(i, 1); else ljSheetState.pend.push(v);
+  r.classList.toggle('on', i === -1);
+});
+document.getElementById('ljSelAll').addEventListener('click', function(){
+  LJ_GROUPS.forEach(function(g){
+    ljState.sets[g.key] = ljGroupKeys(g, ljGroupCounts(g)).slice();
+  });
+  renderLeadsView();
 });
 document.getElementById('ljClearBtn').addEventListener('click', function(){
   ljState.sets = {}; document.getElementById('ljSearch').value = ''; renderLeadsView();
 });
-document.getElementById('ljFHead').addEventListener('click', function(e){
-  if(e.target.closest('#ljClearBtn')) return;
-  document.getElementById('ljFilters').classList.toggle('ljcollapsed');
-});
-document.getElementById('ljFilterMount').addEventListener('click', function(e){
+document.getElementById('ljRailMount').addEventListener('click', function(e){
   var hdr = e.target.closest('.ljgroup > b');
   if(hdr){
     var g = hdr.parentElement.getAttribute('data-g');
     ljState.open[g] = hdr.parentElement.classList.contains('closed');
     hdr.parentElement.classList.toggle('closed');
-    return;
   }
 });
-document.getElementById('ljFilterMount').addEventListener('change', function(e){
+document.getElementById('ljRailMount').addEventListener('change', function(e){
   var cb = e.target.closest('input[type=checkbox]');
   if(!cb) return;
   var g = cb.getAttribute('data-g'), v = cb.value;
@@ -8775,24 +8953,36 @@ document.getElementById('ljFilterMount').addEventListener('change', function(e){
   var i = set.indexOf(v);
   if(cb.checked && i === -1) set.push(v);
   if(!cb.checked && i !== -1) set.splice(i, 1);
+  if(!set.length) delete ljState.sets[g];
   renderLeadsView();
 });
 document.getElementById('ljList').addEventListener('click', function(e){
+  if(e.target.closest('.ljcta')){ e.stopPropagation(); return; }
   var card = e.target.closest('.ljcard');
   if(!card) return;
-  ljState.sel = card.getAttribute('data-lj');
-  renderLeadsView();
-  if(window.innerWidth <= 1100){
-    document.querySelector('.ljdetail').scrollIntoView({ behavior:'smooth', block:'start' });
+  var id = card.getAttribute('data-lj');
+  if(window.innerWidth > 900){
+    ljState.sel = id;
+    renderLeadsView();
+  } else {
+    openProject(id);
   }
 });
-document.querySelector('.ljtabs').addEventListener('click', function(e){
-  var t = e.target.closest('.ljtab');
-  if(!t) return;
-  this.querySelectorAll('.ljtab').forEach(function(x){ x.classList.remove('on'); });
-  t.classList.add('on');
-  ljState.tab = t.getAttribute('data-lt');
-  renderLjDetail();
+document.getElementById('ljPane').addEventListener('click', function(e){
+  var t = e.target.closest('.ljptab');
+  if(t){ ljState.tab = t.getAttribute('data-lt'); renderLjPane(); return; }
+  var p = cacheProjects.find(function(x){ return x.id === ljState.sel; });
+  if(!p) return;
+  if(e.target.closest('#ljOpenBtn')){ openProject(p.id); return; }
+  if(e.target.closest('#ljEditBtn')){ openProjModal(p); return; }
+});
+document.getElementById('ljPane').addEventListener('change', function(e){
+  if(e.target.id !== 'ljPrio') return;
+  var p = cacheProjects.find(function(x){ return x.id === ljState.sel; });
+  if(!p) return;
+  var v = e.target.value;
+  patchProjectCk(p, { priority: v }).then(function(){ renderLeadsView(); })
+    .catch(function(err){ showError('Could not save priority: ' + (err.message || err)); });
 });
 
 /* =========================================================================
@@ -28792,7 +28982,7 @@ steps     : function(){ return STEPS.map(function(s){ return { name:s.name, deta
 </script>
 
 
-<style id="cr-print-styles">@media print{body{background:#fff !important;color:#000 !important;font:12pt/1.45 Georgia,'Times New Roman',serif !important}header.site,footer.site,#navMenu,#newMenu,.dbstage,.cr-portal-chip,#navBtn,#cr-home-btn,#cr-search-btn,#cr-ahc-badge,#addProjectBtn,#cr-recents,.cr-bidstrip,.cr-autotrans,.cr-cp-attach,.cr-cprop-attach,.cr-wo-section,.cr-hdr-row1,.cr-hdr-row2,#ctPortalChip,#cr-dark-toggle,#cr-offline,#cr-bulk-bar,.cr-undo-toast,.cr-pme-exit,.whoami,#headSearch,button.btn,button.chipbtn,.ct-banner-chips,.ins-header{display:none !important}#editorView .toolbar,#editorView button{display:none !important}.wrap,main{max-width:100% !important;padding:0 !important;margin:0 !important}#reportFrame,.doc-content{border:none !important;box-shadow:none !important}h1,h2,h3{page-break-after:avoid}tr,.cr-cp-row,.card,.pipecard{page-break-inside:avoid}a[href^="http"]::after{content:" ("attr(href) ")";font-size:10pt;color:#666}:root{--red:#C8202E;--red-dk:#9c1822;--bg:#fff}#leadsView .ljtitle,#listView #listTitle,#projectView .projsec,.hero-hi,.hero-hi *,.acthead{background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;-webkit-text-fill-color:#1b1b1b !important;color:#1b1b1b !important}#projectView .projsec a{-webkit-text-fill-color:#9c1822 !important;color:#9c1822 !important}#projectView .subnote,#listView #listNote{color:#5c5c5c !important}#leadsView .ljrhead{color:#1b1b1b !important}#listView label,#listView .listlbl,#listView .listctl{color:#5c4a42 !important}.dashcard,section.history{border-color:#d9d9d9 !important;border-top-color:#C8202E !important}.cr-est-saved-list{background:transparent !important}}</style>
+<style id="cr-print-styles">@media print{body{background:#fff !important;color:#000 !important;font:12pt/1.45 Georgia,'Times New Roman',serif !important}header.site,footer.site,#navMenu,#newMenu,.dbstage,.cr-portal-chip,#navBtn,#cr-home-btn,#cr-search-btn,#cr-ahc-badge,#addProjectBtn,#cr-recents,.cr-bidstrip,.cr-autotrans,.cr-cp-attach,.cr-cprop-attach,.cr-wo-section,.cr-hdr-row1,.cr-hdr-row2,#ctPortalChip,#cr-dark-toggle,#cr-offline,#cr-bulk-bar,.cr-undo-toast,.cr-pme-exit,.whoami,#headSearch,button.btn,button.chipbtn,.ct-banner-chips,.ins-header{display:none !important}#editorView .toolbar,#editorView button{display:none !important}.wrap,main{max-width:100% !important;padding:0 !important;margin:0 !important}#reportFrame,.doc-content{border:none !important;box-shadow:none !important}h1,h2,h3{page-break-after:avoid}tr,.cr-cp-row,.card,.pipecard{page-break-inside:avoid}a[href^="http"]::after{content:" ("attr(href) ")";font-size:10pt;color:#666}:root{--red:#C8202E;--red-dk:#9c1822;--bg:#fff}.ljtitle,#listView #listTitle,#projectView .projsec,.hero-hi,.hero-hi *,.acthead{background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;-webkit-text-fill-color:#1b1b1b !important;color:#1b1b1b !important}#projectView .projsec a{-webkit-text-fill-color:#9c1822 !important;color:#9c1822 !important}#projectView .subnote,#listView #listNote{color:#5c5c5c !important}#leadsView .ljrhead{color:#1b1b1b !important}#listView label,#listView .listlbl,#listView .listctl{color:#5c4a42 !important}.dashcard,section.history{border-color:#d9d9d9 !important;border-top-color:#C8202E !important}.cr-est-saved-list{background:transparent !important}}</style>
 
 
 <style id="cr-offline-styles">#cr-offline{display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:4px 12px;border-radius:12px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;z-index:10000;box-shadow:0 2px 10px rgba(0,0,0,.4);animation:cr-offline-pulse 2s ease-in-out infinite}#cr-offline.show{display:block}@keyframes cr-offline-pulse{0%,100%{opacity:1}50%{opacity:.65}}</style>
@@ -39058,7 +39248,7 @@ tab : function(k){ tab = k; render(); },
 </script>
 
 
-<style id="cr-hd2-styles">header.site .wrap.masthead{display:none}header.site{position:fixed;top:0;left:0;right:0;z-index:90;background:var(--hbg,#fbfaf7);border-bottom:none;box-shadow:0 2px 10px rgba(0,0,0,.22);padding:0}#cr-hd2-bar{display:flex;align-items:center;gap:10px;max-width:960px;margin:0 auto;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px));min-height:56px;border-bottom:1px solid var(--hln,#ddd6cf)}#cr-hd2-bar .cr-ib{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:transparent;border:1px solid var(--hln,#ddd6cf);color:var(--hmt,#6b6357);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;padding:0;-webkit-tap-highlight-color:transparent}#cr-hd2-bar .cr-ib.menu{width:38px;height:38px;font-size:16px}#cr-hd2-bar .cr-ib:hover{border-color:var(--hac,#d4a017);color:var(--hac,#d4a017)}#cr-hd2-bar .cr-ib.primary{background:var(--hac,#d4a017);border-color:var(--hac,#d4a017);color:var(--hoc,#1a1a1a);font-size:18px;font-weight:400}#cr-hd2-mid{flex:1 1 auto;min-width:0;text-align:center}#cr-hd2-mid #brandTitle,#cr-hd2-mid #brandCtx{display:block;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}#cr-hd2-mid #brandTitle h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:34px;letter-spacing:.01em;line-height:1.15;color:var(--hac,#d4a017);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--tgrad,linear-gradient(100deg,var(--red),#d4a017 55%,#f5d061));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}#cr-hd2-bar{position:relative}#cr-hd2-mid #brandTitle{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 26px);transform:translate(-50%,-50%);pointer-events:none;max-width:70%;width:max-content}#cr-hd2-mid #brandTitle h1 span{color:var(--hac,#d4a017)}#cr-hd2-mid #brandCtx,#cr-hd2-mid #headCtx{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(14px,4.4vw,18px);line-height:1.2;color:var(--hin,#2c2c2c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-bar #headSearch{display:none;flex:0 1 240px;min-width:0;width:auto;height:40px;padding:0 12px;border-radius:10px;box-sizing:border-box;border:1px solid var(--hln,#ddd6cf);background:var(--hsf,#fff);color:var(--hin,#2c2c2c);font:400 13.5px inherit;outline:none}#cr-hd2-bar #headSearch:focus{border-color:var(--hac,#d4a017);box-shadow:0 0 0 3px rgba(212,160,23,.18)}#cr-hd2-bar #headSearch::placeholder{color:var(--hdm,#9a917f)}@media (min-width:760px){#cr-hd2-bar #headSearch{display:block}#cr-hd2-bar .cr-ib.searchbtn{display:none}}#cr-hd2-bar.searching #headSearch{display:block;flex:1 1 100%;order:9;margin-top:8px}#cr-hd2-bar{flex-wrap:nowrap}#cr-hd2-bar.searching{flex-wrap:wrap}header.site #cr-hd2-bar #navBtn{display:flex !important}#cr-hd2-util{display:flex;align-items:center;gap:6px;flex:0 0 auto}#cr-hd2-util>*{flex:0 0 auto}@media (max-width:560px){#cr-hd2-util #crPortalChip{display:none}}header.site #cr-search-btn{display:none}header.site #whoami,header.site #jobMenuSel,header.site #brandLogo{display:none}body .site{--hbg:#1a1215;--hln:#3a2f22;--hin:#d4a017;--hmt:#d8c9a8;--hdm:#9a917f;--hac:#d4a017;--hoc:#1a1a1a;--hsf:#241c1a;--tgrad:linear-gradient(100deg,var(--red),#d4a017 55%,#f5d061)}body[data-crm="insurance"] .site{--hbg:#0d1f24;--hln:#1d3b42;--hin:#fff;--hmt:#bcdad6;--hdm:#7ba39d;--hac:#2dd4bf;--hoc:#062b26;--hsf:#12262b;--tgrad:linear-gradient(100deg,#2dd4bf,#a3e635)}body[data-crm="community"] .site{--hbg:#0e1a29;--hln:#1d3450;--hin:#fff;--hmt:#c2d6e8;--hdm:#7690ab;--hac:#5ec8ff;--hoc:#08243a;--hsf:#111e2e;--tgrad:linear-gradient(100deg,#5ec8ff,#a8dcff 45%,#e8f4ff)}body[data-crm="production"] .site{--hbg:#181b20;--hln:#2a3038;--hin:#fff;--hmt:#b9c0c9;--hdm:#7d8794;--hac:#f5a623;--hoc:#14171b;--hsf:#1c2128;--tgrad:linear-gradient(100deg,#f5a623,#ffd27a)}body[data-crm="sales"] .site{--hbg:#1a1310;--hln:#2e2320;--hin:#fff;--hmt:#e0cec4;--hdm:#a08b7f;--hac:#e8544f;--hoc:#1a1310;--hsf:#241b17;--tgrad:linear-gradient(100deg,#e8544f,#f5d061)}header.site #navMenu,header.site #newMenu{z-index:95}#cr-hd2-ribbon{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-bottom:3px solid var(--racc,var(--red));background:linear-gradient(168deg,var(--rb1,#241518) 0%,var(--rb2,#170f11) 48%,var(--rb3,#221407) 100%)}#cr-hd2-ribbon::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--rh1,#d4a017) 30%,var(--rh2,#f5d061) 50%,var(--rh1,#d4a017) 70%,transparent)}#cr-hd2-ribbon #qClock,#cr-hd2-ribbon #cbCtx{display:block;max-width:100%;margin:0;color:#fff;font:800 13.5px/1.2 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-ribbon #cbCtx{display:none}#cr-hd2-ribbon #cbCtx small{color:#B57EDC;font-size:.9em;margin-right:4px;font-weight:800}body.projopen #cr-hd2-ribbon #qClock{display:none}body.projopen #cr-hd2-ribbon #cbCtx{display:block}#cr-hd2-ribbon{padding-left:56px;padding-right:56px;min-height:52px}#cr-hd2-home{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;background:rgba(212,160,23,.08);border:1px solid #d4a017;color:#f5d061;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}#cr-hd2-home svg{display:block;width:17px;height:17px}#cr-home-btn{display:none}#cr-hd2-bar{border-bottom:2px solid transparent;border-image:linear-gradient(90deg,transparent,#d4a017 25%,#f5d061 50%,#d4a017 75%,transparent) 1}body[data-crm="insurance"] #cr-hd2-bar,body[data-crm="community"] #cr-hd2-bar,body[data-crm="production"] #cr-hd2-bar,body[data-crm="sales"] #cr-hd2-bar{border-image:none;border-bottom:1px solid var(--hln,#ddd6cf)}#cardinalTruthView,#insClientsView,#resourceLibraryView{top:var(--headh,110px) !important;z-index:60 !important}#cr-ih-bar{display:none}#insClientsView .ins-header,#resourceLibraryView .ins-header{display:none}#resourceLibraryView .rl-search{top:0}body.viewing-community-hub footer.site{display:none}body[data-crm="community"]{background:#0a1420}body[data-crm="insurance"]{background:#08161a}.dashcard,section.history{border-color:#d4a017}.cr-est-body{max-width:100vw;box-sizing:border-box}.cr-est-head{max-width:100vw;box-sizing:border-box}.cr-est-body{overflow-x:hidden}.cr-est-body input,.cr-est-body select,.cr-est-body textarea{min-width:0;max-width:100%;box-sizing:border-box}.cr-est-head{overflow-x:auto;overscroll-behavior-x:contain}#leadsView .ljtitle{background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017}#leadsView .ljrhead{color:#f5d061}#projectView .subnote{color:#fff}#listView #listTitle{background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:#fff}#listView label,#listView .listlbl{color:#d4a017}#listView #listBody,#listView .cards,#listView .doclist{background:transparent}#listView .card{margin-bottom:12px;border-radius:12px}#listView .listctl{color:#d4a017}#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017}#projectView .projsec a{-webkit-text-fill-color:#f5d061;color:#f5d061}.hero-hi,.hero-hi *,.acthead{background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm="insurance"] #cr-hd2-ribbon{--racc:#14b8a6;--rb1:#071518;--rb2:#0a1d22;--rb3:#081a14;--rh1:#2dd4bf;--rh2:#a3e635}body[data-crm="community"] #cr-hd2-ribbon{--racc:#5ec8ff;--rb1:#0a1420;--rb2:#0d1926;--rb3:#101f30;--rh1:#5ec8ff;--rh2:#e8f4ff}body[data-crm="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#f5d061}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
+<style id="cr-hd2-styles">header.site .wrap.masthead{display:none}header.site{position:fixed;top:0;left:0;right:0;z-index:90;background:var(--hbg,#fbfaf7);border-bottom:none;box-shadow:0 2px 10px rgba(0,0,0,.22);padding:0}#cr-hd2-bar{display:flex;align-items:center;gap:10px;max-width:960px;margin:0 auto;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px));min-height:56px;border-bottom:1px solid var(--hln,#ddd6cf)}#cr-hd2-bar .cr-ib{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:transparent;border:1px solid var(--hln,#ddd6cf);color:var(--hmt,#6b6357);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;padding:0;-webkit-tap-highlight-color:transparent}#cr-hd2-bar .cr-ib.menu{width:38px;height:38px;font-size:16px}#cr-hd2-bar .cr-ib:hover{border-color:var(--hac,#d4a017);color:var(--hac,#d4a017)}#cr-hd2-bar .cr-ib.primary{background:var(--hac,#d4a017);border-color:var(--hac,#d4a017);color:var(--hoc,#1a1a1a);font-size:18px;font-weight:400}#cr-hd2-mid{flex:1 1 auto;min-width:0;text-align:center}#cr-hd2-mid #brandTitle,#cr-hd2-mid #brandCtx{display:block;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}#cr-hd2-mid #brandTitle h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:34px;letter-spacing:.01em;line-height:1.15;color:var(--hac,#d4a017);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--tgrad,linear-gradient(100deg,var(--red),#d4a017 55%,#f5d061));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}#cr-hd2-bar{position:relative}#cr-hd2-mid #brandTitle{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 26px);transform:translate(-50%,-50%);pointer-events:none;max-width:70%;width:max-content}#cr-hd2-mid #brandTitle h1 span{color:var(--hac,#d4a017)}#cr-hd2-mid #brandCtx,#cr-hd2-mid #headCtx{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(14px,4.4vw,18px);line-height:1.2;color:var(--hin,#2c2c2c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-bar #headSearch{display:none;flex:0 1 240px;min-width:0;width:auto;height:40px;padding:0 12px;border-radius:10px;box-sizing:border-box;border:1px solid var(--hln,#ddd6cf);background:var(--hsf,#fff);color:var(--hin,#2c2c2c);font:400 13.5px inherit;outline:none}#cr-hd2-bar #headSearch:focus{border-color:var(--hac,#d4a017);box-shadow:0 0 0 3px rgba(212,160,23,.18)}#cr-hd2-bar #headSearch::placeholder{color:var(--hdm,#9a917f)}@media (min-width:760px){#cr-hd2-bar #headSearch{display:block}#cr-hd2-bar .cr-ib.searchbtn{display:none}}#cr-hd2-bar.searching #headSearch{display:block;flex:1 1 100%;order:9;margin-top:8px}#cr-hd2-bar{flex-wrap:nowrap}#cr-hd2-bar.searching{flex-wrap:wrap}header.site #cr-hd2-bar #navBtn{display:flex !important}#cr-hd2-util{display:flex;align-items:center;gap:6px;flex:0 0 auto}#cr-hd2-util>*{flex:0 0 auto}@media (max-width:560px){#cr-hd2-util #crPortalChip{display:none}}header.site #cr-search-btn{display:none}header.site #whoami,header.site #jobMenuSel,header.site #brandLogo{display:none}body .site{--hbg:#1a1215;--hln:#3a2f22;--hin:#d4a017;--hmt:#d8c9a8;--hdm:#9a917f;--hac:#d4a017;--hoc:#1a1a1a;--hsf:#241c1a;--tgrad:linear-gradient(100deg,var(--red),#d4a017 55%,#f5d061)}body[data-crm="insurance"] .site{--hbg:#0d1f24;--hln:#1d3b42;--hin:#fff;--hmt:#bcdad6;--hdm:#7ba39d;--hac:#2dd4bf;--hoc:#062b26;--hsf:#12262b;--tgrad:linear-gradient(100deg,#2dd4bf,#a3e635)}body[data-crm="community"] .site{--hbg:#0e1a29;--hln:#1d3450;--hin:#fff;--hmt:#c2d6e8;--hdm:#7690ab;--hac:#5ec8ff;--hoc:#08243a;--hsf:#111e2e;--tgrad:linear-gradient(100deg,#5ec8ff,#a8dcff 45%,#e8f4ff)}body[data-crm="production"] .site{--hbg:#181b20;--hln:#2a3038;--hin:#fff;--hmt:#b9c0c9;--hdm:#7d8794;--hac:#f5a623;--hoc:#14171b;--hsf:#1c2128;--tgrad:linear-gradient(100deg,#f5a623,#ffd27a)}body[data-crm="sales"] .site{--hbg:#1a1310;--hln:#2e2320;--hin:#fff;--hmt:#e0cec4;--hdm:#a08b7f;--hac:#e8544f;--hoc:#1a1310;--hsf:#241b17;--tgrad:linear-gradient(100deg,#e8544f,#f5d061)}header.site #navMenu,header.site #newMenu{z-index:95}#cr-hd2-ribbon{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-bottom:3px solid var(--racc,var(--red));background:linear-gradient(168deg,var(--rb1,#241518) 0%,var(--rb2,#170f11) 48%,var(--rb3,#221407) 100%)}#cr-hd2-ribbon::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--rh1,#d4a017) 30%,var(--rh2,#f5d061) 50%,var(--rh1,#d4a017) 70%,transparent)}#cr-hd2-ribbon #qClock,#cr-hd2-ribbon #cbCtx{display:block;max-width:100%;margin:0;color:#fff;font:800 13.5px/1.2 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-ribbon #cbCtx{display:none}#cr-hd2-ribbon #cbCtx small{color:#B57EDC;font-size:.9em;margin-right:4px;font-weight:800}body.projopen #cr-hd2-ribbon #qClock{display:none}body.projopen #cr-hd2-ribbon #cbCtx{display:block}#cr-hd2-ribbon{padding-left:56px;padding-right:56px;min-height:52px}#cr-hd2-home{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;background:rgba(212,160,23,.08);border:1px solid #d4a017;color:#f5d061;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}#cr-hd2-home svg{display:block;width:17px;height:17px}#cr-home-btn{display:none}#cr-hd2-bar{border-bottom:2px solid transparent;border-image:linear-gradient(90deg,transparent,#d4a017 25%,#f5d061 50%,#d4a017 75%,transparent) 1}body[data-crm="insurance"] #cr-hd2-bar,body[data-crm="community"] #cr-hd2-bar,body[data-crm="production"] #cr-hd2-bar,body[data-crm="sales"] #cr-hd2-bar{border-image:none;border-bottom:1px solid var(--hln,#ddd6cf)}#cardinalTruthView,#insClientsView,#resourceLibraryView{top:var(--headh,110px) !important;z-index:60 !important}#cr-ih-bar{display:none}#insClientsView .ins-header,#resourceLibraryView .ins-header{display:none}#resourceLibraryView .rl-search{top:0}body.viewing-community-hub footer.site{display:none}body[data-crm="community"]{background:#0a1420}body[data-crm="insurance"]{background:#08161a}.dashcard,section.history{border-color:#d4a017}.cr-est-body{max-width:100vw;box-sizing:border-box}.cr-est-head{max-width:100vw;box-sizing:border-box}.cr-est-body{overflow-x:hidden}.cr-est-body input,.cr-est-body select,.cr-est-body textarea{min-width:0;max-width:100%;box-sizing:border-box}.cr-est-head{overflow-x:auto;overscroll-behavior-x:contain}#projectView .subnote{color:#fff}#listView #listTitle{background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:#fff}#listView label,#listView .listlbl{color:#d4a017}#listView #listBody,#listView .cards,#listView .doclist{background:transparent}#listView .card{margin-bottom:12px;border-radius:12px}#listView .listctl{color:#d4a017}#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017}#projectView .projsec a{-webkit-text-fill-color:#f5d061;color:#f5d061}.hero-hi,.hero-hi *,.acthead{background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm="insurance"] #cr-hd2-ribbon{--racc:#14b8a6;--rb1:#071518;--rb2:#0a1d22;--rb3:#081a14;--rh1:#2dd4bf;--rh2:#a3e635}body[data-crm="community"] #cr-hd2-ribbon{--racc:#5ec8ff;--rb1:#0a1420;--rb2:#0d1926;--rb3:#101f30;--rh1:#5ec8ff;--rh2:#e8f4ff}body[data-crm="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#f5d061}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
 <script id="cr-hd2-script">
 (function(){
 'use strict';
