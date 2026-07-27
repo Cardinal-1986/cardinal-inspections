@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 356 &#8212; Community bids are editable &#8212; pencil on the Hub's bid rows opens the bid form pre-filled; saving updates the bid in place (partner, amounts, dates, contacts, scope). </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 358 &#8212; New insurance lead reads the Scope of Loss &#8212; attach the carrier scope on the lead form; saving opens the new claim and the existing reader fills everything it can. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -5989,7 +5989,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <label><input type="checkbox" id="ldInsOrdLaw"> Ordinance &amp; Law Coverage present</label>
         </div>
         <label style="margin-top:8px;">Insurance Notes<textarea id="ldInsNotes" rows="2" style="width:100%;box-sizing:border-box;margin-top:4px;
-          padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;resize:vertical;"></textarea></label>
+          padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;resize:vertical;"></textarea></label><label style="margin-top:8px;display:block;">&#128209; Scope of Loss (optional)<input type="file" id="ldScopeFile" accept=".pdf,image/*" style="display:block;margin-top:5px;font-size:12.5px;"><small id="ldScopeNote" style="display:block;color:#8a6f66;margin-top:3px;">Attach the carrier scope &mdash; after saving, the reader opens the new claim and fills carrier, claim #, RCV/ACV and the rest automatically.</small></label>
       </div>
 
       <div class="ldbox" id="ldAssignBox">
@@ -10871,8 +10871,20 @@ document.getElementById('ldSave').addEventListener('click', async function(){
     var pr = cacheProjects.find(function(x){ return x.id === pid; });
     if(pr){
       /* Insurance leads land on the insurance side; retail/unknown open the profile as usual */
+      var __scopeF = window.__crPendingScope || null;
+      window.__crPendingScope = null;
       if(lead.claim_type === 'insurance'){
-        showInsuranceClients();
+        if(__scopeF){
+          /* scope attached at creation: land on the claim and let the reader fill it (build 358) */
+          openProject(pr.id);
+          setTimeout(function(){
+            if(typeof window.readScopeOfLoss === 'function' && currentProject && currentProject.id === pr.id){
+              window.readScopeOfLoss(__scopeF);
+            }
+          }, 1200);
+        } else {
+          showInsuranceClients();
+        }
       } else {
         openProject(pr.id);
       }
@@ -41587,6 +41599,16 @@ document.addEventListener('click', function(e){
 section.history > .viewhead{background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
 section.history > .subnote{color:#9aa0a8;}
+/* Client Projects as a horizontal gallery on desktop (build 357) — 10 newest, scroll for the rest of the row */
+@media (min-width:901px){
+  #historyMount{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:14px;padding:4px 2px 12px;
+    scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
+  #historyMount > *{flex:0 0 300px;max-width:300px;scroll-snap-align:start;}
+  #historyMount > *:nth-child(n+11){display:none;}
+  #historyMount::-webkit-scrollbar{height:8px;}
+  #historyMount::-webkit-scrollbar-thumb{background:#3a3f47;border-radius:999px;}
+  #historyMount::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:999px;}
+}
 </style>
 <script id="cr-kphome-script">
 (function(){
@@ -41632,6 +41654,31 @@ document.addEventListener('click', function(e){
   if(!r) return;
   if(typeof openProject === 'function') openProject(r.getAttribute('data-proj'));
 });
+})();
+</script>
+<script id="cr-scopelead-script">
+(function(){
+'use strict';
+document.addEventListener('change', function(e){
+  if(!e.target || e.target.id !== 'ldScopeFile') return;
+  var f = e.target.files && e.target.files[0];
+  window.__crPendingScope = f || null;
+  var n = document.getElementById('ldScopeNote');
+  if(n) n.textContent = f
+    ? '\uD83D\uDCD1 ' + f.name + ' attached \u2014 saving will open the claim and read it.'
+    : 'Attach the carrier scope \u2014 after saving, the reader opens the new claim and fills carrier, claim #, RCV/ACV and the rest automatically.';
+});
+var _origOLF = window.openLeadForm;
+if(typeof _origOLF === 'function'){
+  window.openLeadForm = function(){
+    window.__crPendingScope = null;
+    var i = document.getElementById('ldScopeFile');
+    if(i) i.value = '';
+    var n = document.getElementById('ldScopeNote');
+    if(n) n.textContent = 'Attach the carrier scope \u2014 after saving, the reader opens the new claim and fills carrier, claim #, RCV/ACV and the rest automatically.';
+    return _origOLF.apply(this, arguments);
+  };
+}
 })();
 </script>
 </body>
