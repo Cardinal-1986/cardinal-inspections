@@ -2653,7 +2653,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 372 &#8212; Header CRM title enlarged to 40px and painted the same accent as the &#65291; button; the duplicate header search is retired (the banner carries it). </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 373 &#8212; Team Directory rebuilt as a standalone light page &#8212; Crew Board grouped by Admin / Production / Sales, tap-to-call numbers, search, and an Add teammate button. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3006,10 +3006,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
 <!-- ============ TEAM ============ -->
 <div id="teamView" style="display:none;">
-  <div class="wrap" style="padding-top:18px;">
-    <div class="ljhead">
-      <h2 class="ljtitle">&#128101; Team</h2>
+  <div class="tmwrap">
+    <div class="tmhd">
+      <h2 class="tmttl">Team <b>Directory</b></h2>
+      <button class="tmadd" id="tmAddBtn">&#65291; Add teammate</button>
     </div>
+    <p class="tmsub" id="tmSub"></p>
+    <div class="tmsrch">&#128269; <input type="search" id="tmSearch" placeholder="Search name, role or number"></div>
     <div id="tmMount"></div>
   </div>
 </div>
@@ -17091,23 +17094,54 @@ async function openTeamView(){
     showError('Team page error: ' + (err.message || err));
   }
 }
+function tmRoleOf(em){
+  var p = cacheTeam[em] || {};
+  var t = String(p.title || '').toLowerCase();
+  if(ADMIN_EMAILS.indexOf(em) !== -1) return 'Admin';
+  if(PRODUCTION_EMAILS.indexOf(em) !== -1) return 'Production';
+  if(/admin|owner/.test(t)) return 'Admin';
+  if(/production|crew|foreman|install/.test(t)) return 'Production';
+  return 'Sales';
+}
 function renderTeamView(){
+  /* Build 373: Crew Board \u2014 grouped by role, light theme, no counts, larger type. */
   var isAdmin = currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1;
   var mount = document.getElementById('tmMount');
-  mount.innerHTML = teamEmails().map(function(em){
+  var q = ((document.getElementById('tmSearch') || {}).value || '').trim().toLowerCase();
+  var all = teamEmails().filter(function(em){
+    if(!q) return true;
+    var p = cacheTeam[em] || {};
+    return [p.name, DEFAULT_NAMES[em], em, p.phone, p.title].join(' ').toLowerCase().indexOf(q) !== -1;
+  });
+  var sub = document.getElementById('tmSub');
+  if(sub) sub.textContent = all.length + ' ' + (all.length === 1 ? 'person' : 'people') +
+    (isAdmin ? '' : ' \u00b7 tap the pencil on your own row to update your details');
+  mount.innerHTML = ['Admin','Production','Sales'].map(function(role){
+    var members = all.filter(function(em){ return tmRoleOf(em) === role; });
+    if(!members.length) return '';
+    return '<div class="tmgrp"><div class="tmband tmband-' + role.toLowerCase() + '">' + role + '</div>' +
+      '<div class="tmbody">' + members.map(tmCardHtml).join('') + '</div></div>';
+  }).join('') || '<div class="tmempty">Nobody matches that search.</div>';
+}
+function tmCardHtml(em){
+  var isAdmin = currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1;
+  var mine = currentUser && currentUser.email === em;
+  var canEdit = isAdmin || mine;
+  return (function(em){
     var p = cacheTeam[em] || {};
     var nm = p.name || DEFAULT_NAMES[em] || em.split('@')[0];
-    var roles = '';
-    if(ADMIN_EMAILS.indexOf(em) !== -1) roles += '<span class="tmrole">ADMIN</span>';
-    if(PRODUCTION_EMAILS.indexOf(em) !== -1) roles += '<span class="tmrole pr">PRODUCTION</span>';
+    var tel = String(p.phone || '').replace(/[^0-9+]/g, '');
     return '<div class="tmcard" data-em="' + esc(em) + '">' +
-      '<div class="tmrow">' + avatarHtml(em, 64) +
-        '<span class="tminfo"><b>' + esc(nm) + ' ' + roles + '</b>' +
-        (p.title ? '<span>' + esc(p.title) + '</span>' : '') +
-        (p.phone ? '<span>\uD83D\uDCDE ' + esc(p.phone) + '</span>' : '') +
-        '<span>' + esc(em) + '</span></span>' +
-      (isAdmin ? '<button class="chipbtn" data-edit="1">\u270E Edit</button>' : '') + '</div>' +
-      (isAdmin ?
+      '<div class="tmrow">' + avatarHtml(em, 48) +
+        '<span class="tminfo"><b>' + esc(nm) + '</b>' +
+        (p.title ? '<span class="tmt">' + esc(p.title) + '</span>' : '') +
+        '<span class="tmem">' + esc(em) + '</span></span>' +
+        (p.phone ? '<a class="tmph" href="tel:' + tel + '">' + esc(p.phone) + '</a>'
+                 : '<span class="tmph tmno">no number</span>') +
+        (tel ? '<a class="tmib" href="tel:' + tel + '" title="Call">' + ljPhoneSvg() + '</a>' +
+               '<a class="tmib" href="sms:' + tel + '" title="Text">' + ljSmsSvg() + '</a>' : '') +
+      (canEdit ? '<button class="tmib tmed" data-edit="1" title="Edit">\u270E</button>' : '') + '</div>' +
+      (canEdit ?
         '<div class="tmedit">' +
         '<label>Display name</label><input type="text" class="tmName" value="' + esc(p.name || nm) + '">' +
         '<label>Title / role</label><input type="text" class="tmTitle" value="' + esc(p.title || '') + '" placeholder="e.g. Outside Sales">' +
@@ -17123,7 +17157,7 @@ function renderTeamView(){
           '<button class="chipbtn" data-cancel="1">Cancel</button>' +
         '</div></div>' : '') +
     '</div>';
-  }).join('');
+  })(em);
 }
 function tmResize(file){
   return new Promise(function(res, rej){
@@ -17143,6 +17177,32 @@ function tmResize(file){
     fr.readAsDataURL(file);
   });
 }
+document.getElementById('tmSearch').addEventListener('input', function(){
+  clearTimeout(this.__t); this.__t = setTimeout(renderTeamView, 200);
+});
+document.getElementById('tmAddBtn').addEventListener('click', async function(){
+  if(!(currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1)){
+    alert('Only Theo or Joan can add teammates.');
+    return;
+  }
+  var em = (prompt('Work email for the new teammate:', '@cardinalrenovations.net') || '').trim().toLowerCase();
+  if(!em) return;
+  if(em.indexOf('@') === -1){ alert('That does not look like an email address.'); return; }
+  if(cacheTeam[em] || TEAM_ROSTER.some(function(m){ return m.email === em; })){
+    alert('That person is already in the directory.'); return;
+  }
+  var nm = (prompt('Full name:', '') || '').trim();
+  var ph = (prompt('Phone number (optional):', '') || '').trim();
+  var ti = (prompt('Title / role (optional) \u2014 e.g. Production, Sales:', '') || '').trim();
+  try{
+    var r = await sb.from('team_profiles').upsert(
+      { email: em, name: nm || em.split('@')[0], phone: ph || null, title: ti || null },
+      { onConflict: 'email' });
+    if(r.error) throw r.error;
+    await loadTeamProfiles();
+    renderTeamView();
+  }catch(err){ showError('Could not add teammate: ' + (err.message || err)); }
+});
 document.getElementById('tmMount').addEventListener('click', async function(e){
   var card = e.target.closest('.tmcard');
   if(!card) return;
@@ -42809,5 +42869,57 @@ window.CardinalDownload = Object.assign(window.CardinalDownload || {}, {
 });
 })();
 </script>
+<style id="cr-team-styles">
+/* ── Team Directory (build 373) — standalone light page, no CRM skin ── */
+#teamView{background:#e8e6e1 !important;min-height:100vh;color:#1a1a1a;}
+.tmwrap{max-width:900px;margin:0 auto;padding:20px 16px 150px;}
+.tmhd{display:flex;align-items:center;gap:12px;margin-bottom:3px;flex-wrap:wrap;}
+.tmttl{margin:0;flex:1;font:800 27px Georgia,'Times New Roman',serif;color:#111;letter-spacing:-.01em;
+  background:none;-webkit-text-fill-color:#111;}
+.tmttl b{color:#C8202E;-webkit-text-fill-color:#C8202E;}
+.tmadd{background:#C8202E;color:#fff;border:0;border-radius:9px;padding:11px 19px;font:800 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.tmsub{margin:0 0 16px;font:600 14px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;}
+.tmsrch{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #d5d0c9;border-radius:9px;
+  padding:11px 14px;margin-bottom:18px;color:#8a8a8a;font-size:14.5px;}
+.tmsrch input{flex:1;background:none;border:0;outline:0;font:600 14.5px 'Segoe UI',Arial,sans-serif;color:#111;min-width:0;}
+.tmgrp{margin-bottom:22px;}
+.tmband{padding:11px 16px;border-radius:10px 10px 0 0;color:#fff;
+  font:800 13px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;}
+.tmband-admin{background:#111111;}
+.tmband-production{background:#C8202E;}
+.tmband-sales{background:#4a4a4a;}
+.tmbody{border:1px solid #dcd8d2;border-top:0;border-radius:0 0 11px 11px;overflow:hidden;background:#fff;}
+#teamView .tmcard{background:#fff;border:0;border-bottom:1px solid #eceae6;border-radius:0;padding:0;margin:0;box-shadow:none;}
+#teamView .tmcard:last-child{border-bottom:0;}
+#teamView .tmrow{display:flex;align-items:center;gap:14px;padding:15px 16px;}
+#teamView .tmrow .tmav,#teamView .tmrow img.tmav,#teamView .tmrow .tmav.tmini{
+  width:48px !important;height:48px !important;border-radius:11px !important;flex:0 0 auto;}
+#teamView .tminfo{flex:1;min-width:0;display:flex;flex-direction:column;}
+#teamView .tminfo b{font:800 18px 'Segoe UI',Arial,sans-serif;color:#111;line-height:1.25;}
+#teamView .tmt{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#C8202E;margin-top:1px;}
+#teamView .tmem{font-size:13px;color:#8a8a8a;overflow-wrap:anywhere;}
+#teamView .tmph{font:700 17px ui-monospace,Menlo,monospace;color:#111;text-decoration:none;white-space:nowrap;flex:0 0 auto;}
+#teamView .tmph.tmno{color:#b0aca6;font-size:13px;font-weight:600;}
+#teamView .tmib{width:40px;height:40px;border:1px solid #dcd8d2;border-radius:9px;background:#fff;color:#C8202E;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;flex:0 0 auto;font-size:15px;}
+#teamView .tmib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+#teamView .tmib.tmed{color:#111;}
+#teamView .tmedit{display:none;padding:0 16px 16px;background:#faf9f7;border-top:1px solid #eceae6;}
+#teamView .tmcard.editing .tmedit{display:block;}
+#teamView .tmedit label{display:block;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:#8a8a8a;margin:12px 0 5px;}
+#teamView .tmedit input[type=text]{width:100%;background:#fff;border:1px solid #d5d0c9;color:#111;
+  border-radius:9px;padding:11px 13px;font:600 15px 'Segoe UI',Arial,sans-serif;}
+#teamView .tmedit .axbtn{background:#C8202E;border-color:#C8202E;color:#fff;}
+#teamView .tmedit .chipbtn{background:#fff;border-color:#d5d0c9;color:#111;}
+.tmempty{border:1px dashed #cfcac3;border-radius:11px;padding:18px;text-align:center;color:#8a8a8a;
+  font:600 14px 'Segoe UI',Arial,sans-serif;background:#fff;}
+@media (max-width:640px){
+  #teamView .tmrow{flex-wrap:wrap;gap:11px;}
+  #teamView .tmph{flex-basis:100%;order:5;font-size:18px;}
+  .tmttl{font-size:23px;}
+}
+@media print{#teamView{background:#fff !important;}}
+</style>
 </body>
 </html>
