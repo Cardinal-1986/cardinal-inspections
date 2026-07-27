@@ -2555,7 +2555,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 327 &#8212; ABC Supply: live catalog search, branch pricing and frequent items, ready to connect. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 329 &#8212; Activity and Calendar reachable from the Community tools row. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38314,6 +38314,12 @@ return '<button class="mini" data-open="' + esc(pr.id) + '" type="button">' +
 '<span class="x"><b>Work Orders</b><small>Open and scheduled</small></span></button>' +
 '<button data-go="partners" type="button"><span class="i">\uD83D\uDC65</span>' +
 '<span class="x"><b>All Partners</b><small>Contacts and terms</small></span></button>' +
+'<button data-go="analytics" type="button"><span class="i">\uD83D\uDCCA</span>' +
+'<span class="x"><b>Analytics</b><small>Win rate and pipeline</small></span></button>' +
+'<button data-go="activity" type="button"><span class="i">\u26A1</span>' +
+'<span class="x"><b>Activity</b><small>Team feed, newest first</small></span></button>' +
+'<button data-go="calendar" type="button"><span class="i">\uD83D\uDCC5</span>' +
+'<span class="x"><b>Calendar</b><small>Jobs on the board</small></span></button>' +
 '</div>';
 clock(host);
 wire(host);
@@ -38366,6 +38372,9 @@ if(typeof window.openProject === 'function') window.openProject(el.dataset.open)
 host.querySelectorAll('[data-go]').forEach(function(el){
 el.onclick = function(){
 var k = el.dataset.go;
+if(k === 'analytics'){ if(window.CardinalCommunityAnalytics) window.CardinalCommunityAnalytics.open(); return; }
+if(k === 'activity'){ if(typeof window.openActivityFeed === 'function') window.openActivityFeed(); return; }
+if(k === 'calendar'){ if(typeof window.openScheduleBoard === 'function') window.openScheduleBoard(); return; }
 if(k === 'newbid' && window.CardinalNewBid && window.CardinalNewBid.open){
 window.CardinalNewBid.open(); return;
 }
@@ -39979,6 +39988,146 @@ rows(j.items || (Array.isArray(j) ? j : []));
 function open(){ ensure().style.display = 'flex'; refreshStatus(); }
 function close(){ if(el) el.style.display = 'none'; }
 window.CardinalABC = { open: open, close: close };
+})();
+</script>
+<style id="cr-can-styles">
+#cr-can{display:none;position:fixed;inset:0;z-index:9600;background:#0a1420;color:#e6f0f8;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+#cr-can .wrapx{max-width:760px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(130px + env(safe-area-inset-bottom,0px))}
+#cr-can .hd{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+#cr-can .hd h2{margin:0;flex:1;font:700 24px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,#5ec8ff,#e8f4ff 60%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#cr-can .hd .x{background:none;border:1px solid rgba(94,200,255,.35);color:#e6f0f8;border-radius:10px;font-size:19px;padding:5px 13px;cursor:pointer}
+#cr-can .strip{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+#cr-can .stat{background:linear-gradient(#111e2e,#111e2e) padding-box,linear-gradient(125deg,#5ec8ff,#e8f4ff) border-box;border:1px solid transparent;border-radius:12px;padding:12px 13px}
+#cr-can .stat .k{font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#7690ab}
+#cr-can .stat .v{font:800 22px ui-monospace,Menlo,monospace;margin-top:4px}
+#cr-can .stat .v.good{color:#7fe3b0}
+#cr-can .stat .v.warn{color:#ffcf6b}
+#cr-can .sect{display:flex;align-items:center;gap:10px;margin:20px 0 8px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#7690ab}
+#cr-can .sect::after{content:"";flex:1;height:1px;background:rgba(94,200,255,.18)}
+#cr-can .prow{display:flex;align-items:center;gap:10px;background:#111e2e;border:1px solid rgba(94,200,255,.16);border-radius:11px;padding:11px 13px;margin-bottom:7px}
+#cr-can .prow b{flex:1;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#cr-can .prow small{color:#7690ab;font-size:11.5px}
+#cr-can .prow .m{font:800 13px ui-monospace,Menlo,monospace;color:#7fe3b0}
+#cr-can .prow .d{font:800 12px ui-monospace,Menlo,monospace;color:#ffcf6b;min-width:34px;text-align:right}
+#cr-can .prow .d.hot{color:#ff8f8f}
+#cr-can .bar{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+#cr-can .bar .lb{width:64px;font:700 11px ui-monospace,Menlo,monospace;color:#7690ab}
+#cr-can .bar .tr{flex:1;height:20px;background:#111e2e;border:1px solid rgba(94,200,255,.14);border-radius:7px;overflow:hidden}
+#cr-can .bar .fl{height:100%;background:linear-gradient(90deg,#2f7fb8,#5ec8ff);min-width:2px}
+#cr-can .bar .vv{font:800 11.5px ui-monospace,Menlo,monospace;color:#c2d6e8;min-width:70px;text-align:right}
+#cr-can .quiet{color:#7690ab;font-size:12.5px;padding:10px 2px}
+</style>
+<script id="cr-can-script">
+(function(){
+'use strict';
+function esc(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function usd(n){ return '$' + Math.round(Number(n) || 0).toLocaleString('en-US'); }
+function ck(p){ try{ return window.parseCkAll ? window.parseCkAll(p) : (p.checklist || {}); }catch(_){ return {}; } }
+function stg(p){ try{ return window.normStage ? window.normStage(p.stage) : p.stage; }catch(_){ return p.stage; } }
+function isComm(p){ try{ return window.projClaimType && window.projClaimType(p) === 'community'; }catch(_){ return false; } }
+function isAdmin(){
+var em = (window.currentUser && window.currentUser.email) || '';
+return (window.ADMIN_EMAILS || []).indexOf(em) !== -1;
+}
+var WON = { Approved:1, Scheduled:1, Completed:1, Invoiced:1, Closed:1 };
+var OPEN = { Lead:1, Prospect:1 };
+function compute(){
+var rows = (window.cacheProjects || []).filter(isComm);
+var open = [], won = [], lost = [], partners = {}, amts = [];
+rows.forEach(function(p){
+var c = ck(p) || {}, l = c.lead || {};
+var s = stg(p);
+var amt = Number(l.bid_amount) || 0;
+if(amt > 0) amts.push(amt);
+var pn = l.partner_name || '\u2014';
+partners[pn] = partners[pn] || { bids:0, won:0, lost:0, wonAmt:0 };
+partners[pn].bids++;
+var rec = { p:p, amt:amt, partner:pn, since:c.stage_since || l.stage_since || p.updated_at || p.created_at };
+if(WON[s]){ won.push(rec); partners[pn].won++; partners[pn].wonAmt += amt; }
+else if(s === 'Lost'){ lost.push(rec); partners[pn].lost++; }
+else if(OPEN[s]){ open.push(rec); }
+});
+var decided = won.length + lost.length;
+var months = {};
+won.forEach(function(r){
+var d = new Date(r.p.created_at || Date.now());
+if(isNaN(d)) return;
+var k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+months[k] = months[k] || { n:0, amt:0 };
+months[k].n++; months[k].amt += r.amt;
+});
+return {
+total: rows.length, open: open, won: won, lost: lost,
+winRate: decided ? Math.round(won.length / decided * 100) : null,
+openAmt: open.reduce(function(a, r){ return a + r.amt; }, 0),
+wonAmt: won.reduce(function(a, r){ return a + r.amt; }, 0),
+avgBid: amts.length ? amts.reduce(function(a, b){ return a + b; }, 0) / amts.length : 0,
+partners: partners, months: months,
+};
+}
+function daysSince(iso){
+if(!iso) return null;
+var d = new Date(iso);
+if(isNaN(d)) return null;
+return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+var el = null;
+function ensure(){
+if(el) return el;
+el = document.createElement('div');
+el.id = 'cr-can';
+document.body.appendChild(el);
+return el;
+}
+function render(){
+var host = ensure();
+if(!isAdmin()){
+host.innerHTML = '<div class="wrapx"><div class="hd"><h2>\uD83D\uDCCA Community Analytics</h2>' +
+'<button class="x" data-x type="button">&times;</button></div>' +
+'<div class="quiet">Totals and analytics are admin-only \u2014 same as the home strip.</div></div>';
+host.querySelector('[data-x]').onclick = close;
+return;
+}
+var d = compute();
+var pk = Object.keys(d.partners).sort(function(a, b){ return d.partners[b].wonAmt - d.partners[a].wonAmt; });
+var mk = Object.keys(d.months).sort().slice(-6);
+var mmax = mk.reduce(function(a, k){ return Math.max(a, d.months[k].amt); }, 0) || 1;
+host.innerHTML = '<div class="wrapx">' +
+'<div class="hd"><h2>\uD83D\uDCCA Community Analytics</h2>' +
+'<button class="x" data-x type="button">&times;</button></div>' +
+'<div class="strip">' +
+'<div class="stat"><div class="k">Win rate</div><div class="v ' + (d.winRate == null ? '' : (d.winRate >= 50 ? 'good' : 'warn')) + '">' + (d.winRate == null ? '\u2014' : d.winRate + '%') + '</div></div>' +
+'<div class="stat"><div class="k">Awarded</div><div class="v good">' + usd(d.wonAmt) + '</div></div>' +
+'<div class="stat"><div class="k">Out for pricing</div><div class="v">' + usd(d.openAmt) + '</div></div>' +
+'<div class="stat"><div class="k">Avg bid</div><div class="v">' + usd(d.avgBid) + '</div></div>' +
+'</div>' +
+'<div class="sect">By partner</div>' +
+(pk.length ? pk.map(function(k){
+var v = d.partners[k], dec = v.won + v.lost;
+return '<div class="prow"><b>' + esc(k) + '</b>' +
+'<small>' + v.bids + ' bid' + (v.bids === 1 ? '' : 's') + (dec ? ' \u00b7 ' + Math.round(v.won / dec * 100) + '% win' : '') + '</small>' +
+'<span class="m">' + usd(v.wonAmt) + '</span></div>';
+}).join('') : '<div class="quiet">No community bids yet.</div>') +
+'<div class="sect">Aging \u2014 open bids</div>' +
+(d.open.length ? d.open.slice().sort(function(a, b){ return (daysSince(b.since) || 0) - (daysSince(a.since) || 0); }).map(function(r){
+var dd = daysSince(r.since);
+return '<div class="prow"><b>' + esc(r.p.name || 'Unnamed') + '</b>' +
+'<small>' + esc(r.partner) + (r.amt ? ' \u00b7 ' + usd(r.amt) : '') + '</small>' +
+'<span class="d' + (dd != null && dd > 7 ? ' hot' : '') + '">' + (dd == null ? '\u2014' : dd + 'd') + '</span></div>';
+}).join('') : '<div class="quiet">Nothing open right now.</div>') +
+'<div class="sect">Awarded by month</div>' +
+(mk.length ? mk.map(function(k){
+var v = d.months[k];
+return '<div class="bar"><span class="lb">' + esc(k) + '</span>' +
+'<span class="tr"><span class="fl" style="width:' + Math.round(v.amt / mmax * 100) + '%"></span></span>' +
+'<span class="vv">' + usd(v.amt) + ' \u00b7 ' + v.n + '</span></div>';
+}).join('') : '<div class="quiet">No awards recorded yet.</div>') +
+'</div>';
+host.querySelector('[data-x]').onclick = close;
+}
+function open(){ render(); ensure().style.display = 'block'; try{ window.scrollTo(0, 0); }catch(_){} }
+function close(){ if(el) el.style.display = 'none'; }
+window.CardinalCommunityAnalytics = { open: open, close: close, render: render };
 })();
 </script>
 </body>
