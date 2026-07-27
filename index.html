@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 354 &#8212; Client Projects header matched to the theme &#8212; gold-gradient title and readable intro on the dark ground; prints stay ink-dark. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 355 &#8212; The + follows the CRM &#8212; community's add-button takeover releases when you leave the hub, so Claims (and retail) get their own forms; community keeps its bid form on its clients. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12008,6 +12008,7 @@ function hideAllViews(){
      will re-apply whichever fits the next project. */
   document.body.classList.remove('claim-insurance');
   document.body.classList.remove('claim-community');
+  document.body.classList.remove('viewing-community-hub');
   /* Hide the insurance-section overlay views too — they're z-index 155+ and
      will keep covering the newly-shown main-app view otherwise. */
   var _ct = document.getElementById('cardinalTruthView'); if(_ct) _ct.style.display = 'none';
@@ -16141,6 +16142,7 @@ document.getElementById('landQuick').addEventListener('click', function(){
    so we never touch header.site.style — leaving it alone means going back to
    the main app never leaves us with a hidden header. */
 function showCardinalTruth(){
+  document.body.classList.remove('viewing-community-hub'); /* the + belongs to Claims here (build 355) */
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
   var rl = document.getElementById('resourceLibraryView'); if(rl) rl.style.display = 'none';
   var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
@@ -24561,7 +24563,8 @@ var n = parseFloat(v);
 return isNaN(n) ? 0 : n;
 }
 function isCommunityHubActive(){
-return document.body.classList.contains('viewing-community-hub');
+return document.body.classList.contains('viewing-community-hub') ||
+       document.body.classList.contains('claim-community');
 }
 async function loadPartners(){
 if(!window.CardinalCommunityPartners) return [];
