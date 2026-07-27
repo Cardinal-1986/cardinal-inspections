@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 348 &#8212; Keeper 2/3: Location above the Job Menu as a live Map/Satellite card with Directions; Contacts section retired into the hero (Switch Primary / Add / extras preserved). </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 349 &#8212; Keeper 3/3: Payments and History as opening pills (History in the Cardinal-red timeline), punch card in the committed shell &#8212; the Keeper profile is complete. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8070,6 +8070,35 @@ function renderAcxOverview(){
     '</div>';
   /* ---- contacts: retired to the hero name row (Keeper, build 348). dbSwitchPrimary + add-contact live there now. ---- */
   var extra = ck.contacts || [];
+  /* ---- payments + history pills (Keeper 3/3, build 349) \u2014 retail + community; insurance keeps its own cards ---- */
+  if(!document.body.classList.contains('claim-insurance')){
+    var _fin = (typeof jobFinance === 'function') ? (jobFinance(pr) || {}) : {};
+    var _paylog = ck.payments || [];
+    var _paid = Number(_fin.paid) || 0, _val = Number(_fin.value) || 0;
+    var _pct = _val > 0 ? Math.min(100, Math.round(_paid / _val * 100)) : 0;
+    html += '<div class="kpsec open" id="kpPay"><div class="kpsech" data-kps="1">' +
+        '<span class="kpst">\uD83D\uDCB5 Payments</span><span class="kpcnt">' + _paylog.length + '</span><span class="kpcar">\u203A</span></div>' +
+      '<div class="kpsecb">' +
+        '<div class="kppayrow"><span>Paid</span><span class="kppaybar"><i style="width:' + _pct + '%"></i></span>' +
+          '<b>' + fmtMoney(_paid) + '</b><span class="kpmute">of ' + fmtMoney(_val) + '</span></div>' +
+        (_paylog.length ? _paylog.map(function(p){
+          return '<div class="kprowi"><div><div class="kpti">' + esc(p.note || (p.dir === 'out' ? 'Payment out' : 'Payment received')) + '</div>' +
+            '<div class="kpm">' + esc(String(p.at || p.date || '')) + '</div></div>' +
+            '<b class="' + (p.dir === 'out' ? 'kpout' : 'kpin') + '">' + (p.dir === 'out' ? '\u2212' : '') + fmtMoney(Number(p.amt) || 0) + '</b></div>';
+        }).join('') : '<div class="kpm" style="margin-top:8px;">No payments logged yet.</div>') +
+        '<button type="button" class="btn ghost kppaybtn" style="margin-top:10px;display:none;">Open payments</button>' +
+      '</div></div>';
+    var _hist = (typeof buildActivityEvents === 'function')
+      ? buildActivityEvents().filter(function(x){ return x.pid === pr.id; }).slice(0, 8) : [];
+    html += '<div class="kpsec kpred" id="kpHis"><div class="kpsech" data-kps="1">' +
+        '<span class="kpst">\uD83D\uDD58 History</span><span class="kpcnt">' + _hist.length + '</span><span class="kpcar">\u203A</span></div>' +
+      '<div class="kpsecb"><div class="kphist">' +
+        (_hist.length ? _hist.map(function(x){
+          return '<div class="kpev">' + esc(x.label || '') + (x.detail ? ' \u2014 ' + esc(String(x.detail)) : '') +
+            '<div class="kpw">' + esc(x.who || '') + ' \u00b7 ' + timeAgo(x.t) + '</div></div>';
+        }).join('') : '<div class="kpm">Nothing logged yet.</div>') +
+      '</div></div></div>';
+  }
   /* ---- job details ---- */
   html += '<h3 class="projsec" style="margin:20px 0 10px;">Job Details</h3>' +
   '<div class="acxsec"><div class="acxbody"><div class="ackv">' +
@@ -41358,6 +41387,59 @@ document.addEventListener('click', function(e){
       window.dbMiniMap.removeLayer(satLayer);
     }
   }catch(err){}
+});
+})();
+</script>
+<style id="cr-keeper3-styles">
+/* ── Keeper 3/3 (build 349): Payments + History pills, punch card re-dress ── */
+.kpsec{background:linear-gradient(180deg,#2b2f36,#24282e);border:1px solid #3d434c;border-radius:13px;margin-top:12px;overflow:hidden;}
+.kpsec.kpred{border-color:#6e3129;border-top:3px solid #C8202E;}
+.kpsech{display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer;user-select:none;}
+.kpst{font:800 13px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;flex:1;}
+.kpcnt{font:700 10px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;border-radius:999px;padding:2px 8px;}
+.kpcar{color:#6d747e;transition:transform .15s;}
+.kpsec.open .kpcar{transform:rotate(90deg);}
+.kpsecb{display:none;padding:0 13px 13px;border-top:1px solid #33383f;}
+.kpsec.open .kpsecb{display:block;}
+.kppayrow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12.5px;color:#9aa0a8;}
+.kppayrow b{font:800 13px ui-monospace,Menlo,monospace;color:#8fe0ae;}
+.kppaybar{flex:1;height:8px;border-radius:999px;background:#1c1f24;overflow:hidden;}
+.kppaybar i{display:block;height:100%;background:linear-gradient(90deg,#2f7a4c,#8fe0ae);}
+.kpmute{font-size:11px;}
+.kprowi{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.16);border:1px solid #3a3f47;border-radius:10px;padding:9px 11px;margin-top:9px;font-size:12.5px;color:#dfe3e8;}
+.kprowi > div{flex:1;min-width:0;}
+.kpti{font-weight:700;}
+.kpm{font-size:10.5px;color:#8b929c;}
+.kpin{font:800 13px ui-monospace,Menlo,monospace;color:#8fe0ae;}
+.kpout{font:800 13px ui-monospace,Menlo,monospace;color:#f2a08a;}
+.kphist{border-left:2px solid #3a3f47;margin:12px 0 2px 5px;padding-left:12px;}
+.kpev{position:relative;margin-bottom:10px;font-size:12px;color:#c8cdd4;}
+.kpev::before{content:'';position:absolute;left:-17px;top:5px;width:7px;height:7px;border-radius:50%;background:#d4a017;}
+.kpw{font-size:10px;color:#6d747e;margin-top:1px;}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount > div{background:linear-gradient(180deg,#2b2f36,#24282e) !important;border:1px solid #3d434c !important;border-radius:13px !important;color:#dfe3e8;}
+</style>
+<script id="cr-keeper3-script">
+(function(){
+'use strict';
+document.addEventListener('click', function(e){
+  var h = e.target.closest('.kpsech');
+  if(!h) return;
+  h.parentNode.classList.toggle('open');
+});
+/* the Open payments button proxies the real Job Menu door, if this profile has one */
+document.addEventListener('click', function(e){
+  var b = e.target.closest('.kppaybtn');
+  if(!b) return;
+  var t = document.querySelector('#jaGrid [data-ja="payments"], #jaGrid [data-jm="payments"]');
+  if(t) t.click();
+});
+/* cheap check when the Payments pill is opened \u2014 no observers */
+document.addEventListener('click', function(e){
+  if(!e.target.closest('#kpPay .kpsech')) return;
+  var b = document.querySelector('.kppaybtn');
+  if(!b) return;
+  var t = document.querySelector('#jaGrid [data-ja="payments"], #jaGrid [data-jm="payments"]');
+  b.style.display = t ? 'inline-block' : 'none';
 });
 })();
 </script>
