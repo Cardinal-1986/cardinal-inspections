@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 366 &#8212; Punch items open a detail sheet &#8212; customer, phone, address, sales rep, created and scheduled dates, a notes box, and an open/closed switch that folds into Completed. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 367 &#8212; Browser Back fixed &#8212; a legacy hash router was hijacking every Back and forcing Home; it now yields, and the newer views record history too. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -16810,6 +16810,11 @@ function __histPush(st){
            history, so back went wherever the previous real entry was. */
         case 'salesfloor':      if(window.CardinalSalesFloor) window.CardinalSalesFloor.open(); break;
         case 'production':      if(window.CardinalProduction) window.CardinalProduction.open(); break;
+        /* Build 367: views added after this switch was written. */
+        case 'communityHub':    if(window.CardinalCommunityHub) window.CardinalCommunityHub.show(); break;
+        case 'punch':           if(typeof window.openPunchView === 'function') window.openPunchView(); break;
+        case 'photos':          if(typeof window.openPhotosView === 'function') window.openPhotosView(); break;
+        case 'estimates':       if(window.CardinalEstimates) window.CardinalEstimates.open(); break;
       }
     }catch(_e){}
     setTimeout(function(){ _navRestoring = false; }, 30);
@@ -16874,7 +16879,34 @@ function __histPush(st){
     wrapNav('showCardinalTruth',   'cardinalTruth');
     wrapNav('showResourceLibrary', 'resourceLibrary');
     wrapNav('showInsuranceClients','insClients');
-  }, 0);
+    /* Build 367: the newer full-screen views record state too. */
+    wrapNav('openPunchView',       'punch');
+    wrapNav('openPhotosView',      'photos');
+    (function(){
+      var hub = window.CardinalCommunityHub;
+      if(hub && typeof hub.show === 'function' && !hub.show.__crNav){
+        var origShow = hub.show;
+        var wrapped = function(){
+          var out = origShow.apply(this, arguments);
+          try{ window.navSetView('communityHub'); }catch(_e){}
+          return out;
+        };
+        wrapped.__crNav = true;
+        hub.show = wrapped;
+      }
+      var est = window.CardinalEstimates;
+      if(est && typeof est.open === 'function' && !est.open.__crNav){
+        var origOpen = est.open;
+        var w2 = function(){
+          var out = origOpen.apply(this, arguments);
+          try{ window.navSetView('estimates'); }catch(_e){}
+          return out;
+        };
+        w2.__crNav = true;
+        est.open = w2;
+      }
+    })();
+  }, 400);
 
   /* delegated: the buttons themselves — history.back/forward fires popstate,
      which our handler above turns into an in-app view restore */
@@ -17274,6 +17306,10 @@ async function enableNotifications(){
     return r;
   };
   window.addEventListener('popstate', async function(e){
+    /* Build 367: the modern nav system owns states tagged 'cardinal-nav'. This older
+       hash router doesn't understand them and its final else fell through to showHome(),
+       so Back restored the right view and was instantly overwritten by Home. */
+    if(e.state && e.state.app === 'cardinal-nav') return;
     var st = e.state || { v:'home' };
     __histLock = true;
     try{
