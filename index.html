@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 358 &#8212; New insurance lead reads the Scope of Loss &#8212; attach the carrier scope on the lead form; saving opens the new claim and the existing reader fills everything it can. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 359 &#8212; Community home rebuilt (Slate &amp; Clay) &#8212; light desktop-wide layout, collapsible panels, partner colour coding, rep avatars; Bids | Partners | Clients. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38760,117 +38760,115 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 </script>
 
 
-<style id="cr-ch2-styles">#communityHubView{display:none;min-height:100vh;padding:0 0 40px;background:#0a1420;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
-#communityHubView.cr-ch2-live{background:#0a1420 !important;color:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-\1\nbody.viewing-community-hub section.history{display:none}
-#cr-ch2{--ground:#0a1420;--card:#111e2e;--raise:#1a2c42;--ink:#fff;--mute:#c2d6e8;--dim:#7690ab;--a1:#5ec8ff;--a2:#e8f4ff;--accent:#8ad8ff;--warn:#ffcf6b;--good:#7fe3b0;--heroA:#152740;--urgent:#2a2418;--line:rgba(94,200,255,.18);--po:#B57EDC;--mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;--serif:Georgia,'Times New Roman',serif;max-width:680px;margin:0 auto;padding:14px 16px 60px;color:var(--ink)}
+<style id="cr-ch2-styles">#communityHubView{display:none;min-height:100vh;padding:0 0 40px;background:#e9ecef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+#communityHubView.cr-ch2-live{background:#e9ecef !important;color:#2d3338;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+body.viewing-community-hub section.history{display:none}
+#cr-ch2{--ground:#e9ecef;--card:#fafbfc;--line:#b8c2ca;--line2:#ccd4da;--ink:#2d3338;--mute:#6f7a83;
+--acc:#b06a42;--acc2:#8d5231;--bar:#3b444c;--chip:#dbe1e6;--chipink:#4e5a63;--good:#3a6b4f;--goodbg:#d5e6db;
+--warnbg:#f2ddc8;--warnink:#8d5231;--money:#3a6b4f;--avbg:#dbe1e6;
+--c-hab:#2f6b3f;--bg-hab:#dcebdf;--c-ca:#b08900;--bg-ca:#faf0c4;--c-dh:#2b6cb0;--bg-dh:#dbe8f6;--c-rb:#b8437e;--bg-rb:#f6dfeb;
+--mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+max-width:1320px;margin:0 auto;padding:14px 16px 60px;color:var(--ink)}
 #cr-ch2 button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#cr-ch2 .top{display:flex;align-items:flex-start;gap:12px;margin:8px 0 12px}
-#cr-ch2 .back{flex:0 0 auto;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--mute);font-size:16px}
-#cr-ch2 .brand{flex:1;min-width:0}
-#cr-ch2 .brand h1{margin:0;font-family:var(--serif);font-weight:700;font-size:clamp(24px,6.6vw,30px);line-height:1;letter-spacing:-.015em;background:linear-gradient(100deg,#5ec8ff,#a8dcff 42%,#e8f4ff);-webkit-background-clip:text;background-clip:text;color:var(--accent);-webkit-text-fill-color:transparent}
-#cr-ch2 .brand p{margin:6px 0 0;font:600 9.5px var(--mono);letter-spacing:.26em;text-transform:uppercase;color:var(--dim)}
-#cr-ch2 .clock{text-align:right;flex:0 0 auto}
-#cr-ch2 .clock .d{font:700 11px var(--mono);letter-spacing:.1em;color:var(--mute);text-transform:uppercase}
-#cr-ch2 .clock .t{font:700 19px var(--mono);color:var(--accent);margin-top:2px}
-#cr-ch2 .strip{display:flex;border-radius:11px;overflow:hidden;margin-bottom:6px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}
-#cr-ch2 .strip>div{flex:1;padding:12px 8px;text-align:center;border-right:1px solid var(--line)}
-#cr-ch2 .strip>div:last-child{border-right:0}
-#cr-ch2 .strip .k{font:800 8px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
-#cr-ch2 .strip .val{font:700 16.5px var(--mono);margin-top:5px}
-#cr-ch2 .strip .val.win{color:var(--good)}
-#cr-ch2 .strip .val.owed{color:var(--warn)}
-#cr-ch2 .mine{font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 2px 6px;text-align:right}
-#cr-ch2 .tabs{margin-top:8px}
-#cr-ch2 .tabbar{display:flex;border-bottom:1px solid var(--line);margin:0 0 14px}
-#cr-ch2 .tabbar button{flex:1;position:relative;background:none;border:none;padding:12px 6px 13px;font:800 13px inherit;color:var(--dim)}
-#cr-ch2 .tabbar button .n{font:700 10px var(--mono);color:var(--dim);opacity:.75;margin-left:4px}
-#cr-ch2 .tabbar button.on{color:#fff}
-#cr-ch2 .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}
-#cr-ch2>[data-pane]{display:none}
-#cr-ch2>[data-pane].on{display:block}
-#cr-ch2 .due{border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px rgba(94,200,255,.24),0 0 22px rgba(94,200,255,.14);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}
-#cr-ch2 .due .hd{display:flex;align-items:baseline;gap:10px;padding:15px 17px 4px}
-#cr-ch2 .due .hd .k{flex:1;font:800 9.5px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--warn)}
-#cr-ch2 .due .hd .tot{font:700 14px var(--mono);color:var(--mute)}
-#cr-ch2 .due .n{padding:0 17px;font-size:12.5px;color:var(--dim);line-height:1.5;margin-top:5px}
-#cr-ch2 .due .list{padding:8px 8px 10px}
-#cr-ch2 .due .empty{padding:14px 17px 18px;font-size:13px;color:var(--dim)}
-#cr-ch2 .row{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border-radius:8px;background:none;border:0;color:var(--ink);text-align:left}
-#cr-ch2 .row.hot{background:var(--urgent)}
-#cr-ch2 .days{flex:0 0 auto;min-width:48px;text-align:center;border-radius:8px;padding:6px 4px;background:var(--raise)}
-#cr-ch2 .days b{display:block;font:700 18px var(--mono);line-height:1;color:var(--accent)}
-#cr-ch2 .days small{display:block;font:700 7.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:3px}
-#cr-ch2 .row.hot .days b{color:var(--warn)}
-#cr-ch2 .who{flex:1;min-width:0}
-#cr-ch2 .who b{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#cr-ch2 .who small{display:block;font-size:11px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#cr-ch2 .amt{font:700 13.5px var(--mono);color:var(--good);white-space:nowrap}
-#cr-ch2 .rule{display:flex;align-items:center;gap:12px;margin:24px 0 8px;font:800 9.5px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
-#cr-ch2 .rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--a1),var(--a2),transparent);opacity:.5}
-#cr-ch2 .lede{font-size:12.5px;line-height:1.55;color:var(--dim);margin:0 0 10px}
-#cr-ch2 .qblock{border-radius:12px;background:var(--card);border:1px solid var(--line);margin-bottom:10px;overflow:hidden}
-#cr-ch2 .qh{display:flex;align-items:baseline;gap:9px;padding:11px 14px 8px}
-#cr-ch2 .qh .verb{flex:1;font-family:var(--serif);font-weight:700;font-size:15px}
-#cr-ch2 .qh .n{font:700 12px var(--mono);color:var(--accent)}
-#cr-ch2 .qh .sum{font:700 12px var(--mono);color:var(--dim)}
-#cr-ch2 .qlist{padding:0 6px 8px}
-#cr-ch2 .qrow{display:flex;align-items:center;gap:10px;width:100%;padding:9px 8px;border-radius:8px;background:none;border:0;color:var(--ink);text-align:left}
-#cr-ch2 .qrow:hover{background:var(--raise)}
-#cr-ch2 .qrow .t{flex:1;min-width:0}
-#cr-ch2 .qrow .t b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#cr-ch2 .qrow .t small{display:block;font-size:10.5px;color:var(--dim);margin-top:1px}
-#cr-ch2 .qrow .when{font:700 11px var(--mono);color:var(--accent)}
-#cr-ch2 .qrow .when.hot{color:var(--warn)}
-#cr-ch2 .qrow .a{font:700 12.5px var(--mono);color:var(--good)}
-#cr-ch2 h3.grp{display:flex;align-items:center;gap:10px;margin:18px 0 8px;font:800 10px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
-#cr-ch2 h3.grp:first-of-type{margin-top:4px}
-#cr-ch2 h3.grp .n{color:var(--accent)}
-#cr-ch2 h3.grp::after{content:'';flex:1;height:1px;background:var(--line)}
-#cr-ch2 h3.grp.bid{color:var(--warn)}
-#cr-ch2 h3.grp.bid .n{color:var(--warn)}
-#cr-ch2 .pc{border-radius:14px;overflow:hidden;margin-bottom:11px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}
-#cr-ch2 .ph{display:flex;align-items:center;gap:10px;padding:13px 15px 11px;background:linear-gradient(160deg,var(--heroA),transparent);cursor:pointer}
-#cr-ch2 .car{color:var(--accent);font-size:10px;flex:0 0 auto;transition:transform .15s}
-#cr-ch2 .pc.closed .car{transform:rotate(-90deg)}
-#cr-ch2 .ph .nm{flex:1;min-width:0}
-#cr-ch2 .ph .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#cr-ch2 .ph .nm small{display:block;font-size:10.5px;color:var(--dim);margin-top:3px}
-#cr-ch2 .chip{flex:0 0 auto;font:800 9px var(--mono);letter-spacing:.16em;color:var(--warn);background:var(--urgent);border-radius:12px;padding:6px 10px;text-transform:uppercase}
-#cr-ch2 .chip.z{color:var(--dim);background:var(--raise)}
-#cr-ch2 .pnums{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
-#cr-ch2 .pnums>div{padding:10px 6px 11px;text-align:center;border-left:1px solid var(--line)}
-#cr-ch2 .pnums>div:first-child{border-left:0}
-#cr-ch2 .pnums .k{font:800 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
-#cr-ch2 .pnums .v{font:700 13.5px var(--mono);margin-top:5px}
+#cr-ch2 [data-pane]{display:none}
+#cr-ch2 [data-pane].on{display:block}
+.cc-tabs{margin:0 0 14px;border-bottom:1px solid var(--line)}
+.cc-tabs .tabbar{display:flex;align-items:center}
+.cc-tabs button{background:none;border:0;padding:11px 22px;font:800 14.5px inherit;color:var(--bar);
+border-bottom:3px solid transparent;margin-bottom:-1px}
+.cc-tabs button.on{border-bottom-color:var(--acc);background:var(--card);border-radius:7px 7px 0 0}
+.cc-sep{font:800 21px Georgia,serif;color:var(--bar);padding:0 2px;line-height:1}
+.cc-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
+.cc-kpi div{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:7px;padding:10px 13px;min-width:0}
+.cc-kpi .k{font:800 8.5px var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--mute)}
+.cc-kpi .v{font:700 19px var(--mono);color:var(--ink);margin-top:2px}
+.cc-mine{font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:-8px 2px 10px;text-align:right}
+.cc-card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:14px;min-width:0}
+.cc-fh{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.cc-fh b{font:800 13px inherit;color:var(--acc2)}
+.cc-cnt{font:700 10px var(--mono);background:var(--chip);color:var(--chipink);border-radius:999px;padding:2px 8px}
+.cc-chev{margin-left:auto;color:var(--mute);transition:transform .15s}
+.cc-fold.open .cc-chev{transform:rotate(90deg)}
+.cc-fb{display:none;margin-top:10px;border-top:1px solid var(--line2);padding-top:9px}
+.cc-fold.open .cc-fb{display:block}
+.cc-g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.cc-duegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:0 18px}
+.cc-due{display:flex;align-items:center;gap:9px;padding:8px 0;border-left:1px solid var(--line2);padding-left:14px;cursor:pointer;min-width:0}
+.cc-due:nth-child(4n+1){border-left:0;padding-left:0}
+.cc-due b{font:700 15px var(--mono);color:var(--acc);width:26px;text-align:right;flex:0 0 auto}
+.cc-due>span{min-width:0;flex:1}
+.cc-prow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line2);cursor:pointer;min-width:0}
+.cc-prow:first-child{border-top:0}
+.cc-av{width:30px;height:30px;border-radius:6px;background:var(--avbg);color:var(--acc2);font:800 10px inherit;
+display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.cc-av.p-hab{background:var(--bg-hab);color:var(--c-hab)}
+.cc-av.p-ca{background:var(--bg-ca);color:var(--c-ca)}
+.cc-av.p-dh{background:var(--bg-dh);color:var(--c-dh)}
+.cc-av.p-rb{background:var(--bg-rb);color:var(--c-rb)}
+.p-hab{color:var(--c-hab);font-weight:800}
+.p-ca{color:var(--c-ca);font-weight:800}
+.p-dh{color:var(--c-dh);font-weight:800}
+.p-rb{color:var(--c-rb);font-weight:800}
+.cc-mini{font-size:10.5px;color:var(--mute)}
+.cc-money{font:700 12.5px var(--mono);color:var(--money);flex:0 0 auto}
+.cc-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.cc-tbl th{text-align:left;font:800 9px var(--mono);letter-spacing:.14em;text-transform:uppercase;padding:0 8px 7px;color:var(--mute)}
+.cc-tbl td{padding:9px 8px;border-top:1px solid var(--line2);color:var(--ink)}
+.cc-tbl tbody tr{cursor:pointer}
+.cc-tbl tbody tr:hover td{background:var(--line2)}
+.cc-pill{display:inline-block;font:700 9px var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:2.5px 8px;
+border-radius:4px;background:var(--chip);color:var(--chipink);white-space:nowrap}
+.cc-pill.won{background:var(--goodbg);color:var(--good)}
+.cc-pill.due{background:var(--warnbg);color:var(--warnink)}
+.cc-rep{display:inline-flex;align-items:center;gap:7px}
+.cc-rep .tmav{width:28px !important;height:28px !important;border-radius:50% !important}
+.cc-repnm{display:none;font-size:12px;color:var(--mute)}
+.cc-empty{border:1px dashed var(--line);border-radius:8px;padding:13px;text-align:center;color:var(--mute);font-size:12.5px}
+.cc-srch{display:flex;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:6px;height:34px;overflow:hidden;margin-bottom:12px;max-width:360px}
+.cc-srch input{flex:1;background:none;border:0;outline:0;color:var(--ink);font:600 12.5px inherit;padding:0 11px;min-width:0}
+.cc-pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:13px}
+.cc-rule{font:800 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--mute);margin:20px 0 10px;
+padding-top:12px;border-top:1px solid var(--line)}
+#cr-ch2 .tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
+#cr-ch2 .tools button{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+border-radius:8px;padding:12px 14px;text-align:left;color:var(--ink)}
+#cr-ch2 .tools button.primary{border-color:var(--acc);border-left:3px solid var(--acc)}
+#cr-ch2 .tools .i{font-size:18px;flex:0 0 auto}
+#cr-ch2 .tools .x b{display:block;font:800 13px inherit}
+#cr-ch2 .tools .x small{display:block;font-size:10.5px;color:var(--mute);margin-top:1px}
+#cr-ch2 .pc{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--acc);border-radius:8px;padding:13px 15px}
+#cr-ch2 .pc .chip{font:700 9px var(--mono);background:var(--chip);color:var(--chipink);border-radius:999px;padding:2px 8px}
+#cr-ch2 .pnums{display:flex;flex-wrap:wrap;gap:10px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line2)}
+#cr-ch2 .pnums div{min-width:70px;flex:1}
+#cr-ch2 .pnums .k{font:800 8px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+#cr-ch2 .pnums .v{font:700 14px var(--mono);color:var(--ink);margin-top:1px}
 #cr-ch2 .pnums .v.win{color:var(--good)}
-#cr-ch2 .pnums .v.owed{color:var(--warn)}
-#cr-ch2 .pnums .v.z{color:var(--dim);opacity:.55}
-#cr-ch2 .pbids{padding:6px 8px 9px;border-top:1px solid var(--line)}
-#cr-ch2 .brow{display:flex;align-items:center;gap:12px;width:100%;padding:9px 10px;border-radius:9px;background:none;border:0;color:var(--ink);text-align:left}
-#cr-ch2 .brow.hot{background:var(--urgent);box-shadow:inset 2px 0 0 var(--warn)}
-#cr-ch2 .brow .d{flex:0 0 36px;font:700 12.5px var(--mono);color:var(--po)}
-#cr-ch2 .brow.hot .d{color:var(--warn)}
-#cr-ch2 .brow .x{flex:1;min-width:0}
-#cr-ch2 .brow .x b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#cr-ch2 .brow .x small{display:block;font:700 9px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:2px}
-#cr-ch2 .pc.closed .pnums,#cr-ch2 .pc.closed .pbids,#cr-ch2 .pc.closed .pquiet{display:none}
-#cr-ch2 .pquiet{padding:10px 15px 13px;font-size:12px;color:var(--dim);border-top:1px solid var(--line)}
-#cr-ch2 #cr-ch2-search{width:100%;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:400 14px inherit;outline:none;margin-bottom:4px}
-#cr-ch2 #cr-ch2-search:focus{border-color:var(--a1);box-shadow:0 0 0 3px rgba(94,200,255,.18)}
-#cr-ch2 #cr-ch2-search::placeholder{color:var(--dim)}
-#cr-ch2 .mini{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid rgba(94,200,255,.1);background:none;border-left:0;border-right:0;border-top:0;color:var(--ink);text-align:left}
-#cr-ch2 .mini .d{flex:0 0 auto;font:700 12px var(--mono);color:var(--accent);min-width:30px}
-#cr-ch2 .mini .x{flex:1;min-width:0}
-#cr-ch2 .mini .x b{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#cr-ch2 .mini .x small{display:block;font-size:11px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#cr-ch2 .empty{padding:22px 6px;font-size:13px;color:var(--dim);text-align:center}
-#cr-ch2 .tools{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-#cr-ch2 .tools button{display:flex;align-items:center;gap:10px;border-radius:9px;padding:14px;color:var(--ink);text-align:left;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}
-#cr-ch2 .tools button.primary{box-shadow:0 0 0 1px rgba(94,200,255,.24),0 0 22px rgba(94,200,255,.12)}
-#cr-ch2 .tools .i{font-size:16px;flex:0 0 auto}
-#cr-ch2 .tools .x b{display:block;font:700 13px inherit}
-#cr-ch2 .tools .x small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}
+#cr-ch2 .pnums .v.owed{color:var(--warnink)}
+#cr-ch2 .pnums .v.z{color:var(--mute)}
+#cr-ch2 .pbids .brow{display:flex;align-items:center;gap:9px;width:100%;background:none;border:0;border-top:1px solid var(--line2);padding:8px 0;color:var(--ink);font:inherit;text-align:left}
+@media (max-width:900px){
+#cr-ch2{padding:12px 10px 60px}
+.cc-g2,.cc-pgrid,.cc-duegrid{grid-template-columns:1fr}
+.cc-due{border-left:0;padding-left:0;border-top:1px solid var(--line2)}
+.cc-due:first-child{border-top:0}
+.cc-kpi{grid-template-columns:repeat(2,1fr);gap:8px}
+.cc-kpi div{padding:8px 10px}
+.cc-kpi .v{font-size:15px}
+.cc-tabs button{padding:10px 12px;font-size:13px}
+.cc-sep{font-size:18px}
+.cc-srch{max-width:100%}
+.cc-repnm{display:inline}
+.cc-tbl,.cc-tbl thead,.cc-tbl tbody,.cc-tbl tr,.cc-tbl td{display:block;width:100%}
+.cc-tbl thead{display:none}
+.cc-tbl tbody tr{background:var(--ground);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:7px;padding:9px 11px;margin-bottom:9px}
+.cc-tbl tbody tr:hover td{background:none}
+.cc-tbl td{border-top:0;padding:3px 0;display:flex;align-items:flex-start;gap:8px}
+.cc-tbl td::before{content:attr(data-l);font:800 8px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);flex:0 0 56px;padding-top:4px}
+.cc-tbl td[data-l="Bid"],.cc-tbl td[data-l="Client"]{display:block;font-weight:800;font-size:13px;padding-bottom:5px}
+.cc-tbl td[data-l="Bid"]::before,.cc-tbl td[data-l="Client"]::before{display:none}
+#cr-ch2 .tools{grid-template-columns:1fr}
+}
+@media print{#cr-ch2{color:#000}}
 </style>
 <script id="cr-ch2-script">
 (function(){
@@ -39190,6 +39188,7 @@ return '<div class="pc' + cls + '">' +
 '<small>' + sub.join(' \u00b7 ') + '</small></span>' + chip + '</div>' +
 nums + jobs + '</div>';
 }
+
 function render(){
 var host = document.getElementById('cr-ch2');
 var view = document.getElementById('communityHubView');
@@ -39204,90 +39203,178 @@ var role = roleOf();
 var d = compute();
 var dueTot = d.due.reduce(function(a,x){ return a + (x.amt||0); }, 0);
 var ps = partners();
-var groups = [
-{ key:'program', label:'Community programs' },
-{ key:'pm',      label:'Property managers' },
-{ key:'gc',      label:'General contractors' },
-];
 var rows = clientList();
-var buckets = {};
-rows.forEach(function(pr){
-var st = normStage(pr.stage);
-(buckets[st] = buckets[st] || []).push(pr);
-});
-var strip = (role === 'prod') ? '' :
-'<div class="strip">' +
-'<div><div class="k">Out for pricing</div><div class="val">' + usd(d.out) + '</div></div>' +
-'<div><div class="k">Win rate</div><div class="val win">' +
-(d.win == null ? '\u2014' : d.win + '%') + '</div></div>' +
-'<div><div class="k">Owed to us</div><div class="val owed">' + usd(d.owed) + '</div></div>' +
+var awarded = ps.reduce(function(a,p){ return a + (p.awarded||0); }, 0);
+
+function fold(id, title, count, body, open){
+return '<div class="cc-card cc-fold' + (open === false ? '' : ' open') + '" data-fold="' + id + '">' +
+'<div class="cc-fh"><b>' + title + '</b>' +
+(count == null ? '' : '<span class="cc-cnt">' + count + '</span>') +
+'<span class="cc-chev">\u203A</span></div>' +
+'<div class="cc-fb">' + body + '</div></div>';
+}
+function repAv(email){
+if(!email) return '';
+var nm = (window.cacheTeam && window.cacheTeam[email] && window.cacheTeam[email].name) ||
+(window.DEFAULT_NAMES && window.DEFAULT_NAMES[email]) || String(email).split('@')[0];
+var av = (typeof window.avatarHtml === 'function') ? window.avatarHtml(email, 28) : '';
+return '<span class="cc-rep" title="' + esc(nm) + '">' + av + '<span class="cc-repnm">' + esc(nm) + '</span></span>';
+}
+function pClass(name){
+var n = String(name || '').toLowerCase();
+if(n.indexOf('habitat') !== -1) return 'p-hab';
+if(n.indexOf('community action') !== -1) return 'p-ca';
+if(n.indexOf('dayton home repair') !== -1) return 'p-dh';
+if(n.indexOf('rebuild') !== -1) return 'p-rb';
+return '';
+}
+function pName(name){
+var t = esc(name || 'No partner recorded');
+var c = pClass(name);
+return c ? '<span class="' + c + '">' + t + '</span>' : t;
+}
+function initials(name){
+return String(name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(0); })
+.slice(0,2).join('').toUpperCase();
+}
+
+/* ---- KPI strip (presentation-gated exactly as before) ---- */
+var kpi = (role === 'prod') ? '' :
+'<div class="cc-kpi">' +
+'<div><div class="k">Open bids</div><div class="v">' + d.all.length + '</div></div>' +
+'<div><div class="k">Out for decision</div><div class="v">' + usd(d.out) + '</div></div>' +
+'<div><div class="k">Awarded</div><div class="v">' + usd(awarded) + '</div></div>' +
+'<div><div class="k">Due &le; 7 days</div><div class="v">' +
+d.due.filter(function(x){ return x.d != null && x.d <= 7; }).length + '</div></div>' +
 '</div>' +
-(role === 'sales' ? '<div class="mine">Your pipeline \u2014 your bids only</div>' : '');
-host.innerHTML =
-strip +
-'<div class="tabs"><div class="tabbar">' +
-'<button data-pane="bids" class="' + (pane==='bids'?'on':'') + '" type="button">' +
-'Bids' + (d.due.length ? ' <span class="n">' + d.due.length + ' due</span>' : '') + '</button>' +
-'<button data-pane="partners" class="' + (pane==='partners'?'on':'') + '" type="button">' +
-'Partners <span class="n">' + ps.length + '</span></button>' +
-'<button data-pane="clients" class="' + (pane==='clients'?'on':'') + '" type="button">' +
-'Clients <span class="n">' + d.all.length + '</span></button>' +
-'</div></div>' +
-'<div data-pane="bids" class="' + (pane==='bids'?'on':'') + '">' +
-(d.due.length
-? '<div class="due"><div class="hd"><span class="k">Bids due</span>' +
-'<span class="tot">' + usd(dueTot) + '</span></div>' +
-'<div class="n">' + d.due.length + ' out for pricing.' +
-(d.due[0] && d.due[0].d != null && d.due[0].d <= 3
-? ' The top one closes in ' + d.due[0].d + ' days.' : '') + '</div>' +
-'<div class="list">' + d.due.map(bidRow).join('') + '</div></div>'
-: '<div class="due"><div class="hd"><span class="k">Bids due</span></div>' +
-'<div class="empty">Nothing out for pricing right now.</div></div>') +
-(d.chase.length || d.sched.length || d.inv.length
-? '<div class="rule">Then</div>' +
-'<p class="lede">Everything else waiting on you.</p>' +
-qBlock('Chase a decision',  d.chase, 'ago') +
-qBlock('Get on the calendar', d.sched, 'ago') +
-qBlock('Invoice the partner', d.inv,  'ago')
-: '') +
+(role === 'sales' ? '<div class="cc-mine">Your pipeline \u2014 your bids only</div>' : '');
+
+/* ---- BIDS ---- */
+var dueBody = d.due.length
+? '<div class="cc-duegrid">' + d.due.slice(0, 8).map(function(x){
+return '<div class="cc-due" data-open="' + esc(x.pr.id) + '">' +
+'<b>' + (x.d == null ? '\u2013' : x.d) + '</b>' +
+'<span>' + pName(partnerOf(x.pr)) +
+'<div class="cc-mini">' + esc(x.pr.name || 'Unnamed') + '</div></span>' +
+(x.amt ? '<span class="cc-money">' + usd(x.amt) + '</span>' : '') + '</div>';
+}).join('') + '</div>'
+: '<div class="cc-empty">Nothing out for pricing right now.</div>';
+
+var partnersBody = ps.length
+? ps.slice(0, 6).map(function(p){
+return '<div class="cc-prow" data-go="partners">' +
+'<span class="cc-av ' + pClass(p.name) + '">' + initials(p.name) + '</span>' +
+'<span style="flex:1;min-width:0">' + pName(p.name) +
+'<div class="cc-mini">' + esc((p.type === 'pm' ? 'property manager' : p.type === 'gc' ? 'general contractor' : 'community program')) +
+' \u00b7 ' + p.jobs.length + ' live</div></span>' +
+(role === 'prod' ? '' : '<span class="cc-money">' + (p.awarded ? usd(p.awarded) : '\u2014') + '</span>') +
+'</div>';
+}).join('')
+: '<div class="cc-empty">No partners yet.</div>';
+
+function queue(label, list){
+if(!list.length) return '';
+return '<div class="cc-prow" data-q="1"><span style="flex:1">' + label +
+'<div class="cc-mini">' + list.length + ' waiting</div></span>' +
+(role === 'prod' ? '' : '<span class="cc-money">' +
+usd(list.reduce(function(a,x){ return a + (x.amt||0); }, 0)) + '</span></div>');
+}
+var weekBody = (queue('Chase a decision', d.chase) + queue('Get on the calendar', d.sched) +
+queue('Invoice the partner', d.inv)) ||
+'<div class="cc-empty">Nothing waiting on you.</div>';
+
+var allBidsBody = d.all.length
+? '<table class="cc-tbl"><thead><tr><th>Due</th><th>Bid</th><th>Partner</th><th>Stage</th>' +
+(role === 'prod' ? '' : '<th style="text-align:right">Amount</th>') + '<th>Rep</th></tr></thead><tbody>' +
+d.all.map(function(pr){
+var l = lead(pr), st = normStage(pr.stage), dd = days(l.bid_due_at), amt = bidAmt(pr);
+return '<tr data-open="' + esc(pr.id) + '">' +
+'<td data-l="Due">' + (dd == null ? '\u2014' : '<span class="cc-pill due">' + dd + ' d</span>') + '</td>' +
+'<td data-l="Bid">' + esc(pr.name || 'Unnamed') +
+'<div class="cc-mini">' + esc(pr.address || '') + '</div></td>' +
+'<td data-l="Partner">' + pName(l.partner_name) + '</td>' +
+'<td data-l="Stage"><span class="cc-pill' + (st === 'Approved' || st === 'Completed' || st === 'Invoiced' ? ' won' : '') + '">' +
+esc(LABEL[st] || st) + '</span></td>' +
+(role === 'prod' ? '' : '<td data-l="Amount" class="cc-money" style="text-align:right">' + (amt ? usd(amt) : '\u2014') + '</td>') +
+'<td data-l="Rep">' + repAv(pr.created_by) + '</td></tr>';
+}).join('') + '</tbody></table>'
+: '<div class="cc-empty">No bids yet.</div>';
+
+var bidsPane = '<div data-pane="bids" class="' + (pane === 'bids' ? 'on' : '') + '">' +
+kpi +
+fold('due', 'Due soon', d.due.length, dueBody) +
+'<div class="cc-g2">' +
+fold('partners', 'Partners', ps.length, partnersBody) +
+fold('week', 'Waiting on you', null, weekBody) +
 '</div>' +
-'<div data-pane="partners" class="' + (pane==='partners'?'on':'') + '">' +
+fold('allbids', 'All bids', d.all.length, allBidsBody, false) +
+'</div>';
+
+/* ---- PARTNERS ---- */
+var groups = [{ key:'program', label:'Community programs' },
+{ key:'pm', label:'Property managers' },
+{ key:'gc', label:'General contractors' }];
+var partnersPane = '<div data-pane="partners" class="' + (pane === 'partners' ? 'on' : '') + '">' +
 (ps.length
 ? groups.map(function(g){
 var members = ps.filter(function(p){ return p.type === g.key; });
 if(!members.length) return '';
-return '<h3 class="grp">' + g.label +
-' <span class="n">\u00b7 ' + members.length + '</span></h3>' +
-members.map(function(p){ return partnerCard(p, role); }).join('');
+return fold('pg-' + g.key, g.label, members.length,
+'<div class="cc-pgrid">' + members.map(function(p){ return partnerCard(p, role); }).join('') + '</div>');
 }).join('')
-: '<div class="empty">No partners yet.</div>') +
-'</div>' +
-'<div data-pane="clients" class="' + (pane==='clients'?'on':'') + '">' +
-'<input type="search" id="cr-ch2-search" ' +
-'placeholder="Name, address, partner, work type\u2026" ' +
-'value="' + esc(query) + '">' +
-(rows.length
-? STAGE_ORDER.map(function(st){
-var list = buckets[st];
-if(!list || !list.length) return '';
-return '<h3 class="grp' + (st==='Lead'||st==='Prospect' ? ' bid' : '') + '">' +
-esc(LABEL[st] || st) + ' <span class="n">\u00b7 ' + list.length + '</span></h3>' +
-list.map(function(pr){
-var l = lead(pr), amt = bidAmt(pr);
-var dd = (st === 'Lead') ? days(l.bid_due_at) : null;
-return '<button class="mini" data-open="' + esc(pr.id) + '" type="button">' +
-'<span class="d">' + (dd == null ? '' : dd + 'd') + '</span>' +
-'<span class="x"><b>' + esc(pr.name || 'Unnamed') + '</b>' +
-'<small>' + esc(l.partner_name || 'No partner recorded') +
-(l.work_type ? ' \u00b7 ' + esc(l.work_type) : '') + '</small></span>' +
-'<span class="amt">' + (amt ? usd(amt) : '') + '</span>' +
-'</button>';
+: '<div class="cc-empty">No partners yet.</div>') +
+'</div>';
+
+/* ---- CLIENTS ---- */
+var byPartner = {}, byStage = {};
+rows.forEach(function(pr){
+var pn = lead(pr).partner_name || 'No partner';
+byPartner[pn] = (byPartner[pn] || 0) + 1;
+var st = LABEL[normStage(pr.stage)] || normStage(pr.stage);
+byStage[st] = (byStage[st] || 0) + 1;
+});
+function tally(obj, avatars){
+var keys = Object.keys(obj).sort(function(a,b){ return obj[b] - obj[a]; });
+if(!keys.length) return '<div class="cc-empty">Nothing yet.</div>';
+return keys.map(function(k){
+return '<div class="cc-prow">' +
+(avatars ? '<span class="cc-av ' + pClass(k) + '">' + initials(k) + '</span>' : '') +
+'<span style="flex:1;min-width:0">' + (avatars ? pName(k) : esc(k)) + '</span>' +
+'<span class="cc-money">' + obj[k] + '</span></div>';
 }).join('');
-}).join('')
-: '<div class="empty">' +
-(query ? 'Nothing matches that.' : 'No community clients yet.') + '</div>') +
-'</div>' +
-'<div class="rule">Tools</div>' +
+}
+var clientsBody = rows.length
+? '<table class="cc-tbl"><thead><tr><th>Client</th><th>Partner</th><th>Stage</th><th>Address</th><th>Rep</th></tr></thead><tbody>' +
+rows.map(function(pr){
+var l = lead(pr), st = normStage(pr.stage);
+return '<tr data-open="' + esc(pr.id) + '">' +
+'<td data-l="Client">' + esc(pr.name || 'Unnamed') + '</td>' +
+'<td data-l="Partner">' + pName(l.partner_name) + '</td>' +
+'<td data-l="Stage"><span class="cc-pill' + (st === 'Approved' || st === 'Completed' || st === 'Invoiced' ? ' won' : '') + '">' +
+esc(LABEL[st] || st) + '</span></td>' +
+'<td data-l="Address">' + esc(pr.address || '\u2014') + '</td>' +
+'<td data-l="Rep">' + repAv(pr.created_by) + '</td></tr>';
+}).join('') + '</tbody></table>'
+: '<div class="cc-empty">' + (query ? 'Nothing matches that.' : 'No community clients yet.') + '</div>';
+
+var clientsPane = '<div data-pane="clients" class="' + (pane === 'clients' ? 'on' : '') + '">' +
+'<div class="cc-srch"><input type="search" id="cr-ch2-search" placeholder="Name, address, partner, work type\u2026" value="' + esc(query) + '"></div>' +
+fold('clist', 'Community clients', rows.length, clientsBody) +
+'<div class="cc-g2">' +
+fold('bypartner', 'By partner', Object.keys(byPartner).length, tally(byPartner, true)) +
+fold('bystage', 'By stage', Object.keys(byStage).length, tally(byStage, false)) +
+'</div></div>';
+
+host.innerHTML =
+'<div class="cc-tabs"><div class="tabbar">' +
+'<button data-pane="bids" class="' + (pane==='bids'?'on':'') + '" type="button">Bids</button>' +
+'<span class="cc-sep">|</span>' +
+'<button data-pane="partners" class="' + (pane==='partners'?'on':'') + '" type="button">Partners</button>' +
+'<span class="cc-sep">|</span>' +
+'<button data-pane="clients" class="' + (pane==='clients'?'on':'') + '" type="button">Clients</button>' +
+'</div></div>' +
+bidsPane + partnersPane + clientsPane +
+'<div class="cc-rule">Tools</div>' +
 '<div class="tools">' +
 '<button class="primary" data-go="newbid" type="button"><span class="i">\uD83D\uDCDD</span>' +
 '<span class="x"><b>New Bid</b><small>Price a request</small></span></button>' +
@@ -39304,10 +39391,17 @@ return '<button class="mini" data-open="' + esc(pr.id) + '" type="button">' +
 '<button data-go="calendar" type="button"><span class="i">\uD83D\uDCC5</span>' +
 '<span class="x"><b>Calendar</b><small>Jobs on the board</small></span></button>' +
 '</div>';
+host.querySelectorAll('.cc-fh').forEach(function(h){
+h.onclick = function(e){
+if(e.target.closest('[data-open]')) return;
+h.parentNode.classList.toggle('open');
+};
+});
 clock(host);
 wire(host);
 lastSig = signature();
 }
+
 function clock(host){
 var n = new Date();
 var d = host.querySelector('[data-slot="d"]');
