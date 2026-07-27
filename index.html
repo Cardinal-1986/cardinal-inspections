@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 365 &#8212; Client Projects scrolls sideways for real &#8212; the gallery rule now targets the card rows, not the section wrapper. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 366 &#8212; Punch items open a detail sheet &#8212; customer, phone, address, sales rep, created and scheduled dates, a notes box, and an open/closed switch that folds into Completed. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2923,6 +2923,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
       <div><div id="puList"></div></div>
     </div>
   </div>
+  <div class="pu-detail" id="puDetail"></div>
   <div class="pu-sheet" id="puShSort"><div class="panel">
     <div class="ph"><span class="t">Sort by</span><button id="puSortClose">Close</button></div>
     <div id="puSortList"></div>
@@ -41960,6 +41961,49 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
   .pu-fr.on .bx{background:#3fae6a;border-color:#3fae6a;font-weight:800;}
   .pu-fr .c{margin-left:auto;font:700 10px ui-monospace,Menlo,monospace;color:#6d6a63;}
 }
+/* item detail sheet */
+.pu-detail{position:fixed;inset:0;background:rgba(8,9,11,.72);display:none;z-index:9998;
+  align-items:flex-start;justify-content:center;padding:5vh 14px;overflow-y:auto;}
+.pu-detail.open{display:flex;}
+.pud-box{background:linear-gradient(180deg,#2b2f36,#24282e);border:1px solid #454b55;border-radius:14px;
+  width:100%;max-width:600px;box-shadow:0 18px 44px rgba(0,0,0,.55);overflow:hidden;}
+.pud-hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #3a3f47;}
+.pud-hd b{flex:1;min-width:0;font:800 15px Georgia,'Times New Roman',serif;
+  background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#d4a017;}
+.pud-x{background:none;border:0;color:#9aa0a8;font-size:17px;cursor:pointer;padding:2px 6px;}
+.pud-bd{padding:14px 16px;}
+.pud-check{display:flex;align-items:center;gap:11px;flex-wrap:wrap;background:rgba(0,0,0,.18);
+  border:1px solid #3a3f47;border-radius:11px;padding:11px 13px;cursor:pointer;margin-bottom:14px;}
+.pud-check .bx{width:24px;height:24px;border:1.7px solid #5a6069;border-radius:7px;display:flex;
+  align-items:center;justify-content:center;font:800 13px inherit;color:#17181b;flex:0 0 auto;}
+.pud-check.on .bx{background:#3fae6a;border-color:#3fae6a;}
+.pud-check .tx{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#e9e6df;}
+.pud-check.on .tx{color:#8fe0ae;}
+.pud-check small{flex-basis:100%;font-size:10.5px;color:#8b929c;padding-left:35px;}
+.pud-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.pud-f{min-width:0;background:rgba(0,0,0,.14);border:1px solid #3a3f47;border-radius:9px;padding:8px 11px;}
+.pud-f.pud-wide{grid-column:1 / -1;}
+.pud-f .k{display:block;font:800 8px ui-monospace,Menlo,monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:#8b929c;margin-bottom:3px;}
+.pud-f b,.pud-f a{font:700 13px 'Segoe UI',Arial,sans-serif;color:#e9e6df;text-decoration:none;
+  overflow-wrap:anywhere;display:block;}
+.pud-f a{color:#f5d061;}
+.pud-f .pud-link{color:#f5d061;cursor:pointer;}
+.pud-f input[type=date]{width:100%;background:#1c1f24;border:1px solid #4a4f58;color:#e9e6df;border-radius:7px;
+  padding:5px 8px;font:600 12.5px 'Segoe UI',Arial,sans-serif;}
+.pud-note{margin-top:13px;}
+.pud-note .k{display:block;font:800 8px ui-monospace,Menlo,monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:#8b929c;margin-bottom:5px;}
+.pud-note textarea{width:100%;background:#1c1f24;border:1px solid #4a4f58;color:#e9e6df;border-radius:9px;
+  padding:10px 12px;font:400 13px 'Segoe UI',Arial,sans-serif;resize:vertical;box-sizing:border-box;}
+.pud-msg{margin-top:9px;font-size:11.5px;color:#f2a08a;min-height:14px;}
+.pud-ft{display:flex;gap:9px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #3a3f47;
+  background:rgba(0,0,0,.16);}
+.pud-btn{border:1px solid #4a4f58;background:#2a2e35;color:#cfd6df;border-radius:9px;padding:8px 16px;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.pud-btn.go{border-color:#d4a017;background:rgba(212,160,23,.14);color:#f5d061;}
+@media (max-width:640px){ .pud-grid{grid-template-columns:1fr;} }
 @media print{#punchView{background:#fff;color:#000;}}
 </style>
 <script id="cr-punch-script">
@@ -42001,10 +42045,40 @@ async function toggle(id){
     alert('Could not save: ' + (e.message || e));
   }
 }
+async function update(id, patch){
+  var it = _rows.filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!it) return { ok:false };
+  var before = {};
+  Object.keys(patch).forEach(function(k){ before[k] = it[k]; });
+  Object.assign(it, patch);
+  try{
+    var r = await window.supa.from('punch_items').update(patch).eq('id', it.id);
+    if(r.error){
+      /* a column that isn't in the schema yet: keep what we can, tell the truth about the rest */
+      if(/column .* does not exist|schema cache/i.test(r.error.message || '')){
+        var slim = {};
+        Object.keys(patch).forEach(function(k){ if(k !== 'scheduled_at') slim[k] = patch[k]; });
+        if(Object.keys(slim).length){
+          var r2 = await window.supa.from('punch_items').update(slim).eq('id', it.id);
+          if(r2.error) throw r2.error;
+        }
+        return { ok:true, partial:true, missing:'scheduled_at' };
+      }
+      throw r.error;
+    }
+    if(window.CardinalProduction && window.CardinalProduction.refresh){ try{ window.CardinalProduction.refresh(); }catch(_){} }
+    if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){ try{ window.CardinalPunchProfile.refresh(); }catch(_){} }
+    return { ok:true };
+  }catch(e){
+    Object.assign(it, before);
+    return { ok:false, error:(e.message || String(e)) };
+  }
+}
 window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
   rows   : function(){ return _rows.slice(); },
   reload : reload,
   toggle : toggle,
+  update : update,
   openCount : function(){ return _rows.filter(function(i){ return i.status !== 'done'; }).length; }
 });
 var PU = { sort:'urgent', dir:1, sets:{}, q:'' };
@@ -42205,7 +42279,115 @@ function stripHtml(crm){
 }
 window.CardinalPunchStrip = { html: stripHtml };
 
+/* ── item detail sheet ── */
+function fmtDate(iso){
+  if(!iso) return '\u2014';
+  var d = new Date(iso);
+  if(isNaN(d)) return '\u2014';
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+}
+function repName(email){
+  if(!email) return 'Unassigned';
+  if(typeof window.rptRepName === 'function'){ try{ return window.rptRepName(email) || email; }catch(e){} }
+  return email;
+}
+function openDetail(id){
+  var it = rows().filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!it) return;
+  var pr = projOf(it.project_id) || {};
+  var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
+  var done = it.status === 'done';
+  var m = document.getElementById('puDetail');
+  m.innerHTML =
+    '<div class="pud-box" role="dialog" aria-modal="true">' +
+      '<div class="pud-hd"><b>' + esc(it.title || 'Punch item') + '</b>' +
+        '<button class="pud-x" data-pud="close">\u2715</button></div>' +
+      '<div class="pud-bd">' +
+        '<label class="pud-check' + (done ? ' on' : '') + '" data-pud="status">' +
+          '<span class="bx">' + (done ? '\u2713' : '') + '</span>' +
+          '<span class="tx">' + (done ? 'Closed' : 'Open') + '</span>' +
+          '<small>' + (done ? 'Tap to reopen \u2014 it moves back to the open list'
+                            : 'Tap to close \u2014 it folds into Completed and can be reopened') + '</small>' +
+        '</label>' +
+        '<div class="pud-grid">' +
+          '<div class="pud-f"><span class="k">Customer</span>' +
+            '<b class="pud-link" data-pud="open-client">' + esc(pr.name || 'Unknown client') + '</b></div>' +
+          '<div class="pud-f"><span class="k">Phone</span>' +
+            (tel ? '<a href="tel:' + tel + '">' + esc(pr.phone) + '</a>' : '<b>\u2014</b>') + '</div>' +
+          '<div class="pud-f pud-wide"><span class="k">Address</span>' +
+            (pr.address ? '<a target="_blank" href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '">' +
+              esc(pr.address) + ' \u2197</a>' : '<b>\u2014</b>') + '</div>' +
+          '<div class="pud-f"><span class="k">Sales rep</span><b>' + esc(repName(pr.created_by)) + '</b></div>' +
+          '<div class="pud-f"><span class="k">Assigned to</span><b>' + esc(it.assigned_to || 'Unassigned') + '</b></div>' +
+          '<div class="pud-f"><span class="k">Type</span><b>' + esc(kindOf(it)) + '</b></div>' +
+          '<div class="pud-f"><span class="k">Priority</span><b>' + (it.priority === 'high' ? 'Urgent' : 'Normal') + '</b></div>' +
+          '<div class="pud-f"><span class="k">Date created</span><b>' + fmtDate(it.created_at) + '</b></div>' +
+          '<div class="pud-f"><span class="k">Date scheduled</span>' +
+            '<input type="date" id="puSched" value="' + esc(String(it.scheduled_at || '').slice(0,10)) + '"></div>' +
+          (done ? '<div class="pud-f pud-wide"><span class="k">Closed</span><b>' + fmtDate(it.done_at) +
+                  (it.done_by ? ' \u00b7 ' + esc(repName(it.done_by)) : '') + '</b></div>' : '') +
+        '</div>' +
+        '<div class="pud-note"><span class="k">Notes / description</span>' +
+          '<textarea id="puNote" rows="5" placeholder="What needs doing, what was found, what the customer said\u2026">' +
+          esc(it.detail || '') + '</textarea></div>' +
+        '<div class="pud-msg" id="puMsg"></div>' +
+      '</div>' +
+      '<div class="pud-ft">' +
+        '<button class="pud-btn" data-pud="close">Cancel</button>' +
+        '<button class="pud-btn go" data-pud="save">Save</button>' +
+      '</div>' +
+    '</div>';
+  m.classList.add('open');
+  m.setAttribute('data-id', String(id));
+}
+function closeDetail(){
+  var m = document.getElementById('puDetail');
+  m.classList.remove('open'); m.innerHTML = ''; m.removeAttribute('data-id');
+}
 document.addEventListener('click', function(e){
+  var m = document.getElementById('puDetail');
+  if(m && m.classList.contains('open')){
+    var act = e.target.closest('[data-pud]');
+    if(e.target === m){ closeDetail(); return; }
+    if(act){
+      var a = act.getAttribute('data-pud');
+      var id = m.getAttribute('data-id');
+      if(a === 'close'){ closeDetail(); return; }
+      if(a === 'open-client'){
+        var it0 = rows().filter(function(x){ return String(x.id) === String(id); })[0];
+        closeDetail();
+        if(it0 && typeof openProject === 'function') openProject(it0.project_id);
+        return;
+      }
+      if(a === 'status'){
+        e.preventDefault();
+        if(window.CardinalPunch && window.CardinalPunch.toggle){
+          Promise.resolve(window.CardinalPunch.toggle(id)).then(function(){
+            openDetail(id);
+            if(document.getElementById('punchView').style.display === 'block') render();
+            if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips();
+          });
+        }
+        return;
+      }
+      if(a === 'save'){
+        var note = document.getElementById('puNote').value;
+        var sched = document.getElementById('puSched').value || null;
+        var msg = document.getElementById('puMsg');
+        msg.textContent = 'Saving\u2026';
+        Promise.resolve(window.CardinalPunch.update(id, { detail: note, scheduled_at: sched })).then(function(res){
+          if(!res.ok){ msg.textContent = 'Could not save: ' + (res.error || 'unknown error'); return; }
+          if(res.partial){
+            msg.textContent = 'Notes saved. The scheduled date needs a one-time database column (scheduled_at) \u2014 see the setup note.';
+          } else { closeDetail(); }
+          if(document.getElementById('punchView').style.display === 'block') render();
+          if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips();
+        });
+        return;
+      }
+    }
+    return;
+  }
   var all = e.target.closest('[data-puall]');
   if(all){ openPunchView({ crm: all.getAttribute('data-puall') }); return; }
   var tg = e.target.closest('[data-putoggle]');
@@ -42220,8 +42402,7 @@ document.addEventListener('click', function(e){
   }
   var card = e.target.closest('#puList .pu-card, .pu-strip .pu-card');
   if(card){
-    var pid = card.getAttribute('data-proj');
-    if(pid && typeof openProject === 'function') openProject(pid);
+    openDetail(card.getAttribute('data-pu'));
   }
 }, false);
 
