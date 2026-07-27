@@ -2555,7 +2555,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-26 build 332 &#8212; Housekeeping: eight dead back-button handlers from retired layouts removed. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 334 &#8212; Gutter construction agreement added to Company Documents. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12905,7 +12905,11 @@ var COMPANY_DOCS = [
   { trade:'Siding', name:'Siding Construction Agreement (Master)', file:'docs/Cardinal_Siding_Contract.pdf',
     note:'Complete package &#8212; contract, Terms &amp; Conditions, and both 3-Day Notice of Cancellation copies &#8212; July 2026' },
   { trade:'Windows', name:'Window Construction Agreement (Master)', file:'docs/Cardinal_Window_Contract.pdf',
-    note:'Andersen series selectors, EPA lead-safe, T&amp;C, and both 3-Day Notice copies &#8212; July 2026' }
+    note:'Andersen series selectors, EPA lead-safe, T&amp;C, and both 3-Day Notice copies &#8212; July 2026' },
+  { trade:'Gutters', name:'Gutter Construction Agreement (Master)', file:'docs/Cardinal_Gutter_Contract.pdf',
+    note:'Print master &#8212; gutter, downspout and ShurFlo specs, Terms &amp; Conditions, and both 3-Day Notice of Cancellation copies &#8212; July 2026' },
+  { trade:'Gutters', name:'Gutter Construction Agreement (Fillable)', file:'docs/Cardinal_Gutter_Contract_Fillable.pdf',
+    note:'Same agreement with fill-in fields for a laptop or tablet &#8212; print the master for hand-written jobs' }
 ];
 var COMPANY_TRADES = ['All','Roofing','Siding','Gutters','Windows','General'];
 var __cdTrade = 'All';
@@ -35972,7 +35976,7 @@ openCount : function(){ return items.filter(function(i){ return i.status === 'op
 </script>
 
 
-<style id="cr-pp-styles">.cr-pp-card{margin:14px 0;border:1px solid #ddd6cf;border-radius:11px;background:#fff;overflow:hidden}.cr-pp-hd{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(180deg,#fdf8ee,#f8f1e2);border-bottom:1px solid #ece1cc}.cr-pp-hd .t{flex:1;min-width:0;font:800 13px 'Segoe UI',Arial,sans-serif;color:#7a4e00}.cr-pp-hd .n{flex:0 0 auto;padding:3px 9px;border-radius:20px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-pp-hd .n.open{background:#f5a623;color:#241a09}.cr-pp-hd .n.clear{background:#e2efe6;color:#2f7048}.cr-pp-hd .add{flex:0 0 auto;background:#f5a623;color:#241a09;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;font-family:inherit}.cr-pp-hd .add:hover{background:#e0940f}.cr-pp-bd{padding:12px 14px 14px}.cr-pp-none{font:400 13px 'Segoe UI',Arial,sans-serif;color:#8a7a5a;line-height:1.55;padding:4px 2px}.cr-pp-item{display:flex;align-items:flex-start;gap:11px;padding:10px 4px;border-bottom:1px solid #f2ece1}.cr-pp-item:last-child{border-bottom:0}.cr-pp-item .box{flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:5px;border:2px solid #d0c6b4;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}.cr-pp-item .box:hover{border-color:#4a8c5a}.cr-pp-item.done .box{background:#4a8c5a;border-color:#4a8c5a}.cr-pp-item .tx{flex:1;min-width:0}.cr-pp-item .t{font:600 13.5px 'Segoe UI',Arial,sans-serif;line-height:1.4;color:#1e2432}.cr-pp-item.done .t{color:#8a8578;text-decoration:line-through}.cr-pp-item .m{font-size:11px;color:#8a7a5a;margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}.cr-pp-item .kind{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fdf1dd;color:#8a5a00}.cr-pp-item .kind.callback{background:#fbe9e8;color:var(--red-dk)}.cr-pp-item .kind.ticket{background:#e9f0f9;color:#2d4468}.cr-pp-item .hi{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fbe9e8;color:var(--red-dk)}.cr-pp-item img{width:34px;height:34px;object-fit:cover;border-radius:6px;flex:0 0 auto;cursor:zoom-in}.cr-pp-fold{width:100%;margin-top:10px;padding:9px 12px;background:#faf7f0;border:1px dashed #ddd6cf;border-radius:8px;cursor:pointer;text-align:left;font-family:inherit;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7a5a}.cr-pp-fold:hover{background:#f5efe4;border-color:#d4a017;color:#5a4a1a}.cr-pp-fold .chev{float:right;color:#a89e88}.cr-pp-hist[hidden]{display:none}.cr-pp-hist{margin-top:8px;padding-top:4px;border-top:1px solid #f2ece1}</style>
+<style id="cr-pp-styles">.cr-pp-card{margin:14px 0;border:1px solid #ddd6cf;border-radius:11px;background:#fff;overflow:hidden}.cr-pp-hd{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(180deg,#fdf8ee,#f8f1e2);border-bottom:1px solid #ece1cc}.cr-pp-hd .t{flex:1;min-width:0;font:800 13px 'Segoe UI',Arial,sans-serif;color:#7a4e00}.cr-pp-hd .n{flex:0 0 auto;padding:3px 9px;border-radius:20px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-pp-hd .n.open{background:#f5a623;color:#241a09}.cr-pp-hd .n.clear{background:#e2efe6;color:#2f7048}.cr-pp-hd .add{flex:0 0 auto;background:#f5a623;color:#241a09;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;font-family:inherit}.cr-pp-hd .add:hover{background:#e0940f}.cr-pp-bd{padding:12px 14px 14px}.cr-pp-none{font:400 13px 'Segoe UI',Arial,sans-serif;color:#8a7a5a;line-height:1.55;padding:4px 2px}.cr-pp-item{display:flex;align-items:flex-start;gap:11px;padding:10px 4px;border-bottom:1px solid #f2ece1}.cr-pp-item:last-child{border-bottom:0}.cr-pp-item .box{flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:5px;border:2px solid #d0c6b4;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}.cr-pp-item .box:hover{border-color:#4a8c5a}.cr-pp-item.done .box{background:#4a8c5a;border-color:#4a8c5a}.cr-pp-item .tx{flex:1;min-width:0}.cr-pp-item .t{font:600 13.5px 'Segoe UI',Arial,sans-serif;line-height:1.4;color:#1e2432}.cr-pp-item.done .t{color:#8a8578;text-decoration:line-through}.cr-pp-item .m{font-size:11px;color:#8a7a5a;margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}.cr-pp-item .kind{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fdf1dd;color:#8a5a00}.cr-pp-item .kind.callback{background:#fbe9e8;color:var(--red-dk)}.cr-pp-item .kind.ticket{background:#e9f0f9;color:#2d4468}.cr-pp-item .hi{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fbe9e8;color:var(--red-dk)}.cr-pp-item img{width:34px;height:34px;object-fit:cover;border-radius:6px;flex:0 0 auto;cursor:zoom-in}.cr-pp-fold{width:100%;margin-top:10px;padding:9px 12px;background:#faf7f0;border:1px dashed #ddd6cf;border-radius:8px;cursor:pointer;text-align:left;font-family:inherit;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7a5a}.cr-pp-fold:hover{background:#f5efe4;border-color:#d4a017;color:#5a4a1a}.cr-pp-fold .chev{float:right;color:#a89e88}.cr-pp-hist[hidden]{display:none}.cr-pp-hist{margin-top:8px;padding-top:4px;border-top:1px solid #f2ece1}body.cr-cc-open .cr-pp-card{background:#111e2e;border-color:rgba(94,200,255,.35)}body.cr-cc-open .cr-pp-hd{background:linear-gradient(180deg,#15263a,#111e2e);border-bottom-color:rgba(94,200,255,.2)}body.cr-cc-open .cr-pp-hd .t{color:#cfe6f5}body.cr-cc-open .cr-pp-hd .add{background:transparent;border:1px solid #5ec8ff;color:#8ad0f5}body.cr-cc-open .cr-pp-item{border-bottom-color:rgba(94,200,255,.12)}body.cr-cc-open .cr-pp-item .t{color:#e6f0f8}body.cr-cc-open .cr-pp-item.done .t{color:#7690ab}body.cr-cc-open .cr-pp-item .m{color:#7690ab}body.cr-cc-open .cr-pp-item .box{background:#0d1826;border-color:#3f6a8c}body.cr-cc-open .cr-pp-none{color:#7690ab}body.cr-cc-open .cr-pp-fold{color:#8ad0f5}body.claim-insurance .cr-pp-card{background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);border-color:#2f3a4c}body.claim-insurance .cr-pp-hd{background:linear-gradient(180deg,#26304a,#1f2637);border-bottom-color:#2f3a4c}body.claim-insurance .cr-pp-hd .t{color:#e8ecf1}body.claim-insurance .cr-pp-item .t{color:#e8ecf1}body.claim-insurance .cr-pp-item.done .t{color:#6b7a90}body.claim-insurance .cr-pp-item .m{color:#8b95a5}body.claim-insurance .cr-pp-item{border-bottom-color:#2f3a4c}body.claim-insurance .cr-pp-item .box{background:#1a2233;border-color:#4a6fa5}body.claim-insurance .cr-pp-none{color:#8b95a5}body.claim-insurance .cr-pp-fold{color:#7fa6d6}</style>
 <script id="cr-pp-script">
 (function(){
 'use strict';
@@ -36039,10 +36043,22 @@ function render(){
 var pr = window.currentProject;
 var host = document.getElementById('cr-pp-mount');
 if(!pr){ if(host) host.remove(); return; }
+var ccOpen = document.body.classList.contains('cr-cc-open') && document.getElementById('cr-cc');
+if(host){
+var inCc = !!(host.closest && host.closest('#cr-cc'));
+if(!!ccOpen !== inCc){ host.remove(); host = null; }
+}
 if(!host){
-var anchor = document.getElementById('insDocsCard') ||
+var anchor = null;
+if(ccOpen){
+var jm = document.getElementById('cr-cc-jm');
+anchor = jm ? ((jm.closest && jm.closest('.cc-sec')) || jm) : null;
+}else{
+anchor = document.getElementById('jaGrid') ||
+document.getElementById('insDocsCard') ||
 document.getElementById('insCard') ||
 document.getElementById('solCard');
+}
 if(!anchor || !anchor.parentNode) return;
 host = document.createElement('div');
 host.id = 'cr-pp-mount';
