@@ -2619,7 +2619,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 338 &#8212; Retail-B 2c: shared admin Delete client path (CardinalClientDelete) &#8212; leads pane delete row, community danger zone unhidden, one deep-delete for all three CRMs. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 339 &#8212; Retail-B 3: Estimates status lanes (Unsent &#8594; Sent &#8594; Accepted) &#8212; working Status/Rep/Trade filters, no caps, no auto-archive, dual-pane desktop with pipeline sums. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17322,6 +17322,76 @@ body.claim-insurance #brandLogo{
   .cr-empty { text-align: center; padding: 60px 20px; color: var(--cr-muted); }
 
   .cr-footer { text-align: center; font-size: 10px; color: var(--cr-muted-2); margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--cr-border-2); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+
+/* ── retail-B step 3: Estimates status lanes (build 339) ── */
+.cre-h{margin:0;font:800 22px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
+.cre-sub{margin:2px 0 12px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
+.cre-ctl{display:flex;align-items:center;gap:9px;margin:2px 0 12px;}
+.cre-ctl .sl{font:600 12px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;}
+.cre-chip{color:#6db3f2;font:700 13px 'Segoe UI',Arial,sans-serif;background:none;border:0;padding:2px;cursor:pointer;border-bottom:1px dashed rgba(109,179,242,.5);}
+.cre-ico{width:34px;height:34px;border:1px solid #3a3f47;background:#2a2e35;color:#cfd6df;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;position:relative;}
+.cre-ico.on{border-color:#d4a017;color:#f5d061;}
+.cre-ico .bdg{position:absolute;top:-6px;right:-6px;background:#d4a017;color:#17181b;font:800 9.5px ui-monospace,Menlo,monospace;border-radius:999px;padding:1px 5px;display:none;}
+.cre-ico .bdg.show{display:block;}
+.cre-ctl .right{margin-left:auto;display:flex;gap:8px;}
+.cre-lay{display:block;}
+.cre-rail{display:none;}
+.cre-lane{margin-bottom:15px;}
+.cre-lane .gh{display:flex;align-items:center;gap:9px;margin:2px 0 8px;}
+.cre-lane .gt{font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;}
+.cre-lane .gn{font:700 10px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;border-radius:999px;padding:2px 8px;}
+.cre-lane .gh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--lg,rgba(212,160,23,.5)),transparent);}
+.cre-card{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;border-radius:13px;margin-bottom:11px;display:flex;align-items:center;gap:11px;padding:10px 12px 10px 15px;cursor:pointer;box-shadow:0 7px 18px rgba(0,0,0,.45),0 2px 5px rgba(0,0,0,.35);position:relative;}
+.cre-card::before{content:'';position:absolute;left:0;top:8%;height:84%;width:3px;border-radius:3px;background:var(--rcn,#dbe7f7);box-shadow:0 0 6px var(--rcn,#dbe7f7),0 0 14px var(--rcn,#dbe7f7);}
+.cre-card .mid{flex:1;min-width:0;}
+.cre-card .dt{font-weight:800;font-size:13.5px;background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
+.cre-ai{font:800 8.5px ui-monospace,Menlo,monospace;background:#2a2e35;color:#8ac4f2;-webkit-text-fill-color:#8ac4f2;border-radius:999px;padding:1px 6px;vertical-align:middle;}
+.cre-card .cl{font-size:11.5px;color:#9aa0a8;}
+.cre-card .cl .po{font-weight:800;background:linear-gradient(100deg,#d0564a,#caa030);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#caa030;opacity:.9;}
+.cre-card .cl .rp{font-weight:800;color:#e8c23a;}
+.cre-card .end{text-align:right;flex:0 0 auto;}
+.cre-card .money{display:block;font:800 14px ui-monospace,Menlo,monospace;color:#8fe0ae;}
+.cre-card .when{display:block;font-size:10.5px;color:#9aa0a8;margin-top:3px;}
+.cre-card .when.flag{color:#f2a08a;font-weight:700;}
+.cre-empty{border:1px dashed #4a4f58;border-radius:11px;padding:14px;text-align:center;color:#8b929c;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-bottom:12px;}
+.cre-sum{display:none;}
+.cre-sortsel{width:100%;background:#2a2e35;border:1px solid #3a3f47;color:#e9e6df;border-radius:9px;padding:8px 10px;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-bottom:10px;}
+.cre-selrow{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.cre-selbtn{flex:1;border:1px solid #3a3f47;background:#2a2e35;color:#c8cdd4;border-radius:9px;padding:7px 6px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;text-align:center;}
+.cre-selbtn:hover{border-color:#d4a017;color:#f5d061;}
+.cre-clr{background:none;border:0;color:#e08a7a;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:2px 6px;}
+.cre-note{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6d747e;margin:0 0 10px;line-height:1.45;}
+.cre-grp{margin-top:10px;border-top:1px solid #2c3038;padding-top:8px;}
+.cre-grp .ft{font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#f5d061;margin-bottom:7px;display:flex;align-items:center;gap:7px;}
+.cre-grp .ft .n{background:#2f5a3c;color:#8fe0ae;border-radius:999px;padding:1px 7px;font-size:9.5px;}
+.cre-row{display:flex;align-items:center;gap:8px;padding:5px 2px;color:#c8cdd4;font-size:12.5px;cursor:pointer;}
+.cre-row .bx{width:15px;height:15px;border:1.4px solid #4a505a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#17181b;}
+.cre-row.on .bx{background:#3fae6a;border-color:#3fae6a;font-weight:800;}
+.cre-row .c{margin-left:auto;font:700 10px ui-monospace,Menlo,monospace;color:#6d747e;}
+.cre-sheet{position:fixed;inset:0;background:rgba(10,12,16,.66);display:none;z-index:9996;}
+.cre-sheet.open{display:flex;align-items:flex-start;justify-content:center;}
+.cre-sheet .panel{background:#1c2027;border:1px solid #333842;border-top:0;border-radius:0 0 16px 16px;width:100%;max-width:560px;max-height:86%;overflow:auto;}
+.cre-sheet .ph{display:flex;align-items:center;padding:13px 15px;border-bottom:1px solid #2c3038;position:sticky;top:0;background:#1c2027;z-index:1;}
+.cre-sheet .ph .t{font:800 14px 'Segoe UI',Arial,sans-serif;color:#f5d061;flex:1;text-align:center;}
+.cre-sheet .ph button{background:none;border:0;color:#6db3f2;font:700 13.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:4px 6px;}
+.cre-sheet .ph button.ap{color:#3fae6a;}
+.cre-srow{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #262b32;cursor:pointer;font:600 14px 'Segoe UI',Arial,sans-serif;color:#dfe3e8;}
+.cre-srow .ck{width:20px;color:#3fae6a;font-weight:800;visibility:hidden;}
+.cre-srow.on .ck{visibility:visible;}
+.cre-srow .chev{margin-left:auto;color:#5d646e;}
+.cre-srow .cnt2{margin-left:auto;font:700 10.5px ui-monospace,Menlo,monospace;background:#2f5a3c;color:#8fe0ae;border-radius:999px;padding:2px 8px;display:none;}
+.cre-srow .cnt2.show{display:block;}
+.cre-clearall{display:block;background:none;border:0;color:#e08a7a;font:700 12.5px 'Segoe UI',Arial,sans-serif;padding:10px 16px;cursor:pointer;text-align:left;width:100%;}
+@media (min-width:901px){
+  .cre-wide{max-width:1280px;}
+  .cre-ctl{display:none;}
+  .cre-lay{display:grid;grid-template-columns:215px 1fr;gap:14px;align-items:start;}
+  .cre-rail{display:block;background:#1a1d22;border:1px solid #2c3038;border-radius:12px;padding:13px;position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
+  .cre-lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0 14px;align-items:start;}
+  .cre-lane{margin-bottom:0;}
+  .cre-sum{display:flex;justify-content:flex-end;gap:12px;border-top:1px solid #3a3f47;margin-top:10px;padding-top:10px;font:700 12px ui-monospace,Menlo,monospace;color:#9aa0a8;flex-wrap:wrap;}
+  .cre-sum b{color:#8fe0ae;font-size:14px;}
+}
 </style>
 
 
@@ -17331,41 +17401,55 @@ body.claim-insurance #brandLogo{
 
 <!-- ═══ Template: list view ═════════════════════════════════════ -->
 <template id="cr-tmpl-list">
-  <div class="cr-app">
-    <div class="cr-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS</div>
-    <h1 class="cr-title">Estimates</h1>
-    <div class="cr-title-rule"></div>
-
-    <div class="cr-facts" data-facts></div>
-
-    <div class="cr-pipeline" data-pipeline>
-      <div class="cr-stat" data-status=""><div class="n">–</div><div class="lbl">All</div></div>
-      <div class="cr-stat" data-status="draft"><div class="n">–</div><div class="lbl">Draft</div></div>
-      <div class="cr-stat" data-status="sent"><div class="n">–</div><div class="lbl">Sent</div></div>
-      <div class="cr-stat" data-status="approved"><div class="n">–</div><div class="lbl">Approved</div></div>
-      <div class="cr-stat" data-status="converted"><div class="n">–</div><div class="lbl">Converted</div></div>
-    </div>
+  <div class="cr-app cre-wide">
+    <h1 class="cre-h">&#128176; Estimates</h1>
+    <p class="cre-sub" data-cre-sub></p>
 
     <div class="cr-actions">
-      <button class="cr-btn primary" data-act="new-ai">⚡ AI Estimate</button>
+      <button class="cr-btn primary" data-act="new-ai">&#9889; AI Estimate</button>
       <button class="cr-btn" data-act="new-manual">+ New</button>
       <button class="cr-btn" data-act="templates">Templates</button>
     </div>
 
-    <div class="cr-tabs" data-tabs>
-      <div class="cr-tab active" data-filter="all">All</div>
-      <div class="cr-tab" data-filter="pending">Pending</div>
-      <div class="cr-tab" data-filter="approved">Approved</div>
-      <div class="cr-tab" data-filter="converted">Converted</div>
-      <div class="cr-tab" data-filter="ai">⚡ AI Only</div>
-      <div class="cr-tab" data-filter="mine">Mine</div>
+    <div class="cre-ctl"><span class="sl">Sort by</span>
+      <button class="cre-chip" data-cre-sortchip>Days waiting</button>
+      <div class="right">
+        <div class="cre-ico" data-cre-dir title="Reverse order">&#8645;</div>
+        <div class="cre-ico" data-cre-funnel title="Filters">&#9923;<span class="bdg" data-cre-badge>0</span></div>
+      </div>
     </div>
 
-    <div class="cr-list" data-list>
-      <div class="cr-loading">Loading estimates…</div>
+    <div class="cre-lay">
+      <aside class="cre-rail">
+        <select class="cre-sortsel" data-cre-sortsel></select>
+        <div class="cre-selrow">
+          <button class="cre-selbtn" data-cre-selall>&#9745; Select all</button>
+          <button class="cre-clr" data-cre-clrall>Clear all</button>
+        </div>
+        <div class="cre-note">Nothing checked = everything shows.</div>
+        <div data-cre-rail></div>
+      </aside>
+      <div class="cre-main">
+        <div class="cre-lanes" data-cre-lanes><div class="cr-loading">Loading estimates&#8230;</div></div>
+        <div class="cre-sum" data-cre-sum></div>
+      </div>
     </div>
 
-    <div class="cr-footer">v2026-07-22 build 148 · Estimates</div>
+    <div class="cre-sheet" data-cre-sheet="sort"><div class="panel">
+      <div class="ph"><span class="t">Sort by</span><button data-cre-sortclose>Close</button></div>
+      <div data-cre-sortlist></div>
+    </div></div>
+    <div class="cre-sheet" data-cre-sheet="filter"><div class="panel">
+      <div class="ph"><button data-cre-fdone>Done</button><span class="t" data-cre-ftitle>Filters (0)</span><span style="width:44px"></span></div>
+      <button class="cre-clearall" data-cre-clearall>Clear all</button>
+      <div data-cre-catlist></div>
+    </div></div>
+    <div class="cre-sheet" data-cre-sheet="sub"><div class="panel">
+      <div class="ph"><button data-cre-subback>&#8249; Back</button><span class="t" data-cre-subtitle></span><button class="ap" data-cre-subapply>Apply</button></div>
+      <div data-cre-sublist></div>
+    </div></div>
+
+    <div class="cr-footer">Estimates &#183; status lanes</div>
   </div>
 </template>
 
@@ -17731,93 +17815,215 @@ paint();
 function showList() {
     state.view = 'list';
     mount('cr-tmpl-list');
-    // Wire actions
     MOUNT.querySelector('[data-act="new-ai"]').onclick = showAICreate;
     MOUNT.querySelector('[data-act="new-manual"]').onclick = showManualPick;
-    MOUNT.querySelectorAll('[data-filter]').forEach(t => {
-      t.onclick = () => {
-        MOUNT.querySelectorAll('.cr-tab').forEach(x => x.classList.remove('active'));
-        t.classList.add('active');
-        state.filter = t.dataset.filter;
-        renderRows();
-      };
-    });
-    renderFacts();
-    renderRows();
-  }
 
-  async function renderFacts() {
-    const rows = await loadList('all');
-    const outstanding = rows.filter(r => ['draft','sent','viewed','approved'].includes(r.status)).reduce((s, r) => s + r.amount, 0);
-    const approved = rows.filter(r => ['approved','converted'].includes(r.status));
-    const approvalRate = rows.length ? Math.round(approved.length / rows.length * 100) : 0;
-    const avgTicket = rows.length ? Math.round(rows.reduce((s, r) => s + r.amount, 0) / rows.length) : 0;
+    const q = s => MOUNT.querySelector(s);
+    const sheets = {};
+    MOUNT.querySelectorAll('[data-cre-sheet]').forEach(x => { sheets[x.dataset.creSheet] = x; });
+    const shOpen = k => sheets[k] && sheets[k].classList.add('open');
+    const shClose = k => sheets[k] && sheets[k].classList.remove('open');
 
-    // View may have been closed while the query was in flight
-    const factsEl = MOUNT.querySelector('[data-facts]');
-    if (!factsEl) return;
-    factsEl.innerHTML = `
-      <div class="cr-fact"><div class="lbl">Outstanding</div><div class="val">$${fmt(outstanding)}</div></div>
-      <div class="cr-fact"><div class="lbl">Active Pipeline</div><div class="val">${rows.length} estimates</div></div>
-      <div class="cr-fact"><div class="lbl">Approval Rate</div><div class="val">${approvalRate}%</div></div>
-      <div class="cr-fact"><div class="lbl">Avg. Ticket</div><div class="val">$${fmt(avgTicket)}</div></div>
-    `;
-
-    const counts = { '': rows.length, draft: 0, sent: 0, approved: 0, converted: 0 };
-    rows.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
-    MOUNT.querySelectorAll('.cr-stat').forEach(s => {
-      const status = s.dataset.status;
-      s.querySelector('.n').textContent = counts[status] ?? 0;
-    });
-  }
-
-  async function renderRows() {
-    const listEl = MOUNT.querySelector('[data-list]');
-    if (!listEl) return;
-    listEl.innerHTML = '<div class="cr-loading">Loading estimates…</div>';
-    let rows;
-    try { rows = await loadList(state.filter); }
-    catch (e) { if (listEl.isConnected) listEl.innerHTML = `<div class="cr-empty">Failed to load: ${escape(e.message)}</div>`; return; }
-
-    // Bail if the view was closed or re-rendered while loading
-    if (!listEl.isConnected) return;
-
-    if (!rows.length) { listEl.innerHTML = '<div class="cr-empty">No estimates match.</div>'; return; }
-
-    listEl.innerHTML = rows.map(rowHtml).join('');
-    listEl.querySelectorAll('.cr-row').forEach(el => {
-      el.onclick = () => {
-        const id = el.dataset.id, source = el.dataset.source;
-        if (source === 'ai') showOutput(id);
-        else if (typeof window.openManualEstimate === 'function') window.openManualEstimate(id);
-      };
-    });
-  }
-
-  function rowHtml(r) {
-    const statusMap = {
-      draft: 'Draft', sent: 'Sent · Awaiting', viewed: 'Viewed',
-      approved: 'Approved', converted: '→ Contract Signed',
+    q('[data-cre-sortchip]').onclick = () => shOpen('sort');
+    q('[data-cre-funnel]').onclick = () => shOpen('filter');
+    q('[data-cre-sortclose]').onclick = () => shClose('sort');
+    q('[data-cre-fdone]').onclick = () => shClose('filter');
+    q('[data-cre-dir]').onclick = function(){ cre.dir = -cre.dir; this.classList.toggle('on', cre.dir === -1); renderEst(); };
+    q('[data-cre-clearall]').onclick = () => { cre.sets = {}; renderEst(); };
+    q('[data-cre-sortsel]').onchange = function(){ cre.sort = this.value; renderEst(); };
+    q('[data-cre-selall]').onclick = () => { creGroups().forEach(g => { cre.sets[g.key] = g.values.slice(); }); renderEst(); };
+    q('[data-cre-clrall]').onclick = () => { cre.sets = {}; renderEst(); };
+    q('[data-cre-rail]').onclick = e => {
+      const r = e.target.closest('[data-g]');
+      if (!r) return;
+      const g = r.dataset.g, v = r.dataset.v;
+      const set = cre.sets[g] = cre.sets[g] || [];
+      const i = set.indexOf(v);
+      if (i === -1) set.push(v); else set.splice(i, 1);
+      if (!set.length) delete cre.sets[g];
+      renderEst();
     };
-    const priorityLabel = { high: 'High Priority', moderate: 'Moderate', monitor: 'Monitor' };
-    const aiBadge = r.source === 'ai' ? `<span class="cr-ai-badge">⚡ AI</span>` : '';
-    return `
-      <div class="cr-row" data-id="${r.id}" data-source="${r.source}">
-        <div class="cr-row-top">
-          <div class="cr-row-num">${r.number}<span class="sep">·</span><span class="date">${r.date_label}</span>${aiBadge}</div>
-          <div class="cr-row-amt">$${fmt(r.amount)}</div>
-        </div>
-        <div class="cr-row-client">${escape(r.client)}</div>
-        <div class="cr-row-addr">${escape(r.address)}</div>
-        <div class="cr-row-scope">${escape(r.scope)}</div>
-        <div class="cr-row-footer">
-          <div class="cr-pills">
-            <span class="cr-pill ${r.priority}">${priorityLabel[r.priority] || 'Moderate'}</span>
-            <span class="cr-pill ${r.status}">${statusMap[r.status] || r.status}</span>
-          </div>
-          <div class="cr-row-rep"><span class="who">${r.rep.toUpperCase()}</span> · ${fmtRel(r.date)}</div>
-        </div>
-      </div>`;
+    q('[data-cre-sortlist]').onclick = e => {
+      const r = e.target.closest('[data-sort]');
+      if (!r) return;
+      cre.sort = r.dataset.sort; renderEst(); shClose('sort');
+    };
+    q('[data-cre-catlist]').onclick = e => {
+      const r = e.target.closest('[data-cat]');
+      if (!r) return;
+      cre.cat = r.dataset.cat;
+      cre.pend = (cre.sets[cre.cat] || []).slice();
+      paintCreSub();
+      shClose('filter'); shOpen('sub');
+    };
+    q('[data-cre-subback]').onclick = () => { shClose('sub'); shOpen('filter'); };
+    q('[data-cre-subapply]').onclick = () => {
+      if (cre.pend.length) cre.sets[cre.cat] = cre.pend.slice(); else delete cre.sets[cre.cat];
+      renderEst(); shClose('sub'); shOpen('filter');
+    };
+    q('[data-cre-sublist]').onclick = e => {
+      const r = e.target.closest('[data-opt]');
+      if (!r) return;
+      const v = r.dataset.opt, i = cre.pend.indexOf(v);
+      if (i === -1) cre.pend.push(v); else cre.pend.splice(i, 1);
+      r.classList.toggle('on', i === -1);
+    };
+    q('[data-cre-lanes]').onclick = e => {
+      const el = e.target.closest('.cre-card');
+      if (!el) return;
+      const id = el.dataset.id, source = el.dataset.source;
+      if (source === 'ai') showOutput(id);
+      else if (typeof window.openManualEstimate === 'function') window.openManualEstimate(id);
+    };
+    function paintCreSub(){
+      const g = creGroups().find(x => x.key === cre.cat);
+      if (!g) return;
+      q('[data-cre-subtitle]').textContent = g.label;
+      const counts = {};
+      cre.rows.forEach(r => g.get(r).forEach(v => { if (v) counts[v] = (counts[v] || 0) + 1; }));
+      q('[data-cre-sublist]').innerHTML = g.values.map(v =>
+        `<div class="cre-srow${cre.pend.includes(v) ? ' on' : ''}" data-opt="${escape(v)}"><span class="ck">\u2713</span><span>${escape(v)}</span><span class="cnt2 show" style="background:#2a2e35;color:#9aa0a8;">${counts[v] || 0}</span></div>`).join('');
+    }
+
+    loadEstRows();
+  }
+
+  async function loadEstRows(){
+    const lanesEl = MOUNT.querySelector('[data-cre-lanes]');
+    if (!lanesEl) return;
+    lanesEl.innerHTML = '<div class="cr-loading">Loading estimates\u2026</div>';
+    let rows;
+    try { rows = await loadList('all'); }
+    catch (e) { if (lanesEl.isConnected) lanesEl.innerHTML = `<div class="cr-empty">Failed to load: ${escape(e.message)}</div>`; return; }
+    if (!lanesEl.isConnected) return;
+    cre.rows = rows;
+    renderEst();
+  }
+
+  // ── Status Lanes engine (retail-B step 3) ────────────────────
+  const CRE_LANES = [
+    { key: 'Unsent',   title: 'UNSENT \u2014 DRAFTS', statuses: ['draft'],                 col: '#aab1ba', lg: 'rgba(120,130,145,.5)', neon: '#dbe7f7' },
+    { key: 'Sent',     title: 'SENT \u2014 WAITING',  statuses: ['sent', 'viewed'],        col: '#8ac4f2', lg: 'rgba(138,196,242,.5)', neon: '#6fc3ff' },
+    { key: 'Accepted', title: 'ACCEPTED',             statuses: ['approved', 'converted'], col: '#8fe0ae', lg: 'rgba(79,174,116,.5)',  neon: '#3dff9a' },
+  ];
+  const CRE_SORTS = [
+    { key: 'days',   label: 'Days waiting' },
+    { key: 'newest', label: 'Newest first' },
+    { key: 'amount', label: 'Amount, high to low' },
+    { key: 'client', label: 'Client name' },
+  ];
+  let cre = { rows: [], sort: 'days', dir: 1, sets: {}, cat: null, pend: [] };
+
+  function creLane(r){ const l = CRE_LANES.find(x => x.statuses.includes(r.status)); return l ? l.key : 'Unsent'; }
+  function creDays(r){ return Math.max(0, Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)); }
+  function creProject(r){
+    const pid = r.source === 'manual' ? r.id : (r._raw && r._raw.project_id);
+    return (window.cacheProjects || []).find(p => p.id === pid) || null;
+  }
+  function creTrades(r){
+    const p = creProject(r);
+    return (p && typeof window.ljTrades === 'function') ? window.ljTrades(p) : [];
+  }
+  function creRep(r){
+    return (typeof window.rptRepName === 'function' && r._createdBy) ? window.rptRepName(r._createdBy) : (r.rep || 'Unknown');
+  }
+  function creGroups(){
+    const reps = [...new Set(cre.rows.map(creRep))].sort();
+    const trades = [...new Set(cre.rows.flatMap(creTrades))].sort();
+    return [
+      { key: 'status', label: 'Status', values: CRE_LANES.map(l => l.key), get: r => [creLane(r)] },
+      { key: 'rep',    label: 'Rep',    values: reps,   get: r => [creRep(r)] },
+      { key: 'trade',  label: 'Trade',  values: trades, get: r => creTrades(r) },
+    ].filter(g => g.values.length);
+  }
+  function creActiveLanes(){
+    const sel = cre.sets.status || [];
+    return sel.length ? CRE_LANES.filter(l => sel.includes(l.key)) : CRE_LANES;
+  }
+  function creMatch(r){
+    if (!creActiveLanes().some(l => l.key === creLane(r))) return false;
+    const rs = cre.sets.rep || [], ts = cre.sets.trade || [];
+    if (rs.length && !rs.includes(creRep(r))) return false;
+    if (ts.length && !creTrades(r).some(t => ts.includes(t))) return false;
+    return true;
+  }
+  function creSorted(list){
+    return list.slice().sort((a, b) => {
+      let r = 0;
+      if (cre.sort === 'days') r = creDays(b) - creDays(a);
+      else if (cre.sort === 'newest') r = new Date(b.date) - new Date(a.date);
+      else if (cre.sort === 'amount') r = (b.amount || 0) - (a.amount || 0);
+      else r = String(a.client || '').localeCompare(String(b.client || ''));
+      return cre.dir * (r || String(a.client || '').localeCompare(String(b.client || '')));
+    });
+  }
+  function creCount(){ let n = 0; for (const k in cre.sets) n += (cre.sets[k] || []).length; return n; }
+  function creWhen(r){
+    const lane = creLane(r), d = creDays(r);
+    if (lane === 'Unsent') return { t: 'draft \u00b7 ' + r.date_label, flag: false };
+    if (lane === 'Sent'){
+      const base = d < 1 ? 'today' : d + ' day' + (d === 1 ? '' : 's') + ' out';
+      return { t: (r.status === 'viewed' ? 'viewed \u00b7 ' : '') + base + (d >= 5 ? ' \u2691' : ''), flag: d >= 5 };
+    }
+    return { t: (r.status === 'converted' ? 'contract signed \u00b7 ' : 'accepted \u00b7 ') + r.date_label, flag: false };
+  }
+  function creCardHtml(r){
+    const lane = CRE_LANES.find(l => l.key === creLane(r));
+    const w = creWhen(r);
+    const trades = creTrades(r).join(', ');
+    const aiBadge = r.source === 'ai' ? ' <span class="cre-ai">\u26a1 AI</span>' : '';
+    return `<div class="cre-card" data-id="${r.id}" data-source="${r.source}" style="--rcn:${lane.neon}">` +
+      `<div class="mid"><div class="dt">${escape(r.client)}${aiBadge}</div>` +
+      `<div class="cl"><span class="po">${escape(r.number)}</span>${trades ? ' \u00b7 ' + escape(trades) : ''} \u00b7 <span class="rp">${escape(creRep(r))}</span></div></div>` +
+      `<div class="end"><span class="money">$${fmt(r.amount)}</span><span class="when${w.flag ? ' flag' : ''}">${escape(w.t)}</span></div></div>`;
+  }
+  function renderEst(){
+    const M = MOUNT;
+    if (!M.querySelector('[data-cre-lanes]')) return;
+    const vis = creSorted(cre.rows.filter(creMatch));
+    const n = creCount();
+    const sub = M.querySelector('[data-cre-sub]');
+    if (sub) sub.textContent = vis.length + ' shown of ' + cre.rows.length +
+      (n ? ' \u00b7 ' + n + ' filter' + (n > 1 ? 's' : '') + ' active' : ' \u00b7 grouped by status');
+    const chip = M.querySelector('[data-cre-sortchip]');
+    if (chip) chip.textContent = (CRE_SORTS.find(s => s.key === cre.sort) || CRE_SORTS[0]).label;
+    const b = M.querySelector('[data-cre-badge]');
+    if (b){ b.textContent = n; b.classList.toggle('show', n > 0); }
+    const ft = M.querySelector('[data-cre-ftitle]');
+    if (ft) ft.textContent = 'Filters (' + n + ')';
+    const sel = M.querySelector('[data-cre-sortsel]');
+    if (sel) sel.innerHTML = CRE_SORTS.map(s => `<option value="${s.key}"${s.key === cre.sort ? ' selected' : ''}>${s.label}</option>`).join('');
+
+    const rail = M.querySelector('[data-cre-rail]');
+    if (rail) rail.innerHTML = creGroups().map(g => {
+      const set = cre.sets[g.key] || [];
+      const counts = {};
+      cre.rows.forEach(r => g.get(r).forEach(v => { if (v) counts[v] = (counts[v] || 0) + 1; }));
+      return `<div class="cre-grp"><div class="ft">${g.label}${set.length ? ` <span class="n">${set.length}</span>` : ''}</div>` +
+        g.values.map(v => `<label class="cre-row${set.includes(v) ? ' on' : ''}" data-g="${g.key}" data-v="${escape(v)}"><span class="bx">${set.includes(v) ? '\u2713' : ''}</span>${escape(v)}<span class="c">${counts[v] || 0}</span></label>`).join('') +
+        `</div>`;
+    }).join('');
+
+    const lanes = M.querySelector('[data-cre-lanes]');
+    lanes.innerHTML = creActiveLanes().map(l => {
+      const rows = vis.filter(r => creLane(r) === l.key);
+      return `<div class="cre-lane" style="--lg:${l.lg}"><div class="gh"><span class="gt" style="color:${l.col}">${l.title}</span><span class="gn">${rows.length}</span></div>` +
+        (rows.length ? rows.map(creCardHtml).join('') : '<div class="cre-empty">Nothing here with these filters.</div>') +
+        `</div>`;
+    }).join('');
+
+    const open = vis.filter(r => creLane(r) !== 'Accepted').reduce((s, r) => s + (r.amount || 0), 0);
+    const acc = vis.filter(r => creLane(r) === 'Accepted').reduce((s, r) => s + (r.amount || 0), 0);
+    const sum = M.querySelector('[data-cre-sum]');
+    if (sum) sum.innerHTML = 'showing ' + vis.length + ' \u00b7 open pipeline <b>$' + fmt(open) + '</b> \u00b7 accepted <b>$' + fmt(acc) + '</b>';
+
+    const sl = M.querySelector('[data-cre-sortlist]');
+    if (sl) sl.innerHTML = CRE_SORTS.map(s => `<div class="cre-srow${s.key === cre.sort ? ' on' : ''}" data-sort="${s.key}"><span class="ck">\u2713</span><span>${s.label}</span></div>`).join('');
+    const cl = M.querySelector('[data-cre-catlist]');
+    if (cl) cl.innerHTML = creGroups().map(g => {
+      const k = (cre.sets[g.key] || []).length;
+      return `<div class="cre-srow" data-cat="${g.key}"><span>${g.label}</span><span class="cnt2${k ? ' show' : ''}">${k}</span><span class="chev">\u203a</span></div>`;
+    }).join('');
   }
 
   // ── AI Create view ────────────────────────────────────────
