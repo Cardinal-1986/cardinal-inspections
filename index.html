@@ -1213,15 +1213,15 @@ html, body{overflow-x:hidden;max-width:100%;}
 .pipecard.teamcal::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
   background:linear-gradient(90deg,transparent,#2b2320 30%,#000 50%,#2b2320 70%,transparent);}
 .pipecard.teamcal:not(.prodcal)::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(125deg,#e2574a 20%,#d4a017 58%,#f5d061);
+  background:linear-gradient(135deg,#8f1d15,#C8202E 38%,#b8730a 68%,#d4a017);
   -webkit-mask:url(/cardinal-board.png) center 58% / 68% no-repeat;
   mask:url(/cardinal-board.png) center 58% / 68% no-repeat;
-  opacity:.22;pointer-events:none;z-index:5;}
+  opacity:.3;pointer-events:none;z-index:5;}
 .pipecard.prodcal::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(125deg,#e2574a 20%,#d4a017 58%,#f5d061);
+  background:linear-gradient(135deg,#8f1d15,#C8202E 38%,#b8730a 68%,#d4a017);
   -webkit-mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
   mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
-  opacity:.22;pointer-events:none;z-index:5;}
+  opacity:.3;pointer-events:none;z-index:5;}
 .pipecard.teamcal .pipetitle span:first-child{
   font:800 15.5px Georgia,'Times New Roman',serif;letter-spacing:.03em;color:#1c1416;}
 .teamcal .minical .calhead b{
@@ -2623,7 +2623,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 350 &#8212; Home: Recent leads + Today band &#8212; newest retail clients in the committed card rows beside today\u2019s schedule, both tap-through. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 351 &#8212; Home colour pass &#8212; watermarks in deep red&#8594;gold at full strength, leads/Today rows restyled for the light home cards. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41452,8 +41452,9 @@ document.addEventListener('click', function(e){
 /* ── Home: Recent leads + Today band (build 350) ── */
 .kphomerow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
 @media (max-width:900px){ .kphomerow{grid-template-columns:1fr;} }
-.kplrow{display:flex;align-items:center;gap:9px;background:linear-gradient(180deg,#2e333b,#262a31);
-  border:1px solid #454b55;border-radius:10px;padding:8px 10px;margin-top:8px;position:relative;cursor:pointer;overflow:hidden;}
+.kplrow{display:flex;align-items:center;gap:9px;background:#fbf9f6;
+  border:1px solid #e4ddd2;border-radius:10px;padding:8px 10px;margin-top:8px;position:relative;cursor:pointer;overflow:hidden;}
+.kplrow:hover{border-color:#d4a017;}
 .kplrow::before{content:'';position:absolute;left:0;top:16%;height:68%;width:3px;border-radius:3px;
   background:var(--sc,#dbe7f7);box-shadow:0 0 6px var(--sc,#dbe7f7);}
 .kplrow .nm{flex:1;min-width:0;font:800 12.5px 'Segoe UI',Arial,sans-serif;padding-left:6px;
@@ -41462,14 +41463,14 @@ document.addEventListener('click', function(e){
 .kplrow .po{font-weight:800;font-size:11px;background:linear-gradient(100deg,#d0564a,#caa030);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#caa030;opacity:.9;}
 .kplrow .stc{font:700 8px ui-monospace,Menlo,monospace;letter-spacing:.04em;text-transform:uppercase;
-  padding:2.5px 8px;border-radius:999px;border:1px solid var(--sc,#4a4d52);color:var(--sc,#9aa0a8);white-space:nowrap;}
-.kplrow .rp{font-size:10.5px;font-weight:800;color:#e8c23a;}
-.kptrow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid #33383f;font-size:12px;cursor:pointer;}
+  padding:2.5px 8px;border-radius:999px;border:1px solid var(--sc,#b9ae9e);color:#6b5d4f;background:rgba(0,0,0,.03);white-space:nowrap;}
+.kplrow .rp{font-size:10.5px;font-weight:800;color:#8a5a00;}
+.kptrow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid #eee4d8;font-size:12px;cursor:pointer;}
 .kptrow:last-child{border-bottom:0;}
-.kptrow .tm2{font:800 11px ui-monospace,Menlo,monospace;color:#f5d061;width:66px;flex:0 0 auto;}
-.kptrow .ti2{font-weight:700;color:#dfe3e8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.kptrow .m3{font-size:10.5px;color:#6d747e;}
-.kpempty{border:1px dashed #4a4f58;border-radius:10px;padding:11px;text-align:center;color:#8b929c;
+.kptrow .tm2{font:800 11px ui-monospace,Menlo,monospace;color:#8a5a00;width:66px;flex:0 0 auto;}
+.kptrow .ti2{font-weight:700;color:#2a2622;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kptrow .m3{font-size:10.5px;color:#8a7f76;}
+.kpempty{border:1px dashed #d9cfc0;border-radius:10px;padding:11px;text-align:center;color:#9a8c85;
   font:600 11.5px 'Segoe UI',Arial,sans-serif;margin-top:10px;}
 </style>
 <script id="cr-kphome-script">
