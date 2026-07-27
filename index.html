@@ -295,10 +295,40 @@ footer.site{
 /* ---- project cards (home) ---- */
 .projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:10px 0 26px;}
 .pcard{
-  position:relative;border-radius:14px;overflow:hidden;cursor:pointer;background:#efe9e6;
-  aspect-ratio:4/3;box-shadow:0 2px 8px rgba(0,0,0,.10);
+  position:relative;border-radius:13px;overflow:hidden;cursor:pointer;
+  background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;
+  box-shadow:0 5px 14px rgba(0,0,0,.4);
   transition:box-shadow .15s, transform .15s;
 }
+/* Badge card (build 370) \u2014 monogram + aligned text column, no cover image */
+.pcard.pcbadge{display:flex;align-items:flex-start;gap:11px;padding:12px;aspect-ratio:auto;}
+.pcard.pcbadge::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stgc,#8a93a1);}
+.pcbadge .pcini{width:46px;height:46px;border-radius:12px;background:rgba(212,160,23,.10);border:1px solid #3a3325;
+  display:flex;align-items:center;justify-content:center;font:800 19px Georgia,'Times New Roman',serif;
+  color:#f5d061;flex:0 0 auto;}
+.pcbadge .pcbd{flex:1;min-width:0;}
+.pcbadge .pcr1{display:flex;align-items:center;gap:8px;}
+.pcbadge .pcnm{flex:1;min-width:0;font:800 15.5px 'Segoe UI',Arial,sans-serif;
+  background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#d4a017;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pcbadge .pcpo{font:800 12px ui-monospace,Menlo,monospace;color:#c9a2ff;opacity:.95;flex:0 0 auto;}
+.pcbadge .pcad{font-size:12px;color:#8b929c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
+.pcbadge .pcchips{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;}
+.pcbadge .pcdot{width:3px;height:3px;border-radius:50%;background:#5d646e;flex:0 0 auto;}
+.pcbadge .pcrep{font:800 11px 'Segoe UI',Arial,sans-serif;color:#e8c23a;}
+.pcbadge .pcmeta{font-size:10.5px;color:#77808c;}
+.pcbadge .pcacts{display:flex;gap:7px;margin-top:9px;}
+.pcbadge .pcacts a{flex:1;border:1px solid #3a3325;border-radius:9px;background:rgba(212,160,23,.06);
+  color:#f5d061;text-decoration:none;padding:7px;font:700 11.5px 'Segoe UI',Arial,sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:6px;}
+.pcbadge .pcacts a svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
+.pcbadge .favstar{position:static;flex:0 0 auto;color:#5a5145;text-shadow:none;font-size:15px;line-height:1;}
+.pcbadge .favstar.on{color:#e8a900;text-shadow:none;}
+.pcbadge .stagechip{position:static;box-shadow:none;}
+.pcbadge .agechip{position:static;}
+.pcard.stg-Lead{--stgc:#dbe7f7}.pcard.stg-Prospect{--stgc:#ffd84d}.pcard.stg-Approved{--stgc:#3dff9a}
+.pcard.stg-Scheduled{--stgc:#3dff9a}.pcard.stg-Completed{--stgc:#6fc3ff}.pcard.stg-Invoiced{--stgc:#c9a2ff}
+.pcard.stg-Closed{--stgc:#9aa4af}.pcard.stg-Lost{--stgc:#ff8a7a}
 .pcard:hover{box-shadow:0 10px 26px rgba(0,0,0,.22);transform:translateY(-3px);}
 .pcard .thumb{position:absolute;inset:0;}
 .pcard .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -948,7 +978,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 @media (max-width:640px){
   .projgrid.swipe{display:flex;overflow-x:auto;gap:12px;padding:4px 2px 12px;margin:8px -2px 18px;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
-  .projgrid.swipe .pcard{flex:0 0 40%;scroll-snap-align:start;aspect-ratio:4/3;}
+  .projgrid.swipe .pcard{flex:0 0 88%;scroll-snap-align:start;aspect-ratio:auto;}
   .projgrid.swipe .pcard .nm{font-size:13px;}
   .projgrid.swipe .pcard .ad{font-size:10px;}
   .projgrid.swipe .pcard .ft{font-size:9px;}
@@ -1883,7 +1913,7 @@ body.restoring #restoreVeil{display:flex;}
 .opsstat{text-align:center;flex:1;}
 .opsc{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;
   margin:0 auto 6px;color:#fff;font:800 20px 'Segoe UI',Arial,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.18);}
-.opsstat small{font:700 10.5px 'Segoe UI',Arial,sans-serif;color:#5c4a42;line-height:1.25;display:block;}
+.opsstat small{font:700 10.5px 'Segoe UI',Arial,sans-serif;color:#ffffff;line-height:1.25;display:block;}
 .arwrap{margin-top:10px;display:flex;flex-direction:column;gap:7px;}
 .arrow2{display:flex;align-items:center;gap:8px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#5c4a42;}
 .arrow2 .arlbl{flex:0 0 42px;}
@@ -2623,7 +2653,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 369 &#8212; CRM switcher responds on the first click &#8212; it was re-reading the old CRM before the header updated; banner handlers hardened against odd click targets. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 371 &#8212; Work Schedule counters recoloured &#8212; Completed blue, Jobs Today lavender, 30 Day Outlook forest green, labels in white. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2725,9 +2755,9 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <div class="pipecard opscard">
             <div class="pipetitle">&#128197; Work Schedule</div>
             <div class="opsstats">
-              <div class="opsstat" data-opsnav="completed" style="cursor:pointer;" title="View completed jobs"><span class="opsc" style="background:#F08A24;" id="opsDone">0</span><small>Completed<br>Today</small></div>
-              <div class="opsstat" data-opsnav="today" style="cursor:pointer;" title="Jump to Production Calendar"><span class="opsc" style="background:#141414;" id="opsToday">0</span><small>Jobs<br>Today</small></div>
-              <div class="opsstat" data-opsnav="outlook" style="cursor:pointer;" title="Open Schedule Board"><span class="opsc" style="background:var(--red);" id="opsOutlook">0</span><small>30 Day<br>Outlook</small></div>
+              <div class="opsstat" data-opsnav="completed" style="cursor:pointer;" title="View completed jobs"><span class="opsc" style="background:#2f7fd0;" id="opsDone">0</span><small>Completed<br>Today</small></div>
+              <div class="opsstat" data-opsnav="today" style="cursor:pointer;" title="Jump to Production Calendar"><span class="opsc" style="background:#8b5fd6;" id="opsToday">0</span><small>Jobs<br>Today</small></div>
+              <div class="opsstat" data-opsnav="outlook" style="cursor:pointer;" title="Open Schedule Board"><span class="opsc" style="background:#2f6b3f;" id="opsOutlook">0</span><small>30 Day<br>Outlook</small></div>
             </div>
           </div>
           <div class="pipecard opscard">
@@ -7641,23 +7671,38 @@ function docTable(rows){
 }
 
 function projCardHtml(pr){
+  /* Build 370: the Badge card \u2014 no cover photo. The monogram takes the image slot,
+     everything else sits on a grid so the row aligns at any width. */
   var n = cacheRows.filter(function(r){ return r.project_id === pr.id; }).length;
-  var thumb = pr.cover_image
-    ? '<div class="thumb"><img src="' + pr.cover_image + '" alt=""></div>'
-    : '<div class="initial">' + esc((pr.name || '?').trim().charAt(0).toUpperCase()) + '</div>';
-  var by = pr.created_by ? esc(pr.created_by.split('@')[0]) : '';
   var stg = normStage(pr.stage);
-  return '<div class="pcard" data-proj="' + pr.id + '">' +
-    thumb +
-    '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' + leadAgeChip(pr) +
-    '<span class="favstar' + (isFav(pr) ? ' on' : '') + '" data-fav="' + pr.id + '" title="Favorite / high priority">' +
-      (isFav(pr) ? '\u2B50' : '\u2606') + '</span>' +
-    '<div class="ovl">' +
-      '<div class="nm">' + esc(pr.name || 'Unnamed client') + '</div>' +
-      '<div class="ad">' + esc(pr.address || '') + '</div>' +
-      '<div class="ft"><span>' + n + ' document' + (n === 1 ? '' : 's') +
-        (pr.photos_transferred ? ' \u00b7 \u2713 \uD83D\uDCF7\u2192\uD83D\uDCC4' : '') +
-        '</span><span>' + by + '</span></div>' +
+  var po = (typeof poOf === 'function') ? poOf(pr) : null;
+  var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
+  var rep = (typeof rptRepName === 'function' && pr.created_by) ? rptRepName(pr.created_by)
+          : (pr.created_by ? pr.created_by.split('@')[0] : '');
+  var touch = (typeof timeAgo === 'function') ? timeAgo(pr.updated_at || pr.created_at) : '';
+  var dot = '<span class="pcdot"></span>';
+  return '<div class="pcard pcbadge ' + stageClass(stg) + '" data-proj="' + pr.id + '">' +
+    '<div class="pcini">' + esc((pr.name || '?').trim().charAt(0).toUpperCase()) + '</div>' +
+    '<div class="pcbd">' +
+      '<div class="pcr1">' +
+        '<span class="pcnm">' + esc(pr.name || 'Unnamed client') + '</span>' +
+        (po ? '<span class="pcpo">' + esc(String(po)) + '</span>' : '') +
+        '<span class="favstar' + (isFav(pr) ? ' on' : '') + '" data-fav="' + pr.id + '" title="Favorite / high priority">' +
+          (isFav(pr) ? '\u2B50' : '\u2606') + '</span>' +
+      '</div>' +
+      (pr.address ? '<div class="pcad">' + esc(pr.address) + '</div>' : '') +
+      '<div class="pcchips">' +
+        '<span class="stagechip ' + stageClass(stg) + '">' + stg + '</span>' +
+        leadAgeChip(pr) +
+        (rep ? dot + '<span class="pcrep">' + esc(rep) + '</span>' : '') +
+        dot + '<span class="pcmeta">' + n + ' doc' + (n === 1 ? '' : 's') +
+          (pr.photos_transferred ? ' \u00b7 \u2713\uD83D\uDCF7' : '') + '</span>' +
+        (touch ? dot + '<span class="pcmeta">' + esc(touch) + '</span>' : '') +
+      '</div>' +
+      (tel ? '<div class="pcacts">' +
+        '<a href="tel:' + tel + '" data-act>' + ljPhoneSvg() + ' Call</a>' +
+        '<a href="sms:' + tel + '" data-act>' + ljSmsSvg() + ' Text</a>' +
+      '</div>' : '') +
     '</div></div>';
 }
 function initLoopRow(el){
@@ -9692,6 +9737,7 @@ mount.addEventListener('click', function(e){
   var star = e.target.closest('.favstar');
   if(star){ toggleFav(star.getAttribute('data-fav')); return; }
   if(e.target.closest('#seeAllBtn')){ openClientsDirectory(); return; }
+  if(e.target.closest('.pcbadge [data-act]')) return; /* call / text links (build 370) */
   var card = e.target.closest('.pcard');
   if(card){ openProject(card.getAttribute('data-proj')); }
 });
@@ -41825,8 +41871,8 @@ section.history > .subnote{color:#9aa0a8;}
   #historyMount .projgrid{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:14px;
     padding:4px 2px 14px;margin:8px 0 18px;grid-template-columns:none;
     scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
-  #historyMount .projgrid > .pcard{flex:0 0 250px;max-width:250px;width:250px;
-    scroll-snap-align:start;aspect-ratio:4/3;}
+  #historyMount .projgrid > .pcard{flex:0 0 320px;max-width:320px;width:320px;
+    scroll-snap-align:start;aspect-ratio:auto;}
   #historyMount .projgrid > .pcard:nth-child(n+11){display:none;}
   #historyMount .projgrid.loop > .pcard:nth-child(n+11){display:block;}
   #historyMount .projgrid > .seeall{flex:0 0 auto;display:flex;align-items:center;padding:0 10px;}
