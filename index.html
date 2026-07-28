@@ -2700,7 +2700,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 392 &#8212; Stage chips readable on light: the directory chip and the home Recent Leads chip drew stage colours as text. The strip's boxes were hardcoded white — they were washed out in dark mode too, so this fixes today's look as well as light mode. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 391 &#8212; Client Directory in daylight (matte white). Client names are ink, not CRM colour, which failed contrast on a light ground. The strip's boxes were hardcoded white — they were washed out in dark mode too, so this fixes today's look as well as light mode. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11072,16 +11072,6 @@ function jobFinance(pr){
 }
 var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', Approved:'#7CB342', Scheduled:'#7CB342',
   Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d8d8d' };
-/* STAGE_INK — the same stages, darkened for a light ground.
-   Stage colours are chosen to sit on iron (#202329) or matte black (#141517) and
-   they hold up there. Used as TEXT on paper they collapse: the STAGE_COLORS set
-   reads 1.96-4.37:1 on white and the LJ_SPINE neons read 1.17-2.36:1, against a
-   4.5:1 floor for body text. Anything drawing a stage colour as text in rb-light
-   reads from here; bars, spines and dots keep the bright originals, because a
-   3px glowing rule is not text and the glow is the point. */
-var STAGE_INK = { Lead:'#8A6608', Prospect:'#9A4E06', Approved:'#3F6B23', Scheduled:'#3F6B23',
-  Completed:'#15607F', Invoiced:'#5B4080', Closed:'#455A64', Lost:'#5E5E5E' };
-function stageInk(stg){ return STAGE_INK[stg] || '#5E5E5E'; }
 function commsCount(pr){
   var all = parseCkAll(pr);
   return (all.comments || []).length;
@@ -12807,7 +12797,7 @@ function cdCardHtml(pr){
   var tel = (pr.phone || '').replace(/[^+\d]/g, '');
   var on = cdState.sel.indexOf(pr.id) !== -1;
   var po = poOf(pr);
-  return '<div class="cd-card' + (on ? ' selon' : '') + '" data-proj="' + pr.id + '" style="--cc:' + meta.color + ';--ccl:' + (meta.colorLight || meta.color) + ';--sc:' + sc + ';--scl:' + stageInk(stg) + '">' +
+  return '<div class="cd-card' + (on ? ' selon' : '') + '" data-proj="' + pr.id + '" style="--cc:' + meta.color + ';--ccl:' + (meta.colorLight || meta.color) + ';--sc:' + sc + '">' +
     '<span class="cd-selck">' + (on ? '\u2713' : '') + '</span>' +
     '<div class="bd">' +
       '<div class="nmrow">' + (po ? '<span class="cd-po">' + esc(String(po)) + ':</span>' : '') +
@@ -41718,7 +41708,6 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 :root[data-theme="rb-light"] .cd-srow .chev{color:#8f8f8f;}
 :root[data-theme="rb-light"] .cd-srow .cnt2{background:#eaf6ee;color:#1f7a4d;}
 :root[data-theme="rb-light"] .cd-ssec{background:#fbfbfb;}
-:root[data-theme="rb-light"] .cd-stchip{border-color:var(--scl,var(--sc,#8f8f8f));color:var(--scl,var(--sc,#5E5E5E));}
 @media (min-width:901px){
   :root[data-theme="rb-light"] .cd-rail{background:#fbfbfb;border-color:#efefef;}
 }
@@ -42109,9 +42098,6 @@ document.addEventListener('click', function(e){
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-po2);opacity:.9;}
 .kplrow .stc{font:700 8px ui-monospace,Menlo,monospace;letter-spacing:.04em;text-transform:uppercase;
   padding:2.5px 8px;border-radius:999px;border:1px solid var(--sc,#4a4d52);color:var(--sc,#9aa0a8);white-space:nowrap;}
-/* The spine neons are unreadable as text on paper (1.17-2.36:1). The left rail
-   keeps its glow; only the chip's text and border move to the ink twin. */
-:root[data-theme="rb-light"] .kplrow .stc{border-color:var(--scl,var(--sc,#8f8f8f));color:var(--scl,var(--sc,#5E5E5E));}
 .kplrow .rp{font-size:10.5px;font-weight:800;color:var(--rbe-rep);}
 .kptrow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--rbe-hair);font-size:12px;cursor:pointer;}
 .kptrow:last-child{border-bottom:0;}
@@ -42158,7 +42144,7 @@ window.renderKpHomeRow = function(){
     var st = normStage(p.stage);
     var sc = (typeof LJ_SPINE !== 'undefined' && LJ_SPINE[st]) ? LJ_SPINE[st] : '#dbe7f7';
     var po = poOf(p);
-    return '<div class="kplrow" data-proj="' + p.id + '" style="--sc:' + sc + ';--scl:' + stageInk(st) + '">' +
+    return '<div class="kplrow" data-proj="' + p.id + '" style="--sc:' + sc + '">' +
       '<span class="nm">' + esc(p.name || 'Unnamed client') + '</span>' +
       (po ? '<span class="po">' + esc(String(po)) + '</span>' : '') +
       '<span class="stc">' + esc(st === 'Closed' ? 'Archived' : st) + '</span>' +
