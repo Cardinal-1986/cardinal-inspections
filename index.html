@@ -1298,6 +1298,26 @@ html, body{overflow-x:hidden;max-width:100%;}
 .teamcal .minical .calgrid .day.other{border-color:#ece2d4;background:#fbf8f3;}
 .teamcal .minical .calgrid .dow{
   border:1.8px solid #d9c9b4;border-radius:6px;background:#faf3e6;padding:5px 0;}
+/* ---- teamcal light mode (Option C: red-tinted paper) ----
+   The calendar is deliberately paper-on-iron in dark mode — cream cells on the
+   dark ground, which is why it reads fine there. Light mode needs its own
+   treatment rather than a token swap, so these are scoped overrides. ---- */
+:root[data-theme="rb-light"] .pipecard.teamcal{
+  border:1px solid #ecd9d6;box-shadow:0 6px 18px rgba(120,20,20,.09), inset 0 1px 0 rgba(200,32,46,.18);}
+:root[data-theme="rb-light"] .pipecard.teamcal::after{
+  background:linear-gradient(90deg,transparent,#e7c2ba 30%,#c8202e 50%,#e7c2ba 70%,transparent);}
+:root[data-theme="rb-light"] .pipecard.teamcal .pipetitle span:first-child{color:#6b0f18;}
+:root[data-theme="rb-light"] .teamcal .minical .calhead b{
+  background:none;-webkit-text-fill-color:#6b0f18;color:#6b0f18;}
+:root[data-theme="rb-light"] .teamcal .minical .calgrid .dow{
+  border-color:#ecd9d6;background:#fdf4f3;color:#a6291d;}
+:root[data-theme="rb-light"] .teamcal .minical .calgrid .day{
+  border-color:#ecd9d6;background:#fff;color:#2a1c1c;}
+:root[data-theme="rb-light"] .teamcal .minical .calgrid .day.other{
+  border-color:#f6ebea;background:#fdf9f9;color:#d3c3c1;}
+:root[data-theme="rb-light"] .teamcal .minical .calgrid .day.today{
+  background:#c8202e;color:#fff;box-shadow:0 0 0 2px #e7c2ba, 0 2px 8px rgba(200,32,46,.30);}
+:root[data-theme="rb-light"] .teamcal .callegend{color:#6b0f18;}
 .teamcal .minical .calgrid .day.today{border-color:var(--red-dk);border-width:2.2px;}
 /* ---- reviews section: black calendar theme ---- */
 .acxsec.rvsec{background:linear-gradient(168deg,#241518 0%,#170f11 48%,#221407 100%);
@@ -2680,7 +2700,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 386 &#8212; The page background itself now follows the theme — that's why Photo Activity (and any page whose content doesn't fill the screen) stayed dark in light mode. Photo Activity's own tiles and headers themed too. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 387 &#8212; Team and Production calendars get a red-tinted paper look in light mode (Option C). Dark mode keeps its original cream-on-iron design untouched — that was deliberate, not a gap. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
