@@ -294,35 +294,41 @@ footer.site{
 
 /* ---- project cards (home) ---- */
 .projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:10px 0 26px;}
+:root{
+  --rbe-monobg:rgba(212,160,23,.10);--rbe-monobd:#3a3325;
+}
+:root[data-theme="rb-light"]{
+  --rbe-monobg:rgba(200,32,46,.07);--rbe-monobd:#e7c2ba;
+}
 .pcard{
   position:relative;border-radius:13px;overflow:hidden;cursor:pointer;
-  background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;
+  background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);
   box-shadow:0 5px 14px rgba(0,0,0,.4);
   transition:box-shadow .15s, transform .15s;
 }
 /* Badge card (build 370) \u2014 monogram + aligned text column, no cover image */
 .pcard.pcbadge{display:flex;align-items:flex-start;gap:11px;padding:12px;aspect-ratio:auto;}
 .pcard.pcbadge::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stgc,#8a93a1);}
-.pcbadge .pcini{width:46px;height:46px;border-radius:12px;background:rgba(212,160,23,.10);border:1px solid #3a3325;
+.pcbadge .pcini{width:46px;height:46px;border-radius:12px;background:var(--rbe-monobg);border:1px solid var(--rbe-monobd);
   display:flex;align-items:center;justify-content:center;font:800 19px Georgia,'Times New Roman',serif;
-  color:#f5d061;flex:0 0 auto;}
+  color:var(--rbe-acclt);flex:0 0 auto;}
 .pcbadge .pcbd{flex:1;min-width:0;}
 .pcbadge .pcr1{display:flex;align-items:center;gap:8px;}
 .pcbadge .pcnm{flex:1;min-width:0;font:800 15.5px 'Segoe UI',Arial,sans-serif;
-  background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);-webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;color:#d4a017;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  background:linear-gradient(100deg,var(--rbe-name1),var(--rbe-acc) 55%,var(--rbe-acclt));-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:var(--rbe-acc);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pcbadge .pcpo{font:800 12px ui-monospace,Menlo,monospace;color:#c9a2ff;opacity:.95;flex:0 0 auto;}
-.pcbadge .pcad{font-size:12px;color:#8b929c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
+.pcbadge .pcad{font-size:12px;color:var(--rbe-mute2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
 .pcbadge .pcchips{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;}
-.pcbadge .pcdot{width:3px;height:3px;border-radius:50%;background:#5d646e;flex:0 0 auto;}
-.pcbadge .pcrep{font:800 11px 'Segoe UI',Arial,sans-serif;color:#e8c23a;}
-.pcbadge .pcmeta{font-size:10.5px;color:#77808c;}
+.pcbadge .pcdot{width:3px;height:3px;border-radius:50%;background:var(--rbe-mute2);flex:0 0 auto;}
+.pcbadge .pcrep{font:800 11px 'Segoe UI',Arial,sans-serif;color:var(--rbe-rep);}
+.pcbadge .pcmeta{font-size:10.5px;color:var(--rbe-mute2);}
 .pcbadge .pcacts{display:flex;gap:7px;margin-top:9px;}
-.pcbadge .pcacts a{flex:1;border:1px solid #3a3325;border-radius:9px;background:rgba(212,160,23,.06);
-  color:#f5d061;text-decoration:none;padding:7px;font:700 11.5px 'Segoe UI',Arial,sans-serif;
+.pcbadge .pcacts a{flex:1;border:1px solid var(--rbe-monobd);border-radius:9px;background:var(--rbe-monobg);
+  color:var(--rbe-acclt);text-decoration:none;padding:7px;font:700 11.5px 'Segoe UI',Arial,sans-serif;
   display:flex;align-items:center;justify-content:center;gap:6px;}
 .pcbadge .pcacts a svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
-.pcbadge .favstar{position:static;flex:0 0 auto;color:#5a5145;text-shadow:none;font-size:15px;line-height:1;}
+.pcbadge .favstar{position:static;flex:0 0 auto;color:var(--rbe-mute);text-shadow:none;font-size:15px;line-height:1;}
 .pcbadge .favstar.on{color:#e8a900;text-shadow:none;}
 .pcbadge .stagechip{position:static;box-shadow:none;}
 .pcbadge .agechip{position:static;}
@@ -2669,7 +2675,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 384 &#8212; Punch & Repairs home strip now themes correctly. Urgency/priority/CRM badge colors stay fixed — same as milestone colors elsewhere, they're semantic, not decorative. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 385 &#8212; Client Projects cards (the Badge layout) now theme correctly — card background, name, address, rep. Stage-color accent stripes and the lavender PO stay fixed on purpose, same as milestone colors elsewhere. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
