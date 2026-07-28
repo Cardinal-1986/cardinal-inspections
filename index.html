@@ -2700,7 +2700,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 394 &#8212; Sales Floor re-dressed: red is always the objection, navy is always your answer. The strip's boxes were hardcoded white — they were washed out in dark mode too, so this fixes today's look as well as light mode. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 395 &#8212; Manual estimates work again (a stub was overwriting them on a timer) and the AI Estimate back button is visible. The strip's boxes were hardcoded white — they were washed out in dark mode too, so this fixes today's look as well as light mode. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -27424,22 +27424,23 @@ close();
 if(typeof onAI === 'function') onAI();
 };
 }
-function rewireNewEstimate(){
-var mount = document.getElementById('cr-estimates-mount');
-if(!mount || mount.style.display === 'none') return;
-var btn = mount.querySelector('[data-act="new-manual"]');
-if(!btn) return;
-if(btn.dataset.crFixed === '1') return;
-btn.dataset.crFixed = '1';
-btn.onclick = function(e){
-e.stopPropagation();
-showNewEstimateModal(function(){
-if(window.CardinalEstimates && typeof window.CardinalEstimates.openAI === 'function'){
-window.CardinalEstimates.openAI();
-}
-});
-};
-}
+/* rewireNewEstimate REMOVED at build 395.
+   It ran on a requestAnimationFrame MutationObserver loop, found the working
+   [data-act="new-manual"] button and overwrote its onclick with a modal reading
+   "Manual estimate creation isn't shipped yet."
+
+   Manual estimates were never missing. showManualPick() has been complete since
+   builds 314/316: it lists clients newest-first, filters as you type, and opens
+   CardinalEstimates.openEditor(id) on the chosen job. The estimates module wires
+   it at mount time; this stub simply landed on top of it afterwards and won.
+
+   Same failure as build 378 (styleMounts forcing background:#fff on a timer):
+   a later timer-driven handler beats correct code underneath it. Deleting the
+   hijack restores the real feature -- nothing needed building.
+
+   showNewEstimateModal() and .cr-em-* are left in place: unreferenced now, but
+   deleting markup with boot listeners has broken this app before. */
+function rewireNewEstimate(){ /* intentionally empty -- see note above */ }
 function tick(){
 updateOnHome();
 try{ rewireNewEstimate(); }catch(e){}
@@ -27463,7 +27464,18 @@ else start();
 </script>
 
 
-<style id="cr-eaf-styles">#cr-estimates-mount .cr-stat[data-cr-clickable="1"]{cursor:pointer;transition:background .1s,transform .08s}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:hover{background:#f7f7f7}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:active{transform:scale(.97)}</style>
+<style id="cr-eaf-styles">#cr-estimates-mount .cr-stat[data-cr-clickable="1"]{cursor:pointer;transition:background .1s,transform .08s}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:hover{background:#f7f7f7}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:active{transform:scale(.97)}
+/* .cr-back (build 395) — the AI Estimate and Output views always carried a
+   "Back to Estimates" control, wired to showList(), but it had no CSS rule
+   anywhere in the file, so it painted as bare inheriting text with no padding,
+   border or hit area. It worked; it just did not look like anything. */
+#cr-estimates-mount .cr-back{display:inline-flex;align-items:center;gap:7px;
+  margin:0 0 14px;padding:9px 14px;border-radius:9px;cursor:pointer;
+  background:var(--rbe-panel);border:1px solid var(--rbe-line);color:var(--rbe-ink);
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;-webkit-tap-highlight-color:transparent;
+  transition:border-color .15s,color .15s}
+#cr-estimates-mount .cr-back:hover{border-color:var(--rbe-acc);color:var(--rbe-acclt)}
+#cr-estimates-mount .cr-back:active{transform:scale(.97)}</style>
 <script id="cr-eaf-script">
 (function () {
 'use strict';
