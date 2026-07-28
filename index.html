@@ -745,7 +745,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   transition:transform .12s, box-shadow .12s;}
 .pipebtn:hover .pcirc{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.25);}
 .pipebtn .plabel{display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
-.pipebtn .pcount{display:block;font:800 20px 'Segoe UI',Arial,sans-serif;color:#fff;line-height:1.2;}
+.pipebtn .pcount{display:block;font:800 20px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);line-height:1.2;}
 .pipebtn .pmoney{display:block;font:700 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
 .pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
 .pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;} .pipe-closed{background:#607D8B;}
@@ -2669,7 +2669,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 380 &#8212; Home dashboard: pipeline circles and Work Schedule counters now support the red/black light theme. Milestone colors (gold/orange/green/blue/purple/grey) stay fixed on purpose — those are meaningful, not decorative. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 381 &#8212; Fixed a real bug from build 380: the Cardinal Pipeline count numbers (20/7/2 etc.) were invisible in light mode — they sit on the card background, not inside the colored circle, so they needed to theme too. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
