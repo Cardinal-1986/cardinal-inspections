@@ -933,6 +933,80 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   .insdocrow .insdocic{order:1;}
   .insdocrow button{order:3;padding:5px 10px;font-size:11px;}
 }
+/* iTel reports (build 406) — sits below Insurance Documents on the project profile.
+   Red/black/white, not the navy of the docs card above it: Theo, "Drop the navy completely." */
+.cr-itel-bar{display:flex;align-items:center;gap:10px;margin:8px 0 14px;padding:9px 12px;
+  min-height:44px;border:1px solid #e2d9d2;border-left:3px solid #c4180f;border-radius:10px;
+  background:#fbf9f7;}
+.cr-itel-bar-t{font:800 12px 'Segoe UI',Arial,sans-serif;color:#241c19;letter-spacing:.02em;flex:0 0 auto;}
+.cr-itel-bar-s{flex:1;min-width:0;font:400 12px 'Segoe UI',Arial,sans-serif;color:#8a7a70;font-style:italic;}
+.cr-itel-box{margin:8px 0 14px;padding:10px 12px;border:1px solid #e2d9d2;
+  border-left:3px solid #c4180f;border-radius:10px;background:#fbf9f7;}
+.cr-itel-head{display:flex;align-items:center;gap:9px;cursor:pointer;min-height:44px;
+  -webkit-tap-highlight-color:rgba(196,24,15,.15);touch-action:manipulation;}
+.cr-itel-title{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#241c19;flex:0 0 auto;}
+.cr-itel-sum{flex:1;min-width:0;font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7a70;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cr-itel-tog{background:none;border:none;color:#c4180f;font:800 18px 'Segoe UI',Arial,sans-serif;
+  cursor:pointer;padding:0 2px 0 8px;line-height:1;transition:transform .2s;flex:0 0 auto;}
+.cr-itel-box.collapsed .cr-itel-tog{transform:rotate(-90deg);}
+.cr-itel-box.collapsed .cr-itel-body{display:none;}
+.cr-itel-body{margin-top:8px;}
+.cr-itel-row{display:flex;align-items:flex-start;gap:10px;padding:10px 11px;min-height:44px;
+  background:#fff;border:1px solid #e2d9d2;border-radius:8px;margin-bottom:8px;}
+.cr-itel-rmain{flex:1;min-width:0;}
+.cr-itel-rtop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cr-itel-samp{font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;
+  text-transform:uppercase;color:#5d4e46;}
+.cr-itel-chip{font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase;
+  padding:3px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap;}
+.cr-itel-chip.t-need{background:#fdf3e4;color:#8a5a12;border-color:#e8d3ae;}
+.cr-itel-chip.t-sent{background:#eef1f6;color:#4a5568;border-color:#d3d9e2;}
+.cr-itel-chip.t-recv{background:#eaf6ee;color:#276a41;border-color:#bcdcc7;}
+.cr-itel-chip.t-disc{background:#fdeceb;color:#a3120b;border-color:#f0c2be;}
+.cr-itel-chip.t-close{background:#fdf3e4;color:#8a5a12;border-color:#e8d3ae;}
+.cr-itel-chip.t-off{background:#f2efec;color:#8a7a70;border-color:#e2d9d2;}
+.cr-itel-meta{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7a70;margin-top:3px;line-height:1.35;
+  word-break:break-word;}
+.cr-itel-note{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#5d4e46;margin-top:4px;line-height:1.4;
+  word-break:break-word;}
+.cr-itel-acts{display:flex;align-items:center;gap:6px;flex:0 0 auto;flex-wrap:wrap;
+  justify-content:flex-end;}
+.cr-itel-go,.cr-itel-add,.cr-itel-save{background:#c4180f;color:#fff;border:none;border-radius:6px;
+  padding:7px 12px;min-height:36px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;
+  letter-spacing:.03em;-webkit-tap-highlight-color:rgba(196,24,15,.3);touch-action:manipulation;}
+.cr-itel-go:hover,.cr-itel-add:hover,.cr-itel-save:hover{background:#9c120a;}
+.cr-itel-add{width:100%;background:transparent;color:#c4180f;border:1px dashed #d9a9a4;}
+.cr-itel-add:hover{background:rgba(196,24,15,.06);color:#9c120a;}
+.cr-itel-bar .cr-itel-add{width:auto;flex:0 0 auto;border-style:solid;}
+.cr-itel-flag{background:#fff;color:#8a7a70;border:1px solid #e2d9d2;border-radius:6px;
+  padding:7px 10px;min-height:36px;font:700 11px 'Segoe UI',Arial,sans-serif;cursor:pointer;
+  -webkit-tap-highlight-color:rgba(196,24,15,.2);touch-action:manipulation;}
+.cr-itel-flag.on{background:#c4180f;color:#fff;border-color:#c4180f;}
+.cr-itel-del{background:transparent;color:#a3120b;border:1px solid #e5c4c0;border-radius:6px;
+  padding:5px 10px;min-height:36px;font:700 15px 'Segoe UI',Arial,sans-serif;line-height:1;cursor:pointer;
+  -webkit-tap-highlight-color:rgba(163,18,11,.25);touch-action:manipulation;}
+.cr-itel-del:hover{background:rgba(163,18,11,.1);border-color:#a3120b;}
+.cr-itel-cancel{background:transparent;color:#8a7a70;border:1px solid #e2d9d2;border-radius:6px;
+  padding:7px 12px;min-height:36px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;
+  touch-action:manipulation;}
+.cr-itel-form{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:10px 11px;
+  background:#fff;border:1px solid #e2d9d2;border-radius:8px;}
+.cr-itel-sel,.cr-itel-in{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:#241c19;
+  border:1px solid #e2d9d2;border-radius:6px;padding:8px 9px;min-height:38px;background:#fff;}
+.cr-itel-sel{flex:0 0 auto;text-transform:capitalize;}
+.cr-itel-in{flex:1;min-width:130px;}
+.cr-itel-sel:focus,.cr-itel-in:focus{outline:2px solid #c4180f;outline-offset:1px;border-color:#c4180f;}
+.cr-itel-go:focus-visible,.cr-itel-add:focus-visible,.cr-itel-flag:focus-visible,
+.cr-itel-del:focus-visible,.cr-itel-tog:focus-visible,.cr-itel-head:focus-visible{
+  outline:2px solid #c4180f;outline-offset:2px;}
+@media (max-width:480px){
+  .cr-itel-row{flex-wrap:wrap;gap:8px;}
+  .cr-itel-rmain{flex:1 1 100%;}
+  .cr-itel-acts{flex:1 1 100%;justify-content:flex-start;}
+  .cr-itel-bar{flex-wrap:wrap;gap:7px 10px;}
+  .cr-itel-bar-s{flex:1 1 100%;order:3;}
+}
 /* SOL (Scope of Loss) reader card */
 .solCard{margin:14px 0;padding:14px 16px;border:1px dashed #b0bdd4;background:#f0f4fa;
   border-radius:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
@@ -2789,7 +2863,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 405 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 406 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3204,6 +3278,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
       <div id="solCard"></div>
       <div id="insCard" style="display:none;"></div>
       <div id="insDocsCard" style="display:none;"></div>
+      <div id="insItelCard" style="display:none;"></div>
       <input type="file" id="insDocFileInput" style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.heic">
     </div>
 
@@ -11478,6 +11553,7 @@ function renderLeadCard(){
   renderSolCard();
   renderInsurancePanel();
   renderInsuranceDocsCard();
+  renderInsuranceItelCard();
 }
 
 /* ---------- Insurance Documents (upload + list) ---------- */
@@ -11485,7 +11561,6 @@ var INS_DOC_TYPES = [
   { key: 'authorization',     icon: '\u270D\uFE0F',       label: 'Authorization Form' },
   { key: 'service_agreement', icon: '\uD83D\uDCC4',       label: 'Insurance Service Agreement' },
   { key: 'three_day_right',   icon: '\uD83D\uDDD3\uFE0F', label: '3-Day Right' },
-  { key: 'itell',             icon: '\uD83D\uDCCB',       label: 'iTell Form &mdash; Received' },
   { key: 'scope_of_loss',     icon: '\uD83C\uDFE0',       label: 'Scope of Loss' },
   { key: 'policy',            icon: '\uD83D\uDCD1',       label: 'Policy' }
 ];
@@ -11550,6 +11625,314 @@ function renderInsuranceDocsCard(){
     });
   });
 }
+
+/* ---------- iTel reports (build 406) ----------
+   Theo: "make iTell below documents and have it collapsible. Or if there is no
+   iTell yet not make it take up too much space."
+
+   Vocabulary note. Theo lists "needed, sent, received, discontinued, close
+   matches" as if they were one list of statuses. In the schema they are not:
+   itel_reports.status is a CHECK of needed|sent|received|cancelled, while
+   discontinued and close_match are BOOLEAN OUTCOMES of a received report.
+   itelLabel() merges the two so the card shows the word he actually uses while
+   the data stays honest. Do not add 'discontinued' to the status column — the
+   CHECK constraint will reject it, and a discontinued shingle is a result, not
+   a stage.
+
+   This card lives in #tab-overview, which cr-health-script does NOT sweep
+   (its 16 watched containers do not include it). Handlers are still assigned to
+   the .onclick PROPERTY, because that is the house style the sweep enforces
+   everywhere else and a future move into a watched container should not break it. */
+var ITEL_SAMPLES = ['shingle', 'siding', 'stone', 'tile', 'metal', 'other'];
+var itelState = { rows: [], claimId: null, pid: null, adding: false, busy: false };
+
+function itelLabel(r){
+  if(r.status === 'received'){
+    if(r.discontinued) return 'Discontinued';
+    if(r.close_match)  return 'Close match';
+    return 'Received';
+  }
+  if(r.status === 'cancelled') return 'Cancelled';
+  return r.status === 'sent' ? 'Sent' : 'Needed';
+}
+function itelTone(r){
+  if(r.status === 'received') return r.discontinued ? 'disc' : (r.close_match ? 'close' : 'recv');
+  if(r.status === 'cancelled') return 'off';
+  return r.status === 'sent' ? 'sent' : 'need';
+}
+function itelDate(d){
+  if(!d) return '';
+  try{ return new Date(String(d) + 'T00:00:00').toLocaleDateString(); }catch(_e){ return String(d); }
+}
+function itelToday(){ return new Date().toISOString().slice(0, 10); }
+
+async function renderInsuranceItelCard(){
+  var mount = document.getElementById('insItelCard');
+  var hide = function(){ if(mount){ mount.style.display = 'none'; mount.innerHTML = ''; } };
+  if(!mount || !currentProject) return hide();
+  var ct = (typeof projClaimType === 'function') ? projClaimType(currentProject) : 'unknown';
+  if(ct !== 'insurance') return hide();
+  if(!window.supa) return hide();
+
+  var pid = currentProject.id;
+  itelState.pid = pid;
+
+  /* iTels hang off the claim, not the project. No claim yet means nothing to
+     attach one to, so the card stays out of the way entirely. */
+  var claimId = null;
+  try{
+    var cr = await window.supa.from('insurance_claims').select('id').eq('project_id', pid).limit(1);
+    if(cr.error) throw cr.error;
+    claimId = (cr.data && cr.data[0]) ? cr.data[0].id : null;
+  }catch(e){
+    console.warn('[itel] claim lookup:', e);
+    return hide();
+  }
+  if(itelState.pid !== pid) return;   /* a different project opened while awaiting */
+  if(!claimId) return hide();
+
+  var rows = [];
+  try{
+    var rr = await window.supa.from('itel_reports').select('*')
+      .eq('claim_id', claimId).order('created_at', { ascending: true });
+    if(rr.error) throw rr.error;
+    rows = rr.data || [];
+  }catch(e){
+    /* degrade quietly if the migration has not run here — the profile must still
+       open. Same idiom as softSelect() in the claim card. */
+    console.warn('[itel] itel_reports:', e);
+    return hide();
+  }
+  if(itelState.pid !== pid) return;
+
+  itelState.claimId = claimId;
+  itelState.rows = rows;
+  paintInsuranceItelCard();
+}
+
+function paintInsuranceItelCard(){
+  var mount = document.getElementById('insItelCard');
+  if(!mount) return;
+  var rows = itelState.rows || [];
+
+  if(!rows.length && !itelState.adding){
+    /* Theo: "if there is no iTell yet not make it take up too much space." One bar. */
+    mount.innerHTML =
+      '<div class="cr-itel-bar">' +
+        '<span class="cr-itel-bar-t">📋 iTel</span>' +
+        '<span class="cr-itel-bar-s">None requested yet.</span>' +
+        '<button class="cr-itel-add" type="button">+ Add iTel</button>' +
+      '</div>';
+    mount.style.display = 'block';
+    wireInsuranceItelCard();
+    return;
+  }
+
+  var collapsed = false;
+  try{ collapsed = sessionStorage.getItem('insItelCollapsed') === '1'; }catch(_e){}
+
+  var counts = {};
+  rows.forEach(function(r){ var k = itelLabel(r); counts[k] = (counts[k] || 0) + 1; });
+  var summary = Object.keys(counts).map(function(k){
+    return counts[k] + ' ' + k.toLowerCase();
+  }).join(' · ');
+
+  mount.innerHTML =
+    '<h3 class="projsec" style="margin-top:20px;">📋 iTel Reports</h3>' +
+    '<div class="cr-itel-box' + (collapsed ? ' collapsed' : '') + '" id="crItelBox">' +
+      '<div class="cr-itel-head" role="button" tabindex="0" aria-label="Toggle iTel reports">' +
+        '<span class="cr-itel-title">' + rows.length + ' report' + (rows.length === 1 ? '' : 's') + '</span>' +
+        '<span class="cr-itel-sum">' + esc(summary) + '</span>' +
+        '<button class="cr-itel-tog" type="button" aria-label="Expand or collapse">▾</button>' +
+      '</div>' +
+      '<div class="cr-itel-body">' +
+        rows.map(itelRowHtml).join('') +
+        (itelState.adding ? itelAddFormHtml()
+                          : '<button class="cr-itel-add" type="button">+ Add iTel</button>') +
+      '</div>' +
+    '</div>';
+  mount.style.display = 'block';
+  wireInsuranceItelCard();
+}
+
+function itelRowHtml(r){
+  var next = r.status === 'needed' ? 'sent' : (r.status === 'sent' ? 'received' : null);
+  var meta = [];
+  if(r.location) meta.push(esc(r.location));
+  if(r.sent_at) meta.push('sent ' + esc(itelDate(r.sent_at)));
+  if(r.received_at) meta.push('back ' + esc(itelDate(r.received_at)));
+  var made = [r.manufacturer, r.product].filter(Boolean).join(' ');
+  if(made) meta.push(esc(made));
+  return '<div class="cr-itel-row" data-itelrow="' + esc(r.id) + '">' +
+      '<div class="cr-itel-rmain">' +
+        '<div class="cr-itel-rtop">' +
+          '<span class="cr-itel-samp">' + esc(r.sample_type || 'shingle') + '</span>' +
+          '<span class="cr-itel-chip t-' + itelTone(r) + '">' + esc(itelLabel(r)) + '</span>' +
+        '</div>' +
+        (meta.length ? '<div class="cr-itel-meta">' + meta.join(' · ') + '</div>' : '') +
+        (r.result_notes ? '<div class="cr-itel-note">' + esc(r.result_notes) + '</div>' : '') +
+      '</div>' +
+      '<div class="cr-itel-acts">' +
+        (next ? '<button class="cr-itel-go" type="button" data-itelgo="' + esc(r.id) +
+                '" data-itelnext="' + next + '">Mark ' + next + '</button>' : '') +
+        (r.status === 'received'
+          ? '<button class="cr-itel-flag' + (r.discontinued ? ' on' : '') + '" type="button" ' +
+              'data-iteldisc="' + esc(r.id) + '" aria-pressed="' + (r.discontinued ? 'true' : 'false') +
+              '">Discontinued</button>' +
+            '<button class="cr-itel-flag' + (r.close_match ? ' on' : '') + '" type="button" ' +
+              'data-itelclose="' + esc(r.id) + '" aria-pressed="' + (r.close_match ? 'true' : 'false') +
+              '">Close match</button>'
+          : '') +
+        '<button class="cr-itel-del" type="button" data-iteldel="' + esc(r.id) +
+          '" aria-label="Delete this iTel">×</button>' +
+      '</div>' +
+    '</div>';
+}
+
+function itelAddFormHtml(){
+  return '<div class="cr-itel-form">' +
+      '<select class="cr-itel-sel" id="crItelSample" aria-label="Sample type">' +
+        ITEL_SAMPLES.map(function(s){
+          return '<option value="' + s + '">' + s + '</option>';
+        }).join('') +
+      '</select>' +
+      '<input class="cr-itel-in" id="crItelLoc" type="text" maxlength="120" ' +
+        'placeholder="Where the sample came from" aria-label="Location">' +
+      '<button class="cr-itel-save" type="button">Save</button>' +
+      '<button class="cr-itel-cancel" type="button">Cancel</button>' +
+    '</div>';
+}
+
+function wireInsuranceItelCard(){
+  var mount = document.getElementById('insItelCard');
+  if(!mount) return;
+
+  var box = document.getElementById('crItelBox');
+  var head = mount.querySelector('.cr-itel-head');
+  if(head && box){
+    var toggle = function(){
+      box.classList.toggle('collapsed');
+      try{
+        sessionStorage.setItem('insItelCollapsed', box.classList.contains('collapsed') ? '1' : '0');
+      }catch(_e){}
+    };
+    head.onclick = function(e){
+      /* the caret is a button inside the header; every other button in here is
+         a real action and must not also fold the panel */
+      var b = e.target.closest('button');
+      if(b && !b.classList.contains('cr-itel-tog')) return;
+      toggle();
+    };
+    head.onkeydown = function(e){
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
+    };
+  }
+
+  mount.querySelectorAll('.cr-itel-add').forEach(function(b){
+    b.onclick = function(){
+      itelState.adding = true;
+      paintInsuranceItelCard();
+      var el = document.getElementById('crItelLoc');
+      if(el) el.focus();
+    };
+  });
+  mount.querySelectorAll('.cr-itel-cancel').forEach(function(b){
+    b.onclick = function(){ itelState.adding = false; paintInsuranceItelCard(); };
+  });
+  mount.querySelectorAll('.cr-itel-save').forEach(function(b){
+    b.onclick = function(){ itelAdd(); };
+  });
+  mount.querySelectorAll('[data-itelgo]').forEach(function(b){
+    b.onclick = function(){
+      itelAdvance(b.getAttribute('data-itelgo'), b.getAttribute('data-itelnext'));
+    };
+  });
+  mount.querySelectorAll('[data-iteldisc]').forEach(function(b){
+    b.onclick = function(){ itelToggleFlag(b.getAttribute('data-iteldisc'), 'discontinued'); };
+  });
+  mount.querySelectorAll('[data-itelclose]').forEach(function(b){
+    b.onclick = function(){ itelToggleFlag(b.getAttribute('data-itelclose'), 'close_match'); };
+  });
+  mount.querySelectorAll('[data-iteldel]').forEach(function(b){
+    b.onclick = function(){ itelRemove(b.getAttribute('data-iteldel')); };
+  });
+}
+
+async function itelAdd(){
+  if(itelState.busy || !itelState.claimId) return;
+  itelState.busy = true;
+  var sampleEl = document.getElementById('crItelSample');
+  var locEl = document.getElementById('crItelLoc');
+  var loc = locEl ? String(locEl.value || '').trim() : '';
+  /* sample_type is NOT NULL with a default — omit it rather than send null */
+  var payload = {
+    claim_id: itelState.claimId,
+    sample_type: (sampleEl && sampleEl.value) || 'shingle',
+    status: 'needed'
+  };
+  if(loc) payload.location = loc;
+  try{
+    var r = await window.supa.from('itel_reports').insert(payload).select('*');
+    if(r.error) throw r.error;
+    itelState.rows = itelState.rows.concat(r.data || []);
+    itelState.adding = false;
+    paintInsuranceItelCard();
+  }catch(e){
+    alert('Could not add the iTel: ' + (e.message || e));
+  }finally{
+    itelState.busy = false;
+  }
+}
+
+async function itelAdvance(id, next){
+  if(itelState.busy || !next) return;
+  itelState.busy = true;
+  var patch = { status: next, updated_at: new Date().toISOString() };
+  if(next === 'sent') patch.sent_at = itelToday();
+  if(next === 'received') patch.received_at = itelToday();
+  try{ await itelPatch(id, patch); }finally{ itelState.busy = false; }
+}
+
+async function itelToggleFlag(id, field){
+  if(itelState.busy) return;
+  var row = itelState.rows.filter(function(r){ return r.id === id; })[0];
+  if(!row) return;
+  itelState.busy = true;
+  var patch = { updated_at: new Date().toISOString() };
+  patch[field] = !row[field];
+  try{ await itelPatch(id, patch); }finally{ itelState.busy = false; }
+}
+
+async function itelPatch(id, patch){
+  try{
+    var r = await window.supa.from('itel_reports').update(patch).eq('id', id).select('*');
+    if(r.error) throw r.error;
+    var updated = (r.data || [])[0];
+    if(updated){
+      itelState.rows = itelState.rows.map(function(x){ return x.id === id ? updated : x; });
+    }
+    paintInsuranceItelCard();
+  }catch(e){
+    alert('Could not update the iTel: ' + (e.message || e));
+  }
+}
+
+async function itelRemove(id){
+  if(itelState.busy) return;
+  if(!confirm('Delete this iTel report?')) return;
+  itelState.busy = true;
+  try{
+    var r = await window.supa.from('itel_reports').delete().eq('id', id);
+    if(r.error) throw r.error;
+    itelState.rows = itelState.rows.filter(function(x){ return x.id !== id; });
+    paintInsuranceItelCard();
+  }catch(e){
+    alert('Could not delete: ' + (e.message || e));
+  }finally{
+    itelState.busy = false;
+  }
+}
+
 function pickAndUploadInsDoc(typeKey){
   var input = document.getElementById('insDocFileInput');
   if(!input) return;
