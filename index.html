@@ -2700,7 +2700,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 388 &#8212; Activity Count strip and activity feed now theme correctly. The strip's boxes were hardcoded white — they were washed out in dark mode too, so this fixes today's look as well as light mode. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 389 &#8212; Client profile (Keeper) hero, location tabs, and Payments/Punch/History pills now theme correctly in rb-light. The strip's boxes were hardcoded white — they were washed out in dark mode too, so this fixes today's look as well as light mode. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41647,27 +41647,27 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 </style>
 
 <style id="cr-keeper-styles">
-/* ── Retail client profile · Keeper re-dress (build 342). Guarded: insurance/community keep their skins. ── */
-body:not(.claim-insurance):not(.claim-community) #projectView .projinfo{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;border-radius:14px;box-shadow:0 7px 18px rgba(0,0,0,.45);overflow:hidden;}
-body:not(.claim-insurance):not(.claim-community) #projectView .projinfo:hover{box-shadow:0 7px 18px rgba(0,0,0,.45);border-color:#454b55;}
+/* ── Retail client profile · Keeper re-dress (build 342). Guarded: insurance/community keep their skins. Tokenized for rb-light (build 389). ── */
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);border-radius:14px;box-shadow:var(--rbe-cardshadow);overflow:hidden;}
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo:hover{box-shadow:var(--rbe-cardshadow);border-color:var(--rbe-line2);}
 body:not(.claim-insurance):not(.claim-community) #projectView .projinfo::before{content:'';position:absolute;left:0;top:8%;height:84%;width:3px;border-radius:3px;background:var(--spn,#dbe7f7);box-shadow:0 0 6px var(--spn,#dbe7f7),0 0 14px var(--spn,#dbe7f7);}
-body:not(.claim-insurance):not(.claim-community) #projectView .projinfo h2{color:#e9e6df;}
-body:not(.claim-insurance):not(.claim-community) #projectView .projmeta{color:#9aa0a8;}
-body:not(.claim-insurance):not(.claim-community) #projectView .namestar{color:#5a5145;}
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo h2{color:var(--rbe-ink);}
+body:not(.claim-insurance):not(.claim-community) #projectView .projmeta{color:var(--rbe-mute);}
+body:not(.claim-insurance):not(.claim-community) #projectView .namestar{color:var(--rbe-mute2);}
 body:not(.claim-insurance):not(.claim-community) #projectView .namestar.on{color:#e8a900;}
 body:not(.claim-insurance):not(.claim-community) #projectView .stagebanner{border-radius:11px;font:800 18px ui-monospace,Menlo,monospace;letter-spacing:.1em;padding:12px;}
-body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow{background:linear-gradient(180deg,#2b2f36,#24282e);border:1px solid #3d434c;border-radius:12px;}
-body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow small{font:700 9px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9aa0a8;}
-body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow b{font:800 21px ui-monospace,Menlo,monospace;color:#8fe0ae;}
-body:not(.claim-insurance):not(.claim-community) #projectView .jabox{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;border-radius:11px;color:#e9e6df;box-shadow:0 4px 10px rgba(0,0,0,.35);}
-body:not(.claim-insurance):not(.claim-community) #projectView .jabox .jbl{color:#e9e6df;}
-body:not(.claim-insurance):not(.claim-community) #projectView .jan{font:700 10px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;border-radius:999px;padding:1px 8px;}
+body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-radius:12px;}
+body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow small{font:700 9px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--rbe-mute);}
+body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow b{font:800 21px ui-monospace,Menlo,monospace;color:var(--rbe-money);}
+body:not(.claim-insurance):not(.claim-community) #projectView .jabox{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);border-radius:11px;color:var(--rbe-ink);box-shadow:var(--rbe-cardshadow);}
+body:not(.claim-insurance):not(.claim-community) #projectView .jabox .jbl{color:var(--rbe-ink);}
+body:not(.claim-insurance):not(.claim-community) #projectView .jan{font:700 10px ui-monospace,Menlo,monospace;background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;padding:1px 8px;}
 body:not(.claim-insurance):not(.claim-community) #projectView .jan.zero{opacity:.55;}
-.heroNm{font:800 19px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;min-width:0;}
-#projectView .poPfx{font-weight:800;background:linear-gradient(100deg,#d0564a,#caa030);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#caa030;opacity:.9;}
+.heroNm{font:800 19px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,var(--rbe-name1),var(--rbe-acc) 55%,var(--rbe-acclt));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc);min-width:0;}
+#projectView .poPfx{font-weight:800;background:linear-gradient(100deg,var(--rbe-po1),var(--rbe-po2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-po2);opacity:.9;}
 .hcontact{margin-left:auto;text-align:right;flex:0 0 auto;line-height:1.35;display:flex;flex-direction:column;align-items:flex-end;}
-.hcontact .hph{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#f5d061;text-decoration:none;}
-.hcontact .hem{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;text-decoration:none;margin-top:1px;}
+.hcontact .hph{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-acclt);text-decoration:none;}
+.hcontact .hem{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);text-decoration:none;margin-top:1px;}
 </style>
 <style id="cr-banner-styles">
 /* ── Universal banner nav (build 344) — skinned per CRM via body[data-crm] ── */
@@ -41922,18 +41922,18 @@ document.getElementById('phGrid').addEventListener('click', function(e){
 })();
 </script>
 <style id="cr-keeper2-styles">
-/* ── Keeper 2/3 (build 348): location card + hero contact management ── */
-.dbmtabs{display:flex;align-items:center;gap:0;border:1px solid #3a3f47;border-radius:8px;overflow:hidden;
+/* ── Keeper 2/3 (build 348): location card + hero contact management. Tokenized for rb-light (build 389) \u2014 the map-toggle pill background stays a fixed dark chip like .ljmaptabs, since it overlays a live map tile in both themes. ── */
+.dbmtabs{display:flex;align-items:center;gap:0;border:1px solid var(--rbe-line);border-radius:8px;overflow:hidden;
   background:rgba(16,18,24,.85);margin-bottom:8px;width:max-content;max-width:100%;}
 .dbmtabs button{background:none;border:0;color:#aab1ba;font:700 10.5px 'Segoe UI',Arial,sans-serif;
   padding:6px 12px;cursor:pointer;}
-.dbmtabs button.on{background:#d4a017;color:#17181b;}
+.dbmtabs button.on{background:var(--rbe-acc);color:var(--rbe-checkfg);}
 .dbmtabs .dbmdir{margin-left:6px;padding:6px 11px;font:700 10.5px 'Segoe UI',Arial,sans-serif;
-  color:#f5d061;text-decoration:none;border-left:1px solid #3a3f47;}
+  color:var(--rbe-acclt);text-decoration:none;border-left:1px solid var(--rbe-line);}
 .hmanage{flex-basis:100%;font:700 10.5px 'Segoe UI',Arial,sans-serif;margin-top:2px;}
-.hmanage a{color:#9aa0a8;text-decoration:none;}
-.hmanage a:hover{color:#f5d061;}
-.hxtras{flex-basis:100%;display:flex;flex-direction:column;gap:1px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;margin-top:2px;}
+.hmanage a{color:var(--rbe-mute);text-decoration:none;}
+.hmanage a:hover{color:var(--rbe-acclt);}
+.hxtras{flex-basis:100%;display:flex;flex-direction:column;gap:1px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin-top:2px;}
 body.claim-insurance .hmanage a{color:#8b95a5;}
 </style>
 <script id="cr-keeper2-script">
@@ -41963,32 +41963,32 @@ document.addEventListener('click', function(e){
 })();
 </script>
 <style id="cr-keeper3-styles">
-/* ── Keeper 3/3 (build 349): Payments + History pills, punch card re-dress ── */
-.kpsec{background:linear-gradient(180deg,#2b2f36,#24282e);border:1px solid #3d434c;border-radius:13px;margin-top:12px;overflow:hidden;}
+/* ── Keeper 3/3 (build 349): Payments + History pills, punch card re-dress. Tokenized for rb-light (build 389). kpred stays a fixed urgency-red border in both themes. ── */
+.kpsec{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-radius:13px;margin-top:12px;overflow:hidden;}
 .kpsec.kpred{border-color:#6e3129;border-top:3px solid #C8202E;}
 .kpsech{display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer;user-select:none;}
-.kpst{font:800 13px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;flex:1;}
-.kpcnt{font:700 10px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;border-radius:999px;padding:2px 8px;}
-.kpcar{color:#6d747e;transition:transform .15s;}
+.kpst{font:800 13px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,var(--rbe-accdk),var(--rbe-acc) 45%,var(--rbe-acclt));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc);flex:1;}
+.kpcnt{font:700 10px ui-monospace,Menlo,monospace;background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;padding:2px 8px;}
+.kpcar{color:var(--rbe-mute2);transition:transform .15s;}
 .kpsec.open .kpcar{transform:rotate(90deg);}
-.kpsecb{display:none;padding:0 13px 13px;border-top:1px solid #33383f;}
+.kpsecb{display:none;padding:0 13px 13px;border-top:1px solid var(--rbe-hair);}
 .kpsec.open .kpsecb{display:block;}
-.kppayrow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12.5px;color:#9aa0a8;}
-.kppayrow b{font:800 13px ui-monospace,Menlo,monospace;color:#8fe0ae;}
-.kppaybar{flex:1;height:8px;border-radius:999px;background:#1c1f24;overflow:hidden;}
-.kppaybar i{display:block;height:100%;background:linear-gradient(90deg,#2f7a4c,#8fe0ae);}
+.kppayrow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12.5px;color:var(--rbe-mute);}
+.kppayrow b{font:800 13px ui-monospace,Menlo,monospace;color:var(--rbe-money);}
+.kppaybar{flex:1;height:8px;border-radius:999px;background:var(--rbe-panel2);overflow:hidden;}
+.kppaybar i{display:block;height:100%;background:linear-gradient(90deg,var(--rbe-ok),var(--rbe-money));}
 .kpmute{font-size:11px;}
-.kprowi{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.16);border:1px solid #3a3f47;border-radius:10px;padding:9px 11px;margin-top:9px;font-size:12.5px;color:#dfe3e8;}
+.kprowi{display:flex;align-items:center;gap:10px;background:var(--rbe-panel2);border:1px solid var(--rbe-line);border-radius:10px;padding:9px 11px;margin-top:9px;font-size:12.5px;color:var(--rbe-ink);}
 .kprowi > div{flex:1;min-width:0;}
 .kpti{font-weight:700;}
-.kpm{font-size:10.5px;color:#8b929c;}
-.kpin{font:800 13px ui-monospace,Menlo,monospace;color:#8fe0ae;}
-.kpout{font:800 13px ui-monospace,Menlo,monospace;color:#f2a08a;}
-.kphist{border-left:2px solid #3a3f47;margin:12px 0 2px 5px;padding-left:12px;}
-.kpev{position:relative;margin-bottom:10px;font-size:12px;color:#c8cdd4;}
-.kpev::before{content:'';position:absolute;left:-17px;top:5px;width:7px;height:7px;border-radius:50%;background:#d4a017;}
-.kpw{font-size:10px;color:#6d747e;margin-top:1px;}
-body:not(.claim-insurance):not(.claim-community) #cr-pp-mount > div{background:linear-gradient(180deg,#2b2f36,#24282e) !important;border:1px solid #3d434c !important;border-radius:13px !important;color:#dfe3e8;}
+.kpm{font-size:10.5px;color:var(--rbe-mute2);}
+.kpin{font:800 13px ui-monospace,Menlo,monospace;color:var(--rbe-money);}
+.kpout{font:800 13px ui-monospace,Menlo,monospace;color:var(--rbe-flag);}
+.kphist{border-left:2px solid var(--rbe-line);margin:12px 0 2px 5px;padding-left:12px;}
+.kpev{position:relative;margin-bottom:10px;font-size:12px;color:var(--rbe-ink);}
+.kpev::before{content:'';position:absolute;left:-17px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--rbe-acc);}
+.kpw{font-size:10px;color:var(--rbe-mute2);margin-top:1px;}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount > div{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2)) !important;border:1px solid var(--rbe-line2) !important;border-radius:13px !important;color:var(--rbe-ink);}
 </style>
 <script id="cr-keeper3-script">
 (function(){
