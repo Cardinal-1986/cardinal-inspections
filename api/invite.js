@@ -1,5 +1,5 @@
 // Cardinal team invite — creates a Supabase sign-in + sets the role, admin-only.
-// Deploy: put this file at  api/invite.js  (ESM — do NOT convert to module.exports).
+// Deploy: put this file at  api/invite.js  (ESM — keep the export default handler).
 // Uses existing Vercel env var SUPABASE_SERVICE_ROLE_KEY. No new env vars needed.
 
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
