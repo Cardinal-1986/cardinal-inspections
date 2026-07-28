@@ -2215,6 +2215,70 @@ body:has(#loginView[style*="block"]){background:#fff;}
   --ins-gold:#d4a017;
   font-family:'Segoe UI',Arial,Helvetica,sans-serif;
 }
+
+/* ---- Resource Library theme pair (395): Docket White / Siren Cut ----
+   Scoped to the view. --ins-* above is still live for the secondary screens
+   that have not been converted yet. Contrast for every text pairing below was
+   computed, not estimated - see CARDINAL_THEME.md. */
+#resourceLibraryView{
+  --ct-code:ui-monospace,'SFMono-Regular','Cascadia Mono','Segoe UI Mono',Menlo,Consolas,monospace;
+  --ct-sans:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+}
+#resourceLibraryView[data-rltheme="docket"]{
+  --ct-bg:#FAF8F7; --ct-surface:#FFFFFF; --ct-surface-2:#FAF8F7; --ct-surface-3:#F3EFEE;
+  --ct-ink:#17181B; --ct-ink-2:#6E6663;
+  --ct-line:#EAE5E3; --ct-line-strong:#DED8D6;
+  --ct-red:#C4180F; --ct-red-deep:#7E1410; --ct-red-ink:#FFFFFF; --ct-red-wash:#FDF4F3;
+  --ct-head-bg:#FFFFFF; --ct-head-ink:#17181B; --ct-head-bd:#EAE5E3;
+  --ct-chip-bg:#FFFFFF; --ct-chip-ink:#17181B; --ct-chip-bd:#DED8D6;
+  --ct-chip-a-bg:#17181B; --ct-chip-a-ink:#FFFFFF; --ct-chip-a-bd:#17181B;
+  --ct-chip-b-bg:#FFFFFF; --ct-chip-b-ink:#17181B; --ct-chip-b-bd:#17181B;
+  --ct-act-bg:#FDF4F3; --ct-act-ink:#3B3330; --ct-act-strong:#7E1410; --ct-act-edge:#C4180F;
+  --ct-care-bg:#FAF8F7; --ct-care-ink:#6E6663; --ct-care-strong:#17181B; --ct-care-edge:#DED8D6;
+  --ct-mark:#C4180F;
+  /* do/don't: colour carries meaning here, so it stays green/red in both
+     themes - but retuned per ground. Verified: 8.06:1 / 8.04:1 on the card. */
+  --ct-do-edge:#2E7D46; --ct-do-ink:#165C2E; --ct-do-head-bg:#D7E9DC; --ct-do-head-ink:#0F4A24;
+  --ct-dont-edge:#C4180F; --ct-dont-ink:#A11020; --ct-dont-head-bg:#FBE3E1; --ct-dont-head-ink:#8E0E20;
+  --ct-r-card:8px; --ct-r-chip:5px; --ct-r-field:8px;
+  --ct-card-sh:0 1px 2px rgba(23,24,27,.05),0 8px 24px -16px rgba(23,24,27,.25);
+}
+#resourceLibraryView[data-rltheme="siren"]{
+  --ct-bg:#09090C; --ct-surface:#16161B; --ct-surface-2:#0E0E12; --ct-surface-3:#1E1E24;
+  --ct-ink:#F4F1F1; --ct-ink-2:#A8A09E;
+  --ct-line:#34343B; --ct-line-strong:#4A4A52;
+  /* #CE0E18 is 3.18:1 on this surface - SURFACE ONLY, never type.
+     --ct-red-deep (FLARE) is the text-safe red here at 5.08:1. */
+  --ct-red:#CE0E18; --ct-red-deep:#FF3B30; --ct-red-ink:#FFFFFF; --ct-red-wash:#1A0E10;
+  --ct-head-bg:#CE0E18; --ct-head-ink:#FFFFFF; --ct-head-bd:#CE0E18;
+  --ct-chip-bg:#09090C; --ct-chip-ink:#F4F1F1; --ct-chip-bd:#4A4A52;
+  --ct-chip-a-bg:#09090C; --ct-chip-a-ink:#FFFFFF; --ct-chip-a-bd:#FFFFFF;
+  --ct-chip-b-bg:#FFFFFF; --ct-chip-b-ink:#09090C; --ct-chip-b-bd:#FFFFFF;
+  --ct-act-bg:#CE0E18; --ct-act-ink:#FFFFFF; --ct-act-strong:#FFFFFF; --ct-act-edge:#FFFFFF;
+  --ct-care-bg:#0E0E12; --ct-care-ink:#B8B0AE; --ct-care-strong:#F4F1F1; --ct-care-edge:#4A4A52;
+  --ct-mark:#FF3B30;
+  --ct-do-edge:#3E9D5E; --ct-do-ink:#7FD79A; --ct-do-head-bg:#12251A; --ct-do-head-ink:#A8DCB9;
+  --ct-dont-edge:#FF3B30; --ct-dont-ink:#FF9E9E; --ct-dont-head-bg:#2A1416; --ct-dont-head-ink:#FFB3B3;
+  --ct-r-card:0; --ct-r-chip:0; --ct-r-field:0;
+  --ct-card-sh:none;
+}
+/* header is shared with #cardinalTruthView - every rule here is scoped to the
+   RL view so Cardinal Truth is untouched byte-for-byte */
+#resourceLibraryView .ins-header{
+  background:var(--ct-head-bg);
+  border-bottom:1px solid var(--ct-head-bd);
+  box-shadow:none;
+}
+#resourceLibraryView .ins-title{
+  color:var(--ct-head-ink);
+  font:800 20px var(--ct-sans);letter-spacing:-.022em;
+}
+#resourceLibraryView .ins-hbtn{
+  color:var(--ct-head-ink);border-color:var(--ct-head-bd);
+  min-width:44px;min-height:44px;
+}
+#resourceLibraryView .ins-hbtn:hover{background:rgba(127,127,127,.14);border-color:var(--ct-head-ink);}
+#resourceLibraryView .ins-hbtn:active{background:rgba(127,127,127,.22);}
 .ins-header{
   position:sticky;top:0;z-index:10;
   display:flex;align-items:center;justify-content:space-between;
@@ -2484,73 +2548,78 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
 /* Resource Library content */
 #resourceLibraryView .rl-intro{
-  background:linear-gradient(160deg,var(--ins-panel) 0%,var(--ins-panel-2) 100%);
-  border:1px solid var(--ins-border);border-left:3px solid var(--ins-blue);
-  border-radius:12px;padding:16px 18px;margin-bottom:18px;
-  color:var(--ins-text);
+  background:var(--ct-surface);
+  border:1px solid var(--ct-line);
+  border-radius:var(--ct-r-card);padding:16px 18px;margin-bottom:18px;
+  color:var(--ct-ink);box-shadow:var(--ct-card-sh);
 }
-#resourceLibraryView .rl-intro h2{margin:0 0 8px;font:700 18px Georgia,'Times New Roman',serif;color:var(--ins-blue-lt);}
-#resourceLibraryView .rl-intro p{margin:0 0 8px;font-size:14.5px;color:#c9cfd9;}
-#resourceLibraryView .rl-warn{background:rgba(212,160,23,.12);border-left:3px solid var(--ins-gold);padding:10px 12px;margin-top:10px;font-size:13px;color:#d5b769;}
+#resourceLibraryView .rl-intro h2{margin:0 0 8px;font:700 18px var(--ct-sans);letter-spacing:-.022em;color:var(--ct-ink);}
+#resourceLibraryView .rl-intro p{margin:0 0 8px;font-size:16px;color:var(--ct-ink-2);}
+#resourceLibraryView .rl-warn{background:var(--ct-act-bg);border-left:4px solid var(--ct-act-edge);padding:10px 12px;margin-top:10px;font-size:15px;color:var(--ct-act-ink);border-radius:0 4px 4px 0;}
 
 #resourceLibraryView .rl-search{margin:0 0 18px;position:sticky;top:66px;z-index:9;}
 #resourceLibraryView .rl-search input{
-  width:100%;padding:14px 16px;border:1px solid var(--ins-border);border-radius:10px;
-  font:600 15px 'Segoe UI',Arial,sans-serif;background:var(--ins-panel);color:var(--ins-text);
-  box-shadow:0 4px 12px rgba(0,0,0,.3);box-sizing:border-box;
+  width:100%;padding:14px 16px;border:1px solid var(--ct-line-strong);border-radius:var(--ct-r-field);
+  font:400 16px var(--ct-sans);background:var(--ct-surface);color:var(--ct-ink);
+  box-shadow:var(--ct-card-sh);box-sizing:border-box;min-height:48px;
 }
-#resourceLibraryView .rl-search input:focus{outline:2px solid var(--ins-blue);border-color:var(--ins-blue);}
-#resourceLibraryView .rl-search input::placeholder{color:var(--ins-muted);}
+#resourceLibraryView .rl-search input:focus{outline:none;border-color:var(--ct-red-deep);box-shadow:0 0 0 3px rgba(196,24,15,.15);}
+#resourceLibraryView .rl-search input::placeholder{color:var(--ct-ink-2);}
 
-#resourceLibraryView .rl-jumpnav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:0 0 20px;}
+#resourceLibraryView .rl-jumpnav{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-start;margin:0 0 20px;}
 #resourceLibraryView .rl-jumpnav a{
-  display:inline-block;padding:6px 12px;border:1px solid var(--ins-border);border-radius:14px;
-  background:var(--ins-panel);text-decoration:none;color:var(--ins-blue-lt);
-  font:700 11.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;
+  display:inline-flex;align-items:center;min-height:36px;padding:0 12px;
+  border:1px solid var(--ct-line-strong);border-radius:var(--ct-r-chip);
+  background:var(--ct-surface);text-decoration:none;color:var(--ct-ink);
+  font:600 12px var(--ct-code);letter-spacing:.03em;
 }
-#resourceLibraryView .rl-jumpnav a:hover{background:var(--ins-blue);color:#fff;border-color:var(--ins-blue);}
+#resourceLibraryView .rl-jumpnav a:hover{background:var(--ct-surface-3);color:var(--ct-ink);border-color:var(--ct-red);}
 
 #resourceLibraryView .rl-sect{margin:32px 0 12px;}
 #resourceLibraryView .rl-sect h2{
-  text-align:center;font:800 22px Georgia,'Times New Roman',serif;
-  color:var(--ins-blue-lt);margin:0 0 4px;padding-bottom:8px;
+  text-align:left;font:800 22px var(--ct-sans);letter-spacing:-.03em;
+  color:var(--ct-ink);margin:0 0 4px;padding-bottom:8px;
 }
 #resourceLibraryView .rl-sect h2::after{
-  content:'';display:block;width:120px;height:3px;margin:8px auto 0;
-  background:linear-gradient(90deg,var(--ins-blue),var(--ins-gold));border-radius:2px;
+  content:'';display:block;width:56px;height:3px;margin:8px 0 0;
+  background:var(--ct-red);border-radius:0;
 }
-#resourceLibraryView .rl-sect .rl-subtitle{text-align:center;color:var(--ins-muted);font-size:13px;margin:0 0 16px;letter-spacing:.02em;}
+#resourceLibraryView .rl-sect .rl-subtitle{text-align:left;color:var(--ct-ink-2);font-size:14px;margin:0 0 16px;letter-spacing:0;}
 
 #resourceLibraryView .rl-card{
-  background:#f8f6f0;color:#2b2320;
-  border:1px solid var(--ins-border);border-left:3px solid var(--ins-blue);
-  border-radius:12px;padding:16px 18px;margin:12px 0;
-  box-shadow:0 4px 12px rgba(0,0,0,.25);
+  background:var(--ct-surface);color:var(--ct-ink);
+  border:1px solid var(--ct-line);
+  border-radius:var(--ct-r-card);padding:16px 18px;margin:14px 0;
+  box-shadow:var(--ct-card-sh);
   page-break-inside:avoid;break-inside:avoid;
 }
 #resourceLibraryView .rl-card h3{
-  margin:0 0 10px;font:700 16.5px Georgia,'Times New Roman',serif;color:#170f11;
-  padding-bottom:8px;border-bottom:1px solid #efe4d6;
+  margin:0 0 10px;font:700 17px var(--ct-sans);letter-spacing:-.02em;color:var(--ct-ink);
+  padding-bottom:0;border-bottom:none;line-height:1.25;
 }
+/* citations are MONOSPACE: a rep reads these aloud to an adjuster and
+   Helvetica renders I, l and 1 identically */
 #resourceLibraryView .rl-card .rl-cite{
-  display:inline-block;font:700 11px 'Segoe UI',Arial,sans-serif;
-  color:#fff;background:var(--ins-blue-dk);padding:3px 10px;border-radius:12px;letter-spacing:.05em;
+  display:inline-flex;align-items:center;min-height:30px;
+  font:600 12.5px var(--ct-code);text-transform:uppercase;font-variant-numeric:tabular-nums;
+  color:var(--ct-chip-ink);background:var(--ct-chip-bg);border:1px solid var(--ct-chip-bd);
+  padding:0 9px;border-radius:var(--ct-r-chip);letter-spacing:.02em;
   margin-right:6px;margin-bottom:6px;
 }
-#resourceLibraryView .rl-card .rl-cite.rl-gold{background:#8a5a00;}
-#resourceLibraryView .rl-card .rl-cite.rl-ink{background:#170f11;}
-#resourceLibraryView .rl-card p{margin:8px 0;font-size:14.5px;color:#3b2f2a;}
-#resourceLibraryView .rl-card .rl-use{background:#fff8e6;border-left:4px solid var(--ins-gold);padding:10px 12px;margin-top:10px;font-size:13.5px;color:#3b2f2a;}
-#resourceLibraryView .rl-card .rl-use b{color:var(--red-dk);}
-#resourceLibraryView .rl-card .rl-doc{background:#eef2f7;border-left:4px solid var(--ins-blue);padding:10px 12px;margin-top:10px;font-size:13px;color:#2b2320;}
-#resourceLibraryView .rl-card .rl-doc b{color:var(--ins-blue-dk);}
-#resourceLibraryView .rl-card ul{margin:6px 0 6px 22px;padding:0;font-size:14px;color:#3b2f2a;}
-#resourceLibraryView .rl-card ul li{margin:3px 0;}
-#resourceLibraryView .rl-card .rl-tags{margin-top:10px;font-size:11px;color:#7a6a60;}
-#resourceLibraryView .rl-card .rl-tags span{display:inline-block;margin-right:6px;padding:2px 8px;border:1px solid #ddd6cf;border-radius:10px;background:#fdf9f2;}
+#resourceLibraryView .rl-card .rl-cite.rl-gold{background:var(--ct-chip-a-bg);color:var(--ct-chip-a-ink);border-color:var(--ct-chip-a-bd);}
+#resourceLibraryView .rl-card .rl-cite.rl-ink{background:var(--ct-chip-b-bg);color:var(--ct-chip-b-ink);border:1.5px solid var(--ct-chip-b-bd);}
+#resourceLibraryView .rl-card p{margin:9px 0;font-size:16px;line-height:1.6;color:var(--ct-ink);}
+#resourceLibraryView .rl-card .rl-use{background:var(--ct-act-bg);border-left:4px solid var(--ct-act-edge);padding:12px 13px;margin-top:12px;font-size:15px;line-height:1.6;color:var(--ct-act-ink);border-radius:0 4px 4px 0;}
+#resourceLibraryView .rl-card .rl-use b{color:var(--ct-act-strong);}
+#resourceLibraryView .rl-card .rl-doc{background:var(--ct-care-bg);border-left:4px solid var(--ct-care-edge);padding:12px 13px;margin-top:12px;font-size:15px;line-height:1.6;color:var(--ct-care-ink);border-radius:0 4px 4px 0;}
+#resourceLibraryView .rl-card .rl-doc b{color:var(--ct-care-strong);}
+#resourceLibraryView .rl-card ul{margin:8px 0 8px 22px;padding:0;font-size:15.5px;line-height:1.6;color:var(--ct-ink);}
+#resourceLibraryView .rl-card ul li{margin:5px 0;}
+#resourceLibraryView .rl-card .rl-tags{margin-top:12px;font-size:11px;color:var(--ct-ink-2);}
+#resourceLibraryView .rl-card .rl-tags span{display:inline-block;margin-right:6px;padding:3px 8px;border:1px solid var(--ct-line);border-radius:11px;background:transparent;font-family:var(--ct-code);font-size:10.5px;color:var(--ct-ink-2);}
 #resourceLibraryView .rl-hidden{display:none !important;}
-#resourceLibraryView .rl-foot{margin-top:40px;padding:20px;text-align:center;border-top:1px solid var(--ins-border);color:var(--ins-muted);font-size:12.5px;}
-#resourceLibraryView .rl-foot b{color:var(--ins-blue-lt);}
+#resourceLibraryView .rl-foot{margin-top:40px;padding:20px 0;text-align:left;border-top:1px solid var(--ct-line);color:var(--ct-ink-2);font-size:12.5px;}
+#resourceLibraryView .rl-foot b{color:var(--ct-ink);}
 
 /* ---- RL landing: grid of boxes with blue-to-gold divider lines between rows ---- */
 #resourceLibraryView .rl-boxgrid{
@@ -2563,56 +2632,75 @@ body:has(#loginView[style*="block"]){background:#fff;}
 #resourceLibraryView .rl-box{
   display:flex;flex-direction:column;justify-content:space-between;
   width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
-  background:linear-gradient(160deg,var(--ins-panel) 0%,var(--ins-panel-2) 100%);
-  border:1px solid var(--ins-border);border-left:3px solid var(--ins-blue);
-  border-radius:12px;padding:18px 16px;min-height:160px;
-  color:var(--ins-text);font-family:'Segoe UI',Arial,sans-serif;
+  background:var(--ct-surface);
+  border:1px solid var(--ct-line);
+  border-radius:var(--ct-r-card);padding:18px 16px;min-height:160px;
+  color:var(--ct-ink);font-family:var(--ct-sans);
+  box-shadow:var(--ct-card-sh);
   transition:border-color .15s, transform .15s, box-shadow .15s;
-  -webkit-tap-highlight-color:rgba(127,166,214,.25);
+  -webkit-tap-highlight-color:rgba(196,24,15,.2);
   touch-action:manipulation;
   -webkit-appearance:none;appearance:none;
 }
-#resourceLibraryView .rl-box:active{background:var(--ins-panel-2);}
-#resourceLibraryView .rl-box:hover{border-color:var(--ins-blue-lt);transform:translateY(-1px);box-shadow:0 4px 12px rgba(74,111,165,.25);}
+#resourceLibraryView .rl-box:active{background:var(--ct-surface-3);}
+#resourceLibraryView .rl-box:hover{border-color:var(--ct-red);transform:translateY(-1px);}
 #resourceLibraryView .rl-box .rl-boxicon{
   font-size:28px;line-height:1;margin-bottom:8px;
 }
+/* rl-mark: inline SVG hub marks (397). Structure in ink, one stroke in the
+   accent. Sized in px so they never inherit the emoji font-size. */
+#resourceLibraryView .rl-mark{
+  width:26px;height:26px;display:block;color:var(--ct-ink);
+  overflow:visible;
+}
+/* the two landing hub tiles are the heroes - their marks run larger */
+#resourceLibraryView .rl-boxgrid .rl-box[data-rlgoto="ins_hub"] .rl-mark,
+#resourceLibraryView .rl-boxgrid .rl-box[data-rlgoto="gen_hub"] .rl-mark{
+  width:34px;height:34px;
+}
+#resourceLibraryView .rl-mark .rl-mark-a{color:var(--ct-mark);stroke:var(--ct-mark);}
+#resourceLibraryView .rl-box:hover .rl-mark{color:var(--ct-mark);}
+@media (prefers-reduced-motion:no-preference){
+  #resourceLibraryView .rl-mark{transition:color .15s;}
+}
 #resourceLibraryView .rl-box .rl-boxtitle{
-  font:800 17px Georgia,'Times New Roman',serif;color:var(--ins-blue-lt);margin-bottom:6px;
+  font:700 17px var(--ct-sans);letter-spacing:-.022em;color:var(--ct-ink);margin-bottom:6px;
 }
 #resourceLibraryView .rl-box .rl-boxsub{
-  font-size:12.5px;color:#a5b0c0;line-height:1.45;margin-bottom:10px;flex:1;
+  font-size:13px;color:var(--ct-ink-2);line-height:1.5;margin-bottom:10px;flex:1;
 }
 #resourceLibraryView .rl-box .rl-boxgo{
-  font:700 11.5px 'Segoe UI',Arial,sans-serif;color:var(--ins-blue-lt);letter-spacing:.05em;margin-top:auto;
+  font:700 11px var(--ct-code);color:var(--ct-red-deep);letter-spacing:.08em;
+  text-transform:uppercase;margin-top:auto;
 }
 #resourceLibraryView .rl-divider{
-  height:3px;margin:20px 0;border-radius:2px;
-  background:linear-gradient(90deg,transparent 0%,var(--ins-blue) 15%,var(--ins-blue-lt) 45%,var(--ins-gold) 75%,transparent 100%);
-  box-shadow:0 0 8px rgba(127,166,214,.35);
+  height:1px;margin:26px 0;border-radius:0;
+  background:var(--ct-line);
+  box-shadow:none;
 }
 #resourceLibraryView .rl-cheatlink{
-  display:inline-block;margin:0 0 18px;padding:8px 16px;
-  background:var(--ins-panel);border:1px solid var(--ins-border);border-radius:8px;
-  color:var(--ins-blue-lt);text-decoration:none;
-  font:700 12.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;cursor:pointer;
+  display:inline-flex;align-items:center;min-height:44px;margin:0 0 18px;padding:0 16px;
+  background:var(--ct-surface);border:1px solid var(--ct-line-strong);border-radius:var(--ct-r-field);
+  color:var(--ct-ink);text-decoration:none;
+  font:700 13px var(--ct-sans);letter-spacing:0;cursor:pointer;
 }
-#resourceLibraryView .rl-cheatlink:hover{background:var(--ins-panel-2);border-color:var(--ins-blue-lt);}
+#resourceLibraryView .rl-cheatlink:hover{background:var(--ct-surface-3);border-color:var(--ct-red);}
 
 /* ---- RL sub-pages ---- */
 #resourceLibraryView .rl-page{display:none;}
 #resourceLibraryView .rl-page.rl-pageActive{display:block;}
 #resourceLibraryView .rl-pagehead{margin-bottom:18px;}
+/* --ct-pagehead-done: landing path converted at 396 */
 #resourceLibraryView .rl-pagehead h1{
-  font:800 26px Georgia,'Times New Roman',serif;color:var(--ins-blue-lt);
-  margin:0 0 6px;letter-spacing:.02em;
+  font:800 27px var(--ct-sans);color:var(--ct-ink);
+  margin:0 0 8px;letter-spacing:-.03em;line-height:1.15;
 }
-#resourceLibraryView .rl-pagehead p{font-size:14px;color:#c9cfd9;margin:0;line-height:1.55;}
+#resourceLibraryView .rl-pagehead p{font-size:16px;color:var(--ct-ink-2);margin:0;line-height:1.6;max-width:62ch;}
 #resourceLibraryView .rl-groupsep{
-  margin:22px 0 10px;padding-bottom:6px;
-  border-bottom:1px solid var(--ins-border);
-  font:800 12px 'Segoe UI',Arial,sans-serif;
-  color:var(--ins-blue-lt);letter-spacing:.15em;text-transform:uppercase;
+  margin:26px 0 12px;padding-bottom:8px;
+  border-bottom:1px solid var(--ct-line);
+  font:700 11px var(--ct-code);
+  color:var(--ct-ink-2);letter-spacing:.16em;text-transform:uppercase;
 }
 
 /* ---- Do / Don't split page ---- */
@@ -2623,24 +2711,25 @@ body:has(#loginView[style*="block"]){background:#fff;}
   #resourceLibraryView .rl-dodont{grid-template-columns:1fr;}
 }
 #resourceLibraryView .rl-ddhead{
-  padding:10px 14px;border-radius:10px 10px 0 0;
-  font:800 14px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;
-  text-align:center;
+  padding:10px 14px;border-radius:var(--ct-r-card) var(--ct-r-card) 0 0;
+  font:700 12px var(--ct-code);letter-spacing:.14em;text-transform:uppercase;
+  text-align:left;
 }
-#resourceLibraryView .rl-ddhead.rl-do{background:#2a4a3a;color:#a8dcb9;border:1px solid #3a6a4c;border-bottom:none;}
-#resourceLibraryView .rl-ddhead.rl-dont{background:#4a2a2a;color:#e8a8a8;border:1px solid #6a3a3a;border-bottom:none;}
+#resourceLibraryView .rl-ddhead.rl-do{background:var(--ct-do-head-bg);color:var(--ct-do-head-ink);border:1px solid var(--ct-do-edge);border-bottom:none;}
+#resourceLibraryView .rl-ddhead.rl-dont{background:var(--ct-dont-head-bg);color:var(--ct-dont-head-ink);border:1px solid var(--ct-dont-edge);border-bottom:none;}
 #resourceLibraryView .rl-ddcol{display:flex;flex-direction:column;gap:10px;}
 #resourceLibraryView .rl-ddcard{
-  background:#f8f6f0;color:#2b2320;padding:14px 16px;border-radius:8px;
-  border-left:3px solid #4a9d5a;font-size:13.5px;line-height:1.55;
-  box-shadow:0 3px 8px rgba(0,0,0,.2);
+  background:var(--ct-surface);color:var(--ct-ink);padding:14px 16px;border-radius:var(--ct-r-card);
+  border:1px solid var(--ct-line);border-left:3px solid var(--ct-do-edge);
+  font-size:15px;line-height:1.6;
+  box-shadow:var(--ct-card-sh);
 }
-#resourceLibraryView .rl-ddcard.rl-dontcard{border-left-color:#c05541;}
+#resourceLibraryView .rl-ddcard.rl-dontcard{border-left-color:var(--ct-dont-edge);}
 #resourceLibraryView .rl-ddcard h4{
-  margin:0 0 6px;font:700 14px Georgia,'Times New Roman',serif;color:#170f11;
+  margin:0 0 6px;font:700 15px var(--ct-sans);letter-spacing:-.02em;color:var(--ct-ink);
 }
-#resourceLibraryView .rl-ddcard.rl-dontcard h4{color:#8a2020;}
-#resourceLibraryView .rl-ddcard.rl-docard h4{color:#1a5a2a;}
+#resourceLibraryView .rl-ddcard.rl-dontcard h4{color:var(--ct-dont-ink);}
+#resourceLibraryView .rl-ddcard.rl-docard h4{color:var(--ct-do-ink);}
 
 </style>
 </head>
@@ -2700,7 +2789,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 395 &#8212; Manual estimates work again (a stub was overwriting them on a timer) and the AI Estimate back button is visible. The strip's boxes were hardcoded white — they were washed out in dark mode too, so this fixes today's look as well as light mode. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 400 &#8212; Resource Library complete + estimates fix</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3557,11 +3646,36 @@ body:has(#loginView[style*="block"]){background:#fff;}
 </div>
 
 <!-- ============ RESOURCE LIBRARY ============ -->
-<div id="resourceLibraryView" style="display:none;position:fixed;inset:0;z-index:156;background:#1a1f2e;overflow-y:auto;color:#e8ecf1;">
+<div id="resourceLibraryView" data-rltheme="docket" style="display:none;position:fixed;inset:0;z-index:156;background:var(--ct-bg);overflow-y:auto;color:var(--ct-ink);">
+<svg class="rl-sprite" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+<symbol id="rl-i-hub-ins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.6 20.4 7.4v5.1c0 4.4-3.6 7.6-8.4 8.9-4.8-1.3-8.4-4.5-8.4-8.9V7.4Z"/><path class="rl-mark-a" d="M3.6 7.4h16.8"/><path d="M8.4 12.2h7.2M9.8 15.6h4.4"/></symbol>
+<symbol id="rl-i-hub-gen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path class="rl-mark-a" d="M2.8 9.2 12 3.4l9.2 5.8"/><path d="M2.8 14.4 12 8.6l9.2 5.8"/><path d="M2.8 19.6 12 13.8l9.2 5.8"/></symbol>
+<symbol id="rl-i-law" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7h14"/><path class="rl-mark-a" d="M5 7 2.6 13h4.8ZM19 7l-2.4 6h4.8"/><path d="M8 21h8"/></symbol>
+<symbol id="rl-i-policy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.8h8.4L19 7.4V21H6Z"/><path d="M14 2.8v5h5"/><path class="rl-mark-a" d="m9 14.4 2.1 2.1 4-4"/></symbol>
+<symbol id="rl-i-docs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4H6.6A1.6 1.6 0 0 0 5 5.6v14.8A1.6 1.6 0 0 0 6.6 22h10.8a1.6 1.6 0 0 0 1.6-1.6V5.6A1.6 1.6 0 0 0 17.4 4H16"/><rect x="8" y="2.2" width="8" height="3.6" rx="1.1"/><path class="rl-mark-a" d="m8.6 12 1.7 1.7 3.3-3.3"/><path d="M8.6 17.4h6.8"/></symbol>
+<symbol id="rl-i-tips" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17.6a6 6 0 1 1 6 0v1.8H9Z"/><path class="rl-mark-a" d="M9.8 21.6h4.4"/><path d="M12 8.4v3.2"/></symbol>
+<symbol id="rl-i-dodont" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path class="rl-mark-a" d="m3.4 12.4 2.2 2.2 4.4-4.4"/><path d="m14.6 9.6 5.8 5.8m0-5.8-5.8 5.8"/></symbol>
+<symbol id="rl-i-cheat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.4h16v13.2H4Z"/><path class="rl-mark-a" d="M4 9.2h16"/><path d="M7 12.8h6M7 15.6h4"/></symbol>
+<symbol id="rl-i-supp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 6.6h9.2v14.8H7.4Z"/><path d="M4.6 17.8V2.6h9.2"/><path class="rl-mark-a" d="M12 11.4v5.2M9.4 14h5.2"/></symbol>
+<symbol id="rl-i-codes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.6h6.4A2.6 2.6 0 0 1 13 7.2v13a2.2 2.2 0 0 0-2.2-2.2H4Z"/><path d="M20 4.6h-4.4A2.6 2.6 0 0 0 13 7.2"/><path class="rl-mark-a" d="M20 4.6v13.4h-4.8A2.2 2.2 0 0 0 13 20.2"/></symbol>
+<symbol id="rl-i-mfr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path class="rl-mark-a" d="m2.8 9.6 9.2-5.8 9.2 5.8"/><path d="M4.8 11.6v8.6h14.4v-8.6"/><path d="M9.6 20.2v-5h4.8v5"/></symbol>
+<symbol id="rl-i-measure" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 8.4h18.8v7.2H2.6Z"/><path class="rl-mark-a" d="M6.4 8.4v3M10 8.4v4.4M13.6 8.4v3M17.2 8.4v4.4"/></symbol>
+<symbol id="rl-i-inspect" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.6" cy="10.6" r="6.6"/><path class="rl-mark-a" d="m15.6 15.6 4.6 4.6"/><path d="m7 11.4 3.6-2.8 3.6 2.8"/></symbol>
+<symbol id="rl-i-roof" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path class="rl-mark-a" d="m2.6 12.4 9.4-7.6 9.4 7.6"/><path d="M5.4 14.6v6.2h13.2v-6.2"/><path d="M10.2 20.8v-4h3.6v4"/></symbol>
+<symbol id="rl-i-siding" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 4.6h17.2v14.8H3.4Z"/><path class="rl-mark-a" d="M3.4 9.2h17.2"/><path d="M3.4 14.8h17.2"/></symbol>
+<symbol id="rl-i-windows" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="3.6" width="16.8" height="16.8" rx="1.4"/><path class="rl-mark-a" d="M12 3.6v16.8"/><path d="M3.6 12h16.8"/></symbol>
+<symbol id="rl-i-doors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5.4 2.8h13.2v18.4H5.4Z"/><path d="M8.6 2.8v18.4"/><circle class="rl-mark-a" cx="15.4" cy="12" r="1.05"/></symbol>
+<symbol id="rl-i-gutters" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.4h18v4.2a2.6 2.6 0 0 1-2.6 2.6H5.6A2.6 2.6 0 0 1 3 11.6Z"/><path class="rl-mark-a" d="M12 17v1.8m-4-1.8v1.8m8-1.8v1.8"/></symbol>
+<symbol id="rl-i-fascia" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path class="rl-mark-a" d="m3 9.6 9-5.4 9 5.4"/><path d="M3 12.4h18"/><path d="M3 12.4v4.2h18v-4.2"/></symbol>
+<symbol id="rl-i-soffit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.6h18"/><path d="M3 6.6v5.8h18V6.6"/><path class="rl-mark-a" d="M7.4 15.8v3M12 15.8v3M16.6 15.8v3"/></symbol>
+<symbol id="rl-i-tape" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.6" cy="14.4" r="4.2"/><circle cx="16.4" cy="14.4" r="4.2"/><path class="rl-mark-a" d="M7.6 10.2h8.8"/><path d="M7.6 14.4h.01M16.4 14.4h.01"/></symbol>
+<symbol id="rl-i-reports" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.4h9l5 4.6V20.6H5Z"/><path d="M14 3.4v4.6h5"/><path class="rl-mark-a" d="M8.4 17V13m3.2 4v-6.4m3.2 6.4v-3"/></symbol>
+</svg>
+
   <div class="ins-header">
     <button class="ins-hbtn" id="rlBackBtn" aria-label="Back">&larr;</button>
     <div class="ins-title">Resource Library</div>
-    <span class="ins-hspacer">&nbsp;</span>
+    <button class="ins-hbtn" id="rlThemeBtn" aria-label="Switch between light and dark" title="Light / dark">&#9681;</button>
   </div>
     <div class="ins-body">
 
@@ -3576,13 +3690,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="ins_hub">
-          <div class="rl-boxicon">&#128737;&#65039;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-hub-ins"/></svg></div>
           <div class="rl-boxtitle">Insurance</div>
           <div class="rl-boxsub">Ohio insurance law, policy provisions, documentation standards, claim tips, do &amp; don't, and the truck cheat sheet.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="gen_hub">
-          <div class="rl-boxicon">&#128218;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-hub-gen"/></svg></div>
           <div class="rl-boxtitle">General</div>
           <div class="rl-boxsub">Construction codes (residential, commercial, municipal) and manufacturer installation guidelines.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -3606,13 +3720,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="insurance">
-          <div class="rl-boxicon">&#128737;&#65039;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-law"/></svg></div>
           <div class="rl-boxtitle">Ohio Insurance Law</div>
           <div class="rl-boxsub">Matching regulation, unfair claims practices, public adjuster rules, and the 3-day rescission.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="policy">
-          <div class="rl-boxicon">&#9989;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-policy"/></svg></div>
           <div class="rl-boxtitle">Policy Provisions</div>
           <div class="rl-boxsub">Ordinance &amp; Law, RCV vs. ACV, matching endorsements &mdash; what to check on the dec page.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -3623,13 +3737,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="docs">
-          <div class="rl-boxicon">&#128194;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-docs"/></svg></div>
           <div class="rl-boxtitle">Documentation Checklist</div>
           <div class="rl-boxsub">Per-inspection photo standard, damage-type templates, and the paper trail every claim file needs.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="tips">
-          <div class="rl-boxicon">&#128161;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-tips"/></svg></div>
           <div class="rl-boxtitle">Claim Tips</div>
           <div class="rl-boxsub">Scenario playbook &mdash; the adjuster shortcut and the code cite that answers it. Plus carrier-specific patterns.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -3640,13 +3754,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="pitfalls">
-          <div class="rl-boxicon">&#9888;&#65039;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-dodont"/></svg></div>
           <div class="rl-boxtitle">Do &amp; Don't</div>
           <div class="rl-boxsub">Field practices on one side, ways this goes sideways on the other. Split-screen reference.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="cheat">
-          <div class="rl-boxicon">&#128203;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-cheat"/></svg></div>
           <div class="rl-boxtitle">Truck Cheat Sheet</div>
           <div class="rl-boxsub">One-page summary of the three levers, code cites, and the line you don't cross. Print for the truck.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -3657,7 +3771,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid rl-single">
         <button class="rl-box" data-rlgoto="sup">
-          <div class="rl-boxicon">&#128206;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-supp"/></svg></div>
           <div class="rl-boxtitle">Supplement Templates</div>
           <div class="rl-boxsub">Pre-written supplement requests for the most common denials &mdash; ice barrier, decking, ventilation, matching, flashings, and related property damage. Copy the wording, add the photos, send.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -3676,13 +3790,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="code">
-          <div class="rl-boxicon">&#128736;&#65039;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-codes"/></svg></div>
           <div class="rl-boxtitle">Construction Codes</div>
           <div class="rl-boxsub">Residential (RCO Ch. 9), commercial (OBC Ch. 15), and Miami Valley municipal amendments.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="mfg">
-          <div class="rl-boxicon">&#127981;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-mfr"/></svg></div>
           <div class="rl-boxtitle">Manufacturer Guidelines</div>
           <div class="rl-boxsub">Owens Corning, GAF, CertainTeed installation specs, warranty tiers, and do-not-mix rules. Cite-able the same way code is.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -3693,13 +3807,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr">
-          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-measure"/></svg></div>
           <div class="rl-boxtitle">Measurements</div>
           <div class="rl-boxsub">How to take-off every trade &mdash; roof, siding, windows, gutters, fascia, soffit, doors. Hand measurements plus how to read Hover, Roofr, EagleView.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="insp">
-          <div class="rl-boxicon">&#128269;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-inspect"/></svg></div>
           <div class="rl-boxtitle">Roof Inspections</div>
           <div class="rl-boxsub">Mastering the walk. Safety, systematic approach, damage patterns, documentation. Foundation for every job.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -4811,13 +4925,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr_roof">
-          <div class="rl-boxicon">&#127968;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-roof"/></svg></div>
           <div class="rl-boxtitle">Roof</div>
           <div class="rl-boxsub">Squares, slope, waste factor. Hand measurements and how to read a Hover, Roofr, or EagleView roof report.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="msr_siding">
-          <div class="rl-boxicon">&#129717;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-siding"/></svg></div>
           <div class="rl-boxtitle">Siding</div>
           <div class="rl-boxsub">Squares by elevation, openings deduction, corner and trim linear feet. Hand and report methods.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -4828,13 +4942,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr_windows">
-          <div class="rl-boxicon">&#128273;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-windows"/></svg></div>
           <div class="rl-boxtitle">Windows</div>
           <div class="rl-boxsub">Rough opening vs. exact frame size, standard size conventions, measure from inside vs. outside.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="msr_doors">
-          <div class="rl-boxicon">&#128682;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-doors"/></svg></div>
           <div class="rl-boxtitle">Doors</div>
           <div class="rl-boxsub">Rough opening vs. slab size, prehung vs. slab, handing, standard sizes, patio doors.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -4845,13 +4959,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr_gutters">
-          <div class="rl-boxicon">&#128167;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-gutters"/></svg></div>
           <div class="rl-boxtitle">Gutters</div>
           <div class="rl-boxsub">Eave linear feet, downspout locations and count, elbows and inside/outside miters. Hand and report methods.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="msr_fascia">
-          <div class="rl-boxicon">&#129686;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-fascia"/></svg></div>
           <div class="rl-boxtitle">Fascia</div>
           <div class="rl-boxsub">Board width, linear feet, wrap vs. paint, and corner returns. Hand and report methods.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -4862,7 +4976,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 
       <div class="rl-boxgrid rl-single">
         <button class="rl-box" data-rlgoto="msr_soffit">
-          <div class="rl-boxicon">&#128737;&#65039;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-soffit"/></svg></div>
           <div class="rl-boxtitle">Soffit</div>
           <div class="rl-boxsub">Width from wall to fascia, linear feet, vented vs. solid areas, corner geometry. Hand and report methods.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -4880,13 +4994,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
       </div>
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr_roof_hand">
-          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-tape"/></svg></div>
           <div class="rl-boxtitle">Hand Measurements</div>
           <div class="rl-boxsub">Boots-on-the-roof approach: perimeter, slope, squares, waste, accessory counts.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="msr_roof_reports">
-          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-reports"/></svg></div>
           <div class="rl-boxtitle">Reading Reports</div>
           <div class="rl-boxsub">Hover, Roofr, EagleView, GAF QuickMeasure &mdash; what to trust, what to verify.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -5043,13 +5157,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
       </div>
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr_siding_hand">
-          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-tape"/></svg></div>
           <div class="rl-boxtitle">Hand Measurements</div>
           <div class="rl-boxsub">Wall by wall: squares, openings, corners, trim.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="msr_siding_reports">
-          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-reports"/></svg></div>
           <div class="rl-boxtitle">Reading Reports</div>
           <div class="rl-boxsub">Hover for siding &mdash; what's accurate, what to verify.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -5300,13 +5414,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
       </div>
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr_gutters_hand">
-          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-tape"/></svg></div>
           <div class="rl-boxtitle">Hand Measurements</div>
           <div class="rl-boxsub">Eave LF, downspout count and placement, corners, guards.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="msr_gutters_reports">
-          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-reports"/></svg></div>
           <div class="rl-boxtitle">Reading Reports</div>
           <div class="rl-boxsub">What the roof reports give you and what you still need to walk.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -5398,13 +5512,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
       </div>
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr_fascia_hand">
-          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-tape"/></svg></div>
           <div class="rl-boxtitle">Hand Measurements</div>
           <div class="rl-boxsub">LF, width, wrap vs. paint, corner returns.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="msr_fascia_reports">
-          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-reports"/></svg></div>
           <div class="rl-boxtitle">Reading Reports</div>
           <div class="rl-boxsub">Fascia LF from roof reports; width from the walk.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -5476,13 +5590,13 @@ body:has(#loginView[style*="block"]){background:#fff;}
       </div>
       <div class="rl-boxgrid">
         <button class="rl-box" data-rlgoto="msr_soffit_hand">
-          <div class="rl-boxicon">&#128207;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-tape"/></svg></div>
           <div class="rl-boxtitle">Hand Measurements</div>
           <div class="rl-boxsub">Width (wall to fascia), LF, area, vented vs. solid, corners.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
         <button class="rl-box" data-rlgoto="msr_soffit_reports">
-          <div class="rl-boxicon">&#128188;</div>
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-reports"/></svg></div>
           <div class="rl-boxtitle">Reading Reports</div>
           <div class="rl-boxsub">Some reports include soffit area; verify the width assumption.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
@@ -31463,7 +31577,7 @@ if(body) renderTOC(body);
 </script>
 
 
-<style id="cr-nachi-styles">#resourceLibraryView .rl-navcard{display:block;background:linear-gradient(135deg,rgba(74,111,165,.12),rgba(74,111,165,.05));border:1px solid #3d5875;border-left:4px solid #7fa6d6;border-radius:8px;padding:14px 16px;margin:14px 0;text-decoration:none;cursor:pointer;color:#cfe0f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;transition:background .12s,transform .1s;text-align:left;width:100%;box-sizing:border-box;font-family:inherit}#resourceLibraryView .rl-navcard:hover{background:linear-gradient(135deg,rgba(74,111,165,.22),rgba(74,111,165,.09));transform:translateY(-1px)}#resourceLibraryView .rl-navcard h3{margin:0 0 4px;font:800 15px Georgia,'Times New Roman',serif;color:#e8ecf1}#resourceLibraryView .rl-navcard p{margin:0;font-size:13px;color:#a0b0c8}#resourceLibraryView .rl-navcard .rl-boxgo{margin-top:8px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7fa6d6}#resourceLibraryView .rl-article h4{margin:14px 0 6px;font:700 15px Georgia,'Times New Roman',serif;color:#cfe0f5;letter-spacing:.02em}#resourceLibraryView .rl-article h5{margin:10px 0 4px;font:700 13px 'Segoe UI',Arial,sans-serif;color:#a8bcd4;letter-spacing:.04em;text-transform:uppercase}#resourceLibraryView .rl-article p{margin:0 0 10px;font-size:13.5px;line-height:1.6;color:#c9d3df}#resourceLibraryView .rl-article ul,#resourceLibraryView .rl-article ol{margin:6px 0 12px 0;padding-left:22px}#resourceLibraryView .rl-article li{margin:5px 0;font-size:13.5px;line-height:1.55;color:#c9d3df}#resourceLibraryView .rl-article li b{color:#e8ecf1}#resourceLibraryView .rl-article .rl-attribution{margin-top:16px;padding-top:10px;border-top:1px dashed rgba(127,166,214,.3);font-size:11.5px;color:#8a9bb0;font-style:italic}</style>
+<style id="cr-nachi-styles">#resourceLibraryView .rl-navcard{display:block;background:var(--ct-surface);border:1px solid var(--ct-line);border-left:3px solid var(--ct-red);border-radius:var(--ct-r-card);padding:14px 16px;margin:14px 0;text-decoration:none;cursor:pointer;color:var(--ct-ink);font-family:var(--ct-sans);transition:border-color .12s,transform .1s;text-align:left;width:100%;box-sizing:border-box;min-height:44px;box-shadow:var(--ct-card-sh)}#resourceLibraryView .rl-navcard:hover{border-color:var(--ct-red);transform:translateY(-1px)}#resourceLibraryView .rl-navcard h3{margin:0 0 4px;font:700 16px var(--ct-sans);letter-spacing:-.022em;color:var(--ct-ink)}#resourceLibraryView .rl-navcard p{margin:0;font-size:14px;line-height:1.55;color:var(--ct-ink-2)}#resourceLibraryView .rl-navcard .rl-boxgo{margin-top:8px;font:700 10px var(--ct-code);letter-spacing:.14em;text-transform:uppercase;color:var(--ct-mark)}#resourceLibraryView .rl-article h4{margin:20px 0 8px;font:700 18px var(--ct-sans);color:var(--ct-ink);letter-spacing:-.025em;line-height:1.25}#resourceLibraryView .rl-article h5{margin:14px 0 6px;font:700 11px var(--ct-code);color:var(--ct-ink-2);letter-spacing:.14em;text-transform:uppercase}#resourceLibraryView .rl-article p{margin:0 0 12px;font-size:16px;line-height:1.65;color:var(--ct-ink);max-width:68ch}#resourceLibraryView .rl-article ul,#resourceLibraryView .rl-article ol{margin:8px 0 14px 0;padding-left:22px;max-width:68ch}#resourceLibraryView .rl-article li{margin:6px 0;font-size:16px;line-height:1.6;color:var(--ct-ink)}#resourceLibraryView .rl-article li b{color:var(--ct-ink)}#resourceLibraryView .rl-article .rl-attribution{margin-top:20px;padding-top:12px;border-top:1px solid var(--ct-line);font-size:12.5px;color:var(--ct-ink-2);font-style:normal}</style>
 <script id="cr-nachi-script">
 (function(){
 'use strict';
@@ -43267,5 +43381,44 @@ window.CardinalDownload = Object.assign(window.CardinalDownload || {}, {
 }
 @media print{#teamView{background:#fff !important;}}
 </style>
+
+<script>
+/* Resource Library theme toggle (395) — Docket White / Siren Cut.
+   Scoped to the RL view only; does not touch the retail rb-light toggle. */
+(function(){
+  var KEY='cardinalRLTheme';
+  function view(){ return document.getElementById('resourceLibraryView'); }
+  function apply(t){
+    var v=view(); if(!v) return;
+    v.setAttribute('data-rltheme', t==='siren'?'siren':'docket');
+    var b=document.getElementById('rlThemeBtn');
+    if(b){
+      var dark = t==='siren';
+      b.textContent = dark ? '\u25D1' : '\u25D0';
+      b.setAttribute('aria-label', dark ? 'Switch to light' : 'Switch to dark');
+      b.setAttribute('title', dark ? 'Switch to light' : 'Switch to dark');
+    }
+  }
+  function saved(){
+    try{ return localStorage.getItem(KEY)||'docket'; }catch(e){ return 'docket'; }
+  }
+  function boot(){
+    apply(saved());
+    var b=document.getElementById('rlThemeBtn');
+    if(b && !b.dataset.rlwired){
+      b.dataset.rlwired='1';
+      b.addEventListener('click',function(){
+        var v=view(); if(!v) return;
+        var next = v.getAttribute('data-rltheme')==='siren' ? 'docket' : 'siren';
+        try{ localStorage.setItem(KEY,next); }catch(e){}
+        apply(next);
+      });
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+  else boot();
+  window.CardinalRLTheme = Object.assign(window.CardinalRLTheme || {}, {apply:apply, get:saved});
+})();
+</script>
 </body>
 </html>
