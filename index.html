@@ -2700,7 +2700,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 390 &#8212; Punch &amp; Repairs page now themes in rb-light: header, search, filter rail, tabs, sheets and the item detail sheet. The strip's boxes were hardcoded white — they were washed out in dark mode too, so this fixes today's look as well as light mode. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 391 &#8212; Client Directory in daylight (matte white). Client names are ink, not CRM colour, which failed contrast on a light ground. The strip's boxes were hardcoded white — they were washed out in dark mode too, so this fixes today's look as well as light mode. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12715,9 +12715,12 @@ async function openFollowUp(){
 var cdState = { sort:'name', dir:1, crm:'All', sets:{}, selMode:false, sel:[] };
 var cdSheet = { cat:null, pend:[] };
 var CD_CRMS = [
-  { key:'retail',    label:'Retail',    color:'#c9a227' },
-  { key:'insurance', label:'Claims',    color:'#4db8a8' },
-  { key:'community', label:'Community', color:'#8fb4d8' }
+  /* color = the matte-black brass palette (7.5:1+ on #141517).
+     colorLight = the same hue darkened for a light ground; the bright values
+     collapse to ~2.2-2.4:1 on white, well under the 4.5:1 body-text floor. */
+  { key:'retail',    label:'Retail',    color:'#c9a227', colorLight:'#8a6a12' },
+  { key:'insurance', label:'Claims',    color:'#4db8a8', colorLight:'#1f7a6b' },
+  { key:'community', label:'Community', color:'#8fb4d8', colorLight:'#2f6491' }
 ];
 /* Render-time label maps mirror cr-insstage / cr-comstage — stored values never change. */
 var CD_STAGE_LABEL = {
@@ -12794,7 +12797,7 @@ function cdCardHtml(pr){
   var tel = (pr.phone || '').replace(/[^+\d]/g, '');
   var on = cdState.sel.indexOf(pr.id) !== -1;
   var po = poOf(pr);
-  return '<div class="cd-card' + (on ? ' selon' : '') + '" data-proj="' + pr.id + '" style="--cc:' + meta.color + ';--sc:' + sc + '">' +
+  return '<div class="cd-card' + (on ? ' selon' : '') + '" data-proj="' + pr.id + '" style="--cc:' + meta.color + ';--ccl:' + (meta.colorLight || meta.color) + ';--sc:' + sc + '">' +
     '<span class="cd-selck">' + (on ? '\u2713' : '') + '</span>' +
     '<div class="bd">' +
       '<div class="nmrow">' + (po ? '<span class="cd-po">' + esc(String(po)) + ':</span>' : '') +
@@ -41643,6 +41646,70 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
   #cdFunnelBtn{display:none;}
   .cd-lay{display:grid;grid-template-columns:215px 1fr;gap:14px;align-items:start;}
   .cd-rail{display:block;background:#101113;border:1px solid #26282c;border-radius:12px;padding:13px;position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
+}
+
+/* ── Brass in daylight (build 391) · Option C, "matte white" ──────────────
+   Scoped overrides, not tokens, and deliberately so. Brass is a real design
+   -- "matte black, thin lines, no gradients, no glow" -- not an unswept gap,
+   so pointing it at --rbe-* would make it the same page as Estimates. This is
+   the calendar precedent (387): dark and light are genuinely different designs
+   here, and the dark original above is untouched byte-for-byte.
+   What carries over is the DISCIPLINE, not the colour: hairline rules, no
+   shadows, no gradients. Brass survives only on the spine, PO and CRM tag.
+   The client name is ink -- the CRM colours are tuned for #141517 and read
+   2.17-2.42:1 on white, under the 4.5:1 floor, so they move to --ccl. ── */
+:root[data-theme="rb-light"] #clientsView{background:#ffffff;}
+:root[data-theme="rb-light"] .cd-title{color:#141414;}
+:root[data-theme="rb-light"] #clientsView .btn.ghost{background:#ffffff;border-color:#e6e6e6;color:#3d3d3d;}
+:root[data-theme="rb-light"] .cd-sub{color:#767676;}
+:root[data-theme="rb-light"] .cd-search{background:#ffffff;border-color:#e6e6e6;color:#767676;}
+:root[data-theme="rb-light"] .cd-search input{color:#141414;}
+:root[data-theme="rb-light"] .cd-ctl .sl{color:#767676;}
+:root[data-theme="rb-light"] .cd-chip{color:#8a6a12;border-bottom-color:rgba(138,106,18,.35);}
+:root[data-theme="rb-light"] .cd-ico{border-color:#e6e6e6;background:#ffffff;color:#3d3d3d;}
+:root[data-theme="rb-light"] .cd-ico.on{border-color:#8a6a12;color:#8a6a12;}
+:root[data-theme="rb-light"] .cd-ico .bdg{background:#8a6a12;color:#ffffff;}
+:root[data-theme="rb-light"] .cd-selbtn{border-color:#e6e6e6;background:#ffffff;color:#3d3d3d;}
+:root[data-theme="rb-light"] .cd-selbtn.on{border-color:#c8202e;color:#a6291d;}
+:root[data-theme="rb-light"] .cd-admtag{background:#f2efe6;color:#6b5a2e;}
+:root[data-theme="rb-light"] .cd-card{background:#ffffff;border-color:#e6e6e6;box-shadow:none;}
+:root[data-theme="rb-light"] .cd-card::before{background:var(--ccl,var(--cc,#8a6a12));}
+:root[data-theme="rb-light"] .cd-po{color:#8a6a12;}
+:root[data-theme="rb-light"] .cd-name{color:#141414;}
+:root[data-theme="rb-light"] .cd-crmtag{color:var(--ccl,var(--cc,#8a6a12));}
+:root[data-theme="rb-light"] .cd-star{color:#cfcfcf;}
+:root[data-theme="rb-light"] .cd-addr{color:#8f8f8f;}
+:root[data-theme="rb-light"] .cd-tch{color:#767676;}
+:root[data-theme="rb-light"] .cd-rep{color:#c8202e;}
+:root[data-theme="rb-light"] .cd-abtn{border-color:#e6e6e6;background:#ffffff;}
+:root[data-theme="rb-light"] .cd-abtn svg{stroke:#8a6a12;}
+:root[data-theme="rb-light"] .cd-selck{border-color:#cfcfcf;color:#ffffff;}
+:root[data-theme="rb-light"] .cd-empty{border-color:#e0e0e0;color:#767676;}
+:root[data-theme="rb-light"] .cd-crmbar{background:rgba(251,251,251,.96);border-top-color:#efefef;}
+:root[data-theme="rb-light"] .cd-crmchip{background:#ffffff;border-color:#e6e6e6;color:#3d3d3d;}
+:root[data-theme="rb-light"] .cd-crmchip.on{border-color:#8a6a12;color:#8a6a12;}
+:root[data-theme="rb-light"] .cd-delbar{background:rgba(253,241,239,.96);border-top-color:#e7c2ba;}
+:root[data-theme="rb-light"] .cd-delcancel{color:#3d3d3d;}
+:root[data-theme="rb-light"] .cd-sortsel{background:#ffffff;border-color:#e6e6e6;color:#141414;}
+:root[data-theme="rb-light"] .cd-selall{border-color:#e6e6e6;background:#ffffff;color:#141414;}
+:root[data-theme="rb-light"] .cd-selall:hover{border-color:#8a6a12;color:#8a6a12;}
+:root[data-theme="rb-light"] .cd-note{color:#8f8f8f;}
+:root[data-theme="rb-light"] .cd-grp{border-top-color:#efefef;}
+:root[data-theme="rb-light"] .cd-grp .ft{color:#8a6a12;}
+:root[data-theme="rb-light"] .cd-grp .ft .n{background:#f2efe6;color:#6b5a2e;}
+:root[data-theme="rb-light"] .cd-frow{color:#3d3d3d;}
+:root[data-theme="rb-light"] .cd-frow .bx{border-color:#cfcfcf;color:#ffffff;}
+:root[data-theme="rb-light"] .cd-frow .c{color:#8f8f8f;}
+:root[data-theme="rb-light"] .cd-sheet .panel{background:#ffffff;border-color:#e6e6e6;}
+:root[data-theme="rb-light"] .cd-sheet .ph{border-bottom-color:#efefef;background:#ffffff;}
+:root[data-theme="rb-light"] .cd-sheet .ph .t{color:#141414;}
+:root[data-theme="rb-light"] .cd-sheet .ph button{color:#8a6a12;}
+:root[data-theme="rb-light"] .cd-srow{border-bottom-color:#efefef;color:#141414;}
+:root[data-theme="rb-light"] .cd-srow .chev{color:#8f8f8f;}
+:root[data-theme="rb-light"] .cd-srow .cnt2{background:#eaf6ee;color:#1f7a4d;}
+:root[data-theme="rb-light"] .cd-ssec{background:#fbfbfb;}
+@media (min-width:901px){
+  :root[data-theme="rb-light"] .cd-rail{background:#fbfbfb;border-color:#efefef;}
 }
 </style>
 
