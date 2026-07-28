@@ -736,17 +736,17 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 #brandLogo{background:#fff;border-radius:8px;padding:3px;height:40px !important;width:56px !important;object-fit:contain;flex:0 0 auto;cursor:pointer;}
 @media (max-width:640px){ #brandLogo{height:38px !important;width:52px !important;} }
 /* ---- pipeline widget ---- */
-.pipecard{border:1px solid #3d434c;border-radius:12px;background:linear-gradient(180deg,#2b2f36,#24282e);color:#dfe3e8;padding:14px 16px;margin:14px 0;}
-.pipetitle{font:800 15px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;margin-bottom:10px;}
+.pipecard{border:1px solid var(--rbe-line2);border-radius:12px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));color:var(--rbe-ink);padding:14px 16px;margin:14px 0;}
+.pipetitle{font:800 15px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,var(--rbe-accdk),var(--rbe-acc) 45%,var(--rbe-acclt));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc);margin-bottom:10px;}
 .piperow{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;justify-content:space-evenly;}
 .pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;max-width:200px;}
 .pipebtn .pcirc{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;
   margin:0 auto 6px;color:#fff;font:800 30px 'Segoe UI',Arial,sans-serif;
   transition:transform .12s, box-shadow .12s;}
 .pipebtn:hover .pcirc{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.25);}
-.pipebtn .plabel{display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:#e9e6df;}
+.pipebtn .plabel{display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
 .pipebtn .pcount{display:block;font:800 20px 'Segoe UI',Arial,sans-serif;color:#fff;line-height:1.2;}
-.pipebtn .pmoney{display:block;font:700 12px 'Segoe UI',Arial,sans-serif;color:#b8bec7;}
+.pipebtn .pmoney{display:block;font:700 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
 .pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
 .pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;} .pipe-closed{background:#607D8B;}
 .pipe-prospect{background-image:linear-gradient(160deg,
@@ -1929,7 +1929,7 @@ body.restoring #restoreVeil{display:flex;}
 .opsstat{text-align:center;flex:1;}
 .opsc{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;
   margin:0 auto 6px;color:#fff;font:800 20px 'Segoe UI',Arial,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.18);}
-.opsstat small{font:700 10.5px 'Segoe UI',Arial,sans-serif;color:#ffffff;line-height:1.25;display:block;}
+.opsstat small{font:700 10.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);line-height:1.25;display:block;}
 .arwrap{margin-top:10px;display:flex;flex-direction:column;gap:7px;}
 .arrow2{display:flex;align-items:center;gap:8px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#5c4a42;}
 .arrow2 .arlbl{flex:0 0 42px;}
@@ -2669,7 +2669,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 379 &#8212; The Estimates menu item now opens the real redesigned page instead of the old un-redesigned table — no more duplicate AI Estimates entry, one Estimates everywhere. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 380 &#8212; Home dashboard: pipeline circles and Work Schedule counters now support the red/black light theme. Milestone colors (gold/orange/green/blue/purple/grey) stay fixed on purpose — those are meaningful, not decorative. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
