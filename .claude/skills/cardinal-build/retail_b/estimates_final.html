@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estimates — final spec, working filters</title>
+<style>
+:root{--iron:#202329;--iron2:#1a1d22;--gold:#d4a017;--goldlt:#f5d061;--golddk:#8a5a00;--dcard:#2a2e35;
+--dline:#3a3f47;--ondk:#e9e6df;--mute:#9aa0a8;--money:#8fe0ae;--ok:#3fae6a;
+--n-uns:#dbe7f7;--n-snt:#6fc3ff;--n-acc:#3dff9a}
+*{box-sizing:border-box}
+body{margin:0;background:#101218;color:#dfe3e8;font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+header.top{position:sticky;top:0;z-index:90;background:#0d0f14;border-bottom:1px solid #262a31;padding:12px 16px;display:flex;gap:11px;align-items:center;flex-wrap:wrap}
+header.top h1{margin:0;font:700 15.5px Georgia,serif;color:var(--goldlt);flex:1;min-width:180px}
+.seg{display:flex;border:1px solid #333842;border-radius:10px;overflow:hidden}
+.seg button{background:#171a20;border:0;color:#aab1ba;font:600 12.5px inherit;padding:8px 15px;cursor:pointer}
+.seg button.on{background:var(--gold);color:#17181b}
+.stage{padding:20px 14px 60px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.dirHead{width:100%;max-width:1280px;background:#14171d;border:1px solid #262a31;border-radius:13px;padding:12px 16px}
+.dirHead .nm{font:800 14.5px inherit;color:var(--goldlt)}
+.dirHead .ds{font-size:12.5px;color:#9aa1aa;margin-top:3px;line-height:1.5}
+.view{display:none;width:100%;justify-content:center}
+body[data-w="mobile"] .vm,body[data-w="desktop"] .vd{display:flex}
+.frame{background:var(--iron);border:1px solid #2c3038;border-radius:14px;overflow:hidden;box-shadow:0 16px 44px rgba(0,0,0,.5);position:relative}
+.vm .frame{width:100%;max-width:390px;min-height:640px}
+.vd .frame{width:100%;max-width:1280px}
+.bar{background:#1a1215;padding:9px 12px;display:flex;align-items:center;gap:10px;border-bottom:2px solid;border-image:linear-gradient(90deg,transparent,var(--gold) 25%,var(--goldlt) 50%,var(--gold) 75%,transparent) 1;position:relative}
+.sq{width:30px;height:30px;border:1px solid #3a2f22;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#d8c9a8;font-size:12px}
+.sq.g{background:var(--gold);color:#1a1a1a;font-weight:700;border-color:transparent}
+.sq.home{border-color:var(--gold);background:rgba(212,160,23,.1);box-shadow:0 0 8px rgba(212,160,23,.25)}
+.ttl{position:absolute;left:50%;transform:translateX(-50%);font:700 21px Georgia,serif;background:linear-gradient(100deg,var(--golddk),var(--gold) 55%,var(--goldlt));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.spacer{flex:1}
+.page{padding:14px 12px 22px}
+h2.vh{margin:0;font:700 20px Georgia,serif;background:linear-gradient(100deg,var(--golddk),var(--gold) 45%,var(--goldlt));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+p.sub{margin:1px 0 11px;font-size:12px;color:#cfd3d8}
+.ctlrow{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.ctlrow .sl{font-size:12px;color:var(--mute)}
+.sortchip{color:#6db3f2;font-weight:700;font-size:13px;background:none;border:0;padding:2px;cursor:pointer;border-bottom:1px dashed rgba(109,179,242,.5)}
+.ico{width:34px;height:34px;border:1px solid var(--dline);background:var(--dcard);color:#cfd6df;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;position:relative}
+.ico .bdg{position:absolute;top:-6px;right:-6px;background:var(--gold);color:#17181b;font:800 9.5px ui-monospace,Menlo,monospace;border-radius:999px;padding:1px 5px;display:none}
+.ico .bdg.show{display:block}
+.ctlrow .right{margin-left:auto;display:flex;gap:8px}
+.gh{display:flex;align-items:center;gap:9px;margin:2px 0 8px}
+.gh .gt{font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase}
+.gh .gn{font:700 10px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;border-radius:999px;padding:2px 8px}
+.gh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--lg,rgba(212,160,23,.5)),transparent)}
+.lane{margin-bottom:15px}
+.ecard{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;border-radius:13px;margin-bottom:11px;display:flex;align-items:center;gap:11px;padding:10px 12px 10px 15px;cursor:pointer;box-shadow:0 7px 18px rgba(0,0,0,.45),0 2px 5px rgba(0,0,0,.35);position:relative}
+.ecard::before{content:'';position:absolute;left:0;top:8%;height:84%;width:3px;border-radius:3px;background:var(--rcn);box-shadow:0 0 6px var(--rcn),0 0 14px var(--rcn)}
+.ecard .mid{flex:1;min-width:0}
+.ecard .dt{font-weight:800;font-size:13.5px;background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.ecard .cl{font-size:11.5px;color:var(--mute)}
+.ecard .cl .po{font-weight:800;background:linear-gradient(100deg,#d0564a,#caa030);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;opacity:.9}
+.ecard .cl .rp{font-weight:800;color:#e8c23a}
+.ecard .end{text-align:right;flex:0 0 auto}
+.ecard .money{display:block;font:800 14px ui-monospace,Menlo,monospace;color:var(--money)}
+.ecard .when{display:block;font-size:10.5px;color:var(--mute);margin-top:3px}
+.ecard .when.flag{color:#f2a08a;font-weight:700}
+.emptynote{border:1px dashed #4a4f58;border-radius:11px;padding:14px;text-align:center;color:#8b929c;font-size:12.5px;margin-bottom:12px}
+/* desktop dual pane */
+.lay{display:grid;grid-template-columns:215px 1fr;min-height:640px}
+.filters{background:var(--iron2);border-right:1px solid #2c3038;padding:14px 13px;overflow:auto}
+.sortsel{width:100%;background:var(--dcard);border:1px solid var(--dline);color:#dfe3e8;border-radius:9px;padding:8px 10px;font:600 12.5px inherit;margin-bottom:10px}
+.selrow{display:flex;gap:8px;margin-bottom:10px}
+.selbtn{flex:1;border:1px solid var(--dline);background:var(--dcard);color:#c8cdd4;border-radius:9px;padding:7px 6px;font:700 11.5px inherit;cursor:pointer;text-align:center}
+.selbtn:hover{border-color:var(--gold);color:var(--goldlt)}
+.selbtn.cl{color:#e0937f}.selbtn.cl:hover{border-color:#c96b5c;color:#f2a08a}
+.railnote{font-size:10.5px;color:#6d747e;margin:0 0 12px;line-height:1.45}
+.fgrp{margin-bottom:14px}
+.fgrp .ft{font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--goldlt);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.fgrp .ft .n{background:#3a3f47;color:#cfd6df;border-radius:999px;padding:1px 7px;font-size:9.5px}
+.frow{display:flex;align-items:center;gap:8px;padding:5px 2px;color:#c8cdd4;font-size:12.5px;cursor:pointer}
+.frow .bx{width:15px;height:15px;border:1.4px solid #4a505a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#17181b}
+.frow.on .bx{background:var(--ok);border-color:var(--ok);font-weight:800}
+.frow .c{margin-left:auto;font:700 10px ui-monospace,Menlo,monospace;color:#6d747e}
+.content{padding:14px 15px;overflow:auto}
+.dlanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0 14px;align-items:start}
+.dlanes .lane{margin-bottom:0}
+.pipesum{display:flex;justify-content:flex-end;gap:12px;border-top:1px solid #3a3f47;margin-top:10px;padding-top:10px;font:700 12px ui-monospace,Menlo,monospace;color:var(--mute);flex-wrap:wrap}
+.pipesum b{color:var(--money);font-size:14px}
+/* mobile sheets */
+.sheet{position:absolute;inset:0;background:rgba(10,12,16,.66);display:none;z-index:20}
+.sheet.open{display:flex;align-items:flex-start;justify-content:center}
+.sheet .panel{background:#1c2027;border:1px solid #333842;border-radius:0 0 16px 16px;width:100%;max-height:86%;overflow:auto}
+.sheet .ph{display:flex;align-items:center;padding:13px 15px;border-bottom:1px solid #2c3038;position:sticky;top:0;background:#1c2027}
+.sheet .ph .t{font:800 14px inherit;color:var(--goldlt);flex:1;text-align:center}
+.sheet .ph button{background:none;border:0;color:#6db3f2;font:700 13.5px inherit;cursor:pointer;padding:4px 6px}
+.srow{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #262b32;cursor:pointer;font-size:14px}
+.srow .ck{width:20px;color:var(--ok);font-weight:800;visibility:hidden}
+.srow.on .ck{visibility:visible}
+.srow .chev{margin-left:auto;color:#5d646e}
+.srow .cnt{margin-left:auto;font:700 10.5px ui-monospace,Menlo,monospace;background:#2f5a3c;color:#8fe0ae;border-radius:999px;padding:2px 8px;display:none}
+.srow .cnt.show{display:block}
+.clearall{display:block;background:none;border:0;color:#e08a7a;font:700 12.5px inherit;padding:10px 16px;cursor:pointer;text-align:left}
+</style></head>
+<body data-w="mobile">
+<header class="top">
+  <h1>Estimates — working filters</h1>
+  <div class="seg" id="wSeg"><button data-w="mobile" class="on">Mobile</button><button data-w="desktop">Desktop</button></div>
+</header>
+<div class="stage">
+<div class="dirHead"><div class="nm">Status Lanes — filters are live, caps are gone</div>
+<div class="ds">The filters actually filter now. Check <b>Sent + Theo</b> on desktop and that is exactly what renders; Sent + Accepted + Unsent with Joey shows Joey's three lanes. Nothing checked = everything shows. No auto-archive: accepted estimates stay in their lane. With real filtering there's no "Show all 60" — the filter is the volume control. Mobile uses the identical system as All Leads &amp; Jobs: the sort chip and the funnel opening the two-level filter page. One shared state drives both — filter on desktop, flip to mobile, still filtered.</div></div>
+
+<!-- ============ MOBILE ============ -->
+<div class="view vm"><div class="frame" data-mobile>
+  <div class="bar"><div class="sq">☰</div><div class="sq home" title="CRM home"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#f5d061;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg></div><div class="ttl">Retail</div><div class="spacer"></div><div class="sq">🔍</div><div class="sq g">＋</div></div>
+  <div class="page">
+    <h2 class="vh">💰 Estimates</h2><p class="sub" data-sub></p>
+    <div class="ctlrow"><span class="sl">Sort by</span><button class="sortchip" data-open="sort">Days waiting</button>
+      <div class="right"><div class="ico" data-dirtoggle>⇅</div><div class="ico" data-open="filter">⛃<span class="bdg" data-badge>0</span></div></div></div>
+    <div data-lanes></div>
+  </div>
+</div></div>
+
+<!-- ============ DESKTOP ============ -->
+<div class="view vd"><div class="frame">
+  <div class="bar"><div class="sq">☰</div><div class="sq home" title="CRM home"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#f5d061;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg></div><div class="ttl">Retail</div><div class="spacer"></div><div class="sq">🔍</div><div class="sq g">＋</div></div>
+  <div class="lay">
+    <div class="filters">
+      <select class="sortsel" data-sortsel>
+        <option>Days waiting</option><option>Newest first</option><option>Amount, high to low</option><option>Client name</option>
+      </select>
+      <div class="selrow"><button class="selbtn" data-selall>☑ Select all</button><button class="selbtn cl" data-clrall>Clear all</button></div>
+      <div class="railnote">Nothing checked = everything shows.</div>
+      <div data-rail></div>
+    </div>
+    <div class="content">
+      <h2 class="vh" style="font-size:18px">💰 Estimates</h2><p class="sub" data-sub></p>
+      <div class="dlanes" data-lanes></div>
+      <div class="pipesum" data-sum></div>
+    </div>
+  </div>
+</div></div>
+
+</div>
+
+<template id="sheets">
+  <div class="sheet" data-sheet="sort"><div class="panel">
+    <div class="ph"><span class="t">Sort by</span><button data-close>Close</button></div><div data-sortlist></div>
+  </div></div>
+  <div class="sheet" data-sheet="filter"><div class="panel">
+    <div class="ph"><button data-close>Done</button><span class="t" data-ftitle>Filters (0)</span><span style="width:44px"></span></div>
+    <button class="clearall" data-clearall>Clear all</button><div data-catlist></div>
+  </div></div>
+  <div class="sheet" data-sheet="sub"><div class="panel">
+    <div class="ph"><button data-back>‹ Back</button><span class="t" data-subtitle></span><button data-apply style="color:var(--ok)">Apply</button></div>
+    <div data-sublist></div>
+  </div></div>
+</template>
+
+<script>
+var ESTS=[
+ {t:'Gutter Estimate — Betty Mann',po:'1007',tr:'Gutters',rep:'Joey',amt:4180,st:'Unsent',when:'draft · Jul 26',days:0,idx:14},
+ {t:'Window Estimate — L. Carter',po:'1011',tr:'Windows',rep:'Nick',amt:21300,st:'Unsent',when:'draft · Jul 25',days:0,idx:13},
+ {t:'Roof Repair — M. Ellis',po:'1013',tr:'Roofing',rep:'Theo',amt:2450,st:'Unsent',when:'draft · Jul 25',days:0,idx:12},
+ {t:'Siding Estimate — K. Boone',po:'1014',tr:'Siding',rep:'Jacob',amt:14700,st:'Unsent',when:'draft · Jul 24',days:0,idx:11},
+ {t:'Roof Estimate — D. Whitman',po:'1009',tr:'Roofing',rep:'Nick',amt:19200,st:'Sent',when:'7 days out',days:7,idx:5},
+ {t:'Gutter Estimate — R. Pruitt',po:'1016',tr:'Gutters',rep:'Joey',amt:3850,st:'Sent',when:'6 days out',days:6,idx:6},
+ {t:'Roof Estimate — T. Nguyen',po:'1018',tr:'Roofing',rep:'Nick',amt:24900,st:'Sent',when:'4 days out',days:4,idx:7},
+ {t:'Siding Estimate — Curtis Hoskins',po:'1002',tr:'Siding',rep:'Theo',amt:11600,st:'Sent',when:'3 days out',days:3,idx:8},
+ {t:'Roof Estimate — A. Silva',po:'1021',tr:'Roofing',rep:'Joey',amt:8900,st:'Sent',when:'2 days out',days:2,idx:9},
+ {t:'Window Estimate — P. Ramos',po:'1022',tr:'Windows',rep:'Jacob',amt:6750,st:'Sent',when:'1 day out',days:1,idx:10},
+ {t:'Estimate — Jacob Henderson',po:'1002',tr:'Roofing',rep:'Nick',amt:32150,st:'Accepted',when:'accepted Jul 25',days:0,idx:4},
+ {t:'Gutter Estimate — G. Osei',po:'1019',tr:'Gutters',rep:'Theo',amt:5200,st:'Accepted',when:'accepted Jul 23',days:0,idx:3}
+];
+var LMETA={Unsent:{t:'UNSENT — DRAFTS',col:'#aab1ba',lg:'rgba(120,130,145,.5)',neon:'var(--n-uns)'},
+Sent:{t:'SENT — WAITING',col:'#8ac4f2',lg:'rgba(138,196,242,.5)',neon:'var(--n-snt)'},
+Accepted:{t:'ACCEPTED',col:'#8fe0ae',lg:'rgba(79,174,116,.5)',neon:'var(--n-acc)'}};
+var ORDER=['Unsent','Sent','Accepted'];
+var CATS={'Status':['Unsent','Sent','Accepted'],'Rep':['Theo','Nick','Joey','Jacob'],'Trade':['Roofing','Siding','Gutters','Windows']};
+var SORTS=['Days waiting','Newest first','Amount, high to low','Client name'];
+var STATE={sort:'Days waiting',checks:{}};
+
+function activeStatuses(){
+  var sel=STATE.checks.Status||[];
+  return sel.length?sel:['Unsent','Sent','Accepted'];  /* no archive: accepted stays in its lane */
+}
+function match(e){
+  if(activeStatuses().indexOf(e.st)<0)return false;
+  var r=STATE.checks.Rep||[],t=STATE.checks.Trade||[];
+  if(r.length&&r.indexOf(e.rep)<0)return false;
+  if(t.length&&t.indexOf(e.tr)<0)return false;
+  return true;
+}
+function sortRows(rows){
+  var s=STATE.sort;
+  return rows.slice().sort(function(a,b){
+    if(s==='Days waiting')return b.days-a.days;
+    if(s==='Newest first')return b.idx-a.idx;
+    if(s==='Amount, high to low')return b.amt-a.amt;
+    return a.t.localeCompare(b.t);
+  });
+}
+function money(n){return '$'+n.toLocaleString()}
+function cardHtml(e){
+  return '<div class="ecard" style="--rcn:'+LMETA[e.st].neon+'"><div class="mid"><div class="dt">'+e.t+'</div>'+
+  '<div class="cl"><span class="po">'+e.po+'</span> · '+e.tr+' · <span class="rp">'+e.rep+'</span></div></div>'+
+  '<div class="end"><span class="money">'+money(e.amt)+'</span><span class="when'+(e.days>=5?' flag':'')+'">'+e.when+(e.days>=5?' ⚑':'')+'</span></div></div>';
+}
+function render(){
+  var vis=ESTS.filter(match);
+  var html='';
+  activeStatuses().slice().sort(function(a,b){return ORDER.indexOf(a)-ORDER.indexOf(b)}).forEach(function(st){
+    var rows=sortRows(vis.filter(function(e){return e.st===st}));
+    var m=LMETA[st];
+    html+='<div class="lane" style="--lg:'+m.lg+'"><div class="gh"><span class="gt" style="color:'+m.col+'">'+m.t+'</span><span class="gn">'+rows.length+'</span></div>'+
+      (rows.length?rows.map(cardHtml).join(''):'<div class="emptynote">Nothing here with these filters.</div>')+
+      '</div>';
+  });
+  document.querySelectorAll('[data-lanes]').forEach(function(el){el.innerHTML=html});
+  var open=vis.filter(function(e){return e.st==='Unsent'||e.st==='Sent'}).reduce(function(a,e){return a+e.amt},0);
+  var acc=vis.filter(function(e){return e.st==='Accepted'}).reduce(function(a,e){return a+e.amt},0);
+  var sum=document.querySelector('[data-sum]');
+  if(sum)sum.innerHTML='showing '+vis.length+' · open pipeline <b>'+money(open)+'</b> · accepted <b>'+money(acc)+'</b>';
+  var n=0;for(var k in STATE.checks)n+=STATE.checks[k].length;
+  document.querySelectorAll('[data-sub]').forEach(function(el){el.textContent=vis.length+' shown of '+ESTS.length+(n?' · '+n+' filter'+(n>1?'s':'')+' active':' · grouped by status')});
+  var b=document.querySelector('[data-badge]');
+  if(b){b.textContent=n;b.classList.toggle('show',n>0)}
+  var ft=document.querySelector('[data-ftitle]');if(ft)ft.textContent='Filters ('+n+')';
+  buildRail();if(window.buildCats)buildCats();
+}
+function buildRail(){
+  var rail=document.querySelector('[data-rail]');if(!rail)return;
+  rail.innerHTML='';
+  Object.keys(CATS).forEach(function(cat){
+    var g=document.createElement('div');g.className='fgrp';
+    var on=STATE.checks[cat]||[];
+    g.innerHTML='<div class="ft">'+cat+(on.length?' <span class="n">'+on.length+'</span>':'')+'</div>';
+    CATS[cat].forEach(function(o){
+      var cnt=ESTS.filter(function(e){return (cat==='Status'?e.st:cat==='Rep'?e.rep:e.tr)===o}).length;
+      var r=document.createElement('div');r.className='frow'+(on.indexOf(o)>-1?' on':'');
+      r.innerHTML='<span class="bx">'+(on.indexOf(o)>-1?'✓':'')+'</span>'+o+'<span class="c">'+cnt+'</span>';
+      r.onclick=function(){
+        var arr=STATE.checks[cat]||(STATE.checks[cat]=[]);
+        var i=arr.indexOf(o);if(i>-1)arr.splice(i,1);else arr.push(o);
+        if(!arr.length)delete STATE.checks[cat];
+        render();
+      };
+      g.appendChild(r);
+    });
+    rail.appendChild(g);
+  });
+}
+document.querySelector('[data-selall]').onclick=function(){Object.keys(CATS).forEach(function(c){STATE.checks[c]=CATS[c].slice()});render()};
+document.querySelector('[data-clrall]').onclick=function(){STATE.checks={};render()};
+document.querySelector('[data-sortsel]').onchange=function(){STATE.sort=this.value;
+  var ch=document.querySelector('.sortchip');if(ch)ch.textContent=this.value;render()};
+(function(){
+ var f=document.querySelector('[data-mobile]');
+ var tpl=document.getElementById('sheets').content.cloneNode(true);f.appendChild(tpl);
+ var sheets={};f.querySelectorAll('[data-sheet]').forEach(function(x){sheets[x.dataset.sheet]=x});
+ var cur=null,pend=null;
+ function open(n){sheets[n].classList.add('open')}function close(n){sheets[n].classList.remove('open')}
+ window.buildCats=function(){
+  var cl=f.querySelector('[data-catlist]');if(!cl)return;cl.innerHTML='';
+  Object.keys(CATS).forEach(function(c){
+   var k=(STATE.checks[c]||[]).length;
+   var r=document.createElement('div');r.className='srow';
+   r.innerHTML='<span>'+c+'</span><span class="cnt'+(k?' show':'')+'">'+k+'</span><span class="chev">›</span>';
+   r.onclick=function(){cur=c;pend=(STATE.checks[c]||[]).slice();paintSub();close('filter');open('sub')};
+   cl.appendChild(r);
+  });
+  var sl=f.querySelector('[data-sortlist]');sl.innerHTML='';
+  SORTS.forEach(function(sv){
+   var r=document.createElement('div');r.className='srow'+(sv===STATE.sort?' on':'');
+   r.innerHTML='<span class="ck">✓</span><span>'+sv+'</span>';
+   r.onclick=function(){STATE.sort=sv;f.querySelector('.sortchip').textContent=sv;
+    var ds=document.querySelector('[data-sortsel]');if(ds)ds.value=sv;render();close('sort')};
+   sl.appendChild(r);
+  });
+ };
+ function paintSub(){
+  f.querySelector('[data-subtitle]').textContent=cur;
+  var el=f.querySelector('[data-sublist]');el.innerHTML='';
+  CATS[cur].forEach(function(o){
+   var r=document.createElement('div');r.className='srow'+(pend.indexOf(o)>-1?' on':'');
+   r.innerHTML='<span class="ck">✓</span><span>'+o+'</span>';
+   r.onclick=function(){var i=pend.indexOf(o);if(i>-1)pend.splice(i,1);else pend.push(o);r.classList.toggle('on')};
+   el.appendChild(r);
+  });
+ }
+ f.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){open(b.dataset.open)}});
+ f.querySelectorAll('[data-close]').forEach(function(b){b.onclick=function(){close(b.closest('[data-sheet]').dataset.sheet)}});
+ f.querySelector('[data-back]').onclick=function(){close('sub');open('filter')};
+ f.querySelector('[data-apply]').onclick=function(){
+  if(pend.length)STATE.checks[cur]=pend.slice();else delete STATE.checks[cur];
+  render();close('sub');open('filter')};
+ f.querySelector('[data-clearall]').onclick=function(){STATE.checks={};render()};
+ var asc=false;f.querySelector('[data-dirtoggle]').onclick=function(){asc=!asc;this.style.color=asc?'#f5d061':'#cfd6df'};
+})();
+render();
+document.getElementById('wSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+document.body.dataset.w=b.dataset.w;this.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)})});
+</script>
+</body></html>
