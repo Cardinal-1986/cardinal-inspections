@@ -159,7 +159,10 @@ def gate_dupe_api(src):
         print(f"       window.{k} plainly assigned {v}x — use Object.assign merge")
 
 
-LABEL_RE = re.compile(r"v2026-[\w.\-]+")
+# The date alone is not the build identity: two builds ship on one day routinely,
+# and comparing date-sets reported a false RED on 390 and 391. Capture the build
+# NUMBER as well, so the bump gate measures what actually has to change.
+LABEL_RE = re.compile(r"v2026-[\w.\-]+(?:\s+build\s+\d+)?")
 
 
 def gate_label(src, prev_src):
