@@ -2652,7 +2652,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="quickinsp">&#9889; Quick Inspection</button>
           <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
           <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
-          <button class="navopt" data-nav="aiestimates">&#9889; AI Estimates</button> <button class="navopt" data-nav="abcsupply">&#129521; ABC Supply</button>
+          <button class="navopt" data-nav="abcsupply">&#129521; ABC Supply</button>
           <button class="navopt" data-nav="coach">&#127919; Objection Coach</button>
 
           <div class="navsec">Insurance</div>
@@ -2669,7 +2669,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 378 &#8212; Fixed the real cause of the stuck-white background: a JS helper was force-setting inline white on the Estimates mount on a timer, beating every CSS theme rule. Dark mode now actually renders dark there. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 379 &#8212; The Estimates menu item now opens the real redesigned page instead of the old un-redesigned table — no more duplicate AI Estimates entry, one Estimates everywhere. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -13121,7 +13121,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'companydocs'){ openCompanyDocs(); }
   else if(nav === 'quickinsp'){ qiFreshStart(); }
-  else if(nav === 'aiestimates'){ if(window.crOpenEstimates) window.crOpenEstimates(); } else if(nav === 'abcsupply'){ if(window.CardinalABC) window.CardinalABC.open(); }
+  else if(nav === 'estimates' || nav === 'aiestimates'){ if(window.crOpenEstimates) window.crOpenEstimates(); } else if(nav === 'abcsupply'){ if(window.CardinalABC) window.CardinalABC.open(); }
   else if(nav === 'claims'){ if(window.crOpenClaims) window.crOpenClaims(); }
   else if(nav === 'pricing'){ if(window.crOpenPricing) window.crOpenPricing('roofing'); }
   else if(nav === 'coach'){ if(window.CardinalCoach) window.CardinalCoach.open(); }
@@ -30079,7 +30079,7 @@ var COMMANDS = [
 { icon:'\uD83C\uDFD8\uFE0F', label:'Community Hub',     section:'Views',   run:function(){ if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show==='function') window.CardinalCommunityHub.show(); } },
 { icon:'\uD83D\uDCC8', label:'Reports',                 section:'Views',   run:function(){ if(typeof window.openReportsView==='function') window.openReportsView(); } },
 { icon:'\u26A1',       label:'Quick Inspection',        section:'Actions', run:function(){ if(typeof window.showQuickInsp==='function') window.showQuickInsp(); else if(typeof window.startQuickInsp==='function') window.startQuickInsp(); } },
-{ icon:'\u26A1',       label:'AI Estimates',            section:'Actions', run:function(){ if(typeof window.crOpenEstimates==='function') window.crOpenEstimates(); } },
+{ icon:'\u26A1',       label:'Estimates',               section:'Actions', run:function(){ if(typeof window.crOpenEstimates==='function') window.crOpenEstimates(); } },
 { icon:'\uD83D\uDEE1\uFE0F', label:'Insurance Claims',  section:'Actions', run:function(){ if(typeof window.crOpenClaims==='function') window.crOpenClaims(); } },
 { icon:'\uD83D\uDCB0', label:'Pricing Catalog',         section:'Actions', run:function(){ if(typeof window.crOpenPricing==='function') window.crOpenPricing('roofing'); } },
 { icon:'\uD83C\uDFAF', label:'Objection Coach',         section:'Actions', run:function(){ if(window.CardinalCoach && typeof window.CardinalCoach.open==='function') window.CardinalCoach.open(); } },
