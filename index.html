@@ -2669,7 +2669,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 383 &#8212; Recent Leads rows, Today band rows, and the Client Projects header now theme correctly — same red/black light treatment as the rest of retail. </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 384 &#8212; Punch & Repairs home strip now themes correctly. Urgency/priority/CRM badge colors stay fixed — same as milestone colors elsewhere, they're semantic, not decorative. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42125,30 +42125,30 @@ if(typeof _origOLF === 'function'){
 .pu-ctl .right{margin-left:auto;display:flex;gap:8px;}
 .pu-lay{display:block;}
 .pu-rail{display:none;}
-.pu-card{background:linear-gradient(180deg,#2e333b,#262a31);border:1px solid #454b55;border-top-color:#525966;
+.pu-card{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);
   border-radius:12px;margin-bottom:10px;padding:11px 13px;display:flex;gap:11px;align-items:flex-start;
   position:relative;overflow:hidden;cursor:pointer;}
 .pu-card::before{content:'';position:absolute;left:0;top:10%;height:80%;width:3px;border-radius:3px;background:var(--pc,#8a93a1);}
 .pu-card.urgent::before{background:#e2574a;box-shadow:0 0 7px rgba(226,87,74,.6);}
 .pu-card.done{opacity:.55;}
-.pu-box{width:22px;height:22px;border:1.6px solid #5a6069;border-radius:6px;flex:0 0 auto;margin-top:1px;
-  display:flex;align-items:center;justify-content:center;font:800 12px inherit;color:#17181b;}
+.pu-box{width:22px;height:22px;border:1.6px solid var(--rbe-checkbd);border-radius:6px;flex:0 0 auto;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;font:800 12px inherit;color:var(--rbe-checkfg);}
 .pu-card.done .pu-box{background:#3fae6a;border-color:#3fae6a;}
 .pu-bd{flex:1;min-width:0;padding-left:5px;}
-.pu-t{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#e9e6df;}
+.pu-t{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
 .pu-card.done .pu-t{text-decoration:line-through;}
-.pu-cl{font-size:11.5px;font-weight:800;background:linear-gradient(100deg,#e2574a,#d4a017 55%,#f5d061);
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#d4a017;}
-.pu-m{font-size:10.5px;color:#8b929c;margin-top:2px;}
+.pu-cl{font-size:11.5px;font-weight:800;background:linear-gradient(100deg,var(--rbe-name1),var(--rbe-acc) 55%,var(--rbe-acclt));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc);}
+.pu-m{font-size:10.5px;color:var(--rbe-mute2);margin-top:2px;}
 .pu-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px;}
 .pu-tag{font:700 8.5px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;
-  padding:2.5px 8px;border-radius:999px;border:1px solid #4a4f58;color:#b5bcc4;white-space:nowrap;}
+  padding:2.5px 8px;border-radius:999px;border:1px solid var(--rbe-line);color:var(--rbe-mute);white-space:nowrap;}
 .pu-tag.urg{border-color:#e2574a;color:#f2a08a;}
 .pu-tag.crm-retail{border-color:#d4a017;color:#f5d061;}
 .pu-tag.crm-insurance{border-color:#2dd4bf;color:#7ef0dc;}
 .pu-tag.crm-community{border-color:#8ad0f5;color:#bfe3fa;}
-.pu-who{margin-left:auto;font-size:10.5px;font-weight:800;color:#e8c23a;}
-.pu-empty{border:1px dashed #4a4f58;border-radius:11px;padding:16px;text-align:center;color:#8b929c;
+.pu-who{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--rbe-rep);}
+.pu-empty{border:1px dashed var(--rbe-empty-bd);border-radius:11px;padding:16px;text-align:center;color:var(--rbe-empty-fg);
   font:600 12.5px 'Segoe UI',Arial,sans-serif;}
 .pu-grp{font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#d4a017;
   margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid #3a3f47;display:flex;align-items:center;gap:8px;}
@@ -42175,10 +42175,10 @@ if(typeof _origOLF === 'function'){
 .pu-strip{margin:14px 0;}
 .pu-strip .sh{display:flex;align-items:center;gap:9px;margin-bottom:8px;cursor:pointer;}
 .pu-strip .sh b{font:800 13px Georgia,'Times New Roman',serif;
-  background:linear-gradient(100deg,#8a5a00,#d4a017 45%,#f5d061);-webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;color:#d4a017;}
-.pu-strip .sh .n{font:700 10px ui-monospace,Menlo,monospace;background:#3a3f47;color:#cfd6df;border-radius:999px;padding:2px 8px;}
-.pu-strip .sh .all{margin-left:auto;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#d4a017;}
+  background:linear-gradient(100deg,var(--rbe-accdk),var(--rbe-acc) 45%,var(--rbe-acclt));-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:var(--rbe-acc);}
+.pu-strip .sh .n{font:700 10px ui-monospace,Menlo,monospace;background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;padding:2px 8px;}
+.pu-strip .sh .all{margin-left:auto;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-acc);}
 body[data-crm="insurance"] .pu-strip .sh b{background:none;-webkit-text-fill-color:#7ef0dc;color:#7ef0dc;}
 body[data-crm="insurance"] .pu-strip .sh .all{color:#7ef0dc;}
 body[data-crm="community"] .pu-strip .sh b,body.viewing-community-hub .pu-strip .sh b{background:none;-webkit-text-fill-color:#2b6cb0;color:#2b6cb0;}
