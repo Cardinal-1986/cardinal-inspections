@@ -2669,7 +2669,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 377 &#8212; Red/black light theme now covers Estimates + All Leads &amp; Jobs, and fixes the AI Estimates page background so dark mode actually goes dark (it was stuck on an old always-white container). </div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-27 build 378 &#8212; Fixed the real cause of the stuck-white background: a JS helper was force-setting inline white on the Estimates mount on a timer, beating every CSS theme rule. Dark mode now actually renders dark there. </div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17679,7 +17679,9 @@ body.claim-insurance #brandLogo{
       el.style.inset = '0';
       el.style.zIndex = '200';
       el.style.overflowY = 'auto';
-      el.style.background = '#fff';
+      /* background intentionally left to CSS (was hardcoded #fff inline here,
+         which beat every theme rule regardless of specificity — the real
+         cause of "dark mode isn't there" on #cr-estimates-mount) */
       el.style.webkitOverflowScrolling = 'touch';
     });
   }
