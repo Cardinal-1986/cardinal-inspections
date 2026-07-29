@@ -12150,8 +12150,30 @@ async function signedPhotoMap(paths, ttl){
 }
 /* uploadOne() returns { path, url, size }, so estimate photos carry `path`;
    project_photos rows carry `storage_path`. Accept either. */
+/* MEASURED 29 Jul, and it invalidated the assumption this function was built
+   on: NOT ONE estimate photo object in the database carries `path` or
+   `storage_path`. The picker built them from { photo_id, url, caption } only,
+   so estimatePhotoPaths() returned [] for every real estimate and the whole
+   document-signing path silently fell back to the raw public URL. It was
+   correct code fed an empty list.
+
+   Deriving the path from the stored URL repairs every historical row with no
+   migration. Verified against all 215 stored photos:
+     split_part(data,'/object/public/photos/',2) = storage_path   -> 215/215
+     storage_path ~ '[^A-Za-z0-9._~/-]'                           ->   0 rows
+   so the derivation is exact and decodeURIComponent is a safe inverse.
+   /object/sign/ is accepted too, so an already-signed URL can still be
+   re-signed. Base64 data: URIs have no path and correctly yield null, which
+   leaves them rendering inline exactly as before. */
 function photoPathOf(p){
-  return (p && (p.path || p.storage_path)) || null;
+  if(!p) return null;
+  var direct = p.path || p.storage_path;
+  if(direct) return String(direct);
+  var u = String(p.url || p.data || '');
+  if(!u || u.slice(0, 5) === 'data:') return null;
+  var m = /\/object\/(?:public|sign)\/photos\/([^?#]+)/.exec(u);
+  if(!m) return null;
+  try{ return decodeURIComponent(m[1]); }catch(e){ return m[1]; }
 }
 function estimatePhotoPaths(est){
   return (est && Array.isArray(est.photos) ? est.photos : []).map(photoPathOf).filter(Boolean);
@@ -35913,6 +35935,7 @@ renderTotals(t) +
 '<textarea data-f="payment_instructions">' + esc(s.payment_instructions) + '</textarea>' +
 '</div>';
 wire();
+ensureEstPhotoUrls();
 }
 function renderLine(l, idx, total){
 var itemized = state.itemized !== false;
@@ -35960,6 +35983,45 @@ function autoGrowAll(){
 if(!view) return;
 view.querySelectorAll('.desc-input').forEach(autoGrow);
 }
+/* ---- signed URLs for the builder photo strip (step 3 of 3) ---------------
+   The last in-app render still on a raw public URL. renderPhotos() is
+   synchronous, and re-rendering once the signatures land would destroy a
+   caption someone is halfway through typing - so the resolved URLs are
+   painted straight onto the <img> nodes, keyed by data-pi so a reorder cannot
+   mis-assign one. Later re-renders read the map directly via estPhotoUrl().
+
+   Falls back to p.url on every failure path, so this cannot blank a photo
+   while the bucket is still public. One hour, not the document TTL: this is
+   an editing surface, not something that gets emailed. */
+var estPhotoUrls = {};
+function estPhotoUrl(p){
+var k = (typeof photoPathOf === 'function') ? photoPathOf(p) : null;
+return (k && estPhotoUrls[k]) || (p && p.url) || '';
+}
+function paintEstPhotoUrls(){
+if(!view || !state) return;
+view.querySelectorAll('.cr-est-photo[data-pi]').forEach(function(el){
+var p = (state.photos || [])[Number(el.dataset.pi)];
+if(!p) return;
+var u = estPhotoUrl(p);
+var img = el.querySelector('.thumb img');
+if(img && u && img.getAttribute('src') !== u) img.setAttribute('src', u);
+});
+}
+async function ensureEstPhotoUrls(){
+try{
+if(!state || typeof photoPathOf !== 'function' || typeof signedPhotoMap !== 'function') return;
+var need = (state.photos || []).map(photoPathOf)
+.filter(function(k){ return k && !estPhotoUrls[k]; });
+if(need.length){
+var m = await signedPhotoMap(need, PHOTO_URL_TTL);
+Object.keys(m).forEach(function(k){ estPhotoUrls[k] = m[k]; });
+}
+paintEstPhotoUrls();
+}catch(e){
+try{ if(window.report) window.report(e, 'Estimates', 'sign strip urls'); }catch(e2){}
+}
+}
 function renderPhotos(photos){
 if(!photos || !photos.length){
 return '<div class="cr-est-empty-items">No photos attached. Tap <b>+ Attach Photos</b> to pick from the client\u2019s gallery.</div>';
@@ -35975,7 +36037,7 @@ return '<div class="cr-est-photo' + (isCover ? ' is-cover' : '') + '" data-pi="'
 '<button data-act="pmove-down" type="button" title="Move later"' +
 (i === photos.length - 1 ? ' disabled' : '') + '>\u25B6</button>' +
 '</div>' +
-'<div class="thumb"><img src="' + esc(p.url || '') + '" alt="" loading="lazy" /></div>' +
+'<div class="thumb"><img src="' + esc(estPhotoUrl(p)) + '" alt="" loading="lazy" /></div>' +
 '<button class="cover-btn" data-act="set-cover" title="' +
 (isCover ? 'Cover photo \u2014 tap to unset' : 'Use as cover photo') + '">' +
 (isCover ? '\u2605' : '\u2606') +
@@ -36112,6 +36174,11 @@ var added = selected
 .map(function(p){
 return {
 photo_id : p.id,
+/* Without this the object has no path at all and every downstream signer
+   falls back to the raw public URL. photoPathOf() can now derive one from
+   the URL as well, so this is belt-and-braces - but it makes new rows
+   self-describing instead of dependent on a URL shape. */
+path     : p.storage_path || null,
 url      : p.data,
 caption  : p.caption || '',
 };
