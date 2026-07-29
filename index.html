@@ -6892,9 +6892,9 @@ small.hint{color:#b06a00;font-size:8.5pt;}
   <div class="cover-meta">
     <table>
       <tr><td class="k">Property Address</td><td><span class="ph">[STREET ADDRESS, CITY, STATE ZIP]</span></td></tr>
-      <tr><td class="k">Prepared For</td><td><span class="ph">[CLIENT / HOMEOWNER NAME]</span></td></tr>
+      <tr><td class="k">Prepared For</td><td><span class="ph">[WHO THIS REPORT IS FOR]</span></td></tr>
       <tr><td class="k">Client Contact</td><td><span class="ph">[Phone · Email]</span></td></tr>
-      <tr><td class="k">Client Company (if any)</td><td><span class="ph">[COMPANY / MANAGEMENT CO. — or delete this row]</span></td></tr>
+      <tr><td class="k">Homeowner</td><td><span class="ph">[WHO LIVES AT THE PROPERTY]</span></td></tr>
       <tr><td class="k">Inspection Date</td><td><span class="ph">[MONTH DD, YYYY]</span></td></tr>
       <tr><td class="k">Report / Estimate No.</td><td><span class="ph">[REFERENCE #]</span></td></tr>
       <tr><td class="k">Inspector</td><td><span class="ph">[INSPECTOR NAME]</span></td></tr>
@@ -6925,7 +6925,7 @@ small.hint{color:#b06a00;font-size:8.5pt;}
 <div class="page-break"></div>
 <h2 class="sec"><span class="num">1</span>Inspection Overview &amp; Property Facts</h2>
 <p>Cardinal Roofing &amp; Renovations performed a visual roof and attic inspection of the residence located at
-<span class="ph">[PROPERTY ADDRESS]</span>, at the request of <span class="ph">[CLIENT NAME / ROLE]</span>. The inspection
+<span class="ph">[PROPERTY ADDRESS]</span>, at the request of <span class="ph">[WHO REQUESTED THE INSPECTION]</span>. The inspection
 included ground-level review of all elevations, on-roof evaluation of the shingle field, hips, ridges, penetrations,
 and flashings, and an interior evaluation of the attic space, roof decking, and ventilation. This report documents
 observed conditions with photographs, identifies areas of concern by priority, and provides our professional
@@ -15691,13 +15691,33 @@ function prefillClientInfo(tpl, pr){
   if(!pr) return tpl;
   put('[REFERENCE #]', poOf(pr) ? 'PO #' + poOf(pr) : null);
   var contact = [pr.phone, pr.email].filter(Boolean).join(' \u00b7 ');
+  /* Community jobs have two parties: the partner requested the inspection and
+     receives the report, and the homeowner lives at the property. On retail and
+     insurance work they are the same person, so those reports are unchanged. */
+  var recipient = pr.name, homeowner = '';
+  try{
+    if(typeof projClaimType === 'function' && projClaimType(pr) === 'community'){
+      var _cl = parseCkAll(pr).lead || {};
+      if(_cl.partner_name) recipient = _cl.partner_name;
+      var _hn = (typeof projHomeowner === 'function')
+        ? projHomeowner(pr) : String(_cl.homeowner_name || '').trim();
+      var _hp = String(_cl.homeowner_phone || '').trim();
+      /* A phone with no name is not an identification. One live job (632
+         brumbaugh) has a homeowner_phone and no homeowner_name; filling the row
+         with a bare number would print an orphan phone on a document that goes
+         to the partner. Require the name; the row then stays a placeholder and
+         the existing data-emptyph pass drops it at print time. */
+      homeowner = _hn ? [_hn, _hp].filter(Boolean).join(' \u00b7 ') : '';
+    }
+  }catch(_pe){ try{ if(window.report) window.report(_pe, 'Documents', 'report prefill'); }catch(__pe){} }
   /* report cover + intro */
-  put('[CLIENT / HOMEOWNER NAME]', pr.name);
+  put('[WHO THIS REPORT IS FOR]', recipient);
+  put('[WHO REQUESTED THE INSPECTION]', recipient);
+  put('[WHO LIVES AT THE PROPERTY]', homeowner);
   put('[STREET ADDRESS, CITY, STATE ZIP]', pr.address);
   put('[PROPERTY ADDRESS]', pr.address);
-  put('[CLIENT NAME / ROLE]', pr.name);
   /* estimates */
-  put('[Client name]', pr.name);
+  put('[Client name]', recipient);
   put('[Street, City, State ZIP]', pr.address);
   /* shared contact row */
   put('[Phone \u00b7 Email]', contact);
