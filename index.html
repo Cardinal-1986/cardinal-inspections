@@ -3091,7 +3091,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 425 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 426 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -45406,6 +45406,54 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 .cr-cadj-del{width:100%;margin-top:4px;padding:12px;border-radius:10px;cursor:pointer;
   background:transparent;border:1px solid var(--ct-red,#CE0E18);color:var(--ct-red-deep,#FF3B30);
   font:700 13px 'Segoe UI',Arial,sans-serif}
+</style>
+
+<style id="cr-cthwide-styles">
+/* ── Build 426: the insurance home on a wide screen ────────────────────────
+   Appended at the end of the document on purpose. .cr-cth-styles lives in the
+   BODY, and an equal-specificity override in <head> loses on document order —
+   that mistake shipped twice this session (421, 424). This block comes after it.
+
+   Nothing here applies below 1100px, so the phone is untouched.               */
+
+/* ── laptop and regular monitor: three columns ── */
+@media (min-width:1100px){
+  #cardinalTruthView .cr-cth-wrap{max-width:1500px}
+  #cardinalTruthView .cr-cth-grid{
+    grid-template-columns:minmax(0,0.95fr) minmax(0,1.25fr) minmax(0,1fr);
+    column-gap:24px}
+  /* b1 money · b2 pipeline · b3 everything else, now its own column instead of
+     stacking under the money */
+  #cardinalTruthView .cr-cth-b1{grid-column:1;grid-row:1}
+  #cardinalTruthView .cr-cth-b2{grid-column:2;grid-row:1}
+  #cardinalTruthView .cr-cth-b3{grid-column:3;grid-row:1}
+  #cardinalTruthView .cr-cth-stats{grid-template-columns:1fr 1fr}
+  #cardinalTruthView .cr-cth-tools{grid-template-columns:1fr 1fr}
+}
+
+/* ── ultrawide: four columns, and the money spreads across the top ── */
+@media (min-width:2000px){
+  #cardinalTruthView .cr-cth-wrap{max-width:2160px;padding-left:34px;padding-right:34px}
+  #cardinalTruthView .cr-cth-grid{
+    grid-template-columns:minmax(0,0.85fr) minmax(0,1.1fr) minmax(0,1fr);
+    column-gap:30px}
+  /* the four money tiles run in a single row rather than a 2x2 block, so the
+     figures read across the top the way Theo wanted them */
+  #cardinalTruthView .cr-cth-stats{grid-template-columns:repeat(4,1fr)}
+  #cardinalTruthView .cr-cth-tools{grid-template-columns:1fr 1fr}
+  /* the pipeline has room to stop truncating its hints */
+  #cardinalTruthView .cr-cth-stage{padding-right:18px}
+}
+
+/* Both tiers: the two top boxes start on the SAME LINE. They did not before —
+   the left column opened with a card and the right opened with a label above
+   its card, so their top edges were never going to agree. Theo photographed
+   exactly that. align-items:start puts the boxes on one baseline; this puts the
+   RULES on one baseline too, which is what the eye actually reads. */
+@media (min-width:1100px){
+  #cardinalTruthView .cr-cth-grid > *:first-child > .cr-cth-rule:first-child,
+  #cardinalTruthView .cr-cth-grid > * > .cr-cth-rule:first-child{margin-top:0}
+}
 </style>
 </body>
 </html>
