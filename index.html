@@ -26093,14 +26093,39 @@ openDirectory();
 }
 async function pickPartner(cb){
 await load();
-var list = (CACHE || []).slice();
-var non = list.filter(function(p){ return p.partner_type === 'nonprofit'; });
-var pm  = list.filter(function(p){ return p.partner_type === 'property_manager'; });
+/* Two bugs that were cancelling each other out, fixed together because
+   fixing either alone creates the exposure:
+
+   1. This read CACHE directly, bypassing list() - which is
+      (CACHE||[]).map(maskIfConfidential). So confidential partners rendered
+      with their real name and contact_name to every user, privileged or not.
+   2. It built only nonprofit and property_manager groups. Any partner typed
+      general_contractor was silently absent - not masked, not labelled,
+      simply never listed - so a GC could not be attached to a job at all.
+
+   Because the only confidential partners happen to BE general contractors,
+   (2) was hiding (1) and nothing leaked in practice. Adding the GC group
+   without switching to list() would have exposed both of them immediately.
+
+   Note the picker was already inconsistent with itself: it displayed raw
+   rows but handed the callback get(id), which DOES mask. */
+var rows = list().slice();
+var non = rows.filter(function(p){ return p.partner_type === 'nonprofit'; });
+var pm  = rows.filter(function(p){ return p.partner_type === 'property_manager'; });
+var gc  = rows.filter(function(p){ return p.partner_type === 'general_contractor'; });
 function grp(title, arr){
 if(!arr.length) return '';
 var rows = arr.map(function(p){
 return '<div class="cr-cp-row" data-id="' + esc(p.id) + '" style="cursor:pointer;">' +
-'<div><div class="n">' + esc(p.name) + '</div>' +
+/* PR #18 deliberately left prospects visible here so one can be attached the
+   moment work arrives - but that took this list from six rows to ten, so say
+   which is which. */
+'<div><div class="n">' + esc(p.name) +
+(p.prospective
+? ' <span style="font:800 8px ui-monospace,Menlo,monospace;letter-spacing:.12em;' +
+  'background:#e8f6ef;color:#0a5c3c;padding:1px 5px;border-radius:7px;' +
+  'vertical-align:middle;margin-left:5px;">PROSPECT</span>'
+: '') + '</div>' +
 (p.contact_name ? '<div class="m">' + esc(p.contact_name) + '</div>' : '') +
 '</div>' +
 '<div class="btns"><button data-act="pick">Select</button></div>' +
@@ -26109,11 +26134,12 @@ return '<div class="cr-cp-row" data-id="' + esc(p.id) + '" style="cursor:pointer
 return '<div class="cr-cp-group"><h4>' + esc(title) + '</h4>' + rows + '</div>';
 }
 var html = '';
-if(!list.length){
+if(!rows.length){
 html = '<div class="cr-cp-empty">No partners yet.</div>';
 }else{
-html += grp('Non-profits',      non);
-html += grp('Property Managers', pm);
+html += grp('Non-profits',        non);
+html += grp('Property Managers',  pm);
+html += grp('General Contractors', gc);
 }
 html += '<button class="cr-cp-addbtn" data-act="add">+ New Partner</button>';
 var host = shell('Select a Partner', html);
