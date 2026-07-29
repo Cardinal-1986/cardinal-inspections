@@ -1,0 +1,30 @@
+# Files that must not be uploaded to the Vercel deployment.
+#
+# Everything in this repo is served publicly at app.cardinalroster.com unless
+# listed here. Verified 2026-07-29 by requesting each path against production —
+# all of the entries below returned HTTP 200 to an anonymous visitor.
+#
+# NOT ignored, deliberately: docs/ (the contract PDFs are referenced 6x by the
+# app as print masters), every image asset (all referenced), bulk_assign.html
+# (referenced 2x), api/ (serverless functions).
+
+# --- Development context. Not referenced by any shipped code. ---
+# .claude/ contains the build skill: BUG_CLASSES.md, OPEN_ITEMS.md, HANDOFF.md,
+# cardinal_build_log.md, gates.md. Known bugs and unfinished work should not be
+# a public document.
+.claude/
+CLAUDE.md
+.github/
+
+# --- Orphaned scratch pages. Zero references from index.html; each was
+#     returning 200 in production. ---
+adjuster directory.html
+cardinal truth fixes.html
+claims_form_fixes.html
+convert_client_type.html
+insurance hub bridge.html
+community_hub.html
+community_partners.html
+community_client_view.html
+community_portal_theme.html
+community_stages.html
