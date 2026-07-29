@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scroll band-aid — cascade measurement</title>
+
+<!-- ══ RULE 1: lifted verbatim from index.html @66578 ══ -->
+<style id="base">
+html, body{overflow-x:hidden;max-width:100%;}
+</style>
+
+<!-- ══ RULE 2: the band-aid, verbatim from index.html @2280721.
+     Toggled by disabling this stylesheet, which is exactly equivalent to
+     the rule being present or absent. ══ -->
+<style id="bandaid">
+body.viewing-community-hub{overflow-y:auto !important}
+</style>
+
+<!-- ══ RULE 3+4: the hub view and the Self Check panel, verbatim ══ -->
+<style id="app">
+#communityHubView{display:none;min-height:100vh;padding:0 0 40px;background:#e9ecef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+#cr-sc-panel{display:none;position:fixed;inset:0;z-index:9700;background:#12161c;color:#e8ecf1;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+</style>
+
+<style>
+  body{margin:0;background:#f4f6f7;color:#15202b;
+    font:15px/1.6 ui-sans-serif,-apple-system,'Segoe UI',sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:34px 22px 60px}
+  h1{font:700 25px/1.2 ui-sans-serif,sans-serif;margin:0 0 6px;letter-spacing:-.02em}
+  .sub{color:#5b6b7a;font-size:14px;margin:0 0 26px}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(16,32,48,.06),0 8px 22px rgba(16,32,48,.07);font-size:14px}
+  th{text-align:left;font:700 10px ui-monospace,monospace;letter-spacing:.15em;text-transform:uppercase;
+    color:#7c8b99;padding:11px 13px;background:#f7f9fa;border-bottom:1px solid #e3e9ed}
+  td{padding:12px 13px;border-bottom:1px solid #eef2f5;vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  code{font:600 13px ui-monospace,monospace;background:#f2f5f7;border:1px solid #e3e9ed;
+    padding:2px 6px;border-radius:5px}
+  .v{font:700 15px ui-monospace,monospace}
+  .auto{color:#0a7f52}
+  .hidden{color:#b4231f}
+  .verdict{margin-top:8px;padding:15px 18px;border-radius:10px;font-size:14px;line-height:1.6}
+  .ok{background:#e9f7f0;border:1px solid #bde3d1;color:#0a5c3c}
+  .bad{background:#fdecea;border:1px solid #f2c5c0;color:#8c1d16}
+  .note{margin-top:22px;padding:15px 18px;background:#fff;border-left:3px solid #15202b;
+    border-radius:0 9px 9px 0;font-size:13.5px;color:#40505f;
+    box-shadow:0 1px 2px rgba(16,32,48,.05)}
+  .note b{color:#15202b}
+  #result{font:700 16px ui-monospace,monospace;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Does <code>!important</code> defeat the modal scroll lock?</h1>
+  <p class="sub">All four CSS rules below are lifted verbatim from <code>index.html</code> at
+  <code>23a2b00</code>. Measured with <code>getComputedStyle</code> in this browser — not reasoned about.</p>
+
+  <table>
+    <thead>
+      <tr><th>Band-aid rule</th><th>Modal open<br><code>body.style.overflow='hidden'</code></th>
+          <th>computed<br>overflow-y</th><th>Scroll lock</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div id="verdicts"></div>
+
+  <div class="note">
+    <b>Why row 3 is the one that matters for regression risk.</b> The base rule sets
+    <code>overflow-x:hidden</code> on <code>body</code>. Per the CSS overflow spec, when one axis is
+    <code>hidden</code> the other axis cannot remain <code>visible</code> — it computes to
+    <code>auto</code>. So the question row 3 answers is whether removing the band-aid could ever make
+    the hub unscrollable from CSS alone.
+  </div>
+
+  <div id="result"></div>
+</div>
+
+<!-- the two real elements, present so the app rules have something to match -->
+<div id="communityHubView"></div>
+<div id="cr-sc-panel"></div>
+
+<script>
+(function(){
+  var bandaid = document.getElementById('bandaid');
+  var rows = document.getElementById('rows');
+  var out = [];
+
+  /* The real app puts this class on <body> whenever the community hub is shown. */
+  document.body.classList.add('viewing-community-hub');
+
+  function measure(bandaidOn, modalOpen){
+    bandaid.disabled = !bandaidOn;
+    /* exactly what all ~14 modals do, including #cr-sc-panel */
+    document.body.style.overflow = modalOpen ? 'hidden' : '';
+    /* force a style recalc before reading */
+    void document.body.offsetHeight;
+    return getComputedStyle(document.body).overflowY;
+  }
+
+  var cases = [
+    ['present', false],
+    ['present', true],
+    ['removed', false],
+    ['removed', true]
+  ];
+
+  cases.forEach(function(c){
+    var on = c[0] === 'present';
+    var v = measure(on, c[1]);
+    var locked = (v === 'hidden');
+    out.push({ bandaid: c[0], modal: c[1], value: v, locked: locked });
+    rows.insertAdjacentHTML('beforeend',
+      '<tr><td><code>' + c[0] + '</code></td>' +
+      '<td>' + (c[1] ? 'yes' : 'no') + '</td>' +
+      '<td class="v ' + (v === 'auto' ? 'auto' : 'hidden') + '">' + v + '</td>' +
+      '<td>' + (c[1] ? (locked ? 'holds' : 'DEFEATED') : (v === 'auto' ? 'page scrolls' : 'page frozen')) + '</td></tr>');
+  });
+
+  /* reset to a sane state */
+  bandaid.disabled = false;
+  document.body.style.overflow = '';
+
+  var withBandaidModal = out[1];      /* band-aid present, modal open */
+  var noBandaidIdle    = out[2];      /* band-aid removed, no modal   */
+  var noBandaidModal   = out[3];      /* band-aid removed, modal open */
+
+  var v = document.getElementById('verdicts');
+  function add(cls, html){ v.insertAdjacentHTML('beforeend', '<div class="verdict ' + cls + '">' + html + '</div>'); }
+
+  add(withBandaidModal.locked ? 'ok' : 'bad',
+    '<b>Finding 1 — the bug.</b> With the band-aid present and a modal open, body computed ' +
+    '<code>overflow-y: ' + withBandaidModal.value + '</code>. The modal sets a <em>normal inline</em> ' +
+    'declaration; an <code>!important</code> author rule outranks it, so the lock is ' +
+    (withBandaidModal.locked ? 'NOT defeated (unexpected)' : '<b>defeated</b>') + '.');
+
+  add(noBandaidIdle.value === 'auto' ? 'ok' : 'bad',
+    '<b>Finding 2 — regression risk.</b> With the band-aid removed and no modal, body computed ' +
+    '<code>overflow-y: ' + noBandaidIdle.value + '</code>. ' +
+    (noBandaidIdle.value === 'auto'
+      ? 'The page still scrolls, because <code>overflow-x:hidden</code> already forces the other axis to <code>auto</code>. The band-aid was redundant for a second, stronger reason than hideAllViews().'
+      : 'The page would NOT scroll — removing the band-aid is unsafe.'));
+
+  add(noBandaidModal.locked ? 'ok' : 'bad',
+    '<b>Finding 3 — the fix.</b> With the band-aid removed and a modal open, body computed ' +
+    '<code>overflow-y: ' + noBandaidModal.value + '</code>. The lock ' +
+    (noBandaidModal.locked ? '<b>holds correctly</b>.' : 'still fails (unexpected).'));
+
+  var pass = !withBandaidModal.locked && noBandaidIdle.value === 'auto' && noBandaidModal.locked;
+  document.getElementById('result').textContent =
+    pass ? 'RESULT: all three predictions confirmed by measurement.'
+         : 'RESULT: measurement contradicts the prediction — do not merge.';
+  document.getElementById('result').style.color = pass ? '#0a7f52' : '#b4231f';
+})();
+</script>
+</body>
+</html>
