@@ -16733,7 +16733,29 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     await saveCurrent();
     var row = currentDocRow();
     var pr = currentDocProject();
-    var to = prompt('Send to email address:', (pr && pr.email) || '');
+    /* Community jobs are funded by a partner (Habitat, Rebuilding Together, the
+       Dayton Home Repair Network). The bid goes to THEM for approval, not to the
+       homeowner - so default the recipient to the partner's contact_email. Falls
+       back to the old project email on any failure. */
+    var toDflt = (pr && pr.email) || '', toAsk = 'Send to email address:';
+    try{
+      if(pr && typeof projClaimType === 'function' && projClaimType(pr) === 'community'){
+        var _lead = parseCkAll(pr).lead || {};
+        var _pid  = _lead.partner_id || null;
+        var _pnm  = _lead.partner_name || 'the partner';
+        if(_pid && sb){
+          var _pq = await sb.from('community_partners')
+                             .select('name,contact_email').eq('id', _pid).single();
+          var _pd = (_pq && _pq.data) || null;
+          var _pe = _pd ? String(_pd.contact_email || '').trim() : '';
+          if(_pd && _pd.name) _pnm = _pd.name;
+          if(_pe){ toDflt = _pe; toAsk = 'Send to ' + _pnm + ' for approval:'; }
+          else{ toAsk = 'No contact email on file for ' + _pnm +
+                        ' \u2014 add one under Partners. Send to:'; }
+        }
+      }
+    }catch(_e){ try{ if(window.report) window.report(_e, 'Documents', 'partner email lookup'); }catch(__e){} }
+    var to = prompt(toAsk, toDflt);
     if(to === null) return;
     to = to.trim();
     if(!to || to.indexOf('@') === -1){ showError('Enter a valid email address.'); return; }
