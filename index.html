@@ -408,36 +408,36 @@ footer.site{
 /* Insurance client — cover card gets the dark grey/blue theme so the profile
    context is unmistakable at a glance. Matches Cardinal Truth palette. */
 body.claim-insurance .projinfo{
-  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
-  border:1px solid #2f3a4c;border-left:3px solid #4a6fa5;
-  color:#e8ecf1;
+  background:linear-gradient(160deg,var(--ct-surface) 0%,var(--ct-bg) 100%);
+  border:1px solid var(--ct-line);border-left:3px solid var(--ct-red);
+  color:var(--ct-ink);
 }
-body.claim-insurance .projinfo:hover{border-color:#7fa6d6;box-shadow:0 8px 22px rgba(74,111,165,.2);}
-body.claim-insurance .projinfo h2{color:#e8ecf1;}
-body.claim-insurance .projinfo .namestar{color:#6b7a90;}
-body.claim-insurance .projinfo .namestar.on{color:#f5d061;}
-body.claim-insurance .projinfo .mrow{color:#cfd6e0;}
-body.claim-insurance .projinfo .mrow a{color:#7fa6d6;}
-body.claim-insurance .projinfo .mlbl{color:#8b95a5;}
-body.claim-insurance .projinfo .mrow .poval{color:#d4a017;}
-body.claim-insurance .editpencil{background:rgba(255,255,255,.06);border-color:#2f3a4c;color:#7fa6d6;}
-body.claim-insurance .editpencil:hover{background:rgba(127,166,214,.15);color:#e8ecf1;}
+body.claim-insurance .projinfo:hover{border-color:var(--ct-red);box-shadow:0 8px 22px var(--ct-focus);}
+body.claim-insurance .projinfo h2{color:var(--ct-ink);}
+body.claim-insurance .projinfo .namestar{color:var(--ct-ink-2);}
+body.claim-insurance .projinfo .namestar.on{color:var(--ct-warn);}
+body.claim-insurance .projinfo .mrow{color:var(--ct-ink);}
+body.claim-insurance .projinfo .mrow a{color:var(--ct-red-deep);}
+body.claim-insurance .projinfo .mlbl{color:var(--ct-ink-2);}
+body.claim-insurance .projinfo .mrow .poval{color:var(--ct-warn);}
+body.claim-insurance .editpencil{background:var(--ct-surface-3);border-color:var(--ct-line);color:var(--ct-red-deep);}
+body.claim-insurance .editpencil:hover{background:var(--ct-red-wash);color:var(--ct-ink);}
 /* small blue "INSURANCE" badge above the name */
 .insBadge{display:none;}
 body.claim-insurance .insBadge{
   display:inline-block;padding:3px 10px;border-radius:10px;
-  background:rgba(127,166,214,.15);border:1px solid #4a6fa5;
-  color:#7fa6d6;font:800 10.5px 'Segoe UI',Arial,sans-serif;
+  background:var(--ct-red-wash);border:1px solid var(--ct-red);
+  color:var(--ct-red-deep);font:800 10.5px 'Segoe UI',Arial,sans-serif;
   letter-spacing:.12em;margin-bottom:8px;
 }
 /* insurance info block inside the card — spans the 2 mrow columns */
 .projInsBlock{display:none;}
 body.claim-insurance .projInsBlock{
   display:block;margin-top:10px;padding-top:8px;
-  border-top:1px solid #2f3a4c;
+  border-top:1px solid var(--ct-line);
 }
 body.claim-insurance .projInsBlock .mrow{margin-bottom:2px;}
-body.claim-insurance .projInsBlock .mrow a{color:#7fa6d6;text-decoration:underline;}
+body.claim-insurance .projInsBlock .mrow a{color:var(--ct-red-deep);text-decoration:underline;}
 
 /* -- Insurance mode: repaint the site header rule and the accents to steel-blue -- */
 
@@ -446,8 +446,8 @@ body.claim-insurance .projInsBlock .mrow a{color:#7fa6d6;text-decoration:underli
 
 
 
-body.claim-insurance .clientbanner::before{background:linear-gradient(90deg,transparent,#4a6fa5 30%,#7fa6d6 50%,#4a6fa5 70%,transparent) !important;}
-body.claim-insurance .clientbanner{border-color:#4a6fa5 !important;}
+body.claim-insurance .clientbanner::before{background:linear-gradient(90deg,transparent,var(--ct-red) 30%,var(--ct-red) 50%,var(--ct-red) 70%,transparent) !important;}
+body.claim-insurance .clientbanner{border-color:var(--ct-red) !important;}
 
 /* Reserve top-right space in the projinfo h2 for the Home + Landing chips in the corner */
 
@@ -461,10 +461,10 @@ body.claim-insurance .clientbanner{border-color:#4a6fa5 !important;}
   vertical-align:middle;
 }
 body.claim-insurance .projinfo .poPfx{
-  color:#c9a3ee;background:rgba(181,126,220,.16);border-color:rgba(181,126,220,.5);
+  color:var(--ct-red-deep);background:var(--ct-red-wash);border-color:var(--ct-red);
 }
 .projinfo .poPfx.empty{color:#c9bfb9;background:transparent;border-style:dashed;font-weight:700;font-size:13px;}
-body.claim-insurance .projinfo .poPfx.empty{color:#8b95a5;border-color:#4a6fa5;}
+body.claim-insurance .projinfo .poPfx.empty{color:var(--ct-ink-2);border-color:var(--ct-red);}
 
 /* Landing chip in top-right of client cover card, mirrors the one on the dashboard */
 .projinfo .projTopBtns{
@@ -486,16 +486,16 @@ body.claim-insurance .projinfo .poPfx.empty{color:#8b95a5;border-color:#4a6fa5;}
 .projinfo .projHomeChip:active{background:rgba(212,160,23,.2);}
 body.claim-insurance .projinfo .projLandChip,
 body.claim-insurance .projinfo .projHomeChip{
-  background:rgba(74,111,165,.15);border-color:#4a6fa5;color:#7fa6d6;
+  background:var(--ct-red-wash);border-color:var(--ct-red);color:var(--ct-red-deep);
 }
 body.claim-insurance .projinfo .projLandChip:hover,
-body.claim-insurance .projinfo .projHomeChip:hover{background:rgba(74,111,165,.25);color:#e8ecf1;}
+body.claim-insurance .projinfo .projHomeChip:hover{background:var(--ct-red-wash);color:var(--ct-ink);}
 
 
 /* -- Extend insurance theme to the full client-profile content -- */
 /* Solid dark background matching Cardinal Truth so the profile reads as one theme */
-body.claim-insurance #projectView{background:#1a1f2e;}
-body.claim-insurance{background:#1a1f2e;}
+body.claim-insurance #projectView{background:var(--ct-bg);}
+body.claim-insurance{background:var(--ct-bg);}
 
 /* Two-tone the Cardinal Roofing logo — greyscale it then tint toward light blue
    so it reads as "grey and light blue" against the dark insurance header */
@@ -505,64 +505,64 @@ body.claim-insurance #brandLogo{
 }
 
 /* Section headers with light text + steel-blue rule (subtle, no full dark bar) */
-body.claim-insurance #projectView .projsec{color:#e8ecf1;border-bottom-color:#4a6fa5;
-  padding:6px 10px 4px;background:rgba(35,43,61,.85);border-radius:6px 6px 0 0;
-  border-bottom-width:3px;-webkit-background-clip:initial;background-clip:initial;-webkit-text-fill-color:#e8ecf1;}
+body.claim-insurance #projectView .projsec{color:var(--ct-ink);border-bottom-color:var(--ct-red);
+  padding:6px 10px 4px;background:var(--ct-surface-2);border-radius:6px 6px 0 0;
+  border-bottom-width:3px;-webkit-background-clip:initial;background-clip:initial;-webkit-text-fill-color:var(--ct-ink);}
 
 /* Job Value / Balance Due strip */
 body.claim-insurance .dbmoney{
-  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
-  border:1px solid #2f3a4c;border-left:3px solid #4a6fa5;color:#e8ecf1;}
-body.claim-insurance .dbmoney small{color:#8b95a5;}
-body.claim-insurance .dbmoney b{color:#e8ecf1;}
-body.claim-insurance .dbmoney .dbringin{color:#f5d061;}
+  background:linear-gradient(160deg,var(--ct-surface) 0%,var(--ct-bg) 100%);
+  border:1px solid var(--ct-line);border-left:3px solid var(--ct-red);color:var(--ct-ink);}
+body.claim-insurance .dbmoney small{color:var(--ct-ink-2);}
+body.claim-insurance .dbmoney b{color:var(--ct-ink);}
+body.claim-insurance .dbmoney .dbringin{color:var(--ct-warn);}
 
 /* Payment Information row */
 body.claim-insurance .dbrow{
-  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
-  border:1px solid #2f3a4c;border-left:3px solid #4a6fa5;color:#e8ecf1;}
-body.claim-insurance .dbrow:active{background:#1a1f2e;}
-body.claim-insurance .dbrow .dbic1{color:#7fa6d6;}
-body.claim-insurance .dbrow .dbgo{color:#7fa6d6;}
+  background:linear-gradient(160deg,var(--ct-surface) 0%,var(--ct-bg) 100%);
+  border:1px solid var(--ct-line);border-left:3px solid var(--ct-red);color:var(--ct-ink);}
+body.claim-insurance .dbrow:active{background:var(--ct-bg);}
+body.claim-insurance .dbrow .dbic1{color:var(--ct-red-deep);}
+body.claim-insurance .dbrow .dbgo{color:var(--ct-red-deep);}
 
 /* Job Menu boxes (Communication / Photos / Tasks / etc.) */
 body.claim-insurance .jabox{
-  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
-  border:1px solid #2f3a4c;color:#e8ecf1;}
-body.claim-insurance .jabox:active{background:#1a1f2e;}
-body.claim-insurance .jabox .jbl{color:#cfd6e0;}
-body.claim-insurance .jabox svg{color:#7fa6d6;}
-body.claim-insurance .jabox .jan{color:#f5d061;}
-body.claim-insurance .jabox .jan.zero{color:#6b7a90;}
+  background:linear-gradient(160deg,var(--ct-surface) 0%,var(--ct-bg) 100%);
+  border:1px solid var(--ct-line);color:var(--ct-ink);}
+body.claim-insurance .jabox:active{background:var(--ct-bg);}
+body.claim-insurance .jabox .jbl{color:var(--ct-ink);}
+body.claim-insurance .jabox svg{color:var(--ct-red-deep);}
+body.claim-insurance .jabox .jan{color:var(--ct-warn);}
+body.claim-insurance .jabox .jan.zero{color:var(--ct-ink-2);}
 
 /* Overview accordions/sections (Job Details, Job Activity, Contacts, Location, Assigned To) —
    don't repaint the Google Reviews card (.rvsec) which is already themed. */
 body.claim-insurance .acxsec:not(.rvsec){
-  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);
-  border:1px solid #2f3a4c;color:#e8ecf1;}
-body.claim-insurance .acxsec:not(.rvsec) .acxbody{color:#cfd6e0;}
+  background:linear-gradient(160deg,var(--ct-surface) 0%,var(--ct-bg) 100%);
+  border:1px solid var(--ct-line);color:var(--ct-ink);}
+body.claim-insurance .acxsec:not(.rvsec) .acxbody{color:var(--ct-ink);}
 body.claim-insurance .acxsec:not(.rvsec) .ackv > span{color:#8b95a5;}
 body.claim-insurance .acxsec:not(.rvsec) .ackv > div{color:#e8ecf1;}
-body.claim-insurance .acxsec:not(.rvsec) .ackv a{color:#7fa6d6;}
-body.claim-insurance .acxsec:not(.rvsec) .acxtrs label{color:#cfd6e0;}
-body.claim-insurance .acxsec:not(.rvsec) .axnote{color:#8b95a5;}
-body.claim-insurance .acxsec:not(.rvsec) a[href^="https://maps"]{color:#7fa6d6;}
-body.claim-insurance .acxsec:not(.rvsec) .dbassign{color:#e8ecf1;}
-body.claim-insurance .acxsec:not(.rvsec) .dbrep b{color:#e8ecf1;}
-body.claim-insurance .acxsec:not(.rvsec) .dbprim small{color:#8b95a5;}
-body.claim-insurance .acxsec:not(.rvsec) .dbprim b{color:#e8ecf1;}
-body.claim-insurance .acxsec:not(.rvsec) .rt2 a{color:#7fa6d6;}
+body.claim-insurance .acxsec:not(.rvsec) .ackv a{color:var(--ct-red-deep);}
+body.claim-insurance .acxsec:not(.rvsec) .acxtrs label{color:var(--ct-ink);}
+body.claim-insurance .acxsec:not(.rvsec) .axnote{color:var(--ct-ink-2);}
+body.claim-insurance .acxsec:not(.rvsec) a[href^="https://maps"]{color:var(--ct-red-deep);}
+body.claim-insurance .acxsec:not(.rvsec) .dbassign{color:var(--ct-ink);}
+body.claim-insurance .acxsec:not(.rvsec) .dbrep b{color:var(--ct-ink);}
+body.claim-insurance .acxsec:not(.rvsec) .dbprim small{color:var(--ct-ink-2);}
+body.claim-insurance .acxsec:not(.rvsec) .dbprim b{color:var(--ct-ink);}
+body.claim-insurance .acxsec:not(.rvsec) .rt2 a{color:var(--ct-red-deep);}
 
 /* Selects and inputs inside the themed sections */
 body.claim-insurance .acxsec:not(.rvsec) .acxsel{
-  background:rgba(255,255,255,.06);border-color:#4a6fa5;color:#e8ecf1;}
+  background:var(--ct-surface-3);border-color:var(--ct-red);color:var(--ct-ink);}
 
 /* Lead Details card (renderLeadCard) */
 body.claim-insurance #leadCard #leadCardBody.ldbox{
-  background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%) !important;
-  border:1px solid #2f3a4c;border-left:3px solid #4a6fa5;color:#cfd6e0;}
-body.claim-insurance #leadCard .llrow{color:#cfd6e0;}
-body.claim-insurance #leadCard .llrow b{color:#e8ecf1;}
+  background:linear-gradient(160deg,var(--ct-surface) 0%,var(--ct-bg) 100%) !important;
+  border:1px solid var(--ct-line);border-left:3px solid var(--ct-red);color:var(--ct-ink);}
+body.claim-insurance #leadCard .llrow{color:var(--ct-ink);}
+body.claim-insurance #leadCard .llrow b{color:var(--ct-ink);}
 
 
 .brand{display:flex;align-items:center;gap:14px;}
@@ -901,32 +901,32 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 
 /* Insurance Documents section */
 .insDocsBox{margin:8px 0 14px;padding:12px 12px;
-  border:1px solid #d0dae8;border-left:3px solid #4a6fa5;
-  background:linear-gradient(180deg,#f4f7fb 0%,#eef3f9 100%);
+  border:1px solid var(--ct-line);border-left:3px solid var(--ct-red);
+  background:linear-gradient(180deg,var(--ct-surface-2) 0%,var(--ct-surface-2) 100%);
   border-radius:10px;}
 .insdocrow{display:flex;align-items:center;gap:10px;padding:10px 12px;
-  background:#fff;border:1px solid #d0dae8;border-radius:8px;margin-bottom:8px;
+  background:var(--ct-surface);border:1px solid var(--ct-line);border-radius:8px;margin-bottom:8px;
   min-height:44px;}
 .insdocrow:last-child{margin-bottom:0;}
-.insdocrow.filled{border-color:#7fa6d6;box-shadow:0 1px 3px rgba(74,111,165,.08);}
+.insdocrow.filled{border-color:var(--ct-red);box-shadow:0 1px 3px var(--ct-focus);}
 .insdocic{font-size:20px;flex:0 0 auto;line-height:1;width:26px;text-align:center;}
 .insdoctxt{flex:1;min-width:0;}
-.insdoctxt b{display:block;font:700 13.5px 'Segoe UI',Arial,sans-serif;color:#2d4468;}
-.insdoctxt small{display:block;font-size:11.5px;color:#4a6fa5;margin-top:2px;word-break:break-word;line-height:1.35;}
-.insdoctxt small.muted{color:#a4b0c0;font-style:italic;}
+.insdoctxt b{display:block;font:700 13.5px 'Segoe UI',Arial,sans-serif;color:var(--ct-red-deep);}
+.insdoctxt small{display:block;font-size:11.5px;color:var(--ct-red-deep);margin-top:2px;word-break:break-word;line-height:1.35;}
+.insdoctxt small.muted{color:var(--ct-ink-2);font-style:italic;}
 .insdocupload,.insdocreplace,.insdocview{
-  background:#4a6fa5;color:#fff;border:none;border-radius:6px;
+  background:var(--ct-red);color:var(--ct-red-ink);border:none;border-radius:6px;
   padding:6px 12px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;
-  flex:0 0 auto;-webkit-tap-highlight-color:rgba(74,111,165,.3);touch-action:manipulation;
+  flex:0 0 auto;-webkit-tap-highlight-color:var(--ct-focus);touch-action:manipulation;
   letter-spacing:.03em;}
-.insdocreplace{background:transparent;color:#4a6fa5;border:1px solid #4a6fa5;}
-.insdocview{background:#fff;color:#4a6fa5;border:1px solid #4a6fa5;}
-.insdocupload:hover,.insdocreplace:hover{background:#2d4468;color:#fff;border-color:#2d4468;}
-.insdocview:hover{background:#eef3f9;}
-.insdocdel{background:transparent;color:#c05541;border:1px solid #d0a5a0;
+.insdocreplace{background:transparent;color:var(--ct-red-deep);border:1px solid var(--ct-red);}
+.insdocview{background:var(--ct-surface);color:var(--ct-red-deep);border:1px solid var(--ct-red);}
+.insdocupload:hover,.insdocreplace:hover{background:var(--ct-red-deep);color:var(--ct-red-ink);border-color:var(--ct-red-deep);}
+.insdocview:hover{background:var(--ct-surface-2);}
+.insdocdel{background:transparent;color:var(--ct-red-deep);border:1px solid var(--ct-red);
   border-radius:6px;padding:6px 10px;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;
-  flex:0 0 auto;line-height:1;-webkit-tap-highlight-color:rgba(192,85,65,.25);touch-action:manipulation;}
-.insdocdel:hover{background:rgba(192,85,65,.12);border-color:#c05541;}
+  flex:0 0 auto;line-height:1;-webkit-tap-highlight-color:var(--ct-focus);touch-action:manipulation;}
+.insdocdel:hover{background:var(--ct-red-wash);border-color:var(--ct-red);}
 @media (max-width:480px){
   .insdocrow{flex-wrap:wrap;gap:6px 8px;padding:10px 10px;}
   .insdocrow .insdoctxt{flex:1 1 100%;min-width:0;order:2;}
@@ -934,72 +934,72 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   .insdocrow button{order:3;padding:5px 10px;font-size:11px;}
 }
 /* iTel reports (build 406) — sits below Insurance Documents on the project profile.
-   Red/black/white, not the navy of the docs card above it: Theo, "Drop the navy completely." */
+   Red/black/white, not the navy of the docs card above it:Theo, "Drop the navy completely." */
 .cr-itel-bar{display:flex;align-items:center;gap:10px;margin:8px 0 14px;padding:9px 12px;
-  min-height:44px;border:1px solid #e2d9d2;border-left:3px solid #c4180f;border-radius:10px;
-  background:#fbf9f7;}
-.cr-itel-bar-t{font:800 12px 'Segoe UI',Arial,sans-serif;color:#241c19;letter-spacing:.02em;flex:0 0 auto;}
-.cr-itel-bar-s{flex:1;min-width:0;font:400 12px 'Segoe UI',Arial,sans-serif;color:#8a7a70;font-style:italic;}
-.cr-itel-box{margin:8px 0 14px;padding:10px 12px;border:1px solid #e2d9d2;
-  border-left:3px solid #c4180f;border-radius:10px;background:#fbf9f7;}
+  min-height:44px;border:1px solid var(--ct-line);border-left:3px solid var(--ct-red);border-radius:10px;
+  background:var(--ct-surface-2);}
+.cr-itel-bar-t{font:800 12px 'Segoe UI',Arial,sans-serif;color:var(--ct-ink);letter-spacing:.02em;flex:0 0 auto;}
+.cr-itel-bar-s{flex:1;min-width:0;font:400 12px 'Segoe UI',Arial,sans-serif;color:var(--ct-ink-2);font-style:italic;}
+.cr-itel-box{margin:8px 0 14px;padding:10px 12px;border:1px solid var(--ct-line);
+  border-left:3px solid var(--ct-red);border-radius:10px;background:var(--ct-surface-2);}
 .cr-itel-head{display:flex;align-items:center;gap:9px;cursor:pointer;min-height:44px;
-  -webkit-tap-highlight-color:rgba(196,24,15,.15);touch-action:manipulation;}
-.cr-itel-title{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#241c19;flex:0 0 auto;}
-.cr-itel-sum{flex:1;min-width:0;font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7a70;
+  -webkit-tap-highlight-color:var(--ct-focus);touch-action:manipulation;}
+.cr-itel-title{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:var(--ct-ink);flex:0 0 auto;}
+.cr-itel-sum{flex:1;min-width:0;font:400 11.5px 'Segoe UI',Arial,sans-serif;color:var(--ct-ink-2);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cr-itel-tog{background:none;border:none;color:#c4180f;font:800 18px 'Segoe UI',Arial,sans-serif;
+.cr-itel-tog{background:none;border:none;color:var(--ct-red-deep);font:800 18px 'Segoe UI',Arial,sans-serif;
   cursor:pointer;padding:0 2px 0 8px;line-height:1;transition:transform .2s;flex:0 0 auto;}
 .cr-itel-box.collapsed .cr-itel-tog{transform:rotate(-90deg);}
 .cr-itel-box.collapsed .cr-itel-body{display:none;}
 .cr-itel-body{margin-top:8px;}
 .cr-itel-row{display:flex;align-items:flex-start;gap:10px;padding:10px 11px;min-height:44px;
-  background:#fff;border:1px solid #e2d9d2;border-radius:8px;margin-bottom:8px;}
+  background:var(--ct-surface);border:1px solid var(--ct-line);border-radius:8px;margin-bottom:8px;}
 .cr-itel-rmain{flex:1;min-width:0;}
 .cr-itel-rtop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .cr-itel-samp{font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;
-  text-transform:uppercase;color:#5d4e46;}
+  text-transform:uppercase;color:var(--ct-ink-2);}
 .cr-itel-chip{font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase;
   padding:3px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap;}
-.cr-itel-chip.t-need{background:#fdf3e4;color:#8a5a12;border-color:#e8d3ae;}
-.cr-itel-chip.t-sent{background:#eef1f6;color:#4a5568;border-color:#d3d9e2;}
-.cr-itel-chip.t-recv{background:#eaf6ee;color:#276a41;border-color:#bcdcc7;}
-.cr-itel-chip.t-disc{background:#fdeceb;color:#a3120b;border-color:#f0c2be;}
-.cr-itel-chip.t-close{background:#fdf3e4;color:#8a5a12;border-color:#e8d3ae;}
-.cr-itel-chip.t-off{background:#f2efec;color:#8a7a70;border-color:#e2d9d2;}
-.cr-itel-meta{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7a70;margin-top:3px;line-height:1.35;
+.cr-itel-chip.t-need{background:var(--ct-warn-bg);color:var(--ct-warn);border-color:var(--ct-warn);}
+.cr-itel-chip.t-sent{background:var(--ct-surface-3);color:var(--ct-ink-2);border-color:var(--ct-line);}
+.cr-itel-chip.t-recv{background:var(--ct-do-head-bg);color:var(--ct-do-ink);border-color:var(--ct-do-edge);}
+.cr-itel-chip.t-disc{background:var(--ct-red-wash);color:var(--ct-red-deep);border-color:var(--ct-red);}
+.cr-itel-chip.t-close{background:var(--ct-warn-bg);color:var(--ct-warn);border-color:var(--ct-warn);}
+.cr-itel-chip.t-off{background:var(--ct-surface-3);color:var(--ct-ink-2);border-color:var(--ct-line);}
+.cr-itel-meta{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:var(--ct-ink-2);margin-top:3px;line-height:1.35;
   word-break:break-word;}
-.cr-itel-note{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#5d4e46;margin-top:4px;line-height:1.4;
+.cr-itel-note{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:var(--ct-ink-2);margin-top:4px;line-height:1.4;
   word-break:break-word;}
 .cr-itel-acts{display:flex;align-items:center;gap:6px;flex:0 0 auto;flex-wrap:wrap;
   justify-content:flex-end;}
-.cr-itel-go,.cr-itel-add,.cr-itel-save{background:#c4180f;color:#fff;border:none;border-radius:6px;
+.cr-itel-go,.cr-itel-add,.cr-itel-save{background:var(--ct-red);color:var(--ct-red-ink);border:none;border-radius:6px;
   padding:7px 12px;min-height:36px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;
-  letter-spacing:.03em;-webkit-tap-highlight-color:rgba(196,24,15,.3);touch-action:manipulation;}
-.cr-itel-go:hover,.cr-itel-add:hover,.cr-itel-save:hover{background:#9c120a;}
-.cr-itel-add{width:100%;background:transparent;color:#c4180f;border:1px dashed #d9a9a4;}
-.cr-itel-add:hover{background:rgba(196,24,15,.06);color:#9c120a;}
+  letter-spacing:.03em;-webkit-tap-highlight-color:var(--ct-focus);touch-action:manipulation;}
+.cr-itel-go:hover,.cr-itel-add:hover,.cr-itel-save:hover{background:var(--ct-red-deep);}
+.cr-itel-add{width:100%;background:transparent;color:var(--ct-red-deep);border:1px dashed var(--ct-red);}
+.cr-itel-add:hover{background:var(--ct-red-wash);color:var(--ct-red-deep);}
 .cr-itel-bar .cr-itel-add{width:auto;flex:0 0 auto;border-style:solid;}
-.cr-itel-flag{background:#fff;color:#8a7a70;border:1px solid #e2d9d2;border-radius:6px;
+.cr-itel-flag{background:var(--ct-surface);color:var(--ct-ink-2);border:1px solid var(--ct-line);border-radius:6px;
   padding:7px 10px;min-height:36px;font:700 11px 'Segoe UI',Arial,sans-serif;cursor:pointer;
-  -webkit-tap-highlight-color:rgba(196,24,15,.2);touch-action:manipulation;}
-.cr-itel-flag.on{background:#c4180f;color:#fff;border-color:#c4180f;}
-.cr-itel-del{background:transparent;color:#a3120b;border:1px solid #e5c4c0;border-radius:6px;
+  -webkit-tap-highlight-color:var(--ct-focus);touch-action:manipulation;}
+.cr-itel-flag.on{background:var(--ct-red);color:var(--ct-red-ink);border-color:var(--ct-red);}
+.cr-itel-del{background:transparent;color:var(--ct-red-deep);border:1px solid var(--ct-red);border-radius:6px;
   padding:5px 10px;min-height:36px;font:700 15px 'Segoe UI',Arial,sans-serif;line-height:1;cursor:pointer;
-  -webkit-tap-highlight-color:rgba(163,18,11,.25);touch-action:manipulation;}
-.cr-itel-del:hover{background:rgba(163,18,11,.1);border-color:#a3120b;}
-.cr-itel-cancel{background:transparent;color:#8a7a70;border:1px solid #e2d9d2;border-radius:6px;
+  -webkit-tap-highlight-color:var(--ct-focus);touch-action:manipulation;}
+.cr-itel-del:hover{background:var(--ct-red-wash);border-color:var(--ct-red-deep);}
+.cr-itel-cancel{background:transparent;color:var(--ct-ink-2);border:1px solid var(--ct-line);border-radius:6px;
   padding:7px 12px;min-height:36px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;
   touch-action:manipulation;}
 .cr-itel-form{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:10px 11px;
-  background:#fff;border:1px solid #e2d9d2;border-radius:8px;}
-.cr-itel-sel,.cr-itel-in{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:#241c19;
-  border:1px solid #e2d9d2;border-radius:6px;padding:8px 9px;min-height:38px;background:#fff;}
+  background:var(--ct-surface);border:1px solid var(--ct-line);border-radius:8px;}
+.cr-itel-sel,.cr-itel-in{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:var(--ct-ink);
+  border:1px solid var(--ct-line);border-radius:6px;padding:8px 9px;min-height:38px;background:var(--ct-surface);}
 .cr-itel-sel{flex:0 0 auto;text-transform:capitalize;}
 .cr-itel-in{flex:1;min-width:130px;}
-.cr-itel-sel:focus,.cr-itel-in:focus{outline:2px solid #c4180f;outline-offset:1px;border-color:#c4180f;}
+.cr-itel-sel:focus,.cr-itel-in:focus{outline:2px solid var(--ct-red);outline-offset:1px;border-color:var(--ct-red);}
 .cr-itel-go:focus-visible,.cr-itel-add:focus-visible,.cr-itel-flag:focus-visible,
 .cr-itel-del:focus-visible,.cr-itel-tog:focus-visible,.cr-itel-head:focus-visible{
-  outline:2px solid #c4180f;outline-offset:2px;}
+  outline:2px solid var(--ct-red);outline-offset:2px;}
 @media (max-width:480px){
   .cr-itel-row{flex-wrap:wrap;gap:8px;}
   .cr-itel-rmain{flex:1 1 100%;}
@@ -2867,7 +2867,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 407 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 408 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18056,7 +18056,7 @@ body.claim-insurance #tasksView,
 body.claim-insurance #docsView,
 body.claim-insurance #apptsView,
 body.claim-insurance #galleryView{
-  background:#1a1f2e;
+  background:var(--ct-bg);
 }
 
 /* Page heading + the "— Client Name" suffix (suffix has an inline color) */
@@ -18064,13 +18064,13 @@ body.claim-insurance #paymentsView .viewhead,
 body.claim-insurance #tasksView    .viewhead,
 body.claim-insurance #docsView     .viewhead,
 body.claim-insurance #apptsView    .viewhead,
-body.claim-insurance #galleryView  .viewhead{ color:#e8ecf1; }
+body.claim-insurance #galleryView  .viewhead{ color:var(--ct-ink); }
 
 body.claim-insurance #paymentsView .viewhead span,
 body.claim-insurance #tasksView    .viewhead span,
 body.claim-insurance #docsView     .viewhead span,
 body.claim-insurance #apptsView    .viewhead span,
-body.claim-insurance #galleryView  .viewhead span{ color:#8b95a5 !important; }
+body.claim-insurance #galleryView  .viewhead span{ color:var(--ct-ink-2) !important; }
 
 /* Section headers — same steel-blue treatment used inside #projectView */
 body.claim-insurance #paymentsView .projsec,
@@ -18078,8 +18078,8 @@ body.claim-insurance #tasksView    .projsec,
 body.claim-insurance #docsView     .projsec,
 body.claim-insurance #apptsView    .projsec,
 body.claim-insurance #galleryView  .projsec{
-  color:#e8ecf1; border-bottom-color:#4a6fa5; border-bottom-width:3px;
-  padding:6px 10px 4px; background:rgba(35,43,61,.85); border-radius:6px 6px 0 0;
+  color:var(--ct-ink); border-bottom-color:var(--ct-red); border-bottom-width:3px;
+  padding:6px 10px 4px; background:var(--ct-surface-2); border-radius:6px 6px 0 0;
 }
 
 /* Explanatory / empty-state / loading copy */
@@ -18097,22 +18097,22 @@ body.claim-insurance #apptsView    .axnote,
 body.claim-insurance #apptsView    .loading,
 body.claim-insurance #galleryView  .subnote,
 body.claim-insurance #galleryView  .axnote,
-body.claim-insurance #galleryView  .loading{ color:#a9b3c2; }
+body.claim-insurance #galleryView  .loading{ color:var(--ct-ink-2); }
 
 /* Log / list rows (payment log, task rows) — no background of their own */
 body.claim-insurance #paymentsView .tskrow,
 body.claim-insurance #tasksView    .tskrow,
 body.claim-insurance #docsView     .tskrow{
-  color:#e8ecf1; border-bottom-color:#2f3a4c;
+  color:var(--ct-ink); border-bottom-color:var(--ct-line);
 }
 body.claim-insurance #paymentsView .tskrow small,
 body.claim-insurance #tasksView    .tskrow small,
-body.claim-insurance #docsView     .tskrow small{ color:#8b95a5; }
+body.claim-insurance #docsView     .tskrow small{ color:var(--ct-ink-2); }
 
 /* Inline status text (color:#666 set inline, so !important is required) */
 body.claim-insurance #payStatus,
 body.claim-insurance #jdStatus,
-body.claim-insurance #tskStatus{ color:#8b95a5 !important; }
+body.claim-insurance #tskStatus{ color:var(--ct-ink-2) !important; }
 
 
 /* ── Insurance theme: purpose-built two-tone Cardinal logo ───────
@@ -18132,14 +18132,14 @@ body.claim-insurance #tskStatus{ color:#8b95a5 !important; }
    `filter:none` removes the old treatment; `content:` overrides both the
    JS-set src and the mobile @media content rule.                      */
 body.claim-insurance #brandLogo{
-  content: url("/cardinal-logo-insurance.svg") !important;
-  filter: none !important;
-  background: #232b3d !important;
-  border: 1px solid #4a6fa5 !important;
-  border-radius: 8px !important;
-  padding: 4px 6px !important;
-  object-fit: contain !important;
-  box-sizing: border-box !important;
+  content:url("/cardinal-logo-insurance.svg") !important;
+  filter:none !important;
+  background:var(--ct-surface) !important;
+  border:1px solid var(--ct-red) !important;
+  border-radius:8px !important;
+  padding:4px 6px !important;
+  object-fit:contain !important;
+  box-sizing:border-box !important;
 }
 
 
@@ -24205,10 +24205,10 @@ function showList() {
   .cr-portal-badge.insurance{ background:#e3ecf8; color:#3a5f96; }
   .cr-portal-badge.community{ background:#e2f2e6; color:#2e6b3f; }
   .cr-portal-badge.unknown  { background:#f0eeed; color:#8a7a72; }
-  body.claim-insurance .cr-portal-badge.retail   { background:rgba(212,160,23,.16); color:#d9b45a; }
-  body.claim-insurance .cr-portal-badge.insurance{ background:rgba(74,111,165,.22); color:#8fb4de; }
-  body.claim-insurance .cr-portal-badge.community{ background:rgba(74,140,90,.2);  color:#87c99a; }
-  body.claim-insurance .cr-portal-badge.unknown  { background:rgba(255,255,255,.09); color:#95a1b2; }
+  body.claim-insurance .cr-portal-badge.retail   { background:var(--ct-warn-bg); color:var(--ct-warn); }
+  body.claim-insurance .cr-portal-badge.insurance{ background:var(--ct-red-wash); color:var(--ct-red-deep); }
+  body.claim-insurance .cr-portal-badge.community{ background:var(--ct-do-head-bg);  color:var(--ct-do-ink); }
+  body.claim-insurance .cr-portal-badge.unknown  { background:var(--ct-surface-3); color:var(--ct-ink-2); }
 
   /* ── Landing portal cards ────────────────────────────────── */
   .cr-pcard{
@@ -24294,8 +24294,8 @@ function showList() {
      hideAllViews via the portal_view_sync module. Insurance clients
      get their own theme via body.claim-insurance in the base app. */
   body.viewing-cardinal-truth{
-    --red:#4a6fa5; --red-dk:#3d5d8c;
-    --amber:#7fa6d6; --slate:#5b6b7b;
+    --red:var(--ct-red); --red-dk:var(--ct-red-deep);
+    --amber:var(--ct-warn); --slate:var(--ct-ink-2);
   }
   body.viewing-cardinal-truth .titlecard h1,
   body.viewing-cardinal-truth .ct-dashtitle{ color:var(--ct-ink); }
@@ -26188,7 +26188,7 @@ canSee: canSee,
 </script>
 
 
-<style id="cr-cct-styles">.claimchip.ct-community{background:#e2f2e6;color:#2e6b3f;border:1px solid #4a8c5a}body.claim-insurance .claimchip.ct-community{background:rgba(74,140,90,.2);color:#87c99a;border-color:#4a8c5a}.cr-cct-shell{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9600;display:flex;align-items:flex-start;justify-content:center;padding:32px 12px;overflow-y:auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cct-box{width:100%;max-width:460px;background:#fffdf7;border:1px solid #ded3bf;border-radius:14px;box-shadow:0 12px 44px rgba(0,0,0,.35);overflow:hidden}.cr-cct-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #ede3ce;background:linear-gradient(180deg,#f5efdf,#efe6cd)}.cr-cct-hd h3{margin:0;font:800 15px Georgia,'Times New Roman',serif;color:#3d4a2c;letter-spacing:.02em}.cr-cct-hd .cr-cct-x{background:none;border:0;font-size:22px;color:#7a6a4a;cursor:pointer;line-height:1;padding:0 4px}.cr-cct-bd{padding:12px 14px 14px}.cr-cct-lede{font:600 12px 'Segoe UI',Arial,sans-serif;color:#7a6a4a;padding:2px 4px 10px;line-height:1.5}.cr-cct-opt{display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:8px;cursor:pointer;background:#fff;border:1px solid #e2d7bf;border-radius:11px;transition:transform .1s,border-color .1s}.cr-cct-opt:hover{border-color:#3d4a2c}.cr-cct-opt:active{transform:scale(.98)}.cr-cct-opt.current{background:#f5efdf;border-color:#b8a276;cursor:default}.cr-cct-opt.current:hover{transform:none}.cr-cct-opt .ic{width:38px;height:38px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:20px}.cr-cct-opt.retail .ic{background:#fbf0d6;color:#8a5a00;border:1px solid #d4a017}.cr-cct-opt.insurance .ic{background:#e3ecf8;color:#3a5f96;border:1px solid #4a6fa5}.cr-cct-opt.community .ic{background:#e2f2e6;color:#2e6b3f;border:1px solid #4a8c5a}.cr-cct-opt.unknown .ic{background:#efeae5;color:#6b5a52;border:1px solid #c9c2bf}.cr-cct-opt .body{flex:1 1 auto;min-width:0}.cr-cct-opt .n{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-cct-opt .d{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#7a6a4a;margin-top:2px;line-height:1.45}.cr-cct-opt .mark{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase;color:#7a6a4a;padding:3px 8px;border-radius:6px;background:#efe6cd;white-space:nowrap}</style>
+<style id="cr-cct-styles">.claimchip.ct-community{background:#e2f2e6;color:#2e6b3f;border:1px solid #4a8c5a}body.claim-insurance .claimchip.ct-community{background:var(--ct-do-head-bg);color:var(--ct-do-ink);border-color:var(--ct-do-edge)}.cr-cct-shell{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9600;display:flex;align-items:flex-start;justify-content:center;padding:32px 12px;overflow-y:auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cct-box{width:100%;max-width:460px;background:#fffdf7;border:1px solid #ded3bf;border-radius:14px;box-shadow:0 12px 44px rgba(0,0,0,.35);overflow:hidden}.cr-cct-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #ede3ce;background:linear-gradient(180deg,#f5efdf,#efe6cd)}.cr-cct-hd h3{margin:0;font:800 15px Georgia,'Times New Roman',serif;color:#3d4a2c;letter-spacing:.02em}.cr-cct-hd .cr-cct-x{background:none;border:0;font-size:22px;color:#7a6a4a;cursor:pointer;line-height:1;padding:0 4px}.cr-cct-bd{padding:12px 14px 14px}.cr-cct-lede{font:600 12px 'Segoe UI',Arial,sans-serif;color:#7a6a4a;padding:2px 4px 10px;line-height:1.5}.cr-cct-opt{display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:8px;cursor:pointer;background:#fff;border:1px solid #e2d7bf;border-radius:11px;transition:transform .1s,border-color .1s}.cr-cct-opt:hover{border-color:#3d4a2c}.cr-cct-opt:active{transform:scale(.98)}.cr-cct-opt.current{background:#f5efdf;border-color:#b8a276;cursor:default}.cr-cct-opt.current:hover{transform:none}.cr-cct-opt .ic{width:38px;height:38px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:20px}.cr-cct-opt.retail .ic{background:#fbf0d6;color:#8a5a00;border:1px solid #d4a017}.cr-cct-opt.insurance .ic{background:#e3ecf8;color:#3a5f96;border:1px solid #4a6fa5}.cr-cct-opt.community .ic{background:#e2f2e6;color:#2e6b3f;border:1px solid #4a8c5a}.cr-cct-opt.unknown .ic{background:#efeae5;color:#6b5a52;border:1px solid #c9c2bf}.cr-cct-opt .body{flex:1 1 auto;min-width:0}.cr-cct-opt .n{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-cct-opt .d{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#7a6a4a;margin-top:2px;line-height:1.45}.cr-cct-opt .mark{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase;color:#7a6a4a;padding:3px 8px;border-radius:6px;background:#efe6cd;white-space:nowrap}</style>
 <script id="cr-cct-script">
 (function () {
 'use strict';
@@ -27592,7 +27592,7 @@ onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
 </script>
 
 
-<style id="cr-home-btn-styles">#cr-home-btn{background:transparent;border:1px solid rgba(212,160,23,.6);color:#d4a017;border-radius:8px;padding:5px 8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;flex:0 0 auto;transition:background .12s,border-color .12s,transform .1s,color .12s;-webkit-tap-highlight-color:transparent}#cr-home-btn:hover{background:rgba(212,160,23,.15);border-color:#d4a017}#cr-home-btn:active{transform:scale(.94)}#cr-home-btn svg{display:block}body.viewing-community-hub #cr-home-btn{color:#a67c0a;border-color:rgba(166,124,10,.5)}body.viewing-community-hub #cr-home-btn:hover{background:rgba(166,124,10,.15);border-color:#a67c0a}body.claim-insurance #cr-home-btn{color:#f5d061;border-color:rgba(245,208,97,.5)}body.claim-insurance #cr-home-btn:hover{background:rgba(245,208,97,.15);border-color:#f5d061}</style>
+<style id="cr-home-btn-styles">#cr-home-btn{background:transparent;border:1px solid rgba(212,160,23,.6);color:#d4a017;border-radius:8px;padding:5px 8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;flex:0 0 auto;transition:background .12s,border-color .12s,transform .1s,color .12s;-webkit-tap-highlight-color:transparent}#cr-home-btn:hover{background:rgba(212,160,23,.15);border-color:#d4a017}#cr-home-btn:active{transform:scale(.94)}#cr-home-btn svg{display:block}body.viewing-community-hub #cr-home-btn{color:#a67c0a;border-color:rgba(166,124,10,.5)}body.viewing-community-hub #cr-home-btn:hover{background:rgba(166,124,10,.15);border-color:#a67c0a}body.claim-insurance #cr-home-btn{color:var(--ct-warn);border-color:var(--ct-warn)}body.claim-insurance #cr-home-btn:hover{background:var(--ct-warn-bg);border-color:var(--ct-warn)}</style>
 <script id="cr-home-btn-script">
 (function () {
 'use strict';
@@ -27762,7 +27762,7 @@ else start();
 </script>
 
 
-<style id="cr-autotrans-styles">.cr-autotrans{background:linear-gradient(135deg,#eef7f0,#d9ecd4);border:1px solid #4a8c5a;border-radius:10px;padding:11px 14px;margin:0 0 12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;display:flex;align-items:center;gap:12px;justify-content:space-between}.cr-autotrans .body{flex:1;min-width:0}.cr-autotrans .icon{font-size:16px;line-height:1}.cr-autotrans .title{font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#2f5f3b;display:flex;align-items:center;gap:6px}.cr-autotrans .desc{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#3d4a2c;margin-top:3px;line-height:1.4}.cr-autotrans .actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}.cr-autotrans button{background:#4a8c5a;color:#fff;border:0;border-radius:6px;padding:7px 12px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit;white-space:nowrap}.cr-autotrans button:hover{background:#3d7a4c}.cr-autotrans button:disabled{background:#8ba892;cursor:wait}.cr-autotrans button.ghost{background:transparent;color:#3d7a4c;border:1px solid rgba(74,140,90,.5)}.cr-autotrans button.ghost:hover{background:rgba(74,140,90,.12)}body.claim-insurance .cr-autotrans{background:linear-gradient(135deg,rgba(74,111,165,.14),rgba(74,111,165,.24));border-color:#4a6fa5}body.claim-insurance .cr-autotrans .title{color:#7fa6d6}body.claim-insurance .cr-autotrans .desc{color:#c0d0e5}body.claim-insurance .cr-autotrans button{background:#4a6fa5}body.claim-insurance .cr-autotrans button:hover{background:#3d5d8c}body.claim-insurance .cr-autotrans button.ghost{background:transparent;color:#7fa6d6;border-color:rgba(127,166,214,.5)}body.claim-insurance .cr-autotrans button.ghost:hover{background:rgba(127,166,214,.12)}</style>
+<style id="cr-autotrans-styles">.cr-autotrans{background:linear-gradient(135deg,#eef7f0,#d9ecd4);border:1px solid #4a8c5a;border-radius:10px;padding:11px 14px;margin:0 0 12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;display:flex;align-items:center;gap:12px;justify-content:space-between}.cr-autotrans .body{flex:1;min-width:0}.cr-autotrans .icon{font-size:16px;line-height:1}.cr-autotrans .title{font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#2f5f3b;display:flex;align-items:center;gap:6px}.cr-autotrans .desc{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#3d4a2c;margin-top:3px;line-height:1.4}.cr-autotrans .actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}.cr-autotrans button{background:#4a8c5a;color:#fff;border:0;border-radius:6px;padding:7px 12px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit;white-space:nowrap}.cr-autotrans button:hover{background:#3d7a4c}.cr-autotrans button:disabled{background:#8ba892;cursor:wait}.cr-autotrans button.ghost{background:transparent;color:#3d7a4c;border:1px solid rgba(74,140,90,.5)}.cr-autotrans button.ghost:hover{background:rgba(74,140,90,.12)}body.claim-insurance .cr-autotrans{background:linear-gradient(135deg,var(--ct-red-wash),var(--ct-red-wash));border-color:var(--ct-red)}body.claim-insurance .cr-autotrans .title{color:var(--ct-red-deep)}body.claim-insurance .cr-autotrans .desc{color:var(--ct-ink-2)}body.claim-insurance .cr-autotrans button{background:var(--ct-red)}body.claim-insurance .cr-autotrans button:hover{background:var(--ct-red-deep)}body.claim-insurance .cr-autotrans button.ghost{background:transparent;color:var(--ct-red-deep);border-color:var(--ct-red)}body.claim-insurance .cr-autotrans button.ghost:hover{background:var(--ct-red-wash)}</style>
 <script id="cr-autotrans-script">
 (function () {
 'use strict';
@@ -38011,7 +38011,7 @@ openCount : function(){ return items.filter(function(i){ return i.status === 'op
 </script>
 
 
-<style id="cr-pp-styles">.cr-pp-card{margin:14px 0;border:1px solid #ddd6cf;border-radius:11px;background:#fff;overflow:hidden}.cr-pp-hd{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(180deg,#fdf8ee,#f8f1e2);border-bottom:1px solid #ece1cc}.cr-pp-hd .t{flex:1;min-width:0;font:800 13px 'Segoe UI',Arial,sans-serif;color:#7a4e00}.cr-pp-hd .n{flex:0 0 auto;padding:3px 9px;border-radius:20px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-pp-hd .n.open{background:#f5a623;color:#241a09}.cr-pp-hd .n.clear{background:#e2efe6;color:#2f7048}.cr-pp-hd .add{flex:0 0 auto;background:#f5a623;color:#241a09;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;font-family:inherit}.cr-pp-hd .add:hover{background:#e0940f}.cr-pp-bd{padding:12px 14px 14px}.cr-pp-none{font:400 13px 'Segoe UI',Arial,sans-serif;color:#8a7a5a;line-height:1.55;padding:4px 2px}.cr-pp-item{display:flex;align-items:flex-start;gap:11px;padding:10px 4px;border-bottom:1px solid #f2ece1}.cr-pp-item:last-child{border-bottom:0}.cr-pp-item .box{flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:5px;border:2px solid #d0c6b4;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}.cr-pp-item .box:hover{border-color:#4a8c5a}.cr-pp-item.done .box{background:#4a8c5a;border-color:#4a8c5a}.cr-pp-item .tx{flex:1;min-width:0}.cr-pp-item .t{font:600 13.5px 'Segoe UI',Arial,sans-serif;line-height:1.4;color:#1e2432}.cr-pp-item.done .t{color:#8a8578;text-decoration:line-through}.cr-pp-item .m{font-size:11px;color:#8a7a5a;margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}.cr-pp-item .kind{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fdf1dd;color:#8a5a00}.cr-pp-item .kind.callback{background:#fbe9e8;color:var(--red-dk)}.cr-pp-item .kind.ticket{background:#e9f0f9;color:#2d4468}.cr-pp-item .hi{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fbe9e8;color:var(--red-dk)}.cr-pp-item img{width:34px;height:34px;object-fit:cover;border-radius:6px;flex:0 0 auto;cursor:zoom-in}.cr-pp-fold{width:100%;margin-top:10px;padding:9px 12px;background:#faf7f0;border:1px dashed #ddd6cf;border-radius:8px;cursor:pointer;text-align:left;font-family:inherit;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7a5a}.cr-pp-fold:hover{background:#f5efe4;border-color:#d4a017;color:#5a4a1a}.cr-pp-fold .chev{float:right;color:#a89e88}.cr-pp-hist[hidden]{display:none}.cr-pp-hist{margin-top:8px;padding-top:4px;border-top:1px solid #f2ece1}body.cr-cc-open .cr-pp-card{background:#111e2e;border-color:rgba(94,200,255,.35)}body.cr-cc-open .cr-pp-hd{background:linear-gradient(180deg,#15263a,#111e2e);border-bottom-color:rgba(94,200,255,.2)}body.cr-cc-open .cr-pp-hd .t{color:#cfe6f5}body.cr-cc-open .cr-pp-hd .add{background:transparent;border:1px solid #5ec8ff;color:#8ad0f5}body.cr-cc-open .cr-pp-item{border-bottom-color:rgba(94,200,255,.12)}body.cr-cc-open .cr-pp-item .t{color:#e6f0f8}body.cr-cc-open .cr-pp-item.done .t{color:#7690ab}body.cr-cc-open .cr-pp-item .m{color:#7690ab}body.cr-cc-open .cr-pp-item .box{background:#0d1826;border-color:#3f6a8c}body.cr-cc-open .cr-pp-none{color:#7690ab}body.cr-cc-open .cr-pp-fold{color:#8ad0f5}body.claim-insurance .cr-pp-card{background:linear-gradient(160deg,#232b3d 0%,#1a1f2e 100%);border-color:#2f3a4c}body.claim-insurance .cr-pp-hd{background:linear-gradient(180deg,#26304a,#1f2637);border-bottom-color:#2f3a4c}body.claim-insurance .cr-pp-hd .t{color:#e8ecf1}body.claim-insurance .cr-pp-item .t{color:#e8ecf1}body.claim-insurance .cr-pp-item.done .t{color:#6b7a90}body.claim-insurance .cr-pp-item .m{color:#8b95a5}body.claim-insurance .cr-pp-item{border-bottom-color:#2f3a4c}body.claim-insurance .cr-pp-item .box{background:#1a2233;border-color:#4a6fa5}body.claim-insurance .cr-pp-none{color:#8b95a5}body.claim-insurance .cr-pp-fold{color:#7fa6d6}</style>
+<style id="cr-pp-styles">.cr-pp-card{margin:14px 0;border:1px solid #ddd6cf;border-radius:11px;background:#fff;overflow:hidden}.cr-pp-hd{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(180deg,#fdf8ee,#f8f1e2);border-bottom:1px solid #ece1cc}.cr-pp-hd .t{flex:1;min-width:0;font:800 13px 'Segoe UI',Arial,sans-serif;color:#7a4e00}.cr-pp-hd .n{flex:0 0 auto;padding:3px 9px;border-radius:20px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-pp-hd .n.open{background:#f5a623;color:#241a09}.cr-pp-hd .n.clear{background:#e2efe6;color:#2f7048}.cr-pp-hd .add{flex:0 0 auto;background:#f5a623;color:#241a09;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;font-family:inherit}.cr-pp-hd .add:hover{background:#e0940f}.cr-pp-bd{padding:12px 14px 14px}.cr-pp-none{font:400 13px 'Segoe UI',Arial,sans-serif;color:#8a7a5a;line-height:1.55;padding:4px 2px}.cr-pp-item{display:flex;align-items:flex-start;gap:11px;padding:10px 4px;border-bottom:1px solid #f2ece1}.cr-pp-item:last-child{border-bottom:0}.cr-pp-item .box{flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:5px;border:2px solid #d0c6b4;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}.cr-pp-item .box:hover{border-color:#4a8c5a}.cr-pp-item.done .box{background:#4a8c5a;border-color:#4a8c5a}.cr-pp-item .tx{flex:1;min-width:0}.cr-pp-item .t{font:600 13.5px 'Segoe UI',Arial,sans-serif;line-height:1.4;color:#1e2432}.cr-pp-item.done .t{color:#8a8578;text-decoration:line-through}.cr-pp-item .m{font-size:11px;color:#8a7a5a;margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}.cr-pp-item .kind{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fdf1dd;color:#8a5a00}.cr-pp-item .kind.callback{background:#fbe9e8;color:var(--red-dk)}.cr-pp-item .kind.ticket{background:#e9f0f9;color:#2d4468}.cr-pp-item .hi{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fbe9e8;color:var(--red-dk)}.cr-pp-item img{width:34px;height:34px;object-fit:cover;border-radius:6px;flex:0 0 auto;cursor:zoom-in}.cr-pp-fold{width:100%;margin-top:10px;padding:9px 12px;background:#faf7f0;border:1px dashed #ddd6cf;border-radius:8px;cursor:pointer;text-align:left;font-family:inherit;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7a5a}.cr-pp-fold:hover{background:#f5efe4;border-color:#d4a017;color:#5a4a1a}.cr-pp-fold .chev{float:right;color:#a89e88}.cr-pp-hist[hidden]{display:none}.cr-pp-hist{margin-top:8px;padding-top:4px;border-top:1px solid #f2ece1}body.cr-cc-open .cr-pp-card{background:#111e2e;border-color:rgba(94,200,255,.35)}body.cr-cc-open .cr-pp-hd{background:linear-gradient(180deg,#15263a,#111e2e);border-bottom-color:rgba(94,200,255,.2)}body.cr-cc-open .cr-pp-hd .t{color:#cfe6f5}body.cr-cc-open .cr-pp-hd .add{background:transparent;border:1px solid #5ec8ff;color:#8ad0f5}body.cr-cc-open .cr-pp-item{border-bottom-color:rgba(94,200,255,.12)}body.cr-cc-open .cr-pp-item .t{color:#e6f0f8}body.cr-cc-open .cr-pp-item.done .t{color:#7690ab}body.cr-cc-open .cr-pp-item .m{color:#7690ab}body.cr-cc-open .cr-pp-item .box{background:#0d1826;border-color:#3f6a8c}body.cr-cc-open .cr-pp-none{color:#7690ab}body.cr-cc-open .cr-pp-fold{color:#8ad0f5}body.claim-insurance .cr-pp-card{background:linear-gradient(160deg,var(--ct-surface) 0%,var(--ct-bg) 100%);border-color:var(--ct-line)}body.claim-insurance .cr-pp-hd{background:linear-gradient(180deg,var(--ct-surface-3),var(--ct-surface-2));border-bottom-color:var(--ct-line)}body.claim-insurance .cr-pp-hd .t{color:var(--ct-ink)}body.claim-insurance .cr-pp-item .t{color:var(--ct-ink)}body.claim-insurance .cr-pp-item.done .t{color:var(--ct-ink-2)}body.claim-insurance .cr-pp-item .m{color:var(--ct-ink-2)}body.claim-insurance .cr-pp-item{border-bottom-color:var(--ct-line)}body.claim-insurance .cr-pp-item .box{background:var(--ct-surface-2);border-color:var(--ct-red)}body.claim-insurance .cr-pp-none{color:var(--ct-ink-2)}body.claim-insurance .cr-pp-fold{color:var(--ct-red-deep)}</style>
 <script id="cr-pp-script">
 (function(){
 'use strict';
@@ -42868,7 +42868,7 @@ document.getElementById('phGrid').addEventListener('click', function(e){
 .hmanage a{color:var(--rbe-mute);text-decoration:none;}
 .hmanage a:hover{color:var(--rbe-acclt);}
 .hxtras{flex-basis:100%;display:flex;flex-direction:column;gap:1px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin-top:2px;}
-body.claim-insurance .hmanage a{color:#8b95a5;}
+body.claim-insurance .hmanage a{color:var(--ct-ink-2);}
 </style>
 <script id="cr-keeper2-script">
 (function(){
