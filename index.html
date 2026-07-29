@@ -41118,39 +41118,6 @@ function mountMissing(){
 var v = document.getElementById('communityHubView');
 return !v || !v.querySelector('#cr-ch2');
 }
-function bidRow(x){
-var hot = (x.d != null && x.d <= 3);
-return '<button class="row' + (hot ? ' hot' : '') +
-'" data-open="' + esc(x.pr.id) + '" type="button">' +
-'<span class="days"><b>' + (x.d == null ? '\u2013' : x.d) + '</b>' +
-'<small>' + (x.d == null ? 'no date' : 'days') + '</small></span>' +
-'<span class="who"><b>' + esc(x.pr.name || 'Unnamed') + '</b>' +
-'<small>' + esc(partnerOf(x.pr)) + '</small></span>' +
-'<span class="amt">' + (x.amt ? usd(x.amt) : '') + '</span>' +
-'<span data-cc-editbid="' + esc(x.pr.id) + '" title="Edit bid" style="margin-left:8px;opacity:.7;font-size:13px;">\u270F\uFE0F</span>' +
-'</button>';
-}
-function qBlock(verb, list, unit){
-if(!list.length) return '';
-var tot = list.reduce(function(a, x){ return a + (x.amt || 0); }, 0);
-return '<div class="qblock"><div class="qh">' +
-'<span class="verb">' + verb + '</span>' +
-'<span class="n">' + list.length + '</span>' +
-'<span class="sum">' + usd(tot) + '</span></div>' +
-'<div class="qlist">' +
-list.slice(0, 5).map(function(x){
-var hot = (x.d != null && x.d >= 21);
-return '<button class="qrow" data-open="' + esc(x.pr.id) + '" type="button">' +
-'<span class="t"><b>' + esc(x.pr.name || 'Unnamed') + '</b>' +
-'<small>' + esc(partnerOf(x.pr)) +
-(x.d != null ? ' \u00b7 ' + x.d + ' days ' + unit : '') + '</small></span>' +
-(x.d != null ? '<span class="when' + (hot ? ' hot' : '') + '">' +
-x.d + 'd</span>' : '') +
-'<span class="a">' + (x.amt ? usd(x.amt) : '') + '</span>' +
-'</button>';
-}).join('') +
-'</div></div>';
-}
 function partnerCard(p, role){
 var cls = isClosed(p) ? ' closed' : '';
 var chip = p.dueCount
