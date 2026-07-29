@@ -124,14 +124,18 @@ async function callGemini(model, prompt, photoParts) {
 }
 
 // ═══ OpenAI fallback ═════════════════════════════════════════
-async function callOpenAI(prompt, photoUrls) {
+/* Was handed photo_urls, which meant OpenAI fetched our bucket itself - it
+   cannot once the bucket is private. It gets the bytes we already downloaded
+   for Gemini instead, which removes the dependency entirely. */
+async function callOpenAI(prompt, photoParts) {
   const body = {
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: 'You output only valid JSON per the schema in the user message. No prose, no code fences.' },
       { role: 'user', content: [
           { type: 'text', text: prompt },
-          ...photoUrls.map(url => ({ type: 'image_url', image_url: { url } })),
+          ...photoParts.map(p => ({ type: 'image_url', image_url: {
+            url: `data:${p.inline_data.mime_type};base64,${p.inline_data.data}` } })),
       ]},
     ],
     response_format: { type: 'json_object' },
@@ -151,8 +155,27 @@ async function callOpenAI(prompt, photoUrls) {
 }
 
 // ═══ Fetch photo → Gemini inline_data ════════════════════════
+/* The photos bucket is going private, so a plain GET on an /object/public/
+   URL will 403. This function already holds the service-role key, so it
+   downloads through the storage API instead - which works whether the bucket
+   is public or private, and needs no change on the client. Anything that is
+   not one of our own storage URLs still takes the plain fetch. */
+function storagePathFromUrl(url) {
+  const m = /\/storage\/v1\/object\/(?:public|sign)\/photos\/([^?#]+)/.exec(String(url || ''));
+  if (!m) return null;
+  try { return decodeURIComponent(m[1]); } catch { return m[1]; }
+}
 async function fetchPhotoAsInline(url) {
-  const r = await fetch(url);
+  const spath = storagePathFromUrl(url);
+  let r;
+  if (spath && SUPABASE_SRV) {
+    const enc = spath.split('/').map(encodeURIComponent).join('/');
+    r = await fetch(`${SUPABASE_URL}/storage/v1/object/photos/${enc}`, {
+      headers: { apikey: SUPABASE_SRV, authorization: `Bearer ${SUPABASE_SRV}` },
+    });
+  } else {
+    r = await fetch(url);
+  }
   if (!r.ok) throw new Error(`Photo fetch ${r.status}: ${url}`);
   const buf = Buffer.from(await r.arrayBuffer());
   if (buf.length > 4_500_000) console.warn(`[estimate] large photo ${buf.length}B`);
@@ -248,7 +271,7 @@ export default async function handler(req, res) {
   }
   if (!rawJson) {
     try {
-      rawJson = await callOpenAI(prompt, photo_urls);
+      rawJson = await callOpenAI(prompt, photoParts);
       modelUsed = 'openai:gpt-4o-mini';
     } catch (e) {
       return res.status(502).json({ error: 'All AI providers failed', detail: `${lastErr?.message || ''} | ${e.message}` });

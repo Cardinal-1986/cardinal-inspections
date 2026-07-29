@@ -12178,6 +12178,40 @@ function photoPathOf(p){
 function estimatePhotoPaths(est){
   return (est && Array.isArray(est.photos) ? est.photos : []).map(photoPathOf).filter(Boolean);
 }
+/* ---- generic signed-URL painter -----------------------------------------
+   Four lineages other than estimates/reports mint a PUBLIC url and render it:
+   punch proof photos (two blocks), work-order files, and resource images.
+   All four have ZERO objects in storage today, so they are latent rather than
+   live - but each would break the first time it was used against a private
+   bucket.
+
+   Rather than convert four synchronous renderers, this walks a DOM subtree
+   AFTER it renders and swaps any of our own public photo URLs for a signed
+   one. The selector is deliberately narrow: only /object/public/photos/, so
+   it cannot touch a data: URI, an external image, or another bucket. Bulk
+   signed, one request per subtree. Every failure path leaves the DOM alone,
+   so it cannot blank an image. */
+async function paintSignedPhotoImgs(root, ttl){
+  try{
+    var scope = root || document;
+    if(!scope.querySelectorAll || typeof signedPhotoMap !== 'function') return;
+    var imgs = [].slice.call(scope.querySelectorAll('img[src*="/object/public/photos/"]'));
+    if(!imgs.length) return;
+    var paths = [], keep = [];
+    imgs.forEach(function(im){
+      var k = photoPathOf({ url: im.getAttribute('src') });
+      if(k){ paths.push(k); keep.push(im); }
+    });
+    if(!paths.length) return;
+    var m = await signedPhotoMap(paths, ttl || PHOTO_URL_TTL);
+    keep.forEach(function(im, i){
+      var u = m[paths[i]];
+      if(u) im.setAttribute('src', u);
+    });
+  }catch(e){
+    try{ if(window.report) window.report(e, 'Photos', 'paint signed imgs'); }catch(e2){}
+  }
+}
 function projInsurance(pr){
   var L = pr ? parseCkAll(pr).lead : null;
   return (L && L.insurance && typeof L.insurance === 'object') ? L.insurance : null;
@@ -26972,6 +27006,18 @@ function removeSection(){
 var s = document.querySelector('.cr-wo-section');
 if(s && s.parentNode) s.parentNode.removeChild(s);
 }
+/* Pre-signed at render, read synchronously on click. Signing inside the click
+   handler would put window.open() after an await, which iOS Safari treats as
+   a non-gesture popup and blocks - so the URL has to be ready beforehand. */
+var woUrls = {};
+async function signWorkOrderUrls(orders){
+  try{
+    var paths = (orders || []).map(function(w){ return w && w.path; }).filter(Boolean);
+    if(!paths.length || typeof signedPhotoMap !== 'function') return;
+    var m = await signedPhotoMap(paths, 3600);
+    Object.keys(m).forEach(function(k){ woUrls[k] = m[k]; });
+  }catch(e){}
+}
 function renderSection(){
 var pr = window.currentProject;
 if(!pr || !isCommunityClient(pr) || !canSee()){
@@ -26987,6 +27033,7 @@ var anchor = document.querySelector('.cr-bidstrip') ||
 document.querySelector('.dbstage');
 if(!anchor) return;
 if(existing) existing.remove();
+signWorkOrderUrls(orders);
 var section = document.createElement('div');
 section.className = 'cr-wo-section';
 section.dataset.sig = sig;
@@ -27084,10 +27131,18 @@ renderSection();
 function viewFile(wo){
 if(!wo || !window.supa) return;
 try{
-var res = window.supa.storage.from('photos').getPublicUrl(wo.path);
-var url = res && res.data && res.data.publicUrl;
-if(url) window.open(url, '_blank', 'noopener,noreferrer');
-else alert('Could not generate URL for ' + wo.name);
+/* Warm map: opens in the same task as the tap, so the popup is allowed. */
+var url = woUrls[wo.path];
+if(url){ window.open(url, '_blank', 'noopener,noreferrer'); return; }
+/* Cold map (render had not finished signing). Sign on demand and accept that
+   the tab may need a second tap on iOS. */
+window.supa.storage.from('photos').createSignedUrl(wo.path, 3600).then(function(sig){
+var u = (!sig.error && sig.data && sig.data.signedUrl) || null;
+if(!u){ alert('Could not generate URL for ' + wo.name); return; }
+woUrls[wo.path] = u;
+var w = window.open(u, '_blank', 'noopener,noreferrer');
+if(!w) alert('Tap Open again to view ' + wo.name + '.');
+}).catch(function(e){ alert('Could not open: ' + (e.message || e)); });
 }catch(e){
 alert('Could not open: ' + (e.message || e));
 }
@@ -33714,8 +33769,12 @@ var up = await window.supa.storage.from('photos').upload(path, file, {
 cacheControl:'3600', upsert:false, contentType:file.type || undefined
 });
 if(up.error){ alert('Upload failed: ' + up.error.message); return; }
-var urlRes = window.supa.storage.from('photos').getPublicUrl(path);
-var url = urlRes && urlRes.data && urlRes.data.publicUrl;
+/* This URL is baked into stored resource HTML, so it needs the document TTL -
+   a public URL would 403 the moment the bucket goes private, and the markup
+   is already saved by then. */
+var urlRes = await window.supa.storage.from('photos')
+.createSignedUrl(path, (typeof PHOTO_DOC_URL_TTL === 'number' ? PHOTO_DOC_URL_TTL : 315360000));
+var url = urlRes && !urlRes.error && urlRes.data && urlRes.data.signedUrl;
 if(!url){ alert('Could not get URL.'); return; }
 var caption = prompt('Caption for this image (optional):', '') || '';
 var markup = (window.CardinalResourceImages &&
@@ -38813,6 +38872,7 @@ return '<button data-filter="' + k + '" type="button" ' +
 '</div>') +
 '</div>';
 wire();
+paintSignedPhotoImgs(el);
 }
 function renderItem(i){
 var pr = projectFor(i.project_id);
@@ -39218,6 +39278,7 @@ done.map(itemHtml).join('') +
 '</div>' +
 '</div>';
 wire(host);
+paintSignedPhotoImgs(host);
 }
 function wire(host){
 var add = host.querySelector('[data-act="add"]');
@@ -44899,6 +44960,7 @@ function openDetail(id){
     '</div>';
   m.classList.add('open');
   m.setAttribute('data-id', String(id));
+  paintSignedPhotoImgs(m);
 }
 function closeDetail(){
   var m = document.getElementById('puDetail');
