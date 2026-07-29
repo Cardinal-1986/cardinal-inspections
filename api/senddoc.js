@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   const user = await who.json();
 
   try {
-    const { to, clientName, title, html, shareUrl } = req.body || {};
+    const { to, clientName, title, html, shareUrl, propertyLine } = req.body || {};
     if (!to || !html || !title) { res.status(400).json({ error: 'Missing to/title/html' }); return; }
 
     const from = process.env.DIGEST_FROM || 'Cardinal Client Resources <onboarding@resend.dev>';
@@ -33,6 +33,7 @@ export default async function handler(req, res) {
       <p>Hi${clientName ? ' ' + esc(clientName) : ''},</p>
       <p>Please find your <b>${esc(title)}</b> attached. Open the attachment in any web browser to view it,
       and print or save it as a PDF from there.</p>
+      ${propertyLine ? `<p>${esc(propertyLine)}</p>` : ''}
       ${shareUrl ? `<p>You can also view it online any time: <a href="${esc(shareUrl)}">${esc(shareUrl)}</a></p>` : ''}
       <p>Questions? Just reply to this email.</p>
       <p style="color:#8a6f66;">— ${esc(user.user_metadata?.full_name || user.email)}<br>

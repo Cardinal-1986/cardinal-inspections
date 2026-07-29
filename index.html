@@ -12011,6 +12011,30 @@ function projClaimType(pr){
   if(L.retail) return 'retail';
   return 'unknown';
 }
+/* The person served on a job, as opposed to the party who pays for it.
+   lead.homeowner_name is authoritative. When it is blank the name is recovered
+   from pr.name, which community jobs store as a concatenation in one of two
+   shapes: "{Homeowner} \u2014 {Partner}" or "{Partner} \u2014 {Address}". The second
+   shape describes a property with no homeowner on file, so it yields empty
+   rather than a guess. Declared at depth 0 in a non-IIFE block, so it is a
+   genuine global and reachable as window.projHomeowner from the other blocks
+   \u2014 the same way projClaimType and parseCkAll are. Read-only. */
+function projHomeowner(pr){
+  var L = pr ? parseCkAll(pr).lead : null;
+  if(!L) return '';
+  var hn = String(L.homeowner_name || '').trim();
+  if(hn) return hn;
+  var p = String(L.partner_name || '').trim();
+  var n = String((pr && pr.name) || '').trim();
+  if(!p) return n;
+  if(n === p) return '';
+  if(n.indexOf(p + ' \u2014 ') === 0) return '';
+  var suf = ' \u2014 ' + p;
+  if(n.length > suf.length && n.slice(-suf.length) === suf){
+    return n.slice(0, n.length - suf.length).trim();
+  }
+  return n;
+}
 function projInsurance(pr){
   var L = pr ? parseCkAll(pr).lead : null;
   return (L && L.insurance && typeof L.insurance === 'object') ? L.insurance : null;
@@ -16760,6 +16784,22 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     to = to.trim();
     if(!to || to.indexOf('@') === -1){ showError('Enter a valid email address.'); return; }
     btn.disabled = true; btn.textContent = 'Sending\u2026';
+    /* Who the email greets, and the one line that says whose house this is.
+       On a community job the recipient is the partner, so greeting them by the
+       homeowner's name (or by the concatenated project name) reads as a mistake. */
+    var greetName = (pr && pr.name) || '', propLine = '';
+    try{
+      if(pr && typeof projClaimType === 'function' && projClaimType(pr) === 'community'){
+        var _l2 = parseCkAll(pr).lead || {};
+        if(_l2.partner_name) greetName = _l2.partner_name;
+        var _ho = (typeof projHomeowner === 'function')
+          ? projHomeowner(pr) : String(_l2.homeowner_name || '').trim();
+        var _ad = String((pr && pr.address) || '').trim();
+        if(_ho && _ad) propLine = 'This covers work at ' + _ad + ', for ' + _ho + '.';
+        else if(_ho)   propLine = 'This covers work for ' + _ho + '.';
+        else if(_ad)   propLine = 'This covers work at ' + _ad + '.';
+      }
+    }catch(_e2){ try{ if(window.report) window.report(_e2, 'Documents', 'send greeting'); }catch(__e){} }
     var tok = null;
     try{ tok = await ensureShareToken(); }catch(e){}
     var session = TEAM ? (await sb.auth.getSession()).data.session : null;
@@ -16771,7 +16811,8 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
       },
       body: JSON.stringify({
         to: to,
-        clientName: pr ? pr.name : '',
+        clientName: greetName,
+        propertyLine: propLine,
         title: (row && row.title) || 'Cardinal Document',
         html: serializeFrame(),
         shareUrl: tok ? shareUrlFor(tok) : null
@@ -36233,6 +36274,30 @@ var clientName = (project && (project.name || project.client_name)) || 'Client';
 var address    = (project && project.address) || '';
 var phone      = (project && project.phone) || '';
 var email      = (project && project.email) || '';
+/* A community bid is awarded, approved and paid by the partner, not by the
+   homeowner, so the document is addressed to the partner and the homeowner is
+   named on their own row. Retail and insurance documents are unchanged. */
+var comLead = null;
+try{
+if(project && typeof window.projClaimType === 'function' &&
+window.projClaimType(project) === 'community' &&
+typeof window.parseCkAll === 'function'){
+comLead = window.parseCkAll(project).lead || null;
+}
+}catch(_ch){ comLead = null; }
+var contactKey = 'Client Contact';
+var contactVal = esc(phone) + (email ? '<br>' + esc(email) : '');
+if(comLead){
+var partnerNm = String(comLead.partner_name || '').trim();
+if(partnerNm) clientName = partnerNm;
+var hoNm = (typeof window.projHomeowner === 'function')
+? window.projHomeowner(project)
+: String(comLead.homeowner_name || '').trim();
+var hoPh = String(comLead.homeowner_phone || '').trim();
+contactKey = 'Homeowner';
+contactVal = (hoNm ? esc(hoNm) : '<span style="color:#777;">Not recorded</span>') +
+(hoPh ? '<br>' + esc(hoPh) : '');
+}
 var subtotal = Number(est.subtotal) || 0;
 var discount = Number(est.discount) || 0;
 var total    = Number(est.total) || 0;
@@ -36404,8 +36469,8 @@ return '<!DOCTYPE html>\n' +
 '<td class="k">Date</td><td>' + esc(fmtDate(est.created_at || new Date())) + '</td>' +
 '</tr>' +
 '<tr>' +
-'<td class="k">Client Contact</td>' +
-'<td>' + esc(phone) + (email ? '<br>' + esc(email) : '') + '</td>' +
+'<td class="k">' + esc(contactKey) + '</td>' +
+'<td>' + contactVal + '</td>' +
 '<td class="k">Valid Through</td>' +
 '<td>' + esc(fmtDate(est.valid_through)) + '</td>' +
 '</tr>' +
@@ -40817,24 +40882,13 @@ try{ return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {}); }
 catch(_){ return (pr && pr.checklist) || {}; }
 }
 function lead(pr){ return (ck(pr) || {}).lead || {}; }
-/* The person served. lead.homeowner_name is authoritative; when it is blank we
-   recover the name from pr.name, which is stored as a concatenation in one of
-   two shapes: "{Homeowner} \u2014 {Partner}" or "{Partner} \u2014 {Address}".
-   The second shape has no homeowner, so it returns empty rather than a guess. */
+/* The person served. One implementation lives at global scope (projHomeowner,
+   beside projClaimType) so the hub, the client page and the estimate document
+   cannot drift apart. The fallback covers only the authoritative field, which
+   is populated on 10 of 13 community jobs. */
 function homeownerOf(pr){
-var l = lead(pr);
-var hn = String(l.homeowner_name || '').trim();
-if(hn) return hn;
-var p = String(l.partner_name || '').trim();
-var n = String((pr && pr.name) || '').trim();
-if(!p) return n;
-if(n === p) return '';
-if(n.indexOf(p + ' \u2014 ') === 0) return '';
-var suf = ' \u2014 ' + p;
-if(n.length > suf.length && n.slice(-suf.length) === suf){
-return n.slice(0, n.length - suf.length).trim();
-}
-return n;
+if(typeof window.projHomeowner === 'function') return window.projHomeowner(pr);
+return String(lead(pr).homeowner_name || '').trim();
 }
 function normStage(s){
 if(typeof window.normStage === 'function'){
@@ -41566,24 +41620,13 @@ try{ return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {}); }
 catch(_){ return (pr && pr.checklist) || {}; }
 }
 function lead(pr){ return (ck(pr) || {}).lead || {}; }
-/* The person served. lead.homeowner_name is authoritative; when it is blank we
-   recover the name from pr.name, which is stored as a concatenation in one of
-   two shapes: "{Homeowner} \u2014 {Partner}" or "{Partner} \u2014 {Address}".
-   The second shape has no homeowner, so it returns empty rather than a guess. */
+/* The person served. One implementation lives at global scope (projHomeowner,
+   beside projClaimType) so the hub, the client page and the estimate document
+   cannot drift apart. The fallback covers only the authoritative field, which
+   is populated on 10 of 13 community jobs. */
 function homeownerOf(pr){
-var l = lead(pr);
-var hn = String(l.homeowner_name || '').trim();
-if(hn) return hn;
-var p = String(l.partner_name || '').trim();
-var n = String((pr && pr.name) || '').trim();
-if(!p) return n;
-if(n === p) return '';
-if(n.indexOf(p + ' \u2014 ') === 0) return '';
-var suf = ' \u2014 ' + p;
-if(n.length > suf.length && n.slice(-suf.length) === suf){
-return n.slice(0, n.length - suf.length).trim();
-}
-return n;
+if(typeof window.projHomeowner === 'function') return window.projHomeowner(pr);
+return String(lead(pr).homeowner_name || '').trim();
 }
 /* Partner name trimmed to fit the 4-up facts strip. Full name goes in title. */
 function shortOrg(n){
