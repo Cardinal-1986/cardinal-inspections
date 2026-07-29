@@ -3085,7 +3085,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 420 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 421 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19334,8 +19334,11 @@ MOUNT.innerHTML = '<div style="padding:18px;max-width:640px;margin:0 auto;">' +
 '<h3 style="font:800 18px Georgia,serif;margin:14px 0 6px;">Manual estimate</h3>' +
 '<p style="opacity:.75;font-size:13px;margin:0 0 12px;">Pick the client \u2014 the estimate editor opens on their job.</p>' +
 '<input data-mq placeholder="Search clients\u2026" style="width:100%;box-sizing:border-box;padding:11px 13px;border-radius:9px;border:1px solid rgba(212,160,23,.35);background:rgba(255,255,255,.04);color:inherit;font:inherit;margin-bottom:10px;">' +
+'<button data-mnew style="width:100%;box-sizing:border-box;padding:12px 13px;margin-bottom:10px;border:1px dashed rgba(212,160,23,.55);border-radius:10px;background:rgba(212,160,23,.07);color:inherit;cursor:pointer;font:700 14px inherit;text-align:left;">\u002B  New client\u2026<small style="display:block;font-weight:600;opacity:.65;margin-top:2px;">Pick the CRM, add name, address and phone \u2014 it creates the profile</small></button>' +
+'<div data-mform></div>' +
 '<div data-mrows></div></div>';
 MOUNT.querySelector('[data-act="back"]').onclick = showList;
+MOUNT.querySelector('[data-mnew]').onclick = function(){ newClientForm(); };
 var q = '';
 function paint(){
 var list = rows.filter(function(p){
@@ -19356,6 +19359,108 @@ window.CardinalEstimates.openEditor(b.getAttribute('data-mpick'));
 var inp = MOUNT.querySelector('[data-mq]');
 inp.oninput = function(){ q = inp.value.trim().toLowerCase(); paint(); };
 paint();
+
+/* 421: create the client here, instead of making Theo leave the estimate flow,
+   go and make a profile somewhere else, then come back and search for it.
+   Where it goes is asked FIRST, because claim_type decides which CRM the client
+   ever appears in and it is the one field that is painful to change later. */
+function newClientForm(){
+  var crm = 'retail';
+  var wrap = MOUNT.querySelector('[data-mform]');
+  var btn  = MOUNT.querySelector('[data-mnew]');
+  var rowsBox = MOUNT.querySelector('[data-mrows]');
+  if(wrap.getAttribute('data-open') === '1'){
+    wrap.innerHTML = ''; wrap.removeAttribute('data-open');
+    if(rowsBox) rowsBox.style.display = '';
+    if(btn) btn.style.display = '';
+    return;
+  }
+  wrap.setAttribute('data-open', '1');
+  if(rowsBox) rowsBox.style.display = 'none';
+  if(btn) btn.style.display = 'none';
+  var fieldCss = 'width:100%;box-sizing:border-box;padding:11px 13px;border-radius:9px;' +
+    'border:1px solid rgba(212,160,23,.35);background:rgba(255,255,255,.04);color:inherit;' +
+    'font:inherit;margin-bottom:9px;';
+  var segCss = 'flex:1;padding:10px 6px;border-radius:9px;cursor:pointer;font:800 12px inherit;' +
+    'border:1px solid rgba(212,160,23,.35);background:rgba(255,255,255,.03);color:inherit;';
+  wrap.innerHTML =
+    '<div style="border:1px solid rgba(212,160,23,.4);border-radius:12px;padding:13px;margin-bottom:12px;">' +
+      '<div style="font:800 13px inherit;margin-bottom:8px;">Where does this client go?</div>' +
+      '<div style="display:flex;gap:7px;margin-bottom:12px;">' +
+        '<button data-crm="retail" style="' + segCss + '">Retail</button>' +
+        '<button data-crm="insurance" style="' + segCss + '">Insurance</button>' +
+        '<button data-crm="community" style="' + segCss + '">Community</button>' +
+      '</div>' +
+      '<input data-f="name" placeholder="Client name (required)" style="' + fieldCss + '">' +
+      '<input data-f="address" placeholder="Address" style="' + fieldCss + '">' +
+      '<input data-f="phone" type="tel" placeholder="Phone" style="' + fieldCss + '">' +
+      '<div data-msg style="min-height:18px;font:600 12px inherit;opacity:.8;margin-bottom:8px;"></div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button data-cancel style="flex:0 0 auto;padding:11px 14px;border-radius:9px;border:1px solid rgba(212,160,23,.35);background:none;color:inherit;cursor:pointer;font:inherit;">Cancel</button>' +
+        '<button data-create style="flex:1;padding:11px 14px;border-radius:9px;border:0;background:#d4a017;color:#1a1a1a;cursor:pointer;font:800 14px inherit;">Create &amp; open estimate</button>' +
+      '</div>' +
+    '</div>';
+  function paintSeg(){
+    wrap.querySelectorAll('[data-crm]').forEach(function(b){
+      var on = b.getAttribute('data-crm') === crm;
+      b.style.background = on ? 'rgba(212,160,23,.22)' : 'rgba(255,255,255,.03)';
+      b.style.borderColor = on ? '#d4a017' : 'rgba(212,160,23,.35)';
+    });
+  }
+  wrap.querySelectorAll('[data-crm]').forEach(function(b){
+    b.onclick = function(){ crm = b.getAttribute('data-crm'); paintSeg(); };
+  });
+  paintSeg();
+  wrap.querySelector('[data-cancel]').onclick = function(){ newClientForm(); };
+  wrap.querySelector('[data-create]').onclick = async function(){
+    var msg = wrap.querySelector('[data-msg]');
+    var val = function(k){ var el = wrap.querySelector('[data-f="' + k + '"]'); return el ? el.value.trim() : ''; };
+    var name = val('name');
+    if(!name){ msg.textContent = 'A client name is required.'; return; }
+    if(!window.supa){ msg.textContent = 'Not connected \u2014 cannot create a client offline.'; return; }
+    var go = wrap.querySelector('[data-create]');
+    go.disabled = true; msg.textContent = 'Creating\u2026';
+    var me = (window.currentUser && window.currentUser.email) || null;
+    /* the same shape the Scope of Loss and AccuLynx importers write */
+    var proj = {
+      name    : name,
+      address : val('address') || null,
+      stage   : 'Lead',
+      checklist : {
+        po : (typeof window.nextPo === 'function') ? window.nextPo() : undefined,
+        stage_since : new Date().toISOString(),
+        lead : {
+          claim_type : crm,
+          phone      : val('phone') || null,
+          assigned   : me ? [me] : [],
+          source     : 'Manual estimate',
+          created_at : new Date().toISOString()
+        }
+      },
+      created_by : me
+    };
+    try{
+      var r = await window.supa.from('projects').insert(proj).select().single();
+      if(r.error) throw r.error;
+      var made = r.data;
+      if(Array.isArray(window.cacheProjects) && made &&
+         !window.cacheProjects.some(function(p){ return String(p.id) === String(made.id); })){
+        window.cacheProjects.unshift(made);
+      }
+      if(window.CardinalEstimates && window.CardinalEstimates.openEditor){
+        window.CardinalEstimates.openEditor(made.id);
+      } else {
+        msg.textContent = 'Client created. Open it from the list to add the estimate.';
+        go.disabled = false;
+      }
+    }catch(e){
+      msg.textContent = 'Could not create: ' + ((e && e.message) || e);
+      go.disabled = false;
+    }
+  };
+  var nameEl = wrap.querySelector('[data-f="name"]');
+  if(nameEl) setTimeout(function(){ nameEl.focus(); }, 60);
+}
 }
 function showList() {
     state.view = 'list';
@@ -44492,5 +44597,27 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
   window.CardinalInsTheme = Object.assign(window.CardinalInsTheme || {}, { apply: apply, get: cur });
 })();
 </script>
+
+<style id="cr-estscroll-styles">
+/* ── Build 421: the estimates scroller ───────────────────────────────────────
+   styleMounts() sets position:fixed; inset:0; overflow-y:auto INLINE on these
+   mounts. A fixed inset:0 box already fills the viewport, so the min-height:100vh
+   in their base rule adds nothing but permanent scroll slack — and on mobile
+   100vh resolves against the LARGE viewport, taller than the visible one, so the
+   box hangs off the bottom of the screen. The result is a scrollbar that moves
+   through empty space while the content stays put, which is what Theo
+   photographed twice.
+
+   Build 411 fixed #cr-claims-mount this way and left these two, noting them in
+   OPEN_ITEMS. Written as an override rather than a splice into the originals:
+   those rules are ~2KB of design tokens and one declaration at the end of head
+   is far less risky than surgery inside them.
+
+   overscroll-behavior:contain stops the scroll chaining into whatever view is
+   still mounted underneath — these overlays deliberately leave the previous view
+   in place.                                                                    */
+#cr-estimates-mount,
+#cr-pricing-mount{min-height:0;overscroll-behavior:contain}
+</style>
 </body>
 </html>
