@@ -9,7 +9,7 @@
 
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-3.5-flash';
 const MAX_BYTES = 12 * 1024 * 1024;   // 12 MB raw cap; base64 is ~16 MB
 
 export default async function handler(req, res) {

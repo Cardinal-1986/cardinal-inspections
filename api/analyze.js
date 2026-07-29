@@ -6,7 +6,7 @@
 
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
-const MODEL = 'gemini-2.5-flash';           // cheap + strong vision; swap anytime
+const MODEL = 'gemini-3.5-flash';           // cheap + strong vision; swap anytime
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;    // 5 MB cap per request
 
 export default async function handler(req, res) {
