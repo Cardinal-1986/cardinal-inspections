@@ -2903,9 +2903,15 @@ body[data-crm="retail"]   {--bnbg:#1b1f26;--bnbd:#2b323d;--bnac:#f5d061}
 
 /* the nav row: Home out (the gold house does it), one row not two, dropdowns right */
 #crBanner [data-go="home"]{display:none !important}
-#crBanner{flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;
-  -webkit-overflow-scrolling:touch;scrollbar-width:none;padding-top:6px;padding-bottom:6px}
-#crBanner::-webkit-scrollbar{display:none}
+/* 424: the overflow is GONE. overflow-x:auto with overflow-y:visible computes to
+   auto on both axes, which turned this into a clipping box — and .cbmenu is an
+   absolutely-positioned child of it, so the Production and Tools menus opened
+   clipped, behind the page. Nothing here may reintroduce an overflow value.
+   flex-wrap moved to the body block below: this rule is in the document head and
+   #crBanner's base rule is in the body, so document order meant flex-wrap never
+   applied. Never write a literal style tag in a CSS comment — the tag-balance
+   gate counts it, and a CLOSING one would genuinely end the block early. */
+#crBanner{padding-top:6px;padding-bottom:6px}
 #crBanner .cbn{flex:0 0 auto}
 #crBanner .cbn.cbdd:nth-last-of-type(2){margin-left:auto}
 #crBanner .cbmenu .cr-navhd{display:block}
@@ -3085,7 +3091,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 423 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 424 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -44940,6 +44946,22 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
   font:600 11px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa0a8)}
 .paymodal-bd .paycp-none{padding:16px 2px;font:600 13px 'Segoe UI',Arial,sans-serif;
   line-height:1.5;color:var(--rbe-mute,#9aa0a8)}
+</style>
+
+<style id="cr-nav2-styles">
+/* ── Build 424: the nav row, from a block that actually wins ────────────────
+   #crBanner's base rule is defined in a style block in the BODY. A head override
+   ties on specificity and loses on document order, so 417's flex-wrap:nowrap
+   never applied and the row has been wrapping ever since. This block is appended
+   at the end of the document, after the base rule.
+
+   Deliberately NOT restoring nowrap-with-a-scroller. A horizontal scroller here
+   is what clipped the dropdowns in the first place; wrapping to a second row on
+   a narrow phone is the graceful failure, and at 390px the row measures as
+   fitting on one line anyway.                                                  */
+#crBanner{overflow:visible}
+#crBanner .cbmenu{z-index:60}
+#crBanner .cbn.cbdd.open{z-index:61}
 </style>
 </body>
 </html>
