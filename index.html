@@ -3085,7 +3085,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 421 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 423 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10550,23 +10550,85 @@ async function dbSwitchPrimary(pr){
 /* ---------- payments ---------- */
 function payTotals(pr){
   var fin = jobFinance(pr);
-  var log = parseCkAll(pr).payments || [];
-  var out = 0, exp = 0;
+  var all = parseCkAll(pr);
+  var log = all.payments || [];
+  var out = 0, exp = 0, inn = 0;
   log.forEach(function(p){
     var a = Number(p.amt) || 0;
     if(p.dir === 'out') out += a;
     else if(p.dir === 'exp') exp += a;
+    else if(p.dir === 'in') inn += a;
   });
-  return { recv: fin.paid, out: out, exp: exp, net: fin.paid - (out + exp), log: log, fin: fin };
+  /* 422: the LEDGER figure, not the ring figure. jobFinance clamps paid to the
+     contract value (right for a percentage, wrong for a ledger) — so on a job
+     with no signed contract every dollar received was being displayed as zero.
+     Recomputed here from the same parts, unclamped. jobFinance is untouched so
+     the progress ring keeps behaving. */
+  var ws = all.ws || {};
+  var wsPaid = 0;
+  (fin.contracts || []).forEach(function(r){
+    if(r.signed_at && Number(r.total) > 0) wsPaid += Number((ws[r.id] || {}).paid) || 0;
+  });
+  if(Number(all.manual_value) > 0) wsPaid += Number((ws.manual || {}).paid) || 0;
+  var recv = wsPaid + inn;
+  return { recv: recv, out: out, exp: exp, net: recv - (out + exp),
+           log: log, fin: fin, inn: inn, wsPaid: wsPaid };
 }
+/* 422: on the ledger a real zero is "$0.00", not "--". fmtMoney returns '--' for
+   0 everywhere else in the app and that is fine there — this is money that has
+   been counted and came to nothing, which is a different statement. */
+function payMoney(n){
+  n = Number(n) || 0;
+  var neg = n < 0;
+  var s = '$' + Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return neg ? '-' + s : s;
+}
+var PAY_SECTIONS = [
+  { dir:'in',  label:'Received' },
+  { dir:'out', label:'Paid' },
+  { dir:'exp', label:'Additional Job Expenses' }
+];
+var PAY_ACCOUNTS = ['Materials','Labor','Subcontractor','Equipment','Permit','Dump fee',
+                    'Fuel','Warranty','Marketing','Other'];
 function renderPayments(){
   if(!currentProject) return;
   var t = payTotals(currentProject);
+  /* 422: each section carries its own rows and its own add button, the way
+     AcuLynx does it, so the totals at the top are no longer dead ends. */
+  var totalsBy = { in: t.recv, out: t.out, exp: t.exp };
   document.getElementById('paySummary').innerHTML =
-    '<div class="payhead"><span>Received</span><b>' + fmtMoney(t.recv) + '</b></div>' +
-    '<div class="payhead"><span>Paid</span><b>' + fmtMoney(t.out) + '</b></div>' +
-    '<div class="payhead"><span>Additional Job Expenses</span><b>' + fmtMoney(t.exp) + '</b></div>' +
-    '<div class="paynet">Job Net (Received &#8722; (Paid + Additional Job Expenses))<br><b>' + fmtMoney(t.net) + '</b></div>';
+    PAY_SECTIONS.map(function(sec){
+      var rows = t.log.map(function(p, i){ return { p: p, i: i }; })
+                      .filter(function(x){ return x.p.dir === sec.dir; });
+      /* Received also carries contract payments, which are not log rows and are
+         edited on the worksheet — shown as a read-only line so the total adds up
+         on screen instead of appearing to come from nowhere. */
+      /* 423: editable. It is a sum across contracts, so tapping it opens a list
+         rather than a single field — see openContractPaid(). */
+      var extra = (sec.dir === 'in' && (t.wsPaid || (t.fin.contracts || []).length || Number((parseCkAll(currentProject) || {}).manual_value) > 0))
+        ? '<div class="payrow" data-paycontracts="1"><span>From signed contracts</span><b>' +
+            payMoney(t.wsPaid) + '</b></div>'
+        : '';
+      return '<div class="paysec" data-paysec="' + sec.dir + '">' +
+        '<div class="payhead"><span>' + sec.label + '</span><b>' + payMoney(totalsBy[sec.dir]) + '</b></div>' +
+        extra +
+        (rows.length ? rows.map(function(x){
+          var bits = [];
+          if(x.p.date) bits.push(esc(x.p.date));
+          if(x.p.method) bits.push(esc(x.p.method));
+          if(x.p.account) bits.push(esc(x.p.account));
+          if(x.p.check) bits.push('#' + esc(x.p.check));
+          if(x.p.note) bits.push(esc(x.p.note));
+          return '<div class="payrow" data-payedit="' + x.i + '">' +
+            '<span>' + (bits.length ? bits.join(' \u00b7 ') : 'Payment') + '</span>' +
+            '<b>' + payMoney(Number(x.p.amt) || 0) + '</b></div>';
+        }).join('') : (extra ? '' : '<div class="payrow empty">No data to display</div>')) +
+        '<button class="payadd" data-payadd="' + sec.dir + '" type="button">' +
+          '+ Add new row to ' + sec.label + '</button>' +
+      '</div>';
+    }).join('') +
+    '<div class="paynet">Job Net (Received &#8722; (Paid + Additional Job Expenses))<br><b>' +
+      payMoney(t.net) + '</b></div>';
   var mount = document.getElementById('payLog');
   mount.innerHTML = t.log.length ? t.log.slice().reverse().map(function(p, ri){
     var i = t.log.length - 1 - ri;
@@ -10588,6 +10650,184 @@ function openPaymentsPage(){
   renderPayments();
 }
 document.getElementById('payBackBtn').addEventListener('click', dbCloseTo);
+/* 422: add / edit a ledger row. Fields follow Theo's AcuLynx screenshots:
+   Received and Paid take DATE, FROM/METHOD, AMOUNT, MAKE AMOUNT NEGATIVE,
+   CHECK # and MEMO/NOTES; Additional Job Expenses takes TO/METHOD, AMOUNT,
+   ACCOUNT TYPE, MAKE AMOUNT NEGATIVE and MEMO/NOTES.
+   Writes through the same patchProjectCk(payments) path the old inline row used,
+   so there is one write path, not two. */
+function openPayRow(dir, index){
+  if(!currentProject) return;
+  var log = (parseCkAll(currentProject).payments || []).slice();
+  var isEdit = (index !== null && index !== undefined && log[index]);
+  var p = isEdit ? Object.assign({}, log[index]) : { dir: dir };
+  var sec = PAY_SECTIONS.filter(function(s){ return s.dir === (p.dir || dir); })[0] || PAY_SECTIONS[0];
+  var isExp = sec.dir === 'exp';
+  var amt = Number(p.amt) || 0;
+  var bg = document.createElement('div');
+  bg.className = 'paymodal-bg';
+  bg.innerHTML =
+    '<div class="paymodal" role="dialog" aria-modal="true">' +
+      '<div class="paymodal-hd">' +
+        '<button type="button" data-pm="cancel">Cancel</button>' +
+        '<b>' + (isEdit ? 'Edit' : 'Add') + ' ' + (isExp ? 'Additional Expense' : 'Payment') + '</b>' +
+        '<button type="button" data-pm="save">Save</button>' +
+      '</div>' +
+      '<div class="paymodal-bd">' +
+        (isExp ? '' :
+          '<label><span>DATE</span><input type="date" data-f="date" value="' +
+            esc(p.date || new Date().toISOString().slice(0, 10)) + '"></label>') +
+        '<label><span>' + (isExp ? 'TO/METHOD' : 'FROM/METHOD') + '</span>' +
+          '<input data-f="method" value="' + esc(p.method || '') + '" placeholder="' +
+          (isExp ? 'Who was paid, and how' : 'Who paid, and how') + '"></label>' +
+        '<label><span>AMOUNT</span><input type="number" step="0.01" inputmode="decimal" data-f="amount" value="' +
+          (amt ? Math.abs(amt) : '') + '" placeholder="0.00"></label>' +
+        (isExp ?
+          '<label><span>ACCOUNT TYPE</span><select data-f="account">' +
+            '<option value="">—</option>' +
+            PAY_ACCOUNTS.map(function(a){
+              return '<option value="' + esc(a) + '"' + (p.account === a ? ' selected' : '') + '>' + esc(a) + '</option>';
+            }).join('') +
+          '</select></label>' : '') +
+        '<label class="payswitch"><span>MAKE AMOUNT NEGATIVE</span>' +
+          '<input type="checkbox" data-f="neg"' + (amt < 0 ? ' checked' : '') + '></label>' +
+        (isExp ? '' :
+          '<label><span>CHECK #</span><input data-f="check" value="' + esc(p.check || '') + '"></label>') +
+        '<label><span>MEMO/NOTES</span><textarea data-f="note" rows="3">' + esc(p.note || '') + '</textarea></label>' +
+        '<div class="paymodal-err" data-pmerr></div>' +
+        (isEdit ? '<button type="button" class="paymodal-del" data-pm="delete">Delete this row</button>' : '') +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(bg);
+  var g = function(k){ var el = bg.querySelector('[data-f="' + k + '"]'); return el ? el.value.trim() : ''; };
+  var close = function(){ if(bg.parentNode) bg.parentNode.removeChild(bg); };
+  bg.addEventListener('click', async function(e){
+    if(e.target === bg){ close(); return; }
+    var act = e.target.closest('[data-pm]');
+    if(!act) return;
+    var a = act.getAttribute('data-pm');
+    if(a === 'cancel'){ close(); return; }
+    if(a === 'delete'){
+      if(!confirm('Delete this row?')) return;
+      log.splice(index, 1);
+      try{
+        await patchProjectCk(currentProject, { payments: log });
+        close(); renderPayments(); renderWorksheet(currentProject, jobFinance(currentProject));
+      }catch(err){ bg.querySelector('[data-pmerr]').textContent = 'Could not delete: ' + (err.message || err); }
+      return;
+    }
+    if(a === 'save'){
+      var n = parseFloat(g('amount'));
+      var err = bg.querySelector('[data-pmerr]');
+      if(!n || n <= 0){ err.textContent = 'Enter an amount.'; return; }
+      var negEl = bg.querySelector('[data-f="neg"]');
+      if(negEl && negEl.checked) n = -n;
+      var row = {
+        dir     : sec.dir,
+        amt     : n,
+        date    : isExp ? (p.date || null) : (g('date') || null),
+        method  : g('method') || null,
+        account : isExp ? (g('account') || null) : (p.account || null),
+        check   : isExp ? (p.check || null) : (g('check') || null),
+        note    : g('note') || null,
+        at      : (isEdit && p.at) ? p.at : new Date().toISOString(),
+        by      : (isEdit && p.by) ? p.by : ((currentUser && currentUser.email) || null)
+      };
+      if(isEdit) log[index] = row; else log.push(row);
+      act.disabled = true; err.textContent = 'Saving…';
+      try{
+        await patchProjectCk(currentProject, { payments: log });
+        close(); renderPayments(); renderWorksheet(currentProject, jobFinance(currentProject));
+      }catch(e2){
+        act.disabled = false;
+        err.textContent = 'Could not save: ' + (e2.message || e2);
+      }
+    }
+  });
+  var first = bg.querySelector('[data-f="method"]');
+  if(first) setTimeout(function(){ first.focus(); }, 60);
+}
+/* 423: edit what has been paid against each signed contract, without leaving the
+   payments page. One row per contract because checklist.ws is keyed by contract
+   id — a single "total received from contracts" field could not be written back. */
+function openContractPaid(){
+  if(!currentProject) return;
+  var all = parseCkAll(currentProject);
+  var ws = all.ws || {};
+  var fin = jobFinance(currentProject);
+  var items = (fin.contracts || []).filter(function(r){
+    return r.signed_at && Number(r.total) > 0;
+  }).map(function(r){
+    return { key: r.id, label: (r.title || 'Contract'), total: Number(r.total) || 0 };
+  });
+  if(Number(all.manual_value) > 0){
+    items.push({ key: 'manual', label: 'Manual job value', total: Number(all.manual_value) || 0 });
+  }
+  var bg = document.createElement('div');
+  bg.className = 'paymodal-bg';
+  bg.innerHTML =
+    '<div class="paymodal" role="dialog" aria-modal="true">' +
+      '<div class="paymodal-hd">' +
+        '<button type="button" data-cp="cancel">Cancel</button>' +
+        '<b>Received against contracts</b>' +
+        '<button type="button" data-cp="save">Save</button>' +
+      '</div>' +
+      '<div class="paymodal-bd">' +
+        (items.length ? items.map(function(it){
+          return '<label><span>' + esc(it.label) + '</span>' +
+            '<input type="number" step="0.01" min="0" inputmode="decimal" data-cpk="' + esc(it.key) + '" ' +
+              'value="' + (Number((ws[it.key] || {}).paid) || '') + '" placeholder="0.00">' +
+            '</label>' +
+            '<div class="paycp-of">of ' + payMoney(it.total) + '</div>';
+        }).join('') :
+          '<div class="paycp-none">No signed contract yet. Contract totals appear here once a ' +
+          'contract is created and signed — until then, log money on the Received section above.</div>') +
+        '<div class="paymodal-err" data-cperr></div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(bg);
+  var close = function(){ if(bg.parentNode) bg.parentNode.removeChild(bg); };
+  bg.addEventListener('click', async function(e){
+    if(e.target === bg){ close(); return; }
+    var act = e.target.closest('[data-cp]');
+    if(!act) return;
+    if(act.getAttribute('data-cp') === 'cancel'){ close(); return; }
+    var err = bg.querySelector('[data-cperr]');
+    var next = Object.assign({}, ws);
+    var bad = null;
+    bg.querySelectorAll('[data-cpk]').forEach(function(inp){
+      var k = inp.getAttribute('data-cpk');
+      var v = inp.value.trim() === '' ? 0 : parseFloat(inp.value);
+      if(isNaN(v) || v < 0){ bad = k; return; }
+      /* MERGE, never replace: the entry also carries a .log array that the
+         worksheet's payment path appends to. Assigning { paid: v } over it — as
+         the worksheet's own input does — throws that history away. */
+      next[k] = Object.assign({}, next[k] || {}, { paid: v });
+    });
+    if(bad){ err.textContent = 'Enter a number of 0 or more.'; return; }
+    act.disabled = true; err.textContent = 'Saving…';
+    try{
+      await patchProjectCk(currentProject, { ws: next });
+      close();
+      renderPayments();
+      renderWorksheet(currentProject, jobFinance(currentProject));
+    }catch(e2){
+      act.disabled = false;
+      err.textContent = 'Could not save: ' + ((e2 && e2.message) || e2);
+    }
+  });
+}
+document.getElementById('paySummary').addEventListener('click', function(e){
+  if(e.target.closest('[data-paycontracts]')){ openContractPaid(); return; }
+  var add = e.target.closest('[data-payadd]');
+  if(add){ openPayRow(add.getAttribute('data-payadd'), null); return; }
+  var edit = e.target.closest('[data-payedit]');
+  if(edit){ openPayRow(null, parseInt(edit.getAttribute('data-payedit'), 10)); return; }
+  var head = e.target.closest('.paysec');
+  if(head && e.target.closest('.payhead')){
+    openPayRow(head.getAttribute('data-paysec'), null);
+  }
+});
 document.getElementById('payAddBtn').addEventListener('click', async function(){
   if(!currentProject) return;
   var amt = parseFloat(document.getElementById('payAmt').value);
@@ -44618,6 +44858,88 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
    in place.                                                                    */
 #cr-estimates-mount,
 #cr-pricing-mount{min-height:0;overscroll-behavior:contain}
+</style>
+
+<style id="cr-pay2-styles">
+/* ── Build 422: the payments page ────────────────────────────────────────── */
+#paymentsView .paysec{margin-bottom:14px;border-radius:12px;overflow:hidden;
+  border:1px solid var(--rbe-line2,#454b55)}
+#paymentsView .payhead{display:flex;align-items:center;gap:10px;padding:13px 15px;
+  background:var(--rbe-panel,#2e333b);cursor:pointer;
+  font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#cfd6df)}
+#paymentsView .payhead span{flex:1}
+#paymentsView .payhead b{font-variant-numeric:tabular-nums}
+#paymentsView .payrow{display:flex;align-items:center;gap:10px;padding:11px 15px;
+  border-top:1px solid var(--rbe-hair,#3a3f47);background:var(--rbe-bg2,#262a31);
+  font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#cfd6df);cursor:pointer}
+#paymentsView .payrow span{flex:1;min-width:0;overflow-wrap:anywhere}
+#paymentsView .payrow b{font-variant-numeric:tabular-nums;flex:0 0 auto}
+#paymentsView .payrow.empty{color:var(--rbe-mute,#9aa0a8);font-weight:600;cursor:default}
+#paymentsView .payrow.ghost{color:var(--rbe-mute,#9aa0a8);cursor:default;font-style:italic}
+#paymentsView .payadd{display:block;width:100%;text-align:left;padding:12px 15px;
+  border:0;border-top:1px dashed var(--rbe-line2,#454b55);background:transparent;
+  color:var(--rbe-acclt,#f5d061);font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer}
+#paymentsView .payadd:hover{background:rgba(212,160,23,.08)}
+#paymentsView .paynet{padding:14px 15px;border-radius:12px;
+  background:var(--rbe-panel2,#2e333b);border:1px solid var(--rbe-line2,#454b55);
+  font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa0a8)}
+#paymentsView .paynet b{display:block;margin-top:4px;font:800 20px 'Segoe UI',Arial,sans-serif;
+  color:var(--rbe-ink,#cfd6df);font-variant-numeric:tabular-nums}
+/* the headings were maroon-on-charcoal — the gradient fill never resolved here */
+#paymentsView h2,#paymentsView .projsec{color:var(--rbe-acclt,#f5d061);
+  -webkit-text-fill-color:var(--rbe-acclt,#f5d061);background:none}
+#paymentsView .subnote{color:var(--rbe-mute,#9aa0a8)}
+/* the old inline add row is superseded by the per-section form. Hidden, not
+   removed: its click handler binds at boot and would throw on a null element. */
+#paymentsView #payKind,#paymentsView #payAmt,#paymentsView #payNote,
+#paymentsView #payAddBtn,#paymentsView #payStatus{display:none !important}
+
+.paymodal-bg{position:fixed;inset:0;background:rgba(6,8,11,.72);z-index:9700;
+  display:flex;align-items:flex-end;justify-content:center}
+.paymodal{width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;
+  background:var(--rbe-bg1,#2e333b);color:var(--rbe-ink,#cfd6df);
+  border-radius:16px 16px 0 0;border:1px solid var(--rbe-line2,#454b55);border-bottom:0}
+.paymodal-hd{display:flex;align-items:center;gap:10px;padding:13px 15px;
+  border-bottom:1px solid var(--rbe-line2,#454b55)}
+.paymodal-hd b{flex:1;text-align:center;font:800 15px 'Segoe UI',Arial,sans-serif}
+.paymodal-hd button{background:none;border:0;color:var(--rbe-acclt,#f5d061);
+  font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:4px 2px}
+.paymodal-bd{overflow-y:auto;overscroll-behavior:contain;padding:6px 15px 20px;
+  padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.paymodal-bd label{display:flex;align-items:flex-start;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--rbe-hair,#3a3f47)}
+.paymodal-bd label>span{flex:0 0 116px;padding-top:8px;text-align:right;
+  font:700 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;
+  color:var(--rbe-mute,#9aa0a8)}
+.paymodal-bd input,.paymodal-bd select,.paymodal-bd textarea{flex:1;min-width:0;
+  background:transparent;border:0;color:inherit;font:600 15px 'Segoe UI',Arial,sans-serif;
+  padding:6px 0;outline:none}
+.paymodal-bd textarea{resize:vertical;min-height:56px}
+.paymodal-bd input::placeholder{color:var(--rbe-mute,#9aa0a8);font-weight:600}
+.paymodal-bd select{appearance:none;-webkit-appearance:none}
+.paymodal-bd label.payswitch input{flex:0 0 auto;width:44px;height:26px;
+  -webkit-appearance:none;appearance:none;background:var(--rbe-line2,#454b55);
+  border-radius:99px;position:relative;cursor:pointer;transition:background .15s}
+.paymodal-bd label.payswitch input::after{content:'';position:absolute;top:3px;left:3px;
+  width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s}
+.paymodal-bd label.payswitch input:checked{background:#c4180f}
+.paymodal-bd label.payswitch input:checked::after{transform:translateX(18px)}
+.paymodal-err{min-height:18px;padding:8px 0;font:600 12.5px 'Segoe UI',Arial,sans-serif;
+  color:#e2574a}
+.paymodal-del{width:100%;margin-top:6px;padding:12px;border-radius:10px;
+  border:1px solid #7d2a24;background:transparent;color:#e2574a;cursor:pointer;
+  font:700 13px 'Segoe UI',Arial,sans-serif}
+</style>
+
+<style id="cr-pay3-styles">
+/* Build 423: the contract-paid editor */
+#paymentsView .payrow[data-paycontracts]{cursor:pointer}
+#paymentsView .payrow[data-paycontracts] span::after{content:' \203A';
+  color:var(--rbe-acclt,#f5d061);font-weight:800}
+.paymodal-bd .paycp-of{margin:-6px 0 0;padding:0 0 10px 128px;
+  font:600 11px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa0a8)}
+.paymodal-bd .paycp-none{padding:16px 2px;font:600 13px 'Segoe UI',Arial,sans-serif;
+  line-height:1.5;color:var(--rbe-mute,#9aa0a8)}
 </style>
 </body>
 </html>
