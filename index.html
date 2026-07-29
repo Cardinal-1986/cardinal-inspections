@@ -17800,6 +17800,27 @@ signOutBtn.addEventListener('click', async function(){
   showLogin();
 });
 
+/* ---------- session lifecycle ----------
+   getSession() is a point-in-time read. It does not fire when an access token
+   expires, when a refresh happens in the background, or when the session is
+   revoked (including sign-out in another tab). Without this subscription the
+   UI keeps showing signed-in data while writes fail with 401 — and because the
+   app wraps calls in try/catch, that failure is swallowed and the rep believes
+   their work saved. This makes the session state observable. */
+if(TEAM && sb && sb.auth && typeof sb.auth.onAuthStateChange === 'function'){
+  sb.auth.onAuthStateChange(function(event, session){
+    if(event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)){
+      currentUser = null;
+      try{ showLogin(); }catch(e){}
+      return;
+    }
+    /* Keep currentUser fresh on refresh / user-metadata updates. Deliberately
+       does NOT call showMain() — boot() owns the initial render, and calling it
+       here would race with it on first load. */
+    if(session && session.user){ currentUser = session.user; }
+  });
+}
+
 document.getElementById('forgotLink').addEventListener('click', async function(){
   var err = document.getElementById('loginError');
   var email = document.getElementById('loginEmail').value.trim();
