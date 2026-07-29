@@ -12035,6 +12035,40 @@ function projHomeowner(pr){
   }
   return n;
 }
+/* ---- which estimate is the user actually working on? -----------------------
+   Three flows all did the same thing: click Save, wait for the editor to close,
+   reload the project's estimates, then take rows[0]. But loadForProject() orders
+   by created_at DESC, so rows[0] is the NEWEST estimate on the project - not the
+   one being edited. On a project with one estimate they coincide, which is why
+   this went unnoticed; on a project with several it silently used another
+   estimate's numbers.
+
+   Saving closes the editor and clears the module's state, so the id has to be
+   captured BEFORE the save and matched afterwards. A brand-new estimate has
+   state.id === null, and for that case rows[0] genuinely is the right row.    */
+function openEstimateId(){
+  try{
+    if(window.CardinalEstimates && typeof window.CardinalEstimates.currentState === 'function'){
+      var st = window.CardinalEstimates.currentState();
+      if(st && st.id) return String(st.id);
+    }
+  }catch(e){}
+  return null;
+}
+function pickEstimate(rows, id){
+  if(!rows || !rows.length) return null;
+  if(id){
+    var hit = rows.filter(function(r){ return String(r.id) === String(id); })[0];
+    if(hit) return hit;
+    /* Open estimate not in the reloaded set - archived mid-flight, or a project
+       switch. Fall back to the previous behaviour rather than failing, but say so. */
+    try{
+      if(window.report) window.report(new Error('open estimate ' + id + ' not in reloaded rows'),
+                                     'Estimates', 'publish id match');
+    }catch(e2){}
+  }
+  return rows[0];
+}
 function projInsurance(pr){
   var L = pr ? parseCkAll(pr).lead : null;
   return (L && L.insurance && typeof L.insurance === 'object') ? L.insurance : null;
@@ -36702,6 +36736,7 @@ var saveBtn = document.querySelector('#cr-est-view [data-act="save"]');
 if(!saveBtn){ alert('Editor not ready.'); return; }
 btn.disabled = true; btn.textContent = 'Publishing\u2026';
 var projectBefore = window.currentProject;
+var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 try{
 saveBtn.click();
 var closed = await waitForEditorClose(9000);
@@ -36714,7 +36749,7 @@ if(!rows.length){
 alert('Could not find the saved estimate to publish.');
 return;
 }
-var est = rows[0];
+var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
 var docId = await publish(est, projectBefore);
 if(!docId){ return; }
 if(!openDoc(docId)){
@@ -36892,13 +36927,14 @@ if(!go) return;
 var project = window.currentProject;
 if(!project || !project.id){ alert('No client loaded.'); return; }
 btn.disabled = true; btn.textContent = 'Working\u2026';
+var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 try{
 saveBtn.click();
 var closed = await waitForEditorClose(9000);
 if(!closed) return;
 var rows = await window.CardinalEstimates.loadForProject(project.id);
 if(!rows.length){ alert('Could not find the saved estimate.'); return; }
-var est = rows[0];
+var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
 var docId = await generate(est, project);
 if(!docId) return;
 if(typeof window.reload === 'function'){
@@ -37071,6 +37107,7 @@ if(!view) return;
 var statusSel = view.querySelector('[data-f="status"]');
 if(!statusSel || statusSel.value !== 'draft') return;
 var project = window.currentProject;
+var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 var elapsed = 0;
 var iv = setInterval(function(){
 elapsed += 200;
@@ -37082,7 +37119,8 @@ try{
 var rows = await window.CardinalEstimates.loadForProject(project.id);
 if(rows.length && window.supa){
 await window.supa.from('estimates')
-.update({ status:'sent' }).eq('id', rows[0].id);
+.update({ status:'sent' })
+.eq('id', ((typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0]).id);
 }
 }catch(e){ console.warn('[ess] status bump failed:', e); }
 syncStageFor(project, 'sent');
