@@ -3091,7 +3091,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 424 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 425 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40302,6 +40302,12 @@ return '<details class="cr-cth-carrier"><summary>' +
 '<div class="row"><span>First scope</span><b>' + usd(b.first) + '</b></div>' +
 '<div class="row"><span>Settled</span><b>' + usd(b.settled) + '</b></div>' +
 '<div class="row"><span>Recovered</span><b>' + usd(b.recovered) + '</b></div>' +
+/* 425: the shared adjuster roster for this carrier. Filled in by
+   cr-cadj-script when the fold-down is opened — lazily, so closed carriers
+   cost nothing. */
+'<div class="cr-cadj" data-adjfor="' + esc(b.name) + '">' +
+  '<div class="cr-cadj-load">Loading adjusters\u2026</div>' +
+'</div>' +
 '</div></details>';
 }).join('')
 : '<div class="cr-cth-chaseempty">No carriers yet \u2014 they appear as claims are entered.</div>';
@@ -45085,6 +45091,321 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
 #crBanner{overflow:visible}
 #crBanner .cbmenu{z-index:60}
 #crBanner .cbn.cbdd.open{z-index:61}
+</style>
+
+<script id="cr-cadj-script">
+(function(){
+'use strict';
+/* Build 425 — adjusters, kept per carrier and shared by the whole team.
+   Table: carrier_adjusters. Encounters/last-seen: carrier_adjuster_stats, which
+   derives them from insurance_claims rather than storing a counter. */
+var KINDS = [
+  { v:'cat',         l:'CAT adjuster' },
+  { v:'third_party', l:'3rd party' },
+  { v:'in_house',    l:'In-house' },
+  { v:'independent', l:'Independent' }
+];
+var DIFF = ['\u2014', 'Easy', 'Fine', 'Slow', 'Hard', 'Fights everything'];
+var rows = [], stats = {}, loaded = false, loading = null;
+
+function esc(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+  return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function norm(s){ return String(s == null ? '' : s).trim().toLowerCase(); }
+function kindLabel(v){
+  for(var i = 0; i < KINDS.length; i++){ if(KINDS[i].v === v) return KINDS[i].l; }
+  return null;
+}
+function mayDeleteAdj(){
+  try{ return (typeof window.isAdminUser === 'function') ? !!window.isAdminUser() : false; }
+  catch(e){ return false; }
+}
+
+async function load(force){
+  if(loaded && !force) return rows;
+  if(loading) return loading;
+  loading = (async function(){
+    if(!window.supa) return rows;
+    try{
+      var r = await window.supa.from('carrier_adjusters')
+        .select('id,carrier,name,phone,email,kind,difficulty,notes')
+        .order('name', { ascending:true });
+      if(r.error) throw r.error;
+      rows = r.data || [];
+      var st = await window.supa.from('carrier_adjuster_stats')
+        .select('id,encounters,last_seen');
+      stats = {};
+      if(!st.error) (st.data || []).forEach(function(x){ stats[x.id] = x; });
+      loaded = true;
+    }catch(e){
+      /* the table may not exist yet — the SQL ships alongside this build */
+      if(!/does not exist|schema cache/i.test((e && e.message) || '')){
+        console.warn('[adjusters] load:', e && e.message);
+      }
+      rows = rows || [];
+      loaded = true;
+    }
+    loading = null;
+    return rows;
+  })();
+  return loading;
+}
+
+function forCarrier(name){
+  var k = norm(name);
+  return rows.filter(function(a){ return norm(a.carrier) === k; });
+}
+
+function paint(box){
+  var carrier = box.getAttribute('data-adjfor') || '';
+  var list = forCarrier(carrier);
+  box.innerHTML =
+    '<div class="cr-cadj-hd">Adjusters</div>' +
+    (list.length ? list.map(function(a){
+      var s = stats[a.id] || {};
+      var n = Number(s.encounters) || 0;
+      var d = Number(a.difficulty) || 0;
+      return '<button type="button" class="cr-cadj-row" data-adjopen="' + esc(a.id) + '">' +
+        '<span class="who"><b>' + esc(a.name) + '</b>' +
+          '<small>' + (kindLabel(a.kind) ? esc(kindLabel(a.kind)) : 'Type not set') +
+          (a.phone ? ' \u00b7 ' + esc(a.phone) : '') + '</small></span>' +
+        '<span class="met">' +
+          '<span class="seen" title="Claims naming this adjuster">' + n + '\u00d7</span>' +
+          (d ? '<span class="dif d' + d + '" title="' + esc(DIFF[d]) + '">' + d + '</span>'
+             : '<span class="dif none" title="Not rated">\u2013</span>') +
+        '</span>' +
+      '</button>';
+    }).join('') : '<div class="cr-cadj-none">No adjusters saved for this carrier yet.</div>') +
+    '<button type="button" class="cr-cadj-add" data-adjadd="' + esc(carrier) + '">' +
+      '+ Add adjuster</button>';
+}
+
+function paintAll(){
+  var boxes = document.querySelectorAll('#cardinalTruthView .cr-cadj[data-adjfor]');
+  Array.prototype.forEach.call(boxes, paint);
+}
+
+/* the popup */
+function openAdj(existing, carrier){
+  var a = existing || { carrier: carrier || '', difficulty: null };
+  var isEdit = !!(existing && existing.id);
+  var s = isEdit ? (stats[a.id] || {}) : {};
+  var bg = document.createElement('div');
+  bg.className = 'cr-cadj-bg';
+  bg.innerHTML =
+    '<div class="cr-cadj-box" role="dialog" aria-modal="true">' +
+      '<div class="cr-cadj-top">' +
+        '<button type="button" data-ax="cancel">Cancel</button>' +
+        '<b>' + (isEdit ? esc(a.name) : 'New adjuster') + '</b>' +
+        '<button type="button" data-ax="save">Save</button>' +
+      '</div>' +
+      '<div class="cr-cadj-bd">' +
+        '<div class="cr-cadj-carrier">' + esc(a.carrier || carrier || '') + '</div>' +
+        (isEdit ? '<div class="cr-cadj-seen">' +
+          '<span><b>' + (Number(s.encounters) || 0) + '</b> claim' +
+          ((Number(s.encounters) || 0) === 1 ? '' : 's') + ' name this adjuster</span>' +
+          (s.last_seen ? '<span>last ' + esc(new Date(s.last_seen).toLocaleDateString()) + '</span>' : '') +
+          '</div>' : '') +
+        '<label><span>NAME</span><input data-f="name" value="' + esc(a.name || '') + '"></label>' +
+        '<label><span>TYPE</span><select data-f="kind">' +
+          '<option value="">\u2014 not set \u2014</option>' +
+          KINDS.map(function(k){
+            return '<option value="' + k.v + '"' + (a.kind === k.v ? ' selected' : '') + '>' + k.l + '</option>';
+          }).join('') +
+        '</select></label>' +
+        '<label><span>PHONE</span><input data-f="phone" type="tel" value="' + esc(a.phone || '') + '"></label>' +
+        '<label><span>EMAIL</span><input data-f="email" type="email" value="' + esc(a.email || '') + '"></label>' +
+        '<div class="cr-cadj-diff"><span>DIFFICULTY</span><div class="scale">' +
+          [1,2,3,4,5].map(function(n){
+            return '<button type="button" data-diff="' + n + '"' +
+              (Number(a.difficulty) === n ? ' class="on"' : '') + '>' + n + '</button>';
+          }).join('') +
+          '<em data-difftxt>' + esc(DIFF[Number(a.difficulty) || 0]) + '</em>' +
+        '</div></div>' +
+        '<label><span>NOTES</span><textarea data-f="notes" rows="4" ' +
+          'placeholder="How they work, what they push back on, who to escalate to\u2026">' +
+          esc(a.notes || '') + '</textarea></label>' +
+        '<div class="cr-cadj-err" data-aerr></div>' +
+        ((isEdit && mayDeleteAdj())
+          ? '<button type="button" class="cr-cadj-del" data-ax="delete">Delete this adjuster</button>' : '') +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(bg);
+  var diff = Number(a.difficulty) || 0;
+  var close = function(){ if(bg.parentNode) bg.parentNode.removeChild(bg); };
+  var g = function(k){ var el = bg.querySelector('[data-f="' + k + '"]'); return el ? el.value.trim() : ''; };
+  bg.addEventListener('click', async function(e){
+    if(e.target === bg){ close(); return; }
+    var dbtn = e.target.closest('[data-diff]');
+    if(dbtn){
+      diff = Number(dbtn.getAttribute('data-diff'));
+      Array.prototype.forEach.call(bg.querySelectorAll('[data-diff]'), function(x){
+        x.classList.toggle('on', Number(x.getAttribute('data-diff')) === diff); });
+      bg.querySelector('[data-difftxt]').textContent = DIFF[diff];
+      return;
+    }
+    var act = e.target.closest('[data-ax]');
+    if(!act) return;
+    var what = act.getAttribute('data-ax');
+    var err = bg.querySelector('[data-aerr]');
+    if(what === 'cancel'){ close(); return; }
+    if(what === 'delete'){
+      if(!confirm('Delete ' + (a.name || 'this adjuster') + '?\n\nTheir difficulty rating and notes go with them.')) return;
+      try{
+        var dr = await window.supa.from('carrier_adjusters').delete().eq('id', a.id);
+        if(dr && dr.error) throw dr.error;
+        await load(true); close(); paintAll();
+      }catch(e2){ err.textContent = 'Could not delete: ' + ((e2 && e2.message) || e2); }
+      return;
+    }
+    if(what === 'save'){
+      var name = g('name');
+      if(!name){ err.textContent = 'A name is required.'; return; }
+      if(!window.supa){ err.textContent = 'Not connected.'; return; }
+      var kindEl = bg.querySelector('[data-f="kind"]');
+      var patch = {
+        carrier    : (a.carrier || carrier || '').trim(),
+        name       : name,
+        phone      : g('phone') || null,
+        email      : g('email') || null,
+        kind       : (kindEl && kindEl.value) || null,
+        difficulty : diff || null,
+        notes      : g('notes') || null
+      };
+      act.disabled = true; err.textContent = 'Saving\u2026';
+      try{
+        var r = isEdit
+          ? await window.supa.from('carrier_adjusters').update(patch).eq('id', a.id)
+          : await window.supa.from('carrier_adjusters').insert(patch);
+        if(r && r.error) throw r.error;
+        await load(true); close(); paintAll();
+      }catch(e3){
+        act.disabled = false;
+        var m = (e3 && e3.message) || String(e3);
+        if(/duplicate key|carrier_adjusters_uniq/i.test(m)){
+          m = 'That name is already saved under this carrier.';
+        } else if(/does not exist|schema cache/i.test(m)){
+          m = 'The adjuster table is not set up yet \u2014 run carrier_adjusters_v1.sql first.';
+        }
+        err.textContent = 'Could not save: ' + m;
+      }
+    }
+  });
+  var f = bg.querySelector('[data-f="name"]');
+  if(f) setTimeout(function(){ f.focus(); }, 60);
+}
+
+/* Delegated, and painted off the <details> toggle rather than a
+   MutationObserver — build 404 is why this app does not add observers lightly. */
+document.addEventListener('click', function(e){
+  if(!e.target || !e.target.closest) return;
+  var add = e.target.closest('[data-adjadd]');
+  if(add){
+    e.preventDefault(); e.stopPropagation();
+    load().then(function(){ openAdj(null, add.getAttribute('data-adjadd')); });
+    return;
+  }
+  var open = e.target.closest('[data-adjopen]');
+  if(open){
+    e.preventDefault(); e.stopPropagation();
+    var id = open.getAttribute('data-adjopen');
+    load().then(function(){
+      var hit = rows.filter(function(x){ return String(x.id) === String(id); })[0];
+      if(hit) openAdj(hit, hit.carrier);
+    });
+    return;
+  }
+}, true);
+
+document.addEventListener('toggle', function(e){
+  var det = e.target;
+  if(!det || det.tagName !== 'DETAILS' || !det.classList.contains('cr-cth-carrier')) return;
+  if(!det.open) return;
+  var box = det.querySelector('.cr-cadj[data-adjfor]');
+  if(!box) return;
+  load().then(function(){ paint(box); });
+}, true);
+
+window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters || {}, {
+  reload : function(){ return load(true).then(paintAll); },
+  paint  : paintAll,
+  rows   : function(){ return rows.slice(); }
+});
+})();
+</script>
+
+<style id="cr-cadj-styles">
+/* Build 425 — the adjuster roster inside each carrier fold-down. Uses the
+   insurance view's own --ct-* tokens, so it follows Docket and Siren both. */
+#cardinalTruthView .cr-cadj{border-top:1px solid var(--ct-line);padding:8px 10px 10px}
+#cardinalTruthView .cr-cadj-hd{font:800 9px ui-monospace,Menlo,monospace;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ct-ink-2);margin:2px 0 6px}
+#cardinalTruthView .cr-cadj-load,
+#cardinalTruthView .cr-cadj-none{font:12px 'Segoe UI',Arial,sans-serif;color:var(--ct-ink-2);
+  padding:6px 2px}
+#cardinalTruthView .cr-cadj-row{display:flex;align-items:center;gap:10px;width:100%;
+  padding:9px 8px;margin-bottom:4px;background:var(--ct-surface-2);border:1px solid var(--ct-line);
+  border-radius:8px;cursor:pointer;text-align:left;color:var(--ct-ink);font:inherit}
+#cardinalTruthView .cr-cadj-row:hover{border-color:var(--ct-red)}
+#cardinalTruthView .cr-cadj-row .who{flex:1;min-width:0}
+#cardinalTruthView .cr-cadj-row .who b{display:block;font:700 13px 'Segoe UI',Arial,sans-serif}
+#cardinalTruthView .cr-cadj-row .who small{display:block;font-size:11px;color:var(--ct-ink-2);
+  margin-top:1px;overflow-wrap:anywhere}
+#cardinalTruthView .cr-cadj-row .met{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+#cardinalTruthView .cr-cadj-row .seen{font:700 11px ui-monospace,Menlo,monospace;color:var(--ct-ink-2)}
+#cardinalTruthView .cr-cadj-row .dif{width:20px;height:20px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font:800 11px ui-monospace,Menlo,monospace;border:1px solid var(--ct-line-strong);
+  color:var(--ct-ink-2)}
+#cardinalTruthView .cr-cadj-row .dif.d4,
+#cardinalTruthView .cr-cadj-row .dif.d5{border-color:var(--ct-red-deep);color:var(--ct-red-deep)}
+#cardinalTruthView .cr-cadj-add{display:block;width:100%;margin-top:4px;padding:9px;
+  background:transparent;border:1px dashed var(--ct-line-strong);border-radius:8px;
+  color:var(--ct-red-deep);font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer}
+#cardinalTruthView .cr-cadj-add:hover{border-color:var(--ct-red-deep)}
+
+.cr-cadj-bg{position:fixed;inset:0;background:rgba(4,4,6,.74);z-index:9750;
+  display:flex;align-items:flex-end;justify-content:center}
+.cr-cadj-box{width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;
+  background:var(--ct-surface,#16161B);color:var(--ct-ink,#F4F1F1);
+  border:1px solid var(--ct-line,#34343B);border-bottom:0;border-radius:16px 16px 0 0;
+  font-family:'Segoe UI',Arial,sans-serif}
+.cr-cadj-top{display:flex;align-items:center;gap:10px;padding:13px 15px;
+  border-bottom:1px solid var(--ct-line,#34343B)}
+.cr-cadj-top b{flex:1;text-align:center;font:800 15px Georgia,serif;overflow-wrap:anywhere}
+.cr-cadj-top button{background:none;border:0;color:var(--ct-red-deep,#FF3B30);
+  font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:4px 2px}
+.cr-cadj-bd{overflow-y:auto;overscroll-behavior:contain;padding:8px 15px 20px;
+  padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.cr-cadj-carrier{font:800 9px ui-monospace,Menlo,monospace;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ct-ink-2,#A8A09E);padding:4px 0 8px}
+.cr-cadj-seen{display:flex;gap:14px;flex-wrap:wrap;padding:10px 12px;margin-bottom:6px;
+  background:var(--ct-red-wash,#1A0E10);border:1px solid var(--ct-line,#34343B);
+  border-radius:9px;font-size:12px;color:var(--ct-ink-2,#A8A09E)}
+.cr-cadj-seen b{color:var(--ct-ink,#F4F1F1);font-size:14px}
+.cr-cadj-bd label{display:flex;align-items:flex-start;gap:12px;padding:11px 0;
+  border-bottom:1px solid var(--ct-line,#34343B)}
+.cr-cadj-bd label>span{flex:0 0 84px;padding-top:7px;text-align:right;
+  font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.08em;color:var(--ct-ink-2,#A8A09E)}
+.cr-cadj-bd input,.cr-cadj-bd select,.cr-cadj-bd textarea{flex:1;min-width:0;background:transparent;
+  border:0;color:inherit;font:600 15px 'Segoe UI',Arial,sans-serif;padding:5px 0;outline:none}
+.cr-cadj-bd textarea{resize:vertical;min-height:64px}
+.cr-cadj-bd select{appearance:none;-webkit-appearance:none}
+.cr-cadj-diff{display:flex;align-items:center;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--ct-line,#34343B)}
+.cr-cadj-diff>span{flex:0 0 84px;text-align:right;
+  font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.08em;color:var(--ct-ink-2,#A8A09E)}
+.cr-cadj-diff .scale{flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cr-cadj-diff .scale button{width:34px;height:34px;border-radius:8px;cursor:pointer;
+  background:transparent;border:1px solid var(--ct-line-strong,#4A4A52);
+  color:var(--ct-ink-2,#A8A09E);font:800 13px ui-monospace,Menlo,monospace}
+.cr-cadj-diff .scale button.on{border-color:var(--ct-red-deep,#FF3B30);
+  color:var(--ct-red-deep,#FF3B30)}
+.cr-cadj-diff .scale em{font-style:normal;font-size:12px;color:var(--ct-ink-2,#A8A09E)}
+.cr-cadj-err{min-height:18px;padding:9px 0;font:600 12.5px 'Segoe UI',Arial,sans-serif;
+  color:var(--ct-red-deep,#FF3B30)}
+.cr-cadj-del{width:100%;margin-top:4px;padding:12px;border-radius:10px;cursor:pointer;
+  background:transparent;border:1px solid var(--ct-red,#CE0E18);color:var(--ct-red-deep,#FF3B30);
+  font:700 13px 'Segoe UI',Arial,sans-serif}
 </style>
 </body>
 </html>
