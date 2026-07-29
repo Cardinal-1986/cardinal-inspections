@@ -25868,13 +25868,63 @@ function closeShell(){
 var s = document.querySelector('.cr-cp-shell');
 if(s) s.parentNode.removeChild(s);
 }
+/* ---- Prospective partners -------------------------------------------------
+   Organisations that fund or award home-repair work in the region but have not
+   sent us a job yet. They live on their own page so the active roster stays the
+   people who actually award work. Flagged by community_partners.prospective.
+   renderDirectory() filters them out; get(), byType() and pickPartner() read
+   CACHE directly and are deliberately untouched, so a prospect can still be
+   attached to a job the moment one arrives.                                  */
+function prospects(){
+return (CACHE || []).filter(function(p){ return !!p.prospective; }).map(maskIfConfidential);
+}
+function renderProspects(host){
+var rows = prospects();
+var body = rows.length
+? rows.map(function(p){
+var who = [p.contact_name, p.contact_phone].filter(Boolean).join(' \u00b7 ');
+var mail = p.contact_email
+? '<a href="mailto:' + esc(p.contact_email) + '">' + esc(p.contact_email) + '</a>'
+: '<span style="opacity:.6;font-style:italic">no public email \u2014 call them</span>';
+return '<div class="cr-cp-row" data-id="' + esc(p.id) + '" style="align-items:flex-start">' +
+'<div style="min-width:0">' +
+'<div class="n">' + esc(p.name) + '</div>' +
+(who ? '<div class="m">' + esc(who) + '</div>' : '') +
+'<div class="m" style="margin-top:2px">' + mail + '</div>' +
+(p.notes
+? '<div class="m" style="margin-top:7px;line-height:1.55;opacity:.92">' + esc(p.notes) + '</div>'
+: '') +
+'</div>' +
+'<div class="btns"><button data-act="edit">Edit</button></div>' +
+'</div>';
+}).join('')
+: '<div class="cr-cp-empty">No prospective partners yet.</div>';
+var bd = host.querySelector('.cr-cp-bd');
+bd.innerHTML =
+'<div class="m" style="margin:0 0 13px;line-height:1.55;opacity:.8">' +
+'Researched, not yet worked with. Every contact below came from a public source \u2014 ' +
+'confirm it before you send a bid.</div>' + body;
+bd.querySelectorAll('.cr-cp-row').forEach(function(row){
+var b = row.querySelector('[data-act="edit"]');
+if(b) b.onclick = function(){
+var p = getRaw(row.dataset.id);
+if(p) openEditor(p);
+};
+});
+}
+async function openProspects(){
+await load();
+var host = shell('Prospective Partners', '<div class="cr-cp-list">Loading\u2026</div>');
+renderProspects(host);
+}
 async function openDirectory(){
 await load();
 var host = shell('Community Partners', '<div class="cr-cp-list">Loading…</div>');
 renderDirectory(host);
 }
 function renderDirectory(host){
-var listRows = list().slice();
+/* Prospects are shown by openProspects(), not here. */
+var listRows = list().filter(function(p){ return !p.prospective; });
 var non = listRows.filter(function(p){ return p.partner_type === 'nonprofit'; });
 var pm  = listRows.filter(function(p){ return p.partner_type === 'property_manager'; });
 var gc  = listRows.filter(function(p){ return p.partner_type === 'general_contractor'; });
@@ -26146,6 +26196,7 @@ window.CardinalCommunityPartners = {
 load: load, list: list, get: get, byType: byType,
 save: save, archive: archive,
 openDirectory: openDirectory,
+openProspects: openProspects,
 openEditor: openEditor,
 pickPartner: pickPartner,
 partnerIdForProject: partnerIdForProject,
@@ -30434,7 +30485,11 @@ return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
 }
 async function check_9_partnersNoContact(){
 var c = await countWhere('community_partners', function(q){
-return q.is('email', null).is('phone', null);
+/* community_partners has contact_email / contact_phone. There is no `email`
+   or `phone` column, so the old query errored, fell into skipIfErr and this
+   check never once ran - which is why it never reported the six partners
+   that had no contact details at all. */
+return q.is('contact_email', null).is('contact_phone', null);
 });
 if(c == null) return { status:'warn', message:'Supabase unavailable', fix:'' };
 if(isErr(c)) return skipIfErr(c, 'community_partners');
@@ -32334,8 +32389,17 @@ if(window.CardinalCommunityPartners && typeof window.CardinalCommunityPartners.o
 window.CardinalCommunityPartners.openDirectory();
 }
 });
+var prospects = makeOpt('cr-nav-communityprospects',
+'\uD83C\uDF31 Prospective Partners',
+function(){
+if(window.CardinalCommunityPartners &&
+typeof window.CardinalCommunityPartners.openProspects === 'function'){
+window.CardinalCommunityPartners.openProspects();
+}
+});
 insertAfter(ct, hub);
 insertAfter(hub, partners);
+insertAfter(partners, prospects);
 }
 function addAdminSection(){
 if(!isAdmin()) return;
