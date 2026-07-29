@@ -2824,6 +2824,58 @@ body:has(#loginView[style*="block"]){background:#fff;}
 #resourceLibraryView .rl-ddcard.rl-docard h4{color:var(--ct-do-ink);}
 
 </style>
+
+<style id="cr-hd3-styles">
+/* ── Build 416: header layout ──────────────────────────────────────────────
+   burger left · title absolutely centred · + and home right · search on its own
+   full-width row · no date/time. The title is centred with position:absolute
+   rather than flex so an uneven number of buttons per side cannot pull it
+   off-centre. Measured at 390px: "Community" is the longest at 123px and still
+   clears the buttons on both sides.                                          */
+#cr-hd2-bar{position:relative;gap:9px}
+#cr-hd2-mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  flex:0 0 auto;width:auto;max-width:calc(100% - 190px);text-align:center;
+  pointer-events:none;z-index:1}
+#cr-hd2-bar .cr-ib,#cr-hd2-bar #cr-hd2-home{position:relative;z-index:2}
+#cr-hd2-bar #brandTitle h1{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+  font-weight:800;font-size:21px;letter-spacing:-.015em;line-height:1.1;
+  color:var(--hin,#fff);background:none;-webkit-text-fill-color:currentColor}
+#cr-hd2-bar #brandCtx{display:none !important}
+#cr-hd2-bar .searchbtn{display:none !important}
+#cr-hd2-bar #cr-hd2-home{position:static;transform:none;margin-left:auto;
+  width:34px;height:34px;border-radius:9px;background:rgba(0,0,0,.30);
+  border:1px solid #d4a017;color:#f5d061;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center}
+/* + sits just inside home, so home is always the outermost thing on the right */
+#cr-hd2-bar .cr-ib.primary{order:8}
+#cr-hd2-bar #cr-hd2-home{order:9}
+
+/* the search row: attached under the bar, CRM strip colour, toggle closing it */
+#cr-hd2-srch{display:flex;align-items:center;gap:0;
+  background:var(--bnbg,#15171b);border-bottom:1px solid var(--bnbd,#262a31);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+#cr-hd2-srch #headSearch{display:block !important;flex:1 1 auto;min-width:0;width:auto;
+  height:38px;margin:0;padding:0 13px;border:0;border-radius:0;background:transparent;
+  color:var(--hin,#fff);font:400 13px 'Segoe UI',Arial,sans-serif;box-shadow:none}
+#cr-hd2-srch #headSearch::placeholder{color:#8d8781}
+#cr-hd2-srch #headSearch:focus{outline:none;box-shadow:inset 0 -2px 0 var(--hac,#d4a017)}
+#cr-hd2-srch .cr-ins-theme{flex:0 0 auto;width:30px;height:30px;margin:0 10px 0 4px;
+  border-radius:8px;border:1px solid var(--bnbd,#3a3f47);background:transparent;
+  color:var(--bnac,#d4a017);display:flex;align-items:center;justify-content:center;
+  font:400 14px/1 'Segoe UI',Arial,sans-serif;cursor:pointer}
+#cr-hd2-srch .cr-ins-theme:hover{border-color:var(--bnac,#d4a017)}
+
+/* per-CRM strip colours, matching #crBanner so the two rows read as one block */
+body[data-crm="insurance"]{--bnbg:#1a0e0d;--bnbd:#3d1512;--bnac:#ff8a7a}
+body[data-crm="community"]{--bnbg:#08211a;--bnbd:#12463a;--bnac:#34D399}
+body[data-crm="retail"]   {--bnbg:#1b1f26;--bnbd:#2b323d;--bnac:#f5d061}
+
+/* the ribbon now carries only the project context, and gets out of the way
+   entirely when there is none */
+#cr-hd2-ribbon{padding-left:14px;padding-right:14px;min-height:0}
+#cr-hd2-ribbon.cr-hd2-empty{display:none}
+#qClock{display:none !important}
+</style>
 </head>
 <body>
 
@@ -2881,7 +2933,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 415 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 416 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41383,7 +41435,7 @@ body[data-crm="community"] .site{--hbg:#047857;--hln:#0a9268;--hin:#fff;--hmt:#f
 <script id="cr-hd2-script">
 (function(){
 'use strict';
-var TITLES = { retail:'Retail', insurance:'Claims', community:'Community',
+var TITLES = { retail:'Retail', insurance:'Insurance', community:'Community',
 production:'Production', sales:'Sales Floor' };
 function relocateAux(){
 var pwa = document.getElementById('pwaNav');
@@ -41414,12 +41466,19 @@ if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ windo
 else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
 else if(typeof window.showHome === 'function'){ window.showHome(); }
 };
-rib.insertBefore(home, rib.firstChild);
 }
-['qClock','cbCtx'].forEach(function(id){
-var el = document.getElementById(id);
-if(el && el.parentNode !== rib) rib.appendChild(el);
-});
+/* 416: home now anchors the RIGHT END OF THE BAR, not the ribbon. Appended last so
+   it sits outside the absolutely-centred title. */
+var _bar = document.getElementById('cr-hd2-bar');
+if(_bar && home.parentNode !== _bar) _bar.appendChild(home);
+/* 416: qClock is NOT relocated — Theo dropped the date and time, and the phone's
+   own status bar shows the clock two rows above it anyway. The ribbon now carries
+   only the project context, and hides itself when there is none. */
+var _cx = document.getElementById('cbCtx');
+if(_cx && _cx.parentNode !== rib) rib.appendChild(_cx);
+var _qc = document.getElementById('qClock');
+if(_qc && _qc.parentNode) _qc.parentNode.removeChild(_qc);
+rib.classList.toggle('cr-hd2-empty', !(_cx && _cx.textContent.trim()));
 }
 function build(){
 var head = document.querySelector('header.site');
@@ -41442,20 +41501,8 @@ var bc = document.getElementById('brandCtx');
 if(bt) mid.appendChild(bt);
 if(bc) mid.appendChild(bc);
 bar.appendChild(mid);
-var search = document.getElementById('headSearch');
-if(search) bar.appendChild(search);
-var sBtn = document.createElement('button');
-sBtn.className = 'cr-ib searchbtn';
-sBtn.type = 'button';
-sBtn.title = 'Search';
-sBtn.innerHTML = '\uD83D\uDD0D';
-sBtn.onclick = function(){
-bar.classList.toggle('searching');
-if(bar.classList.contains('searching') && search){
-setTimeout(function(){ search.focus(); }, 60);
-}
-};
-bar.appendChild(sBtn);
+/* 416: no search toggle button. The bar is burger | title | + | home, and the
+   search field lives on its own full-width row underneath. */
 var addBtn = document.getElementById('addProjectBtn');
 if(addBtn){
 addBtn.className = 'cr-ib primary';
@@ -41469,9 +41516,25 @@ var m = document.getElementById(id);
 if(m && m.parentNode !== head) head.appendChild(m);
 });
 }
+ensureSearchRow(head);
 ensureRibbon(head);
 relocateAux();
 return true;
+}
+/* 416: the search row — full-width field, theme toggle closing the right end.
+   Sits directly under the bar and carries the CRM's strip colour. */
+function ensureSearchRow(head){
+var row = document.getElementById('cr-hd2-srch');
+if(!row){
+row = document.createElement('div');
+row.id = 'cr-hd2-srch';
+var bar = document.getElementById('cr-hd2-bar');
+if(bar && bar.nextSibling) head.insertBefore(row, bar.nextSibling);
+else head.appendChild(row);
+}
+var search = document.getElementById('headSearch');
+if(search && search.parentNode !== row) row.insertBefore(search, row.firstChild);
+return row;
 }
 function claimTypeOf(pr){
 try{
@@ -43412,7 +43475,7 @@ var PU_SORTS = [
   { k:'oldest',  l:'Oldest first' },
   { k:'client',  l:'Client name' }
 ];
-var CRM_LABEL = { retail:'Retail', insurance:'Claims', community:'Community' };
+var CRM_LABEL = { retail:'Retail', insurance:'Insurance', community:'Community' };
 
 function rows(){ return (window.CardinalPunch && window.CardinalPunch.rows) ? window.CardinalPunch.rows() : []; }
 function projOf(pid){
@@ -44120,7 +44183,7 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
      reason: 'retired in build 301 - the unified header owns insurance chrome'.
      #cr-hd2-bar IS that chrome, and it is present on every CRM, so the button is
      hidden by CSS unless body[data-crm="insurance"]. */
-  var HOSTS = ['#cr-hd2-bar'];
+  var HOSTS = ['#cr-hd2-srch'];   /* 416: the toggle closes the search row */
 
   function cur(){
     try { return localStorage.getItem(KEY) === 'siren' ? 'siren' : 'docket'; }
