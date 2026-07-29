@@ -41249,6 +41249,40 @@ display:flex;align-items:center;justify-content:center;flex:0 0 auto}
    labels - so this reaches the bid table AND the clients table without either
    renderer changing. nth-child would not: Bill to is the 3rd column in one
    table and the 2nd in the other. */
+/* ---- sort / filter controls + sheets ---------------------------------------
+   Mirrors .ljsheet / .ljsrow from the retail Leads & Jobs view so the two
+   screens behave identically, but painted from the community tokens so it is
+   green rather than the retail blue-link / red-header treatment. */
+.cc-bar{display:flex;align-items:center;gap:9px;padding:2px 0 12px;flex-wrap:wrap}
+.cc-bar .lb{font:800 9px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.cc-bar .chip{background:none;border:0;border-bottom:1px dashed var(--acc);color:var(--acc);
+font:800 13px inherit;cursor:pointer;padding:1px 2px}
+.cc-bar .shown{margin-left:auto;font:700 10px var(--mono);letter-spacing:.06em;
+text-transform:uppercase;color:var(--mute)}
+.cc-bar .ic{position:relative;background:var(--card);border:1px solid var(--line);
+border-radius:8px;color:var(--mute);font-size:15px;line-height:1;cursor:pointer;
+padding:7px 10px;min-width:38px}
+.cc-bar .ic.on{border-color:var(--acc);color:var(--acc);background:var(--goodbg)}
+.cc-bar .ic i{position:absolute;top:-6px;right:-6px;font:800 9px var(--mono);font-style:normal;
+background:var(--acc);color:var(--card);border-radius:999px;padding:2px 5px}
+.cc-sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;z-index:9996}
+.cc-sheet.open{display:flex;align-items:flex-start;justify-content:center}
+.cc-sheet .panel{background:var(--card);border:1px solid var(--line);border-top:0;
+border-radius:0 0 16px 16px;width:100%;max-width:560px;max-height:86%;overflow:auto}
+.cc-sheet .ph{display:flex;align-items:center;gap:8px;padding:13px 15px;
+border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:1}
+.cc-sheet .ph .t{font:800 14px inherit;color:var(--acc);flex:1;text-align:center}
+.cc-sheet .ph button{background:none;border:0;color:var(--acc);font:700 13.5px inherit;
+cursor:pointer;padding:4px 6px}
+.cc-sheet .ph button.ap{font-weight:800}
+.csrow{display:flex;align-items:center;gap:10px;padding:13px 16px;
+border-bottom:1px solid var(--line2);cursor:pointer;font:600 14px inherit;color:var(--ink)}
+.csrow.clear{color:var(--warnink);font-weight:800}
+.csrow .ck{width:18px;color:var(--acc);font-weight:800;visibility:hidden}
+.csrow.on .ck{visibility:visible}
+.csrow .chev{margin-left:auto;color:var(--mute)}
+.csrow .cnt{margin-left:auto;font:700 10.5px var(--mono);background:var(--goodbg);
+color:var(--acc);border-radius:999px;padding:2px 8px}
 .cc-tbl td[data-l="Bill to"]{background:var(--goodbg);box-shadow:inset 2px 0 0 var(--acc)}
 .cc-tbl th.k-bill{color:var(--acc)}
 .cc-idp .k.b{color:var(--acc)}
@@ -41357,11 +41391,33 @@ try{ return window.normStage(s); }catch(_){}
 }
 return s;
 }
+/* MEASURED 29 Jul, and it is a live bug, not a latent one: a date-only string
+   like '2026-07-29' parses as UTC midnight, which in EDT is 8pm the evening
+   before - so Math.floor on the wall-clock delta reported
+     days('2026-07-29') -> -1   a bid due TODAY, shown as a day overdue
+     days('2026-07-27') -> -3   two days over, shown as three
+   Every community due date has been rendering a day early. bid_due_at is stored
+   date-only, so this hit all of them. Anchoring both ends to local midnight
+   makes the count exact and independent of the hour it is read.
+
+   This is the same hazard PR #21 documented and fixed in the analytics module;
+   the hub kept its own copy. Fixed here rather than worked around because the
+   new deadline FILTER reads the same value the Due column prints - a filter
+   saying 'Due today' next to a cell saying '1d over' is worse than either. */
 function days(iso){
 if(!iso) return null;
-var d = new Date(iso);
+var s = String(iso);
+var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+var t;
+if(m){
+t = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}else{
+var d = new Date(s);
 if(isNaN(d)) return null;
-return Math.floor((d.getTime() - Date.now()) / 86400000);
+t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+var a = new Date(); a.setHours(0, 0, 0, 0);
+return Math.round((t.getTime() - a.getTime()) / 86400000);
 }
 function since(iso){
 if(!iso) return null;
@@ -41409,6 +41465,214 @@ return n ? esc(n) : '<span class="cc-mu">No homeowner recorded</span>';
 function hoCell(pr){
 var a = String((pr && pr.address) || '').trim();
 return hoText(pr) + (a ? '<div class="cc-mini">' + esc(a) + '</div>' : '');
+}
+/* ---- sort / filter / direction, mirroring the retail Leads & Jobs pattern --
+   Same shape Theo already knows: a Sort-by chip, a direction toggle, and a
+   funnel opening a category sheet that drills into values with live counts.
+
+   Deliberately a SEPARATE state object rather than reusing ljState: the sort
+   keys have almost nothing in common (retail sorts by Trade and Lead Source,
+   community by bid deadline and who is billed), and sharing the state would
+   make changing the sort on one screen silently change the other.
+
+   Everything below reads through helpers this module already has - lead(),
+   days(), since(), bidAmt(), partnerOf(), homeownerOf(), metaOf(), normStage()
+   - so there is no second source of truth for any field. */
+var chState = { sort:'due', dir:1, sets:{} };
+var chSheet = { cat:null, pend:[] };
+var CH_SORTS = [
+{ key:'due',       label:'Bid deadline' },
+{ key:'homeowner', label:'Homeowner' },
+{ key:'partner',   label:'Bill to' },
+{ key:'amount',    label:'Bid amount' },
+{ key:'stage',     label:'Stage' },
+{ key:'age',       label:'Age in stage' },
+{ key:'address',   label:'Address' }
+];
+var TYPE_LABEL = { pm:'Property manager', gc:'General contractor', program:'Community program' };
+/* Bands, not raw dates - 'Overdue' is the filter you actually want at 7am. */
+function chDueBand(pr){
+var dd = days(lead(pr).bid_due_at);
+if(dd == null) return 'No deadline set';
+if(dd < 0) return 'Overdue';
+if(dd === 0) return 'Due today';
+if(dd <= 7) return 'Due this week';
+return 'Later';
+}
+function chRepName(pr){
+var e = String(pr && pr.created_by || '').trim();
+if(!e) return 'Unassigned';
+return (window.cacheTeam && window.cacheTeam[e] && window.cacheTeam[e].name) ||
+(window.DEFAULT_NAMES && window.DEFAULT_NAMES[e]) || e.split('@')[0];
+}
+var CH_GROUPS = [
+{ key:'partner', label:'Bill to',       get:function(pr){ return partnerOf(pr); } },
+{ key:'ptype',   label:'Partner type',  get:function(pr){ return TYPE_LABEL[metaOf(partnerOf(pr)).type] || 'Community program'; } },
+{ key:'stage',   label:'Stage',         get:function(pr){ var s = normStage(pr.stage); return LABEL[s] || s; } },
+{ key:'due',     label:'Bid deadline',  get:chDueBand },
+/* Community-specific, and the reason this is worth building: 2 of the 12 jobs
+   have no homeowner recorded, which is exactly the ambiguity the two-party
+   header was meant to remove. This makes those two findable in one tap. */
+{ key:'ho',      label:'Homeowner',     get:function(pr){ return homeownerOf(pr) ? 'Recorded' : 'Not recorded'; } },
+{ key:'rep',     label:'Assigned to',   get:chRepName }
+];
+function chActiveCount(){
+var n = 0;
+CH_GROUPS.forEach(function(g){ if((chState.sets[g.key] || []).length) n++; });
+return n;
+}
+function chMatches(pr){
+for(var i = 0; i < CH_GROUPS.length; i++){
+var g = CH_GROUPS[i], want = chState.sets[g.key];
+if(!want || !want.length) continue;
+if(want.indexOf(String(g.get(pr))) === -1) return false;
+}
+return true;
+}
+function chCmp(a, b){
+function alpha(x, y){ return String(x == null ? '' : x).localeCompare(String(y == null ? '' : y)); }
+var k = chState.sort;
+if(k === 'due'){
+/* Most urgent first: overdue leads, then soonest, then undated LAST - and
+   undated has to sort last in both directions or reversing hides the work. */
+var da = days(lead(a).bid_due_at), db = days(lead(b).bid_due_at);
+if(da == null && db == null) return alpha(homeownerOf(a), homeownerOf(b));
+if(da == null) return 1;
+if(db == null) return -1;
+return da - db;
+}
+if(k === 'homeowner') return alpha(homeownerOf(a), homeownerOf(b));
+if(k === 'partner')   return alpha(partnerOf(a), partnerOf(b));
+if(k === 'amount')    return (bidAmt(b) || 0) - (bidAmt(a) || 0);
+if(k === 'stage')     return STAGE_ORDER.indexOf(normStage(a.stage)) - STAGE_ORDER.indexOf(normStage(b.stage));
+if(k === 'age')       return (since(b.updated_at || b.created_at) || 0) - (since(a.updated_at || a.created_at) || 0);
+if(k === 'address')   return alpha(a.address, b.address);
+return 0;
+}
+function chSorted(list){
+/* Undated bids stay pinned to the bottom when the direction flips, so a
+   reversed deadline sort still shows real deadlines first. */
+if(chState.sort === 'due'){
+var dated = [], undated = [];
+list.forEach(function(p){ (days(lead(p).bid_due_at) == null ? undated : dated).push(p); });
+dated.sort(function(x, y){ return chState.dir * chCmp(x, y); });
+return dated.concat(undated);
+}
+return list.slice().sort(function(x, y){ return chState.dir * chCmp(x, y); });
+}
+function chSortLabel(){
+var f = CH_SORTS.filter(function(x){ return x.key === chState.sort; })[0];
+return f ? f.label : 'Bid deadline';
+}
+function chGroupCounts(g){
+var c = {};
+projects().forEach(function(pr){ var v = String(g.get(pr)); c[v] = (c[v] || 0) + 1; });
+return c;
+}
+function chBar(shown, total){
+var n = chActiveCount();
+return '<div class="cc-bar">' +
+'<span class="lb">Sort by</span>' +
+'<button class="chip" data-ch="sort" type="button">' + esc(chSortLabel()) + '</button>' +
+'<span class="shown">' + shown + (shown === total ? '' : ' of ' + total) + '</span>' +
+'<button class="ic' + (chState.dir === -1 ? ' on' : '') + '" data-ch="dir" type="button" ' +
+'title="Reverse the order">\u21C5</button>' +
+'<button class="ic' + (n ? ' on' : '') + '" data-ch="filter" type="button" title="Filters">' +
+'\u2632' + (n ? '<i>' + n + '</i>' : '') + '</button>' +
+'</div>';
+}
+function chSheets(){
+return '<div class="cc-sheet" data-sh="sort"><div class="panel">' +
+'<div class="ph"><button data-ch="x-sort" type="button">Close</button>' +
+'<span class="t">Sort by</span><span style="width:52px"></span></div>' +
+'<div data-slot="sortlist"></div></div></div>' +
+'<div class="cc-sheet" data-sh="filter"><div class="panel">' +
+'<div class="ph"><button data-ch="x-filter" type="button">Done</button>' +
+'<span class="t">Filters (' + chActiveCount() + ')</span><span style="width:52px"></span></div>' +
+'<div class="csrow clear" data-ch="clear">Clear all</div>' +
+'<div data-slot="catlist"></div></div></div>' +
+'<div class="cc-sheet" data-sh="sub"><div class="panel">' +
+'<div class="ph"><button data-ch="back" type="button">\u2039 Back</button>' +
+'<span class="t" data-slot="subtitle"></span>' +
+'<button class="ap" data-ch="apply" type="button">Apply</button></div>' +
+'<div data-slot="sublist"></div></div></div>';
+}
+function chFillLists(host){
+var sl = host.querySelector('[data-slot="sortlist"]');
+if(sl) sl.innerHTML = CH_SORTS.map(function(s){
+return '<div class="csrow' + (s.key === chState.sort ? ' on' : '') + '" data-sort="' + s.key + '">' +
+'<span class="ck">\u2713</span>' + esc(s.label) + '</div>';
+}).join('');
+var cl = host.querySelector('[data-slot="catlist"]');
+if(cl) cl.innerHTML = CH_GROUPS.map(function(g){
+var n = (chState.sets[g.key] || []).length;
+return '<div class="csrow" data-cat="' + g.key + '">' + esc(g.label) +
+(n ? '<span class="cnt">' + n + '</span>' : '<span class="chev">\u203A</span>') + '</div>';
+}).join('');
+}
+function chPaintSub(host){
+var g = CH_GROUPS.filter(function(x){ return x.key === chSheet.cat; })[0];
+if(!g) return;
+var t = host.querySelector('[data-slot="subtitle"]');
+if(t) t.textContent = g.label;
+var counts = chGroupCounts(g);
+var keys = Object.keys(counts).sort(function(a, b){
+return counts[b] - counts[a] || a.localeCompare(b);
+});
+var sl = host.querySelector('[data-slot="sublist"]');
+if(sl) sl.innerHTML = keys.map(function(k){
+return '<div class="csrow' + (chSheet.pend.indexOf(k) !== -1 ? ' on' : '') + '" data-opt="' + esc(k) + '">' +
+'<span class="ck">\u2713</span>' + esc(k) + '<span class="cnt">' + counts[k] + '</span></div>';
+}).join('') || '<div class="cc-empty">Nothing to filter on yet.</div>';
+}
+function chWire(host){
+function sheet(name, on){
+var el = host.querySelector('[data-sh="' + name + '"]');
+if(el) el.classList.toggle('open', !!on);
+}
+chFillLists(host);
+host.querySelectorAll('[data-ch]').forEach(function(el){
+el.onclick = function(e){
+e.stopPropagation();
+var a = el.getAttribute('data-ch');
+if(a === 'sort'){ chFillLists(host); sheet('sort', true); }
+else if(a === 'dir'){ chState.dir = -chState.dir; render(); }
+else if(a === 'filter'){ chFillLists(host); sheet('filter', true); }
+else if(a === 'x-sort'){ sheet('sort', false); }
+else if(a === 'x-filter'){ sheet('filter', false); }
+else if(a === 'clear'){ chState.sets = {}; render(); }
+else if(a === 'back'){ sheet('sub', false); sheet('filter', true); }
+else if(a === 'apply'){
+if(chSheet.pend.length) chState.sets[chSheet.cat] = chSheet.pend.slice();
+else delete chState.sets[chSheet.cat];
+render();
+}
+};
+});
+host.querySelectorAll('[data-sort]').forEach(function(el){
+el.onclick = function(){ chState.sort = el.getAttribute('data-sort'); render(); };
+});
+host.querySelectorAll('[data-cat]').forEach(function(el){
+el.onclick = function(){
+chSheet.cat = el.getAttribute('data-cat');
+chSheet.pend = (chState.sets[chSheet.cat] || []).slice();
+chPaintSub(host);
+sheet('filter', false);
+sheet('sub', true);
+};
+});
+host.querySelectorAll('[data-opt]').forEach(function(el){
+el.onclick = function(){
+var v = el.getAttribute('data-opt');
+var i = chSheet.pend.indexOf(v);
+if(i !== -1) chSheet.pend.splice(i, 1); else chSheet.pend.push(v);
+chPaintSub(host);
+};
+});
+/* tapping the scrim closes, same as the retail sheets */
+host.querySelectorAll('.cc-sheet').forEach(function(el){
+el.onclick = function(e){ if(e.target === el) el.classList.remove('open'); };
+});
 }
 function compute(){
 var all = projects();
@@ -41716,10 +41980,16 @@ var weekBody = (queue('Chase a decision', d.chase) + queue('Get on the calendar'
 queue('Invoice the partner', d.inv)) ||
 '<div class="cc-empty">Nothing waiting on you.</div>';
 
+/* The filter and sort apply to THIS table only. The Due-soon block and the
+   Clients tab keep their own orders on purpose - a filter that silently
+   emptied the due-soon list would hide overdue bids. */
+var chRows = chSorted(d.all.filter(chMatches));
 var allBidsBody = d.all.length
+? chBar(chRows.length, d.all.length) +
+(chRows.length
 ? '<table class="cc-tbl"><thead><tr><th>Due</th><th>Homeowner</th><th class="k-bill">Bill to</th><th>Stage</th>' +
 (role === 'prod' ? '' : '<th style="text-align:right">Amount</th>') + '<th>Rep</th></tr></thead><tbody>' +
-d.all.map(function(pr){
+chRows.map(function(pr){
 var l = lead(pr), st = normStage(pr.stage), dd = days(l.bid_due_at), amt = bidAmt(pr);
 return '<tr data-open="' + esc(pr.id) + '">' +
 '<td data-l="Due">' + (dd == null ? '\u2014' : '<span class="cc-pill due">' + dd + ' d</span>') + '</td>' +
@@ -41730,6 +42000,7 @@ esc(LABEL[st] || st) + '</span></td>' +
 (role === 'prod' ? '' : '<td data-l="Amount" class="cc-money" style="text-align:right">' + (amt ? usd(amt) : '\u2014') + '</td>') +
 '<td data-l="Rep">' + repAv(pr.created_by) + '</td></tr>';
 }).join('') + '</tbody></table>'
+: '<div class="cc-empty">No bids match these filters.</div>')
 : '<div class="cc-empty">No bids yet.</div>';
 
 var bidsPane = '<div data-pane="bids" class="' + (pane === 'bids' ? 'on' : '') + '">' +
@@ -41823,7 +42094,7 @@ bidsPane + partnersPane + clientsPane +
 '<span class="x"><b>Activity</b><small>Team feed, newest first</small></span></button>' +
 '<button data-go="calendar" type="button"><span class="i">\uD83D\uDCC5</span>' +
 '<span class="x"><b>Calendar</b><small>Jobs on the board</small></span></button>' +
-'</div>';
+'</div>' + chSheets();
 host.querySelectorAll('.cc-fh').forEach(function(h){
 h.onclick = function(e){
 if(e.target.closest('[data-open]')) return;
@@ -41832,6 +42103,7 @@ h.parentNode.classList.toggle('open');
 });
 clock(host);
 wire(host);
+chWire(host);
 if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips();
 lastSig = signature();
 }
