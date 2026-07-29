@@ -43337,7 +43337,8 @@ if(amt > 0) amts.push(amt);
 var pn = l.partner_name || '\u2014';
 partners[pn] = partners[pn] || { bids:0, won:0, lost:0, wonAmt:0 };
 partners[pn].bids++;
-var rec = { p:p, amt:amt, partner:pn, since:c.stage_since || l.stage_since || p.updated_at || p.created_at };
+var rec = { p:p, amt:amt, partner:pn, due:l.bid_due_at || null,
+since:c.stage_since || l.stage_since || p.updated_at || p.created_at };
 if(WON[s]){ won.push(rec); partners[pn].won++; partners[pn].wonAmt += amt; }
 else if(s === 'Lost'){ lost.push(rec); partners[pn].lost++; }
 else if(OPEN[s]){ open.push(rec); }
@@ -43365,6 +43366,42 @@ if(!iso) return null;
 var d = new Date(iso);
 if(isNaN(d)) return null;
 return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+/* Signed, unlike daysSince which clamps at 0 and therefore cannot express
+   "overdue" at all. bid_due_at was not read anywhere in this module, so a bid
+   two days past the date we promised a partner looked identical to one we
+   simply had not touched.
+
+   The date is built from its parts rather than parsed. A date-only string like
+   '2026-07-27' parses to UTC midnight, which in EDT is Sun Jul 26 20:00 - a
+   different instant from local midnight by the UTC offset, giving an exact
+   delta of -2.1667 days instead of -2. Math.round (used below) hides that, so
+   there is no live bug either way; Math.floor does NOT, and would report 3
+   days over instead of 2. daysSince() directly above uses Math.floor, so the
+   hazard is one line away. Building from parts makes it exact instead of
+   dependent on the rounding mode. */
+function daysUntil(iso){
+if(!iso) return null;
+var s = String(iso);
+var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+var b;
+if(m){
+b = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}else{
+var d = new Date(s);
+if(isNaN(d)) return null;
+b = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+var a = new Date(); a.setHours(0, 0, 0, 0);
+return Math.round((b.getTime() - a.getTime()) / 86400000);
+}
+/* Most urgent first: overdue leading (most overdue first), then due soonest,
+   then undated by longest sitting. Undated bids sort below every dated one. */
+function agingRank(r){
+var due = daysUntil(r.due);
+if(due != null) return due;
+var age = daysSince(r.since);
+return 100000 - (age == null ? 0 : age);
 }
 var el = null;
 function ensure(){
@@ -43404,11 +43441,21 @@ return '<div class="prow"><b>' + esc(k) + '</b>' +
 '<span class="m">' + usd(v.wonAmt) + '</span></div>';
 }).join('') : '<div class="quiet">No community bids yet.</div>') +
 '<div class="sect">Aging \u2014 open bids</div>' +
-(d.open.length ? d.open.slice().sort(function(a, b){ return (daysSince(b.since) || 0) - (daysSince(a.since) || 0); }).map(function(r){
-var dd = daysSince(r.since);
-return '<div class="prow"><b>' + esc(r.p.name || 'Unnamed') + '</b>' +
-'<small>' + esc(r.partner) + (r.amt ? ' \u00b7 ' + usd(r.amt) : '') + '</small>' +
-'<span class="d' + (dd != null && dd > 7 ? ' hot' : '') + '">' + (dd == null ? '\u2014' : dd + 'd') + '</span></div>';
+(d.open.length ? d.open.slice().sort(function(a, b){ return agingRank(a) - agingRank(b); }).map(function(r){
+var due = daysUntil(r.due);
+var age = daysSince(r.since);
+var lab, cls;
+if(due == null){ lab = (age == null ? '\u2014' : age + 'd'); cls = (age != null && age > 7) ? ' hot' : ''; }
+else if(due < 0){ lab = Math.abs(due) + 'd over'; cls = ' hot'; }
+else if(due === 0){ lab = 'due today'; cls = ' hot'; }
+else { lab = 'in ' + due + 'd'; cls = (due <= 3) ? ' hot' : ''; }
+/* Title the row with the homeowner, not pr.name - that is the concatenation
+   "{Homeowner} \u2014 {Partner}", and the partner is already on the line below. */
+var who = (typeof projHomeowner === 'function') ? projHomeowner(r.p) : '';
+return '<div class="prow"><b>' + esc(who || r.p.address || r.p.name || 'Unnamed') + '</b>' +
+'<small>' + esc(r.partner) + (r.amt ? ' \u00b7 ' + usd(r.amt) : '') +
+(due == null ? ' \u00b7 no due date' : '') + '</small>' +
+'<span class="d' + cls + '">' + lab + '</span></div>';
 }).join('') : '<div class="quiet">Nothing open right now.</div>') +
 '<div class="sect">Awarded by month</div>' +
 (mk.length ? mk.map(function(k){
