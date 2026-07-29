@@ -40719,6 +40719,11 @@ display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .p-dh{color:var(--c-dh);font-weight:800}
 .p-rb{color:var(--c-rb);font-weight:800}
 .cc-mini{font-size:10.5px;color:var(--mute)}
+.cc-mu{font-weight:400;font-style:italic;color:var(--mute)}
+.cc-idp{display:grid;grid-template-columns:52px 1fr;gap:2px 8px;align-items:baseline;min-width:0}
+.cc-due>.cc-idp{flex:1;min-width:0}
+.cc-idp .k{font:800 8px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);padding-top:3px}
+.cc-idp .v{font-weight:700;font-size:12.5px;min-width:0;overflow-wrap:anywhere}
 .cc-money{font:700 12.5px var(--mono);color:var(--money);flex:0 0 auto}
 .cc-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
 .cc-tbl th{text-align:left;font:800 9px var(--mono);letter-spacing:.14em;text-transform:uppercase;padding:0 8px 7px;color:var(--mute)}
@@ -40780,8 +40785,8 @@ box-shadow:0 4px 11px rgba(45,51,56,.11)}
 .cc-tbl tbody tr:hover td{background:none}
 .cc-tbl td{border-top:0;padding:3px 0;display:flex;align-items:flex-start;gap:8px}
 .cc-tbl td::before{content:attr(data-l);font:800 8px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);flex:0 0 56px;padding-top:4px}
-.cc-tbl td[data-l="Bid"],.cc-tbl td[data-l="Client"]{display:block;font-weight:800;font-size:13px;padding-bottom:5px}
-.cc-tbl td[data-l="Bid"]::before,.cc-tbl td[data-l="Client"]::before{display:none}
+.cc-tbl td[data-l="Homeowner"]{display:block;font-weight:800;font-size:13px;padding-bottom:5px}
+.cc-tbl td[data-l="Homeowner"]::before{display:none}
 #cr-ch2 .tools{grid-template-columns:1fr}
 }
 @media print{#cr-ch2{color:#000}}
@@ -40812,6 +40817,25 @@ try{ return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {}); }
 catch(_){ return (pr && pr.checklist) || {}; }
 }
 function lead(pr){ return (ck(pr) || {}).lead || {}; }
+/* The person served. lead.homeowner_name is authoritative; when it is blank we
+   recover the name from pr.name, which is stored as a concatenation in one of
+   two shapes: "{Homeowner} \u2014 {Partner}" or "{Partner} \u2014 {Address}".
+   The second shape has no homeowner, so it returns empty rather than a guess. */
+function homeownerOf(pr){
+var l = lead(pr);
+var hn = String(l.homeowner_name || '').trim();
+if(hn) return hn;
+var p = String(l.partner_name || '').trim();
+var n = String((pr && pr.name) || '').trim();
+if(!p) return n;
+if(n === p) return '';
+if(n.indexOf(p + ' \u2014 ') === 0) return '';
+var suf = ' \u2014 ' + p;
+if(n.length > suf.length && n.slice(-suf.length) === suf){
+return n.slice(0, n.length - suf.length).trim();
+}
+return n;
+}
 function normStage(s){
 if(typeof window.normStage === 'function'){
 try{ return window.normStage(s); }catch(_){}
@@ -40862,6 +40886,14 @@ return Number(l.bid_amount) || Number(estTot[pr.id]) || 0;
 function partnerOf(pr){
 var l = lead(pr);
 return l.partner_name || 'No partner recorded';
+}
+function hoText(pr){
+var n = homeownerOf(pr);
+return n ? esc(n) : '<span class="cc-mu">No homeowner recorded</span>';
+}
+function hoCell(pr){
+var a = String((pr && pr.address) || '').trim();
+return hoText(pr) + (a ? '<div class="cc-mini">' + esc(a) + '</div>' : '');
 }
 function compute(){
 var all = projects();
@@ -41170,8 +41202,9 @@ var dueBody = d.due.length
 ? '<div class="cc-duegrid">' + d.due.slice(0, 8).map(function(x){
 return '<div class="cc-due" data-open="' + esc(x.pr.id) + '">' +
 '<b>' + (x.d == null ? '\u2013' : x.d) + '</b>' +
-'<span>' + pName(partnerOf(x.pr)) +
-'<div class="cc-mini">' + esc(x.pr.name || 'Unnamed') + '</div></span>' +
+'<div class="cc-idp">' +
+'<div class="k">Bill to</div><div class="v">' + pName(partnerOf(x.pr)) + '</div>' +
+'<div class="k">Serving</div><div class="v">' + hoCell(x.pr) + '</div></div>' +
 (x.amt ? '<span class="cc-money">' + usd(x.amt) + '</span>' : '') + '</div>';
 }).join('') + '</div>'
 : '<div class="cc-empty">Nothing out for pricing right now.</div>';
@@ -41200,15 +41233,14 @@ queue('Invoice the partner', d.inv)) ||
 '<div class="cc-empty">Nothing waiting on you.</div>';
 
 var allBidsBody = d.all.length
-? '<table class="cc-tbl"><thead><tr><th>Due</th><th>Bid</th><th>Partner</th><th>Stage</th>' +
+? '<table class="cc-tbl"><thead><tr><th>Due</th><th>Homeowner</th><th>Bill to</th><th>Stage</th>' +
 (role === 'prod' ? '' : '<th style="text-align:right">Amount</th>') + '<th>Rep</th></tr></thead><tbody>' +
 d.all.map(function(pr){
 var l = lead(pr), st = normStage(pr.stage), dd = days(l.bid_due_at), amt = bidAmt(pr);
 return '<tr data-open="' + esc(pr.id) + '">' +
 '<td data-l="Due">' + (dd == null ? '\u2014' : '<span class="cc-pill due">' + dd + ' d</span>') + '</td>' +
-'<td data-l="Bid">' + esc(pr.name || 'Unnamed') +
-'<div class="cc-mini">' + esc(pr.address || '') + '</div></td>' +
-'<td data-l="Partner">' + pName(l.partner_name) + '</td>' +
+'<td data-l="Homeowner">' + hoCell(pr) + '</td>' +
+'<td data-l="Bill to">' + pName(l.partner_name) + '</td>' +
 '<td data-l="Stage"><span class="cc-pill' + (st === 'Approved' || st === 'Completed' || st === 'Invoiced' ? ' won' : '') + '">' +
 esc(LABEL[st] || st) + '</span></td>' +
 (role === 'prod' ? '' : '<td data-l="Amount" class="cc-money" style="text-align:right">' + (amt ? usd(amt) : '\u2014') + '</td>') +
@@ -41261,12 +41293,12 @@ return '<div class="cc-prow">' +
 }).join('');
 }
 var clientsBody = rows.length
-? '<table class="cc-tbl"><thead><tr><th>Client</th><th>Partner</th><th>Stage</th><th>Address</th><th>Rep</th></tr></thead><tbody>' +
+? '<table class="cc-tbl"><thead><tr><th>Homeowner</th><th>Bill to</th><th>Stage</th><th>Address</th><th>Rep</th></tr></thead><tbody>' +
 rows.map(function(pr){
 var l = lead(pr), st = normStage(pr.stage);
 return '<tr data-open="' + esc(pr.id) + '">' +
-'<td data-l="Client">' + esc(pr.name || 'Unnamed') + '</td>' +
-'<td data-l="Partner">' + pName(l.partner_name) + '</td>' +
+'<td data-l="Homeowner">' + hoText(pr) + '</td>' +
+'<td data-l="Bill to">' + pName(l.partner_name) + '</td>' +
 '<td data-l="Stage"><span class="cc-pill' + (st === 'Approved' || st === 'Completed' || st === 'Invoiced' ? ' won' : '') + '">' +
 esc(LABEL[st] || st) + '</span></td>' +
 '<td data-l="Address">' + esc(pr.address || '\u2014') + '</td>' +
@@ -41505,7 +41537,9 @@ isOpen : isOpen,
 })();
 </script>
 
-<style id="cr-cc-styles">#cr-cc{--ground:#0a1420;--card:#111e2e;--raise:#1a2c42;--ink:#fff;--mute:#c2d6e8;--dim:#7690ab;--a1:#5ec8ff;--a2:#e8f4ff;--accent:#8ad8ff;--warn:#ffcf6b;--good:#7fe3b0;--bad:#ff8f8f;--heroA:#152740;--urgent:#2a2418;--line:rgba(94,200,255,.18);--glow:0 0 0 1px rgba(94,200,255,.24),0 0 22px rgba(94,200,255,.14);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:18px 0 14px;color:var(--ink);position:relative;z-index:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11.5px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 20px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:10px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}#cr-cc .pin .facts .v{font:700 12.5px var(--mono);margin-top:4px}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc .tabbar{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}#cr-cc .tabbar button{flex:1;position:relative;background:transparent;border:0;cursor:pointer;padding:11px 8px 12px;font-family:inherit;color:var(--dim);font:700 12.5px inherit}#cr-cc .tabbar button.on{color:var(--ink)}#cr-cc .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--urgent),var(--urgent)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}#cr-cc .ev .eh{display:flex;align-items:baseline;gap:9px}#cr-cc .ev .eh b{flex:1;font:700 13px inherit}#cr-cc .ev .eh .when{font:700 10px var(--mono);color:var(--dim);white-space:nowrap}#cr-cc .ev .txt{font-size:12.5px;color:var(--mute);line-height:1.55;margin-top:5px}#cr-cc .ev .who{font-size:10.5px;color:var(--dim);margin-top:6px}#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 8px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:12px;color:var(--accent)}#cr-cc .sheet .lines{padding:5px 7px}#cr-cc .sheet .ln{display:flex;align-items:baseline;gap:11px;padding:10px 10px;border-radius:7px}#cr-cc .sheet .ln:nth-child(odd){background:rgba(255,255,255,.02)}#cr-cc .sheet .ln .d{flex:1;min-width:0}#cr-cc .sheet .ln .d b{display:block;font:600 13px inherit}#cr-cc .sheet .ln .d small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}#cr-cc .sheet .ln .q{flex:0 0 auto;font:700 11.5px var(--mono);color:var(--dim)}#cr-cc .sheet .ln .p{flex:0 0 auto;min-width:72px;text-align:right;font:700 12.5px var(--mono);color:var(--mute)}#cr-cc .sheet .tot{display:flex;align-items:baseline;gap:12px;padding:14px 16px;border-top:1px solid var(--line);background:var(--raise)}#cr-cc .sheet .tot .k{flex:1;font:800 9px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .tot .v{font:700 24px var(--mono);letter-spacing:-.02em;color:var(--good)}#cr-cc .sheet .duebar{display:flex;align-items:center;gap:11px;padding:12px 16px;background:var(--urgent);border-top:1px solid var(--line)}#cr-cc .sheet .duebar .d{font:700 19px var(--mono);color:var(--warn);line-height:1}#cr-cc .sheet .duebar .x{flex:1;font-size:11.5px;color:var(--mute);line-height:1.4}#cr-cc .sheet .duebar button{background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:9px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit;white-space:nowrap}#cr-cc .nobid{padding:26px 18px;text-align:center}#cr-cc .nobid p{font-size:13px;color:var(--dim);line-height:1.6;margin:0 0 14px}#cr-cc .nobid button{background:linear-gradient(120deg,var(--a1),var(--a2));color:#08240f;border:0;border-radius:8px;padding:11px 18px;cursor:pointer;font:800 12.5px inherit;font-family:inherit}#cr-cc .cts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}#cr-cc .ct{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ct .k{font:800 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}#cr-cc .ct .v{font:700 13px inherit;margin-top:5px}#cr-cc .ct .v a{color:var(--accent);text-decoration:none;font-weight:400;font-size:11.5px;display:block;margin-top:2px}#cr-cc .ct .held{font:400 11.5px inherit;color:var(--dim);margin-top:5px;line-height:1.45}#cr-cc .ct.none .v{color:var(--dim);opacity:.6}#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none !important}#projectView.cr-cc-own{background:#0a1420 !important}body.cr-cc-open{background:#0a1420}body.cr-cc-open footer.site{display:none}#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#7690ab}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:rgba(94,200,255,.18)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:#e6f0f8;cursor:pointer;background:linear-gradient(#111e2e,#111e2e) padding-box,linear-gradient(125deg,#5ec8ff,#e8f4ff) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:#7690ab;opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(#111e2e,#111e2e) padding-box,linear-gradient(125deg,#5ec8ff,#e8f4ff) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:#e6f0f8 !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:#7690ab}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:#111e2e;border:1px solid #5ec8ff;color:#e6f0f8;font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:0 10px 26px rgba(0,0,0,.5);cursor:pointer}body[data-crm="community"] #commsView .viewhead{background:linear-gradient(100deg,#047857,#34D399 60%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#34D399}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}</style> <script id="cr-cc-script">
+<style id="cr-cc-styles">#cr-cc{--ground:#0a1420;--card:#111e2e;--raise:#1a2c42;--ink:#fff;--mute:#c2d6e8;--dim:#7690ab;--a1:#5ec8ff;--a2:#e8f4ff;--accent:#8ad8ff;--warn:#ffcf6b;--good:#7fe3b0;--bad:#ff8f8f;--heroA:#152740;--urgent:#2a2418;--line:rgba(94,200,255,.18);--glow:0 0 0 1px rgba(94,200,255,.24),0 0 22px rgba(94,200,255,.14);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:18px 0 14px;color:var(--ink);position:relative;z-index:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11.5px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 20px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:10px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}#cr-cc .pin .facts .v{font:700 12.5px var(--mono);margin-top:4px}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc .tabbar{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}#cr-cc .tabbar button{flex:1;position:relative;background:transparent;border:0;cursor:pointer;padding:11px 8px 12px;font-family:inherit;color:var(--dim);font:700 12.5px inherit}#cr-cc .tabbar button.on{color:var(--ink)}#cr-cc .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--urgent),var(--urgent)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}#cr-cc .ev .eh{display:flex;align-items:baseline;gap:9px}#cr-cc .ev .eh b{flex:1;font:700 13px inherit}#cr-cc .ev .eh .when{font:700 10px var(--mono);color:var(--dim);white-space:nowrap}#cr-cc .ev .txt{font-size:12.5px;color:var(--mute);line-height:1.55;margin-top:5px}#cr-cc .ev .who{font-size:10.5px;color:var(--dim);margin-top:6px}#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 8px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:12px;color:var(--accent)}
+#cr-cc .pin .t .nm .rl{display:block;font:800 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+#cr-cc .ct.bill{grid-column:1/-1}#cr-cc .sheet .lines{padding:5px 7px}#cr-cc .sheet .ln{display:flex;align-items:baseline;gap:11px;padding:10px 10px;border-radius:7px}#cr-cc .sheet .ln:nth-child(odd){background:rgba(255,255,255,.02)}#cr-cc .sheet .ln .d{flex:1;min-width:0}#cr-cc .sheet .ln .d b{display:block;font:600 13px inherit}#cr-cc .sheet .ln .d small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}#cr-cc .sheet .ln .q{flex:0 0 auto;font:700 11.5px var(--mono);color:var(--dim)}#cr-cc .sheet .ln .p{flex:0 0 auto;min-width:72px;text-align:right;font:700 12.5px var(--mono);color:var(--mute)}#cr-cc .sheet .tot{display:flex;align-items:baseline;gap:12px;padding:14px 16px;border-top:1px solid var(--line);background:var(--raise)}#cr-cc .sheet .tot .k{flex:1;font:800 9px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .tot .v{font:700 24px var(--mono);letter-spacing:-.02em;color:var(--good)}#cr-cc .sheet .duebar{display:flex;align-items:center;gap:11px;padding:12px 16px;background:var(--urgent);border-top:1px solid var(--line)}#cr-cc .sheet .duebar .d{font:700 19px var(--mono);color:var(--warn);line-height:1}#cr-cc .sheet .duebar .x{flex:1;font-size:11.5px;color:var(--mute);line-height:1.4}#cr-cc .sheet .duebar button{background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:9px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit;white-space:nowrap}#cr-cc .nobid{padding:26px 18px;text-align:center}#cr-cc .nobid p{font-size:13px;color:var(--dim);line-height:1.6;margin:0 0 14px}#cr-cc .nobid button{background:linear-gradient(120deg,var(--a1),var(--a2));color:#08240f;border:0;border-radius:8px;padding:11px 18px;cursor:pointer;font:800 12.5px inherit;font-family:inherit}#cr-cc .cts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}#cr-cc .ct{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ct .k{font:800 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}#cr-cc .ct .v{font:700 13px inherit;margin-top:5px}#cr-cc .ct .v a{color:var(--accent);text-decoration:none;font-weight:400;font-size:11.5px;display:block;margin-top:2px}#cr-cc .ct .held{font:400 11.5px inherit;color:var(--dim);margin-top:5px;line-height:1.45}#cr-cc .ct.none .v{color:var(--dim);opacity:.6}#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none !important}#projectView.cr-cc-own{background:#0a1420 !important}body.cr-cc-open{background:#0a1420}body.cr-cc-open footer.site{display:none}#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#7690ab}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:rgba(94,200,255,.18)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:#e6f0f8;cursor:pointer;background:linear-gradient(#111e2e,#111e2e) padding-box,linear-gradient(125deg,#5ec8ff,#e8f4ff) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:#7690ab;opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(#111e2e,#111e2e) padding-box,linear-gradient(125deg,#5ec8ff,#e8f4ff) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:#e6f0f8 !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:#7690ab}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:#111e2e;border:1px solid #5ec8ff;color:#e6f0f8;font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:0 10px 26px rgba(0,0,0,.5);cursor:pointer}body[data-crm="community"] #commsView .viewhead{background:linear-gradient(100deg,#047857,#34D399 60%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#34D399}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}</style> <script id="cr-cc-script">
 (function(){
 'use strict';
 var tab = 'thread';
@@ -41532,6 +41566,34 @@ try{ return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {}); }
 catch(_){ return (pr && pr.checklist) || {}; }
 }
 function lead(pr){ return (ck(pr) || {}).lead || {}; }
+/* The person served. lead.homeowner_name is authoritative; when it is blank we
+   recover the name from pr.name, which is stored as a concatenation in one of
+   two shapes: "{Homeowner} \u2014 {Partner}" or "{Partner} \u2014 {Address}".
+   The second shape has no homeowner, so it returns empty rather than a guess. */
+function homeownerOf(pr){
+var l = lead(pr);
+var hn = String(l.homeowner_name || '').trim();
+if(hn) return hn;
+var p = String(l.partner_name || '').trim();
+var n = String((pr && pr.name) || '').trim();
+if(!p) return n;
+if(n === p) return '';
+if(n.indexOf(p + ' \u2014 ') === 0) return '';
+var suf = ' \u2014 ' + p;
+if(n.length > suf.length && n.slice(-suf.length) === suf){
+return n.slice(0, n.length - suf.length).trim();
+}
+return n;
+}
+/* Partner name trimmed to fit the 4-up facts strip. Full name goes in title. */
+function shortOrg(n){
+n = String(n || '').trim();
+if(!n) return '\u2014';
+if(n.length <= 13) return n;
+var w = n.split(/\s+/);
+var two = w[1] ? (w[0] + ' ' + w[1]) : w[0];
+return (w[0].length <= 6 && two.length <= 14) ? two : w[0];
+}
 function isCommunity(pr){
 return pr && typeof window.projClaimType === 'function' &&
 window.projClaimType(pr) === 'community';
@@ -41643,6 +41705,7 @@ esc(e.act) + '</button>' : '') +
 }
 function bidHtml(pr){
 var est = liveEstimate(), l = lead(pr);
+var hoNm = homeownerOf(pr), addr = String((pr && pr.address) || '').trim();
 var due = daysTo(l.bid_due_at);
 if(!est){
 return '<div class="sheet"><div class="nobid">' +
@@ -41654,9 +41717,11 @@ return '<div class="sheet"><div class="nobid">' +
 var items = est.line_items || [];
 return '<div class="sheet">' +
 '<div class="lh">' +
-'<div class="for">Bid prepared for</div>' +
-'<h4>' + esc(pr.name || 'Unnamed') + '</h4>' +
-(l.partner_name ? '<div class="via">via ' + esc(l.partner_name) + '</div>' : '') +
+'<div class="for">Bid goes to \u00b7 for approval</div>' +
+'<h4>' + esc(l.partner_name || pr.name || 'Unnamed') + '</h4>' +
+(hoNm
+? '<div class="via">Work for ' + esc(hoNm) + (addr ? ' \u00b7 ' + esc(addr) : '') + '</div>'
+: (addr ? '<div class="via">Work at ' + esc(addr) + '</div>' : '')) +
 '</div>' +
 (items.length
 ? '<div class="lines">' + items.map(function(it){
@@ -41686,6 +41751,10 @@ esc(LABEL[normStage(pr.stage)] || pr.stage) +
 function contactsHtml(pr){
 var l = lead(pr);
 var site = contacts.find(function(c){ return c.kind === 'site'; });
+var billTo = l.partner_name
+? '<div class="ct bill"><div class="k">Bill to</div>' +
+'<div class="v">' + esc(l.partner_name) + '</div></div>'
+: '';
 var held = !contacts.length;
 var homeowner = l.no_homeowner
 ? '<div class="ct none"><div class="k">Homeowner</div>' +
@@ -41694,7 +41763,7 @@ var homeowner = l.no_homeowner
 '<div class="v">' + esc(l.homeowner_name || 'Not recorded') +
 (l.homeowner_phone ? '<a href="tel:' + esc(l.homeowner_phone) + '">' +
 esc(l.homeowner_phone) + '</a>' : '') + '</div></div>';
-return '<div class="cts">' + homeowner +
+return '<div class="cts">' + billTo + homeowner +
 (site
 ? '<div class="ct"><div class="k">Site contact</div>' +
 '<div class="v">' + esc(site.name || 'Admin') +
@@ -41880,14 +41949,15 @@ view.insertBefore(mount, view.firstChild);
 }
 releaseAll();
 var l = lead(pr), est = liveEstimate();
+var hoNm = homeownerOf(pr);
 var due = daysTo(l.bid_due_at);
 var amt = est ? est.total : (Number(l.bid_amount) || 0);
 var st  = normStage(pr.stage);
 mount.innerHTML =
 '<div class="pin">' +
-'<div class="t"><span class="nm"><b>' + esc(pr.name || 'Unnamed') + '</b>' +
-'<small>' + esc(pr.address || 'No address') +
-(l.partner_name ? ' \u00b7 ' + esc(l.partner_name) : '') + '</small></span>' +
+'<div class="t"><span class="nm"><span class="rl">Serving</span>' +
+'<b>' + (hoNm ? esc(hoNm) : 'No homeowner recorded') + '</b>' +
+'<small>' + esc(pr.address || 'No address') + '</small></span>' +
 (amt ? '<span class="amt"><b>' + usd(amt) + '</b></span>' : '') +
 '</div>' +
 '<div class="facts">' +
@@ -41898,8 +41968,8 @@ mount.innerHTML =
 esc((LABEL[st] || st || '').split(' ')[0]) + '</div></div>' +
 '<div><div class="k">Work</div><div class="v">' +
 esc(l.work_type || l.worktype || '\u2014') + '</div></div>' +
-'<div><div class="k">Terms</div><div class="v">' +
-esc(l.terms || 'Net 30') + '</div></div>' +
+'<div><div class="k">Bill to</div><div class="v" title="' + esc(l.partner_name || '') + '">' +
+esc(shortOrg(l.partner_name)) + '</div></div>' +
 '</div>' +
 '</div>' +
 '<div class="tabbar">' +
