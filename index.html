@@ -41446,15 +41446,30 @@ if(k === 'calendar'){ if(typeof window.openScheduleBoard === 'function') window.
 if(k === 'newbid' && window.CardinalNewBid && window.CardinalNewBid.open){
 window.CardinalNewBid.open(); return;
 }
-if(k === 'props' && window.CardinalCommunityProps && window.CardinalCommunityProps.open){
-window.CardinalCommunityProps.open(); return;
+/* Properties hang off a partner: openDirectory(partnerId) is the only entry
+   point, and with no id it says so itself. Previously this checked
+   window.CardinalCommunityProps, which does not exist - the module is
+   CardinalCommunityProperties - so the tile fell through to a generic
+   "Not available yet." */
+if(k === 'props'){
+if(window.CardinalCommunityProperties && window.CardinalCommunityProperties.openDirectory){
+window.CardinalCommunityProperties.openDirectory();
+}else{
+alert('Properties live under each partner \u2014 open All Partners, then a partner.');
 }
-if(k === 'wo' && window.CardinalWorkOrders && window.CardinalWorkOrders.open){
-window.CardinalWorkOrders.open(); return;
+return;
+}
+/* Work orders render as a section on a community job, not as a standalone
+   view: CardinalWorkOrders exports only { render, canSee }, and
+   renderSection() removes itself unless window.currentProject is an open
+   community job. Calling render() from here would silently do nothing. */
+if(k === 'wo'){
+alert('Work orders live on each community job \u2014 open a client, then the Work Orders section.');
+return;
 }
 if(k === 'partners' && window.CardinalCommunityPartners &&
-window.CardinalCommunityPartners.open){
-window.CardinalCommunityPartners.open(); return;
+window.CardinalCommunityPartners.openDirectory){
+window.CardinalCommunityPartners.openDirectory(); return;
 }
 alert('Not available yet.');
 };
