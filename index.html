@@ -7755,6 +7755,23 @@ var ANDERSEN_TEMPLATE = buildEstimate('ANDERSEN\u00ae WINDOW <span>ESTIMATE</spa
 
 var TEAM = !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
 var sb = TEAM ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+/* Attach the caller's session to model-backed /api routes.
+   /api/summarize, /api/organize and /api/caption sent no Authorization header,
+   and their server side had no gate — so anyone who knew the paths could bill
+   inference to GEMINI_API_KEY. The server now requires a session; this is the
+   client half of that change. Falls back to no header if the session cannot be
+   read, in which case the server returns 401 rather than silently spending. */
+window.aiHeaders = async function(){
+  var hdrs = { 'Content-Type': 'application/json' };
+  try{
+    var client = window.supa || sb;
+    var s = client && client.auth ? await client.auth.getSession() : null;
+    var tok = s && s.data && s.data.session ? s.data.session.access_token : '';
+    if(tok) hdrs['Authorization'] = 'Bearer ' + tok;
+  }catch(e){}
+  return hdrs;
+};
 var TABLE = 'inspection_reports';
 
 /* ---------- helpers ---------- */
@@ -15849,7 +15866,7 @@ async function autoCaptionPhoto(dataUrl, captionEl){
     var img = await toDataUrlIfNeeded(dataUrl);
     var res = await fetch('/api/caption', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: await window.aiHeaders(),
       body: JSON.stringify({ image: img })
     });
     var data = null;
@@ -15930,7 +15947,7 @@ function wireReanalyzeButtons(doc){
           hc2.querySelectorAll('.num, button').forEach(function(x){ x.remove(); });
           var r2 = await fetch('/api/summarize', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await window.aiHeaders(),
             body: JSON.stringify({ captions: caps, section: hc2.textContent.trim() })
           });
           var j2 = null;
@@ -15990,7 +16007,7 @@ function wireSummaryDraftButton(doc){
       });
       var res = await fetch('/api/summarize', {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
+        headers: await window.aiHeaders(),
         body: JSON.stringify({ captions: captions })
       });
       var data = null;
@@ -16247,7 +16264,7 @@ async function processAssistPhoto(file){
   try{
     var res = await fetch('/api/organize', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: await window.aiHeaders(),
       body: JSON.stringify({ image: dataUrl })
     });
     var data = null;
@@ -16280,7 +16297,7 @@ async function sendAssistNote(){
   try{
     var res = await fetch('/api/organize', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: await window.aiHeaders(),
       body: JSON.stringify({ note: note })
     });
     var data = null;
@@ -34811,7 +34828,7 @@ statusEl.textContent = 'Asking AI\u2026';
 try{
 var res = await fetch('/api/caption', {
 method:'POST',
-headers:{'Content-Type':'application/json'},
+headers: await window.aiHeaders(),
 body: JSON.stringify({ image: photo.data }),
 });
 var body = null;
@@ -34840,7 +34857,7 @@ btnEl.textContent = '\u2026';
 try{
 var res = await fetch('/api/caption', {
 method:'POST',
-headers:{'Content-Type':'application/json'},
+headers: await window.aiHeaders(),
 body: JSON.stringify({ image: photo.data }),
 });
 var body = null;

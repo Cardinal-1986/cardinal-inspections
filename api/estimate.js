@@ -25,7 +25,7 @@ const OPENAI_KEY   = (process.env.OPENAI_API_KEY || '').trim();
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
 const SUPABASE_SRV = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
-const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash'];
+const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-3.5-flash'];
 const RETRY_WAIT_MS = 1200;
 const GEMINI_URL    = (m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
 const ROSTER_DOMAIN = '@cardinalrenovations.net';

@@ -11,11 +11,40 @@
 //
 // The key is only ever used here, on the server — it is never sent to the browser.
 
+const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
+const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
+
+/* Only signed-in Cardinal users may spend the Gemini key.
+   This route previously had no session check at all: anyone who knew the path
+   could POST to it and bill inference to GEMINI_API_KEY. Same gate as
+   /api/analyze.js, which was already doing this correctly. */
+async function requireSession(req, res){
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token) { res.status(401).json({ error: 'Sign in required' }); return null; }
+  try {
+    const who = await fetch(SUPABASE_URL + '/auth/v1/user', {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token }
+    });
+    if (!who.ok) { res.status(401).json({ error: 'Invalid session' }); return null; }
+    const user = await who.json();
+    if (!user || !user.email) { res.status(401).json({ error: 'Invalid session' }); return null; }
+    return user;
+  } catch (e) {
+    res.status(401).json({ error: 'Could not verify session' });
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // ---- Only signed-in Cardinal users may spend credits ----
+  const _user = await requireSession(req, res);
+  if (!_user) return;
 
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) {
@@ -72,7 +101,7 @@ export default async function handler(req, res) {
       diag.gemini35_try2 = geminiRes.status;
     }
     if (!geminiRes.ok) {
-      const alt = await askGemini('gemini-2.5-flash');
+      const alt = await askGemini('gemini-3.5-flash');
       diag.gemini25 = alt.status;
       if (alt.ok) geminiRes = alt;
     }
