@@ -7971,11 +7971,13 @@ var photoDb = {
   listByProject: async function(projectId){
     if(TEAM){
       var r = await sb.from('project_photos')
-        .select('id,project_id,data,created_by,created_at')
+        .select('id,project_id,data,storage_path,created_by,created_at')
         .eq('project_id', projectId)
         .order('created_at', {ascending:true});
       if(r.error) throw r.error;
-      return r.data || [];
+      /* storage_path was not selected before, so the renderers had no path to
+         sign from even if they wanted to. */
+      return await attachSignedPhotoUrls(r.data || []);
     }
     return glsLoad().filter(function(x){ return x.project_id === projectId; });
   },
@@ -10322,7 +10324,7 @@ function renderGallery(){
   grid.innerHTML = currentPhotos.map(function(ph){
     var ck = galChecked[ph.id];
     return '<div class="gph' + (ck ? ' checked' : '') + '" data-gid="' + ph.id + '">' +
-      '<img src="' + ph.data + '" alt="">' +
+      '<img src="' + (ph._src || ph.data) + '" alt="">' +
       '<div class="gchk">' + (ck ? '\u2713' : '') + '</div>' +
       '<button class="gdel" title="Delete photo">\u2715</button>' +
     '</div>';
@@ -12068,6 +12070,47 @@ function pickEstimate(rows, id){
     }catch(e2){}
   }
   return rows[0];
+}
+/* ---- signed photo URLs (step 1 of 3) --------------------------------------
+   Every stored photo URL is a permanent PUBLIC one, and the bucket was
+   anonymously enumerable until 29 Jul - so any list harvested before then still
+   works, forever. Closing that means serving photos through short-lived signed
+   URLs and making the bucket private.
+
+   Resolved in BULK - one request per gallery, not one per photo - and attached
+   as _src on each row, so the synchronous renderers stay synchronous and simply
+   prefer _src over the stored value. EVERY failure path returns the rows
+   untouched, so while the bucket is still public this cannot make a photo
+   disappear. That is the point of doing it in this order.
+
+   window.supa is a getter for window.sb (see cr-shim), so sb here is the same
+   client every other module uses.
+
+   NOT done here, deliberately - steps 2 and 3: the three places a URL is BAKED
+   INTO a stored or emailed document (photos -> report html, and buildDocHtml's
+   cover + photo grid) need a long expiry resolved BEFORE those synchronous
+   builders run. Only once those are done can the bucket flip private, because
+   a document already in someone's inbox has to keep working. */
+var PHOTO_URL_TTL = 3600;
+async function attachSignedPhotoUrls(rows, ttl){
+  if(!Array.isArray(rows) || !rows.length) return rows;
+  var cl = (typeof sb !== 'undefined' && sb) ? sb : (window.supa || null);
+  if(!cl || !cl.storage) return rows;
+  try{
+    var paths = [], idx = [];
+    rows.forEach(function(r, i){
+      if(r && r.storage_path){ paths.push(r.storage_path); idx.push(i); }
+    });
+    if(!paths.length) return rows;
+    var res = await cl.storage.from('photos').createSignedUrls(paths, ttl || PHOTO_URL_TTL);
+    if(!res || res.error || !Array.isArray(res.data)) return rows;
+    res.data.forEach(function(d, k){
+      if(d && d.signedUrl && !d.error) rows[idx[k]]._src = d.signedUrl;
+    });
+  }catch(e){
+    try{ if(window.report) window.report(e, 'Photos', 'sign urls'); }catch(e2){}
+  }
+  return rows;
 }
 function projInsurance(pr){
   var L = pr ? parseCkAll(pr).lead : null;
@@ -35405,7 +35448,7 @@ img.onerror = function(){
 el.querySelector('[data-slot="loading"]').textContent =
 'Could not load this photo for editing.';
 };
-img.src = p.data;
+img.src = (p._src || p.data);
 }
 function close(){
 if(el) el.classList.remove('open');
@@ -43871,7 +43914,7 @@ function renderPhotosView(){
       g.items.map(function(r){
         var p = byId[r.project_id];
         return '<div class="phc" data-pid="' + esc(String(r.project_id || '')) + '">' +
-          '<img loading="lazy" src="' + esc(String(r.data || '')) + '" alt="">' +
+          '<img loading="lazy" src="' + esc(String(r._src || r.data || '')) + '" alt="">' +
           '<span class="phn">' + esc(p ? (p.name || '') : 'Unknown client') + '</span></div>';
       }).join('') + '</div>';
   }).join('');
@@ -43884,12 +43927,13 @@ window.openPhotosView = function(){
   var grid = document.getElementById('phGrid');
   grid.innerHTML = '<div class="phnote">Loading photos\u2026</div>';
   var p = TEAM
-    ? sb.from('project_photos').select('id,project_id,data,created_by,created_at')
+    ? sb.from('project_photos').select('id,project_id,data,storage_path,created_by,created_at')
         .order('created_at', { ascending: false }).limit(200)
     : Promise.resolve({ data: [], error: null });
-  Promise.resolve(p).then(function(r){
+  Promise.resolve(p).then(async function(r){
     if(r && r.error) throw r.error;
     phRows = (r && r.data) || [];
+    await attachSignedPhotoUrls(phRows);
     renderPhotosView();
   }).catch(function(err){
     if(grid.isConnected) grid.innerHTML = '<div class="phnote">Could not load photos: ' + esc(err.message || String(err)) + '</div>';
