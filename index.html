@@ -7780,6 +7780,11 @@ function showError(msg){
   var m = document.getElementById('bannerMount');
   m.innerHTML = '<div class="banner err">' + esc(msg) + '</div>';
   setTimeout(function(){ m.innerHTML = TEAM ? '' : localBannerHTML(); }, 6000);
+  /* Persist every user-visible failure. 73 call sites funnel through this
+     function, which makes it the highest-leverage reporting hook in the app —
+     saves, photo uploads, estimate writes and claim updates all surface here.
+     Guarded and fire-and-forget: reporting must never change what the user sees. */
+  try{ if(window.report) window.report(msg, 'ui', 'showError'); }catch(_){}
 }
 function localBannerHTML(){
   return '<div class="banner local"><b>Local mode.</b> Reports are stored only in this browser. ' +
@@ -29863,170 +29868,250 @@ isAdmin : isAdmin,
 <script id="cr-errcap-script">
 (function () {
 'use strict';
+/* ---------------------------------------------------------------------------
+   Cardinal client error capture.
+
+   FIXED 2026-07-29 — column mapping. This pipeline previously inserted
+   { event_type, description, meta, created_by } into audit_events. That table's
+   real columns are ( id, at, email, type, detail, project_id ), so every insert
+   failed with 42703 "column does not exist" — and the fallback path used the
+   same wrong names, so it failed too. The outer catch was empty, so the whole
+   thing discarded every error it ever captured. audit_events held 122 rows and
+   zero of them were errors.
+
+   Because there is no meta column, structured context is folded into `detail`
+   as text. `type` is 'client_error', which slots alongside the existing type
+   taxonomy (doc, estimate_publish, lead, money, punch, review, stage, team...)
+   so it stays filterable.
+
+   RLS: audit_events INSERT is
+     to authenticated with check (email = auth.jwt()->>'email' or email is null)
+   so `email` MUST be the signed-in user's address or NULL. Never anything else.
+   --------------------------------------------------------------------------- */
 var BUFFER          = [];
 var SEEN            = {};
 var CAPTURED        = 0;
 var SENT            = 0;
+var DROPPED         = 0;
 var FLUSH_INTERVAL  = 10 * 1000;
 var IMMEDIATE_THRESH= 20;
 var MAX_MESSAGE     = 500;
 var MAX_STACK       = 2000;
 var MAX_FRAMES      = 15;
+var MAX_DETAIL      = 4000;
+var MAX_PER_SESSION = 200;   /* hard cap so a pathological loop cannot hammer the DB */
 var SESSION_ID      = Math.random().toString(36).slice(2, 10);
 var flushing        = false;
+var reporting       = false; /* re-entrancy guard: a failure inside report() must never report */
+
 function stripQuery(s){
-return String(s || '').replace(/(\?[^\s'"]*)/g, '')
-.replace(/(#[^\s'"]*)/g, '');
+  return String(s || '').replace(/(\?[^\s'"]*)/g, '')
+                        .replace(/(#[^\s'"]*)/g, '');
 }
 function shortenStack(stack){
-if(!stack) return '';
-var lines = String(stack).split('\n').slice(0, MAX_FRAMES);
-var out = lines.map(stripQuery).join('\n');
-if(out.length > MAX_STACK) out = out.slice(0, MAX_STACK) + '\n[truncated]';
-return out;
+  if(!stack) return '';
+  var lines = String(stack).split('\n').slice(0, MAX_FRAMES);
+  var out = lines.map(stripQuery).join('\n');
+  if(out.length > MAX_STACK) out = out.slice(0, MAX_STACK) + '\n[truncated]';
+  return out;
 }
 function shortUA(){
-var ua = (navigator.userAgent || '').trim();
-var mobile   = /Mobi|Android|iPhone|iPad/.test(ua) ? 'mobile' : 'desktop';
-var browser  = /Chrome/.test(ua) ? 'chrome' :
-/Safari/.test(ua) ? 'safari' :
-/Firefox/.test(ua) ? 'firefox' :
-/Edge/.test(ua) ? 'edge' : 'other';
-var platform = /iPhone|iPad|iOS/.test(ua) ? 'ios' :
-/Android/.test(ua) ? 'android' :
-/Mac/.test(ua) ? 'mac' :
-/Windows/.test(ua) ? 'win' :
-/Linux/.test(ua) ? 'linux' : 'other';
-return platform + '/' + browser + '/' + mobile;
+  var ua = (navigator.userAgent || '').trim();
+  var mobile   = /Mobi|Android|iPhone|iPad/.test(ua) ? 'mobile' : 'desktop';
+  var browser  = /Chrome/.test(ua) ? 'chrome' :
+                 /Safari/.test(ua) ? 'safari' :
+                 /Firefox/.test(ua) ? 'firefox' :
+                 /Edge/.test(ua) ? 'edge' : 'other';
+  var platform = /iPhone|iPad|iOS/.test(ua) ? 'ios' :
+                 /Android/.test(ua) ? 'android' :
+                 /Mac/.test(ua) ? 'mac' :
+                 /Windows/.test(ua) ? 'win' :
+                 /Linux/.test(ua) ? 'linux' : 'other';
+  return platform + '/' + browser + '/' + mobile;
 }
 function currentEmail(){
-try{
-if(window.currentUser && window.currentUser.email) return window.currentUser.email;
-if(typeof window.my_email === 'function') return window.my_email();
-}catch(e){}
-return '';
+  try{
+    if(window.currentUser && window.currentUser.email) return window.currentUser.email;
+  }catch(e){}
+  return '';
 }
 function currentProjectId(){
-try{
-if(window.currentProject && window.currentProject.id) return window.currentProject.id;
-}catch(e){}
-return null;
+  try{
+    if(window.currentProject && window.currentProject.id) return window.currentProject.id;
+  }catch(e){}
+  return null;
+}
+function buildTag(){
+  try{
+    var f = document.querySelector('[data-cr-footer], .menu-footer');
+    if(!f) return '';
+    var mt = f.textContent.match(/build\s+\d+/i);
+    return mt ? mt[0] : '';
+  }catch(e){ return ''; }
 }
 function keyOf(msg, stack){
-var firstFrame = String(stack || '').split('\n')[1] || '';
-return String(msg).slice(0, 120) + '::' + firstFrame.slice(0, 120);
+  var firstFrame = String(stack || '').split('\n')[1] || '';
+  return String(msg).slice(0, 120) + '::' + firstFrame.slice(0, 120);
 }
-function capture(kind, msg, stack, sourceUrl){
-CAPTURED++;
-var key = keyOf(msg, stack);
-if(SEEN[key]){
-SEEN[key]++;
-return;
+
+/* Compose the text that goes into audit_events.detail. */
+function composeDetail(kind, msg, stack, sourceUrl, extra){
+  var lines = [];
+  lines.push('[' + kind + '] ' + String(msg).slice(0, MAX_MESSAGE));
+  if(extra && (extra.screen || extra.op)){
+    lines.push('where: ' + (extra.screen || '?') + ' / ' + (extra.op || '?'));
+  }
+  if(extra){
+    Object.keys(extra).forEach(function(k){
+      if(k === 'screen' || k === 'op') return;
+      var v = extra[k];
+      if(v === undefined || v === null || v === '') return;
+      lines.push(k + ': ' + String(v).slice(0, 200));
+    });
+  }
+  lines.push('url: ' + stripQuery(sourceUrl || location.pathname));
+  var b = buildTag();
+  lines.push('ua: ' + shortUA() + '  session: ' + SESSION_ID + (b ? '  ' + b : ''));
+  lines.push('ts: ' + new Date().toISOString());
+  var st = shortenStack(stack);
+  if(st) lines.push('stack:\n' + st);
+  var out = lines.join('\n');
+  return out.length > MAX_DETAIL ? out.slice(0, MAX_DETAIL) + '\n[truncated]' : out;
 }
-SEEN[key] = 1;
-BUFFER.push({
-event_type : 'client_error',
-description: String(msg).slice(0, MAX_MESSAGE),
-meta       : {
-kind      : kind,
-stack     : shortenStack(stack),
-source_url: stripQuery(sourceUrl || location.pathname),
-ua        : shortUA(),
-session   : SESSION_ID,
-ts        : new Date().toISOString(),
-build     : (function(){
-var f = document.querySelector('[data-cr-footer], .menu-footer');
-return f ? f.textContent.match(/build\s+\d+/i)?.[0] || '' : '';
-})(),
-},
-project_id : currentProjectId(),
-created_by : currentEmail() || null,
-});
-if(BUFFER.length >= IMMEDIATE_THRESH) flush();
+
+function capture(kind, msg, stack, sourceUrl, extra){
+  CAPTURED++;
+  if(SENT + BUFFER.length >= MAX_PER_SESSION){ DROPPED++; return; }
+  var key = keyOf(msg, stack);
+  if(SEEN[key]){ SEEN[key]++; return; }
+  SEEN[key] = 1;
+  var em = currentEmail();
+  BUFFER.push({
+    type      : 'client_error',
+    detail    : composeDetail(kind, msg, stack, sourceUrl, extra),
+    /* RLS requires this to equal the JWT email or be NULL. */
+    email     : em || null,
+    project_id: currentProjectId(),
+  });
+  if(BUFFER.length >= IMMEDIATE_THRESH) flush();
 }
+
 async function flush(){
-if(flushing) return;
-if(!BUFFER.length) return;
-if(!window.supa) return;
-flushing = true;
-var payload = BUFFER.splice(0, BUFFER.length);
-try{
-var res = await window.supa.from('audit_events').insert(payload);
-if(res && !res.error){
-SENT += payload.length;
-}else{
-var fallback = payload.map(function(p){
-return {
-event_type : p.event_type,
-description: p.description + '\n\n[meta] ' + JSON.stringify(p.meta),
-project_id : p.project_id,
-created_by : p.created_by,
-};
-});
-var res2 = await window.supa.from('audit_events').insert(fallback);
-if(res2 && !res2.error){ SENT += fallback.length; }
+  if(flushing) return;
+  if(!BUFFER.length) return;
+  if(!window.supa) return;
+  flushing = true;
+  var payload = BUFFER.splice(0, BUFFER.length);
+  try{
+    var res = await window.supa.from('audit_events').insert(payload);
+    if(res && !res.error){
+      SENT += payload.length;
+    }else{
+      /* Minimal retry: drop email and project_id. `email is null` satisfies the
+         RLS check unconditionally, and a stale/invalid project_id uuid is the
+         other plausible reason a row would be rejected. */
+      var minimal = payload.map(function(p){
+        return { type: p.type, detail: p.detail };
+      });
+      var res2 = await window.supa.from('audit_events').insert(minimal);
+      if(res2 && !res2.error){
+        SENT += minimal.length;
+      }else{
+        DROPPED += payload.length;
+      }
+    }
+  }catch(e){
+    DROPPED += payload.length;
+  }finally{
+    flushing = false;
+  }
 }
-}catch(e){
-}finally{
-flushing = false;
+
+/* ---------------------------------------------------------------------------
+   report(err, screen, op) — the explicit helper.
+
+   Accepts an Error, a Supabase error object ({ message, details, hint, code }),
+   or a plain string. Never throws. Never recurses. Fire-and-forget: it buffers
+   and returns immediately, so it is safe to call from any catch block on any
+   hot path.
+
+     try{ ... }catch(err){ report(err, 'estimates', 'save'); showError(...); }
+   --------------------------------------------------------------------------- */
+function report(err, screen, op){
+  if(reporting) return;
+  reporting = true;
+  try{
+    var msg, stack = null, extra = { screen: screen, op: op };
+    if(err && typeof err === 'object'){
+      msg = err.message || err.error_description || err.details || err.hint ||
+            err.msg || JSON.stringify(err).slice(0, MAX_MESSAGE);
+      stack = err.stack || null;
+      if(err.code) extra.code = err.code;          /* postgrest / pg error code */
+      if(err.status) extra.status = err.status;
+      if(err.details && err.details !== msg) extra.details = err.details;
+      if(err.hint) extra.hint = err.hint;
+    }else{
+      msg = String(err === undefined || err === null ? 'unknown error' : err);
+    }
+    capture('report', msg, stack, location.pathname, extra);
+    /* Keep it visible in devtools too — this app had 8 console.error calls. */
+    try{ console.error('[cardinal]', screen || '?', op || '?', msg); }catch(_){}
+  }catch(_){
+    /* deliberately silent: reporting must never become the failure */
+  }finally{
+    reporting = false;
+  }
 }
-}
+
 window.addEventListener('error', function(e){
-try{
-var msg = (e && (e.message || (e.error && e.error.message))) || 'unknown error';
-var stack = e && e.error && e.error.stack;
-capture('window.error', msg, stack, e && e.filename);
-}catch(_){}
+  try{
+    var msg = (e && (e.message || (e.error && e.error.message))) || 'unknown error';
+    var stack = e && e.error && e.error.stack;
+    capture('window.error', msg, stack, e && e.filename);
+  }catch(_){}
 });
 window.addEventListener('unhandledrejection', function(e){
-try{
-var reason = e && (e.reason || e.detail);
-var msg = reason && (reason.message || String(reason)) || 'unhandled rejection';
-var stack = reason && reason.stack;
-capture('unhandledrejection', msg, stack, location.pathname);
-}catch(_){}
+  try{
+    var reason = e && (e.reason || e.detail);
+    var msg = reason && (reason.message || String(reason)) || 'unhandled rejection';
+    var stack = reason && reason.stack;
+    capture('unhandledrejection', msg, stack, location.pathname);
+  }catch(_){}
 });
 setInterval(flush, FLUSH_INTERVAL);
 document.addEventListener('visibilitychange', function(){
-if(document.visibilityState === 'hidden') flush();
+  if(document.visibilityState === 'hidden') flush();
 });
 window.addEventListener('beforeunload', flush);
+
+window.report = report;
+
 window.CardinalErrors = {
-status: function(){
-var deduped = 0;
-Object.keys(SEEN).forEach(function(k){ if(SEEN[k] > 1) deduped += SEEN[k] - 1; });
-return {
-captured: CAPTURED,
-sent    : SENT,
-buffered: BUFFER.length,
-deduped : deduped,
-session : SESSION_ID,
-};
-},
-flush : flush,
-reset : function(){
-BUFFER.length = 0;
-SEEN = {};
-CAPTURED = 0;
-SENT = 0;
-return 'Reset';
-},
-log : function(msg, meta){
-BUFFER.push({
-event_type : 'client_error',
-description: 'manual: ' + String(msg).slice(0, MAX_MESSAGE - 8),
-meta       : Object.assign({
-kind: 'manual',
-source_url: stripQuery(location.pathname),
-ua: shortUA(),
-session: SESSION_ID,
-ts: new Date().toISOString(),
-}, meta || {}),
-project_id : currentProjectId(),
-created_by : currentEmail() || null,
-});
-if(BUFFER.length >= IMMEDIATE_THRESH) flush();
-},
+  status: function(){
+    var deduped = 0;
+    Object.keys(SEEN).forEach(function(k){ if(SEEN[k] > 1) deduped += SEEN[k] - 1; });
+    return {
+      captured: CAPTURED,
+      sent    : SENT,
+      buffered: BUFFER.length,
+      deduped : deduped,
+      dropped : DROPPED,
+      session : SESSION_ID,
+    };
+  },
+  flush  : flush,
+  report : report,
+  reset  : function(){
+    BUFFER.length = 0;
+    SEEN = {};
+    CAPTURED = 0;
+    SENT = 0;
+    DROPPED = 0;
+    return 'Reset';
+  },
+  log : function(msg, meta){
+    capture('manual', msg, null, location.pathname, meta || {});
+  },
 };
 })();
 </script>
