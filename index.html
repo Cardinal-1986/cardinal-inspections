@@ -40661,7 +40661,20 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 
 <style id="cr-ch2-styles">#communityHubView{display:none;min-height:100vh;padding:0 0 40px;background:#e9ecef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
 #communityHubView.cr-ch2-live{background:#e9ecef !important;color:#2d3338;overflow:visible;-webkit-overflow-scrolling:touch}
-body.viewing-community-hub{overflow-y:auto !important}
+/* Removed (experiment, branch test/scroll-bandaid-removal):
+     body.viewing-community-hub{overflow-y:auto !important}
+   Two reasons it should not be here.
+   1. Redundant. hideAllViews() already releases a stale inline scroll lock
+      left behind by a modal (build 364, see its comment), and
+      CardinalCommunityHub.show() calls hideAllViews() before it displays the
+      hub - so the hub cannot open locked.
+   2. Harmful. An !important author declaration outranks a *normal inline*
+      declaration, so it defeated the document.body.style.overflow='hidden'
+      that every modal sets. #cr-sc-panel (Self Check) is overflow-y:auto
+      with no overscroll-behavior, so it relied on that body lock to stop
+      scroll chaining; on the community hub it chained into the page beneath.
+   If the hub ever opens unscrollable, the correct fix is in show(), not an
+   !important that breaks every modal. */
 body.viewing-community-hub section.history{display:none}
 #cr-ch2{--ground:#e9ecef;--card:#fafbfc;--line:#b8c2ca;--line2:#ccd4da;--ink:#2d3338;--mute:#6f7a83;
 --acc:#b06a42;--acc2:#8d5231;--bar:#3b444c;--chip:#dbe1e6;--chipink:#4e5a63;--good:#3a6b4f;--goodbg:#d5e6db;
