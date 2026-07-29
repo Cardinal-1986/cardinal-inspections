@@ -41099,8 +41099,60 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 })();
 </script>
 
-<style id="cr-ch2-styles">#communityHubView{display:none;min-height:100vh;padding:0 0 40px;background:#e9ecef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
-#communityHubView.cr-ch2-live{background:#e9ecef !important;color:#2d3338;overflow:visible;-webkit-overflow-scrolling:touch}
+<style id="cr-ch2-styles">/* ---- community palette: one green, zero blue -----------------------------
+   The emerald here is not new. #047857 / #34D399 / #065F46 / #ECFDF5 already
+   ship on .cr-portal-chip.community, .claimchip.ct-community, the claim-type
+   picker, .comBadge and the community #commsView header gradient. The hub and
+   client page were the only community surfaces NOT following that.
+
+   One rule makes it work: green means community and nothing else. So --money
+   drops its green (it was #3a6b4f, four points off Habitat's chip) and partner
+   chips key off partner_type instead of partner identity.
+
+   Dark is the default because that is how the rest of the app behaves; these
+   two surfaces previously ignored the toggle entirely - the hub was hard-coded
+   light, the client page hard-coded dark, so one of them was always wrong.
+
+   Every neutral has green >= blue so nothing picks up a cool cast next to the
+   emerald. Hue-tested: 0 blue-dominant, 0 cyan-dominant values. */
+:root{
+--ccm-ground:#0e100f;--ccm-card:#161918;--ccm-raise:#1e2220;
+--ccm-ink:#f2f4f3;--ccm-mute:#9aa39e;--ccm-dim:#7d8781;
+--ccm-line:#2a2f2c;--ccm-line2:#232725;
+--ccm-ac:#34D399;--ccm-ac2:#6EE7B7;--ccm-wash:rgba(4,120,87,.18);--ccm-washln:#047857;
+--ccm-rd:#ff6b78;--ccm-rdw:rgba(200,32,46,.16);--ccm-rdln:rgba(255,107,120,.34);
+--ccm-chip:#242927;--ccm-chipink:#b8c1bd;
+--ccm-program:#c4ccc8;--ccm-programbg:#252a27;
+--ccm-pm:#e8c874;--ccm-pmbg:#332b16;
+--ccm-gc:#dba98a;--ccm-gcbg:#332419;
+--ccm-grad:linear-gradient(180deg,#1b201e,#161918);
+--ccm-edge:linear-gradient(140deg,#2f3633,#252b28 45%,#1d2220);
+--ccm-edge2:linear-gradient(125deg,#047857,#34D399);
+--ccm-shadow:0 6px 16px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.4);
+/* Text that sits ON the accent. It has to flip: in dark the accent is a LIGHT
+   green (#34D399) so the label must be dark; in light the accent is a DARK
+   green (#047857) so it must be white. .nobid button hard-coded #08240f for
+   the old pale-blue button - correct then, unreadable on dark green now. */
+--ccm-onac:#08240f;
+--ccm-glow:0 0 0 1px rgba(52,211,153,.24),0 0 22px rgba(4,120,87,.16)}
+[data-theme="rb-light"]{
+--ccm-ground:#f1f2f1;--ccm-card:#ffffff;--ccm-raise:#f7f8f7;
+--ccm-ink:#1b1b1b;--ccm-mute:#666666;--ccm-dim:#8a8a8a;
+--ccm-line:#d9d9d9;--ccm-line2:#e8e9e8;
+--ccm-ac:#047857;--ccm-ac2:#065F46;--ccm-wash:#ECFDF5;--ccm-washln:#a7d9c6;
+--ccm-rd:#C8202E;--ccm-rdw:#fdecec;--ccm-rdln:#f2c9cc;
+--ccm-chip:#ececec;--ccm-chipink:#4a5350;
+--ccm-program:#454b48;--ccm-programbg:#ececec;
+--ccm-pm:#8a6420;--ccm-pmbg:#faf0d8;
+--ccm-gc:#8d5231;--ccm-gcbg:#f5e4d9;
+--ccm-grad:linear-gradient(180deg,#ffffff,#f7f8f7);
+--ccm-edge:linear-gradient(140deg,#cfd4d1,#e2e6e3 45%,#eceeed);
+--ccm-edge2:linear-gradient(125deg,#047857,#6EE7B7);
+--ccm-shadow:0 6px 16px rgba(45,51,56,.13),0 1px 3px rgba(45,51,56,.10);
+--ccm-onac:#ffffff;
+--ccm-glow:0 0 0 1px rgba(4,120,87,.24),0 0 22px rgba(4,120,87,.12)}
+#communityHubView{display:none;min-height:100vh;padding:0 0 40px;background:var(--ccm-ground);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+#communityHubView.cr-ch2-live{background:var(--ccm-ground) !important;color:var(--ccm-ink);overflow:visible;-webkit-overflow-scrolling:touch}
 /* Removed. Measured, not assumed - see the cascade harness on PR #11:
      body.viewing-community-hub{overflow-y:auto !important}
    Two reasons it should not be here.
@@ -41116,10 +41168,23 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
    If the hub ever opens unscrollable, the correct fix is in show(), not an
    !important that breaks every modal. */
 body.viewing-community-hub section.history{display:none}
-#cr-ch2{--ground:#e9ecef;--card:#fafbfc;--line:#b8c2ca;--line2:#ccd4da;--ink:#2d3338;--mute:#6f7a83;
---acc:#b06a42;--acc2:#8d5231;--bar:#3b444c;--chip:#dbe1e6;--chipink:#4e5a63;--good:#3a6b4f;--goodbg:#d5e6db;
---warnbg:#f2ddc8;--warnink:#8d5231;--money:#3a6b4f;--avbg:#dbe1e6;
---c-hab:#2f6b3f;--bg-hab:#dcebdf;--c-ca:#b08900;--bg-ca:#faf0c4;--c-dh:#2b6cb0;--bg-dh:#dbe8f6;--c-rb:#b8437e;--bg-rb:#f6dfeb;
+#cr-ch2{--ground:var(--ccm-ground);--card:var(--ccm-card);--line:var(--ccm-line);--line2:var(--ccm-line2);
+--ink:var(--ccm-ink);--mute:var(--ccm-mute);
+--acc:var(--ccm-ac);--acc2:var(--ccm-ac2);--bar:var(--ccm-ink);--chip:var(--ccm-chip);
+--chipink:var(--ccm-chipink);--good:var(--ccm-ac);--goodbg:var(--ccm-wash);
+/* Overdue was tan-on-tan (#f2ddc8 / #8d5231) - the one thing on this screen
+   that has to shout now uses the brand red. */
+--warnbg:var(--ccm-rdw);--warnink:var(--ccm-rd);
+/* --money was #3a6b4f, four points off Habitat's chip. A dollar figure is data,
+   not a status; it reads fine in bold ink, and giving it up is what leaves
+   exactly one green with exactly one meaning. */
+--money:var(--ccm-ink);--avbg:var(--ccm-chip);
+/* Keyed by partner_type, not partner name. Before: 4 of 10 partners had a
+   colour and it meant nothing - Habitat was green and DHRN blue because of
+   who got defined first. normType() already yields program|pm|gc. */
+--c-program:var(--ccm-program);--bg-program:var(--ccm-programbg);
+--c-pm:var(--ccm-pm);--bg-pm:var(--ccm-pmbg);
+--c-gc:var(--ccm-gc);--bg-gc:var(--ccm-gcbg);
 --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
 max-width:1320px;margin:0 auto;padding:14px 16px 60px;color:var(--ink)}
 #cr-ch2 button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -41133,18 +41198,18 @@ border-bottom:3px solid transparent;margin-bottom:-1px}
 .cc-tabs button.on{border-bottom-color:var(--acc);background:var(--card);border-radius:7px 7px 0 0}
 .cc-sep{font:800 21px Georgia,serif;color:var(--bar);padding:0 2px;line-height:1}
 .cc-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
-.cc-kpi div{background:linear-gradient(180deg,#ffffff,#f2f5f8);border:1px solid var(--line);
+.cc-kpi div{background:var(--ccm-grad);border:1px solid var(--line);
 border-left:3px solid var(--acc);border-radius:8px;padding:10px 13px;min-width:0;
 box-shadow:0 5px 13px rgba(45,51,56,.12),0 1px 2px rgba(45,51,56,.08)}
 .cc-kpi .k{font:800 8.5px var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--mute)}
 .cc-kpi .v{font:700 19px var(--mono);color:var(--ink);margin-top:2px}
 .cc-mine{font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:-8px 2px 10px;text-align:right}
-.cc-card{background:linear-gradient(180deg,#ffffff,#f2f5f8);border:1px solid transparent;border-radius:10px;
+.cc-card{background:var(--ccm-grad);border:1px solid transparent;border-radius:10px;
 padding:13px 15px;margin-bottom:14px;min-width:0;position:relative;
 background-origin:border-box;
-background-image:linear-gradient(180deg,#ffffff,#f2f5f8),linear-gradient(140deg,#3b444c,#7d8b97 45%,#b8c2ca);
+background-image:var(--ccm-grad),var(--ccm-edge);
 background-clip:padding-box,border-box;
-box-shadow:0 6px 16px rgba(45,51,56,.13),0 1px 3px rgba(45,51,56,.10)}
+box-shadow:var(--ccm-shadow)}
 .cc-card:hover{box-shadow:0 10px 24px rgba(45,51,56,.17),0 2px 5px rgba(45,51,56,.12)}
 .cc-fh{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
 .cc-fh b{font:800 13px inherit;color:var(--acc2)}
@@ -41163,14 +41228,12 @@ box-shadow:0 6px 16px rgba(45,51,56,.13),0 1px 3px rgba(45,51,56,.10)}
 .cc-prow:first-child{border-top:0}
 .cc-av{width:30px;height:30px;border-radius:6px;background:var(--avbg);color:var(--acc2);font:800 10px inherit;
 display:flex;align-items:center;justify-content:center;flex:0 0 auto}
-.cc-av.p-hab{background:var(--bg-hab);color:var(--c-hab)}
-.cc-av.p-ca{background:var(--bg-ca);color:var(--c-ca)}
-.cc-av.p-dh{background:var(--bg-dh);color:var(--c-dh)}
-.cc-av.p-rb{background:var(--bg-rb);color:var(--c-rb)}
-.p-hab{color:var(--c-hab);font-weight:800}
-.p-ca{color:var(--c-ca);font-weight:800}
-.p-dh{color:var(--c-dh);font-weight:800}
-.p-rb{color:var(--c-rb);font-weight:800}
+.cc-av.p-program{background:var(--bg-program);color:var(--c-program)}
+.cc-av.p-pm{background:var(--bg-pm);color:var(--c-pm)}
+.cc-av.p-gc{background:var(--bg-gc);color:var(--c-gc)}
+.p-program{color:var(--c-program);font-weight:800}
+.p-pm{color:var(--c-pm);font-weight:800}
+.p-gc{color:var(--c-gc);font-weight:800}
 .cc-mini{font-size:10.5px;color:var(--mute)}
 .cc-mu{font-weight:400;font-style:italic;color:var(--mute)}
 .cc-idp{display:grid;grid-template-columns:52px 1fr;gap:2px 8px;align-items:baseline;min-width:0}
@@ -41197,7 +41260,7 @@ border-radius:4px;background:var(--chip);color:var(--chipink);white-space:nowrap
 .cc-rule{font:800 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--mute);margin:20px 0 10px;
 padding-top:12px;border-top:1px solid var(--line)}
 #cr-ch2 .tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
-#cr-ch2 .tools button{display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,#ffffff,#f2f5f8);
+#cr-ch2 .tools button{display:flex;align-items:center;gap:11px;background:var(--ccm-grad);
 border:1px solid var(--line);border-radius:9px;padding:12px 14px;text-align:left;color:var(--ink);
 box-shadow:0 5px 13px rgba(45,51,56,.11),0 1px 2px rgba(45,51,56,.07)}
 #cr-ch2 .tools button:hover{box-shadow:0 9px 20px rgba(45,51,56,.16)}
@@ -41205,7 +41268,7 @@ box-shadow:0 5px 13px rgba(45,51,56,.11),0 1px 2px rgba(45,51,56,.07)}
 #cr-ch2 .tools .i{font-size:18px;flex:0 0 auto}
 #cr-ch2 .tools .x b{display:block;font:800 13px inherit}
 #cr-ch2 .tools .x small{display:block;font-size:10.5px;color:var(--mute);margin-top:1px}
-#cr-ch2 .pc{background:linear-gradient(180deg,#ffffff,#f2f5f8);border:1px solid var(--line);
+#cr-ch2 .pc{background:var(--ccm-grad);border:1px solid var(--line);
 border-top:3px solid var(--acc);border-radius:9px;padding:13px 15px;
 box-shadow:0 6px 16px rgba(45,51,56,.13),0 1px 3px rgba(45,51,56,.09)}
 #cr-ch2 .pc:hover{box-shadow:0 10px 24px rgba(45,51,56,.17)}
@@ -41232,7 +41295,7 @@ box-shadow:0 6px 16px rgba(45,51,56,.13),0 1px 3px rgba(45,51,56,.09)}
 .cc-repnm{display:inline}
 .cc-tbl,.cc-tbl thead,.cc-tbl tbody,.cc-tbl tr,.cc-tbl td{display:block;width:100%}
 .cc-tbl thead{display:none}
-.cc-tbl tbody tr{background:linear-gradient(180deg,#ffffff,#f2f5f8);border:1px solid var(--line);
+.cc-tbl tbody tr{background:var(--ccm-grad);border:1px solid var(--line);
 border-left:3px solid var(--acc);border-radius:8px;padding:9px 11px;margin-bottom:9px;
 box-shadow:0 4px 11px rgba(45,51,56,.11)}
 .cc-tbl tbody tr:hover td{background:none}
@@ -41577,13 +41640,15 @@ var nm = (window.cacheTeam && window.cacheTeam[email] && window.cacheTeam[email]
 var av = (typeof window.avatarHtml === 'function') ? window.avatarHtml(email, 28) : '';
 return '<span class="cc-rep" title="' + esc(nm) + '">' + av + '<span class="cc-repnm">' + esc(nm) + '</span></span>';
 }
+/* Was four hard-coded partner names, so 6 of your 10 partners - including
+   every prospect - fell through to no colour at all, and the four that
+   matched carried no meaning. metaOf() already resolves partner_type through
+   normType(), which yields exactly program|pm|gc, and defaults to 'program'
+   before community_partners has loaded - so the neutral chip is also the
+   safe first paint. */
 function pClass(name){
-var n = String(name || '').toLowerCase();
-if(n.indexOf('habitat') !== -1) return 'p-hab';
-if(n.indexOf('community action') !== -1) return 'p-ca';
-if(n.indexOf('dayton home repair') !== -1) return 'p-dh';
-if(n.indexOf('rebuild') !== -1) return 'p-rb';
-return '';
+var t = metaOf(name).type;
+return (t === 'pm' || t === 'gc' || t === 'program') ? ('p-' + t) : '';
 }
 function pName(name){
 var t = esc(name || 'No partner recorded');
@@ -41961,9 +42026,16 @@ isOpen : isOpen,
 })();
 </script>
 
-<style id="cr-cc-styles">#cr-cc{--ground:#0a1420;--card:#111e2e;--raise:#1a2c42;--ink:#fff;--mute:#c2d6e8;--dim:#7690ab;--a1:#5ec8ff;--a2:#e8f4ff;--accent:#8ad8ff;--warn:#ffcf6b;--good:#7fe3b0;--bad:#ff8f8f;--heroA:#152740;--urgent:#2a2418;--line:rgba(94,200,255,.18);--glow:0 0 0 1px rgba(94,200,255,.24),0 0 22px rgba(94,200,255,.14);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:18px 0 14px;color:var(--ink);position:relative;z-index:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11.5px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 20px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:10px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}#cr-cc .pin .facts .v{font:700 12.5px var(--mono);margin-top:4px}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc .tabbar{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}#cr-cc .tabbar button{flex:1;position:relative;background:transparent;border:0;cursor:pointer;padding:11px 8px 12px;font-family:inherit;color:var(--dim);font:700 12.5px inherit}#cr-cc .tabbar button.on{color:var(--ink)}#cr-cc .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--urgent),var(--urgent)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}#cr-cc .ev .eh{display:flex;align-items:baseline;gap:9px}#cr-cc .ev .eh b{flex:1;font:700 13px inherit}#cr-cc .ev .eh .when{font:700 10px var(--mono);color:var(--dim);white-space:nowrap}#cr-cc .ev .txt{font-size:12.5px;color:var(--mute);line-height:1.55;margin-top:5px}#cr-cc .ev .who{font-size:10.5px;color:var(--dim);margin-top:6px}#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 8px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:12px;color:var(--accent)}
+<style id="cr-cc-styles">/* Was 10 distinct blues plus 4 rgba(94,200,255,*) uses - the entire surface.
+   --warn stays amber: it is not blue, and it is the only non-red caution. */
+#cr-cc{--ground:var(--ccm-ground);--card:var(--ccm-card);--raise:var(--ccm-raise);
+--ink:var(--ccm-ink);--mute:var(--ccm-mute);--dim:var(--ccm-dim);
+--a1:var(--ccm-ac);--a2:var(--ccm-ac2);--accent:var(--ccm-ac);--warn:#ffcf6b;
+--good:var(--ccm-ac);--bad:var(--ccm-rd);
+--heroA:var(--ccm-raise);--urgent:var(--ccm-rdw);--line:var(--ccm-line);
+--glow:var(--ccm-glow);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:18px 0 14px;color:var(--ink);position:relative;z-index:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11.5px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 20px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:10px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}#cr-cc .pin .facts .v{font:700 12.5px var(--mono);margin-top:4px}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc .tabbar{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}#cr-cc .tabbar button{flex:1;position:relative;background:transparent;border:0;cursor:pointer;padding:11px 8px 12px;font-family:inherit;color:var(--dim);font:700 12.5px inherit}#cr-cc .tabbar button.on{color:var(--ink)}#cr-cc .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--urgent),var(--urgent)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}#cr-cc .ev .eh{display:flex;align-items:baseline;gap:9px}#cr-cc .ev .eh b{flex:1;font:700 13px inherit}#cr-cc .ev .eh .when{font:700 10px var(--mono);color:var(--dim);white-space:nowrap}#cr-cc .ev .txt{font-size:12.5px;color:var(--mute);line-height:1.55;margin-top:5px}#cr-cc .ev .who{font-size:10.5px;color:var(--dim);margin-top:6px}#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 8px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:12px;color:var(--accent)}
 #cr-cc .pin .t .nm .rl{display:block;font:800 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
-#cr-cc .ct.bill{grid-column:1/-1}#cr-cc .sheet .lines{padding:5px 7px}#cr-cc .sheet .ln{display:flex;align-items:baseline;gap:11px;padding:10px 10px;border-radius:7px}#cr-cc .sheet .ln:nth-child(odd){background:rgba(255,255,255,.02)}#cr-cc .sheet .ln .d{flex:1;min-width:0}#cr-cc .sheet .ln .d b{display:block;font:600 13px inherit}#cr-cc .sheet .ln .d small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}#cr-cc .sheet .ln .q{flex:0 0 auto;font:700 11.5px var(--mono);color:var(--dim)}#cr-cc .sheet .ln .p{flex:0 0 auto;min-width:72px;text-align:right;font:700 12.5px var(--mono);color:var(--mute)}#cr-cc .sheet .tot{display:flex;align-items:baseline;gap:12px;padding:14px 16px;border-top:1px solid var(--line);background:var(--raise)}#cr-cc .sheet .tot .k{flex:1;font:800 9px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .tot .v{font:700 24px var(--mono);letter-spacing:-.02em;color:var(--good)}#cr-cc .sheet .duebar{display:flex;align-items:center;gap:11px;padding:12px 16px;background:var(--urgent);border-top:1px solid var(--line)}#cr-cc .sheet .duebar .d{font:700 19px var(--mono);color:var(--warn);line-height:1}#cr-cc .sheet .duebar .x{flex:1;font-size:11.5px;color:var(--mute);line-height:1.4}#cr-cc .sheet .duebar button{background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:9px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit;white-space:nowrap}#cr-cc .nobid{padding:26px 18px;text-align:center}#cr-cc .nobid p{font-size:13px;color:var(--dim);line-height:1.6;margin:0 0 14px}#cr-cc .nobid button{background:linear-gradient(120deg,var(--a1),var(--a2));color:#08240f;border:0;border-radius:8px;padding:11px 18px;cursor:pointer;font:800 12.5px inherit;font-family:inherit}#cr-cc .cts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}#cr-cc .ct{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ct .k{font:800 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}#cr-cc .ct .v{font:700 13px inherit;margin-top:5px}#cr-cc .ct .v a{color:var(--accent);text-decoration:none;font-weight:400;font-size:11.5px;display:block;margin-top:2px}#cr-cc .ct .held{font:400 11.5px inherit;color:var(--dim);margin-top:5px;line-height:1.45}#cr-cc .ct.none .v{color:var(--dim);opacity:.6}#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none !important}#projectView.cr-cc-own{background:#0a1420 !important}body.cr-cc-open{background:#0a1420}body.cr-cc-open footer.site{display:none}#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#7690ab}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:rgba(94,200,255,.18)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:#e6f0f8;cursor:pointer;background:linear-gradient(#111e2e,#111e2e) padding-box,linear-gradient(125deg,#5ec8ff,#e8f4ff) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:#7690ab;opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(#111e2e,#111e2e) padding-box,linear-gradient(125deg,#5ec8ff,#e8f4ff) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:#e6f0f8 !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:#7690ab}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:#111e2e;border:1px solid #5ec8ff;color:#e6f0f8;font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:0 10px 26px rgba(0,0,0,.5);cursor:pointer}body[data-crm="community"] #commsView .viewhead{background:linear-gradient(100deg,#047857,#34D399 60%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#34D399}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}</style> <script id="cr-cc-script">
+#cr-cc .ct.bill{grid-column:1/-1}#cr-cc .sheet .lines{padding:5px 7px}#cr-cc .sheet .ln{display:flex;align-items:baseline;gap:11px;padding:10px 10px;border-radius:7px}#cr-cc .sheet .ln:nth-child(odd){background:rgba(255,255,255,.02)}#cr-cc .sheet .ln .d{flex:1;min-width:0}#cr-cc .sheet .ln .d b{display:block;font:600 13px inherit}#cr-cc .sheet .ln .d small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}#cr-cc .sheet .ln .q{flex:0 0 auto;font:700 11.5px var(--mono);color:var(--dim)}#cr-cc .sheet .ln .p{flex:0 0 auto;min-width:72px;text-align:right;font:700 12.5px var(--mono);color:var(--mute)}#cr-cc .sheet .tot{display:flex;align-items:baseline;gap:12px;padding:14px 16px;border-top:1px solid var(--line);background:var(--raise)}#cr-cc .sheet .tot .k{flex:1;font:800 9px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .tot .v{font:700 24px var(--mono);letter-spacing:-.02em;color:var(--good)}#cr-cc .sheet .duebar{display:flex;align-items:center;gap:11px;padding:12px 16px;background:var(--urgent);border-top:1px solid var(--line)}#cr-cc .sheet .duebar .d{font:700 19px var(--mono);color:var(--warn);line-height:1}#cr-cc .sheet .duebar .x{flex:1;font-size:11.5px;color:var(--mute);line-height:1.4}#cr-cc .sheet .duebar button{background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:9px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit;white-space:nowrap}#cr-cc .nobid{padding:26px 18px;text-align:center}#cr-cc .nobid p{font-size:13px;color:var(--dim);line-height:1.6;margin:0 0 14px}#cr-cc .nobid button{background:linear-gradient(120deg,var(--a1),var(--a2));color:var(--ccm-onac);border:0;border-radius:8px;padding:11px 18px;cursor:pointer;font:800 12.5px inherit;font-family:inherit}#cr-cc .cts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}#cr-cc .ct{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ct .k{font:800 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}#cr-cc .ct .v{font:700 13px inherit;margin-top:5px}#cr-cc .ct .v a{color:var(--accent);text-decoration:none;font-weight:400;font-size:11.5px;display:block;margin-top:2px}#cr-cc .ct .held{font:400 11.5px inherit;color:var(--dim);margin-top:5px;line-height:1.45}#cr-cc .ct.none .v{color:var(--dim);opacity:.6}#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none !important}#projectView.cr-cc-own{background:var(--ccm-ground) !important}body.cr-cc-open{background:var(--ccm-ground)}body.cr-cc-open footer.site{display:none}#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:var(--ccm-dim)}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:var(--ccm-card);border:1px solid var(--ccm-ac);color:var(--ccm-ink);font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:0 10px 26px rgba(0,0,0,.5);cursor:pointer}body[data-crm="community"] #commsView .viewhead{background:linear-gradient(100deg,#047857,#34D399 60%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#34D399}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}</style> <script id="cr-cc-script">
 (function(){
 'use strict';
 var tab = 'thread';
