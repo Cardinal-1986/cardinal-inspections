@@ -11216,6 +11216,10 @@ galXferMenu.addEventListener('click', async function(e){
 async function transferPhotosToReport(docId, photos){
   var full = await db.get(docId);
   if(!full) throw new Error('Report not found');
+  /* These src values are written into the stored report html, so they need the
+     document TTL - not the one-hour _src the gallery attached at load time. */
+  var docUrls = await signedPhotoMap(
+    (photos || []).map(photoPathOf).filter(Boolean), PHOTO_DOC_URL_TTL);
   var doc = new DOMParser().parseFromString(full.html, 'text/html');
   photos.forEach(function(ph){
     var frame = null;
@@ -11227,7 +11231,8 @@ async function transferPhotosToReport(docId, photos){
     if(!frame) return;
     frame.textContent = '';
     var img = doc.createElement('img');
-    img.src = ph.data;
+    var pk = photoPathOf(ph);
+    img.src = (pk && docUrls[pk]) || ph.data;
     frame.appendChild(img);
   });
   var out = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
@@ -12111,6 +12116,45 @@ async function attachSignedPhotoUrls(rows, ttl){
     try{ if(window.report) window.report(e, 'Photos', 'sign urls'); }catch(e2){}
   }
   return rows;
+}
+/* ---- signed photo URLs for DOCUMENTS (step 2 of 3) ------------------------
+   A document is stored and emailed; a partner may open it months later, so the
+   one-hour TTL used for in-app rendering is useless here. These are signed for
+   about ten years.
+
+   A long-lived signed URL is still strictly better than a public one: it is
+   per-object and unguessable, and once the bucket is private (step 3) a list of
+   PATHS harvested while the bucket was enumerable is worthless without a
+   signature. That is the whole point of the exercise.
+
+   Returns a { path: signedUrl } map and deliberately does NOT mutate the photo
+   objects. saveEstimate() persists estimates.photos verbatim, so writing a
+   signed URL onto a photo would store an expiring value in the database. */
+var PHOTO_DOC_URL_TTL = 315360000;
+async function signedPhotoMap(paths, ttl){
+  var out = {};
+  var list = (paths || []).filter(Boolean);
+  if(!list.length) return out;
+  var cl = (typeof sb !== 'undefined' && sb) ? sb : (window.supa || null);
+  if(!cl || !cl.storage) return out;
+  try{
+    var res = await cl.storage.from('photos').createSignedUrls(list, ttl || PHOTO_DOC_URL_TTL);
+    if(!res || res.error || !Array.isArray(res.data)) return out;
+    res.data.forEach(function(d, i){
+      if(d && d.signedUrl && !d.error) out[list[i]] = d.signedUrl;
+    });
+  }catch(e){
+    try{ if(window.report) window.report(e, 'Photos', 'sign doc urls'); }catch(e2){}
+  }
+  return out;
+}
+/* uploadOne() returns { path, url, size }, so estimate photos carry `path`;
+   project_photos rows carry `storage_path`. Accept either. */
+function photoPathOf(p){
+  return (p && (p.path || p.storage_path)) || null;
+}
+function estimatePhotoPaths(est){
+  return (est && Array.isArray(est.photos) ? est.photos : []).map(photoPathOf).filter(Boolean);
 }
 function projInsurance(pr){
   var L = pr ? parseCkAll(pr).lead : null;
@@ -36453,7 +36497,14 @@ if(m2) return m2[1];
 }catch(_){}
 return '';
 }
-function buildDocHtml(est, project){
+/* Prefer the long-lived signed URL for this photo; fall back to whatever was
+   persisted, so a document still builds if signing failed. */
+function docPhotoUrl(urls, p){
+if(!p) return '';
+var k = (typeof photoPathOf === 'function') ? photoPathOf(p) : (p.path || p.storage_path);
+return (urls && k && urls[k]) || p.url || '';
+}
+function buildDocHtml(est, project, urls){
 var logo    = cardinalLogo();
 var lines   = Array.isArray(est.line_items) ? est.line_items : [];
 var photos  = Array.isArray(est.photos) ? est.photos : [];
@@ -36548,7 +36599,7 @@ var cover = photos.filter(function(p){ return p.cover; })[0] || null;
 var gridPhotos = photos.filter(function(p){ return p !== cover; });
 var coverBlock = cover
 ? '<figure class="coverfig avoid-break">' +
-'<img src="' + esc(cover.url || '') + '" alt="">' +
+'<img src="' + esc(docPhotoUrl(urls, cover)) + '" alt="">' +
 (cover.caption ? '<figcaption>' + nl2br(cover.caption) + '</figcaption>' : '') +
 '</figure>'
 : '';
@@ -36557,7 +36608,7 @@ var photoSection = gridPhotos.length
 '<div class="photogrid">' +
 gridPhotos.map(function(p){
 return '<figure class="pfig avoid-break">' +
-'<img src="' + esc(p.url || '') + '" alt="">' +
+'<img src="' + esc(docPhotoUrl(urls, p)) + '" alt="">' +
 (p.caption
 ? '<figcaption>' + nl2br(p.caption) + '</figcaption>'
 : '') +
@@ -36693,7 +36744,10 @@ if(!window.db || typeof window.db.create !== 'function'){
 alert('Document system not available. Reload the app and retry.');
 return null;
 }
-var html  = buildDocHtml(est, project);
+/* Resolved BEFORE the synchronous builder runs - it cannot await. */
+var docUrls = (typeof signedPhotoMap === 'function')
+? await signedPhotoMap(estimatePhotoPaths(est), PHOTO_DOC_URL_TTL) : null;
+var html  = buildDocHtml(est, project, docUrls);
 var title = (est.estimate_number ? est.estimate_number + ' \u2014 ' : '') +
 (est.title || 'Estimate');
 var projName = (project && (project.name || project.client_name)) || '';
@@ -36753,7 +36807,7 @@ alert('Print failed: ' + (e.message || e));
 };
 return previewEl;
 }
-function openPreview(){
+async function openPreview(){
 if(!window.CardinalEstimates ||
 typeof window.CardinalEstimates.currentState !== 'function'){
 alert('Open an estimate first.');
@@ -36763,7 +36817,9 @@ var est = window.CardinalEstimates.currentState();
 var project = window.CardinalEstimates.currentProject() || window.currentProject;
 if(!est || !project){ alert('Open an estimate first.'); return; }
 ensurePreview();
-var html = buildDocHtml(est, project);
+var docUrls = (typeof signedPhotoMap === 'function')
+? await signedPhotoMap(estimatePhotoPaths(est), PHOTO_DOC_URL_TTL) : null;
+var html = buildDocHtml(est, project, docUrls);
 var frame = previewEl.querySelector('[data-slot="pv-frame"]');
 frame.srcdoc = html;
 previewEl.classList.add('open');
