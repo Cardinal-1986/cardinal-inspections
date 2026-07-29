@@ -2951,6 +2951,83 @@ body[data-crm="insurance"] #cr-hd2-srch #cr-dark-toggle{display:none !important}
 .pud-ft .pud-btn.del{margin-right:auto;border-color:#7d2a24;color:#e2574a;background:transparent}
 .pud-ft .pud-btn.del:hover{background:rgba(226,87,74,.12)}
 </style>
+
+<style id="cr-pcard-styles">
+/* ── Build 420: the client card ──────────────────────────────────────────────
+
+   LEGIBILITY. .mrow carries color:#1b1b1b from when this card was white.
+   claim-insurance and claim-community both override it; retail dark never did,
+   so the address sat at 1.4:1 on #2e333b. Tokenised here for that one case.
+   Scoped with the same body:not(...):not(...) prefix the retail card ground
+   already uses, so the two themed CRMs are untouched.                          */
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .mrow{
+  color:var(--rbe-ink)}
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .mlbl{
+  color:var(--rbe-mute)}
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .mrow a{
+  color:var(--rbe-acclt)}
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hmanage a{
+  color:var(--rbe-acclt);text-decoration:underline;text-underline-offset:2px}
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
+  color:var(--rbe-ink)}
+
+/* the Convert bar is a light-theme panel sitting on a dark page */
+body:not(.claim-insurance):not(.claim-community) #projectView .convertins{
+  background:#241a1a;border-color:#4a2320;border-left-color:#c4180f}
+body:not(.claim-insurance):not(.claim-community) #projectView .convertins .cvtxt{
+  color:var(--rbe-ink)}
+body:not(.claim-insurance):not(.claim-community) #projectView .convertins .cvtxt small{
+  color:var(--rbe-mute)}
+body:not(.claim-insurance):not(.claim-community) #projectView .convertins .cvgo{
+  color:var(--rbe-acclt)}
+body:not(.claim-insurance):not(.claim-community) #projectView .convertins:hover,
+body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active{
+  background:#2d1f1f;border-color:#7a2a24}
+/* it is the last thing on the card now, so it needs air above it, not below */
+#projectView .convertins{margin:18px 0 4px}
+
+/* HEIGHT. On a phone the head stacks, and the cover only occupies space when it
+   actually holds a photo — the empty state was a ~190px box saying "Add photo".
+   Desktop keeps the side-by-side layout exactly as it is.                       */
+@media (max-width:700px){
+  #projectView .projhead{flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+  #projectView .projhead .projinfo{flex:1 1 100%;order:2}
+  #projectView .projhead .projcover{order:1;flex:1 1 100%;width:100%}
+  /* with a photo: a full-width banner above the details */
+  #projectView .projhead.hascover .projcover{height:150px;min-height:0;
+    border-radius:12px;overflow:hidden}
+  #projectView .projhead.hascover .projcover img{width:100%;height:100%;
+    object-fit:cover;display:block}
+  /* without one: a slim button, not an empty panel.
+     GEOMETRY is global — every theme benefits from losing the empty box. The
+     PAINT is per-theme: a first draft used var(--rbe-line2,#454b55) here, which
+     falls back to dark grey on the two light-carded CRMs. The gate caught it. */
+  #projectView .projhead:not(.hascover) .projcover{height:auto;min-height:0;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:7px 10px;border-radius:10px}
+  #projectView .projhead:not(.hascover) #projCoverEmpty{
+    font:700 12px 'Segoe UI',Arial,sans-serif;padding:0;line-height:1}
+  body:not(.claim-insurance):not(.claim-community) #projectView .projhead:not(.hascover) .projcover{
+    background:transparent;border:1px dashed var(--rbe-line2)}
+  body:not(.claim-insurance):not(.claim-community) #projectView .projhead:not(.hascover) #projCoverEmpty{
+    color:var(--rbe-mute)}
+  body.claim-insurance #projectView .projhead:not(.hascover) .projcover{
+    background:transparent;border:1px dashed var(--ct-line)}
+  body.claim-insurance #projectView .projhead:not(.hascover) #projCoverEmpty{
+    color:var(--ct-ink-2)}
+  body.claim-community #projectView .projhead:not(.hascover) .projcover{
+    background:transparent;border:1px dashed #c9dcbf}
+  body.claim-community #projectView .projhead:not(.hascover) #projCoverEmpty{
+    color:#6b7a55}
+  #projectView .projhead:not(.hascover) #projCoverEmpty br{display:none}
+  #projectView .projhead:not(.hascover) #projCoverBtn{position:static;
+    width:auto;height:auto;padding:2px 8px;font-size:13px}
+  /* the details themselves, a little tighter */
+  #projectView .projinfo{padding:10px 12px 11px}
+  #projectView .projinfo h2{font-size:19px;margin:0 0 6px}
+  #projectView .projinfo .mrow{margin-bottom:2px}
+}
+</style>
 </head>
 <body>
 
@@ -3008,7 +3085,7 @@ body[data-crm="insurance"] #cr-hd2-srch #cr-dark-toggle{display:none !important}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 419 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 420 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8483,10 +8560,15 @@ function renderAcxOverview(){
     return myFirst && String(m.text || '').toLowerCase().indexOf('@' + myFirst.toLowerCase()) !== -1;
   }).length;
   var html = '';
-  /* ---- Convert to Insurance (shown only when this client is Retail or Unknown) ---- */
+  /* ---- Convert to Insurance ----------------------------------------------
+     420: built here but APPENDED LAST (see _cvHtml below). It is a rare action
+     and was sitting above the stage bar, which is the thing you actually came to
+     the card for. Kept as one string rather than a second render path so there
+     is still exactly one place this markup exists. */
   var _ct = (typeof projClaimType === 'function') ? projClaimType(pr) : 'unknown';
+  var _cvHtml = '';
   if(_ct !== 'insurance'){
-    html += '<div class="convertins" id="dbConvertIns" role="button" tabindex="0">' +
+    _cvHtml = '<div class="convertins" id="dbConvertIns" role="button" tabindex="0">' +
       '<span class="cvic">&#128737;&#65039;</span>' +
       '<span class="cvtxt">Convert to Insurance<small>Add carrier, claim #, adjuster contact &amp; policy info</small></span>' +
       '<span class="cvgo">&#8250;</span>' +
@@ -8621,6 +8703,8 @@ function renderAcxOverview(){
       TEAM_ROSTER.map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
     '</select>' : '') +
   '</div></div>';
+  /* 420: Convert to Insurance, all the way at the bottom (Theo's words) */
+  html += _cvHtml;
   mount.innerHTML = html;
   /* async: photo count + cover thumb */
   photoDb.listByProject(pr.id).then(function(l){
@@ -10025,6 +10109,10 @@ function openProject(id){
   if(img) img.remove();
   document.getElementById('projCoverEmpty').style.display = pr.cover_image ? 'none' : 'inline';
   cov.classList.toggle('hasimg', !!pr.cover_image);
+  /* 420: the head needs to know too — on a phone the cover only takes room when
+     there is a photo in it. Class on the container, so it is pure CSS from here. */
+  var _phead = document.querySelector('#projectView .projhead');
+  if(_phead) _phead.classList.toggle('hascover', !!pr.cover_image);
   if(pr.cover_image){
     var im = document.createElement('img');
     im.src = pr.cover_image;
