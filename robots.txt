@@ -1,0 +1,6 @@
+# Cardinal Resource — internal team application for Cardinal Roofing & Renovations.
+# Client, claim, and job data sits behind authentication; nothing here is
+# intended for search indexing.
+
+User-agent: *
+Disallow: /
