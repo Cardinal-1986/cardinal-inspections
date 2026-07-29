@@ -2876,6 +2876,81 @@ body[data-crm="retail"]   {--bnbg:#1b1f26;--bnbd:#2b323d;--bnac:#f5d061}
 #cr-hd2-ribbon.cr-hd2-empty{display:none}
 #qClock{display:none !important}
 </style>
+
+<style id="cr-hd4-styles">
+/* ── Build 417: header part 2 ─────────────────────────────────────────────── */
+
+/* THE 416 REGRESSION. One rule in the whole file can hide this element:
+   @media (max-width:700px){ body.projopen #brandTitle{display:none} }  — and the
+   title is missing on HOME screens, so projopen is sticking after a project is
+   closed. The title is now the CRM name and must never disappear, so it is forced
+   visible here; the sticky class itself is cleared by the home button below.
+   Also returned to static flow: #cr-hd2-mid is the one centring mechanism, so
+   #brandTitle no longer carries a second, competing position:absolute.           */
+#cr-hd2-bar #cr-hd2-mid #brandTitle{position:static;left:auto;top:auto;
+  transform:none;max-width:100%;width:auto;display:block !important;
+  pointer-events:none}
+/* .titlecard h1 carries font-size:17px !important, so this needs it too */
+#cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:20px !important;line-height:1.15;
+  color:var(--hin,#fff);-webkit-text-fill-color:var(--hin,#fff)}
+
+/* ONE search bar. #cbSearch on the banner and #headSearch in the header are both
+   live and do the same thing (open the client directory, seed #cliFilter). The
+   header one is the one Theo asked for, so the banner copy goes. Hidden rather
+   than deleted: its keydown listener is bound at boot and would throw on a null
+   element, and hiding keeps the markup honest about what it is.                  */
+#crBanner .cbsrch{display:none !important}
+
+/* the nav row: Home out (the gold house does it), one row not two, dropdowns right */
+#crBanner [data-go="home"]{display:none !important}
+#crBanner{flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;padding-top:6px;padding-bottom:6px}
+#crBanner::-webkit-scrollbar{display:none}
+#crBanner .cbn{flex:0 0 auto}
+#crBanner .cbn.cbdd:nth-last-of-type(2){margin-left:auto}
+#crBanner .cbmenu .cr-navhd{display:block}
+
+/* the light/dark control, sitting where the search row ends */
+#cr-hd2-srch #cr-dark-toggle{position:static;inset:auto;flex:0 0 auto;
+  width:30px;height:30px;margin:0 10px 0 4px;border-radius:8px;
+  background:transparent;border:1px solid var(--bnbd,#3a3f47);
+  color:var(--bnac,#d4a017);font-size:14px;line-height:1;box-shadow:none;
+  z-index:auto;display:flex !important;align-items:center;justify-content:center}
+#cr-hd2-srch #cr-dark-toggle:hover{transform:none;border-color:var(--bnac,#d4a017)}
+/* insurance has its own Docket/Siren toggle in this row — never show both */
+body[data-crm="insurance"] #cr-hd2-srch #cr-dark-toggle{display:none !important}
+
+/* smaller: the bar loses 4px, the search row 2px, and the whole second nav row
+   and banner search are gone — about 90px back on a 390px phone. */
+#cr-hd2-bar{padding-top:6px;padding-bottom:6px}
+#cr-hd2-srch #headSearch{height:36px}
+</style>
+
+<style id="cr-punch2-styles">
+/* ── Build 418: Punch & Repairs ──────────────────────────────────────────────
+   The controls always worked; they were 22px and 11.5px targets on a phone.
+   The VISUAL size is unchanged — an invisible ::after pad does the work, so
+   nothing about the card's look moves.                                        */
+.pu-box{position:relative;cursor:pointer}
+.pu-box::after{content:'';position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);width:44px;height:44px;border-radius:10px}
+.pu-strip .sh .all{position:relative;padding:6px 4px;cursor:pointer}
+.pu-strip .sh .all::after{content:'';position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);width:100%;min-width:88px;height:44px}
+.pu-card{cursor:pointer}
+/* the card sits under the box's pad, so the pad must win the hit test */
+.pu-box{z-index:2}
+
+/* locked: production-only, and it says so instead of just not working */
+.pu-box.locked{cursor:not-allowed;opacity:.55;border-style:dashed;
+  font-size:11px;display:flex;align-items:center;justify-content:center}
+.pud-check.locked{opacity:.6;cursor:not-allowed}
+.pud-check.locked .bx{border-style:dashed}
+
+/* delete keeps its distance from Save */
+.pud-ft .pud-btn.del{margin-right:auto;border-color:#7d2a24;color:#e2574a;background:transparent}
+.pud-ft .pud-btn.del:hover{background:rgba(226,87,74,.12)}
+</style>
 </head>
 <body>
 
@@ -2933,7 +3008,7 @@ body[data-crm="retail"]   {--bnbg:#1b1f26;--bnbd:#2b323d;--bnac:#f5d061}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 416 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 419 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -2971,7 +3046,7 @@ body[data-crm="retail"]   {--bnbg:#1b1f26;--bnbd:#2b323d;--bnac:#f5d061}
   </span>
   <span class="cbcrm" id="cbCrm" aria-label="Switch CRM">
     <b data-crm-go="retail" class="on"><i style="background:#d4a017"></i>Retail</b>
-    <b data-crm-go="insurance"><i style="background:#2dd4bf"></i>Claims</b>
+    <b data-crm-go="insurance"><i style="background:#2dd4bf"></i>Insurance</b>
     <b data-crm-go="community"><i style="background:#8ad0f5"></i>Community</b>
   </span>
   <span class="cbsrch"><input id="cbSearch" type="search" placeholder="Client, PO # or address"><b class="go"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></b></span>
@@ -41461,6 +41536,9 @@ home.type = 'button';
 home.title = 'Home';
 home.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.8 21v-6h4.4v6"/></svg>';
 home.onclick = function(){
+/* 417: leaving a project. Nothing else clears this, and a stale `projopen`
+   hides the CRM title and the burger on every screen that follows. */
+document.body.classList.remove('projopen');
 var crm = crmNow();
 if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ window.showCardinalTruth(); }
 else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
@@ -41519,7 +41597,35 @@ if(m && m.parentNode !== head) head.appendChild(m);
 ensureSearchRow(head);
 ensureRibbon(head);
 relocateAux();
+relocateNav();
 return true;
+}
+/* 417: Track and Reports MOVE into the Tools menu. Moved rather than re-created:
+   #crBanner delegates clicks off data-go, and both the pills and the menu items
+   live inside #crBanner, so relocating the element keeps the route alive. Building
+   new menu entries instead would have made a second way to reach the same view —
+   the duplicate-feature bug class this app pays for most. Idempotent: it runs from
+   build(), which the header's MutationObserver calls constantly. */
+function relocateNav(){
+var nav = document.getElementById('crBanner');
+if(!nav) return;
+var dd = nav.querySelectorAll('.cbn.cbdd');
+if(dd.length < 2) return;
+var tools = dd[dd.length - 1].querySelector('.cbmenu');
+if(!tools) return;
+if(!tools.querySelector('.cr-navhd')){
+var hd = document.createElement('small');
+hd.className = 'cr-navhd';
+hd.textContent = 'Navigate';
+tools.insertBefore(hd, tools.firstChild);
+}
+var hd2 = tools.querySelector('.cr-navhd');
+['track','reports'].forEach(function(key){
+var el = nav.querySelector('[data-go="' + key + '"]');
+if(!el || el.parentNode === tools) return;
+el.className = 'cbi';
+tools.insertBefore(el, hd2.nextSibling);
+});
 }
 /* 416: the search row — full-width field, theme toggle closing the right end.
    Sits directly under the bar and carries the CRM's strip colour. */
@@ -41534,6 +41640,11 @@ else head.appendChild(row);
 }
 var search = document.getElementById('headSearch');
 if(search && search.parentNode !== row) row.insertBefore(search, row.firstChild);
+/* 417: the light/dark control closes the row. #cr-dark-toggle is the EXISTING,
+   already-wired retail toggle — it was floating bottom-right over the calendar.
+   Adopted, not rebuilt. Insurance mounts its own .cr-ins-theme here instead. */
+var dark = document.getElementById('cr-dark-toggle');
+if(dark && dark.parentNode !== row) row.appendChild(dark);
 return row;
 }
 function claimTypeOf(pr){
@@ -43488,6 +43599,29 @@ function crmOf(pr){
   return (t === 'insurance' || t === 'community') ? t : 'retail';
 }
 function isUrgent(it){ return it.priority === 'high' && it.status !== 'done'; }
+/* 418: who may close or reopen an item. Mirrors the punch_close_guard trigger in
+   punch_roles_v1.sql — the trigger is the authority, this is only so the UI can
+   explain itself instead of failing on a round-trip. Falls OPEN when the roster
+   helpers are missing so a partial boot cannot lock out the production crew;
+   the database refuses the write in that case anyway. */
+function mayClose(){
+  try{
+    var prod  = (typeof window.isProductionUser === 'function') ? window.isProductionUser() : null;
+    var admin = (typeof window.isAdminUser === 'function') ? window.isAdminUser() : null;
+    if(prod === null && admin === null) return true;
+    return !!prod || !!admin;
+  }catch(e){ return true; }
+}
+function mayDelete(){
+  /* 419: production deletes too, at Theo's request. Same four people as the
+     punch_delete policy, which is public.is_full_access(). Kept as two explicit
+     calls rather than a new list so the app and the database cannot drift. */
+  try{
+    var admin = (typeof window.isAdminUser === 'function') ? !!window.isAdminUser() : false;
+    var prod  = (typeof window.isProductionUser === 'function') ? !!window.isProductionUser() : false;
+    return admin || prod;
+  }catch(e){ return false; }
+}
 function prioOf(it){
   var p = String(it.priority || 'normal').toLowerCase();
   return (p === 'high' || p === 'low') ? p : 'normal';
@@ -43562,7 +43696,10 @@ function cardHtml(it, showCrm){
   var ph = photosOf(it).length;
   return '<div class="pu-card prio-' + prio + (urg ? ' urgent' : '') + (done ? ' done' : '') + '" data-pu="' + esc(String(it.id)) + '"' +
     ' data-proj="' + esc(String(it.project_id || '')) + '"' + (done ? ' style="--pc:#3fae6a"' : '') + '>' +
-    '<span class="pu-box" data-putoggle="' + esc(String(it.id)) + '">' + (done ? '\u2713' : '') + '</span>' +
+    '<span class="pu-box' + (mayClose() ? '' : ' locked') + '" data-putoggle="' + esc(String(it.id)) + '"' +
+      (mayClose() ? ' role="button" tabindex="0" aria-label="' + (done ? 'Reopen' : 'Close') + ' this item"'
+                  : ' aria-disabled="true" title="Only the production team can close punch items"') +
+      '>' + (done ? '\u2713' : (mayClose() ? '' : '\uD83D\uDD12')) + '</span>' +
     '<div class="pu-bd">' +
       '<div class="pu-t">' + esc(it.title || 'Untitled item') + '</div>' +
       '<div class="pu-cl">' + esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</div>' +
@@ -43731,7 +43868,8 @@ function openDetail(id){
       '<div class="pud-hd"><b>' + esc(it.title || 'Punch item') + '</b>' +
         '<button class="pud-x" data-pud="close">\u2715</button></div>' +
       '<div class="pud-bd">' +
-        '<label class="pud-check' + (done ? ' on' : '') + '" data-pud="status">' +
+        '<label class="pud-check' + (done ? ' on' : '') + (mayClose() ? '' : ' locked') + '"' +
+          (mayClose() ? ' data-pud="status"' : ' title="Only the production team can close punch items"') + '>' +
           '<span class="bx">' + (done ? '\u2713' : '') + '</span>' +
           '<span class="tx">' + (done ? 'Closed' : 'Open') + '</span>' +
           '<small>' + (done ? 'Tap to reopen \u2014 it moves back to the open list'
@@ -43785,6 +43923,7 @@ function openDetail(id){
         '<div class="pud-msg" id="puMsg"></div>' +
       '</div>' +
       '<div class="pud-ft">' +
+        (mayDelete() ? '<button class="pud-btn del" data-pud="delete">Delete</button>' : '') +
         '<button class="pud-btn" data-pud="close">Cancel</button>' +
         '<button class="pud-btn go" data-pud="save">Save</button>' +
       '</div>' +
@@ -43805,6 +43944,27 @@ document.addEventListener('click', function(e){
       var a = act.getAttribute('data-pud');
       var id = m.getAttribute('data-id');
       if(a === 'close'){ closeDetail(); return; }
+      /* 418: delete. Confirmed first, then the rows are reloaded so every
+         surface repaints. The DELETE policy is restricted to is_full_access()
+         in punch_roles_v1.sql, so this is enforced, not just hidden. */
+      if(a === 'delete'){
+        var dit = rows().filter(function(x){ return String(x.id) === String(id); })[0];
+        if(!confirm('Delete "' + ((dit && dit.title) || 'this item') + '"?\n\nThis cannot be undone.')) return;
+        var dmsg = document.getElementById('puMsg');
+        if(dmsg) dmsg.textContent = 'Deleting\u2026';
+        Promise.resolve(window.supa.from('punch_items').delete().eq('id', id)).then(function(r){
+          if(r && r.error){ if(dmsg) dmsg.textContent = 'Could not delete: ' + r.error.message; return; }
+          Promise.resolve(window.CardinalPunch && window.CardinalPunch.reload
+            ? window.CardinalPunch.reload() : null).then(function(){
+            closeDetail();
+            if(document.getElementById('punchView').style.display === 'block') render();
+            if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips();
+          });
+        }).catch(function(err){
+          if(dmsg) dmsg.textContent = 'Could not delete: ' + ((err && err.message) || err);
+        });
+        return;
+      }
       if(a === 'open-client'){
         var it0 = rows().filter(function(x){ return String(x.id) === String(id); })[0];
         closeDetail();
@@ -43868,6 +44028,14 @@ document.addEventListener('click', function(e){
   var tg = e.target.closest('[data-putoggle]');
   if(tg){
     e.stopPropagation();
+    /* 418: the database refuses this write for anyone outside the production
+       crew (punch_close_guard). Say so here rather than let it fail silently. */
+    if(!mayClose()){
+      alert('Only the production team can close or reopen a punch item.\\n\\n' +
+            'You can still edit it, add photos, or change who it is assigned to \\u2014 ' +
+            'tap the item itself.');
+      return;
+    }
     if(window.CardinalPunch && window.CardinalPunch.toggle){
       Promise.resolve(window.CardinalPunch.toggle(tg.getAttribute('data-putoggle'))).then(function(){
         if(document.getElementById('punchView').style.display === 'block') render();
