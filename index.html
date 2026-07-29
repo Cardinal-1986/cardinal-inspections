@@ -2871,7 +2871,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 410 &#8212; insurance home: carriers, calendar, contract value</div>
+          <div style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-28 build 411 &#8212; insurance home: carriers, calendar, contract value</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18067,6 +18067,7 @@ body.claim-insurance #paymentsView,
 body.claim-insurance #tasksView,
 body.claim-insurance #docsView,
 body.claim-insurance #apptsView,
+body.claim-insurance #commsView,
 body.claim-insurance #galleryView{
   background:var(--ct-bg);
 }
@@ -18076,13 +18077,47 @@ body.claim-insurance #paymentsView .viewhead,
 body.claim-insurance #tasksView    .viewhead,
 body.claim-insurance #docsView     .viewhead,
 body.claim-insurance #apptsView    .viewhead,
+body.claim-insurance #commsView    .viewhead,
 body.claim-insurance #galleryView  .viewhead{ color:var(--ct-ink); }
 
 body.claim-insurance #paymentsView .viewhead span,
 body.claim-insurance #tasksView    .viewhead span,
 body.claim-insurance #docsView     .viewhead span,
 body.claim-insurance #apptsView    .viewhead span,
-body.claim-insurance #galleryView  .viewhead span{ color:var(--ct-ink-2) !important; }
+body.claim-insurance #commsView    .viewhead span,
+body.claim-insurance #galleryView  .viewhead span{ color:var(--ct-red-deep) !important; }
+
+/* 411: the chat card, its bubbles, the @mention chips and the composer are frozen
+   cream/white literals in the main sheet. They coincide with Docket, which is why
+   only the dark theme looked broken. Scoped to insurance because #commsView is
+   shared with retail and community, whose grounds are not var(--ct-bg). */
+body.claim-insurance #commsView .subnote{ color:var(--ct-ink-2); }
+body.claim-insurance #commsView .chatbox{
+  background:var(--ct-surface); border-color:var(--ct-line); }
+body.claim-insurance #commsView .chatmsg .bub{
+  background:var(--ct-surface-2); border-color:var(--ct-line); color:var(--ct-ink); }
+body.claim-insurance #commsView .chatmsg .who{ color:var(--ct-red-deep); }
+body.claim-insurance #commsView .chatmsg .when,
+body.claim-insurance #commsView .chatempty{ color:var(--ct-ink-2); }
+body.claim-insurance #commsView .chatmsg .mention{
+  background:var(--ct-red-wash); color:var(--ct-red-deep); }
+body.claim-insurance #commsView .chatmsg.mine .av{ background:var(--ct-ink); color:var(--ct-bg); }
+body.claim-insurance #commsView .chatmsg .av{ background:var(--ct-red); color:var(--ct-red-ink); }
+body.claim-insurance #commsView .chatinput input{
+  background:var(--ct-surface); border-color:var(--ct-line-strong); color:var(--ct-ink); }
+body.claim-insurance #commsView .chatinput input::placeholder{ color:var(--ct-ink-2); }
+body.claim-insurance #commsView .chipbtn{
+  background:var(--ct-surface); border-color:var(--ct-line-strong); color:var(--ct-ink); }
+body.claim-insurance #commsView .chipbtn:hover{
+  border-color:var(--ct-red); color:var(--ct-red-deep); }
+/* 411: the ribbon ground became theme-aware at 409 but its ink stayed color:#fff,
+   so the clock and project context went white-on-white in Docket. Insurance is the
+   only CRM whose ribbon reads --ct-* tokens, so only insurance needs (and gets) this. */
+body[data-crm="insurance"] #cr-hd2-ribbon #qClock,
+body[data-crm="insurance"] #cr-hd2-ribbon #cbCtx{color:var(--ct-ink);}
+body[data-crm="insurance"] #cr-hd2-ribbon #cbCtx b,
+body[data-crm="insurance"] #cr-hd2-ribbon #cbCtx span{color:inherit;}
+
 
 /* Section headers — same steel-blue treatment used inside #projectView */
 body.claim-insurance #paymentsView .projsec,
@@ -21104,7 +21139,13 @@ function showList() {
     --cr-border: #e5e5e5; --cr-border-2: #efefef; --cr-bg: #ffffff; --cr-bg-subtle: #fafafa;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: var(--cr-text); background: var(--cr-bg);
-    -webkit-font-smoothing: antialiased; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    /* 411: NO min-height. The mount is position:fixed; inset:0 (inline, styleMounts
+       18235) so it already fills the viewport; min-height:100vh only guaranteed
+       permanent scroll slack, and on mobile 100vh > visual viewport so the box
+       overhung the screen bottom. overscroll-behavior stops the chain into the
+       views left mounted underneath. */
+    overscroll-behavior: contain;
   }
   #cr-claims-mount * { box-sizing: border-box; }
   #cr-claims-mount .cr-c-app { max-width: 800px; margin: 0 auto; padding: 24px 22px 100px; }
