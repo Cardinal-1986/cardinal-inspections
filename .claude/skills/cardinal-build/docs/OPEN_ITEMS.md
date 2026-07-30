@@ -1,6 +1,6 @@
 # Cardinal Resource App — Open Items
 
-*The single live list. Current at build 394 · July 28, 2026.*
+*The single live list. Current at build 427 · July 29, 2026.*
 *When something ships, strike it here and add a line to `cardinal_build_log.md`.*
 
 > **Everything below was verified against the repo or the database on July 28, not carried
@@ -109,3 +109,225 @@ a light ground changes how they read. Same reasoning as the calendars.
 - **Sales Floor: red is the objection, navy is your answer** (394). Colour carries meaning there; do not spend either colour on decoration.
 - **Owens Corning** (Preferred Contractor) throughout, not GAF. TruDefinition Duration is Class 3; FLEX and STORM are Class 4; both qualify for the policy discount. Standard warranty 5-year workmanship; OC upgraded tiers 10-year / transferable.
 - **Habitat for Humanity of Greater Dayton** — commercial partnership, logo use permitted.
+
+---
+
+# Added 29 July 2026
+
+*Updated 29 July 2026 — session of 34 merged PRs, `origin/main @ 202e6f3`, app stamped build 427.*
+
+## 1. The outcome form — designed, agreed, not built
+
+**Status:** design settled with Theo. Nothing shipped. `OnHold` (PR #34) is the
+foundation and is already in place.
+
+Reference: `/agent/workspace/outcome_v2.html` — **Style 4 layout with Style 2's
+flow**, which is what he picked ("4 with 2s flow").
+
+### Four outcomes
+
+1. **Awarded**
+2. **Still waiting** ← *most common in practice; sits second deliberately*
+3. **Referred onward**
+4. **Not awarded**
+
+### Decided, and non-negotiable
+
+- **No reason field.** Theo, verbatim: *"Dont need the why we didn't get it."*
+  A grant that did not fund this cycle is not a lost sale. PR #33 already
+  suppressed the loss-reason prompt for community; do not reintroduce it here.
+- **"Still waiting" writes stage `OnHold`** plus a `check_back_at` date.
+- **Habitat for Humanity sorts first** in every partner list. They do most of
+  Cardinal's community volume and appear in an annual joint TV commercial.
+
+### ⚠ Design correction found during hand-off — read this first
+
+My earlier plan was to add six new fields under `checklist.lead`, including
+`awarded_amount`. **That was wrong, and would have created a duplicate.**
+
+The app *already* stores bid amounts in `checklist.bid`:
+
+```js
+function bidOf(pr){
+  try{
+    var ck = window.parseCkAll ? window.parseCkAll(pr) : {};
+    return ck.bid || null;
+  }catch(e){ return null; }
+}
+```
+
+`bid.submitted_amount` and `bid.awarded_amount` already exist, and there is
+already UI that writes them — `promptForBid(pr, 'awarded')`, wired to
+`[data-act="log-awd"]`, with a `.cr-bidstrip` display.
+
+**So the outcome form must read and write `checklist.bid.awarded_amount`, not
+invent `checklist.lead.awarded_amount`.** Writing a second field would silently
+diverge from the bid strip already on screen.
+
+Revised field list:
+
+| Field | Location | New? |
+|---|---|---|
+| `awarded_amount` | `checklist.bid` | **exists — reuse** |
+| `submitted_amount` | `checklist.bid` | **exists — reuse** |
+| `funded_by` | `checklist.lead` | new |
+| `referred_to` | `checklist.lead` | new |
+| `tarped_at` | `checklist.lead` | new — `tarp` appears **0** times in the codebase today |
+| `check_back_at` | `checklist.lead` | new — **0** occurrences today |
+| `award_cycle` | `checklist.lead` | new |
+
+Before building, grep for each remaining name. I found one collision by
+checking; there may be others.
+
+### Still open
+
+**The check-back default.** Options are 3 months / 6 months / 1 year / 2 years.
+I picked **1 year** as a default. **Theo never actually answered this.** Ask
+him — he is the one who said some of these run two years.
+
+---
+
+## 2. The second clock — a real bug, currently visible
+
+This is the highest-value unshipped fix, and it is a consequence of item 1.
+
+The Community hub has **one** notion of "when is this due", and it needs two.
+
+```js
+function chDueBand(pr){
+  var dd = days(lead(pr).bid_due_at);      // <-- always the bid deadline
+  if(dd == null) return 'No deadline set';
+  if(dd < 0) return 'Overdue';
+  ...
+}
+```
+
+`bid_due_at` is *when our bid was due to the partner*. Once a bid is submitted
+and waiting on a grant, that date is meaningless — and it goes on aging.
+
+**A 2024 bid currently reads −713 days and sorts as most-urgent forever.**
+
+The fix: when `normStage(pr.stage) === 'OnHold'`, both `chDueBand` and the Due
+column must read **`check_back_at`**, not `bid_due_at`. `bid_due_at` is
+referenced 8 times in the hub block — scope the change, do not blanket-replace.
+
+This is coupled to item 1 because `check_back_at` does not exist until the
+outcome form writes it. Ship them together, outcome form first.
+
+---
+
+## 3. Open bugs
+
+### 3a. Buttons need 4–6 taps — *needs Theo, then a fix*
+
+Theo reported this on his phone. My lead suspect is `#cr-pae-actionbar`: it is
+`z-index: 9995`, `pointer-events: auto`, and `display: none` when inactive —
+but the changelog for build 214 says this same bar previously blocked taps.
+
+**What is needed:** ask Theo whether the dead taps are near the **top** or the
+**bottom** of the screen. That single answer separates the action bar from a
+sticky header overlay and saves a lot of guessing. Do not fix this blind.
+
+### 3b. Unreadable text — small, safe, do it soon
+
+Two contrast failures Theo photographed:
+
+- The mint **"Waiting on a decision"** body text.
+- **`#galTitle`** on the navy photo-album header.
+
+Both are single-value fixes. `contrast_sweep.js` and `resolve_tokens.js` will
+give you the resolved values and the WCAG ratios. Low risk, visible payoff.
+
+### 3c. 221 blue rules still reachable from Community
+
+Down from 250. The remainder breaks into three groups:
+
+| Group | Count | Recommendation |
+|---|---|---|
+| Screens unreachable from Community in practice | ~95 | **Leave.** No user impact. |
+| The global style block | 69 | **Leave for now.** Ungated — editing them changes Retail and Insurance too. Needs Theo's sign-off on a whole-app change. |
+| The punch board, mostly cool greys | 28 | **Judgement call.** Cool greys read as "blue" in a screenshot but are near-neutral in place. Show Theo before touching. |
+
+The blocker is real: those 69 are not community-scoped, so "fix the blue"
+becomes "restyle the entire app". That is a product decision, not a patch.
+
+---
+
+## 4. The CDN cache residue — decision needed
+
+The `photos` bucket is private and the origin enforces it, but Cloudflare had
+already cached objects with `max-age=31536000` (one year). 11 of 26 sampled
+objects still served anonymously *after* the flip.
+
+Three options:
+
+| Option | Effect | Cost |
+|---|---|---|
+| **Purge the Cloudflare cache** | Immediate; residue gone | Needs Cloudflare access — Theo has it, I do not |
+| **Re-path the objects** | New keys, so cached URLs die | Touches 220 storage rows + 235 `projectphotos` rows; needs a migration |
+| **Wait it out** | Residue expires within a year | Free; leaves old URLs live until then |
+
+**My recommendation: purge.** It is one action, it is complete, and it costs
+nothing. Re-pathing is a lot of risk for the same outcome.
+
+Worth stating plainly: the exposure is limited to URLs someone already had.
+Nothing new is being exposed. It is not urgent — but it is not closed either,
+and it should not be quietly forgotten.
+
+---
+
+## 5. Blocked on Theo
+
+| Item | What is needed | Why blocked |
+|---|---|---|
+| Partner bid emails | Real bid-submission addresses for **Habitat (937-965-7684)** and **Kitty Hawk (937-236-5447)** | I will not write an unverified address into `community_partners`. A bid sent to a guessed address is a lost bid. |
+| The `photos_upload` policy | Keep, or drop and replace? | His commits are authored `theodorion1986@gmail.com`. Dropping the policy could silently kill *his own* photo upload if he signs in with that Gmail identity. Needs his call. |
+| CDN residue | Purge / re-path / wait | §4 — needs Cloudflare access |
+| Check-back default | 3mo / 6mo / 1yr / 2yr | §1 — I guessed 1 year |
+| Tap dead-zone | Top or bottom of screen? | §3a |
+| The 69 global blue rules | Restyle app-wide, or leave? | §3c — affects all three CRMs |
+
+---
+
+## 6. Structural work I would recommend
+
+Not bugs. These are the things that would stop *classes* of bug. Detail in
+`BUG_CLASSES.md`.
+
+### 6a. A scroll-lock reconciler — **my top recommendation**
+
+13 modules write one global `document.body.style.overflow`. All 15 lock sites
+are balanced against 19 releases, so no module is *missing* a release — the
+failure mode is an early return or a throw between lock and release, which is
+exactly what PR #37 fixed.
+
+This class has now bitten three times: build 214, PR #17, and PR #37.
+
+A watchdog that clears the lock when no overlay is actually open would end it.
+Its overlay list must be **derived from the code**, not guessed — that is why I
+did not bolt it onto #37. Budget an hour for the derivation, twenty minutes for
+the watchdog.
+
+### 6b. `.maybeSingle()` where zero rows is legal
+
+43 `.single()` calls, 0 `.maybeSingle()`. `.single()` **throws** on zero rows.
+Each one needs classifying: "must exist" stays, "may not exist yet" becomes
+`.maybeSingle()`. Do it in small batches, not one sweep.
+
+### 6c. Error handling on async click handlers
+
+36 `async` onclick handlers; most have no `catch`. A rejected promise in a
+click handler fails silently — the user taps, nothing happens, no error.
+`ccDoAct` (PR #32) is the pattern to copy: `try` / `catch` / `alert` with the
+real message.
+
+### 6d. Consider whether this stays one file
+
+2.59 MB, 99 script blocks, 100 style blocks, no namespacing. Every count in
+this hand-off needed a lexer to be trustworthy. That is a symptom.
+
+I am **not** recommending a rewrite — it works, it ships, and the patch
+discipline holds it together. But if the app keeps growing, splitting the
+community CRM into its own file with scoped CSS would remove most of the
+verification burden. Worth discussing before the next large feature, not
+during it.
