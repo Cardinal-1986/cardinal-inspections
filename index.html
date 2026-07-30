@@ -3110,7 +3110,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 443 &#8212; the assistant writes entries into the library; panel follows light/dark</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 444 &#8212; upload a document, choose its section and title, tap to open the original</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32145,6 +32145,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:444, note:'\uD83D\uDCC1 You can now upload a document, pick the section and name it yourself \u2014 it shows as a clickable title that opens the original file, not a summary of it' },
 { build:443, note:'\uD83D\uDCD6 Ask the library a question and it writes the answer up as a reference entry and files it, so the next person just finds it. The assistant also follows the library light/dark switch now' },
 { build:442, note:'\uD83E\uDD16 The Resource Library has an assistant \u2014 send it a code page, spec sheet or photo and it reads, names and files it into the right section' },
 { build:441, note:'\uD83C\uDF19 The bid form is dark now instead of a bright cream card \u2014 it was deliberately left light in an earlier build and that no longer fits' },
@@ -46474,6 +46475,25 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 #rlLibPanel .lb-ask button{background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);border:0;
   border-radius:10px;padding:11px 16px;font:800 12px 'Segoe UI',Arial,sans-serif;cursor:pointer}
 #rlLibPanel .lb-note{padding:0 16px 12px;font-size:11.5px;color:var(--lb-ink2,#6E6663);line-height:1.5}
+#rlLibPanel .lb-form{display:none;padding:12px 16px;border-top:1px solid var(--lb-line,#EAE5E3);gap:9px;
+  flex-direction:column}
+#rlLibPanel.filing .lb-form{display:flex}
+#rlLibPanel.filing .lb-ask,#rlLibPanel.filing .lb-note{display:none}
+#rlLibPanel .lb-form label{font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--lb-ink2,#6E6663)}
+#rlLibPanel .lb-form select,#rlLibPanel .lb-form input[type=text]{width:100%;box-sizing:border-box;
+  padding:11px 12px;border-radius:10px;border:1px solid var(--lb-line2,#DED8D6);
+  background:var(--lb-surface,#fff);color:var(--lb-ink,#17181B);
+  font:600 14px 'Segoe UI',Arial,sans-serif}
+#rlLibPanel .lb-form .row{display:flex;gap:8px}
+#rlLibPanel .lb-form .row button{flex:1;border-radius:10px;padding:12px 10px;cursor:pointer;
+  font:800 12px 'Segoe UI',Arial,sans-serif;border:1px solid var(--lb-line2,#DED8D6);
+  background:var(--lb-surface2,#FAF8F7);color:var(--lb-ink,#17181B)}
+#rlLibPanel .lb-form .row button.go{background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);border:0}
+#rlLibPanel .lb-chosen{font-size:12.5px;color:var(--lb-ink2,#6E6663)}
+#rlPageTeam .lb-add{margin:0 0 10px;background:none;border:1px dashed var(--ct-line-strong,#DED8D6);
+  color:var(--ct-ink-2,#6E6663);border-radius:9px;padding:9px 12px;
+  font:800 11px 'Segoe UI',Arial,sans-serif;cursor:pointer}
 /* the filed-material page */
 #rlPageTeam .lb-sec{margin:0 0 18px}
 #rlPageTeam .lb-sec > h3{margin:0 0 4px;font:800 15px Georgia,'Times New Roman',serif;
@@ -46715,6 +46735,97 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     });
   }
 
+  /* ---------- file it myself: no AI, my section, my title ---------- */
+  var pending = null;          /* the File the user picked for the manual path */
+  var pendingSection = null;   /* set when they tapped Upload into <section> */
+
+  function fillWhere(){
+    var sel = document.querySelector('#rlLibPanel [data-lb-where]');
+    if(!sel) return;
+    var tops = sections.filter(function(s){ return !s.parent_id; });
+    sel.innerHTML = tops.map(function(s){
+      var kids = sections.filter(function(c){ return c.parent_id === s.id; });
+      return '<option value="' + esc(s.id) + '">' + esc(s.title) + '</option>' +
+        kids.map(function(c){
+          return '<option value="' + esc(c.id) + '">\u00a0\u00a0\u203a ' + esc(c.title) + '</option>';
+        }).join('');
+    }).join('');
+  }
+
+  function startManual(file){
+    pending = file;
+    var p = document.getElementById('rlLibPanel');
+    if(!p) return;
+    fillWhere();
+    if(pendingSection){
+      var w = p.querySelector('[data-lb-where]');
+      if(w) w.value = pendingSection;
+      pendingSection = null;
+    }
+    var ch = p.querySelector('[data-lb-chosen]');
+    if(ch) ch.textContent = file ? file.name : 'No file chosen yet.';
+    var ti = p.querySelector('[data-lb-title]');
+    if(ti && file && !ti.value){
+      ti.value = String(file.name).replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ');
+    }
+    p.classList.add('filing');
+    openPanel();
+  }
+
+  function cancelManual(){
+    pending = null;
+    var p = document.getElementById('rlLibPanel');
+    if(p){
+      p.classList.remove('filing');
+      var ti = p.querySelector('[data-lb-title]'); if(ti) ti.value = '';
+      var ns = p.querySelector('[data-lb-newsub]'); if(ns) ns.value = '';
+    }
+  }
+
+  function saveManual(){
+    var p = document.getElementById('rlLibPanel');
+    if(!p || !pending || !window.supa) return;
+    var secId  = (p.querySelector('[data-lb-where]') || {}).value;
+    var newSub = ((p.querySelector('[data-lb-newsub]') || {}).value || '').trim();
+    var title  = ((p.querySelector('[data-lb-title]') || {}).value || '').trim() || pending.name;
+    if(!secId){ say('bot err', 'Pick a section first.'); return; }
+    var file = pending, kind = kindOf(file.type, file.name);
+    var parent = sections.find(function(s){ return s.id === secId; });
+    cancelManual();
+    say('me', esc(title) + ' \u2014 ' + esc(file.name));
+    var working = say('bot', 'Filing it\u2026');
+
+    var path = 'lib/' + Date.now() + '_' + String(file.name).replace(/[^\w.\-]+/g, '_').slice(0, 80);
+    window.supa.storage.from('library').upload(path, file, { upsert:false })
+      .then(function(up){
+        if(up.error) throw up.error;
+        if(!newSub) return parent;
+        /* a new subsection has to hang off a top-level section */
+        var top = parent && parent.parent_id
+          ? sections.find(function(s){ return s.id === parent.parent_id; })
+          : parent;
+        return ensureSection(top.hub, newSub, top.id);
+      })
+      .then(function(target){
+        if(!target) throw new Error('Could not work out where to put it');
+        return window.supa.from('library_items').insert({
+          section_id: target.id, title: title, summary: null, kind: kind,
+          file_path: path, mime: file.type, size_bytes: file.size,
+          source_name: file.name, created_by: email()
+        }).select().maybeSingle().then(function(r){
+          if(r.error) throw r.error;
+          if(r.data) items.unshift(r.data);
+          working.innerHTML = '<b>' + esc(title) + '</b>' +
+            '<span class="filed">Filed in ' + esc(target.title) + ' \u00b7 tap it to open the document</span>';
+          renderTeamPage();
+        });
+      })
+      .catch(function(e){
+        working.className = 'lb-m bot err';
+        working.textContent = 'Could not file that \u2014 ' + String(e.message || e).slice(0, 200);
+      });
+  }
+
   /* ---------- the filed-material page ---------- */
   function renderTeamPage(){
     var page = document.getElementById('rlPageTeam');
@@ -46722,11 +46833,10 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     var body = page.querySelector('[data-lb-body]');
     if(!body) return;
     var tops = sections.filter(function(s){ return !s.parent_id; });
-    var withItems = tops.filter(function(s){
-      var subs = sections.filter(function(c){ return c.parent_id === s.id; }).map(function(c){ return c.id; });
-      return items.some(function(i){ return i.section_id === s.id || subs.indexOf(i.section_id) > -1; });
-    });
-    if(!withItems.length){
+    /* every section shows, even empty ones - otherwise there is nowhere to
+       upload into until something has already been uploaded */
+    var withItems = tops;
+    if(!tops.length){
       body.innerHTML = '<div class="lb-empty">Nothing filed yet. Tap <b>Ask / File</b> and send a ' +
         'code page, a spec sheet or a photo \u2014 it gets read, named and put in the right place.</div>';
       return;
@@ -46736,6 +46846,8 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       var direct = items.filter(function(i){ return i.section_id === s.id; });
       return '<div class="lb-sec"><h3>' + esc(s.title) + '</h3>' +
         (s.blurb ? '<p>' + esc(s.blurb) + '</p>' : '') +
+        '<button type="button" class="lb-add" data-lb-addto="' + esc(s.id) + '">' +
+        '&#43; Upload into ' + esc(s.title) + '</button>' +
         direct.map(itemHtml).join('') +
         subs.map(function(c){
           var kids = items.filter(function(i){ return i.section_id === c.id; });
@@ -46771,12 +46883,23 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 
   function openItem(path){
     if(!path || !window.supa) return;
+    /* The signed URL is async, and a window.open() after an await is treated as
+       an unrequested popup on iOS and gets blocked. Open the tab inside the tap,
+       then point it at the URL once it arrives. */
+    var tab = null;
+    try{ tab = window.open('', '_blank'); }catch(_){}
     window.supa.storage.from('library').createSignedUrl(path, 3600)
       .then(function(r){
         var u = r && r.data && r.data.signedUrl;
-        if(u) window.open(u, '_blank', 'noopener');
+        if(!u) throw new Error('no signed url');
+        if(tab && !tab.closed){ tab.location = u; }
+        else{ window.location.href = u; }
       })
-      .catch(function(e){ console.error('[library] open failed:', e); });
+      .catch(function(e){
+        if(tab && !tab.closed) tab.close();
+        console.error('[library] open failed:', e);
+        say('bot err', 'Could not open that file \u2014 ' + String(e.message || e).slice(0, 160));
+      });
   }
 
   /* ---------- mount ---------- */
@@ -46832,14 +46955,29 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         'Or ask a question about roofing, siding, windows or code.</div>' +
         '</div>' +
         '<div class="lb-acts">' +
-        '<button type="button" data-lb-pick>&#128206; Choose a file</button>' +
+        '<button type="button" data-lb-pick>&#129302; File it for me</button>' +
+        '<button type="button" data-lb-mine>&#128193; I\'ll say where</button>' +
         '<button type="button" data-lb-cam>&#128247; Take a photo</button>' +
+        '</div>' +
+        '<div class="lb-form">' +
+          '<div class="lb-chosen" data-lb-chosen>No file chosen yet.</div>' +
+          '<label>Put it in</label>' +
+          '<select data-lb-where></select>' +
+          '<label>New subsection (optional)</label>' +
+          '<input type="text" data-lb-newsub placeholder="e.g. Montgomery County">' +
+          '<label>Title</label>' +
+          '<input type="text" data-lb-title placeholder="e.g. Montgomery building codes">' +
+          '<div class="row">' +
+            '<button type="button" data-lb-cancel>Cancel</button>' +
+            '<button type="button" class="go" data-lb-save>File it</button>' +
+          '</div>' +
         '</div>' +
         '<div class="lb-ask"><input type="text" data-lb-q placeholder="Ask about code, roofing, siding\u2026">' +
         '<button type="button" data-lb-send>Ask</button></div>' +
         '<div class="lb-note">Reference material only \u2014 code, roofing, siding, windows, gutters, ' +
         'manufacturer specs. Job paperwork and client files belong on the job, not here.</div>' +
         '<input type="file" data-lb-file accept=".pdf,image/*,.doc,.docx,.txt" multiple style="display:none">' +
+        '<input type="file" data-lb-mineinput accept=".pdf,image/*,.doc,.docx,.txt,.xls,.xlsx" style="display:none">' +
         '<input type="file" data-lb-camin accept="image/*" capture="environment" style="display:none">' +
         '</div>';
       document.body.appendChild(p);
@@ -46848,6 +46986,9 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         if(e.target === p){ closePanel(); return; }
         if(e.target.closest('[data-lb-x]')){ closePanel(); return; }
         if(e.target.closest('[data-lb-pick]')){ p.querySelector('[data-lb-file]').click(); return; }
+        if(e.target.closest('[data-lb-mine]')){ p.querySelector('[data-lb-mineinput]').click(); return; }
+        if(e.target.closest('[data-lb-cancel]')){ cancelManual(); return; }
+        if(e.target.closest('[data-lb-save]')){ saveManual(); return; }
         if(e.target.closest('[data-lb-cam]')){ p.querySelector('[data-lb-camin]').click(); return; }
         if(e.target.closest('[data-lb-send]')){
           var q = p.querySelector('[data-lb-q]');
@@ -46858,6 +46999,11 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       });
       p.querySelector('[data-lb-q]').addEventListener('keydown', function(e){
         if(e.key === 'Enter'){ e.preventDefault(); var val = this.value.trim(); this.value = ''; askQuestion(val); }
+      });
+      p.querySelector('[data-lb-mineinput]').addEventListener('change', function(){
+        var fl = (this.files || [])[0];
+        this.value = '';
+        if(fl) startManual(fl);
       });
       ['[data-lb-file]','[data-lb-camin]'].forEach(function(sel){
         p.querySelector(sel).addEventListener('change', function(){
@@ -46874,6 +47020,13 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     v.addEventListener('click', function(e){
       var g = e.target.closest('[data-lb-goto]');
       if(g && window._rlShowPage){ window._rlShowPage('rlPageTeam'); return; }
+      var add = e.target.closest('[data-lb-addto]');
+      if(add){
+        pendingSection = add.getAttribute('data-lb-addto');
+        var inp = document.querySelector('#rlLibPanel [data-lb-mineinput]');
+        if(inp) inp.click();
+        return;
+      }
       var nt = e.target.closest('[data-lb-note]');
       if(nt){ openNote(nt.getAttribute('data-lb-note')); return; }
       var it = e.target.closest('[data-lb-open]');
