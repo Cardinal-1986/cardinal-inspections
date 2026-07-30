@@ -893,3 +893,55 @@ for byte, and a sentinel walk over all six regions leaves the two files identica
    49px.
 2. The negative control crashed on `boxes[0].closest` instead of failing cleanly. A control
    that throws is weaker evidence than one that names the missing thing.
+
+---
+
+## Build 456 — the one page the search could not see
+
+Measured across all 34 library pages: every page is at least 75% indexed **except**
+`rlPagePitfalls` (Do & Don't), which was **0%**. 2,721 characters over 11 cards — seven DO
+and four DON'T, the field practices most worth having in a rep's hands — and none of it
+came up no matter what you typed. It uses a two-column `.rl-ddcard` layout and
+`buildIndex()` walked `'.rl-groupsep, .rl-card'`.
+
+The page is good. It was just invisible.
+
+### The trap in the obvious fix
+
+Adding `.rl-ddcard` to the walk is one selector. Shipping only that would have been a
+safety bug: `renderTOC()` prints a card's group heading **only when there is no query**
+(`if(!q && h.c.group ...)`), so a DON'T surfacing from a search shows as a bare title.
+**"Waive or absorb the deductible" reads as advice.**
+
+So the polarity lives in the indexed title — `Don't — Waive or absorb the deductible` —
+which is correct with or without a query and makes "do" and "don't" searchable words in
+their own right. It is read from the card's own class (`.rl-docard` / `.rl-dontcard`), not
+from the column head, whose `textContent` starts with an emoji entity.
+
+Second find, from reading the CSS rather than watching it fail: the flash rule is scoped
+`#resourceLibraryView .rl-card.cr-rltoc-flash`. Navigation would have applied the class to
+a `.rl-ddcard` and animated nothing. The selector now names both.
+
+The page still gets no search box of its own — it has zero `.rl-card`, so it sits under
+the 4-card mount threshold from 455. That is deliberate: filtering one column of a
+two-column DO/DON'T layout leaves a heading with nothing under it.
+
+### Gates
+
+`check_build.py` green, marker `.rl-groupsep, .rl-card, .rl-ddcard` with the negative
+control. **15/15 in a real browser**, including the flash animation resolving to a real
+`animation-name` and the index totalling 144 cards + 11. Scope proven both ways over four
+regions.
+
+**Negative control: 6 of 11 fail on 455** — and getting to 6 was the point. The first
+version failed only 4, because the two *safety* checks passed **vacuously**: `[].every()`
+is true, so "every row declares Do or Don't" passed against zero indexed rows. Both now
+require a non-empty set before they can pass. A vacuous safety check is worse than no
+check, and this is the second time this class has appeared on this project — build 454's
+`innerText` scan had the same shape.
+
+### A third harness bug, also mine
+
+The index-totals check was guarded with `if (bg2)` and **silently skipped**: clicking a
+result closes the TOC panel, so `bg2` was null every run. It reported 13/13 while proving
+12 things.

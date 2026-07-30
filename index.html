@@ -3143,7 +3143,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 455 &#8212; every library page has its own search box now, right where you are reading</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 456 &#8212; the Do &amp; Don&#8217;t page is searchable now, and a don&#8217;t always says so</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32496,6 +32496,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:456, note:'\uD83D\uDD0E The Do &amp; Don\u2019t page can be searched now. It was the one page in the library the search could not see \u2014 eleven field practices that never came up no matter what you typed. Results always say whether something is a do or a don\u2019t, so a don\u2019t can never read like advice.' },
 { build:455, note:'\uD83D\uDD0E Every library page now has a search box at the top that filters that page as you type \u2014 no more leaving the page to look something up. It searches code sections, keywords and the card text, same as the contents list.' },
 { build:454, note:'\uD83D\uDCB5 Policy Provisions now covers the money: what Coverage A, B, C and D each pay for, flat vs percentage deductibles, the order the checks arrive in worked out with real numbers, why a $0 first check is not a denial, the mortgage company on the check, and appraisal. Also corrected five places that called Ordinance &amp; Law \u201cCoverage D\u201d \u2014 on a standard policy Coverage D is Loss of Use.' },
 { build:453, note:'\uD83D\uDD0D Library search finally finds things. Type a code section like R905.1.2 and you get the code card, the supplement wording and the rebuttal \u2014 before, that returned nothing. Searches card text and keywords too, and three cards that could never be opened from the contents list now open.' },
@@ -33141,7 +33142,7 @@ else start();
 
 <style id="cr-rltoc-styles">/* cr-rltoc-themed (401) */#cr-rltoc-btn{display:none;position:fixed;bottom:24px;left:24px;z-index:9400;width:auto;padding:9px 14px 9px 12px;height:44px;border-radius:var(--ct-r-field,8px);background:var(--ct-red);color:var(--ct-red-ink,#fff);border:1px solid var(--ct-line-strong);cursor:pointer;display:flex;align-items:center;gap:6px;font:800 11px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;box-shadow:0 6px 18px rgba(0,0,0,.45);-webkit-tap-highlight-color:rgba(196,24,15,.25);font-family:inherit;transition:transform .12s,box-shadow .12s}#cr-rltoc-btn:hover{transform:translateY(-1px);background:var(--ct-red)}#cr-rltoc-btn:active{transform:translateY(0)}body:not(.viewing-rl) #cr-rltoc-btn{display:none}body.viewing-rl #cr-rltoc-btn{display:flex}/* 447: Library Home. Sits directly above the TOC pill and shares its visibility class, so the two read as one nav cluster. Hidden on the landing itself — there is nowhere to go. --ct-* resolves here because the RL theme module mirrors data-rltheme onto <body>. */#cr-rlhome-btn{display:none;position:fixed;left:24px;bottom:calc(133px + env(safe-area-inset-bottom,0px));z-index:9400;width:auto;height:44px;padding:9px 14px 9px 12px;align-items:center;gap:7px;border-radius:var(--ct-r-field,8px);border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#fff);color:var(--ct-ink,#17181B);font:800 12px var(--ct-sans,'Segoe UI',Arial,sans-serif);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rlhome-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rlhome-btn:active{transform:translateY(1px)}#cr-rlhome-btn svg{display:block;width:15px;height:15px;flex:0 0 auto}body:not(.viewing-rl) #cr-rlhome-btn{display:none}body.viewing-rl #cr-rlhome-btn{display:flex}body.viewing-rl.rl-at-landing #cr-rlhome-btn{display:none}/* 451 (was staged as 450): theme toggle. Stacked above the Library pill. Visible on every RL page including the landing (unlike Library, there is no page where a theme choice is irrelevant), so no .rl-at-landing exception. Standalone-mode repositioning lives in cr-pnc-styles, not here — one place for that concern, matching TOC/Manage/Library. */#cr-rltheme-btn{display:none;position:fixed;left:24px;bottom:calc(187px + env(safe-area-inset-bottom,0px));z-index:9400;width:44px;height:44px;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#FFFFFF);color:var(--ct-ink,#17181B);font-size:19px;line-height:1;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rltheme-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rltheme-btn:active{transform:translateY(1px)}body:not(.viewing-rl) #cr-rltheme-btn{display:none}body.viewing-rl #cr-rltheme-btn{display:flex}.cr-rltoc-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9450;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px 5vh;-webkit-overflow-scrolling:touch}.cr-rltoc-box{background:var(--ct-surface);color:var(--ct-ink);border-radius:12px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.6);border:1px solid var(--ct-line-strong);overflow:hidden;font-family:var(--ct-sans)}.cr-rltoc-head{padding:14px 20px 10px;border-bottom:1px solid var(--ct-line);background:var(--ct-surface-2)}.cr-rltoc-head h3{margin:0 0 8px;font:800 13px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink);display:flex;align-items:center;gap:8px}.cr-rltoc-search{width:100%;box-sizing:border-box;background:var(--ct-surface-2);color:var(--ct-ink);border:1px solid var(--ct-line-strong);border-radius:8px;padding:9px 12px;font-size:14px;outline:none;font-family:inherit}.cr-rltoc-search:focus{border-color:var(--ct-mark);box-shadow:0 0 0 3px rgba(196,24,15,.15)}.cr-rltoc-search::placeholder{color:var(--ct-ink-2)}.cr-rltoc-body{overflow-y:auto;flex:1;padding:8px 8px 12px}.cr-rltoc-empty{padding:40px 20px;text-align:center;color:var(--ct-ink-2);font:600 13px var(--ct-sans)}.cr-rltoc-hub{margin:8px 0 4px;padding:8px 12px;background:var(--ct-surface-2);border-left:3px solid var(--ct-line-strong);border-radius:0 6px 6px 0;font:800 11px var(--ct-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ct-mark);display:flex;align-items:center;gap:8px}.cr-rltoc-hub .hub-icon{font-size:14px}.cr-rltoc-page{margin:0 4px 2px;border-radius:6px;overflow:hidden}.cr-rltoc-page-head{padding:8px 12px 8px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;font:700 12.5px var(--ct-sans);color:var(--ct-ink);background:transparent;border:0;width:100%;text-align:left;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-page-head:hover{background:var(--ct-surface-3)}.cr-rltoc-page-head .caret{font-size:10px;color:var(--ct-mark);transition:transform .18s;flex:0 0 auto;width:12px}.cr-rltoc-page.expanded .caret{transform:rotate(90deg)}.cr-rltoc-page-head .title{flex:1;min-width:0}.cr-rltoc-page-head .count{color:var(--ct-mark);font-weight:800;font-size:10px;letter-spacing:.08em}.cr-rltoc-cards{display:none;padding:2px 0 6px 42px}.cr-rltoc-page.expanded .cr-rltoc-cards{display:block}.cr-rltoc-card{display:block;width:100%;text-align:left;padding:6px 10px 6px 0;background:transparent;border:0;cursor:pointer;font:600 12px var(--ct-sans);color:var(--ct-ink);border-radius:4px;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-card:hover{color:#fff;background:var(--ct-surface-3);padding-left:6px}.cr-rltoc-card .m{color:var(--ct-mark)}/* search match highlight */ .cr-rltoc-subgroup{margin:4px 0 2px;padding:4px 8px;font:800 10px var(--ct-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ct-ink-2);background:transparent;border-radius:4px}.cr-rltoc-close{margin-left:auto;background:transparent;border:0;color:var(--ct-ink-2);cursor:pointer;font-size:20px;padding:0 4px;font-family:inherit;line-height:1}.cr-rltoc-close:hover{color:var(--ct-ink)}.cr-rltoc-cards .cr-rltoc-group{margin:9px 0 3px;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.15em;text-transform:uppercase;opacity:.55}
 .cr-rltoc-card .cr-rltoc-why{display:inline-block;margin-left:7px;font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;opacity:.62;vertical-align:1px}
-#resourceLibraryView .rl-card.cr-rltoc-flash{animation:cr-rltoc-flash 2.5s ease;scroll-margin-top:80px}@keyframes cr-rltoc-flash{0%,100%{background:transparent;box-shadow:none}15%{background:rgba(196,24,15,.14);box-shadow:0 0 0 3px rgba(196,24,15,.32)}70%{background:rgba(196,24,15,.07);box-shadow:0 0 0 2px rgba(196,24,15,.18)}}</style>
+#resourceLibraryView .rl-card.cr-rltoc-flash,#resourceLibraryView .rl-ddcard.cr-rltoc-flash{animation:cr-rltoc-flash 2.5s ease;scroll-margin-top:80px}@keyframes cr-rltoc-flash{0%,100%{background:transparent;box-shadow:none}15%{background:rgba(196,24,15,.14);box-shadow:0 0 0 3px rgba(196,24,15,.32)}70%{background:rgba(196,24,15,.07);box-shadow:0 0 0 2px rgba(196,24,15,.18)}}</style>
 <script id="cr-rltoc-script">
 (function(){
 'use strict';
@@ -33201,20 +33202,32 @@ var list = [];
    Walk cards and dividers together so each card carries the group it sits under —
    derived from the markup, so it cannot drift the way a typed list did. */
 var group = '';
-page.querySelectorAll('.rl-groupsep, .rl-card').forEach(function(card){
+/* 456: .rl-ddcard joins the walk. rlPagePitfalls was the only page in the library
+   whose content the search could not see \u2014 2,721 characters over 11 cards, 0%
+   indexed, while every other page is 75%+. It uses a two-column DO/DON'T layout
+   instead of .rl-card, so nothing was wrong with it except that it was invisible. */
+page.querySelectorAll('.rl-groupsep, .rl-card, .rl-ddcard').forEach(function(card){
 if(card.classList.contains('rl-groupsep')){
 group = String(card.textContent || '').replace(/\s+/g, ' ').trim();
 return;
 }
-var h3 = card.querySelector('h3');
+var dd = card.classList.contains('rl-ddcard');
+/* renderTOC() prints the group heading only when there is NO query, so a DON'T
+   surfacing from a search would show as a bare title with nothing marking it as a
+   don't \u2014 "Waive or absorb the deductible" reads as advice. Carry the polarity
+   in the title itself, which also makes "do" and "don't" searchable. Read it from
+   the card's class: the column head's textContent starts with an emoji. */
+var pol = dd ? (card.classList.contains('rl-dontcard') ? 'Don\u2019t' : 'Do') : '';
+var h3 = card.querySelector('h3') || (dd ? card.querySelector('h4') : null);
 var cites = [];
 card.querySelectorAll('.rl-cite').forEach(function(c){
 cites.push(String(c.textContent || '').trim());
 });
+var ttl = h3 ? String(h3.textContent || '').replace(/\s+/g, ' ').trim() : '';
 list.push({
 el: card,
-group: group,
-title: h3 ? String(h3.textContent || '').replace(/\s+/g, ' ').trim() : '',
+group: dd ? pol : group,
+title: dd && ttl ? (pol + ' \u2014 ' + ttl) : ttl,
 cite: cites.join(' '),
 tags: card.getAttribute('data-rltags') || '',
 body: String(card.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 300)
