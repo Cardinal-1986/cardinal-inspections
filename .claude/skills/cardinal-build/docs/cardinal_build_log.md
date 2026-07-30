@@ -945,3 +945,53 @@ check, and this is the second time this class has appeared on this project — b
 The index-totals check was guarded with `if (bg2)` and **silently skipped**: clicking a
 result closes the TOC panel, so `bg2` was null every run. It reported 13/13 while proving
 12 things.
+
+---
+
+## Build 457 — a search result has to say which manufacturer it is about
+
+Found while validating a tag-editing helper, not while looking for it: the helper refused
+to locate a card by `(page, title)` because **six titles are not unique within their page.**
+
+`rlPageMfg` carries three cards called **Contractor Program & Warranty Tiers** and three
+called **Do-Not-Mix Rules** — one each for Owens Corning, GAF and CertainTeed. On the page
+the `.rl-groupsep` above them says which. In a search it does not, because `renderTOC()`
+prints the group heading **only when there is no query** — the same line that caused the
+Do & Don't problem in 456.
+
+So typing "warranty tiers" returned three rows reading exactly the same. Cardinal runs
+**Owens Corning throughout**; opening the GAF card by accident means quoting the wrong
+manufacturer's fastening and do-not-mix requirements on a live roof.
+
+`buildIndex()` now counts titles per page and qualifies **only** the ones that repeat:
+`Owens Corning — Contractor Program & Warranty Tiers`. Six rows change. A title already
+unique on its page is left exactly as written — asserted in the harness against
+*Product Lines & SureNail* and *Ice Barrier Requirement*.
+
+Side effect worth having: "Owens Corning" went from 2 hits to 3+ as a query.
+
+### Gates
+
+`check_build.py` green with the negative control. **15/15 in a real browser.** The
+strongest check is the last one: click the GAF row, then walk back up the DOM from the
+flashed card to its `.rl-groupsep` and assert it reads `GAF`. That proves the label matches
+the card, not merely that the labels differ.
+
+The sweep check is stated as a property rather than a case — *no two rows on any page read
+identically*, computed over the whole index — so a future page with duplicate titles fails
+this gate without anyone remembering to add a case.
+
+**Negative control: 8 of 13 fail on 456**, and the failure output prints the bug verbatim:
+`Contractor Program & Warranty Tiers | Contractor Program & Warranty Tiers | Contractor
+Program & Warranty Tiers`.
+
+Scope proven both ways over three regions. No markup changed at all — card count,
+groupsep count, `data-rltags` count and `<h3>` count are all identical to 456.
+
+### A counting correction, entered against myself
+
+`FEATURES.md` said the library has **146 `.rl-card`**. That is a bare regex over 2.6 MB:
+**ten of those hits are inside JS template strings.** The real numbers are **136 in
+markup**, **144 in the DOM** (136 + 8 built from in-file NACHI templates), before the
+database adds any. Corrected in `FEATURES.md`, which now states both and says why they
+differ.

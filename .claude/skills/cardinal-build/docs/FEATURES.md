@@ -156,8 +156,11 @@ Two routers coexist. The modern one (`cardinal-nav`) tags its states `{app:'card
 shipped it with no record outside the in-app changelog.*
 
 A reference library with an AI librarian, mounting into **`#resourceLibraryView` only**, as
-a fixed overlay. **30 static `rl-page` divs, 146 `.rl-card` and 11 `.rl-ddcard`**, plus
-pages built at runtime from the database.
+a fixed overlay. **30 static `rl-page` divs**, and in the DOM **144 `.rl-card` + 11 `.rl-ddcard`** —
+136 written in markup plus 8 built from in-file NACHI templates, before the database
+adds any. A bare `class="rl-card` regex says **146**; ten of those hits are inside JS
+template strings, so the file count and the DOM count are different questions and
+neither is wrong.
 
 | Block | What it owns |
 |---|---|
@@ -195,6 +198,11 @@ share it** — the contents modal and the per-page boxes. Do not add a third.
   title that reads like advice. It gets no search box of its own by design — filtering one
   column of a two-column layout leaves a heading with nothing under it.
 - The flash class `cr-rltoc-flash` is scoped to **both** `.rl-card` and `.rl-ddcard`.
+- **A title that repeats within its page is qualified with its group** (457). Three cards
+  on `rlPageMfg` are called *Contractor Program & Warranty Tiers* and three *Do-Not-Mix
+  Rules* — one each for Owens Corning, GAF and CertainTeed — so a search returned three
+  identical rows and picking wrong meant reading GAF's rules on an Owens Corning roof.
+  Six rows library-wide; unique titles are left exactly as written.
 
 ### Scope fence — stated in the module banner and the API header
 

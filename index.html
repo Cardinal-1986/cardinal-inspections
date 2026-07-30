@@ -3143,7 +3143,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 456 &#8212; the Do &amp; Don&#8217;t page is searchable now, and a don&#8217;t always says so</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 457 &#8212; manufacturer results say which manufacturer, so you can&#8217;t read GAF&#8217;s rules on an Owens Corning roof</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32496,6 +32496,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:457, note:'\uD83C\uDFED Searching the library for something like \u201cwarranty tiers\u201d used to return three rows that read exactly the same \u2014 Owens Corning, GAF and CertainTeed all have a card by that name. Results now lead with the manufacturer, so you can\u2019t open the wrong one by accident.' },
 { build:456, note:'\uD83D\uDD0E The Do &amp; Don\u2019t page can be searched now. It was the one page in the library the search could not see \u2014 eleven field practices that never came up no matter what you typed. Results always say whether something is a do or a don\u2019t, so a don\u2019t can never read like advice.' },
 { build:455, note:'\uD83D\uDD0E Every library page now has a search box at the top that filters that page as you type \u2014 no more leaving the page to look something up. It searches code sections, keywords and the card text, same as the contents list.' },
 { build:454, note:'\uD83D\uDCB5 Policy Provisions now covers the money: what Coverage A, B, C and D each pay for, flat vs percentage deductibles, the order the checks arrive in worked out with real numbers, why a $0 first check is not a denial, the mortgage company on the check, and appraisal. Also corrected five places that called Ordinance &amp; Law \u201cCoverage D\u201d \u2014 on a standard policy Coverage D is Loss of Use.' },
@@ -33232,6 +33233,18 @@ cite: cites.join(' '),
 tags: card.getAttribute('data-rltags') || '',
 body: String(card.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 300)
 });
+});
+/* 457: three cards on the Manufacturer page are titled "Contractor Program &
+   Warranty Tiers" and three "Do-Not-Mix Rules" \u2014 one per manufacturer, told
+   apart on the page only by the .rl-groupsep above them. renderTOC() prints that
+   heading ONLY when there is no query, so searching "warranty tiers" returned
+   three identical rows, and picking the wrong one means reading GAF's do-not-mix
+   rules on an Owens Corning roof. Qualify only the titles that actually repeat;
+   a title already unique on its page is untouched. Six rows library-wide. */
+var dupes = {};
+list.forEach(function(c){ dupes[c.title] = (dupes[c.title] || 0) + 1; });
+list.forEach(function(c){
+if(dupes[c.title] > 1 && c.group) c.title = c.group + ' \u2014 ' + c.title;
 });
 map[page.id] = list;
 });
