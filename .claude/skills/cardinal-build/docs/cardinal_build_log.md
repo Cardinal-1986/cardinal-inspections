@@ -728,3 +728,38 @@ been seen to fail.
 One assertion in the patch script fired on its own explanatory comment (`scrollToCard(`
 inside the comment documenting its removal) — the exact trap `CLAUDE.md` names. The
 assertion was corrected to two distinctive code forms; the comment was left alone.
+
+### API · the librarian's citations reach the browser at last (30 Jul 2026, no build)
+
+`api/librarian.js` only. **`index.html` is untouched, so no build label was bumped** —
+the app is unchanged at 453.
+
+Build 446 shipped the whole citation chain: the `sources text[]` column, `lbSources()`,
+the `.lb-cite` chips, and the `.lb-nocite` fallback reading *"No source recorded — verify
+before quoting this to an adjuster."* The prompt asks Gemini for `sources` and says
+plainly to return an empty array rather than invent one. The handler even sanitises the
+result — coercing a bare string or null into a clean array of ≤8 short strings.
+
+**Then both `res.status(200).json({...})` blocks enumerated their fields explicitly and
+omitted `sources`.** The citations were fetched, cleaned, and dropped on the floor. Every
+entry the librarian has filed since 446 has shown the uncited warning regardless of what
+the model returned — and a warning that fires 100% of the time trains the crew to ignore
+it, which is worse than not having one.
+
+Two lines, one in each response builder. The rest of the chain was already correct and
+verified end to end: the client reads `d.sources` at **4** sites and renders it through
+`lbSources()` at **3**.
+
+**Reported as our own regression.** The feature was announced in a build comment and has
+never once run.
+
+Also removed **`librarian.js` from the repo root** — a shorter, older duplicate of
+`api/librarian.js` (9,121 vs 13,001 bytes) whose own first line is the comment
+`// /api/librarian.js`. Nothing referenced `/librarian.js`; the app calls `/api/librarian`
+twice. It was not in `.vercelignore`, so it was being served at
+`app.cardinalroster.com/librarian.js`.
+
+**What is still unverified:** the live Gemini round trip. Whether the model actually
+returns useful citations, and how often it correctly returns an empty array, needs one
+real question asked against the deployed function. Ask the librarian something
+code-shaped — *"what nail count does high wind require?"* — and see whether chips appear.
