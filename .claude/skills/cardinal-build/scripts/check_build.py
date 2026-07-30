@@ -162,18 +162,78 @@ def gate_dupe_api(src):
 # The date alone is not the build identity: two builds ship on one day routinely,
 # and comparing date-sets reported a false RED on 390 and 391. Capture the build
 # NUMBER as well, so the bump gate measures what actually has to change.
-LABEL_RE = re.compile(r"v2026-[\w.\-]+(?:\s+build\s+\d+)?")
+#
+# TWO SEPARATORS. index.html carries 20 version strings, and a regex that assumes
+# one separator silently misses the other:
+#     space  x9   8 JS footer-template strings + the 1 rendered app stamp
+#     middot x11  HTML banner comments, every one (U+00B7, no other variant)
+# The previous LABEL_RE here reported 6 distinct labels, because its optional
+# build-number group half-matched the middot form and emitted bare dates. A
+# sibling copy of this gate reported 4, because it required the space form and so
+# never saw build 148 at all. Both wrong, same root cause.
+ALL_LABEL_RE = re.compile(r"v(2026-\d\d-\d\d)\s*(?:\u00b7\s*)?build\s+(\d+)")
+
+# ONLY ONE of those 20 is the app version. Comparing the SET of all labels meant
+# bumping any plugin footer satisfied the gate while the version users actually
+# see stayed stale - a false GREEN, worse than the false RED that was fixed at
+# 390/391. Verified: bump build 146 -> 147, leave 427 alone, and a set-comparison
+# gate reports "label bumped".
+#
+# The app stamp is the only version string in RENDERED MARKUP; every other one
+# sits inside an HTML comment or a JS string literal. Statically it is the only
+# one followed by the em-dash entity and a summary. That is a grep-time property
+# only - runtime code cannot tell "this was in a comment" - which is precisely
+# why currentBuild() and buildTag() need data-cr-footer on the element instead.
+# Accept the em-dash as an entity OR a literal character. Writing it literally
+# made the fallback report "app stamp: NONE" - red, so it failed closed rather
+# than green, but it is still a foot-gun worth removing.
+APP_STAMP_RE = re.compile(
+    r"v(2026-\d\d-\d\d)\s+build\s+(\d+)\s*(?:&#8212;|&mdash;|\u2014)"
+)
+# Prefer an explicit anchor the moment index.html carries one.
+APP_ANCHORED_RE = re.compile(
+    r"data-cr-footer[^>]*>\s*v(2026-\d\d-\d\d)\s+build\s+(\d+)"
+)
+
+
+def app_stamp(src):
+    """(date, build) for the one version string users see, or None."""
+    m = APP_ANCHORED_RE.search(src) or APP_STAMP_RE.search(src)
+    return (m.group(1), int(m.group(2))) if m else None
 
 
 def gate_label(src, prev_src):
-    labels = sorted(set(LABEL_RE.findall(src)))
-    report(bool(labels), f"build label present: {', '.join(labels) or 'NONE'}")
-    if prev_src is not None:
-        prev = sorted(set(LABEL_RE.findall(prev_src)))
-        report(
-            labels != prev,
-            f"build label bumped (prev: {', '.join(prev) or 'NONE'})",
-        )
+    hits = ALL_LABEL_RE.findall(src)
+    builds = sorted({int(b) for _, b in hits})
+    stamp = app_stamp(src)
+    anchored = bool(APP_ANCHORED_RE.search(src))
+    report(
+        stamp is not None,
+        "app stamp present: %s   [%d version strings, %d distinct builds: %s]%s"
+        % (
+            ("v%s build %d" % stamp) if stamp else "NONE",
+            len(hits),
+            len(builds),
+            ", ".join(str(b) for b in builds),
+            "" if anchored else "   (no data-cr-footer yet - matched via em-dash)",
+        ),
+    )
+    if stamp is None or prev_src is None:
+        return
+    prev = app_stamp(prev_src)
+    if prev is None:
+        report(True, "app stamp bumped (previous build had no readable stamp)")
+        return
+    ok = stamp[1] > prev[1]
+    report(
+        ok,
+        "app stamp bumped: build %d -> %d%s"
+        % (
+            prev[1],
+            stamp[1],
+            "" if ok else "   (a plugin footer changing is NOT an app bump)",
+        ),
+    )
 
 
 def main():

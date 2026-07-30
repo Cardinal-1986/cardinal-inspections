@@ -543,9 +543,41 @@ So the gate cannot currently tell "the version users see was bumped" from "some 
 footer changed." It also reports **6** distinct labels rather than 5, because its optional
 `(?:\s+build\s+\d+)?` group half-matches the middot form and emits bare dates.
 
-**Fix: anchor to the app stamp, not the set.** The app stamp is uniquely identifiable as
-the only version string in rendered markup — and it becomes trivially addressable once it
-carries `data-cr-footer` (§2.2). That attribute now has **three** consumers:
+### Fixed — `gate_label` now anchors on the app stamp
+
+Landed in the same PR as this note, once a peer session confirmed the repo copy was
+untouched. (Note the two copies are different files: the repo's md5 is `114ff919`, the
+bundled sibling's is `5cf8a41d`.)
+
+- `ALL_LABEL_RE` matches **both separators**, so the count is 20 strings / 5 builds and
+  build 148 is no longer invisible.
+- `app_stamp()` returns `(date, build)` for the **one** string users see. It prefers a
+  `data-cr-footer` anchor and falls back to the em-dash form — the app stamp is the only
+  version string followed by `&#8212;` / `&mdash;` / a literal `—` plus a summary.
+- The bump gate requires the app stamp's **build number to strictly increase**, so a
+  plugin footer changing no longer satisfies it.
+
+Negative-controlled, 7 scenarios:
+
+| Scenario | Want | Got |
+|---|---|---|
+| app stamp `427 → 428` | PASS | PASS |
+| only module `146 → 147` | FAIL | FAIL |
+| nothing bumped | FAIL | FAIL |
+| app stamp `427 → 426` (decrease) | FAIL | FAIL |
+| `427 → 428` with `data-cr-footer` | PASS | PASS |
+| literal `—` instead of the entity | PASS | PASS |
+| `&mdash;` instead of `&#8212;` | PASS | PASS |
+
+The literal-em-dash case was a real fragility found by probing rather than reasoning:
+before hardening it reported `app stamp: NONE`. It failed **closed** (red, not green),
+which is the right direction, but it was still a foot-gun.
+
+Full ladder re-run on main's `index.html`: green, exit 0. With `--prev` pointed at an
+identical file it reds on the bump gate, exit 1 — the negative control.
+
+**The permanent fix is still `data-cr-footer`.** The em-dash fallback is a grep-time
+heuristic; the attribute is an identity. That attribute now has **three** consumers:
 
 1. `currentBuild()` — so the changelog reads 427 instead of a CSS comment's 406
 2. `buildTag()` — so error reports carry a build number
