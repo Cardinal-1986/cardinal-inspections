@@ -13845,16 +13845,27 @@ async function setStage(prId, v){
   var _now = new Date().toISOString();
   var _ckPatch = { stage_since: _now };
   _ckPatch['t_' + v] = _now;
+  /* Community jobs are not lost to a competitor and have no carrier, so
+     LOSS_REASONS - Retail's list - has nothing true to offer. Asking anyway
+     forces a wrong answer into the win-rate, so community skips the prompt.
+     lost_at is still stamped either way: we record WHEN, just not WHY. */
+  var _isCommunityLoss = false;
+  try{
+    _isCommunityLoss = (typeof window.projClaimType === 'function') &&
+                       window.projClaimType(pr) === 'community';
+  }catch(_e){}
   if(v === 'Lost'){
-    var _rNum = prompt('Why was this lead lost?\n' +
-      LOSS_REASONS.map(function(r,i){ return (i+1) + '. ' + r; }).join('\n') +
-      '\n\nEnter a number (1-' + LOSS_REASONS.length + ') or type a reason:', '1');
-    var _reason = 'Unspecified';
-    if(_rNum !== null){
-      var _idx = parseInt(_rNum, 10);
-      _reason = (_idx >= 1 && _idx <= LOSS_REASONS.length) ? LOSS_REASONS[_idx-1] : (_rNum.trim() || 'Unspecified');
+    if(!_isCommunityLoss){
+      var _rNum = prompt('Why was this lead lost?\n' +
+        LOSS_REASONS.map(function(r,i){ return (i+1) + '. ' + r; }).join('\n') +
+        '\n\nEnter a number (1-' + LOSS_REASONS.length + ') or type a reason:', '1');
+      var _reason = 'Unspecified';
+      if(_rNum !== null){
+        var _idx = parseInt(_rNum, 10);
+        _reason = (_idx >= 1 && _idx <= LOSS_REASONS.length) ? LOSS_REASONS[_idx-1] : (_rNum.trim() || 'Unspecified');
+      }
+      _ckPatch.loss_reason = _reason;
     }
-    _ckPatch.loss_reason = _reason;
     _ckPatch.lost_at = _now;
   }
   patchProjectCk(pr, _ckPatch).catch(function(){});
