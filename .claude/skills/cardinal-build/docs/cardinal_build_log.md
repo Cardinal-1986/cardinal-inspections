@@ -495,3 +495,61 @@ Ordered by value per unit of risk.
 6. **Do not renumber history to close the gaps.** 82 source comments cite build
    numbers; renumbering would invalidate all of them. Leave the record as-is
    and start incrementing cleanly from here.
+
+---
+
+## 7. Correction — the version-string count, and a gate that can be fooled
+
+*Added 29 July 2026, after main had already merged §1–6. Two peer sessions
+independently measured the labels and got different answers; this is the reconciliation.*
+
+### There are 20 version strings, not 9
+
+§1 said "82 textual `build N` references … 46 distinct builds," and CLAUDE.md said
+`grep -oE "v2026-[0-9-]+ build [0-9]+"` returns 9 hits / 4 distinct labels. Both were
+measured with a regex that assumes a **single separator**. There are two:
+
+| Form | Example | Count | Where |
+|---|---|---:|---|
+| space | `v2026-07-29 build 427` | 9 | the app stamp + footer templates |
+| middot | `v2026-07-22 · build 148` | 11 | module banner comments |
+
+Honest count: **20 strings, 5 distinct builds — 95, 146, 148, 404, 427.**
+**Build 148 was missing from every earlier list**, because it only ever appears in the
+middot form (estimates + pricing module banners, ×4).
+
+| Build | Count | Where |
+|---|---:|---|
+| 427 | 1 | nav menu `<div>` — **the app version, and the only version string in rendered markup** |
+| 404 | 1 | `.cr-c-footer` |
+| 95 | 2 | claims footer + banner (date is 6 days in the future — unexplained, do not "fix") |
+| 146 | 12 | analytics / Keeper / portals / adjuster / coach |
+| 148 | 4 | estimates + pricing banners |
+
+### The label gate passes when only a module is bumped
+
+`scripts/check_build.py` compares `sorted(set(LABEL_RE.findall(src)))` between builds.
+Its `LABEL_RE` already captures the build number — its own comment records the false RED
+on 390/391 that prompted that — but comparing the **set** means *any* label changing
+satisfies it. Tested against main's `index.html`:
+
+| Scenario | Gate says | Correct |
+|---|---|---|
+| app stamp `427 → 428` | PASS | PASS |
+| only module `146 → 147`, app stamp untouched | **PASS** | FAIL |
+| nothing bumped | FAIL | FAIL |
+
+So the gate cannot currently tell "the version users see was bumped" from "some plugin
+footer changed." It also reports **6** distinct labels rather than 5, because its optional
+`(?:\s+build\s+\d+)?` group half-matches the middot form and emits bare dates.
+
+**Fix: anchor to the app stamp, not the set.** The app stamp is uniquely identifiable as
+the only version string in rendered markup — and it becomes trivially addressable once it
+carries `data-cr-footer` (§2.2). That attribute now has **three** consumers:
+
+1. `currentBuild()` — so the changelog reads 427 instead of a CSS comment's 406
+2. `buildTag()` — so error reports carry a build number
+3. the label gate — so "bumped" means the app version, not any footer
+
+One attribute, three silent failures. It is still the highest value-per-byte change in
+the codebase.
