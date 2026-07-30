@@ -107,9 +107,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { image, text, filename, mime, sections, ask } = req.body || {};
-    if (!image && !text && !ask) {
-      res.status(400).json({ error: 'Send an image, document text, or a question' });
+    const { image, file, text, filename, mime, sections, ask } = req.body || {};
+    if (!image && !file && !text && !ask) {
+      res.status(400).json({ error: 'Send a file, an image, document text, or a question' });
       return;
     }
 
@@ -127,6 +127,19 @@ export default async function handler(req, res) {
         'rather than guessing a number. Respond with ONLY raw JSON: ' +
         '{"answer": "<your answer>", "look_in": "<section title or empty string>"}'
       }];
+    } else if (file) {
+      /* Same request shape as /api/sol.js: { file: <base64 payload>, mime }.
+         Gemini reads PDFs directly, so no text extraction in the browser. */
+      const mt = String(mime || 'application/pdf').toLowerCase();
+      const b64 = String(file).includes(',') ? String(file).split(',').pop() : String(file);
+      if (!b64) { res.status(400).json({ error: 'Empty file payload' }); return; }
+      parts = [
+        { text: RULES + '\n' + shelf +
+          'This file was uploaded to the library' +
+          (filename ? ' (filename: ' + String(filename).slice(0, 120) + ')' : '') +
+          '. Read it and decide where it belongs.\n\n' + SHAPE },
+        { inlineData: { mimeType: mt, data: b64 } }
+      ];
     } else if (image) {
       const match = typeof image === 'string'
         ? image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/)
