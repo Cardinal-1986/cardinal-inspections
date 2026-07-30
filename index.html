@@ -3138,7 +3138,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 449 &#8212; the rest of the claim workspace gets the same safety net</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 450 &#8212; light/dark toggle for the Resource Library is reachable again</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18056,6 +18056,59 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
      RL view is z-index:60 and a fixed child of it sits under the chrome — the
      same reason #cr-rltoc-btn lives on <body>. Visibility rides the existing
      body.viewing-rl class rather than a second observer. */
+  /* 450: same glyphs apply() already used for the buried #rlThemeBtn, so the
+     visual language is unchanged — only the button's reachability is fixed. */
+  function paintThemeBtn(btn, theme){
+    var dark = theme === 'siren';
+    btn.textContent = dark ? '\u25D1' : '\u25D0';
+    var lbl = dark ? 'Switch to light theme' : 'Switch to dark theme';
+    btn.setAttribute('aria-label', lbl);
+    btn.setAttribute('title', lbl);
+  }
+
+  function currentRlTheme(){
+    try{
+      if(window.CardinalRLTheme && typeof window.CardinalRLTheme.get === 'function'){
+        return window.CardinalRLTheme.get();
+      }
+    }catch(e){}
+    try{ return localStorage.getItem('cardinalRLTheme') || 'docket'; }
+    catch(e){ return 'docket'; }
+  }
+
+  function ensureThemeBtn(){
+    var btn = document.getElementById('cr-rltheme-btn');
+    if(!btn){
+      if(!document.body) return;
+      btn = document.createElement('button');
+      btn.id = 'cr-rltheme-btn';
+      btn.type = 'button';
+      btn.onclick = function(){
+        var next = currentRlTheme() === 'siren' ? 'docket' : 'siren';
+        /* Primary path: the real toggle build 395 already wired, shared with
+           the insurance-CRM switch — one mechanism, three entry points. */
+        var applied = false;
+        try{
+          if(window.CardinalRLTheme && typeof window.CardinalRLTheme.apply === 'function'){
+            window.CardinalRLTheme.apply(next);
+            applied = true;
+          }
+        }catch(e){}
+        if(!applied){
+          /* Defensive fallback only — confirmed unreachable in normal load
+             order, kept in case a future change reorders the scripts. */
+          try{ localStorage.setItem('cardinalRLTheme', next); }catch(e){}
+          if(document.body) document.body.setAttribute('data-rltheme', next);
+          var v = document.getElementById('resourceLibraryView');
+          if(v) v.setAttribute('data-rltheme', next);
+        }
+        paintThemeBtn(btn, next);
+      };
+      document.body.appendChild(btn);
+    }
+    paintThemeBtn(btn, currentRlTheme());
+  }
+
   function ensureHomeBtn(){
     if(document.getElementById('cr-rlhome-btn')) return;
     if(!document.body) return;
@@ -18074,6 +18127,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
 
   function showPage(id){
     ensureHomeBtn();
+    ensureThemeBtn();
     /* the landing is its own destination — nothing to go home to */
     if(document.body) document.body.classList.toggle('rl-at-landing', id === 'rlLanding');
     pages.forEach(function(p){ p.classList.toggle('rl-pageActive', p.id === id); });
@@ -32285,6 +32339,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:450, note:'\u25D1 A light/dark toggle button now sits above the Library button on every Resource Library page \u2014 Docket and Siren both existed and worked, the switch had just been buried by the header redesign along with the old back arrow' },
 { build:449, note:'\uD83D\uDEE1\uFE0F Chat, appointments, documents, tasks, photos and payments inside a claim now carry the same fallback colors Cardinal Truth got in 448 \u2014 same root cause, seven more screens that were exposed to it' },
 { build:448, note:'\uD83E\uDE9F Fixed the insurance home and client list rendering see-through with the retail page ghosting behind them \u2014 a background token was being stripped by another module within a second of load' },
 { build:447, note:'\uD83C\uDFE0 A Library button now sits above the TOC on every Resource Library page and takes you straight back to the library home \u2014 the old back arrow had been hidden by the header redesign, and the deepest pages were four steps from home' },
@@ -32923,7 +32978,7 @@ else start();
 })();
 </script>
 
-<style id="cr-rltoc-styles">/* cr-rltoc-themed (401) */#cr-rltoc-btn{display:none;position:fixed;bottom:24px;left:24px;z-index:9400;width:auto;padding:9px 14px 9px 12px;height:44px;border-radius:var(--ct-r-field,8px);background:var(--ct-red);color:var(--ct-red-ink,#fff);border:1px solid var(--ct-line-strong);cursor:pointer;display:flex;align-items:center;gap:6px;font:800 11px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;box-shadow:0 6px 18px rgba(0,0,0,.45);-webkit-tap-highlight-color:rgba(196,24,15,.25);font-family:inherit;transition:transform .12s,box-shadow .12s}#cr-rltoc-btn:hover{transform:translateY(-1px);background:var(--ct-red)}#cr-rltoc-btn:active{transform:translateY(0)}body:not(.viewing-rl) #cr-rltoc-btn{display:none}body.viewing-rl #cr-rltoc-btn{display:flex}/* 447: Library Home. Sits directly above the TOC pill and shares its visibility class, so the two read as one nav cluster. Hidden on the landing itself — there is nowhere to go. --ct-* resolves here because the RL theme module mirrors data-rltheme onto <body>. */#cr-rlhome-btn{display:none;position:fixed;left:24px;bottom:calc(133px + env(safe-area-inset-bottom,0px));z-index:9400;width:auto;height:44px;padding:9px 14px 9px 12px;align-items:center;gap:7px;border-radius:var(--ct-r-field,8px);border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#fff);color:var(--ct-ink,#17181B);font:800 12px var(--ct-sans,'Segoe UI',Arial,sans-serif);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rlhome-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rlhome-btn:active{transform:translateY(1px)}#cr-rlhome-btn svg{display:block;width:15px;height:15px;flex:0 0 auto}body:not(.viewing-rl) #cr-rlhome-btn{display:none}body.viewing-rl #cr-rlhome-btn{display:flex}body.viewing-rl.rl-at-landing #cr-rlhome-btn{display:none}.cr-rltoc-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9450;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px 5vh;-webkit-overflow-scrolling:touch}.cr-rltoc-box{background:var(--ct-surface);color:var(--ct-ink);border-radius:12px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.6);border:1px solid var(--ct-line-strong);overflow:hidden;font-family:var(--ct-sans)}.cr-rltoc-head{padding:14px 20px 10px;border-bottom:1px solid var(--ct-line);background:var(--ct-surface-2)}.cr-rltoc-head h3{margin:0 0 8px;font:800 13px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink);display:flex;align-items:center;gap:8px}.cr-rltoc-search{width:100%;box-sizing:border-box;background:var(--ct-surface-2);color:var(--ct-ink);border:1px solid var(--ct-line-strong);border-radius:8px;padding:9px 12px;font-size:14px;outline:none;font-family:inherit}.cr-rltoc-search:focus{border-color:var(--ct-mark);box-shadow:0 0 0 3px rgba(196,24,15,.15)}.cr-rltoc-search::placeholder{color:var(--ct-ink-2)}.cr-rltoc-body{overflow-y:auto;flex:1;padding:8px 8px 12px}.cr-rltoc-empty{padding:40px 20px;text-align:center;color:var(--ct-ink-2);font:600 13px var(--ct-sans)}.cr-rltoc-hub{margin:8px 0 4px;padding:8px 12px;background:var(--ct-surface-2);border-left:3px solid var(--ct-line-strong);border-radius:0 6px 6px 0;font:800 11px var(--ct-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ct-mark);display:flex;align-items:center;gap:8px}.cr-rltoc-hub .hub-icon{font-size:14px}.cr-rltoc-page{margin:0 4px 2px;border-radius:6px;overflow:hidden}.cr-rltoc-page-head{padding:8px 12px 8px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;font:700 12.5px var(--ct-sans);color:var(--ct-ink);background:transparent;border:0;width:100%;text-align:left;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-page-head:hover{background:var(--ct-surface-3)}.cr-rltoc-page-head .caret{font-size:10px;color:var(--ct-mark);transition:transform .18s;flex:0 0 auto;width:12px}.cr-rltoc-page.expanded .caret{transform:rotate(90deg)}.cr-rltoc-page-head .title{flex:1;min-width:0}.cr-rltoc-page-head .count{color:var(--ct-mark);font-weight:800;font-size:10px;letter-spacing:.08em}.cr-rltoc-cards{display:none;padding:2px 0 6px 42px}.cr-rltoc-page.expanded .cr-rltoc-cards{display:block}.cr-rltoc-card{display:block;width:100%;text-align:left;padding:6px 10px 6px 0;background:transparent;border:0;cursor:pointer;font:600 12px var(--ct-sans);color:var(--ct-ink);border-radius:4px;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-card:hover{color:#fff;background:var(--ct-surface-3);padding-left:6px}.cr-rltoc-card .m{color:var(--ct-mark)}/* search match highlight */ .cr-rltoc-subgroup{margin:4px 0 2px;padding:4px 8px;font:800 10px var(--ct-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ct-ink-2);background:transparent;border-radius:4px}.cr-rltoc-close{margin-left:auto;background:transparent;border:0;color:var(--ct-ink-2);cursor:pointer;font-size:20px;padding:0 4px;font-family:inherit;line-height:1}.cr-rltoc-close:hover{color:var(--ct-ink)}#resourceLibraryView .rl-card.cr-rltoc-flash{animation:cr-rltoc-flash 2.5s ease;scroll-margin-top:80px}@keyframes cr-rltoc-flash{0%,100%{background:transparent;box-shadow:none}15%{background:rgba(196,24,15,.14);box-shadow:0 0 0 3px rgba(196,24,15,.32)}70%{background:rgba(196,24,15,.07);box-shadow:0 0 0 2px rgba(196,24,15,.18)}}</style>
+<style id="cr-rltoc-styles">/* cr-rltoc-themed (401) */#cr-rltoc-btn{display:none;position:fixed;bottom:24px;left:24px;z-index:9400;width:auto;padding:9px 14px 9px 12px;height:44px;border-radius:var(--ct-r-field,8px);background:var(--ct-red);color:var(--ct-red-ink,#fff);border:1px solid var(--ct-line-strong);cursor:pointer;display:flex;align-items:center;gap:6px;font:800 11px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;box-shadow:0 6px 18px rgba(0,0,0,.45);-webkit-tap-highlight-color:rgba(196,24,15,.25);font-family:inherit;transition:transform .12s,box-shadow .12s}#cr-rltoc-btn:hover{transform:translateY(-1px);background:var(--ct-red)}#cr-rltoc-btn:active{transform:translateY(0)}body:not(.viewing-rl) #cr-rltoc-btn{display:none}body.viewing-rl #cr-rltoc-btn{display:flex}/* 447: Library Home. Sits directly above the TOC pill and shares its visibility class, so the two read as one nav cluster. Hidden on the landing itself — there is nowhere to go. --ct-* resolves here because the RL theme module mirrors data-rltheme onto <body>. */#cr-rlhome-btn{display:none;position:fixed;left:24px;bottom:calc(133px + env(safe-area-inset-bottom,0px));z-index:9400;width:auto;height:44px;padding:9px 14px 9px 12px;align-items:center;gap:7px;border-radius:var(--ct-r-field,8px);border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#fff);color:var(--ct-ink,#17181B);font:800 12px var(--ct-sans,'Segoe UI',Arial,sans-serif);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rlhome-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rlhome-btn:active{transform:translateY(1px)}#cr-rlhome-btn svg{display:block;width:15px;height:15px;flex:0 0 auto}body:not(.viewing-rl) #cr-rlhome-btn{display:none}body.viewing-rl #cr-rlhome-btn{display:flex}body.viewing-rl.rl-at-landing #cr-rlhome-btn{display:none}/* 450: theme toggle. Stacked directly above the Library pill (same left edge, next step up: 133 + 44 + 10 = 187) as a circular icon button rather than a text pill, since it is a single glyph — matching what #rlThemeBtn already rendered before it was buried. Visible on every RL page INCLUDING the landing (unlike Library, there is no page where a theme choice is irrelevant), so no .rl-at-landing exception. */#cr-rltheme-btn{display:none;position:fixed;left:24px;bottom:calc(187px + env(safe-area-inset-bottom,0px));z-index:9400;width:44px;height:44px;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#FFFFFF);color:var(--ct-ink,#17181B);font-size:19px;line-height:1;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rltheme-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rltheme-btn:active{transform:translateY(1px)}body:not(.viewing-rl) #cr-rltheme-btn{display:none}body.viewing-rl #cr-rltheme-btn{display:flex}.cr-rltoc-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9450;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px 5vh;-webkit-overflow-scrolling:touch}.cr-rltoc-box{background:var(--ct-surface);color:var(--ct-ink);border-radius:12px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.6);border:1px solid var(--ct-line-strong);overflow:hidden;font-family:var(--ct-sans)}.cr-rltoc-head{padding:14px 20px 10px;border-bottom:1px solid var(--ct-line);background:var(--ct-surface-2)}.cr-rltoc-head h3{margin:0 0 8px;font:800 13px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink);display:flex;align-items:center;gap:8px}.cr-rltoc-search{width:100%;box-sizing:border-box;background:var(--ct-surface-2);color:var(--ct-ink);border:1px solid var(--ct-line-strong);border-radius:8px;padding:9px 12px;font-size:14px;outline:none;font-family:inherit}.cr-rltoc-search:focus{border-color:var(--ct-mark);box-shadow:0 0 0 3px rgba(196,24,15,.15)}.cr-rltoc-search::placeholder{color:var(--ct-ink-2)}.cr-rltoc-body{overflow-y:auto;flex:1;padding:8px 8px 12px}.cr-rltoc-empty{padding:40px 20px;text-align:center;color:var(--ct-ink-2);font:600 13px var(--ct-sans)}.cr-rltoc-hub{margin:8px 0 4px;padding:8px 12px;background:var(--ct-surface-2);border-left:3px solid var(--ct-line-strong);border-radius:0 6px 6px 0;font:800 11px var(--ct-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ct-mark);display:flex;align-items:center;gap:8px}.cr-rltoc-hub .hub-icon{font-size:14px}.cr-rltoc-page{margin:0 4px 2px;border-radius:6px;overflow:hidden}.cr-rltoc-page-head{padding:8px 12px 8px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;font:700 12.5px var(--ct-sans);color:var(--ct-ink);background:transparent;border:0;width:100%;text-align:left;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-page-head:hover{background:var(--ct-surface-3)}.cr-rltoc-page-head .caret{font-size:10px;color:var(--ct-mark);transition:transform .18s;flex:0 0 auto;width:12px}.cr-rltoc-page.expanded .caret{transform:rotate(90deg)}.cr-rltoc-page-head .title{flex:1;min-width:0}.cr-rltoc-page-head .count{color:var(--ct-mark);font-weight:800;font-size:10px;letter-spacing:.08em}.cr-rltoc-cards{display:none;padding:2px 0 6px 42px}.cr-rltoc-page.expanded .cr-rltoc-cards{display:block}.cr-rltoc-card{display:block;width:100%;text-align:left;padding:6px 10px 6px 0;background:transparent;border:0;cursor:pointer;font:600 12px var(--ct-sans);color:var(--ct-ink);border-radius:4px;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-card:hover{color:#fff;background:var(--ct-surface-3);padding-left:6px}.cr-rltoc-card .m{color:var(--ct-mark)}/* search match highlight */ .cr-rltoc-subgroup{margin:4px 0 2px;padding:4px 8px;font:800 10px var(--ct-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ct-ink-2);background:transparent;border-radius:4px}.cr-rltoc-close{margin-left:auto;background:transparent;border:0;color:var(--ct-ink-2);cursor:pointer;font-size:20px;padding:0 4px;font-family:inherit;line-height:1}.cr-rltoc-close:hover{color:var(--ct-ink)}#resourceLibraryView .rl-card.cr-rltoc-flash{animation:cr-rltoc-flash 2.5s ease;scroll-margin-top:80px}@keyframes cr-rltoc-flash{0%,100%{background:transparent;box-shadow:none}15%{background:rgba(196,24,15,.14);box-shadow:0 0 0 3px rgba(196,24,15,.32)}70%{background:rgba(196,24,15,.07);box-shadow:0 0 0 2px rgba(196,24,15,.18)}}</style>
 <script id="cr-rltoc-script">
 (function(){
 'use strict';
