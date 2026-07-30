@@ -127,6 +127,16 @@ export default async function handler(req, res) {
         'keeping. Plain, practical language for a roofer in Ohio. Lead with the ' +
         'answer, then the detail that matters on a roof or a job site. Use short ' +
         'paragraphs; use "- " bullets for lists of requirements or steps.\n' +
+        'The body is rendered as light markdown. You may use: "## " for a short ' +
+        'heading on its own line, "- " bullets, "1. " numbered steps, **bold**, ' +
+        'and GitHub-style pipe tables. Separate every block with a blank line.\n' +
+        'Reach for a TABLE whenever the answer is a set of values that vary by ' +
+        'one thing — sizes, spacings, fastener counts, thresholds by material, ' +
+        'requirements by jurisdiction. A table a roofer can read one row off ' +
+        'beats the same numbers buried in a sentence. Example shape:\n' +
+        '| Pitch | Multiplier |\n|---|---|\n| 4/12 | 1.0541 |\n' +
+        'Keep tables to 4 columns or fewer — this is read on a phone.\n' +
+        'Do NOT use raw HTML, links or images; they will not render.\n' +
         'Where a number comes from code or a manufacturer spec, name the source ' +
         '(for example "2019 Residential Code of Ohio R905.2.8.5" or "per the ' +
         'manufacturer\'s installation instructions"). If you are not certain of a ' +
@@ -143,8 +153,17 @@ export default async function handler(req, res) {
         '  "subsection_is_new": true|false,\n' +
         '  "title": "<a title someone would scan for later, under 70 characters>",\n' +
         '  "summary": "<one sentence on what it covers>",\n' +
-        '  "body": "<the entry itself>"\n' +
-        '}'
+        '  "body": "<the entry itself>",\n' +
+        '  "sources": ["<short citation>", "..."]\n' +
+        '}\n' +
+        'sources: the code sections, manufacturer documents or statutes the ' +
+        'answer actually rests on, each a short label a person could look up ' +
+        '(for example "2019 RCO R905.1.2" or "Owens Corning installation ' +
+        'instructions"). Cite only what genuinely governs the answer. If nothing ' +
+        'specific does, return an EMPTY array — the library shows an uncited ' +
+        'entry as uncited, which is far better than a citation that does not ' +
+        'say what you claim it says. Never cite a section number you are not ' +
+        'sure of.'
       }];
     } else if (file) {
       /* Same request shape as /api/sol.js: { file: <base64 payload>, mime }.
@@ -201,9 +220,21 @@ export default async function handler(req, res) {
     out = out.replace(/```json|```/g, '').trim();
 
     let parsed;
+    /* 446: sources is display-only and reaches the DB as text[]. Coerce to a
+       clean array of short strings here so the browser never has to guess —
+       a model returning a bare string or null must not become [null]. */
     try { parsed = JSON.parse(out); }
     catch (e) {
       res.status(502).json({ error: 'Model returned unparseable output', detail: out.slice(0, 300) });
+
+    if (parsed && typeof parsed === 'object') {
+      const raw = parsed.sources;
+      const list = Array.isArray(raw) ? raw : (typeof raw === 'string' && raw.trim() ? [raw] : []);
+      parsed.sources = list
+        .map(s => String(s == null ? '' : s).trim().slice(0, 200))
+        .filter(s => s.length > 1)
+        .slice(0, 8);
+    }
       return;
     }
 
