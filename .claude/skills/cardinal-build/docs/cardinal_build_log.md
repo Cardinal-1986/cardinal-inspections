@@ -995,3 +995,89 @@ groupsep count, `data-rltags` count and `<h3>` count are all identical to 456.
 markup**, **144 in the DOM** (136 + 8 built from in-file NACHI templates), before the
 database adds any. Corrected in `FEATURES.md`, which now states both and says why they
 differ.
+
+---
+
+## Build 458 — the trade words a rep actually types
+
+A probe of **107 realistic search terms** against the library at build 455 found **27
+returning nothing** and 21 returning a single card. That list went through two adversarial
+passes. **18 of the first 27 proposals were refuted**, and several refutations are worth
+more than the tags that survived them.
+
+### What the review stopped
+
+- **`flat roof` → the commercial code cards.** OBC does not apply to a one- or two-family
+  dwelling; RCO does. In Dayton a residential "flat roof" is a porch, addition or garage
+  deck, usually under 2:12 — where **RCO R905.2.2 does not permit asphalt shingles at all**,
+  and the card the tag would have pointed at says "double-layer underlayment and shingle
+  it." Zero results sends the rep to call the office. That tag would have sent him to the
+  supply house with the wrong material. **Left at zero** until a residential low-slope card
+  exists.
+- **`ice dam` → the Ice Barrier code card.** An ice dam is a winter phenomenon; the ice
+  barrier rule is an installation requirement at re-roof. A rep who lands there and tells an
+  adjuster "code requires ice barrier so my leak is covered" has conflated code compliance
+  with coverage. Routed to **Attic Ventilation** — the actual cause and prevention.
+- **`permit close-out` → the depreciation card.** The card mentions it once as the fourth of
+  four proofs. A rank-2 tag asserts the card is *about* it, routing a public-authority
+  question into a money card — and on a Dayton tear-off the corpus's own City of Dayton card
+  says no permit is required at all.
+- **`window wrap` → the fascia card.** Fascia wrap bills by LF along eave and rake; window
+  wrap bills per opening. The correct card already answers that query and the tag would have
+  sorted the wrong one above it.
+- **`weatherlock` / `proarmor`.** Brand names are narrowings, not synonyms — RCO R905.1.2
+  accepts a self-adhering sheet from anyone, GAF sells WeatherWatch, CertainTeed WinterGuard.
+- **`ridge capping`.** Australian/NZ usage for mortar-bedded ridge tiles. Nobody in Dayton
+  says it.
+- **`capping`** on its own — it means trim coil wrap, ridge cap shingles *or* cap flashing
+  depending on who is speaking. The disambiguated compounds shipped instead.
+
+### Two mechanics that shaped every token, both read from the shipped source
+
+1. **`cardRank()` is plain substring, so matching is ONE-DIRECTIONAL.** The query is searched
+   inside the tag: a tag `ice damming` is found by `ice dam`, but a tag `ice dam` is **not**
+   found by `ice damming`. So the longer form ships. That is why `high nailing` also answers
+   `nailing` (and why a separate `nailing` token was dropped as a strict no-op), and why the
+   plurals `turtle vents`, `soffit vents`, `cap flashings`, `gutter sizes`,
+   `additional living expenses` are the shipped forms.
+2. **`filterTier()` runs PER PAGE**, inside `allPages.forEach`. Give a card a rank-2 tag and
+   every rank-3 body hit **on that page** vanishes from that query. The first skeptic claimed
+   this was library-wide and was wrong; that was checked against the source, not argued.
+
+**That mechanic bit twice, and both were caught by measurement, not by reading.**
+
+- `cap flashing` was answered only by `rlPageSup :: Screens & Window Frames` at rank 3 — the
+  same page as `Step & Counter Flashing`. Tagging Step alone would have deleted it. Screens
+  is tagged `window cap flashings`, which contains `cap flashing` so it survives, and is
+  honest: there the term means the aluminum head cap over a window, not chimney
+  counterflashing.
+- `gutters` lost `Slope / Fall` the moment `Total Eave Linear Feet` gained `5 inch gutters`.
+  Fixed by tagging `Slope / Fall` with `gutter slope gutters` — its tags were
+  `pitch slope grade half inch` and never said gutter at all, while its body is about
+  sagging gutters holding standing water.
+
+### Gates
+
+`check_build.py` green with the negative control. **104/104 across five browser harnesses.**
+Scope proven both ways over **22 regions**.
+
+The real gate was a **402-query regression diff** — the 107 probe terms, the 22 new tokens,
+and all 314 existing tag tokens on every page being touched — captured as full result sets
+before and after so they diff card by card rather than by count. **35 queries gained, 365
+unchanged, 1 lost.**
+
+The one loss is accepted and stated: `water` drops three `rlPageCode` body hits
+(*When Roof Recover is Prohibited*, *Flashings*, *Commercial Reroofing Rules*) and gains
+*Ice Barrier Requirement* at tag rank. All three lost hits are incidental — "water-soaked",
+"prevent water intrusion". Every genuinely water-related card survives.
+
+**Known leftover, not fixed:** `nailing` still returns `rlPageMfg :: 📤 PDFs Pending` as a
+rank-3 body hit. Evicting it needs a rank 0–2 hit on that page, and tagging a card purely to
+hide a junk row is the wrong tool. It is a placeholder-card cleanup.
+
+### A third test-was-wrong
+
+The generic scope proof reported REGION PROOF FAILED. It spies on `patch_lib.sub`, and 20 of
+this build's 22 edits go through `tag_lib.append_tokens`, which splices a located opening tag
+directly — so it correctly reported changes it had not been told about. `proof_458.py` spies
+on both paths. Third red on this project that was the test's fault, not the artifact's.
