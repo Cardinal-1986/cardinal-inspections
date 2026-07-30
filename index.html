@@ -3143,7 +3143,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 459 &#8212; Community keeps the light/dark button on purpose now, and both its themes read properly</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 460 &#8212; kickout flashing, what the slope allows, power vents, ice dams and 3-tab &#8212; plus a wrong drip-edge number fixed</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4304,12 +4304,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-tags"><span>nails</span><span>wind damage</span><span>installation defect</span></div>
       </div>
 
-      <div class="rl-card" data-rltags="drip edge overhang eave rake">
+      <div class="rl-card" data-rltags="drip edge overhang eave rake gutter apron">
         <h3>Drip Edge</h3>
         <span class="rl-cite">RCO R905.2.8.5</span>
-        <p>Drip edge is required at eaves and rakes of shingle roofs. It must be corrosion-resistant metal, extend at least 1/4 inch below the sheathing, and extend back onto the roof deck a minimum of 2 inches. Adjacent segments overlap at least 2 inches. Fasten at intervals not exceeding 16 inches on center. At eaves, underlayment is installed <b>over</b> the drip edge; at rakes, underlayment is installed <b>under</b> the drip edge.</p>
+        <p>Drip edge is required at eaves and rakes of shingle roofs. It must be corrosion-resistant metal, extend at least 1/4 inch below the sheathing, and extend back onto the roof deck a minimum of 2 inches. Adjacent segments overlap at least 2 inches. Fasten at intervals not exceeding <b>12 inches</b> on center. At eaves, underlayment is installed <b>over</b> the drip edge; at rakes, underlayment is installed <b>under</b> the drip edge.</p>
         <div class="rl-use"><b>Use it when:</b> Adjuster's scope excludes new drip edge on a full re-roof. Code requires it on every eave and rake. Legacy roofs installed before drip edge was required often lack it entirely &mdash; document that and add it as required-by-code.</div>
-        <div class="rl-tags"><span>drip edge</span><span>eave</span><span>rake</span></div>
+        <div class="rl-warn"><b>A gutter apron is not a drip edge, and this section will not buy you one.</b> Different profiles, different jobs: drip edge is the required eave and rake metal; a gutter apron has a longer back leg that carries water over the back edge of the gutter, on a house where the fascia is set back or the gutter hangs low. It is a real, billable item and often the right call &mdash; bill it as a gutter detail on its own merits. Cite R905.2.8.5 for it and an adjuster who knows the code will discount everything else you said.</div>
+        <div class="rl-tags"><span>drip edge</span><span>gutter apron</span><span>eave</span><span>rake</span></div>
       </div>
 
       <div class="rl-card" data-rltags="flashing step counter valley chimney wall counterflashing">
@@ -4373,6 +4374,56 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-use"><b>Use it when:</b> Discovering rot or delamination during tear-off. Photograph before covering. Ohio code makes decking replacement a code-required scope item when the existing sheathing cannot support new roofing; Ordinance &amp; Law coverage often pays for this even when standard coverage doesn't. Verify the homeowner's policy has O&amp;L coverage before promising anything.</div>
         <div class="rl-doc"><b>Document:</b> Photo each section of failed decking with a tape measure or ruler in frame for scale. Log square footage replaced. Save the removed board as evidence when reasonable.</div>
         <div class="rl-tags"><span>decking</span><span>rot</span><span>ordinance &amp; law</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="kickout kick-out diverter flashing roof to wall sidewall r903 wall rot">
+        <h3>Kickout &amp; Roof-to-Wall Flashing</h3>
+        <span class="rl-cite">RCO R903.2.1</span>
+        <p>Where a sloped roof runs down into a vertical sidewall &mdash; a dormer cheek, a garage wall, a second-storey wall over a porch &mdash; the last shingle course dumps its whole slope's water at the wall. Without a diverter it runs <b>behind</b> the siding instead of into the gutter.</p>
+        <p><b>The code does not use the words &ldquo;kickout flashing.&rdquo;</b> It is written as a function, and that is how you should quote it: flashings are required at wall and roof intersections, and <i>&ldquo;a flashing shall be installed to divert the water away from where the eave of a sloped roof intersects a vertical sidewall.&rdquo;</i> Metal flashing must be corrosion-resistant and not less than <b>0.019&Prime;</b> (No. 26 galvanized sheet).</p>
+        <p>Quoting the sentence beats saying &ldquo;code requires a kickout&rdquo; and being told the word is not in the book. It is not &mdash; the requirement still is.</p>
+        <div class="rl-use"><b>Use it when:</b> An adjuster's scope has step flashing but no diverter at the bottom of a roof-to-wall run, or a re-roof is scoped to reuse whatever is there. The flashing at the bottom of that run is the one that fails, and the damage it causes is inside the wall where nobody photographs it.</div>
+        <div class="rl-doc"><b>Document:</b> Photograph every roof-to-wall termination from the ground and from the roof. Note whether a diverter exists, whether it is a formed piece or a bent shingle, and whether it discharges into the gutter or past the end of it. Then photograph the siding and trim directly below &mdash; staining, swollen trim, soft sheathing, peeling paint in a vertical stripe. That stripe is the argument.</div>
+        <div class="rl-warn"><b>This one is a liability, not just a line item.</b> A missing diverter is the single most common cause of hidden wall rot behind cladding. If Cardinal re-roofs and reinstalls the same non-compliant detail, the next leak is Cardinal's. Cardinal's own gutter scope already specifies it &mdash; <i>&ldquo;install aluminum kickout flashing at all critical roof-to-wall intersections where gutters terminate&rdquo;</i> &mdash; so the roof scope should match.</div>
+        <div class="rl-tags"><span>kickout</span><span>roof-to-wall</span><span>flashing</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="slope pitch 2 12 4 12 minimum shingles prohibited low slope flat roof porch r905 2 2">
+        <h3>Slope Decides the System</h3>
+        <span class="rl-cite">RCO R905.2.2</span>
+        <p>Pitch is not a preference on a roof. It decides what may legally go on it.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>What the slope permits &mdash; asphalt shingles</caption>
+            <thead><tr><th>Slope</th><th>Asphalt shingles?</th><th>Underlayment</th></tr></thead>
+            <tbody>
+              <tr><td><b>4:12 and steeper</b></td><td>Yes</td><td>Single layer</td></tr>
+              <tr><td><b>2:12 up to 4:12</b></td><td>Yes</td><td><b>Double layer</b> &mdash; RCO R905.1.1</td></tr>
+              <tr><td><b>Below 2:12</b></td><td><b>No &mdash; not permitted</b></td><td>Needs a low-slope system, not shingles</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Asphalt shingles may be used <b>only</b> on slopes of two units vertical in twelve horizontal (2:12) or greater. From 2:12 up to 4:12, double underlayment is required. Below 2:12 the answer is not &ldquo;shingles with extra underlayment&rdquo; &mdash; it is a different roof covering entirely.</p>
+        <p>In Dayton housing stock the sub-2:12 areas are porch roofs, additions, garage decks and shed dormers. They are small, they are easy to miss on an aerial report, and they are where the callback comes from.</p>
+        <div class="rl-use"><b>Use it when:</b> A porch or addition is scoped as shingles at the same unit price as the main roof. Measure the pitch before you agree. If it is under 2:12 the line item is a low-slope system and it prices differently.</div>
+        <div class="rl-doc"><b>Document:</b> Pitch every plane separately, not just the main roof. A pitch gauge photo on the low plane, with the reading visible, settles the argument before it starts.</div>
+        <div class="rl-warn"><b>Do not sell shingles below 2:12.</b> The code does not permit it, no manufacturer warranty covers it, and the leak is yours. If the existing roof has shingles down there, that is a defect to document &mdash; not a precedent to match.</div>
+        <div class="rl-tags"><span>slope</span><span>low slope</span><span>underlayment</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="powered attic ventilator power vent attic fan pav short circuit depressurize r806">
+        <h3>Powered Attic Ventilators</h3>
+        <span class="rl-cite">RCO R806</span>
+        <p>A powered attic ventilator is a fan, and a fan does not fix a ventilation deficit &mdash; it moves the problem. R806 is satisfied by <b>net free area</b>, balanced low-to-high: 1/150 of the ventilated space, reducible to 1/300 when 40&ndash;50% of it is in the upper portion.</p>
+        <p>Two failures come up on inspection, and both are worth photographing:</p>
+        <ul>
+          <li><b>Paired with a ridge vent, it short-circuits.</b> The fan pulls its air from the nearest opening, which is the ridge six feet away, not from the soffits thirty feet away. The attic barely ventilates and the ridge vent becomes an intake.</li>
+          <li><b>Starved of intake, it depressurizes the attic and pulls from the house.</b> With soffits blocked or absent, the easiest air path is through can lights, the attic hatch and top plates &mdash; so it draws conditioned air out of the living space, and in winter it drags moisture up with it.</li>
+        </ul>
+        <p>Intake must be at least equal to exhaust. If it is not, adding a fan makes it worse, not better.</p>
+        <div class="rl-use"><b>Use it when:</b> You find a power vent on a roof that also has a ridge vent, or a power vent over blocked soffits. Both are documentable defects. If the unit itself is hail-struck or the motor has failed, that is a covered line item on its own &mdash; but do not present the fan as the ventilation fix.</div>
+        <div class="rl-doc"><b>Document:</b> Photograph the fan, the ridge line, and the soffit intake in the same walk. Note whether the thermostat/humidistat responds. Check the manufacturer's system requirements before scoping a fan alongside ridge vent &mdash; several shingle and vent warranties restrict mixing exhaust types.</div>
+        <div class="rl-tags"><span>power vent</span><span>ventilation</span><span>intake</span></div>
       </div>
 
       <div class="rl-groupsep">Commercial &mdash; OBC Chapter 15</div>
@@ -5165,6 +5216,38 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <li><b>Assuming intent.</b> Wear-and-tear damage on an old roof and hail impact can coexist. Document both honestly. Overselling storm damage on an aged roof gets caught &mdash; and it damages Cardinal's credibility on every future claim in the neighborhood.</li>
         </ul>
       </div>
+
+      <div class="rl-card" data-rltags="ice dam ice damming refreeze attic heat eave icicle winter leak">
+        <h3>Ice Dams &mdash; How They Form, and What They Are Not</h3>
+        <p>An ice dam is a <b>heat</b> problem that presents as a water problem. Attic heat warms the deck over the living space, snow on that part of the roof melts, the water runs down to the overhang &mdash; which is cold, because there is no heated space under it &mdash; and refreezes. The ridge of ice grows, backs water up the slope, and the water finds the shingle laps and goes in.</p>
+        <p>Three things cause it, in this order: <b>air leaking</b> from the house into the attic, <b>insufficient insulation</b> at the ceiling plane, and <b>insufficient or unbalanced ventilation</b> to carry away the heat that still gets through. A roof cannot be built to survive a heat problem indefinitely; it can only be built to resist the water longer.</p>
+        <div class="rl-use"><b>Use it when:</b> A homeowner calls in January with a ceiling stain and icicles at the eave. The roof is usually not defective &mdash; it is doing what a roof does under a dam. Look in the attic on the same visit: frost on nail points, matted insulation, a warm patch, a bath fan venting into the attic instead of through the roof.</div>
+        <div class="rl-doc"><b>Document:</b> Icicle line and dam thickness from the ground. Interior staining with a date. Attic: insulation depth, air-sealing at the top plates and hatch, whether soffit intake is blocked, whether any exhaust fan terminates in the attic. That last one is a five-minute find that explains a lot of January calls.</div>
+        <div class="rl-warn"><b>Do not turn a code section into a coverage argument.</b> The ice barrier rule (<b>RCO R905.1.2</b>) is an <i>installation</i> requirement that applies when a roof is replaced. It is not retroactive to the roof on the house, and it does not make an existing ice-dam leak a covered loss. Whether the interior damage is covered is a policy question &mdash; read the declarations and the endorsements, and let the carrier answer it. Telling an adjuster &ldquo;code requires an ice barrier, so this leak is covered&rdquo; conflates two different things and spends your credibility on an argument you will lose.</div>
+        <div class="rl-tags"><span>ice dam</span><span>ventilation</span><span>attic</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="three tab 3-tab architectural laminate dimensional wind rating discontinued repairability matching">
+        <h3>3-Tab vs. Architectural &mdash; and Why It Decides the Argument</h3>
+        <p>Two shingle types, and which one is on the roof changes the whole conversation about repair versus replace.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>What separates them in the field</caption>
+            <thead><tr><th></th><th>3-tab</th><th>Architectural / laminate</th></tr></thead>
+            <tbody>
+              <tr><td><b>Build</b></td><td>Single layer, cut tabs, flat look</td><td>Two or more laminated layers, shadowed</td></tr>
+              <tr><td><b>Typical wind rating</b></td><td>Around 60 mph</td><td>Commonly 110&ndash;130 mph</td></tr>
+              <tr><td><b>Typical weight</b></td><td>Lighter</td><td>Noticeably heavier per square</td></tr>
+              <tr><td><b>Still made?</b></td><td>Largely discontinued across the major lines</td><td>The current standard</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><b>The repairability point is the one that matters on a claim.</b> A 3-tab roof is hard to repair honestly: the lines are mostly gone, and what is still sold will not match the weathered colour or the exposure of a roof that has been up fifteen years. That is not an aesthetic complaint &mdash; it is the factual basis for the matching argument the library already sets out under <b>OAC 3901-1-54</b>.</p>
+        <p>So identifying the shingle type is not trivia. On an architectural roof, a slope repair may genuinely be reasonable. On a discontinued 3-tab, &ldquo;repair the damaged slope&rdquo; usually cannot be done to a reasonably comparable appearance, and that is the argument to make &mdash; with the discontinuation documented, not asserted.</p>
+        <div class="rl-use"><b>Use it when:</b> The scope says repair and the roof is 3-tab. Identify the line if you can, get the discontinuation in writing from the supplier, and pair it with the matching regulation. Type first, then the argument.</div>
+        <div class="rl-doc"><b>Document:</b> Close-up of the shingle butt showing single vs laminated layer. A photo of the tab cut and exposure. Any legible wrapper or stamp in the attic or on a leftover bundle. Supplier confirmation that the line is discontinued &mdash; an email, not a phone call.</div>
+        <div class="rl-tags"><span>3-tab</span><span>architectural</span><span>matching</span></div>
+      </div>
     </div>
 
     <!-- =========================================================
@@ -5423,6 +5506,22 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           </ul>
         </div>
         <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The property has [X vent stack penetrations of the following sizes: ...]. Existing pipe boots on this roof are [years] old with visible UV degradation and cracked rubber seals (documented in attached photos). Reusing degraded boots on the new roof will produce failures within the warranty period. Per RCO R905.2.8, flashings must be sized and installed to prevent water intrusion. Please add [X new pipe boots] to the approved scope.&rdquo;</i></div>
+      </div>
+
+      <div class="rl-card" data-rltags="kickout kick-out diverter roof to wall sidewall supplement r903 wall rot">
+        <h3>Kickout / Roof-to-Wall Diverter</h3>
+        <span class="rl-cite">RCO R903.2.1</span>
+        <p>A roof-to-wall run terminates without a diverter, or the adjuster's scope carries step flashing but nothing at the bottom of the run.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Kickout / diverter flashing &mdash; count each roof-to-wall termination, not linear feet.</li>
+            <li>Step flashing for the full run above it, if being replaced.</li>
+            <li>Siding removal and re-installation at the termination, where the diverter has to tuck behind the cladding.</li>
+            <li>Any sheathing or trim replacement the wall behind it turns out to need &mdash; scoped after exposure, not before.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R903.2.1, flashing is required at wall and roof intersections, and a flashing shall be installed to divert water away from where the eave of a sloped roof intersects a vertical sidewall. The roof-to-wall termination(s) at [location] have no diverter installed. Reinstalling the roof without one would leave a known code deficiency in place and direct roof runoff behind the wall cladding. Please add diverter flashing at [N] roof-to-wall terminations, with associated siding removal and re-installation, to the approved scope.&rdquo;</i></div>
+        <div class="rl-warn"><b>Photograph the wall below before you write this.</b> If there is staining or soft trim under the termination, that is related damage and belongs in the same supplement &mdash; documented as observed condition. If the wall has to be opened, scope the repair after exposure, not from a guess.</div>
       </div>
 
       <div class="rl-groupsep">Related Property Damage</div>
@@ -32505,6 +32604,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:460, note:'\uD83E\uDDF1 Six new library cards: kickout flashing at roof-to-wall (and how to quote it, because the code never says \u201ckickout\u201d), what the slope actually allows, powered attic ventilators, ice dams, and 3-tab vs architectural. Also fixed a wrong number on the Drip Edge card \u2014 fasteners are 12\u2033 on center, not 16\u2033 \u2014 and noted that a gutter apron is not a drip edge.' },
 { build:459, note:'\u2600\uFE0F The light/dark button stays on Community on purpose now \u2014 it used to be there by accident and would disappear in one state. The grey Community uses for secondary text was also too pale to read, in BOTH themes: section headings, stat labels, sheet totals and the quiet text under a bid are all legible now.' },
 { build:458, note:'\uD83D\uDD24 The library now answers trade words, not just the wording on the card. \u201cTurtle vent\u201d finds the box-vent rules, \u201cice and water\u201d finds the ice barrier code, \u201chip and ridge\u201d and \u201cleaf guard\u201d and \u201cfascia wrap\u201d and \u201c6 inch gutter\u201d all land somewhere now \u2014 they returned nothing at all before.' },
 { build:457, note:'\uD83C\uDFED Searching the library for something like \u201cwarranty tiers\u201d used to return three rows that read exactly the same \u2014 Owens Corning, GAF and CertainTeed all have a card by that name. Results now lead with the manufacturer, so you can\u2019t open the wrong one by accident.' },

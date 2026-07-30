@@ -1164,3 +1164,74 @@ Scope proven both ways over 5 regions. The other five library harnesses still pa
 **Theo's eyes are still the gate on how it looks.** The ratios are arithmetic and they are
 right; whether `#828c86` reads as "dim" next to `#9aa39e` on his phone is not something a
 number settles.
+
+---
+
+## Build 460 — roof-to-wall, slope, and a drip-edge number that was wrong
+
+First tranche of the thirteen measured content gaps. Every gap was re-verified against the
+corpus before a word was written, and that re-verification changed the build twice.
+
+### The most important thing in this build is a correction, not a new card
+
+`rlPageCode :: Drip Edge` said **"Fasten at intervals not exceeding 16 inches on center."**
+R905.2.8.5 says **12 inches** — *"Drip edges shall be mechanically fastened to the roof deck
+at not more than 12 inches (305 mm) o.c."* Verified against the 2018 and 2021 IRC and two
+adopting jurisdictions, not recalled. That is a wrong number on a card whose entire purpose
+is to be quoted to an adjuster.
+
+### Two cards I did not write, because they already existed
+
+- **Drip edge / gutter apron.** The shipped card already carries eaves-and-rakes, the 2″
+  overlap, the ¼″ and 2″ extensions and the underlayment sequencing. The only thing it
+  lacked — that a gutter apron is a *different profile the code does not name* — went on as
+  a warning. Extend, don't add.
+- **Kickout** is genuinely absent, and the existing `Flashings — Step, Wall, Valley,
+  Chimney` card does not cover it. Checked before writing rather than assumed.
+
+### The extractor lied first
+
+`kickout` and `kick-out` do appear in the file, and my first pass attributed them to
+`Calculating from an Aerial Report` — because that is the last card on its page and my
+owner-mapping let its range run to end-of-file. Every hit is actually in **Cardinal's own
+gutter contract template and the estimate chips**, i.e. app code, not a library card. Fixed
+the mapping before drawing a conclusion. Useful side effect: the new card matches Cardinal's
+existing scope wording instead of inventing a parallel phrasing.
+
+### Six new cards
+
+`rlPageCode` — **Kickout & Roof-to-Wall Flashing** (R903.2.1), **Slope Decides the System**
+(R905.2.2), **Powered Attic Ventilators** (R806).
+`rlPageSup` — **Kickout / Roof-to-Wall Diverter**, in the Flashings group.
+`rlPageInsp` — **Ice Dams**, **3-Tab vs. Architectural**.
+
+Two points worth keeping:
+
+- **The IRC never uses the words "kickout flashing."** The requirement is functional — *"a
+  flashing shall be installed to divert the water away from where the eave of a sloped roof
+  intersects a vertical sidewall."* The card teaches the rep to quote the sentence, because
+  saying "code requires a kickout" and being told the word is not in the book loses the room.
+- **The ice-dam card refuses the coverage argument on purpose.** R905.1.2 is an installation
+  requirement at re-roof; it is not retroactive and it does not make an existing ice-dam leak
+  a covered loss. The card says so, in a warning, because that conflation is the easy mistake.
+
+### Content shipped without its key, and the harness caught it
+
+The gutter-apron warning sits **past the 300-character body index**, and the visible
+`.rl-tags` chips are display only — the searchable attribute is `data-rltags`. So the card
+taught the distinction and `gutter apron` still returned nothing. Tagged.
+
+### Gates
+
+`check_build.py` green with the negative control. **27/27 in a real browser** — every new
+card present on the right page with tags, the correction live, no duplicate Drip Edge card,
+both new tables rendering as real tables, and every card reachable through the shipped
+search. Scope proven both ways over 8 regions. Full suite still green: **117/117**.
+
+### Counting, again
+
+Three assertions in this patch were hardcoded guesses that fired: `RCO R903.2.1` (already
+present twice in the file), `rl-warn`, and `gutter apron`. I fixed the last one by
+instrumenting the delta and reading it instead of reasoning about it — which is what the
+counting rule in `CLAUDE.md` has said all along. Prefer self-computing assertions; when one
+fires, measure, do not re-guess.
