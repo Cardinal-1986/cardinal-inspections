@@ -505,7 +505,7 @@ body.claim-insurance .projinfo .projHomeChip:hover{background:var(--ct-red-wash)
 
 /* -- Extend insurance theme to the full client-profile content -- */
 /* Solid dark background matching Cardinal Truth so the profile reads as one theme */
-body.claim-insurance #projectView{background:var(--ct-bg);}
+body.claim-insurance #projectView{background:var(--ct-bg,#FAF8F7);}
 body.claim-insurance{background:var(--ct-bg);}
 /* 412: <html> has no background anywhere in this file, only <body> does. #commsView
    is normal document flow (not a fixed overlay), so a long note scrolls the real
@@ -527,9 +527,9 @@ body.claim-insurance #brandLogo{
 }
 
 /* Section headers with light text + steel-blue rule (subtle, no full dark bar) */
-body.claim-insurance #projectView .projsec{color:var(--ct-ink);border-bottom-color:var(--ct-red);
-  padding:6px 10px 4px;background:var(--ct-surface-2);border-radius:6px 6px 0 0;
-  border-bottom-width:3px;-webkit-background-clip:initial;background-clip:initial;-webkit-text-fill-color:var(--ct-ink);}
+body.claim-insurance #projectView .projsec{color:var(--ct-ink,#17181B);border-bottom-color:var(--ct-red,#C4180F);
+  padding:6px 10px 4px;background:var(--ct-surface-2,#FAF8F7);border-radius:6px 6px 0 0;
+  border-bottom-width:3px;-webkit-background-clip:initial;background-clip:initial;-webkit-text-fill-color:var(--ct-ink,#17181B);}
 
 /* Job Value / Balance Due strip */
 body.claim-insurance .dbmoney{
@@ -3065,9 +3065,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
   body:not(.claim-insurance):not(.claim-community) #projectView .projhead:not(.hascover) #projCoverEmpty{
     color:var(--rbe-mute)}
   body.claim-insurance #projectView .projhead:not(.hascover) .projcover{
-    background:transparent;border:1px dashed var(--ct-line)}
+    background:transparent;border:1px dashed var(--ct-line,#EAE5E3)}
   body.claim-insurance #projectView .projhead:not(.hascover) #projCoverEmpty{
-    color:var(--ct-ink-2)}
+    color:var(--ct-ink-2,#6E6663)}
   body.claim-community #projectView .projhead:not(.hascover) .projcover{
     background:transparent;border:1px dashed #c9dcbf}
   body.claim-community #projectView .projhead:not(.hascover) #projCoverEmpty{
@@ -3138,7 +3138,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 448 &#8212; the insurance screens stop being see-through</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 449 &#8212; the rest of the claim workspace gets the same safety net</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19021,7 +19021,7 @@ body.claim-insurance #docsView,
 body.claim-insurance #apptsView,
 body.claim-insurance #commsView,
 body.claim-insurance #galleryView{
-  background:var(--ct-bg);
+  background:var(--ct-bg,#FAF8F7);
 }
 
 /* Page heading + the "— Client Name" suffix (suffix has an inline color) */
@@ -19030,38 +19030,38 @@ body.claim-insurance #tasksView    .viewhead,
 body.claim-insurance #docsView     .viewhead,
 body.claim-insurance #apptsView    .viewhead,
 body.claim-insurance #commsView    .viewhead,
-body.claim-insurance #galleryView  .viewhead{ color:var(--ct-ink); }
+body.claim-insurance #galleryView  .viewhead{ color:var(--ct-ink,#17181B); }
 
 body.claim-insurance #paymentsView .viewhead span,
 body.claim-insurance #tasksView    .viewhead span,
 body.claim-insurance #docsView     .viewhead span,
 body.claim-insurance #apptsView    .viewhead span,
 body.claim-insurance #commsView    .viewhead span,
-body.claim-insurance #galleryView  .viewhead span{ color:var(--ct-red-deep) !important; }
+body.claim-insurance #galleryView  .viewhead span{ color:var(--ct-red-deep,#7E1410) !important; }
 
 /* 411: the chat card, its bubbles, the @mention chips and the composer are frozen
    cream/white literals in the main sheet. They coincide with Docket, which is why
    only the dark theme looked broken. Scoped to insurance because #commsView is
-   shared with retail and community, whose grounds are not var(--ct-bg). */
-body.claim-insurance #commsView .subnote{ color:var(--ct-ink-2); }
+   shared with retail and community, whose grounds are not var(--ct-bg,#FAF8F7). */
+body.claim-insurance #commsView .subnote{ color:var(--ct-ink-2,#6E6663); }
 body.claim-insurance #commsView .chatbox{
-  background:var(--ct-surface); border-color:var(--ct-line); }
+  background:var(--ct-surface,#FFFFFF); border-color:var(--ct-line,#EAE5E3); }
 body.claim-insurance #commsView .chatmsg .bub{
-  background:var(--ct-surface-2); border-color:var(--ct-line); color:var(--ct-ink); }
-body.claim-insurance #commsView .chatmsg .who{ color:var(--ct-red-deep); }
+  background:var(--ct-surface-2,#FAF8F7); border-color:var(--ct-line,#EAE5E3); color:var(--ct-ink,#17181B); }
+body.claim-insurance #commsView .chatmsg .who{ color:var(--ct-red-deep,#7E1410); }
 body.claim-insurance #commsView .chatmsg .when,
-body.claim-insurance #commsView .chatempty{ color:var(--ct-ink-2); }
+body.claim-insurance #commsView .chatempty{ color:var(--ct-ink-2,#6E6663); }
 body.claim-insurance #commsView .chatmsg .mention{
-  background:var(--ct-red-wash); color:var(--ct-red-deep); }
-body.claim-insurance #commsView .chatmsg.mine .av{ background:var(--ct-ink); color:var(--ct-bg); }
-body.claim-insurance #commsView .chatmsg .av{ background:var(--ct-red); color:var(--ct-red-ink); }
+  background:var(--ct-red-wash,#FDF4F3); color:var(--ct-red-deep,#7E1410); }
+body.claim-insurance #commsView .chatmsg.mine .av{ background:var(--ct-ink,#17181B); color:var(--ct-bg,#FAF8F7); }
+body.claim-insurance #commsView .chatmsg .av{ background:var(--ct-red,#C4180F); color:var(--ct-red-ink,#FFFFFF); }
 body.claim-insurance #commsView .chatinput input{
-  background:var(--ct-surface); border-color:var(--ct-line-strong); color:var(--ct-ink); }
-body.claim-insurance #commsView .chatinput input::placeholder{ color:var(--ct-ink-2); }
+  background:var(--ct-surface,#FFFFFF); border-color:var(--ct-line-strong,#DED8D6); color:var(--ct-ink,#17181B); }
+body.claim-insurance #commsView .chatinput input::placeholder{ color:var(--ct-ink-2,#6E6663); }
 body.claim-insurance #commsView .chipbtn{
-  background:var(--ct-surface); border-color:var(--ct-line-strong); color:var(--ct-ink); }
+  background:var(--ct-surface,#FFFFFF); border-color:var(--ct-line-strong,#DED8D6); color:var(--ct-ink,#17181B); }
 body.claim-insurance #commsView .chipbtn:hover{
-  border-color:var(--ct-red); color:var(--ct-red-deep); }
+  border-color:var(--ct-red,#C4180F); color:var(--ct-red-deep,#7E1410); }
 /* 411: the ribbon ground became theme-aware at 409 but its ink stayed color:#fff,
    so the clock and project context went white-on-white in Docket. Insurance is the
    only CRM whose ribbon reads --ct-* tokens, so only insurance needs (and gets) this. */
@@ -19076,8 +19076,8 @@ body.claim-insurance #tasksView    .projsec,
 body.claim-insurance #docsView     .projsec,
 body.claim-insurance #apptsView    .projsec,
 body.claim-insurance #galleryView  .projsec{
-  color:var(--ct-ink); border-bottom-color:var(--ct-red); border-bottom-width:3px;
-  padding:6px 10px 4px; background:var(--ct-surface-2); border-radius:6px 6px 0 0;
+  color:var(--ct-ink,#17181B); border-bottom-color:var(--ct-red,#C4180F); border-bottom-width:3px;
+  padding:6px 10px 4px; background:var(--ct-surface-2,#FAF8F7); border-radius:6px 6px 0 0;
 }
 
 /* Explanatory / empty-state / loading copy */
@@ -19095,17 +19095,17 @@ body.claim-insurance #apptsView    .axnote,
 body.claim-insurance #apptsView    .loading,
 body.claim-insurance #galleryView  .subnote,
 body.claim-insurance #galleryView  .axnote,
-body.claim-insurance #galleryView  .loading{ color:var(--ct-ink-2); }
+body.claim-insurance #galleryView  .loading{ color:var(--ct-ink-2,#6E6663); }
 
 /* Log / list rows (payment log, task rows) — no background of their own */
 body.claim-insurance #paymentsView .tskrow,
 body.claim-insurance #tasksView    .tskrow,
 body.claim-insurance #docsView     .tskrow{
-  color:var(--ct-ink); border-bottom-color:var(--ct-line);
+  color:var(--ct-ink,#17181B); border-bottom-color:var(--ct-line,#EAE5E3);
 }
 body.claim-insurance #paymentsView .tskrow small,
 body.claim-insurance #tasksView    .tskrow small,
-body.claim-insurance #docsView     .tskrow small{ color:var(--ct-ink-2); }
+body.claim-insurance #docsView     .tskrow small{ color:var(--ct-ink-2,#6E6663); }
 
 /* Inline status text (color:#666 set inline, so !important is required) */
 body.claim-insurance #payStatus,
@@ -32285,6 +32285,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:449, note:'\uD83D\uDEE1\uFE0F Chat, appointments, documents, tasks, photos and payments inside a claim now carry the same fallback colors Cardinal Truth got in 448 \u2014 same root cause, seven more screens that were exposed to it' },
 { build:448, note:'\uD83E\uDE9F Fixed the insurance home and client list rendering see-through with the retail page ghosting behind them \u2014 a background token was being stripped by another module within a second of load' },
 { build:447, note:'\uD83C\uDFE0 A Library button now sits above the TOC on every Resource Library page and takes you straight back to the library home \u2014 the old back arrow had been hidden by the header redesign, and the deepest pages were four steps from home' },
 { build:446, note:'\uD83D\uDCDA Ask the librarian something and the entry it files can now hold tables, headings and lists instead of flat text \u2014 and it lists the code sections or specs it drew on, or says plainly that it could not cite one' },
