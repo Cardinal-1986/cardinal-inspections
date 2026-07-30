@@ -3143,7 +3143,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 458 &#8212; the library answers the words you actually type &#8212; turtle vent, ice and water, hip and ridge, leaf guard</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 459 &#8212; Community keeps the light/dark button on purpose now, and both its themes read properly</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32476,7 +32476,16 @@ document.body.appendChild(btn);
 function refreshVisibility(){
 var btn = document.getElementById('cr-dark-toggle');
 if(!btn) return;
-btn.classList.toggle('show', document.body.dataset.crm === 'retail');
+/* 459: Community gets the light/dark control too \u2014 Theo's call.
+   This gate only governs the bottom-right FAB state, before ensureSearchRow()
+   adopts the button into the header row, where build 417's
+   `#cr-hd2-srch #cr-dark-toggle{display:flex !important}` takes over. Until now
+   the control was visible on Community only because that !important rule
+   outranked this line, and hidden in the FAB window. Naming both CRMs makes the
+   shipped behaviour deliberate. Insurance stays out: it mounts its own
+   Docket/Siren control in that row and must never show both. */
+var crm = document.body.dataset.crm;
+btn.classList.toggle('show', crm === 'retail' || crm === 'community');
 }
 function start(){
 ensureButton();
@@ -32496,6 +32505,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:459, note:'\u2600\uFE0F The light/dark button stays on Community on purpose now \u2014 it used to be there by accident and would disappear in one state. The grey Community uses for secondary text was also too pale to read, in BOTH themes: section headings, stat labels, sheet totals and the quiet text under a bid are all legible now.' },
 { build:458, note:'\uD83D\uDD24 The library now answers trade words, not just the wording on the card. \u201cTurtle vent\u201d finds the box-vent rules, \u201cice and water\u201d finds the ice barrier code, \u201chip and ridge\u201d and \u201cleaf guard\u201d and \u201cfascia wrap\u201d and \u201c6 inch gutter\u201d all land somewhere now \u2014 they returned nothing at all before.' },
 { build:457, note:'\uD83C\uDFED Searching the library for something like \u201cwarranty tiers\u201d used to return three rows that read exactly the same \u2014 Owens Corning, GAF and CertainTeed all have a card by that name. Results now lead with the manufacturer, so you can\u2019t open the wrong one by accident.' },
 { build:456, note:'\uD83D\uDD0E The Do &amp; Don\u2019t page can be searched now. It was the one page in the library the search could not see \u2014 eleven field practices that never came up no matter what you typed. Results always say whether something is a do or a don\u2019t, so a don\u2019t can never read like advice.' },
@@ -41527,7 +41537,7 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
    emerald. Hue-tested: 0 blue-dominant, 0 cyan-dominant values. */
 :root{
 --ccm-ground:#0e100f;--ccm-card:#161918;--ccm-raise:#1e2220;
---ccm-ink:#f2f4f3;--ccm-mute:#9aa39e;--ccm-dim:#7d8781;
+--ccm-ink:#f2f4f3;--ccm-mute:#9aa39e;--ccm-dim:#828c86;
 --ccm-line:#2a2f2c;--ccm-line2:#232725;
 --ccm-ac:#34D399;--ccm-ac2:#6EE7B7;--ccm-wash:rgba(4,120,87,.18);--ccm-washln:#047857;
 --ccm-rd:#ff6b78;--ccm-rdw:rgba(200,32,46,.16);--ccm-rdln:rgba(255,107,120,.34);
@@ -41550,7 +41560,7 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 --ccm-glow:0 0 0 1px rgba(52,211,153,.24),0 0 22px rgba(4,120,87,.16)}
 [data-theme="rb-light"]{
 --ccm-ground:#f1f2f1;--ccm-card:#ffffff;--ccm-raise:#f7f8f7;
---ccm-ink:#1b1b1b;--ccm-mute:#666666;--ccm-dim:#8a8a8a;
+--ccm-ink:#1b1b1b;--ccm-mute:#666666;--ccm-dim:#6e6e6e;
 --ccm-line:#d9d9d9;--ccm-line2:#e8e9e8;
 --ccm-ac:#047857;--ccm-ac2:#065F46;--ccm-wash:#ECFDF5;--ccm-washln:#a7d9c6;
 --ccm-rd:#C8202E;--ccm-rdw:#fdecec;--ccm-rdln:#f2c9cc;

@@ -1081,3 +1081,86 @@ The generic scope proof reported REGION PROOF FAILED. It spies on `patch_lib.sub
 this build's 22 edits go through `tag_lib.append_tokens`, which splices a located opening tag
 directly — so it correctly reported changes it had not been told about. `proof_458.py` spies
 on both paths. Third red on this project that was the test's fault, not the artifact's.
+
+---
+
+## Build 459 — the light/dark control belongs on Community, so make it deliberate
+
+Theo's call: the retail light/dark toggle appearing on Community is **correct, not the bug
+I flagged at 452.** Two things follow, and neither is cosmetic.
+
+### It was there by accident
+
+`refreshVisibility()` runs on a 1-second interval and sets `.show` only when the CRM is
+retail. It looks like dead code because build 417's
+`#cr-hd2-srch #cr-dark-toggle{display:flex !important}` outranks it — **but only once
+`ensureSearchRow()` has adopted the button into the header row.** `ensureButton()` appends
+it to `<body>` first, and in that window it is the bottom-right FAB, whose visibility
+`.show` really does govern. So on Community the control was visible in the normal state and
+hidden in the fallback one.
+
+The gate now names both CRMs. Insurance keeps its explicit hide rule — it mounts its own
+Docket/Siren control in that row and must never show both.
+
+### Pressing it on Community is now a supported path, so Community light had to be checked
+
+It is a real palette: 32 `--ccm-*` tokens at `:root` and 32 twins under
+`[data-theme="rb-light"]`. Every text-on-surface pair was computed in both themes, with
+alpha washes **composited over their real base** rather than treated as solid.
+
+**`--ccm-dim` was the one token that could not carry text**, and it failed in *both* themes:
+
+| | ground | card | raise |
+|---|---:|---:|---:|
+| light `#8a8a8a` → `#6e6e6e` | 3.08 → **4.54** | 3.45 → **5.10** | 3.24 → **4.79** |
+| dark `#7d8781` → `#828c86` | 5.14 → 5.50 | 4.77 → 5.10 | **4.33** → **4.63** |
+
+Both are the *lightest* values that clear 4.5 on every surface the token actually sits on,
+so the dim-under-mute hierarchy survives (`--ccm-mute` is 5.12–5.74 light, 6.21 on raise
+dark).
+
+Chips were excluded deliberately: `--ccm-chipink` carries chip text and `--ccm-dim` never
+sits on one. Forcing 4.5 on `#ececec` too would have required `#6b6b6b`, nearly
+`--ccm-mute`, collapsing two tiers into one.
+
+### Three of my own errors, all caught by instruments rather than reading
+
+1. **I compared alpha washes as if they were solid.** `rgba(200,32,46,.16)` was read as
+   `#c8202e`, which reported *red on its wash* at 2.06:1 and *wash border on wash* at
+   1.00:1. Both were the instrument. Composited over the real base they are 5.87 and 7.90.
+   Two false findings, in the same class as the 452 square-bounding-box error.
+2. **I said `--ccm-dim` has 12 references. It has 25.** The grep matched `var(--ccm-dim`
+   and missed the 13 that go through `--dim`, the alias `#cr-cc` declares
+   (`--dim:var(--ccm-dim)`). Alias indirection defeats a single grep — the same shape as the
+   `renderTeamPage` and `.acthead` traps.
+3. **I only checked `dim on card` in dark and called dark clean at 14/14.** The harness,
+   which enumerates pairs rather than trusting my list, found `dim on raise` at 4.33:1. I
+   then verified the pair is real before touching it — `.cr-nbid-box input` and
+   `#cr-cc .sheet .tot` both paint `var(--raise)` and both carry `--dim` text, a placeholder
+   and a totals label. Pre-existing, not caused by this build, fixed because it is real.
+
+A fourth, smaller: the first draft's changelog entry said "light mode" after the build had
+grown to fix both themes, and a scope comment still read "the dark default is untouched".
+Both corrected before commit — a changelog is user-facing and a stale one is a lie.
+
+### Anchor discipline
+
+`#8a8a8a` occurs **28 times** in this file. A find-and-replace on the value would have been
+an app-wide restyle. The anchor is the token declaration, which occurs once; the patch
+asserts the other 27 survive.
+
+### Gates
+
+`check_build.py` green with the negative control. **13/13 in a real browser**, driving the
+shipped `CardinalRBTheme` and reading tokens the browser actually resolved — including the
+FAB state across four CRMs and the header-row state on Community and Insurance.
+**0 contrast pairs below floor in either theme**, computed from resolved values.
+
+**Negative control on 458: 3 checks fail and 4 contrast pairs are below floor** — exactly
+the three light `dim` pairs and the one dark one.
+
+Scope proven both ways over 5 regions. The other five library harnesses still pass 104/104.
+
+**Theo's eyes are still the gate on how it looks.** The ratios are arithmetic and they are
+right; whether `#828c86` reads as "dim" next to `#9aa39e` on his phone is not something a
+number settles.
