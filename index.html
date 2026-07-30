@@ -779,7 +779,8 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .pipebtn .pcount{display:block;font:800 20px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);line-height:1.2;}
 .pipebtn .pmoney{display:block;font:700 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
 .pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
-.pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;} .pipe-closed{background:#607D8B;}
+.pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;}
+.pipe-onhold{background:#047857;} .pipe-closed{background:#607D8B;}
 .pipe-prospect{background-image:linear-gradient(160deg,
   #fcead8 0%, #f8ca9c 12%, #F08A24 38%, #F08A24 55%, #ad631a 80%, #784512 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
@@ -13798,7 +13799,7 @@ function renderFavBtn(){
 }
 
 /* ---------- pipeline stages ---------- */
-var STAGES = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
+var STAGES = ['Lead','Prospect','OnHold','Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
 var LOSS_REASONS = ['Price too high','Went with competitor','Not ready / postponed','Insurance denied','No response','Other'];
 var LEGACY_STAGE = { 'Inspected':'Prospect', 'Estimate Sent':'Prospect', 'Signed':'Approved', 'Complete':'Completed' };
 function normStage(s){
@@ -15149,8 +15150,13 @@ var PIPE_BUCKETS = [
   { key:'Prospect',  label:'PROSPECTS',  cls:'pipe-prospect',  tip:'Estimates out \u2014 awaiting decision' },
   { key:'Approved',  label:'APPROVED',   cls:'pipe-approved',  tip:'Signed contracts (incl. scheduled)' },
   { key:'Completed', label:'COMPLETED',  cls:'pipe-completed', tip:'Work finished \u2014 not yet invoiced' },
-  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' }
+  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' },
+  { key:'OnHold',    label:'ON HOLD',    cls:'pipe-onhold',    tip:'Bid in, waiting on a grant or funding decision' }
 ];
+/* Same shape as IC_SKIP: a stage-keyed map per CRM. A community-only column
+   would otherwise appear as a permanently empty sixth column on the Retail
+   and Insurance boards, because renderPipeline does not filter by CRM. */
+var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
 function projectValue(pr){
   var best = Number(parseCkAll(pr).manual_value) || 0;
   cacheRows.forEach(function(r){
@@ -15263,7 +15269,9 @@ document.addEventListener('click', function(e){
 function renderPipeline(){
   var row = document.getElementById('pipeRow');
   if(!row) return;
-  row.innerHTML = PIPE_BUCKETS.map(function(b){
+  var _crm = document.body.dataset.crm || 'retail';
+  var _skip = (typeof PIPE_SKIP !== 'undefined' && PIPE_SKIP[_crm]) || {};
+  row.innerHTML = PIPE_BUCKETS.filter(function(b){ return !_skip[b.key]; }).map(function(b){
     var inBucket = cacheProjects.filter(function(pr){
       var s = normStage(pr.stage);
       return s === b.key || (b.key === 'Approved' && s === 'Scheduled');
@@ -17633,7 +17641,7 @@ function renderInsuranceClientsList(){
   if(stgWrap){
     /* Lead and Prospect are pre-claim stages — a record that far back
        isn't a claim yet, so filtering the claims list by them is noise. */
-    var IC_SKIP = { 'Lead':1, 'Prospect':1 };
+    var IC_SKIP = { 'Lead':1, 'Prospect':1, 'OnHold':1 };
     /* And the chips were printing raw stage names while the rest of this
        CRM says Scope Approved / Awaiting RCV / Denied. Use the same map
        the stage overlay uses so the vocabulary matches. */
@@ -41443,11 +41451,12 @@ if(isNaN(d)) return null;
 return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
 var LABEL = {
-'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'Approved':'Awarded',
+'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'OnHold':'Awaiting Funding',
+'Approved':'Awarded',
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
 'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded',
 };
-var STAGE_ORDER = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
+var STAGE_ORDER = ['Lead','Prospect','OnHold','Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
 function myEmail(){
 try{ return String((window.currentUser && window.currentUser.email) || '').toLowerCase(); }
 catch(_){ return ''; }
@@ -42432,7 +42441,8 @@ if(n < 30) return n + ' days ago';
 return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
 }
 var LABEL = {
-'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'Approved':'Awarded',
+'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'OnHold':'Awaiting Funding',
+'Approved':'Awarded',
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
 'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded',
 };
