@@ -28,3 +28,9 @@ community_partners.html
 community_client_view.html
 community_portal_theme.html
 community_stages.html
+
+# --- SQL. CLAUDE.md's standing convention is "SQL ships as separate .sql
+#     files", and there was no rule here for them — the first migration
+#     committed would have been served at app.cardinalroster.com. Migrations
+#     are run against Supabase by hand; they are never fetched by the app. ---
+*.sql

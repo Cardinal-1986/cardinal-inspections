@@ -635,3 +635,38 @@ Both errors are recorded because the *pattern* costs more than the instances.
    so on the light ground it reported the page as the "ink" and the fix looked like
    it had not applied. Sampling a centred disc at 0.62r fixed it. **The app was
    right and the instrument was wrong** — check the instrument first.
+
+### Library content — the six unconfirmed counties (30 Jul 2026, no build)
+
+`library_items` row `adfe5c23` was seeded as an explicit placeholder: *"Miami,
+Warren, Butler, Clark, Preble and Darke — not yet confirmed."* Each was checked
+against its own official site. **All six run their own building department**;
+none hand residential work back to the State. `library_counties_entry.sql`.
+
+Two findings worth carrying:
+
+- **Preble routes plan review to National Inspection Corporation**
+  (`Plans@Natinspect.com`, 937-433-4642) — *the same private firm Xenia
+  contracts with*, which the library already documents separately. Two
+  jurisdictions, one phone number.
+- **Butler County covers unincorporated areas only.** Hamilton, Fairfield,
+  Middletown, West Chester and Oxford issue their own. This is the Greene
+  County "six exceptions" trap a second time, and the entry says so.
+
+**Darke is flagged unverified in its own body text and in its last source
+chip** — the county site refused the request, so the number came from a
+services directory. Do not let that quietly become fact.
+
+No `index.html` change, so **no build number was bumped** — the app is
+unchanged at 452 and bumping would have been a lie.
+
+**`.vercelignore` gained `*.sql`.** CLAUDE.md's standing convention is that SQL
+ships as separate `.sql` files, and there was no rule for them — the repo
+happened to contain zero, so the first migration committed would have been
+served at `app.cardinalroster.com`. Closed before it opened.
+
+Verified by running the **shipped** `lbRich`/`lbSources` (extracted from
+`index.html` by brace-matching, not re-implemented) against the row as stored:
+12/12 checks — table promoted, `|---|` rule not leaked as a row, `&` escaped,
+7 citation chips rather than the "No source recorded" fallback, and a negative
+control proving `<img onerror>` inside a table cell is still escaped.
