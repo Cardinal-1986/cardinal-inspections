@@ -768,7 +768,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 #brandLogo{background:#fff;border-radius:8px;padding:3px;height:40px !important;width:56px !important;object-fit:contain;flex:0 0 auto;cursor:pointer;}
 @media (max-width:640px){ #brandLogo{height:38px !important;width:52px !important;} }
 /* ---- pipeline widget ---- */
-.pipecard{border:1px solid var(--rbe-line2);border-radius:12px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));color:var(--rbe-ink);padding:14px 16px;margin:14px 0;}
+.pipecard{border:1px solid var(--rbe-line2);border-top:2px solid var(--rbe-ridge-t);border-bottom:2px solid var(--rbe-ridge-b);border-radius:12px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));color:var(--rbe-ink);padding:14px 16px;margin:14px 0;box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
 .pipetitle{font:800 15px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,var(--rbe-head),var(--rbe-head));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc);margin-bottom:10px;}
 .piperow{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;justify-content:space-evenly;}
 .pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;max-width:200px;}
@@ -832,7 +832,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .homeside{flex:0 0 320px;display:flex;flex-direction:column;gap:14px;}
 @media (max-width:900px){ .homecols{flex-direction:column;} .homeside{flex-basis:auto;width:100%;} }
 /* ---- activity feed ---- */
-.actcard{border:1px solid var(--rbe-line2);border-radius:12px;background:var(--rbe-panel);padding:12px 14px;}
+.actcard{border:1px solid var(--rbe-line2);border-top:2px solid var(--rbe-ridge-t);border-bottom:2px solid var(--rbe-ridge-b);border-radius:12px;background:var(--rbe-panel);padding:12px 14px;box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
 .acthead{font:800 14px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);margin-bottom:6px;}
 .actitem{display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--rbe-hair);font:12.5px 'Segoe UI',Arial,sans-serif;}
 .actitem:last-child{border-bottom:0;}
@@ -2114,7 +2114,9 @@ body.restoring #restoreVeil{display:flex;}
 
   /* Client Projects: themed box, centered title */
   section.history{background:var(--rbe-panel);border:1px solid var(--rbe-panelbd);
-    border-radius:12px;padding:14px;position:relative;overflow:hidden;margin:16px 0 26px;}
+    border-top:2px solid var(--rbe-ridge-t);border-bottom:2px solid var(--rbe-ridge-b);
+    border-radius:12px;padding:14px;position:relative;overflow:hidden;margin:16px 0 26px;
+    box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
   section.history::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
     background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
   section.history h2.sec{justify-content:center;text-align:center;}
@@ -3108,7 +3110,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 435 &#8212; brushed steel header, plate icons, and the company line in the title</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 436 &#8212; ridge cards: bevelled top edge, cut bottom, deeper shadow</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19407,6 +19409,8 @@ body.claim-insurance #brandLogo{
   --rbe-line:#232329;--rbe-line2:#2b2b33;--rbe-line3:#3a3a44;
   --rbe-panel:#16161B;--rbe-panel2:#101015;--rbe-panelbd:#24242c;--rbe-railbg:#0E0E12;
   --rbe-ink:#cfd6df;--rbe-head:#ffffff;
+  --rbe-ridge-t:#454552;--rbe-ridge-b:#050507;--rbe-ridge-hl:rgba(255,255,255,.09);
+  --rbe-ridge-sh:0 14px 30px rgba(0,0,0,.8);
   --rbe-bg1:#2e333b;--rbe-bg2:#262a31;
   --rbe-name1:#e2574a;--rbe-po1:#d0564a;--rbe-po2:#caa030;--rbe-rep:#e8c23a;--rbe-ai:#8ac4f2;
   --rbe-money:#8fe0ae;--rbe-flag:#f2a08a;--rbe-clr:#e08a7a;
@@ -19427,6 +19431,8 @@ body.claim-insurance #brandLogo{
   --rbe-line:#e2e2e2;--rbe-line2:#e2e2e2;--rbe-line3:#3d6485;
   --rbe-panel:#fafafa;--rbe-panel2:#ffffff;--rbe-panelbd:#e2e2e2;--rbe-railbg:#ffffff;
   --rbe-ink:#161616;--rbe-head:#161616;
+  --rbe-ridge-t:#ffffff;--rbe-ridge-b:#d9d9d9;--rbe-ridge-hl:rgba(255,255,255,.9);
+  --rbe-ridge-sh:0 4px 12px rgba(0,0,0,.08);
   --rbe-bg1:#ffffff;--rbe-bg2:#fafafa;
   --rbe-name1:#6b0f18;--rbe-po1:#6b0f18;--rbe-po2:#d4424c;--rbe-rep:#c8202e;--rbe-ai:#2f6fa8;
   --rbe-money:#1f7a4d;--rbe-flag:#c8202e;--rbe-clr:#a6291d;
@@ -32138,6 +32144,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:436, note:'\uD83E\uDE9F Cards sit up off the page now \u2014 a bright bevel along the top edge, a cut shadow at the bottom, like a ridge cap' },
 { build:435, note:'\u2712\uFE0F Retail header now reads \u201CSingle source of truth\u201D, the buttons are brushed steel, and the red trim under the header is steel' },
 { build:434, note:'\uD83E\uDDF9 The red lines above Activity Count and Activity are gone, and the Most Recent / Nearby labels are readable on the dark panel' },
 { build:433, note:'\uD83E\uDDF9 The thick strip on top of the home cards is gone, Client Projects is dark instead of white, and the stage pill and star no longer sit on top of the client initial and PO number' },
