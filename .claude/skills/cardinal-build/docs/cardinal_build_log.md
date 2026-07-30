@@ -495,3 +495,93 @@ Ordered by value per unit of risk.
 6. **Do not renumber history to close the gaps.** 82 source comments cite build
    numbers; renumbering would invalidate all of them. Leave the record as-is
    and start incrementing cleanly from here.
+
+---
+
+## 7. Correction — the version-string count, and a gate that can be fooled
+
+*Added 29 July 2026, after main had already merged §1–6. Two peer sessions
+independently measured the labels and got different answers; this is the reconciliation.*
+
+### There are 20 version strings, not 9
+
+§1 said "82 textual `build N` references … 46 distinct builds," and CLAUDE.md said
+`grep -oE "v2026-[0-9-]+ build [0-9]+"` returns 9 hits / 4 distinct labels. Both were
+measured with a regex that assumes a **single separator**. There are two:
+
+| Form | Example | Count | Where |
+|---|---|---:|---|
+| space | `v2026-07-29 build 427` | 9 | the app stamp + footer templates |
+| middot | `v2026-07-22 · build 148` | 11 | module banner comments |
+
+Honest count: **20 strings, 5 distinct builds — 95, 146, 148, 404, 427.**
+**Build 148 was missing from every earlier list**, because it only ever appears in the
+middot form (estimates + pricing module banners, ×4).
+
+| Build | Count | Where |
+|---|---:|---|
+| 427 | 1 | nav menu `<div>` — **the app version, and the only version string in rendered markup** |
+| 404 | 1 | `.cr-c-footer` |
+| 95 | 2 | claims footer + banner (date is 6 days in the future — unexplained, do not "fix") |
+| 146 | 12 | analytics / Keeper / portals / adjuster / coach |
+| 148 | 4 | estimates + pricing banners |
+
+### The label gate passes when only a module is bumped
+
+`scripts/check_build.py` compares `sorted(set(LABEL_RE.findall(src)))` between builds.
+Its `LABEL_RE` already captures the build number — its own comment records the false RED
+on 390/391 that prompted that — but comparing the **set** means *any* label changing
+satisfies it. Tested against main's `index.html`:
+
+| Scenario | Gate says | Correct |
+|---|---|---|
+| app stamp `427 → 428` | PASS | PASS |
+| only module `146 → 147`, app stamp untouched | **PASS** | FAIL |
+| nothing bumped | FAIL | FAIL |
+
+So the gate cannot currently tell "the version users see was bumped" from "some plugin
+footer changed." It also reports **6** distinct labels rather than 5, because its optional
+`(?:\s+build\s+\d+)?` group half-matches the middot form and emits bare dates.
+
+### Fixed — `gate_label` now anchors on the app stamp
+
+Landed in the same PR as this note, once a peer session confirmed the repo copy was
+untouched. (Note the two copies are different files: the repo's md5 is `114ff919`, the
+bundled sibling's is `5cf8a41d`.)
+
+- `ALL_LABEL_RE` matches **both separators**, so the count is 20 strings / 5 builds and
+  build 148 is no longer invisible.
+- `app_stamp()` returns `(date, build)` for the **one** string users see. It prefers a
+  `data-cr-footer` anchor and falls back to the em-dash form — the app stamp is the only
+  version string followed by `&#8212;` / `&mdash;` / a literal `—` plus a summary.
+- The bump gate requires the app stamp's **build number to strictly increase**, so a
+  plugin footer changing no longer satisfies it.
+
+Negative-controlled, 7 scenarios:
+
+| Scenario | Want | Got |
+|---|---|---|
+| app stamp `427 → 428` | PASS | PASS |
+| only module `146 → 147` | FAIL | FAIL |
+| nothing bumped | FAIL | FAIL |
+| app stamp `427 → 426` (decrease) | FAIL | FAIL |
+| `427 → 428` with `data-cr-footer` | PASS | PASS |
+| literal `—` instead of the entity | PASS | PASS |
+| `&mdash;` instead of `&#8212;` | PASS | PASS |
+
+The literal-em-dash case was a real fragility found by probing rather than reasoning:
+before hardening it reported `app stamp: NONE`. It failed **closed** (red, not green),
+which is the right direction, but it was still a foot-gun.
+
+Full ladder re-run on main's `index.html`: green, exit 0. With `--prev` pointed at an
+identical file it reds on the bump gate, exit 1 — the negative control.
+
+**The permanent fix is still `data-cr-footer`.** The em-dash fallback is a grep-time
+heuristic; the attribute is an identity. That attribute now has **three** consumers:
+
+1. `currentBuild()` — so the changelog reads 427 instead of a CSS comment's 406
+2. `buildTag()` — so error reports carry a build number
+3. the label gate — so "bumped" means the app version, not any footer
+
+One attribute, three silent failures. It is still the highest value-per-byte change in
+the codebase.

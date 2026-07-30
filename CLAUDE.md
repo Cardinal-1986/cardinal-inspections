@@ -135,16 +135,30 @@ Anything unrecognised **becomes `'Lead'`** with no error. Therefore: **`STAGES` 
 
 ---
 
-## The build label — there are four, and they are not the app version
+## The build label — there are 20 of them, and only one is the app version
 
-`grep -oE "v2026-[0-9-]+ build [0-9]+" index.html` returns **9 hits / 4 distinct labels**, because each plugin module stamps its own footer:
+**Two separators, and a regex that assumes one will miss the other.** Module banner
+comments use a middot (`v2026-07-22 · build 148`); footers and the app stamp use a
+space (`v2026-07-29 build 427`). Counting only the space form finds 9 of 20 strings
+and misses build 148 entirely.
 
-| Label | Where | Meaning |
-|---|---|---|
-| `v2026-07-29 build 427` | nav menu, char ~205,000 | **the app version — this is the one to bump** |
-| `v2026-08-04 build 95` | `.cr-c-footer` | Claims module (date looks wrong; do not "fix" without asking) |
-| `v2026-07-28 build 404` | `.cr-c-footer` | second claims pane |
-| `v2026-07-22 build 146` ×6 | `.cr-a-footer` / `.cr-k-footer` | analytics / Keeper modules |
+`re.finditer(r"v(2026-\d\d-\d\d)\s*(?:·|)\s*build\s+(\d+)")` is the honest count:
+**20 strings · 9 space + 11 middot · 5 distinct builds (95, 146, 148, 404, 427).**
+
+| Label | Count | Where | Meaning |
+|---|---:|---|---|
+| `v2026-07-29 build 427` | 1 | nav menu `<div>`, char ~205,000 | **the app version — the only one in rendered markup, and the only one to bump** |
+| `v2026-07-28 build 404` | 1 | `.cr-c-footer` | claims pane |
+| `v2026-08-04 build 95` | 2 | `.cr-c-footer` + banner | Claims module (date is 6 days in the future; do not "fix" without asking) |
+| `v2026-07-22 build 146` | 12 | `.cr-a-footer` / `.cr-k-footer` + banners | analytics / Keeper / portals / adjuster / coach |
+| `v2026-07-22 build 148` | 4 | banner comments | estimates + pricing modules |
+
+**The app stamp is the only version string in rendered markup.** Every other one lives
+in a footer template or a `/* ... */` banner comment. That is what makes it identifiable
+— and it is why a gate that compares the *set* of all labels can be fooled: bumping any
+plugin footer passes while the app stamp stays stale. Demonstrated: bump `build 146` to
+`147` and leave 427 alone, and a set-comparison gate reports "label bumped." **Anchor the
+gate to the app stamp, not to the set.**
 
 **Bump the app label every build**, and add a `CHANGELOG` entry in `<script id="cr-cl-script">`. Build numbers are **ordering, not inventory** — 234, 241 and 299 are each reused for unrelated work and there are 30 gaps. Never renumber history; 82 source comments cite build numbers.
 
