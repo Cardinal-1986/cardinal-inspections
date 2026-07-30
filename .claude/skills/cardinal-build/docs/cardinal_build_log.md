@@ -1362,3 +1362,85 @@ Neither was an app defect. Third and fourth reds on this branch that were the te
 60-vs-75 assertion, the suit-limitation distinction, the do-not-infer sentence and the
 verify-with-Malarkey sentence. Scope proven over 6 regions. Full suite **195/195** across
 nine harnesses.
+
+---
+
+## Build 463 — Roof Types: the library learns what a roof looks like
+
+*30 July 2026. One page, one plate, thirteen drawings, twelve cards.*
+
+Theo asked for a section on roof types with pictures, pointing at the kind of illustrated
+roof-shape chart that turns up in a web search.
+
+### Audited first, per the doctrine — and this one really was missing
+
+`gambrel`, `mansard`, `saltbox`, `butterfly`, `cross gable`, `dutch gable`, `roof shape` and
+`roof style`: **zero occurrences each**. All 19 hits for `gable` were *gable vents* on the
+ventilation cards. The library carried thirteen siding cards and a full measurement tree and
+had never named a roof form.
+
+### What it extends rather than invents
+
+- **`figure.rl-fig` + `Plate N`** — the existing figure convention. Plates 1–3 ship today.
+  This is **Plate 4**, thirteen shapes on one grid.
+- **`.fig-ink` / `.fig-acc`** — the existing figure stroke classes. Walls read ink, roof
+  reads accent, exactly as Plate 1 does.
+- The **455 search box** mounted itself: 12 cards and a pagehead is over the 4-card
+  threshold, and boxes went 16 → 17 without a line of new code.
+
+### The drawings are computed, not drawn
+
+One oblique projection, defined once, walked by `pt(u,v)`. Every shape is a list of
+*volumes*; each volume emits wall polygons in ink and roof polygons in accent. Two-volume
+shapes (cross gable, cross hip) paint back-to-front with the front volume masking the one
+behind. Bounds are asserted, so nothing silently runs off its viewBox.
+
+### Two things caught in preview, before the file
+
+- **The sprite draft rendered flat.** The first version put the shapes in `<symbol id="rl-r-*">`
+  and used `<use>`, copying the `rl-i-*` nav icons. Every tile came out ink with no accent:
+  `<use>` builds a shadow tree and `.rl-mark .rl-mark-a{stroke:…}` cannot select into it.
+  Plates 1–3 never used the sprite. Rewritten to inline SVG.
+- **Butterfly was a projection collision.** With the valley running front-to-back, the back
+  valley point lands 2 px from the front-right eave and the right-hand plane degenerates
+  into a sliver. Running the valley left-right puts the V in the visible face.
+
+### The defect this build found in the library's own machinery
+
+**`var TOC` in `cr-rltoc-script` is still a hand-maintained hub → page list.** Build 453
+replaced the hand-typed *card* list with `buildIndex()`; the *page* list survived and nobody
+noticed. Registering the new page in the markup, the `data-rlgoto` map and `parentOf` — three
+of four points — produced a page that rendered, navigated, and searched correctly **from its
+own box**, while the global contents search returned **zero** for `gambrel`, `mansard`,
+`saltbox`, `jerkinhead`, `roof shape` and `butterfly`.
+
+That is a silent half-failure. It was caught because the harness asserted on search results
+rather than on the page existing. The four-point rule is now written up in `FEATURES.md`, and
+the patch asserts `count('rlPageRoofTypes') == 4` against the measured count for `rlPageMfg`
+and `rlPageCode`.
+
+The fix shipped inside 463 rather than as a follow-up — the page was reverted and re-patched
+so the build is coherent, not a broken page plus a repair.
+
+### Deliberately no code citations
+
+Roof form is not code-defined; no section says what a gambrel is. Where a real rule applies —
+slope thresholds, R806 net free area — the cards point at the library card that already
+carries it rather than restating a number this build would have to re-verify. Same discipline
+as the vinyl cards at 461, and the harness asserts `.rl-cite` count is **0** on the page.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker. **38/38 in a real browser** —
+reachable by a real click on the hub box, back lands on the General hub, 13 tiles each with
+art and a label, the accent resolving to a different colour than the ink (the check that
+would have caught the sprite bug), mask fill equal to its tile background in both skins, tile
+label contrast 5.30:1 and 7.51:1, three-across layout with no horizontal overflow at 414 px,
+and every new card findable in both search surfaces. Negative control **0/2** on 462 — and it
+bails cleanly rather than throwing, because an `ERR` stack proves nothing.
+
+Scope proven both ways over 8 regions: replay reproduces the file byte for byte, and a
+sentinel walk leaves everything outside the edits identical.
+
+**Counts, measured:** pages 34 → 35 in the DOM, cards 161 → 173, plates 3 → 4, search boxes
+16 → 17. File +28,790 characters.

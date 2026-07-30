@@ -2755,6 +2755,15 @@ body:has(#loginView[style*="block"]){background:#fff;}
 #resourceLibraryView .fig-t{fill:var(--ct-ink);font:600 10.5px var(--ct-code);letter-spacing:.06em;stroke:none;}
 #resourceLibraryView .fig-t2{fill:var(--ct-ink-2);font:600 9.5px var(--ct-code);letter-spacing:.06em;stroke:none;}
 #resourceLibraryView .fig-ta{fill:var(--ct-mark);font:700 10.5px var(--ct-code);letter-spacing:.06em;stroke:none;}
+/* 463: Plate 4's roof-shape tiles. .fig-mask is a filled occluder for the
+   two-volume shapes (cross gable, cross hip) - the front volume has to hide
+   the back one's strokes. Its fill and the tile background are the same
+   declaration with the same fallback so they can never disagree. */
+#resourceLibraryView .fig-mask{fill:var(--ct-surface-2,#FAF8F7);stroke:none;}
+#resourceLibraryView .rl-rgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:2px 0 4px;}
+#resourceLibraryView .rl-rtile{background:var(--ct-surface-2,#FAF8F7);border:1px solid var(--ct-line);border-radius:var(--ct-r-chip);padding:7px 4px 6px;text-align:center;min-width:0;}
+#resourceLibraryView .rl-rtile svg{display:block;width:100%;height:auto;}
+#resourceLibraryView .rl-rtile b{display:block;margin-top:3px;font:700 9.5px var(--ct-code);letter-spacing:.03em;color:var(--ct-ink-2);}
 #resourceLibraryView .rl-hidden{display:none !important;}
 #resourceLibraryView .rl-foot{margin-top:40px;padding:20px 0;text-align:left;border-top:1px solid var(--ct-line);color:var(--ct-ink-2);font-size:12.5px;}
 #resourceLibraryView .rl-foot b{color:var(--ct-ink);}
@@ -3143,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 462 &#8212; reinspections, the deadlines that actually bite, the punch walk, closing on paper, who the permit office really is, and Malarkey</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 463 &#8212; a Roof Types page: thirteen roof shapes drawn on one plate, and what each one costs you in waste, cap and ventilation</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4169,6 +4178,12 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-inspect"/></svg></div>
           <div class="rl-boxtitle">Roof Inspections</div>
           <div class="rl-boxsub">Mastering the walk. Safety, systematic approach, damage patterns, documentation. Foundation for every job.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+        <button class="rl-box" data-rlgoto="roof_types">
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-roof"/></svg></div>
+          <div class="rl-boxtitle">Roof Types</div>
+          <div class="rl-boxsub">Gable, hip, gambrel, mansard and the rest &mdash; drawn, named, and what each one costs you in waste, cap and ventilation.</div>
           <div class="rl-boxgo">Open &rsaquo;</div>
         </button>
       </div>
@@ -5432,6 +5447,191 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-warn"><b>Cold weather changes what damage means, in both directions.</b> Vinyl gets brittle as temperature drops &mdash; below roughly freezing, an impact that would have bounced off in July can crack a panel, and so can a ladder, a knee or a pry bar. That cuts two ways and you need to be straight about both: <b>(a)</b> genuine storm damage in winter can be far worse than the same stones in summer, which is a real argument; and <b>(b)</b> <b>damage the crew causes working cold is not storm damage.</b> Photograph the elevation before anyone touches it. If a panel cracks during the inspection, say so and own it &mdash; presenting it as hail is fraud, and it is the kind that gets found.</div>
         <div class="rl-doc"><b>Document:</b> Elevation-wide before anyone works the wall. Test square per affected elevation with count. Close-ups with scale. Note the temperature and date &mdash; on a winter inspection that context belongs in the file.</div>
         <div class="rl-tags"><span>vinyl</span><span>hail</span><span>test square</span></div>
+      </div>
+    </div>
+
+        <!-- =========================================================
+         SUB-PAGE: ROOF TYPES
+         ========================================================= -->
+    <div class="rl-page" id="rlPageRoofTypes" data-rltitle="Roof Types">
+      <div class="rl-pagehead">
+        <h1>Roof Types</h1>
+        <p>Name the shape before you measure it. The form of a roof decides its waste factor, its accessory linear feet, how it can be ventilated and where it drops below the slope the code allows.</p>
+      </div>
+
+      <figure class="rl-fig">
+        <div class="rl-figh"><span class="n">Plate 4</span><span class="t">Roof shapes at a glance</span></div>
+        <div class="rl-figb">
+          <div class="rl-rgrid">
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Gable roof: two slopes meeting at a ridge, with a triangular gable end wall"><path class="fig-ink" d="M16 80 L16 56 L46 34 L76 56 L76 80 Z"/><path class="fig-ink" d="M76 56 L104 38 L104 62 L76 80 Z"/><path class="fig-acc" d="M16 56 L46 34 L74 16 L44 38 Z"/><path class="fig-acc" d="M76 56 L46 34 L74 16 L104 38 Z"/><path class="fig-acc" d="M46 34 L74 16"/></svg><b>Gable</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Cross gable: a gabled wing meeting the main range at right angles, forming valleys"><path class="fig-ink" d="M25.5 73.9 L25.5 49.9 L85.5 49.9 L85.5 73.9 Z"/><path class="fig-ink" d="M85.5 49.9 L94.8 26.9 L104 38 L104 62 L85.5 73.9 Z"/><path class="fig-acc" d="M25.5 49.9 L85.5 49.9 L94.8 26.9 L34.8 26.9 Z"/><path class="fig-acc" d="M34.8 26.9 L94.8 26.9 L104 38 L44 38 Z"/><path class="fig-acc" d="M34.8 26.9 L94.8 26.9"/><path class="fig-mask" d="M7.9 88.3 L7.9 64.3 L21.7 41.3 L35.5 64.3 L35.5 88.3 Z"/><path class="fig-mask" d="M35.5 64.3 L62.4 47 L62.4 71 L35.5 88.3 Z"/><path class="fig-mask" d="M7.9 64.3 L21.7 41.3 L48.6 24 L34.8 47 Z"/><path class="fig-mask" d="M35.5 64.3 L21.7 41.3 L48.6 24 L62.4 47 Z"/><path class="fig-ink" d="M7.9 88.3 L7.9 64.3 L21.7 41.3 L35.5 64.3 L35.5 88.3 Z"/><path class="fig-ink" d="M35.5 64.3 L62.4 47 L62.4 71 L35.5 88.3 Z"/><path class="fig-acc" d="M7.9 64.3 L21.7 41.3 L48.6 24 L34.8 47 Z"/><path class="fig-acc" d="M35.5 64.3 L21.7 41.3 L48.6 24 L62.4 47 Z"/><path class="fig-acc" d="M21.7 41.3 L48.6 24"/></svg><b>Cross gable</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Hip roof: four slopes rising to a short central ridge, no gable ends"><path class="fig-ink" d="M16 80 L16 56 L76 56 L76 80 Z"/><path class="fig-ink" d="M76 56 L104 38 L104 62 L76 80 Z"/><path class="fig-acc" d="M16 56 L76 56 L53.3 30.3 Z"/><path class="fig-acc" d="M44 38 L104 38 L66.7 21.7 Z"/><path class="fig-acc" d="M16 56 L53.3 30.3 L66.7 21.7 L44 38 Z"/><path class="fig-acc" d="M76 56 L53.3 30.3 L66.7 21.7 L104 38 Z"/><path class="fig-acc" d="M53.3 30.3 L66.7 21.7"/></svg><b>Hip</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Cross hip: two hipped sections meeting at right angles over an L-shaped plan"><path class="fig-ink" d="M25.5 73.9 L25.5 49.9 L85.5 49.9 L85.5 73.9 Z"/><path class="fig-ink" d="M85.5 49.9 L104 38 L104 62 L85.5 73.9 Z"/><path class="fig-acc" d="M25.5 49.9 L85.5 49.9 L79.2 27.9 L50.4 27.9 Z"/><path class="fig-acc" d="M50.4 27.9 L79.2 27.9 L104 38 L44 38 Z"/><path class="fig-acc" d="M85.5 49.9 L104 38 L79.2 27.9 Z"/><path class="fig-acc" d="M25.5 49.9 L50.4 27.9 L44 38 Z"/><path class="fig-acc" d="M50.4 27.9 L79.2 27.9"/><path class="fig-mask" d="M7.9 88.3 L7.9 64.3 L35.5 64.3 L35.5 88.3 Z"/><path class="fig-mask" d="M35.5 64.3 L62.4 47 L62.4 71 L35.5 88.3 Z"/><path class="fig-mask" d="M7.9 64.3 L35.5 64.3 L28.7 38.8 Z"/><path class="fig-mask" d="M34.8 47 L62.4 47 L41.6 30.5 Z"/><path class="fig-mask" d="M7.9 64.3 L28.7 38.8 L41.6 30.5 L34.8 47 Z"/><path class="fig-mask" d="M35.5 64.3 L28.7 38.8 L41.6 30.5 L62.4 47 Z"/><path class="fig-ink" d="M7.9 88.3 L7.9 64.3 L35.5 64.3 L35.5 88.3 Z"/><path class="fig-ink" d="M35.5 64.3 L62.4 47 L62.4 71 L35.5 88.3 Z"/><path class="fig-acc" d="M7.9 64.3 L35.5 64.3 L28.7 38.8 Z"/><path class="fig-acc" d="M34.8 47 L62.4 47 L41.6 30.5 Z"/><path class="fig-acc" d="M7.9 64.3 L28.7 38.8 L41.6 30.5 L34.8 47 Z"/><path class="fig-acc" d="M35.5 64.3 L28.7 38.8 L41.6 30.5 L62.4 47 Z"/><path class="fig-acc" d="M28.7 38.8 L41.6 30.5"/></svg><b>Cross hip</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Dutch gable: a hip roof carrying a small vertical gable at the ridge end"><path class="fig-ink" d="M16 80 L16 56 L76 56 L76 80 Z"/><path class="fig-ink" d="M76 56 L104 38 L104 62 L76 80 Z"/><path class="fig-ink" d="M37.2 40.4 L51.6 28.4 L66 40.4 Z"/><path class="fig-acc" d="M16 56 L76 56 L66 40.4 L37.2 40.4 Z"/><path class="fig-acc" d="M16 56 L37.2 40.4 L51.6 28.4 L68.4 17.6 L44 38 Z"/><path class="fig-acc" d="M76 56 L66 40.4 L51.6 28.4 L68.4 17.6 L104 38 Z"/><path class="fig-acc" d="M44 38 L104 38 L68.4 17.6 Z"/><path class="fig-acc" d="M51.6 28.4 L68.4 17.6"/></svg><b>Dutch gable</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Pyramid hip: four equal triangular slopes meeting at a single peak"><path class="fig-ink" d="M16 80 L16 56 L76 56 L76 80 Z"/><path class="fig-ink" d="M76 56 L104 38 L104 62 L76 80 Z"/><path class="fig-acc" d="M16 56 L76 56 L60 21 Z"/><path class="fig-acc" d="M76 56 L104 38 L60 21 Z"/><path class="fig-acc" d="M16 56 L60 21 L44 38 Z"/><path class="fig-acc" d="M44 38 L104 38 L60 21 Z"/></svg><b>Pyramid hip</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Jerkinhead or clipped gable: a gable whose peak is cut back to a small hip"><path class="fig-ink" d="M16 80 L16 56 L32.8 41.1 L59.2 41.1 L76 56 L76 80 Z"/><path class="fig-ink" d="M76 56 L104 38 L104 62 L76 80 Z"/><path class="fig-acc" d="M32.8 41.1 L46 32 L59.2 41.1 Z"/><path class="fig-acc" d="M16 56 L32.8 41.1 L46 32 L74 14 L44 38 Z"/><path class="fig-acc" d="M76 56 L59.2 41.1 L46 32 L74 14 L104 38 Z"/><path class="fig-acc" d="M46 32 L74 14"/></svg><b>Jerkinhead</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Gambrel: a barn profile with a steep lower slope and a shallow upper slope each side"><path class="fig-ink" d="M16 80 L16 56 L23.8 42.2 L46 26 L68.2 42.2 L76 56 L76 80 Z"/><path class="fig-ink" d="M76 56 L104 38 L104 62 L76 80 Z"/><path class="fig-acc" d="M23.8 42.2 L46 26 L74 8 L51.8 24.2 Z"/><path class="fig-acc" d="M16 56 L23.8 42.2 L51.8 24.2 L44 38 Z"/><path class="fig-acc" d="M68.2 42.2 L46 26 L74 8 L96.2 24.2 Z"/><path class="fig-acc" d="M76 56 L68.2 42.2 L96.2 24.2 L104 38 Z"/><path class="fig-acc" d="M46 26 L74 8"/><path class="fig-acc" d="M68.2 42.2 L96.2 24.2"/></svg><b>Gambrel</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Mansard: steep slopes on all four sides with a near-flat deck on top"><path class="fig-ink" d="M16 80 L16 56 L76 56 L76 80 Z"/><path class="fig-ink" d="M76 56 L104 38 L104 62 L76 80 Z"/><path class="fig-acc" d="M16 56 L76 56 L70.6 33.9 L31 33.9 Z"/><path class="fig-acc" d="M76 56 L104 38 L89 22.1 L70.6 33.9 Z"/><path class="fig-acc" d="M16 56 L31 33.9 L49.4 22.1 L44 38 Z"/><path class="fig-acc" d="M31 33.9 L70.6 33.9 L89 22.1 L49.4 22.1 Z"/></svg><b>Mansard</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Shed or skillion roof: a single plane sloping one way, with no ridge"><path class="fig-ink" d="M16 80 L16 50.5 L76 34 L76 80 Z"/><path class="fig-ink" d="M76 34 L104 16 L104 62 L76 80 Z"/><path class="fig-acc" d="M16 50.5 L76 34 L104 16 L44 32.5 Z"/></svg><b>Shed</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Saltbox: an off-centre ridge giving a short steep slope one side and a long slope the other"><path class="fig-ink" d="M16 80 L16 56 L55.6 32 L76 56 L76 80 Z"/><path class="fig-ink" d="M76 56 L104 38 L104 62 L76 80 Z"/><path class="fig-acc" d="M16 56 L55.6 32 L83.6 14 L44 38 Z"/><path class="fig-acc" d="M76 56 L55.6 32 L83.6 14 L104 38 Z"/><path class="fig-acc" d="M55.6 32 L83.6 14"/></svg><b>Saltbox</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Flat or low-slope roof: an almost level deck behind a low parapet"><path class="fig-ink" d="M16 80 L16 56 L76 56 L76 80 Z"/><path class="fig-ink" d="M76 56 L104 38 L104 62 L76 80 Z"/><path class="fig-acc" d="M16 56 L76 56 L104 38 L44 38 Z"/><path class="fig-acc" d="M16 51 L76 51 L104 33 L44 33 Z"/><path class="fig-acc" d="M16 56 L16 51"/><path class="fig-acc" d="M76 56 L76 51"/><path class="fig-acc" d="M104 38 L104 33"/></svg><b>Flat / low-slope</b></div>
+        <div class="rl-rtile"><svg viewBox="0 0 120 96" role="img" aria-label="Butterfly roof: two slopes falling inward to a central valley"><path class="fig-ink" d="M16 80 L16 30 L76 30 L76 80 Z"/><path class="fig-ink" d="M76 30 L90 46 L104 12 L104 62 L76 80 Z"/><path class="fig-acc" d="M16 30 L76 30 L90 46 L30 46 Z"/><path class="fig-acc" d="M30 46 L90 46 L104 12 L44 12 Z"/><path class="fig-acc" d="M30 46 L90 46"/></svg><b>Butterfly</b></div>
+          </div>
+        </div>
+        <figcaption><b>Roof in accent, walls in outline.</b> Thirteen forms drawn on one viewpoint so they compare directly. Most houses here are two or three of these at once &mdash; see <i>Most Real Houses Are a Combination</i> below.</figcaption>
+      </figure>
+
+      <div class="rl-card" data-rltags="roof shape why it matters first thing identify form">
+        <h3>Why the Shape Is the First Thing You Write Down</h3>
+        <p>Before pitch, before squares, before a single photograph &mdash; name the shape. Everything downstream changes with it.</p>
+        <ul>
+          <li><b>Waste.</b> A plain gable and a cut-up hip on the same footprint are not the same order. The library's <i>Waste Factor</i> card puts a simple gable at 5&ndash;7&percnt; and a complex cut-up roof at 15&percnt; or more.</li>
+          <li><b>Accessory linear feet.</b> Hips take ridge cap. Gables take rake drip edge. Valleys take ice barrier. The shape tells you which lines exist before you measure them.</li>
+          <li><b>Ventilation.</b> A long straight ridge can take continuous ridge vent. A hip or a pyramid barely has a ridge, and the exhaust has to come from somewhere else.</li>
+          <li><b>Low-slope exposure.</b> Sheds, mansard decks and butterfly valleys are where a roof drops under 4:12 &mdash; and sometimes under 2:12, where shingles are not permitted at all.</li>
+          <li><b>Access and staging.</b> Gambrel and mansard lower slopes are steep enough to change how the crew works and how the job prices.</li>
+        </ul>
+        <div class="rl-use"><b>Use it when:</b> Writing the first line of any inspection. &ldquo;Cross-gable ranch, one 2:12 porch shed&rdquo; is a better opening than a pitch reading, because it predicts every problem you are about to find.</div>
+        <div class="rl-tags"><span>roof shape</span><span>identify</span><span>take-off</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="gable roof ridge rake gable end open gable most common">
+        <h3>Gable</h3>
+        <p>Two slopes meeting at a single ridge, with a triangular wall &mdash; the <b>gable end</b> &mdash; closing each end. The most common roof in the Miami Valley by a distance.</p>
+        <p><b>How you know it:</b> stand at the end of the house and you are looking at a triangle of siding, not a slope.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>What a gable means for the take-off</caption>
+            <thead><tr><th>Line</th><th>What to expect</th></tr></thead>
+            <tbody>
+              <tr><td><b>Ridge</b></td><td>One run, the full length of the house. The best case for continuous ridge vent</td></tr>
+              <tr><td><b>Rakes</b></td><td>Two, one each gable end. Rake drip edge is a separate quantity from eave drip edge</td></tr>
+              <tr><td><b>Hips / valleys</b></td><td>None, on a plain gable. This is why the waste is low</td></tr>
+              <tr><td><b>Waste</b></td><td>The bottom of the band &mdash; 5&ndash;7&percnt; with no valleys</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rl-use"><b>On the claim:</b> gable ends carry the wind load. Uplift damage concentrates along the rake, and the first course above the rake is where you look for creased or lifted tabs after a wind event.</div>
+        <div class="rl-doc"><b>Document:</b> Photograph both gable ends. If there is a gable vent, it is part of the ventilation picture &mdash; a gable vent working against a ridge vent is a documented defect, and the library's ventilation cards cover why.</div>
+        <div class="rl-tags"><span>gable</span><span>ridge</span><span>rake</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="hip roof four slopes no gable end hip ridge cap wind">
+        <h3>Hip</h3>
+        <p>Four slopes rising to a short ridge. No gable ends &mdash; every side of the building is under roof.</p>
+        <p><b>How you know it:</b> walk the perimeter and there is no wall triangle anywhere. The ridge is visibly shorter than the house.</p>
+        <ul>
+          <li><b>Ridge cap doubles as hip cap.</b> Four hips plus a short ridge is usually <i>more</i> cap linear footage than a gable of the same footprint, not less. Measure the hips.</li>
+          <li><b>No rakes.</b> Drip edge is all eave &mdash; a longer eave run than the equivalent gable.</li>
+          <li><b>Waste is higher.</b> Every hip is a cut. This is standard cut-up territory, not the 5&ndash;7&percnt; band.</li>
+          <li><b>Better in wind.</b> There is no gable end for wind to load, which is why hip roofs generally survive a storm better than their neighbours &mdash; and why the damage you do find is often on the field rather than the edge.</li>
+        </ul>
+        <div class="rl-warn"><b>The ventilation trap.</b> A hip roof has very little ridge. Ridge vent alone will often not reach the net free area <b>RCO R806</b> requires &mdash; 1/150 of the ventilated space, reducible to 1/300 when 40&ndash;50&percnt; of it sits high. On a hip, the exhaust has to be made up with hip vents or additional units, and an adjuster's scope that swaps a hip roof to &ldquo;ridge vent, LF as measured&rdquo; is short. Run the arithmetic on the library's ventilation card before you sign it.</div>
+        <div class="rl-tags"><span>hip</span><span>ridge cap</span><span>ventilation</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="cross gable cross hip L shaped ranch valley intersecting wing ell">
+        <h3>Cross Gable and Cross Hip &mdash; the L-Shaped House</h3>
+        <p>Two roof ranges meeting at right angles over an L or T shaped plan. On a Dayton ranch this is the single most common roof after the plain gable, and it is where the money is.</p>
+        <p><b>What the intersection creates:</b> <b>valleys</b> &mdash; usually two, one each side of the wing.</p>
+        <ul>
+          <li><b>Valleys are the leak.</b> Every drop of water off two planes runs through one line. Ice barrier belongs in every valley, and the library's code cards carry the requirement.</li>
+          <li><b>Valleys are the waste.</b> Both planes get cut to the valley line. Two valleys move a roof out of the simple band on their own.</li>
+          <li><b>Valleys are the argument.</b> An aerial report that flattens the wing into the main range under-measures the valley LF and the waste together. Check the wing on the report against the wing on the house.</li>
+        </ul>
+        <div class="rl-doc"><b>Document:</b> Photograph each valley end to end, and get a close-up of the valley metal or the closed-cut line. If the existing valley has no ice barrier under it, that is a code-compliance item at re-roof and it is worth writing up while you are standing there.</div>
+        <div class="rl-use"><b>Use it when:</b> The scope shows a single rectangle and the house is an L. That is the tell that the wing was missed, and everything downstream &mdash; squares, valley LF, waste &mdash; is short.</div>
+        <div class="rl-tags"><span>cross gable</span><span>valley</span><span>ice barrier</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="dutch gable gablet jerkinhead clipped gable hybrid half hip">
+        <h3>Dutch Gable and Jerkinhead</h3>
+        <p>Two hybrids that confuse scopes because they are neither one thing nor the other.</p>
+        <p><b>Dutch gable</b> &mdash; a hip roof carrying a small vertical gable at the end of the ridge. The little gable is a <i>gablet</i>, and it very often holds a vent.</p>
+        <p><b>Jerkinhead</b> (clipped gable, half hip) &mdash; a gable whose peak has been cut back into a small hip. Common on 1920s Dayton bungalows.</p>
+        <div class="rl-use"><b>Why it matters:</b> both take hip cap <i>and</i> rake, which report software and adjusters routinely simplify to one or the other. Count both. On a Dutch gable, also check whether the gablet vent is the only exhaust on the roof &mdash; if it is, the ventilation is almost certainly short.</div>
+        <div class="rl-tags"><span>dutch gable</span><span>jerkinhead</span><span>hybrid</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="gambrel barn roof two pitches break line slope multiplier dutch colonial">
+        <h3>Gambrel</h3>
+        <p>The barn profile: <b>two different pitches on each side</b>, a steep lower slope breaking to a shallow upper slope. Found on Dutch Colonials and on genuine farm buildings all over the rural edge of the county.</p>
+        <div class="rl-warn"><b>One slope multiplier will under-measure a gambrel.</b> The library's <i>Squares</i> card converts footprint to roof area with a single slope factor. A gambrel has two slopes, and the steep lower one carries a much larger multiplier than the shallow upper one. Measure and factor the two sections <b>separately</b>, then add them. Running the whole footprint at the upper pitch is the classic gambrel shortfall.</div>
+        <ul>
+          <li><b>The break line is a horizontal joint</b> across the whole elevation, and it is a recurring leak point. Inspect it specifically.</li>
+          <li><b>The lower slope is steep</b> &mdash; often steep enough to change the labour line. Check the steep-slope pricing in the price list the estimate was written on rather than assuming it applies or that it does not.</li>
+          <li><b>Ridge is short relative to the area.</b> Same ventilation caution as a hip.</li>
+        </ul>
+        <div class="rl-doc"><b>Document:</b> A pitch reading on the lower slope <i>and</i> the upper slope, both photographed with the gauge visible. Two readings is the whole point.</div>
+        <div class="rl-tags"><span>gambrel</span><span>two pitches</span><span>measurement</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="mansard roof steep face flat deck two systems apartment 1970s">
+        <h3>Mansard</h3>
+        <p>Steep slopes on all four sides with a near-flat deck on top. Around Dayton it turns up on 1960s&ndash;70s apartment blocks, on commercial frontages, and on houses that borrowed the look.</p>
+        <div class="rl-warn"><b>A mansard is two roof systems on one building, and they price differently.</b> The steep faces take shingles. The deck on top is low-slope and needs a low-slope covering &mdash; the library's <i>Slope Decides the System</i> card is the governing rule, and below 2:12 asphalt shingles are not permitted at all. A scope that shingles the whole thing at one unit price is wrong on the deck.</div>
+        <p><b>The other argument:</b> some carriers treat the steep face as a wall rather than a roof, which changes the coverage line and sometimes the deductible treatment. Do not assume either way &mdash; ask, in writing, before the scope is agreed.</p>
+        <div class="rl-doc"><b>Document:</b> Photograph the deck separately from the faces, with a pitch reading on the deck. The deck is the part nobody photographs and the part that leaks.</div>
+        <div class="rl-tags"><span>mansard</span><span>low slope</span><span>two systems</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="shed roof skillion mono pitch lean to porch addition garage low slope">
+        <h3>Shed (Skillion)</h3>
+        <p>A single plane sloping one way, with no ridge. Rare as a whole house here; extremely common as the <b>porch, the addition, the garage and the dormer</b>.</p>
+        <div class="rl-warn"><b>This is where the low-slope problem lives.</b> Shed sections are routinely under 4:12 and often under 2:12. Below 2:12 shingles are not permitted &mdash; it is a different covering entirely, priced differently. Pitch the shed section separately, every time, and photograph the gauge.</div>
+        <ul>
+          <li><b>No ridge means no ridge vent.</b> Exhaust on a shed section has to be solved another way, and a conditioned shed addition often has no attic at all.</li>
+          <li><b>One eave, one high edge, two rakes.</b> The high edge usually meets a wall &mdash; which means step flashing and, at the bottom of that wall, a kickout. The library's kickout card covers what has to be there.</li>
+        </ul>
+        <div class="rl-tags"><span>shed</span><span>low slope</span><span>porch</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="flat roof low slope deck parapet commercial residential porch">
+        <h3>Flat and Low-Slope</h3>
+        <p>No roof is truly flat &mdash; a &ldquo;flat&rdquo; roof is a low-slope deck built to drain, usually behind a parapet.</p>
+        <p>On residential work in this market you meet it as a porch deck, a garage roof, an addition, or the top of a mansard &mdash; not usually as a whole house.</p>
+        <div class="rl-use"><b>Where the rule lives:</b> the library's <i>Slope Decides the System</i> card carries the thresholds &mdash; single-layer underlayment at 4:12 and steeper, double layer from 2:12 up to 4:12, and no asphalt shingles at all below 2:12. That card is the authority; this one only tells you what you are looking at.</div>
+        <div class="rl-warn"><b>A residential low-slope section is not a commercial roof.</b> One- and two-family dwellings are built to the Residential Code of Ohio, not the commercial code, and the commercial cards in this library do not apply to them. If a low-slope section needs a system rather than shingles, that is a call to the office, not a guess on the driveway.</div>
+        <div class="rl-tags"><span>flat roof</span><span>low slope</span><span>deck</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="saltbox pyramid hip butterfly less common asymmetric gazebo">
+        <h3>Saltbox, Pyramid and Butterfly</h3>
+        <p>The three you will meet occasionally and should still be able to name.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>Less common shapes</caption>
+            <thead><tr><th>Shape</th><th>What it is</th><th>What to watch</th></tr></thead>
+            <tbody>
+              <tr><td><b>Saltbox</b></td><td>An off-centre ridge: short steep slope one side, long slope the other</td><td>The two sides are different areas. Measuring one and doubling it is wrong by a lot</td></tr>
+              <tr><td><b>Pyramid hip</b></td><td>Four equal slopes to a single peak, no ridge at all</td><td>Zero ridge means zero ridge vent. Usually a garage, gazebo or small square addition</td></tr>
+              <tr><td><b>Butterfly</b></td><td>Two slopes falling <i>inward</i> to a central valley</td><td>Very rare here. The internal valley drains to an interior point &mdash; if you find one, it is a call to the office</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rl-tags"><span>saltbox</span><span>pyramid</span><span>butterfly</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="combination roof complex cut up multiple shapes dormer real houses">
+        <h3>Most Real Houses Are a Combination</h3>
+        <p>The shapes on the plate are the vocabulary, not the inventory. An actual Dayton house is frequently a cross gable with a shed porch, a hip garage and two dormers &mdash; four forms on one address.</p>
+        <p><b>Take it off plane by plane, not house by house.</b> Every plane gets its own pitch reading, its own area, and its own place in the waste calculation. A single &ldquo;the roof is 7:12&rdquo; on a combination roof is a guess wearing a number.</p>
+        <div class="rl-use"><b>Use it when:</b> Deciding the waste factor. The library's <i>Waste Factor</i> card bands it by complexity &mdash; simple gable 5&ndash;7&percnt;, standard cut-up with hips, dormers and valleys 10&ndash;12&percnt;, complex 15&percnt; or more. Count the forms on the house and be honest about which band you are in; underordering stops the job mid-day.</div>
+        <div class="rl-doc"><b>Document:</b> Name every form in the inspection note. &ldquo;Main range cross gable, hip over the garage, 2:12 shed at the rear porch&rdquo; tells the office what to expect on the order without them re-reading your photographs.</div>
+        <div class="rl-tags"><span>combination</span><span>complex</span><span>waste</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="aerial report hover eagleview roofr shape check wing missed">
+        <h3>Checking the Shape Against an Aerial Report</h3>
+        <p>Hover, EagleView and Roofr all infer the roof from imagery. They are good, and they are wrong in a predictable direction: <b>they simplify.</b></p>
+        <ul>
+          <li><b>A wing gets absorbed into the main range</b> &mdash; the valley LF and the waste both go missing with it.</li>
+          <li><b>A low-slope section gets the main roof's pitch</b>, which is exactly the section where the pitch matters most.</li>
+          <li><b>Small forms get lumped</b> &mdash; dormers, the porch shed, a hip over a bay.</li>
+        </ul>
+        <p><b>The check takes a minute:</b> name the shape from the ground, then name the shape the report drew. If they do not match, the report is short before anyone has argued about a single shingle.</p>
+        <div class="rl-use"><b>Use it when:</b> Any report-based scope. The library's <i>Reading Reports</i> pages cover what each product gets right and wrong in detail; this is the thirty-second version you run in the driveway.</div>
+        <div class="rl-tags"><span>aerial report</span><span>hover</span><span>eagleview</span></div>
       </div>
     </div>
 
@@ -18491,6 +18691,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     rlPageCode:       'rlPageGenHub',
     rlPageMfg:        'rlPageGenHub',
     rlPageInsp:       'rlPageGenHub',
+    rlPageRoofTypes:  'rlPageGenHub',
     /* Measurements tree */
     rlPageMsr:                 'rlPageGenHub',
     rlPageMsrRoof:             'rlPageMsr',
@@ -18616,6 +18817,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
       sup:       'rlPageSup',
       mfg:       'rlPageMfg',
       insp:      'rlPageInsp',
+      roof_types: 'rlPageRoofTypes',
       /* Measurements */
       msr:                'rlPageMsr',
       msr_roof:           'rlPageMsrRoof',
@@ -32807,6 +33009,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:463, note:'\U0001F3E0 New in the Resource Library: <b>Roof Types</b>, under General. Thirteen roof shapes \u2014 gable, hip, cross gable, Dutch gable, jerkinhead, gambrel, mansard, shed, saltbox, pyramid, butterfly and the rest \u2014 drawn on one plate so you can name what you are standing under, then a card each on what that shape costs you in waste, in ridge cap, in ventilation and in low-slope exposure. The library had never named a roof form before this.' },
 { build:462, note:'\u23F1\uFE0F Six more library cards, and the last of the gaps: how and when to ask for a reinspection, the deadlines that actually bite \u2014 the lien window on a house is 60 days, not the 75 everyone quotes \u2014 the punch walk on the last day, what has to exist on paper before a job is closed, how to find out who the permit office really is, and Malarkey\u2019s programme for reading somebody else\u2019s bid.' },
 { build:461, note:'\uD83E\uDDF1 The wall side of the library, which had nothing but measuring in it before: what the water-resistive barrier behind the siding has to do, what a re-side has to add up to, how to identify a vinyl panel and read hail on it \u2014 including why cold weather cuts both ways \u2014 and the discontinued-colour argument for a full elevation.' },
 { build:460, note:'\uD83E\uDDF1 Six new library cards: kickout flashing at roof-to-wall (and how to quote it, because the code never says \u201ckickout\u201d), what the slope actually allows, powered attic ventilators, ice dams, and 3-tab vs architectural. Also fixed a wrong number on the Drip Edge card \u2014 fasteners are 12\u2033 on center, not 16\u2033 \u2014 and noted that a gutter apron is not a drip edge.' },
@@ -33477,6 +33680,9 @@ var TOC = [
 { pid:'rlPageNachiAccessing', title:'NACHI 1-3 Accessing A Roof' },
 { pid:'rlPageNachiAsphalt', title:'NACHI Asphalt Composition Shingles' },
 { pid:'rlPageSup', title:'Supplement Templates' },
+]},
+{ hub:'General \u2014 Construction', icon:'\uD83C\uDFE0', pages:[
+{ pid:'rlPageRoofTypes', title:'Roof Types' },
 ]},
 { hub:'Manufacturer', icon:'\uD83C\uDFED', pages:[
 { pid:'rlPageMfg', title:'Manufacturer Guidelines' },
