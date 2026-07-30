@@ -1235,3 +1235,58 @@ present twice in the file), `rl-warn`, and `gutter apron`. I fixed the last one 
 instrumenting the delta and reading it instead of reasoning about it — which is what the
 counting rule in `CLAUDE.md` has said all along. Prefer self-computing assertions; when one
 fires, measure, do not re-guess.
+
+---
+
+## Build 461 — the wall, which the library had nothing on
+
+Second tranche. The library held **thirteen siding cards and every one was about measuring
+siding or reading a siding report.** Nothing on the wall as an assembly, nothing on
+identifying the material, nothing on how siding damage reads.
+
+### No new page, deliberately
+
+The gap list allowed a new `rlPageSiding`. That means a hub nav box, a router entry and a
+sprite symbol — three surfaces — for content that splits cleanly across pages that already
+exist. So: the wall **code** opens a `Walls — RCO Chapter 7` group on `rlPageCode`, which
+was roof-only despite being called Construction Codes; **reading damage** goes on
+`rlPageInsp` beside the 3-tab card from 460; **the matching argument** joins the Matching
+group on `rlPageSup`, next to the shingle version it mirrors on purpose.
+
+### Five cards
+
+- **Water-Resistive Barrier** (R703.2) — one layer of No. 15 felt to ASTM D226 Type 1 or
+  another approved barrier, horizontal, upper over lower ≥2″, joints ≥6″, continuous to the
+  top of the wall. Verified this session, not recalled.
+- **Re-Siding Over What Is Already There** (R703.1) — the wall has to end up a
+  weather-resistant envelope, so a layover is a decision about the openings and the
+  substrate, not a price.
+- **Vinyl Siding — Profile, Gauge, and Why Both Go in the File** — with the panel-back
+  photo trick, because a stamped nail hem turns "discontinued" from an assertion into a fact.
+- **Reading Damage on Vinyl — and the Cold-Weather Trap.**
+- **Discontinued Siding Colour — Full Elevation** (OAC 3901-1-54(I)(1)(b)).
+
+### Two judgement calls worth recording
+
+**The vinyl cards carry no `rl-cite` at all, on purpose.** They teach how to read damage and
+identify a panel. No code section says what a Dutch lap is. The library's other inspection
+cards are uncited for the same reason, and inventing a section number to make a card look
+authoritative is precisely the failure this whole tranche was built to avoid. The harness
+asserts the absence.
+
+**The cold-weather warning states both directions, and the harness enforces that too.** Vinyl
+gets brittle below freezing, so genuine storm damage in winter can be worse than the same
+stones in July — a real argument. And a crew working cold can crack a panel with a ladder or
+a knee — which is *not* storm damage. A card giving only the first half would be coaching a
+rep into a fraud. `...says winter damage can be worse` and `...says crew-caused damage is not
+storm damage` are both gate checks.
+
+### Gates
+
+`check_build.py` green with the negative control. **21/21 in a real browser**, including that
+the new group sorts between the roof and commercial groups, that neither vinyl card carries a
+citation, and that both halves of the cold-weather warning are present. Scope proven over 5
+regions. Full suite **145/145**.
+
+`R703` occurred **zero times** in the file before this build — asserted in the patch, so the
+claim that the wall code was absent is checked rather than stated.
