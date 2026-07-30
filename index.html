@@ -2722,6 +2722,34 @@ body:has(#loginView[style*="block"]){background:#fff;}
 #resourceLibraryView .rl-card ul li{margin:5px 0;}
 #resourceLibraryView .rl-card .rl-tags{margin-top:12px;font-size:11px;color:var(--ct-ink-2);}
 #resourceLibraryView .rl-card .rl-tags span{display:inline-block;margin-right:6px;padding:3px 8px;border:1px solid var(--ct-line);border-radius:11px;background:transparent;font-family:var(--ct-code);font-size:10.5px;color:var(--ct-ink-2);}
+/* ---- reference layer (445) · ledger tables + framed plates -------------
+   Chosen from preview v1: A1 tables, B2 figures. Every colour is a --ct-*
+   token so both rltheme skins (docket / siren) follow automatically. ---- */
+#resourceLibraryView .rl-tw{margin-top:13px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+#resourceLibraryView table.rl-table{width:100%;border-collapse:collapse;font:15px var(--ct-sans);font-variant-numeric:tabular-nums;}
+#resourceLibraryView table.rl-table caption{caption-side:top;text-align:left;font:700 11px var(--ct-code);letter-spacing:.15em;text-transform:uppercase;color:var(--ct-ink-2);padding:0 0 7px;}
+#resourceLibraryView table.rl-table th,#resourceLibraryView table.rl-table td{padding:8px 11px;text-align:left;}
+#resourceLibraryView table.rl-table th{border-bottom:2px solid var(--ct-ink);font:700 12.5px var(--ct-sans);letter-spacing:.01em;color:var(--ct-ink);}
+#resourceLibraryView table.rl-table td{border-bottom:1px solid var(--ct-line);color:var(--ct-ink);}
+#resourceLibraryView table.rl-table tbody tr:last-child td{border-bottom:none;}
+#resourceLibraryView table.rl-table td.num,#resourceLibraryView table.rl-table th.num{text-align:right;font-family:var(--ct-code);font-size:14px;}
+#resourceLibraryView .rl-tnote{margin:7px 0 0;font-size:12.5px;line-height:1.5;color:var(--ct-ink-2);}
+#resourceLibraryView .rl-tnote b{color:var(--ct-ink);}
+#resourceLibraryView figure.rl-fig{margin:14px 0 0;background:var(--ct-surface-2);border:1px solid var(--ct-line);border-radius:var(--ct-r-card);padding:0;overflow:hidden;page-break-inside:avoid;break-inside:avoid;}
+#resourceLibraryView figure.rl-fig .rl-figh{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--ct-line);background:var(--ct-surface);}
+#resourceLibraryView figure.rl-fig .rl-figh .n{font:700 10px var(--ct-code);letter-spacing:.16em;text-transform:uppercase;color:var(--ct-red-ink);background:var(--ct-mark);padding:2px 7px;border-radius:var(--ct-r-chip);white-space:nowrap;}
+#resourceLibraryView figure.rl-fig .rl-figh .t{font:700 12px var(--ct-sans);color:var(--ct-ink);letter-spacing:-.01em;}
+#resourceLibraryView figure.rl-fig .rl-figb{padding:14px 14px 4px;}
+#resourceLibraryView figure.rl-fig svg{display:block;width:100%;height:auto;}
+#resourceLibraryView figure.rl-fig figcaption{padding:0 14px 12px;margin-top:6px;font-size:13px;line-height:1.5;color:var(--ct-ink-2);}
+#resourceLibraryView figure.rl-fig figcaption b{color:var(--ct-ink);}
+#resourceLibraryView .fig-ink{stroke:var(--ct-ink);fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+#resourceLibraryView .fig-acc{stroke:var(--ct-mark);fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+#resourceLibraryView .fig-accw{stroke:var(--ct-mark);fill:none;stroke-width:5;stroke-linecap:round;}
+#resourceLibraryView .fig-hair{stroke:var(--ct-line-strong);fill:none;stroke-width:1;stroke-dasharray:4 3;}
+#resourceLibraryView .fig-t{fill:var(--ct-ink);font:600 10.5px var(--ct-code);letter-spacing:.06em;stroke:none;}
+#resourceLibraryView .fig-t2{fill:var(--ct-ink-2);font:600 9.5px var(--ct-code);letter-spacing:.06em;stroke:none;}
+#resourceLibraryView .fig-ta{fill:var(--ct-mark);font:700 10.5px var(--ct-code);letter-spacing:.06em;stroke:none;}
 #resourceLibraryView .rl-hidden{display:none !important;}
 #resourceLibraryView .rl-foot{margin-top:40px;padding:20px 0;text-align:left;border-top:1px solid var(--ct-line);color:var(--ct-ink-2);font-size:12.5px;}
 #resourceLibraryView .rl-foot b{color:var(--ct-ink);}
@@ -3110,7 +3138,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 444 &#8212; upload a document, choose its section and title, tap to open the original</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 445 &#8212; tables and diagrams in the Resource Library</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4222,6 +4250,27 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <span class="rl-cite">RCO R905.1.2</span>
         <p>Ohio's Table 301.2(1) designates the entire state as an ice-forming region. An ice barrier is required on new asphalt shingle, metal shingle, mineral-surfaced roll, slate, wood shingle, and wood shake roofs. The barrier must be either two layers of underlayment cemented together, or a self-adhering polymer-modified bitumen sheet. It must extend from the eave edge to a point <b>at least 24 inches inside the exterior wall line</b> of the building, measured along the slope.</p>
         <p>On roofs with slope &ge; 8:12, the barrier extends 36 inches up the slope from the eave.</p>
+        <figure class="rl-fig">
+          <div class="rl-figh"><span class="n">Plate 2</span><span class="t">Ice barrier &mdash; extension past the wall line</span></div>
+          <div class="rl-figb">
+            <svg viewBox="0 0 340 200" role="img" aria-label="Section through an eave showing the ice barrier running from the eave edge to 24 inches inside the exterior wall line">
+              <path class="fig-ink" d="M40 132 L300 62"/>
+              <path class="fig-ink" d="M120 110 V178"/>
+              <path class="fig-ink" d="M120 178 H196"/>
+              <path class="fig-accw" d="M42 131 L214 85"/>
+              <path class="fig-hair" d="M120 104 V38M214 85 V38"/>
+              <path class="fig-ink" d="M120 44 H214"/>
+              <path class="fig-ink" d="M124 40 l-4 4 4 4M210 40 l4 4-4 4"/>
+              <text class="fig-ta" x="167" y="33" text-anchor="middle">24&#8243; MIN</text>
+              <text class="fig-t2" x="26" y="150">EAVE</text>
+              <text class="fig-t2" x="26" y="162">EDGE</text>
+              <text class="fig-t" x="128" y="172">EXTERIOR WALL LINE</text>
+              <text class="fig-t2" x="58" y="118">OVERHANG</text>
+              <text class="fig-ta" x="222" y="80">BARRIER ENDS</text>
+            </svg>
+          </div>
+          <figcaption><b>The overhang does not count.</b> The 24&Prime; is measured inward from the exterior wall line, so a deep soffit means more membrane &mdash; which is why overhang depth belongs on the worksheet.</figcaption>
+        </figure>
         <div class="rl-use"><b>Use it when:</b> An adjuster's scope for a re-roof doesn't include ice &amp; water membrane, or only shows a strip at the eave without the full wall-line coverage. Code requires it. Add the line item and cite R905.1.2.</div>
         <div class="rl-doc"><b>Document:</b> Note the overhang depth in inches (drip edge to exterior wall). This determines how far up the slope the barrier must extend. Include in the measurement worksheet.</div>
         <div class="rl-tags"><span>ice &amp; water</span><span>eave</span><span>underlayment</span></div>
@@ -4272,6 +4321,40 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <h3>Attic Ventilation</h3>
         <span class="rl-cite">RCO R806</span>
         <p>Enclosed attics and rafter spaces must have cross-ventilation. Minimum net free ventilation area is <b>1/150</b> of the ventilated space, reducible to <b>1/300</b> when at least 40&percnt; and not more than 50&percnt; of the ventilation is in the upper portion of the space (i.e., balanced ridge + soffit intake).</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>Net free area required &mdash; worked at three attic sizes</caption>
+            <thead><tr><th>Attic floor</th><th class="num">At 1/150</th><th class="num">At 1/300</th><th class="num">Difference</th></tr></thead>
+            <tbody>
+              <tr><td>1,200 sq ft</td><td class="num">1,152 in&sup2;</td><td class="num">576 in&sup2;</td><td class="num">576 in&sup2;</td></tr>
+              <tr><td>1,600 sq ft</td><td class="num">1,536 in&sup2;</td><td class="num">768 in&sup2;</td><td class="num">768 in&sup2;</td></tr>
+              <tr><td>2,000 sq ft</td><td class="num">1,920 in&sup2;</td><td class="num">960 in&sup2;</td><td class="num">960 in&sup2;</td></tr>
+              <tr><td>2,400 sq ft</td><td class="num">2,304 in&sup2;</td><td class="num">1,152 in&sup2;</td><td class="num">1,152 in&sup2;</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote">Attic square feet &times; 144 &divide; 150 (or &divide; 300) = required square inches of <b>net free area</b>, not gross vent area. NFA is printed on the vent&rsquo;s data sheet and is always the smaller of the two numbers.</p>
+        </div>
+        <figure class="rl-fig">
+          <div class="rl-figh"><span class="n">Plate 3</span><span class="t">Balanced ventilation &mdash; intake low, exhaust high</span></div>
+          <div class="rl-figb">
+            <svg viewBox="0 0 340 210" role="img" aria-label="House section showing ridge exhaust at the top and soffit intake at both eaves, giving a balanced system">
+              <path class="fig-ink" d="M170 42 L58 120 H282 Z"/>
+              <path class="fig-ink" d="M58 120 V184 H282 V120"/>
+              <path class="fig-acc" d="M152 46 H188"/>
+              <path class="fig-acc" d="M158 34 v-12M170 30 v-14M182 34 v-12"/>
+              <path class="fig-acc" d="M154 26 l4-6 4 6M166 22 l4-6 4 6M178 26 l4-6 4 6"/>
+              <path class="fig-acc" d="M72 118 H94M246 118 H268"/>
+              <path class="fig-acc" d="M82 132 v-11M258 132 v-11"/>
+              <path class="fig-acc" d="M78 126 l4-5 4 5M254 126 l4-5 4 5"/>
+              <text class="fig-ta" x="170" y="12" text-anchor="middle">EXHAUST</text>
+              <text class="fig-t2" x="170" y="66" text-anchor="middle">40&#8211;50% UPPER</text>
+              <text class="fig-ta" x="82" y="148" text-anchor="middle">INTAKE</text>
+              <text class="fig-ta" x="258" y="148" text-anchor="middle">INTAKE</text>
+              <text class="fig-t" x="170" y="204" text-anchor="middle">BALANCED &#8594; 1/300 ALLOWED</text>
+            </svg>
+          </div>
+          <figcaption><b>Exhaust without intake pulls conditioned air out of the house</b> instead of air through the attic. Blocked or missing soffit intake is the most common defect found on a re-roof inspection.</figcaption>
+        </figure>
         <div class="rl-use"><b>Use it when:</b> Existing roof shows heat blistering, premature granule loss, or ice damming caused by inadequate ventilation. Re-roof scope should include bringing ventilation to code. Adjusters often exclude ventilation upgrades as "improvement" &mdash; the counter is that installing a non-compliant assembly on the new roof would violate code.</div>
         <div class="rl-doc"><b>Document:</b> Photo existing ventilation type (ridge, box, gable, power). Check for soffit intake &mdash; blocked or absent soffit vents are the most common defect. Note attic temperature vs outdoor if inspecting on a warm day.</div>
         <div class="rl-tags"><span>ventilation</span><span>ridge vent</span><span>soffit</span><span>ice damming</span></div>
@@ -5353,6 +5436,40 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <li><b>Phone level app</b> &mdash; iPhone Measure or any level app. Lay against sheathing or shingle plane. Accurate to about &plusmn;0.5&deg;.</li>
           <li><b>Rafter/joist trick</b> &mdash; measure 12&Prime; horizontally from the rake, then measure vertically to the rake board. That vertical is the rise per 12&Prime; run.</li>
         </ul>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>Slope multipliers &mdash; plan area &times; multiplier = roof area</caption>
+            <thead><tr><th>Pitch</th><th class="num">&times;</th><th>Pitch</th><th class="num">&times;</th></tr></thead>
+            <tbody>
+              <tr><td>3/12</td><td class="num">1.0308</td><td>8/12</td><td class="num">1.2019</td></tr>
+              <tr><td>4/12</td><td class="num">1.0541</td><td>9/12</td><td class="num">1.2500</td></tr>
+              <tr><td>5/12</td><td class="num">1.0833</td><td>10/12</td><td class="num">1.3017</td></tr>
+              <tr><td>6/12</td><td class="num">1.1180</td><td>12/12</td><td class="num">1.4142</td></tr>
+              <tr><td>7/12</td><td class="num">1.1577</td><td>16/12</td><td class="num">1.6667</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote">The multiplier is <b>&radic;(1 + (rise&divide;12)&sup2;)</b>, so it holds for any pitch &mdash; including the odd ones not in the table.</p>
+        </div>
+        <figure class="rl-fig">
+          <div class="rl-figh"><span class="n">Plate 1</span><span class="t">Rise, run and the rafter</span></div>
+          <div class="rl-figb">
+            <svg viewBox="0 0 340 180" role="img" aria-label="Pitch triangle: 6 inch rise over 12 inch run, rafter multiplier 1.1180">
+              <path class="fig-ink" d="M50 145 H270"/>
+              <path class="fig-ink" d="M270 145 V35"/>
+              <path class="fig-acc" d="M50 145 L270 35"/>
+              <path class="fig-ink" d="M258 145 v-12 h12"/>
+              <path class="fig-hair" d="M50 145 v18M270 145 v18"/>
+              <path class="fig-ink" d="M50 158 H270"/>
+              <path class="fig-ink" d="M54 154 l-4 4 4 4M266 154 l4 4-4 4"/>
+              <text class="fig-t" x="160" y="176" text-anchor="middle">12&#8243; RUN</text>
+              <text class="fig-t" x="283" y="94">6&#8243;</text>
+              <text class="fig-t2" x="283" y="107">RISE</text>
+              <text class="fig-ta" x="150" y="78" text-anchor="middle" transform="rotate(-26.6 150 78)">RAFTER &#215; 1.1180</text>
+              <text class="fig-t2" x="50" y="28">6/12</text>
+            </svg>
+          </div>
+          <figcaption><b>The rafter is the hypotenuse.</b> Rise over run gives the pitch; the multiplier converts flat plan area into actual roof area.</figcaption>
+        </figure>
         <div class="rl-use"><b>Why it matters:</b> Slope determines square footage. A 6/12 roof is about 12&percnt; more surface than the footprint; a 12/12 is about 41&percnt; more. Same footprint, very different materials.</div>
       </div>
 
@@ -32145,6 +32262,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:445, note:'\uD83D\uDCD0 Resource Library gets tables and diagrams \u2014 pitch multipliers on Slope/Pitch, net-free-area worked out on Attic Ventilation, and labelled plates for the pitch triangle, the ice barrier wall line and balanced ventilation' },
 { build:444, note:'\uD83D\uDCC1 You can now upload a document, pick the section and name it yourself \u2014 it shows as a clickable title that opens the original file, not a summary of it' },
 { build:443, note:'\uD83D\uDCD6 Ask the library a question and it writes the answer up as a reference entry and files it, so the next person just finds it. The assistant also follows the library light/dark switch now' },
 { build:442, note:'\uD83E\uDD16 The Resource Library has an assistant \u2014 send it a code page, spec sheet or photo and it reads, names and files it into the right section' },
