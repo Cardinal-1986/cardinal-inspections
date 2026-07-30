@@ -10,7 +10,7 @@
 | **BUG_CLASSES.md** | Failure modes already paid for | Before debugging, and before shipping |
 | **cardinal_build_log.md** | One line per build | Tracing when and why something changed |
 
-**Current build: 388 · July 27–28, 2026 · 2.38 MB · 94 inline script blocks · 177 named modules · 74 `window.Cardinal*` exports**
+**Current build: 427 · July 29, 2026 · 2.59 MB · 99 inline script blocks · 177 named modules · 74 `window.Cardinal*` exports**
 
 ---
 
@@ -28,7 +28,7 @@ A single-file PWA (`index.html`) for **Cardinal Roofing & Renovations, LLC** —
 | Production | curtis@, scottie@ | All clients; **no** stats strips or partner money (presentation-gated) |
 | Sales | nick@, joey@, jacob@ | Only what they created or are assigned (database-enforced) |
 
-**Three CRMs in one app**, switched from the banner chips or the bottom bar: **Retail** (iron + gold), **Cardinal Claims** (Aurora teal), **Community** (Slate & Clay, light). Plus Production, Sales Floor, Punch & Repairs, Photo Activity and the Team Directory, which are CRM-independent.
+**Three CRMs in one app**, switched from the banner chips or the bottom bar: **Retail** (iron; red/black/grey since 542 values migrated off gold, though the retail badge stays `#c9a227`), **Cardinal Claims** (Aurora teal), **Community** (green `--ccm-*`, dark by default since build 427+). Plus Production, Sales Floor, Punch & Repairs, Photo Activity and the Team Directory, which are CRM-independent.
 
 **Universal chrome (since 344–346):** the fixed header carries burger · gold home · CRM title · ＋, and directly beneath it a **banner nav** — Home · Contacts · Leads · Photos · Track · Reports · Production ▾ · Tools ▾ · CRM switcher · search. The banner lives *inside* `header.site` so it scrolls with it; `fixHeadPad()` measures the whole block and keeps content clear.
 
@@ -63,7 +63,7 @@ Non-negotiable:
 
 Run in order. **Stage to outputs only on verified green** — check the exit code, never the eyeball.
 
-1. **`node --check`** on all 94 inline script blocks, extracted individually.
+1. **`node --check`** on all 99 inline script blocks, extracted individually.
 2. **Tag balance** (`<script>`/`<style>`) and CSS brace balance.
 3. **Whole-string assertions** — assert entire rules and structures, never fragments.
 4. **jsdom functional harness** — boot the file, mock `cacheProjects` / `currentUser` / chainable `sb` and `supa`, shim `offsetParent`, then exercise the changed surface with **structural proofs** (`matches()`, parentage, counts).
@@ -111,3 +111,74 @@ Run in order. **Stage to outputs only on verified green** — check the exit cod
 ---
 
 *Doc set current at build 373. Keep this file about the app and the process — the to-do list lives in OPEN_ITEMS.md, the lessons in BUG_CLASSES.md.*
+
+---
+
+# Session 29 July 2026 — additions
+
+*Updated 29 July 2026 — session of 34 merged PRs, `origin/main @ 202e6f3`, app stamped build 427.*
+
+## Counting things in this file — read before you assert a number
+
+Most wrong claims on this project came from a count, not from reasoning. A bare regex over 2.5 MB is **not** evidence.
+
+**Comments and strings lie in both directions.** Patch scripts document the values they change, so a naive count finds the value in its own explanatory comment. But naive comment-*stripping* is worse: `/*` inside a string literal is not a comment, and stripping on that basis deletes real code.
+
+Worked example — counting the global scroll lock:
+
+| Method | Answer |
+|---|---|
+| Bare regex | 14 modules — one was text inside a code comment |
+| Strip `/* … */` first | 10 modules — ate real calls from three modules |
+| **JS lexer (strings/templates/comments as states)** | **13 — correct** |
+
+Both shortcuts were wrong, in opposite directions. **Use a lexer.**
+
+**Scope the assertion to the function, not the file.** The single most repeated error here. `await signedPhotoMap(...)` appears twice — `publish()` and `openPreview()` — so asserting `1` file-wide fails a correct patch. Extract the function by brace-matching, then assert against that slice. Same trap with `LABEL`: a file-wide regex finds the *insurance* map (`'Lead':'Claim Filed'`) when you meant community (`'Lead':'Bid Requested'`).
+
+**Prefer self-computing assertions** over hardcoded numbers, which are usually read off an already-patched tree:
+
+```python
+assert count(patched, VALUE) == count(orig, VALUE) - 1   # "exactly one changed"
+```
+
+**Print what your extractor captured** before asserting on it. An extractor that swallowed 2,271 characters returned empty counts, and empty looks like a legitimate zero.
+
+**When a count contradicts you, suspect the regex.** A pattern using `[^;\n]*` cannot see an expression split across lines — that nearly produced a false "locks scroll and never releases" bug report against correct code.
+
+---
+
+## 5. Invariants you must not break
+
+**`normStage()` is a whitelist.** Six copies exist; five delegate to the one
+in the main block.
+
+```js
+return STAGES.indexOf(s) !== -1 ? s : 'Lead';
+```
+
+Anything it does not recognise **silently becomes `'Lead'`**. Therefore:
+
+> **`STAGES` must contain a stage value before any row is given that value.**
+
+Ship the whitelist entry first, in its own commit. If you write a row with a
+stage the whitelist has not learned, every affected job renders as a brand-new
+bid request and you will not get an error.
+
+**Never mutate `estimates.photos` objects.** `saveEstimate()` persists them
+verbatim. Writing a signed (expiring) URL back into that array corrupts the
+record permanently. Sign for *display only*.
+
+**Community palette tokens need literal fallbacks.** `--ccm-*` are declared
+in the community stylesheets. When you reference them from a block outside
+those sheets, always `var(--ccm-card,#161918)` — never bare — or the surface
+renders transparent if the declaration ever moves.
+
+**Follow existing conventions instead of inventing mechanisms.** The app
+already had `IC_SKIP` (per-CRM stage hiding) and `LEGACY_STAGE` (stage
+aliases). `PIPE_SKIP` was added this session by copying `IC_SKIP`'s shape
+rather than designing something new. Grep for a convention before you invent.
+
+---
+
+> The full patch-discipline checklist, the corrected two-party rules and the current open list live in `HANDOFF.md`, `FEATURES.md` and `OPEN_ITEMS.md`.

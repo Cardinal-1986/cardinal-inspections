@@ -4,7 +4,7 @@
 
 **Rule: read this before proposing any new feature. If something related exists, extend it.**
 
-*Current through build 388 · July 27–28, 2026*
+*Current through build 427 · July 29, 2026*
 
 > **Four features were "built" on this project that already existed** and were merely unreachable or plain-looking: manual estimates (dead stub), the photo Attach bar (buried under the nav), the punch-list profile card (mounted to a hidden anchor), and the **Team page** (in the burger menu the whole time — build 373 restyled it rather than adding a second directory). When something appears missing, **first assume it exists and is buried.**
 
@@ -20,7 +20,7 @@
 | Ribbon | `cr-hd2` | Gold home + clock / PO + client name; `body.projopen` swaps clock → client context |
 | Bottom bar | `pnc` + relocations | Portal chip · health shield · history ◀ ▶ |
 
-`window.CardinalHeader = { build, skin, crm }` — **`crm()` is the single source of truth for "which CRM am I in."**
+`window.CardinalHeader = { build, skin, crm }` — **`crm` is `crmNow` and recomputes on call.** `skin()` publishes the result to `body.dataset.crm`, which is the DOM mirror everything else reads (6 sites) and the only thing CSS can gate on (`body[data-crm="community"]`). Call `crm()` when you need it fresh before `skin()` has run; read the attribute otherwise.
 
 **Retail surface (retail-B, committed at source in 335):** ground `#202329` at the base, not an override layer. The 21-rule `body[data-crm="retail"]` layer is **deleted**; a light-on-paper `@media print` block ships beside the other 14.
 
@@ -43,7 +43,7 @@
 - Milestone/pipeline circle colours (L·P·A·C·I) and the white letters/digits on them
 - Status spines and stage-colour accents (`--sc`, `--stgc`, `--rcn`, `--pc`)
 - The **lavender PO** on client cards (a deliberate distinguishing choice, see Clients & projects)
-- Urgency red, priority colours, CRM badge colours (retail gold / insurance teal / community blue)
+- Urgency red, priority colours, CRM badge colours (retail gold `#c9a227` / insurance teal / **community green** — community moved off blue at 427+)
 - The AR chart's amber bars, the Activity Count orange figures
 - The lit favourite star
 - Photo captions (`.phn`) — they sit on the **photo**, not the page
@@ -108,7 +108,7 @@ Pipeline circles (L·P·A·C·I) with white counts and light stage labels (362) 
 
 ---
 
-## Community CRM (Slate & Clay, rebuilt 359–364)
+## Community CRM (green `--ccm-*`, rebuilt 359–364, re-themed 427+)
 
 Light desktop-wide layout replacing a 680px phone layout that had **zero media queries**. Tabs **Bids | Partners | Clients** in the header slate-blue with bold separators.
 
@@ -182,3 +182,307 @@ team_profiles:        readable by the team; admins write anyone, users write the
 5. Share / email / sign / print → `db.create()`.
 6. New `window.Cardinal*` export → `Object.assign` merge.
 7. **Add a row here when you ship.**
+
+---
+
+# Community CRM — detail as built, 29 July 2026
+
+*Updated 29 July 2026 — session of 34 merged PRs, `origin/main @ 202e6f3`, app stamped build 427.*
+
+## 2. Stages
+
+`STAGES` is the whitelist. Order matters — it drives sorting.
+
+```js
+var STAGES = ['Lead','Prospect','OnHold','Approved','Scheduled',
+              'Completed','Invoiced','Closed','Lost'];
+```
+
+Community renders its own vocabulary via `LABEL`. **Community never shows the
+words "Lead" or "Prospect" to a user.**
+
+| Stage value | Community label |
+|---|---|
+| `Lead` | Bid Requested |
+| `Prospect` | Bid Submitted |
+| `OnHold` | **Awaiting Funding** |
+| `Approved` | Awarded |
+| `Scheduled` | Scheduled |
+| `Completed` | Build Complete |
+| `Invoiced` | Invoiced |
+| `Closed` | Closed |
+| `Lost` | **Not Awarded** |
+
+Both community `LABEL` maps — hub and client page — are byte-identical, so one
+edit covers both. That is intentional; a count of 2 is correct.
+
+`STAGE_ORDER` matches `STAGES` exactly, with `OnHold` after `Prospect` — a held
+bid *was* submitted, so it sorts after submission.
+
+### `OnHold` (PR #34)
+
+Added because Theo said: *"Some of these could last 2 years before approval
+depending on the grant and funding."*
+
+Visible **only** in Community, via the app's existing per-CRM skip convention:
+
+```js
+var IC_SKIP   = { 'Lead':1, 'Prospect':1, 'OnHold':1 };
+var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
+```
+
+- `IC_SKIP` keeps it out of the Insurance stage list (existing mechanism).
+- `PIPE_SKIP` keeps the board column off Retail and Insurance. New this
+  session, deliberately copying `IC_SKIP`'s shape rather than inventing one.
+- Board column: `label:'ON HOLD'`, swatch `.pipe-onhold{background:#047857}`,
+  tooltip *"Bid in, waiting on a grant or funding decision"*.
+
+**Win rate needs no change.** It computes `decided = won + lost`, so a held bid
+is excluded from the percentage rather than counted as a loss. Verified: two
+won + one lost = 67%, and adding a held bid leaves it at 67%.
+
+⚠ **Nothing writes `OnHold` yet.** That is correct ordering (see
+`BUG_CLASSES.md` §3) — the outcome form will write it.
+
+---
+
+## 3. Loss handling — deliberately different from Retail
+
+Retail and Insurance prompt for a reason from `LOSS_REASONS` when a job is
+marked lost. **Community does not.**
+
+Theo, verbatim: *"Dont need the why we didn't get it."* A grant that did not
+fund this cycle is not a lost sale, and forcing a reason produces noise.
+
+Gated by `_isCommunityLoss` (PR #33). `LOSS_REASONS` is untouched for the other
+two CRMs.
+
+---
+
+## 4. Sort, filter and direction toggle (PR #30)
+
+State:
+
+```js
+var chState = { sort:'due', dir:1, sets:{} };
+```
+
+### Seven sorts (`CH_SORTS`)
+
+`Bid deadline` (default) · `Homeowner` · `Bill to` · `Bid amount` · `Stage` ·
+`Age in stage` · `Address`
+
+`chSorted` **pins undated rows last in both directions** — otherwise reversing
+the sort floats "no deadline set" to the top, which is never what you want.
+
+### Six filter groups (`CH_GROUPS`)
+
+| Key | Label | Derives from |
+|---|---|---|
+| `partner` | Bill to | `partnerOf(pr)` |
+| `ptype` | Partner type | `TYPE_LABEL[metaOf(...).type]`, default "Community program" |
+| `stage` | Stage | `LABEL[normStage(pr.stage)]` |
+| `due` | Bid deadline | `chDueBand` |
+| `ho` | **Homeowner** | `homeownerOf(pr) ? 'Recorded' : 'Not recorded'` |
+| `rep` | Assigned to | `chRepName` |
+
+`ho` is community-specific and the reason the feature was worth building: 2 of
+12 jobs have no homeowner recorded — exactly the ambiguity the two-party header
+was meant to remove. This makes those two findable in one tap.
+
+### Due bands (`chDueBand`)
+
+`No deadline set` · `Overdue` · `Due today` · `Due this week` · `Later`
+
+⚠ **Known bug.** Always reads `bid_due_at`, even when a bid is on hold waiting
+for a grant. A 2024 bid reads −713 days and sorts most-urgent forever. See
+`OPEN_ITEMS.md` §2.
+
+---
+
+## 5. The two-party header and billed-party emphasis
+
+PR #12 named both parties and added the `data-l` attributes. PR #28 used those
+attributes to mark **who is being billed** — the thing Theo most needed at a
+glance:
+
+```css
+.cc-tbl td[data-l="Bill to"]{ background:var(--goodbg);
+                              box-shadow:inset 2px 0 0 var(--acc) }
+.cc-tbl th.k-bill{ color:var(--acc) }
+.cc-idp .k.b{ color:var(--acc) }
+```
+
+Keying off an attribute PR #12 had already shipped meant no markup change — the
+styling attached to structure that already existed.
+
+Downstream, both parties now appear in the emailed bid (#13) and the inspection
+report (#15), and bids route to the **funding partner**, not the homeowner
+(#10).
+
+---
+
+## 6. Thread actions (PR #32)
+
+The thread action bar previously used a blind dispatcher: every `[data-act]`
+button was wired to the same handler regardless of what it claimed to do —
+which is why "Log the outcome" opened the estimate page.
+
+Now explicitly routed, in `ccDoAct(a, pr)`:
+
+| Action | Effect |
+|---|---|
+| `estimate` / `newbid` / `open` | `CardinalEstimates.openEditor(pr.id)` |
+| `won` | confirm, then `setStage(pr.id, 'Approved')` |
+| `lost` | `setStage(pr.id, 'Lost')` — no reason prompt in Community |
+| `schedule` | confirm, then `setStage(pr.id, 'Scheduled')` |
+| `invoice` | confirm, then `setStage(pr.id, 'Invoiced')` |
+
+Prospect offers two buttons rather than one ambiguous action. Confirmations name
+the partner: *"Mark this bid AWARDED by Habitat for Humanity?"*
+
+`setStage()` stamps `stage_since` and `t_<stage>`, so the outcome is recorded
+rather than just flagged.
+
+**This is the error-handling pattern to copy** — one of the few handlers with a
+real `catch`:
+
+```js
+}catch(e){
+  console.error('[community client] action failed:', e);
+  alert('That did not save — ' + (e.message || e));
+}
+```
+
+---
+
+## 7. Palette (PR #27, #31, #35, #36)
+
+**57 `--ccm-*` token declarations.** Dark is the default at `:root`, with a
+`[data-theme="rb-light"]` override. CSS custom properties resolve regardless of
+block order, and `:root` tokens inherit to `body`.
+
+| Token | Dark | Role |
+|---|---|---|
+| `--ccm-ground` | `#0e100f` | page background |
+| `--ccm-card` | `#161918` | card surface |
+| `--ccm-raise` | `#1e2220` | raised surface |
+| `--ccm-ink` | `#f2f4f3` | body text |
+| `--ccm-mute` | `#9aa39e` | secondary text |
+| `--ccm-dim` | `#7d8781` | tertiary text |
+| `--ccm-line` / `--ccm-line2` | `#2a2f2c` / `#232725` | borders |
+| `--ccm-ac` | `#34D399` | **the green accent** |
+| `--ccm-ac2` | `#6EE7B7` | lighter accent |
+| `--ccm-wash` / `--ccm-washln` | `rgba(4,120,87,.18)` / `#047857` | accent wash |
+| `--ccm-rd` / `--ccm-rdw` | `#ff6b78` / `rgba(200,32,46,.16)` | danger |
+| `--ccm-onac` | `#08240f` dark / `#ffffff` light | on-accent labels |
+
+**Always use a literal fallback** when referencing these from outside the
+community stylesheets: `var(--ccm-card,#161918)`. PR #31 tokenised the last 7
+hard-coded shadows (`.cc-card` was already tokenised — 7, not 8).
+
+### Blue removal
+
+| Round | Mechanism | Result |
+|---|---|---|
+| Census | rule-level across 35 stylesheets | 253 total, 3 gated away, **250 reachable** |
+| PR #35 | 4 already-community-gated rules, incl. the whole-CRM navy `body[data-crm="community"]{background:#0a1420}` | 250 → 246 |
+| PR #36 | 25 rules via `body.cr-cc-open` | 246 → **221** |
+
+`body.cr-cc-open` is toggled in exactly one place — the community client page's
+`takeOver()` — making it a safe community-scoped gate.
+
+221 remain, of which 69 are in the global block and cannot be changed without
+affecting Retail and Insurance. See `OPEN_ITEMS.md` §3c.
+
+---
+
+## 8. Photos — signed URLs (PRs #22–#26)
+
+The `photos` bucket is **private**. Images are rendered through signed URLs.
+
+**Path derivation (PR #24)** — the fix that made the migration work. No photo
+object in the database has `path` or `storage_path`, so the path is derived from
+the URL. 215/215 resolved exactly:
+
+```js
+function photoPathOf(p){
+  if(!p) return null;
+  var direct = p.path || p.storage_path;
+  if(direct) return String(direct);
+  var u = String(p.url || p.data || '');
+  if(!u || u.slice(0, 5) === 'data:') return null;
+  var m = /\/object\/(?:public|sign)\/photos\/([^?#]+)/.exec(u);
+  if(!m) return null;
+  try{ return decodeURIComponent(m[1]); }catch(e){ return m[1]; }
+}
+```
+
+**Global repaint (PR #25)** — a deliberately narrow selector so it cannot touch
+data URIs or other buckets:
+
+```js
+var imgs = [].slice.call(
+  scope.querySelectorAll('img[src*="/object/public/photos/"]'));
+```
+
+**`api/estimate.js`** gained `storagePathFromUrl` plus a service-key download,
+and now sends inline base64 to the model via `callOpenAI(prompt, photoParts)`.
+
+### 🚫 Never mutate `estimates.photos`
+
+`saveEstimate()` persists those objects **verbatim**. Writing a signed
+(expiring) URL back into the array corrupts the record permanently. Sign for
+display only, never for storage.
+
+`PHOTO_DOC_URL_TTL = 315360000` (ten years) for photos baked into documents,
+since a document may be opened long after it was generated.
+
+---
+
+## 9. Preview scroll guard (PR #37)
+
+`openPreview` became `async` in PR #23, which put a network round-trip between
+the user's tap and the body scroll lock. The precondition is now revalidated
+**after** the await:
+
+```js
+var docUrls = (typeof signedPhotoMap === 'function')
+  ? await signedPhotoMap(estimatePhotoPaths(est), PHOTO_DOC_URL_TTL) : null;
+function _pvStillOpen(){
+  var ed = document.getElementById('cr-est-view');
+  return !!(previewEl && previewEl.isConnected &&
+            ed && ed.classList.contains('open'));
+}
+if(!_pvStillOpen()) return;
+var html = buildDocHtml(est, project, docUrls);
+var frame = previewEl.querySelector('[data-slot="pv-frame"]');
+if(!frame) return;
+frame.srcdoc = html;
+previewEl.classList.add('open');
+document.body.style.overflow = 'hidden';
+```
+
+`publish()` and `transferPhotosToReport()` also await `signedPhotoMap`, but
+neither locks scroll — verified — so the bug was unique to `openPreview`.
+
+---
+
+## 10. Designed, agreed, not built
+
+The **outcome form**. Design settled with Theo; `outcome_v2.html` is the
+reference (Style 4 layout, Style 2 flow).
+
+Four outcomes: **Awarded** / **Still waiting** *(second — most common)* /
+**Referred onward** / **Not awarded**. No reason field.
+
+"Still waiting" writes stage `OnHold` plus `check_back_at`.
+
+⚠ **Reuse `checklist.bid.awarded_amount`** — it already exists, with a
+`promptForBid` UI and a `.cr-bidstrip` display. Do not create a parallel field
+under `checklist.lead`. Full corrected field list and the open questions are in
+`OPEN_ITEMS.md` §1.
+
+Also outstanding: `tarped_at` must be **displayed** on the job card, not merely
+stored — Theo: *"It is nice to show when the tarp was put up."* The string
+`tarp` currently appears **zero** times in the codebase.

@@ -1,70 +1,220 @@
-# Cardinal — Session Handoff (retail light theme, builds 374–388)
+# Hand-Off — Session Log
 
-**Give this to the new chat first, alongside the doc set.** The doc set (START_HERE / FEATURES / OPEN_ITEMS / BUG_CLASSES / cardinal_build_log) is current through **388** — read those for state. This file covers what they don't: what was learned, what's staged, and what to do next.
+**Cardinal Roofing & Renovations LLC — `app.cardinalroster.com`**
+Session of 29 July 2026, 02:24 → 21:45 (America/New_York).
 
-*Written ~10:30pm, July 27–28, 2026.*
-
----
-
-## 1. Where the build actually is
-
-**Live in the repo:** whatever Theo last uploaded — confirm with the footer (`v2026-`). As of writing, builds through **388** were staged and each was verified on device by Theo as it shipped.
-
-**Staged artifacts** (`/mnt/user-data/outputs/`, one per build): `cardinal_v374_index.html` … `cardinal_v388_index.html`. Only the newest matters; the rest are lineage. **388 supersedes everything before it.**
-
-Nothing is half-shipped. Every build passed its gates and was confirmed on Theo's phone before the next one started.
+`origin/main` moved **`69dfb9f` → `202e6f3`**.
+**34 pull requests merged.** PRs #7, #11, #29 were opened and closed without
+merging (see §5).
 
 ---
 
-## 2. What was built: the retail light theme (`rb-light`)
+## 1. Everything merged, in order
 
-A **second theme for Retail only**, layered on the committed dark base. Dark stays the default.
+Verified against `git log origin/main`. Times are commit times.
 
-- **Switch:** the moon/sun button, bottom-right. It is the **repurposed build-186 dark-mode button** — that old overlay was dead weight after retail-B made dark the base. Now drives `data-theme="rb-light"` on `<html>`.
-- **API:** `window.CardinalRBTheme { toggle, isLight, setLight }`, persisted in `localStorage` under `cardinal.theme.rb`.
-- **Retail-scoped:** the button only appears when `body.dataset.crm === 'retail'`. Claims and Community are untouched and not planned.
-- **Mechanism: tokens, not an override layer.** `--rbe-*` defined in `:root` and again under `:root[data-theme="rb-light"]`. Retail-B was torn out at 21 override rules; do not reintroduce that pattern.
-- **Palette is red/black**, not gold: `--rbe-acc:#c8202e`, `--rbe-accdk:#6b0f18`, `--rbe-acclt:#d4424c`, ground `#f7f7f7`, panels `#fafafa`.
+### Foundation — telemetry, auth, routing (03:29 → 04:11)
 
-**Covered and verified on device:** Estimates · All Leads & Jobs · Home (pipeline circles, Work Schedule, Accounts Receivable, Recent Leads, Today, Punch strip, Client Projects cards, activity strip + feed) · Photo Activity · Team + Production calendars.
-
-**The full fixed-colour list is in FEATURES.md.** Read it before touching anything. Milestone circles, status spines, urgency red, CRM badges, the lavender PO, photo captions and the chrome blacks are **semantic** — they must not be tokenized. More than one build was spent re-learning this.
-
----
-
-## 3. The five real bugs found along the way
-
-These are in BUG_CLASSES.md too, but they're the spine of the session:
-
-| # | Symptom | Real cause | Build |
+| PR | Commit | Time | What |
 |---|---|---|---|
-| 1 | "Dark mode isn't there on AI Estimates" | `styleMounts()` force-set `background:'#fff'` **inline, on a timer**. Inline beats every CSS rule regardless of specificity | 378 |
-| 2 | "The Estimates page doesn't have the new design" | **Two separate Estimates screens.** The menu item named *Estimates* opened a legacy table; the redesign sat behind *AI Estimates* | 379 |
-| 3 | Pipeline counts invisible in light mode | `.pcount` renders **below** the coloured circle, on the card — not inside it. It must theme; the letter inside the circle must not | 381 |
-| 4 | Photo Activity stayed dark | `--bg`, the **global page ground**, was never theme-aware. Every other page only looked right because its cards covered the viewport | 386 |
-| 5 | Activity strip patch did nothing | `.acthead` had **three** definitions. Two were patched (both dead); the winner was ~39,000 lines later in `cr-est-fix-styles` | 388 |
+| — | `150d4df` | 03:34 | **Error capture was silently discarding everything.** The telemetry pipeline swallowed its own payloads, so the app had been reporting nothing. |
+| — | `35643e6` | 04:00 | Gated the model-backed API routes; standardised on `gemini-3.5-flash`. |
+| — | `a0bb53b` | 04:01 | Removed a stray ungated `api:sol` route. |
+| #1 | `37d7c25` | 04:10 | Service-worker offline shell fix. |
+| #2 | `6a2b955` | 04:10 | Auth state subscription fix. |
+| #3 | `9331248` | 04:10 | `robots.txt`. |
+| #4 | `b79d9fd` | 04:10 | Removed stray files from `public/`. |
+| #5 | `ad0217c` | 04:11 | Error-reporting pipeline. |
+| #6 | `0348929` | 04:11 | Gate model routes. |
 
-**#5 is the important one procedurally:** source-order reasoning over the two rules you find first will ship a silent no-op. Grep the whole file for every occurrence of a selector before patching it.
+### Identity — the red/black/grey theme (04:55 → 05:18)
+
+| PR | Commit | Time | What |
+|---|---|---|---|
+| #8 | `e5b2d8f` | 04:55 | **Retired the gold palette for red, black and grey.** The app-wide identity change. |
+| #9 | `9b1bae7` | 05:18 | Landing page: unstuck scrolling, restored header padding, added the theme icon. |
+
+### Community — the two-party problem (09:37 → 13:26)
+
+This is the session's main thread of work. Community jobs bill a nonprofit for
+work on a homeowner's house, and the code assumed one party.
+
+| PR | Commit | Time | What |
+|---|---|---|---|
+| #10 | `e5c12f3` | 09:37 | **Bids were being emailed to the homeowner instead of the funding partner.** The partner is who pays and who decides. |
+| #12 | `424363d` | 10:26 | Name the homeowner served *and* the party billed. Added the `data-l` attributes that PR #28 later keyed its styling off. |
+| #13 | `e4e98fa` | 10:35 | The emailed bid now says who it is for and whose house it is. |
+| #14 | `65593bf` | 10:51 | Deleted two unreachable renderers from the hub. |
+| #15 | `0526945` | 11:00 | The inspection report names both parties. |
+| #16 | `23a2b00` | 12:02 | The hub's Tools tiles stopped claiming "Not available yet" for tools that work. |
+| #17 | `cfbcada` | 12:14 | **Removed an `overflow-y:auto !important` scroll band-aid.** It outranked the inline `overflow:hidden` every modal sets, so scroll chained into the page beneath. First appearance of the scroll-lock class of bug. |
+| #18 | `3c1535d` | 12:40 | A Prospective Partners page, and fixed a validity check that never ran. |
+| #19 | `e5ba1ce` | 12:49 | **Publish the estimate you are editing, not the newest one.** |
+| #20 | `474ed9d` | 13:18 | General contractors were unselectable, and the picker bypassed masking. |
+| #21 | `c3b379e` | 13:26 | **Age open bids against the promised deadline, not our own clock.** First of three copies of a day-early date bug. |
+
+### Photos — public bucket to signed URLs (13:52 → 15:08)
+
+A three-step migration so the storage bucket could be flipped private without
+breaking image rendering.
+
+| PR | Commit | Time | What |
+|---|---|---|---|
+| #22 | `dceb1c4` | 13:52 | Step 1 of 3 — serve in-app photos through signed URLs. |
+| #23 | `f2193d9` | 14:19 | Step 2 of 3 — sign photos baked into documents. **This PR was inert; see §4.** It also introduced the scroll regression fixed in #37. |
+| #24 | `f6da5f3` | 14:54 | Step 3 of 3 — **derive the storage path from the URL**, which is what made #23 actually work. 215/215 paths resolved exactly. |
+| #25 | `422cf2f` | 15:04 | Made the app private-bucket-safe *before* flipping the bucket: a global repaint pass plus service-key download in `api/estimate.js`. |
+| #26 | `53e0595` | 15:08 | **Declared `@supabase/supabase-js` as a dependency — two serverless functions had never run.** An undeclared import; the functions failed on cold start, permanently. |
+
+### Community identity — green, and no blue (16:54 → 19:11)
+
+| PR | Commit | Time | What |
+|---|---|---|---|
+| #27 | `896fd4c` | 16:54 | **One green, zero blue, and both surfaces follow the theme.** The `--ccm-*` palette: 57 token declarations, `:root` dark default with a `[data-theme="rb-light"]` override. |
+| #28 | `3a6dc79` | 18:57 | **Mark the party being billed.** Keyed off the `data-l` attributes from #12. |
+| #30 | `8fac62a` | 18:59 | **Sort, filter and direction toggle on the bid table** — 7 sorts, 6 filter groups. Also fixed the `days()` day-early bug. |
+| #31 | `ad5b83f` | 19:11 | Tokenised the last 7 hard-coded shadows. |
+
+### Community workflow — outcomes and stages (19:36 → 20:34)
+
+| PR | Commit | Time | What |
+|---|---|---|---|
+| #32 | `4bd71be` | 19:36 | **Routed the thread actions.** Replaced a blind dispatcher with 5 real actions. Also the third copy of the day-early date bug. |
+| #33 | `f7c3b4c` | 20:19 | **Stopped asking why a community bid was lost.** Theo: a grant not funding this cycle is not a lost sale. |
+| #34 | `51bd483` | 20:34 | **A real `OnHold` stage** for bids waiting on a grant cycle. 8 coordinated edits. |
+
+### Blue removal and the scroll fix (21:15 → 21:32)
+
+| PR | Commit | Time | What |
+|---|---|---|---|
+| #35 | `65f1a13` | 21:15 | Removed the blue that is genuinely community-scoped — 4 rules, including the whole-CRM navy backdrop. |
+| #36 | `c9133df` | 21:22 | De-blued community analytics and the punch panel — 25 more rules via `body.cr-cc-open`. |
+| #37 | `202e6f3` | 21:32 | **Stopped `openPreview` locking body scroll on a screen the user had already left.** My own regression from #23. |
 
 ---
 
-## 4. The gate limitation — read this before trusting any green run
+## 2. What the numbers say now
 
-**jsdom does not resolve `var()` inside `background` / `border` shorthands.** It returns `rgba(0,0,0,0)`.
+Measured on `202e6f3`:
 
-Proven with a control test in build 388: a plain-hex rule from the same stylesheet applied correctly, while every `var()`-based rule in that same block read transparent — **including `.pu-empty`, code from build 384 that Theo had already confirmed working on his phone.**
-
-What this means:
-
-- `getPropertyValue('--x')` **works** — that's why the `--bg` (386) and calendar (387) gates were honest.
-- Computed `backgroundColor` from a `var()` **does not work** — that's why the `.actbox` gate could not be made to pass.
-- A functional gate can verify **structure** (element exists, class applied, attribute set, JS API behaves) and **directly-read custom properties**. It **cannot** verify that a tokenized colour renders.
-
-**For colour work: assert on the CSS text, run the negative control against the previous build, and say plainly that Theo's eyes are the gate.** Do not report a green jsdom run as proof the colour is right. Most of this session's colour verification was Theo's screenshots, not the tooling — the reports should have said so earlier than they did.
+| Metric | Value | Note |
+|---|---|---|
+| Blue/cyan CSS rules reachable from Community | **221** | from 253 total; 3 gated away; 250 → 246 (#35) → 221 (#36) |
+| Modules writing the global body scroll lock | **13** | 15 lock sites, 19 release sites, all balanced |
+| `normStage` copies | **6** | 1 whitelist + 5 delegates |
+| `.single()` calls | **43** | throws on zero rows |
+| `.maybeSingle()` calls | **0** | |
+| `async` onclick handlers | **36** | most without a `catch` |
+| `--ccm-*` token declarations | **57** | |
+| `STAGES` | `Lead, Prospect, OnHold, Approved, Scheduled, Completed, Invoiced, Closed, Lost` | |
 
 ---
 
-## 5. Three false alarms — do not re-flag these
+## 3. The photos bucket
+
+`storage.buckets.public` for `photos` was flipped **`true` → `false`**.
+
+- **Origin honours it.** A cache-busted anonymous request returns
+  `400 "Bucket not found"`.
+- **Theo confirmed photos still render** in the app.
+- **But 11 of 26 sampled objects (42%) still served from the Cloudflare edge**
+  with `Cache-Control: public, max-age=31536000`. I pulled 5,417 KB
+  anonymously *after* the flip. Cloudflare caches independently of the
+  bucket's `public` flag, and `max-age` is one year.
+
+**This is not fully closed.** See `OPEN_ITEMS.md` §4.
+
+Rollback, if photos ever break:
+
+```sql
+update storage.buckets set public = true where id = 'photos';
+```
+
+---
+
+## 4. Where I was wrong
+
+These are all mine, all caught during the session, and all corrected. They are
+recorded because the *pattern* matters more than the individual mistakes —
+`BUG_CLASSES.md` §4 generalises them.
+
+**PR #23 shipped inert.** I tested document photo-signing against `{path, url}`
+fixtures. **Zero** estimate photo objects in the real database have `path` or
+`storage_path`. The code was correct and did nothing. I found it by running the
+shipped functions against the real object shape, and fixed it in #24 by
+deriving the path from the URL. *Test against production shapes, not the
+shapes you find convenient.*
+
+**"The flip is one step away" was wrong.** I said the bucket was ready to go
+private. Auditing found five more code lineages that read photos, and
+`api/estimate.js` was live and would have broken. The flip needed #25 first.
+
+**"Zero blue" covered 2 of 35 stylesheets.** Theo caught this. I had made a
+confident claim from a block-level scan. A rule-level census found **250**
+reachable blue rules.
+
+**The green emphasis never shipped in #27.** Every preview I sent showed it.
+Production did not have it. Theo caught it. It shipped in #28.
+
+**I invented a "C.G. Egli Inc" row** in a preview. No community job bills a
+general contractor — the real split is nonprofit 11, property manager 1, GC 0.
+
+**Stage pills showed the wrong vocabulary.** Community renders "Bid Requested"
+and "Bid Submitted", not "Lead"/"Prospect". Early previews were wrong.
+
+**Two block-level blue classifiers misfiled the Punch List** as
+insurance-only, because its CSS mentions "claim" — while it is the panel Theo
+had photographed *on the community page*. Rule-level classification fixed it,
+and I validated against all three of his screenshots before editing anything.
+
+**PR #37 was my own regression from #23.** Making `openPreview` async put a
+network round-trip between the tap and the scroll lock.
+
+---
+
+## 5. PRs opened and not merged
+
+- **#29** — squash-rebase conflicts. Rebuilt as **#30** with a byte-identical
+  blob, so nothing was lost.
+- **#7, #11** — closed during the session; superseded by adjacent work. No
+  content from either is missing from `main`.
+
+---
+
+## 6. Artifacts produced
+
+Design previews, all in `/agent/workspace/`:
+
+| File | Purpose |
+|---|---|
+| `community_identity_v3.html` | green identity, dark + light, against red/black/grey |
+| `community_green_noblue.html` | the green-and-no-blue palette Theo approved |
+| `community_shipped_previews.html` | desktop + mobile, post-ship verification |
+| `billed_party_previews.html` | billed-party emphasis options |
+| `sortfilter_previews.html` | sort/filter/toggle, adapted to Community |
+| `outcome_five_styles.html` | five outcome-form directions |
+| `outcome_v2.html` | Style 4 layout with Style 2's flow — **the agreed design** |
+| `cardinal_brief.html` | opening architecture brief |
+| `rls_audit.html` | row-level-security audit |
+
+`probe_dark.html` / `probe_light.html` were throwaway token-resolution probes.
+
+---
+
+## 7. State at hand-off
+
+- `origin/main` = **`202e6f3`**, deployed.
+- Working clone at `/agent/workspace/clone` is clean and on `origin/main`.
+- All 99 script blocks parse. Tag and brace balance verified.
+- No known broken behaviour in Retail or Insurance — every community change
+  this session was gated by `body[data-crm="community"]`, `body.cr-cc-open`,
+  `IC_SKIP`, or `PIPE_SKIP`.
+- `OnHold` exists in the whitelist but **nothing writes it yet**. That is
+  deliberate and correct ordering; the outcome form is what will write it.
+
+---
+
+## Carried forward — three false alarms — do not re-flag these
 
 All three were flagged mid-session as "never got the dark treatment," and all three were wrong. This is the counterpart to the prime doctrine (*things that look missing are usually buried*): **not every light-coloured thing on a dark ground is a gap.**
 
@@ -74,64 +224,10 @@ All three were flagged mid-session as "never got the dark treatment," and all th
 
 **Ask first: is it (a) hidden, (b) chrome with its own system, or (c) deliberate contrast?** Only then is it a gap.
 
----
 
-## 6. The calendars — the one sanctioned override
+*Carried forward verbatim from the 374–388 session handoff. Still binding.*
 
-Build 387 is the single place this session used **scoped overrides instead of tokens**, and it was correct:
-
-```css
-:root[data-theme="rb-light"] .teamcal .minical .calgrid .day{ ... }
-```
-
-**Why:** dark and light needed *genuinely different designs*, not one design in two palettes. The dark original (cream cells, gold headers, on iron) is a real design that tokenizing would have destroyed. The dark CSS is untouched byte-for-byte.
-
-Theo chose **Option C — red-tinted paper** from a three-option preview (A: leave as cream, B: crisp white/grey, C: red-tinted). `.teamcal` covers both the Team and Production calendars; a functional gate confirmed both, and confirmed dark mode was unaffected.
-
-**This is not licence to reach for overrides generally.** Retail-B was torn out at 21 override rules for exactly that reason.
-
----
-
-## 7. What's next, in order
-
-**1. Client profile page (the Keeper profile) — the big one.**
-Biggest surface left and the screen the crew touches most. Hero card, Job Menu tiles (`.jatile` in `#jaGrid`), Location map card, Payments / Punch / History pills, the Cardinal-red timeline.
-
-- **Do the B3 check first** — some of it is likely deliberate contrast, not an unswept gap.
-- Insurance keeps its own skin on this page; don't disturb it.
-- This deserves a fresh session. It was deliberately *not* started at the end of this one.
-
-**2. Standalone Punch page** (`#punchView`) — the "See all ›" destination. Home strip is done; the page is not.
-
-**3. Production board · Reports · Contacts/Client Directory.** Reports may need canvas-level colour work (charts). The Client Directory is brass-themed and may need its own design decision like the calendars did — preview options rather than guessing.
-
-**4. Sales Floor, Objection Coach, Documents, Scheduling** — lower traffic, last.
-
-**Not planned:** Claims and Community. The toggle is retail-scoped.
-
----
-
-## 8. Everything else still open (unchanged this session)
-
-None of this was touched — see OPEN_ITEMS.md for the full list:
-
-- **`punch_columns.sql`** still needs running (Scheduled tab + photo storage are blocked without it)
-- **ABC Supply 401** · **OpenAI credit** · **Resend sender domain** · **Gemini key rotation + billing**
-- **Repo junk** — delete `api/api/`, `api/index.html`, `api/vercel.json`
-- **Contract PDFs** — `docs/` folder still doesn't exist in the repo; siding + window masters still missing
-- **$10,000,000 test value** — database data, fix it in the app
-- **Supabase PITR** unconfirmed
-
-**Security, still outstanding and worth chasing:** a GitHub personal access token was pasted into chat this session and needs revoking if it hasn't been (GitHub → Settings → Developer settings → Personal access tokens). The old Gemini key exposure is still unrotated too. Secrets go into Vercel/GitHub directly, never into a chat message.
-
----
-
-## 9. Working with Theo
-
-Mobile only, deploys through the GitHub web UI, works very late. Terse — often a single word. Wants honest costs, no flattery, and will say "keep going" for hours if the work is landing.
-
-**Screenshots have root-caused more bugs on this project than reasoning has, and did so repeatedly tonight.** Builds 379, 381 and 386 were all found from a screenshot, not from reading code. Ask for one before theorising.
-
-**Cache discipline matters and cost real time tonight:** twice, a "the fix didn't work" turned out to be the service worker serving a stale build. Always remind: fully close and reopen the PWA **twice**. And before assuming a bug, verify the fix is actually present in the file that shipped.
-
-Preview visual changes before shipping them — the three-option calendar preview took one round and got a decision immediately. One build at a time, staged separately, verified on device before the next.
+**Also carried forward:** that session's "what's next" list (client profile, standalone
+Punch page, Production board, Client Directory) is **obsolete** — all four shipped at
+builds 389–393. `OPEN_ITEMS.md` §4 is the current light-theme status; this session's
+open list is in the "Added 29 July 2026" section of the same file.

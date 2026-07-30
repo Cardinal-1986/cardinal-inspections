@@ -1,7 +1,7 @@
 # Cardinal Resource App — Bug Classes
 
 **Failure modes already paid for. Every entry cost at least one build.**
-*Read before debugging; skim before shipping. Current at build 388.*
+*Read before debugging; skim before shipping. Current at build 427.*
 
 ---
 
@@ -121,3 +121,361 @@ Tonight's rule was tokens everywhere — one variable, both themes. **The except
 - Modal CSS scoped to mount points must not be appended to `document.body` (white screens).
 - Unicode: raw surrogate escapes mid-write can zero out a file. Use HTML entities and atomic writes.
 - CI regexes matching `<script>` miss module scripts tagged with `id=`.
+
+---
+
+# Classes added 29 July 2026
+
+*Updated 29 July 2026 — session of 34 merged PRs, `origin/main @ 202e6f3`, app stamped build 427.*
+
+## 1. The shared global scroll lock
+
+**Severity: high. Has recurred three times.**
+
+13 independent modules write the same global:
+
+```js
+document.body.style.overflow = 'hidden';   // lock
+document.body.style.overflow = '';         // release
+```
+
+Measured on `202e6f3` (lexer-verified, comments and strings excluded):
+
+| Module | Locks | Releases |
+|---|---|---|
+| `(main)` | 1 | 4 |
+| `cr-ce-script` | 1 | 1 |
+| `cr-lil-script` | 1 | 1 |
+| `cr-ped-script` | 1 | 1 |
+| `cr-est-script` | 2 | 2 |
+| `cr-epub-script` | 1 | 1 |
+| `cr-ri-script` | 1 | 1 |
+| `cr-sf-script` | 1 | 2 |
+| `cr-pb-script` | 1 | 2 |
+| `cr-sol-script` | 1 | 1 |
+| `cr-ci-script` | 1 | 1 |
+| `cr-sp-script` | 1 | 1 |
+| `cr-sc-script` | 2 | 1 |
+| **Total** | **15** | **19** |
+
+**Every module is balanced.** No module locks without a release path. That is
+worth stating clearly, because it rules out the obvious hypothesis.
+
+### The actual failure mode
+
+There is **no reconciler**. The lock is a single global with no owner, no
+reference count, and no reconciliation against "is any overlay actually open".
+So it leaks whenever control leaves a function *between* the lock and the
+release:
+
+- an early `return` after the lock
+- a thrown exception between them
+- **an `await` between the user's intent and the lock** ← PR #37
+- two overlays open at once; the first to close releases for both
+
+Result: body scroll frozen with nothing on screen to dismiss. Dead until
+reload. Intermittent, which is why it reads as "the scrolling is acting up"
+rather than a reproducible bug.
+
+### History
+
+| When | What |
+|---|---|
+| build 214 | `hideAllViews()` gained a stale-lock release — a band-aid for this |
+| PR #17 | An `overflow-y:auto !important` outranked the inline lock, so scroll chained through. Removed. |
+| PR #37 | `openPreview` became `async` in #23, putting a network round-trip between tap and lock |
+
+### The fix that would end it
+
+A watchdog that clears the lock when no overlay is actually open. Its overlay
+list **must be derived from the code**, not guessed — a missing entry would
+clear the lock while a real overlay is up, which is worse than the bug. That
+derivation is the whole job; the watchdog itself is trivial.
+
+---
+
+## 2. `await` between intent and side effect
+
+**Severity: high. This is the class PR #37 belongs to.**
+
+Making a function `async` inserts a window in which the world can change. Any
+side effect after an `await` is acting on a **stale** precondition.
+
+```js
+// BEFORE #23 — synchronous, no window
+previewEl.classList.add('open');
+document.body.style.overflow = 'hidden';
+
+// AFTER #23 — a network round-trip opened a window
+var docUrls = await signedPhotoMap(...);   // user can leave during this
+previewEl.classList.add('open');
+document.body.style.overflow = 'hidden';   // locks a screen nobody is on
+```
+
+The fix pattern — **revalidate after the await**:
+
+```js
+function _pvStillOpen(){
+  var ed = document.getElementById('cr-est-view');
+  return !!(previewEl && previewEl.isConnected &&
+            ed && ed.classList.contains('open'));
+}
+if(!_pvStillOpen()) return;
+```
+
+Pick a precondition that is genuinely load-bearing. Here the Preview button is
+injected into `#cr-est-view .cr-est-head`, so "the editor is open" is a true
+precondition — if it closed, the tap is stale by definition.
+
+### Known remaining sites
+
+| Site | Awaits | Risk |
+|---|---|---|
+| report `openEditor` | `db.get()` — local, milliseconds | same shape, much smaller window |
+| `openCategoriesModal` | then `display='block'` | shows a modal on a possibly-gone screen |
+| `showBidModal` | then `display='block'` | same |
+
+The estimate builder's `openEditor` is **synchronous**, so the community thread
+path is safe.
+
+**Rule of thumb:** when you add `await` to a function that was synchronous, list
+every side effect after it and ask what happens if the user left. Adding
+`async` is never a purely local change.
+
+---
+
+## 3. Whitelist-silent data corruption
+
+**Severity: high. Silent — no error, no log.**
+
+```js
+function normStage(s){
+  ...
+  return STAGES.indexOf(s) !== -1 ? s : 'Lead';
+}
+```
+
+Six copies exist; five delegate to this one. Anything not in `STAGES`
+**becomes `'Lead'`** with no warning.
+
+So a row written with a stage the whitelist has not learned does not error — it
+quietly renders as a brand-new bid request, in the wrong column, with the wrong
+age, in the wrong sort position.
+
+> **Ordering rule: `STAGES` must contain a value before any row is given it.**
+
+PR #34 followed this deliberately: it added `OnHold` to the whitelist and
+shipped **nothing that writes it**. The writer comes later, on top. That
+ordering is not fussiness — reversed, it is a silent data bug across every
+affected job.
+
+The same shape applies to `LEGACY_STAGE` (stage aliases) and `IC_SKIP` /
+`PIPE_SKIP` (per-CRM visibility). Whitelists and skip maps must be taught first.
+
+---
+
+## 4. Verification anti-patterns — *the ones that cost me the most today*
+
+Not bugs in the app. Bugs in how I measured the app. Every one of these
+produced a confident, wrong statement.
+
+### 4a. Counting values inside your own comments
+
+Hit roughly **eight times**. Patch scripts document the values they change, so
+a naive count finds the value in its own explanatory comment and reports a
+change that did not happen — or a module that does not exist.
+
+**Live example from this hand-off.** Counting scroll-lock writes naively
+returned **14 modules**. One was `cr-ch2-styles` — a `<style>` block, matching
+text inside *my own PR #17 comment*:
+
+```
+   2. Harmful. An !important author declaration outranks a *normal inline*
+      declaration, so it defeated the document.body.style.overflow='hidden'
+```
+
+### 4b. …but naive comment-stripping eats real code
+
+The obvious fix is worse. A `strip()` that removes everything between `/*` and
+`*/` treats `/*` **inside a string literal** as a comment start and deletes
+real code after it.
+
+**Same example, opposite error.** Stripping comments returned **10 modules** —
+it had eaten genuine lock calls from `cr-pb`, `cr-sol` and `cr-ci`.
+
+So: naive count said 14. Stripped count said 10. **Both were wrong.** The truth
+is 13, and only a lexer that tracks strings, template literals and comments as
+distinct states gets there. That lexer is `/agent/workspace/lexscan.js`.
+
+I had documented hazard 4b in `patch_photos1.js` earlier in the day and then
+walked straight into it again.
+
+### 4c. Counting file-wide when the claim is about one function
+
+**The single most repeated mistake of the session.** I made it, fixed it inside
+a patch script, then made it *again* in the production verifier for the same
+change.
+
+`await signedPhotoMap(...)` appears twice — `publish()` and `openPreview()`.
+Asserting `1` file-wide fails a correct patch.
+
+It bit again while writing this hand-off: I pulled `var LABEL = {...}` with a
+file-wide regex and got the **insurance** map (`'Lead':'Claim Filed'`) while
+documenting **community** (`'Lead':'Bid Requested'`).
+
+**Fix:** extract the function or block first, assert against that.
+
+Genuinely-plural counts you should *not* "fix": `days()` and `daysUntil()` both
+anchoring to midnight (2 is right); both community `LABEL` maps being
+byte-identical (2 is right); `CH_SORTS` and `CH_GROUPS` sharing key names.
+
+### 4d. Reading counts off an already-patched tree
+
+Run a patch, read a count, use it as the *pre*-patch expectation. Every
+absolute number written that way was wrong.
+
+**Fix — self-computing assertions:**
+
+```js
+["#1e2432 exactly one occurrence changed",
+  n(h, /#1e2432/g), n(orig, /#1e2432/g) - 1],
+```
+
+Now the assertion is the invariant ("exactly one changed"), and cannot be
+poisoned by a stale reading.
+
+### 4e. Regexes that cannot see what they are looking for
+
+A pattern using `[^;\n]*` cannot match an expression split across lines. I
+concluded `cr-epub-script` locked scroll and **never released it** — a serious
+finding — when `closePreview` releases via a two-line ternary:
+
+```js
+document.body.style.overflow =
+(ed && ed.classList.contains('open')) ? 'hidden' : '';
+```
+
+My original note ("ternary release") had been right; the regex I wrote to
+confirm it was wrong, and I nearly filed a false bug against my own correct
+earlier analysis.
+
+### 4f. Extractor bugs that fail quietly
+
+- `grabVar` searching for the next `\n];` swallowed 2,271 characters into a
+  later array. Every filter count came back empty — and empty looks like a
+  legitimate zero.
+- Whitespace **guessed** rather than read: I assumed `.cr-pcard.community`
+  spanned multiple lines. It is one line. The anchor silently matched nothing.
+
+**Always print what your extractor captured** before asserting on it.
+
+### 4g. Walking blocks in list order instead of file order
+
+The bytes-outside-changed proof compares regions replaced by sentinels. Walk
+them in your own list order rather than file order and you get a false failure
+on a correct patch — which trains you to ignore the proof.
+
+### 4h. False positives worth running down, then reporting as such
+
+Three findings that looked real and were not. Reporting a false positive as a
+bug is its own failure:
+
+- **`cr-sc-script`: 2 locks, 1 release.** Two *idempotent* locks in one
+  function, one release in `close()`. Balanced.
+- **"Unguarded `JSON.parse`".** It is `JSON.parse(JSON.stringify(x))` — the
+  deep-copy idiom. Cannot throw.
+- **"Unescaped `name` in a selector".** `querySelector('[data-sh="' + name +
+  '"]')` where `name` is an internal literal from PR #30, not user data.
+
+---
+
+## 5. Ungated styling in a shared file
+
+**Severity: medium. The reason "remove the blue" is not a small task.**
+
+2.59 MB with 100 style blocks and no namespacing. One hex value paints
+unrelated surfaces across all three CRMs. `#1e2432` paints `.cr-pcard.community`,
+`.ins-header`, `#solModal`, `.cr-pp-item`, the supplement panels, and two inline
+`style=` attributes.
+
+So a find-and-replace on a colour is an app-wide restyle wearing the costume of
+a small fix.
+
+Of 253 blue/cyan rules, only **4** carried a community selector — those are the
+only ones changeable without touching Retail and Insurance. Hence two rounds:
+
+| Round | Mechanism | Effect |
+|---|---|---|
+| PR #35 | already community-gated selectors | 250 → 246 |
+| PR #36 | `body.cr-cc-open` punch rules | 246 → **221** |
+
+`body.cr-cc-open` is toggled in exactly one place — the community client page's
+`takeOver()` — which makes it effectively community-scoped and therefore a safe
+gate.
+
+**Rule:** before changing a colour, find every selector using that value and
+confirm each is gated. Gate first, then restyle. The surviving occurrences of
+an edited value are the *proof* the other CRMs were untouched — assert on them.
+
+---
+
+## 6. Undeclared dependencies in serverless functions
+
+**Severity: high when it happens. Completely silent.**
+
+`@supabase/supabase-js` was imported by serverless functions but **not declared
+in `package.json`**. Two functions had *never run* — they failed at cold start,
+permanently, since they were written. Fixed in PR #26.
+
+Nothing surfaced this. No build error (there is no build), no runtime error the
+app noticed, no log anyone read. Worth periodically diffing every `require` /
+`import` in `api/` against `dependencies`.
+
+Related: the error-capture pipeline itself was silently discarding every
+payload (`150d4df`) — so for a while the app had no way to tell anyone anything
+was wrong. **Fix telemetry first;** a broken reporter hides everything else.
+
+---
+
+## 7. Assumed-single-party logic
+
+**Severity: medium. Specific to Community, but pervasive there.**
+
+Community bills a nonprofit for work on a homeowner's house. Code written for
+Retail assumes payer == occupant == contact. Every place that assumption is
+baked in is a bug in Community:
+
+| PR | Symptom |
+|---|---|
+| #10 | Bid emailed to the **homeowner** instead of the funding partner |
+| #12 | Only one party named on the job |
+| #13 | Emailed bid did not say whose house it was |
+| #15 | Inspection report named one party |
+| #20 | General contractors unselectable; picker bypassed masking |
+| #28 | No visual indication of which party is billed |
+
+**When touching anything in Community that involves a person, ask which
+person.** Payer, occupant, and contact are three roles, and in Community they
+are routinely three different entities. 2 of 12 community jobs have **no**
+homeowner recorded at all — which is why PR #30's filter includes a
+community-only "Homeowner: Recorded / Not recorded" group.
+
+---
+
+## 8. Date arithmetic off by one day
+
+**Severity: low individually. Notable because it appeared three times.**
+
+Three separate copies of the same day-early bug, fixed in PRs #21, #30, #32.
+The pattern: comparing a timestamp against `new Date()` without normalising
+both sides to midnight.
+
+The correct form, which now appears exactly 3 times:
+
+```js
+var a = new Date(); a.setHours(0, 0, 0, 0);
+```
+
+Two functions legitimately do this — `days()` and `daysUntil()`. When you fix
+one copy, **grep for the others**. This codebase duplicates logic freely; a fix
+applied once is usually a fix applied to one third of the problem.
