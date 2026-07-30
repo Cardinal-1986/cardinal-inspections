@@ -1290,3 +1290,75 @@ regions. Full suite **145/145**.
 
 `R703` occurred **zero times** in the file before this build — asserted in the patch, so the
 claim that the wall code was absent is checked rather than stated.
+
+---
+
+## Build 462 — the last six gaps
+
+Third and final tranche. **All thirteen measured content gaps are now closed.**
+
+### The number I would have got wrong
+
+The mechanic's-lien window for a **one- or two-family dwelling is 60 days** from the last
+day labour or material was furnished. **Seventy-five is the commercial figure**, and 75 is
+what I was about to write from memory. Verified against ORC 1311.06 before it went near a
+card. On a house, fifteen days late is entirely too late — the card says it in bold and the
+harness asserts both the 60 and that 75 is labelled commercial.
+
+Also verified rather than recalled: ORC 2305.06 was shortened by **SB 13, effective 14 June
+2021** — written contracts 8 years → **6**, oral 6 → **4**, with pre-amendment claims running
+to the earlier of 14 June 2027 or the remaining old period.
+
+### The distinction that matters more than either number
+
+A **suit-limitation clause inside the policy is not the statute of limitations.** It is a
+private term, usually far shorter, and it is enforceable. The card refuses to let a rep tell
+a homeowner "you have six years" off the contract statute.
+
+That conflation was named by an adversarial reviewer earlier in this session, when it
+recommended *against* tagging "statute of limitations" onto the duties-after-loss card —
+because the card describes a contractual clause and the tag would assert the two are the
+same thing. The reviewer was right, and it said the honest fix was a card that does not
+exist. **This is that card.** A refutation from three builds ago turned into content.
+
+### Montgomery County, written as a method rather than a claim
+
+The same review refuted tagging "Montgomery County" onto `Other Miami Valley Jurisdictions`,
+because that card names Beavercreek (Greene) and Springboro (Warren) alongside Montgomery
+municipalities, and Dayton, Kettering and Huber Heights each have their own card — so the
+query would land on the one card that excludes them.
+
+So the shipped card is not a jurisdiction list I have not verified. It is the rule —
+municipality with its own department issues its own; townships and unincorporated land are
+the county — plus the method: pull the parcel, read the taxing district, call that office.
+**It explicitly tells the rep not to infer the AHJ from the card itself**, and the harness
+asserts that sentence is present. `Montgomery County` occurs the same number of times after
+this build as before: once, in an unrelated form placeholder.
+
+### Six cards
+
+`rlPageInsurance` — **Asking for a Reinspection**, **Deadlines That Actually Bite**.
+`rlPageDocs` — **The Punch Walk**, **Closing the Job on Paper**.
+`rlPageCode` — **County vs. Municipality — Who Actually Has Jurisdiction**.
+`rlPageMfg` — **Malarkey — Certification, Warranty and the Secure Choice System**, verified
+against the manufacturer's own programme, ending by telling the rep to confirm current terms
+because a summary is not a certificate.
+
+### Two harnesses went red, and both were right to
+
+- **`rlPageDocs` grew 3 → 5 cards and crossed the 4-card threshold, so it earned a search
+  box.** 17 → 18. The Do & Don't harness hardcoded 17. That is the **455 mount rule working
+  as designed**, so the test now derives the expected count from the eligible pages.
+- **"warranty tiers" now returns four manufacturers, not three**, because the Malarkey card
+  legitimately carries that tag. The manufacturer harness asserted exactly 3. Rewritten to
+  require the Big 3 present and no two rows reading alike — which is the property build 457
+  actually established. A fourth manufacturer answering the query is an improvement.
+
+Neither was an app defect. Third and fourth reds on this branch that were the test's fault.
+
+### Gates
+
+`check_build.py` green with the negative control. **29/29 in a real browser**, including the
+60-vs-75 assertion, the suit-limitation distinction, the do-not-infer sentence and the
+verify-with-Malarkey sentence. Scope proven over 6 regions. Full suite **195/195** across
+nine harnesses.
