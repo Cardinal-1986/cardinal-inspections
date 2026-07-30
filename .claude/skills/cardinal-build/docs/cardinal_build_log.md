@@ -585,3 +585,53 @@ heuristic; the attribute is an identity. That attribute now has **three** consum
 
 One attribute, three silent failures. It is still the highest value-per-byte change in
 the codebase.
+
+---
+
+# Builds 428–452
+
+Builds **428–451** were shipped without a log entry; the only record is the
+`CHANGELOG` array in `<script id="cr-cl-script">`. Reconstructed summary lives in
+`CLAUDE.md` ("What happened in 428–451"). Build **450 is a gap**.
+
+- **452** · pipeline circle letters go near-black · measured on painted pixels at
+  414 px, both retail themes: white ink read **1.95 / 2.50 / 2.50 / 2.84 / 4.16:1**
+  against a 3.0:1 floor for a 21 px bold letter — 4 of 5 failed. `#fff` → `#141517`
+  on `.pipebtn .pcirc` gives **9.33 / 7.28 / 7.29 / 6.41 / 4.37:1**, 0 of 5 fail.
+  The five `STAGE_COLORS` fills are **untouched** — they are semantic and settled
+  (`OPEN_ITEMS.md` §6); only the ink on top of them changed. Also gave `.pipe-lead`
+  the ridge-cap gradient the other five received at 436 (Lead and OnHold were
+  skipped; Lead is the first circle on the row).
+
+  **`STAGE_INK` was the obvious candidate and is wrong here** — it fails 5 of 5
+  (2.02–2.69:1) on the fills, because those values are tuned to sit on paper.
+  Computed before shipping, not after.
+
+### Two findings from the 452 audit, not fixed
+
+- **The retail theme toggle leaks into Community.** `refreshVisibility()` strips
+  `.show` when the CRM is not retail, but build 417 adopted the button into the
+  header row and `#cr-hd2-srch #cr-dark-toggle{display:flex !important}` outranks
+  both `.show` and the base `display:none`. So the gate is dead code on a 1-second
+  timer, and pressing the button in Community repaints Community too, because
+  `[data-theme="rb-light"]` also drives `--ccm-*`. Insurance is unaffected — it has
+  an explicit hide rule. Mirroring that one rule for Community is the whole fix.
+  **Verified by letting the app's own poller run and reading which rule won.**
+- **`.pipe-onhold` still has no ridge-cap gradient** (`background:#047857`, flat).
+  Same 436 omission as Lead; left alone because OnHold does not appear on the
+  retail pipeline row.
+
+### Method note — why the first two measurements were wrong
+
+Both errors are recorded because the *pattern* costs more than the instances.
+
+1. **Static CSS analysis produced 1,418 findings; painted pixels produced 13.** The
+   static pass composited `rgba()` over a ground it had guessed, and flattened
+   `@media print` — which is where a *third* `:root{--bg:#fff}` lives, so it took
+   the print ground for the screen ground. It flagged the header
+   "Single source of truth" at 2.46:1; the real painted value is **5.09:1**.
+2. **The first pixel sampler read each circle's square bounding box.** For a round
+   46 px disc the four corners are page background — (4−π)/4 ≈ **21%** of the box —
+   so on the light ground it reported the page as the "ink" and the fix looked like
+   it had not applied. Sampling a centred disc at 0.62r fixed it. **The app was
+   right and the instrument was wrong** — check the instrument first.

@@ -773,7 +773,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .piperow{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;justify-content:space-evenly;}
 .pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;max-width:200px;}
 .pipebtn .pcirc{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;
-  margin:0 auto 6px;color:#fff;font:800 30px 'Segoe UI',Arial,sans-serif;
+  margin:0 auto 6px;color:#141517;font:800 30px 'Segoe UI',Arial,sans-serif;/* 452: was #fff — 1.95:1 on Lead's fill, 4 of 5 circles under the 3.0 floor */
   transition:transform .12s, box-shadow .12s;}
 .pipebtn:hover .pcirc{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.25);}
 .pipebtn .plabel{display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
@@ -782,6 +782,9 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
 .pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;}
 .pipe-onhold{background:#047857;} .pipe-closed{background:#607D8B;}
+.pipe-lead{background-image:linear-gradient(160deg,
+  #fdf3d6 0%, #f7e0a0 12%, #E8B10F 38%, #E8B10F 55%, #a67e08 80%, #6f5405 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
 .pipe-prospect{background-image:linear-gradient(160deg,
   #fcead8 0%, #f8ca9c 12%, #F08A24 38%, #F08A24 55%, #ad631a 80%, #784512 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
@@ -3138,7 +3141,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 451 &#8212; fixed the button overlap, shipped the theme toggle correctly</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 452 &#8212; the pipeline letters are readable now, and Leads got the same raised edge as the rest</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32333,6 +32336,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:452, note:'\uD83D\uDD35 The letters inside the pipeline circles are dark now instead of white \u2014 white on the yellow, orange, green and blue read at 2:1 and you could not make them out. Leads also got the same raised edge the other circles have had since 436.' },
 { build:451, note:'\uD83D\uDD27 Fixed Library and Manage NACHI landing on top of each other in the installed app \u2014 both now stack cleanly with TOC and the new light/dark toggle. Also fixed a clipped placeholder in client notes.' },
 { build:449, note:'\uD83D\uDEE1\uFE0F Chat, appointments, documents, tasks, photos and payments inside a claim now carry the same fallback colors Cardinal Truth got in 448 \u2014 same root cause, seven more screens that were exposed to it' },
 { build:448, note:'\uD83E\uDE9F Fixed the insurance home and client list rendering see-through with the retail page ghosting behind them \u2014 a background token was being stripped by another module within a second of load' },
