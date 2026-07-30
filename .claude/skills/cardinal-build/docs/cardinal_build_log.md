@@ -670,3 +670,61 @@ Verified by running the **shipped** `lbRich`/`lbSources` (extracted from
 12/12 checks — table promoted, `|---|` rule not leaked as a row, `&` escaped,
 7 citation chips rather than the "No source recorded" fallback, and a negative
 control proving `<img onerror>` inside a table cell is still escaped.
+
+### 453 · the library search index comes from the cards, not from a list
+
+**Measured at 452, all re-verified in the live DOM:** `data-rltags` carried 461 distinct
+keywords across 135 cards and had **zero JS readers** — dead data. The only search was
+the TOC modal, matching page titles and a **hand-typed array of card titles**. All 47
+`.rl-cite` chips were unsearchable: `R905.1.2` returned *"No topics match"*. No card body
+text was searchable. `deductible` appears 86 times in the file and was a tag on **zero**
+cards.
+
+`buildIndex()` now walks `#resourceLibraryView .rl-card` and captures per card: the
+**element**, its `h3`, every `.rl-cite`, `data-rltags`, and a 300-char body excerpt.
+Ranking is title → citation → tag → body, and **body-only hits are dropped whenever
+anything matched higher** (`filterTier`) so `roof` does not return all 134 cards — it
+returns 22. Cards are addressed by stored element reference, and the index is rebuilt on
+every `open()` so runtime-built NACHI pages are picked up.
+
+**The hand-typed `cards:[…]` lists are deleted** — 4,581 characters. Hub/icon/page
+curation is kept because it is authored, not derivable. The replacement array was
+generated from the old one programmatically and verified in node: 30 pages,
+hub|icon|pid|title identical. Net **−1,611 characters**.
+
+#### The bug this fixes, stated accurately
+
+The array wrote three titles with a **curly apostrophe** where the markup uses a straight
+one, and `scrollToCard`'s `norm()` mapped all four curly quote characters to a **double
+quote** — so `it"s` could never equal `it's`. Controlled on Claim Tips: **10 of 10** titles
+without an apostrophe matched; only the apostrophe ones failed.
+
+**The first write-up of this said the cards were "unreachable". That was an
+overstatement** — measured before and after, the card was always *listed*, and tapping it
+always landed on the right *page*; what failed was the scroll and highlight, so a rep was
+dumped at the top of a 12-card page. Affected: *"We'll only pay for the damaged slope"*,
+*"It's just wear and tear"*, *The Inspector's Mindset* — two of them objection rebuttals.
+
+#### A regression the harness caught, not the reading
+
+`rlPageMfg` was listed **six times** in the array, each entry with its own curated card
+subset. Deriving cards from the DOM made all six render the full page: 134 cards became
+**204 buttons**. The six collapse to one entry, and the lost sub-navigation is replaced by
+group headings derived from the **`.rl-groupsep` dividers already in the markup** (Code 3,
+Tips 2, Mfg 5, Sup 5). Those old subsets were themselves stale — they listed 10 of the
+page's 14 cards, so **four Manufacturer cards were in no TOC entry at all**.
+
+#### Gates
+
+`check_build.py` green with `--prev` at 452 and the marker negative-controlled. Functional
+harness drives the **shipped** module through its real UI — opens the panel, types into the
+real input, reads the rendered results: **25/25**. Re-applying the patch to a fresh copy
+reproduces the file byte-for-byte (`84d6c510`).
+
+**Negative control on the harness itself:** run against 452 it reports **12 failures** —
+all four citation searches return 0 hits and the index count reads 132 vs 134. The gate has
+been seen to fail.
+
+One assertion in the patch script fired on its own explanatory comment (`scrollToCard(`
+inside the comment documenting its removal) — the exact trap `CLAUDE.md` names. The
+assertion was corrected to two distinctive code forms; the comment was left alone.

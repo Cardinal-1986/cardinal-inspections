@@ -3141,7 +3141,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 452 &#8212; the pipeline letters are readable now, and Leads got the same raised edge as the rest</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 453 &#8212; library search now finds code sections, keywords and card text, not just titles</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32336,6 +32336,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:453, note:'\uD83D\uDD0D Library search finally finds things. Type a code section like R905.1.2 and you get the code card, the supplement wording and the rebuttal \u2014 before, that returned nothing. Searches card text and keywords too, and three cards that could never be opened from the contents list now open.' },
 { build:452, note:'\uD83D\uDD35 The letters inside the pipeline circles are dark now instead of white \u2014 white on the yellow, orange, green and blue read at 2:1 and you could not make them out. Leads also got the same raised edge the other circles have had since 436.' },
 { build:451, note:'\uD83D\uDD27 Fixed Library and Manage NACHI landing on top of each other in the installed app \u2014 both now stack cleanly with TOC and the new light/dark toggle. Also fixed a clipped placeholder in client notes.' },
 { build:449, note:'\uD83D\uDEE1\uFE0F Chat, appointments, documents, tasks, photos and payments inside a claim now carry the same fallback colors Cardinal Truth got in 448 \u2014 same root cause, seven more screens that were exposed to it' },
@@ -32976,207 +32977,43 @@ else start();
 })();
 </script>
 
-<style id="cr-rltoc-styles">/* cr-rltoc-themed (401) */#cr-rltoc-btn{display:none;position:fixed;bottom:24px;left:24px;z-index:9400;width:auto;padding:9px 14px 9px 12px;height:44px;border-radius:var(--ct-r-field,8px);background:var(--ct-red);color:var(--ct-red-ink,#fff);border:1px solid var(--ct-line-strong);cursor:pointer;display:flex;align-items:center;gap:6px;font:800 11px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;box-shadow:0 6px 18px rgba(0,0,0,.45);-webkit-tap-highlight-color:rgba(196,24,15,.25);font-family:inherit;transition:transform .12s,box-shadow .12s}#cr-rltoc-btn:hover{transform:translateY(-1px);background:var(--ct-red)}#cr-rltoc-btn:active{transform:translateY(0)}body:not(.viewing-rl) #cr-rltoc-btn{display:none}body.viewing-rl #cr-rltoc-btn{display:flex}/* 447: Library Home. Sits directly above the TOC pill and shares its visibility class, so the two read as one nav cluster. Hidden on the landing itself — there is nowhere to go. --ct-* resolves here because the RL theme module mirrors data-rltheme onto <body>. */#cr-rlhome-btn{display:none;position:fixed;left:24px;bottom:calc(133px + env(safe-area-inset-bottom,0px));z-index:9400;width:auto;height:44px;padding:9px 14px 9px 12px;align-items:center;gap:7px;border-radius:var(--ct-r-field,8px);border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#fff);color:var(--ct-ink,#17181B);font:800 12px var(--ct-sans,'Segoe UI',Arial,sans-serif);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rlhome-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rlhome-btn:active{transform:translateY(1px)}#cr-rlhome-btn svg{display:block;width:15px;height:15px;flex:0 0 auto}body:not(.viewing-rl) #cr-rlhome-btn{display:none}body.viewing-rl #cr-rlhome-btn{display:flex}body.viewing-rl.rl-at-landing #cr-rlhome-btn{display:none}/* 451 (was staged as 450): theme toggle. Stacked above the Library pill. Visible on every RL page including the landing (unlike Library, there is no page where a theme choice is irrelevant), so no .rl-at-landing exception. Standalone-mode repositioning lives in cr-pnc-styles, not here — one place for that concern, matching TOC/Manage/Library. */#cr-rltheme-btn{display:none;position:fixed;left:24px;bottom:calc(187px + env(safe-area-inset-bottom,0px));z-index:9400;width:44px;height:44px;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#FFFFFF);color:var(--ct-ink,#17181B);font-size:19px;line-height:1;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rltheme-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rltheme-btn:active{transform:translateY(1px)}body:not(.viewing-rl) #cr-rltheme-btn{display:none}body.viewing-rl #cr-rltheme-btn{display:flex}.cr-rltoc-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9450;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px 5vh;-webkit-overflow-scrolling:touch}.cr-rltoc-box{background:var(--ct-surface);color:var(--ct-ink);border-radius:12px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.6);border:1px solid var(--ct-line-strong);overflow:hidden;font-family:var(--ct-sans)}.cr-rltoc-head{padding:14px 20px 10px;border-bottom:1px solid var(--ct-line);background:var(--ct-surface-2)}.cr-rltoc-head h3{margin:0 0 8px;font:800 13px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink);display:flex;align-items:center;gap:8px}.cr-rltoc-search{width:100%;box-sizing:border-box;background:var(--ct-surface-2);color:var(--ct-ink);border:1px solid var(--ct-line-strong);border-radius:8px;padding:9px 12px;font-size:14px;outline:none;font-family:inherit}.cr-rltoc-search:focus{border-color:var(--ct-mark);box-shadow:0 0 0 3px rgba(196,24,15,.15)}.cr-rltoc-search::placeholder{color:var(--ct-ink-2)}.cr-rltoc-body{overflow-y:auto;flex:1;padding:8px 8px 12px}.cr-rltoc-empty{padding:40px 20px;text-align:center;color:var(--ct-ink-2);font:600 13px var(--ct-sans)}.cr-rltoc-hub{margin:8px 0 4px;padding:8px 12px;background:var(--ct-surface-2);border-left:3px solid var(--ct-line-strong);border-radius:0 6px 6px 0;font:800 11px var(--ct-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ct-mark);display:flex;align-items:center;gap:8px}.cr-rltoc-hub .hub-icon{font-size:14px}.cr-rltoc-page{margin:0 4px 2px;border-radius:6px;overflow:hidden}.cr-rltoc-page-head{padding:8px 12px 8px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;font:700 12.5px var(--ct-sans);color:var(--ct-ink);background:transparent;border:0;width:100%;text-align:left;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-page-head:hover{background:var(--ct-surface-3)}.cr-rltoc-page-head .caret{font-size:10px;color:var(--ct-mark);transition:transform .18s;flex:0 0 auto;width:12px}.cr-rltoc-page.expanded .caret{transform:rotate(90deg)}.cr-rltoc-page-head .title{flex:1;min-width:0}.cr-rltoc-page-head .count{color:var(--ct-mark);font-weight:800;font-size:10px;letter-spacing:.08em}.cr-rltoc-cards{display:none;padding:2px 0 6px 42px}.cr-rltoc-page.expanded .cr-rltoc-cards{display:block}.cr-rltoc-card{display:block;width:100%;text-align:left;padding:6px 10px 6px 0;background:transparent;border:0;cursor:pointer;font:600 12px var(--ct-sans);color:var(--ct-ink);border-radius:4px;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-card:hover{color:#fff;background:var(--ct-surface-3);padding-left:6px}.cr-rltoc-card .m{color:var(--ct-mark)}/* search match highlight */ .cr-rltoc-subgroup{margin:4px 0 2px;padding:4px 8px;font:800 10px var(--ct-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ct-ink-2);background:transparent;border-radius:4px}.cr-rltoc-close{margin-left:auto;background:transparent;border:0;color:var(--ct-ink-2);cursor:pointer;font-size:20px;padding:0 4px;font-family:inherit;line-height:1}.cr-rltoc-close:hover{color:var(--ct-ink)}#resourceLibraryView .rl-card.cr-rltoc-flash{animation:cr-rltoc-flash 2.5s ease;scroll-margin-top:80px}@keyframes cr-rltoc-flash{0%,100%{background:transparent;box-shadow:none}15%{background:rgba(196,24,15,.14);box-shadow:0 0 0 3px rgba(196,24,15,.32)}70%{background:rgba(196,24,15,.07);box-shadow:0 0 0 2px rgba(196,24,15,.18)}}</style>
+<style id="cr-rltoc-styles">/* cr-rltoc-themed (401) */#cr-rltoc-btn{display:none;position:fixed;bottom:24px;left:24px;z-index:9400;width:auto;padding:9px 14px 9px 12px;height:44px;border-radius:var(--ct-r-field,8px);background:var(--ct-red);color:var(--ct-red-ink,#fff);border:1px solid var(--ct-line-strong);cursor:pointer;display:flex;align-items:center;gap:6px;font:800 11px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;box-shadow:0 6px 18px rgba(0,0,0,.45);-webkit-tap-highlight-color:rgba(196,24,15,.25);font-family:inherit;transition:transform .12s,box-shadow .12s}#cr-rltoc-btn:hover{transform:translateY(-1px);background:var(--ct-red)}#cr-rltoc-btn:active{transform:translateY(0)}body:not(.viewing-rl) #cr-rltoc-btn{display:none}body.viewing-rl #cr-rltoc-btn{display:flex}/* 447: Library Home. Sits directly above the TOC pill and shares its visibility class, so the two read as one nav cluster. Hidden on the landing itself — there is nowhere to go. --ct-* resolves here because the RL theme module mirrors data-rltheme onto <body>. */#cr-rlhome-btn{display:none;position:fixed;left:24px;bottom:calc(133px + env(safe-area-inset-bottom,0px));z-index:9400;width:auto;height:44px;padding:9px 14px 9px 12px;align-items:center;gap:7px;border-radius:var(--ct-r-field,8px);border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#fff);color:var(--ct-ink,#17181B);font:800 12px var(--ct-sans,'Segoe UI',Arial,sans-serif);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rlhome-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rlhome-btn:active{transform:translateY(1px)}#cr-rlhome-btn svg{display:block;width:15px;height:15px;flex:0 0 auto}body:not(.viewing-rl) #cr-rlhome-btn{display:none}body.viewing-rl #cr-rlhome-btn{display:flex}body.viewing-rl.rl-at-landing #cr-rlhome-btn{display:none}/* 451 (was staged as 450): theme toggle. Stacked above the Library pill. Visible on every RL page including the landing (unlike Library, there is no page where a theme choice is irrelevant), so no .rl-at-landing exception. Standalone-mode repositioning lives in cr-pnc-styles, not here — one place for that concern, matching TOC/Manage/Library. */#cr-rltheme-btn{display:none;position:fixed;left:24px;bottom:calc(187px + env(safe-area-inset-bottom,0px));z-index:9400;width:44px;height:44px;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#FFFFFF);color:var(--ct-ink,#17181B);font-size:19px;line-height:1;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rltheme-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rltheme-btn:active{transform:translateY(1px)}body:not(.viewing-rl) #cr-rltheme-btn{display:none}body.viewing-rl #cr-rltheme-btn{display:flex}.cr-rltoc-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9450;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px 5vh;-webkit-overflow-scrolling:touch}.cr-rltoc-box{background:var(--ct-surface);color:var(--ct-ink);border-radius:12px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.6);border:1px solid var(--ct-line-strong);overflow:hidden;font-family:var(--ct-sans)}.cr-rltoc-head{padding:14px 20px 10px;border-bottom:1px solid var(--ct-line);background:var(--ct-surface-2)}.cr-rltoc-head h3{margin:0 0 8px;font:800 13px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink);display:flex;align-items:center;gap:8px}.cr-rltoc-search{width:100%;box-sizing:border-box;background:var(--ct-surface-2);color:var(--ct-ink);border:1px solid var(--ct-line-strong);border-radius:8px;padding:9px 12px;font-size:14px;outline:none;font-family:inherit}.cr-rltoc-search:focus{border-color:var(--ct-mark);box-shadow:0 0 0 3px rgba(196,24,15,.15)}.cr-rltoc-search::placeholder{color:var(--ct-ink-2)}.cr-rltoc-body{overflow-y:auto;flex:1;padding:8px 8px 12px}.cr-rltoc-empty{padding:40px 20px;text-align:center;color:var(--ct-ink-2);font:600 13px var(--ct-sans)}.cr-rltoc-hub{margin:8px 0 4px;padding:8px 12px;background:var(--ct-surface-2);border-left:3px solid var(--ct-line-strong);border-radius:0 6px 6px 0;font:800 11px var(--ct-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ct-mark);display:flex;align-items:center;gap:8px}.cr-rltoc-hub .hub-icon{font-size:14px}.cr-rltoc-page{margin:0 4px 2px;border-radius:6px;overflow:hidden}.cr-rltoc-page-head{padding:8px 12px 8px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;font:700 12.5px var(--ct-sans);color:var(--ct-ink);background:transparent;border:0;width:100%;text-align:left;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-page-head:hover{background:var(--ct-surface-3)}.cr-rltoc-page-head .caret{font-size:10px;color:var(--ct-mark);transition:transform .18s;flex:0 0 auto;width:12px}.cr-rltoc-page.expanded .caret{transform:rotate(90deg)}.cr-rltoc-page-head .title{flex:1;min-width:0}.cr-rltoc-page-head .count{color:var(--ct-mark);font-weight:800;font-size:10px;letter-spacing:.08em}.cr-rltoc-cards{display:none;padding:2px 0 6px 42px}.cr-rltoc-page.expanded .cr-rltoc-cards{display:block}.cr-rltoc-card{display:block;width:100%;text-align:left;padding:6px 10px 6px 0;background:transparent;border:0;cursor:pointer;font:600 12px var(--ct-sans);color:var(--ct-ink);border-radius:4px;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-card:hover{color:#fff;background:var(--ct-surface-3);padding-left:6px}.cr-rltoc-card .m{color:var(--ct-mark)}/* search match highlight */ .cr-rltoc-subgroup{margin:4px 0 2px;padding:4px 8px;font:800 10px var(--ct-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ct-ink-2);background:transparent;border-radius:4px}.cr-rltoc-close{margin-left:auto;background:transparent;border:0;color:var(--ct-ink-2);cursor:pointer;font-size:20px;padding:0 4px;font-family:inherit;line-height:1}.cr-rltoc-close:hover{color:var(--ct-ink)}.cr-rltoc-cards .cr-rltoc-group{margin:9px 0 3px;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.15em;text-transform:uppercase;opacity:.55}
+.cr-rltoc-card .cr-rltoc-why{display:inline-block;margin-left:7px;font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;opacity:.62;vertical-align:1px}
+#resourceLibraryView .rl-card.cr-rltoc-flash{animation:cr-rltoc-flash 2.5s ease;scroll-margin-top:80px}@keyframes cr-rltoc-flash{0%,100%{background:transparent;box-shadow:none}15%{background:rgba(196,24,15,.14);box-shadow:0 0 0 3px rgba(196,24,15,.32)}70%{background:rgba(196,24,15,.07);box-shadow:0 0 0 2px rgba(196,24,15,.18)}}</style>
 <script id="cr-rltoc-script">
 (function(){
 'use strict';
 var TOC = [
 { hub:'Insurance', icon:'\uD83D\uDEE1\uFE0F', pages:[
-{ pid:'rlPageInsurance', title:'Ohio Insurance Law', cards:[
-'Ohio Matching Regulation',
-'Unfair Claims Settlement Practices',
-'Public Adjuster Licensing',
-'Home Solicitation 3-Day Right of Rescission',
-]},
-{ pid:'rlPageCode', title:'Construction Codes', cards:[
-'When Roof Recover is Prohibited',
-'Ice Barrier Requirement',
-'Underlayment Requirements',
-'Asphalt Shingle Fastening',
-'Drip Edge',
-'Flashings \u2014 Step, Wall, Valley, Chimney',
-'Attic Ventilation',
-'Roof Decking / Sheathing',
-'2024 Ohio Building Code \u2014 Chapter 15',
-'Commercial Reroofing Rules',
-'City of Dayton',
-'City of Kettering',
-'Huber Heights',
-'Other Miami Valley Jurisdictions',
-]},
-{ pid:'rlPagePolicy', title:'Policy Provisions', cards:[
-'Ordinance & Law Coverage',
-'RCV vs ACV Settlement',
-'Matching Endorsement',
-]},
-{ pid:'rlPageDocs', title:'Documentation Checklist', cards:[
-'Per-Inspection Documentation Standard',
-'Photo Templates by Damage Type',
-'Paper Trail',
-]},
-{ pid:'rlPageTips', title:'Claim Tips', cards:[
-'\u201CWe\u2019ll only pay for the damaged slope\u201D',
-'\u201CJust layer new shingles over the existing\u201D',
-'\u201CDecking replacement is not covered\u201D',
-'\u201CA strip of ice & water at the eave is enough\u201D',
-'\u201CReuse the existing flashings\u201D',
-'\u201CVentilation upgrade is a betterment\u201D',
-'\u201CIt\u2019s just wear and tear\u201D',
-'\u201CRoof is too old for full replacement value\u201D',
-'State Farm \u2014 Engineer Reports on Denials',
-'Allstate \u2014 Cosmetic Damage Endorsement',
-'Third-Party Administrators & Preferred Networks',
-'Aggressive Depreciation Schedules',
-]},
-{ pid:'rlPagePitfalls', title:'Do & Don\u2019t', cards:[] },
-{ pid:'rlPageCheat', title:'Truck Cheat Sheet', cards:[
-'Cardinal One-Page Field Card',
-]},
-{ pid:'rlPageInsp', title:'Mastering Roof Inspections', cards:[
-'The Inspector\u2019s Mindset',
-'Safety First',
-'The Systematic Walk',
-'What to Look For',
-'Attic & Interior',
-'Documentation Discipline',
-'Common Mistakes to Avoid',
-]},
-{ pid:'rlPageNachiMastery', title:'NACHI Roof Mastery (hub)', cards:[
-'1-3 Accessing A Roof',
-'Asphalt Composition Shingles',
-]},
-{ pid:'rlPageNachiAccessing', title:'NACHI 1-3 Accessing A Roof', cards:[
-'Part 1 \u2014 Roof Safety, Risk, Pitch & Boots',
-'Part 3 \u2014 Gaining Access, Choosing a Ladder & Safety Rules',
-'Part 4 \u2014 Length, Material, Standing an Extension Ladder',
-'Part 5 \u2014 Climbing, Maintenance & Step-Ladders',
-]},
-{ pid:'rlPageNachiAsphalt', title:'NACHI Asphalt Composition Shingles', cards:[
-'Part 1 \u2014 Components, Mat & Fiberglass vs Organic',
-'Part 2 \u2014 Organic Shingles & Distortion',
-'Part 3 \u2014 Asphalt, Crude Oil, Filler & ASTM Standards',
-'Part 4 \u2014 Back-Surfacing & Granules',
-]},
-{ pid:'rlPageSup', title:'Supplement Templates', cards:[
-'How to Use These',
-'Ice Barrier \u2014 Extension to Wall Line',
-'Drip Edge \u2014 All Eaves and Rakes',
-'Underlayment \u2014 Double Layer on Low Slope',
-'Attic Ventilation to Code',
-'Enhanced Fastening / High-Wind Installation',
-'Starter Strip & Manufacturer Accessories',
-'Decking Replacement',
-'Full Tear-Off Required by Code',
-'Line-of-Sight Mismatch \u2014 Full Slope Replacement',
-'Discontinued Shingle \u2014 Full Roof Replacement',
-'Spatter with Matching Endorsement',
-'Step & Counter Flashing',
-'Skylight Flashing Kit',
-'Chimney Cricket / Saddle',
-'Pipe Boot Replacement',
-'Siding & Trim',
-'Gutters & Downspouts',
-'HVAC Condenser Fin Damage',
-'Screens & Window Frames',
-]},
+{ pid:'rlPageInsurance', title:'Ohio Insurance Law' },
+{ pid:'rlPageCode', title:'Construction Codes' },
+{ pid:'rlPagePolicy', title:'Policy Provisions' },
+{ pid:'rlPageDocs', title:'Documentation Checklist' },
+{ pid:'rlPageTips', title:'Claim Tips' },
+{ pid:'rlPagePitfalls', title:'Do & Don\u2019t' },
+{ pid:'rlPageCheat', title:'Truck Cheat Sheet' },
+{ pid:'rlPageInsp', title:'Mastering Roof Inspections' },
+{ pid:'rlPageNachiMastery', title:'NACHI Roof Mastery (hub)' },
+{ pid:'rlPageNachiAccessing', title:'NACHI 1-3 Accessing A Roof' },
+{ pid:'rlPageNachiAsphalt', title:'NACHI Asphalt Composition Shingles' },
+{ pid:'rlPageSup', title:'Supplement Templates' },
 ]},
 { hub:'Manufacturer', icon:'\uD83C\uDFED', pages:[
-{ pid:'rlPageMfg', title:'Overview & Standards', cards:[
-'\uD83D\uDCE4 PDFs Pending',
-'Class 4 Impact-Resistant \u2014 Insurance Premium Discounts',
-'System Warranty Prerequisites',
-'Enhanced Fastening / High-Wind Installation',
-]},
-{ pid:'rlPageMfg', title:'Owens Corning', cards:[
-'Product Lines & SureNail',
-]},
-{ pid:'rlPageMfg', title:'GAF', cards:[
-'Product Lines & LayerLock',
-]},
-{ pid:'rlPageMfg', title:'CertainTeed', cards:[
-'Product Lines',
-]},
-{ pid:'rlPageMfg', title:'Others', cards:[
-'IKO, Malarkey, Tamko, Atlas',
-]},
-{ pid:'rlPageMfg', title:'Shared — All Brands', cards:[
-'Contractor Program & Warranty Tiers',
-'Do-Not-Mix Rules',
-]},
+{ pid:'rlPageMfg', title:'Manufacturer Guidelines' },
 ]},
 { hub:'General \u2014 Measurements', icon:'\uD83D\uDCD0', pages:[
-{ pid:'rlPageMsrRoofHand', title:'Roof \u2014 Hand Measurements', cards:[
-'Perimeter & Facet Basics',
-'Slope / Pitch',
-'Squares (100 sqft units)',
-'Waste Factor',
-'Linear Feet \u2014 Ridge, Hip, Valley, Edge',
-'Accessory Counts',
-]},
-{ pid:'rlPageMsrRoofReports', title:'Roof \u2014 Reading Reports', cards:[
-'Hover',
-'Roofr',
-'EagleView',
-'Other Reports',
-'When a Report Seems Wrong',
-]},
-{ pid:'rlPageMsrSidingHand', title:'Siding \u2014 Hand Measurements', cards:[
-'Wall Area (Squares)',
-'Deducting Openings',
-'Corner Posts, J-Channel, Trim',
-'Vertical vs. Horizontal Siding',
-'Waste Factor',
-]},
-{ pid:'rlPageMsrSidingReports', title:'Siding \u2014 Reading Reports', cards:[
-'Hover for Siding',
-'EagleView / Aerial Reports',
-'Verifying the Report',
-]},
-{ pid:'rlPageMsrWindowsHand', title:'Windows \u2014 Measurements', cards:[
-'Rough Opening vs. Exact Size',
-'Standard Window Sizes & Notation',
-'Measuring for a Replacement',
-'Egress Requirements',
-'Glass & Frame Specifications',
-]},
-{ pid:'rlPageMsrDoorsHand', title:'Doors \u2014 Measurements', cards:[
-'Rough Opening vs. Slab Size vs. Frame Size',
-'Prehung vs. Slab Replacement',
-'Handing (Left-Hand vs. Right-Hand, Inswing vs. Outswing)',
-'Patio & Sliding Doors',
-'Storm Doors',
-'Fire-Rated Doors (Garage-to-House)',
-]},
-{ pid:'rlPageMsrGuttersHand', title:'Gutters \u2014 Hand Measurements', cards:[
-'Total Eave Linear Feet',
-'Downspouts \u2014 Count & Placement',
-'Corners, Elbows, End Caps',
-'Gutter Guards / Leaf Protection',
-'Slope / Fall',
-]},
-{ pid:'rlPageMsrGuttersReports', title:'Gutters \u2014 Reading Reports', cards:[
-'What Roof Reports Give You',
-'What You Still Need to Walk',
-]},
-{ pid:'rlPageMsrFasciaHand', title:'Fascia \u2014 Hand Measurements', cards:[
-'Total Fascia Linear Feet',
-'Width / Profile',
-'Material Options',
-'Corners & Returns',
-]},
-{ pid:'rlPageMsrFasciaReports', title:'Fascia \u2014 Reading Reports', cards:[
-'What Reports Give You',
-]},
-{ pid:'rlPageMsrSoffitHand', title:'Soffit \u2014 Hand Measurements', cards:[
-'Soffit Width',
-'Linear Feet & Area',
-'Vented vs. Solid',
-'Corner Geometry',
-]},
-{ pid:'rlPageMsrSoffitReports', title:'Soffit \u2014 Reading Reports', cards:[
-'Hover for Soffit',
-'Calculating from an Aerial Report',
-]},
+{ pid:'rlPageMsrRoofHand', title:'Roof \u2014 Hand Measurements' },
+{ pid:'rlPageMsrRoofReports', title:'Roof \u2014 Reading Reports' },
+{ pid:'rlPageMsrSidingHand', title:'Siding \u2014 Hand Measurements' },
+{ pid:'rlPageMsrSidingReports', title:'Siding \u2014 Reading Reports' },
+{ pid:'rlPageMsrWindowsHand', title:'Windows \u2014 Measurements' },
+{ pid:'rlPageMsrDoorsHand', title:'Doors \u2014 Measurements' },
+{ pid:'rlPageMsrGuttersHand', title:'Gutters \u2014 Hand Measurements' },
+{ pid:'rlPageMsrGuttersReports', title:'Gutters \u2014 Reading Reports' },
+{ pid:'rlPageMsrFasciaHand', title:'Fascia \u2014 Hand Measurements' },
+{ pid:'rlPageMsrFasciaReports', title:'Fascia \u2014 Reading Reports' },
+{ pid:'rlPageMsrSoffitHand', title:'Soffit \u2014 Hand Measurements' },
+{ pid:'rlPageMsrSoffitReports', title:'Soffit \u2014 Reading Reports' },
 ]},
 ];
 var expanded = new Set();
@@ -33190,6 +33027,63 @@ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
 function matches(q, t){
 if(!q) return true;
 return String(t || '').toLowerCase().indexOf(q.toLowerCase()) !== -1;
+}
+/* 453: the index is the cards. Nothing is hand-maintained, so nothing can drift.
+   Rebuilt on every open() so pages built at runtime (NACHI) are picked up. */
+var IDX = null;
+function buildIndex(){
+var map = {};
+document.querySelectorAll('#resourceLibraryView .rl-page').forEach(function(page){
+var list = [];
+/* .rl-groupsep already divides the richest pages (Code 3, Tips 2, Mfg 5, Sup 5).
+   Walk cards and dividers together so each card carries the group it sits under —
+   derived from the markup, so it cannot drift the way a typed list did. */
+var group = '';
+page.querySelectorAll('.rl-groupsep, .rl-card').forEach(function(card){
+if(card.classList.contains('rl-groupsep')){
+group = String(card.textContent || '').replace(/\s+/g, ' ').trim();
+return;
+}
+var h3 = card.querySelector('h3');
+var cites = [];
+card.querySelectorAll('.rl-cite').forEach(function(c){
+cites.push(String(c.textContent || '').trim());
+});
+list.push({
+el: card,
+group: group,
+title: h3 ? String(h3.textContent || '').replace(/\s+/g, ' ').trim() : '',
+cite: cites.join(' '),
+tags: card.getAttribute('data-rltags') || '',
+body: String(card.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 300)
+});
+});
+map[page.id] = list;
+});
+return map;
+}
+function cardsFor(pid){
+if(!IDX) IDX = buildIndex();
+return IDX[pid] || [];
+}
+/* rank 0 title, 1 citation, 2 tag, 3 body. -1 is no match.
+   Body is the fallback tier only — see filterTier(). */
+function cardRank(q, c){
+if(!q) return 0;
+var s = q.toLowerCase();
+if(String(c.title).toLowerCase().indexOf(s) !== -1) return 0;
+if(String(c.cite).toLowerCase().indexOf(s) !== -1) return 1;
+if(String(c.tags).toLowerCase().indexOf(s) !== -1) return 2;
+if(String(c.body).toLowerCase().indexOf(s) !== -1) return 3;
+return -1;
+}
+/* 'roof' and 'shingle' appear in almost every body. If anything matched on a
+   title, citation or tag, body-only hits are noise and get dropped. */
+function filterTier(hits){
+var best = 9;
+hits.forEach(function(h){ if(h.rank < best) best = h.rank; });
+if(best > 2) return hits;
+return hits.filter(function(h){ return h.rank <= 2; });
 }
 function highlight(text, q){
 if(!q) return esc(text);
@@ -33215,20 +33109,38 @@ var pagesHtml = '';
 allPages.forEach(function(page, pIdx){
 var pageKey = hubIdx + '-' + pIdx;
 var pageMatches = q ? matches(q, page.title) : false;
-var matchingCards = q ?
-page.cards.filter(function(c){ return matches(q, c); }) :
-page.cards;
-var cardsToShow = q ? matchingCards : page.cards;
+var allCards = cardsFor(page.pid);
+var matchingCards;
+if(q){
+var hits = [];
+allCards.forEach(function(c, ci){
+var r = cardRank(q, c);
+if(r !== -1) hits.push({ c:c, ci:ci, rank:r });
+});
+matchingCards = filterTier(hits);
+}else{
+matchingCards = allCards.map(function(c, ci){ return { c:c, ci:ci, rank:0 }; });
+}
+var cardsToShow = matchingCards;
 if(q && !pageMatches && matchingCards.length === 0) return;
 hubHasMatch = true;
 totalMatches += (pageMatches ? 1 : 0) + matchingCards.length;
 var isExpanded = q ? true : expanded.has(pageKey);
-var cardsHtml = cardsToShow.map(function(cardTitle){
-return '<button class="cr-rltoc-card" ' +
+var lastGroup = null;
+var cardsHtml = cardsToShow.map(function(h){
+var sep = '';
+if(!q && h.c.group && h.c.group !== lastGroup){
+sep = '<div class="cr-rltoc-group">' + esc(h.c.group) + '</div>';
+}
+if(!q) lastGroup = h.c.group;
+return sep + '<button class="cr-rltoc-card" ' +
 'data-pid="' + esc(page.pid) + '" ' +
-'data-card="' + esc(cardTitle) + '" ' +
+'data-idx="' + h.ci + '" ' +
 'type="button">' +
-highlight(cardTitle, q) +
+highlight(h.c.title, q) +
+(h.rank > 0 ? '<span class="cr-rltoc-why">' +
+esc(h.rank === 1 ? 'citation' : (h.rank === 2 ? 'tag' : 'in text')) +
+'</span>' : '') +
 '</button>';
 }).join('');
 pagesHtml +=
@@ -33240,7 +33152,7 @@ pagesHtml +=
 'type="button">' +
 '<span class="caret">\u25B6</span>' +
 '<span class="title">' + highlight(page.title, q) + '</span>' +
-(page.cards.length ? '<span class="count">' + page.cards.length + '</span>' : '') +
+(allCards.length ? '<span class="count">' + allCards.length + '</span>' : '') +
 '</button>' +
 (cardsHtml ? '<div class="cr-rltoc-cards">' + cardsHtml + '</div>' : '') +
 '</div>';
@@ -33279,11 +33191,11 @@ btn.closest('.cr-rltoc-page').classList.toggle('expanded');
 host.querySelectorAll('.cr-rltoc-card').forEach(function(btn){
 btn.onclick = function(e){
 e.stopPropagation();
-navigateTo(btn.dataset.pid, btn.dataset.card);
+navigateTo(btn.dataset.pid, parseInt(btn.dataset.idx, 10));
 };
 });
 }
-function navigateTo(pageId, cardTitle){
+function navigateTo(pageId, cardIdx){
 close();
 setTimeout(function(){
 try{
@@ -33295,31 +33207,18 @@ p.classList.toggle('rl-pageActive', p.id === pageId);
 });
 window.scrollTo(0, 0);
 }
-if(cardTitle){
-setTimeout(function(){ scrollToCard(pageId, cardTitle); }, 120);
+if(cardIdx !== null && cardIdx === cardIdx){
+setTimeout(function(){ scrollToCardEl(cardsFor(pageId)[cardIdx]); }, 120);
 }
 }catch(e){ console.warn('[rl-toc]', e); }
 }, 60);
 }
-function scrollToCard(pageId, cardTitle){
-var page = document.getElementById(pageId);
-if(!page) return;
-var norm = function(s){
-return String(s || '')
-.replace(/[\u2018\u2019\u201C\u201D]/g, '"')
-.replace(/[\u2014\u2013\-]/g, '-')
-.replace(/\s+/g, ' ')
-.trim().toLowerCase();
-};
-var target = norm(cardTitle);
-var cards = page.querySelectorAll('.rl-card');
-var match = null;
-for(var i = 0; i < cards.length; i++){
-var h3 = cards[i].querySelector('h3');
-if(h3 && norm(h3.textContent).indexOf(target) !== -1){
-match = cards[i]; break;
-}
-}
+/* 453: was scrollToCard(pageId, cardTitle), which matched an h3 by normalised
+   string. Its norm() mapped curly quotes to a DOUBLE quote, so a title written
+   with a curly apostrophe could never match markup written with a straight one
+   — three cards were unreachable. The index hands us the element instead. */
+function scrollToCardEl(entry){
+var match = entry && entry.el;
 if(match){
 match.scrollIntoView({ behavior:'smooth', block:'start' });
 match.classList.remove('cr-rltoc-flash');
@@ -33331,6 +33230,7 @@ setTimeout(function(){ match.classList.remove('cr-rltoc-flash'); }, 2600);
 var backdrop = null;
 function open(){
 if(backdrop) return;
+IDX = null;
 backdrop = document.createElement('div');
 backdrop.className = 'cr-rltoc-bg';
 backdrop.innerHTML =
