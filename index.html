@@ -3138,7 +3138,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 445 &#8212; tables and diagrams in the Resource Library</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 446 &#8212; the librarian writes tables now, and cites its sources</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32262,6 +32262,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:446, note:'\uD83D\uDCDA Ask the librarian something and the entry it files can now hold tables, headings and lists instead of flat text \u2014 and it lists the code sections or specs it drew on, or says plainly that it could not cite one' },
 { build:445, note:'\uD83D\uDCD0 Resource Library gets tables and diagrams \u2014 pitch multipliers on Slope/Pitch, net-free-area worked out on Attic Ventilation, and labelled plates for the pitch triangle, the ice barrier wall line and balanced ventilation' },
 { build:444, note:'\uD83D\uDCC1 You can now upload a document, pick the section and name it yourself \u2014 it shows as a clickable title that opens the original file, not a summary of it' },
 { build:443, note:'\uD83D\uDCD6 Ask the library a question and it writes the answer up as a reference entry and files it, so the next person just finds it. The assistant also follows the library light/dark switch now' },
@@ -46530,6 +46531,22 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 </style>
 
 <style id="cr-lib-styles">
+/* ---- rich entry bodies (446) ------------------------------------------
+   Scoped to #rlLibPanel and built on --lb-* — the panel's own palette. The
+   --ct-* tokens used by the 445 components live on #resourceLibraryView and
+   are NOT in scope here; reaching for them would render this invisible. ---- */
+#rlLibPanel .lb-p{margin:8px 0;line-height:1.55;}
+#rlLibPanel .lb-h{margin:12px 0 6px;font:700 13px var(--lb-sans,inherit);color:var(--lb-ink);letter-spacing:-.01em;}
+#rlLibPanel .lb-ul,#rlLibPanel .lb-ol{margin:8px 0 8px 20px;padding:0;line-height:1.55;}
+#rlLibPanel .lb-ul li,#rlLibPanel .lb-ol li{margin:4px 0;}
+#rlLibPanel .lb-table{width:100%;border-collapse:collapse;margin:11px 0 4px;font-size:12.5px;font-variant-numeric:tabular-nums;}
+#rlLibPanel .lb-table th{text-align:left;padding:6px 8px;border-bottom:2px solid var(--lb-ink);font-weight:700;color:var(--lb-ink);}
+#rlLibPanel .lb-table td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--lb-line);color:var(--lb-ink);}
+#rlLibPanel .lb-table tbody tr:last-child td{border-bottom:none;}
+#rlLibPanel .lb-table td.num{text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;}
+#rlLibPanel .lb-cites{margin-top:10px;display:flex;flex-wrap:wrap;gap:5px;}
+#rlLibPanel .lb-cite{display:inline-flex;align-items:center;font:600 10.5px ui-monospace,Menlo,Consolas,monospace;text-transform:uppercase;letter-spacing:.03em;color:var(--lb-ink);background:var(--lb-surface2);border:1px solid var(--lb-line2);border-radius:4px;padding:3px 7px;}
+#rlLibPanel .lb-nocite{margin-top:10px;font-size:11px;line-height:1.45;color:var(--lb-warn-ink);background:var(--lb-warn-bg);border-radius:4px;padding:6px 8px;}
 /* ══════════════════════════════════════════════════════════════
    CARDINAL — RESOURCE LIBRARY ASSISTANT              build 442
    ──────────────────────────────────────────────────────────────
@@ -46641,6 +46658,96 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
   function esc(s){ return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function email(){ return (window.currentUser && window.currentUser.email) || ''; }
+
+  /* lbRich — build 446. Escape first, THEN promote a small marker set on the
+     escaped string. Nothing the API returns can introduce a tag: by the time
+     any rule below runs, every '<' is already '&lt;'. Supports what a reference
+     entry actually needs — tables, headings, bullets, numbers, bold — and
+     deliberately nothing else (no links, no images, no raw HTML). */
+  function lbRich(s){
+    var t = esc(s == null ? '' : s).replace(/\r\n?/g, '\n');
+    if(!t.trim()) return '';
+    var blocks = t.split(/\n{2,}/);
+    var out = [];
+    for(var b = 0; b < blocks.length; b++){
+      var lines = blocks[b].split('\n').filter(function(x){ return x.trim() !== ''; });
+      if(!lines.length) continue;
+      out.push(lbBlock(lines));
+    }
+    return out.join('');
+  }
+
+  function lbInline(x){
+    /* bold only. Runs on escaped text, so this cannot open a tag. */
+    return x.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  }
+
+  function lbCells(line){
+    var r = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+    return r.split('|').map(function(c){ return c.trim(); });
+  }
+
+  function lbIsRule(line){
+    return /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(line);
+  }
+
+  function lbBlock(lines){
+    var first = lines[0];
+
+    /* markdown table: a header row, a |---| rule, then body rows */
+    if(lines.length >= 2 && first.indexOf('|') > -1 && lbIsRule(lines[1])){
+      var head = lbCells(first);
+      var cols = head.length;
+      var h = '<table class="lb-table"><thead><tr>' +
+        head.map(function(c){ return '<th>' + lbInline(c) + '</th>'; }).join('') +
+        '</tr></thead><tbody>';
+      for(var i = 2; i < lines.length; i++){
+        if(lines[i].indexOf('|') < 0) continue;
+        var cells = lbCells(lines[i]);
+        /* pad or trim so a ragged row can never break the column count */
+        while(cells.length < cols) cells.push('');
+        cells = cells.slice(0, cols);
+        h += '<tr>' + cells.map(function(c){
+          var num = /^[$\d(]/.test(c) && /[\d]/.test(c);
+          return '<td' + (num ? ' class="num"' : '') + '>' + lbInline(c) + '</td>';
+        }).join('') + '</tr>';
+      }
+      return h + '</tbody></table>';
+    }
+
+    /* ## heading */
+    if(/^#{2,4}\s+/.test(first) && lines.length === 1){
+      return '<div class="lb-h">' + lbInline(first.replace(/^#{2,4}\s+/, '')) + '</div>';
+    }
+
+    /* - bullets */
+    if(lines.every(function(l){ return /^\s*[-*\u2022]\s+/.test(l); })){
+      return '<ul class="lb-ul">' + lines.map(function(l){
+        return '<li>' + lbInline(l.replace(/^\s*[-*\u2022]\s+/, '')) + '</li>';
+      }).join('') + '</ul>';
+    }
+
+    /* 1. numbered */
+    if(lines.length > 1 && lines.every(function(l){ return /^\s*\d+[.)]\s+/.test(l); })){
+      return '<ol class="lb-ol">' + lines.map(function(l){
+        return '<li>' + lbInline(l.replace(/^\s*\d+[.)]\s+/, '')) + '</li>';
+      }).join('') + '</ol>';
+    }
+
+    /* plain paragraph — single newlines stay as breaks */
+    return '<p class="lb-p">' + lbInline(lines.join('<br>')) + '</p>';
+  }
+
+  /* Citation chips. An entry with no recorded source says so rather than
+     staying silent — an uncited number is the thing worth noticing. */
+  function lbSources(arr){
+    if(!Array.isArray(arr) || !arr.length){
+      return '<div class="lb-nocite">No source recorded &mdash; verify before quoting this to an adjuster.</div>';
+    }
+    return '<div class="lb-cites">' + arr.slice(0, 8).map(function(c){
+      return '<span class="lb-cite">' + esc(String(c).slice(0, 90)) + '</span>';
+    }).join('') + '</div>';
+  }
 
   /* ---------- data ---------- */
   function loadData(){
@@ -46833,6 +46940,9 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
             summary: d.summary,
             body: d.body,
             kind: 'note',
+            sources: Array.isArray(d.sources) && d.sources.length
+              ? d.sources.slice(0, 8).map(function(x){ return String(x).slice(0, 200); })
+              : null,
             source_note: q,
             created_by: email()
           }).select().maybeSingle();
@@ -46841,8 +46951,8 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
           if(r.error) throw r.error;
           if(r.data) items.unshift(r.data);
           var where = d.subsection ? (d.section + ' \u203a ' + d.subsection) : d.section;
-          working.innerHTML = '<b>' + esc(d.title) + '</b><br>' +
-            esc(d.body || '').replace(/\n/g, '<br>') +
+          working.innerHTML = '<b>' + esc(d.title) + '</b>' +
+            lbRich(d.body || '') + lbSources(d.sources) +
             '<span class="filed">Added to ' + esc(where) +
             (d.section_is_new ? ' \u00b7 new section' : '') + '</span>';
           renderTeamPage();
@@ -46994,8 +47104,9 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     var it = items.find(function(x){ return x.id === id; });
     if(!it) return;
     openPanel();
-    say('bot', '<b>' + esc(it.title) + '</b><br>' + esc(it.body || it.summary || '')
-      .replace(/\n/g, '<br>') +
+    say('bot', '<b>' + esc(it.title) + '</b>' +
+      lbRich(it.body || it.summary || '') +
+      (it.kind === 'note' ? lbSources(it.sources) : '') +
       (it.source_note ? '<span class="filed">Asked: ' + esc(it.source_note) + '</span>' : ''));
   }
 
