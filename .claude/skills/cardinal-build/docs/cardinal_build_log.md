@@ -585,3 +585,780 @@ heuristic; the attribute is an identity. That attribute now has **three** consum
 
 One attribute, three silent failures. It is still the highest value-per-byte change in
 the codebase.
+
+---
+
+# Builds 428–452
+
+Builds **428–451** were shipped without a log entry; the only record is the
+`CHANGELOG` array in `<script id="cr-cl-script">`. Reconstructed summary lives in
+`CLAUDE.md` ("What happened in 428–451"). Build **450 is a gap**.
+
+- **452** · pipeline circle letters go near-black · measured on painted pixels at
+  414 px, both retail themes: white ink read **1.95 / 2.50 / 2.50 / 2.84 / 4.16:1**
+  against a 3.0:1 floor for a 21 px bold letter — 4 of 5 failed. `#fff` → `#141517`
+  on `.pipebtn .pcirc` gives **9.33 / 7.28 / 7.29 / 6.41 / 4.37:1**, 0 of 5 fail.
+  The five `STAGE_COLORS` fills are **untouched** — they are semantic and settled
+  (`OPEN_ITEMS.md` §6); only the ink on top of them changed. Also gave `.pipe-lead`
+  the ridge-cap gradient the other five received at 436 (Lead and OnHold were
+  skipped; Lead is the first circle on the row).
+
+  **`STAGE_INK` was the obvious candidate and is wrong here** — it fails 5 of 5
+  (2.02–2.69:1) on the fills, because those values are tuned to sit on paper.
+  Computed before shipping, not after.
+
+### Two findings from the 452 audit, not fixed
+
+- **The retail theme toggle leaks into Community.** `refreshVisibility()` strips
+  `.show` when the CRM is not retail, but build 417 adopted the button into the
+  header row and `#cr-hd2-srch #cr-dark-toggle{display:flex !important}` outranks
+  both `.show` and the base `display:none`. So the gate is dead code on a 1-second
+  timer, and pressing the button in Community repaints Community too, because
+  `[data-theme="rb-light"]` also drives `--ccm-*`. Insurance is unaffected — it has
+  an explicit hide rule. Mirroring that one rule for Community is the whole fix.
+  **Verified by letting the app's own poller run and reading which rule won.**
+- **`.pipe-onhold` still has no ridge-cap gradient** (`background:#047857`, flat).
+  Same 436 omission as Lead; left alone because OnHold does not appear on the
+  retail pipeline row.
+
+### Method note — why the first two measurements were wrong
+
+Both errors are recorded because the *pattern* costs more than the instances.
+
+1. **Static CSS analysis produced 1,418 findings; painted pixels produced 13.** The
+   static pass composited `rgba()` over a ground it had guessed, and flattened
+   `@media print` — which is where a *third* `:root{--bg:#fff}` lives, so it took
+   the print ground for the screen ground. It flagged the header
+   "Single source of truth" at 2.46:1; the real painted value is **5.09:1**.
+2. **The first pixel sampler read each circle's square bounding box.** For a round
+   46 px disc the four corners are page background — (4−π)/4 ≈ **21%** of the box —
+   so on the light ground it reported the page as the "ink" and the fix looked like
+   it had not applied. Sampling a centred disc at 0.62r fixed it. **The app was
+   right and the instrument was wrong** — check the instrument first.
+
+### Library content — the six unconfirmed counties (30 Jul 2026, no build)
+
+`library_items` row `adfe5c23` was seeded as an explicit placeholder: *"Miami,
+Warren, Butler, Clark, Preble and Darke — not yet confirmed."* Each was checked
+against its own official site. **All six run their own building department**;
+none hand residential work back to the State. `library_counties_entry.sql`.
+
+Two findings worth carrying:
+
+- **Preble routes plan review to National Inspection Corporation**
+  (`Plans@Natinspect.com`, 937-433-4642) — *the same private firm Xenia
+  contracts with*, which the library already documents separately. Two
+  jurisdictions, one phone number.
+- **Butler County covers unincorporated areas only.** Hamilton, Fairfield,
+  Middletown, West Chester and Oxford issue their own. This is the Greene
+  County "six exceptions" trap a second time, and the entry says so.
+
+**Darke is flagged unverified in its own body text and in its last source
+chip** — the county site refused the request, so the number came from a
+services directory. Do not let that quietly become fact.
+
+No `index.html` change, so **no build number was bumped** — the app is
+unchanged at 452 and bumping would have been a lie.
+
+**`.vercelignore` gained `*.sql`.** CLAUDE.md's standing convention is that SQL
+ships as separate `.sql` files, and there was no rule for them — the repo
+happened to contain zero, so the first migration committed would have been
+served at `app.cardinalroster.com`. Closed before it opened.
+
+Verified by running the **shipped** `lbRich`/`lbSources` (extracted from
+`index.html` by brace-matching, not re-implemented) against the row as stored:
+12/12 checks — table promoted, `|---|` rule not leaked as a row, `&` escaped,
+7 citation chips rather than the "No source recorded" fallback, and a negative
+control proving `<img onerror>` inside a table cell is still escaped.
+
+### 453 · the library search index comes from the cards, not from a list
+
+**Measured at 452, all re-verified in the live DOM:** `data-rltags` carried 461 distinct
+keywords across 135 cards and had **zero JS readers** — dead data. The only search was
+the TOC modal, matching page titles and a **hand-typed array of card titles**. All 47
+`.rl-cite` chips were unsearchable: `R905.1.2` returned *"No topics match"*. No card body
+text was searchable. `deductible` appears 86 times in the file and was a tag on **zero**
+cards.
+
+`buildIndex()` now walks `#resourceLibraryView .rl-card` and captures per card: the
+**element**, its `h3`, every `.rl-cite`, `data-rltags`, and a 300-char body excerpt.
+Ranking is title → citation → tag → body, and **body-only hits are dropped whenever
+anything matched higher** (`filterTier`) so `roof` does not return all 134 cards — it
+returns 22. Cards are addressed by stored element reference, and the index is rebuilt on
+every `open()` so runtime-built NACHI pages are picked up.
+
+**The hand-typed `cards:[…]` lists are deleted** — 4,581 characters. Hub/icon/page
+curation is kept because it is authored, not derivable. The replacement array was
+generated from the old one programmatically and verified in node: 30 pages,
+hub|icon|pid|title identical. Net **−1,611 characters**.
+
+#### The bug this fixes, stated accurately
+
+The array wrote three titles with a **curly apostrophe** where the markup uses a straight
+one, and `scrollToCard`'s `norm()` mapped all four curly quote characters to a **double
+quote** — so `it"s` could never equal `it's`. Controlled on Claim Tips: **10 of 10** titles
+without an apostrophe matched; only the apostrophe ones failed.
+
+**The first write-up of this said the cards were "unreachable". That was an
+overstatement** — measured before and after, the card was always *listed*, and tapping it
+always landed on the right *page*; what failed was the scroll and highlight, so a rep was
+dumped at the top of a 12-card page. Affected: *"We'll only pay for the damaged slope"*,
+*"It's just wear and tear"*, *The Inspector's Mindset* — two of them objection rebuttals.
+
+#### A regression the harness caught, not the reading
+
+`rlPageMfg` was listed **six times** in the array, each entry with its own curated card
+subset. Deriving cards from the DOM made all six render the full page: 134 cards became
+**204 buttons**. The six collapse to one entry, and the lost sub-navigation is replaced by
+group headings derived from the **`.rl-groupsep` dividers already in the markup** (Code 3,
+Tips 2, Mfg 5, Sup 5). Those old subsets were themselves stale — they listed 10 of the
+page's 14 cards, so **four Manufacturer cards were in no TOC entry at all**.
+
+#### Gates
+
+`check_build.py` green with `--prev` at 452 and the marker negative-controlled. Functional
+harness drives the **shipped** module through its real UI — opens the panel, types into the
+real input, reads the rendered results: **25/25**. Re-applying the patch to a fresh copy
+reproduces the file byte-for-byte (`84d6c510`).
+
+**Negative control on the harness itself:** run against 452 it reports **12 failures** —
+all four citation searches return 0 hits and the index count reads 132 vs 134. The gate has
+been seen to fail.
+
+One assertion in the patch script fired on its own explanatory comment (`scrollToCard(`
+inside the comment documenting its removal) — the exact trap `CLAUDE.md` names. The
+assertion was corrected to two distinctive code forms; the comment was left alone.
+
+### API · the librarian's citations reach the browser at last (30 Jul 2026, no build)
+
+`api/librarian.js` only. **`index.html` is untouched, so no build label was bumped** —
+the app is unchanged at 453.
+
+Build 446 shipped the whole citation chain: the `sources text[]` column, `lbSources()`,
+the `.lb-cite` chips, and the `.lb-nocite` fallback reading *"No source recorded — verify
+before quoting this to an adjuster."* The prompt asks Gemini for `sources` and says
+plainly to return an empty array rather than invent one. The handler even sanitises the
+result — coercing a bare string or null into a clean array of ≤8 short strings.
+
+**Then both `res.status(200).json({...})` blocks enumerated their fields explicitly and
+omitted `sources`.** The citations were fetched, cleaned, and dropped on the floor. Every
+entry the librarian has filed since 446 has shown the uncited warning regardless of what
+the model returned — and a warning that fires 100% of the time trains the crew to ignore
+it, which is worse than not having one.
+
+Two lines, one in each response builder. The rest of the chain was already correct and
+verified end to end: the client reads `d.sources` at **4** sites and renders it through
+`lbSources()` at **3**.
+
+**Reported as our own regression.** The feature was announced in a build comment and has
+never once run.
+
+Also removed **`librarian.js` from the repo root** — a shorter, older duplicate of
+`api/librarian.js` (9,121 vs 13,001 bytes) whose own first line is the comment
+`// /api/librarian.js`. Nothing referenced `/librarian.js`; the app calls `/api/librarian`
+twice. It was not in `.vercelignore`, so it was being served at
+`app.cardinalroster.com/librarian.js`.
+
+**What is still unverified:** the live Gemini round trip. Whether the model actually
+returns useful citations, and how often it correctly returns an empty array, needs one
+real question asked against the deployed function. Ask the librarian something
+code-shaped — *"what nail count does high wind require?"* — and see whether chips appear.
+
+### 454 · the money page, and the Coverage D error it exposed
+
+`rlPagePolicy` held **3 cards** and the library contained **no worked money arithmetic
+anywhere**. Now 13: Coverage A–D, flat vs percentage deductible, the payment order worked
+twice, why a $0 first check is not a denial, recoverable depreciation, the roof payment
+schedule endorsement, duties after loss, mortgagee loss-draft escrow, appraisal, and the
+deductible. **+10 cards, +5 tables, `.rl-warn`'s first six production uses.**
+
+#### Drafted, then adversarially reviewed before it came near the file
+
+Three independent lenses — arithmetic, insurance accuracy, legal exposure — plus an
+adjudicator. **30 required changes: 24 to the draft, 6 to shipped content.** The
+recurring failure the review named is worth keeping: *a correct worked example generalised
+into a rule.* "The carrier pays twice", "withheld depreciation is recoverable", "the
+identity is the whole point" — each true of the example, false as a rule, and each one
+gets corrected in front of a customer.
+
+The single worst item was a spoken script in an `.rl-use`, in quotation marks, promising
+a homeowner their out-of-pocket is the deductible — **false under a roof payment schedule
+endorsement, which the library's own card describes two cards later.**
+
+#### Six corrections to shipped cards — why this had to be one build
+
+**Five places called Ordinance & Law "Coverage D".** On a standard ISO HO-3 **Coverage D
+is Loss of Use**; Ordinance or Law is a Section I Additional Coverage, commonly capped at
+10% of Coverage A. One of the five was an **`.rl-cite` chip** — the monospace chip that
+exists *because reps read it aloud* — and one was **sample supplement wording a rep sends
+to a carrier in writing** over Cardinal's name.
+
+Shipping the new Coverage A–D card without these would have put two cards in one library
+flatly contradicting each other, **both surfacing on a search for "coverage d"** — a
+search that only started working at 453.
+
+**The review supplied four of the five. The patch's own scope assertion caught the
+fifth** — the citation chip. That assertion is the reason it did not ship.
+
+#### `.rl-warn` had never rendered
+
+Exactly **one** occurrence in the 2.66 MB file (the CSS rule), **zero** markup uses, and
+it resolved **byte-identically** to `.rl-use` — same `--ct-act-bg` / `--ct-act-edge` /
+`--ct-act-ink`. Every legal disclaimer would have rendered in the same skin as the
+cheerful sales tip. Now on `--ct-warn-bg` / `--ct-warn` (both declared in each skin, with
+literal fallbacks). Contrast computed, not estimated: **10.85:1** body and **8.01:1** bold.
+
+#### Gates
+
+`check_build.py` green, `--prev` at 453, marker negative-controlled. Functional harness
+**21/21**. Re-applying to a fresh copy reproduces byte-for-byte (`d8dd0a16`).
+**Negative control: 18 of 21 fail on 453**, including the Coverage D check — the errors
+were real and the gate has been seen to fail.
+
+#### Three harness bugs, all mine, all caught
+
+1. Asserted a `::before` label that was never part of the adjudicated fix — my own dropped
+   idea. Removed.
+2. **`innerText` on a *rendered* container skips `display:none` children**, so the
+   library-wide "no Ordinance-linked Coverage D" check was scanning only the active page
+   and **passing vacuously**. `textContent` sees hidden pages; `innerText` does not.
+3. `Coverage D` case-insensitive matched **"coverage doesn't"**. Missing `\b`.
+
+### Flagged, not fixed — Theo's call
+
+`rlPageCode` → *Roof Decking / Sheathing* tells reps "Ordinance & Law coverage often pays
+for this even when standard coverage doesn't", about **rot-driven** decking replacement.
+Decking replaced because it is rotten is a condition item; only a **code-driven** decking
+upgrade (thickness, span, fastening) is Ordinance or Law. Correcting it needs a decision
+about how the decking-supplement cards frame that distinction, so it is a follow-up build,
+not a silent edit.
+
+---
+
+## Build 455 — the search box the stylesheet had been waiting for
+
+`#resourceLibraryView .rl-search` shipped as **five complete CSS rules and zero elements**
+— sticky, focus ring, placeholder colour, `min-height:48px` for a thumb. Nobody had ever
+seen it. Until now the only way to search the library was the TOC modal, which means
+leaving the page you are reading to find something on it.
+
+**17 boxes, one per content page with 4+ cards**, mounted immediately after `.rl-pagehead`
+and filtering that page in place. Hubs and thin pages get none — they are navigation, not
+reading. Re-mounted on every library open, so the NACHI pages built at runtime get one too.
+
+**No second mechanism.** It reuses the 453 index (`cardsFor` / `cardRank` — the same
+citation + tag + body-text ranking the TOC modal uses) and the `.rl-hidden` class already
+in the file. The only new CSS is one rule, `.rl-searchnote`.
+
+### Two defects found while building it
+
+- **A cross-surface dead end.** Filter a page, then use the TOC to jump to a card on that
+  page that the filter is hiding: the scroll landed nowhere, on a page showing four cards.
+  `scrollToCardEl()` now clears the target page's box **through the box's own input
+  handler** — the same unhide path, not a second one.
+- **`rlPageInsp` lost the top slot.** The NACHI module inserts its nav card at the *same*
+  `head.nextSibling` position, so whichever ran last owned it — and NACHI ran last. The
+  mount now re-seats the box on every pass; moving a node already in place is a no-op.
+  Caught by the harness, not by reading. Exactly the "grep for every occurrence before you
+  patch a selector" rule, in element form.
+
+### A third finding that needed no fix
+
+`#resourceLibraryView .rl-search{top:0}` already exists at char 2,441,195 inside
+`cr-hd2-styles`, overriding the `top:66px` in the library's own block. It is not a
+conflict: that block also hides `.ins-header` and pins the view below `--headh`, so 0 is
+the correct offset once the library's own header is gone. Someone wrote the companion rule
+for a box that did not exist yet. Measured sticking, not assumed: after a 900px scroll the
+box pins at the top of the overlay.
+
+### Gates
+
+`check_build.py` green with the negative control. **28/28 in a real browser** — mount
+arithmetic (17 boxes vs 17 eligible pages, computed both ways rather than hardcoded),
+placement, filtering, the count note agreeing with the DOM, the empty state, clear-restore,
+citation search on the code page, the cross-surface bug and its fix, and no double-mount on
+re-open. **Negative control: 0 boxes on 454**, so every check below the first is dependent
+on the build.
+
+Painted contrast in both skins: input **17.75:1** docket / **16.05:1** siren; the count
+note **5.30:1** / **7.75:1**. Computed from what the browser painted, not from source.
+
+Scope proven both ways — re-applying the patch to a fresh 454 reproduces `index.html` byte
+for byte, and a sentinel walk over all six regions leaves the two files identical.
+
+### Two harness bugs, both mine
+
+1. Measured `boxes[0]` for height while its page was inactive and reported **0px** about
+   perfectly good CSS. Only `.rl-pageActive` is displayed. Activate, then measure — it is
+   49px.
+2. The negative control crashed on `boxes[0].closest` instead of failing cleanly. A control
+   that throws is weaker evidence than one that names the missing thing.
+
+---
+
+## Build 456 — the one page the search could not see
+
+Measured across all 34 library pages: every page is at least 75% indexed **except**
+`rlPagePitfalls` (Do & Don't), which was **0%**. 2,721 characters over 11 cards — seven DO
+and four DON'T, the field practices most worth having in a rep's hands — and none of it
+came up no matter what you typed. It uses a two-column `.rl-ddcard` layout and
+`buildIndex()` walked `'.rl-groupsep, .rl-card'`.
+
+The page is good. It was just invisible.
+
+### The trap in the obvious fix
+
+Adding `.rl-ddcard` to the walk is one selector. Shipping only that would have been a
+safety bug: `renderTOC()` prints a card's group heading **only when there is no query**
+(`if(!q && h.c.group ...)`), so a DON'T surfacing from a search shows as a bare title.
+**"Waive or absorb the deductible" reads as advice.**
+
+So the polarity lives in the indexed title — `Don't — Waive or absorb the deductible` —
+which is correct with or without a query and makes "do" and "don't" searchable words in
+their own right. It is read from the card's own class (`.rl-docard` / `.rl-dontcard`), not
+from the column head, whose `textContent` starts with an emoji entity.
+
+Second find, from reading the CSS rather than watching it fail: the flash rule is scoped
+`#resourceLibraryView .rl-card.cr-rltoc-flash`. Navigation would have applied the class to
+a `.rl-ddcard` and animated nothing. The selector now names both.
+
+The page still gets no search box of its own — it has zero `.rl-card`, so it sits under
+the 4-card mount threshold from 455. That is deliberate: filtering one column of a
+two-column DO/DON'T layout leaves a heading with nothing under it.
+
+### Gates
+
+`check_build.py` green, marker `.rl-groupsep, .rl-card, .rl-ddcard` with the negative
+control. **15/15 in a real browser**, including the flash animation resolving to a real
+`animation-name` and the index totalling 144 cards + 11. Scope proven both ways over four
+regions.
+
+**Negative control: 6 of 11 fail on 455** — and getting to 6 was the point. The first
+version failed only 4, because the two *safety* checks passed **vacuously**: `[].every()`
+is true, so "every row declares Do or Don't" passed against zero indexed rows. Both now
+require a non-empty set before they can pass. A vacuous safety check is worse than no
+check, and this is the second time this class has appeared on this project — build 454's
+`innerText` scan had the same shape.
+
+### A third harness bug, also mine
+
+The index-totals check was guarded with `if (bg2)` and **silently skipped**: clicking a
+result closes the TOC panel, so `bg2` was null every run. It reported 13/13 while proving
+12 things.
+
+---
+
+## Build 457 — a search result has to say which manufacturer it is about
+
+Found while validating a tag-editing helper, not while looking for it: the helper refused
+to locate a card by `(page, title)` because **six titles are not unique within their page.**
+
+`rlPageMfg` carries three cards called **Contractor Program & Warranty Tiers** and three
+called **Do-Not-Mix Rules** — one each for Owens Corning, GAF and CertainTeed. On the page
+the `.rl-groupsep` above them says which. In a search it does not, because `renderTOC()`
+prints the group heading **only when there is no query** — the same line that caused the
+Do & Don't problem in 456.
+
+So typing "warranty tiers" returned three rows reading exactly the same. Cardinal runs
+**Owens Corning throughout**; opening the GAF card by accident means quoting the wrong
+manufacturer's fastening and do-not-mix requirements on a live roof.
+
+`buildIndex()` now counts titles per page and qualifies **only** the ones that repeat:
+`Owens Corning — Contractor Program & Warranty Tiers`. Six rows change. A title already
+unique on its page is left exactly as written — asserted in the harness against
+*Product Lines & SureNail* and *Ice Barrier Requirement*.
+
+Side effect worth having: "Owens Corning" went from 2 hits to 3+ as a query.
+
+### Gates
+
+`check_build.py` green with the negative control. **15/15 in a real browser.** The
+strongest check is the last one: click the GAF row, then walk back up the DOM from the
+flashed card to its `.rl-groupsep` and assert it reads `GAF`. That proves the label matches
+the card, not merely that the labels differ.
+
+The sweep check is stated as a property rather than a case — *no two rows on any page read
+identically*, computed over the whole index — so a future page with duplicate titles fails
+this gate without anyone remembering to add a case.
+
+**Negative control: 8 of 13 fail on 456**, and the failure output prints the bug verbatim:
+`Contractor Program & Warranty Tiers | Contractor Program & Warranty Tiers | Contractor
+Program & Warranty Tiers`.
+
+Scope proven both ways over three regions. No markup changed at all — card count,
+groupsep count, `data-rltags` count and `<h3>` count are all identical to 456.
+
+### A counting correction, entered against myself
+
+`FEATURES.md` said the library has **146 `.rl-card`**. That is a bare regex over 2.6 MB:
+**ten of those hits are inside JS template strings.** The real numbers are **136 in
+markup**, **144 in the DOM** (136 + 8 built from in-file NACHI templates), before the
+database adds any. Corrected in `FEATURES.md`, which now states both and says why they
+differ.
+
+---
+
+## Build 458 — the trade words a rep actually types
+
+A probe of **107 realistic search terms** against the library at build 455 found **27
+returning nothing** and 21 returning a single card. That list went through two adversarial
+passes. **18 of the first 27 proposals were refuted**, and several refutations are worth
+more than the tags that survived them.
+
+### What the review stopped
+
+- **`flat roof` → the commercial code cards.** OBC does not apply to a one- or two-family
+  dwelling; RCO does. In Dayton a residential "flat roof" is a porch, addition or garage
+  deck, usually under 2:12 — where **RCO R905.2.2 does not permit asphalt shingles at all**,
+  and the card the tag would have pointed at says "double-layer underlayment and shingle
+  it." Zero results sends the rep to call the office. That tag would have sent him to the
+  supply house with the wrong material. **Left at zero** until a residential low-slope card
+  exists.
+- **`ice dam` → the Ice Barrier code card.** An ice dam is a winter phenomenon; the ice
+  barrier rule is an installation requirement at re-roof. A rep who lands there and tells an
+  adjuster "code requires ice barrier so my leak is covered" has conflated code compliance
+  with coverage. Routed to **Attic Ventilation** — the actual cause and prevention.
+- **`permit close-out` → the depreciation card.** The card mentions it once as the fourth of
+  four proofs. A rank-2 tag asserts the card is *about* it, routing a public-authority
+  question into a money card — and on a Dayton tear-off the corpus's own City of Dayton card
+  says no permit is required at all.
+- **`window wrap` → the fascia card.** Fascia wrap bills by LF along eave and rake; window
+  wrap bills per opening. The correct card already answers that query and the tag would have
+  sorted the wrong one above it.
+- **`weatherlock` / `proarmor`.** Brand names are narrowings, not synonyms — RCO R905.1.2
+  accepts a self-adhering sheet from anyone, GAF sells WeatherWatch, CertainTeed WinterGuard.
+- **`ridge capping`.** Australian/NZ usage for mortar-bedded ridge tiles. Nobody in Dayton
+  says it.
+- **`capping`** on its own — it means trim coil wrap, ridge cap shingles *or* cap flashing
+  depending on who is speaking. The disambiguated compounds shipped instead.
+
+### Two mechanics that shaped every token, both read from the shipped source
+
+1. **`cardRank()` is plain substring, so matching is ONE-DIRECTIONAL.** The query is searched
+   inside the tag: a tag `ice damming` is found by `ice dam`, but a tag `ice dam` is **not**
+   found by `ice damming`. So the longer form ships. That is why `high nailing` also answers
+   `nailing` (and why a separate `nailing` token was dropped as a strict no-op), and why the
+   plurals `turtle vents`, `soffit vents`, `cap flashings`, `gutter sizes`,
+   `additional living expenses` are the shipped forms.
+2. **`filterTier()` runs PER PAGE**, inside `allPages.forEach`. Give a card a rank-2 tag and
+   every rank-3 body hit **on that page** vanishes from that query. The first skeptic claimed
+   this was library-wide and was wrong; that was checked against the source, not argued.
+
+**That mechanic bit twice, and both were caught by measurement, not by reading.**
+
+- `cap flashing` was answered only by `rlPageSup :: Screens & Window Frames` at rank 3 — the
+  same page as `Step & Counter Flashing`. Tagging Step alone would have deleted it. Screens
+  is tagged `window cap flashings`, which contains `cap flashing` so it survives, and is
+  honest: there the term means the aluminum head cap over a window, not chimney
+  counterflashing.
+- `gutters` lost `Slope / Fall` the moment `Total Eave Linear Feet` gained `5 inch gutters`.
+  Fixed by tagging `Slope / Fall` with `gutter slope gutters` — its tags were
+  `pitch slope grade half inch` and never said gutter at all, while its body is about
+  sagging gutters holding standing water.
+
+### Gates
+
+`check_build.py` green with the negative control. **104/104 across five browser harnesses.**
+Scope proven both ways over **22 regions**.
+
+The real gate was a **402-query regression diff** — the 107 probe terms, the 22 new tokens,
+and all 314 existing tag tokens on every page being touched — captured as full result sets
+before and after so they diff card by card rather than by count. **35 queries gained, 365
+unchanged, 1 lost.**
+
+The one loss is accepted and stated: `water` drops three `rlPageCode` body hits
+(*When Roof Recover is Prohibited*, *Flashings*, *Commercial Reroofing Rules*) and gains
+*Ice Barrier Requirement* at tag rank. All three lost hits are incidental — "water-soaked",
+"prevent water intrusion". Every genuinely water-related card survives.
+
+**Known leftover, not fixed:** `nailing` still returns `rlPageMfg :: 📤 PDFs Pending` as a
+rank-3 body hit. Evicting it needs a rank 0–2 hit on that page, and tagging a card purely to
+hide a junk row is the wrong tool. It is a placeholder-card cleanup.
+
+### A third test-was-wrong
+
+The generic scope proof reported REGION PROOF FAILED. It spies on `patch_lib.sub`, and 20 of
+this build's 22 edits go through `tag_lib.append_tokens`, which splices a located opening tag
+directly — so it correctly reported changes it had not been told about. `proof_458.py` spies
+on both paths. Third red on this project that was the test's fault, not the artifact's.
+
+---
+
+## Build 459 — the light/dark control belongs on Community, so make it deliberate
+
+Theo's call: the retail light/dark toggle appearing on Community is **correct, not the bug
+I flagged at 452.** Two things follow, and neither is cosmetic.
+
+### It was there by accident
+
+`refreshVisibility()` runs on a 1-second interval and sets `.show` only when the CRM is
+retail. It looks like dead code because build 417's
+`#cr-hd2-srch #cr-dark-toggle{display:flex !important}` outranks it — **but only once
+`ensureSearchRow()` has adopted the button into the header row.** `ensureButton()` appends
+it to `<body>` first, and in that window it is the bottom-right FAB, whose visibility
+`.show` really does govern. So on Community the control was visible in the normal state and
+hidden in the fallback one.
+
+The gate now names both CRMs. Insurance keeps its explicit hide rule — it mounts its own
+Docket/Siren control in that row and must never show both.
+
+### Pressing it on Community is now a supported path, so Community light had to be checked
+
+It is a real palette: 32 `--ccm-*` tokens at `:root` and 32 twins under
+`[data-theme="rb-light"]`. Every text-on-surface pair was computed in both themes, with
+alpha washes **composited over their real base** rather than treated as solid.
+
+**`--ccm-dim` was the one token that could not carry text**, and it failed in *both* themes:
+
+| | ground | card | raise |
+|---|---:|---:|---:|
+| light `#8a8a8a` → `#6e6e6e` | 3.08 → **4.54** | 3.45 → **5.10** | 3.24 → **4.79** |
+| dark `#7d8781` → `#828c86` | 5.14 → 5.50 | 4.77 → 5.10 | **4.33** → **4.63** |
+
+Both are the *lightest* values that clear 4.5 on every surface the token actually sits on,
+so the dim-under-mute hierarchy survives (`--ccm-mute` is 5.12–5.74 light, 6.21 on raise
+dark).
+
+Chips were excluded deliberately: `--ccm-chipink` carries chip text and `--ccm-dim` never
+sits on one. Forcing 4.5 on `#ececec` too would have required `#6b6b6b`, nearly
+`--ccm-mute`, collapsing two tiers into one.
+
+### Three of my own errors, all caught by instruments rather than reading
+
+1. **I compared alpha washes as if they were solid.** `rgba(200,32,46,.16)` was read as
+   `#c8202e`, which reported *red on its wash* at 2.06:1 and *wash border on wash* at
+   1.00:1. Both were the instrument. Composited over the real base they are 5.87 and 7.90.
+   Two false findings, in the same class as the 452 square-bounding-box error.
+2. **I said `--ccm-dim` has 12 references. It has 25.** The grep matched `var(--ccm-dim`
+   and missed the 13 that go through `--dim`, the alias `#cr-cc` declares
+   (`--dim:var(--ccm-dim)`). Alias indirection defeats a single grep — the same shape as the
+   `renderTeamPage` and `.acthead` traps.
+3. **I only checked `dim on card` in dark and called dark clean at 14/14.** The harness,
+   which enumerates pairs rather than trusting my list, found `dim on raise` at 4.33:1. I
+   then verified the pair is real before touching it — `.cr-nbid-box input` and
+   `#cr-cc .sheet .tot` both paint `var(--raise)` and both carry `--dim` text, a placeholder
+   and a totals label. Pre-existing, not caused by this build, fixed because it is real.
+
+A fourth, smaller: the first draft's changelog entry said "light mode" after the build had
+grown to fix both themes, and a scope comment still read "the dark default is untouched".
+Both corrected before commit — a changelog is user-facing and a stale one is a lie.
+
+### Anchor discipline
+
+`#8a8a8a` occurs **28 times** in this file. A find-and-replace on the value would have been
+an app-wide restyle. The anchor is the token declaration, which occurs once; the patch
+asserts the other 27 survive.
+
+### Gates
+
+`check_build.py` green with the negative control. **13/13 in a real browser**, driving the
+shipped `CardinalRBTheme` and reading tokens the browser actually resolved — including the
+FAB state across four CRMs and the header-row state on Community and Insurance.
+**0 contrast pairs below floor in either theme**, computed from resolved values.
+
+**Negative control on 458: 3 checks fail and 4 contrast pairs are below floor** — exactly
+the three light `dim` pairs and the one dark one.
+
+Scope proven both ways over 5 regions. The other five library harnesses still pass 104/104.
+
+**Theo's eyes are still the gate on how it looks.** The ratios are arithmetic and they are
+right; whether `#828c86` reads as "dim" next to `#9aa39e` on his phone is not something a
+number settles.
+
+---
+
+## Build 460 — roof-to-wall, slope, and a drip-edge number that was wrong
+
+First tranche of the thirteen measured content gaps. Every gap was re-verified against the
+corpus before a word was written, and that re-verification changed the build twice.
+
+### The most important thing in this build is a correction, not a new card
+
+`rlPageCode :: Drip Edge` said **"Fasten at intervals not exceeding 16 inches on center."**
+R905.2.8.5 says **12 inches** — *"Drip edges shall be mechanically fastened to the roof deck
+at not more than 12 inches (305 mm) o.c."* Verified against the 2018 and 2021 IRC and two
+adopting jurisdictions, not recalled. That is a wrong number on a card whose entire purpose
+is to be quoted to an adjuster.
+
+### Two cards I did not write, because they already existed
+
+- **Drip edge / gutter apron.** The shipped card already carries eaves-and-rakes, the 2″
+  overlap, the ¼″ and 2″ extensions and the underlayment sequencing. The only thing it
+  lacked — that a gutter apron is a *different profile the code does not name* — went on as
+  a warning. Extend, don't add.
+- **Kickout** is genuinely absent, and the existing `Flashings — Step, Wall, Valley,
+  Chimney` card does not cover it. Checked before writing rather than assumed.
+
+### The extractor lied first
+
+`kickout` and `kick-out` do appear in the file, and my first pass attributed them to
+`Calculating from an Aerial Report` — because that is the last card on its page and my
+owner-mapping let its range run to end-of-file. Every hit is actually in **Cardinal's own
+gutter contract template and the estimate chips**, i.e. app code, not a library card. Fixed
+the mapping before drawing a conclusion. Useful side effect: the new card matches Cardinal's
+existing scope wording instead of inventing a parallel phrasing.
+
+### Six new cards
+
+`rlPageCode` — **Kickout & Roof-to-Wall Flashing** (R903.2.1), **Slope Decides the System**
+(R905.2.2), **Powered Attic Ventilators** (R806).
+`rlPageSup` — **Kickout / Roof-to-Wall Diverter**, in the Flashings group.
+`rlPageInsp` — **Ice Dams**, **3-Tab vs. Architectural**.
+
+Two points worth keeping:
+
+- **The IRC never uses the words "kickout flashing."** The requirement is functional — *"a
+  flashing shall be installed to divert the water away from where the eave of a sloped roof
+  intersects a vertical sidewall."* The card teaches the rep to quote the sentence, because
+  saying "code requires a kickout" and being told the word is not in the book loses the room.
+- **The ice-dam card refuses the coverage argument on purpose.** R905.1.2 is an installation
+  requirement at re-roof; it is not retroactive and it does not make an existing ice-dam leak
+  a covered loss. The card says so, in a warning, because that conflation is the easy mistake.
+
+### Content shipped without its key, and the harness caught it
+
+The gutter-apron warning sits **past the 300-character body index**, and the visible
+`.rl-tags` chips are display only — the searchable attribute is `data-rltags`. So the card
+taught the distinction and `gutter apron` still returned nothing. Tagged.
+
+### Gates
+
+`check_build.py` green with the negative control. **27/27 in a real browser** — every new
+card present on the right page with tags, the correction live, no duplicate Drip Edge card,
+both new tables rendering as real tables, and every card reachable through the shipped
+search. Scope proven both ways over 8 regions. Full suite still green: **117/117**.
+
+### Counting, again
+
+Three assertions in this patch were hardcoded guesses that fired: `RCO R903.2.1` (already
+present twice in the file), `rl-warn`, and `gutter apron`. I fixed the last one by
+instrumenting the delta and reading it instead of reasoning about it — which is what the
+counting rule in `CLAUDE.md` has said all along. Prefer self-computing assertions; when one
+fires, measure, do not re-guess.
+
+---
+
+## Build 461 — the wall, which the library had nothing on
+
+Second tranche. The library held **thirteen siding cards and every one was about measuring
+siding or reading a siding report.** Nothing on the wall as an assembly, nothing on
+identifying the material, nothing on how siding damage reads.
+
+### No new page, deliberately
+
+The gap list allowed a new `rlPageSiding`. That means a hub nav box, a router entry and a
+sprite symbol — three surfaces — for content that splits cleanly across pages that already
+exist. So: the wall **code** opens a `Walls — RCO Chapter 7` group on `rlPageCode`, which
+was roof-only despite being called Construction Codes; **reading damage** goes on
+`rlPageInsp` beside the 3-tab card from 460; **the matching argument** joins the Matching
+group on `rlPageSup`, next to the shingle version it mirrors on purpose.
+
+### Five cards
+
+- **Water-Resistive Barrier** (R703.2) — one layer of No. 15 felt to ASTM D226 Type 1 or
+  another approved barrier, horizontal, upper over lower ≥2″, joints ≥6″, continuous to the
+  top of the wall. Verified this session, not recalled.
+- **Re-Siding Over What Is Already There** (R703.1) — the wall has to end up a
+  weather-resistant envelope, so a layover is a decision about the openings and the
+  substrate, not a price.
+- **Vinyl Siding — Profile, Gauge, and Why Both Go in the File** — with the panel-back
+  photo trick, because a stamped nail hem turns "discontinued" from an assertion into a fact.
+- **Reading Damage on Vinyl — and the Cold-Weather Trap.**
+- **Discontinued Siding Colour — Full Elevation** (OAC 3901-1-54(I)(1)(b)).
+
+### Two judgement calls worth recording
+
+**The vinyl cards carry no `rl-cite` at all, on purpose.** They teach how to read damage and
+identify a panel. No code section says what a Dutch lap is. The library's other inspection
+cards are uncited for the same reason, and inventing a section number to make a card look
+authoritative is precisely the failure this whole tranche was built to avoid. The harness
+asserts the absence.
+
+**The cold-weather warning states both directions, and the harness enforces that too.** Vinyl
+gets brittle below freezing, so genuine storm damage in winter can be worse than the same
+stones in July — a real argument. And a crew working cold can crack a panel with a ladder or
+a knee — which is *not* storm damage. A card giving only the first half would be coaching a
+rep into a fraud. `...says winter damage can be worse` and `...says crew-caused damage is not
+storm damage` are both gate checks.
+
+### Gates
+
+`check_build.py` green with the negative control. **21/21 in a real browser**, including that
+the new group sorts between the roof and commercial groups, that neither vinyl card carries a
+citation, and that both halves of the cold-weather warning are present. Scope proven over 5
+regions. Full suite **145/145**.
+
+`R703` occurred **zero times** in the file before this build — asserted in the patch, so the
+claim that the wall code was absent is checked rather than stated.
+
+---
+
+## Build 462 — the last six gaps
+
+Third and final tranche. **All thirteen measured content gaps are now closed.**
+
+### The number I would have got wrong
+
+The mechanic's-lien window for a **one- or two-family dwelling is 60 days** from the last
+day labour or material was furnished. **Seventy-five is the commercial figure**, and 75 is
+what I was about to write from memory. Verified against ORC 1311.06 before it went near a
+card. On a house, fifteen days late is entirely too late — the card says it in bold and the
+harness asserts both the 60 and that 75 is labelled commercial.
+
+Also verified rather than recalled: ORC 2305.06 was shortened by **SB 13, effective 14 June
+2021** — written contracts 8 years → **6**, oral 6 → **4**, with pre-amendment claims running
+to the earlier of 14 June 2027 or the remaining old period.
+
+### The distinction that matters more than either number
+
+A **suit-limitation clause inside the policy is not the statute of limitations.** It is a
+private term, usually far shorter, and it is enforceable. The card refuses to let a rep tell
+a homeowner "you have six years" off the contract statute.
+
+That conflation was named by an adversarial reviewer earlier in this session, when it
+recommended *against* tagging "statute of limitations" onto the duties-after-loss card —
+because the card describes a contractual clause and the tag would assert the two are the
+same thing. The reviewer was right, and it said the honest fix was a card that does not
+exist. **This is that card.** A refutation from three builds ago turned into content.
+
+### Montgomery County, written as a method rather than a claim
+
+The same review refuted tagging "Montgomery County" onto `Other Miami Valley Jurisdictions`,
+because that card names Beavercreek (Greene) and Springboro (Warren) alongside Montgomery
+municipalities, and Dayton, Kettering and Huber Heights each have their own card — so the
+query would land on the one card that excludes them.
+
+So the shipped card is not a jurisdiction list I have not verified. It is the rule —
+municipality with its own department issues its own; townships and unincorporated land are
+the county — plus the method: pull the parcel, read the taxing district, call that office.
+**It explicitly tells the rep not to infer the AHJ from the card itself**, and the harness
+asserts that sentence is present. `Montgomery County` occurs the same number of times after
+this build as before: once, in an unrelated form placeholder.
+
+### Six cards
+
+`rlPageInsurance` — **Asking for a Reinspection**, **Deadlines That Actually Bite**.
+`rlPageDocs` — **The Punch Walk**, **Closing the Job on Paper**.
+`rlPageCode` — **County vs. Municipality — Who Actually Has Jurisdiction**.
+`rlPageMfg` — **Malarkey — Certification, Warranty and the Secure Choice System**, verified
+against the manufacturer's own programme, ending by telling the rep to confirm current terms
+because a summary is not a certificate.
+
+### Two harnesses went red, and both were right to
+
+- **`rlPageDocs` grew 3 → 5 cards and crossed the 4-card threshold, so it earned a search
+  box.** 17 → 18. The Do & Don't harness hardcoded 17. That is the **455 mount rule working
+  as designed**, so the test now derives the expected count from the eligible pages.
+- **"warranty tiers" now returns four manufacturers, not three**, because the Malarkey card
+  legitimately carries that tag. The manufacturer harness asserted exactly 3. Rewritten to
+  require the Big 3 present and no two rows reading alike — which is the property build 457
+  actually established. A fourth manufacturer answering the query is an improvement.
+
+Neither was an app defect. Third and fourth reds on this branch that were the test's fault.
+
+### Gates
+
+`check_build.py` green with the negative control. **29/29 in a real browser**, including the
+60-vs-75 assertion, the suit-limitation distinction, the do-not-infer sentence and the
+verify-with-Malarkey sentence. Scope proven over 6 regions. Full suite **195/195** across
+nine harnesses.

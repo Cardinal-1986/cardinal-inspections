@@ -249,7 +249,11 @@ export default async function handler(req, res) {
         subsection_is_new: !!parsed.subsection_is_new,
         title: String(parsed.title || 'Reference note').slice(0, 140),
         summary: String(parsed.summary || '').slice(0, 700),
-        body: String(parsed.body || '').slice(0, 8000)
+        body: String(parsed.body || '').slice(0, 8000),
+        /* 454: sources was asked for in the prompt and sanitised above, then
+           dropped here — so every entry the librarian filed since 446 showed
+           "No source recorded" no matter what the model returned. */
+        sources: parsed.sources || []
       });
       return;
     }
@@ -264,7 +268,8 @@ export default async function handler(req, res) {
       subsection: String(parsed.subsection || '').slice(0, 90),
       subsection_is_new: !!parsed.subsection_is_new,
       title: String(parsed.title || filename || 'Untitled').slice(0, 140),
-      summary: String(parsed.summary || '').slice(0, 700)
+      summary: String(parsed.summary || '').slice(0, 700),
+      sources: parsed.sources || []
     });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });

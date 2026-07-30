@@ -773,7 +773,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .piperow{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;justify-content:space-evenly;}
 .pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;max-width:200px;}
 .pipebtn .pcirc{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;
-  margin:0 auto 6px;color:#fff;font:800 30px 'Segoe UI',Arial,sans-serif;
+  margin:0 auto 6px;color:#141517;font:800 30px 'Segoe UI',Arial,sans-serif;/* 452: was #fff — 1.95:1 on Lead's fill, 4 of 5 circles under the 3.0 floor */
   transition:transform .12s, box-shadow .12s;}
 .pipebtn:hover .pcirc{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.25);}
 .pipebtn .plabel{display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
@@ -782,6 +782,9 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
 .pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;}
 .pipe-onhold{background:#047857;} .pipe-closed{background:#607D8B;}
+.pipe-lead{background-image:linear-gradient(160deg,
+  #fdf3d6 0%, #f7e0a0 12%, #E8B10F 38%, #E8B10F 55%, #a67e08 80%, #6f5405 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
 .pipe-prospect{background-image:linear-gradient(160deg,
   #fcead8 0%, #f8ca9c 12%, #F08A24 38%, #F08A24 55%, #ad631a 80%, #784512 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
@@ -2660,7 +2663,8 @@ body:has(#loginView[style*="block"]){background:#fff;}
 }
 #resourceLibraryView .rl-intro h2{margin:0 0 8px;font:700 18px var(--ct-sans);letter-spacing:-.022em;color:var(--ct-ink);}
 #resourceLibraryView .rl-intro p{margin:0 0 8px;font-size:16px;color:var(--ct-ink-2);}
-#resourceLibraryView .rl-warn{background:var(--ct-act-bg);border-left:4px solid var(--ct-act-edge);padding:10px 12px;margin-top:10px;font-size:15px;color:var(--ct-act-ink);border-radius:0 4px 4px 0;}
+#resourceLibraryView .rl-warn{background:var(--ct-warn-bg,#FBEFDA);border-left:4px solid var(--ct-warn,#8f1620);padding:10px 12px;margin-top:10px;font-size:15px;color:var(--ct-act-ink,#3B3330);border-radius:0 4px 4px 0;}
+#resourceLibraryView .rl-warn b{color:var(--ct-warn,#8f1620);}
 
 #resourceLibraryView .rl-search{margin:0 0 18px;position:sticky;top:66px;z-index:9;}
 #resourceLibraryView .rl-search input{
@@ -2670,6 +2674,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 }
 #resourceLibraryView .rl-search input:focus{outline:none;border-color:var(--ct-red-deep);box-shadow:0 0 0 3px rgba(196,24,15,.15);}
 #resourceLibraryView .rl-search input::placeholder{color:var(--ct-ink-2);}
+#resourceLibraryView .rl-searchnote{margin-top:6px;font:700 11px var(--ct-code);letter-spacing:.08em;text-transform:uppercase;color:var(--ct-ink-2);}
 
 #resourceLibraryView .rl-jumpnav{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-start;margin:0 0 20px;}
 #resourceLibraryView .rl-jumpnav a{
@@ -3138,7 +3143,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 451 &#8212; fixed the button overlap, shipped the theme toggle correctly</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 462 &#8212; reinspections, the deadlines that actually bite, the punch walk, closing on paper, who the permit office really is, and Malarkey</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4216,6 +4221,49 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-use"><b>Use it when:</b> Reminding a homeowner that the 3-day window has started; explaining why work cannot begin until day 4 unless the homeowner waives the right in a genuine emergency (rare and narrow).</div>
         <div class="rl-tags"><span>contract</span><span>cancellation</span></div>
       </div>
+
+      <div class="rl-card" data-rltags="reinspection re-inspect second look denied supplement ladder assist adjuster return">
+        <h3>Asking for a Reinspection</h3>
+        <p>A reinspection is a request that the carrier send someone back out. It is the normal next step when the first inspection produced a scope that does not match the roof, and it is the step most often skipped in favour of arguing by email.</p>
+        <p><b>Ask for one when:</b></p>
+        <ul>
+          <li>The adjuster scoped from the ground, from a drone, or from an aerial report and never set foot on the slopes.</li>
+          <li>You were not present at the first inspection, so nothing you found is in their file.</li>
+          <li>A supplement was denied on the basis that the damage &ldquo;is not there&rdquo; &mdash; that is a factual dispute, and a factual dispute is settled by looking again.</li>
+          <li>Damage was found after the first visit &mdash; a leak that showed up in the next rain, decking exposed at tear-off, a slope nobody accessed.</li>
+        </ul>
+        <p><b>Do not ask for one</b> when the disagreement is about coverage or price rather than about what is physically on the building. A second person looking at the same roof does not change what the policy says.</p>
+        <div class="rl-use"><b>How to ask:</b> In writing, to the desk adjuster or the claim's assigned handler, with the claim number in the subject line. Say what specifically you want re-examined and why, attach the photographs, and propose being on site. Then follow the written request with a call &mdash; the call moves it, the writing is what exists later.</div>
+        <div class="rl-doc"><b>Be there.</b> The whole point is that someone sees what you saw. Have the ladder up, the test squares still chalked if you can, and the same photographs on your phone. If the reinspection happens without you, it happens on their terms and you are back where you started.</div>
+        <div class="rl-warn"><b>Stay on your side of the line.</b> Cardinal documents damage and provides its own scope. Requesting a reinspection because the physical findings are disputed is documentation work. Negotiating what the policy owes is not &mdash; that is public adjuster or attorney work under <b>ORC Chapter 3951</b>, and the library says so elsewhere for a reason.</div>
+        <div class="rl-tags"><span>reinspection</span><span>adjuster</span><span>supplement</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="deadline statute of limitations suit limitation clause mechanics lien 60 days 1311 2305 ohio time limit">
+        <h3>Deadlines That Actually Bite</h3>
+        <span class="rl-cite">ORC 2305.06</span>
+        <span class="rl-cite">ORC 1311.06</span>
+        <p>Four different clocks run on a claim job, and they are not the same clock. Missing the short one costs money that the long one cannot get back.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>The clocks, shortest first</caption>
+            <thead><tr><th>Clock</th><th>Period</th><th>Runs from</th></tr></thead>
+            <tbody>
+              <tr><td><b>Mechanic's lien &mdash; one- or two-family dwelling</b></td><td><b>60 days</b></td><td>The last day labour or material was furnished</td></tr>
+              <tr><td>Mechanic's lien &mdash; commercial</td><td>75 days</td><td>Same</td></tr>
+              <tr><td>Serving the lien affidavit on the owner</td><td>30 days</td><td>After the affidavit is filed</td></tr>
+              <tr><td><b>The policy's own suit-limitation clause</b></td><td><b>Whatever it says</b></td><td>Usually the date of loss &mdash; read it</td></tr>
+              <tr><td>Written contract, breach</td><td>6 years</td><td>When the cause of action accrues</td></tr>
+              <tr><td>Oral contract, breach</td><td>4 years</td><td>Same</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><b>The residential lien window is 60 days, not 75.</b> Seventy-five is the commercial number and it is the one people quote from memory. On a house, being fifteen days late is being entirely too late.</p>
+        <p><b>The contract periods shortened.</b> Ohio SB 13 cut written contracts from eight years to <b>six</b> and oral from six to <b>four</b>, effective <b>14 June 2021</b>. Claims that accrued before that date run to the earlier of 14 June 2027 or whatever was left of the old eight years.</p>
+        <div class="rl-warn"><b>The policy's suit-limitation clause is not the statute, and it is usually shorter.</b> A statute of limitations runs by operation of law. A suit-limitation clause is a private term inside the policy that shortens the time to sue the carrier &mdash; often to one or two years from the date of loss. Both are enforceable. Never tell a homeowner &ldquo;you have six years&rdquo; on the strength of the contract statute; the clause in their policy is the one that will end their claim. Read the policy, and if it is close, that is an attorney's call, not yours.</div>
+        <div class="rl-doc"><b>Practice:</b> Put the last-day-of-work date in the job record on the day it happens, not from memory a month later &mdash; the 60-day clock runs from it. And note the date of loss on every claim file, because every policy deadline counts from there.</div>
+        <div class="rl-tags"><span>deadlines</span><span>lien</span><span>statute</span></div>
+      </div>
     </div>
 
     <!-- =========================================================
@@ -4245,7 +4293,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-tags"><span>tear-off</span><span>2+ layers</span><span>full replacement</span><span>ordinance &amp; law</span></div>
       </div>
 
-      <div class="rl-card" data-rltags="ice barrier eave 24 inches wall line">
+      <div class="rl-card" data-rltags="ice barrier eave 24 inches wall line ice and water shield">
         <h3>Ice Barrier Requirement</h3>
         <span class="rl-cite">RCO R905.1.2</span>
         <p>Ohio's Table 301.2(1) designates the entire state as an ice-forming region. An ice barrier is required on new asphalt shingle, metal shingle, mineral-surfaced roll, slate, wood shingle, and wood shake roofs. The barrier must be either two layers of underlayment cemented together, or a self-adhering polymer-modified bitumen sheet. It must extend from the eave edge to a point <b>at least 24 inches inside the exterior wall line</b> of the building, measured along the slope.</p>
@@ -4276,7 +4324,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-tags"><span>ice &amp; water</span><span>eave</span><span>underlayment</span></div>
       </div>
 
-      <div class="rl-card" data-rltags="underlayment felt synthetic slope 2 12 4 12">
+      <div class="rl-card" data-rltags="underlayment felt synthetic slope 2 12 4 12 low slope synthetic underlayment">
         <h3>Underlayment Requirements</h3>
         <span class="rl-cite">RCO R905.1.1</span>
         <span class="rl-cite">RCO Table R905.1.1(2)</span>
@@ -4289,7 +4337,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-tags"><span>felt</span><span>synthetic</span><span>low slope</span></div>
       </div>
 
-      <div class="rl-card" data-rltags="nails fasteners four six shingle wind">
+      <div class="rl-card" data-rltags="nails fasteners four six shingle wind high nailing">
         <h3>Asphalt Shingle Fastening</h3>
         <span class="rl-cite">RCO R905.2.5</span>
         <p>Fasteners must be galvanized steel, stainless, aluminum, or copper, minimum 12-gauge shank with a minimum 3/8-inch diameter head. Length must penetrate through the roofing material and at least 3/4 inch into the sheathing (or fully through sheathing less than 3/4 inch thick).</p>
@@ -4299,15 +4347,16 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-tags"><span>nails</span><span>wind damage</span><span>installation defect</span></div>
       </div>
 
-      <div class="rl-card" data-rltags="drip edge overhang eave rake">
+      <div class="rl-card" data-rltags="drip edge overhang eave rake gutter apron">
         <h3>Drip Edge</h3>
         <span class="rl-cite">RCO R905.2.8.5</span>
-        <p>Drip edge is required at eaves and rakes of shingle roofs. It must be corrosion-resistant metal, extend at least 1/4 inch below the sheathing, and extend back onto the roof deck a minimum of 2 inches. Adjacent segments overlap at least 2 inches. Fasten at intervals not exceeding 16 inches on center. At eaves, underlayment is installed <b>over</b> the drip edge; at rakes, underlayment is installed <b>under</b> the drip edge.</p>
+        <p>Drip edge is required at eaves and rakes of shingle roofs. It must be corrosion-resistant metal, extend at least 1/4 inch below the sheathing, and extend back onto the roof deck a minimum of 2 inches. Adjacent segments overlap at least 2 inches. Fasten at intervals not exceeding <b>12 inches</b> on center. At eaves, underlayment is installed <b>over</b> the drip edge; at rakes, underlayment is installed <b>under</b> the drip edge.</p>
         <div class="rl-use"><b>Use it when:</b> Adjuster's scope excludes new drip edge on a full re-roof. Code requires it on every eave and rake. Legacy roofs installed before drip edge was required often lack it entirely &mdash; document that and add it as required-by-code.</div>
-        <div class="rl-tags"><span>drip edge</span><span>eave</span><span>rake</span></div>
+        <div class="rl-warn"><b>A gutter apron is not a drip edge, and this section will not buy you one.</b> Different profiles, different jobs: drip edge is the required eave and rake metal; a gutter apron has a longer back leg that carries water over the back edge of the gutter, on a house where the fascia is set back or the gutter hangs low. It is a real, billable item and often the right call &mdash; bill it as a gutter detail on its own merits. Cite R905.2.8.5 for it and an adjuster who knows the code will discount everything else you said.</div>
+        <div class="rl-tags"><span>drip edge</span><span>gutter apron</span><span>eave</span><span>rake</span></div>
       </div>
 
-      <div class="rl-card" data-rltags="flashing step counter valley chimney wall">
+      <div class="rl-card" data-rltags="flashing step counter valley chimney wall counterflashing">
         <h3>Flashings &mdash; Step, Wall, Valley, Chimney</h3>
         <span class="rl-cite">RCO R905.2.8</span>
         <span class="rl-cite">RCO R903.2</span>
@@ -4317,7 +4366,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-tags"><span>step flashing</span><span>counter flashing</span><span>chimney</span><span>reuse</span></div>
       </div>
 
-      <div class="rl-card" data-rltags="ventilation attic intake exhaust 1 150 1 300">
+      <div class="rl-card" data-rltags="ventilation attic intake exhaust 1 150 1 300 soffit vents ice damming ice dams turtle vents">
         <h3>Attic Ventilation</h3>
         <span class="rl-cite">RCO R806</span>
         <p>Enclosed attics and rafter spaces must have cross-ventilation. Minimum net free ventilation area is <b>1/150</b> of the ventilated space, reducible to <b>1/300</b> when at least 40&percnt; and not more than 50&percnt; of the ventilation is in the upper portion of the space (i.e., balanced ridge + soffit intake).</p>
@@ -4368,6 +4417,89 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-use"><b>Use it when:</b> Discovering rot or delamination during tear-off. Photograph before covering. Ohio code makes decking replacement a code-required scope item when the existing sheathing cannot support new roofing; Ordinance &amp; Law coverage often pays for this even when standard coverage doesn't. Verify the homeowner's policy has O&amp;L coverage before promising anything.</div>
         <div class="rl-doc"><b>Document:</b> Photo each section of failed decking with a tape measure or ruler in frame for scale. Log square footage replaced. Save the removed board as evidence when reasonable.</div>
         <div class="rl-tags"><span>decking</span><span>rot</span><span>ordinance &amp; law</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="kickout kick-out diverter flashing roof to wall sidewall r903 wall rot">
+        <h3>Kickout &amp; Roof-to-Wall Flashing</h3>
+        <span class="rl-cite">RCO R903.2.1</span>
+        <p>Where a sloped roof runs down into a vertical sidewall &mdash; a dormer cheek, a garage wall, a second-storey wall over a porch &mdash; the last shingle course dumps its whole slope's water at the wall. Without a diverter it runs <b>behind</b> the siding instead of into the gutter.</p>
+        <p><b>The code does not use the words &ldquo;kickout flashing.&rdquo;</b> It is written as a function, and that is how you should quote it: flashings are required at wall and roof intersections, and <i>&ldquo;a flashing shall be installed to divert the water away from where the eave of a sloped roof intersects a vertical sidewall.&rdquo;</i> Metal flashing must be corrosion-resistant and not less than <b>0.019&Prime;</b> (No. 26 galvanized sheet).</p>
+        <p>Quoting the sentence beats saying &ldquo;code requires a kickout&rdquo; and being told the word is not in the book. It is not &mdash; the requirement still is.</p>
+        <div class="rl-use"><b>Use it when:</b> An adjuster's scope has step flashing but no diverter at the bottom of a roof-to-wall run, or a re-roof is scoped to reuse whatever is there. The flashing at the bottom of that run is the one that fails, and the damage it causes is inside the wall where nobody photographs it.</div>
+        <div class="rl-doc"><b>Document:</b> Photograph every roof-to-wall termination from the ground and from the roof. Note whether a diverter exists, whether it is a formed piece or a bent shingle, and whether it discharges into the gutter or past the end of it. Then photograph the siding and trim directly below &mdash; staining, swollen trim, soft sheathing, peeling paint in a vertical stripe. That stripe is the argument.</div>
+        <div class="rl-warn"><b>This one is a liability, not just a line item.</b> A missing diverter is the single most common cause of hidden wall rot behind cladding. If Cardinal re-roofs and reinstalls the same non-compliant detail, the next leak is Cardinal's. Cardinal's own gutter scope already specifies it &mdash; <i>&ldquo;install aluminum kickout flashing at all critical roof-to-wall intersections where gutters terminate&rdquo;</i> &mdash; so the roof scope should match.</div>
+        <div class="rl-tags"><span>kickout</span><span>roof-to-wall</span><span>flashing</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="slope pitch 2 12 4 12 minimum shingles prohibited low slope flat roof porch r905 2 2">
+        <h3>Slope Decides the System</h3>
+        <span class="rl-cite">RCO R905.2.2</span>
+        <p>Pitch is not a preference on a roof. It decides what may legally go on it.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>What the slope permits &mdash; asphalt shingles</caption>
+            <thead><tr><th>Slope</th><th>Asphalt shingles?</th><th>Underlayment</th></tr></thead>
+            <tbody>
+              <tr><td><b>4:12 and steeper</b></td><td>Yes</td><td>Single layer</td></tr>
+              <tr><td><b>2:12 up to 4:12</b></td><td>Yes</td><td><b>Double layer</b> &mdash; RCO R905.1.1</td></tr>
+              <tr><td><b>Below 2:12</b></td><td><b>No &mdash; not permitted</b></td><td>Needs a low-slope system, not shingles</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Asphalt shingles may be used <b>only</b> on slopes of two units vertical in twelve horizontal (2:12) or greater. From 2:12 up to 4:12, double underlayment is required. Below 2:12 the answer is not &ldquo;shingles with extra underlayment&rdquo; &mdash; it is a different roof covering entirely.</p>
+        <p>In Dayton housing stock the sub-2:12 areas are porch roofs, additions, garage decks and shed dormers. They are small, they are easy to miss on an aerial report, and they are where the callback comes from.</p>
+        <div class="rl-use"><b>Use it when:</b> A porch or addition is scoped as shingles at the same unit price as the main roof. Measure the pitch before you agree. If it is under 2:12 the line item is a low-slope system and it prices differently.</div>
+        <div class="rl-doc"><b>Document:</b> Pitch every plane separately, not just the main roof. A pitch gauge photo on the low plane, with the reading visible, settles the argument before it starts.</div>
+        <div class="rl-warn"><b>Do not sell shingles below 2:12.</b> The code does not permit it, no manufacturer warranty covers it, and the leak is yours. If the existing roof has shingles down there, that is a defect to document &mdash; not a precedent to match.</div>
+        <div class="rl-tags"><span>slope</span><span>low slope</span><span>underlayment</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="powered attic ventilator power vent attic fan pav short circuit depressurize r806">
+        <h3>Powered Attic Ventilators</h3>
+        <span class="rl-cite">RCO R806</span>
+        <p>A powered attic ventilator is a fan, and a fan does not fix a ventilation deficit &mdash; it moves the problem. R806 is satisfied by <b>net free area</b>, balanced low-to-high: 1/150 of the ventilated space, reducible to 1/300 when 40&ndash;50% of it is in the upper portion.</p>
+        <p>Two failures come up on inspection, and both are worth photographing:</p>
+        <ul>
+          <li><b>Paired with a ridge vent, it short-circuits.</b> The fan pulls its air from the nearest opening, which is the ridge six feet away, not from the soffits thirty feet away. The attic barely ventilates and the ridge vent becomes an intake.</li>
+          <li><b>Starved of intake, it depressurizes the attic and pulls from the house.</b> With soffits blocked or absent, the easiest air path is through can lights, the attic hatch and top plates &mdash; so it draws conditioned air out of the living space, and in winter it drags moisture up with it.</li>
+        </ul>
+        <p>Intake must be at least equal to exhaust. If it is not, adding a fan makes it worse, not better.</p>
+        <div class="rl-use"><b>Use it when:</b> You find a power vent on a roof that also has a ridge vent, or a power vent over blocked soffits. Both are documentable defects. If the unit itself is hail-struck or the motor has failed, that is a covered line item on its own &mdash; but do not present the fan as the ventilation fix.</div>
+        <div class="rl-doc"><b>Document:</b> Photograph the fan, the ridge line, and the soffit intake in the same walk. Note whether the thermostat/humidistat responds. Check the manufacturer's system requirements before scoping a fan alongside ridge vent &mdash; several shingle and vent warranties restrict mixing exhaust types.</div>
+        <div class="rl-tags"><span>power vent</span><span>ventilation</span><span>intake</span></div>
+      </div>
+
+      <div class="rl-groupsep">Walls &mdash; RCO Chapter 7</div>
+
+      <div class="rl-card" data-rltags="house wrap housewrap water resistive barrier wrb felt r703 siding re-side">
+        <h3>Water-Resistive Barrier &mdash; the Layer Behind the Siding</h3>
+        <span class="rl-cite">RCO R703.2</span>
+        <p>Every exterior wall needs a water-resistive barrier behind the cladding: <b>one layer of No. 15 asphalt felt</b> complying with ASTM D226 Type 1, <b>or another approved barrier</b> &mdash; which is what a modern house wrap is. It goes over the studs or sheathing of all exterior walls.</p>
+        <p>The lapping is written down, and it is the part that gets skipped:</p>
+        <ul>
+          <li>Applied <b>horizontally</b>, upper course lapped over the lower by <b>not less than 2&Prime;</b>.</li>
+          <li>Where joints occur, lapped <b>not less than 6&Prime;</b>.</li>
+          <li><b>Continuous to the top of the wall</b>, and terminated at penetrations and building appendages so the wall envelope still works.</li>
+        </ul>
+        <p>Shingle-fashion is the whole idea: every lap sheds onto the one below, so water that gets past the siding runs down the barrier and back out. A wrap installed upside-down at one course, or taped instead of lapped, is a funnel.</p>
+        <div class="rl-use"><b>Use it when:</b> A siding scope is written as &ldquo;siding only&rdquo; with no barrier line. If the existing wall has no wrap or the wrap is torn, damaged or discontinuous, the barrier is a required part of the re-side &mdash; it is not an upgrade the homeowner is choosing.</div>
+        <div class="rl-doc"><b>Document:</b> Photograph the wall once a section of siding is off &mdash; that is the only moment the barrier is visible. Note whether there is felt, a branded wrap, or nothing; whether laps run the right way; whether it is continuous behind trim and at the band board. If there is nothing behind the siding, that photo is the line item.</div>
+        <div class="rl-tags"><span>house wrap</span><span>WRB</span><span>siding</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="siding re-side over existing furring flashing openings integration r703 wall envelope">
+        <h3>Re-Siding Over What Is Already There</h3>
+        <span class="rl-cite">RCO R703.1</span>
+        <p>The wall has to end up as a <b>weather-resistant exterior wall envelope</b> &mdash; cladding, barrier, flashing and the way they meet at every opening, working as one assembly. That is the standard the finished wall is judged against, not &ldquo;the new siding is nailed on.&rdquo;</p>
+        <p>Which is why going over existing siding is a decision, not a shortcut. Three things decide it:</p>
+        <ul>
+          <li><b>Can the barrier be made continuous?</b> If the existing cladding stays, you generally cannot inspect or repair what is behind it. Damage found later is behind two layers.</li>
+          <li><b>Do the openings still integrate?</b> Window and door flashing has to lap over the barrier and under the cladding. Adding a layer changes every jamb, sill and head detail.</li>
+          <li><b>Is the substrate sound?</b> Soft sheathing, rot at the band board, or previous water tracking behind a kickout that was never there &mdash; all of it stays hidden if you cover it.</li>
+        </ul>
+        <div class="rl-use"><b>Use it when:</b> An adjuster's scope prices a layover because it is cheaper, or a homeowner asks for one. Answer it on the assembly, not on price: what happens at the windows, and what happens to anything already wet.</div>
+        <div class="rl-warn"><b>Tear-off is the moment you find out.</b> Scope wall repairs <i>after</i> exposure, never from a guess, and photograph what you find before you cover it. A wall opened, photographed and re-closed is a documented condition. A wall covered without looking is a warranty claim waiting.</div>
+        <div class="rl-tags"><span>re-side</span><span>layover</span><span>flashing</span></div>
       </div>
 
       <div class="rl-groupsep">Commercial &mdash; OBC Chapter 15</div>
@@ -4423,6 +4555,17 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </ul>
         <div class="rl-use"><b>Practice:</b> Call the AHJ (Authority Having Jurisdiction) before signing the contract if there's any doubt. A denied permit mid-job costs more than a five-minute phone call.</div>
       </div>
+
+      <div class="rl-card" data-rltags="montgomery county township unincorporated ahj building regulations jurisdiction permit who issues">
+        <h3>County vs. Municipality &mdash; Who Actually Has Jurisdiction</h3>
+        <p>The cards above name cities. Not every Cardinal address is in one.</p>
+        <p>Ohio addresses carry a mailing city that is frequently <b>not</b> the authority having jurisdiction. A house with a Dayton or Centerville postal address can sit in a township, in unincorporated county land, or inside a different municipality altogether &mdash; and the permit office changes with it, not with the envelope.</p>
+        <p><b>The rule that holds:</b> an incorporated municipality that operates its own building department issues its own permits and does its own inspections. Everywhere else &mdash; townships and unincorporated land &mdash; the <b>county</b> building department is the authority. Which is why the three largest jurisdictions on this page have their own cards and the rest of the region does not: they are not the same office.</p>
+        <div class="rl-warn"><b>Do not infer the AHJ from the mailing address, and do not infer it from this card.</b> The only reliable way to know is to ask, using the parcel &mdash; not the street name. Pull the parcel on the county auditor's site, get the taxing district off it, and call the office that district points to. Five minutes before the contract is signed; a stopped job and a re-inspection fee afterwards.</div>
+        <div class="rl-use"><b>Use it when:</b> The address is outside a named city on this page, or the homeowner says &ldquo;we're Dayton&rdquo; and the parcel says a township. Confirm the office before you promise a permit timeline to anyone.</div>
+        <div class="rl-doc"><b>Record it on the job:</b> the AHJ you confirmed, who you spoke to, and the date. The next rep on that street should not have to make the call again.</div>
+        <div class="rl-tags"><span>AHJ</span><span>township</span><span>permit</span></div>
+      </div>
     </div>
 
     <!-- =========================================================
@@ -4436,7 +4579,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
       <div class="rl-card" data-rltags="ordinance law coverage d code upgrade">
         <h3>Ordinance &amp; Law Coverage</h3>
-        <p>Often listed as Coverage D or Increased Cost of Construction on HO-3 policies. Pays for costs incurred to bring the property into current code compliance as part of a covered loss. Without it, the carrier only owes the pre-loss condition &mdash; code-required upgrades come out of the homeowner's pocket.</p>
+        <p>Usually a built-in Additional Coverage on HO-3 policies, commonly capped at a percentage of Coverage A, with higher limits available by endorsement. It is not one of the lettered coverages. Pays for costs incurred to bring the property into current code compliance as part of a covered loss. Without it, the carrier only owes the pre-loss condition &mdash; code-required upgrades come out of the homeowner's pocket.</p>
         <div class="rl-use"><b>Check for:</b> percentage of Coverage A dwelling amount (10&percnt;, 25&percnt;, 50&percnt;), or a flat dollar limit. Some policies exclude it entirely, some include it automatically. If absent, decking replacement and ventilation upgrades required by code become the homeowner's cost.</div>
       </div>
 
@@ -4451,6 +4594,164 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <h3>Matching Endorsement</h3>
         <p>Some carriers offer an optional endorsement that expands the state matching regulation and explicitly requires uniform-appearance repairs including full replacement of undamaged sections when necessary. Others explicitly limit matching to a single slope or single side of a wall.</p>
         <div class="rl-use"><b>Check for:</b> "matching," "uniform appearance," "cosmetic" language in the policy schedule and any endorsements. Some carriers add a cosmetic-damage exclusion that specifically strips matching for hail spatter without functional damage.</div>
+      </div>
+
+      <div class="rl-groupsep">The Money</div>
+
+      <div class="rl-warn"><b>These worked examples are examples.</b> The numbers below are made up to show the order the arithmetic runs in. Depreciation schedules, roof life expectancy and whether labor is depreciated are set by the carrier and vary policy to policy &mdash; none of them is Ohio law. Read the declarations page and the endorsements before you put a number in front of a homeowner.</div>
+
+      <div class="rl-card" data-rltags="coverage a b c d dwelling structures contents loss of use deductible declarations additional living expenses">
+        <h3>Coverage A, B, C, D &mdash; which one pays for what</h3>
+        <p>A homeowner asks &ldquo;is this covered?&rdquo; The answer is usually &ldquo;under which coverage?&rdquo; On a standard HO-3 the roof is Coverage A, the detached garage is Coverage B, and the ruined furniture underneath the leak is Coverage C.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>The four coverages on a standard homeowner policy</caption>
+            <thead><tr><th>Coverage</th><th>Pays for</th><th>On a storm claim</th></tr></thead>
+            <tbody>
+              <tr><td><b>A</b> &mdash; Dwelling</td><td>The house and what is attached to it</td><td>Roof, siding, gutters, attached porch</td></tr>
+              <tr><td><b>B</b> &mdash; Other Structures</td><td>Detached structures on the lot</td><td>Detached garage, shed, fence. Typically 10&percnt; of Coverage A, with its own limit</td></tr>
+              <tr><td><b>C</b> &mdash; Personal Property</td><td>Contents</td><td>What the leak ruined inside</td></tr>
+              <tr><td><b>D</b> &mdash; Loss of Use</td><td>Additional living expense</td><td>Rarely reached on a roof claim</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote"><b>Ordinance or Law is where code-upgrade money lives, and it is not one of the four lettered coverages.</b> On a standard HO-3 the letters stop at D. Code-upgrade cost comes from a separate Additional Coverage built into the form &mdash; commonly capped at 10&percnt; of Coverage A &mdash; with higher limits available by endorsement. Some proprietary forms reduce or exclude it. This is what pays for what the Ohio Residential Code requires on a reroof but the old roof did not have, such as ice barrier, drip edge and fastening upgrades. Find the limit on the schedule before you write the supplement, and do not assume it is absent just because no endorsement is listed.</p>
+          <p class="rl-tnote"><b>Rentals are a different form.</b> Landlord policies are usually dwelling-fire (DP) forms, where the letters run further &mdash; D is Fair Rental Value and E is Additional Living Expense. Confirm the form number at the top of the declarations page before you quote a letter.</p>
+        </div>
+        <div class="rl-use"><b>Use it:</b> when the adjuster's scope only lists the house, ask whether the detached garage was inspected. It is a separate coverage with its own limit, and it is one of the easiest things to leave off a scope.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="deductible percentage flat wind hail money first check homeowner">
+        <h3>Flat deductible vs percentage deductible</h3>
+        <p>A flat deductible is a dollar figure. A percentage deductible is a percentage <b>of Coverage A</b> &mdash; not of the claim &mdash; and on a wind or hail loss it is often larger than the all-perils deductible on the same policy.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>What a wind/hail percentage costs at four dwelling amounts</caption>
+            <thead><tr><th class="num">Coverage A</th><th class="num">1&percnt;</th><th class="num">2&percnt;</th><th class="num">5&percnt;</th></tr></thead>
+            <tbody>
+              <tr><td class="num">$200,000</td><td class="num">$2,000</td><td class="num">$4,000</td><td class="num">$10,000</td></tr>
+              <tr><td class="num">$300,000</td><td class="num">$3,000</td><td class="num">$6,000</td><td class="num">$15,000</td></tr>
+              <tr><td class="num">$400,000</td><td class="num">$4,000</td><td class="num">$8,000</td><td class="num">$20,000</td></tr>
+              <tr><td class="num">$500,000</td><td class="num">$5,000</td><td class="num">$10,000</td><td class="num">$25,000</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote">Straight arithmetic, not a carrier's schedule. The percentage and the Coverage A figure both come off the declarations page.</p>
+        </div>
+        <div class="rl-doc"><b>Get this before you quote anything:</b> a photo of the declarations page showing Coverage A, the all-perils deductible <i>and</i> the separate wind/hail deductible. A homeowner who thinks their deductible is $1,000 when the policy says 2&percnt; of $350,000 &mdash; that is $7,000 &mdash; is a signed job that dies at the kitchen table.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="acv rcv payment order first check depreciation deductible math worked example">
+        <h3>The order the money arrives in</h3>
+        <div class="rl-warn"><b>Example numbers.</b> The 25-year roof life, the straight-line schedule and whether labor is depreciated are assumptions used here to show the order the arithmetic runs in. All three are set by the carrier and the policy &mdash; none is Ohio law.</div>
+        <p>On an RCV policy the carrier pays in stages &mdash; at least twice, and more if the scope is supplemented. The first check is the actual cash value minus the deductible. The rest &mdash; the recoverable depreciation &mdash; is released after the work is done and documented. The release is capped at what the job actually cost: if the final invoice comes in under the approved scope, the carrier releases the lower figure. The withheld amount is a ceiling, not a guaranteed payment.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>Worked example &mdash; RCV policy, 1&percnt; wind/hail on $340,000, roof aged 14 of an assumed 25-year life</caption>
+            <thead><tr><th>Step</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td>Replacement cost of the approved scope</td><td class="num">$21,450.00</td></tr>
+              <tr><td>Less depreciation withheld (14 of 25 years = 56&percnt;)</td><td class="num">&minus;$12,012.00</td></tr>
+              <tr><td><b>Actual cash value</b></td><td class="num"><b>$9,438.00</b></td></tr>
+              <tr><td>Less wind/hail deductible (1&percnt; of $340,000)</td><td class="num">&minus;$3,400.00</td></tr>
+              <tr><td><b>First check</b></td><td class="num"><b>$6,038.00</b></td></tr>
+              <tr><td>Depreciation released on completion (up to the amount actually incurred)</td><td class="num">$12,012.00</td></tr>
+              <tr><td><b>Total the carrier pays</b></td><td class="num"><b>$18,050.00</b></td></tr>
+              <tr><td>Homeowner pays the deductible</td><td class="num">$3,400.00</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote"><b>$18,050 + $3,400 = $21,450.</b> On a clean full-RCV settlement the carrier plus the homeowner equals the job. It legitimately will not close when the estimate carries non-recoverable depreciation, an ACV roof endorsement, a sublimit or a cap. If it does not close, ask the adjuster which of those applies before you assume something was left out &mdash; there is usually a line on the estimate that says.</p>
+        </div>
+        <div class="rl-use"><b>Say it like this:</b> &ldquo;The insurance company pays for the approved scope minus your deductible, and they pay it in two parts &mdash; some now, the rest when the work is finished. Your deductible is your part. If the carrier hasn&rsquo;t approved everything yet, or if your policy has a roof payment schedule on it, your share can be more than the deductible &mdash; I&rsquo;ll check your declarations page and endorsements and tell you before you sign anything.&rdquo;</div>
+      </div>
+
+      <div class="rl-card" data-rltags="zero check small first check denial acv deductible not denied money">
+        <h3>Why the first check is small &mdash; and why $0 is not a denial</h3>
+        <div class="rl-warn"><b>Example numbers.</b> The 25-year roof life, the straight-line schedule and whether labor is depreciated are assumptions used here to show the order the arithmetic runs in. All three are set by the carrier and the policy &mdash; none is Ohio law.</div>
+        <p>When the approved scope is larger than the deductible but the actual cash value is not, the first check is zero and the claim is still <b>approved</b>. It is not denied, and the recoverable depreciation is owed on completion. What the homeowner has is a timing problem, not a coverage problem.</p>
+        <p><b>Check which zero it is.</b> Compare the <i>replacement cost</i> of the scope to the deductible, not the ACV. If replacement cost is above the deductible &mdash; as in the table below &mdash; the balance comes on completion. If the whole replacement cost is <i>below</i> the deductible, there is no payment now and none later, and that is a dead end rather than a timing problem. Make that comparison before you tell anyone a second check is coming.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>Worked example &mdash; same $21,450 scope, a roof aged 21 of an assumed 25-year life, 2&percnt; deductible on $340,000</caption>
+            <thead><tr><th>Step</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td>Replacement cost</td><td class="num">$21,450.00</td></tr>
+              <tr><td>Less depreciation (21 of 25 years = 84&percnt;)</td><td class="num">&minus;$18,018.00</td></tr>
+              <tr><td>Actual cash value</td><td class="num">$3,432.00</td></tr>
+              <tr><td>Less deductible (2&percnt; of $340,000)</td><td class="num">&minus;$6,800.00</td></tr>
+              <tr><td><b>First check</b> &mdash; floored at zero</td><td class="num"><b>$0.00</b></td></tr>
+              <tr><td>Released on completion</td><td class="num">$14,650.00</td></tr>
+              <tr><td><b>Total the carrier pays</b></td><td class="num"><b>$14,650.00</b></td></tr>
+              <tr><td>Homeowner pays the deductible</td><td class="num">$6,800.00</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote">The check is floored at zero, but <b>the deductible is not forgiven</b> &mdash; the part it could not absorb comes off the release instead. On this policy, with the work completed and all of the depreciation recoverable, the carrier's total comes to replacement cost minus the deductible: <b>$21,450 &minus; $6,800 = $14,650</b>, and the homeowner's share is the full $6,800. If the work is never finished nothing is released and the carrier's total stays at the first check; where a roof payment schedule endorsement applies it does not work this way at all &mdash; see <i>The roof payment schedule endorsement</i>.</p>
+        </div>
+        <div class="rl-use"><b>Use it:</b> a homeowner who gets a $0 check usually believes the claim was denied and stops answering the phone. Show them this before the check arrives, not after &mdash; and have the answer to &ldquo;so how do I pay for this now?&rdquo; ready, because on this example they are carrying the job until the release arrives.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="recoverable depreciation release completion certificate final invoice supplement">
+        <h3>Recoverable depreciation and how it is released</h3>
+        <p>Depreciation withheld on an RCV policy is usually <b>recoverable</b> &mdash; the carrier owes it once the work is actually done, and it is released against proof, not against a phone call. Check the estimate first: many carriers print recoverable and <b>non-recoverable</b> depreciation as separate lines, and the non-recoverable figure is never released. Read the summary page and quote the recoverable number, not the total withheld.</p>
+        <ul>
+          <li>Final invoice showing the work performed and the amount charged.</li>
+          <li>Completion photographs, usually including the finished roof and the disposal.</li>
+          <li>A certificate of completion or signed satisfaction form on some carriers.</li>
+          <li>Any permit close-out the jurisdiction requires.</li>
+        </ul>
+        <div class="rl-doc"><b>Watch the clock.</b> Most policies put a time limit on claiming recoverable depreciation, commonly measured from the date of loss. The limit is in the policy, not in state law, and it varies &mdash; find it on the claim, write it on the job, and do not let a job sit unfinished past it.</div>
+        <div class="rl-use"><b>Common trap:</b> a supplement approved <i>after</i> the ACV check has its own depreciation withheld too. Getting a supplement approved is not the same as getting it paid &mdash; the release still has to be requested on completion.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="roof surfacing payment schedule endorsement acv schedule age condition">
+        <h3>The roof payment schedule endorsement</h3>
+        <p>Several carriers now attach an endorsement that converts roof surfacing from replacement cost to a scheduled payout based on the roof's age &mdash; sometimes a table of percentages by year, sometimes a flat conversion to ACV after a stated age.</p>
+        <p>When it applies, <b>there is no recoverable depreciation to release on the roof surfacing</b> &mdash; the scheduled amount is the whole payment for that part, and the homeowner covers the rest. The rest of the claim is unaffected: siding, gutters and interior damage normally stay on replacement cost with depreciation still recoverable. Read the endorsement for what it counts as &ldquo;roof surfacing&rdquo; &mdash; forms differ on whether flashing, decking and underlayment are inside or outside that word.</p>
+        <div class="rl-doc"><b>Find it before the inspection.</b> It has different names on different forms &mdash; roof surfacing payment schedule, roof surfaces extended coverage, actual cash value loss settlement windstorm or hail losses to roof surfacing. It is in the endorsement pages, not on the declarations summary.</div>
+        <div class="rl-use"><b>Why it matters commercially:</b> the job is the same job, but the homeowner's share is much larger. Find it early, price it honestly, and do not let it surface after the contract is signed.</div>
+      </div>
+
+      <div class="rl-groupsep">Getting Paid</div>
+
+      <div class="rl-card" data-rltags="duties after loss policy obligation mitigate cooperate proof of loss homeowner">
+        <h3>Duties after loss &mdash; the homeowner's side of the contract</h3>
+        <p>Every policy lists what the insured must do after a loss. Miss them and the carrier gains an argument it did not have to earn. In broad terms they run to: give prompt notice, protect the property from further damage, cooperate with the investigation, and provide records the carrier asks for.</p>
+        <div class="rl-use"><b>Cardinal's part:</b> the mitigation duty is the one a contractor can discharge for the homeowner. A tarp, dated and photographed, is evidence that the duty was met. Bill it as a line item and keep the photograph.</div>
+        <div class="rl-doc"><b>Read the actual policy language.</b> The list above is the general shape, not a quotation. Some forms require a signed sworn proof of loss on request and set a deadline for it; some set a time limit for suit against the carrier. Both are in the policy, both are enforceable, and neither is something to learn about late.<br><br><b>The duties run both ways.</b> Ohio&rsquo;s unfair claims settlement practices rules put the carrier on its own timelines for acknowledging and acting on a claim &mdash; see <i>Unfair Claims Settlement Practices</i> on the Ohio Insurance Law page. Do not quote a number of days from memory.</div>
+        <div class="rl-warn"><b>A sworn proof of loss is the homeowner&rsquo;s sworn document.</b> Do not prepare it, do not fill it in, and never sign one for a homeowner. Hand them your estimate and your photographs &mdash; what they swear to is theirs.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="mortgagee escrow loss draft endorsement two party check bank inspection draw completion inspection loss draft inspection servicer inspections">
+        <h3>The mortgage company is on the check</h3>
+        <p>If there is a mortgage, the lender is almost always a named payee on the <b>structure</b> portion of the claim &mdash; the Coverage A and B money. Contents and loss-of-use checks normally go to the homeowner alone. The homeowner cannot simply sign the structure check over &mdash; the lender endorses it, and above a threshold it goes into a loss-draft escrow and is released in stages against inspections.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>A typical loss-draft sequence &mdash; shape only, every servicer differs</caption>
+            <thead><tr><th>Stage</th><th>What the servicer usually wants</th></tr></thead>
+            <tbody>
+              <tr><td>Open the claim file</td><td>The check, the adjuster's scope, the contractor's contract and W&#8209;9</td></tr>
+              <tr><td>First release</td><td>Often a portion up front on a signed contract</td></tr>
+              <tr><td>Progress release</td><td>An inspection, sometimes by a third party the servicer sends</td></tr>
+              <tr><td>Final release</td><td>Completion inspection, final invoice, lien waiver</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote">Thresholds, staging and paperwork are set by the <b>servicer</b>, not by the carrier and not by Ohio law. Ask the homeowner to call the number on their mortgage statement and ask for the loss draft department. <b>Loan status matters more than paperwork:</b> if the loan is behind or in foreclosure, many servicers will not release monitored funds at all, or will apply them to the balance. No completion package fixes that, so find out early whether the homeowner is current.</p>
+        </div>
+        <div class="rl-use"><b>Why jobs stall here:</b> the money exists, the homeowner has the check, and nobody told them a bank has to endorse it. Ask on the first visit whether there is a mortgage. It changes the payment schedule, not the price.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="appraisal umpire dispute amount of loss not coverage clause">
+        <h3>Appraisal &mdash; the disagreement clause about <i>amount</i></h3>
+        <p>Most property policies contain an appraisal clause. Either side may invoke it when they disagree about the <b>amount</b> of the loss. Each side names an appraiser, the two appraisers select an umpire, and an award agreed by any two of the three is binding as to amount. The clause usually runs on deadlines &mdash; a set period to name an appraiser after a written demand, a further period for the two to agree an umpire, and a court appointment if they cannot. Read the days off the policy in front of you; they differ between forms.</p>
+        <div class="rl-warn"><b>Appraisal decides amount, not coverage.</b> If the carrier says the damage is not storm damage at all, that is a coverage dispute and appraisal is the wrong tool. Read the clause on the policy in front of you &mdash; who may invoke it, what it costs, and what it binds are all in that paragraph and they differ between forms.</div>
+        <div class="rl-use"><b>Where a contractor stands:</b> Cardinal documents, scopes and prices. Explaining what the clause is, is fine. Negotiating the claim on the homeowner's behalf crosses into public adjusting, which Ohio licenses &mdash; see <i>Public Adjuster Licensing</i> on the Ohio Insurance Law page. Invoking appraisal is the policyholder's decision and not one to recommend: if they ask whether they should, refer them to their own attorney or a licensed public adjuster. Whether Cardinal may serve as the homeowner's named <i>appraiser</i> under the clause is a separate and less settled question &mdash; ask Theo, do not decide it on a driveway.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="deductible rebating waive absorb illegal fraud homeowner obligation">
+        <h3>The deductible is the homeowner's to pay</h3>
+        <span class="rl-cite">ORC &sect;2913.47</span><span class="rl-cite rl-gold">Insurance side</span>
+        <p>Inflating an invoice, writing a second set of paperwork, or otherwise misstating the price of the job so the carrier absorbs the homeowner's deductible puts a false figure in front of the insurer. In Ohio, presenting a statement in support of an insurance claim &mdash; with purpose to defraud, or knowing you are facilitating a fraud &mdash; knowing that the statement is false or deceptive is a criminal offense under ORC 2913.47. Cardinal invoices the real price, every time.</p>
+        <p>Separately, Cardinal does not advertise, offer or agree to waive, absorb or rebate a deductible in any form. Whether a particular arrangement is itself unlawful in Ohio turns on the facts and on statutes outside 2913.47 &mdash; a question for Cardinal's attorney, not for a rep on a driveway.</p>
+        <div class="rl-use"><b>The safe sentence:</b> &ldquo;Your deductible is your part of the job. We can't cover it, and any contractor offering to isn't doing you a favor &mdash; it's the same paperwork that gets a claim reopened.&rdquo;</div>
+        <div class="rl-warn"><b>This card describes why Cardinal will not do it. It is not a legal opinion about anyone else.</b> Whether a particular arrangement crosses ORC 2913.47, whether Ohio has a contractor-specific deductible statute, and how the Consumer Sales Practices Act applies to roofing advertising are questions for Cardinal's attorney. Do not accuse a competitor of a crime on a driveway.</div>
       </div>
     </div>
 
@@ -4519,6 +4820,47 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <li>Every written communication with the adjuster &mdash; email chain, portal messages.</li>
         </ul>
       </div>
+
+      <div class="rl-card" data-rltags="punch list punch walk final walkthrough defect close out install day quality">
+        <h3>The Punch Walk</h3>
+        <p>Everything in this library up to here is about getting the job. This is the part that decides whether you get the next one.</p>
+        <p>Walk the job the day the crew finishes, before the dumpster leaves, with the homeowner if they will come. What you are looking for is not craftsmanship in the abstract &mdash; it is the specific short list of things that generate callbacks:</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>The punch walk, in order</caption>
+            <thead><tr><th>Where</th><th>What generates the callback</th></tr></thead>
+            <tbody>
+              <tr><td><b>Ground, all elevations</b></td><td>Nails in the grass and beds. Magnetic sweep twice, including the driveway and any gravel. Trampled plantings, gouged siding, dented gutters from the tear-off</td></tr>
+              <tr><td><b>Gutters</b></td><td>Debris left in the trough. Dents from ladders or bundles. Downspouts re-hung and draining away</td></tr>
+              <tr><td><b>Eaves and rakes</b></td><td>Drip edge straight and continuous. Starter course correct. No exposed fasteners</td></tr>
+              <tr><td><b>Roof-to-wall</b></td><td>Diverter installed and discharging into the gutter. Step flashing under the cladding, not caulked over it</td></tr>
+              <tr><td><b>Penetrations</b></td><td>New boots, not re-used. Collars seated. Vents sitting flat and not shimmed with shingle scrap</td></tr>
+              <tr><td><b>Ridge</b></td><td>Cap straight and fastened, ridge vent continuous, ends closed off</td></tr>
+              <tr><td><b>Interior</b></td><td>Nothing shaken loose. Ceilings, light fixtures, anything on shelves in the garage</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rl-use"><b>Use it when:</b> Every job, on the last day. The Production board already carries a shared punch list &mdash; put what you find on it while you are standing there, not from the truck an hour later. An item written on site with a photo gets fixed; an item remembered later gets argued about.</div>
+        <div class="rl-doc"><b>Document:</b> Photograph the finished roof from all elevations the same way you photographed the damage. That set is the before-and-after, and it is what answers a complaint six months out.</div>
+        <div class="rl-tags"><span>punch list</span><span>close out</span><span>quality</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="closing the job final invoice completion certificate lien waiver warranty registration depreciation release paperwork">
+        <h3>Closing the Job on Paper</h3>
+        <p>The physical work being finished and the job being closed are two different events, and the money lives in the gap between them.</p>
+        <p><b>What has to exist before this job is done:</b></p>
+        <ul>
+          <li><b>Final invoice</b> matching the approved scope, with any supplements shown as supplements rather than folded silently into the total.</li>
+          <li><b>Certificate of completion</b> where the carrier or the mortgage servicer requires one to release funds &mdash; the library's depreciation card covers what that release needs.</li>
+          <li><b>Lien waiver</b>, where one is being exchanged for payment.</li>
+          <li><b>Warranty registration</b> with the manufacturer. An unregistered system warranty is a marketing claim, not a warranty &mdash; and on the Big-3 programmes the registration window is finite.</li>
+          <li><b>Completion photographs</b>, filed against the job, not left on somebody's phone.</li>
+          <li><b>Permit close-out</b> where a permit was pulled. That is the jurisdiction's business, on the jurisdiction's timetable, and it is not the carrier's process.</li>
+        </ul>
+        <div class="rl-warn"><b>Do not let the last-day-of-work date go unrecorded.</b> It starts the 60-day residential mechanic's lien clock, and it is the one date nobody writes down at the time because the job feels finished. Record it the day it happens.</div>
+        <div class="rl-use"><b>Use it when:</b> The crew is off the job and the file is about to go quiet. Everything on this list is easier on the day than it is in a month, and two of them &mdash; warranty registration and the lien date &mdash; get harder or impossible with time.</div>
+        <div class="rl-tags"><span>close out</span><span>invoice</span><span>warranty</span></div>
+      </div>
     </div>
 
     <!-- =========================================================
@@ -4561,7 +4903,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <p>Deteriorated decking is discovered during tear-off. Adjuster wants to exclude it as maintenance.</p>
         <div class="rl-use"><b>Answer:</b>
           <ul>
-            <li>If the policy has <b>Ordinance &amp; Law (Coverage D)</b>, deck replacement required by code is covered under that coverage even if not covered by dwelling coverage.</li>
+            <li>If the policy has <b>Ordinance &amp; Law coverage</b>, deck replacement required by code is covered under that coverage even if not covered by dwelling coverage.</li>
             <li>Cite <b>RCO R908.3</b> and <b>R803</b> &mdash; recovering over unsound sheathing is prohibited.</li>
             <li>Photograph every replaced board with scale, log square footage, submit as supplement with dated photos.</li>
             <li>Check the policy declarations page before promising O&amp;L coverage &mdash; not every homeowner has it.</li>
@@ -4569,7 +4911,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </div>
       </div>
 
-      <div class="rl-card" data-rltags="scenario ice water eave only strip">
+      <div class="rl-card" data-rltags="scenario ice water eave only strip ice and water shield">
         <h3>&ldquo;A strip of ice &amp; water at the eave is enough&rdquo;</h3>
         <p>Adjuster's scope includes ice &amp; water at the drip edge only, not the full 24-inch-past-wall-line coverage.</p>
         <div class="rl-use"><b>Answer:</b>
@@ -4772,7 +5114,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <li>Double underlayment on &lt; 4:12 slope &mdash; <b>RCO R905.1.1</b></li>
           <li>4-nail (or 6 in high-wind) fastening &mdash; <b>RCO R905.2.5</b></li>
         </ul>
-        <p><b>Ordinance &amp; Law coverage (Coverage D):</b> check the declarations page. Percentage of Coverage A. Pays for code-driven upgrades. If it's not there, decking replacement is on the homeowner.</p>
+        <p><b>Ordinance &amp; Law coverage:</b> check the declarations page and the endorsement pages. Percentage of Coverage A. Pays for code-driven upgrades. If it's not there, decking replacement is on the homeowner.</p>
         <p><b>Documentation minimums:</b> ground of all elevations, layer count at edge, test square per slope, damage close-ups with scale, ventilation type &amp; condition, flashing condition, attic if accessible, dated on every photo.</p>
         <p><b>The line you don't cross:</b> Cardinal documents damage and provides its own scope. Cardinal does not negotiate coverage under the policy. That's public adjuster or attorney work &mdash; <b>ORC Chapter 3951</b>.</p>
       </div>
@@ -4906,6 +5248,27 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <p><b>Atlas</b> &mdash; PRO Plus and Signature Select. Pinnacle Pristine and StormMaster.</p>
         <div class="rl-use"><b>Use it when:</b> Homeowner asks about alternatives or matching an existing non-Big-3 roof. Cardinal's Big-3 focus doesn't preclude working with these manufacturers, but the warranty tier programs and installation specs need to be checked per project.</div>
       </div>
+
+      <div class="rl-card" data-rltags="malarkey emerald pro certified premium secure choice warranty tiers accessories nex highlander">
+        <h3>Malarkey &mdash; Certification, Warranty and the Secure Choice System</h3>
+        <p>The Other Manufacturers card above lists Malarkey's lines. This is the programme detail, in the same shape as the Big-3 cards, for the two times it matters: matching an existing Malarkey roof, and reading a competitor's bid that quotes one.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>Certification tiers</caption>
+            <thead><tr><th>Tier</th><th>What it takes</th></tr></thead>
+            <tbody>
+              <tr><td><b>Certified Residential Contractor</b></td><td>The entry badge &mdash; certification status with Malarkey</td></tr>
+              <tr><td><b>Emerald Pro Certified</b></td><td>In-person training with a Malarkey rep and a passed Pro-level test. Vetted for at least three years' roofing experience, licensed and insured, in good standing with the BBB</td></tr>
+              <tr><td><b>Certified Premium</b></td><td>Pro training plus Premium training, and work inspected by Malarkey's technical team</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><b>The warranty follows the system, not just the shingle.</b> The enhanced Pro warranty requires a complete <b>Secure Choice</b> roof system with <b>at least three</b> Malarkey accessories, offered by a Certified Pro. The top-tier Emerald Premium warranty requires an Emerald Premium contractor installing Malarkey shingles with <b>at least four</b> Malarkey accessories.</p>
+        <p>Secure Choice is the coordinated family &mdash; underlayments, starter, field shingles, hip and ridge. The same do-not-mix logic the library sets out for Owens Corning, GAF and CertainTeed applies here: accessories from another maker drop the roof back to the base shingle warranty.</p>
+        <div class="rl-use"><b>Use it when:</b> A homeowner has an existing Malarkey roof and wants a match, or a competitor's bid quotes an &ldquo;Emerald&rdquo; or &ldquo;Secure Choice&rdquo; warranty. Ask which tier the contractor actually holds and how many Malarkey accessories are in the line items &mdash; a Premium warranty needs four, and a bid with a competitor's underlayment cannot deliver one.</div>
+        <div class="rl-warn"><b>Cardinal runs Owens Corning.</b> This card is for reading somebody else's roof or somebody else's bid, not for switching systems. Verify the current programme terms with Malarkey before quoting them to a homeowner &mdash; manufacturer programmes change, and this card is a summary, not the certificate.</div>
+        <div class="rl-tags"><span>Malarkey</span><span>Secure Choice</span><span>warranty</span></div>
+      </div>
     </div>
 
     <!-- =========================================================
@@ -4951,7 +5314,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </ol>
       </div>
 
-      <div class="rl-card" data-rltags="damage patterns wind hail age installation recognition">
+      <div class="rl-card" data-rltags="damage patterns wind hail age installation recognition high nailing">
         <h3>What to Look For</h3>
         <p>Pattern recognition is what turns an inspector into a diagnostician.</p>
         <ul>
@@ -5002,6 +5365,74 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <li><b>Assuming intent.</b> Wear-and-tear damage on an old roof and hail impact can coexist. Document both honestly. Overselling storm damage on an aged roof gets caught &mdash; and it damages Cardinal's credibility on every future claim in the neighborhood.</li>
         </ul>
       </div>
+
+      <div class="rl-card" data-rltags="ice dam ice damming refreeze attic heat eave icicle winter leak">
+        <h3>Ice Dams &mdash; How They Form, and What They Are Not</h3>
+        <p>An ice dam is a <b>heat</b> problem that presents as a water problem. Attic heat warms the deck over the living space, snow on that part of the roof melts, the water runs down to the overhang &mdash; which is cold, because there is no heated space under it &mdash; and refreezes. The ridge of ice grows, backs water up the slope, and the water finds the shingle laps and goes in.</p>
+        <p>Three things cause it, in this order: <b>air leaking</b> from the house into the attic, <b>insufficient insulation</b> at the ceiling plane, and <b>insufficient or unbalanced ventilation</b> to carry away the heat that still gets through. A roof cannot be built to survive a heat problem indefinitely; it can only be built to resist the water longer.</p>
+        <div class="rl-use"><b>Use it when:</b> A homeowner calls in January with a ceiling stain and icicles at the eave. The roof is usually not defective &mdash; it is doing what a roof does under a dam. Look in the attic on the same visit: frost on nail points, matted insulation, a warm patch, a bath fan venting into the attic instead of through the roof.</div>
+        <div class="rl-doc"><b>Document:</b> Icicle line and dam thickness from the ground. Interior staining with a date. Attic: insulation depth, air-sealing at the top plates and hatch, whether soffit intake is blocked, whether any exhaust fan terminates in the attic. That last one is a five-minute find that explains a lot of January calls.</div>
+        <div class="rl-warn"><b>Do not turn a code section into a coverage argument.</b> The ice barrier rule (<b>RCO R905.1.2</b>) is an <i>installation</i> requirement that applies when a roof is replaced. It is not retroactive to the roof on the house, and it does not make an existing ice-dam leak a covered loss. Whether the interior damage is covered is a policy question &mdash; read the declarations and the endorsements, and let the carrier answer it. Telling an adjuster &ldquo;code requires an ice barrier, so this leak is covered&rdquo; conflates two different things and spends your credibility on an argument you will lose.</div>
+        <div class="rl-tags"><span>ice dam</span><span>ventilation</span><span>attic</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="three tab 3-tab architectural laminate dimensional wind rating discontinued repairability matching">
+        <h3>3-Tab vs. Architectural &mdash; and Why It Decides the Argument</h3>
+        <p>Two shingle types, and which one is on the roof changes the whole conversation about repair versus replace.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>What separates them in the field</caption>
+            <thead><tr><th></th><th>3-tab</th><th>Architectural / laminate</th></tr></thead>
+            <tbody>
+              <tr><td><b>Build</b></td><td>Single layer, cut tabs, flat look</td><td>Two or more laminated layers, shadowed</td></tr>
+              <tr><td><b>Typical wind rating</b></td><td>Around 60 mph</td><td>Commonly 110&ndash;130 mph</td></tr>
+              <tr><td><b>Typical weight</b></td><td>Lighter</td><td>Noticeably heavier per square</td></tr>
+              <tr><td><b>Still made?</b></td><td>Largely discontinued across the major lines</td><td>The current standard</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><b>The repairability point is the one that matters on a claim.</b> A 3-tab roof is hard to repair honestly: the lines are mostly gone, and what is still sold will not match the weathered colour or the exposure of a roof that has been up fifteen years. That is not an aesthetic complaint &mdash; it is the factual basis for the matching argument the library already sets out under <b>OAC 3901-1-54</b>.</p>
+        <p>So identifying the shingle type is not trivia. On an architectural roof, a slope repair may genuinely be reasonable. On a discontinued 3-tab, &ldquo;repair the damaged slope&rdquo; usually cannot be done to a reasonably comparable appearance, and that is the argument to make &mdash; with the discontinuation documented, not asserted.</p>
+        <div class="rl-use"><b>Use it when:</b> The scope says repair and the roof is 3-tab. Identify the line if you can, get the discontinuation in writing from the supplier, and pair it with the matching regulation. Type first, then the argument.</div>
+        <div class="rl-doc"><b>Document:</b> Close-up of the shingle butt showing single vs laminated layer. A photo of the tab cut and exposure. Any legible wrapper or stamp in the attic or on a leftover bundle. Supplier confirmation that the line is discontinued &mdash; an email, not a phone call.</div>
+        <div class="rl-tags"><span>3-tab</span><span>architectural</span><span>matching</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="vinyl siding profile gauge dutch lap clapboard mil thickness panel identify">
+        <h3>Vinyl Siding &mdash; Profile, Gauge, and Why Both Go in the File</h3>
+        <p>Every siding claim starts with identifying what is on the house. Get it wrong and the replacement does not match, the estimate is under-written, and the argument about appearance is lost before it starts.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>What to record on every siding inspection</caption>
+            <thead><tr><th>Record</th><th>Why it matters</th></tr></thead>
+            <tbody>
+              <tr><td><b>Profile</b> &mdash; double 4&Prime;, double 5&Prime;, Dutch lap, single 8&Prime;, board &amp; batten, shake</td><td>Decides the panel, the exposure, and whether anything current even matches</td></tr>
+              <tr><td><b>Gauge</b> &mdash; panel thickness, roughly .040&Prime; builder grade up to .046&Prime;+ premium</td><td>Prices differently and resists impact differently. Replacing .046 with .040 is a downgrade the homeowner will feel in the first storm</td></tr>
+              <tr><td><b>Colour and finish</b></td><td>The matching question. Faded colour on a 15-year wall will not be met by current stock</td></tr>
+              <tr><td><b>Manufacturer, if legible</b></td><td>Stamped on the nail hem or the back of a panel. It is the difference between &ldquo;discontinued&rdquo; as an assertion and as a fact</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Pull one panel where it will not show &mdash; low on a gable end, behind a downspout &mdash; and photograph the back. The nail hem usually carries the maker and often a date or plant code. That single photo does more for a matching argument than a page of description.</p>
+        <div class="rl-use"><b>Use it when:</b> Writing any siding scope. Cardinal's own siding estimate already itemises house wrap, starter strip, J-channel at windows, doors and rakes, corner posts and utility trim &mdash; the profile and gauge decide what each of those actually costs.</div>
+        <div class="rl-doc"><b>Document:</b> One panel back showing the stamp. One measured exposure. One wide elevation per side. Colour in daylight, not under a floodlight.</div>
+        <div class="rl-tags"><span>vinyl</span><span>profile</span><span>gauge</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="vinyl hail damage test square cold weather brittle crack chalking wind zipper siding inspection">
+        <h3>Reading Damage on Vinyl &mdash; and the Cold-Weather Trap</h3>
+        <p>Vinyl does not dent, so hail damage on it reads differently from metal or shingle. What you are looking for:</p>
+        <ul>
+          <li><b>Punctures and holes</b> &mdash; the clean case. Usually the lower third of a panel where it is unsupported.</li>
+          <li><b>Cracks radiating from an impact point</b>, often visible only from a raking angle or from inside on a bright day.</li>
+          <li><b>Chalking or scouring</b> where the surface finish has been driven off, which shows as a lighter patch.</li>
+          <li><b>Wind damage: panels unlocked from the course below</b> &mdash; the &ldquo;zipper&rdquo; failure. A panel can look fine and be completely unhooked. Push up on the butt and see if it re-engages.</li>
+        </ul>
+        <p><b>Test-square the walls the same way you test-square the roof.</b> A chalked 10&times;10 on each affected elevation with the hit count written in frame is the same evidence standard the roof gets, and the library's siding supplement already asks for it.</p>
+        <div class="rl-warn"><b>Cold weather changes what damage means, in both directions.</b> Vinyl gets brittle as temperature drops &mdash; below roughly freezing, an impact that would have bounced off in July can crack a panel, and so can a ladder, a knee or a pry bar. That cuts two ways and you need to be straight about both: <b>(a)</b> genuine storm damage in winter can be far worse than the same stones in summer, which is a real argument; and <b>(b)</b> <b>damage the crew causes working cold is not storm damage.</b> Photograph the elevation before anyone touches it. If a panel cracks during the inspection, say so and own it &mdash; presenting it as hail is fraud, and it is the kind that gets found.</div>
+        <div class="rl-doc"><b>Document:</b> Elevation-wide before anyone works the wall. Test square per affected elevation with count. Close-ups with scale. Note the temperature and date &mdash; on a winter inspection that context belongs in the file.</div>
+        <div class="rl-tags"><span>vinyl</span><span>hail</span><span>test square</span></div>
+      </div>
     </div>
 
     <!-- =========================================================
@@ -5026,7 +5457,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
       <div class="rl-groupsep">Code-Required Upgrades</div>
 
-      <div class="rl-card" data-rltags="ice barrier eave 24 inches wall line supplement">
+      <div class="rl-card" data-rltags="ice barrier eave 24 inches wall line supplement ice and water shield">
         <h3>Ice Barrier &mdash; Extension to Wall Line</h3>
         <span class="rl-cite">RCO R905.1.2</span>
         <p>Adjuster's scope shows ice &amp; water membrane only at the drip edge (usually 3 feet) instead of the code-required extension to 24 inches past the exterior wall line, measured along the slope.</p>
@@ -5053,7 +5484,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R905.2.8.5, drip edge is required at both eaves and rakes of shingle roofs on all new installations. The current scope [excludes drip edge / includes it only at eaves]. This property has [X LF of eaves] and [Y LF of rakes], and drip edge is required on all [X+Y] linear feet. Please add [X+Y LF] of drip edge to the approved scope.&rdquo;</i></div>
       </div>
 
-      <div class="rl-card" data-rltags="underlayment double layer low slope supplement">
+      <div class="rl-card" data-rltags="underlayment double layer low slope supplement synthetic underlayment">
         <h3>Underlayment &mdash; Double Layer on Low Slope</h3>
         <span class="rl-cite">RCO R905.1.1</span>
         <p>Roof has one or more slopes between 2:12 and 4:12 (porch roofs, dormers, additions) and the adjuster's scope specs single-layer underlayment.</p>
@@ -5115,7 +5546,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <h3>Decking Replacement</h3>
         <span class="rl-cite">RCO R803</span>
         <span class="rl-cite">RCO R908.3</span>
-        <span class="rl-cite rl-gold">Coverage D</span>
+        <span class="rl-cite rl-gold">Ordinance or Law</span>
         <p>Deteriorated decking discovered during tear-off. Adjuster wants to exclude as &ldquo;maintenance&rdquo; or pre-existing.</p>
         <div class="rl-doc"><b>Line items to add:</b>
           <ul>
@@ -5132,7 +5563,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
             <li>If possible: physical sample of removed board.</li>
           </ul>
         </div>
-        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;During tear-off on [date], Cardinal identified [X square feet] of deteriorated roof sheathing that will not hold fasteners and cannot serve as an adequate base for new roofing. Per RCO R908.3, a re-cover over unsound decking is prohibited; per RCO R803, sheathing must be structurally sound. This deck replacement is code-required. If the policy includes Ordinance &amp; Law (Coverage D), this work is covered under that coverage. Please add [X sqft] of deck replacement to the approved scope, priced at [$X per sqft]. Documentation photos with scale are attached.&rdquo;</i></div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;During tear-off on [date], Cardinal identified [X square feet] of deteriorated roof sheathing that will not hold fasteners and cannot serve as an adequate base for new roofing. Per RCO R908.3, a re-cover over unsound decking is prohibited; per RCO R803, sheathing must be structurally sound. This deck replacement is code-required. If the policy includes Ordinance &amp; Law coverage, this work is covered under that coverage. Please add [X sqft] of deck replacement to the approved scope, priced at [$X per sqft]. Documentation photos with scale are attached.&rdquo;</i></div>
         <div class="rl-tags"><span>discovered</span><span>ordinance &amp; law</span><span>tear-off</span></div>
       </div>
 
@@ -5204,9 +5635,27 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-doc"><b>Note:</b> if the policy has a cosmetic damage exclusion, this template does not apply &mdash; the exclusion typically strips matching for spatter-only impacts.</div>
       </div>
 
+      <div class="rl-card" data-rltags="discontinued siding colour color match elevation vinyl 3901 supplement full wall">
+        <h3>Discontinued Siding Colour &mdash; Full Elevation</h3>
+        <span class="rl-cite">OAC 3901-1-54(I)(1)(b)</span>
+        <p>Storm damage is confined to part of an elevation, the adjuster scopes a partial repair, and the panel &mdash; profile, gauge or colour &mdash; is no longer available.</p>
+        <p>This is the same argument the library already makes for a discontinued shingle, applied to a wall. The difference is that a wall is read from the ground at eye level, every day, from the driveway. A mismatched patch on an elevation is more visible than a mismatched slope on a roof, not less.</p>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Panel back photo showing the manufacturer stamp, if legible.</li>
+            <li>Written confirmation from the supplier that the profile, gauge or colour is discontinued &mdash; an email, not a phone call.</li>
+            <li>Wide elevation photos showing the damaged area in the context of the whole wall.</li>
+            <li>Test-square hit counts per affected elevation, mirroring the roof methodology.</li>
+            <li>A photo showing the line of sight: where a person actually stands to see both the patch and the original.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The damaged siding on the [elevation] is [manufacturer/profile/gauge/colour], which the supplier has confirmed in writing is discontinued and no longer available. Attached is that confirmation. A partial repair cannot produce a reasonably comparable appearance as required by OAC 3901-1-54(I)(1)(b), because no currently available panel matches the existing profile and weathered colour. Please approve replacement of the full [elevation(s)] &mdash; [X squares] &mdash; together with the associated house wrap, starter strip, J-channel, corner posts and utility trim.&rdquo;</i></div>
+        <div class="rl-warn"><b>Ask for the elevation you can defend.</b> If only one wall is damaged and the walls do not share a line of sight, ask for that wall. Asking for all four when three are undamaged and not visible together invites a denial that also costs you the one you were entitled to.</div>
+      </div>
+
       <div class="rl-groupsep">Flashings</div>
 
-      <div class="rl-card" data-rltags="step counter flashing wall chimney supplement">
+      <div class="rl-card" data-rltags="step counter flashing wall chimney supplement cap flashings counterflashing">
         <h3>Step &amp; Counter Flashing</h3>
         <span class="rl-cite">RCO R905.2.8</span>
         <span class="rl-cite">RCO R903.2</span>
@@ -5262,6 +5711,22 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The property has [X vent stack penetrations of the following sizes: ...]. Existing pipe boots on this roof are [years] old with visible UV degradation and cracked rubber seals (documented in attached photos). Reusing degraded boots on the new roof will produce failures within the warranty period. Per RCO R905.2.8, flashings must be sized and installed to prevent water intrusion. Please add [X new pipe boots] to the approved scope.&rdquo;</i></div>
       </div>
 
+      <div class="rl-card" data-rltags="kickout kick-out diverter roof to wall sidewall supplement r903 wall rot">
+        <h3>Kickout / Roof-to-Wall Diverter</h3>
+        <span class="rl-cite">RCO R903.2.1</span>
+        <p>A roof-to-wall run terminates without a diverter, or the adjuster's scope carries step flashing but nothing at the bottom of the run.</p>
+        <div class="rl-doc"><b>Line items to add:</b>
+          <ul>
+            <li>Kickout / diverter flashing &mdash; count each roof-to-wall termination, not linear feet.</li>
+            <li>Step flashing for the full run above it, if being replaced.</li>
+            <li>Siding removal and re-installation at the termination, where the diverter has to tuck behind the cladding.</li>
+            <li>Any sheathing or trim replacement the wall behind it turns out to need &mdash; scoped after exposure, not before.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R903.2.1, flashing is required at wall and roof intersections, and a flashing shall be installed to divert water away from where the eave of a sloped roof intersects a vertical sidewall. The roof-to-wall termination(s) at [location] have no diverter installed. Reinstalling the roof without one would leave a known code deficiency in place and direct roof runoff behind the wall cladding. Please add diverter flashing at [N] roof-to-wall terminations, with associated siding removal and re-installation, to the approved scope.&rdquo;</i></div>
+        <div class="rl-warn"><b>Photograph the wall below before you write this.</b> If there is staining or soft trim under the termination, that is related damage and belongs in the same supplement &mdash; documented as observed condition. If the wall has to be opened, scope the repair after exposure, not from a guess.</div>
+      </div>
+
       <div class="rl-groupsep">Related Property Damage</div>
 
       <div class="rl-card" data-rltags="related property damage siding hail supplement">
@@ -5303,7 +5768,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-doc"><b>Note:</b> HVAC repairs generally require a licensed HVAC contractor's assessment. Cardinal documents the damage and refers, rather than pricing the repair directly.</div>
       </div>
 
-      <div class="rl-card" data-rltags="screens window frames wrap damage supplement">
+      <div class="rl-card" data-rltags="screens window frames wrap damage supplement window cap flashings">
         <h3>Screens &amp; Window Frames</h3>
         <p>Window screens are torn, punctured, or dislodged. Aluminum window wraps and cap flashings show hail dents.</p>
         <div class="rl-doc"><b>Documentation required:</b>
@@ -5496,7 +5961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rl-use"><b>Underorder:</b> job stops mid-day for material. <b>Overorder:</b> you eat the return trip and restocking fee. Split the difference by knowing the complexity honestly.</div>
       </div>
 
-      <div class="rl-card" data-rltags="linear feet ridge hip valley starter drip edge">
+      <div class="rl-card" data-rltags="linear feet ridge hip valley starter drip edge hip and ridge cap">
         <h3>Linear Feet &mdash; Ridge, Hip, Valley, Edge</h3>
         <p>Accessories are sold by the linear foot. Measure each:</p>
         <ul>
@@ -5508,7 +5973,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </ul>
       </div>
 
-      <div class="rl-card" data-rltags="accessories vents pipe boots skylights count">
+      <div class="rl-card" data-rltags="accessories vents pipe boots skylights count turtle vents">
         <h3>Accessory Counts</h3>
         <p>Walk and count. Don't estimate.</p>
         <ul>
@@ -5870,7 +6335,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <p>Gutters follow the eave line. Ground measurement with a long tape works fine for most residential jobs.</p>
       </div>
 
-      <div class="rl-card" data-rltags="eave linear feet run">
+      <div class="rl-card" data-rltags="eave linear feet run gutter sizes 5 inch gutters 6 inch gutters">
         <h3>Total Eave Linear Feet</h3>
         <p>Walk each eave and record LF. Total for the whole house. Gutters typically run in continuous sections between corners and end caps.</p>
         <ul>
@@ -5899,7 +6364,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </ul>
       </div>
 
-      <div class="rl-card" data-rltags="gutter guard protection LF">
+      <div class="rl-card" data-rltags="gutter guard protection LF leaf guard leafguard">
         <h3>Gutter Guards / Leaf Protection</h3>
         <p>Sold by the LF. Equals total gutter LF unless partial coverage.</p>
         <ul>
@@ -5909,7 +6374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </ul>
       </div>
 
-      <div class="rl-card" data-rltags="pitch slope grade half inch">
+      <div class="rl-card" data-rltags="pitch slope grade half inch gutter slope gutters">
         <h3>Slope / Fall</h3>
         <p>Not a takeoff number but important: gutters need <b>1/16&Prime; to 1/4&Prime; per 10&prime; of fall</b> toward each downspout. On existing gutters, verify with a hose or a level &mdash; sagging gutters (standing water) are a code and warranty problem worth calling out in the scope.</p>
       </div>
@@ -5973,7 +6438,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <p>Fascia LF equals total eave LF plus total rake LF (for houses with sub-fascia at the rakes). Some houses have fascia only at the eaves and gable-end trim at rakes &mdash; walk it.</p>
       </div>
 
-      <div class="rl-card" data-rltags="width profile 1x6 1x8 2x8">
+      <div class="rl-card" data-rltags="width profile 1x6 1x8 2x8 fascia wrap">
         <h3>Width / Profile</h3>
         <p>Standard fascia widths on residential:</p>
         <ul>
@@ -5984,7 +6449,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <p>Measure the face of the existing fascia to match. If replacing wood with aluminum wrap or PVC, order the wrap sized for the existing width.</p>
       </div>
 
-      <div class="rl-card" data-rltags="material wood aluminum wrap PVC composite">
+      <div class="rl-card" data-rltags="material wood aluminum wrap PVC composite fascia wrap">
         <h3>Material Options</h3>
         <ul>
           <li><b>Wood (pine, cedar) with paint:</b> traditional, requires periodic repainting.</li>
@@ -32313,7 +32778,16 @@ document.body.appendChild(btn);
 function refreshVisibility(){
 var btn = document.getElementById('cr-dark-toggle');
 if(!btn) return;
-btn.classList.toggle('show', document.body.dataset.crm === 'retail');
+/* 459: Community gets the light/dark control too \u2014 Theo's call.
+   This gate only governs the bottom-right FAB state, before ensureSearchRow()
+   adopts the button into the header row, where build 417's
+   `#cr-hd2-srch #cr-dark-toggle{display:flex !important}` takes over. Until now
+   the control was visible on Community only because that !important rule
+   outranked this line, and hidden in the FAB window. Naming both CRMs makes the
+   shipped behaviour deliberate. Insurance stays out: it mounts its own
+   Docket/Siren control in that row and must never show both. */
+var crm = document.body.dataset.crm;
+btn.classList.toggle('show', crm === 'retail' || crm === 'community');
 }
 function start(){
 ensureButton();
@@ -32333,6 +32807,17 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:462, note:'\u23F1\uFE0F Six more library cards, and the last of the gaps: how and when to ask for a reinspection, the deadlines that actually bite \u2014 the lien window on a house is 60 days, not the 75 everyone quotes \u2014 the punch walk on the last day, what has to exist on paper before a job is closed, how to find out who the permit office really is, and Malarkey\u2019s programme for reading somebody else\u2019s bid.' },
+{ build:461, note:'\uD83E\uDDF1 The wall side of the library, which had nothing but measuring in it before: what the water-resistive barrier behind the siding has to do, what a re-side has to add up to, how to identify a vinyl panel and read hail on it \u2014 including why cold weather cuts both ways \u2014 and the discontinued-colour argument for a full elevation.' },
+{ build:460, note:'\uD83E\uDDF1 Six new library cards: kickout flashing at roof-to-wall (and how to quote it, because the code never says \u201ckickout\u201d), what the slope actually allows, powered attic ventilators, ice dams, and 3-tab vs architectural. Also fixed a wrong number on the Drip Edge card \u2014 fasteners are 12\u2033 on center, not 16\u2033 \u2014 and noted that a gutter apron is not a drip edge.' },
+{ build:459, note:'\u2600\uFE0F The light/dark button stays on Community on purpose now \u2014 it used to be there by accident and would disappear in one state. The grey Community uses for secondary text was also too pale to read, in BOTH themes: section headings, stat labels, sheet totals and the quiet text under a bid are all legible now.' },
+{ build:458, note:'\uD83D\uDD24 The library now answers trade words, not just the wording on the card. \u201cTurtle vent\u201d finds the box-vent rules, \u201cice and water\u201d finds the ice barrier code, \u201chip and ridge\u201d and \u201cleaf guard\u201d and \u201cfascia wrap\u201d and \u201c6 inch gutter\u201d all land somewhere now \u2014 they returned nothing at all before.' },
+{ build:457, note:'\uD83C\uDFED Searching the library for something like \u201cwarranty tiers\u201d used to return three rows that read exactly the same \u2014 Owens Corning, GAF and CertainTeed all have a card by that name. Results now lead with the manufacturer, so you can\u2019t open the wrong one by accident.' },
+{ build:456, note:'\uD83D\uDD0E The Do &amp; Don\u2019t page can be searched now. It was the one page in the library the search could not see \u2014 eleven field practices that never came up no matter what you typed. Results always say whether something is a do or a don\u2019t, so a don\u2019t can never read like advice.' },
+{ build:455, note:'\uD83D\uDD0E Every library page now has a search box at the top that filters that page as you type \u2014 no more leaving the page to look something up. It searches code sections, keywords and the card text, same as the contents list.' },
+{ build:454, note:'\uD83D\uDCB5 Policy Provisions now covers the money: what Coverage A, B, C and D each pay for, flat vs percentage deductibles, the order the checks arrive in worked out with real numbers, why a $0 first check is not a denial, the mortgage company on the check, and appraisal. Also corrected five places that called Ordinance &amp; Law \u201cCoverage D\u201d \u2014 on a standard policy Coverage D is Loss of Use.' },
+{ build:453, note:'\uD83D\uDD0D Library search finally finds things. Type a code section like R905.1.2 and you get the code card, the supplement wording and the rebuttal \u2014 before, that returned nothing. Searches card text and keywords too, and three cards that could never be opened from the contents list now open.' },
+{ build:452, note:'\uD83D\uDD35 The letters inside the pipeline circles are dark now instead of white \u2014 white on the yellow, orange, green and blue read at 2:1 and you could not make them out. Leads also got the same raised edge the other circles have had since 436.' },
 { build:451, note:'\uD83D\uDD27 Fixed Library and Manage NACHI landing on top of each other in the installed app \u2014 both now stack cleanly with TOC and the new light/dark toggle. Also fixed a clipped placeholder in client notes.' },
 { build:449, note:'\uD83D\uDEE1\uFE0F Chat, appointments, documents, tasks, photos and payments inside a claim now carry the same fallback colors Cardinal Truth got in 448 \u2014 same root cause, seven more screens that were exposed to it' },
 { build:448, note:'\uD83E\uDE9F Fixed the insurance home and client list rendering see-through with the retail page ghosting behind them \u2014 a background token was being stripped by another module within a second of load' },
@@ -32972,207 +33457,43 @@ else start();
 })();
 </script>
 
-<style id="cr-rltoc-styles">/* cr-rltoc-themed (401) */#cr-rltoc-btn{display:none;position:fixed;bottom:24px;left:24px;z-index:9400;width:auto;padding:9px 14px 9px 12px;height:44px;border-radius:var(--ct-r-field,8px);background:var(--ct-red);color:var(--ct-red-ink,#fff);border:1px solid var(--ct-line-strong);cursor:pointer;display:flex;align-items:center;gap:6px;font:800 11px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;box-shadow:0 6px 18px rgba(0,0,0,.45);-webkit-tap-highlight-color:rgba(196,24,15,.25);font-family:inherit;transition:transform .12s,box-shadow .12s}#cr-rltoc-btn:hover{transform:translateY(-1px);background:var(--ct-red)}#cr-rltoc-btn:active{transform:translateY(0)}body:not(.viewing-rl) #cr-rltoc-btn{display:none}body.viewing-rl #cr-rltoc-btn{display:flex}/* 447: Library Home. Sits directly above the TOC pill and shares its visibility class, so the two read as one nav cluster. Hidden on the landing itself — there is nowhere to go. --ct-* resolves here because the RL theme module mirrors data-rltheme onto <body>. */#cr-rlhome-btn{display:none;position:fixed;left:24px;bottom:calc(133px + env(safe-area-inset-bottom,0px));z-index:9400;width:auto;height:44px;padding:9px 14px 9px 12px;align-items:center;gap:7px;border-radius:var(--ct-r-field,8px);border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#fff);color:var(--ct-ink,#17181B);font:800 12px var(--ct-sans,'Segoe UI',Arial,sans-serif);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rlhome-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rlhome-btn:active{transform:translateY(1px)}#cr-rlhome-btn svg{display:block;width:15px;height:15px;flex:0 0 auto}body:not(.viewing-rl) #cr-rlhome-btn{display:none}body.viewing-rl #cr-rlhome-btn{display:flex}body.viewing-rl.rl-at-landing #cr-rlhome-btn{display:none}/* 451 (was staged as 450): theme toggle. Stacked above the Library pill. Visible on every RL page including the landing (unlike Library, there is no page where a theme choice is irrelevant), so no .rl-at-landing exception. Standalone-mode repositioning lives in cr-pnc-styles, not here — one place for that concern, matching TOC/Manage/Library. */#cr-rltheme-btn{display:none;position:fixed;left:24px;bottom:calc(187px + env(safe-area-inset-bottom,0px));z-index:9400;width:44px;height:44px;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#FFFFFF);color:var(--ct-ink,#17181B);font-size:19px;line-height:1;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rltheme-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rltheme-btn:active{transform:translateY(1px)}body:not(.viewing-rl) #cr-rltheme-btn{display:none}body.viewing-rl #cr-rltheme-btn{display:flex}.cr-rltoc-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9450;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px 5vh;-webkit-overflow-scrolling:touch}.cr-rltoc-box{background:var(--ct-surface);color:var(--ct-ink);border-radius:12px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.6);border:1px solid var(--ct-line-strong);overflow:hidden;font-family:var(--ct-sans)}.cr-rltoc-head{padding:14px 20px 10px;border-bottom:1px solid var(--ct-line);background:var(--ct-surface-2)}.cr-rltoc-head h3{margin:0 0 8px;font:800 13px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink);display:flex;align-items:center;gap:8px}.cr-rltoc-search{width:100%;box-sizing:border-box;background:var(--ct-surface-2);color:var(--ct-ink);border:1px solid var(--ct-line-strong);border-radius:8px;padding:9px 12px;font-size:14px;outline:none;font-family:inherit}.cr-rltoc-search:focus{border-color:var(--ct-mark);box-shadow:0 0 0 3px rgba(196,24,15,.15)}.cr-rltoc-search::placeholder{color:var(--ct-ink-2)}.cr-rltoc-body{overflow-y:auto;flex:1;padding:8px 8px 12px}.cr-rltoc-empty{padding:40px 20px;text-align:center;color:var(--ct-ink-2);font:600 13px var(--ct-sans)}.cr-rltoc-hub{margin:8px 0 4px;padding:8px 12px;background:var(--ct-surface-2);border-left:3px solid var(--ct-line-strong);border-radius:0 6px 6px 0;font:800 11px var(--ct-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ct-mark);display:flex;align-items:center;gap:8px}.cr-rltoc-hub .hub-icon{font-size:14px}.cr-rltoc-page{margin:0 4px 2px;border-radius:6px;overflow:hidden}.cr-rltoc-page-head{padding:8px 12px 8px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;font:700 12.5px var(--ct-sans);color:var(--ct-ink);background:transparent;border:0;width:100%;text-align:left;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-page-head:hover{background:var(--ct-surface-3)}.cr-rltoc-page-head .caret{font-size:10px;color:var(--ct-mark);transition:transform .18s;flex:0 0 auto;width:12px}.cr-rltoc-page.expanded .caret{transform:rotate(90deg)}.cr-rltoc-page-head .title{flex:1;min-width:0}.cr-rltoc-page-head .count{color:var(--ct-mark);font-weight:800;font-size:10px;letter-spacing:.08em}.cr-rltoc-cards{display:none;padding:2px 0 6px 42px}.cr-rltoc-page.expanded .cr-rltoc-cards{display:block}.cr-rltoc-card{display:block;width:100%;text-align:left;padding:6px 10px 6px 0;background:transparent;border:0;cursor:pointer;font:600 12px var(--ct-sans);color:var(--ct-ink);border-radius:4px;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-card:hover{color:#fff;background:var(--ct-surface-3);padding-left:6px}.cr-rltoc-card .m{color:var(--ct-mark)}/* search match highlight */ .cr-rltoc-subgroup{margin:4px 0 2px;padding:4px 8px;font:800 10px var(--ct-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ct-ink-2);background:transparent;border-radius:4px}.cr-rltoc-close{margin-left:auto;background:transparent;border:0;color:var(--ct-ink-2);cursor:pointer;font-size:20px;padding:0 4px;font-family:inherit;line-height:1}.cr-rltoc-close:hover{color:var(--ct-ink)}#resourceLibraryView .rl-card.cr-rltoc-flash{animation:cr-rltoc-flash 2.5s ease;scroll-margin-top:80px}@keyframes cr-rltoc-flash{0%,100%{background:transparent;box-shadow:none}15%{background:rgba(196,24,15,.14);box-shadow:0 0 0 3px rgba(196,24,15,.32)}70%{background:rgba(196,24,15,.07);box-shadow:0 0 0 2px rgba(196,24,15,.18)}}</style>
+<style id="cr-rltoc-styles">/* cr-rltoc-themed (401) */#cr-rltoc-btn{display:none;position:fixed;bottom:24px;left:24px;z-index:9400;width:auto;padding:9px 14px 9px 12px;height:44px;border-radius:var(--ct-r-field,8px);background:var(--ct-red);color:var(--ct-red-ink,#fff);border:1px solid var(--ct-line-strong);cursor:pointer;display:flex;align-items:center;gap:6px;font:800 11px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;box-shadow:0 6px 18px rgba(0,0,0,.45);-webkit-tap-highlight-color:rgba(196,24,15,.25);font-family:inherit;transition:transform .12s,box-shadow .12s}#cr-rltoc-btn:hover{transform:translateY(-1px);background:var(--ct-red)}#cr-rltoc-btn:active{transform:translateY(0)}body:not(.viewing-rl) #cr-rltoc-btn{display:none}body.viewing-rl #cr-rltoc-btn{display:flex}/* 447: Library Home. Sits directly above the TOC pill and shares its visibility class, so the two read as one nav cluster. Hidden on the landing itself — there is nowhere to go. --ct-* resolves here because the RL theme module mirrors data-rltheme onto <body>. */#cr-rlhome-btn{display:none;position:fixed;left:24px;bottom:calc(133px + env(safe-area-inset-bottom,0px));z-index:9400;width:auto;height:44px;padding:9px 14px 9px 12px;align-items:center;gap:7px;border-radius:var(--ct-r-field,8px);border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#fff);color:var(--ct-ink,#17181B);font:800 12px var(--ct-sans,'Segoe UI',Arial,sans-serif);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rlhome-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rlhome-btn:active{transform:translateY(1px)}#cr-rlhome-btn svg{display:block;width:15px;height:15px;flex:0 0 auto}body:not(.viewing-rl) #cr-rlhome-btn{display:none}body.viewing-rl #cr-rlhome-btn{display:flex}body.viewing-rl.rl-at-landing #cr-rlhome-btn{display:none}/* 451 (was staged as 450): theme toggle. Stacked above the Library pill. Visible on every RL page including the landing (unlike Library, there is no page where a theme choice is irrelevant), so no .rl-at-landing exception. Standalone-mode repositioning lives in cr-pnc-styles, not here — one place for that concern, matching TOC/Manage/Library. */#cr-rltheme-btn{display:none;position:fixed;left:24px;bottom:calc(187px + env(safe-area-inset-bottom,0px));z-index:9400;width:44px;height:44px;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--ct-line-strong,#DED8D6);background:var(--ct-surface,#FFFFFF);color:var(--ct-ink,#17181B);font-size:19px;line-height:1;cursor:pointer;box-shadow:var(--ct-card-sh,0 6px 18px rgba(0,0,0,.18));-webkit-tap-highlight-color:transparent}#cr-rltheme-btn:hover{border-color:var(--ct-mark,#C4180F);color:var(--ct-mark,#C4180F)}#cr-rltheme-btn:active{transform:translateY(1px)}body:not(.viewing-rl) #cr-rltheme-btn{display:none}body.viewing-rl #cr-rltheme-btn{display:flex}.cr-rltoc-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9450;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px 5vh;-webkit-overflow-scrolling:touch}.cr-rltoc-box{background:var(--ct-surface);color:var(--ct-ink);border-radius:12px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.6);border:1px solid var(--ct-line-strong);overflow:hidden;font-family:var(--ct-sans)}.cr-rltoc-head{padding:14px 20px 10px;border-bottom:1px solid var(--ct-line);background:var(--ct-surface-2)}.cr-rltoc-head h3{margin:0 0 8px;font:800 13px var(--ct-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink);display:flex;align-items:center;gap:8px}.cr-rltoc-search{width:100%;box-sizing:border-box;background:var(--ct-surface-2);color:var(--ct-ink);border:1px solid var(--ct-line-strong);border-radius:8px;padding:9px 12px;font-size:14px;outline:none;font-family:inherit}.cr-rltoc-search:focus{border-color:var(--ct-mark);box-shadow:0 0 0 3px rgba(196,24,15,.15)}.cr-rltoc-search::placeholder{color:var(--ct-ink-2)}.cr-rltoc-body{overflow-y:auto;flex:1;padding:8px 8px 12px}.cr-rltoc-empty{padding:40px 20px;text-align:center;color:var(--ct-ink-2);font:600 13px var(--ct-sans)}.cr-rltoc-hub{margin:8px 0 4px;padding:8px 12px;background:var(--ct-surface-2);border-left:3px solid var(--ct-line-strong);border-radius:0 6px 6px 0;font:800 11px var(--ct-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ct-mark);display:flex;align-items:center;gap:8px}.cr-rltoc-hub .hub-icon{font-size:14px}.cr-rltoc-page{margin:0 4px 2px;border-radius:6px;overflow:hidden}.cr-rltoc-page-head{padding:8px 12px 8px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;font:700 12.5px var(--ct-sans);color:var(--ct-ink);background:transparent;border:0;width:100%;text-align:left;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-page-head:hover{background:var(--ct-surface-3)}.cr-rltoc-page-head .caret{font-size:10px;color:var(--ct-mark);transition:transform .18s;flex:0 0 auto;width:12px}.cr-rltoc-page.expanded .caret{transform:rotate(90deg)}.cr-rltoc-page-head .title{flex:1;min-width:0}.cr-rltoc-page-head .count{color:var(--ct-mark);font-weight:800;font-size:10px;letter-spacing:.08em}.cr-rltoc-cards{display:none;padding:2px 0 6px 42px}.cr-rltoc-page.expanded .cr-rltoc-cards{display:block}.cr-rltoc-card{display:block;width:100%;text-align:left;padding:6px 10px 6px 0;background:transparent;border:0;cursor:pointer;font:600 12px var(--ct-sans);color:var(--ct-ink);border-radius:4px;-webkit-tap-highlight-color:rgba(196,24,15,.18);font-family:inherit}.cr-rltoc-card:hover{color:#fff;background:var(--ct-surface-3);padding-left:6px}.cr-rltoc-card .m{color:var(--ct-mark)}/* search match highlight */ .cr-rltoc-subgroup{margin:4px 0 2px;padding:4px 8px;font:800 10px var(--ct-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ct-ink-2);background:transparent;border-radius:4px}.cr-rltoc-close{margin-left:auto;background:transparent;border:0;color:var(--ct-ink-2);cursor:pointer;font-size:20px;padding:0 4px;font-family:inherit;line-height:1}.cr-rltoc-close:hover{color:var(--ct-ink)}.cr-rltoc-cards .cr-rltoc-group{margin:9px 0 3px;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.15em;text-transform:uppercase;opacity:.55}
+.cr-rltoc-card .cr-rltoc-why{display:inline-block;margin-left:7px;font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;opacity:.62;vertical-align:1px}
+#resourceLibraryView .rl-card.cr-rltoc-flash,#resourceLibraryView .rl-ddcard.cr-rltoc-flash{animation:cr-rltoc-flash 2.5s ease;scroll-margin-top:80px}@keyframes cr-rltoc-flash{0%,100%{background:transparent;box-shadow:none}15%{background:rgba(196,24,15,.14);box-shadow:0 0 0 3px rgba(196,24,15,.32)}70%{background:rgba(196,24,15,.07);box-shadow:0 0 0 2px rgba(196,24,15,.18)}}</style>
 <script id="cr-rltoc-script">
 (function(){
 'use strict';
 var TOC = [
 { hub:'Insurance', icon:'\uD83D\uDEE1\uFE0F', pages:[
-{ pid:'rlPageInsurance', title:'Ohio Insurance Law', cards:[
-'Ohio Matching Regulation',
-'Unfair Claims Settlement Practices',
-'Public Adjuster Licensing',
-'Home Solicitation 3-Day Right of Rescission',
-]},
-{ pid:'rlPageCode', title:'Construction Codes', cards:[
-'When Roof Recover is Prohibited',
-'Ice Barrier Requirement',
-'Underlayment Requirements',
-'Asphalt Shingle Fastening',
-'Drip Edge',
-'Flashings \u2014 Step, Wall, Valley, Chimney',
-'Attic Ventilation',
-'Roof Decking / Sheathing',
-'2024 Ohio Building Code \u2014 Chapter 15',
-'Commercial Reroofing Rules',
-'City of Dayton',
-'City of Kettering',
-'Huber Heights',
-'Other Miami Valley Jurisdictions',
-]},
-{ pid:'rlPagePolicy', title:'Policy Provisions', cards:[
-'Ordinance & Law Coverage',
-'RCV vs ACV Settlement',
-'Matching Endorsement',
-]},
-{ pid:'rlPageDocs', title:'Documentation Checklist', cards:[
-'Per-Inspection Documentation Standard',
-'Photo Templates by Damage Type',
-'Paper Trail',
-]},
-{ pid:'rlPageTips', title:'Claim Tips', cards:[
-'\u201CWe\u2019ll only pay for the damaged slope\u201D',
-'\u201CJust layer new shingles over the existing\u201D',
-'\u201CDecking replacement is not covered\u201D',
-'\u201CA strip of ice & water at the eave is enough\u201D',
-'\u201CReuse the existing flashings\u201D',
-'\u201CVentilation upgrade is a betterment\u201D',
-'\u201CIt\u2019s just wear and tear\u201D',
-'\u201CRoof is too old for full replacement value\u201D',
-'State Farm \u2014 Engineer Reports on Denials',
-'Allstate \u2014 Cosmetic Damage Endorsement',
-'Third-Party Administrators & Preferred Networks',
-'Aggressive Depreciation Schedules',
-]},
-{ pid:'rlPagePitfalls', title:'Do & Don\u2019t', cards:[] },
-{ pid:'rlPageCheat', title:'Truck Cheat Sheet', cards:[
-'Cardinal One-Page Field Card',
-]},
-{ pid:'rlPageInsp', title:'Mastering Roof Inspections', cards:[
-'The Inspector\u2019s Mindset',
-'Safety First',
-'The Systematic Walk',
-'What to Look For',
-'Attic & Interior',
-'Documentation Discipline',
-'Common Mistakes to Avoid',
-]},
-{ pid:'rlPageNachiMastery', title:'NACHI Roof Mastery (hub)', cards:[
-'1-3 Accessing A Roof',
-'Asphalt Composition Shingles',
-]},
-{ pid:'rlPageNachiAccessing', title:'NACHI 1-3 Accessing A Roof', cards:[
-'Part 1 \u2014 Roof Safety, Risk, Pitch & Boots',
-'Part 3 \u2014 Gaining Access, Choosing a Ladder & Safety Rules',
-'Part 4 \u2014 Length, Material, Standing an Extension Ladder',
-'Part 5 \u2014 Climbing, Maintenance & Step-Ladders',
-]},
-{ pid:'rlPageNachiAsphalt', title:'NACHI Asphalt Composition Shingles', cards:[
-'Part 1 \u2014 Components, Mat & Fiberglass vs Organic',
-'Part 2 \u2014 Organic Shingles & Distortion',
-'Part 3 \u2014 Asphalt, Crude Oil, Filler & ASTM Standards',
-'Part 4 \u2014 Back-Surfacing & Granules',
-]},
-{ pid:'rlPageSup', title:'Supplement Templates', cards:[
-'How to Use These',
-'Ice Barrier \u2014 Extension to Wall Line',
-'Drip Edge \u2014 All Eaves and Rakes',
-'Underlayment \u2014 Double Layer on Low Slope',
-'Attic Ventilation to Code',
-'Enhanced Fastening / High-Wind Installation',
-'Starter Strip & Manufacturer Accessories',
-'Decking Replacement',
-'Full Tear-Off Required by Code',
-'Line-of-Sight Mismatch \u2014 Full Slope Replacement',
-'Discontinued Shingle \u2014 Full Roof Replacement',
-'Spatter with Matching Endorsement',
-'Step & Counter Flashing',
-'Skylight Flashing Kit',
-'Chimney Cricket / Saddle',
-'Pipe Boot Replacement',
-'Siding & Trim',
-'Gutters & Downspouts',
-'HVAC Condenser Fin Damage',
-'Screens & Window Frames',
-]},
+{ pid:'rlPageInsurance', title:'Ohio Insurance Law' },
+{ pid:'rlPageCode', title:'Construction Codes' },
+{ pid:'rlPagePolicy', title:'Policy Provisions' },
+{ pid:'rlPageDocs', title:'Documentation Checklist' },
+{ pid:'rlPageTips', title:'Claim Tips' },
+{ pid:'rlPagePitfalls', title:'Do & Don\u2019t' },
+{ pid:'rlPageCheat', title:'Truck Cheat Sheet' },
+{ pid:'rlPageInsp', title:'Mastering Roof Inspections' },
+{ pid:'rlPageNachiMastery', title:'NACHI Roof Mastery (hub)' },
+{ pid:'rlPageNachiAccessing', title:'NACHI 1-3 Accessing A Roof' },
+{ pid:'rlPageNachiAsphalt', title:'NACHI Asphalt Composition Shingles' },
+{ pid:'rlPageSup', title:'Supplement Templates' },
 ]},
 { hub:'Manufacturer', icon:'\uD83C\uDFED', pages:[
-{ pid:'rlPageMfg', title:'Overview & Standards', cards:[
-'\uD83D\uDCE4 PDFs Pending',
-'Class 4 Impact-Resistant \u2014 Insurance Premium Discounts',
-'System Warranty Prerequisites',
-'Enhanced Fastening / High-Wind Installation',
-]},
-{ pid:'rlPageMfg', title:'Owens Corning', cards:[
-'Product Lines & SureNail',
-]},
-{ pid:'rlPageMfg', title:'GAF', cards:[
-'Product Lines & LayerLock',
-]},
-{ pid:'rlPageMfg', title:'CertainTeed', cards:[
-'Product Lines',
-]},
-{ pid:'rlPageMfg', title:'Others', cards:[
-'IKO, Malarkey, Tamko, Atlas',
-]},
-{ pid:'rlPageMfg', title:'Shared — All Brands', cards:[
-'Contractor Program & Warranty Tiers',
-'Do-Not-Mix Rules',
-]},
+{ pid:'rlPageMfg', title:'Manufacturer Guidelines' },
 ]},
 { hub:'General \u2014 Measurements', icon:'\uD83D\uDCD0', pages:[
-{ pid:'rlPageMsrRoofHand', title:'Roof \u2014 Hand Measurements', cards:[
-'Perimeter & Facet Basics',
-'Slope / Pitch',
-'Squares (100 sqft units)',
-'Waste Factor',
-'Linear Feet \u2014 Ridge, Hip, Valley, Edge',
-'Accessory Counts',
-]},
-{ pid:'rlPageMsrRoofReports', title:'Roof \u2014 Reading Reports', cards:[
-'Hover',
-'Roofr',
-'EagleView',
-'Other Reports',
-'When a Report Seems Wrong',
-]},
-{ pid:'rlPageMsrSidingHand', title:'Siding \u2014 Hand Measurements', cards:[
-'Wall Area (Squares)',
-'Deducting Openings',
-'Corner Posts, J-Channel, Trim',
-'Vertical vs. Horizontal Siding',
-'Waste Factor',
-]},
-{ pid:'rlPageMsrSidingReports', title:'Siding \u2014 Reading Reports', cards:[
-'Hover for Siding',
-'EagleView / Aerial Reports',
-'Verifying the Report',
-]},
-{ pid:'rlPageMsrWindowsHand', title:'Windows \u2014 Measurements', cards:[
-'Rough Opening vs. Exact Size',
-'Standard Window Sizes & Notation',
-'Measuring for a Replacement',
-'Egress Requirements',
-'Glass & Frame Specifications',
-]},
-{ pid:'rlPageMsrDoorsHand', title:'Doors \u2014 Measurements', cards:[
-'Rough Opening vs. Slab Size vs. Frame Size',
-'Prehung vs. Slab Replacement',
-'Handing (Left-Hand vs. Right-Hand, Inswing vs. Outswing)',
-'Patio & Sliding Doors',
-'Storm Doors',
-'Fire-Rated Doors (Garage-to-House)',
-]},
-{ pid:'rlPageMsrGuttersHand', title:'Gutters \u2014 Hand Measurements', cards:[
-'Total Eave Linear Feet',
-'Downspouts \u2014 Count & Placement',
-'Corners, Elbows, End Caps',
-'Gutter Guards / Leaf Protection',
-'Slope / Fall',
-]},
-{ pid:'rlPageMsrGuttersReports', title:'Gutters \u2014 Reading Reports', cards:[
-'What Roof Reports Give You',
-'What You Still Need to Walk',
-]},
-{ pid:'rlPageMsrFasciaHand', title:'Fascia \u2014 Hand Measurements', cards:[
-'Total Fascia Linear Feet',
-'Width / Profile',
-'Material Options',
-'Corners & Returns',
-]},
-{ pid:'rlPageMsrFasciaReports', title:'Fascia \u2014 Reading Reports', cards:[
-'What Reports Give You',
-]},
-{ pid:'rlPageMsrSoffitHand', title:'Soffit \u2014 Hand Measurements', cards:[
-'Soffit Width',
-'Linear Feet & Area',
-'Vented vs. Solid',
-'Corner Geometry',
-]},
-{ pid:'rlPageMsrSoffitReports', title:'Soffit \u2014 Reading Reports', cards:[
-'Hover for Soffit',
-'Calculating from an Aerial Report',
-]},
+{ pid:'rlPageMsrRoofHand', title:'Roof \u2014 Hand Measurements' },
+{ pid:'rlPageMsrRoofReports', title:'Roof \u2014 Reading Reports' },
+{ pid:'rlPageMsrSidingHand', title:'Siding \u2014 Hand Measurements' },
+{ pid:'rlPageMsrSidingReports', title:'Siding \u2014 Reading Reports' },
+{ pid:'rlPageMsrWindowsHand', title:'Windows \u2014 Measurements' },
+{ pid:'rlPageMsrDoorsHand', title:'Doors \u2014 Measurements' },
+{ pid:'rlPageMsrGuttersHand', title:'Gutters \u2014 Hand Measurements' },
+{ pid:'rlPageMsrGuttersReports', title:'Gutters \u2014 Reading Reports' },
+{ pid:'rlPageMsrFasciaHand', title:'Fascia \u2014 Hand Measurements' },
+{ pid:'rlPageMsrFasciaReports', title:'Fascia \u2014 Reading Reports' },
+{ pid:'rlPageMsrSoffitHand', title:'Soffit \u2014 Hand Measurements' },
+{ pid:'rlPageMsrSoffitReports', title:'Soffit \u2014 Reading Reports' },
 ]},
 ];
 var expanded = new Set();
@@ -33186,6 +33507,87 @@ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
 function matches(q, t){
 if(!q) return true;
 return String(t || '').toLowerCase().indexOf(q.toLowerCase()) !== -1;
+}
+/* 453: the index is the cards. Nothing is hand-maintained, so nothing can drift.
+   Rebuilt on every open() so pages built at runtime (NACHI) are picked up. */
+var IDX = null;
+function buildIndex(){
+var map = {};
+document.querySelectorAll('#resourceLibraryView .rl-page').forEach(function(page){
+var list = [];
+/* .rl-groupsep already divides the richest pages (Code 3, Tips 2, Mfg 5, Sup 5).
+   Walk cards and dividers together so each card carries the group it sits under —
+   derived from the markup, so it cannot drift the way a typed list did. */
+var group = '';
+/* 456: .rl-ddcard joins the walk. rlPagePitfalls was the only page in the library
+   whose content the search could not see \u2014 2,721 characters over 11 cards, 0%
+   indexed, while every other page is 75%+. It uses a two-column DO/DON'T layout
+   instead of .rl-card, so nothing was wrong with it except that it was invisible. */
+page.querySelectorAll('.rl-groupsep, .rl-card, .rl-ddcard').forEach(function(card){
+if(card.classList.contains('rl-groupsep')){
+group = String(card.textContent || '').replace(/\s+/g, ' ').trim();
+return;
+}
+var dd = card.classList.contains('rl-ddcard');
+/* renderTOC() prints the group heading only when there is NO query, so a DON'T
+   surfacing from a search would show as a bare title with nothing marking it as a
+   don't \u2014 "Waive or absorb the deductible" reads as advice. Carry the polarity
+   in the title itself, which also makes "do" and "don't" searchable. Read it from
+   the card's class: the column head's textContent starts with an emoji. */
+var pol = dd ? (card.classList.contains('rl-dontcard') ? 'Don\u2019t' : 'Do') : '';
+var h3 = card.querySelector('h3') || (dd ? card.querySelector('h4') : null);
+var cites = [];
+card.querySelectorAll('.rl-cite').forEach(function(c){
+cites.push(String(c.textContent || '').trim());
+});
+var ttl = h3 ? String(h3.textContent || '').replace(/\s+/g, ' ').trim() : '';
+list.push({
+el: card,
+group: dd ? pol : group,
+title: dd && ttl ? (pol + ' \u2014 ' + ttl) : ttl,
+cite: cites.join(' '),
+tags: card.getAttribute('data-rltags') || '',
+body: String(card.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 300)
+});
+});
+/* 457: three cards on the Manufacturer page are titled "Contractor Program &
+   Warranty Tiers" and three "Do-Not-Mix Rules" \u2014 one per manufacturer, told
+   apart on the page only by the .rl-groupsep above them. renderTOC() prints that
+   heading ONLY when there is no query, so searching "warranty tiers" returned
+   three identical rows, and picking the wrong one means reading GAF's do-not-mix
+   rules on an Owens Corning roof. Qualify only the titles that actually repeat;
+   a title already unique on its page is untouched. Six rows library-wide. */
+var dupes = {};
+list.forEach(function(c){ dupes[c.title] = (dupes[c.title] || 0) + 1; });
+list.forEach(function(c){
+if(dupes[c.title] > 1 && c.group) c.title = c.group + ' \u2014 ' + c.title;
+});
+map[page.id] = list;
+});
+return map;
+}
+function cardsFor(pid){
+if(!IDX) IDX = buildIndex();
+return IDX[pid] || [];
+}
+/* rank 0 title, 1 citation, 2 tag, 3 body. -1 is no match.
+   Body is the fallback tier only — see filterTier(). */
+function cardRank(q, c){
+if(!q) return 0;
+var s = q.toLowerCase();
+if(String(c.title).toLowerCase().indexOf(s) !== -1) return 0;
+if(String(c.cite).toLowerCase().indexOf(s) !== -1) return 1;
+if(String(c.tags).toLowerCase().indexOf(s) !== -1) return 2;
+if(String(c.body).toLowerCase().indexOf(s) !== -1) return 3;
+return -1;
+}
+/* 'roof' and 'shingle' appear in almost every body. If anything matched on a
+   title, citation or tag, body-only hits are noise and get dropped. */
+function filterTier(hits){
+var best = 9;
+hits.forEach(function(h){ if(h.rank < best) best = h.rank; });
+if(best > 2) return hits;
+return hits.filter(function(h){ return h.rank <= 2; });
 }
 function highlight(text, q){
 if(!q) return esc(text);
@@ -33211,20 +33613,38 @@ var pagesHtml = '';
 allPages.forEach(function(page, pIdx){
 var pageKey = hubIdx + '-' + pIdx;
 var pageMatches = q ? matches(q, page.title) : false;
-var matchingCards = q ?
-page.cards.filter(function(c){ return matches(q, c); }) :
-page.cards;
-var cardsToShow = q ? matchingCards : page.cards;
+var allCards = cardsFor(page.pid);
+var matchingCards;
+if(q){
+var hits = [];
+allCards.forEach(function(c, ci){
+var r = cardRank(q, c);
+if(r !== -1) hits.push({ c:c, ci:ci, rank:r });
+});
+matchingCards = filterTier(hits);
+}else{
+matchingCards = allCards.map(function(c, ci){ return { c:c, ci:ci, rank:0 }; });
+}
+var cardsToShow = matchingCards;
 if(q && !pageMatches && matchingCards.length === 0) return;
 hubHasMatch = true;
 totalMatches += (pageMatches ? 1 : 0) + matchingCards.length;
 var isExpanded = q ? true : expanded.has(pageKey);
-var cardsHtml = cardsToShow.map(function(cardTitle){
-return '<button class="cr-rltoc-card" ' +
+var lastGroup = null;
+var cardsHtml = cardsToShow.map(function(h){
+var sep = '';
+if(!q && h.c.group && h.c.group !== lastGroup){
+sep = '<div class="cr-rltoc-group">' + esc(h.c.group) + '</div>';
+}
+if(!q) lastGroup = h.c.group;
+return sep + '<button class="cr-rltoc-card" ' +
 'data-pid="' + esc(page.pid) + '" ' +
-'data-card="' + esc(cardTitle) + '" ' +
+'data-idx="' + h.ci + '" ' +
 'type="button">' +
-highlight(cardTitle, q) +
+highlight(h.c.title, q) +
+(h.rank > 0 ? '<span class="cr-rltoc-why">' +
+esc(h.rank === 1 ? 'citation' : (h.rank === 2 ? 'tag' : 'in text')) +
+'</span>' : '') +
 '</button>';
 }).join('');
 pagesHtml +=
@@ -33236,7 +33656,7 @@ pagesHtml +=
 'type="button">' +
 '<span class="caret">\u25B6</span>' +
 '<span class="title">' + highlight(page.title, q) + '</span>' +
-(page.cards.length ? '<span class="count">' + page.cards.length + '</span>' : '') +
+(allCards.length ? '<span class="count">' + allCards.length + '</span>' : '') +
 '</button>' +
 (cardsHtml ? '<div class="cr-rltoc-cards">' + cardsHtml + '</div>' : '') +
 '</div>';
@@ -33275,11 +33695,11 @@ btn.closest('.cr-rltoc-page').classList.toggle('expanded');
 host.querySelectorAll('.cr-rltoc-card').forEach(function(btn){
 btn.onclick = function(e){
 e.stopPropagation();
-navigateTo(btn.dataset.pid, btn.dataset.card);
+navigateTo(btn.dataset.pid, parseInt(btn.dataset.idx, 10));
 };
 });
 }
-function navigateTo(pageId, cardTitle){
+function navigateTo(pageId, cardIdx){
 close();
 setTimeout(function(){
 try{
@@ -33291,32 +33711,28 @@ p.classList.toggle('rl-pageActive', p.id === pageId);
 });
 window.scrollTo(0, 0);
 }
-if(cardTitle){
-setTimeout(function(){ scrollToCard(pageId, cardTitle); }, 120);
+if(cardIdx !== null && cardIdx === cardIdx){
+setTimeout(function(){ scrollToCardEl(cardsFor(pageId)[cardIdx]); }, 120);
 }
 }catch(e){ console.warn('[rl-toc]', e); }
 }, 60);
 }
-function scrollToCard(pageId, cardTitle){
-var page = document.getElementById(pageId);
-if(!page) return;
-var norm = function(s){
-return String(s || '')
-.replace(/[\u2018\u2019\u201C\u201D]/g, '"')
-.replace(/[\u2014\u2013\-]/g, '-')
-.replace(/\s+/g, ' ')
-.trim().toLowerCase();
-};
-var target = norm(cardTitle);
-var cards = page.querySelectorAll('.rl-card');
-var match = null;
-for(var i = 0; i < cards.length; i++){
-var h3 = cards[i].querySelector('h3');
-if(h3 && norm(h3.textContent).indexOf(target) !== -1){
-match = cards[i]; break;
-}
-}
+/* 453: was scrollToCard(pageId, cardTitle), which matched an h3 by normalised
+   string. Its norm() mapped curly quotes to a DOUBLE quote, so a title written
+   with a curly apostrophe could never match markup written with a straight one
+   — three cards were unreachable. The index hands us the element instead. */
+function scrollToCardEl(entry){
+var match = entry && entry.el;
 if(match){
+/* 455: the page may be filtered by its own search box. Landing on a card that
+   filter is hiding would scroll nowhere, on a page showing four cards. Clear it
+   through the box's own input handler — same unhide path, not a second one. */
+var pg = match.closest ? match.closest('.rl-page') : null;
+var box = pg ? pg.querySelector('.rl-search input') : null;
+if(box && box.value){
+box.value = '';
+box.dispatchEvent(new Event('input', { bubbles:true }));
+}
 match.scrollIntoView({ behavior:'smooth', block:'start' });
 match.classList.remove('cr-rltoc-flash');
 void match.offsetWidth;
@@ -33327,6 +33743,7 @@ setTimeout(function(){ match.classList.remove('cr-rltoc-flash'); }, 2600);
 var backdrop = null;
 function open(){
 if(backdrop) return;
+IDX = null;
 backdrop = document.createElement('div');
 backdrop.className = 'cr-rltoc-bg';
 backdrop.innerHTML =
@@ -33375,12 +33792,60 @@ b.title = 'Open Table of Contents';
 b.onclick = open;
 document.body.appendChild(b);
 }
+/* 455: .rl-search shipped as a complete stylesheet with zero elements — five rules
+   nobody has ever seen. One box per content page, filtering that page in place
+   through the same index the TOC modal uses. No second search mechanism. */
+function mountPageSearch(){
+var view = document.getElementById('resourceLibraryView');
+if(!view) return;
+IDX = null;                       /* the DOM may have gained runtime pages */
+view.querySelectorAll('.rl-page').forEach(function(page){
+if(page.querySelectorAll('.rl-card').length < 4) return;
+var head = page.querySelector('.rl-pagehead');
+if(!head || !head.parentNode) return;
+var seated = page.querySelector('.rl-search');
+if(seated){
+/* The NACHI module inserts its nav card at the same head.nextSibling slot on
+   rlPageInsp, so whichever ran last owns the top. Re-seat every pass — moving
+   a node already in place is a no-op. */
+if(seated.previousElementSibling !== head) head.parentNode.insertBefore(seated, head.nextSibling);
+return;
+}
+var wrap = document.createElement('div');
+wrap.className = 'rl-search';
+var inp = document.createElement('input');
+inp.type = 'search';
+inp.placeholder = 'Search this page \u2014 code section, keyword, anything\u2026';
+inp.setAttribute('autocomplete', 'off');
+inp.setAttribute('aria-label', 'Search this page');
+var note = document.createElement('div');
+note.className = 'rl-searchnote';
+wrap.appendChild(inp);
+wrap.appendChild(note);
+head.parentNode.insertBefore(wrap, head.nextSibling);
+inp.addEventListener('input', function(){
+var q = inp.value.trim();
+var cards = cardsFor(page.id);
+var shown = 0;
+cards.forEach(function(c){
+var hit = !q || cardRank(q, c) !== -1;
+if(c.el) c.el.classList.toggle('rl-hidden', !hit);
+if(hit) shown++;
+});
+note.textContent = q
+? (shown ? shown + ' of ' + cards.length : 'Nothing on this page matches \u2014 try the contents list')
+: '';
+});
+});
+}
 function start(){
 ensureButton();
 updateViewClass();
+mountPageSearch();
 var v = document.getElementById('resourceLibraryView');
 if(v){
-new MutationObserver(updateViewClass).observe(v, { attributes:true, attributeFilter:['style'] });
+new MutationObserver(function(){ updateViewClass(); mountPageSearch(); })
+.observe(v, { attributes:true, attributeFilter:['style'] });
 }
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
@@ -41377,7 +41842,7 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
    emerald. Hue-tested: 0 blue-dominant, 0 cyan-dominant values. */
 :root{
 --ccm-ground:#0e100f;--ccm-card:#161918;--ccm-raise:#1e2220;
---ccm-ink:#f2f4f3;--ccm-mute:#9aa39e;--ccm-dim:#7d8781;
+--ccm-ink:#f2f4f3;--ccm-mute:#9aa39e;--ccm-dim:#828c86;
 --ccm-line:#2a2f2c;--ccm-line2:#232725;
 --ccm-ac:#34D399;--ccm-ac2:#6EE7B7;--ccm-wash:rgba(4,120,87,.18);--ccm-washln:#047857;
 --ccm-rd:#ff6b78;--ccm-rdw:rgba(200,32,46,.16);--ccm-rdln:rgba(255,107,120,.34);
@@ -41400,7 +41865,7 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 --ccm-glow:0 0 0 1px rgba(52,211,153,.24),0 0 22px rgba(4,120,87,.16)}
 [data-theme="rb-light"]{
 --ccm-ground:#f1f2f1;--ccm-card:#ffffff;--ccm-raise:#f7f8f7;
---ccm-ink:#1b1b1b;--ccm-mute:#666666;--ccm-dim:#8a8a8a;
+--ccm-ink:#1b1b1b;--ccm-mute:#666666;--ccm-dim:#6e6e6e;
 --ccm-line:#d9d9d9;--ccm-line2:#e8e9e8;
 --ccm-ac:#047857;--ccm-ac2:#065F46;--ccm-wash:#ECFDF5;--ccm-washln:#a7d9c6;
 --ccm-rd:#C8202E;--ccm-rdw:#fdecec;--ccm-rdln:#f2c9cc;

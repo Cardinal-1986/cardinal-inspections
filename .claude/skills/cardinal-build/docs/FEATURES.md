@@ -150,9 +150,92 @@ Two routers coexist. The modern one (`cardinal-nav`) tags its states `{app:'card
 
 ---
 
+## Resource Library (`rlPage*`, builds 442–456)
+
+*Written 30 July 2026 against build 456. Absent from this file until now — the 428–451 span
+shipped it with no record outside the in-app changelog.*
+
+A reference library with an AI librarian, mounting into **`#resourceLibraryView` only**, as
+a fixed overlay. **30 static `rl-page` divs**, and in the DOM **144 `.rl-card` + 11 `.rl-ddcard`** —
+136 written in markup plus 8 built from in-file NACHI templates, before the database
+adds any. A bare `class="rl-card` regex says **146**; ten of those hits are inside JS
+template strings, so the file count and the DOM count are different questions and
+neither is wrong.
+
+| Block | What it owns |
+|---|---|
+| `cr-lib-styles` / `cr-lib-script` | the librarian panel — asks `api/librarian.js`, renders with `lbRich()`. Exports `CardinalLibrary` |
+| `cr-rltoc-styles` / `cr-rltoc-script` | the contents modal, **the search index**, and the per-page search boxes. Exports `CardinalRLTOC` |
+| `cr-nachi-*` (2 pairs) | NACHI curriculum pages + the admin content manager. Exports `CardinalNachi`, `CardinalNachiContent` |
+| `cr-ri-styles` / `cr-ri-script` | image zoom and `figureHtml()`. Exports `CardinalResourceImages` |
+| theme toggle | `data-rltheme="docket"` (paper) / `"siren"` (dark), `localStorage['cardinalRLTheme']`. Exports `CardinalRLTheme` |
+
+**Its own token namespace: `--ct-*`** — 105 declarations, 926 references. The librarian
+panel keeps a separate `--lb-*` set (22 declarations, 38 of its 48 refs carry literal
+fallbacks — the best-behaved palette in the app).
+
+### Search — one index, four ranks (453, 455, 456)
+
+`buildIndex()` walks **`.rl-groupsep, .rl-card, .rl-ddcard`** per page and returns
+`{el, group, title, cite, tags, body}`. `cardRank()` scores **0 title · 1 citation ·
+2 `data-rltags` · 3 body text**; `filterTier()` drops the body tier whenever anything
+better matched, so a common word doesn't return the whole library. **Both search surfaces
+share it** — the contents modal and the per-page boxes. Do not add a third.
+
+- It indexes **elements, not titles**. Before 453 the modal held a hand-typed array and
+  matched an `<h3>` by normalised string, which mapped curly quotes to a double quote —
+  three cards with a curly apostrophe were unreachable. `scrollToCardEl(entry)` takes the
+  element.
+- **`.rl-search` boxes mount on pages with 4+ `.rl-card` and a `.rl-pagehead`** — 17 of
+  them — immediately after the page head, re-seated on every mount pass because the NACHI
+  module inserts its nav card at the same `head.nextSibling` slot on `rlPageInsp`.
+- **`#resourceLibraryView .rl-search{top:0}` lives in `cr-hd2-styles`**, overriding the
+  `top:66px` in the library's own block. Not a conflict — that block also hides
+  `.ins-header` and pins the view below `--headh`, so 0 is the correct offset.
+- **Do & Don't (`rlPagePitfalls`) is `.rl-ddcard`, not `.rl-card`.** Its indexed title
+  carries the polarity (`Don't — …`) because `renderTOC()` prints group headings **only
+  when there is no query**, so a DON'T would otherwise surface from a search as a bare
+  title that reads like advice. It gets no search box of its own by design — filtering one
+  column of a two-column layout leaves a heading with nothing under it.
+- The flash class `cr-rltoc-flash` is scoped to **both** `.rl-card` and `.rl-ddcard`.
+- **A title that repeats within its page is qualified with its group** (457). Three cards
+  on `rlPageMfg` are called *Contractor Program & Warranty Tiers* and three *Do-Not-Mix
+  Rules* — one each for Owens Corning, GAF and CertainTeed — so a search returned three
+  identical rows and picking wrong meant reading GAF's rules on an Owens Corning roof.
+  Six rows library-wide; unique titles are left exactly as written.
+
+### Scope fence — stated in the module banner and the API header
+
+The Library files **reference** material: building code, roofing, siding, windows, gutters,
+manufacturer specs. It has **no knowledge of projects, clients, inspections, photos or
+Company Documents, and must never be pointed at them.** A design constraint, not an
+oversight.
+
+`lbRich()` **escapes first, then promotes** a small marker set on the already-escaped
+string — tables, headings, bullets, numbered lists, bold. By the time any promotion rule
+runs every `<` is `&lt;`, so nothing the API returns can open a tag. No links, no images,
+no raw HTML. If you extend it, keep that order and keep the set small.
+
+**`nachi_articles.html_content` is the deliberate exception** — it is rendered raw by
+`renderSeriesPage()`, because the content manager is an admin-authored rich-HTML editor
+with an HTML-source toggle. `esc()` is applied to title, tags and source around it.
+So `figureHtml()`'s unescaped `url` is **not an XSS** — it takes a Supabase signed URL, and
+an admin who could exploit it can already type raw HTML into the same editor.
+
+### Known, not fixed
+
+- `rlPageCode` → *Roof Decking / Sheathing* conflates rot-driven decking (a condition item)
+  with a code-driven decking upgrade (genuinely Ordinance or Law).
+- Sales Floor carries a second `[data-rl]` handler that routes into the library.
+- Content gaps measured by probe at build 455: siding and gutter **systems** (only
+  measurement pages exist), low-slope/TPO/modified bitumen, and post-sale process
+  (punch list, final inspection).
+
+---
+
 ## Everything else
 
-Photos & Album (`cr-pae`, `cr-ped`, `cr-paf`), Inspections, Documents/contracts (isolated iframes), Production board (`cr-pb`), Sales Floor + Objection Coach (`cr-sf`, `cr-coach`), Scheduling, Client Portal (`cr-portal`), Cross-links (`cr-xlinks`), AccuLynx import (`cr-import`), Adjuster Directory, Recents, Search, CSV, Undo, Offline, Palette, Perf, Errors, Invariants, Self Check (`cr-sc`), Admin health badge (`cr-ahc`), Changelog (`CardinalChangelog`), NACHI content, Resource Library, ABC Supply (`cr-abc`).
+Photos & Album (`cr-pae`, `cr-ped`, `cr-paf`), Inspections, Documents/contracts (isolated iframes), Production board (`cr-pb`), Sales Floor + Objection Coach (`cr-sf`, `cr-coach`), Scheduling, Client Portal (`cr-portal`), Cross-links (`cr-xlinks`), AccuLynx import (`cr-import`), Adjuster Directory, Recents, Search, CSV, Undo, Offline, Palette, Perf, Errors, Invariants, Self Check (`cr-sc`), Admin health badge (`cr-ahc`), Changelog (`CardinalChangelog`), NACHI content, **Resource Library — see its own section above**, ABC Supply (`cr-abc`).
 
 **Live back buttons — do not "clean" these:** `galBackBtn`, `commsBackBtn`, `apBackBtn`, `icBackBtn`, `jdBackBtn`, `payBackBtn`, `rlBackBtn`, `tskBackBtn`.
 
