@@ -36965,8 +36965,20 @@ if(!est || !project){ alert('Open an estimate first.'); return; }
 ensurePreview();
 var docUrls = (typeof signedPhotoMap === 'function')
 ? await signedPhotoMap(estimatePhotoPaths(est), PHOTO_DOC_URL_TTL) : null;
+/* Signing is a network round-trip, so the user may have closed the estimate or
+   navigated away while it was in flight. Locking body scroll now would freeze
+   the page with no visible overlay to dismiss - the tap is stale, so drop it.
+   openPreview() was synchronous before the signed-URL work; the await is what
+   created this window. */
+function _pvStillOpen(){
+var ed = document.getElementById('cr-est-view');
+return !!(previewEl && previewEl.isConnected &&
+ed && ed.classList.contains('open'));
+}
+if(!_pvStillOpen()) return;
 var html = buildDocHtml(est, project, docUrls);
 var frame = previewEl.querySelector('[data-slot="pv-frame"]');
+if(!frame) return;
 frame.srcdoc = html;
 previewEl.classList.add('open');
 document.body.style.overflow = 'hidden';
