@@ -2663,7 +2663,8 @@ body:has(#loginView[style*="block"]){background:#fff;}
 }
 #resourceLibraryView .rl-intro h2{margin:0 0 8px;font:700 18px var(--ct-sans);letter-spacing:-.022em;color:var(--ct-ink);}
 #resourceLibraryView .rl-intro p{margin:0 0 8px;font-size:16px;color:var(--ct-ink-2);}
-#resourceLibraryView .rl-warn{background:var(--ct-act-bg);border-left:4px solid var(--ct-act-edge);padding:10px 12px;margin-top:10px;font-size:15px;color:var(--ct-act-ink);border-radius:0 4px 4px 0;}
+#resourceLibraryView .rl-warn{background:var(--ct-warn-bg,#FBEFDA);border-left:4px solid var(--ct-warn,#8f1620);padding:10px 12px;margin-top:10px;font-size:15px;color:var(--ct-act-ink,#3B3330);border-radius:0 4px 4px 0;}
+#resourceLibraryView .rl-warn b{color:var(--ct-warn,#8f1620);}
 
 #resourceLibraryView .rl-search{margin:0 0 18px;position:sticky;top:66px;z-index:9;}
 #resourceLibraryView .rl-search input{
@@ -3141,7 +3142,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 453 &#8212; library search now finds code sections, keywords and card text, not just titles</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 454 &#8212; the money side of a claim is in the library now, with the arithmetic worked out</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4439,7 +4440,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
       <div class="rl-card" data-rltags="ordinance law coverage d code upgrade">
         <h3>Ordinance &amp; Law Coverage</h3>
-        <p>Often listed as Coverage D or Increased Cost of Construction on HO-3 policies. Pays for costs incurred to bring the property into current code compliance as part of a covered loss. Without it, the carrier only owes the pre-loss condition &mdash; code-required upgrades come out of the homeowner's pocket.</p>
+        <p>Usually a built-in Additional Coverage on HO-3 policies, commonly capped at a percentage of Coverage A, with higher limits available by endorsement. It is not one of the lettered coverages. Pays for costs incurred to bring the property into current code compliance as part of a covered loss. Without it, the carrier only owes the pre-loss condition &mdash; code-required upgrades come out of the homeowner's pocket.</p>
         <div class="rl-use"><b>Check for:</b> percentage of Coverage A dwelling amount (10&percnt;, 25&percnt;, 50&percnt;), or a flat dollar limit. Some policies exclude it entirely, some include it automatically. If absent, decking replacement and ventilation upgrades required by code become the homeowner's cost.</div>
       </div>
 
@@ -4454,6 +4455,164 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <h3>Matching Endorsement</h3>
         <p>Some carriers offer an optional endorsement that expands the state matching regulation and explicitly requires uniform-appearance repairs including full replacement of undamaged sections when necessary. Others explicitly limit matching to a single slope or single side of a wall.</p>
         <div class="rl-use"><b>Check for:</b> "matching," "uniform appearance," "cosmetic" language in the policy schedule and any endorsements. Some carriers add a cosmetic-damage exclusion that specifically strips matching for hail spatter without functional damage.</div>
+      </div>
+
+      <div class="rl-groupsep">The Money</div>
+
+      <div class="rl-warn"><b>These worked examples are examples.</b> The numbers below are made up to show the order the arithmetic runs in. Depreciation schedules, roof life expectancy and whether labor is depreciated are set by the carrier and vary policy to policy &mdash; none of them is Ohio law. Read the declarations page and the endorsements before you put a number in front of a homeowner.</div>
+
+      <div class="rl-card" data-rltags="coverage a b c d dwelling structures contents loss of use deductible declarations">
+        <h3>Coverage A, B, C, D &mdash; which one pays for what</h3>
+        <p>A homeowner asks &ldquo;is this covered?&rdquo; The answer is usually &ldquo;under which coverage?&rdquo; On a standard HO-3 the roof is Coverage A, the detached garage is Coverage B, and the ruined furniture underneath the leak is Coverage C.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>The four coverages on a standard homeowner policy</caption>
+            <thead><tr><th>Coverage</th><th>Pays for</th><th>On a storm claim</th></tr></thead>
+            <tbody>
+              <tr><td><b>A</b> &mdash; Dwelling</td><td>The house and what is attached to it</td><td>Roof, siding, gutters, attached porch</td></tr>
+              <tr><td><b>B</b> &mdash; Other Structures</td><td>Detached structures on the lot</td><td>Detached garage, shed, fence. Typically 10&percnt; of Coverage A, with its own limit</td></tr>
+              <tr><td><b>C</b> &mdash; Personal Property</td><td>Contents</td><td>What the leak ruined inside</td></tr>
+              <tr><td><b>D</b> &mdash; Loss of Use</td><td>Additional living expense</td><td>Rarely reached on a roof claim</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote"><b>Ordinance or Law is where code-upgrade money lives, and it is not one of the four lettered coverages.</b> On a standard HO-3 the letters stop at D. Code-upgrade cost comes from a separate Additional Coverage built into the form &mdash; commonly capped at 10&percnt; of Coverage A &mdash; with higher limits available by endorsement. Some proprietary forms reduce or exclude it. This is what pays for what the Ohio Residential Code requires on a reroof but the old roof did not have, such as ice barrier, drip edge and fastening upgrades. Find the limit on the schedule before you write the supplement, and do not assume it is absent just because no endorsement is listed.</p>
+          <p class="rl-tnote"><b>Rentals are a different form.</b> Landlord policies are usually dwelling-fire (DP) forms, where the letters run further &mdash; D is Fair Rental Value and E is Additional Living Expense. Confirm the form number at the top of the declarations page before you quote a letter.</p>
+        </div>
+        <div class="rl-use"><b>Use it:</b> when the adjuster's scope only lists the house, ask whether the detached garage was inspected. It is a separate coverage with its own limit, and it is one of the easiest things to leave off a scope.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="deductible percentage flat wind hail money first check homeowner">
+        <h3>Flat deductible vs percentage deductible</h3>
+        <p>A flat deductible is a dollar figure. A percentage deductible is a percentage <b>of Coverage A</b> &mdash; not of the claim &mdash; and on a wind or hail loss it is often larger than the all-perils deductible on the same policy.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>What a wind/hail percentage costs at four dwelling amounts</caption>
+            <thead><tr><th class="num">Coverage A</th><th class="num">1&percnt;</th><th class="num">2&percnt;</th><th class="num">5&percnt;</th></tr></thead>
+            <tbody>
+              <tr><td class="num">$200,000</td><td class="num">$2,000</td><td class="num">$4,000</td><td class="num">$10,000</td></tr>
+              <tr><td class="num">$300,000</td><td class="num">$3,000</td><td class="num">$6,000</td><td class="num">$15,000</td></tr>
+              <tr><td class="num">$400,000</td><td class="num">$4,000</td><td class="num">$8,000</td><td class="num">$20,000</td></tr>
+              <tr><td class="num">$500,000</td><td class="num">$5,000</td><td class="num">$10,000</td><td class="num">$25,000</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote">Straight arithmetic, not a carrier's schedule. The percentage and the Coverage A figure both come off the declarations page.</p>
+        </div>
+        <div class="rl-doc"><b>Get this before you quote anything:</b> a photo of the declarations page showing Coverage A, the all-perils deductible <i>and</i> the separate wind/hail deductible. A homeowner who thinks their deductible is $1,000 when the policy says 2&percnt; of $350,000 &mdash; that is $7,000 &mdash; is a signed job that dies at the kitchen table.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="acv rcv payment order first check depreciation deductible math worked example">
+        <h3>The order the money arrives in</h3>
+        <div class="rl-warn"><b>Example numbers.</b> The 25-year roof life, the straight-line schedule and whether labor is depreciated are assumptions used here to show the order the arithmetic runs in. All three are set by the carrier and the policy &mdash; none is Ohio law.</div>
+        <p>On an RCV policy the carrier pays in stages &mdash; at least twice, and more if the scope is supplemented. The first check is the actual cash value minus the deductible. The rest &mdash; the recoverable depreciation &mdash; is released after the work is done and documented. The release is capped at what the job actually cost: if the final invoice comes in under the approved scope, the carrier releases the lower figure. The withheld amount is a ceiling, not a guaranteed payment.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>Worked example &mdash; RCV policy, 1&percnt; wind/hail on $340,000, roof aged 14 of an assumed 25-year life</caption>
+            <thead><tr><th>Step</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td>Replacement cost of the approved scope</td><td class="num">$21,450.00</td></tr>
+              <tr><td>Less depreciation withheld (14 of 25 years = 56&percnt;)</td><td class="num">&minus;$12,012.00</td></tr>
+              <tr><td><b>Actual cash value</b></td><td class="num"><b>$9,438.00</b></td></tr>
+              <tr><td>Less wind/hail deductible (1&percnt; of $340,000)</td><td class="num">&minus;$3,400.00</td></tr>
+              <tr><td><b>First check</b></td><td class="num"><b>$6,038.00</b></td></tr>
+              <tr><td>Depreciation released on completion (up to the amount actually incurred)</td><td class="num">$12,012.00</td></tr>
+              <tr><td><b>Total the carrier pays</b></td><td class="num"><b>$18,050.00</b></td></tr>
+              <tr><td>Homeowner pays the deductible</td><td class="num">$3,400.00</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote"><b>$18,050 + $3,400 = $21,450.</b> On a clean full-RCV settlement the carrier plus the homeowner equals the job. It legitimately will not close when the estimate carries non-recoverable depreciation, an ACV roof endorsement, a sublimit or a cap. If it does not close, ask the adjuster which of those applies before you assume something was left out &mdash; there is usually a line on the estimate that says.</p>
+        </div>
+        <div class="rl-use"><b>Say it like this:</b> &ldquo;The insurance company pays for the approved scope minus your deductible, and they pay it in two parts &mdash; some now, the rest when the work is finished. Your deductible is your part. If the carrier hasn&rsquo;t approved everything yet, or if your policy has a roof payment schedule on it, your share can be more than the deductible &mdash; I&rsquo;ll check your declarations page and endorsements and tell you before you sign anything.&rdquo;</div>
+      </div>
+
+      <div class="rl-card" data-rltags="zero check small first check denial acv deductible not denied money">
+        <h3>Why the first check is small &mdash; and why $0 is not a denial</h3>
+        <div class="rl-warn"><b>Example numbers.</b> The 25-year roof life, the straight-line schedule and whether labor is depreciated are assumptions used here to show the order the arithmetic runs in. All three are set by the carrier and the policy &mdash; none is Ohio law.</div>
+        <p>When the approved scope is larger than the deductible but the actual cash value is not, the first check is zero and the claim is still <b>approved</b>. It is not denied, and the recoverable depreciation is owed on completion. What the homeowner has is a timing problem, not a coverage problem.</p>
+        <p><b>Check which zero it is.</b> Compare the <i>replacement cost</i> of the scope to the deductible, not the ACV. If replacement cost is above the deductible &mdash; as in the table below &mdash; the balance comes on completion. If the whole replacement cost is <i>below</i> the deductible, there is no payment now and none later, and that is a dead end rather than a timing problem. Make that comparison before you tell anyone a second check is coming.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>Worked example &mdash; same $21,450 scope, a roof aged 21 of an assumed 25-year life, 2&percnt; deductible on $340,000</caption>
+            <thead><tr><th>Step</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td>Replacement cost</td><td class="num">$21,450.00</td></tr>
+              <tr><td>Less depreciation (21 of 25 years = 84&percnt;)</td><td class="num">&minus;$18,018.00</td></tr>
+              <tr><td>Actual cash value</td><td class="num">$3,432.00</td></tr>
+              <tr><td>Less deductible (2&percnt; of $340,000)</td><td class="num">&minus;$6,800.00</td></tr>
+              <tr><td><b>First check</b> &mdash; floored at zero</td><td class="num"><b>$0.00</b></td></tr>
+              <tr><td>Released on completion</td><td class="num">$14,650.00</td></tr>
+              <tr><td><b>Total the carrier pays</b></td><td class="num"><b>$14,650.00</b></td></tr>
+              <tr><td>Homeowner pays the deductible</td><td class="num">$6,800.00</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote">The check is floored at zero, but <b>the deductible is not forgiven</b> &mdash; the part it could not absorb comes off the release instead. On this policy, with the work completed and all of the depreciation recoverable, the carrier's total comes to replacement cost minus the deductible: <b>$21,450 &minus; $6,800 = $14,650</b>, and the homeowner's share is the full $6,800. If the work is never finished nothing is released and the carrier's total stays at the first check; where a roof payment schedule endorsement applies it does not work this way at all &mdash; see <i>The roof payment schedule endorsement</i>.</p>
+        </div>
+        <div class="rl-use"><b>Use it:</b> a homeowner who gets a $0 check usually believes the claim was denied and stops answering the phone. Show them this before the check arrives, not after &mdash; and have the answer to &ldquo;so how do I pay for this now?&rdquo; ready, because on this example they are carrying the job until the release arrives.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="recoverable depreciation release completion certificate final invoice supplement">
+        <h3>Recoverable depreciation and how it is released</h3>
+        <p>Depreciation withheld on an RCV policy is usually <b>recoverable</b> &mdash; the carrier owes it once the work is actually done, and it is released against proof, not against a phone call. Check the estimate first: many carriers print recoverable and <b>non-recoverable</b> depreciation as separate lines, and the non-recoverable figure is never released. Read the summary page and quote the recoverable number, not the total withheld.</p>
+        <ul>
+          <li>Final invoice showing the work performed and the amount charged.</li>
+          <li>Completion photographs, usually including the finished roof and the disposal.</li>
+          <li>A certificate of completion or signed satisfaction form on some carriers.</li>
+          <li>Any permit close-out the jurisdiction requires.</li>
+        </ul>
+        <div class="rl-doc"><b>Watch the clock.</b> Most policies put a time limit on claiming recoverable depreciation, commonly measured from the date of loss. The limit is in the policy, not in state law, and it varies &mdash; find it on the claim, write it on the job, and do not let a job sit unfinished past it.</div>
+        <div class="rl-use"><b>Common trap:</b> a supplement approved <i>after</i> the ACV check has its own depreciation withheld too. Getting a supplement approved is not the same as getting it paid &mdash; the release still has to be requested on completion.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="roof surfacing payment schedule endorsement acv schedule age condition">
+        <h3>The roof payment schedule endorsement</h3>
+        <p>Several carriers now attach an endorsement that converts roof surfacing from replacement cost to a scheduled payout based on the roof's age &mdash; sometimes a table of percentages by year, sometimes a flat conversion to ACV after a stated age.</p>
+        <p>When it applies, <b>there is no recoverable depreciation to release on the roof surfacing</b> &mdash; the scheduled amount is the whole payment for that part, and the homeowner covers the rest. The rest of the claim is unaffected: siding, gutters and interior damage normally stay on replacement cost with depreciation still recoverable. Read the endorsement for what it counts as &ldquo;roof surfacing&rdquo; &mdash; forms differ on whether flashing, decking and underlayment are inside or outside that word.</p>
+        <div class="rl-doc"><b>Find it before the inspection.</b> It has different names on different forms &mdash; roof surfacing payment schedule, roof surfaces extended coverage, actual cash value loss settlement windstorm or hail losses to roof surfacing. It is in the endorsement pages, not on the declarations summary.</div>
+        <div class="rl-use"><b>Why it matters commercially:</b> the job is the same job, but the homeowner's share is much larger. Find it early, price it honestly, and do not let it surface after the contract is signed.</div>
+      </div>
+
+      <div class="rl-groupsep">Getting Paid</div>
+
+      <div class="rl-card" data-rltags="duties after loss policy obligation mitigate cooperate proof of loss homeowner">
+        <h3>Duties after loss &mdash; the homeowner's side of the contract</h3>
+        <p>Every policy lists what the insured must do after a loss. Miss them and the carrier gains an argument it did not have to earn. In broad terms they run to: give prompt notice, protect the property from further damage, cooperate with the investigation, and provide records the carrier asks for.</p>
+        <div class="rl-use"><b>Cardinal's part:</b> the mitigation duty is the one a contractor can discharge for the homeowner. A tarp, dated and photographed, is evidence that the duty was met. Bill it as a line item and keep the photograph.</div>
+        <div class="rl-doc"><b>Read the actual policy language.</b> The list above is the general shape, not a quotation. Some forms require a signed sworn proof of loss on request and set a deadline for it; some set a time limit for suit against the carrier. Both are in the policy, both are enforceable, and neither is something to learn about late.<br><br><b>The duties run both ways.</b> Ohio&rsquo;s unfair claims settlement practices rules put the carrier on its own timelines for acknowledging and acting on a claim &mdash; see <i>Unfair Claims Settlement Practices</i> on the Ohio Insurance Law page. Do not quote a number of days from memory.</div>
+        <div class="rl-warn"><b>A sworn proof of loss is the homeowner&rsquo;s sworn document.</b> Do not prepare it, do not fill it in, and never sign one for a homeowner. Hand them your estimate and your photographs &mdash; what they swear to is theirs.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="mortgagee escrow loss draft endorsement two party check bank inspection draw">
+        <h3>The mortgage company is on the check</h3>
+        <p>If there is a mortgage, the lender is almost always a named payee on the <b>structure</b> portion of the claim &mdash; the Coverage A and B money. Contents and loss-of-use checks normally go to the homeowner alone. The homeowner cannot simply sign the structure check over &mdash; the lender endorses it, and above a threshold it goes into a loss-draft escrow and is released in stages against inspections.</p>
+        <div class="rl-tw">
+          <table class="rl-table">
+            <caption>A typical loss-draft sequence &mdash; shape only, every servicer differs</caption>
+            <thead><tr><th>Stage</th><th>What the servicer usually wants</th></tr></thead>
+            <tbody>
+              <tr><td>Open the claim file</td><td>The check, the adjuster's scope, the contractor's contract and W&#8209;9</td></tr>
+              <tr><td>First release</td><td>Often a portion up front on a signed contract</td></tr>
+              <tr><td>Progress release</td><td>An inspection, sometimes by a third party the servicer sends</td></tr>
+              <tr><td>Final release</td><td>Completion inspection, final invoice, lien waiver</td></tr>
+            </tbody>
+          </table>
+          <p class="rl-tnote">Thresholds, staging and paperwork are set by the <b>servicer</b>, not by the carrier and not by Ohio law. Ask the homeowner to call the number on their mortgage statement and ask for the loss draft department. <b>Loan status matters more than paperwork:</b> if the loan is behind or in foreclosure, many servicers will not release monitored funds at all, or will apply them to the balance. No completion package fixes that, so find out early whether the homeowner is current.</p>
+        </div>
+        <div class="rl-use"><b>Why jobs stall here:</b> the money exists, the homeowner has the check, and nobody told them a bank has to endorse it. Ask on the first visit whether there is a mortgage. It changes the payment schedule, not the price.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="appraisal umpire dispute amount of loss not coverage clause">
+        <h3>Appraisal &mdash; the disagreement clause about <i>amount</i></h3>
+        <p>Most property policies contain an appraisal clause. Either side may invoke it when they disagree about the <b>amount</b> of the loss. Each side names an appraiser, the two appraisers select an umpire, and an award agreed by any two of the three is binding as to amount. The clause usually runs on deadlines &mdash; a set period to name an appraiser after a written demand, a further period for the two to agree an umpire, and a court appointment if they cannot. Read the days off the policy in front of you; they differ between forms.</p>
+        <div class="rl-warn"><b>Appraisal decides amount, not coverage.</b> If the carrier says the damage is not storm damage at all, that is a coverage dispute and appraisal is the wrong tool. Read the clause on the policy in front of you &mdash; who may invoke it, what it costs, and what it binds are all in that paragraph and they differ between forms.</div>
+        <div class="rl-use"><b>Where a contractor stands:</b> Cardinal documents, scopes and prices. Explaining what the clause is, is fine. Negotiating the claim on the homeowner's behalf crosses into public adjusting, which Ohio licenses &mdash; see <i>Public Adjuster Licensing</i> on the Ohio Insurance Law page. Invoking appraisal is the policyholder's decision and not one to recommend: if they ask whether they should, refer them to their own attorney or a licensed public adjuster. Whether Cardinal may serve as the homeowner's named <i>appraiser</i> under the clause is a separate and less settled question &mdash; ask Theo, do not decide it on a driveway.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="deductible rebating waive absorb illegal fraud homeowner obligation">
+        <h3>The deductible is the homeowner's to pay</h3>
+        <span class="rl-cite">ORC &sect;2913.47</span><span class="rl-cite rl-gold">Insurance side</span>
+        <p>Inflating an invoice, writing a second set of paperwork, or otherwise misstating the price of the job so the carrier absorbs the homeowner's deductible puts a false figure in front of the insurer. In Ohio, presenting a statement in support of an insurance claim &mdash; with purpose to defraud, or knowing you are facilitating a fraud &mdash; knowing that the statement is false or deceptive is a criminal offense under ORC 2913.47. Cardinal invoices the real price, every time.</p>
+        <p>Separately, Cardinal does not advertise, offer or agree to waive, absorb or rebate a deductible in any form. Whether a particular arrangement is itself unlawful in Ohio turns on the facts and on statutes outside 2913.47 &mdash; a question for Cardinal's attorney, not for a rep on a driveway.</p>
+        <div class="rl-use"><b>The safe sentence:</b> &ldquo;Your deductible is your part of the job. We can't cover it, and any contractor offering to isn't doing you a favor &mdash; it's the same paperwork that gets a claim reopened.&rdquo;</div>
+        <div class="rl-warn"><b>This card describes why Cardinal will not do it. It is not a legal opinion about anyone else.</b> Whether a particular arrangement crosses ORC 2913.47, whether Ohio has a contractor-specific deductible statute, and how the Consumer Sales Practices Act applies to roofing advertising are questions for Cardinal's attorney. Do not accuse a competitor of a crime on a driveway.</div>
       </div>
     </div>
 
@@ -4564,7 +4723,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <p>Deteriorated decking is discovered during tear-off. Adjuster wants to exclude it as maintenance.</p>
         <div class="rl-use"><b>Answer:</b>
           <ul>
-            <li>If the policy has <b>Ordinance &amp; Law (Coverage D)</b>, deck replacement required by code is covered under that coverage even if not covered by dwelling coverage.</li>
+            <li>If the policy has <b>Ordinance &amp; Law coverage</b>, deck replacement required by code is covered under that coverage even if not covered by dwelling coverage.</li>
             <li>Cite <b>RCO R908.3</b> and <b>R803</b> &mdash; recovering over unsound sheathing is prohibited.</li>
             <li>Photograph every replaced board with scale, log square footage, submit as supplement with dated photos.</li>
             <li>Check the policy declarations page before promising O&amp;L coverage &mdash; not every homeowner has it.</li>
@@ -4775,7 +4934,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <li>Double underlayment on &lt; 4:12 slope &mdash; <b>RCO R905.1.1</b></li>
           <li>4-nail (or 6 in high-wind) fastening &mdash; <b>RCO R905.2.5</b></li>
         </ul>
-        <p><b>Ordinance &amp; Law coverage (Coverage D):</b> check the declarations page. Percentage of Coverage A. Pays for code-driven upgrades. If it's not there, decking replacement is on the homeowner.</p>
+        <p><b>Ordinance &amp; Law coverage:</b> check the declarations page and the endorsement pages. Percentage of Coverage A. Pays for code-driven upgrades. If it's not there, decking replacement is on the homeowner.</p>
         <p><b>Documentation minimums:</b> ground of all elevations, layer count at edge, test square per slope, damage close-ups with scale, ventilation type &amp; condition, flashing condition, attic if accessible, dated on every photo.</p>
         <p><b>The line you don't cross:</b> Cardinal documents damage and provides its own scope. Cardinal does not negotiate coverage under the policy. That's public adjuster or attorney work &mdash; <b>ORC Chapter 3951</b>.</p>
       </div>
@@ -5118,7 +5277,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <h3>Decking Replacement</h3>
         <span class="rl-cite">RCO R803</span>
         <span class="rl-cite">RCO R908.3</span>
-        <span class="rl-cite rl-gold">Coverage D</span>
+        <span class="rl-cite rl-gold">Ordinance or Law</span>
         <p>Deteriorated decking discovered during tear-off. Adjuster wants to exclude as &ldquo;maintenance&rdquo; or pre-existing.</p>
         <div class="rl-doc"><b>Line items to add:</b>
           <ul>
@@ -5135,7 +5294,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
             <li>If possible: physical sample of removed board.</li>
           </ul>
         </div>
-        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;During tear-off on [date], Cardinal identified [X square feet] of deteriorated roof sheathing that will not hold fasteners and cannot serve as an adequate base for new roofing. Per RCO R908.3, a re-cover over unsound decking is prohibited; per RCO R803, sheathing must be structurally sound. This deck replacement is code-required. If the policy includes Ordinance &amp; Law (Coverage D), this work is covered under that coverage. Please add [X sqft] of deck replacement to the approved scope, priced at [$X per sqft]. Documentation photos with scale are attached.&rdquo;</i></div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;During tear-off on [date], Cardinal identified [X square feet] of deteriorated roof sheathing that will not hold fasteners and cannot serve as an adequate base for new roofing. Per RCO R908.3, a re-cover over unsound decking is prohibited; per RCO R803, sheathing must be structurally sound. This deck replacement is code-required. If the policy includes Ordinance &amp; Law coverage, this work is covered under that coverage. Please add [X sqft] of deck replacement to the approved scope, priced at [$X per sqft]. Documentation photos with scale are attached.&rdquo;</i></div>
         <div class="rl-tags"><span>discovered</span><span>ordinance &amp; law</span><span>tear-off</span></div>
       </div>
 
@@ -32336,6 +32495,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:454, note:'\uD83D\uDCB5 Policy Provisions now covers the money: what Coverage A, B, C and D each pay for, flat vs percentage deductibles, the order the checks arrive in worked out with real numbers, why a $0 first check is not a denial, the mortgage company on the check, and appraisal. Also corrected five places that called Ordinance &amp; Law \u201cCoverage D\u201d \u2014 on a standard policy Coverage D is Loss of Use.' },
 { build:453, note:'\uD83D\uDD0D Library search finally finds things. Type a code section like R905.1.2 and you get the code card, the supplement wording and the rebuttal \u2014 before, that returned nothing. Searches card text and keywords too, and three cards that could never be opened from the contents list now open.' },
 { build:452, note:'\uD83D\uDD35 The letters inside the pipeline circles are dark now instead of white \u2014 white on the yellow, orange, green and blue read at 2:1 and you could not make them out. Leads also got the same raised edge the other circles have had since 436.' },
 { build:451, note:'\uD83D\uDD27 Fixed Library and Manage NACHI landing on top of each other in the installed app \u2014 both now stack cleanly with TOC and the new light/dark toggle. Also fixed a clipped placeholder in client notes.' },

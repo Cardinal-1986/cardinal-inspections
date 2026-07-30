@@ -763,3 +763,72 @@ twice. It was not in `.vercelignore`, so it was being served at
 returns useful citations, and how often it correctly returns an empty array, needs one
 real question asked against the deployed function. Ask the librarian something
 code-shaped — *"what nail count does high wind require?"* — and see whether chips appear.
+
+### 454 · the money page, and the Coverage D error it exposed
+
+`rlPagePolicy` held **3 cards** and the library contained **no worked money arithmetic
+anywhere**. Now 13: Coverage A–D, flat vs percentage deductible, the payment order worked
+twice, why a $0 first check is not a denial, recoverable depreciation, the roof payment
+schedule endorsement, duties after loss, mortgagee loss-draft escrow, appraisal, and the
+deductible. **+10 cards, +5 tables, `.rl-warn`'s first six production uses.**
+
+#### Drafted, then adversarially reviewed before it came near the file
+
+Three independent lenses — arithmetic, insurance accuracy, legal exposure — plus an
+adjudicator. **30 required changes: 24 to the draft, 6 to shipped content.** The
+recurring failure the review named is worth keeping: *a correct worked example generalised
+into a rule.* "The carrier pays twice", "withheld depreciation is recoverable", "the
+identity is the whole point" — each true of the example, false as a rule, and each one
+gets corrected in front of a customer.
+
+The single worst item was a spoken script in an `.rl-use`, in quotation marks, promising
+a homeowner their out-of-pocket is the deductible — **false under a roof payment schedule
+endorsement, which the library's own card describes two cards later.**
+
+#### Six corrections to shipped cards — why this had to be one build
+
+**Five places called Ordinance & Law "Coverage D".** On a standard ISO HO-3 **Coverage D
+is Loss of Use**; Ordinance or Law is a Section I Additional Coverage, commonly capped at
+10% of Coverage A. One of the five was an **`.rl-cite` chip** — the monospace chip that
+exists *because reps read it aloud* — and one was **sample supplement wording a rep sends
+to a carrier in writing** over Cardinal's name.
+
+Shipping the new Coverage A–D card without these would have put two cards in one library
+flatly contradicting each other, **both surfacing on a search for "coverage d"** — a
+search that only started working at 453.
+
+**The review supplied four of the five. The patch's own scope assertion caught the
+fifth** — the citation chip. That assertion is the reason it did not ship.
+
+#### `.rl-warn` had never rendered
+
+Exactly **one** occurrence in the 2.66 MB file (the CSS rule), **zero** markup uses, and
+it resolved **byte-identically** to `.rl-use` — same `--ct-act-bg` / `--ct-act-edge` /
+`--ct-act-ink`. Every legal disclaimer would have rendered in the same skin as the
+cheerful sales tip. Now on `--ct-warn-bg` / `--ct-warn` (both declared in each skin, with
+literal fallbacks). Contrast computed, not estimated: **10.85:1** body and **8.01:1** bold.
+
+#### Gates
+
+`check_build.py` green, `--prev` at 453, marker negative-controlled. Functional harness
+**21/21**. Re-applying to a fresh copy reproduces byte-for-byte (`d8dd0a16`).
+**Negative control: 18 of 21 fail on 453**, including the Coverage D check — the errors
+were real and the gate has been seen to fail.
+
+#### Three harness bugs, all mine, all caught
+
+1. Asserted a `::before` label that was never part of the adjudicated fix — my own dropped
+   idea. Removed.
+2. **`innerText` on a *rendered* container skips `display:none` children**, so the
+   library-wide "no Ordinance-linked Coverage D" check was scanning only the active page
+   and **passing vacuously**. `textContent` sees hidden pages; `innerText` does not.
+3. `Coverage D` case-insensitive matched **"coverage doesn't"**. Missing `\b`.
+
+### Flagged, not fixed — Theo's call
+
+`rlPageCode` → *Roof Decking / Sheathing* tells reps "Ordinance & Law coverage often pays
+for this even when standard coverage doesn't", about **rot-driven** decking replacement.
+Decking replaced because it is rotten is a condition item; only a **code-driven** decking
+upgrade (thickness, span, fastening) is Ordinance or Law. Correcting it needs a decision
+about how the decking-supplement cards frame that distinction, so it is a follow-up build,
+not a silent edit.
