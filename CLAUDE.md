@@ -24,7 +24,7 @@ Owner: **Theo Dorion** · theo@cardinalrenovations.net
 
 The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It triggers on any Cardinal work — features, bug fixes, theming, SQL, `/api`, audits.
 
-**These docs supersede anything in the skill's `references/` folder** (snapshots at build 334). Do not proceed from memory — build numbers, open items and settled decisions change every session. **Check their dates against the current build before trusting them**; docs written a session ago describe a different app.
+**For session state — open items, settled decisions, handoffs — these docs are authoritative over the skill's `references/` folder.** The references were refreshed to build 427/428 (invariants, gates, bug classes, theming, app map, plus the lexer/contrast/selector-audit scripts); `references/app_map.md` remains a 388-era terrain map that itself defers to `FEATURES.md`. Do not proceed from memory — build numbers, open items and settled decisions change every session. **Check their dates against the current build before trusting them**; docs written a session ago describe a different app.
 
 ---
 

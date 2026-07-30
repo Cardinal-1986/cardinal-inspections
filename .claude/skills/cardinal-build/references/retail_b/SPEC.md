@@ -1,8 +1,10 @@
-# retail-B — COMMITTED spec (July 27, ~7am)
+# retail-B — SHIPPED (builds 335–341)
 
-**Theo committed the full design. This is the build plan — do not re-design, do not re-litigate.** The interactive sources of truth are `all_leads_jobs_final.html` and `estimates_final.html` (both sent to Theo / in outputs; `estimates_final.html` is bundled beside this file — open it, the filters actually work). Estimated **5–7 builds. Stage every build separately — each staged build is a safe resume point.** Gate + negative-control every step; preview on device between builds.
+**This is now a historical record, not a build plan.** Verified at build 373: `body[data-crm="retail"]` occurs **0 times** in the shipped file — the 21-rule override layer is deleted and dark iron lives at the base.
 
-## The committed run, in order
+Keep this file for two jobs: **tracing why a retail surface looks the way it does**, and **regression reference** — `estimates_final.html` beside it is the interactive spec the shipped Estimates lanes were built from, so it's the thing to diff against if lanes/filters ever drift. Do not re-litigate anything below; the settled decisions (no auto-archive, no caps) are in OPEN_ITEMS §5.
+
+## What shipped, in order
 
 ### 1. Dark base commit
 - Iron `#202329` becomes the **base** ground; delete the 21-rule `body[data-crm="retail"]` override layer.
