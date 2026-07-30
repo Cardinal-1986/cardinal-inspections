@@ -511,11 +511,12 @@ body.claim-insurance{background:var(--ct-bg);}
    is normal document flow (not a fixed overlay), so a long note scrolls the real
    document, and iOS rubber-band overscroll reveals whatever is beyond body's
    painted area — html's browser default, white. Shaped exactly like body's own
-   base-then-override: a universal dark fallback (matching --bg's own #202329,
-   nothing new invented), then the insurance light/dark toggle on top so the
+   base-then-override: a universal dark fallback reading --bg directly (429: was a
+   hardcoded #202329 duplicating the token; now the token is the single source of
+   truth for the page ground, and light/print modes re-ground html for free), then the insurance light/dark toggle on top so the
    bounce colour always matches whatever is actually on screen. :has() already used
    5x elsewhere in this file (loginView, .fig, .figrow, .cover-photo). */
-html{background:#202329;}
+html{background:var(--bg);}
 html:has(body.claim-insurance){background:var(--ct-bg);}
 
 /* Two-tone the Cardinal Roofing logo — greyscale it then tint toward light blue
@@ -3101,7 +3102,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-29 build 428 &#8212; the build number is readable again: changelog + error reports</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 429 &#8212; page ground reads the --bg token: one place to change it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32131,6 +32132,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:429, note:'\uD83C\uDFA8 Page background now reads the --bg token instead of a hardcoded copy \u2014 the ground can be changed in one place, and light mode no longer shows dark overscroll' },
 { build:428, note:'\uD83D\uDD27 This box now knows which build you are on \u2014 it had been reading a number out of a stylesheet comment, so it had stopped appearing after updates' },
 { build:342, note:'\uD83C\uDFA8 Client profile hero re-dressed \u2014 iron card with a neon stage spine, gradient name, tap-to-call phone + email right on the name row' },
 { build:341, note:'\uD83D\uDC65 One Clients directory for all three CRMs \u2014 brass look, per-CRM milestone filters, CRM switcher bar at the bottom, admin multi-select delete' },
