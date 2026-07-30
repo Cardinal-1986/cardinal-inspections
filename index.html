@@ -1091,7 +1091,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   .projgrid.swipe .pcard .ft{font-size:9px;}
   .projgrid.swipe.loop{scroll-snap-type:none;}
   .rowlab{text-align:center;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.05em;
-    color:#2b2b2b;margin:8px 0 6px;}
+    color:var(--rbe-head);margin:8px 0 6px;}
   .rowdiv{height:1px;margin:14px 8px;
     background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
   .seeall{display:flex;justify-content:center;margin:6px 0 2px;}
@@ -1448,7 +1448,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 }
 
 /* ---- activity count strip + AR vertical chart ---- */
-.acthead{border-top:2px solid var(--red);margin-top:16px;padding-top:8px;
+.acthead{margin-top:16px;padding-top:8px;
   font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
 .actstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:10px;}
 .actbox{background:var(--rbe-panel);border:1px solid var(--rbe-line2);border-radius:6px;padding:10px 6px;text-align:center;}
@@ -3102,7 +3102,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 433 &#8212; card top strips removed, Client Projects dark, badge chips no longer overlap</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 434 &#8212; red rules above the activity headings gone; Most Recent / Nearby readable</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32132,6 +32132,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:434, note:'\uD83E\uDDF9 The red lines above Activity Count and Activity are gone, and the Most Recent / Nearby labels are readable on the dark panel' },
 { build:433, note:'\uD83E\uDDF9 The thick strip on top of the home cards is gone, Client Projects is dark instead of white, and the stage pill and star no longer sit on top of the client initial and PO number' },
 { build:432, note:'\u2712\uFE0F Section headings are white now. The thin divider lines are steel; the thicker card top edge stays red' },
 { build:431, note:'\uD83E\uDE9F Card top edges and the thin divider lines on the retail home are steel now instead of red' },
