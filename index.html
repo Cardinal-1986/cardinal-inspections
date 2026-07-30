@@ -1093,7 +1093,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   .rowlab{text-align:center;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.05em;
     color:#2b2b2b;margin:8px 0 6px;}
   .rowdiv{height:1px;margin:14px 8px;
-    background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#e35c63 50%,var(--red-dk) 70%,transparent);}
+    background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
   .seeall{display:flex;justify-content:center;margin:6px 0 2px;}
   .projgrid.swipe .seeall{flex:0 0 auto;display:flex;align-items:center;padding:0 8px;scroll-snap-align:start;}
 }
@@ -2048,7 +2048,7 @@ body.restoring #restoreVeil{display:flex;}
 .tradeopt{display:flex;align-items:center;gap:7px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
 
 /* ---- work schedule + AR row ---- */
-.rowfil{height:1px;margin:14px 8px;background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#e35c63 50%,var(--red-dk) 70%,transparent);}
+.rowfil{height:1px;margin:14px 8px;background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
 .opsrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;}
 .opscard{margin:0 !important;}
 .opsstats{display:flex;justify-content:space-around;align-items:flex-start;gap:6px;margin-top:10px;}
@@ -2100,7 +2100,7 @@ body.restoring #restoreVeil{display:flex;}
 
 /* ---- home cards: red bar + black filament (matches sign-in framing) ---- */
 .dashcard, .pipecard, .actcard{
-  border-top:5px solid var(--red);position:relative;overflow:hidden;}
+  border-top:5px solid var(--rbe-acc);position:relative;overflow:hidden;}
 .dashcard::after, .pipecard::after, .actcard::after{
   content:'';position:absolute;left:0;right:0;top:5px;height:1px;
   background:linear-gradient(90deg,transparent,#2b2320 30%,#000 50%,#2b2320 70%,transparent);}
@@ -2110,7 +2110,7 @@ body.restoring #restoreVeil{display:flex;}
   /* red filament between the two stacked calendars */
   .herorow .pipecard.teamcal:last-of-type{order:2;}
   .herorow::after{content:'';order:1;height:1px;margin:2px 8px;
-    background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#e35c63 50%,var(--red-dk) 70%,transparent);}
+    background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
 
   /* Client Projects: themed box, centered title */
   section.history{background:#fff;border:1px solid var(--line);border-top:5px solid var(--red);
@@ -2121,7 +2121,7 @@ body.restoring #restoreVeil{display:flex;}
 
   /* red filament between activity feed and Client Projects */
   .homecols::after{content:'';display:block;width:100%;flex:0 0 auto;height:1px;margin:4px 0 0;
-    background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#e35c63 50%,var(--red-dk) 70%,transparent);}
+    background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
 
   /* all cards as wide as the Client Projects box */
   #mainView .wrap{padding-left:8px;padding-right:8px;}
@@ -2129,14 +2129,14 @@ body.restoring #restoreVeil{display:flex;}
   #mainView section.history .subnote, #mainView section.history .controls{display:none;}
 
   /* red filament above the search card */
-  .quickrow::before{content:'';order:-1;height:1px;margin:2px 8px 0;background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#e35c63 50%,var(--red-dk) 70%,transparent);}
+  .quickrow::before{content:'';order:-1;height:1px;margin:2px 8px 0;background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
 
   /* red filament between pipeline and the calendars */
-  .herorow::before{content:'';height:1px;margin:0 8px;background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#e35c63 50%,var(--red-dk) 70%,transparent);}
+  .herorow::before{content:'';height:1px;margin:0 8px;background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
 
   /* red filaments above and below the greeting quote */
-  .hero-left::before{content:'';width:100%;height:1px;margin-bottom:10px;background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#e35c63 50%,var(--red-dk) 70%,transparent);}
-  .hero-left::after{content:'';width:100%;height:1px;margin-top:10px;background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#e35c63 50%,var(--red-dk) 70%,transparent);}
+  .hero-left::before{content:'';width:100%;height:1px;margin-bottom:10px;background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
+  .hero-left::after{content:'';width:100%;height:1px;margin-top:10px;background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
 
   /* Dashboard box: pinned alone under header; search scrolls below in its own card */
   .homemain{display:flex;flex-direction:column;}
@@ -2170,7 +2170,7 @@ body.restoring #restoreVeil{display:flex;}
     border:1px solid var(--line);border-radius:999px;padding:9px 14px;}
   /* red filament under the search card */
   .quickrow::after{content:'';order:-1;height:1px;margin:12px 8px 0;
-    background:linear-gradient(90deg,transparent,var(--red-dk) 30%,#e35c63 50%,var(--red-dk) 70%,transparent);}
+    background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
 
   
 
@@ -3102,7 +3102,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 430 &#8212; retail goes near-black with a steel accent</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 431 &#8212; the red card edges and divider lines go steel too</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32132,6 +32132,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:431, note:'\uD83E\uDE9F Card top edges and the thin divider lines on the retail home are steel now instead of red' },
 { build:430, note:'\uD83E\uDE9F Retail is near-black now with a steel accent \u2014 deeper ground, darker cards, brushed steel header. Claims and Community untouched' },
 { build:429, note:'\uD83C\uDFA8 Page background now reads the --bg token instead of a hardcoded copy \u2014 the ground can be changed in one place, and light mode no longer shows dark overscroll' },
 { build:428, note:'\uD83D\uDD27 This box now knows which build you are on \u2014 it had been reading a number out of a stylesheet comment, so it had stopped appearing after updates' },
