@@ -117,15 +117,34 @@ export default async function handler(req, res) {
     let parts;
 
     if (ask) {
-      // A question, not a filing. Answer from the trade, and point at the shelf.
+      /* A question is a request to GROW the library. Write a reference entry
+         worth keeping and say where it should be filed — the browser then
+         stores it, so the next person finds it without asking. */
       parts = [{ text:
         RULES + '\n' + shelf +
         'A member of the crew asked:\n"' + String(ask).slice(0, 800) + '"\n\n' +
-        'Answer in plain, practical language for a roofer — two short paragraphs at ' +
-        'most. If a section of the library above is where they should look, name it. ' +
-        'If the answer depends on local code or a manufacturer\'s spec, say so plainly ' +
-        'rather than guessing a number. Respond with ONLY raw JSON: ' +
-        '{"answer": "<your answer>", "look_in": "<section title or empty string>"}'
+        'Write a reference entry for the library that answers it and is worth ' +
+        'keeping. Plain, practical language for a roofer in Ohio. Lead with the ' +
+        'answer, then the detail that matters on a roof or a job site. Use short ' +
+        'paragraphs; use "- " bullets for lists of requirements or steps.\n' +
+        'Where a number comes from code or a manufacturer spec, name the source ' +
+        '(for example "2019 Residential Code of Ohio R905.2.8.5" or "per the ' +
+        'manufacturer\'s installation instructions"). If you are not certain of a ' +
+        'number, say what governs it instead of inventing one — a wrong number in ' +
+        'the library is worse than no entry.\n' +
+        'Aim for 150-400 words. Respond with ONLY raw JSON, no markdown fences:\n' +
+        '{\n' +
+        '  "belongs": true|false,\n' +
+        '  "reason": "<if belongs is false, why>",\n' +
+        '  "hub": "general"|"insurance",\n' +
+        '  "section": "<existing section title, or a new one>",\n' +
+        '  "section_is_new": true|false,\n' +
+        '  "subsection": "<optional, or empty string>",\n' +
+        '  "subsection_is_new": true|false,\n' +
+        '  "title": "<a title someone would scan for later, under 70 characters>",\n' +
+        '  "summary": "<one sentence on what it covers>",\n' +
+        '  "body": "<the entry itself>"\n' +
+        '}'
       }];
     } else if (file) {
       /* Same request shape as /api/sol.js: { file: <base64 payload>, mime }.
@@ -190,8 +209,16 @@ export default async function handler(req, res) {
 
     if (ask) {
       res.status(200).json({
-        answer: String(parsed.answer || '').slice(0, 4000),
-        look_in: String(parsed.look_in || '').slice(0, 120)
+        belongs: parsed.belongs !== false,
+        reason: String(parsed.reason || '').slice(0, 300),
+        hub: parsed.hub === 'insurance' ? 'insurance' : 'general',
+        section: String(parsed.section || 'Unsorted').slice(0, 90),
+        section_is_new: !!parsed.section_is_new,
+        subsection: String(parsed.subsection || '').slice(0, 90),
+        subsection_is_new: !!parsed.subsection_is_new,
+        title: String(parsed.title || 'Reference note').slice(0, 140),
+        summary: String(parsed.summary || '').slice(0, 700),
+        body: String(parsed.body || '').slice(0, 8000)
       });
       return;
     }
