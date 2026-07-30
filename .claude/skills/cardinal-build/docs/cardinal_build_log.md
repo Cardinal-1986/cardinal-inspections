@@ -1444,3 +1444,75 @@ sentinel walk leaves everything outside the edits identical.
 
 **Counts, measured:** pages 34 → 35 in the DOM, cards 161 → 173, plates 3 → 4, search boxes
 16 → 17. File +28,790 characters.
+
+---
+
+## Build 464 — the library light/dark button goes back
+
+*30 July 2026. Reported as a freeze. It was not a freeze.*
+
+Theo: *"Page freezes for a few seconds after hitting toggle then toggle back."*
+
+### Measured before diagnosing
+
+There is no freeze. Click-to-second-frame for the library skin button is **30 ms** on
+desktop and **95–183 ms at 6× CPU throttle**, and the app theme button is 32 ms / 149–183 ms.
+Identical on 462 and 463, so the 13 SVGs build 463 added were not the cause either — that
+was the first suspicion and it was wrong.
+
+What is broken is that **the button is one-way.** It takes you light → dark and then does
+nothing, however many times you press it. Pressing a control that visibly does nothing is
+what "toggle then toggle back" running into a wall feels like.
+
+### The defect — two writers, one asymmetry
+
+`CardinalRLTheme.apply()` sets the attributes and deliberately does **not** persist; its
+sibling consumer, the inline `#rlThemeBtn` handler in `cr-dl-script`, writes
+`localStorage['cardinalRLTheme']` itself before calling it.
+
+The floating `#cr-rltheme-btn` in the library block does not:
+
+```js
+var next = currentRlTheme() === 'siren' ? 'docket' : 'siren';  // reads localStorage
+if (CardinalRLTheme.apply) { apply(next); applied = true; }    // always taken
+if (!applied) { localStorage.setItem('cardinalRLTheme', next); } // dead branch
+```
+
+`applied` is always true, so the write sits on a branch that never runs. `currentRlTheme()`
+reads a key nothing ever wrote, returns `'docket'` every time, and `next` is `'siren'` every
+time. Probed in Chromium: **localStorage stayed `null` across four presses** while body and
+view stayed `siren` and the card background never came back.
+
+**Pre-existing, not a 463 regression** — the handler is byte-identical on 462.
+
+### The fix
+
+Read the **applied** state off the DOM instead of off the setting nothing wrote, and persist
+on both paths. That mirrors the sibling handler rather than inventing a mechanism, and it
+also makes the button correct where `localStorage` throws (private mode), which the old code
+could not be. `apply()` itself is untouched — this build does not move the persist contract.
+
+Side effect worth having: the skin now survives a reload. It never did.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker. **9/9 in a real browser** — six
+presses landing on the right skin each time, body and view never disagreeing, the card
+background actually returning to its light value, the choice persisted on every press, glyph
+and `aria-label` tracking state, and the skin surviving a reload. **Negative control 7 of 9
+failing on 463**, which is the discrimination that matters: the old code changed the
+attribute on press 1 too, so a weaker test would have passed on it.
+
+Scope proven both ways over 3 regions.
+
+### Still open
+
+The report said *freeze*. I could not reproduce one at 6× CPU throttle on a desktop browser,
+and the numbers above are the whole of what I can honestly claim. If it still stalls on the
+phone after this, it is a different bug and I need to know which of the two controls — the
+floating ◐ or the 🌙 in the header row — and roughly where in the app.
+
+**Two theme controls are visible at once on a library page**, which is its own confusion:
+`#cr-rltheme-btn` (library skin, `--ct-*`) and `#cr-dark-toggle` (retail app theme, flips
+`:root[data-theme="rb-light"]`). Flagged, not changed — which controls appear where is
+Theo's call.

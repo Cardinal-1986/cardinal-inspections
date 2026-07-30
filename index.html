@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 463 &#8212; a Roof Types page: thirteen roof shapes drawn on one plate, and what each one costs you in waste, cap and ventilation</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 464 &#8212; the Resource Library light/dark button goes back again; it had been one-way since it was added</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18748,7 +18748,20 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
       btn.id = 'cr-rltheme-btn';
       btn.type = 'button';
       btn.onclick = function(){
-        var next = currentRlTheme() === 'siren' ? 'docket' : 'siren';
+        /* 464: read the APPLIED state off the DOM, not off localStorage.
+           CardinalRLTheme.apply() does not persist - its other consumer, the
+           inline #rlThemeBtn handler, writes the key itself before calling it.
+           This one did not, and `applied` is always true, so the write below
+           sat on a branch that never ran. currentRlTheme() therefore read
+           'docket' on every press and the button was one-way: light -> dark,
+           then nothing, forever. Reading the view attribute also keeps the
+           button working where localStorage throws (private mode). */
+        var view = document.getElementById('resourceLibraryView');
+        var cur = (view && view.getAttribute('data-rltheme'))
+               || (document.body && document.body.getAttribute('data-rltheme'))
+               || currentRlTheme();
+        var next = cur === 'siren' ? 'docket' : 'siren';
+        try{ localStorage.setItem('cardinalRLTheme', next); }catch(e){}
         var applied = false;
         try{
           if(window.CardinalRLTheme && typeof window.CardinalRLTheme.apply === 'function'){
@@ -18757,10 +18770,8 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
           }
         }catch(e){}
         if(!applied){
-          try{ localStorage.setItem('cardinalRLTheme', next); }catch(e){}
           if(document.body) document.body.setAttribute('data-rltheme', next);
-          var v = document.getElementById('resourceLibraryView');
-          if(v) v.setAttribute('data-rltheme', next);
+          if(view) view.setAttribute('data-rltheme', next);
         }
         paintThemeBtn(btn, next);
       };
@@ -33009,6 +33020,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:464, note:'\u25D1 The light/dark button in the Resource Library goes back again. It had been one-way \u2014 it would take you from light to dark and then do nothing, however many times you pressed it \u2014 because it was asking a setting that nothing ever wrote. It now reads the theme actually on screen, and it remembers your choice between sessions, which it also never did.' },
 { build:463, note:'\U0001F3E0 New in the Resource Library: <b>Roof Types</b>, under General. Thirteen roof shapes \u2014 gable, hip, cross gable, Dutch gable, jerkinhead, gambrel, mansard, shed, saltbox, pyramid, butterfly and the rest \u2014 drawn on one plate so you can name what you are standing under, then a card each on what that shape costs you in waste, in ridge cap, in ventilation and in low-slope exposure. The library had never named a roof form before this.' },
 { build:462, note:'\u23F1\uFE0F Six more library cards, and the last of the gaps: how and when to ask for a reinspection, the deadlines that actually bite \u2014 the lien window on a house is 60 days, not the 75 everyone quotes \u2014 the punch walk on the last day, what has to exist on paper before a job is closed, how to find out who the permit office really is, and Malarkey\u2019s programme for reading somebody else\u2019s bid.' },
 { build:461, note:'\uD83E\uDDF1 The wall side of the library, which had nothing but measuring in it before: what the water-resistive barrier behind the siding has to do, what a re-side has to add up to, how to identify a vinyl panel and read hail on it \u2014 including why cold weather cuts both ways \u2014 and the discontinued-colour argument for a full elevation.' },
