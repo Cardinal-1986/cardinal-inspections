@@ -2674,6 +2674,7 @@ body:has(#loginView[style*="block"]){background:#fff;}
 }
 #resourceLibraryView .rl-search input:focus{outline:none;border-color:var(--ct-red-deep);box-shadow:0 0 0 3px rgba(196,24,15,.15);}
 #resourceLibraryView .rl-search input::placeholder{color:var(--ct-ink-2);}
+#resourceLibraryView .rl-searchnote{margin-top:6px;font:700 11px var(--ct-code);letter-spacing:.08em;text-transform:uppercase;color:var(--ct-ink-2);}
 
 #resourceLibraryView .rl-jumpnav{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-start;margin:0 0 20px;}
 #resourceLibraryView .rl-jumpnav a{
@@ -3142,7 +3143,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 454 &#8212; the money side of a claim is in the library now, with the arithmetic worked out</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 455 &#8212; every library page has its own search box now, right where you are reading</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32495,6 +32496,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:455, note:'\uD83D\uDD0E Every library page now has a search box at the top that filters that page as you type \u2014 no more leaving the page to look something up. It searches code sections, keywords and the card text, same as the contents list.' },
 { build:454, note:'\uD83D\uDCB5 Policy Provisions now covers the money: what Coverage A, B, C and D each pay for, flat vs percentage deductibles, the order the checks arrive in worked out with real numbers, why a $0 first check is not a denial, the mortgage company on the check, and appraisal. Also corrected five places that called Ordinance &amp; Law \u201cCoverage D\u201d \u2014 on a standard policy Coverage D is Loss of Use.' },
 { build:453, note:'\uD83D\uDD0D Library search finally finds things. Type a code section like R905.1.2 and you get the code card, the supplement wording and the rebuttal \u2014 before, that returned nothing. Searches card text and keywords too, and three cards that could never be opened from the contents list now open.' },
 { build:452, note:'\uD83D\uDD35 The letters inside the pipeline circles are dark now instead of white \u2014 white on the yellow, orange, green and blue read at 2:1 and you could not make them out. Leads also got the same raised edge the other circles have had since 436.' },
@@ -33380,6 +33382,15 @@ setTimeout(function(){ scrollToCardEl(cardsFor(pageId)[cardIdx]); }, 120);
 function scrollToCardEl(entry){
 var match = entry && entry.el;
 if(match){
+/* 455: the page may be filtered by its own search box. Landing on a card that
+   filter is hiding would scroll nowhere, on a page showing four cards. Clear it
+   through the box's own input handler — same unhide path, not a second one. */
+var pg = match.closest ? match.closest('.rl-page') : null;
+var box = pg ? pg.querySelector('.rl-search input') : null;
+if(box && box.value){
+box.value = '';
+box.dispatchEvent(new Event('input', { bubbles:true }));
+}
 match.scrollIntoView({ behavior:'smooth', block:'start' });
 match.classList.remove('cr-rltoc-flash');
 void match.offsetWidth;
@@ -33439,12 +33450,60 @@ b.title = 'Open Table of Contents';
 b.onclick = open;
 document.body.appendChild(b);
 }
+/* 455: .rl-search shipped as a complete stylesheet with zero elements — five rules
+   nobody has ever seen. One box per content page, filtering that page in place
+   through the same index the TOC modal uses. No second search mechanism. */
+function mountPageSearch(){
+var view = document.getElementById('resourceLibraryView');
+if(!view) return;
+IDX = null;                       /* the DOM may have gained runtime pages */
+view.querySelectorAll('.rl-page').forEach(function(page){
+if(page.querySelectorAll('.rl-card').length < 4) return;
+var head = page.querySelector('.rl-pagehead');
+if(!head || !head.parentNode) return;
+var seated = page.querySelector('.rl-search');
+if(seated){
+/* The NACHI module inserts its nav card at the same head.nextSibling slot on
+   rlPageInsp, so whichever ran last owns the top. Re-seat every pass — moving
+   a node already in place is a no-op. */
+if(seated.previousElementSibling !== head) head.parentNode.insertBefore(seated, head.nextSibling);
+return;
+}
+var wrap = document.createElement('div');
+wrap.className = 'rl-search';
+var inp = document.createElement('input');
+inp.type = 'search';
+inp.placeholder = 'Search this page \u2014 code section, keyword, anything\u2026';
+inp.setAttribute('autocomplete', 'off');
+inp.setAttribute('aria-label', 'Search this page');
+var note = document.createElement('div');
+note.className = 'rl-searchnote';
+wrap.appendChild(inp);
+wrap.appendChild(note);
+head.parentNode.insertBefore(wrap, head.nextSibling);
+inp.addEventListener('input', function(){
+var q = inp.value.trim();
+var cards = cardsFor(page.id);
+var shown = 0;
+cards.forEach(function(c){
+var hit = !q || cardRank(q, c) !== -1;
+if(c.el) c.el.classList.toggle('rl-hidden', !hit);
+if(hit) shown++;
+});
+note.textContent = q
+? (shown ? shown + ' of ' + cards.length : 'Nothing on this page matches \u2014 try the contents list')
+: '';
+});
+});
+}
 function start(){
 ensureButton();
 updateViewClass();
+mountPageSearch();
 var v = document.getElementById('resourceLibraryView');
 if(v){
-new MutationObserver(updateViewClass).observe(v, { attributes:true, attributeFilter:['style'] });
+new MutationObserver(function(){ updateViewClass(); mountPageSearch(); })
+.observe(v, { attributes:true, attributeFilter:['style'] });
 }
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

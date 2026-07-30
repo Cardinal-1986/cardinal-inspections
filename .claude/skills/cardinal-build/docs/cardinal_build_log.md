@@ -832,3 +832,64 @@ Decking replaced because it is rotten is a condition item; only a **code-driven*
 upgrade (thickness, span, fastening) is Ordinance or Law. Correcting it needs a decision
 about how the decking-supplement cards frame that distinction, so it is a follow-up build,
 not a silent edit.
+
+---
+
+## Build 455 — the search box the stylesheet had been waiting for
+
+`#resourceLibraryView .rl-search` shipped as **five complete CSS rules and zero elements**
+— sticky, focus ring, placeholder colour, `min-height:48px` for a thumb. Nobody had ever
+seen it. Until now the only way to search the library was the TOC modal, which means
+leaving the page you are reading to find something on it.
+
+**17 boxes, one per content page with 4+ cards**, mounted immediately after `.rl-pagehead`
+and filtering that page in place. Hubs and thin pages get none — they are navigation, not
+reading. Re-mounted on every library open, so the NACHI pages built at runtime get one too.
+
+**No second mechanism.** It reuses the 453 index (`cardsFor` / `cardRank` — the same
+citation + tag + body-text ranking the TOC modal uses) and the `.rl-hidden` class already
+in the file. The only new CSS is one rule, `.rl-searchnote`.
+
+### Two defects found while building it
+
+- **A cross-surface dead end.** Filter a page, then use the TOC to jump to a card on that
+  page that the filter is hiding: the scroll landed nowhere, on a page showing four cards.
+  `scrollToCardEl()` now clears the target page's box **through the box's own input
+  handler** — the same unhide path, not a second one.
+- **`rlPageInsp` lost the top slot.** The NACHI module inserts its nav card at the *same*
+  `head.nextSibling` position, so whichever ran last owned it — and NACHI ran last. The
+  mount now re-seats the box on every pass; moving a node already in place is a no-op.
+  Caught by the harness, not by reading. Exactly the "grep for every occurrence before you
+  patch a selector" rule, in element form.
+
+### A third finding that needed no fix
+
+`#resourceLibraryView .rl-search{top:0}` already exists at char 2,441,195 inside
+`cr-hd2-styles`, overriding the `top:66px` in the library's own block. It is not a
+conflict: that block also hides `.ins-header` and pins the view below `--headh`, so 0 is
+the correct offset once the library's own header is gone. Someone wrote the companion rule
+for a box that did not exist yet. Measured sticking, not assumed: after a 900px scroll the
+box pins at the top of the overlay.
+
+### Gates
+
+`check_build.py` green with the negative control. **28/28 in a real browser** — mount
+arithmetic (17 boxes vs 17 eligible pages, computed both ways rather than hardcoded),
+placement, filtering, the count note agreeing with the DOM, the empty state, clear-restore,
+citation search on the code page, the cross-surface bug and its fix, and no double-mount on
+re-open. **Negative control: 0 boxes on 454**, so every check below the first is dependent
+on the build.
+
+Painted contrast in both skins: input **17.75:1** docket / **16.05:1** siren; the count
+note **5.30:1** / **7.75:1**. Computed from what the browser painted, not from source.
+
+Scope proven both ways — re-applying the patch to a fresh 454 reproduces `index.html` byte
+for byte, and a sentinel walk over all six regions leaves the two files identical.
+
+### Two harness bugs, both mine
+
+1. Measured `boxes[0]` for height while its page was inactive and reported **0px** about
+   perfectly good CSS. Only `.rl-pageActive` is displayed. Activate, then measure — it is
+   49px.
+2. The negative control crashed on `boxes[0].closest` instead of failing cleanly. A control
+   that throws is weaker evidence than one that names the missing thing.
