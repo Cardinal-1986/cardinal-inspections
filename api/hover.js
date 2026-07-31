@@ -3,6 +3,49 @@
 // report PDF and returns structured siding/exterior measurements for the
 // material order list. Uses the same GEMINI_API_KEY as the other functions.
 
+/* 505: the second rung, same as 502 elsewhere. gemini-3.5-flash 503s "high
+   demand" in spells - measured at roughly one call in four this afternoon - and
+   this route had NO fallback, so it simply failed while OpenAI sat idle at 0.6s.
+
+   Returns GEMINI'S OWN response shape, so the call site below reads it unchanged.
+   Never throws: on any failure it hands back the original Gemini response and the
+   existing error path behaves exactly as before.
+
+   Handles BOTH part spellings: inlineData/mimeType (most routes) and
+   inline_data/mime_type (sol.js). Missing that would have shipped a silently
+   text-only fallback for the one route whose whole job is reading a document. */
+async function aiFallback(parts, geminiRes) {
+  const oaKey = (process.env.OPENAI_API_KEY || '').trim();
+  if (!oaKey) return geminiRes;
+  try {
+    const content = [];
+    (parts || []).forEach(p => {
+      if (!p) return;
+      if (typeof p.text === 'string') { content.push({ type: 'text', text: p.text }); return; }
+      const inl = p.inlineData || p.inline_data;
+      if (inl) {
+        const mime = inl.mimeType || inl.mime_type || 'image/jpeg';
+        content.push({ type: 'image_url', image_url: { url: 'data:' + mime + ';base64,' + inl.data } });
+      }
+    });
+    if (!content.length) return geminiRes;
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + oaKey },
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1200, messages: [{ role: 'user', content }] })
+    });
+    if (!r || !r.ok) return geminiRes;
+    const d = await r.json();
+    const t = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+    if (!t) return geminiRes;
+    return { ok: true, status: 200, _via: 'openai', json: async () => ({
+      candidates: [{ content: { parts: [{ text: String(t) }] } }]
+    }) };
+  } catch (e) {
+    return geminiRes;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -39,7 +82,7 @@ export default async function handler(req, res) {
       'Respond with ONLY raw JSON, no markdown fences, exactly these keys.\n\n' +
       'REPORT TEXT:\n' + text.slice(0, 50000);
 
-    const geminiRes = await fetch(
+    let geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
       {
         method: 'POST',
@@ -53,6 +96,9 @@ export default async function handler(req, res) {
         })
       }
     );
+    /* 505: Google refusing is no longer the end of the road. */
+    if (!geminiRes.ok) geminiRes = await aiFallback([{ text: prompt }], geminiRes);
+
     if (!geminiRes.ok) {
       const detail = await geminiRes.text();
       res.status(502).json({ error: 'AI request failed', detail: detail.slice(0, 300) });

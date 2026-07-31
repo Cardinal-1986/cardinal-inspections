@@ -3255,3 +3255,30 @@ behaviour: a 503 walks both models twice each, 3.6 before 3.5, a 400 tries each 
 **Still on 3.5 only:** `analyze`, `coach`, `companycam-sync`, `estimate`, `hover`, `roofr`, `sol`.
 They have no fallback either. The same fifteen lines apply; not bundled here because this build was
 about the routes Theo was actually hitting.
+
+## 504–505 — every AI route has somewhere to go now
+
+**504.** `ai-status.js` honoured `?model=` in its probe URL but reported the model name **hardcoded**
+as `gemini-3.5-flash`. So asking it about 3.6 probed 3.6 and answered "3.5". **A diagnostic that
+lies about what it tested is worse than none** — it is how you conclude the wrong thing with
+confidence. The model is now named once and used for both the probe and the report.
+
+**505 — and a correction I owe.** I told Theo seven routes had no fallback. **Wrong: I listed them
+from memory instead of checking.** `analyze`, `coach` and `estimate` already had OpenAI paths. Only
+**four** were Gemini-only: `companycam-sync`, `hover`, `roofr`, `sol` — the CompanyCam caption pass,
+the Hover takeoff reader, the Roofr takeoff reader and the Scope of Loss reader. All four now have
+the same ladder.
+
+One difference that mattered: **`sol.js` speaks snake_case** (`inline_data` / `mime_type`) where the
+others use camelCase. The converter handles both. Missing it would have shipped a silently
+text-only fallback for the one route whose entire job is reading a document — it would have
+"worked", and quietly stopped seeing the PDF.
+
+`sol.js` also reads `.json()` **before** checking `ok`, so the fallback had to be inserted before the
+body is consumed — a Response can only be read once, and the fallback returns a different object with
+its own `json()`.
+
+**Audited, not remembered — all 13 Gemini routes:** `ai-status`, `analyze`, `caption`, `coach`,
+`companycam-sync`, `estimate`, `hover`, `librarian`, `organize`, `roofr`, `sol`, `sortphotos`,
+`summarize`. Every one now reads **Gemini → OpenAI**, and `sortphotos`/`librarian` additionally walk
+**3.6 → 3.5** first. All 26 `api/*.js` parse.

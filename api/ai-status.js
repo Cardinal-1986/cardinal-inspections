@@ -24,6 +24,14 @@ export default async function handler(req, res) {
     : '';
   const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
+  /* 504: name the model ONCE. 503 made the probe URL honour ?model= but left the
+     REPORTED name hardcoded to gemini-3.5-flash, so asking it about 3.6 probed 3.6
+     and answered "3.5". A diagnostic that lies about what it tested is worse than
+     no diagnostic - it is how you conclude the wrong thing with confidence. */
+  const GEMINI_MODEL = (req.query && req.query.model)
+    ? String(req.query.model).replace(/[^a-z0-9.\-]/gi, '')
+    : 'gemini-3.5-flash';
+
   const result = { gemini: {}, openai: {}, supabase: {} };
 
   // ── Gemini check ─────────────────────────────────────────
@@ -33,7 +41,7 @@ export default async function handler(req, res) {
     const t0 = Date.now();
     try {
       const r = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/' + (req.query && req.query.model ? String(req.query.model).replace(/[^a-z0-9.\-]/gi,'') : 'gemini-3.5-flash') + ':generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent',
         {
           method: 'POST',
           headers: {
@@ -48,7 +56,7 @@ export default async function handler(req, res) {
       );
       const latency = Date.now() - t0;
       if (r.ok) {
-        result.gemini = { ok: true, model: 'gemini-3.5-flash', latency_ms: latency };
+        result.gemini = { ok: true, model: GEMINI_MODEL, latency_ms: latency };
       } else {
         const txt = (await r.text().catch(() => '')).slice(0, 250);
         result.gemini = {

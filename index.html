@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 503 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 505 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33845,6 +33845,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:505, note:'\u26A1 The last four features that could only use Google now fall back to the second AI as well: the CompanyCam caption pass, the Hover takeoff reader, the Roofr takeoff reader and the Scope of Loss reader. Every AI feature in the app now has somewhere to go when Google is busy.' },
+{ build:504, note:'\u1F527 The AI health check now reports which model it actually tested. It could be asked about one model and answer about another, which made it useless for telling whether a newer model works.' },
 { build:503, note:'\u26A1 The AI now tries the newest Gemini model first and falls back to the previous one, then to OpenAI. Three fallbacks deep, so a busy afternoon at Google stops being your problem.' },
 { build:502, note:'\u26A1 The Library assistant, the report Assistant and the summary drafter now fall back to a second AI as well, the same way Sort photos already does. Google has been refusing about one request in four today; those three used to simply fail when it did.' },
 { build:501, note:'\u26A1 Sort photos now falls back to a second AI when Google is busy. Google has been refusing about one request in four today with a high demand error; when that happens the photograph is sent to OpenAI instead, which is answering in well under a second. A photograph is only skipped if both refuse.' },
