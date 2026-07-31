@@ -3048,3 +3048,63 @@ visible again on the next report — so it is not a one-way latch. Plus the stru
 there is exactly one call site, after `srcdoc`, inside `frame.onload`. **Negative-controlled twice**:
 against 494's source order, and behaviourally by gating an empty frame, which is what 494 was
 effectively doing.
+
+## 496 — CompanyCam search by address or job name found nothing
+
+**Theo reported it. Diagnosed against the live index, not reasoned about.**
+
+The route searched each column **separately**, and `websearch_to_tsquery` **ANDs** every word. The
+picker pre-fills the box with the report **title**, which carries the client name *and* the address —
+but `project_name` holds only the name and `project_address` only the address, so **no single column
+ever contained all the terms**:
+
+| typed | hits |
+|---|---:|
+| `843 Farnam` | **738** |
+| `CR226 Amber Mcdonald — 843 Farnam St, Springfield, OH 45506` | **0** |
+
+And a lone hyphen is **negation** to `websearch_to_tsquery`: `Client - 843 Farnam` parsed to
+`'client' & !'843' & 'farnam'` and actively **excluded** the address being searched for.
+
+**The index for this already existed and was never used.** `companycam_photos_fts` is a GIN index
+over the four fields **concatenated into one document**. Querying that expression is both correct
+(all terms match across the combined text) and fast. Measured:
+
+| | plan | time | rows |
+|---|---|---:|---:|
+| per-word `ilike` scan | parallel seq scan | 1,706 ms | 738 |
+| the combined expression | **Bitmap Index Scan** | **32 ms** | **738** |
+
+**SQL:** `companycam_search.sql`, **applied**. `SECURITY DEFINER`, revoked from `anon`/`authenticated`,
+granted only to `service_role` — the same shape as `companycam_backfill_project_names`. Verified
+after applying: `prosecdef=true, anon=false, service_role=true`. It strips punctuation before
+parsing, which removes the hyphen-as-NOT trap.
+
+**Third bug, and the reason this failed silently:** the `ilike` fallback only fired when the request
+**errored**. A search that succeeded and returned zero rows was reported as "nothing matching" — a
+confident wrong answer. It now falls back when the result is **empty** too.
+
+**Also:** `rccSubject()` now pre-fills with the **project address** rather than the report title. The
+title is a sentence; the address is what CompanyCam actually stores.
+
+Gates: `node --check`, check_build green, harness **13/13** against the shipped handler with `fetch`
+stubbed — the RPC is called, the per-column form is gone, an empty result falls back, a genuinely
+empty search still returns zero, the body is read once, and it is still admin-only.
+
+## 497 — take a photograph OUT of an inspection report
+
+Asked for by Theo. Until now a photo could be **replaced** but never removed, so one added by mistake
+had to be covered with another.
+
+Built into `wirePhotoFrames`, where the photo controls already live, rather than as a second
+mechanism. **Safe by construction:** the button sits inside `.fig .frame`, and `serializeFrame`
+removes `.fig .frame button` wholesale — so it cannot reach the database, the client email or the
+public share link. The print sheet already hides it too.
+
+It asks first, and **clears the caption with the photograph** — a caption describing a photo that is
+no longer there is worse than no caption. It touches nothing outside the report: not CompanyCam, not
+the client photo album.
+
+Gates: check_build green, harness **15/15** — visible only when a frame holds a photograph, removal
+clears image and caption and flips the button back, declining the confirm changes nothing, and
+**the real denylist rule is run over a document containing the control to prove zero survive**.
