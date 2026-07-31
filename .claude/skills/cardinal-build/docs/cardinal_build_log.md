@@ -2526,3 +2526,86 @@ patch adds says it, the **build label** this patch adds says it, and it was **al
 in a Library entry about drip edge vs apron (*"Different profiles, different jobs"*). The site
 assertion beside it — `count("' different jobs' +") == 1` — was right the first time. **Name the
 site; never count the phrase.** Nothing was written on any of the three runs.
+
+## Build 486 — CompanyCam photographs into an inspection report (31 July 2026)
+
+A 📸 button in the report editor toolbar. Search by address / job name / crew across the 60,485
+indexed photographs, tick, choose a section, and they land in the report captioned with the job name.
+
+**A 37-agent read-only audit ran first**, with every finding adversarially refuted before it was built
+on. It changed the build twice and caught two things that would have shipped wrong.
+
+### Mount in the PARENT document, not the iframe
+
+The obvious build puts the button inside `#reportFrame`, beside the existing photo frames. **That is
+the wrong build.** `serializeFrame()` is a **denylist**, and its output is what reaches the database,
+the client email and the public share link. Anything living inside the iframe needs a matching
+removal rule there, a matching `#printFix` selector and a `no-print` class — and **still** leaks
+through `downloadFrame()`, which reads the **live** `documentElement` rather than the serialised
+clone.
+
+Mounting in the toolbar needs none of that, and `#editorView .toolbar,#editorView button{display:none}`
+already hides it on print. **Asserted, not assumed:** the brace-matched `serializeFrame` and
+`downloadFrame` slices contain zero `rcc`.
+
+### `api/companycam.js` needed no change at all
+
+It already full-text searches `description`, `project_name`, `project_address` and `creator_name`,
+with an `ilike` fallback. The Library's own search box simply never sent `q`. **"Search by address"
+was a parameter, not a feature.**
+
+### Data URLs only — never a remote src
+
+`placePhotoInSection` does `img.src = dataUrl` with **no scheme check**, and `serializeFrame`
+preserves `<img>` verbatim. A signed CompanyCam or Supabase URL written there would leak through the
+public share link **and 404 when it expired** — a report that silently loses its photographs weeks
+after it was sent. Bytes come through `action:'fetch'` as base64.
+
+Deliberately **not** routed through `resizeImageFile()`: it sets no `crossOrigin`, and its
+`toDataURL` runs inside `img.onload`, **outside the Promise executor** — so a throw there never
+rejects and the `await` hangs forever.
+
+### A pre-existing bug, fixed here
+
+**`lockTemplate()` had exactly one call site**, inside `frame.onload`. Any figure minted at runtime
+by `addFrameToSection()` therefore carried a fresh `<span class="ph">` with no `contenteditable`,
+and the body's own was removed at load — **the caption could not be typed in.** It fires immediately
+in sections **1, 2, 9 and 10** (no template figrows at all) and after two photographs in most others.
+`lockTemplate` is idempotent, so one call at the end of `placePhotoInSection` fixes **every** caller
+at once, including the existing Assistant path.
+
+### Guards
+
+- **The `await` window.** `closeEditor()` sets **nothing** synchronously — `srcdoc=''`, `current=null`
+  and the class removal all run *after* `await saveCurrent()`. Re-reading `frame.contentDocument`
+  therefore cannot tell you the editor is closing. A generation counter (`_rccGen`) bumped as the
+  **first synchronous statement** of `closeEditor` can; every await is followed by a check.
+- **`addFrameToSection` never returns null** even when the heading is missing, so
+  `placePhotoInSection` reports success on a row that was never inserted. The picker checks the
+  heading itself rather than trusting the return value.
+- **`rcc-` not `cc-`.** In this file `cc-` already means Community *and*, inside `cr-lib-script`,
+  CompanyCam. A third meaning would be a bug with a delay on it.
+
+### Two decisions taken conservatively, both reversible
+
+- **Admin-gated**, matching `api/companycam.js`'s server-side 403. A button that fails for Curtis,
+  Scottie, Nick, Joey and Jacob is worse than no button. Widening the route spends a credential and
+  is Theo's call.
+- **Cross-client guard, not requested.** The picker reaches all 1,437 jobs, so it can put another
+  customer's house into this customer's report — and reports go out by email and public link. The
+  search pre-fills with the report's property; a photograph from a different job is outlined red and
+  labelled before it can be filed.
+
+### Four harness reds, all the test's fault, each a different mistake
+
+1. The ordering check compared against `CLOSE.indexOf('await')` — and **the comment explaining the
+   bump contains the word "await."**
+2. `_rccGen` was passed as a `new Function` **parameter**, which copies the number by value, so the
+   stub's bump was invisible.
+3. `String.prototype.lastIndexOf` called with **three** arguments (Python slice habits) — returns
+   `-1`, so the "stylesheet" was the whole file from char 0 and the `.open` rule drowned in garbage.
+
+Plus three patch aborts before that, all **one class**: counting an identifier that this patch's own
+comment, or an earlier build, already used — `lockTemplate` (comment names it twice), `g !== _rccGen`
+(hardcoded 6, wrote 5), and the data-URL string (build 482's `ccEdit` already builds an identical
+one). **Name the site; never count the phrase.** Nothing was written on any of them.
