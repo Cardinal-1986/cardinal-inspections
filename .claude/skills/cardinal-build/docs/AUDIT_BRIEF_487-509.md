@@ -25,7 +25,7 @@ Then answer the four questions below **before** building anything new.
 | 487 | documents-list contrast fix (the `td.dates{color:#333}` bug) |
 | 488 | updates panel was printing raw `\uXXXX` escapes instead of emoji |
 | 489 | three greys strengthened |
-| 490 | *"Groundwork for sorting photographs… nothing to see on screen yet"* |
+| 490 | *"Groundwork for sorting photographs… nothing to see on screen yet"* — **that line is 490's own changelog and is now out of date; the sort WORKS.** See below |
 | 491–509 | ⬜ **not examined** |
 
 So the AI sort starts at **490**, not 487, and the plan's build numbers no longer
@@ -41,10 +41,51 @@ map to anything. **Do not assume a build number means what §0 says it means.**
   under a different name than the plan's `api/report-sort.js`.
 - `setAside` appears 4× in `index.html` — the tray concept exists.
 
-## What is verified ABSENT
+## ✅ The AI sort WORKS — confirmed by Theo, 31 July
+
+He used it. Do not go looking for a bug in it. Measured alongside that:
+
+- `api/sortphotos.js` — 13.6 KB, session gate + Gemini key present, called from
+  `index.html` via `fetch('/api/sortphotos', opts)`.
+- Controls: `data-cre-sortchip`, `-sortlist`, `-sortsel`, `-sortclose`.
+- **Audit question 1 appears already answered.** `index.html` carries the comment
+  *"These MUST stay identical to `api/sortphotos.js`'s SECTIONS / SEVERITIES…"* —
+  the vocabulary collision was handled deliberately, not walked into. Verify the
+  lists actually match; the intent is clearly right.
+
+## ⚠ ONLY TWO INSPECTION TYPES EXIST — the other three were never built
+
+Theo went looking for these and could not find them. He was right; they are not there.
+
+| type | status |
+|---|---|
+| **Roof** | ✅ the original `REPORT_TEMPLATE` |
+| **General Exterior** | ✅ **build 492** — `EXTERIOR_TEMPLATE`, *derived from* `REPORT_TEMPLATE` |
+| Siding | ❌ never built |
+| Gutter | ❌ never built |
+| Window | ❌ never built |
+
+492's changelog: *"Under Inspection Reports there is now a **second** button, New
+exterior report… It looks and prints exactly like the roof report because it is
+built from the same one."* **A second button — that is where it stopped.**
+`Gutter Inspection` and `Window Inspection` appear **zero** times in the file.
+
+> 🚫 **`SIDING_TEMPLATE`, `GUTTER_TEMPLATE` and `WINDOW_TEMPLATE` DO EXIST — and they
+> are ESTIMATES, not inspections.** Their neighbours `ANDERSEN_TEMPLATE` and
+> `GENERAL_TEMPLATE` are built by `buildEstimate(`. Do not mistake a template whose
+> name looks like an inspection for one. This is the exact trap the previous session
+> fell into and corrected; it is now recorded twice because it caught two people.
+
+**Build the remaining three the way 492 built General Exterior** — derived from
+`REPORT_TEMPLATE`, same shell, a different section list. 492 proved the approach,
+so each should be far cheaper than authoring 163 KB from scratch. Theo's General
+Exterior section list is in `OPEN_ITEMS §0`, confirmed verbatim; the other three
+have **no confirmed list yet — ask him before authoring one.**
+
+## Still verified absent
 
 - `cover_candidate` — **0 occurrences.** The cover-photo field from the design is
-  not there. Either it was dropped, renamed, or not built yet.
+  not there. Either dropped, renamed, or not built. Ask before rebuilding it.
 - Shot lists — no sign. `QI_SHOTS` (2×) is the pre-existing quick-inspection list.
 
 ---
