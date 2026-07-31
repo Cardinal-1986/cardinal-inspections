@@ -43,10 +43,63 @@ async function requireSession(req, res){
   }
 }
 
+/* 502: the second rung. gemini-3.5-flash 503s "high demand" roughly one call in
+   four and takes 6-14s when it answers; gpt-4o-mini answers the same server in
+   0.6s. Measured via /api/ai-status, not assumed.
+
+   Returns GEMINI'S OWN RESPONSE SHAPE so every existing call site reads it
+   unchanged - no caller has to learn there is a second provider. Never throws:
+   on total failure it returns the Gemini response (or null) and the caller's
+   existing error path handles it exactly as before.
+
+   Copied from caption.js, which has had this ladder for a long time. Not
+   factored into a shared module on purpose: no route in this repo imports a
+   sibling file, check.yml is syntax-only and could not catch a bundling failure,
+   and the blast radius would be every AI route at once. */
+async function aiFallback(parts, geminiRes) {
+  const oaKey = (process.env.OPENAI_API_KEY || '').trim();
+  if (!oaKey) return geminiRes;
+  try {
+    const content = [];
+    (parts || []).forEach(p => {
+      if (p && typeof p.text === 'string') content.push({ type: 'text', text: p.text });
+      else if (p && p.inlineData) content.push({
+        type: 'image_url',
+        image_url: { url: 'data:' + p.inlineData.mimeType + ';base64,' + p.inlineData.data }
+      });
+    });
+    if (!content.length) return geminiRes;
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + oaKey },
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1200, messages: [{ role: 'user', content }] })
+    });
+    if (!r || !r.ok) return geminiRes;
+    const d = await r.json();
+    const t = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+    if (!t) return geminiRes;
+    /* Gemini's shape, so nothing downstream changes. */
+    return { ok: true, status: 200, _via: 'openai', json: async () => ({
+      candidates: [{ content: { parts: [{ text: String(t) }] } }]
+    }) };
+  } catch (e) {
+    return geminiRes;
+  }
+}
+
 /* The retry ladder this project uses everywhere: flash, pause, flash again.
    The free Gemini tier 503s under load, so one retry is worth the 1.2s. */
+/* 503: MODEL LADDER. Theo confirmed the current line-up is Gemini 3.6 Flash,
+   3.5 Flash and 3.1 Pro. Everything here was pinned to 3.5, which is valid but is
+   the one measurably struggling today - /api/ai-status showed it 503ing "high
+   demand" about one call in four and taking 6-14s when it answered.
+
+   3.6 is tried first and 3.5 is the fallback, so if 3.6 is unavailable to this
+   key the cost is one fast 404 and nothing breaks. OpenAI remains the rung below
+   both. */
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
+
 async function askGemini(apiKey, parts){
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
   const body = JSON.stringify({ contents: [{ parts }] });
   const opts = {
     method: 'POST',
@@ -54,14 +107,21 @@ async function askGemini(apiKey, parts){
     body
   };
   let last = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const r = await fetch(url, opts);
-    if (r.ok) return r;
-    last = r;
-    if (r.status !== 503 && r.status !== 429) break;
-    await new Promise(s => setTimeout(s, 1200));
+  for (const model of GEMINI_MODELS) {
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent';
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const r = await fetch(url, opts);
+      if (r.ok) return r;
+      last = r;
+      if (r.status !== 503 && r.status !== 429) break;
+      /* 502: only pause when another attempt actually follows - the original
+         slept after the final failure too, burning 1200ms of billed time. */
+      if (attempt < 1) await new Promise(s => setTimeout(s, 1200));
+    }
   }
-  return last;
+  /* 502: and when Gemini is simply unavailable, ask OpenAI instead of giving up.
+     Returns Gemini's shape, so both call sites below are unchanged. */
+  return await aiFallback(parts, last);
 }
 
 function outline(sections){

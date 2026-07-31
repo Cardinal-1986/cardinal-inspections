@@ -3215,3 +3215,43 @@ on every path.
 **Not done:** `librarian.js`, `organize.js`, `caption.js` and `summarize.js` all still call Gemini
 alone and will still fail on a busy day. `askOpenAI` is fifteen lines and copies cleanly to each —
 worth doing, and deliberately not bundled into a build about Sort.
+
+## 502–503 — the fallback everywhere, and a model ladder above it
+
+Theo: *"It should have been done before and not sure why it never has, please do it."* He is right.
+
+**502.** `caption.js` has had a Gemini→OpenAI ladder for a long time; 501 gave `sortphotos.js` one.
+`librarian.js`, `organize.js` and `summarize.js` never got one, so on a day like today the Library
+box, the Assistant and the summary drafter simply failed.
+
+Copied **caption.js's proven shape**, not a new one. **Deliberately not factored into a shared
+module:** no route in this repo has ever imported a sibling file, `check.yml` is syntax-only so it
+could not catch a bundling failure, and the blast radius would be every AI route at once. Three
+copies of a small function is the lesser evil, recorded as a choice rather than an oversight.
+
+The fallback returns **Gemini's own response shape**, so every existing call site reads it unchanged
+— no caller had to learn there is a second provider. Also fixed `librarian.js`'s sleep-after-final-
+failure, the same defect 490 fixed when copying it.
+
+**503.** Theo confirmed the current line-up: **Gemini 3.6 Flash, 3.5 Flash, 3.1 Pro.** All 13 routes
+were pinned to `gemini-3.5-flash` — valid, but the one measurably struggling. Now a ladder:
+**3.6 → 3.5 → OpenAI**. If 3.6 is unavailable to this key the cost is one fast 404 and nothing
+breaks, which is why it could be shipped without being able to test it from here.
+
+A `503`/`429` retries the same model; a `400`/`404` moves to the next model **immediately** rather
+than retrying something that will never work.
+
+`ai-status.js` now takes `?model=` so any model can be probed by name — evidence rather than
+assumption:
+
+```
+https://app.cardinalroster.com/api/ai-status?model=gemini-3.6-flash
+```
+
+Gates: every `api/*.js` parses, check_build green, harness **25/25** (updated for the intended new
+behaviour: a 503 walks both models twice each, 3.6 before 3.5, a 400 tries each model once) and
+**10/10** on the provider ladder.
+
+**Still on 3.5 only:** `analyze`, `coach`, `companycam-sync`, `estimate`, `hover`, `roofr`, `sol`.
+They have no fallback either. The same fifteen lines apply; not bundled here because this build was
+about the routes Theo was actually hitting.

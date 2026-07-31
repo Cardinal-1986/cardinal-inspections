@@ -34,6 +34,50 @@ async function requireSession(req, res){
   }
 }
 
+/* 502: the second rung. gemini-3.5-flash 503s "high demand" roughly one call in
+   four and takes 6-14s when it answers; gpt-4o-mini answers the same server in
+   0.6s. Measured via /api/ai-status, not assumed.
+
+   Returns GEMINI'S OWN RESPONSE SHAPE so every existing call site reads it
+   unchanged - no caller has to learn there is a second provider. Never throws:
+   on total failure it returns the Gemini response (or null) and the caller's
+   existing error path handles it exactly as before.
+
+   Copied from caption.js, which has had this ladder for a long time. Not
+   factored into a shared module on purpose: no route in this repo imports a
+   sibling file, check.yml is syntax-only and could not catch a bundling failure,
+   and the blast radius would be every AI route at once. */
+async function aiFallback(parts, geminiRes) {
+  const oaKey = (process.env.OPENAI_API_KEY || '').trim();
+  if (!oaKey) return geminiRes;
+  try {
+    const content = [];
+    (parts || []).forEach(p => {
+      if (p && typeof p.text === 'string') content.push({ type: 'text', text: p.text });
+      else if (p && p.inlineData) content.push({
+        type: 'image_url',
+        image_url: { url: 'data:' + p.inlineData.mimeType + ';base64,' + p.inlineData.data }
+      });
+    });
+    if (!content.length) return geminiRes;
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + oaKey },
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1200, messages: [{ role: 'user', content }] })
+    });
+    if (!r || !r.ok) return geminiRes;
+    const d = await r.json();
+    const t = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+    if (!t) return geminiRes;
+    /* Gemini's shape, so nothing downstream changes. */
+    return { ok: true, status: 200, _via: 'openai', json: async () => ({
+      candidates: [{ content: { parts: [{ text: String(t) }] } }]
+    }) };
+  } catch (e) {
+    return geminiRes;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -80,7 +124,7 @@ export default async function handler(req, res) {
          'Photo observations:\n' +
          list.map((c, i) => `${i + 1}. ${c}`).join('\n'));
 
-    const geminiRes = await fetch(
+    let geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
       {
         method: 'POST',
@@ -93,6 +137,9 @@ export default async function handler(req, res) {
         })
       }
     );
+
+    /* 502: Google refusing is no longer the end of the road. */
+    if (!geminiRes.ok) geminiRes = await aiFallback([{ text: prompt }], geminiRes);
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
