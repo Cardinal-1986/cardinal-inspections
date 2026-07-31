@@ -570,6 +570,44 @@ selectors were unprefixed while the surrounding ones were not. Nothing else surf
 
 ---
 
+## 10. A sampler whose comment claims a spread it does not produce (build 478 → fixed 485)
+
+`order by id asc` on a table whose ids sort near creation order is **not a shuffle** — it is
+"oldest first" wearing a disguise. 478's caption trial did this and its own comment asserted the
+opposite:
+
+> *"A spread, not the newest 50: order by id so the sample crosses years, crews and job types
+> rather than sampling one week of one roof."*
+
+Result: 53 photographs, **1 job**, **1 crew**, **two days**, from an index spanning 2007–2026.
+
+**Why this class is dangerous.** A bad sample does not look like a bug. It returns rows, the code
+runs, the counter fills, and the output is *internally consistent* — 26 of the 53 captions
+correctly described the same water-damaged ceiling. It reads as a finished experiment. The only
+tell is a measurement nobody thought to take.
+
+**The rule.** When a query claims to sample, **prove the spread before trusting the result**:
+
+```sql
+select count(*), count(distinct project_id), count(distinct creator_name),
+       min(captured_at)::date, max(captured_at)::date
+from <the sample>;
+```
+
+If the sample's `count(distinct <entity>)` is not close to its row count, it is not a sample.
+
+**And when batching a sample, exclude the whole entity, not the row.** Excluding only already-
+processed *rows* makes each batch re-pick the same entities and choose a different row from them —
+50 photos from 6 roofs. `not exists (… where q.project_id = p.project_id and q.<field> is not null)`
+is the shape that actually works.
+
+**Related, same family:** *"Test against production data shapes, not convenient fixtures"* —
+a photo-signing change verified against `{path, url}` fixtures shipped completely inert because
+**zero** real photo rows carry `path`. Both are the same failure: an assumption about the data that
+nobody measured.
+
+---
+
 ## Do-not-reflag register — imported from the Hyperagent session, verified at 472
 
 Each of these looks like a defect and is not. Re-reporting one costs trust.

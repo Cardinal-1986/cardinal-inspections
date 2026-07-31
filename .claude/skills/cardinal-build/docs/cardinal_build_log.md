@@ -2462,3 +2462,67 @@ before.
 Harnesses: ordering **21/21** driving the shipped `ccSync()` and asserting the exact call sequence
 (`projects, photos:start, photos:c1, stamp` — four calls, no duplicated pass), all four failure
 paths and the double-press guard; route **7/7** importing the shipped handler with `fetch` stubbed.
+
+## Build 485 — the caption trial was not a sample (31 July 2026)
+
+478 shipped a 50-photo AI caption trial so Theo could judge the captions before spending on 60,406.
+Its sampler carried this comment:
+
+> *"A spread, not the newest 50: order by id so the sample crosses years, crews and job types rather
+> than sampling one week of one roof."*
+
+**The first real run produced the exact opposite**, measured against the live index:
+
+| | |
+|---|---:|
+| photos captioned | 53 |
+| **distinct jobs** | **1** |
+| distinct crews | 1 |
+| date range | 2023-12-19 … 2023-12-20 |
+| index spans | 2007-03-29 … 2026-07-30 |
+
+**`order by id asc` is not a shuffle.** CompanyCam ids sort near creation order, so it took the
+*oldest* rows — 53 photographs of one water-damaged house over two days. It sampled precisely the
+"one week of one roof" its own comment promised to avoid, and it showed: **26 of the 53** were
+variants of *"water staining indicating an active roof leak"* — true of that house, silent about the
+other 60,432.
+
+**The captions themselves were good** ("hip cap shingle", "roof-to-wall transition", "sealant line",
+"roof valley"). The model is not the problem. The sample was, and it was mine.
+
+### The fix is in SQL
+
+`companycam_caption_sample(n)` — one photo from each of n **different** jobs:
+
+- `distinct on (project_id)` → at most one row per job;
+- `not exists (… ai_description is not null)` → **a job with any caption is excluded outright.**
+  This is load-bearing. Without it each six-photo batch re-picks the same handful of jobs and merely
+  chooses a *different photo* from them, so 50 photos would come from 6 roofs;
+- `order by md5(id)` → a **stable** pseudo-random spread. Re-running picks the SAME jobs rather than
+  spending on a fresh set — the one thing 478 got right, preserved;
+- newest photo per job, because later photographs show conditions rather than arrival shots.
+
+Verified before a line of the patch was written: **50 photos · 50 jobs · 5 crews ·
+2024-04-30 … 2026-07-30 · zero rows from the one already-captioned job.**
+
+Both functions are `SECURITY DEFINER`, revoked from `anon`/`authenticated` and granted only to
+`service_role` — matching `companycam_backfill_project_names`, which was already locked that way.
+They bypass RLS, so a signed-in non-admin must not be able to read preview urls out of the mirror.
+
+### Progress is counted in JOBS now
+
+53 photos of one roof is **one** data point. Counting it as 53 is exactly how the first trial
+reported itself finished while having proved nothing. `captioned` is kept as an alias of `jobs` so a
+panel already on the phone cannot read `undefined` if the route deploys ahead of `index.html`.
+
+`rpc()` extracted — all three Postgres functions go through one caller; asserted that zero
+hand-rolled RPC fetches remain. Still writes `ai_description` only; the harness asserts `description`
+never appears in a PATCH body.
+
+### Three aborts on one assertion, all the same mistake
+
+`src.count('different jobs')` failed three times, each for a different reason: the **changelog** this
+patch adds says it, the **build label** this patch adds says it, and it was **already in the file**,
+in a Library entry about drip edge vs apron (*"Different profiles, different jobs"*). The site
+assertion beside it — `count("' different jobs' +") == 1` — was right the first time. **Name the
+site; never count the phrase.** Nothing was written on any of the three runs.
