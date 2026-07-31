@@ -42,6 +42,11 @@ const CC_BASE = 'https://app.companycam.com/public_api/v1';
    rather than emitting a truncated body that fails to decode in the browser. */
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
+/* Text search pages through captions because the API cannot. Eight pages of 100
+   is 800 photos and about eight sequential round trips - enough to be useful,
+   bounded enough that a vague word cannot walk the whole account. */
+const MAX_SCAN_PAGES = 8;
+
 /* Never let the key reach a response body, however the error was shaped. */
 function scrub(text, key) {
   let s = String(text == null ? '' : text);
@@ -164,12 +169,53 @@ export default async function handler(req, res) {
     if (action === 'list') {
       const b = req.body || {};
       const limit = Math.min(Math.max(parseInt(b.limit, 10) || 30, 1), 100);
+      let tagIds = Array.isArray(b.tag_ids) ? b.tag_ids.slice(0, 20) : [];
+
+      /* 471: the librarian speaks tag NAMES, never ids — a model cannot know
+         that "Ice Dam" is tag 4471. Resolve here rather than making the caller
+         fetch the vocabulary first. Unknown names resolve to nothing, which
+         yields an empty result rather than silently returning the whole
+         account: a filter that fails open would show every photo Cardinal has
+         ever taken in answer to one word. */
+      let unmatchedTags = [];
+      if (!tagIds.length && Array.isArray(b.tag_names) && b.tag_names.length) {
+        const want = b.tag_names.slice(0, 10).map(n => String(n).trim().toLowerCase()).filter(Boolean);
+        const tr = await cc('/tags', key, { limit: 100 });
+        const vocab = ((tr.body && tr.body.data) || []).map(t => ({
+          id: String(t.id),
+          name: String(t.display_value || t.value || t.name || '').toLowerCase()
+        }));
+        want.forEach(w => {
+          const hit = vocab.find(v => v.name === w) || vocab.find(v => v.name && v.name.indexOf(w) > -1);
+          if (hit) tagIds.push(hit.id); else unmatchedTags.push(w);
+        });
+        if (!tagIds.length) {
+          res.status(200).json({
+            photos: [], next_cursor: null, has_next: false,
+            unmatched_tags: unmatchedTags,
+            known_tags: vocab.map(v => v.name).filter(Boolean).slice(0, 40)
+          });
+          return;
+        }
+      }
+
       const params = {
         limit,
         after: b.after || '',
-        tag_ids: Array.isArray(b.tag_ids) ? b.tag_ids.slice(0, 20) : [],
+        tag_ids: tagIds,
         project_ids: Array.isArray(b.project_ids) ? b.project_ids.slice(0, 20) : []
       };
+
+      /* 472: TEXT SEARCH, which the API does not have. The photo index takes
+         eleven parameters and none of them is a query, so matching "ice dam"
+         against a caption means paging and filtering here. Bounded hard: at
+         most MAX_SCAN_PAGES pages, stopping the moment we have enough. There
+         are no rate-limit headers to read, so politeness has to be structural.
+         Every response says how far it actually got - a search that quietly
+         gave up after one page and reported "nothing found" would be worse
+         than no search at all. */
+      const q = String(b.q || '').trim().toLowerCase();
+      const words = q ? q.split(/\s+/).filter(w => w.length > 1).slice(0, 6) : [];
 
       /* The accepted date format is not documented anywhere we can read, and a
          bad one is a 422 rather than an ignored parameter. So: try the filter,
@@ -202,12 +248,46 @@ export default async function handler(req, res) {
         });
       }
 
-      const meta = (r.body && r.body.meta) || {};
+      let meta = (r.body && r.body.meta) || {};
+
+      /* Text search: keep paging until we have `limit` matches or hit the cap.
+         Scoring is deliberately dumb - all words beat some words, a whole-phrase
+         hit sorts first - because a caption is one short line and anything
+         cleverer would be guessing. */
+      let scanned = rows.length, pages = 1, captioned = rows.filter(p => p.description).length;
+      if (words.length) {
+        const score = p => {
+          const d = String(p.description || '').toLowerCase();
+          if (!d) return 0;
+          const hits = words.filter(w => d.indexOf(w) > -1).length;
+          if (!hits) return 0;
+          return (d.indexOf(q) > -1 ? 100 : 0) + hits * 10 + (hits === words.length ? 5 : 0);
+        };
+        let pool = rows.map(p => ({ p, s: score(p) })).filter(x => x.s > 0);
+        let cursor = meta.has_next === true ? meta.next_cursor : null;
+        while (pool.length < limit && cursor && pages < MAX_SCAN_PAGES) {
+          const nx = await cc('/photos', key, { ...params, limit: 100, after: cursor });
+          if (!nx.ok) break;
+          pages++;
+          const batch = ((nx.body && nx.body.data) || []).filter(usable);
+          scanned += batch.length;
+          captioned += batch.filter(p => p.description).length;
+          pool = pool.concat(batch.map(p => ({ p, s: score(p) })).filter(x => x.s > 0));
+          const m2 = (nx.body && nx.body.meta) || {};
+          cursor = m2.has_next === true ? m2.next_cursor : null;
+        }
+        pool.sort((a, z) => z.s - a.s);
+        rows = pool.slice(0, limit).map(x => x.p);
+        meta = { next_cursor: null, has_next: false };
+      }
+
       res.status(200).json({
         photos: rows.map(safePhoto),
         next_cursor: meta.next_cursor || null,
         has_next: meta.has_next === true,
-        dates_filtered_here: clientSideDates
+        dates_filtered_here: clientSideDates,
+        unmatched_tags: unmatchedTags,
+        searched: words.length ? { q, scanned, pages, captioned, capped: pages >= MAX_SCAN_PAGES } : null
       });
       return;
     }

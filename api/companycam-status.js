@@ -152,6 +152,14 @@ export default async function handler(req, res) {
 
     if (b.meta && typeof b.meta === 'object') {
       pr.meta_keys = Object.keys(b.meta).sort();
+      /* The COUNT, not just the key name. This probe reported which meta keys
+         existed and never their values, which answered "is there a total?" when
+         the question was "how many photos are there?" - the number that decides
+         whether captioning the account is an afternoon or a project. A count is
+         not photo data; no caption, url or coordinate goes with it. */
+      for (const k of ['total', 'total_count', 'total_entries']) {
+        if (typeof b.meta[k] === 'number') { pr.total_photos = b.meta[k]; break; }
+      }
       pr.has_next = b.meta.has_next === true;          // boolean, not the cursor
       // Only a real answer if the caller actually asked for a total. The first
       // version reported `false` on a plain visit, which reads as "include_total
@@ -161,6 +169,7 @@ export default async function handler(req, res) {
         ? (Object.prototype.hasOwnProperty.call(b.meta, 'total') ||
            Object.prototype.hasOwnProperty.call(b.meta, 'total_count'))
         : 'not probed — add ?include_total=true';
+      if (typeof pr.total_photos === 'number') out.answers.total_photos_in_account = pr.total_photos;
     }
   } else {
     pr.why = photos.why || scrub(photos.raw, key);

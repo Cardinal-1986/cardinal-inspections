@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 469 &#8212; the CompanyCam button in the library assistant actually opens now &mdash; it was wired to the wrong element and did nothing</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 472 &#8212; the assistant now finds photographs by what is written on them, not by tag &mdash; and says how many it looked through</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33046,6 +33046,9 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:472, note:'\U0001F50D Asking the assistant for photographs now searches what was actually typed on them rather than relying on tags, which are only as good as we have been about adding them. It reads through up to 800 recent photos, ranks the closest captions first, and tells you how many it looked at \u2014 including how many had no caption to search, which is the honest reason a search comes back empty.' },
+{ build:471, note:'\U0001F5BC\uFE0F Ask the library assistant to show you something \u2014 \u201cwhat does an ice dam look like\u201d, \u201chave we got photos of kickout flashing\u201d \u2014 and it pulls real photographs from our own CompanyCam jobs, captions and all, right into the answer. Tap one to enlarge it. Photos marked internal in CompanyCam never appear, and asking for a photo no longer leaves a note behind in the library.' },
+{ build:470, note:'\U0001F485 The CompanyCam import panel now looks like the rest of the assistant. Its buttons had been running together as one unbroken line, its labels were bare text and the two date boxes were unstyled, because the panel\u2019s form styling only ever applied to the older form beside it.' },
 { build:469, note:'\U0001F527 Fixed: the CompanyCam button added in 468 did nothing when tapped. It had been wired to the library page instead of to the assistant panel the button actually sits in, so the tap never reached the code. Everything behind it was working the whole time.' },
 { build:468, note:'\U0001F4F8 The Resource Library can pull photographs straight out of CompanyCam. Open the assistant, tap CompanyCam, narrow by tag and date, tick the ones worth keeping and file them \u2014 captions come across with them, and where the crew marked a photo up, you get the marked-up copy. Photos flagged internal in CompanyCam are never shown. Admin only.' },
 { build:467, note:'\U0001F4F7 Photographs filed into the library now look like photographs. A filed image shows a real thumbnail in the list instead of a camera icon, and tapping it opens it full size inside the app rather than throwing you out into a browser tab. Uploading already worked \u2014 nothing had ever been uploaded, because there was nothing to see when you did.' },
@@ -47348,6 +47351,16 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ccp .meta{display:block;font-size:10px;color:var(--lb-dim,#6B615D);}
 #rlLibPanel .lb-ccmore{grid-column:1/-1;padding:7px;font-size:12px;}
 #rlLibPanel .lb-ccfile{margin-top:9px;}
+/* 471: photographs inside a chat answer. Reuses the tile, not a second one. */
+#rlLibPanel .lb-photos{margin:10px 0 4px;}
+#rlLibPanel .lb-photos .lb-ccgrid{max-height:none;}
+#rlLibPanel .lb-photos-stat{display:block;margin-top:6px;font-size:11.5px;color:var(--lb-dim,#6B615D);}
+#rlLibPanel .lb-ccp-v{cursor:zoom-in;}
+#rlLibPanel .lb-ccp-v input{display:none;}
+#rlLibPanel .lb-ccfile button{width:100%;margin-top:7px;border-radius:10px;padding:12px 10px;cursor:pointer;font:800 12px 'Segoe UI',Arial,sans-serif;border:0;background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);}
+#rlLibPanel .lb-cc label:not(.lb-ccp){display:block;margin:9px 0 4px;}
+#rlLibPanel .lb-cc .row{margin-top:10px;}
+#rlLibPanel .lb-ccp .cap,#rlLibPanel .lb-ccp .meta{text-transform:none;letter-spacing:normal;}
 .lb-thumb{width:56px;height:44px;flex:0 0 56px;object-fit:cover;border-radius:6px;background:var(--lb-surface3,#F3EFEE);border:1px solid var(--lb-line,#EAE5E3);display:block;}
 .lb-item-img .bd{min-width:0;}
 /* 466: diagram blocks. Literal fallbacks throughout - the librarian palette
@@ -47440,17 +47453,17 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
   flex-direction:column}
 #rlLibPanel.filing .lb-form{display:flex}
 #rlLibPanel.filing .lb-ask,#rlLibPanel.filing .lb-note{display:none}
-#rlLibPanel .lb-form label{font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;
+#rlLibPanel .lb-form label,#rlLibPanel .lb-cc label:not(.lb-ccp){font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;
   text-transform:uppercase;color:var(--lb-ink2,#6E6663)}
-#rlLibPanel .lb-form select,#rlLibPanel .lb-form input[type=text]{width:100%;box-sizing:border-box;
+#rlLibPanel .lb-form select,#rlLibPanel .lb-form input[type=text],#rlLibPanel .lb-cc select,#rlLibPanel .lb-cc input[type=text],#rlLibPanel .lb-form input[type=date],#rlLibPanel .lb-cc input[type=date]{width:100%;box-sizing:border-box;
   padding:11px 12px;border-radius:10px;border:1px solid var(--lb-line2,#DED8D6);
   background:var(--lb-surface,#fff);color:var(--lb-ink,#17181B);
   font:600 14px 'Segoe UI',Arial,sans-serif}
-#rlLibPanel .lb-form .row{display:flex;gap:8px}
-#rlLibPanel .lb-form .row button{flex:1;border-radius:10px;padding:12px 10px;cursor:pointer;
+#rlLibPanel .lb-form .row,#rlLibPanel .lb-cc .row{display:flex;gap:8px}
+#rlLibPanel .lb-form .row button,#rlLibPanel .lb-cc .row button{flex:1;border-radius:10px;padding:12px 10px;cursor:pointer;
   font:800 12px 'Segoe UI',Arial,sans-serif;border:1px solid var(--lb-line2,#DED8D6);
   background:var(--lb-surface2,#FAF8F7);color:var(--lb-ink,#17181B)}
-#rlLibPanel .lb-form .row button.go{background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);border:0}
+#rlLibPanel .lb-form .row button.go,#rlLibPanel .lb-cc .row button.go{background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);border:0}
 #rlLibPanel .lb-chosen{font-size:12.5px;color:var(--lb-ink2,#6E6663)}
 #rlPageTeam .lb-add{margin:0 0 10px;background:none;border:1px dashed var(--ct-line-strong,#DED8D6);
   color:var(--ct-ink-2,#6E6663);border-radius:9px;padding:9px 12px;
@@ -47490,6 +47503,101 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
      any rule below runs, every '<' is already '&lt;'. Supports what a reference
      entry actually needs — tables, headings, bullets, numbers, bold — and
      deliberately nothing else (no links, no images, no raw HTML). */
+  /* ---- 471: real photographs in an answer -------------------------------
+     The model writes `~~photos tag=Ice Dam from=... to=...` and nothing else
+     about them. This emits an empty container carrying that query; the fetch
+     happens in lbFillPhotos() once the message is in the DOM, because lbRich
+     builds a string and cannot await. Nothing about a photo ever goes back to
+     the model. */
+  function lbPhotoArgs(s){
+    /* A value runs to the NEXT key or the end of the line, so `tag=Ice Dam`
+       keeps both words. Stopping at whitespace lost everything after the first
+       one, and the prompt's own example is unquoted - it would have searched
+       for "Ice". Quotes are honoured but never required. */
+    var a = { q:'', tag:'', from:'', to:'' };
+    var t = String(s || '').trim();
+    var re = /\b(q|tag|from|to)\s*=\s*/gi, m, marks = [];
+    while((m = re.exec(t))) marks.push({ k: m[1].toLowerCase(), at: m.index, from: re.lastIndex });
+    marks.forEach(function(mk, i){
+      var end = (i + 1 < marks.length) ? marks[i + 1].at : t.length;
+      a[mk.k] = t.slice(mk.from, end).trim().replace(/^["']|["']$/g, '').trim();
+    });
+    return a;
+  }
+
+  function lbPhotoBox(argstr){
+    var a = lbPhotoArgs(argstr);
+    /* attributes only ever carry values esc() has escaped */
+    return '<div class="lb-photos" data-lbp="1"' +
+      ' data-lbp-q="' + esc(a.q) + '"' +
+      ' data-lbp-tag="' + esc(a.tag) + '"' +
+      ' data-lbp-from="' + esc(a.from) + '"' +
+      ' data-lbp-to="' + esc(a.to) + '">' +
+      '<span class="lb-photos-stat">Looking for photographs\u2026</span>' +
+      '</div>';
+  }
+
+  function lbFillPhotos(root){
+    if(!root) return;
+    var boxes = [].slice.call(root.querySelectorAll('[data-lbp]'));
+    if(!boxes.length) return;
+    boxes.forEach(function(box){
+      box.removeAttribute('data-lbp');            /* once only */
+      var body = { action:'list', limit:12 };
+      var q = box.getAttribute('data-lbp-q');
+      var tag = box.getAttribute('data-lbp-tag');
+      var from = box.getAttribute('data-lbp-from');
+      var to = box.getAttribute('data-lbp-to');
+      if(q) body.q = q;
+      if(tag) body.tag_names = [tag];
+      if(from) body.start_date = from;
+      if(to) body.end_date = to;
+      var stat = box.querySelector('.lb-photos-stat');
+      ccApi(body).then(function(d){
+        var list = (d && d.photos) || [];
+        if(!list.length){
+          var un = (d && d.unmatched_tags) || [];
+          var sr = d && d.searched;
+          if(sr){
+            /* Say what was actually looked at. "Nothing found" after one page
+               and after 800 photos are very different answers. */
+            stat.textContent = 'Nothing matching \u201c' + sr.q + '\u201d in ' +
+              sr.scanned + ' photograph' + (sr.scanned === 1 ? '' : 's') +
+              (sr.captioned < sr.scanned
+                ? ' \u00b7 only ' + sr.captioned + ' of them have a caption to search'
+                : '') +
+              (sr.capped ? ' \u00b7 stopped at ' + sr.pages + ' pages' : '');
+          } else {
+            stat.textContent = un.length
+              ? 'No photographs tagged \u201c' + un[0] + '\u201d.'
+              : 'No photographs on file for that.';
+          }
+          return;
+        }
+        box.innerHTML = '<div class="lb-ccgrid">' + list.map(function(ph){
+          var when = ph.captured_at ? String(ph.captured_at).slice(0, 10) : '';
+          return '<label class="lb-ccp lb-ccp-v" data-lbp-open="' + esc(ph.preview) + '">' +
+            '<img src="' + esc(ph.thumb) + '" alt="' + esc(ph.description || 'Job photograph') + '" loading="lazy">' +
+            '<span class="cap">' + esc(ph.description || '(no caption)') + '</span>' +
+            '<span class="meta">' + esc(when) + (ph.annotated ? ' \u00b7 marked up' : '') + '</span>' +
+            '</label>';
+        }).join('') + '</div>' +
+        '<span class="lb-photos-stat">' + list.length + ' from CompanyCam' +
+        (d && d.searched ? ' of ' + d.searched.scanned + ' searched' : '') +
+        ' \u00b7 tap to enlarge' + (ph_admin_hint()) + '</span>';
+      }).catch(function(e){
+        var m = String((e && e.message) || e);
+        stat.textContent = /Admins only/i.test(m)
+          ? 'Photographs are admin-only.'
+          : 'Could not reach CompanyCam \u2014 ' + m.slice(0, 120);
+      });
+    });
+  }
+
+  function ph_admin_hint(){
+    return ccIsAdmin() ? ' \u00b7 use \uD83D\uDCF8 CompanyCam to file them' : '';
+  }
+
   function lbRich(s){
     var t = esc(s == null ? '' : s).replace(/\r\n?/g, '\n');
     if(!t.trim()) return '';
@@ -47664,10 +47772,15 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     /* 466: ~~stack / ~~flow / ~~bars / ~~pitch - data in, SVG out. On anything
        malformed lbDiagram returns null; drop the marker line and let the rest
        re-dispatch below, so a broken diagram degrades to the list it was. */
-    var dm = first.match(/^~~\s*(stack|flow|bars|pitch)\b\s*(.*)$/i);
+    var dm = first.match(/^~~\s*(stack|flow|bars|pitch|photos)\b\s*(.*)$/i);
     if(dm){
       var drawn = null;
-      try{ drawn = lbDiagram(dm[1].toLowerCase(), dm[2], lines.slice(1)); }catch(e){ drawn = null; }
+      /* 471: photos are a search, not a drawing - same marker family, own renderer */
+      if(dm[1].toLowerCase() === 'photos'){
+        try{ drawn = lbPhotoBox(dm[2]); }catch(e){ drawn = null; }
+      } else {
+        try{ drawn = lbDiagram(dm[1].toLowerCase(), dm[2], lines.slice(1)); }catch(e){ drawn = null; }
+      }
       if(drawn) return drawn;
       lines = lines.slice(1);
       if(!lines.length) return '';
@@ -48082,6 +48195,14 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
           (d.reason || 'it is not building, code, roofing, siding or window material.');
         return null;
       }
+      /* 471: askQuestion FILES every answer as a note. "Show me ice dam photos"
+         is a lookup, not reference material, and would leave junk in the
+         library - so an ephemeral answer renders and is never inserted. */
+      if(d.ephemeral === true || /^\s*~~\s*photos\b/m.test(String(d.body || ''))){
+        working.innerHTML = (d.title ? '<b>' + esc(d.title) + '</b>' : '') + lbRich(d.body || '');
+        lbFillPhotos(working);
+        return null;
+      }
       return ensureSection(d.hub, d.section, null)
         .then(function(top){
           if(!top) throw new Error('Could not create the section');
@@ -48110,6 +48231,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
             lbRich(d.body || '') + lbSources(d.sources) +
             '<span class="filed">Added to ' + esc(where) +
             (d.section_is_new ? ' \u00b7 new section' : '') + '</span>';
+          lbFillPhotos(working);
           renderTeamPage();
         });
     }).catch(function(e){
@@ -48441,6 +48563,15 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         if(e.target.closest('[data-lb-cam]')){ p.querySelector('[data-lb-camin]').click(); return; }
         /* 469: these five were on the library VIEW in 468. The panel is a
            SIBLING of that element, not a child, so the clicks never arrived. */
+        var pv = e.target.closest('[data-lbp-open]');
+        if(pv){
+          var u = pv.getAttribute('data-lbp-open');
+          if(u && window.CardinalResourceImages && typeof window.CardinalResourceImages.open === 'function'){
+            var c = pv.querySelector('.cap');
+            window.CardinalResourceImages.open(u, c ? c.textContent : '');
+          }
+          return;
+        }
         if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
         if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
         if(e.target.closest('[data-cc-find]')){ ccFind(false); return; }

@@ -1844,3 +1844,131 @@ one, which makes it the more valuable half of this build.
 **The lesson generalises past this bug:** a delegate's anchor tells you nothing about its host.
 Before adding to one, find its `addEventListener` and confirm the element you are targeting is
 actually inside it. Proximity in the file is not containment in the DOM.
+
+---
+
+## Build 470 — the import panel's controls were unstyled (31 July 2026)
+
+**Same root cause as 469, one layer up.** 469 was a delegate on the wrong element; 470 is a class
+under the wrong ancestor. Both times I checked that a name existed and not **where it applied.**
+
+Every form rule in this panel is written `#rlLibPanel .lb-form …`. My block is `.lb-cc`. So:
+
+- `.row` had no `display:flex` → **"CancelFind photos" ran together as one string**, which is
+  exactly what Theo reported
+- labels had no styling → bare text
+- selects had no styling → unstyled native dropdown
+- the date inputs matched **nothing at all**: the rule covers `input[type=text]`, and mine are
+  `input[type=date]`
+
+**Extended, not duplicated.** Each rule gained a `.lb-cc` twin selector rather than a copied block
+under a new prefix. A second block of near-identical form CSS is an override layer with a delay on
+it; retail-B was torn out at 21 override rules for exactly this.
+
+### The render caught a bug the assertions did not
+
+With the label rule extended, **every photo caption went uppercase and letter-spaced** — because
+the tiles are `<label class="lb-ccp">` elements and picked up form-label styling. The layout
+harness was 15/15 green while it happened. **Screenshotting the panel is what found it**, which is
+the "preview visual changes" doctrine paying for itself. Fixed with `label:not(.lb-ccp)` plus an
+explicit `text-transform:none` on `.cap`/`.meta`, and the patch now asserts that no bare
+`.lb-cc label` rule exists.
+
+### The gate this build adds
+
+`cc470_harness.js` measures **computed layout** in Chromium at a 390px viewport — `display`,
+bounding boxes, the real gap between the two buttons, border radius, and that nothing exceeds the
+phone width. No behavioural harness can see a CSS-scope bug; 469 was green on every existing gate
+while rendering wrong.
+
+**It fails 7/15 on 469**, including `0px gap` and 21px-tall bare-text buttons — the reported
+symptom, reproduced mechanically.
+
+**One trap worth recording:** the first run measured every box at **0px**, because `#rlLibPanel` is
+`display:none` until `.on` and the harness never added it. Computed *styles* resolve on hidden
+elements; *boxes* do not. Show the element before measuring it, or the numbers are fiction.
+
+### Two self-inflicted aborts, both caught before any write
+
+1. `assert src.count('input[type=date]') == 2` — the file **already had two**, in the estimates and
+   punch styles. Replaced with a delta against `orig`. **A hardcoded count read off nothing is the
+   most repeated error on this project and I made it again.**
+2. A patch anchor with two leading spaces where the file has one.
+
+---
+
+## Build 471 — ask the librarian for photographs (31 July 2026)
+
+**A fence moved, on Theo's explicit instruction.** `CLAUDE.md` had the librarian fenced off from
+photos entirely. I put the constraint in front of him with three options; he chose the one that
+lifts it. The docs moved with the code — a `CLAUDE.md` that still said *"must never be pointed at
+them"* would have had the next session undo this.
+
+**What is still fenced:** clients, inspections, job paperwork, Company Documents. What changed is
+that asking to *see a roof* is now in scope.
+
+### The model never receives a photograph
+
+It writes a **search** — `~~photos tag=Ice Dam from=… to=…` — and nothing else. `index.html` runs
+that through `api/companycam.js` **after** the answer comes back, so no image, caption or project
+can reach Gemini even in principle. The route is admin-only and refuses `internal` photos, so the
+chat cannot surface anything the panel would not.
+
+### It is 466's convention, not a new one
+
+`~~photos` joins the same regex, the same `lbBlock` dispatch, the same marker family as
+`~~stack` / `~~flow` / `~~bars` / `~~pitch`. A new mechanism beside an existing one is a bug with a
+delay on it.
+
+Two adaptations were needed:
+
+- **Async inside a synchronous renderer.** `lbRich` builds a string. So `~~photos` emits an empty
+  container carrying its query in data attributes and `lbFillPhotos()` fills it once the message is
+  in the DOM — the shape 467 used for signed thumbnails.
+- **No junk notes.** `askQuestion` **files every answer as a library note.** "Show me ice dam
+  photos" is a lookup, not reference material, so an answer containing `~~photos` renders and is
+  never inserted.
+
+### Tag names, not ids — and it fails CLOSED
+
+A model cannot know that "Ice Dam" is tag 4471, so the route resolves names server-side. **An
+unknown name returns nothing rather than everything**: a filter that failed open would answer one
+misspelt word with every photograph Cardinal has ever taken.
+
+### Two defects my own harness caught, one of which passed first
+
+1. **An assertion containing `|| true`** — it could not fail. That is not a test, and `gates.md`'s
+   "print honest labels" rule covers exactly this.
+2. **Behind it, a real bug.** `tag=Ice Dam` unquoted parsed as **"Ice"**, and *the prompt's own
+   example is unquoted* — so the shipped feature would have searched for the wrong tag on its most
+   likely input. The parser now runs each value to the next key or end of line. The `D_greedy_lost`
+   control reproduces it.
+
+**Third hardcoded-count abort of the night** (`count('lbFillPhotos') == 3`). Replaced with property
+assertions. The count is never the thing I actually mean.
+
+---
+
+## Build 472 — search photographs by caption, not by tag (31 July 2026)
+
+**Theo's correction, and it reframes 471.** The tags on the account are his own and he says he has
+not used them consistently — *which is exactly why he asked whether the AI could pick photos out by
+description in the first place.* Tag filtering was answering a question he had not asked. `q=` is
+now the primary filter and the prompt says so; `tag=` is a last resort.
+
+**The API cannot do this.** The photo index takes eleven parameters and **none of them is a
+query** — there is no text search to call. So matching happens in `api/companycam.js`, which pages
+through captions with a hard cap of **8 pages / 800 photos** and stops the moment it has enough.
+No rate-limit headers come back, so politeness has to be structural rather than adaptive.
+
+**It reports how far it got.** Every search returns `scanned / pages / captioned / capped`, and the
+empty state says so out loud: *"Nothing matching 'unicorn' in 800 photographs · only 96 of them
+have a caption to search · stopped at 8 pages."* A search that quietly gave up after one page and
+said "nothing found" would be worse than no search.
+
+**`captioned` is the number that matters next.** If most photos carry no caption, no amount of text
+matching will help, and the first real search will say so rather than leaving us to guess. That
+measurement decides whether the next step is worth building — see OPEN_ITEMS.
+
+Ranking is deliberately dumb: whole-phrase hit first, then how many query words appear. A caption
+is one short line; anything cleverer would be guessing.

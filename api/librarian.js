@@ -1,10 +1,18 @@
 // /api/librarian.js
 // Vercel serverless function — the brains behind the Resource Library assistant.
 //
-// SCOPE: the Resource Library ONLY. This route files reference material —
-// building code, roofing, siding, windows, gutters, manufacturer specs. It has
-// no knowledge of projects, clients, inspections or Company Documents and must
-// never be pointed at them.
+// SCOPE: the Resource Library. This route files reference material — building
+// code, roofing, siding, windows, gutters, manufacturer specs. It still has no
+// knowledge of clients, inspections or Company Documents and must not be
+// pointed at them.
+//
+// ONE DELIBERATE EXCEPTION, added 471 on Theo's explicit instruction. The
+// librarian may ask for PHOTOGRAPHS from the company's own CompanyCam account
+// by emitting a `~~photos` block. It never receives photo data and never sees a
+// caption: it writes a search, and index.html runs it through /api/companycam,
+// which is admin-only and refuses anything flagged internal. The fence that
+// mattered — no client records, no job paperwork — is intact; what changed is
+// that asking to SEE a roof is now in scope.
 //
 // Given a PDF's text, a photo, or a typed question, it decides which library
 // section the material belongs in, writes a short title and summary, and may
@@ -154,6 +162,22 @@ export default async function handler(req, res) {
         'never put a fact, number or step in a diagram that is not in the text. \n' +
         'If the answer is values that vary by one thing, a TABLE is better. If \n' +
         'nothing genuinely benefits from a picture, do not add one.\n' +
+        /* 471: real photographs, on the same principle — you write a SEARCH,
+           the app runs it. The model never receives photo data back. */
+        'REAL PHOTOGRAPHS. When someone asks to SEE something — "show me", \n' +
+        '"what does X look like", "have we got photos of" — you may add ONE \n' +
+        '~~photos block. It searches the company\'s own job photographs.\n' +
+        '  ~~photos q=ice dam\n' +
+        '  ~~photos q=kickout flashing from=2026-01-01 to=2026-03-31\n' +
+        'ALWAYS use q= with the plain words someone would have written on the \n' +
+        'photo. It matches the caption the crew typed. Tags on this account are \n' +
+        'used inconsistently, so tag= is a last resort, not the default. Dates \n' +
+        'only when the question is about a season or period. Put it on ONE line, and \n' +
+        'do NOT describe what the photos will show — you cannot see them, and \n' +
+        'the app puts the real captions underneath. Say something like "Here is \n' +
+        'what we have on file:" and nothing more about their content.\n' +
+        'Use it only for things a photograph actually settles. A definition, a \n' +
+        'code citation or a measurement is not one of those.\n' +
         'Where a number comes from code or a manufacturer spec, name the source ' +
         '(for example "2019 Residential Code of Ohio R905.2.8.5" or "per the ' +
         'manufacturer\'s installation instructions"). If you are not certain of a ' +
