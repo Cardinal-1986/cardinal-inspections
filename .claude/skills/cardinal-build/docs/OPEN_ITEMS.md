@@ -457,7 +457,28 @@ but the changelog for build 214 says this same bar previously blocked taps.
 **bottom** of the screen. That single answer separates the action bar from a
 sticky header overlay and saves a lot of guessing. Do not fix this blind.
 
-### 3b. Unreadable text — small, safe, do it soon
+### 3b. Unreadable text — ✅ RESOLVED BY INTERVENING WORK (re-measured 31 July)
+
+**Both photographed failures now pass. Do not re-fix them.** Re-measured with
+`scripts/contrast.py` against the values actually in the file:
+
+| Was reported | Measured now |
+|---|---:|
+| mint *"Waiting on a decision"* body text — `--ccm-mute` `#9aa39e` on `--ccm-card` `#161918` | **6.83:1** |
+| the same card in its `.now` state — `#d8cfc9` on `--ccm-nowfill` fallback `#321a1c` | **10.53:1** |
+| `#galTitle` on the "navy" photo-album header | **16.77–17.08:1** |
+
+**There is no navy.** Nothing paints a background behind `#galleryView` except
+`body.claim-insurance #galleryView{background:var(--ct-bg,#FAF8F7)}` — near-white. PRs #35/#36
+removed the whole-CRM navy backdrop on 29 July, and the `--ccm-*` palette rebuild (#27) replaced the
+mint. The item was written before both.
+
+*The tools it names, `contrast_sweep.js` and `resolve_tokens.js`, do not exist in this repo. Use
+`scripts/contrast.py` for a pair and `scripts/token_pairs.py` for a sweep.*
+
+---
+
+### 3b-ORIGINAL (kept for provenance only — the finding above supersedes it)
 
 Two contrast failures Theo photographed:
 
