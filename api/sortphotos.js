@@ -198,8 +198,17 @@ export default async function handler(req, res) {
     const placed = [];
     const setAside = [];
 
-    for (const photo of photos) {
-      const out = await sortOne(apiKey, photo);
+    /* 499: CONCURRENTLY, not one at a time. The previous loop awaited each
+       photograph in turn, so a batch of four was four Gemini vision calls
+       back-to-back - several seconds each, plus up to a 1200 ms retry pause -
+       and it blew the client's 45 s timeout. Four concurrent calls take about
+       as long as one.
+
+       sortOne NEVER throws (asserted in its own gate), so Promise.all cannot
+       reject here and cannot lose a photograph. Results come back in the order
+       they were requested, so the accounting below is unchanged. */
+    const outs = await Promise.all(photos.map(photo => sortOne(apiKey, photo)));
+    for (const out of outs) {
       if (out.placed) placed.push(out.placed);
       else setAside.push(out.setAside);
     }

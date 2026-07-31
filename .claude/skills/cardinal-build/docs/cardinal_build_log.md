@@ -3158,3 +3158,20 @@ and 497 is confirmed to have had no batching, no shrinking and no timeout.
 **Still unproven:** no gate made a real Gemini call, and jsdom has no canvas — so the shrinker's
 actual output size is inferred from the arithmetic, not measured. Whether a sorted report reads well
 remains Theo's eye.
+
+## 499 — Sort was making its model calls one at a time
+
+498 stopped the silent hang and reported honestly: *"the server did not answer within 45 seconds."*
+That was the timeout doing its job — and it exposed the real cost.
+
+`sortphotos.js` awaited each photograph **in turn**. A batch of four was four Gemini vision calls
+back-to-back, several seconds each plus up to a 1,200 ms retry pause, which is what blew the 45 s
+budget. Four concurrent calls take about as long as one.
+
+`sortOne` **never throws** — asserted in its own gate since 490 — so `Promise.all` cannot reject here
+and cannot lose a photograph. Results return in request order, so the
+`placed + setAside === submitted` accounting is unchanged.
+
+Measured against the shipped handler with stubbed 60 ms calls: **peak concurrency 4** (sequential
+would be 1), **66 ms** for four (sequential would be 240 ms+), 4/4 accounted for. 490's route harness
+still green.
