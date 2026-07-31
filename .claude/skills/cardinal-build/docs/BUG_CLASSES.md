@@ -608,6 +608,49 @@ nobody measured.
 
 ---
 
+## 11. The patch language's escape syntax written into the patched language (build ~468 → fixed 488)
+
+**Every build here is a Python script writing JavaScript.** Anything that means one thing in Python
+and another in JS crosses that boundary silently, and the gates do not see it.
+
+The instance: 20 `CHANGELOG` notes carried `\U0001F4F8`. That is a valid **Python** escape for 📸.
+JavaScript has no `\U` escape at all — it takes the unknown escape, drops the backslash, and yields
+the literal text `U0001F4F8`. So the panel rendered:
+
+> `U0001F4F8 CompanyCam photographs go straight into an inspection report.`
+
+**This is the dangerous shape of the class: it parses.** `node --check` is clean, tag and brace
+balance are clean, the string is a perfectly legal string. Nothing is malformed — it just says the
+wrong thing. It shipped in every build from roughly 468 and nobody caught it for twenty builds,
+because the only instrument that sees it is *reading the rendered text*.
+
+**Sibling traps on the same boundary:**
+
+| Written in Python | Python means | JavaScript means |
+|---|---|---|
+| `'\U0001F4F8'` | 📸 | literal `U0001F4F8` |
+| `'\d'` in a patch string | invalid escape (warns) | literal `d` — a regex silently loses its class |
+| `'...What's...'` | fine in a `"` string | **closes** a `'` JS string — took out a whole script block at 488 |
+| `\1` via `pl.sub` | literal, not a backref | destroyed five CSS rules at build 302 |
+
+**How to catch it:** assert on what the *engine* produces, not on the text you wrote. `gate_488.js`
+extracts the shipped array, evaluates it in a real JS context, and reads the resulting strings — a
+wrong escape then yields wrong characters and fails a count. A `grep` for the string you intended
+would have passed on every one of the twenty broken builds.
+
+**The scan, if you want to know whether this is live right now:**
+
+```bash
+grep -oE '\\U[0-9A-Fa-f]{8}' index.html | sort | uniq -c    # invalid in JS — must be 0
+grep -coE '\\u[0-9A-Fa-f]{4}' index.html                    # valid in JS — must not change
+```
+
+Repair as **surrogate pairs** — write `\uD83D\uDCF8`, not a literal 📸 character. `\uXXXX` is valid JS,
+is already this file's own convention (597 × `\u2014`), and keeps the region ASCII so no encoding
+step between the patch script and the artifact can mangle it.
+
+---
+
 ## Do-not-reflag register — imported from the Hyperagent session, verified at 472
 
 Each of these looks like a defect and is not. Re-reporting one costs trust.
