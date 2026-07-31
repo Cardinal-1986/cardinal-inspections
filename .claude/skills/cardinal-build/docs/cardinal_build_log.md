@@ -2161,3 +2161,60 @@ turned it green — and the same normalisation is what makes the test meaningful
 12/12: passthrough for Supabase and `/api/*`, network-first navigations, offline shell fallback,
 instant stale response, background refill, frozen CDN, cache miss, and an offline revalidation that
 does not become an unhandled rejection.
+
+---
+
+## Build 475 — milestone pill legibility, option C (31 July 2026)
+
+Theo picked C from a preview of four, drawn with the shipped CSS on the app's own grounds.
+
+### The measurement, and the correction that came with it
+
+The pill label is `font:800 10.5px` uppercase — **small text, so 4.5:1 applies.** Ink came from one
+token, `--rbe-mpill-fg`, flipped per theme: `#15171b` dark, `#ffffff` light.
+
+**An earlier report of "6 of 8 fail" was the light theme only** — read from one token and
+generalised. Both themes fail, on different stages:
+
+| | dark `#15171b` | light `#ffffff` |
+|---|---:|---:|
+| below 4.5:1 | **4 of 8** | **6 of 8** |
+
+The two inks are near-opposites, so each covers what the other misses — **except Invoiced
+(`#8E6BC1`, 4.29/4.18) and Closed (`#607D8B`, 4.10/4.37)**, mid-luminance and failing both ways.
+Ink alone cannot save those two.
+
+### What shipped
+
+1. **Ink is chosen per stage, not per theme** — same ink in both, because the pill's ground is the
+   stage colour, not the page.
+2. **Two colours nudged**: Invoiced **3.5% lighter** (`#9170c3`), Closed **1.6% darker**
+   (`#5e7b88`). Both near-invisible.
+
+**16 of 16 pass**, 4.50–6.39. Gate computes this from the *shipped* `LJ_SOLID` / `LJ_INK`, so a
+typo in either map goes red here rather than in Theo's hand.
+
+### The scope trap this build had to dodge
+
+`Invoiced:'#8E6BC1'` and `Closed:'#607D8B'` each appear **twice** — once in `LJ_SOLID` (Library
+board) and once in **`STAGE_COLORS`** (CRM pipeline chips, which carry different Lead/Prospect/
+Approved values). A find-and-replace on either value would have restyled the pipeline. Every anchor
+is bound to the `LJ_SOLID` literal, unique because it carries `Lead:'#8a93a1'`, and the gate
+**asserts both original values still appear exactly once** in `STAGE_COLORS`.
+
+### Mechanism follows the module's own convention
+
+The card already publishes per-stage colour as inline custom properties (`--spn`, `--slc`). Ink
+joins as **`--sli`**, and `.ljmc` reads `var(--sli, var(--rbe-mpill-fg))` — unset falls back to
+exactly today. The detail pill already set `background` inline, so it takes `color` the same way.
+**No new mechanism beside an existing one.**
+
+`OnHold` is in neither map and never was; it takes the literal defaults, which is correct while it
+still has no writer.
+
+### Rejected, with numbers
+
+- **A — ink only.** Leaves Invoiced 4.29 and Closed 4.37 short.
+- **B — pale tint + `STAGE_INK`.** Clears everything (4.69–7.31) but turns a solid-colour board
+  pale. Theo looked at it and chose C.
+- **Darken every solid.** Would have moved the green and blue 22–23%; C moves two colours by 2–4%.

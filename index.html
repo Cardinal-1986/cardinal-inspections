@@ -1946,7 +1946,7 @@ body.restoring #restoreVeil{display:flex;}
 .ljrl{flex:0 0 84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 6px;position:relative;}
 .ljrl::after{content:'';position:absolute;right:0;top:10%;height:80%;width:1px;background:var(--rbe-line);}
 .ljmc{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font:800 11px ui-monospace,Menlo,monospace;color:var(--rbe-mpill-fg);background:var(--slc,var(--rbe-mpill-bg));margin-bottom:3px;}
+  font:800 11px ui-monospace,Menlo,monospace;color:var(--sli,var(--rbe-mpill-fg));background:var(--slc,var(--rbe-mpill-bg));margin-bottom:3px;}
 .ljkl{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--rbe-mute);}
 .ljkv{font:800 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-fact-fg);}
 .ljmain{flex:1;min-width:0;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;}
@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 474 &#8212; property maps and address autocomplete work again; they had been switched off by a missing setting, not a broken feature</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 475 &#8212; the coloured status pills on the Library board are readable now, in both the dark and the light theme</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10148,7 +10148,16 @@ var LJ_GROUPS = [
 var LJ_SPINE = { Lead:'#dbe7f7', Prospect:'#ffd84d', Approved:'#3dff9a', Scheduled:'#3dff9a',
   Completed:'#6fc3ff', Invoiced:'#c9a2ff', Closed:'#9aa4af', Lost:'#ff8a7a' };
 var LJ_SOLID = { Lead:'#8a93a1', Prospect:'#c8202e', Approved:'#3fae6a', Scheduled:'#3fae6a',
-  Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d6e63' };
+  Completed:'#29A3DC', Invoiced:'#9170c3', Closed:'#5e7b88', Lost:'#8d6e63' };
+/* 475: Invoiced 3.5% lighter and Closed 1.6% darker. Those two sit mid-luminance
+   and fail against BOTH inks; every other stage is fixed by ink alone. The same
+   two values live in STAGE_COLORS for the CRM pipeline chips and are deliberately
+   NOT changed there - different surface, different decision. */
+/* Per-stage label ink: whichever of the two wins on that colour, same in both
+   themes because the pill's ground is the stage colour, not the page. Ratios
+   against the colour above: 5.78 / 5.67 / 6.39 / 6.39 / 6.29 / 4.54 / 4.50 / 4.62. */
+var LJ_INK = { Lead:'#15171b', Prospect:'#ffffff', Approved:'#15171b', Scheduled:'#15171b',
+  Completed:'#15171b', Invoiced:'#15171b', Closed:'#ffffff', Lost:'#ffffff' };
 function ljTrades(p){
   var ck = parseCkAll(p);
   if(ck.trades && ck.trades.length) return ck.trades;
@@ -10249,9 +10258,10 @@ function ljCardHtml(p){
   var stg = normStage(p.stage);
   var spine = LJ_SPINE[stg] || '#9aa4af';
   var solid = LJ_SOLID[stg] || '#8a93a1';
+  var ink   = LJ_INK[stg]   || '#15171b';
   var cat = [ck.job_category, ljTrades(p).join(', ')].filter(Boolean).join(' \u00b7 ');
   var tel = (p.phone || '').replace(/[^+\d]/g, '');
-  return '<div class="ljcard' + (ljState.sel === p.id ? ' sel' : '') + '" data-lj="' + p.id + '" style="--spn:' + spine + ';--slc:' + solid + '" title="' + esc(stg) + '">' +
+  return '<div class="ljcard' + (ljState.sel === p.id ? ' sel' : '') + '" data-lj="' + p.id + '" style="--spn:' + spine + ';--slc:' + solid + ';--sli:' + ink + '" title="' + esc(stg) + '">' +
     '<div class="ljrl"><div class="ljmc">' + esc(stg.charAt(0)) + '</div>' +
       '<span class="ljkl">In status</span><span class="ljkv">' + ljAge(ck.stage_since || p.updated_at) + '</span>' +
       '<span class="ljkl">Touched</span><span class="ljkv">' + ljAge(p.updated_at || p.created_at) + '</span></div>' +
@@ -10331,6 +10341,7 @@ function renderLjPane(){
   var ck = parseCkAll(p);
   var stg = normStage(p.stage);
   var solid = LJ_SOLID[stg] || '#8a93a1';
+  var ink   = LJ_INK[stg]   || '#15171b';
   var tel = (p.phone || '').replace(/[^+\d]/g, '');
   var addr = (p.address || '').trim();
   var tab = ljState.tab;
@@ -10349,7 +10360,7 @@ function renderLjPane(){
     : '<div class="ljsummary" style="padding-top:46px;">No address on file for this job.</div>';
   pane.innerHTML =
     '<div class="ljprow"><span class="ljpname">' + esc(p.name || 'Unnamed') + '</span>' +
-      '<span class="ljmpill" style="background:' + solid + ';">' + (stg === 'Closed' ? 'Archived' : stg) + '</span></div>' +
+      '<span class="ljmpill" style="background:' + solid + ';color:' + ink + ';">' + (stg === 'Closed' ? 'Archived' : stg) + '</span></div>' +
     '<div class="ljpsub">' + (ck.po ? '<span class="po">' + esc(String(ck.po)) + '</span> \u00b7 ' : '') + esc(addr || 'No address') + '</div>' +
     '<div class="ljpact">' +
       (tel ? '<a class="ljab" href="tel:' + tel + '">' + ljPhoneSvg() + 'Call</a>' +
@@ -33046,6 +33057,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:475, note:'\U0001F3F7\uFE0F The coloured status pills on the Library board were hard to read \u2014 white letters on light green, dark letters on deep red, depending on the theme. Each stage now takes whichever letter colour actually reads on it, and two of the eight colours moved by a couple of percent because no letter colour worked on them. Every pill now clears the accessibility standard for text that size, in both themes. You may not notice the colour change; you should notice the words.' },
 { build:474, note:'\U0001F5FA\uFE0F The property maps are back. Address autocomplete, the satellite photo of the house, and the Directions button had all been dead \u2014 not broken, just never switched on: the app asked the server for its Google Maps setting and nothing was there to answer. It answers now. A dropped connection also used to kill maps until you reloaded the app; it retries on its own instead.' },
 { build:473, note:'\U0001F5C2\uFE0F Photo searches can now reach the whole CompanyCam account. There are 61,649 photos in it, and searching live could only ever read the most recent 800 \u2014 so a job from last winter was unfindable no matter how you worded it. Press Build index once in the CompanyCam panel and it reads through the lot in a few minutes; after that searches are instant and cover everything. It also tells you how many photos have no caption, which is the honest reason a search comes back empty.' },
 { build:472, note:'\U0001F50D Asking the assistant for photographs now searches what was actually typed on them rather than relying on tags, which are only as good as we have been about adding them. It reads through up to 800 recent photos, ranks the closest captions first, and tells you how many it looked at \u2014 including how many had no caption to search, which is the honest reason a search comes back empty.' },
