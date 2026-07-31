@@ -467,3 +467,42 @@ barely exists. Build the effective map in **document order, last wins**. Same tr
 **A recon regex of the form `([^\n{}]+)\{([^{}]*TOKEN[^{}]*)\}` will hang the file.** It did — 120s
 timeout, exactly the backtracking CLAUDE.md warns about. Walk back from each hit to the nearest
 `{` with `rfind` and bound the window instead.
+
+---
+
+## Settled decisions, imported from the Hyperagent session (filed 31 July)
+
+Theo pulled these from the tool that built 428–467. **Every repo-checkable claim was
+re-verified here before filing** — `OnHold` writers **0**, `check_back_at` / `funded_by` /
+`referred_to` / `award_cycle` **0**, `tarped_at` **0**, `origin/main @ ec685f0`. All accurate.
+
+### Do not revisit
+
+- **Skill layout is canonical as of PR #41.** `retail_b` lives under `references/`; the root
+  copies and the 1-byte `references/retail_b/spec.md` stub are deleted. **Do not restore them**,
+  and mind the case trap — `spec.md` and `SPEC.md` are different files to git but collide on a
+  case-insensitive disk.
+- **Any bundled `app_map.md` saying "Community (Slate & Clay, light)" or calling `crm()` the
+  single source of truth is stale.** Take the repo copy. Community is green `--ccm-*`, dark by
+  default; `crmNow` recomputes and `skin()` publishes to `body.dataset.crm` — the attribute is the
+  only thing CSS can gate on.
+
+### Known broken / half-finished — deltas only
+
+- **The outcome form is still unbuilt end to end**, verified at 472. Zero writers of `OnHold`;
+  `check_back_at`, `funded_by`, `referred_to`, `award_cycle` all at **0** references; `chDueBand`
+  still reads only `bid_due_at`, so the **−713-day bid still sorts most-urgent**.
+- **§3c's blue count has drifted: 221 → 226 reachable, 5 gated.** New builds add blue faster than
+  triage removes it. The three triage groups stand; only the number moved.
+- ✅ **Broken pointer FIXED.** `/agent/workspace/outcome_v2.html` was a sandbox-only path no other
+  program could open. The real design — **style 4 with style 2's flow, the one Theo picked** — now
+  lives at **`.claude/skills/cardinal-build/references/outcome_v2.html`** (202 KB, 2,094 lines).
+  That directory is in `.vercelignore`, so it is reachable by any program reading the repo and is
+  **not** served publicly. Scanned before filing: no fetch/XHR/WebSocket, no Supabase reference, no
+  key-shaped strings, one external host (Google Fonts).
+- CHANGELOG's 343–427 gap was never backfilled. **Cosmetic only** since `data-cr-footer` landed —
+  every stuck watermark is ≥406 so nobody is shown them. Backfill is optional, not owed.
+- External, measured 29 Jul, decisions still pending: Cloudflare edge held **11 of 26** sampled
+  photo objects after the bucket flip (max-age one year — purge / re-path / wait is Theo's call);
+  the `photos_upload` policy question; real bid emails for **Habitat and Kitty Hawk** (the latter
+  matches tonight's own database audit).

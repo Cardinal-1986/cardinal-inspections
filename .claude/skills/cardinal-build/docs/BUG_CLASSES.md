@@ -520,3 +520,25 @@ for a binding far in the file from the markup that creates it. Distance is the s
 
 **Do not re-run the naive version.** Counting listeners against `innerHTML` targets produces 34
 false positives and zero true ones.
+
+---
+
+## Do-not-reflag register — imported from the Hyperagent session, verified at 472
+
+Each of these looks like a defect and is not. Re-reporting one costs trust.
+
+| Looks wrong | Why it is right |
+|---|---|
+| **`OnHold` is fully rigged and nothing writes it** — `STAGES`, `IC_SKIP`, `PIPE_SKIP`, board column, both `LABEL` maps | Deliberate whitelist-before-writer ordering. The outcome form is the writer. **Don't wire it ad hoc, don't delete it as dead code.** |
+| **27 surviving gold values** | Correct: `#c9a227` ×17 (retail badge + brass directory chips), `#b8860b` ×10 (gradient text fallbacks). **Grep the value, not the word "gold".** |
+| **`--ins-gold` is `#c8202e`** | The token name lies. Renaming touches every call site. Leave it. |
+| **`v2026-08-04 build 95`, `146` ×12, `148` ×4, `404`** | Module-local counters and a future-dated claims label. **Only the `data-cr-footer` div is the app version.** |
+| **The two community `LABEL` maps are byte-identical** | On purpose. A count of 2 is right, and **any edit must land in both.** |
+| **Three copies of `setHours(0,0,0,0)`** | `days()` and `daysUntil()` both anchor to midnight. Correct, not duplication. |
+| **`await signedPhotoMap(...)` appears twice** | `publish()` and `openPreview()`. **Asserting 1 file-wide fails a correct patch.** |
+| **`PHOTO_DOC_URL_TTL = 315360000`** | Ten years, deliberate — documents get opened long after generation. |
+| **Main block: 1 lock, 4 releases** | The extra releases are `hideAllViews` safety nets. **The asymmetry is the design, not a leak** — this refines CLAUDE.md's "all individually balanced". |
+| **`cr-sc-script` two locks, one release** | Both locks idempotent, balanced. |
+| **Unguarded `JSON.parse(JSON.stringify(x))`** | Deep-copy idiom; cannot throw. |
+| **`querySelector('[data-sh="' + name + '"]')`** | `name` is an internal literal from the sort/filter build, not user data. |
+| **The Punch panel's CSS says "claim"** | The panel is **cross-CRM**. Its vocabulary misfiled it as insurance-only for two scanners while it sat in Theo's community screenshots. **Don't scope it by its words.** |
