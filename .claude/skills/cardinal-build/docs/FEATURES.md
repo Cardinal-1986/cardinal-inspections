@@ -150,7 +150,7 @@ Two routers coexist. The modern one (`cardinal-nav`) tags its states `{app:'card
 
 ---
 
-## Resource Library (`rlPage*`, builds 442–474)
+## Resource Library (`rlPage*`, builds 442–482)
 
 **CompanyCam import (468, admin only).** Library assistant → **📸 CompanyCam** → narrow by
 tag and date → tick → file. Captions come across as titles; where the crew marked a photo up you
@@ -176,6 +176,51 @@ drives a resumable sync (`api/companycam-sync.js`, six pages a call, cursor retu
 ~7 min / zero Gemini). `api/companycam.js` searches the index when populated and falls back to the
 live API when not. Internal photos are **never written to the mirror** — otherwise the index
 becomes a way around the flag. RLS: admins read, service role writes, **no write policies at all**.
+
+**476 — the caption search had nothing to search.** The first full sync indexed 60,485 photos and
+proved **only 79 carry a caption** — 0.13%, flat across every year. 472 was built over a field this
+account does not use. `project_id`, `creator_name` and `captured_at` **are** populated on all
+60,485 across **775 jobs**, so `companycam_projects.sql` syncs the job names and the FTS index now
+covers caption + project name + project address + creator. Ask for a street or a partner and you
+get the pictures. **Measure the data before building the search over it.**
+
+**477 — the counter.** A resumable run that starts over with no cursor must reset its counters too.
+It didn't, and the panel read `87,096 of 61,649`.
+
+**478 — the AI caption trial (admin only).** Captioning 60,406 photos means sending customers' job
+photographs to a third party. That is **not a decision to make on Theo's behalf**, so the button
+does **50** and reads them back. The backfill is deliberately not built.
+
+**479–480 — the panel was a dead end.** The ask box was hidden whenever the CompanyCam block was
+open, and there was no way to see a photo bigger than a thumbnail. 480's corner expand button
+reuses `window.CardinalResourceImages` and calls **both** `preventDefault()` and
+`stopPropagation()` — the tile is a `<label>` wrapping a checkbox.
+
+**481 — ⬇ Save to device.** Tick photos → save them to the phone or the computer. Share sheet first
+(Photos / AirDrop / Messages in one step), one spaced anchor click per file otherwise — the shape
+the job gallery has used since 216. `ccPicked()` is the single reader of the ticked set, shared with
+filing. **The ticks stay set afterwards**, unlike filing, so the same set can then be filed.
+
+**482 — ✏️ Draw on it.** The pencil in a tile's corner opens **`cr-ped-script`, the photo editor
+that already existed** for job photos — pen, arrow, circle, text, rotate, undo, six colours. It was
+never rebuilt, only reached. `open(p, opts)` gained `opts.onSave` (take the blob, skip the editor's
+own Supabase write) and `opts.extra` (one more header button); both default absent, so the
+job-photo path is unchanged.
+
+- **The bytes come through `api/companycam.js`, never the CDN.** A cross-origin image **taints** the
+  canvas and `toBlob()` then throws `SecurityError` — markup would draw fine and fail only at save.
+- **The CompanyCam original is never written to.** Nothing here holds a CompanyCam write scope; the
+  editor is handed a copy. The marked-up version is a **new** `library_items` row titled
+  `Marked up — …` and sourced `CompanyCam <id> (marked up)`.
+- Save goes to the section chosen in **Put them in**; **⬇ Device** goes to 481's share sheet.
+- `ccDeliver()` and `ccFileBlob()` are shared with 481 and `ccSave()` — one pipeline each.
+
+> ⚠️ **`cc-` is two namespaces.** Inside `cr-lib-script` it means CompanyCam; elsewhere in the file
+> it means Community (`data-cc-editbid`). Grep the block, not the prefix.
+
+> ⚠️ **`annotated` is meaningless.** It is `true` on all 60,485 rows — CompanyCam returns a
+> `web_annotation` URI whether or not anyone drew on the photo. Filed, not fixed; no caller depends
+> on it.
 
 The panel reports the **uncaptioned count**, which is the honest reason a search comes back empty
 and the exact size of any future AI-captioning job.

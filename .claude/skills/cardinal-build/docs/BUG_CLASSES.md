@@ -525,6 +525,51 @@ false positives and zero true ones.
 
 ---
 
+## 9. A CSS rule that parses, balances, and never applies (build 481 → fixed 482)
+
+**This class is invisible to every gate on this project except one.**
+
+481 added a ghost button to the CompanyCam foot:
+
+```css
+.lb-ccfile button.ghost{background:transparent;border:1px solid …}
+```
+
+Every other rule in `cr-lib-styles` is scoped to `#rlLibPanel`, including:
+
+```css
+#rlLibPanel .lb-ccfile button{…background:var(--lb-accent,#C4180F);…}
+```
+
+`id + class + type` (1,0,1,1) beats `class + class + type` (0,0,2,1). The ghost rule **lost**, and
+"Save to device" rendered as a **second solid red button** identical to "File selected".
+
+**What each instrument said:**
+
+| Check | Verdict |
+|---|---|
+| `check_build.py` — CSS brace balance | ✅ green |
+| `check_build.py` — duplicate style ids | ✅ green |
+| `node --check`, tag balance, marker, negative control | ✅ green |
+| A jsdom harness | ✅ green — and it **cannot** resolve `var()` in a `background` shorthand anyway |
+| **`getComputedStyle` in a real browser** | ❌ **`rgb(196, 24, 15)` — the same as the primary** |
+
+**The rule.** When you add a CSS rule to a module in this file, **read its neighbours' selectors
+first** and match their scoping. If the rule is meant to override, prove it did — in a real engine,
+not in jsdom:
+
+```js
+getComputedStyle(document.querySelector('[data-cc-dl]')).backgroundColor
+```
+
+`css482_harness.js` is that gate, kept. **It proves which rule won, not that the colour is right;
+Theo's eyes remain the gate for the second question.**
+
+**How it was caught:** the *scope diff* of the next build. Walking every changed hunk showed the new
+selectors were unprefixed while the surrounding ones were not. Nothing else surfaced it.
+
+---
+
 ## Do-not-reflag register — imported from the Hyperagent session, verified at 472
 
 Each of these looks like a defect and is not. Re-reporting one costs trust.

@@ -2275,3 +2275,109 @@ and no caller depends on it yet.
 
 **Seventh hardcoded-count abort:** `count('photos_with_project_name') == 1` — it appears twice on
 one line, in `typeof d.X === 'number' ? d.X : null`. Caught before the write, like the other six.
+
+---
+
+## Build 477 — the indexing counter counted past the number of photos that exist (31 July 2026)
+
+Theo's screenshot read **`Indexing… 87,096 of 61,649 photos`**, still climbing.
+
+The sync is resumable: the panel calls the route repeatedly, six pages a call, passing the cursor
+back. `status` was accumulating `synced` across calls — correct — but a run that *starts over* has
+no cursor and must start its counters at zero too. It didn't, so a second full run added its count
+to the first.
+
+```js
+/* Only the FIRST call of a run can be fresh. */
+const freshRun = !cursor;
+…
+synced: (freshRun ? 0 : (prev.synced || 0)) + wrote,
+```
+
+Belt and braces in the panel, because a stored counter from before this fix would still read high:
+
+```js
+var shown = (total && done > total) ? total : done;
+```
+
+**The negative control rejected `var shown =` as a marker** — four occurrences already existed in
+475. The gate was right; the marker was lazy. Re-run with the whole assignment.
+
+## Build 478 — try AI captions on 50 photographs before spending on 60,406 (31 July 2026)
+
+The index proved only 79 of 60,485 photos carry a caption. Captioning the rest means sending
+customers' job photographs to Google, which is **not a decision to make on Theo's behalf** — so this
+ships the trial, not the backfill: one button, 50 photographs, `action:'sample_captions'`, and the
+captions read back to him before anything is written at scale.
+
+## Builds 479–480 — the CompanyCam panel was a dead end (31 July 2026)
+
+Two things Theo hit immediately. The ask box was hidden whenever the CompanyCam block was open
+(`.lb-acts{display:none}` with no way back), and there was no way to see a photograph larger than a
+thumbnail. 479 restored the ask line and renamed "Cancel" to "← Back to chat". 480 added a corner
+expand button that reuses `window.CardinalResourceImages`, with **both `preventDefault()` and
+`stopPropagation()`** — the tile is a `<label>` wrapping a checkbox, so an unstopped click would
+also tick the photo for filing.
+
+## Build 481 — save ticked CompanyCam photographs to the phone (31 July 2026)
+
+"Can you make pictures selected downloadable?" Everything needed already existed and was wired
+together rather than re-invented:
+
+| Piece | Already there since |
+|---|---|
+| the ticked set (`data-cc-id` + checkbox) | 468 |
+| the bytes (`action:'fetch'`, base64, our origin) | 468 |
+| share-sheet-then-anchors | 216, in the job gallery |
+
+`ccPicked()` is now the one reader of the selection, called by both filing and saving, so they
+cannot disagree about what is ticked. **The ticks are deliberately left set** after a device save —
+saving a set and then filing the same set is a reasonable thing to want. `AbortError` from
+dismissing the iOS share sheet is the user's own choice and is not reported as a failure.
+
+## Build 482 — draw on a CompanyCam photograph (31 July 2026)
+
+"Can you make the pictures editable?" **The editor already existed** — `cr-ped-script`: pen, arrow,
+circle, text, rotate left/right, undo, clear, six colours, stroke width scaled to the image. It has
+been on the job-photo caption modal's "✏️ Edit" button for a long time. It was simply unreachable
+from CompanyCam, and its `save()` writes to `project_photos`, a table a CompanyCam photograph has no
+row in. **Seventh "missing feature" on this project that was a mounting problem.**
+
+Two additive changes:
+
+1. **`open(p, opts)`.** `opts.onSave` takes the encoded blob and the editor's own two Supabase
+   branches never run; `opts.extra` adds one header button. Both default absent, so `open(photo)`
+   from the job modal is unchanged — proved by executing the shipped module against a recording
+   Supabase stub.
+2. **The bytes come through our own route.** Painting a CompanyCam CDN URL into a canvas **taints**
+   it, and `canvas.toBlob()` then throws `SecurityError` — the markup would draw perfectly and fail
+   only at save, which is the worst possible place to find out. `ccEdit()` fetches base64 through
+   `api/companycam.js` and hands the editor a `data:` URL.
+
+A marked-up photo goes to the Library section chosen in "Put them in", or to the phone through
+481's share sheet. **The CompanyCam original is never written to** — nothing in this app holds a
+CompanyCam write scope, and the editor is handed a copy.
+
+`ccDeliver()` and `ccFileBlob()` were lifted out of `ccDownload()` and `ccSave()` so the original
+and the marked-up copy take the identical path in each case.
+
+### The lesson of this build: a rule can be present, parse, balance, and never apply
+
+481 added `.lb-ccfile button.ghost` **unprefixed**. Every other rule in `cr-lib-styles` is scoped to
+`#rlLibPanel`, and `#rlLibPanel .lb-ccfile button` (id+class+type) out-specifies a bare
+`.lb-ccfile button.ghost`. Measured in a real engine, "Save to device" and "File selected" **both
+computed `rgb(196,24,15)`** — two identical solid red buttons stacked.
+
+`check_build.py` cannot see this. jsdom cannot see this. **`getComputedStyle` in a real browser
+can**, and is now a standing gate (`css482_harness.js`). Caught by this build's own scope diff and
+fixed before merge. Corrected beside it: `.lb-ccz`'s focus ring read `var(--lb-ac,…)` and
+**`--lb-ac` is declared zero times in this file** — the token is `--lb-accent`.
+
+**Eighth and ninth hardcoded-anchor aborts**, both caught before any write: `canvasBlob(0.9)` stopped
+being unique because the `extra()` function *this same patch* added encodes the same way (re-anchored
+on the line only `save()` has); and the marker `data-cc-edit` failed the negative control because
+Community's `data-cc-editbid` already contains it. Attribute *selectors* match whole names, so
+`[data-cc-edit]` does not collide — but the marker did, and the gate was right.
+
+**Namespace hazard worth knowing:** `cc-` means **CompanyCam** inside `cr-lib-script` and
+**Community** elsewhere in the file. Grep the block, not the prefix.

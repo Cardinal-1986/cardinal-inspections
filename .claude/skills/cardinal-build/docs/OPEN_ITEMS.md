@@ -97,6 +97,16 @@ there are 3 punch items total and none are scheduled. That is a coverage gap, no
 - **Back button (367):** Home → Leads → client → Punch, then Back four times
 - **Scroll lock (364):** open a contract, leave via a banner item, confirm the next page scrolls
 - **Community (359–364):** desktop width, folds, All bids, bid editing, partner colours
+- **CompanyCam panel (479–482), all on the phone, in the installed app:**
+  - the ask box is visible while the CompanyCam block is open, and "← Back to chat" returns to it
+  - the ⤢ corner button expands a photo **without ticking it**
+  - the ✏️ corner button opens the editor **without ticking it**; arrows and circles draw where the
+    finger goes at the photo's real resolution
+  - **"Save to device" must NOT look like a second "File selected"** — it is a bordered ghost, not
+    solid red. This shipped wrong in 481 and was fixed in 482; it is the thing to eyeball first.
+  - tick 3 → **⬇ Save to device** → the iOS share sheet offers Photos / Messages / AirDrop, and the
+    ticks are **still set** afterwards
+  - draw on one → **File it** → it appears in the chosen Library section titled `Marked up — …`
 
 ---
 
@@ -129,12 +139,16 @@ a light ground changes how they read. Same reasoning as the calendars.
 
 ## 5. Build queue (code, unblocked)
 
-0. **Does CompanyCam caption coverage make text search viable?** Build 472 searches photo captions
-   because tags are used inconsistently. Every search now reports `captioned` out of `scanned` —
-   **read that number on the first real search.** If most photos have no caption, text matching
-   cannot work either, and the honest next step is having Gemini *look* at the photos
-   (`analyze.js`/`caption.js` are already Gemini-backed). **That sends customers' job photos to a
-   third party and is Theo's call, not an implementation detail.** Do not build it without asking.
+0. ~~**Does CompanyCam caption coverage make text search viable?**~~ **ANSWERED, 31 July — no.**
+   The full sync indexed 60,485 photos and found **79 with a caption** (0.13%, flat across every
+   year). 476 pivoted the search to job names instead: `project_id` is populated on all 60,485
+   across 775 jobs, and that is what the photographs actually carry. **Do not re-open the caption
+   search.**
+
+   The Gemini follow-on is **still Theo's call and still not built.** 478 ships a **50-photo trial**
+   button so he can read real captions before deciding. **Waiting on him to press it and report.**
+   Do not run it over all 60,406 without an explicit yes — that sends customers' job photographs to
+   a third party.
 
 1. **Partner colour as a stored field.** Community partner colours are matched on name, so a new or renamed partner reads neutral. Verified: `partners` has no `color` column. Add one, set it in the Partners directory, have every surface read it. **This is the only open database item.**
 2. **Distinguish "no clients" from "couldn't load."** Both render the same empty state, which is why a transient read failure looked like data loss.
