@@ -3108,3 +3108,53 @@ the client photo album.
 Gates: check_build green, harness **15/15** — visible only when a frame holds a photograph, removal
 clears image and caption and flips the button back, declining the confirm changes nothing, and
 **the real denylist rule is run over a document containing the control to prove zero survive**.
+
+## 498 — Sort hung silently. My design error, on two axes at once
+
+Theo: *"Sort gets greyed out, I dont see an error message, nothing sorts."*
+
+**That symptom was diagnostic.** `sortRun`'s final `.then()` re-enables the button **unconditionally**,
+so a button still greyed means the promise never settled — which rules out every error path, because
+all of them settle and alert. It was not failing. **It was hanging.**
+
+**Two causes, both mine:**
+
+**Payload.** Report photographs are stored at 1600px/0.82 — roughly 300–800 KB each once base64'd.
+The route accepted **24 in one POST**: 7–19 MB, against Vercel's **4.5 MB** body limit. I capped 490
+on photo **count**, which bounds spend, and never on **bytes**.
+
+**Time.** The route loops photographs sequentially, each up to two Gemini attempts with a 1,200 ms
+pause. Twenty-four of those is minutes; a serverless function is killed long before. The browser sat
+waiting on something already dead.
+
+**Four fixes:**
+
+1. **Shrink before sending.** 640px at 0.6 — about a tenth the bytes. The model does not need 1600px
+   to tell a chimney from a soffit. **The photograph in the report is never touched**; only the copy
+   sent for classification is reduced. Asserted: `sortApply` still places the original.
+2. **Batch.** Four per request, sequentially. Each body is now well under a megabyte and each call
+   finishes inside the function's lifetime.
+3. **Progress.** The button reads *"Sorting 8/18…"*, so it is never a mystery again, and its label is
+   restored afterwards.
+4. **Timeout.** `AbortController` at 45 s, reported in words — *"the server did not answer within 45
+   seconds"*.
+
+### The harness caught me reintroducing the same bug one layer down
+
+`sortShrink` waits on `img.onload` / `img.onerror`. **An image that never decodes fires neither**, and
+that promise would then never resolve — the exact hang this build exists to remove, recreated inside
+the fix. jsdom exposed it because it does not decode images; any browser that silently fails to
+decode would do the same.
+
+It now settles **once and unconditionally** behind a 5 s guard. I did not find this by reading the
+code back — the gate found it, which is the whole argument for writing one that actually drives the
+thing.
+
+**Gates.** check_build green, stamp 497 → 498, marker present, negative control clean. Harness
+**16/16** driving the shipped module: ten photographs go out in **three** batches of no more than
+four, all ten accounted for, the button comes back enabled with its label, a stalled request aborts,
+and 497 is confirmed to have had no batching, no shrinking and no timeout.
+
+**Still unproven:** no gate made a real Gemini call, and jsdom has no canvas — so the shrinker's
+actual output size is inferred from the arithmetic, not measured. Whether a sorted report reads well
+remains Theo's eye.

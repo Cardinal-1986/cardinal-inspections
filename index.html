@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 497 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 498 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33845,6 +33845,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:498, note:'\uD83E\uDDF9 Fixed: Sort photos greyed out and then sat there doing nothing. It was trying to send every photograph at full size in one go, which is far more than the server accepts, and asking it to do more work than it is allowed to finish. It now sends small copies a few at a time, counts its progress on the button, and tells you plainly if the server does not answer. The photographs in your report keep their full quality.' },
 { build:497, note:'\uD83D\uDDD1 You can now take a photograph out of an inspection report. Every photo box has a Remove button beside Replace; it asks first, clears the caption with it, and does not touch CompanyCam or the client photo album.' },
 { build:496, note:'\uD83D\uDD0E Fixed: searching CompanyCam by address or job name found nothing. The search needed every word you typed to appear in the same single field, so a full address with a client name in front of it matched no photograph at all, and a dash in the middle told it to EXCLUDE what followed. It now searches the whole record at once, and the box opens with the property address rather than the report title.' },
 { build:495, note:'\uD83E\uDDF9 Fixed: the Sort photos button added in the last update never actually appeared. It was being asked to show itself a moment before the report had finished opening, so it always decided there was nothing to sort. It now appears once the report is on screen.' },
@@ -50153,9 +50154,71 @@ function sortCaption(img, text){
   if(cap) cap.textContent = text;
 }
 
+/* 498: SHRINK before sending. Report photographs are stored at 1600px/0.82 -
+   300-800 KB each once base64'd - and 24 of those in one POST is 7-19 MB against
+   Vercel's 4.5 MB body limit. The model does not need 1600px to tell a chimney
+   from a soffit. 640px at 0.6 is roughly a tenth the size.
+
+   The photograph IN THE REPORT is never touched; this only reduces the copy sent
+   away for classification. */
+var SORT_MAXDIM = 640;
+var SORT_QUALITY = 0.6;
+
+var SORT_DECODE_MS = 5000;
+
+function sortShrink(dataUrl){
+  return new Promise(function(resolve){
+    /* Settle ONCE, and settle no matter what. An <img> that never decodes fires
+       NEITHER onload NOR onerror, and this promise would then never resolve -
+       which is the exact hang this build exists to remove, reintroduced one layer
+       down. Caught by the harness, not by reading it back. */
+    var settled = false;
+    function done(v){ if(settled) return; settled = true; resolve(v); }
+    setTimeout(function(){ done(dataUrl); }, SORT_DECODE_MS);
+    try{
+      var img = new Image();
+      /* Resolve, never reject: a photograph that will not re-encode should be
+         sent as-is rather than sinking the whole batch. */
+      img.onerror = function(){ done(dataUrl); };
+      img.onload = function(){
+        try{
+          var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+          if(!w || !h){ done(dataUrl); return; }
+          var scale = Math.min(1, SORT_MAXDIM / Math.max(w, h));
+          var c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(w * scale));
+          c.height = Math.max(1, Math.round(h * scale));
+          var cx = c.getContext('2d');
+          if(!cx){ done(dataUrl); return; }
+          cx.drawImage(img, 0, 0, c.width, c.height);
+          var out = c.toDataURL('image/jpeg', SORT_QUALITY);
+          done(out && out.length < dataUrl.length ? out : dataUrl);
+        }catch(e){ done(dataUrl); }
+      };
+      img.src = dataUrl;
+    }catch(e){ done(dataUrl); }
+  });
+}
+
+/* 498: a stalled request used to hang forever, and a hang with no message is the
+   worst failure there is - it looks identical to the app ignoring you. */
+var SORT_TIMEOUT_MS = 45000;
+
 function sortApi(body){
   return window.aiHeaders().then(function(h){
-    return fetch('/api/sortphotos', { method:'POST', headers:h, body:JSON.stringify(body) });
+    var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = setTimeout(function(){ if(ctl) ctl.abort(); }, SORT_TIMEOUT_MS);
+    var opts = { method:'POST', headers:h, body:JSON.stringify(body) };
+    if(ctl) opts.signal = ctl.signal;
+    return fetch('/api/sortphotos', opts).then(function(res){
+      clearTimeout(timer);
+      return res;
+    }, function(err){
+      clearTimeout(timer);
+      throw new Error((err && err.name === 'AbortError')
+        ? 'the server did not answer within 45 seconds'
+        : ((err && err.message) || String(err)));
+    });
   }).then(function(res){
     return res.json().catch(function(){ return null; }).then(function(data){
       if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
@@ -50236,10 +50299,46 @@ function sortRun(){
 
   _sortBusy = true;
   var btn = document.getElementById('sortBtn');
+  var btnLabel = btn ? btn.textContent : '';
   if(btn) btn.disabled = true;
   var g = _rccGen;
 
-  sortApi({ photos: photos.map(function(p){ return { id:p.id, dataUrl:p.dataUrl }; }) })
+  /* 498: FOUR AT A TIME, not twenty-four. One request per batch keeps the body
+     under a megabyte and lets the function finish inside its lifetime; the old
+     single request asked a serverless function to make up to 24 sequential model
+     calls, which it is killed long before completing. */
+  var SORT_BATCH = 4;
+  function say(t){ if(btn) btn.textContent = t; }
+
+  function runBatches(){
+    var placed = [], setAside = [], vocab = null, done = 0;
+    var chain = Promise.resolve();
+    for(var i = 0; i < photos.length; i += SORT_BATCH){
+      (function(slice){
+        chain = chain.then(function(){
+          if(g !== _rccGen) return;
+          say('Sorting ' + Math.min(done + slice.length, photos.length) + '/' + photos.length + '\u2026');
+          return Promise.all(slice.map(function(p){
+            return sortShrink(p.dataUrl).then(function(small){
+              return { id: p.id, dataUrl: small };
+            });
+          })).then(function(small){
+            return sortApi({ photos: small });
+          }).then(function(d){
+            done += slice.length;
+            if(d && Array.isArray(d.placed)) placed = placed.concat(d.placed);
+            if(d && Array.isArray(d.setAside)) setAside = setAside.concat(d.setAside);
+            if(d && d.vocabulary) vocab = d.vocabulary;
+          });
+        });
+      })(photos.slice(i, i + SORT_BATCH));
+    }
+    return chain.then(function(){
+      return { placed: placed, setAside: setAside, vocabulary: vocab };
+    });
+  }
+
+  runBatches()
   .then(function(d){
     /* closeEditor() sets nothing synchronously, so re-reading contentDocument
        cannot tell you the editor is closing. The generation counter can. */
@@ -50272,7 +50371,7 @@ function sortRun(){
   .then(function(){
     _sortBusy = false;
     var b = document.getElementById('sortBtn');
-    if(b) b.disabled = false;
+    if(b){ b.disabled = false; if(btnLabel) b.textContent = btnLabel; }
   });
 }
 
@@ -50295,6 +50394,7 @@ window.CardinalSortPhotos = Object.assign(window.CardinalSortPhotos || {}, {
   apply   : sortApply,
   vacate  : sortVacate,
   fp      : sortFp,
+  shrink  : sortShrink,
   sectionOf: sortSectionOf
 });
 })();
