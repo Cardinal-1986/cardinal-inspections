@@ -2029,3 +2029,59 @@ insert/update/delete policies — absent policies deny, so no browser session ca
 `count('data-cc-sync') == 2` missed the third site that disables the button. Both replaced by
 naming the sites. **Five aborts in one session from the same habit** — every one caught before a
 write, but the pattern is mine and it is now the most-repeated entry in this log.
+
+---
+
+## Build 474 — `/api/config` exists, and a failed fetch stops being permanent (31 July 2026)
+
+**CLAUDE.md understated this one.** It recorded `/api/config` as missing with "Google Maps address
+autocomplete is silently off." The route is genuinely absent — no `api/config.js`, and `vercel.json`
+holds only the digest cron, no rewrite — but the blast radius is **the whole `cr-gmap-script`
+module**, because every consumer short-circuits on the empty key:
+
+| Consumer | With no key |
+|---|---|
+| `loadMaps()` | throws `'no google maps key configured'` — **autocomplete never attaches** |
+| `staticMapUrl()` | returns `''` — **the satellite property photo is blank** |
+| `insertMap()` | returns before building the block — **takes Directions and View-on-Maps with it**, though neither needs a key |
+
+It degrades cleanly and warns only to the console, which is exactly why it survived this long.
+
+**Not verified against production** — outbound to `app.cardinalroster.com` is blocked by this
+environment's network policy. The finding is from the repo: no file, no rewrite, and Vercel serves
+`/api/*` from `api/` only. A dashboard-level rewrite outside the repo would falsify it.
+
+### The route is deliberately not behind the signed-in gate
+
+A Maps **browser** key cannot be secret — the JS API loads by putting the key in a `<script src>`,
+so any user who sees a map can read it. **HTTP referrer restriction is the control, not secrecy.**
+
+Gating would also have hit a real trap: `loadConfig()` memoises its promise *including rejections*,
+so a 401 from a pre-sign-in call would cache `API_KEY = ''` for the whole session and maps would
+stay dead after signing in.
+
+> **The key must be referrer-restricted in Google Cloud before `GOOGLE_MAPS_API_KEY` is set.**
+> Unset env var → empty key → byte-identical to today's behaviour, so shipping cannot regress.
+
+### The memoisation defect the route exposed
+
+Harmless while the route was permanently missing; **not** harmless once it exists. One failed
+fetch — cold start, deploy in flight, dropped signal — killed maps until the tab was reloaded, and
+a fresh deploy is precisely when cold starts happen.
+
+**A plain retry would have been worse.** `attachAutocomplete()` resets `crAutocomplete` to `''` on
+failure, so the input retries on the next `scan()`, and `scan()` fires on DOM changes — unfloored,
+that is one fetch per input per scan. The 30s floor is checked **before** the memo is rebuilt, so
+while broken the retry path costs **zero** network. Harness proves it: 25 retries inside the floor,
+0 requests.
+
+### The red was the test's fault, again
+
+`loadMaps` "still rejected" after a successful retry — because it ends by loading the real Google
+script, which no sandbox can reach. The assertion was testing the network, not the fix. Corrected to
+assert the observable thing: the retry **appended the script tag carrying the key**, which a
+replayed rejection could never reach. Roughly half of all reds on this project are the test's fault
+and this was one.
+
+**Sixth hardcoded-count abort of the night** — `count('configPromise = null;')` also matched its own
+`var` declaration. Six in one session, one root cause, every one caught before a write.
