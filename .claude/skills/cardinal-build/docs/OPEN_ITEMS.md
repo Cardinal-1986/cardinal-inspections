@@ -58,6 +58,110 @@ re-check this — it becomes live the moment that count is non-zero.
 
 ---
 
+## 0. AI Inspections — the live build queue (31 July 2026)
+
+**486 is built and in PR #51; 487–490 are not.** The plan below came out of a 37-agent read-only
+audit whose findings were each adversarially refuted. Do not re-audit these surfaces; do re-measure
+any number before quoting it.
+
+### ⚠ A correction I owe, recorded so nobody repeats it
+
+I told Theo *"a template is a section list plus a trade map — data, not code, so General ships
+alongside Roof at no real cost."* **That is false in this app.** There is exactly **one** inspection
+report template: `var REPORT_TEMPLATE` (index.html:7508, backtick literal, ~163 KB, closes 7939),
+roof-specific, sections 1–10. `GENERAL_TEMPLATE` (8448) is `buildEstimate('REPAIR ESTIMATE', …)` —
+a **repair estimate**, not an inspection report. `#gcModal`, the General Checklist, has **zero** file
+inputs. Verified, not inferred.
+
+**A General Exterior inspection report is therefore its own build (490)**, comparable in size to 487.
+
+### ✅ SETTLED BY THEO, 31 July — do not re-litigate
+
+**490's section list, confirmed verbatim.** Author the document to exactly these ten, in this order:
+
+1. Inspection Overview & Property Facts
+2. Summary of Findings
+3. Exterior Elevations
+4. Roof
+5. Siding & Trim
+6. Windows & Doors
+7. Gutters & Drainage
+8. Structure & Grounds
+9. Recommendations
+10. Limitations & Acknowledgment
+
+It mirrors the roof report's shape on purpose — an adjuster recognises it. Theo's own words for why
+this template matters: *"We do lots of exterior inspections."* It is also the template his archive
+serves best: every trade qualifies, so nothing lands in the set-aside tray.
+
+**487's route is SIGNED-IN, not admin-only.** The two gates guard different things and are meant to
+differ:
+
+| Route | Gate | Why |
+|---|---|---|
+| `api/companycam.js` (486's picker) | **admin-only** | reaches all 1,437 jobs; can put the wrong client's house in a report that goes out by email and public link |
+| the 487 sort route | **signed in** | only ever sees photographs *already in this report*; never touches CompanyCam |
+
+The point of the feature is to take the bottleneck off Theo and Joan, so the crew who shot the roof
+can draft the report. RLS already limits Sales to work they created or are assigned. **Cap photos
+per sort regardless of the gate** — that is what bounds spend, not the gate.
+
+**Known and accepted:** signed-in means a rep's AI-drafted findings can reach a client without Theo
+seeing them first. The confirm-before-send gate covers it — nothing sends until a human clears every
+section — but that human is not necessarily Theo. He was told this plainly and chose signed-in.
+
+### 487 — the AI sort (roof template only)
+
+- Copy the skeleton from **`api/organize.js`** — the only route already doing signed-in gate →
+  Gemini vision → fence-strip → `JSON.parse` → validate → coerced capped scalars. Take
+  `requireSession` **and its caller** (the helper is inert without it).
+- **Fix three things while copying, do not carry them forward:** `organize.js:51` reads
+  `process.env.GEMINI_API_KEY` **bare** (use `(… || '').trim()`, the majority idiom — a trailing
+  newline in the Vercel var gives an opaque Google 400); `organize.js` has **no retry** (take
+  `askGemini` from `librarian.js:48–65`, and **move the sleep** — it currently fires after the final
+  failure too, burning 1200 ms of billed time); do not copy `librarian.js`'s `sources` sanitiser,
+  which is **stranded inside a `catch` and never runs**.
+- **⚠ Vocabulary is the biggest correctness risk.** `section` already has an **incompatible** prior
+  art: `api/organize.js:8–14` defines sections as numeric **3–8** and **502s** outside that range.
+  `severity` exists elsewhere as `crit`/`warn`/`ok`. `trade` overlaps `EST_TYPES` keys
+  (index.html:16751). **A fourth vocabulary under a colliding name is the "new mechanism beside an
+  existing one" failure.** Pin all three enums in one place and reuse `EST_TYPES` for `trade`.
+- **⚠ Section 2 — feed the EXISTING button, do not add a second control.**
+  `wireSummaryDraftButton` (17045) already owns that paragraph and mounts with
+  `insertAdjacentElement('afterend', …)`. `serializeFrame` (17717) removes it by testing **a single
+  node** while stripping the `data-wired` guard unconditionally — **a second `afterend` control
+  removes the wrong one and compounds one copy per save/open cycle.** Also `EDITABLE_SELECTOR`
+  contains `'[data-cardinal-summary-heading] + p'`, an adjacent-sibling combinator that only matches
+  because `lockTemplate` runs before that button mounts; anything inserted afterend earlier silently
+  kills contenteditable on that paragraph.
+- Cover photo: reuse `.cover-photo` / `wireCoverPhoto` (17110); match its `change` handler exactly.
+  The deterministic fallback (earliest wide exterior) is **pure JS**, not a second model call.
+- **Unlisted `await` sites, worse than the known ones:** `processAssistPhoto` (17326) and
+  `sendAssistNote` (17358) capture `frame.contentDocument` and write post-await with **no**
+  revalidation, and `wireReanalyzeButtons`' handler (16985) closes over **elements**, invisible to a
+  `contentDocument` grep. Use 486's `_rccGen` token.
+- **O(n²):** `placePhotoInSection` re-runs `wirePhotoFrames` + `wireReanalyzeButtons` per photo. For a
+  bulk sort, place all then wire once — and call `lockTemplate` once at the end if you do.
+- CI note: `.github/workflows/check.yml` has **no `npm ci`**, so its "every API function parses" step
+  is **syntax-only** — an undeclared dependency ships permanently dead. Diff every `import` against
+  `api/package.json` by hand. Never write `module.exports` even in a comment; check.yml greps text.
+- **Theo, unresolved:** whether the new route is signed-in or admin-only. Every CompanyCam-touching
+  route is admin-only; every "caption the photo I just took" route is merely signed-in. Nothing in
+  the repo settles it.
+- Harness must assert `placed + setAside == submitted` — **a silent drop is the failure mode** — and
+  that every enum the route can emit is in the client whitelist *before* the writer ships
+  (`normStage` lesson).
+
+### 488 — shot lists · 489 — Save PDF
+
+- 488: **reuse `QI_SHOTS`, do not add a fifth list.** Duplication is the real risk.
+- 489: `downloadReport()` produces **`.html`, not PDF**. Print → Save as PDF already produces a
+  proper vector PDF using the template's `@page` rules; any client-side PDF library would be
+  **worse** (rasterised, unsearchable). 489 is a labelled one-tap route through the print path.
+  A server-side `/api/pdf` is only justified if reports must go out **unattended** — Theo's call.
+
+---
+
 ## 1. SQL
 
 **Nothing pending.** `punch_columns.sql` was run — `punch_items.scheduled_at` (date) and
