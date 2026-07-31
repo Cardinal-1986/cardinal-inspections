@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 509 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 519 &#8212; removed the small calendar from the top right of the dashboard</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33851,6 +33851,13 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:519, note:'\uD83D\uDDD3 The small calendar in the top right of the dashboard is gone. The Cardinal Team Calendar and Production Calendar further down are untouched. Note the \u201Cnext appointment\u201D line lived inside that card and went with it \u2014 say the word and it comes back on its own.' },
+{ build:518, note:'\uD83D\uDCCF Fixed the proportions on a wide monitor. The previous change capped the page at a fixed width, which looked right on a laptop and left a narrow strip of content floating in the middle of an ultrawide with dead space either side. The width now scales with the screen \u2014 most of it on a big monitor, still reined in so nothing stretches edge to edge.' },
+{ build:517, note:'\uD83E\uDDED Menu tidy-up. \u2666 Sales Floor now sits at the top of \u201CSell\u201D where it belongs, instead of loose at the bottom of the menu. \u2666 Objection Coach came out of the menu \u2014 it is already inside Sales Floor, and one way in is enough. \u2666 ABC Supply moved to Admin. \u2666 Community Partners had been listed twice; now once. Health Check was already in Admin.' },
+{ build:516, note:'\uD83D\uDCD0 On a desktop the menu now lives down the left instead of behind the \u2630 button \u2014 every section, with the headings collapsible so it is not a wall of links, and it remembers which ones you left open. It mirrors the \u2630 menu rather than copying it, so anything that shows up there shows up here. Pages also stop stretching the full width of a wide screen. Phones are unchanged.' },
+{ build:515, note:'\uD83D\uDFE9 The green Bill to card on a community job is back. It had been pointing at a colour that only exists on the hub, so the browser threw the whole rule away and the card lost its green fill and its border together \u2014 on the one card that tells you which party gets the invoice.' },
+{ build:514, note:'\u23F3 A parked community bid stops shouting. Once a job is waiting on funding, the Due column, the deadline sort and the filter all count to the date you said you would check back \u2014 not to the bid deadline, which has already passed and was making a two-year grant look like the most urgent job on the board. The chip goes quiet too: neutral with the word hold, instead of red.' },
+{ build:513, note:'\uD83E\uDD1D Community bids can now record what actually happened. Four outcomes on the job page: awarded, still waiting on funding, referred to another partner, or not awarded. Waiting parks the job with a date to check back \u2014 months or years out \u2014 so a grant cycle stops reading as overdue. No reason is asked when one does not land.' },
 { build:509, note:'\u1F4DA The Resource Library is now one tap away from anywhere. A books button sits in the little bar with the back and forward arrows, on every screen, instead of the library only being reachable from the home page and two panels.' },
 { build:508, note:'\u1F58D Asking the Library assistant to draw or illustrate a concept now works. It was refusing every request that used the word drawing, because it treated them all as job blueprints. Asking how something works and wanting it drawn is exactly what the library is for.' },
 { build:507, note:'\u1F4CB Sort photos now fills in the Areas of Concern table as well. It writes one line per section rather than one per photograph, uses the most serious finding in each, and sets the priority from what the AI judged. Anything you have already typed is left exactly as it is.' },
@@ -34508,6 +34515,54 @@ if(child.textContent && /^v2026-/.test(child.textContent.trim())) footer = child
 if(footer) menu.insertBefore(hint, footer);
 else menu.appendChild(hint);
 }
+/* ---- Theo's reorganisation, 508 -------------------------------------------
+   "Sales floor lives in and is the main part of Sell section. The objection
+    coach is already in Sales Floor. Health check goes into admin. ABC Supply
+    should go into admin as well"
+
+   Health Check needed nothing - addAdminSection() has always put it there. What
+   he was reading was the signed-out menu, which has no Admin section at all.
+
+   Every step is idempotent and re-checked on a poll, because the items being
+   moved arrive LATE: Sales Floor comes from cr-sf-script and lands after the
+   build stamp, and apply() stops polling the moment it first returns true, so a
+   one-shot move would silently miss it.
+
+   Hide rather than remove, deliberately. cr-cpartners-script re-adds its option
+   whenever querySelector('[data-nav="community-partners"]') finds nothing, so
+   removing it starts a tug of war; a hidden node satisfies that check and stays
+   put. hideOpt() is this module's own convention and the left menu (507)
+   already skips display:none rows. */
+function moveAfter(anchor, el){
+if(!anchor || !el || !anchor.parentNode) return false;
+if(el.previousElementSibling === anchor) return false;
+anchor.parentNode.insertBefore(el, anchor.nextSibling);
+return true;
+}
+function reorg(){
+var menu = document.getElementById('navMenu');
+if(!menu) return;
+/* 1. Sales Floor is the main part of Sell, so it goes first in Sell - not
+      appended at the tail of the whole menu where cr-sf-script leaves it. */
+moveAfter(findSec('sell'), document.getElementById('cr-nav-salesfloor'));
+/* 2. Objection Coach is reachable inside Sales Floor, so the second way in
+      comes out. One route per destination. */
+hideOpt('coach');
+/* 3. ABC Supply into Admin. Only when the Admin section exists, which means
+      only for an admin - a rep keeps it where it has always been rather than
+      silently losing the tool. Flagged for Theo rather than decided here. */
+var adminSec = document.getElementById('cr-nav-sec-admin');
+if(adminSec) moveAfter(adminSec, menu.querySelector('.navopt[data-nav="abcsupply"]'));
+/* 4. Not asked for, but it is on screen today: Community Partners is in the
+      menu TWICE - cr-menu-script puts one under CRMs and cr-cpartners-script
+      appends its own at the end. Keep the one that sits in a section. */
+if(document.getElementById('cr-nav-communitypartners')){
+Array.prototype.forEach.call(
+menu.querySelectorAll('.navopt[data-nav="community-partners"]'),
+function(el){ el.style.display = 'none'; }
+);
+}
+}
 function apply(){
 var menu = document.getElementById('navMenu');
 if(!menu) return false;
@@ -34522,6 +34577,7 @@ addAdminSection();
 hideAdminItemsForNonAdmin();
 }
 addPaletteHint();
+reorg();
 return true;
 }
 function start(){
@@ -34530,6 +34586,13 @@ var n = 0, iv = setInterval(function(){
 if(apply() || ++n > 60) clearInterval(iv);
 }, 200);
 }
+/* reorg() needs to outlive apply()'s poll: cr-sf-script's own retry runs to
+   about six seconds and cr-cpartners-script's to about six as well, so keep
+   re-checking past both, then stop rather than leave a timer running. */
+var rn = 0, riv = setInterval(function(){
+try{ reorg(); }catch(_){ }
+if(++rn > 60) clearInterval(riv);
+}, 300);
 var btn = document.getElementById('navBtn');
 if(btn && btn.dataset.crMenuScrollReset !== '1'){
 btn.dataset.crMenuScrollReset = '1';
@@ -43406,7 +43469,7 @@ return hoText(pr) + (a ? '<div class="cc-mini">' + esc(a) + '</div>' : '');
 var chState = { sort:'due', dir:1, sets:{} };
 var chSheet = { cat:null, pend:[] };
 var CH_SORTS = [
-{ key:'due',       label:'Bid deadline' },
+{ key:'due',       label:'Due / check back' },
 { key:'homeowner', label:'Homeowner' },
 { key:'partner',   label:'Bill to' },
 { key:'amount',    label:'Bid amount' },
@@ -43415,9 +43478,32 @@ var CH_SORTS = [
 { key:'address',   label:'Address' }
 ];
 var TYPE_LABEL = { pm:'Property manager', gc:'General contractor', program:'Community program' };
+/* ---- the second clock -----------------------------------------------------
+   bid_due_at is when OUR bid was owed to the partner. Once the bid is in and
+   the job is parked waiting on a grant, that date is meaningless and it keeps
+   aging: the job reads further overdue every morning and sorts as the most
+   urgent thing on the board forever, which is exactly what makes the overdue
+   filter useless. Theo's own framing - some of these run two years.
+
+   So an OnHold job with a check-back date is measured against THAT date. The
+   bands themselves do not change: a check-back you have sailed past really is
+   overdue, and it is the one thing on a parked job worth shouting about.
+
+   OnHold with no check_back_at keeps reading bid_due_at. That is the old
+   behaviour, deliberately - 504's Park it always writes the date, so this
+   only covers a stage set some other way, and inventing a band for it would
+   hide the job instead of showing it. */
+function chDueIso(pr){
+var l = lead(pr);
+if(normStage(pr.stage) === 'OnHold' && l.check_back_at) return l.check_back_at;
+return l.bid_due_at;
+}
+function chOnHold(pr){
+return normStage(pr.stage) === 'OnHold' && !!lead(pr).check_back_at;
+}
 /* Bands, not raw dates - 'Overdue' is the filter you actually want at 7am. */
 function chDueBand(pr){
-var dd = days(lead(pr).bid_due_at);
+var dd = days(chDueIso(pr));
 if(dd == null) return 'No deadline set';
 if(dd < 0) return 'Overdue';
 if(dd === 0) return 'Due today';
@@ -43434,7 +43520,7 @@ var CH_GROUPS = [
 { key:'partner', label:'Bill to',       get:function(pr){ return partnerOf(pr); } },
 { key:'ptype',   label:'Partner type',  get:function(pr){ return TYPE_LABEL[metaOf(partnerOf(pr)).type] || 'Community program'; } },
 { key:'stage',   label:'Stage',         get:function(pr){ var s = normStage(pr.stage); return LABEL[s] || s; } },
-{ key:'due',     label:'Bid deadline',  get:chDueBand },
+{ key:'due',     label:'Due / check back',  get:chDueBand },
 /* Community-specific, and the reason this is worth building: 2 of the 12 jobs
    have no homeowner recorded, which is exactly the ambiguity the two-party
    header was meant to remove. This makes those two findable in one tap. */
@@ -43460,7 +43546,7 @@ var k = chState.sort;
 if(k === 'due'){
 /* Most urgent first: overdue leads, then soonest, then undated LAST - and
    undated has to sort last in both directions or reversing hides the work. */
-var da = days(lead(a).bid_due_at), db = days(lead(b).bid_due_at);
+var da = days(chDueIso(a)), db = days(chDueIso(b));
 if(da == null && db == null) return alpha(homeownerOf(a), homeownerOf(b));
 if(da == null) return 1;
 if(db == null) return -1;
@@ -43479,7 +43565,7 @@ function chSorted(list){
    reversed deadline sort still shows real deadlines first. */
 if(chState.sort === 'due'){
 var dated = [], undated = [];
-list.forEach(function(p){ (days(lead(p).bid_due_at) == null ? undated : dated).push(p); });
+list.forEach(function(p){ (days(chDueIso(p)) == null ? undated : dated).push(p); });
 dated.sort(function(x, y){ return chState.dir * chCmp(x, y); });
 return dated.concat(undated);
 }
@@ -43915,9 +44001,15 @@ var allBidsBody = d.all.length
 ? '<table class="cc-tbl"><thead><tr><th>Due</th><th>Homeowner</th><th class="k-bill">Bill to</th><th>Stage</th>' +
 (role === 'prod' ? '' : '<th style="text-align:right">Amount</th>') + '<th>Rep</th></tr></thead><tbody>' +
 chRows.map(function(pr){
-var l = lead(pr), st = normStage(pr.stage), dd = days(l.bid_due_at), amt = bidAmt(pr);
+var l = lead(pr), st = normStage(pr.stage), dd = days(chDueIso(pr)), amt = bidAmt(pr);
+var held = chOnHold(pr);
 return '<tr data-open="' + esc(pr.id) + '">' +
-'<td data-l="Due">' + (dd == null ? '\u2014' : '<span class="cc-pill due">' + dd + ' d</span>') + '</td>' +
+'<td data-l="Due">' + (dd == null ? '\u2014' :
+/* .cc-pill.due is the red one. A parked job counting down to its own
+   check-back is not urgent, so it takes the neutral chip - that is the
+   whole payoff of the second clock, visible in one glance. */
+'<span class="cc-pill' + (held ? '' : ' due') + '">' + dd + ' d' +
+(held ? ' hold' : '') + '</span>') + '</td>' +
 '<td data-l="Homeowner">' + hoCell(pr) + '</td>' +
 '<td data-l="Bill to">' + pName(l.partner_name) + '</td>' +
 '<td data-l="Stage"><span class="cc-pill' + (st === 'Approved' || st === 'Completed' || st === 'Invoiced' ? ' won' : '') + '">' +
@@ -44253,7 +44345,11 @@ isOpen : isOpen,
    padding-box, so the fill has to be swapped in the same two-layer form or the
    gradient border disappears. */
 #cr-cc .ct.bill{grid-column:1/-1;
-background:linear-gradient(var(--goodbg),var(--goodbg)) padding-box,var(--ccm-edge2) border-box}
+/* 506: was var(--goodbg), a #cr-ch2 token that does not exist in this
+   scope - the value was invalid, so the browser dropped the whole
+   declaration and the gradient border went with it. --ccm-wash is what
+   --goodbg resolves to in the hub; the literal is per the 448-449 rule. */
+background:linear-gradient(var(--ccm-wash,rgba(4,120,87,.18)),var(--ccm-wash,rgba(4,120,87,.18))) padding-box,var(--ccm-edge2,linear-gradient(125deg,#047857,#34D399)) border-box}
 #cr-cc .ct.bill .k{color:var(--a1)}
 #cr-cc .k.b{color:var(--a1)}
 #cr-cc .ct .k{display:flex;align-items:center;gap:6px}
@@ -44270,7 +44366,7 @@ background:linear-gradient(var(--goodbg),var(--goodbg)) padding-box,var(--ccm-ed
   #cr-cc .cts{grid-template-columns:1fr 1fr;gap:12px}
   #cr-cc .tabbar button{font-size:14px}
 }
-#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:var(--ccm-dim)}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:var(--ccm-card);border:1px solid var(--ccm-ac);color:var(--ccm-ink);font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:var(--ccm-sh-lg);cursor:pointer}body[data-crm="community"] #commsView .viewhead{background:linear-gradient(100deg,#047857,#34D399 60%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#34D399}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}</style> <script id="cr-cc-script">
+#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:var(--ccm-dim)}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:var(--ccm-card);border:1px solid var(--ccm-ac);color:var(--ccm-ink);font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:var(--ccm-sh-lg);cursor:pointer}body[data-crm="community"] #commsView .viewhead{background:linear-gradient(100deg,#047857,#34D399 60%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#34D399}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}#cr-cc .cc-oc{background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:12px;padding:14px}#cr-cc .cc-oc .hd{font:800 16px inherit;margin:0 0 3px}#cr-cc .cc-oc .sub{font:400 12px inherit;color:var(--mute,#9aa39e);margin:0 0 13px}#cr-cc .cc-oc .step{font:700 9.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.14em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:10px}#cr-cc .cc-oc .big{display:flex;flex-direction:column;gap:9px}#cr-cc .cc-oc .big button{display:flex;align-items:flex-start;gap:12px;text-align:left;padding:15px;border-radius:11px;border:1px solid var(--line,#2a2f2c);background:var(--card,#161918);color:var(--ink,#f2f4f3);font:700 15px inherit;cursor:pointer;width:100%}#cr-cc .cc-oc .big button .ic{font-size:20px;width:26px;flex:0 0 26px;text-align:center;line-height:1.2}#cr-cc .cc-oc .big button small{display:block;font:400 11.5px/1.45 inherit;color:var(--mute,#9aa39e);margin-top:3px}#cr-cc .cc-oc .big button.go{border-color:var(--a1,#34D399);background:var(--ccm-wash,rgba(4,120,87,.18))}#cr-cc .cc-oc .big button.wait{border-color:var(--warn,#ffcf6b)}#cr-cc .cc-oc .f{margin-top:12px}#cr-cc .cc-oc .f label{display:block;font:800 8.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.15em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:5px}#cr-cc .cc-oc .f input,#cr-cc .cc-oc .f select{width:100%;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);border-radius:9px;padding:12px;color:var(--ink,#f2f4f3);font:600 14.5px inherit}#cr-cc .cc-oc .row{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-oc .row .f{margin-top:0}#cr-cc .cc-oc .seg{display:flex;border:1px solid var(--line,#2a2f2c);border-radius:9px;overflow:hidden;margin-top:6px}#cr-cc .cc-oc .seg button{flex:1;background:var(--card,#161918);border:0;border-right:1px solid var(--line,#2a2f2c);padding:12px 4px;color:var(--mute,#9aa39e);font:700 12px inherit;cursor:pointer}#cr-cc .cc-oc .seg button:last-child{border-right:0}#cr-cc .cc-oc .seg button.on{background:var(--ccm-wash,rgba(4,120,87,.18));color:var(--a1,#34D399)}#cr-cc .cc-oc .gap{margin-top:11px;padding:11px 12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);font:400 12px/1.5 inherit;color:var(--mute,#9aa39e)}#cr-cc .cc-oc .gap b{color:var(--ink,#f2f4f3);font-weight:700}#cr-cc .cc-oc .tar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c)}#cr-cc .cc-oc .tar .ic{font-size:18px}#cr-cc .cc-oc .tar b{font:700 13px inherit;display:block;color:var(--ink,#f2f4f3)}#cr-cc .cc-oc .tar small{display:block;font:400 11px inherit;color:var(--mute,#9aa39e);margin-top:1px}#cr-cc .cc-oc .tar input{margin-left:auto;width:132px;background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:7px;padding:9px;color:var(--ink,#f2f4f3);font:600 12.5px inherit}#cr-cc .cc-oc .ft{display:flex;gap:9px;margin-top:15px}#cr-cc .cc-oc .ft button{flex:1;padding:14px;border-radius:10px;border:0;font:800 13.5px inherit;cursor:pointer}#cr-cc .cc-oc .ft .save{background:var(--a1,#34D399);color:var(--ccm-onac,#08240f)}#cr-cc .cc-oc .ft .save[disabled]{opacity:.55;cursor:default}#cr-cc .cc-oc .ft .back{background:none;border:1px solid var(--line,#2a2f2c);color:var(--mute,#9aa39e)}#cr-cc .cc-oc .note{font:400 11.5px/1.55 inherit;color:var(--mute,#9aa39e);margin-top:11px}#cr-cc .cc-oc .dots{display:flex;gap:5px;justify-content:center;margin-top:14px}#cr-cc .cc-oc .dots i{width:6px;height:6px;border-radius:99px;background:var(--line,#2a2f2c)}#cr-cc .cc-oc .dots i.on{background:var(--a1,#34D399);width:17px}@media (max-width:420px){#cr-cc .cc-oc .row{grid-template-columns:1fr}#cr-cc .cc-oc .row .f+.f{margin-top:9px}}</style> <script id="cr-cc-script">
 (function(){
 'use strict';
 var tab = 'thread';
@@ -44283,7 +44379,9 @@ var pr = window.currentProject;
 if(!pr) return '';
 var est = liveEstimate();
 return [pr.id, pr.stage, tab, estimates.length, events.length,
-contacts.length, est ? est.total : 0].join('|');
+contacts.length, est ? est.total : 0,
+oc ? ('oc:' + oc.kind + ':' + oc.step + ':' + (oc.busy ? 1 : 0) + ':' + oc.months) : ''
+].join('|');
 }
 function mountMissing(){ return !document.getElementById('cr-cc'); }
 function esc(s){
@@ -44356,6 +44454,354 @@ if(n === 1) return 'yesterday';
 if(n < 30) return n + ' days ago';
 return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
 }
+/* ---- the outcome step (504) -----------------------------------------------
+   The design Theo picked: style 4's card with style 2's flow. Four outcomes,
+   each explaining itself; 'Still waiting' sits SECOND because on this data it
+   is the most common one, not the exception.
+
+   No reason field, deliberately. Theo, verbatim: "Dont need the why we didn't
+   get it." A grant that did not fund this cycle is not a lost sale, and
+   setStage('Lost') already skips Retail's LOSS_REASONS prompt for community.
+
+   It renders as a pane inside #cr-cc rather than as an overlay, so it adds no
+   fixed positioning, nothing for #pwaNav to strand, and no 14th writer of the
+   global body scroll lock.
+
+   Money reuses checklist.bid.awarded_amount - the field the bid strip already
+   shows and promptForBid() already writes. An outcome-only copy under
+   checklist.lead would have diverged from the number on screen. */
+var oc = null;
+var partners = [];
+var OC_HORIZONS = [{ m:3, l:'3 mo' }, { m:6, l:'6 mo' }, { m:12, l:'1 yr' }, { m:24, l:'2 yr' }];
+/* The mock preselects 1 yr and Theo has never picked a different one. It is a
+   preselection, not a silent default - the segment is always on screen. */
+var OC_DEFAULT_MONTHS = 12;
+var OC_AUDIT = {
+awarded  : 'Bid awarded',
+waiting  : 'Parked — waiting on funding',
+referred : 'Referred to another partner',
+lost     : 'Bid not awarded',
+};
+function bidOf(pr){ return (ck(pr) || {}).bid || {}; }
+/* Date-only strings must be built and read at LOCAL midnight. Parsing
+   '2026-07-27' with new Date() gives UTC midnight, which is the evening before
+   in EDT - the same day-early bug daysTo() above documents. */
+function isoDay(d){
+if(!d || isNaN(d.getTime())) return '';
+var m = d.getMonth() + 1, y = d.getDate();
+return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (y < 10 ? '0' : '') + y;
+}
+function todayIso(){ return isoDay(new Date()); }
+function plusMonths(n){
+var d = new Date();
+d.setHours(0, 0, 0, 0);
+d.setMonth(d.getMonth() + Number(n || 0));
+return isoDay(d);
+}
+function fmtDay(iso){
+if(!iso) return '';
+var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+var d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(iso);
+if(isNaN(d.getTime())) return '';
+return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+/* '' = left blank (the caller deletes the key), null = not a dollar amount. */
+function ocMoney(v){
+var s = String(v == null ? '' : v).replace(/[$,\s]/g, '');
+if(s === '') return '';
+var n = parseFloat(s);
+if(isNaN(n) || n < 0) return null;
+return +n.toFixed(2);
+}
+/* Habitat for Humanity of Greater Dayton does most of Cardinal's community
+   volume and appears in an annual joint TV commercial. It sorts first in every
+   partner list; the rest are alphabetical. */
+function ocPartners(){
+var rows = (partners || []).filter(function(p){ return p && p.name; });
+return rows.sort(function(a, b){
+var ah = /habitat/i.test(a.name) ? 0 : 1, bh = /habitat/i.test(b.name) ? 0 : 1;
+if(ah !== bh) return ah - bh;
+return String(a.name).localeCompare(String(b.name));
+});
+}
+/* Merges into ONE checklist key and touches only the keys handed in. Stripping
+   every empty value the way saveBid() does would delete bid_due_at on the nine
+   community jobs that hold it as an empty string. */
+function mergeCk(pr, key, next){
+var cur = Object.assign({}, (ck(pr) || {})[key] || {});
+Object.keys(next).forEach(function(k){
+var v = next[k];
+if(v == null || v === '') delete cur[k];
+else cur[k] = v;
+});
+return cur;
+}
+function ocOpen(pr){
+var l = lead(pr), b = bidOf(pr);
+oc = {
+pr        : pr.id,
+step      : 1,
+kind      : null,
+busy      : false,
+amount    : (b.awarded_amount != null ? String(b.awarded_amount) : ''),
+decided   : (b.awarded_at ? isoDay(new Date(b.awarded_at)) : todayIso()) || todayIso(),
+funded_by : l.funded_by || l.partner_name || '',
+funded_id : l.partner_id || '',
+months    : OC_DEFAULT_MONTHS,
+check_back_at : l.check_back_at || plusMonths(OC_DEFAULT_MONTHS),
+award_cycle   : l.award_cycle || '',
+referred_to   : l.referred_to || '',
+referred_id   : '',
+referred_at   : l.referred_at || todayIso(),
+tarped_at     : l.tarped_at || '',
+};
+render();
+}
+function ocHead(pr){
+var l = lead(pr), est = liveEstimate();
+var amt = est ? est.total : (Number(l.bid_amount) || 0);
+return '<div class="hd">' + esc(homeownerOf(pr) || pr.name || 'This job') + '</div>' +
+'<div class="sub">' + esc(pr.address || 'No address') +
+(amt ? ' · bid ' + usd(amt) : '') +
+(l.partner_name ? ' to ' + esc(l.partner_name) : '') + '</div>';
+}
+function ocTarp(){
+return '<div class="tar"><span class="ic">🏖️</span>' +
+'<div><b>Tarped</b><small>Kept on the record either way</small></div>' +
+'<input type="date" data-oc="in" data-f="tarped_at" value="' + esc(oc.tarped_at || '') + '"></div>';
+}
+/* A <select> off the real community_partners roster - never a hardcoded list.
+   Falls back to free text when the roster has not loaded, and always keeps the
+   value already on the job as an option so a partner outside the roster is not
+   silently dropped. */
+function ocPartnerField(label, field, idField){
+var rows = ocPartners();
+var cur = String(oc[field] || '');
+if(!rows.length){
+return '<div class="f"><label>' + esc(label) + '</label>' +
+'<input type="text" data-oc="in" data-f="' + esc(field) + '" value="' + esc(cur) +
+'" placeholder="Partner name"></div>';
+}
+var known = rows.some(function(p){ return String(p.name) === cur; });
+var opts = '<option value=""' + (cur ? '' : ' selected') + '>— select —</option>' +
+(cur && !known ? '<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>' : '') +
+rows.map(function(p){
+return '<option value="' + esc(p.name) + '" data-pid="' + esc(p.id || '') + '"' +
+(String(p.name) === cur ? ' selected' : '') + '>' + esc(p.name) + '</option>';
+}).join('');
+return '<div class="f"><label>' + esc(label) + '</label>' +
+'<select data-oc="sel" data-f="' + esc(field) + '" data-idf="' + esc(idField || '') + '">' +
+opts + '</select></div>';
+}
+function ocStep1(pr){
+var pn = lead(pr).partner_name || 'The partner';
+return '<div class="cc-oc">' +
+'<div class="step">Step 1 of 2 · what happened</div>' + ocHead(pr) +
+'<div class="big">' +
+'<button class="go" data-oc="pick" data-k="awarded" type="button">' +
+'<span class="ic">✅</span><span>Awarded<small>' + esc(pn) +
+' is funding it. Record the approved amount.</small></span></button>' +
+'<button class="wait" data-oc="pick" data-k="waiting" type="button">' +
+'<span class="ic">⌛</span><span>Still waiting on funding<small>Grant cycle. Park it and ' +
+'set a date to check back — months or years out.</small></span></button>' +
+'<button data-oc="pick" data-k="referred" type="button">' +
+'<span class="ic">➤</span><span>Referred to another partner<small>Handed on to a ' +
+'different funder. The bill-to follows it.</small></span></button>' +
+'<button data-oc="pick" data-k="lost" type="button">' +
+'<span class="ic">❌</span><span>Not awarded<small>Closed out. No reason needed.</small>' +
+'</span></button>' +
+'</div>' +
+'<div class="ft"><button class="back" data-oc="close" type="button">Not now</button></div>' +
+'<div class="dots"><i class="on"></i><i></i></div>' +
+'</div>';
+}
+function ocStep2(pr){
+var l = lead(pr), est = liveEstimate();
+var body = '', title = '', save = 'Save outcome';
+var submitted = Number(bidOf(pr).submitted_amount || 0) || (est ? Number(est.total) || 0 : 0);
+if(oc.kind === 'awarded'){
+title = 'Step 2 · awarded';
+var appr = ocMoney(oc.amount);
+body =
+'<div class="row">' +
+'<div class="f"><label>Approved amount</label>' +
+'<input type="text" inputmode="decimal" data-oc="in" data-f="amount" value="' +
+esc(oc.amount) + '" placeholder="$0"></div>' +
+'<div class="f"><label>Decided</label>' +
+'<input type="date" data-oc="in" data-f="decided" value="' + esc(oc.decided) + '"></div>' +
+'</div>' +
+ocPartnerField('Funded by', 'funded_by', 'funded_id') +
+((submitted && typeof appr === 'number' && appr && appr !== submitted)
+? '<div class="gap">Bid <b>' + usd(submitted) + '</b> → approved <b>' + usd(appr) +
+'</b>. A <b>' + usd(Math.abs(submitted - appr)) + '</b> ' +
+(appr < submitted ? 'gap' : 'increase') +
+' gets recorded, so win rate and pipeline value stay true.</div>'
+: '');
+}else if(oc.kind === 'waiting'){
+title = 'Step 2 · waiting on funding';
+save = 'Park it';
+var dueIn = daysTo(l.bid_due_at);
+body =
+'<div class="f" style="margin-top:0"><label>Check back in</label><div class="seg">' +
+OC_HORIZONS.map(function(h){
+return '<button type="button" data-oc="months" data-m="' + h.m + '" class="' +
+(oc.months === h.m ? 'on' : '') + '">' + h.l + '</button>';
+}).join('') +
+'</div></div>' +
+'<div class="f"><label>Or pick a date</label>' +
+'<input type="date" data-oc="in" data-f="check_back_at" value="' + esc(oc.check_back_at) + '"></div>' +
+'<div class="f"><label>Grant / cycle we are waiting on</label>' +
+'<input type="text" data-oc="in" data-f="award_cycle" value="' + esc(oc.award_cycle) +
+'" placeholder="optional"></div>' +
+'<div class="gap"><b>Stops the nagging.</b> ' +
+(l.bid_due_at
+? 'The bid deadline was ' + esc(fmtDay(l.bid_due_at)) + '. ' +
+(dueIn != null && dueIn < 0
+? 'Without this the job reads ' + Math.abs(dueIn) + 'd over and sorts as your most urgent forever. '
+: '')
+: '') +
+'Once it is parked the Due column counts to <b>' + esc(fmtDay(oc.check_back_at) || 'the date you set') +
+'</b> instead.</div>';
+}else if(oc.kind === 'referred'){
+title = 'Step 2 · referred onward';
+body =
+ocPartnerField('Now with', 'referred_to', 'referred_id') +
+'<div class="row">' +
+'<div class="f"><label>Handed on</label>' +
+'<input type="date" data-oc="in" data-f="referred_at" value="' + esc(oc.referred_at) + '"></div>' +
+'<div class="f"><label>Check back</label>' +
+'<input type="date" data-oc="in" data-f="check_back_at" value="' + esc(oc.check_back_at) + '"></div>' +
+'</div>' +
+'<div class="gap">Every bid document, email and <b>Bill to</b> cell follows this. Without it the ' +
+'record still says <b>' + esc(l.partner_name || 'the old partner') + '</b> after the handoff.</div>';
+}else if(oc.kind === 'lost'){
+title = 'Step 2 · not awarded';
+save = 'Close it out';
+body =
+'<div class="f" style="margin-top:0"><label>Closed on</label>' +
+'<div class="gap" style="margin-top:0">' + esc(fmtDay(todayIso())) +
+' — the app stamps this when you close it out.</div></div>';
+}else{
+return ocStep1(pr);
+}
+return '<div class="cc-oc">' +
+'<div class="step">' + esc(title) + '</div>' + ocHead(pr) + body + ocTarp() +
+(oc.kind === 'lost'
+? '<div class="note">No reason field, on purpose. A grant that did not fund this cycle is not ' +
+'a lost sale, so nothing is asked and nothing is guessed.</div>'
+: '') +
+'<div class="ft">' +
+'<button class="back" data-oc="back" type="button">Back</button>' +
+'<button class="save" data-oc="save" type="button"' + (oc.busy ? ' disabled' : '') + '>' +
+(oc.busy ? 'Saving…' : esc(save)) + '</button>' +
+'</div>' +
+'<div class="dots"><i></i><i class="on"></i></div>' +
+'</div>';
+}
+function ocWire(mount, pr){
+mount.querySelectorAll('[data-oc]').forEach(function(el){
+var k = el.getAttribute('data-oc');
+if(k === 'pick'){
+el.onclick = function(){ if(!oc) return; oc.kind = el.getAttribute('data-k'); oc.step = 2; render(); };
+}else if(k === 'close'){
+el.onclick = function(){ oc = null; render(); };
+}else if(k === 'back'){
+el.onclick = function(){ if(!oc) return; oc.step = 1; oc.kind = null; render(); };
+}else if(k === 'months'){
+el.onclick = function(){
+if(!oc) return;
+var n = Number(el.getAttribute('data-m'));
+oc.months = n;
+oc.check_back_at = plusMonths(n);
+render();
+};
+}else if(k === 'in'){
+/* Typing must not re-render - that would take the caret out of the field
+   mid-word. State lives in oc, so a later structural render restores it.
+   Picking a date by hand un-highlights the segment in place, for the same
+   reason: correct without a repaint. */
+el.oninput = function(){
+if(!oc) return;
+var f = el.getAttribute('data-f');
+oc[f] = el.value;
+if(f === 'check_back_at'){
+oc.months = 0;
+mount.querySelectorAll('[data-oc="months"]').forEach(function(s){ s.classList.remove('on'); });
+}
+};
+}else if(k === 'sel'){
+el.onchange = function(){
+if(!oc) return;
+var f = el.getAttribute('data-f'), idf = el.getAttribute('data-idf');
+oc[f] = el.value;
+if(idf){
+var o = el.options[el.selectedIndex];
+oc[idf] = (o && o.getAttribute('data-pid')) || '';
+}
+};
+}else if(k === 'save'){
+el.onclick = function(){ ocSave(pr); };
+}
+});
+}
+async function ocSave(pr){
+if(!oc || oc.busy) return;
+var kind = oc.kind, pid = pr.id, lp = {}, bp = null, stage = null;
+lp.tarped_at = oc.tarped_at || '';
+if(kind === 'awarded'){
+var n = ocMoney(oc.amount);
+if(n === null){ alert('That doesn\'t look like a dollar amount.'); return; }
+bp = { awarded_amount: n, awarded_at: (n === '' ? '' : (oc.decided || todayIso())) };
+lp.funded_by = String(oc.funded_by || '').trim();
+stage = 'Approved';
+}else if(kind === 'waiting'){
+if(!oc.check_back_at){ alert('Pick a date to check back — that is what parks it.'); return; }
+lp.check_back_at = oc.check_back_at;
+lp.award_cycle   = String(oc.award_cycle || '').trim();
+stage = 'OnHold';
+}else if(kind === 'referred'){
+var to = String(oc.referred_to || '').trim();
+if(!to){ alert('Say who it went to.'); return; }
+lp.referred_to  = to;
+lp.referred_at  = oc.referred_at || todayIso();
+lp.check_back_at = oc.check_back_at || '';
+/* The bill-to follows the referral - that is the whole point of recording
+   it. partner_id only moves when the new funder came off the roster; a
+   free-typed name leaves the old id rather than pointing at the wrong row. */
+lp.partner_name = to;
+if(oc.referred_id) lp.partner_id = oc.referred_id;
+stage = 'OnHold';
+}else if(kind === 'lost'){
+stage = 'Lost';
+}else{
+return;
+}
+oc.busy = true;
+render();
+try{
+/* Checklist FIRST, then setStage. setStage fires its own patchProjectCk
+   without awaiting it, and patchProjectCk reads pr.checklist synchronously
+   at call time - so a patch started after it would race stage_since and
+   t_<stage> and could drop them. This order cannot lose either write. */
+var patch = { lead: mergeCk(pr, 'lead', lp) };
+if(bp) patch.bid = mergeCk(pr, 'bid', bp);
+if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, patch);
+if(typeof window.setStage === 'function') await window.setStage(pid, stage);
+if(typeof window.auditLog === 'function') window.auditLog('lead', OC_AUDIT[kind] || 'Outcome recorded', pid);
+}catch(e){
+if(oc) oc.busy = false;
+console.error('[community outcome] save failed:', e);
+alert('That did not save — ' + (e.message || e));
+render();
+return;
+}
+/* Everything past here runs after an await, so the user may have left the job
+   in the meantime. Revalidate before touching state or the DOM. */
+oc = null;
+if(!window.currentProject || String(window.currentProject.id) !== String(pid)) return;
+await load(pid);
+if(window.currentProject && String(window.currentProject.id) === String(pid)) render();
+}
 var LABEL = {
 'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'OnHold':'Awaiting Funding',
 'Approved':'Awarded',
@@ -44380,6 +44826,15 @@ var c = await window.supa.from('community_contacts')
 .select('*').eq('project_id', pid);
 contacts = c.data || [];
 }catch(_){ contacts = []; }
+/* The outcome step's Funded by / Now with pickers read the real roster.
+   list() is the masked view - reading CACHE directly is what leaked
+   confidential partner names out of pickPartner() once already. */
+try{
+if(window.CardinalCommunityPartners){
+await window.CardinalCommunityPartners.load();
+partners = window.CardinalCommunityPartners.list() || [];
+}
+}catch(_){ partners = partners || []; }
 loadedFor = pid;
 }
 function liveEstimate(){
@@ -44394,6 +44849,10 @@ return open[0] || estimates[0];
    opens the builder - which is why 'Price it' was the one that looked fine. */
 async function ccDoAct(a, pr){
 try{
+/* The four-way outcome step replaces the old Awarded / Not awarded pair.
+   'won' and 'lost' stay routed below: the hub and any older markup still
+   dispatch them, and one pipeline is the rule. */
+if(a === 'outcome'){ ocOpen(pr); return; }
 /* 438: the bid form already edits homeowner / renter / no_homeowner, and
    CardinalNewBid.edit() already existed with zero callers. This just makes it
    reachable from the client page - no second editor. */
@@ -44457,11 +44916,26 @@ acts:[{ label: est ? 'Submit the bid' : 'Price it', how:'estimate' }] });
 out.push({ now:true, title:'Waiting on a decision', when:'now',
 txt:'Submitted' + (est ? ' at ' + usd(est.total) : '') +
 '. Nothing back from the partner yet.',
-acts:[{ label:'Awarded', how:'won' },
-{ label:'Not awarded', how:'lost', alt:true }] });
+acts:[{ label:'Record the outcome', how:'outcome' }] });
+}else if(st === 'OnHold'){
+var cb = daysTo(l.check_back_at);
+out.push({ now:true, title:'Parked \u2014 waiting on funding', when:'now',
+txt:(l.award_cycle ? l.award_cycle + '. ' : '') +
+(l.check_back_at
+? 'Check back ' + fmtDay(l.check_back_at) +
+(cb == null ? '.'
+: cb > 0 ? ' \u2014 ' + cb + ' days out.'
+: cb === 0 ? ' \u2014 today.'
+: ' \u2014 ' + Math.abs(cb) + ' days ago.')
+: 'No check-back date set.') +
+(l.referred_to ? ' Now with ' + l.referred_to + '.' : '') +
+(l.tarped_at ? ' Tarped ' + fmtDay(l.tarped_at) + '.' : ''),
+acts:[{ label:'Record the outcome', how:'outcome' }] });
 }else if(st === 'Approved'){
 out.push({ now:true, title:'Awarded \u2014 needs scheduling', when:'now',
 txt:'Won' + (est ? ' at ' + usd(est.total) : '') +
+(l.funded_by ? ', funded by ' + l.funded_by : '') +
+(l.tarped_at ? '. Tarped ' + fmtDay(l.tarped_at) : '') +
 '. No crew or date set.', acts:[{ label:'Get on the calendar', how:'schedule' }] });
 }else if(st === 'Completed'){
 out.push({ now:true, title:'Ready to invoice', when:'now',
@@ -44743,11 +45217,26 @@ view.insertBefore(mount, view.firstChild);
 }
 }
 releaseAll();
+/* While the outcome step is open it IS the page - no pin, no tabs, no
+   adopted sections. Dropped if the user has moved to another job. */
+if(oc && String(oc.pr) !== String(pr.id)) oc = null;
+if(oc){
+mount.innerHTML = (oc.step === 1 ? ocStep1(pr) : ocStep2(pr));
+ocWire(mount, pr);
+takeOver(mount.childNodes.length > 0 && mount.offsetParent !== null);
+lastSig = signature();
+return;
+}
 var l = lead(pr), est = liveEstimate();
 var hoNm = homeownerOf(pr);
-var due = daysTo(l.bid_due_at);
 var amt = est ? est.total : (Number(l.bid_amount) || 0);
 var st  = normStage(pr.stage);
+/* Same second clock as the hub: a parked job counts to its check-back,
+   and says so, rather than ageing against a bid deadline that has passed.
+   st is read here, so it has to be assigned above this line - var hoisting
+   would make held silently false rather than throwing. */
+var held = (st === 'OnHold' && !!l.check_back_at);
+var due = daysTo(held ? l.check_back_at : l.bid_due_at);
 mount.innerHTML =
 '<div class="pin">' +
 '<div class="t"><span class="nm"><span class="rl">Serving</span>' +
@@ -44756,8 +45245,8 @@ mount.innerHTML =
 (amt ? '<span class="amt"><b>' + usd(amt) + '</b></span>' : '') +
 '</div>' +
 '<div class="facts">' +
-'<div><div class="k">Due</div><div class="v' +
-(due != null && due <= 3 ? ' hot' : '') + '">' +
+'<div><div class="k">' + (held ? 'Check back' : 'Due') + '</div><div class="v' +
+(!held && due != null && due <= 3 ? ' hot' : '') + '">' +
 (due == null ? '\u2014' : due + 'd') + '</div></div>' +
 '<div><div class="k">Stage</div><div class="v">' +
 esc((LABEL[st] || st || '').split(' ')[0]) + '</div></div>' +
@@ -44802,6 +45291,7 @@ var pr = window.currentProject;
 var view = document.getElementById('projectView');
 if(!pr || !view || view.style.display === 'none' || !isCommunity(pr)){
 suspended = false;
+oc = null;
 removePill();
 releaseAll();
 takeOver(false);
@@ -44822,6 +45312,7 @@ return;
 if(busy) return;
 busy = true;
 tab = 'thread';
+oc = null;
 try{
 if(!document.getElementById('cr-cc')){
 var v0 = document.getElementById('projectView');
@@ -50544,5 +51035,350 @@ window.CardinalSortPhotos = Object.assign(window.CardinalSortPhotos || {}, {
 });
 })();
 </script>
+<style id="cr-lnav-styles">
+/* ---- the desktop left menu (507) -------------------------------------------
+   Option 2 with option 4's content cap, which is what Theo picked.
+
+   Desktop only, and it declares that in ONE place: the --lnav-w custom property
+   is 0 below the breakpoint, and everything else is calc()'d off it, so there is
+   no second copy of the rule to fall out of step.
+
+   Scoped under body.cr-lnav-on. The class is only ever set when the menu is
+   actually mounted, so a phone, the login screen and print all keep the app
+   exactly as it is today. */
+/* 518: 1180 was far too tight. Measured on Theo's own 3440 ultrawide, it left
+   the dashboard as a 1180px island with 1011px of dead black on EACH side -
+   worse than the stretch it was meant to fix. A flat pixel cap cannot serve a
+   1280 laptop and a 3440 ultrawide at once, so it is proportional now: 92% of
+   whatever room is left beside the menu, and never more than 2400.
+     3440 screen -> 2400 wide, ~400 a side
+     2560        -> 2136, ~93 a side
+     1920        -> 1547, ~67 a side
+   min() means the percentage wins on a small screen, so it can never overflow
+   the way a hard floor would. */
+:root{--lnav-w:0px;--lnav-top:96px;--lnav-cap:min(2400px, 92%)}
+@media (min-width:1100px){ :root{--lnav-w:238px} }
+@media print{ #cr-lnav{display:none !important} }
+
+#cr-lnav{
+  position:fixed;left:0;top:var(--lnav-top);bottom:0;width:var(--lnav-w);
+  z-index:80;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  background:var(--rbe-railbg,#0E0E12);border-right:1px solid var(--rbe-panelbd,#24242c);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  overscroll-behavior:contain;
+}
+body.cr-lnav-on{padding-left:var(--lnav-w)}
+/* The reason this build exists: .wrap ships max-width:none, so every table runs
+   the full width of an ultrawide. Cap it — but never the masthead, which lives
+   inside the fixed header and must stay full width. */
+body.cr-lnav-on .wrap:not(.masthead){max-width:var(--lnav-cap)}
+
+#cr-lnav .lnav-crm{display:flex;margin:12px 10px 4px;border-radius:9px;overflow:hidden;
+  border:1px solid var(--rbe-panelbd,#24242c);background:var(--rbe-panel,#16161B)}
+#cr-lnav .lnav-crm button{flex:1;min-width:0;background:none;border:0;
+  border-right:1px solid var(--rbe-panelbd,#24242c);padding:8px 2px;cursor:pointer;
+  font:700 9.5px inherit;letter-spacing:-.01em;color:var(--rbe-mute,#9aa0a8);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#cr-lnav .lnav-crm button:last-child{border-right:0}
+#cr-lnav .lnav-crm button.on{color:#fff;background:var(--lnav-crmc,#c8202e)}
+
+#cr-lnav .lnav-sec{display:flex;align-items:center;gap:8px;width:100%;background:none;
+  border:0;cursor:pointer;padding:15px 15px 7px;text-align:left;
+  font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.19em;text-transform:uppercase;
+  color:var(--rbe-mute,#9aa0a8)}
+#cr-lnav .lnav-sec .cnt{margin-left:auto;font-weight:700;letter-spacing:.04em;
+  color:var(--rbe-mute2,#6d747e)}
+#cr-lnav .lnav-sec .chev{font-size:9px;line-height:1;transition:transform .14s;
+  color:var(--rbe-mute2,#6d747e)}
+#cr-lnav .lnav-sec[aria-expanded="false"] .chev{transform:rotate(-90deg)}
+#cr-lnav .lnav-body{display:block}
+#cr-lnav .lnav-body[hidden]{display:none}
+
+#cr-lnav .lnav-item{display:flex;align-items:center;gap:10px;width:100%;
+  background:none;border:0;border-left:3px solid transparent;cursor:pointer;
+  padding:9px 15px;text-align:left;font:600 13.5px inherit;
+  color:var(--rbe-ink,#cfd6df);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cr-lnav .lnav-item:hover{background:var(--rbe-line,#232329);color:var(--rbe-head,#fff)}
+#cr-lnav .lnav-item.on{background:var(--lnav-wash,rgba(200,32,46,.14));
+  border-left-color:var(--lnav-crmc,#c8202e);color:var(--rbe-head,#fff);font-weight:700}
+#cr-lnav .lnav-item:focus-visible,#cr-lnav .lnav-sec:focus-visible,
+#cr-lnav .lnav-crm button:focus-visible{outline:2px solid var(--lnav-crmc,#c8202e);outline-offset:-2px}
+@media (prefers-reduced-motion:reduce){#cr-lnav .lnav-sec .chev{transition:none}}
+</style>
+<script id="cr-lnav-script">
+(function(){
+'use strict';
+var W = 1100;                      /* below this the burger stays the only menu */
+var KEY = 'cardinal.lnav.sections';
+var MOUNT = 'cr-lnav';
+
+/* Sections that start open. Theo asked for everything in AND for it to be
+   collapsible because it is a lot - so the two he named open, the rest fold. */
+var OPEN_BY_DEFAULT = { 'daily':1, 'sell':1 };
+
+var CRM_COLOR = { retail:'#c8202e', insurance:'#2dd4bf', community:'#34D399' };
+var CRM_WASH  = {
+retail    : 'rgba(200,32,46,.14)',
+insurance : 'rgba(45,212,191,.14)',
+community : 'rgba(52,211,153,.14)'
+};
+
+function on(){ return window.matchMedia('(min-width:' + W + 'px)').matches; }
+function menu(){ return document.getElementById('navMenu'); }
+function host(){ return document.getElementById(MOUNT); }
+
+function readState(){
+try{ return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
+catch(_){ return {}; }
+}
+function writeState(st){
+try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(_){}
+}
+function slug(s){ return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+
+/* Where it must NOT appear, using the app's own signals rather than new ones.
+   Checking only the header was not enough: on the post-login LANDING the header
+   is still present, so the menu mounted behind #landingView (which is fixed,
+   inset:0, z-index:150, so it covered it - invisible, but wrong and one
+   stacking change away from visible).
+
+   getComputedStyle, not offsetParent: header.site and #landingView are both
+   position:fixed, and offsetParent is null for fixed elements by spec, so an
+   offsetParent test would read every one of them as hidden. */
+function shown(el){
+if(!el) return false;
+try{ return getComputedStyle(el).display !== 'none'; }catch(_){ return false; }
+}
+function ready(){
+var m = menu();
+if(!m || !m.querySelector('.navopt')) return false;
+if(!shown(document.querySelector('header.site'))) return false;
+/* navWrap is the app's own signed-in flag: showLogin() sets it to none and the
+   signed-in path sets it to inline-block. */
+if(!shown(document.getElementById('navWrap'))) return false;
+if(shown(document.getElementById('landingView'))) return false;
+return true;
+}
+
+/* The whole point: read the LIVE menu rather than keep a copy of it. Nine
+   modules inject into #navMenu, cr-menu-script renames two of its sections and
+   hides items per-role, and all of that arrives here for free. */
+function scrape(){
+var m = menu();
+if(!m) return [];
+var out = [], cur = null;
+Array.prototype.forEach.call(m.children, function(el){
+if(el.id === 'cr-nav-palette-hint') return;
+if(el.id === 'signOutBtn') return;
+if(el.hasAttribute && el.hasAttribute('data-cr-footer')) return;
+if(el.classList && el.classList.contains('navsec')){
+if(el.style.display === 'none') { cur = null; return; }
+cur = { label:el.textContent.trim(), items:[] };
+out.push(cur);
+return;
+}
+if(el.classList && el.classList.contains('navopt')){
+if(el.style.display === 'none') return;
+var label = (el.textContent || '').trim();
+if(!label) return;
+/* Sales Floor and Self Check are appended past the last .navsec - after
+   the build stamp - so they genuinely belong to no section. Bucket them
+   rather than drop them, and say what the bucket is. */
+if(!cur){ cur = { label:'More', items:[] }; out.push(cur); }
+cur.items.push({ label:label, el:el });
+}
+});
+return out.filter(function(s){ return s.items.length; });
+}
+
+/* The CRM switcher is the banner's, mirrored - not a second one. Clicking a
+   mirrored control clicks the real one, so crmNow()/skin() stay the only
+   things that decide what the active CRM is. */
+function crms(){
+var bar = document.getElementById('cbCrm');
+if(!bar) return [];
+return Array.prototype.slice.call(bar.querySelectorAll('[data-crm-go]')).map(function(b){
+return { key:b.getAttribute('data-crm-go'), label:(b.textContent || '').trim(), el:b };
+});
+}
+function activeCrm(){
+try{ return document.body.dataset.crm || 'retail'; }catch(_){ return 'retail'; }
+}
+
+function esc(s){
+return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+});
+}
+
+var lastSig = '';
+function signature(secs, cs){
+return [activeCrm(), cs.map(function(c){ return c.key; }).join(','),
+secs.map(function(s){
+return s.label + ':' + s.items.map(function(i){
+return i.label + (i.el.classList.contains('on') ? '*' : '');
+}).join('|');
+}).join('~')].join('#');
+}
+
+function build(){
+var secs = scrape(), cs = crms();
+if(!secs.length) return;
+var sig = signature(secs, cs);
+var h = host();
+if(h && h.dataset.sig === sig) return;
+
+if(!h){
+h = document.createElement('nav');
+h.id = MOUNT;
+h.setAttribute('aria-label', 'Main');
+document.body.appendChild(h);
+}
+h.dataset.sig = sig;
+
+var st = readState();
+var crm = activeCrm();
+h.style.setProperty('--lnav-crmc', CRM_COLOR[crm] || CRM_COLOR.retail);
+h.style.setProperty('--lnav-wash', CRM_WASH[crm] || CRM_WASH.retail);
+
+h.innerHTML =
+(cs.length
+? '<div class="lnav-crm" role="group" aria-label="Switch CRM">' + cs.map(function(c){
+return '<button type="button" data-crm="' + esc(c.key) + '" class="' +
+(c.key === crm ? 'on' : '') + '"' +
+(c.key === crm ? ' aria-current="true"' : '') + '>' + esc(c.label) + '</button>';
+}).join('') + '</div>'
+: '') +
+secs.map(function(s, si){
+var id = slug(s.label);
+var openState = st[id];
+var isOpen = (openState == null) ? !!OPEN_BY_DEFAULT[id] : !!openState;
+return '<button type="button" class="lnav-sec" data-sec="' + esc(id) +
+'" aria-expanded="' + (isOpen ? 'true' : 'false') +
+'" aria-controls="lnav-body-' + si + '">' +
+'<span class="chev">▼</span><span>' + esc(s.label) + '</span>' +
+'<span class="cnt">' + s.items.length + '</span></button>' +
+'<div class="lnav-body" id="lnav-body-' + si + '"' + (isOpen ? '' : ' hidden') + '>' +
+s.items.map(function(it, ii){
+return '<button type="button" class="lnav-item' +
+(it.el.classList.contains('on') ? ' on' : '') +
+'" data-sec="' + esc(id) + '" data-i="' + ii + '">' + esc(it.label) + '</button>';
+}).join('') +
+'</div>';
+}).join('') +
+'';
+
+wire(h, secs, cs);
+}
+
+function wire(h, secs, cs){
+h.querySelectorAll('.lnav-sec').forEach(function(b){
+b.onclick = function(){
+var body = document.getElementById(b.getAttribute('aria-controls'));
+var nowOpen = b.getAttribute('aria-expanded') !== 'true';
+b.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+if(body) body.hidden = !nowOpen;
+var st = readState();
+st[b.getAttribute('data-sec')] = nowOpen ? 1 : 0;
+writeState(st);
+};
+});
+/* One dispatcher. The mirrored row clicks the REAL .navopt, so every handler,
+   every admin gate and every module-injected item keeps working with no second
+   copy of the routing to drift. Same shape as syncJobMenu(). */
+h.querySelectorAll('.lnav-item').forEach(function(b){
+b.onclick = function(){
+var sec = null, id = b.getAttribute('data-sec');
+for(var i = 0; i < secs.length; i++){ if(slug(secs[i].label) === id) sec = secs[i]; }
+var it = sec && sec.items[Number(b.getAttribute('data-i'))];
+if(it && it.el){ try{ it.el.click(); }catch(_){} }
+};
+});
+h.querySelectorAll('[data-crm]').forEach(function(b){
+b.onclick = function(){
+var k = b.getAttribute('data-crm');
+for(var i = 0; i < cs.length; i++){
+if(cs[i].key === k && cs[i].el){ try{ cs[i].el.click(); }catch(_){} return; }
+}
+};
+});
+}
+
+/* The header is fixed and its height moves (two rows, the ribbon, the banner,
+   safe-area insets). Measure it rather than hardcode a number. */
+function place(){
+var h = host();
+if(!h) return;
+var head = document.querySelector('header.site');
+var top = 0;
+try{ top = head ? Math.round(head.getBoundingClientRect().height) : 0; }catch(_){}
+if(top > 0) document.documentElement.style.setProperty('--lnav-top', top + 'px');
+}
+
+function teardown(){
+var h = host();
+if(h) h.remove();
+document.body.classList.remove('cr-lnav-on');
+lastSig = '';
+}
+
+function sync(){
+if(!on() || !ready()){ if(host() || document.body.classList.contains('cr-lnav-on')) teardown(); return; }
+build();
+if(host()){
+document.body.classList.add('cr-lnav-on');
+place();
+}
+}
+
+var queued = false;
+function scan(){
+if(queued) return;
+queued = true;
+requestAnimationFrame(function(){
+queued = false;
+try{ sync(); }catch(e){ console.warn('[lnav]', e); }
+});
+}
+
+function start(){
+scan();
+try{ new MutationObserver(scan).observe(document.body, { childList:true, subtree:true }); }catch(_){}
+window.addEventListener('resize', scan, { passive:true });
+/* The nine injectors land over the first few seconds; a short poll catches the
+   late ones without leaving an observer churning forever. */
+var n = 0, iv = setInterval(function(){ scan(); if(++n > 40) clearInterval(iv); }, 300);
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+
+window.CardinalLeftNav = Object.assign(window.CardinalLeftNav || {}, {
+refresh : scan,
+teardown: teardown,
+scrape  : scrape
+});
+})();
+</script>
+<style id="cr-dash-styles">
+/* ---- dashboard tidy-up (519) -----------------------------------------------
+   Theo: "Please remove the Calendar on the very right side upper."
+
+   That is #calCard in the .homeside rail. HIDDEN, not deleted, and the reason is
+   specific rather than caution for its own sake: line ~16921 runs
+     document.getElementById('calGrid').addEventListener(...)
+   with no null guard, so removing the markup throws a TypeError at boot and
+   takes out everything after it in that script block. Same class of trap as the
+   old landing markup that is still in the file for its boot writers, and the
+   same treatment the dead .dashcard got at build 352.
+
+   The two big calendars lower down - Cardinal Team Calendar and Production
+   Calendar - are untouched; this only removes the small duplicate in the rail.
+
+   ⚠ #apptUpcoming ("Next Aug 1 - 9:00 AM ...") lived inside this card and goes
+   with it. It is the one thing here that was not duplicated elsewhere, so it is
+   flagged rather than quietly dropped - one line puts it back on its own. */
+#calCard{display:none !important}
+</style>
 </body>
 </html>
