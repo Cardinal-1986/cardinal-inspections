@@ -2381,3 +2381,148 @@ Community's `data-cc-editbid` already contains it. Attribute *selectors* match w
 
 **Namespace hazard worth knowing:** `cc-` means **CompanyCam** inside `cr-lib-script` and
 **Community** elsewhere in the file. Grep the block, not the prefix.
+
+## Build 483 — the librarian sheet was cut off at the bottom of the phone (31 July 2026)
+
+Theo: *"move the ai librarian box further up the screen so it doesnt get cut off at the bottom."*
+
+`#rlLibPanel` is a bottom sheet — `inset:0` with `align-items:flex-end` — so `.lb-box`'s bottom edge
+sits on the bottom of the layout viewport, which on an iPhone is **under the home indicator**.
+`.lb-box` carried **no bottom inset at all**, so its last rows (the ask input, the note under it)
+were the part being eaten.
+
+**The panel was the exception, not a new problem.** Every other fixed overlay in this file already
+reserves the inset — `.cr-ped-tools`, `.cr-est-body`, `#cr-est-picker .box-list` — and
+`#cr-est-picker .box` already carries the height convention:
+
+```css
+max-height:85vh; max-height:85dvh;
+```
+
+`vh` on mobile means the viewport with browser chrome **hidden**, so a sheet sized in `vh` is taller
+than what is on screen. `dvh` is correct; declaring `vh` first keeps an old engine working. Both
+copied verbatim rather than invented.
+
+Three declarations on `.lb-box`: `padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))`,
+`max-height:88dvh` after the existing `88vh`, and an explicit `box-sizing:border-box`.
+
+**Correction, so it is not miscredited:** `box-sizing` was **already** `border-box` via one of the
+file's 14 wildcard resets — the harness measured 482 at `border-box` too. Explicit is belt-and-braces
+so the sheet's height cannot come to depend on which reset reaches it. **It is not a fix.**
+
+**Deliberately not done:** the sheet is not lifted into a floating card. Its corners are rounded
+top-only, so a gap beneath it would show the scrim through a square bottom edge and read as a bug.
+
+**What the harness can and cannot say.** 11/11 in a real engine at 393×852 using the *shipped* panel
+markup and stylesheet, negative-controlled against 482 (which measured **0px** reserved, so the
+defect reproduces). But **headless Chromium has no home indicator, so `env(safe-area-inset-bottom)`
+resolves to its `0px` fallback there.** It proves the strip is reserved and that content clears it.
+It cannot prove the 34px iOS inset lands. That is Theo's eyes, and the PR said so.
+
+## Build 484 — read the job names first, not after seven minutes of photos (31 July 2026)
+
+Theo pressed Build index and reported `60,485 photos indexed of 61,649 · 0 jobs · 0 searchable by job`.
+
+**Measured against the live database rather than guessed:**
+
+| | |
+|---|---:|
+| `companycam_photos` | 60,485 |
+| …with `project_id` | 60,485 |
+| distinct `project_id` | 775 |
+| **`companycam_projects` rows** | **0** |
+| …with `project_name` | 0 |
+| backfill function | exists |
+
+**The route was fine and the panel was fine.** The project pass only fires at the **tail** of a Build
+index press, and 476 shipped after his last one. The status line was honest.
+
+**The fix is the ORDER, not the code.** 476 put projects last with this reasoning:
+
+> *"Projects second, and only after the photos land — the backfill stamps names onto rows that must
+> already exist."*
+
+True on a first sync. **Wrong once 60,485 rows exist**: then the names are the only thing missing,
+they are ~8 pages against 617, and going last means waiting seven minutes to fix a fifteen-second
+problem — seven minutes spent re-walking photos already indexed.
+
+484 runs **names → photos → stamp**. Names first so the search works in seconds and the status line
+updates before the long pass. Photos unchanged. Then a stamp, because photos *this run added* have
+no name yet — the names are in the table by then, so it is one `UPDATE` and no second trip to
+CompanyCam (`action:'stamp'`, admin-gated like every other action).
+
+`stampNames()` extracted so the backfill RPC has **one** implementation with two callers. The RPC
+name now appears exactly once in the route, asserted.
+
+**Failure policy, asserted in the harness:** a failed *name* pass must **not** stop the photo index —
+the photos are the expensive half and are useful alone, so it reports and carries on. A failed
+*stamp* must not report the whole press as failed. A failed *photo* pass still reports, exactly as
+before.
+
+Harnesses: ordering **21/21** driving the shipped `ccSync()` and asserting the exact call sequence
+(`projects, photos:start, photos:c1, stamp` — four calls, no duplicated pass), all four failure
+paths and the double-press guard; route **7/7** importing the shipped handler with `fetch` stubbed.
+
+## Build 485 — the caption trial was not a sample (31 July 2026)
+
+478 shipped a 50-photo AI caption trial so Theo could judge the captions before spending on 60,406.
+Its sampler carried this comment:
+
+> *"A spread, not the newest 50: order by id so the sample crosses years, crews and job types rather
+> than sampling one week of one roof."*
+
+**The first real run produced the exact opposite**, measured against the live index:
+
+| | |
+|---|---:|
+| photos captioned | 53 |
+| **distinct jobs** | **1** |
+| distinct crews | 1 |
+| date range | 2023-12-19 … 2023-12-20 |
+| index spans | 2007-03-29 … 2026-07-30 |
+
+**`order by id asc` is not a shuffle.** CompanyCam ids sort near creation order, so it took the
+*oldest* rows — 53 photographs of one water-damaged house over two days. It sampled precisely the
+"one week of one roof" its own comment promised to avoid, and it showed: **26 of the 53** were
+variants of *"water staining indicating an active roof leak"* — true of that house, silent about the
+other 60,432.
+
+**The captions themselves were good** ("hip cap shingle", "roof-to-wall transition", "sealant line",
+"roof valley"). The model is not the problem. The sample was, and it was mine.
+
+### The fix is in SQL
+
+`companycam_caption_sample(n)` — one photo from each of n **different** jobs:
+
+- `distinct on (project_id)` → at most one row per job;
+- `not exists (… ai_description is not null)` → **a job with any caption is excluded outright.**
+  This is load-bearing. Without it each six-photo batch re-picks the same handful of jobs and merely
+  chooses a *different photo* from them, so 50 photos would come from 6 roofs;
+- `order by md5(id)` → a **stable** pseudo-random spread. Re-running picks the SAME jobs rather than
+  spending on a fresh set — the one thing 478 got right, preserved;
+- newest photo per job, because later photographs show conditions rather than arrival shots.
+
+Verified before a line of the patch was written: **50 photos · 50 jobs · 5 crews ·
+2024-04-30 … 2026-07-30 · zero rows from the one already-captioned job.**
+
+Both functions are `SECURITY DEFINER`, revoked from `anon`/`authenticated` and granted only to
+`service_role` — matching `companycam_backfill_project_names`, which was already locked that way.
+They bypass RLS, so a signed-in non-admin must not be able to read preview urls out of the mirror.
+
+### Progress is counted in JOBS now
+
+53 photos of one roof is **one** data point. Counting it as 53 is exactly how the first trial
+reported itself finished while having proved nothing. `captioned` is kept as an alias of `jobs` so a
+panel already on the phone cannot read `undefined` if the route deploys ahead of `index.html`.
+
+`rpc()` extracted — all three Postgres functions go through one caller; asserted that zero
+hand-rolled RPC fetches remain. Still writes `ai_description` only; the harness asserts `description`
+never appears in a PATCH body.
+
+### Three aborts on one assertion, all the same mistake
+
+`src.count('different jobs')` failed three times, each for a different reason: the **changelog** this
+patch adds says it, the **build label** this patch adds says it, and it was **already in the file**,
+in a Library entry about drip edge vs apron (*"Different profiles, different jobs"*). The site
+assertion beside it — `count("' different jobs' +") == 1` — was right the first time. **Name the
+site; never count the phrase.** Nothing was written on any of the three runs.

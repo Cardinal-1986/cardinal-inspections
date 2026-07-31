@@ -150,7 +150,7 @@ Two routers coexist. The modern one (`cardinal-nav`) tags its states `{app:'card
 
 ---
 
-## Resource Library (`rlPage*`, builds 442–482)
+## Resource Library (`rlPage*`, builds 442–484)
 
 **CompanyCam import (468, admin only).** Library assistant → **📸 CompanyCam** → narrow by
 tag and date → tick → file. Captions come across as titles; where the crew marked a photo up you
@@ -221,6 +221,23 @@ job-photo path is unchanged.
 > ⚠️ **`annotated` is meaningless.** It is `true` on all 60,485 rows — CompanyCam returns a
 > `web_annotation` URI whether or not anyone drew on the photo. Filed, not fixed; no caller depends
 > on it.
+
+**483 — the sheet fits the phone.** `#rlLibPanel` is a bottom sheet pinned to the bottom of the
+layout viewport, which on an iPhone is under the home indicator, and `.lb-box` reserved nothing —
+so the ask row was behind it. Now `padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))`
+plus `max-height:88dvh` after the existing `88vh`. **Both conventions were already in this file**
+(`.cr-ped-tools`, `.cr-est-body`, `#cr-est-picker .box`); the panel was the exception. The sheet
+still meets the bottom edge on purpose — its corners are rounded top-only.
+
+**484 — Build index reads job names FIRST.** Was photos → names; now **names → photos → stamp**.
+The names are ~8 pages against 617, so going last meant a seven-minute wait for a fifteen-second
+result. New admin-gated `action:'stamp'` runs only the backfill RPC, for photos a run just added.
+A failed name pass does **not** stop the photo index; a failed stamp does **not** fail the press;
+a failed photo pass still reports, as before.
+
+> ⚠️ **The project pass only fires at the tail of a Build index press.** That is why 476 shipped
+> and the database still read `0 jobs` — nobody had pressed the button since. 484 moved it to the
+> front, but the rule stands: **nothing in the CompanyCam index updates without a press.**
 
 The panel reports the **uncaptioned count**, which is the honest reason a search comes back empty
 and the exact size of any future AI-captioning job.

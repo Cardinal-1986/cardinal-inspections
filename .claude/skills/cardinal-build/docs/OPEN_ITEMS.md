@@ -107,6 +107,12 @@ there are 3 punch items total and none are scheduled. That is a coverage gap, no
   - tick 3 → **⬇ Save to device** → the iOS share sheet offers Photos / Messages / AirDrop, and the
     ticks are **still set** afterwards
   - draw on one → **File it** → it appears in the chosen Library section titled `Marked up — …`
+- **483/484, on the phone, in the installed app:**
+  - **the library assistant's ask line must clear the home bar.** ⚠️ **No harness can settle this** —
+    headless Chromium has no home indicator, so `env(safe-area-inset-bottom)` is 0 there. The gate
+    proves the strip is reserved and content clears it, nothing more. **Theo's eyes only.**
+  - press **Build index**: `Reading job names…` → `Matched 775 jobs — now the photos…` within
+    seconds → the photo counter. Then search a street or "Habitat" **before** the photos finish.
 
 ---
 
@@ -149,6 +155,13 @@ a light ground changes how they read. Same reasoning as the calendars.
    button so he can read real captions before deciding. **Waiting on him to press it and report.**
    Do not run it over all 60,406 without an explicit yes — that sends customers' job photographs to
    a third party.
+
+   **First trial run, 31 July — INVALID, and the reason is recorded so it is not repeated.** 53
+   photos captioned, **all one job, one crew, two days** (see `BUG_CLASSES.md` §10). The captions
+   were good; the sample was not. 485 rewrote it to one photo from each of 50 different jobs —
+   verified at 50 photos / 50 jobs / 5 crews / Apr 2024–Jul 2026. **Waiting on Theo to press it
+   again**, then I read the 49 fresh ones back. The old 53 are still in `ai_description` and can be
+   binned on his word.
 
 1. **Partner colour as a stored field.** Community partner colours are matched on name, so a new or renamed partner reads neutral. Verified: `partners` has no `color` column. Add one, set it in the Partners directory, have every surface read it. **This is the only open database item.**
 2. **Distinguish "no clients" from "couldn't load."** Both render the same empty state, which is why a transient read failure looked like data loss.
