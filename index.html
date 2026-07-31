@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 471 &#8212; ask the library assistant to show you something and it pulls the real job photographs from CompanyCam</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 472 &#8212; the assistant now finds photographs by what is written on them, not by tag &mdash; and says how many it looked through</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33046,6 +33046,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:472, note:'\U0001F50D Asking the assistant for photographs now searches what was actually typed on them rather than relying on tags, which are only as good as we have been about adding them. It reads through up to 800 recent photos, ranks the closest captions first, and tells you how many it looked at \u2014 including how many had no caption to search, which is the honest reason a search comes back empty.' },
 { build:471, note:'\U0001F5BC\uFE0F Ask the library assistant to show you something \u2014 \u201cwhat does an ice dam look like\u201d, \u201chave we got photos of kickout flashing\u201d \u2014 and it pulls real photographs from our own CompanyCam jobs, captions and all, right into the answer. Tap one to enlarge it. Photos marked internal in CompanyCam never appear, and asking for a photo no longer leaves a note behind in the library.' },
 { build:470, note:'\U0001F485 The CompanyCam import panel now looks like the rest of the assistant. Its buttons had been running together as one unbroken line, its labels were bare text and the two date boxes were unstyled, because the panel\u2019s form styling only ever applied to the older form beside it.' },
 { build:469, note:'\U0001F527 Fixed: the CompanyCam button added in 468 did nothing when tapped. It had been wired to the library page instead of to the assistant panel the button actually sits in, so the tap never reached the code. Everything behind it was working the whole time.' },
@@ -47513,9 +47514,9 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
        keeps both words. Stopping at whitespace lost everything after the first
        one, and the prompt's own example is unquoted - it would have searched
        for "Ice". Quotes are honoured but never required. */
-    var a = { tag:'', from:'', to:'' };
+    var a = { q:'', tag:'', from:'', to:'' };
     var t = String(s || '').trim();
-    var re = /\b(tag|from|to)\s*=\s*/gi, m, marks = [];
+    var re = /\b(q|tag|from|to)\s*=\s*/gi, m, marks = [];
     while((m = re.exec(t))) marks.push({ k: m[1].toLowerCase(), at: m.index, from: re.lastIndex });
     marks.forEach(function(mk, i){
       var end = (i + 1 < marks.length) ? marks[i + 1].at : t.length;
@@ -47528,6 +47529,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     var a = lbPhotoArgs(argstr);
     /* attributes only ever carry values esc() has escaped */
     return '<div class="lb-photos" data-lbp="1"' +
+      ' data-lbp-q="' + esc(a.q) + '"' +
       ' data-lbp-tag="' + esc(a.tag) + '"' +
       ' data-lbp-from="' + esc(a.from) + '"' +
       ' data-lbp-to="' + esc(a.to) + '">' +
@@ -47542,9 +47544,11 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     boxes.forEach(function(box){
       box.removeAttribute('data-lbp');            /* once only */
       var body = { action:'list', limit:12 };
+      var q = box.getAttribute('data-lbp-q');
       var tag = box.getAttribute('data-lbp-tag');
       var from = box.getAttribute('data-lbp-from');
       var to = box.getAttribute('data-lbp-to');
+      if(q) body.q = q;
       if(tag) body.tag_names = [tag];
       if(from) body.start_date = from;
       if(to) body.end_date = to;
@@ -47553,9 +47557,21 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         var list = (d && d.photos) || [];
         if(!list.length){
           var un = (d && d.unmatched_tags) || [];
-          stat.textContent = un.length
-            ? 'No photographs tagged \u201c' + un[0] + '\u201d.'
-            : 'No photographs on file for that.';
+          var sr = d && d.searched;
+          if(sr){
+            /* Say what was actually looked at. "Nothing found" after one page
+               and after 800 photos are very different answers. */
+            stat.textContent = 'Nothing matching \u201c' + sr.q + '\u201d in ' +
+              sr.scanned + ' photograph' + (sr.scanned === 1 ? '' : 's') +
+              (sr.captioned < sr.scanned
+                ? ' \u00b7 only ' + sr.captioned + ' of them have a caption to search'
+                : '') +
+              (sr.capped ? ' \u00b7 stopped at ' + sr.pages + ' pages' : '');
+          } else {
+            stat.textContent = un.length
+              ? 'No photographs tagged \u201c' + un[0] + '\u201d.'
+              : 'No photographs on file for that.';
+          }
           return;
         }
         box.innerHTML = '<div class="lb-ccgrid">' + list.map(function(ph){
@@ -47566,8 +47582,9 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
             '<span class="meta">' + esc(when) + (ph.annotated ? ' \u00b7 marked up' : '') + '</span>' +
             '</label>';
         }).join('') + '</div>' +
-        '<span class="lb-photos-stat">' + list.length + ' from CompanyCam \u00b7 tap to enlarge' +
-        (ph_admin_hint()) + '</span>';
+        '<span class="lb-photos-stat">' + list.length + ' from CompanyCam' +
+        (d && d.searched ? ' of ' + d.searched.scanned + ' searched' : '') +
+        ' \u00b7 tap to enlarge' + (ph_admin_hint()) + '</span>';
       }).catch(function(e){
         var m = String((e && e.message) || e);
         stat.textContent = /Admins only/i.test(m)

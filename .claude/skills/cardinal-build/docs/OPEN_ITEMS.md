@@ -83,6 +83,13 @@ a light ground changes how they read. Same reasoning as the calendars.
 
 ## 5. Build queue (code, unblocked)
 
+0. **Does CompanyCam caption coverage make text search viable?** Build 472 searches photo captions
+   because tags are used inconsistently. Every search now reports `captioned` out of `scanned` —
+   **read that number on the first real search.** If most photos have no caption, text matching
+   cannot work either, and the honest next step is having Gemini *look* at the photos
+   (`analyze.js`/`caption.js` are already Gemini-backed). **That sends customers' job photos to a
+   third party and is Theo's call, not an implementation detail.** Do not build it without asking.
+
 1. **Partner colour as a stored field.** Community partner colours are matched on name, so a new or renamed partner reads neutral. Verified: `partners` has no `color` column. Add one, set it in the Partners directory, have every surface read it. **This is the only open database item.**
 2. **Distinguish "no clients" from "couldn't load."** Both render the same empty state, which is why a transient read failure looked like data loss.
 3. **Real PDF export.** Downloads are standalone `.html`. A `/api/pdf` endpoint using the ReportLab toolchain that built the contract masters would give true `.pdf`.

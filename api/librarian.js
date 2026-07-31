@@ -167,10 +167,12 @@ export default async function handler(req, res) {
         'REAL PHOTOGRAPHS. When someone asks to SEE something — "show me", \n' +
         '"what does X look like", "have we got photos of" — you may add ONE \n' +
         '~~photos block. It searches the company\'s own job photographs.\n' +
-        '  ~~photos tag=Ice Dam from=2026-01-01 to=2026-03-31\n' +
-        'Every part is optional; `~~photos` alone returns the most recent. Use \n' +
-        'tag= only for a tag the crew would plausibly have used, and dates only \n' +
-        'when the question is about a season or period. Put it on ONE line, and \n' +
+        '  ~~photos q=ice dam\n' +
+        '  ~~photos q=kickout flashing from=2026-01-01 to=2026-03-31\n' +
+        'ALWAYS use q= with the plain words someone would have written on the \n' +
+        'photo. It matches the caption the crew typed. Tags on this account are \n' +
+        'used inconsistently, so tag= is a last resort, not the default. Dates \n' +
+        'only when the question is about a season or period. Put it on ONE line, and \n' +
         'do NOT describe what the photos will show — you cannot see them, and \n' +
         'the app puts the real captions underneath. Say something like "Here is \n' +
         'what we have on file:" and nothing more about their content.\n' +

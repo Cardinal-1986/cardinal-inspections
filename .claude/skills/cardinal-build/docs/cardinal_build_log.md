@@ -1946,3 +1946,29 @@ misspelt word with every photograph Cardinal has ever taken.
 
 **Third hardcoded-count abort of the night** (`count('lbFillPhotos') == 3`). Replaced with property
 assertions. The count is never the thing I actually mean.
+
+---
+
+## Build 472 — search photographs by caption, not by tag (31 July 2026)
+
+**Theo's correction, and it reframes 471.** The tags on the account are his own and he says he has
+not used them consistently — *which is exactly why he asked whether the AI could pick photos out by
+description in the first place.* Tag filtering was answering a question he had not asked. `q=` is
+now the primary filter and the prompt says so; `tag=` is a last resort.
+
+**The API cannot do this.** The photo index takes eleven parameters and **none of them is a
+query** — there is no text search to call. So matching happens in `api/companycam.js`, which pages
+through captions with a hard cap of **8 pages / 800 photos** and stops the moment it has enough.
+No rate-limit headers come back, so politeness has to be structural rather than adaptive.
+
+**It reports how far it got.** Every search returns `scanned / pages / captioned / capped`, and the
+empty state says so out loud: *"Nothing matching 'unicorn' in 800 photographs · only 96 of them
+have a caption to search · stopped at 8 pages."* A search that quietly gave up after one page and
+said "nothing found" would be worse than no search.
+
+**`captioned` is the number that matters next.** If most photos carry no caption, no amount of text
+matching will help, and the first real search will say so rather than leaving us to guess. That
+measurement decides whether the next step is worth building — see OPEN_ITEMS.
+
+Ranking is deliberately dumb: whole-phrase hit first, then how many query words appear. A caption
+is one short line; anything cleverer would be guessing.

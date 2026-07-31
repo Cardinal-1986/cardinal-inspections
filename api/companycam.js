@@ -42,6 +42,11 @@ const CC_BASE = 'https://app.companycam.com/public_api/v1';
    rather than emitting a truncated body that fails to decode in the browser. */
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
+/* Text search pages through captions because the API cannot. Eight pages of 100
+   is 800 photos and about eight sequential round trips - enough to be useful,
+   bounded enough that a vague word cannot walk the whole account. */
+const MAX_SCAN_PAGES = 8;
+
 /* Never let the key reach a response body, however the error was shaped. */
 function scrub(text, key) {
   let s = String(text == null ? '' : text);
@@ -201,6 +206,17 @@ export default async function handler(req, res) {
         project_ids: Array.isArray(b.project_ids) ? b.project_ids.slice(0, 20) : []
       };
 
+      /* 472: TEXT SEARCH, which the API does not have. The photo index takes
+         eleven parameters and none of them is a query, so matching "ice dam"
+         against a caption means paging and filtering here. Bounded hard: at
+         most MAX_SCAN_PAGES pages, stopping the moment we have enough. There
+         are no rate-limit headers to read, so politeness has to be structural.
+         Every response says how far it actually got - a search that quietly
+         gave up after one page and reported "nothing found" would be worse
+         than no search at all. */
+      const q = String(b.q || '').trim().toLowerCase();
+      const words = q ? q.split(/\s+/).filter(w => w.length > 1).slice(0, 6) : [];
+
       /* The accepted date format is not documented anywhere we can read, and a
          bad one is a 422 rather than an ignored parameter. So: try the filter,
          and if CompanyCam rejects it, drop the dates and filter on captured_at
@@ -232,13 +248,46 @@ export default async function handler(req, res) {
         });
       }
 
-      const meta = (r.body && r.body.meta) || {};
+      let meta = (r.body && r.body.meta) || {};
+
+      /* Text search: keep paging until we have `limit` matches or hit the cap.
+         Scoring is deliberately dumb - all words beat some words, a whole-phrase
+         hit sorts first - because a caption is one short line and anything
+         cleverer would be guessing. */
+      let scanned = rows.length, pages = 1, captioned = rows.filter(p => p.description).length;
+      if (words.length) {
+        const score = p => {
+          const d = String(p.description || '').toLowerCase();
+          if (!d) return 0;
+          const hits = words.filter(w => d.indexOf(w) > -1).length;
+          if (!hits) return 0;
+          return (d.indexOf(q) > -1 ? 100 : 0) + hits * 10 + (hits === words.length ? 5 : 0);
+        };
+        let pool = rows.map(p => ({ p, s: score(p) })).filter(x => x.s > 0);
+        let cursor = meta.has_next === true ? meta.next_cursor : null;
+        while (pool.length < limit && cursor && pages < MAX_SCAN_PAGES) {
+          const nx = await cc('/photos', key, { ...params, limit: 100, after: cursor });
+          if (!nx.ok) break;
+          pages++;
+          const batch = ((nx.body && nx.body.data) || []).filter(usable);
+          scanned += batch.length;
+          captioned += batch.filter(p => p.description).length;
+          pool = pool.concat(batch.map(p => ({ p, s: score(p) })).filter(x => x.s > 0));
+          const m2 = (nx.body && nx.body.meta) || {};
+          cursor = m2.has_next === true ? m2.next_cursor : null;
+        }
+        pool.sort((a, z) => z.s - a.s);
+        rows = pool.slice(0, limit).map(x => x.p);
+        meta = { next_cursor: null, has_next: false };
+      }
+
       res.status(200).json({
         photos: rows.map(safePhoto),
         next_cursor: meta.next_cursor || null,
         has_next: meta.has_next === true,
         dates_filtered_here: clientSideDates,
-        unmatched_tags: unmatchedTags
+        unmatched_tags: unmatchedTags,
+        searched: words.length ? { q, scanned, pages, captioned, capped: pages >= MAX_SCAN_PAGES } : null
       });
       return;
     }
