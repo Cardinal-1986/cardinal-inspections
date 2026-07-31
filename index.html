@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 480 &#8212; tap the corner of a CompanyCam photograph to see it full size</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 481 &#8212; tick photographs in the CompanyCam box and save them straight to your phone or computer</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33057,6 +33057,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:481, note:'\u2B07\uFE0F Save CompanyCam photographs to your phone. Tick the ones you want in the CompanyCam box and press Save to device \u2014 on a phone they go to your share sheet, so Photos, AirDrop and Messages are one tap away; on a computer they download. Filing them into the Library still works exactly as before, and your ticks stay put so you can do both.' },
 { build:480, note:'\U0001F50D CompanyCam photographs open full size. Tap the small arrows in the corner of any thumbnail and it fills the screen, caption and all. Tapping the picture itself still ticks it for filing, the way it always did \u2014 the corner button is the only thing that expands.' },
 { build:479, note:'\U0001F6AA The CompanyCam photo panel was a dead end. The question box disappeared when you opened it, so you could not ask anything while looking at photographs, and the only way out was a button marked \u2018Cancel\u2019 \u2014 which reads like it throws your work away rather than takes you back. The question box now stays, and the button says \u2018Back to chat\u2019.' },
 { build:478, note:'\U0001F9EA A trial button for AI photo captions. Only 79 of your 60,485 CompanyCam photographs have a caption typed on them, so searching by what is IN a picture needs the computer to write one. Whether it is any good at roofing is worth finding out on fifty photographs rather than sixty thousand. Nothing is overwritten \u2014 the computer\u2019s captions are kept separately from the ones your crews wrote, and can be thrown away.' },
@@ -47410,6 +47411,8 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ccp-v{cursor:zoom-in;}
 #rlLibPanel .lb-ccp-v input{display:none;}
 #rlLibPanel .lb-ccfile button{width:100%;margin-top:7px;border-radius:10px;padding:12px 10px;cursor:pointer;font:800 12px 'Segoe UI',Arial,sans-serif;border:0;background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);}
+.lb-ccfile button.ghost{background:transparent;border:1px solid var(--lb-line,#EAE5E3);color:var(--lb-ink,#17181B);}
+.lb-ccfile button:disabled{opacity:.55;cursor:default;}
 #rlLibPanel .lb-cc label:not(.lb-ccp){display:block;margin:9px 0 4px;}
 #rlLibPanel .lb-cc .row{margin-top:10px;}
 #rlLibPanel .lb-ccp .cap,#rlLibPanel .lb-ccp .meta{text-transform:none;letter-spacing:normal;}
@@ -48211,14 +48214,111 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     return new Blob([u8], { type: mime || 'image/jpeg' });
   }
 
+  /* 481: one reader for the ticked set. ccSave() and ccDownload() must never
+     disagree about what is selected, and the way they cannot is by asking the
+     same function. */
+  function ccPicked(p){
+    return [].slice.call(p.querySelectorAll('.lb-ccp'))
+      .filter(function(n){ var c = n.querySelector('[data-cc-pick]'); return c && c.checked; })
+      .map(function(n){ return n.getAttribute('data-cc-id'); });
+  }
+
+  function ccSafe(s){
+    return String(s || '').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  }
+
+  /* 99.87% of this account's photographs carry no caption - the full index put
+     it at 79 of 60,485 - so the name is nearly always built from the id. That
+     is fine: it is unique, and it is honest about what is known. */
+  function ccFileName(d, i){
+    var when = d.captured_at ? String(d.captured_at).slice(0, 10) : 'undated';
+    var what = ccSafe(d.description) || ('cc' + String(d.id || '').slice(0, 12));
+    return 'Cardinal_CompanyCam_' + what + '_' + when + '_' + (i + 1) + '.jpg';
+  }
+
+  /* Desktop, and any phone whose share sheet refused the files. One anchor
+     click per file, spaced - the job gallery has used this exact shape since
+     build 216 and has not dropped one. */
+  function ccAnchorSave(files, failed){
+    ccStat('Saving ' + files.length + '\u2026');
+    return files.reduce(function(chain, f, j){
+      return chain.then(function(){
+        var url = URL.createObjectURL(f);
+        var a = document.createElement('a');
+        a.href = url; a.download = f.name;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 20000);
+        if(j < files.length - 1) return new Promise(function(r){ setTimeout(r, 350); });
+      });
+    }, Promise.resolve()).then(function(){
+      ccStat('Saved ' + files.length +
+             (failed ? ' \u00b7 ' + failed + ' could not be fetched' : ''));
+    });
+  }
+
+  /* Save the ticked photographs to the device. Same bytes the filing path uses:
+     our own route fetched them from CompanyCam server-side, so the browser is
+     never handed a CompanyCam URL and nothing here depends on their CDN allowing
+     a cross-origin read.
+
+     One at a time, for the same reason ccSave() is: CompanyCam advertises no
+     rate limits, so there is nothing to read and nothing to adapt to, and being
+     polite is the only available strategy.
+
+     The ticks are deliberately LEFT SET afterwards, unlike filing - saving a set
+     and then filing the same set is a reasonable thing to want. */
+  function ccDownload(){
+    var p = document.getElementById('rlLibPanel');
+    if(!p) return;
+    var picked = ccPicked(p);
+    if(!picked.length){ ccStat('Tick the photos you want first.', true); return; }
+    var btn = p.querySelector('[data-cc-dl]');
+    if(btn) btn.disabled = true;
+
+    var files = [], failed = 0;
+    var chain = Promise.resolve();
+    picked.forEach(function(id, i){
+      chain = chain.then(function(){
+        ccStat('Fetching ' + (i + 1) + ' of ' + picked.length + '\u2026');
+        return ccApi({ action:'fetch', id:id }).then(function(d){
+          files.push(new File([ccBlob(d.data, d.mime)], ccFileName(d, i),
+                              { type: d.mime || 'image/jpeg' }));
+        }).catch(function(){ failed++; });
+      });
+    });
+
+    chain.then(function(){
+      if(!files.length){
+        ccStat('Could not fetch ' + (picked.length === 1 ? 'that photo' : 'those photos') + '.', true);
+        return;
+      }
+      var share = navigator.canShare && navigator.share && navigator.canShare({ files: files });
+      if(!share) return ccAnchorSave(files, failed);
+      return navigator.share({ files: files, title: 'Cardinal photos' })
+        .then(function(){
+          ccStat(files.length + ' sent to your share sheet' +
+                 (failed ? ' \u00b7 ' + failed + ' could not be fetched' : ''));
+        })
+        .catch(function(e){
+          /* Dismissing the sheet is the user's own choice, not a failure, and
+             must not be reported as one. Anything else falls back to anchors. */
+          if(e && e.name === 'AbortError'){ ccStat(''); return; }
+          return ccAnchorSave(files, failed);
+        });
+    }).catch(function(e){
+      ccStat('Save failed \u2014 ' + String((e && e.message) || e).slice(0, 120), true);
+    }).then(function(){
+      var b = document.querySelector('#rlLibPanel [data-cc-dl]');
+      if(b) b.disabled = false;
+    });
+  }
+
   function ccSave(){
     var p = document.getElementById('rlLibPanel');
     if(!p || !window.supa) return;
     var secId = (p.querySelector('[data-cc-where]') || {}).value;
     if(!secId){ ccStat('Pick a section first.', true); return; }
-    var picked = [].slice.call(p.querySelectorAll('.lb-ccp'))
-      .filter(function(n){ var c = n.querySelector('[data-cc-pick]'); return c && c.checked; })
-      .map(function(n){ return n.getAttribute('data-cc-id'); });
+    var picked = ccPicked(p);
     if(!picked.length){ ccStat('Tick the photos you want first.', true); return; }
     var target = sections.find(function(s){ return s.id === secId; });
     if(!target){ ccStat('That section has gone away.', true); return; }
@@ -48736,6 +48836,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
             '<label>Put them in</label>' +
             '<select data-cc-where></select>' +
             '<button type="button" class="go" data-cc-save>File selected</button>' +
+            '<button type="button" class="ghost" data-cc-dl>\u2B07 Save to device</button>' +
           '</div>' +
         '</div>' +
         '<div class="lb-ask"><input type="text" data-lb-q placeholder="Ask about code, roofing, siding\u2026">' +
@@ -48791,6 +48892,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         if(e.target.closest('[data-cc-find]')){ ccFind(false); return; }
         if(e.target.closest('[data-cc-more]')){ ccFind(true); return; }
         if(e.target.closest('[data-cc-save]')){ ccSave(); return; }
+        if(e.target.closest('[data-cc-dl]')){ ccDownload(); return; }
         if(e.target.closest('[data-lb-send]')){
           var q = p.querySelector('[data-lb-q]');
           var val = q.value.trim(); q.value = '';
