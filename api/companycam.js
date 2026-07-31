@@ -223,18 +223,58 @@ export default async function handler(req, res) {
            caption, so a caption-only search had almost nothing to match. Project
            name, address and creator ARE populated on every row, so the query now
            reaches all four through one GIN index. */
-        const FTS = 'or=(description.wfts(english).%q,project_name.wfts(english).%q,'
-                  + 'project_address.wfts(english).%q,creator_name.wfts(english).%q)';
-        let idx = await fetch(base + '&' + FTS.split('%q').join(encodeURIComponent(qq)), { headers: hdrs });
-        /* websearch_to_tsquery rejects some punctuation outright; a plain
-           substring match is a worse search but an honest fallback. */
-        if (!idx.ok) {
-          const LIKE = 'or=(description.ilike.*%q*,project_name.ilike.*%q*,'
-                     + 'project_address.ilike.*%q*,creator_name.ilike.*%q*)';
-          idx = await fetch(base + '&' + LIKE.split('%q').join(encodeURIComponent(qq)), { headers: hdrs });
-        }
+        /* 496: ONE query, against the COMBINED document.
+
+           The previous form searched each column separately:
+             or=(description.wfts.Q, project_name.wfts.Q, project_address.wfts.Q, ...)
+           websearch_to_tsquery ANDs every word, and the picker pre-fills the box
+           with the report TITLE - client name AND address. project_name holds
+           only the name, project_address only the address, so NO ONE COLUMN held
+           all the terms and the search returned nothing. Measured on the live
+           index: '843 Farnam' -> 738 photos, but the full title -> 0.
+
+           A lone hyphen is NEGATION to websearch_to_tsquery, so "Client - 843
+           Farnam" parsed to 'client' & !'843' & 'farnam' and excluded the very
+           address being searched for. companycam_search() strips punctuation
+           before parsing, which removes that trap.
+
+           It also uses companycam_photos_fts - a GIN index over the four fields
+           CONCATENATED, which already existed and which the separate-column form
+           could not use at all. Measured 32 ms against 1,706 ms. */
+        let idx = await fetch(SUPABASE_URL + '/rest/v1/rpc/companycam_search', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, hdrs),
+          body: JSON.stringify({ q: qq, n: limit })
+        });
+
+        /* The old fallback only fired when the request ERRORED. A search that
+           succeeded and returned zero rows was reported as "nothing matching",
+           which is exactly how this failed silently for weeks. Fall back when the
+           answer is EMPTY as well - a substring scan is a worse search and a
+           slower one, but an honest last resort rather than a confident zero. */
+        let hitsSoFar = null;
         if (idx.ok) {
-          const hits = await idx.json();
+          hitsSoFar = await idx.json().catch(() => null);
+        }
+        if (!idx.ok || (Array.isArray(hitsSoFar) && hitsSoFar.length === 0)) {
+          const words = qq.replace(/[^\p{L}\p{N}\s]+/gu, ' ').split(/\s+/)
+                          .filter(w => w.length > 1).slice(0, 6);
+          if (words.length) {
+            const grp = w => 'or(description.ilike.*' + encodeURIComponent(w) + '*,' +
+                             'project_name.ilike.*' + encodeURIComponent(w) + '*,' +
+                             'project_address.ilike.*' + encodeURIComponent(w) + '*,' +
+                             'creator_name.ilike.*' + encodeURIComponent(w) + '*)';
+            const alt = await fetch(base + '&and=(' + words.map(grp).join(',') + ')', { headers: hdrs });
+            if (alt.ok) {
+              const altHits = await alt.json().catch(() => null);
+              if (Array.isArray(altHits) && altHits.length) { idx = alt; hitsSoFar = altHits; }
+            }
+          }
+        }
+        if (idx.ok || Array.isArray(hitsSoFar)) {
+          /* 496: the body was already read above to test for an empty
+             result; a Response body can only be consumed once. */
+          const hits = Array.isArray(hitsSoFar) ? hitsSoFar : await idx.json();
           const sizeRes = await fetch(SUPABASE_URL +
             '/rest/v1/companycam_photos?select=id&limit=1', { headers: { ...hdrs, Range: '0-0' } });
           const indexed = parseInt(String(sizeRes.headers.get('content-range') || '').split('/')[1], 10);

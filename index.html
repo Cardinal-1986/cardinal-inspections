@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 495 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 497 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17372,6 +17372,54 @@ function wirePhotoFrames(doc){
 
     btn.addEventListener('click', function(e){ e.stopPropagation(); input.click(); });
 
+    /* 497: take a photograph OUT. Until now the only control was Replace, so a
+       photo added by mistake had to be covered with another one.
+
+       Safe by construction: this lives inside .fig .frame, and serializeFrame
+       removes `.fig .frame button` wholesale, so it cannot reach the database,
+       the client email or the share link. The print sheet hides it too. */
+    var rmv = doc.createElement('button');
+    rmv.type = 'button';
+    rmv.className = 'no-print';
+    rmv.setAttribute('data-cr-rmv', '1');
+    rmv.textContent = '\u2715 Remove';
+    rmv.style.cssText = 'position:absolute;bottom:8px;left:8px;z-index:5;font:12px "Segoe UI",Arial,sans-serif;'+
+      'padding:6px 10px;border-radius:5px;border:1px solid #d8b4b4;background:rgba(255,255,255,.94);'+
+      'color:#8f1620;cursor:pointer;';
+    if (doc.defaultView && doc.defaultView.innerWidth < 640) {
+      rmv.style.fontSize = '14px';
+      rmv.style.padding = '10px 14px';
+    }
+    frame.appendChild(rmv);
+
+    /* Only meaningful when there IS a photograph. Kept on the frame so
+       placePhotoInSection can re-sync after it fills one at runtime. */
+    function syncRmv(){
+      rmv.style.display = frame.querySelector('img') ? '' : 'none';
+    }
+    frame._crSyncRmv = syncRmv;
+    syncRmv();
+
+    rmv.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(!frame.querySelector('img')) return;
+      if(!confirm('Remove this photograph from the report?\n\nThe caption is cleared too. Nothing is deleted from CompanyCam or the client photo album.')) return;
+      Array.prototype.slice.call(frame.childNodes).forEach(function(node){
+        if(node === btn || node === input || node === rmv) return;
+        if(node.nodeType === 1 && node.classList && node.classList.contains('tag')) return;
+        frame.removeChild(node);
+      });
+      frame.insertBefore(doc.createTextNode('PHOTO'), btn);
+      btn.textContent = '\uD83D\uDCF7 Add photo';
+      /* A caption describing a photograph that is no longer there is worse than
+         no caption. Restore the placeholder the template ships with. */
+      var fig = frame.parentElement;
+      var cap = fig ? fig.querySelector('.cap .ph') : null;
+      if(cap) cap.textContent = '[Caption.]';
+      syncRmv();
+      if(typeof scheduleSave === 'function') scheduleSave();
+    });
+
     input.addEventListener('change', function(){
       var file = input.files && input.files[0];
       if(!file) return;
@@ -17728,9 +17776,17 @@ function rccApi(body){
 
 /* The property this report is actually about, for the cross-client guard. */
 function rccSubject(){
-  var t = (rccEl('reportTitle') || {}).value || '';
+  /* 496: the ADDRESS first, not the report title. The title is a sentence
+     - "CR226 Amber Mcdonald - 843 Farnam St, Springfield" - and every word
+     of it had to match. The project address is the thing CompanyCam
+     actually stores, so it is what the box should open with. The title is
+     kept as a last resort for a report with no project attached. */
   var p = (typeof currentProject === 'object' && currentProject) || null;
-  return (t.trim() || (p && (p.address || p.name)) || '').trim();
+  var addr = (p && p.address) || '';
+  if(addr.trim()) return addr.trim();
+  var nm = (p && p.name) || '';
+  if(nm.trim()) return nm.trim();
+  return String((rccEl('reportTitle') || {}).value || '').trim();
 }
 
 function rccOpen(){
@@ -17969,6 +18025,9 @@ function placePhotoInSection(doc, num, dataUrl, caption, defer){
   else frame.appendChild(img);
   var cap = frame.parentElement ? frame.parentElement.querySelector('.cap .ph') : null;
   if(cap && caption) cap.textContent = caption;
+  /* 497: this frame may have been wired while empty, so its Remove control is
+     hidden. It has a photograph now. */
+  if(typeof frame._crSyncRmv === 'function') frame._crSyncRmv();
   /* 491: a bulk caller passes defer=true and wires ONCE after the last
      photograph, because these two are O(whole document) and re-running them
      per photo is quadratic. Both callers that existed before 491 pass four
@@ -33786,6 +33845,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:497, note:'\uD83D\uDDD1 You can now take a photograph out of an inspection report. Every photo box has a Remove button beside Replace; it asks first, clears the caption with it, and does not touch CompanyCam or the client photo album.' },
+{ build:496, note:'\uD83D\uDD0E Fixed: searching CompanyCam by address or job name found nothing. The search needed every word you typed to appear in the same single field, so a full address with a client name in front of it matched no photograph at all, and a dash in the middle told it to EXCLUDE what followed. It now searches the whole record at once, and the box opens with the property address rather than the report title.' },
 { build:495, note:'\uD83E\uDDF9 Fixed: the Sort photos button added in the last update never actually appeared. It was being asked to show itself a moment before the report had finished opening, so it always decided there was nothing to sort. It now appears once the report is on screen.' },
 { build:494, note:'\uD83E\uDE7A Fixed: opening Self Check and then leaving it without pressing Close could stop the whole app scrolling until you reloaded. It now lets go of the screen whenever you navigate away, however you leave it.' },
 { build:493, note:'\uD83D\uDD0C When the app cannot reach your data it now says so, instead of showing an empty client list that looks like everything was deleted. It tells you it is a connection problem, that nothing has been removed, and gives you a Try again button.' },
