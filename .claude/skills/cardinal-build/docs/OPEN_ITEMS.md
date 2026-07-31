@@ -170,7 +170,34 @@ section — but that human is not necessarily Theo. He was told this plainly and
   that every enum the route can emit is in the client whitelist *before* the writer ships
   (`normStage` lesson).
 
-### Shot lists · Save PDF
+### Shot lists · Save PDF — ⚠ BOTH ARE LARGELY ALREADY BUILT (checked 31 July)
+
+**Prime doctrine, eighth time on this project.** Neither of these is the greenfield build the line
+below implies. Read this before starting either.
+
+**Save PDF is DONE.** `#printBtn` is already labelled **`Print / PDF`** and has been since before
+the meaningful git history. It injects `#printFix` (`@page size:Letter`, the company footer,
+break-inside rules), runs `compactForPrint()`, calls `frame.contentWindow.print()` and then
+`restorePrintMarks()`. The browser's own Save-as-PDF destination turns that into a **real vector
+PDF** — searchable, not rasterised. `FEATURES.md:141` recorded this the whole time:
+*"Download sits beside Print / PDF … Files save as standalone `.html` — not true PDF; a real
+`/api/pdf` endpoint is still unbuilt."*
+
+  What is genuinely unbuilt is only the **server-side** `/api/pdf`, and per the note below that is
+  justified **only if reports must go out unattended**. That is Theo's call, not an engineering one.
+  **Do not build it without asking him.** The client-side story is finished.
+
+**Shot lists mostly exist too.** `QI_SHOTS` (index.html:15297) is a working 12-entry list —
+*Ground shots, Down the gutter line, Shingle layers at the edge, Current ventilation, Pipe boots &
+penetrations, Chimney flashing, Wall flashing, Step flashing, Valleys, Gutters & downspouts, Decking
+from attic, Damage close-ups*. `renderQiChips()` (15495) already renders it as chips that tick with
+a ✓ and a running count as photographs are labelled, and clicking one sets the next shot.
+
+  So this item is **not** "build a shot list". It is "surface the existing one somewhere else" —
+  most plausibly the report editor, so an inspector can see what is still missing. **Where** is the
+  open question and nothing in the repo settles it. Ask Theo before building. When it is built,
+  reuse `QI_SHOTS`; do not mint a second list.
+
 
 - Shot lists: **reuse `QI_SHOTS`, do not add a fifth list.** Duplication is the real risk.
 - Save PDF: `downloadReport()` produces **`.html`, not PDF**. Print → Save as PDF already produces a
