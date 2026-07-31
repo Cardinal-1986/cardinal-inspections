@@ -7,9 +7,9 @@ The file you want is lowercase **`index.html`** at the repo root. **100** inline
 
 Owner: **Theo Dorion** · theo@cardinalrenovations.net
 
-*Last verified against `origin/main @ d62244c`, 30 Jul 2026, stamped **build 451**. Every number in this file was re-measured against that commit.*
+*Numbers below re-measured **31 Jul 2026 against build 474** (this PR's `index.html`; `origin/main` is at `ec685f0`, build 472). **17 of 22 figures were unchanged from build 451** — the module surface did not move. The five that drifted are all accounted for by builds 473–474 and are corrected here.*
 
-**Size, stated once so nobody re-derives it wrong:** **2,657,248 bytes on disk (2.66 MB)** — but **2,641,309 characters**, because the file is UTF-8 with multi-byte content. `check_build.py` prints the *character* count and labels it "bytes". `wc -c` prints the byte count. They will never agree; neither is broken.
+**Size, stated once so nobody re-derives it wrong:** **2,797,541 bytes on disk (2.80 MB)** — but **2,781,582 characters**, because the file is UTF-8 with multi-byte content. `check_build.py` prints the *character* count and labels it "bytes". `wc -c` prints the byte count. They will never agree; neither is broken.
 
 ---
 
@@ -128,11 +128,11 @@ assert count(patched, VALUE) == count(orig, VALUE) - 1   # "exactly one changed"
 | Modules writing the global scroll lock | **13** | lexer, CODE hits only |
 | Scroll-lock writes | 15 locks · 18 bare releases · 1 conditional restore | 34 assignments + 1 comparison = 35 CODE hits |
 | `normStage()` copies | 6 | 1 whitelist + 5 delegates |
-| `.single()` / `.maybeSingle()` | **43 / 4** | `.maybeSingle()` was 0 at build 427 |
+| `.single()` / `.maybeSingle()` | **43 / 5** | was recorded as 43/4; re-measured 5. **All 43 `.single()` sites guard — there is no migration backlog**, see the invariants section |
 | `--ccm-*` declarations / refs | 64 / 132 (56 with fallback) | |
 | `--rbe-*` declarations / refs | 154 / 601 (31 with fallback) | |
 | `--lb-*` declarations / refs | 22 / 48 (38 with fallback) | Resource Library |
-| `var()` refs total / with a literal fallback | 3,001 / 325 | **89% are bare** — see 448–449 |
+| `var()` refs total / with a literal fallback | 3,049 / 327 | **89% are bare** — see 448–449 |
 | Surviving legacy gold hexes | **27** | `#c9a227` ×17 + `#b8860b` ×10 |
 | `#c8202e` (cardinal red) | 264 | |
 | `</body>` | 10 | |
