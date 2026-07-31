@@ -9,8 +9,14 @@
 | **OPEN_ITEMS.md** | The live to-do list and blockers | Picking up work |
 | **BUG_CLASSES.md** | Failure modes already paid for | Before debugging, and before shipping |
 | **cardinal_build_log.md** | One line per build | Tracing when and why something changed |
+| **HANDOFF.md** | Session-state bridge | It says so itself — read it early |
+| **`CLAUDE.md`** (repo root) | The current, authoritative overview | **Before this file.** It is kept current; the older sections here are not |
 
-**Current build: 427 · July 29, 2026 · 2.59 MB · 99 inline script blocks · 177 named modules · 74 `window.Cardinal*` exports**
+**Current build: 467 · 31 July 2026 · 2,772,640 bytes (2.64 MB) on disk, 2,756,681 characters · 100 inline script blocks · 103 `<script>` tags (3 external CDN) · 101 `<style>` blocks · 192 id'd script+style blocks · 82 `window.Cardinal*` exports · `</body>` ×10**
+
+> Re-measured at 467, not carried forward. **Bytes and characters differ** because the file is
+> UTF-8 with multi-byte content — `check_build.py` prints the character count and labels it
+> "bytes", `wc -c` prints bytes. Neither is broken.
 
 ---
 
@@ -28,7 +34,7 @@ A single-file PWA (`index.html`) for **Cardinal Roofing & Renovations, LLC** —
 | Production | curtis@, scottie@ | All clients; **no** stats strips or partner money (presentation-gated) |
 | Sales | nick@, joey@, jacob@ | Only what they created or are assigned (database-enforced) |
 
-**Three CRMs in one app**, switched from the banner chips or the bottom bar: **Retail** (iron; red/black/grey since 542 values migrated off gold, though the retail badge stays `#c9a227`), **Cardinal Claims** (Aurora teal), **Community** (green `--ccm-*`, dark by default since build 427+). Plus Production, Sales Floor, Punch & Repairs, Photo Activity and the Team Directory, which are CRM-independent.
+**Three CRMs in one app**, switched from the banner chips or the bottom bar: **Retail** (**near-black with a brushed-steel accent since 430–436** — it is no longer the "iron, red/black/grey" this file used to describe; the red survives on the thick card top edge, and the retail badge stays `#c9a227`), **Cardinal Claims** (Aurora teal), **Community** (green `--ccm-*`, dark by default). Plus Production, Sales Floor, Punch & Repairs, Photo Activity and the Team Directory, which are CRM-independent.
 
 **Universal chrome (since 344–346):** the fixed header carries burger · gold home · CRM title · ＋, and directly beneath it a **banner nav** — Home · Contacts · Leads · Photos · Track · Reports · Production ▾ · Tools ▾ · CRM switcher · search. The banner lives *inside* `header.site` so it scrolls with it; `fixHeadPad()` measures the whole block and keeps content clear.
 
@@ -38,13 +44,24 @@ A single-file PWA (`index.html`) for **Cardinal Roofing & Renovations, LLC** —
 
 No build pipeline, no module folder, no pristine base. **All work is direct surgery on the shipped file.**
 
+> ### ⚠ The flow below replaced the upload flow — do not go looking for `/home/claude/app/`
+>
+> Earlier revisions of this file described patching `/home/claude/app/index_v{N}.html` and
+> staging `cardinal_v{N}_index.html` into `/mnt/user-data/outputs/` for Theo to upload by hand.
+> **That is gone.** Work now happens in a **git checkout of the repo**, and ships as a **pull
+> request** Theo reviews and merges; Vercel deploys from `main`. Those paths do not exist, and
+> a session that hunts for them wastes its first ten minutes.
+
 ```
-/home/claude/app/index_v{N}.html          ← lineage, one file per build
+<repo>/index.html                         ← patch it in place, on a branch
         ↓  python patch script (exact-match asserts, atomic temp-then-rename)
-/home/claude/app/index_v{N+1}.html
-        ↓  gates (section 3)
-/mnt/user-data/outputs/cardinal_v{N+1}_index.html   ← Theo uploads as index.html
+<repo>/index.html                         ← same file, one build older in git
+        ↓  gates (section 3), then the scope proof
+   git commit → push → PR → Theo merges → Vercel deploys from main
 ```
+
+Keep a copy of the previous build beside the working tree (`index_<N-1>.html` in the
+scratchpad) — `check_build.py --prev` and every negative control need it.
 
 Non-negotiable:
 
@@ -53,17 +70,18 @@ Non-negotiable:
 - **The patch helper is literal string splicing** — it does NOT expand regex backreferences. Use `re.sub` for backrefs.
 - **Recon regexes need bounds.** `[^{}]` can't cross a brace; `[\s\S]*` on a 2 MB file backtracks forever.
 - **Bump the build label every build** — search `v2026-`.
-- **Unique output filename every build** (`cardinal_v373_index.html`) — mobile browsers serve cached downloads on repeated names. Retire the superseded file from outputs so only one candidate is ever visible.
-- **Deploy order: SQL first, then index.html.** After deploy, fully close and reopen the PWA **twice** — the service worker serves stale builds.
-- **Appending a module**: `</body>` appears 9 times (contract templates carry their own). Anchor with `rfind('</body>')`.
+- **Take a fresh `git hash-object` before pushing**, to confirm what you push is what you gated.
+- **Deploy order: SQL first, then index.html.** Still close and reopen the PWA **twice** after a deploy — but **`sw.js` is network-first for navigations now**, so a stale `index.html` is no longer a service-worker cache problem. Static assets are still cache-first and `CACHE` has never been bumped: if your build touches an icon or the manifest, bump the cache name.
+- **Appending a module**: `</body>` appears **10** times (contract templates, generated print/share documents and the Resource Library each carry their own). Anchor with `rfind('</body>')`.
 
 ---
 
 ## 3. The gate ladder
 
-Run in order. **Stage to outputs only on verified green** — check the exit code, never the eyeball.
+Run in order. **Never commit on red** — check the exit code, never the eyeball. The mechanical
+ladder is one command: `scripts/check_build.py index.html --prev <previous> --marker '<string your fix added>'`.
 
-1. **`node --check`** on all 99 inline script blocks, extracted individually.
+1. **`node --check`** on all **100** inline script blocks, extracted individually.
 2. **Tag balance** (`<script>`/`<style>`) and CSS brace balance.
 3. **Whole-string assertions** — assert entire rules and structures, never fragments.
 4. **jsdom functional harness** — boot the file, mock `cacheProjects` / `currentUser` / chainable `sb` and `supa`, shim `offsetParent`, then exercise the changed surface with **structural proofs** (`matches()`, parentage, counts).
@@ -110,7 +128,7 @@ Run in order. **Stage to outputs only on verified green** — check the exit cod
 
 ---
 
-*Doc set current at build 373. Keep this file about the app and the process — the to-do list lives in OPEN_ITEMS.md, the lessons in BUG_CLASSES.md.*
+*Sections 1–5 above were written at build 373 and patched forward. Keep this file about the app and the process — the to-do list lives in OPEN_ITEMS.md, the lessons in BUG_CLASSES.md.*
 
 ---
 
@@ -182,3 +200,60 @@ rather than designing something new. Grep for a convention before you invent.
 ---
 
 > The full patch-discipline checklist, the corrected two-party rules and the current open list live in `HANDOFF.md`, `FEATURES.md` and `OPEN_ITEMS.md`.
+
+---
+
+# Session 30–31 July 2026 — builds 428–467
+
+*Written at build 467, `origin/main @ cc0b591`. The sections above were written at 373 and 427
+and patched forward; **where this section and an older one disagree, this one is right**.*
+
+## Where the record actually lives now
+
+The doc set fell forty builds behind. It is caught up as follows, and **nothing is duplicated** —
+go to the right file rather than trusting a summary:
+
+| Span | Where the detail is |
+|---|---|
+| 428–451 | **`CLAUDE.md`**, reconstructed from the in-app `CHANGELOG`. Never had build-log entries |
+| 452–467 | **`cardinal_build_log.md`**, one full entry per build |
+| The Resource Library | **`FEATURES.md`** — its own section, current at 463 |
+| What is still open | **`OPEN_ITEMS.md`** |
+
+**`CLAUDE.md` at the repo root is the authoritative overview.** It is re-measured every session.
+This file is the workflow and the doctrine.
+
+## Doctrine that changed or hardened in this span
+
+**Adding a Resource Library page takes FOUR registrations, not three** (463). Markup, the
+`data-rlgoto` map, `parentOf`, **and `var TOC`** — a hand-maintained hub → page list that build
+453 left behind when it replaced the hand-typed *card* list. With three of four, the page
+renders, navigates, and finds its own cards, while global search returns **zero** for every term
+on it. Silent half-failure; only a search assertion catches it. Table in `FEATURES.md`.
+
+**Every negative control must FAIL, not crash.** Four separate harnesses in this session threw
+a `TypeError` on the previous build instead of counting a red — a stack trace proves nothing
+about whether the checks discriminate. Guard the dereference and record the failure.
+
+**Self-computing assertions, and this is not advice — it is the most repeated mistake here.**
+Eight hardcoded-count assertions fired across builds 466–467 alone. One fired on the very
+construction it was written to protect; one split an argument list on commas when the labels
+*contain* commas; one assumed a regex appeared once when it appears twice in its own rule; one
+assumed a single `itemHtml` when **three modules define one** (pricing, punch, library). Assert
+the *property* — "unchanged", "exactly one gained X", "inside this block" — not the tally.
+
+**Plates inline their SVG. They must not use the icon sprite.** A `<use>` reference builds a
+shadow tree and a document rule cannot select into it, so sprite-based figures render with no
+accent at all. Found by rendering, not by reading. `figure.rl-fig`, five plates as of 465.
+
+**A picture must not say what the words do not.** The librarian can draw (466), but the model
+emits *data* in a fenced block and the app draws the SVG — the escape-then-promote contract in
+`lbRich()` is never relaxed for a picture. The prompt rule that matters most is that a diagram
+may only restate something the prose already says.
+
+## Repo hygiene
+
+**4.1 MB of dead files were removed** from the public deployment: `api/index.html` (a complete
+copy of the app, build 329), `IMG_1510.png`, `TeamCalendar_Watermark_Mock.png`. Each verified
+unreferenced first. **`cardinal-landing.PNG` looks like a duplicate and is not** — it is the live
+`onerror` fallback on the landing page. Details and the correction are in `CLAUDE.md`.

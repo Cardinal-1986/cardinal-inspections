@@ -1,6 +1,6 @@
 # Cardinal Resource App — Open Items
 
-*The single live list. Current at build 427 · July 29, 2026.*
+*The single live list. Current at build **467** · 31 July 2026 · `origin/main @ cc0b591`.*
 *When something ships, strike it here and add a line to `cardinal_build_log.md`.*
 
 > **Everything below was verified against the repo or the database on July 28, not carried
@@ -310,7 +310,8 @@ the watchdog.
 
 ### 6b. `.maybeSingle()` where zero rows is legal
 
-43 `.single()` calls, 0 `.maybeSingle()`. `.single()` **throws** on zero rows.
+**Re-measured at 467: 43 `.single()`, and `.maybeSingle()` is now 4 — it was 0 when this was
+written, so the migration has started.** `.single()` **throws** on zero rows.
 Each one needs classifying: "must exist" stays, "may not exist yet" becomes
 `.maybeSingle()`. Do it in small batches, not one sweep.
 
@@ -323,11 +324,53 @@ real message.
 
 ### 6d. Consider whether this stays one file
 
-2.59 MB, 99 script blocks, 100 style blocks, no namespacing. Every count in
-this hand-off needed a lexer to be trustworthy. That is a symptom.
+**Re-measured at 467: 2.64 MB (2,772,640 bytes), 100 inline script blocks, 101 style
+blocks**, no namespacing. Every count in this hand-off needed a lexer to be trustworthy.
+That is a symptom, and it has not improved.
 
 I am **not** recommending a rewrite — it works, it ships, and the patch
 discipline holds it together. But if the app keeps growing, splitting the
 community CRM into its own file with scoped CSS would remove most of the
 verification burden. Worth discussing before the next large feature, not
 during it.
+
+---
+
+# Added 31 July 2026 — builds 452–467
+
+*`origin/main @ cc0b591`. Everything below was checked against the repo or the database in
+this session, not carried forward.*
+
+## Closed since this list was written — do not re-list
+
+- ~~**Repo junk still shipping publicly**~~ — `api/index.html` (2.23 MB, a whole copy of the
+  app at build 329), `IMG_1510.png` and `TeamCalendar_Watermark_Mock.png` are **deleted**.
+  4.1 MB off the deployment; the tree went 12.56 MB → 8.42 MB. Root `librarian.js` went at 453.
+  **`cardinal-landing.PNG` stays** — it looks like a duplicate but it is the live `onerror`
+  fallback on the landing page.
+- ~~**The library light/dark button**~~ — was one-way since it was added; fixed at 464. It also
+  persists now, which it never did.
+- ~~**Filed photographs were unusable**~~ — an uploaded image rendered as a row with a camera
+  emoji that opened in a new browser tab. Fixed at 467: signed thumbnail in the list, opens in
+  the existing zoom viewer.
+- ~~**The doc set stopped at 427**~~ — `START_HERE.md`, `OPEN_ITEMS.md` and `FEATURES.md` are
+  current at 467; `cardinal_build_log.md` has an entry per build for 452–467; `CLAUDE.md`
+  covers 428–451.
+
+## Still open, and honest about it
+
+| Item | State | What unsticks it |
+|---|---|---|
+| **Library photographs** | The upload path works end to end as of 467, and the `library` bucket is empty | **Source material.** Every photo in the system was taken 21–30 July and **none are captioned** — there are no winter photographs to find. Send them through Ask / File, or import from CompanyCam |
+| **CompanyCam import** | `COMPANYCAM_API_KEY` is set in Vercel. What is known about the API is in `references/companycam-api.md` | The **List Photos** doc page. Not known: whether an account-wide `GET /photos` exists, any date filter, or how tags work — `Photo` has no tag field. **Do not guess these.** Note the agent sandbox cannot reach `api.companycam.com`, so it can only be deployed and tested by Theo |
+| **`project_photos` has zero captions** | 236 rows, 216 with `storage_path`, **one** section | Independent of the library and getting worse weekly. `api/caption.js` already exists — worth checking whether it can be pointed at the backlog |
+| **The librarian's diagram grammar, in the wild** | Shipped at 466 and gated hard, but the gates cannot prove the **model** uses it well — that needs a live API call the harness blocks | Ask it something with a natural shape after deploy and see whether the diagram matches the prose. A miss is a prompt line, not code |
+| **The reported toggle "freeze"** | 464 fixed a one-way toggle. Blocking time measured at **30 ms**, and 95–183 ms at 6× CPU — no freeze reproduced | If it still stalls on the phone it is a **different bug**; needs to know which control and where |
+| **Two theme controls on one screen** | A library page shows both the floating ◐ (library skin) and the 🌙 (whole app) | Theo's call which appears where. Flagged, not changed |
+
+## Doc correction
+
+`CLAUDE.md` said zero `project_photos` rows carry `path` or `storage_path`, and the lesson
+built on it ("a photo-signing change shipped completely inert"). That was true when written —
+**216 of 236 rows now have `storage_path`.** The lesson about testing against real data shapes
+still stands; the specific number does not.
