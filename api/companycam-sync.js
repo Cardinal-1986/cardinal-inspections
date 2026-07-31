@@ -89,18 +89,25 @@ function row(p) {
   };
 }
 
+/* 485: one caller for every Postgres function this route invokes. Three of them
+   now - the name backfill, the caption sample and the job count - and three
+   hand-rolled fetches would drift on headers the way they always do. */
+async function rpc(service, name, body) {
+  return fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
+    method: 'POST',
+    headers: { apikey: service, Authorization: 'Bearer ' + service, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  });
+}
+
 /* 484: the ONE place the backfill RPC is called. Two callers - the projects
    pass, which runs it after writing names, and the `stamp` action, which runs it
    alone for photos a later sync added. A copy in each would drift. */
 async function stampNames(service) {
-  const rpc = await fetch(SUPABASE_URL + '/rest/v1/rpc/companycam_backfill_project_names', {
-    method: 'POST',
-    headers: { apikey: service, Authorization: 'Bearer ' + service, 'Content-Type': 'application/json' },
-    body: '{}'
-  });
+  const r = await rpc(service, 'companycam_backfill_project_names', {});
   let stamped = null;
-  if (rpc.ok) { try { stamped = await rpc.json(); } catch (e) { stamped = null; } }
-  return { ok: rpc.ok, stamped };
+  if (r.ok) { try { stamped = await r.json(); } catch (e) { stamped = null; } }
+  return { ok: r.ok, stamped };
 }
 
 async function sb(service, path, init) {
@@ -282,20 +289,28 @@ export default async function handler(req, res) {
       const want = Math.min(Math.max(parseInt(b.limit, 10) || 50, 1), 50);
       const per  = Math.min(Math.max(parseInt(b.per, 10) || 6, 1), 8);
 
-      /* A spread, not the newest 50: order by id so the sample crosses years,
-         crews and job types rather than sampling one week of one roof. */
-      const q = await sb(service,
-        'companycam_photos?select=id,preview_url,thumb_url,project_name' +
-        '&ai_description=is.null&preview_url=not.is.null' +
-        '&order=id.asc&limit=' + per);
+      /* 485: ONE PHOTO PER JOB. The 478 version ordered by id and called that a
+         spread. It is not one - ids sort near creation order, so it took the
+         oldest rows, which on this account are 53 photographs of a SINGLE roof
+         over two days. The trial therefore answered nothing, and half its output
+         read "water staining indicating an active roof leak" because that is
+         what that one house looked like.
+
+         companycam_caption_sample() does the real thing: distinct on project_id,
+         jobs that already carry a caption excluded outright, ordered by md5(id)
+         so it is a stable spread rather than a slice of one year. Measured on
+         the live index: 50 photos, 50 jobs, 5 crews, 2024-04-30..2026-07-30. */
+      const q = await rpc(service, 'companycam_caption_sample', { n: per });
       if (!q.ok) { res.status(502).json({ error: 'Could not read the index', detail: scrub(await q.text(), service) }); return; }
       const batch = await q.json();
 
-      const doneRes = await sb(service, 'companycam_photos?select=id&ai_description=not.is.null',
-        { headers: { Prefer: 'count=exact', Range: '0-0' } });
-      const already = parseInt(String(doneRes.headers.get('content-range') || '').split('/')[1], 10) || 0;
+      /* Progress is JOBS, not photographs. 53 photos of one roof is one data
+         point, and counting it as 53 is exactly how the first trial reported
+         itself finished while having proved nothing. */
+      const dj = await rpc(service, 'companycam_caption_jobs_done', {});
+      const already = dj.ok ? (parseInt(await dj.text(), 10) || 0) : 0;
       if (!batch.length || already >= want) {
-        res.status(200).json({ captioned: already, done: true, remaining: 0 });
+        res.status(200).json({ jobs: already, captioned: already, done: true, remaining: 0 });
         return;
       }
 
@@ -340,9 +355,17 @@ export default async function handler(req, res) {
         }
       }
 
-      res.status(200).json({ wrote, captioned: already + wrote, target: want,
-                             remaining: Math.max(0, want - (already + wrote)),
-                             done: (already + wrote) >= want, failures });
+      /* Re-read rather than assuming already+wrote: a batch can fail partway,
+         and the job count is the thing the panel and I both reason about. */
+      const dj2 = await rpc(service, 'companycam_caption_jobs_done', {});
+      const jobs = dj2.ok ? (parseInt(await dj2.text(), 10) || 0) : (already + wrote);
+
+      /* `captioned` is kept as an alias of `jobs` on purpose. The panel that is
+         already on Theo's phone reads that field, and a route deploying ahead of
+         index.html must not make it read undefined. */
+      res.status(200).json({ wrote, jobs, captioned: jobs, target: want,
+                             remaining: Math.max(0, want - jobs),
+                             done: jobs >= want, failures });
       return;
     }
 

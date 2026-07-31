@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 484 &#8212; Build index reads the job names first, so photo search starts working in seconds instead of at the end</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 485 &#8212; the AI caption trial now samples one photo from each of fifty different jobs, instead of fifty photos of one roof</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33057,6 +33057,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:485, note:'\U0001F50D The AI caption trial was not a fair test and now is. It was supposed to take fifty photographs from across the whole account; it actually took the fifty oldest, which turned out to be one roof over two days in December 2023 \u2014 so half the captions said the same thing about the same ceiling. It now takes ONE photo from each of fifty different jobs, spread across years and crews, and counts its progress in jobs rather than photographs. Your real captions were never touched.' },
 { build:484, note:'\U0001F3F7\uFE0F Build index now reads the job names FIRST. It used to do them last, after all 617 pages of photographs \u2014 so the search that needs them sat idle for seven minutes, and if the photographs were already indexed those seven minutes were spent re-reading things it already had. Press Build index and the job names land in a few seconds; the photographs carry on behind them.' },
 { build:483, note:'\U0001F4F1 The library assistant box was running off the bottom of the phone screen \u2014 the ask line and the note under it were sitting behind the home bar. The box now keeps clear of it, and it sizes itself to the screen you can actually see rather than the one underneath the browser chrome.' },
 { build:482, note:'\u270F\uFE0F Draw on a CompanyCam photograph. Tap the pencil in the corner of any photo in the CompanyCam box and the photo editor opens \u2014 arrows, circles, freehand, text, six colours, rotate and undo. It was already in the app for job photos; it just could not be reached from here. When you are done, File it puts the marked-up copy in the Library section you picked, or Device sends it to your phone. The photograph in CompanyCam is never changed.' },
@@ -48220,7 +48221,8 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 
     function step(){
       return ccSyncApi({ action:'sample_captions', limit:50, per:6 }).then(function(d){
-        el.textContent = 'Captioning\u2026 ' + (d.captioned || 0) + ' of ' + (d.target || 50);
+        el.textContent = 'Captioning\u2026 ' + (d.jobs || d.captioned || 0) +
+          ' of ' + (d.target || 50) + ' jobs';
         if(!d.done && d.remaining > 0 && d.wrote > 0) return step();
         /* wrote === 0 with work remaining means every photo in the batch failed;
            looping again would just burn the same failures. */
@@ -48232,7 +48234,10 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       ccTrialing = false;
       if(btn) btn.disabled = false;
       var bad = (d && d.failures && d.failures.length) || 0;
-      el.textContent = 'Captioned ' + ((d && d.captioned) || 0) + ' photographs' +
+      /* 485: jobs, not photographs. The first trial said "53 photographs" and
+         they were all one roof - a number that read like a sample and was not. */
+      el.textContent = 'Captioned one photo from ' + ((d && (d.jobs || d.captioned)) || 0) +
+        ' different jobs' +
         (bad ? ' \u00b7 ' + bad + ' failed' : '') +
         ' \u2014 tell Claude and it will read them back to you.';
     }).catch(function(e){
