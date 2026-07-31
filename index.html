@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 500 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 501 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33845,6 +33845,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:501, note:'\u26A1 Sort photos now falls back to a second AI when Google is busy. Google has been refusing about one request in four today with a high demand error; when that happens the photograph is sent to OpenAI instead, which is answering in well under a second. A photograph is only skipped if both refuse.' },
 { build:500, note:'\u23F1 Sort now waits longer before giving up. Google is answering slowly at the moment - measured at six to fourteen seconds per photograph, and refusing outright about one time in four - so the old forty-five second limit was cutting off work that would have finished. Nothing about your setup is wrong.' },
 { build:499, note:'\u26A1 Sort photos is much faster. It was asking the AI about each photograph one after another, which took long enough to time out; it now asks about them at the same time.' },
 { build:498, note:'\uD83E\uDDF9 Fixed: Sort photos greyed out and then sat there doing nothing. It was trying to send every photograph at full size in one go, which is far more than the server accepts, and asking it to do more work than it is allowed to finish. It now sends small copies a few at a time, counts its progress on the button, and tells you plainly if the server does not answer. The photographs in your report keep their full quality.' },

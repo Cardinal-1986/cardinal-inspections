@@ -3175,3 +3175,43 @@ and cannot lose a photograph. Results return in request order, so the
 Measured against the shipped handler with stubbed 60 ms calls: **peak concurrency 4** (sequential
 would be 1), **66 ms** for four (sequential would be 240 ms+), 4/4 accounted for. 490's route harness
 still green.
+
+## 500–501 — the AI provider ladder, finally built
+
+Theo asked whether the Gemini key was working. **It is. The model is not.**
+
+`/api/ai-status` against the live deployment, seven calls:
+
+| | latency | reliability |
+|---|---:|---|
+| `gemini-3.5-flash` | **6–14 s** | **503 "high demand" ~1 call in 4** |
+| `gpt-4o-mini` | **0.6 s** | 7/7 |
+
+Nothing is wrong with the key, the billing or the config. `gemini-3.5-flash` is overloaded on
+Google's side, and it was hitting the Library box as well as the sort.
+
+**500** raised Sort's client timeout 45 s → 90 s. 45 s was my guess; 6–14 s per call plus a 503 retry
+is what the measurement supports.
+
+**501 — and this is the one that matters.** `ai-status.js` has always described itself as the health
+check for *"the AI provider ladder (Gemini + OpenAI backup)"*. **The ladder was designed and never
+built** — only `api/coach.js` ever called OpenAI. Theo asked the obvious question: *"Why doesnt
+openai substitute for it?"*
+
+Now it does. When Gemini refuses for any reason — 503, 429, empty or unusable output — the same
+prompt and the same photograph go to `gpt-4o-mini`, which is multimodal. A photograph is set aside
+only once **both** have failed, and the reason says so: `both models refused`.
+
+Gemini stays first: it is what every other route uses and what the prompt was tuned against. This is
+a fallback, not a switch. The response now reports `via: 'gemini' | 'openai'` per placement and
+`viaGemini` / `viaOpenAI` counts, so a day where everything says `openai` reads as a Google outage
+rather than a bug here.
+
+Gates: `node --check`, no imports, check_build green, harness **10/10** — Gemini answering means
+OpenAI is never called; a 503 means the photograph is still **placed** rather than set aside, with the
+caption intact; both failing sets it aside and says so; and `placed + setAside === submitted` holds
+on every path.
+
+**Not done:** `librarian.js`, `organize.js`, `caption.js` and `summarize.js` all still call Gemini
+alone and will still fail on a busy day. `askOpenAI` is fifteen lines and copies cleanly to each —
+worth doing, and deliberately not bundled into a build about Sort.

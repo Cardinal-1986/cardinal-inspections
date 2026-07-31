@@ -94,6 +94,41 @@ async function askGemini(apiKey, parts) {
   return last;
 }
 
+/* 501: the second rung. gemini-3.5-flash is 503ing "high demand" about one call
+   in four and taking 6-14s when it does answer; OpenAI answers the same server in
+   0.6s. gpt-4o-mini is multimodal, so it can read the photograph too.
+
+   Returns the raw text, or null. Never throws - sortOne's contract is that every
+   photograph comes back in exactly one of two lists, and a throw here would
+   silently drop one. */
+async function askOpenAI(prompt, mime, b64) {
+  const key = (process.env.OPENAI_API_KEY || '').trim();
+  if (!key) return null;
+  try {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: { url: 'data:' + mime + ';base64,' + b64 } }
+          ]
+        }]
+      })
+    });
+    if (!r || !r.ok) return null;
+    const d = await r.json();
+    const t = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+    return (t && String(t).trim()) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function sectionList() {
   return Object.keys(SECTIONS).map(n => n + ' — ' + SECTIONS[n]).join('\n');
 }
@@ -122,26 +157,35 @@ async function sortOne(apiKey, photo) {
   const match = img.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
   if (!match) return { setAside: aside('not an image data URL') };
 
-  let r;
+  /* 501: Gemini first - it is what every other route uses and what this prompt
+     was tuned against - then OpenAI if it refuses or returns nothing usable. A
+     photograph is only set aside once BOTH have failed. */
+  const prompt = promptFor();
+  let text = '';
+  let via = 'gemini';
+
   try {
-    r = await askGemini(apiKey, [
-      { text: promptFor() },
+    const r = await askGemini(apiKey, [
+      { text: prompt },
       { inlineData: { mimeType: match[1], data: match[2] } }
     ]);
+    if (r && r.ok) {
+      const data = await r.json();
+      text = (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+              data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
+              data.candidates[0].content.parts[0].text || '').trim();
+    }
   } catch (e) {
-    return { setAside: aside('could not reach the model') };
+    text = '';
   }
-  if (!r || !r.ok) return { setAside: aside('model refused (' + ((r && r.status) || 'no response') + ')') };
 
-  let text = '';
-  try {
-    const data = await r.json();
-    text = (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
-            data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
-            data.candidates[0].content.parts[0].text || '').trim();
-  } catch (e) {
-    return { setAside: aside('model returned no readable body') };
+  if (!text) {
+    const alt = await askOpenAI(prompt, match[1], match[2]);
+    if (alt) { text = alt.trim(); via = 'openai'; }
   }
+
+  if (!text) return { setAside: aside('both models refused') };
+
   text = text.replace(/```json|```/g, '').trim();
 
   let parsed;
@@ -160,7 +204,7 @@ async function sortOne(apiKey, photo) {
   const trade = TRADES.indexOf(parsed && parsed.trade) !== -1 ? parsed.trade : 'roof';
   const caption = String((parsed && parsed.caption) || '').slice(0, CAPTION_MAX);
 
-  return { placed: { id, section, caption, severity, trade } };
+  return { placed: { id, section, caption, severity, trade, via } };
 }
 
 export default async function handler(req, res) {
@@ -229,7 +273,13 @@ export default async function handler(req, res) {
     res.status(200).json({
       placed,
       setAside,
-      counts: { submitted, placed: placed.length, setAside: setAside.length },
+      counts: {
+        submitted, placed: placed.length, setAside: setAside.length,
+        /* 501: which rung answered. A day where everything says openai is a
+           Gemini outage, not a bug in this route. */
+        viaGemini: placed.filter(p => p.via === 'gemini').length,
+        viaOpenAI: placed.filter(p => p.via === 'openai').length
+      },
       vocabulary: { sectionMin: SECTION_MIN, sectionMax: SECTION_MAX, severities: SEVERITIES, trades: TRADES }
     });
   } catch (err) {
