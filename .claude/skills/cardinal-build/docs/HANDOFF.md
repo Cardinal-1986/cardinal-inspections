@@ -4,6 +4,99 @@
 
 ---
 
+# Session of 31 July 2026 (late) — builds 510–512
+
+**`main` is at `5c19a8e` (PR #60 merged), stamped build 509. Three commits are unpushed on
+`claude/487-488-listview-contrast`: 510, 511, 512.** Nothing is uncommitted. Theo pushes and
+merges — I cannot.
+
+| | |
+|---|---|
+| **510** | The librarian prompt taught the shape its own renderer cannot draw |
+| **511** | **My bug, six times:** What's New emoji written as a five-hex `\uXXXXX` — the exact thing 488 fixed |
+| **512** | A drawing can be added to a library entry that already exists |
+
+## What 510 established, by measurement
+
+The prompt's own worked example was run through the real `lbRich`. **As presented it drew
+zero diagrams and leaked a literal `~~` to the reader**; the identical two, blank-line
+separated, drew both. The prompt violated the spacing rule it states. The **renderer was
+never at fault** and is asserted byte-identical.
+
+`lbRich` splits on blank lines only, so a marker must be the **first line of its own block**.
+Prose touching it on either side turns the whole diagram into text. Any future prompt work
+must preserve that.
+
+## What 512 found that was not what I expected
+
+**The library is 23 notes, not the 165 I repeated all session.** Three already have a
+diagram. Of the remaining twenty, roughly half are permit-office contact notes where a
+picture is noise. Check the count before designing around it.
+
+`openNote()` **already** renders through `lbRich`, and the `lib_items_update` RLS policy has
+**always** allowed writes. The only real gap was that the client had four `insert`s on
+`library_items` and **zero** `update`s.
+
+**A dead sanitiser:** the 446 `sources` cleanup sat *inside* the `catch` of the `JSON.parse`
+it cleans up after — so it ran only when the parse had thrown, when `parsed` is `undefined`.
+Hoisted in 512. Worth a habit: when a `try/catch` runs long, check what is sitting inside the
+`catch` that meant to be after it.
+
+## The lesson, now with a gate behind it
+
+Every build tonight that failed in Theo's hands passed a rigorous harness first, because the
+harness asked *does the function work* and never **does the control appear, does a tap reach
+it, does what got written render.**
+
+`scripts/illustrate_test.mjs` is the shape to copy: it runs the real `openNote()`, attaches
+the **real delegated handler sliced out of the file** (never retyped), dispatches a real
+bubbling click, and renders the result. It fails on 511 and passes on 512.
+
+`scripts/changelog_render.mjs` is the other one: it evaluates the real `CHANGELOG` and prints
+what Theo actually reads. Six builds of broken emoji passed `node --check`, because **the
+broken form is valid JavaScript** — a Greek letter followed by a digit.
+
+**Three harness faults caught tonight, each of which read exactly like a product bug:**
+
+- `lbDiagram` threw on an unloaded constant and `lbBlock`'s `try/catch` turned it into a
+  paragraph — *0 diagrams everywhere, including the control.* Fixed by a **sanity probe**
+  that refuses to print a verdict unless the thing under test works in isolation.
+- `p.addEventListener('click', function(e){` **is not unique** in a 3 MB file. `indexOf`
+  grabbed a different panel, yielding a 186-character slice and 11 failures. Anchor backward
+  from the line under test.
+- The harness compared a request against a fixture the code **legitimately mutates**.
+  Snapshot the fixture before the call.
+
+## Corrections I owe from this session
+
+**"Only 5 plates across 165 cards"** — wrong. It is **23 notes, 3 illustrated**.
+
+**A scanner reported 21 broken escapes; the real number was 6.** `\u00a71345.23` is
+*§1345.23* and `\u2019d` is *’d* — correct four-hex escapes whose next character merely
+looks hexadecimal. The harness then made the mirror error and called **⚡ (U+26A1)**, a valid
+BMP emoji, broken, because it demanded an astral codepoint. State the defect's signature
+precisely, in both directions.
+
+## Next
+
+**The community outcome form** — `OPEN_ITEMS.md` §1. Designed, agreed, **not built**, and
+still the largest remaining item. Check-back default is settled at **1 year**. It ships with
+§2, the second clock, a 216-character function once `check_back_at` exists.
+
+**Illustrate the real candidates** once 512 is live: *Pocket Window Installation and
+Cross-Section* (its title promises a cross-section and there is none), Ice Dam Prevention,
+Step Flashing, Drip Edge Sequence, Mod-Bit build-up, both pitch entries.
+
+## Still only Theo
+
+Five partner emails (Kitty Hawk **has a live job**) · `GOOGLE_MAPS_API_KEY`
+(**referrer-restrict in Google Cloud first**) · **486 has still never been used on a real
+phone with real photographs** · press **Sort photos** on a real report · and now: tap
+**Add a diagram** on a real entry. **No gate on this project has ever made a real Gemini
+call** — every AI claim in this log is about plumbing, never answer quality.
+
+---
+
 # Session of 31 July 2026 (evening) — builds 487–509
 
 **`main` is at `f397b52`, app stamp build 503. The branch is pushed and 5 commits
