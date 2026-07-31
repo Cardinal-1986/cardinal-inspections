@@ -2161,3 +2161,223 @@ turned it green — and the same normalisation is what makes the test meaningful
 12/12: passthrough for Supabase and `/api/*`, network-first navigations, offline shell fallback,
 instant stale response, background refill, frozen CDN, cache miss, and an offline revalidation that
 does not become an unhandled rejection.
+
+---
+
+## Build 475 — milestone pill legibility, option C (31 July 2026)
+
+Theo picked C from a preview of four, drawn with the shipped CSS on the app's own grounds.
+
+### The measurement, and the correction that came with it
+
+The pill label is `font:800 10.5px` uppercase — **small text, so 4.5:1 applies.** Ink came from one
+token, `--rbe-mpill-fg`, flipped per theme: `#15171b` dark, `#ffffff` light.
+
+**An earlier report of "6 of 8 fail" was the light theme only** — read from one token and
+generalised. Both themes fail, on different stages:
+
+| | dark `#15171b` | light `#ffffff` |
+|---|---:|---:|
+| below 4.5:1 | **4 of 8** | **6 of 8** |
+
+The two inks are near-opposites, so each covers what the other misses — **except Invoiced
+(`#8E6BC1`, 4.29/4.18) and Closed (`#607D8B`, 4.10/4.37)**, mid-luminance and failing both ways.
+Ink alone cannot save those two.
+
+### What shipped
+
+1. **Ink is chosen per stage, not per theme** — same ink in both, because the pill's ground is the
+   stage colour, not the page.
+2. **Two colours nudged**: Invoiced **3.5% lighter** (`#9170c3`), Closed **1.6% darker**
+   (`#5e7b88`). Both near-invisible.
+
+**16 of 16 pass**, 4.50–6.39. Gate computes this from the *shipped* `LJ_SOLID` / `LJ_INK`, so a
+typo in either map goes red here rather than in Theo's hand.
+
+### The scope trap this build had to dodge
+
+`Invoiced:'#8E6BC1'` and `Closed:'#607D8B'` each appear **twice** — once in `LJ_SOLID` (Library
+board) and once in **`STAGE_COLORS`** (CRM pipeline chips, which carry different Lead/Prospect/
+Approved values). A find-and-replace on either value would have restyled the pipeline. Every anchor
+is bound to the `LJ_SOLID` literal, unique because it carries `Lead:'#8a93a1'`, and the gate
+**asserts both original values still appear exactly once** in `STAGE_COLORS`.
+
+### Mechanism follows the module's own convention
+
+The card already publishes per-stage colour as inline custom properties (`--spn`, `--slc`). Ink
+joins as **`--sli`**, and `.ljmc` reads `var(--sli, var(--rbe-mpill-fg))` — unset falls back to
+exactly today. The detail pill already set `background` inline, so it takes `color` the same way.
+**No new mechanism beside an existing one.**
+
+`OnHold` is in neither map and never was; it takes the literal defaults, which is correct while it
+still has no writer.
+
+### Rejected, with numbers
+
+- **A — ink only.** Leaves Invoiced 4.29 and Closed 4.37 short.
+- **B — pale tint + `STAGE_INK`.** Clears everything (4.69–7.31) but turns a solid-colour board
+  pale. Theo looked at it and chose C.
+- **Darken every solid.** Would have moved the green and blue 22–23%; C moves two colours by 2–4%.
+
+---
+
+## Build 476 — the caption search had nothing to search (31 July 2026)
+
+**The first full sync is the most useful thing that happened all night, and it invalidated a
+feature I had just built.**
+
+| | |
+|---|---:|
+| Photos indexed | **60,485** |
+| Skipped (internal / inactive / unprocessed) | 1,164 |
+| **Reconciles to** | **61,649** exactly |
+| **Carrying a caption** | **79** |
+| Without | **60,406 — 99.87%** |
+
+Not a recent habit: **10** captions in 2026, **39** in 2025, **30** in 2024, **zero** before.
+Nobody has ever captioned in CompanyCam.
+
+**So 472's caption search was built over a field this account does not fill in.** That measurement
+was one query away and should have come *before* the build, not after. The index still earns its
+place — but not for the reason it was built.
+
+### What is actually populated, on all 60,485
+
+`project_id`, `creator_name`, `captured_at` — **100%**, across **775 distinct jobs**. The index
+knew which project each photo belonged to and not what that project was **called**, so a search for
+"Habitat" matched nothing while every row carried the answer.
+
+476 syncs the 775 names and searches them. **No AI, ~8 pages, one call.**
+
+- `companycam_projects` table + `project_name` / `project_address` on the photo, denormalised so
+  search stays single-table.
+- The FTS index was **caption-only** — it could match at most 79 rows. It now covers caption,
+  project name, project address and creator in one GIN index.
+- `companycam_backfill_project_names()` stamps names in **one statement**, and only where the value
+  actually differs, so a re-run after a rename is cheap rather than a 60k rewrite.
+- The panel runs photos first, then projects — the backfill can only stamp rows that already exist,
+  and the harness now **asserts that ordering**.
+
+### The status line stopped leading with the caption gap
+
+It read `60,406 with no caption`. That is a to-do list nobody can action. It now reports what makes
+the index usable: how many jobs it knows, and whether every photo carries one.
+
+**The old assertion for that line went red, and the test was what was wrong** — it was asserting
+removed behaviour. Updated to the new intent rather than bent back.
+
+### A bug the data exposed
+
+**`annotated` is `true` for all 60,485 rows.** CompanyCam returns a `web_annotation` URI whether or
+not anyone drew on the photo, so `web.type === 'web_annotation'` is always true and the flag is
+meaningless. **Not fixed in this build** — filed, because it needs a different signal from the API
+and no caller depends on it yet.
+
+**Seventh hardcoded-count abort:** `count('photos_with_project_name') == 1` — it appears twice on
+one line, in `typeof d.X === 'number' ? d.X : null`. Caught before the write, like the other six.
+
+---
+
+## Build 477 — the indexing counter counted past the number of photos that exist (31 July 2026)
+
+Theo's screenshot read **`Indexing… 87,096 of 61,649 photos`**, still climbing.
+
+The sync is resumable: the panel calls the route repeatedly, six pages a call, passing the cursor
+back. `status` was accumulating `synced` across calls — correct — but a run that *starts over* has
+no cursor and must start its counters at zero too. It didn't, so a second full run added its count
+to the first.
+
+```js
+/* Only the FIRST call of a run can be fresh. */
+const freshRun = !cursor;
+…
+synced: (freshRun ? 0 : (prev.synced || 0)) + wrote,
+```
+
+Belt and braces in the panel, because a stored counter from before this fix would still read high:
+
+```js
+var shown = (total && done > total) ? total : done;
+```
+
+**The negative control rejected `var shown =` as a marker** — four occurrences already existed in
+475. The gate was right; the marker was lazy. Re-run with the whole assignment.
+
+## Build 478 — try AI captions on 50 photographs before spending on 60,406 (31 July 2026)
+
+The index proved only 79 of 60,485 photos carry a caption. Captioning the rest means sending
+customers' job photographs to Google, which is **not a decision to make on Theo's behalf** — so this
+ships the trial, not the backfill: one button, 50 photographs, `action:'sample_captions'`, and the
+captions read back to him before anything is written at scale.
+
+## Builds 479–480 — the CompanyCam panel was a dead end (31 July 2026)
+
+Two things Theo hit immediately. The ask box was hidden whenever the CompanyCam block was open
+(`.lb-acts{display:none}` with no way back), and there was no way to see a photograph larger than a
+thumbnail. 479 restored the ask line and renamed "Cancel" to "← Back to chat". 480 added a corner
+expand button that reuses `window.CardinalResourceImages`, with **both `preventDefault()` and
+`stopPropagation()`** — the tile is a `<label>` wrapping a checkbox, so an unstopped click would
+also tick the photo for filing.
+
+## Build 481 — save ticked CompanyCam photographs to the phone (31 July 2026)
+
+"Can you make pictures selected downloadable?" Everything needed already existed and was wired
+together rather than re-invented:
+
+| Piece | Already there since |
+|---|---|
+| the ticked set (`data-cc-id` + checkbox) | 468 |
+| the bytes (`action:'fetch'`, base64, our origin) | 468 |
+| share-sheet-then-anchors | 216, in the job gallery |
+
+`ccPicked()` is now the one reader of the selection, called by both filing and saving, so they
+cannot disagree about what is ticked. **The ticks are deliberately left set** after a device save —
+saving a set and then filing the same set is a reasonable thing to want. `AbortError` from
+dismissing the iOS share sheet is the user's own choice and is not reported as a failure.
+
+## Build 482 — draw on a CompanyCam photograph (31 July 2026)
+
+"Can you make the pictures editable?" **The editor already existed** — `cr-ped-script`: pen, arrow,
+circle, text, rotate left/right, undo, clear, six colours, stroke width scaled to the image. It has
+been on the job-photo caption modal's "✏️ Edit" button for a long time. It was simply unreachable
+from CompanyCam, and its `save()` writes to `project_photos`, a table a CompanyCam photograph has no
+row in. **Seventh "missing feature" on this project that was a mounting problem.**
+
+Two additive changes:
+
+1. **`open(p, opts)`.** `opts.onSave` takes the encoded blob and the editor's own two Supabase
+   branches never run; `opts.extra` adds one header button. Both default absent, so `open(photo)`
+   from the job modal is unchanged — proved by executing the shipped module against a recording
+   Supabase stub.
+2. **The bytes come through our own route.** Painting a CompanyCam CDN URL into a canvas **taints**
+   it, and `canvas.toBlob()` then throws `SecurityError` — the markup would draw perfectly and fail
+   only at save, which is the worst possible place to find out. `ccEdit()` fetches base64 through
+   `api/companycam.js` and hands the editor a `data:` URL.
+
+A marked-up photo goes to the Library section chosen in "Put them in", or to the phone through
+481's share sheet. **The CompanyCam original is never written to** — nothing in this app holds a
+CompanyCam write scope, and the editor is handed a copy.
+
+`ccDeliver()` and `ccFileBlob()` were lifted out of `ccDownload()` and `ccSave()` so the original
+and the marked-up copy take the identical path in each case.
+
+### The lesson of this build: a rule can be present, parse, balance, and never apply
+
+481 added `.lb-ccfile button.ghost` **unprefixed**. Every other rule in `cr-lib-styles` is scoped to
+`#rlLibPanel`, and `#rlLibPanel .lb-ccfile button` (id+class+type) out-specifies a bare
+`.lb-ccfile button.ghost`. Measured in a real engine, "Save to device" and "File selected" **both
+computed `rgb(196,24,15)`** — two identical solid red buttons stacked.
+
+`check_build.py` cannot see this. jsdom cannot see this. **`getComputedStyle` in a real browser
+can**, and is now a standing gate (`css482_harness.js`). Caught by this build's own scope diff and
+fixed before merge. Corrected beside it: `.lb-ccz`'s focus ring read `var(--lb-ac,…)` and
+**`--lb-ac` is declared zero times in this file** — the token is `--lb-accent`.
+
+**Eighth and ninth hardcoded-anchor aborts**, both caught before any write: `canvasBlob(0.9)` stopped
+being unique because the `extra()` function *this same patch* added encodes the same way (re-anchored
+on the line only `save()` has); and the marker `data-cc-edit` failed the negative control because
+Community's `data-cc-editbid` already contains it. Attribute *selectors* match whole names, so
+`[data-cc-edit]` does not collide — but the marker did, and the gate was right.
+
+**Namespace hazard worth knowing:** `cc-` means **CompanyCam** inside `cr-lib-script` and
+**Community** elsewhere in the file. Grep the block, not the prefix.

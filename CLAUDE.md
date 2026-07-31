@@ -7,9 +7,9 @@ The file you want is lowercase **`index.html`** at the repo root. **100** inline
 
 Owner: **Theo Dorion** · theo@cardinalrenovations.net
 
-*Numbers below re-measured **31 Jul 2026 against build 474** (this PR's `index.html`; `origin/main` is at `ec685f0`, build 472). **17 of 22 figures were unchanged from build 451** — the module surface did not move. The five that drifted are all accounted for by builds 473–474 and are corrected here.*
+*The table below was re-measured **31 Jul 2026 against build 474**, and the rows marked **@482** were re-measured again at build 482 (this PR's `index.html`). **The module surface has not moved since 451** — 100 inline scripts, 103 script tags, 101 style tags, 82 `window.Cardinal*`, 10 `</body>`, all unchanged across 451→482. What moved is the Library palette, which builds 452–482 grew. Rows without a stamp are as of 474; re-measure before quoting one.*
 
-**Size, stated once so nobody re-derives it wrong:** **2,797,541 bytes on disk (2.80 MB)** — but **2,781,582 characters**, because the file is UTF-8 with multi-byte content. `check_build.py` prints the *character* count and labels it "bytes". `wc -c` prints the byte count. They will never agree; neither is broken.
+**Size, stated once so nobody re-derives it wrong (@482):** **2,819,297 bytes on disk (2.69 MiB / 2.82 MB)** — but **2,803,338 characters**, because the file is UTF-8 with multi-byte content. `check_build.py` prints the *character* count and labels it "bytes". `wc -c` prints the byte count. They will never agree; neither is broken.
 
 ---
 
@@ -131,8 +131,8 @@ assert count(patched, VALUE) == count(orig, VALUE) - 1   # "exactly one changed"
 | `.single()` / `.maybeSingle()` | **43 / 5** | was recorded as 43/4; re-measured 5. **All 43 `.single()` sites guard — there is no migration backlog**, see the invariants section |
 | `--ccm-*` declarations / refs | 64 / 132 (56 with fallback) | |
 | `--rbe-*` declarations / refs | 154 / 601 (31 with fallback) | |
-| `--lb-*` declarations / refs | 22 / 48 (38 with fallback) | Resource Library |
-| `var()` refs total / with a literal fallback | 3,049 / 327 | **89% are bare** — see 448–449 |
+| `--lb-*` declarations / refs **@482** | 14 / 84 (55 with fallback) | Resource Library. **The 22 recorded at 451 does not reproduce** — `--lb-[a-z-]+\s*:` finds 14 declaration sites across both themes. Refs nearly doubled (48 → 84) over builds 452–482. **65% carry a literal — still the best-behaved palette in the app.** |
+| `var()` refs total / with a literal fallback **@482** | 3,055 / 373 | **88% are bare** — see 448–449 |
 | Surviving legacy gold hexes | **27** | `#c9a227` ×17 + `#b8860b` ×10 |
 | `#c8202e` (cardinal red) | 264 | |
 | `</body>` | 10 | |
@@ -172,6 +172,15 @@ Two of those steps carry `FIXED —` comments explaining that they used to check
 **jsdom does not resolve `var()` inside `background` / `border` shorthands** — it returns `rgba(0,0,0,0)`. A gate can verify **structure** (element exists, class applied, attribute set) and **directly-read custom properties** via `getPropertyValue()`, but **cannot verify that a tokenized colour actually renders**.
 
 For colour work: assert on the **CSS text**, run the negative control against the previous build, and **say plainly that Theo's eyes are the gate.** Do not report a green jsdom run as proof a colour is right.
+
+**A CSS rule can parse, balance, and never apply — and only a real engine sees it.** Build 481
+added `.lb-ccfile button.ghost` unprefixed into a stylesheet where every neighbour is scoped to
+`#rlLibPanel`. `#rlLibPanel .lb-ccfile button` out-specifies it, so the ghost lost and the button
+rendered as a second solid red one. Brace balance, duplicate-id, `node --check`, marker and negative
+control were **all green**. `getComputedStyle` in Chromium said `rgb(196,24,15)`. **Read the
+neighbours' selectors before adding a rule, and prove an override won in a real browser**
+(`scripts/`-adjacent `css482_harness.js` in the session scratchpad is the pattern). It proves which
+rule won, not that the colour is right.
 
 **Contrast is arithmetic, not judgment — compute it** (`scripts/contrast.py`). Stage and CRM colours are chosen for a dark ground and collapse as text on a light one: the stage set reads 1.96–4.37:1 on white and the spine neons 1.17–2.36:1, against a 4.5:1 floor for body text. Two shipped builds carried unreadable chips before anyone noticed. When a surface goes light, compute the ratio for **every colour that carries text** and use the `STAGE_INK` / `colorLight` twins. Bars, spines and dots keep the bright originals — a glowing 3px rule is not text.
 
@@ -251,6 +260,8 @@ A reference-material library with an AI assistant. Nothing in the doc set mentio
 - **The one exception, added 471 on Theo's explicit instruction after the constraint was put in front of him:** the librarian may ask for **photographs** from Cardinal's own CompanyCam account by emitting a `~~photos` block. **The model never receives photo data** — not the image, not the caption, not the project. It writes a search; `index.html` runs it through `api/companycam.js`, which is admin-only and refuses anything flagged `internal`. Do not widen this to client records on your own initiative; do not narrow it back either.
 - **Its own token namespace, `--lb-*`** — 22 declarations, 48 references, **38 of them with literal fallbacks**. This is the best-behaved palette in the app; copy its habit, not the other 89%.
 - **`lbRich()` is the renderer, and its ordering is load-bearing.** It **escapes first, then promotes** a small marker set on the already-escaped string — tables, headings, bullets, numbered lists, bold. By the time any promotion rule runs, every `<` is already `&lt;`, so nothing the API returns can open a tag. It deliberately supports **no links, no images, no raw HTML**. If you extend it, keep escape-then-promote in that order and keep the set small.
+- **The CompanyCam picker (468–482) lives in this module** and is admin-only. Its photographs can be expanded (480), saved to the device (481) and **drawn on** (482) — the pencil opens `cr-ped-script`, the photo editor that already existed for job photos, via `open(p, opts)`. **The bytes always come through `api/companycam.js`, never the CDN**: a cross-origin image taints the canvas and `toBlob()` then throws. The CompanyCam original is never written to.
+- ⚠️ **`cc-` is two namespaces.** Inside `cr-lib-script` it means CompanyCam; elsewhere in this file it means Community (`data-cc-editbid`). Grep the block, not the prefix.
 - Related but separate: **Manage NACHI** (`cr-nachi-*` blocks). Build 451 fixed the two landing on top of each other in the installed app.
 
 ---

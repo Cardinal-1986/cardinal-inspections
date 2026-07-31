@@ -4,6 +4,97 @@
 
 ---
 
+# Session of 31 July 2026 (overnight, part two) — builds 475–482
+
+**PR #47 is MERGED** (`main` at `6420f27`, build 474). Everything below is **PR #48**, still open as
+a draft on the same branch, `check` green and all three Vercel previews Ready.
+
+## The measurement that reframed the whole session
+
+The full sync ran: **60,485 photos indexed**, +1,164 skipped as internal/inactive, reconciling to
+61,649 exactly. **79 of them carry a caption** — 0.13%, flat across every year (10 in 2026, 39 in
+2025, 30 in 2024, none before).
+
+**Build 472's caption search was built over a field this account does not use.** That measurement
+should have come before the build, not after. Everything from 476 onward follows from it.
+
+`project_id`, `creator_name` and `captured_at` **are** populated on all 60,485, across **775 jobs**.
+
+## What shipped
+
+| | |
+|---|---|
+| **475** | Milestone pill legibility, option C (Theo's pick). Ink per **stage**, not per theme; two colours nudged. 16/16 pass. Bound to `LJ_SOLID`, never `STAGE_COLORS` — the same two hexes live in both |
+| **476** | Photo search reads **job names and addresses**. `companycam_projects.sql` (**applied**) + FTS over caption + name + address + creator |
+| **477** | The counter read `87,096 of 61,649`. A resumable run starting with no cursor must reset its counters too |
+| **478** | **Try AI captions (50)** — a trial, not the backfill |
+| **479** | The ask box was hidden whenever the CompanyCam block was open; "Cancel" → "← Back to chat" |
+| **480** | ⤢ Expand — reuses `CardinalResourceImages`, with **both** `preventDefault()` and `stopPropagation()` |
+| **481** | ⬇ **Save to device** — share sheet then anchors, the job gallery's shape since 216 |
+| **482** | ✏️ **Draw on it** — reaches `cr-ped-script`, the editor that already existed |
+
+## ⚠ SQL is ALREADY APPLIED
+
+`companycam_projects` + the two `companycam_photos` columns + the four-field GIN index +
+`companycam_backfill_project_names()` are live on Supabase. Idempotent and additive. **Do not
+re-apply or treat as pending.**
+
+## Waiting on Theo — do not nag, do not guess
+
+1. **Merge #48**, then press **Try AI captions (50)** and report what the captions say. I read the
+   50 back to him. **The 60,406 backfill is NOT built and must not be** without an explicit yes —
+   it sends customers' job photographs to a third party.
+2. **Five partner emails**: Kitty Hawk Realty (live job), C.G. Egli, CityWide Development, County
+   Corp, James Construction. **Never guess one.**
+3. `GOOGLE_MAPS_API_KEY` — **restrict the key in Google Cloud before setting it.**
+4. Two contrast fixes unpicked: `--rbe-empty-fg` `#8a8a8a`→`#767676`, `--rbe-adm-fg`
+   `#8a6a4a`→`#826446`.
+5. **AI-generated images** — he said "not sure yet, show me what it can do". I proposed generated
+   *illustrations* rather than altered photographs, because **this app runs insurance claims** and a
+   restyled photo of a real roof reaching a supplement is an altered-evidence problem for him.
+   **I also cannot verify his Gemini key has image generation at all** — the key is a Vercel env
+   var. Nothing built. His call.
+
+## My regressions this session, named
+
+- **481's ghost button never applied.** `.lb-ccfile button.ghost` went in unprefixed; every
+  neighbour in `cr-lib-styles` is scoped to `#rlLibPanel`, which out-specifies it. "Save to device"
+  rendered **solid red, identical to "File selected."** Every gate was green. Caught by 482's scope
+  diff, proven with `getComputedStyle` in Chromium, fixed in 482 before merge. **New bug class,
+  `BUG_CLASSES.md` §9.**
+- Said the sync was "still running" off a 0.9-second-old timestamp; it had stopped.
+- Said a counter fix was "fixed and pushed", which read as deployed when it was in an unmerged PR.
+
+## Where the doctrine paid, again
+
+**The markup tool already existed.** `cr-ped-script` — pen, arrow, circle, text, rotate, undo, six
+colours — behind the job-photo modal's "✏️ Edit" since long before this session, and unreachable
+from CompanyCam. 482 reached it; it built nothing. **Seventh time on this project.**
+
+## Traps recorded
+
+- **`cc-` is two namespaces.** CompanyCam inside `cr-lib-script`, Community elsewhere
+  (`data-cc-editbid`). It failed a negative control as a marker. Grep the block, not the prefix.
+- **Canvas tainting.** A CompanyCam CDN URL painted into a canvas makes `toBlob()` throw
+  `SecurityError` — markup would draw perfectly and fail only at save. All editor bytes come through
+  `api/companycam.js` as base64 and reach the canvas as a `data:` URL.
+- **Two anchor aborts**, both caught before any write: `canvasBlob(0.9)` stopped being unique
+  because the same patch added a second encoder; `data-cc-edit` is a prefix of `data-cc-editbid`.
+
+## Filed, not fixed
+
+- **`annotated` is `true` on all 60,485 rows.** CompanyCam returns a `web_annotation` URI whether or
+  not anyone drew on the photo. No caller depends on it.
+- The bottom-bar light/dark glitch Theo reported — **he could not reproduce it and neither could I.**
+
+## Standing harnesses in the session scratchpad
+
+`dl481_harness.js` (29) · `edit482_editor.js` (20, real mouse against the real canvas) ·
+`edit482_panel.js` (33) · `edit482_tile.js` (14) · `css482_harness.js` (15, computed CSS in a real
+engine — **the only instrument that catches a lost rule**).
+
+---
+
 # Session of 31 July 2026 (overnight) — builds 468–474
 
 **Not merged.** Everything below is on `claude/claude-md-documentation-qbvt85`, open as **PR #47**,

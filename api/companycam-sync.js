@@ -143,10 +143,17 @@ export default async function handler(req, res) {
       const gap = await sb(service, 'companycam_photos?select=id&or=(description.is.null,description.eq.)',
         { headers: { Prefer: 'count=exact', Range: '0-0' } });
       const uncap = parseInt(String(gap.headers.get('content-range') || '').split('/')[1], 10);
+      const prj = await sb(service, 'companycam_projects?select=id', { headers: { Prefer: 'count=exact', Range: '0-0' } });
+      const nprj = parseInt(String(prj.headers.get('content-range') || '').split('/')[1], 10);
+      const named = await sb(service, 'companycam_photos?select=id&project_name=not.is.null',
+        { headers: { Prefer: 'count=exact', Range: '0-0' } });
+      const nnamed = parseInt(String(named.headers.get('content-range') || '').split('/')[1], 10);
       res.status(200).json({
         state: st.ok ? (await st.json())[0] || null : null,
         rows_in_index: isNaN(have) ? null : have,
-        uncaptioned: isNaN(uncap) ? null : uncap
+        uncaptioned: isNaN(uncap) ? null : uncap,
+        projects: isNaN(nprj) ? null : nprj,
+        photos_with_project_name: isNaN(nnamed) ? null : nnamed
       });
       return;
     }
@@ -163,6 +170,163 @@ export default async function handler(req, res) {
       return;
     }
 
+    // ---- projects: names for the index ----
+    /* The first full sync proved the caption search had nothing to search: 79 of
+       60,485 photos carry a description, 0.13%, flat across every year. But every
+       photo knows its project_id, across 775 jobs — the index just did not know
+       what those projects are CALLED. This pass fetches the names, then stamps
+       them onto the photos so a search for "Habitat" reaches all of them.
+
+       Cheap: 775 projects is ~8 pages, not 617. Runs to completion in one call. */
+    if (b.action === 'projects') {
+      let cursor = null, wrote = 0, pages = 0, hasNext = true;
+      while (hasNext && pages < 40) {
+        const params = { limit: 100 };
+        if (cursor) params.after = cursor;
+        const r = await cc('/projects', key, params);
+        if (!r.ok) {
+          res.status(502).json({ error: 'CompanyCam refused the project list',
+                                 status: r.status, detail: scrub(r.raw, key), wrote, pages });
+          return;
+        }
+        pages++;
+        const data = (r.body && r.body.data) || [];
+        const meta = (r.body && r.body.meta) || {};
+        const rows = data.filter(p => p && p.id).map(p => {
+          /* Address arrives as an object on v1; flatten it to one searchable line
+             and tolerate a plain string, because this shape is unverified against
+             the live account. Missing pieces simply drop out. */
+          const a = p.address || {};
+          const addr = typeof a === 'string' ? a : [
+            a.street_address_1, a.street_address_2, a.city, a.state, a.postal_code
+          ].filter(Boolean).join(', ');
+          return {
+            id: String(p.id),
+            name: p.name || null,
+            address: addr || null,
+            status: p.status || null,
+            cc_created_at: iso(p.created_at),
+            synced_at: new Date().toISOString()
+          };
+        });
+        if (rows.length) {
+          const up = await sb(service, 'companycam_projects?on_conflict=id', {
+            method: 'POST',
+            headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify(rows)
+          });
+          if (!up.ok) {
+            const why = await up.text();
+            res.status(502).json({ error: 'Could not write the project list',
+                                   status: up.status, detail: scrub(why, service), wrote, pages });
+            return;
+          }
+          wrote += rows.length;
+        }
+        hasNext = meta.has_next === true && !!meta.next_cursor;
+        cursor = hasNext ? meta.next_cursor : null;
+        if (!data.length) hasNext = false;
+      }
+
+      /* Stamp the names onto the photos. One statement, not 60k round trips. */
+      const rpc = await fetch(SUPABASE_URL + '/rest/v1/rpc/companycam_backfill_project_names', {
+        method: 'POST',
+        headers: { apikey: service, Authorization: 'Bearer ' + service, 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      let stamped = null;
+      if (rpc.ok) { try { stamped = await rpc.json(); } catch (e) { stamped = null; } }
+
+      res.status(200).json({ projects: wrote, pages, stamped,
+                             backfilled: rpc.ok, done: true });
+      return;
+    }
+
+    // ---- AI caption sample ----
+    /* Theo asked whether AI captions would help find pictures. Only 79 of 60,485
+       photos carry a human caption, so content search has nothing to work with -
+       but a general vision model may not know roofing well enough to be worth
+       60,406 calls. This answers that on a SMALL sample before anything is spent.
+
+       Deliberate choices:
+       - The prompt is lifted VERBATIM from api/caption.js, so this measures what
+         the app would really produce, not a prompt written to flatter the test.
+       - Results go to ai_description, never description. The 79 human captions
+         are untouchable and the whole sample is one UPDATE away from discarded.
+       - The sample is drawn by a stable ordering, so re-running captions the SAME
+         photos instead of spending on a fresh 50.
+       - Six per call. Downloading a photo and captioning it is slow, and the
+         serverless limit is the same one the photo sync works around. */
+    if (b.action === 'sample_captions') {
+      const gem = (process.env.GEMINI_API_KEY || '').trim();
+      if (!gem) { res.status(500).json({ error: 'GEMINI_API_KEY not configured in Vercel' }); return; }
+      const want = Math.min(Math.max(parseInt(b.limit, 10) || 50, 1), 50);
+      const per  = Math.min(Math.max(parseInt(b.per, 10) || 6, 1), 8);
+
+      /* A spread, not the newest 50: order by id so the sample crosses years,
+         crews and job types rather than sampling one week of one roof. */
+      const q = await sb(service,
+        'companycam_photos?select=id,preview_url,thumb_url,project_name' +
+        '&ai_description=is.null&preview_url=not.is.null' +
+        '&order=id.asc&limit=' + per);
+      if (!q.ok) { res.status(502).json({ error: 'Could not read the index', detail: scrub(await q.text(), service) }); return; }
+      const batch = await q.json();
+
+      const doneRes = await sb(service, 'companycam_photos?select=id&ai_description=not.is.null',
+        { headers: { Prefer: 'count=exact', Range: '0-0' } });
+      const already = parseInt(String(doneRes.headers.get('content-range') || '').split('/')[1], 10) || 0;
+      if (!batch.length || already >= want) {
+        res.status(200).json({ captioned: already, done: true, remaining: 0 });
+        return;
+      }
+
+      /* Verbatim from api/caption.js. Do not "improve" it here - a different
+         prompt would make the sample unrepresentative of the real feature. */
+      const prompt =
+        'You are captioning a photo for a professional roof inspection report. ' +
+        'In one concise sentence (under 20 words), describe what the photo shows in ' +
+        'plain, professional roofing-inspection language. No preamble, no quotes, just the caption sentence.';
+
+      let wrote = 0; const failures = [];
+      for (const ph of batch) {
+        try {
+          const img = await fetch(ph.preview_url || ph.thumb_url);
+          if (!img.ok) { failures.push({ id: ph.id, why: 'image ' + img.status }); continue; }
+          const buf = Buffer.from(await img.arrayBuffer());
+          if (buf.length > 4 * 1024 * 1024) { failures.push({ id: ph.id, why: 'too large' }); continue; }
+          const mime = img.headers.get('content-type') || 'image/jpeg';
+
+          const g = await fetch(
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+            { method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gem },
+              body: JSON.stringify({ contents: [ { parts: [
+                { text: prompt },
+                { inlineData: { mimeType: mime.split(';')[0], data: buf.toString('base64') } }
+              ] } ] }) });
+          if (!g.ok) { failures.push({ id: ph.id, why: 'gemini ' + g.status }); continue; }
+          const gj = await g.json();
+          const cap = (((gj.candidates || [])[0] || {}).content || {}).parts?.[0]?.text;
+          if (!cap) { failures.push({ id: ph.id, why: 'empty caption' }); continue; }
+
+          const up = await sb(service, 'companycam_photos?id=eq.' + encodeURIComponent(ph.id), {
+            method: 'PATCH',
+            headers: { Prefer: 'return=minimal' },
+            body: JSON.stringify({ ai_description: String(cap).trim().slice(0, 400),
+                                   ai_captioned_at: new Date().toISOString() })
+          });
+          if (up.ok) wrote++; else failures.push({ id: ph.id, why: 'write ' + up.status });
+        } catch (e) {
+          failures.push({ id: ph.id, why: scrub((e && e.message) || e, gem).slice(0, 60) });
+        }
+      }
+
+      res.status(200).json({ wrote, captioned: already + wrote, target: want,
+                             remaining: Math.max(0, want - (already + wrote)),
+                             done: (already + wrote) >= want, failures });
+      return;
+    }
+
     // ---- a batch ----
     const pages = Math.min(Math.max(parseInt(b.pages, 10) || DEFAULT_PAGES, 1), MAX_PAGES);
     let cursor = typeof b.cursor === 'string' && b.cursor ? b.cursor : null;
@@ -173,6 +337,13 @@ export default async function handler(req, res) {
       const st = await sb(service, 'companycam_sync?id=eq.1&select=cursor');
       if (st.ok) { const r0 = (await st.json())[0]; cursor = (r0 && r0.cursor) || null; }
     }
+
+    /* A run that starts with no cursor is starting from the beginning - either
+       the first ever, or a re-run after the last one finished and cleared it.
+       The counters must start from zero too. They did not, and the panel showed
+       "87,096 of 61,649": the second run kept adding to the first run's total.
+       Only the FIRST call of a run can be fresh; later calls carry a cursor. */
+    const freshRun = !cursor;
 
     let wrote = 0, skipped = 0, captioned = 0, pagesDone = 0, total = null, hasNext = true;
 
@@ -223,11 +394,11 @@ export default async function handler(req, res) {
       method: 'PATCH',
       body: JSON.stringify({
         cursor,
-        synced: (prev.synced || 0) + wrote,
-        skipped: (prev.skipped || 0) + skipped,
-        captioned: (prev.captioned || 0) + captioned,
+        synced: (freshRun ? 0 : (prev.synced || 0)) + wrote,
+        skipped: (freshRun ? 0 : (prev.skipped || 0)) + skipped,
+        captioned: (freshRun ? 0 : (prev.captioned || 0)) + captioned,
         total,
-        started_at: prev.started_at || new Date().toISOString(),
+        started_at: freshRun ? new Date().toISOString() : (prev.started_at || new Date().toISOString()),
         finished_at: hasNext ? null : new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -236,7 +407,8 @@ export default async function handler(req, res) {
     res.status(200).json({
       wrote, skipped, captioned, pages: pagesDone,
       cursor, has_next: hasNext, done: !hasNext,
-      total, synced_so_far: (prev.synced || 0) + wrote
+      total, fresh_run: freshRun,
+      synced_so_far: (freshRun ? 0 : (prev.synced || 0)) + wrote
     });
   } catch (e) {
     res.status(500).json({ error: 'Sync failed', detail: scrub((e && e.message) || e, key) });
