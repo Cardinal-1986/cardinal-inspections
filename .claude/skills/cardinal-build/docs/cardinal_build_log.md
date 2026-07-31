@@ -2124,3 +2124,40 @@ the library's own source was the verification that actually held.
 **Outcome: do not open the `.maybeSingle()` migration.** Prefer it in new code where absence is
 expected — not for safety, but because `.single()` manufactures an error the caller must then tell
 apart from a real failure. Counts now **43 / 5**.
+
+---
+
+## `sw.js` — static assets self-heal; the CDN stays frozen on purpose (31 July 2026)
+
+**No build number: `index.html` is untouched.** Only `sw.js` changed, so nothing owed the app stamp.
+
+CLAUDE.md makes four claims about this file. **All four check out** — network-first navigations,
+Supabase and `/api/*` never cached, static assets cache-first with no revalidation, and
+`CACHE = 'cardinal-shell-v1'` never bumped. No false alarm here; the file's own header said *"Bump
+CACHE on each deploy"* and it has been `v1` since it was written.
+
+**The rule was never going to hold.** Theo deploys from a phone through the GitHub web UI. A manual
+cache-name edit on every deploy is not a process, it is a wish. So the fix is self-healing rather
+than a louder reminder: **same-origin assets are now stale-while-revalidate** — the cached copy is
+returned at exactly the speed it always was, then refreshed behind the response, so a changed icon
+or `manifest.json` reaches people on the next load instead of never.
+
+### The CDN deliberately did NOT change
+
+`index.html` loads supabase-js@2, chart.js and papaparse from a CDN with a **floating major**.
+Revalidating those would quietly move every user onto a new minor of a dependency this app has **no
+test runner** to catch. Cache-first-forever is the nearest thing to a lockfile an app with no build
+step gets, so cross-origin hits still return with **zero** network calls. That is now stated in the
+file so the next reader does not "finish the job".
+
+### Second test-fault red of the night
+
+The offline-navigation assertion failed first run: the cached shell was not found. **The mock was
+wrong, not the worker.** The real Cache API resolves a relative key against the worker scope, so
+`caches.put('/', …)` and `caches.match('/')` both land on `ORIGIN + '/'`; a mock keyed on the raw
+string missed it and made a correct fallback look broken. Normalising the mock to spec behaviour
+turned it green — and the same normalisation is what makes the test meaningful at all.
+
+12/12: passthrough for Supabase and `/api/*`, network-first navigations, offline shell fallback,
+instant stale response, background refill, frozen CDN, cache miss, and an offline revalidation that
+does not become an unhandled rejection.
