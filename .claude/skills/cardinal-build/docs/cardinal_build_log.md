@@ -1812,3 +1812,35 @@ Replay onto a fresh 467 reproduces the file byte-for-byte (sha256 `23ff252e…`)
    `ccSave` bails and `uploaded[0]` is undefined — the run threw and printed no verdict at all.
    Null-safe reads added. **Standing rule, now twice-learned: a negative control must fail, not
    crash.**
+
+---
+
+## Build 469 — the CompanyCam button was wired to the wrong element (31 July 2026)
+
+**My regression, shipped in 468 and live for minutes.** The button did nothing when tapped.
+
+The five `[data-cc-*]` click delegates went onto **`v`, the library view**, because I anchored
+them beside the `[data-lb-open]` delegate without checking what that listener was bound to.
+`data-lb-open` is on library item rows, which render *inside the page*. The CompanyCam button is
+in the **panel** — and the panel is `document.body.appendChild(p)`, a **sibling** of `v`, not a
+descendant. The click never reached the handler.
+
+The panel has had its own click listener the whole time, forty lines earlier in the same
+function. That is where all five belong; every `[data-cc-*]` control lives in the panel.
+
+### Why 42 green assertions missed it
+
+**The harness called `ccOpen()` directly.** It proved the functions work and never proved that
+anything reaches them — a fully tested feature with no route in. `gates.md` says *navigate the
+way the app navigates*; I asserted on the functions instead of on the wiring, and the gate was
+green on a button that did nothing.
+
+`cc469_harness.js` never calls a cc function by name. It builds the panel from the **shipped**
+builder, attaches the **shipped** listener, dispatches real `MouseEvent`s and asserts on what
+gets reached. It **fails on 468** — `clicked -> []`, the click fires and reaches nothing — and
+passes on 469. That is a negative control against a real shipped defect rather than a synthetic
+one, which makes it the more valuable half of this build.
+
+**The lesson generalises past this bug:** a delegate's anchor tells you nothing about its host.
+Before adding to one, find its `addEventListener` and confirm the element you are targeting is
+actually inside it. Proximity in the file is not containment in the DOM.
