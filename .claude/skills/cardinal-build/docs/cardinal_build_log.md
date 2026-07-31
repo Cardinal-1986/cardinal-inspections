@@ -3323,3 +3323,43 @@ I first asserted the file contains exactly **one** `insertAdjacentElement('after
 **seven**, across unrelated features. The patch aborted on correct work. The right assertion is the
 one `START_HERE` §"Counting things" prescribes and I keep relearning: **assert the property —
 "unchanged from the previous build" — never a tally read off an assumption.**
+
+## 508 — the librarian refused to draw a concept
+
+Theo asked it to illustrate the ice-and-water concept and got: *"That is outside the library — Job
+drawings, blueprints, site plans, and shop drawings are job-specific files."*
+
+**The right fence catching the wrong thing.** `RULES` says the library holds no job files or client
+paperwork; the model reasonably extended that to blueprints and shop drawings, then swept up "draw
+me how an ice dam forms" along with them.
+
+The distinction is **whose it is, not whether it is a picture.** A site plan for 2444 Edenhill is job
+paperwork. A section through an eave showing how an ice dam forms is exactly what this library is
+for — and **Plates 1–5 already in it are precisely that.**
+
+Worth recording: **the librarian has been able to draw since 466** — `~~stack`, `~~flow`, `~~bars`
+and one more, emitting data that `index.html` renders as SVG. It was refusing before it ever reached
+the capability. Nothing needed building; the scope note needed one carve-out.
+
+## 509 — the Resource Library, reachable from every page
+
+Theo: *"please add the resource library where it can be seen whatever page your at."*
+
+It had **three entrances and all three were page-specific** — the landing page's minor links, the
+Tools panel, the insurance panel. From a client profile, a report or the schedule board there was no
+way to it.
+
+`#pwaNav` is already fixed, already on every screen, already at z-index 9990 — the value the whole
+app's stacking is designed around — and already holds back/forward and the CRM chip. Extending it
+costs **no new mechanism, no new stacking context, and nothing new that can strand itself over a
+modal**, which a fresh floating button would have risked on a project whose most expensive recurring
+bug is exactly that.
+
+Hidden when `showResourceLibrary` does not exist, matching `resolveHide()`'s existing rule that an
+entrance only shows if its destination does.
+
+### Two patch aborts, both the same mistake
+
+Both anchors were copied from **whitespace-normalised display output** rather than printed with
+`pl.context()`. Both aborted before writing, which is the helper working. `START_HERE` says print
+`repr()` of the real text before writing an anchor; I did it the third time.

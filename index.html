@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 507 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 509 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20529,6 +20529,12 @@ async function enableNotifications(){
 <div id="pwaNav">
   <button id="pwaBack" aria-label="Back">&#8249;</button>
   <button id="pwaFwd" aria-label="Forward">&#8250;</button>
+  <!-- 509: the Resource Library had three entrances and all three were
+       page-specific. This bar is already fixed on every screen at the
+       z-index the whole app is stacked around, so it costs no new
+       mechanism and cannot strand itself over a modal. -->
+  <button id="pwaLib" aria-label="Resource Library" title="Resource Library"
+          style="display:none;font-size:20px;">&#128218;</button>
 </div>
 <div id="restoreVeil">
   <div class="rvinner">
@@ -33845,6 +33851,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:509, note:'\u1F4DA The Resource Library is now one tap away from anywhere. A books button sits in the little bar with the back and forward arrows, on every screen, instead of the library only being reachable from the home page and two panels.' },
+{ build:508, note:'\u1F58D Asking the Library assistant to draw or illustrate a concept now works. It was refusing every request that used the word drawing, because it treated them all as job blueprints. Asking how something works and wanting it drawn is exactly what the library is for.' },
 { build:507, note:'\u1F4CB Sort photos now fills in the Areas of Concern table as well. It writes one line per section rather than one per photograph, uses the most serious finding in each, and sets the priority from what the AI judged. Anything you have already typed is left exactly as it is.' },
 { build:506, note:'\u1F50E CompanyCam search is much more forgiving. Typing an address with the house number found nothing if you wrote Ave and the record said Avenue, or if the postcode had an extra four digits. It now shows the closest matches with the right job first, instead of showing nothing.' },
 { build:505, note:'\u26A1 The last four features that could only use Google now fall back to the second AI as well: the CompanyCam caption pass, the Hover takeoff reader, the Roofr takeoff reader and the Scope of Loss reader. Every AI feature in the app now has somewhere to go when Google is busy.' },
@@ -46368,6 +46376,30 @@ function resolveHide(){
 }
 if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', resolveHide); }
 else { resolveHide(); }
+/* 509: the Resource Library button in the always-on-screen bar. Same rule as
+   resolveHide() above - an entrance only appears if its destination does, so a
+   build that ever drops showResourceLibrary hides the button instead of
+   shipping one that does nothing. */
+(function(){
+  function wireLibraryButton(){
+    var b = document.getElementById('pwaLib');
+    if(!b) return;
+    if(typeof window.showResourceLibrary !== 'function'){ b.style.display = 'none'; return; }
+    b.style.display = '';
+    if(b.getAttribute('data-wired')) return;
+    b.setAttribute('data-wired','1');
+    b.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      try{ window.showResourceLibrary(); }catch(err){}
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', wireLibraryButton);
+  }else{
+    wireLibraryButton();
+  }
+})();
 function closeMenus(){
   Array.prototype.forEach.call(B.querySelectorAll('.cbdd.open'), function(x){ x.classList.remove('open'); });
 }
