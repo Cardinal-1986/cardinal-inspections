@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 477 &#8212; the indexing progress counter no longer counts past the number of photographs that exist</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 478 &#8212; try AI captions on fifty photographs before deciding whether to do all sixty thousand</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33057,6 +33057,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:478, note:'\U0001F9EA A trial button for AI photo captions. Only 79 of your 60,485 CompanyCam photographs have a caption typed on them, so searching by what is IN a picture needs the computer to write one. Whether it is any good at roofing is worth finding out on fifty photographs rather than sixty thousand. Nothing is overwritten \u2014 the computer\u2019s captions are kept separately from the ones your crews wrote, and can be thrown away.' },
 { build:477, note:'\U0001F522 Fixed the indexing counter. Running Build index a second time carried on counting from the first run, so it read \u201887,096 of 61,649 photos\u2019 \u2014 more pictures than exist. The tally now starts from zero each run, and the display refuses to show a number larger than the total even if something else goes wrong. Nothing was wrong with the photographs; only the counting.' },
 { build:476, note:'\U0001F3D7\uFE0F Photo search now works on job names. Indexing all 60,485 photographs turned up something worth knowing: only 79 of them have a caption typed on them. Searching captions was therefore never going to find much. But every single photo does know which job it came from \u2014 775 of them \u2014 so the search now reads job names and addresses instead. Ask for a street or a partner and you will get the pictures.' },
 { build:475, note:'\U0001F3F7\uFE0F The coloured status pills on the Library board were hard to read \u2014 white letters on light green, dark letters on deep red, depending on the theme. Each stage now takes whichever letter colour actually reads on it, and two of the eight colours moved by a couple of percent because no letter colour worked on them. Every pill now clears the accessibility standard for text that size, in both themes. You may not notice the colour change; you should notice the words.' },
@@ -47392,6 +47393,7 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ccidx span{flex:1;min-width:0;}
 #rlLibPanel .lb-ccidx button{flex:0 0 auto;padding:6px 10px;border-radius:8px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;border:1px solid var(--lb-line2,#DED8D6);background:var(--lb-surface2,#FAF8F7);color:var(--lb-ink,#17181B);}
 #rlLibPanel .lb-ccidx button:disabled{opacity:.5;cursor:progress;}
+#rlLibPanel .lb-ccidx button[data-cc-trial]{background:transparent;color:var(--lb-dim,#6B615D);border-style:dashed;}
 /* 471: photographs inside a chat answer. Reuses the tile, not a second one. */
 #rlLibPanel .lb-photos{margin:10px 0 4px;}
 #rlLibPanel .lb-photos .lb-ccgrid{max-height:none;}
@@ -48096,6 +48098,44 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     });
   }
 
+  /* 478: a 50-photo trial before committing to 60,406. Only 79 photos in the
+     whole account carry a human caption, so content search has nothing to work
+     with - but whether a general model is any good at ROOFING is an empirical
+     question, and this is the cheap way to answer it. Same six-per-call shape as
+     the index sync, for the same serverless-timeout reason. */
+  var ccTrialing = false;
+
+  function ccTrial(){
+    if(ccTrialing || ccSyncing) return;
+    var el = ccIdxEl(); if(!el) return;
+    ccTrialing = true;
+    var btn = document.querySelector('#rlLibPanel [data-cc-trial]');
+    if(btn) btn.disabled = true;
+
+    function step(){
+      return ccSyncApi({ action:'sample_captions', limit:50, per:6 }).then(function(d){
+        el.textContent = 'Captioning\u2026 ' + (d.captioned || 0) + ' of ' + (d.target || 50);
+        if(!d.done && d.remaining > 0 && d.wrote > 0) return step();
+        /* wrote === 0 with work remaining means every photo in the batch failed;
+           looping again would just burn the same failures. */
+        return d;
+      });
+    }
+
+    step().then(function(d){
+      ccTrialing = false;
+      if(btn) btn.disabled = false;
+      var bad = (d && d.failures && d.failures.length) || 0;
+      el.textContent = 'Captioned ' + ((d && d.captioned) || 0) + ' photographs' +
+        (bad ? ' \u00b7 ' + bad + ' failed' : '') +
+        ' \u2014 tell Claude and it will read them back to you.';
+    }).catch(function(e){
+      ccTrialing = false;
+      if(btn) btn.disabled = false;
+      el.textContent = 'Captioning stopped \u2014 ' + String(e.message || e).slice(0, 120);
+    });
+  }
+
   function ccClose(){
     var p = document.getElementById('rlLibPanel');
     if(p) p.classList.remove('cc');
@@ -48673,6 +48713,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
           '<div class="lb-ccidx">' +
             '<span data-cc-idx>Checking the photo index\u2026</span>' +
             '<button type="button" data-cc-sync>Build index</button>' +
+            '<button type="button" data-cc-trial title="Send 50 photographs to Google for captioning, to see whether the captions are any good before doing all 60,406">Try AI captions (50)</button>' +
           '</div>' +
           '<div class="lb-ccstat" data-cc-stat></div>' +
           '<div class="lb-ccgrid" data-cc-grid></div>' +
@@ -48718,6 +48759,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
         if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
         if(e.target.closest('[data-cc-sync]')){ ccSync(); return; }
+        if(e.target.closest('[data-cc-trial]')){ ccTrial(); return; }
         if(e.target.closest('[data-cc-find]')){ ccFind(false); return; }
         if(e.target.closest('[data-cc-more]')){ ccFind(true); return; }
         if(e.target.closest('[data-cc-save]')){ ccSave(); return; }

@@ -242,6 +242,91 @@ export default async function handler(req, res) {
       return;
     }
 
+    // ---- AI caption sample ----
+    /* Theo asked whether AI captions would help find pictures. Only 79 of 60,485
+       photos carry a human caption, so content search has nothing to work with -
+       but a general vision model may not know roofing well enough to be worth
+       60,406 calls. This answers that on a SMALL sample before anything is spent.
+
+       Deliberate choices:
+       - The prompt is lifted VERBATIM from api/caption.js, so this measures what
+         the app would really produce, not a prompt written to flatter the test.
+       - Results go to ai_description, never description. The 79 human captions
+         are untouchable and the whole sample is one UPDATE away from discarded.
+       - The sample is drawn by a stable ordering, so re-running captions the SAME
+         photos instead of spending on a fresh 50.
+       - Six per call. Downloading a photo and captioning it is slow, and the
+         serverless limit is the same one the photo sync works around. */
+    if (b.action === 'sample_captions') {
+      const gem = (process.env.GEMINI_API_KEY || '').trim();
+      if (!gem) { res.status(500).json({ error: 'GEMINI_API_KEY not configured in Vercel' }); return; }
+      const want = Math.min(Math.max(parseInt(b.limit, 10) || 50, 1), 50);
+      const per  = Math.min(Math.max(parseInt(b.per, 10) || 6, 1), 8);
+
+      /* A spread, not the newest 50: order by id so the sample crosses years,
+         crews and job types rather than sampling one week of one roof. */
+      const q = await sb(service,
+        'companycam_photos?select=id,preview_url,thumb_url,project_name' +
+        '&ai_description=is.null&preview_url=not.is.null' +
+        '&order=id.asc&limit=' + per);
+      if (!q.ok) { res.status(502).json({ error: 'Could not read the index', detail: scrub(await q.text(), service) }); return; }
+      const batch = await q.json();
+
+      const doneRes = await sb(service, 'companycam_photos?select=id&ai_description=not.is.null',
+        { headers: { Prefer: 'count=exact', Range: '0-0' } });
+      const already = parseInt(String(doneRes.headers.get('content-range') || '').split('/')[1], 10) || 0;
+      if (!batch.length || already >= want) {
+        res.status(200).json({ captioned: already, done: true, remaining: 0 });
+        return;
+      }
+
+      /* Verbatim from api/caption.js. Do not "improve" it here - a different
+         prompt would make the sample unrepresentative of the real feature. */
+      const prompt =
+        'You are captioning a photo for a professional roof inspection report. ' +
+        'In one concise sentence (under 20 words), describe what the photo shows in ' +
+        'plain, professional roofing-inspection language. No preamble, no quotes, just the caption sentence.';
+
+      let wrote = 0; const failures = [];
+      for (const ph of batch) {
+        try {
+          const img = await fetch(ph.preview_url || ph.thumb_url);
+          if (!img.ok) { failures.push({ id: ph.id, why: 'image ' + img.status }); continue; }
+          const buf = Buffer.from(await img.arrayBuffer());
+          if (buf.length > 4 * 1024 * 1024) { failures.push({ id: ph.id, why: 'too large' }); continue; }
+          const mime = img.headers.get('content-type') || 'image/jpeg';
+
+          const g = await fetch(
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+            { method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gem },
+              body: JSON.stringify({ contents: [ { parts: [
+                { text: prompt },
+                { inlineData: { mimeType: mime.split(';')[0], data: buf.toString('base64') } }
+              ] } ] }) });
+          if (!g.ok) { failures.push({ id: ph.id, why: 'gemini ' + g.status }); continue; }
+          const gj = await g.json();
+          const cap = (((gj.candidates || [])[0] || {}).content || {}).parts?.[0]?.text;
+          if (!cap) { failures.push({ id: ph.id, why: 'empty caption' }); continue; }
+
+          const up = await sb(service, 'companycam_photos?id=eq.' + encodeURIComponent(ph.id), {
+            method: 'PATCH',
+            headers: { Prefer: 'return=minimal' },
+            body: JSON.stringify({ ai_description: String(cap).trim().slice(0, 400),
+                                   ai_captioned_at: new Date().toISOString() })
+          });
+          if (up.ok) wrote++; else failures.push({ id: ph.id, why: 'write ' + up.status });
+        } catch (e) {
+          failures.push({ id: ph.id, why: scrub((e && e.message) || e, gem).slice(0, 60) });
+        }
+      }
+
+      res.status(200).json({ wrote, captioned: already + wrote, target: want,
+                             remaining: Math.max(0, want - (already + wrote)),
+                             done: (already + wrote) >= want, failures });
+      return;
+    }
+
     // ---- a batch ----
     const pages = Math.min(Math.max(parseInt(b.pages, 10) || DEFAULT_PAGES, 1), MAX_PAGES);
     let cursor = typeof b.cursor === 'string' && b.cursor ? b.cursor : null;
