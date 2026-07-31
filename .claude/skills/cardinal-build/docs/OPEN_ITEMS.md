@@ -73,10 +73,42 @@ roof-specific, sections 1–10. `GENERAL_TEMPLATE` (8448) is `buildEstimate('REP
 a **repair estimate**, not an inspection report. `#gcModal`, the General Checklist, has **zero** file
 inputs. Verified, not inferred.
 
-**A General Exterior inspection report is therefore its own build (490)**, comparable in size to 487,
-and it needs Theo's section list confirmed before a 163 KB document is authored to it. I proposed:
-Overview & Property Facts · Summary of Findings · Exterior Elevations · Roof · Siding & Trim ·
-Windows & Doors · Gutters & Drainage · Structure & Grounds · Recommendations · Limitations.
+**A General Exterior inspection report is therefore its own build (490)**, comparable in size to 487.
+
+### ✅ SETTLED BY THEO, 31 July — do not re-litigate
+
+**490's section list, confirmed verbatim.** Author the document to exactly these ten, in this order:
+
+1. Inspection Overview & Property Facts
+2. Summary of Findings
+3. Exterior Elevations
+4. Roof
+5. Siding & Trim
+6. Windows & Doors
+7. Gutters & Drainage
+8. Structure & Grounds
+9. Recommendations
+10. Limitations & Acknowledgment
+
+It mirrors the roof report's shape on purpose — an adjuster recognises it. Theo's own words for why
+this template matters: *"We do lots of exterior inspections."* It is also the template his archive
+serves best: every trade qualifies, so nothing lands in the set-aside tray.
+
+**487's route is SIGNED-IN, not admin-only.** The two gates guard different things and are meant to
+differ:
+
+| Route | Gate | Why |
+|---|---|---|
+| `api/companycam.js` (486's picker) | **admin-only** | reaches all 1,437 jobs; can put the wrong client's house in a report that goes out by email and public link |
+| the 487 sort route | **signed in** | only ever sees photographs *already in this report*; never touches CompanyCam |
+
+The point of the feature is to take the bottleneck off Theo and Joan, so the crew who shot the roof
+can draft the report. RLS already limits Sales to work they created or are assigned. **Cap photos
+per sort regardless of the gate** — that is what bounds spend, not the gate.
+
+**Known and accepted:** signed-in means a rep's AI-drafted findings can reach a client without Theo
+seeing them first. The confirm-before-send gate covers it — nothing sends until a human clears every
+section — but that human is not necessarily Theo. He was told this plainly and chose signed-in.
 
 ### 487 — the AI sort (roof template only)
 
