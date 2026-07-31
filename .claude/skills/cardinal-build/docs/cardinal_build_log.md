@@ -1972,3 +1972,60 @@ measurement decides whether the next step is worth building — see OPEN_ITEMS.
 
 Ranking is deliberately dumb: whole-phrase hit first, then how many query words appear. A caption
 is one short line; anything cleverer would be guessing.
+
+---
+
+## Build 473 — a searchable index of all 61,649 CompanyCam photos (31 July 2026)
+
+**The number changed the design.** `/api/companycam-status?include_total=true` returned
+**`total_photos_in_account: 61,649`** — and closed the `include_total` unknown at the same time.
+
+472's caption search reads at most 800 photos. Against 61,649 that is **1.3% of the account**: a
+photo from last winter could never be found however it was worded, and the honest empty state
+would have said *"nothing in 800 photographs"* while never getting near it.
+
+**Paging harder is not the fix** — the v1 API has no text search at all. So the metadata is
+mirrored into Postgres (`companycam_index.sql`, already applied) and searched there. One indexed
+query over everything, instead of eight round trips over the most recent fraction.
+
+### Costed from measurements, not guesses
+
+| | |
+|---|---|
+| Pages to fill | **617** (61,649 ÷ 100) |
+| Wall clock at the measured 707ms/page | **~7 minutes** |
+| Gemini calls | **zero** |
+| Per-search cost afterwards | one Postgres query |
+
+### Resumable because it has to be
+
+617 pages is longer than any serverless function may run, so the route does **six pages a call**
+and returns a cursor; the panel loops. A closed tab, a redeploy or a timeout costs one batch, and
+pressing the button again **resumes from the stored cursor** rather than restarting.
+
+The harness proves the properties that actually matter: the loop terminates, carries the cursor
+forward, sends none on the first call so the route resumes stored state, **and cannot be started
+three times at once** — a runaway loop here is 617 real API calls.
+
+### The index refuses what the route refuses
+
+`internal: true`, non-active and unprocessed photos are never written. Otherwise the mirror would
+become a way around the privacy flag. No coordinates are stored either — a searchable index does
+not need the customer's latitude and longitude.
+
+### Search switches itself
+
+`api/companycam.js` queries the index when it has rows and falls through to the live API when it
+does not, so this works before the first sync and if the table is ever emptied. The panel needed
+no knowledge of which path ran; results say `indexed` rather than `searched` when they came from
+Postgres.
+
+**RLS:** admins read, and only the service role writes. There are deliberately **no**
+insert/update/delete policies — absent policies deny, so no browser session can forge a row.
+
+### Fourth and fifth hardcoded-count aborts of the night
+
+`count('ccSyncing = false') == 2` caught the `var ccSyncing = false` declaration too, and
+`count('data-cc-sync') == 2` missed the third site that disables the button. Both replaced by
+naming the sites. **Five aborts in one session from the same habit** — every one caught before a
+write, but the pattern is mine and it is now the most-repeated entry in this log.

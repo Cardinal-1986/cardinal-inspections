@@ -1,0 +1,244 @@
+// /api/companycam-sync.js
+// Fills the local mirror of CompanyCam photo metadata, a few pages at a time.
+//
+// WHY IT IS RESUMABLE RATHER THAN ONE LONG JOB.
+// The account holds 61,649 photos — 617 pages of 100. At the ~700ms per page
+// this project measured, that is roughly seven minutes of wall clock, which no
+// serverless function may hold. So each call does a handful of pages, returns
+// the cursor, and the caller loops. That also means a timeout, a redeploy or a
+// closed tab costs one batch, not the whole run.
+//
+// WHAT IT WRITES. Caption, dates, project id, creator, and the two URLs needed
+// to show a thumbnail. NOT coordinates — a searchable index does not need the
+// customer's latitude and longitude — and never a photo flagged `internal`,
+// matching what api/companycam.js already refuses to return.
+//
+// Admin-only, same gate as api/invite.js and api/companycam.js.
+
+const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
+const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
+const FALLBACK_ADMINS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
+const CC_BASE = 'https://app.companycam.com/public_api/v1';
+
+/* Six pages ≈ 4-5s at the measured 707ms. Comfortably inside a 10s function
+   limit, so this works on any Vercel plan rather than only the paid one. */
+const DEFAULT_PAGES = 6;
+const MAX_PAGES = 12;
+const PAGE_SIZE = 100;
+
+function scrub(text, key) {
+  let s = String(text == null ? '' : text);
+  if (key) s = s.split(key).join('[redacted]');
+  return s.slice(0, 400);
+}
+
+async function cc(path, key, params) {
+  const url = new URL(CC_BASE + path);
+  for (const [k, v] of Object.entries(params || {})) {
+    if (v == null || v === '') continue;
+    url.searchParams.set(k, v);
+  }
+  const r = await fetch(url.toString(), {
+    headers: { Authorization: 'Bearer ' + key, Accept: 'application/json' }
+  });
+  const raw = await r.text();
+  let body = null;
+  try { body = JSON.parse(raw); } catch (e) { /* keep raw for the error path */ }
+  return { ok: r.ok, status: r.status, body, raw };
+}
+
+function pickUri(photo, order) {
+  const uris = Array.isArray(photo && photo.uris) ? photo.uris : [];
+  for (const want of order) {
+    const hit = uris.find(u => u && u.type === want && (u.url || u.uri));
+    if (hit) return { type: want, url: hit.url || hit.uri };
+  }
+  return null;
+}
+
+/* Same refusal as api/companycam.js. An internal photo must not reach the
+   mirror either — otherwise the index becomes a way around the flag. */
+function usable(p) {
+  if (!p || p.internal === true) return false;
+  if (p.status && p.status !== 'active') return false;
+  if (p.processing_status && p.processing_status !== 'processed') return false;
+  return true;
+}
+
+function iso(v) {
+  if (!v) return null;
+  if (typeof v === 'number') return new Date(v * 1000).toISOString();   // v2 sends unix
+  const t = Date.parse(v);
+  return isNaN(t) ? null : new Date(t).toISOString();
+}
+
+function row(p) {
+  const web = pickUri(p, ['web_annotation', 'web', 'original']);
+  const thumb = pickUri(p, ['thumbnail_annotation', 'thumbnail', 'web']);
+  return {
+    id: String(p.id),
+    description: p.description || null,
+    captured_at: iso(p.captured_at),
+    cc_created_at: iso(p.created_at),
+    project_id: p.project_id ? String(p.project_id) : null,
+    creator_name: p.creator_name || null,
+    annotated: !!(web && web.type === 'web_annotation'),
+    thumb_url: thumb ? thumb.url : null,
+    preview_url: web ? web.url : null,
+    synced_at: new Date().toISOString()
+  };
+}
+
+async function sb(service, path, init) {
+  return fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    ...(init || {}),
+    headers: {
+      apikey: service,
+      Authorization: 'Bearer ' + service,
+      'Content-Type': 'application/json',
+      ...((init || {}).headers || {})
+    }
+  });
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
+
+  const key = (process.env.COMPANYCAM_API_KEY || '').trim();
+  const service = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+
+  try {
+    if (!key) { res.status(500).json({ error: 'COMPANYCAM_API_KEY not configured in Vercel' }); return; }
+    if (!service) { res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured in Vercel' }); return; }
+
+    // ---- who ----
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+    if (!token) { res.status(401).json({ error: 'Sign in required' }); return; }
+    const who = await fetch(SUPABASE_URL + '/auth/v1/user', {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token }
+    });
+    if (!who.ok) { res.status(401).json({ error: 'Invalid session' }); return; }
+    const caller = await who.json();
+    const email = ((caller && caller.email) || '').toLowerCase();
+    if (!email) { res.status(401).json({ error: 'Invalid session' }); return; }
+
+    let isAdmin = FALLBACK_ADMINS.includes(email);
+    if (!isAdmin) {
+      const pr = await sb(service, 'team_profiles?email=eq.' + encodeURIComponent(email) + '&select=role');
+      if (pr.ok) {
+        const rows = await pr.json();
+        isAdmin = Array.isArray(rows) && rows[0] && String(rows[0].role).toLowerCase() === 'admin';
+      }
+    }
+    if (!isAdmin) { res.status(403).json({ error: 'Admins only' }); return; }
+
+    const b = req.body || {};
+
+    // ---- status only ----
+    if (b.action === 'status') {
+      const st = await sb(service, 'companycam_sync?id=eq.1&select=*');
+      const cnt = await sb(service, 'companycam_photos?select=id', { headers: { Prefer: 'count=exact', Range: '0-0' } });
+      const have = parseInt(String(cnt.headers.get('content-range') || '').split('/')[1], 10);
+      const gap = await sb(service, 'companycam_photos?select=id&or=(description.is.null,description.eq.)',
+        { headers: { Prefer: 'count=exact', Range: '0-0' } });
+      const uncap = parseInt(String(gap.headers.get('content-range') || '').split('/')[1], 10);
+      res.status(200).json({
+        state: st.ok ? (await st.json())[0] || null : null,
+        rows_in_index: isNaN(have) ? null : have,
+        uncaptioned: isNaN(uncap) ? null : uncap
+      });
+      return;
+    }
+
+    // ---- reset, so a re-sync can start clean without touching rows ----
+    if (b.action === 'reset') {
+      await sb(service, 'companycam_sync?id=eq.1', {
+        method: 'PATCH',
+        body: JSON.stringify({ cursor: null, synced: 0, skipped: 0, captioned: 0,
+                               started_at: new Date().toISOString(), finished_at: null,
+                               updated_at: new Date().toISOString() })
+      });
+      res.status(200).json({ ok: true, reset: true });
+      return;
+    }
+
+    // ---- a batch ----
+    const pages = Math.min(Math.max(parseInt(b.pages, 10) || DEFAULT_PAGES, 1), MAX_PAGES);
+    let cursor = typeof b.cursor === 'string' && b.cursor ? b.cursor : null;
+
+    /* No cursor supplied means "carry on from where the stored state got to".
+       Passing one explicitly wins, so the caller can drive the loop itself. */
+    if (!cursor && b.resume !== false) {
+      const st = await sb(service, 'companycam_sync?id=eq.1&select=cursor');
+      if (st.ok) { const r0 = (await st.json())[0]; cursor = (r0 && r0.cursor) || null; }
+    }
+
+    let wrote = 0, skipped = 0, captioned = 0, pagesDone = 0, total = null, hasNext = true;
+
+    for (let i = 0; i < pages && hasNext; i++) {
+      const params = { limit: PAGE_SIZE };
+      if (cursor) params.after = cursor;
+      if (i === 0) params.include_total = 'true';
+
+      const r = await cc('/photos', key, params);
+      if (!r.ok) {
+        res.status(502).json({ error: 'CompanyCam refused the photo list', status: r.status,
+                               detail: scrub(r.raw, key), wrote, pages: pagesDone, cursor });
+        return;
+      }
+      pagesDone++;
+      const data = (r.body && r.body.data) || [];
+      const meta = (r.body && r.body.meta) || {};
+      if (typeof meta.total === 'number') total = meta.total;
+
+      const keep = data.filter(usable);
+      skipped += data.length - keep.length;
+      captioned += keep.filter(p => p.description).length;
+
+      if (keep.length) {
+        const up = await sb(service, 'companycam_photos?on_conflict=id', {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify(keep.map(row))
+        });
+        if (!up.ok) {
+          const why = await up.text();
+          res.status(502).json({ error: 'Could not write to the index', status: up.status,
+                                 detail: scrub(why, service), wrote, pages: pagesDone, cursor });
+          return;
+        }
+        wrote += keep.length;
+      }
+
+      hasNext = meta.has_next === true && !!meta.next_cursor;
+      cursor = hasNext ? meta.next_cursor : null;
+      if (!data.length) hasNext = false;
+    }
+
+    // ---- record where we got to ----
+    const st = await sb(service, 'companycam_sync?id=eq.1&select=synced,skipped,captioned,started_at');
+    const prev = st.ok ? ((await st.json())[0] || {}) : {};
+    await sb(service, 'companycam_sync?id=eq.1', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        cursor,
+        synced: (prev.synced || 0) + wrote,
+        skipped: (prev.skipped || 0) + skipped,
+        captioned: (prev.captioned || 0) + captioned,
+        total,
+        started_at: prev.started_at || new Date().toISOString(),
+        finished_at: hasNext ? null : new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    });
+
+    res.status(200).json({
+      wrote, skipped, captioned, pages: pagesDone,
+      cursor, has_next: hasNext, done: !hasNext,
+      total, synced_so_far: (prev.synced || 0) + wrote
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Sync failed', detail: scrub((e && e.message) || e, key) });
+  }
+}
