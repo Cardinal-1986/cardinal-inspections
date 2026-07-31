@@ -164,10 +164,40 @@ export default async function handler(req, res) {
     if (action === 'list') {
       const b = req.body || {};
       const limit = Math.min(Math.max(parseInt(b.limit, 10) || 30, 1), 100);
+      let tagIds = Array.isArray(b.tag_ids) ? b.tag_ids.slice(0, 20) : [];
+
+      /* 471: the librarian speaks tag NAMES, never ids — a model cannot know
+         that "Ice Dam" is tag 4471. Resolve here rather than making the caller
+         fetch the vocabulary first. Unknown names resolve to nothing, which
+         yields an empty result rather than silently returning the whole
+         account: a filter that fails open would show every photo Cardinal has
+         ever taken in answer to one word. */
+      let unmatchedTags = [];
+      if (!tagIds.length && Array.isArray(b.tag_names) && b.tag_names.length) {
+        const want = b.tag_names.slice(0, 10).map(n => String(n).trim().toLowerCase()).filter(Boolean);
+        const tr = await cc('/tags', key, { limit: 100 });
+        const vocab = ((tr.body && tr.body.data) || []).map(t => ({
+          id: String(t.id),
+          name: String(t.display_value || t.value || t.name || '').toLowerCase()
+        }));
+        want.forEach(w => {
+          const hit = vocab.find(v => v.name === w) || vocab.find(v => v.name && v.name.indexOf(w) > -1);
+          if (hit) tagIds.push(hit.id); else unmatchedTags.push(w);
+        });
+        if (!tagIds.length) {
+          res.status(200).json({
+            photos: [], next_cursor: null, has_next: false,
+            unmatched_tags: unmatchedTags,
+            known_tags: vocab.map(v => v.name).filter(Boolean).slice(0, 40)
+          });
+          return;
+        }
+      }
+
       const params = {
         limit,
         after: b.after || '',
-        tag_ids: Array.isArray(b.tag_ids) ? b.tag_ids.slice(0, 20) : [],
+        tag_ids: tagIds,
         project_ids: Array.isArray(b.project_ids) ? b.project_ids.slice(0, 20) : []
       };
 
@@ -207,7 +237,8 @@ export default async function handler(req, res) {
         photos: rows.map(safePhoto),
         next_cursor: meta.next_cursor || null,
         has_next: meta.has_next === true,
-        dates_filtered_here: clientSideDates
+        dates_filtered_here: clientSideDates,
+        unmatched_tags: unmatchedTags
       });
       return;
     }

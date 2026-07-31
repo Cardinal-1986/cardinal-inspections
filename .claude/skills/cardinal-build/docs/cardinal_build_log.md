@@ -1894,3 +1894,55 @@ elements; *boxes* do not. Show the element before measuring it, or the numbers a
    punch styles. Replaced with a delta against `orig`. **A hardcoded count read off nothing is the
    most repeated error on this project and I made it again.**
 2. A patch anchor with two leading spaces where the file has one.
+
+---
+
+## Build 471 — ask the librarian for photographs (31 July 2026)
+
+**A fence moved, on Theo's explicit instruction.** `CLAUDE.md` had the librarian fenced off from
+photos entirely. I put the constraint in front of him with three options; he chose the one that
+lifts it. The docs moved with the code — a `CLAUDE.md` that still said *"must never be pointed at
+them"* would have had the next session undo this.
+
+**What is still fenced:** clients, inspections, job paperwork, Company Documents. What changed is
+that asking to *see a roof* is now in scope.
+
+### The model never receives a photograph
+
+It writes a **search** — `~~photos tag=Ice Dam from=… to=…` — and nothing else. `index.html` runs
+that through `api/companycam.js` **after** the answer comes back, so no image, caption or project
+can reach Gemini even in principle. The route is admin-only and refuses `internal` photos, so the
+chat cannot surface anything the panel would not.
+
+### It is 466's convention, not a new one
+
+`~~photos` joins the same regex, the same `lbBlock` dispatch, the same marker family as
+`~~stack` / `~~flow` / `~~bars` / `~~pitch`. A new mechanism beside an existing one is a bug with a
+delay on it.
+
+Two adaptations were needed:
+
+- **Async inside a synchronous renderer.** `lbRich` builds a string. So `~~photos` emits an empty
+  container carrying its query in data attributes and `lbFillPhotos()` fills it once the message is
+  in the DOM — the shape 467 used for signed thumbnails.
+- **No junk notes.** `askQuestion` **files every answer as a library note.** "Show me ice dam
+  photos" is a lookup, not reference material, so an answer containing `~~photos` renders and is
+  never inserted.
+
+### Tag names, not ids — and it fails CLOSED
+
+A model cannot know that "Ice Dam" is tag 4471, so the route resolves names server-side. **An
+unknown name returns nothing rather than everything**: a filter that failed open would answer one
+misspelt word with every photograph Cardinal has ever taken.
+
+### Two defects my own harness caught, one of which passed first
+
+1. **An assertion containing `|| true`** — it could not fail. That is not a test, and `gates.md`'s
+   "print honest labels" rule covers exactly this.
+2. **Behind it, a real bug.** `tag=Ice Dam` unquoted parsed as **"Ice"**, and *the prompt's own
+   example is unquoted* — so the shipped feature would have searched for the wrong tag on its most
+   likely input. The parser now runs each value to the next key or end of line. The `D_greedy_lost`
+   control reproduces it.
+
+**Third hardcoded-count abort of the night** (`count('lbFillPhotos') == 3`). Replaced with property
+assertions. The count is never the thing I actually mean.
