@@ -73,23 +73,37 @@ async function requireSession(req, res) {
    That version sleeps after the final attempt too, so a job that is going to
    fail anyway still burns 1200 ms of billed time before returning. Sleep only
    when another attempt will actually follow. */
+/* 503: MODEL LADDER. Theo confirmed the current line-up is Gemini 3.6 Flash,
+   3.5 Flash and 3.1 Pro. Everything here was pinned to 3.5, which is valid but is
+   the one measurably struggling today - /api/ai-status showed it 503ing "high
+   demand" about one call in four and taking 6-14s when it answered.
+
+   3.6 is tried first and 3.5 is the fallback, so if 3.6 is unavailable to this
+   key the cost is one fast 404 and nothing breaks. OpenAI remains the rung below
+   both. */
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
+
 const ATTEMPTS = 2;
 const RETRY_PAUSE_MS = 1200;
 
 async function askGemini(apiKey, parts) {
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
   const opts = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({ contents: [{ parts }] })
   };
   let last = null;
-  for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
-    const r = await fetch(url, opts);
-    if (r.ok) return r;
-    last = r;
-    if (r.status !== 503 && r.status !== 429) break;
-    if (attempt < ATTEMPTS - 1) await new Promise(s => setTimeout(s, RETRY_PAUSE_MS));
+  for (const model of GEMINI_MODELS) {
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent';
+    for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+      const r = await fetch(url, opts);
+      if (r.ok) return r;
+      last = r;
+      /* A model this key cannot use answers 404/400 - move to the next model
+         immediately rather than retrying something that will never work. */
+      if (r.status !== 503 && r.status !== 429) break;
+      if (attempt < ATTEMPTS - 1) await new Promise(s => setTimeout(s, RETRY_PAUSE_MS));
+    }
   }
   return last;
 }

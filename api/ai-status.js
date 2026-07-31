@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     const t0 = Date.now();
     try {
       const r = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/' + (req.query && req.query.model ? String(req.query.model).replace(/[^a-z0-9.\-]/gi,'') : 'gemini-3.5-flash') + ':generateContent',
         {
           method: 'POST',
           headers: {
