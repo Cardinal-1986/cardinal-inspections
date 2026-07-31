@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 468 &#8212; import real job photographs straight from CompanyCam into the Resource Library, captions and all</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 469 &#8212; the CompanyCam button in the library assistant actually opens now &mdash; it was wired to the wrong element and did nothing</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33046,6 +33046,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:469, note:'\U0001F527 Fixed: the CompanyCam button added in 468 did nothing when tapped. It had been wired to the library page instead of to the assistant panel the button actually sits in, so the tap never reached the code. Everything behind it was working the whole time.' },
 { build:468, note:'\U0001F4F8 The Resource Library can pull photographs straight out of CompanyCam. Open the assistant, tap CompanyCam, narrow by tag and date, tick the ones worth keeping and file them \u2014 captions come across with them, and where the crew marked a photo up, you get the marked-up copy. Photos flagged internal in CompanyCam are never shown. Admin only.' },
 { build:467, note:'\U0001F4F7 Photographs filed into the library now look like photographs. A filed image shows a real thumbnail in the list instead of a camera icon, and tapping it opens it full size inside the app rather than throwing you out into a browser tab. Uploading already worked \u2014 nothing had ever been uploaded, because there was nothing to see when you did.' },
 { build:466, note:'\U0001F4D0 Ask the library assistant something and it can now draw a simple diagram in the answer \u2014 a layered assembly from the top down, numbered steps with arrows, a comparison bar chart, or a roof slope triangle. It does not draw pictures out of thin air: a diagram is only allowed to repeat something the answer already says in words, and the slope multiplier is worked out by the app rather than by the assistant.' },
@@ -48438,6 +48439,13 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         if(e.target.closest('[data-lb-cancel]')){ cancelManual(); return; }
         if(e.target.closest('[data-lb-save]')){ saveManual(); return; }
         if(e.target.closest('[data-lb-cam]')){ p.querySelector('[data-lb-camin]').click(); return; }
+        /* 469: these five were on the library VIEW in 468. The panel is a
+           SIBLING of that element, not a child, so the clicks never arrived. */
+        if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
+        if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
+        if(e.target.closest('[data-cc-find]')){ ccFind(false); return; }
+        if(e.target.closest('[data-cc-more]')){ ccFind(true); return; }
+        if(e.target.closest('[data-cc-save]')){ ccSave(); return; }
         if(e.target.closest('[data-lb-send]')){
           var q = p.querySelector('[data-lb-q]');
           var val = q.value.trim(); q.value = '';
@@ -48477,11 +48485,6 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       }
       var nt = e.target.closest('[data-lb-note]');
       if(nt){ openNote(nt.getAttribute('data-lb-note')); return; }
-      if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
-      if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
-      if(e.target.closest('[data-cc-find]')){ ccFind(false); return; }
-      if(e.target.closest('[data-cc-more]')){ ccFind(true); return; }
-      if(e.target.closest('[data-cc-save]')){ ccSave(); return; }
       var it = e.target.closest('[data-lb-open]');
       if(it){
         /* 467: a photo opens in the existing zoom viewer rather than a new tab.
