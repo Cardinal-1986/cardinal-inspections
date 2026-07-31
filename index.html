@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 465 &#8212; Plate 5: a drawing of how an ice dam actually forms, on the ice dam card</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 466 &#8212; the library assistant can draw a simple diagram in its answers &mdash; layers, steps, comparisons and slope</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33046,6 +33046,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:466, note:'\U0001F4D0 Ask the library assistant something and it can now draw a simple diagram in the answer \u2014 a layered assembly from the top down, numbered steps with arrows, a comparison bar chart, or a roof slope triangle. It does not draw pictures out of thin air: a diagram is only allowed to repeat something the answer already says in words, and the slope multiplier is worked out by the app rather than by the assistant.' },
 { build:465, note:'\u2744\uFE0F The ice dam card now has a drawing. Plate 5 shows the whole mechanism in one section \u2014 heat escaping into the attic, the snow melting over the heated part of the roof, the water running down to the cold overhang and refreezing, and the water behind the dam backing up under the shingle laps. It is drawn on the same eave as Plate 2, so the two read as a pair: this is why the ice barrier has to go where the code says it goes.' },
 { build:464, note:'\u25D1 The light/dark button in the Resource Library goes back again. It had been one-way \u2014 it would take you from light to dark and then do nothing, however many times you pressed it \u2014 because it was asking a setting that nothing ever wrote. It now reads the theme actually on screen, and it remembers your choice between sessions, which it also never did.' },
 { build:463, note:'\U0001F3E0 New in the Resource Library: <b>Roof Types</b>, under General. Thirteen roof shapes \u2014 gable, hip, cross gable, Dutch gable, jerkinhead, gambrel, mansard, shed, saltbox, pyramid, butterfly and the rest \u2014 drawn on one plate so you can name what you are standing under, then a card each on what that shape costs you in waste, in ridge cap, in ventilation and in low-slope exposure. The library had never named a roof form before this.' },
@@ -47325,6 +47326,22 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ul,#rlLibPanel .lb-ol{margin:8px 0 8px 20px;padding:0;line-height:1.55;}
 #rlLibPanel .lb-ul li,#rlLibPanel .lb-ol li{margin:4px 0;}
 #rlLibPanel .lb-table{width:100%;border-collapse:collapse;margin:11px 0 4px;font-size:12.5px;font-variant-numeric:tabular-nums;}
+/* 466: diagram blocks. Literal fallbacks throughout - the librarian palette
+   is the best-behaved one in the app and this keeps it that way. */
+.lb-fig{margin:12px 0 6px;}
+.lb-d{display:block;width:100%;height:auto;overflow:visible;}
+.lb-d-band{fill:var(--lb-surface2,#FAF8F7);stroke:var(--lb-line,#EAE5E3);stroke-width:1;}
+.lb-d-band.lb-d-top{stroke:var(--lb-accent,#C4180F);stroke-width:1.6;}
+.lb-d-track{fill:var(--lb-surface3,#F3EFEE);}
+.lb-d-bar{fill:var(--lb-accent,#C4180F);}
+.lb-d-t{fill:var(--lb-ink,#17181B);font:600 12px var(--ct-sans,system-ui,sans-serif);}
+.lb-d-s{fill:var(--lb-ink2,#6E6663);font:600 9.5px var(--ct-code,ui-monospace,monospace);letter-spacing:.06em;}
+.lb-d-v{fill:var(--lb-ink,#17181B);font:700 12px var(--ct-code,ui-monospace,monospace);font-variant-numeric:tabular-nums;}
+.lb-d-n{fill:var(--lb-accent,#C4180F);font:700 11px var(--ct-code,ui-monospace,monospace);}
+.lb-d-a{fill:var(--lb-accent,#C4180F);font:700 11px var(--ct-code,ui-monospace,monospace);letter-spacing:.05em;}
+.lb-d-arrow{stroke:var(--lb-ink2,#6E6663);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.lb-d-line{stroke:var(--lb-ink,#17181B);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.lb-d-hyp{stroke:var(--lb-accent,#C4180F);fill:none;stroke-width:1.9;stroke-linecap:round;}
 #rlLibPanel .lb-table th{text-align:left;padding:6px 8px;border-bottom:2px solid var(--lb-ink);font-weight:700;color:var(--lb-ink);}
 #rlLibPanel .lb-table td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--lb-line);color:var(--lb-ink);}
 #rlLibPanel .lb-table tbody tr:last-child td{border-bottom:none;}
@@ -47462,6 +47479,147 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     return out.join('');
   }
 
+  /* ---- 466: diagrams in a librarian answer -------------------------------
+     THE MODEL NEVER EMITS MARKUP. It emits DATA in a fenced block and this
+     builds the SVG. That is the whole security design, and it is the only one
+     compatible with lbRich's contract: escape first, then promote.
+
+     Two rules hold the line, and both are load-bearing:
+       1. Model text lands ONLY in a <text> node, NEVER in an attribute.
+          esc() escapes & < > and " but NOT the single quote, so an attribute
+          is the one place model text could still bite. Every aria-label below
+          is a fixed string built from the diagram TYPE, not from its content.
+       2. Every number drawn is one WE parsed and clamped. Nothing the model
+          wrote is ever concatenated into path data or a coordinate.
+
+     Anything malformed returns null, the marker line is dropped, and the block
+     falls through to normal rendering — so a broken diagram degrades to the
+     list it already was rather than vanishing or leaking "~~stack". */
+
+  var LB_DW = 320, LB_DMAX = 8;
+
+  /* Entity-aware truncation. The text is ALREADY escaped here, so slicing by
+     character can cut "&amp;" in half and produce garbage. Tokenise into
+     entities-or-characters and slice on that boundary instead. */
+  function lbCut(s, n){
+    var toks = String(s).match(/&[a-zA-Z]+;|&#\d+;|[\s\S]/g) || [];
+    return toks.length <= n ? String(s) : toks.slice(0, n - 1).join('') + '…';
+  }
+
+  function lbNum(s){
+    var n = parseFloat(String(s).replace(/[^0-9.\-]/g, ''));
+    return isFinite(n) ? n : null;
+  }
+
+  function lbSvg(h, body, label){
+    /* label is a FIXED string from the call site, never model text. */
+    return '<div class="lb-fig"><svg class="lb-d" viewBox="0 0 ' + LB_DW + ' ' + h +
+      '" role="img" aria-label="' + label + '">' + body + '</svg></div>';
+  }
+
+  function lbStack(rows){
+    var h = 30, pad = 5, H = rows.length * h + pad * 2 - 4, s = '';
+    for(var i = 0; i < rows.length; i++){
+      var y = pad + i * h;
+      s += '<rect class="lb-d-band' + (i === 0 ? ' lb-d-top' : '') + '" x="0.9" y="' + y +
+           '" width="' + (LB_DW - 1.8) + '" height="26" rx="5"/>' +
+           '<text class="lb-d-t" x="13" y="' + (y + 17.5) + '">' + lbCut(rows[i], 42) + '</text>';
+    }
+    return lbSvg(H, s, 'Layered assembly, listed from the top layer down');
+  }
+
+  function lbFlow(rows){
+    var bh = 32, gap = 17, H = rows.length * bh + (rows.length - 1) * gap + 8, s = '';
+    for(var i = 0; i < rows.length; i++){
+      var y = 4 + i * (bh + gap);
+      s += '<rect class="lb-d-band" x="0.9" y="' + y + '" width="' + (LB_DW - 1.8) +
+           '" height="' + bh + '" rx="6"/>' +
+           '<text class="lb-d-n" x="14" y="' + (y + 20.5) + '">' + (i + 1) + '</text>' +
+           '<text class="lb-d-t" x="34" y="' + (y + 20.5) + '">' + lbCut(rows[i], 40) + '</text>';
+      if(i < rows.length - 1){
+        var ay = y + bh;
+        s += '<path class="lb-d-arrow" d="M22 ' + (ay + 2) + ' V' + (ay + gap - 4) +
+             'M18.5 ' + (ay + gap - 8) + ' L22 ' + (ay + gap - 4) + ' L25.5 ' + (ay + gap - 8) + '"/>';
+      }
+    }
+    return lbSvg(H, s, 'Ordered steps, first to last');
+  }
+
+  function lbBars(rows, unit){
+    var lw = 132, bx = lw + 12, bmax = LB_DW - bx - 46, rh = 27;
+    var top = 0, i;
+    for(i = 0; i < rows.length; i++) if(rows[i].v > top) top = rows[i].v;
+    if(!(top > 0)) return null;
+    var H = rows.length * rh + 6, s = '';
+    for(i = 0; i < rows.length; i++){
+      var y = 3 + i * rh, w = Math.max(2, Math.round(bmax * (rows[i].v / top)));
+      s += '<text class="lb-d-t" x="0" y="' + (y + 17) + '">' + lbCut(rows[i].label, 20) + '</text>' +
+           '<rect class="lb-d-track" x="' + bx + '" y="' + (y + 7) + '" width="' + bmax + '" height="11" rx="5.5"/>' +
+           '<rect class="lb-d-bar" x="' + bx + '" y="' + (y + 7) + '" width="' + w + '" height="11" rx="5.5"/>' +
+           '<text class="lb-d-v" x="' + LB_DW + '" y="' + (y + 17) + '" text-anchor="end">' +
+           rows[i].shown + unit + '</text>';
+    }
+    return lbSvg(H, s, 'Labelled comparison bars');
+  }
+
+  function lbPitch(rise, run){
+    /* The multiplier is OURS, computed here — the model only names the pitch.
+       That is deliberate: it is the one number on this diagram that a model
+       would plausibly get wrong, so it never gets the chance. */
+    var mult = Math.sqrt(1 + (rise / run) * (rise / run));
+    var x0 = 44, x1 = 244, yb = 118, hgt = Math.max(26, Math.min(86, 200 * (rise / run)));
+    var yt = yb - hgt;
+    var s =
+      '<path class="lb-d-line" d="M' + x0 + ' ' + yb + ' H' + x1 + 'M' + x1 + ' ' + yb + ' V' + yt + '"/>' +
+      '<path class="lb-d-hyp" d="M' + x0 + ' ' + yb + ' L' + x1 + ' ' + yt + '"/>' +
+      '<path class="lb-d-line" d="M' + (x1 - 11) + ' ' + yb + ' v-11 h11"/>' +
+      '<text class="lb-d-t" x="' + ((x0 + x1) / 2) + '" y="' + (yb + 17) + '" text-anchor="middle">' +
+      run + '&#8243; RUN</text>' +
+      '<text class="lb-d-t" x="' + (x1 + 9) + '" y="' + (yt + (hgt / 2)) + '">' + rise + '&#8243;</text>' +
+      '<text class="lb-d-s" x="' + (x1 + 9) + '" y="' + (yt + (hgt / 2) + 12) + '">RISE</text>' +
+      /* Inside the triangle, not above the hypotenuse: a horizontal label set
+         against a sloping line crosses it at one end however it is nudged. */
+      '<text class="lb-d-a" x="' + (x0 + (x1 - x0) * 0.42) + '" y="' + (yb - 14) +
+      '" text-anchor="middle">&#215; ' + mult.toFixed(4) + '</text>' +
+      '<text class="lb-d-s" x="' + x0 + '" y="' + (yt - 6) + '">' + rise + '/' + run + '</text>';
+    return lbSvg(150, s, 'Roof slope triangle with its area multiplier');
+  }
+
+  function lbDiagram(kind, arg, lines){
+    if(lines.length > LB_DMAX) return null;   /* too many rows to draw honestly */
+    var i, rows = [];
+
+    if(kind === 'pitch'){
+      var m = String(arg).match(/(\d+(?:\.\d+)?)\s*[\/:]\s*(\d+(?:\.\d+)?)/);
+      if(!m) return null;
+      var rise = parseFloat(m[1]), run = parseFloat(m[2]);
+      if(!isFinite(rise) || !isFinite(run) || run <= 0 || rise <= 0) return null;
+      if(rise > 36 || run > 36) return null;
+      return lbPitch(rise, run);
+    }
+
+    if(!lines.length) return null;
+
+    if(kind === 'bars'){
+      var unit = String(arg || '').trim().slice(0, 4);
+      for(i = 0; i < lines.length; i++){
+        var p = lines[i].split('|');
+        if(p.length < 2) return null;
+        var v = lbNum(p[1]);
+        if(v === null || v < 0) return null;
+        rows.push({ label: p[0].trim(), v: v, shown: p[1].trim().replace(/[^0-9.,\-]/g, '') });
+      }
+      return rows.length ? lbBars(rows, unit ? ' ' + unit : '') : null;
+    }
+
+    for(i = 0; i < lines.length; i++){
+      var t = lines[i].replace(/^\s*(?:[-*•]|\d+[.)])\s+/, '').trim();
+      if(t) rows.push(t);
+    }
+    if(rows.length < 2) return null;          /* one band is not a diagram */
+    return kind === 'flow' ? lbFlow(rows) : lbStack(rows);
+  }
+
   function lbInline(x){
     /* bold only. Runs on escaped text, so this cannot open a tag. */
     return x.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
@@ -47478,6 +47636,19 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 
   function lbBlock(lines){
     var first = lines[0];
+
+    /* 466: ~~stack / ~~flow / ~~bars / ~~pitch - data in, SVG out. On anything
+       malformed lbDiagram returns null; drop the marker line and let the rest
+       re-dispatch below, so a broken diagram degrades to the list it was. */
+    var dm = first.match(/^~~\s*(stack|flow|bars|pitch)\b\s*(.*)$/i);
+    if(dm){
+      var drawn = null;
+      try{ drawn = lbDiagram(dm[1].toLowerCase(), dm[2], lines.slice(1)); }catch(e){ drawn = null; }
+      if(drawn) return drawn;
+      lines = lines.slice(1);
+      if(!lines.length) return '';
+      first = lines[0];
+    }
 
     /* markdown table: a header row, a |---| rule, then body rows */
     if(lines.length >= 2 && first.indexOf('|') > -1 && lbIsRule(lines[1])){

@@ -1584,3 +1584,88 @@ at all, so for this card specifically Cardinal's own library has nothing usable 
 **Doc correction:** `CLAUDE.md` says zero photo objects carry `path` or `storage_path`. That
 was true when it was written; **216 of 236 rows now have `storage_path`**. The migration
 happened. Do not re-derive the old lesson from the doc.
+
+---
+
+## Build 466 — the librarian can draw, without ever emitting markup
+
+*30 July 2026. Theo: "Can you make the ai in the resource chat add simple diagrams to the info".*
+
+### The constraint that shaped the whole design
+
+`lbRich()` **escapes first, then promotes** a small marker set on the already-escaped
+string, and deliberately supports no links, no images and no raw HTML. That ordering is the
+only reason nothing the API returns can open a tag. Letting the model emit SVG would have
+thrown it away for a picture.
+
+**So the model emits DATA and the app draws the SVG.** Four forms:
+
+| | |
+|---|---|
+| `~~stack` | a layered assembly, top layer first, one per line |
+| `~~flow` | ordered steps, drawn with numbered boxes and arrows |
+| `~~bars <unit>` | `Label \| number` per line |
+| `~~pitch 6/12` | a slope triangle — **the app computes the multiplier** |
+
+### Two rules hold the security line, and both are load-bearing
+
+1. **Model text lands only in a `<text>` node, never in an attribute.** `esc()` escapes
+   `&`, `<`, `>` and `"` — **but not the single quote** — so an attribute is the one place
+   model text could still bite. Every `aria-label` is a fixed string chosen by the diagram
+   *type*, never built from its content. The patch asserts all four `lbSvg()` call sites
+   pass a string literal.
+2. **Every number drawn is one we parsed and clamped.** Nothing the model wrote is
+   concatenated into path data or a coordinate.
+
+And the one number a model would plausibly get wrong — the rafter multiplier — is computed
+from the pitch here rather than accepted. `~~pitch 6/12` draws **1.1180** because we did the
+arithmetic.
+
+### Degradation, and why caps are refusals rather than truncations
+
+Malformed input returns `null`, the marker line is dropped, and the remaining lines
+re-dispatch through the normal rules — so a broken diagram becomes the bullet list it
+already was. It does not vanish and it does not leak `~~stack`.
+
+Over 8 rows, a `bars` row with no number, a single-row stack, an unparseable pitch, a zero
+run: **all refuse to draw** rather than drawing a partial picture. Silently dropping half a
+list of requirements is the failure worth avoiding here.
+
+### The prompt rule that matters more than the grammar
+
+`api/librarian.js` now teaches the four forms and adds: a diagram may **only restate
+something the prose already says** — never introduce a fact, number or step that is not in
+the text. A picture that says something the words do not is a far worse bug than no picture.
+It also keeps the existing "prefer a TABLE for values that vary by one thing", and the
+"do NOT use raw HTML" line survives verbatim.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker; `node --check` on `api/librarian.js`.
+
+**29/29 in a real browser, against the SHIPPED source** — the harness slices `esc()` through
+`lbBlock` straight out of `index.html` and executes that, rather than re-implementing it.
+Five XSS payloads (`<img onerror>`, `"><svg onload>`, `<script>`, `</text><foreignObject>`,
+`<style>`) were each pushed through all four diagram kinds and through plain prose, then the
+output was put through `innerHTML` exactly as the app does: **zero elements created, zero
+`on*` attributes, and the payload still renders as visible literal text** rather than being
+silently eaten. Entity-aware truncation is asserted too — the text is already escaped at
+that point, so a naive slice can cut `&amp;` in half.
+
+**Negative control: 15 of 29 failing on 465.** Scope proven across **both files** — the
+single-file proof would have routed both writes to one temp and reported a difference that
+had nothing to do with scope.
+
+### Where I was wrong — three assertions in one build, all mine
+
+1. `aria-label="' \+` fired on the **one legitimate construction it was written to protect**.
+   Replaced with the property that actually matters: every `lbSvg()` call passes a literal.
+2. The replacement split the argument list on commas — **and the labels contain commas**.
+3. `assert src.count('/^#{2,4}\\s+/') == 1` — that regex appears **twice** in its own rule
+   (test, then replace). Hardcoded number, again; made self-computing.
+
+All three aborted before any write, which is the patch harness working exactly as intended.
+
+**Fourth time this session a negative control threw instead of counting a red.** It is now a
+helper (`q(el, sel, prop)`) rather than another one-line patch. Standing rule, restated:
+*every negative control must fail, not crash.*
