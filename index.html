@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 478 &#8212; try AI captions on fifty photographs before deciding whether to do all sixty thousand</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 480 &#8212; tap the corner of a CompanyCam photograph to see it full size</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33057,6 +33057,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:480, note:'\U0001F50D CompanyCam photographs open full size. Tap the small arrows in the corner of any thumbnail and it fills the screen, caption and all. Tapping the picture itself still ticks it for filing, the way it always did \u2014 the corner button is the only thing that expands.' },
+{ build:479, note:'\U0001F6AA The CompanyCam photo panel was a dead end. The question box disappeared when you opened it, so you could not ask anything while looking at photographs, and the only way out was a button marked \u2018Cancel\u2019 \u2014 which reads like it throws your work away rather than takes you back. The question box now stays, and the button says \u2018Back to chat\u2019.' },
 { build:478, note:'\U0001F9EA A trial button for AI photo captions. Only 79 of your 60,485 CompanyCam photographs have a caption typed on them, so searching by what is IN a picture needs the computer to write one. Whether it is any good at roofing is worth finding out on fifty photographs rather than sixty thousand. Nothing is overwritten \u2014 the computer\u2019s captions are kept separately from the ones your crews wrote, and can be thrown away.' },
 { build:477, note:'\U0001F522 Fixed the indexing counter. Running Build index a second time carried on counting from the first run, so it read \u201887,096 of 61,649 photos\u2019 \u2014 more pictures than exist. The tally now starts from zero each run, and the display refuses to show a number larger than the total even if something else goes wrong. Nothing was wrong with the photographs; only the counting.' },
 { build:476, note:'\U0001F3D7\uFE0F Photo search now works on job names. Indexing all 60,485 photographs turned up something worth knowing: only 79 of them have a caption typed on them. Searching captions was therefore never going to find much. But every single photo does know which job it came from \u2014 775 of them \u2014 so the search now reads job names and addresses instead. Ask for a street or a partner and you will get the pictures.' },
@@ -47375,7 +47377,11 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 /* 468: the CompanyCam import picker. Hidden until the button opens it. */
 #rlLibPanel .lb-cc{display:none;padding:10px 12px;border-top:1px solid var(--lb-line,#EAE5E3);}
 #rlLibPanel.cc .lb-cc{display:block;}
-#rlLibPanel.cc .lb-acts,#rlLibPanel.cc .lb-ask{display:none;}
+/* 479: only the action row hides in CompanyCam mode. The ask box used to hide
+   with it, which left the panel a dead end - no way to ask, and the only exit
+   labelled "Cancel". The librarian can answer WITH photographs, so being
+   unable to ask while looking at them was backwards. */
+#rlLibPanel.cc .lb-acts{display:none;}
 #rlLibPanel .lb-cch{font:700 13px var(--lb-sans,inherit);color:var(--lb-ink,#241E1C);margin-bottom:6px;}
 #rlLibPanel .lb-cc .row2{display:flex;gap:8px;}
 #rlLibPanel .lb-cc .row2 span{flex:1;min-width:0;}
@@ -47393,6 +47399,9 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ccidx span{flex:1;min-width:0;}
 #rlLibPanel .lb-ccidx button{flex:0 0 auto;padding:6px 10px;border-radius:8px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;border:1px solid var(--lb-line2,#DED8D6);background:var(--lb-surface2,#FAF8F7);color:var(--lb-ink,#17181B);}
 #rlLibPanel .lb-ccidx button:disabled{opacity:.5;cursor:progress;}
+#rlLibPanel .lb-ccz{position:absolute;top:3px;right:3px;width:22px;height:22px;border:0;border-radius:5px;cursor:pointer;padding:0;line-height:1;font:700 12px 'Segoe UI',Arial,sans-serif;color:#fff;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;}
+#rlLibPanel .lb-ccz:hover{background:rgba(0,0,0,.78);}
+#rlLibPanel .lb-ccz:focus-visible{outline:2px solid var(--lb-ac,#c8202e);outline-offset:1px;}
 #rlLibPanel .lb-ccidx button[data-cc-trial]{background:transparent;color:var(--lb-dim,#6B615D);border-style:dashed;}
 /* 471: photographs inside a chat answer. Reuses the tile, not a second one. */
 #rlLibPanel .lb-photos{margin:10px 0 4px;}
@@ -48182,6 +48191,12 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         '<img src="' + esc(ph.thumb) + '" alt="' + esc(ph.description || 'CompanyCam photo') + '" loading="lazy">' +
         '<span class="cap">' + esc(ph.description || '(no caption)') + '</span>' +
         '<span class="meta">' + esc(when) + (ph.annotated ? ' \u00b7 marked up' : '') + '</span>' +
+        /* 480: the tile is a <label> wrapping a checkbox, so a plain click picks
+           the photo. Expanding needs its own control that does NOT pick - the
+           delegate stops the event before the label sees it. Uses the Library's
+           existing lightbox rather than a second one. */
+        '<button type="button" class="lb-ccz" data-cc-zoom="' + esc(ph.preview || ph.thumb) +
+          '" title="Expand" aria-label="Expand this photograph">\u2922</button>' +
         '</label>';
     }).join('') + (ccCursor ? '<button type="button" class="lb-ccmore" data-cc-more>More</button>' : '');
     var f = p.querySelector('[data-cc-foot]');
@@ -48707,7 +48722,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
             '<span><label>To</label><input type="date" data-cc-to></span>' +
           '</div>' +
           '<div class="row">' +
-            '<button type="button" data-cc-close>Cancel</button>' +
+            '<button type="button" data-cc-close>\u2190 Back to chat</button>' +
             '<button type="button" class="go" data-cc-find>Find photos</button>' +
           '</div>' +
           '<div class="lb-ccidx">' +
@@ -48758,6 +48773,19 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         }
         if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
         if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
+        var _z = e.target.closest('[data-cc-zoom]');
+        if(_z){
+          /* Both, deliberately: preventDefault stops the <label> toggling its
+             checkbox, stopPropagation stops any outer handler re-picking it. */
+          e.preventDefault(); e.stopPropagation();
+          var _u = _z.getAttribute('data-cc-zoom');
+          var _t = _z.closest('.lb-ccp');
+          var _c = _t && _t.querySelector('.cap');
+          if(_u && window.CardinalResourceImages && typeof window.CardinalResourceImages.open === 'function'){
+            window.CardinalResourceImages.open(_u, _c ? _c.textContent : '');
+          }
+          return;
+        }
         if(e.target.closest('[data-cc-sync]')){ ccSync(); return; }
         if(e.target.closest('[data-cc-trial]')){ ccTrial(); return; }
         if(e.target.closest('[data-cc-find]')){ ccFind(false); return; }
