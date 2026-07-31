@@ -196,11 +196,30 @@ GET         /public_api/v1/projects/{project_id}/photos/tags Project Photo Tag
 GET POST DELETE GET PATCH  /public_api/v1/tags[/{id}]        Tags — full CRUD
 ```
 
-**`Photo Description` is POST-only.** There is no `GET .../descriptions`. So either the description
-lives on the Photo object itself (in the clipped tail, where v2 puts it) or it comes back through
-`include` — **and we cannot tell which from this capture.** This is the single most important open
-question for the importer, because the caption *is* the feature: `project_photos` in Supabase has
-**236 rows and zero captions**, which is exactly why no query could ever find "the ice dam photo".
+**`Photo Description` is POST-only — and that turned out not to matter.** There is no
+`GET .../descriptions`, which looked like the importer's biggest risk: either the caption lived on
+the Photo object or it needed a second call nobody could see. **The probe settled it — `description`
+is a field on the Photo itself**, so the account-wide index returns captions in one pass. The
+POST-only resource is for *writing* a description back, which we never do. Reading needs nothing
+extra.
+
+### `Projects → index` — `GET /public_api/v1/projects`
+
+*Read 31 July off Theo's screen in the **Scalar API client** (`client.scalar.com`), which is the
+interactive twin of the reference — same document, but every parameter is a live input box.*
+
+Query parameters, and they are **not** the photo index's:
+
+```
+after   archived   assigned_user_ids   include   include_total   limit   status
+```
+
+**No `start_date` / `end_date`, no `tag_ids`.** Projects filter on `archived` and `status` instead.
+So "photos from jobs we ran last winter" cannot be reached by filtering projects by date — go at it
+through the **photo** index, which does carry the date filters, and use `project_id` off each photo
+to label it. One pass, not two.
+
+`limit` showed a default of **50**, matching every other index.
 
 **Tags are a first-class resource in v1**, which the v2 schema had no field for at all. `tag_ids` on
 the photo index is a server-side filter, and `GET /public_api/v1/tags` is how you learn the ids to
