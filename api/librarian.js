@@ -146,13 +146,13 @@ const RULES =
      files." Right fence, wrong catch: he asked for a DIAGRAM OF A CONCEPT, which
      is reference material by definition. The test is WHOSE it is, not whether it
      is a picture - and Plates 1-5 already in this library are exactly that. */
-  'A request to DRAW, ILLUSTRATE or DIAGRAM a general concept IS in scope. Answer \n' +
-  'it and include a diagram. Asking for a drawing of HOW SOMETHING WORKS is a \n' +
-  'request for reference material, not for job paperwork.\n' +
-  'What is out of scope is a drawing OF ONE SPECIFIC JOB - a site plan, shop \n' +
-  'drawing or blueprint for a single address or customer. The test is whose it \n' +
-  'is, not whether it is a picture. NEVER set belongs:false merely because the \n' +
-  'request used the words draw, drawing, illustration, concept or diagram.\n';
+  /* 510: 508 carved this out in SEVEN lines against a FIVE-line fence. A
+     qualifier heavier than the rule it qualifies stops being a qualifier - it
+     becomes the rule, and job paperwork gets let in from the other side. Same
+     distinction, three lines, proportionate. */
+  'A drawing IS in scope when it explains how something works in general, and is \n' +
+  'NOT in scope when it belongs to one job - a site plan or shop drawing for a \n' +
+  'single address. The test is whose it is, not whether it is a picture.\n';
 
 const SHAPE =
   'Respond with ONLY raw JSON, no markdown fences, in this shape:\n' +
@@ -221,14 +221,22 @@ export default async function handler(req, res) {
            draws the SVG. See the lbDiagram block there for why. */
         'You may add ONE simple diagram when it genuinely helps. You never write \n' +
         'HTML or SVG - you write the data on its own lines and the app draws it. \n' +
-        'Leave a blank line before and after. The four forms:\n' +
+        /* 510: TESTED against the real lbRich. A marker line is only a diagram
+           if it is the FIRST line of its own block; lbRich splits on blank lines
+           only. Prose touching it on either side turns the whole thing into a
+           paragraph and leaks the ~~ to the reader. The example below now obeys
+           this - it did not, and rendered as zero diagrams. */
+        'A marker must be the FIRST line of its own block: one blank line before \n' +
+        'it and one blank line after the last data line. Text touching it on \n' +
+        'either side turns the whole diagram into plain text. The four forms:\n' +
         '  ~~stack        a layered assembly, TOP layer first, one per line\n' +
         '  ~~flow         ordered steps, one per line, drawn with arrows\n' +
         '  ~~bars <unit>  comparison, one "Label | number" per line\n' +
         '  ~~pitch 6/12   a roof slope triangle; the app computes the multiplier\n' +
         'For example:\n' +
-        '~~stack\nAsphalt shingles\nSynthetic underlayment\nIce barrier at the eave\nRoof deck\n' +
+        '\n~~stack\nAsphalt shingles\nSynthetic underlayment\nIce barrier at the eave\nRoof deck\n' +
         '\n~~bars %\nSimple gable | 6\nStandard cut-up | 12\nComplex cut-up | 15\n' +
+        '\n' +
         'At most ONE diagram per entry, at most 8 lines in it, labels under 40 \n' +
         'characters. A diagram may ONLY restate something the prose already says - \n' +
         'never put a fact, number or step in a diagram that is not in the text. \n' +

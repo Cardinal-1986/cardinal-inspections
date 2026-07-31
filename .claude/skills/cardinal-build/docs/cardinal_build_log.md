@@ -3363,3 +3363,49 @@ entrance only shows if its destination does.
 Both anchors were copied from **whitespace-normalised display output** rather than printed with
 `pl.context()`. Both aborted before writing, which is the helper working. `START_HERE` says print
 `repr()` of the real text before writing an anchor; I did it the third time.
+
+## 510 — the librarian prompt taught the shape that breaks
+
+**Tested before changing anything, and the test decided what changed.**
+
+The prompt's own worked example was put through the real `lbRich`, with the whole `lb*` family loaded
+and a sanity probe first confirming `lbDiagram` can draw at all:
+
+| | diagrams | paragraphs | `~~` leaked |
+|---|---:|---:|---|
+| the example exactly as the prompt presents it | **0** | 2 | **yes** |
+| the identical two, blank-line separated | **2** | 0 | no |
+
+**The renderer is innocent and was not touched.** `lbDiagram` drew on the direct probe and drew both
+diagrams from clean input. `lbRich`, `lbBlock` and `lbDiagram` are asserted **byte-identical** to 509.
+
+### Two prompt defects, both proven by that run
+
+**The example violated the rule it states.** *"Leave a blank line before and after"* was followed
+immediately by an example with no blank line before `~~stack` — `For example:` sat directly above it —
+and none after the last bars row, where `At most ONE diagram per entry…` ran straight on. Rendered as
+presented: **zero diagrams, and a literal `~~stack` visible to the reader.**
+
+Isolated separately: prose immediately **before** a marker swallows the diagram and leaks the `~~`;
+prose immediately **after** feeds instruction lines to `lbDiagram` as data, which fails the
+`Label | number` check and degrades to a paragraph. Both are inherent to `lbRich` splitting on blank
+lines only — which is why the rule is now stated sharply rather than in passing.
+
+**My own 508 edit was lopsided.** I carved the scope open in **seven** lines against a **five**-line
+fence. A qualifier heavier than the rule it qualifies stops being a qualifier and becomes the rule —
+and the fence then fails in the other direction, letting job paperwork in. Condensed to three lines
+holding exactly the same distinction: *the test is whose it is, not whether it is a picture.*
+
+### The harness nearly gave a confident wrong answer
+
+The first run reported **0 diagrams for every case, including the clean control**, which reads as
+"the renderer cannot draw this". It was the harness: `lbDiagram` threw on `LB_DMAX`, then on `lbCut`,
+and `lbBlock`'s `try/catch` turned each throw into a paragraph — the degradation path doing its job,
+and hiding the fault perfectly.
+
+Two things saved it. A **sanity probe** that calls `lbDiagram` directly and refuses to print a verdict
+unless it draws. And **discovering** the helper list from the source (18 of them) rather than typing
+it from memory — the hand-made list missed `lbCut`.
+
+**A degradation path that silently swallows errors will make an incomplete harness look like a broken
+feature.** Probe the thing under test in isolation before believing any result that flows through it.
