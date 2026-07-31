@@ -698,22 +698,76 @@ neither locks scroll — verified — so the bug was unique to `openPreview`.
 
 ---
 
-## 10. Designed, agreed, not built
+## 10. The outcome form — SHIPPED at 513 (with 514 and 515)
 
-The **outcome form**. Design settled with Theo; the reference is
-`.claude/skills/cardinal-build/references/outcome_v2.html`
-(Style 4 layout, Style 2 flow) — in the repo as of 31 Jul, reachable by any program.
+Was "designed, agreed, not built" from 29 July until **31 July, builds 513–506**.
+Reference design: `.claude/skills/cardinal-build/references/outcome_v2.html`
+(Style 4 layout, Style 2 flow) — built as drawn.
 
-Four outcomes: **Awarded** / **Still waiting** *(second — most common)* /
-**Referred onward** / **Not awarded**. No reason field.
+**Where it lives:** `<script id="cr-cc-script">` (the community client page), rendered
+as a **pane inside `#cr-cc`**, not an overlay. No fixed positioning, nothing for
+`#pwaNav` (9990) to strand, and **no 14th writer of the global body scroll lock** —
+that count stays at 13.
 
-"Still waiting" writes stage `OnHold` plus `check_back_at`.
+**How you reach it:** the *Waiting on a decision* card (stage `Prospect`) now offers a
+single **Record the outcome** button in place of the old Awarded / Not awarded pair.
+A parked job (`OnHold`) gets its own thread card that re-enters the same step.
 
-⚠ **Reuse `checklist.bid.awarded_amount`** — it already exists, with a
-`promptForBid` UI and a `.cr-bidstrip` display. Do not create a parallel field
-under `checklist.lead`. Full corrected field list and the open questions are in
-`OPEN_ITEMS.md` §1.
+### The four outcomes
 
-Also outstanding: `tarped_at` must be **displayed** on the job card, not merely
-stored — Theo: *"It is nice to show when the tarp was put up."* The string
-`tarp` currently appears **zero** times in the codebase.
+| Outcome | Writes | Stage |
+|---|---|---|
+| **Awarded** | `bid.awarded_amount`, `bid.awarded_at`, `lead.funded_by` | `Approved` |
+| **Still waiting** *(second — the most common)* | `lead.check_back_at`, `lead.award_cycle` | `OnHold` |
+| **Referred onward** | `lead.referred_to`, `lead.referred_at`, `lead.check_back_at`, and `lead.partner_name` / `partner_id` follow the referral | `OnHold` |
+| **Not awarded** | nothing but the tarp date | `Lost` |
+
+`lead.tarped_at` is on all four — tarping happens regardless of how the bid lands —
+and is **displayed**, on the parked card and the awarded card. That closes Theo's
+*"It is nice to show when the tarp was put up."*
+
+**No reason field**, deliberately. `setStage('Lost')` already skips `LOSS_REASONS` for
+community (PR #33, §3 above), so nothing asks and nothing is guessed.
+
+### Things worth not relearning
+
+- **Money reuses `checklist.bid.awarded_amount`** — the field `promptForBid()` writes
+  and `.cr-bidstrip` displays. An outcome-only copy under `checklist.lead` would have
+  forked the number already on screen.
+- **Checklist patch runs BEFORE `setStage`.** `setStage` fires its own
+  `patchProjectCk` without awaiting it, and `patchProjectCk` reads `pr.checklist`
+  synchronously at call time — so a patch started *after* it races `stage_since` and
+  `t_<stage>`. This order cannot lose either write.
+- **`mergeCk()` touches only the keys handed to it.** Stripping every empty value the
+  way `saveBid()` does would have deleted `bid_due_at` on the nine community jobs that
+  hold it as an empty string.
+- **The partner pickers read `CardinalCommunityPartners.list()`**, the masked view, and
+  sort **Habitat first**. Nothing is hardcoded — the mock's partner names were
+  illustrative and are not this account's roster.
+- Typing does not re-render (the caret would jump). State lives in `oc`; hand-picking a
+  date clears the segment highlight in place.
+
+### 514 — the second clock
+
+`bid_due_at` is when *our* bid was owed to the partner. Once a job is parked on a grant
+that date is meaningless and keeps ageing, so the job sorted as the most urgent thing on
+the board forever. `chDueIso(pr)` returns `check_back_at` when the stage is `OnHold` and
+one is set, otherwise `bid_due_at`, and it feeds **`chDueBand`, the deadline sort, the
+undated partition and the All-bids Due column** — plus the client page's facts strip,
+which relabels **Due → Check back**. The chip drops `.cc-pill.due` (the red one) for the
+neutral one and reads `N d hold`. Sort/filter label is now **Due / check back**.
+
+A *missed* check-back still bands **Overdue** — that is the one thing on a parked job
+worth shouting about. `OnHold` with no `check_back_at` keeps the old behaviour.
+
+### 515 — the Bill to card had lost its fill and its border
+
+Found by 513's own structural gate, pre-existing. `#cr-cc .ct.bill` filled with
+`var(--goodbg)` — a token declared inside `#cr-ch2` (the hub) and **nowhere else**. In
+`#cr-cc` scope the value was invalid, so Chromium dropped the whole `background`
+declaration, and the gradient border went with it exactly as that rule's own comment
+warns. Computed `background-image` was **`none`** at 503 and is a real gradient at 515.
+Now `var(--ccm-wash,rgba(4,120,87,.18))` with a literal, per 448–449.
+
+That card is the community CRM's "who gets the invoice" marker (PR #28), which makes it
+the last thing that should render blank.

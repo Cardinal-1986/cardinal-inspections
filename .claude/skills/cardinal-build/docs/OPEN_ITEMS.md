@@ -51,6 +51,25 @@ re-check this — it becomes live the moment that count is non-zero.
 
 ### ✅ Shipped 31 July — struck from this list
 
+- **513 — the community outcome form.** §1 below, struck. Four outcomes, no reason field,
+  `tarped_at` displayed. Renders as a pane, so the scroll-lock writer count stays at 13.
+- **514 — the second clock.** §2 below, struck.
+- **515 — the Bill to card had lost its fill and its border.** Pre-existing; `#cr-cc .ct.bill`
+  referenced `--goodbg`, a `#cr-ch2` token that does not exist in that scope, so the whole
+  `background` declaration was invalid and dropped. Computed `background-image` was **`none`**.
+- **516 — the desktop left menu.** Theo's pick: option 2 with option 4's content cap. It
+  **mirrors the live `#navMenu`** rather than copying it — nine modules inject into that menu at
+  runtime and `cr-menu-script` renames two of its sections — and clicking a row clicks the real
+  `.navopt`, so there is one dispatcher. Sections collapsible, state remembered. Desktop ≥1100px.
+- **517 — Theo's menu reorganisation.** Sales Floor leads Sell; Objection Coach hidden (it lives
+  inside Sales Floor); ABC Supply into Admin; the duplicate Community Partners hidden. Health
+  Check was already in Admin. **Open, and Theo's call:** whether ABC Supply should leave the reps'
+  Sell section too, and where **Self Check** belongs — it has no section and buckets under *More*.
+- **518 — the content cap was far too tight**, my own regression from 516. A flat 1180px left a
+  narrow island on a 3440 ultrawide with 1011px dead each side. Now `min(2400px, 92%)`.
+- **519 — the dashboard mini calendar removed** (`#calCard`), on Theo's word. Hidden, not deleted:
+  `getElementById('calGrid').addEventListener` has no null guard and would throw at boot.
+
 - **487 — list-view document contrast.** NOT the documents list: that surface keeps a white
   `--paper` table and measured 12.63:1, and the prescribed 'tokenise to var(--muted)' would have
   cut it to 6.69:1. The real failure was `#listMount` under `#listView` at >700px — 1.57:1.
@@ -345,10 +364,18 @@ a light ground changes how they read. Same reasoning as the calendars.
 
 *Updated 29 July 2026 — session of 34 merged PRs, `origin/main @ 202e6f3`, app stamped build 427.*
 
-## 1. The outcome form — designed, agreed, not built
+## 1. ~~The outcome form~~ — ✅ SHIPPED at 513, do not re-open
 
-**Status:** design settled with Theo. Nothing shipped. `OnHold` (PR #34) is the
-foundation and is already in place.
+**Built 31 July as builds 513–515**, exactly as `references/outcome_v2.html` draws it.
+Full record in `FEATURES.md` §10 and `cardinal_build_log.md`. Everything below is kept
+only because the *reasoning* is still worth having; none of it is outstanding.
+
+**The one thing Theo still owes an answer on:** the check-back default. It shipped as
+**1 yr preselected**, which is what the approved mock draws — a preselection on a segment
+that is always on screen, not a silent default. One token to change if he wants 6 mo or 2 yr.
+
+~~**Status:** design settled with Theo. Nothing shipped.~~ `OnHold` (PR #34) was the
+foundation and 513 is what finally writes it.
 
 Reference: `.claude/skills/cardinal-build/references/outcome_v2.html` — **Style 4 layout with Style 2's
 flow**, which is what he picked ("4 with 2s flow"). *Path corrected 31 Jul; it previously cited a sandbox-only `/agent/workspace/` path no other program could open.*
@@ -455,7 +482,17 @@ whose `await` is a syntax error. That bit me twice today on other functions.
 
 ---
 
-## 2. The second clock — a real bug, currently visible
+## 2. ~~The second clock~~ — ✅ SHIPPED at 514
+
+`chDueIso(pr)` in `cr-ch2-script` returns `check_back_at` when the stage is `OnHold` and
+one is set, else `bid_due_at`, and it feeds `chDueBand`, the deadline sort, the undated
+partition and the All-bids Due column — plus the client page facts strip, which relabels
+**Due → Check back**. Scoped, not blanket-replaced: the two `bid_due_at` reads inside
+`st === 'Lead'` branches are untouched, because a Lead is never `OnHold`.
+
+The reasoning below is kept for the record.
+
+### ~~The second clock — a real bug, currently visible~~
 
 This is the highest-value unshipped fix, and it is a consequence of item 1.
 
@@ -725,9 +762,9 @@ re-verified here before filing** — `OnHold` writers **0**, `check_back_at` / `
 
 ### Known broken / half-finished — deltas only
 
-- **The outcome form is still unbuilt end to end**, verified at 472. Zero writers of `OnHold`;
-  `check_back_at`, `funded_by`, `referred_to`, `award_cycle` all at **0** references. `chDueBand`
-  does still read only `bid_due_at` — that part stands.
+- ~~**The outcome form is still unbuilt end to end**, verified at 472.~~ **Built at 513–515,
+  31 July.** All six field names were still at 0 occurrences when the build started, which is
+  what let it use them without collision. `chDueBand` now reads `chDueIso()`.
 
   **⚠ The −713-day bid no longer exists.** Checked against the live database 31 Jul: of 10
   community jobs carrying the `bid_due_at` key, **9 hold an empty string** and exactly one holds a

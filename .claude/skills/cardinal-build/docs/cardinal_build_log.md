@@ -3363,3 +3363,201 @@ entrance only shows if its destination does.
 Both anchors were copied from **whitespace-normalised display output** rather than printed with
 `pl.context()`. Both aborted before writing, which is the helper working. `START_HERE` says print
 `repr()` of the real text before writing an anchor; I did it the third time.
+
+---
+
+## 513–515 · 31 July 2026 · the community outcome form, and the second clock
+
+**513 — the outcome form.** Shipped as designed in `references/outcome_v2.html` (style 4
+layout, style 2 flow — the one Theo picked on 29 July). Four outcomes on the community
+client page: Awarded, **Still waiting** (second, because it is the most common), Referred
+onward, Not awarded. No reason field. It renders as a pane inside `#cr-cc` rather than an
+overlay, so it adds no fixed positioning, nothing for `#pwaNav` to strand, and **no 14th
+writer of the global body scroll lock** — that count is still 13.
+
+Field names were all grepped first and all six were at **0 occurrences**: `funded_by`,
+`referred_to`, `referred_at`, `tarped_at`, `check_back_at`, `award_cycle`. Money reuses
+`checklist.bid.awarded_amount`, which already had `promptForBid()` writing it and
+`.cr-bidstrip` displaying it — the corrected field list in `OPEN_ITEMS.md` §1 caught that
+before it became a second, diverging number.
+
+Two ordering decisions worth keeping:
+
+- **Checklist patch runs before `setStage`.** `setStage` fires its own `patchProjectCk`
+  without awaiting it, and `patchProjectCk` reads `pr.checklist` synchronously at call
+  time. A patch started after it races `stage_since` and `t_<stage>` and can drop them.
+- **`mergeCk()` touches only the keys it is given.** `saveBid()`'s strip-every-empty-value
+  pass would have deleted `bid_due_at` on the nine community jobs holding it as `''`.
+
+**514 — the second clock.** `chDueIso(pr)` returns `check_back_at` when the stage is
+`OnHold` and one is set, else `bid_due_at`. It feeds `chDueBand`, the deadline comparator,
+the undated partition and the All-bids Due column, plus the client page's facts strip
+(**Due → Check back**). A parked row drops the red `.cc-pill.due` for the neutral chip and
+reads `N d hold`. The sort/filter label became **Due / check back**, because it is no
+longer only the bid deadline. A *missed* check-back still bands Overdue, on purpose.
+
+Scoped, not blanket-replaced: `bid_due_at` is referenced 19 times, and the two sites inside
+`st === 'Lead'` branches are untouched — a Lead is never OnHold.
+
+**515 — the Bill to card had lost its fill AND its border.** Pre-existing, found by 513's
+own structural gate. `#cr-cc .ct.bill` painted with `var(--goodbg)`, declared inside
+`#cr-ch2` and nowhere else; in `#cr-cc` scope the value is invalid, so the whole
+`background` declaration was dropped — taking the gradient border with it, exactly as that
+rule's comment warns. Same class as 481, second time in six builds.
+
+**Gates.** `check_build.py` green at each of 513, 514, 515, each against its predecessor
+with its own marker and negative control. jsdom harness `oc514_harness.js` — **74/74**,
+running the shipped `cr-cc-script` verbatim and the hub's `chDueIso`/`chDueBand` lifted out
+by brace-matching, against real-shaped rows (`checklist` as a JSON string, `bid_due_at` as
+an empty string).
+
+**And the instrument the last session lacked: Chromium.** This environment has it, so
+`css515_chromium.js` ran `getComputedStyle` over the shipped stylesheet and the shipped
+renderer's own markup — **26/26 across dark and rb-light**. It is what proved 515:
+`.ct.bill` computes `background-image: none` at 503 and a real gradient at 515. Two harness
+reds along the way were both **the test's fault** — splitting CSS on `}` tore an `@media`
+prelude and read as an unprefixed selector, and a bare `--goodbg` count found the string
+inside 515's own explanatory comment.
+
+Contrast computed rather than eyeballed: the mock's `--dim` for the small labels measures
+**4.33:1 dark and 3.24:1 light** on `--raise`, under the floor, so the build uses `--mute`
+(**6.21:1 / 5.39:1**). Every other text pair in the step clears 4.5:1 in both themes.
+Colour *correctness* is still Theo's eyes.
+
+**Left alone deliberately:** the check-back default is **1 yr preselected**, as the approved
+mock draws it. Theo has never actually answered 3mo/6mo/1yr/2yr — it is a preselection on a
+segment that is always on screen, and it is a one-token change.
+
+---
+
+## 516 · 31 July 2026 · the desktop left menu
+
+Theo: *"On the Desktop can you please just put a menu over to the left side, that way the screen is
+not so stretched out… all 3 CRMS, everything in the SELL section, everything in the DAILY sections."*
+Four designs were drawn; he picked **2 with 4's content cap**, then asked for the remaining sections
+in as well, with the headings collapsible *"as that may be alot."*
+
+**It does not hardcode a menu, and that is the whole point.** `#navMenu` is assembled at RUNTIME by
+**nine** modules — `cr-cpartners-script`, `cr-menu-script`, `cr-lil-script`, `cr-sf-script`,
+`cr-pb-script`, `cr-ci-script`, `cr-ch2-script`, `cr-sc-script` and the main block. `cr-menu-script`
+alone **renames `Insurance` → `CRMs` and `Office` → `Resources`**, hides `recents`, hides
+`reports`/`feed`/`settings` from non-admins, and builds an admin-gated **Admin** section. A menu
+copied out of the static markup would have shipped with two section names the app has not used for
+builds, missing ten runtime items, and no admin gating.
+
+So `cr-lnav-script` **mirrors the live `#navMenu`** and clicking a row **clicks the real `.navopt`**.
+One dispatcher, no second copy of the routing, and every future injected item appears for free. This
+is `syncJobMenu()`'s shape, which already does exactly this for the job menu — the convention
+existed, so it was copied rather than reinvented.
+
+**The stretch itself.** `.wrap` ships `max-width:none` and carries 25 elements. `body.cr-lnav-on
+.wrap:not(.masthead)` caps it at 1180. Five views out-specify that with their **own** deliberate
+widths and keep them — Settings 640, Communications 900, Audit 980, Activity 1500, **Schedule Board
+1700** — which is correct; squeezing a 1700px calendar to 1180 would be a regression dressed as a
+fix. `#bannerMount` keeps 100% through its own ID rule. After 516 **no `.wrap` is left unbounded.**
+
+Desktop-only via one `--lnav-w` custom property (0 below 1100px, 238 above) so there is no second
+copy of the breakpoint to fall out of step. Phones are byte-for-byte unchanged.
+
+**Gates.** `check_build.py` green. New harness `lnav516_harness.js` — **32/32** — and it is a
+different instrument from anything before it: it loads the **whole real `index.html`** in Chromium
+off `file://`, boots all 103 script blocks with the network blocked at the route level, and drives
+the actual sidebar. jsdom could not have run this: it resolves neither the media query that gates
+the menu nor the `calc()` that sizes the cap.
+
+**Three reds, all three the test's fault**, which is roughly the project's long-run average:
+- asserted the cap on `.wrap[0]`, which is `#bannerMount` — the one element with a deliberate ID
+  override. *Scope the assertion.*
+- then asserted every `.wrap` should read 1180, which would have condemned the five views that set
+  their own width. Rewrote it to the property that actually matters: **nothing is left `none`**.
+- a bare `--goodbg` count found the string inside 515's own explanatory comment.
+
+**One real defect, caught by the screenshot and not by 30 passing assertions.** `ready()` tested only
+that `header.site` was visible — but on the **post-login landing** the header is still there, so the
+menu mounted behind `#landingView` (fixed, `inset:0`, `z-index:150`, so it covered it — invisible,
+and one stacking change from visible). Now keyed on the app's own signals: `header.site` shown,
+`navWrap` shown (what `showLogin()` toggles), `#landingView` hidden. Uses `getComputedStyle`, not
+`offsetParent`, because both of those elements are `position:fixed` and `offsetParent` is null for
+fixed elements by spec — an `offsetParent` test would have read every one of them as hidden.
+
+**Filed, not fixed:** **Sales Floor** and **Self Check** are appended past the last `.navsec` — after
+the build stamp — so they belong to no section in the burger menu either. The sidebar buckets them
+under **More** rather than dropping them. Worth giving them a real home eventually.
+
+---
+
+## 517 · 31 July 2026 · Theo's menu reorganisation
+
+> *"Sales floor lives in and is the main part of Sell section. The objection coach is already in
+> Sales Floor. Health check goes into admin. ABC Supply should go into admin as well"*
+
+**Reproduced as an admin before touching anything**, which changed the answer: **Health Check was
+already in Admin** — `addAdminSection()` has always put it there. What he was reading was the
+signed-out screenshot from 516, and the Admin section does not exist for a non-admin at all. Told
+him rather than "fixing" it.
+
+| | |
+|---|---|
+| Sales Floor | now **first in Sell**. `cr-sf-script` appends it at the tail of the whole menu, past the build stamp |
+| Objection Coach | **hidden** — reachable inside Sales Floor, and one route per destination |
+| ABC Supply | into **Admin** |
+| Health Check | already there, unchanged |
+| **Community Partners** | **was listed twice** and neither of us asked about it — `cr-menu-script` puts one under CRMs and `cr-cpartners-script` appends its own. The duplicate is hidden |
+
+Lives in `cr-menu-script` because that module already owns this exact surgery — it renames two
+sections, hides items per-role, and moves reports/feed/settings into Admin. A second module doing
+menu surgery beside it is the "new mechanism beside an existing one" failure.
+
+**Two things that had to be right or it would have silently done nothing.**
+
+`apply()` stops polling the moment it first returns true, and it returns true as soon as any
+`.navopt` exists — which is long before `cr-sf-script` injects Sales Floor. So `reorg()` gets **its
+own** 300 ms × 60 poll, outlasting both `cr-sf-script`'s retry and `cr-cpartners-script`'s tick, then
+stops rather than leaving a timer running.
+
+And it **hides rather than removes**: `cr-cpartners-script.ensureMenuOption()` re-adds its option
+whenever `querySelector('[data-nav="community-partners"]')` finds nothing, so removing it starts a
+tug of war that never settles. A hidden node satisfies that check. `hideOpt()` is this module's own
+convention and 516's sidebar already skips `display:none` rows.
+
+**ABC Supply for a rep is deliberately unchanged.** The move is conditional on the Admin section
+existing, so a non-admin keeps it in Sell rather than silently losing the tool. Making it
+admin-only is a permissions decision, and it is Theo's — flagged, not taken.
+
+**Gates.** `check_build.py` green. New `reorg517_harness.js` — **14/14**, and it reads the menu the
+app actually builds **in both roles**, because the Admin section only exists for one of them and a
+single-role run would have proved half of it. 516's own harness re-run against the same file:
+**32/32** — the left menu mirrors, so it followed the reorganisation with no changes at all, which
+is the payoff of not hardcoding it.
+
+---
+
+## 518 · 31 July 2026 · the content cap was far too tight — my own regression from 516
+
+Theo photographed his ultrawide: *"The proportions are off a bit please fix."* He was right, and it
+was mine.
+
+**Reproduced at his actual resolution before touching anything.** At **3440×1440** with the 238px
+menu, 516's flat `max-width:1180px` left the dashboard as a **1180px island with 1011px of dead
+black on each side** — objectively worse than the stretch it was meant to fix. A flat pixel cap
+cannot serve a 1280 laptop and a 3440 ultrawide at the same time, and I picked the number against a
+1280 frame.
+
+Now proportional: `min(2400px, 92%)`. Measured across five widths, no overflow at any of them:
+
+| Screen | Content | Gutter each side |
+|---|---:|---:|
+| 3440 | **2400** | 401 |
+| 2560 | 2136 | 93 |
+| 1920 | 1547 | 67 |
+| 1440 | 1106 | 48 |
+| 1100 | 793 | 34 |
+
+`min()` rather than `clamp()` deliberately: a `clamp()` floor wins even when it overflows, so a
+narrow window would have gained a horizontal scrollbar. With `min()` the percentage takes over on
+small screens and it can never overflow.
+
+**The harness had to change too, and the reason is the same mistake in miniature.** 516's gate
+asserted the literal `'1180px'`. That tied the test to one screen size — exactly what the cap itself
+got wrong. It now identifies capped elements by elimination and adds a real ratio check at 3440:
+content ≥2200 with gutters <550. **33/33**, up from 32. 517's harness re-run: **14/14**.
