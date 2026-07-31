@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 469 &#8212; the CompanyCam button in the library assistant actually opens now &mdash; it was wired to the wrong element and did nothing</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 470 &#8212; the CompanyCam import panel is laid out properly &mdash; its buttons, labels and date boxes were completely unstyled</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33046,6 +33046,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:470, note:'\U0001F485 The CompanyCam import panel now looks like the rest of the assistant. Its buttons had been running together as one unbroken line, its labels were bare text and the two date boxes were unstyled, because the panel\u2019s form styling only ever applied to the older form beside it.' },
 { build:469, note:'\U0001F527 Fixed: the CompanyCam button added in 468 did nothing when tapped. It had been wired to the library page instead of to the assistant panel the button actually sits in, so the tap never reached the code. Everything behind it was working the whole time.' },
 { build:468, note:'\U0001F4F8 The Resource Library can pull photographs straight out of CompanyCam. Open the assistant, tap CompanyCam, narrow by tag and date, tick the ones worth keeping and file them \u2014 captions come across with them, and where the crew marked a photo up, you get the marked-up copy. Photos flagged internal in CompanyCam are never shown. Admin only.' },
 { build:467, note:'\U0001F4F7 Photographs filed into the library now look like photographs. A filed image shows a real thumbnail in the list instead of a camera icon, and tapping it opens it full size inside the app rather than throwing you out into a browser tab. Uploading already worked \u2014 nothing had ever been uploaded, because there was nothing to see when you did.' },
@@ -47348,6 +47349,10 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ccp .meta{display:block;font-size:10px;color:var(--lb-dim,#6B615D);}
 #rlLibPanel .lb-ccmore{grid-column:1/-1;padding:7px;font-size:12px;}
 #rlLibPanel .lb-ccfile{margin-top:9px;}
+#rlLibPanel .lb-ccfile button{width:100%;margin-top:7px;border-radius:10px;padding:12px 10px;cursor:pointer;font:800 12px 'Segoe UI',Arial,sans-serif;border:0;background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);}
+#rlLibPanel .lb-cc label:not(.lb-ccp){display:block;margin:9px 0 4px;}
+#rlLibPanel .lb-cc .row{margin-top:10px;}
+#rlLibPanel .lb-ccp .cap,#rlLibPanel .lb-ccp .meta{text-transform:none;letter-spacing:normal;}
 .lb-thumb{width:56px;height:44px;flex:0 0 56px;object-fit:cover;border-radius:6px;background:var(--lb-surface3,#F3EFEE);border:1px solid var(--lb-line,#EAE5E3);display:block;}
 .lb-item-img .bd{min-width:0;}
 /* 466: diagram blocks. Literal fallbacks throughout - the librarian palette
@@ -47440,17 +47445,17 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
   flex-direction:column}
 #rlLibPanel.filing .lb-form{display:flex}
 #rlLibPanel.filing .lb-ask,#rlLibPanel.filing .lb-note{display:none}
-#rlLibPanel .lb-form label{font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;
+#rlLibPanel .lb-form label,#rlLibPanel .lb-cc label:not(.lb-ccp){font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;
   text-transform:uppercase;color:var(--lb-ink2,#6E6663)}
-#rlLibPanel .lb-form select,#rlLibPanel .lb-form input[type=text]{width:100%;box-sizing:border-box;
+#rlLibPanel .lb-form select,#rlLibPanel .lb-form input[type=text],#rlLibPanel .lb-cc select,#rlLibPanel .lb-cc input[type=text],#rlLibPanel .lb-form input[type=date],#rlLibPanel .lb-cc input[type=date]{width:100%;box-sizing:border-box;
   padding:11px 12px;border-radius:10px;border:1px solid var(--lb-line2,#DED8D6);
   background:var(--lb-surface,#fff);color:var(--lb-ink,#17181B);
   font:600 14px 'Segoe UI',Arial,sans-serif}
-#rlLibPanel .lb-form .row{display:flex;gap:8px}
-#rlLibPanel .lb-form .row button{flex:1;border-radius:10px;padding:12px 10px;cursor:pointer;
+#rlLibPanel .lb-form .row,#rlLibPanel .lb-cc .row{display:flex;gap:8px}
+#rlLibPanel .lb-form .row button,#rlLibPanel .lb-cc .row button{flex:1;border-radius:10px;padding:12px 10px;cursor:pointer;
   font:800 12px 'Segoe UI',Arial,sans-serif;border:1px solid var(--lb-line2,#DED8D6);
   background:var(--lb-surface2,#FAF8F7);color:var(--lb-ink,#17181B)}
-#rlLibPanel .lb-form .row button.go{background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);border:0}
+#rlLibPanel .lb-form .row button.go,#rlLibPanel .lb-cc .row button.go{background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);border:0}
 #rlLibPanel .lb-chosen{font-size:12.5px;color:var(--lb-ink2,#6E6663)}
 #rlPageTeam .lb-add{margin:0 0 10px;background:none;border:1px dashed var(--ct-line-strong,#DED8D6);
   color:var(--ct-ink-2,#6E6663);border-radius:9px;padding:9px 12px;

@@ -1844,3 +1844,53 @@ one, which makes it the more valuable half of this build.
 **The lesson generalises past this bug:** a delegate's anchor tells you nothing about its host.
 Before adding to one, find its `addEventListener` and confirm the element you are targeting is
 actually inside it. Proximity in the file is not containment in the DOM.
+
+---
+
+## Build 470 — the import panel's controls were unstyled (31 July 2026)
+
+**Same root cause as 469, one layer up.** 469 was a delegate on the wrong element; 470 is a class
+under the wrong ancestor. Both times I checked that a name existed and not **where it applied.**
+
+Every form rule in this panel is written `#rlLibPanel .lb-form …`. My block is `.lb-cc`. So:
+
+- `.row` had no `display:flex` → **"CancelFind photos" ran together as one string**, which is
+  exactly what Theo reported
+- labels had no styling → bare text
+- selects had no styling → unstyled native dropdown
+- the date inputs matched **nothing at all**: the rule covers `input[type=text]`, and mine are
+  `input[type=date]`
+
+**Extended, not duplicated.** Each rule gained a `.lb-cc` twin selector rather than a copied block
+under a new prefix. A second block of near-identical form CSS is an override layer with a delay on
+it; retail-B was torn out at 21 override rules for exactly this.
+
+### The render caught a bug the assertions did not
+
+With the label rule extended, **every photo caption went uppercase and letter-spaced** — because
+the tiles are `<label class="lb-ccp">` elements and picked up form-label styling. The layout
+harness was 15/15 green while it happened. **Screenshotting the panel is what found it**, which is
+the "preview visual changes" doctrine paying for itself. Fixed with `label:not(.lb-ccp)` plus an
+explicit `text-transform:none` on `.cap`/`.meta`, and the patch now asserts that no bare
+`.lb-cc label` rule exists.
+
+### The gate this build adds
+
+`cc470_harness.js` measures **computed layout** in Chromium at a 390px viewport — `display`,
+bounding boxes, the real gap between the two buttons, border radius, and that nothing exceeds the
+phone width. No behavioural harness can see a CSS-scope bug; 469 was green on every existing gate
+while rendering wrong.
+
+**It fails 7/15 on 469**, including `0px gap` and 21px-tall bare-text buttons — the reported
+symptom, reproduced mechanically.
+
+**One trap worth recording:** the first run measured every box at **0px**, because `#rlLibPanel` is
+`display:none` until `.on` and the harness never added it. Computed *styles* resolve on hidden
+elements; *boxes* do not. Show the element before measuring it, or the numbers are fiction.
+
+### Two self-inflicted aborts, both caught before any write
+
+1. `assert src.count('input[type=date]') == 2` — the file **already had two**, in the estimates and
+   punch styles. Replaced with a delta against `orig`. **A hardcoded count read off nothing is the
+   most repeated error on this project and I made it again.**
+2. A patch anchor with two leading spaces where the file has one.
