@@ -247,6 +247,38 @@ set is not uniform across index endpoints**, so read each one rather than assumi
 Each of these is one live call away from being settled — but that call has to be made from Vercel
 or from Theo's browser, **not from here.**
 
+### That call now exists: `api/companycam-status.js`
+
+Rather than leave six unknowns for a future session to guess at, the call is written down as a
+route. Visit **`https://app.cardinalroster.com/api/companycam-status`** and it answers all six.
+
+It is modelled on `api/ai-status.js` — same shape, same public-with-no-session posture, and the
+same absolute rule that **it never returns the key.** It goes further, because this one touches
+customer jobs: **it returns no photo *values* at all** — only the *field names* present on a photo
+object. "Does v1's Photo carry `description`?" is answerable with a list of keys and nothing else,
+so a list of keys is all it sends. No URL, no address, no coordinate, no creator name, no caption.
+
+| Probe | Closes |
+|---|---|
+| `POST /access_tokens/verify` | does the key authenticate on v1 at all |
+| `GET /photos?limit=1` → `Object.keys(data[0])` | **unknown 1** — the clipped schema tail |
+| the same call's response headers | **unknown 6** — rate limits, which arrive free |
+| `GET /v2/projects?per_page=1` alongside it | **unknown 5** — v2-valid but v1-unscoped is a *scope* fix, not a bad key, and the two look identical from the app |
+| `?start_date=…` passthrough, and the 422 body echoed back | **unknown 3** — the date format, from the API's own complaint |
+| `?include=…` / `?include_total=…` passthrough | **unknowns 2 and 4**, probed from the URL bar with no redeploy |
+
+`?tags=1` additionally lists the account's tag vocabulary. **Off by default**; on because tag names
+are company words ("Ice Dam", "Before"), not anything about a customer, and they are what `tag_ids`
+needs.
+
+`limit` is pinned at 1 and **cannot be widened from the URL** — the route is a probe, not a data
+tap. Gated by a harness at `scratchpad/ccstatus_harness.js`: 42 assertions, negative-controlled
+across five deliberately-broken copies (no-scrub, leak-the-photo, no-field-enumeration,
+widenable-limit, no-try/catch), each of which fails the specific assertion that protects it.
+
+**Fill this file in from what it returns.** The unknowns above stop being unknowns the first time
+anyone opens that URL.
+
 ---
 
 ## Two findings from v2 that still shape the design
