@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 475 &#8212; the coloured status pills on the Library board are readable now, in both the dark and the light theme</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 476 &#8212; photo search now finds pictures by the job they belong to, which is what the photographs actually carry</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33057,6 +33057,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:476, note:'\U0001F3D7\uFE0F Photo search now works on job names. Indexing all 60,485 photographs turned up something worth knowing: only 79 of them have a caption typed on them. Searching captions was therefore never going to find much. But every single photo does know which job it came from \u2014 775 of them \u2014 so the search now reads job names and addresses instead. Ask for a street or a partner and you will get the pictures.' },
 { build:475, note:'\U0001F3F7\uFE0F The coloured status pills on the Library board were hard to read \u2014 white letters on light green, dark letters on deep red, depending on the theme. Each stage now takes whichever letter colour actually reads on it, and two of the eight colours moved by a couple of percent because no letter colour worked on them. Every pill now clears the accessibility standard for text that size, in both themes. You may not notice the colour change; you should notice the words.' },
 { build:474, note:'\U0001F5FA\uFE0F The property maps are back. Address autocomplete, the satellite photo of the house, and the Directions button had all been dead \u2014 not broken, just never switched on: the app asked the server for its Google Maps setting and nothing was there to answer. It answers now. A dropped connection also used to kill maps until you reloaded the app; it retries on its own instead.' },
 { build:473, note:'\U0001F5C2\uFE0F Photo searches can now reach the whole CompanyCam account. There are 61,649 photos in it, and searching live could only ever read the most recent 800 \u2014 so a job from last winter was unfindable no matter how you worded it. Press Build index once in the CompanyCam panel and it reads through the lot in a few minutes; after that searches are instant and cover everything. It also tells you how many photos have no caption, which is the honest reason a search comes back empty.' },
@@ -48024,14 +48025,25 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     ccSyncApi({ action:'status' }).then(function(d){
       var have = (d && d.rows_in_index) || 0;
       var total = (d && d.state && d.state.total) || null;
-      var uncap = (d && typeof d.uncaptioned === 'number') ? d.uncaptioned : null;
+      var nprj = (d && typeof d.projects === 'number') ? d.projects : null;
+      var named = (d && typeof d.photos_with_project_name === 'number') ? d.photos_with_project_name : null;
       if(!have){
         el.textContent = 'No photo index yet \u2014 searches read the most recent 800 only.';
         return;
       }
-      el.textContent = have.toLocaleString() + ' photos indexed' +
-        (total ? ' of ' + Number(total).toLocaleString() : '') +
-        (uncap !== null ? ' \u00b7 ' + uncap.toLocaleString() + ' with no caption' : '');
+      /* 476: the caption count used to lead here. It reads as a to-do list, and
+         on this account it is 60,406 of 60,485 - a number nobody can act on.
+         What matters is whether the photos are searchable, which they are once
+         they carry a job name. */
+      var bits = [have.toLocaleString() + ' photos indexed' +
+                  (total ? ' of ' + Number(total).toLocaleString() : '')];
+      if(nprj !== null) bits.push(nprj.toLocaleString() + ' jobs');
+      if(named !== null && have){
+        bits.push(named >= have
+          ? 'all searchable by job'
+          : named.toLocaleString() + ' searchable by job');
+      }
+      el.textContent = bits.join(' \u00b7 ');
     }).catch(function(e){
       el.textContent = /Admins only/i.test(String(e.message || e))
         ? '' : 'Index status unavailable.';
@@ -48059,6 +48071,13 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     }
 
     step(null).then(function(){
+      /* Projects second, and only after the photos land - the backfill stamps
+         names onto rows that must already exist. ~8 pages, one call, no cursor. */
+      el.textContent = 'Reading job names\u2026';
+      return ccSyncApi({ action:'projects' }).then(function(p){
+        if(p && p.projects) el.textContent = 'Matched ' + Number(p.projects).toLocaleString() + ' jobs\u2026';
+      });
+    }).then(function(){
       ccSyncing = false;
       if(btn) btn.disabled = false;
       ccIdxStatus();

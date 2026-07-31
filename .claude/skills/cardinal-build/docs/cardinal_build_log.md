@@ -2218,3 +2218,60 @@ still has no writer.
 - **B — pale tint + `STAGE_INK`.** Clears everything (4.69–7.31) but turns a solid-colour board
   pale. Theo looked at it and chose C.
 - **Darken every solid.** Would have moved the green and blue 22–23%; C moves two colours by 2–4%.
+
+---
+
+## Build 476 — the caption search had nothing to search (31 July 2026)
+
+**The first full sync is the most useful thing that happened all night, and it invalidated a
+feature I had just built.**
+
+| | |
+|---|---:|
+| Photos indexed | **60,485** |
+| Skipped (internal / inactive / unprocessed) | 1,164 |
+| **Reconciles to** | **61,649** exactly |
+| **Carrying a caption** | **79** |
+| Without | **60,406 — 99.87%** |
+
+Not a recent habit: **10** captions in 2026, **39** in 2025, **30** in 2024, **zero** before.
+Nobody has ever captioned in CompanyCam.
+
+**So 472's caption search was built over a field this account does not fill in.** That measurement
+was one query away and should have come *before* the build, not after. The index still earns its
+place — but not for the reason it was built.
+
+### What is actually populated, on all 60,485
+
+`project_id`, `creator_name`, `captured_at` — **100%**, across **775 distinct jobs**. The index
+knew which project each photo belonged to and not what that project was **called**, so a search for
+"Habitat" matched nothing while every row carried the answer.
+
+476 syncs the 775 names and searches them. **No AI, ~8 pages, one call.**
+
+- `companycam_projects` table + `project_name` / `project_address` on the photo, denormalised so
+  search stays single-table.
+- The FTS index was **caption-only** — it could match at most 79 rows. It now covers caption,
+  project name, project address and creator in one GIN index.
+- `companycam_backfill_project_names()` stamps names in **one statement**, and only where the value
+  actually differs, so a re-run after a rename is cheap rather than a 60k rewrite.
+- The panel runs photos first, then projects — the backfill can only stamp rows that already exist,
+  and the harness now **asserts that ordering**.
+
+### The status line stopped leading with the caption gap
+
+It read `60,406 with no caption`. That is a to-do list nobody can action. It now reports what makes
+the index usable: how many jobs it knows, and whether every photo carries one.
+
+**The old assertion for that line went red, and the test was what was wrong** — it was asserting
+removed behaviour. Updated to the new intent rather than bent back.
+
+### A bug the data exposed
+
+**`annotated` is `true` for all 60,485 rows.** CompanyCam returns a `web_annotation` URI whether or
+not anyone drew on the photo, so `web.type === 'web_annotation'` is always true and the flag is
+meaningless. **Not fixed in this build** — filed, because it needs a different signal from the API
+and no caller depends on it yet.
+
+**Seventh hardcoded-count abort:** `count('photos_with_project_name') == 1` — it appears twice on
+one line, in `typeof d.X === 'number' ? d.X : null`. Caught before the write, like the other six.

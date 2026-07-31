@@ -215,15 +215,23 @@ export default async function handler(req, res) {
       const service = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
       if (String(b.q || '').trim() && service && b.source !== 'live') {
         const qq = String(b.q).trim();
-        const cols = 'id,description,captured_at,project_id,creator_name,annotated,thumb_url,preview_url';
+        const cols = 'id,description,captured_at,project_id,project_name,project_address,creator_name,annotated,thumb_url,preview_url';
         const base = SUPABASE_URL + '/rest/v1/companycam_photos?select=' + cols +
                      '&order=captured_at.desc.nullslast&limit=' + limit;
         const hdrs = { apikey: service, Authorization: 'Bearer ' + service, Prefer: 'count=exact' };
-        let idx = await fetch(base + '&description=wfts(english).' + encodeURIComponent(qq), { headers: hdrs });
+        /* 476: the first full sync proved only 79 of 60,485 photos carry a
+           caption, so a caption-only search had almost nothing to match. Project
+           name, address and creator ARE populated on every row, so the query now
+           reaches all four through one GIN index. */
+        const FTS = 'or=(description.wfts(english).%q,project_name.wfts(english).%q,'
+                  + 'project_address.wfts(english).%q,creator_name.wfts(english).%q)';
+        let idx = await fetch(base + '&' + FTS.split('%q').join(encodeURIComponent(qq)), { headers: hdrs });
         /* websearch_to_tsquery rejects some punctuation outright; a plain
            substring match is a worse search but an honest fallback. */
         if (!idx.ok) {
-          idx = await fetch(base + '&description=ilike.' + encodeURIComponent('%' + qq + '%'), { headers: hdrs });
+          const LIKE = 'or=(description.ilike.*%q*,project_name.ilike.*%q*,'
+                     + 'project_address.ilike.*%q*,creator_name.ilike.*%q*)';
+          idx = await fetch(base + '&' + LIKE.split('%q').join(encodeURIComponent(qq)), { headers: hdrs });
         }
         if (idx.ok) {
           const hits = await idx.json();
@@ -234,7 +242,8 @@ export default async function handler(req, res) {
             res.status(200).json({
               photos: hits.map(h => ({
                 id: h.id, description: h.description || '', captured_at: h.captured_at || '',
-                project_id: h.project_id || '', creator_name: h.creator_name || '',
+                project_id: h.project_id || '', project_name: h.project_name || '',
+                project_address: h.project_address || '', creator_name: h.creator_name || '',
                 annotated: !!h.annotated, thumb: h.thumb_url || '', preview: h.preview_url || ''
               })),
               next_cursor: null, has_next: false, dates_filtered_here: false, unmatched_tags: [],

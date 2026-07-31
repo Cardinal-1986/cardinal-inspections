@@ -143,10 +143,17 @@ export default async function handler(req, res) {
       const gap = await sb(service, 'companycam_photos?select=id&or=(description.is.null,description.eq.)',
         { headers: { Prefer: 'count=exact', Range: '0-0' } });
       const uncap = parseInt(String(gap.headers.get('content-range') || '').split('/')[1], 10);
+      const prj = await sb(service, 'companycam_projects?select=id', { headers: { Prefer: 'count=exact', Range: '0-0' } });
+      const nprj = parseInt(String(prj.headers.get('content-range') || '').split('/')[1], 10);
+      const named = await sb(service, 'companycam_photos?select=id&project_name=not.is.null',
+        { headers: { Prefer: 'count=exact', Range: '0-0' } });
+      const nnamed = parseInt(String(named.headers.get('content-range') || '').split('/')[1], 10);
       res.status(200).json({
         state: st.ok ? (await st.json())[0] || null : null,
         rows_in_index: isNaN(have) ? null : have,
-        uncaptioned: isNaN(uncap) ? null : uncap
+        uncaptioned: isNaN(uncap) ? null : uncap,
+        projects: isNaN(nprj) ? null : nprj,
+        photos_with_project_name: isNaN(nnamed) ? null : nnamed
       });
       return;
     }
@@ -160,6 +167,78 @@ export default async function handler(req, res) {
                                updated_at: new Date().toISOString() })
       });
       res.status(200).json({ ok: true, reset: true });
+      return;
+    }
+
+    // ---- projects: names for the index ----
+    /* The first full sync proved the caption search had nothing to search: 79 of
+       60,485 photos carry a description, 0.13%, flat across every year. But every
+       photo knows its project_id, across 775 jobs — the index just did not know
+       what those projects are CALLED. This pass fetches the names, then stamps
+       them onto the photos so a search for "Habitat" reaches all of them.
+
+       Cheap: 775 projects is ~8 pages, not 617. Runs to completion in one call. */
+    if (b.action === 'projects') {
+      let cursor = null, wrote = 0, pages = 0, hasNext = true;
+      while (hasNext && pages < 40) {
+        const params = { limit: 100 };
+        if (cursor) params.after = cursor;
+        const r = await cc('/projects', key, params);
+        if (!r.ok) {
+          res.status(502).json({ error: 'CompanyCam refused the project list',
+                                 status: r.status, detail: scrub(r.raw, key), wrote, pages });
+          return;
+        }
+        pages++;
+        const data = (r.body && r.body.data) || [];
+        const meta = (r.body && r.body.meta) || {};
+        const rows = data.filter(p => p && p.id).map(p => {
+          /* Address arrives as an object on v1; flatten it to one searchable line
+             and tolerate a plain string, because this shape is unverified against
+             the live account. Missing pieces simply drop out. */
+          const a = p.address || {};
+          const addr = typeof a === 'string' ? a : [
+            a.street_address_1, a.street_address_2, a.city, a.state, a.postal_code
+          ].filter(Boolean).join(', ');
+          return {
+            id: String(p.id),
+            name: p.name || null,
+            address: addr || null,
+            status: p.status || null,
+            cc_created_at: iso(p.created_at),
+            synced_at: new Date().toISOString()
+          };
+        });
+        if (rows.length) {
+          const up = await sb(service, 'companycam_projects?on_conflict=id', {
+            method: 'POST',
+            headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify(rows)
+          });
+          if (!up.ok) {
+            const why = await up.text();
+            res.status(502).json({ error: 'Could not write the project list',
+                                   status: up.status, detail: scrub(why, service), wrote, pages });
+            return;
+          }
+          wrote += rows.length;
+        }
+        hasNext = meta.has_next === true && !!meta.next_cursor;
+        cursor = hasNext ? meta.next_cursor : null;
+        if (!data.length) hasNext = false;
+      }
+
+      /* Stamp the names onto the photos. One statement, not 60k round trips. */
+      const rpc = await fetch(SUPABASE_URL + '/rest/v1/rpc/companycam_backfill_project_names', {
+        method: 'POST',
+        headers: { apikey: service, Authorization: 'Bearer ' + service, 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      let stamped = null;
+      if (rpc.ok) { try { stamped = await rpc.json(); } catch (e) { stamped = null; } }
+
+      res.status(200).json({ projects: wrote, pages, stamped,
+                             backfilled: rpc.ok, done: true });
       return;
     }
 
