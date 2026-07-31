@@ -3255,3 +3255,111 @@ behaviour: a 503 walks both models twice each, 3.6 before 3.5, a 400 tries each 
 **Still on 3.5 only:** `analyze`, `coach`, `companycam-sync`, `estimate`, `hover`, `roofr`, `sol`.
 They have no fallback either. The same fifteen lines apply; not bundled here because this build was
 about the routes Theo was actually hitting.
+
+## 504–505 — every AI route has somewhere to go now
+
+**504.** `ai-status.js` honoured `?model=` in its probe URL but reported the model name **hardcoded**
+as `gemini-3.5-flash`. So asking it about 3.6 probed 3.6 and answered "3.5". **A diagnostic that
+lies about what it tested is worse than none** — it is how you conclude the wrong thing with
+confidence. The model is now named once and used for both the probe and the report.
+
+**505 — and a correction I owe.** I told Theo seven routes had no fallback. **Wrong: I listed them
+from memory instead of checking.** `analyze`, `coach` and `estimate` already had OpenAI paths. Only
+**four** were Gemini-only: `companycam-sync`, `hover`, `roofr`, `sol` — the CompanyCam caption pass,
+the Hover takeoff reader, the Roofr takeoff reader and the Scope of Loss reader. All four now have
+the same ladder.
+
+One difference that mattered: **`sol.js` speaks snake_case** (`inline_data` / `mime_type`) where the
+others use camelCase. The converter handles both. Missing it would have shipped a silently
+text-only fallback for the one route whose entire job is reading a document — it would have
+"worked", and quietly stopped seeing the PDF.
+
+`sol.js` also reads `.json()` **before** checking `ok`, so the fallback had to be inserted before the
+body is consumed — a Response can only be read once, and the fallback returns a different object with
+its own `json()`.
+
+**Audited, not remembered — all 13 Gemini routes:** `ai-status`, `analyze`, `caption`, `coach`,
+`companycam-sync`, `estimate`, `hover`, `librarian`, `organize`, `roofr`, `sol`, `sortphotos`,
+`summarize`. Every one now reads **Gemini → OpenAI**, and `sortphotos`/`librarian` additionally walk
+**3.6 → 3.5** first. All 26 `api/*.js` parse.
+
+## 507 — Sort fills the Areas of Concern table
+
+Theo: *"Yes and please do it the right way."*
+
+The data was already there and being discarded. Every placement returns a `severity` — `crit` /
+`warn` / `ok` — and `sortApply` used only the section and the caption. It maps exactly onto the
+priority vocabulary the template defines in its own words: **HIGH** water intrusion or prompt action,
+**MODERATE** work alongside replacement, **MONITOR** serviceable, observe.
+
+**A summary, not a dump.** One row per **section**, not per photograph — twelve photos of one slope
+is one finding, not twelve rows. The worst severity in a section wins and its caption becomes the
+finding. Ordered `crit` → `warn` → `ok`, so the top of the table is what matters.
+
+**Never overwrite a human.** A row is filled only if its Area is still the template's placeholder —
+empty, or starting with `[`. Anything typed by hand survives a re-sort untouched. This is a document
+that goes to a client; silently replacing someone's wording would be far worse than doing nothing.
+
+**`.ph` is preserved on every cell written.** `EDITABLE_SELECTOR` keys `contenteditable` off that
+class — strip it and the inspector can no longer edit what the AI wrote. That would have been a
+quiet, nasty regression.
+
+**The Section 2 trap, avoided by construction.** The audit warns that `wireSummaryDraftButton` owns
+the paragraph by the summary heading, mounts with `insertAdjacentElement('afterend', …)`, and that
+`serializeFrame` removes it by testing **a single node** — so a second `afterend` control there
+compounds one copy per save/open cycle. **This adds no control anywhere.** It writes into existing
+cells and adds rows only by cloning one already present, which is the template's own instruction.
+
+Gates: check_build green, harness **21/21** against the real `REPORT_TEMPLATE` — 5 photographs over
+3 sections give 3 rows; the crit caption wins its section and the warn one does not also appear;
+Area is the section *name*; the `#` column renumbers; `.ph` survives on both cells; a hand-typed row
+is untouched and the AI finding goes to the next free row; 30 photographs over 6 sections stay
+bounded; and the `afterend` count is asserted **unchanged from 506** rather than against a made-up
+number.
+
+### An assertion of mine that fired on correct code
+
+I first asserted the file contains exactly **one** `insertAdjacentElement('afterend'`. It contains
+**seven**, across unrelated features. The patch aborted on correct work. The right assertion is the
+one `START_HERE` §"Counting things" prescribes and I keep relearning: **assert the property —
+"unchanged from the previous build" — never a tally read off an assumption.**
+
+## 508 — the librarian refused to draw a concept
+
+Theo asked it to illustrate the ice-and-water concept and got: *"That is outside the library — Job
+drawings, blueprints, site plans, and shop drawings are job-specific files."*
+
+**The right fence catching the wrong thing.** `RULES` says the library holds no job files or client
+paperwork; the model reasonably extended that to blueprints and shop drawings, then swept up "draw
+me how an ice dam forms" along with them.
+
+The distinction is **whose it is, not whether it is a picture.** A site plan for 2444 Edenhill is job
+paperwork. A section through an eave showing how an ice dam forms is exactly what this library is
+for — and **Plates 1–5 already in it are precisely that.**
+
+Worth recording: **the librarian has been able to draw since 466** — `~~stack`, `~~flow`, `~~bars`
+and one more, emitting data that `index.html` renders as SVG. It was refusing before it ever reached
+the capability. Nothing needed building; the scope note needed one carve-out.
+
+## 509 — the Resource Library, reachable from every page
+
+Theo: *"please add the resource library where it can be seen whatever page your at."*
+
+It had **three entrances and all three were page-specific** — the landing page's minor links, the
+Tools panel, the insurance panel. From a client profile, a report or the schedule board there was no
+way to it.
+
+`#pwaNav` is already fixed, already on every screen, already at z-index 9990 — the value the whole
+app's stacking is designed around — and already holds back/forward and the CRM chip. Extending it
+costs **no new mechanism, no new stacking context, and nothing new that can strand itself over a
+modal**, which a fresh floating button would have risked on a project whose most expensive recurring
+bug is exactly that.
+
+Hidden when `showResourceLibrary` does not exist, matching `resolveHide()`'s existing rule that an
+entrance only shows if its destination does.
+
+### Two patch aborts, both the same mistake
+
+Both anchors were copied from **whitespace-normalised display output** rather than printed with
+`pl.context()`. Both aborted before writing, which is the helper working. `START_HERE` says print
+`repr()` of the real text before writing an anchor; I did it the third time.

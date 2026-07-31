@@ -122,6 +122,49 @@ async function sb(service, path, init) {
   });
 }
 
+/* 505: the second rung, same as 502 elsewhere. gemini-3.5-flash 503s "high
+   demand" in spells - measured at roughly one call in four this afternoon - and
+   this route had NO fallback, so it simply failed while OpenAI sat idle at 0.6s.
+
+   Returns GEMINI'S OWN response shape, so the call site below reads it unchanged.
+   Never throws: on any failure it hands back the original Gemini response and the
+   existing error path behaves exactly as before.
+
+   Handles BOTH part spellings: inlineData/mimeType (most routes) and
+   inline_data/mime_type (sol.js). Missing that would have shipped a silently
+   text-only fallback for the one route whose whole job is reading a document. */
+async function aiFallback(parts, geminiRes) {
+  const oaKey = (process.env.OPENAI_API_KEY || '').trim();
+  if (!oaKey) return geminiRes;
+  try {
+    const content = [];
+    (parts || []).forEach(p => {
+      if (!p) return;
+      if (typeof p.text === 'string') { content.push({ type: 'text', text: p.text }); return; }
+      const inl = p.inlineData || p.inline_data;
+      if (inl) {
+        const mime = inl.mimeType || inl.mime_type || 'image/jpeg';
+        content.push({ type: 'image_url', image_url: { url: 'data:' + mime + ';base64,' + inl.data } });
+      }
+    });
+    if (!content.length) return geminiRes;
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + oaKey },
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1200, messages: [{ role: 'user', content }] })
+    });
+    if (!r || !r.ok) return geminiRes;
+    const d = await r.json();
+    const t = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+    if (!t) return geminiRes;
+    return { ok: true, status: 200, _via: 'openai', json: async () => ({
+      candidates: [{ content: { parts: [{ text: String(t) }] } }]
+    }) };
+  } catch (e) {
+    return geminiRes;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
 
@@ -330,14 +373,18 @@ export default async function handler(req, res) {
           if (buf.length > 4 * 1024 * 1024) { failures.push({ id: ph.id, why: 'too large' }); continue; }
           const mime = img.headers.get('content-type') || 'image/jpeg';
 
-          const g = await fetch(
+          const _parts = [
+            { text: prompt },
+            { inlineData: { mimeType: mime.split(';')[0], data: buf.toString('base64') } }
+          ];
+          let g = await fetch(
             'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
             { method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gem },
-              body: JSON.stringify({ contents: [ { parts: [
-                { text: prompt },
-                { inlineData: { mimeType: mime.split(';')[0], data: buf.toString('base64') } }
-              ] } ] }) });
+              body: JSON.stringify({ contents: [ { parts: _parts } ] }) });
+          /* 505: one photograph failing to a 503 used to cost that caption
+             outright, in a pass that runs over tens of thousands of them. */
+          if (!g.ok) g = await aiFallback(_parts, g);
           if (!g.ok) { failures.push({ id: ph.id, why: 'gemini ' + g.status }); continue; }
           const gj = await g.json();
           const cap = (((gj.candidates || [])[0] || {}).content || {}).parts?.[0]?.text;

@@ -410,9 +410,48 @@ checking; there may be others.
 
 ### Still open
 
-**The check-back default.** Options are 3 months / 6 months / 1 year / 2 years.
-I picked **1 year** as a default. **Theo never actually answered this.** Ask
-him — he is the one who said some of these run two years.
+**The check-back default — ✅ ANSWERED 31 July: 1 year.** Asked and confirmed by
+Theo. The design's own chips are `3 mo · 6 mo · 1 yr · 2 yr`, so **1 yr is the
+pre-selected chip** and the other three stay available per bid. Nothing else in
+this item is open.
+
+### Ground truth gathered 31 July — start here, do not re-derive it
+
+**The reference is a visual comp, not markup.** `references/outcome_v2.html` is
+204 KB and contains exactly three `data-` attributes, all theming. It shows the
+agreed look; it cannot be lifted. This is a build-from-design, and estimating it
+as "wire up the mockup" will be wrong.
+
+**The four flows, read off the comp's own labels:**
+
+| Outcome | Fields | Button |
+|---|---|---|
+| Awarded | Approved amount · Decided · Funded by | *Save outcome* |
+| Still waiting | Check back in (chips) · Or pick a date · Grant / cycle we are waiting on | *Park it* |
+| Referred onward | Now with · Handed on | *Save outcome* |
+| Not awarded | Closed on | *Close it out* |
+
+The comp annotates the waiting panel **"Stops the nagging."** — that is the
+−713-day problem in three words, and the reason this item and §2 ship together.
+
+**The functions to reuse, located and read:**
+
+| What | Where | Note |
+|---|---|---|
+| `lead(pr)` | 43303 | `return (ck(pr) || {}).lead || {};` |
+| `bidOf(pr)` | 29355 | reads `checklist.bid` |
+| `saveBid(pr, next)` | 29361 | **`async`** — writes via `window.patchProjectCk(pr, {bid:b})`, re-renders the strip, audit-logs |
+| `promptForBid(pr, kind)` | 29467 | already writes `submitted_amount` / `awarded_amount` |
+| `wireActs(host, pr)` | ~29464 | wires `log-sub` / `log-awd` on `.cr-bidstrip` |
+| `chDueBand(pr)` | 43419 | **216 chars** — the whole §2 fix is inside it and the Due column |
+
+**There is no `saveLead`.** The five new `checklist.lead` fields need one, and it
+should mirror `saveBid` exactly — same `patchProjectCk` path, same null-stripping,
+same audit line — rather than a second write mechanism.
+
+**Beware:** `saveBid` is declared `async function`. Any brace-matched extraction
+that searches for `function saveBid(` starts *after* `async ` and yields code
+whose `await` is a syntax error. That bit me twice today on other functions.
 
 ---
 

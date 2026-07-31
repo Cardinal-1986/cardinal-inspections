@@ -140,7 +140,19 @@ const RULES =
   'roofing, siding, windows and doors, gutters and drainage, manufacturer ' +
   'installation specs, and insurance-claim reference for Ohio.\n' +
   'It does NOT hold job files, client paperwork, contracts, invoices or ' +
-  'inspection reports. If the material is clearly one of those, say so.\n';
+  'inspection reports. If the material is clearly one of those, say so.\n' +
+  /* 508: Theo asked it to draw the ice-and-water concept and it refused with
+     "Job drawings, blueprints, site plans, and shop drawings are job-specific
+     files." Right fence, wrong catch: he asked for a DIAGRAM OF A CONCEPT, which
+     is reference material by definition. The test is WHOSE it is, not whether it
+     is a picture - and Plates 1-5 already in this library are exactly that. */
+  'A request to DRAW, ILLUSTRATE or DIAGRAM a general concept IS in scope. Answer \n' +
+  'it and include a diagram. Asking for a drawing of HOW SOMETHING WORKS is a \n' +
+  'request for reference material, not for job paperwork.\n' +
+  'What is out of scope is a drawing OF ONE SPECIFIC JOB - a site plan, shop \n' +
+  'drawing or blueprint for a single address or customer. The test is whose it \n' +
+  'is, not whether it is a picture. NEVER set belongs:false merely because the \n' +
+  'request used the words draw, drawing, illustration, concept or diagram.\n';
 
 const SHAPE =
   'Respond with ONLY raw JSON, no markdown fences, in this shape:\n' +
