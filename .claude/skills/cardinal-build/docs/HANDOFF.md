@@ -4,6 +4,110 @@
 
 ---
 
+# Session of 31 July 2026 (evening) — builds 487–509
+
+**`main` is at `f397b52`, app stamp build 503. The branch is pushed and 5 commits
+ahead, unmerged.** Open a PR from `claude/487-488-listview-contrast` and merge to get
+504–509 live. Nothing is uncommitted; nothing is unpushed.
+
+## What shipped
+
+| | |
+|---|---|
+| **487** | List view unreadable at desktop width (1.57:1). **Not** the documents list — the handed-off task was wrong; see the correction below |
+| **488** | What's New printed raw codes — 20 notes carried **Python** escape syntax, which JavaScript does not have. `BUG_CLASSES.md` §11 |
+| **489** | Two unpicked contrast tokens **plus a third the audit missed** — it had only checked light theme |
+| **490** | `api/sortphotos.js` + the client whitelist, whitelist shipped **before** the writer |
+| **491** | Sort photos — moves every photograph in a report to its section and captions it |
+| **492** | The General Exterior report, **derived** from `REPORT_TEMPLATE` (five of its ten sections already were the roof report's) |
+| **493** | The app claimed "No client projects yet" whenever a load **failed** |
+| **494** | Self Check could leave the whole app unable to scroll |
+| **495** | **My bug:** 491's button never appeared — gated before the frame had loaded |
+| **496** | CompanyCam search found nothing by address — terms ANDed across separate columns |
+| **497** | Remove a photograph from a report |
+| **498** | **My bug:** Sort hung silently — 24 photos in one POST against Vercel's 4.5 MB, and no timeout |
+| **499** | **My bug:** the route made its model calls one at a time |
+| **500** | Sort's timeout 45s to 90s, on measured evidence |
+| **501–505** | **Every** Gemini route now falls back to OpenAI — 13 of them, audited not remembered |
+| **506** | Search: `2444 Edenhill Ave` returned **0** because the record says "Avenue" |
+| **507** | Sort fills the Areas of Concern table |
+| **508** | The librarian refused to draw concepts — right fence, wrong catch |
+| **509** | Resource Library reachable from every screen |
+
+## Read before touching the environment
+
+**Work only under `C:\Users\kpkor\OneDrive\Desktop\cardinal-push`.** Anything written
+elsewhere lands in a sandbox layer Theo's own shell cannot see — a full clone, three
+builds and four commits were made at `C:\Users\kpkor\repos\` and simply did not exist
+for him. Test with a marker file before building, not after.
+
+**I cannot push and cannot merge.** The GitHub connector is read-only (`403` on
+`create_branch`) and git has no credential for `git:https://github.com` — GitHub
+Desktop's token is stored separately and git cannot use it. **Theo pushes; Theo
+merges.** Do not spend a session working around this; it cost him an hour of his
+evening.
+
+**`index.html` is CRLF in the working tree.** Python patching is unaffected (universal
+newlines in, CRLF out, normalised to LF on commit). A **JavaScript** harness reads raw
+bytes, so a multi-line anchor silently matches nothing — normalise first.
+
+**`node --check` every file in `api/` after touching any route** — `check.yml` has no
+`npm ci`, so its parse step cannot catch a bad import.
+
+**Anchors: print `repr()` of the real text before writing one.** Three aborts today
+came from copying an anchor out of whitespace-normalised display output. And note that
+`saveBid` is `async function` — an extractor searching for `function saveBid(` starts
+after `async ` and yields code whose `await` is a syntax error.
+
+## Corrections I owe
+
+**The contrast measurement previously in this file was wrong.** It named the wrong
+surface, and its prescription would have taken the documents list from 12.63:1 down to
+6.69:1. Corrected in the 483–489 section below.
+
+**I told Theo seven routes had no OpenAI fallback. Three already had one.** I listed
+them from memory instead of checking. Audit, do not remember.
+
+**Gemini is not misconfigured; Google's capacity is the problem.** `gemini-3.5-flash`
+measured 6–14 seconds and returned 503 about one call in four all evening, while OpenAI
+answered in 0.6 s. Probe any model by name:
+`https://app.cardinalroster.com/api/ai-status?model=gemini-3.6-flash`
+
+## The lesson this session cost the most
+
+**I gated logic and never delivery.** Three separate failures — an invisible button, a
+silent hang, and a dead button afterwards — all passed rigorous harnesses, because the
+harnesses asked *does the function work* and never *does the control appear, does the
+request fit the platform's limits, does the work fit the function's time budget.*
+
+Before calling a feature done: **check the control renders after a real load; check the
+request size against 4.5 MB; check the work against the function timeout.** Those three,
+before writing the harness.
+
+## Next
+
+**The community outcome form** — `OPEN_ITEMS.md` §1. Designed, agreed, **not built**,
+and the largest remaining item. Its last open question is now answered (**check-back
+default: 1 year**), the four flows are transcribed from the comp's own labels, and every
+function to reuse is located and read.
+
+It is a **build-from-design**: `references/outcome_v2.html` is a 204 KB visual comp
+containing three `data-` attributes, all theming. It cannot be lifted. Estimating it as
+"wire up the mockup" will be wrong.
+
+It ships with §2, the second clock, which is a **216-character function** once
+`check_back_at` exists.
+
+## Still only Theo
+
+Five partner emails (Kitty Hawk **has a live job**) · `GOOGLE_MAPS_API_KEY`
+(**referrer-restrict in Google Cloud first**) · **486 has still never been used on a real
+phone with real photographs** · and now: press **Sort photos** on a real report and judge
+whether the model's section choices are sensible. **No gate here has ever made a real
+Gemini call** — every AI claim in this log is about plumbing, never about answer quality.
+
+---
+
 # Session of 31 July 2026 (daytime) — builds 483–489
 
 **483–486 merged (`main` at `0047bbb`, then `e9fa331` for docs). 487–489 are committed on
