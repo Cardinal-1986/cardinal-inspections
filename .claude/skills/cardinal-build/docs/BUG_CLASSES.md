@@ -305,7 +305,9 @@ it had eaten genuine lock calls from `cr-pb`, `cr-sol` and `cr-ci`.
 
 So: naive count said 14. Stripped count said 10. **Both were wrong.** The truth
 is 13, and only a lexer that tracks strings, template literals and comments as
-distinct states gets there. That lexer is `/agent/workspace/lexscan.js`.
+distinct states gets there. **That lexer is `scripts/jslex_count.py`** — in this repo, runnable
+by any program. (An earlier `/agent/workspace/lexscan.js` was the sandbox-only original and is
+not reachable; do not go looking for it.)
 
 I had documented hazard 4b in `patch_photos1.js` earlier in the day and then
 walked straight into it again.

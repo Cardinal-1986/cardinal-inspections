@@ -257,7 +257,10 @@ network round-trip between the tap and the scroll lock.
 
 ## 6. Artifacts produced
 
-Design previews, all in `/agent/workspace/`:
+Design previews. **`/agent/workspace/` was the Hyperagent sandbox and is not reachable from
+anywhere else** — only the agreed outcome design has been recovered into this repo, at
+`.claude/skills/cardinal-build/references/outcome_v2.html`. The rest are listed for the record and are **not openable**; ask Theo to re-export if one is
+needed:
 
 | File | Purpose |
 |---|---|
@@ -267,7 +270,7 @@ Design previews, all in `/agent/workspace/`:
 | `billed_party_previews.html` | billed-party emphasis options |
 | `sortfilter_previews.html` | sort/filter/toggle, adapted to Community |
 | `outcome_five_styles.html` | five outcome-form directions |
-| `outcome_v2.html` | Style 4 layout with Style 2's flow — **the agreed design** |
+| `outcome_v2.html` | Style 4 layout with Style 2's flow — **the agreed design** · ✅ **recovered into `references/`** |
 | `cardinal_brief.html` | opening architecture brief |
 | `rls_audit.html` | row-level-security audit |
 
@@ -278,7 +281,8 @@ Design previews, all in `/agent/workspace/`:
 ## 7. State at hand-off
 
 - `origin/main` = **`202e6f3`**, deployed.
-- Working clone at `/agent/workspace/clone` is clean and on `origin/main`.
+- Working clone at `/agent/workspace/clone` was the sandbox's own checkout — **not a path any
+  other program can use.** Ignore it.
 - All 99 script blocks parse. Tag and brace balance verified.
 - No known broken behaviour in Retail or Insurance — every community change
   this session was gated by `body[data-crm="community"]`, `body.cr-cc-open`,

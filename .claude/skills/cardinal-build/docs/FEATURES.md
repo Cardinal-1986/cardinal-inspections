@@ -638,8 +638,9 @@ neither locks scroll — verified — so the bug was unique to `openPreview`.
 
 ## 10. Designed, agreed, not built
 
-The **outcome form**. Design settled with Theo; `outcome_v2.html` is the
-reference (Style 4 layout, Style 2 flow).
+The **outcome form**. Design settled with Theo; the reference is
+`.claude/skills/cardinal-build/references/outcome_v2.html`
+(Style 4 layout, Style 2 flow) — in the repo as of 31 Jul, reachable by any program.
 
 Four outcomes: **Awarded** / **Still waiting** *(second — most common)* /
 **Referred onward** / **Not awarded**. No reason field.

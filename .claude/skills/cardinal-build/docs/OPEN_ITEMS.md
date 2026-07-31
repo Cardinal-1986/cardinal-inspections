@@ -174,8 +174,8 @@ a light ground changes how they read. Same reasoning as the calendars.
 **Status:** design settled with Theo. Nothing shipped. `OnHold` (PR #34) is the
 foundation and is already in place.
 
-Reference: `/agent/workspace/outcome_v2.html` — **Style 4 layout with Style 2's
-flow**, which is what he picked ("4 with 2s flow").
+Reference: `.claude/skills/cardinal-build/references/outcome_v2.html` — **Style 4 layout with Style 2's
+flow**, which is what he picked ("4 with 2s flow"). *Path corrected 31 Jul; it previously cited a sandbox-only `/agent/workspace/` path no other program could open.*
 
 ### Four outcomes
 
