@@ -427,3 +427,43 @@ this session, not carried forward.*
 built on it ("a photo-signing change shipped completely inert"). That was true when written —
 **216 of 236 rows now have `storage_path`.** The lesson about testing against real data shapes
 still stands; the specific number does not.
+
+---
+
+## 🟡 Light-theme contrast — 2 real failures, 2 false positives, computed 31 July
+
+Arithmetic, not judgment (`scripts/contrast.py`). **Not shipped** — colour changes get previewed
+and picked by Theo, per CLAUDE.md. These are ready to apply on a word.
+
+### Real: 2 pairs below the 4.5:1 body-text floor
+
+| Where | Now | Ratio | Proposed | Then |
+|---|---|---:|---|---:|
+| `.ljempty` / `.cre-empty` — empty-state text, `font:600 12.5px` | `#8a8a8a` on `#ffffff` | **3.45** | `#767676` | 4.54 |
+| `.ljadm` — admin badge pill | `#8a6a4a` on `#f2e9e2` | **4.13** | `#826446` | 4.54 |
+
+Both are the **minimum** darkening that clears the floor — same hue, 14% and 5% down. Neither is a
+semantic colour, so neither is protected by the "semantic colours stay fixed" rule.
+
+### False positives — do NOT re-file these
+
+- **`--rbe-checkfg` on `--rbe-okbg` = 1.11.** Not a pair. `checkfg` sits on `--rbe-acc`
+  (`.ljico .bdg`) and as a `::before` glyph on `.cbx:checked`; `--rbe-okbg` is paired with
+  `--rbe-money`. Pairing them was **my** invention, not the app's.
+- **Milestone pill, `#ffffff` on `#9a9a9a` = 2.81.** `--rbe-mpill-bg` is only the *fallback*:
+  the rule is `background:var(--slc, var(--rbe-mpill-bg))`, and `--slc` is the per-stage colour set
+  at runtime. **The real ground is not knowable statically** — this one needs the rendered page.
+
+### Method notes, so this is repeatable
+
+**Pair by name, never by cartesian product.** A first pass compared all 13 ink tokens against all
+17 grounds and produced **8** "failures"; matching tokens to the grounds they actually meet cut
+that to **4**, and reading the carrying selectors cut it to **2**.
+
+**There are FOUR `rb-light` token blocks** (13 + 13 + 40 + 24 = 92 declarations across 115 selector
+groups). A regex that stops at the first one finds a single token and concludes the light theme
+barely exists. Build the effective map in **document order, last wins**. Same trap as `.acthead`.
+
+**A recon regex of the form `([^\n{}]+)\{([^{}]*TOKEN[^{}]*)\}` will hang the file.** It did — 120s
+timeout, exactly the backtracking CLAUDE.md warns about. Walk back from each hit to the nearest
+`{` with `rfind` and bound the window instead.
