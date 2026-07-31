@@ -1,6 +1,52 @@
 # Cardinal Resource App — Open Items
 
 *The single live list, last worked at build **467** · 31 July 2026 · `origin/main @ cc0b591`. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
+
+
+---
+
+## 🔴 Data, not code — audited against the live database 31 July 2026
+
+Read-only audit via the Supabase connector. **Only one item needs Theo.**
+
+### Needs Theo: 5 of 10 active community partners have no `contact_email`
+
+| Partner | Type | Jobs referencing | Contact name on file |
+|---|---|---:|---|
+| **Kitty Hawk Realty** | property manager | **1 — live** | yes |
+| C.G. Egli Inc | general contractor | 0 | no |
+| CityWide Development Corporation | nonprofit (prospective) | 0 | yes |
+| County Corp | nonprofit (prospective) | 0 | yes |
+| James Construction | general contractor | 0 | no |
+
+**Kitty Hawk is the one that matters** — it has a live job, and community bids go to the *funding
+partner*, not the homeowner. Sending that bid means typing the address by hand.
+
+**Do NOT guess these.** CLAUDE.md is explicit: *"Never write an unverified email address into
+`community_partners`. A bid sent to a guessed address is a lost bid. Ask."* Ask Theo, then write.
+
+### ✅ Invariants that HOLD — do not re-audit without cause
+
+- **`normStage()` whitelist:** 0 of 16 projects carry a stage outside the whitelist. The silent
+  everything-becomes-`Lead` corruption this file warns about **is not happening**.
+- **`checklist` JSON:** 0 of 16 unparseable.
+- **Partner emails already on file:** 0 malformed. Nothing guessed or typo'd has been written.
+
+### ❌ A false positive I nearly filed, recorded so nobody re-files it
+
+The community bid path pre-fills the recipient with `pr.email` — the *project's* address, which on
+a community job is the homeowner, i.e. the one party that must never receive the bid. That reads
+like a real trap.
+
+**It cannot currently fire: 0 of 10 community jobs have a project email**, so the prompt opens
+blank. The code also names the partner and says *"No contact email on file for X — add one under
+Partners."* Working as designed. If project emails ever start being filled in on community jobs,
+re-check this — it becomes live the moment that count is non-zero.
+
+### Minor: one project has no `stage_since`
+
+**Alton** (Lead, created 17 Jul). One row of 16. Cosmetic unless something sorts on stage age.
+
 *When something ships, strike it here and add a line to `cardinal_build_log.md`.*
 
 > **Everything below was verified against the repo or the database on July 28, not carried
