@@ -2863,3 +2863,50 @@ the ratio in `START_HERE` §3 continues to hold.
 
 **LIMIT.** jsdom proves structure, never appearance, and no real Gemini call was made by any gate.
 That a sorted report *reads* well needs Theo, real photographs, and a real key.
+
+## 492 — the General Exterior inspection report
+
+Under **📄 Inspection Reports** there is now a second button, **+ New exterior report**, for the jobs
+that are not only about the roof.
+
+**Derived from `REPORT_TEMPLATE` at patch time, not authored.** Comparing Theo's ten sections against
+the roof report's, **five are the same five** — Inspection Overview, Summary of Findings, Exterior
+Elevations, Recommendations, Limitations. Only the middle five differ: Aerial Roof · Roof Surface ·
+Penetrations · Chimney · Attic become **Roof · Siding & Trim · Windows & Doors · Gutters & Drainage
+· Structure & Grounds**.
+
+So this is a rename of five headings, five narratives and five contents rows — not 163 KB of new
+document. Deriving guarantees what hand-authoring could not: identical `<style>` block, identical
+`@page` rules, identical cover-photo hook, identical `figrow` / `fig` / `frame` / `cap` markup, and
+the `data-` attributes the editor depends on.
+
+**The derivation runs in Python and emits a static literal.** No runtime template machinery was
+added. The correction recorded at 486 stands — in this app a template is *code*, not data — and
+inventing a runtime derivation mechanism would have been the "new mechanism beside an existing one"
+failure this project keeps paying for.
+
+**`data-cardinal-summary-heading` was the thing to be careful with.** It sits on an `<h3>` in
+section 1, and `EDITABLE_SELECTOR` reaches its paragraph with `'[data-cardinal-summary-heading] + p'`
+— an adjacent-sibling combinator. Anything inserted between them silently kills contenteditable on
+that paragraph. The patch asserts the `<h3>` is still immediately followed by a `<p>`, and the
+harness re-checks it on the loaded document.
+
+**One creation path, two buttons.** `createReportFrom(tpl, kindLabel, roofy)` is extracted and both
+buttons call it; duplicating the handler is how this project grows a second copy of a feature.
+`roofy` is **false** for the exterior report on purpose: the Roofing Inspection Checklist feeds roof
+specs and has nothing to say about siding, windows or grounds, so it is neither demanded nor
+injected there.
+
+**Gates.** check_build green, stamp 491 → 492, marker present, negative control clean. Harness
+**18/18** driving the shipped `rccIsReport` / `rccSections` / `placePhotoInSection` against the
+derived template: ten sections in Theo's order verbatim, contents matching the headings, no
+roof-only title surviving, the sort's 3–8 range landing on real sections, a photograph actually
+placed into Siding & Trim with its caption written. **`REPORT_TEMPLATE` asserted byte-identical to
+491** — the roof report was not touched.
+
+**Cost, stated plainly: `index.html` grew 164 KB, from 2.83 MB to 3.00 MB.** That is the real price
+of a second template in a single-file PWA, and it is paid on every cold load. Worth knowing before
+a third template is ever considered.
+
+**LIMIT.** jsdom proves structure. Whether the five new narratives read right on a real siding or
+window job is Theo's eye, not a gate.
