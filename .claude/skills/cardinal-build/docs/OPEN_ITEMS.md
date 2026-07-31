@@ -668,3 +668,56 @@ re-verified here before filing** — `OnHold` writers **0**, `check_back_at` / `
   photo objects after the bucket flip (max-age one year — purge / re-path / wait is Theo's call);
   the `photos_upload` policy question; real bid emails for **Habitat and Kitty Hawk** (the latter
   matches tonight's own database audit).
+
+---
+
+## 🟡 Palette accessibility — 104 declared pairs below 4.5:1 (measured, NOT shipped)
+
+New tool: `scripts/token_pairs.py`. It scores only pairs **the app itself declares** — rules setting
+a colour *and* a background in the same block — so there is no ancestry to guess at. That is the
+case where static analysis is trustworthy; it is exactly what the 27-candidate sweep after 487 got
+wrong by inferring grounds. `@media print` is excluded and `-webkit-text-fill-color` rules are
+skipped rather than scored.
+
+```bash
+python3 .claude/skills/cardinal-build/scripts/token_pairs.py index.html
+python3 .claude/skills/cardinal-build/scripts/token_pairs.py index.html --floor 3.0
+```
+
+**104 pairs below 4.5:1 · 27 below even the 3.0 large-text floor.**
+
+### This is a palette decision, not a bug list — do not "fix" it in one build
+
+The failures cluster, and the clusters are deliberate design:
+
+| Cluster | Measured | Where |
+|---|---:|---|
+| Amber status pills, `#C87A00` on `#FBEFDA` | **2.96:1** | 7+ sites: claims, adjusters, kind-pills, pricing |
+| Green status pills, `#2E7D32` on `#E7F2E7` | **4.46:1** | 7 sites: approved / completed / won / rcv |
+| Faint grey empty states on near-white | 1.77–2.96:1 | `.clirow .mini`, `.wsempty`, `.cr-wo-empty`, `.cr-pal-hint`, `#navMenu .navsec`, `.axbtn.ghost` |
+| Red action-bar button label, `#1a1a1a` on `#C4180F` | **2.89:1** | `.cr-cm-actionbar button` |
+| Header search text, `#c8202e` on `#241c1a` | **2.95:1** | `#cr-hd2-bar #headSearch` |
+| White on light teal, `#fff` on `#5eead4` | **1.48:1** | `#cr-sol .ft .go` |
+
+The pill families are **semantic colours** — amber means awaiting, green means approved. CLAUDE.md
+protects those, and the 31 July note is explicit that the two tokens fixed at 489 were fair game
+*because* they were not semantic. Darkening amber and green across fourteen pills changes the
+product's status vocabulary and is Theo's call, not an engineering one.
+
+The **green cluster at 4.46:1 is 0.04 below the floor** — a rounding-level miss. Changing fourteen
+pills for that is almost certainly not worth it.
+
+**The empty-state cluster is the strongest candidate for a real build.** It is the same family as
+489's `--rbe-empty-fg` (3.45→4.54) — faint grey on near-white, no semantic meaning, minimum
+darkening fixes it. Six surfaces, all low-risk.
+
+### Known false positives — do not re-file
+
+- **`.cr-pp-item .box` at 1.00:1** (`#fff` on `#fff`). A checkbox: the colour is for a `::before`
+  glyph that only renders when checked, at which point the background changes. Same shape as the
+  `--rbe-checkfg` false positive already recorded above.
+- **`body` at 1.15:1** (`#1b1b1b` on `#09090C`). The base declaration; every real surface overrides
+  it. Not a rendered pairing.
+
+**Nothing here is shipped.** The measurement is done and repeatable, so a future session should
+**pick a cluster with Theo and ship that one**, not attempt the list.
