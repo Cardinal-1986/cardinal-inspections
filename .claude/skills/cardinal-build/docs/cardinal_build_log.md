@@ -2609,3 +2609,79 @@ Plus three patch aborts before that, all **one class**: counting an identifier t
 comment, or an earlier build, already used — `lockTemplate` (comment names it twice), `g !== _rccGen`
 (hardcoded 6, wrote 5), and the data-URL string (build 482's `ccEdit` already builds an identical
 one). **Name the site; never count the phrase.** Nothing was written on any of them.
+
+---
+
+## 487 — the list view's documents were dark text on the dark page
+
+**The handed-off task was wrong, and the measurement that justified it was wrong.** HANDOFF named
+the *documents list* and prescribed tokenising `td.dates{color:#333}` to `var(--muted)`. Both halves
+were false, and shipping it would have been a regression sold as a fix.
+
+**Wrong surface.** `#estDocsMount` / `#inspDocsMount` sit under `#projectView`. The rule that strips
+the paper background — `#listView table.reports{background:transparent}`, added by 44310's retail
+redesign — is scoped to `#listView` and never reaches them. Those tables keep
+`background:var(--paper)` = `#ffffff` at every width, where `#333` measures **12.63:1**. There was
+never a bug there.
+
+**The prescribed fix inverted the contrast.** `var(--muted)` is `#5c5c5c`. On that white table,
+tokenising takes **12.63:1 down to 6.69:1**. Every mechanical gate would have gone green.
+
+**The numbers could not both be true.** HANDOFF claimed `#333` at 1.48:1 and the tokenised lines at
+7.10:1. They share one table cell, so one background — and `#333` is *darker* than `#5c5c5c`. On any
+dark ground `#333` is worse; on any light ground it is better. `7.10:1` is also unreachable for
+`#5c5c5c` against anything: pure white caps it at 6.69:1.
+
+**The real defect, measured.** `#listMount` *is* inside `#listView`. There the table is transparent
+over `--bg:#09090C`, and every cell still carries its paper-theme colour:
+
+| | on the dark list view |
+|---|---|
+| `td.dates{color:#333}` | **1.57:1** |
+| `var(--muted)` = `#5c5c5c` | **2.97:1** |
+
+The tokenised lines fail too, which is why "tokenise it" was never going to work. 44310 also gave
+`#listView .reports tr` `border-radius` and `margin-bottom` — card geometry that does not apply to a
+table row at all above the breakpoint. It stripped the surface and never replaced it.
+
+**Why nobody saw it.** `table.reports tr{background:#fff}` lives inside `@media (max-width:700px)`,
+so on a phone every row is a white card and the bug is invisible. The doc set recorded Theo as
+mobile-only. He corrected that mid-session: desktop **and** an ultrawide, both >700px.
+
+**The fix.** Three rules scoped to `#listView`, using the retail token pair already declared dark at
+20556 and light at 20578, so `rb-light` flips with them instead of needing a second block:
+`--rbe-ink` (`#cfd6df`, **13.58:1**) for cell text, `--rbe-mute` (`#9aa0a8`, **7.55:1**) for `small`
+and `.ref`, and `rgba(255,255,255,.06)` for hover — because the inherited
+`tr:hover td{background:#faf7f5}` would otherwise flash a near-white bar under light text.
+`--rbe-mute2` (`#6d747e`) was rejected at **4.21:1**, below the floor. `.projrow` is excluded: it
+sets its own light band and would have gone light-on-light.
+
+Gates green, negative control clean. Harness 14/14 proving **scope** — that the selectors reach the
+list view and provably cannot reach the documents list, which is the exact mistake avoided.
+**jsdom cannot resolve `var()`, so nothing here proves colour**; the Vercel preview and Theo's eyes
+are that gate.
+
+## 488 — the updates panel was printing raw codes at people
+
+Found by an assertion written for something else. 20 `CHANGELOG` notes carried `\U0001XXXX` escapes
+— **Python syntax, not JavaScript.** JS has no `\U` escape, so it drops the backslash and the note
+renders beginning `U0001F4F8` where the emoji belongs. `CHANGELOG` is rendered (33510 filters to
+builds newer than `lastSeen`, else the latest five), so this is what Theo has been reading since
+roughly 468 — including 486's entry, the newest one he would see.
+
+Repaired as **surrogate pairs** (`\uD83D\uDCF8`), not literal characters: `\uXXXX` is valid JS and is
+already this file's convention (597 × `\u2014`, 115 × `\u2026`), and it keeps the region ASCII so no
+encoding step can mangle it. Scoped to the `CHANGELOG` array and asserted: the ~2,141 valid `\u`
+escapes elsewhere are unchanged, counted before and after.
+
+Harness parses the shipped array in a real engine and reads the resulting strings — 6/6, negative
+control 4/6 against 487. Not a text assertion: a wrong escape produces wrong characters and fails.
+
+### Two aborts, both mine, both the same class as 485–486
+
+1. **An apostrophe in my own note.** "What's New" inside a single-quoted JS string closed it and
+   took out the whole `cr-cl-script` block. Caught by `node --check`, nothing staged. The patch now
+   asserts no apostrophe reaches the literal.
+2. **I quoted the broken pattern inside the note meant to prove it absent** — the harness scans every
+   note for that pattern and cannot tell my example from a real one. Exactly the class recorded at
+   486: *counting an identifier my own text already used.* The note no longer quotes it.
