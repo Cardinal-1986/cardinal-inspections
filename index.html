@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 511 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 512 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33851,6 +33851,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:512, note:'\uD83D\uDCD0 Library entries that were written before can now be given a diagram. Open one and tap Add a diagram, and the assistant draws it from what that entry already says. It will tell you when a picture would not help.' },
 { build:511, note:'\uD83D\uDD24 The What is New list showed stray letters where a small picture belonged. Six notes had one, going back several updates today.' },
 { build:510, note:'\uD83D\uDD8D The Library assistant draws diagrams reliably now. Its instructions showed it an example that did not follow its own rule about spacing, so diagrams could come out as plain text with stray marks in them.' },
 { build:509, note:'\uD83D\uDCDA The Resource Library is now one tap away from anywhere. A books button sits in the little bar with the back and forward arrows, on every screen, instead of the library only being reachable from the home page and two panels.' },
@@ -48454,6 +48455,12 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 #rlLibPanel .lb-acts button{flex:1;min-width:120px;background:var(--lb-surface2,#FAF8F7);
   border:1px solid var(--lb-line2,#DED8D6);color:var(--lb-ink,#17181B);border-radius:10px;
   padding:11px 10px;font:800 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer}
+/* 512: the button that adds a drawing to an entry that already exists.
+   Same tokens as .lb-acts button above so it inherits every theme. */
+#rlLibPanel .lb-m .lb-draw{display:block;margin:10px 0 2px;background:var(--lb-surface2,#FAF8F7);
+  border:1px solid var(--lb-line2,#DED8D6);color:var(--lb-ink,#17181B);border-radius:10px;
+  padding:9px 14px;font:800 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer}
+#rlLibPanel .lb-m .lb-draw[disabled]{opacity:.55;cursor:default}
 #rlLibPanel .lb-ask{display:flex;gap:8px;padding:0 16px 14px}
 #rlLibPanel .lb-ask input{flex:1;min-width:0;padding:11px 12px;border-radius:10px;
   border:1px solid var(--lb-line2,#DED8D6);background:var(--lb-surface,#fff);
@@ -49780,14 +49787,79 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       '</span></div>';
   }
 
+  /* 512: the same four forms lbBlock accepts. Kept next to its only two callers
+     so a change to the renderer's marker set has one obvious place to land. */
+  var LB_MARKER = /(^|\n)\s*~~\s*(stack|flow|bars|pitch)\b/i;
+
   function openNote(id){
     var it = items.find(function(x){ return x.id === id; });
     if(!it) return;
     openPanel();
-    say('bot', '<b>' + esc(it.title) + '</b>' +
+    var m = say('bot', '<b>' + esc(it.title) + '</b>' +
       lbRich(it.body || it.summary || '') +
       (it.kind === 'note' ? lbSources(it.sources) : '') +
       (it.source_note ? '<span class="filed">Asked: ' + esc(it.source_note) + '</span>' : ''));
+    /* Offer it only where it can do something: a note, with text, that has no
+       diagram yet. Without the last condition an entry collects three. */
+    if(m && it.kind === 'note' && String(it.body || '').trim() && !LB_MARKER.test(String(it.body || ''))){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lb-draw';
+      b.setAttribute('data-lb-draw', it.id);
+      b.textContent = '\u270E  Add a diagram';
+      m.appendChild(b);
+    }
+  }
+
+  /* 512: Theo asked to be able to put illustrations into entries that already
+     exist. The library had FOUR inserts on library_items and no update at all,
+     so nothing could ever add to one. The RLS policy has always allowed it. */
+  function drawInto(id, btn){
+    var it = items.find(function(x){ return x.id === id; });
+    if(!it || !window.supa || !btn || btn.disabled) return;
+    var was = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Drawing\u2026';
+    function give(msg){
+      btn.disabled = false;
+      btn.textContent = was;
+      var e = say('bot', esc(msg));
+      if(e) e.className = 'lb-m bot err';
+    }
+    window.aiHeaders().then(function(h){
+      return fetch('/api/librarian', { method:'POST', headers:h,
+        body:JSON.stringify({ illustrate:{ title:it.title, body:it.body } }) });
+    }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(data){
+        if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+        return data;
+      });
+    }).then(function(d){
+      var block = String((d && d.diagram) || '').trim();
+      /* Not every entry should have a picture. Half this library is permit
+         offices - "no" is a real answer here, not a failure. */
+      if(!block){
+        give((d && d.reason) || 'A drawing would not add anything to this one.');
+        return;
+      }
+      if(!LB_MARKER.test('\n' + block)){
+        give('That came back in a shape the app cannot draw.');
+        return;
+      }
+      /* 510 measured this exactly: a marker only draws when it STARTS its own
+         block. Whatever the model returned, it gets a blank line either side. */
+      var body = String(it.body || '').replace(/\s+$/, '') + '\n\n' +
+        (d.caption ? String(d.caption).trim() + '\n\n' : '') +
+        block.replace(/\s+$/, '') + '\n';
+      return window.supa.from('library_items').update({ body:body }).eq('id', it.id)
+        .then(function(r){
+          if(r && r.error) throw r.error;
+          it.body = body;
+          openNote(it.id);
+        });
+    }).catch(function(e){
+      give('Could not add a drawing \u2014 ' + (e && e.message ? e.message : String(e)));
+    });
   }
 
   function openItem(path){
@@ -49941,6 +50013,8 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
           }
           return;
         }
+        var dw = e.target.closest('[data-lb-draw]');
+        if(dw){ drawInto(dw.getAttribute('data-lb-draw'), dw); return; }
         if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
         if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
         var _e = e.target.closest('[data-cc-edit]');

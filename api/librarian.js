@@ -171,52 +171,10 @@ const SHAPE =
   'section when the material is a real category the library is missing. ' +
   'Never invent more than one new section and one new subsection per item.';
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
-  }
-
-  const _user = await requireSession(req, res);
-  if (!_user) return;
-
-  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
-  if (!apiKey) {
-    res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server' });
-    return;
-  }
-
-  try {
-    const { image, file, text, filename, mime, sections, ask } = req.body || {};
-    if (!image && !file && !text && !ask) {
-      res.status(400).json({ error: 'Send a file, an image, document text, or a question' });
-      return;
-    }
-
-    const shelf = 'The library currently looks like this:\n' + outline(sections) + '\n\n';
-    let parts;
-
-    if (ask) {
-      /* A question is a request to GROW the library. Write a reference entry
-         worth keeping and say where it should be filed — the browser then
-         stores it, so the next person finds it without asking. */
-      parts = [{ text:
-        RULES + '\n' + shelf +
-        'A member of the crew asked:\n"' + String(ask).slice(0, 800) + '"\n\n' +
-        'Write a reference entry for the library that answers it and is worth ' +
-        'keeping. Plain, practical language for a roofer in Ohio. Lead with the ' +
-        'answer, then the detail that matters on a roof or a job site. Use short ' +
-        'paragraphs; use "- " bullets for lists of requirements or steps.\n' +
-        'The body is rendered as light markdown. You may use: "## " for a short ' +
-        'heading on its own line, "- " bullets, "1. " numbered steps, **bold**, ' +
-        'and GitHub-style pipe tables. Separate every block with a blank line.\n' +
-        'Reach for a TABLE whenever the answer is a set of values that vary by ' +
-        'one thing — sizes, spacings, fastener counts, thresholds by material, ' +
-        'requirements by jurisdiction. A table a roofer can read one row off ' +
-        'beats the same numbers buried in a sentence. Example shape:\n' +
-        '| Pitch | Multiplier |\n|---|---|\n| 4/12 | 1.0541 |\n' +
-        'Keep tables to 4 columns or fewer — this is read on a phone.\n' +
-        'Do NOT use raw HTML, links or images; they will not render.\n' +
+/* 512: these instructions were inline in the ask branch. The illustrate
+   mode below needs them too, and a second copy would drift - the 510
+   spacing fix would have landed in only one of them. One definition. */
+const DIAGRAM =
         /* 466: diagrams. The model writes DATA, never markup - index.html
            draws the SVG. See the lbDiagram block there for why. */
         'You may add ONE simple diagram when it genuinely helps. You never write \n' +
@@ -241,7 +199,87 @@ export default async function handler(req, res) {
         'characters. A diagram may ONLY restate something the prose already says - \n' +
         'never put a fact, number or step in a diagram that is not in the text. \n' +
         'If the answer is values that vary by one thing, a TABLE is better. If \n' +
-        'nothing genuinely benefits from a picture, do not add one.\n' +
+        'nothing genuinely benefits from a picture, do not add one.\n';
+
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const _user = await requireSession(req, res);
+  if (!_user) return;
+
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  if (!apiKey) {
+    res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server' });
+    return;
+  }
+
+  try {
+    const { image, file, text, filename, mime, sections, ask, illustrate } = req.body || {};
+    if (!image && !file && !text && !ask && !illustrate) {
+      res.status(400).json({ error: 'Send a file, an image, document text, a question, or an entry to illustrate' });
+      return;
+    }
+
+    const shelf = 'The library currently looks like this:\n' + outline(sections) + '\n\n';
+    let parts;
+
+    if (illustrate) {
+      /* 512: add a drawing to an entry that ALREADY EXISTS. It gets the entry's
+         own words and returns ONLY a diagram - never a rewrite. Half this
+         library is permit-office contact notes, so returning nothing has to be
+         a first-class answer, not a failure. */
+      const itTitle = String(illustrate.title || '').slice(0, 200);
+      const itBody = String(illustrate.body || '').slice(0, 8000);
+      if (!itBody.trim()) {
+        res.status(400).json({ error: 'That entry has no text to illustrate' });
+        return;
+      }
+      parts = [{ text:
+        'A reference entry in a roofing company library already exists and someone \n' +
+        'has asked for a drawing to go with it. Do NOT rewrite it, summarise it, \n' +
+        'correct it or comment on it. Your entire job is the drawing.\n\n' +
+        'Title: ' + itTitle + '\n\n' +
+        'The entry says:\n"""\n' + itBody + '\n"""\n\n' +
+        DIAGRAM + '\n' +
+        'Draw ONLY what this entry actually says. Never introduce a measurement, \n' +
+        'a layer or a step the text does not contain - a diagram that disagrees \n' +
+        'with the words above it is worse than no diagram.\n' +
+        'Some entries should NOT be illustrated. If it is about who to call, \n' +
+        'where to file, what a permit costs or which office has jurisdiction, \n' +
+        'return an empty diagram and say why. A picture of an office helps nobody.\n' +
+        'Respond with ONLY raw JSON, no markdown fences:\n' +
+        '{\n' +
+        '  "diagram": "<the marker line and its data lines, or an empty string>",\n' +
+        '  "caption": "<one short sentence introducing it, or an empty string>",\n' +
+        '  "reason": "<if diagram is empty, why a picture would not help here>"\n' +
+        '}'
+      }];
+    } else if (ask) {
+      /* A question is a request to GROW the library. Write a reference entry
+         worth keeping and say where it should be filed — the browser then
+         stores it, so the next person finds it without asking. */
+      parts = [{ text:
+        RULES + '\n' + shelf +
+        'A member of the crew asked:\n"' + String(ask).slice(0, 800) + '"\n\n' +
+        'Write a reference entry for the library that answers it and is worth ' +
+        'keeping. Plain, practical language for a roofer in Ohio. Lead with the ' +
+        'answer, then the detail that matters on a roof or a job site. Use short ' +
+        'paragraphs; use "- " bullets for lists of requirements or steps.\n' +
+        'The body is rendered as light markdown. You may use: "## " for a short ' +
+        'heading on its own line, "- " bullets, "1. " numbered steps, **bold**, ' +
+        'and GitHub-style pipe tables. Separate every block with a blank line.\n' +
+        'Reach for a TABLE whenever the answer is a set of values that vary by ' +
+        'one thing — sizes, spacings, fastener counts, thresholds by material, ' +
+        'requirements by jurisdiction. A table a roofer can read one row off ' +
+        'beats the same numbers buried in a sentence. Example shape:\n' +
+        '| Pitch | Multiplier |\n|---|---|\n| 4/12 | 1.0541 |\n' +
+        'Keep tables to 4 columns or fewer — this is read on a phone.\n' +
+        'Do NOT use raw HTML, links or images; they will not render.\n' +
+        DIAGRAM +
         /* 471: real photographs, on the same principle — you write a SEARCH,
            the app runs it. The model never receives photo data back. */
         'REAL PHOTOGRAPHS. When someone asks to SEE something — "show me", \n' +
@@ -341,21 +379,37 @@ export default async function handler(req, res) {
     out = out.replace(/```json|```/g, '').trim();
 
     let parsed;
-    /* 446: sources is display-only and reaches the DB as text[]. Coerce to a
-       clean array of short strings here so the browser never has to guess —
-       a model returning a bare string or null must not become [null]. */
     try { parsed = JSON.parse(out); }
     catch (e) {
       res.status(502).json({ error: 'Model returned unparseable output', detail: out.slice(0, 300) });
+      return;
+    }
 
+    /* 446: sources is display-only and reaches the DB as text[]. Coerce to a
+       clean array of short strings here so the browser never has to guess —
+       a model returning a bare string or null must not become [null].
+       512: this sat INSIDE the catch above, so it ran only when JSON.parse had
+       already thrown - at which point `parsed` is undefined and its own guard is
+       false. Dead since 446. Nothing corrupt reached the database because the
+       browser re-guards on insert, but a model answering sources as a bare
+       string failed that Array.isArray check and the citation was dropped, which
+       is the exact thing this block was written to prevent. */
     if (parsed && typeof parsed === 'object') {
       const raw = parsed.sources;
       const list = Array.isArray(raw) ? raw : (typeof raw === 'string' && raw.trim() ? [raw] : []);
       parsed.sources = list
-        .map(s => String(s == null ? '' : s).trim().slice(0, 200))
-        .filter(s => s.length > 1)
+        .map(x => String(x == null ? '' : x).trim().slice(0, 200))
+        .filter(x => x.length > 1)
         .slice(0, 8);
     }
+
+    if (illustrate) {
+      const d = String(parsed.diagram || '').trim();
+      res.status(200).json({
+        diagram: d.slice(0, 1200),
+        caption: String(parsed.caption || '').slice(0, 300),
+        reason: String(parsed.reason || '').slice(0, 300)
+      });
       return;
     }
 

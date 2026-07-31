@@ -3447,3 +3447,63 @@ flagged **⚡ (U+26A1)** — a valid BMP emoji — as broken. Corrected to the a
 **Both directions of this mistake cost the same thing.** A pattern loose enough to catch
 every real instance also catches things that are fine; the fix is to state the defect's
 signature precisely, then check the claim against what the user sees.
+
+## 512 — a drawing can go into an entry that already exists
+
+Theo: *"Id also like to be able to put illustrations or concept drawings in existing areas."*
+
+### What was already there, checked instead of assumed
+
+`openNote()` **already** renders through `lbRich`, so an existing entry already draws a
+diagram the moment its body contains one — no renderer work was needed. The
+`lib_items_update` RLS policy has **always** permitted this. The actual gap was narrow: the
+client had **four** inserts on `library_items` and **zero** updates. Nothing could ever add
+to an entry that existed.
+
+### The library is 23 notes, not 165
+
+I had been repeating 165 all session. It is **23, all notes, none archived**, three already
+carrying a diagram. Of the remaining twenty, about half are permit-office contact notes —
+Xenia, Beavercreek, Franklin County, *"There is no such thing as a county building code in
+Ohio"* — where a picture is noise. The real candidates are physical: **Pocket Window
+Installation and Cross-Section** (the title promises a cross-section and there is none),
+Ice Dam Prevention, Step Flashing, Drip Edge Sequence, Mod-Bit build-up, both pitch entries.
+
+Twenty entries is a button on an open note, not a batch job. That number changed the design.
+
+### Changes
+
+**`api/librarian.js`** — the diagram instructions were inline in the `ask` branch; a second
+mode would have needed a second copy, and the 510 spacing fix would have landed in only one
+of them. Extracted to `const DIAGRAM`, **proved byte-identical** by `diagram_identical.mjs`.
+New `illustrate` mode returns *only* a diagram, drawn from the entry's own words, and
+treats "no picture would help here" as a first-class answer.
+
+**A real bug, found while reading:** the 446 `sources` sanitiser sits **inside the `catch`**
+of the `JSON.parse` it cleans up after. It runs only when the parse threw — at which point
+`parsed` is `undefined` and its own guard is false. Dead since 446. Nothing corrupt reached
+the database because the browser re-guards on insert, but a model answering
+`"sources": "2019 RCO R905.2"` as a bare string fails that `Array.isArray` check and the
+citation is **silently dropped** — precisely what the block was written to prevent. Hoisted.
+
+**`index.html`** — an *Add a diagram* button on an open note, offered only where it can do
+something: a note, with text, **and no diagram yet**. Without that last condition an entry
+collects three.
+
+### The gate finally asks the right question
+
+Three features tonight passed rigorous harnesses and did not work, because the harness asked
+*does the function work* and never *does the button exist, does a tap reach it.*
+`illustrate_test.mjs` runs the real `openNote()`, attaches the **real delegated handler
+sliced out of the file**, dispatches a real bubbling click, and proves the diagram renders
+afterwards. 20 assertions. It **fails on 511** and passes on 512.
+
+Two harness faults it caught on itself, both of which would have read as product bugs:
+
+`p.addEventListener('click', function(e){` **is not unique** in a 3 MB file. `indexOf` found
+a different panel and yielded a 186-character slice, failing 11 assertions. Anchor backward
+from the line under test.
+
+And the harness compared the outgoing request against `NO_DIAGRAM.body` — an object
+`drawInto` **legitimately mutates** on success. By assertion time it was reading the updated
+text. **When the code under test mutates your fixture, snapshot the fixture first.**
