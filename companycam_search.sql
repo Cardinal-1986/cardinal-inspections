@@ -1,80 +1,83 @@
--- companycam_search.sql
--- Build 496 — make CompanyCam photo search actually find things by address or job name.
+-- companycam_search.sql  [rewritten at build 506 - APPLIED]
 --
--- THE BUG, measured against the live index rather than reasoned about:
+-- 496 fixed "no single column holds all the terms" by searching the four fields
+-- CONCATENATED. It left a second problem, which Theo found:
 --
---   api/companycam.js searched each column SEPARATELY:
---       or=(description.wfts.Q, project_name.wfts.Q, project_address.wfts.Q, creator_name.wfts.Q)
+--   "if edenhill is searched with the address number it will not populate
+--    photos. It only populates if its just the street name"
 --
---   websearch_to_tsquery ANDs every word. The picker pre-fills the box with the
---   report TITLE, which carries the client name AND the address — but
---   project_name holds only the name and project_address only the address, so
---   NO SINGLE COLUMN ever contains all the terms and the search returned zero:
+-- Measured against the live index. The number was never the issue - the WORD was:
 --
---       '843 Farnam'                                    -> 738 photos
---       'CR226 Amber Mcdonald - 843 Farnam St, ...'     ->   0 photos
+--   'Edenhill'            -> 54 photos
+--   '2444 Edenhill'       -> 38 photos
+--   '2444 Edenhill Ave'   ->  0        <-- stored as "Edenhill AVENUE"
+--   full stored address   ->  0        <-- 45420-3551 splits, city may differ
 --
---   Worse, websearch_to_tsquery reads a lone hyphen as NEGATION, so
---   "Client - 843 Farnam" parses to  'client' & !'843' & 'farnam'  and actively
---   EXCLUDES the address being searched for.
+-- websearch_to_tsquery ANDs every word, so ONE abbreviation kills the search.
+-- Ave/Avenue, St/Street, Dr/Drive, a ZIP+4, a city spelled differently - any of
+-- them returns nothing at all, which reads as "we have no photos of this job".
 --
--- THE INDEX FOR THIS ALREADY EXISTED AND WAS NEVER USED. companycam_photos_fts
--- is a GIN index over the four fields CONCATENATED into one document. Querying
--- that expression is both correct (all terms match across the combined text) and
--- fast — measured 32 ms vs 1,706 ms for a per-word ilike scan, because the
--- separate-column form cannot use it at all.
+-- SO: RANK, DO NOT FILTER. Strict AND first, because someone who types exactly
+-- should get exactly. Only if that finds NOTHING, match ANY term and order by
+-- how well each row matches. Prefix-matched, so "Eden" finds Edenhill.
 --
--- Punctuation is stripped before parsing, which removes the hyphen-as-NOT trap
--- and makes a pasted address behave like the words it contains.
+-- Measured after: every failing case above now returns the correct job FIRST.
+-- The loose pass is deliberately noisy - it is a last resort, and the ordering
+-- is what makes it useful rather than the filtering.
 --
--- SECURITY: SECURITY DEFINER and revoked from anon/authenticated, granted only to
--- service_role — matching companycam_backfill_project_names and
--- companycam_caption_sample. It bypasses RLS, so a signed-in non-admin must not
--- be able to read preview urls straight out of the mirror. The route that calls
--- it is admin-gated.
---
--- Idempotent and additive. To undo: drop function companycam_search(text,int);
+-- SECURITY unchanged: SECURITY DEFINER, revoked from anon/authenticated, granted
+-- only to service_role, matching companycam_backfill_project_names.
+-- To undo: drop function companycam_search(text,int);
 
 create or replace function companycam_search(q text, n int default 60)
 returns table (
-  id              text,
-  description     text,
-  captured_at     timestamptz,
-  project_id      text,
-  project_name    text,
-  project_address text,
-  creator_name    text,
-  annotated       boolean,
-  thumb_url       text,
-  preview_url     text
+  id text, description text, captured_at timestamptz, project_id text,
+  project_name text, project_address text, creator_name text,
+  annotated boolean, thumb_url text, preview_url text
 )
-language sql
-stable
-security definer
-set search_path = public
+language plpgsql stable security definer set search_path = public
 as $$
-  with cleaned as (
-    -- Strip everything that is not a letter, digit or space. This is what kills
-    -- the hyphen-as-NOT trap, and it also means a pasted address with commas
-    -- behaves exactly like the words inside it.
-    select nullif(btrim(regexp_replace(coalesce(q, ''), '[^[:alnum:][:space:]]+', ' ', 'g')), '') as t
-  )
-  select
-    p.id, p.description, p.captured_at, p.project_id, p.project_name,
-    p.project_address, p.creator_name, p.annotated, p.thumb_url, p.preview_url
-  from companycam_photos p, cleaned c
-  where c.t is not null
-    and to_tsvector('english',
-          coalesce(p.description, '')     || ' ' ||
-          coalesce(p.project_name, '')    || ' ' ||
-          coalesce(p.project_address, '') || ' ' ||
-          coalesce(p.creator_name, '')
-        ) @@ websearch_to_tsquery('english', c.t)
+declare
+  cleaned text; words text[]; strict_q tsquery; loose_q tsquery;
+  lim int := least(greatest(coalesce(n,60),1),100); found int;
+begin
+  cleaned := btrim(regexp_replace(coalesce(q,''), '[^[:alnum:][:space:]]+', ' ', 'g'));
+  if cleaned = '' then return; end if;
+  words := array(select w from unnest(regexp_split_to_array(cleaned, '\s+')) w where length(w) > 0);
+  if array_length(words,1) is null then return; end if;
+
+  -- 1) STRICT: every word must appear.
+  strict_q := websearch_to_tsquery('english', cleaned);
+  return query
+  select p.id,p.description,p.captured_at,p.project_id,p.project_name,
+         p.project_address,p.creator_name,p.annotated,p.thumb_url,p.preview_url
+  from companycam_photos p
+  where to_tsvector('english',
+          coalesce(p.description,'')||' '||coalesce(p.project_name,'')||' '||
+          coalesce(p.project_address,'')||' '||coalesce(p.creator_name,'')) @@ strict_q
   order by p.captured_at desc nulls last
-  limit least(greatest(coalesce(n, 60), 1), 100);
+  limit lim;
+  get diagnostics found = row_count;
+  if found > 0 then return; end if;
+
+  -- 2) LOOSE: any word, best match first.
+  loose_q := to_tsquery('english', array_to_string(array(select w || ':*' from unnest(words) w), ' | '));
+  return query
+  select p.id,p.description,p.captured_at,p.project_id,p.project_name,
+         p.project_address,p.creator_name,p.annotated,p.thumb_url,p.preview_url
+  from companycam_photos p
+  where to_tsvector('english',
+          coalesce(p.description,'')||' '||coalesce(p.project_name,'')||' '||
+          coalesce(p.project_address,'')||' '||coalesce(p.creator_name,'')) @@ loose_q
+  order by ts_rank(to_tsvector('english',
+          coalesce(p.description,'')||' '||coalesce(p.project_name,'')||' '||
+          coalesce(p.project_address,'')||' '||coalesce(p.creator_name,'')), loose_q) desc,
+        p.captured_at desc nulls last
+  limit lim;
+end;
 $$;
 
-revoke all on function companycam_search(text, int) from public;
-revoke all on function companycam_search(text, int) from anon;
-revoke all on function companycam_search(text, int) from authenticated;
-grant execute on function companycam_search(text, int) to service_role;
+revoke all on function companycam_search(text,int) from public;
+revoke all on function companycam_search(text,int) from anon;
+revoke all on function companycam_search(text,int) from authenticated;
+grant execute on function companycam_search(text,int) to service_role;
