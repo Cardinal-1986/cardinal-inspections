@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 489 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 490 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33303,6 +33303,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:490, note:'\uD83D\uDCC1 Groundwork for sorting photographs into the right sections automatically. There is nothing to see on screen yet - this build puts the machinery in place and the button that uses it comes next. Nothing that already worked has changed.' },
 { build:489, note:'\uD83D\uDC53 Three greys that were too faint to read comfortably are now a shade stronger: the message shown when a list has nothing in it, in both the light and dark themes, and the small admin tag. Each is the smallest change that clears the readability standard, so nothing else looks different.' },
 { build:488, note:'\uD83D\uDD24 The updates panel was printing raw codes. Every note going back about twenty builds began with a string of letters and numbers instead of a small picture, because the picture was written the way one language spells it and read by another that spells it differently. All of them now show a picture.' },
 { build:487, note:'The documents list was unreadable on a computer. On a phone each row is a white card, so this never showed there - but on a desktop or ultrawide the table sits straight on the dark page and the text was still the near-black it uses on white. Titles and dates now use the light text the rest of the dark theme already uses, and hovering a row lifts it slightly instead of flashing it white.' },
@@ -49464,5 +49465,57 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 })();
 </script>
 
+
+<script id="cr-sortvocab-script">
+/* Build 490 - the AI photo sort's vocabulary, client side.
+
+   This ships BEFORE the writer that consumes it, on purpose. normStage's lesson
+   is that a value the whitelist has not learned does not error - it silently
+   becomes something else. So the whitelist lands first and the writer lands
+   against a client that already knows every value it can be handed.
+
+   These MUST stay identical to api/sortphotos.js's SECTIONS / SEVERITIES /
+   TRADES / MAX_PHOTOS. They are not independent choices: `section` is
+   organize.js's existing 3-8 numbering, `severity` is severityOf()'s crit/warn/
+   ok, and `trade` is the EST_TYPES key set. The route also returns its own
+   vocabulary on every 200 so a deploy skew can be detected rather than guessed
+   at - see agrees() below. */
+(function(){
+'use strict';
+var SECTION_MIN = 3, SECTION_MAX = 8;
+var SEVERITIES = ['crit','warn','ok'];
+var TRADES = ['roof','siding','windows','andersen','gutters','general'];
+var MAX_PHOTOS = 24;
+
+function knows(p){
+  if(!p || typeof p !== 'object') return false;
+  var s = parseInt(p.section, 10);
+  if(!(s >= SECTION_MIN && s <= SECTION_MAX)) return false;
+  if(SEVERITIES.indexOf(p.severity) === -1) return false;
+  if(TRADES.indexOf(p.trade) === -1) return false;
+  return true;
+}
+
+/* Compare against the vocabulary block the route returns. If index.html and the
+   route deploy out of step this reports it, instead of the client quietly
+   discarding placements it does not recognise. */
+function agrees(v){
+  if(!v) return false;
+  return v.sectionMin === SECTION_MIN && v.sectionMax === SECTION_MAX
+      && String(v.severities) === String(SEVERITIES)
+      && String(v.trades) === String(TRADES);
+}
+
+window.CardinalSortVocab = Object.assign(window.CardinalSortVocab || {}, {
+  sectionMin : SECTION_MIN,
+  sectionMax : SECTION_MAX,
+  severities : SEVERITIES.slice(),
+  trades     : TRADES.slice(),
+  maxPhotos  : MAX_PHOTOS,
+  knows      : knows,
+  agrees     : agrees
+});
+})();
+</script>
 </body>
 </html>

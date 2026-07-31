@@ -2748,3 +2748,61 @@ Assert **non-increasing**, which still catches a genuinely misfiled entry. Same 
 build: the first version of that gate also pinned `log[0].build` to a literal `488`, so it went red
 the moment 489 shipped while every substantive check still passed. **Assert the property, never the
 tally.**
+
+## 490 — the AI sort route, and its vocabulary on the client BEFORE the writer
+
+**Deliberately half a feature, in the sanctioned order.** This ships `api/sortphotos.js` and the
+client-side whitelist with **no writer yet**. That is the `normStage` invariant applied as
+`START_HERE` §5 states it — *"ship the whitelist entry first, in its own commit"* — and it is what
+`OPEN_ITEMS` asked for: *every enum the route can emit is in the client whitelist before the writer
+ships*. A value the whitelist has not learned does not error; it silently becomes something else.
+
+**The route is signed-in, not admin-only** — settled by Theo, and the two gates guard different
+things. `api/companycam.js` stays admin-only because it reaches all 1,437 jobs and can put the wrong
+customer's house into a report that goes out by email and public link. This route only ever sees
+photographs already in the open report and never touches CompanyCam. Spend is bounded by
+`MAX_PHOTOS = 24`, which is what actually caps cost — not the gate.
+
+### The three defects from `organize.js` / `librarian.js`, fixed rather than inherited
+
+1. `organize.js:51` reads `process.env.GEMINI_API_KEY` **bare**. A trailing newline in the Vercel
+   variable produces an opaque Google 400. Now `(… || '').trim()`, the majority idiom. Asserted both
+   ways: a padded key works, a whitespace-only key reads as missing.
+2. `organize.js` has **no retry**. `askGemini` is taken from `librarian.js:48–65` — **with its bug
+   fixed.** That version sleeps 1200 ms *after the final attempt*, so a job already doomed still
+   burns billed time before returning. It now sleeps only when another attempt will follow.
+3. `librarian.js`'s `sources` sanitiser is **stranded inside a `catch` and never runs**. Not copied.
+
+### One vocabulary, none of it invented
+
+`section` had incompatible prior art — `organize.js` defines 3–8 and 502s outside — so this route
+uses the **same numbering** rather than a fourth scheme under a colliding name. `severity` is
+`severityOf()`'s `crit`/`warn`/`ok` (index.html:31212). `trade` is the `EST_TYPES` key set
+(**index.html:16771** — the audit said 16751; re-measured, as the docs instruct). An unknown value
+from the model is **coerced to the safe end of each scale**, never passed through.
+
+The route also returns its own vocabulary on every 200, so a deploy skew between `index.html` and
+the route is **detected** by `CardinalSortVocab.agrees()` rather than silently discarding
+placements.
+
+### `placed + setAside === submitted`, on every path
+
+A silent drop is the failure mode — a photograph that is neither placed nor reported looks handled.
+`sortOne()` never throws; every failure returns a set-aside with a reason. The handler re-checks the
+arithmetic before responding and 500s loudly rather than returning a short list.
+
+**Gates.** `node --check`, no `module.exports`, **zero imports** so `check.yml`'s missing `npm ci`
+cannot hide an undeclared dependency. Route harness **24/24** against the shipped handler with
+`fetch` stubbed: 401 unsigned and the model never reached, signed-in non-admin succeeds, the
+invariant holds across five failure paths, a remote URL is set aside without a model call, unknown
+severity and trade are coerced, 503 retried exactly once, non-retryable 400 not retried, the cap
+refused before any spend. Client harness **16/16**, running the shipped block and comparing it to
+the vocabulary from a live route call — including that `agrees()` actually rejects drift, so it is
+not decorative.
+
+**Negative control on a new file.** Nothing to diff against, so the bug was reintroduced: restoring
+`librarian.js`'s unconditional sleep flips exactly one check to FAIL (23/24, RED). The gate
+discriminates.
+
+**LIMIT: no real Gemini call was made.** This proves the route's contract, not that the model sorts
+photographs well. That needs Theo, real photographs, and the writer that does not exist yet.
