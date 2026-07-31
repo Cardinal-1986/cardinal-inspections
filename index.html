@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 464 &#8212; the Resource Library light/dark button goes back again; it had been one-way since it was added</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 465 &#8212; Plate 5: a drawing of how an ice dam actually forms, on the ice dam card</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -5385,6 +5385,32 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <h3>Ice Dams &mdash; How They Form, and What They Are Not</h3>
         <p>An ice dam is a <b>heat</b> problem that presents as a water problem. Attic heat warms the deck over the living space, snow on that part of the roof melts, the water runs down to the overhang &mdash; which is cold, because there is no heated space under it &mdash; and refreezes. The ridge of ice grows, backs water up the slope, and the water finds the shingle laps and goes in.</p>
         <p>Three things cause it, in this order: <b>air leaking</b> from the house into the attic, <b>insufficient insulation</b> at the ceiling plane, and <b>insufficient or unbalanced ventilation</b> to carry away the heat that still gets through. A roof cannot be built to survive a heat problem indefinitely; it can only be built to resist the water longer.</p>
+        <figure class="rl-fig">
+          <div class="rl-figh"><span class="n">Plate 5</span><span class="t">How an ice dam forms</span></div>
+          <div class="rl-figb">
+            <svg viewBox="0 0 340 200" role="img" aria-label="Section through a roof and eave showing how an ice dam forms: heat escaping into the attic melts the snow over the heated part of the roof, the meltwater runs down to the unheated overhang and refreezes into a ridge of ice at the eave, and the water ponding behind that ice backs up under the shingle laps">
+              <path class="fig-hair" d="M27 127 L307 53"/>
+              <path class="fig-hair" d="M30 138 L27 127M310 64 L307 53"/>
+              <text class="fig-t2" x="256" y="44">SNOW</text>
+              <path class="fig-ink" d="M30 138 L310 64"/>
+              <path class="fig-ink" d="M118 114.8 V180"/>
+              <path class="fig-ink" d="M118 158 H310"/>
+              <path class="fig-acc" d="M196 146 V106M196 106 l-3.5 6M196 106 l3.5 6"/>
+              <path class="fig-acc" d="M234 140 V97M234 97 l-3.5 6M234 97 l3.5 6"/>
+              <path class="fig-acc" d="M272 133 V87M272 87 l-3.5 6M272 87 l3.5 6"/>
+              <text class="fig-ta" x="234" y="154" text-anchor="middle">ATTIC HEAT</text>
+              <path class="fig-acc" d="M256 69 L196 85"/>
+              <path class="fig-acc" d="M196 85 l8 -4.5M196 85 l6 5.5"/>
+              <path class="fig-acc" d="M30 138 V104 Q 46 92 74 97 T 118 104 L118 114.8 Z"/>
+              <text class="fig-ta" x="30" y="94">ICE DAM</text>
+              <path class="fig-accw" d="M121 104 L155 104"/>
+              <path class="fig-acc" d="M150 108 l-9 8M141 116 l9 0M141 116 l0 -9"/>
+              <text class="fig-ta" x="162" y="99">BACKS UP</text>
+              <text class="fig-t" x="122" y="174">EXTERIOR WALL LINE</text>
+            </svg>
+          </div>
+          <figcaption><b>The cause is inside the wall line; the damage is outside it.</b> That gap is the whole argument &mdash; and it is why <i>Ice Barrier Requirement</i> (Plate 2) is the same eave drawn for what the code makes you put there.</figcaption>
+        </figure>
         <div class="rl-use"><b>Use it when:</b> A homeowner calls in January with a ceiling stain and icicles at the eave. The roof is usually not defective &mdash; it is doing what a roof does under a dam. Look in the attic on the same visit: frost on nail points, matted insulation, a warm patch, a bath fan venting into the attic instead of through the roof.</div>
         <div class="rl-doc"><b>Document:</b> Icicle line and dam thickness from the ground. Interior staining with a date. Attic: insulation depth, air-sealing at the top plates and hatch, whether soffit intake is blocked, whether any exhaust fan terminates in the attic. That last one is a five-minute find that explains a lot of January calls.</div>
         <div class="rl-warn"><b>Do not turn a code section into a coverage argument.</b> The ice barrier rule (<b>RCO R905.1.2</b>) is an <i>installation</i> requirement that applies when a roof is replaced. It is not retroactive to the roof on the house, and it does not make an existing ice-dam leak a covered loss. Whether the interior damage is covered is a policy question &mdash; read the declarations and the endorsements, and let the carrier answer it. Telling an adjuster &ldquo;code requires an ice barrier, so this leak is covered&rdquo; conflates two different things and spends your credibility on an argument you will lose.</div>
@@ -33020,6 +33046,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:465, note:'\u2744\uFE0F The ice dam card now has a drawing. Plate 5 shows the whole mechanism in one section \u2014 heat escaping into the attic, the snow melting over the heated part of the roof, the water running down to the cold overhang and refreezing, and the water behind the dam backing up under the shingle laps. It is drawn on the same eave as Plate 2, so the two read as a pair: this is why the ice barrier has to go where the code says it goes.' },
 { build:464, note:'\u25D1 The light/dark button in the Resource Library goes back again. It had been one-way \u2014 it would take you from light to dark and then do nothing, however many times you pressed it \u2014 because it was asking a setting that nothing ever wrote. It now reads the theme actually on screen, and it remembers your choice between sessions, which it also never did.' },
 { build:463, note:'\U0001F3E0 New in the Resource Library: <b>Roof Types</b>, under General. Thirteen roof shapes \u2014 gable, hip, cross gable, Dutch gable, jerkinhead, gambrel, mansard, shed, saltbox, pyramid, butterfly and the rest \u2014 drawn on one plate so you can name what you are standing under, then a card each on what that shape costs you in waste, in ridge cap, in ventilation and in low-slope exposure. The library had never named a roof form before this.' },
 { build:462, note:'\u23F1\uFE0F Six more library cards, and the last of the gaps: how and when to ask for a reinspection, the deadlines that actually bite \u2014 the lien window on a house is 60 days, not the 75 everyone quotes \u2014 the punch walk on the last day, what has to exist on paper before a job is closed, how to find out who the permit office really is, and Malarkey\u2019s programme for reading somebody else\u2019s bid.' },

@@ -1516,3 +1516,71 @@ floating ◐ or the 🌙 in the header row — and roughly where in the app.
 `#cr-rltheme-btn` (library skin, `--ct-*`) and `#cr-dark-toggle` (retail app theme, flips
 `:root[data-theme="rb-light"]`). Flagged, not changed — which controls appear where is
 Theo's call.
+
+---
+
+## Build 465 — Plate 5: how an ice dam forms
+
+*30 July 2026. Theo asked for pictures on the ice dam card and picked "both" — a drawing
+for the mechanism, photographs for what it looks like. This is the drawing half.*
+
+### Why a drawing is the right artifact here, not a fallback
+
+The ice dam is not the interesting object; the heat path is. A photograph shows icicles at
+an eave, which is the symptom every homeowner already describes on the phone. What a rep has
+to argue is that **the cause sits inside the wall line, under the insulation** — and that is
+a section, not a photograph.
+
+### It is Plate 2's eave, drawn again
+
+Same 340×200 viewBox, same deck line, same wall line, same `fig-*` classes. Plate 2 shows
+what the code makes you put at that eave; Plate 5 shows why. The caption points across.
+**No new CSS** — the plate machinery took it verbatim, and the patch asserts `fig-mask` did
+not move (a single-volume section needs no occluder).
+
+### Four drafts, and they failed the same way three times
+
+1. Seven labels in 340×200 → five collisions.
+2. **The ice polygon closed on a chord** from (118,110) to (30,140) instead of on the deck,
+   so the wedge rendered *below* the roof line.
+3. Still six labels, still colliding.
+4. Five labels, ice re-cut as a mound rising off the eave instead of a sliver. Clean.
+
+Every pass was rendered in Chromium in both skins and looked at. **Label crowding, not
+geometry, was the real problem in three of four** — the instinct to add another label is the
+thing to resist. The harness now asserts pairwise that no two `<text>` boxes intersect, so
+that failure cannot come back silently.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker. **12/12 in a real browser** —
+including that the plate landed *inside the ice dam card* rather than merely somewhere in the
+file, that the accent paints and differs from ink, that all five labels exist, that **no two
+label boxes overlap**, and that Plate 2 is untouched on its own card. Negative control **3 of
+4 failing** on 464. Scope proven both ways over 3 regions.
+
+**Third time this session a negative control threw instead of counting a red** — `fig` is
+null on the previous build and the harness dereferenced it. Guarded, same as the other two.
+This is now a standing harness rule, not an incident: *every negative control must fail, not
+crash.*
+
+### The photograph half is blocked, and here is the measurement
+
+Queried production rather than asking:
+
+| | |
+|---|---|
+| `storage.buckets` | **`library` exists, is private, and holds 0 objects** — the home for library images is already provisioned and empty |
+| `photos` bucket | 225 objects, 132 MB |
+| `project_photos` | 236 rows, **216 with `storage_path`** |
+| captions | **0 rows have one** |
+| sections | 1 |
+| date range | **21–30 July 2026 — a ten-day window** |
+
+Two consequences. Nothing is captioned or categorised, so no query can pick out "the ice dam
+photo". And every photo in the system was taken in **late July** — there are no winter photos
+at all, so for this card specifically Cardinal's own library has nothing usable yet.
+
+**Doc correction:** `CLAUDE.md` says zero photo objects carry `path` or `storage_path`. That
+was true when it was written; **216 of 236 rows now have `storage_path`**. The migration
+happened. Do not re-derive the old lesson from the doc.
