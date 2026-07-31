@@ -49,6 +49,21 @@ re-check this — it becomes live the moment that count is non-zero.
 
 *When something ships, strike it here and add a line to `cardinal_build_log.md`.*
 
+### ✅ Shipped 31 July — struck from this list
+
+- **487 — list-view document contrast.** NOT the documents list: that surface keeps a white
+  `--paper` table and measured 12.63:1, and the prescribed 'tokenise to var(--muted)' would have
+  cut it to 6.69:1. The real failure was `#listMount` under `#listView` at >700px — 1.57:1.
+  Full reasoning in `cardinal_build_log.md`; the wrong measurement is corrected in `HANDOFF.md`.
+- **488 — the updates panel printed raw codes.** 20 CHANGELOG notes carried Python `\U`
+  escapes, invalid in JavaScript. New class: `BUG_CLASSES.md` §11.
+- **489 — the two unpicked contrast tokens, plus a third the audit missed.**
+  `--rbe-empty-fg` 3.45:1→4.54:1 (light) and **4.05:1→4.82:1 (dark — not in the
+  original audit, which was scoped to light theme only)**; `--rbe-adm-fg` 4.13:1→4.54:1.
+  Dark `--rbe-adm-fg` measured 7.98:1 and was left alone. The dark repair reuses
+  `--rbe-mute`'s existing `#9aa0a8` rather than inventing a shade.
+
+
 > **Everything below was verified against the repo or the database on July 28, not carried
 > forward from the previous list.** The prior version of this file listed four items as open
 > that were already done — `punch_columns.sql`, the $10,000,000 test client, the repo junk,
@@ -60,9 +75,12 @@ re-check this — it becomes live the moment that count is non-zero.
 
 ## 0. AI Inspections — the live build queue (31 July 2026)
 
-**486 is built and in PR #51; 487–490 are not.** The plan below came out of a 37-agent read-only
-audit whose findings were each adversarially refuted. Do not re-audit these surfaces; do re-measure
-any number before quoting it.
+**486–489 are shipped. The work below is not.**
+
+> **The items below are deliberately NOT numbered, and must not be renumbered again.** They carried build numbers twice this session (487–490, then 489–492) and both were invalidated within hours, because a build number is assigned at **ship time in ship order** — a plan cannot reserve one. Every unplanned fix silently falsified the queue and every cross-reference to it. **Name the work; let the number be whatever it gets when it ships.**
+
+The plan below came out of a 37-agent read-only audit whose findings were each adversarially
+refuted. Do not re-audit these surfaces; do re-measure any number before quoting it.
 
 ### ⚠ A correction I owe, recorded so nobody repeats it
 
@@ -73,11 +91,11 @@ roof-specific, sections 1–10. `GENERAL_TEMPLATE` (8448) is `buildEstimate('REP
 a **repair estimate**, not an inspection report. `#gcModal`, the General Checklist, has **zero** file
 inputs. Verified, not inferred.
 
-**A General Exterior inspection report is therefore its own build (490)**, comparable in size to 487.
+**A General Exterior inspection report is therefore its own build**, comparable in size to the AI sort.
 
 ### ✅ SETTLED BY THEO, 31 July — do not re-litigate
 
-**490's section list, confirmed verbatim.** Author the document to exactly these ten, in this order:
+**The General Exterior section list, confirmed verbatim.** Author the document to exactly these ten, in this order:
 
 1. Inspection Overview & Property Facts
 2. Summary of Findings
@@ -94,13 +112,13 @@ It mirrors the roof report's shape on purpose — an adjuster recognises it. The
 this template matters: *"We do lots of exterior inspections."* It is also the template his archive
 serves best: every trade qualifies, so nothing lands in the set-aside tray.
 
-**487's route is SIGNED-IN, not admin-only.** The two gates guard different things and are meant to
+**The sort route is SIGNED-IN, not admin-only.** The two gates guard different things and are meant to
 differ:
 
 | Route | Gate | Why |
 |---|---|---|
 | `api/companycam.js` (486's picker) | **admin-only** | reaches all 1,437 jobs; can put the wrong client's house in a report that goes out by email and public link |
-| the 487 sort route | **signed in** | only ever sees photographs *already in this report*; never touches CompanyCam |
+| the sort route | **signed in** | only ever sees photographs *already in this report*; never touches CompanyCam |
 
 The point of the feature is to take the bottleneck off Theo and Joan, so the crew who shot the roof
 can draft the report. RLS already limits Sales to work they created or are assigned. **Cap photos
@@ -110,7 +128,7 @@ per sort regardless of the gate** — that is what bounds spend, not the gate.
 seeing them first. The confirm-before-send gate covers it — nothing sends until a human clears every
 section — but that human is not necessarily Theo. He was told this plainly and chose signed-in.
 
-### 487 — the AI sort (roof template only)
+### The AI sort (roof template only) — the next substantial build
 
 - Copy the skeleton from **`api/organize.js`** — the only route already doing signed-in gate →
   Gemini vision → fence-strip → `JSON.parse` → validate → coerced capped scalars. Take
@@ -152,12 +170,39 @@ section — but that human is not necessarily Theo. He was told this plainly and
   that every enum the route can emit is in the client whitelist *before* the writer ships
   (`normStage` lesson).
 
-### 488 — shot lists · 489 — Save PDF
+### Shot lists · Save PDF — ⚠ BOTH ARE LARGELY ALREADY BUILT (checked 31 July)
 
-- 488: **reuse `QI_SHOTS`, do not add a fifth list.** Duplication is the real risk.
-- 489: `downloadReport()` produces **`.html`, not PDF**. Print → Save as PDF already produces a
+**Prime doctrine, eighth time on this project.** Neither of these is the greenfield build the line
+below implies. Read this before starting either.
+
+**Save PDF is DONE.** `#printBtn` is already labelled **`Print / PDF`** and has been since before
+the meaningful git history. It injects `#printFix` (`@page size:Letter`, the company footer,
+break-inside rules), runs `compactForPrint()`, calls `frame.contentWindow.print()` and then
+`restorePrintMarks()`. The browser's own Save-as-PDF destination turns that into a **real vector
+PDF** — searchable, not rasterised. `FEATURES.md:141` recorded this the whole time:
+*"Download sits beside Print / PDF … Files save as standalone `.html` — not true PDF; a real
+`/api/pdf` endpoint is still unbuilt."*
+
+  What is genuinely unbuilt is only the **server-side** `/api/pdf`, and per the note below that is
+  justified **only if reports must go out unattended**. That is Theo's call, not an engineering one.
+  **Do not build it without asking him.** The client-side story is finished.
+
+**Shot lists mostly exist too.** `QI_SHOTS` (index.html:15297) is a working 12-entry list —
+*Ground shots, Down the gutter line, Shingle layers at the edge, Current ventilation, Pipe boots &
+penetrations, Chimney flashing, Wall flashing, Step flashing, Valleys, Gutters & downspouts, Decking
+from attic, Damage close-ups*. `renderQiChips()` (15495) already renders it as chips that tick with
+a ✓ and a running count as photographs are labelled, and clicking one sets the next shot.
+
+  So this item is **not** "build a shot list". It is "surface the existing one somewhere else" —
+  most plausibly the report editor, so an inspector can see what is still missing. **Where** is the
+  open question and nothing in the repo settles it. Ask Theo before building. When it is built,
+  reuse `QI_SHOTS`; do not mint a second list.
+
+
+- Shot lists: **reuse `QI_SHOTS`, do not add a fifth list.** Duplication is the real risk.
+- Save PDF: `downloadReport()` produces **`.html`, not PDF**. Print → Save as PDF already produces a
   proper vector PDF using the template's `@page` rules; any client-side PDF library would be
-  **worse** (rasterised, unsearchable). 489 is a labelled one-tap route through the print path.
+  **worse** (rasterised, unsearchable). It is a labelled one-tap route through the print path.
   A server-side `/api/pdf` is only justified if reports must go out **unattended** — Theo's call.
 
 ---
@@ -412,7 +457,28 @@ but the changelog for build 214 says this same bar previously blocked taps.
 **bottom** of the screen. That single answer separates the action bar from a
 sticky header overlay and saves a lot of guessing. Do not fix this blind.
 
-### 3b. Unreadable text — small, safe, do it soon
+### 3b. Unreadable text — ✅ RESOLVED BY INTERVENING WORK (re-measured 31 July)
+
+**Both photographed failures now pass. Do not re-fix them.** Re-measured with
+`scripts/contrast.py` against the values actually in the file:
+
+| Was reported | Measured now |
+|---|---:|
+| mint *"Waiting on a decision"* body text — `--ccm-mute` `#9aa39e` on `--ccm-card` `#161918` | **6.83:1** |
+| the same card in its `.now` state — `#d8cfc9` on `--ccm-nowfill` fallback `#321a1c` | **10.53:1** |
+| `#galTitle` on the "navy" photo-album header | **16.77–17.08:1** |
+
+**There is no navy.** Nothing paints a background behind `#galleryView` except
+`body.claim-insurance #galleryView{background:var(--ct-bg,#FAF8F7)}` — near-white. PRs #35/#36
+removed the whole-CRM navy backdrop on 29 July, and the `--ccm-*` palette rebuild (#27) replaced the
+mint. The item was written before both.
+
+*The tools it names, `contrast_sweep.js` and `resolve_tokens.js`, do not exist in this repo. Use
+`scripts/contrast.py` for a pair and `scripts/token_pairs.py` for a sweep.*
+
+---
+
+### 3b-ORIGINAL (kept for provenance only — the finding above supersedes it)
 
 Two contrast failures Theo photographed:
 
@@ -650,3 +716,56 @@ re-verified here before filing** — `OnHold` writers **0**, `check_back_at` / `
   photo objects after the bucket flip (max-age one year — purge / re-path / wait is Theo's call);
   the `photos_upload` policy question; real bid emails for **Habitat and Kitty Hawk** (the latter
   matches tonight's own database audit).
+
+---
+
+## 🟡 Palette accessibility — 104 declared pairs below 4.5:1 (measured, NOT shipped)
+
+New tool: `scripts/token_pairs.py`. It scores only pairs **the app itself declares** — rules setting
+a colour *and* a background in the same block — so there is no ancestry to guess at. That is the
+case where static analysis is trustworthy; it is exactly what the 27-candidate sweep after 487 got
+wrong by inferring grounds. `@media print` is excluded and `-webkit-text-fill-color` rules are
+skipped rather than scored.
+
+```bash
+python3 .claude/skills/cardinal-build/scripts/token_pairs.py index.html
+python3 .claude/skills/cardinal-build/scripts/token_pairs.py index.html --floor 3.0
+```
+
+**104 pairs below 4.5:1 · 27 below even the 3.0 large-text floor.**
+
+### This is a palette decision, not a bug list — do not "fix" it in one build
+
+The failures cluster, and the clusters are deliberate design:
+
+| Cluster | Measured | Where |
+|---|---:|---|
+| Amber status pills, `#C87A00` on `#FBEFDA` | **2.96:1** | 7+ sites: claims, adjusters, kind-pills, pricing |
+| Green status pills, `#2E7D32` on `#E7F2E7` | **4.46:1** | 7 sites: approved / completed / won / rcv |
+| Faint grey empty states on near-white | 1.77–2.96:1 | `.clirow .mini`, `.wsempty`, `.cr-wo-empty`, `.cr-pal-hint`, `#navMenu .navsec`, `.axbtn.ghost` |
+| Red action-bar button label, `#1a1a1a` on `#C4180F` | **2.89:1** | `.cr-cm-actionbar button` |
+| Header search text, `#c8202e` on `#241c1a` | **2.95:1** | `#cr-hd2-bar #headSearch` |
+| White on light teal, `#fff` on `#5eead4` | **1.48:1** | `#cr-sol .ft .go` |
+
+The pill families are **semantic colours** — amber means awaiting, green means approved. CLAUDE.md
+protects those, and the 31 July note is explicit that the two tokens fixed at 489 were fair game
+*because* they were not semantic. Darkening amber and green across fourteen pills changes the
+product's status vocabulary and is Theo's call, not an engineering one.
+
+The **green cluster at 4.46:1 is 0.04 below the floor** — a rounding-level miss. Changing fourteen
+pills for that is almost certainly not worth it.
+
+**The empty-state cluster is the strongest candidate for a real build.** It is the same family as
+489's `--rbe-empty-fg` (3.45→4.54) — faint grey on near-white, no semantic meaning, minimum
+darkening fixes it. Six surfaces, all low-risk.
+
+### Known false positives — do not re-file
+
+- **`.cr-pp-item .box` at 1.00:1** (`#fff` on `#fff`). A checkbox: the colour is for a `::before`
+  glyph that only renders when checked, at which point the background changes. Same shape as the
+  `--rbe-checkfg` false positive already recorded above.
+- **`body` at 1.15:1** (`#1b1b1b` on `#09090C`). The base declaration; every real surface overrides
+  it. Not a rendered pairing.
+
+**Nothing here is shipped.** The measurement is done and repeatable, so a future session should
+**pick a cluster with Theo and ship that one**, not attempt the list.

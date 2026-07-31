@@ -4,9 +4,17 @@
 
 ---
 
-# Session of 31 July 2026 (daytime) — builds 483–486
+# Session of 31 July 2026 (daytime) — builds 483–489
 
-**All merged. `main` at `0047bbb`, app stamp build 486.** PRs #49, #50, #51 all merged.
+**483–486 merged (`main` at `0047bbb`, then `e9fa331` for docs). 487–489 are committed on
+`claude/487-488-listview-contrast` and NOT pushed** — see "Waiting on Theo" for why and the one
+command that fixes it. PRs #49, #50, #51, #52 merged.
+
+**This session ran from a real local clone on Theo's Windows machine** —
+`C:\Users\kpkor\repos\cardinal-inspections`, outside OneDrive, because OneDrive corrupts `.git`.
+The mechanical gates run there unchanged: they import only stdlib plus `patch_lib`. `jsdom` lives in
+the session scratchpad, never the repo. **No Chromium**, so no computed-style harness — that is the
+one instrument this machine lacks.
 
 | | |
 |---|---|
@@ -14,34 +22,84 @@
 | **484** | Build index reads job names **first** (names → photos → stamp). New admin-gated `action:'stamp'`. Measured cause: 60,485 photos, 775 project ids, **zero** project rows — the pass had never been reached |
 | **485** | The caption trial was not a sample — 53 photos, **1 job**, two days. `companycam_caption_sample()` (SQL **applied**) returns one photo from each of N different jobs; progress counts **jobs** |
 | **486** | **CompanyCam photographs into an inspection report.** Picker in the report editor toolbar. Also fixes a pre-existing bug: captions on runtime-minted figures could not be typed in |
+| **487** | The **list view's** documents were dark text on the dark page — `#333` at **1.57:1**, `var(--muted)` at **2.97:1**. Scoped to `#listView` with the retail token pair. **Not the documents list, which was never broken** — see the correction below |
+| **488** | The updates panel was printing `U0001F4F8` instead of 📸. 20 `CHANGELOG` notes carried **Python** `\U` escapes, which JavaScript does not have. Repaired as surrogate pairs. `BUG_CLASSES.md` §11 |
+| **489** | The two unpicked contrast tokens — **and a third the audit missed**, because that pass was scoped to light theme and `--rbe-empty-fg` fails in **both**. All four pairs now clear 4.5:1 |
 
 ## ⚠ Read `OPEN_ITEMS.md §0` before touching AI Inspections
 
-It carries a **37-agent audit** (findings adversarially refuted) covering 487–490: which route to
-copy, the three defects in it *not* to carry forward, the vocabulary collision, the Section 2 trap,
-and Theo's two settled decisions. **Do not re-audit those surfaces.**
+It carries a **37-agent audit** (findings adversarially refuted) covering what are now **489–492**:
+which route to copy, the three defects in it *not* to carry forward, the vocabulary collision, the
+Section 2 trap, and Theo's two settled decisions. **Do not re-audit those surfaces.**
 
 ## ⚠ A correction I owe, in my own words
 
 I told Theo *"a template is a section list plus a trade map — data, not code, so General ships
 alongside Roof at no real cost."* **False.** There is exactly one inspection report template
 (`REPORT_TEMPLATE`, ~163 KB); `GENERAL_TEMPLATE` is a **repair estimate** and the General Checklist
-has **zero** file inputs. A General Exterior report is its own build (490). I inferred it from my own
-mockup instead of checking the app.
+has **zero** file inputs. A General Exterior report is its own build (**492**, renumbered from 490).
+I inferred it from my own mockup instead of checking the app.
 
-## Next, in order
+## ⚠ The contrast measurement I left here was WRONG. Corrected at 487 — read before trusting it
 
-1. **Documents-list contrast** — pinned exactly: `td.dates{color:#333}` is **1.48:1** on the dark
-   page with **zero** dark-theme overrides, and `td.title b` has no colour rule at all so it inherits
-   dark. In the same cell, `td.dates small` and `td.title .ref` use `var(--muted)` and read at
-   7.10:1. Every tokenised line works; every hardcoded one fails.
-2. **487** the AI sort · **488** shot lists · **489** Save PDF · **490** General Exterior template.
+I wrote, and it is false: *"`td.dates{color:#333}` is 1.48:1 on the dark page… `td.dates small` and
+`td.title .ref` use `var(--muted)` and read at 7.10:1. Every tokenised line works; every hardcoded
+one fails."*
+
+**It could not have been true.** Those colours sit in the same table cell, so they share one
+background — and `#333` is *darker* than `#5c5c5c`. On any dark ground `#333` is worse; on any light
+ground it is better. `7.10:1` is unreachable for `#5c5c5c` against anything: pure white caps it at
+**6.69:1**.
+
+**It also named the wrong surface.** The documents list (`#estDocsMount` / `#inspDocsMount`) sits
+under `#projectView`, where `table.reports` keeps `background:var(--paper)` = `#ffffff` at every
+width. `#333` measures **12.63:1** there. **Tokenising it to `var(--muted)` — my own prescription —
+would have taken 12.63:1 down to 6.69:1 and shipped a regression labelled a fix**, with every
+mechanical gate green.
+
+The real failure was `#listMount` inside `#listView`, where 44310 stripped the table background:
+`#333` reads **1.57:1** and `var(--muted)` **2.97:1** over `--bg:#09090C`. **Shipped as 487.**
+
+**Theo is NOT mobile-only** — he corrected this directly: desktop *and* an ultrawide. The doc set
+recorded mobile-only, and that is why this survived: `table.reports tr{background:#fff}` inside
+`@media (max-width:700px)` makes every row a white card on a phone, hiding it completely.
+**Check contrast at desktop width, and measure against the element's own background, not the page
+ground.**
+
+## Next
+
+**`OPEN_ITEMS.md` §0, in this order: the AI sort → shot lists → Save PDF → General Exterior.**
+
+**Do not put build numbers back on those.** They carried numbers twice in one session (487–490, then
+489–492) and both sets were invalidated within hours, because a number is assigned at **ship time in
+ship order** — a plan cannot reserve one. Every unplanned fix falsified the queue and every
+cross-reference to it. §0 now names the work instead, and says so.
+
+The AI sort is the next substantial build; everything before it this session was small repair work.
+Its audit is done and must not be re-run.
 
 ## Waiting on Theo — do not nag
 
 Five partner emails (Kitty Hawk Realty **has a live job**); `GOOGLE_MAPS_API_KEY` (**referrer-restrict
-in Google Cloud first**); two contrast fixes unpicked (`--rbe-empty-fg`, `--rbe-adm-fg`); and **486
-has never been used on a real phone with real photographs** — that verification is outstanding.
+in Google Cloud first**); and **486 has never been used on a real phone with real photographs** —
+that verification is still outstanding.
+
+~~Two contrast fixes unpicked~~ — **shipped at 489**, along with the dark-theme half the audit had
+missed.
+
+**Also outstanding: 487–489 are committed locally but NOT pushed.** Git on this machine has no
+credential for `git:https://github.com` (the one in Credential Manager is an API token for
+`api.github.com`), and the GitHub connector here is read-only — `403 Resource not accessible by
+integration` on branch creation. One interactive `git push` caches the credential and unblocks every
+future session on this machine:
+
+```
+cd C:/Users/kpkor/repos/cardinal-inspections
+git push -u origin claude/487-488-listview-contrast
+```
+
+**The Vercel preview on the resulting PR is the only gate that has seen 487's colour render.** jsdom
+cannot resolve `var()` and this machine has no Chromium.
 
 ---
 

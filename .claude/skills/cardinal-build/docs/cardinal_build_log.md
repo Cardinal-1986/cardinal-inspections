@@ -2609,3 +2609,395 @@ Plus three patch aborts before that, all **one class**: counting an identifier t
 comment, or an earlier build, already used — `lockTemplate` (comment names it twice), `g !== _rccGen`
 (hardcoded 6, wrote 5), and the data-URL string (build 482's `ccEdit` already builds an identical
 one). **Name the site; never count the phrase.** Nothing was written on any of them.
+
+---
+
+## 487 — the list view's documents were dark text on the dark page
+
+**The handed-off task was wrong, and the measurement that justified it was wrong.** HANDOFF named
+the *documents list* and prescribed tokenising `td.dates{color:#333}` to `var(--muted)`. Both halves
+were false, and shipping it would have been a regression sold as a fix.
+
+**Wrong surface.** `#estDocsMount` / `#inspDocsMount` sit under `#projectView`. The rule that strips
+the paper background — `#listView table.reports{background:transparent}`, added by 44310's retail
+redesign — is scoped to `#listView` and never reaches them. Those tables keep
+`background:var(--paper)` = `#ffffff` at every width, where `#333` measures **12.63:1**. There was
+never a bug there.
+
+**The prescribed fix inverted the contrast.** `var(--muted)` is `#5c5c5c`. On that white table,
+tokenising takes **12.63:1 down to 6.69:1**. Every mechanical gate would have gone green.
+
+**The numbers could not both be true.** HANDOFF claimed `#333` at 1.48:1 and the tokenised lines at
+7.10:1. They share one table cell, so one background — and `#333` is *darker* than `#5c5c5c`. On any
+dark ground `#333` is worse; on any light ground it is better. `7.10:1` is also unreachable for
+`#5c5c5c` against anything: pure white caps it at 6.69:1.
+
+**The real defect, measured.** `#listMount` *is* inside `#listView`. There the table is transparent
+over `--bg:#09090C`, and every cell still carries its paper-theme colour:
+
+| | on the dark list view |
+|---|---|
+| `td.dates{color:#333}` | **1.57:1** |
+| `var(--muted)` = `#5c5c5c` | **2.97:1** |
+
+The tokenised lines fail too, which is why "tokenise it" was never going to work. 44310 also gave
+`#listView .reports tr` `border-radius` and `margin-bottom` — card geometry that does not apply to a
+table row at all above the breakpoint. It stripped the surface and never replaced it.
+
+**Why nobody saw it.** `table.reports tr{background:#fff}` lives inside `@media (max-width:700px)`,
+so on a phone every row is a white card and the bug is invisible. The doc set recorded Theo as
+mobile-only. He corrected that mid-session: desktop **and** an ultrawide, both >700px.
+
+**The fix.** Three rules scoped to `#listView`, using the retail token pair already declared dark at
+20556 and light at 20578, so `rb-light` flips with them instead of needing a second block:
+`--rbe-ink` (`#cfd6df`, **13.58:1**) for cell text, `--rbe-mute` (`#9aa0a8`, **7.55:1**) for `small`
+and `.ref`, and `rgba(255,255,255,.06)` for hover — because the inherited
+`tr:hover td{background:#faf7f5}` would otherwise flash a near-white bar under light text.
+`--rbe-mute2` (`#6d747e`) was rejected at **4.21:1**, below the floor. `.projrow` is excluded: it
+sets its own light band and would have gone light-on-light.
+
+Gates green, negative control clean. Harness 14/14 proving **scope** — that the selectors reach the
+list view and provably cannot reach the documents list, which is the exact mistake avoided.
+**jsdom cannot resolve `var()`, so nothing here proves colour**; the Vercel preview and Theo's eyes
+are that gate.
+
+## 488 — the updates panel was printing raw codes at people
+
+Found by an assertion written for something else. 20 `CHANGELOG` notes carried `\U0001XXXX` escapes
+— **Python syntax, not JavaScript.** JS has no `\U` escape, so it drops the backslash and the note
+renders beginning `U0001F4F8` where the emoji belongs. `CHANGELOG` is rendered (33510 filters to
+builds newer than `lastSeen`, else the latest five), so this is what Theo has been reading since
+roughly 468 — including 486's entry, the newest one he would see.
+
+Repaired as **surrogate pairs** (`\uD83D\uDCF8`), not literal characters: `\uXXXX` is valid JS and is
+already this file's convention (597 × `\u2014`, 115 × `\u2026`), and it keeps the region ASCII so no
+encoding step can mangle it. Scoped to the `CHANGELOG` array and asserted: the ~2,141 valid `\u`
+escapes elsewhere are unchanged, counted before and after.
+
+Harness parses the shipped array in a real engine and reads the resulting strings — 6/6, negative
+control 4/6 against 487. Not a text assertion: a wrong escape produces wrong characters and fails.
+
+### Two aborts, both mine, both the same class as 485–486
+
+1. **An apostrophe in my own note.** "What's New" inside a single-quoted JS string closed it and
+   took out the whole `cr-cl-script` block. Caught by `node --check`, nothing staged. The patch now
+   asserts no apostrophe reaches the literal.
+2. **I quoted the broken pattern inside the note meant to prove it absent** — the harness scans every
+   note for that pattern and cannot tell my example from a real one. Exactly the class recorded at
+   486: *counting an identifier my own text already used.* The note no longer quotes it.
+
+## 489 — the two unpicked contrast tokens, and a third the audit missed
+
+`OPEN_ITEMS` carried two light-theme failures computed 31 July and marked *"ready to apply on a
+word."* Both re-confirmed here with `scripts/contrast.py` before touching anything:
+
+| Token | Was | Now |
+|---|---:|---:|
+| `--rbe-empty-fg` light, `#8a8a8a` on `#ffffff` | **3.45:1** | `#767676` → **4.54:1** |
+| `--rbe-adm-fg` light, `#8a6a4a` on `#f2e9e2` | **4.13:1** | `#826446` → **4.54:1** |
+| `--rbe-empty-fg` **dark**, `#8b929c` on `#2e333b` | **4.05:1** | `#9aa0a8` → **4.82:1** |
+
+**The third one was not in the audit.** That pass was scoped to *light theme*, so the dark half of
+the same token was never computed — and it fails too. Shipping only the two listed would have
+cleared one theme and left the other below the floor, while the build log said "contrast fixed."
+**When a token is a dark/light pair, compute both halves; an audit scoped to one theme has not
+checked the token, only half of it.**
+
+The dark repair reuses `#9aa0a8` — the value `--rbe-mute` already carries in the dark theme —
+rather than the bare-minimum `#959ba5` (4.54:1). An empty-state message *is* muted text, so this
+removes a near-duplicate grey instead of adding one, and lands at 4.82:1. *Grep for a convention
+before you invent one.*
+
+`--rbe-adm-fg` dark (`#d8c9a8` on `#3a2f22`) measures **7.98:1**. Left alone, and asserted
+untouched rather than merely not edited.
+
+**This build needed no rendering and none was claimed.** Contrast is arithmetic, so the gate reads
+the shipped token values back out of the artifact, pairs each foreground with the ground it actually
+meets — by name, never by cartesian product — and computes. 4/4 clear the floor; negative control
+against 488 fails 3 of 4, and correctly passes the one that was already fine.
+
+## The sweep that found nothing — recorded so it is not repeated
+
+After 487 I swept the file for the same class: a surface stripped to transparent over the dark page
+with hardcoded light-theme ink left behind. It produced **27 candidates and zero real defects.**
+All 27 died on inspection, and **my sweep was wrong three different ways:**
+
+1. **Token-valued backgrounds read as "no background."** The detector matched `background:#hex`, so
+   every `#cr-bulk-mount .badge` using `var(--bt)` / `var(--gt)` looked groundless. They all paint
+   their own surface.
+2. **`-webkit-text-fill-color` was ignored.** `#listTitle` and `.projsec` set a gradient with
+   `background-clip:text` and `text-fill-color:transparent`; their `color:#c8202e` is a fallback
+   that never renders. The computed ratio was meaningless.
+3. **`@media print` was not excluded.** The two most convincing survivors — `#listNote` at 2.97:1
+   and `#listView label` at 2.38:1, both `!important` and both apparently beating the redesign —
+   live inside `<style id="cr-print-styles">@media print{…}`, where the background is forced
+   `#fff`. On screen they never apply.
+
+**That third one is the same error as the measurement 487 had to correct**: computing a ratio
+against a background the text never meets. It is the defining mistake of this whole area.
+**A contrast candidate is a hypothesis until you have identified what actually paints beneath it.**
+
+The useful result is the negative: **487 was the only instance of its class.** Recorded so the next
+session does not re-run this and re-derive the same 27 ghosts.
+
+### A data fact for anyone gating the CHANGELOG
+
+It has **185 entries**, and **builds 234, 241 and 299 each carry two of them.** A gate asserting
+strictly descending build numbers reports three violations against perfectly good data — mine did.
+Assert **non-increasing**, which still catches a genuinely misfiled entry. Same lesson twice in one
+build: the first version of that gate also pinned `log[0].build` to a literal `488`, so it went red
+the moment 489 shipped while every substantive check still passed. **Assert the property, never the
+tally.**
+
+## 490 — the AI sort route, and its vocabulary on the client BEFORE the writer
+
+**Deliberately half a feature, in the sanctioned order.** This ships `api/sortphotos.js` and the
+client-side whitelist with **no writer yet**. That is the `normStage` invariant applied as
+`START_HERE` §5 states it — *"ship the whitelist entry first, in its own commit"* — and it is what
+`OPEN_ITEMS` asked for: *every enum the route can emit is in the client whitelist before the writer
+ships*. A value the whitelist has not learned does not error; it silently becomes something else.
+
+**The route is signed-in, not admin-only** — settled by Theo, and the two gates guard different
+things. `api/companycam.js` stays admin-only because it reaches all 1,437 jobs and can put the wrong
+customer's house into a report that goes out by email and public link. This route only ever sees
+photographs already in the open report and never touches CompanyCam. Spend is bounded by
+`MAX_PHOTOS = 24`, which is what actually caps cost — not the gate.
+
+### The three defects from `organize.js` / `librarian.js`, fixed rather than inherited
+
+1. `organize.js:51` reads `process.env.GEMINI_API_KEY` **bare**. A trailing newline in the Vercel
+   variable produces an opaque Google 400. Now `(… || '').trim()`, the majority idiom. Asserted both
+   ways: a padded key works, a whitespace-only key reads as missing.
+2. `organize.js` has **no retry**. `askGemini` is taken from `librarian.js:48–65` — **with its bug
+   fixed.** That version sleeps 1200 ms *after the final attempt*, so a job already doomed still
+   burns billed time before returning. It now sleeps only when another attempt will follow.
+3. `librarian.js`'s `sources` sanitiser is **stranded inside a `catch` and never runs**. Not copied.
+
+### One vocabulary, none of it invented
+
+`section` had incompatible prior art — `organize.js` defines 3–8 and 502s outside — so this route
+uses the **same numbering** rather than a fourth scheme under a colliding name. `severity` is
+`severityOf()`'s `crit`/`warn`/`ok` (index.html:31212). `trade` is the `EST_TYPES` key set
+(**index.html:16771** — the audit said 16751; re-measured, as the docs instruct). An unknown value
+from the model is **coerced to the safe end of each scale**, never passed through.
+
+The route also returns its own vocabulary on every 200, so a deploy skew between `index.html` and
+the route is **detected** by `CardinalSortVocab.agrees()` rather than silently discarding
+placements.
+
+### `placed + setAside === submitted`, on every path
+
+A silent drop is the failure mode — a photograph that is neither placed nor reported looks handled.
+`sortOne()` never throws; every failure returns a set-aside with a reason. The handler re-checks the
+arithmetic before responding and 500s loudly rather than returning a short list.
+
+**Gates.** `node --check`, no `module.exports`, **zero imports** so `check.yml`'s missing `npm ci`
+cannot hide an undeclared dependency. Route harness **24/24** against the shipped handler with
+`fetch` stubbed: 401 unsigned and the model never reached, signed-in non-admin succeeds, the
+invariant holds across five failure paths, a remote URL is set aside without a model call, unknown
+severity and trade are coerced, 503 retried exactly once, non-retryable 400 not retried, the cap
+refused before any spend. Client harness **16/16**, running the shipped block and comparing it to
+the vocabulary from a live route call — including that `agrees()` actually rejects drift, so it is
+not decorative.
+
+**Negative control on a new file.** Nothing to diff against, so the bug was reintroduced: restoring
+`librarian.js`'s unconditional sleep flips exactly one check to FAIL (23/24, RED). The gate
+discriminates.
+
+**LIMIT: no real Gemini call was made.** This proves the route's contract, not that the model sorts
+photographs well. That needs Theo, real photographs, and the writer that does not exist yet.
+
+## 491 — the writer: sort the photographs already in this report
+
+Open a report, press **🧹 Sort photos**, and every photograph already in it is moved to the section
+it belongs to and given a caption. Photographs the model is not confident about are left exactly
+where they are rather than guessed at.
+
+Mounted in the **parent document**, like 486 and for the same reason: `serializeFrame()` is a
+denylist and its output is what reaches the database, the client email and the public share link.
+Signed-in rather than admin, because this route only ever sees photographs already in the open
+report — settled by Theo and recorded at 490.
+
+### The traps, and where each is handled
+
+**O(n²), fixed by extension not duplication.** `placePhotoInSection` re-ran `wirePhotoFrames` and
+`wireReanalyzeButtons` on every call. It gains an optional fifth argument, `defer`; the bulk caller
+passes `true` and wires **once** after the last photograph. Both callers that existed before 491
+pass four arguments, so `defer` is `undefined` for them and their behaviour is exactly what 486
+shipped — asserted, both call sites unchanged. **Negative-controlled:** the same three-photo sort
+run through 490's `placePhotoInSection` wires **3** times; through 491's it wires **1**. Without
+that control the assertion would have been vacuous.
+
+**Node references captured before an `await` are not trusted.** The editor may have re-rendered
+during the round trip. A marker attribute was rejected outright — `serializeFrame` would carry one
+into the saved report and out to the client — so `sortApply` re-reads the live document and matches
+photographs back by a fingerprint of their bytes (`length + first 64 + last 64`). `_rccGen` is
+captured before the call and re-checked after, because `closeEditor()` sets nothing synchronously
+and re-reading `contentDocument` cannot tell you the editor is closing.
+
+**Section 2 is never a target.** It belongs to `wireSummaryDraftButton`, which mounts with
+`insertAdjacentElement('afterend', …)`; `serializeFrame` removes it by testing a single node while
+stripping the `data-wired` guard unconditionally, so a second `afterend` control removes the wrong
+one and compounds one copy per save/open cycle. 490's whitelist rejects anything outside 3–8, and
+the harness asserts section 2 specifically.
+
+**The client whitelist is the authority, not the route.** Every placement goes through
+`CardinalSortVocab.knows()` before it touches the document, and the batch is compared against the
+vocabulary the route returns — a deploy skew between `index.html` and the route reports itself
+instead of silently discarding placements.
+
+**Data URLs only.** A non-`data:` src is never collected, so it can never be sent.
+
+**Gates.** check_build green, stamp 490 → 491, marker present, negative control clean. Harness
+**22/22** driving the shipped module against a report built from the shipped `REPORT_TEMPLATE` —
+nothing reimplemented: `placePhotoInSection`, `addFrameToSection`, `findEmptyFrameInSection`,
+`sectionElements`, `findSectionHeading`, `sectionName` and `rccSections` are all lifted out of
+`index.html` by brace-matching. Only the three wiring functions are counting stubs, because how
+often they run is the thing under test.
+
+**A harness red that was the harness's fault, again.** Two placement assertions failed because they
+keyed photographs on the last 12 characters of their data URL — all three fixtures end in the same
+80 `x`s, so the base64 tails are identical and the map collapsed to one entry. The app's own
+`sortFp` was already correct. Third time this session that a red was the test rather than the app;
+the ratio in `START_HERE` §3 continues to hold.
+
+**LIMIT.** jsdom proves structure, never appearance, and no real Gemini call was made by any gate.
+That a sorted report *reads* well needs Theo, real photographs, and a real key.
+
+## 492 — the General Exterior inspection report
+
+Under **📄 Inspection Reports** there is now a second button, **+ New exterior report**, for the jobs
+that are not only about the roof.
+
+**Derived from `REPORT_TEMPLATE` at patch time, not authored.** Comparing Theo's ten sections against
+the roof report's, **five are the same five** — Inspection Overview, Summary of Findings, Exterior
+Elevations, Recommendations, Limitations. Only the middle five differ: Aerial Roof · Roof Surface ·
+Penetrations · Chimney · Attic become **Roof · Siding & Trim · Windows & Doors · Gutters & Drainage
+· Structure & Grounds**.
+
+So this is a rename of five headings, five narratives and five contents rows — not 163 KB of new
+document. Deriving guarantees what hand-authoring could not: identical `<style>` block, identical
+`@page` rules, identical cover-photo hook, identical `figrow` / `fig` / `frame` / `cap` markup, and
+the `data-` attributes the editor depends on.
+
+**The derivation runs in Python and emits a static literal.** No runtime template machinery was
+added. The correction recorded at 486 stands — in this app a template is *code*, not data — and
+inventing a runtime derivation mechanism would have been the "new mechanism beside an existing one"
+failure this project keeps paying for.
+
+**`data-cardinal-summary-heading` was the thing to be careful with.** It sits on an `<h3>` in
+section 1, and `EDITABLE_SELECTOR` reaches its paragraph with `'[data-cardinal-summary-heading] + p'`
+— an adjacent-sibling combinator. Anything inserted between them silently kills contenteditable on
+that paragraph. The patch asserts the `<h3>` is still immediately followed by a `<p>`, and the
+harness re-checks it on the loaded document.
+
+**One creation path, two buttons.** `createReportFrom(tpl, kindLabel, roofy)` is extracted and both
+buttons call it; duplicating the handler is how this project grows a second copy of a feature.
+`roofy` is **false** for the exterior report on purpose: the Roofing Inspection Checklist feeds roof
+specs and has nothing to say about siding, windows or grounds, so it is neither demanded nor
+injected there.
+
+**Gates.** check_build green, stamp 491 → 492, marker present, negative control clean. Harness
+**18/18** driving the shipped `rccIsReport` / `rccSections` / `placePhotoInSection` against the
+derived template: ten sections in Theo's order verbatim, contents matching the headings, no
+roof-only title surviving, the sort's 3–8 range landing on real sections, a photograph actually
+placed into Siding & Trim with its caption written. **`REPORT_TEMPLATE` asserted byte-identical to
+491** — the roof report was not touched.
+
+**Cost, stated plainly: `index.html` grew 164 KB, from 2.83 MB to 3.00 MB.** That is the real price
+of a second template in a single-file PWA, and it is paid on every cold load. Worth knowing before
+a third template is ever considered.
+
+**LIMIT.** jsdom proves structure. Whether the five new narratives read right on a real siding or
+window job is Theo's eye, not a gate.
+
+## 493 — stop telling people their clients are gone when we simply never loaded
+
+From the unblocked build queue: *"Distinguish 'no clients' from 'couldn't load.' Both render the
+same empty state, which is why a transient read failure looked like data loss."*
+
+`cacheProjects` is initialised to `[]` and **stays `[]` when a load fails**, so `renderHome()`'s
+empty state confidently rendered *"No client projects yet. Click + Add project to create your first
+client profile."* — to someone who may have two hundred clients and a dropped connection.
+
+**The distinction is not in the data.** A denied read and an empty table both arrive as `[]`; no
+inspection of the array can tell them apart. What can is whether a load has **ever succeeded**, so
+that is what is now tracked. `cacheLoaded` starts `false` and is set in exactly one place — inside
+`reload()`, after the awaited results are assigned, never in the `catch`. All three asserted.
+
+Three states, three different things said:
+
+| State | What the user sees |
+|---|---|
+| never loaded / load failed | *Could not load your client projects.* + **nothing has been deleted** + **Try again** |
+| loaded, genuinely empty | the original *No client projects yet* invitation, untouched |
+| loaded, has rows | neither |
+
+The retry is delegated at the document, so it survives every `innerHTML` replacement regardless of
+which container rendered the empty state.
+
+**Scope kept deliberately narrow.** Exactly one user-facing claim was wrong. `exportClients()`
+already hedges correctly (*"No clients loaded yet"*), the filter empty-states are about filters, and
+the hash-restore retry loop is not a claim. None were touched.
+
+**Gates.** check_build green, stamp 492 → 493, marker present, negative control clean. Harness
+**19/19**, evaluating the branch lifted verbatim from the shipped file under each of the three
+states — and it **reproduces the bug on 492 first**, which is what makes the fix believable rather
+than merely green.
+
+### One abort and one harness red, both useful
+
+The patch aborted on `async function reload(){` — it occurs **twice**, the global one and a scoped
+one inside the punch data layer's IIFE at 46823. Nothing was written; the anchor was re-cut against
+the function body, which is unique.
+
+Then two harness checks failed for a reason worth recording: **`index.html` is CRLF in the working
+tree.** Git's `autocrlf` converts on checkout. Python patching is unaffected — universal newlines in,
+CRLF out, normalised back to LF on commit, which is why every scope diff has stayed clean — but a
+**JavaScript** harness reads raw bytes, so a multi-line anchor containing `\n` silently matches
+nothing and `indexOf` returns `-1`. Normalise with `.replace(/\r\n/g,'\n')` when reading
+`index.html` from Node.
+
+## 494 — Self Check could stop the whole app scrolling
+
+Found by auditing scrolling after seven builds, not by a report. **This is
+`BUG_CLASSES.md` §1 recurring in a new module** — the same shape PR #37 fixed for `openPreview`.
+
+`cr-sc-script` locked body scroll **twice** and released it **once**:
+
+```js
+panel.classList.add('open');
+document.body.style.overflow = 'hidden';     // lock
+try { results = await collect(); }
+finally {
+  panel.classList.add('open');
+  document.body.style.overflow = 'hidden';   // locked AGAIN, failure path included
+}
+```
+
+The only release was the Close button. No `popstate`, no `hashchange`, and — confirmed against the
+whole file — **no global scroll-lock reconciler exists**. So: Menu → 🩺 Self Check, then leave by the
+back button, a nav link or a CRM switch without pressing Close, and `body{overflow:hidden}` survived.
+Nothing scrolled until a reload.
+
+**Two edits.** The redundant `finally` re-lock is gone — the lock is already set before the await,
+and re-applying it on the failure path was how a failed run left the page stuck. And the module now
+releases on `hashchange` (the app routes on the hash, so this covers ordinary navigation) and
+`popstate` (the back button). `close()` is idempotent, so firing it when nothing is open costs
+nothing.
+
+The module is now **one lock, one release** — asserted on the module slice, not the file, because
+the file has ~15 of each and a file-wide count would prove nothing.
+
+**Gates.** check_build green, stamp 493 → 494, marker present, negative control clean. Harness
+**10/10**, and it is behavioural rather than textual: it runs the shipped module in jsdom, opens the
+panel, fires `hashchange` **without** touching Close, and reads
+`document.body.style.overflow`. Against 493 the same sequence leaves it `'hidden'` — **the bug
+reproduces** — and against 494 it reads `''`.
+
+### What this does NOT fix
+
+Only this module. `OPEN_ITEMS` §6a still stands and is still the right answer: **a global
+scroll-lock reconciler**, because ~15 modules each hold their own lock and every one of them is a
+chance to strand it. Two `overflow-y:auto !important` band-aids also remain, at `#navMenu` and the
+community hub; PR #11 is the open experiment on one of them and needs a device test.
