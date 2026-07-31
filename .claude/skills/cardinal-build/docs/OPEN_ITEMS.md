@@ -1,6 +1,6 @@
 # Cardinal Resource App — Open Items
 
-*The single live list. Current at build **467** · 31 July 2026 · `origin/main @ cc0b591`.*
+*The single live list, last worked at build **467** · 31 July 2026 · `origin/main @ cc0b591`. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
 *When something ships, strike it here and add a line to `cardinal_build_log.md`.*
 
 > **Everything below was verified against the repo or the database on July 28, not carried

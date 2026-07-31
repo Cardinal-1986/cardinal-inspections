@@ -1,7 +1,7 @@
 # Cardinal Resource App — Bug Classes
 
 **Failure modes already paid for. Every entry cost at least one build.**
-*Read before debugging; skim before shipping. Current at build 427.*
+*Read before debugging; skim before shipping. Written at build 427. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
 
 ---
 
