@@ -1972,3 +1972,192 @@ measurement decides whether the next step is worth building — see OPEN_ITEMS.
 
 Ranking is deliberately dumb: whole-phrase hit first, then how many query words appear. A caption
 is one short line; anything cleverer would be guessing.
+
+---
+
+## Build 473 — a searchable index of all 61,649 CompanyCam photos (31 July 2026)
+
+**The number changed the design.** `/api/companycam-status?include_total=true` returned
+**`total_photos_in_account: 61,649`** — and closed the `include_total` unknown at the same time.
+
+472's caption search reads at most 800 photos. Against 61,649 that is **1.3% of the account**: a
+photo from last winter could never be found however it was worded, and the honest empty state
+would have said *"nothing in 800 photographs"* while never getting near it.
+
+**Paging harder is not the fix** — the v1 API has no text search at all. So the metadata is
+mirrored into Postgres (`companycam_index.sql`, already applied) and searched there. One indexed
+query over everything, instead of eight round trips over the most recent fraction.
+
+### Costed from measurements, not guesses
+
+| | |
+|---|---|
+| Pages to fill | **617** (61,649 ÷ 100) |
+| Wall clock at the measured 707ms/page | **~7 minutes** |
+| Gemini calls | **zero** |
+| Per-search cost afterwards | one Postgres query |
+
+### Resumable because it has to be
+
+617 pages is longer than any serverless function may run, so the route does **six pages a call**
+and returns a cursor; the panel loops. A closed tab, a redeploy or a timeout costs one batch, and
+pressing the button again **resumes from the stored cursor** rather than restarting.
+
+The harness proves the properties that actually matter: the loop terminates, carries the cursor
+forward, sends none on the first call so the route resumes stored state, **and cannot be started
+three times at once** — a runaway loop here is 617 real API calls.
+
+### The index refuses what the route refuses
+
+`internal: true`, non-active and unprocessed photos are never written. Otherwise the mirror would
+become a way around the privacy flag. No coordinates are stored either — a searchable index does
+not need the customer's latitude and longitude.
+
+### Search switches itself
+
+`api/companycam.js` queries the index when it has rows and falls through to the live API when it
+does not, so this works before the first sync and if the table is ever emptied. The panel needed
+no knowledge of which path ran; results say `indexed` rather than `searched` when they came from
+Postgres.
+
+**RLS:** admins read, and only the service role writes. There are deliberately **no**
+insert/update/delete policies — absent policies deny, so no browser session can forge a row.
+
+### Fourth and fifth hardcoded-count aborts of the night
+
+`count('ccSyncing = false') == 2` caught the `var ccSyncing = false` declaration too, and
+`count('data-cc-sync') == 2` missed the third site that disables the button. Both replaced by
+naming the sites. **Five aborts in one session from the same habit** — every one caught before a
+write, but the pattern is mine and it is now the most-repeated entry in this log.
+
+---
+
+## Build 474 — `/api/config` exists, and a failed fetch stops being permanent (31 July 2026)
+
+**CLAUDE.md understated this one.** It recorded `/api/config` as missing with "Google Maps address
+autocomplete is silently off." The route is genuinely absent — no `api/config.js`, and `vercel.json`
+holds only the digest cron, no rewrite — but the blast radius is **the whole `cr-gmap-script`
+module**, because every consumer short-circuits on the empty key:
+
+| Consumer | With no key |
+|---|---|
+| `loadMaps()` | throws `'no google maps key configured'` — **autocomplete never attaches** |
+| `staticMapUrl()` | returns `''` — **the satellite property photo is blank** |
+| `insertMap()` | returns before building the block — **takes Directions and View-on-Maps with it**, though neither needs a key |
+
+It degrades cleanly and warns only to the console, which is exactly why it survived this long.
+
+**Not verified against production** — outbound to `app.cardinalroster.com` is blocked by this
+environment's network policy. The finding is from the repo: no file, no rewrite, and Vercel serves
+`/api/*` from `api/` only. A dashboard-level rewrite outside the repo would falsify it.
+
+### The route is deliberately not behind the signed-in gate
+
+A Maps **browser** key cannot be secret — the JS API loads by putting the key in a `<script src>`,
+so any user who sees a map can read it. **HTTP referrer restriction is the control, not secrecy.**
+
+Gating would also have hit a real trap: `loadConfig()` memoises its promise *including rejections*,
+so a 401 from a pre-sign-in call would cache `API_KEY = ''` for the whole session and maps would
+stay dead after signing in.
+
+> **The key must be referrer-restricted in Google Cloud before `GOOGLE_MAPS_API_KEY` is set.**
+> Unset env var → empty key → byte-identical to today's behaviour, so shipping cannot regress.
+
+### The memoisation defect the route exposed
+
+Harmless while the route was permanently missing; **not** harmless once it exists. One failed
+fetch — cold start, deploy in flight, dropped signal — killed maps until the tab was reloaded, and
+a fresh deploy is precisely when cold starts happen.
+
+**A plain retry would have been worse.** `attachAutocomplete()` resets `crAutocomplete` to `''` on
+failure, so the input retries on the next `scan()`, and `scan()` fires on DOM changes — unfloored,
+that is one fetch per input per scan. The 30s floor is checked **before** the memo is rebuilt, so
+while broken the retry path costs **zero** network. Harness proves it: 25 retries inside the floor,
+0 requests.
+
+### The red was the test's fault, again
+
+`loadMaps` "still rejected" after a successful retry — because it ends by loading the real Google
+script, which no sandbox can reach. The assertion was testing the network, not the fix. Corrected to
+assert the observable thing: the retry **appended the script tag carrying the key**, which a
+replayed rejection could never reach. Roughly half of all reds on this project are the test's fault
+and this was one.
+
+**Sixth hardcoded-count abort of the night** — `count('configPromise = null;')` also matched its own
+`var` declaration. Six in one session, one root cause, every one caught before a write.
+
+---
+
+## Audit (no build) — the `.single()` backlog does not exist (31 July 2026)
+
+CLAUDE.md carried this as an invariant: *"`.single()` throws on zero rows — there are 43 of them
+against only 4 `.maybeSingle()`; use `.maybeSingle()` wherever absence is legal."* Read together
+that is a **43-site migration backlog**. Audited it before doing the work. **Both halves are wrong.**
+
+### Verified against the shipped client source, not from memory
+
+| Claim | Reality |
+|---|---|
+| `.single()` throws on zero rows | **No.** `single()` only sets `Accept: application/vnd.pgrst.object+json`; PostgREST answers 406 / `PGRST116`, and the client does `if (error && this.shouldThrowOnError) throw` — otherwise it **returns** `{data:null, error}` |
+| …so the app is at risk | **`throwOnError` appears 0 times in this repo.** `.single()` never throws here |
+| 43 sites need migrating | **All 43 guard.** Zero raw dereferences |
+
+`maybeSingle()` sets **no** Accept header — it fetches a list and enforces cardinality client-side,
+so zero rows give `{data:null, error:null}` with no error to filter.
+
+**The real hazard** is `const { data } = await ….single()` then `data.foo` — a `TypeError` when the
+row is absent. Every one of the 43 guards: `if (error || !data)`, `if (!claim) return`,
+`est?.project_id`, `r.data &&`, `if (claimRes.error) return null`.
+
+### Two process notes
+
+**A keyword heuristic flagged 5 sites as unguarded; all 5 were false positives.** They guard by
+null-check rather than by the words `error`/`try`/`catch` the regex searched for. Reading them was
+what turned a 5-item bug list into a 0-item one — the file's own rule about printing what the
+extractor captured, applied to a different kind of extractor.
+
+**An empirical probe was attempted first and did not work.** Installing `@supabase/supabase-js` and
+querying a non-existent row returned `Host not in allowlist` — the agent proxy blocked the Supabase
+host, so the result proved nothing about zero rows and was discarded rather than reported. Reading
+the library's own source was the verification that actually held.
+
+**Outcome: do not open the `.maybeSingle()` migration.** Prefer it in new code where absence is
+expected — not for safety, but because `.single()` manufactures an error the caller must then tell
+apart from a real failure. Counts now **43 / 5**.
+
+---
+
+## `sw.js` — static assets self-heal; the CDN stays frozen on purpose (31 July 2026)
+
+**No build number: `index.html` is untouched.** Only `sw.js` changed, so nothing owed the app stamp.
+
+CLAUDE.md makes four claims about this file. **All four check out** — network-first navigations,
+Supabase and `/api/*` never cached, static assets cache-first with no revalidation, and
+`CACHE = 'cardinal-shell-v1'` never bumped. No false alarm here; the file's own header said *"Bump
+CACHE on each deploy"* and it has been `v1` since it was written.
+
+**The rule was never going to hold.** Theo deploys from a phone through the GitHub web UI. A manual
+cache-name edit on every deploy is not a process, it is a wish. So the fix is self-healing rather
+than a louder reminder: **same-origin assets are now stale-while-revalidate** — the cached copy is
+returned at exactly the speed it always was, then refreshed behind the response, so a changed icon
+or `manifest.json` reaches people on the next load instead of never.
+
+### The CDN deliberately did NOT change
+
+`index.html` loads supabase-js@2, chart.js and papaparse from a CDN with a **floating major**.
+Revalidating those would quietly move every user onto a new minor of a dependency this app has **no
+test runner** to catch. Cache-first-forever is the nearest thing to a lockfile an app with no build
+step gets, so cross-origin hits still return with **zero** network calls. That is now stated in the
+file so the next reader does not "finish the job".
+
+### Second test-fault red of the night
+
+The offline-navigation assertion failed first run: the cached shell was not found. **The mock was
+wrong, not the worker.** The real Cache API resolves a relative key against the worker scope, so
+`caches.put('/', …)` and `caches.match('/')` both land on `ORIGIN + '/'`; a mock keyed on the raw
+string missed it and made a correct fallback look broken. Normalising the mock to spec behaviour
+turned it green — and the same normalisation is what makes the test meaningful at all.
+
+12/12: passthrough for Supabase and `/api/*`, network-first navigations, offline shell fallback,
+instant stale response, background refill, frozen CDN, cache miss, and an offline revalidation that
+does not become an unhandled rejection.

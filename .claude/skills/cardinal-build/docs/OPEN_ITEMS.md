@@ -1,6 +1,52 @@
 # Cardinal Resource App — Open Items
 
-*The single live list. Current at build **467** · 31 July 2026 · `origin/main @ cc0b591`.*
+*The single live list, last worked at build **467** · 31 July 2026 · `origin/main @ cc0b591`. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
+
+
+---
+
+## 🔴 Data, not code — audited against the live database 31 July 2026
+
+Read-only audit via the Supabase connector. **Only one item needs Theo.**
+
+### Needs Theo: 5 of 10 active community partners have no `contact_email`
+
+| Partner | Type | Jobs referencing | Contact name on file |
+|---|---|---:|---|
+| **Kitty Hawk Realty** | property manager | **1 — live** | yes |
+| C.G. Egli Inc | general contractor | 0 | no |
+| CityWide Development Corporation | nonprofit (prospective) | 0 | yes |
+| County Corp | nonprofit (prospective) | 0 | yes |
+| James Construction | general contractor | 0 | no |
+
+**Kitty Hawk is the one that matters** — it has a live job, and community bids go to the *funding
+partner*, not the homeowner. Sending that bid means typing the address by hand.
+
+**Do NOT guess these.** CLAUDE.md is explicit: *"Never write an unverified email address into
+`community_partners`. A bid sent to a guessed address is a lost bid. Ask."* Ask Theo, then write.
+
+### ✅ Invariants that HOLD — do not re-audit without cause
+
+- **`normStage()` whitelist:** 0 of 16 projects carry a stage outside the whitelist. The silent
+  everything-becomes-`Lead` corruption this file warns about **is not happening**.
+- **`checklist` JSON:** 0 of 16 unparseable.
+- **Partner emails already on file:** 0 malformed. Nothing guessed or typo'd has been written.
+
+### ❌ A false positive I nearly filed, recorded so nobody re-files it
+
+The community bid path pre-fills the recipient with `pr.email` — the *project's* address, which on
+a community job is the homeowner, i.e. the one party that must never receive the bid. That reads
+like a real trap.
+
+**It cannot currently fire: 0 of 10 community jobs have a project email**, so the prompt opens
+blank. The code also names the partner and says *"No contact email on file for X — add one under
+Partners."* Working as designed. If project emails ever start being filled in on community jobs,
+re-check this — it becomes live the moment that count is non-zero.
+
+### Minor: one project has no `stage_since`
+
+**Alton** (Lead, created 17 Jul). One row of 16. Cosmetic unless something sorts on stage age.
+
 *When something ships, strike it here and add a line to `cardinal_build_log.md`.*
 
 > **Everything below was verified against the repo or the database on July 28, not carried
@@ -28,9 +74,9 @@ there are 3 punch items total and none are scheduled. That is a coverage gap, no
 |---|---|---|
 | **ABC Supply 401** | App registered, credentials + `ABC_ENV` in Vercel, `api/abc.js` reachable, but ABC's auth rejects the pair on **both** sandbox and production | Clean re-paste of both values using the portal's clipboard icons, redeploy (env changes only reach a **new** deployment). If it persists, email **apisupport@abcsupply.com** |
 | **ABC account numbers** | Not entered | Ship-To and Bill-To from an invoice or myABCsupply (Branch # 106 already entered) |
-| **OpenAI quota (429)** | Coach fallback down | Add credit |
+| **OpenAI quota (429)** | Coach fallback down. Theo says he pays for ChatGPT — **verify that is API credit, not a ChatGPT subscription.** `api/coach.js` calls `api.openai.com/v1/chat/completions` with `OPENAI_API_KEY` and `gpt-4o-mini`; a ChatGPT Plus/Pro plan does **not** fund that. | Check credit at platform.openai.com → Billing, not chatgpt.com |
 | **Resend sender domain** | Daily digest 403s | Verify `cardinalrenovations.net` DNS, then swap the from-address in `digest.js` |
-| **Gemini key** | Exposed in an old session, still unrotated; free tier also 503s | Rotate in Google AI Studio → update `GEMINI_API_KEY` in Vercel → attach billing. **This also gates the Scope-of-Loss autofill on new leads (358)** |
+| **Gemini key** | **Theo confirmed 31 Jul he is on paid Gemini billing — the "free tier 503s" note was stale and is retired.** Still worth confirming the key exposed in an old session was rotated. | The 503 retry ladder in `librarian.js` stays regardless (cheap insurance), but paid quota is what makes a bulk caption backfill viable at all |
 | **GitHub PAT** | Pasted into chat in the 374–388 session | Revoke if not already done: GitHub → Settings → Developer settings → Personal access tokens |
 | **Contract PDFs** | Roofing + gutter ready; siding and windows **missing** | `docs/` now exists in the repo. Siding/window masters were built July 20 in the *"Digital roofing contract formatting"* chat |
 | **Supabase PITR** | Unconfirmed | Confirm point-in-time recovery is on |
@@ -128,8 +174,8 @@ a light ground changes how they read. Same reasoning as the calendars.
 **Status:** design settled with Theo. Nothing shipped. `OnHold` (PR #34) is the
 foundation and is already in place.
 
-Reference: `/agent/workspace/outcome_v2.html` — **Style 4 layout with Style 2's
-flow**, which is what he picked ("4 with 2s flow").
+Reference: `.claude/skills/cardinal-build/references/outcome_v2.html` — **Style 4 layout with Style 2's
+flow**, which is what he picked ("4 with 2s flow"). *Path corrected 31 Jul; it previously cited a sandbox-only `/agent/workspace/` path no other program could open.*
 
 ### Four outcomes
 
@@ -381,3 +427,95 @@ this session, not carried forward.*
 built on it ("a photo-signing change shipped completely inert"). That was true when written —
 **216 of 236 rows now have `storage_path`.** The lesson about testing against real data shapes
 still stands; the specific number does not.
+
+---
+
+## 🟡 Light-theme contrast — 2 real failures, 2 false positives, computed 31 July
+
+Arithmetic, not judgment (`scripts/contrast.py`). **Not shipped** — colour changes get previewed
+and picked by Theo, per CLAUDE.md. These are ready to apply on a word.
+
+### Real: 2 pairs below the 4.5:1 body-text floor
+
+| Where | Now | Ratio | Proposed | Then |
+|---|---|---:|---|---:|
+| `.ljempty` / `.cre-empty` — empty-state text, `font:600 12.5px` | `#8a8a8a` on `#ffffff` | **3.45** | `#767676` | 4.54 |
+| `.ljadm` — admin badge pill | `#8a6a4a` on `#f2e9e2` | **4.13** | `#826446` | 4.54 |
+
+Both are the **minimum** darkening that clears the floor — same hue, 14% and 5% down. Neither is a
+semantic colour, so neither is protected by the "semantic colours stay fixed" rule.
+
+### False positives — do NOT re-file these
+
+- **`--rbe-checkfg` on `--rbe-okbg` = 1.11.** Not a pair. `checkfg` sits on `--rbe-acc`
+  (`.ljico .bdg`) and as a `::before` glyph on `.cbx:checked`; `--rbe-okbg` is paired with
+  `--rbe-money`. Pairing them was **my** invention, not the app's.
+- **Milestone pill, `#ffffff` on `#9a9a9a` = 2.81.** `--rbe-mpill-bg` is only the *fallback*:
+  the rule is `background:var(--slc, var(--rbe-mpill-bg))`, and `--slc` is the per-stage colour set
+  at runtime. **The real ground is not knowable statically** — this one needs the rendered page.
+
+### Method notes, so this is repeatable
+
+**Pair by name, never by cartesian product.** A first pass compared all 13 ink tokens against all
+17 grounds and produced **8** "failures"; matching tokens to the grounds they actually meet cut
+that to **4**, and reading the carrying selectors cut it to **2**.
+
+**There are FOUR `rb-light` token blocks** (13 + 13 + 40 + 24 = 92 declarations across 115 selector
+groups). A regex that stops at the first one finds a single token and concludes the light theme
+barely exists. Build the effective map in **document order, last wins**. Same trap as `.acthead`.
+
+**A recon regex of the form `([^\n{}]+)\{([^{}]*TOKEN[^{}]*)\}` will hang the file.** It did — 120s
+timeout, exactly the backtracking CLAUDE.md warns about. Walk back from each hit to the nearest
+`{` with `rfind` and bound the window instead.
+
+---
+
+## Settled decisions, imported from the Hyperagent session (filed 31 July)
+
+Theo pulled these from the tool that built 428–467. **Every repo-checkable claim was
+re-verified here before filing** — `OnHold` writers **0**, `check_back_at` / `funded_by` /
+`referred_to` / `award_cycle` **0**, `tarped_at` **0**, `origin/main @ ec685f0`. All accurate.
+
+### Do not revisit
+
+- **Skill layout is canonical as of PR #41.** `retail_b` lives under `references/`; the root
+  copies and the 1-byte `references/retail_b/spec.md` stub are deleted. **Do not restore them**,
+  and mind the case trap — `spec.md` and `SPEC.md` are different files to git but collide on a
+  case-insensitive disk.
+- **Any bundled `app_map.md` saying "Community (Slate & Clay, light)" or calling `crm()` the
+  single source of truth is stale.** Take the repo copy. Community is green `--ccm-*`, dark by
+  default; `crmNow` recomputes and `skin()` publishes to `body.dataset.crm` — the attribute is the
+  only thing CSS can gate on.
+
+### Known broken / half-finished — deltas only
+
+- **The outcome form is still unbuilt end to end**, verified at 472. Zero writers of `OnHold`;
+  `check_back_at`, `funded_by`, `referred_to`, `award_cycle` all at **0** references. `chDueBand`
+  does still read only `bid_due_at` — that part stands.
+
+  **⚠ The −713-day bid no longer exists.** Checked against the live database 31 Jul: of 10
+  community jobs carrying the `bid_due_at` key, **9 hold an empty string** and exactly one holds a
+  real date — `Jacob — Habitat for Humanity`, `2026-07-27`, **−4 days**. Sorting that most-urgent
+  is correct behaviour, not the bug.
+
+  **And the empty-string case degrades cleanly**, which the filed note did not say: `days('')`
+  short-circuits on `if(!iso) return null`, so `chDueBand` returns **"No deadline set"** and those
+  nine group there rather than landing in a bogus band. Nothing to fix in the banding today.
+
+  Do not go hunting the −713 record. Either it was edited away since 29 July or it was never in
+  this database. The *shape* of the concern — one field driving urgency, with no
+  `check_back_at` — is still real and still waits on the outcome form.
+- **§3c's blue count has drifted: 221 → 226 reachable, 5 gated.** New builds add blue faster than
+  triage removes it. The three triage groups stand; only the number moved.
+- ✅ **Broken pointer FIXED.** `/agent/workspace/outcome_v2.html` was a sandbox-only path no other
+  program could open. The real design — **style 4 with style 2's flow, the one Theo picked** — now
+  lives at **`.claude/skills/cardinal-build/references/outcome_v2.html`** (202 KB, 2,094 lines).
+  That directory is in `.vercelignore`, so it is reachable by any program reading the repo and is
+  **not** served publicly. Scanned before filing: no fetch/XHR/WebSocket, no Supabase reference, no
+  key-shaped strings, one external host (Google Fonts).
+- CHANGELOG's 343–427 gap was never backfilled. **Cosmetic only** since `data-cr-footer` landed —
+  every stuck watermark is ≥406 so nobody is shown them. Backfill is optional, not owed.
+- External, measured 29 Jul, decisions still pending: Cloudflare edge held **11 of 26** sampled
+  photo objects after the bucket flip (max-age one year — purge / re-path / wait is Theo's call);
+  the `photos_upload` policy question; real bid emails for **Habitat and Kitty Hawk** (the latter
+  matches tonight's own database audit).

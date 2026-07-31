@@ -12,7 +12,9 @@
 | **HANDOFF.md** | Session-state bridge | It says so itself — read it early |
 | **`CLAUDE.md`** (repo root) | The current, authoritative overview | **Before this file.** It is kept current; the older sections here are not |
 
-**Current build: 467 · 31 July 2026 · 2,772,640 bytes (2.64 MB) on disk, 2,756,681 characters · 100 inline script blocks · 103 `<script>` tags (3 external CDN) · 101 `<style>` blocks · 192 id'd script+style blocks · 82 `window.Cardinal*` exports · `</body>` ×10**
+**Measured at build 467 · 31 July 2026 · 2,772,640 bytes (2.64 MB) on disk, 2,756,681 characters · 100 inline script blocks · 103 `<script>` tags (3 external CDN) · 101 `<style>` blocks · 192 id'd script+style blocks · 82 `window.Cardinal*` exports · `</body>` ×10**
+
+*Those figures were true at 467 and are not re-checked automatically. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
 
 > Re-measured at 467, not carried forward. **Bytes and characters differ** because the file is
 > UTF-8 with multi-byte content — `check_build.py` prints the character count and labels it

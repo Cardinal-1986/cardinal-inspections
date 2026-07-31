@@ -4,7 +4,7 @@
 
 **Rule: read this before proposing any new feature. If something related exists, extend it.**
 
-*Current through build 427 · July 29, 2026*
+*Written at build 427 · 29 July 2026, with sections added at 456–474. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
 
 > **Four features were "built" on this project that already existed** and were merely unreachable or plain-looking: manual estimates (dead stub), the photo Attach bar (buried under the nav), the punch-list profile card (mounted to a hidden anchor), and the **Team page** (in the burger menu the whole time — build 373 restyled it rather than adding a second directory). When something appears missing, **first assume it exists and is buried.**
 
@@ -150,7 +150,7 @@ Two routers coexist. The modern one (`cardinal-nav`) tags its states `{app:'card
 
 ---
 
-## Resource Library (`rlPage*`, builds 442–468)
+## Resource Library (`rlPage*`, builds 442–474)
 
 **CompanyCam import (468, admin only).** Library assistant → **📸 CompanyCam** → narrow by
 tag and date → tick → file. Captions come across as titles; where the crew marked a photo up you
@@ -158,6 +158,27 @@ get the marked-up rendition. Photos flagged `internal` in CompanyCam are never s
 refuses them, so no UI bug can leak one. Files through the **existing** `library` bucket +
 `library_items` pipeline, so imports render as thumbnails via 467 with nothing added.
 Back end `api/companycam.js`; `COMPANYCAM_API_KEY` in Vercel, never in the app.
+
+**469–471 — making the importer actually reachable.** 468 shipped it working but unusable, and
+each of these is a regression of mine, named as such: **469** the click delegate was bound to a
+node that is replaced on every render, so the buttons were inert; **470** the panel CSS was scoped
+to an ancestor the panel does not sit under, so it rendered unstyled; **471** the librarian may
+request photos by emitting a `~~photos` block — **the model never receives photo data**, only
+writes a search, and `api/companycam.js` refuses anything flagged `internal`.
+
+**472 — caption search.** The v1 API has no text search (eleven parameters, none a query), so the
+route pages and matches captions itself. Capped at 8 pages / 800 photos.
+
+**473 — the photo index.** `/api/companycam-status` measured the account at **61,649 photos**, so
+472's 800-photo ceiling was **1.3%** of it — a photo from last winter was unfindable however it
+was worded. `companycam_index.sql` mirrors the metadata into Postgres; **Build index** in the panel
+drives a resumable sync (`api/companycam-sync.js`, six pages a call, cursor returned, ~617 pages /
+~7 min / zero Gemini). `api/companycam.js` searches the index when populated and falls back to the
+live API when not. Internal photos are **never written to the mirror** — otherwise the index
+becomes a way around the flag. RLS: admins read, service role writes, **no write policies at all**.
+
+The panel reports the **uncaptioned count**, which is the honest reason a search comes back empty
+and the exact size of any future AI-captioning job.
 
 
 *Written 30 July 2026 against build 456. Absent from this file until now — the 428–451 span
@@ -178,9 +199,15 @@ the DOM count are different questions and neither is wrong.
 | `cr-ri-styles` / `cr-ri-script` | image zoom and `figureHtml()`. Exports `CardinalResourceImages` |
 | theme toggle | `data-rltheme="docket"` (paper) / `"siren"` (dark), `localStorage['cardinalRLTheme']`. Exports `CardinalRLTheme` |
 
-**Its own token namespace: `--ct-*`** — 105 declarations, 926 references. The librarian
-panel keeps a separate `--lb-*` set (22 declarations, 38 of its 48 refs carry literal
-fallbacks — the best-behaved palette in the app).
+**Token namespaces — corrected at build 474.** This section previously read "its own token
+namespace: `--ct-*`". **`--ct-*` is not the Library's.** It is the **Cardinal Truth / insurance**
+palette — first occurrence is `body.claim-insurance .projinfo`, and the names are
+`--ct-care-*`, `--ct-act-*`, `--ct-chip-*`. Restyling it because this file said "Library" would
+have repainted the claims surface. **105 declarations, 937 references**, re-measured at 474.
+
+The Library's own namespace is **`--lb-*`** — 22 declarations, **79** references (48 at build
+451; tonight's builds added the rest). Most carry literal fallbacks, which is the habit CLAUDE.md
+holds up as the one to copy while 89% of the file's `var()` refs stay bare.
 
 ### Adding a page takes FOUR registrations, not three (463)
 
@@ -280,6 +307,18 @@ an admin who could exploit it can already type raw HTML into the same editor.
 ---
 
 ## Everything else
+
+**Google Maps (`cr-gmap-*`) — was inert until build 474.** Address autocomplete, the satellite
+property image, and the Directions / View-on-Maps buttons. All of it depended on `/api/config`,
+**which had never existed** — no `api/config.js`, and `vercel.json` holds only the digest cron.
+`loadConfig()` caught the 404, set an empty key, and every consumer short-circuited: `loadMaps()`
+threw, `staticMapUrl()` returned `''`, and `insertMap()` bailed before building its block, taking
+the two key-free buttons with it. CLAUDE.md recorded only "autocomplete is silently off"; the
+module was dead end to end. 474 adds the route and stops `loadConfig()`/`loadMaps()` caching a
+*failure* for the life of the tab (30s floor, so a broken route costs no network).
+**Needs `GOOGLE_MAPS_API_KEY` in Vercel, referrer-restricted first** — unset means an empty key,
+which is exactly today's behaviour. Not verified against production: outbound to the live host is
+blocked from the build sandbox.
 
 Photos & Album (`cr-pae`, `cr-ped`, `cr-paf`), Inspections, Documents/contracts (isolated iframes), Production board (`cr-pb`), Sales Floor + Objection Coach (`cr-sf`, `cr-coach`), Scheduling, Client Portal (`cr-portal`), Cross-links (`cr-xlinks`), AccuLynx import (`cr-import`), Adjuster Directory, Recents, Search, CSV, Undo, Offline, Palette, Perf, Errors, Invariants, Self Check (`cr-sc`), Admin health badge (`cr-ahc`), Changelog (`CardinalChangelog`), NACHI content, **Resource Library — see its own section above**, ABC Supply (`cr-abc`).
 
@@ -599,8 +638,9 @@ neither locks scroll — verified — so the bug was unique to `openPreview`.
 
 ## 10. Designed, agreed, not built
 
-The **outcome form**. Design settled with Theo; `outcome_v2.html` is the
-reference (Style 4 layout, Style 2 flow).
+The **outcome form**. Design settled with Theo; the reference is
+`.claude/skills/cardinal-build/references/outcome_v2.html`
+(Style 4 layout, Style 2 flow) — in the repo as of 31 Jul, reachable by any program.
 
 Four outcomes: **Awarded** / **Still waiting** *(second — most common)* /
 **Referred onward** / **Not awarded**. No reason field.

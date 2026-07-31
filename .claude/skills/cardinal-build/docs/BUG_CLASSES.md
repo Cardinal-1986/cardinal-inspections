@@ -1,7 +1,7 @@
 # Cardinal Resource App — Bug Classes
 
 **Failure modes already paid for. Every entry cost at least one build.**
-*Read before debugging; skim before shipping. Current at build 427.*
+*Read before debugging; skim before shipping. Written at build 427. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
 
 ---
 
@@ -305,7 +305,9 @@ it had eaten genuine lock calls from `cr-pb`, `cr-sol` and `cr-ci`.
 
 So: naive count said 14. Stripped count said 10. **Both were wrong.** The truth
 is 13, and only a lexer that tracks strings, template literals and comments as
-distinct states gets there. That lexer is `/agent/workspace/lexscan.js`.
+distinct states gets there. **That lexer is `scripts/jslex_count.py`** — in this repo, runnable
+by any program. (An earlier `/agent/workspace/lexscan.js` was the sandbox-only original and is
+not reachable; do not go looking for it.)
 
 I had documented hazard 4b in `patch_photos1.js` earlier in the day and then
 walked straight into it again.
@@ -479,3 +481,66 @@ var a = new Date(); a.setHours(0, 0, 0, 0);
 Two functions legitimately do this — `days()` and `daysUntil()`. When you fix
 one copy, **grep for the others**. This codebase duplicates logic freely; a fix
 applied once is usually a fix applied to one third of the problem.
+
+---
+
+## The "handler bound to a replaced node" class — swept, and it is MINE alone (31 July 2026)
+
+Build 469 fixed a click delegate bound to a node replaced on every render, so the CompanyCam
+buttons were inert. Having caused that, the obvious question was whether it exists elsewhere.
+
+**It does not. The app was consistent; the outlier was me.**
+
+### The sweep, and the false positives it produced first
+
+**First heuristic — 34 "risky" hits, all wrong.** It flagged every listener bound to an element
+whose innerHTML is reassigned. That is **the correct pattern**, not the bug: `innerHTML` on a
+container does not kill a listener *on that container*, only on its descendants. Binding to a
+stable container and routing with `e.target.closest(...)` is exactly what 469 was fixed *to*. The
+scan flagged the fix as the defect. It also invented links that were not there —
+`ljList.innerHTML` is never assigned at all; a variable-to-selector mapping produced a phantom.
+
+**Second heuristic — the real shape.** A listener bound to a node that *markup regenerates*: an
+`id` emitted from inside a `<script>` block (generated at render) rather than present in the static
+body. **7 candidates**, each bound exactly once.
+
+**All 7 are safe.** Every one binds within 3–5 lines of emitting its own markup — render-then-bind,
+inside the same function, so both re-run together on every render:
+
+| id | emitted | bound | Δ |
+|---|---:|---:|---:|
+| `msCancel` · `msSave` | 9822 · 9823 | 9825 · 9826 | 3 |
+| `tskCloseBtn` · `tskCancelBtn` · `tskSaveBtn` | 9953 · 10027 · 10028 | 9957 · 10030 · 10031 | 3–4 |
+| `solBtn` · `solFileInput` | 13600 · 13601 | 13603 · 13606 | 3–5 |
+
+### What to actually check, if this is ever suspected again
+
+Two patterns are correct and both appear throughout: **container delegation** (bind the stable
+parent, route with `closest()`) and **render-then-bind** (emit, then attach, in one function). The
+bug is only the third shape — **bound once at init, to a node something later regenerates**. Look
+for a binding far in the file from the markup that creates it. Distance is the signal.
+
+**Do not re-run the naive version.** Counting listeners against `innerHTML` targets produces 34
+false positives and zero true ones.
+
+---
+
+## Do-not-reflag register — imported from the Hyperagent session, verified at 472
+
+Each of these looks like a defect and is not. Re-reporting one costs trust.
+
+| Looks wrong | Why it is right |
+|---|---|
+| **`OnHold` is fully rigged and nothing writes it** — `STAGES`, `IC_SKIP`, `PIPE_SKIP`, board column, both `LABEL` maps | Deliberate whitelist-before-writer ordering. The outcome form is the writer. **Don't wire it ad hoc, don't delete it as dead code.** |
+| **27 surviving gold values** | Correct: `#c9a227` ×17 (retail badge + brass directory chips), `#b8860b` ×10 (gradient text fallbacks). **Grep the value, not the word "gold".** |
+| **`--ins-gold` is `#c8202e`** | The token name lies. Renaming touches every call site. Leave it. |
+| **`v2026-08-04 build 95`, `146` ×12, `148` ×4, `404`** | Module-local counters and a future-dated claims label. **Only the `data-cr-footer` div is the app version.** |
+| **The two community `LABEL` maps are byte-identical** | On purpose. A count of 2 is right, and **any edit must land in both.** |
+| **Three copies of `setHours(0,0,0,0)`** | `days()` and `daysUntil()` both anchor to midnight. Correct, not duplication. |
+| **`await signedPhotoMap(...)` appears twice** | `publish()` and `openPreview()`. **Asserting 1 file-wide fails a correct patch.** |
+| **`PHOTO_DOC_URL_TTL = 315360000`** | Ten years, deliberate — documents get opened long after generation. |
+| **Main block: 1 lock, 4 releases** | The extra releases are `hideAllViews` safety nets. **The asymmetry is the design, not a leak** — this refines CLAUDE.md's "all individually balanced". |
+| **`cr-sc-script` two locks, one release** | Both locks idempotent, balanced. |
+| **Unguarded `JSON.parse(JSON.stringify(x))`** | Deep-copy idiom; cannot throw. |
+| **`querySelector('[data-sh="' + name + '"]')`** | `name` is an internal literal from the sort/filter build, not user data. |
+| **The Punch panel's CSS says "claim"** | The panel is **cross-CRM**. Its vocabulary misfiled it as insurance-only for two scanners while it sat in Theo's community screenshots. **Don't scope it by its words.** |

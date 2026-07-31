@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 472 &#8212; the assistant now finds photographs by what is written on them, not by tag &mdash; and says how many it looked through</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 474 &#8212; property maps and address autocomplete work again; they had been switched off by a missing setting, not a broken feature</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33046,6 +33046,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:474, note:'\U0001F5FA\uFE0F The property maps are back. Address autocomplete, the satellite photo of the house, and the Directions button had all been dead \u2014 not broken, just never switched on: the app asked the server for its Google Maps setting and nothing was there to answer. It answers now. A dropped connection also used to kill maps until you reloaded the app; it retries on its own instead.' },
+{ build:473, note:'\U0001F5C2\uFE0F Photo searches can now reach the whole CompanyCam account. There are 61,649 photos in it, and searching live could only ever read the most recent 800 \u2014 so a job from last winter was unfindable no matter how you worded it. Press Build index once in the CompanyCam panel and it reads through the lot in a few minutes; after that searches are instant and cover everything. It also tells you how many photos have no caption, which is the honest reason a search comes back empty.' },
 { build:472, note:'\U0001F50D Asking the assistant for photographs now searches what was actually typed on them rather than relying on tags, which are only as good as we have been about adding them. It reads through up to 800 recent photos, ranks the closest captions first, and tells you how many it looked at \u2014 including how many had no caption to search, which is the honest reason a search comes back empty.' },
 { build:471, note:'\U0001F5BC\uFE0F Ask the library assistant to show you something \u2014 \u201cwhat does an ice dam look like\u201d, \u201chave we got photos of kickout flashing\u201d \u2014 and it pulls real photographs from our own CompanyCam jobs, captions and all, right into the answer. Tap one to enlarge it. Photos marked internal in CompanyCam never appear, and asking for a photo no longer leaves a note behind in the library.' },
 { build:470, note:'\U0001F485 The CompanyCam import panel now looks like the rest of the assistant. Its buttons had been running together as one unbroken line, its labels were bare text and the two date boxes were unstyled, because the panel\u2019s form styling only ever applied to the older form beside it.' },
@@ -35084,17 +35086,32 @@ migrateBaseline: migrateBaseline,
 var API_KEY   = null;
 var configPromise = null;
 var mapsPromise   = null;
+/* 474: a failed config fetch used to be cached for the life of the tab. It is
+   retried now, but not faster than this - scan() fires on DOM changes and an
+   unfloored retry is one fetch per input per scan. */
+var CONFIG_RETRY_MS = 30000;
+var configFailedAt  = 0;
 function loadConfig(){
 if(configPromise) return configPromise;
+/* Still inside the quiet period after a failure - answer from memory so a
+   busy page cannot turn a broken route into a flood of requests. */
+if(configFailedAt && (Date.now() - configFailedAt) < CONFIG_RETRY_MS){
+return Promise.resolve('');
+}
 configPromise = fetch('/api/config').then(function(r){
 if(!r.ok) throw new Error('config ' + r.status);
 return r.json();
 }).then(function(j){
 API_KEY = String((j && j.googleMapsKey) || '').trim();
+configFailedAt = 0;
 return API_KEY;
 }).catch(function(e){
 console.warn('[gmap] config fetch failed:', e && e.message);
 API_KEY = '';
+/* Drop the memo so a later attempt can succeed; stamp the clock so the
+   next attempt is not immediate. */
+configPromise = null;
+configFailedAt = Date.now();
 return '';
 });
 return configPromise;
@@ -35119,6 +35136,12 @@ encodeURIComponent(key) +
 s.onerror = function(){ reject(new Error('maps script failed')); };
 document.head.appendChild(s);
 });
+}).catch(function(e){
+/* A rejection cached here would outlive a config that has since started
+   working. Costs nothing to clear: loadConfig's floor is what keeps the
+   retry cheap while the route is genuinely down. */
+mapsPromise = null;
+throw e;
 });
 return mapsPromise;
 }
@@ -47351,6 +47374,10 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ccp .meta{display:block;font-size:10px;color:var(--lb-dim,#6B615D);}
 #rlLibPanel .lb-ccmore{grid-column:1/-1;padding:7px;font-size:12px;}
 #rlLibPanel .lb-ccfile{margin-top:9px;}
+#rlLibPanel .lb-ccidx{display:flex;align-items:center;gap:8px;margin:9px 0 2px;font-size:11.5px;color:var(--lb-dim,#6B615D);}
+#rlLibPanel .lb-ccidx span{flex:1;min-width:0;}
+#rlLibPanel .lb-ccidx button{flex:0 0 auto;padding:6px 10px;border-radius:8px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;border:1px solid var(--lb-line2,#DED8D6);background:var(--lb-surface2,#FAF8F7);color:var(--lb-ink,#17181B);}
+#rlLibPanel .lb-ccidx button:disabled{opacity:.5;cursor:progress;}
 /* 471: photographs inside a chat answer. Reuses the tile, not a second one. */
 #rlLibPanel .lb-photos{margin:10px 0 4px;}
 #rlLibPanel .lb-photos .lb-ccgrid{max-height:none;}
@@ -47583,7 +47610,8 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
             '</label>';
         }).join('') + '</div>' +
         '<span class="lb-photos-stat">' + list.length + ' from CompanyCam' +
-        (d && d.searched ? ' of ' + d.searched.scanned + ' searched' : '') +
+        (d && d.searched ? ' of ' + d.searched.scanned.toLocaleString() +
+          (d.searched.from_index ? ' indexed' : ' searched') : '') +
         ' \u00b7 tap to enlarge' + (ph_admin_hint()) + '</span>';
       }).catch(function(e){
         var m = String((e && e.message) || e);
@@ -47941,6 +47969,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     var f = p.querySelector('[data-cc-foot]'); if(f) f.style.display = 'none';
     ccStat('');
     fillWhere('[data-cc-where]');
+    ccIdxStatus();
     if(ccTagsLoaded) return;
     ccApi({ action:'tags' }).then(function(d){
       var sel = p.querySelector('[data-cc-tag]');
@@ -47954,6 +47983,78 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       if(!d.tags.length) ccStat('No tags on the account \u2014 filter by date instead.');
     }).catch(function(e){
       ccStat('Could not load tags \u2014 ' + String(e.message || e).slice(0, 140), true);
+    });
+  }
+
+  /* ---- 473: the searchable index ---------------------------------------
+     61,649 photos is 617 pages. No serverless function may hold that, so the
+     route does six pages a call and hands back a cursor; this loops until it
+     says done. Stopping early is safe - the cursor is stored, and pressing the
+     button again resumes rather than restarting. */
+  var ccSyncing = false;
+
+  function ccIdxEl(){ return document.querySelector('#rlLibPanel [data-cc-idx]'); }
+
+  function ccSyncApi(body){
+    return window.aiHeaders().then(function(h){
+      return fetch('/api/companycam-sync', { method:'POST', headers:h, body:JSON.stringify(body) });
+    }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(d){
+        if(!res.ok) throw new Error((d && (d.detail || d.error)) || ('HTTP ' + res.status));
+        return d;
+      });
+    });
+  }
+
+  function ccIdxStatus(){
+    var el = ccIdxEl();
+    if(!el) return;
+    ccSyncApi({ action:'status' }).then(function(d){
+      var have = (d && d.rows_in_index) || 0;
+      var total = (d && d.state && d.state.total) || null;
+      var uncap = (d && typeof d.uncaptioned === 'number') ? d.uncaptioned : null;
+      if(!have){
+        el.textContent = 'No photo index yet \u2014 searches read the most recent 800 only.';
+        return;
+      }
+      el.textContent = have.toLocaleString() + ' photos indexed' +
+        (total ? ' of ' + Number(total).toLocaleString() : '') +
+        (uncap !== null ? ' \u00b7 ' + uncap.toLocaleString() + ' with no caption' : '');
+    }).catch(function(e){
+      el.textContent = /Admins only/i.test(String(e.message || e))
+        ? '' : 'Index status unavailable.';
+    });
+  }
+
+  function ccSync(){
+    if(ccSyncing) return;
+    var el = ccIdxEl();
+    if(!el) return;
+    ccSyncing = true;
+    var btn = document.querySelector('#rlLibPanel [data-cc-sync]');
+    if(btn) btn.disabled = true;
+    var done = 0, total = null;
+
+    function step(cursor){
+      return ccSyncApi(cursor ? { cursor:cursor, pages:6 } : { pages:6 }).then(function(d){
+        done = d.synced_so_far || (done + (d.wrote || 0));
+        if(typeof d.total === 'number') total = d.total;
+        el.textContent = 'Indexing\u2026 ' + done.toLocaleString() +
+          (total ? ' of ' + total.toLocaleString() : '') + ' photos';
+        if(d.has_next && d.cursor) return step(d.cursor);
+        return d;
+      });
+    }
+
+    step(null).then(function(){
+      ccSyncing = false;
+      if(btn) btn.disabled = false;
+      ccIdxStatus();
+    }).catch(function(e){
+      ccSyncing = false;
+      if(btn) btn.disabled = false;
+      el.textContent = 'Indexing stopped \u2014 ' + String(e.message || e).slice(0, 120) +
+        ' \u00b7 press again to carry on from where it got to';
     });
   }
 
@@ -48531,6 +48632,10 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
             '<button type="button" data-cc-close>Cancel</button>' +
             '<button type="button" class="go" data-cc-find>Find photos</button>' +
           '</div>' +
+          '<div class="lb-ccidx">' +
+            '<span data-cc-idx>Checking the photo index\u2026</span>' +
+            '<button type="button" data-cc-sync>Build index</button>' +
+          '</div>' +
           '<div class="lb-ccstat" data-cc-stat></div>' +
           '<div class="lb-ccgrid" data-cc-grid></div>' +
           '<div class="lb-ccfile" data-cc-foot style="display:none">' +
@@ -48574,6 +48679,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         }
         if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
         if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
+        if(e.target.closest('[data-cc-sync]')){ ccSync(); return; }
         if(e.target.closest('[data-cc-find]')){ ccFind(false); return; }
         if(e.target.closest('[data-cc-more]')){ ccFind(true); return; }
         if(e.target.closest('[data-cc-save]')){ ccSave(); return; }

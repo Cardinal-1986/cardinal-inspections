@@ -13,7 +13,10 @@
  * Those must always hit the network so a stale session or stale claim data
  * can never be served from disk.
  *
- * Bump CACHE on each deploy — the activate handler evicts every other version.
+ * CACHE is no longer a per-deploy chore. Same-origin assets are
+ * stale-while-revalidate, so they self-heal on the next load; bumping CACHE is
+ * now only needed to force-evict everything at once (e.g. a poisoned entry).
+ * The activate handler still evicts every other version when you do.
  */
 var CACHE = 'cardinal-shell-v1';
 var SHELL = [
@@ -89,17 +92,45 @@ self.addEventListener('fetch', function(e){
     return;
   }
 
-  /* Same-origin static assets and CDN libraries: cache first, refill behind it. */
+  var sameOrigin = (url.origin === self.location.origin);
+
   e.respondWith(
     caches.match(req).then(function(hit){
-      if(hit) return hit;
-      return fetch(req).then(function(res){
+
+      /* CDN libraries: cache-first FOREVER, and that is deliberate. index.html
+         loads supabase-js@2, chart.js and papaparse from a CDN with a floating
+         major, so revalidating would quietly move every user onto a new minor of
+         a dependency this app has no test runner to catch. A frozen copy is the
+         nearest thing to a lockfile an app with no build step gets. Do not
+         "fix" this into a refresh without deciding that with Theo first. */
+      if(hit && !sameOrigin) return hit;
+
+      var net = fetch(req).then(function(res){
         if(res && res.ok && (res.type === 'basic' || res.type === 'cors')){
           var copy = res.clone();
           caches.open(CACHE).then(function(c){ c.put(req, copy); });
         }
         return res;
       });
+
+      /* Same-origin assets: stale-while-revalidate. The cached copy is returned
+         at exactly the speed it always was, then refreshed behind the response
+         so the NEXT load is current.
+
+         This is what makes a changed icon or manifest actually reach anyone.
+         The header above says "bump CACHE on each deploy"; CACHE has been
+         'cardinal-shell-v1' since it was written, because a manual step on
+         every deploy — from a phone, through the GitHub web UI — was never
+         going to hold. Self-healing beats a rule nobody can keep.
+
+         waitUntil keeps the worker alive for the refill; the .catch matters
+         because an offline revalidation must not reject into an unhandled
+         rejection, and the user already has their answer either way. */
+      if(hit){
+        e.waitUntil(net.catch(function(){}));
+        return hit;
+      }
+      return net;
     })
   );
 });

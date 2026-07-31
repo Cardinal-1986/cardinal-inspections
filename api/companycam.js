@@ -206,6 +206,46 @@ export default async function handler(req, res) {
         project_ids: Array.isArray(b.project_ids) ? b.project_ids.slice(0, 20) : []
       };
 
+      /* 473: INDEX FIRST. Once companycam_photos is populated, a caption search
+         is one Postgres query over all 61,649 photos instead of eight API pages
+         over the most recent 800 - which was 1.3% of the account and could never
+         reach a photo from last winter. Falls through to the live API when the
+         index is empty, so this works before the first sync and if it is ever
+         wiped. */
+      const service = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+      if (String(b.q || '').trim() && service && b.source !== 'live') {
+        const qq = String(b.q).trim();
+        const cols = 'id,description,captured_at,project_id,creator_name,annotated,thumb_url,preview_url';
+        const base = SUPABASE_URL + '/rest/v1/companycam_photos?select=' + cols +
+                     '&order=captured_at.desc.nullslast&limit=' + limit;
+        const hdrs = { apikey: service, Authorization: 'Bearer ' + service, Prefer: 'count=exact' };
+        let idx = await fetch(base + '&description=wfts(english).' + encodeURIComponent(qq), { headers: hdrs });
+        /* websearch_to_tsquery rejects some punctuation outright; a plain
+           substring match is a worse search but an honest fallback. */
+        if (!idx.ok) {
+          idx = await fetch(base + '&description=ilike.' + encodeURIComponent('%' + qq + '%'), { headers: hdrs });
+        }
+        if (idx.ok) {
+          const hits = await idx.json();
+          const sizeRes = await fetch(SUPABASE_URL +
+            '/rest/v1/companycam_photos?select=id&limit=1', { headers: { ...hdrs, Range: '0-0' } });
+          const indexed = parseInt(String(sizeRes.headers.get('content-range') || '').split('/')[1], 10);
+          if (Array.isArray(hits) && (indexed > 0)) {
+            res.status(200).json({
+              photos: hits.map(h => ({
+                id: h.id, description: h.description || '', captured_at: h.captured_at || '',
+                project_id: h.project_id || '', creator_name: h.creator_name || '',
+                annotated: !!h.annotated, thumb: h.thumb_url || '', preview: h.preview_url || ''
+              })),
+              next_cursor: null, has_next: false, dates_filtered_here: false, unmatched_tags: [],
+              searched: { q: qq.toLowerCase(), scanned: indexed, pages: 0,
+                          captioned: indexed, capped: false, from_index: true }
+            });
+            return;
+          }
+        }
+      }
+
       /* 472: TEXT SEARCH, which the API does not have. The photo index takes
          eleven parameters and none of them is a query, so matching "ice dam"
          against a caption means paging and filtering here. Bounded hard: at

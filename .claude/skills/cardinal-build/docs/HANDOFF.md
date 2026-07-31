@@ -1,5 +1,79 @@
 # Hand-Off — Session Log
 
+> **Newest session first.** The 29 July log begins below the 31 July section.
+
+---
+
+# Session of 31 July 2026 (overnight) — builds 468–474
+
+**Not merged.** Everything below is on `claude/claude-md-documentation-qbvt85`, open as **PR #47**,
+`check` green. `origin/main` has NOT moved. Builds 468–472 were merged earlier; **473, 474 and the
+`sw.js` change are still in the PR.**
+
+## What shipped
+
+| | |
+|---|---|
+| **473** | Searchable index of all **61,649** CompanyCam photos. `companycam_index.sql` + `api/companycam-sync.js` (resumable, six pages a call). `api/companycam.js` searches the index when populated, live API when not |
+| **474** | `api/config.js` — the route `index.html` has always fetched and never had. Plus `loadConfig`/`loadMaps` stop caching a *failure* for the life of the tab (30s floor) |
+| `sw.js` | Same-origin assets → stale-while-revalidate. **CDN stays frozen deliberately** — floating majors, no test runner |
+| docs | `.single()` backlog closed as non-existent · doc headers converted to provenance · live data audit |
+
+## ⚠ SQL is ALREADY APPLIED
+
+`companycam_photos` + `companycam_sync` exist on Supabase — 4 indexes, RLS on, 2 read policies, no
+write policies, sync row seeded. **Do not re-apply or treat as pending.** Idempotent and additive.
+
+## Waiting on Theo — do not nag, do not guess
+
+1. **Merge #47**, then tap **Build index** in the CompanyCam panel. The status line then reads
+   `61,649 photos indexed · N with no caption`. **That N is the whole point** — it is the exact
+   size of any Gemini captioning job, which has been guesswork.
+2. **`GOOGLE_MAPS_API_KEY` in Vercel — referrer-restrict it in Google Cloud FIRST.** Until then
+   maps stay off, exactly as today. 474 cannot regress anything.
+3. **5 of 10 community partners have no `contact_email`** (Kitty Hawk Realty has a live job).
+   **Never guess these** — see OPEN_ITEMS.
+4. `api/coach.js` calls the **OpenAI** API; a ChatGPT subscription does not fund it. Unverified.
+
+## 🚫 Do NOT build without asking
+
+**The Gemini caption backfill.** It sends customers' job photos to a third party. Theo is on paid
+Gemini billing (confirmed 31 Jul), so rate limits are no longer the blocker — the decision is.
+
+## Never verified, and it matters
+
+**No call has ever been made against real CompanyCam data from a build sandbox.** Outbound to
+`app.cardinalroster.com` and `*.supabase.co` is blocked by the agent proxy. Every assertion behind
+468–474 is against a mock shaped like the measured schema. The measured schema itself came from
+Theo running probes.
+
+## My regressions this session, named
+
+**469** click delegate bound to a node replaced on every render (buttons inert) · **470** panel CSS
+scoped to an ancestor the panel does not sit under (rendered unstyled) · **471** wrong filter
+entirely. 468 shipped working-but-unusable and took three builds to become reachable.
+
+## False positives — recorded so they are not re-chased
+
+- **The `.single()` "43-site backlog"** does not exist. `single()` only sets a header; the client
+  throws only under `.throwOnError()`, which appears **0 times** in this repo. All 43 guard.
+- **Community bid pre-fills the homeowner's address** — cannot fire, 0 of 10 community jobs have a
+  project email. Becomes live if that count is ever non-zero.
+- A keyword heuristic flagged **5** unguarded `.single()` sites; reading them showed **all 5** were
+  false positives.
+
+## Process lesson, six times over
+
+**Six patch aborts from hardcoding a count** — `count('configPromise = null;')` matches its own
+`var` declaration; `count('data-cc-sync')` missed a third site. All caught before a write, none
+reached the artifact. **Name the sites or assert the shape; do not count a bare string.**
+
+**Two of two reds were the test's fault** — `loadMaps` "still rejected" because it ends by loading
+the real Google script no sandbox can reach; the SW offline fallback "failed" because a mock keyed
+`caches.match('/')` on the raw string when the real Cache API resolves it against the origin.
+
+---
+
 **Cardinal Roofing & Renovations LLC — `app.cardinalroster.com`**
 Session of 29 July 2026, 02:24 → 21:45 (America/New_York).
 
@@ -183,7 +257,10 @@ network round-trip between the tap and the scroll lock.
 
 ## 6. Artifacts produced
 
-Design previews, all in `/agent/workspace/`:
+Design previews. **`/agent/workspace/` was the Hyperagent sandbox and is not reachable from
+anywhere else** — only the agreed outcome design has been recovered into this repo, at
+`.claude/skills/cardinal-build/references/outcome_v2.html`. The rest are listed for the record and are **not openable**; ask Theo to re-export if one is
+needed:
 
 | File | Purpose |
 |---|---|
@@ -193,7 +270,7 @@ Design previews, all in `/agent/workspace/`:
 | `billed_party_previews.html` | billed-party emphasis options |
 | `sortfilter_previews.html` | sort/filter/toggle, adapted to Community |
 | `outcome_five_styles.html` | five outcome-form directions |
-| `outcome_v2.html` | Style 4 layout with Style 2's flow — **the agreed design** |
+| `outcome_v2.html` | Style 4 layout with Style 2's flow — **the agreed design** · ✅ **recovered into `references/`** |
 | `cardinal_brief.html` | opening architecture brief |
 | `rls_audit.html` | row-level-security audit |
 
@@ -204,7 +281,8 @@ Design previews, all in `/agent/workspace/`:
 ## 7. State at hand-off
 
 - `origin/main` = **`202e6f3`**, deployed.
-- Working clone at `/agent/workspace/clone` is clean and on `origin/main`.
+- Working clone at `/agent/workspace/clone` was the sandbox's own checkout — **not a path any
+  other program can use.** Ignore it.
 - All 99 script blocks parse. Tag and brace balance verified.
 - No known broken behaviour in Retail or Insurance — every community change
   this session was gated by `body[data-crm="community"]`, `body.cr-cc-open`,

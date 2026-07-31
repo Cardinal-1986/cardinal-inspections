@@ -7,9 +7,9 @@ The file you want is lowercase **`index.html`** at the repo root. **100** inline
 
 Owner: **Theo Dorion** · theo@cardinalrenovations.net
 
-*Last verified against `origin/main @ d62244c`, 30 Jul 2026, stamped **build 451**. Every number in this file was re-measured against that commit.*
+*Numbers below re-measured **31 Jul 2026 against build 474** (this PR's `index.html`; `origin/main` is at `ec685f0`, build 472). **17 of 22 figures were unchanged from build 451** — the module surface did not move. The five that drifted are all accounted for by builds 473–474 and are corrected here.*
 
-**Size, stated once so nobody re-derives it wrong:** **2,657,248 bytes on disk (2.66 MB)** — but **2,641,309 characters**, because the file is UTF-8 with multi-byte content. `check_build.py` prints the *character* count and labels it "bytes". `wc -c` prints the byte count. They will never agree; neither is broken.
+**Size, stated once so nobody re-derives it wrong:** **2,797,541 bytes on disk (2.80 MB)** — but **2,781,582 characters**, because the file is UTF-8 with multi-byte content. `check_build.py` prints the *character* count and labels it "bytes". `wc -c` prints the byte count. They will never agree; neither is broken.
 
 ---
 
@@ -26,13 +26,15 @@ Owner: **Theo Dorion** · theo@cardinalrenovations.net
 
 The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It triggers on any Cardinal work — features, bug fixes, theming, SQL, `/api`, audits.
 
-### ⚠ The doc set stops at build 427. The app is at 451.
+### ⚠ The doc set lags the app — check the gap before trusting a number
 
-Every file above was written for the **29 July** session and is stamped `origin/main @ 202e6f3`, build 427. **Builds 428–451 are not in any of them** — not in `cardinal_build_log.md`, not in `FEATURES.md`, not in `OPEN_ITEMS.md`. `START_HERE.md` still says "Current build: 427".
+Every file above was written for the **29 July** session and is stamped `origin/main @ 202e6f3`, build 427; `START_HERE.md` and `OPEN_ITEMS.md` were later worked forward to **467**, and `FEATURES.md` carries sections added at 456–474. **The engineering record for 428–467 is still thin** — much of that span was built through a different tool that never read this folder, so `cardinal_build_log.md` has no entry for it.
 
-**For 428–451, the only record is the `CHANGELOG` array in `<script id="cr-cl-script">` inside `index.html`.** It is current, complete and in the app's user-facing voice. Read it before you assume a feature is missing. A summary of what it says is in "What happened in 428–451" below.
+**No doc in the set claims to be current any more.** Each one states the build it was *written* at, which stays true forever, and points here. Corrected 31 July after this file was found asserting `START_HERE.md` said 427 when it said 467 — a stale claim about staleness, which is how the whole class works.
 
-**For session state — open items, settled decisions, handoffs — the `docs/` folder is authoritative over the skill's `references/` folder.** `references/app_map.md` remains a 388-era terrain map that itself defers to `FEATURES.md`. Do not proceed from memory — build numbers, open items and settled decisions change every session. **Check their dates against the current build before trusting them**; docs written a session ago describe a different app.
+**For most of 428–467, the only record is the `CHANGELOG` array in `<script id="cr-cl-script">` inside `index.html`.** It is current, complete and in the app's user-facing voice. Read it before you assume a feature is missing. A summary of what it says is in "What happened in 428–451" below.
+
+**For session state — open items, settled decisions, handoffs — the `docs/` folder is authoritative over the skill's `references/` folder.** **But the `CHANGELOG` in `index.html` outranks both for *what shipped*.** It is the only record that survives work done outside `.claude/`, because it lives inside the file every tool has to edit. When a doc and the `CHANGELOG` disagree about whether something exists, the `CHANGELOG` wins. `references/app_map.md` remains a 388-era terrain map that itself defers to `FEATURES.md`. Do not proceed from memory — build numbers, open items and settled decisions change every session. **Check their dates against the current build before trusting them**; docs written a session ago describe a different app.
 
 ---
 
@@ -126,11 +128,11 @@ assert count(patched, VALUE) == count(orig, VALUE) - 1   # "exactly one changed"
 | Modules writing the global scroll lock | **13** | lexer, CODE hits only |
 | Scroll-lock writes | 15 locks · 18 bare releases · 1 conditional restore | 34 assignments + 1 comparison = 35 CODE hits |
 | `normStage()` copies | 6 | 1 whitelist + 5 delegates |
-| `.single()` / `.maybeSingle()` | **43 / 4** | `.maybeSingle()` was 0 at build 427 |
+| `.single()` / `.maybeSingle()` | **43 / 5** | was recorded as 43/4; re-measured 5. **All 43 `.single()` sites guard — there is no migration backlog**, see the invariants section |
 | `--ccm-*` declarations / refs | 64 / 132 (56 with fallback) | |
 | `--rbe-*` declarations / refs | 154 / 601 (31 with fallback) | |
 | `--lb-*` declarations / refs | 22 / 48 (38 with fallback) | Resource Library |
-| `var()` refs total / with a literal fallback | 3,001 / 325 | **89% are bare** — see 448–449 |
+| `var()` refs total / with a literal fallback | 3,049 / 327 | **89% are bare** — see 448–449 |
 | Surviving legacy gold hexes | **27** | `#c9a227` ×17 + `#b8860b` ×10 |
 | `#c8202e` (cardinal red) | 264 | |
 | `</body>` | 10 | |
@@ -361,7 +363,36 @@ Sales       nick@, joey@, jacob@      only what they created or are assigned (RL
 
 `project_assigned_rep()` takes `p.checklist`, **not** `p.id`. `is_cardinal_admin()` is security-definer to avoid RLS recursion. Theo + Joan are hardcoded admin fallbacks in SQL and API.
 
-Client name column is **`name`**. Money has one chokepoint: `bidAmt()`. `stage_since` must be written on creation. **`.single()` throws on zero rows — there are 43 of them against only 4 `.maybeSingle()`** (that was 0 at build 427, so the migration has started); use `.maybeSingle()` wherever absence is legal.
+Client name column is **`name`**. Money has one chokepoint: `bidAmt()`. `stage_since` must be written on creation.
+
+### ✅ `.single()` does **not** throw here, and there is no 43-site backlog — audited at build 474
+
+Previous revisions of this file said "**`.single()` throws on zero rows** — there are 43 of them
+against only 4 `.maybeSingle()`; use `.maybeSingle()` wherever absence is legal." **Both halves are
+wrong**, and together they read as 43 pending fixes. Verified against the shipped
+`@supabase/postgrest-js` source, not from memory:
+
+- **`single()` only sets a header** — `Accept: application/vnd.pgrst.object+json`. PostgREST then
+  answers a non-single row count with **406 / `PGRST116`**.
+- **The client throws only under `.throwOnError()`**: `if (error && this.shouldThrowOnError) throw`.
+  Otherwise it *returns* `{ data: null, error: {...} }`. **`throwOnError` appears 0 times in this
+  repo**, so `.single()` never throws in this app.
+- `maybeSingle()` sets **no** Accept header — it fetches a list and enforces cardinality
+  client-side, so zero rows give `{ data: null, error: null }` with no error to filter out.
+
+**The real hazard is destructure-then-dereference** — `const { data } = await ….single()` followed
+by `data.foo` is a `TypeError` when the row is absent. **All 43 sites were checked individually and
+every one guards** (`if (error || !data)`, `if (!claim) return`, `est?.project_id`, `r.data &&`).
+**Zero raw dereferences.** Converting them is churn with real regression risk and no correctness
+gain — **do not open that migration.**
+
+A first pass using a keyword heuristic flagged 5 "unguarded" sites; reading them showed **all 5
+were false positives** — they guard by null-check rather than by the words the regex looked for.
+That is the file's own "scope the assertion, then read what it captured" rule earning its place.
+
+**Still prefer `.maybeSingle()` in new code where absence is expected** — not for safety, but
+because `.single()` manufactures an error object the caller then has to tell apart from a real
+failure. Current counts: **43 `.single()` · 5 `.maybeSingle()`**.
 
 ---
 
