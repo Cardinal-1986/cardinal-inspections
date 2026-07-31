@@ -26,13 +26,13 @@ Owner: **Theo Dorion** · theo@cardinalrenovations.net
 
 The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It triggers on any Cardinal work — features, bug fixes, theming, SQL, `/api`, audits.
 
-### ⚠ The doc set stops at build 427. The app is at 451.
+### ⚠ The doc set lags the app — check the gap before trusting a number
 
 Every file above was written for the **29 July** session and is stamped `origin/main @ 202e6f3`, build 427; `START_HERE.md` and `OPEN_ITEMS.md` were later worked forward to **467**, and `FEATURES.md` carries sections added at 456–474. **The engineering record for 428–467 is still thin** — much of that span was built through a different tool that never read this folder, so `cardinal_build_log.md` has no entry for it.
 
 **No doc in the set claims to be current any more.** Each one states the build it was *written* at, which stays true forever, and points here. Corrected 31 July after this file was found asserting `START_HERE.md` said 427 when it said 467 — a stale claim about staleness, which is how the whole class works.
 
-**For 428–451, the only record is the `CHANGELOG` array in `<script id="cr-cl-script">` inside `index.html`.** It is current, complete and in the app's user-facing voice. Read it before you assume a feature is missing. A summary of what it says is in "What happened in 428–451" below.
+**For most of 428–467, the only record is the `CHANGELOG` array in `<script id="cr-cl-script">` inside `index.html`.** It is current, complete and in the app's user-facing voice. Read it before you assume a feature is missing. A summary of what it says is in "What happened in 428–451" below.
 
 **For session state — open items, settled decisions, handoffs — the `docs/` folder is authoritative over the skill's `references/` folder.** **But the `CHANGELOG` in `index.html` outranks both for *what shipped*.** It is the only record that survives work done outside `.claude/`, because it lives inside the file every tool has to edit. When a doc and the `CHANGELOG` disagree about whether something exists, the `CHANGELOG` wins. `references/app_map.md` remains a 388-era terrain map that itself defers to `FEATURES.md`. Do not proceed from memory — build numbers, open items and settled decisions change every session. **Check their dates against the current build before trusting them**; docs written a session ago describe a different app.
 
