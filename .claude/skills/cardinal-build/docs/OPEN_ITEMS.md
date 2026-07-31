@@ -490,8 +490,21 @@ re-verified here before filing** — `OnHold` writers **0**, `check_back_at` / `
 ### Known broken / half-finished — deltas only
 
 - **The outcome form is still unbuilt end to end**, verified at 472. Zero writers of `OnHold`;
-  `check_back_at`, `funded_by`, `referred_to`, `award_cycle` all at **0** references; `chDueBand`
-  still reads only `bid_due_at`, so the **−713-day bid still sorts most-urgent**.
+  `check_back_at`, `funded_by`, `referred_to`, `award_cycle` all at **0** references. `chDueBand`
+  does still read only `bid_due_at` — that part stands.
+
+  **⚠ The −713-day bid no longer exists.** Checked against the live database 31 Jul: of 10
+  community jobs carrying the `bid_due_at` key, **9 hold an empty string** and exactly one holds a
+  real date — `Jacob — Habitat for Humanity`, `2026-07-27`, **−4 days**. Sorting that most-urgent
+  is correct behaviour, not the bug.
+
+  **And the empty-string case degrades cleanly**, which the filed note did not say: `days('')`
+  short-circuits on `if(!iso) return null`, so `chDueBand` returns **"No deadline set"** and those
+  nine group there rather than landing in a bogus band. Nothing to fix in the banding today.
+
+  Do not go hunting the −713 record. Either it was edited away since 29 July or it was never in
+  this database. The *shape* of the concern — one field driving urgency, with no
+  `check_back_at` — is still real and still waits on the outcome form.
 - **§3c's blue count has drifted: 221 → 226 reachable, 5 gated.** New builds add blue faster than
   triage removes it. The three triage groups stand; only the number moved.
 - ✅ **Broken pointer FIXED.** `/agent/workspace/outcome_v2.html` was a sandbox-only path no other
