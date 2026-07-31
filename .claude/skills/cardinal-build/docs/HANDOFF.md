@@ -4,6 +4,47 @@
 
 ---
 
+# Session of 31 July 2026 (daytime) — builds 483–486
+
+**All merged. `main` at `0047bbb`, app stamp build 486.** PRs #49, #50, #51 all merged.
+
+| | |
+|---|---|
+| **483** | The librarian sheet was cut off by the iPhone home bar. `padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))` + `max-height:88dvh`. Both conventions were already in this file; the panel was the exception |
+| **484** | Build index reads job names **first** (names → photos → stamp). New admin-gated `action:'stamp'`. Measured cause: 60,485 photos, 775 project ids, **zero** project rows — the pass had never been reached |
+| **485** | The caption trial was not a sample — 53 photos, **1 job**, two days. `companycam_caption_sample()` (SQL **applied**) returns one photo from each of N different jobs; progress counts **jobs** |
+| **486** | **CompanyCam photographs into an inspection report.** Picker in the report editor toolbar. Also fixes a pre-existing bug: captions on runtime-minted figures could not be typed in |
+
+## ⚠ Read `OPEN_ITEMS.md §0` before touching AI Inspections
+
+It carries a **37-agent audit** (findings adversarially refuted) covering 487–490: which route to
+copy, the three defects in it *not* to carry forward, the vocabulary collision, the Section 2 trap,
+and Theo's two settled decisions. **Do not re-audit those surfaces.**
+
+## ⚠ A correction I owe, in my own words
+
+I told Theo *"a template is a section list plus a trade map — data, not code, so General ships
+alongside Roof at no real cost."* **False.** There is exactly one inspection report template
+(`REPORT_TEMPLATE`, ~163 KB); `GENERAL_TEMPLATE` is a **repair estimate** and the General Checklist
+has **zero** file inputs. A General Exterior report is its own build (490). I inferred it from my own
+mockup instead of checking the app.
+
+## Next, in order
+
+1. **Documents-list contrast** — pinned exactly: `td.dates{color:#333}` is **1.48:1** on the dark
+   page with **zero** dark-theme overrides, and `td.title b` has no colour rule at all so it inherits
+   dark. In the same cell, `td.dates small` and `td.title .ref` use `var(--muted)` and read at
+   7.10:1. Every tokenised line works; every hardcoded one fails.
+2. **487** the AI sort · **488** shot lists · **489** Save PDF · **490** General Exterior template.
+
+## Waiting on Theo — do not nag
+
+Five partner emails (Kitty Hawk Realty **has a live job**); `GOOGLE_MAPS_API_KEY` (**referrer-restrict
+in Google Cloud first**); two contrast fixes unpicked (`--rbe-empty-fg`, `--rbe-adm-fg`); and **486
+has never been used on a real phone with real photographs** — that verification is outstanding.
+
+---
+
 # Session of 31 July 2026 (overnight, part two) — builds 475–482
 
 **PR #47 is MERGED** (`main` at `6420f27`, build 474). Everything below is **PR #48**, still open as

@@ -9,6 +9,8 @@ Owner: **Theo Dorion** · theo@cardinalrenovations.net
 
 *The table below was re-measured **31 Jul 2026 against build 474**, and the rows marked **@482** were re-measured again at build 482 (this PR's `index.html`). **The module surface has not moved since 451** — 100 inline scripts, 103 script tags, 101 style tags, 82 `window.Cardinal*`, 10 `</body>`, all unchanged across 451→482. What moved is the Library palette, which builds 452–482 grew. Rows without a stamp are as of 474; re-measure before quoting one.*
 
+**⚠ Re-measure at 486 before quoting:** `check_build.py` now reports **102** `<style>` blocks (486 added `cr-rcc-styles`) and the file grew ~14 KB. The figures below are as of 482.
+
 **Size, stated once so nobody re-derives it wrong (@482):** **2,819,297 bytes on disk (2.69 MiB / 2.82 MB)** — but **2,803,338 characters**, because the file is UTF-8 with multi-byte content. `check_build.py` prints the *character* count and labels it "bytes". `wc -c` prints the byte count. They will never agree; neither is broken.
 
 ---
