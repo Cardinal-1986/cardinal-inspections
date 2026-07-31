@@ -95,3 +95,46 @@ against a live endpoint.
 
 Gate it the way `librarian.js` gates: `requireSession()`, and admin-only given it holds a
 credential. Never return the key, never log it.
+
+---
+
+# There are TWO CompanyCam APIs — establish which one first
+
+*Added 31 July 2026 from a screenshot of `developers.companycam.com/api-reference`.*
+
+| | **v2** | **public_api/v1** |
+|---|---|---|
+| Host | `api.companycam.com/v2` | `app.companycam.com/public_api/v1` |
+| Docs | `docs.companycam.com` (ReadMe) | `developers.companycam.com` (Scalar) |
+| Auth | `Authorization: Bearer` | Bearer **with OAuth scopes** — returns `403 insufficient_scope` |
+| Response | bare object / array | wrapped in a **`data` envelope** |
+| Photo list | only `GET /v2/projects/{id}/photos` confirmed | **`Photos → Index` exists** — an account-wide list |
+
+**The v1 public API is the one that fits this job**, on what the sidebar shows:
+
+- **`Photos → Index`** — the account-wide list. This is the endpoint whose absence would have
+  forced an importer to walk every project one at a time.
+- **`Photo Tag`** and **`Photo Description`** as their own resources — which is why `Photo` in
+  the v2 schema has no tag field, and matches the community thread asking for tags in the list.
+- **`show` takes an `include` query parameter.** Very likely how related resources (tags) come
+  back on a photo without a second round trip. **Confirm before relying on it.**
+- Also present: `Project Photo`, `Project Photo Tag`, `Tag`, `Session`, `Project Document`.
+
+**Consequences for the key.** `COMPANYCAM_API_KEY` was minted through the *Applications* flow.
+The v1 API is scope-gated, so **a token valid for v2 may still 403 on v1**. Check what scopes
+the Application was granted before concluding the key is wrong.
+
+**Read off a photograph of a screen, at an angle.** Endpoint names and URL shapes were legible;
+**field-level schema was not, and none is transcribed here.** Do not treat this table as a
+spec — it is a map telling you which page to fetch.
+
+## The one page still needed
+
+**`Photos → Index`** on `developers.companycam.com` — the list, not `/photos/{id}` which is the
+single-photo `show`. It settles the query parameters (pagination, and whether a date or tag
+filter exists), and the envelope shape.
+
+**Every CompanyCam host is unreachable from the agent sandbox** — `api.`, `docs.`, `app.`,
+`developers.`, and the third-party mirrors (rollout, pipedream, mindcloud, dlthub). Verified by
+direct request, not assumed. The page has to arrive via Theo's **Copy Page** button, or the
+environment's network policy has to be opened.
