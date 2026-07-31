@@ -2739,3 +2739,12 @@ against a background the text never meets. It is the defining mistake of this wh
 
 The useful result is the negative: **487 was the only instance of its class.** Recorded so the next
 session does not re-run this and re-derive the same 27 ghosts.
+
+### A data fact for anyone gating the CHANGELOG
+
+It has **185 entries**, and **builds 234, 241 and 299 each carry two of them.** A gate asserting
+strictly descending build numbers reports three violations against perfectly good data — mine did.
+Assert **non-increasing**, which still catches a genuinely misfiled entry. Same lesson twice in one
+build: the first version of that gate also pinned `log[0].build` to a literal `488`, so it went red
+the moment 489 shipped while every substantive check still passed. **Assert the property, never the
+tally.**
