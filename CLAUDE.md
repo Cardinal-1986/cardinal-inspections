@@ -300,11 +300,30 @@ Everything in this repo is served publicly at `app.cardinalroster.com` **unless 
 
 `.vercelignore` excludes `.claude/`, `CLAUDE.md`, `.github/` and ten orphaned scratch `.html` pages. Its header comment explains the reasoning and records that each entry was verified returning HTTP 200 to an anonymous visitor before being added. **Keep that discipline: if you add a file to the root, decide whether it ships.**
 
-**Three things currently ship that probably should not.** Flagged, not fixed — they are outside the scope of a docs pass, and removing files from a live deployment is Theo's call:
+### ✅ The dead public files are gone — all four, do not re-report them
 
-1. **`api/index.html` — a 2.2 MB stale copy of the app**, stamped build 329. Not ignored, so it is served at `/api/index.html`.
-2. **`librarian.js` at the repo root** — a shorter, older duplicate of `api/librarian.js` (9,121 vs 12,715 bytes; its first line is the comment `// /api/librarian.js`). Nothing references `/librarian.js`; the app calls `/api/librarian` twice. It looks like an upload that landed one directory too high.
-3. **`IMG_1510.png` and `cardinal-landing.PNG` are byte-identical 1.7 MB images.**
+Earlier revisions of this file listed three things shipping publicly that should not.
+**All are now removed**, on Theo's say-so, and the deployable tree went **12.56 MB → 8.42 MB**.
+
+| Removed | Was | Why it was safe |
+|---|---:|---|
+| `api/index.html` | 2.23 MB | a **complete copy of the app stamped build 329**. Zero references anywhere — not in `index.html`, not in `vercel.json` (which holds only the digest cron), not in `check.yml` |
+| `IMG_1510.png` | 1.65 MB | zero references, byte-identical to `cardinal-landing.PNG` |
+| `TeamCalendar_Watermark_Mock.png` | 178 KB | zero references. Not previously flagged; found by sweeping every root image against what actually cites it |
+| `librarian.js` (root) | 9 KB | older duplicate of `api/librarian.js`. Removed at build 453 |
+
+**One correction to the old note, which mattered.** It listed `IMG_1510.png` and
+`cardinal-landing.PNG` together as interchangeable duplicates. They are byte-identical, but
+**`cardinal-landing.PNG` is live** — it is the `onerror` fallback behind
+`cardinal-transparent.png` on the landing page:
+
+```html
+<img src="/cardinal-transparent.png" … onerror="this.src='/cardinal-landing.PNG'">
+```
+
+Deleting the wrong one of the pair breaks the first thing anyone sees. **Only the orphan
+went.** Every other root image is referenced and earns its place — checked one by one against
+`index.html`, `sw.js` and `manifest.json`, not eyeballed.
 
 **One route is referenced but missing: `/api/config`.** `loadConfig()` in the Google Maps module fetches it; there is no `api/config.js`. It **degrades cleanly** — the `.catch` sets `API_KEY = ''`, `loadMaps()` then throws `'no google maps key configured'` and nothing crashes — but **Google Maps address autocomplete is silently off**. Verify against production before treating this as a bug; the route may be provided by Vercel configuration outside the repo.
 
