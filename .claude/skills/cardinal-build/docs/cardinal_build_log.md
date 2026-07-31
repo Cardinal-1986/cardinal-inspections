@@ -2957,3 +2957,47 @@ CRLF out, normalised back to LF on commit, which is why every scope diff has sta
 **JavaScript** harness reads raw bytes, so a multi-line anchor containing `\n` silently matches
 nothing and `indexOf` returns `-1`. Normalise with `.replace(/\r\n/g,'\n')` when reading
 `index.html` from Node.
+
+## 494 — Self Check could stop the whole app scrolling
+
+Found by auditing scrolling after seven builds, not by a report. **This is
+`BUG_CLASSES.md` §1 recurring in a new module** — the same shape PR #37 fixed for `openPreview`.
+
+`cr-sc-script` locked body scroll **twice** and released it **once**:
+
+```js
+panel.classList.add('open');
+document.body.style.overflow = 'hidden';     // lock
+try { results = await collect(); }
+finally {
+  panel.classList.add('open');
+  document.body.style.overflow = 'hidden';   // locked AGAIN, failure path included
+}
+```
+
+The only release was the Close button. No `popstate`, no `hashchange`, and — confirmed against the
+whole file — **no global scroll-lock reconciler exists**. So: Menu → 🩺 Self Check, then leave by the
+back button, a nav link or a CRM switch without pressing Close, and `body{overflow:hidden}` survived.
+Nothing scrolled until a reload.
+
+**Two edits.** The redundant `finally` re-lock is gone — the lock is already set before the await,
+and re-applying it on the failure path was how a failed run left the page stuck. And the module now
+releases on `hashchange` (the app routes on the hash, so this covers ordinary navigation) and
+`popstate` (the back button). `close()` is idempotent, so firing it when nothing is open costs
+nothing.
+
+The module is now **one lock, one release** — asserted on the module slice, not the file, because
+the file has ~15 of each and a file-wide count would prove nothing.
+
+**Gates.** check_build green, stamp 493 → 494, marker present, negative control clean. Harness
+**10/10**, and it is behavioural rather than textual: it runs the shipped module in jsdom, opens the
+panel, fires `hashchange` **without** touching Close, and reads
+`document.body.style.overflow`. Against 493 the same sequence leaves it `'hidden'` — **the bug
+reproduces** — and against 494 it reads `''`.
+
+### What this does NOT fix
+
+Only this module. `OPEN_ITEMS` §6a still stands and is still the right answer: **a global
+scroll-lock reconciler**, because ~15 modules each hold their own lock and every one of them is a
+chance to strand it. Two `overflow-y:auto !important` band-aids also remain, at `#navMenu` and the
+community hub; PR #11 is the open experiment on one of them and needs a device test.

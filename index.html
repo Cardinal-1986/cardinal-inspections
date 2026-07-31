@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 493 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 494 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33781,6 +33781,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:494, note:'\uD83E\uDE7A Fixed: opening Self Check and then leaving it without pressing Close could stop the whole app scrolling until you reloaded. It now lets go of the screen whenever you navigate away, however you leave it.' },
 { build:493, note:'\uD83D\uDD0C When the app cannot reach your data it now says so, instead of showing an empty client list that looks like everything was deleted. It tells you it is a connection problem, that nothing has been removed, and gives you a Try again button.' },
 { build:492, note:'\uD83C\uDFE0 A General Exterior inspection report. Under Inspection Reports there is now a second button, New exterior report, for the jobs that are not only about the roof: roof, siding and trim, windows and doors, gutters and drainage, structure and grounds. It looks and prints exactly like the roof report because it is built from the same one.' },
 { build:491, note:'\uD83E\uDDF9 Sort photos. Open a report, press Sort photos, and every photograph already in it is put in the section it belongs to and given a caption. Photographs it is not sure about are left exactly where they are rather than guessed at. It never reaches outside the report you are editing.' },
@@ -45272,7 +45273,8 @@ try{ results = await collect(); }
 finally{
 panel.style.visibility = '';
 panel.classList.add('open');
-document.body.style.overflow = 'hidden';
+/* 494: the lock is already set before the await; re-setting it here bought
+   nothing and also re-applied it on the failure path. One lock, one release. */
 }
 paint(results, false);
 return results;
@@ -45316,6 +45318,19 @@ new MutationObserver(scan).observe(document.body, { childList:true, subtree:true
 scan();
 new MutationObserver(scan).observe(document.body, { childList:true, subtree:true });
 }
+/* cr-sc-release-494: close() was the ONLY release of the body scroll lock, so
+   leaving this panel by any route other than its Close button stranded
+   body{overflow:hidden} and the whole app stopped scrolling until a reload.
+   Same class PR #37 fixed for openPreview. The app routes on the hash, so
+   hashchange covers ordinary navigation and popstate covers the back button.
+   close() is idempotent - it null-guards the panel and assigning '' twice is
+   harmless - so firing this when nothing is open costs nothing. */
+function releaseIfOpen(){
+if(panel && panel.classList.contains('open')) close();
+}
+window.addEventListener('hashchange', releaseIfOpen);
+window.addEventListener('popstate', releaseIfOpen);
+
 window.CardinalSelfCheck = {
 run    : run,
 open   : openAndRun,
