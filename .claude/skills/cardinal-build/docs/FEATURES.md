@@ -150,17 +150,17 @@ Two routers coexist. The modern one (`cardinal-nav`) tags its states `{app:'card
 
 ---
 
-## Resource Library (`rlPage*`, builds 442–456)
+## Resource Library (`rlPage*`, builds 442–463)
 
 *Written 30 July 2026 against build 456. Absent from this file until now — the 428–451 span
-shipped it with no record outside the in-app changelog.*
+shipped it with no record outside the in-app changelog. Counts re-measured at build 463.*
 
 A reference library with an AI librarian, mounting into **`#resourceLibraryView` only**, as
-a fixed overlay. **30 static `rl-page` divs**, and in the DOM **144 `.rl-card` + 11 `.rl-ddcard`** —
-136 written in markup plus 8 built from in-file NACHI templates, before the database
-adds any. A bare `class="rl-card` regex says **146**; ten of those hits are inside JS
-template strings, so the file count and the DOM count are different questions and
-neither is wrong.
+a fixed overlay. **31 static `rl-page` divs** (35 in the DOM once NACHI builds its four),
+and in the DOM **173 `.rl-card` + 11 `.rl-ddcard`** — 166 written in markup plus the rest
+built from in-file NACHI templates, before the database adds any. A bare `class="rl-card`
+regex overcounts; some of those hits are inside JS template strings, so the file count and
+the DOM count are different questions and neither is wrong.
 
 | Block | What it owns |
 |---|---|
@@ -173,6 +173,44 @@ neither is wrong.
 **Its own token namespace: `--ct-*`** — 105 declarations, 926 references. The librarian
 panel keeps a separate `--lb-*` set (22 declarations, 38 of its 48 refs carry literal
 fallbacks — the best-behaved palette in the app).
+
+### Adding a page takes FOUR registrations, not three (463)
+
+A static library page is unreachable, or half-reachable, unless **all four** land. Measured,
+not assumed: `rlPageMfg` and `rlPageCode` each occur **exactly 4 times** in the file.
+
+| # | Where | What breaks without it |
+|---|---|---|
+| 1 | the `<div class="rl-page" id="…" data-rltitle="…">` markup | nothing to show |
+| 2 | the `map` in `cr-rltoc-script`'s `data-rlgoto` click handler | the hub box does nothing |
+| 3 | `parentOf` in the same block | back walks off the page, or exits the library |
+| 4 | **`var TOC` — the hand-maintained hub → page list** | **the page is missing from the contents modal and from global search** |
+
+**Point 4 is the one that gets missed.** Build 453 replaced the hand-typed *card* list with
+`buildIndex()`; the *page* list survived it and is still hand-maintained. With 1–3 done and
+4 skipped, build 463's page rendered correctly, navigated correctly, and its own page search
+box found its cards — while the global search returned **zero** for every term on it. That
+is a silent half-failure, and only a search assertion catches it.
+
+`CardinalRLTOC.addSection(hub, page)` / `EXTRA_PAGES` is **not** the substitute. It exists
+for pages NACHI builds at runtime, and `renderTOC()` filters extras by `e.hub === hubBlock.hub`
+— an extra whose hub name matches nothing is dropped without a word.
+
+### Plates — the figure convention (`figure.rl-fig`)
+
+Four plates ship: **1** rise/run/rafter, **2** ice-barrier extension, **3** balanced
+ventilation, **4** roof shapes. Structure is `figure.rl-fig` › `.rl-figh` (`Plate N` chip +
+title) › `.rl-figb` (the SVG) › `figcaption`.
+
+**Plates inline their SVG and style it with `.fig-ink` / `.fig-acc` / `.fig-hair` /
+`.fig-t*`. They do not use the `rl-i-*` icon sprite, and must not.** A `<use>` reference
+builds a shadow tree, and a document rule like `.rl-mark .rl-mark-a{stroke:var(--ct-mark)}`
+cannot select into it — only inherited and custom properties cross that boundary. Drawing
+Plate 4 through the sprite rendered every shape flat ink with no accent.
+
+`.fig-mask` (463) is a filled occluder for multi-volume drawings, painter's-algorithm style.
+Its fill and the tile background are **the same declaration with the same literal fallback**,
+so a stripped token cannot leave a mask that no longer matches what it sits on.
 
 ### Search — one index, four ranks (453, 455, 456)
 

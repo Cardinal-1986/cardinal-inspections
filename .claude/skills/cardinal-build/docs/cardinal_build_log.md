@@ -1362,3 +1362,393 @@ Neither was an app defect. Third and fourth reds on this branch that were the te
 60-vs-75 assertion, the suit-limitation distinction, the do-not-infer sentence and the
 verify-with-Malarkey sentence. Scope proven over 6 regions. Full suite **195/195** across
 nine harnesses.
+
+---
+
+## Build 463 — Roof Types: the library learns what a roof looks like
+
+*30 July 2026. One page, one plate, thirteen drawings, twelve cards.*
+
+Theo asked for a section on roof types with pictures, pointing at the kind of illustrated
+roof-shape chart that turns up in a web search.
+
+### Audited first, per the doctrine — and this one really was missing
+
+`gambrel`, `mansard`, `saltbox`, `butterfly`, `cross gable`, `dutch gable`, `roof shape` and
+`roof style`: **zero occurrences each**. All 19 hits for `gable` were *gable vents* on the
+ventilation cards. The library carried thirteen siding cards and a full measurement tree and
+had never named a roof form.
+
+### What it extends rather than invents
+
+- **`figure.rl-fig` + `Plate N`** — the existing figure convention. Plates 1–3 ship today.
+  This is **Plate 4**, thirteen shapes on one grid.
+- **`.fig-ink` / `.fig-acc`** — the existing figure stroke classes. Walls read ink, roof
+  reads accent, exactly as Plate 1 does.
+- The **455 search box** mounted itself: 12 cards and a pagehead is over the 4-card
+  threshold, and boxes went 16 → 17 without a line of new code.
+
+### The drawings are computed, not drawn
+
+One oblique projection, defined once, walked by `pt(u,v)`. Every shape is a list of
+*volumes*; each volume emits wall polygons in ink and roof polygons in accent. Two-volume
+shapes (cross gable, cross hip) paint back-to-front with the front volume masking the one
+behind. Bounds are asserted, so nothing silently runs off its viewBox.
+
+### Two things caught in preview, before the file
+
+- **The sprite draft rendered flat.** The first version put the shapes in `<symbol id="rl-r-*">`
+  and used `<use>`, copying the `rl-i-*` nav icons. Every tile came out ink with no accent:
+  `<use>` builds a shadow tree and `.rl-mark .rl-mark-a{stroke:…}` cannot select into it.
+  Plates 1–3 never used the sprite. Rewritten to inline SVG.
+- **Butterfly was a projection collision.** With the valley running front-to-back, the back
+  valley point lands 2 px from the front-right eave and the right-hand plane degenerates
+  into a sliver. Running the valley left-right puts the V in the visible face.
+
+### The defect this build found in the library's own machinery
+
+**`var TOC` in `cr-rltoc-script` is still a hand-maintained hub → page list.** Build 453
+replaced the hand-typed *card* list with `buildIndex()`; the *page* list survived and nobody
+noticed. Registering the new page in the markup, the `data-rlgoto` map and `parentOf` — three
+of four points — produced a page that rendered, navigated, and searched correctly **from its
+own box**, while the global contents search returned **zero** for `gambrel`, `mansard`,
+`saltbox`, `jerkinhead`, `roof shape` and `butterfly`.
+
+That is a silent half-failure. It was caught because the harness asserted on search results
+rather than on the page existing. The four-point rule is now written up in `FEATURES.md`, and
+the patch asserts `count('rlPageRoofTypes') == 4` against the measured count for `rlPageMfg`
+and `rlPageCode`.
+
+The fix shipped inside 463 rather than as a follow-up — the page was reverted and re-patched
+so the build is coherent, not a broken page plus a repair.
+
+### Deliberately no code citations
+
+Roof form is not code-defined; no section says what a gambrel is. Where a real rule applies —
+slope thresholds, R806 net free area — the cards point at the library card that already
+carries it rather than restating a number this build would have to re-verify. Same discipline
+as the vinyl cards at 461, and the harness asserts `.rl-cite` count is **0** on the page.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker. **38/38 in a real browser** —
+reachable by a real click on the hub box, back lands on the General hub, 13 tiles each with
+art and a label, the accent resolving to a different colour than the ink (the check that
+would have caught the sprite bug), mask fill equal to its tile background in both skins, tile
+label contrast 5.30:1 and 7.51:1, three-across layout with no horizontal overflow at 414 px,
+and every new card findable in both search surfaces. Negative control **0/2** on 462 — and it
+bails cleanly rather than throwing, because an `ERR` stack proves nothing.
+
+Scope proven both ways over 8 regions: replay reproduces the file byte for byte, and a
+sentinel walk leaves everything outside the edits identical.
+
+**Counts, measured:** pages 34 → 35 in the DOM, cards 161 → 173, plates 3 → 4, search boxes
+16 → 17. File +28,790 characters.
+
+---
+
+## Build 464 — the library light/dark button goes back
+
+*30 July 2026. Reported as a freeze. It was not a freeze.*
+
+Theo: *"Page freezes for a few seconds after hitting toggle then toggle back."*
+
+### Measured before diagnosing
+
+There is no freeze. Click-to-second-frame for the library skin button is **30 ms** on
+desktop and **95–183 ms at 6× CPU throttle**, and the app theme button is 32 ms / 149–183 ms.
+Identical on 462 and 463, so the 13 SVGs build 463 added were not the cause either — that
+was the first suspicion and it was wrong.
+
+What is broken is that **the button is one-way.** It takes you light → dark and then does
+nothing, however many times you press it. Pressing a control that visibly does nothing is
+what "toggle then toggle back" running into a wall feels like.
+
+### The defect — two writers, one asymmetry
+
+`CardinalRLTheme.apply()` sets the attributes and deliberately does **not** persist; its
+sibling consumer, the inline `#rlThemeBtn` handler in `cr-dl-script`, writes
+`localStorage['cardinalRLTheme']` itself before calling it.
+
+The floating `#cr-rltheme-btn` in the library block does not:
+
+```js
+var next = currentRlTheme() === 'siren' ? 'docket' : 'siren';  // reads localStorage
+if (CardinalRLTheme.apply) { apply(next); applied = true; }    // always taken
+if (!applied) { localStorage.setItem('cardinalRLTheme', next); } // dead branch
+```
+
+`applied` is always true, so the write sits on a branch that never runs. `currentRlTheme()`
+reads a key nothing ever wrote, returns `'docket'` every time, and `next` is `'siren'` every
+time. Probed in Chromium: **localStorage stayed `null` across four presses** while body and
+view stayed `siren` and the card background never came back.
+
+**Pre-existing, not a 463 regression** — the handler is byte-identical on 462.
+
+### The fix
+
+Read the **applied** state off the DOM instead of off the setting nothing wrote, and persist
+on both paths. That mirrors the sibling handler rather than inventing a mechanism, and it
+also makes the button correct where `localStorage` throws (private mode), which the old code
+could not be. `apply()` itself is untouched — this build does not move the persist contract.
+
+Side effect worth having: the skin now survives a reload. It never did.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker. **9/9 in a real browser** — six
+presses landing on the right skin each time, body and view never disagreeing, the card
+background actually returning to its light value, the choice persisted on every press, glyph
+and `aria-label` tracking state, and the skin surviving a reload. **Negative control 7 of 9
+failing on 463**, which is the discrimination that matters: the old code changed the
+attribute on press 1 too, so a weaker test would have passed on it.
+
+Scope proven both ways over 3 regions.
+
+### Still open
+
+The report said *freeze*. I could not reproduce one at 6× CPU throttle on a desktop browser,
+and the numbers above are the whole of what I can honestly claim. If it still stalls on the
+phone after this, it is a different bug and I need to know which of the two controls — the
+floating ◐ or the 🌙 in the header row — and roughly where in the app.
+
+**Two theme controls are visible at once on a library page**, which is its own confusion:
+`#cr-rltheme-btn` (library skin, `--ct-*`) and `#cr-dark-toggle` (retail app theme, flips
+`:root[data-theme="rb-light"]`). Flagged, not changed — which controls appear where is
+Theo's call.
+
+---
+
+## Build 465 — Plate 5: how an ice dam forms
+
+*30 July 2026. Theo asked for pictures on the ice dam card and picked "both" — a drawing
+for the mechanism, photographs for what it looks like. This is the drawing half.*
+
+### Why a drawing is the right artifact here, not a fallback
+
+The ice dam is not the interesting object; the heat path is. A photograph shows icicles at
+an eave, which is the symptom every homeowner already describes on the phone. What a rep has
+to argue is that **the cause sits inside the wall line, under the insulation** — and that is
+a section, not a photograph.
+
+### It is Plate 2's eave, drawn again
+
+Same 340×200 viewBox, same deck line, same wall line, same `fig-*` classes. Plate 2 shows
+what the code makes you put at that eave; Plate 5 shows why. The caption points across.
+**No new CSS** — the plate machinery took it verbatim, and the patch asserts `fig-mask` did
+not move (a single-volume section needs no occluder).
+
+### Four drafts, and they failed the same way three times
+
+1. Seven labels in 340×200 → five collisions.
+2. **The ice polygon closed on a chord** from (118,110) to (30,140) instead of on the deck,
+   so the wedge rendered *below* the roof line.
+3. Still six labels, still colliding.
+4. Five labels, ice re-cut as a mound rising off the eave instead of a sliver. Clean.
+
+Every pass was rendered in Chromium in both skins and looked at. **Label crowding, not
+geometry, was the real problem in three of four** — the instinct to add another label is the
+thing to resist. The harness now asserts pairwise that no two `<text>` boxes intersect, so
+that failure cannot come back silently.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker. **12/12 in a real browser** —
+including that the plate landed *inside the ice dam card* rather than merely somewhere in the
+file, that the accent paints and differs from ink, that all five labels exist, that **no two
+label boxes overlap**, and that Plate 2 is untouched on its own card. Negative control **3 of
+4 failing** on 464. Scope proven both ways over 3 regions.
+
+**Third time this session a negative control threw instead of counting a red** — `fig` is
+null on the previous build and the harness dereferenced it. Guarded, same as the other two.
+This is now a standing harness rule, not an incident: *every negative control must fail, not
+crash.*
+
+### The photograph half is blocked, and here is the measurement
+
+Queried production rather than asking:
+
+| | |
+|---|---|
+| `storage.buckets` | **`library` exists, is private, and holds 0 objects** — the home for library images is already provisioned and empty |
+| `photos` bucket | 225 objects, 132 MB |
+| `project_photos` | 236 rows, **216 with `storage_path`** |
+| captions | **0 rows have one** |
+| sections | 1 |
+| date range | **21–30 July 2026 — a ten-day window** |
+
+Two consequences. Nothing is captioned or categorised, so no query can pick out "the ice dam
+photo". And every photo in the system was taken in **late July** — there are no winter photos
+at all, so for this card specifically Cardinal's own library has nothing usable yet.
+
+**Doc correction:** `CLAUDE.md` says zero photo objects carry `path` or `storage_path`. That
+was true when it was written; **216 of 236 rows now have `storage_path`**. The migration
+happened. Do not re-derive the old lesson from the doc.
+
+---
+
+## Build 466 — the librarian can draw, without ever emitting markup
+
+*30 July 2026. Theo: "Can you make the ai in the resource chat add simple diagrams to the info".*
+
+### The constraint that shaped the whole design
+
+`lbRich()` **escapes first, then promotes** a small marker set on the already-escaped
+string, and deliberately supports no links, no images and no raw HTML. That ordering is the
+only reason nothing the API returns can open a tag. Letting the model emit SVG would have
+thrown it away for a picture.
+
+**So the model emits DATA and the app draws the SVG.** Four forms:
+
+| | |
+|---|---|
+| `~~stack` | a layered assembly, top layer first, one per line |
+| `~~flow` | ordered steps, drawn with numbered boxes and arrows |
+| `~~bars <unit>` | `Label \| number` per line |
+| `~~pitch 6/12` | a slope triangle — **the app computes the multiplier** |
+
+### Two rules hold the security line, and both are load-bearing
+
+1. **Model text lands only in a `<text>` node, never in an attribute.** `esc()` escapes
+   `&`, `<`, `>` and `"` — **but not the single quote** — so an attribute is the one place
+   model text could still bite. Every `aria-label` is a fixed string chosen by the diagram
+   *type*, never built from its content. The patch asserts all four `lbSvg()` call sites
+   pass a string literal.
+2. **Every number drawn is one we parsed and clamped.** Nothing the model wrote is
+   concatenated into path data or a coordinate.
+
+And the one number a model would plausibly get wrong — the rafter multiplier — is computed
+from the pitch here rather than accepted. `~~pitch 6/12` draws **1.1180** because we did the
+arithmetic.
+
+### Degradation, and why caps are refusals rather than truncations
+
+Malformed input returns `null`, the marker line is dropped, and the remaining lines
+re-dispatch through the normal rules — so a broken diagram becomes the bullet list it
+already was. It does not vanish and it does not leak `~~stack`.
+
+Over 8 rows, a `bars` row with no number, a single-row stack, an unparseable pitch, a zero
+run: **all refuse to draw** rather than drawing a partial picture. Silently dropping half a
+list of requirements is the failure worth avoiding here.
+
+### The prompt rule that matters more than the grammar
+
+`api/librarian.js` now teaches the four forms and adds: a diagram may **only restate
+something the prose already says** — never introduce a fact, number or step that is not in
+the text. A picture that says something the words do not is a far worse bug than no picture.
+It also keeps the existing "prefer a TABLE for values that vary by one thing", and the
+"do NOT use raw HTML" line survives verbatim.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker; `node --check` on `api/librarian.js`.
+
+**29/29 in a real browser, against the SHIPPED source** — the harness slices `esc()` through
+`lbBlock` straight out of `index.html` and executes that, rather than re-implementing it.
+Five XSS payloads (`<img onerror>`, `"><svg onload>`, `<script>`, `</text><foreignObject>`,
+`<style>`) were each pushed through all four diagram kinds and through plain prose, then the
+output was put through `innerHTML` exactly as the app does: **zero elements created, zero
+`on*` attributes, and the payload still renders as visible literal text** rather than being
+silently eaten. Entity-aware truncation is asserted too — the text is already escaped at
+that point, so a naive slice can cut `&amp;` in half.
+
+**Negative control: 15 of 29 failing on 465.** Scope proven across **both files** — the
+single-file proof would have routed both writes to one temp and reported a difference that
+had nothing to do with scope.
+
+### Where I was wrong — three assertions in one build, all mine
+
+1. `aria-label="' \+` fired on the **one legitimate construction it was written to protect**.
+   Replaced with the property that actually matters: every `lbSvg()` call passes a literal.
+2. The replacement split the argument list on commas — **and the labels contain commas**.
+3. `assert src.count('/^#{2,4}\\s+/') == 1` — that regex appears **twice** in its own rule
+   (test, then replace). Hardcoded number, again; made self-computing.
+
+All three aborted before any write, which is the patch harness working exactly as intended.
+
+**Fourth time this session a negative control threw instead of counting a red.** It is now a
+helper (`q(el, sel, prop)`) rather than another one-line patch. Standing rule, restated:
+*every negative control must fail, not crash.*
+
+---
+
+## Build 467 — a filed photograph looks like a photograph
+
+*31 July 2026. Theo picked "all" on the photo routes. This is the only one that was
+buildable tonight, and the audit changed what it turned out to be.*
+
+### What was already there — the prime doctrine paid again
+
+**The `library` Supabase bucket is wired end to end and always was.** The librarian panel
+uploads into it at `lib/<timestamp>_<name>` from *two* paths — the auto-filed route and the
+manual "Upload into &lt;section&gt;" button — and `openItem()` already signs a URL for 3600 s.
+None of that needed building.
+
+The gap was narrower and more annoying than "photos are not supported":
+
+> `itemHtml()` rendered a filed image as **a row with a camera emoji**, and tapping it signed
+> a URL and dumped the file in **a new browser tab**.
+
+So an uploaded photograph was a file attachment in a list. It never illustrated anything, and
+you left the app to look at it.
+
+**Measured, not inferred:** `library_items` holds 18 rows and **every one is `kind='note'`**.
+No image has ever been filed — because there was nothing to see when you did.
+
+### What shipped
+
+1. A filed image renders a real signed thumbnail instead of an emoji.
+2. Tapping it opens the **existing** zoom viewer rather than punting to a new tab.
+
+### Reused, not invented
+
+- **`CardinalResourceImages`** — the zoom viewer that already serves `.rl-card` and
+  `.rl-article` images. This matters for more than tidiness: its `open()` writes
+  `document.body.style.overflow`, one of the **13 global scroll-lock writers**. Calling the
+  existing one adds no fourteenth, and the patch asserts the count did not move.
+- **`createSignedUrls` (plural)** — one round trip for the whole visible list, cached for the
+  session, deduped by path. The harness asserts one call for three thumbnails and no second
+  call on re-render.
+
+### Security
+
+The signed URL comes from Supabase, never from a model, and is assigned as a **DOM property**
+(`img.src = url`) rather than concatenated into markup. The only DB text reaching an
+attribute is the title in `alt=""`, and `esc()` escapes the double quote — the character that
+matters there. Both a quote-laden title and a quote-laden `file_path` are asserted unable to
+break out.
+
+### Degradation
+
+No `supa`, a rejected signing call, or a path that will not sign: the thumbnail stays blank
+and the row still opens the file the old way. A photo that cannot be signed is never a broken
+library page.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker. **26/26 in a real browser** against
+the shipped `itemHtml` / `lbSignImages` sliced out of `index.html`, driven with a mocked
+storage client — the only way to exercise this before anything is uploaded. Negative control
+fails at the slice on 466. Scope proven both ways over 6 regions.
+
+### Where I was wrong — the same mistake three more times
+
+Three assertions in this build fired, **all hardcoded counts**, all against a rule this
+project's own doc states plainly ("prefer self-computing assertions over hardcoded numbers"):
+
+1. `count('function itemHtml(i){') == 1` — there are **two**; the other is in `cr-pp-script`.
+   **Three modules define `itemHtml`**: pricing (`itemHtml(it)`), punch and the library. The
+   anchor used the full function body so it patched the right one, but the check was wrong.
+2. `count('data-lb-img') == 4` — it is **6**.
+3. (466 carried three more of the same class.)
+
+Replaced with properties rather than tallies: no `itemHtml` appeared or vanished, exactly one
+gained the image branch, and that one sits inside `cr-lib-script`. **Eight hardcoded-count
+assertions across builds 466–467.** Every one aborted before a write, so the artifact was
+never at risk — but the pattern is mine and it is documented as a known trap.
+
+### Still blocked
+
+Routes 2 and 3 need files from outside the app. The only images in the system are 225 objects
+in `photos`, all taken **21–30 July**; `library_items` has none. There are no winter
+photographs to find.

@@ -137,6 +137,23 @@ export default async function handler(req, res) {
         '| Pitch | Multiplier |\n|---|---|\n| 4/12 | 1.0541 |\n' +
         'Keep tables to 4 columns or fewer — this is read on a phone.\n' +
         'Do NOT use raw HTML, links or images; they will not render.\n' +
+        /* 466: diagrams. The model writes DATA, never markup - index.html
+           draws the SVG. See the lbDiagram block there for why. */
+        'You may add ONE simple diagram when it genuinely helps. You never write \n' +
+        'HTML or SVG - you write the data on its own lines and the app draws it. \n' +
+        'Leave a blank line before and after. The four forms:\n' +
+        '  ~~stack        a layered assembly, TOP layer first, one per line\n' +
+        '  ~~flow         ordered steps, one per line, drawn with arrows\n' +
+        '  ~~bars <unit>  comparison, one "Label | number" per line\n' +
+        '  ~~pitch 6/12   a roof slope triangle; the app computes the multiplier\n' +
+        'For example:\n' +
+        '~~stack\nAsphalt shingles\nSynthetic underlayment\nIce barrier at the eave\nRoof deck\n' +
+        '\n~~bars %\nSimple gable | 6\nStandard cut-up | 12\nComplex cut-up | 15\n' +
+        'At most ONE diagram per entry, at most 8 lines in it, labels under 40 \n' +
+        'characters. A diagram may ONLY restate something the prose already says - \n' +
+        'never put a fact, number or step in a diagram that is not in the text. \n' +
+        'If the answer is values that vary by one thing, a TABLE is better. If \n' +
+        'nothing genuinely benefits from a picture, do not add one.\n' +
         'Where a number comes from code or a manufacturer spec, name the source ' +
         '(for example "2019 Residential Code of Ohio R905.2.8.5" or "per the ' +
         'manufacturer\'s installation instructions"). If you are not certain of a ' +
