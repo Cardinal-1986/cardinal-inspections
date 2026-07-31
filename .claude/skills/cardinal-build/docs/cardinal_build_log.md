@@ -2910,3 +2910,50 @@ a third template is ever considered.
 
 **LIMIT.** jsdom proves structure. Whether the five new narratives read right on a real siding or
 window job is Theo's eye, not a gate.
+
+## 493 — stop telling people their clients are gone when we simply never loaded
+
+From the unblocked build queue: *"Distinguish 'no clients' from 'couldn't load.' Both render the
+same empty state, which is why a transient read failure looked like data loss."*
+
+`cacheProjects` is initialised to `[]` and **stays `[]` when a load fails**, so `renderHome()`'s
+empty state confidently rendered *"No client projects yet. Click + Add project to create your first
+client profile."* — to someone who may have two hundred clients and a dropped connection.
+
+**The distinction is not in the data.** A denied read and an empty table both arrive as `[]`; no
+inspection of the array can tell them apart. What can is whether a load has **ever succeeded**, so
+that is what is now tracked. `cacheLoaded` starts `false` and is set in exactly one place — inside
+`reload()`, after the awaited results are assigned, never in the `catch`. All three asserted.
+
+Three states, three different things said:
+
+| State | What the user sees |
+|---|---|
+| never loaded / load failed | *Could not load your client projects.* + **nothing has been deleted** + **Try again** |
+| loaded, genuinely empty | the original *No client projects yet* invitation, untouched |
+| loaded, has rows | neither |
+
+The retry is delegated at the document, so it survives every `innerHTML` replacement regardless of
+which container rendered the empty state.
+
+**Scope kept deliberately narrow.** Exactly one user-facing claim was wrong. `exportClients()`
+already hedges correctly (*"No clients loaded yet"*), the filter empty-states are about filters, and
+the hash-restore retry loop is not a claim. None were touched.
+
+**Gates.** check_build green, stamp 492 → 493, marker present, negative control clean. Harness
+**19/19**, evaluating the branch lifted verbatim from the shipped file under each of the three
+states — and it **reproduces the bug on 492 first**, which is what makes the fix believable rather
+than merely green.
+
+### One abort and one harness red, both useful
+
+The patch aborted on `async function reload(){` — it occurs **twice**, the global one and a scoped
+one inside the punch data layer's IIFE at 46823. Nothing was written; the anchor was re-cut against
+the function body, which is unique.
+
+Then two harness checks failed for a reason worth recording: **`index.html` is CRLF in the working
+tree.** Git's `autocrlf` converts on checkout. Python patching is unaffected — universal newlines in,
+CRLF out, normalised back to LF on commit, which is why every scope diff has stayed clean — but a
+**JavaScript** harness reads raw bytes, so a multi-line anchor containing `\n` silently matches
+nothing and `indexOf` returns `-1`. Normalise with `.replace(/\r\n/g,'\n')` when reading
+`index.html` from Node.

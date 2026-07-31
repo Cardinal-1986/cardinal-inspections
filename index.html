@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 492 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 493 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9362,9 +9362,24 @@ var mount = document.getElementById('historyMount');
 var countLabel = document.getElementById('countLabel');
 
 var cacheProjects = [];
+/* 493: [] means two different things - the table is empty, or we never got a
+   successful read. A denied or failed load leaves cacheProjects at its initial
+   [], and the home empty-state then tells the user they have no clients. The
+   data cannot tell these apart; only whether a load has EVER succeeded can. */
+var cacheLoaded = false;
 var cacheAppts = [];
 var currentProject = null;
 
+/* 493: delegated at the document, so it works no matter which container the
+   empty state was rendered into and survives every innerHTML replacement. */
+document.addEventListener('click', function(e){
+  var b = e.target && e.target.closest && e.target.closest('[data-reload-clients]');
+  if(!b) return;
+  e.preventDefault();
+  b.disabled = true;
+  b.textContent = 'Trying\u2026';
+  reload();
+});
 async function reload(){
   mount.innerHTML = '<div class="loading">Loading…</div>';
   try{
@@ -9375,6 +9390,7 @@ async function reload(){
     cacheProjects = res[0];
     cacheRows = res[1];
     cacheAppts = res[2];
+    cacheLoaded = true;   /* 493: only here, and only after the awaits resolved */
     if(currentProject){
       var fresh = cacheProjects.find(function(x){ return x.id === currentProject.id; });
       if(fresh) currentProject = fresh;
@@ -9545,7 +9561,13 @@ function renderHome(){
   renderOps();
 
   var out = '';
-  if(!cacheProjects.length){
+  if(!cacheProjects.length && !cacheLoaded){
+    /* 493: never had a successful read. Do NOT tell someone with 200 clients
+       that they have none - say what is actually known and offer a retry. */
+    out += '<div class="empty"><b>Could not load your client projects.</b><br>' +
+      'This is a connection problem, not lost data \u2014 nothing has been deleted.<br>' +
+      '<button class="btn" data-reload-clients style="margin-top:10px;">Try again</button></div>';
+  }else if(!cacheProjects.length){
     out += '<div class="empty"><b>No client projects yet.</b><br>' +
       'Click <b>+ Add project</b> to create your first client profile.</div>';
   }else if(!projs.length){
@@ -33759,6 +33781,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:493, note:'\uD83D\uDD0C When the app cannot reach your data it now says so, instead of showing an empty client list that looks like everything was deleted. It tells you it is a connection problem, that nothing has been removed, and gives you a Try again button.' },
 { build:492, note:'\uD83C\uDFE0 A General Exterior inspection report. Under Inspection Reports there is now a second button, New exterior report, for the jobs that are not only about the roof: roof, siding and trim, windows and doors, gutters and drainage, structure and grounds. It looks and prints exactly like the roof report because it is built from the same one.' },
 { build:491, note:'\uD83E\uDDF9 Sort photos. Open a report, press Sort photos, and every photograph already in it is put in the section it belongs to and given a caption. Photographs it is not sure about are left exactly where they are rather than guessed at. It never reaches outside the report you are editing.' },
 { build:490, note:'\uD83D\uDCC1 Groundwork for sorting photographs into the right sections automatically. There is nothing to see on screen yet - this build puts the machinery in place and the button that uses it comes next. Nothing that already worked has changed.' },
