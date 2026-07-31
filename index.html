@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 494 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 495 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18354,12 +18354,17 @@ async function openEditor(id){
   setEditorStatus(r.status, r.sent_at);
   savedFlash.textContent = '';
   rccGate();
-  if(typeof window.sortGate === 'function') window.sortGate();
   frame.srcdoc = r.html;
   frame.onload = function(){
     try{
       var doc = frame.contentDocument;
       lockTemplate(doc);
+      /* 495: the 491 call site sat BEFORE frame.srcdoc was assigned, so it
+         asked whether a document that had not loaded yet was a report, and the
+         button never appeared. rccGate() survives that position because it only
+         asks isAdminUser(); this one reads the loaded document, so it belongs
+         here with the rest of the post-load wiring. */
+      if(typeof window.sortGate === 'function') window.sortGate();
       if(!doc.getElementById('screenFix')){
         var sfx = doc.createElement('style');
         sfx.id = 'screenFix';
@@ -33781,6 +33786,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:495, note:'\uD83E\uDDF9 Fixed: the Sort photos button added in the last update never actually appeared. It was being asked to show itself a moment before the report had finished opening, so it always decided there was nothing to sort. It now appears once the report is on screen.' },
 { build:494, note:'\uD83E\uDE7A Fixed: opening Self Check and then leaving it without pressing Close could stop the whole app scrolling until you reloaded. It now lets go of the screen whenever you navigate away, however you leave it.' },
 { build:493, note:'\uD83D\uDD0C When the app cannot reach your data it now says so, instead of showing an empty client list that looks like everything was deleted. It tells you it is a connection problem, that nothing has been removed, and gives you a Try again button.' },
 { build:492, note:'\uD83C\uDFE0 A General Exterior inspection report. Under Inspection Reports there is now a second button, New exterior report, for the jobs that are not only about the roof: roof, siding and trim, windows and doors, gutters and drainage, structure and grounds. It looks and prints exactly like the roof report because it is built from the same one.' },

@@ -3001,3 +3001,50 @@ Only this module. `OPEN_ITEMS` §6a still stands and is still the right answer: 
 scroll-lock reconciler**, because ~15 modules each hold their own lock and every one of them is a
 chance to strand it. Two `overflow-y:auto !important` band-aids also remain, at `#navMenu` and the
 community hub; PR #11 is the open experiment on one of them and needs a device test.
+
+## 495 — my bug: the Sort photos button from 491 never appeared
+
+**Theo found this, not a gate.** He opened the app looking for it and it was not there.
+
+491 gated the button beside `rccGate()`:
+
+```js
+rccGate();
+if(typeof window.sortGate === 'function') window.sortGate();
+frame.srcdoc = r.html;      // <-- the report loads AFTER this
+```
+
+`rccGate()` survives that position because it only asks `isAdminUser()`, which does not depend on
+the frame. `sortGate()` asks whether the **loaded document** is an inspection report — and at that
+instant the frame still holds the previous document, or nothing. So the button stayed hidden, or
+worse, reflected whatever had been open before.
+
+*"Navigate the way the app navigates; views created at `show()` time do not exist before it"* —
+`START_HERE` §3. I read that line, quoted the neighbouring one about `_rccGen` in my own 491 commit,
+and then placed the call one line too early anyway.
+
+**Fix:** one call site, inside `frame.onload`, beside `lockTemplate(doc)` where the rest of the
+post-load wiring already runs.
+
+### Why no gate caught it, which is the part worth keeping
+
+491's harness had 22 checks and every one passed. **It proved the sort LOGIC and never proved the
+MOUNTING.** It called `SortPhotos.apply()` directly with a document it had built itself, so it never
+asked the question the user asks: *is the button there?*
+
+This is the same gap as build 359, which shipped a CSS selector that hid the community tab buttons
+while every structural proof passed — the elements existed, they were just never shown.
+`BUG_CLASSES.md` B already says jsdom proves *does this work*, never *does this look right*. Visibility
+sits exactly on that line, and it **is** testable: 495's harness loads the real `REPORT_TEMPLATE`
+into a real iframe, runs the real `rccDoc` / `rccIsReport`, calls `sortGate()`, and reads
+`style.display`.
+
+**A rule that would have caught it, and is cheap:** when a build adds a control that gates on
+document state, assert its `display` after a real load — not just that its handler works.
+
+**Gates.** check_build green, stamp 494 → 495, marker present, negative control clean. Harness
+**10/10**: hidden at rest, **visible after a report loads**, hidden again on a non-report document,
+visible again on the next report — so it is not a one-way latch. Plus the structural proof that
+there is exactly one call site, after `srcdoc`, inside `frame.onload`. **Negative-controlled twice**:
+against 494's source order, and behaviourally by gating an empty frame, which is what 494 was
+effectively doing.
