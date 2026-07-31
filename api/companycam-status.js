@@ -153,9 +153,14 @@ export default async function handler(req, res) {
     if (b.meta && typeof b.meta === 'object') {
       pr.meta_keys = Object.keys(b.meta).sort();
       pr.has_next = b.meta.has_next === true;          // boolean, not the cursor
-      out.answers.include_total_worked =
-        Object.prototype.hasOwnProperty.call(b.meta, 'total') ||
-        Object.prototype.hasOwnProperty.call(b.meta, 'total_count');
+      // Only a real answer if the caller actually asked for a total. The first
+      // version reported `false` on a plain visit, which reads as "include_total
+      // is broken" when it means "nobody tried it" — a probe that answers a
+      // question it was not asked is worse than one that stays quiet.
+      out.answers.include_total_worked = params.has('include_total')
+        ? (Object.prototype.hasOwnProperty.call(b.meta, 'total') ||
+           Object.prototype.hasOwnProperty.call(b.meta, 'total_count'))
+        : 'not probed — add ?include_total=true';
     }
   } else {
     pr.why = photos.why || scrub(photos.raw, key);
@@ -197,7 +202,11 @@ export default async function handler(req, res) {
     : v1Auth ? 'v1 only — this is the one we want'
     : out.v2.ok ? 'v2 only — the Application is missing the v1 OAuth scopes; that is the fix'
     : 'neither — the key is wrong, expired, or revoked';
-  out.answers.rate_limits_seen = !!(out.v1.photos.rate_limit_headers || out.v2.rate_limit_headers);
+  // Measured 31 Jul against the live account: CompanyCam sends NO rate-limit
+  // headers on these responses. So false here means "they told us nothing",
+  // not "we did not look" — the limits are real but undiscoverable this way.
+  out.answers.rate_limits_seen = !!(out.v1.photos.rate_limit_headers || out.v2.rate_limit_headers)
+    || 'no rate-limit headers on the response — limits exist but are not advertised';
 
   res.status(200).json(out);
 }

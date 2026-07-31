@@ -1,14 +1,23 @@
 # CompanyCam API — what is actually known
 
-*Two capture passes. The v2 section came from the OpenAPI definition on the "List All Checklists"
-page of `docs.companycam.com`, 31 July 2026. The **v1 section — which is the one that matters —**
-came from a 109-page PDF of `developers.companycam.com/api-reference`, supplied by Theo the same
-night and read directly, page by page.*
+*Three passes, in increasing order of trust. The v2 section came from the OpenAPI definition on the
+"List All Checklists" page of `docs.companycam.com`. The **v1 section** came from a 109-page PDF of
+`developers.companycam.com/api-reference`, read page by page. **Then `api/companycam-status.js` ran
+against Cardinal's live account and measured what the screenshots could not show.** All 31 July
+2026.*
+
+**Read the provenance markers.** Anything marked **MEASURED** came back from the live API and is
+fact. Anything marked *confirmed* was read off a legible pixel in the PDF. Anything marked *not
+legible* is exactly that, and is not transcribed. **Where the two disagreed, the measurement won** —
+`uris` has six types, not the three the v2 docs list, and this file said three until the probe
+said otherwise.
 
 **This environment cannot reach `api.companycam.com`, `docs.companycam.com`, `app.companycam.com`
-or `developers.companycam.com`** — the agent proxy blocks every CompanyCam host, and the
-third-party mirrors (rollout, pipedream, mindcloud, dlthub) with them. Verified by direct request,
-not assumed. So this file is the only source of truth available in-session. Do not guess past it.
+or `developers.companycam.com`** — the agent proxy blocks every CompanyCam host, the
+third-party mirrors (rollout, pipedream, mindcloud, dlthub) with them, and `*.vercel.app` besides.
+Verified by direct request, not assumed. **The live measurements above exist because the probe runs
+on Vercel and Theo opened it in a browser** — that is the only path from here to a real response,
+and it is the path to use again for anything still open.
 
 **Why this file exists:** the alternative is inventing field names, which is the failure the vinyl
 cards at 461 and the `/api/config` note in `CLAUDE.md` both exist to prevent.
@@ -117,36 +126,45 @@ That 422 matters: **a malformed date is a hard error, not an ignored parameter.*
 the way the API wants them or the call fails outright — and the exact accepted format is one of the
 things not legible in the capture, so **the first live call has to probe it.**
 
-### `Photo` — the fields that are legible
+### `Photo` — MEASURED against the live account, 31 July 2026
 
-Identical in `index` (inside `data: [...]`) and `show` (`data: {...}`):
+Not read off a screenshot. This is `Object.keys()` on a real photo, returned by
+`/api/companycam-status` against Cardinal's own CompanyCam account. **20 fields, complete:**
 
-```json
-{
-  "id": "string",
-  "company_id": "string",
-  "creator_id": "string",
-  "creator_type": "string",
-  "creator_name": "string",
-  "project_id": "string",
-  "coordinates": { "lat": 1, "lon": 1 },
-  "status": "string",
-  "uris": [ { "type": "string", "uri": "string", "url": "string" } ],
-  "hash": null,
-  "internal": true,
-  "origin": "string",
-  "photo_url": "string",
-  "comment_count": 1,
-  "has_comments": true,
+```
+captured_at   comment_count   company_id    coordinates   created_at
+creator_id    creator_name    creator_type  description   has_comments
+hash          id              internal      origin        photo_url
+processing_status             project_id    status        updated_at    uris
 ```
 
-**The example panel is clipped there, in both places.** Its scrollbar thumb covers roughly the top
-40% of its track, so **something like 60% of the schema is below the fold and was never captured.**
-Do not fill that in from the v2 schema and do not fill it in from the Video schema — see "still
-unknown".
+**`description` exists — the caption problem is solved.** This was the one thing that could have
+sunk the whole idea, because `project_photos` in Supabase has 236 rows and zero captions, and an
+uncaptioned photo library is the thing we already have and cannot use. CompanyCam photos carry
+their caption natively.
 
-New in v1 versus v2: **`origin`**, **`comment_count`**, **`has_comments`**. Gone from the legible
-portion: `processing_status`, `description`, `captured_at`.
+`captured_at` and `processing_status` are both present too — the screenshot capture had them below
+the fold, and this file previously said they were "gone from the legible portion." They were never
+gone; they were just unread. **`tags` is genuinely absent**, confirming tags need their own call.
+
+`timestamp_type` measured as `string` — ISO 8601 confirmed, not v2's Unix ints.
+
+### `uris[]` — SIX types, not three. This was the surprise.
+
+```
+original   web   thumbnail   original_annotation   web_annotation   thumbnail_annotation
+```
+
+The v2 docs list only the first three, and this file guessed from them. **The `_annotation`
+variants are the crew's marked-up copies** — CompanyCam lets someone draw arrows and circles on a
+photo, and those are stored as separate renditions.
+
+**For library figures that inverts the obvious choice.** A raw photo of a roof is a photo of a
+roof; the same photo with the foreman's arrow pointing at the ice dam is *teaching material*.
+Prefer **`web_annotation` when it exists, falling back to `web`** — and never `original`, which
+drags full-resolution job photos into the app for no benefit. `thumbnail` for lists.
+
+Each item is `{ type, uri, url }`.
 
 ### `show` — `GET /public_api/v1/photos/{id}`
 
@@ -228,21 +246,35 @@ set is not uniform across index endpoints**, so read each one rather than assumi
 
 ---
 
+## Settled by the probe, 31 July 2026
+
+✅ **1. The `Photo` schema** — measured in full, above. `description` exists.
+✅ **5. Scopes are not a problem.** The key authenticates on **both v1 and v2**
+(`which_api_the_key_works_on: "both v1 and v2"`). The feared "v2-valid but v1-unscoped 403" did not
+happen. Key length 43.
+⚠️ **6. Rate limits: CompanyCam sends no rate-limit headers on these responses** (`rate_limits_seen`
+false, and the route sweeps every `ratelimit`/`retry-after` header name). The limits are real but
+**not advertised**, so an importer cannot self-regulate from headers — it has to be polite by
+construction (small `limit`, sequential pages, back off on 429) and treat a 429 as the first signal.
+
+Also confirmed: `meta` is exactly `{has_next, has_prev, next_cursor, prev_cursor}` — **no `total`**
+on a plain call.
+
 ## Still unknown — do NOT guess these
 
-1. **The rest of the `Photo` schema.** ~60% of the example is below the panel fold. In particular
-   **whether `description` and `captured_at` exist on v1's Photo**, which v2's Photo definitely has.
-2. **What `include` accepts.** Present on both `index` and `show`, and the one curl example that
-   uses it is clipped at the panel edge precisely at the value.
+2. **What `include` accepts.** Present on both `index` and `show`; the one curl example using it is
+   clipped at the panel edge precisely at the value. Probe with
+   `/api/companycam-status?include=tags` and watch whether `photo_fields` grows.
 3. **The accepted date format for `start_date` / `end_date`**, and what the second `oneOf` form of
-   `start_date` is. A wrong format is a 422, not a silent no-op.
-4. **`include_total`'s semantics** — it is typed `string`, not boolean, so `?include_total=true` is
-   a guess, not a reading.
-5. **The OAuth scope names**, and which ones Theo's Application was granted. The API Reference does
-   not list them; the dev portal has separate *MCP Setup*, *Rate Limits* and *Deep Links* pages that
-   were not in the capture. A key minted through the v2-era *Applications* flow **may 403 on v1**.
-6. **Rate limits.** There is a whole nav page for them and we have not read it. An importer that
-   walks the whole account must assume it will be throttled.
+   `start_date` is. A wrong format is a **422**, not a silent no-op — but the 422 body is echoed
+   back by the probe, so one bad guess reveals the right answer. Probe with
+   `?start_date=2026-01-01&end_date=2026-03-31`.
+4. **`include_total`'s semantics** — typed `string`, not boolean, so `?include_total=true` is a
+   guess. Probe it; the route now reports `not probed` rather than a misleading `false`.
+
+**None of the three blocks an importer.** Dates can be filtered client-side on `captured_at` if
+`start_date` will not cooperate — wasteful, not fatal — and neither `include` nor `include_total` is
+needed to walk the account with cursors.
 
 Each of these is one live call away from being settled — but that call has to be made from Vercel
 or from Theo's browser, **not from here.**
@@ -276,8 +308,10 @@ tap. Gated by a harness at `scratchpad/ccstatus_harness.js`: 42 assertions, nega
 across five deliberately-broken copies (no-scrub, leak-the-photo, no-field-enumeration,
 widenable-limit, no-try/catch), each of which fails the specific assertion that protects it.
 
-**Fill this file in from what it returns.** The unknowns above stop being unknowns the first time
-anyone opens that URL.
+**It was run against the live account on 31 July 2026 and it worked.** Three of the six unknowns
+closed on the first page load, one of them overturning a guess this file had made (`uris` has six
+types, not three). The remaining three are listed above with the exact query string that closes
+each. **Fill this file in from what it returns** — that is what the section above is.
 
 ---
 
@@ -316,15 +350,25 @@ against a live endpoint — and the reason the six unknowns above are listed rat
 **Gate it the way `librarian.js` gates:** `requireSession()`, and admin-only, given it holds a
 credential. Never return the key, never log it.
 
-**Sketch of the one call that matters**, once the unknowns are settled:
+**The one call that matters**, now verified end to end:
 
 ```
-GET https://app.companycam.com/public_api/v1/photos
-      ?start_date=<...>&end_date=<...>&tag_ids[]=<id>&limit=100
+GET https://app.companycam.com/public_api/v1/photos?tag_ids[]=<id>&limit=100
 Authorization: Bearer $COMPANYCAM_API_KEY
-→ { data: [ …photos… ], errors: [], meta: { next_cursor, has_next, … } }
+→ { data: [ …photos… ], errors: [], meta: { next_cursor, prev_cursor, has_next, has_prev } }
 ```
 
-then loop on `meta.has_next` with `?after=meta.next_cursor`, **skipping every `internal: true`**,
-taking `uris[type=web]`, and carrying the caption — whatever field turns out to hold it — into
-`project_photos`. **An uncaptioned photo library is the thing we already have and cannot use.**
+Loop on `meta.has_next` with `?after=<meta.next_cursor>`. Then, per photo:
+
+- **Skip every `internal: true`.** Not negotiable — CompanyCam's own wording is *"should not be
+  used in marketing or other public materials."* Whoever took the photo already made that call.
+- **Skip `status !== 'active'`** and anything whose `processing_status` is not `processed`.
+- Take **`uris[type='web_annotation']`, falling back to `web`** — the annotated rendition carries
+  the crew's arrows and is the better figure. Never `original`.
+- Carry **`description`** across as the caption. It exists, it is the whole point, and without it
+  we are rebuilding the 236 uncaptioned rows we already cannot search.
+- `captured_at` is the date to trust — `created_at` is when it reached their server and can differ.
+
+Be polite by construction: **no rate-limit headers come back**, so there is nothing to read and
+nothing to adapt to. Sequential pages, `limit` well under 100, and treat a 429 as the only warning
+you will get.
