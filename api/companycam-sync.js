@@ -253,6 +253,13 @@ export default async function handler(req, res) {
       if (st.ok) { const r0 = (await st.json())[0]; cursor = (r0 && r0.cursor) || null; }
     }
 
+    /* A run that starts with no cursor is starting from the beginning - either
+       the first ever, or a re-run after the last one finished and cleared it.
+       The counters must start from zero too. They did not, and the panel showed
+       "87,096 of 61,649": the second run kept adding to the first run's total.
+       Only the FIRST call of a run can be fresh; later calls carry a cursor. */
+    const freshRun = !cursor;
+
     let wrote = 0, skipped = 0, captioned = 0, pagesDone = 0, total = null, hasNext = true;
 
     for (let i = 0; i < pages && hasNext; i++) {
@@ -302,11 +309,11 @@ export default async function handler(req, res) {
       method: 'PATCH',
       body: JSON.stringify({
         cursor,
-        synced: (prev.synced || 0) + wrote,
-        skipped: (prev.skipped || 0) + skipped,
-        captioned: (prev.captioned || 0) + captioned,
+        synced: (freshRun ? 0 : (prev.synced || 0)) + wrote,
+        skipped: (freshRun ? 0 : (prev.skipped || 0)) + skipped,
+        captioned: (freshRun ? 0 : (prev.captioned || 0)) + captioned,
         total,
-        started_at: prev.started_at || new Date().toISOString(),
+        started_at: freshRun ? new Date().toISOString() : (prev.started_at || new Date().toISOString()),
         finished_at: hasNext ? null : new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -315,7 +322,8 @@ export default async function handler(req, res) {
     res.status(200).json({
       wrote, skipped, captioned, pages: pagesDone,
       cursor, has_next: hasNext, done: !hasNext,
-      total, synced_so_far: (prev.synced || 0) + wrote
+      total, fresh_run: freshRun,
+      synced_so_far: (freshRun ? 0 : (prev.synced || 0)) + wrote
     });
   } catch (e) {
     res.status(500).json({ error: 'Sync failed', detail: scrub((e && e.message) || e, key) });
