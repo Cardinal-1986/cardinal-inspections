@@ -89,6 +89,20 @@ function row(p) {
   };
 }
 
+/* 484: the ONE place the backfill RPC is called. Two callers - the projects
+   pass, which runs it after writing names, and the `stamp` action, which runs it
+   alone for photos a later sync added. A copy in each would drift. */
+async function stampNames(service) {
+  const rpc = await fetch(SUPABASE_URL + '/rest/v1/rpc/companycam_backfill_project_names', {
+    method: 'POST',
+    headers: { apikey: service, Authorization: 'Bearer ' + service, 'Content-Type': 'application/json' },
+    body: '{}'
+  });
+  let stamped = null;
+  if (rpc.ok) { try { stamped = await rpc.json(); } catch (e) { stamped = null; } }
+  return { ok: rpc.ok, stamped };
+}
+
 async function sb(service, path, init) {
   return fetch(SUPABASE_URL + '/rest/v1/' + path, {
     ...(init || {}),
@@ -170,6 +184,17 @@ export default async function handler(req, res) {
       return;
     }
 
+    // ---- stamp: names onto photos, with no trip to CompanyCam ----
+    /* 484: the names are already in companycam_projects; photos added by a later
+       sync just need them applied. The sync runs this at the END of a press so a
+       photo indexed thirty seconds ago is searchable by job like all the others.
+       One UPDATE, and the function only touches rows whose value differs. */
+    if (b.action === 'stamp') {
+      const st = await stampNames(service);
+      res.status(200).json({ stamped: st.stamped, backfilled: st.ok, done: true });
+      return;
+    }
+
     // ---- projects: names for the index ----
     /* The first full sync proved the caption search had nothing to search: 79 of
        60,485 photos carry a description, 0.13%, flat across every year. But every
@@ -229,16 +254,10 @@ export default async function handler(req, res) {
       }
 
       /* Stamp the names onto the photos. One statement, not 60k round trips. */
-      const rpc = await fetch(SUPABASE_URL + '/rest/v1/rpc/companycam_backfill_project_names', {
-        method: 'POST',
-        headers: { apikey: service, Authorization: 'Bearer ' + service, 'Content-Type': 'application/json' },
-        body: '{}'
-      });
-      let stamped = null;
-      if (rpc.ok) { try { stamped = await rpc.json(); } catch (e) { stamped = null; } }
+      const st = await stampNames(service);
 
-      res.status(200).json({ projects: wrote, pages, stamped,
-                             backfilled: rpc.ok, done: true });
+      res.status(200).json({ projects: wrote, pages, stamped: st.stamped,
+                             backfilled: st.ok, done: true });
       return;
     }
 

@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 483 &#8212; the library assistant box no longer runs off the bottom of the phone screen</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 484 &#8212; Build index reads the job names first, so photo search starts working in seconds instead of at the end</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33057,6 +33057,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:484, note:'\U0001F3F7\uFE0F Build index now reads the job names FIRST. It used to do them last, after all 617 pages of photographs \u2014 so the search that needs them sat idle for seven minutes, and if the photographs were already indexed those seven minutes were spent re-reading things it already had. Press Build index and the job names land in a few seconds; the photographs carry on behind them.' },
 { build:483, note:'\U0001F4F1 The library assistant box was running off the bottom of the phone screen \u2014 the ask line and the note under it were sitting behind the home bar. The box now keeps clear of it, and it sizes itself to the screen you can actually see rather than the one underneath the browser chrome.' },
 { build:482, note:'\u270F\uFE0F Draw on a CompanyCam photograph. Tap the pencil in the corner of any photo in the CompanyCam box and the photo editor opens \u2014 arrows, circles, freehand, text, six colours, rotate and undo. It was already in the app for job photos; it just could not be reached from here. When you are done, File it puts the marked-up copy in the Library section you picked, or Device sends it to your phone. The photograph in CompanyCam is never changed.' },
 { build:481, note:'\u2B07\uFE0F Save CompanyCam photographs to your phone. Tick the ones you want in the CompanyCam box and press Save to device \u2014 on a phone they go to your share sheet, so Photos, AirDrop and Messages are one tap away; on a computer they download. Filing them into the Library still works exactly as before, and your ticks stay put so you can do both.' },
@@ -48162,13 +48163,35 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       });
     }
 
-    step(null).then(function(){
-      /* Projects second, and only after the photos land - the backfill stamps
-         names onto rows that must already exist. ~8 pages, one call, no cursor. */
-      el.textContent = 'Reading job names\u2026';
-      return ccSyncApi({ action:'projects' }).then(function(p){
-        if(p && p.projects) el.textContent = 'Matched ' + Number(p.projects).toLocaleString() + ' jobs\u2026';
-      });
+    /* 484: NAMES FIRST. 476 put them last, reasoning that the backfill can only
+       stamp rows that already exist - true on a first sync, wrong once 60,485
+       photos are already indexed. Then the names are the only thing missing, they
+       are ~8 pages against 617, and going last meant waiting seven minutes to fix
+       a fifteen-second problem. Measured on the live database after 476 shipped:
+       60,485 photos, 775 distinct project ids, ZERO project rows - because the
+       pass had never been reached. */
+    el.textContent = 'Reading job names\u2026';
+    ccSyncApi({ action:'projects' }).then(function(p){
+      if(p && p.projects){
+        el.textContent = 'Matched ' + Number(p.projects).toLocaleString() +
+          ' jobs \u2014 now the photos\u2026';
+        /* Update the status line NOW, so the search is usable while the long
+           pass runs rather than only when it finishes. */
+        ccIdxStatus();
+      }
+    }).catch(function(e){
+      /* A failed name pass must NOT stop the photo index. The photos are the
+         expensive half and are useful on their own. Say what happened, carry on. */
+      el.textContent = 'Job names could not be read \u2014 ' +
+        String((e && e.message) || e).slice(0, 60) + ' \u00b7 indexing photos anyway\u2026';
+    }).then(function(){
+      return step(null);
+    }).then(function(){
+      /* Photos this run just ADDED carry no job name. The names are already in
+         the table, so this is one UPDATE and no second trip to CompanyCam. Its
+         own catch: the photos are indexed either way, and a failed stamp must not
+         report the whole press as failed. */
+      return ccSyncApi({ action:'stamp' }).catch(function(){ return null; });
     }).then(function(){
       ccSyncing = false;
       if(btn) btn.disabled = false;
