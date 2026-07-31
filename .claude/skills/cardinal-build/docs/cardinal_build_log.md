@@ -2381,3 +2381,84 @@ Community's `data-cc-editbid` already contains it. Attribute *selectors* match w
 
 **Namespace hazard worth knowing:** `cc-` means **CompanyCam** inside `cr-lib-script` and
 **Community** elsewhere in the file. Grep the block, not the prefix.
+
+## Build 483 — the librarian sheet was cut off at the bottom of the phone (31 July 2026)
+
+Theo: *"move the ai librarian box further up the screen so it doesnt get cut off at the bottom."*
+
+`#rlLibPanel` is a bottom sheet — `inset:0` with `align-items:flex-end` — so `.lb-box`'s bottom edge
+sits on the bottom of the layout viewport, which on an iPhone is **under the home indicator**.
+`.lb-box` carried **no bottom inset at all**, so its last rows (the ask input, the note under it)
+were the part being eaten.
+
+**The panel was the exception, not a new problem.** Every other fixed overlay in this file already
+reserves the inset — `.cr-ped-tools`, `.cr-est-body`, `#cr-est-picker .box-list` — and
+`#cr-est-picker .box` already carries the height convention:
+
+```css
+max-height:85vh; max-height:85dvh;
+```
+
+`vh` on mobile means the viewport with browser chrome **hidden**, so a sheet sized in `vh` is taller
+than what is on screen. `dvh` is correct; declaring `vh` first keeps an old engine working. Both
+copied verbatim rather than invented.
+
+Three declarations on `.lb-box`: `padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))`,
+`max-height:88dvh` after the existing `88vh`, and an explicit `box-sizing:border-box`.
+
+**Correction, so it is not miscredited:** `box-sizing` was **already** `border-box` via one of the
+file's 14 wildcard resets — the harness measured 482 at `border-box` too. Explicit is belt-and-braces
+so the sheet's height cannot come to depend on which reset reaches it. **It is not a fix.**
+
+**Deliberately not done:** the sheet is not lifted into a floating card. Its corners are rounded
+top-only, so a gap beneath it would show the scrim through a square bottom edge and read as a bug.
+
+**What the harness can and cannot say.** 11/11 in a real engine at 393×852 using the *shipped* panel
+markup and stylesheet, negative-controlled against 482 (which measured **0px** reserved, so the
+defect reproduces). But **headless Chromium has no home indicator, so `env(safe-area-inset-bottom)`
+resolves to its `0px` fallback there.** It proves the strip is reserved and that content clears it.
+It cannot prove the 34px iOS inset lands. That is Theo's eyes, and the PR said so.
+
+## Build 484 — read the job names first, not after seven minutes of photos (31 July 2026)
+
+Theo pressed Build index and reported `60,485 photos indexed of 61,649 · 0 jobs · 0 searchable by job`.
+
+**Measured against the live database rather than guessed:**
+
+| | |
+|---|---:|
+| `companycam_photos` | 60,485 |
+| …with `project_id` | 60,485 |
+| distinct `project_id` | 775 |
+| **`companycam_projects` rows** | **0** |
+| …with `project_name` | 0 |
+| backfill function | exists |
+
+**The route was fine and the panel was fine.** The project pass only fires at the **tail** of a Build
+index press, and 476 shipped after his last one. The status line was honest.
+
+**The fix is the ORDER, not the code.** 476 put projects last with this reasoning:
+
+> *"Projects second, and only after the photos land — the backfill stamps names onto rows that must
+> already exist."*
+
+True on a first sync. **Wrong once 60,485 rows exist**: then the names are the only thing missing,
+they are ~8 pages against 617, and going last means waiting seven minutes to fix a fifteen-second
+problem — seven minutes spent re-walking photos already indexed.
+
+484 runs **names → photos → stamp**. Names first so the search works in seconds and the status line
+updates before the long pass. Photos unchanged. Then a stamp, because photos *this run added* have
+no name yet — the names are in the table by then, so it is one `UPDATE` and no second trip to
+CompanyCam (`action:'stamp'`, admin-gated like every other action).
+
+`stampNames()` extracted so the backfill RPC has **one** implementation with two callers. The RPC
+name now appears exactly once in the route, asserted.
+
+**Failure policy, asserted in the harness:** a failed *name* pass must **not** stop the photo index —
+the photos are the expensive half and are useful alone, so it reports and carries on. A failed
+*stamp* must not report the whole press as failed. A failed *photo* pass still reports, exactly as
+before.
+
+Harnesses: ordering **21/21** driving the shipped `ccSync()` and asserting the exact call sequence
+(`projects, photos:start, photos:c1, stamp` — four calls, no duplicated pass), all four failure
+paths and the double-press guard; route **7/7** importing the shipped handler with `fetch` stubbed.

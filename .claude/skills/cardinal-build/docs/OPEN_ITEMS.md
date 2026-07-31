@@ -107,6 +107,12 @@ there are 3 punch items total and none are scheduled. That is a coverage gap, no
   - tick 3 → **⬇ Save to device** → the iOS share sheet offers Photos / Messages / AirDrop, and the
     ticks are **still set** afterwards
   - draw on one → **File it** → it appears in the chosen Library section titled `Marked up — …`
+- **483/484, on the phone, in the installed app:**
+  - **the library assistant's ask line must clear the home bar.** ⚠️ **No harness can settle this** —
+    headless Chromium has no home indicator, so `env(safe-area-inset-bottom)` is 0 there. The gate
+    proves the strip is reserved and content clears it, nothing more. **Theo's eyes only.**
+  - press **Build index**: `Reading job names…` → `Matched 775 jobs — now the photos…` within
+    seconds → the photo counter. Then search a street or "Habitat" **before** the photos finish.
 
 ---
 
