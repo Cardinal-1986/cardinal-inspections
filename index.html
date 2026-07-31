@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 481 &#8212; tick photographs in the CompanyCam box and save them straight to your phone or computer</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 482 &#8212; draw arrows and circles on a CompanyCam photograph, then file it or send it to your phone</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33057,6 +33057,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:482, note:'\u270F\uFE0F Draw on a CompanyCam photograph. Tap the pencil in the corner of any photo in the CompanyCam box and the photo editor opens \u2014 arrows, circles, freehand, text, six colours, rotate and undo. It was already in the app for job photos; it just could not be reached from here. When you are done, File it puts the marked-up copy in the Library section you picked, or Device sends it to your phone. The photograph in CompanyCam is never changed.' },
 { build:481, note:'\u2B07\uFE0F Save CompanyCam photographs to your phone. Tick the ones you want in the CompanyCam box and press Save to device \u2014 on a phone they go to your share sheet, so Photos, AirDrop and Messages are one tap away; on a computer they download. Filing them into the Library still works exactly as before, and your ticks stay put so you can do both.' },
 { build:480, note:'\U0001F50D CompanyCam photographs open full size. Tap the small arrows in the corner of any thumbnail and it fills the screen, caption and all. Tapping the picture itself still ticks it for filing, the way it always did \u2014 the corner button is the only thing that expands.' },
 { build:479, note:'\U0001F6AA The CompanyCam photo panel was a dead end. The question box disappeared when you opened it, so you could not ask anything while looking at photographs, and the only way out was a button marked \u2018Cancel\u2019 \u2014 which reads like it throws your work away rather than takes you back. The question box now stays, and the button says \u2018Back to chat\u2019.' },
@@ -36435,7 +36436,7 @@ photosFor    : function(){ return (window.currentPhotos || []).slice(); },
 })();
 </script>
 
-<style id="cr-ped-styles">#cr-ped{display:none;position:fixed;inset:0;background:#101010;z-index:9600;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;touch-action:none}#cr-ped.open{display:flex}.cr-ped-head{padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:#1a1a1a;color:#f5efe0;display:flex;align-items:center;gap:8px;flex:0 0 auto;border-bottom:1px solid #2c2c2c}.cr-ped-head h3{margin:0;flex:1;font:800 13px Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ped-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;padding:6px 12px;border-radius:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}.cr-ped-head button.primary{background:#c8202e;color:#1a1a1a;border-color:#c8202e}.cr-ped-head button.primary:disabled{opacity:.5;cursor:wait}.cr-ped-stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0a0a0a;padding:10px}#cr-ped-canvas{max-width:100%;max-height:100%;display:block;touch-action:none;cursor:crosshair;box-shadow:0 4px 24px rgba(0,0,0,.6)}.cr-ped-loading{color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-ped-tools{background:#1a1a1a;border-top:1px solid #2c2c2c;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));flex:0 0 auto;display:flex;flex-direction:column;gap:9px}.cr-ped-row{display:flex;align-items:center;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-ped-row::-webkit-scrollbar{display:none}.cr-ped-tool{background:#2c2c2c;color:#c9bfa8;border:1px solid #3c3c3c;padding:9px 13px;border-radius:8px;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;font-family:inherit;white-space:nowrap;flex:0 0 auto;display:flex;align-items:center;gap:5px}.cr-ped-tool:hover{background:#3c3c3c}.cr-ped-tool.active{background:#c8202e;color:#1a1a1a;border-color:#c8202e}.cr-ped-tool.ghost{background:transparent;border-color:#3c3c3c;color:#6b6b6b}.cr-ped-tool.ghost:hover{background:#2c2c2c;color:#c9bfa8}.cr-ped-tool:disabled{opacity:.4;cursor:default}.cr-ped-swatch{width:30px;height:30px;border-radius:50%;border:2px solid #3c3c3c;cursor:pointer;flex:0 0 auto;padding:0}.cr-ped-swatch.active{border-color:#fdfcf7;box-shadow:0 0 0 2px #c8202e}.cr-ped-sep{width:1px;height:26px;background:#3c3c3c;flex:0 0 auto;margin:0 3px}.cr-ped-hint{color:#6b6b6b;font:600 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em;flex:1;text-align:right;white-space:nowrap}</style>
+<style id="cr-ped-styles">#cr-ped{display:none;position:fixed;inset:0;background:#101010;z-index:9600;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;touch-action:none}#cr-ped.open{display:flex}.cr-ped-head{padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:#1a1a1a;color:#f5efe0;display:flex;align-items:center;gap:8px;flex:0 0 auto;border-bottom:1px solid #2c2c2c}.cr-ped-head h3{margin:0;flex:1;font:800 13px Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ped-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;padding:6px 12px;border-radius:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}.cr-ped-head button.alt{padding:6px 9px;letter-spacing:.06em}.cr-ped-head button.alt:disabled{opacity:.5;cursor:wait}.cr-ped-head button.primary{background:#c8202e;color:#1a1a1a;border-color:#c8202e}.cr-ped-head button.primary:disabled{opacity:.5;cursor:wait}.cr-ped-stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0a0a0a;padding:10px}#cr-ped-canvas{max-width:100%;max-height:100%;display:block;touch-action:none;cursor:crosshair;box-shadow:0 4px 24px rgba(0,0,0,.6)}.cr-ped-loading{color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-ped-tools{background:#1a1a1a;border-top:1px solid #2c2c2c;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));flex:0 0 auto;display:flex;flex-direction:column;gap:9px}.cr-ped-row{display:flex;align-items:center;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-ped-row::-webkit-scrollbar{display:none}.cr-ped-tool{background:#2c2c2c;color:#c9bfa8;border:1px solid #3c3c3c;padding:9px 13px;border-radius:8px;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;font-family:inherit;white-space:nowrap;flex:0 0 auto;display:flex;align-items:center;gap:5px}.cr-ped-tool:hover{background:#3c3c3c}.cr-ped-tool.active{background:#c8202e;color:#1a1a1a;border-color:#c8202e}.cr-ped-tool.ghost{background:transparent;border-color:#3c3c3c;color:#6b6b6b}.cr-ped-tool.ghost:hover{background:#2c2c2c;color:#c9bfa8}.cr-ped-tool:disabled{opacity:.4;cursor:default}.cr-ped-swatch{width:30px;height:30px;border-radius:50%;border:2px solid #3c3c3c;cursor:pointer;flex:0 0 auto;padding:0}.cr-ped-swatch.active{border-color:#fdfcf7;box-shadow:0 0 0 2px #c8202e}.cr-ped-sep{width:1px;height:26px;background:#3c3c3c;flex:0 0 auto;margin:0 3px}.cr-ped-hint{color:#6b6b6b;font:600 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em;flex:1;text-align:right;white-space:nowrap}</style>
 <script id="cr-ped-script">
 (function(){
 'use strict';
@@ -36448,6 +36449,9 @@ var TOOLS  = [
 ];
 var el = null, canvas = null, ctx = null;
 var photo = null;
+/* 482: who asked for the editor, and what they want done with the result.
+   Empty for the job-photo path, which is why that path is unchanged. */
+var opts = {};
 var baseImg = null;
 var baseW = 0, baseH = 0;
 var rotation = 0;
@@ -36472,6 +36476,7 @@ el.innerHTML =
 '<div class="cr-ped-head">' +
 '<button data-act="cancel" type="button">Cancel</button>' +
 '<h3 data-slot="title">Edit photo</h3>' +
+'<button class="alt" data-act="extra" type="button" style="display:none;"></button>' +
 '<button class="primary" data-act="save" type="button">Save</button>' +
 '</div>' +
 '<div class="cr-ped-stage">' +
@@ -36487,6 +36492,7 @@ canvas = el.querySelector('#cr-ped-canvas');
 ctx = canvas.getContext('2d');
 el.querySelector('[data-act="cancel"]').onclick = close;
 el.querySelector('[data-act="save"]').onclick   = save;
+el.querySelector('[data-act="extra"]').onclick  = extra;
 var tr = el.querySelector('[data-slot="toolrow"]');
 tr.innerHTML =
 '<button class="cr-ped-tool ghost" data-rot="-90" type="button">\u21BA Left</button>' +
@@ -36543,9 +36549,43 @@ function setHint(t){
 var h = el.querySelector('[data-slot="hint"]');
 if(h) h.textContent = t || '';
 }
-function open(p){
+/* The header is Cancel | title | [extra] | Save. Both labels are the caller's
+   to set; with no options it reads exactly as it did before this build. */
+function applyOpts(){
+var sv = el.querySelector('[data-act="save"]');
+if(sv) sv.textContent = saveLabel();
+var ex = el.querySelector('[data-act="extra"]');
+if(!ex) return;
+var has = opts.extra && typeof opts.extra.run === 'function';
+ex.style.display = has ? '' : 'none';
+ex.textContent = has ? (opts.extra.label || 'More') : '';
+}
+function saveLabel(){ return opts.saveLabel || 'Save'; }
+/* The second destination. Deliberately does NOT close the editor: saving a
+   marked-up photo to the phone and then filing it is one sensible sequence, and
+   closing after the first would make it two trips. */
+async function extra(){
+if(!photo || !baseImg) return;
+if(!opts.extra || typeof opts.extra.run !== 'function') return;
+var b = el.querySelector('[data-act="extra"]');
+var was = b.textContent;
+b.disabled = true; b.textContent = 'Working\u2026';
+try{
+var blob = await canvasBlob(0.9);
+if(!blob) throw new Error('Could not encode the image');
+await opts.extra.run(blob, { rotated: rotation !== 0, strokes: strokes.length });
+}catch(e){
+alert('Failed: ' + (e.message || e));
+}finally{
+var bb = el && el.querySelector('[data-act="extra"]');
+if(bb){ bb.disabled = false; bb.textContent = was; }
+}
+}
+function open(p, o){
 ensureEl();
 photo = p;
+opts = o || {};
+applyOpts();
 strokes = [];
 rotation = 0;
 tool = 'pen';
@@ -36582,6 +36622,10 @@ function close(){
 if(el) el.classList.remove('open');
 document.body.style.overflow = '';
 photo = null; baseImg = null; strokes = [];
+/* Cleared on close, so the next caller cannot inherit the last one's
+   save destination. A job photo filed into the Library would be a
+   silent, wrong, and very hard to trace. */
+opts = {};
 }
 function redraw(){
 if(!baseImg) return;
@@ -36729,6 +36773,15 @@ btn.disabled = true; btn.textContent = 'Saving\u2026';
 try{
 var blob = await canvasBlob(0.9);
 if(!blob) throw new Error('Could not encode the image');
+/* 482: whoever opened the editor may own the save. The CompanyCam picker
+   does - those photographs have no project_photos row to update and no
+   storage_path to overwrite, and the original must never be touched. The
+   two branches below are the job-photo path and are unchanged. */
+if(typeof opts.onSave === 'function'){
+await opts.onSave(blob, { rotated: rotation !== 0, strokes: strokes.length });
+close();
+return;
+}
 if(rotatedOnly && photo.storage_path){
 var up = await window.supa.storage.from('photos')
 .upload(photo.storage_path, blob, {
@@ -36778,7 +36831,7 @@ if(typeof window.renderGallery === 'function') window.renderGallery();
 alert('Save failed: ' + (e.message || e));
 }finally{
 var b = el && el.querySelector('[data-act="save"]');
-if(b){ b.disabled = false; b.textContent = 'Save'; }
+if(b){ b.disabled = false; b.textContent = saveLabel(); }
 }
 }
 window.CardinalPhotoEditor = { open: open, close: close };
@@ -47402,7 +47455,14 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ccidx button:disabled{opacity:.5;cursor:progress;}
 #rlLibPanel .lb-ccz{position:absolute;top:3px;right:3px;width:22px;height:22px;border:0;border-radius:5px;cursor:pointer;padding:0;line-height:1;font:700 12px 'Segoe UI',Arial,sans-serif;color:#fff;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;}
 #rlLibPanel .lb-ccz:hover{background:rgba(0,0,0,.78);}
-#rlLibPanel .lb-ccz:focus-visible{outline:2px solid var(--lb-ac,#c8202e);outline-offset:1px;}
+#rlLibPanel .lb-ccz:focus-visible{outline:2px solid var(--lb-accent,#C4180F);outline-offset:1px;}
+/* 482: the markup button sits to the LEFT of the expand button, both in the
+   corner and both out of the way of the picture. --lb-ac was never declared
+   anywhere in this file - the token is --lb-accent - so the ring above had
+   silently used its fallback since 480. Corrected rather than copied. */
+#rlLibPanel .lb-cce{position:absolute;top:3px;right:29px;width:22px;height:22px;border:0;border-radius:5px;cursor:pointer;padding:0;line-height:1;font:700 11px 'Segoe UI',Arial,sans-serif;color:#fff;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;}
+#rlLibPanel .lb-cce:hover{background:rgba(0,0,0,.78);}
+#rlLibPanel .lb-cce:focus-visible{outline:2px solid var(--lb-accent,#C4180F);outline-offset:1px;}
 #rlLibPanel .lb-ccidx button[data-cc-trial]{background:transparent;color:var(--lb-dim,#6B615D);border-style:dashed;}
 /* 471: photographs inside a chat answer. Reuses the tile, not a second one. */
 #rlLibPanel .lb-photos{margin:10px 0 4px;}
@@ -47411,8 +47471,8 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ccp-v{cursor:zoom-in;}
 #rlLibPanel .lb-ccp-v input{display:none;}
 #rlLibPanel .lb-ccfile button{width:100%;margin-top:7px;border-radius:10px;padding:12px 10px;cursor:pointer;font:800 12px 'Segoe UI',Arial,sans-serif;border:0;background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);}
-.lb-ccfile button.ghost{background:transparent;border:1px solid var(--lb-line,#EAE5E3);color:var(--lb-ink,#17181B);}
-.lb-ccfile button:disabled{opacity:.55;cursor:default;}
+#rlLibPanel .lb-ccfile button.ghost{background:transparent;border:1px solid var(--lb-line,#EAE5E3);color:var(--lb-ink,#17181B);}
+#rlLibPanel .lb-ccfile button:disabled{opacity:.55;cursor:default;}
 #rlLibPanel .lb-cc label:not(.lb-ccp){display:block;margin:9px 0 4px;}
 #rlLibPanel .lb-cc .row{margin-top:10px;}
 #rlLibPanel .lb-ccp .cap,#rlLibPanel .lb-ccp .meta{text-transform:none;letter-spacing:normal;}
@@ -48198,6 +48258,8 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
            the photo. Expanding needs its own control that does NOT pick - the
            delegate stops the event before the label sees it. Uses the Library's
            existing lightbox rather than a second one. */
+        '<button type="button" class="lb-cce" data-cc-edit="' + esc(ph.id) +
+          '" title="Draw on it" aria-label="Draw on this photograph">\u270F\uFE0F</button>' +
         '<button type="button" class="lb-ccz" data-cc-zoom="' + esc(ph.preview || ph.thumb) +
           '" title="Expand" aria-label="Expand this photograph">\u2922</button>' +
         '</label>';
@@ -48267,6 +48329,25 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 
      The ticks are deliberately LEFT SET afterwards, unlike filing - saving a set
      and then filing the same set is a reasonable thing to want. */
+  /* 482: share sheet if the device has one that will take files, anchors if not.
+     Lifted out of ccDownload so the markup editor's Device button takes the
+     identical path rather than a second copy of it. */
+  function ccDeliver(files, failed){
+    var share = navigator.canShare && navigator.share && navigator.canShare({ files: files });
+    if(!share) return ccAnchorSave(files, failed);
+    return navigator.share({ files: files, title: 'Cardinal photos' })
+      .then(function(){
+        ccStat(files.length + ' sent to your share sheet' +
+               (failed ? ' \u00b7 ' + failed + ' could not be fetched' : ''));
+      })
+      .catch(function(e){
+        /* Dismissing the sheet is the user's own choice, not a failure, and
+           must not be reported as one. Anything else falls back to anchors. */
+        if(e && e.name === 'AbortError'){ ccStat(''); return; }
+        return ccAnchorSave(files, failed);
+      });
+  }
+
   function ccDownload(){
     var p = document.getElementById('rlLibPanel');
     if(!p) return;
@@ -48292,24 +48373,104 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         ccStat('Could not fetch ' + (picked.length === 1 ? 'that photo' : 'those photos') + '.', true);
         return;
       }
-      var share = navigator.canShare && navigator.share && navigator.canShare({ files: files });
-      if(!share) return ccAnchorSave(files, failed);
-      return navigator.share({ files: files, title: 'Cardinal photos' })
-        .then(function(){
-          ccStat(files.length + ' sent to your share sheet' +
-                 (failed ? ' \u00b7 ' + failed + ' could not be fetched' : ''));
-        })
-        .catch(function(e){
-          /* Dismissing the sheet is the user's own choice, not a failure, and
-             must not be reported as one. Anything else falls back to anchors. */
-          if(e && e.name === 'AbortError'){ ccStat(''); return; }
-          return ccAnchorSave(files, failed);
-        });
+      return ccDeliver(files, failed);
     }).catch(function(e){
       ccStat('Save failed \u2014 ' + String((e && e.message) || e).slice(0, 120), true);
     }).then(function(){
       var b = document.querySelector('#rlLibPanel [data-cc-dl]');
       if(b) b.disabled = false;
+    });
+  }
+
+  /* 482: one uploader. ccSave() files the original and the markup editor files
+     the marked-up copy; both land in the same bucket with the same row shape,
+     because a Library that shows two kinds of image row is a Library nobody
+     trusts. size_bytes is blob.size rather than the route's byte count -
+     ccBlob() decodes exactly that many bytes, so it is the same number for the
+     filing path, and it is the only true one for a blob the canvas just made. */
+  function ccFileBlob(blob, target, meta){
+    var path = 'lib/' + Date.now() + '_' + (meta.slug || 'cc') + '.jpg';
+    return window.supa.storage.from('library').upload(path, blob, { upsert:false })
+      .then(function(up){
+        if(up.error) throw up.error;
+        return window.supa.from('library_items').insert({
+          section_id : target.id,
+          title      : meta.title,
+          summary    : meta.summary || null,
+          kind       : 'image',
+          file_path  : path,
+          mime       : meta.mime || 'image/jpeg',
+          size_bytes : blob.size || null,
+          source_name: meta.source || null,
+          created_by : email()
+        }).select().maybeSingle();
+      })
+      .then(function(r){
+        if(r.error) throw r.error;
+        if(r.data) items.unshift(r.data);
+        return r.data;
+      });
+  }
+
+  /* Draw on a CompanyCam photograph. The editor is cr-ped-script, which has had
+     pen, arrow, circle, text, rotate and undo since long before this build - it
+     was simply never reachable from here.
+
+     The bytes come through our own route, NOT from CompanyCam's CDN. Painting a
+     cross-origin image into a canvas taints it, and canvas.toBlob() then throws
+     a SecurityError: the markup would draw perfectly and fail only at save,
+     which is the worst place to discover it.
+
+     The CompanyCam original is never written to. It cannot be - nothing in this
+     app holds a CompanyCam write scope, and the editor is handed a copy. */
+  function ccEdit(id){
+    if(!window.CardinalPhotoEditor || typeof window.CardinalPhotoEditor.open !== 'function'){
+      ccStat('The photo editor did not load \u2014 reload the app.', true);
+      return;
+    }
+    ccStat('Opening\u2026');
+    ccApi({ action:'fetch', id:id }).then(function(d){
+      var when = d.captured_at ? String(d.captured_at).slice(0, 10) : '';
+      var name = d.description || ('CompanyCam photo' + (when ? ' \u00b7 ' + when : ''));
+      ccStat('');
+      window.CardinalPhotoEditor.open(
+        { _src: 'data:' + (d.mime || 'image/jpeg') + ';base64,' + d.data, section: name },
+        {
+          saveLabel: 'File it',
+          onSave: function(blob){ return ccFileMarked(blob, d, when, name); },
+          extra: {
+            label: '\u2B07 Device',
+            run: function(blob){
+              var f = new File([blob], ccFileName(d, 0).replace(/\.jpg$/, '_marked.jpg'),
+                               { type:'image/jpeg' });
+              return ccDeliver([f], 0);
+            }
+          }
+        }
+      );
+    }).catch(function(e){
+      ccStat('Could not open that photograph \u2014 ' +
+             String((e && e.message) || e).slice(0, 120), true);
+    });
+  }
+
+  /* Filed as a NEW Library item, never over the original import. Throws rather
+     than guessing when no section is chosen - the editor surfaces the message
+     and stays open, so nothing drawn is lost. */
+  function ccFileMarked(blob, d, when, name){
+    var p = document.getElementById('rlLibPanel');
+    var sel = p && p.querySelector('[data-cc-where]');
+    var target = sections.find(function(s){ return s.id === (sel && sel.value); });
+    if(!target) throw new Error('Pick a section under \u201cPut them in\u201d first');
+    return ccFileBlob(blob, target, {
+      slug   : 'ccm' + String(d.id).replace(/[^\w]+/g, ''),
+      title  : 'Marked up \u2014 ' + name,
+      summary: when ? ('Taken ' + when + ', marked up in Cardinal') : 'Marked up in Cardinal',
+      source : 'CompanyCam ' + d.id + ' (marked up)',
+      mime   : 'image/jpeg'
+    }).then(function(){
+      renderTeamPage();
+      ccStat('Filed into ' + target.title);
     });
   }
 
@@ -48333,29 +48494,14 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     picked.forEach(function(id){
       chain = chain.then(function(){
         return ccApi({ action:'fetch', id:id }).then(function(d){
-          var blob = ccBlob(d.data, d.mime);
-          var path = 'lib/' + Date.now() + '_cc' + String(id).replace(/[^\w]+/g, '') + '.jpg';
-          return window.supa.storage.from('library').upload(path, blob, { upsert:false })
-            .then(function(up){
-              if(up.error) throw up.error;
-              var when = d.captured_at ? String(d.captured_at).slice(0, 10) : '';
-              return window.supa.from('library_items').insert({
-                section_id: target.id,
-                title: d.description || ('CompanyCam photo ' + (when || id)),
-                summary: when ? ('Taken ' + when) : null,
-                kind: 'image',
-                file_path: path,
-                mime: d.mime || 'image/jpeg',
-                size_bytes: d.bytes || null,
-                source_name: 'CompanyCam ' + id,
-                created_by: email()
-              }).select().maybeSingle();
-            })
-            .then(function(r){
-              if(r.error) throw r.error;
-              if(r.data) items.unshift(r.data);
-              done++;
-            });
+          var when = d.captured_at ? String(d.captured_at).slice(0, 10) : '';
+          return ccFileBlob(ccBlob(d.data, d.mime), target, {
+            slug   : 'cc' + String(id).replace(/[^\w]+/g, ''),
+            title  : d.description || ('CompanyCam photo ' + (when || id)),
+            summary: when ? ('Taken ' + when) : null,
+            source : 'CompanyCam ' + id,
+            mime   : d.mime || 'image/jpeg'
+          }).then(function(){ done++; });
         }).catch(function(){ failed++; })
           .then(function(){
             ccStat('Filing ' + (done + failed) + ' of ' + picked.length + '\u2026');
@@ -48874,6 +49020,15 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         }
         if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
         if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
+        var _e = e.target.closest('[data-cc-edit]');
+        if(_e){
+          /* Both stops, for the same reason the expand button needs both: the
+             tile is a <label> wrapping a checkbox, so an unstopped click would
+             also tick the photo for filing. */
+          e.preventDefault(); e.stopPropagation();
+          ccEdit(_e.getAttribute('data-cc-edit'));
+          return;
+        }
         var _z = e.target.closest('[data-cc-zoom]');
         if(_z){
           /* Both, deliberately: preventDefault stops the <label> toggling its
