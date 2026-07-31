@@ -150,7 +150,15 @@ Two routers coexist. The modern one (`cardinal-nav`) tags its states `{app:'card
 
 ---
 
-## Resource Library (`rlPage*`, builds 442–463)
+## Resource Library (`rlPage*`, builds 442–468)
+
+**CompanyCam import (468, admin only).** Library assistant → **📸 CompanyCam** → narrow by
+tag and date → tick → file. Captions come across as titles; where the crew marked a photo up you
+get the marked-up rendition. Photos flagged `internal` in CompanyCam are never shown — the route
+refuses them, so no UI bug can leak one. Files through the **existing** `library` bucket +
+`library_items` pipeline, so imports render as thumbnails via 467 with nothing added.
+Back end `api/companycam.js`; `COMPANYCAM_API_KEY` in Vercel, never in the app.
+
 
 *Written 30 July 2026 against build 456. Absent from this file until now — the 428–451 span
 shipped it with no record outside the in-app changelog. Counts re-measured at build 463.*

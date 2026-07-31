@@ -1752,3 +1752,63 @@ never at risk — but the pattern is mine and it is documented as a known trap.
 Routes 2 and 3 need files from outside the app. The only images in the system are 225 objects
 in `photos`, all taken **21–30 July**; `library_items` has none. There are no winter
 photographs to find.
+
+---
+
+## Build 468 — CompanyCam import (31 July 2026)
+
+**The photo drought is over.** Every route to library photographs was blocked on the same fact:
+there is no source material. `project_photos` holds 236 rows, **zero captioned**, all shot
+21–30 July. No winter photographs exist in Supabase, so "show me an ice dam" could not be
+answered from what we had. CompanyCam holds years of Cardinal's own job photos **and carries a
+caption on each one** — `description`, measured against the live account, not assumed.
+
+### `api/companycam.js` — read-only, admin-only
+
+Lists photos, lists the tag vocabulary, fetches the bytes of one chosen photo. It never writes to
+CompanyCam and offers no endpoint that could. Three refusals are the actual product:
+
+1. **`internal: true` photos are never returned.** CompanyCam's own privacy flag — *"should not be
+   used in marketing or other public materials."* Whoever took the photo made that call. Filtered
+   in **both** list and fetch, so an id learned elsewhere cannot walk around the list.
+2. **`fetch` takes a photo ID, never a URL.** The server re-reads the photo and picks the
+   rendition itself. Taking a URL from the caller would make this an open proxy for anything the
+   Vercel box can reach.
+3. **The key never leaves in a response**, and is scrubbed from every error body before echoing.
+
+It also returns only what the Library needs — no coordinates, no hash, no `company_id`. A
+reference photo does not need the customer's latitude and longitude in a second system.
+
+**The unknown date format cannot break it.** The route tries the server-side filter and, on a
+422, drops the dates and filters on `captured_at` itself. Slower, never wrong, and a gap in the
+spec is not a broken feature.
+
+**Renditions prefer `web_annotation` over `web`** — the crew's marked-up copy. An ice dam with an
+arrow drawn at it is teaching material in a way the raw frame is not.
+
+### The panel — filter, then pick (Theo's call, option 3 of 3)
+
+Narrow by tag and date, tick what is worth keeping, file it. **There is deliberately no "import
+everything" button**; these are customers' houses.
+
+**It invents no pipeline.** Imported photos go through the *same* `library` bucket upload and the
+*same* `library_items` insert as the manual route, with the same column set — so they render
+through build 467's thumbnail work with nothing added. `fillWhere()` was **generalised, not
+cloned**, to serve the second section select: one call site existed and passes nothing, so the
+default keeps it working untouched.
+
+### Gates
+
+`check_build.py` green with the negative control. **42 jsdom assertions** executing the shipped
+slice, and **40 assertions + 6 negative controls** on the route against a mocked CompanyCam.
+Replay onto a fresh 467 reproduces the file byte-for-byte (sha256 `23ff252e…`).
+
+### Two harness defects found by the controls, both mine
+
+1. **A control passed against a broken build.** `fillWhere` was *shimmed* in the harness instead
+   of sliced from the file, so breaking the shipped one changed nothing. That assertion was
+   validating fiction — exactly the trap `gates.md` warns about. Now sliced and executed.
+2. **Controls crashed instead of failing.** Breaking `fillWhere` empties the section select, so
+   `ccSave` bails and `uploaded[0]` is undefined — the run threw and printed no verdict at all.
+   Null-safe reads added. **Standing rule, now twice-learned: a negative control must fail, not
+   crash.**

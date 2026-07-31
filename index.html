@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 467 &#8212; a photo filed into the library shows as a picture and opens in the app instead of a new browser tab</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 468 &#8212; import real job photographs straight from CompanyCam into the Resource Library, captions and all</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33046,6 +33046,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:468, note:'\U0001F4F8 The Resource Library can pull photographs straight out of CompanyCam. Open the assistant, tap CompanyCam, narrow by tag and date, tick the ones worth keeping and file them \u2014 captions come across with them, and where the crew marked a photo up, you get the marked-up copy. Photos flagged internal in CompanyCam are never shown. Admin only.' },
 { build:467, note:'\U0001F4F7 Photographs filed into the library now look like photographs. A filed image shows a real thumbnail in the list instead of a camera icon, and tapping it opens it full size inside the app rather than throwing you out into a browser tab. Uploading already worked \u2014 nothing had ever been uploaded, because there was nothing to see when you did.' },
 { build:466, note:'\U0001F4D0 Ask the library assistant something and it can now draw a simple diagram in the answer \u2014 a layered assembly from the top down, numbered steps with arrows, a comparison bar chart, or a roof slope triangle. It does not draw pictures out of thin air: a diagram is only allowed to repeat something the answer already says in words, and the slope multiplier is worked out by the app rather than by the assistant.' },
 { build:465, note:'\u2744\uFE0F The ice dam card now has a drawing. Plate 5 shows the whole mechanism in one section \u2014 heat escaping into the attic, the snow melting over the heated part of the roof, the water running down to the cold overhang and refreezing, and the water behind the dam backing up under the shingle laps. It is drawn on the same eave as Plate 2, so the two read as a pair: this is why the ice barrier has to go where the code says it goes.' },
@@ -47329,6 +47330,23 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-table{width:100%;border-collapse:collapse;margin:11px 0 4px;font-size:12.5px;font-variant-numeric:tabular-nums;}
 /* 467: filed photographs read as photographs, not as file rows. */
 .lb-item-img{align-items:center;}
+/* 468: the CompanyCam import picker. Hidden until the button opens it. */
+#rlLibPanel .lb-cc{display:none;padding:10px 12px;border-top:1px solid var(--lb-line,#EAE5E3);}
+#rlLibPanel.cc .lb-cc{display:block;}
+#rlLibPanel.cc .lb-acts,#rlLibPanel.cc .lb-ask{display:none;}
+#rlLibPanel .lb-cch{font:700 13px var(--lb-sans,inherit);color:var(--lb-ink,#241E1C);margin-bottom:6px;}
+#rlLibPanel .lb-cc .row2{display:flex;gap:8px;}
+#rlLibPanel .lb-cc .row2 span{flex:1;min-width:0;}
+#rlLibPanel .lb-ccstat{font-size:12px;color:var(--lb-dim,#6B615D);margin:6px 0;min-height:15px;}
+#rlLibPanel .lb-ccstat.err{color:var(--lb-bad,#B3261E);}
+#rlLibPanel .lb-ccgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;max-height:44vh;overflow-y:auto;}
+#rlLibPanel .lb-ccp{position:relative;display:block;cursor:pointer;}
+#rlLibPanel .lb-ccp img{width:100%;height:74px;object-fit:cover;border-radius:6px;display:block;background:var(--lb-surface3,#F3EFEE);border:1px solid var(--lb-line,#EAE5E3);}
+#rlLibPanel .lb-ccp input{position:absolute;top:5px;left:5px;width:18px;height:18px;margin:0;}
+#rlLibPanel .lb-ccp .cap{display:block;font-size:11px;line-height:1.3;color:var(--lb-ink,#241E1C);margin-top:3px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+#rlLibPanel .lb-ccp .meta{display:block;font-size:10px;color:var(--lb-dim,#6B615D);}
+#rlLibPanel .lb-ccmore{grid-column:1/-1;padding:7px;font-size:12px;}
+#rlLibPanel .lb-ccfile{margin-top:9px;}
 .lb-thumb{width:56px;height:44px;flex:0 0 56px;object-fit:cover;border-radius:6px;background:var(--lb-surface3,#F3EFEE);border:1px solid var(--lb-line,#EAE5E3);display:block;}
 .lb-item-img .bd{min-width:0;}
 /* 466: diagram blocks. Literal fallbacks throughout - the librarian palette
@@ -47770,6 +47788,181 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     return d;
   }
 
+  /* ---- 468: CompanyCam import -------------------------------------------
+     Filter, then pick. The route refuses internal/deleted/unprocessed photos
+     before they are ever listed, so this panel cannot show one. Everything it
+     files goes through the SAME library bucket + library_items insert as the
+     manual upload - no second pipeline. */
+  var ccTagsLoaded = false, ccCursor = null, ccPhotos = [];
+
+  function ccIsAdmin(){
+    return typeof isAdminUser === 'function' && isAdminUser();
+  }
+
+  function ccApi(body){
+    return window.aiHeaders().then(function(h){
+      return fetch('/api/companycam', { method:'POST', headers:h, body:JSON.stringify(body) });
+    }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(d){
+        if(!res.ok) throw new Error((d && (d.detail || d.error)) || ('HTTP ' + res.status));
+        return d;
+      });
+    });
+  }
+
+  function ccStat(msg, bad){
+    var el = document.querySelector('#rlLibPanel [data-cc-stat]');
+    if(!el) return;
+    el.textContent = msg || '';
+    el.className = 'lb-ccstat' + (bad ? ' err' : '');
+  }
+
+  function ccOpen(){
+    var p = document.getElementById('rlLibPanel');
+    if(!p) return;
+    cancelManual();
+    p.classList.add('cc');
+    ccPhotos = []; ccCursor = null;
+    var g = p.querySelector('[data-cc-grid]'); if(g) g.innerHTML = '';
+    var f = p.querySelector('[data-cc-foot]'); if(f) f.style.display = 'none';
+    ccStat('');
+    fillWhere('[data-cc-where]');
+    if(ccTagsLoaded) return;
+    ccApi({ action:'tags' }).then(function(d){
+      var sel = p.querySelector('[data-cc-tag]');
+      if(!sel || !d || !d.tags) return;
+      ccTagsLoaded = true;
+      d.tags.forEach(function(t){
+        var o = document.createElement('option');
+        o.value = t.id; o.textContent = t.name;
+        sel.appendChild(o);
+      });
+      if(!d.tags.length) ccStat('No tags on the account \u2014 filter by date instead.');
+    }).catch(function(e){
+      ccStat('Could not load tags \u2014 ' + String(e.message || e).slice(0, 140), true);
+    });
+  }
+
+  function ccClose(){
+    var p = document.getElementById('rlLibPanel');
+    if(p) p.classList.remove('cc');
+  }
+
+  function ccFind(more){
+    var p = document.getElementById('rlLibPanel');
+    if(!p) return;
+    var tag  = (p.querySelector('[data-cc-tag]') || {}).value || '';
+    var from = (p.querySelector('[data-cc-from]') || {}).value || '';
+    var to   = (p.querySelector('[data-cc-to]') || {}).value || '';
+    var body = { action:'list', limit:30 };
+    if(tag) body.tag_ids = [tag];
+    if(from) body.start_date = from;
+    if(to) body.end_date = to;
+    if(more && ccCursor) body.after = ccCursor;
+    ccStat('Looking\u2026');
+    ccApi(body).then(function(d){
+      var list = (d && d.photos) || [];
+      if(!more){ ccPhotos = []; }
+      ccPhotos = ccPhotos.concat(list);
+      ccCursor = d && d.has_next ? d.next_cursor : null;
+      ccRender();
+      if(!ccPhotos.length){
+        ccStat('Nothing matched. Try a wider date range, or no tag.');
+      } else {
+        ccStat(ccPhotos.length + ' photo' + (ccPhotos.length === 1 ? '' : 's') +
+               (ccCursor ? ' \u2014 tap More for the next page' : '') +
+               (d && d.dates_filtered_here ? ' \u00b7 dates filtered here' : ''));
+      }
+    }).catch(function(e){
+      ccStat('CompanyCam said no \u2014 ' + String(e.message || e).slice(0, 160), true);
+    });
+  }
+
+  function ccRender(){
+    var p = document.getElementById('rlLibPanel');
+    var g = p && p.querySelector('[data-cc-grid]');
+    if(!g) return;
+    g.innerHTML = ccPhotos.map(function(ph){
+      var when = ph.captured_at ? String(ph.captured_at).slice(0, 10) : '';
+      return '<label class="lb-ccp" data-cc-id="' + esc(ph.id) + '">' +
+        '<input type="checkbox" data-cc-pick>' +
+        '<img src="' + esc(ph.thumb) + '" alt="' + esc(ph.description || 'CompanyCam photo') + '" loading="lazy">' +
+        '<span class="cap">' + esc(ph.description || '(no caption)') + '</span>' +
+        '<span class="meta">' + esc(when) + (ph.annotated ? ' \u00b7 marked up' : '') + '</span>' +
+        '</label>';
+    }).join('') + (ccCursor ? '<button type="button" class="lb-ccmore" data-cc-more>More</button>' : '');
+    var f = p.querySelector('[data-cc-foot]');
+    if(f) f.style.display = ccPhotos.length ? 'block' : 'none';
+  }
+
+  /* base64 -> Blob. The bytes come from our own route, which fetched them from
+     CompanyCam server-side; the browser never touches a CompanyCam URL. */
+  function ccBlob(b64, mime){
+    var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+    for(var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+    return new Blob([u8], { type: mime || 'image/jpeg' });
+  }
+
+  function ccSave(){
+    var p = document.getElementById('rlLibPanel');
+    if(!p || !window.supa) return;
+    var secId = (p.querySelector('[data-cc-where]') || {}).value;
+    if(!secId){ ccStat('Pick a section first.', true); return; }
+    var picked = [].slice.call(p.querySelectorAll('.lb-ccp'))
+      .filter(function(n){ var c = n.querySelector('[data-cc-pick]'); return c && c.checked; })
+      .map(function(n){ return n.getAttribute('data-cc-id'); });
+    if(!picked.length){ ccStat('Tick the photos you want first.', true); return; }
+    var target = sections.find(function(s){ return s.id === secId; });
+    if(!target){ ccStat('That section has gone away.', true); return; }
+
+    var done = 0, failed = 0;
+    ccStat('Filing 0 of ' + picked.length + '\u2026');
+
+    /* One at a time on purpose. CompanyCam advertises no rate limits, so there
+       is nothing to read and nothing to adapt to - being polite is the only
+       available strategy. */
+    var chain = Promise.resolve();
+    picked.forEach(function(id){
+      chain = chain.then(function(){
+        return ccApi({ action:'fetch', id:id }).then(function(d){
+          var blob = ccBlob(d.data, d.mime);
+          var path = 'lib/' + Date.now() + '_cc' + String(id).replace(/[^\w]+/g, '') + '.jpg';
+          return window.supa.storage.from('library').upload(path, blob, { upsert:false })
+            .then(function(up){
+              if(up.error) throw up.error;
+              var when = d.captured_at ? String(d.captured_at).slice(0, 10) : '';
+              return window.supa.from('library_items').insert({
+                section_id: target.id,
+                title: d.description || ('CompanyCam photo ' + (when || id)),
+                summary: when ? ('Taken ' + when) : null,
+                kind: 'image',
+                file_path: path,
+                mime: d.mime || 'image/jpeg',
+                size_bytes: d.bytes || null,
+                source_name: 'CompanyCam ' + id,
+                created_by: email()
+              }).select().maybeSingle();
+            })
+            .then(function(r){
+              if(r.error) throw r.error;
+              if(r.data) items.unshift(r.data);
+              done++;
+            });
+        }).catch(function(){ failed++; })
+          .then(function(){
+            ccStat('Filing ' + (done + failed) + ' of ' + picked.length + '\u2026');
+          });
+      });
+    });
+
+    chain.then(function(){
+      renderTeamPage();
+      ccStat(done + ' filed into ' + target.title +
+             (failed ? ' \u00b7 ' + failed + ' could not be imported' : ''), failed > 0);
+      [].slice.call(p.querySelectorAll('[data-cc-pick]')).forEach(function(c){ c.checked = false; });
+    });
+  }
+
   function openPanel(){
     var p = document.getElementById('rlLibPanel');
     if(p) p.classList.add('on');
@@ -47928,8 +48121,8 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
   var pending = null;          /* the File the user picked for the manual path */
   var pendingSection = null;   /* set when they tapped Upload into <section> */
 
-  function fillWhere(){
-    var sel = document.querySelector('#rlLibPanel [data-lb-where]');
+  function fillWhere(which){
+    var sel = document.querySelector('#rlLibPanel ' + (which || '[data-lb-where]'));
     if(!sel) return;
     var tops = sections.filter(function(s){ return !s.parent_id; });
     sel.innerHTML = tops.map(function(s){
@@ -48188,6 +48381,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         '<button type="button" data-lb-pick>&#129302; File it for me</button>' +
         '<button type="button" data-lb-mine>&#128193; I\'ll say where</button>' +
         '<button type="button" data-lb-cam>&#128247; Take a photo</button>' +
+        '<button type="button" data-lb-cc style="display:none">&#128248; CompanyCam</button>' +
         '</div>' +
         '<div class="lb-form">' +
           '<div class="lb-chosen" data-lb-chosen>No file chosen yet.</div>' +
@@ -48202,6 +48396,26 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
             '<button type="button" class="go" data-lb-save>File it</button>' +
           '</div>' +
         '</div>' +
+        '<div class="lb-cc">' +
+          '<div class="lb-cch">Import from CompanyCam</div>' +
+          '<label>Tag</label>' +
+          '<select data-cc-tag><option value="">Any tag</option></select>' +
+          '<div class="row2">' +
+            '<span><label>From</label><input type="date" data-cc-from></span>' +
+            '<span><label>To</label><input type="date" data-cc-to></span>' +
+          '</div>' +
+          '<div class="row">' +
+            '<button type="button" data-cc-close>Cancel</button>' +
+            '<button type="button" class="go" data-cc-find>Find photos</button>' +
+          '</div>' +
+          '<div class="lb-ccstat" data-cc-stat></div>' +
+          '<div class="lb-ccgrid" data-cc-grid></div>' +
+          '<div class="lb-ccfile" data-cc-foot style="display:none">' +
+            '<label>Put them in</label>' +
+            '<select data-cc-where></select>' +
+            '<button type="button" class="go" data-cc-save>File selected</button>' +
+          '</div>' +
+        '</div>' +
         '<div class="lb-ask"><input type="text" data-lb-q placeholder="Ask about code, roofing, siding\u2026">' +
         '<button type="button" data-lb-send>Ask</button></div>' +
         '<div class="lb-note">Reference material only \u2014 code, roofing, siding, windows, gutters, ' +
@@ -48211,6 +48425,10 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         '<input type="file" data-lb-camin accept="image/*" capture="environment" style="display:none">' +
         '</div>';
       document.body.appendChild(p);
+      /* 468: the import button only exists for admins. The route enforces this
+         too - this just avoids showing a button that would 403. */
+      var ccBtn = p.querySelector('[data-lb-cc]');
+      if(ccBtn && ccIsAdmin()) ccBtn.style.display = '';
 
       p.addEventListener('click', function(e){
         if(e.target === p){ closePanel(); return; }
@@ -48259,6 +48477,11 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       }
       var nt = e.target.closest('[data-lb-note]');
       if(nt){ openNote(nt.getAttribute('data-lb-note')); return; }
+      if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
+      if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
+      if(e.target.closest('[data-cc-find]')){ ccFind(false); return; }
+      if(e.target.closest('[data-cc-more]')){ ccFind(true); return; }
+      if(e.target.closest('[data-cc-save]')){ ccSave(); return; }
       var it = e.target.closest('[data-lb-open]');
       if(it){
         /* 467: a photo opens in the existing zoom viewer rather than a new tab.
