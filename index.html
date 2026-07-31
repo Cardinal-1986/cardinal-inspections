@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 466 &#8212; the library assistant can draw a simple diagram in its answers &mdash; layers, steps, comparisons and slope</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-30 build 467 &#8212; a photo filed into the library shows as a picture and opens in the app instead of a new browser tab</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33046,6 +33046,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:467, note:'\U0001F4F7 Photographs filed into the library now look like photographs. A filed image shows a real thumbnail in the list instead of a camera icon, and tapping it opens it full size inside the app rather than throwing you out into a browser tab. Uploading already worked \u2014 nothing had ever been uploaded, because there was nothing to see when you did.' },
 { build:466, note:'\U0001F4D0 Ask the library assistant something and it can now draw a simple diagram in the answer \u2014 a layered assembly from the top down, numbered steps with arrows, a comparison bar chart, or a roof slope triangle. It does not draw pictures out of thin air: a diagram is only allowed to repeat something the answer already says in words, and the slope multiplier is worked out by the app rather than by the assistant.' },
 { build:465, note:'\u2744\uFE0F The ice dam card now has a drawing. Plate 5 shows the whole mechanism in one section \u2014 heat escaping into the attic, the snow melting over the heated part of the roof, the water running down to the cold overhang and refreezing, and the water behind the dam backing up under the shingle laps. It is drawn on the same eave as Plate 2, so the two read as a pair: this is why the ice barrier has to go where the code says it goes.' },
 { build:464, note:'\u25D1 The light/dark button in the Resource Library goes back again. It had been one-way \u2014 it would take you from light to dark and then do nothing, however many times you pressed it \u2014 because it was asking a setting that nothing ever wrote. It now reads the theme actually on screen, and it remembers your choice between sessions, which it also never did.' },
@@ -47326,6 +47327,10 @@ window.CardinalCarrierAdjusters = Object.assign(window.CardinalCarrierAdjusters 
 #rlLibPanel .lb-ul,#rlLibPanel .lb-ol{margin:8px 0 8px 20px;padding:0;line-height:1.55;}
 #rlLibPanel .lb-ul li,#rlLibPanel .lb-ol li{margin:4px 0;}
 #rlLibPanel .lb-table{width:100%;border-collapse:collapse;margin:11px 0 4px;font-size:12.5px;font-variant-numeric:tabular-nums;}
+/* 467: filed photographs read as photographs, not as file rows. */
+.lb-item-img{align-items:center;}
+.lb-thumb{width:56px;height:44px;flex:0 0 56px;object-fit:cover;border-radius:6px;background:var(--lb-surface3,#F3EFEE);border:1px solid var(--lb-line,#EAE5E3);display:block;}
+.lb-item-img .bd{min-width:0;}
 /* 466: diagram blocks. Literal fallbacks throughout - the librarian palette
    is the best-behaved one in the app and this keeps it that way. */
 .lb-fig{margin:12px 0 6px;}
@@ -48040,17 +48045,57 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         }).join('') +
         '</div>';
     }).join('');
+
+    lbSignImages(body);
+  }
+
+  /* 467: signed thumbnails for filed images. One round trip for the whole
+     visible list, cached for the session. The URL comes from Supabase and is
+     assigned as a DOM PROPERTY - it is never concatenated into markup. */
+  var lbImgUrl = {};
+
+  function lbSignImages(root){
+    if(!root || !window.supa || !window.supa.storage) return;
+    var nodes = [].slice.call(root.querySelectorAll('img[data-lb-img]'));
+    if(!nodes.length) return;
+    var want = [];
+    nodes.forEach(function(n){
+      var p = n.getAttribute('data-lb-img');
+      if(!p) return;
+      if(lbImgUrl[p]){ n.src = lbImgUrl[p]; return; }
+      if(want.indexOf(p) === -1) want.push(p);
+    });
+    if(!want.length) return;
+    window.supa.storage.from('library').createSignedUrls(want, 3600)
+      .then(function(r){
+        ((r && r.data) || []).forEach(function(row){
+          if(row && row.path && row.signedUrl) lbImgUrl[row.path] = row.signedUrl;
+        });
+        nodes.forEach(function(n){
+          var p = n.getAttribute('data-lb-img');
+          if(p && lbImgUrl[p]) n.src = lbImgUrl[p];
+        });
+      })
+      .catch(function(e){
+        /* a thumbnail that will not sign stays blank; the row still opens */
+        console.warn('[library] thumbnail signing failed:', e && e.message);
+      });
   }
 
   function itemHtml(i){
+    var isImg = i.kind === 'image' && !!i.file_path;
     var ic = i.kind === 'pdf' ? '&#128196;'
            : i.kind === 'image' ? '&#128247;'
            : i.kind === 'note' ? '&#128221;' : '&#128206;';
     var attr = i.kind === 'note'
       ? 'data-lb-note="' + esc(i.id) + '"'
       : 'data-lb-open="' + esc(i.file_path || '') + '"';
-    return '<div class="lb-item" ' + attr + '>' +
-      '<span class="ic">' + ic + '</span><span class="bd">' +
+    return '<div class="lb-item' + (isImg ? ' lb-item-img' : '') + '" ' + attr + '>' +
+      (isImg
+        ? '<img class="lb-thumb" data-lb-img="' + esc(i.file_path) + '" alt="' +
+          esc(i.title) + '" loading="lazy">'
+        : '<span class="ic">' + ic + '</span>') +
+      '<span class="bd">' +
       '<span class="t">' + esc(i.title) + '</span>' +
       (i.summary ? '<span class="s">' + esc(i.summary) + '</span>' : '') +
       '</span></div>';
@@ -48215,7 +48260,19 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       var nt = e.target.closest('[data-lb-note]');
       if(nt){ openNote(nt.getAttribute('data-lb-note')); return; }
       var it = e.target.closest('[data-lb-open]');
-      if(it) openItem(it.getAttribute('data-lb-open'));
+      if(it){
+        /* 467: a photo opens in the existing zoom viewer rather than a new tab.
+           If it has not been signed yet, fall through to the old behaviour. */
+        var th = it.querySelector('img[data-lb-img]');
+        var tp = th && th.getAttribute('data-lb-img');
+        if(tp && lbImgUrl[tp] && window.CardinalResourceImages &&
+           typeof window.CardinalResourceImages.open === 'function'){
+          var cap = it.querySelector('.t');
+          window.CardinalResourceImages.open(lbImgUrl[tp], cap ? cap.textContent : '');
+          return;
+        }
+        openItem(it.getAttribute('data-lb-open'));
+      }
     });
 
     mounted = true;

@@ -1669,3 +1669,86 @@ All three aborted before any write, which is the patch harness working exactly a
 **Fourth time this session a negative control threw instead of counting a red.** It is now a
 helper (`q(el, sel, prop)`) rather than another one-line patch. Standing rule, restated:
 *every negative control must fail, not crash.*
+
+---
+
+## Build 467 — a filed photograph looks like a photograph
+
+*31 July 2026. Theo picked "all" on the photo routes. This is the only one that was
+buildable tonight, and the audit changed what it turned out to be.*
+
+### What was already there — the prime doctrine paid again
+
+**The `library` Supabase bucket is wired end to end and always was.** The librarian panel
+uploads into it at `lib/<timestamp>_<name>` from *two* paths — the auto-filed route and the
+manual "Upload into &lt;section&gt;" button — and `openItem()` already signs a URL for 3600 s.
+None of that needed building.
+
+The gap was narrower and more annoying than "photos are not supported":
+
+> `itemHtml()` rendered a filed image as **a row with a camera emoji**, and tapping it signed
+> a URL and dumped the file in **a new browser tab**.
+
+So an uploaded photograph was a file attachment in a list. It never illustrated anything, and
+you left the app to look at it.
+
+**Measured, not inferred:** `library_items` holds 18 rows and **every one is `kind='note'`**.
+No image has ever been filed — because there was nothing to see when you did.
+
+### What shipped
+
+1. A filed image renders a real signed thumbnail instead of an emoji.
+2. Tapping it opens the **existing** zoom viewer rather than punting to a new tab.
+
+### Reused, not invented
+
+- **`CardinalResourceImages`** — the zoom viewer that already serves `.rl-card` and
+  `.rl-article` images. This matters for more than tidiness: its `open()` writes
+  `document.body.style.overflow`, one of the **13 global scroll-lock writers**. Calling the
+  existing one adds no fourteenth, and the patch asserts the count did not move.
+- **`createSignedUrls` (plural)** — one round trip for the whole visible list, cached for the
+  session, deduped by path. The harness asserts one call for three thumbnails and no second
+  call on re-render.
+
+### Security
+
+The signed URL comes from Supabase, never from a model, and is assigned as a **DOM property**
+(`img.src = url`) rather than concatenated into markup. The only DB text reaching an
+attribute is the title in `alt=""`, and `esc()` escapes the double quote — the character that
+matters there. Both a quote-laden title and a quote-laden `file_path` are asserted unable to
+break out.
+
+### Degradation
+
+No `supa`, a rejected signing call, or a path that will not sign: the thumbnail stays blank
+and the row still opens the file the old way. A photo that cannot be signed is never a broken
+library page.
+
+### Gates
+
+`check_build.py` green with a negative-controlled marker. **26/26 in a real browser** against
+the shipped `itemHtml` / `lbSignImages` sliced out of `index.html`, driven with a mocked
+storage client — the only way to exercise this before anything is uploaded. Negative control
+fails at the slice on 466. Scope proven both ways over 6 regions.
+
+### Where I was wrong — the same mistake three more times
+
+Three assertions in this build fired, **all hardcoded counts**, all against a rule this
+project's own doc states plainly ("prefer self-computing assertions over hardcoded numbers"):
+
+1. `count('function itemHtml(i){') == 1` — there are **two**; the other is in `cr-pp-script`.
+   **Three modules define `itemHtml`**: pricing (`itemHtml(it)`), punch and the library. The
+   anchor used the full function body so it patched the right one, but the check was wrong.
+2. `count('data-lb-img') == 4` — it is **6**.
+3. (466 carried three more of the same class.)
+
+Replaced with properties rather than tallies: no `itemHtml` appeared or vanished, exactly one
+gained the image branch, and that one sits inside `cr-lib-script`. **Eight hardcoded-count
+assertions across builds 466–467.** Every one aborted before a write, so the artifact was
+never at risk — but the pattern is mine and it is documented as a known trap.
+
+### Still blocked
+
+Routes 2 and 3 need files from outside the app. The only images in the system are 225 objects
+in `photos`, all taken **21–30 July**; `library_items` has none. There are no winter
+photographs to find.
