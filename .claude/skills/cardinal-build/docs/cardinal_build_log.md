@@ -2085,3 +2085,42 @@ and this was one.
 
 **Sixth hardcoded-count abort of the night** — `count('configPromise = null;')` also matched its own
 `var` declaration. Six in one session, one root cause, every one caught before a write.
+
+---
+
+## Audit (no build) — the `.single()` backlog does not exist (31 July 2026)
+
+CLAUDE.md carried this as an invariant: *"`.single()` throws on zero rows — there are 43 of them
+against only 4 `.maybeSingle()`; use `.maybeSingle()` wherever absence is legal."* Read together
+that is a **43-site migration backlog**. Audited it before doing the work. **Both halves are wrong.**
+
+### Verified against the shipped client source, not from memory
+
+| Claim | Reality |
+|---|---|
+| `.single()` throws on zero rows | **No.** `single()` only sets `Accept: application/vnd.pgrst.object+json`; PostgREST answers 406 / `PGRST116`, and the client does `if (error && this.shouldThrowOnError) throw` — otherwise it **returns** `{data:null, error}` |
+| …so the app is at risk | **`throwOnError` appears 0 times in this repo.** `.single()` never throws here |
+| 43 sites need migrating | **All 43 guard.** Zero raw dereferences |
+
+`maybeSingle()` sets **no** Accept header — it fetches a list and enforces cardinality client-side,
+so zero rows give `{data:null, error:null}` with no error to filter.
+
+**The real hazard** is `const { data } = await ….single()` then `data.foo` — a `TypeError` when the
+row is absent. Every one of the 43 guards: `if (error || !data)`, `if (!claim) return`,
+`est?.project_id`, `r.data &&`, `if (claimRes.error) return null`.
+
+### Two process notes
+
+**A keyword heuristic flagged 5 sites as unguarded; all 5 were false positives.** They guard by
+null-check rather than by the words `error`/`try`/`catch` the regex searched for. Reading them was
+what turned a 5-item bug list into a 0-item one — the file's own rule about printing what the
+extractor captured, applied to a different kind of extractor.
+
+**An empirical probe was attempted first and did not work.** Installing `@supabase/supabase-js` and
+querying a non-existent row returned `Host not in allowlist` — the agent proxy blocked the Supabase
+host, so the result proved nothing about zero rows and was discarded rather than reported. Reading
+the library's own source was the verification that actually held.
+
+**Outcome: do not open the `.maybeSingle()` migration.** Prefer it in new code where absence is
+expected — not for safety, but because `.single()` manufactures an error the caller must then tell
+apart from a real failure. Counts now **43 / 5**.

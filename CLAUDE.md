@@ -361,7 +361,36 @@ Sales       nick@, joey@, jacob@      only what they created or are assigned (RL
 
 `project_assigned_rep()` takes `p.checklist`, **not** `p.id`. `is_cardinal_admin()` is security-definer to avoid RLS recursion. Theo + Joan are hardcoded admin fallbacks in SQL and API.
 
-Client name column is **`name`**. Money has one chokepoint: `bidAmt()`. `stage_since` must be written on creation. **`.single()` throws on zero rows — there are 43 of them against only 4 `.maybeSingle()`** (that was 0 at build 427, so the migration has started); use `.maybeSingle()` wherever absence is legal.
+Client name column is **`name`**. Money has one chokepoint: `bidAmt()`. `stage_since` must be written on creation.
+
+### ✅ `.single()` does **not** throw here, and there is no 43-site backlog — audited at build 474
+
+Previous revisions of this file said "**`.single()` throws on zero rows** — there are 43 of them
+against only 4 `.maybeSingle()`; use `.maybeSingle()` wherever absence is legal." **Both halves are
+wrong**, and together they read as 43 pending fixes. Verified against the shipped
+`@supabase/postgrest-js` source, not from memory:
+
+- **`single()` only sets a header** — `Accept: application/vnd.pgrst.object+json`. PostgREST then
+  answers a non-single row count with **406 / `PGRST116`**.
+- **The client throws only under `.throwOnError()`**: `if (error && this.shouldThrowOnError) throw`.
+  Otherwise it *returns* `{ data: null, error: {...} }`. **`throwOnError` appears 0 times in this
+  repo**, so `.single()` never throws in this app.
+- `maybeSingle()` sets **no** Accept header — it fetches a list and enforces cardinality
+  client-side, so zero rows give `{ data: null, error: null }` with no error to filter out.
+
+**The real hazard is destructure-then-dereference** — `const { data } = await ….single()` followed
+by `data.foo` is a `TypeError` when the row is absent. **All 43 sites were checked individually and
+every one guards** (`if (error || !data)`, `if (!claim) return`, `est?.project_id`, `r.data &&`).
+**Zero raw dereferences.** Converting them is churn with real regression risk and no correctness
+gain — **do not open that migration.**
+
+A first pass using a keyword heuristic flagged 5 "unguarded" sites; reading them showed **all 5
+were false positives** — they guard by null-check rather than by the words the regex looked for.
+That is the file's own "scope the assertion, then read what it captured" rule earning its place.
+
+**Still prefer `.maybeSingle()` in new code where absence is expected** — not for safety, but
+because `.single()` manufactures an error object the caller then has to tell apart from a real
+failure. Current counts: **43 `.single()` · 5 `.maybeSingle()`**.
 
 ---
 
