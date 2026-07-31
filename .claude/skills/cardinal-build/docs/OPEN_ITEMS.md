@@ -57,6 +57,11 @@ re-check this — it becomes live the moment that count is non-zero.
   Full reasoning in `cardinal_build_log.md`; the wrong measurement is corrected in `HANDOFF.md`.
 - **488 — the updates panel printed raw codes.** 20 CHANGELOG notes carried Python `\U`
   escapes, invalid in JavaScript. New class: `BUG_CLASSES.md` §11.
+- **489 — the two unpicked contrast tokens, plus a third the audit missed.**
+  `--rbe-empty-fg` 3.45:1→4.54:1 (light) and **4.05:1→4.82:1 (dark — not in the
+  original audit, which was scoped to light theme only)**; `--rbe-adm-fg` 4.13:1→4.54:1.
+  Dark `--rbe-adm-fg` measured 7.98:1 and was left alone. The dark repair reuses
+  `--rbe-mute`'s existing `#9aa0a8` rather than inventing a shade.
 
 
 > **Everything below was verified against the repo or the database on July 28, not carried
@@ -70,9 +75,12 @@ re-check this — it becomes live the moment that count is non-zero.
 
 ## 0. AI Inspections — the live build queue (31 July 2026)
 
-**486–488 are shipped; 489–492 are not.** (Renumbered: the plan below was written as 487–490, but 487 and 488 were spent on the list-view contrast fix and the changelog escape fix. Same work, numbers shifted up two.) The plan below came out of a 37-agent read-only
-audit whose findings were each adversarially refuted. Do not re-audit these surfaces; do re-measure
-any number before quoting it.
+**486–489 are shipped. The work below is not.**
+
+> **The items below are deliberately NOT numbered, and must not be renumbered again.** They carried build numbers twice this session (487–490, then 489–492) and both were invalidated within hours, because a build number is assigned at **ship time in ship order** — a plan cannot reserve one. Every unplanned fix silently falsified the queue and every cross-reference to it. **Name the work; let the number be whatever it gets when it ships.**
+
+The plan below came out of a 37-agent read-only audit whose findings were each adversarially
+refuted. Do not re-audit these surfaces; do re-measure any number before quoting it.
 
 ### ⚠ A correction I owe, recorded so nobody repeats it
 
@@ -83,11 +91,11 @@ roof-specific, sections 1–10. `GENERAL_TEMPLATE` (8448) is `buildEstimate('REP
 a **repair estimate**, not an inspection report. `#gcModal`, the General Checklist, has **zero** file
 inputs. Verified, not inferred.
 
-**A General Exterior inspection report is therefore its own build (492)**, comparable in size to the AI sort (489).
+**A General Exterior inspection report is therefore its own build**, comparable in size to the AI sort.
 
 ### ✅ SETTLED BY THEO, 31 July — do not re-litigate
 
-**492's section list, confirmed verbatim.** Author the document to exactly these ten, in this order:
+**The General Exterior section list, confirmed verbatim.** Author the document to exactly these ten, in this order:
 
 1. Inspection Overview & Property Facts
 2. Summary of Findings
@@ -104,13 +112,13 @@ It mirrors the roof report's shape on purpose — an adjuster recognises it. The
 this template matters: *"We do lots of exterior inspections."* It is also the template his archive
 serves best: every trade qualifies, so nothing lands in the set-aside tray.
 
-**489's route is SIGNED-IN, not admin-only.** The two gates guard different things and are meant to
+**The sort route is SIGNED-IN, not admin-only.** The two gates guard different things and are meant to
 differ:
 
 | Route | Gate | Why |
 |---|---|---|
 | `api/companycam.js` (486's picker) | **admin-only** | reaches all 1,437 jobs; can put the wrong client's house in a report that goes out by email and public link |
-| the 489 sort route | **signed in** | only ever sees photographs *already in this report*; never touches CompanyCam |
+| the sort route | **signed in** | only ever sees photographs *already in this report*; never touches CompanyCam |
 
 The point of the feature is to take the bottleneck off Theo and Joan, so the crew who shot the roof
 can draft the report. RLS already limits Sales to work they created or are assigned. **Cap photos
@@ -120,7 +128,7 @@ per sort regardless of the gate** — that is what bounds spend, not the gate.
 seeing them first. The confirm-before-send gate covers it — nothing sends until a human clears every
 section — but that human is not necessarily Theo. He was told this plainly and chose signed-in.
 
-### 489 — the AI sort (roof template only)
+### The AI sort (roof template only) — the next substantial build
 
 - Copy the skeleton from **`api/organize.js`** — the only route already doing signed-in gate →
   Gemini vision → fence-strip → `JSON.parse` → validate → coerced capped scalars. Take
@@ -162,12 +170,12 @@ section — but that human is not necessarily Theo. He was told this plainly and
   that every enum the route can emit is in the client whitelist *before* the writer ships
   (`normStage` lesson).
 
-### 490 — shot lists · 491 — Save PDF
+### Shot lists · Save PDF
 
-- 490: **reuse `QI_SHOTS`, do not add a fifth list.** Duplication is the real risk.
-- 491: `downloadReport()` produces **`.html`, not PDF**. Print → Save as PDF already produces a
+- Shot lists: **reuse `QI_SHOTS`, do not add a fifth list.** Duplication is the real risk.
+- Save PDF: `downloadReport()` produces **`.html`, not PDF**. Print → Save as PDF already produces a
   proper vector PDF using the template's `@page` rules; any client-side PDF library would be
-  **worse** (rasterised, unsearchable). 491 is a labelled one-tap route through the print path.
+  **worse** (rasterised, unsearchable). It is a labelled one-tap route through the print path.
   A server-side `/api/pdf` is only justified if reports must go out **unattended** — Theo's call.
 
 ---

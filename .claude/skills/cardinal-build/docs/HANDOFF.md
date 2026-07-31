@@ -4,10 +4,11 @@
 
 ---
 
-# Session of 31 July 2026 (daytime) — builds 483–488
+# Session of 31 July 2026 (daytime) — builds 483–489
 
-**483–486 merged (`main` at `0047bbb`, then `e9fa331` for docs). 487–488 are in a PR.** PRs #49,
-#50, #51, #52 merged.
+**483–486 merged (`main` at `0047bbb`, then `e9fa331` for docs). 487–489 are committed on
+`claude/487-488-listview-contrast` and NOT pushed** — see "Waiting on Theo" for why and the one
+command that fixes it. PRs #49, #50, #51, #52 merged.
 
 **This session ran from a real local clone on Theo's Windows machine** —
 `C:\Users\kpkor\repos\cardinal-inspections`, outside OneDrive, because OneDrive corrupts `.git`.
@@ -23,6 +24,7 @@ one instrument this machine lacks.
 | **486** | **CompanyCam photographs into an inspection report.** Picker in the report editor toolbar. Also fixes a pre-existing bug: captions on runtime-minted figures could not be typed in |
 | **487** | The **list view's** documents were dark text on the dark page — `#333` at **1.57:1**, `var(--muted)` at **2.97:1**. Scoped to `#listView` with the retail token pair. **Not the documents list, which was never broken** — see the correction below |
 | **488** | The updates panel was printing `U0001F4F8` instead of 📸. 20 `CHANGELOG` notes carried **Python** `\U` escapes, which JavaScript does not have. Repaired as surrogate pairs. `BUG_CLASSES.md` §11 |
+| **489** | The two unpicked contrast tokens — **and a third the audit missed**, because that pass was scoped to light theme and `--rbe-empty-fg` fails in **both**. All four pairs now clear 4.5:1 |
 
 ## ⚠ Read `OPEN_ITEMS.md §0` before touching AI Inspections
 
@@ -64,19 +66,40 @@ recorded mobile-only, and that is why this survived: `table.reports tr{backgroun
 **Check contrast at desktop width, and measure against the element's own background, not the page
 ground.**
 
-## Next, in order
+## Next
 
-1. **489** the AI sort · **490** shot lists · **491** Save PDF · **492** General Exterior template.
-   **Renumbered** — 487 and 488 were spent on the two fixes above, so the AI Inspections queue shifts
-   up by two. `OPEN_ITEMS.md` §0 carries the plan under the new numbers.
-2. Still unpicked and genuinely small: `--rbe-empty-fg` `#8a8a8a`→`#767676`, `--rbe-adm-fg`
-   `#8a6a4a`→`#826446`.
+**`OPEN_ITEMS.md` §0, in this order: the AI sort → shot lists → Save PDF → General Exterior.**
+
+**Do not put build numbers back on those.** They carried numbers twice in one session (487–490, then
+489–492) and both sets were invalidated within hours, because a number is assigned at **ship time in
+ship order** — a plan cannot reserve one. Every unplanned fix falsified the queue and every
+cross-reference to it. §0 now names the work instead, and says so.
+
+The AI sort is the next substantial build; everything before it this session was small repair work.
+Its audit is done and must not be re-run.
 
 ## Waiting on Theo — do not nag
 
 Five partner emails (Kitty Hawk Realty **has a live job**); `GOOGLE_MAPS_API_KEY` (**referrer-restrict
-in Google Cloud first**); two contrast fixes unpicked (`--rbe-empty-fg`, `--rbe-adm-fg`); and **486
-has never been used on a real phone with real photographs** — that verification is outstanding.
+in Google Cloud first**); and **486 has never been used on a real phone with real photographs** —
+that verification is still outstanding.
+
+~~Two contrast fixes unpicked~~ — **shipped at 489**, along with the dark-theme half the audit had
+missed.
+
+**Also outstanding: 487–489 are committed locally but NOT pushed.** Git on this machine has no
+credential for `git:https://github.com` (the one in Credential Manager is an API token for
+`api.github.com`), and the GitHub connector here is read-only — `403 Resource not accessible by
+integration` on branch creation. One interactive `git push` caches the credential and unblocks every
+future session on this machine:
+
+```
+cd C:/Users/kpkor/repos/cardinal-inspections
+git push -u origin claude/487-488-listview-contrast
+```
+
+**The Vercel preview on the resulting PR is the only gate that has seen 487's colour render.** jsdom
+cannot resolve `var()` and this machine has no Chromium.
 
 ---
 

@@ -1910,7 +1910,7 @@ body.restoring #restoreVeil{display:flex;}
   --rbe-mpill-fg:#ffffff;--rbe-mpill-bg:#9a9a9a;
   --rbe-po3:#c8202e;--rbe-fact-fg:#161616;
   --rbe-del-bd:#e7c2ba;--rbe-del-bg:#fdf1ef;--rbe-del-fg:#a6291d;
-  --rbe-adm-bg:#f2e9e2;--rbe-adm-fg:#8a6a4a;
+  --rbe-adm-bg:#f2e9e2;--rbe-adm-fg:#826446;
   --rbe-sep:#e2e2e2;--rbe-ctamiss:#e2e2e2;--rbe-ctabg:rgba(200,32,46,.06);
   --rbe-msg-who:#c8202e;--rbe-msg-when:#8a8a8a;
 }
@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 488 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 489 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20563,7 +20563,7 @@ body.claim-insurance #brandLogo{
   --rbe-bg1:#2e333b;--rbe-bg2:#262a31;
   --rbe-name1:#e2574a;--rbe-po1:#d0564a;--rbe-po2:#caa030;--rbe-rep:#e8c23a;--rbe-ai:#8ac4f2;
   --rbe-money:#8fe0ae;--rbe-flag:#f2a08a;--rbe-clr:#e08a7a;
-  --rbe-empty-bd:#4a4f58;--rbe-empty-fg:#8b929c;
+  --rbe-empty-bd:#4a4f58;--rbe-empty-fg:#9aa0a8;
   --rbe-hair:#2c3038;
   --rbe-checkbd:#4a505a;--rbe-checkfg:#17181b;--rbe-ok:#3fae6a;--rbe-okbg:#2f5a3c;
   --rbe-cardshadow:0 7px 18px rgba(0,0,0,.45),0 2px 5px rgba(0,0,0,.35);
@@ -20585,7 +20585,7 @@ body.claim-insurance #brandLogo{
   --rbe-bg1:#ffffff;--rbe-bg2:#fafafa;
   --rbe-name1:#6b0f18;--rbe-po1:#6b0f18;--rbe-po2:#d4424c;--rbe-rep:#c8202e;--rbe-ai:#2f6fa8;
   --rbe-money:#1f7a4d;--rbe-flag:#c8202e;--rbe-clr:#a6291d;
-  --rbe-empty-bd:#d4d4d4;--rbe-empty-fg:#8a8a8a;
+  --rbe-empty-bd:#d4d4d4;--rbe-empty-fg:#767676;
   --rbe-hair:#e2e2e2;
   --rbe-checkbd:#c9c9c9;--rbe-checkfg:#ffffff;--rbe-ok:#2f8f56;--rbe-okbg:#eaf6ee;
   --rbe-cardshadow:0 3px 10px rgba(0,0,0,.06);
@@ -33303,6 +33303,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:489, note:'\uD83D\uDC53 Three greys that were too faint to read comfortably are now a shade stronger: the message shown when a list has nothing in it, in both the light and dark themes, and the small admin tag. Each is the smallest change that clears the readability standard, so nothing else looks different.' },
 { build:488, note:'\uD83D\uDD24 The updates panel was printing raw codes. Every note going back about twenty builds began with a string of letters and numbers instead of a small picture, because the picture was written the way one language spells it and read by another that spells it differently. All of them now show a picture.' },
 { build:487, note:'The documents list was unreadable on a computer. On a phone each row is a white card, so this never showed there - but on a desktop or ultrawide the table sits straight on the dark page and the text was still the near-black it uses on white. Titles and dates now use the light text the rest of the dark theme already uses, and hovering a row lifts it slightly instead of flashing it white.' },
 { build:486, note:'\uD83D\uDCF8 CompanyCam photographs go straight into an inspection report. Open a report, press CompanyCam, and search by address, job name or crew \u2014 it looks through all 60,485 indexed photographs. Tick the ones you want, choose a section, and they land in the report with the job name as a caption. Photographs from a different job than the one the report is about are marked in red before you can add them, because a report goes out by email and by link. Also fixed something old: once a section ran out of its built-in photo boxes, the captions on any new ones could not be typed in.' },

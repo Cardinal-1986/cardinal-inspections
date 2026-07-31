@@ -2685,3 +2685,57 @@ control 4/6 against 487. Not a text assertion: a wrong escape produces wrong cha
 2. **I quoted the broken pattern inside the note meant to prove it absent** — the harness scans every
    note for that pattern and cannot tell my example from a real one. Exactly the class recorded at
    486: *counting an identifier my own text already used.* The note no longer quotes it.
+
+## 489 — the two unpicked contrast tokens, and a third the audit missed
+
+`OPEN_ITEMS` carried two light-theme failures computed 31 July and marked *"ready to apply on a
+word."* Both re-confirmed here with `scripts/contrast.py` before touching anything:
+
+| Token | Was | Now |
+|---|---:|---:|
+| `--rbe-empty-fg` light, `#8a8a8a` on `#ffffff` | **3.45:1** | `#767676` → **4.54:1** |
+| `--rbe-adm-fg` light, `#8a6a4a` on `#f2e9e2` | **4.13:1** | `#826446` → **4.54:1** |
+| `--rbe-empty-fg` **dark**, `#8b929c` on `#2e333b` | **4.05:1** | `#9aa0a8` → **4.82:1** |
+
+**The third one was not in the audit.** That pass was scoped to *light theme*, so the dark half of
+the same token was never computed — and it fails too. Shipping only the two listed would have
+cleared one theme and left the other below the floor, while the build log said "contrast fixed."
+**When a token is a dark/light pair, compute both halves; an audit scoped to one theme has not
+checked the token, only half of it.**
+
+The dark repair reuses `#9aa0a8` — the value `--rbe-mute` already carries in the dark theme —
+rather than the bare-minimum `#959ba5` (4.54:1). An empty-state message *is* muted text, so this
+removes a near-duplicate grey instead of adding one, and lands at 4.82:1. *Grep for a convention
+before you invent one.*
+
+`--rbe-adm-fg` dark (`#d8c9a8` on `#3a2f22`) measures **7.98:1**. Left alone, and asserted
+untouched rather than merely not edited.
+
+**This build needed no rendering and none was claimed.** Contrast is arithmetic, so the gate reads
+the shipped token values back out of the artifact, pairs each foreground with the ground it actually
+meets — by name, never by cartesian product — and computes. 4/4 clear the floor; negative control
+against 488 fails 3 of 4, and correctly passes the one that was already fine.
+
+## The sweep that found nothing — recorded so it is not repeated
+
+After 487 I swept the file for the same class: a surface stripped to transparent over the dark page
+with hardcoded light-theme ink left behind. It produced **27 candidates and zero real defects.**
+All 27 died on inspection, and **my sweep was wrong three different ways:**
+
+1. **Token-valued backgrounds read as "no background."** The detector matched `background:#hex`, so
+   every `#cr-bulk-mount .badge` using `var(--bt)` / `var(--gt)` looked groundless. They all paint
+   their own surface.
+2. **`-webkit-text-fill-color` was ignored.** `#listTitle` and `.projsec` set a gradient with
+   `background-clip:text` and `text-fill-color:transparent`; their `color:#c8202e` is a fallback
+   that never renders. The computed ratio was meaningless.
+3. **`@media print` was not excluded.** The two most convincing survivors — `#listNote` at 2.97:1
+   and `#listView label` at 2.38:1, both `!important` and both apparently beating the redesign —
+   live inside `<style id="cr-print-styles">@media print{…}`, where the background is forced
+   `#fff`. On screen they never apply.
+
+**That third one is the same error as the measurement 487 had to correct**: computing a ratio
+against a background the text never meets. It is the defining mistake of this whole area.
+**A contrast candidate is a hypothesis until you have identified what actually paints beneath it.**
+
+The useful result is the negative: **487 was the only instance of its class.** Recorded so the next
+session does not re-run this and re-derive the same 27 ghosts.
