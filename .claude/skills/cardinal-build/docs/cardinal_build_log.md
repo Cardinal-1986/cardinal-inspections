@@ -3282,3 +3282,44 @@ its own `json()`.
 `companycam-sync`, `estimate`, `hover`, `librarian`, `organize`, `roofr`, `sol`, `sortphotos`,
 `summarize`. Every one now reads **Gemini → OpenAI**, and `sortphotos`/`librarian` additionally walk
 **3.6 → 3.5** first. All 26 `api/*.js` parse.
+
+## 507 — Sort fills the Areas of Concern table
+
+Theo: *"Yes and please do it the right way."*
+
+The data was already there and being discarded. Every placement returns a `severity` — `crit` /
+`warn` / `ok` — and `sortApply` used only the section and the caption. It maps exactly onto the
+priority vocabulary the template defines in its own words: **HIGH** water intrusion or prompt action,
+**MODERATE** work alongside replacement, **MONITOR** serviceable, observe.
+
+**A summary, not a dump.** One row per **section**, not per photograph — twelve photos of one slope
+is one finding, not twelve rows. The worst severity in a section wins and its caption becomes the
+finding. Ordered `crit` → `warn` → `ok`, so the top of the table is what matters.
+
+**Never overwrite a human.** A row is filled only if its Area is still the template's placeholder —
+empty, or starting with `[`. Anything typed by hand survives a re-sort untouched. This is a document
+that goes to a client; silently replacing someone's wording would be far worse than doing nothing.
+
+**`.ph` is preserved on every cell written.** `EDITABLE_SELECTOR` keys `contenteditable` off that
+class — strip it and the inspector can no longer edit what the AI wrote. That would have been a
+quiet, nasty regression.
+
+**The Section 2 trap, avoided by construction.** The audit warns that `wireSummaryDraftButton` owns
+the paragraph by the summary heading, mounts with `insertAdjacentElement('afterend', …)`, and that
+`serializeFrame` removes it by testing **a single node** — so a second `afterend` control there
+compounds one copy per save/open cycle. **This adds no control anywhere.** It writes into existing
+cells and adds rows only by cloning one already present, which is the template's own instruction.
+
+Gates: check_build green, harness **21/21** against the real `REPORT_TEMPLATE` — 5 photographs over
+3 sections give 3 rows; the crit caption wins its section and the warn one does not also appear;
+Area is the section *name*; the `#` column renumbers; `.ph` survives on both cells; a hand-typed row
+is untouched and the AI finding goes to the next free row; 30 photographs over 6 sections stay
+bounded; and the `afterend` count is asserted **unchanged from 506** rather than against a made-up
+number.
+
+### An assertion of mine that fired on correct code
+
+I first asserted the file contains exactly **one** `insertAdjacentElement('afterend'`. It contains
+**seven**, across unrelated features. The patch aborted on correct work. The right assertion is the
+one `START_HERE` §"Counting things" prescribes and I keep relearning: **assert the property —
+"unchanged from the previous build" — never a tally read off an assumption.**

@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 506 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 507 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33845,6 +33845,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:507, note:'\u1F4CB Sort photos now fills in the Areas of Concern table as well. It writes one line per section rather than one per photograph, uses the most serious finding in each, and sets the priority from what the AI judged. Anything you have already typed is left exactly as it is.' },
 { build:506, note:'\u1F50E CompanyCam search is much more forgiving. Typing an address with the house number found nothing if you wrote Ave and the record said Avenue, or if the postcode had an extra four digits. It now shows the closest matches with the right job first, instead of showing nothing.' },
 { build:505, note:'\u26A1 The last four features that could only use Google now fall back to the second AI as well: the CompanyCam caption pass, the Hover takeoff reader, the Roofr takeoff reader and the Scope of Loss reader. Every AI feature in the app now has somewhere to go when Google is busy.' },
 { build:504, note:'\u1F527 The AI health check now reports which model it actually tested. It could be asked about one model and answer about another, which made it useless for telling whether a newer model works.' },
@@ -50242,6 +50243,94 @@ function sortApi(body){
   });
 }
 
+
+/* 507: the Areas of Concern table, filled from what the sort already knew.
+   Severity was being collected and discarded. The template defines its own
+   priority vocabulary and severity maps onto it exactly. */
+var SEV_RANK = { crit: 3, warn: 2, ok: 1 };
+var SEV_CHIP = {
+  crit: { cls: 'high', label: 'HIGH' },
+  warn: { cls: 'mod',  label: 'MODERATE' },
+  ok:   { cls: 'mon',  label: 'MONITOR' }
+};
+/* A concerns table longer than this stops being a summary. */
+var CONCERN_MAX = 12;
+
+/* Still the template's own text: empty, or starting with "[". Anything a person
+   typed fails this and is left alone. */
+function sortIsPlaceholder(el){
+  var t = ((el && el.textContent) || '').trim();
+  return !t || t.charAt(0) === '[';
+}
+
+function sortFillConcerns(doc, placements){
+  var table = doc.querySelector('table.concerns');
+  if(!table || !placements || !placements.length) return 0;
+
+  /* ONE ROW PER SECTION, worst severity wins. Twelve photographs of one slope is
+     one finding, not twelve rows. */
+  var worst = {};
+  placements.forEach(function(pl){
+    if(!pl || !SEV_CHIP[pl.severity]) return;
+    var k = String(pl.section);
+    var rank = SEV_RANK[pl.severity] || 0;
+    if(!worst[k] || rank > worst[k].rank){
+      worst[k] = { rank: rank, severity: pl.severity, caption: pl.caption || '', section: k };
+    }
+  });
+  var findings = Object.keys(worst).map(function(k){ return worst[k]; });
+  if(!findings.length) return 0;
+  /* crit first, then warn, then ok; ties by section order. */
+  findings.sort(function(a, b){ return (b.rank - a.rank) || (Number(a.section) - Number(b.section)); });
+
+  var body = table.querySelector('tbody') || table;
+  var dataRows = [].filter.call(body.querySelectorAll('tr'), function(tr){ return !tr.querySelector('th'); });
+  if(!dataRows.length) return 0;
+
+  var written = 0;
+  findings.slice(0, CONCERN_MAX).forEach(function(f){
+    var row = null;
+    for(var i = 0; i < dataRows.length; i++){
+      var a = dataRows[i].querySelector('td:nth-child(2) b, td:nth-child(2) .ph');
+      if(a && sortIsPlaceholder(a)){ row = dataRows[i]; break; }
+    }
+    if(!row){
+      /* No free row left. Add one by cloning the last - the template's own
+         instruction is "COPY A ROW: duplicate one <tr> below and edit". */
+      if(dataRows.length >= CONCERN_MAX) return;
+      var last = dataRows[dataRows.length - 1];
+      row = last.cloneNode(true);
+      if(last.parentNode) last.parentNode.insertBefore(row, last.nextSibling);
+      dataRows.push(row);
+    }
+
+    var cells = row.querySelectorAll('td');
+    if(cells.length < 4) return;
+
+    var area = cells[1].querySelector('b') || cells[1];
+    var find = cells[2].querySelector('span') || cells[2];
+    /* .ph is what EDITABLE_SELECTOR keys contenteditable off - keep it, or the
+       inspector can no longer edit what was written here. */
+    area.className = 'ph';
+    find.className = 'ph';
+    area.textContent = sectionName(doc, f.section);
+    find.textContent = f.caption;
+
+    var chip = SEV_CHIP[f.severity];
+    cells[3].innerHTML = '<span class="chip ' + chip.cls + '">' + chip.label + '</span>';
+    written++;
+  });
+
+  /* Keep the # column honest after any rows were added. */
+  [].forEach.call(body.querySelectorAll('tr'), function(tr, i){
+    if(tr.querySelector('th')) return;
+    var n = tr.querySelector('td.n');
+    if(n) n.textContent = String(i);
+  });
+
+  return written;
+}
+
 /* Applies placements against a FRESHLY READ document. `sent` is only used for
    its id -> fingerprint map; none of its node references are touched. */
 function sortApply(doc, sent, placements){
@@ -50283,12 +50372,19 @@ function sortApply(doc, sent, placements){
     else vanished++;
   });
 
+  /* 507: fill the Areas of Concern table from the same placements. Before
+     lockTemplate, so the cells it writes get contenteditable in the same pass. */
+  var concerns = sortFillConcerns(doc, (placements || []).filter(function(pl){
+    return pl && window.CardinalSortVocab && window.CardinalSortVocab.knows(pl);
+  }));
+
   /* ONCE, after the last photograph. */
   wirePhotoFrames(doc);
   wireReanalyzeButtons(doc);
   lockTemplate(doc);
 
-  return { moved: moved, captioned: captioned, unknown: unknown, vanished: vanished };
+  return { moved: moved, captioned: captioned, unknown: unknown, vanished: vanished,
+           concerns: concerns };
 }
 
 function sortRun(){
@@ -50375,6 +50471,7 @@ function sortRun(){
     if(aside) bits.push(aside + ' left alone (no confident section)');
     if(r.unknown) bits.push(r.unknown + ' skipped (unrecognised)');
     if(r.vanished) bits.push(r.vanished + ' could not be matched back');
+    if(r.concerns) bits.push(r.concerns + ' added to Areas of Concern');
 
     alert(bits.length ? ('Sorted.\n\n' + bits.join('\n')) : 'Nothing needed moving.');
     if(typeof scheduleSave === 'function') scheduleSave();
@@ -50410,7 +50507,8 @@ window.CardinalSortPhotos = Object.assign(window.CardinalSortPhotos || {}, {
   vacate  : sortVacate,
   fp      : sortFp,
   shrink  : sortShrink,
-  sectionOf: sortSectionOf
+  sectionOf: sortSectionOf,
+  concerns : sortFillConcerns
 });
 })();
 </script>
