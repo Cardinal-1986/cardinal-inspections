@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 490 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 491 &#8212; pull photographs straight out of CompanyCam into an inspection report, searching by address</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7461,6 +7461,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
     <button class="btn dark" id="shareBtn">&#128279; Share link</button>
     <button class="btn dark" id="assistantBtn">&#128194; Assistant</button>
     <button class="btn dark" id="rccBtn" style="display:none;">&#128248; CompanyCam</button>
+    <button class="btn dark" id="sortBtn" style="display:none;">&#129517; Sort photos</button>
     <span id="savedFlash"></span>
   </div>
   <div class="editor-body">
@@ -17482,7 +17483,7 @@ function addFrameToSection(doc, num){
   }
   return fig.querySelector('.frame');
 }
-function placePhotoInSection(doc, num, dataUrl, caption){
+function placePhotoInSection(doc, num, dataUrl, caption, defer){
   var frame = findEmptyFrameInSection(doc, num) || addFrameToSection(doc, num);
   if(!frame) return false;
   Array.prototype.slice.call(frame.childNodes).forEach(function(node){
@@ -17498,8 +17499,14 @@ function placePhotoInSection(doc, num, dataUrl, caption){
   else frame.appendChild(img);
   var cap = frame.parentElement ? frame.parentElement.querySelector('.cap .ph') : null;
   if(cap && caption) cap.textContent = caption;
-  wirePhotoFrames(doc);
-  wireReanalyzeButtons(doc);
+  /* 491: a bulk caller passes defer=true and wires ONCE after the last
+     photograph, because these two are O(whole document) and re-running them
+     per photo is quadratic. Both callers that existed before 491 pass four
+     arguments, so defer is undefined for them and this is what 486 shipped. */
+  if(!defer){
+    wirePhotoFrames(doc);
+    wireReanalyzeButtons(doc);
+  }
   /* 486: a PRE-EXISTING bug, fixed for every caller at once. lockTemplate()
      had exactly one call site, inside frame.onload - so any figure minted at
      runtime by addFrameToSection() carried a fresh <span class="ph"> with no
@@ -17508,7 +17515,7 @@ function placePhotoInSection(doc, num, dataUrl, caption){
      no template figrows at all, and after two photographs in most of the others.
      lockTemplate is idempotent (removeAttribute then setAttribute over a fixed
      selector set), and by this line the new fig is already in doc. */
-  lockTemplate(doc);
+  if(!defer) lockTemplate(doc);
   var _rv = doc.getElementById('restoreVeil');
   if(_rv) _rv.style.display = 'none';
   return true;
@@ -17877,6 +17884,7 @@ async function openEditor(id){
   setEditorStatus(r.status, r.sent_at);
   savedFlash.textContent = '';
   rccGate();
+  if(typeof window.sortGate === 'function') window.sortGate();
   frame.srcdoc = r.html;
   frame.onload = function(){
     try{
@@ -33303,6 +33311,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:491, note:'\uD83E\uDDF9 Sort photos. Open a report, press Sort photos, and every photograph already in it is put in the section it belongs to and given a caption. Photographs it is not sure about are left exactly where they are rather than guessed at. It never reaches outside the report you are editing.' },
 { build:490, note:'\uD83D\uDCC1 Groundwork for sorting photographs into the right sections automatically. There is nothing to see on screen yet - this build puts the machinery in place and the button that uses it comes next. Nothing that already worked has changed.' },
 { build:489, note:'\uD83D\uDC53 Three greys that were too faint to read comfortably are now a shade stronger: the message shown when a list has nothing in it, in both the light and dark themes, and the small admin tag. Each is the smallest change that clears the readability standard, so nothing else looks different.' },
 { build:488, note:'\uD83D\uDD24 The updates panel was printing raw codes. Every note going back about twenty builds began with a string of letters and numbers instead of a small picture, because the picture was written the way one language spells it and read by another that spells it differently. All of them now show a picture.' },
@@ -49514,6 +49523,225 @@ window.CardinalSortVocab = Object.assign(window.CardinalSortVocab || {}, {
   maxPhotos  : MAX_PHOTOS,
   knows      : knows,
   agrees     : agrees
+});
+})();
+</script>
+
+<script id="cr-sortphotos-script">
+/* =========================================================================
+   491 - sort the photographs already in this report into their sections.
+
+   PARENT DOCUMENT, like 486 and for the same reason: serializeFrame() is a
+   DENYLIST, and its output is what reaches the database, the client email and
+   the public share link. Nothing here may exist inside #reportFrame.
+
+   This never touches CompanyCam and cannot reach another client's job - it only
+   ever sees photographs already in the open report. That is why /api/sortphotos
+   is signed-in while /api/companycam stays admin-only.
+   ========================================================================= */
+(function(){
+'use strict';
+
+var _sortBusy = false;
+
+/* A cheap, collision-resistant fingerprint. Node references captured before an
+   await cannot be trusted - the editor may have re-rendered - and writing a
+   marker attribute is not an option because serializeFrame would carry it into
+   the saved report. So photographs are matched back by their bytes. */
+function sortFp(u){
+  return u.length + ':' + u.slice(0, 64) + u.slice(-64);
+}
+
+function sortSectionOf(doc, node){
+  var secs = rccSections(doc);
+  for(var i = 0; i < secs.length; i++){
+    var els = sectionElements(doc, secs[i].num);
+    for(var j = 0; j < els.length; j++){
+      if(els[j].contains && els[j].contains(node)) return secs[i].num;
+    }
+  }
+  return null;
+}
+
+/* Every photograph currently in a figure. A non-data: src is skipped outright -
+   it must never be sent anywhere, and 486 already guarantees everything placed
+   is a data URL. */
+function sortCollect(doc){
+  var out = [];
+  [].forEach.call(doc.querySelectorAll('.fig .frame img'), function(img, i){
+    var src = img.getAttribute('src') || '';
+    if(src.slice(0, 5) !== 'data:') return;
+    out.push({ id: 'p' + i, dataUrl: src, img: img, from: sortSectionOf(doc, img) });
+  });
+  return out;
+}
+
+/* Return a frame to its placeholder state so findEmptyFrameInSection can reuse
+   it - it decides "empty" by the absence of an img. Buttons, inputs and tags are
+   preserved exactly as placePhotoInSection preserves them. */
+function sortVacate(frame){
+  Array.prototype.slice.call(frame.childNodes).forEach(function(n){
+    if(n.nodeType === 1 && (n.tagName === 'BUTTON' || n.tagName === 'INPUT')) return;
+    if(n.nodeType === 1 && n.classList && n.classList.contains('tag')) return;
+    frame.removeChild(n);
+  });
+  var btn = frame.querySelector('button');
+  var t = frame.ownerDocument.createTextNode('PHOTO');
+  if(btn){ frame.insertBefore(t, btn); btn.textContent = '\u21BB Replace photo'; }
+  else frame.appendChild(t);
+}
+
+function sortCaption(img, text){
+  if(!text) return;
+  var frame = img.parentElement;
+  var fig = frame && frame.parentElement;
+  var cap = fig ? fig.querySelector('.cap .ph') : null;
+  if(cap) cap.textContent = text;
+}
+
+function sortApi(body){
+  return window.aiHeaders().then(function(h){
+    return fetch('/api/sortphotos', { method:'POST', headers:h, body:JSON.stringify(body) });
+  }).then(function(res){
+    return res.json().catch(function(){ return null; }).then(function(data){
+      if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+      return data;
+    });
+  });
+}
+
+/* Applies placements against a FRESHLY READ document. `sent` is only used for
+   its id -> fingerprint map; none of its node references are touched. */
+function sortApply(doc, sent, placements){
+  var V = window.CardinalSortVocab;
+  var want = {};
+  sent.forEach(function(p){ want[p.id] = sortFp(p.dataUrl); });
+
+  var live = sortCollect(doc);
+  var used = {};
+  function take(id){
+    var fp = want[id];
+    if(!fp) return null;
+    for(var i = 0; i < live.length; i++){
+      if(used[i]) continue;
+      if(sortFp(live[i].dataUrl) === fp){ used[i] = 1; return live[i]; }
+    }
+    return null;
+  }
+
+  var moved = 0, captioned = 0, unknown = 0, vanished = 0;
+  placements.forEach(function(pl){
+    /* The whitelist decides, not the route. A value this build has never heard
+       of is dropped loudly rather than written into the report. */
+    if(!V || !V.knows(pl)){ unknown++; return; }
+    var p = take(pl.id);
+    if(!p){ vanished++; return; }
+
+    var target = String(pl.section);
+    if(p.from === target){
+      sortCaption(p.img, pl.caption);
+      captioned++;
+      return;
+    }
+    var frame = p.img.parentElement;
+    if(!frame){ vanished++; return; }
+    sortVacate(frame);
+    /* defer=true: wire once below, not once per photograph. */
+    if(placePhotoInSection(doc, target, p.dataUrl, pl.caption, true)) moved++;
+    else vanished++;
+  });
+
+  /* ONCE, after the last photograph. */
+  wirePhotoFrames(doc);
+  wireReanalyzeButtons(doc);
+  lockTemplate(doc);
+
+  return { moved: moved, captioned: captioned, unknown: unknown, vanished: vanished };
+}
+
+function sortRun(){
+  if(_sortBusy) return;
+  var doc = rccDoc();
+  if(!rccIsReport(doc)){
+    alert('Sorting is for inspection reports. This document is a different kind.');
+    return;
+  }
+  var V = window.CardinalSortVocab;
+  if(!V){ alert('The sorting vocabulary did not load. Reload the app and try again.'); return; }
+
+  var photos = sortCollect(doc);
+  if(!photos.length){ alert('There are no photographs in this report yet.'); return; }
+  if(photos.length > V.maxPhotos){
+    alert('This report has ' + photos.length + ' photographs and one sort handles up to ' +
+          V.maxPhotos + '.\n\nRemove some, or sort the report in batches.');
+    return;
+  }
+  if(!confirm('Sort ' + photos.length + ' photograph' + (photos.length === 1 ? '' : 's') +
+              ' into sections and write captions?\n\n' +
+              'This only rearranges the report you are editing. Nothing is sent to the client.')) return;
+
+  _sortBusy = true;
+  var btn = document.getElementById('sortBtn');
+  if(btn) btn.disabled = true;
+  var g = _rccGen;
+
+  sortApi({ photos: photos.map(function(p){ return { id:p.id, dataUrl:p.dataUrl }; }) })
+  .then(function(d){
+    /* closeEditor() sets nothing synchronously, so re-reading contentDocument
+       cannot tell you the editor is closing. The generation counter can. */
+    if(g !== _rccGen) return;
+    var live = rccDoc();
+    if(!rccIsReport(live)) return;
+
+    if(!V.agrees(d && d.vocabulary)){
+      alert('This copy of the app and the sorting service are out of step.\n\n' +
+            'Close the app completely, reopen it twice, and try again.');
+      return;
+    }
+
+    var r = sortApply(live, photos, (d && d.placed) || []);
+    var aside = ((d && d.setAside) || []).length;
+    var bits = [];
+    if(r.moved) bits.push(r.moved + ' moved');
+    if(r.captioned) bits.push(r.captioned + ' captioned where they were');
+    if(aside) bits.push(aside + ' left alone (no confident section)');
+    if(r.unknown) bits.push(r.unknown + ' skipped (unrecognised)');
+    if(r.vanished) bits.push(r.vanished + ' could not be matched back');
+
+    alert(bits.length ? ('Sorted.\n\n' + bits.join('\n')) : 'Nothing needed moving.');
+    if(typeof scheduleSave === 'function') scheduleSave();
+  })
+  .catch(function(e){
+    if(g !== _rccGen) return;
+    alert('Could not sort the photographs \u2014 ' + String((e && e.message) || e).slice(0, 160));
+  })
+  .then(function(){
+    _sortBusy = false;
+    var b = document.getElementById('sortBtn');
+    if(b) b.disabled = false;
+  });
+}
+
+/* Signed-in, not admin: /api/sortphotos only ever sees photographs already in
+   this report. Shown when the open document is actually an inspection report -
+   the same editor opens estimates and contracts, whose sections mean something
+   else entirely. */
+window.sortGate = function(){
+  var b = document.getElementById('sortBtn');
+  if(!b) return;
+  b.style.display = rccIsReport(rccDoc()) ? '' : 'none';
+};
+
+var sb = document.getElementById('sortBtn');
+if(sb) sb.addEventListener('click', sortRun);
+
+window.CardinalSortPhotos = Object.assign(window.CardinalSortPhotos || {}, {
+  run     : sortRun,
+  collect : sortCollect,
+  apply   : sortApply,
+  vacate  : sortVacate,
+  fp      : sortFp,
+  sectionOf: sortSectionOf
 });
 })();
 </script>

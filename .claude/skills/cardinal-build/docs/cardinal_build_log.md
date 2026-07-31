@@ -2806,3 +2806,60 @@ discriminates.
 
 **LIMIT: no real Gemini call was made.** This proves the route's contract, not that the model sorts
 photographs well. That needs Theo, real photographs, and the writer that does not exist yet.
+
+## 491 — the writer: sort the photographs already in this report
+
+Open a report, press **🧹 Sort photos**, and every photograph already in it is moved to the section
+it belongs to and given a caption. Photographs the model is not confident about are left exactly
+where they are rather than guessed at.
+
+Mounted in the **parent document**, like 486 and for the same reason: `serializeFrame()` is a
+denylist and its output is what reaches the database, the client email and the public share link.
+Signed-in rather than admin, because this route only ever sees photographs already in the open
+report — settled by Theo and recorded at 490.
+
+### The traps, and where each is handled
+
+**O(n²), fixed by extension not duplication.** `placePhotoInSection` re-ran `wirePhotoFrames` and
+`wireReanalyzeButtons` on every call. It gains an optional fifth argument, `defer`; the bulk caller
+passes `true` and wires **once** after the last photograph. Both callers that existed before 491
+pass four arguments, so `defer` is `undefined` for them and their behaviour is exactly what 486
+shipped — asserted, both call sites unchanged. **Negative-controlled:** the same three-photo sort
+run through 490's `placePhotoInSection` wires **3** times; through 491's it wires **1**. Without
+that control the assertion would have been vacuous.
+
+**Node references captured before an `await` are not trusted.** The editor may have re-rendered
+during the round trip. A marker attribute was rejected outright — `serializeFrame` would carry one
+into the saved report and out to the client — so `sortApply` re-reads the live document and matches
+photographs back by a fingerprint of their bytes (`length + first 64 + last 64`). `_rccGen` is
+captured before the call and re-checked after, because `closeEditor()` sets nothing synchronously
+and re-reading `contentDocument` cannot tell you the editor is closing.
+
+**Section 2 is never a target.** It belongs to `wireSummaryDraftButton`, which mounts with
+`insertAdjacentElement('afterend', …)`; `serializeFrame` removes it by testing a single node while
+stripping the `data-wired` guard unconditionally, so a second `afterend` control removes the wrong
+one and compounds one copy per save/open cycle. 490's whitelist rejects anything outside 3–8, and
+the harness asserts section 2 specifically.
+
+**The client whitelist is the authority, not the route.** Every placement goes through
+`CardinalSortVocab.knows()` before it touches the document, and the batch is compared against the
+vocabulary the route returns — a deploy skew between `index.html` and the route reports itself
+instead of silently discarding placements.
+
+**Data URLs only.** A non-`data:` src is never collected, so it can never be sent.
+
+**Gates.** check_build green, stamp 490 → 491, marker present, negative control clean. Harness
+**22/22** driving the shipped module against a report built from the shipped `REPORT_TEMPLATE` —
+nothing reimplemented: `placePhotoInSection`, `addFrameToSection`, `findEmptyFrameInSection`,
+`sectionElements`, `findSectionHeading`, `sectionName` and `rccSections` are all lifted out of
+`index.html` by brace-matching. Only the three wiring functions are counting stubs, because how
+often they run is the thing under test.
+
+**A harness red that was the harness's fault, again.** Two placement assertions failed because they
+keyed photographs on the last 12 characters of their data URL — all three fixtures end in the same
+80 `x`s, so the base64 tails are identical and the map collapsed to one entry. The app's own
+`sortFp` was already correct. Third time this session that a red was the test rather than the app;
+the ratio in `START_HERE` §3 continues to hold.
+
+**LIMIT.** jsdom proves structure, never appearance, and no real Gemini call was made by any gate.
+That a sorted report *reads* well needs Theo, real photographs, and a real key.
