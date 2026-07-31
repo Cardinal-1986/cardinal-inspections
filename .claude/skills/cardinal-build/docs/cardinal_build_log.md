@@ -3409,3 +3409,41 @@ it from memory — the hand-made list missed `lbCut`.
 
 **A degradation path that silently swallows errors will make an incomplete harness look like a broken
 feature.** Probe the thing under test in isolation before believing any result that flows through it.
+
+## 511 — I reintroduced the bug 488 fixed, six times in one evening
+
+Build 488 repaired 20 What's New notes carrying an escape JavaScript cannot represent.
+`BUG_CLASSES.md` §11 documents it. **I then did it again in 504, 506, 507, 508, 509 and 510.**
+
+`\u` takes **four** hex digits and stops. Emoji live above U+FFFF, so `\u1F4DA` is U+1F58
+followed by a literal `A`. What's New has been reading:
+
+> `ὍA The Resource Library is now one tap away from anywhere.`
+
+Astral characters need a **surrogate pair** — `\uD83D\uDCDA`. Six occurrences, all mine,
+all repaired. Each replacement was decoded back to a codepoint and asserted to land in the
+emoji block before being written.
+
+### Why the earlier gates never caught it
+
+Every one passed `node --check`, because **the broken form is valid JavaScript** — it is a
+Greek letter followed by a digit, which is a perfectly legal string. The gate asked *does
+this parse* when the question was *what does Theo read.*
+
+`scripts/changelog_render.mjs` now answers the second one: it evaluates the real
+`CHANGELOG` array and prints the leading token of each recent note with its codepoints.
+It reports **6 bad on build 510 and 0 on 511** — a gate that has been seen to fail.
+
+### The scanner nearly produced a confidently wrong number
+
+A first pass matched `\u[0-9A-Fa-f]{5}` and reported **21** broken escapes. Most were
+correct: `\u00a71345.23` is *§1345.23* and `\u2019d` is *'d* — four-hex escapes whose next
+character merely looks hexadecimal. The real signature is narrower, and the count was 6.
+
+The harness then made the mirror-image error: it defined "emoji" as codepoint ≥ 0x1F000 and
+flagged **⚡ (U+26A1)** — a valid BMP emoji — as broken. Corrected to the actual signature:
+*two* codepoints in a slot that should hold one.
+
+**Both directions of this mistake cost the same thing.** A pattern loose enough to catch
+every real instance also catches things that are fine; the fix is to state the defect's
+signature precisely, then check the claim against what the user sees.
