@@ -3175,7 +3175,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 550 &#8212; Crews in light mode, matching the rest of the app &#8212; white cards, red hairlines, everything raised</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 551 &#8212; the light Crews cards actually lift off the page now</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34116,6 +34116,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:551, note:'\u2728 The light cards pop now. \u2666 Crews cards sit up off the page with a real shadow instead of a faint one \u2014 the app\u2019s own lifted look, which until now you could only see by hovering, and a phone cannot hover.' },
 { build:550, note:'\u2600\uFE0F Crews looks right in light mode now. \u2666 Warm off-white page, white cards with a thin red edge, and everything lifted off the page the way the Landing and Insurance screens are. \u2666 The crew list is a raised card in light instead of a sunk channel. Dark is unchanged.' },
 { build:549, note:'\uD83D\uDCD0 Rate columns line up. \u2666 Each category was its own table sizing its own columns, so Unit, Ours and Theirs sat in a different place in every block. One table now. \u2666 And the rates scroll inside their own frame instead of dragging the whole page sideways on a phone.' },
 { build:548, note:'\uD83D\uDCB5 Labor rates on a crew. \u2666 Price a crew against your own catalog and see what you keep on every line, or add a row only they do. \u2666 Admin only \u2014 production can see who is insured, not what anyone is paid.' },
@@ -53487,9 +53488,10 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* ── the nav: a raised card, not a sunk well ── */
 :root[data-theme="rb-light"] #crewsView .crw-nav{
   background:var(--crw-card,#fff);
-  border:1px solid var(--crw-hair,rgba(200,32,46,.28));
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-top:2px solid var(--crw-lit,#fff);
   border-radius:14px;
-  box-shadow:0 6px 18px rgba(31,33,36,.09), 0 1px 3px rgba(31,33,36,.06);
+  box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
 }
 /* section heading = label, then a rule running to the edge */
 :root[data-theme="rb-light"] #crewsView .crw-sec{
@@ -53515,21 +53517,22 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* the selected crew is the one card that gets the bloom */
 :root[data-theme="rb-light"] #crewsView .crw-item.on{
   background:var(--crw-card,#fff);color:#161616;
-  box-shadow:inset 3px 0 0 #c8202e, 0 3px 10px rgba(200,32,46,.14),
-             0 0 0 1px rgba(200,32,46,.30);
+  box-shadow:inset 3px 0 0 #c8202e, 0 8px 20px rgba(200,32,46,.24),
+             0 0 0 1px rgba(200,32,46,.34);
 }
 
 /* ── panels: white, hairlined, raised ── */
 :root[data-theme="rb-light"] #crewsView .crw-card{
   background:var(--crw-card,#fff);
-  border:1px solid var(--crw-hair,rgba(200,32,46,.28));
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-top:2px solid var(--crw-lit,#fff);
   border-radius:14px;
-  box-shadow:0 6px 18px rgba(31,33,36,.09), 0 1px 3px rgba(31,33,36,.06);
+  box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
 }
 /* the header card and the body card are one object, so the seam between them
    must not draw a line through it */
 :root[data-theme="rb-light"] #crewsView .crw-card + .crw-card{
-  box-shadow:0 6px 18px rgba(31,33,36,.09);
+  box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
 }
 
 /* ── tabs ── */
@@ -53540,7 +53543,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-tab.on{
   background:var(--crw-card,#fff);color:#161616;
   border-color:var(--crw-hair,rgba(200,32,46,.28));
-  box-shadow:inset 0 2px 0 #c8202e, 0 -2px 6px rgba(31,33,36,.05);
+  box-shadow:inset 0 2px 0 #c8202e, 0 -3px 8px rgba(40,20,10,.09);
 }
 
 /* ── document rows and notes: little raised cards of their own ── */
@@ -53549,7 +53552,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   background:var(--crw-card,#fff);
   border:1px solid var(--crw-hair,rgba(200,32,46,.20));
   border-radius:11px;
-  box-shadow:0 2px 6px rgba(31,33,36,.06);
+  box-shadow:0 4px 10px rgba(40,20,10,.10), 0 1px 3px rgba(40,20,10,.07);
 }
 
 /* ── the rate table ── */
@@ -53557,7 +53560,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   background:var(--crw-card,#fff);
   border:1px solid var(--crw-hair,rgba(200,32,46,.20));
   border-radius:11px;padding:2px 10px 6px;
-  box-shadow:0 2px 6px rgba(31,33,36,.06);
+  box-shadow:0 4px 10px rgba(40,20,10,.10), 0 1px 3px rgba(40,20,10,.07);
 }
 :root[data-theme="rb-light"] #crewsView .crw-rcatrow td{
   color:var(--crw-red,#9c1822);
@@ -53575,7 +53578,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView textarea{
   background:var(--crw-card,#fff);color:var(--crw-ink,#1f2124);
   border:1px solid var(--crw-inputline,#e2dede);border-radius:8px;
-  box-shadow:0 1px 2px rgba(31,33,36,.05);
+  box-shadow:0 1px 3px rgba(40,20,10,.08);
 }
 :root[data-theme="rb-light"] #crewsView label{ color:var(--crw-red,#9c1822); }
 
@@ -53583,7 +53586,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-btn{
   background:var(--crw-card,#fff);color:var(--crw-ink,#1f2124);
   border:1px solid var(--crw-inputline,#e2dede);border-radius:9px;
-  box-shadow:0 2px 5px rgba(31,33,36,.07);
+  box-shadow:0 3px 7px rgba(40,20,10,.13), 0 1px 2px rgba(40,20,10,.08);
 }
 :root[data-theme="rb-light"] #crewsView .crw-btn.primary{
   background:#c8202e;border-color:#c8202e;color:#fff;

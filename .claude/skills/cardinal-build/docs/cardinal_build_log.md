@@ -4939,3 +4939,44 @@ Harness `harnesses/h550_chromium.js`.
 an **int**, so the slice was a single character and the check was meaningless before it failed. Rewritten
 to regex out the rule body and assert `box-shadow` inside it. The test was wrong twice over: broken
 *and* silently so.
+
+---
+
+## Build 551 — the light Crews cards actually lift off the page
+
+**Theo, with a third screenshot:** *"I need the light theme to have this type of raised look with
+shadows it pops out."*
+
+550's light shadows were **too weak and the wrong temperature**: `rgba(31,33,36,.09)` — a cool grey I
+picked, on a warm off-white ground.
+
+**Every value here is the app's own, measured rather than invented.** `#leadsView .ljcard` renders
+`rgba(40,20,10,…)` — a *warm* shadow that belongs with the warm page — and it already defines a lifted
+elevation at `0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10)`. **That is its `:hover`
+state.** A phone cannot hover, so the app's own lifted look was unreachable on the device Theo works
+from. 551 promotes it to rest.
+
+Inner objects (doc rows, notes, the rate table, buttons, inputs) lift at a **smaller** amplitude so the
+hierarchy survives the increase — everything getting the same shadow would flatten it again.
+
+**A lit top edge is the other half of "raised":** `border-top:2px solid #fff` with the shadow beneath
+is light-from-above. Without it a card is merely outlined.
+
+The patch asserts **zero `rgba(31,33,36` remain** in the light block — the first attempt missed the
+tabs and the inputs and its own gate caught it, aborting before the write.
+
+**⚠ The first marker failed the negative control**, and correctly: `0 14px 28px rgba(40,20,10,.16)` was
+**already in the file**, because it was lifted *from* `.ljcard:hover`. Reusing the app's values means
+the value is not new — only where it appears is. Same lesson as 543's ported icon. Marker changed to
+`border-top:2px solid var(--crw-lit,#fff)`.
+
+Measured before and after in Chromium:
+`rgba(31,33,36,.09) 0 6px 18px` → `rgba(40,20,10,.16) 0 14px 28px`.
+
+`check_build.py` green (551, negative-controlled). Dark untouched — asserted, all 25 rules still
+light-scoped and the dark recessed well intact.
+
+**Still unresolved, and Theo should say:** his screenshot shows a **dark top edge** on each card. The
+shipped light `.ljcard` renders `border-top: rgb(255,255,255)` — white — so that edge is not coming
+from the current rule. It may be the shadow of the card above, or a build he was looking at. 551 uses a
+**light** top edge, which is the correct physics for a raised card. If he wants a dark edge, say so.
