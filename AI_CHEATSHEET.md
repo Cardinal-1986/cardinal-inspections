@@ -8,7 +8,8 @@ rest land; skip it and the others read like a list of tricks. Every prompt is me
 written.
 
 Parts 1-5 are the general manual. Parts 6-13 are the ones with Cardinal's own hardware, data and
-numbers in them.
+numbers in them. Parts 14-15 are the wider view: why the strongest model isn't always for sale, and
+where the models you can download actually come from.
 
 ---
 
@@ -1356,6 +1357,208 @@ It probably has, and it's almost certainly fine. Don't panic and don't hide it.
 
 ---
 
+## Part 14 — Project Glasswing
+
+*Checked 1 August 2026. Figures from Anthropic's own announcements.*
+
+In April 2026 Anthropic finished a model and decided not to sell it. What they did instead is the
+clearest illustration in this document of why *the best model* and *the model you can buy* are two
+different questions.
+
+### The short version
+
+Anthropic built **Claude Mythos** — a model with the same capabilities, the same price and the same
+behaviour as Claude Fable 5 from Part 9. Then they didn't put it on the price list. There is no
+signup page. The only way to reach it is to be a participant in a programme called **Project
+Glasswing**.
+
+The stated reason is uncomfortable and worth reading twice: **the model is extremely good at finding
+security holes in software.** A tool that can read a million lines of code and tell you where the
+flaws are is the same tool, unchanged, that can read a million lines of code and write the attack.
+There is no version of it that only does the helpful half.
+
+So rather than release it and let both sides start at once, they handed it to the defenders first
+and gave them a head start.
+
+### What actually happened
+
+1. **Roughly fifty organisations got it first.** The launch partners were the companies that hold up
+   the internet: Amazon Web Services, Apple, Broadcom, Cisco, CrowdStrike, Google, JPMorganChase, the
+   Linux Foundation, Microsoft, NVIDIA and Palo Alto Networks, alongside Anthropic.
+2. **They pointed it at their own code.** Not at each other's — at the software their own products
+   are built from, which is also the software everything else is built from.
+3. **In about a month it found more than ten thousand high- or critical-severity vulnerabilities.**
+   Most individual partners each found hundreds. In code that is already the most audited on earth.
+4. **Then it widened.** Roughly 150 more organisations across more than fifteen countries were
+   brought in.
+5. **And they paid the volunteers.** $2.5M to Alpha-Omega and the OpenSSF through the Linux
+   Foundation, and $1.5M to the Apache Software Foundation — because open-source software is largely
+   maintained by unpaid people, and a flood of ten thousand real bug reports lands on those same
+   unpaid people.
+
+> **Ten thousand is the number to sit with.** Not because it's alarming — those flaws were already
+> there, and now they're being fixed. Sit with it because of what it says about **every other piece
+> of software you use**, none of which has had a frontier model pointed at it. The holes exist.
+> Nobody has looked. That is the ordinary condition of software, and it always was.
+
+### Three things it teaches, in order of how much they affect you
+
+| Lesson | What it means at your desk |
+|---|---|
+| **Capability is not availability** | The strongest model in the world was, for a while, not purchasable at any price. When you read a benchmark score, the real question is what you can actually get an account for — and Part 9 only lists things you can. |
+| **Defence and offence are one skill** | Anything that reads your code well enough to fix it reads it well enough to break it. This is the concrete, non-theoretical reason Part 13 exists — and the reason a leaked key is not a filing error but an incident. |
+| **Updates are the whole ask** | You will never touch Mythos and you don't need to. What reaches you is the *fixes* — in Supabase, in Vercel, in your browser, in the phone in your pocket. **Take the update.** That is your entire share of this work. |
+
+### And then they shipped it anyway
+
+The ending matters. Anthropic said from the start that Mythos-class models would reach everyone once
+the head start had been used, and they did: **Claude Fable 5 — on the price list in Part 9 at
+$10 / $50 — is that model class, publicly available.** Mythos itself still exists behind Glasswing,
+same capabilities, different name on the door.
+
+So the withholding was a delay, not a lock. Which is the honest shape of most of these decisions:
+not *whether* the capability arrives, but **who gets to use it first, and for how long**. For once,
+the answer was the people patching things.
+
+**Why a roofing company has a section about this.** Because it's the clearest available answer to
+"why can't I just use the best one?" — a question you'll ask every time a headline names a model you
+can't find a buy button for. Sometimes the answer is price. Sometimes it's a waiting list. And
+sometimes it's that the thing is genuinely dangerous in the wrong hands and the people who built it
+decided the order of operations mattered.
+
+---
+
+## Part 15 — The other half of the map: China and South Korea
+
+*Checked 1 August 2026. Half-life ≈ three months — faster than Part 9.*
+
+Part 9 listed four American companies. But almost every model you can actually *download* — the
+entire premise of Parts 6, 10 and 11 — comes from somewhere else. Mostly China. And the most
+interesting argument for running your own is being made by South Korea.
+
+> **Specs here move faster than anywhere else in this document.** Writing this page, published
+> sources **disagreed with each other** about context windows on the same model in the same article.
+> So this part names families and what they're for, and mostly avoids quoting numbers that will be
+> wrong by Christmas. Where a figure appears, it's one that two independent sources agreed on.
+
+### China — five families, and you already depend on them
+
+By mid-2026 five Chinese labs are publishing frontier-class models with **open weights** — the
+actual file, downloadable, yours to keep. This is not a niche. When Part 6 says a $4,000 box can do
+useful work, this is *why*.
+
+**DeepSeek** (Hangzhou) · open weights, MIT-style licence
+: The cheap generalist. V4 ships open weights, a very long context and API prices that read like
+  typos next to American ones.
+: **Strong** — price, by a distance. Reasoning well above what the cost suggests. Runs on consumer
+  hardware once quantized.
+: **Weak** — the company carries more political baggage than the file does; see the next section,
+  which is the part that actually matters.
+
+**Qwen** (Alibaba) · open weights, every size
+: The base almost all local tooling assumes. If a guide says "pull a small model and try it", it
+  usually means a Qwen.
+: **Strong** — released in every size from phone-scale up, so one family covers your laptop, your
+  Spark and a server. Best multilingual work of the five. Enormous ecosystem of ready-made variants.
+: **Weak** — so many versions that picking one is genuinely confusing, and the naming changes with
+  each generation.
+
+**GLM** (Z.ai / Zhipu) · open weights
+: The coding one. Aimed squarely at long, multi-file programming work.
+: **Strong** — holds a very long context, which is what large-codebase work actually needs.
+: **Weak** — narrower than Qwen if you want one model for everything.
+
+**Kimi** (Moonshot AI) · K3, 2.8T parameters, 17 July 2026
+: The agent one — built to keep its footing across long, many-step runs without losing the plot.
+: **Strong** — K3 is billed as the largest open-source model in the world; full weights were
+  published on 28 July 2026. Strong at the sort of long autonomous work Part 3 warns you to
+  supervise.
+: **Weak** — 2.8 trillion parameters is not something you run at home. Read this one as a hosted
+  option, not a Spark option.
+
+**MiniMax** (Shanghai) · open weights
+: The fifth family, strongest on long documents and multimodal work.
+: **Strong** — very long context at a low price.
+: **Weak** — the least-known of the five in English-language tooling, so fewer guides when something
+  breaks.
+
+### The distinction the headlines skip — read this one carefully
+
+**Chinese weights are not the same thing as Chinese servers.** These are two completely different
+decisions and only one of them is about your data.
+
+| | You download the weights and run them | You use the app, or call their API |
+|---|---|---|
+| **Where your words go** | Nowhere. The weights file is arithmetic — no networking code, no telemetry, nothing to phone home with | To their servers. DeepSeek's own privacy policy says data is stored in China |
+| **Works offline** | Yes. Unplug the internet and it still answers | No |
+| **Who has banned it** | Nobody bans a file of numbers | Australia, Taiwan, Italy, the Czech Republic, the Netherlands, several US states, NASA, the US Navy, the Department of Commerce — all on *government devices* |
+| **What it costs you** | Electricity | Very little money, and a data-residency decision you have to actually make |
+
+Every one of those bans is aimed at **the service**. None of them is aimed at the maths. That
+distinction is the entire reason Part 6's local option is available to you at all.
+
+### What running it locally does *not* fix
+
+One honest caveat, because it surprises people. The censorship in these models **is trained into the
+weights**, not bolted onto the website. A DeepSeek running entirely offline on your own machine,
+with no internet at all, will still decline to discuss Tiananmen Square and will still steer toward
+the approved version of Chinese history. Researchers have documented this at the model level rather
+than the app level.
+
+For estimating a hip roof this is irrelevant and you will never notice it. It is in here for one
+reason: **it proves the weights carry opinions you did not choose and cannot see.** That is true of
+every model from every country — China's is simply the easiest to point at. Part 1's rule holds
+regardless: verify anything that matters.
+
+### South Korea — the argument, not the model
+
+Korea is not on this page because a Korean model will run your business. It's here because Korea is
+doing, at national scale and with public money, **exactly the thing Part 6 recommends you do with a
+$4,000 box**: deciding that some work should happen on machines you control, in your own language,
+on your own soil.
+
+They call it **sovereign AI**. It is the same sentence as "run the photo captioner on the Spark",
+with eight more zeroes.
+
+**The Foundation Model Project** (Ministry of Science and ICT)
+: A state contest to build models from scratch — domestic data, domestic architecture, domestic
+  training, no foreign pre-trained weights underneath.
+: **Who passed** — January 2026: LG AI Research, SK Telecom and Upstage cleared the first stage.
+: **Who didn't** — Naver failed the *originality* test for leaning on components it hadn't trained
+  itself, which tells you how seriously the word "sovereign" was meant.
+
+**"AI for All"** (bidding opened 13 July 2026)
+: A free, unlimited AI assistant for all ~52 million citizens — the first G20 country to try it. Web
+  service before the end of 2026; a personal agent per citizen from 2027.
+: **The rule that matters** — at least 50% of queries must route through the operator's own certified
+  Korean model, plus 30% through other Korean companies' models: an **80% domestic floor**, written
+  into the contract. The state supplies the GPUs.
+: **The scale behind it** — a 260,000-GPU national build-out, with Samsung, SK, Hyundai and Naver
+  each deploying tens of thousands of chips.
+
+**The models themselves**, for completeness — you are unlikely to use any of these, and that's fine,
+because they are built for Korean. LG's **EXAONE** family publishes open weights. **Upstage Solar
+Pro** is the small-but-punching-up one, and the only Korean entry on the frontier leaderboards.
+**SK Telecom's A.X K1** is the big one at 519 billion parameters. Naver's **HyperCLOVA X** is trained
+on far more Korean text than any Western model. None of them beats what Part 9 already recommends
+for English-language roofing work. This section is about the *strategy*, not the shopping list.
+
+### The four rules to take off this page
+
+1. **Weights you downloaded and run offline are fine, whatever flag is on the box.** Nothing leaves.
+   This is not a loophole — it is the actual technical situation, and it is why local AI is cheap.
+2. **Any hosted service, from any country, is a data-residency decision.** Including the American
+   ones. Ask where the bytes land, then apply Part 13. The question is never the passport — it's the
+   destination.
+3. **Don't put client information through a hosted Chinese endpoint.** Not politics: their own policy
+   says it's stored in China, and you cannot explain that to a homeowner if you're ever asked. The
+   same data through the same model *running on your Spark* is a non-issue.
+4. **Judge the model on your own work; judge the service on where it sends the bytes.** Two separate
+   judgements, and mixing them is how people end up either needlessly afraid of a free download or
+   carelessly trusting a free website.
+
+---
+
 ## The short version
 
 1. **It predicts text and has no memory.** Everything it needs to know, you supply.
@@ -1379,7 +1582,11 @@ It probably has, and it's almost certainly fine. Don't panic and don't hide it.
     model took your Spark from 5 tokens a second to 64, for free.
 14. **A stack is layers, like a roof.** Build the smallest one that does the job; every layer is one
     more thing that can break at 11pm, and you own all of them.
-15. **An agent with a terminal fails differently.** Everything else gets you a wrong answer; that
+15. **The strongest model is sometimes not for sale** — and the only part of that story you have
+    to act on is **take the update**.
+16. **Chinese weights on your own machine send nothing anywhere; a Chinese website sends
+    everything.** Judge the model on your work, the service on where the bytes land.
+17. **An agent with a terminal fails differently.** Everything else gets you a wrong answer; that
     gets you a deleted folder. Own account, own folder, no keys to money or mail.
 
 ---
@@ -1396,6 +1603,7 @@ Every term this document uses that isn't plain English, defined once, with the p
 | **Batch job** | Work run over many records at once, usually overnight, with nobody watching. Local hardware's best shape. | VI |
 | **Container** | Software packed with everything it needs to run, so installing it can't break anything else — and removing it leaves no trace. Your undo button. | X |
 | **Context** | Everything the model can see at once: your question plus whatever you pasted. It has no memory beyond this. | I |
+| **Data residency** | Which country's soil your information physically sits on, and therefore whose laws reach it. The real question behind "is this service safe". | XV |
 | **Embedding** | A way of turning text into numbers so a computer can find things that *mean* the same, not just things spelled the same. The search half of RAG. | X |
 | **Fine-tuning** | Adjusting a model's own weights on your material. Teaches it a style; does **not** reliably teach it facts. For facts you want RAG. | X |
 | **GGUF** | The model file format llama.cpp and Ollama use. | XI |
@@ -1414,6 +1622,7 @@ Every term this document uses that isn't plain English, defined once, with the p
 | **safetensors** | The safe model file format: data only, so opening one cannot run code. Prefer it to the older `.bin`. | XI |
 | **Scope** | The adjuster's itemised list of what the carrier agrees to pay for. The document carrying the homeowner's details. | XII |
 | **Skill** | A capability you give an agent — run a command, send a message, read a folder. OpenClaw ships over a hundred; Hermes writes its own. | XI |
+| **Sovereign AI** | A country deciding it needs models trained on its own data, in its own language, running on its own soil. Cardinal's argument for a Spark, at national scale. | XV |
 | **SSH** | Typing on your laptop while the words run on another machine. How you reach the Spark. | XI |
 | **Stack** | The layers of software between a model file and something you can use. Like a roof: decking, underlayment, shingles. | X |
 | **Supplement** | A request to the carrier to pay for work the first scope missed. | XII |
@@ -1520,7 +1729,7 @@ its own shows status. `/goal clear` stops it. (Slash, not `@`.)
 
 ## Sources
 
-Parts 1-4 and 7-8 are practice rather than claims. Everything below backs a number or a tool name in Part 5, 6, 9, 10 or 11. Part 12's figures came
+Parts 1-4 and 7-8 are practice rather than claims. Everything below backs a number or a tool name in Part 5, 6, 9, 10, 11, 14 or 15. Part 12's figures came
 from querying Cardinal's own database on 1 August 2026.
 
 ### Part 5 — marketing and SEO
@@ -1576,6 +1785,27 @@ Six of these are vendor pages and will always be current. Check those, not this 
 - [DigitalOcean — what OpenClaw is (and that it was Clawdbot until Jan 2026)](https://www.digitalocean.com/resources/articles/what-is-openclaw)
 - [Turing Post — Hermes Agent vs OpenClaw, full comparison](https://www.turingpost.com/p/hermes)
 - [innFactory — an honest comparison of the two agent frameworks](https://innfactory.ai/en/blog/openclaw-vs-hermes-agent-comparison/)
+
+### Part 14 — Project Glasswing
+
+- [Anthropic — Project Glasswing: securing critical software for the AI era](https://www.anthropic.com/glasswing)
+- [Anthropic — Expanding Project Glasswing (partner count, vulnerability total, donations)](https://www.anthropic.com/news/expanding-project-glasswing)
+- [Anthropic — Project Glasswing: an initial update](https://www.anthropic.com/research/glasswing-initial-update)
+- [Anthropic Red — assessing Claude Mythos Preview's cybersecurity capabilities](https://red.anthropic.com/2026/mythos-preview/)
+
+### Part 15 — China and South Korea
+
+- [Kingy AI — best open-weight models 2026: GLM, DeepSeek, Kimi, Qwen](https://kingy.ai/news/best-open-weight-ai-models-in-2026-glm-5-2-vs-deepseek-v4-vs-kimi-k2-6-vs-qwen-vs-mistral/)
+- [TokenMix — Chinese model comparison, Q2 2026 update](https://tokenmix.ai/blog/best-chinese-ai-models-2026-comparison-guide)
+- [TechCrunch — DeepSeek is not uncensored when run locally](https://techcrunch.com/2025/02/03/no-deepseek-isnt-uncensored-if-you-run-it-locally/)
+- [R1dacted — investigating local censorship in DeepSeek's weights (arXiv)](https://arxiv.org/html/2505.12625v1)
+- [Introl — government bans on the DeepSeek service, by country and agency](https://introl.com/blog/deepseek-government-bans-spreading-worldwide-2026)
+- [KED Global — the firms selected to build Korea's sovereign model](https://www.kedglobal.com/artificial-intelligence/newsView/ked202508040010)
+- [Light Reading — Korea's sovereign AI project, second phase](https://www.lightreading.com/ai-machine-learning/south-korea-enters-second-phase-of-sovereign-ai-project)
+- [The Next Web — free AI for all 52 million citizens, and the domestic-model floor](https://thenextweb.com/news/south-korea-free-ai-chatbot-all-citizens-domestic-models)
+- [UPI — "AI for All" launch, 13 July 2026](https://www.upi.com/Top_News/World-News/2026/07/13/ai-for-everyone-public-services/9121783997023/)
+- [MarkTechPost — HyperCLOVA X, A.X, Solar Pro and the Korean model families](https://www.marktechpost.com/2025/08/21/meet-south-koreas-llm-powerhouses-hyperclova-ax-solar-pro-and-more/)
+- [Barchart — SK Telecom's A.X K1, 519B parameters](https://www.barchart.com/story/news/36803176/sk-telecom-unveils-a-x-k1-korea-s-first-500b-scale-hyperscale-ai-model)
 
 ### On the computed figures
 
