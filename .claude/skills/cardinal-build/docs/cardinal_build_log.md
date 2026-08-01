@@ -5244,3 +5244,55 @@ Gates: `check_build.py` green, negative-controlled, 557 → 558. **Chromium 14/1
 assertions against 557 and 558 from one script** so every line is its own negative control —
 `crewsView` NO→yes, all four content edges x=72→304, the two exceptions byte-identical, the other
 24 unmoved, and all 30 unchanged at 900px.
+
+### build 559 — Quick Inspection gets a yellow panel and stops being unreadable
+Theo: *"The quick inspec page is unreadable… leave the background color black alone then box the
+contents in a square with rounded corners in a deep yellow with white text make the yellow box
+recessed and the boxes within it hover with a shadow."* → shown three depths → *"Anything actually
+yellow yellow?"* → shown real yellows → *"Do option A but make the boxes within the yellow either
+dark grey or black and make them sink into the page with White text."*
+
+**What was actually wrong — rendered and measured, not guessed.** The page is a light-theme design
+stranded on the black retail page:
+
+| | computed | on the black page |
+|---|---|---:|
+| `.viewhead` | `rgb(28,20,22)` | **1.09:1 — invisible** |
+| `.subnote` | `rgb(102,102,102)` | 3.42:1 |
+| `.qibub` / `.qichip` / `.qibar` | white and cream slabs | glare |
+
+The heading was the real complaint. `backgroundImage` computed to `none`, so the retail
+gradient-clip rule people would expect to rescue `.viewhead` is **not** applying — a bare
+`.viewhead{color:#1c1416}` wins by file order.
+
+**White text had to move onto the cards, and arithmetic decided it.** White on `#FFD400` is
+**1.43:1** — no real yellow can carry white. Dark ink on it is 12.63:1, and white on the `#14110c`
+card is 18.83:1. So the panel carries dark ink and Theo's white text lives on the cards inside it.
+
+**Every selector is scoped to `#quickInspView`** — `.btn`, `.chipbtn`, `.axbtn`, `.viewhead`,
+`.subnote` and `.wrap` are app-wide classes; unscoped this would restyle every screen. Gated.
+
+**Two traps.** (1) `.chipbtn` carries `-webkit-text-fill-color:#2c2c2c`, which **beats `color`** —
+`color:#fff` alone would have left the note buttons dark-on-dark, i.e. reproduced the exact bug
+being fixed. Both properties are set everywhere. Same class as `.pipetitle` stripping colour off
+emoji. (2) Semantic colour preserved per CLAUDE.md: Camera red, Finish green (an inline style),
+active chip red, done chip green.
+
+**A defect only the screenshot caught.** Photos is `class="btn ghost"`, so the `.btn` red rule
+swallowed it and rendered a second cardinal-red button beside Camera. **All 19 assertions passed
+while that sat on screen.** Fixed with a `.btn.ghost` rule and a 20th assertion. This project's
+note that *screenshots root-cause more than reasoning does* earned itself again.
+
+**Green is Finish, and only Finish.** Theo, after seeing the render: a *done* chip was also
+green, spending the one colour that means "this inspection is over" on a much smaller idea. Done
+is now the same black card with its label in the panel's own yellow — **13.15:1**, unmistakably a
+different state from a plain white chip, and no second green anywhere. A darker grey card was
+measured first and **rejected**: every candidate came out **1.2–1.7:1 against the neutral chip**,
+so "done" would have been invisible. The harness now asserts green appears nowhere in the block
+and that Finish's inline green is the only one on the page.
+
+**`#qiStartView` is deliberately untouched** — it shares the invisible-heading problem, but
+wrapping a 340px map in a yellow panel is a design decision Theo has not seen. Flagged, not assumed.
+
+Gates: `check_build.py` green, negative-controlled, 558 → 559. **Chromium 20/20** against the
+*shipped* `#quickInspView` markup and real stylesheets, with 558 loaded from disk as its own control.
