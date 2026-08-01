@@ -3945,3 +3945,71 @@ harnesses re-run — **347 assertions total**, unchanged.
 **A harness that "hung" did not.** Twelve `pretendToBeVisual` JSDOM instances each keep a rAF loop
 alive, so node never exited, so `tail` never saw EOF and printed nothing. The run had completed.
 Close the windows and `process.exit(0)`.
+
+---
+
+## Build 526 — the landing page, four corrections
+
+> "Can you make the background black like the retail page i cant remember what that black is called.
+> Also seperate the 4 cards a bit so they look better. Make the resource library at the bottom stand
+> out a bit more along with the schedule board as they are both important"
+> …then: "Also make these text raised as well — Cardinal. / Roofing & Renovations / [the weather] /
+> Good evening, Theo. / Friday · July 31"
+
+**The black is `--bg`, `#09090C`** — declared once on `:root` beside `--paper`, and used by
+`body{background:var(--bg)}`. That is the retail page ground. The landing had `#14100e`, a warmer
+brown-black, so the two screens never matched. Now `var(--bg,#09090c)`, with the literal fallback
+448–449 requires. Measured after: `rgb(9, 9, 12)`.
+
+**525's weather is confirmed live.** Theo quoted his own reading back — "75° Overcast, H 88° · L 63°
+· 3 mph" — which is the verification the blocked egress proxy could not give from here. The
+unverified-schema caveat on 525 is now closed.
+
+### The four cards, separated
+
+`.cr-lr-roof` was a single clipped slab — `border-radius` + `overflow:hidden` around four seamless
+rows divided by a hairline and an inset seam shadow. Splitting them means the **container stops
+being a card and each row becomes one**: the roof gives up its radius, clipping and shadow; every
+`.cr-lr-course` takes them, in an 11px flex gap.
+
+Two things the container was quietly doing that now have to be done per card:
+
+1. **`overflow:hidden` was clipping the `::before` accent bar.** Without it on each card, the bar
+   squares off the rounded corner.
+2. **`.cr-lr-course + .cr-lr-course` is (0,2,0)** and beats a plain `.cr-lr-course` rule no matter
+   how late it sits. Named explicitly rather than hoped over.
+
+Measured after: gaps `[11, 11, 10]`, radius `12px`, `4/4` cards carry a shadow, `overflow:hidden`.
+
+**And one stray from 525, caught by measuring rather than looking:** `html[data-mode="light"]
+.cr-lr-roof{border-top:2px solid #ffffff}` survived `border:0` on specificity and drew a white line
+above the first card in light mode. Now `border:0` there too.
+
+### Library and Schedule Board promoted
+
+They were `.cr-lr-minor` — transparent ghost pills, **which is the tier I chose for them at 525 and
+exactly what he is correcting**. They move to the `.cr-lr-pair` treatment Production and Sales Floor
+already have: solid ground, accent top edge, icon, title, one line of description, raised. Verified:
+the pair grid now reads Production · Sales Floor · Resource Library · Schedule Board.
+
+That leaves "All clients · N" alone in `.cr-lr-minor`, which is right — an admin shortcut, not a
+destination. It only renders for `seeAll`, so the row can now be **empty**:
+`.cr-lr-minor:empty{display:none}` rather than a stray 14px of margin around nothing.
+
+### Raised type
+
+Letterpress, and it **inverts per theme**: on the dark ground the lift is a shadow *below* the
+glyph; on paper it is a highlight below with a soft shade under it. `.cr-lr-wx .ic` gets a
+`drop-shadow()` filter instead — it is an emoji, not text.
+
+**Checked before writing it:** none of the five targets carry
+`-webkit-text-fill-color:transparent`. A `text-shadow` behind a transparent fill paints as a smear,
+not a lift. The patch script asserts this against the file. (`.cre-h` on the Estimates screen *is*
+clipped — that is the one to keep away from.)
+
+Kept deliberately light on the 10px monospace: 523 was spent making this page readable and a heavy
+shadow at that size gives it back.
+
+### Gates
+
+`check_build.py` green. All seven harnesses re-run — **347 assertions**, unchanged.
