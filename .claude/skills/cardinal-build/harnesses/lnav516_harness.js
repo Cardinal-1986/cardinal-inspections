@@ -207,10 +207,18 @@ const eq = (n, got, want) => ok(n + '  [' + JSON.stringify(got) + ']', JSON.stri
   eq('NOTHING is left unbounded — max-width:none is gone from every .wrap', cap.unbounded, []);
   ok('the new cap covers the bulk of them  [' + cap.atCap + ' of ' + cap.total + ']',
     cap.atCap >= 15, cap);
+  /* 527 moved boardView's 1700px out of an inline attribute and into CSS so the
+     desktop cap can out-specify it — that inline width was exactly what stranded
+     the Schedule Board in a narrow column with dead space either side. It still
+     holds 1700 when the sidebar is OFF; with the sidebar on it joins the capped
+     set. So: FOUR own-width views now, and the board must be capped, not
+     unbounded. */
   ok('views with their own deliberate width keep it, uncrushed  [' + cap.ownWidth.join(', ') + ']',
-    cap.ownWidth.length === 5 &&
-    cap.ownWidth.some((x) => /boardView:1700px/.test(x)) &&
+    cap.ownWidth.length === 4 &&
+    !cap.ownWidth.some((x) => /boardView/.test(x)) &&
     cap.ownWidth.some((x) => /settingsView:640px/.test(x)), cap);
+  ok('...and the Schedule Board is capped now, not stranded at 1700 (527)',
+    cap.unbounded.indexOf('boardView') === -1, cap);
   ok('the masthead inside the fixed header is NOT capped  [' + cap.mastMax + ']',
     cap.mastMax === 'none' || cap.mastMax === '100%', cap);
 

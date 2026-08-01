@@ -4013,3 +4013,64 @@ shadow at that size gives it back.
 ### Gates
 
 `check_build.py` green. All seven harnesses re-run — **347 assertions**, unchanged.
+
+---
+
+## Build 527 — the Schedule Board
+
+> Theo, with a screenshot of it: "Can you fix this page"
+
+Measured in Chromium, not guessed. Three things:
+
+1. **It was the one retail surface never tokenised.** `.bday{background:#fff}` — fourteen white
+   slabs down a near-black page.
+2. **`.bnone` ("Nothing scheduled") was `#a89f9a` on that white — 2.6:1**, and it is the text on
+   thirteen of the fourteen cards.
+3. **The wrap carried an INLINE `max-width:1700px`**, which no stylesheet rule can beat, so the
+   desktop cap every other page follows never applied and the column sat stranded.
+
+### The inks had to move with the ground
+
+The trap 523 and 525 were both spent on. On the retail card (`#2e333b`→`#262a31`) the existing inks
+read:
+
+| | | |
+|---|---:|---|
+| `.bhead` `#8f1620` | **1.39:1** | the date on every card |
+| `.btime` `#555555` | **1.70:1** | |
+| `.bcli` `#1d4f91` | **1.56:1** | the client name |
+
+Darkening the card alone would have made this page **worse** than the white version — unreadable
+rather than merely jarring. All replaced with computed values: `#f08a90`, `var(--rbe-ink)`,
+`var(--rbe-acclt)`, `var(--rbe-mute)`.
+
+`.bday` already carried 522's raise with the **light** bevel, because it was a white card then. It
+isn't any more, so the bevel is retuned with it — "the bevel follows the card", as 522 established.
+
+Gated retail-only rather than edited at source, so Claims and Community keep what they have.
+
+### The width — and a regression the harness caught
+
+Deleting the inline width outright dropped the board to `.wrap`'s 1180 whenever the sidebar is off
+— **a tablet regression dressed as a fix**. `lnav516_harness` failed on it, correctly.
+
+The fix is to move the width into CSS rather than delete it: `#boardView .wrap{max-width:1700px}`
+keeps the no-sidebar case, and `body.cr-lnav-on #boardView .wrap{max-width:var(--lnav-cap)}`
+out-specifies it when the sidebar is on — which is the case Theo photographed.
+
+**The 516 harness was then updated, because its assertion had become stale by intent**: it encoded
+"boardView keeps 1700 even with the sidebar", which was true at 516 and is deliberately no longer
+true. Now four own-width views, and the board asserted as capped rather than unbounded.
+
+### One self-inflicted red worth recording
+
+The patch script asserts that no collapsed ink survives into the new block — and tripped on
+`#8f1620` **inside its own explanatory comment**. CLAUDE.md records exactly this ("patch scripts
+document the values they change, so a naive count finds the value in its own explanatory comment").
+Comments are stripped before the assertion now.
+
+### Not verified visually
+
+The computed style is proved — card ink `#cfd6df`, heading `#f08a90`, background a gradient rather
+than `#fff`. A screenshot was **not** obtained: `#landingView` is a fixed overlay and the app's own
+view switching kept landing on the dashboard instead. Theo's eyes on the preview are the gate.

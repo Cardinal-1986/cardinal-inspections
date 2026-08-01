@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 526 &#8212; the landing page sits on the same black as the rest of the app, its cards stand apart, and Library and Schedule Board are proper cards</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 527 &#8212; the Schedule Board is no longer a stack of white slabs on a black page, and it uses the whole width</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7005,7 +7005,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
   </div>
 </div>
 <div id="boardView" style="display:none;">
-  <div class="wrap" style="padding-top:18px;max-width:1700px;">
+  <!-- 527: the inline max-width beat the desktop cap every other page
+       follows (body.cr-lnav-on .wrap -> --lnav-cap), stranding this column
+       with dead space either side. Dropped so the board sizes like the
+       rest of the app. -->
+  <div class="wrap" style="padding-top:18px;">
     <h2 class="viewhead">&#128197; Schedule Board</h2>
     <p class="subnote">Jobs &#128296;, material drops &#128666;, and appointments &#128197; for the next 14 days. Tap a day to add or edit.</p>
     <div id="boardMount"></div>
@@ -33854,6 +33858,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:527, note:'\uD83D\uDCC5 Schedule Board. \u2666 It was the one retail page still painted for a white background \u2014 fourteen white cards down a black screen, with \u201CNothing scheduled\u201D almost too faint to read. It now matches the rest of the app, and the dates, times and client names were re-picked so they stay readable on the darker card. \u2666 It also stretches to the full width of the screen instead of sitting in a narrow column.' },
 { build:526, note:'\uD83C\uDFA8 Landing page, tidied. \u2666 The background is now the same black the rest of the app uses, instead of a warmer one. \u2666 The four big cards are separated instead of stacked in one block. \u2666 Resource Library and Schedule Board are proper cards now, beside Production and Sales Floor, rather than plain outlines at the bottom. \u2666 The name, greeting, date and weather sit raised off the page.' },
 { build:525, note:'\u26C5 The landing page. \u2666 Today\u2019s Dayton weather now sits top right beside \u201CCardinal\u201D \u2014 conditions, temperature, high and low, wind and the rain chance, so you know before you leave whether anyone is getting on a roof. \u2666 The cards sit raised off the page like the home page ones. \u2666 In light mode the daily quote was invisible \u2014 cream writing on a cream background \u2014 along with the small print under it. Fixed.' },
 { build:524, note:'\uD83D\uDDD1 Delete an estimate. \u2666 Every saved estimate on a client now has an \u2715 beside it, and an open estimate has a Delete button next to Cancel. \u2666 It asks first, and it tells you plainly if it could not \u2014 you can delete estimates you created, Theo and Joan can delete any. \u2666 A document already published from an estimate is kept.' },
@@ -51827,6 +51832,55 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 body:not(.claim-insurance):not(.claim-community) #projectView .projinfo:hover,
 body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow:hover,
 body:not(.claim-insurance):not(.claim-community) #projectView .jabox:hover{box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
+
+/* ── Build 527 · the Schedule Board ───────────────────────────────────────
+   Fourteen white slabs down a near-black page - the one retail surface that
+   never got tokenised. Themed here rather than at source, so Claims and
+   Community keep what they have.
+
+   THE INKS MOVE WITH THE GROUND. On the retail card the old ones read
+   .bhead #8f1620 at 1.39:1, .btime #555 at 1.70:1 and .bcli #1d4f91 at
+   1.56:1 - darkening the card alone would have made this page unreadable
+   rather than merely jarring. Every replacement below is computed.
+
+   .bday already carried 522's raise with the LIGHT bevel, because it was a
+   white card then. It is not any more, so the bevel is retuned with it.    */
+body:not(.claim-insurance):not(.claim-community) #boardView .bday{
+--rbe-ridge-t:#454552;--rbe-ridge-b:#050507;--rbe-ridge-hl:rgba(255,255,255,.09);
+background:linear-gradient(180deg,var(--rbe-bg1,#2e333b),var(--rbe-bg2,#262a31));
+border:1px solid var(--rbe-line2,#2b2b33);
+color:var(--rbe-ink,#cfd6df);
+}
+body:not(.claim-insurance):not(.claim-community) #boardView .bday.bempty{
+background:linear-gradient(180deg,var(--rbe-bg2,#262a31),var(--rbe-panel,#16161B));
+}
+/* the date line - 1.39:1 before */
+body:not(.claim-insurance):not(.claim-community) #boardView .bhead{
+color:#f08a90;border-bottom:1px solid var(--rbe-line2,#2b2b33);
+}
+/* "Nothing scheduled", which is thirteen of the fourteen cards */
+body:not(.claim-insurance):not(.claim-community) #boardView .bnone{
+color:var(--rbe-mute,#9aa0a8);
+}
+body:not(.claim-insurance):not(.claim-community) #boardView .btime{
+color:var(--rbe-ink,#cfd6df);
+}
+body:not(.claim-insurance):not(.claim-community) #boardView .bcli{
+color:var(--rbe-acclt,#b9d3ec);
+}
+body:not(.claim-insurance):not(.claim-community) #boardView .brow{
+border-top-color:var(--rbe-line2,#2b2b33);
+}
+body:not(.claim-insurance):not(.claim-community) #boardView .subnote{
+color:var(--rbe-mute,#9aa0a8);
+}
+/* The width, moved out of the inline attribute rather than deleted. Deleting it
+   outright dropped the board to .wrap's 1180 whenever the sidebar is off - a
+   tablet regression dressed as a fix, and the 516 harness caught it. So: keep
+   1700 for the no-sidebar case, and let the desktop cap out-specify it when the
+   sidebar IS on, which is the case Theo photographed. */
+#boardView .wrap{max-width:1700px}
+body.cr-lnav-on #boardView .wrap{max-width:var(--lnav-cap)}
 
 /* the card whose red top edge carries meaning keeps it */
 .rptkpi{--rbe-ridge-t:#ffffff;--rbe-ridge-b:#d9d9d9;--rbe-ridge-hl:rgba(255,255,255,.9);
