@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 527 &#8212; the Schedule Board is no longer a stack of white slabs on a black page, and it uses the whole width</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 528 &#8212; the desktop menu down the left uses proper icons instead of emoji</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33858,6 +33858,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:528, note:'\u25FB\uFE0F Proper icons. \u2666 The menu down the left side on desktop no longer uses emoji \u2014 it has a real icon set: solid marks on the dark app, lighter keyline marks when you switch to the light theme. \u2666 The burger menu is unchanged.' },
 { build:527, note:'\uD83D\uDCC5 Schedule Board. \u2666 It was the one retail page still painted for a white background \u2014 fourteen white cards down a black screen, with \u201CNothing scheduled\u201D almost too faint to read. It now matches the rest of the app, and the dates, times and client names were re-picked so they stay readable on the darker card. \u2666 It also stretches to the full width of the screen instead of sitting in a narrow column.' },
 { build:526, note:'\uD83C\uDFA8 Landing page, tidied. \u2666 The background is now the same black the rest of the app uses, instead of a warmer one. \u2666 The four big cards are separated instead of stacked in one block. \u2666 Resource Library and Schedule Board are proper cards now, beside Production and Sales Floor, rather than plain outlines at the bottom. \u2666 The name, greeting, date and weather sit raised off the page.' },
 { build:525, note:'\u26C5 The landing page. \u2666 Today\u2019s Dayton weather now sits top right beside \u201CCardinal\u201D \u2014 conditions, temperature, high and low, wind and the rain chance, so you know before you leave whether anyone is getting on a roof. \u2666 The cards sit raised off the page like the home page ones. \u2666 In light mode the daily quote was invisible \u2014 cream writing on a cream background \u2014 along with the small print under it. Fixed.' },
@@ -51413,6 +51414,25 @@ body.cr-lnav-on .wrap:not(.masthead){max-width:var(--lnav-cap)}
 #cr-lnav .lnav-item:hover{background:var(--rbe-line,#232329);color:var(--rbe-head,#fff)}
 #cr-lnav .lnav-item.on{background:var(--lnav-wash,rgba(200,32,46,.14));
   border-left-color:var(--lnav-crmc,#c8202e);color:var(--rbe-head,#fff);font-weight:700}
+/* ── 528 · icons ──────────────────────────────────────────────────────────
+   Style 2 (solid) in the app's dark theme, style 5 (keylines) in rb-light.
+   Both sets are in the DOM and CSS picks one, so flipping the theme costs no
+   re-render.
+
+   Gated on :root[data-theme="rb-light"] - the APP's light theme - and NOT on
+   html[data-mode="light"], which CLAUDE.md records as the landing page's own
+   toggle and explicitly not an app-wide mode.                                */
+#cr-lnav .lnav-ic{flex:0 0 auto;width:17px;height:17px;display:grid;place-items:center}
+#cr-lnav .lnav-ic svg{width:17px;height:17px;display:block}
+#cr-lnav .lnav-tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#cr-lnav .lnav-ic .i2{fill:var(--rbe-mute,#8b9199);stroke:none}
+#cr-lnav .lnav-ic .i5{display:none;fill:none;stroke:var(--rbe-mute,#8b9199);stroke-width:2;stroke-linecap:round}
+#cr-lnav .lnav-item:hover .lnav-ic .i2{fill:var(--rbe-head,#fff)}
+#cr-lnav .lnav-item.on .lnav-ic .i2{fill:var(--lnav-crmc,#c8202e)}
+:root[data-theme="rb-light"] #cr-lnav .lnav-ic .i2{display:none}
+:root[data-theme="rb-light"] #cr-lnav .lnav-ic .i5{display:block;stroke:#a3121e}
+:root[data-theme="rb-light"] #cr-lnav .lnav-ic .i5 .m{stroke:#9a9a9a}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item.on .lnav-ic .i5{stroke:var(--lnav-crmc,#c8202e)}
 #cr-lnav .lnav-item:focus-visible,#cr-lnav .lnav-sec:focus-visible,
 #cr-lnav .lnav-crm button:focus-visible{outline:2px solid var(--lnav-crmc,#c8202e);outline-offset:-2px}
 @media (prefers-reduced-motion:reduce){#cr-lnav .lnav-sec .chev{transition:none}}
@@ -51533,6 +51553,122 @@ return i.label + (i.el.classList.contains('on') ? '*' : '');
 }).join('~')].join('#');
 }
 
+/* ---- icons (528) ----------------------------------------------------------
+   Theo picked style 2 for the dark app and style 5 for the light one, so both
+   sets ship and CSS chooses. Keyed on the slugged LABEL rather than data-nav,
+   because only 19 of the rows have a data-nav - Import, Production, Sales
+   Floor, Resource Library, Team and Health Check are injected by other modules
+   with no data-nav at all.
+
+   viewBox is 24x24 throughout. The solid set is filled, the keyline set is
+   stroked; the .m class marks the strokes that should sit back in grey. */
+var I2 = {
+landing:'<path d="M12 3 2.5 11.2 4 12.9l1-.9V21h5v-6h4v6h5v-9l1 .9 1.5-1.7z"/>',
+clients:'<circle cx="9" cy="8.5" r="3.6"/><path d="M2.6 20a6.4 6.4 0 0 1 12.8 0z"/><circle cx="17" cy="9.5" r="2.7"/><path d="M14.6 20h6.8a4.6 4.6 0 0 0-5.6-4.3z"/>',
+importfromacculynx:'<path d="M11 3h2v8.2l2.6-2.6 1.4 1.4-5 5-5-5 1.4-1.4L11 11.2z"/><path d="M4 17h16v4H4z"/>',
+leadsjobs:'<rect x="3" y="5" width="18" height="2.6" rx="1.3"/><rect x="3" y="10.7" width="18" height="2.6" rx="1.3"/><rect x="3" y="16.4" width="11" height="2.6" rx="1.3"/>',
+production:'<path d="M14.2 2.6 20 8.4l-2.9 2.9-5.8-5.8z"/><path d="M10.2 6.6 3 13.8V21h7.2l7.2-7.2z"/>',
+scheduleboard:'<path d="M7 2h2v2.4h6V2h2v2.4h2A2 2 0 0 1 21 6.4V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6.4a2 2 0 0 1 2-2h2z"/>',
+salesfloor:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.4" fill="#0d0d10"/><circle cx="12" cy="12" r="1.7"/>',
+quickinspection:'<path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/>',
+inspections:'<circle cx="11" cy="11" r="6.6"/><rect x="15.2" y="16.6" width="7" height="2.6" rx="1.3" transform="rotate(45 15.2 16.6)"/>',
+estimates:'<path d="M6 2h9l4 4v16H6z"/><rect x="8.6" y="8" width="8" height="1.7" fill="#0d0d10"/><rect x="8.6" y="12" width="8" height="1.7" fill="#0d0d10"/><rect x="8.6" y="16" width="5" height="1.7" fill="#0d0d10"/>',
+abcsupply:'<rect x="2.5" y="6" width="8.6" height="5.2" rx="1"/><rect x="12.9" y="6" width="8.6" height="5.2" rx="1"/><rect x="2.5" y="12.8" width="8.6" height="5.2" rx="1"/><rect x="12.9" y="12.8" width="8.6" height="5.2" rx="1"/>',
+cardinaltruth:'<path d="M12 2 4 5v6.5c0 5 3.4 9.2 8 10.5 4.6-1.3 8-5.5 8-10.5V5z"/>',
+communityhub:'<path d="M12 3 3 10h2.5v11h5v-6h3v6h5V10H21z"/>',
+communitypartners:'<circle cx="7.5" cy="9" r="3.2"/><circle cx="16.5" cy="9" r="3.2"/><path d="M1.6 20a6 6 0 0 1 11.8 0zM10.6 20a6 6 0 0 1 11.8 0z"/>',
+resourcelibrary:'<path d="M4 3h4v18H4zM9.5 3h4v18h-4zM15.4 3.9l3.9 1-4.2 16.2-3.9-1z"/>',
+graphsreports:'<rect x="3" y="12" width="4.4" height="9" rx="1"/><rect x="9.8" y="7" width="4.4" height="14" rx="1"/><rect x="16.6" y="3" width="4.4" height="18" rx="1"/>',
+activityfeed:'<path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/>',
+recents:'<circle cx="12" cy="12" r="9"/><path d="M11 6.5h2V12l4 2.4-1 1.7-5-3z" fill="#0d0d10"/>',
+pricingcatalog:'<path d="M11 2H5a3 3 0 0 0-3 3v6l11 11 9-9z"/><circle cx="7.6" cy="7.6" r="1.7" fill="#0d0d10"/>',
+companydocuments:'<path d="M2.5 5.5A2 2 0 0 1 4.5 3.5h4l2 2.6h9a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2z"/>',
+settings:'<path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2zm9 4.7v-2.2l-2.3-.5a7 7 0 0 0-.8-1.9l1.3-2-1.6-1.6-2 1.3a7 7 0 0 0-1.9-.8L13.1 3h-2.2l-.5 2.3a7 7 0 0 0-1.9.8l-2-1.3-1.6 1.6 1.3 2a7 7 0 0 0-.8 1.9L3 10.9v2.2l2.3.5a7 7 0 0 0 .8 1.9l-1.3 2 1.6 1.6 2-1.3a7 7 0 0 0 1.9.8l.5 2.3h2.2l.5-2.3a7 7 0 0 0 1.9-.8l2 1.3 1.6-1.6-1.3-2a7 7 0 0 0 .8-1.9z"/>',
+team:'<circle cx="12" cy="7" r="3.6"/><path d="M4.6 20a7.4 7.4 0 0 1 14.8 0z"/>',
+objectioncoach:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.4" fill="#0d0d10"/><circle cx="12" cy="12" r="1.7"/>',
+photos:'<path d="M9 3h6l1.4 2.2H21a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.2a1 1 0 0 1 1-1h4.6z"/><circle cx="12" cy="13" r="4" fill="#0d0d10"/>',
+generic:'<circle cx="12" cy="12" r="4.6"/>'
+};
+var I5 = {
+landing:'<path d="M4 16h16" class="m"/><path d="M4 8h16"/>',
+clients:'<path d="M5 6h14" class="m"/><path d="M5 12h14"/><path d="M5 18h9" class="m"/>',
+importfromacculynx:'<path d="M12 5v11"/><path d="M8 12.5 12 16.5l4-4" class="m"/>',
+leadsjobs:'<path d="M4 7h16" class="m"/><path d="M4 12h11"/><path d="M4 17h6" class="m"/>',
+production:'<path d="M4 18 10 6l4 8 2-3 4 7" class="m"/><path d="M4 18h16"/>',
+scheduleboard:'<path d="M4 7h16"/><path d="M4 12h16" class="m"/><path d="M4 17h16" class="m"/><path d="M9 5v14" class="m"/>',
+salesfloor:'<circle cx="12" cy="12" r="7" class="m"/><path d="M12 5v14"/>',
+quickinspection:'<path d="M13 4 6 13h5l-1 7 8-10h-5z"/>',
+inspections:'<circle cx="11" cy="11" r="5.5" class="m"/><path d="M15 15l5 5"/>',
+estimates:'<path d="M6 4h12" class="m"/><path d="M6 9h12"/><path d="M6 14h12" class="m"/><path d="M6 19h7" class="m"/>',
+abcsupply:'<path d="M4 8h16" class="m"/><path d="M4 16h16" class="m"/><path d="M12 4v16"/>',
+cardinaltruth:'<path d="M12 4v16"/><path d="M6 8h12" class="m"/>',
+communityhub:'<path d="M4 18h16" class="m"/><path d="M7 18V9l5-4 5 4v9"/>',
+communitypartners:'<path d="M5 8h6" class="m"/><path d="M13 8h6" class="m"/><path d="M5 16h14"/>',
+resourcelibrary:'<path d="M6 4v16" class="m"/><path d="M11 4v16"/><path d="M16 4v16" class="m"/>',
+graphsreports:'<path d="M4 20V13" class="m"/><path d="M10 20V8"/><path d="M16 20V4" class="m"/><path d="M4 20h16" class="m"/>',
+activityfeed:'<path d="M13 4 6 13h5l-1 7 8-10h-5z"/>',
+recents:'<circle cx="12" cy="12" r="7" class="m"/><path d="M12 8v4.4l3 1.8"/>',
+pricingcatalog:'<path d="M5 6h14" class="m"/><path d="M5 12h9"/><path d="M5 18h14" class="m"/>',
+companydocuments:'<path d="M4 8h6l1.6 2H20" class="m"/><path d="M4 8v11h16V10"/>',
+settings:'<circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" class="m"/>',
+team:'<circle cx="12" cy="8" r="3.2" class="m"/><path d="M5 19h14"/>',
+objectioncoach:'<circle cx="12" cy="12" r="7" class="m"/><path d="M12 5v14"/>',
+photos:'<path d="M4 7h16v12H4z" class="m"/><path d="M8 19l5-6 3 3.4"/>',
+generic:'<path d="M6 12h12"/>'
+};
+/* the label carries its emoji ("📅 Schedule Board") because the rows
+   are scraped out of #navMenu. Strip it, but never to nothing. */
+function stripEmoji(s){
+/* A character class of literal astral emoji is fragile to author and worse to
+   read, so this walks code points instead: drop surrogate halves, variation
+   selectors, ZWJ, keycaps, the symbol blocks and any leading space, and stop
+   the moment a real character appears. Never returns empty - if stripping
+   would eat the whole label, the original is kept. */
+var t = String(s || ''), out = '', started = false;
+for(var i = 0; i < t.length; i++){
+var c = t.charCodeAt(i);
+if(!started){
+if(c >= 0xD800 && c <= 0xDFFF) continue;      /* surrogate pair halves */
+if(c === 0xFE0F || c === 0xFE0E) continue;    /* variation selectors */
+if(c === 0x200D || c === 0x20E3) continue;    /* ZWJ, combining keycap */
+if(c >= 0x2000 && c <= 0x33FF) continue;      /* arrows, dingbats, symbols */
+if(c === 32) continue;
+started = true;
+}
+out += t.charAt(i);
+}
+out = out.replace(/^\s+|\s+$/g, '');
+return out || String(s || '').replace(/^\s+|\s+$/g, '');
+}
+function iconKey(text){
+return String(text || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+function lnavIcon(label){
+var text = stripEmoji(label);
+var k = iconKey(text);
+if(!I2[k]){
+/* a few labels differ from their slug by a word */
+if(/^import/.test(k)) k = 'importfromacculynx';
+else if(/^leads/.test(k)) k = 'leadsjobs';
+else if(/^schedule/.test(k)) k = 'scheduleboard';
+else if(/^sales/.test(k)) k = 'salesfloor';
+else if(/^quick/.test(k)) k = 'quickinspection';
+else if(/^allclients/.test(k)) k = 'clients';
+else if(/report|graph/.test(k)) k = 'graphsreports';
+else if(/photo/.test(k)) k = 'photos';
+else if(/librar/.test(k)) k = 'resourcelibrary';
+else if(/partner/.test(k)) k = 'communitypartners';
+else if(/communit/.test(k)) k = 'communityhub';
+else if(/document|doc/.test(k)) k = 'companydocuments';
+else if(/setting|health|check/.test(k)) k = 'settings';
+else if(/team|nachi/.test(k)) k = 'team';
+else k = 'generic';
+}
+return '<span class="lnav-ic" aria-hidden="true">' +
+'<svg class="i2" viewBox="0 0 24 24">' + I2[k] + '</svg>' +
+'<svg class="i5" viewBox="0 0 24 24">' + I5[k] + '</svg>' +
+'</span><span class="lnav-tx">' + esc(text) + '</span>';
+}
 function build(){
 var secs = scrape(), cs = crms();
 if(!secs.length) return;
@@ -51574,7 +51710,7 @@ return '<button type="button" class="lnav-sec" data-sec="' + esc(id) +
 s.items.map(function(it, ii){
 return '<button type="button" class="lnav-item' +
 (it.el.classList.contains('on') ? ' on' : '') +
-'" data-sec="' + esc(id) + '" data-i="' + ii + '">' + esc(it.label) + '</button>';
+'" data-sec="' + esc(id) + '" data-i="' + ii + '">' + lnavIcon(it.label) + '</button>';
 }).join('') +
 '</div>';
 }).join('') +

@@ -70,9 +70,27 @@ const eq = (n, got, want) => ok(n + '  [' + JSON.stringify(got) + ']', JSON.stri
       z: getComputedStyle(n).zIndex,
       sections: [...n.querySelectorAll('.lnav-sec')].map((s) => s.textContent.replace(/[▼\s]+/g, ' ').trim()),
       items: [...n.querySelectorAll('.lnav-item')].map((i) => i.textContent.trim()),
+      /* 528: the mirror strips the emoji, so the live-menu comparison has to
+         strip it on both sides or it fails on a cosmetic difference. */
+      liveStripped: [...document.querySelectorAll('#navMenu .navopt')]
+        .filter((o) => o.style.display !== 'none' && o.textContent.trim())
+        .map((o) => o.textContent.replace(/^[^A-Za-z0-9(]+/, '').trim()),
       open: [...n.querySelectorAll('.lnav-sec')].filter((s) => s.getAttribute('aria-expanded') === 'true')
         .map((s) => s.getAttribute('data-sec')),
       crms: [...n.querySelectorAll('[data-crm]')].map((b) => b.textContent.trim()),
+      /* 528 — icons replaced the emoji labels */
+      rows: [...n.querySelectorAll('.lnav-item')].length,
+      withIcon: [...n.querySelectorAll('.lnav-item')].filter((r) => r.querySelector('.lnav-ic svg.i2') && r.querySelector('.lnav-ic svg.i5')).length,
+      emojiLeft: [...n.querySelectorAll('.lnav-item')]
+        .filter((r) => /[\u{1F300}-\u{1FAFF}\u{2190}-\u{27BF}\u{FE0F}]/u.test(r.textContent))
+        .map((r) => r.textContent.trim()),
+      genericIcon: [...n.querySelectorAll('.lnav-item')]
+        .filter((r) => { const g = r.querySelector('.i2'); return g && g.innerHTML.indexOf('r="4.6"') >= 0; })
+        .map((r) => r.textContent.trim()),
+      i2vis: (() => { const e = n.querySelector('.lnav-item .i2'); return e ? getComputedStyle(e).display : null; })(),
+      i5vis: (() => { const e = n.querySelector('.lnav-item .i5'); return e ? getComputedStyle(e).display : null; })(),
+      burgerEmoji: [...document.querySelectorAll('#navMenu .navopt')]
+        .filter((b) => /[\u{1F300}-\u{1FAFF}\u{2190}-\u{27BF}]/u.test(b.textContent)).length,
     };
   });
 
@@ -84,6 +102,36 @@ const eq = (n, got, want) => ok(n + '  [' + JSON.stringify(got) + ']', JSON.stri
   ok('it sits under the header in the stack, not over it  [z ' + mounted.z + ']', Number(mounted.z) < 90);
   eq('body gets the matching padding so nothing hides behind it', mounted.padLeft, '238px');
   eq('the three CRMs are mirrored from the banner', mounted.crms, ['Retail', 'Insurance', 'Community']);
+
+  /* ---- 528: icons, not emoji ---------------------------------------------
+     Theo picked style 2 for dark and style 5 for light, so BOTH sets are in
+     the DOM on every row and CSS decides. The assertion that matters is that
+     no row still shows a raw emoji — a row whose label failed to strip would
+     show both an icon and the emoji next to it. */
+  ok('528: every row carries both icon sets  [' + mounted.withIcon + '/' + mounted.rows + ']',
+    mounted.rows > 0 && mounted.withIcon === mounted.rows, mounted);
+  eq('528: no emoji survives in the sidebar', mounted.emojiLeft, []);
+  ok('528: style 2 is the one showing in the dark app  [i2 ' + mounted.i2vis + ' / i5 ' + mounted.i5vis + ']',
+    mounted.i2vis !== 'none' && mounted.i5vis === 'none', mounted);
+  /* the other half of Theo's pick: style 5 in the app's light theme. Gated on
+     :root[data-theme="rb-light"], NOT html[data-mode="light"] — that one is the
+     landing page's own toggle and CLAUDE.md says not to wire app surfaces to it. */
+  const lightSwap = await page.evaluate(async () => {
+    document.documentElement.setAttribute('data-theme', 'rb-light');
+    await new Promise((r) => setTimeout(r, 250));
+    const g = (s) => { const e = document.querySelector('#cr-lnav .lnav-item ' + s); return e ? getComputedStyle(e).display : null; };
+    const out = { i2: g('.i2'), i5: g('.i5') };
+    document.documentElement.removeAttribute('data-theme');
+    await new Promise((r) => setTimeout(r, 250));
+    return out;
+  });
+  ok('528: rb-light swaps to style 5  [i2 ' + lightSwap.i2 + ' / i5 ' + lightSwap.i5 + ']',
+    lightSwap.i2 === 'none' && lightSwap.i5 !== 'none', lightSwap);
+
+  ok('528: at most two rows fall back to the generic mark  [' + mounted.genericIcon.join(', ') + ']',
+    mounted.genericIcon.length <= 2, mounted.genericIcon);
+  ok('528: the burger menu KEEPS its emoji — only the mirror changed  [' + mounted.burgerEmoji + ']',
+    mounted.burgerEmoji >= 10, mounted);
 
   console.log('\n  sections found: ' + JSON.stringify(mounted.sections));
   console.log('  items found:    ' + mounted.items.length);
@@ -104,10 +152,13 @@ const eq = (n, got, want) => ok(n + '  [' + JSON.stringify(got) + ']', JSON.stri
   ok('picked up the RUNTIME rename Office → Resources', mounted.sections.some((s) => /Resources/.test(s)), mounted.sections);
   ok('no section still called "Insurance" or "Office"',
     !mounted.sections.some((s) => /^(Insurance|Office)\b/.test(s)), mounted.sections);
+  /* 528 strips the leading emoji off the mirrored label, so both sides are
+     compared stripped. The SET must still match exactly — that is the property
+     worth holding; the emoji was never the contract. */
   eq('every visible item in the live menu is in the sidebar',
-    live.opts.filter((o) => !mounted.items.includes(o)), []);
+    mounted.liveStripped.filter((o) => !mounted.items.includes(o)), []);
   eq('and the sidebar invents nothing that is not in the live menu',
-    mounted.items.filter((i) => !live.opts.includes(i)), []);
+    mounted.items.filter((i) => !mounted.liveStripped.includes(i)), []);
   ok('runtime-injected items came through (Community Hub / Self Check / Sales Floor …)',
     mounted.items.some((i) => /Community Hub/.test(i)) || mounted.items.some((i) => /Self Check/.test(i)), mounted.items);
   ok('the hidden item "Recents" was NOT mirrored', !mounted.items.some((i) => /Recents/.test(i)), mounted.items);
@@ -156,8 +207,13 @@ const eq = (n, got, want) => ok(n + '  [' + JSON.stringify(got) + ']', JSON.stri
       .find((o) => /Clients/.test(o.textContent) && o.style.display !== 'none');
     let fired = 0;
     real.addEventListener('click', () => { fired++; }, true);
+    /* 528 strips the leading emoji off the mirrored label, so the two are no
+       longer byte-equal. Compare on the stripped form — the routing itself is
+       by data-sec/data-i index, not by text, so this is a lookup detail in the
+       TEST, not a change in what the row does. */
+    const strip = (t) => String(t).replace(/^[^A-Za-z0-9(]+/, '').trim();
     const mirror = [...document.querySelectorAll('#cr-lnav .lnav-item')]
-      .find((i) => i.textContent.trim() === real.textContent.trim());
+      .find((i) => strip(i.textContent) === strip(real.textContent));
     if (!mirror) return { err: 'no mirror row for ' + real.textContent.trim() };
     /* the section it lives in may be collapsed — click it directly, the app
        does not require visibility to dispatch */

@@ -4074,3 +4074,63 @@ Comments are stripped before the assertion now.
 The computed style is proved — card ink `#cfd6df`, heading `#f08a90`, background a gradient rather
 than `#fff`. A screenshot was **not** obtained: `#landingView` is a fixed overlay and the app's own
 view switching kept landing on the dashboard instead. Theo's eyes on the preview are the gate.
+
+---
+
+## Build 528 — the left nav loses its emoji
+
+> Theo, shown five styles: **"Go with 2 then 5 on the light"**
+
+Style 2 (solid glyphs) as the default, style 5 (keyline marks) in the light theme. **Both sets are
+emitted on every row and CSS picks one**, so flipping the theme costs no re-render.
+
+### Which "light" — and why it matters
+
+The landing's ☾ toggle sets `html[data-mode="light"]`, and CLAUDE.md is explicit that it is the
+**landing only** — *"not an app-wide dark mode. Do not wire app surfaces to it without a decision
+from Theo."* The sidebar is an app surface, so this gates on **`:root[data-theme="rb-light"]`**, the
+app's actual retail light theme. Measured first: `cr-lnav-styles` had **zero** references to either,
+so there was no existing convention to follow.
+
+### Keyed on the label, not `data-nav`
+
+Only **19** rows carry a `data-nav`. Import from AccuLynx, Production, Sales Floor, Resource
+Library, Team and Health Check are injected by other modules with their own ids and none at all.
+Slugging the label covers every row however it got there. 24 mapped keys plus prefix aliases;
+**zero rows fell through to the generic mark** in practice.
+
+**The emoji is part of the label text** — the rows are scraped out of `#navMenu`, whose buttons read
+`"📅 Schedule Board"`. `stripEmoji()` walks code points rather than using a character class of
+literal astral characters (fragile to author, worse to read), and **never returns empty**: if
+stripping would eat the whole label, the original is kept.
+
+**`#navMenu` itself is untouched** — asserted, 21 emoji labels before and after, 24 still live in
+the burger menu. One source of truth for what the menu contains; the mirror is the only thing that
+changed.
+
+### The negative control earned its keep
+
+The first gate run went **red**: marker `function iconFor(` was already present in the previous
+build. **`cr-ahc-script` (Health Check) already has a `function iconFor(status)`.** Separate IIFEs,
+so no runtime conflict — but CLAUDE.md's "a name is not a contract" lesson was paid for by exactly
+this shape (`renderTeamPage` living in the Library module). Renamed to **`lnavIcon()`** rather than
+leaving a future grep ambiguous.
+
+### Three harness reds, all the test's fault — but the third mattered
+
+`lnav516_harness` compares the mirror's labels to `#navMenu`'s **verbatim**, and 528 strips the
+emoji by design, so two set-equality assertions failed on a cosmetic difference. The third —
+**"clicking the sidebar row fires the real `.navopt`"** — failed for the same reason: it locates the
+mirror row by exact `textContent` equality, so it found nothing and asserted against `undefined`.
+
+That one was worth chasing rather than waving through: the click-through is the *entire point* of
+the mirror. Routing is by `data-sec`/`data-i` index, not by text, so stripping the display label
+cannot affect it — and with the lookup fixed the real button fires (`fired: 1`). Test stale, app
+correct.
+
+### Gates
+
+`check_build.py` green. `lnav516_harness` extended with **six** new assertions — both icon sets on
+every row (18/18), no emoji surviving, style 2 showing in dark, style 5 after flipping to
+`rb-light`, at most two generic fallbacks (actual: zero), and the burger menu keeping its emoji.
+All seven harnesses pass — **354 assertions**.
