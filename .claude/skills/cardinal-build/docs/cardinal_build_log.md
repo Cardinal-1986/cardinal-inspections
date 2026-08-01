@@ -4484,3 +4484,29 @@ its `--hbg`.
 Chromium: **25/25** — the shipped `stripEmoji`/`iconKey`/render statement executed against the real
 menu labels, and contrast recomputed from the *rendered* colour against the *rendered* background
 rather than from the numbers in the patch comment. Harness at `harnesses/h538_chromium.js`.
+
+---
+
+## Build 539 — Landing is literal yellow in light mode too
+
+538 shipped light-mode Landing as amber `#8a6100`, because a true yellow cannot meet the
+readability floor on a near-white rail. That was flagged **with the measurement**, Theo saw it, and
+answered: *"literal yellow"*. His call, made with the number in front of him, so it ships.
+
+**What it costs, on the record.** `#f0c651` in light: **1.47:1** on the rail, **1.63:1** on the
+active card, **1.34:1** on hover — against a 4.5:1 floor. And no better yellow exists; the whole
+family fails (`#ffd700` 1.26, `#f5c518` 1.47, `#e8b800` 1.68). `#f0c651` is the pick because it is
+the value already used in dark, so **Landing is now one colour in both themes** instead of two.
+
+**The contrast gate is narrowed, not deleted.** It still runs and still fails the build for the
+other five values. Landing-light is a single *named* exemption, and both the patch and the harness
+assert the exemption is exactly one entry wide — the harness even fails if that value ever starts
+*passing*, so a stale exemption cannot sit there unnoticed. The next person to add a colour here
+inherits a live gate, not a disabled one.
+
+**A trap this patch sprang on itself:** `assert '#8a6100' not in src` failed, because the block
+comment now names the amber as the *history* of why the value is what it is. The file's own
+"comments lie in both directions" rule, caught by its own gate. Scoped to the comment-stripped code.
+
+`check_build.py` green (539, marker `literal yellow, Theo's call`, negative-controlled).
+Chromium: **25/25**. Harness at `harnesses/h539_chromium.js`.

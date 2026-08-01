@@ -3157,7 +3157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 538 &#8212; Cardinal Truth, Community Hub and Landing are colour-coded in the left menu</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 539 &#8212; Landing is the same yellow in light mode as it is in dark</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33863,6 +33863,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:539, note:'\uD83D\uDC9B Landing is yellow in both modes. \u2666 In the light theme it had been a darker amber so it would stay readable on the white menu; it is now the same yellow as the dark theme.' },
 { build:538, note:'\uD83C\uDF08 Three menu items are colour-coded. \u2666 In the left menu on desktop, Cardinal Truth reads red, Community Hub emerald green and Landing yellow \u2014 just the wording, the icons are unchanged. \u2666 Each colour has a light-mode twin, because the bright versions cannot be read on a white menu.' },
 { build:537, note:'\uD83C\uDFA8 Card headings have real icons. \u2666 The squares beside the headings on the home page and the Graphs \u0026 Reports page are gone \u2014 all 20 now carry a drawn icon in the same style as the left menu. \u2666 Both calendars finally look like calendars, and Punch \u0026 Repairs is a wrench rather than a second hammer. \u2666 They follow the theme the way the menu does: filled in dark, outlined in light.' },
 { build:536, note:'\uD83D\uDCD0 The left menu has depth. \u2666 It is now set into the page rather than sitting flat on it, with the section headings as raised bands and whichever page you are on lifted out as a card. \u2666 Works both ways \u2014 in light it is a grey channel with a white card, in dark it is a black channel with a navy one. Desktop only; nothing on the phone changed.' },
@@ -52411,9 +52412,11 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    * CARDINAL RED FAILS IN DARK — #c8202e is 3.40 / 2.75 / 3.11 there. Dark
      gets #ef6b6b (6.42 / 5.19 / 5.86); light gets the real #c8202e, which
      passes (5.11 / 5.67 / 4.66).
-   * A TRUE YELLOW CANNOT BE READ ON THE LIGHT RAIL — #f0c651 is 1.6:1 on
-     #f2f3f5. Light gets the darkest amber that still reads as the same
-     colour, #8a6100 (4.99 / 5.54 / 4.55).
+   * A TRUE YELLOW CANNOT BE READ ON THE LIGHT RAIL — #f0c651 is 1.47 / 1.63 /
+     1.34 there, and no yellow clears the floor (#ffd700 is 1.26:1). 538 shipped
+     amber #8a6100 (4.99 / 5.54 / 4.55) for that reason; 539 replaced it with
+     literal yellow on Theo's explicit call, made with the measurement in front
+     of him. It is the one value here below the floor, and it is deliberate.
 
    Emerald is the community CRM's own value in both themes — #34D399 is its
    --lnav-crmc, #047857 its --hbg. Not invented.
@@ -52429,7 +52432,10 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* ── LIGHT ───────────────────────────────────────────────────────────────── */
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#c8202e}
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#047857}
-:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#8a6100}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#f0c651}  /* 539: literal yellow, Theo's call with the number in front of him. This is the
+     ONE value in this block that does not meet 4.5:1 — it is 1.47:1 on the light rail,
+     and no yellow clears it (#ffd700 is 1.26:1). Same value as dark, so Landing is one
+     colour in both themes. Do not "fix" this back to amber without asking him. */
 </style>
 </body>
 </html>
