@@ -1462,8 +1462,12 @@ html, body{overflow-x:hidden;max-width:100%;}
 /* 545: obsidian — Theo's pick of three gloss treatments. Black in BOTH modes,
    which is his literal instruction and what he saw in the preview; a light twin
    is one added rule if he wants one. Raised on a real drop shadow, sheen from
-   the top-left, and the orange numeral kept exactly as it was (#E8722A reads
-   6.47:1 here, against a 3.0 floor for 22px 800). */
+   the top-left, and the orange numeral kept exactly as it was kept exactly as it was. 557 re-measured the
+   figure this comment used to carry: #E8722A is 4.47:1 against the gradient's
+   LIGHTEST stop (#2c2d36 — the worst case that actually governs), not the 6.47:1
+   recorded here, which was taken against a darker stop. Still far over the 3.0
+   floor for 22px 800, so the dark tile needed no change — but the number was
+   wrong, and the next person would have trusted it. */
 .actbox{background:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
   border:1px solid #24242c;border-radius:6px;padding:10px 6px;text-align:center;
   box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5),
@@ -1475,6 +1479,32 @@ html, body{overflow-x:hidden;max-width:100%;}
 .actbox span{display:block;font:700 11.5px 'Segoe UI',Arial,sans-serif;
   color:#9aa0a8;line-height:1.3;}
 .actbox b{display:block;font:800 22px 'Segoe UI',Arial,sans-serif;color:#E8722A;margin-top:3px;}
+/* ── 557: the light twin 545 said would be one added rule ──────────────────
+   DESIGNED, not recoloured. Dark is highlight-led — a white sheen inset riding a
+   black radial. In light an inset highlight is invisible against a white card, so
+   light is shadow-led: the same radial inverted, and a real drop shadow doing the
+   lift the inset used to do. Same geometry, same sheen origin at 22% -10%.
+
+   Both inks are re-pinned rather than tokenised, for 545's own stated reason —
+   and because the arithmetic forced it. Computed, not eyeballed:
+     label  #5f6670 on #ffffff  5.80:1  (floor 4.5 for 11.5px 700)
+     number #C25A18 on #ffffff  4.40:1  (floor 3.0 for 22px 800)
+   The orange it replaces, #E8722A, is 3.06:1 on white and 2.71:1 on the app's
+   cream — under the floor. #C25A18 is that orange deepened for a light ground,
+   not a different colour: swapping it for red would make the two themes read as
+   two components.
+
+   Out-specifies the bare .actbox rules above it, (0,2,1) against (0,1,0) — but
+   specificity on paper is not proof, so the harness asserts in Chromium which
+   rule actually won. That is build 481's lesson. */
+:root[data-theme="rb-light"] .actbox{
+  background:radial-gradient(120% 90% at 22% -10%,#ffffff 0%,#f7f7f9 45%,#eceef2 100%);
+  border:1px solid #e2e2e2;
+  box-shadow:0 6px 14px rgba(16,18,24,.10), 0 1px 2px rgba(16,18,24,.06),
+             0 1px 0 rgba(255,255,255,.9) inset;}
+:root[data-theme="rb-light"] .actbox span{color:#5f6670;}
+:root[data-theme="rb-light"] .actbox b{color:#C25A18;}
+
 @media (max-width:900px){ .actstrip{grid-template-columns:repeat(3,1fr);gap:8px;} .actbox b{font-size:19px;} }
 .arhead{font:700 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin-top:8px;}
 .arhead b{font-size:13px;color:var(--rbe-ink);margin-right:8px;}
@@ -3177,7 +3207,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 556 &#8212; payments to your crews, and commissions on every job</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 557 &#8212; the Activity Count tiles read properly in light mode</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34585,6 +34615,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:557, note:'\u2600\uFE0F The Activity Count tiles get a light twin. They were obsidian in both modes \u2014 deliberate, and your pick \u2014 but in light mode a black tile on a white page was the only one left. Now it is a raised white tile with the same sheen, and the numbers are a deeper orange so they are actually readable on it. Dark mode is untouched.' },
 { build:556, note:'\uD83D\uDCB0 Money in and money out. \u2666 A Payments tab on every crew records what you have paid them \u2014 amount, date, method, check number \u2014 with a running total. \u2666 A Commissions tab on every client records what a rep is owed and what has been paid, with outstanding and paid totals. \u2666 Reps see their own commissions; you and Joan see everyone\u2019s. Crew payments are yours alone. \u2666 A work order made by production no longer says the rates were unreadable \u2014 it says the office handles pricing, because it does.' },
 { build:555, note:'\uD83D\uDD28 Work orders for your crews. \u2666 A new Work Orders tab on every client issues Cardinal\u2019s own work order TO a crew \u2014 one per trade, so a roof and a gutter run are two documents. \u2666 It arrives filled: homeowner and address, the layers, pitch, decking and satellite dish off the roof inspection, the squares and lineal feet off the measurements, and that crew\u2019s labor lines. \u2666 Everything is editable before it goes out, and it prints on the same paper as your contracts.' },
 { build:554, note:'\uD83D\uDCD0 A Roofr upload fills the job, not just the page. \u2666 Squares, pitch, ridge, hip, valley, eave and rake land in Measurements, and the pitch reaches the Construction Agreement. Before, the import filled the document you had open and nothing else. \u2666 It fills blanks and refreshes its own earlier numbers, but never overwrites a measurement taken by hand \u2014 those records read \u2018Field + Roofr\u2019. \u2666 Layers and decking still come from the inspection only.' },
