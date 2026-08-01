@@ -3143,6 +3143,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <option value="estimates">Estimates</option>
           <option value="contracts">Contracts</option>
 <option value="workorders">Work Orders</option>
+<option value="commissions">Commissions</option>
           <option value="materials">Materials</option>
           <option value="measure">Measurements</option>
         </select>
@@ -3176,7 +3177,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 555 &#8212; work orders for your crews, one per trade, filled from the inspection and the measurements</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 556 &#8212; payments to your crews, and commissions on every job</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3637,6 +3638,14 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <button class="btn" id="pNewContractBtn">+ New contract</button>
       </div>
       <div id="contractDocsMount"><div class="loading">Loading…</div></div>
+    </div>
+
+    <div id="tab-commissions" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <h3 class="projsec">&#128176; Commissions</h3>
+      <p class="subnote">What a rep is owed on this job, and what has been paid.
+      Reps see their own rows; admins see everyone&#8217;s.</p>
+      <div id="commMount"><div class="loading">Loading…</div></div>
     </div>
 
     <div id="tab-workorders" style="display:none;">
@@ -11740,9 +11749,13 @@ function renderProjectDocs(){
     : '<div class="empty"><b>No contracts yet.</b><br>Use <b>+ New contract</b>, or approve the job from the pipeline to auto-create one.</div>';
 }
 function showTab(name){
+  /* 556: commissions are fetched per-tab rather than cached with the project —
+     the row set depends on who is asking (a rep sees only their own), so it must
+     not be served from a cache filled for somebody else. */
+  if(name === 'commissions'){ try{ renderCommissions(); }catch(_){} }
   var sel = document.getElementById('jobMenuSel');
   if(sel && sel.value !== name) sel.value = name;
-  ['overview','inspections','estimates','contracts','workorders','checklists','materials','measure'].forEach(function(t){
+  ['overview','inspections','estimates','contracts','workorders','commissions','checklists','materials','measure'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
   if(name === 'inspections') refreshInspGalN();
@@ -16794,6 +16807,125 @@ async function runTotalsBackfill(){
    No email address is written anywhere. The crew contact block prefills from
    the crew record when it has one and shows a blank otherwise, and the whole
    document is editable in the existing editor before it goes out.          */
+/* ══ 556: commissions on this job ══════════════════════════════════════════
+   `commissions` carries the one split policy in the schema: admins do
+   everything, and a rep may SELECT rows where rep_email = auth.email(). So this
+   renders for everyone and a rep simply sees fewer rows — that is the design,
+   not a refusal to explain away. Only admins get the form.
+
+   The total is summed from the rows actually rendered, so the figure can never
+   disagree with the list above it.                                          */
+var COMM_STATUS = ['pending','approved','paid','void'];
+var COMM_METHODS = [['check','Check'],['ach','ACH'],['payroll','Payroll'],['other','Other']];
+
+function commAdmin(){
+  try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
+}
+function commMoney(n){
+  var v = Number(n);
+  if(!isFinite(v)) return '';
+  return (v < 0 ? '-' : '') + '$' + Math.abs(v).toLocaleString('en-US',
+    { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function commRowsHtml(rows){
+  var paid = 0, open = 0;
+  var body = rows.map(function(r){
+    var v = Number(r.amount);
+    if(isFinite(v)){ if(r.status === 'paid') paid += v; else if(r.status !== 'void') open += v; }
+    return '<tr>' +
+      '<td>' + woEsc(r.rep_email || '') + '</td>' +
+      '<td style="text-align:right">' + commMoney(r.amount) + '</td>' +
+      '<td>' + woEsc(r.basis || '') + '</td>' +
+      '<td>' + woEsc(r.status || '') + '</td>' +
+      '<td>' + woEsc(r.paid_on || '') + '</td>' +
+      '<td>' + woEsc(r.reference || '') + '</td>' +
+      (commAdmin() ? '<td><button class="chipbtn" data-delcomm="' + woEsc(r.id) + '">Remove</button></td>' : '') +
+    '</tr>';
+  }).join('');
+  return { paid: paid, open: open, body: body };
+}
+async function renderCommissions(){
+  var mount = document.getElementById('commMount');
+  if(!mount || !currentProject) return;
+  var rows = [];
+  try{
+    var r = await sb.from('commissions').select('*').eq('project_id', currentProject.id)
+                    .order('created_at', { ascending:false });
+    if(r.error) throw r.error;
+    rows = r.data || [];
+  }catch(e){
+    mount.innerHTML = '<div class="empty">Could not load commissions: ' + woEsc(e.message || e) + '</div>';
+    return;
+  }
+  var t = commRowsHtml(rows);
+  var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;' +
+            'padding:8px 10px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;"';
+  mount.innerHTML =
+    (rows.length
+      ? '<table class="reports"><thead><tr><th>Rep</th><th style="text-align:right">Amount</th>' +
+        '<th>Basis</th><th>Status</th><th>Paid</th><th>Reference</th>' +
+        (commAdmin() ? '<th></th>' : '') + '</tr></thead><tbody>' + t.body + '</tbody></table>' +
+        '<div style="display:flex;justify-content:flex-end;gap:18px;margin:10px 2px 0">' +
+          '<span><span class="subnote">Outstanding</span> <b>' + commMoney(t.open) + '</b></span>' +
+          '<span><span class="subnote">Paid</span> <b>' + commMoney(t.paid) + '</b></span></div>'
+      : '<div class="empty"><b>No commissions on this job yet.</b>' +
+        (commAdmin() ? '<br>Add one below.' : '<br>You have none recorded here.') + '</div>') +
+    (commAdmin()
+      ? '<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(128,128,128,.22)">' +
+        '<div class="ckrow">' +
+          '<label>Rep email<input type="text" id="cmRep" ' + inp + ' placeholder="nick@cardinalrenovations.net"></label>' +
+          '<label>Amount<input type="text" id="cmAmt" ' + inp + ' placeholder="1,250.00"></label>' +
+        '</div><div class="ckrow">' +
+          '<label>Basis<input type="text" id="cmBasis" ' + inp + ' placeholder="5% of contract"></label>' +
+          '<label>Status<select id="cmStatus" ' + inp + '>' +
+            COMM_STATUS.map(function(s){ return '<option value="' + s + '">' + s + '</option>'; }).join('') +
+          '</select></label>' +
+        '</div><div class="ckrow">' +
+          '<label>Paid on<input type="date" id="cmPaid" ' + inp + '></label>' +
+          '<label>Method<select id="cmMethod" ' + inp + '>' +
+            COMM_METHODS.map(function(m){ return '<option value="' + m[0] + '">' + m[1] + '</option>'; }).join('') +
+          '</select></label>' +
+        '</div>' +
+        '<label style="display:block;margin-top:8px">Reference / memo<input type="text" id="cmRef" ' + inp + '></label>' +
+        '<button class="btn" style="margin-top:12px" id="cmAdd">Record commission</button>' +
+        '<span class="subnote" id="cmMsg" style="margin-left:10px"></span></div>'
+      : '');
+  var add = document.getElementById('cmAdd');
+  if(add) add.addEventListener('click', addCommission);
+}
+async function addCommission(){
+  if(!currentProject || !commAdmin()) return;
+  var msg = document.getElementById('cmMsg');
+  var rep = document.getElementById('cmRep').value.trim();
+  var amt = Number(document.getElementById('cmAmt').value.replace(/[$,\s]/g, ''));
+  /* An unverified address is never written on this project. A commission row
+     keyed to a typo silently belongs to nobody — the rep's own SELECT policy
+     matches on this exact string. */
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rep)){
+    if(msg) msg.textContent = 'Enter the rep\u2019s full email address.'; return;
+  }
+  if(!isFinite(amt) || amt === 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
+  if(msg) msg.textContent = 'Saving\u2026';
+  var r = await sb.from('commissions').insert({
+    project_id: currentProject.id, rep_email: rep.toLowerCase(), amount: amt,
+    basis: document.getElementById('cmBasis').value.trim() || null,
+    status: document.getElementById('cmStatus').value || 'pending',
+    paid_on: document.getElementById('cmPaid').value || null,
+    method: document.getElementById('cmMethod').value || null,
+    reference: document.getElementById('cmRef').value.trim() || null,
+    created_by: (currentUser && currentUser.email) || null,
+  });
+  if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+  await renderCommissions();
+}
+async function delCommission(id){
+  if(!commAdmin()) return;
+  if(!confirm('Remove this commission from the record?')) return;
+  var r = await sb.from('commissions').delete().eq('id', id);
+  if(r.error){ alert('Could not remove: ' + r.error.message); return; }
+  await renderCommissions();
+}
+
 var WO_TRADES = ['Roofing','Siding','Windows','Gutters','General Repairs'];
 
 function woEsc(s){
@@ -16838,8 +16970,11 @@ function woSpecRows(pr, trade){
 }
 
 function woLaborRows(rates, catalog){
-  if(!rates) return { html:'<p class="mut">Labor rates are not readable from this ' +
-    'account, so no pricing is printed. An admin can add it before this goes out.</p>', total:null };
+  /* 556: production does not need crew rates — Theo writes the checks. So this is
+     the design, not a failure, and must not read like one on a document that gets
+     handed to a subcontractor. */
+  if(!rates) return { html:'<p class="mut">Labor pricing is handled by the office.</p>',
+    total:null };
   if(!rates.length) return { html:'<p class="mut">No labor rates recorded for this crew yet.</p>',
     total:null };
   var total = 0, rows = rates.map(function(r){
@@ -17062,6 +17197,11 @@ var __pNewWorkOrderBtn = document.getElementById('pNewWorkOrderBtn');
 if(__pNewWorkOrderBtn) __pNewWorkOrderBtn.addEventListener('click', openWorkOrderPicker);
 var __woDocsMount = document.getElementById('woDocsMount');
 if(__woDocsMount) __woDocsMount.addEventListener('click', handleDocAction);
+var __commMount = document.getElementById('commMount');
+if(__commMount) __commMount.addEventListener('click', function(e){
+  var d = e.target.closest('[data-delcomm]');
+  if(d) delCommission(d.getAttribute('data-delcomm'));
+});
 
 async function approveAndContract(prId){
   var pr = cacheProjects.find(function(x){ return String(x.id) === String(prId); });
@@ -34445,6 +34585,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:556, note:'\uD83D\uDCB0 Money in and money out. \u2666 A Payments tab on every crew records what you have paid them \u2014 amount, date, method, check number \u2014 with a running total. \u2666 A Commissions tab on every client records what a rep is owed and what has been paid, with outstanding and paid totals. \u2666 Reps see their own commissions; you and Joan see everyone\u2019s. Crew payments are yours alone. \u2666 A work order made by production no longer says the rates were unreadable \u2014 it says the office handles pricing, because it does.' },
 { build:555, note:'\uD83D\uDD28 Work orders for your crews. \u2666 A new Work Orders tab on every client issues Cardinal\u2019s own work order TO a crew \u2014 one per trade, so a roof and a gutter run are two documents. \u2666 It arrives filled: homeowner and address, the layers, pitch, decking and satellite dish off the roof inspection, the squares and lineal feet off the measurements, and that crew\u2019s labor lines. \u2666 Everything is editable before it goes out, and it prints on the same paper as your contracts.' },
 { build:554, note:'\uD83D\uDCD0 A Roofr upload fills the job, not just the page. \u2666 Squares, pitch, ridge, hip, valley, eave and rake land in Measurements, and the pitch reaches the Construction Agreement. Before, the import filled the document you had open and nothing else. \u2666 It fills blanks and refreshes its own earlier numbers, but never overwrites a measurement taken by hand \u2014 those records read \u2018Field + Roofr\u2019. \u2666 Layers and decking still come from the inspection only.' },
 { build:553, note:'\u25E7 The right side of Crews got the same finish as the left. \u2666 Its corners were 10px against the crew list\u2019s 14 \u2014 they match now. \u2666 The Choose File button on Compliance was a raw browser control; it is styled like every other field, in both themes. \u2666 Document rows, notes and the rate frame share the card\u2019s hairline instead of a pink one. \u2666 In dark, a white line ran across the middle of the panel where the tabs meet the content. Gone.' },
@@ -53996,16 +54137,20 @@ var DOCS = [
    for anyone who is not an admin — crew_rates is admin-only in RLS, so for
    production the tab would render and then show nothing, turning a deliberate
    restriction into what looks like a broken screen. */
-var TABS = [['profile','Profile'],['compliance','Compliance'],['rates','Labor Rates'],['notes','Notes']];
+var TABS = [['profile','Profile'],['compliance','Compliance'],['rates','Labor Rates'],['payments','Payments'],['notes','Notes']];
+/* 556: rates and payments are both admin-only and gate together — crew_rates and
+   crew_payments are both is_cardinal_admin() in RLS. */
+var MONEY_TABS = ['rates','payments'];
 function canSeeRates(){
   try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
 }
 function tabsFor(){
-  return TABS.filter(function(t){ return t[0] !== 'rates' || canSeeRates(); });
+  return TABS.filter(function(t){ return MONEY_TABS.indexOf(t[0]) === -1 || canSeeRates(); });
 }
 
 var crews = [], docs = [], notes = [], selId = null, tab = 'compliance', booted = false;
 var catalog = [], rates = [];   /* 548: pricing_items + crew_rates */
+var payments = [];              /* 556: crew_payments, admin-only */
 
 function db(){ return window.supa || window.sb || null; }
 function view(){ return document.getElementById('crewsView'); }
@@ -54067,7 +54212,10 @@ async function load(){
        a correct refusal — it must degrade to "no rates shown", never to a
        failed load that blanks the whole directory. */
     cl.from('pricing_items').select('id,category,name,unit,rate,enabled,sort_order').eq('enabled', true),
-    cl.from('crew_rates').select('*')
+    cl.from('crew_rates').select('*'),
+    /* 556: same rule as crew_rates — RLS refusing production is CORRECT and must
+       degrade to an empty list, never to a failed load that blanks the directory. */
+    cl.from('crew_payments').select('*').order('paid_on', { ascending:false })
   ]);
   if(res[0].error) throw res[0].error;
   crews = res[0].data || [];
@@ -54075,6 +54223,7 @@ async function load(){
   notes = (res[2].data) || [];
   catalog = (res[3].data) || [];
   rates   = (res[4].data) || [];
+  payments = (res[5].data) || [];
   if(selId && !crews.some(function(c){ return c.id === selId; })) selId = null;
   if(!selId && crews.length) selId = crews[0].id;
 }
@@ -54146,19 +54295,102 @@ function itemById(id){
   for(var i = 0; i < catalog.length; i++){ if(catalog[i].id === id) return catalog[i]; }
   return null;
 }
-function money(n){
+function money(n, cents){
   var v = Number(n);
   if(!isFinite(v)) return '';
   /* The sign goes OUTSIDE the currency symbol. Prepending '$' to an already
      negative number gives "$-2", which is not how money is written anywhere —
      caught by the harness on a crew whose rate is above Cardinal's own. */
   var sign = v < 0 ? '-' : '';
-  return sign + '$' + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits:2 });
+  /* 556: `cents` forces the two decimal places a payment always has. Rates pass
+     nothing and are unchanged — $285 stays $285. */
+  return sign + '$' + Math.abs(v).toLocaleString('en-US',
+    cents ? { minimumFractionDigits:2, maximumFractionDigits:2 } : { maximumFractionDigits:2 });
 }
 /* What Cardinal keeps on a line: our rate minus theirs. Shown as a spread, not
    a percentage, because a percentage of a per-square rate reads as a discount
    rather than as money. Returns null when there is nothing to compare — a
    custom row has no catalog twin, and a zero catalog rate is not a 100% margin. */
+/* ── 556: what Cardinal has paid this crew ──────────────────────────────────
+   Admin-only, and refused here as well as in the tab strip and the dispatch —
+   crew_payments is is_cardinal_admin() in RLS, so a rendered-but-empty panel
+   would turn a correct refusal into what looks like a broken screen.
+
+   The total is summed from the rows actually rendered, never from a second
+   query, so the figure and the list cannot drift apart. */
+var PAY_METHODS = [['check','Check'],['ach','ACH'],['cash','Cash'],['card','Card'],['other','Other']];
+
+function payFor(crewId){
+  return payments.filter(function(p){ return p.crew_id === crewId; });
+}
+function paymentsHtml(c){
+  if(!canSeeRates()) return '<div class="crw-empty">Payments are not shown for this account.</div>';
+  var mine = payFor(c.id), total = 0;
+  var rows = mine.map(function(p){
+    var v = Number(p.amount);
+    if(isFinite(v)) total += v;
+    var meth = (PAY_METHODS.find(function(m){ return m[0] === p.method; }) || [null, p.method || ''])[1];
+    return '<tr>' +
+      '<td>' + esc(p.paid_on || '\u2014') + '</td>' +
+      '<td style="text-align:right">' + money(p.amount, true) + '</td>' +
+      '<td>' + esc(meth) + '</td>' +
+      '<td>' + esc(p.reference || '') + '</td>' +
+      '<td>' + esc(p.memo || '') + '</td>' +
+      '<td><button class="crw-btn" style="padding:3px 8px" data-delpay="' + esc(p.id) + '">Remove</button></td>' +
+    '</tr>';
+  }).join('');
+  return '<div class="crw-rtwrap"><table class="crw-rt">' +
+      '<colgroup><col style="width:15%"><col style="width:15%"><col style="width:14%">' +
+      '<col style="width:18%"><col style="width:26%"><col style="width:12%"></colgroup>' +
+      '<thead><tr><th>Paid</th><th style="text-align:right">Amount</th><th>Method</th>' +
+      '<th>Reference</th><th>Memo</th><th></th></tr></thead>' +
+      '<tbody>' + (rows || '<tr><td colspan="6" class="crw-mut">Nothing paid to this crew yet.</td></tr>') +
+      '</tbody></table></div>' +
+    '<div style="display:flex;justify-content:flex-end;gap:10px;align-items:baseline;margin:8px 2px 14px">' +
+      '<span class="crw-mut">Paid to date</span><b style="font-size:16px">' + money(total, true) + '</b></div>' +
+    '<div class="crw-grid2">' +
+      '<div><label>Amount</label><input type="text" data-p="amount" placeholder="1,250.00"></div>' +
+      '<div><label>Paid on</label><input type="date" data-p="paid_on"></div>' +
+      '<div><label>Method</label><select data-p="method">' +
+        PAY_METHODS.map(function(m){ return '<option value="' + m[0] + '">' + m[1] + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div><label>Reference</label><input type="text" data-p="reference" placeholder="Check #"></div>' +
+    '</div>' +
+    '<div style="margin-top:10px"><label>Memo</label><input type="text" data-p="memo" placeholder="Which job, or what it covered"></div>' +
+    '<button class="crw-btn primary" style="margin-top:12px" data-act="addpay">Record payment</button>' +
+    '<span class="crw-mut" data-paymsg style="margin-left:10px;font-size:12px"></span>';
+}
+function pval(k){
+  var el = view().querySelector('[data-p="' + k + '"]');
+  return el ? el.value.trim() : '';
+}
+async function addPayment(){
+  var c = sel(), cl = db();
+  if(!c || !cl || !canSeeRates()) return;
+  var msg = view().querySelector('[data-paymsg]');
+  var amt = Number(pval('amount').replace(/[$,\s]/g, ''));
+  if(!isFinite(amt) || amt === 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
+  if(msg) msg.textContent = 'Saving\u2026';
+  var r = await cl.from('crew_payments').insert({
+    crew_id: c.id, amount: amt,
+    method: pval('method') || 'check',
+    reference: pval('reference') || null,
+    paid_on: pval('paid_on') || null,
+    memo: pval('memo') || null,
+    created_by: (window.currentUser && window.currentUser.email) || null,
+  });
+  if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+  await load(); render();
+}
+async function delPayment(id){
+  var cl = db();
+  if(!cl || !canSeeRates()) return;
+  if(!confirm('Remove this payment from the record?')) return;
+  var r = await cl.from('crew_payments').delete().eq('id', id);
+  if(r.error){ alert('Could not remove: ' + r.error.message); return; }
+  await load(); render();
+}
+
 function spread(ours, theirs){
   var a = Number(ours), b = Number(theirs);
   if(!isFinite(a) || !isFinite(b) || a <= 0) return null;
@@ -54276,9 +54508,10 @@ function panelHtml(){
   var lbl = st === 'ok' ? '\u25cf Compliant' : st === 'warn' ? '\u25b2 Expiring' : '\u2715 Not compliant';
   /* 548: a non-admin who somehow lands on 'rates' falls back to compliance
      rather than seeing an empty panel. */
-  if(tab === 'rates' && !canSeeRates()) tab = 'compliance';
+  if(MONEY_TABS.indexOf(tab) !== -1 && !canSeeRates()) tab = 'compliance';
   var body = tab === 'profile' ? profileHtml(c)
     : tab === 'rates' ? ratesHtml(c)
+    : tab === 'payments' ? paymentsHtml(c)
     : tab === 'notes' ? notesHtml(c) : complianceHtml(c);
   return '<div class="crw-card crw-cardtop">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">' +
@@ -54470,6 +54703,8 @@ function wire(){
     if(od){ openDoc(od.getAttribute('data-open')); return; }
     var dr = e.target.closest('[data-delrate]');
     if(dr){ delRate(dr.getAttribute('data-delrate')); return; }
+    var dp = e.target.closest('[data-delpay]');
+    if(dp){ delPayment(dp.getAttribute('data-delpay')); return; }
     var a = e.target.closest('[data-act]');
     if(!a) return;
     var k = a.getAttribute('data-act');
@@ -54482,6 +54717,7 @@ function wire(){
     else if(k === 'saverates'){ saveRates(); }
     else if(k === 'addcatrate'){ addCatRate(); }
     else if(k === 'addcustomrate'){ addCustomRate(); }
+    else if(k === 'addpay'){ addPayment(); }
   });
 }
 
