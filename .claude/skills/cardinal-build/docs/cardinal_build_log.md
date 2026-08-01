@@ -4170,3 +4170,44 @@ note and prints the recent nine plus every failure: **5 on 528, 0 on 531.**
 **Three wrong rules and a coverage hole, all on a gate I wrote to catch a bug I had caused
 six times.** Getting the failing case right is not the hard part — not flagging the passing
 cases is.
+
+---
+
+## Build 533 — dark ink on cardinal red (was 529; rebuilt on main at 532)
+
+Shipped first as **529** on a branch cut from 528. While it sat in review a parallel session merged
+**builds 530–532** (PR #68), so the branch was three commits stale and its 529 stamp would have gone
+**backwards** against main. Re-applied on top of their work rather than merged into it — the same
+recovery this project ran at 513–519, for the same reason.
+
+**Checked before rebuilding, not assumed.** All fourteen red-ink pairings were still present on main
+untouched, and every marker from 522–528 survived their merge — `cr-raise-styles`, `lnav-ic`,
+`lnavIcon`, `#boardView .bnone`, `deleteEstimate`, `cr-lr-wx`, all at identical counts before and
+after. Their `next_build.py` (new, and useful) said 533.
+
+### One defect in their merge, fixed here
+
+`main`'s app stamp read:
+
+> `v2026-08-01 build 532 — the desktop menu down the left uses proper icons instead of emoji`
+
+The **number** was bumped to 532; the **summary** was left as build 528's. The app stamp is the only
+version string in rendered markup and the one `currentBuild()` / What's New reads, so the app was
+telling Theo that 532 was the nav-icon build. Their CHANGELOG entry for 532 is correct (Library
+diagrams) — only the stamp was wrong. Bumping to 533 with matching text clears it.
+
+**Worth generalising:** when renumbering a stamp during a collision recovery, the em-dash summary
+has to move with the number. `check_build.py` only asserts the number *increases*; it cannot know
+whether the sentence after it still describes the build.
+
+### The fix itself — unchanged from 529
+
+Fourteen pairings, 3.07:1 and 3.31:1 → **5.67:1**. `#c8202e` unchanged at 239 occurrences. The
+fourteenth is an inline style in a JS string on the "Create & open estimate" button, found only
+because two differently-shaped counts disagreed.
+
+### Gates
+
+`check_build.py` green, 532 → 533. Self-computing: dark-ink-on-red **14 → 0**, `#c8202e`
+**239 → 239**. Nothing of 530–532 lost, asserted by count. All seven harnesses pass — **354
+assertions** — against their base rather than mine.
