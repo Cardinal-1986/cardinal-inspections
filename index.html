@@ -3175,7 +3175,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 547 &#8212; Crews: a page for your subcontractors, grouped by trade, with their W-9 and insurance on file</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 554 &#8212; a Roofr upload now fills the measurements and the pitch, not just the document in front of you</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18539,7 +18539,7 @@ function wireRoofrUpload(doc){
           var mAll = {};
           try{ mAll = JSON.parse(mpr.checklist || '{}') || {}; }catch(me){}
           data.imported_at = new Date().toISOString();
-          mAll.roofr = data;
+          roofrMerge(mAll, data);
           var mS = JSON.stringify(mAll);
           await pdb.update(mpr.id, { checklist: mS });
           mpr.checklist = mS;
@@ -18557,6 +18557,56 @@ function wireRoofrUpload(doc){
 
 }
 
+/* 554: a Roofr import used to fill the open document and save its raw payload
+   under checklist.roofr, and stop. Nothing read that key afterwards, so the
+   Measurements panel and the agreement's pitch line stayed empty on a job that
+   had just been measured. This lands the numbers where the app already looks
+   for them: checklist.meas (the Measurements modal) and checklist.pitch (the
+   inspection field the Construction Agreement collapses into line 13).
+
+   Precedence: Roofr fills blanks and refreshes its OWN earlier numbers, so a
+   corrected re-upload works. It never overwrites a field measurement — someone
+   who stood on the roof outranks a model reading a PDF — and a record that
+   ends up mixed is labelled 'Field + Roofr' rather than relabelled 'Roofr',
+   so the mixture stays visible.
+
+   layers and decking are deliberately untouched. Roofr does not report them;
+   ck_layers / ck_decking on the inspection checklist are their only source.
+
+   Kept as a pure (all, data) function so the gate can run THIS code against
+   real checklist rows instead of a re-implementation of it. */
+function roofrMerge(all, d){
+  if(!all || !d) return;
+  all.roofr = d;
+  var sq = (d.squares != null) ? Number(d.squares)
+         : (d.area_sqft != null ? Number(d.area_sqft) / 100 : null);
+  var prev = (all.meas && typeof all.meas === 'object') ? all.meas : {};
+  /* no source recorded means nothing has claimed these numbers yet */
+  var ours = !prev.source || String(prev.source).toLowerCase().indexOf('roofr') === 0;
+  var next = {}, wrote = 0;
+  Object.keys(prev).forEach(function(k){ next[k] = prev[k]; });
+  function put(key, val){
+    if(val == null || val === '') return;
+    if(!ours && next[key]) return;                 /* a human measured this */
+    var s = String(val);
+    if(String(next[key] == null ? '' : next[key]) === s) return;
+    next[key] = s; wrote++;
+  }
+  put('sq', (sq != null && isFinite(sq)) ? sq.toFixed(1) : null);
+  put('pitch',  d.pitch);
+  put('ridge',  d.ridge_lf);
+  put('hip',    d.hip_lf);
+  put('valley', d.valley_lf);
+  put('eave',   d.eave_lf);
+  put('rake',   d.rake_lf);
+  if(wrote){
+    next.source = ours ? 'Roofr' : 'Field + Roofr';
+    next.updated_at = d.imported_at || new Date().toISOString();
+    all.meas = next;
+  }
+  /* the inspector's pitch, taken on the roof, wins over a derived one */
+  if(!all.pitch && d.pitch) all.pitch = String(d.pitch);
+}
 function fillRoofrFields(doc, d){
   function setPh(key, val){
     var el = doc.querySelector('[data-roofr="' + key + '"]');
@@ -34116,6 +34166,13 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:554, note:'\uD83D\uDCD0 A Roofr upload fills the job, not just the page. \u2666 Squares, pitch, ridge, hip, valley, eave and rake land in Measurements, and the pitch reaches the Construction Agreement. Before, the import filled the document you had open and nothing else. \u2666 It fills blanks and refreshes its own earlier numbers, but never overwrites a measurement taken by hand \u2014 those records read \u2018Field + Roofr\u2019. \u2666 Layers and decking still come from the inspection only.' },
+{ build:553, note:'\u25E7 The right side of Crews got the same finish as the left. \u2666 Its corners were 10px against the crew list\u2019s 14 \u2014 they match now. \u2666 The Choose File button on Compliance was a raw browser control; it is styled like every other field, in both themes. \u2666 Document rows, notes and the rate frame share the card\u2019s hairline instead of a pink one. \u2666 In dark, a white line ran across the middle of the panel where the tabs meet the content. Gone.' },
+{ build:552, note:'\uD83D\uDD34 Red edge on the light Crews cards, on top instead of the plain white one.' },
+{ build:551, note:'\u2728 The light cards pop now. \u2666 Crews cards sit up off the page with a real shadow instead of a faint one \u2014 the app\u2019s own lifted look, which until now you could only see by hovering, and a phone cannot hover.' },
+{ build:550, note:'\u2600\uFE0F Crews looks right in light mode now. \u2666 Warm off-white page, white cards with a thin red edge, and everything lifted off the page the way the Landing and Insurance screens are. \u2666 The crew list is a raised card in light instead of a sunk channel. Dark is unchanged.' },
+{ build:549, note:'\uD83D\uDCD0 Rate columns line up. \u2666 Each category was its own table sizing its own columns, so Unit, Ours and Theirs sat in a different place in every block. One table now. \u2666 And the rates scroll inside their own frame instead of dragging the whole page sideways on a phone.' },
+{ build:548, note:'\uD83D\uDCB5 Labor rates on a crew. \u2666 Price a crew against your own catalog and see what you keep on every line, or add a row only they do. \u2666 Admin only \u2014 production can see who is insured, not what anyone is paid.' },
 { build:547, note:'\uD83D\uDC77 Crews. \u2666 A page for your subcontractors, grouped by trade \u2014 Roofing, Siding, Window Installers, Gutters, General Repairs. \u2666 Each crew carries their W-9 and insurance certificates, and the list shows at a glance who is covered and whose is about to lapse. \u2666 Notes too. Labor rates, work orders and payments come next.' },
 { build:546, note:'\u2728 Cards lift when you hover them. \u2666 Leads, the estimate builder and the reports page all raise off the page under the cursor. \u2666 Lead cards are navy now, matching the home screen. \u2666 The client name is white and the PO gold \u2014 they were a red-to-blue gradient that measured below the readable minimum. \u2666 Call, text and now Email sit in raised grey buttons down the right of every lead card. \u2666 The filter rail on Leads is a sunk black channel with proper drop-down sections, the same one the CRM menu uses. \u2666 The estimate builder has a jump list on the left \u2014 tap any line item to go straight to it \u2014 and the whole page is obsidian black. \u2666 Reports cards are obsidian too, with a thin red edge, and the numbers are colour-coded: money green, new leads yellow, signed work dark green.' },
 { build:545, note:'\u26AB Activity Count tiles are obsidian now. \u2666 Raised off the page, glossy black, with a sheen from the top-left. \u2666 The orange numbers are exactly the same orange as before.' },
@@ -53335,8 +53392,14 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #crewsView .crw-x{ background:none;border:0;font-size:22px;line-height:1;cursor:pointer;
   color:var(--crw-mut,#9aa0a8); }
 
-#crewsView .crw-wrap{ display:grid;grid-template-columns:236px 1fr;gap:14px;
+#crewsView .crw-wrap{ display:grid;grid-template-columns:236px minmax(0,1fr);gap:14px;
   align-items:start;padding:0 18px 26px; }
+/* 549: a grid item's default min-width is AUTO, not 0 — so the panel column
+   refused to shrink below the rate table's intrinsic width and stretched the
+   whole card instead, which is why .crw-rtwrap's overflow-x never engaged and
+   the form fields ran off the right edge. minmax(0,1fr) on the track and
+   min-width:0 here are the two halves of the same fix. */
+#crewsView .crw-wrap > *{ min-width:0; }
 @media (max-width:820px){ #crewsView .crw-wrap{ grid-template-columns:1fr; } }
 
 /* ── trade nav — #cr-lnav's shape, 536's well ── */
@@ -53372,6 +53435,18 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   background:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
   border:1px solid var(--crw-cardn,#24242c);
   box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.10) inset; }
+/* 553: the panel is two cards butted together. Geometry here is exactly what
+   the inline styles used to set — moved into classes so the light theme can
+   reach it, which an inline style would never allow.
+
+   The one behavioural change is the body half's shadow: `.crw-card`'s
+   `0 1px 0 rgba(255,255,255,.10) inset` is a top-edge bevel, and the body half
+   has no top edge. It was drawing a white hairline across the middle of the
+   object — measured at luma 54.3 against the card's own 32.3. The drop shadow
+   and the ledge are kept verbatim; only the inset goes. */
+#crewsView .crw-cardtop{ border-radius:10px 10px 0 0;padding-bottom:0; }
+#crewsView .crw-cardbot{ border-radius:0 0 10px 10px;border-top:0;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5); }
 :root[data-theme="rb-light"] #crewsView .crw-card{ background:var(--crw-card,#fff);
   border-color:var(--crw-cardn,#dcdee2);box-shadow:0 2px 6px rgba(30,45,65,.10); }
 
@@ -53391,6 +53466,13 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #crewsView .crw-tab.on{ background:var(--crw-tabon,#242430);color:#fff;box-shadow:inset 0 2px 0 #c8202e; }
 :root[data-theme="rb-light"] #crewsView .crw-tab.on{ background:var(--crw-tabon,#fff);color:#161616; }
 
+/* 553: a raw UA file button was rendering here — border-width:0, radius:0,
+   grey-on-near-black in dark. */
+#crewsView input[type=file]{ padding:6px 8px;font:12.5px system-ui;cursor:pointer; }
+#crewsView input[type=file]::file-selector-button{
+  font:700 12px system-ui;padding:5px 11px;margin-right:9px;cursor:pointer;
+  border-radius:6px;border:1px solid var(--crw-line,#2b2b33);
+  background:var(--crw-taboff,#14151a);color:var(--crw-ink,#c2cbd8); }
 #crewsView .crw-doc{ display:flex;justify-content:space-between;align-items:center;gap:10px;
   padding:10px 12px;border-radius:7px;margin-bottom:7px;font-size:12.5px;
   background:rgba(255,255,255,.035);border:1px solid var(--crw-line,#26262e); }
@@ -53403,7 +53485,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #crewsView label{ display:block;font:700 10px system-ui;letter-spacing:.05em;
   text-transform:uppercase;margin:10px 0 4px;color:var(--crw-mut,#9aa0a8); }
 :root[data-theme="rb-light"] #crewsView label{ color:var(--crw-mut,#5f666e); }
-#crewsView input[type=text],#crewsView input[type=date],#crewsView select,#crewsView textarea{
+#crewsView input[type=text],#crewsView input[type=date],#crewsView input[type=file],#crewsView select,#crewsView textarea{
   width:100%;padding:8px 10px;border-radius:6px;font:13px system-ui;
   background:var(--crw-input,#101015);border:1px solid var(--crw-line,#2b2b33);
   color:var(--crw-ink,#c2cbd8); }
@@ -53414,7 +53496,197 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   background:var(--crw-input,#fff);border-color:var(--crw-line,#dcdee2);color:var(--crw-ink,#2f3338); }
 #crewsView .crw-grid2{ display:grid;grid-template-columns:1fr 1fr;gap:0 12px; }
 @media (max-width:620px){ #crewsView .crw-grid2{ grid-template-columns:1fr; } }
+/* 549: the rate table scrolls inside ITS OWN box. Six columns of auto-width
+   content was forcing the whole card wider than a phone, so the PAGE scrolled
+   sideways — which is why the row labels were clipped on the left and the form
+   fields ran off on the right. Those fields sit in a .crw-grid2 whose media
+   query collapses below 620px; it never fired, because a media query keys off
+   the VIEWPORT while the layout was being stretched from inside. */
+#crewsView .crw-rtwrap{ overflow-x:auto;-webkit-overflow-scrolling:touch;
+  margin:0 -2px 4px;padding:0 2px; }
+#crewsView .crw-rcatrow td{ font:800 10px system-ui;letter-spacing:.06em;text-transform:uppercase;
+  padding:14px 7px 5px;color:var(--crw-mut,#9aa0a8);border-bottom:0; }
+:root[data-theme="rb-light"] #crewsView .crw-rcatrow td{ color:var(--crw-mut,#5f666e); }
+/* table-layout:fixed is what actually pins the columns — without it the widths
+   below are only suggestions and the longest line item still wins. */
+#crewsView .crw-rt{ border-collapse:collapse;width:100%;min-width:540px;
+  table-layout:fixed;font-size:12.5px;margin-bottom:4px; }
+#crewsView .crw-rt .c-name{ width:auto; }
+#crewsView .crw-rt .c-unit{ width:52px; }
+/* Ours and Theirs sit adjacent and right-aligned: comparing them is the entire
+   point of this tab, so they must never be something you scroll to reunite. */
+#crewsView .crw-rt .c-ours{ width:74px; }
+#crewsView .crw-rt .c-theirs{ width:96px; }
+#crewsView .crw-rt .c-spread{ width:82px; }
+#crewsView .crw-rt .c-x{ width:38px; }
+#crewsView .crw-rt .crw-rn{ overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+#crewsView .crw-rt .crw-rx{ text-align:right; }
+#crewsView .crw-rt th{ font:700 9.5px system-ui;letter-spacing:.05em;text-transform:uppercase;
+  text-align:left;padding:5px 7px;color:var(--crw-mut,#9aa0a8);
+  border-bottom:1px solid var(--crw-line,#2b2b33); }
+#crewsView .crw-rt td{ padding:5px 7px;border-bottom:1px solid var(--crw-rowline,#232329);
+  vertical-align:middle; }
+:root[data-theme="rb-light"] #crewsView .crw-rt th{ color:var(--crw-mut,#5f666e);
+  border-bottom-color:var(--crw-line,#dcdee2); }
+:root[data-theme="rb-light"] #crewsView .crw-rt td{ border-bottom-color:var(--crw-rowline,#eceef1); }
+#crewsView .crw-rt .n{ text-align:right;white-space:nowrap; }
+#crewsView .crw-rt input{ width:100%;padding:5px 7px;text-align:right;font:13px system-ui; }
+/* A NEGATIVE spread means the crew charges more than Cardinal does for that
+   line. Amber, not red: it is a number to look at, not an error. */
+#crewsView .crw-rt .crw-neg{ color:#f5b880;font-weight:700; }
+:root[data-theme="rb-light"] #crewsView .crw-rt .crw-neg{ color:#8a5200; }
+#crewsView .crw-mini{ padding:2px 8px;font-size:14px;line-height:1.2; }
 #crewsView .crw-empty{ padding:26px 14px;text-align:center;color:var(--crw-mut,#9aa0a8);font-size:13px; }
+
+/* ══ Build 550 · light mode for Crews, in the app's own light language ══════
+   Read off Theo's two screenshots (Landing + Insurance home): a WARM off-white
+   ground, white cards with a thin CARDINAL hairline rather than a grey one,
+   soft shadows on everything, letterspaced red micro-labels, and section
+   headings as a label followed by a rule.
+
+   The nav inverts. 547 built it as a recessed well in both themes, copying
+   536's left menu; Theo asked for raised, so light gets a raised white card and
+   the well survives in dark. The twins genuinely differ here — which is the
+   point, not an oversight.
+
+   Contrast computed, not eyeballed: worst is the section-rule label at 4.91:1
+   against a 4.5 floor.                                                      */
+
+:root[data-theme="rb-light"] #crewsView{
+  background:var(--crw-page,#f7f5f5);color:var(--crw-ink,#1f2124);
+}
+:root[data-theme="rb-light"] #crewsView .crw-mut{ color:var(--crw-mut,#5f666e); }
+
+/* ── the nav: a raised card, not a sunk well ── */
+:root[data-theme="rb-light"] #crewsView .crw-nav{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-top:2px solid var(--crw-edge,#c8202e);
+  border-radius:14px;
+  box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
+}
+/* section heading = label, then a rule running to the edge */
+:root[data-theme="rb-light"] #crewsView .crw-sec{
+  background:none;box-shadow:none;color:var(--crw-red,#9c1822);
+  padding:13px 14px 6px;margin-top:2px;gap:10px;
+}
+:root[data-theme="rb-light"] #crewsView .crw-sec > span:first-child{
+  flex:0 0 auto;position:relative;
+}
+:root[data-theme="rb-light"] #crewsView .crw-sec::after{
+  content:'';flex:1 1 auto;height:1px;order:1;
+  background:var(--crw-rule,rgba(200,32,46,.22));
+}
+:root[data-theme="rb-light"] #crewsView .crw-sec > span:last-child{
+  order:2;flex:0 0 auto;color:var(--crw-mut,#6b6b6b);
+}
+:root[data-theme="rb-light"] #crewsView .crw-item{
+  color:var(--crw-ink,#3f3f46);margin:3px 8px;border-radius:9px;padding:9px 11px;
+}
+:root[data-theme="rb-light"] #crewsView .crw-item:hover{
+  background:var(--crw-hover,#faf7f7);
+}
+/* the selected crew is the one card that gets the bloom */
+:root[data-theme="rb-light"] #crewsView .crw-item.on{
+  background:var(--crw-card,#fff);color:#161616;
+  box-shadow:inset 3px 0 0 #c8202e, 0 8px 20px rgba(200,32,46,.24),
+             0 0 0 1px rgba(200,32,46,.34);
+}
+
+/* ── panels: white, hairlined, raised ── */
+:root[data-theme="rb-light"] #crewsView .crw-card{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-top:2px solid var(--crw-edge,#c8202e);
+  border-radius:14px;
+  box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
+}
+/* 553: the two halves match the nav's 14px now. They used to carry an inline
+   10px, which beat every rule in this stylesheet, so the left card rendered
+   visibly rounder than the right.
+
+   The rule that stood here before was mine and did nothing: it guarded against
+   the top half's drop shadow smearing onto the body half, which cannot happen
+   — the body half is a later sibling and paints its opaque background over
+   that shadow. Measured flat 255.0 for 13px below the seam. It also aimed at
+   the wrong card, and 551 set it to a value identical to `.crw-card`. Deleted
+   rather than left as decoration. No shadow is overridden here; both halves
+   inherit `.crw-card`'s exactly as they did at 552. */
+:root[data-theme="rb-light"] #crewsView .crw-cardtop{
+  border-radius:14px 14px 0 0;
+}
+:root[data-theme="rb-light"] #crewsView .crw-cardbot{
+  border-radius:0 0 14px 14px;
+  /* border-top MUST be re-zeroed. The base `#crewsView .crw-cardbot` sets it,
+     but the light `.crw-card` rule above out-specifies that one (1,3,0 against
+     1,1,0) and puts the 2px cardinal edge back — drawing a red line straight
+     across the middle of the panel. The harness caught it as a 186-luma band
+     1px below the seam. */
+  border-top:0;
+}
+
+/* ── tabs ── */
+:root[data-theme="rb-light"] #crewsView .crw-tab{
+  background:var(--crw-taboff,#f0eded);color:var(--crw-taboffink,#575d64);
+  border:1px solid transparent;border-bottom:0;
+}
+:root[data-theme="rb-light"] #crewsView .crw-tab.on{
+  background:var(--crw-card,#fff);color:#161616;
+  border-color:var(--crw-hair,rgba(200,32,46,.28));
+  box-shadow:inset 0 2px 0 #c8202e, 0 -3px 8px rgba(40,20,10,.09);
+}
+
+/* ── document rows and notes: little raised cards of their own ── */
+:root[data-theme="rb-light"] #crewsView .crw-doc,
+:root[data-theme="rb-light"] #crewsView .crw-note{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-radius:11px;
+  box-shadow:0 4px 10px rgba(40,20,10,.10), 0 1px 3px rgba(40,20,10,.07);
+}
+
+/* ── the rate table ── */
+:root[data-theme="rb-light"] #crewsView .crw-rtwrap{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-radius:11px;padding:2px 10px 6px;
+  box-shadow:0 4px 10px rgba(40,20,10,.10), 0 1px 3px rgba(40,20,10,.07);
+}
+:root[data-theme="rb-light"] #crewsView .crw-rcatrow td{
+  color:var(--crw-red,#9c1822);
+}
+:root[data-theme="rb-light"] #crewsView .crw-rt th{
+  color:var(--crw-mut,#6b6b6b);border-bottom-color:var(--crw-rule,rgba(200,32,46,.18));
+}
+:root[data-theme="rb-light"] #crewsView .crw-rt td{
+  border-bottom-color:var(--crw-rowline,#f0eded);
+}
+:root[data-theme="rb-light"] #crewsView .crw-rt input,
+:root[data-theme="rb-light"] #crewsView input[type=text],
+:root[data-theme="rb-light"] #crewsView input[type=date],
+:root[data-theme="rb-light"] #crewsView select,
+:root[data-theme="rb-light"] #crewsView textarea{
+  background:var(--crw-card,#fff);color:var(--crw-ink,#1f2124);
+  border:1px solid var(--crw-inputline,#e2dede);border-radius:8px;
+  box-shadow:0 1px 3px rgba(40,20,10,.08);
+}
+:root[data-theme="rb-light"] #crewsView label{ color:var(--crw-red,#9c1822); }
+:root[data-theme="rb-light"] #crewsView input[type=file]::file-selector-button{
+  background:var(--crw-taboff,#f0eded);color:var(--crw-ink,#1f2124);
+  border:1px solid var(--crw-inputline,#e2dede); }
+
+/* ── buttons ── */
+:root[data-theme="rb-light"] #crewsView .crw-btn{
+  background:var(--crw-card,#fff);color:var(--crw-ink,#1f2124);
+  border:1px solid var(--crw-inputline,#e2dede);border-radius:9px;
+  box-shadow:0 3px 7px rgba(40,20,10,.13), 0 1px 2px rgba(40,20,10,.08);
+}
+:root[data-theme="rb-light"] #crewsView .crw-btn.primary{
+  background:#c8202e;border-color:#c8202e;color:#fff;
+  box-shadow:0 3px 10px rgba(200,32,46,.28);
+}
+:root[data-theme="rb-light"] #crewsView .crw-h{ color:#161616; }
+:root[data-theme="rb-light"] #crewsView .crw-x{ color:var(--crw-mut,#5f666e); }
 </style>
 <script id="cr-crew-script">
 /* ══ Build 547 · Crews ═════════════════════════════════════════════════════
@@ -53440,9 +53712,20 @@ var DOCS = [
   ['gl', 'General Liability'],
   ['wc', "Workers' Comp"]
 ];
-var TABS = [['profile','Profile'],['compliance','Compliance'],['notes','Notes']];
+/* 548: Labor Rates sits between Compliance and Notes. tabsFor() filters it out
+   for anyone who is not an admin — crew_rates is admin-only in RLS, so for
+   production the tab would render and then show nothing, turning a deliberate
+   restriction into what looks like a broken screen. */
+var TABS = [['profile','Profile'],['compliance','Compliance'],['rates','Labor Rates'],['notes','Notes']];
+function canSeeRates(){
+  try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
+}
+function tabsFor(){
+  return TABS.filter(function(t){ return t[0] !== 'rates' || canSeeRates(); });
+}
 
 var crews = [], docs = [], notes = [], selId = null, tab = 'compliance', booted = false;
+var catalog = [], rates = [];   /* 548: pricing_items + crew_rates */
 
 function db(){ return window.supa || window.sb || null; }
 function view(){ return document.getElementById('crewsView'); }
@@ -53499,12 +53782,19 @@ async function load(){
   var res = await Promise.all([
     cl.from('crews').select('*').eq('archived', false).order('name'),
     cl.from('crew_docs').select('*'),
-    cl.from('crew_notes').select('*').order('at', { ascending:false })
+    cl.from('crew_notes').select('*').order('at', { ascending:false }),
+    /* 548: both are optional. RLS refuses crew_rates to production, and that is
+       a correct refusal — it must degrade to "no rates shown", never to a
+       failed load that blanks the whole directory. */
+    cl.from('pricing_items').select('id,category,name,unit,rate,enabled,sort_order').eq('enabled', true),
+    cl.from('crew_rates').select('*')
   ]);
   if(res[0].error) throw res[0].error;
   crews = res[0].data || [];
   docs  = (res[1].data) || [];      /* a docs failure must not blank the directory */
   notes = (res[2].data) || [];
+  catalog = (res[3].data) || [];
+  rates   = (res[4].data) || [];
   if(selId && !crews.some(function(c){ return c.id === selId; })) selId = null;
   if(!selId && crews.length) selId = crews[0].id;
 }
@@ -53572,6 +53862,119 @@ function complianceHtml(c){
     '</div>';
 }
 
+function itemById(id){
+  for(var i = 0; i < catalog.length; i++){ if(catalog[i].id === id) return catalog[i]; }
+  return null;
+}
+function money(n){
+  var v = Number(n);
+  if(!isFinite(v)) return '';
+  /* The sign goes OUTSIDE the currency symbol. Prepending '$' to an already
+     negative number gives "$-2", which is not how money is written anywhere —
+     caught by the harness on a crew whose rate is above Cardinal's own. */
+  var sign = v < 0 ? '-' : '';
+  return sign + '$' + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits:2 });
+}
+/* What Cardinal keeps on a line: our rate minus theirs. Shown as a spread, not
+   a percentage, because a percentage of a per-square rate reads as a discount
+   rather than as money. Returns null when there is nothing to compare — a
+   custom row has no catalog twin, and a zero catalog rate is not a 100% margin. */
+function spread(ours, theirs){
+  var a = Number(ours), b = Number(theirs);
+  if(!isFinite(a) || !isFinite(b) || a <= 0) return null;
+  return a - b;
+}
+function ratesHtml(c){
+  if(!canSeeRates()){
+    return '<div class="crw-empty">Labor rates are admin-only.</div>';
+  }
+  var mine = rates.filter(function(r){ return r.crew_id === c.id; });
+  /* group: catalog rows by their category, custom rows together at the end */
+  var groups = {}, custom = [];
+  mine.forEach(function(r){
+    if(!r.pricing_item_id){ custom.push(r); return; }
+    var it = itemById(r.pricing_item_id);
+    var cat = it ? it.category : 'Uncategorised';
+    (groups[cat] = groups[cat] || []).push({ r:r, it:it });
+  });
+  var cats = Object.keys(groups).sort();
+  /* 549: ONE table, not one per category. Four separate tables each sized their
+     own columns to their own longest line item, so Unit/Ours/Theirs landed at
+     four different x-positions down the page. Categories are full-width rows
+     inside a single table now, so the columns line up structurally rather than
+     by coincidence. */
+  function rateRow(id, name, unit, ours, theirs, sp){
+    return '<tr>' +
+      '<td class="crw-rn" title="' + esc(name) + '">' + esc(name) + '</td>' +
+      '<td class="crw-mut">' + esc(unit || '') + '</td>' +
+      '<td class="n crw-mut">' + ours + '</td>' +
+      '<td class="n"><input type="text" inputmode="decimal" data-rate="' + esc(id) +
+        '" value="' + esc(theirs) + '"></td>' +
+      '<td class="n ' + (sp === null ? 'crw-mut' : sp < 0 ? 'crw-neg' : '') + '">' +
+        (sp === null ? '&mdash;' : money(sp)) + '</td>' +
+      '<td class="crw-rx"><button class="crw-btn crw-mini" data-delrate="' + esc(id) +
+        '">&times;</button></td></tr>';
+  }
+  var rows = '';
+  cats.forEach(function(cat){
+    rows += '<tr class="crw-rcatrow"><td colspan="6">' + esc(cat) + '</td></tr>';
+    groups[cat].sort(function(a, b){
+      return String(a.it && a.it.name).localeCompare(String(b.it && b.it.name));
+    }).forEach(function(g){
+      rows += rateRow(g.r.id,
+        g.it ? g.it.name : '(item removed from the catalog)',
+        g.it ? g.it.unit : '',
+        g.it ? money(g.it.rate) : '&mdash;',
+        g.r.rate,
+        g.it ? spread(g.it.rate, g.r.rate) : null);
+    });
+  });
+  if(custom.length){
+    rows += '<tr class="crw-rcatrow"><td colspan="6">Their own line items</td></tr>';
+    custom.forEach(function(r){
+      rows += rateRow(r.id, r.custom_name, r.custom_unit, '&mdash;', r.rate, null);
+    });
+  }
+  var out = mine.length
+    ? '<div class="crw-rtwrap"><table class="crw-rt">' +
+        '<colgroup><col class="c-name"><col class="c-unit"><col class="c-ours">' +
+        '<col class="c-theirs"><col class="c-spread"><col class="c-x"></colgroup>' +
+        '<tr><th>Line item</th><th>Unit</th><th class="n">Ours</th>' +
+        '<th class="n">Theirs</th><th class="n">Spread</th><th></th></tr>' +
+        rows + '</table></div>'
+    : '<div class="crw-empty">Nothing priced yet. Add a catalog item below, ' +
+      'or a line item only this crew does.</div>';
+  /* only offer catalog items this crew is not already priced on */
+  var taken = {};
+  mine.forEach(function(r){ if(r.pricing_item_id) taken[r.pricing_item_id] = 1; });
+  var free = catalog.filter(function(i){ return !taken[i.id]; })
+    .sort(function(a, b){ return (a.category + a.name).localeCompare(b.category + b.name); });
+
+  return out +
+    '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
+    (mine.length ? '<button class="crw-btn primary" data-act="saverates">Save rates</button>' +
+      '<span class="crw-mut" data-ratemsg style="margin-left:10px;font-size:12px"></span>' : '') +
+    '<div class="crw-grid2" style="margin-top:12px">' +
+      '<div><label>Add a catalog item</label>' +
+        (free.length
+          ? '<select data-r="pick"><option value="">' + free.length + ' available\u2026</option>' +
+            free.map(function(i){
+              return '<option value="' + esc(i.id) + '">' + esc(i.category) + ' \u2014 ' +
+                esc(i.name) + ' (' + esc(i.unit) + ', ours ' + money(i.rate) + ')</option>';
+            }).join('') + '</select>'
+          : '<div class="crw-mut" style="font-size:12.5px;padding:8px 0">Every catalog item is already priced for this crew.</div>') +
+      '</div>' +
+      '<div><label>Their rate</label><input type="text" inputmode="decimal" data-r="pickrate" placeholder="0.00"></div>' +
+    '</div>' +
+    (free.length ? '<button class="crw-btn" style="margin-top:10px" data-act="addcatrate">Add</button>' : '') +
+    '<div class="crw-grid2" style="margin-top:16px">' +
+      '<div><label>Or a line item only they do</label><input type="text" data-r="cname" placeholder="Wrap bay window"></div>' +
+      '<div><label>Unit</label><input type="text" data-r="cunit" placeholder="ea"></div>' +
+      '<div><label>Their rate</label><input type="text" inputmode="decimal" data-r="crate" placeholder="0.00"></div>' +
+    '</div>' +
+    '<button class="crw-btn" style="margin-top:10px" data-act="addcustomrate">Add custom row</button>' +
+    '</div>';
+}
 function notesHtml(c){
   var mine = notes.filter(function(n){ return n.crew_id === c.id; });
   return '<div><label>Add a note</label><textarea data-f="newnote" rows="2"></textarea>' +
@@ -53591,18 +53994,23 @@ function panelHtml(){
     'Use <b>+ New crew</b> to add the first one.</div></div>';
   var st = crewState(c.id);
   var lbl = st === 'ok' ? '\u25cf Compliant' : st === 'warn' ? '\u25b2 Expiring' : '\u2715 Not compliant';
-  var body = tab === 'profile' ? profileHtml(c) : tab === 'notes' ? notesHtml(c) : complianceHtml(c);
-  return '<div class="crw-card" style="border-radius:10px 10px 0 0;padding-bottom:0">' +
+  /* 548: a non-admin who somehow lands on 'rates' falls back to compliance
+     rather than seeing an empty panel. */
+  if(tab === 'rates' && !canSeeRates()) tab = 'compliance';
+  var body = tab === 'profile' ? profileHtml(c)
+    : tab === 'rates' ? ratesHtml(c)
+    : tab === 'notes' ? notesHtml(c) : complianceHtml(c);
+  return '<div class="crw-card crw-cardtop">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">' +
       '<div><b style="font-size:15px">' + esc(c.legal_name || c.name) + '</b>' +
         '<div class="crw-mut" style="margin-top:2px">' +
         [c.trade, c.contact_name, c.contact_phone].filter(Boolean).map(esc).join(' \u00b7 ') +
         '</div></div>' +
       '<span class="crw-pill ' + st + '">' + lbl + '</span></div>' +
-    '<div class="crw-tabs">' + TABS.map(function(t){
+    '<div class="crw-tabs">' + tabsFor().map(function(t){
       return '<div class="crw-tab' + (tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</div>';
     }).join('') + '</div></div>' +
-    '<div class="crw-card" style="border-radius:0 0 10px 10px;border-top:0">' + body + '</div>';
+    '<div class="crw-card crw-cardbot">' + body + '</div>';
 }
 
 function render(){
@@ -53698,6 +54106,68 @@ async function addNote(){
   await load(); render();
 }
 
+function rv(k){ var el = view().querySelector('[data-r="' + k + '"]'); return el ? el.value.trim() : ''; }
+/* A rate must be a real number. '' and 'abc' both become NaN, and a NaN rate
+   written to a NOT NULL numeric column is a 400 from PostgREST rather than a
+   useful message, so it is caught here. Zero is allowed — a crew genuinely can
+   include a line at no charge. */
+function num(v){
+  if(v === '' || v === null || v === undefined) return null;
+  var n = Number(String(v).replace(/[$,\s]/g, ''));
+  return isFinite(n) ? n : null;
+}
+async function addCatRate(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var id = rv('pick'), r = num(rv('pickrate'));
+  if(!id){ alert('Pick a catalog item first.'); return; }
+  if(r === null){ alert('Enter their rate as a number.'); return; }
+  var res = await cl.from('crew_rates').insert({
+    crew_id:c.id, pricing_item_id:id, rate:r, updated_by:me()
+  });
+  if(res.error){ alert('Could not add that rate: ' + res.error.message); return; }
+  await load(); render();
+}
+async function addCustomRate(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var name = rv('cname'), unit = rv('cunit'), r = num(rv('crate'));
+  if(!name){ alert('Give the line item a name.'); return; }
+  if(r === null){ alert('Enter their rate as a number.'); return; }
+  var res = await cl.from('crew_rates').insert({
+    crew_id:c.id, custom_name:name, custom_unit:unit || null, rate:r, updated_by:me()
+  });
+  if(res.error){ alert('Could not add that row: ' + res.error.message); return; }
+  await load(); render();
+}
+async function saveRates(){
+  var cl = db();
+  if(!cl) return;
+  var msg = view().querySelector('[data-ratemsg]');
+  var edits = [];
+  view().querySelectorAll('[data-rate]').forEach(function(el){
+    var id = el.getAttribute('data-rate'), n = num(el.value);
+    var was = rates.find(function(r){ return r.id === id; });
+    if(n === null || !was || Number(was.rate) === n) return;   /* only what changed */
+    edits.push({ id:id, rate:n });
+  });
+  if(!edits.length){ if(msg) msg.textContent = 'Nothing changed.'; return; }
+  if(msg) msg.textContent = 'Saving\u2026';
+  for(var i = 0; i < edits.length; i++){
+    var r = await cl.from('crew_rates')
+      .update({ rate:edits[i].rate, updated_at:new Date().toISOString(), updated_by:me() })
+      .eq('id', edits[i].id);
+    if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+  }
+  await load(); render();
+}
+async function delRate(id){
+  var cl = db();
+  if(!cl || !id) return;
+  var r = await cl.from('crew_rates').delete().eq('id', id);
+  if(r.error){ alert('Could not remove that row: ' + r.error.message); return; }
+  await load(); render();
+}
 async function archive(){
   var c = sel(), cl = db();
   if(!c || !cl) return;
@@ -53718,6 +54188,8 @@ function wire(){
     if(tb){ tab = tb.getAttribute('data-tab'); render(); return; }
     var od = e.target.closest('[data-open]');
     if(od){ openDoc(od.getAttribute('data-open')); return; }
+    var dr = e.target.closest('[data-delrate]');
+    if(dr){ delRate(dr.getAttribute('data-delrate')); return; }
     var a = e.target.closest('[data-act]');
     if(!a) return;
     var k = a.getAttribute('data-act');
@@ -53727,6 +54199,9 @@ function wire(){
     else if(k === 'upload'){ upload(); }
     else if(k === 'addnote'){ addNote(); }
     else if(k === 'archive'){ archive(); }
+    else if(k === 'saverates'){ saveRates(); }
+    else if(k === 'addcatrate'){ addCatRate(); }
+    else if(k === 'addcustomrate'){ addCustomRate(); }
   });
 }
 

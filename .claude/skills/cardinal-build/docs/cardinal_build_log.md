@@ -4818,3 +4818,269 @@ the bucket — otherwise it is stored, billed and referenced by nothing.
 real DOM state. Harness `harnesses/h547_chromium.js`.
 
 **Next:** Labor Rates (needs crews) → Work Order generator (needs rates) → Payments + Commissions.
+
+---
+
+## Build 548 — Labor Rates on a crew: catalog items plus custom rows
+
+Stage 2. 547 shipped the page; this is the tab that makes `crew_rates` referencing `pricing_items`
+worth having.
+
+**The tab shows what the crew is priced on, not the whole catalog.** `pricing_items` has **34 enabled
+rows across 16 categories** — rendering 34 inputs and asking Theo to fill them on a phone is a chore,
+not a rate sheet. The tab lists this crew's rates grouped by category; you add a catalog item when you
+need one. Custom rows group at the end. The picker offers **only items not already priced for that
+crew**, asserted.
+
+**The tab is admin-only and is HIDDEN, not empty.** `crew_rates` is `is_cardinal_admin()` in RLS —
+it is what Cardinal *pays*, which with `pricing_items.rate` is the margin. Production must not see it.
+A rendered-but-empty tab would turn a correct refusal into what looks like a broken screen, and worse,
+imply the data is there to be had. Gated in **three** places: `tabsFor()` filters the strip,
+the dispatch falls back to Compliance, and `ratesHtml()` refuses on its own. The harness runs the page
+**twice — as Theo and as Curtis** — and asserts four tabs versus three.
+
+**The spread is the point.** Every catalog-linked row shows Cardinal's rate beside the crew's and the
+difference. `spread()` returns **null rather than a number** for a custom row (no catalog twin) and for
+a zero catalog rate (a zero base is not a 100% margin). A negative spread — the crew charging more than
+Cardinal does — is **amber, not red**: a number to look at, not an error.
+
+**Neither new fetch can blank the directory.** `pricing_items` and `crew_rates` degrade to `[]`; only
+the `crews` fetch throws. Asserted by counting `throw` sites in `load()`.
+
+### The harness caught a real bug
+
+`money()` produced **`$-2`** for a negative spread — the sign inside the currency symbol, which is not
+how money is written anywhere. Fixed to `-$2`; the sign now goes outside. It only shows up on a crew
+whose rate is *above* Cardinal's own, which is exactly the row Theo most needs to read correctly.
+
+`check_build.py` green (548, marker `function ratesHtml`, negative-controlled).
+**Chromium 13/13**, both roles, both themes. Harness `harnesses/h548_chromium.js`.
+
+**Next:** the Work Order generator (needs these rates to fill its labor lines), then Payments +
+Commissions.
+
+---
+
+## Build 549 — the rate columns line up, and the panel stops stretching
+
+**Theo, with a phone screenshot:** *"Can you line up and align those sections."*
+
+**Two faults, and the second made the first look worse.**
+
+**1. Every category got its own `<table>`.** Five categories, five tables — and an **auto-layout table
+sizes its columns to its own content**, so Unit / Ours / Theirs landed in a different place in every
+block. Nothing was going to align them while they were separate tables.
+
+**2. The panel was being stretched from inside.** Six auto-width columns forced the card wider than the
+phone, so the row labels clipped on the left and the "Their rate" / "Unit" fields ran off on the right.
+Those fields sit in a `.crw-grid2` whose media query collapses below 620px — **it never fired, because
+a media query keys off the VIEWPORT while the layout was being stretched from within.**
+
+**The fix is one table, not five.** Categories are full-width rows inside a single table, so alignment
+is *structural* rather than coincidental. `table-layout:fixed` with an explicit `<colgroup>` pins the
+widths, and the table sits in its own `overflow-x:auto` box with a `min-width` — the rates scroll
+inside their own frame, the page never does.
+
+**⚠ `min-width:0` is half the fix, and the half that is easy to miss.** A **grid item's default
+`min-width` is `auto`, not 0**, so the panel track refused to shrink below the table's intrinsic width
+and stretched the card anyway — which meant `.crw-rtwrap`'s `overflow-x` never engaged. `minmax(0,1fr)`
+on the track plus `min-width:0` on the children are two halves of one fix. **The harness caught this:
+the first run of 549 still failed both the wrapper-scrolls and form-fits assertions.**
+
+### The negative control did NOT reproduce, and that is recorded rather than hidden
+
+The 548 fixture's five tables happen to *agree* — each is `width:100%` of the same container, and the
+identical headers give columns 2–6 identical minimums, so column 1 comes out the same. Theo's real data
+diverges. Rather than claim a before/after win the fixture cannot support, the control asserts **the
+defect itself**, which is provable either way: 548's tables compute `table-layout: auto`, so agreement
+was a coincidence; 549's computes `fixed`, so it is a guarantee.
+
+`check_build.py` green (549, marker `crw-rtwrap`, negative-controlled).
+**Chromium 13/13 measured at 430px**, Theo's actual phone width — every column asserted to one
+x-position, the view asserted not to exceed the viewport, the wrapper asserted to scroll instead.
+Harness `harnesses/h549_chromium.js`.
+
+---
+
+## Build 550 — light mode for Crews, in the app's own light language
+
+**Theo, with two screenshots** (the Landing and the Insurance home in light): *"Make light modes for
+all sections in crew labor similar to this style and color theme. Raise everything that can be raised
+with shadows."*
+
+**Read off the screenshots rather than guessed:**
+
+- a **warm** off-white ground (`#f7f5f5`), not the cool `#f2f3f5` the crews page had
+- white cards with a **thin cardinal hairline**, not a grey one
+- soft drop shadows on everything — nothing sits flat
+- micro-labels in letterspaced uppercase **cardinal red**
+- section headings as a **label followed by a rule** (`CHASE LIST ————`)
+- the card that matters gets a red edge and a faint red bloom
+
+**The nav inverts, and that is the interesting part.** 547 built it as a **recessed well in both
+themes**, copying 536's left menu. Theo has now asked for the opposite in light, so light gets a raised
+white card with the hairline and a shadow while **the well survives untouched in dark**. The twins
+genuinely differ now — which is this project's own "the dark twin is designed, not recoloured", running
+in the other direction for once.
+
+**Dark is not touched.** Every one of the 25 rules is inside `:root[data-theme="rb-light"]`, and the
+patch asserts it by parsing the selectors and failing on any that would reach dark. It also asserts the
+dark well's `inset 3px 0 7px -3px rgba(0,0,0,.85)` still exists.
+
+**Contrast computed before the colours went in**, not after: worst pair is the section-rule label at
+**4.91:1** against a 4.5 floor; everything else runs 5.7–18:1. The red hairline is decoration, not text,
+but it reads 5.67:1 against white so it is visible rather than theoretical.
+
+`check_build.py` green (550, marker `Build 550 · light mode for Crews`, negative-controlled).
+Chromium 13/13 carried forward, plus **all four tabs rendered in light** for review.
+Harness `harnesses/h550_chromium.js`.
+
+**A gate bug worth recording:** the shadow assertion used `light[light.index(sel)]` — `index()` returns
+an **int**, so the slice was a single character and the check was meaningless before it failed. Rewritten
+to regex out the rule body and assert `box-shadow` inside it. The test was wrong twice over: broken
+*and* silently so.
+
+---
+
+## Build 551 — the light Crews cards actually lift off the page
+
+**Theo, with a third screenshot:** *"I need the light theme to have this type of raised look with
+shadows it pops out."*
+
+550's light shadows were **too weak and the wrong temperature**: `rgba(31,33,36,.09)` — a cool grey I
+picked, on a warm off-white ground.
+
+**Every value here is the app's own, measured rather than invented.** `#leadsView .ljcard` renders
+`rgba(40,20,10,…)` — a *warm* shadow that belongs with the warm page — and it already defines a lifted
+elevation at `0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10)`. **That is its `:hover`
+state.** A phone cannot hover, so the app's own lifted look was unreachable on the device Theo works
+from. 551 promotes it to rest.
+
+Inner objects (doc rows, notes, the rate table, buttons, inputs) lift at a **smaller** amplitude so the
+hierarchy survives the increase — everything getting the same shadow would flatten it again.
+
+**A lit top edge is the other half of "raised":** `border-top:2px solid #fff` with the shadow beneath
+is light-from-above. Without it a card is merely outlined.
+
+The patch asserts **zero `rgba(31,33,36` remain** in the light block — the first attempt missed the
+tabs and the inputs and its own gate caught it, aborting before the write.
+
+**⚠ The first marker failed the negative control**, and correctly: `0 14px 28px rgba(40,20,10,.16)` was
+**already in the file**, because it was lifted *from* `.ljcard:hover`. Reusing the app's values means
+the value is not new — only where it appears is. Same lesson as 543's ported icon. Marker changed to
+`border-top:2px solid var(--crw-lit,#fff)`.
+
+Measured before and after in Chromium:
+`rgba(31,33,36,.09) 0 6px 18px` → `rgba(40,20,10,.16) 0 14px 28px`.
+
+`check_build.py` green (551, negative-controlled). Dark untouched — asserted, all 25 rules still
+light-scoped and the dark recessed well intact.
+
+**Still unresolved, and Theo should say:** his screenshot shows a **dark top edge** on each card. The
+shipped light `.ljcard` renders `border-top: rgb(255,255,255)` — white — so that edge is not coming
+from the current rule. It may be the shadow of the card above, or a build he was looking at. 551 uses a
+**light** top edge, which is the correct physics for a raised card. If he wants a dark edge, say so.
+
+---
+
+## Build 552 — cardinal red top edge on the light Crews cards
+
+**Theo:** *"Use red edge instead of navy."*
+
+551 used a **white** lit edge — correct physics for a raised card (light from above, shadow beneath),
+and it answered the open question from 551's note, which had flagged that the dark edge in Theo's
+screenshot was not coming from any shipped rule. He wants it **red**, not navy and not white.
+
+`border-top:2px solid #c8202e` on the panel and the nav. The edge is **decoration, not text**, so no
+4.5 floor applies — but it reads **5.67:1** against the white card, past the 3.0 non-text floor, so it
+is a visible edge rather than a theoretical one.
+
+Verified in Chromium in both themes:
+
+| | card top | nav top |
+|---|---|---|
+| light | `rgb(200, 32, 46)` @ 2px | `rgb(200, 32, 46)` |
+| dark | `rgb(36, 36, 44)` @ 1px | `rgb(34, 48, 71)` |
+
+Dark is untouched — asserted, and confirmed by reading the rendered border rather than the source.
+
+`check_build.py` green (552, negative-controlled). Closes the open question from 551.
+
+### build 553 — the right side of Crews
+Theo: "How about the right side?" Measured the left nav against the right panel in
+Chromium rather than guessing. The panel is TWO `.crw-card`s butted together (header
+with the tabs, then the body), and three things were wrong with it:
+
+- **Light corners were 10px against the nav's 14px.** `panelHtml()` set the radius as an
+  INLINE style, which beats every rule in the stylesheet. Fixed structurally: the two
+  halves get real classes (`crw-cardtop` / `crw-cardbot`) carrying exactly the geometry
+  the inline styles used to, so a theme rule can reach them. Dark was never affected —
+  its nav is 10px too.
+- **The file input was unstyled in BOTH themes.** The base rule lists `[type=text]`,
+  `[type=date]`, `select`, `textarea` and stops, so Compliance rendered a raw UA control
+  (measured `border-width:0px, border-radius:0px`). Now styled, plus
+  `::file-selector-button`.
+- **Dark drew a white line across the middle of the panel.** `.crw-card`'s
+  `0 1px 0 rgba(255,255,255,.10) inset` is a top-edge bevel, and the body half has no top
+  edge. Pixel-measured at luma 53.0 against the card's own 30.2. Only the inset is
+  dropped; the drop shadow and ledge are kept verbatim.
+
+Also unified the hairline — 550 gave doc rows, notes and the rate frame a translucent-red
+border, 551 changed the CARDS to grey `#e6e2df` and left the children pink.
+
+**A false positive of mine, recorded so it does not come back.** I first diagnosed a
+drop-shadow SMEAR at the seam — the top half's `0 14px 28px` landing on the body half's
+face. It does not happen: the body half is a later sibling with an opaque background and
+paints over that shadow. The luma profile is flat over dy 1-9 in both builds. What I had
+measured was the first document row's own border, 14px down. 550's `.crw-card + .crw-card`
+rule went in under the same wrong theory, aimed at the wrong card, and 551 then set it to
+a value identical to `.crw-card` — a literal no-op. Deleted. No shadow is overridden in
+this build except the one dark inset above. `h553_chromium.js` asserts the absence of the
+smear so the wrong fix cannot be reintroduced.
+
+Caught during the build: adding the classes let the light `.crw-card` rule (1,3,0)
+out-specify the base `.crw-cardbot` (1,1,0) and put the 2px cardinal edge back — a red
+line straight across the middle of the panel, 186 luma. The harness caught it before the
+write; the light rule now re-zeroes `border-top`.
+
+Gates: `check_build.py` green, negative-controlled, 552 → 553. Chromium 22/22, both themes.
+
+### build 554 — a Roofr upload fills the measurements and the pitch
+Theo: "Roofr when uploaded should be auto populating the info for pitch and measurements."
+
+**The audit behind it.** The same roof facts had THREE homes and the import populated
+the one nothing reads:
+- `checklist.roofr` — written by `wireRoofrUpload`, read by nobody afterwards
+- `checklist.meas` — written ONLY by the hand-typed Measurements modal
+- `checklist.pitch` / `.layers` / `.decking` — written by the roof INSPECTION checklist
+  (`ck_pitch`, `ck_layers`, `ck_decking`), read by the Construction Agreement via
+  `collapse('pitch', _ck.pitch)`
+
+So a job could be measured by Roofr and still show an empty Measurements panel and a
+blank pitch line on its agreement.
+
+**The change.** The merge is lifted into a named pure function `roofrMerge(all, d)` beside
+`fillRoofrFields`, so the gate can execute the shipped code rather than a re-implementation.
+Precedence: Roofr fills blanks and refreshes its OWN earlier numbers (a corrected re-upload
+works), never overwrites a field measurement, and a mixed record reads `Field + Roofr`
+rather than being relabelled. `checklist.pitch` is filled only when the inspection left it
+blank. `layers`/`decking` are untouched — Roofr does not report them.
+
+**Corrections to claims I made earlier in the session, all mine:**
+- I said "nothing writes `checklist.layers/pitch/decking`". **Wrong** — the roof inspection
+  checklist writes them (`ck_layers`, `ck_pitch`, `ck_decking`, and `ck_sat` for a satellite
+  dish). My regex `(layers|pitch|decking)\s*:` missed it because the form reads DOM values
+  into a differently-shaped object.
+- I said the one project carrying them was a test row from 542. **Wrong** — it is "Alton",
+  created 17 Jul, with real values (8/12, 2 Layers, 1x6 Plank / Spaced Lumber), and it is a
+  *different* project from the one carrying `meas`.
+- Block attribution by "nearest preceding named block" is unreliable: **unnamed script blocks
+  get credited to whatever named block precedes them**, which made real code look like it
+  lived in `cr-pcard-styles` (the base64 blob). Track block ENDs, not just starts.
+
+**Stated caveat:** zero projects in production carry a `roofr` key, so no real import has
+ever landed. The payload shape is taken from `api/roofr.js`'s own documented contract.
+The harness runs against REAL checklist rows pulled from the database for everything else.
+
+Gates: `check_build.py` green, negative-controlled, 553 → 554. Harness 32/32 against
+production rows.
