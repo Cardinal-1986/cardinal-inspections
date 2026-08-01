@@ -29,6 +29,11 @@ community_client_view.html
 community_portal_theme.html
 community_stages.html
 
+# --- Company letterhead. Not referenced by the app; it is a Word template Theo
+#     writes letters in. A blank letterhead is the raw material for forged
+#     correspondence, so it should not be a public download. ---
+brand/
+
 # --- SQL. CLAUDE.md's standing convention is "SQL ships as separate .sql
 #     files", and there was no rule here for them — the first migration
 #     committed would have been served at app.cardinalroster.com. Migrations
