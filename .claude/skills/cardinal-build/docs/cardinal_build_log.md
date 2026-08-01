@@ -3741,3 +3741,127 @@ of the work. That is arithmetic, not a bug: a *white* card cannot read raised on
 dark home card does, because home's lift comes from a light top edge over a darker body. Making the
 retail cards look like home on the dark ground would mean giving them home's ground — which is the
 colour change Theo explicitly ruled out.
+
+---
+
+## Build 523 — Quick Inspect and the estimate screens, made readable
+
+> "Can you fix the quick inspect and estimates pages. Not able to read words."
+
+**Reproduced before fixed.** `harnesses/legibility523_probe.js` renders the real
+markup those modules emit — `cr-ci-script`'s own `shell()/open()/read()/review()`, the four
+`<template>` blocks the estimates module clones, and the estimate editor driven through its own
+exported `openEditor()/refreshSavedList()` — in real Chromium, resolves the ground each text node
+is *actually* painted on, and computes the WCAG ratio. Every replacement came from
+`scripts/contrast.py`. **74 failing pairs → 3**, and all three survivors are out of scope
+(below).
+
+### The probe was wrong three times first — each is a standing trap
+
+1. **Every `--cr-*` palette is declared on its OWN mount** (`#cr-estimates-mount`,
+   `#cr-pricing-mount`, `#cr-claims-mount`), not on `:root`. Cloning the templates into the page
+   made every `color:var(--cr-muted)` invalid, so elements inherited body's `#1b1b1b` and **30 fake
+   1.15:1 failures** appeared. Textbook "scope the assertion, then read what it captured".
+2. **A gradient's painted colour is not `backgroundColor`** — that reads transparent, so a naive
+   ancestor walk invents a ground. "Edit Estimate" was reported at 1.12:1; it sits on
+   `.cr-est-head`'s dark gradient and is fine. Fixed by treating every gradient colour stop as a
+   candidate ground and keeping the worst.
+3. **Gradient-clipped text** (`-webkit-text-fill-color:transparent`) is painted *in* the gradient;
+   `color` is only the no-clip fallback. Measuring it as ground put the Estimates title at 2.17:1.
+4. …and `.cr-est-saved-list .head` only matches when the slot carries the class
+   `injectOnProfile()` gives it. A bare div reported 1.15:1 on text that is really `#6b6b6b`.
+
+### What was actually wrong — 26 values, all measured
+
+| | was | now |
+|---|---|---|
+| `#cr-ci label` + `.req` (every field label) | `#c8202e` on `#202329` — **2.78** | `#f08a90` — 6.55 |
+| `#cr-ci .busy` (the whole reading-the-screen state) | `#6b6357` — **2.66** | `#b0a89c` — 6.69 |
+| `#cr-ci .found .miss` | `#a5a5a5` on `#f4f8f4` — **2.30** | `#6f6f6f` — 4.69 |
+| **seven** rules of `#1a1a1a` on `#c8202e` (Save, + From Library, + Attach Photos, move-button hovers, cover chips, the dupe button) | **3.07** | `#fff` — 5.67 |
+| `.cr-est-lineitem .del` | `#a89e88` on white — **2.65** | `#767066` — 4.91 |
+| `.cr-est-saved-list .head` | `#6b6b6b`, untokenised — **2.95** | `var(--rbe-mute)` — 7.55 dark / 4.97 light |
+| `.cr-chrome-badge` | white on `#c87a00` — **3.37** | `#1a1a1a` — 5.17 |
+| `.cre-note` / `.cr-footer` | faint grey — **2.38** light | the module's own `--cr-muted` — 5.33 / 7.10 |
+| `#cr-epub-btn`, `#cr-epub-preview-btn`, `#cr-e2c-btn`, `.pv-head button` | `#e35c63` — **3.97** | `#f08a90` — 5.81 |
+
+**The four `#id` button rules were a second pass.** Publish, Preview and → Contract are injected
+into `.cr-est-head` by three *other* modules and each carries an `#id` rule — **(1,0,0) beats
+`.cr-est-head button` at (0,2,1)**, so fixing the class rule moved Cancel and nothing else. Only
+re-running the probe against the patched file found them. Same for `#cr-ci .req`: fixing a label
+without its children leaves one 2.78:1 behind.
+
+**One self-inflicted regression, caught the same way.** The first pass flipped `.cr-tmpl-lbl` to a
+flat `#e35c63` — fixing dark by breaking light (3.51:1 on the white card). No single red clears 4.5
+on both `#101218` and `#ffffff`, so the value has to follow the theme: `--cr-red` stays (4.90 light)
+and dark gets one scoped override.
+
+**`#c8202e` stays.** Cardinal red is brand and semantic; what changed is the ink on it.
+
+### Deliberately left, and why
+
+- `#cr-est-new-btn` — `#1a1a1a` over `linear-gradient(135deg,#c8202e,#c88a0f)`. Dark ink is right on
+  the gold end and 3.07:1 on the red end; white ink would fail on the gold end instead. Fixing it
+  means changing the brand gradient — a design decision, not a contrast fix.
+- `.cr-est-saved-row .status.*` at 3.99:1 — semantic pill family, Theo's call per OPEN_ITEMS.
+- `.cre-sheet .ph button.ap` ("Apply") at 4.05:1 in `rb-light` — that is `--rbe-ok`'s light value
+  `#2f8f56`, and **`--rbe-ok` has 22 references app-wide**. An app-wide token change is its own
+  deliberate build, not a rider on this one.
+- Pricing Catalog `span.count` at 4.29:1 — a different screen from the two named.
+
+**Also found, not fixed:** `#1a1a1a` on `#c8202e` appears **12 more times** outside these two blocks.
+Same defect, other modules. The assertion in `patch523.py` is scoped to the two blocks and proves
+those 12 were left untouched.
+
+**Gates.** `check_build.py` green. Probe 74 → 3. All five prior harnesses re-run, unchanged.
+
+---
+
+## Build 524 — delete an estimate, with the SQL that makes it real
+
+> "Also can you have an option to delete estimates within the page."
+
+### The SQL is not optional — verified against the live database
+
+`public.estimates` has RLS on and exactly three policies: `est_read` (SELECT), `est_write` (INSERT),
+`est_update` (UPDATE). **There is no DELETE policy.** Under RLS that is not an error, it is a silent
+refusal: PostgREST answers with **204 and no error body**, the row survives, and the client cannot
+tell it apart from success. A Delete button shipped without `estimates_delete_policy.sql` would
+be a lie.
+
+```sql
+create policy est_delete on public.estimates for delete to authenticated
+  using ( is_full_access() or created_by = my_email() );
+```
+
+`is_full_access()` is theo/joan/curtis/scottie. That mirrors `est_write`'s ownership rule rather
+than inventing a new one; `created_by IS NULL` rows end up admin-only, the safe default.
+
+### Hard delete, not archive — and the schema is why
+
+- `estimates.line_items` is **jsonb on the row**, and **nothing has a foreign key to `estimates`**.
+  Deleting the row is complete and leaves no orphans. (`estimate_line_items` is the shared price
+  book, unrelated.)
+- The `archived` column exists but is **dead**: 0 of 11 rows use it, and the app only reads it in
+  `loadForProject`'s `.eq('archived', false)`. 8 of the 11 rows are drafts — which is presumably
+  why Theo wants them gone rather than filed.
+- A document already published from an estimate (`doc_id` / `contract_doc_id`) is **kept**. A signed
+  PDF should outlive the draft it came from.
+
+### One pipeline, two entry points
+
+`deleteEstimate(id, opts)` does the confirm, the delete, the verification, the audit entry and the
+refresh. The editor header calls it; each saved row calls it. Adding a second delete path later is
+how this file grew two Estimates screens in the first place.
+
+**`.select('id')` is load-bearing, not decoration** — it is the only way to tell a real delete from
+an RLS refusal, and the harness asserts it directly.
+
+Details worth keeping: Delete renders only when `s.id` is set (nothing to delete before the first
+save); `wire()` **guards** it, unlike its unconditional neighbours which dereference
+`querySelector()` immediately; the row control calls `stopPropagation()` because the row itself
+opens the editor; and deleting the estimate you have open closes the editor.
+
+**Gates.** `check_build.py` green. `harnesses/del524_harness.js` — **32 assertions, 0 failed**,
+running the shipped module against a Supabase stand-in that can be told to refuse exactly the way
+RLS does. All five prior harnesses re-run, unchanged.
