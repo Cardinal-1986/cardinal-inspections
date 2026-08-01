@@ -947,3 +947,37 @@ whatever comes back.
 **The library cannot generate pictures.** Both models are text-only. `~~photos` (471) is a
 different thing entirely — a search over real CompanyCam photographs, admin-only, where the model
 never receives photo data. See OPEN_ITEMS before proposing image generation.
+
+---
+
+## Card-title icons (build 537)
+
+Every card heading on the **home screen** and **Graphs & Reports** carries a drawn SVG icon in the
+left nav's style — **20 in total**. Colour, weight and the light/dark switch are copied off
+`#cr-lnav .lnav-ic`, not invented: solid `var(--rbe-mute,#8b9199)` in dark, `#a3121e` keyline with
+`#9a9a9a` secondaries in `rb-light`.
+
+**Where it lives:** `<style id="cr-titleicon-styles">` (last block before `</body>`) plus inline
+`<svg class="pti">` in the markup. Each icon ships **both weights** — `<g class="i2">` solid and
+`<g class="i5">` keyline — and CSS picks, exactly as the nav does.
+
+**Inline SVG, not `lnavIcon()`.** The titles are static markup and `cr-lnav-script` is desktop-only
+(`--lnav-w` is 0 below 1100px), so routing through the nav's emitter would drop every icon on a
+phone.
+
+**Seven icons are the nav's own**, copied verbatim from `I2`/`I5` at patch time so they cannot
+drift: `graphsreports` ×2, `leadsjobs`, `activityfeed`, `team`, `production`, `inspections`.
+**Thirteen are new** and live only in the patch that placed them — `scheduleboard` (a clipboard,
+overriding the nav's slab for card titles only), `accountsreceivable`, `today`, `teamcalendar`,
+`productioncalendar`, `punch`, `revenue`, `trend`, `loss`, `funnel`, `trophy`, `stale`, `margin`.
+
+**Two rules if you extend this set:**
+- **Never copy an `I2` icon that carries `fill="#0d0d10"`.** That is the rail's own background
+  painted on as a fake knockout — `recents`, `pricingcatalog`, `salesfloor` and `estimates` all do
+  it, and they render as black holes on the navy card. Use `fill-rule="evenodd"` for a real hole.
+- **Look at it filled before you ship it.** Three of these passed every structural gate as a slab,
+  a slab and a bucket-with-an-arrow. Only the screenshot said so.
+
+`.pipetitle` no longer clips a gradient to text — see the build log for why that was the whole
+cause of the blank squares, and note that `.acthead` and `.pu-strip .sh b` **still carry the same
+clip** deliberately.

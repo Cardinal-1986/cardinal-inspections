@@ -769,7 +769,12 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 @media (max-width:640px){ #brandLogo{height:38px !important;width:52px !important;} }
 /* ---- pipeline widget ---- */
 .pipecard{border:1px solid var(--rbe-line2);border-top:2px solid var(--rbe-ridge-t);border-bottom:2px solid var(--rbe-ridge-b);border-radius:12px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));color:var(--rbe-ink);padding:14px 16px;margin:14px 0;box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
-.pipetitle{font:800 15px Georgia,'Times New Roman',serif;background:linear-gradient(100deg,var(--rbe-head),var(--rbe-head));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc);margin-bottom:10px;}
+/* 537: the clip is GONE. It was clipping a gradient whose two stops are the SAME
+   colour - var(--rbe-head) twice - so it rendered identically to a flat fill while
+   stripping the colour out of every emoji in a card title. That is the whole reason
+   they came through as squares. color: is set to what the clip was already painting,
+   so the text does not change; only the emoji do, and they are now icons anyway. */
+.pipetitle{font:800 15px Georgia,'Times New Roman',serif;color:var(--rbe-head);margin-bottom:10px;}
 .piperow{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;justify-content:space-evenly;}
 .pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;max-width:200px;}
 .pipebtn .pcirc{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;
@@ -3152,7 +3157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 535 &#8212; the retail home in dark mode is navy over black instead of iron grey, and both calendars match it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 537 &#8212; the squares beside the headings on the home and reports pages are proper drawn icons now</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3242,7 +3247,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           </div>
         </div>
         <div class="pipecard" style="margin-top:12px;">
-          <div class="pipetitle">&#128202; Cardinal Pipeline</div>
+          <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="12" width="4.4" height="9" rx="1"/><rect x="9.8" y="7" width="4.4" height="14" rx="1"/><rect x="16.6" y="3" width="4.4" height="18" rx="1"/></g><g class="i5"><path d="M4 20V13" class="m"/><path d="M10 20V8"/><path d="M16 20V4" class="m"/><path d="M4 20h16" class="m"/></g></svg>Cardinal Pipeline</div>
           <div class="piperow" id="pipeRow"></div>
         </div>
         <div class="pipecard" id="approvalsCard" style="display:none;margin-top:14px;border-left:5px solid #C8202E;">
@@ -3252,7 +3257,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="rowfil"></div>
         <div class="opsrow">
           <div class="pipecard opscard">
-            <div class="pipetitle">&#128197; Work Schedule</div>
+            <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M9.4 1.8h5.2a1.6 1.6 0 0 1 1.6 1.6v.9H7.8v-.9a1.6 1.6 0 0 1 1.6-1.6z"/><path fill-rule="evenodd" d="M6.2 3.6h1.6v2.8h8.4V3.6h1.6a2 2 0 0 1 2 2v13.8a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM6.6 9.4h10.8v9.6H6.6z"/><rect x="8.4" y="11" width="7.2" height="1.9" rx=".95"/><rect x="8.4" y="14.4" width="5" height="1.9" rx=".95"/></g><g class="i5"><path d="M8.6 4.2H6.4a2 2 0 0 0-2 2v13.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V6.2a2 2 0 0 0-2-2h-2.2"/><rect x="8.4" y="2.4" width="7.2" height="3.6" rx="1.4" class="m"/><path d="M8.2 11.6h7.6" class="m"/><path d="M8.2 15.4h5" class="m"/></g></svg>Work Schedule</div>
             <div class="opsstats">
               <div class="opsstat" data-opsnav="completed" style="cursor:pointer;" title="View completed jobs"><span class="opsc" style="background:#2f7fd0;" id="opsDone">0</span><small>Completed<br>Today</small></div>
               <div class="opsstat" data-opsnav="today" style="cursor:pointer;" title="Jump to Production Calendar"><span class="opsc" style="background:#8b5fd6;" id="opsToday">0</span><small>Jobs<br>Today</small></div>
@@ -3260,21 +3265,21 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
             </div>
           </div>
           <div class="pipecard opscard">
-            <div class="pipetitle">&#128176; Accounts Receivable</div>
+            <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><ellipse cx="12" cy="6.2" rx="7.4" ry="2.4"/><ellipse cx="12" cy="12" rx="7.4" ry="2.4"/><ellipse cx="12" cy="17.8" rx="7.4" ry="2.4"/></g><g class="i5"><ellipse cx="12" cy="6.4" rx="7" ry="2.6"/><path d="M5 6.4v11.2c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6.4" class="m"/><path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6" class="m"/></g></svg>Accounts Receivable</div>
             <div class="arwrap" id="arWrap"></div>
             <div class="artotal" id="arTotal"></div>
           </div>
         </div>
         <div class="rowfil"></div>
         <div class="kphomerow">
-          <div class="pipecard"><div class="pipetitle">&#128293; Recent leads</div><div id="kpLeadsList"></div></div>
-          <div class="pipecard"><div class="pipetitle">&#128197; Today</div><div id="kpTodayList"></div></div>
+          <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="5" width="18" height="2.6" rx="1.3"/><rect x="3" y="10.7" width="18" height="2.6" rx="1.3"/><rect x="3" y="16.4" width="11" height="2.6" rx="1.3"/></g><g class="i5"><path d="M4 7h16" class="m"/><path d="M4 12h11"/><path d="M4 17h6" class="m"/></g></svg>Recent leads</div><div id="kpLeadsList"></div></div>
+          <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path fill-rule="evenodd" d="M4.8 3.6h14.4a2 2 0 0 1 2 2v12.8a2 2 0 0 1-2 2H4.8a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM5.2 10.2h13.6v7.6H5.2z"/><circle cx="12" cy="14" r="2.2"/></g><g class="i5"><rect x="2.8" y="3.6" width="18.4" height="16.8" rx="2"/><path d="M2.8 9.8h18.4"/><circle cx="12" cy="15" r="2" class="m"/></g></svg>Today</div><div id="kpTodayList"></div></div>
         </div>
         <div id="kpPunchStrip"></div>
         <div class="herorow" style="margin-top:14px;">
           <div class="pipecard teamcal">
             <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
-              <span>&#127970; Cardinal Team Calendar</span>
+              <span><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="7.2" y="1.8" width="2.2" height="5" rx="1.1"/><rect x="14.6" y="1.8" width="2.2" height="5" rx="1.1"/><path fill-rule="evenodd" d="M4.8 4.6h14.4a2 2 0 0 1 2 2v12.4a2 2 0 0 1-2 2H4.8a2 2 0 0 1-2-2V6.6a2 2 0 0 1 2-2zM5.2 11h13.6v7.4H5.2z"/><rect x="8" y="13.6" width="8" height="2.2" rx="1.1"/></g><g class="i5"><rect x="2.8" y="4.6" width="18.4" height="16" rx="2"/><path d="M2.8 10h18.4"/><path d="M7.6 2.4v4" class="m"/><path d="M16.4 2.4v4" class="m"/><path d="M8 15h8" class="m"/></g></svg>Cardinal Team Calendar</span>
               <button class="chipbtn" id="teamAddBtn">&#65291; Add</button>
             </div>
             <div class="minical" id="teamCalMount"></div>
@@ -3282,7 +3287,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           </div>
           <div class="pipecard teamcal prodcal">
             <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
-              <span><img src="/cardinal-hammer.png" alt="" style="height:22px;width:auto;vertical-align:-5px;margin-right:4px;"> Production Calendar</span>
+              <span><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path fill-rule="evenodd" d="M4.8 4.6h14.4a2 2 0 0 1 2 2v12.4a2 2 0 0 1-2 2H4.8a2 2 0 0 1-2-2V6.6a2 2 0 0 1 2-2zM5.2 11h13.6v7.4H5.2z"/><rect x="7" y="12.6" width="7.6" height="1.9" rx=".95"/><rect x="9.4" y="15.4" width="7.6" height="1.9" rx=".95"/></g><g class="i5"><rect x="2.8" y="4.6" width="18.4" height="16" rx="2"/><path d="M2.8 10h18.4"/><path d="M7 13.4h7.4" class="m"/><path d="M9.6 16.6h7.4" class="m"/></g></svg>Production Calendar</span>
               <small id="prodCalWho" style="font:700 11px 'Segoe UI',Arial,sans-serif;color:#9a8c85;"></small>
             </div>
             <div class="minical" id="prodCalMount"></div>
@@ -3292,7 +3297,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="hero-left" style="margin-top:14px;">
           <div id="heroGreeting" class="hero-hi"></div>
         </div>
-        <div class="acthead">Activity Count: Last 30 Days</div>
+        <div class="acthead"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/></g><g class="i5"><path d="M13 4 6 13h5l-1 7 8-10h-5z"/></g></svg>Activity Count: Last 30 Days</div>
         <div class="actstrip" id="actStrip"></div>
       </div>
       <aside class="homeside" style="margin-top:14px;">
@@ -3331,7 +3336,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
   <div class="wrap" style="padding-top:18px;">
     <div class="pipecard" style="margin-top:0;">
       <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
-        <span>&#128200; Graphs &amp; Reports</span>
+        <span><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="12" width="4.4" height="9" rx="1"/><rect x="9.8" y="7" width="4.4" height="14" rx="1"/><rect x="16.6" y="3" width="4.4" height="18" rx="1"/></g><g class="i5"><path d="M4 20V13" class="m"/><path d="M10 20V8"/><path d="M16 20V4" class="m"/><path d="M4 20h16" class="m"/></g></svg>Graphs &amp; Reports</span>
         </div>
       <div class="rptchips" id="rptRange">
         <span class="hstat" data-r="w">Week</span><span class="hstat on" data-r="m">Month</span>
@@ -3360,24 +3365,24 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
     <div id="rptCompany">
       <div class="rptkpis" id="rptKpis"></div>
-      <div class="pipecard"><div class="pipetitle">&#128176; Revenue over time <small style="font-weight:400;">(signed value &#183; dashed = previous period)</small></div><canvas id="chRevenue" height="230"></canvas></div>
-      <div class="pipecard"><div class="pipetitle">&#128683; Pipeline funnel &amp; conversion</div><canvas id="chFunnel" height="230"></canvas><div id="rptConv" class="rptconv"></div></div>
-      <div class="pipecard"><div class="pipetitle">&#128681; New leads over time</div><canvas id="chLeads" height="200"></canvas></div>
-      <div class="pipecard" id="rptSourceCard" style="display:none;"><div class="pipetitle">&#128269; Leads by source</div><canvas id="chSource" height="220"></canvas></div>
-      <div class="pipecard" id="rptLossCard" style="display:none;"><div class="pipetitle">&#10060; Why we lose bids</div><canvas id="chLoss" height="220"></canvas></div>
+      <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path fill-rule="evenodd" d="M2.6 5.4h18.8a1.6 1.6 0 0 1 1.6 1.6v10a1.6 1.6 0 0 1-1.6 1.6H2.6A1.6 1.6 0 0 1 1 17V7a1.6 1.6 0 0 1 1.6-1.6zM12 8.8a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 0 0 0-6.4z"/></g><g class="i5"><rect x="1.8" y="5.8" width="20.4" height="12.4" rx="1.8"/><circle cx="12" cy="12" r="3" class="m"/></g></svg>Revenue over time <small style="font-weight:400;">(signed value &#183; dashed = previous period)</small></div><canvas id="chRevenue" height="230"></canvas></div>
+      <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M2.6 3.6h18.8a1 1 0 0 1 .78 1.63L14.8 14v6.1a1 1 0 0 1-1.45.9l-2.8-1.4a1 1 0 0 1-.55-.9V14L1.82 5.23A1 1 0 0 1 2.6 3.6z"/></g><g class="i5"><path d="M2.8 4.6h18.4l-7.4 8.9v6.3l-3.6-1.8v-4.5z"/></g></svg>Pipeline funnel &amp; conversion</div><canvas id="chFunnel" height="230"></canvas><div id="rptConv" class="rptconv"></div></div>
+      <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M13.4 21h-2.8V10.6H6.2L12 3.2l5.8 7.4h-4.4z"/></g><g class="i5"><path d="M12 20.4V5.2"/><path d="m5.6 11.6 6.4-6.4 6.4 6.4" class="m"/></g></svg>New leads over time</div><canvas id="chLeads" height="200"></canvas></div>
+      <div class="pipecard" id="rptSourceCard" style="display:none;"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><circle cx="11" cy="11" r="6.6"/><rect x="15.2" y="16.6" width="7" height="2.6" rx="1.3" transform="rotate(45 15.2 16.6)"/></g><g class="i5"><circle cx="11" cy="11" r="5.5" class="m"/><path d="M15 15l5 5"/></g></svg>Leads by source</div><canvas id="chSource" height="220"></canvas></div>
+      <div class="pipecard" id="rptLossCard" style="display:none;"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M10.6 3h2.8v10.4h4.4L12 20.8l-5.8-7.4h4.4z"/></g><g class="i5"><path d="M12 3.6v15.2"/><path d="m5.6 12.4 6.4 6.4 6.4-6.4" class="m"/></g></svg>Why we lose bids</div><canvas id="chLoss" height="220"></canvas></div>
     </div>
 
     <div id="rptReps" style="display:none;">
-      <div class="pipecard"><div class="pipetitle">&#127942; Rep scoreboard</div><div id="rptRepTable"></div></div>
+      <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M6.2 2.8h11.6v5.6a5.8 5.8 0 0 1-11.6 0z"/><rect x="10.6" y="14.2" width="2.8" height="3.4"/><rect x="6.6" y="18.4" width="10.8" height="2.6" rx="1.1"/><path d="M4.6 4.4H2v2.4a4.2 4.2 0 0 0 3 4V8.6a1.9 1.9 0 0 1-1-1.7V6.4h1.6z"/><path d="M19.4 4.4H22v2.4a4.2 4.2 0 0 1-3 4V8.6a1.9 1.9 0 0 0 1-1.7V6.4h-1.6z"/></g><g class="i5"><path d="M6.6 3.4h10.8v5a5.4 5.4 0 0 1-10.8 0z"/><path d="M12 13.8v3.8"/><path d="M7.4 19.8h9.2" class="m"/><path d="M6.6 5h-2.8v1.8a3.8 3.8 0 0 0 2.8 3.6" class="m"/><path d="M17.4 5h2.8v1.8a3.8 3.8 0 0 1-2.8 3.6" class="m"/></g></svg>Rep scoreboard</div><div id="rptRepTable"></div></div>
       <div class="pipecard"><div class="pipetitle"><svg class="gicon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Google Reviews</div><div id="rptReviews"></div></div>
-      <div class="pipecard"><div class="pipetitle">&#128176; Signed revenue by rep</div><canvas id="chRepRev" height="220"></canvas></div>
-      <div class="pipecard"><div class="pipetitle">&#9888;&#65039; Stale leads (14+ days untouched)</div><div id="rptStale"></div></div>
+      <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><circle cx="12" cy="7" r="3.6"/><path d="M4.6 20a7.4 7.4 0 0 1 14.8 0z"/></g><g class="i5"><circle cx="12" cy="8" r="3.2" class="m"/><path d="M5 19h14"/></g></svg>Signed revenue by rep</div><canvas id="chRepRev" height="220"></canvas></div>
+      <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M5.4 2.4h13.2v2.4H5.4z"/><path d="M5.4 19.2h13.2v2.4H5.4z"/><path d="M7.2 6.4h9.6v1.5L12 11.6 7.2 7.9z"/><path d="M7.2 17.6v-1.5L12 12.4l4.8 3.7v1.5z"/></g><g class="i5"><path d="M5.8 3.2h12.4" /><path d="M5.8 20.8h12.4"/><path d="M7.4 3.2v3.4L12 11l4.6-4.4V3.2" class="m"/><path d="M7.4 20.8v-3.4L12 13l4.6 4.4v3.4" class="m"/></g></svg>Stale leads (14+ days untouched)</div><div id="rptStale"></div></div>
     </div>
 
     <div id="rptProd" style="display:none;">
       <div class="rptkpis" id="rptProdKpis"></div>
-      <div class="pipecard"><div class="pipetitle">&#128296; Jobs completed over time</div><canvas id="chProd" height="220"></canvas></div>
-      <div class="pipecard" id="rptProfitCard" style="display:none;"><div class="pipetitle">&#128181; Profit margin (jobs with cost entered)</div><div id="rptProfit"></div></div>
+      <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M14.2 2.6 20 8.4l-2.9 2.9-5.8-5.8z"/><path d="M10.2 6.6 3 13.8V21h7.2l7.2-7.2z"/></g><g class="i5"><path d="M4 18 10 6l4 8 2-3 4 7" class="m"/><path d="M4 18h16"/></g></svg>Jobs completed over time</div><canvas id="chProd" height="220"></canvas></div>
+      <div class="pipecard" id="rptProfitCard" style="display:none;"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M12.8 2.4v8.8h8.8a9 9 0 0 0-8.8-8.8z"/><path d="M11.2 3.7a9 9 0 1 0 9.9 9.9h-9.9z"/></g><g class="i5"><circle cx="12" cy="12" r="8.6" class="m"/><path d="M12 3.4v8.6h8.6"/></g></svg>Profit margin (jobs with cost entered)</div><div id="rptProfit"></div></div>
     </div>
   </div>
 </div>
@@ -33858,6 +33863,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:537, note:'\uD83C\uDFA8 Card headings have real icons. \u2666 The squares beside the headings on the home page and the Graphs \u0026 Reports page are gone \u2014 all 20 now carry a drawn icon in the same style as the left menu. \u2666 Both calendars finally look like calendars, and Punch \u0026 Repairs is a wrench rather than a second hammer. \u2666 They follow the theme the way the menu does: filled in dark, outlined in light.' },
+{ build:536, note:'\uD83D\uDCD0 The left menu has depth. \u2666 It is now set into the page rather than sitting flat on it, with the section headings as raised bands and whichever page you are on lifted out as a card. \u2666 Works both ways \u2014 in light it is a grey channel with a white card, in dark it is a black channel with a navy one. Desktop only; nothing on the phone changed.' },
 { build:535, note:'\uD83C\uDF11 Dark mode, retail home. \u2666 The grey cards are gone. Everything now sits as navy panels raised off the black, with the numbers and client rows set into them \u2014 your idea, from that checkout screen. \u2666 The pipeline circles are a compact strip that shows the same five numbers in the space one circle used to take. \u2666 Both calendars match now: no red cap, white month, white dates, every square set in, and the greyed-out dates are actually readable. \u2666 \u201Call jobs\u201D came off the Production Calendar so the header sits level.' },
 { build:534, note:'\uD83D\uDCD0 Library diagrams, reliable. \u2666 When you asked the assistant something and it drew a diagram, it only worked if the assistant happened to leave a blank line above it \u2014 otherwise you got the raw text \u201C~~stack\u201D printed at you instead of a picture. The app now spaces them itself, so a diagram draws every time. Nothing about how they look has changed.' },
 { build:533, note:'\uD83D\uDD34 Red buttons, finished. \u2666 Thirteen more buttons and tabs across the app had near-black writing on the cardinal red \u2014 the map button, ABC Supply, the photo editor and its tools, the photo annotator, the line-item library, the contract editor and the estimate preview. All now white, like the ones fixed earlier. The red itself is unchanged.' },
@@ -48104,7 +48111,7 @@ function stripHtml(crm){
   });
   var urg = list.filter(isUrgent).length;
   return '<div class="pu-strip" data-pustrip="' + crm + '">' +
-    '<div class="sh"><b>\uD83D\uDD28 Punch &amp; Repairs</b>' +
+    '<div class="sh"><b><svg class=\"pti\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><g class=\"i2\"><path d=\"M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z\"/></g><g class=\"i5\"><path d=\"M21.6 19.1l-8.4-8.4a5.6 5.6 0 0 0-7.3-7.3l3.4 3.4-2.6 2.6-3.4-3.4a5.6 5.6 0 0 0 7.3 7.3l8.4 8.4a1 1 0 0 0 1.4 0l1.2-1.2a1 1 0 0 0 0-1.4z\"/></g></svg>Punch &amp; Repairs</b>' +
     '<span class="n">' + list.length + (urg ? ' \u00b7 ' + urg + ' urgent' : '') + '</span>' +
     '<span class="all" data-puall="' + crm + '">See all \u203A</span></div>' +
     (list.length ? list.slice(0, 3).map(function(i){ return cardHtml(i, false); }).join('')
@@ -52290,6 +52297,92 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #prodCalWho{
   display:none;
 }
+</style>
+<style id="cr-lnav-a-styles">
+/* ══ Build 536 · left menu — option A, the recessed channel ════════════════
+   Theo's pick, both modes. Depth by RECESSION: every other card in this app
+   is raised, so a carved nav reads as chrome instead of content.
+
+   The dark twin is designed, not recoloured. A well is lit from above — dark
+   on the top/left inner edge, light catch on the bottom/right. In light the
+   shadow leads; in dark the shadow is already almost the page colour, so the
+   HIGHLIGHT leads instead. Recolour the light rule and you get a bump.
+
+   Dark reuses 535's palette: the well is the same #0A0E16 as the home
+   screen's sunk rows, and the active item is a #1A2434 navy card sitting in
+   it — the inverse of light, where the well is grey and the item is white. */
+
+/* ── LIGHT · shadow-led ──────────────────────────────────────────────────── */
+:root[data-theme="rb-light"] #cr-lnav{
+  background:#f2f3f5;
+  border-right:1px solid #dcdee2;
+  box-shadow:inset 3px 0 6px -3px rgba(30,45,65,.22), inset -1px 0 0 #ffffff;
+}
+:root[data-theme="rb-light"] #cr-lnav .lnav-sec{
+  background:linear-gradient(180deg,#e9ebee,#f2f3f5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 #dcdee2;
+  color:#6f7683;padding-top:8px;padding-bottom:7px;margin-top:6px;
+}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item{color:#3f3f46}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item:hover{background:#e7e9ec;color:#161616}
+/* the active row is a white card sitting IN the well */
+:root[data-theme="rb-light"] #cr-lnav .lnav-item.on{
+  background:#ffffff;color:#161616;font-weight:700;
+  border-left-color:transparent;
+  box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e), 0 1px 2px rgba(30,45,65,.10);
+}
+
+/* ── DARK · highlight-led ────────────────────────────────────────────────── */
+:root:not([data-theme="rb-light"]) #cr-lnav{
+  background:#0A0E16;
+  border-right:1px solid #223047;
+  /* the catch on the inner right edge is what says "dip" here; the shadow is
+     nearly the page colour and does almost nothing on its own */
+  box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055);
+}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec{
+  background:linear-gradient(180deg,#141C29,#0F1521);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910;
+  color:#8d97a6;padding-top:8px;padding-bottom:7px;margin-top:6px;
+}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec .cnt,
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec .chev{color:#6b7688}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item{color:#c2cbd8}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item:hover{background:#111927;color:#ffffff}
+/* the active row is a navy card sitting IN the well — 535's card colour */
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item.on{
+  background:linear-gradient(180deg,#1A2434,#141C29);
+  color:#ffffff;font-weight:700;border-left-color:transparent;
+  box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e),
+             0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07);
+}
+/* the CRM switcher sits in the well too, so it needs the same ground */
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-crm{
+  background:#0D1220;border-color:#223047;
+}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-crm button{border-right-color:#223047}
+</style>
+<style id="cr-titleicon-styles">
+/* ══ Build 537 · card titles carry the nav's icons ════════════════════════
+   Colour, weight and the light/dark switch are COPIED off #cr-lnav .lnav-ic,
+   because "just like the nav menu icons" is a claim about colour too: solid
+   --rbe-mute in dark, #a3121e keyline in rb-light with #9a9a9a secondaries.
+
+   Inline SVG rather than lnavIcon(), because these titles are static markup
+   and cr-lnav-script is desktop-only — routing through it would drop every
+   icon on a phone. And inline, not flex: .pipetitle is used 19 times and two
+   of them hold a <small> that a flex container would break out onto its own
+   line. The SVG flows exactly where the emoji flowed.                     */
+.pipetitle .pti,.acthead .pti,.sh .pti{
+  width:18px;height:18px;vertical-align:-3.5px;margin-right:7px;
+}
+/* solid is the default weight; the keyline takes over in rb-light */
+.pti .i2{fill:var(--rbe-mute,#8b9199);stroke:none}
+.pti .i5{display:none;fill:none;stroke:var(--rbe-mute,#8b9199);stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+:root[data-theme="rb-light"] .pti .i2{display:none}
+:root[data-theme="rb-light"] .pti .i5{display:inline;stroke:#a3121e}
+:root[data-theme="rb-light"] .pti .i5 .m{stroke:#9a9a9a}
 </style>
 </body>
 </html>
