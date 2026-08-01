@@ -4980,3 +4980,28 @@ light-scoped and the dark recessed well intact.
 shipped light `.ljcard` renders `border-top: rgb(255,255,255)` — white — so that edge is not coming
 from the current rule. It may be the shadow of the card above, or a build he was looking at. 551 uses a
 **light** top edge, which is the correct physics for a raised card. If he wants a dark edge, say so.
+
+---
+
+## Build 552 — cardinal red top edge on the light Crews cards
+
+**Theo:** *"Use red edge instead of navy."*
+
+551 used a **white** lit edge — correct physics for a raised card (light from above, shadow beneath),
+and it answered the open question from 551's note, which had flagged that the dark edge in Theo's
+screenshot was not coming from any shipped rule. He wants it **red**, not navy and not white.
+
+`border-top:2px solid #c8202e` on the panel and the nav. The edge is **decoration, not text**, so no
+4.5 floor applies — but it reads **5.67:1** against the white card, past the 3.0 non-text floor, so it
+is a visible edge rather than a theoretical one.
+
+Verified in Chromium in both themes:
+
+| | card top | nav top |
+|---|---|---|
+| light | `rgb(200, 32, 46)` @ 2px | `rgb(200, 32, 46)` |
+| dark | `rgb(36, 36, 44)` @ 1px | `rgb(34, 48, 71)` |
+
+Dark is untouched — asserted, and confirmed by reading the rendered border rather than the source.
+
+`check_build.py` green (552, negative-controlled). Closes the open question from 551.

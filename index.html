@@ -3175,7 +3175,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 551 &#8212; the light Crews cards actually lift off the page now</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 552 &#8212; the light Crews cards carry a cardinal red top edge</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34116,6 +34116,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:552, note:'\uD83D\uDD34 Red edge on the light Crews cards, on top instead of the plain white one.' },
 { build:551, note:'\u2728 The light cards pop now. \u2666 Crews cards sit up off the page with a real shadow instead of a faint one \u2014 the app\u2019s own lifted look, which until now you could only see by hovering, and a phone cannot hover.' },
 { build:550, note:'\u2600\uFE0F Crews looks right in light mode now. \u2666 Warm off-white page, white cards with a thin red edge, and everything lifted off the page the way the Landing and Insurance screens are. \u2666 The crew list is a raised card in light instead of a sunk channel. Dark is unchanged.' },
 { build:549, note:'\uD83D\uDCD0 Rate columns line up. \u2666 Each category was its own table sizing its own columns, so Unit, Ours and Theirs sat in a different place in every block. One table now. \u2666 And the rates scroll inside their own frame instead of dragging the whole page sideways on a phone.' },
@@ -53489,7 +53490,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-nav{
   background:var(--crw-card,#fff);
   border:1px solid var(--crw-hair,#e6e2df);
-  border-top:2px solid var(--crw-lit,#fff);
+  border-top:2px solid var(--crw-edge,#c8202e);
   border-radius:14px;
   box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
 }
@@ -53525,7 +53526,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-card{
   background:var(--crw-card,#fff);
   border:1px solid var(--crw-hair,#e6e2df);
-  border-top:2px solid var(--crw-lit,#fff);
+  border-top:2px solid var(--crw-edge,#c8202e);
   border-radius:14px;
   box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
 }
