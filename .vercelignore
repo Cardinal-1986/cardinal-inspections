@@ -17,11 +17,10 @@ CLAUDE.md
 .github/
 
 # --- Reference notes. Written for Theo, not for the app. Zero references from
-#     index.html; nothing fetches them. They carry vendor pricing, our read on
+#     index.html; nothing fetches it. It carries vendor pricing, our read on
 #     it, and notes on how we work — none of which belongs on a customer-facing
 #     domain. ---
 AI_CHEATSHEET.md
-HUBSPOT_AI_CHEATSHEET.md
 
 # --- Orphaned scratch pages. Zero references from index.html; each was
 #     returning 200 in production. ---

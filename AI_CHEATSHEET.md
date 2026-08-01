@@ -1,11 +1,14 @@
 # Working with AI — a field manual
 
-**Prompting, agents, building software, and getting found.** Everything worth knowing on day one,
-in the order it becomes useful.
+**Prompting, agents, building software, getting found, and what your own hardware can and can't
+do.** Everything worth knowing on day one, in the order it becomes useful.
 
 Nothing here needs a technical background. Part 1 is the twenty minutes of theory that makes the
-other four parts land; skip it and the rest reads like a list of tricks. Every prompt is meant to be
-copied as written.
+rest land; skip it and the others read like a list of tricks. Every prompt is meant to be copied as
+written.
+
+Parts 1-5 are the general manual. Parts 6-9 are the ones with Cardinal's own hardware, data and
+numbers in them.
 
 ---
 
@@ -372,6 +375,427 @@ is most of a content strategy.
 
 ---
 
+## Part 6 — Local AI vs. the cloud
+
+You own a DGX Spark, so this isn't theory. One piece of arithmetic decides what any machine can and
+can't run — and it explains why the marketing numbers contradict each other.
+
+### The only formula you need
+
+> **Tokens per second ≈ memory bandwidth ÷ bytes read per token.**
+
+Generating one token means reading the model's weights out of memory. So two numbers describe any
+local box, and they answer different questions: **how much** memory decides what will fit; **how
+fast** that memory is decides how fast it runs. People shop on the first and get bitten by the
+second.
+
+### What the four types actually do
+
+Realistic tokens per second, dense model at 4-bit, one conversation at a time. A dash means it won't
+fit. Reading speed is about 5 t/s; comfortable is 15; instant is 40.
+
+| Machine | 8B | 20B | 30B | 70B | 120B | 200B |
+|---|---:|---:|---:|---:|---:|---:|
+| **DGX Spark** · 128 GB @ 273 GB/s | 40 | 16 | 11 | 5 | 3 | — |
+| **Mac M4 Max** · 128 GB @ 546 GB/s | 80 | 32 | 21 | 9 | 5 | — |
+| **Mac M3 Ultra** · 512 GB @ 819 GB/s | 119 | 48 | 32 | 14 | 8 | 5 |
+| **AMD Ryzen AI Max+ 395** · 128 GB @ 256 GB/s | 37 | 15 | 10 | 4 | 2 | — |
+| **RTX 5090** · 32 GB @ 1792 GB/s | 261 | 105 | 70 | — | — | — |
+
+The 5090 is six times faster than everything else and holds a fraction as much. That's the real
+trade in local AI, and it's a hard one — you're choosing between big-and-slow and small-and-fast,
+not buying your way out.
+
+**These figures are computed, not quoted** — bandwidth divided by model size at 4-bit, taken to 70%
+for real-world overhead. Published benchmarks disagree with each other because they rarely say which
+model they measured.
+
+### Why the numbers you'll read contradict each other
+
+One review says the Spark does 35–80 tokens a second. Another says 2.7 on a 70B model. Both are true
+and neither says *of what*. The first is a small model, the second a large one — and a
+mixture-of-experts model breaks the table entirely, because it only reads the *active* experts per
+token rather than all the weights.
+
+### Mixture-of-experts, on your Spark
+
+| Model shape | Memory used | Speed |
+|---|---:|---:|
+| 35B total / 3B active | 21 GB | 106 t/s |
+| 120B total / 5B active | 72 GB | 64 t/s |
+| 235B total / 22B active | 141 GB | won't fit |
+| 70B dense | 40 GB | 5 t/s |
+
+Same box, twenty times the difference, entirely down to model architecture. **On a
+bandwidth-limited machine like the Spark, pick mixture-of-experts models.** That single choice
+matters more than anything else you can tune.
+
+### What local does well
+
+- **Image generation.** Your strongest case, and you're already on it — the Spark makes the Resource
+  Library illustrations. Quality is genuinely competitive with paid APIs, iteration is free, and a
+  LoRA gives you one house style no API will sell you at any price.
+- **Transcription.** Whisper runs fast and local. Voice notes from a roof, straight to text.
+- **Embeddings and search over your own documents.** Cheap, fast, and nothing leaves the building.
+- **OCR and extraction** — pulling numbers off an insurance scope, in a batch, overnight.
+- **Photo tagging and classification** at volume.
+
+The pattern: high volume, latency doesn't matter, and the bar is "good enough and consistent."
+
+### What local can't do
+
+- **Frontier coding.** The big one, and it isn't close. The gap between the best local model and a
+  top-tier cloud model on real code is the difference between a working feature and an afternoon of
+  debugging. Cardinal is a 3 MB single file — nothing you can run at home will work on it
+  competently.
+- **Serve the live app.** The librarian, captions and analysis have to answer from anyone's phone at
+  any hour. A box at your house is one power cut, one ISP outage, one driver update away from every
+  user seeing an error. The cloud isn't buying intelligence there — it's buying uptime.
+- **Long documents at speed.** Large context is exactly where the bandwidth ceiling bites hardest.
+- **Anything needing current facts.** No web index, no search, and a training cutoff you can't move.
+
+### So: what the Spark is for
+
+It's a **generation and batch machine**, not a chat machine. Keep it making illustrations, add
+transcription and bulk photo or document work. Don't move the app's live AI onto it — that trades a
+working feature for a house that has to stay online.
+
+And if you ever want a local chat model that doesn't feel slow, the answer isn't a bigger machine.
+It's a mixture-of-experts model: 64 tokens a second instead of 5, on hardware you already own.
+
+---
+
+## Part 7 — What's worth building
+
+Software is cheap to make now and just as expensive to own as it ever was. The question is no longer
+"can we build it" — it's "should this exist at all."
+
+### The deciding question
+
+**Does it turn something you already have into something you can act on?** That's the whole test.
+You already have 60,000 photographs, eighteen years of jobs and a supplier's price list. Software
+that makes those usable is worth building. Software that re-creates what a vendor already sells for
+thirty dollars a month is a hobby with a maintenance bill.
+
+### Build, buy, or leave alone
+
+| Build it when | Buy it when |
+|---|---|
+| The data is already yours and nobody sells the shape you need | It's a solved commodity — accounting, payroll, email, storage, phones |
+| It's a small hinge in a big process: the handoff, the approval, the reminder | Being wrong is expensive and regulated — tax, payroll, anything the IRS reads |
+| The current answer is a spreadsheet three people edit differently | The vendor's entire company exists to keep it working and yours doesn't |
+| It has to match how *you* work, not how the industry averages out | You'd be rebuilding it every time a bank or a carrier changes a format |
+| One screen would replace a group text nobody scrolls back through | It needs to keep running at 2am whether or not you're awake |
+
+**There's a third answer people forget: leave it alone.** Plenty of small annoyances are cheaper to
+live with than to automate. If the whole problem is fifteen minutes a month, it is not a software
+problem.
+
+### The business itself — the work moving through
+
+These pay off because they compress a handoff. Every one of them replaces a moment where information
+sits still, waiting for somebody to notice it.
+
+- **The one-screen day.** What's happening today, who's on it, what's stuck. Not a dashboard of
+  charts — a list you can act on before you finish your coffee.
+- **The handoff from sold to scheduled.** The single most common place work falls on the floor in a
+  contracting business. A signed job that nobody staged is invisible until the homeowner calls.
+- **Anything currently living in a group text.** Group texts have no state. Nothing is open or
+  closed, assigned or done — it just scrolls away.
+- **Checklists that leave a record.** The value isn't the checklist, it's that finishing it produces
+  something you can show a carrier six months later.
+- **The nudge.** "This job hasn't moved in 21 days." One query, one message, and it recovers work
+  you'd otherwise lose quietly.
+
+### Organization — finding what you already own
+
+This is the family people most consistently underrate, because nothing is *broken*. The photos
+exist. The documents exist. You simply cannot get to them at the moment you need them, which in
+practice is the same as not having them.
+
+- **Search across things you already keep.** One box that looks in jobs, photos, documents and
+  estimates at once. Unglamorous and used forty times a day.
+- **Automatic naming.** The reason nothing is labelled is that labelling is nobody's job. A model
+  that writes a plain-English line for every photo turns a pile into an index — and this is the
+  cheapest AI in the whole document.
+- **One place per concept.** Not "photos in three apps." The failure isn't storage, it's that nobody
+  remembers which of the three.
+- **The record that survives the person.** When a rep leaves, what did they know that nobody wrote
+  down?
+
+Part 8 is this family, worked all the way through on the biggest example you have.
+
+### Money — and the one rule that matters
+
+> **Never build the ledger.** Accounting, payroll and tax are bought, always. They are regulated,
+> they change without asking you, and the cost of a subtle bug is not a bad afternoon — it's an
+> amended return. Nothing below touches the books. It all sits *beside* them, answering questions
+> the books are too slow to answer.
+
+The gap worth building into is the one between what your accountant sees in April and what you need
+to decide on Thursday.
+
+| Money question | Verdict | Why |
+|---|---|---|
+| **What did this job actually cost?** | Build | Sold price minus materials, crew and disposal, per job. Your accounting package knows the totals and not the jobs |
+| **Which trades and which reps make money?** | Build | Same data, sliced the way you actually make decisions. Nobody sells this shape |
+| **Who owes us, and since when?** | Build | Deposits, draws and final payments against your own stages. Ageing that matches your process, not a generic 30/60/90 |
+| **What's the pipeline worth?** | Build | Only you know which stages are real. Weighting is a judgment call and it belongs in your code |
+| **Invoices, ledger, payroll, tax** | Buy | Solved, regulated, and a bad edge case costs more than the subscription ever will |
+| **Taking a card payment** | Buy | Card data is a liability. Let a processor hold it and stay out of the compliance business entirely |
+| **Material pricing** | Borrow | The supplier's sheet is the truth. Import it; never retype it, and never let anyone hand-edit the copy |
+
+### One chokepoint per number
+
+Every figure that matters should be computed in exactly one place. Cardinal has this already — every
+money figure in the app goes through a single function, so a change to how a job is valued lands
+everywhere at once instead of in eleven places minus the one you forgot. **When you find the same
+calculation written twice, you have already found tomorrow's discrepancy.**
+
+---
+
+## Part 8 — A worked example: the photo binder
+
+One thing built twice over — an organizer for you, and a sales binder for the kitchen table. It's
+the same photographs either way. What changes is who's looking.
+
+### The problem, in your own numbers
+
+Cardinal's photo table holds **60,485 photographs** across **775 jobs** and 755 addresses, shot by
+nine people between 2007 and July of this year. The median job has **49 photos**; the biggest has
+738.
+
+**107 of them have a caption.** That is under two in every thousand. You do not have a photo problem
+— you have the best photographic record of roofing in Montgomery County and no way to find anything
+in it.
+
+### Why this one is worth building
+
+It passes the deciding question twice. The photographs are already yours, nobody sells "your roofs,
+arranged your way," and the same work produces two different things: a filing cabinet you'll use on
+Tuesday and a sales tool you'll use on Saturday. The second one is what makes the first one get done
+— organizing is a chore nobody finishes, but a rep who closes with it will keep it tidy.
+
+### The pages
+
+*(The web version draws these to scale. Here they're described.)*
+
+| Page | Who it's for | What's on it |
+|---|---|---|
+| **1 · The shelf** | You | **Jobs, not photographs.** 775 rows, newest first, each with the one picture that says what it was. A search box across address, trade, colour and year, and filter chips for Roof / Siding / Gutters / Storm. Each row: address, what it was and when, and a photo count |
+| **2 · One roof** | You | The 49 photos of a job **grouped by the stage they were shot at** — Before 9, Tear-off 22, Decking 7, After 23 — each with a one-line caption. **This grouping is the whole product** |
+| **3 · Build the binder** | The rep | Pick six or eight, put them in order, write one line each. Name it for the situation, not the customer. Two minutes, and it's reusable forever. Options: which jobs it pulled from, price shown (no), address shown (street only) |
+| **4 · At the kitchen table** | The homeowner, with a rep | One photograph at a time, full bleed, one sentence. Before / After pairs. A single fact line underneath — *"Kettering · 2,400 sq ft · finished in four days"* — and **no price on this page**. Nothing to tap by accident |
+| **5 · The leave-behind** | The homeowner, alone | One sheet. Same binder, printed or sent as a link, with the rep's name and number on it and still no price. It survives the three weeks they spend deciding, and it beats a business card by a distance |
+
+### What actually makes it work
+
+- **Captioning is the product.** Every other feature is arranging things. Without a line of text per
+  photograph there is nothing to search, nothing to group and nothing to pick from — you are back to
+  scrolling 60,000 files.
+- **Caption in a batch, overnight, on hardware you own.** This is exactly the job Part 6 says local
+  AI is for: high volume, latency irrelevant, and a wrong answer is obvious at a glance. Sixty
+  thousand captions through a paid API is a real bill; on the Spark it's electricity.
+- **Let a person correct, never require it.** An AI caption that's 85% right is infinitely better
+  than the blank you have now. Make the good ones easy to fix and leave the rest alone.
+- **Group by stage, not by date.** The camera gives you time order. What sells is before,
+  underneath, after — and that's a judgment the model can make from the picture.
+- **Keep price out of the binder.** The binder builds belief. The estimate handles money. Putting a
+  number under a photograph invites the comparison you least want.
+- **Street, never the full address.** It's someone's house. "Kettering" and "2,400 sq ft" carry the
+  whole argument; the house number carries only risk.
+
+### What to skip
+
+| Don't | Because |
+|---|---|
+| Rebuild the camera | You already have one that works and the crews already use it. Read from it; don't replace it |
+| Editing, filters, retouching | A retouched roof is a lie in a sales meeting, and the photo editor you already have covers arrows and circles |
+| Automatic before/after pairing | Sounds clever, fails on the ones that matter, and picking two photographs takes four seconds |
+| Letting it caption the money | Square footage, age and cost come from the record, not from looking at a picture. Model reads pixels; database holds facts |
+| A binder per customer | Five or six good binders by situation beat 775 bespoke ones nobody maintains |
+
+### The honest order to build it in
+
+**Captions first, alone, and stop there for a week.** If the captions are good, the shelf and the
+search are a weekend. If they're not, nothing downstream can save it — and you'll have found that
+out for the cost of one batch job instead of a month. That's Part 4's "one feature at a time,
+verified," applied to the biggest thing you own.
+
+---
+
+## Part 9 — Which model, and when
+
+**Checked 1 August 2026 · Anthropic figures cached 24 June 2026 · half-life ≈ six months.**
+
+Four companies sell the cloud ones; a dozen more give theirs away. The names below will go stale.
+The shape of the choice underneath them won't, and that's the part worth learning.
+
+> **Read the date before the page.** This is the fastest-rotting section here. Every price and every
+> name was true on the date above and some of them will be wrong within the year — one of these
+> companies cut two of its prices the week this was written. **Nothing here is a reason to change
+> what you're already doing.** Read it once for the shape, then use the last section, which doesn't
+> expire.
+
+### These change faster than anything else in this document
+
+Here is what actually happened in the weeks around this being written:
+
+- **8 July 2026** — xAI released Grok 4.5, a new flagship.
+- **9 July 2026** — OpenAI released an entire new generation, GPT-5.6, in three sizes at once.
+- **21 July 2026** — Google released Gemini 3.6 Flash.
+- **30 July 2026** — OpenAI cut two of its prices, one of them by roughly 80%.
+- **16 October 2026** — Gemini 2.5 Flash gets switched off. Anything still pointed at it simply
+  stops working.
+
+Three launches, a price cut and a shutdown, all inside one quarter — and that is a normal quarter.
+Nobody tells you when it happens; you find out because something you built quietly changed behaviour
+or stopped. **So treat every name and number here as true on one day and unverified after it.**
+
+### Every family is the same three sizes
+
+This is the part nobody explains, and it's most of what you need. Each company trains one model and
+ships it in three sizes. Same knowledge, same manners, different amount of machine behind it —
+bigger is slower, dearer and better at the hard parts.
+
+| Size | What it's for | Anthropic | OpenAI | Google | xAI |
+|---|---|---|---|---|---|
+| **Big** | The hard one — right the first time | Claude Opus 5 | GPT-5.6 Sol | Gemini 3.1 Pro | Grok 4.5 |
+| **Middle** | Everything you do all day. Leave this one open | Claude Sonnet 5 | GPT-5.6 Terra | Gemini 3.6 Flash | Grok 4.3 |
+| **Small** | Volume. Ten thousand copies of one small job | Claude Haiku 4.5 | GPT-5.6 Luna | Gemini Flash-Lite | Grok 4.1 Fast |
+
+**The common mistake is running the big one for everything.** It feels safe and it is quietly
+expensive — and on a simple job it isn't even better, just slower. The other mistake is the mirror
+of it: running the small one on something that needed thinking, then concluding AI is useless.
+
+### How to read a price
+
+Everything is priced per **million tokens**. A token is about three-quarters of a word, so a million
+tokens is roughly 750,000 words — nine long novels. Two numbers are always quoted: **input**, what
+you send it, and **output**, what it writes back. Output costs about five times input at every
+vendor.
+
+Which means a long question with a short answer is cheap, and "summarise these forty pages in a
+paragraph" is one of the best-value things you can ask a computer to do.
+
+### Six in the cloud
+
+One of each *job* rather than one of each brand. Prices per million tokens, input / output.
+
+**Claude Opus 5** · Anthropic · $5 / $25 · 1M context
+*The one to reach for when being wrong is expensive.*
+- **Strong** — changing code inside a large existing file without breaking the parts you didn't
+  mention, which is the exact thing that goes wrong when an app is one big file. Follows a
+  specification literally. Says "I don't know" more readily than the others.
+- **Weak** — dearest of the six per token, and complete overkill for a two-line email. Slower,
+  because it thinks longer.
+
+**Claude Sonnet 5** · Anthropic · $3 / $15 · 1M context
+*The daily driver. Most people's default, and it should be yours.*
+- **Strong** — close to the top on writing and everyday code at a fraction of the cost. Fast enough
+  that you stop noticing it. Discounted to $2 / $10 through 31 August 2026.
+- **Weak** — on genuinely hard debugging it may take three passes where the big one takes one, which
+  can cost more than the difference you saved.
+
+**GPT-5.6 Terra** · OpenAI · ≈ $2 / $12 · 1.05M context
+*The one everything else plugs into.*
+- **Strong** — the widest ecosystem by a distance; nearly every third-party tool speaks to it first.
+  Strong general writing. *Sol* sits above it for the hardest work; *Luna* below it, cut roughly 80%
+  on 30 July 2026, which makes it very cheap for volume.
+- **Weak** — the names change fast, and a tool you bought last year may quietly still be pinned to
+  an old one. If a vendor says "powered by GPT", ask which.
+
+**Gemini 3.1 Pro** · Google · $2 / $12 up to 200k · 1M context
+*For piles of paper.*
+- **Strong** — hand it a carrier policy, the whole contract set and last year's correspondence in
+  one go and ask a question across all of it. Cheapest serious model per page of long input; the
+  rate steps up to $4 / $18 past 200,000 tokens, still a bargain at that length.
+- **Weak** — more variable at following a fussy instruction exactly. Check the details it produced,
+  not the confidence it produced them with.
+
+**Grok 4.5** · xAI · $2 / $6 · 500k context
+*The newest of the four, and the odd one out: built into X (formerly Twitter), and it reads the live
+internet by default rather than answering from what it was taught months ago. Launched 8 July 2026.*
+- **Strong** — the best scores on the board for *using tools* (searching, calling things, chaining
+  steps) at its price. Within a point of Gemini 3.1 Pro on hard science questions at half the output
+  cost. Its answer to "what is being said about this right now" is genuinely better than the others,
+  because the others are not looking. *Grok 4.3* sits under it as the everyday one (1M window, $1.25
+  / $2.50); *Grok 4.1 Fast* below that at $0.20 / $0.50.
+- **Weak** — reading the live internet cuts both ways: on a narrow question it will repeat something
+  unverified it found five minutes ago, in the same confident voice as everything else. **Every rate
+  doubles past 200,000 tokens**, so it is the wrong choice for long documents. Loses to Claude on
+  the hardest real-repository code, and it's the least battle-tested of the four for business
+  paperwork.
+
+**Gemini Flash-Lite** · Google · $0.25 / $1.50
+*The volume tier — and the one already running in your app.*
+- **Strong** — anything you need to do to *every* record you own lives here: ten thousand copies of
+  one small job for the price of dinner. Cardinal's librarian already runs on this family.
+- **Weak** — it is a small model and it knows it. Ask it to describe, classify or extract, not to
+  reason. Give it a job with three steps and it will do two.
+
+> **One worked example — what the tier is actually worth.** Captioning all **60,485** CompanyCam
+> photographs is about 78 million tokens in and 2.4 million out. On **Flash-Lite that's roughly $24,
+> once.** The identical job on **Opus 5 is about $450** — eighteen times the money to describe a
+> photograph, which is not a task that rewards a bigger brain. *Computed from the posted rates, not
+> quoted from a benchmark; the arithmetic is yours to redo when the prices move.*
+
+### Five you can run yourself
+
+Free to download and yours to keep. Part 6 has the hardware arithmetic — speed is memory bandwidth
+divided by model size, and mixture-of-experts models cheat that division in your favour.
+
+| Model | Strong | Weak |
+|---|---|---|
+| **Llama 4** · Meta<br>*mixture-of-experts* | The most-supported open name on earth — every tool, tutorial and compressed build targets it first. Runs far quicker on a Spark than its size suggests | The licence is Meta's own, not a real open one: it restricts use in the EU and by companies above a size threshold. Read it before it goes near something you sell |
+| **Qwen 3** · Alibaba<br>*Apache 2.0, tiny → 235B* | No strings at all. The coding variant fixes real bugs in real repositories at around 70% on the standard test — best open score outside GLM. Sizes from laptop to Spark | Chinese-origin weights are a procurement question for some customers even when the model never leaves your building. Know your answer before somebody asks |
+| **DeepSeek V3.2 / R1**<br>*mixture-of-experts* | Very strong at maths and step-by-step work for what it costs to run. Punches well above the memory bandwidth it needs | Reasoning models think out loud at length before answering — you pay for that in seconds. Same procurement question as Qwen |
+| **GLM-5** · Zhipu | The highest open score on real repository bug-fixing, around 78% — within sight of the cloud models rather than a curiosity. If the local box is going to write code, start here | Thinner tooling and fewer prepared builds than Llama or Qwen. Expect an evening of setup rather than an hour |
+| **Gemma 3 27B** · Google | The one that actually fits: runs comfortably on a single graphics card. Reads images as well as text, which most models this small can't do at all — the usual reason to want one locally | Small, and it shows the moment a job needs several steps held in mind at once. Excellent describer, mediocre thinker |
+
+**Also worth knowing by name:** *Mistral* (French, permissive, the usual answer when European data
+rules are the problem) and *Kimi K2* (built for agent work — tools and multi-step jobs). Both are
+real contenders; neither was measured on the date at the top of this part, so no numbers are quoted.
+
+### Which one for which job
+
+| The job | In the cloud | Run it yourself? |
+|---|---|---|
+| **One small job, run across every record you own** | Flash-Lite, Luna or Haiku. Cheapest tier, no exceptions | **Yes** — Gemma 3. Free to repeat, and repeating is the entire point |
+| **Write or change code in the app** | Opus 5 for anything structural; Sonnet 5 for the routine | Practice only — GLM-5 or Qwen coder. The gap is still real here |
+| **Customer email, review reply, a page for the site** | Sonnet 5 or Terra. Any middle tier does this well | Yes, then read it. Local prose is fine, not good |
+| **Read a 90-page carrier policy** | Gemini 3.1 Pro — cheapest per page at that length | No. Long documents are where local hardware runs out first |
+| **Transcribe and summarise a call** | Any middle tier, if you don't mind it leaving | **Yes** — and this is the row where "local" earns its keep. Nothing leaves the building |
+| **Search across your own documents** | Any tier for the answer | Yes for the indexing half — cheap, constant, and it touches everything you own |
+| **Something that turns on what happened this week** | Grok 4.5 — the only one of the six reading the live web by default | No. A model on your own machine knows nothing after the day it was built |
+| **Anything with a dollar figure a customer will see** | The big tier, then you check every number yourself | No |
+| **Anything a homeowner reads unedited** | *There is no model for this row. Somebody at Cardinal reads it first, every time* | |
+
+### The part that doesn't expire
+
+If the rest of this is out of date by the time you read it, these six still hold.
+
+1. **There are always three sizes.** Work out which of your jobs is big, middle and small once; the
+   names underneath will keep changing and it won't matter.
+2. **Output costs about five times input.** Everywhere, every vendor. Long question, short answer is
+   the cheap shape.
+3. **The middle tier does ninety per cent of the work.** Reach up only after you've watched the
+   middle one actually fail at the thing.
+4. **Local wins on volume, privacy and repetition. Cloud wins on hard reasoning, long documents, and
+   anything that must be right the first time.** That line has not moved in two years.
+5. **A new model is not automatically better for you.** Test it on one job where you already know
+   the right answer. That takes ten minutes and settles it.
+6. **Never let a price table decide a customer-facing answer.** Save money on the ten thousand small
+   jobs, not on the one that goes to a homeowner.
+
+> **Re-checking this takes five minutes.** Each of the four companies publishes a pricing page and a
+> models page, and they're the only sources that are ever current — open the vendor links at the
+> bottom and you're done. **Do not ask a model what the current models are.** Its knowledge stops at
+> its training date and it will name versions that don't exist, in the same confident voice it uses
+> for everything else. That's Part 1, arriving exactly where you'd expect it to.
+
+---
+
 ## The short version
 
 1. **It predicts text and has no memory.** Everything it needs to know, you supply.
@@ -441,6 +865,14 @@ its own shows status. `/goal clear` stops it. (Slash, not `@`.)
 - Always end with "or stop after 20 turns."
 - Never for looks, colour or tone. Nothing there to check.
 
+### Local vs. cloud, in four lines
+
+- **Local** — images, transcription, search, batch jobs. Free to repeat, nothing leaves the
+  building.
+- **Cloud** — code, anything live, anything that must be right the first time.
+- Speed = memory bandwidth ÷ model size. Big model on a slow bus is **slow**.
+- On the Spark, pick mixture-of-experts models. 64 t/s instead of 5.
+
 ### What it can't do
 
 - It doesn't remember. Every new chat starts from nothing.
@@ -476,7 +908,11 @@ its own shows status. `/goal clear` stops it. (Slash, not `@`.)
 
 ---
 
-## Sources for the figures in Part 5
+## Sources
+
+Parts 1-4 and 7-8 are practice rather than claims. Everything below backs a number in Part 5, 6 or 9.
+
+### Part 5 — marketing and SEO
 
 - [AirOps — AEO guide 2026 (citation freshness data)](https://www.airops.com/blog/aeo-answer-engine-optimization)
 - [ALM Corp — AEO playbook for AI Overviews, ChatGPT, Perplexity and Claude](https://almcorp.com/blog/answer-engine-optimization-2026/)
@@ -486,3 +922,35 @@ its own shows status. `/goal clear` stops it. (Slash, not `@`.)
 - [LocalHero — local SEO for roofers](https://localhero.live/blog/local-seo-for-roofers)
 - [Google Search — spam policies (scaled content abuse)](https://developers.google.com/search/docs/essentials/spam-policies)
 - [Rankability — study on Google and AI-generated content](https://www.rankability.com/data/does-google-penalize-ai-content/)
+
+### Part 6 — hardware
+
+- [NVIDIA — DGX Spark product page](https://www.nvidia.com/en-us/products/workstations/dgx-spark/)
+- [Tom's Hardware — M4 Max vs GB10 vs Strix Halo decode throughput](https://www.tomshardware.com/desktops/exploring-apple-silicons-local-ai-performance-with-the-mac-studio-and-m4-max-m4-max-beats-gb10-and-strix-halo-in-decode-throughput-but-memory-bandwidth-isnt-everything)
+- [Tech Insider — DGX Spark vs Mac Studio, memory and bandwidth](https://tech-insider.org/dgx-spark-vs-mac-studio-2026/)
+- [Strix Halo — production ROCm llama.cpp build recipe](https://github.com/LucRoot/Strix-Halo-Linux-Llama_cpp-ROCm)
+- [ModelFit — RTX 5090 local LLM benchmarks](https://modelfit.io/gpu/rtx-5090/)
+
+### Part 9 — the model line-up
+
+Six of these are vendor pages and will always be current. Check those, not this document.
+
+- [Anthropic — model pricing](https://docs.claude.com/en/docs/about-claude/pricing) *(Claude figures here are cached at 24 June 2026)*
+- [Anthropic — models overview and context windows](https://docs.claude.com/en/docs/about-claude/models/overview)
+- [OpenAI — API pricing, current tiers](https://developers.openai.com/api/docs/pricing)
+- [Google — Gemini API pricing, including the 200k context step](https://ai.google.dev/gemini-api/docs/pricing)
+- [Google — Gemini model list and deprecation dates](https://ai.google.dev/gemini-api/docs/models)
+- [xAI — Grok model list and rates](https://docs.x.ai/docs/models) *(rates double past 200k tokens)*
+- [CloudZero — OpenAI pricing tracked over time, including the 30 July 2026 cuts](https://www.cloudzero.com/blog/openai-pricing/)
+- [Morph — Grok API pricing across every model, 2026](https://www.morphllm.com/grok-api-pricing)
+- [Snorkel — Grok 4.5 tested against Opus 4.8 and GPT-5.5 on professional work](https://snorkel.ai/blog/grok-4-5-testing-results-how-spacexais-new-model-performs-on-real-professional-work/)
+- [LM Council — July 2026 benchmark board, all four families](https://lmcouncil.ai/benchmarks)
+- [LLM-Stats — open-weight leaderboard](https://llm-stats.com/leaderboards/open-llm-leaderboard)
+- [MindStudio — open models for agentic coding, 2026](https://www.mindstudio.ai/blog/best-open-source-llms-agentic-coding-2026)
+- [Wavect — open-weight comparison and licence terms](https://wavect.io/blog/open-weight-llm-comparison-2026)
+
+### On the computed figures
+
+The Part 6 tokens-per-second numbers and the two Part 9 cost examples are **computed, not quoted** —
+bandwidth divided by model size, and posted rates times token counts. The arithmetic is shown so you
+can redo it when the hardware or the prices move.
