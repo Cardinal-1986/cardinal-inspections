@@ -3598,3 +3598,45 @@ untouched, including the existing `@media (max-width:900px)` rule that makes the
 **Gates.** `check_build.py` green. All four harnesses re-run — **147 assertions**, no change needed
 to any of them: 518's ratio check at 3440 (content ≥2200, gutters <550) still holds at 2900/151.
 No horizontal overflow at any of the five widths.
+
+---
+
+## 521 · 1 August 2026 · the white footer and the floating CRM bar, off the desktop
+
+Two screenshots: *"Non readable on 1st white the white footer? 2nd screen unneeded crm switcher black
+bar and white footer."*
+
+**`footer.site`** is one line of boilerplate — *"Cardinal Roofing & Renovations — Client Resources:
+profiles, inspections & estimates."* — painted `background:var(--paper)`. **`--paper` is declared
+exactly once, on `:root`, as `#ffffff`, and is never themed**, so that footer is a white slab across
+the near-black page in *every* theme. It was already hidden for Community, for Insurance, for the
+community hub and for an open community client — **Retail was the only place still showing it.**
+
+**`.cd-crmbar`** is `position:fixed; bottom:calc(104px + env(safe-area-inset-bottom,0px))`. That
+104px is clearance for **`#pwaNav`, the phone bottom bar**. A desktop has no bottom bar, so it hovers
+over the content clearing nothing, and since 516 it also duplicates the CRM control in the left rail.
+**The "black bar" is not a separate element** — it is this one's own
+`background:rgba(16,17,19,.95)`.
+
+Both hidden under `body.cr-lnav-on`. Verified in Chromium at 3440 and at 430: desktop `none`/`none`,
+phone `block`/`flex` — unchanged.
+
+### Two things left standing, deliberately
+
+- **The phone still shows the white footer**, and the computed background there is
+  `rgb(255,255,255)` — measured, not assumed. Theo reported it on desktop, so it is fixed on
+  desktop. Fixing it properly means theming `--paper` or giving the footer its own token, which
+  touches every surface that reads `--paper`. Flagged, not taken.
+- **Hiding `.cd-crmbar` on desktop removes the only CRM filter on the Client Directory** — the chips
+  are `All / Retail / Claims / Community`, and there is no CRM option in `cdShFilter`. He called it
+  unneeded and he uses the screen daily, so it is gone as asked; the alternative (move the chips
+  inline at the top of the directory instead of floating them at the bottom) is a small change if he
+  wants the filter back without the bar.
+
+**Gates.** `check_build.py` green. All four harnesses re-run — **147 assertions**, unchanged.
+
+### Recon note
+
+The regex `[^};]*footer\.site\s*\{\s*display:none\s*\}` **hung the file** — an unbounded negated
+class over 3 MB, exactly the backtracking trap `CLAUDE.md` records. Second time this session that
+warning earned its place. Bound the window or walk back with `rfind`.
