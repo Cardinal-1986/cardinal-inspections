@@ -7,7 +7,7 @@ Nothing here needs a technical background. Part 1 is the twenty minutes of theor
 rest land; skip it and the others read like a list of tricks. Every prompt is meant to be copied as
 written.
 
-Parts 1-5 are the general manual. Parts 6-9 are the ones with Cardinal's own hardware, data and
+Parts 1-5 are the general manual. Parts 6-10 are the ones with Cardinal's own hardware, data and
 numbers in them.
 
 ---
@@ -796,6 +796,140 @@ If the rest of this is out of date by the time you read it, these six still hold
 
 ---
 
+## Part 10 — The stacks
+
+A model on its own does nothing at all. A stack is the set of parts around it that turn a file on a
+disk into something you can use — and which parts you need depends entirely on the job.
+
+### What a stack is
+
+You already build one on every job. **A roof isn't one thing.** It's decking, then ice and water,
+then underlayment, then shingles, then the ridge cap. Five layers, each doing one job, each sitting
+on the one below it. You can tear off the shingles and leave the decking. You can upgrade the
+underlayment without touching anything else. Get the order wrong and none of it works.
+
+Software people call that a **stack**, and they mean exactly the same thing by it. When somebody
+asks "what's your stack," they are asking which layers you picked. That is the entire concept.
+There is nothing clever hiding behind the word.
+
+### The six layers of a local AI stack
+
+Read it the way you'd read a roof section — what you touch at the top, the machine at the bottom.
+
+| | Layer | What it is |
+|---:|---|---|
+| **6** | **The face** | How you talk to it: a chat page, a phone app, a script, or just a folder it watches. **The only layer anyone but you will ever see** — and the one that decides whether the thing gets used |
+| **5** | **The feeder** | Optional, and the one you can skip at first. What hands it *your* information — your documents, your photographs, your database. Without it the model only knows what it was trained on, which is nothing about Cardinal |
+| **4** | **The model** | The weights — a single large file. Part 9 is the whole conversation about picking this one. **Decides quality** |
+| **3** | **The engine** | The program that reads the model and turns your question into words: *llama.cpp*, *vLLM*, *MLX* on a Mac. **Decides speed.** Same model, different engine, very different tokens per second |
+| **2** | **The runtime** | The driver layer that lets software use the chip — *CUDA* on NVIDIA, *Metal* on Apple, *ROCm* on AMD. You install it once and forget it exists until the day it breaks, and then it is the only thing you think about |
+| **1** | **The box** | The Spark, a Mac, a graphics card. Part 6 is the arithmetic. **Decides what will fit at all** |
+
+**Swapping the model is one line. Swapping the engine is an afternoon. Swapping the box is a
+purchase.** That is the order of how expensive a change is, and it is why you choose a stack from
+the top down — start from what the job needs — but build it from the bottom up.
+
+### Six stacks for six jobs
+
+These are genuinely different shapes, not the same thing configured differently. A stack built to
+serve a crowd is the wrong shape for a batch job that runs overnight and talks to nobody.
+
+**1 · Just let me talk to it** — Ollama + Open WebUI · *an evening*
+A private ChatGPT on hardware you own.
+- **Why** — Ollama is the easiest way in by a distance: one-line install, and you pull a model the
+  way you'd install an app. Open WebUI puts a familiar chat page in front of it.
+- **Watch** — Ollama is built for *one person at a time*. That's fine and it's what you want; just
+  don't point the company at it later and wonder why it crawls.
+
+**2 · Making pictures** — ComfyUI + FLUX · *already running*
+The one you already have — the Resource Library illustrations come off this.
+- **Why** — your strongest local case, per Part 6: quality competitive with paid services, and
+  iteration is free. NVIDIA publishes an official ComfyUI playbook for the Spark and Comfy's own
+  team wrote up running it on this exact chip, so you're on a paved road.
+- **Next** — a *LoRA*, a small extra file trained on your own images, gives you one consistent house
+  style. No paid service will sell you that at any price.
+
+**3 · Voice notes into text** — whisper.cpp + a watched folder · *an afternoon*
+Talk at your phone on a roof; read it at the desk.
+- **Why** — the best value per hour of setup on this list. There is *no face at all*: a file lands
+  in a folder, a text file appears beside it. Nothing leaves the building.
+- **Watch** — names and addresses come back spelled the way they sound. Fine for notes, not for
+  anything that gets sent.
+
+**4 · Captioning everything you own** — vision model + script + database · *a weekend*
+Part 8, seen from the software side.
+- **Why** — also faceless: a batch job that runs overnight and writes rows. Exactly the shape Part 6
+  describes as local AI's home ground.
+- **Watch** — most of the weekend is database work, not AI work. Deciding where captions live and
+  how a person corrects one is the actual job.
+
+**5 · Questions about your own documents** — the RAG stack · *a weekend with a playbook*
+"What does our contract say about deposits?" answered from your paperwork.
+- **Why** — four parts: an embedding model, a store to keep the results in, a retriever, and a chat
+  model. NVIDIA ships a one-command private RAG stack built for the Spark, which is the difference
+  between a weekend and a month.
+- **Watch** — it answers from what it finds, so it inherits the state of your filing. Point it at an
+  organised set and it's excellent; point it at the current pile and it will confidently quote the
+  wrong version of a contract.
+
+**6 · Serving it to other people** — vLLM or SGLang + API + tunnel · *a week, then forever*
+The one that looks like the goal and isn't.
+- **Why it exists** — built for crowds rather than one person: roughly **16–20×** Ollama's
+  throughput once several people are asking at once.
+- **Don't** — Part 6's reason stands and hasn't moved: for the live app the cloud isn't selling you
+  intelligence, it's selling you *uptime*. This stack makes your house a single point of failure for
+  every phone in the company.
+
+### What RAG actually is, since it's the one people get wrong
+
+It stands for retrieval-augmented generation, and the name is far worse than the idea. It means:
+**search first, then answer from what the search found.**
+
+You ask a question. The stack finds the handful of paragraphs out of everything you own that best
+match it. It hands the model those paragraphs *plus* your question. The model answers from them.
+That's the whole mechanism.
+
+> **Why that's the right shape.** Nothing is trained and nothing is permanent — change a document
+> and you get a different answer a second later. Part 1 said the model has no memory and only knows
+> what you hand it. **RAG is just the machinery for handing it the right thing automatically, every
+> time, instead of you pasting it.** People reach for "fine-tuning" here and it's the wrong tool:
+> fine-tuning teaches a model a *style*; RAG gives it *facts*. You want facts.
+
+### Six rules for picking one
+
+1. **Start with the smallest stack that does the job.** Ollama and a chat page covers most of what
+   people imagine they need a whole stack for. Add a layer when something actually hurts.
+2. **Every layer is a thing that can break at 11pm, and you own all of them.** That's the real price
+   of local, and it isn't the electricity. A cloud model has exactly one layer you own: the prompt.
+3. **Pick the stack from the job, not from what's popular.** Half the stacks above have no user
+   interface at all, and two of them nobody ever looks at.
+4. **Engine decides speed, model decides quality, face decides whether it gets used.** Three
+   different complaints, three different layers — and people fix the wrong one constantly. "It's
+   slow" is almost never the model.
+5. **Run it in containers.** You will want to undo it. A container is the undo button, and it's why
+   NVIDIA ships its Spark playbooks that way rather than as instructions.
+6. **One stack per job is normal.** You're not building one machine that does everything. A picture
+   stack and a transcription stack can sit on the same box and completely ignore each other.
+
+### What Cardinal should actually run
+
+| The job | The stack | Where it stands |
+|---|---|---|
+| **Library illustrations** | ComfyUI + FLUX on the Spark | Running. Next step is a LoRA for one house style |
+| **A private chat window** | Ollama + Open WebUI | Not built. One evening — do this one next |
+| **Voice notes from a roof** | whisper.cpp + a watched folder | Not built. An afternoon, and it pays back immediately |
+| **Captions for 60,485 photographs** | Vision model + script + database | Not built. **The big one** — and Part 8 says captions come first |
+| **Search your own documents** | Private RAG stack, NVIDIA's playbook | After the captions, not before. It inherits your filing |
+| **The live app** | vLLM + API + tunnel | No. It stays in the cloud, and that's a decision, not a gap |
+
+> **The honest warning.** A stack is not a purchase, it's a **pet**. Every one of these needs
+> feeding — drivers drift, a model gets superseded, a container image goes stale, and the thing that
+> worked in March quietly stops in June. That's fine for two or three stacks that each earn their
+> keep. It's how people end up with nine that don't. **Build the one whose absence you actually
+> feel**, get it boring, and only then build the next.
+
+---
+
 ## The short version
 
 1. **It predicts text and has no memory.** Everything it needs to know, you supply.
@@ -910,7 +1044,7 @@ its own shows status. `/goal clear` stops it. (Slash, not `@`.)
 
 ## Sources
 
-Parts 1-4 and 7-8 are practice rather than claims. Everything below backs a number in Part 5, 6 or 9.
+Parts 1-4 and 7-8 are practice rather than claims. Everything below backs a number or a tool name in Part 5, 6, 9 or 10.
 
 ### Part 5 — marketing and SEO
 
@@ -948,6 +1082,14 @@ Six of these are vendor pages and will always be current. Check those, not this 
 - [LLM-Stats — open-weight leaderboard](https://llm-stats.com/leaderboards/open-llm-leaderboard)
 - [MindStudio — open models for agentic coding, 2026](https://www.mindstudio.ai/blog/best-open-source-llms-agentic-coding-2026)
 - [Wavect — open-weight comparison and licence terms](https://wavect.io/blog/open-weight-llm-comparison-2026)
+
+### Part 10 — stacks
+
+- [Complete guide to local LLM inference tools, July 2026 — llama.cpp, Ollama, vLLM, SGLang](https://dev.to/sreeraj-sreenivasan/the-complete-guide-to-local-llm-inference-tools-in-july-2026-llamacpp-ollama-vllm-sglang-and-4mh1)
+- [iunera — 20 tools for running LLMs locally, compared (the three-layer view)](https://www.iunera.com/kraken/enterprise-ai/top-20-tools-to-run-llms-locally-in-2026-ollama-anythingllm-open-webui-lm-studio-vllm-and-every-real-alternative-compared/)
+- [Ollama vs LM Studio vs vLLM vs llama.cpp vs MLX, 2026 — where the throughput numbers come from](https://codersera.com/blog/ollama-vs-lm-studio-vs-vllm-vs-llama-cpp-vs-mlx-2026/)
+- [ComfyUI's own write-up of running on the DGX Spark](https://blog.comfy.org/p/comfyui-on-nvidia-dgx-spark)
+- [Awesome DGX Spark — playbooks for vLLM, SGLang, Ollama, ComfyUI, FLUX and the one-command private RAG stack](https://github.com/bidual/awesome-dgx-spark)
 
 ### On the computed figures
 
