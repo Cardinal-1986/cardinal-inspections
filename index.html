@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 535 &#8212; the retail home in dark mode is navy over black instead of iron grey, and both calendars match it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 536 &#8212; the menu down the left side is set into the page now instead of sitting flat on it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33858,6 +33858,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:536, note:'\uD83D\uDCD0 The left menu has depth. \u2666 It is now set into the page rather than sitting flat on it, with the section headings as raised bands and whichever page you are on lifted out as a card. \u2666 Works both ways \u2014 in light it is a grey channel with a white card, in dark it is a black channel with a navy one. Desktop only; nothing on the phone changed.' },
 { build:535, note:'\uD83C\uDF11 Dark mode, retail home. \u2666 The grey cards are gone. Everything now sits as navy panels raised off the black, with the numbers and client rows set into them \u2014 your idea, from that checkout screen. \u2666 The pipeline circles are a compact strip that shows the same five numbers in the space one circle used to take. \u2666 Both calendars match now: no red cap, white month, white dates, every square set in, and the greyed-out dates are actually readable. \u2666 \u201Call jobs\u201D came off the Production Calendar so the header sits level.' },
 { build:534, note:'\uD83D\uDCD0 Library diagrams, reliable. \u2666 When you asked the assistant something and it drew a diagram, it only worked if the assistant happened to leave a blank line above it \u2014 otherwise you got the raw text \u201C~~stack\u201D printed at you instead of a picture. The app now spaces them itself, so a diagram draws every time. Nothing about how they look has changed.' },
 { build:533, note:'\uD83D\uDD34 Red buttons, finished. \u2666 Thirteen more buttons and tabs across the app had near-black writing on the cardinal red \u2014 the map button, ABC Supply, the photo editor and its tools, the photo annotator, the line-item library, the contract editor and the estimate preview. All now white, like the ones fixed earlier. The red itself is unchanged.' },
@@ -52290,6 +52291,70 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #prodCalWho{
   display:none;
 }
+</style>
+<style id="cr-lnav-a-styles">
+/* ══ Build 536 · left menu — option A, the recessed channel ════════════════
+   Theo's pick, both modes. Depth by RECESSION: every other card in this app
+   is raised, so a carved nav reads as chrome instead of content.
+
+   The dark twin is designed, not recoloured. A well is lit from above — dark
+   on the top/left inner edge, light catch on the bottom/right. In light the
+   shadow leads; in dark the shadow is already almost the page colour, so the
+   HIGHLIGHT leads instead. Recolour the light rule and you get a bump.
+
+   Dark reuses 535's palette: the well is the same #0A0E16 as the home
+   screen's sunk rows, and the active item is a #1A2434 navy card sitting in
+   it — the inverse of light, where the well is grey and the item is white. */
+
+/* ── LIGHT · shadow-led ──────────────────────────────────────────────────── */
+:root[data-theme="rb-light"] #cr-lnav{
+  background:#f2f3f5;
+  border-right:1px solid #dcdee2;
+  box-shadow:inset 3px 0 6px -3px rgba(30,45,65,.22), inset -1px 0 0 #ffffff;
+}
+:root[data-theme="rb-light"] #cr-lnav .lnav-sec{
+  background:linear-gradient(180deg,#e9ebee,#f2f3f5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 #dcdee2;
+  color:#6f7683;padding-top:8px;padding-bottom:7px;margin-top:6px;
+}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item{color:#3f3f46}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item:hover{background:#e7e9ec;color:#161616}
+/* the active row is a white card sitting IN the well */
+:root[data-theme="rb-light"] #cr-lnav .lnav-item.on{
+  background:#ffffff;color:#161616;font-weight:700;
+  border-left-color:transparent;
+  box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e), 0 1px 2px rgba(30,45,65,.10);
+}
+
+/* ── DARK · highlight-led ────────────────────────────────────────────────── */
+:root:not([data-theme="rb-light"]) #cr-lnav{
+  background:#0A0E16;
+  border-right:1px solid #223047;
+  /* the catch on the inner right edge is what says "dip" here; the shadow is
+     nearly the page colour and does almost nothing on its own */
+  box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055);
+}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec{
+  background:linear-gradient(180deg,#141C29,#0F1521);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910;
+  color:#8d97a6;padding-top:8px;padding-bottom:7px;margin-top:6px;
+}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec .cnt,
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec .chev{color:#6b7688}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item{color:#c2cbd8}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item:hover{background:#111927;color:#ffffff}
+/* the active row is a navy card sitting IN the well — 535's card colour */
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item.on{
+  background:linear-gradient(180deg,#1A2434,#141C29);
+  color:#ffffff;font-weight:700;border-left-color:transparent;
+  box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e),
+             0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07);
+}
+/* the CRM switcher sits in the well too, so it needs the same ground */
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-crm{
+  background:#0D1220;border-color:#223047;
+}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-crm button{border-right-color:#223047}
 </style>
 </body>
 </html>

@@ -4323,3 +4323,45 @@ the 481 lesson. Two negative controls confirm the light theme and Claims are unt
 
 **Not in this build, so it does not read as forgotten:** the nav-style icon set for card titles
 and left-menu option A. Both agreed, both 536.
+
+---
+
+## Build 536 — left menu, option A: the recessed channel, both modes
+
+Theo picked A from three depth treatments, then **"I'll do A for both dark and light modes."**
+
+**Why A won.** Every other card in this app is *raised*. A nav carved **into** the page reads as
+chrome rather than as content — which is what a nav actually is. It also organises better than
+the flat version, because the section headers become banded strips instead of floating labels.
+The rejected option 1 (every row its own card) made the list read as five separate objects.
+
+### The dark twin is designed, not recoloured — this is the whole trick
+
+A carved well is lit from above: dark on the top/left inner edge, a light catch on the
+bottom/right. **In light the shadow leads. In dark the shadow is already almost the page colour
+and carries nothing, so the HIGHLIGHT has to lead instead.** Recolour the light rule and you get
+a bump, not a dip. Asserted: the two `box-shadow` values differ, and the dark one contains
+`rgba(255,255,255,.055)` while the light one contains `inset -1px 0 0 #ffffff`.
+
+**Dark reuses 535's palette rather than inventing a second one.** The well is the same `#0A0E16`
+as the home screen's sunk rows, and the active item is a `#1A2434` navy card sitting in it — the
+exact inverse of light, where the well is grey and the active item is white. One system, two
+grounds.
+
+### Gates
+
+`check_build.py` green, 535 → 536, marker + negative control clean. **12 Chromium assertions, 0
+failures**, with the source `cr-lnav-styles` and the new `cr-lnav-a-styles` both in the page so
+each answers *which rule won*. All 14 selectors asserted to be theme-scoped **and** confined to
+`#cr-lnav` — nothing can leak into the app.
+
+**A harness bug worth recording:** `block()` returns the captured `<style>…</style>` *including*
+its tags, and the first draft nested those inside another `<style>`. The inner `</style>` closed
+the outer one and the trailing rules rendered as visible text. **The assertions still passed** —
+the captured blocks are valid style elements in their own right — so only the screenshot caught
+it. Structural gates would not have.
+
+**Still to come:** the nav-style icon set for card titles. Root cause already diagnosed —
+`.pipetitle` clips `linear-gradient(100deg,var(--rbe-head),var(--rbe-head))`, the same colour
+twice, with `-webkit-text-fill-color:transparent`. A flat fill pretending to be a gradient whose
+only real effect is stripping colour from every emoji on the home screen.
