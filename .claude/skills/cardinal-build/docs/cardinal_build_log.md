@@ -3741,3 +3741,396 @@ of the work. That is arithmetic, not a bug: a *white* card cannot read raised on
 dark home card does, because home's lift comes from a light top edge over a darker body. Making the
 retail cards look like home on the dark ground would mean giving them home's ground — which is the
 colour change Theo explicitly ruled out.
+
+---
+
+## Build 523 — Quick Inspect and the estimate screens, made readable
+
+> "Can you fix the quick inspect and estimates pages. Not able to read words."
+
+**Reproduced before fixed.** `harnesses/legibility523_probe.js` renders the real
+markup those modules emit — `cr-ci-script`'s own `shell()/open()/read()/review()`, the four
+`<template>` blocks the estimates module clones, and the estimate editor driven through its own
+exported `openEditor()/refreshSavedList()` — in real Chromium, resolves the ground each text node
+is *actually* painted on, and computes the WCAG ratio. Every replacement came from
+`scripts/contrast.py`. **74 failing pairs → 3**, and all three survivors are out of scope
+(below).
+
+### The probe was wrong three times first — each is a standing trap
+
+1. **Every `--cr-*` palette is declared on its OWN mount** (`#cr-estimates-mount`,
+   `#cr-pricing-mount`, `#cr-claims-mount`), not on `:root`. Cloning the templates into the page
+   made every `color:var(--cr-muted)` invalid, so elements inherited body's `#1b1b1b` and **30 fake
+   1.15:1 failures** appeared. Textbook "scope the assertion, then read what it captured".
+2. **A gradient's painted colour is not `backgroundColor`** — that reads transparent, so a naive
+   ancestor walk invents a ground. "Edit Estimate" was reported at 1.12:1; it sits on
+   `.cr-est-head`'s dark gradient and is fine. Fixed by treating every gradient colour stop as a
+   candidate ground and keeping the worst.
+3. **Gradient-clipped text** (`-webkit-text-fill-color:transparent`) is painted *in* the gradient;
+   `color` is only the no-clip fallback. Measuring it as ground put the Estimates title at 2.17:1.
+4. …and `.cr-est-saved-list .head` only matches when the slot carries the class
+   `injectOnProfile()` gives it. A bare div reported 1.15:1 on text that is really `#6b6b6b`.
+
+### What was actually wrong — 26 values, all measured
+
+| | was | now |
+|---|---|---|
+| `#cr-ci label` + `.req` (every field label) | `#c8202e` on `#202329` — **2.78** | `#f08a90` — 6.55 |
+| `#cr-ci .busy` (the whole reading-the-screen state) | `#6b6357` — **2.66** | `#b0a89c` — 6.69 |
+| `#cr-ci .found .miss` | `#a5a5a5` on `#f4f8f4` — **2.30** | `#6f6f6f` — 4.69 |
+| **seven** rules of `#1a1a1a` on `#c8202e` (Save, + From Library, + Attach Photos, move-button hovers, cover chips, the dupe button) | **3.07** | `#fff` — 5.67 |
+| `.cr-est-lineitem .del` | `#a89e88` on white — **2.65** | `#767066` — 4.91 |
+| `.cr-est-saved-list .head` | `#6b6b6b`, untokenised — **2.95** | `var(--rbe-mute)` — 7.55 dark / 4.97 light |
+| `.cr-chrome-badge` | white on `#c87a00` — **3.37** | `#1a1a1a` — 5.17 |
+| `.cre-note` / `.cr-footer` | faint grey — **2.38** light | the module's own `--cr-muted` — 5.33 / 7.10 |
+| `#cr-epub-btn`, `#cr-epub-preview-btn`, `#cr-e2c-btn`, `.pv-head button` | `#e35c63` — **3.97** | `#f08a90` — 5.81 |
+
+**The four `#id` button rules were a second pass.** Publish, Preview and → Contract are injected
+into `.cr-est-head` by three *other* modules and each carries an `#id` rule — **(1,0,0) beats
+`.cr-est-head button` at (0,2,1)**, so fixing the class rule moved Cancel and nothing else. Only
+re-running the probe against the patched file found them. Same for `#cr-ci .req`: fixing a label
+without its children leaves one 2.78:1 behind.
+
+**One self-inflicted regression, caught the same way.** The first pass flipped `.cr-tmpl-lbl` to a
+flat `#e35c63` — fixing dark by breaking light (3.51:1 on the white card). No single red clears 4.5
+on both `#101218` and `#ffffff`, so the value has to follow the theme: `--cr-red` stays (4.90 light)
+and dark gets one scoped override.
+
+**`#c8202e` stays.** Cardinal red is brand and semantic; what changed is the ink on it.
+
+### Deliberately left, and why
+
+- `#cr-est-new-btn` — `#1a1a1a` over `linear-gradient(135deg,#c8202e,#c88a0f)`. Dark ink is right on
+  the gold end and 3.07:1 on the red end; white ink would fail on the gold end instead. Fixing it
+  means changing the brand gradient — a design decision, not a contrast fix.
+- `.cr-est-saved-row .status.*` at 3.99:1 — semantic pill family, Theo's call per OPEN_ITEMS.
+- `.cre-sheet .ph button.ap` ("Apply") at 4.05:1 in `rb-light` — that is `--rbe-ok`'s light value
+  `#2f8f56`, and **`--rbe-ok` has 22 references app-wide**. An app-wide token change is its own
+  deliberate build, not a rider on this one.
+- Pricing Catalog `span.count` at 4.29:1 — a different screen from the two named.
+
+**Also found, not fixed:** `#1a1a1a` on `#c8202e` appears **12 more times** outside these two blocks.
+Same defect, other modules. The assertion in `patch523.py` is scoped to the two blocks and proves
+those 12 were left untouched.
+
+**Gates.** `check_build.py` green. Probe 74 → 3. All five prior harnesses re-run, unchanged.
+
+---
+
+## Build 524 — delete an estimate, with the SQL that makes it real
+
+> "Also can you have an option to delete estimates within the page."
+
+### The SQL is not optional — verified against the live database
+
+`public.estimates` has RLS on and exactly three policies: `est_read` (SELECT), `est_write` (INSERT),
+`est_update` (UPDATE). **There is no DELETE policy.** Under RLS that is not an error, it is a silent
+refusal: PostgREST answers with **204 and no error body**, the row survives, and the client cannot
+tell it apart from success. A Delete button shipped without `estimates_delete_policy.sql` would
+be a lie.
+
+```sql
+create policy est_delete on public.estimates for delete to authenticated
+  using ( is_full_access() or created_by = my_email() );
+```
+
+`is_full_access()` is theo/joan/curtis/scottie. That mirrors `est_write`'s ownership rule rather
+than inventing a new one; `created_by IS NULL` rows end up admin-only, the safe default.
+
+### Hard delete, not archive — and the schema is why
+
+- `estimates.line_items` is **jsonb on the row**, and **nothing has a foreign key to `estimates`**.
+  Deleting the row is complete and leaves no orphans. (`estimate_line_items` is the shared price
+  book, unrelated.)
+- The `archived` column exists but is **dead**: 0 of 11 rows use it, and the app only reads it in
+  `loadForProject`'s `.eq('archived', false)`. 8 of the 11 rows are drafts — which is presumably
+  why Theo wants them gone rather than filed.
+- A document already published from an estimate (`doc_id` / `contract_doc_id`) is **kept**. A signed
+  PDF should outlive the draft it came from.
+
+### One pipeline, two entry points
+
+`deleteEstimate(id, opts)` does the confirm, the delete, the verification, the audit entry and the
+refresh. The editor header calls it; each saved row calls it. Adding a second delete path later is
+how this file grew two Estimates screens in the first place.
+
+**`.select('id')` is load-bearing, not decoration** — it is the only way to tell a real delete from
+an RLS refusal, and the harness asserts it directly.
+
+Details worth keeping: Delete renders only when `s.id` is set (nothing to delete before the first
+save); `wire()` **guards** it, unlike its unconditional neighbours which dereference
+`querySelector()` immediately; the row control calls `stopPropagation()` because the row itself
+opens the editor; and deleting the estimate you have open closes the editor.
+
+**Gates.** `check_build.py` green. `harnesses/del524_harness.js` — **32 assertions, 0 failed**,
+running the shipped module against a Supabase stand-in that can be told to refuse exactly the way
+RLS does. All five prior harnesses re-run, unchanged.
+
+---
+
+## Build 525 — the landing page: raised cards, today's weather, and a quote you can read
+
+> "Please raise all cards in the landing page as well. Also can you out today's weather at the top
+> right next to cardinal. And above the quote, there is a big square section there that is unused"
+
+**How the third sentence was read, stated so it is cheap to correct:** the landing is one narrow
+column, and the only genuinely unused area is the band to the **right of the "Cardinal." wordmark**,
+which sits directly above the quote — which is also exactly where the weather was asked for. Treated
+as one instruction. If it meant something else, the panel moves and nothing else has to.
+
+### First: the landing is not what the markup looks like
+
+The inline-styled buttons under `<div id="landingView">` are a **dead fallback**.
+`#landingView>*{display:none}` hides them and `cr-lr-script` overwrites the whole element with a
+`.cr-lr` layout. Patching those inline styles would have changed nothing on screen. Found by
+rendering the page, not by reading it — the prime doctrine, in the other direction.
+
+### 1. Raised
+
+Same recipe as 522 — bevel follows the card, drop shadow follows the page. `.cr-lr-roof` had a
+shadow and gained the ridge edges; **`.cr-lr-pair button` had `box-shadow:none`** (measured at 524).
+`.cr-lr-minor` is deliberately left flat: those are transparent ghost pills, not cards.
+
+**Also restored, pre-existing and not caused here:** `html[data-mode="light"] .cr-lr-pair
+button{border-color:#ded7cf}` is a *shorthand*, and it had been quietly eating the `--racc` accent
+edge — orange Production, red Sales Floor — in light mode only. Verified against 524 before claiming
+it: dark `rgb(224,118,42)`, light `rgb(222,215,207)`. Semantic colours hold in both themes.
+
+### 2. Weather
+
+**Open-Meteo, chosen because it needs no API key** — nothing secret enters the file. CLAUDE.md
+records that a key has already been leaked on this project once; the durable fix is to pick a source
+that doesn't have one.
+
+Fetching a keyless third-party host straight from the browser is **this app's existing convention**,
+not a new mechanism: `nominatim.openstreetmap.org` and `photon.komoot.io` are already called that
+way for address lookup. Copied their shape — plain `fetch`, `try/catch`, `localStorage` cache
+(20 min), silent `.catch()`.
+
+Shows what decides a roofing day: condition, temperature, high/low, wind, and the rain chance (badge
+only at ≥20%). On phones the high/low/wind line drops so the panel fits beside the wordmark.
+
+**⚠️ Unverified against the live API.** The build container's egress proxy answers **403 to CONNECT**
+for `api.open-meteo.com`, so the response schema could not be confirmed from here and is not being
+claimed. Everything is written to degrade to nothing instead: the panel ships `hidden` and only
+un-hides once a response has actually parsed into a numeric temperature.
+
+**The wordmark overlapped the panel at phone width** — `clamp(38px,12vw,58px)` and it does not wrap,
+so it ran straight under. Caught by measuring `getBoundingClientRect()` overlap, not by looking.
+Now `clamp(28px,8.2vw,58px)` inside `.cr-lr-head`; measured overlap 0 at 430px.
+
+### 3. The quote was invisible in light mode
+
+Found while rendering for (1). **The same defect four times:** every `html[data-mode="light"]`
+override targets the **parent** while the child carries its own colour, so the child never changes.
+
+| | on `#f7f5f2` | |
+|---|---:|---|
+| `.cr-lr-quote p` `#f0e6da` | **1.13:1** | literally unreadable — cream on cream |
+| `.cr-lr-quote cite` `#9c8b7e` | 3.01:1 | |
+| `.cr-lr-minor button` `#9c8b7e` | 3.01:1 | |
+| `.cr-lr-foot .pp` `#8d7f73` | 3.56:1 | |
+
+The override sets `.cr-lr-quote{color:#5f564f}`; `.cr-lr-quote p` has its own `#f0e6da` and wins.
+Identical in shape to 523's `#cr-ci label` vs `.req`, two builds apart, in a different module.
+
+### Gates
+
+`check_build.py` green. `harnesses/wx525_harness.js` — **56 assertions, 0 failed**, running the
+shipped module against a stubbed fetch. **Eight failure paths** are asserted individually (network
+refused, HTTP 500, non-JSON, empty object, schema changed, temperature as string, temperature null,
+empty daily arrays) and every one must leave the four cards and the quote untouched. All six prior
+harnesses re-run — **347 assertions total**, unchanged.
+
+**A harness that "hung" did not.** Twelve `pretendToBeVisual` JSDOM instances each keep a rAF loop
+alive, so node never exited, so `tail` never saw EOF and printed nothing. The run had completed.
+Close the windows and `process.exit(0)`.
+
+---
+
+## Build 526 — the landing page, four corrections
+
+> "Can you make the background black like the retail page i cant remember what that black is called.
+> Also seperate the 4 cards a bit so they look better. Make the resource library at the bottom stand
+> out a bit more along with the schedule board as they are both important"
+> …then: "Also make these text raised as well — Cardinal. / Roofing & Renovations / [the weather] /
+> Good evening, Theo. / Friday · July 31"
+
+**The black is `--bg`, `#09090C`** — declared once on `:root` beside `--paper`, and used by
+`body{background:var(--bg)}`. That is the retail page ground. The landing had `#14100e`, a warmer
+brown-black, so the two screens never matched. Now `var(--bg,#09090c)`, with the literal fallback
+448–449 requires. Measured after: `rgb(9, 9, 12)`.
+
+**525's weather is confirmed live.** Theo quoted his own reading back — "75° Overcast, H 88° · L 63°
+· 3 mph" — which is the verification the blocked egress proxy could not give from here. The
+unverified-schema caveat on 525 is now closed.
+
+### The four cards, separated
+
+`.cr-lr-roof` was a single clipped slab — `border-radius` + `overflow:hidden` around four seamless
+rows divided by a hairline and an inset seam shadow. Splitting them means the **container stops
+being a card and each row becomes one**: the roof gives up its radius, clipping and shadow; every
+`.cr-lr-course` takes them, in an 11px flex gap.
+
+Two things the container was quietly doing that now have to be done per card:
+
+1. **`overflow:hidden` was clipping the `::before` accent bar.** Without it on each card, the bar
+   squares off the rounded corner.
+2. **`.cr-lr-course + .cr-lr-course` is (0,2,0)** and beats a plain `.cr-lr-course` rule no matter
+   how late it sits. Named explicitly rather than hoped over.
+
+Measured after: gaps `[11, 11, 10]`, radius `12px`, `4/4` cards carry a shadow, `overflow:hidden`.
+
+**And one stray from 525, caught by measuring rather than looking:** `html[data-mode="light"]
+.cr-lr-roof{border-top:2px solid #ffffff}` survived `border:0` on specificity and drew a white line
+above the first card in light mode. Now `border:0` there too.
+
+### Library and Schedule Board promoted
+
+They were `.cr-lr-minor` — transparent ghost pills, **which is the tier I chose for them at 525 and
+exactly what he is correcting**. They move to the `.cr-lr-pair` treatment Production and Sales Floor
+already have: solid ground, accent top edge, icon, title, one line of description, raised. Verified:
+the pair grid now reads Production · Sales Floor · Resource Library · Schedule Board.
+
+That leaves "All clients · N" alone in `.cr-lr-minor`, which is right — an admin shortcut, not a
+destination. It only renders for `seeAll`, so the row can now be **empty**:
+`.cr-lr-minor:empty{display:none}` rather than a stray 14px of margin around nothing.
+
+### Raised type
+
+Letterpress, and it **inverts per theme**: on the dark ground the lift is a shadow *below* the
+glyph; on paper it is a highlight below with a soft shade under it. `.cr-lr-wx .ic` gets a
+`drop-shadow()` filter instead — it is an emoji, not text.
+
+**Checked before writing it:** none of the five targets carry
+`-webkit-text-fill-color:transparent`. A `text-shadow` behind a transparent fill paints as a smear,
+not a lift. The patch script asserts this against the file. (`.cre-h` on the Estimates screen *is*
+clipped — that is the one to keep away from.)
+
+Kept deliberately light on the 10px monospace: 523 was spent making this page readable and a heavy
+shadow at that size gives it back.
+
+### Gates
+
+`check_build.py` green. All seven harnesses re-run — **347 assertions**, unchanged.
+
+---
+
+## Build 527 — the Schedule Board
+
+> Theo, with a screenshot of it: "Can you fix this page"
+
+Measured in Chromium, not guessed. Three things:
+
+1. **It was the one retail surface never tokenised.** `.bday{background:#fff}` — fourteen white
+   slabs down a near-black page.
+2. **`.bnone` ("Nothing scheduled") was `#a89f9a` on that white — 2.6:1**, and it is the text on
+   thirteen of the fourteen cards.
+3. **The wrap carried an INLINE `max-width:1700px`**, which no stylesheet rule can beat, so the
+   desktop cap every other page follows never applied and the column sat stranded.
+
+### The inks had to move with the ground
+
+The trap 523 and 525 were both spent on. On the retail card (`#2e333b`→`#262a31`) the existing inks
+read:
+
+| | | |
+|---|---:|---|
+| `.bhead` `#8f1620` | **1.39:1** | the date on every card |
+| `.btime` `#555555` | **1.70:1** | |
+| `.bcli` `#1d4f91` | **1.56:1** | the client name |
+
+Darkening the card alone would have made this page **worse** than the white version — unreadable
+rather than merely jarring. All replaced with computed values: `#f08a90`, `var(--rbe-ink)`,
+`var(--rbe-acclt)`, `var(--rbe-mute)`.
+
+`.bday` already carried 522's raise with the **light** bevel, because it was a white card then. It
+isn't any more, so the bevel is retuned with it — "the bevel follows the card", as 522 established.
+
+Gated retail-only rather than edited at source, so Claims and Community keep what they have.
+
+### The width — and a regression the harness caught
+
+Deleting the inline width outright dropped the board to `.wrap`'s 1180 whenever the sidebar is off
+— **a tablet regression dressed as a fix**. `lnav516_harness` failed on it, correctly.
+
+The fix is to move the width into CSS rather than delete it: `#boardView .wrap{max-width:1700px}`
+keeps the no-sidebar case, and `body.cr-lnav-on #boardView .wrap{max-width:var(--lnav-cap)}`
+out-specifies it when the sidebar is on — which is the case Theo photographed.
+
+**The 516 harness was then updated, because its assertion had become stale by intent**: it encoded
+"boardView keeps 1700 even with the sidebar", which was true at 516 and is deliberately no longer
+true. Now four own-width views, and the board asserted as capped rather than unbounded.
+
+### One self-inflicted red worth recording
+
+The patch script asserts that no collapsed ink survives into the new block — and tripped on
+`#8f1620` **inside its own explanatory comment**. CLAUDE.md records exactly this ("patch scripts
+document the values they change, so a naive count finds the value in its own explanatory comment").
+Comments are stripped before the assertion now.
+
+### Not verified visually
+
+The computed style is proved — card ink `#cfd6df`, heading `#f08a90`, background a gradient rather
+than `#fff`. A screenshot was **not** obtained: `#landingView` is a fixed overlay and the app's own
+view switching kept landing on the dashboard instead. Theo's eyes on the preview are the gate.
+
+---
+
+## Build 528 — the left nav loses its emoji
+
+> Theo, shown five styles: **"Go with 2 then 5 on the light"**
+
+Style 2 (solid glyphs) as the default, style 5 (keyline marks) in the light theme. **Both sets are
+emitted on every row and CSS picks one**, so flipping the theme costs no re-render.
+
+### Which "light" — and why it matters
+
+The landing's ☾ toggle sets `html[data-mode="light"]`, and CLAUDE.md is explicit that it is the
+**landing only** — *"not an app-wide dark mode. Do not wire app surfaces to it without a decision
+from Theo."* The sidebar is an app surface, so this gates on **`:root[data-theme="rb-light"]`**, the
+app's actual retail light theme. Measured first: `cr-lnav-styles` had **zero** references to either,
+so there was no existing convention to follow.
+
+### Keyed on the label, not `data-nav`
+
+Only **19** rows carry a `data-nav`. Import from AccuLynx, Production, Sales Floor, Resource
+Library, Team and Health Check are injected by other modules with their own ids and none at all.
+Slugging the label covers every row however it got there. 24 mapped keys plus prefix aliases;
+**zero rows fell through to the generic mark** in practice.
+
+**The emoji is part of the label text** — the rows are scraped out of `#navMenu`, whose buttons read
+`"📅 Schedule Board"`. `stripEmoji()` walks code points rather than using a character class of
+literal astral characters (fragile to author, worse to read), and **never returns empty**: if
+stripping would eat the whole label, the original is kept.
+
+**`#navMenu` itself is untouched** — asserted, 21 emoji labels before and after, 24 still live in
+the burger menu. One source of truth for what the menu contains; the mirror is the only thing that
+changed.
+
+### The negative control earned its keep
+
+The first gate run went **red**: marker `function iconFor(` was already present in the previous
+build. **`cr-ahc-script` (Health Check) already has a `function iconFor(status)`.** Separate IIFEs,
+so no runtime conflict — but CLAUDE.md's "a name is not a contract" lesson was paid for by exactly
+this shape (`renderTeamPage` living in the Library module). Renamed to **`lnavIcon()`** rather than
+leaving a future grep ambiguous.
+
+### Three harness reds, all the test's fault — but the third mattered
+
+`lnav516_harness` compares the mirror's labels to `#navMenu`'s **verbatim**, and 528 strips the
+emoji by design, so two set-equality assertions failed on a cosmetic difference. The third —
+**"clicking the sidebar row fires the real `.navopt`"** — failed for the same reason: it locates the
+mirror row by exact `textContent` equality, so it found nothing and asserted against `undefined`.
+
+That one was worth chasing rather than waving through: the click-through is the *entire point* of
+the mirror. Routing is by `data-sec`/`data-i` index, not by text, so stripping the display label
+cannot affect it — and with the lookup fixed the real button fires (`fired: 1`). Test stale, app
+correct.
+
+### Gates
+
+`check_build.py` green. `lnav516_harness` extended with **six** new assertions — both icon sets on
+every row (18/18), no emoji surviving, style 2 showing in dark, style 5 after flipping to
+`rb-light`, at most two generic fallbacks (actual: zero), and the burger menu keeping its emoji.
+All seven harnesses pass — **354 assertions**.

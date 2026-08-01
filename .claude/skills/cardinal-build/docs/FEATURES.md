@@ -829,3 +829,86 @@ shadow has almost nothing to cast onto a near-black page, so the `#d9d9d9` botto
 A *white* card cannot lift on black the way the dark home card does; home's lift is a light top edge
 over a darker body. Closing that gap means giving the retail cards home's ground — the colour change
 that was explicitly ruled out.
+
+---
+
+# Delete an estimate (build 524)
+
+**`window.CardinalEstimates.deleteEstimate(id, opts)`** in `cr-est-script`. One pipeline; two entry
+points call it and nothing else deletes an estimate.
+
+| Entry point | Where |
+|---|---|
+| `✕` on each `.cr-est-saved-row` | the Saved Estimates list on the client profile |
+| `Delete` button, `data-act="del"` | the estimate editor header, **only when `s.id` is set** |
+
+`opts`: `{ label, projectId, skipConfirm }`.
+
+### 🚫 The DELETE policy is part of the feature
+
+`public.estimates` had **no DELETE policy** until `estimates_delete_policy.sql`. Under RLS a delete
+with no matching policy is a **silent refusal — 204, no error body, row survives**, which the client
+cannot distinguish from success. If that policy is ever dropped, the button goes quiet, not broken.
+
+```sql
+create policy est_delete on public.estimates for delete to authenticated
+  using ( is_full_access() or created_by = my_email() );
+```
+
+Admins + production (theo, joan, curtis, scottie) can delete any estimate; a rep can delete their
+own; `created_by IS NULL` is admin-only.
+
+### Things worth not relearning
+
+- **`.select('id')` on the delete is load-bearing.** It is the only way to tell a real delete from an
+  RLS refusal. Drop it and the UI reports success either way. `del524_harness.js` asserts it.
+- **`wire()` must guard `[data-act="del"]`.** Its neighbours dereference `querySelector()` with no
+  null check because they are unconditional; this button is not.
+- **The row control must `stopPropagation()`** — the whole `.cr-est-saved-row` opens the editor.
+- **Deleting the open estimate closes the editor** (`state.id === id → close()`).
+- **A published document survives its estimate.** `doc_id` / `contract_doc_id` are not touched.
+- `estimates.line_items` is **jsonb on the row** and nothing FKs to `estimates`, so the delete is
+  complete with no cascade. `estimate_line_items` is the price book and is unrelated.
+- The `archived` column exists and is **dead** — 0 rows use it; only `loadForProject` reads it. If
+  Theo ever wants soft-delete instead, that is the column, and this is where it would go.
+
+---
+
+# Landing page weather (build 525)
+
+`wx()` / `wxPaint()` / `wxCached()` in **`cr-lr-script`**, painted into
+`<div class="cr-lr-wx" data-slot="wx" hidden>` — the last child of `.cr-lr-head`, i.e. to the right
+of the "Cardinal." wordmark. Called from `paint()`.
+
+- **Open-Meteo, no API key.** Deliberate: nothing secret can enter `index.html` this way. Do not
+  "upgrade" this to a keyed provider without moving the call into `/api/`.
+- Dayton at `39.7589, -84.1916`. Fahrenheit + mph. Cached in `localStorage['cr-wx-dayton']` for
+  20 minutes.
+- Shows condition, temperature, high/low, wind, and a rain badge **only at ≥20%**. The high/low/wind
+  line is hidden under 560px so the panel fits beside the wordmark.
+
+### 🚫 It must always be able to fail silently
+
+The panel ships `hidden` and only un-hides once a response parses into a **numeric** temperature.
+Every failure path — network, non-2xx, non-JSON, changed schema, null/string temperature, empty
+daily arrays — ends in "leave it hidden", and `wx()` is called inside `try{}catch(_){}`. The landing
+must never depend on a third party being up. `wx525_harness.js` asserts all eight paths.
+
+**The live schema is unverified** — the build container's proxy blocks `api.open-meteo.com`. If the
+panel never appears in production, that is the first thing to check, and it fails safe by design.
+
+### The wordmark shares its row now
+
+`.cr-lr-head` is a flex row holding `.cr-lr-id` (wordmark + sub) and the weather. `.cr-lr-mark` is
+re-clamped to `clamp(28px,8.2vw,58px)` **inside `.cr-lr-head`** — at its original `12vw` it does not
+wrap and ran straight under the panel at phone width.
+
+### Also at 525
+
+- `.cr-lr-roof` and `.cr-lr-pair button` are raised (522's recipe). `.cr-lr-minor` stays flat on
+  purpose — ghost pills, not cards.
+- The light-mode `--racc` accent edge on `.cr-lr-pair button` is restored; a `border-color` shorthand
+  in the light override had been eating it.
+- **Four light-mode overrides target a parent whose child has its own colour**, so the child never
+  changed. The quote body was `#f0e6da` on `#f7f5f2` — **1.13:1**. All four now addressed directly.
+  When adding a light-mode override here, override the element that actually declares the colour.
