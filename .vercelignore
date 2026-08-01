@@ -16,10 +16,11 @@
 CLAUDE.md
 .github/
 
-# --- Business reference notes. Written for Theo, not for the app. Zero
-#     references from index.html; nothing fetches them. They name vendor
-#     pricing and our read on it, which is not something to serve publicly
-#     from a customer-facing domain. ---
+# --- Reference notes. Written for Theo, not for the app. Zero references from
+#     index.html; nothing fetches them. They carry vendor pricing, our read on
+#     it, and notes on how we work — none of which belongs on a customer-facing
+#     domain. ---
+AI_CHEATSHEET.md
 HUBSPOT_AI_CHEATSHEET.md
 
 # --- Orphaned scratch pages. Zero references from index.html; each was
