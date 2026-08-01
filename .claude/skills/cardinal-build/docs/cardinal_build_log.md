@@ -4741,3 +4741,32 @@ mechanical check green, and only a real engine catches it. Every assertion here 
 gradient, a retail pipeline card takes its stage's background. Whether that is the intended
 stage-tinting or a long-standing accident is Theo's call; how visible it is depends on what is painted
 over the card. Not touched here.
+
+---
+
+## Card lift, two navigators, navy leads, obsidian (546)
+
+- **546** · one appended `<style id="cr-nvl-styles">` + nine exact-match JS edits. Hover lift
+  (option 1, 3px, `@media (hover:hover)` so a phone tap cannot latch it) on leads, estimate and
+  reports cards. Lead cards navy (535's `--nv-*`). Leads rail and the new estimate jump list both in
+  536's recessed-channel recipe. Estimate page and `#reportsView` pipe cards obsidian (545's
+  `.actbox` recipe), hairline `#ff2740` left edge on the pipe cards. Milestone pill on 544's stage
+  chips. KPI numerals colour-coded. Retail only, both modes, `#mainView` excluded.
+
+**Three things worth carrying forward:**
+
+- **`</body>` is at ELEVEN, not the 10 `CLAUDE.md` records** (that figure is from 451), and *three of
+  the eleven are prose inside comments* — "paste this block into index.html before `</body>`". The
+  count was never the invariant. Assert that `rfind()` landed on the real close instead: the 9 chars
+  before it are `</style>\n` and the 16 after are `</body>\n</html>\n`.
+- **An inline `style=` attribute is why the milestone pill needed a JS change.** Reusing 544's
+  palette from CSS alone was impossible; `ljRenderPane()` was painting `background`/`color` inline.
+  This is the `styleMounts()` trap in `CLAUDE.md` recurring on a different surface.
+- **A screenshot caught a bug three green harnesses did not.** The nav header read
+  `PHOTOS &AMP; TOTALS` — the label was pre-escaped `&amp;` and then run through `esc()` again.
+  Every structural assertion passed because the *structure* was right. Look at the picture.
+
+**One red that was the test's fault, recorded because half of them are.** An XSS assertion demanded
+the substring `onerror=alert(1)` be absent from the escaped `mailto:` href. Escaping neutralises the
+**delimiters**; the payload text survives as inert attribute content. Rewritten to assert what
+actually matters — no raw `"`, `<` or `>` inside the href value, and no `<img>` opened anywhere.

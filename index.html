@@ -2010,8 +2010,11 @@ body.restoring #restoreVeil{display:flex;}
 .ljpname{flex:1;min-width:0;font:800 19px Georgia,'Times New Roman',serif;
   background:linear-gradient(100deg,var(--rbe-name1),var(--rbe-acc) 55%,var(--rbe-acclt));
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc);}
+/* 546: colour moved out to 544's .stagechip.stg-* rules, which the pill now
+   wears as classes. Shape only here - .stagechip is (0,1,0) and so is this, and
+   this one is 85k characters later, so the pill keeps its 999px radius. */
 .ljmpill{display:inline-block;font:800 10.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--rbe-mpill-fg);border-radius:999px;padding:4px 14px;background:var(--slc,var(--rbe-mpill-bg));}
+  text-transform:uppercase;border-radius:999px;padding:4px 14px;}
 .ljpsub{padding:2px 16px 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
 .ljpsub .po{color:var(--rbe-po3);font-weight:800;}
 .ljpact{display:flex;gap:8px;padding:0 16px 13px;}
@@ -3171,7 +3174,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 545 &#8212; the Activity Count tiles are raised glossy black with the orange kept</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 546 &#8212; cards lift on hover, two navigators, navy leads and obsidian estimates</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10900,6 +10903,9 @@ function ljPhoneSvg(){
 function ljSmsSvg(){
   return '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
 }
+function ljMailSvg(){
+  return '<svg viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M3 6.5l9 6.5 9-6.5"/></svg>';
+}
 function ljCardHtml(p){
   var ck = parseCkAll(p);
   var stg = normStage(p.stage);
@@ -10908,6 +10914,10 @@ function ljCardHtml(p){
   var ink   = LJ_INK[stg]   || '#15171b';
   var cat = [ck.job_category, ljTrades(p).join(', ')].filter(Boolean).join(' \u00b7 ');
   var tel = (p.phone || '').replace(/[^+\d]/g, '');
+  /* 546: the card's action column was phone-only, so a lead with an email and
+     no number showed no way to reach them at all. Theo asked for the email icon
+     under the phone; .ljcta is already flex-column so it aligns by itself. */
+  var eml = (p.email || '').trim();
   return '<div class="ljcard' + (ljState.sel === p.id ? ' sel' : '') + '" data-lj="' + p.id + '" style="--spn:' + spine + ';--slc:' + solid + ';--sli:' + ink + '" title="' + esc(stg) + '">' +
     '<div class="ljrl"><div class="ljmc">' + esc(stg.charAt(0)) + '</div>' +
       '<span class="ljkl">In status</span><span class="ljkv">' + ljAge(ck.stage_since || p.updated_at) + '</span>' +
@@ -10918,9 +10928,10 @@ function ljCardHtml(p){
       (cat ? '<div class="ljct">' + esc(cat) + '</div>' : '') +
       '<div class="ljrep">' + esc(rptRepName(p.created_by || '')) + '</div>' +
     '</div>' +
-    (tel ? '<div class="ljcta">' +
-      '<a class="ljbtn" href="tel:' + tel + '" title="Call">' + ljPhoneSvg() + '</a>' +
-      '<a class="ljbtn" href="sms:' + tel + '" title="Text">' + ljSmsSvg() + '</a>' +
+    ((tel || eml) ? '<div class="ljcta">' +
+      (tel ? '<a class="ljbtn" href="tel:' + tel + '" title="Call">' + ljPhoneSvg() + '</a>' : '') +
+      (tel ? '<a class="ljbtn" href="sms:' + tel + '" title="Text">' + ljSmsSvg() + '</a>' : '') +
+      (eml ? '<a class="ljbtn" href="mailto:' + esc(eml) + '" title="Email">' + ljMailSvg() + '</a>' : '') +
     '</div>' : '') +
   '</div>';
 }
@@ -11007,7 +11018,11 @@ function renderLjPane(){
     : '<div class="ljsummary" style="padding-top:46px;">No address on file for this job.</div>';
   pane.innerHTML =
     '<div class="ljprow"><span class="ljpname">' + esc(p.name || 'Unnamed') + '</span>' +
-      '<span class="ljmpill" style="background:' + solid + ';color:' + ink + ';">' + (stg === 'Closed' ? 'Archived' : stg) + '</span></div>' +
+      /* 546: was style="background:<solid>;color:<ink>" - an inline declaration
+         no stylesheet can outrank. It now wears 544's stage chip classes, so the
+         pill and every other chip in the app read from ONE palette. The stage
+         key drives the class; the label still says Archived for Closed. */
+      '<span class="ljmpill stagechip stg-' + esc(stg) + '">' + (stg === 'Closed' ? 'Archived' : stg) + '</span></div>' +
     '<div class="ljpsub">' + (ck.po ? '<span class="po">' + esc(String(ck.po)) + '</span> \u00b7 ' : '') + esc(addr || 'No address') + '</div>' +
     '<div class="ljpact">' +
       (tel ? '<a class="ljab" href="tel:' + tel + '">' + ljPhoneSvg() + 'Call</a>' +
@@ -11251,6 +11266,14 @@ function rptChart(id, cfg){
   if(rptCharts[id]){ rptCharts[id].destroy(); }
   var el = document.getElementById(id);
   if(!el || typeof Chart === 'undefined') return;
+  /* 546: the reports cards are obsidian now. Chart.js defaults its tick and
+     legend ink to #666, which is 2.5:1 on that ground - and was already failing
+     on 535's navy card before this build. NOT themed, deliberately: the card is
+     black in both modes, so the ink has to be too. Set here rather than per
+     chart because `new Chart(` appears exactly once in this file, which makes
+     this reach the reports charts and nothing else. */
+  Chart.defaults.color = '#b9bec7';
+  Chart.defaults.borderColor = 'rgba(255,255,255,.10)';
   rptCharts[id] = new Chart(el.getContext('2d'), cfg);
 }
 function rptRepName(email){
@@ -11326,13 +11349,17 @@ function renderRptCompany(projs, from, to, pfrom, pto){
   });
   var avgDays = days.length ? Math.round(days.reduce(function(a,b){ return a+b; },0)/days.length) : null;
   document.getElementById('rptKpis').innerHTML =
-    '<div class="rptkpi"><span>Revenue signed</span><b>' + fmtMoney(rev) + '</b>' + rptDelta(rev, revPrev) + '</div>' +
-    '<div class="rptkpi"><span>New leads</span><b>' + newLeads.length + '</b>' + rptDelta(newLeads.length, newLeadsPrev.length) + '</div>' +
-    '<div class="rptkpi"><span>Deals signed</span><b>' + signed.length + '</b>' + rptDelta(signed.length, signedPrev.length) + '</div>' +
-    '<div class="rptkpi"><span>Win rate</span><b>' + rptPct(signed.length, winDen) + '</b></div>' +
-    '<div class="rptkpi"><span>Avg job size</span><b>' + (signed.length ? fmtMoney(rev/signed.length) : '\u2014') + '</b></div>' +
-    '<div class="rptkpi"><span>Avg days to sign</span><b>' + (avgDays != null ? avgDays : '\u2014') + '</b></div>' +
-    '<div class="rptkpi"><span>Open pipeline $</span><b>' + fmtMoney(pipeVal) + '</b></div>';
+    /* 546: k-money / k-new / k-won / k-rate carry the colour. Money is green,
+       new work yellow, closed work the dark green, ratios and durations grey -
+       computed against the obsidian card's lightest band, worst case 3.90:1
+       against a 3.0 floor for 20px/800. */
+    '<div class="rptkpi"><span>Revenue signed</span><b class="k-money">' + fmtMoney(rev) + '</b>' + rptDelta(rev, revPrev) + '</div>' +
+    '<div class="rptkpi"><span>New leads</span><b class="k-new">' + newLeads.length + '</b>' + rptDelta(newLeads.length, newLeadsPrev.length) + '</div>' +
+    '<div class="rptkpi"><span>Deals signed</span><b class="k-won">' + signed.length + '</b>' + rptDelta(signed.length, signedPrev.length) + '</div>' +
+    '<div class="rptkpi"><span>Win rate</span><b class="k-rate">' + rptPct(signed.length, winDen) + '</b></div>' +
+    '<div class="rptkpi"><span>Avg job size</span><b class="k-money">' + (signed.length ? fmtMoney(rev/signed.length) : '\u2014') + '</b></div>' +
+    '<div class="rptkpi"><span>Avg days to sign</span><b class="k-rate">' + (avgDays != null ? avgDays : '\u2014') + '</b></div>' +
+    '<div class="rptkpi"><span>Open pipeline $</span><b class="k-money">' + fmtMoney(pipeVal) + '</b></div>';
 
   var cur = rptSeries(projs.filter(rptIsSigned), rptSignedDate, projectValue, from, to);
   var prevRaw = rptSeries(projs.filter(rptIsSigned), rptSignedDate, projectValue, pfrom, pto);
@@ -11467,10 +11494,10 @@ function renderRptProd(projs, from, to, pfrom, pto){
     return a.appt_date && new Date(a.appt_date + 'T00:00:00') >= new Date();
   }).length;
   document.getElementById('rptProdKpis').innerHTML =
-    '<div class="rptkpi"><span>Jobs completed</span><b>' + done.length + '</b>' + rptDelta(done.length, donePrev.length) + '</div>' +
-    '<div class="rptkpi"><span>Backlog (approved)</span><b>' + backlog.length + '</b></div>' +
-    '<div class="rptkpi"><span>Backlog value</span><b>' + fmtMoney(backlogVal) + '</b></div>' +
-    '<div class="rptkpi"><span>Upcoming appts</span><b>' + schedAhead + '</b></div>';
+    '<div class="rptkpi"><span>Jobs completed</span><b class="k-won">' + done.length + '</b>' + rptDelta(done.length, donePrev.length) + '</div>' +
+    '<div class="rptkpi"><span>Backlog (approved)</span><b class="k-won">' + backlog.length + '</b></div>' +
+    '<div class="rptkpi"><span>Backlog value</span><b class="k-money">' + fmtMoney(backlogVal) + '</b></div>' +
+    '<div class="rptkpi"><span>Upcoming appts</span><b class="k-new">' + schedAhead + '</b></div>';
   var ser = rptSeries(projs, function(p){ return rptStageDate(p,'Completed'); }, function(){ return 1; }, from, to);
   rptChart('chProd', { type:'bar', data:{ labels: ser.labels, datasets:[{
       label:'Completed', data: ser.values, backgroundColor:'#29A3DC' }] },
@@ -34087,6 +34114,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:546, note:'\u2728 Cards lift when you hover them. \u2666 Leads, the estimate builder and the reports page all raise off the page under the cursor. \u2666 Lead cards are navy now, matching the home screen. \u2666 The client name is white and the PO gold \u2014 they were a red-to-blue gradient that measured below the readable minimum. \u2666 Call, text and now Email sit in raised grey buttons down the right of every lead card. \u2666 The filter rail on Leads is a sunk black channel with proper drop-down sections, the same one the CRM menu uses. \u2666 The estimate builder has a jump list on the left \u2014 tap any line item to go straight to it \u2014 and the whole page is obsidian black. \u2666 Reports cards are obsidian too, with a thin red edge, and the numbers are colour-coded: money green, new leads yellow, signed work dark green.' },
 { build:545, note:'\u26AB Activity Count tiles are obsidian now. \u2666 Raised off the page, glossy black, with a sheen from the top-left. \u2666 The orange numbers are exactly the same orange as before.' },
 { build:544, note:'\uD83C\uDFF7\uFE0F Stage chips read properly in dark mode. \u2666 They were light pastel lozenges on a near-black card \u2014 retail never got a dark version, only the insurance side did. \u2666 They now use the same colours Cardinal Claims already uses. Light mode is unchanged.' },
 { build:543, note:'\uD83D\uDCCB The last square icon is gone. \u2666 Schedule Board in the left menu was still a solid filled calendar \u2014 the one 537 left alone. \u2666 It now uses the same clipboard the Work Schedule card title got, the same artwork rather than a lookalike.' },
@@ -38053,6 +38081,9 @@ var d = new Date(iso);
 if(isNaN(d.getTime())) return '';
 return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 }
+/* which nav sections are expanded; survives a render(), like ljState.open does
+   for the leads rail. */
+var estNavOpen = {};
 function newLineId(){ return 'l_' + Math.random().toString(36).slice(2, 10); }
 async function loadForProject(projectId){
 if(!window.supa || !projectId) return [];
@@ -38224,7 +38255,9 @@ view.innerHTML =
 '<button class="primary" data-act="save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
 '</div>' +
 '<div class="cr-est-body">' +
-'<div class="cr-est-clientcard">' +
+estNavHtml(s) +
+'<div class="cr-est-main">' +
+'<div class="cr-est-clientcard" data-navsec="client">' +
 '<div class="name">' + esc((s.project && (s.project.name || s.project.client_name)) || 'Untitled client') + '</div>' +
 (s.project && s.project.address
 ? '<div class="addr">' + esc(s.project.address) + '</div>'
@@ -38250,7 +38283,7 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 '<input type="number" data-f="deposit_pct" value="' + esc(s.deposit_pct) + '" min="0" max="100" step="0.5" inputmode="decimal" />' +
 '</div>' +
 '</div>' +
-'<div class="cr-est-items-head">' +
+'<div class="cr-est-items-head" data-navsec="items">' +
 '<h3>Line Items</h3>' +
 '<label class="cr-est-itemchk" title="Turn off for lump-sum pricing \u2014 the client sees a description and one amount">' +
 '<input type="checkbox" data-f="itemized"' + (s.itemized !== false ? ' checked' : '') + ' /> ' +
@@ -38264,7 +38297,7 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 ? s.lines.map(function(l, i){ return renderLine(l, i, s.lines.length); }).join('')
 : '<div class="cr-est-empty-items">No line items yet. Tap <b>+ From Library</b> to pick from your catalog, or <b>+ Custom</b> to type a one-off item.</div>')
 + '</div>' +
-'<div class="cr-est-items-head" style="margin-top:26px;">' +
+'<div class="cr-est-items-head" data-navsec="photos" style="margin-top:26px;">' +
 '<h3>Photos <span style="opacity:.6;font-weight:600;">' +
 (s.photos.length ? '(' + s.photos.length + ')' : '') +
 '</span></h3>' +
@@ -38276,9 +38309,89 @@ renderTotals(t) +
 '<textarea data-f="notes" placeholder="Additional details for the crew or homeowner\u2026">' + esc(s.notes) + '</textarea>' +
 '<label>Payment Instructions</label>' +
 '<textarea data-f="payment_instructions">' + esc(s.payment_instructions) + '</textarea>' +
+'</div>' +
 '</div>';
 wire();
 ensureEstPhotoUrls();
+}
+/* ---- Navigator B: the estimate's table of contents (build 546) ------------
+   Theo asked for a navigator with sections and drop-downs on both screens. The
+   leads rail already had that machinery and only needed a restyle; this side
+   had nothing, so this is the one genuinely new component in the build.
+
+   Desktop only - the CSS hides it under 901px, the same breakpoint .ljrail
+   uses. It is built from `state` on every render(), so it cannot drift out of
+   step with the form; the only live patch is the line-item label, which is
+   retitled as you type rather than re-rendering the row under the cursor. */
+function estNavHtml(s){
+  var open = estNavOpen;
+  var lines = s.lines || [];
+  var items = lines.length
+    ? lines.map(function(l, i){
+        return '<button type="button" class="navitem" data-jump="line" data-lid="' + esc(l._lid) + '">' +
+          '<span class="ix">' + (i + 1) + '</span>' +
+          '<span class="tx">' + esc(l.name || 'Untitled item') + '</span></button>';
+      }).join('')
+    : '<div class="navempty">No line items yet.</div>';
+  function sec(key, label, count, body){
+    var isOpen = open[key] !== false;
+    return '<button type="button" class="navsec" data-sec="' + key + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '">' +
+        '<span class="chev">\u25BE</span><span class="lbl">' + esc(label) + '</span>' +
+        (count == null ? '' : '<span class="cnt">' + count + '</span>') +
+      '</button>' +
+      '<div class="navbody" data-body="' + key + '"' + (isOpen ? '' : ' hidden') + '>' + body + '</div>';
+  }
+  return '<aside class="cr-est-nav" aria-label="Estimate sections">' +
+    '<div class="navhead">This estimate</div>' +
+    sec('details', 'Details', null,
+      '<button type="button" class="navitem" data-jump="sec" data-target="client">' +
+        '<span class="ix">\u00b7</span><span class="tx">Client &amp; title</span></button>') +
+    sec('items', 'Line items', lines.length, items) +
+    /* raw ampersand: sec() runs the label through esc(). Pre-escaping it here
+       double-escaped and the header read "PHOTOS &AMP; TOTALS". */
+    sec('rest', 'Photos & totals', null,
+      '<button type="button" class="navitem" data-jump="sec" data-target="photos">' +
+        '<span class="ix">\u00b7</span><span class="tx">Photos</span></button>' +
+      '<button type="button" class="navitem" data-jump="sec" data-target="totals">' +
+        '<span class="ix">\u00b7</span><span class="tx">Totals</span></button>') +
+  '</aside>';
+}
+function estNavWire(){
+  var nav = view && view.querySelector('.cr-est-nav');
+  if(!nav) return;
+  nav.addEventListener('click', function(e){
+    var sech = e.target.closest('.navsec');
+    if(sech){
+      var key = sech.dataset.sec;
+      var body = nav.querySelector('[data-body="' + key + '"]');
+      var nowOpen = sech.getAttribute('aria-expanded') !== 'true';
+      sech.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+      if(body) body.hidden = !nowOpen;
+      estNavOpen[key] = nowOpen;
+      return;
+    }
+    var item = e.target.closest('.navitem');
+    if(!item) return;
+    var target = item.dataset.jump === 'line'
+      ? view.querySelector('.cr-est-lineitem[data-lid="' + item.dataset.lid + '"]')
+      : (item.dataset.target === 'totals'
+          ? view.querySelector('.cr-est-totals')
+          : view.querySelector('[data-navsec="' + item.dataset.target + '"]'));
+    if(!target) return;
+    target.scrollIntoView({ block:'start', behavior:'smooth' });
+    nav.querySelectorAll('.navitem.on').forEach(function(n){ n.classList.remove('on'); });
+    item.classList.add('on');
+    /* the name field is the point of jumping to a line item */
+    var nameEl = target.querySelector('.name-input');
+    if(nameEl) setTimeout(function(){ nameEl.focus({ preventScroll:true }); }, 260);
+  });
+}
+/* Retitle the nav row while you type, instead of re-rendering the row you are
+   typing in - a re-render there would destroy the caret. */
+function estNavRelabel(lid, text){
+  if(!view) return;
+  var el = view.querySelector('.cr-est-nav .navitem[data-lid="' + lid + '"] .tx');
+  if(el) el.textContent = text || 'Untitled item';
 }
 function renderLine(l, idx, total){
 var itemized = state.itemized !== false;
@@ -38414,6 +38527,8 @@ state.photos[i] = state.photos[j];
 state.photos[j] = tmp;
 render();
 }
+/* renderTotals() emits .cr-est-totals, which Navigator B jumps to by class -
+   no data-navsec needed here, the class is already unique to this view. */
 function renderTotals(t){
 return '<div class="cr-est-totals" data-slot="totals">' +
 '<span class="lbl">Subtotal</span>' +
@@ -38595,11 +38710,13 @@ refreshTotals();
 }else{
 line[field] = v;
 if(field === 'description') autoGrow(e.target);
+if(field === 'name') estNavRelabel(lid, v);
 }
 };
 inp.onchange = inp.oninput;
 });
 });
+estNavWire();
 autoGrowAll();
 }
 async function handleSave(){
@@ -52694,6 +52811,498 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
      ONE value in this block that does not meet 4.5:1 — it is 1.47:1 on the light rail,
      and no yellow clears it (#ffd700 is 1.26:1). Same value as dark, so Landing is one
      colour in both themes. Do not "fix" this back to amber without asking him. */
+</style>
+<style id="cr-nvl-styles">
+/* ══ Build 546 · lift, two navigators, navy leads, obsidian estimates+reports ══
+   Theo, over five preview rounds: "1 on lift and both on navigator … Make the
+   money Green. Crews Grey Approved a dark green Prospects Orange and Leads
+   Yellow (the numbers) … 1 Hairline. Scope will be the rest of retail on both
+   dark and light modes leave the home screen alone."
+
+   THE HOME SCREEN IS OUT OF SCOPE BY CONSTRUCTION. .pipecard lives in two
+   views — 8 in #mainView (which IS renderHome()) and 12 in #reportsView. Every
+   pipecard rule below is prefixed #reportsView, so 535's navy home card is
+   untouched. Counted per container, not eyeballed.
+
+   NOTHING HERE IS A NEW PALETTE. The lead cards reuse 535's --nv-*, the rail
+   reuses 536's #cr-lnav recipe, the milestone pill reuses 544's
+   .stagechip.stg-* (via a class change in JS, because the pill carried an
+   INLINE background that no stylesheet rule can outrank), and the obsidian is
+   545's .actbox recipe. Four shipped decisions, applied to four more surfaces.
+
+   OBSIDIAN IS BLACK IN BOTH MODES — 545's stated precedent and Theo's pick
+   there. The estimate page's header was ALREADY near-black; a dark body
+   finishes a shell that was half-done rather than inventing a third ground.
+   The corollary 545 also wrote down applies here: a theme-independent surface
+   needs theme-independent inks, so the greys below are pinned, not tokenised. */
+
+/* ── shared: the obsidian recipe, named once ─────────────────────────────── */
+#cr-est-view,
+#reportsView .pipecard,
+#reportsView .rptkpi{
+  --obs-face:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  --obs-bd:#24242c;
+  --obs-lift:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.10) inset;
+  --obs-hover:0 20px 40px rgba(0,0,0,.72), 0 3px 0 rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.16) inset;
+  --obs-ink:#e6e8ec;
+  --obs-mute:#9aa0a8;   /* 6.85:1 on #15161c — 545's pinned label grey, same reason */
+  --obs-well:#0d0e12;
+  --obs-hair:#2f3038;
+}
+
+/* ══ 1 · LIFT — option 1, the soft float ═══════════════════════════════════
+   Travel is 3px and the shadow roughly doubles. Guarded by (hover:hover) so a
+   phone tap does not leave a card stuck in the lifted state — touch devices
+   latch :hover until you tap somewhere else.                                */
+#leadsView .ljcard,
+#cr-est-view .cr-est-lineitem,
+#cr-est-view .cr-est-clientcard,
+#cr-est-view .cr-est-saved-row,
+#cr-est-view .cr-est-totals,
+#cr-est-view .cr-est-photo,
+#reportsView .pipecard,
+#reportsView .rptkpi{
+  transition:transform .18s cubic-bezier(.2,.7,.3,1), box-shadow .18s cubic-bezier(.2,.7,.3,1);
+}
+@media (hover:hover){
+  #leadsView .ljcard:hover,
+  #cr-est-view .cr-est-lineitem:hover,
+  #cr-est-view .cr-est-clientcard:hover,
+  #cr-est-view .cr-est-saved-row:hover,
+  #cr-est-view .cr-est-totals:hover,
+  #cr-est-view .cr-est-photo:hover,
+  #reportsView .pipecard:hover,
+  #reportsView .rptkpi:hover{ transform:translateY(-3px); }
+}
+@media (prefers-reduced-motion:reduce){
+  #leadsView .ljcard,
+  #cr-est-view .cr-est-lineitem,
+  #cr-est-view .cr-est-clientcard,
+  #cr-est-view .cr-est-saved-row,
+  #cr-est-view .cr-est-totals,
+  #cr-est-view .cr-est-photo,
+  #reportsView .pipecard,
+  #reportsView .rptkpi{ transition:none; }
+  #leadsView .ljcard:hover,
+  #cr-est-view .cr-est-lineitem:hover,
+  #cr-est-view .cr-est-clientcard:hover,
+  #cr-est-view .cr-est-saved-row:hover,
+  #cr-est-view .cr-est-totals:hover,
+  #cr-est-view .cr-est-photo:hover,
+  #reportsView .pipecard:hover,
+  #reportsView .rptkpi:hover{ transform:none; }
+}
+
+/* ══ 2 · THE LEAD CARDS ════════════════════════════════════════════════════
+   Dark: navy, 535's card colours, so a lead card and a home card are the same
+   object seen twice. Light: the bright white card on the off-white page, lifted
+   the same way.                                                             */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljcard{
+  background:linear-gradient(180deg,var(--nv-card1,#1A2434),var(--nv-card2,#141C29));
+  border:1px solid var(--nv-bd,#223047);
+  border-top:2px solid var(--nv-edge,#33496A);
+  box-shadow:0 10px 24px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.07);
+  color:var(--nv-ink,#dfe5ee);
+}
+@media (hover:hover){
+  :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljcard:hover{
+    box-shadow:0 20px 40px rgba(0,0,0,.74), inset 0 1px 0 rgba(255,255,255,.13);
+    border-top-color:#435C82;
+  }
+}
+:root[data-theme="rb-light"] #leadsView .ljcard{
+  background:#ffffff;
+  border:1px solid #e6e2df;
+  border-top:2px solid #ffffff;
+  box-shadow:0 2px 6px rgba(40,20,10,.07), 0 1px 2px rgba(40,20,10,.05);
+}
+@media (hover:hover){
+  :root[data-theme="rb-light"] #leadsView .ljcard:hover{
+    box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
+    border-color:#e0d5d2;
+  }
+}
+
+/* — the client name and the PO —
+   THIS IS AN ACCESSIBILITY FIX, not a taste change. Both were gradient-clipped
+   text (background-clip:text + a transparent fill), computing to 3.91:1 for the
+   name and 3.10:1 for the PO on the dark card — under the 4.5 floor. Theo: "For
+   client name and PO I like C". White name is 15.60:1 on the navy card, the
+   gold PO 7.21:1. The clip must be UNDONE explicitly: -webkit-text-fill-color
+   :transparent survives a plain color: declaration and would swallow both.   */
+#leadsView .ljnm,
+#leadsView .ljpname,
+#leadsView .ljpo{
+  background:none;-webkit-background-clip:border-box;background-clip:border-box;
+  -webkit-text-fill-color:currentColor;
+}
+#leadsView .ljpo{opacity:1;}
+:root:not([data-theme="rb-light"]) #leadsView .ljnm,
+:root:not([data-theme="rb-light"]) #leadsView .ljpname{color:#ffffff;}
+:root:not([data-theme="rb-light"]) #leadsView .ljpo{color:#d8a94f;}
+:root[data-theme="rb-light"] #leadsView .ljnm,
+:root[data-theme="rb-light"] #leadsView .ljpname{color:#161616;}
+:root[data-theme="rb-light"] #leadsView .ljpo{color:#8f1620;}
+
+/* — the stage circle: carries the pipeline colour and pops off the card —
+   --slc is LJ_SOLID and --spn is LJ_SPINE, both already set inline per card by
+   ljCardHtml(). The ring is the neon spine at low alpha, so the pop is the
+   stage's own colour rather than a second palette.                          */
+#leadsView .ljmc{
+  width:27px;height:27px;font-size:12px;
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--spn,#dbe7f7) 42%, transparent),
+             0 2px 6px rgba(0,0,0,.55),
+             inset 0 1px 0 rgba(255,255,255,.28);
+}
+@supports not (color:color-mix(in srgb, red 42%, transparent)){
+  #leadsView .ljmc{box-shadow:0 0 0 2px rgba(255,255,255,.22), 0 2px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.28);}
+}
+/* "IN STATUS" / "TOUCHED" — white, per Theo. 15.60:1 on the navy card. */
+:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljkl{color:#ffffff;opacity:.82;}
+:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljkv{color:#ffffff;}
+:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljad{color:#b3bcca;}
+:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljct{color:#8d97a6;}
+:root:not([data-theme="rb-light"]) #leadsView .ljrl::after{background:var(--nv-bd,#223047);}
+:root[data-theme="rb-light"] #leadsView .ljcard .ljkl{color:#5b6673;}
+:root[data-theme="rb-light"] #leadsView .ljcard .ljkv{color:#161616;}
+
+/* — call / text / email: grey raised boxes with white glyphs —
+   Theo: "the phone icon can you make A Grey raised box with a better phone
+   symbol in White  There should also be an Email icon under phone but aligned".
+   .ljcta is already flex-column, so the third button aligns by construction. */
+#leadsView .ljcta{gap:7px;}
+#leadsView .ljbtn{
+  width:38px;height:38px;border-radius:9px;
+  background:linear-gradient(180deg,#4a5160,#343a46);
+  border:1px solid #5b6373;
+  box-shadow:0 2px 5px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.16);
+  transition:transform .14s ease, box-shadow .14s ease, background .14s ease;
+}
+#leadsView .ljbtn svg{stroke:#ffffff;fill:none;stroke-width:1.9;}
+@media (hover:hover){
+  #leadsView .ljbtn:hover{
+    background:linear-gradient(180deg,#59616f,#3d434f);
+    transform:translateY(-1px);
+    box-shadow:0 5px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.22);
+  }
+}
+#leadsView .ljbtn:active{transform:translateY(1px);box-shadow:inset 0 1px 3px rgba(0,0,0,.5);}
+:root[data-theme="rb-light"] #leadsView .ljbtn{
+  background:linear-gradient(180deg,#6a7280,#4e5663);
+  border:1px solid #7c8492;
+  box-shadow:0 2px 5px rgba(40,20,10,.18), inset 0 1px 0 rgba(255,255,255,.28);
+}
+
+/* — the milestone pill: glassy and raised —
+   The COLOUR comes from 544's .stagechip.stg-* rules, which the pill now wears
+   as classes (see the JS change). Nothing here sets a background or a colour,
+   so the two cannot drift apart.                                            */
+#leadsView .ljmpill{
+  -webkit-backdrop-filter:blur(3px) saturate(1.3);
+  backdrop-filter:blur(3px) saturate(1.3);
+  box-shadow:0 3px 8px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.20);
+  text-shadow:0 1px 1px rgba(0,0,0,.28);
+}
+:root[data-theme="rb-light"] #leadsView .ljmpill{
+  box-shadow:0 2px 5px rgba(40,20,10,.16), inset 0 1px 0 rgba(255,255,255,.8);
+  text-shadow:none;
+}
+
+/* ══ 3 · NAVIGATOR A — the leads rail as a recessed channel ════════════════
+   The dropdown machinery is NOT new: .ljgroup / .ljgroup.closed, the ▾/▸ caret,
+   the click handler on .ljgroup > b and ljState.open have been in the file
+   since build 336. This is a restyle with no JS behind it — the sections and
+   drop-downs Theo asked for were already there and looked like plain text.
+
+   Recipe is 536's #cr-lnav: light is shadow-led, dark is highlight-led (in dark
+   the shadow is nearly the page colour and does almost nothing on its own).  */
+@media (min-width:901px){
+  :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrail{
+    background:#0A0E16;
+    border:1px solid #223047;
+    box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055);
+    padding:11px 9px 13px;
+  }
+  :root[data-theme="rb-light"] #leadsView .ljrail{
+    background:#f2f3f5;
+    border:1px solid #dcdee2;
+    box-shadow:inset 3px 0 6px -3px rgba(30,45,65,.22), inset -1px 0 0 #ffffff;
+    padding:11px 9px 13px;
+  }
+}
+/* the group header is 536's .lnav-sec — a lit ledge across the channel */
+#leadsView .ljgroup{margin-top:8px;border-top:0;padding-top:0;}
+#leadsView .ljgroup>b{padding:8px 10px 7px;border-radius:7px;margin-bottom:2px;}
+#leadsView .ljgroup>b::before{transition:transform .15s ease;}
+#leadsView .ljopts{padding:1px 0 3px;}
+#leadsView .ljopt{padding:6px 10px;border-radius:6px;margin:1px 0;transition:background .12s ease, color .12s ease;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljgroup>b{
+  background:linear-gradient(180deg,#141C29,#0F1521);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910;
+  color:#8d97a6;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt{color:#c2cbd8;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt:hover{background:#111927;color:#ffffff;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrhead{color:#dfe5ee;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrailnote{color:#6b7688;}
+:root[data-theme="rb-light"] #leadsView .ljgroup>b{
+  background:linear-gradient(180deg,#e9ebee,#f2f3f5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 #dcdee2;
+  color:#6f7683;
+}
+:root[data-theme="rb-light"] #leadsView .ljopt{color:#3f3f46;}
+:root[data-theme="rb-light"] #leadsView .ljopt:hover{background:#e7e9ec;color:#161616;}
+/* a ticked option is the "on" row — 536's inset red edge. :has() is progressive:
+   where it is unsupported the filter still works, it just is not highlighted. */
+#leadsView .ljopt:has(.cbx:checked){box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e);font-weight:700;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt:has(.cbx:checked){
+  background:linear-gradient(180deg,#1A2434,#141C29);color:#ffffff;
+}
+:root[data-theme="rb-light"] #leadsView .ljopt:has(.cbx:checked){background:#ffffff;color:#161616;}
+
+/* ══ 4 · THE ESTIMATE PAGE — obsidian ══════════════════════════════════════
+   "Now that ive seen obsidian style can you make all the cards in the estimates
+    page obsidian and not navy".
+
+   The cards cannot go black on a cream page, so the SHELL moves with them. The
+   header was already linear-gradient(120deg,#2c2c2c,#1a1a1a); this finishes a
+   dark shell that was half-built, and it is one shell in both modes exactly as
+   545's tiles are. Every ink below is computed against #15161c, the dominant
+   band of the gradient; the softest is --obs-mute at 6.85:1.
+
+   The .cr-est-* rules are hardcoded light values with NO theme gate anywhere,
+   so these overrides key on #cr-est-view rather than on the theme — there is no
+   theme to key on. Specificity: #cr-est-view .x is (1,1,0) against the
+   originals' (0,1,0) / (0,2,0), and every (0,2,0) neighbour lives inside this
+   same view, so nothing outside it is reachable.                            */
+#cr-est-view{background:#0b0b0e;color:var(--obs-ink,#e6e8ec);}
+#cr-est-view .cr-est-body{background:#0b0b0e;}
+
+#cr-est-view .cr-est-lineitem,
+#cr-est-view .cr-est-clientcard,
+#cr-est-view .cr-est-totals,
+#cr-est-view .cr-est-saved-row,
+#cr-est-view .cr-est-photo,
+#cr-est-view .cr-est-empty-items{
+  background:var(--obs-face);
+  border:1px solid var(--obs-bd,#24242c);
+  border-top:1px solid #34353f;
+  border-bottom:1px solid #050507;
+  box-shadow:var(--obs-lift);
+  color:var(--obs-ink,#e6e8ec);
+}
+@media (hover:hover){
+  #cr-est-view .cr-est-lineitem:hover,
+  #cr-est-view .cr-est-clientcard:hover,
+  #cr-est-view .cr-est-totals:hover,
+  #cr-est-view .cr-est-saved-row:hover,
+  #cr-est-view .cr-est-photo:hover{box-shadow:var(--obs-hover);}
+}
+#cr-est-view .cr-est-saved-row:hover{background:var(--obs-face);}
+#cr-est-view .cr-est-empty-items{border-style:dashed;box-shadow:none;color:var(--obs-mute,#9aa0a8);}
+
+/* inks */
+#cr-est-view .cr-est-clientcard .name{color:#ffffff;}
+#cr-est-view .cr-est-clientcard .addr,
+#cr-est-view .cr-est-body label,
+#cr-est-view .cr-est-items-head h3,
+#cr-est-view .cr-est-lineitem .pricing.lump .lump-lbl,
+#cr-est-view .cr-est-lineitem .pricing .lbl,
+#cr-est-view .cr-est-totals .lbl,
+#cr-est-view .cr-est-photohint,
+#cr-est-view .cr-est-saved-list .head{color:var(--obs-mute,#9aa0a8);}
+#cr-est-view .cr-est-lineitem .pricing .amount,
+#cr-est-view .cr-est-lineitem .pricing.lump input,
+#cr-est-view .cr-est-totals .val,
+#cr-est-view .cr-est-totals .grand-lbl,
+#cr-est-view .cr-est-saved-row .title,
+#cr-est-view .cr-est-saved-row .amount{color:#ffffff;}
+#cr-est-view .cr-est-saved-row .num{color:#f08a90;}
+#cr-est-view .cr-est-lineitem .desc-input{color:#c3c7ce;}
+
+/* the fields — sunk cells in the card, the inverse of the raised card */
+#cr-est-view .cr-est-body input[type=text],
+#cr-est-view .cr-est-body input[type=number],
+#cr-est-view .cr-est-body input[type=date],
+#cr-est-view .cr-est-body select,
+#cr-est-view .cr-est-body textarea{
+  background:var(--obs-well,#0d0e12);
+  border:1px solid var(--obs-hair,#2f3038);
+  color:#e6e8ec;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.55);
+}
+#cr-est-view .cr-est-body input::placeholder,
+#cr-est-view .cr-est-body textarea::placeholder{color:#6d747e;}
+#cr-est-view .cr-est-body input:focus,
+#cr-est-view .cr-est-body select:focus,
+#cr-est-view .cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.28);}
+/* the two in-card inputs are transparent at rest by design — keep that, and
+   give them the sunk cell only once they are in use */
+#cr-est-view .cr-est-lineitem .name-input,
+#cr-est-view .cr-est-lineitem .desc-input{background:transparent;box-shadow:none;border-color:transparent;}
+#cr-est-view .cr-est-lineitem .name-input{color:#ffffff;}
+#cr-est-view .cr-est-lineitem .name-input:hover,
+#cr-est-view .cr-est-lineitem .desc-input:hover{background:rgba(255,255,255,.045);border-color:var(--obs-hair,#2f3038);}
+#cr-est-view .cr-est-lineitem .name-input:focus,
+#cr-est-view .cr-est-lineitem .desc-input:focus{background:var(--obs-well,#0d0e12);border-color:#c8202e;}
+#cr-est-view .cr-est-lineitem .pricing{border-top:1px dashed var(--obs-hair,#2f3038);}
+#cr-est-view .cr-est-totals .rule{border-top:1px solid var(--obs-hair,#2f3038);}
+#cr-est-view .cr-est-totals .deposit{background:rgba(200,32,46,.09);border:1px solid rgba(200,32,46,.55);}
+
+/* the small controls */
+#cr-est-view .cr-est-itemchk{background:var(--obs-well,#0d0e12);border:1px solid var(--obs-hair,#2f3038);color:#f0a3a9;}
+#cr-est-view .cr-est-itemchk:hover{background:#16171d;border-color:#c8202e;}
+#cr-est-view .cr-est-items-head .add-custom{color:#f0a3a9;border:1px solid #c8202e;}
+#cr-est-view .cr-est-move button{background:var(--obs-well,#0d0e12);border:1px solid var(--obs-hair,#2f3038);color:#f0a3a9;}
+#cr-est-view .cr-est-move button:disabled{opacity:.35;}
+#cr-est-view .cr-est-photo .thumb{background:#15161c;}
+#cr-est-view .cr-est-photo .caption{background:transparent;color:#c3c7ce;}
+#cr-est-view .cr-est-photo .caption:focus{background:var(--obs-well,#0d0e12);}
+
+/* the library picker rides the same shell */
+#cr-est-picker .box{background:#0b0b0e;box-shadow:0 -8px 40px rgba(0,0,0,.7);}
+#cr-est-picker .box-head{background:#141419;border-bottom:1px solid var(--obs-hair,#2f3038);}
+#cr-est-picker .box-head h3{color:#ffffff;}
+#cr-est-picker .box-head button{color:#9aa0a8;}
+#cr-est-picker .box-search{background:#0b0b0e;}
+#cr-est-picker .box-search input{background-color:#0d0e12;border:1px solid #2f3038;color:#e6e8ec;}
+#cr-est-picker .box-list{background:#0b0b0e;}
+#cr-est-picker .cat-header{background:#141419;color:#9aa0a8;border-top:1px solid #2f3038;border-bottom:1px solid #1c1d23;}
+#cr-est-picker .p-item{border-bottom:1px solid #1c1d23;}
+#cr-est-picker .p-item:hover{background:#16171d;}
+#cr-est-picker .p-item .name{color:#ffffff;}
+#cr-est-picker .p-item .desc,
+#cr-est-picker .empty{color:#9aa0a8;}
+
+/* ══ 5 · NAVIGATOR B — the estimate jump list ══════════════════════════════
+   The only genuinely new component in this build. A long estimate is one
+   unbroken scroll of line items; this is the table of contents for it. Desktop
+   only (≥901px), the same breakpoint the leads rail uses — on a phone a rail
+   would eat the column the form needs.
+
+   The sticky works because a grid ITEM's containing block is its grid AREA: the
+   area is the full row height while align-items:start keeps the box at content
+   height, which is exactly the travel sticky needs.                          */
+#cr-est-view .cr-est-nav{display:none;}
+@media (min-width:901px){
+  #cr-est-view .cr-est-body{
+    display:grid;
+    grid-template-columns:224px minmax(0,1fr);
+    gap:0 20px;
+    align-items:start;
+    max-width:1180px;margin:0 auto;width:100%;
+  }
+  #cr-est-view .cr-est-nav{
+    display:block;
+    position:sticky;top:14px;
+    max-height:calc(100vh - 140px);overflow-y:auto;
+    background:#0A0E16;
+    border:1px solid #223047;
+    border-radius:12px;
+    box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055);
+    padding:11px 9px 13px;
+  }
+  #cr-est-view .cr-est-main{min-width:0;}
+}
+#cr-est-view .cr-est-nav .navhead{
+  font:800 10.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:#6b7688;padding:0 6px 8px;
+}
+#cr-est-view .cr-est-nav .navsec{
+  display:flex;align-items:center;gap:7px;width:100%;
+  background:linear-gradient(180deg,#141C29,#0F1521);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910;
+  color:#8d97a6;border:0;border-radius:7px;
+  font:800 10.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  padding:8px 10px 7px;margin:8px 0 2px;cursor:pointer;text-align:left;
+}
+#cr-est-view .cr-est-nav .navsec:first-of-type{margin-top:0;}
+#cr-est-view .cr-est-nav .navsec .chev{font-size:10px;transition:transform .15s ease;}
+#cr-est-view .cr-est-nav .navsec[aria-expanded="false"] .chev{transform:rotate(-90deg);}
+#cr-est-view .cr-est-nav .navsec .lbl{flex:1;}
+#cr-est-view .cr-est-nav .navsec .cnt{
+  font:700 9.5px ui-monospace,Menlo,monospace;color:#6b7688;
+  background:rgba(255,255,255,.06);border-radius:999px;padding:1px 7px;
+}
+#cr-est-view .cr-est-nav .navbody[hidden]{display:none;}
+#cr-est-view .cr-est-nav .navitem{
+  display:flex;align-items:baseline;gap:8px;width:100%;
+  background:transparent;border:0;border-radius:6px;
+  color:#c2cbd8;font:600 12px 'Segoe UI',Arial,sans-serif;
+  padding:6px 10px;margin:1px 0;cursor:pointer;text-align:left;
+  transition:background .12s ease, color .12s ease;
+}
+#cr-est-view .cr-est-nav .navitem:hover{background:#111927;color:#ffffff;}
+#cr-est-view .cr-est-nav .navitem.on{
+  background:linear-gradient(180deg,#1A2434,#141C29);color:#ffffff;font-weight:700;
+  box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e), 0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07);
+}
+#cr-est-view .cr-est-nav .navitem .ix{
+  flex:0 0 auto;font:700 9.5px ui-monospace,Menlo,monospace;color:#6b7688;min-width:14px;
+}
+#cr-est-view .cr-est-nav .navitem.on .ix{color:#f08a90;}
+#cr-est-view .cr-est-nav .navitem .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#cr-est-view .cr-est-nav .navempty{color:#6b7688;font:600 11px 'Segoe UI',Arial,sans-serif;padding:6px 10px;line-height:1.4;}
+/* the body is the scroller, so scroll-margin keeps a jumped-to row off its lip */
+#cr-est-view .cr-est-lineitem,
+#cr-est-view [data-navsec]{scroll-margin-top:14px;}
+
+/* ══ 6 · REPORTS — obsidian pipe cards, hairline neon red ══════════════════
+   #reportsView ONLY. The 8 .pipecards in #mainView keep 535's navy — "leave the
+   home screen alone".
+
+   Theo picked option 1 of two red treatments: "1 Hairline" — a 2px neon edge
+   with NO glow. The glow version read as a highlighter laid on a black card.  */
+#reportsView .pipecard{
+  background:var(--obs-face);
+  border:1px solid var(--obs-bd,#24242c);
+  border-top:1px solid #34353f;
+  border-bottom:1px solid #050507;
+  border-left:2px solid #ff2740;
+  box-shadow:var(--obs-lift);
+  color:var(--obs-ink,#e6e8ec);
+}
+@media (hover:hover){ #reportsView .pipecard:hover{box-shadow:var(--obs-hover);} }
+#reportsView .pipetitle{color:#ffffff;}
+#reportsView .pipecard .subnote,
+#reportsView .pipecard small{color:var(--obs-mute,#9aa0a8);}
+/* the tables and the funnel strip ride inside those cards. .rpttable td was
+   #2b2b2b with a #faf7f4 even-row stripe — dark ink on a white band, which has
+   been unreadable on the dark card since 535 put navy under it. Fixed here
+   because this build owns the ground it sits on. */
+#reportsView .rpttable th{color:#9aa0a8;}
+#reportsView .rpttable td{color:#dfe2e8;border-bottom:1px solid #22232b;}
+#reportsView .rpttable tr:nth-child(even) td{background:rgba(255,255,255,.035);}
+#reportsView .rptconv{color:#b9bec7;}
+
+/* — the KPI tiles —
+   Theo assigned five colours against a preview of mine carrying labels this app
+   does not have ("Bid out", "Crews"). Mapped onto the seven real KPIs by what
+   each number IS: money is green, new work is yellow, closed work is the dark
+   green, ratios and durations are grey. Every value computed against #2c2d36 —
+   the LIGHTEST band of the gradient and therefore the worst case: the softest
+   is the dark green at 3.90:1, against a 3.0 floor for 20px/800.
+   Orange is deliberately absent: it is spent on the Activity Count tiles and
+   spending it twice would stop it meaning anything.                          */
+#reportsView .rptkpi{
+  background:var(--obs-face);
+  border:1px solid var(--obs-bd,#24242c);
+  border-top:5px solid #c8202e;
+  border-bottom:1px solid #050507;
+  box-shadow:var(--obs-lift);
+}
+#reportsView .rptkpi::after{
+  background:linear-gradient(90deg,transparent,#3a2b2b 30%,#5a1a20 50%,#3a2b2b 70%,transparent);
+}
+#reportsView .rptkpi span{color:#ffffff;}          /* the labels, per Theo */
+#reportsView .rptkpi b{color:#b9bec7;}             /* default: grey, 7.33:1 */
+#reportsView .rptkpi b.k-money{color:#4fc98a;}     /* money — 6.55:1 */
+#reportsView .rptkpi b.k-new{color:#E8C21E;}       /* new / upcoming — 7.92:1 */
+#reportsView .rptkpi b.k-won{color:#3d9970;}       /* approved + closed — 3.90:1 */
+#reportsView .rptkpi b.k-rate{color:#b9bec7;}      /* rates + durations — 7.33:1 */
+#reportsView .rptkpi small{color:var(--obs-mute,#9aa0a8);}
+#reportsView .rptkpi small.up{color:#4fc98a;}
+#reportsView .rptkpi small.down{color:#f0a3a9;}
 </style>
 </body>
 </html>
