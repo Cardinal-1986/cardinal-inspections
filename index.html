@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 521 &#8212; the white footer strip and the floating CRM bar are gone from the desktop</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 522 &#8212; the cards through the retail pages now sit raised off the page, the same way the home page cards do</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33851,6 +33851,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:522, note:'\uD83C\uDCCF Raised cards. \u2666 The cards and rows through the retail pages \u2014 client profile, client list, team, documents, reports, settings, estimates, punch, sales floor and the production board \u2014 now sit lifted off the page with the same edge and shadow the home page cards have always had. Nothing changed colour; they just stopped looking flat.' },
 { build:521, note:'\uD83E\uDDF9 Two leftovers cleared off the desktop. The white footer strip at the bottom of the page is gone \u2014 it was painting solid white across the dark page. So is the floating CRM bar on the client list, which was positioned to clear the phone\u2019s bottom bar and had nothing to clear on a desktop, and duplicated the CRM switcher in the left menu. Phones keep both, including the CRM filter chips.' },
 { build:520, note:'\u2194 The desktop dashboard uses more of a wide screen. The page stretches further right instead of leaving a band of dead space either side, and the Activity column beside it widens with the screen rather than staying a fixed narrow strip. On a laptop nothing changes; the Activity column has a floor so it can never be squeezed thin.' },
 { build:519, note:'\uD83D\uDDD3 The small calendar in the top right of the dashboard is gone. The Cardinal Team Calendar and Production Calendar further down are untouched. Note the \u201Cnext appointment\u201D line lived inside that card and went with it \u2014 say the word and it comes back on its own.' },
@@ -51423,6 +51424,119 @@ body.cr-lnav-on .homeside{flex:0 0 clamp(320px, 22%, 460px)}
    replaced with something he did not ask for. */
 body.cr-lnav-on footer.site{display:none}
 body.cr-lnav-on .cd-crmbar{display:none}
+</style>
+<style id="cr-raise-styles">
+/* ── Build 522 · the retail cards, raised the way the home page card is ──────
+   "Make all the cards in every retail section the same style as the home page.
+    Raised just like home."  …  "I didn't mean color I meant raised cards"
+
+   Geometry only. Read the declarations below: there is not one `color:` or
+   `background` among them. Backgrounds, inks and accents are exactly where
+   build 521 left them.
+
+   The recipe is .pipecard's own raise, lifted verbatim: a lit 2px top edge, a
+   shadowed 2px bottom edge, the drop shadow and its inset highlight. Only three
+   rules in the file had it before this one — .pipecard, .actcard and
+   section.history — which is why everything else read flat beside the home page.
+
+   --rbe-ridge-sh is left alone on purpose: the drop shadow falls on the PAGE,
+   and the page is themed, so the token already says 0 14px 30px rgba(0,0,0,.8)
+   on the dark ground and 0 4px 12px rgba(0,0,0,.08) on rb-light.
+
+   The two EDGE tokens are re-declared per card, because the edge sits on the
+   CARD and most retail cards are a hardcoded #fff in both themes. #454552 over
+   #050507 is a highlight on the dark home card and a grey line over a black one
+   on a white card. Same recipe, three tunings.
+
+   #projectView appears on three selectors for specificity, not for scope:
+   cr-keeper-styles already styles those at (1,3,1) and a plain class selector
+   loses to it. Radii are deliberately untouched — see the patch script.       */
+
+/* — ground families, expressed as token tunings — */
+body:not(.claim-insurance):not(.claim-community) .dbmoney,
+body:not(.claim-insurance):not(.claim-community) .dbrow,
+body:not(.claim-insurance):not(.claim-community) .acxsec:not(.rvsec),
+body:not(.claim-insurance):not(.claim-community) .contactrow,
+body:not(.claim-insurance):not(.claim-community) .locrow,
+body:not(.claim-insurance):not(.claim-community) .ldbox,
+.jatile,
+.matcard,
+.ckcard,
+.afrow,
+.apprrow,
+.wsrow,
+.audrow,
+.bday,
+.chatbox,
+.cdoccat,
+.cdocrow,
+.setrow,
+.tmbody,
+.cr-est-clientcard,
+.cr-est-totals,
+.cr-est-saved-row,
+.cr-est-lineitem,
+.rptkpi{--rbe-ridge-t:#ffffff;--rbe-ridge-b:#d9d9d9;--rbe-ridge-hl:rgba(255,255,255,.9);}
+.cr-sf-today,
+.cr-sf-block,
+.cr-pb-job{--rbe-ridge-t:#454552;--rbe-ridge-b:#050507;--rbe-ridge-hl:rgba(255,255,255,.09);}
+/* the TOKEN family needs no tuning: its ground already is --rbe-bg1/--rbe-bg2,
+   so the :root ridge values are the very ones the home card uses. */
+
+/* — the raise, written once — */
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo,
+body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow,
+body:not(.claim-insurance):not(.claim-community) #projectView .jabox,
+body:not(.claim-insurance):not(.claim-community) .dbmoney,
+body:not(.claim-insurance):not(.claim-community) .dbrow,
+body:not(.claim-insurance):not(.claim-community) .acxsec:not(.rvsec),
+body:not(.claim-insurance):not(.claim-community) .contactrow,
+body:not(.claim-insurance):not(.claim-community) .locrow,
+body:not(.claim-insurance):not(.claim-community) .ldbox,
+.jatile,
+.matcard,
+.ckcard,
+.afrow,
+.apprrow,
+.wsrow,
+.audrow,
+.bday,
+.chatbox,
+.cdoccat,
+.cdocrow,
+.setrow,
+.cr-est-clientcard,
+.cr-est-totals,
+.cr-est-saved-row,
+.cr-est-lineitem,
+.cre-card,
+.pu-card,
+.cr-sf-today,
+.cr-sf-block,
+.cr-pb-job{
+border-top:2px solid var(--rbe-ridge-t);
+border-bottom:2px solid var(--rbe-ridge-b);
+box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
+}
+
+/* .projinfo:hover is (1,4,1) and would snap back to the old weak shadow under
+   the cursor, so it needs a companion at the same weight. */
+body:not(.claim-insurance):not(.claim-community) #projectView .projinfo:hover,
+body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow:hover,
+body:not(.claim-insurance):not(.claim-community) #projectView .jabox:hover{box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
+
+/* the card whose red top edge carries meaning keeps it */
+.rptkpi{--rbe-ridge-t:#ffffff;--rbe-ridge-b:#d9d9d9;--rbe-ridge-hl:rgba(255,255,255,.9);
+border-bottom:2px solid var(--rbe-ridge-b);
+box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
+}
+
+/* Team: .tmcard is deliberately flat (it is a row inside .tmbody). The card is
+   .tmbody, and .tmband is already its top edge, so it lifts from below only. */
+.tmbody{--rbe-ridge-t:#ffffff;--rbe-ridge-b:#d9d9d9;--rbe-ridge-hl:rgba(255,255,255,.9);
+border-bottom:2px solid var(--rbe-ridge-b);
+box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
+}
 </style>
 </body>
 </html>

@@ -3640,3 +3640,104 @@ phone `block`/`flex` — unchanged.
 The regex `[^};]*footer\.site\s*\{\s*display:none\s*\}` **hung the file** — an unbounded negated
 class over 3 MB, exactly the backtracking trap `CLAUDE.md` records. Second time this session that
 warning earned its place. Bound the window or walk back with `rfind`.
+
+---
+
+## Build 522 — the retail cards, raised the way the home page card is
+
+> "Make all the cards in every retail section the same style as the home page. Raised just like home."
+> …then, mid-build: **"Wait I didn't mean color I meant raised cards"**
+
+That correction is the whole entry. The first draft was a colour change and it was wrong.
+
+### What shipped
+
+One new block, `<style id="cr-raise-styles">`, appended before the last `</body>`. **Geometry only** —
+the patch script asserts the block contains no `color:` or `background` declaration at all, and the
+Chromium harness proves background and ink are byte-identical to 521 on all 38 probed elements.
+
+`.pipecard`'s raise, minus its palette half:
+
+```css
+border-top:2px solid var(--rbe-ridge-t);
+border-bottom:2px solid var(--rbe-ridge-b);
+box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
+```
+
+**Exactly three rules in the file carried that raise before this build** — `.pipecard`, `.actcard`
+and `section.history`. Everything else in retail was flat (a 1px border, no shadow) or on the older,
+much weaker `--rbe-cardshadow`. That is why the client profile read flat beside the home page.
+
+**32 selectors raised**, across client profile, client list, team, documents, reports, settings,
+estimates, punch, Sales Floor and the production board.
+
+### The shadow follows the page, the bevel follows the card
+
+`--rbe-ridge-sh` is **left alone**: the drop shadow falls on the page, and the page is themed, so
+the token is already right in both (`0 14px 30px rgba(0,0,0,.8)` dark, `0 4px 12px rgba(0,0,0,.08)`
+light).
+
+The two **edge** tokens are re-declared on the card, per ground family, because the edge sits on the
+card and most retail cards are a hardcoded `#fff` in *both* themes — `.dbrow`, `.acxsec` and twenty
+more never got tokenised. `#454552` over `#050507` is a highlight on the dark home card and a grey
+line over a black one on a white card. **One recipe, three tunings** (light / token / dark), not
+three recipes.
+
+### The colour draft that did not ship — and why
+
+The first version flipped the cards to the home card's gradient. It would have shipped an
+**unreadable client profile**: `.ackv div` and `.acxtrs label` carry `#2b2b2b`, `.axnote` `#5c4a42`,
+`.dbrow .dbgo` and `.dbic1` `#23507e` — all inherited from when those cards were white. Build 420
+already recorded this exact class ("`.mrow` carries `color:#1b1b1b` from when this card was white …
+the address sat at 1.4:1 on `#2e333b`"). It was caught by auditing descendant inks *before* writing
+the rule, not by a gate.
+
+### Four cascade traps, all found before shipping (BUG_CLASSES §9)
+
+1. `cr-keeper-styles` already styles `.projinfo` / `.jobvalrow` / `.jabox` at **(1,3,1)** with
+   `box-shadow:var(--rbe-cardshadow)`. A plain `body:not(…):not(…) .projinfo` is (0,3,1) and
+   **loses**. Those three carry `#projectView` for specificity, not scope.
+2. …and `.projinfo:hover` is **(1,4,1)**, higher again — it would have snapped back to the weak
+   shadow under the cursor. It gets a companion rule.
+3. `.acxsec.rvsec` is the dark red review card with a deliberate red inset highlight. Gating
+   `.acxsec` at (0,3,1) would have overridden it. Hence `.acxsec:not(.rvsec)`.
+4. **`#teamView .tmcard` is deliberately flattened** (`box-shadow:none;border:0;border-radius:0`) —
+   the Team redesign turned `.tmcard` into a row inside a `.tmbody` container. Raising it would
+   fight that design. `.tmcard` was dropped; **`.tmbody`, the actual Team card, is raised instead**,
+   and only from below because `.tmband` is its top edge.
+
+Selectors with a `:hover` shadow (`.jatile`, `.bday`) are deliberately left **ungated**, so their
+(0,1,0) stays below the (0,2,0) hover rule and the lift on hover survives.
+
+### Deliberately not touched
+
+- **Radii.** Home is 12px, several targets are 6–10px — but `.acxsec` holds a light `.acxhead` strip
+  with square corners as its first child, and rounding the parent without the child leaves the
+  header poking out of the corner. The raise reads from the shadow and the bevel. Separate pass.
+- **`.rptkpi`'s red top cap** and **`.setrow`'s red left edge** — semantic, fixed in both themes.
+  Both asserted unchanged.
+- Chips and insets the sweep flagged that are not cards: `.projcount`, `.hstat`, `.payhead`,
+  `.paynet`, `.actbox`, `.ljab`, `.ljfact`, `.ljcmsg`. Dashed placeholders (`.solCard`,
+  `.cdsoonpanel`) are dashed on purpose.
+- Claims and Community, on every selector they skin — asserted, both CRMs, both themes.
+
+### Gates
+
+`check_build.py` green. `harnesses/raise522_chromium.js` — **112 assertions, 0 failed**, loading
+both 521 and 522 in real Chromium and diffing computed style.
+
+**One red was the test's fault, again.** Four assertions claimed Claims still got `.projinfo`'s
+raise. Reading the matched rules showed **zero** rules matched under `claim-insurance` — Chromium
+had handed back a **stale computed style** because the harness flipped the body class and read
+`getComputedStyle` in the same task. `.dbmoney` beside it had already recalculated; `.projinfo` had
+not. Split into separate tasks with a wait, all four pass. The file's "roughly half of all reds are
+the test's fault" rule earning its place.
+
+### Honest limit
+
+**In `rb-light` the raise reads clearly.** On the near-black retail ground it is **subtle** — a black
+drop shadow has almost nothing to cast onto a near-black page, so the `#d9d9d9` bottom lip does most
+of the work. That is arithmetic, not a bug: a *white* card cannot read raised on black the way the
+dark home card does, because home's lift comes from a light top edge over a darker body. Making the
+retail cards look like home on the dark ground would mean giving them home's ground — which is the
+colour change Theo explicitly ruled out.

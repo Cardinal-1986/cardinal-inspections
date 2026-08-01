@@ -771,3 +771,61 @@ Now `var(--ccm-wash,rgba(4,120,87,.18))` with a literal, per 448–449.
 
 That card is the community CRM's "who gets the invoice" marker (PR #28), which makes it
 the last thing that should render blank.
+
+---
+
+# Retail — the card raise (build 522)
+
+**One block, `<style id="cr-raise-styles">`, last in the file.** Geometry only: it declares no
+`color` and no `background` anywhere, and the harness proves 521→522 moved no background or ink on
+any probed element.
+
+**Where the raise comes from.** Before 522, exactly **three** rules in the whole file carried the
+home card's lift — `.pipecard`, `.actcard`, `section.history`. Everything else in retail was flat
+(1px border, no shadow) or on the older, weaker `--rbe-cardshadow`. The recipe, minus its palette
+half:
+
+```css
+border-top:2px solid var(--rbe-ridge-t);
+border-bottom:2px solid var(--rbe-ridge-b);
+box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
+```
+
+**Shadow follows the page; bevel follows the card.** `--rbe-ridge-sh` is untouched — the drop shadow
+lands on the themed page, so the token is already correct in both themes. The two *edge* tokens are
+re-declared on the card per ground family, because most retail cards are a hardcoded `#fff` in
+**both** themes:
+
+| Family | Cards | Bevel |
+|---|---|---|
+| **LIGHT** | `.dbmoney` `.dbrow` `.acxsec:not(.rvsec)` `.contactrow` `.locrow` `.ldbox` `.jatile` `.matcard` `.ckcard` `.afrow` `.apprrow` `.wsrow` `.audrow` `.bday` `.chatbox` `.cdoccat` `.cdocrow` `.setrow` `.tmbody` `.rptkpi` `.cr-est-*` | `#ffffff` / `#d9d9d9` / `rgba(255,255,255,.9)` |
+| **TOKEN** | `#projectView .projinfo` `.jobvalrow` `.jabox` · `.cre-card` `.pu-card` | `:root` values — same as home |
+| **DARK** | `.cr-sf-today` `.cr-sf-block` `.cr-pb-job` | `#454552` / `#050507` / `rgba(255,255,255,.09)` |
+
+**32 selectors**, across client profile, client list, team, documents, reports, settings, estimates,
+punch, Sales Floor and the production board.
+
+### Do not "fix" these — they are decisions
+
+- **`#projectView` on three selectors is specificity, not scope.** `cr-keeper-styles` styles
+  `.projinfo` / `.jobvalrow` / `.jabox` at (1,3,1); a plain class selector loses to it. `.projinfo:hover`
+  is (1,4,1) and needs its own companion rule or it snaps back under the cursor.
+- **`.acxsec:not(.rvsec)`** — `.acxsec.rvsec` is the dark red review card with a deliberate red inset.
+- **`.tmcard` is not raised, `.tmbody` is.** `#teamView .tmcard` is *deliberately* flat
+  (`box-shadow:none;border:0;border-radius:0`) — the Team redesign made it a row inside `.tmbody`.
+  `.tmbody` lifts from below only, because `.tmband` is its top edge.
+- **`.jatile` and `.bday` are ungated on purpose** so their (0,1,0) stays under the (0,2,0) `:hover`
+  rule and the hover lift survives.
+- **Radii are untouched.** `.acxsec` holds a light `.acxhead` with square corners as its first child;
+  rounding the parent alone leaves the header poking out.
+- **`.rptkpi`'s red top cap and `.setrow`'s red left edge stay** — semantic, asserted unchanged.
+- **Chips and insets are not cards** and were left alone: `.projcount` `.hstat` `.payhead` `.paynet`
+  `.actbox` `.ljab` `.ljfact` `.ljcmsg`. `.solCard` and `.cdsoonpanel` are dashed on purpose.
+
+### Known limit
+
+The raise reads clearly in `rb-light`. On the near-black retail ground it is **subtle** — a black
+shadow has almost nothing to cast onto a near-black page, so the `#d9d9d9` bottom lip carries it.
+A *white* card cannot lift on black the way the dark home card does; home's lift is a light top edge
+over a darker body. Closing that gap means giving the retail cards home's ground — the colour change
+that was explicitly ruled out.
