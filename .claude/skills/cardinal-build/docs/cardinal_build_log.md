@@ -4899,3 +4899,43 @@ was a coincidence; 549's computes `fixed`, so it is a guarantee.
 **Chromium 13/13 measured at 430px**, Theo's actual phone width — every column asserted to one
 x-position, the view asserted not to exceed the viewport, the wrapper asserted to scroll instead.
 Harness `harnesses/h549_chromium.js`.
+
+---
+
+## Build 550 — light mode for Crews, in the app's own light language
+
+**Theo, with two screenshots** (the Landing and the Insurance home in light): *"Make light modes for
+all sections in crew labor similar to this style and color theme. Raise everything that can be raised
+with shadows."*
+
+**Read off the screenshots rather than guessed:**
+
+- a **warm** off-white ground (`#f7f5f5`), not the cool `#f2f3f5` the crews page had
+- white cards with a **thin cardinal hairline**, not a grey one
+- soft drop shadows on everything — nothing sits flat
+- micro-labels in letterspaced uppercase **cardinal red**
+- section headings as a **label followed by a rule** (`CHASE LIST ————`)
+- the card that matters gets a red edge and a faint red bloom
+
+**The nav inverts, and that is the interesting part.** 547 built it as a **recessed well in both
+themes**, copying 536's left menu. Theo has now asked for the opposite in light, so light gets a raised
+white card with the hairline and a shadow while **the well survives untouched in dark**. The twins
+genuinely differ now — which is this project's own "the dark twin is designed, not recoloured", running
+in the other direction for once.
+
+**Dark is not touched.** Every one of the 25 rules is inside `:root[data-theme="rb-light"]`, and the
+patch asserts it by parsing the selectors and failing on any that would reach dark. It also asserts the
+dark well's `inset 3px 0 7px -3px rgba(0,0,0,.85)` still exists.
+
+**Contrast computed before the colours went in**, not after: worst pair is the section-rule label at
+**4.91:1** against a 4.5 floor; everything else runs 5.7–18:1. The red hairline is decoration, not text,
+but it reads 5.67:1 against white so it is visible rather than theoretical.
+
+`check_build.py` green (550, marker `Build 550 · light mode for Crews`, negative-controlled).
+Chromium 13/13 carried forward, plus **all four tabs rendered in light** for review.
+Harness `harnesses/h550_chromium.js`.
+
+**A gate bug worth recording:** the shadow assertion used `light[light.index(sel)]` — `index()` returns
+an **int**, so the slice was a single character and the check was meaningless before it failed. Rewritten
+to regex out the rule body and assert `box-shadow` inside it. The test was wrong twice over: broken
+*and* silently so.

@@ -3175,7 +3175,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 549 &#8212; the rate columns line up across every category, and the page stops sliding sideways on a phone</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 550 &#8212; Crews in light mode, matching the rest of the app &#8212; white cards, red hairlines, everything raised</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34116,6 +34116,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:550, note:'\u2600\uFE0F Crews looks right in light mode now. \u2666 Warm off-white page, white cards with a thin red edge, and everything lifted off the page the way the Landing and Insurance screens are. \u2666 The crew list is a raised card in light instead of a sunk channel. Dark is unchanged.' },
 { build:549, note:'\uD83D\uDCD0 Rate columns line up. \u2666 Each category was its own table sizing its own columns, so Unit, Ours and Theirs sat in a different place in every block. One table now. \u2666 And the rates scroll inside their own frame instead of dragging the whole page sideways on a phone.' },
 { build:548, note:'\uD83D\uDCB5 Labor rates on a crew. \u2666 Price a crew against your own catalog and see what you keep on every line, or add a row only they do. \u2666 Admin only \u2014 production can see who is insured, not what anyone is paid.' },
 { build:547, note:'\uD83D\uDC77 Crews. \u2666 A page for your subcontractors, grouped by trade \u2014 Roofing, Siding, Window Installers, Gutters, General Repairs. \u2666 Each crew carries their W-9 and insurance certificates, and the list shows at a glance who is covered and whose is about to lapse. \u2666 Notes too. Labor rates, work orders and payments come next.' },
@@ -53463,6 +53464,133 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-rt .crw-neg{ color:#8a5200; }
 #crewsView .crw-mini{ padding:2px 8px;font-size:14px;line-height:1.2; }
 #crewsView .crw-empty{ padding:26px 14px;text-align:center;color:var(--crw-mut,#9aa0a8);font-size:13px; }
+
+/* ══ Build 550 · light mode for Crews, in the app's own light language ══════
+   Read off Theo's two screenshots (Landing + Insurance home): a WARM off-white
+   ground, white cards with a thin CARDINAL hairline rather than a grey one,
+   soft shadows on everything, letterspaced red micro-labels, and section
+   headings as a label followed by a rule.
+
+   The nav inverts. 547 built it as a recessed well in both themes, copying
+   536's left menu; Theo asked for raised, so light gets a raised white card and
+   the well survives in dark. The twins genuinely differ here — which is the
+   point, not an oversight.
+
+   Contrast computed, not eyeballed: worst is the section-rule label at 4.91:1
+   against a 4.5 floor.                                                      */
+
+:root[data-theme="rb-light"] #crewsView{
+  background:var(--crw-page,#f7f5f5);color:var(--crw-ink,#1f2124);
+}
+:root[data-theme="rb-light"] #crewsView .crw-mut{ color:var(--crw-mut,#5f666e); }
+
+/* ── the nav: a raised card, not a sunk well ── */
+:root[data-theme="rb-light"] #crewsView .crw-nav{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,rgba(200,32,46,.28));
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(31,33,36,.09), 0 1px 3px rgba(31,33,36,.06);
+}
+/* section heading = label, then a rule running to the edge */
+:root[data-theme="rb-light"] #crewsView .crw-sec{
+  background:none;box-shadow:none;color:var(--crw-red,#9c1822);
+  padding:13px 14px 6px;margin-top:2px;gap:10px;
+}
+:root[data-theme="rb-light"] #crewsView .crw-sec > span:first-child{
+  flex:0 0 auto;position:relative;
+}
+:root[data-theme="rb-light"] #crewsView .crw-sec::after{
+  content:'';flex:1 1 auto;height:1px;order:1;
+  background:var(--crw-rule,rgba(200,32,46,.22));
+}
+:root[data-theme="rb-light"] #crewsView .crw-sec > span:last-child{
+  order:2;flex:0 0 auto;color:var(--crw-mut,#6b6b6b);
+}
+:root[data-theme="rb-light"] #crewsView .crw-item{
+  color:var(--crw-ink,#3f3f46);margin:3px 8px;border-radius:9px;padding:9px 11px;
+}
+:root[data-theme="rb-light"] #crewsView .crw-item:hover{
+  background:var(--crw-hover,#faf7f7);
+}
+/* the selected crew is the one card that gets the bloom */
+:root[data-theme="rb-light"] #crewsView .crw-item.on{
+  background:var(--crw-card,#fff);color:#161616;
+  box-shadow:inset 3px 0 0 #c8202e, 0 3px 10px rgba(200,32,46,.14),
+             0 0 0 1px rgba(200,32,46,.30);
+}
+
+/* ── panels: white, hairlined, raised ── */
+:root[data-theme="rb-light"] #crewsView .crw-card{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,rgba(200,32,46,.28));
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(31,33,36,.09), 0 1px 3px rgba(31,33,36,.06);
+}
+/* the header card and the body card are one object, so the seam between them
+   must not draw a line through it */
+:root[data-theme="rb-light"] #crewsView .crw-card + .crw-card{
+  box-shadow:0 6px 18px rgba(31,33,36,.09);
+}
+
+/* ── tabs ── */
+:root[data-theme="rb-light"] #crewsView .crw-tab{
+  background:var(--crw-taboff,#f0eded);color:var(--crw-taboffink,#575d64);
+  border:1px solid transparent;border-bottom:0;
+}
+:root[data-theme="rb-light"] #crewsView .crw-tab.on{
+  background:var(--crw-card,#fff);color:#161616;
+  border-color:var(--crw-hair,rgba(200,32,46,.28));
+  box-shadow:inset 0 2px 0 #c8202e, 0 -2px 6px rgba(31,33,36,.05);
+}
+
+/* ── document rows and notes: little raised cards of their own ── */
+:root[data-theme="rb-light"] #crewsView .crw-doc,
+:root[data-theme="rb-light"] #crewsView .crw-note{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,rgba(200,32,46,.20));
+  border-radius:11px;
+  box-shadow:0 2px 6px rgba(31,33,36,.06);
+}
+
+/* ── the rate table ── */
+:root[data-theme="rb-light"] #crewsView .crw-rtwrap{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,rgba(200,32,46,.20));
+  border-radius:11px;padding:2px 10px 6px;
+  box-shadow:0 2px 6px rgba(31,33,36,.06);
+}
+:root[data-theme="rb-light"] #crewsView .crw-rcatrow td{
+  color:var(--crw-red,#9c1822);
+}
+:root[data-theme="rb-light"] #crewsView .crw-rt th{
+  color:var(--crw-mut,#6b6b6b);border-bottom-color:var(--crw-rule,rgba(200,32,46,.18));
+}
+:root[data-theme="rb-light"] #crewsView .crw-rt td{
+  border-bottom-color:var(--crw-rowline,#f0eded);
+}
+:root[data-theme="rb-light"] #crewsView .crw-rt input,
+:root[data-theme="rb-light"] #crewsView input[type=text],
+:root[data-theme="rb-light"] #crewsView input[type=date],
+:root[data-theme="rb-light"] #crewsView select,
+:root[data-theme="rb-light"] #crewsView textarea{
+  background:var(--crw-card,#fff);color:var(--crw-ink,#1f2124);
+  border:1px solid var(--crw-inputline,#e2dede);border-radius:8px;
+  box-shadow:0 1px 2px rgba(31,33,36,.05);
+}
+:root[data-theme="rb-light"] #crewsView label{ color:var(--crw-red,#9c1822); }
+
+/* ── buttons ── */
+:root[data-theme="rb-light"] #crewsView .crw-btn{
+  background:var(--crw-card,#fff);color:var(--crw-ink,#1f2124);
+  border:1px solid var(--crw-inputline,#e2dede);border-radius:9px;
+  box-shadow:0 2px 5px rgba(31,33,36,.07);
+}
+:root[data-theme="rb-light"] #crewsView .crw-btn.primary{
+  background:#c8202e;border-color:#c8202e;color:#fff;
+  box-shadow:0 3px 10px rgba(200,32,46,.28);
+}
+:root[data-theme="rb-light"] #crewsView .crw-h{ color:#161616; }
+:root[data-theme="rb-light"] #crewsView .crw-x{ color:var(--crw-mut,#5f666e); }
 </style>
 <script id="cr-crew-script">
 /* ══ Build 547 · Crews ═════════════════════════════════════════════════════
