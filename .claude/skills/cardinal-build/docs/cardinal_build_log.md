@@ -5160,3 +5160,41 @@ decimals. Fixed with an opt-in `money(n, cents)`; rates pass nothing and are byt
 
 Gates: `check_build.py` green, negative-controlled, 555 → 556. Chromium 14/14, both roles, both
 themes — including the total read off the RENDERED cells and summed independently.
+
+### build 557 — a light twin for the Activity Count tiles
+Theo: "fix activity count tiles."
+
+545 shipped them obsidian in BOTH modes — his pick of three gloss treatments, and what he saw in
+the preview. 545's own comment left the door open: *"a light twin is one added rule if he wants
+one."* He wanted one.
+
+**The inks could not simply carry over, and the arithmetic is why.** 545 pinned both inks
+*because* the tile was theme-independent. Computed, not eyeballed:
+
+| ink | on #ffffff | on #f4f1ec cream |
+|---|---:|---:|
+| `#E8722A` as-is | 3.06:1 | **2.71:1 — under the 3.0 floor** |
+| `#C25A18` shipped | 4.40:1 | 3.91:1 |
+| `#5f6670` label | 5.80:1 | 5.15:1 |
+
+`#C25A18` is that same orange deepened for a light ground — not a different colour. Swapping it
+for cardinal red would have made the two themes read as two different components.
+
+**Designed, not recoloured.** Dark is highlight-led (a white sheen inset riding a black radial);
+in light an inset highlight is invisible against a white card, so light is shadow-led — the same
+radial inverted, with a real drop shadow doing the lift the inset used to do. Same geometry, same
+sheen origin at 22% -10%, asserted equal in both.
+
+**Dark is untouched byte-for-byte** — the patch asserts the four dark rules and both pinned inks
+survive unchanged. The one dark-side edit is to a COMMENT: 545 recorded `#E8722A` at 6.47:1 on the
+obsidian; against the gradient's LIGHTEST stop (`#2c2d36`, the worst case that actually governs)
+it is **4.47:1**. Still far over the floor — the dark tile needed no change — but the recorded
+figure was wrong and would have been trusted.
+
+**Blast radius:** `.actbox` has exactly one emitter and appears in no other markup. The "obsidian
+recipe" later builds applied to four more surfaces was COPIED under their own class names, so
+they are unaffected — asserted.
+
+Gates: `check_build.py` green, negative-controlled, 556 → 557. **Chromium 16/16**, both modes from
+the same file, every assertion read via `getComputedStyle` — build 481's lesson, that specificity
+on paper is not proof of which rule won.
