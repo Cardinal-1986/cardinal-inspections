@@ -4365,3 +4365,64 @@ it. Structural gates would not have.
 `.pipetitle` clips `linear-gradient(100deg,var(--rbe-head),var(--rbe-head))`, the same colour
 twice, with `-webkit-text-fill-color:transparent`. A flat fill pretending to be a gradient whose
 only real effect is stripping colour from every emoji on the home screen.
+
+---
+
+## Build 537 — every card title carries the nav's icons
+
+**Theo:** *"Make all Icon styles just like the nav menu icons."* Then, on the two weak reuses,
+*"sure"* — draw proper calendar icons for both calendars.
+
+**The bug, and it was never about the emoji.** `.pipetitle` clipped
+`linear-gradient(100deg,var(--rbe-head),var(--rbe-head))` — **the same colour twice** — to text with
+`-webkit-text-fill-color:transparent`. A flat fill pretending to be a gradient. It renders
+identically to a plain colour, and its only real effect was stripping the colour out of every emoji
+in a card title, which is why they came through as blank squares. The clip is released and replaced
+with `color:var(--rbe-head)`, the colour it was already painting.
+
+**Proved by pixels, because computed style cannot see it.** A `background-clip:text` element reports
+`color:var(--rbe-acc)` while painting the gradient. So: two element screenshots, mean channel colour
+compared in an in-page canvas. Plain text **Δ 2.36** (unchanged), the emoji **Δ 20.27** (that was the
+bug). Byte-identical PNGs were the first assertion and it **failed on correct code** — clip-to-text
+antialiases through a mask, so it is a stronger claim than "the colour did not move."
+
+**Recon changed the job twice.**
+
+1. **`.pipetitle` is used 19 times, not 9.** Nine are the home screen; **eleven more are Graphs &
+   Reports**, all still emoji. Releasing the clip changes all nineteen whether they are touched or
+   not, so leaving Reports on emoji would have shipped an inconsistency this build caused. 20 icons
+   placed.
+2. **The I2 set uses hardcoded knockouts** — `fill="#0d0d10"`, the rail's own background, in
+   `recents`, `pricingcatalog`, `salesfloor` and `estimates`. Those are black holes anywhere but the
+   rail. All seven icons reused here happen to be knockout-free; that is luck, so `icon()` asserts
+   it. The new icons use `fill-rule="evenodd"`, which is transparent on any ground.
+
+**What Theo actually pointed at was Work Schedule** — *"where it says work schedule with white
+square icon."* The nav's own `scheduleboard` I2 is one unbroken filled calendar slab, so reusing it
+would have replaced his white square with a grey one. Card titles get a **clipboard** instead; the
+nav's copy is untouched and asserted byte-identical.
+
+**The screenshot caught what no assertion could.** Filled solid, the first `today`,
+`teamcalendar` and `productioncalendar` drafts were a slab, a slab and a bucket-with-an-arrow —
+all three passed every structural gate. Redrawn as one family: an evenodd frame with an open
+body, so the solid weight can carry a mark and dark ends up looking like its own keyline.
+
+**No layout mode change.** An earlier draft put `display:flex` on `.pipetitle`; that hits all
+nineteen, and two hold a `<small>` that would have been broken onto its own line. Inline SVG with
+`vertical-align` instead — exactly how the emoji flowed.
+
+**Left alone deliberately:** `.acthead` and `.pu-strip .sh b` carry the *same* flat-gradient clip.
+Neither contains an emoji, and `-webkit-text-fill-color` does not reach an SVG child, so the icons
+added to them render through it. Asserted in Chromium rather than assumed.
+
+**Also gone:** `<img src="/cardinal-hammer.png">`, a real 22px PNG on the Production Calendar card —
+never an emoji, never broken by the clip. One fewer image request on the home screen.
+
+**A harness bug worth recording, and it is the file's own rule earning its place.** The `.acthead`
+clip rule was captured by selector — but `.hero-hi,.hero-hi *,.acthead{` is a **substring of the
+print stylesheet's much longer selector list**, which comes first in the file. The harness silently
+loaded the `@media print` rule and reported a `#1b1b1b` text-fill. Fixed by anchoring on a
+*declaration*. Scope the assertion, then read what it captured.
+
+`check_build.py` green (537, marker `cr-titleicon-styles`, negative-controlled).
+Chromium: **18/18**. Harness at `harnesses/h537_chromium.js`.
