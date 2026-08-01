@@ -3142,6 +3142,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <option value="inspections">Inspections</option>
           <option value="estimates">Estimates</option>
           <option value="contracts">Contracts</option>
+<option value="workorders">Work Orders</option>
           <option value="materials">Materials</option>
           <option value="measure">Measurements</option>
         </select>
@@ -3175,7 +3176,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 554 &#8212; a Roofr upload now fills the measurements and the pitch, not just the document in front of you</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 555 &#8212; work orders for your crews, one per trade, filled from the inspection and the measurements</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3636,6 +3637,18 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <button class="btn" id="pNewContractBtn">+ New contract</button>
       </div>
       <div id="contractDocsMount"><div class="loading">Loading…</div></div>
+    </div>
+
+    <div id="tab-workorders" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <h3 class="projsec">&#128296; Work Orders</h3>
+      <p class="subnote">Cardinal&#8217;s own work order, issued <b>to a crew</b> &#8212; one per trade.
+      Filled from the inspection and the measurements on this job. Open it to correct anything,
+      then print it or send it.</p>
+      <div style="margin:6px 0 12px;">
+        <button class="btn" id="pNewWorkOrderBtn">+ New work order</button>
+      </div>
+      <div id="woDocsMount"><div class="loading">Loading…</div></div>
     </div>
 
     <div id="tab-checklists" style="display:none;">
@@ -11706,15 +11719,22 @@ function openProject(id){
   window.scrollTo(0,0);
 }
 function isContractTitle(t){ return /^contract/i.test((t||'').trim()); }
+/* 555: document type three. The `insp` bucket in renderProjectDocs is defined by
+   NEGATION, so this predicate has to be subtracted there too or every work order
+   files itself under Inspections. */
+function isWorkOrderTitle(t){ return /^work order/i.test((t||'').trim()); }
 function renderProjectDocs(){
   var docs = cacheRows.filter(function(r){ return currentProject && r.project_id === currentProject.id; });
   var ctrs = docs.filter(function(r){ return isContractTitle(r.title); });
   var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
-  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title) && !/^file:/i.test((r.title || '').trim()); });
+  var wos  = docs.filter(function(r){ return isWorkOrderTitle(r.title); });
+  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !/^file:/i.test((r.title || '').trim()); });
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
     : '<div class="empty"><b>No estimates yet.</b><br>Use <b>+ New estimate</b> to pick a template.</div>';
+  var wm = document.getElementById('woDocsMount');
+  if(wm) wm.innerHTML = wos.length ? docTable(wos) : '<div class="empty"><b>No work orders yet.</b><br>Use <b>+ New work order</b> to issue one to a crew.</div>';
   var cm = document.getElementById('contractDocsMount');
   if(cm) cm.innerHTML = ctrs.length ? docTable(ctrs)
     : '<div class="empty"><b>No contracts yet.</b><br>Use <b>+ New contract</b>, or approve the job from the pipeline to auto-create one.</div>';
@@ -11722,7 +11742,7 @@ function renderProjectDocs(){
 function showTab(name){
   var sel = document.getElementById('jobMenuSel');
   if(sel && sel.value !== name) sel.value = name;
-  ['overview','inspections','estimates','contracts','checklists','materials','measure'].forEach(function(t){
+  ['overview','inspections','estimates','contracts','workorders','checklists','materials','measure'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
   if(name === 'inspections') refreshInspGalN();
@@ -16761,6 +16781,261 @@ async function runTotalsBackfill(){
   await reload();
   alert('Backfill complete: ' + fixed + ' total(s) filled in' + (skipped ? ', ' + skipped + ' had no readable total (open and re-save those to set one)' : '') + '. Pipeline dollars are now up to date.');
 }
+/* ══ 555: the crew Work Order ═══════════════════════════════════════════════
+   Cardinal's own document, issued TO a crew before the job goes on the
+   schedule. Separate from the community work-order module, which stores a file
+   a PARTNER sent in — different direction, different document, deliberately
+   left alone.
+
+   One per trade, per Theo. Nothing here is retyped: the roof facts come from
+   the inspection checklist, the measurements from checklist.meas (which 554
+   fills from a Roofr upload), the labor lines from crew_rates.
+
+   No email address is written anywhere. The crew contact block prefills from
+   the crew record when it has one and shows a blank otherwise, and the whole
+   document is editable in the existing editor before it goes out.          */
+var WO_TRADES = ['Roofing','Siding','Windows','Gutters','General Repairs'];
+
+function woEsc(s){
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+/* a blank the crew can see and Production can fill in, rather than a silent gap */
+function woVal(v){
+  return (v == null || v === '') ? '<span class="ph">[&nbsp;&nbsp;&nbsp;&nbsp;]</span>' : woEsc(v);
+}
+function woRow(k, v){
+  return '<tr><td class="k">' + k + '</td><td>' + v + '</td></tr>';
+}
+
+/* The roof block only earns its place on a roofing job, and only once the roof
+   has actually been inspected — getChecklist() returns null until then. */
+function woSpecRows(pr, trade){
+  var out = '';
+  var cl = (typeof getChecklist === 'function') ? getChecklist(pr) : null;
+  if(trade === 'Roofing' && cl){
+    out += woRow('Existing roof type', woVal(cl.rooftype));
+    out += woRow('Number of layers',   woVal(cl.layers));
+    out += woRow('Decking',            woVal(cl.decking) +
+             (cl.deckcond ? ' &#183; condition ' + woEsc(cl.deckcond) : ''));
+    out += woRow('Pitch',              woVal(cl.pitch));
+    if(cl.sat) out += woRow('Satellite dish', woEsc(cl.sat) +
+             ' &#8212; <b>remove and set aside before tear-off</b>');
+    if(cl.structure) out += woRow('Structure', woEsc(cl.structure));
+  }
+  var ms = (typeof parseCkAll === 'function' ? (parseCkAll(pr).meas || {}) : {});
+  var mparts = [];
+  [['sq','squares'],['ridge','ridge LF'],['hip','hip LF'],['valley','valley LF'],
+   ['eave','eave LF'],['rake','rake LF']].forEach(function(p){
+    if(ms[p[0]]) mparts.push(woEsc(ms[p[0]]) + ' ' + p[1]);
+  });
+  if(mparts.length){
+    out += woRow('Measurements', mparts.join(' &#183; ') +
+             (ms.source ? ' <span class="mut">(' + woEsc(ms.source) + ')</span>' : ''));
+  }
+  return out;
+}
+
+function woLaborRows(rates, catalog){
+  if(!rates) return { html:'<p class="mut">Labor rates are not readable from this ' +
+    'account, so no pricing is printed. An admin can add it before this goes out.</p>', total:null };
+  if(!rates.length) return { html:'<p class="mut">No labor rates recorded for this crew yet.</p>',
+    total:null };
+  var total = 0, rows = rates.map(function(r){
+    var item = r.pricing_item_id ? (catalog[r.pricing_item_id] || null) : null;
+    var name = item ? item.name : (r.custom_name || 'Line item');
+    var unit = item ? (item.unit || '') : (r.custom_unit || '');
+    var rate = Number(r.rate);
+    if(isFinite(rate)) total += rate;
+    return '<tr><td>' + woEsc(name) + '</td><td>' + woEsc(unit) + '</td>' +
+           '<td style="text-align:right">' +
+           (isFinite(rate) ? '$' + rate.toLocaleString('en-US') : '&#8212;') + '</td></tr>';
+  }).join('');
+  return {
+    total: total,
+    html: '<table class="meta"><thead><tr><th>Labor line</th><th>Unit</th>' +
+          '<th style="text-align:right">Rate</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+          '<p class="mut">Rates are per unit, as agreed with this crew. ' +
+          'Quantities are taken off the measurements above.</p>'
+  };
+}
+
+function woBody(pr, crew, rates, catalog, opts){
+  opts = opts || {};
+  var lab = woLaborRows(rates, catalog);
+  var specs = woSpecRows(pr, crew.trade);
+  return '' +
+  '<h2 class="sec">Work Order</h2>' +
+  '<table class="meta">' +
+    woRow('Work order #', woEsc(opts.wo_number || '')) +
+    woRow('Issued', woEsc(opts.issued || '')) +
+    woRow('Trade', woEsc(crew.trade)) +
+    woRow('Scheduled', woVal(opts.scheduled_on)) +
+  '</table>' +
+  '<h2 class="sec">Job</h2>' +
+  '<table class="meta">' +
+    woRow('Homeowner', woVal(pr.name)) +
+    woRow('Address', woVal(pr.address)) +
+    woRow('Phone', woVal(pr.phone)) +
+  '</table>' +
+  '<h2 class="sec">Crew</h2>' +
+  '<table class="meta">' +
+    woRow('Company', woVal(crew.legal_name || crew.name)) +
+    woRow('Contact', woVal(crew.contact_name)) +
+    woRow('Phone', woVal(crew.contact_phone)) +
+    woRow('Email', woVal(crew.contact_email)) +
+  '</table>' +
+  (specs ? '<h2 class="sec">Job Specifications</h2><table class="meta">' + specs + '</table>' : '') +
+  '<h2 class="sec">Scope of Work</h2>' +
+  '<div class="descbox">' + (opts.scope ? woEsc(opts.scope).replace(/\n/g, '<br>')
+     : '<span class="ph">[describe exactly what this crew is to do]</span>') + '</div>' +
+  '<h2 class="sec">Labor</h2>' + lab.html +
+  '<h2 class="sec">Sign-off</h2>' +
+  '<table class="meta">' +
+    woRow('Crew accepted by', '<span class="ph">[signature]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span>') +
+    woRow('Cardinal', '<span class="ph">[signature]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span>') +
+  '</table>';
+}
+
+var WO_TERMS = '<li>This work order authorises the scope described above and nothing beyond it. ' +
+  'Anything additional must be approved by Cardinal in writing before it is performed.</li>' +
+  '<li>The crew is responsible for its own tools, safety equipment and clean-up, and for ' +
+  'keeping current general liability and workers&#8217; compensation coverage on file with Cardinal.</li>' +
+  '<li>Damage to landscaping, gutters, siding or the structure caused by the crew is the ' +
+  'crew&#8217;s responsibility to make good.</li>';
+
+/* WO-1001 upward. crew_work_orders is readable by production, so the lookup
+   normally succeeds; if it is refused the number falls back to a timestamp
+   rather than blocking the document. */
+async function woNextNumber(){
+  try{
+    var r = await sb.from('crew_work_orders').select('wo_number');
+    if(r.error || !r.data) throw new Error('unreadable');
+    var max = 1000;
+    r.data.forEach(function(row){
+      var m = /(\d+)\s*$/.exec(String(row.wo_number || ''));
+      if(m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return 'WO-' + (max + 1);
+  }catch(e){
+    var d = new Date();
+    return 'WO-' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') +
+           String(d.getDate()).padStart(2,'0') + '-' +
+           String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
+  }
+}
+
+async function openWorkOrderPicker(){
+  var pr = currentProject;
+  if(!pr) return;
+  var m = document.getElementById('tskModal');
+  var body = document.getElementById('tskModalBody');
+  document.getElementById('tskModalTitle').textContent = 'New work order';
+  body.innerHTML = '<div class="loading">Loading crews…</div>';
+  m.style.display = 'flex';
+
+  var crews = [];
+  try{
+    var cr = await sb.from('crews').select('*').eq('archived', false).order('name');
+    if(cr.error) throw cr.error;
+    crews = cr.data || [];
+  }catch(e){
+    body.innerHTML = '<p>Could not load crews: ' + woEsc(e.message || e) + '</p>';
+    return;
+  }
+  if(!crews.length){
+    body.innerHTML = '<p>No crews on file yet. Add one in <b>&#9776; Menu &#8594; Crews</b> first.</p>';
+    return;
+  }
+  /* grouped by trade, in the order the Crews page uses */
+  var opts = '';
+  WO_TRADES.forEach(function(t){
+    var inT = crews.filter(function(c){ return c.trade === t; });
+    if(!inT.length) return;
+    opts += '<optgroup label="' + woEsc(t) + '">' +
+      inT.map(function(c){ return '<option value="' + woEsc(c.id) + '">' + woEsc(c.name) + '</option>'; }).join('') +
+      '</optgroup>';
+  });
+  var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;' +
+            'padding:9px 11px;font:600 14px \'Segoe UI\',Arial,sans-serif;"';
+  body.innerHTML =
+    '<p class="subnote">One work order per trade. Pick the crew this one is for.</p>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-bottom:3px;">Crew</label>' +
+    '<select id="woCrew" ' + inp + '>' + opts + '</select>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Scheduled for</label>' +
+    '<input type="date" id="woWhen" ' + inp + '>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Scope &#8212; what this crew is to do</label>' +
+    '<textarea id="woScope" rows="4" ' + inp + ' placeholder="Tear off to deck, replace rotten sheathing, ice &amp; water at eaves and valleys, OC Duration in Estate Gray…"></textarea>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">' +
+      '<button class="chipbtn" id="woCancel">Cancel</button>' +
+      '<button class="axbtn" id="woGo">Create</button></div>' +
+    '<div id="woErr" style="color:#c8202e;font-size:12.5px;margin-top:8px;"></div>';
+  document.getElementById('woCancel').addEventListener('click', function(){ m.style.display = 'none'; });
+  document.getElementById('woGo').addEventListener('click', function(){
+    var crew = crews.find(function(c){ return String(c.id) === document.getElementById('woCrew').value; });
+    if(!crew) return;
+    createWorkOrder(pr, crew, {
+      scheduled_on: document.getElementById('woWhen').value || null,
+      scope: document.getElementById('woScope').value.trim() || null,
+    });
+  });
+}
+
+async function createWorkOrder(pr, crew, opts){
+  var err = document.getElementById('woErr');
+  var go = document.getElementById('woGo');
+  if(go){ go.disabled = true; go.textContent = 'Creating…'; }
+  try{
+    /* crew_rates is admin-only by RLS. Production gets an error or an empty
+       set, and the document says so rather than printing a blank money table. */
+    var rates = null, catalog = {};
+    try{
+      var rr = await sb.from('crew_rates').select('*').eq('crew_id', crew.id);
+      if(!rr.error && rr.data){
+        rates = rr.data;
+        var ids = rates.map(function(r){ return r.pricing_item_id; }).filter(Boolean);
+        if(ids.length){
+          var pi = await sb.from('pricing_items').select('id,name,unit,category');
+          if(!pi.error && pi.data) pi.data.forEach(function(it){ catalog[it.id] = it; });
+        }
+      }
+    }catch(re){}
+
+    var num = await woNextNumber();
+    var issued = new Date().toLocaleDateString('en-US',
+      { month:'short', day:'numeric', year:'numeric' });
+    var lab = woLaborRows(rates, catalog);
+    var tpl = buildEstimate('WORK <span>ORDER</span>',
+      woBody(pr, crew, rates, catalog,
+             { wo_number:num, issued:issued, scheduled_on:opts.scheduled_on, scope:opts.scope }),
+      WO_TERMS);
+    if(typeof prefillUserInfo === 'function') tpl = prefillUserInfo(tpl);
+
+    var title = 'Work Order — ' + crew.trade + ' — ' + (crew.name || 'Crew');
+    var id = await db.create(title, tpl, pr.name, pr.id);
+
+    /* the document is the deliverable; the row is the record of it. A failure
+       here must not lose the document that was just created. */
+    try{
+      await sb.from('crew_work_orders').insert({
+        wo_number: num, crew_id: crew.id, project_id: pr.id, report_id: id,
+        status: 'draft', scope: opts.scope || null,
+        amount: (lab.total != null && lab.total > 0) ? lab.total : null,
+        scheduled_on: opts.scheduled_on || null,
+        created_by: (currentUser && currentUser.email) || null,
+      });
+    }catch(ie){}
+
+    document.getElementById('tskModal').style.display = 'none';
+    await reload();
+    await openEditor(id);
+  }catch(e){
+    if(err) err.textContent = 'Could not create the work order: ' + (e.message || e);
+    if(go){ go.disabled = false; go.textContent = 'Create'; }
+  }
+}
+
 async function createContractForCurrent(){
   var pr = currentProject;
   if(!pr) return;
@@ -16783,6 +17058,10 @@ var __pNewContractBtn = document.getElementById('pNewContractBtn');
 if(__pNewContractBtn) __pNewContractBtn.addEventListener('click', createContractForCurrent);
 var __contractDocsMount = document.getElementById('contractDocsMount');
 if(__contractDocsMount) __contractDocsMount.addEventListener('click', handleDocAction);
+var __pNewWorkOrderBtn = document.getElementById('pNewWorkOrderBtn');
+if(__pNewWorkOrderBtn) __pNewWorkOrderBtn.addEventListener('click', openWorkOrderPicker);
+var __woDocsMount = document.getElementById('woDocsMount');
+if(__woDocsMount) __woDocsMount.addEventListener('click', handleDocAction);
 
 async function approveAndContract(prId){
   var pr = cacheProjects.find(function(x){ return String(x.id) === String(prId); });
@@ -34166,6 +34445,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:555, note:'\uD83D\uDD28 Work orders for your crews. \u2666 A new Work Orders tab on every client issues Cardinal\u2019s own work order TO a crew \u2014 one per trade, so a roof and a gutter run are two documents. \u2666 It arrives filled: homeowner and address, the layers, pitch, decking and satellite dish off the roof inspection, the squares and lineal feet off the measurements, and that crew\u2019s labor lines. \u2666 Everything is editable before it goes out, and it prints on the same paper as your contracts.' },
 { build:554, note:'\uD83D\uDCD0 A Roofr upload fills the job, not just the page. \u2666 Squares, pitch, ridge, hip, valley, eave and rake land in Measurements, and the pitch reaches the Construction Agreement. Before, the import filled the document you had open and nothing else. \u2666 It fills blanks and refreshes its own earlier numbers, but never overwrites a measurement taken by hand \u2014 those records read \u2018Field + Roofr\u2019. \u2666 Layers and decking still come from the inspection only.' },
 { build:553, note:'\u25E7 The right side of Crews got the same finish as the left. \u2666 Its corners were 10px against the crew list\u2019s 14 \u2014 they match now. \u2666 The Choose File button on Compliance was a raw browser control; it is styled like every other field, in both themes. \u2666 Document rows, notes and the rate frame share the card\u2019s hairline instead of a pink one. \u2666 In dark, a white line ran across the middle of the panel where the tabs meet the content. Gone.' },
 { build:552, note:'\uD83D\uDD34 Red edge on the light Crews cards, on top instead of the plain white one.' },
