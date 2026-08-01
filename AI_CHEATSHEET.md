@@ -7,7 +7,7 @@ Nothing here needs a technical background. Part 1 is the twenty minutes of theor
 rest land; skip it and the others read like a list of tricks. Every prompt is meant to be copied as
 written.
 
-Parts 1-5 are the general manual. Parts 6-10 are the ones with Cardinal's own hardware, data and
+Parts 1-5 are the general manual. Parts 6-11 are the ones with Cardinal's own hardware, data and
 numbers in them.
 
 ---
@@ -930,6 +930,203 @@ That's the whole mechanism.
 
 ---
 
+## Part 11 — The Spark, end to end
+
+**Product names checked 1 August 2026.** Same warning as Part 9 — names in this corner move fast.
+
+You own one. This is what it actually is, how to get into it, how to reach it from a roof, and the
+software worth knowing by name — including the two agents everybody is talking about and why one of
+them deserves more caution than anything else in this document.
+
+### What it actually is
+
+A small box with a **GB10 chip and 128 GB of memory shared between the processor and the graphics
+side**, running a version of Linux called DGX OS. That shared memory is the entire point. A gaming
+graphics card might be six times faster but holds 32 GB, and a model that doesn't fit doesn't run at
+any speed. **The Spark buys capacity, not pace** — exactly the trade Part 6 lays out with the
+arithmetic.
+
+It is not a faster PC and it is not a games machine. Think of it as a small server that happens to
+live in your building: you rarely sit at it, and most of the time it's doing a job you started from
+somewhere else.
+
+### Getting into it the first time
+
+You do not need a monitor, and this surprises people.
+
+1. **Power it on with no screen attached.** The Spark raises *its own Wi-Fi hotspot*. The network
+   name and password are printed on the Quick Start Guide in the box.
+2. **Join that hotspot from a laptop** and open the address the guide gives you. You are now talking
+   to the machine.
+3. **Run the first-time setup.** Account, network, updates. Give it your real Wi-Fi so it stops
+   needing the hotspot.
+4. **Install *NVIDIA Sync* on your laptop.** This is the front door from then on — it finds the
+   Spark, opens a Terminal straight onto it, and launches the common applications without you
+   remembering any addresses.
+
+NVIDIA publish this as *first boot* in their own documentation, and it's worth following theirs
+rather than a blog, because the hotspot name and the setup URL are the two things people get wrong.
+
+### What the "Spark terminal" is
+
+It is the black window with text in it, and it is **the machine itself**. There is no other app
+hiding behind it. On a normal computer the desktop is the thing and the terminal is a curiosity; on
+a server it's the other way round.
+
+When you press *Terminal* in NVIDIA Sync it opens one and connects for you over something called
+**SSH**. All SSH means is: *you are typing on your laptop and the words are running on the Spark.*
+The screen is yours, the machine is over there. Close the window and whatever you started keeps
+running.
+
+```
+# where am I, and what is this machine
+$ hostname
+# is anything actually using the GPU right now
+$ nvidia-smi
+# how much of that 128 GB is left
+$ free -h
+# what containers are running
+$ docker ps
+```
+
+Four commands that answer "is it alive, is it busy, is it full, what's on it." That is genuinely
+most of what you need. **You are not expected to memorise commands** — you're expected to paste
+them, and to be able to tell an AI what happened when one of them complains.
+
+### Tailscale — reaching it from a roof
+
+**The problem first.** The Spark sits at your building behind a router. From a jobsite in Kettering
+the internet cannot see it — and you genuinely do not want the internet to be able to see it. The
+old answer was *port forwarding*: deliberately punching a hole in your firewall and hoping only you
+find it. Don't.
+
+**Tailscale is the good answer.** It builds a small private network that only your own devices can
+join — your phone, your laptop, the Spark. Every device gets a permanent address starting `100.`
+that works from anywhere on earth, and everything between them is encrypted. Nothing is exposed to
+the public internet. No port forwarding, no dynamic DNS, no firewall rules to maintain.
+
+```
+# on the Spark, once
+$ sudo tailscale up
+  → prints a link. Open it, sign in, done.
+
+# then ask it what address it got
+$ tailscale ip
+  100.x.x.x
+```
+
+Install the app on your phone and laptop too, same login. Paste that `100.` address into NVIDIA Sync
+where it asks for a hostname and the Spark answers you from anywhere. It's also how you'd open
+ComfyUI or a chat page on your phone at a job: same address, from the truck, with nothing published
+to the world. **NVIDIA ship an official Tailscale playbook for the Spark**, which tells you it's the
+expected way to do this rather than a clever workaround.
+
+### Two Sparks
+
+You can wire two of them together and run one model across both. It's a supported setup with an
+official name and a fast link between the boxes.
+
+> **What it buys, and what it doesn't.** Two Sparks buy you **capacity, not speed** — a model that
+> would not fit in 128 GB fits in 256 GB. The tokens per second do not double. Before you buy a
+> second box, re-read the mixture-of-experts table in Part 6: choosing a different *model shape*
+> took the same single Spark from 5 tokens a second to 64. **That's a free change and this is a
+> purchase.** Do the free one first.
+
+### Hugging Face — where the models come from
+
+*(I've read "happyface" as Hugging Face — say so if you meant something else.)*
+
+It's the warehouse. Practically every open model in Part 9 lives there, and when you run
+`ollama pull` or load a checkpoint in ComfyUI, the file is coming from Hugging Face whether or not
+you ever visit the site. It holds three things: **models** (the weights), **datasets**, and
+**Spaces** (little hosted demos, handy for trying something before you download 40 GB of it).
+
+| What you'll see | What it means |
+|---|---|
+| **GGUF** | The format llama.cpp and Ollama want. If you're running either, this is your file |
+| **safetensors** | The format everything else wants. Also the *safe* one — it's data only and cannot run code when opened |
+| **.bin / pickle** | The old format. It *can* execute code on load. Prefer safetensors when both are offered |
+| **Q4_K_M, Q5, Q8…** | How hard the model was squeezed to make it smaller. Lower number, smaller and dumber. **Q4 is the usual sensible choice** and it's what Part 6's arithmetic assumes |
+| **"Gated"** | You have to click a licence before it'll download. Llama does this; Qwen doesn't |
+
+**One habit:** download from the organisation that made the model, not from whoever re-uploaded it.
+A model file is a large binary from a stranger, and the account name is the only provenance you get.
+
+### ComfyUI — the one already running
+
+Your picture stack, and the thing the Spark currently earns its keep on. What makes it different
+from a text box is that **you build a diagram, not a sentence**: boxes for the model, the prompt,
+the size, the number of steps, wired together left to right. Run it, and it does exactly that again.
+
+- **The cost** — genuinely steep the first afternoon. A prompt box is one thing to learn; a node
+  graph is ten.
+- **The payoff** — because it's a diagram, it's repeatable. Save the graph and every Library
+  illustration comes out the same shape, forever, without you remembering what you typed in March.
+
+NVIDIA publish an official ComfyUI playbook for the Spark, and the ComfyUI team wrote up running on
+this exact chip — so it's a paved road. The upgrade worth making is a **LoRA**: a small extra file
+trained on your own images that pins one house style. Nobody sells you that.
+
+### Hermes Agent vs OpenClaw
+
+The two open-source agent runtimes everybody is arguing about in 2026. Both are free, both
+MIT-licensed, both run on your own hardware, and both work with whichever model you point them at.
+They are not competing on intelligence; they're competing on *shape*.
+
+**OpenClaw** — MIT, Node.js, ~250k GitHub stars in about 60 days
+*A personal assistant you message. Reach is the whole idea.*
+- **What it is** — it connects a chat channel you already use (WhatsApp, Telegram, Slack, Discord)
+  to a model, and then *acts on your machine*: runs commands, moves files, fills in web forms. Over
+  100 ready-made skills. It began as *Clawdbot* in November 2025, was renamed in January 2026, and
+  became one of the fastest-growing open projects ever. Its creator joined OpenAI that February; the
+  project continues under a foundation.
+- **Who it's for** — you, if the appeal is texting a thing from a roof and having it actually do
+  something. Broadest reach, most models supported, most ready to hand to other people.
+
+**Hermes Agent** — Nous Research, MIT, ~188k stars
+*A quiet worker on a server. No chat app, no front door.*
+- **What it is** — a small headless runtime; it runs as a background service and you script it. Its
+  distinguishing trick is that it *writes its own skills* and accumulates them, so it gets better at
+  the jobs you actually give it rather than staying generic. Currently top of the OpenRouter token
+  rankings, a decent proxy for how much real work runs through it.
+- **Who it's for** — the overnight jobs, the batch work in Parts 8 and 10. Lighter, cheaper to run,
+  better at getting personal to your process. Worse if you wanted something to talk to.
+
+| If you want… | Pick | Because |
+|---|---|---|
+| **To text it from a jobsite** | OpenClaw | The messaging channels are the entire point of it |
+| **Something running overnight** | Hermes | Headless by design; nothing to log into |
+| **It to learn your jobs** | Hermes | It keeps the skills it writes |
+| **To hand it to a crew** | OpenClaw | People already have WhatsApp; nobody wants a new app |
+| **The safest start** | Neither, yet | Read the next box first |
+
+> **This is the sharp end of the whole document.** Every other thing in these eleven parts gets a
+> *wrong answer* when it fails. These two get a **deleted folder**. An agent with a terminal takes
+> real, immediate actions on a real machine — and if you've set up Tailscale, it's a machine
+> reachable from anywhere. Part 3's rule stops being advice here and becomes the only thing standing
+> between you and a bad afternoon: **review before it's irreversible.**
+>
+> So if you run one: give it **its own account on the machine and its own folder**, not yours. Give
+> it **no keys** to anything that spends money, sends mail, or writes to the client database. Start
+> it read-only and widen it one permission at a time, only when something it couldn't do actually
+> annoyed you. And keep it off anything customer-facing until it has been boring for a month.
+
+### The order to do it in
+
+1. **Get in.** First boot over the hotspot, then NVIDIA Sync on your laptop. One evening.
+2. **Tailscale next, before anything else.** Twenty minutes, and it's what makes the box useful from
+   a truck instead of only from your kitchen.
+3. **ComfyUI is already there.** Add a LoRA for the house style — the highest-value thing on this
+   list you can do today.
+4. **Then Ollama and a chat page** — Part 10's first stack. Now you have a private assistant on
+   hardware you own.
+5. **Then the batch jobs** — transcription, then captions. Faceless, overnight, biggest payoff.
+6. **Agents last, deliberately, and fenced.** Not because they're bad — because everything above
+   teaches you what "normal" looks like on this machine, and you want to know that before you hand
+   something the keys.
+
+---
+
 ## The short version
 
 1. **It predicts text and has no memory.** Everything it needs to know, you supply.
@@ -1044,7 +1241,7 @@ its own shows status. `/goal clear` stops it. (Slash, not `@`.)
 
 ## Sources
 
-Parts 1-4 and 7-8 are practice rather than claims. Everything below backs a number or a tool name in Part 5, 6, 9 or 10.
+Parts 1-4 and 7-8 are practice rather than claims. Everything below backs a number or a tool name in Part 5, 6, 9, 10 or 11.
 
 ### Part 5 — marketing and SEO
 
@@ -1090,6 +1287,15 @@ Six of these are vendor pages and will always be current. Check those, not this 
 - [Ollama vs LM Studio vs vLLM vs llama.cpp vs MLX, 2026 — where the throughput numbers come from](https://codersera.com/blog/ollama-vs-lm-studio-vs-vllm-vs-llama-cpp-vs-mlx-2026/)
 - [ComfyUI's own write-up of running on the DGX Spark](https://blog.comfy.org/p/comfyui-on-nvidia-dgx-spark)
 - [Awesome DGX Spark — playbooks for vLLM, SGLang, Ollama, ComfyUI, FLUX and the one-command private RAG stack](https://github.com/bidual/awesome-dgx-spark)
+
+### Part 11 — the Spark
+
+- [NVIDIA — DGX Spark first boot, the official setup path](https://docs.nvidia.com/dgx/dgx-spark/first-boot.html)
+- [NVIDIA playbooks — setting up remote access with Tailscale](https://deepwiki.com/NVIDIA/dgx-spark-playbooks/2.3-setting-up-remote-access-with-tailscale)
+- [SSH into a DGX Spark from anywhere using Tailscale — the walkthrough](https://blog.kubesimplify.com/ssh-into-your-dgx-spark-from-anywhere-in-the-world-using-tailscale)
+- [DigitalOcean — what OpenClaw is (and that it was Clawdbot until Jan 2026)](https://www.digitalocean.com/resources/articles/what-is-openclaw)
+- [Turing Post — Hermes Agent vs OpenClaw, full comparison](https://www.turingpost.com/p/hermes)
+- [innFactory — an honest comparison of the two agent frameworks](https://innfactory.ai/en/blog/openclaw-vs-hermes-agent-comparison/)
 
 ### On the computed figures
 
