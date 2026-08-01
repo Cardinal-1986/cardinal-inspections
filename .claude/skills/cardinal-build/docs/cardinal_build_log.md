@@ -5198,3 +5198,49 @@ they are unaffected — asserted.
 Gates: `check_build.py` green, negative-controlled, 556 → 557. **Chromium 16/16**, both modes from
 the same file, every assertion read via `getComputedStyle` — build 481's lesson, that specificity
 on paper is not proof of which rule won.
+
+### build 558 — the left menu survives on every page but two
+Theo: *"Every single page in this app should have the navigation on the left side on desktops
+except for the landing page"* → asked about the document editor → *"Every page except for the
+document editor."*
+
+**The mount gate was never the problem.** `ready()` already returns true for exactly what he
+described — desktop ≥1100px, signed in, header up, not the landing page. **24 of 30 views** are in
+normal flow and `body.cr-lnav-on{padding-left:var(--lnav-w)}` already handled them.
+
+**Six views are `position:fixed`, and padding on `<body>` does nothing for a fixed child** — it is
+laid out against the viewport, not the padding box. Measured in Chromium, not inferred: **an
+inline-style scan missed `editorView` entirely**, because its `position:fixed` comes from a
+stylesheet. Only a computed-style pass over all 30 found it.
+
+| view | z | before |
+|---|---:|---|
+| landingView | 150 | covers the menu — **correct**, exception 1 |
+| editorView | 150 | covers the menu — **correct**, exception 2 |
+| crewsView | 156 | **covered the menu outright** |
+| cardinalTruthView / insClientsView / resourceLibraryView | 60 | menu visible, but **content hid beneath it** |
+
+**Two defects, one of them mine.** (1) `#crewsView` never joined the convention a prior build
+already established for the other three — `top:var(--headh)!important;z-index:60!important`, which
+drops them below the menu (80) and the header (90). Crews shipped at 547 with a bare `z-index:156`.
+Fixed by adding it to that selector list, **not** by inventing a second mechanism. (2) **Nothing
+has ever offset a fixed view by the menu's width** — all four sat at `left:0` under 238px of menu,
+content at x=72. `.wrap` is `max-width:none;padding:0 36px`, so it is genuinely full-bleed and not
+centred out of harm's way. Live in production on three pages until now.
+
+`!important` is required, not decorative — the views carry `inset:0` in an **inline style
+attribute**, the `styleMounts()` trap. The neighbouring convention rule already uses it for the
+same reason. **No media query**: `--lnav-w` is `0px` at `:root` and `238px` only above 1100px, so
+the rule self-gates; paired with the `body.cr-lnav-on` scope the phone is unreachable.
+
+**Three assertion traps hit while writing the gates**, each caught before any write:
+- A file-wide `body.cr-lnav-on #(\w+View)` sweep also matched the **pre-existing** `#boardView`
+  rule and read as a fifth target — a false failure against a correct patch.
+- `'landingView' not in block` failed on **my own comment**, which names both exceptions to
+  explain why they are excluded. Comments lie in both directions; assert on the selector text.
+- An unbounded `[^{}]*` recon regex over 3.2 MB backtracked past the 120s timeout. Bounded it.
+
+Gates: `check_build.py` green, negative-controlled, 557 → 558. **Chromium 14/14, running the same
+assertions against 557 and 558 from one script** so every line is its own negative control —
+`crewsView` NO→yes, all four content edges x=72→304, the two exceptions byte-identical, the other
+24 unmoved, and all 30 unchanged at 900px.

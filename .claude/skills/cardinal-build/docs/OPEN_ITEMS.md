@@ -1,6 +1,6 @@
 # Cardinal Resource App — Open Items
 
-*The single live list, last worked at build **467** · 31 July 2026 · `origin/main @ cc0b591`. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
+*Last worked at build **557** · 1 Aug 2026. Most of this file was written at 467 and still describes that app; the crew-email entry under "Data, not code" is current. For anything not covered here, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder. **The Crews section (547–557) has no entry anywhere in this folder; CLAUDE.md is its only description.**
 
 
 ---
@@ -92,7 +92,7 @@ step away without re-reading that section.
 
 ## 🔴 Data, not code — audited against the live database 31 July 2026
 
-Read-only audit via the Supabase connector. **Only one item needs Theo.**
+Read-only audit via the Supabase connector 31 July; the crews section below was added 1 Aug at build 557. **Two items need Theo — both are email addresses, and both carry the same do-not-guess rule.**
 
 ### Needs Theo: 5 of 10 active community partners have no `contact_email`
 
@@ -109,6 +109,45 @@ partner*, not the homeowner. Sending that bid means typing the address by hand.
 
 **Do NOT guess these.** CLAUDE.md is explicit: *"Never write an unverified email address into
 `community_partners`. A bid sent to a guessed address is a lost bid. Ask."* Ask Theo, then write.
+
+### Needs Theo: 10 of 11 crews have no `contact_email` — added 1 Aug 2026, build 557
+
+Same rule, different table. The crew Work Order (build 555) prefills its contact block from
+`crews.contact_*` and **renders a visible blank when the address is absent** — it never invents
+one. Nothing anywhere in the app writes a crew email; they arrive from Theo or not at all.
+
+**✅ Supplied by Theo and written 1 Aug 2026 — do not re-ask:**
+
+| Crew | Legal name | Trade | Email |
+|---|---|---|---|
+| Alberto Campuzano Rutledge | Betos Home Improvements | Roofing | `betoshomeimprovements@gmail.com` |
+
+*(`contact_name` on that row was `"Alberto "` with a trailing space, which would have printed that
+way on a work order. Trimmed in the same statement.)*
+
+**Still blank — ask, then write:**
+
+| Trade | Crew | Legal name |
+|---|---|---|
+| Roofing | Daniel Sarceno | Sarceno Construction |
+| Roofing | Diego Hernandez | Morelos Construction |
+| Roofing | Felipe | Advanced Construction |
+| Siding | Jamie & Robin | Pineda Siding |
+| Siding | Ronaldo | — |
+| Windows | Cameron Deaton | — |
+| Windows | DeShawn Vaughn | — |
+| Windows | Robert W Deaton | Robert W Deaton |
+| Gutters | Francisco Ramirez | Jiminez Gutters |
+| General Repairs | Amanda Hoskins | — |
+
+**Do NOT guess these**, and do not derive one from a legal name — `betoshomeimprovements@gmail.com`
+happens to match "Betos Home Improvements", and that coincidence is exactly the trap. It was
+correct because **Theo supplied it**, not because it was inferable. A work order sent to a guessed
+address is a job the crew never hears about.
+
+No app change is needed when one arrives — 555 reads the column live, so writing the row is the
+whole task. `update public.crews set contact_email = … where id = …`, one row, verified by name
+**and** trade before writing.
 
 ### ✅ Invariants that HOLD — do not re-audit without cause
 
