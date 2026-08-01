@@ -3207,7 +3207,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 558 &#8212; the left menu stays with you on every page</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 559 &#8212; Quick Inspection is readable again, in Cardinal yellow</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34615,6 +34615,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:559, note:'\u26A1 Quick Inspection is readable again. \u2666 The page title was near-black text on a near-black page \u2014 effectively invisible. \u2666 The whole inspection now sits in a yellow panel sunk into the page, and the chat bubbles, chips and buttons are black cards sunk into the yellow with white text, lifting on hover. \u2666 The glaring white note bar is gone. \u2666 Camera stays red and Finish stays green \u2014 those colours mean something. \u2666 The black background is untouched.' },
 { build:558, note:'\uD83E\uDDED The left menu now stays with you on every page on a desktop. \u2666 Crews used to cover it completely \u2014 it now sits beside it like everything else. \u2666 Cardinal Truth, the Client Directory and the Resource Library were quietly hiding their own left edge underneath the menu; they now start where the menu ends. \u2666 The landing page and the document editor keep the full screen on purpose \u2014 nothing should sit between you and a document you have not saved. \u2666 Phones and tablets are unchanged.' },
 { build:557, note:'\u2600\uFE0F The Activity Count tiles get a light twin. They were obsidian in both modes \u2014 deliberate, and your pick \u2014 but in light mode a black tile on a white page was the only one left. Now it is a raised white tile with the same sheen, and the numbers are a deeper orange so they are actually readable on it. Dark mode is untouched.' },
 { build:556, note:'\uD83D\uDCB0 Money in and money out. \u2666 A Payments tab on every crew records what you have paid them \u2014 amount, date, method, check number \u2014 with a running total. \u2666 A Commissions tab on every client records what a rep is owed and what has been paid, with outstanding and paid totals. \u2666 Reps see their own commissions; you and Joan see everyone\u2019s. Crew payments are yours alone. \u2666 A work order made by production no longer says the rates were unreadable \u2014 it says the office handles pricing, because it does.' },
@@ -54165,6 +54166,97 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-h{ color:#161616; }
 :root[data-theme="rb-light"] #crewsView .crw-x{ color:var(--crw-mut,#5f666e); }
 </style>
+<style id="cr-qi-yellow">
+/* ══ Build 559 · Quick Inspection — the yellow panel ════════════════════════
+   Theo's pick: option A's pure yellow, cards SUNK into it in near-black with
+   white text, lifting out on hover. The black page is left alone, as asked.
+
+   Measured, not chosen by eye:
+     dark ink #1c1416 on #FFD400   12.63:1   (panel heading + subline)
+     white     #ffffff on #14110c  18.83:1   (every card)
+     white     #ffffff on #FFD400   1.43:1   ← why white text is on the CARDS
+                                               and not on the yellow itself
+
+   EVERY selector is scoped to #quickInspView. .btn / .chipbtn / .axbtn /
+   .viewhead / .subnote are app-wide classes; unscoped, this would restyle every
+   screen in the app. */
+
+/* the panel itself — recessed into the black page */
+#quickInspView .wrap{
+  max-width:720px;margin:16px auto 26px;padding:18px 16px 14px;
+  background:#FFD400;border-radius:18px;
+  box-shadow:inset 0 5px 14px rgba(0,0,0,.40),
+             inset 0 -1px 0 rgba(255,255,255,.45),
+             inset 0 0 0 1px rgba(0,0,0,.16);
+}
+/* the heading was the actual complaint: #1c1416 on a #0b0b0f page. It now has a
+   ground to be read against. -webkit-text-fill-color is reset too, because the
+   retail gradient-clip treatment would otherwise blank it. */
+#quickInspView .viewhead{
+  background:none;color:#1c1416;-webkit-text-fill-color:#1c1416;
+}
+#quickInspView .viewhead::after{background:rgba(0,0,0,.5);}
+#quickInspView .subnote{color:#1c1416;opacity:.85;}
+
+/* every box within: near-black, sunk into the yellow, white text.
+   The 0 1px 0 white line is the lip of the hole — it is what makes a dark card
+   on a bright panel read as sunk rather than merely dark. */
+#quickInspView .qichip,
+#quickInspView .qibub,
+#quickInspView .qibar .btn,
+#quickInspView .qibar .chipbtn,
+#quickInspView .qibar .axbtn,
+#quickInspView .qibar input[type=text]{
+  background:#14110c;color:#ffffff;-webkit-text-fill-color:#ffffff;border:0;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.85),
+             inset 0 -1px 0 rgba(255,255,255,.08),
+             0 1px 0 rgba(255,255,255,.40);
+  transition:box-shadow .16s ease, transform .16s ease;
+}
+/* and they lift out of the panel on a shadow */
+#quickInspView .qichip:hover,
+#quickInspView .qibub:hover,
+#quickInspView .qibar .btn:hover,
+#quickInspView .qibar .chipbtn:hover,
+#quickInspView .qibar .axbtn:hover{
+  box-shadow:0 11px 24px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.16);
+  transform:translateY(-2px);
+}
+@media (prefers-reduced-motion:reduce){
+  #quickInspView .qichip,#quickInspView .qibub,#quickInspView .qibar .btn,
+  #quickInspView .qibar .chipbtn,#quickInspView .qibar .axbtn{transition:none}
+  #quickInspView .qichip:hover,#quickInspView .qibub:hover{transform:none}
+}
+
+/* SEMANTIC COLOUR IS NOT DECORATION — these keep their meaning. Camera is the
+   primary action, Finish ends the inspection, the active chip is where you are
+   and a done chip is work already shot. CLAUDE.md is explicit that this class of
+   colour stays fixed; only the neutral surfaces went dark. */
+#quickInspView .qibar .btn{background:var(--red,#c8202e);}
+/* ...but Photos is `class="btn ghost"`, a SECONDARY action, and the rule above
+   swallowed it and rendered it cardinal red right beside Camera. Caught by LOOKING
+   at the render — every assertion passed while two identical red buttons sat there.
+   Screenshots root-cause more on this project than reasoning does. */
+#quickInspView .qibar .btn.ghost{background:#14110c;}
+#quickInspView .qichip.act{background:#c8202e;}
+/* GREEN IS FINISH, AND ONLY FINISH — Theo, after seeing the render. A done chip
+   was also green, which spent the one colour that means "this inspection is over"
+   on a much smaller idea. Done is now the same black card with its label in the
+   panel's own yellow: 13.15:1, unmistakably a different state from a plain white
+   chip, and no second green anywhere on the page.
+   A darker grey card was measured first and rejected — every candidate came out
+   1.2-1.7:1 against the neutral chip, so "done" would have been invisible. */
+#quickInspView .qichip.done{background:#14110c;color:#FFD400;-webkit-text-fill-color:#FFD400;}
+#quickInspView .qibub.me{background:#c8202e;}
+
+#quickInspView .qibub.ph{padding:6px;}
+#quickInspView .qibub .qicap{color:#ffffff;-webkit-text-fill-color:#ffffff;opacity:.9;}
+/* the cream sticky bar was the biggest slab of glare on the page */
+#quickInspView .qibar{background:transparent;}
+#quickInspView .qibar input[type=text]::placeholder{color:rgba(255,255,255,.62);-webkit-text-fill-color:rgba(255,255,255,.62);}
+#quickInspView #qiStream{padding-bottom:24px;}
+</style>
+
 <script id="cr-crew-script">
 /* ══ Build 547 · Crews ═════════════════════════════════════════════════════
    Reads the schema that shipped at PR #77. Profile, Compliance and Notes are
