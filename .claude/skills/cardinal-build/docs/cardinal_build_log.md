@@ -4770,3 +4770,51 @@ over the card. Not touched here.
 the substring `onerror=alert(1)` be absent from the escaped `mailto:` href. Escaping neutralises the
 **delimiters**; the payload text survives as inert attribute content. Rewritten to assert what
 actually matters — no raw `"`, `<` or `>` inside the href value, and no `<img>` opened anywhere.
+
+---
+
+## Build 547 — the Crews page: trade nav, profile, compliance vault, notes
+
+Stage 1 of the crews section. The schema went live at #77; this is the first screen that reads it.
+
+**Scope, deliberately not all six tabs.** Profile, Compliance and Notes are **fully working**. Labor
+Rates, Work Orders and Payments are later builds and are **not rendered as dead tabs** — shipping four
+empty tabs to look complete is how a feature reads as broken. The harness asserts exactly three tabs
+ship.
+
+**One menu entry, two menus.** `cr-lnav-script` **scrapes the live burger menu** rather than keeping a
+copy ("read the LIVE menu rather than keep a copy of it"), so a single
+`<button class="navopt" data-nav="crews">` in `#navMenu` appears in the burger *and* the left nav. No
+second list to drift.
+
+**Chrome is borrowed, not invented:** the trade nav is `#cr-lnav`'s banded `.lnav-sec` headers over
+536's recessed well; dark cards are 545's obsidian gradient and shadow verbatim; status chips are the
+stage palette 544 put into retail dark. The view is a fixed overlay like `#resourceLibraryView`, so it
+needs **no surgery on `hideAllViews()`** or the view registry.
+
+**`TRADES` mirrors the `crews_trade_ck` constraint**, in Theo's order with General Repairs last. The
+patch asserts the two lists match — if one grows a value and the other does not, a crew lands in a
+section that renders nowhere. Same discipline as `STAGES`/`normStage()`.
+
+**Expiry is the whole point, so it got the hardest test.** `daysLeft()` returns **null for "no clock"**
+(a W-9 never expires) which is *not* the same as zero — a caller treating null as 0 would mark every
+W-9 expired. `crewState()` is worst-of-three. Verified in Chromium against realistic rows:
+
+| crew | data | dot |
+|---|---|---|
+| Ramirez | all current | green |
+| Delgado | GL in 21 days | amber |
+| Novak | GL expired, no WC | red |
+| **Halstead** | **nothing on file at all** | **red** — absence must never read as compliant |
+| **Ortiz** | **two GL rows, one expired** | **green** — the newer wins |
+
+**Upload rolls back.** If the `crew_docs` insert fails after the file lands, the object is removed from
+the bucket — otherwise it is stored, billed and referenced by nothing.
+
+**All 46 `--crw-*` references carry a literal fallback**, asserted in the patch. 448–449 are why.
+
+`check_build.py` green (547, marker `cr-crew-script`, negative-controlled).
+**Chromium 20/20**, every `<style>` block loaded in file order, assertions all `getComputedStyle` or
+real DOM state. Harness `harnesses/h547_chromium.js`.
+
+**Next:** Labor Rates (needs crews) → Work Order generator (needs rates) → Payments + Commissions.
