@@ -5330,3 +5330,49 @@ form at 1280, 958px at 1440, 1438px at 1920.** Workable everywhere the menu appe
 Gates: `check_build.py` green, negative-controlled, 559 → 560. **Chromium 11/11**, creating
 `#cr-est-view` the same way the app does rather than expecting it in the markup, with 559 as its
 own control, at 1440 and at 820.
+
+### build 561 — the Estimates screen the MENU opens, and the Quick Inspection start step
+Theo, with a screenshot: *"the quick inspects and estimates, the estimates one does not have the nav."*
+
+**Two of my own mistakes, both visible in that one screenshot.**
+
+**1. 560 fixed the wrong Estimates screen.** THREE surfaces carry "estimate" in the name and I
+patched the one nobody reaches from the menu:
+
+| surface | what it is |
+|---|---|
+| `#cr-est-view` | the per-client BUILDER behind "+ New estimate". **560 fixed this** — real, but not the menu's |
+| `#cr-estimates-mount` | **what the menu's Estimates item opens**, via `crOpenEstimates()`. This one |
+| `tab-estimates` | a pane in the client profile, normal flow, always had the menu |
+
+And a stylesheet rule alone could never have fixed it:
+
+```js
+function styleMounts(){ MOUNT_IDS.forEach(function(id){
+  el.style.position='fixed'; el.style.inset='0'; el.style.zIndex='200'; ... }); }
+```
+
+Those are **inline styles written by JavaScript** onto `cr-estimates-mount`, `cr-pricing-mount`
+and `cr-claims-mount`. Inline beats every stylesheet rule at any specificity — the `styleMounts()`
+trap CLAUDE.md lists among its six buried-feature failures, and **the function's own comment
+records it biting once before** ("the real cause of 'dark mode isn't there' on
+#cr-estimates-mount"). So `!important` is mandatory here, not stylistic.
+
+**All three mounts, not just Estimates.** Pricing Catalog and Claims sit in the same menu carrying
+identical inline styles; fixing one and leaving two identical bugs beside it is how this file got
+the way it is.
+
+**2. 559 styled the wrong half of Quick Inspection.** It was scoped to `#quickInspView` — the photo
+stream you reach AFTER pinning — and I explicitly flagged `#qiStartView` as left alone. **That start
+step is the first thing you see**, and its title is the same `#1c1416` on `#0b0b0f` (1.09:1) that
+559 existed to fix. It now shares 559's panel, so both halves of one feature match.
+
+**The screenshot also settled that the menu works everywhere else** — plainly visible down the left
+of that page. 558 and 560 are fine; this was a third surface neither could reach.
+
+**A red that was the test's fault, recorded per the standing rule:** the shadow assertion failed
+because the harness sliced `boxShadow` to 40 chars, chopping `inset` to `inse`. The rule was correct.
+
+Gates: `check_build.py` green, negative-controlled, 560 → 561. **Chromium 12/12**, applying
+styleMounts()' inline styles verbatim before testing — anything less would prove nothing — with 560
+as its own control, at 1440 and 820.
