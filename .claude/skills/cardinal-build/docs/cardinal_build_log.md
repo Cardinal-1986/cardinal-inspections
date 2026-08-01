@@ -4858,3 +4858,44 @@ whose rate is *above* Cardinal's own, which is exactly the row Theo most needs t
 
 **Next:** the Work Order generator (needs these rates to fill its labor lines), then Payments +
 Commissions.
+
+---
+
+## Build 549 — the rate columns line up, and the panel stops stretching
+
+**Theo, with a phone screenshot:** *"Can you line up and align those sections."*
+
+**Two faults, and the second made the first look worse.**
+
+**1. Every category got its own `<table>`.** Five categories, five tables — and an **auto-layout table
+sizes its columns to its own content**, so Unit / Ours / Theirs landed in a different place in every
+block. Nothing was going to align them while they were separate tables.
+
+**2. The panel was being stretched from inside.** Six auto-width columns forced the card wider than the
+phone, so the row labels clipped on the left and the "Their rate" / "Unit" fields ran off on the right.
+Those fields sit in a `.crw-grid2` whose media query collapses below 620px — **it never fired, because
+a media query keys off the VIEWPORT while the layout was being stretched from within.**
+
+**The fix is one table, not five.** Categories are full-width rows inside a single table, so alignment
+is *structural* rather than coincidental. `table-layout:fixed` with an explicit `<colgroup>` pins the
+widths, and the table sits in its own `overflow-x:auto` box with a `min-width` — the rates scroll
+inside their own frame, the page never does.
+
+**⚠ `min-width:0` is half the fix, and the half that is easy to miss.** A **grid item's default
+`min-width` is `auto`, not 0**, so the panel track refused to shrink below the table's intrinsic width
+and stretched the card anyway — which meant `.crw-rtwrap`'s `overflow-x` never engaged. `minmax(0,1fr)`
+on the track plus `min-width:0` on the children are two halves of one fix. **The harness caught this:
+the first run of 549 still failed both the wrapper-scrolls and form-fits assertions.**
+
+### The negative control did NOT reproduce, and that is recorded rather than hidden
+
+The 548 fixture's five tables happen to *agree* — each is `width:100%` of the same container, and the
+identical headers give columns 2–6 identical minimums, so column 1 comes out the same. Theo's real data
+diverges. Rather than claim a before/after win the fixture cannot support, the control asserts **the
+defect itself**, which is provable either way: 548's tables compute `table-layout: auto`, so agreement
+was a coincidence; 549's computes `fixed`, so it is a guarantee.
+
+`check_build.py` green (549, marker `crw-rtwrap`, negative-controlled).
+**Chromium 13/13 measured at 430px**, Theo's actual phone width — every column asserted to one
+x-position, the view asserted not to exceed the viewport, the wrapper asserted to scroll instead.
+Harness `harnesses/h549_chromium.js`.
