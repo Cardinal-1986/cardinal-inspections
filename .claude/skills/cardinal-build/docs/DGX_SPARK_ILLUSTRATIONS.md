@@ -167,3 +167,53 @@ remote-access route; the Library's image upload path exists and works (`ccFileBl
 sites). **Not verified from here:** the exact install commands — this sandbox cannot reach the
 Spark or NVIDIA's docs host, so treat the commands above as the shape, and follow the playbook's
 own README for exact syntax.
+
+---
+
+## First real attempt — what actually came out (1 Aug 2026, ~02:15 EDT)
+
+**The pipeline works.** ComfyUI + FLUX.1-dev running on the Spark, driven from a phone over
+Tailscale, generating on Theo's own hardware at zero marginal cost. That part is settled and does
+not need re-proving.
+
+**The first image was not usable, and the reason is worth keeping.** Prompted with the recipe
+above ("cutaway view … orthographic side view"), FLUX returned a **clean 3D perspective product
+render** of a roof edge — not a section. No layers, no underlayment, no deck, no drip edge; the
+shingles were a surface texture rather than a layer in a stack. It also invented a floating grey
+box beneath the eave that corresponds to nothing real.
+
+Handsome, confident, and it teaches a roofer nothing — **exactly the failure mode this file warns
+about, arriving on the very first try.** Worth noting the warning earned its place immediately.
+
+**FLUX defaults hard toward clean 3D renders**, and the words `cutaway` and `orthographic side
+view` are not enough to overcome it. Two stronger prompts were queued but their results are not
+yet recorded here:
+
+- **A, force it flat:** `Flat 2D architectural section drawing of a roof eave, straight-on side
+  elevation, no perspective, no 3D, cut through the assembly showing each layer as a distinct
+  band … thin black outlines, flat grey fills, one red accent line. White background. Technical
+  manual figure. No text, no labels.`
+- **B, anchor to an existing style:** `Black and white architectural detail plate from a
+  construction textbook, roof eave section, cut view, hatched material fills, flat orthographic
+  projection, no perspective, no gradients, white background, no text`
+
+### The reframe — probably the most useful thing learned here
+
+**Do not ask the image model to do what `~~stack` already does well.**
+
+A layer assembly is precisely what the SVG diagrams handle: accurately, with real text, themed,
+readable on a phone, and constrained to only restate what the prose says. Replacing that with a
+generated picture trades a correct diagram for a prettier guess — a bad trade for a library the
+crew works from.
+
+Generated illustrations earn their place on **recognition** subjects the diagrams cannot show:
+
+- what a **kickout flashing** looks like installed
+- what **ice damming** looks like on a real roof
+- what a **failed pipe boot** looks like, so a crew member spots one
+- **roof shapes** — gable vs hip vs gambrel at a glance
+
+"What does this look like" is the job. "What are the layers" is already done, and done better.
+
+**Status: paused here at Theo's call.** Prompts A and B are untried. Nothing is half-built — no
+app code was written for illustrations, and none is needed; the upload path already exists.
