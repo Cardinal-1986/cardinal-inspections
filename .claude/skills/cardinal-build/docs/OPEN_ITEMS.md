@@ -66,14 +66,27 @@ If built, it must have: **(1)** Theo approves before it files — generate → p
 discard; **(2)** prompted schematic, not photoreal; **(3)** illustrations sit *beside* diagrams,
 never replacing one.
 
-### Theo's open question, not yet answered
+### ✅ ANSWERED — the DGX Spark is the recommended route, see `DGX_SPARK_ILLUSTRATIONS.md`
 
-Whether his **DGX Spark** changes this. Short answer recorded so it is not re-derived: **not for
-serving the app** (a box in Dayton behind a tunnel is a single point of failure for a field tool
-whose crew works at all hours), **but genuinely yes for producing the illustrations offline** —
-unlimited iteration at zero marginal cost, a LoRA for one consistent house style, and customer
-photos never leaving the building. It needs **no app changes at all**, because the library
-already accepts image uploads through `ccFileBlob()`.
+Theo confirmed the Spark is **up and running**, and that he has **Tailscale**. That settles it:
+generate on the Spark, upload through the Library's existing image path. **No app changes, no
+vendor, no key, and the unverified-endpoint blocker above stops mattering.**
+
+Not for *serving* the app — a box in Dayton behind a tunnel is a single point of failure for a
+field tool whose crew works at all hours, and the librarian's Gemini → OpenAI fallback has no
+equivalent for a self-hosted box. But for *producing* illustrations it wins outright: unlimited
+iteration at zero marginal cost, a LoRA for one consistent house style, and customer photos never
+leaving the building.
+
+Full setup written up in **`DGX_SPARK_ILLUSTRATIONS.md`** — Tailscale, ComfyUI on port 8188, the
+`--listen 0.0.0.0` gotcha that silently breaks remote access, FLUX.1-dev, a prompt recipe, and
+the standing rule that **generated illustrations must not carry labels** (text rendering is
+unreliable; let the `~~stack`/`~~flow` diagrams carry the words, which are real text and already
+accurate).
+
+**Still true and still the reason to be careful:** a generated cutaway is an unverifiable claim
+with a picture's authority. Nothing files without Theo looking at it. Do not automate the upload
+step away without re-reading that section.
 
 ---
 
