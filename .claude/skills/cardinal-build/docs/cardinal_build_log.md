@@ -4135,7 +4135,7 @@ every row (18/18), no emoji surviving, style 2 showing in dark, style 5 after fl
 `rb-light`, at most two generic fallbacks (actual: zero), and the burger menu keeping its emoji.
 All seven harnesses pass — **354 assertions**.
 
-## 529–531 — my 510–512, rebuilt on top of 528
+## 530–532 — my 510–512, rebuilt on top of 528
 
 Two sessions ran this repo at once. While I built 510–512, another built 513–528 and merged
 them. Mine were never merged, so `main` was missing all three — **verified against

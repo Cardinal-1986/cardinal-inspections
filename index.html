@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 531 &#8212; the desktop menu down the left uses proper icons instead of emoji</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 532 &#8212; the desktop menu down the left uses proper icons instead of emoji</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33858,9 +33858,9 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ build:531, note:'\uD83D\uDCD0 Library entries that were written before can now be given a diagram. Open one and tap Add a diagram, and the assistant draws it from what that entry already says. It will tell you when a picture would not help.' },
-{ build:530, note:'\uD83D\uDD24 The What is New list showed stray letters where a small picture belonged. Six notes had one, going back several updates.' },
-{ build:529, note:'\uD83D\uDD8D The Library assistant draws diagrams reliably now. Its instructions showed it an example that did not follow its own rule about spacing, so diagrams could come out as plain text with stray marks in them.' },
+{ build:532, note:'\uD83D\uDCD0 Library entries that were written before can now be given a diagram. Open one and tap Add a diagram, and the assistant draws it from what that entry already says. It will tell you when a picture would not help.' },
+{ build:531, note:'\uD83D\uDD24 The What is New list showed stray letters where a small picture belonged. Six notes had one, going back several updates.' },
+{ build:530, note:'\uD83D\uDD8D The Library assistant draws diagrams reliably now. Its instructions showed it an example that did not follow its own rule about spacing, so diagrams could come out as plain text with stray marks in them.' },
 { build:528, note:'\u25FB\uFE0F Proper icons. \u2666 The menu down the left side on desktop no longer uses emoji \u2014 it has a real icon set: solid marks on the dark app, lighter keyline marks when you switch to the light theme. \u2666 The burger menu is unchanged.' },
 { build:527, note:'\uD83D\uDCC5 Schedule Board. \u2666 It was the one retail page still painted for a white background \u2014 fourteen white cards down a black screen, with \u201CNothing scheduled\u201D almost too faint to read. It now matches the rest of the app, and the dates, times and client names were re-picked so they stay readable on the darker card. \u2666 It also stretches to the full width of the screen instead of sitting in a narrow column.' },
 { build:526, note:'\uD83C\uDFA8 Landing page, tidied. \u2666 The background is now the same black the rest of the app uses, instead of a warmer one. \u2666 The four big cards are separated instead of stacked in one block. \u2666 Resource Library and Schedule Board are proper cards now, beside Production and Sales Floor, rather than plain outlines at the bottom. \u2666 The name, greeting, date and weather sit raised off the page.' },
@@ -49258,7 +49258,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 #rlLibPanel .lb-acts button{flex:1;min-width:120px;background:var(--lb-surface2,#FAF8F7);
   border:1px solid var(--lb-line2,#DED8D6);color:var(--lb-ink,#17181B);border-radius:10px;
   padding:11px 10px;font:800 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer}
-/* 531: the button that adds a drawing to an entry that already exists.
+/* 532: the button that adds a drawing to an entry that already exists.
    Same tokens as .lb-acts button above so it inherits every theme. */
 #rlLibPanel .lb-m .lb-draw{display:block;margin:10px 0 2px;background:var(--lb-surface2,#FAF8F7);
   border:1px solid var(--lb-line2,#DED8D6);color:var(--lb-ink,#17181B);border-radius:10px;
@@ -50590,7 +50590,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       '</span></div>';
   }
 
-  /* 531: the same four forms lbBlock accepts. Kept next to its only two callers
+  /* 532: the same four forms lbBlock accepts. Kept next to its only two callers
      so a change to the renderer's marker set has one obvious place to land. */
   var LB_MARKER = /(^|\n)\s*~~\s*(stack|flow|bars|pitch)\b/i;
 
@@ -50614,7 +50614,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     }
   }
 
-  /* 531: Theo asked to be able to put illustrations into entries that already
+  /* 532: Theo asked to be able to put illustrations into entries that already
      exist. The library had FOUR inserts on library_items and no update at all,
      so nothing could ever add to one. The RLS policy has always allowed it. */
   function drawInto(id, btn){
@@ -50649,7 +50649,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
         give('That came back in a shape the app cannot draw.');
         return;
       }
-      /* 529 measured this exactly: a marker only draws when it STARTS its own
+      /* 530 measured this exactly: a marker only draws when it STARTS its own
          block. Whatever the model returned, it gets a blank line either side. */
       var body = String(it.body || '').replace(/\s+$/, '') + '\n\n' +
         (d.caption ? String(d.caption).trim() + '\n\n' : '') +
