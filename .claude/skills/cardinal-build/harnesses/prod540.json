@@ -1,0 +1,43 @@
+{
+  "note": "Pulled straight out of production on 2026-08-01. Trimmed to the fields projectValue/indexMoney read. This is the point: the harness runs the SHIPPED functions against REAL rows, not fixtures someone typed.",
+  "projects": [
+    {"id":"7b16a8e8-f528-4cf1-a81e-1aa05f75e41f","name":"Kimberly  Guy","checklist":"{\"po\":1033,\"lead\":{\"claim_type\":\"retail\"},\"fav\":true}"},
+    {"id":"100dcf27-939e-4d41-b67f-86229727bdaf","name":"Kim Guy","checklist":"{\"po\":1034,\"lead\":{\"claim_type\":\"retail\"}}"},
+    {"id":"21e1990d-60f2-4296-858b-f826b648ee06","name":"Dan Thompson","checklist":"{\"po\":1036,\"lead\":{\"claim_type\":\"retail\"},\"fav\":true}"},
+    {"id":"5d0eda55-f1cb-4f86-8aaf-40d28edc921b","name":"Kitty Hawk Realty — 7036 Montague Road","checklist":"{\"po\":1035,\"lead\":{\"claim_type\":\"community\",\"bid_amount\":0}}"},
+    {"id":"5cea4c27-c7ab-473c-98cf-050d22643c8e","name":"Betty Mann","checklist":"{\"po\":1007,\"lead\":{\"claim_type\":\"retail\"}}"},
+    {"id":"d11b3888-9f9e-4aca-a20b-d00c1b95f7aa","name":"Bob DeBuilder","checklist":"{\"po\":1032,\"job_cost\":null}"},
+    {"id":"72fee071-fc76-4afb-a440-d09256430ab6","name":"Joeseph Estimate","checklist":"{\"po\":1008,\"lead\":{\"claim_type\":\"retail\"}}"},
+    {"id":"261b7d62-0cbb-4f0a-aa7a-102b5c972965","name":"Alton","checklist":"{\"po\":1029,\"job_cost\":null}"}
+  ],
+  "reports": [
+    {"project_id":"7b16a8e8-f528-4cf1-a81e-1aa05f75e41f","title":"EST-2026-0892 — Estimate — Kimberly  Guy","total":null},
+    {"project_id":"7b16a8e8-f528-4cf1-a81e-1aa05f75e41f","title":"EST-2026-0888 — Estimate — Kimberly  Guy","total":null},
+    {"project_id":"100dcf27-939e-4d41-b67f-86229727bdaf","title":"Kim Guy — 6633 Edenhill Ave, Dayton, OH 45420","total":null},
+    {"project_id":"72fee071-fc76-4afb-a440-d09256430ab6","title":"Joeseph Estimate — 3879 Shadeland Ave Dayton OH","total":null},
+    {"project_id":"d11b3888-9f9e-4aca-a20b-d00c1b95f7aa","title":"Bob DeBuilder — 921 Testing Way","total":null},
+    {"project_id":"d11b3888-9f9e-4aca-a20b-d00c1b95f7aa","title":"Estimate — Bob DeBuilder","total":0},
+    {"project_id":"5cea4c27-c7ab-473c-98cf-050d22643c8e","title":"Betty Mann — 449 Harriet, Dayton, OH 45417","total":null},
+    {"project_id":"261b7d62-0cbb-4f0a-aa7a-102b5c972965","title":"Estimate — Alton","total":0},
+    {"project_id":"261b7d62-0cbb-4f0a-aa7a-102b5c972965","title":"Alton — 948 Huron","total":null},
+    {"project_id":"72fee071-fc76-4afb-a440-d09256430ab6","title":"Estimate — Roof Replacement","total":0},
+    {"project_id":"5cea4c27-c7ab-473c-98cf-050d22643c8e","title":"EST-2026-0871 — Estimate — Betty Mann","total":null},
+    {"project_id":"5cea4c27-c7ab-473c-98cf-050d22643c8e","title":"EST-2026-0882 — Estimate — Betty Mann","total":null},
+    {"project_id":"21e1990d-60f2-4296-858b-f826b648ee06","title":"EST-2026-0895 — Estimate — Dan Thompson","total":null}
+  ],
+  "estimates": [
+    {"id":"6b0396a6","project_id":"5cea4c27-c7ab-473c-98cf-050d22643c8e","total":0,"status":"draft","archived":false},
+    {"id":"00771120","project_id":"5cea4c27-c7ab-473c-98cf-050d22643c8e","total":0,"status":"draft","archived":false},
+    {"id":"2b4358d9","project_id":"5cea4c27-c7ab-473c-98cf-050d22643c8e","total":0,"status":"draft","archived":false},
+    {"id":"0b901d7c","project_id":"5cea4c27-c7ab-473c-98cf-050d22643c8e","total":1820,"status":"sent","archived":false},
+    {"id":"7e5e88b2","project_id":"7b16a8e8-f528-4cf1-a81e-1aa05f75e41f","total":21451,"status":"sent","archived":false},
+    {"id":"2ca028ce","project_id":"5d0eda55-f1cb-4f86-8aaf-40d28edc921b","total":2560,"status":"draft","archived":false},
+    {"id":"61aa1cb5","project_id":"100dcf27-939e-4d41-b67f-86229727bdaf","total":34050,"status":"draft","archived":false},
+    {"id":"8e9ec168","project_id":"100dcf27-939e-4d41-b67f-86229727bdaf","total":36432,"status":"draft","archived":false},
+    {"id":"ffc2bf5a","project_id":"100dcf27-939e-4d41-b67f-86229727bdaf","total":17730,"status":"draft","archived":false},
+    {"id":"fe820471","project_id":"7b16a8e8-f528-4cf1-a81e-1aa05f75e41f","total":36654,"status":"sent","archived":false},
+    {"id":"a8bffba7","project_id":"5d0eda55-f1cb-4f86-8aaf-40d28edc921b","total":6180,"status":"draft","archived":false},
+    {"id":"ee7afee2","project_id":"21e1990d-60f2-4296-858b-f826b648ee06","total":11920.99,"status":"sent","archived":false}
+  ],
+  "contracts": []
+}

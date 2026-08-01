@@ -997,10 +997,16 @@ same `iconKey(stripEmoji(label))` the icon lookup already uses. **Use it for any
 styling.** `data-nav` looks like the obvious hook and is not: Community Hub is added at runtime by
 `makeOpt()` with only an `id`, so `data-nav` exists on the static items only.
 
-**Both themes get their own value, and it is not one palette recoloured.** Cardinal red `#c8202e`
-is **3.40:1** on the dark rail and fails, so dark uses `#ef6b6b`; a true yellow is **1.6:1** on the
-light rail, so light uses amber `#8a6100`. Contrast was measured against the rail, the active card
-*and* hover in each theme — the active card counts because these labels stay coloured when their
-row is the current page.
+**Cardinal Truth and Community Hub get their own value per theme, and it is not one palette
+recoloured** — cardinal red `#c8202e` is **3.40:1** on the dark rail and fails, so dark uses
+`#ef6b6b`. Contrast is measured against the rail, the active card *and* hover in each theme; the
+active card counts because these labels stay coloured when their row is the current page.
+
+**Landing is the one sanctioned exemption (539).** It is `#f0c651` in both themes — literal yellow,
+on Theo's explicit call after 538 shipped amber `#8a6100` and he was shown the measurement. In light
+it is **1.47 / 1.63 / 1.34**, knowingly under the floor, and no yellow clears it (`#ffd700` is
+1.26:1). **Do not "fix" it back to amber without asking him.** The gate is narrowed, not disabled:
+the patch and the harness both assert the exemption is exactly one entry wide, and the harness fails
+if that value ever starts passing.
 
 Desktop-only comes free: `--lnav-w` is `0px` except inside `@media (min-width:1100px)`.

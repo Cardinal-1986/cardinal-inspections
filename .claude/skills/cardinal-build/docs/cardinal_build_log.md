@@ -4484,3 +4484,160 @@ its `--hbg`.
 Chromium: **25/25** — the shipped `stripEmoji`/`iconKey`/render statement executed against the real
 menu labels, and contrast recomputed from the *rendered* colour against the *rendered* background
 rather than from the numbers in the patch comment. Harness at `harnesses/h538_chromium.js`.
+
+---
+
+## Build 539 — Landing is literal yellow in light mode too
+
+538 shipped light-mode Landing as amber `#8a6100`, because a true yellow cannot meet the
+readability floor on a near-white rail. That was flagged **with the measurement**, Theo saw it, and
+answered: *"literal yellow"*. His call, made with the number in front of him, so it ships.
+
+**What it costs, on the record.** `#f0c651` in light: **1.47:1** on the rail, **1.63:1** on the
+active card, **1.34:1** on hover — against a 4.5:1 floor. And no better yellow exists; the whole
+family fails (`#ffd700` 1.26, `#f5c518` 1.47, `#e8b800` 1.68). `#f0c651` is the pick because it is
+the value already used in dark, so **Landing is now one colour in both themes** instead of two.
+
+**The contrast gate is narrowed, not deleted.** It still runs and still fails the build for the
+other five values. Landing-light is a single *named* exemption, and both the patch and the harness
+assert the exemption is exactly one entry wide — the harness even fails if that value ever starts
+*passing*, so a stale exemption cannot sit there unnoticed. The next person to add a colour here
+inherits a live gate, not a disabled one.
+
+**A trap this patch sprang on itself:** `assert '#8a6100' not in src` failed, because the block
+comment now names the amber as the *history* of why the value is what it is. The file's own
+"comments lie in both directions" rule, caught by its own gate. Scoped to the comment-stripped code.
+
+`check_build.py` green (539, marker `literal yellow, Theo's call`, negative-controlled).
+Chromium: **25/25**. Harness at `harnesses/h539_chromium.js`.
+
+---
+
+## Build 540 — the money circle reads the table the money is actually in
+
+**Theo:** *"The circle where it shows the money stays at 0 and should be tied to the contract or
+approved estimate amount."*
+
+**The circle was never broken — it was pointed at the wrong table.** `projectValue()` scanned
+`cacheRows` (which is `inspection_reports`) for rows titled "Estimate…" and took the highest
+`total`. Measured against production, not guessed:
+
+| table | rows | with money |
+|---|---:|---|
+| `inspection_reports` | 22 | **0** — 3 match `isEstimateTitle` and all three total **0**; the other 19 are NULL |
+| `estimates` | 12 | **9** ← the money |
+| `contracts` | 0 | — |
+| `manual_estimates` | 0 | — |
+
+**Not one row in that table has ever carried money.** So the max was always 0 unless someone had
+typed a manual override — and no production checklist carries `manual_value` at all. Five real
+clients were showing $0 with money on the job: Kimberly Guy $36,654 · Kim Guy $36,432 ·
+Dan Thompson $11,920.99 · Kitty Hawk $6,180 · Betty Mann $1,820.
+
+**The order is Theo's own words.** A **signed contract wins outright** — not folded into the max,
+because if the contract says $30k and a stale estimate says $36k the contract is the truth.
+Otherwise the highest of: manual override, best **sent** estimate, legacy `inspection_reports`
+total. **Drafts do not count** — `estimates` is 8 draft / 4 sent today, so Kim Guy and Kitty Hawk
+stay at $0 until those are sent. That is a rule Theo can reverse with one word and the harness
+asserts it explicitly so the reversal is a one-line change.
+
+**Why `projectValue()` and nothing else.** It is the single money chokepoint for retail — **15 call
+sites**: the pipeline stage circles, Leads & Jobs cards, the client directory, reports revenue,
+backlog, profit margin, and the price that prefills a new contract. One fix lands in all of them.
+
+**The two new fetches cannot break the profile.** Both carry `.catch(→[])` exactly as `adb.list()`
+already does, so an RLS refusal degrades to "no contract/estimate money known" rather than taking
+down `reload()` and with it the whole client profile. The lookup maps start `{}` so all 15
+synchronous callers are safe before the fetch resolves — asserted.
+
+**Also found, not fixed here:** there are **two contract pipelines**. `createContractForCurrent()`
+(the `+ New contract` button in the profile) writes a `Contract — {name}` row into
+`inspection_reports`; a newer `/api/estimate_to_contract` flow writes to the `contracts` table.
+Both are empty in production — nobody has made a contract either way. `projectValue()` reads the
+`contracts` table. **This is the duplicate-pipeline bug class and it needs a decision from Theo.**
+
+`check_build.py` green (540, marker `indexMoney`, negative-controlled).
+**Harness: 18/18, and it is the good kind** — `projectValue`, `indexMoney` and `isEstimateTitle`
+are extracted from the shipped artifact by brace matching and executed against **rows pulled out of
+the live database**, nulls and duplicate titles included. The one stub, `parseCkAll`, is proven
+inert by an assertion that no production checklist carries `manual_value`.
+Harness at `harnesses/h540_prod.js`, data at `harnesses/prod540.json`.
+
+---
+
+## Build 541 — contracts get their own tab
+
+**Theo**, asked where the contracts section should live: **"2"** — its own tab.
+
+**Nothing was missing.** The heading, the `+ New contract` button and the list were all there and all
+wired — filed inside `tab-estimates`, below the estimates list, which is exactly why they read as
+absent. The markup moved **verbatim** into a pane of its own; the only edit is dropping a
+`margin-top:22px` that was spacing it below the estimates list and is now just a gap at the top of
+a pane. `pNewContractBtn` and `contractDocsMount` keep their ids, so every existing listener still
+finds its element.
+
+**The tab strip is a `<select>`, not a row of buttons.** Navigation is `#jobMenuSel` in the header
+and `showTab()` syncs it. So a new tab is exactly three things: the pane, an entry in `showTab`'s
+list, and an `<option>`.
+
+**⚠ `showTab()` has no null guard** — `document.getElementById('tab-' + t).style.display` inside a
+`forEach` over a hardcoded list. **The name and the pane have to ship in the same commit**; split
+them and every `showTab()` call throws, killing tab switching across the whole profile. The gate
+asserts `showTab`'s list and the panes in the markup are the *same set* rather than matching a
+number, and the harness carries the negative control that proves the hazard is real: 541's
+`showTab` run against 540's markup throws `Cannot read properties of null (reading 'style')`.
+
+`check_build.py` green (541, marker `id="tab-contracts"`, negative-controlled).
+Chromium: **17/17** — the shipped `showTab` driven against the shipped pane ids, every tab
+exercised. Harness at `harnesses/h541_chromium.js`.
+
+**Next, and Theo has already picked it:** the roofing master agreement rendered in the tab and
+autopopulated ("2" again). `docs/Cardinal_Roofing_Contract.pdf` is 5 pages, US Letter, **zero
+AcroForm fields** — agreement face ×2, T&C, and the two statutory 3-Day Notice copies which must
+not be reworded. Autopopulatable: date, buyer, email, phone, street/city/state/zip (stored as
+separate fields on the lead), insurance carrier + claim #, and the four money lines off `projectValue()`.
+Plus **existing layers, roof pitch and decking type straight from the inspection checklist**.
+
+**Also found:** two Company Documents entries are dead links — `Cardinal_Window_Contract.pdf` and
+`Cardinal_Gutter_Contract_Fillable.pdf` are in `COMPANY_DOCS` but not in the repo. They 404 today.
+
+---
+
+## Build 542 — the roofing Construction Agreement, in the app, autopopulated
+
+**Theo:** *"Use the master roofing/construction agreement in the company docs and make it fillable,
+whatever can be autopopulated do so"* … *"for Roofs in specific"* … and on how much of the spec grid
+to reproduce: **"3"** — full fidelity, except the lines the inspection already answered.
+
+`+ New contract` used `CONTRACT_TEMPLATE`, a generic three-section service contract that looks
+nothing like the paper form Cardinal signs. It now builds the roofing **Construction Agreement** —
+all 13 numbered specification sections with their lettered sub-options, warranty tiers, HOA,
+timeline, insurance, payment structure and signature block.
+
+**Two things deliberately not reproduced, and it is a legal call, not a shortcut:** the **Terms and
+Conditions** (master p3) and **both 3-Day Notice of Cancellation copies** (master p4–5). Statutory
+text under ORC 1345.23. Retyping it invites silent divergence between what the app prints and what
+the reviewed master says, and nobody in this loop is a lawyer. The agreement **references** them the
+way the paper form does and points at the master in Company Documents. Asserted in the gate.
+
+**What autofills:** date · buyer · email · phone · **street / city / state / zip as separate boxes**
+(the lead stores them as separate fields) · rep name & title · the three money lines off
+`projectValue()` · and — the point of Theo's "3" — **existing layers, roof pitch and decking type
+straight off the inspection checklist**, with their lettered option rows *collapsing* when known and
+printing as on paper when not.
+
+**What does not, said plainly:** `INSURANCE CO.` and `CLAIM #`. There is no client-side cache of
+`insurance_claims` — it is fetched ad hoc inside async functions — and `prefillClientInfo()` is
+**synchronous with many callers**. "Adding `await` to a synchronous function is never a local change"
+is this project's own rule and it is not worth breaking for two fields. The gate asserts
+`prefillClientInfo` stays synchronous.
+
+**`CONTRACT_TEMPLATE` survives.** `CardinalEstimateToContract` checks for it by name and warns when
+missing. This build *adds* a template; it does not delete one.
+
+`check_build.py` green (542, marker `ROOF_AGREEMENT`, negative-controlled).
+**Chromium 17/17, against real records:** the shipped `prefillClientInfo` and the shipped template,
+run on **Bob DeBuilder's actual row** — the one client whose roof has been inspected, so the only
+record that can prove the collapses fire — with **Dan Thompson as the control**, a real client with
+no inspection whose option rows must survive. Harness `harnesses/h542_chromium.js`; the template
+body lives at `scripts/roof_body.py`.

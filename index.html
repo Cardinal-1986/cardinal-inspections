@@ -3125,6 +3125,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <option value="checklists">Checklists</option>
           <option value="inspections">Inspections</option>
           <option value="estimates">Estimates</option>
+          <option value="contracts">Contracts</option>
           <option value="materials">Materials</option>
           <option value="measure">Measurements</option>
         </select>
@@ -3157,7 +3158,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 538 &#8212; Cardinal Truth, Community Hub and Landing are colour-coded in the left menu</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 542 &#8212; + New contract now builds the real roofing Construction Agreement, filled in from the job</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3607,7 +3608,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </span>
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
-      <h3 class="projsec" style="margin-top:22px;">&#128209; Contracts</h3>
+    </div>
+
+    <div id="tab-contracts" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <h3 class="projsec">&#128209; Contracts</h3>
       <p class="subnote">Client contracts &#8212; prefilled from this profile. Blank print masters live in
       <b>&#9776; Menu &#8594; Company Documents</b>.</p>
       <div style="margin:6px 0 12px;">
@@ -8949,6 +8954,113 @@ var CONTRACT_TERMS = `
 <li><b>Payment.</b> Balances unpaid 30 days after completion accrue 1.5% monthly. Owner is responsible for reasonable collection costs.</li>
 `;
 var CONTRACT_TEMPLATE = buildEstimate('SERVICE <span>CONTRACT</span>', CONTRACT_BODY, CONTRACT_TERMS);
+/* 542: the roofing Construction Agreement, faithful to
+   docs/Cardinal_Roofing_Contract.pdf page 1 — all 13 numbered spec sections with
+   their lettered sub-options. The T&C and the two statutory 3-Day Notice copies are
+   NOT retyped; they stay the printed master in Company Documents and this references
+   them the way the paper form does. */
+var ROOF_AGREEMENT_TERMS = `<li><b>The Terms and Conditions and both Notice of Cancellation copies are the printed master.</b> They are reproduced verbatim in <b>&#9776; Menu &#8594; Company Documents &#8594; Roofing &#8594; Construction Agreement (Master)</b> and are deliberately not retyped here &#8212; the cancellation notice is statutory text under ORC 1345.23.</li>\n<li>This Agreement, the accompanying Terms and Conditions, and any specification sheet(s) together form the entire agreement between Buyer and Contractor.</li>`;
+var ROOF_AGREEMENT_BODY = `
+<h2 class="sec">Customer Information</h2>
+<table class="meta">
+<tr><td class="k">Date</td><td><span class="ph">[Date]</span></td></tr>
+<tr><td class="k">Buyer</td><td><span class="ph">[BUYER]</span></td></tr>
+<tr><td class="k">Co-buyer</td><td><span class="ph">[CO-BUYER]</span></td></tr>
+<tr><td class="k">Email</td><td><span class="ph">[EMAIL]</span></td></tr>
+<tr><td class="k">Phone</td><td><span class="ph">[PHONE NUMBER]</span></td></tr>
+<tr><td class="k">Street</td><td><span class="ph">[STREET]</span></td></tr>
+<tr><td class="k">City / State / ZIP</td><td><span class="ph">[CITY]</span> &nbsp; <span class="ph">[STATE]</span> &nbsp; <span class="ph">[ZIP]</span></td></tr>
+<tr><td class="k">Primary residence</td><td><b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span></td></tr>
+</table>
+
+<p style="font-size:10pt;">Buyer(s) hereby jointly and severally agrees to purchase the products
+and/or services of Cardinal Roofing &amp; Renovations, LLC (&#8220;Contractor&#8221;) as listed herein,
+in accordance with the terms and conditions described in this Agreement, the accompanying
+<b>Terms and Conditions</b> form, and any accompanying specification sheet(s).</p>
+
+<h2 class="sec">Project Specifications</h2>
+<table class="meta">
+<tr><td class="k">1. Decking</td><td>A. Remove existing roofing layers to roof deck<br>B. Inspect roof deck &amp; replace wood as needed &#8212; $<span class="ph">[rate]</span> per sheet</td></tr>
+<tr><td class="k">&nbsp;&nbsp;&nbsp;Decking type</td><td><span class="opts" data-opts="decking">A. OSB &nbsp; B. Plywood &nbsp; C. T&amp;G &nbsp; D. Plank Board &nbsp; E. Spaced Decking &nbsp; F. Cedar Shake</span></td></tr>
+<tr><td class="k">2. Roof deck protection</td><td>A. Felt underlayment 15&nbsp;lb &nbsp; B. Felt underlayment 30&nbsp;lb &nbsp; C. Synthetic underlayment &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">3. Drip edge / gutter apron</td><td>A. Drip edge colour <span class="ph">[colour]</span> (rakes)<br>B. Gutter apron colour <span class="ph">[colour]</span> (eaves)</td></tr>
+<tr><td class="k">4. Ice &amp; water barrier</td><td>Install along eaves, valleys &amp; flashings &#8212; A. Standard &nbsp; B. OC &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">5. Valley metal</td><td>A. Colour <span class="ph">[colour]</span></td></tr>
+<tr><td class="k">6. Starter shingles</td><td>Install along all rakes &amp; eaves &#8212; A. Standard &nbsp; B. OC Starter Plus &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">7. Shingles <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Style <span class="ph">[style]</span><br>B. Colour <span class="ph">[colour]</span><br>C. Brand <span class="ph">[brand]</span></td></tr>
+<tr><td class="k">8. Flashing</td><td>A. Chimney &nbsp; B. Wall &nbsp; C. Step &nbsp; <span class="ph">[circle all that apply]</span><br>Extra structure: A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; <span class="ph">[if any]</span></td></tr>
+<tr><td class="k">9. Extrusions</td><td>A. Pipe boots <span class="ph">[qty]</span> &nbsp; B. Skylights <span class="ph">[qty]</span></td></tr>
+<tr><td class="k">10. Ventilation</td><td>A. Shingle-over ridge vent &#8212; 1. Standard &nbsp; 2. OC<br>B. Box / turtle vents <span class="ph">[qty]</span> &nbsp; C. Power vent <span class="ph">[qty]</span> &nbsp; D. Turbine <span class="ph">[qty]</span><br><span style="font-size:9pt;color:#666;">Not responsible for re-attachment of satellite or HVAC.</span></td></tr>
+<tr><td class="k">11. Ridge cap / hip cap</td><td>A. Standard &nbsp; B. OC &#8212; 1. Pro Edge &nbsp; 2. Decoridge &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">12. Existing layers</td><td><span class="opts" data-opts="layers">Number / type of existing layers</span></td></tr>
+<tr><td class="k">13. Roof pitch</td><td><span class="opts" data-opts="pitch">Roof pitch</span></td></tr>
+</table>
+
+<h2 class="sec">Warranty System</h2>
+<table class="meta">
+<tr><td class="k">Standard</td><td>25-yr manufacturer &nbsp;&#183;&nbsp; 5-yr workmanship</td></tr>
+<tr><td class="k">Systems Protection</td><td>25-yr mfr. &nbsp;&#183;&nbsp; 10-yr workmanship &nbsp;&#183;&nbsp; Owens Corning &nbsp;&#183;&nbsp; transferable</td></tr>
+<tr><td class="k">Preferred Protection</td><td>50-yr mfr. &nbsp;&#183;&nbsp; 10-yr workmanship &nbsp;&#183;&nbsp; Owens Corning &nbsp;&#183;&nbsp; transferable</td></tr>
+<tr><td class="k">Selected</td><td><span class="ph">[circle one]</span></td></tr>
+</table>
+
+<h2 class="sec">HOA / Authorization</h2>
+<p style="font-size:10.5pt;">HOA approval required: <b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span><br>
+Buyer to obtain required authorization from the HOA and authorities. &nbsp;&nbsp;
+Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Project Timeline</h2>
+<p style="font-size:10.5pt;">The anticipated start date is <span class="ph">[n]</span> weeks from the date on
+which all HOA permissions, permits and other contingencies necessary to complete the project are
+obtained, and the anticipated completion date is <span class="ph">[n]</span> weeks from the actual start date.</p>
+
+<h2 class="sec">Notes &amp; Insurance Claim</h2>
+<table class="meta">
+<tr><td class="k">Notes</td><td><div class="descbox"><span class="ph">[notes]</span></div></td></tr>
+<tr><td class="k">Insurance co.</td><td><span class="ph">[INSURANCE CO.]</span></td></tr>
+<tr><td class="k">Claim #</td><td><span class="ph">[CLAIM #]</span></td></tr>
+</table>
+<p style="font-size:10pt;">Buyer(s) acknowledges that Contractor is due any and all monies received
+from any insurance company pursuant to an insurance claim, including overhead and profit, approved
+cost increases, and approved claim supplements. &nbsp;&nbsp; Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Payment Structure</h2>
+<table class="items">
+  <thead><tr><th>Payment</th><th>Due</th><th class="price">Amount</th></tr></thead>
+  <tbody>
+    <tr><td>Down payment</td><td>Upon signing this Agreement</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+    <tr><td>Balance due on completion</td><td>Upon substantial completion</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+  </tbody>
+  <tfoot><tr><td colspan="2" style="text-align:right;font-weight:800;">CONTRACT PRICE</td>
+    <td class="price" style="font-weight:800;" id="estTotal">
+      <span class="ph" data-cprice="1">[0.00]</span></td></tr></tfoot>
+</table>
+<p style="font-size:10.5pt;">Cash on completion &nbsp;or&nbsp; financed: $<span class="ph">[0.00]</span>
+per month for <span class="ph">[n]</span> months.</p>
+
+<h2 class="sec">Acknowledgement &amp; Right to Cancel</h2>
+<p style="font-size:10pt;">Buyer(s) hereby acknowledges that Buyer(s) has read this Agreement and
+the accompanying Terms and Conditions, understands the terms of this Agreement, has received a
+completed, signed and dated copy of this Agreement on the date first written above, and was orally
+advised of his/her right to cancel this transaction.</p>
+<p style="font-size:10pt;"><b>You, the buyer, may cancel this transaction at any time prior to
+midnight of the third business day after the date of this transaction.</b> See the two attached
+<i>Notice of Cancellation</i> copies for an explanation of that right.</p>
+<p style="font-size:9.5pt;color:#666;">The Terms and Conditions and both Notice of Cancellation
+copies are the printed master &#8212; <b>&#9776; Menu &#8594; Company Documents &#8594; Roofing
+&#8594; Construction Agreement (Master)</b>. They are reproduced there verbatim and are not
+retyped here.</p>
+
+<table class="meta" style="margin-top:14px;">
+<tr><td class="k">Buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Co-buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Contractor representative</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>
+<tr><td class="k">Contractor signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+</table>
+`;
+var ROOF_AGREEMENT = buildEstimate('CONSTRUCTION <span>AGREEMENT</span>', ROOF_AGREEMENT_BODY, ROOF_AGREEMENT_TERMS);
 var INVOICE_BODY =
   '<div class="secthead">INVOICE</div>' +
   '<table style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px;">' +
@@ -9197,6 +9309,27 @@ var PKEY = 'cardinal_projects_v1';
 function plsLoad(){ try{ return JSON.parse(localStorage.getItem(PKEY)) || []; }catch(e){ return []; } }
 function plsSave(l){ localStorage.setItem(PKEY, JSON.stringify(l)); }
 
+/* 540: the two money tables. Read-only, narrow selects, and deliberately NOT
+   folded into db/pdb — those are the inspection_reports and projects pipelines
+   and have their own local-storage fallbacks. There is no offline story for
+   money, so these simply return [] when signed out. */
+var moneyDb = {
+  estimates: async function(){
+    if(!TEAM) return [];
+    var r = await sb.from('estimates')
+      .select('id,project_id,total,status,archived');
+    if(r.error) throw r.error;
+    return r.data || [];
+  },
+  contracts: async function(){
+    if(!TEAM) return [];
+    var r = await sb.from('contracts')
+      .select('id,project_id,total,status,homeowner_signed_at,voided_at');
+    if(r.error) throw r.error;
+    return r.data || [];
+  }
+};
+
 var pdb = {
   list: async function(){
     if(TEAM){
@@ -9371,6 +9504,12 @@ var mount = document.getElementById('historyMount');
 var countLabel = document.getElementById('countLabel');
 
 var cacheProjects = [];
+/* 540: project_id -> money, filled by reload(). Synchronous readers (there are
+   15 of them through projectValue) must be safe before the fetch resolves, so
+   these start empty and an empty map simply means "no contract/estimate money
+   known yet" — never an exception. */
+var estBest = {};   /* highest total among SENT/approved estimates */
+var ctrSigned = {}; /* total on the signed, un-voided contract */
 /* 493: [] means two different things - the table is empty, or we never got a
    successful read. A denied or failed load leaves cacheProjects at its initial
    [], and the home empty-state then tells the user they have no clients. The
@@ -9394,11 +9533,17 @@ async function reload(){
   try{
     var res = await Promise.all([
       pdb.list(), db.list(),
-      adb.list().catch(function(){ return []; })
+      adb.list().catch(function(){ return []; }),
+      /* 540: the money lives here, not in inspection_reports. Both catch to []
+         for the same reason adb does — an RLS refusal must not take down
+         reload(), and with it the entire client profile. */
+      moneyDb.estimates().catch(function(){ return []; }),
+      moneyDb.contracts().catch(function(){ return []; })
     ]);
     cacheProjects = res[0];
     cacheRows = res[1];
     cacheAppts = res[2];
+    indexMoney(res[3], res[4]);
     cacheLoaded = true;   /* 493: only here, and only after the awaits resolved */
     if(currentProject){
       var fresh = cacheProjects.find(function(x){ return x.id === currentProject.id; });
@@ -11536,7 +11681,7 @@ function renderProjectDocs(){
 function showTab(name){
   var sel = document.getElementById('jobMenuSel');
   if(sel && sel.value !== name) sel.value = name;
-  ['overview','inspections','estimates','checklists','materials','measure'].forEach(function(t){
+  ['overview','inspections','estimates','contracts','checklists','materials','measure'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
   if(name === 'inspections') refreshInspGalN();
@@ -16474,8 +16619,48 @@ var PIPE_BUCKETS = [
    would otherwise appear as a permanently empty sixth column on the Retail
    and Insurance boards, because renderPipeline does not filter by CRM. */
 var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
+/* 540 ─ where the money actually is ─────────────────────────────────────────
+   projectValue() used to scan inspection_reports for rows titled "Estimate…"
+   and take the highest total. Measured against production: that table has 22
+   rows, 3 of them match, and ALL THREE have total = 0 — the other 19 are NULL.
+   Not one row in it has ever carried money. The money is in `estimates`, which
+   this function never opened, so the circle read $0 for every client who had
+   not been given a manual override.
+
+   ONLY SENT ESTIMATES COUNT. A draft is a number still being edited; the
+   circle must not move on its own while Theo is typing. */
+var SENT_EST = { sent:1, approved:1, accepted:1, signed:1 };
+
+function indexMoney(estimates, contracts){
+  estBest = {};
+  (estimates || []).forEach(function(e){
+    if(!e || !e.project_id) return;
+    if(e.archived) return;
+    if(!SENT_EST[String(e.status || '').toLowerCase()]) return;
+    var t = Number(e.total) || 0;
+    if(t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
+  });
+  ctrSigned = {};
+  (contracts || []).forEach(function(c){
+    if(!c || !c.project_id) return;
+    if(c.voided_at) return;                       /* a voided contract is not money */
+    if(!c.homeowner_signed_at) return;            /* unsigned is not money either */
+    var t = Number(c.total) || 0;
+    if(t > (ctrSigned[c.project_id] || 0)) ctrSigned[c.project_id] = t;
+  });
+}
+
+/* Theo's own order: "tied to the contract or approved estimate amount".
+   A SIGNED CONTRACT WINS OUTRIGHT — it is not folded into the max, because if
+   the contract says $30k and a stale estimate says $36k, the contract is the
+   truth. Everything else is the highest of what we know. */
 function projectValue(pr){
+  if(!pr) return 0;
+  var signed = Number(ctrSigned[pr.id]) || 0;
+  if(signed > 0) return signed;
   var best = Number(parseCkAll(pr).manual_value) || 0;
+  var est = Number(estBest[pr.id]) || 0;
+  if(est > best) best = est;
   cacheRows.forEach(function(r){
     if(r.project_id === pr.id && isEstimateTitle(r.title) && Number(r.total) > best){
       best = Number(r.total);
@@ -16539,7 +16724,7 @@ async function createContractForCurrent(){
   if(!pr) return;
   try{
     var price = projectValue(pr);
-    var tpl = prefillUserInfo(prefillClientInfo(CONTRACT_TEMPLATE, pr));
+    var tpl = prefillUserInfo(prefillClientInfo(ROOF_AGREEMENT, pr));
     if(price > 0){
       var half = price / 2;
       var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
@@ -16563,7 +16748,7 @@ async function approveAndContract(prId){
   try{
     await patchProjectCk(pr, { wf_approved: { at: new Date().toISOString(), by: currentUser ? currentUser.email : null } });
     var price = projectValue(pr);
-    var tpl = prefillUserInfo(prefillClientInfo(CONTRACT_TEMPLATE, pr));
+    var tpl = prefillUserInfo(prefillClientInfo(ROOF_AGREEMENT, pr));
     if(price > 0){
       var half = price / 2;
       var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
@@ -17234,6 +17419,32 @@ function prefillClientInfo(tpl, pr){
   put('[Street, City, State ZIP]', pr.address);
   /* shared contact row */
   put('[Phone \u00b7 Email]', contact);
+
+  /* ── 542: the roofing Construction Agreement ─────────────────────────────
+     The lead stores the address as SEPARATE fields, so each one lands in its
+     own box on the form rather than as a single mashed line. */
+  put('[BUYER]', recipient);
+  put('[EMAIL]', pr.email);
+  put('[PHONE NUMBER]', pr.phone);
+  var _loc = (parseCkAll(pr).lead || {}).location || {};
+  put('[STREET]', [_loc.street, _loc.suite].filter(Boolean).join(' '));
+  put('[CITY]', _loc.city);
+  put('[STATE]', _loc.state);
+  put('[ZIP]', _loc.zip);
+
+  /* Theo's "3": where the roof has already been looked at, the line arrives
+     filled and its lettered option row collapses. Where it has not, the
+     options print exactly as they do on paper. */
+  function collapse(key, value){
+    if(!value) return;
+    tpl = tpl.replace(
+      new RegExp('<span class="opts" data-opts="' + key + '">[^<]*(?:<(?!/span>)[^<]*)*</span>'),
+      '<span class="fill">' + esc(value) + '</span>');
+  }
+  var _ck = parseCkAll(pr);
+  collapse('layers', _ck.layers);
+  collapse('pitch', _ck.pitch);
+  collapse('decking', _ck.decking);
   return tpl;
 }
 
@@ -33863,6 +34074,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:542, note:'\uD83C\uDFE0 The real roofing agreement, filled in for you. \u2666 + New contract on a client now builds the actual Construction Agreement \u2014 every numbered section from the paper form. \u2666 Date, buyer, email, phone, street, city, state, zip, the rep and all three money lines come in already filled. \u2666 If the roof has been inspected, the layers, pitch and decking lines arrive filled too. \u2666 The Terms and the two cancellation notices are still the printed master in Company Documents \u2014 that is legal wording and is not retyped.' },
+{ build:541, note:'\uD83D\uDCD1 Contracts have their own tab. \u2666 The contracts section was always there \u2014 it was just filed at the bottom of the Estimates tab, which is why nobody could find it. \u2666 It is now its own entry in the job menu at the top of a client. Same button, same list, nothing else changed.' },
+{ build:540, note:'\uD83D\uDCB0 The money on a client is real now. \u2666 The circle, the job cards, the pipeline totals and the reports were all reading a table that has never had a dollar in it, so everything showed $0. \u2666 They now read the signed contract first, and if there is not one, the highest estimate you have actually SENT. \u2666 Drafts do not count \u2014 send the estimate and the number appears.' },
+{ build:539, note:'\uD83D\uDC9B Landing is yellow in both modes. \u2666 In the light theme it had been a darker amber so it would stay readable on the white menu; it is now the same yellow as the dark theme.' },
 { build:538, note:'\uD83C\uDF08 Three menu items are colour-coded. \u2666 In the left menu on desktop, Cardinal Truth reads red, Community Hub emerald green and Landing yellow \u2014 just the wording, the icons are unchanged. \u2666 Each colour has a light-mode twin, because the bright versions cannot be read on a white menu.' },
 { build:537, note:'\uD83C\uDFA8 Card headings have real icons. \u2666 The squares beside the headings on the home page and the Graphs \u0026 Reports page are gone \u2014 all 20 now carry a drawn icon in the same style as the left menu. \u2666 Both calendars finally look like calendars, and Punch \u0026 Repairs is a wrench rather than a second hammer. \u2666 They follow the theme the way the menu does: filled in dark, outlined in light.' },
 { build:536, note:'\uD83D\uDCD0 The left menu has depth. \u2666 It is now set into the page rather than sitting flat on it, with the section headings as raised bands and whichever page you are on lifted out as a card. \u2666 Works both ways \u2014 in light it is a grey channel with a white card, in dark it is a black channel with a navy one. Desktop only; nothing on the phone changed.' },
@@ -52411,9 +52626,11 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    * CARDINAL RED FAILS IN DARK — #c8202e is 3.40 / 2.75 / 3.11 there. Dark
      gets #ef6b6b (6.42 / 5.19 / 5.86); light gets the real #c8202e, which
      passes (5.11 / 5.67 / 4.66).
-   * A TRUE YELLOW CANNOT BE READ ON THE LIGHT RAIL — #f0c651 is 1.6:1 on
-     #f2f3f5. Light gets the darkest amber that still reads as the same
-     colour, #8a6100 (4.99 / 5.54 / 4.55).
+   * A TRUE YELLOW CANNOT BE READ ON THE LIGHT RAIL — #f0c651 is 1.47 / 1.63 /
+     1.34 there, and no yellow clears the floor (#ffd700 is 1.26:1). 538 shipped
+     amber #8a6100 (4.99 / 5.54 / 4.55) for that reason; 539 replaced it with
+     literal yellow on Theo's explicit call, made with the measurement in front
+     of him. It is the one value here below the floor, and it is deliberate.
 
    Emerald is the community CRM's own value in both themes — #34D399 is its
    --lnav-crmc, #047857 its --hbg. Not invented.
@@ -52429,7 +52646,10 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* ── LIGHT ───────────────────────────────────────────────────────────────── */
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#c8202e}
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#047857}
-:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#8a6100}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#f0c651}  /* 539: literal yellow, Theo's call with the number in front of him. This is the
+     ONE value in this block that does not meet 4.5:1 — it is 1.47:1 on the light rail,
+     and no yellow clears it (#ffd700 is 1.26:1). Same value as dark, so Landing is one
+     colour in both themes. Do not "fix" this back to amber without asking him. */
 </style>
 </body>
 </html>
