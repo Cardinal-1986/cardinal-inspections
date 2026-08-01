@@ -3207,7 +3207,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 560 &#8212; the left menu reaches the Estimates builder too</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 561 &#8212; the Estimates page keeps the menu, and Quick Inspection is readable from the first step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34615,6 +34615,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:561, note:'\uD83E\uDDED Two corrections. \u2666 560 gave the menu to the estimate builder behind \u201C+ New estimate\u201D \u2014 but the Estimates item in the menu opens a different screen, and THAT is the one that was covering the menu. Fixed, along with Pricing Catalog and Claims, which had the same fault. \u2666 559 made Quick Inspection readable, but only the photo stream \u2014 the pin-the-property step you actually land on first still had the near-invisible title. It now carries the same yellow panel, so both halves match.' },
 { build:560, note:'\uD83E\uDDED The left menu now stays with you on the Estimates builder too. It was the one screen 558 could not reach \u2014 the builder is created on the fly rather than living in the page, so the sweep that fixed the others never saw it. \u2666 Your estimate keeps its own toolbar and its own outline down the left; the app menu sits outside both. \u2666 Phones and tablets still get the full-screen builder, unchanged.' },
 { build:559, note:'\u26A1 Quick Inspection is readable again. \u2666 The page title was near-black text on a near-black page \u2014 effectively invisible. \u2666 The whole inspection now sits in a yellow panel sunk into the page, and the chat bubbles, chips and buttons are black cards sunk into the yellow with white text, lifting on hover. \u2666 The glaring white note bar is gone. \u2666 Camera stays red and Finish stays green \u2014 those colours mean something. \u2666 The black background is untouched.' },
 { build:558, note:'\uD83E\uDDED The left menu now stays with you on every page on a desktop. \u2666 Crews used to cover it completely \u2014 it now sits beside it like everything else. \u2666 Cardinal Truth, the Client Directory and the Resource Library were quietly hiding their own left edge underneath the menu; they now start where the menu ends. \u2666 The landing page and the document editor keep the full screen on purpose \u2014 nothing should sit between you and a document you have not saved. \u2666 Phones and tablets are unchanged.' },
@@ -52435,6 +52436,34 @@ body.cr-lnav-on #cr-est-view{
   left:var(--lnav-w) !important;
   z-index:60 !important;
 }
+
+/* ── 561: the Estimates screen the MENU actually opens ─────────────────────
+   560 fixed #cr-est-view — the per-client builder behind "+ New estimate". The
+   menu's Estimates item opens something else entirely, `#cr-estimates-mount`,
+   via crOpenEstimates(). Three different surfaces carry "estimate" in the name
+   and I patched the one nobody reaches from the menu.
+
+   `!important` is MANDATORY here, not stylistic. styleMounts() writes
+
+       el.style.position='fixed'; el.style.inset='0'; el.style.zIndex='200';
+
+   as INLINE styles onto these three ids. Inline beats every stylesheet rule at
+   any specificity — the styleMounts() trap CLAUDE.md lists among its six
+   buried-feature failures, and the function's own comment records it biting
+   once already ("the real cause of 'dark mode isn't there'").
+
+   All three, not just Estimates: Pricing Catalog and Claims sit in the same menu
+   and carry the identical inline styles. Fixing one and leaving two identical
+   bugs beside it is how this file got the way it is.
+
+   Gated on body.cr-lnav-on so a phone keeps the full-screen mount untouched. */
+body.cr-lnav-on #cr-estimates-mount,
+body.cr-lnav-on #cr-pricing-mount,
+body.cr-lnav-on #cr-claims-mount{
+  top:var(--headh,110px) !important;
+  left:var(--lnav-w) !important;
+  z-index:60 !important;
+}
 /* The reason this build exists: .wrap ships max-width:none, so every table runs
    the full width of an ultrawide. Cap it — but never the masthead, which lives
    inside the fixed header and must stay full width. */
@@ -54212,6 +54241,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    screen in the app. */
 
 /* the panel itself — recessed into the black page */
+#qiStartView .wrap,
 #quickInspView .wrap{
   max-width:720px;margin:16px auto 26px;padding:18px 16px 14px;
   background:#FFD400;border-radius:18px;
@@ -54222,10 +54252,13 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* the heading was the actual complaint: #1c1416 on a #0b0b0f page. It now has a
    ground to be read against. -webkit-text-fill-color is reset too, because the
    retail gradient-clip treatment would otherwise blank it. */
+#qiStartView .viewhead,
 #quickInspView .viewhead{
   background:none;color:#1c1416;-webkit-text-fill-color:#1c1416;
 }
+#qiStartView .viewhead::after,
 #quickInspView .viewhead::after{background:rgba(0,0,0,.5);}
+#qiStartView .subnote,
 #quickInspView .subnote{color:#1c1416;opacity:.85;}
 
 /* every box within: near-black, sunk into the yellow, white text.
@@ -54285,6 +54318,22 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #quickInspView .qibar{background:transparent;}
 #quickInspView .qibar input[type=text]::placeholder{color:rgba(255,255,255,.62);-webkit-text-fill-color:rgba(255,255,255,.62);}
 #quickInspView #qiStream{padding-bottom:24px;}
+/* 561: the start step — same panel, so the two halves of Quick Inspection match.
+   Its Search / My location buttons get the stream bar's sunk-card treatment;
+   -webkit-text-fill-color is set alongside colour because .chipbtn pins #2c2c2c
+   and that property beats `color`. The map and the address input are left alone —
+   the input carries an inline style no rule here should be fighting. */
+#qiStartView .chipbtn{
+  background:#14110c;color:#ffffff;-webkit-text-fill-color:#ffffff;border:0;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.85),
+             inset 0 -1px 0 rgba(255,255,255,.08),
+             0 1px 0 rgba(255,255,255,.40);
+  transition:box-shadow .16s ease, transform .16s ease;
+}
+#qiStartView .chipbtn:hover{
+  box-shadow:0 11px 24px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.16);
+  transform:translateY(-2px);
+}
 </style>
 
 <script id="cr-crew-script">
