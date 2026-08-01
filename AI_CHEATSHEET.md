@@ -1593,27 +1593,72 @@ for English-language roofing work. This section is about the *strategy*, not the
 
 ## Glossary
 
-Every term this document uses that isn't plain English, defined once, with the part that leans on it.
+The ten worth learning first, then the rest — every term this document uses, plus the general
+vocabulary you'll meet anywhere else in AI. Defined once, with the part that leans on it.
+
+### The ten to learn first
+
+Everything below this panel is reference — look it up when you meet it. These ten are different: not
+knowing them is what makes the rest of the subject feel like a foreign language, and each one changes
+a decision you will actually make.
+
+1. **LLM.** The engine under ChatGPT, Claude and Gemini. Everything else — the app, the agent, the
+   assistant on your phone — is packaging around one of these.
+2. **Token.** About three-quarters of a word, and the unit *everything* is priced and measured in. A
+   million tokens is roughly 750,000 words. Every price in Part 9 is per million of them.
+3. **Context.** Everything the model can see at once: your question plus whatever you pasted. **It
+   has no memory beyond this.** More misunderstandings start here than anywhere else in the subject.
+4. **Hallucination.** The polite word for confidently making something up. There is no tell — a
+   fabricated part number reads exactly like a real one. This is why Part 1 says verify every number,
+   name and price.
+5. **Prompt.** What you type. The whole of Part 2 is the argument that it is a *work order* rather
+   than a wish, and that the difference is most of the value.
+6. **Agent.** AI that does a job rather than answering a question — it takes steps, uses tools, and
+   stops when it decides it is finished. Chats answer; agents act. Know which one you're talking to.
+7. **Weights.** The model itself: one very large file of numbers, produced by training and never
+   changed by using it. When someone says "the model", this file is the thing they mean.
+8. **Open-weight.** A model whose weights you can download and keep, as against one you can only rent
+   by the token. **This single distinction decides where your data goes** — see Part 15, which is
+   mostly about it.
+9. **RAG.** Search your own documents first, then answer from what the search found. The practical way
+   to make a model use *your* material — your prices, your specs, your twenty years — without
+   retraining anything.
+10. **Fine-tuning.** Retraining a model on your own material. Teaches it a *style*; does **not**
+    reliably teach it facts. Nine times in ten the thing you actually wanted was RAG, one line up.
+
+### Everything else, A to Z
 
 | Term | Meaning | Part |
 |---|---|---|
 | **ACV / RCV** | Actual cash value is what a roof is worth *today*, after age is deducted; replacement cost value is what it costs to replace new. Carriers usually pay ACV first and the difference once the work is done. | XII |
 | **Agent** | AI that does a job rather than answering a question — it takes steps, uses tools, and stops when it decides it's finished. | III |
+| **AI** | The umbrella word, and a loose one. In practice today it means software that learned a skill from examples rather than being given rules — which is why it can do things nobody wrote instructions for, and why it fails in ways ordinary software does not. | I |
 | **API** | The way one program talks to another without a human in between. When your app calls a model, it's using an API. | X |
 | **Batch job** | Work run over many records at once, usually overnight, with nobody watching. Local hardware's best shape. | VI |
+| **Benchmark** | A standard test used to rank models. Useful for spotting the rough tier a model sits in; close to useless for predicting how it does on *your* work. Run your own three real jobs instead. | IX |
 | **Container** | Software packed with everything it needs to run, so installing it can't break anything else — and removing it leaves no trace. Your undo button. | X |
 | **Context** | Everything the model can see at once: your question plus whatever you pasted. It has no memory beyond this. | I |
 | **Data residency** | Which country's soil your information physically sits on, and therefore whose laws reach it. The real question behind "is this service safe". | XV |
+| **Deep learning** | Machine learning using neural networks with many layers stacked up — "deep" is literally the number of layers. Everything in this document is built on it. | I |
 | **Embedding** | A way of turning text into numbers so a computer can find things that *mean* the same, not just things spelled the same. The search half of RAG. | X |
 | **Fine-tuning** | Adjusting a model's own weights on your material. Teaches it a style; does **not** reliably teach it facts. For facts you want RAG. | X |
+| **Frontier model** | Industry shorthand for the largest, most capable models of the moment — the handful at the leading edge. A moving label: today's frontier model is next year's ordinary one. | IX |
+| **Generative AI** | AI that *produces* something — text, an image, code, a summary — rather than just sorting or scoring what already exists. The whole of this document is about generative AI. | I |
 | **GGUF** | The model file format llama.cpp and Ollama use. | XI |
+| **GPU** | The graphics chip. It turned out that drawing games and running AI need the same kind of arithmetic, done thousands of ways at once, which is why an AI machine is mostly a very expensive graphics card and why NVIDIA is worth what it is. | VI |
 | **Hallucination** | The industry's polite word for confidently making something up. There is no tell — a fake part number reads exactly like a real one. | I |
 | **Headless** | Software with no screen or window; it runs in the background and you talk to it by script. Hermes Agent is headless, OpenClaw isn't. | XI |
 | **Inference** | The act of actually running a model to get an answer, as opposed to training it. What your Spark does. | X |
+| **Latency** | How long you wait before the answer starts. Separate from *throughput*, which is how fast it goes once started. Local wins on the second, cloud usually on the first. | VI |
 | **LLM** | Large language model — the thing underneath ChatGPT, Claude, Gemini and everything in Part 9. | I |
 | **LoRA** | A small extra file trained on your own images or text that pins a model to one style, without retraining the model itself. | XI |
+| **Machine learning** | Software that learns a pattern from examples instead of following rules a person wrote. The parent field; every term on this page sits inside it. | I |
 | **Mixture-of-experts** | A model built in parts, only some of which are read per word. Why one shape of model runs at 64 tokens a second on your Spark and another at 5. | VI |
+| **Model training** | The one-time, very expensive process that produces the weights — months of computation over enormous amounts of text. **You will never do this.** What you might do is fine-tuning or RAG, both of which are a different and much smaller thing. | X |
+| **Multimodal** | A model that handles more than text — images, audio, sometimes video — in the same conversation. Reading a roof photograph and a scope PDF in one go needs this. | XV |
+| **Neural network** | The structure underneath all of it: layers of very simple units, each passing numbers to the next, with the connection strengths adjusted during training until the output is right. The "weights" are those strengths. | I |
 | **Open-weight** | A model whose file you can download and keep. Not quite the same as open source — check the licence, especially Llama's. | IX |
+| **Parameters** | The individual numbers inside the model — the count you see quoted as 7B, 236B or 2.8T. Roughly, capacity. It is also what sets the file size and therefore whether the thing fits on your hardware at all, which is the arithmetic in Part 6. | VI |
 | **Prompt** | What you type. Part 2 is the argument that it's a work order rather than a wish. | II |
 | **Prompt injection** | When text inside a document or web page acts as an instruction to a model reading it. The reason an agent may read anything but shouldn't act unreviewed. | XIII |
 | **Quantization** | Squeezing a model to make it smaller and faster, at some cost in quality. `Q4` is the usual sensible setting. | XI |
@@ -1628,8 +1673,17 @@ Every term this document uses that isn't plain English, defined once, with the p
 | **Supplement** | A request to the carrier to pay for work the first scope missed. | XII |
 | **Tailscale** | A private network only your own devices can join, so you can reach the Spark from a jobsite without exposing it to the internet. | XI |
 | **Token** | About three-quarters of a word. The unit everything is priced in — a million is roughly 750,000 words. | IX |
+| **Vision AI** | A model that looks at pictures — reading a photograph, describing damage, pulling numbers off a scanned page. Part 8's captioner is this, and it is the AI a roofing company gets the most out of. | VIII |
 | **Weights** | The model itself: one very large file of numbers, produced by training and never changed by using it. | X |
 | **Whisper** | The speech-to-text model behind the transcription stack. | X |
+
+---
+
+**If you want a longer one.** This glossary is deliberately short — it defines what this document
+leans on and the general vocabulary around it, and stops. For a much fuller A–Z, with the marketing
+and automation terms this document has no reason to carry,
+[Zapier keeps a good one](https://zapier.com/blog/ai-terms/). Same advice as everywhere else in
+here: read it once for the shape, then come back when a word actually blocks you.
 
 ---
 
@@ -1785,6 +1839,10 @@ Six of these are vendor pages and will always be current. Check those, not this 
 - [DigitalOcean — what OpenClaw is (and that it was Clawdbot until Jan 2026)](https://www.digitalocean.com/resources/articles/what-is-openclaw)
 - [Turing Post — Hermes Agent vs OpenClaw, full comparison](https://www.turingpost.com/p/hermes)
 - [innFactory — an honest comparison of the two agent frameworks](https://innfactory.ai/en/blog/openclaw-vs-hermes-agent-comparison/)
+
+### Glossary — a longer one
+
+- [Zapier — AI terms glossary, the fuller A–Z](https://zapier.com/blog/ai-terms/)
 
 ### Part 14 — Project Glasswing
 
