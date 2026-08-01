@@ -66,7 +66,8 @@ async function probe(b, m, shot){
 }
 (async()=>{
   const b=await chromium.launch();
-  const B=await probe(b, mk('/home/user/cardinal-inspections/index.html'));
+  /* the control is the previous BUILD, not the working tree — the tree now holds 559 */
+  const B=await probe(b, mk(SC+'/prev558.html'));
   const A=await probe(b, mk(SC+'/app/index_v559.html'), 'qi_after.png');
 
   console.log('\nTHE ACTUAL COMPLAINT — the heading was invisible');
