@@ -4134,3 +4134,39 @@ correct.
 every row (18/18), no emoji surviving, style 2 showing in dark, style 5 after flipping to
 `rb-light`, at most two generic fallbacks (actual: zero), and the burger menu keeping its emoji.
 All seven harnesses pass — **354 assertions**.
+
+## 529–531 — my 510–512, rebuilt on top of 528
+
+Two sessions ran this repo at once. While I built 510–512, another built 513–528 and merged
+them. Mine were never merged, so `main` was missing all three — **verified against
+`origin/main`, not assumed**: the 510 prompt fix absent, all five broken emoji escapes still
+present, no trace of the illustrate feature in either file.
+
+Renumbered so the changelog reads in the order things shipped. The work is unchanged.
+`api/librarian.js` was taken wholesale — `main` has not touched that file since 508, and a
+diff proved its copy byte-identical to my branch's parent, so only `index.html` was patched.
+
+**Merging the old branch could not have broken the app:** GitHub refuses a conflicting PR.
+The two conflicts were the footer build stamp and the head of the `CHANGELOG` array — both
+sessions writing in the same two places. No conflicting logic anywhere.
+
+### The changelog gate was wrong three times, always in the same direction
+
+Each version flagged something that was fine:
+
+| rule | flagged | why it was wrong |
+|---|---|---|
+| codepoint ≥ 0x1F000 | **⚡** U+26A1 | emoji need not be astral |
+| exactly one codepoint | **◻️** U+25FB U+FE0F | a variation selector is a legitimate second codepoint |
+| any letter in the slot | build 487, *"The documents…"* | a note with no emoji is a style choice, not this bug |
+
+The signature that is actually right: **a non-ASCII character with an ASCII letter or digit
+fused onto it** — precisely what `\u1F4DA` collapses to, U+1F4D plus `A`. Nothing else.
+
+It also **only checked the first nine notes**, so it passed a file whose five broken escapes
+sat further down. A gate that cannot see the bug it was written for. It now checks every
+note and prints the recent nine plus every failure: **5 on 528, 0 on 531.**
+
+**Three wrong rules and a coverage hole, all on a gate I wrote to catch a bug I had caused
+six times.** Getting the failing case right is not the hard part — not flagging the passing
+cases is.
