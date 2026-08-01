@@ -4510,3 +4510,55 @@ comment now names the amber as the *history* of why the value is what it is. The
 
 `check_build.py` green (539, marker `literal yellow, Theo's call`, negative-controlled).
 Chromium: **25/25**. Harness at `harnesses/h539_chromium.js`.
+
+---
+
+## Build 540 — the money circle reads the table the money is actually in
+
+**Theo:** *"The circle where it shows the money stays at 0 and should be tied to the contract or
+approved estimate amount."*
+
+**The circle was never broken — it was pointed at the wrong table.** `projectValue()` scanned
+`cacheRows` (which is `inspection_reports`) for rows titled "Estimate…" and took the highest
+`total`. Measured against production, not guessed:
+
+| table | rows | with money |
+|---|---:|---|
+| `inspection_reports` | 22 | **0** — 3 match `isEstimateTitle` and all three total **0**; the other 19 are NULL |
+| `estimates` | 12 | **9** ← the money |
+| `contracts` | 0 | — |
+| `manual_estimates` | 0 | — |
+
+**Not one row in that table has ever carried money.** So the max was always 0 unless someone had
+typed a manual override — and no production checklist carries `manual_value` at all. Five real
+clients were showing $0 with money on the job: Kimberly Guy $36,654 · Kim Guy $36,432 ·
+Dan Thompson $11,920.99 · Kitty Hawk $6,180 · Betty Mann $1,820.
+
+**The order is Theo's own words.** A **signed contract wins outright** — not folded into the max,
+because if the contract says $30k and a stale estimate says $36k the contract is the truth.
+Otherwise the highest of: manual override, best **sent** estimate, legacy `inspection_reports`
+total. **Drafts do not count** — `estimates` is 8 draft / 4 sent today, so Kim Guy and Kitty Hawk
+stay at $0 until those are sent. That is a rule Theo can reverse with one word and the harness
+asserts it explicitly so the reversal is a one-line change.
+
+**Why `projectValue()` and nothing else.** It is the single money chokepoint for retail — **15 call
+sites**: the pipeline stage circles, Leads & Jobs cards, the client directory, reports revenue,
+backlog, profit margin, and the price that prefills a new contract. One fix lands in all of them.
+
+**The two new fetches cannot break the profile.** Both carry `.catch(→[])` exactly as `adb.list()`
+already does, so an RLS refusal degrades to "no contract/estimate money known" rather than taking
+down `reload()` and with it the whole client profile. The lookup maps start `{}` so all 15
+synchronous callers are safe before the fetch resolves — asserted.
+
+**Also found, not fixed here:** there are **two contract pipelines**. `createContractForCurrent()`
+(the `+ New contract` button in the profile) writes a `Contract — {name}` row into
+`inspection_reports`; a newer `/api/estimate_to_contract` flow writes to the `contracts` table.
+Both are empty in production — nobody has made a contract either way. `projectValue()` reads the
+`contracts` table. **This is the duplicate-pipeline bug class and it needs a decision from Theo.**
+
+`check_build.py` green (540, marker `indexMoney`, negative-controlled).
+**Harness: 18/18, and it is the good kind** — `projectValue`, `indexMoney` and `isEstimateTitle`
+are extracted from the shipped artifact by brace matching and executed against **rows pulled out of
+the live database**, nulls and duplicate titles included. The one stub, `parseCkAll`, is proven
+inert by an assertion that no production checklist carries `manual_value`.
+Harness at `harnesses/h540_prod.js`, data at `harnesses/prod540.json`.

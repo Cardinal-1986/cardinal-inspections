@@ -3157,7 +3157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 539 &#8212; Landing is the same yellow in light mode as it is in dark</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 540 &#8212; the money circle on a client now shows the signed contract, or the estimate you sent, instead of $0</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9197,6 +9197,27 @@ var PKEY = 'cardinal_projects_v1';
 function plsLoad(){ try{ return JSON.parse(localStorage.getItem(PKEY)) || []; }catch(e){ return []; } }
 function plsSave(l){ localStorage.setItem(PKEY, JSON.stringify(l)); }
 
+/* 540: the two money tables. Read-only, narrow selects, and deliberately NOT
+   folded into db/pdb — those are the inspection_reports and projects pipelines
+   and have their own local-storage fallbacks. There is no offline story for
+   money, so these simply return [] when signed out. */
+var moneyDb = {
+  estimates: async function(){
+    if(!TEAM) return [];
+    var r = await sb.from('estimates')
+      .select('id,project_id,total,status,archived');
+    if(r.error) throw r.error;
+    return r.data || [];
+  },
+  contracts: async function(){
+    if(!TEAM) return [];
+    var r = await sb.from('contracts')
+      .select('id,project_id,total,status,homeowner_signed_at,voided_at');
+    if(r.error) throw r.error;
+    return r.data || [];
+  }
+};
+
 var pdb = {
   list: async function(){
     if(TEAM){
@@ -9371,6 +9392,12 @@ var mount = document.getElementById('historyMount');
 var countLabel = document.getElementById('countLabel');
 
 var cacheProjects = [];
+/* 540: project_id -> money, filled by reload(). Synchronous readers (there are
+   15 of them through projectValue) must be safe before the fetch resolves, so
+   these start empty and an empty map simply means "no contract/estimate money
+   known yet" — never an exception. */
+var estBest = {};   /* highest total among SENT/approved estimates */
+var ctrSigned = {}; /* total on the signed, un-voided contract */
 /* 493: [] means two different things - the table is empty, or we never got a
    successful read. A denied or failed load leaves cacheProjects at its initial
    [], and the home empty-state then tells the user they have no clients. The
@@ -9394,11 +9421,17 @@ async function reload(){
   try{
     var res = await Promise.all([
       pdb.list(), db.list(),
-      adb.list().catch(function(){ return []; })
+      adb.list().catch(function(){ return []; }),
+      /* 540: the money lives here, not in inspection_reports. Both catch to []
+         for the same reason adb does — an RLS refusal must not take down
+         reload(), and with it the entire client profile. */
+      moneyDb.estimates().catch(function(){ return []; }),
+      moneyDb.contracts().catch(function(){ return []; })
     ]);
     cacheProjects = res[0];
     cacheRows = res[1];
     cacheAppts = res[2];
+    indexMoney(res[3], res[4]);
     cacheLoaded = true;   /* 493: only here, and only after the awaits resolved */
     if(currentProject){
       var fresh = cacheProjects.find(function(x){ return x.id === currentProject.id; });
@@ -16474,8 +16507,48 @@ var PIPE_BUCKETS = [
    would otherwise appear as a permanently empty sixth column on the Retail
    and Insurance boards, because renderPipeline does not filter by CRM. */
 var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
+/* 540 ─ where the money actually is ─────────────────────────────────────────
+   projectValue() used to scan inspection_reports for rows titled "Estimate…"
+   and take the highest total. Measured against production: that table has 22
+   rows, 3 of them match, and ALL THREE have total = 0 — the other 19 are NULL.
+   Not one row in it has ever carried money. The money is in `estimates`, which
+   this function never opened, so the circle read $0 for every client who had
+   not been given a manual override.
+
+   ONLY SENT ESTIMATES COUNT. A draft is a number still being edited; the
+   circle must not move on its own while Theo is typing. */
+var SENT_EST = { sent:1, approved:1, accepted:1, signed:1 };
+
+function indexMoney(estimates, contracts){
+  estBest = {};
+  (estimates || []).forEach(function(e){
+    if(!e || !e.project_id) return;
+    if(e.archived) return;
+    if(!SENT_EST[String(e.status || '').toLowerCase()]) return;
+    var t = Number(e.total) || 0;
+    if(t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
+  });
+  ctrSigned = {};
+  (contracts || []).forEach(function(c){
+    if(!c || !c.project_id) return;
+    if(c.voided_at) return;                       /* a voided contract is not money */
+    if(!c.homeowner_signed_at) return;            /* unsigned is not money either */
+    var t = Number(c.total) || 0;
+    if(t > (ctrSigned[c.project_id] || 0)) ctrSigned[c.project_id] = t;
+  });
+}
+
+/* Theo's own order: "tied to the contract or approved estimate amount".
+   A SIGNED CONTRACT WINS OUTRIGHT — it is not folded into the max, because if
+   the contract says $30k and a stale estimate says $36k, the contract is the
+   truth. Everything else is the highest of what we know. */
 function projectValue(pr){
+  if(!pr) return 0;
+  var signed = Number(ctrSigned[pr.id]) || 0;
+  if(signed > 0) return signed;
   var best = Number(parseCkAll(pr).manual_value) || 0;
+  var est = Number(estBest[pr.id]) || 0;
+  if(est > best) best = est;
   cacheRows.forEach(function(r){
     if(r.project_id === pr.id && isEstimateTitle(r.title) && Number(r.total) > best){
       best = Number(r.total);
@@ -33863,6 +33936,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:540, note:'\uD83D\uDCB0 The money on a client is real now. \u2666 The circle, the job cards, the pipeline totals and the reports were all reading a table that has never had a dollar in it, so everything showed $0. \u2666 They now read the signed contract first, and if there is not one, the highest estimate you have actually SENT. \u2666 Drafts do not count \u2014 send the estimate and the number appears.' },
 { build:539, note:'\uD83D\uDC9B Landing is yellow in both modes. \u2666 In the light theme it had been a darker amber so it would stay readable on the white menu; it is now the same yellow as the dark theme.' },
 { build:538, note:'\uD83C\uDF08 Three menu items are colour-coded. \u2666 In the left menu on desktop, Cardinal Truth reads red, Community Hub emerald green and Landing yellow \u2014 just the wording, the icons are unchanged. \u2666 Each colour has a light-mode twin, because the bright versions cannot be read on a white menu.' },
 { build:537, note:'\uD83C\uDFA8 Card headings have real icons. \u2666 The squares beside the headings on the home page and the Graphs \u0026 Reports page are gone \u2014 all 20 now carry a drawn icon in the same style as the left menu. \u2666 Both calendars finally look like calendars, and Punch \u0026 Repairs is a wrench rather than a second hammer. \u2666 They follow the theme the way the menu does: filled in dark, outlined in light.' },
