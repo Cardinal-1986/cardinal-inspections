@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-07-31 build 519 &#8212; removed the small calendar from the top right of the dashboard</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 520 &#8212; on desktop the dashboard and the Activity column both spread further right instead of leaving dead space</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33851,6 +33851,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:520, note:'\u2194 The desktop dashboard uses more of a wide screen. The page stretches further right instead of leaving a band of dead space either side, and the Activity column beside it widens with the screen rather than staying a fixed narrow strip. On a laptop nothing changes; the Activity column has a floor so it can never be squeezed thin.' },
 { build:519, note:'\uD83D\uDDD3 The small calendar in the top right of the dashboard is gone. The Cardinal Team Calendar and Production Calendar further down are untouched. Note the \u201Cnext appointment\u201D line lived inside that card and went with it \u2014 say the word and it comes back on its own.' },
 { build:518, note:'\uD83D\uDCCF Fixed the proportions on a wide monitor. The previous change capped the page at a fixed width, which looked right on a laptop and left a narrow strip of content floating in the middle of an ultrawide with dead space either side. The width now scales with the screen \u2014 most of it on a big monitor, still reined in so nothing stretches edge to edge.' },
 { build:517, note:'\uD83E\uDDED Menu tidy-up. \u2666 Sales Floor now sits at the top of \u201CSell\u201D where it belongs, instead of loose at the bottom of the menu. \u2666 Objection Coach came out of the menu \u2014 it is already inside Sales Floor, and one way in is enough. \u2666 ABC Supply moved to Admin. \u2666 Community Partners had been listed twice; now once. Health Check was already in Admin.' },
@@ -51056,7 +51057,7 @@ window.CardinalSortPhotos = Object.assign(window.CardinalSortPhotos || {}, {
      1920        -> 1547, ~67 a side
    min() means the percentage wins on a small screen, so it can never overflow
    the way a hard floor would. */
-:root{--lnav-w:0px;--lnav-top:96px;--lnav-cap:min(2400px, 92%)}
+:root{--lnav-w:0px;--lnav-top:96px;--lnav-cap:min(2900px, 95%)}
 @media (min-width:1100px){ :root{--lnav-w:238px} }
 @media print{ #cr-lnav{display:none !important} }
 
@@ -51379,6 +51380,25 @@ scrape  : scrape
    with it. It is the one thing here that was not duplicated elsewhere, so it is
    flagged rather than quietly dropped - one line puts it back on its own. */
 #calCard{display:none !important}
+/* ---- both columns spread right (520) ---------------------------------------
+   Measured on Theo's 3440 at build 519: the content sat 639-3039 with **401px of
+   dead black on each side**, and .homeside was pinned at a flat `flex:0 0 320px`
+   - so the Activity rail stayed a narrow strip no matter how much room was going
+   spare beside it. Both of those are what he is pointing at.
+
+   The cap goes 2400 -> 2900 (min(2900px,95%)), and the rail becomes proportional
+   instead of fixed. clamp() is right here where min() was right for the cap: the
+   rail needs a FLOOR so it cannot be squeezed to nothing on a 1440 laptop, and a
+   ceiling so it does not run away on an ultrawide.
+
+     3440 -> rail 460 (the ceiling), dead ~80 a side, was 320 / 401
+     1920 -> rail ~330
+     1440 -> rail 320, the floor - unchanged from today
+
+   Scoped to body.cr-lnav-on, so it only applies where the desktop menu is
+   mounted. Phones and tablets keep the layout they have, including the
+   existing @media (max-width:900px) rule that makes the rail full width. */
+body.cr-lnav-on .homeside{flex:0 0 clamp(320px, 22%, 460px)}
 </style>
 </body>
 </html>

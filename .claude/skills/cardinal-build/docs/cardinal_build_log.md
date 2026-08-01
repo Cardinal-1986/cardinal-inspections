@@ -3561,3 +3561,40 @@ small screens and it can never overflow.
 asserted the literal `'1180px'`. That tied the test to one screen size — exactly what the cap itself
 got wrong. It now identifies capped elements by elimination and adds a real ratio check at 3440:
 content ≥2200 with gutters <550. **33/33**, up from 32. 517's harness re-run: **14/14**.
+
+---
+
+## 520 · 1 August 2026 · both dashboard columns spread right
+
+Theo, with a photo of his ultrawide: *"On desktop, can you make the left column expanded over to the
+right and the right side activity column expand over to the right."*
+
+**Measured at 3440 before changing anything**, which named both halves precisely: the content sat
+**639–3039 with 401px of dead black on each side**, and `.homeside` was pinned at a flat
+`flex:0 0 320px` — so the Activity rail stayed a narrow strip however much room was going spare
+beside it.
+
+Cap 2400 → **`min(2900px, 95%)`**; rail → **`clamp(320px, 22%, 460px)`**.
+
+| Width | main (was → now) | Activity (was → now) | dead each side |
+|---|---|---|---:|
+| **3440** | 1988 → **2348** | 320 → **460** | 401 → **151** |
+| 2560 | 1724 → 1654 | 320 → 460 | 93 → 58 |
+| 1920 | 1135 → 1170 | 320 → 336 | 67 → 42 |
+| 1440 | 694 → 730 | 320 → 320 | 48 → 30 |
+| 1100 | 381 → 407 | 320 → 320 | 34 → 22 |
+
+`clamp()` here where `min()` was right for the cap, and the difference is the point: the rail needs a
+**floor** so a 1440 laptop cannot squeeze it thin, and a **ceiling** so it does not run away on an
+ultrawide. The cap needs neither floor nor ceiling — only a ceiling and a percentage — which is why a
+`clamp()` there would have introduced the overflow risk 518 avoided.
+
+At 2560 `main` gets 70px *narrower* because the rail took 140. That is the trade he asked for, not a
+regression.
+
+Scoped to `body.cr-lnav-on`, so it only applies where the desktop menu mounts. Phones and tablets are
+untouched, including the existing `@media (max-width:900px)` rule that makes the rail full width.
+
+**Gates.** `check_build.py` green. All four harnesses re-run — **147 assertions**, no change needed
+to any of them: 518's ratio check at 3440 (content ≥2200, gutters <550) still holds at 2900/151.
+No horizontal overflow at any of the five widths.
