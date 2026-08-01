@@ -149,9 +149,62 @@ catches most bad runs while they're still free.
 | Pull every job that hasn't moved in 21 days with a one-line status each | Data gathering plus writing, and you can spot-check any row |
 | Watch a deploy and fix what breaks | Needs tools, has an unambiguous finish line: it's green or it isn't |
 
+### Letting it run: `/goal`
+
+Normally Claude does one turn and hands control back. `/goal` sets a **finish line** and keeps it
+working across turns until that line is crossed, so you stop prompting every step. Setting it starts
+work immediately — no second prompt needed.
+
+*(It's `/goal`, with a slash. In Claude Code `@` pulls a file into your message — `@index.html` —
+and `/` runs a command against the session. There is no `@goal`.)*
+
+| Type this | What happens |
+|---|---|
+| `/goal <condition>` | Sets the finish line and starts working. One goal per session — a new one replaces the old |
+| `/goal` | Status: the condition, how long it's run, turns evaluated, tokens spent, and the checker's most recent reason |
+| `/goal clear` | Cancels it. `stop`, `off`, `reset`, `none` and `cancel` all work too |
+
+**The mechanic that decides everything.** After each turn a *separate small model reads the
+conversation* and answers one question: is the condition met, yes or no? No, and Claude keeps going
+using that reason as its next instruction. Yes, and the goal clears itself.
+
+**That checker can't run commands or open files.** It only sees what Claude has already put on
+screen. This is the whole ballgame — a condition it can't verify from the transcript is a loop that
+never ends.
+
+#### Eight tips for using it well
+
+1. **Write a finish line, not a task list.** "Migrate the module until every call site compiles and
+   the tests pass" — not "do A, then B, then C." You're describing *done*, not the route.
+2. **Make it provable on screen.** Name the command that proves it: *"`check_build.py` exits 0 and
+   the full output is pasted."* If nothing prints, the checker has nothing to read.
+3. **Always add a stop clause.** *"…or stop after 20 turns."* Without one, a badly worded condition
+   keeps burning turns until you happen to look.
+4. **Say what must not change.** "No other file is modified." Constraints are part of the finish
+   line, not a footnote.
+5. **Check on it with a bare `/goal`.** The checker's last reason is the useful bit — it tells you
+   exactly what it's still waiting to see.
+6. **If it won't finish, the condition is wrong — not the model.** Read that last reason. Nine times
+   in ten it's asking for proof that never got printed.
+7. **Never use it for taste.** Colour, layout, tone, "does this look right" — none of it has a
+   finish line a checker can see. Those stay turn-by-turn with your eyes on them.
+8. **Pair it with auto mode only when you mean it.** `/goal` doesn't change permissions on its own.
+   Auto mode plus a goal means unattended edits — fine for an audit, risky for a build.
+
+#### What that looks like here
+
+| Won't finish | Will |
+|---|---|
+| `/goal` make the retail home page look better | `/goal` check_build.py passes on index.html with --prev and my marker, the app stamp is bumped, and a CHANGELOG entry exists for the new build. Paste the full gate output every turn. Stop after 15 turns. |
+| `/goal` fix the estimates bug | `/goal` Every `.single()` call site in index.html is listed in a table with its position and how it guards. Paste the table in full. Change no code. Stop after 12 turns. |
+
+The pattern in both: the good version names a command whose output lands in the transcript, and
+bounds itself. The bad version asks for a judgment nobody can check.
+
 **What it costs.** An agent runs many steps, so it costs meaningfully more than a single chat
 message — you're trading tokens for your own time. Worth it when the job really is twenty minutes of
-clicking. Not worth it for a question you could have just asked.
+clicking. Not worth it for a question you could have just asked. A `/goal` multiplies this by
+however many turns it takes, which is the real reason to write the stop clause.
 
 ---
 
@@ -377,6 +430,16 @@ Miss one and you get a wrong first draft. That's the whole trick.
 > **"Show me your plan before you start."**
 >
 > Then: draft, don't send. Stage, don't push. Check it before it goes out.
+
+### Letting it run — /goal
+
+`/goal <finish line>` keeps it working turn after turn until a checker agrees it's done. `/goal` on
+its own shows status. `/goal clear` stops it. (Slash, not `@`.)
+
+- Describe **done**, not the steps to get there.
+- The checker only reads the chat — name the command that proves it.
+- Always end with "or stop after 20 turns."
+- Never for looks, colour or tone. Nothing there to check.
 
 ### What it can't do
 
