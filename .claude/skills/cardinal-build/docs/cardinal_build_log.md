@@ -5044,3 +5044,43 @@ line straight across the middle of the panel, 186 luma. The harness caught it be
 write; the light rule now re-zeroes `border-top`.
 
 Gates: `check_build.py` green, negative-controlled, 552 → 553. Chromium 22/22, both themes.
+
+### build 554 — a Roofr upload fills the measurements and the pitch
+Theo: "Roofr when uploaded should be auto populating the info for pitch and measurements."
+
+**The audit behind it.** The same roof facts had THREE homes and the import populated
+the one nothing reads:
+- `checklist.roofr` — written by `wireRoofrUpload`, read by nobody afterwards
+- `checklist.meas` — written ONLY by the hand-typed Measurements modal
+- `checklist.pitch` / `.layers` / `.decking` — written by the roof INSPECTION checklist
+  (`ck_pitch`, `ck_layers`, `ck_decking`), read by the Construction Agreement via
+  `collapse('pitch', _ck.pitch)`
+
+So a job could be measured by Roofr and still show an empty Measurements panel and a
+blank pitch line on its agreement.
+
+**The change.** The merge is lifted into a named pure function `roofrMerge(all, d)` beside
+`fillRoofrFields`, so the gate can execute the shipped code rather than a re-implementation.
+Precedence: Roofr fills blanks and refreshes its OWN earlier numbers (a corrected re-upload
+works), never overwrites a field measurement, and a mixed record reads `Field + Roofr`
+rather than being relabelled. `checklist.pitch` is filled only when the inspection left it
+blank. `layers`/`decking` are untouched — Roofr does not report them.
+
+**Corrections to claims I made earlier in the session, all mine:**
+- I said "nothing writes `checklist.layers/pitch/decking`". **Wrong** — the roof inspection
+  checklist writes them (`ck_layers`, `ck_pitch`, `ck_decking`, and `ck_sat` for a satellite
+  dish). My regex `(layers|pitch|decking)\s*:` missed it because the form reads DOM values
+  into a differently-shaped object.
+- I said the one project carrying them was a test row from 542. **Wrong** — it is "Alton",
+  created 17 Jul, with real values (8/12, 2 Layers, 1x6 Plank / Spaced Lumber), and it is a
+  *different* project from the one carrying `meas`.
+- Block attribution by "nearest preceding named block" is unreliable: **unnamed script blocks
+  get credited to whatever named block precedes them**, which made real code look like it
+  lived in `cr-pcard-styles` (the base64 blob). Track block ENDs, not just starts.
+
+**Stated caveat:** zero projects in production carry a `roofr` key, so no real import has
+ever landed. The payload shape is taken from `api/roofr.js`'s own documented contract.
+The harness runs against REAL checklist rows pulled from the database for everything else.
+
+Gates: `check_build.py` green, negative-controlled, 553 → 554. Harness 32/32 against
+production rows.

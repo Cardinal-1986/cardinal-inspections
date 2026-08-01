@@ -3175,7 +3175,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 553 &#8212; the right side of Crews matches the crew list, and Choose File is no longer a raw browser control</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 554 &#8212; a Roofr upload now fills the measurements and the pitch, not just the document in front of you</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18539,7 +18539,7 @@ function wireRoofrUpload(doc){
           var mAll = {};
           try{ mAll = JSON.parse(mpr.checklist || '{}') || {}; }catch(me){}
           data.imported_at = new Date().toISOString();
-          mAll.roofr = data;
+          roofrMerge(mAll, data);
           var mS = JSON.stringify(mAll);
           await pdb.update(mpr.id, { checklist: mS });
           mpr.checklist = mS;
@@ -18557,6 +18557,56 @@ function wireRoofrUpload(doc){
 
 }
 
+/* 554: a Roofr import used to fill the open document and save its raw payload
+   under checklist.roofr, and stop. Nothing read that key afterwards, so the
+   Measurements panel and the agreement's pitch line stayed empty on a job that
+   had just been measured. This lands the numbers where the app already looks
+   for them: checklist.meas (the Measurements modal) and checklist.pitch (the
+   inspection field the Construction Agreement collapses into line 13).
+
+   Precedence: Roofr fills blanks and refreshes its OWN earlier numbers, so a
+   corrected re-upload works. It never overwrites a field measurement — someone
+   who stood on the roof outranks a model reading a PDF — and a record that
+   ends up mixed is labelled 'Field + Roofr' rather than relabelled 'Roofr',
+   so the mixture stays visible.
+
+   layers and decking are deliberately untouched. Roofr does not report them;
+   ck_layers / ck_decking on the inspection checklist are their only source.
+
+   Kept as a pure (all, data) function so the gate can run THIS code against
+   real checklist rows instead of a re-implementation of it. */
+function roofrMerge(all, d){
+  if(!all || !d) return;
+  all.roofr = d;
+  var sq = (d.squares != null) ? Number(d.squares)
+         : (d.area_sqft != null ? Number(d.area_sqft) / 100 : null);
+  var prev = (all.meas && typeof all.meas === 'object') ? all.meas : {};
+  /* no source recorded means nothing has claimed these numbers yet */
+  var ours = !prev.source || String(prev.source).toLowerCase().indexOf('roofr') === 0;
+  var next = {}, wrote = 0;
+  Object.keys(prev).forEach(function(k){ next[k] = prev[k]; });
+  function put(key, val){
+    if(val == null || val === '') return;
+    if(!ours && next[key]) return;                 /* a human measured this */
+    var s = String(val);
+    if(String(next[key] == null ? '' : next[key]) === s) return;
+    next[key] = s; wrote++;
+  }
+  put('sq', (sq != null && isFinite(sq)) ? sq.toFixed(1) : null);
+  put('pitch',  d.pitch);
+  put('ridge',  d.ridge_lf);
+  put('hip',    d.hip_lf);
+  put('valley', d.valley_lf);
+  put('eave',   d.eave_lf);
+  put('rake',   d.rake_lf);
+  if(wrote){
+    next.source = ours ? 'Roofr' : 'Field + Roofr';
+    next.updated_at = d.imported_at || new Date().toISOString();
+    all.meas = next;
+  }
+  /* the inspector's pitch, taken on the roof, wins over a derived one */
+  if(!all.pitch && d.pitch) all.pitch = String(d.pitch);
+}
 function fillRoofrFields(doc, d){
   function setPh(key, val){
     var el = doc.querySelector('[data-roofr="' + key + '"]');
@@ -34116,6 +34166,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:554, note:'\uD83D\uDCD0 A Roofr upload fills the job, not just the page. \u2666 Squares, pitch, ridge, hip, valley, eave and rake land in Measurements, and the pitch reaches the Construction Agreement. Before, the import filled the document you had open and nothing else. \u2666 It fills blanks and refreshes its own earlier numbers, but never overwrites a measurement taken by hand \u2014 those records read \u2018Field + Roofr\u2019. \u2666 Layers and decking still come from the inspection only.' },
 { build:553, note:'\u25E7 The right side of Crews got the same finish as the left. \u2666 Its corners were 10px against the crew list\u2019s 14 \u2014 they match now. \u2666 The Choose File button on Compliance was a raw browser control; it is styled like every other field, in both themes. \u2666 Document rows, notes and the rate frame share the card\u2019s hairline instead of a pink one. \u2666 In dark, a white line ran across the middle of the panel where the tabs meet the content. Gone.' },
 { build:552, note:'\uD83D\uDD34 Red edge on the light Crews cards, on top instead of the plain white one.' },
 { build:551, note:'\u2728 The light cards pop now. \u2666 Crews cards sit up off the page with a real shadow instead of a faint one \u2014 the app\u2019s own lifted look, which until now you could only see by hovering, and a phone cannot hover.' },
