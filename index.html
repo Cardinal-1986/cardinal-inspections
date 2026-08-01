@@ -3169,12 +3169,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="recents">&#128337; Recents</button>
           <button class="navopt" data-nav="pricing">&#127991;&#65039; Pricing Catalog</button>
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
+          <button class="navopt" data-nav="crews">&#128119; Crews</button>
 
           <div class="navsec">Account</div>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 546 &#8212; cards lift on hover, two navigators, navy leads and obsidian estimates</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 547 &#8212; Crews: a page for your subcontractors, grouped by trade, with their W-9 and insurance on file</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15872,6 +15873,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'landing'){ goToLanding(); }
   else if(nav === 'profile'){ openMyProfile(); }
   else if(nav === 'clients'){ openClientsDirectory(); }
+  else if(nav === 'crews'){ if(window.CardinalCrews) window.CardinalCrews.open(); }
   else if(nav === 'feed'){ openActivityFeed(); }
   else if(nav === 'reports'){ openReportsView(); }
   else if(nav === 'leads'){ openLeadsView(); }
@@ -34114,6 +34116,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:547, note:'\uD83D\uDC77 Crews. \u2666 A page for your subcontractors, grouped by trade \u2014 Roofing, Siding, Window Installers, Gutters, General Repairs. \u2666 Each crew carries their W-9 and insurance certificates, and the list shows at a glance who is covered and whose is about to lapse. \u2666 Notes too. Labor rates, work orders and payments come next.' },
 { build:546, note:'\u2728 Cards lift when you hover them. \u2666 Leads, the estimate builder and the reports page all raise off the page under the cursor. \u2666 Lead cards are navy now, matching the home screen. \u2666 The client name is white and the PO gold \u2014 they were a red-to-blue gradient that measured below the readable minimum. \u2666 Call, text and now Email sit in raised grey buttons down the right of every lead card. \u2666 The filter rail on Leads is a sunk black channel with proper drop-down sections, the same one the CRM menu uses. \u2666 The estimate builder has a jump list on the left \u2014 tap any line item to go straight to it \u2014 and the whole page is obsidian black. \u2666 Reports cards are obsidian too, with a thin red edge, and the numbers are colour-coded: money green, new leads yellow, signed work dark green.' },
 { build:545, note:'\u26AB Activity Count tiles are obsidian now. \u2666 Raised off the page, glossy black, with a sheen from the top-left. \u2666 The orange numbers are exactly the same orange as before.' },
 { build:544, note:'\uD83C\uDFF7\uFE0F Stage chips read properly in dark mode. \u2666 They were light pastel lozenges on a near-black card \u2014 retail never got a dark version, only the insurance side did. \u2666 They now use the same colours Cardinal Claims already uses. Light mode is unchanged.' },
@@ -52064,6 +52067,7 @@ cardinaltruth:'<path d="M12 2 4 5v6.5c0 5 3.4 9.2 8 10.5 4.6-1.3 8-5.5 8-10.5V5z
 communityhub:'<path d="M12 3 3 10h2.5v11h5v-6h3v6h5V10H21z"/>',
 communitypartners:'<circle cx="7.5" cy="9" r="3.2"/><circle cx="16.5" cy="9" r="3.2"/><path d="M1.6 20a6 6 0 0 1 11.8 0zM10.6 20a6 6 0 0 1 11.8 0z"/>',
 resourcelibrary:'<path d="M4 3h4v18H4zM9.5 3h4v18h-4zM15.4 3.9l3.9 1-4.2 16.2-3.9-1z"/>',
+crews:'<circle cx="9" cy="7.2" r="3.4"/><path d="M2.2 20.4a6.8 6.8 0 0 1 13.6 0z"/><path fill-rule="evenodd" d="M17.4 8.4a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zm0 1.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/><path d="M13.4 20.4a4.6 4.6 0 0 1 8.4-2.6v2.6z"/>',
 graphsreports:'<rect x="3" y="12" width="4.4" height="9" rx="1"/><rect x="9.8" y="7" width="4.4" height="14" rx="1"/><rect x="16.6" y="3" width="4.4" height="18" rx="1"/>',
 activityfeed:'<path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/>',
 recents:'<circle cx="12" cy="12" r="9"/><path d="M11 6.5h2V12l4 2.4-1 1.7-5-3z" fill="#0d0d10"/>',
@@ -52091,6 +52095,7 @@ cardinaltruth:'<path d="M12 4v16"/><path d="M6 8h12" class="m"/>',
 communityhub:'<path d="M4 18h16" class="m"/><path d="M7 18V9l5-4 5 4v9"/>',
 communitypartners:'<path d="M5 8h6" class="m"/><path d="M13 8h6" class="m"/><path d="M5 16h14"/>',
 resourcelibrary:'<path d="M6 4v16" class="m"/><path d="M11 4v16"/><path d="M16 4v16" class="m"/>',
+crews:'<circle cx="9" cy="7.2" r="3.2"/><path d="M3 20.4a6 6 0 0 1 12 0"/><circle cx="17.4" cy="11" r="2.4" class="m"/><path d="M14 20.4a4 4 0 0 1 7.4-2.1" class="m"/>',
 graphsreports:'<path d="M4 20V13" class="m"/><path d="M10 20V8"/><path d="M16 20V4" class="m"/><path d="M4 20h16" class="m"/>',
 activityfeed:'<path d="M13 4 6 13h5l-1 7 8-10h-5z"/>',
 recents:'<circle cx="12" cy="12" r="7" class="m"/><path d="M12 8v4.4l3 1.8"/>',
@@ -53304,5 +53309,453 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #reportsView .rptkpi small.up{color:#4fc98a;}
 #reportsView .rptkpi small.down{color:#f0a3a9;}
 </style>
+<div id="crewsView" style="display:none;position:fixed;inset:0;z-index:156;overflow-y:auto;"></div>
+<style id="cr-crew-styles">
+/* ══ Build 547 · Crews — trade nav, profile, compliance vault, notes ═══════
+   Chrome is borrowed, not invented: the trade nav is #cr-lnav's banded
+   sections over 536's recessed well; dark cards are 545's obsidian; status
+   chips are 544's retail-dark stage palette. Every token carries a literal
+   fallback (448-449).                                                      */
+#crewsView{ background:var(--crw-page,#0d0d10); color:var(--crw-ink,#c2cbd8);
+  font:13px/1.45 system-ui,-apple-system,'Segoe UI',Arial,sans-serif; }
+:root[data-theme="rb-light"] #crewsView{ background:var(--crw-page,#f2f3f5); color:var(--crw-ink,#2f3338); }
+
+#crewsView .crw-top{ display:flex;justify-content:space-between;align-items:center;
+  padding:16px 18px 10px;gap:12px;flex-wrap:wrap; }
+#crewsView .crw-h{ font:800 17px system-ui;color:var(--crw-head,#fff); }
+:root[data-theme="rb-light"] #crewsView .crw-h{ color:var(--crw-head,#161616); }
+#crewsView .crw-mut{ color:var(--crw-mut,#9aa0a8); }
+:root[data-theme="rb-light"] #crewsView .crw-mut{ color:var(--crw-mut,#5f666e); }
+
+#crewsView .crw-btn{ font:700 12px system-ui;padding:8px 13px;border-radius:7px;cursor:pointer;
+  border:1px solid var(--crw-line,#2b2b33);background:var(--crw-btn,#1c1c22);color:var(--crw-ink,#c2cbd8); }
+:root[data-theme="rb-light"] #crewsView .crw-btn{ background:var(--crw-btn,#fff);
+  border-color:var(--crw-line,#dcdee2);color:var(--crw-ink,#2f3338); }
+#crewsView .crw-btn.primary{ background:#c8202e;border-color:#c8202e;color:#fff; }
+#crewsView .crw-x{ background:none;border:0;font-size:22px;line-height:1;cursor:pointer;
+  color:var(--crw-mut,#9aa0a8); }
+
+#crewsView .crw-wrap{ display:grid;grid-template-columns:236px 1fr;gap:14px;
+  align-items:start;padding:0 18px 26px; }
+@media (max-width:820px){ #crewsView .crw-wrap{ grid-template-columns:1fr; } }
+
+/* ── trade nav — #cr-lnav's shape, 536's well ── */
+#crewsView .crw-nav{ border-radius:10px;padding:7px 0;overflow:hidden;
+  background:var(--crw-well,#0A0E16);border:1px solid var(--crw-welln,#223047);
+  box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055); }
+:root[data-theme="rb-light"] #crewsView .crw-nav{ background:var(--crw-well,#f2f3f5);
+  border-color:var(--crw-welln,#dcdee2);
+  box-shadow:inset 3px 0 6px -3px rgba(30,45,65,.22), inset -1px 0 0 #fff; }
+#crewsView .crw-sec{ display:flex;justify-content:space-between;align-items:center;
+  font:800 10px system-ui;letter-spacing:.07em;text-transform:uppercase;
+  padding:8px 13px 7px;margin-top:5px;color:var(--crw-secink,#8d97a6);
+  background:linear-gradient(180deg,#141C29,#0F1521);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910; }
+:root[data-theme="rb-light"] #crewsView .crw-sec{ color:var(--crw-secink,#5a6068);
+  background:linear-gradient(180deg,#e9ebee,#f2f3f5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 #dcdee2; }
+#crewsView .crw-item{ display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:8px 13px;font-size:12.5px;cursor:pointer;border-left:3px solid transparent;
+  color:var(--crw-ink,#c2cbd8); }
+:root[data-theme="rb-light"] #crewsView .crw-item{ color:var(--crw-ink,#3f3f46); }
+#crewsView .crw-item.on{ font-weight:700;color:#fff;
+  background:linear-gradient(180deg,#1A2434,#141C29);
+  box-shadow:inset 3px 0 0 #c8202e, 0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07); }
+:root[data-theme="rb-light"] #crewsView .crw-item.on{ background:#fff;color:#161616;
+  box-shadow:inset 3px 0 0 #c8202e, 0 1px 2px rgba(30,45,65,.10); }
+#crewsView .crw-dot{ width:7px;height:7px;border-radius:50%;flex:0 0 auto; }
+#crewsView .crw-dot.ok{ background:#4caf71; } #crewsView .crw-dot.warn{ background:#e6912d; }
+#crewsView .crw-dot.bad{ background:#c8202e; }
+
+/* ── the panel — 545's obsidian in dark, raised white in light ── */
+#crewsView .crw-card{ border-radius:10px;padding:14px;
+  background:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid var(--crw-cardn,#24242c);
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.10) inset; }
+:root[data-theme="rb-light"] #crewsView .crw-card{ background:var(--crw-card,#fff);
+  border-color:var(--crw-cardn,#dcdee2);box-shadow:0 2px 6px rgba(30,45,65,.10); }
+
+#crewsView .crw-pill{ display:inline-block;font:800 9.5px system-ui;letter-spacing:.06em;
+  text-transform:uppercase;padding:3px 8px;border-radius:9px;white-space:nowrap; }
+#crewsView .crw-pill.ok{ background:rgba(76,175,113,.18);color:#8fdfa8;border:1px solid rgba(76,175,113,.35); }
+#crewsView .crw-pill.warn{ background:rgba(230,145,45,.18);color:#f5b880;border:1px solid rgba(230,145,45,.35); }
+#crewsView .crw-pill.bad{ background:rgba(200,32,46,.2);color:#f4a7ae;border:1px solid rgba(200,32,46,.35); }
+:root[data-theme="rb-light"] #crewsView .crw-pill.ok{ background:#e9f5ec;color:#1d6b34;border-color:transparent; }
+:root[data-theme="rb-light"] #crewsView .crw-pill.warn{ background:#fdf3e2;color:#8a5200;border-color:transparent; }
+:root[data-theme="rb-light"] #crewsView .crw-pill.bad{ background:#fff0f0;color:#9c1822;border-color:transparent; }
+
+#crewsView .crw-tabs{ display:flex;gap:2px;flex-wrap:wrap;margin-top:12px; }
+#crewsView .crw-tab{ font:700 11px system-ui;padding:7px 11px;border-radius:6px 6px 0 0;
+  cursor:pointer;background:var(--crw-taboff,#14151a);color:var(--crw-mut,#9aa0a8); }
+:root[data-theme="rb-light"] #crewsView .crw-tab{ background:var(--crw-taboff,#e9ebee);color:#575d64; }
+#crewsView .crw-tab.on{ background:var(--crw-tabon,#242430);color:#fff;box-shadow:inset 0 2px 0 #c8202e; }
+:root[data-theme="rb-light"] #crewsView .crw-tab.on{ background:var(--crw-tabon,#fff);color:#161616; }
+
+#crewsView .crw-doc{ display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:7px;margin-bottom:7px;font-size:12.5px;
+  background:rgba(255,255,255,.035);border:1px solid var(--crw-line,#26262e); }
+:root[data-theme="rb-light"] #crewsView .crw-doc{ background:var(--crw-doc,#f7f8f9);
+  border-color:var(--crw-line,#e4e6ea); }
+#crewsView .crw-note{ padding:10px 12px;border-radius:7px;margin-bottom:6px;font-size:12.5px;
+  background:rgba(255,255,255,.035);border:1px solid var(--crw-line,#26262e); }
+:root[data-theme="rb-light"] #crewsView .crw-note{ background:var(--crw-doc,#f7f8f9);
+  border-color:var(--crw-line,#e4e6ea); }
+#crewsView label{ display:block;font:700 10px system-ui;letter-spacing:.05em;
+  text-transform:uppercase;margin:10px 0 4px;color:var(--crw-mut,#9aa0a8); }
+:root[data-theme="rb-light"] #crewsView label{ color:var(--crw-mut,#5f666e); }
+#crewsView input[type=text],#crewsView input[type=date],#crewsView select,#crewsView textarea{
+  width:100%;padding:8px 10px;border-radius:6px;font:13px system-ui;
+  background:var(--crw-input,#101015);border:1px solid var(--crw-line,#2b2b33);
+  color:var(--crw-ink,#c2cbd8); }
+:root[data-theme="rb-light"] #crewsView input[type=text],
+:root[data-theme="rb-light"] #crewsView input[type=date],
+:root[data-theme="rb-light"] #crewsView select,
+:root[data-theme="rb-light"] #crewsView textarea{
+  background:var(--crw-input,#fff);border-color:var(--crw-line,#dcdee2);color:var(--crw-ink,#2f3338); }
+#crewsView .crw-grid2{ display:grid;grid-template-columns:1fr 1fr;gap:0 12px; }
+@media (max-width:620px){ #crewsView .crw-grid2{ grid-template-columns:1fr; } }
+#crewsView .crw-empty{ padding:26px 14px;text-align:center;color:var(--crw-mut,#9aa0a8);font-size:13px; }
+</style>
+<script id="cr-crew-script">
+/* ══ Build 547 · Crews ═════════════════════════════════════════════════════
+   Reads the schema that shipped at PR #77. Profile, Compliance and Notes are
+   working; Labor Rates, Work Orders and Payments are later builds and are
+   deliberately NOT rendered as empty tabs.                                 */
+(function(){
+'use strict';
+
+/* Theo's five sections, in his order — General Repairs last. This list is the
+   UI mirror of the crews_trade_ck constraint in the database; if one grows a
+   value the other must too, or a crew lands in a section that renders nowhere.
+   Same discipline as STAGES/normStage(). */
+var TRADES = [
+  ['Roofing',         'Roofing Crews'],
+  ['Siding',          'Siding Crews'],
+  ['Windows',         'Window Installers'],
+  ['Gutters',         'Gutter Crews'],
+  ['General Repairs', 'General Repairs']
+];
+var DOCS = [
+  ['w9', 'W-9'],
+  ['gl', 'General Liability'],
+  ['wc', "Workers' Comp"]
+];
+var TABS = [['profile','Profile'],['compliance','Compliance'],['notes','Notes']];
+
+var crews = [], docs = [], notes = [], selId = null, tab = 'compliance', booted = false;
+
+function db(){ return window.supa || window.sb || null; }
+function view(){ return document.getElementById('crewsView'); }
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
+  });
+}
+function me(){
+  try{ return (window.currentUser && window.currentUser.email) || null; }catch(_){ return null; }
+}
+
+/* Days until a certificate lapses. NEGATIVE means it already has. A W-9 has no
+   expiry at all, which is not the same as an expired one — null means "no
+   clock", and the caller must not treat that as zero. */
+function daysLeft(iso){
+  if(!iso) return null;
+  var d = new Date(iso + 'T00:00:00');
+  if(isNaN(d.getTime())) return null;
+  return Math.floor((d.getTime() - Date.now()) / 86400000);
+}
+function docState(kind, row){
+  if(!row) return { cls:'bad', label:'\u2715 Missing', note:'nothing on file' };
+  var n = daysLeft(row.expires_on);
+  if(n === null) return { cls:'ok', label:'\u25cf On file',
+    note:row.issued_on ? 'filed ' + row.issued_on : 'no expiry' };
+  if(n < 0)  return { cls:'bad',  label:'\u2715 Expired',  note:'expired ' + (-n) + ' days ago' };
+  if(n <= 30) return { cls:'warn', label:'\u25b2 ' + n + ' days', note:'expires ' + row.expires_on };
+  return { cls:'ok', label:'\u25cf Current', note:'expires ' + row.expires_on };
+}
+/* A crew is only as good as its worst document. */
+function crewState(id){
+  var worst = 'ok';
+  DOCS.forEach(function(d){
+    var st = docState(d[0], docFor(id, d[0])).cls;
+    if(st === 'bad') worst = 'bad';
+    else if(st === 'warn' && worst !== 'bad') worst = 'warn';
+  });
+  return worst;
+}
+function docFor(crewId, kind){
+  var hit = null;
+  docs.forEach(function(r){
+    if(r.crew_id !== crewId || r.kind !== kind) return;
+    if(!hit || String(r.uploaded_at) > String(hit.uploaded_at)) hit = r;
+  });
+  return hit;
+}
+function sel(){ return crews.find(function(c){ return c.id === selId; }) || null; }
+
+async function load(){
+  var cl = db();
+  if(!cl) throw new Error('not signed in');
+  var res = await Promise.all([
+    cl.from('crews').select('*').eq('archived', false).order('name'),
+    cl.from('crew_docs').select('*'),
+    cl.from('crew_notes').select('*').order('at', { ascending:false })
+  ]);
+  if(res[0].error) throw res[0].error;
+  crews = res[0].data || [];
+  docs  = (res[1].data) || [];      /* a docs failure must not blank the directory */
+  notes = (res[2].data) || [];
+  if(selId && !crews.some(function(c){ return c.id === selId; })) selId = null;
+  if(!selId && crews.length) selId = crews[0].id;
+}
+
+function navHtml(){
+  var out = '';
+  TRADES.forEach(function(t){
+    var list = crews.filter(function(c){ return c.trade === t[0]; });
+    out += '<div class="crw-sec"><span>' + esc(t[1]) + '</span><span>' + list.length + '</span></div>';
+    list.forEach(function(c){
+      out += '<div class="crw-item' + (c.id === selId ? ' on' : '') + '" data-crew="' + esc(c.id) + '">' +
+             '<span>' + esc(c.name) + '</span>' +
+             '<span class="crw-dot ' + crewState(c.id) + '"></span></div>';
+    });
+  });
+  return '<div class="crw-nav">' + out + '</div>';
+}
+
+function profileHtml(c){
+  function f(label, key, type){
+    return '<div><label>' + label + '</label>' +
+      '<input type="' + (type || 'text') + '" data-f="' + key + '" value="' + esc(c[key] || '') + '"></div>';
+  }
+  return '<div class="crw-grid2">' +
+    f('Crew name', 'name') + f('Legal name (as on the W-9)', 'legal_name') +
+    f('Contact', 'contact_name') + f('Phone', 'contact_phone') +
+    '<div><label>Email</label><input type="text" data-f="contact_email" value="' + esc(c.contact_email || '') +
+      '" placeholder="never guess this one"></div>' +
+    '<div><label>Trade</label><select data-f="trade">' +
+      TRADES.map(function(t){
+        return '<option value="' + t[0] + '"' + (c.trade === t[0] ? ' selected' : '') + '>' + esc(t[1]) + '</option>';
+      }).join('') + '</select></div>' +
+    '</div>' +
+    '<div><label>Address</label><input type="text" data-f="address" value="' + esc(c.address || '') + '"></div>' +
+    '<div style="margin-top:14px;display:flex;gap:8px">' +
+      '<button class="crw-btn primary" data-act="save">Save</button>' +
+      '<button class="crw-btn" data-act="archive">Archive this crew</button>' +
+    '</div>';
+}
+
+function complianceHtml(c){
+  var out = DOCS.map(function(d){
+    var row = docFor(c.id, d[0]), st = docState(d[0], row);
+    var meta = row ? (row.carrier ? esc(row.carrier) + ' \u00b7 ' : '') +
+                     (row.coverage_limits ? esc(row.coverage_limits) + ' \u00b7 ' : '') + st.note
+                   : st.note;
+    return '<div class="crw-doc"><span><b>' + d[1] + '</b> &nbsp;<span class="crw-mut">' + meta + '</span>' +
+      (row ? ' <button class="crw-btn" style="padding:3px 8px;margin-left:6px" data-open="' + esc(row.storage_path) + '">Open</button>' : '') +
+      '</span><span class="crw-pill ' + st.cls + '">' + st.label + '</span></div>';
+  }).join('');
+  return out +
+    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
+    '<div class="crw-grid2">' +
+      '<div><label>Document</label><select data-u="kind">' +
+        DOCS.map(function(d){ return '<option value="' + d[0] + '">' + d[1] + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div><label>Expires (leave blank for a W-9)</label><input type="date" data-u="expires_on"></div>' +
+      '<div><label>Carrier</label><input type="text" data-u="carrier"></div>' +
+      '<div><label>Policy #</label><input type="text" data-u="policy_number"></div>' +
+      '<div><label>Limits</label><input type="text" data-u="coverage_limits" placeholder="$1M / $2M"></div>' +
+      '<div><label>File</label><input type="file" data-u="file" accept=".pdf,.png,.jpg,.jpeg,.heic"></div>' +
+    '</div>' +
+    '<button class="crw-btn primary" style="margin-top:12px" data-act="upload">Upload</button>' +
+    '<span class="crw-mut" data-upmsg style="margin-left:10px;font-size:12px"></span>' +
+    '</div>';
+}
+
+function notesHtml(c){
+  var mine = notes.filter(function(n){ return n.crew_id === c.id; });
+  return '<div><label>Add a note</label><textarea data-f="newnote" rows="2"></textarea>' +
+    '<button class="crw-btn primary" style="margin-top:8px" data-act="addnote">Add</button></div>' +
+    '<div style="margin-top:14px">' +
+    (mine.length ? mine.map(function(n){
+      return '<div class="crw-note"><div class="crw-mut" style="font-size:11px">' +
+        esc(String(n.at || '').slice(0, 10)) + (n.by ? ' \u00b7 ' + esc(n.by) : '') + '</div>' +
+        esc(n.body) + '</div>';
+    }).join('') : '<div class="crw-mut" style="font-size:12.5px">No notes yet.</div>') +
+    '</div>';
+}
+
+function panelHtml(){
+  var c = sel();
+  if(!c) return '<div class="crw-card"><div class="crw-empty"><b>No crews yet.</b><br>' +
+    'Use <b>+ New crew</b> to add the first one.</div></div>';
+  var st = crewState(c.id);
+  var lbl = st === 'ok' ? '\u25cf Compliant' : st === 'warn' ? '\u25b2 Expiring' : '\u2715 Not compliant';
+  var body = tab === 'profile' ? profileHtml(c) : tab === 'notes' ? notesHtml(c) : complianceHtml(c);
+  return '<div class="crw-card" style="border-radius:10px 10px 0 0;padding-bottom:0">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">' +
+      '<div><b style="font-size:15px">' + esc(c.legal_name || c.name) + '</b>' +
+        '<div class="crw-mut" style="margin-top:2px">' +
+        [c.trade, c.contact_name, c.contact_phone].filter(Boolean).map(esc).join(' \u00b7 ') +
+        '</div></div>' +
+      '<span class="crw-pill ' + st + '">' + lbl + '</span></div>' +
+    '<div class="crw-tabs">' + TABS.map(function(t){
+      return '<div class="crw-tab' + (tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</div>';
+    }).join('') + '</div></div>' +
+    '<div class="crw-card" style="border-radius:0 0 10px 10px;border-top:0">' + body + '</div>';
+}
+
+function render(){
+  var v = view();
+  if(!v) return;
+  v.innerHTML =
+    '<div class="crw-top"><div>' +
+      '<div class="crw-h">Crews</div>' +
+      '<div class="crw-mut" style="font-size:12px">Subcontractors, grouped by trade.</div>' +
+    '</div><div style="display:flex;gap:8px;align-items:center">' +
+      '<button class="crw-btn primary" data-act="new">+ New crew</button>' +
+      '<button class="crw-x" data-act="close" aria-label="Close">&times;</button>' +
+    '</div></div>' +
+    '<div class="crw-wrap"><div>' + navHtml() + '</div><div>' + panelHtml() + '</div></div>';
+}
+
+function val(k){ var el = view().querySelector('[data-u="' + k + '"]'); return el ? el.value : ''; }
+
+async function upload(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var msg = view().querySelector('[data-upmsg]');
+  var fileEl = view().querySelector('[data-u="file"]');
+  var file = fileEl && fileEl.files && fileEl.files[0];
+  if(!file){ if(msg) msg.textContent = 'Pick a file first.'; return; }
+  if(msg) msg.textContent = 'Uploading\u2026';
+  try{
+    var kind = val('kind') || 'w9';
+    var safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+    var path = 'crews/' + c.id + '/' + kind + '/' + Date.now() + '_' + safe;
+    var up = await cl.storage.from('crew-docs').upload(path, file,
+      { contentType: file.type || undefined });
+    if(up.error) throw up.error;
+    var r = await cl.from('crew_docs').insert({
+      crew_id: c.id, kind: kind, storage_path: path, file_name: file.name,
+      expires_on: val('expires_on') || null, carrier: val('carrier') || null,
+      policy_number: val('policy_number') || null,
+      coverage_limits: val('coverage_limits') || null, uploaded_by: me()
+    });
+    /* If the row fails, take the orphan back out of the bucket — otherwise the
+       file is charged for and referenced by nothing. */
+    if(r.error){ try{ await cl.storage.from('crew-docs').remove([path]); }catch(_){} throw r.error; }
+    await load(); render();
+  }catch(e){
+    if(msg) msg.textContent = 'Could not upload: ' + (e.message || e);
+  }
+}
+
+async function openDoc(path){
+  var cl = db();
+  if(!cl || !path) return;
+  try{
+    var r = await cl.storage.from('crew-docs').createSignedUrl(path, 300);
+    if(r.error) throw r.error;
+    window.open(r.data.signedUrl, '_blank', 'noopener');
+  }catch(e){ alert('Could not open that document: ' + (e.message || e)); }
+}
+
+async function save(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var patch = {};
+  view().querySelectorAll('[data-f]').forEach(function(el){
+    var k = el.getAttribute('data-f');
+    if(k !== 'newnote') patch[k] = el.value || null;
+  });
+  patch.updated_at = new Date().toISOString();
+  var r = await cl.from('crews').update(patch).eq('id', c.id);
+  if(r.error){ alert('Could not save: ' + r.error.message); return; }
+  await load(); render();
+}
+
+async function addCrew(){
+  var cl = db();
+  if(!cl) return;
+  var name = prompt('Crew name');
+  if(!name) return;
+  var r = await cl.from('crews').insert({ name:name, trade:'Roofing', created_by:me() })
+    .select('id').single();
+  if(r.error){ alert('Could not add: ' + r.error.message); return; }
+  selId = r.data ? r.data.id : null; tab = 'profile';
+  await load(); render();
+}
+
+async function addNote(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var el = view().querySelector('[data-f="newnote"]');
+  var body = el && el.value.trim();
+  if(!body) return;
+  var r = await cl.from('crew_notes').insert({ crew_id:c.id, body:body, by:me() });
+  if(r.error){ alert('Could not add the note: ' + r.error.message); return; }
+  await load(); render();
+}
+
+async function archive(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  if(!confirm('Archive ' + c.name + '? They stop showing in the list. Nothing is deleted.')) return;
+  var r = await cl.from('crews').update({ archived:true }).eq('id', c.id);
+  if(r.error){ alert('Could not archive: ' + r.error.message); return; }
+  selId = null; await load(); render();
+}
+
+function wire(){
+  var v = view();
+  if(!v || booted) return;
+  booted = true;
+  v.addEventListener('click', function(e){
+    var t = e.target.closest('[data-crew]');
+    if(t){ selId = t.getAttribute('data-crew'); render(); return; }
+    var tb = e.target.closest('[data-tab]');
+    if(tb){ tab = tb.getAttribute('data-tab'); render(); return; }
+    var od = e.target.closest('[data-open]');
+    if(od){ openDoc(od.getAttribute('data-open')); return; }
+    var a = e.target.closest('[data-act]');
+    if(!a) return;
+    var k = a.getAttribute('data-act');
+    if(k === 'close'){ close(); }
+    else if(k === 'new'){ addCrew(); }
+    else if(k === 'save'){ save(); }
+    else if(k === 'upload'){ upload(); }
+    else if(k === 'addnote'){ addNote(); }
+    else if(k === 'archive'){ archive(); }
+  });
+}
+
+function close(){
+  var v = view();
+  if(v) v.style.display = 'none';
+  /* This module took no scroll lock, so it releases none — the one global lock
+     has 13 writers already and does not need a 14th. */
+  try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
+}
+
+async function open(){
+  var v = view();
+  if(!v) return;
+  wire();
+  v.style.display = 'block';
+  v.innerHTML = '<div class="crw-empty">Loading\u2026</div>';
+  try{ await load(); render(); }
+  catch(e){
+    v.innerHTML = '<div class="crw-top"><div class="crw-h">Crews</div>' +
+      '<button class="crw-x" data-act="close">&times;</button></div>' +
+      '<div class="crw-empty"><b>Could not load crews.</b><br>' + esc(e.message || e) + '</div>';
+  }
+}
+
+window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
+  open: open, reload: async function(){ await load(); render(); }
+});
+})();
+</script>
 </body>
 </html>
