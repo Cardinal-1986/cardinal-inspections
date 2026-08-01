@@ -3158,7 +3158,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 541 &#8212; contracts have their own tab on a client instead of being buried under Estimates</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 542 &#8212; + New contract now builds the real roofing Construction Agreement, filled in from the job</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8954,6 +8954,113 @@ var CONTRACT_TERMS = `
 <li><b>Payment.</b> Balances unpaid 30 days after completion accrue 1.5% monthly. Owner is responsible for reasonable collection costs.</li>
 `;
 var CONTRACT_TEMPLATE = buildEstimate('SERVICE <span>CONTRACT</span>', CONTRACT_BODY, CONTRACT_TERMS);
+/* 542: the roofing Construction Agreement, faithful to
+   docs/Cardinal_Roofing_Contract.pdf page 1 — all 13 numbered spec sections with
+   their lettered sub-options. The T&C and the two statutory 3-Day Notice copies are
+   NOT retyped; they stay the printed master in Company Documents and this references
+   them the way the paper form does. */
+var ROOF_AGREEMENT_TERMS = `<li><b>The Terms and Conditions and both Notice of Cancellation copies are the printed master.</b> They are reproduced verbatim in <b>&#9776; Menu &#8594; Company Documents &#8594; Roofing &#8594; Construction Agreement (Master)</b> and are deliberately not retyped here &#8212; the cancellation notice is statutory text under ORC 1345.23.</li>\n<li>This Agreement, the accompanying Terms and Conditions, and any specification sheet(s) together form the entire agreement between Buyer and Contractor.</li>`;
+var ROOF_AGREEMENT_BODY = `
+<h2 class="sec">Customer Information</h2>
+<table class="meta">
+<tr><td class="k">Date</td><td><span class="ph">[Date]</span></td></tr>
+<tr><td class="k">Buyer</td><td><span class="ph">[BUYER]</span></td></tr>
+<tr><td class="k">Co-buyer</td><td><span class="ph">[CO-BUYER]</span></td></tr>
+<tr><td class="k">Email</td><td><span class="ph">[EMAIL]</span></td></tr>
+<tr><td class="k">Phone</td><td><span class="ph">[PHONE NUMBER]</span></td></tr>
+<tr><td class="k">Street</td><td><span class="ph">[STREET]</span></td></tr>
+<tr><td class="k">City / State / ZIP</td><td><span class="ph">[CITY]</span> &nbsp; <span class="ph">[STATE]</span> &nbsp; <span class="ph">[ZIP]</span></td></tr>
+<tr><td class="k">Primary residence</td><td><b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span></td></tr>
+</table>
+
+<p style="font-size:10pt;">Buyer(s) hereby jointly and severally agrees to purchase the products
+and/or services of Cardinal Roofing &amp; Renovations, LLC (&#8220;Contractor&#8221;) as listed herein,
+in accordance with the terms and conditions described in this Agreement, the accompanying
+<b>Terms and Conditions</b> form, and any accompanying specification sheet(s).</p>
+
+<h2 class="sec">Project Specifications</h2>
+<table class="meta">
+<tr><td class="k">1. Decking</td><td>A. Remove existing roofing layers to roof deck<br>B. Inspect roof deck &amp; replace wood as needed &#8212; $<span class="ph">[rate]</span> per sheet</td></tr>
+<tr><td class="k">&nbsp;&nbsp;&nbsp;Decking type</td><td><span class="opts" data-opts="decking">A. OSB &nbsp; B. Plywood &nbsp; C. T&amp;G &nbsp; D. Plank Board &nbsp; E. Spaced Decking &nbsp; F. Cedar Shake</span></td></tr>
+<tr><td class="k">2. Roof deck protection</td><td>A. Felt underlayment 15&nbsp;lb &nbsp; B. Felt underlayment 30&nbsp;lb &nbsp; C. Synthetic underlayment &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">3. Drip edge / gutter apron</td><td>A. Drip edge colour <span class="ph">[colour]</span> (rakes)<br>B. Gutter apron colour <span class="ph">[colour]</span> (eaves)</td></tr>
+<tr><td class="k">4. Ice &amp; water barrier</td><td>Install along eaves, valleys &amp; flashings &#8212; A. Standard &nbsp; B. OC &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">5. Valley metal</td><td>A. Colour <span class="ph">[colour]</span></td></tr>
+<tr><td class="k">6. Starter shingles</td><td>Install along all rakes &amp; eaves &#8212; A. Standard &nbsp; B. OC Starter Plus &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">7. Shingles <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Style <span class="ph">[style]</span><br>B. Colour <span class="ph">[colour]</span><br>C. Brand <span class="ph">[brand]</span></td></tr>
+<tr><td class="k">8. Flashing</td><td>A. Chimney &nbsp; B. Wall &nbsp; C. Step &nbsp; <span class="ph">[circle all that apply]</span><br>Extra structure: A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; <span class="ph">[if any]</span></td></tr>
+<tr><td class="k">9. Extrusions</td><td>A. Pipe boots <span class="ph">[qty]</span> &nbsp; B. Skylights <span class="ph">[qty]</span></td></tr>
+<tr><td class="k">10. Ventilation</td><td>A. Shingle-over ridge vent &#8212; 1. Standard &nbsp; 2. OC<br>B. Box / turtle vents <span class="ph">[qty]</span> &nbsp; C. Power vent <span class="ph">[qty]</span> &nbsp; D. Turbine <span class="ph">[qty]</span><br><span style="font-size:9pt;color:#666;">Not responsible for re-attachment of satellite or HVAC.</span></td></tr>
+<tr><td class="k">11. Ridge cap / hip cap</td><td>A. Standard &nbsp; B. OC &#8212; 1. Pro Edge &nbsp; 2. Decoridge &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">12. Existing layers</td><td><span class="opts" data-opts="layers">Number / type of existing layers</span></td></tr>
+<tr><td class="k">13. Roof pitch</td><td><span class="opts" data-opts="pitch">Roof pitch</span></td></tr>
+</table>
+
+<h2 class="sec">Warranty System</h2>
+<table class="meta">
+<tr><td class="k">Standard</td><td>25-yr manufacturer &nbsp;&#183;&nbsp; 5-yr workmanship</td></tr>
+<tr><td class="k">Systems Protection</td><td>25-yr mfr. &nbsp;&#183;&nbsp; 10-yr workmanship &nbsp;&#183;&nbsp; Owens Corning &nbsp;&#183;&nbsp; transferable</td></tr>
+<tr><td class="k">Preferred Protection</td><td>50-yr mfr. &nbsp;&#183;&nbsp; 10-yr workmanship &nbsp;&#183;&nbsp; Owens Corning &nbsp;&#183;&nbsp; transferable</td></tr>
+<tr><td class="k">Selected</td><td><span class="ph">[circle one]</span></td></tr>
+</table>
+
+<h2 class="sec">HOA / Authorization</h2>
+<p style="font-size:10.5pt;">HOA approval required: <b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span><br>
+Buyer to obtain required authorization from the HOA and authorities. &nbsp;&nbsp;
+Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Project Timeline</h2>
+<p style="font-size:10.5pt;">The anticipated start date is <span class="ph">[n]</span> weeks from the date on
+which all HOA permissions, permits and other contingencies necessary to complete the project are
+obtained, and the anticipated completion date is <span class="ph">[n]</span> weeks from the actual start date.</p>
+
+<h2 class="sec">Notes &amp; Insurance Claim</h2>
+<table class="meta">
+<tr><td class="k">Notes</td><td><div class="descbox"><span class="ph">[notes]</span></div></td></tr>
+<tr><td class="k">Insurance co.</td><td><span class="ph">[INSURANCE CO.]</span></td></tr>
+<tr><td class="k">Claim #</td><td><span class="ph">[CLAIM #]</span></td></tr>
+</table>
+<p style="font-size:10pt;">Buyer(s) acknowledges that Contractor is due any and all monies received
+from any insurance company pursuant to an insurance claim, including overhead and profit, approved
+cost increases, and approved claim supplements. &nbsp;&nbsp; Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Payment Structure</h2>
+<table class="items">
+  <thead><tr><th>Payment</th><th>Due</th><th class="price">Amount</th></tr></thead>
+  <tbody>
+    <tr><td>Down payment</td><td>Upon signing this Agreement</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+    <tr><td>Balance due on completion</td><td>Upon substantial completion</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+  </tbody>
+  <tfoot><tr><td colspan="2" style="text-align:right;font-weight:800;">CONTRACT PRICE</td>
+    <td class="price" style="font-weight:800;" id="estTotal">
+      <span class="ph" data-cprice="1">[0.00]</span></td></tr></tfoot>
+</table>
+<p style="font-size:10.5pt;">Cash on completion &nbsp;or&nbsp; financed: $<span class="ph">[0.00]</span>
+per month for <span class="ph">[n]</span> months.</p>
+
+<h2 class="sec">Acknowledgement &amp; Right to Cancel</h2>
+<p style="font-size:10pt;">Buyer(s) hereby acknowledges that Buyer(s) has read this Agreement and
+the accompanying Terms and Conditions, understands the terms of this Agreement, has received a
+completed, signed and dated copy of this Agreement on the date first written above, and was orally
+advised of his/her right to cancel this transaction.</p>
+<p style="font-size:10pt;"><b>You, the buyer, may cancel this transaction at any time prior to
+midnight of the third business day after the date of this transaction.</b> See the two attached
+<i>Notice of Cancellation</i> copies for an explanation of that right.</p>
+<p style="font-size:9.5pt;color:#666;">The Terms and Conditions and both Notice of Cancellation
+copies are the printed master &#8212; <b>&#9776; Menu &#8594; Company Documents &#8594; Roofing
+&#8594; Construction Agreement (Master)</b>. They are reproduced there verbatim and are not
+retyped here.</p>
+
+<table class="meta" style="margin-top:14px;">
+<tr><td class="k">Buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Co-buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Contractor representative</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>
+<tr><td class="k">Contractor signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+</table>
+`;
+var ROOF_AGREEMENT = buildEstimate('CONSTRUCTION <span>AGREEMENT</span>', ROOF_AGREEMENT_BODY, ROOF_AGREEMENT_TERMS);
 var INVOICE_BODY =
   '<div class="secthead">INVOICE</div>' +
   '<table style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px;">' +
@@ -16617,7 +16724,7 @@ async function createContractForCurrent(){
   if(!pr) return;
   try{
     var price = projectValue(pr);
-    var tpl = prefillUserInfo(prefillClientInfo(CONTRACT_TEMPLATE, pr));
+    var tpl = prefillUserInfo(prefillClientInfo(ROOF_AGREEMENT, pr));
     if(price > 0){
       var half = price / 2;
       var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
@@ -16641,7 +16748,7 @@ async function approveAndContract(prId){
   try{
     await patchProjectCk(pr, { wf_approved: { at: new Date().toISOString(), by: currentUser ? currentUser.email : null } });
     var price = projectValue(pr);
-    var tpl = prefillUserInfo(prefillClientInfo(CONTRACT_TEMPLATE, pr));
+    var tpl = prefillUserInfo(prefillClientInfo(ROOF_AGREEMENT, pr));
     if(price > 0){
       var half = price / 2;
       var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
@@ -17312,6 +17419,32 @@ function prefillClientInfo(tpl, pr){
   put('[Street, City, State ZIP]', pr.address);
   /* shared contact row */
   put('[Phone \u00b7 Email]', contact);
+
+  /* ── 542: the roofing Construction Agreement ─────────────────────────────
+     The lead stores the address as SEPARATE fields, so each one lands in its
+     own box on the form rather than as a single mashed line. */
+  put('[BUYER]', recipient);
+  put('[EMAIL]', pr.email);
+  put('[PHONE NUMBER]', pr.phone);
+  var _loc = (parseCkAll(pr).lead || {}).location || {};
+  put('[STREET]', [_loc.street, _loc.suite].filter(Boolean).join(' '));
+  put('[CITY]', _loc.city);
+  put('[STATE]', _loc.state);
+  put('[ZIP]', _loc.zip);
+
+  /* Theo's "3": where the roof has already been looked at, the line arrives
+     filled and its lettered option row collapses. Where it has not, the
+     options print exactly as they do on paper. */
+  function collapse(key, value){
+    if(!value) return;
+    tpl = tpl.replace(
+      new RegExp('<span class="opts" data-opts="' + key + '">[^<]*(?:<(?!/span>)[^<]*)*</span>'),
+      '<span class="fill">' + esc(value) + '</span>');
+  }
+  var _ck = parseCkAll(pr);
+  collapse('layers', _ck.layers);
+  collapse('pitch', _ck.pitch);
+  collapse('decking', _ck.decking);
   return tpl;
 }
 
@@ -33941,6 +34074,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:542, note:'\uD83C\uDFE0 The real roofing agreement, filled in for you. \u2666 + New contract on a client now builds the actual Construction Agreement \u2014 every numbered section from the paper form. \u2666 Date, buyer, email, phone, street, city, state, zip, the rep and all three money lines come in already filled. \u2666 If the roof has been inspected, the layers, pitch and decking lines arrive filled too. \u2666 The Terms and the two cancellation notices are still the printed master in Company Documents \u2014 that is legal wording and is not retyped.' },
 { build:541, note:'\uD83D\uDCD1 Contracts have their own tab. \u2666 The contracts section was always there \u2014 it was just filed at the bottom of the Estimates tab, which is why nobody could find it. \u2666 It is now its own entry in the job menu at the top of a client. Same button, same list, nothing else changed.' },
 { build:540, note:'\uD83D\uDCB0 The money on a client is real now. \u2666 The circle, the job cards, the pipeline totals and the reports were all reading a table that has never had a dollar in it, so everything showed $0. \u2666 They now read the signed contract first, and if there is not one, the highest estimate you have actually SENT. \u2666 Drafts do not count \u2014 send the estimate and the number appears.' },
 { build:539, note:'\uD83D\uDC9B Landing is yellow in both modes. \u2666 In the light theme it had been a darker amber so it would stay readable on the white menu; it is now the same yellow as the dark theme.' },

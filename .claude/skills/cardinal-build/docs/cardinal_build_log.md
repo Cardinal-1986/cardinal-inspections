@@ -4600,3 +4600,44 @@ Plus **existing layers, roof pitch and decking type straight from the inspection
 
 **Also found:** two Company Documents entries are dead links — `Cardinal_Window_Contract.pdf` and
 `Cardinal_Gutter_Contract_Fillable.pdf` are in `COMPANY_DOCS` but not in the repo. They 404 today.
+
+---
+
+## Build 542 — the roofing Construction Agreement, in the app, autopopulated
+
+**Theo:** *"Use the master roofing/construction agreement in the company docs and make it fillable,
+whatever can be autopopulated do so"* … *"for Roofs in specific"* … and on how much of the spec grid
+to reproduce: **"3"** — full fidelity, except the lines the inspection already answered.
+
+`+ New contract` used `CONTRACT_TEMPLATE`, a generic three-section service contract that looks
+nothing like the paper form Cardinal signs. It now builds the roofing **Construction Agreement** —
+all 13 numbered specification sections with their lettered sub-options, warranty tiers, HOA,
+timeline, insurance, payment structure and signature block.
+
+**Two things deliberately not reproduced, and it is a legal call, not a shortcut:** the **Terms and
+Conditions** (master p3) and **both 3-Day Notice of Cancellation copies** (master p4–5). Statutory
+text under ORC 1345.23. Retyping it invites silent divergence between what the app prints and what
+the reviewed master says, and nobody in this loop is a lawyer. The agreement **references** them the
+way the paper form does and points at the master in Company Documents. Asserted in the gate.
+
+**What autofills:** date · buyer · email · phone · **street / city / state / zip as separate boxes**
+(the lead stores them as separate fields) · rep name & title · the three money lines off
+`projectValue()` · and — the point of Theo's "3" — **existing layers, roof pitch and decking type
+straight off the inspection checklist**, with their lettered option rows *collapsing* when known and
+printing as on paper when not.
+
+**What does not, said plainly:** `INSURANCE CO.` and `CLAIM #`. There is no client-side cache of
+`insurance_claims` — it is fetched ad hoc inside async functions — and `prefillClientInfo()` is
+**synchronous with many callers**. "Adding `await` to a synchronous function is never a local change"
+is this project's own rule and it is not worth breaking for two fields. The gate asserts
+`prefillClientInfo` stays synchronous.
+
+**`CONTRACT_TEMPLATE` survives.** `CardinalEstimateToContract` checks for it by name and warns when
+missing. This build *adds* a template; it does not delete one.
+
+`check_build.py` green (542, marker `ROOF_AGREEMENT`, negative-controlled).
+**Chromium 17/17, against real records:** the shipped `prefillClientInfo` and the shipped template,
+run on **Bob DeBuilder's actual row** — the one client whose roof has been inspected, so the only
+record that can prove the collapses fire — with **Dan Thompson as the control**, a real client with
+no inspection whose option rows must survive. Harness `harnesses/h542_chromium.js`; the template
+body lives at `scripts/roof_body.py`.
