@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 520 &#8212; on desktop the dashboard and the Activity column both spread further right instead of leaving dead space</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 521 &#8212; the white footer strip and the floating CRM bar are gone from the desktop</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33851,6 +33851,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:521, note:'\uD83E\uDDF9 Two leftovers cleared off the desktop. The white footer strip at the bottom of the page is gone \u2014 it was painting solid white across the dark page. So is the floating CRM bar on the client list, which was positioned to clear the phone\u2019s bottom bar and had nothing to clear on a desktop, and duplicated the CRM switcher in the left menu. Phones keep both, including the CRM filter chips.' },
 { build:520, note:'\u2194 The desktop dashboard uses more of a wide screen. The page stretches further right instead of leaving a band of dead space either side, and the Activity column beside it widens with the screen rather than staying a fixed narrow strip. On a laptop nothing changes; the Activity column has a floor so it can never be squeezed thin.' },
 { build:519, note:'\uD83D\uDDD3 The small calendar in the top right of the dashboard is gone. The Cardinal Team Calendar and Production Calendar further down are untouched. Note the \u201Cnext appointment\u201D line lived inside that card and went with it \u2014 say the word and it comes back on its own.' },
 { build:518, note:'\uD83D\uDCCF Fixed the proportions on a wide monitor. The previous change capped the page at a fixed width, which looked right on a laptop and left a narrow strip of content floating in the middle of an ultrawide with dead space either side. The width now scales with the screen \u2014 most of it on a big monitor, still reined in so nothing stretches edge to edge.' },
@@ -51399,6 +51400,29 @@ scrape  : scrape
    mounted. Phones and tablets keep the layout they have, including the
    existing @media (max-width:900px) rule that makes the rail full width. */
 body.cr-lnav-on .homeside{flex:0 0 clamp(320px, 22%, 460px)}
+/* ---- two desktop leftovers (521) -------------------------------------------
+   Theo, on two screenshots: the white footer is unreadable, and the client
+   directory's CRM bar and the black bar it sits on are unneeded.
+
+   1. footer.site is one line of boilerplate painted background:var(--paper).
+      --paper is declared ONCE, on :root, as #ffffff, and is never themed - so
+      that footer is a white slab on the near-black page in every theme. It is
+      already hidden for Community, for Insurance, for the community hub and for
+      an open community client; Retail was the only place left showing it.
+
+   2. .cd-crmbar is position:fixed at bottom:calc(104px + safe-area) - that 104px
+      is clearance for #pwaNav, the PHONE bottom bar. On a desktop there is no
+      bottom bar, so it floats over the content for no reason, and since 516 it
+      also duplicates the CRM control in the left rail. The dark band Theo calls
+      the black bar is this element's own rgba(16,17,19,.95) background, not a
+      separate thing.
+
+   Both scoped to body.cr-lnav-on, so the phone keeps its footer and, more
+   importantly, keeps the CRM filter chips - the only way to filter the directory
+   by CRM. On desktop that filter goes with the bar; flagged to Theo rather than
+   replaced with something he did not ask for. */
+body.cr-lnav-on footer.site{display:none}
+body.cr-lnav-on .cd-crmbar{display:none}
 </style>
 </body>
 </html>
