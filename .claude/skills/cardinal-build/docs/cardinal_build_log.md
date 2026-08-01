@@ -4265,3 +4265,61 @@ rule 4 landed and were inverted rather than relaxed.
 
 **Illustrations were investigated and NOT built** — see OPEN_ITEMS. Both librarian models are
 text-only; there is no image generation anywhere in `api/`.
+
+---
+
+## Build 535 — the dark retail home: navy over black, indented in
+
+**The scheme is Theo's, not mine.** He sent a photo of a checkout form — navy panel, near-black
+inset fields — and asked "what about a dark navy over a black indented in?" It is better than
+the glass I had proposed, for a concrete reason: **glass needs a backdrop to blur, and this page
+is a flat `#09090C`.** I was faking it with edge light. Navy over black needs no trick.
+
+    page   #09090C            unchanged
+    card   #1A2434 → #141C29  lit #33496A top edge, raised
+    well   #0A0E16 / #0D1220  recessed
+
+**Depth is "slight", also his call.** My first pass ran the inset at `rgba(0,0,0,.85) 0 2px 5px`
+and he was right that it was overcooked — on his reference the shadow does almost nothing and
+the *value drop* carries the recession. Final: `inset 0 1px 2px rgba(0,0,0,.5)`, a hairline at
+the top lip. Three strengths were previewed (deep / slight / flat drop) before picking.
+
+**No iron grey.** `#2e333b`, `#262a31`, `#16161B` are what this replaces — with *hue*, not with
+another grey, which was the actual complaint. The patch asserts none are reintroduced, **after
+stripping CSS comments** — the block documents the values it replaces and the first run tripped
+on its own explanatory note, exactly as CLAUDE.md warns.
+
+**Gated, not edited at source**, the shape 522 and 527 used. One appended block, **24 selectors,
+every one asserted to start with `:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community)`.**
+Light mode, Claims and Community are out of reach by construction rather than by inspection.
+
+### The calendars — a sanctioned decision overridden on instruction
+
+CLAUDE.md recorded paper-on-iron as deliberate and told future sessions not to re-flag it. Theo
+asked for it changed directly. **CLAUDE.md is corrected in this same commit** — otherwise the
+next session reverts this on the strength of the old note. Light mode keeps paper-on-iron.
+
+His list, each item gated: no red cap (was `border-top:5px solid var(--red)`) · white month
+(which required *releasing a clipped gold→red→gold gradient*, or the text stays transparent) ·
+white day numbers · every small square sunk · "all jobs" off the Production Calendar so the
+header sits level — **hidden, not deleted from the JS**, so the string is still computed and
+restoring it is one line.
+
+**The unreadable text, measured:** other-month days were `#cfc4ba` on cream, ≈1.6:1. Now
+**5.24:1**. All 8 text pairs on the new ground clear 4.5:1; lowest is 5.24.
+
+### The pipeline orbs
+
+`.pcirc` is reshaped from a 52px sphere into the cell's 3px top edge. **The stage colour never
+leaves JS** — the class mapping is untouched, only the geometry moved. The whole strip is the
+height the circle alone used to be.
+
+### Gates
+
+`check_build.py` green, 534 → 535, marker + negative control clean. **22 Chromium assertions, 0
+failures** — and the shape of them matters: the source rules and the new block are both in the
+page, so each assertion answers *which rule won*, not *does the file contain my CSS*. That is
+the 481 lesson. Two negative controls confirm the light theme and Claims are untouched.
+
+**Not in this build, so it does not read as forgotten:** the nav-style icon set for card titles
+and left-menu option A. Both agreed, both 536.

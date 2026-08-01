@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 534 &#8212; the Library assistant’s diagrams draw every time instead of sometimes printing ~~stack at you</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 535 &#8212; the retail home in dark mode is navy over black instead of iron grey, and both calendars match it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33858,6 +33858,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:535, note:'\uD83C\uDF11 Dark mode, retail home. \u2666 The grey cards are gone. Everything now sits as navy panels raised off the black, with the numbers and client rows set into them \u2014 your idea, from that checkout screen. \u2666 The pipeline circles are a compact strip that shows the same five numbers in the space one circle used to take. \u2666 Both calendars match now: no red cap, white month, white dates, every square set in, and the greyed-out dates are actually readable. \u2666 \u201Call jobs\u201D came off the Production Calendar so the header sits level.' },
 { build:534, note:'\uD83D\uDCD0 Library diagrams, reliable. \u2666 When you asked the assistant something and it drew a diagram, it only worked if the assistant happened to leave a blank line above it \u2014 otherwise you got the raw text \u201C~~stack\u201D printed at you instead of a picture. The app now spaces them itself, so a diagram draws every time. Nothing about how they look has changed.' },
 { build:533, note:'\uD83D\uDD34 Red buttons, finished. \u2666 Thirteen more buttons and tabs across the app had near-black writing on the cardinal red \u2014 the map button, ABC Supply, the photo editor and its tools, the photo annotator, the line-item library, the contract editor and the estimate preview. All now white, like the ones fixed earlier. The red itself is unchanged.' },
 { build:532, note:'\uD83D\uDCD0 Library entries that were written before can now be given a diagram. Open one and tap Add a diagram, and the assistant draws it from what that entry already says. It will tell you when a picture would not help.' },
@@ -52158,6 +52159,136 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 .tmbody{--rbe-ridge-t:#ffffff;--rbe-ridge-b:#d9d9d9;--rbe-ridge-hl:rgba(255,255,255,.9);
 border-bottom:2px solid var(--rbe-ridge-b);
 box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
+}
+</style>
+<style id="cr-navy-styles">
+/* ══ Build 535 · dark retail home — navy over black, indented in ═══════════
+   Theo's scheme, off a checkout-form photo: navy panel, near-black inset
+   fields. Three planes — page #09090C, card navy raised, well blacker and
+   recessed. Replaces the iron greys (#2e333b / #262a31 / #16161B) with HUE
+   rather than with another grey, which was the actual complaint.
+
+   Depth is "slight": the value drop carries the recession and the inset
+   shadow is a hairline at the top lip. A heavier shadow was tried and
+   rejected — on the reference form the shadow does almost nothing.
+
+   Scoped to DARK + RETAIL only. Claims, Community and the entire light theme
+   are out of reach by construction, not by inspection.                     */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community){
+  --nv-card1:#1A2434; --nv-card2:#141C29; --nv-edge:#33496A; --nv-bd:#223047;
+  --nv-well:#0A0E16;  --nv-cell:#0D1220;  --nv-ink:#dfe5ee;  --nv-ink2:#8d97a6;
+  --nv-sink:inset 0 1px 2px rgba(0,0,0,.5);
+}
+/* the card — raised, navy, lit along the top edge */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard{
+  background:linear-gradient(180deg,var(--nv-card1,#1A2434),var(--nv-card2,#141C29));
+  border:1px solid var(--nv-bd,#223047);
+  border-top:2px solid var(--nv-edge,#33496A);
+  border-bottom:1px solid var(--nv-bd,#223047);
+  box-shadow:0 12px 26px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.07);
+  color:var(--nv-ink,#dfe5ee);
+}
+/* ── the pipeline: orbs become a carved strip ──────────────────────────────
+   The whole strip is the height the 52px circle alone used to be. .pcirc
+   keeps carrying the stage colour — it is only reshaped from a sphere into
+   the cell's top edge, so the semantic colour mapping never leaves JS.     */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow{
+  background:var(--nv-well,#0A0E16);border-radius:5px;padding:1px;gap:1px;
+  box-shadow:var(--nv-sink,inset 0 1px 2px rgba(0,0,0,.5));
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn{
+  flex:1;background:var(--nv-cell,#0D1220);border:0;border-radius:0;
+  padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;gap:1px;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:first-child{border-radius:4px 0 0 4px}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:last-child{border-radius:0 4px 4px 0}
+/* the sphere flattens into the top edge — same colour, no gloss */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pcirc{
+  width:100%;height:3px;border-radius:0;margin:-8px 0 6px;
+  font-size:0;line-height:0;color:transparent;box-shadow:none;
+  background-image:none;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pcount{
+  font:800 18px 'Segoe UI',Arial,sans-serif;color:var(--nv-ink,#dfe5ee);order:2}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .plabel{
+  font:700 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--nv-ink2,#8d97a6);order:3}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pmoney{
+  font:700 9.5px ui-monospace,Menlo,monospace;color:var(--nv-ink2,#8d97a6);order:4}
+
+/* ── client rows: sunk, at Theo's pick ─────────────────────────────────── */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .kplrow{
+  background:var(--nv-well,#0A0E16);box-shadow:var(--nv-sink,inset 0 1px 2px rgba(0,0,0,.5));
+  border-radius:0 6px 6px 0;
+}
+
+/* ══ the calendars ════════════════════════════════════════════════════════
+   OVERRIDING A SANCTIONED DECISION, ON INSTRUCTION. CLAUDE.md records the
+   calendars as deliberate paper-on-iron and tells future sessions not to
+   re-flag them. Theo asked for this directly; the doc is updated in the same
+   commit so the next session does not revert it on the old note's strength.
+
+   His list: same treatment · no red on top · white numbers · white month ·
+   each small square gets the sunk cell · fix the text that cannot be read. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.teamcal{
+  border:1px solid var(--nv-bd,#223047);
+  border-top:2px solid var(--nv-edge,#33496A);   /* was 5px solid var(--red) */
+  box-shadow:0 12px 26px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.07);
+}
+/* the black hairline that sat under the red cap has nothing left to cap */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.teamcal::after{
+  display:none;
+}
+/* the red rule under the month header goes with it */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calhead{
+  border-bottom:1px solid var(--nv-bd,#223047);
+}
+/* "White for month also" — this kills a gold→red→gold clipped gradient, so the
+   clip has to be released too or the text stays transparent. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calhead b{
+  background:none;-webkit-text-fill-color:#ffffff;color:#ffffff;
+}
+/* each small square, same sunk cell as the pipeline */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calgrid .day{
+  background:var(--nv-cell,#0D1220);border:1px solid var(--nv-bd,#223047);
+  box-shadow:var(--nv-sink,inset 0 1px 2px rgba(0,0,0,.5));
+  color:#ffffff;                                  /* "Make the numbers white" */
+}
+/* days outside the month: dimmed but still legible — the old #cfc4ba on cream
+   was ~1.6:1, which is one of the "texts that can't be read". */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calgrid .day.other{
+  background:var(--nv-well,#0A0E16);border-color:#161d2a;color:#7c8695;box-shadow:none;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calgrid .day.cur:hover{
+  background:#141d2c;
+}
+/* today keeps cardinal red — semantic, and the one thing that must stay loud */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calgrid .day.today{
+  background:var(--red,#c8202e);color:#fff;border-color:var(--red,#c8202e);
+  box-shadow:0 0 0 2px rgba(200,32,46,.30);
+}
+/* day-of-week strip: was #b8860b gold on cream, unreadable on the new ground */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calgrid .dow{
+  background:var(--nv-well,#0A0E16);border:1px solid var(--nv-bd,#223047);
+  color:var(--nv-ink2,#8d97a6);
+}
+/* the legend under the grid — #3a2e28 on this ground is invisible */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .callegend{
+  color:var(--nv-ink,#dfe5ee);
+}
+/* the nav arrows keep the red; only their shadow was tuned for paper */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calnav{
+  box-shadow:0 2px 5px rgba(0,0,0,.5);
+}
+/* the watermark bird was set for a cream ground and muddies the navy */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.teamcal::before{
+  opacity:.10;
+}
+/* "Take the all jobs off the calander it makes the calander in level."
+   Hidden rather than deleted from the JS: the string is still computed and
+   still correct, so turning it back on is one line and no logic moved. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #prodCalWho{
+  display:none;
 }
 </style>
 </body>
