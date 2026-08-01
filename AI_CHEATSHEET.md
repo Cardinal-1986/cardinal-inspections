@@ -337,6 +337,82 @@ is most of a content strategy.
 
 ---
 
+## Appendix — the desk card
+
+The condensed, print-it-and-pin-it version. In the web copy this is a button near the top of the
+page that opens a print-ready view; here it's the same content.
+
+### Every prompt needs four things
+
+- **Context** — what's going on, and who it's for.
+- **Task** — what you want done.
+- **Format** — how long, what shape.
+- **Constraints** — what to leave out.
+
+Miss one and you get a wrong first draft. That's the whole trick.
+
+### The eight lines that do the work
+
+1. Paste something you liked and say **"Match this."** Biggest single win.
+2. Paste the **whole** thing — the full email, the full spec sheet. Don't shorten it first.
+3. **"Before you answer, ask me up to five questions."**
+4. **"Give me three versions."** Picking beats rewriting.
+5. Correct it in the same chat: **"Shorter. Cut paragraph two."** Don't start over.
+6. **"What's wrong with this? What did you miss?"**
+7. **"Which parts are you least sure about?"** Tells you what to check.
+8. Say who it's for: **"Explain this to a homeowner who's never filed a claim."**
+
+### Say this, not that
+
+| Not this | This |
+|---|---|
+| "Make it better." | "Cut it in half. Drop the sales words." |
+| "Don't make it too long." | "Under 150 words." |
+| "Is this right?" | "What's wrong with this?" |
+| "Write a blog post about roofing." | "400 words for a homeowner who just found a leak after a storm." |
+| "What do shingles cost?" | Paste your price sheet first, then ask. |
+
+### Before it does anything you can't undo
+
+> **"Show me your plan before you start."**
+>
+> Then: draft, don't send. Stage, don't push. Check it before it goes out.
+
+### What it can't do
+
+- It doesn't remember. Every new chat starts from nothing.
+- It only knows what you've given it. If it hasn't seen it, it guesses.
+- It sounds the same right or wrong. There is no tell.
+
+**So check yourself:** numbers · names · prices · dates · links · anything about our business.
+
+### Four you can copy as-is
+
+**Customer email**
+> We're a roofing contractor in Dayton. [what happened]. Write a short email to the homeowner —
+> under 120 words, plain, no apologising twice. Say what happened, give the new date, offer to work
+> around them. Don't offer a discount.
+
+**Job → website page**
+> Here are photos and my notes from a job we finished. Write 350 words for homeowners: what was
+> wrong, what we found, what we did, how long it took. Plain words. No superlatives.
+
+**Review reply**
+> Draft a reply to this review. Warm but not gushing, under 60 words, mentions the specific thing
+> they said. Don't apologise if we did nothing wrong.
+
+**Anything long**
+> Summarise this. What's happened, where it stands, what I owe them.
+
+### Don't bother
+
+- **Shouting.** "CRITICAL — YOU MUST" makes it worse now, not better.
+- **"Act as a world-class expert."** Does nothing. Say who it's for instead.
+- **A wall of text.** Four clear sentences beat four paragraphs.
+- **Manners.** "Please" changes nothing either way.
+
+---
+
 ## Sources for the figures in Part 5
 
 - [AirOps — AEO guide 2026 (citation freshness data)](https://www.airops.com/blog/aeo-answer-engine-optimization)
