@@ -3865,3 +3865,83 @@ opens the editor; and deleting the estimate you have open closes the editor.
 **Gates.** `check_build.py` green. `harnesses/del524_harness.js` — **32 assertions, 0 failed**,
 running the shipped module against a Supabase stand-in that can be told to refuse exactly the way
 RLS does. All five prior harnesses re-run, unchanged.
+
+---
+
+## Build 525 — the landing page: raised cards, today's weather, and a quote you can read
+
+> "Please raise all cards in the landing page as well. Also can you out today's weather at the top
+> right next to cardinal. And above the quote, there is a big square section there that is unused"
+
+**How the third sentence was read, stated so it is cheap to correct:** the landing is one narrow
+column, and the only genuinely unused area is the band to the **right of the "Cardinal." wordmark**,
+which sits directly above the quote — which is also exactly where the weather was asked for. Treated
+as one instruction. If it meant something else, the panel moves and nothing else has to.
+
+### First: the landing is not what the markup looks like
+
+The inline-styled buttons under `<div id="landingView">` are a **dead fallback**.
+`#landingView>*{display:none}` hides them and `cr-lr-script` overwrites the whole element with a
+`.cr-lr` layout. Patching those inline styles would have changed nothing on screen. Found by
+rendering the page, not by reading it — the prime doctrine, in the other direction.
+
+### 1. Raised
+
+Same recipe as 522 — bevel follows the card, drop shadow follows the page. `.cr-lr-roof` had a
+shadow and gained the ridge edges; **`.cr-lr-pair button` had `box-shadow:none`** (measured at 524).
+`.cr-lr-minor` is deliberately left flat: those are transparent ghost pills, not cards.
+
+**Also restored, pre-existing and not caused here:** `html[data-mode="light"] .cr-lr-pair
+button{border-color:#ded7cf}` is a *shorthand*, and it had been quietly eating the `--racc` accent
+edge — orange Production, red Sales Floor — in light mode only. Verified against 524 before claiming
+it: dark `rgb(224,118,42)`, light `rgb(222,215,207)`. Semantic colours hold in both themes.
+
+### 2. Weather
+
+**Open-Meteo, chosen because it needs no API key** — nothing secret enters the file. CLAUDE.md
+records that a key has already been leaked on this project once; the durable fix is to pick a source
+that doesn't have one.
+
+Fetching a keyless third-party host straight from the browser is **this app's existing convention**,
+not a new mechanism: `nominatim.openstreetmap.org` and `photon.komoot.io` are already called that
+way for address lookup. Copied their shape — plain `fetch`, `try/catch`, `localStorage` cache
+(20 min), silent `.catch()`.
+
+Shows what decides a roofing day: condition, temperature, high/low, wind, and the rain chance (badge
+only at ≥20%). On phones the high/low/wind line drops so the panel fits beside the wordmark.
+
+**⚠️ Unverified against the live API.** The build container's egress proxy answers **403 to CONNECT**
+for `api.open-meteo.com`, so the response schema could not be confirmed from here and is not being
+claimed. Everything is written to degrade to nothing instead: the panel ships `hidden` and only
+un-hides once a response has actually parsed into a numeric temperature.
+
+**The wordmark overlapped the panel at phone width** — `clamp(38px,12vw,58px)` and it does not wrap,
+so it ran straight under. Caught by measuring `getBoundingClientRect()` overlap, not by looking.
+Now `clamp(28px,8.2vw,58px)` inside `.cr-lr-head`; measured overlap 0 at 430px.
+
+### 3. The quote was invisible in light mode
+
+Found while rendering for (1). **The same defect four times:** every `html[data-mode="light"]`
+override targets the **parent** while the child carries its own colour, so the child never changes.
+
+| | on `#f7f5f2` | |
+|---|---:|---|
+| `.cr-lr-quote p` `#f0e6da` | **1.13:1** | literally unreadable — cream on cream |
+| `.cr-lr-quote cite` `#9c8b7e` | 3.01:1 | |
+| `.cr-lr-minor button` `#9c8b7e` | 3.01:1 | |
+| `.cr-lr-foot .pp` `#8d7f73` | 3.56:1 | |
+
+The override sets `.cr-lr-quote{color:#5f564f}`; `.cr-lr-quote p` has its own `#f0e6da` and wins.
+Identical in shape to 523's `#cr-ci label` vs `.req`, two builds apart, in a different module.
+
+### Gates
+
+`check_build.py` green. `harnesses/wx525_harness.js` — **56 assertions, 0 failed**, running the
+shipped module against a stubbed fetch. **Eight failure paths** are asserted individually (network
+refused, HTTP 500, non-JSON, empty object, schema changed, temperature as string, temperature null,
+empty daily arrays) and every one must leave the four cards and the quote untouched. All six prior
+harnesses re-run — **347 assertions total**, unchanged.
+
+**A harness that "hung" did not.** Twelve `pretendToBeVisual` JSDOM instances each keep a rAF loop
+alive, so node never exited, so `tail` never saw EOF and printed nothing. The run had completed.
+Close the windows and `process.exit(0)`.
