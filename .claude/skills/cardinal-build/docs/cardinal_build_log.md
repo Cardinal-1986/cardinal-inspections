@@ -5005,3 +5005,42 @@ Verified in Chromium in both themes:
 Dark is untouched — asserted, and confirmed by reading the rendered border rather than the source.
 
 `check_build.py` green (552, negative-controlled). Closes the open question from 551.
+
+### build 553 — the right side of Crews
+Theo: "How about the right side?" Measured the left nav against the right panel in
+Chromium rather than guessing. The panel is TWO `.crw-card`s butted together (header
+with the tabs, then the body), and three things were wrong with it:
+
+- **Light corners were 10px against the nav's 14px.** `panelHtml()` set the radius as an
+  INLINE style, which beats every rule in the stylesheet. Fixed structurally: the two
+  halves get real classes (`crw-cardtop` / `crw-cardbot`) carrying exactly the geometry
+  the inline styles used to, so a theme rule can reach them. Dark was never affected —
+  its nav is 10px too.
+- **The file input was unstyled in BOTH themes.** The base rule lists `[type=text]`,
+  `[type=date]`, `select`, `textarea` and stops, so Compliance rendered a raw UA control
+  (measured `border-width:0px, border-radius:0px`). Now styled, plus
+  `::file-selector-button`.
+- **Dark drew a white line across the middle of the panel.** `.crw-card`'s
+  `0 1px 0 rgba(255,255,255,.10) inset` is a top-edge bevel, and the body half has no top
+  edge. Pixel-measured at luma 53.0 against the card's own 30.2. Only the inset is
+  dropped; the drop shadow and ledge are kept verbatim.
+
+Also unified the hairline — 550 gave doc rows, notes and the rate frame a translucent-red
+border, 551 changed the CARDS to grey `#e6e2df` and left the children pink.
+
+**A false positive of mine, recorded so it does not come back.** I first diagnosed a
+drop-shadow SMEAR at the seam — the top half's `0 14px 28px` landing on the body half's
+face. It does not happen: the body half is a later sibling with an opaque background and
+paints over that shadow. The luma profile is flat over dy 1-9 in both builds. What I had
+measured was the first document row's own border, 14px down. 550's `.crw-card + .crw-card`
+rule went in under the same wrong theory, aimed at the wrong card, and 551 then set it to
+a value identical to `.crw-card` — a literal no-op. Deleted. No shadow is overridden in
+this build except the one dark inset above. `h553_chromium.js` asserts the absence of the
+smear so the wrong fix cannot be reintroduced.
+
+Caught during the build: adding the classes let the light `.crw-card` rule (1,3,0)
+out-specify the base `.crw-cardbot` (1,1,0) and put the 2px cardinal edge back — a red
+line straight across the middle of the panel, 186 luma. The harness caught it before the
+write; the light rule now re-zeroes `border-top`.
+
+Gates: `check_build.py` green, negative-controlled, 552 → 553. Chromium 22/22, both themes.

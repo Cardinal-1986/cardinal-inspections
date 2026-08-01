@@ -3175,7 +3175,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 552 &#8212; the light Crews cards carry a cardinal red top edge</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 553 &#8212; the right side of Crews matches the crew list, and Choose File is no longer a raw browser control</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34116,6 +34116,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:553, note:'\u25E7 The right side of Crews got the same finish as the left. \u2666 Its corners were 10px against the crew list\u2019s 14 \u2014 they match now. \u2666 The Choose File button on Compliance was a raw browser control; it is styled like every other field, in both themes. \u2666 Document rows, notes and the rate frame share the card\u2019s hairline instead of a pink one. \u2666 In dark, a white line ran across the middle of the panel where the tabs meet the content. Gone.' },
 { build:552, note:'\uD83D\uDD34 Red edge on the light Crews cards, on top instead of the plain white one.' },
 { build:551, note:'\u2728 The light cards pop now. \u2666 Crews cards sit up off the page with a real shadow instead of a faint one \u2014 the app\u2019s own lifted look, which until now you could only see by hovering, and a phone cannot hover.' },
 { build:550, note:'\u2600\uFE0F Crews looks right in light mode now. \u2666 Warm off-white page, white cards with a thin red edge, and everything lifted off the page the way the Landing and Insurance screens are. \u2666 The crew list is a raised card in light instead of a sunk channel. Dark is unchanged.' },
@@ -53383,6 +53384,18 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   background:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
   border:1px solid var(--crw-cardn,#24242c);
   box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.10) inset; }
+/* 553: the panel is two cards butted together. Geometry here is exactly what
+   the inline styles used to set — moved into classes so the light theme can
+   reach it, which an inline style would never allow.
+
+   The one behavioural change is the body half's shadow: `.crw-card`'s
+   `0 1px 0 rgba(255,255,255,.10) inset` is a top-edge bevel, and the body half
+   has no top edge. It was drawing a white hairline across the middle of the
+   object — measured at luma 54.3 against the card's own 32.3. The drop shadow
+   and the ledge are kept verbatim; only the inset goes. */
+#crewsView .crw-cardtop{ border-radius:10px 10px 0 0;padding-bottom:0; }
+#crewsView .crw-cardbot{ border-radius:0 0 10px 10px;border-top:0;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5); }
 :root[data-theme="rb-light"] #crewsView .crw-card{ background:var(--crw-card,#fff);
   border-color:var(--crw-cardn,#dcdee2);box-shadow:0 2px 6px rgba(30,45,65,.10); }
 
@@ -53402,6 +53415,13 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #crewsView .crw-tab.on{ background:var(--crw-tabon,#242430);color:#fff;box-shadow:inset 0 2px 0 #c8202e; }
 :root[data-theme="rb-light"] #crewsView .crw-tab.on{ background:var(--crw-tabon,#fff);color:#161616; }
 
+/* 553: a raw UA file button was rendering here — border-width:0, radius:0,
+   grey-on-near-black in dark. */
+#crewsView input[type=file]{ padding:6px 8px;font:12.5px system-ui;cursor:pointer; }
+#crewsView input[type=file]::file-selector-button{
+  font:700 12px system-ui;padding:5px 11px;margin-right:9px;cursor:pointer;
+  border-radius:6px;border:1px solid var(--crw-line,#2b2b33);
+  background:var(--crw-taboff,#14151a);color:var(--crw-ink,#c2cbd8); }
 #crewsView .crw-doc{ display:flex;justify-content:space-between;align-items:center;gap:10px;
   padding:10px 12px;border-radius:7px;margin-bottom:7px;font-size:12.5px;
   background:rgba(255,255,255,.035);border:1px solid var(--crw-line,#26262e); }
@@ -53414,7 +53434,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #crewsView label{ display:block;font:700 10px system-ui;letter-spacing:.05em;
   text-transform:uppercase;margin:10px 0 4px;color:var(--crw-mut,#9aa0a8); }
 :root[data-theme="rb-light"] #crewsView label{ color:var(--crw-mut,#5f666e); }
-#crewsView input[type=text],#crewsView input[type=date],#crewsView select,#crewsView textarea{
+#crewsView input[type=text],#crewsView input[type=date],#crewsView input[type=file],#crewsView select,#crewsView textarea{
   width:100%;padding:8px 10px;border-radius:6px;font:13px system-ui;
   background:var(--crw-input,#101015);border:1px solid var(--crw-line,#2b2b33);
   color:var(--crw-ink,#c2cbd8); }
@@ -53530,10 +53550,28 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   border-radius:14px;
   box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
 }
-/* the header card and the body card are one object, so the seam between them
-   must not draw a line through it */
-:root[data-theme="rb-light"] #crewsView .crw-card + .crw-card{
-  box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
+/* 553: the two halves match the nav's 14px now. They used to carry an inline
+   10px, which beat every rule in this stylesheet, so the left card rendered
+   visibly rounder than the right.
+
+   The rule that stood here before was mine and did nothing: it guarded against
+   the top half's drop shadow smearing onto the body half, which cannot happen
+   — the body half is a later sibling and paints its opaque background over
+   that shadow. Measured flat 255.0 for 13px below the seam. It also aimed at
+   the wrong card, and 551 set it to a value identical to `.crw-card`. Deleted
+   rather than left as decoration. No shadow is overridden here; both halves
+   inherit `.crw-card`'s exactly as they did at 552. */
+:root[data-theme="rb-light"] #crewsView .crw-cardtop{
+  border-radius:14px 14px 0 0;
+}
+:root[data-theme="rb-light"] #crewsView .crw-cardbot{
+  border-radius:0 0 14px 14px;
+  /* border-top MUST be re-zeroed. The base `#crewsView .crw-cardbot` sets it,
+     but the light `.crw-card` rule above out-specifies that one (1,3,0 against
+     1,1,0) and puts the 2px cardinal edge back — drawing a red line straight
+     across the middle of the panel. The harness caught it as a 186-luma band
+     1px below the seam. */
+  border-top:0;
 }
 
 /* ── tabs ── */
@@ -53551,7 +53589,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-doc,
 :root[data-theme="rb-light"] #crewsView .crw-note{
   background:var(--crw-card,#fff);
-  border:1px solid var(--crw-hair,rgba(200,32,46,.20));
+  border:1px solid var(--crw-hair,#e6e2df);
   border-radius:11px;
   box-shadow:0 4px 10px rgba(40,20,10,.10), 0 1px 3px rgba(40,20,10,.07);
 }
@@ -53559,7 +53597,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* ── the rate table ── */
 :root[data-theme="rb-light"] #crewsView .crw-rtwrap{
   background:var(--crw-card,#fff);
-  border:1px solid var(--crw-hair,rgba(200,32,46,.20));
+  border:1px solid var(--crw-hair,#e6e2df);
   border-radius:11px;padding:2px 10px 6px;
   box-shadow:0 4px 10px rgba(40,20,10,.10), 0 1px 3px rgba(40,20,10,.07);
 }
@@ -53582,6 +53620,9 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   box-shadow:0 1px 3px rgba(40,20,10,.08);
 }
 :root[data-theme="rb-light"] #crewsView label{ color:var(--crw-red,#9c1822); }
+:root[data-theme="rb-light"] #crewsView input[type=file]::file-selector-button{
+  background:var(--crw-taboff,#f0eded);color:var(--crw-ink,#1f2124);
+  border:1px solid var(--crw-inputline,#e2dede); }
 
 /* ── buttons ── */
 :root[data-theme="rb-light"] #crewsView .crw-btn{
@@ -53908,7 +53949,7 @@ function panelHtml(){
   var body = tab === 'profile' ? profileHtml(c)
     : tab === 'rates' ? ratesHtml(c)
     : tab === 'notes' ? notesHtml(c) : complianceHtml(c);
-  return '<div class="crw-card" style="border-radius:10px 10px 0 0;padding-bottom:0">' +
+  return '<div class="crw-card crw-cardtop">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">' +
       '<div><b style="font-size:15px">' + esc(c.legal_name || c.name) + '</b>' +
         '<div class="crw-mut" style="margin-top:2px">' +
@@ -53918,7 +53959,7 @@ function panelHtml(){
     '<div class="crw-tabs">' + tabsFor().map(function(t){
       return '<div class="crw-tab' + (tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</div>';
     }).join('') + '</div></div>' +
-    '<div class="crw-card" style="border-radius:0 0 10px 10px;border-top:0">' + body + '</div>';
+    '<div class="crw-card crw-cardbot">' + body + '</div>';
 }
 
 function render(){
