@@ -4641,3 +4641,43 @@ run on **Bob DeBuilder's actual row** — the one client whose roof has been ins
 record that can prove the collapses fire — with **Dan Thompson as the control**, a real client with
 no inspection whose option rows must survive. Harness `harnesses/h542_chromium.js`; the template
 body lives at `scripts/roof_body.py`.
+
+---
+
+## Build 543 — the nav's own Schedule Board icon joins the clipboard family
+
+**Theo:** *"yes please do"* — taking up the offer 537 left open.
+
+537 gave 20 card titles drawn icons and **deliberately did not touch the nav's own copy**, because Theo
+had signed off on that surface at 536. `I2.scheduleboard` was **one unbroken filled slab**:
+
+```
+M7 2h2v2.4h6V2h2v2.4h2A2 2 0 0 1 21 6.4V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6.4a2 2 0 0 1 2-2h2z
+```
+
+A calendar outline with nothing cut out, filled with `--rbe-mute`. **That is the white square Theo
+pointed at**, and it is exactly why 537 drew the cards a clipboard instead of reusing this — reusing
+it would have swapped a white square for a grey one.
+
+**This is a port, not a new drawing.** Both weights are lifted verbatim out of the card icon 537 already
+shipped and Theo has already seen in production, so the nav and the cards are now **provably the same
+artwork** rather than two drawings that resemble each other. The gate asserts byte-equality against the
+card markup in the file, not against a copy pasted into the patch script.
+
+**Why the solid weight stops being a slab:** the ported path carries `fill-rule="evenodd"` with an inner
+rect (`M6.6 9.4h10.8v9.6H6.6z`) cutting the body open. Evenodd rather than a knockout fill is
+load-bearing — 537's recon found four `I2` icons using hardcoded `fill="#0d0d10"` (the rail's own
+background) which are black holes anywhere else. This icon sits in **536's recessed well**, `#0A0E16`
+in dark and `#f2f3f5` in light, so a hardcoded knockout would have been visibly wrong in *both*.
+
+`check_build.py` green. Chromium **8/8**, plus rendered before/after in both modes across rest, hover
+and active — active matters because `.lnav-item.on` recolours the icon to cardinal red, which is where
+a solid slab looks worst.
+
+**⚠ The first marker was wrong and the negative control caught it.** `fill-rule="evenodd" d="M6.2 3.6h1.6`
+is **already in 542** — as the card icon. Porting artwork means the geometry is not new; only its
+appearance *inside the `I2`/`I5` sets* is. Marker corrected to `scheduleboard:'<path d="M9.4 1.8h5.2`.
+The test was wrong, not the app — as usual.
+
+`I2` and `I5` are 24 icons each; the gate asserts **exactly one key changed** in each, computed against
+the previous file rather than hardcoded.
