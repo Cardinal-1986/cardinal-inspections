@@ -3158,7 +3158,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 542 &#8212; + New contract now builds the real roofing Construction Agreement, filled in from the job</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 543 &#8212; the left menu's Schedule Board icon matches the card titles instead of being a filled square</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34074,6 +34074,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:543, note:'\uD83D\uDCCB The last square icon is gone. \u2666 Schedule Board in the left menu was still a solid filled calendar \u2014 the one 537 left alone. \u2666 It now uses the same clipboard the Work Schedule card title got, the same artwork rather than a lookalike.' },
 { build:542, note:'\uD83C\uDFE0 The real roofing agreement, filled in for you. \u2666 + New contract on a client now builds the actual Construction Agreement \u2014 every numbered section from the paper form. \u2666 Date, buyer, email, phone, street, city, state, zip, the rep and all three money lines come in already filled. \u2666 If the roof has been inspected, the layers, pitch and decking lines arrive filled too. \u2666 The Terms and the two cancellation notices are still the printed master in Company Documents \u2014 that is legal wording and is not retyped.' },
 { build:541, note:'\uD83D\uDCD1 Contracts have their own tab. \u2666 The contracts section was always there \u2014 it was just filed at the bottom of the Estimates tab, which is why nobody could find it. \u2666 It is now its own entry in the job menu at the top of a client. Same button, same list, nothing else changed.' },
 { build:540, note:'\uD83D\uDCB0 The money on a client is real now. \u2666 The circle, the job cards, the pipeline totals and the reports were all reading a table that has never had a dollar in it, so everything showed $0. \u2666 They now read the signed contract first, and if there is not one, the highest estimate you have actually SENT. \u2666 Drafts do not count \u2014 send the estimate and the number appears.' },
@@ -51921,7 +51922,7 @@ clients:'<circle cx="9" cy="8.5" r="3.6"/><path d="M2.6 20a6.4 6.4 0 0 1 12.8 0z
 importfromacculynx:'<path d="M11 3h2v8.2l2.6-2.6 1.4 1.4-5 5-5-5 1.4-1.4L11 11.2z"/><path d="M4 17h16v4H4z"/>',
 leadsjobs:'<rect x="3" y="5" width="18" height="2.6" rx="1.3"/><rect x="3" y="10.7" width="18" height="2.6" rx="1.3"/><rect x="3" y="16.4" width="11" height="2.6" rx="1.3"/>',
 production:'<path d="M14.2 2.6 20 8.4l-2.9 2.9-5.8-5.8z"/><path d="M10.2 6.6 3 13.8V21h7.2l7.2-7.2z"/>',
-scheduleboard:'<path d="M7 2h2v2.4h6V2h2v2.4h2A2 2 0 0 1 21 6.4V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6.4a2 2 0 0 1 2-2h2z"/>',
+scheduleboard:'<path d="M9.4 1.8h5.2a1.6 1.6 0 0 1 1.6 1.6v.9H7.8v-.9a1.6 1.6 0 0 1 1.6-1.6z"/><path fill-rule="evenodd" d="M6.2 3.6h1.6v2.8h8.4V3.6h1.6a2 2 0 0 1 2 2v13.8a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM6.6 9.4h10.8v9.6H6.6z"/><rect x="8.4" y="11" width="7.2" height="1.9" rx=".95"/><rect x="8.4" y="14.4" width="5" height="1.9" rx=".95"/>',
 salesfloor:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.4" fill="#0d0d10"/><circle cx="12" cy="12" r="1.7"/>',
 quickinspection:'<path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/>',
 inspections:'<circle cx="11" cy="11" r="6.6"/><rect x="15.2" y="16.6" width="7" height="2.6" rx="1.3" transform="rotate(45 15.2 16.6)"/>',
@@ -51948,7 +51949,7 @@ clients:'<path d="M5 6h14" class="m"/><path d="M5 12h14"/><path d="M5 18h9" clas
 importfromacculynx:'<path d="M12 5v11"/><path d="M8 12.5 12 16.5l4-4" class="m"/>',
 leadsjobs:'<path d="M4 7h16" class="m"/><path d="M4 12h11"/><path d="M4 17h6" class="m"/>',
 production:'<path d="M4 18 10 6l4 8 2-3 4 7" class="m"/><path d="M4 18h16"/>',
-scheduleboard:'<path d="M4 7h16"/><path d="M4 12h16" class="m"/><path d="M4 17h16" class="m"/><path d="M9 5v14" class="m"/>',
+scheduleboard:'<path d="M8.6 4.2H6.4a2 2 0 0 0-2 2v13.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V6.2a2 2 0 0 0-2-2h-2.2"/><rect x="8.4" y="2.4" width="7.2" height="3.6" rx="1.4" class="m"/><path d="M8.2 11.6h7.6" class="m"/><path d="M8.2 15.4h5" class="m"/>',
 salesfloor:'<circle cx="12" cy="12" r="7" class="m"/><path d="M12 5v14"/>',
 quickinspection:'<path d="M13 4 6 13h5l-1 7 8-10h-5z"/>',
 inspections:'<circle cx="11" cy="11" r="5.5" class="m"/><path d="M15 15l5 5"/>',
