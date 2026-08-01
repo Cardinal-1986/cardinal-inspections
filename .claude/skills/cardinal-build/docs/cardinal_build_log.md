@@ -5296,3 +5296,37 @@ wrapping a 340px map in a yellow panel is a design decision Theo has not seen. F
 
 Gates: `check_build.py` green, negative-controlled, 558 → 559. **Chromium 20/20** against the
 *shipped* `#quickInspView` markup and real stylesheets, with 558 loaded from disk as its own control.
+
+### build 560 — the left menu reaches the Estimates builder too
+Theo: *"add the nav section desktop on the estimates page."*
+
+**Why 558 could not have found this screen — the lesson worth keeping.** `#cr-est-view` **is not in
+the markup.** `cr-est-script` creates it at runtime:
+
+```js
+function ensureView(){ if(view) return view;
+  view = document.createElement('div'); view.id = 'cr-est-view';
+  document.body.appendChild(view); return view; }
+```
+
+Its id is `cr-est-view`, not `...View`, so 558's static scan **and** its computed-style sweep over
+`[id$="View"]` both walked straight past it. **A DOM audit that only reads the shipped HTML cannot
+see a screen JavaScript appends.** It is `position:fixed;inset:0;z-index:9500` — the highest
+surface in the app — so it covered the menu outright.
+
+**Not simply a fifth selector on 558's rule**, for two reasons:
+
+- **Gated on `body.cr-lnav-on`, not applied flat.** That class is set only once the menu has
+  actually mounted, so a phone keeps the full-screen takeover at `z-index:9500`/`top:0` byte for
+  byte. 558's convention rule is unconditional — right for those four, wrong for this one.
+- **`.cr-est-head` is NOT hidden.** The convention hides `.ins-header` on the views it governs, but
+  this bar carries the estimate number **and the Save button**; hiding it would remove the only way
+  to save an estimate. It reads as a document toolbar beneath the app header.
+
+**Two left rails on desktop, flagged not buried:** the app menu (238px) plus the estimate's own
+document outline (`.cr-est-nav`, 224px, desktop-only ≥901px, its own feature). Measured: **798px of
+form at 1280, 958px at 1440, 1438px at 1920.** Workable everywhere the menu appears (≥1100px).
+
+Gates: `check_build.py` green, negative-controlled, 559 → 560. **Chromium 11/11**, creating
+`#cr-est-view` the same way the app does rather than expecting it in the markup, with 559 as its
+own control, at 1440 and at 820.

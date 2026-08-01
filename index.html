@@ -3207,7 +3207,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 559 &#8212; Quick Inspection is readable again, in Cardinal yellow</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 560 &#8212; the left menu reaches the Estimates builder too</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34615,6 +34615,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:560, note:'\uD83E\uDDED The left menu now stays with you on the Estimates builder too. It was the one screen 558 could not reach \u2014 the builder is created on the fly rather than living in the page, so the sweep that fixed the others never saw it. \u2666 Your estimate keeps its own toolbar and its own outline down the left; the app menu sits outside both. \u2666 Phones and tablets still get the full-screen builder, unchanged.' },
 { build:559, note:'\u26A1 Quick Inspection is readable again. \u2666 The page title was near-black text on a near-black page \u2014 effectively invisible. \u2666 The whole inspection now sits in a yellow panel sunk into the page, and the chat bubbles, chips and buttons are black cards sunk into the yellow with white text, lifting on hover. \u2666 The glaring white note bar is gone. \u2666 Camera stays red and Finish stays green \u2014 those colours mean something. \u2666 The black background is untouched.' },
 { build:558, note:'\uD83E\uDDED The left menu now stays with you on every page on a desktop. \u2666 Crews used to cover it completely \u2014 it now sits beside it like everything else. \u2666 Cardinal Truth, the Client Directory and the Resource Library were quietly hiding their own left edge underneath the menu; they now start where the menu ends. \u2666 The landing page and the document editor keep the full screen on purpose \u2014 nothing should sit between you and a document you have not saved. \u2666 Phones and tablets are unchanged.' },
 { build:557, note:'\u2600\uFE0F The Activity Count tiles get a light twin. They were obsidian in both modes \u2014 deliberate, and your pick \u2014 but in light mode a black tile on a white page was the only one left. Now it is a raised white tile with the same sheen, and the numbers are a deeper orange so they are actually readable on it. Dark mode is untouched.' },
@@ -52405,6 +52406,35 @@ body.cr-lnav-on #cardinalTruthView,
 body.cr-lnav-on #insClientsView,
 body.cr-lnav-on #resourceLibraryView,
 body.cr-lnav-on #crewsView{left:var(--lnav-w) !important}
+
+/* ── 560: the Estimates builder, which 558 could not have found ────────────
+   `#cr-est-view` is not in the markup — cr-est-script creates it at runtime and
+   appends it to <body>, and its id is `cr-est-view`, not `...View`. 558's static
+   scan AND its computed-style sweep over [id$="View"] both walked past it. It is
+   position:fixed;inset:0;z-index:9500, the highest surface in the app, so it
+   covered the menu outright.
+
+   Deliberately NOT folded into the rule above, for two reasons:
+
+   1. It is gated on body.cr-lnav-on, not applied flat. That class is set only
+      once the menu has actually mounted, so a phone keeps the full-screen
+      takeover at z-index 9500 exactly as it ships today. The convention rule is
+      unconditional, which is right for those four and wrong for this one.
+
+   2. Its own header bar STAYS. The convention hides `.ins-header` on the views
+      it governs, but `.cr-est-head` carries the estimate number and the Save
+      button — hiding it would remove the only way to save an estimate. It reads
+      as a document toolbar under the app header, which is what it is.
+
+   The page now carries two left rails on desktop: this menu at 238px and the
+   estimate's own document outline at 224px (desktop-only ≥901px, its own
+   feature). That leaves 958px of form at 1440 and 798px at 1280 — workable, and
+   flagged to Theo rather than assumed. */
+body.cr-lnav-on #cr-est-view{
+  top:var(--headh,110px) !important;
+  left:var(--lnav-w) !important;
+  z-index:60 !important;
+}
 /* The reason this build exists: .wrap ships max-width:none, so every table runs
    the full width of an ultrawide. Cap it — but never the masthead, which lives
    inside the fixed header and must stay full width. */
