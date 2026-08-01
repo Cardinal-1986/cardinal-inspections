@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 533 &#8212; the last of the near-black writing on red buttons is now white, everywhere in the app</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 534 &#8212; the Library assistant’s diagrams draw every time instead of sometimes printing ~~stack at you</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33858,6 +33858,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:534, note:'\uD83D\uDCD0 Library diagrams, reliable. \u2666 When you asked the assistant something and it drew a diagram, it only worked if the assistant happened to leave a blank line above it \u2014 otherwise you got the raw text \u201C~~stack\u201D printed at you instead of a picture. The app now spaces them itself, so a diagram draws every time. Nothing about how they look has changed.' },
 { build:533, note:'\uD83D\uDD34 Red buttons, finished. \u2666 Thirteen more buttons and tabs across the app had near-black writing on the cardinal red \u2014 the map button, ABC Supply, the photo editor and its tools, the photo annotator, the line-item library, the contract editor and the estimate preview. All now white, like the ones fixed earlier. The red itself is unchanged.' },
 { build:532, note:'\uD83D\uDCD0 Library entries that were written before can now be given a diagram. Open one and tap Add a diagram, and the assistant draws it from what that entry already says. It will tell you when a picture would not help.' },
 { build:531, note:'\uD83D\uDD24 The What is New list showed stray letters where a small picture belonged. Six notes had one, going back several updates.' },
@@ -49422,8 +49423,59 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
     return ccIsAdmin() ? ' \u00b7 use \uD83D\uDCF8 CompanyCam to file them' : '';
   }
 
+  /* 534: a marker only draws when it STARTS its own block - lbRich splits on
+     blank lines only and lbBlock reads lines[0]. api/librarian.js asks the
+     model for that spacing (510) and drawInto force-wraps it (530), but the
+     free-form ASK path had no normalisation at all: one line of prose above a
+     marker turned the diagram into a paragraph AND leaked "~~stack" to the
+     reader. Normalised HERE rather than at the call site because lbRich is the
+     renderer - one pipeline, so the ask path, the ephemeral photo path and
+     every stored note are all covered at once.
+
+     Four rules, each justified by what the parser actually does:
+       1. a blank line BEFORE any marker line       (all four forms)
+       2. a blank line AFTER a ~~pitch line         (pitch reads no data lines)
+       3. for ~~bars, a blank line at the first following line with no "|"
+          (lbDiagram returns null on such a line, killing the whole diagram)
+       4. a line that is exactly "~~" closes the block instead of becoming a
+          row. The model writes it as a closing fence; nothing reads it that
+          way, so it was rendering as a band. MEASURED ON LIVE DATA - the
+          "Attic Ventilation" entry draws a 4th step reading "~~" today.
+
+     Trailing prose after ~~stack / ~~flow is deliberately left alone: those
+     carry no signal separating a data line from a sentence, so a rule would be
+     a guess, and their failure mode is the mild one (an extra band, capped at
+     8 rows). Every rule above is a no-op on already-correctly-spaced text. */
+  var LB_MK = /^\s*~~\s*(stack|flow|bars|pitch)\b/i;
+  function lbSpaceMarkers(t){
+    if(t.indexOf('~~') < 0) return t;          /* the overwhelming common case */
+    var src = t.split('\n'), out = [], i, m, kind;
+    for(i = 0; i < src.length; i++){
+      /* 4: a bare "~~" fence closes the block rather than joining it */
+      if(src[i].trim() === '~~'){ out.push(''); continue; }
+      m = src[i].match(LB_MK);
+      /* 1: open a block for the marker */
+      if(m && out.length && out[out.length - 1].trim() !== '') out.push('');
+      out.push(src[i]);
+      if(!m) continue;
+      kind = m[1].toLowerCase();
+      /* 2: pitch takes no data lines, so close immediately */
+      if(kind === 'pitch'){
+        if(i + 1 < src.length && src[i + 1].trim() !== '') out.push('');
+        continue;
+      }
+      /* 3: bars data lines carry "|"; close at the first line that does not */
+      if(kind === 'bars'){
+        while(i + 1 < src.length && src[i + 1].trim() !== '' &&
+              src[i + 1].indexOf('|') > -1) out.push(src[++i]);
+        if(i + 1 < src.length && src[i + 1].trim() !== '') out.push('');
+      }
+    }
+    return out.join('\n');
+  }
+
   function lbRich(s){
-    var t = esc(s == null ? '' : s).replace(/\r\n?/g, '\n');
+    var t = lbSpaceMarkers(esc(s == null ? '' : s).replace(/\r\n?/g, '\n'));
     if(!t.trim()) return '';
     var blocks = t.split(/\n{2,}/);
     var out = [];

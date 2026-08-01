@@ -4211,3 +4211,57 @@ because two differently-shaped counts disagreed.
 `check_build.py` green, 532 → 533. Self-computing: dark-ink-on-red **14 → 0**, `#c8202e`
 **239 → 239**. Nothing of 530–532 lost, asserted by count. All seven harnesses pass — **354
 assertions** — against their base rather than mine.
+
+---
+
+## Build 534 — the librarian's diagrams stop intermittently leaking `~~stack`
+
+**Asked for:** *"check if the librarian is actually able to make diagrams and illustrations —
+the other session went in a circle and burned a lot of money by guessing and it not being
+true"* … then *"do it"*.
+
+**Answered by measurement, not reading.** The shipped `lbRich`/`lbDiagram` were lifted out of
+`index.html` verbatim and executed: **33/33** render assertions and **20/20** Chromium
+assertions (both themes, real computed styles) pass on 533. **The diagram engine works** —
+four forms (`~~stack` `~~flow` `~~bars` `~~pitch`), model writes data only, app builds the SVG.
+6 of 26 live library entries already carry one.
+
+**The defect was the spacing contract around it.** `lbRich` splits on blank lines only and
+`lbBlock` reads `lines[0]`, so a marker only draws when it *starts its own block*. One line of
+prose immediately above it turned the diagram into a paragraph **and printed the literal
+`~~stack` to the reader** — the worst available degradation, because it reads as a broken app.
+`api/librarian.js` spends six prompt lines asking for that spacing (510) and `drawInto()`
+force-wraps it (530), but **the free-form ask path had no normalisation at all**, client or
+server. The only guard was the model choosing to obey an instruction.
+
+**Fixed in `lbRich` itself**, not at the call site — one pipeline per concept, so the ask path,
+the ephemeral photo path and every stored note are covered at once. New `lbSpaceMarkers()`,
+four rules, each justified by what the parser actually does:
+
+1. blank line **before** any marker line (all four forms)
+2. blank line **after** a `~~pitch` line (it reads no data lines)
+3. for `~~bars`, blank line at the first following line with no `|` (`lbDiagram` returns
+   `null` on such a line, killing the whole diagram)
+4. a line that is exactly `~~` closes the block instead of becoming a row
+
+**Rule 4 came from production data, not a fixture.** The live *Attic Ventilation* entry ends
+its flow block with a stray `~~` fence and has been drawing **a 4th step reading "~~"**. Found
+by running all 6 real entries through both renderers — the kind of thing no invented fixture
+surfaces.
+
+**Deliberately not fixed, so it is not read as an oversight:** trailing prose after `~~stack` /
+`~~flow`. Those carry no signal separating a data line from a sentence, so a rule would be a
+guess; their failure mode is also the mild one (an extra band, capped at 8 rows).
+
+### Gates
+
+`check_build.py` green, 533 → 534, marker + negative control clean. **66 new assertions, 0
+failures** — 51 functional, 15 against the six live entries. The load-bearing set is section B:
+**534's output is byte-identical to 533's** for every correctly-spaced input (stack, flow, bars,
+pitch, tables, bullets, numbered lists, headings, bold, plain prose). Nothing about how a
+diagram looks changed. The only intended difference on real data is the Attic entry, asserted
+as a difference rather than waved through. Two harness assertions went stale **by intent** when
+rule 4 landed and were inverted rather than relaxed.
+
+**Illustrations were investigated and NOT built** — see OPEN_ITEMS. Both librarian models are
+text-only; there is no image generation anywhere in `api/`.
