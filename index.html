@@ -3152,7 +3152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 528 &#8212; the desktop menu down the left uses proper icons instead of emoji</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 532 &#8212; the desktop menu down the left uses proper icons instead of emoji</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33858,6 +33858,9 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:532, note:'\uD83D\uDCD0 Library entries that were written before can now be given a diagram. Open one and tap Add a diagram, and the assistant draws it from what that entry already says. It will tell you when a picture would not help.' },
+{ build:531, note:'\uD83D\uDD24 The What is New list showed stray letters where a small picture belonged. Six notes had one, going back several updates.' },
+{ build:530, note:'\uD83D\uDD8D The Library assistant draws diagrams reliably now. Its instructions showed it an example that did not follow its own rule about spacing, so diagrams could come out as plain text with stray marks in them.' },
 { build:528, note:'\u25FB\uFE0F Proper icons. \u2666 The menu down the left side on desktop no longer uses emoji \u2014 it has a real icon set: solid marks on the dark app, lighter keyline marks when you switch to the light theme. \u2666 The burger menu is unchanged.' },
 { build:527, note:'\uD83D\uDCC5 Schedule Board. \u2666 It was the one retail page still painted for a white background \u2014 fourteen white cards down a black screen, with \u201CNothing scheduled\u201D almost too faint to read. It now matches the rest of the app, and the dates, times and client names were re-picked so they stay readable on the darker card. \u2666 It also stretches to the full width of the screen instead of sitting in a narrow column.' },
 { build:526, note:'\uD83C\uDFA8 Landing page, tidied. \u2666 The background is now the same black the rest of the app uses, instead of a warmer one. \u2666 The four big cards are separated instead of stacked in one block. \u2666 Resource Library and Schedule Board are proper cards now, beside Production and Sales Floor, rather than plain outlines at the bottom. \u2666 The name, greeting, date and weather sit raised off the page.' },
@@ -33874,12 +33877,12 @@ var CHANGELOG = [
 { build:515, note:'\uD83D\uDFE9 The green Bill to card on a community job is back. It had been pointing at a colour that only exists on the hub, so the browser threw the whole rule away and the card lost its green fill and its border together \u2014 on the one card that tells you which party gets the invoice.' },
 { build:514, note:'\u23F3 A parked community bid stops shouting. Once a job is waiting on funding, the Due column, the deadline sort and the filter all count to the date you said you would check back \u2014 not to the bid deadline, which has already passed and was making a two-year grant look like the most urgent job on the board. The chip goes quiet too: neutral with the word hold, instead of red.' },
 { build:513, note:'\uD83E\uDD1D Community bids can now record what actually happened. Four outcomes on the job page: awarded, still waiting on funding, referred to another partner, or not awarded. Waiting parks the job with a date to check back \u2014 months or years out \u2014 so a grant cycle stops reading as overdue. No reason is asked when one does not land.' },
-{ build:509, note:'\u1F4DA The Resource Library is now one tap away from anywhere. A books button sits in the little bar with the back and forward arrows, on every screen, instead of the library only being reachable from the home page and two panels.' },
-{ build:508, note:'\u1F58D Asking the Library assistant to draw or illustrate a concept now works. It was refusing every request that used the word drawing, because it treated them all as job blueprints. Asking how something works and wanting it drawn is exactly what the library is for.' },
-{ build:507, note:'\u1F4CB Sort photos now fills in the Areas of Concern table as well. It writes one line per section rather than one per photograph, uses the most serious finding in each, and sets the priority from what the AI judged. Anything you have already typed is left exactly as it is.' },
-{ build:506, note:'\u1F50E CompanyCam search is much more forgiving. Typing an address with the house number found nothing if you wrote Ave and the record said Avenue, or if the postcode had an extra four digits. It now shows the closest matches with the right job first, instead of showing nothing.' },
+{ build:509, note:'\uD83D\uDCDA The Resource Library is now one tap away from anywhere. A books button sits in the little bar with the back and forward arrows, on every screen, instead of the library only being reachable from the home page and two panels.' },
+{ build:508, note:'\uD83D\uDD8D Asking the Library assistant to draw or illustrate a concept now works. It was refusing every request that used the word drawing, because it treated them all as job blueprints. Asking how something works and wanting it drawn is exactly what the library is for.' },
+{ build:507, note:'\uD83D\uDCCB Sort photos now fills in the Areas of Concern table as well. It writes one line per section rather than one per photograph, uses the most serious finding in each, and sets the priority from what the AI judged. Anything you have already typed is left exactly as it is.' },
+{ build:506, note:'\uD83D\uDD0E CompanyCam search is much more forgiving. Typing an address with the house number found nothing if you wrote Ave and the record said Avenue, or if the postcode had an extra four digits. It now shows the closest matches with the right job first, instead of showing nothing.' },
 { build:505, note:'\u26A1 The last four features that could only use Google now fall back to the second AI as well: the CompanyCam caption pass, the Hover takeoff reader, the Roofr takeoff reader and the Scope of Loss reader. Every AI feature in the app now has somewhere to go when Google is busy.' },
-{ build:504, note:'\u1F527 The AI health check now reports which model it actually tested. It could be asked about one model and answer about another, which made it useless for telling whether a newer model works.' },
+{ build:504, note:'\uD83D\uDD27 The AI health check now reports which model it actually tested. It could be asked about one model and answer about another, which made it useless for telling whether a newer model works.' },
 { build:503, note:'\u26A1 The AI now tries the newest Gemini model first and falls back to the previous one, then to OpenAI. Three fallbacks deep, so a busy afternoon at Google stops being your problem.' },
 { build:502, note:'\u26A1 The Library assistant, the report Assistant and the summary drafter now fall back to a second AI as well, the same way Sort photos already does. Google has been refusing about one request in four today; those three used to simply fail when it did.' },
 { build:501, note:'\u26A1 Sort photos now falls back to a second AI when Google is busy. Google has been refusing about one request in four today with a high demand error; when that happens the photograph is sent to OpenAI instead, which is answering in well under a second. A photograph is only skipped if both refuse.' },
@@ -49255,6 +49258,12 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 #rlLibPanel .lb-acts button{flex:1;min-width:120px;background:var(--lb-surface2,#FAF8F7);
   border:1px solid var(--lb-line2,#DED8D6);color:var(--lb-ink,#17181B);border-radius:10px;
   padding:11px 10px;font:800 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer}
+/* 532: the button that adds a drawing to an entry that already exists.
+   Same tokens as .lb-acts button above so it inherits every theme. */
+#rlLibPanel .lb-m .lb-draw{display:block;margin:10px 0 2px;background:var(--lb-surface2,#FAF8F7);
+  border:1px solid var(--lb-line2,#DED8D6);color:var(--lb-ink,#17181B);border-radius:10px;
+  padding:9px 14px;font:800 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer}
+#rlLibPanel .lb-m .lb-draw[disabled]{opacity:.55;cursor:default}
 #rlLibPanel .lb-ask{display:flex;gap:8px;padding:0 16px 14px}
 #rlLibPanel .lb-ask input{flex:1;min-width:0;padding:11px 12px;border-radius:10px;
   border:1px solid var(--lb-line2,#DED8D6);background:var(--lb-surface,#fff);
@@ -50581,14 +50590,79 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       '</span></div>';
   }
 
+  /* 532: the same four forms lbBlock accepts. Kept next to its only two callers
+     so a change to the renderer's marker set has one obvious place to land. */
+  var LB_MARKER = /(^|\n)\s*~~\s*(stack|flow|bars|pitch)\b/i;
+
   function openNote(id){
     var it = items.find(function(x){ return x.id === id; });
     if(!it) return;
     openPanel();
-    say('bot', '<b>' + esc(it.title) + '</b>' +
+    var m = say('bot', '<b>' + esc(it.title) + '</b>' +
       lbRich(it.body || it.summary || '') +
       (it.kind === 'note' ? lbSources(it.sources) : '') +
       (it.source_note ? '<span class="filed">Asked: ' + esc(it.source_note) + '</span>' : ''));
+    /* Offer it only where it can do something: a note, with text, that has no
+       diagram yet. Without the last condition an entry collects three. */
+    if(m && it.kind === 'note' && String(it.body || '').trim() && !LB_MARKER.test(String(it.body || ''))){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lb-draw';
+      b.setAttribute('data-lb-draw', it.id);
+      b.textContent = '\u270E  Add a diagram';
+      m.appendChild(b);
+    }
+  }
+
+  /* 532: Theo asked to be able to put illustrations into entries that already
+     exist. The library had FOUR inserts on library_items and no update at all,
+     so nothing could ever add to one. The RLS policy has always allowed it. */
+  function drawInto(id, btn){
+    var it = items.find(function(x){ return x.id === id; });
+    if(!it || !window.supa || !btn || btn.disabled) return;
+    var was = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Drawing\u2026';
+    function give(msg){
+      btn.disabled = false;
+      btn.textContent = was;
+      var e = say('bot', esc(msg));
+      if(e) e.className = 'lb-m bot err';
+    }
+    window.aiHeaders().then(function(h){
+      return fetch('/api/librarian', { method:'POST', headers:h,
+        body:JSON.stringify({ illustrate:{ title:it.title, body:it.body } }) });
+    }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(data){
+        if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+        return data;
+      });
+    }).then(function(d){
+      var block = String((d && d.diagram) || '').trim();
+      /* Not every entry should have a picture. Half this library is permit
+         offices - "no" is a real answer here, not a failure. */
+      if(!block){
+        give((d && d.reason) || 'A drawing would not add anything to this one.');
+        return;
+      }
+      if(!LB_MARKER.test('\n' + block)){
+        give('That came back in a shape the app cannot draw.');
+        return;
+      }
+      /* 530 measured this exactly: a marker only draws when it STARTS its own
+         block. Whatever the model returned, it gets a blank line either side. */
+      var body = String(it.body || '').replace(/\s+$/, '') + '\n\n' +
+        (d.caption ? String(d.caption).trim() + '\n\n' : '') +
+        block.replace(/\s+$/, '') + '\n';
+      return window.supa.from('library_items').update({ body:body }).eq('id', it.id)
+        .then(function(r){
+          if(r && r.error) throw r.error;
+          it.body = body;
+          openNote(it.id);
+        });
+    }).catch(function(e){
+      give('Could not add a drawing \u2014 ' + (e && e.message ? e.message : String(e)));
+    });
   }
 
   function openItem(path){
@@ -50742,6 +50816,8 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
           }
           return;
         }
+        var dw = e.target.closest('[data-lb-draw]');
+        if(dw){ drawInto(dw.getAttribute('data-lb-draw'), dw); return; }
         if(e.target.closest('[data-lb-cc]')){ ccOpen(); return; }
         if(e.target.closest('[data-cc-close]')){ ccClose(); return; }
         var _e = e.target.closest('[data-cc-edit]');
