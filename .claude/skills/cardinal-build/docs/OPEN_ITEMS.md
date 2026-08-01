@@ -845,3 +845,23 @@ darkening fixes it. Six surfaces, all low-risk.
 
 **Nothing here is shipped.** The measurement is done and repeatable, so a future session should
 **pick a cluster with Theo and ship that one**, not attempt the list.
+
+---
+
+## Left open by build 522 (the card raise)
+
+1. **The dark ground barely shows the raise.** In `rb-light` it reads clearly; on retail's near-black
+   page the `rgba(0,0,0,.8)` drop shadow has nothing to cast onto, so the `#d9d9d9` bottom lip carries
+   it alone. A *white* card cannot lift on black the way the dark home card does — home's lift is a
+   light top edge over a **darker body**. Closing the gap means giving retail's cards home's ground,
+   which is the colour change Theo explicitly ruled out ("I didn't mean color I meant raised cards").
+   **Do not do it unilaterally.** If he asks again, the audit is already done: `.ackv div` and
+   `.acxtrs label` carry `#2b2b2b`, `.axnote` `#5c4a42`, `.dbrow .dbgo` and `.dbic1` `#23507e` — every
+   one needs a token before the ground moves, or the client profile goes unreadable.
+2. **Radii were left alone.** Home is 12px; several raised cards are 6–10px. The blocker is `.acxsec`,
+   whose first child `.acxhead` is a light strip with square corners — round the parent alone and the
+   header pokes out. A radius pass means rounding both, per card. Small, separate build.
+3. **Sales Floor and the production board got the raise** (`.cr-sf-today`, `.cr-sf-block`,
+   `.cr-pb-job`), geometry only. They are deliberate designs with their own colour semantics and the
+   Production board is one of the three sanctioned light-theme exceptions — **if Theo dislikes the
+   lift there, remove those three selectors rather than retuning the block.**
