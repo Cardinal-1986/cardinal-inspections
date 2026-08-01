@@ -4681,3 +4681,63 @@ The test was wrong, not the app — as usual.
 
 `I2` and `I5` are 24 icons each; the gate asserts **exactly one key changed** in each, computed against
 the previous file rather than hardcoded.
+
+---
+
+## Build 544 — retail stage chips finally have a dark variant
+
+**Theo:** *"lets do the ratail stage chips and activity count tiles."*
+
+Eight `.stg-*` rules carry **light pastels with no theme gate at all** — `#e8f0fb`, `#fdf3e2`,
+`#ececec` and friends. Cardinal Claims has a dark-adapted set under `#insClientsView`; **retail never
+got one**, so in dark mode retail chips render as pastel lozenges on a near-black card.
+
+**The palette is Claims', reused verbatim** — one stage palette for the app rather than two that
+drift apart. Contrast computed, not eyeballed: **6.40:1 at worst (Lost), 8.57:1 at best (Approved)**,
+against a 4.5 floor. Chip text is 800 10px uppercase, which is *body* text, not large.
+
+**Scoped to `.stagechip.stg-*`, never bare `.stg-*`** — and this is the load-bearing part. `.pcard`
+also wears these classes, where they set `--stgc` (an accent variable), not a background. A bare rule
+would paint a chip background across the whole card. `stageClass()` only ever emits them onto a
+`.stagechip` span or a `.pcard`, so the two-class form hits exactly the chips. Specificity is
+deliberate: base is (0,1,0), this is (0,3,0) so it wins in dark, and `#insClientsView .stagechip.stg-*`
+is (1,3,0) so **Claims still wins on its own screens** — asserted in a real browser.
+
+## Build 545 — Activity Count tiles go obsidian
+
+**Theo:** *"Keep them orange tho and raise it, color black. Glassy/Glossy style tile"* → previewed
+three treatments → **"obsidian"**.
+
+`.actbox` was flat `var(--rbe-panel)` with a hairline. Now a radial sheen from the top-left, raised on
+a real drop shadow. **The orange is untouched** — `#E8722A`, 6.47:1 on the new ground against a 3.0
+floor for 22px 800 numerals.
+
+**⚠ The label had to be pinned, and this is the bug the build nearly shipped.** `.actbox span` was
+`color:var(--rbe-mute)`. That token is `#9aa0a8` in dark but **`#6b6b6b` in light** — and the tile is
+black in *both* modes, so in light the label would have landed at **3.57:1**, under the floor. A
+theme-independent tile needs a theme-independent label: pinned to `#9aa0a8`, 7.22:1 in both. Caught by
+computing the ratio before writing the rule, not after.
+
+Black in both modes is Theo's literal instruction, shown to him in the preview. A light twin is a
+single added rule.
+
+### Gates, and two tests that were wrong before the app was
+
+`check_build.py` green on both. **Chromium 30/30**, with **every `<style>` block from the artifact
+loaded in file order** — the 481 lesson made into a gate: that build shipped a losing rule with every
+mechanical check green, and only a real engine catches it. Every assertion here is a
+`getComputedStyle` read.
+
+- **The orange assertion fired on a false positive.** `src.count('#E8722A') == 1` failed because the
+  *comment explaining the value quotes the value*. This file's oldest counting trap, verbatim:
+  "patch scripts document the values they change, so a naive count finds the value in its own
+  explanatory comment." Rewritten to compare the `.actbox b` **rule** before and after.
+- **The `.pcard` assertion blamed this build for a pre-existing condition.** It demanded the card not
+  be a pastel; it is one — **and build 543 shows the identical value**. `.stg-Lead{background}` at char
+  41043 outranks `.pcard{background}` at char 14262 by *file order* at equal specificity. Rewritten to
+  assert this build **did not move** it, comparing 543 against 545 in-browser.
+
+**Reported, not fixed — needs a decision:** because a bare `.stg-*` rule outranks `.pcard`'s own
+gradient, a retail pipeline card takes its stage's background. Whether that is the intended
+stage-tinting or a long-standing accident is Theo's call; how visible it is depends on what is painted
+over the card. Not touched here.

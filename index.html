@@ -1459,8 +1459,21 @@ html, body{overflow-x:hidden;max-width:100%;}
 .acthead{margin-top:16px;padding-top:8px;
   font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
 .actstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:10px;}
-.actbox{background:var(--rbe-panel);border:1px solid var(--rbe-line2);border-radius:6px;padding:10px 6px;text-align:center;}
-.actbox span{display:block;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);line-height:1.3;}
+/* 545: obsidian — Theo's pick of three gloss treatments. Black in BOTH modes,
+   which is his literal instruction and what he saw in the preview; a light twin
+   is one added rule if he wants one. Raised on a real drop shadow, sheen from
+   the top-left, and the orange numeral kept exactly as it was (#E8722A reads
+   6.47:1 here, against a 3.0 floor for 22px 800). */
+.actbox{background:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;border-radius:6px;padding:10px 6px;text-align:center;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5),
+             0 1px 0 rgba(255,255,255,.10) inset;}
+/* PINNED, not var(--rbe-mute). That token is #9aa0a8 in dark but #6b6b6b in
+   light, and this tile is black in BOTH — so the themed token would have put the
+   label at 3.57:1 in light mode, under the 4.5 floor. A theme-independent tile
+   needs a theme-independent label. #9aa0a8 is 7.22:1 on this ground. */
+.actbox span{display:block;font:700 11.5px 'Segoe UI',Arial,sans-serif;
+  color:#9aa0a8;line-height:1.3;}
 .actbox b{display:block;font:800 22px 'Segoe UI',Arial,sans-serif;color:#E8722A;margin-top:3px;}
 @media (max-width:900px){ .actstrip{grid-template-columns:repeat(3,1fr);gap:8px;} .actbox b{font-size:19px;} }
 .arhead{font:700 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin-top:8px;}
@@ -3158,7 +3171,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 543 &#8212; the left menu's Schedule Board icon matches the card titles instead of being a filled square</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 545 &#8212; the Activity Count tiles are raised glossy black with the orange kept</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34074,6 +34087,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:545, note:'\u26AB Activity Count tiles are obsidian now. \u2666 Raised off the page, glossy black, with a sheen from the top-left. \u2666 The orange numbers are exactly the same orange as before.' },
+{ build:544, note:'\uD83C\uDFF7\uFE0F Stage chips read properly in dark mode. \u2666 They were light pastel lozenges on a near-black card \u2014 retail never got a dark version, only the insurance side did. \u2666 They now use the same colours Cardinal Claims already uses. Light mode is unchanged.' },
 { build:543, note:'\uD83D\uDCCB The last square icon is gone. \u2666 Schedule Board in the left menu was still a solid filled calendar \u2014 the one 537 left alone. \u2666 It now uses the same clipboard the Work Schedule card title got, the same artwork rather than a lookalike.' },
 { build:542, note:'\uD83C\uDFE0 The real roofing agreement, filled in for you. \u2666 + New contract on a client now builds the actual Construction Agreement \u2014 every numbered section from the paper form. \u2666 Date, buyer, email, phone, street, city, state, zip, the rep and all three money lines come in already filled. \u2666 If the roof has been inspected, the layers, pitch and decking lines arrive filled too. \u2666 The Terms and the two cancellation notices are still the printed master in Company Documents \u2014 that is legal wording and is not retyped.' },
 { build:541, note:'\uD83D\uDCD1 Contracts have their own tab. \u2666 The contracts section was always there \u2014 it was just filed at the bottom of the Estimates tab, which is why nobody could find it. \u2666 It is now its own entry in the job menu at the top of a client. Same button, same list, nothing else changed.' },
@@ -52578,6 +52593,34 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   background:#0D1220;border-color:#223047;
 }
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-crm button{border-right-color:#223047}
+</style>
+<style id="cr-stagechip-dark-styles">
+/* ══ Build 544 · retail stage chips finally have a dark variant ════════════
+   The eight .stg-* rules are LIGHT PASTELS with no theme gate — #e8f0fb,
+   #fdf3e2, #ececec and friends. Cardinal Claims has a dark set under
+   #insClientsView; retail never got one, so in dark mode retail chips render
+   as pastel lozenges on a near-black card.
+
+   THE PALETTE IS CLAIMS', REUSED VERBATIM — one stage palette for the app
+   rather than two that drift apart. Contrast computed, not eyeballed: 6.40:1
+   at worst (Lost), 8.57:1 at best (Approved), against a 4.5 floor. Chip text
+   is 800 10px uppercase, which is body text, not large text.
+
+   SCOPED TO .stagechip.stg-*, NEVER BARE .stg-*. `.pcard` also wears these
+   classes, where they set --stgc (an accent variable) and not a background —
+   a bare rule would paint a chip background across the entire card.
+
+   Specificity is deliberate: base .stg-Lead is (0,1,0), this is (0,3,0) so it
+   wins in dark, and #insClientsView .stagechip.stg-Lead is (1,3,0) so Claims
+   still wins on its own screens. Light mode is untouched.                  */
+:root:not([data-theme="rb-light"]) .stagechip.stg-Lead{background:rgba(93,161,243,.18);color:#a3c7fa;border:1px solid rgba(93,161,243,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Prospect{background:rgba(230,145,45,.18);color:#f5b880;border:1px solid rgba(230,145,45,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Approved{background:rgba(76,175,113,.18);color:#8fdfa8;border:1px solid rgba(76,175,113,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Scheduled{background:rgba(200,32,46,.2);color:#f4a7ae;border:1px solid rgba(200,32,46,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Completed{background:rgba(150,150,150,.18);color:#c8c8c8;border:1px solid rgba(150,150,150,.32);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Invoiced{background:rgba(140,90,190,.18);color:#c4a3f0;border:1px solid rgba(140,90,190,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Closed{background:rgba(120,140,160,.18);color:#a5b8ce;border:1px solid rgba(120,140,160,.32);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Lost{background:rgba(140,120,120,.2);color:#c4a8a8;border:1px solid rgba(140,120,120,.32);}
 </style>
 <style id="cr-titleicon-styles">
 /* ══ Build 537 · card titles carry the nav's icons ════════════════════════
