@@ -5,6 +5,91 @@
 
 ---
 
+## 🟡 Illustrations in the Resource Library — researched at 534, NOT built, awaiting Theo
+
+*Written 1 Aug 2026 at build 534. **Read this before re-researching any of it** — Theo's
+explicit complaint was that a previous session "went in a circle and burned a lot of money by
+guessing and it not being true." Every figure below was measured or fetched, and the one thing
+that could not be verified is named as such.*
+
+**What Theo wants:** diagrams AND illustrations, specifically **shaded technical illustrations**.
+He raised using actual client photos, undecided.
+
+### Settled facts — do not re-derive
+
+- **The diagram engine works.** 33/33 render + 20/20 Chromium assertions on 533. Four forms,
+  6 of 26 live entries already use one. It is not broken and never was.
+- **There is no image generation in this app.** Both librarian models (`gemini-3.6-flash`,
+  `gemini-3.5-flash`) are text-only; nothing in `api/` generates an image. The `MAX_IMAGE_BYTES`
+  hits in `analyze.js` / `companycam.js` are image *input*.
+- **Client photos already exist as a feature** — `~~photos` (build 471), real CompanyCam
+  photographs, admin-only, model never receives photo data. Theo may simply not have seen it.
+- **The storage half is already built.** `library` bucket + blob upload + signed URL +
+  `library_items` row with `kind:'image'` — 5 call sites, `ccFileBlob()` is the pattern.
+  A generated image needs **no new storage work**.
+- **Cost is not a factor.** 20 entries lack a diagram; at ~$0.067/image that is **~$1.35 one
+  time**, stored not regenerated.
+
+### Vendor comparison — settled, do not re-litigate
+
+| | Verdict |
+|---|---|
+| **Imagen 4** | ❌ **Deprecated, shutdown 17 Aug 2026.** Do not build on it. |
+| **`gemini-3.1-flash-image`** (Nano Banana 2) | ✅ Recommended. Existing key, existing host, existing `askGemini()` ladder, ~$0.067/image. |
+| **Recraft (direct or via fal)** | ❌ **Wrong tool for shaded technical.** Its advantages — SVG vector, brand style sets, text-in-image — all serve *flat* work. Its style catalogue has no technical/cutaway/schematic option, and **V4 dropped the `style` parameter entirely**. |
+| **fal.ai** | ⚠️ Real merit as vendor insurance (Google just killed Imagen 4 with two weeks' notice) and Recraft V4 vector emits native SVG — but a 5th vendor and prepaid credits for ~$0.85 of savings. Revisit only if raster looks wrong beside the SVG diagrams. |
+
+### ⛔ The one unverified thing — needs a key, cannot be closed from the sandbox
+
+**The exact endpoint and response shape for Gemini image generation.** Sources conflict on
+`:generateContent` vs a newer `/interactions` path.
+
+An unauthenticated probe was attempted and **the negative control killed it**: a model that
+cannot exist (`gemini-9.9-not-a-real-model`) returned the same 403, because auth is checked
+*before* model resolution. **Those 403s prove nothing.** Without the control this would have
+been reported as "all three image models confirmed" — which is precisely the failure mode Theo
+is complaining about. Close it with a probe route (precedent: `api/companycam-status.js`).
+
+Reachability from the build sandbox, measured: `generativelanguage.googleapis.com` **reachable**;
+`fal.ai` and `api.openai.com` **blocked by the proxy**. Chromium bypasses the proxy entirely, so
+`ai.google.dev` is unreachable by any local tool.
+
+### 🔴 The real risk, and it is not the vendor
+
+Generated technical illustration produces **confident, handsome, wrong detail** — layers in the
+wrong order, impossible flashing, invented components. The crew uses this library to work on real
+houses. Note the existing diagrams are structurally safe from this: the prompt requires a diagram
+to *only restate what the prose already says*, and four data lines can be checked at a glance.
+**A picture cannot be verified that way.**
+
+If built, it must have: **(1)** Theo approves before it files — generate → preview → save or
+discard; **(2)** prompted schematic, not photoreal; **(3)** illustrations sit *beside* diagrams,
+never replacing one.
+
+### ✅ ANSWERED — the DGX Spark is the recommended route, see `DGX_SPARK_ILLUSTRATIONS.md`
+
+Theo confirmed the Spark is **up and running**, and that he has **Tailscale**. That settles it:
+generate on the Spark, upload through the Library's existing image path. **No app changes, no
+vendor, no key, and the unverified-endpoint blocker above stops mattering.**
+
+Not for *serving* the app — a box in Dayton behind a tunnel is a single point of failure for a
+field tool whose crew works at all hours, and the librarian's Gemini → OpenAI fallback has no
+equivalent for a self-hosted box. But for *producing* illustrations it wins outright: unlimited
+iteration at zero marginal cost, a LoRA for one consistent house style, and customer photos never
+leaving the building.
+
+Full setup written up in **`DGX_SPARK_ILLUSTRATIONS.md`** — Tailscale, ComfyUI on port 8188, the
+`--listen 0.0.0.0` gotcha that silently breaks remote access, FLUX.1-dev, a prompt recipe, and
+the standing rule that **generated illustrations must not carry labels** (text rendering is
+unreliable; let the `~~stack`/`~~flow` diagrams carry the words, which are real text and already
+accurate).
+
+**Still true and still the reason to be careful:** a generated cutaway is an unverifiable claim
+with a picture's authority. Nothing files without Theo looking at it. Do not automate the upload
+step away without re-reading that section.
+
+---
+
 ## 🔴 Data, not code — audited against the live database 31 July 2026
 
 Read-only audit via the Supabase connector. **Only one item needs Theo.**

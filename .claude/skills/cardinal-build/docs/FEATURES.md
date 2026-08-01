@@ -912,3 +912,38 @@ wrap and ran straight under the panel at phone width.
 - **Four light-mode overrides target a parent whose child has its own colour**, so the child never
   changed. The quote body was `#f0e6da` on `#f7f5f2` — **1.13:1**. All four now addressed directly.
   When adding a light-mode override here, override the element that actually declares the colour.
+
+---
+
+## Resource Library — diagrams (`~~stack` `~~flow` `~~bars` `~~pitch`)
+
+Added at build 466, made reliable at **534**. Absent from this file until now.
+
+**The model never emits markup.** It writes DATA lines; `index.html` builds the SVG. That is the
+whole security design and the only one compatible with `lbRich()`'s escape-then-promote contract.
+Two rules hold it: model text lands only in an SVG `<text>` node, never an attribute (`esc()`
+does not escape the single quote); and every number drawn is one *we* parsed and clamped.
+
+| Form | Draws | Notes |
+|---|---|---|
+| `~~stack` | layered assembly, top layer first | first band gets the accent stroke |
+| `~~flow` | ordered steps with arrows | numbered by the app |
+| `~~bars <unit>` | `Label \| number` comparison | longest bar scales to full width |
+| `~~pitch 6/12` | slope triangle | **the app computes the multiplier**, deliberately — it is the one number a model would plausibly get wrong |
+
+Anything malformed → `lbDiagram()` returns `null`, the marker line is dropped, and the block
+falls through to normal rendering. A broken diagram degrades to the list it already was.
+
+**Where things live:** `lbDiagram()` / `lbStack()` / `lbFlow()` / `lbBars()` / `lbPitch()` /
+`lbSvg()` / `lbCut()` in `cr-lib-script`; CSS `.lb-d-*` in `cr-lib-styles` (unprefixed, unlike
+its `#rlLibPanel`-scoped neighbours — verified winning in Chromium, not assumed).
+`lbSpaceMarkers()` (534) normalises marker spacing before the block split — see the build log
+for its four rules and for what it deliberately does not fix.
+
+**Two entry points:** inline in a librarian answer, and the **"✎ Add a diagram"** button on an
+existing entry (`drawInto()`, build 532) which posts `{illustrate:{title,body}}` and force-wraps
+whatever comes back.
+
+**The library cannot generate pictures.** Both models are text-only. `~~photos` (471) is a
+different thing entirely — a search over real CompanyCam photographs, admin-only, where the model
+never receives photo data. See OPEN_ITEMS before proposing image generation.
