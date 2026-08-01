@@ -4562,3 +4562,41 @@ are extracted from the shipped artifact by brace matching and executed against *
 the live database**, nulls and duplicate titles included. The one stub, `parseCkAll`, is proven
 inert by an assertion that no production checklist carries `manual_value`.
 Harness at `harnesses/h540_prod.js`, data at `harnesses/prod540.json`.
+
+---
+
+## Build 541 — contracts get their own tab
+
+**Theo**, asked where the contracts section should live: **"2"** — its own tab.
+
+**Nothing was missing.** The heading, the `+ New contract` button and the list were all there and all
+wired — filed inside `tab-estimates`, below the estimates list, which is exactly why they read as
+absent. The markup moved **verbatim** into a pane of its own; the only edit is dropping a
+`margin-top:22px` that was spacing it below the estimates list and is now just a gap at the top of
+a pane. `pNewContractBtn` and `contractDocsMount` keep their ids, so every existing listener still
+finds its element.
+
+**The tab strip is a `<select>`, not a row of buttons.** Navigation is `#jobMenuSel` in the header
+and `showTab()` syncs it. So a new tab is exactly three things: the pane, an entry in `showTab`'s
+list, and an `<option>`.
+
+**⚠ `showTab()` has no null guard** — `document.getElementById('tab-' + t).style.display` inside a
+`forEach` over a hardcoded list. **The name and the pane have to ship in the same commit**; split
+them and every `showTab()` call throws, killing tab switching across the whole profile. The gate
+asserts `showTab`'s list and the panes in the markup are the *same set* rather than matching a
+number, and the harness carries the negative control that proves the hazard is real: 541's
+`showTab` run against 540's markup throws `Cannot read properties of null (reading 'style')`.
+
+`check_build.py` green (541, marker `id="tab-contracts"`, negative-controlled).
+Chromium: **17/17** — the shipped `showTab` driven against the shipped pane ids, every tab
+exercised. Harness at `harnesses/h541_chromium.js`.
+
+**Next, and Theo has already picked it:** the roofing master agreement rendered in the tab and
+autopopulated ("2" again). `docs/Cardinal_Roofing_Contract.pdf` is 5 pages, US Letter, **zero
+AcroForm fields** — agreement face ×2, T&C, and the two statutory 3-Day Notice copies which must
+not be reworded. Autopopulatable: date, buyer, email, phone, street/city/state/zip (stored as
+separate fields on the lead), insurance carrier + claim #, and the four money lines off `projectValue()`.
+Plus **existing layers, roof pitch and decking type straight from the inspection checklist**.
+
+**Also found:** two Company Documents entries are dead links — `Cardinal_Window_Contract.pdf` and
+`Cardinal_Gutter_Contract_Fillable.pdf` are in `COMPANY_DOCS` but not in the repo. They 404 today.

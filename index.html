@@ -3125,6 +3125,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <option value="checklists">Checklists</option>
           <option value="inspections">Inspections</option>
           <option value="estimates">Estimates</option>
+          <option value="contracts">Contracts</option>
           <option value="materials">Materials</option>
           <option value="measure">Measurements</option>
         </select>
@@ -3157,7 +3158,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 540 &#8212; the money circle on a client now shows the signed contract, or the estimate you sent, instead of $0</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 541 &#8212; contracts have their own tab on a client instead of being buried under Estimates</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3607,7 +3608,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </span>
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
-      <h3 class="projsec" style="margin-top:22px;">&#128209; Contracts</h3>
+    </div>
+
+    <div id="tab-contracts" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <h3 class="projsec">&#128209; Contracts</h3>
       <p class="subnote">Client contracts &#8212; prefilled from this profile. Blank print masters live in
       <b>&#9776; Menu &#8594; Company Documents</b>.</p>
       <div style="margin:6px 0 12px;">
@@ -11569,7 +11574,7 @@ function renderProjectDocs(){
 function showTab(name){
   var sel = document.getElementById('jobMenuSel');
   if(sel && sel.value !== name) sel.value = name;
-  ['overview','inspections','estimates','checklists','materials','measure'].forEach(function(t){
+  ['overview','inspections','estimates','contracts','checklists','materials','measure'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
   if(name === 'inspections') refreshInspGalN();
@@ -33936,6 +33941,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:541, note:'\uD83D\uDCD1 Contracts have their own tab. \u2666 The contracts section was always there \u2014 it was just filed at the bottom of the Estimates tab, which is why nobody could find it. \u2666 It is now its own entry in the job menu at the top of a client. Same button, same list, nothing else changed.' },
 { build:540, note:'\uD83D\uDCB0 The money on a client is real now. \u2666 The circle, the job cards, the pipeline totals and the reports were all reading a table that has never had a dollar in it, so everything showed $0. \u2666 They now read the signed contract first, and if there is not one, the highest estimate you have actually SENT. \u2666 Drafts do not count \u2014 send the estimate and the number appears.' },
 { build:539, note:'\uD83D\uDC9B Landing is yellow in both modes. \u2666 In the light theme it had been a darker amber so it would stay readable on the white menu; it is now the same yellow as the dark theme.' },
 { build:538, note:'\uD83C\uDF08 Three menu items are colour-coded. \u2666 In the left menu on desktop, Cardinal Truth reads red, Community Hub emerald green and Landing yellow \u2014 just the wording, the icons are unchanged. \u2666 Each colour has a light-mode twin, because the bright versions cannot be read on a white menu.' },
