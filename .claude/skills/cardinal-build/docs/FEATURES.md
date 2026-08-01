@@ -981,3 +981,26 @@ overriding the nav's slab for card titles only), `accountsreceivable`, `today`, 
 `.pipetitle` no longer clips a gradient to text — see the build log for why that was the whole
 cause of the blank squares, and note that `.acthead` and `.pu-strip .sh b` **still carry the same
 clip** deliberately.
+
+---
+
+## Colour-coded nav labels (build 538)
+
+Three items in the desktop left rail carry their own label colour: **Cardinal Truth** red,
+**Community Hub** emerald, **Landing** yellow. Text only — icons and row states are untouched.
+
+**Where it lives:** `<style id="cr-lnav-ink-styles">`, six selectors, all theme-scoped and all
+ending at `.lnav-tx`. Plus one attribute in `cr-lnav-script`.
+
+**`data-k` is the hook** — the label's own slug, emitted on every `.lnav-item`, computed with the
+same `iconKey(stripEmoji(label))` the icon lookup already uses. **Use it for any future per-item nav
+styling.** `data-nav` looks like the obvious hook and is not: Community Hub is added at runtime by
+`makeOpt()` with only an `id`, so `data-nav` exists on the static items only.
+
+**Both themes get their own value, and it is not one palette recoloured.** Cardinal red `#c8202e`
+is **3.40:1** on the dark rail and fails, so dark uses `#ef6b6b`; a true yellow is **1.6:1** on the
+light rail, so light uses amber `#8a6100`. Contrast was measured against the rail, the active card
+*and* hover in each theme — the active card counts because these labels stay coloured when their
+row is the current page.
+
+Desktop-only comes free: `--lnav-w` is `0px` except inside `@media (min-width:1100px)`.

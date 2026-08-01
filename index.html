@@ -3157,7 +3157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 537 &#8212; the squares beside the headings on the home and reports pages are proper drawn icons now</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 538 &#8212; Cardinal Truth, Community Hub and Landing are colour-coded in the left menu</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -33863,6 +33863,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:538, note:'\uD83C\uDF08 Three menu items are colour-coded. \u2666 In the left menu on desktop, Cardinal Truth reads red, Community Hub emerald green and Landing yellow \u2014 just the wording, the icons are unchanged. \u2666 Each colour has a light-mode twin, because the bright versions cannot be read on a white menu.' },
 { build:537, note:'\uD83C\uDFA8 Card headings have real icons. \u2666 The squares beside the headings on the home page and the Graphs \u0026 Reports page are gone \u2014 all 20 now carry a drawn icon in the same style as the left menu. \u2666 Both calendars finally look like calendars, and Punch \u0026 Repairs is a wrench rather than a second hammer. \u2666 They follow the theme the way the menu does: filled in dark, outlined in light.' },
 { build:536, note:'\uD83D\uDCD0 The left menu has depth. \u2666 It is now set into the page rather than sitting flat on it, with the section headings as raised bands and whichever page you are on lifted out as a card. \u2666 Works both ways \u2014 in light it is a grey channel with a white card, in dark it is a black channel with a navy one. Desktop only; nothing on the phone changed.' },
 { build:535, note:'\uD83C\uDF11 Dark mode, retail home. \u2666 The grey cards are gone. Everything now sits as navy panels raised off the black, with the numbers and client rows set into them \u2014 your idea, from that checkout screen. \u2666 The pipeline circles are a compact strip that shows the same five numbers in the space one circle used to take. \u2666 Both calendars match now: no red cap, white month, white dates, every square set in, and the greyed-out dates are actually readable. \u2666 \u201Call jobs\u201D came off the Production Calendar so the header sits level.' },
@@ -51847,7 +51848,7 @@ return '<button type="button" class="lnav-sec" data-sec="' + esc(id) +
 s.items.map(function(it, ii){
 return '<button type="button" class="lnav-item' +
 (it.el.classList.contains('on') ? ' on' : '') +
-'" data-sec="' + esc(id) + '" data-i="' + ii + '">' + lnavIcon(it.label) + '</button>';
+'" data-k="' + esc(iconKey(stripEmoji(it.label))) + '" data-sec="' + esc(id) + '" data-i="' + ii + '">' + lnavIcon(it.label) + '</button>';
 }).join('') +
 '</div>';
 }).join('') +
@@ -52383,6 +52384,52 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] .pti .i2{display:none}
 :root[data-theme="rb-light"] .pti .i5{display:inline;stroke:#a3121e}
 :root[data-theme="rb-light"] .pti .i5 .m{stroke:#9a9a9a}
+</style>
+<style id="cr-lnav-ink-styles">
+/* ══ Build 538 · three nav labels carry their own colour ══════════════════
+   Cardinal Truth red · Community Hub emerald · Landing yellow. JUST THE TEXT —
+   these land on .lnav-tx, the span holding the label, so the icon keeps the
+   nav's muted grey and the active row keeps its card, bar and lift.
+
+   Hooked on data-k, the label's own slug, emitted by cr-lnav-script. The
+   burger menu carries data-nav for Cardinal Truth and Landing, but Community
+   Hub is added at runtime by makeOpt() with only an id — so data-nav covers
+   two of three. data-k is the value lnavIcon() already computes for the icon
+   lookup, and equals data-nav wherever data-nav exists.
+
+   EVERY VALUE IS COMPUTED, at the 4.5:1 body-text floor, against all three
+   grounds a label sits on — the rail, the active card, and hover. The active
+   card is in that list because these labels stay coloured when their row is
+   the current page: a child's own color beats the row's.
+
+     dark   rail #0A0E16 · card #1A2434 · hover #111927
+     light  rail #f2f3f5 · card #ffffff · hover #e7e9ec
+
+   Two places the literal answer was the wrong one, both stated rather than
+   quietly fudged:
+
+   * CARDINAL RED FAILS IN DARK — #c8202e is 3.40 / 2.75 / 3.11 there. Dark
+     gets #ef6b6b (6.42 / 5.19 / 5.86); light gets the real #c8202e, which
+     passes (5.11 / 5.67 / 4.66).
+   * A TRUE YELLOW CANNOT BE READ ON THE LIGHT RAIL — #f0c651 is 1.6:1 on
+     #f2f3f5. Light gets the darkest amber that still reads as the same
+     colour, #8a6100 (4.99 / 5.54 / 4.55).
+
+   Emerald is the community CRM's own value in both themes — #34D399 is its
+   --lnav-crmc, #047857 its --hbg. Not invented.
+
+   Desktop-only comes for free: --lnav-w is 0px at :root and only 238px inside
+   @media (min-width:1100px).                                              */
+
+/* ── DARK ────────────────────────────────────────────────────────────────── */
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#ef6b6b}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#34D399}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#f0c651}
+
+/* ── LIGHT ───────────────────────────────────────────────────────────────── */
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#c8202e}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#047857}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#8a6100}
 </style>
 </body>
 </html>

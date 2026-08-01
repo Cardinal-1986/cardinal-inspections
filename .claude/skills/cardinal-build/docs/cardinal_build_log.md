@@ -4426,3 +4426,61 @@ loaded the `@media print` rule and reported a `#1b1b1b` text-fill. Fixed by anch
 
 `check_build.py` green (537, marker `cr-titleicon-styles`, negative-controlled).
 Chromium: **18/18**. Harness at `harnesses/h537_chromium.js`.
+
+---
+
+## Build 538 — three left-nav labels carry their own colour
+
+**Theo:** *"make the wording on cardinal truth red, and the community hub the emerald green just the
+text on the nav bar. Also make the Landing Hub a yellow color text on the nav bar for desktop"*
+
+**Just the text.** The rules land on `.lnav-tx`, the span holding the label — not on the row. Icons
+keep the nav's muted grey; the active row keeps its card, its cardinal bar and its lift. A child's
+own `color` beats the row's inherited one, so no specificity fight and no `!important`.
+
+**The hook is `data-k`, and finding it was the whole recon.** The burger menu the rail mirrors
+already carries `data-nav="cardinaltruth"` and `data-nav="landing"` — but **Community Hub is added
+at runtime by `makeOpt()` with only an `id`**, so `data-nav` covers two of the three. `cr-lnav-script`
+now emits `data-k`, the label's own slug, which is *the same value `lnavIcon()` already computes* for
+the icon lookup. That extends an existing computation instead of standing a second mechanism beside
+it, and it equals `data-nav` wherever `data-nav` exists.
+
+**"for desktop" needed no extra scoping.** `--lnav-w` is `0px` at `:root` and only `238px` inside
+`@media (min-width:1100px)` — the rail declares desktop-only in one place.
+
+**Every colour computed, not picked**, at the 4.5:1 body-text floor, against all three grounds a
+label can sit on in each theme — rail, active card, hover. The active card is in that list *because*
+these labels stay coloured when their row is current.
+
+| | dark | light |
+|---|---|---|
+| Cardinal Truth | `#ef6b6b` 6.42 / 5.19 / 5.86 | `#c8202e` 5.11 / 5.67 / 4.66 |
+| Community Hub | `#34D399` 10.05 / 8.12 / 9.16 | `#047857` 4.94 / 5.48 / 4.51 |
+| Landing | `#f0c651` 11.87 / 9.59 / 10.82 | `#8a6100` 4.99 / 5.54 / 4.55 |
+
+**Two places the literal answer was the wrong one**, both said out loud rather than fudged:
+
+- **Cardinal red fails in dark.** `#c8202e` is **3.40 / 2.75 / 3.11** on the rail, the active card
+  and hover. Dark gets a lighter red; light gets the real cardinal red, which passes there.
+- **A true yellow cannot be read on the light rail** — `#f0c651` is **1.6:1** on `#f2f3f5`. Light
+  gets the darkest amber that still reads as the same colour.
+
+Emerald is the community CRM's own value in both themes — `#34D399` is its `--lnav-crmc`, `#047857`
+its `--hbg`.
+
+**Three harness reds, all the test's fault, all worth recording:**
+
+1. **Slugs came out as `128737655039cardinaltruth`.** The harness fed the labels as *raw source* —
+   `&#128737;&#65039; Cardinal Truth` — but the rail reads `(el.textContent || '').trim()` off the
+   mirrored `.navopt`, which is **decoded DOM text**. Fixed by building the real element, setting
+   `innerHTML`, and reading `textContent` back the way the app does.
+2. **Every colour assertion passed against an empty screenshot.** `#cr-lnav` is
+   `display:none !important` until `body.cr-lnav-on` is set, and `getComputedStyle` reads hidden
+   elements happily. A visibility gate now runs *before* any colour reading.
+3. **The rail then rendered 1px wide** — the viewport was 620px, below the 1100px breakpoint, so
+   `--lnav-w` stayed `0px`. Tested at 1220px, which is the only width this feature exists at.
+
+`check_build.py` green (538, marker `cr-lnav-ink-styles`, negative-controlled).
+Chromium: **25/25** — the shipped `stripEmoji`/`iconKey`/render statement executed against the real
+menu labels, and contrast recomputed from the *rendered* colour against the *rendered* background
+rather than from the numbers in the patch comment. Harness at `harnesses/h538_chromium.js`.
