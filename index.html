@@ -3175,7 +3175,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 547 &#8212; Crews: a page for your subcontractors, grouped by trade, with their W-9 and insurance on file</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 548 &#8212; Crews now carry their labor rates, beside what Cardinal charges for the same line</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34116,6 +34116,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:548, note:'\uD83D\uDCB5 Labor rates on a crew. \u2666 Price a crew against your own catalog and see what you keep on every line, or add a row only they do. \u2666 Admin only \u2014 production can see who is insured, not what anyone is paid.' },
 { build:547, note:'\uD83D\uDC77 Crews. \u2666 A page for your subcontractors, grouped by trade \u2014 Roofing, Siding, Window Installers, Gutters, General Repairs. \u2666 Each crew carries their W-9 and insurance certificates, and the list shows at a glance who is covered and whose is about to lapse. \u2666 Notes too. Labor rates, work orders and payments come next.' },
 { build:546, note:'\u2728 Cards lift when you hover them. \u2666 Leads, the estimate builder and the reports page all raise off the page under the cursor. \u2666 Lead cards are navy now, matching the home screen. \u2666 The client name is white and the PO gold \u2014 they were a red-to-blue gradient that measured below the readable minimum. \u2666 Call, text and now Email sit in raised grey buttons down the right of every lead card. \u2666 The filter rail on Leads is a sunk black channel with proper drop-down sections, the same one the CRM menu uses. \u2666 The estimate builder has a jump list on the left \u2014 tap any line item to go straight to it \u2014 and the whole page is obsidian black. \u2666 Reports cards are obsidian too, with a thin red edge, and the numbers are colour-coded: money green, new leads yellow, signed work dark green.' },
 { build:545, note:'\u26AB Activity Count tiles are obsidian now. \u2666 Raised off the page, glossy black, with a sheen from the top-left. \u2666 The orange numbers are exactly the same orange as before.' },
@@ -53414,6 +53415,25 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   background:var(--crw-input,#fff);border-color:var(--crw-line,#dcdee2);color:var(--crw-ink,#2f3338); }
 #crewsView .crw-grid2{ display:grid;grid-template-columns:1fr 1fr;gap:0 12px; }
 @media (max-width:620px){ #crewsView .crw-grid2{ grid-template-columns:1fr; } }
+#crewsView .crw-rcat{ font:800 10px system-ui;letter-spacing:.06em;text-transform:uppercase;
+  margin:14px 0 5px;color:var(--crw-mut,#9aa0a8); }
+:root[data-theme="rb-light"] #crewsView .crw-rcat{ color:var(--crw-mut,#5f666e); }
+#crewsView .crw-rt{ border-collapse:collapse;width:100%;font-size:12.5px;margin-bottom:4px; }
+#crewsView .crw-rt th{ font:700 9.5px system-ui;letter-spacing:.05em;text-transform:uppercase;
+  text-align:left;padding:5px 7px;color:var(--crw-mut,#9aa0a8);
+  border-bottom:1px solid var(--crw-line,#2b2b33); }
+#crewsView .crw-rt td{ padding:5px 7px;border-bottom:1px solid var(--crw-rowline,#232329);
+  vertical-align:middle; }
+:root[data-theme="rb-light"] #crewsView .crw-rt th{ color:var(--crw-mut,#5f666e);
+  border-bottom-color:var(--crw-line,#dcdee2); }
+:root[data-theme="rb-light"] #crewsView .crw-rt td{ border-bottom-color:var(--crw-rowline,#eceef1); }
+#crewsView .crw-rt .n{ text-align:right;white-space:nowrap; }
+#crewsView .crw-rt input{ width:82px;padding:5px 7px;text-align:right;font:13px system-ui; }
+/* A NEGATIVE spread means the crew charges more than Cardinal does for that
+   line. Amber, not red: it is a number to look at, not an error. */
+#crewsView .crw-rt .crw-neg{ color:#f5b880;font-weight:700; }
+:root[data-theme="rb-light"] #crewsView .crw-rt .crw-neg{ color:#8a5200; }
+#crewsView .crw-mini{ padding:2px 8px;font-size:14px;line-height:1.2; }
 #crewsView .crw-empty{ padding:26px 14px;text-align:center;color:var(--crw-mut,#9aa0a8);font-size:13px; }
 </style>
 <script id="cr-crew-script">
@@ -53440,9 +53460,20 @@ var DOCS = [
   ['gl', 'General Liability'],
   ['wc', "Workers' Comp"]
 ];
-var TABS = [['profile','Profile'],['compliance','Compliance'],['notes','Notes']];
+/* 548: Labor Rates sits between Compliance and Notes. tabsFor() filters it out
+   for anyone who is not an admin — crew_rates is admin-only in RLS, so for
+   production the tab would render and then show nothing, turning a deliberate
+   restriction into what looks like a broken screen. */
+var TABS = [['profile','Profile'],['compliance','Compliance'],['rates','Labor Rates'],['notes','Notes']];
+function canSeeRates(){
+  try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
+}
+function tabsFor(){
+  return TABS.filter(function(t){ return t[0] !== 'rates' || canSeeRates(); });
+}
 
 var crews = [], docs = [], notes = [], selId = null, tab = 'compliance', booted = false;
+var catalog = [], rates = [];   /* 548: pricing_items + crew_rates */
 
 function db(){ return window.supa || window.sb || null; }
 function view(){ return document.getElementById('crewsView'); }
@@ -53499,12 +53530,19 @@ async function load(){
   var res = await Promise.all([
     cl.from('crews').select('*').eq('archived', false).order('name'),
     cl.from('crew_docs').select('*'),
-    cl.from('crew_notes').select('*').order('at', { ascending:false })
+    cl.from('crew_notes').select('*').order('at', { ascending:false }),
+    /* 548: both are optional. RLS refuses crew_rates to production, and that is
+       a correct refusal — it must degrade to "no rates shown", never to a
+       failed load that blanks the whole directory. */
+    cl.from('pricing_items').select('id,category,name,unit,rate,enabled,sort_order').eq('enabled', true),
+    cl.from('crew_rates').select('*')
   ]);
   if(res[0].error) throw res[0].error;
   crews = res[0].data || [];
   docs  = (res[1].data) || [];      /* a docs failure must not blank the directory */
   notes = (res[2].data) || [];
+  catalog = (res[3].data) || [];
+  rates   = (res[4].data) || [];
   if(selId && !crews.some(function(c){ return c.id === selId; })) selId = null;
   if(!selId && crews.length) selId = crews[0].id;
 }
@@ -53572,6 +53610,108 @@ function complianceHtml(c){
     '</div>';
 }
 
+function itemById(id){
+  for(var i = 0; i < catalog.length; i++){ if(catalog[i].id === id) return catalog[i]; }
+  return null;
+}
+function money(n){
+  var v = Number(n);
+  if(!isFinite(v)) return '';
+  /* The sign goes OUTSIDE the currency symbol. Prepending '$' to an already
+     negative number gives "$-2", which is not how money is written anywhere —
+     caught by the harness on a crew whose rate is above Cardinal's own. */
+  var sign = v < 0 ? '-' : '';
+  return sign + '$' + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits:2 });
+}
+/* What Cardinal keeps on a line: our rate minus theirs. Shown as a spread, not
+   a percentage, because a percentage of a per-square rate reads as a discount
+   rather than as money. Returns null when there is nothing to compare — a
+   custom row has no catalog twin, and a zero catalog rate is not a 100% margin. */
+function spread(ours, theirs){
+  var a = Number(ours), b = Number(theirs);
+  if(!isFinite(a) || !isFinite(b) || a <= 0) return null;
+  return a - b;
+}
+function ratesHtml(c){
+  if(!canSeeRates()){
+    return '<div class="crw-empty">Labor rates are admin-only.</div>';
+  }
+  var mine = rates.filter(function(r){ return r.crew_id === c.id; });
+  /* group: catalog rows by their category, custom rows together at the end */
+  var groups = {}, custom = [];
+  mine.forEach(function(r){
+    if(!r.pricing_item_id){ custom.push(r); return; }
+    var it = itemById(r.pricing_item_id);
+    var cat = it ? it.category : 'Uncategorised';
+    (groups[cat] = groups[cat] || []).push({ r:r, it:it });
+  });
+  var cats = Object.keys(groups).sort();
+  var out = '';
+  cats.forEach(function(cat){
+    out += '<div class="crw-rcat">' + esc(cat) + '</div><table class="crw-rt">' +
+      '<tr><th>Line item</th><th>Unit</th><th class="n">Ours</th><th class="n">Theirs</th><th class="n">Spread</th><th></th></tr>';
+    groups[cat].sort(function(a, b){
+      return String(a.it && a.it.name).localeCompare(String(b.it && b.it.name));
+    }).forEach(function(g){
+      var sp = g.it ? spread(g.it.rate, g.r.rate) : null;
+      out += '<tr><td>' + esc(g.it ? g.it.name : '(item removed from the catalog)') + '</td>' +
+        '<td class="crw-mut">' + esc(g.it ? g.it.unit : '') + '</td>' +
+        '<td class="n crw-mut">' + (g.it ? money(g.it.rate) : '&mdash;') + '</td>' +
+        '<td class="n"><input type="text" inputmode="decimal" data-rate="' + esc(g.r.id) + '" value="' + esc(g.r.rate) + '"></td>' +
+        '<td class="n ' + (sp === null ? 'crw-mut' : sp < 0 ? 'crw-neg' : '') + '">' +
+          (sp === null ? '&mdash;' : money(sp)) + '</td>' +
+        '<td><button class="crw-btn crw-mini" data-delrate="' + esc(g.r.id) + '">&times;</button></td></tr>';
+    });
+    out += '</table>';
+  });
+  if(custom.length){
+    out += '<div class="crw-rcat">Their own line items</div><table class="crw-rt">' +
+      '<tr><th>Line item</th><th>Unit</th><th class="n">Ours</th><th class="n">Theirs</th><th class="n">Spread</th><th></th></tr>';
+    custom.forEach(function(r){
+      out += '<tr><td>' + esc(r.custom_name) + '</td>' +
+        '<td class="crw-mut">' + esc(r.custom_unit || '') + '</td>' +
+        '<td class="n crw-mut">&mdash;</td>' +
+        '<td class="n"><input type="text" inputmode="decimal" data-rate="' + esc(r.id) + '" value="' + esc(r.rate) + '"></td>' +
+        '<td class="n crw-mut">&mdash;</td>' +
+        '<td><button class="crw-btn crw-mini" data-delrate="' + esc(r.id) + '">&times;</button></td></tr>';
+    });
+    out += '</table>';
+  }
+  if(!mine.length){
+    out = '<div class="crw-empty">Nothing priced yet. Add a catalog item below, ' +
+      'or a line item only this crew does.</div>';
+  }
+  /* only offer catalog items this crew is not already priced on */
+  var taken = {};
+  mine.forEach(function(r){ if(r.pricing_item_id) taken[r.pricing_item_id] = 1; });
+  var free = catalog.filter(function(i){ return !taken[i.id]; })
+    .sort(function(a, b){ return (a.category + a.name).localeCompare(b.category + b.name); });
+
+  return out +
+    '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
+    (mine.length ? '<button class="crw-btn primary" data-act="saverates">Save rates</button>' +
+      '<span class="crw-mut" data-ratemsg style="margin-left:10px;font-size:12px"></span>' : '') +
+    '<div class="crw-grid2" style="margin-top:12px">' +
+      '<div><label>Add a catalog item</label>' +
+        (free.length
+          ? '<select data-r="pick"><option value="">' + free.length + ' available\u2026</option>' +
+            free.map(function(i){
+              return '<option value="' + esc(i.id) + '">' + esc(i.category) + ' \u2014 ' +
+                esc(i.name) + ' (' + esc(i.unit) + ', ours ' + money(i.rate) + ')</option>';
+            }).join('') + '</select>'
+          : '<div class="crw-mut" style="font-size:12.5px;padding:8px 0">Every catalog item is already priced for this crew.</div>') +
+      '</div>' +
+      '<div><label>Their rate</label><input type="text" inputmode="decimal" data-r="pickrate" placeholder="0.00"></div>' +
+    '</div>' +
+    (free.length ? '<button class="crw-btn" style="margin-top:10px" data-act="addcatrate">Add</button>' : '') +
+    '<div class="crw-grid2" style="margin-top:16px">' +
+      '<div><label>Or a line item only they do</label><input type="text" data-r="cname" placeholder="Wrap bay window"></div>' +
+      '<div><label>Unit</label><input type="text" data-r="cunit" placeholder="ea"></div>' +
+      '<div><label>Their rate</label><input type="text" inputmode="decimal" data-r="crate" placeholder="0.00"></div>' +
+    '</div>' +
+    '<button class="crw-btn" style="margin-top:10px" data-act="addcustomrate">Add custom row</button>' +
+    '</div>';
+}
 function notesHtml(c){
   var mine = notes.filter(function(n){ return n.crew_id === c.id; });
   return '<div><label>Add a note</label><textarea data-f="newnote" rows="2"></textarea>' +
@@ -53591,7 +53731,12 @@ function panelHtml(){
     'Use <b>+ New crew</b> to add the first one.</div></div>';
   var st = crewState(c.id);
   var lbl = st === 'ok' ? '\u25cf Compliant' : st === 'warn' ? '\u25b2 Expiring' : '\u2715 Not compliant';
-  var body = tab === 'profile' ? profileHtml(c) : tab === 'notes' ? notesHtml(c) : complianceHtml(c);
+  /* 548: a non-admin who somehow lands on 'rates' falls back to compliance
+     rather than seeing an empty panel. */
+  if(tab === 'rates' && !canSeeRates()) tab = 'compliance';
+  var body = tab === 'profile' ? profileHtml(c)
+    : tab === 'rates' ? ratesHtml(c)
+    : tab === 'notes' ? notesHtml(c) : complianceHtml(c);
   return '<div class="crw-card" style="border-radius:10px 10px 0 0;padding-bottom:0">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">' +
       '<div><b style="font-size:15px">' + esc(c.legal_name || c.name) + '</b>' +
@@ -53599,7 +53744,7 @@ function panelHtml(){
         [c.trade, c.contact_name, c.contact_phone].filter(Boolean).map(esc).join(' \u00b7 ') +
         '</div></div>' +
       '<span class="crw-pill ' + st + '">' + lbl + '</span></div>' +
-    '<div class="crw-tabs">' + TABS.map(function(t){
+    '<div class="crw-tabs">' + tabsFor().map(function(t){
       return '<div class="crw-tab' + (tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</div>';
     }).join('') + '</div></div>' +
     '<div class="crw-card" style="border-radius:0 0 10px 10px;border-top:0">' + body + '</div>';
@@ -53698,6 +53843,68 @@ async function addNote(){
   await load(); render();
 }
 
+function rv(k){ var el = view().querySelector('[data-r="' + k + '"]'); return el ? el.value.trim() : ''; }
+/* A rate must be a real number. '' and 'abc' both become NaN, and a NaN rate
+   written to a NOT NULL numeric column is a 400 from PostgREST rather than a
+   useful message, so it is caught here. Zero is allowed — a crew genuinely can
+   include a line at no charge. */
+function num(v){
+  if(v === '' || v === null || v === undefined) return null;
+  var n = Number(String(v).replace(/[$,\s]/g, ''));
+  return isFinite(n) ? n : null;
+}
+async function addCatRate(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var id = rv('pick'), r = num(rv('pickrate'));
+  if(!id){ alert('Pick a catalog item first.'); return; }
+  if(r === null){ alert('Enter their rate as a number.'); return; }
+  var res = await cl.from('crew_rates').insert({
+    crew_id:c.id, pricing_item_id:id, rate:r, updated_by:me()
+  });
+  if(res.error){ alert('Could not add that rate: ' + res.error.message); return; }
+  await load(); render();
+}
+async function addCustomRate(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var name = rv('cname'), unit = rv('cunit'), r = num(rv('crate'));
+  if(!name){ alert('Give the line item a name.'); return; }
+  if(r === null){ alert('Enter their rate as a number.'); return; }
+  var res = await cl.from('crew_rates').insert({
+    crew_id:c.id, custom_name:name, custom_unit:unit || null, rate:r, updated_by:me()
+  });
+  if(res.error){ alert('Could not add that row: ' + res.error.message); return; }
+  await load(); render();
+}
+async function saveRates(){
+  var cl = db();
+  if(!cl) return;
+  var msg = view().querySelector('[data-ratemsg]');
+  var edits = [];
+  view().querySelectorAll('[data-rate]').forEach(function(el){
+    var id = el.getAttribute('data-rate'), n = num(el.value);
+    var was = rates.find(function(r){ return r.id === id; });
+    if(n === null || !was || Number(was.rate) === n) return;   /* only what changed */
+    edits.push({ id:id, rate:n });
+  });
+  if(!edits.length){ if(msg) msg.textContent = 'Nothing changed.'; return; }
+  if(msg) msg.textContent = 'Saving\u2026';
+  for(var i = 0; i < edits.length; i++){
+    var r = await cl.from('crew_rates')
+      .update({ rate:edits[i].rate, updated_at:new Date().toISOString(), updated_by:me() })
+      .eq('id', edits[i].id);
+    if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+  }
+  await load(); render();
+}
+async function delRate(id){
+  var cl = db();
+  if(!cl || !id) return;
+  var r = await cl.from('crew_rates').delete().eq('id', id);
+  if(r.error){ alert('Could not remove that row: ' + r.error.message); return; }
+  await load(); render();
+}
 async function archive(){
   var c = sel(), cl = db();
   if(!c || !cl) return;
@@ -53718,6 +53925,8 @@ function wire(){
     if(tb){ tab = tb.getAttribute('data-tab'); render(); return; }
     var od = e.target.closest('[data-open]');
     if(od){ openDoc(od.getAttribute('data-open')); return; }
+    var dr = e.target.closest('[data-delrate]');
+    if(dr){ delRate(dr.getAttribute('data-delrate')); return; }
     var a = e.target.closest('[data-act]');
     if(!a) return;
     var k = a.getAttribute('data-act');
@@ -53727,6 +53936,9 @@ function wire(){
     else if(k === 'upload'){ upload(); }
     else if(k === 'addnote'){ addNote(); }
     else if(k === 'archive'){ archive(); }
+    else if(k === 'saverates'){ saveRates(); }
+    else if(k === 'addcatrate'){ addCatRate(); }
+    else if(k === 'addcustomrate'){ addCustomRate(); }
   });
 }
 

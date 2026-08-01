@@ -4818,3 +4818,43 @@ the bucket — otherwise it is stored, billed and referenced by nothing.
 real DOM state. Harness `harnesses/h547_chromium.js`.
 
 **Next:** Labor Rates (needs crews) → Work Order generator (needs rates) → Payments + Commissions.
+
+---
+
+## Build 548 — Labor Rates on a crew: catalog items plus custom rows
+
+Stage 2. 547 shipped the page; this is the tab that makes `crew_rates` referencing `pricing_items`
+worth having.
+
+**The tab shows what the crew is priced on, not the whole catalog.** `pricing_items` has **34 enabled
+rows across 16 categories** — rendering 34 inputs and asking Theo to fill them on a phone is a chore,
+not a rate sheet. The tab lists this crew's rates grouped by category; you add a catalog item when you
+need one. Custom rows group at the end. The picker offers **only items not already priced for that
+crew**, asserted.
+
+**The tab is admin-only and is HIDDEN, not empty.** `crew_rates` is `is_cardinal_admin()` in RLS —
+it is what Cardinal *pays*, which with `pricing_items.rate` is the margin. Production must not see it.
+A rendered-but-empty tab would turn a correct refusal into what looks like a broken screen, and worse,
+imply the data is there to be had. Gated in **three** places: `tabsFor()` filters the strip,
+the dispatch falls back to Compliance, and `ratesHtml()` refuses on its own. The harness runs the page
+**twice — as Theo and as Curtis** — and asserts four tabs versus three.
+
+**The spread is the point.** Every catalog-linked row shows Cardinal's rate beside the crew's and the
+difference. `spread()` returns **null rather than a number** for a custom row (no catalog twin) and for
+a zero catalog rate (a zero base is not a 100% margin). A negative spread — the crew charging more than
+Cardinal does — is **amber, not red**: a number to look at, not an error.
+
+**Neither new fetch can blank the directory.** `pricing_items` and `crew_rates` degrade to `[]`; only
+the `crews` fetch throws. Asserted by counting `throw` sites in `load()`.
+
+### The harness caught a real bug
+
+`money()` produced **`$-2`** for a negative spread — the sign inside the currency symbol, which is not
+how money is written anywhere. Fixed to `-$2`; the sign now goes outside. It only shows up on a crew
+whose rate is *above* Cardinal's own, which is exactly the row Theo most needs to read correctly.
+
+`check_build.py` green (548, marker `function ratesHtml`, negative-controlled).
+**Chromium 13/13**, both roles, both themes. Harness `harnesses/h548_chromium.js`.
+
+**Next:** the Work Order generator (needs these rates to fill its labor lines), then Payments +
+Commissions.
