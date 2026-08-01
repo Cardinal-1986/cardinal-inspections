@@ -7,7 +7,7 @@ Nothing here needs a technical background. Part 1 is the twenty minutes of theor
 rest land; skip it and the others read like a list of tricks. Every prompt is meant to be copied as
 written.
 
-Parts 1-5 are the general manual. Parts 6-11 are the ones with Cardinal's own hardware, data and
+Parts 1-5 are the general manual. Parts 6-13 are the ones with Cardinal's own hardware, data and
 numbers in them.
 
 ---
@@ -740,6 +740,53 @@ internet by default rather than answering from what it was taught months ago. La
 > photograph, which is not a task that rewards a bigger brain. *Computed from the posted rates, not
 > quoted from a benchmark; the arithmetic is yours to redo when the prices move.*
 
+### The Claude family in full — since it's the one you use
+
+The six-model list above picks two Claudes. Here's the whole ladder, because two of the names come up
+constantly and one of them you cannot buy at any price.
+
+| Model | $ in / out | Context | What it's for |
+|---|---|---|---|
+| **Claude Fable 5** | $10 / $50 | 1M | The most capable one Anthropic sells. Hardest reasoning, longest autonomous runs |
+| **Claude Mythos 5** | $10 / $50 | 1M | Identical to Fable in every respect — see below |
+| **Claude Opus 5** | $5 / $25 | 1M | Complex coding and business work. **Half Fable's price** |
+| **Claude Sonnet 5** | $3 / $15 | 1M | The daily driver. $2 / $10 introductory through 31 Aug 2026 |
+| **Claude Haiku 4.5** | $1 / $5 | 200K | Volume. The only one without the 1M window |
+
+*Anthropic figures cached 24 June 2026 — the oldest numbers on this page.*
+
+### Fable 5 vs Opus 5 — four differences that actually matter
+
+They look adjacent on the ladder. They are not interchangeable, and the gap is wider than the price
+suggests.
+
+| | Claude Opus 5 | Claude Fable 5 |
+|---|---|---|
+| **Price** | $5 / $25 | $10 / $50 — exactly double, both ends |
+| **Built for** | Complex coding and business work; a step change over what came before it | The hardest reasoning and long autonomous runs — work at the edge of what any model can do |
+| **Thinking** | On by default, and you *can* turn it off | **Always on. Cannot be disabled at all** — asking it to returns an error |
+| **Your data** | No special requirement | **Requires 30-day data retention.** An organisation set to keep nothing cannot use Fable — every request fails |
+
+> **The retention line is the one to notice.** Read that last row next to Part 13. **Fable is not
+> available to an organisation that has chosen zero data retention** — the option to have nothing
+> kept is off the table if you want the top model. That's a business decision, not a technical one,
+> and it's the kind of trade nobody mentions until you hit it. Opus 5 carries no such condition.
+
+**The practical answer for Cardinal:** Opus 5. It's what Claude Code runs on, it's built for exactly
+the shape of work the app is, and it's half the price. Fable earns its money on problems where a
+wrong answer costs more than the difference — and single requests on it can run for many minutes,
+which is its own kind of cost.
+
+### And Mythos 5 — the one you can't buy
+
+Same capabilities, same price, same behaviour as Fable 5. The *only* difference is the door: Mythos
+is available exclusively through a programme called **Project Glasswing**, and participating in it is
+the only way to reach the model. There's no plan to upgrade to, no invoice to pay.
+
+So if you see it named somewhere and wonder what you're missing: **nothing you could act on.** It's
+Fable with a different label and a closed door. Worth being able to recognise the name, not worth a
+second thought.
+
 ### Five you can run yourself
 
 Free to download and yours to keep. Part 6 has the hardware arithmetic — speed is memory bandwidth
@@ -1127,6 +1174,188 @@ They are not competing on intelligence; they're competing on *shape*.
 
 ---
 
+## Part 12 — Claims: the instrument you already built
+
+This was going to be a part about pointing AI at your claims. Then I looked at the table, and it
+turned into a different one — a more useful one.
+
+### What's actually in there
+
+Cardinal's `insurance_claims` table has **42 columns** and **three rows**, created on the 23rd, 24th
+and 29th of July. All three sit at status *filed*. Here is what those three records contain:
+
+| Field | Populated |
+|---|---|
+| `carrier` | none |
+| `adjuster_name` | none |
+| `cause_of_loss` | none |
+| `scope_pdf_url` — the adjuster's scope | none |
+| `first_scope_rcv` — the carrier's first offer | none |
+| `approved_rcv` — where it ended up | none |
+| `our_estimate_total` | none |
+| `supplement_filed` / `supplement_approved` | 3 — all $0.00 |
+
+*Queried, not assumed — 1 August 2026.*
+
+> **Why that is the whole part.** Look at what those columns are for. Somebody — you — designed a
+> record that stores **the carrier's first offer and the final approved figure side by side**, plus
+> what was supplemented and what came back. That is not a generic CRM table. It's an instrument
+> built to measure the single most valuable number in restoration work: *how much money the
+> supplement process actually recovers, and from whom.*
+>
+> **It has never been fed.** Every field that would make an AI useful here is blank. This is Part
+> 4's warning arriving in a new place: code that is perfectly correct and does nothing at all,
+> because the data it was built for doesn't exist yet.
+
+### The three jobs AI does well here, in order of value
+
+All three are genuinely good fits — tedious, mechanical, and wrong answers are visible at a glance.
+None of them work on an empty table.
+
+**1 · Read the scope against your estimate** — *needs: the scope PDF*
+The highest-value AI task in a roofing business, and it isn't close.
+- **Why it fits** — hand it the adjuster's scope and your line items and ask what's in one and not
+  the other. Drip edge, starter course, ice and water, ridge cap, pipe boots, step and counter
+  flashing, detach-and-reset, code upgrades, waste factor. It's a comparison of two lists — exactly
+  Part 3's definition of a job worth handing over, and the output is a checkable list.
+- **What it can't do** — decide what you're *owed*. It finds differences; you decide which
+  differences are arguments. And it will invent a plausible code section if you let it.
+
+**2 · Draft the supplement** — *needs: job 1, done first*
+- **Why it fits** — given the differences and your photographs, it writes the request with a reason
+  attached to each line. Drafting is the thing it's genuinely best at, and it removes the part
+  everyone hates: starting the document.
+- **The rule** — **you send it. Always.** A carrier reads this.
+
+**3 · The pattern across carriers** — *needs: ~30 filled-in claims*
+- **Why it fits** — with `first_scope_rcv`, `approved_rcv` and `carrier` populated across enough
+  jobs, one query tells you which carriers systematically under-scope, by roughly how much, and
+  which line items they leave off. That changes how you write the *first* estimate.
+- **Honestly** — three claims proves nothing. Thirty starts to. This is a year of discipline, not a
+  weekend of software, and it's worth more than the other two combined.
+
+### What has to be true first
+
+Same shape as Part 8: the unglamorous input step is the whole project.
+
+1. **The scope PDF has to land on the record.** `scope_pdf_url` is empty on all three claims. No
+   document, no comparison — a model cannot read a file you never gave it.
+2. **Two numbers, every time: first scope and approved.** Without both, "what did supplementing
+   recover" is unanswerable. With both it's one subtraction. The columns already exist.
+3. **Carrier on every claim.** One field. It's the difference between fifty records and a pattern.
+4. **Then, and only then, point AI at it.** Job 1 works the day a scope PDF exists. Job 3 needs a
+   year of the first three habits.
+
+### Where the line is
+
+| Task | Verdict | Why |
+|---|---|---|
+| List what's in the scope and not in your estimate | Yes | Two lists, one comparison, obvious when wrong |
+| Draft a supplement letter | Yes | Drafting is its best skill. You read every word before it goes |
+| Summarise a long scope into plain English | Yes | Long input, short output — the cheapest shape there is |
+| Quote policy language or a building code | Verify | Exactly where it invents confidently. Check every citation |
+| Decide what the carrier owes | No | A judgment with money and a relationship attached |
+| Correspond with an adjuster directly | No | Never. A person from Cardinal is on that thread |
+
+**And read Part 13 before you paste a scope anywhere** — an adjuster's scope carries the homeowner's
+name, address, claim number and policy number on the first page.
+
+---
+
+## Part 13 — What never to paste
+
+This document has told you repeatedly to paste the whole thing — the full email thread, the whole
+scope, the actual photograph. This is the part that says which things.
+
+> **The one rule.** Once you have sent it, assume it's gone. Not because the vendors are villains,
+> but because you cannot un-send it, and you don't control how long it's kept, who at that company
+> can see it, or what a court could later ask for.
+
+### Three tiers
+
+**Never — no exceptions, no "just this once"**
+- Card numbers, bank details, routing numbers
+- Social security numbers — yours, an employee's, a homeowner's
+- Passwords, API keys, the Supabase service key, anything from Vercel's environment variables
+- Anything out of an employee file — wages, discipline, medical, immigration status
+- A photograph of somebody's driver's licence or insurance card
+
+**Not without thinking — usually fine once de-identified**
+- **An adjuster's scope.** Page one carries the homeowner's full name, address, claim number and
+  policy number. The one you'll reach for most, so the one worth a habit
+- Full name and street address together — either alone is far less identifying than both
+- Claim numbers and policy numbers
+- Anything involving a minor
+- A homeowner's complaint, dispute or financial situation
+
+**Fine — and it's most of what you actually do**
+- Your own prices, your own process, your own templates
+- Your photographs of roofs, with no address attached
+- A scope with the name and address stripped out
+- Anything already public on your website
+- Code, schemas, the whole of `index.html`
+
+### The habit that makes the middle tier disappear
+
+**Replace the name with "the homeowner" and the address with the town.** That's the entire
+technique, and it takes four seconds.
+
+| | |
+|---|---|
+| **Don't** | "Here's the scope for Margaret Whitfield at 812 Wayne Ave, claim 4471-B-22 with State Farm — what's missing versus my estimate?" |
+| **Do** | "Here's an insurance scope for a tear-off in Kettering, Ohio, and my estimate for the same job. What's in the scope that isn't in my estimate, and what's in mine that isn't in theirs?" |
+
+**The answer is identical.** The model doesn't need to know whose house it is to compare two lists —
+and that's true of very nearly every task in this document.
+
+### Not all accounts are the same account
+
+The free consumer chat product and the paid business or API tier of the *same company* usually have
+different terms about whether your input can be used to improve their models. It's a contractual
+difference, not a technical one, and it changes without telling you. **Check the terms for the tier
+you're actually on, not the tier you read about.** No specifics are quoted here on purpose — that's
+a fact with a six-month shelf life.
+
+### This is the other reason you own a Spark
+
+Part 6 justified local hardware on volume and cost. This is the second argument and for some
+documents it's the stronger one: **a scope with a homeowner's name on it can be read on a machine in
+your building and never leave it.** If a document makes you hesitate, that's precisely the document
+the Spark is for.
+
+### The one that catches people out: instructions hidden in documents
+
+Now that Part 11 has handed you agents, this stops being theoretical. **A model cannot reliably tell
+the difference between your instruction and text it happens to read.** Point one at a document, an
+email, a review or a web page, and whatever is written in that content arrives in the same channel
+as your orders.
+
+Somebody who wants to can put a sentence in a PDF, an email footer or a web page that reads like an
+instruction — and an agent with a terminal may simply do it. This has a name ("prompt injection")
+and no complete fix.
+
+**The practical rule:** an agent may *read* anything from outside. It may not *act* on what it read
+without you seeing the plan first.
+
+### Two smaller ones
+
+- **A screenshot is not redaction.** It's a picture of the same data, and every one of these tools
+  reads text out of images perfectly well. Cropping is redaction; screenshotting isn't.
+- **"It's just for me" isn't a category.** The question was never who reads the answer. It's where
+  the input went.
+
+### If it has already happened
+
+It probably has, and it's almost certainly fine. Don't panic and don't hide it.
+
+1. **Stop repeating it.** The habit is the exposure, not the single message.
+2. **Delete the conversation** where the product lets you, and turn off training on your inputs if
+   that's a setting on your tier.
+3. **If it was card data, an SSN or a credential, treat it as an incident.** Rotate the credential
+   immediately — that one is genuinely urgent — and tell whoever handles that side of the business.
+
+---
+
 ## The short version
 
 1. **It predicts text and has no memory.** Everything it needs to know, you supply.
@@ -1142,6 +1371,56 @@ They are not competing on intelligence; they're competing on *shape*.
    monthly photos.
 10. **Feed AI your evidence; never let it invent the evidence.** Your twenty years of real roofs is
     the one thing no competitor can generate.
+11. **Local wins on volume, privacy and repetition. Cloud wins on hard reasoning, long documents,
+    and anything that must be right the first time.** That line hasn't moved in two years.
+12. **Every family is three sizes, and the middle one does ninety per cent of the work.** Running
+    the big one for everything is quietly expensive and usually not even better.
+13. **Speed is memory bandwidth divided by model size** — which is why picking a mixture-of-experts
+    model took your Spark from 5 tokens a second to 64, for free.
+14. **A stack is layers, like a roof.** Build the smallest one that does the job; every layer is one
+    more thing that can break at 11pm, and you own all of them.
+15. **An agent with a terminal fails differently.** Everything else gets you a wrong answer; that
+    gets you a deleted folder. Own account, own folder, no keys to money or mail.
+
+---
+
+## Glossary
+
+Every term this document uses that isn't plain English, defined once, with the part that leans on it.
+
+| Term | Meaning | Part |
+|---|---|---|
+| **ACV / RCV** | Actual cash value is what a roof is worth *today*, after age is deducted; replacement cost value is what it costs to replace new. Carriers usually pay ACV first and the difference once the work is done. | XII |
+| **Agent** | AI that does a job rather than answering a question — it takes steps, uses tools, and stops when it decides it's finished. | III |
+| **API** | The way one program talks to another without a human in between. When your app calls a model, it's using an API. | X |
+| **Batch job** | Work run over many records at once, usually overnight, with nobody watching. Local hardware's best shape. | VI |
+| **Container** | Software packed with everything it needs to run, so installing it can't break anything else — and removing it leaves no trace. Your undo button. | X |
+| **Context** | Everything the model can see at once: your question plus whatever you pasted. It has no memory beyond this. | I |
+| **Embedding** | A way of turning text into numbers so a computer can find things that *mean* the same, not just things spelled the same. The search half of RAG. | X |
+| **Fine-tuning** | Adjusting a model's own weights on your material. Teaches it a style; does **not** reliably teach it facts. For facts you want RAG. | X |
+| **GGUF** | The model file format llama.cpp and Ollama use. | XI |
+| **Hallucination** | The industry's polite word for confidently making something up. There is no tell — a fake part number reads exactly like a real one. | I |
+| **Headless** | Software with no screen or window; it runs in the background and you talk to it by script. Hermes Agent is headless, OpenClaw isn't. | XI |
+| **Inference** | The act of actually running a model to get an answer, as opposed to training it. What your Spark does. | X |
+| **LLM** | Large language model — the thing underneath ChatGPT, Claude, Gemini and everything in Part 9. | I |
+| **LoRA** | A small extra file trained on your own images or text that pins a model to one style, without retraining the model itself. | XI |
+| **Mixture-of-experts** | A model built in parts, only some of which are read per word. Why one shape of model runs at 64 tokens a second on your Spark and another at 5. | VI |
+| **Open-weight** | A model whose file you can download and keep. Not quite the same as open source — check the licence, especially Llama's. | IX |
+| **Prompt** | What you type. Part 2 is the argument that it's a work order rather than a wish. | II |
+| **Prompt injection** | When text inside a document or web page acts as an instruction to a model reading it. The reason an agent may read anything but shouldn't act unreviewed. | XIII |
+| **Quantization** | Squeezing a model to make it smaller and faster, at some cost in quality. `Q4` is the usual sensible setting. | XI |
+| **RAG** | Retrieval-augmented generation. Search your documents first, then answer from what the search found. | X |
+| **Runtime** | The driver layer between software and the chip — CUDA on NVIDIA, Metal on Apple, ROCm on AMD. | X |
+| **safetensors** | The safe model file format: data only, so opening one cannot run code. Prefer it to the older `.bin`. | XI |
+| **Scope** | The adjuster's itemised list of what the carrier agrees to pay for. The document carrying the homeowner's details. | XII |
+| **Skill** | A capability you give an agent — run a command, send a message, read a folder. OpenClaw ships over a hundred; Hermes writes its own. | XI |
+| **SSH** | Typing on your laptop while the words run on another machine. How you reach the Spark. | XI |
+| **Stack** | The layers of software between a model file and something you can use. Like a roof: decking, underlayment, shingles. | X |
+| **Supplement** | A request to the carrier to pay for work the first scope missed. | XII |
+| **Tailscale** | A private network only your own devices can join, so you can reach the Spark from a jobsite without exposing it to the internet. | XI |
+| **Token** | About three-quarters of a word. The unit everything is priced in — a million is roughly 750,000 words. | IX |
+| **Weights** | The model itself: one very large file of numbers, produced by training and never changed by using it. | X |
+| **Whisper** | The speech-to-text model behind the transcription stack. | X |
 
 ---
 
@@ -1241,7 +1520,8 @@ its own shows status. `/goal clear` stops it. (Slash, not `@`.)
 
 ## Sources
 
-Parts 1-4 and 7-8 are practice rather than claims. Everything below backs a number or a tool name in Part 5, 6, 9, 10 or 11.
+Parts 1-4 and 7-8 are practice rather than claims. Everything below backs a number or a tool name in Part 5, 6, 9, 10 or 11. Part 12's figures came
+from querying Cardinal's own database on 1 August 2026.
 
 ### Part 5 — marketing and SEO
 
