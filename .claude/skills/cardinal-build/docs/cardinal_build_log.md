@@ -5122,3 +5122,41 @@ Gates: `check_build.py` green, negative-controlled, 554 → 555. Harness 32/32 a
 `projects` rows (Alton's inspection, the field-measured job) and real `crews`/`crew_rates` shapes.
 One harness red was a fixture bug of mine — `woBody` prefers `legal_name`, so the hostile `name`
 in the escaping test could never render; the assertion, not the escaping, was wrong.
+
+### build 556 — Payments to crews, Commissions on a client. Stage 4, the last.
+Theo: "payment history made to crews wired in. with history in the crew section" ·
+"a commission section in the client profile paid out and a history of it" ·
+"Crew rates is not needed by productions, I write the checks."
+
+**Payments tab on a crew** — admin-only, gated the same three ways Labor Rates is (tab strip,
+dispatch fallback, renderer refuses on its own), matching `crew_payments`' `is_cardinal_admin()`
+RLS. `check` is the default method because Theo writes the checks. The paid-to-date total is
+summed from the rows actually rendered, never a second query, so the figure cannot drift from
+the list. `MONEY_TABS = ['rates','payments']` gates both together.
+
+**Commissions tab on the client profile** — `commissions` carries the schema's one split policy:
+admins do everything, a rep may SELECT `rep_email = auth.email()`. So it renders for everyone
+and a rep simply sees fewer rows; only admins get the form. Fetched on tab open rather than
+cached with the project, because the row set depends on who is asking. The rep address is
+format-validated and lower-cased before insert — the rep's own SELECT policy matches on that
+exact string, so a typo silently orphans the row.
+
+**Work-order labor wording** — 555 printed "Labor rates are not readable from this account" when
+production generated one. Theo settled that production doesn't need rates, so that describes the
+design, not a fault; it read like a malfunction on a document handed to a subcontractor. Now
+"Labor pricing is handled by the office."
+
+**Defect the harness caught, in shipped code:** `money()` (from 548) rendered `$1,875.5` — it was
+written for per-unit RATES where `$285` reads fine, but a payment is a check amount and needs two
+decimals. Fixed with an opt-in `money(n, cents)`; rates pass nothing and are byte-identical.
+
+**Two anchor traps hit and worth recording:**
+- `rates   = (res[4].data)` is aligned with THREE spaces, not one; and the click delegation is
+  indented four, not six. Print `repr()` first — both aborted before any write, as designed.
+- **`function money(n){` appears NINE times in this file, one per module.** A file-wide
+  `count == 1` assertion is meaningless here; the edit is scoped to the `cr-crew-script` slice
+  and the patch asserts the other eight survive. This is the file's own "scope the assertion to
+  the function, not the file" rule earning its place again.
+
+Gates: `check_build.py` green, negative-controlled, 555 → 556. Chromium 14/14, both roles, both
+themes — including the total read off the RENDERED cells and summed independently.
