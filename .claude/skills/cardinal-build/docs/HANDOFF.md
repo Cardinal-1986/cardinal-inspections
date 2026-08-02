@@ -4,6 +4,122 @@
 
 ---
 
+# Session of 1–2 August 2026 — builds 565–573, and one applied migration
+
+**`main` is at `35fa7c9`, app stamp build 573. Branch `claude/git-log-oneline-7b9nbd` is merged and
+clean — nothing uncommitted, nothing unpushed.** Every build below is live.
+
+**⚠ The SQL is ALREADY APPLIED.** `estimates_update_policy.sql` was run against production through
+the Supabase connector on Theo's instruction and verified afterwards (RLS on, 4 policies, **0
+carrying the bare literal `true`**, 12 rows intact). It is idempotent, so re-running is harmless —
+but do not treat it as pending work. The one-statement revert is recorded in `cardinal_build_log.md`.
+
+## What shipped
+
+| | |
+|---|---|
+| **565** | The address-autocomplete retry storm. The `catch` cleared its own guard while a rAF scanner re-attached, so with no Maps key it retried at 60fps **forever, on every screen**. Theo photographed the console climbing 21,335 → 29,873 in seconds. Also: **Discard** on an estimate, reusing the soft delete the AI review screen already had |
+| **566** | The estimates list asked `projects` for `client_name` and `estimate`. The table has **neither** — every load returned 400. Removed rather than repaired, because repairing meant choosing a source Theo had not been shown |
+| **567** | **Two rAF repaint loops.** The CRM chip and the landing greeting were repainting **every animation frame, forever** |
+| **568** | The Estimates screen finally shows the **12 real estimates**. It had been querying two empty tables and never the full one. Cards now open the editor — that branch was a **dead stub** |
+| **569** | **567's miss** — the landing weather strip was still looping. See "the lesson", below |
+| **570** | Crews / Pricing Catalog / Company Documents stopped **trapping** you — `hideAllViews()` did not know they existed |
+| **571** | The estimate editor trapped you the same way. Plus the **back button**, which walked straight past five overlays |
+| **572** | Sales Floor, the Objections Coach and the Production board keep the left menu and use the desktop width (they were a 640px column in a 1440px window) |
+| **573** | Dark mode for the Objections Coach, Pricing Catalog, Company Documents and Adjusters — four modules built white that stayed white in every theme |
+| **SQL** | `estimates_update_policy.sql` — `est_update` was `USING (true)`: **any signed-in user could edit any estimate.** Now matches `est_delete` |
+
+## ⚠ Read before trusting any test you run here
+
+**Three hosts are blocked by this environment's egress policy:**
+
+```
+yipslubcptjoarblzbpl.supabase.co     (the app's own database)
+app.cardinalroster.com               (the live app)
+api.open-meteo.com                   (the landing weather)
+```
+
+Reported, not routed around — `/root/.ccr/README.md` says do not retry policy denials.
+
+**This is not a footnote. Build 569 exists because of it.** 567's probe reported the landing loop
+fixed. It was — *in a sandbox where the weather does not exist*. `wx()` returns early unless
+`wxCached()` finds a reading, so with the host blocked and localStorage empty, the looping function
+**never executed once**. The denial was even printed in a proxy status I had read that same session.
+
+**The fix that generalises:** when a sandbox cannot reach a dependency, **seed its cache** and
+reproduce the production condition. `loop_probe.js` now seeds `localStorage['cr-wx-dayton']` before
+load; with that one line the loop reproduced instantly at 64.8 writes/sec.
+
+The Supabase **connector** works (different path) — that is how the schema and rows were read. Only
+direct HTTP to those hosts is blocked.
+
+## Corrections I owe, in my own words
+
+- **I reported 567 as fixing both re-render loops. It fixed one.** Theo's console after 568 deployed
+  still showed `landingView ~245 mutations/sec`. 569 is the correction.
+- **I told Theo the re-render loop was the missing-nav bug. It was not.** The menu's gate reads
+  `getComputedStyle(el).display` on `navWrap` and `landingView`; rewriting descendant *text* cannot
+  change either. The 566 build-log note claiming so is struck in place.
+- **570 deliberately excluded the estimate editor on my judgement, and Theo hit it as a trap.** Both
+  my reasons were wrong: the "editor exception" was about *showing* the menu, not navigation closing
+  it; and "it would discard unsaved work" is false — its own Cancel calls the same `close()`, with no
+  confirm and no dirty tracking anywhere in the module.
+- **558/561 made the nav traps easier to walk into.** Lowering those overlays to z-index 60 so the
+  menu would show through made every menu item *clickable* without making any of them close the
+  overlay. The trap pre-existed; I made it reachable.
+- **`metallicize`, `rerenderChipIfNeeded` and the duplicate-`#crPortalChip` theory are all innocent.**
+  I had recorded them as suspects in the 566 note. The first probe pass implicated `metallicize` only
+  because it sampled the boot burst.
+
+## The lesson this session cost the most
+
+**Reading the source failed three times; instrumenting it worked immediately.**
+
+Every candidate I read for the re-render loops looked correctly guarded — because they *were*, in the
+sense of having a guard. So: patch `appendChild` / `insertBefore` / `replaceChild` / `innerHTML` /
+`textContent` / `className` on the prototypes **before the app's scripts run**, record
+`new Error().stack` on every write, and sample only **past a settle window** so boot writes cannot
+drown the signal. The top rows named the culprits outright, with line numbers.
+
+`loop_probe.js` is in the session scratchpad and is worth keeping.
+
+Second lesson, cheaper but recurring: **five gates this session tripped on comments the same patch had
+just written** (`normalizeManual`, `openManualEstimate` ×2, `hideAllViews()`, `M.style.background`).
+Scope assertions to the block, and assert on code *shapes* rather than bare identifiers. All five
+aborted before any write, which is the design working.
+
+## Next — nothing is blocked on code
+
+- **Production hub revamp** — Theo asked for it explicitly: left nav plus punch-outs grouped
+  new / remaining / closed. **Punch is already built** (`punch_items`, `cr-punch-*`, statuses already
+  in the data) — this is wiring, not building. **It wants labelled previews before any code**, which
+  is what he and I agreed; do not guess at it.
+- **`cr-bpa-script`** — the fifth module sharing the `--cr-*` palette. Left untouched at 573 on
+  purpose: it writes `M.style.background='#fff'` inline and has **no dark palette to fall back on**,
+  so stripping the inline white would leave it with no background at all.
+- **Admin Health reports four of its own bugs as infrastructure failures.** All four are the health
+  check's fault — see `OPEN_ITEMS.md`.
+- **`--cr-muted-2` in light mode is 2.38:1** — below the readability floor *today*, pre-existing.
+
+## Waiting on Theo — do not nag, do not guess
+
+- **Google Maps key** — he set it; I could not verify (host blocked). `/api/config` should report
+  `"configured": true`. If autocomplete still fails, 565 made the console legible: **one** line
+  instead of 20,000. `ApiNotActivatedMapError` almost always means the **legacy** Places API is not
+  enabled — the app uses `google.maps.places.Autocomplete`, the old widget.
+- **Two left rails** on the estimate builder (238px app menu + 224px document outline) — flagged at
+  560, never answered.
+- **The 640px → 940/1180px widths at 572** were my pick, not his. A board earns width; prose does
+  not. Easy to change, one number each.
+
+## Still only Theo
+
+Everything about money, permissions and outward-facing email remains his call. The `est_update`
+tightening was **asked and answered** ("1 run it in supabase") — do not extend it further without
+asking.
+
+---
+
 # Session of 31 July 2026 (evening) — builds 487–509
 
 **`main` is at `f397b52`, app stamp build 503. The branch is pushed and 5 commits

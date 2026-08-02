@@ -1,6 +1,97 @@
 # Cardinal Resource App — Open Items
 
-*Last worked at build **557** · 1 Aug 2026. Most of this file was written at 467 and still describes that app; the crew-email entry under "Data, not code" is current. For anything not covered here, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder. **The Crews section (547–557) has no entry anywhere in this folder; CLAUDE.md is its only description.**
+*Last worked at build **573** · 2 Aug 2026. The section immediately below is this session's; everything under "Illustrations in the Resource Library" and beyond is 467–557 era and still describes that app. For anything not covered here, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder. **Crews (547–556) is now documented in `FEATURES.md`**, not only in CLAUDE.md.*
+
+---
+
+## 🔴 Open after builds 565–573 (2 Aug 2026)
+
+### ✅ Closed this session — do not re-open
+
+| | |
+|---|---|
+| Address-autocomplete retry storm (60fps, forever, every screen) | **565** |
+| Estimates list returning 400 on every load | **566** |
+| Two rAF repaint loops — CRM chip, landing greeting | **567** |
+| The landing weather strip, still looping after 567 | **569** |
+| The Estimates screen showing nothing despite 12 real rows | **568** |
+| Crews / Pricing / Company Docs trapping you on the page | **570** |
+| The estimate editor trapping you the same way | **571** |
+| The back button walking past five full-screen overlays | **571** |
+| Sales Floor / Coach / Production with no menu and a 640px column | **572** |
+| Four modules hardcoded light in every theme | **573** |
+| `estimates` editable by any signed-in user | **SQL, applied** |
+
+### 🟠 `cr-bpa-script` — the fifth `--cr-*` module, deliberately left
+
+Four of the five modules sharing the `--cr-*` palette were themed at 573. **`cr-bpa-script` was
+not**, on purpose: it writes `M.style.background='#fff'` **inline**, and it has **no dark palette to
+fall back on**. Stripping the inline white without first giving it the dark/`rb-light` token pair
+would leave it with **no background at all**. Do the tokens first, then the inline write — same order
+573 used for the other four. The dark palette is already designed and contrast-checked; copy it.
+
+### 🟠 `--cr-muted-2` is below the contrast floor **in light mode, today**
+
+`#a8a8a8` on `#fff` = **2.38:1** against a 4.5 floor. **Pre-existing — 573 did not introduce it**,
+and 573 deliberately left the light side byte-identical rather than smuggle in a visible change Theo
+had not asked for. The dark twin is 5.40:1. Fixing light is a real visible change to four screens and
+wants its own build and Theo's eyes.
+
+### 🔴 Admin Health reports four of its OWN bugs as infrastructure failures
+
+Every one of these is the health check being wrong, not the database. Verified against the live
+schema 2 Aug:
+
+| It queries | Reality |
+|---|---|
+| `audit_events.created_at` | column is **`at`** |
+| `audit_events.event_type` | column is **`type`** |
+| `team_profiles.id` | **no `id` column** — the PK is `email`, so `checkTable`'s `.select('id')` 400s |
+| `payments`, `supplements` | **the tables do not exist**, and are referenced **nowhere** in the app (0 hits) |
+
+**Why the error message is useless:** `checkTable` uses `.select('id', { count:'exact', head:true })`.
+A `head:true` response carries **no body**, so PostgREST's reason never reaches `r.error.message` —
+which is why a missing *column* is reported as *"Query failed · Fix: Check RLS policies"*. Fix:
+`select('*')` instead of `'id'`, and on error re-ask without `head` to get a real reason.
+
+`payments` / `supplements` should come **out** of the `REQUIREMENTS` registry — nothing uses them, so
+flagging them makes the whole screen cry wolf. 16 of the 18 registry tables do exist.
+
+### 🟡 Production hub revamp — Theo asked, previews first
+
+> *"Can we possible Revamp the productions page with a nav on the left and maybe reconstruct with
+> added relevant info or have it to where its relevant with all productions related hub that also has
+> all the punch outs that are new/remaining/closed?"*
+
+**Punch is already built** — `punch_items`, the `cr-punch-*` blocks, and the statuses are already in
+the data. This is **wiring, not building**. 572 already gave the board the left menu and the desktop
+width, so the remaining work is the hub layout and the punch-outs grouped by status.
+
+**Agreed with Theo: labelled previews, dark and light, before any code.** Do not guess at it.
+
+### 🟡 Two left rails on the estimate builder — flagged at 560, never answered
+
+On desktop the builder now carries both the app menu (238px) and its own document outline (224px).
+Measured: 798px of form at 1280, 958 at 1440. Workable, but it is two rails and Theo has not said
+whether he wants it.
+
+### 🟡 572's widths were my pick, not his
+
+`.cr-sf-wrap` and the coach's `.cr-k-app` went 640/760 → **940**; `.cr-pb-wrap` → **1180**. A board
+earns width; prose does not — a 1200px measure reads worse than 640. One number each if he wants
+different.
+
+### ⛔ Blocked on Theo — Google Maps key
+
+He set `GOOGLE_MAPS_API_KEY` in Vercel on 2 Aug. **I could not verify it** — `app.cardinalroster.com`
+is blocked by this environment's egress policy. `/api/config` should report `"configured": true`.
+
+If autocomplete still fails, 565 made the console legible (**one** warning per page load instead of
+20,000). `ApiNotActivatedMapError` / `REQUEST_DENIED` almost always means the **legacy Places API**
+is not enabled — the app uses `google.maps.places.Autocomplete`, the old widget, not
+`PlaceAutocompleteElement`.
+
+---
 
 
 ---
