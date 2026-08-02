@@ -5406,3 +5406,79 @@ assertion:
 Gates: `check_build.py` green, negative-controlled, 561 → 562. **Chromium 38/38**, extracting the RL
 IIFE from `index.html` on every run — the saved copy went stale the moment `showPage()` gained a
 line and reported a fixture bug as a product bug.
+
+---
+
+## 563 → 564 — severe weather alerts from the NWS, across every screen
+
+New module, `<style id="cr-wxa-styles">` + `<script id="cr-wxa-script">`, appended before the real
+`</body>`. Exports `window.CardinalWxAlerts` (88th distinct name). One new namespace, `cr-wxa-`,
+verified free before it was chosen. **No SQL, no `/api/` function, no new dependency.**
+
+Fetches `api.weather.gov/alerts/active?point=39.7589,-84.1916` — the same Dayton coordinate
+`cr-lr-script`'s `wx()` already uses, so there is one point of truth for "where Cardinal is".
+Keyless and CORS-open, so the call goes straight from the browser, on 525's stated reasoning:
+nothing secret can enter `index.html` this way. **If NWS ever wants a key or a User-Agent, the fix
+is to move that one URL behind `/api/` — not to hardcode anything here.**
+
+### What made it worth writing carefully
+
+Theo pasted one real payload: the 1 Aug 9:02 PM Montgomery County tornado warning. Six separate
+ways to get it wrong are live in that single message, and all six are now asserted:
+
+1. `properties.parameters.*` values are **arrays**. `NWSheadline` is `["A TORNADO WARNING…"]`.
+2. **`eventCode.SAME` is not the event.** That message is `event:"Tornado Warning"` with
+   `eventCode.SAME:["SVS"]` and AWIPS `SVSILN` — a Severe Weather Statement *continuing* a tornado
+   warning. Keying on the SAME code labels a tornado warning "Severe Weather Statement".
+3. **VTEC is the lifecycle key**, not the alert id. `/O.CON.KILN.TO.W.0042.…/` → `KILN.TO.W.0042`,
+   shared by the original and every update. `CAN`/`EXP`/`UPG` mean it is over; product `T`/`E`/`X`
+   is not operational.
+4. `messageType:"Update"` + `references[]` supersede the referenced message, which can still be
+   sitting in `/alerts/active`.
+5. `ends` ≠ `expires`. The message expiry is not the event end. Prefer `ends`, fall back.
+6. **`areaDesc` is the county; the polygon is not.** That alert says "Montgomery, OH" while its
+   polygon and its own NWS headline cover only NORTH CENTRAL Montgomery County — **Dayton's
+   coordinate is outside it** (verified: `inRing(39.7589,-84.1916)` is false, Englewood is true).
+
+**(6) is the one design decision in the build.** The polygon **labels**, it does not filter. Filtering
+on it would have hidden a live tornado warning from the Dayton office to look precise. The sheet says
+"part of your county" instead. Under-alerting a tornado is not a trade this app makes.
+
+Coordinate order is not even consistent inside one payload: `geometry.coordinates` are GeoJSON
+`[lon,lat]`, the pair inside `eventMotionDescription` is `[lat,lon]`. Both handled, separately.
+Motion bearing is the direction the storm comes **from** — 204° means travelling toward 24°, NNE,
+which is what the plain text says.
+
+### Deliberate non-decisions
+
+- **No fourteenth scroll-lock writer.** The sheet scrolls internally with
+  `overscroll-behavior:contain`; `document.body.style.overflow` is never touched. Asserted.
+- **Colours are literal, not tokenised** — 448-449 is the reason. A tornado banner does not get to
+  render see-through because another module stripped a token. Contrast computed, not eyeballed:
+  every pair clears 4.5:1.
+- **The banner is the same red in light mode.** 545's precedent — a life-safety strip is
+  theme-independent. Only the sheet gets a light twin.
+- **A dropped poll leaves a live warning on screen.** Losing signal mid-tornado is exactly when the
+  banner has to stay. The first version of the harness asserted the reverse and was wrong.
+
+### Gates
+
+`check_build.py` green and negative-controlled, 563 → 564. **Chromium 90/90** — not jsdom, on this
+file's own advice: jsdom cannot resolve `var()` or tell you which rule won, and 481 shipped a rule
+that parsed, balanced and never applied. The harness slices the shipped `<style>` and `<script>`
+out of the built artifact on every run and drives them with the real payload, so it cannot validate
+a re-implementation. Scope proved twice: re-applying reproduces the file byte-for-byte, and
+sentinel-stripping the three changed regions compares equal to 563.
+
+**Live reachability is unverified and that is a known gap.** The build container's network policy
+403s `api.weather.gov`, exactly as it blocks `api.open-meteo.com` for 525. The parser is proved
+against the real payload; the *fetch* is not proved against the real host. If the banner never
+appears in production that is the first thing to check — and it fails hidden by design.
+
+Two of my own mistakes, both caught by a screenshot rather than by a passing assertion:
+
+1. **`subtitle()` lowercased the whole NWS headline**, turning NORTH CENTRAL MONTGOMERY COUNTY into
+   "north central montgomery county" and printing the end time twice. Now `placeOf()` takes the
+   place off the end of the headline and title-cases it.
+2. **The line still truncated at 390px** — "until 9:15 PM" was the half being cut. End time now
+   leads, and the "DETAILS" pill became a chevron, which bought back the ~70px it needed.

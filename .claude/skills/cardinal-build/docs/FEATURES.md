@@ -1101,3 +1101,59 @@ Not themed, deliberately: the card is black in both modes, so the ink has to be 
 `linear-gradient(120deg,#2c2c2c,#1a1a1a)`, so a dark body finishes a shell that was half-built
 rather than inventing a third ground. The corollary 545 wrote down applies too: a theme-independent
 surface needs theme-independent inks, so every grey in the block is pinned, not tokenised.
+
+---
+
+# Severe weather alerts (build 564)
+
+`window.CardinalWxAlerts` in **`cr-wxa-script`** (+ `cr-wxa-styles`), the last blocks before the real
+`</body>`. A fixed banner at `z-index:10700` — above `#pwaNav` (9990), `#cr-offline` (10000) and the
+Resource Library panel (10600), below `.pac-container` (100000, the address autocomplete). Because it
+is a `body`-level fixed element it shows on **every screen including the landing page**, signed in or
+not.
+
+- **`api.weather.gov/alerts/active?point=39.7589,-84.1916`** — the same Dayton coordinate as
+  `wx()` in `cr-lr-script`. Keyless, CORS-open, fetched direct from the browser on 525's reasoning.
+  **Do not "upgrade" this to a keyed provider without moving the call into `/api/`.**
+- Cached 3 minutes in `localStorage['cr-wxa-cache']`; polls every 3 minutes, only while the tab is
+  visible, plus on `visibilitychange` and `online`. That warning ran 13 minutes end to end.
+- **Three tiers.** t3 take-cover red `#B3121B` (VTEC `TO.W` / `EW.W` / `FF.W`, or CAP
+  Extreme+Immediate) — the only one that pulses; t2 warning amber `#9A4A07`; t1 steel `#3F4A57`.
+- Tap → sheet with the NWS `instruction` ("TAKE COVER NOW!"), the `description`, and chips for storm
+  motion, detection, severity, certainty, coverage, issuing office and the VTEC id.
+- Dismiss is remembered per **VTEC event key** in `localStorage['cr-wxa-hush']`, so a *continued*
+  warning stays dismissed but a new event re-alerts. `CardinalWxAlerts.unhush()` clears it.
+- One `navigator.vibrate` per event, t3 only. Chromium refuses it before the frame has been tapped,
+  so it is a bonus, never the alert.
+
+### The polygon labels — it does not filter
+
+`areaDesc` is the whole county; the polygon usually is not. The 1 Aug tornado warning said
+"Montgomery, OH" while covering only **north central** Montgomery County — and **Dayton's own
+coordinate falls outside that polygon.** Filtering on point-in-polygon would have hidden a live
+tornado warning from the office it was issued for. So `scopeOf()` returns `point` (inside the
+polygon), `zone` (county match, outside it) or `area` (no polygon published), all three surface, and
+the sheet says which. **Under-alerting a tornado to look precise is not a trade this app makes.**
+
+### Six payload traps, all asserted
+
+`parameters.*` are arrays · `eventCode.SAME` is not the event (that message is SAME `SVS`, event
+`Tornado Warning`) · VTEC is the lifecycle key, not the alert id · `references[]` supersede ·
+`ends` ≠ `expires` · the polygon is not the county. Plus: `geometry.coordinates` are `[lon,lat]`
+but `eventMotionDescription`'s pair is `[lat,lon]`, and its bearing is the direction the storm comes
+**from**.
+
+### 🚫 It must always be able to fail silently
+
+Banner ships `display:none` and only ever appears because a real alert parsed. Non-2xx, network
+reject, non-JSON, changed schema, `features:null`, empty and junk features all end in "stay hidden";
+a denied `localStorage` still paints. **But a failed *poll* leaves a live warning up** — losing
+signal mid-tornado is when the banner matters most. Chromium harness asserts all of it (90/90).
+
+**Live reachability is unverified** — the build container 403s `api.weather.gov`, the same gap 525
+records for Open-Meteo. If the banner never appears in production, check that first.
+
+### It is not the 14th scroll-lock writer
+
+The sheet scrolls internally with `overscroll-behavior:contain`. `document.body.style.overflow` is
+never touched, and the harness asserts it stays `''` through open and close.

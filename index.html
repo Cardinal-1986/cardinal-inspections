@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 563 &#8212; the Estimates page keeps the menu, and Quick Inspection is readable from the first step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 564 &#8212; severe weather alerts from the National Weather Service, across every screen</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34666,6 +34666,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:564, note:'\uD83C\uDF2A Severe weather alerts. The app now watches the National Weather Service for the Dayton area and drops a bar across the top of every screen when a warning is out \u2014 tornado, severe thunderstorm, flood. Tap it for exactly what the NWS said, including what to do and where the storm is headed. Dismiss it and it stays gone until the next event.' },
 { build:563, note:'\uD83D\uDD27 Offline fix: opening the AI Field Manual no longer replaces what the app shows when you have no signal.' },
 { build:562, note:'\uD83D\uDCD5 The AI Field Manual is in the Resource Library \u2014 fifteen chapters on using AI in this business, plus a printable desk card. Its own section on the Library home, below the two hubs.' },
 { build:561, note:'\uD83E\uDDED Two corrections. \u2666 560 gave the menu to the estimate builder behind \u201C+ New estimate\u201D \u2014 but the Estimates item in the menu opens a different screen, and THAT is the one that was covering the menu. Fixed, along with Pricing Catalog and Claims, which had the same fault. \u2666 559 made Quick Inspection readable, but only the photo stream \u2014 the pin-the-property step you actually land on first still had the near-invisible title. It now carries the same yellow panel, so both halves match.' },
@@ -55025,6 +55026,669 @@ async function open(){
 
 window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   open: open, reload: async function(){ await load(); render(); }
+});
+})();
+</script>
+
+<style id="cr-wxa-styles">
+/* Cardinal — NWS active weather alerts · v2026-08-02 · build 564
+   ---------------------------------------------------------------------------
+   Colours here are LITERAL, not tokenised, and that is deliberate. Builds
+   448-449 are the reason: a background token really was being stripped by
+   another module within a second of load and eight claim screens rendered
+   see-through. Every other surface in this app can survive that for a second.
+   A tornado banner cannot. Nothing below resolves through var().
+
+   The banner is a solid coloured bar in BOTH themes on purpose — same call as
+   the obsidian Activity Count tiles at 545. A life-safety strip does not go
+   pale in light mode. Only the detail sheet gets a light twin.
+
+   Contrast, computed not eyeballed (scripts/contrast.py, 4.5:1 floor):
+     #fff on #B3121B  6.96:1   #fff on #9A4A07  6.26:1   #fff on #3F4A57  9.02:1
+     sheet dark  body 12.67:1  mute 6.82:1      instr 13.57:1
+     sheet light body 13.44:1  mute 5.80:1      instr  8.70:1                */
+
+#cr-wxa{display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);
+  left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 18px));
+  z-index:10700;border-radius:13px;overflow:hidden;
+  font-family:'Segoe UI',Arial,sans-serif;
+  box-shadow:0 6px 22px rgba(0,0,0,.45),0 1px 0 rgba(255,255,255,.14) inset;
+  align-items:stretch}
+#cr-wxa.show{display:flex}
+
+/* Three tiers. t3 is take-cover, and only t3 pulses. */
+#cr-wxa.t3{background:#B3121B}
+#cr-wxa.t2{background:#9A4A07}
+#cr-wxa.t1{background:#3F4A57}
+#cr-wxa.t3{animation:cr-wxa-pulse 2.4s ease-in-out infinite}
+@keyframes cr-wxa-pulse{0%,100%{box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 0 0 rgba(179,18,27,.55)}
+  50%{box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 0 7px rgba(179,18,27,0)}}
+@media (prefers-reduced-motion:reduce){#cr-wxa.t3{animation:none}}
+
+#cr-wxa .cr-wxa-hit{flex:1 1 auto;display:flex;align-items:center;gap:10px;
+  min-width:0;padding:9px 4px 9px 12px;background:none;border:0;cursor:pointer;
+  text-align:left;color:#fff;font:inherit}
+#cr-wxa .cr-wxa-ic{flex:0 0 auto;font-size:19px;line-height:1}
+#cr-wxa .cr-wxa-tx{min-width:0;display:block}
+#cr-wxa .cr-wxa-tx b{display:block;font:800 12.5px/1.25 'Segoe UI',Arial,sans-serif;
+  color:#fff;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cr-wxa .cr-wxa-tx i{display:block;margin-top:1px;font:600 10.5px/1.3 'Segoe UI',Arial,sans-serif;
+  font-style:normal;color:rgba(255,255,255,.88);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* A chevron, not a "DETAILS" pill. The pill cost ~70px and at 390px that is
+   exactly the width the end time needs. The whole bar is the tap target. */
+#cr-wxa .cr-wxa-more{flex:0 0 auto;margin-left:2px;
+  font:400 20px/1 'Segoe UI',Arial,sans-serif;color:rgba(255,255,255,.75)}
+#cr-wxa .cr-wxa-x{flex:0 0 auto;width:36px;background:none;border:0;cursor:pointer;
+  color:rgba(255,255,255,.85);font:400 20px/1 'Segoe UI',Arial,sans-serif}
+#cr-wxa .cr-wxa-x:hover{color:#fff}
+
+/* The offline badge lives in this exact slot at z-10000. Nudge it, from here,
+   rather than editing cr-offline-styles — deletable at source with this block. */
+body.cr-wxa-on #cr-offline{top:calc(env(safe-area-inset-top,0px) + 56px)}
+
+/* ---- detail sheet -------------------------------------------------------- */
+/* No scroll lock. document.body.style.overflow already has 13 independent
+   writers and no reconciler (BUG_CLASSES), and this module is not going to be
+   the 14th. The sheet scrolls internally with overscroll-behavior:contain. */
+#cr-wxa-sheet{display:none;position:fixed;inset:0;z-index:10710;
+  background:rgba(6,7,9,.62);
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 12px
+          calc(env(safe-area-inset-bottom,0px) + 16px);
+  font-family:'Segoe UI',Arial,sans-serif}
+#cr-wxa-sheet.show{display:block}
+#cr-wxa-sheet .cr-wxa-card{max-width:560px;margin:0 auto;max-height:100%;
+  display:flex;flex-direction:column;border-radius:15px;overflow:hidden;
+  background:#16181c;border:1px solid #2b2f36;
+  box-shadow:0 18px 48px rgba(0,0,0,.6)}
+#cr-wxa-sheet .cr-wxa-hd{flex:0 0 auto;padding:13px 14px;color:#fff;
+  display:flex;align-items:flex-start;gap:10px}
+#cr-wxa-sheet.t3 .cr-wxa-hd{background:#B3121B}
+#cr-wxa-sheet.t2 .cr-wxa-hd{background:#9A4A07}
+#cr-wxa-sheet.t1 .cr-wxa-hd{background:#3F4A57}
+#cr-wxa-sheet .cr-wxa-hd h4{margin:0;font:800 16px/1.25 'Segoe UI',Arial,sans-serif;color:#fff}
+#cr-wxa-sheet .cr-wxa-hd p{margin:3px 0 0;font:600 11px/1.4 'Segoe UI',Arial,sans-serif;
+  color:rgba(255,255,255,.9)}
+#cr-wxa-sheet .cr-wxa-close{margin-left:auto;flex:0 0 auto;width:30px;height:30px;
+  border:1px solid rgba(255,255,255,.4);border-radius:8px;background:none;
+  color:#fff;font:400 17px/1 'Segoe UI',Arial,sans-serif;cursor:pointer}
+#cr-wxa-sheet .cr-wxa-scroll{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;padding:13px 14px 16px}
+#cr-wxa-sheet .cr-wxa-act{margin:0 0 12px;padding:10px 12px;border-radius:10px;
+  background:#3a0d11;border:1px solid #5d1a20}
+#cr-wxa-sheet .cr-wxa-act h5{margin:0 0 5px;font:800 10px 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.15em;text-transform:uppercase;color:#ff9ba3}
+#cr-wxa-sheet .cr-wxa-act p{margin:0 0 7px;font:600 13px/1.5 'Segoe UI',Arial,sans-serif;color:#ffdfe2}
+#cr-wxa-sheet .cr-wxa-act p:last-child{margin-bottom:0}
+#cr-wxa-sheet .cr-wxa-sec{margin:0 0 5px;font:800 10px 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.15em;text-transform:uppercase;color:#9aa1aa}
+#cr-wxa-sheet .cr-wxa-desc{margin:0 0 12px}
+#cr-wxa-sheet .cr-wxa-desc p{margin:0 0 7px;font:400 13px/1.55 'Segoe UI',Arial,sans-serif;color:#d7dade}
+#cr-wxa-sheet .cr-wxa-desc p:last-child{margin-bottom:0}
+#cr-wxa-sheet .cr-wxa-desc b{color:#fff;font-weight:800}
+#cr-wxa-sheet .cr-wxa-meta{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+#cr-wxa-sheet .cr-wxa-meta span{font:600 10.5px/1.35 'Segoe UI',Arial,sans-serif;
+  color:#e8ebee;background:#262a30;border:1px solid #343941;border-radius:999px;padding:3px 9px}
+#cr-wxa-sheet .cr-wxa-meta span k{font-weight:800;font-style:normal;color:#9aa1aa}
+
+:root[data-theme="rb-light"] #cr-wxa-sheet{background:rgba(28,30,36,.45)}
+:root[data-theme="rb-light"] #cr-wxa-sheet .cr-wxa-card{background:#ffffff;border-color:#e2e2e2;
+  box-shadow:0 18px 44px rgba(16,18,24,.22)}
+:root[data-theme="rb-light"] #cr-wxa-sheet .cr-wxa-act{background:#fdf0f1;border-color:#f0c9cc}
+:root[data-theme="rb-light"] #cr-wxa-sheet .cr-wxa-act h5{color:#a3121e}
+:root[data-theme="rb-light"] #cr-wxa-sheet .cr-wxa-act p{color:#8a1119}
+:root[data-theme="rb-light"] #cr-wxa-sheet .cr-wxa-sec{color:#5f6670}
+:root[data-theme="rb-light"] #cr-wxa-sheet .cr-wxa-desc p{color:#2b2f36}
+:root[data-theme="rb-light"] #cr-wxa-sheet .cr-wxa-desc b{color:#14161a}
+:root[data-theme="rb-light"] #cr-wxa-sheet .cr-wxa-meta span{color:#3a3f47;background:#eef0f3;border-color:#dfe2e7}
+:root[data-theme="rb-light"] #cr-wxa-sheet .cr-wxa-meta span k{color:#5f6670}
+</style>
+<script id="cr-wxa-script">
+/* Cardinal — NWS active weather alerts · v2026-08-02 · build 564
+   ---------------------------------------------------------------------------
+   Parses api.weather.gov /alerts/active and puts a banner over the whole app.
+   Keyless and CORS-open, so it is fetched straight from the browser — the same
+   call cr-lr-script's wx() makes to Open-Meteo, and for the same stated reason:
+   nothing secret can enter index.html this way. If NWS ever requires a key or a
+   User-Agent, the fix is to move THIS ONE URL behind /api/, not to hardcode
+   anything here.
+
+   Fails silent, always. The banner ships display:none and only ever appears
+   because a real alert parsed. Every failure path — offline, non-2xx, non-JSON,
+   changed schema, empty features, unparseable dates — ends in "leave it hidden".
+
+   WHAT THE PAYLOAD ACTUALLY LOOKS LIKE, and the six traps in it. All six are
+   live in one real Montgomery County tornado warning (1 Aug 2026, 9:02 PM EDT):
+
+   1. properties.parameters.* values are ARRAYS, never scalars.
+      NWSheadline is ["A TORNADO WARNING REMAINS..."]. Reading it directly
+      renders the brackets.
+   2. eventCode.SAME is NOT the event. That warning carries event:"Tornado
+      Warning" with eventCode.SAME:["SVS"] and AWIPSidentifier "SVSILN" — it is
+      a Severe Weather Statement that CONTINUES a tornado warning. Key on
+      `event` and on the VTEC phenomenon. Keying on the SAME code labels a
+      tornado warning "Severe Weather Statement".
+   3. VTEC is the lifecycle key, not the alert id.
+      /O.CON.KILN.TO.W.0042.000000T0000Z-260802T0115Z/
+      product O · action CON · office KILN · TO.W · ETN 0042. The original
+      warning and every update share KILN.TO.W.0042. Without it the same
+      tornado stacks up once per update. CAN/EXP/UPG mean it is over.
+   4. messageType "Update" + references[] supersede the referenced message.
+      Both can be in /alerts/active at once.
+   5. `ends` and `expires` are different fields. `expires` is when the MESSAGE
+      goes stale; `ends` is when the EVENT does. Prefer ends, fall back.
+   6. areaDesc is the whole county, the polygon is not. That alert says
+      "Montgomery, OH" while its polygon and NWS headline cover only NORTH
+      CENTRAL Montgomery County — Dayton's own coordinate is outside it.
+      So the polygon LABELS the alert, it does not filter it. Under-alerting a
+      tornado to look precise is not a trade this app makes.
+
+   Coordinate order is not consistent inside one payload and this bites:
+   geometry.coordinates are GeoJSON [lon,lat]; the lat/lon inside
+   eventMotionDescription is [lat,lon]. Both are handled below, separately. */
+(function(){
+'use strict';
+
+var PT   = { lat:39.7589, lon:-84.1916 };   /* Dayton — the same point wx() uses */
+var FEED = 'https://api.weather.gov/alerts/active?point=' + PT.lat + ',' + PT.lon;
+var CKEY = 'cr-wxa-cache';
+var HUSH = 'cr-wxa-hush';
+var BUZZ = 'cr-wxa-buzz';
+var TTL  = 3 * 60 * 1000;    /* this warning ran 13 minutes end to end */
+var POLL = 3 * 60 * 1000;
+
+var SEV  = { Extreme:4, Severe:3, Moderate:2, Minor:1, Unknown:0 };
+var URG  = { Immediate:4, Expected:3, Future:2, Past:1, Unknown:0 };
+var DEAD = { CAN:1, EXP:1, UPG:1 };          /* VTEC actions meaning "over" */
+var COVER= { 'TO.W':1, 'EW.W':1, 'FF.W':1 }; /* tornado / extreme wind / flash flood */
+var ICON = { 'TO':'🌪', 'SV':'⛈', 'FF':'🌊', 'EW':'💨',
+             'WI':'💨', 'WS':'❄', 'BZ':'❄', 'EH':'🌡',
+             'FL':'🌊', 'SQ':'⛈' };
+var ROSE = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+
+/* ---------- small helpers ------------------------------------------------- */
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+/* Escape FIRST, then promote a tiny marker set on the already-escaped string.
+   That ordering is cr-lib-script's lbRich() contract and it is load-bearing:
+   by the time any promotion runs every < is already &lt;, so nothing NWS
+   returns can open a tag. No links, no images, no raw HTML. */
+function rich(s){
+  var t = esc(s).replace(/\r\n?/g, '\n');
+  t = t.replace(/^([A-Z][A-Z ]{2,})\.\.\./gm, '<b>$1</b> ');  /* HAZARD... SOURCE... IMPACT... */
+  t = t.split(/\n{2,}/).map(function(p){ return p.replace(/\n/g, ' ').trim(); })
+       .filter(Boolean);
+  return t.length ? '<p>' + t.join('</p><p>') + '</p>' : '';
+}
+
+/* parameters.* are arrays. Tolerate a scalar in case that ever changes. */
+function p1(p, name){
+  var v = p && p.parameters && p.parameters[name];
+  if(Array.isArray(v)) return v.length ? v[0] : null;
+  return v == null ? null : v;
+}
+
+function arr(v){ return Array.isArray(v) ? v : (v == null ? [] : [v]); }
+
+function ts(s){
+  if(!s) return null;
+  var t = Date.parse(s);
+  return isFinite(t) ? t : null;   /* offsets like -04:00 parse; string compare would not */
+}
+
+function compass(d){
+  return ROSE[Math.round((((d % 360) + 360) % 360) / 22.5) % 16];
+}
+
+function clock(t){
+  try{
+    return new Date(t).toLocaleTimeString('en-US',
+      { hour:'numeric', minute:'2-digit' });
+  }catch(e){ return ''; }
+}
+
+/* ---------- VTEC ---------------------------------------------------------- */
+/* /O.CON.KILN.TO.W.0042.000000T0000Z-260802T0115Z/ */
+var VTEC_RE = /^\/?([OTEX])\.([A-Z]{3})\.([A-Z0-9]{4})\.([A-Z]{2})\.([A-Z])\.(\d{4})\.(\d{6}T\d{4}Z)-(\d{6}T\d{4}Z)\/?$/;
+
+function parseVtec(s){
+  if(typeof s !== 'string') return null;
+  var m = VTEC_RE.exec(s.trim());
+  if(!m) return null;
+  return {
+    product : m[1],                 /* O operational · T test · E/X experimental */
+    action  : m[2],
+    office  : m[3],
+    phenom  : m[4],
+    sig     : m[5],
+    etn     : m[6],
+    phenSig : m[4] + '.' + m[5],
+    /* One real-world event, however many messages describe it. */
+    key     : m[3] + '.' + m[4] + '.' + m[5] + '.' + m[6],
+    live    : m[1] === 'O' && !DEAD[m[2]]
+  };
+}
+
+/* ---------- storm motion -------------------------------------------------- */
+/* "2026-08-02T01:02:00-00:00...storm...204DEG...16KT...39.83,-84.3"
+   The DEG is the bearing the storm comes FROM. Heading is the reciprocal, so
+   204 means it is travelling toward 24 degrees — NNE, which is what the plain
+   text of that warning says. The trailing pair is [lat,lon], not GeoJSON order. */
+function parseMotion(s){
+  if(typeof s !== 'string' || !s) return null;
+  var parts = s.split('...'), deg = null, kt = null, lat = null, lon = null, m, i, t;
+  for(i = 0; i < parts.length; i++){
+    t = parts[i].trim();
+    if((m = /^(\d{1,3})DEG$/.exec(t)))     deg = +m[1];
+    else if((m = /^(\d{1,3})KT$/.exec(t))) kt  = +m[1];
+    else if((m = /^(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)$/.exec(t))){
+      lat = +m[1]; lon = +m[2];
+    }
+  }
+  if(deg === null && kt === null) return null;
+  var head = deg === null ? null : (deg + 180) % 360;
+  return {
+    fromDeg : deg,
+    heading : head,
+    dir     : head === null ? null : compass(head),
+    kt      : kt,
+    mph     : kt === null ? null : Math.round(kt * 1.15078),
+    lat     : lat,
+    lon     : lon
+  };
+}
+
+/* ---------- geometry ------------------------------------------------------ */
+/* Outer ring only — NWS warning polygons carry no holes. [lon,lat] throughout. */
+function rings(g){
+  var out = [], i;
+  if(!g || !g.coordinates) return out;
+  if(g.type === 'Polygon') out = [g.coordinates[0]];
+  else if(g.type === 'MultiPolygon'){
+    for(i = 0; i < g.coordinates.length; i++){
+      if(g.coordinates[i]) out.push(g.coordinates[i][0]);
+    }
+  }
+  return out.filter(function(r){ return Array.isArray(r) && r.length >= 4; });
+}
+
+function inRing(lat, lon, ring){
+  var inside = false, i, j, xi, yi, xj, yj;
+  for(i = 0, j = ring.length - 1; i < ring.length; j = i++){
+    xi = ring[i][0]; yi = ring[i][1];       /* lon, lat */
+    xj = ring[j][0]; yj = ring[j][1];
+    if(typeof xi !== 'number' || typeof yi !== 'number') return false;
+    if(((yi > lat) !== (yj > lat)) &&
+       (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+
+function inAny(lat, lon, rs){
+  for(var i = 0; i < rs.length; i++){ if(inRing(lat, lon, rs[i])) return true; }
+  return false;
+}
+
+/* ---------- one alert ----------------------------------------------------- */
+
+function parseAlert(f){
+  if(!f || typeof f !== 'object') return null;
+  var p = f.properties;
+  if(!p || typeof p !== 'object') return null;
+
+  /* NWS pushes Test / Exercise / Draft / System down the same feed. */
+  if(p.status !== 'Actual') return null;
+
+  /* `event`, never eventCode.SAME — see trap 2 in the header. */
+  var event = typeof p.event === 'string' ? p.event.trim() : '';
+  if(!event) return null;
+
+  var vts = arr(p.parameters && p.parameters.VTEC).map(parseVtec).filter(Boolean);
+  var vt  = null, i;
+  for(i = 0; i < vts.length; i++){ if(vts[i].live){ vt = vts[i]; break; } }
+  var primary = vt || vts[0] || null;
+
+  var dead = p.messageType === 'Cancel' ||
+             (vts.length > 0 && !vt) ||
+             (primary ? primary.product !== 'O' : false);
+
+  var endsAt = ts(p.ends) || ts(p.expires);
+  var sev    = SEV[p.severity] || 0;
+  var urg    = URG[p.urgency]  || 0;
+  var phenSig= primary ? primary.phenSig : '';
+
+  var tier = 1;
+  if(COVER[phenSig] || (sev >= 4 && urg >= 4)) tier = 3;
+  else if((primary && primary.sig === 'W') || sev >= 3) tier = 2;
+
+  return {
+    id      : p.id || f.id || '',
+    event   : event,
+    headline: typeof p.headline === 'string' ? p.headline : '',
+    nws     : p1(p, 'NWSheadline'),
+    desc    : typeof p.description === 'string' ? p.description : '',
+    instr   : typeof p.instruction === 'string' ? p.instruction : '',
+    area    : typeof p.areaDesc === 'string' ? p.areaDesc : '',
+    sender  : typeof p.senderName === 'string' ? p.senderName : '',
+    response: typeof p.response === 'string' ? p.response : '',
+    severity: p.severity || 'Unknown',
+    urgency : p.urgency  || 'Unknown',
+    certain : p.certainty || 'Unknown',
+    msgType : p.messageType || '',
+    sent    : ts(p.sent),
+    onset   : ts(p.onset) || ts(p.effective),
+    endsAt  : endsAt,
+    codes   : arr(p.geocode && p.geocode.UGC).concat(arr(p.geocode && p.geocode.SAME)),
+    refs    : arr(p.references).map(function(r){
+                return r && (r.identifier || r['@id']); }).filter(Boolean),
+    vtec    : primary,
+    key     : primary ? primary.key : '',
+    phenSig : phenSig,
+    detect  : p1(p, 'tornadoDetection'),
+    hail    : (function(h){ var n = parseFloat(h); return isFinite(n) && n > 0 ? n : null; })(
+                p1(p, 'maxHailSize')),
+    motion  : parseMotion(p1(p, 'eventMotionDescription')),
+    rings   : rings(f.geometry),
+    sev     : sev,
+    urg     : urg,
+    tier    : tier,
+    rank    : tier * 100 + sev * 10 + urg,
+    dead    : dead
+  };
+}
+
+/* ---------- the whole feed ------------------------------------------------ */
+
+/* Polygon membership LABELS, it does not filter. See trap 6: Dayton's own
+   coordinate falls outside the polygon of a warning that legitimately covers
+   its county. 'point' = inside the drawn polygon, 'zone' = county match but
+   outside it, 'area' = no polygon was published at all. */
+function scopeOf(a, lat, lon, zones){
+  var geo = a.rings.length > 0;
+  if(geo && inAny(lat, lon, a.rings)) return 'point';
+  if(zones && zones.length){
+    var hit = a.codes.some(function(c){ return zones.indexOf(c) !== -1; });
+    if(!hit) return null;
+  }
+  return geo ? 'zone' : 'area';
+}
+
+function pickAlerts(list, opts){
+  opts = opts || {};
+  var now   = typeof opts.now === 'number' ? opts.now : Date.now();
+  var lat   = typeof opts.lat === 'number' ? opts.lat : PT.lat;
+  var lon   = typeof opts.lon === 'number' ? opts.lon : PT.lon;
+  var zones = opts.zones || null;
+
+  var live = [], i, a;
+  for(i = 0; i < (list || []).length; i++){
+    a = parseAlert(list[i]);
+    /* 1. real, and not already retired by its own VTEC action */
+    if(a && !a.dead) live.push(a);
+  }
+  /* 2. already finished */
+  live = live.filter(function(x){ return !x.endsAt || x.endsAt > now; });
+
+  /* 3. an Update supersedes every message it references. Catches products
+        that carry no VTEC at all. */
+  var beaten = {};
+  live.forEach(function(x){ x.refs.forEach(function(id){ beaten[id] = 1; }); });
+  live = live.filter(function(x){ return !beaten[x.id]; });
+
+  /* 4. one row per real-world event, newest message wins. VTEC key, else id. */
+  var byKey = {}, k;
+  live.forEach(function(x){
+    k = x.key || x.id;
+    if(!byKey[k] || (x.sent || 0) > (byKey[k].sent || 0)) byKey[k] = x;
+  });
+
+  var out = [];
+  Object.keys(byKey).forEach(function(kk){
+    var x = byKey[kk];
+    x.scope = scopeOf(x, lat, lon, zones);
+    if(x.scope) out.push(x);
+  });
+  out.sort(function(x, y){
+    return (y.rank - x.rank) || ((x.endsAt || 0) - (y.endsAt || 0));
+  });
+  return out;
+}
+
+/* ---------- UI ------------------------------------------------------------ */
+
+var bar, sheet, current = null, timer = null;
+
+function hushed(){
+  try{ return JSON.parse(localStorage.getItem(HUSH) || '{}') || {}; }
+  catch(e){ return {}; }
+}
+
+function ensureBar(){
+  if(bar) return bar;
+  bar = document.createElement('div');
+  bar.id = 'cr-wxa';
+  bar.setAttribute('role', 'alert');
+  bar.innerHTML =
+    '<button class="cr-wxa-hit" type="button">' +
+      '<span class="cr-wxa-ic" aria-hidden="true"></span>' +
+      '<span class="cr-wxa-tx"><b></b><i></i></span>' +
+      '<span class="cr-wxa-more" aria-hidden="true">\u203A</span>' +
+    '</button>' +
+    '<button class="cr-wxa-x" type="button" aria-label="Dismiss this alert">×</button>';
+  bar.querySelector('.cr-wxa-hit').addEventListener('click', function(){ openSheet(); });
+  bar.querySelector('.cr-wxa-x').addEventListener('click', function(){
+    if(current && (current.key || current.id)){
+      var h = hushed();
+      h[current.key || current.id] = 1;
+      try{ localStorage.setItem(HUSH, JSON.stringify(h)); }catch(e){}
+    }
+    hideBar();
+  });
+  document.body.appendChild(bar);
+  return bar;
+}
+
+function hideBar(){
+  if(bar){ bar.classList.remove('show'); }
+  document.body.classList.remove('cr-wxa-on');
+}
+
+/* The NWS headline is the precise one — areaDesc says "Montgomery, OH" while
+   the headline says NORTH CENTRAL MONTGOMERY COUNTY, which is what the polygon
+   actually covers. Take the place off the end of it rather than lowercasing the
+   whole sentence: it is written in caps, so a blanket toLowerCase() turns a
+   county name into prose and the line then repeats the end time twice. */
+function placeOf(a){
+  var m = /\bFOR\s+(.+?)[.\s]*$/.exec(a.nws ? String(a.nws) : '');
+  if(m && m[1].length > 3 && !/FOLLOWING|THESE\s+AREAS/.test(m[1])){
+    return m[1].toLowerCase().replace(/\b[a-z]/g, function(c){ return c.toUpperCase(); });
+  }
+  return a.area || '';
+}
+
+/* End time FIRST. At 390px the line ellipsises, and "until 9:15 PM" is the half
+   you act on — the place is already implied by the fact you are being shown it. */
+function subtitle(a){
+  var bits = [], place = placeOf(a);
+  if(a.endsAt) bits.push('until ' + clock(a.endsAt));
+  if(place) bits.push(place);
+  return bits.join(' · ');
+}
+
+function paint(a){
+  var b = ensureBar();
+  current = a;
+  b.className = 't' + a.tier + ' show';
+  b.querySelector('.cr-wxa-ic').textContent =
+    ICON[a.vtec ? a.vtec.phenom : ''] || '⚠';
+  b.querySelector('.cr-wxa-tx b').textContent = a.event;
+  b.querySelector('.cr-wxa-tx i').textContent = subtitle(a);
+  document.body.classList.add('cr-wxa-on');
+
+  /* One buzz per real event, only for take-cover tiers, only if the device
+     does haptics at all. A tornado warning in a pocket is worth one vibration;
+     it is not worth one every three minutes for thirteen minutes. */
+  if(a.tier === 3 && navigator.vibrate){
+    var kk = a.key || a.id;
+    try{
+      var seen = JSON.parse(localStorage.getItem(BUZZ) || '{}') || {};
+      if(kk && !seen[kk]){
+        seen[kk] = 1;
+        localStorage.setItem(BUZZ, JSON.stringify(seen));
+        navigator.vibrate([220, 110, 220]);
+      }
+    }catch(e){}
+  }
+}
+
+function ensureSheet(){
+  if(sheet) return sheet;
+  sheet = document.createElement('div');
+  sheet.id = 'cr-wxa-sheet';
+  sheet.innerHTML =
+    '<div class="cr-wxa-card" role="dialog" aria-modal="true" aria-label="Weather alert">' +
+      '<div class="cr-wxa-hd">' +
+        '<div><h4></h4><p></p></div>' +
+        '<button class="cr-wxa-close" type="button" aria-label="Close">×</button>' +
+      '</div>' +
+      '<div class="cr-wxa-scroll"></div>' +
+    '</div>';
+  sheet.addEventListener('click', function(e){
+    if(e.target === sheet) closeSheet();
+  });
+  sheet.querySelector('.cr-wxa-close').addEventListener('click', closeSheet);
+  document.body.appendChild(sheet);
+  return sheet;
+}
+
+function closeSheet(){ if(sheet) sheet.classList.remove('show'); }
+
+function openSheet(){
+  var a = current;
+  if(!a) return;
+  var s = ensureSheet();
+  s.className = 't' + a.tier + ' show';
+  s.querySelector('.cr-wxa-hd h4').textContent = a.event;
+
+  var when = [];
+  if(a.onset)  when.push('from ' + clock(a.onset));
+  if(a.endsAt) when.push('until ' + clock(a.endsAt));
+  var place = placeOf(a);
+  s.querySelector('.cr-wxa-hd p').textContent =
+    (place ? place + ' · ' : '') + when.join(' ');
+
+  var html = '';
+  if(a.instr){
+    html += '<div class="cr-wxa-act"><h5>' +
+            esc(a.response === 'Shelter' ? 'Take cover' : (a.response || 'What to do')) +
+            '</h5>' + rich(a.instr) + '</div>';
+  }
+  if(a.desc){
+    html += '<div class="cr-wxa-sec">Details</div><div class="cr-wxa-desc">' + rich(a.desc) + '</div>';
+  }
+
+  var chips = [];
+  if(a.motion && a.motion.dir && a.motion.mph !== null){
+    chips.push(['Storm', 'moving ' + a.motion.dir + ' at ' + a.motion.mph + ' mph']);
+  }
+  if(a.detect)             chips.push(['Detection', String(a.detect).toLowerCase()]);
+  if(a.hail !== null)      chips.push(['Max hail', a.hail + '"']);
+  if(a.severity)           chips.push(['Severity', a.severity.toLowerCase()]);
+  if(a.certain)            chips.push(['Certainty', a.certain.toLowerCase()]);
+  if(a.area)               chips.push(['Area', a.area]);
+  chips.push(['Coverage', a.scope === 'point'
+      ? 'includes your location'
+      : (a.scope === 'zone' ? 'part of your county' : 'county-wide')]);
+  if(a.sender)             chips.push(['Source', a.sender]);
+  if(a.vtec)               chips.push(['NWS id', a.vtec.key]);
+
+  if(chips.length){
+    html += '<div class="cr-wxa-meta">' + chips.map(function(c){
+      return '<span><k>' + esc(c[0]) + '</k> ' + esc(c[1]) + '</span>';
+    }).join('') + '</div>';
+  }
+  s.querySelector('.cr-wxa-scroll').innerHTML = html;
+  s.querySelector('.cr-wxa-scroll').scrollTop = 0;
+}
+
+/* ---------- data ---------------------------------------------------------- */
+
+function show(list){
+  var picked = pickAlerts(list, {});
+  var h = hushed(), i, a;
+  for(i = 0; i < picked.length; i++){
+    a = picked[i];
+    if(!h[a.key || a.id]){ paint(a); return picked; }
+  }
+  /* everything live is hushed, or there is nothing live at all */
+  hideBar();
+  closeSheet();
+  current = null;
+  return picked;
+}
+
+function cached(){
+  try{
+    var c = JSON.parse(localStorage.getItem(CKEY) || 'null');
+    if(c && c.t && Array.isArray(c.f) && (Date.now() - c.t) < TTL) return c.f;
+  }catch(e){}
+  return null;
+}
+
+function load(force){
+  try{
+    if(!force){
+      var c = cached();
+      if(c){ show(c); return; }
+    }
+    fetch(FEED, { cache:'no-store' }).then(function(r){
+      if(!r.ok) throw new Error('wxa ' + r.status);
+      return r.json();
+    }).then(function(j){
+      var feats = j && Array.isArray(j.features) ? j.features : null;
+      if(!feats) return;                       /* schema moved — stay hidden */
+      try{ localStorage.setItem(CKEY, JSON.stringify({ t:Date.now(), f:feats })); }catch(e){}
+      show(feats);
+    }).catch(function(){ /* no alert feed is not an error worth showing */ });
+  }catch(e){}
+}
+
+function start(){
+  try{
+    load(false);
+    if(timer) clearInterval(timer);
+    timer = setInterval(function(){ if(!document.hidden) load(true); }, POLL);
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden) load(false);
+    });
+    window.addEventListener('online', function(){ load(true); });
+  }catch(e){}
+}
+
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+
+window.CardinalWxAlerts = Object.assign(window.CardinalWxAlerts || {}, {
+  /* pure, and exported so the gate harness runs the SHIPPED functions rather
+     than a re-implementation of them */
+  parseVtec   : parseVtec,
+  parseMotion : parseMotion,
+  parseAlert  : parseAlert,
+  pickAlerts  : pickAlerts,
+  inRing      : inRing,
+  rings       : rings,
+  rich        : rich,
+  /* live */
+  refresh     : function(){ load(true); },
+  current     : function(){ return current; },
+  open        : openSheet,
+  close       : closeSheet,
+  unhush      : function(){ try{ localStorage.removeItem(HUSH); }catch(e){} load(true); }
 });
 })();
 </script>
