@@ -1469,15 +1469,20 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
 
         <div class="block">
-          <h3>What local does well</h3>
-          <ul>
-            <li><strong>Image generation.</strong> Your strongest case, and you're already on it — the Spark makes the Resource Library illustrations. Quality is genuinely competitive with paid APIs, iteration is free, and a LoRA gives you one house style no API will sell you at any price.</li>
-            <li><strong>Transcription.</strong> Whisper runs fast and local. Voice notes from a roof, straight to text.</li>
-            <li><strong>Embeddings and search</strong> over your own documents. Cheap, fast, and nothing leaves the building.</li>
-            <li><strong>OCR and extraction</strong> — pulling numbers off an insurance scope, in a batch, overnight.</li>
-            <li><strong>Photo tagging and classification</strong> at volume.</li>
-          </ul>
-          <p>The pattern: high volume, latency doesn't matter, and the bar is "good enough and consistent."</p>
+          <h3>What local does well &mdash; seven things, and photos are one of them</h3>
+          <ol class="habits">
+            <li><span><b>Image generation.</b> The strongest case and the one already running &mdash; the Spark makes the Resource Library illustrations. Quality is competitive with paid services, iteration is free, and it is the most locked to NVIDIA of anything on this list.</span></li>
+            <li><span><b>Training on your own material.</b> A LoRA holding one house style, taught from Cardinal's own work. No API sells that at any price, and it is the one job where owning the machine is not a cost decision at all.</span></li>
+            <li><span><b>Transcription.</b> Whisper runs fast and local. Voice notes off a roof, straight to text, without a per-minute meter running.</span></li>
+            <li><span><b>Search over your own documents.</b> Embeddings across eighteen years of paperwork. Cheap, fast, and nothing leaves the building.</span></li>
+            <li><span><b>Reading paperwork.</b> Pulling numbers off an insurance scope, a supplier price list, a permit &mdash; in a batch, overnight, at volume no one would pay per page for.</span></li>
+            <li><span><b>Photo tagging and captioning</b> at volume. Real, useful, and <strong>one line of seven</strong> &mdash; which is roughly its share of why the machine is worth owning.</span></li>
+            <li><span><b>A private assistant.</b> An agent on hardware that never leaves the building, for the material you would not paste into anything. That is the second half of the argument in <em>What never to paste</em>, arriving as a capability rather than a warning.</span></li>
+          </ol>
+          <p>The pattern: high volume, latency doesn&apos;t matter, and the bar is &ldquo;good
+          enough and consistent.&rdquo; <strong>Five of the seven are reading rather than
+          writing</strong>, which is the half this machine is fastest at &mdash; and the reason
+          every verdict in the next chapter lands where it does.</p>
         </div>
 
         <div class="block">
@@ -1516,6 +1521,44 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
 
         <div class="block">
+          <h3>The spec sheet</h3>
+          <p>Every number the rest of this chapter argues from, in one place and with nothing
+          concluded from it yet. Bandwidth is the one that decides how fast a model writes;
+          memory is the one that decides whether it opens at all.</p>
+          <div class="tw">
+            <table class="figs">
+              <thead><tr><th>Machine</th><th>Memory</th><th>Type</th><th>Bandwidth</th><th>Power</th><th>Runs</th><th>Price</th></tr></thead>
+              <tbody>
+                <tr><td><strong>DGX Spark</strong></td><td>128 GB</td><td>LPDDR5X, unified</td><td>273 GB/s</td><td>240 W</td><td>Ubuntu 24.04, ARM</td><td>$4,699</td></tr>
+                <tr><td><strong>Mac Studio M3 Ultra</strong></td><td>96 GB</td><td>LPDDR5X, unified</td><td>819 GB/s</td><td>~270 W</td><td>macOS</td><td>$5,299</td></tr>
+                <tr><td><strong>MacBook Pro M5 Max</strong></td><td>128 GB</td><td>LPDDR5X, unified</td><td>614 GB/s</td><td>~120 W</td><td>macOS</td><td>build to order</td></tr>
+                <tr><td><strong>AMD Ryzen AI Max+ 395</strong></td><td>128 GB</td><td>LPDDR5X, unified</td><td>256 GB/s</td><td>~140 W</td><td>Windows or Linux</td><td>$3,999</td></tr>
+                <tr><td><strong>RTX PRO 6000 Blackwell</strong></td><td>96 GB</td><td>GDDR7 with ECC</td><td>1,792 GB/s</td><td>600 W</td><td>a PC you supply</td><td>$13,250</td></tr>
+                <tr><td><strong>RTX 5090</strong></td><td>32 GB</td><td>GDDR7</td><td>1,792 GB/s</td><td>575 W</td><td>a PC you supply</td><td>~$2,500</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><strong>Two kinds of machine are in that table and the difference is the whole
+          chapter.</strong> The first four share one pool of memory between processor and
+          graphics &mdash; that is what &ldquo;unified&rdquo; means, and it is why a $4,699 box
+          can hold more than a $13,250 card. The last two are graphics cards with their own
+          dedicated memory: far faster, far smaller, and they need a computer built around
+          them.</p>
+          <div class="call">
+            <h3>The two numbers, and which question each answers</h3>
+            <ul>
+              <li><strong>Memory</strong> &mdash; can it open the model at all. A model needs
+              about <strong>0.75&nbsp;GB per billion parameters</strong> at the usual 4-bit
+              setting, once you leave room to work in.</li>
+              <li><strong>Bandwidth</strong> &mdash; how fast it writes once open. Every single
+              word means reading the whole model out of memory again.</li>
+            </ul>
+            <p>Nothing else on a spec sheet moves either answer much. Core counts, clock speeds
+            and benchmark scores are downstream of those two.</p>
+          </div>
+        </div>
+
+        <div class="block">
           <h3>What the four types actually do</h3>
           <p>Realistic tokens per second, dense model at 4-bit, one conversation at a time. A dash means it won't fit. Reading speed is about 5 t/s; comfortable is 15; instant is 40.</p>
           <div class="tw">
@@ -1535,9 +1578,58 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
 
 
         <div class="block">
-          <h3>Spark vs Mac Studio, in detail</h3>
+          <h3>The DGX Spark, since it is the one you own</h3>
+          <p>A sealed box about the size of a hardback, built around a single
+          <strong>GB10 Grace&#8209;Blackwell</strong> chip &mdash; an ARM processor and a
+          Blackwell graphics unit on one substrate, sharing <strong>128&nbsp;GB</strong> of
+          memory between them. That sharing is the entire point: nothing has to be copied
+          across a bus, so the whole 128 GB is available to a model.</p>
+
+          <p><strong>Four things it is genuinely good at</strong>, in the order they matter to
+          Cardinal:</p>
+          <ol class="habits">
+            <li><span><b>Reading, and it is not close.</b> About <strong>1,700 tokens a
+            second</strong> chewing through a prompt, against roughly 340 on the AMD box. Every
+            job that feeds it more than it gets back &mdash; OCR off a scope, tagging, search,
+            classification &mdash; is this half of the work.</span></li>
+            <li><span><b>Holding a big model at all.</b> 128&nbsp;GB opens a
+            <strong>171B</strong> model. No Mac Studio sold today reaches that, and the card
+            further down this page costs three times as much and holds less.</span></li>
+            <li><span><b>CUDA, which is where the tooling lives.</b> Diffusion, LoRA training
+            and most serving frameworks are built for it first. That is a software fact, not a
+            speed one, and it is the argument that survives every price comparison.</span></li>
+            <li><span><b>Running flat out, unattended, all night.</b> 240&nbsp;W, no throttling,
+            no lid to close, and it does not leave the building. Batch work is overnight work.</span></li>
+          </ol>
+
+          <p><strong>And three it is not.</strong> Stated plainly because the machine is
+          already bought and knowing its shape is worth more than defending it:</p>
+          <ul>
+            <li><strong>It writes slowly.</strong> 273&nbsp;GB/s is the lowest number in the
+            spec sheet. On a big model that is 2 tokens a second &mdash; slower than you read.
+            It is not a chat machine and no setting makes it one.</li>
+            <li><strong>&ldquo;Full CUDA support&rdquo; is oversold.</strong> It is
+            <code>sm_121</code>, its own Blackwell variant; plenty of packages either refuse or
+            quietly fall back to years-old code paths.</li>
+            <li><strong>Linux only, and ARM Linux at that.</strong> Which is why this book has a
+            commands page at the back, and why the occasional x86 binary simply will not run.</li>
+          </ul>
+        </div>
+
+        <div class="block">
+          <h3>Apple, in detail</h3>
           <p>The comparison everybody makes, and the one every article online still gets
-          wrong &mdash; in both directions. Start with the half that gets left out.</p>
+          wrong &mdash; in both directions.</p>
+          <p><strong>What Apple actually sells for this.</strong> Two machines matter: the
+          <strong>Mac Studio</strong>, a small desktop, in an M4&nbsp;Max or a faster M3&nbsp;Ultra
+          version; and the <strong>MacBook Pro</strong> with an M5&nbsp;Max. All of them use the
+          same unified-memory idea as the Spark &mdash; one pool shared by processor and graphics
+          &mdash; which is why a laptop can hold a model a $2,000 graphics card cannot.</p>
+          <p><strong>The software is called MLX</strong>, Apple&apos;s own framework, and it is
+          genuinely good now: Ollama, LM Studio and llama.cpp all run well on Apple silicon and
+          the community around them is the largest of any platform. What MLX is not is CUDA
+          &mdash; and the gap shows up in exactly one place, which the verdict below is about.</p>
+          <p>Now the half that gets left out.</p>
           <p><strong>Four things a Mac is straightforwardly better at</strong>, before any of
           the detail:</p>
           <ol class="habits">
@@ -1656,7 +1748,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
             capacity as your Spark, more than twice the bandwidth. Anyone who tells you the
             Spark simply wins is not looking at the current line-up.</p>
             <p>It loses on <em>the whole job</em>, not one task. Look back at what this
-            chapter says local is actually good for &mdash; six things, and <strong>image
+            chapter says local is actually good for &mdash; seven things, and <strong>image
             generation is first</strong>: the Library illustrations, iterated free, with a LoRA
             holding one house style. Then transcription, search over your own documents, OCR off
             a scope, and bulk photo work. That is a <strong>generation and batch machine</strong>,
@@ -1746,48 +1838,198 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
 
         <div class="block">
-          <h3>Anything else worth a look</h3>
-          <p>Three machines is not the whole market, so: one other thing genuinely earns a
-          place on this page, one is worth a phone call, and the rest are a different job
-          wearing similar specs.</p>
+          <h3>The RTX PRO 6000 Blackwell, which breaks the rule</h3>
+          <p>Everything above trades capacity against speed. This one refuses to, and it is the
+          only entry in the book that does &mdash; which is worth a section rather than a
+          footnote, because it changes what the trade actually is.</p>
 
-          <p><strong>The one that earns it &mdash; NVIDIA RTX PRO 6000 Blackwell.</strong>
-          A card, not a machine: <strong>96&nbsp;GB of GDDR7 at 1,792&nbsp;GB/s</strong>, which
-          is 6.5&times; the Spark&apos;s bandwidth with three quarters of its memory. Run the
-          chapter&apos;s own arithmetic on it and it holds a <strong>128B</strong> model and
-          writes at <strong>16 tokens a second</strong> &mdash; against 2 on the Spark and 7 on
-          a 96&nbsp;GB Mac Studio. It is the only entry here that refuses the trade the rest of
-          this chapter is built on.</p>
-          <p>It also costs like it. <strong>$13,250</strong> as of this writing, up from $8,565
-          at launch in March 2025 &mdash; a 55% rise driven by the same memory shortage that
-          took Apple&apos;s big configurations away. And it is a card: budget a workstation
-          around it, a 600&nbsp;W power draw, and a case it physically fits in. Call it
-          <strong>$16&ndash;17k</strong> before it does anything, or about three and a half
-          Sparks.</p>
+          <p><strong>What it is for, first</strong>, because it is not an AI appliance. It is
+          NVIDIA&apos;s professional workstation card: rendering, simulation, CAD, colour work,
+          video. AI is one of several jobs it is sold to do, which is why it carries
+          <strong>ECC memory</strong> and can be split into <strong>four isolated instances</strong>
+          at once. A firm that already needs a workstation gets the AI capability alongside the
+          thing it was buying anyway. A firm that only wants AI is paying for a lot of silicon
+          it will never light up.</p>
 
-          <p><strong>Worth a phone call &mdash; the Macs Apple stopped selling.</strong> The
-          256&nbsp;GB and 512&nbsp;GB M3 Ultra Studios were withdrawn, not recalled. They are
-          still the largest unified-memory machines ever sold to the public, and they turn up
-          secondhand. If somebody offers you one at a sane price, it holds a
-          <strong>~683B</strong> model &mdash; four times anything in the table above. Buying
-          used, no warranty, from a stranger, is its own decision.</p>
+          <p><strong>What it can do.</strong> 96&nbsp;GB of GDDR7 at
+          <strong>1,792&nbsp;GB/s</strong> &mdash; six and a half times the Spark&apos;s
+          bandwidth with three quarters of its memory. Run this chapter&apos;s arithmetic and it
+          holds a <strong>128B</strong> model and writes at <strong>16 tokens a second</strong>,
+          against 2 on the Spark and 7 on a 96&nbsp;GB Mac Studio. That is the first number in
+          this book that is both large and comfortable to read.</p>
 
-          <p><strong>What is deliberately not here:</strong></p>
+          <div class="tw">
+            <table class="vs">
+              <thead><tr><th></th><th>For it</th><th>Against it</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Speed</strong></td>
+                    <td class="yes">1,792 GB/s. Nothing else here is within 2&times;</td>
+                    <td>&mdash;</td></tr>
+                <tr><td><strong>Capacity</strong></td>
+                    <td class="yes">96 GB is the largest on any single card</td>
+                    <td class="no">Still <strong>less than the Spark&apos;s 128</strong>. Bigger models do not fit</td></tr>
+                <tr><td><strong>Price</strong></td>
+                    <td>&mdash;</td>
+                    <td class="no"><strong>$13,250</strong>, up from $8,565 at launch in March 2025 &mdash; a 55% rise on the same memory shortage that took Apple&apos;s big configurations away</td></tr>
+                <tr><td><strong>What you get</strong></td>
+                    <td class="yes">A real workstation afterwards &mdash; render, simulate, edit. It earns its keep between AI jobs</td>
+                    <td class="no">It is a <strong>card, not a machine</strong>. Budget a PC around it, 600 W, and a case it physically fits</td></tr>
+                <tr><td><strong>Reliability</strong></td>
+                    <td class="yes">ECC memory, and MIG splits it into four isolated instances</td>
+                    <td>&mdash;</td></tr>
+                <tr><td><strong>Two of them</strong></td>
+                    <td>&mdash;</td>
+                    <td class="no">Do not plan on pooling their memory. Vendor pages claim a combined 192 GB; NVIDIA&apos;s own workstation sheet does not list the link. <strong>Budget for one card until somebody shows you two working</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="call warn">
+            <h3>The variant that actually fits a normal tower</h3>
+            <p>The <strong>Max&#8209;Q</strong> version carries the same 96&nbsp;GB at about
+            <strong>300&nbsp;W</strong> instead of 600, for roughly 20&ndash;30% less throughput.
+            For a small business that is usually the right one: it drops into an ordinary
+            workstation without a new power supply and a case rethink, and 20% off 16 tokens a
+            second is still six times what the Spark does.</p>
+          </div>
+
+          <p><strong>All in, call it $16&ndash;17k</strong> before it has done anything &mdash;
+          about three and a half Sparks. That is the honest comparison, and it is why this is a
+          section rather than a recommendation.</p>
+        </div>
+
+        <div class="block">
+          <h3>Spark vs Apple vs the 6000, side by side</h3>
+          <p>Three answers to the same question, and they are genuinely different answers rather
+          than better and worse ones. Prices are the machine as configured, not the cheapest way
+          in.</p>
+          <div class="tw">
+            <table class="vs">
+              <thead><tr><th></th><th>DGX Spark</th><th>Mac (M3 Ultra / M5 Max)</th><th>RTX PRO 6000</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Memory</strong></td><td class="yes">128 GB</td><td>96 GB desktop, 128 GB laptop</td><td>96 GB</td></tr>
+                <tr><td><strong>Biggest model</strong></td><td class="yes">~171B</td><td>~128B desktop, ~171B laptop</td><td>~128B</td></tr>
+                <tr><td><strong>Writing it</strong></td><td class="no">2 t/s</td><td>7 t/s desktop, 4 laptop</td><td class="yes"><strong>16 t/s</strong></td></tr>
+                <tr><td><strong>Reading a long prompt</strong></td><td class="yes">~1,700 t/s</td><td class="no">Its weakest half</td><td class="yes">Faster still</td></tr>
+                <tr><td><strong>Software</strong></td><td class="yes">CUDA, with the <code>sm_121</code> caveat</td><td class="no">MLX &mdash; good, and a smaller island</td><td class="yes">CUDA, the full unrestricted kind</td></tr>
+                <tr><td><strong>Unattended overnight</strong></td><td class="yes">Built for it</td><td class="no">A laptop throttles, and it leaves with someone</td><td class="yes">Built for it</td></tr>
+                <tr><td><strong>Second job</strong></td><td class="no">None. It is an appliance</td><td class="yes">A whole computer &mdash; office, video, design</td><td class="yes">A rendering and simulation workstation</td></tr>
+                <tr><td><strong>All in</strong></td><td class="yes">$4,699</td><td>$5,299&ndash;$7,000+</td><td class="no">$16&ndash;17k with a PC around it</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><strong>Read down the rows and the shape is clear.</strong> The Spark is the
+          cheapest way to hold a big model and read fast. The Mac is the one you can also do
+          your job on. The 6000 is the only one that is big and fast at once, and you pay
+          roughly three Sparks for the privilege.</p>
+          <div class="call">
+            <h3>If you were spending the money again</h3>
+            <ul>
+              <li><strong>Generation, batch work, anything overnight</strong> &mdash; the Spark,
+              and it is not a close call at the price.</li>
+              <li><strong>One machine that also has to be somebody&apos;s computer</strong>
+              &mdash; a Mac.</li>
+              <li><strong>A big model that has to answer while you sit there</strong> &mdash;
+              the 6000, and nothing else on this page will do it.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>What stacking two Sparks actually changes</h3>
+          <p>The Spark was built for this &mdash; the two ports on the back are
+          <strong>ConnectX&#8209;7</strong>, and NVIDIA supports joining exactly two boxes with a
+          single 200&nbsp;Gb/s cable costing about $100. So the question is not whether it works.
+          It is what you get.</p>
+          <div class="tw">
+            <table class="figs">
+              <thead><tr><th></th><th>One Spark</th><th>Two Sparks</th><th>Change</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Memory</strong></td><td>128 GB</td><td>256 GB</td><td class="yes">doubles</td></tr>
+                <tr><td><strong>Biggest dense model</strong></td><td>~171B</td><td>~341B</td><td class="yes">doubles</td></tr>
+                <tr><td><strong>Bandwidth</strong></td><td>273 GB/s</td><td>273 GB/s</td><td class="no">unchanged</td></tr>
+                <tr><td><strong>Writing that biggest model</strong></td><td>2 t/s</td><td>~1 t/s</td><td class="no">worse</td></tr>
+                <tr><td><strong>Reading a long prompt</strong></td><td>~1,700 t/s</td><td>faster</td><td class="yes">scales</td></tr>
+                <tr><td><strong>Several jobs at once</strong></td><td>75 t/s total</td><td>~120 t/s total</td><td class="yes">~1.6&times;</td></tr>
+                <tr><td><strong>Price</strong></td><td>$4,699</td><td>$9,398 + a cable</td><td class="no">doubles</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><strong>Memory adds. Speed does not.</strong> Two boxes hold twice as much and write
+          each word no faster, because the token still has to walk through the same 273&nbsp;GB/s
+          on its way out. A 341B dense model on two Sparks runs at about
+          <strong>1 token a second</strong> &mdash; you have bought the ability to open
+          something you cannot use.</p>
+          <div class="call warn">
+            <h3>Unless the model is a mixture-of-experts, and then it changes everything</h3>
+            <p>Go back to the mixture-of-experts table in the previous chapter. Those models read
+            only the <em>active</em> experts per token rather than all the weights, so the
+            arithmetic above does not apply to them. That is why owners measure two Sparks at
+            <strong>27&ndash;28 tokens a second on a 397B model</strong> &mdash; a number the
+            dense maths says is impossible. NVIDIA&apos;s own headline for the pair is Llama 3.1
+            <strong>405B</strong> at 4-bit, which fits because it leaves less working room than
+            this book&apos;s rule does.</p>
+            <p><strong>So the answer is: a second Spark buys you bigger, and buys you more jobs
+            at once. It does not buy you faster.</strong> If a chat model that does not feel slow
+            is what you are after, changing the model is free and changing the hardware is
+            $4,699.</p>
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>Can you partner a Spark with a 5090?</h3>
+          <p><strong>Not usefully, and the reason is worth understanding because it applies to
+          every &ldquo;just add a second machine&rdquo; idea.</strong></p>
+          <ol class="habits">
+            <li><span><b>You cannot put one inside a Spark.</b> It is a sealed box built around
+            one chip with the memory soldered to it. There is no slot. What comes out of the
+            back is USB-C, HDMI, 10 gigabit Ethernet and the two ConnectX ports &mdash; and none
+            of those is somewhere a graphics card goes.</span></li>
+            <li><span><b>So &ldquo;partnering&rdquo; means two computers on a network.</b> That
+            part genuinely works: llama.cpp has a mode for splitting one model across machines,
+            and so do the bigger serving frameworks.</span></li>
+            <li><span><b>Memory adds. Bandwidth does not.</b> Split across two machines, a token
+            walks through the Spark&apos;s share of the model, crosses the wire, then walks
+            through the 5090&apos;s. The time per word is the <em>sum</em>, so the pair is
+            slower than either machine alone on a model that already fit.</span></li>
+            <li><span><b>And the mismatch makes it worse.</b> A 5090 holding 32 of the combined
+            160&nbsp;GB finishes its fifth of the work instantly and then waits on the Spark. You
+            would own the fastest memory in this chapter and be running it at 273&nbsp;GB/s.</span></li>
+          </ol>
+          <p><strong>What a 5090 is actually good for beside a Spark is a second job.</strong>
+          On a model that fits in its 32&nbsp;GB it reads at <strong>8,519 tokens a second</strong>
+          and writes at <strong>205</strong> &mdash; against the Spark&apos;s 1,723 and 39 on a
+          bigger one. Images, video, and a small chat model that answers instantly. Two machines
+          doing two things beats two machines doing one thing badly.</p>
+          <p>The exception that proves it is two Sparks, above: NVIDIA built the ports for it,
+          validated it, sells the cable &mdash; and <em>even then</em> the honest answer is
+          bigger rather than faster. If joining two machines were a way to buy speed, the company
+          that makes both would have said so.</p>
+        </div>
+
+        <div class="block">
+          <h3>What is deliberately not here</h3>
+          <p>Two things worth a look that did not earn a section, and two that people ask about
+          and shouldn&apos;t.</p>
           <ul>
-            <li>An <strong>RTX 5090</strong>. Same 1,792&nbsp;GB/s, but 32&nbsp;GB &mdash; so
-            it runs a 43B model at a blistering 48 tokens a second and cannot open anything
-            larger. Wonderful for images, useless for a big model.</li>
-            <li><strong>A second Spark.</strong> The port on the back is for this, and owners
-            do it. It doubles memory, not bandwidth &mdash; so you get bigger, not faster, and
-            you get a networking project.</li>
+            <li><strong>The Macs Apple stopped selling.</strong> The 256&nbsp;GB and 512&nbsp;GB
+            M3&nbsp;Ultra Studios were withdrawn, not recalled &mdash; still the largest
+            unified-memory machines ever sold to the public, and they turn up secondhand. One at
+            a sane price holds a <strong>~683B</strong> model, four times anything in the table
+            above. Buying used, no warranty, from a stranger is its own decision.</li>
+            <li><strong>An RTX 5090 on its own.</strong> Same 1,792&nbsp;GB/s as the card above
+            for a fifth of the money, and only 32&nbsp;GB &mdash; so it runs a 43B model at a
+            blistering 48 tokens a second and cannot open anything larger. A superb image
+            machine and a poor big-model one.</li>
             <li><strong>Jetson Thor</strong> and the rest of the embedded line. Same company,
-            same CUDA, different job &mdash; those go in robots.</li>
-            <li><strong>Renting a cloud GPU.</strong> Cheaper per hour and instantly bigger, and
-            it is the right answer for a one-off. It is also the thing the top of this chapter
-            explains you would be choosing against.</li>
+            same CUDA, different job entirely &mdash; those go in robots and cameras.</li>
+            <li><strong>Renting a cloud GPU.</strong> Cheaper per hour, instantly bigger, and
+            the right answer for a one-off. It is also precisely the thing the previous chapter
+            explains you would be choosing against &mdash; the reasons to own the machine are
+            not about the hourly rate.</li>
           </ul>
         </div>
-        <div class="folio">
+<div class="folio">
           <a class="prev" href="#/6"><span class="dir">Previous</span><span class="ttl">VI &middot; Local AI vs. the cloud</span></a>
           <span class="pg">VII / XVI</span>
           <a class="next" href="#/8"><span class="dir">Next chapter</span><span class="ttl">VIII &middot; The Spark, end to end</span></a>
@@ -1863,6 +2105,9 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         <div class="block">
           <h3>Two Sparks</h3>
           <p>You can wire two of them together and run one model across both. It is a supported setup with an official name and a fast link between the boxes.</p>
+          <p><strong>The previous chapter works the numbers</strong> &mdash; what doubles, what
+          doesn&apos;t, and the one kind of model that changes the answer. The short version is
+          below; the table is there.</p>
           <div class="call warn">
             <h3>What it buys, and what it doesn&apos;t</h3>
             <p>Two Sparks buy you <strong>capacity, not speed</strong> &mdash; a model that would not fit in 128 GB fits in 256 GB. The tokens per second do not double. Before you buy a second box, re-read the mixture-of-experts table in Chapter VI: choosing a different <em>model shape</em> took the same single Spark from 5 tokens a second to 64. <strong>That is a free change and this is a purchase.</strong> Do the free one first.</p>

@@ -6294,3 +6294,65 @@ first six of thirteen, and the drop was at index 8. **Print what your extractor 
 Gates: `check_build.py` green **580 → 581**, negative-controlled against `origin/main`. New harness
 `h581_changelog.js` (25 assertions) runs the shipped module against the shipped array at eight
 `lastSeen` values. Book harness 325/325, `h562_aibook.js` 42/42.
+
+---
+
+### build 582 — the hardware chapter answers the whole question
+
+Seven asks in one message. 578 built the container; this fills it. **Eight new sections**, and the
+one rewrite that mattered most.
+
+| Ask | Section |
+|---|---|
+| *"Tech specs in its own section"* | **The spec sheet** — six machines, no conclusions drawn |
+| — | **The DGX Spark, since it is the one you own** — four pros, three cons |
+| *"a detailed section on apple as well"* | **Apple, in detail** — the line-up, MLX, then the withdrawals |
+| *"Make the 6000 its own section… pros and cons"* | **The RTX PRO 6000, which breaks the rule** |
+| *"the comparison section spark vs apple vs 6000"* | **Side by side** — one three-column table |
+| *"what if I stacked 2 sparks"* | **What stacking two Sparks actually changes** |
+| *"Can you partner a spark and a 5090"* | **Can you partner a Spark with a 5090?** |
+| *"any references to photo use only… re-analyze"* | VI's workload list, rewritten |
+
+**The photo rewrite was a real defect, not a tone change.** "What local does well" listed **five**
+items while two verdicts leaning on it said **six**. It is now **seven** — image generation, LoRA
+training, transcription, document search, reading paperwork, photo tagging, a private assistant —
+and photo work says of itself that it is *one line of seven, roughly its share of why the machine
+is worth owning*. Theo: *"that was a small part in buying a spark a very small part."*
+
+**Every computed figure is derived in the patch script and self-checked against a row the book
+already ships** before any of it is written:
+
+```python
+def tps(bw, B): return round(bw * 0.58 / (0.5 * B))
+CHECK = [(273,171,2), (819,128,7), (614,171,4), (546,48,13), (256,171,2)]
+```
+
+so RTX PRO 6000 = 96 GB → 128B at **16 t/s**, RTX 5090 = 32 GB → 43B at **48 t/s**, two Sparks =
+256 GB → 341B at **1 t/s**. If the method ever drifts the script aborts before writing.
+
+**The two stacking answers, which are the same answer twice.** Memory adds; bandwidth does not. Two
+Sparks double capacity and make the biggest model *slower* — unless it is mixture-of-experts, which
+is why owners measure 27–28 t/s on a 397B model that the dense maths calls impossible. A Spark and
+a 5090 cannot be joined at all in the way people mean: **the Spark is sealed and has no slot**, so
+"partnering" means two computers on a network, and a token then walks through both.
+
+**Chapter VIII already had a Two Sparks section** and it agreed with the new one — same claim, same
+reasoning. It now points at VII's numbers rather than arguing the case independently. *Grep before
+you write: the prime doctrine, earned again.*
+
+⚠️ **Four of my own assertions were wrong and every one stopped a bad write.** `RTX PRO 6000`
+appears 4 times, not 5 (the three-way table header omits the model word). The new sections add
+**10** headings, not 8 — four of them carry a callout with its own `h3`. A whole-file check on
+`Spark vs Mac Studio` fails on a *source-link title* that must not be renamed. And
+`orig.index('data-ch="8"')` finds the **spine TOC entry**, not the section, so the blast-radius
+check compared the file against itself from the wrong offset.
+
+⚠️ **And two harness patterns were wrong for the same reason twice.** `textContent` hands back
+**decoded** entities, so `200&nbsp;Gb/s` is `200 Gb/s` and `Max&#8209;Q` is `Max‑Q`. A
+pattern written with an ordinary space or hyphen matches neither. Both failed against correct
+prose. The block now normalises before matching.
+
+Gates: `check_build.py` green 581 → 582, negative-controlled. Book harness **345** (was 325), and
+**25** of them fail against the 578 book — each naming exactly what 582 added. `h562_aibook.js`
+42/42, `h581_changelog.js` 25/25. Web ↔ markdown parity 33/33. Screenshots of all six new sections
+at 390 px and 1280 px, light and dark.

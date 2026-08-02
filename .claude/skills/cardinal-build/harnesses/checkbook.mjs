@@ -643,7 +643,8 @@ ck('VII: the CUDA catch is named specifically',
    the AMD assertions re-pointed so the two sections can't drift apart. */
 ck('VII: the Mac section leads with what a Mac is better at', await page.evaluate(() => {
   const ch = document.querySelector('.chapter.on');
-  const h = [...ch.querySelectorAll('h3')].find(x => /Spark vs Mac Studio/.test(x.textContent));
+  const h = [...ch.querySelectorAll('h3')].find(x => /^Apple, in detail/.test(x.textContent));
+  if (!h) return 'no Apple section';
   const blk = h.parentElement;
   const run = blk.querySelector('.habits');
   const tbl = blk.querySelector('table');
@@ -651,7 +652,7 @@ ck('VII: the Mac section leads with what a Mac is better at', await page.evaluat
   return (run.compareDocumentPosition(tbl) & Node.DOCUMENT_POSITION_FOLLOWING) ? 'before' : 'after';
 }), 'before');
 ck('VII: four Apple pros, each named', await page.evaluate(() => {
-  const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /Spark vs Mac Studio/.test(x.textContent));
+  const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /^Apple, in detail/.test(x.textContent));
   const run = h && h.parentElement.querySelector('.habits');
   return run ? run.querySelectorAll(':scope > li').length : 0;
 }), 4);
@@ -664,7 +665,7 @@ ck('VII: the Mac write advantage reproduces from the table', await page.evaluate
   return (/3\s*×/.test(t) && /2\.2\s*×/.test(t)) ? 'both ends' : 'not stated at both ends';
 }), 'both ends');
 ck('VII: and the Mac pros are not only speed', await page.evaluate(() => {
-  const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /Spark vs Mac Studio/.test(x.textContent));
+  const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /^Apple, in detail/.test(x.textContent));
   const run = h && h.parentElement.querySelector('.habits');
   if (!run) return 'no pros run';
   const t = run.textContent;
@@ -805,10 +806,10 @@ ck('VII: both prefill figures come from the same model', await page.evaluate(() 
 ck('VII: the other-hardware block exists and is honest about being a card',
    await page.evaluate(() => {
      const h = [...document.querySelectorAll('.chapter.on h3')]
-       .find(x => /Anything else worth a look/.test(x.textContent));
+       .find(x => /RTX PRO 6000 Blackwell, which breaks the rule/.test(x.textContent));
      if (!h) return 'missing';
      const t = h.parentElement.textContent;
-     return /A card, not a machine/.test(t) ? 'true' : 'does not say it is a card';
+     return /card, not a machine/i.test(t) ? 'true' : 'does not say it is a card';
    }), 'true');
 ck('VII: the RTX price includes the machine you have to put it in',
    await page.evaluate(() => {
@@ -823,7 +824,7 @@ ck('VII: the trade is called a price trade, not a physical one',
 ck('VII: the withdrawn Mac capacities appear only as a secondhand note',
    await page.evaluate(() => {
      const ch = document.querySelector('.chapter.on');
-     const h = [...ch.querySelectorAll('h3')].find(x => /Anything else worth a look/.test(x.textContent));
+     const h = [...ch.querySelectorAll('h3')].find(x => /deliberately not here/.test(x.textContent));
      const inBlock = !!h && /512\s*GB/.test(h.parentElement.textContent);
      /* and nowhere in the orderable ladder, which is the 574 finding.
         Scoped to the MEMORY column: a whole-table regex for /512|256/ matched
@@ -836,7 +837,7 @@ ck('VII: the withdrawn Mac capacities appear only as a secondhand note',
    }), 'true');
 ck('VII: what was left out is listed, with a reason each', await page.evaluate(() => {
   const h = [...document.querySelectorAll('.chapter.on h3')]
-    .find(x => /Anything else worth a look/.test(x.textContent));
+    .find(x => /deliberately not here/.test(x.textContent));
   if (!h) return 'no such block';
   const li = [...h.parentElement.querySelectorAll('ul > li')];
   return li.length >= 4 && li.every(x => x.textContent.trim().length > 60);
@@ -844,7 +845,99 @@ ck('VII: what was left out is listed, with a reason each', await page.evaluate((
 /* the second-Spark line is the one most likely to be written wrong: two boxes
    double memory, they do not double bandwidth */
 ck('VII: a second Spark is described as bigger, not faster', await page.evaluate(() =>
-  /doubles memory, not bandwidth/i.test(document.querySelector('.chapter.on').textContent)), 'true');
+  /Memory adds\.\s*Speed does not/i.test(document.querySelector('.chapter.on').textContent)), 'true');
+
+/* ── the sections added at 582 ────────────────────────────────────────────
+   Theo asked for seven things in one message. Each gets an assertion on the
+   claim that would be wrong if the section were written carelessly, not on the
+   fact that the section exists. */
+{
+  /* Normalise before matching. textContent hands back DECODED entities, so
+     `200&nbsp;Gb/s` is "200\u00a0Gb/s" and `Max&#8209;Q` is "Max\u2011Q" — a
+     pattern written with an ordinary space or hyphen finds neither. Both of
+     these failed against correct prose before the normalisation went in. */
+  const t = (await page.$eval('.chapter.on', n => n.textContent))
+    .replace(/\u00a0/g, ' ').replace(/[\u2010\u2011]/g, '-');
+  const has = re => re.test(t);
+
+  /* the spec sheet states figures and draws no conclusion — the point of
+     separating it. If a verdict word turns up in it, it stopped being specs. */
+  ck('VII: the spec sheet covers all six machines', await page.evaluate(() => {
+    const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /^The spec sheet/.test(x.textContent));
+    if (!h) return 'missing';
+    const tb = h.parentElement.querySelector('table.figs');
+    return tb ? tb.tBodies[0].rows.length : 'no table';
+  }), 6);
+  ck('VII: and names the memory TYPE, which is the whole unified-vs-card point',
+     has(/unified/) && has(/GDDR7/) ? 'true' : 'false', 'true');
+
+  /* the Spark gets the same pros-and-cons treatment as the machines Cardinal
+     does NOT own — 575 and 577 were both about that even-handedness */
+  ck('VII: the Spark section states what it is bad at, not only good at', await page.evaluate(() => {
+    const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /since it is the one you own/.test(x.textContent));
+    if (!h) return 'missing';
+    const b = h.parentElement.textContent;
+    return /writes slowly/i.test(b) && /oversold/i.test(b) && /Linux only/i.test(b) ? 'true' : 'no cons';
+  }), 'true');
+
+  /* the three-way table is the comparison he asked for: it must be three
+     machines wide, not two with a note */
+  ck('VII: the head-to-head is genuinely three-way', await page.evaluate(() => {
+    const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /side by side/.test(x.textContent));
+    if (!h) return 'missing';
+    const th = h.parentElement.querySelector('table.vs thead tr');
+    return th ? th.children.length : 'no table';
+  }), 4);   /* label column + three machines */
+
+  /* stacking. The number that decides it is the DENSE one — two Sparks make a
+     bigger model openable and slower to read, and the honest version says so */
+  ck('VII: two Sparks is bigger, not faster', has(/Memory adds\.\s*Speed does not/) ? 'true' : 'false', 'true');
+  ck('VII: and the mixture-of-experts exception is not left out',
+     has(/mixture-of-experts/i) && has(/27–28/) ? 'true' : 'false', 'true');
+  ck('VII: the two-Spark link is named, not hand-waved',
+     has(/ConnectX/) && has(/200 Gb\/s/) ? 'true' : 'false', 'true');
+
+  /* the 5090 question: the answer is no, and the reason must be the physical
+     one first — there is no slot — not just a performance argument */
+  ck('VII: the 5090 answer starts with the physical fact',
+     has(/There is no slot/i) ? 'true' : 'false', 'true');
+  ck('VII: and explains that bandwidth does not add',
+     has(/Memory adds\.\s*Bandwidth does not/) ? 'true' : 'false', 'true');
+  ck('VII: with the 5090 measured, not asserted',
+     has(/8,519/) && has(/205/) ? 'true' : 'false', 'true');
+
+  /* Apple is a section like the others now, and names its own framework */
+  ck('VII: Apple gets the same per-machine treatment', await page.evaluate(() => {
+    const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /^Apple, in detail/.test(x.textContent));
+    if (!h) return 'missing';
+    const b = h.parentElement.textContent;
+    return /MLX/.test(b) && /unified/.test(b) && /M5.Max/.test(b) ? 'true' : 'thin';
+  }), 'true');
+
+  /* the RTX PRO 6000's cons must include the two that actually decide it */
+  ck('VII: the 6000 admits it holds LESS than the Spark', has(/less than the Spark/i) ? 'true' : 'false', 'true');
+  ck('VII: and that two of them may not pool memory', has(/until somebody shows you two working/) ? 'true' : 'false', 'true');
+  ck('VII: the Max-Q variant is named, since it is the one that fits a tower',
+     has(/Max-Q/) && has(/300 W/) ? 'true' : 'false', 'true');
+}
+{
+  /* and the workload list VI's verdicts rest on — Theo: "that was a small part
+     in buying a spark a very small part". It listed five while two verdicts
+     called it six; photos are now one line of seven and say so. */
+  await go(CH.local);
+  const li = await page.$$eval('.chapter.on .habits > li', n => n.map(x => x.textContent));
+  ck('VI: the workload list has seven entries', li.length, 7);
+  ck('VI: and photo work is one of them, not the argument',
+     li.filter(x => /photo/i.test(x)).length, 1);
+  ck('VI: photos are not first', /photo/i.test(li[0]) ? 'first' : 'not first', 'not first');
+  ck('VI: the count in the text matches the list', await page.evaluate(() =>
+     /seven things/.test(document.querySelector('.chapter.on').textContent)
+     && !/six things/.test(document.body.textContent) ? 'true' : 'false'), 'true');
+  ck('VI: training on your own material is on the list',
+     li.some(x => /LoRA/.test(x)) ? 'true' : 'false', 'true');
+  ck('VI: and a private assistant, which is the never-paste chapter inverted',
+     li.some(x => /private assistant/i.test(x)) ? 'true' : 'false', 'true');
+}
 
 /* ── chapter X ──────────────────────────────────────────────────────────── */
 await go(CH.stacks);
