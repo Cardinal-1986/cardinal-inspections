@@ -399,10 +399,49 @@ const SHOTS = [
       geo && geo.gripShown);
     await shot('05-desktop-the-walk.png');
 
+    /* ── Chalk (585) — the drawing gesture, which jsdom cannot make ──────── */
+    await page.click('[data-act="rmark"]');
+    await page.waitForTimeout(200);
+    const rev = await page.locator('[data-rev]').boundingBox();
+    await page.mouse.move(rev.x + rev.width * 0.60, rev.y + rev.height * 0.55);
+    await page.mouse.down();
+    await page.mouse.move(rev.x + rev.width * 0.85, rev.y + rev.height * 0.80, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+    ok('drawing opens the classify sheet', await page.evaluate(() =>
+      !!document.querySelector('#cr-show .cr-sh-clsheet')));
+    await page.click('[data-def="nail_pop"]');
+    await page.waitForTimeout(150);
+    await page.click('[data-dsev="warn"]');
+    await page.waitForTimeout(150);
+    await page.click('[data-act="dkeep"]');
+    await page.waitForTimeout(300);
+    const chalk = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      const boxes = [...el.querySelectorAll('[data-box]')];
+      const k = boxes[boxes.length - 1];
+      const stage = el.querySelector('[data-rev]');
+      const S = stage.getBoundingClientRect(), R = k.getBoundingClientRect();
+      return { n: boxes.length,
+        fx: (R.left - S.left) / S.width, fw: R.width / S.width,
+        colour: getComputedStyle(k).borderTopColor,
+        rows: el.querySelectorAll('[data-fnd]').length,
+        label: k.textContent.trim() };
+    });
+    ok('the kept mark is a third box', chalk.n === 3 && chalk.rows === 3, chalk.n + '/' + chalk.rows);
+    ok('it landed where it was drawn', Math.abs(chalk.fx - 0.60) < 0.02 && Math.abs(chalk.fw - 0.25) < 0.02,
+      chalk.fx + ' / ' + chalk.fw);
+    ok('it adopted the picked severity colour', /232, 163, 61/.test(chalk.colour), chalk.colour);
+    ok('and the picked defect label', /Nail pop/.test(chalk.label), chalk.label);
+    await shot('07-desktop-chalk.png');
+
     /* ── Spotlight (584) ──────────────────────────────────────────────────
        jsdom proves the markup; only an engine can prove the veil's radial
        gradient RESOLVES (the 448-449 transparent-surface class) and that the
-       ring lands at its fractions of the real layer. */
+       ring lands at its fractions of the real layer.
+       Leaving the review discards the unsaved chalk mark — the 580 guard
+       asks first, and Playwright must answer it. */
+    page.once('dialog', d => d.accept());
     await page.click('[data-act="rback"]').catch(() => {});
     await page.waitForTimeout(300);
     await page.click('[data-act="present"]');

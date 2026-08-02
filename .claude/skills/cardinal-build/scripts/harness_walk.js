@@ -497,8 +497,76 @@ const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
     // Nudging a box is a drag, not a click — confirm only that stop() marks it
     // dirty, since jsdom does no layout and the gesture itself is Chromium's
     // job (render_showcase.js).
+    /* 585 rewrote stop() to be draw-aware; the move/resize branch must still
+       end with the dirty mark. Anchored on the branch, not the whole shape. */
     ok('a finished drag marks the review dirty',
-      /function stop\(\)\{ if\(drag\)\{ drag = null; review\.dirty = true; repaint\(\); \}/.test(MODULE_JS));
+      /drag = null; review\.dirty = true; repaint\(\);/.test(MODULE_JS));
+  }
+
+  /* ── build 585 · Chalk — hand-drawn marks ──────────────────────────────── */
+  console.log('\n── hand-drawn marks ──');
+  {
+    // The drawing gesture needs layout (Chromium's job). What jsdom CAN prove
+    // is the contracts: provenance survives a save, Ask again keeps human
+    // marks, and the classify sheet drives the working set correctly.
+    const HUMAN_SHOT = {
+      id: 'ssss1111-0000-0000-0000-00000000000h', walk_id: WALKS[0].id, sort_order: 0,
+      path: 'walks/aaaa1111-2222-3333-4444-555555555555/h1.jpg', source: 'phone',
+      findings: [
+        { defect: 'other', severity: 'warn', label: 'Soft decking, hand-marked',
+          box: { x: 0.5, y: 0.5, w: 0.2, h: 0.2 }, confidence: null, edited: true, source: 'human' },
+        { defect: 'hail_impact', severity: 'crit', label: 'AI mark',
+          box: { x: 0.1, y: 0.1, w: 0.1, h: 0.1 }, confidence: 0.8, edited: false, source: 'ai' }
+      ],
+      reviewed_at: '2026-08-02T12:00:00Z', reviewed_by: 'theo@cardinalrenovations.net'
+    };
+    const h = await boot({ shots: [HUMAN_SHOT] });
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[0].click(); await settle(120);
+    const el = h.d.getElementById('cr-show');
+    ok('+ Mark damage button present', !!el.querySelector('[data-act="rmark"]'));
+    ok('a hand-drawn mark reopens like any other',
+      el.querySelectorAll('[data-fnd]').length === 2);
+
+    // Ask again: the AI's mark is replaced by the fresh proposals, the
+    // hand-drawn one SURVIVES — the model has no standing to erase it.
+    el.querySelector('[data-act="rdetect"]').click(); await settle(200);
+    const rows = [...el.querySelectorAll('[data-fnd]')].map(x => x.textContent);
+    ok('Ask again kept the hand-drawn mark',
+      rows.some(t => /Soft decking, hand-marked/.test(t)), JSON.stringify(rows.map(t => t.slice(0, 30))));
+    ok('and replaced the AI marks with fresh proposals',
+      !rows.some(t => /^AI mark/.test(t)) && rows.length === 1 + DETECT_REPLY.findings.length,
+      rows.length);
+
+    // Save: provenance must survive the field-by-field rebuild.
+    el.querySelector('[data-act="rsave"]').click(); await settle(120);
+    const up = h.state.updates.filter(u => u.table === 'walk_shots').pop();
+    const saved = up && up.row.findings;
+    ok('saved findings carry source', saved && saved.every(f => f.source === 'ai' || f.source === 'human'),
+      saved && JSON.stringify(saved.map(f => f.source)));
+    ok('the hand-drawn mark saved as human',
+      saved && saved.filter(f => f.source === 'human').length === 1);
+    ok('a hand-drawn mark has no fabricated confidence',
+      saved && saved.find(f => f.source === 'human').confidence === null);
+  }
+  {
+    // Arming toggles; the confirm guard covers the new decision the moment
+    // a mark is kept (dirty), same as every other decision.
+    const h = await boot({ confirmReturn: false });
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[1].click(); await settle(120);
+    const el = h.d.getElementById('cr-show');
+    el.querySelector('[data-act="rmark"]').click(); await settle();
+    ok('arming sets the crosshair state',
+      el.querySelector('[data-rev]').classList.contains('arming'));
+    el.querySelector('[data-act="rmark"]').click(); await settle();
+    ok('tapping again disarms', !el.querySelector('[data-rev]').classList.contains('arming'));
+    // Drive the sheet directly (the gesture itself is Chromium's to prove):
+    ok('classify sheet is absent until a box is drawn', !el.querySelector('.cr-sh-clsheet'));
   }
 
   /* ── build 584 · Spotlight — present mode ──────────────────────────────── */

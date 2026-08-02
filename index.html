@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 584 &#8212; Spotlight — present a walk full screen, one finding at a time, lights off</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 585 &#8212; Chalk — draw your own damage marks when the AI misses one</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:585, d:'2026-08-02', t:'Chalk \u2014 draw your own marks', s:'The Walk\u2019s review screen gains + Mark damage: drag a box on the photograph, say what it is and how serious, and it joins the marks exactly like one you accepted from the AI. Asking the AI again now keeps your hand-drawn marks \u2014 it only refreshes its own. Works even when the AI is down, and every mark you draw is recorded as yours, which is exactly what training your own detector later needs.' },
 { b:584, d:'2026-08-02', t:'Spotlight \u2014 present mode for The Walk', s:'A Present button appears on any walk with a reviewed photo. Tap it and the screen goes true black: one finding at a time, the damage lit and everything else dark, with the marks you kept \u2014 nothing the AI proposed that you rejected. Tap the right side for the next finding, the left to go back, past the last one to finish. The address never appears on screen. Works for sales too, not just admins \u2014 presenting is the point.' },
 { build:582, note:'\uD83D\uDD29 The manual\u2019s hardware chapter now answers the whole question. A plain spec sheet before any argument, the DGX Spark and Apple each written up properly, the RTX PRO 6000 with its own pros and cons, a three-way Spark-vs-Mac-vs-6000 table, and both stacking questions \u2014 what two Sparks really change, and whether you can pair one with a 5090. And what local AI is good for is now seven jobs, with photographs as one of them rather than the argument.' },
 { build:581, note:'\uD83D\uDD27 What\u2019s New was showing five blank cards reading \u201cBuild undefined\u201d, and the seven newest builds never appeared at all \u2014 two ways of writing an entry had got mixed and the box only understood one of them. It reads both now. Also: the AI Field Manual is reordered into sixteen chapters in four groups, and the hardware has a chapter of its own.' },
@@ -55713,6 +55714,34 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   color:var(--sh-mut,#98A29C);font-size:14px;line-height:1;font-family:inherit}
 .cr-sh-fnd .x:hover{color:var(--sh-bad,#E5484D)}
 
+/* ── Chalk — draw your own marks (585) ─────────────────────────────────────
+   The drafting state is the only new visual: dashed chalk-white on the
+   stage (16.9:1, computed), adopting its severity colour on classify. */
+.cr-sh-rev.arming{cursor:crosshair}
+.cr-sh-btn.arming{border-style:dashed;border-color:var(--sh-ink,#F2F4F2);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-draft{position:absolute;border:2.5px dashed var(--sh-ink,#F2F4F2);border-radius:6px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.45);z-index:5;pointer-events:none}
+.cr-sh-clsheet{margin-top:10px;background:var(--sh-card,#151817);
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:12px;padding:13px 15px}
+.cr-sh-clsheet label{display:block;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--sh-mut,#98A29C);margin-bottom:8px}
+.cr-sh-defchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
+.cr-sh-defchips button{font:700 11.5px inherit;font-family:inherit;color:var(--sh-ink,#F2F4F2);
+  border:1px solid var(--sh-line,rgba(148,157,165,.35));border-radius:999px;padding:7px 12px;
+  background:transparent;cursor:pointer}
+.cr-sh-defchips button.on{border-color:var(--sh-bad,#E5484D);background:rgba(229,72,77,.13)}
+.cr-sh-sevseg{display:inline-flex;border:1px solid var(--sh-line,rgba(148,157,165,.3));
+  border-radius:9px;overflow:hidden;vertical-align:middle}
+.cr-sh-sevseg button{font:700 11.5px inherit;font-family:inherit;padding:8px 14px;
+  color:var(--sh-mut,#98A29C);background:transparent;border:0;cursor:pointer}
+.cr-sh-sevseg button.on.crit{background:var(--sh-bad,#E5484D);color:#FFF3F3}
+.cr-sh-sevseg button.on.warn{background:var(--sh-warn,#E8A33D);color:#14100C}
+.cr-sh-sevseg button.on.ok{background:var(--sh-ok,#46A758);color:#F2FFF4}
+.cr-sh-clsheet .keep{margin-left:10px;font:800 11.5px inherit;font-family:inherit;color:#FFF3F3;
+  background:var(--sh-acc,#C8202E);border:0;border-radius:9px;padding:9px 15px;cursor:pointer}
+.cr-sh-clsheet .drop{margin-left:6px;font:700 11.5px inherit;font-family:inherit;
+  color:var(--sh-mut,#98A29C);background:transparent;border:0;cursor:pointer;padding:9px 6px}
+
 /* the job-photo picker */
 .cr-sh-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;
   margin-top:10px;max-height:44vh;overflow-y:auto;overscroll-behavior:contain}
@@ -56623,17 +56652,24 @@ function renderReview(){
       '<span class="gr" data-grip="' + i + '"></span>' +
     '</div>';
   }).join('');
+  if(r.draft && r.draft.box){
+    var db = r.draft.box;
+    boxes += '<div class="cr-sh-draft" style="left:' + pc(db.x) + ';top:' + pc(db.y) +
+      ';width:' + pc(db.w) + ';height:' + pc(db.h) + '"></div>';
+  }
 
   return '<div class="cr-sh-rule">Checking a photograph</div>' +
     '<div class="cr-sh-bar">' +
       '<button class="cr-sh-btn ghost" data-act="rback" type="button">← Back</button>' +
       '<button class="cr-sh-btn ghost" data-act="rdetect" type="button">' +
         (r.list.length ? 'Ask again' : 'Ask the AI') + '</button>' +
+      '<button class="cr-sh-btn ghost' + (r.arming ? ' arming' : '') + '" data-act="rmark" type="button">+ Mark damage</button>' +
       '<button class="cr-sh-btn" data-act="rsave" type="button">Save what I accepted</button>' +
     '</div>' +
-    '<div class="cr-sh-rev" data-rev>' +
+    '<div class="cr-sh-rev' + (r.arming ? ' arming' : '') + '" data-rev>' +
       '<img alt="" src="' + esc(img) + '">' + boxes +
     '</div>' +
+    (r.draft ? renderClassify() : '') +
     (r.note ? '<p class="cr-sh-note' + (r.noteKind ? ' ' + r.noteKind : '') + '">' +
               esc(r.note) + '</p>' : '') +
     (r.list.length
@@ -56644,7 +56680,7 @@ function renderReview(){
             '<div class="m"><b>' + esc(f.label || defLabel(f.defect)) + '</b>' +
               '<p>' + esc(defLabel(f.defect)) + (f.note ? ' — ' + esc(f.note) : '') +
               (f.confidence != null ? ' · ' + Math.round(f.confidence * 100) + '% sure' : '') +
-              (f.edited ? ' · moved by hand' : '') + '</p>' +
+              (f.source === 'human' ? ' · drawn by hand' : (f.edited ? ' · moved by hand' : '')) + '</p>' +
               '<select data-sev="' + i + '">' +
                 WALK_SEV.map(function(s){
                   return '<option value="' + s + '"' + (f.severity === s ? ' selected' : '') +
@@ -56655,8 +56691,8 @@ function renderReview(){
             '<button class="x" data-drop="' + i + '" type="button" aria-label="Reject">✕</button>' +
           '</div>';
         }).join('')
-      : '<p class="cr-sh-note">Nothing marked yet. Ask the AI, then keep the marks that are ' +
-        'real and drag them onto the damage if they are close but not right.</p>');
+      : '<p class="cr-sh-note">Nothing marked yet. Ask the AI, or press + Mark damage and ' +
+        'draw the box yourself \u2014 then keep what is real.</p>');
 }
 function pc(v){ return (Math.max(0, Math.min(1, +v || 0)) * 100).toFixed(3) + '%'; }
 
@@ -56723,13 +56759,14 @@ async function runDetect(){
   try{
     var blob = await shotBlob(r.shot.path);
     var out  = await askDetect(blob, curWalk ? (curWalk.trade || '') : '');
-    /* Proposals REPLACE the working set rather than appending: asking twice
-       should not silently double every mark. Anything already accepted and
-       saved is still on the row until Save overwrites it. */
-    r.list = (out.findings || []).map(function(f){
+    /* Proposals REPLACE the AI's marks rather than appending — asking twice
+       must not double every mark — but HAND-DRAWN marks survive: they are a
+       person's decisions, and the model has no standing to erase them. */
+    var mine = r.list.filter(function(f){ return f.source === 'human'; });
+    r.list = mine.concat((out.findings || []).map(function(f){
       return { defect:f.defect, severity:f.severity, label:f.label, note:f.note,
-               box:f.box, confidence:(f.confidence == null ? null : f.confidence), edited:false };
-    });
+               box:f.box, confidence:(f.confidence == null ? null : f.confidence), edited:false, source:'ai' };
+    }));
     r.sel = r.list.length ? 0 : -1;
 
     var bits = [];
@@ -56766,7 +56803,7 @@ async function saveReview(){
        schema comment is the contract: anything in findings has been seen. */
     var keep = r.list.map(function(f){
       return { defect:f.defect, severity:f.severity, label:f.label, note:f.note,
-               box:f.box, confidence:f.confidence, edited:!!f.edited };
+               box:f.box, confidence:f.confidence, edited:!!f.edited, source:f.source || 'ai' };
     });
     var up = await cl.from('walk_shots').update({
       findings   : keep,
@@ -56788,6 +56825,54 @@ async function saveReview(){
   repaint();
 }
 
+/* ── Chalk (585): classify a hand-drawn box ──────────────────────────────── */
+function renderClassify(){
+  var d = review.draft;
+  return '<div class="cr-sh-clsheet">' +
+    '<label>What is it?</label>' +
+    '<div class="cr-sh-defchips">' +
+      Object.keys(DEF_LABEL).map(function(k){
+        return '<button data-def="' + k + '"' + (d.defect === k ? ' class="on"' : '') +
+               ' type="button">' + esc(DEF_LABEL[k]) + '</button>';
+      }).join('') +
+    '</div>' +
+    '<span class="cr-sh-sevseg">' +
+      WALK_SEV.map(function(sv){
+        return '<button data-dsev="' + sv + '" class="' + (d.severity === sv ? 'on ' + sv : '') +
+               '" type="button">' + SEV_LABEL[sv] + '</button>';
+      }).join('') +
+    '</span>' +
+    '<button class="keep" data-act="dkeep" type="button">Keep this mark</button>' +
+    '<button class="drop" data-act="ddrop" type="button">Discard</button>' +
+  '</div>';
+}
+function wireClassify(){
+  if(!review || !review.draft) return;
+  el.querySelectorAll('[data-def]').forEach(function(b){
+    b.onclick = function(){ review.draft.defect = b.dataset.def; repaint(); };
+  });
+  el.querySelectorAll('[data-dsev]').forEach(function(b){
+    b.onclick = function(){ review.draft.severity = b.dataset.dsev; repaint(); };
+  });
+  el.querySelectorAll('[data-act="dkeep"]').forEach(function(b){
+    b.onclick = function(){
+      var d = review.draft;
+      /* A hand-drawn mark: no confidence to fabricate, provenance recorded.
+         It joins the working set exactly like an accepted AI mark — the
+         579 contract (findings = what a person decided) already covers it. */
+      review.list.push({ defect:d.defect, severity:d.severity,
+        label:DEF_LABEL[d.defect] || d.defect, note:'', box:d.box,
+        confidence:null, edited:true, source:'human' });
+      review.sel = review.list.length - 1;
+      review.draft = null; review.arming = false; review.dirty = true;
+      repaint();
+    };
+  });
+  el.querySelectorAll('[data-act="ddrop"]').forEach(function(b){
+    b.onclick = function(){ review.draft = null; repaint(); };
+  });
+}
+
 /* Drag to move, corner to resize. Same pointer idiom as wireSlider() — capture
    on pointerdown, convert against getBoundingClientRect, clamp exactly the way
    cleanFindings() clamps server-side so a box can never be saved off-frame. */
@@ -56804,6 +56889,16 @@ function wireBoxes(){
   stage.addEventListener('pointerdown', function(e){
     var grip = e.target.closest ? e.target.closest('[data-grip]') : null;
     var boxEl = e.target.closest ? e.target.closest('[data-box]') : null;
+    /* Armed and not on an existing box: start a chalk draft instead of a
+       drag. The draft lives on `review` so it survives repaints. */
+    if(review.arming && !boxEl){
+      var p0 = frac(e);
+      if(!p0) return;
+      e.preventDefault();
+      try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+      drag = { mode:'draw', from:p0 };
+      return;
+    }
     if(!boxEl) return;
     var i = parseInt((grip || boxEl).dataset[grip ? 'grip' : 'box'], 10);
     var f = review.list[i];
@@ -56831,6 +56926,21 @@ function wireBoxes(){
   stage.addEventListener('pointermove', function(e){
     if(!drag) return;
     var p = frac(e); if(!p) return;
+    if(drag.mode === 'draw'){
+      var bx = { x:Math.min(drag.from.x, p.x), y:Math.min(drag.from.y, p.y),
+                 w:Math.abs(p.x - drag.from.x), h:Math.abs(p.y - drag.from.y) };
+      bx.x = clamp01(bx.x, bx.w); bx.y = clamp01(bx.y, bx.h);
+      drag.box = bx;
+      var live = el.querySelector('.cr-sh-draft');
+      if(!live){
+        live = document.createElement('div');
+        live.className = 'cr-sh-draft';
+        stage.appendChild(live);
+      }
+      live.style.left = pc(bx.x); live.style.top = pc(bx.y);
+      live.style.width = pc(bx.w); live.style.height = pc(bx.h);
+      return;
+    }
     var f = review.list[drag.i]; if(!f) return;
     var dx = p.x - drag.from.x, dy = p.y - drag.from.y, b = drag.box, n;
     if(drag.mode === 'move'){
@@ -56847,7 +56957,20 @@ function wireBoxes(){
       live.style.width = pc(n.w); live.style.height = pc(n.h);
     }
   });
-  function stop(){ if(drag){ drag = null; review.dirty = true; repaint(); } }
+  function stop(){
+    if(!drag) return;
+    if(drag.mode === 'draw'){
+      /* A dot is not a location — same floor cleanFindings() enforces
+         server-side. Too small: quietly drop the draft. */
+      if(drag.box && drag.box.w > 0.02 && drag.box.h > 0.02){
+        review.draft = { box:drag.box, defect:'hail_impact', severity:'crit' };
+      }
+      drag = null;
+      repaint();
+      return;
+    }
+    drag = null; review.dirty = true; repaint();
+  }
   stage.addEventListener('pointerup', stop);
   stage.addEventListener('pointercancel', stop);
 }
@@ -57193,9 +57316,13 @@ function wireWalk(){
       review = null; repaint();
     };
   });
+  el.querySelectorAll('[data-act="rmark"]').forEach(function(b){
+    b.onclick = function(){ review.arming = !review.arming; review.draft = null; repaint(); };
+  });
+  wireClassify();
   el.querySelectorAll('[data-act="rdetect"]').forEach(function(b){
     b.onclick = function(){
-      if(review.dirty && !window.confirm('Asking again replaces every mark below — ' +
+      if(review.dirty && !window.confirm('Asking again replaces the AI\u2019s marks — your hand-drawn marks stay — ' +
         'discard the changes you have not saved?')) return;
       runDetect();
     };
