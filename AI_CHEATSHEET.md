@@ -472,10 +472,20 @@ Owners running a 397B model measured the Mac at 30–40 tokens a second against 
 > Spark, more than twice the bandwidth. Anyone who tells you the Spark simply wins is not
 > looking at the current line-up.
 >
-> It loses on *your* job, for two specific reasons. Part 8's work is 60,485 photographs with a
-> short prompt each — that is reading and throughput, the half the Spark wins. And it runs
-> **overnight, unattended**: a laptop throttles under hours of sustained load, and it is a
-> laptop. A box that sits on a shelf and never stops is the right shape for that work.
+> It loses on *the whole job*, not one task. Look back at what this part says local is actually
+> good for — six things, and **image generation is first**: the Library illustrations, iterated
+> free, with a LoRA holding one house style. Then transcription, search over your own documents,
+> OCR off a scope, and bulk photo work. That is a **generation and batch machine**.
+>
+> Three reasons the Mac is the wrong shape for that:
+>
+> 1. **Image work is the most locked-in of the lot.** Diffusion tooling and LoRA training are
+>    built CUDA-first. This is the one place where "MLX is fine now" stops being true, and it is
+>    your strongest use.
+> 2. **It has to run unattended.** Batch jobs are overnight jobs. A laptop throttles under hours
+>    of sustained load, and it leaves the building with whoever picks it up.
+> 3. **Reading beats writing across most of the list.** OCR, tagging, captioning and search all
+>    feed it more than they get back. The Mac's 3.4× is on the half you use least.
 >
 > Worth knowing: people who own both *network* them — Spark reads, Mac writes — for about
 > **2.8×** what the Mac manages alone. Real, and also a second machine and a networking
@@ -520,10 +530,19 @@ the same job.
 > and it runs Windows. If you were buying today for chatting and coding, **the AMD box is the
 > better value and it isn't close.**
 >
-> But **reading is the half Cardinal actually does.** Sixty thousand photographs, each with a
-> short prompt, is prefill in a loop — the exact number where the Spark is five times ahead. On
-> that job the $700 buys back days of wall-clock, and it is the reason not to feel bad about
-> the box you own.
+> **But you did not buy it to chat.** Weigh it against the whole list this part opens with, not
+> one job:
+>
+> | What you actually run | Who wins |
+> |---|---|
+> | **Image generation, LoRAs** — the Library illustrations | **Spark, clearly.** Diffusion and fine-tuning are CUDA-first, and this is the one workload where ROCm is still genuinely behind rather than merely different |
+> | **OCR off a scope, tagging, captioning** | **Spark** — all of it is reading, where it is five times ahead |
+> | **Transcription, embeddings, search** | Either. Whisper and embedding models run fine on both |
+> | **Chatting, coding, a local assistant** | **AMD**, on price. Same speed for $700 less |
+>
+> Two of those four go to the Spark on *software*, not speed — and the one it wins hardest is the
+> one you already use every week. **Photo captioning is a single line in that table**, which is
+> roughly its share of the argument.
 
 
 ### Why the numbers you'll read contradict each other
