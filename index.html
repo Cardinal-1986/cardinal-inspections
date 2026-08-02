@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 573 &#8212; the Objections Coach, Pricing, Company Documents and Adjusters follow dark mode</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 574 &#8212; the Showcase: before and after, side by side, for the kitchen table</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15046,8 +15046,11 @@ function hideAllViews(){
      module state are released too, then CONFIRMED: 571 proved a module close() can
      no-op without throwing when its internal element reference is not set, and a
      catch cannot see that. */
+  /* 574: the Showcase is the same shape — created at runtime, shown by a class,
+     with its own close() that also dismisses the add-pair form. */
   [{ id:'cr-sf', api:window.CardinalSalesFloor },
-   { id:'cr-pb', api:window.CardinalProduction }].forEach(function(o){
+   { id:'cr-pb', api:window.CardinalProduction },
+   { id:'cr-show', api:window.CardinalShowcase }].forEach(function(o){
     var el = document.getElementById(o.id);
     if(!el || !el.classList.contains('open')) return;
     if(o.api && typeof o.api.close === 'function'){ try{ o.api.close(); }catch(_){} }
@@ -20806,6 +20809,7 @@ function __histPush(st){
            history, so back went wherever the previous real entry was. */
         case 'salesfloor':      if(window.CardinalSalesFloor) window.CardinalSalesFloor.open(); break;
         case 'production':      if(window.CardinalProduction) window.CardinalProduction.open(); break;
+        case 'showcase':        if(window.CardinalShowcase) window.CardinalShowcase.open(); break;
         /* Build 367: views added after this switch was written. */
         case 'communityHub':    if(window.CardinalCommunityHub) window.CardinalCommunityHub.show(); break;
         case 'punch':           if(typeof window.openPunchView === 'function') window.openPunchView(); break;
@@ -34994,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:574, d:'2026-08-02', t:'The Showcase', s:'Before and after, side by side, on the Sales Floor. Drag the divider and the finished roof wipes over the old one. Privacy mode swaps the address for a project number so the tablet can go across the table. Theo adds the pairs from his phone; everyone else can show them.' },
 { build:573, note:'\uD83C\uDF13 Four screens were built white and stayed white no matter which theme you were in \u2014 the Objections Coach, Pricing Catalog, Company Documents and Adjusters. Walking into the coach from the dark Sales Floor was a wall of white. \u2666 All four now follow the app theme. \u2666 Light mode looks exactly as it did; only dark is new. \u2666 Every colour that carries text was checked for readability against its new background rather than eyeballed.' },
 { build:572, note:'\uD83D\uDDA5\uFE0F Sales Floor, the Objections Coach and the Production board used to open as a bare screen with no menu, a narrow strip of content down the middle and a lot of empty space either side. \u2666 They now keep the left menu, close properly when you tap another page, and use the width of the screen on a desktop. \u2666 Phones are unchanged.' },
 { build:571, note:'\uD83D\uDD19 Finishing 570. \u2666 The estimate editor trapped you the same way \u2014 the menu was right there and did nothing. Menu items now close it, exactly as its own Cancel button does. \u2666 The back button used to walk straight past Crews, Estimates, Pricing Catalog and Company Documents as if they were never open; it now returns to them properly.' },
@@ -42046,6 +42051,8 @@ el.innerHTML =
 '<span class="x"><b>Leaderboard</b><small>How the team scores</small></span></button>' +
 '<button data-go="log" type="button"><span class="i">\uD83D\uDCDD</span>' +
 '<span class="x"><b>Log a real one</b><small>Something you heard today</small></span></button>' +
+'<button data-go="showcase" type="button"><span class="i">\uD83C\uDFE0</span>' +
+'<span class="x"><b>Showcase</b><small>Before and after, for the kitchen table</small></span></button>' +
 '</div>' +
 '<div class="cr-sf-rule">Objections</div>' +
 '<p class="cr-sf-lede">What they say, what you say, and why it lands.</p>' +
@@ -42104,6 +42111,9 @@ return;
 }
 if(d === 'library' && typeof window.showResourceLibrary === 'function'){
 close(false); window.showResourceLibrary(); return;
+}
+if(d === 'showcase' && window.CardinalShowcase){
+close(false); window.CardinalShowcase.open(); return;
 }
 alert('That isn\u2019t available yet.');
 };
@@ -52904,6 +52914,7 @@ body.cr-lnav-on #cr-claims-mount{
    mounted, so a phone keeps the full-screen page byte-for-byte as it ships. */
 body.cr-lnav-on #cr-sf,
 body.cr-lnav-on #cr-pb,
+body.cr-lnav-on #cr-show,
 body.cr-lnav-on #cr-coach-mount,
 body.cr-lnav-on #cr-adjusters-mount{
   top:var(--headh,110px) !important;
@@ -52918,6 +52929,8 @@ body.cr-lnav-on #cr-adjusters-mount{
    worse than 640. 940 fills most of the gap and keeps the line length sane.
    .cr-k-modal (480px) is a MODAL and is deliberately untouched. */
 body.cr-lnav-on .cr-sf-wrap{ max-width:940px !important; }
+/* 574: the Showcase is pictures, not prose — it earns the board's width. */
+body.cr-lnav-on .cr-sh-wrap{ max-width:1180px !important; }
 body.cr-lnav-on #cr-coach-mount .cr-k-app{ max-width:940px !important; }
 body.cr-lnav-on .cr-pb-wrap{ max-width:1180px !important; }
 /* The reason this build exists: .wrap ships max-width:none, so every table runs
@@ -55436,5 +55449,578 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 });
 })();
 </script>
+<style id="cr-show-styles">
+/* ═══════════════════════════════════════════════════════════════════════════
+   Showcase — v2026-08-02 · build 574
+   The kitchen-table surface. A rep opens this beside a homeowner and swipes
+   through finished work; an admin curates what is in it.
+
+   PALETTE: every colour is var(--sh-*,#literal). The tokens are declared
+   nowhere on purpose — the fallbacks ARE the palette, exactly as the Crews
+   module (547+) does it. That makes this module immune to the 448-449 class,
+   where another module stripped a background token within a second of load and
+   eight screens rendered see-through.
+
+   SCROLL LOCK: this module deliberately does NOT write document.body.style
+   .overflow. That global has 13 writers and no reconciler and the leak class
+   has recurred three times; overscroll-behavior:contain on the fixed overlay
+   solves the scroll-chaining this would otherwise need a lock for.
+
+   GEOMETRY: base z-index matches #cr-sf/#cr-pb at 9500. The desktop inset and
+   the z-60 drop are added to the SHARED build-572 rules further down this file
+   rather than restated here, so all five overlays keep moving together.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#cr-show{display:none;position:fixed;inset:0;background:var(--sh-bg,#0B0D0C);z-index:9500;
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--sh-ink,#F2F4F2)}
+#cr-show.open{display:block}
+.cr-sh-wrap{max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom,0px))}
+.cr-sh-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.cr-sh-back{flex:0 0 auto;background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
+  color:var(--sh-mut,#98A29C);width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:17px;line-height:1;margin-top:3px}
+.cr-sh-back:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-ttl{flex:1;min-width:0}
+.cr-sh-ttl h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(26px,7vw,34px);letter-spacing:-.02em;line-height:1}
+.cr-sh-ttl h1 span{color:var(--sh-acc,#C8202E)}
+.cr-sh-ttl p{margin:6px 0 0;font:600 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+.cr-sh-priv{flex:0 0 auto;display:flex;align-items:center;gap:7px;background:transparent;
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:8px;padding:7px 11px;cursor:pointer;
+  color:var(--sh-mut,#98A29C);font:600 11px inherit;font-family:inherit;margin-top:3px}
+.cr-sh-priv .d{width:8px;height:8px;border-radius:50%;background:var(--sh-mut,#98A29C)}
+#cr-show.priv .cr-sh-priv{border-color:var(--sh-ok,#46A758);color:var(--sh-ink,#F2F4F2)}
+#cr-show.priv .cr-sh-priv .d{background:var(--sh-ok,#46A758)}
+#cr-show.priv .cr-sh-priv .n{display:none}
+.cr-sh-priv .y{display:none}
+#cr-show.priv .cr-sh-priv .y{display:inline}
+/* Privacy masking. The real address is REMOVED from the DOM, not merely hidden:
+   a homeowner holding the tablet can select text on the screen. */
+.cr-sh-rule{display:flex;align-items:center;gap:12px;margin:26px 0 4px;
+  font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+.cr-sh-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--sh-line,rgba(148,157,165,.4)),transparent)}
+.cr-sh-empty{padding:30px 18px;text-align:center;font-size:13.5px;line-height:1.65;color:var(--sh-mut,#98A29C)}
+.cr-sh-empty b{display:block;color:var(--sh-ink,#F2F4F2);font-size:15px;margin-bottom:7px}
+
+/* cards */
+.cr-sh-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px}
+.cr-sh-card{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:9px;overflow:hidden;cursor:pointer;padding:0;text-align:left;color:inherit;font-family:inherit;transition:border-color .15s}
+.cr-sh-card:hover{border-color:var(--sh-acc,#C8202E)}
+.cr-sh-card.on{border-color:var(--sh-acc,#C8202E);box-shadow:0 0 0 1px var(--sh-acc,#C8202E)}
+.cr-sh-card img{display:block;width:100%;aspect-ratio:8/4.4;object-fit:cover;background:var(--sh-card2,#101312)}
+.cr-sh-card .m{padding:9px 11px 11px}
+.cr-sh-card .a{font:600 13px inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-sh-card .c{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.cr-sh-chip{font:600 10.5px inherit;padding:2px 7px;border-radius:4px;background:var(--sh-chip,rgba(148,157,165,.12));color:var(--sh-mut,#98A29C)}
+.cr-sh-score{font:700 10.5px inherit;padding:2px 7px;border-radius:4px;color:var(--sh-gold,#C9A227);border:1px solid var(--sh-gold,#C9A227)}
+
+/* featured + slider */
+.cr-sh-show{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));border-radius:11px;padding:13px;margin-top:10px}
+.cr-sh-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+.cr-sh-head h2{margin:0;font:650 18px inherit;font-family:inherit}
+.cr-sh-head .s{color:var(--sh-mut,#98A29C);font-size:12.5px;width:100%}
+.cr-sh-step{margin-left:auto;display:flex;align-items:center;gap:4px;flex:none}
+.cr-sh-step button{width:30px;height:30px;border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:6px;
+  background:transparent;color:var(--sh-mut,#98A29C);cursor:pointer;font-size:12px;line-height:1;font-family:inherit}
+.cr-sh-step button:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-step .p{font:600 11.5px ui-monospace,'SF Mono',Menlo,monospace;color:var(--sh-mut,#98A29C);padding:0 4px}
+.cr-sh-cmp{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:var(--sh-card2,#101312);
+  touch-action:none;user-select:none;-webkit-user-select:none}
+.cr-sh-cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.cr-sh-cmp .bf{clip-path:inset(0 calc(100% - var(--sh-split,52%)) 0 0);z-index:2}
+.cr-sh-hd{position:absolute;top:0;bottom:0;left:var(--sh-split,52%);width:38px;margin-left:-19px;z-index:3;
+  cursor:ew-resize;display:flex;align-items:center;justify-content:center}
+.cr-sh-hd::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.6)}
+.cr-sh-grip{position:relative;background:#fff;color:#111;border-radius:999px;padding:5px 9px;font:700 10px inherit;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.cr-sh-tag{position:absolute;top:9px;z-index:4;font:600 10.5px inherit;letter-spacing:.06em;padding:3px 9px;border-radius:4px;
+  background:rgba(10,12,14,.74);color:#fff;pointer-events:none;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-sh-tag.b{left:9px}
+.cr-sh-tag.a{right:9px}
+.cr-sh-dock{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.cr-sh-dock button{font:600 12px inherit;font-family:inherit;padding:7px 12px;border-radius:6px;cursor:pointer;
+  background:var(--sh-card2,#101312);border:1px solid var(--sh-line,rgba(148,157,165,.20));color:var(--sh-mut,#98A29C)}
+.cr-sh-dock button.on{background:var(--sh-acc,#C8202E);border-color:var(--sh-acc,#C8202E);color:var(--sh-acci,#FFF3F3)}
+.cr-sh-dock button[disabled]{opacity:.4;cursor:default}
+
+/* admin bar + form */
+.cr-sh-admin{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.cr-sh-btn{font:700 12.5px inherit;font-family:inherit;padding:10px 15px;border-radius:7px;cursor:pointer;
+  background:var(--sh-acc,#C8202E);border:0;color:var(--sh-acci,#FFF3F3)}
+.cr-sh-btn.ghost{background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));color:var(--sh-mut,#98A29C)}
+.cr-sh-btn:disabled{opacity:.55;cursor:wait}
+#cr-show-form{display:none;position:fixed;inset:0;background:rgba(8,10,9,.82);z-index:9610;
+  align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+#cr-show-form.open{display:flex}
+#cr-show-form .bx{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.28));
+  border-radius:12px;width:min(430px,100%);max-height:100%;overflow-y:auto;padding:18px;color:var(--sh-ink,#F2F4F2)}
+#cr-show-form h3{margin:0 0 13px;font:700 17px Georgia,serif}
+#cr-show-form label{display:block;margin:12px 0 5px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+#cr-show-form label:first-of-type{margin-top:0}
+#cr-show-form input,#cr-show-form select{width:100%;box-sizing:border-box;padding:10px 12px;
+  background:var(--sh-card2,#101312);color:var(--sh-ink,#F2F4F2);border:1px solid var(--sh-line,rgba(148,157,165,.24));
+  border-radius:8px;font:400 14px inherit;font-family:inherit;outline:none}
+#cr-show-form input:focus,#cr-show-form select:focus{border-color:var(--sh-acc,#C8202E)}
+#cr-show-form .r2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+#cr-show-form .ft{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+#cr-show-form .note{margin-top:11px;font-size:11.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+#cr-show-form .err{margin-top:10px;font-size:12.5px;color:var(--sh-bad,#E5484D);display:none}
+#cr-show-form .err.on{display:block}
+</style>
+
+<script id="cr-show-script">
+/* Showcase — v2026-08-02 · build 574
+   Curated before/after transformations, opened from the Sales Floor.
+
+   PERMISSIONS, settled by Theo: admins add/edit/remove; sales and production
+   view. The UI gate below is convenience — the real enforcement is the RLS in
+   showcase_pairs.sql, because a hidden button is not a permission.
+
+   PHOTOS: bytes are COPIED into Cardinal's own private `photos` bucket under
+   showcase/, never linked from CompanyCam's CDN. A curated pair has to outlive
+   the vendor. Paths are stored; signedPhotoMap() signs them for display only —
+   an expiring URL is never written to a row. */
+(function(){
+'use strict';
+
+var TRADES = ['roof','siding','windows','andersen','gutters','general'];
+var TRADE_LABEL = { roof:'Roofing', siding:'Siding', windows:'Windows',
+                    andersen:'Andersen', gutters:'Gutters', general:'Repair' };
+
+var el = null, formEl = null;
+var pairs = [], cur = 0, signed = {}, loaded = false, busy = false;
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function sb(){ return window.supa || null; }
+function amAdmin(){
+  try{ if(window.is_admin && window.is_admin()) return true; }catch(_){}
+  return false;
+}
+/* Privacy mode strips the address entirely rather than hiding it with CSS —
+   the homeowner is holding the tablet and can select hidden text. */
+function label(p){
+  var priv = el && el.classList.contains('priv');
+  if(priv) return 'Project ' + shortId(p) + (p.city ? ' · ' + p.city : '');
+  return p.address || p.title || ('Project ' + shortId(p));
+}
+function shortId(p){ return 'C-' + String(p.id || '').replace(/-/g,'').slice(0,4).toUpperCase(); }
+
+function ensure(){
+  if(el) return el;
+  el = document.getElementById('cr-show');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'cr-show';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+/* ── data ──────────────────────────────────────────────────────────────── */
+async function load(){
+  var cl = sb();
+  if(!cl) return;
+  var q = cl.from('showcase_pairs').select('*').order('sort_order', { ascending:true })
+           .order('created_at', { ascending:false });
+  var r = await q;
+  if(r.error){ pairs = []; loaded = true; return; }
+  pairs = r.data || [];
+  loaded = true;
+  await sign();
+}
+/* Sign for DISPLAY ONLY. The returned map is never written back onto a row —
+   saveEstimate's lesson: an expiring URL in the database corrupts it forever. */
+async function sign(){
+  var paths = [];
+  pairs.forEach(function(p){
+    [p.before_path, p.build_path, p.after_path].forEach(function(x){ if(x) paths.push(x); });
+  });
+  if(!paths.length) return;
+  if(typeof window.signedPhotoMap !== 'function') return;
+  try{ signed = await window.signedPhotoMap(paths, 3600) || {}; }catch(_){ signed = {}; }
+}
+function src(path){ return path ? (signed[path] || '') : ''; }
+
+/* ── render ────────────────────────────────────────────────────────────── */
+function render(){
+  ensure();
+  el.innerHTML =
+    '<div class="cr-sh-wrap">' +
+      '<div class="cr-sh-top">' +
+        '<button class="cr-sh-back" data-act="back" type="button">←</button>' +
+        '<div class="cr-sh-ttl">' +
+          '<h1>Show<span>case</span></h1>' +
+          '<p>Cardinal Roofing · Before &amp; After</p>' +
+        '</div>' +
+        '<button class="cr-sh-priv" data-act="priv" type="button" role="switch" aria-checked="false">' +
+          '<span class="d"></span><span class="n">Privacy off</span><span class="y">Privacy on</span>' +
+        '</button>' +
+      '</div>' +
+      '<div data-slot="body">' + renderBody() + '</div>' +
+    '</div>';
+  wire();
+}
+
+function renderBody(){
+  if(!loaded) return '<div class="cr-sh-empty">Loading…</div>';
+  if(!pairs.length) return renderEmpty();
+  return renderShow() + renderCards() + renderAdmin();
+}
+
+function renderEmpty(){
+  return '<div class="cr-sh-empty"><b>Nothing in the showcase yet.</b>' +
+    (amAdmin()
+      ? 'Add a pair and it appears here — a before shot, an after shot, and what you put on the house.'
+      : 'Theo hasn’t added any transformations yet.') +
+    '</div>' + renderAdmin();
+}
+
+function renderShow(){
+  var p = pairs[cur]; if(!p) return '';
+  var bits = [];
+  if(p.material) bits.push(esc(p.material));
+  if(p.completed_on) bits.push(esc(fmtDate(p.completed_on)));
+  return '<div class="cr-sh-rule">Transformation</div>' +
+    '<div class="cr-sh-show">' +
+      '<div class="cr-sh-head">' +
+        '<h2>' + esc(label(p)) + '</h2>' +
+        (p.score != null ? '<span class="cr-sh-score">★ ' + esc(p.score) + '</span>' : '') +
+        '<div class="cr-sh-step">' +
+          '<button data-act="prev" type="button" aria-label="Previous">◄</button>' +
+          '<span class="p">' + (cur + 1) + ' / ' + pairs.length + '</span>' +
+          '<button data-act="next" type="button" aria-label="Next">►</button>' +
+        '</div>' +
+        (bits.length ? '<span class="s">' + bits.join(' · ') + '</span>' : '') +
+      '</div>' +
+      '<div class="cr-sh-cmp" data-cmp style="--sh-split:52%">' +
+        '<img data-role="after" alt="After" src="' + esc(src(p.after_path)) + '">' +
+        '<img class="bf" data-role="before" alt="Before" src="' + esc(src(p.before_path)) + '">' +
+        '<div class="cr-sh-hd" data-hd role="slider" tabindex="0" aria-label="Before and after divider"' +
+             ' aria-valuemin="0" aria-valuemax="100" aria-valuenow="52"><span class="cr-sh-grip">◄ ►</span></div>' +
+        '<span class="cr-sh-tag b">Before</span>' +
+        '<span class="cr-sh-tag a" data-aftertag>After</span>' +
+      '</div>' +
+      '<div class="cr-sh-dock">' +
+        '<button data-ph="after" class="on" type="button">Final</button>' +
+        '<button data-ph="build" type="button"' + (p.build_path ? '' : ' disabled') + '>During the build</button>' +
+      '</div>' +
+    '</div>';
+}
+
+function renderCards(){
+  if(pairs.length < 2) return '';
+  return '<div class="cr-sh-rule">' + pairs.length + ' transformations</div>' +
+    '<div class="cr-sh-cards">' +
+      pairs.map(function(p, i){
+        var chips = '';
+        if(p.score != null) chips += '<span class="cr-sh-score">★ ' + esc(p.score) + '</span>';
+        if(p.trade) chips += '<span class="cr-sh-chip">' + esc(TRADE_LABEL[p.trade] || p.trade) + '</span>';
+        if(p.material) chips += '<span class="cr-sh-chip">' + esc(p.material) + '</span>';
+        return '<button class="cr-sh-card' + (i === cur ? ' on' : '') + '" data-pick="' + i + '" type="button">' +
+          '<img alt="" src="' + esc(src(p.after_path)) + '">' +
+          '<div class="m"><div class="a">' + esc(label(p)) + '</div>' +
+          '<div class="c">' + chips + '</div></div></button>';
+      }).join('') +
+    '</div>';
+}
+
+function renderAdmin(){
+  if(!amAdmin()) return '';
+  var p = pairs[cur];
+  return '<div class="cr-sh-admin">' +
+    '<button class="cr-sh-btn" data-act="add" type="button">Add a pair</button>' +
+    (p ? '<button class="cr-sh-btn ghost" data-act="pub" type="button">' +
+           (p.published ? 'Unpublish this one' : 'Publish this one') + '</button>' +
+         '<button class="cr-sh-btn ghost" data-act="del" type="button">Remove</button>' : '') +
+    '</div>';
+}
+
+function fmtDate(d){
+  try{
+    var t = new Date(d + 'T00:00:00');
+    return t.toLocaleDateString(undefined, { month:'short', year:'numeric' });
+  }catch(_){ return String(d); }
+}
+
+function repaint(){
+  var slot = el && el.querySelector('[data-slot="body"]');
+  if(!slot) return;
+  slot.innerHTML = renderBody();
+  wireBody();
+}
+
+/* ── wiring ────────────────────────────────────────────────────────────── */
+function wire(){
+  el.querySelectorAll('[data-act="back"]').forEach(function(b){
+    b.onclick = function(){ close(true); };
+  });
+  el.querySelectorAll('[data-act="priv"]').forEach(function(b){
+    b.onclick = function(){
+      var on = el.classList.toggle('priv');
+      b.setAttribute('aria-checked', String(on));
+      repaint();
+    };
+  });
+  wireBody();
+}
+
+function wireBody(){
+  el.querySelectorAll('[data-pick]').forEach(function(b){
+    b.onclick = function(){ cur = parseInt(b.dataset.pick, 10) || 0; repaint(); };
+  });
+  el.querySelectorAll('[data-act="prev"]').forEach(function(b){
+    b.onclick = function(){ if(pairs.length){ cur = (cur - 1 + pairs.length) % pairs.length; repaint(); } };
+  });
+  el.querySelectorAll('[data-act="next"]').forEach(function(b){
+    b.onclick = function(){ if(pairs.length){ cur = (cur + 1) % pairs.length; repaint(); } };
+  });
+  el.querySelectorAll('[data-act="add"]').forEach(function(b){ b.onclick = openForm; });
+  el.querySelectorAll('[data-act="pub"]').forEach(function(b){ b.onclick = togglePublish; });
+  el.querySelectorAll('[data-act="del"]').forEach(function(b){ b.onclick = removePair; });
+  el.querySelectorAll('[data-ph]').forEach(function(b){
+    b.onclick = function(){
+      if(b.hasAttribute('disabled')) return;
+      var p = pairs[cur]; if(!p) return;
+      var img = el.querySelector('[data-role="after"]');
+      var tag = el.querySelector('[data-aftertag]');
+      var want = b.dataset.ph;
+      if(img) img.src = src(want === 'build' ? p.build_path : p.after_path);
+      if(tag) tag.textContent = want === 'build' ? 'During the build' : 'After';
+      el.querySelectorAll('[data-ph]').forEach(function(x){ x.classList.toggle('on', x === b); });
+    };
+  });
+  wireSlider();
+}
+
+function wireSlider(){
+  var cmp = el.querySelector('[data-cmp]');
+  var hd  = el.querySelector('[data-hd]');
+  if(!cmp || !hd) return;
+  var dragging = false;
+  function set(pct){
+    pct = Math.max(3, Math.min(97, pct));
+    cmp.style.setProperty('--sh-split', pct + '%');
+    hd.setAttribute('aria-valuenow', String(Math.round(pct)));
+  }
+  function from(e){
+    var r = cmp.getBoundingClientRect();
+    if(!r.width) return;
+    set((e.clientX - r.left) / r.width * 100);
+  }
+  cmp.addEventListener('pointerdown', function(e){
+    dragging = true;
+    try{ cmp.setPointerCapture(e.pointerId); }catch(_){}
+    from(e);
+  });
+  cmp.addEventListener('pointermove', function(e){ if(dragging) from(e); });
+  cmp.addEventListener('pointerup',     function(){ dragging = false; });
+  cmp.addEventListener('pointercancel', function(){ dragging = false; });
+  hd.addEventListener('keydown', function(e){
+    var now = parseFloat(cmp.style.getPropertyValue('--sh-split')) || 52;
+    if(e.key === 'ArrowLeft'){ set(now - 4); e.preventDefault(); }
+    if(e.key === 'ArrowRight'){ set(now + 4); e.preventDefault(); }
+  });
+}
+
+/* ── admin: add a pair ─────────────────────────────────────────────────── */
+function ensureForm(){
+  if(formEl) return formEl;
+  formEl = document.getElementById('cr-show-form');
+  if(!formEl){
+    formEl = document.createElement('div');
+    formEl.id = 'cr-show-form';
+    document.body.appendChild(formEl);
+  }
+  return formEl;
+}
+
+function openForm(){
+  if(!amAdmin()) return;
+  ensureForm();
+  formEl.innerHTML =
+    '<div class="bx">' +
+      '<h3>Add a transformation</h3>' +
+      '<label>Before photo</label><input type="file" accept="image/*" data-f="before">' +
+      '<label>After photo</label><input type="file" accept="image/*" data-f="after">' +
+      '<label>During the build (optional)</label><input type="file" accept="image/*" data-f="build">' +
+      '<label>Address</label><input type="text" data-f="address" placeholder="123 Main St">' +
+      '<div class="r2"><div><label>City</label><input type="text" data-f="city" placeholder="Dayton"></div>' +
+        '<div><label>Score 0-100</label><input type="number" data-f="score" min="0" max="100" placeholder="90"></div></div>' +
+      '<label>Trade</label><select data-f="trade">' +
+        TRADES.map(function(t){ return '<option value="' + t + '">' + esc(TRADE_LABEL[t]) + '</option>'; }).join('') +
+      '</select>' +
+      '<label>Material</label><input type="text" data-f="material" placeholder="Owens Corning Duration — Onyx Black">' +
+      '<label>Completed</label><input type="date" data-f="completed_on">' +
+      '<div class="err" data-err></div>' +
+      '<p class="note">Photographs are copied into Cardinal’s own storage, so they keep working ' +
+        'whatever happens to CompanyCam. Nothing is shown to the team until you publish it.</p>' +
+      '<div class="ft">' +
+        '<button class="cr-sh-btn ghost" data-act="cancel" type="button">Cancel</button>' +
+        '<button class="cr-sh-btn" data-act="save" type="button">Save</button>' +
+      '</div>' +
+    '</div>';
+  formEl.classList.add('open');
+  formEl.querySelector('[data-act="cancel"]').onclick = closeForm;
+  formEl.querySelector('[data-act="save"]').onclick = savePair;
+}
+function closeForm(){ if(formEl) formEl.classList.remove('open'); }
+
+function showErr(msg){
+  var e = formEl && formEl.querySelector('[data-err]');
+  if(e){ e.textContent = msg; e.classList.add('on'); }
+}
+
+/* Shrink before upload. A phone photo is 3-5 MB and the showcase renders it at
+   most a few hundred pixels wide on a tablet; 1600px keeps it sharp when a
+   homeowner pinches in and keeps the bucket small. */
+function shrink(file, max){
+  return new Promise(function(resolve, reject){
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function(){
+      URL.revokeObjectURL(url);
+      var w = img.naturalWidth, h = img.naturalHeight;
+      var scale = Math.min(1, (max || 1600) / Math.max(w, h));
+      var c = document.createElement('canvas');
+      c.width = Math.round(w * scale); c.height = Math.round(h * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(function(b){ b ? resolve(b) : reject(new Error('encode failed')); }, 'image/jpeg', 0.86);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('could not read that image')); };
+    img.src = url;
+  });
+}
+
+async function savePair(){
+  if(busy) return;
+  var cl = sb();
+  if(!cl) return showErr('Not signed in.');
+  var btn = formEl.querySelector('[data-act="save"]');
+  var get = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i ? i.value.trim() : ''; };
+  var file = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i && i.files && i.files[0] ? i.files[0] : null; };
+
+  var fb = file('before'), fa = file('after'), fbu = file('build');
+  if(!fb || !fa) return showErr('A before and an after photo are both needed.');
+
+  busy = true; btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+           : String(Date.now()) + Math.random().toString(16).slice(2);
+    var base = 'showcase/' + id + '/';
+    var paths = {};
+    var jobs = [['before', fb], ['after', fa]];
+    if(fbu) jobs.push(['build', fbu]);
+
+    for(var i = 0; i < jobs.length; i++){
+      var kind = jobs[i][0];
+      var blob = await shrink(jobs[i][1], 1600);
+      var path = base + kind + '.jpg';
+      var up = await cl.storage.from('photos').upload(path, blob, { contentType:'image/jpeg', upsert:true });
+      if(up && up.error) throw new Error(up.error.message || ('upload failed: ' + kind));
+      paths[kind] = path;
+    }
+
+    var scoreRaw = get('score');
+    var row = {
+      id: id,
+      address: get('address') || null,
+      city: get('city') || null,
+      trade: get('trade') || null,
+      material: get('material') || null,
+      completed_on: get('completed_on') || null,
+      before_path: paths.before,
+      build_path: paths.build || null,
+      after_path: paths.after,
+      score: scoreRaw === '' ? null : Math.max(0, Math.min(100, parseInt(scoreRaw, 10) || 0)),
+      published: true
+    };
+    var ins = await cl.from('showcase_pairs').insert(row).select('id');
+    if(ins && ins.error) throw new Error(ins.error.message || 'could not save');
+    /* An insert refused by RLS comes back with no error and no rows — the same
+       silent-204 shape as a blocked delete. Check the rows, not just .error. */
+    if(!ins || !ins.data || !ins.data.length) throw new Error('Saved nothing — admin only.');
+
+    closeForm();
+    loaded = false;
+    await load();
+    cur = 0;
+    repaint();
+  }catch(e){
+    showErr(String(e && e.message ? e.message : e));
+  }finally{
+    busy = false;
+    if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+  }
+}
+
+async function togglePublish(){
+  var cl = sb(), p = pairs[cur];
+  if(!cl || !p || busy) return;
+  busy = true;
+  try{
+    var r = await cl.from('showcase_pairs').update({ published: !p.published, updated_at: new Date().toISOString() })
+                    .eq('id', p.id).select('id');
+    if(r && !r.error && r.data && r.data.length) p.published = !p.published;
+  }catch(_){}
+  busy = false;
+  repaint();
+}
+
+async function removePair(){
+  var cl = sb(), p = pairs[cur];
+  if(!cl || !p || busy) return;
+  if(!window.confirm('Remove this transformation from the showcase?')) return;
+  busy = true;
+  try{
+    /* .select('id') is load-bearing: a delete refused by RLS returns a silent
+       204 with no error, so the only proof it happened is a row coming back. */
+    var r = await cl.from('showcase_pairs').delete().eq('id', p.id).select('id');
+    if(r && !r.error && r.data && r.data.length){
+      pairs.splice(cur, 1);
+      if(cur >= pairs.length) cur = Math.max(0, pairs.length - 1);
+    }
+  }catch(_){}
+  busy = false;
+  repaint();
+}
+
+/* ── open / close ──────────────────────────────────────────────────────── */
+function open(){
+  ensure();
+  render();
+  if(typeof window.hideAllViews === 'function'){
+    try{ window.hideAllViews(); }catch(_){}
+  }
+  el.classList.add('open');
+  el.scrollTop = 0;
+  if(typeof window.navSetView === 'function'){
+    try{ window.navSetView('showcase'); }catch(_){}
+  }
+  if(!loaded){
+    load().then(function(){ repaint(); }, function(){ loaded = true; repaint(); });
+  }else{
+    /* Signed URLs expire; re-sign on every open rather than trusting the map
+       from an hour ago. */
+    sign().then(function(){ repaint(); }, function(){});
+  }
+}
+
+function close(goHome){
+  closeForm();
+  if(el) el.classList.remove('open');
+  if(goHome !== false && typeof window.showHome === 'function') window.showHome();
+}
+
+window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
+  open  : open,
+  close : close,
+  reload: function(){ loaded = false; return load(); }
+});
+})();
+</script>
+
 </body>
 </html>
