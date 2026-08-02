@@ -1390,3 +1390,33 @@ destroy the element under the finger mid-gesture.
 Gates: `harness_walk.js` (67, jsdom, data contracts), `harness_showcase.js` (106),
 `harness_detect.js` (39), `render_showcase.js` (36, real Chromium — the only one that can prove a
 box lands where its fraction says).
+
+## 584–588 — the Vision Suite's five, all in Blackout
+
+Theo picked all five preview options and one treatment: **Blackout** — true black `#050607`
+(the app's only pure-black surfaces), white ink, severity colours as the only chroma, cardinal
+red staying on primary buttons. All five live in the existing `cr-show-*` blocks; none adds a
+view, a table, or a scroll-lock writer. Builds 583 was left to PR #105 (Library chrome) — a gap
+if it never merges, which is normal here.
+
+| Build | What | Where it hangs |
+|---|---|---|
+| **584** | **Spotlight** — present mode. Full screen, one accepted finding at a time, radial veil lights the damage, story tap-zones. Only `reviewed_at` shots with findings (the 579 contract filters). Address never rendered. **Not admin-gated** — sales presenting is the point. | `Present ▶` on a walk's header · `.presenting` on `#cr-show` |
+| **585** | **Chalk** — draw your own marks. Crosshair → dashed chalk box → 17-defect sheet + severity → a finding with `source:'human'`, `confidence:null`. **`source` is now stamped on every finding** and threaded through both field-rebuild sites (`runDetect`, `saveReview`). **Ask again preserves human marks** — replaces only the AI's. | `+ Mark damage` in the review bar |
+| **586** | **The Lens** — pinch into any photograph at FULL rendition. Found while proposing: `touch-action:none` had blocked pinch since 574, making 577's 3840px files unreachable. Two-pointer pinch, pan, double-tap; Walk boxes ride inside the world. | tap a Hall of Fame photo · `⤢` on the slider and review stage |
+| **587** | **The Release** — share cards. Released pairs (575's fields) get Square/Story/Wide × Classic/Blackout/Kraft, canvas-drawn from `shotBlob()` bytes (never cross-origin → never tainted), **city only, `p.address` never enters `drawCard`** (pinned by assertion), zero EXIF by construction. Unreleased pairs render Share dead with the reason. Admin-only. | `Share…` in the Showcase admin bar |
+| **588** | **Curtain Call** — kiosk. Play → drift, self-sweeping wipe (starts on the BEFORE), white-serif placard via `label()` (privacy-masked), next pair. **Any touch hands over the real slider on the pair that was showing.** Every timer in `ccRun`, every continuation checks `isConnected` — the 567/569 class designed against. Auto-start deliberately unshipped. | `▶` beside the pair counter |
+
+**Traps recorded while building, for whoever patches next:**
+- Controls inside a gesture surface feed gesture detectors — the Lens `+/−` buttons are guarded
+  from the double-tap detector (caught in the preview; 578's class).
+- Two harness slices went red for being too broad, not wrong: "HoF reads no client record"
+  (fixed at 579-era) and "Walk never draws on the image" (587's legitimate canvas) — **bound the
+  slice, assert it captured something**.
+- `renderAdmin` teaches now: an unreleased pair shows a dead Share with the reason. Don't
+  "clean up" the dead button — the visible refusal *is* the feature.
+
+Gates at 588: `check_build` green per build, each negative-controlled · `harness_walk` 115 ·
+`harness_showcase` 123 · `harness_detect` 39 · `render_showcase` **69 in real Chromium** —
+including pixel-proofs (Kraft mat measured `232,220,200`), a synthetic two-pointer pinch, the
+drawn chalk box landing at its fractions, and the kiosk wipe sampled mid-sweep.

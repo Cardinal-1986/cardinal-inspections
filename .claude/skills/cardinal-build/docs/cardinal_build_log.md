@@ -6356,3 +6356,27 @@ Gates: `check_build.py` green 581 → 582, negative-controlled. Book harness **3
 **25** of them fail against the 578 book — each naming exactly what 582 added. `h562_aibook.js`
 42/42, `h581_changelog.js` 25/25. Web ↔ markdown parity 33/33. Screenshots of all six new sections
 at 390 px and 1280 px, light and dark.
+
+---
+
+## Builds 584–588 — the Vision Suite's five, in one sitting
+
+Theo approved all five preview options ("Why not do all 5?") unified on the Blackout scheme.
+Each shipped as its own build, gated before the next started; the per-build detail is in the
+five commit messages (`abff82d`, `aa6afd2`, `4df8681`, `43de1ee`, `239a8cc`). What belongs here
+is what future sessions need:
+
+- **583 was deliberately skipped** — open PR #105 claims it. Gaps are normal; collisions with an
+  open PR are not.
+- **`walk_shots.findings` grew a `source` key** (`'ai'`|`'human'`) at 585. It is stamped in
+  `runDetect()` and preserved through `saveReview()`'s rebuild (`f.source || 'ai'` defaults old
+  rows). "Ask again" now filters on it: human marks survive, AI marks refresh.
+- **Interactive preview practice paid twice.** The five were first built as a live artifact
+  (claude.ai) Theo could touch; its pre-publish Chromium check caught the +/− buttons feeding
+  the lens's double-tap detector — 578's class — before it ever reached the app.
+- **Harness slice discipline, third occurrence:** "The Walk never draws onto the image" ran to
+  end-of-module and went red when 587 added the share-card canvas legitimately. Bound every
+  slice; assert the slice captured something.
+- Chromium proofs worth keeping as patterns: pixel-reading a canvas (`getImageData` on the share
+  card's mat), synthetic two-pointer `PointerEvent`s for pinch, sampling a CSS var mid-animation
+  for the kiosk wipe.
