@@ -5624,3 +5624,50 @@ before any write, which is the design working.
 Gates: `check_build.py` green, negative-controlled, 567 → 568. Harness runs the **shipped**
 `normalizeEst`, `creProject` and `creLane` (extracted by brace-matching, not re-implemented) against
 **real row shapes read out of the live table** — 19 assertions, all green.
+
+---
+
+### SQL only — `estimates_update_policy.sql` (no build number, no index.html change)
+
+Found while wiring 568 and flagged in that PR rather than changed silently. `public.estimates` had
+four policies and exactly one of them carried no ownership test:
+
+```
+est_read    SELECT   is_full_access() OR the project is readable
+est_write   INSERT   (created_by = my_email() OR created_by IS NULL) AND project readable
+est_delete  DELETE   is_full_access() OR created_by = my_email()
+est_update  UPDATE   USING (true)  WITH CHECK (true)          <- wide open
+```
+
+**Any signed-in user could edit any estimate** — line items, total, status, archived — including
+estimates they could not delete and did not create. Pre-existing since the table shipped; it survived
+because nothing in the UI offered to do it until 568 started showing other people's estimates.
+
+The new policy is **deliberately identical to `est_delete`** rather than a new rule: a user who may
+delete their own estimate should be able to edit it, and nobody should be able to edit what they
+cannot delete. One ownership rule for the table, not two.
+
+`WITH CHECK` is not a copy of `USING`. USING picks which rows you may touch; WITH CHECK constrains
+what the row may become. Without it a rep could edit their own estimate and set `created_by` to
+somebody else in the same statement — handing the row away and locking themselves out — or move it
+onto a project they cannot see. The EXISTS mirrors `est_write`'s.
+
+Effect, simulated read-only against the 12 live rows before writing anything:
+
+| | before | after |
+|---|---:|---:|
+| theo, joan, curtis, scottie | 12 | 12 |
+| nick, joey, jacob | 12 | **0** |
+
+**⚠ Known cost, stated in the file.** Three writes-back after publishing swallow their errors
+(`doc_id`, `contract_doc_id`, `status:'sent'` — all `try{}catch(_){}`). A rep publishing an estimate
+somebody ELSE created still gets the document, but the link back to the estimate is not written and
+nothing says so. Exposure is narrow and today it is zero: all 12 rows were created by theo@, who is
+full-access. `saveEstimate()` is NOT silent — `.select().single()` makes a refused update throw.
+
+**Verification without touching production.** The expressions were type-checked against the live
+table with a read-only SELECT, the effect was simulated per-user with a CROSS JOIN, and the DDL
+itself was proved to run by creating it under a throwaway name — safe because permissive policies OR
+together and `est_update USING (true)` was still in place, so nothing could become more restrictive —
+then reading back Postgres's own parse of both expressions and dropping it. Final `pg_policies` read
+confirms the table is byte-identical to before. **The real policy has NOT been applied; Theo runs it.**
