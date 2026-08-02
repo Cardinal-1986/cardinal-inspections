@@ -410,6 +410,55 @@ const settle = () => new Promise(r => setTimeout(r, 30));
       !/projects|inspection_reports|companycam/i.test(MODULE_JS.split('function openWorkForm()')[1] || ''));
   }
 
+
+  /* ── 11 · resolution (build 577) ─────────────────────────────────────── */
+  console.log('\n── resolution ──');
+  {
+    ok('full rendition is 4K-class', /var FULL = \{ max: 3840, q: 0\.92 \}/.test(MODULE_JS));
+    ok('display rendition is small and separate', /var DISP = \{ max: 1400, q: 0\.82 \}/.test(MODULE_JS));
+    ok('no upload asks for the old 1600 cap', !/shrink\(jobs\[i\]\[1\], 1600\)/.test(MODULE_JS));
+    ok('dead 1600 default removed', !/\(max \|\| 1600\)/.test(MODULE_JS));
+    ok('downscale uses high-quality smoothing',
+      /imageSmoothingQuality = 'high'/.test(MODULE_JS));
+    ok('both upload paths go through putPhoto',
+      (MODULE_JS.match(/await putPhoto\(cl,/g) || []).length === 2);
+    ok('putPhoto writes both renditions',
+      /shrink\(file, FULL\.max, FULL\.q\)/.test(MODULE_JS) &&
+      /shrink\(file, DISP\.max, DISP\.q\)/.test(MODULE_JS));
+    ok('a failed display copy is not fatal',
+      /\}catch\(_\)\{ \/\* cards fall back to the full image \*\//.test(MODULE_JS));
+    ok('row stores the FULL path', /return path;\n\}/.test(MODULE_JS));
+
+    // Derivation + fallback, exercised rather than asserted from source.
+    const h = await boot({ admin: false, rows: PAIRS, workRows: [] });
+    h.w.CardinalShowcase.open();
+    await settle();
+    const el = h.d.getElementById('cr-show');
+    const slider = el.querySelector('[data-role="after"]').getAttribute('src');
+    const card = el.querySelector('[data-pick="0"] img').getAttribute('src');
+    ok('slider uses the FULL image', /after\.jpg/.test(slider) && !/-d\.jpg/.test(slider), slider);
+    ok('card uses the DISPLAY image', /after-d\.jpg/.test(card), card);
+    ok('display paths were signed too',
+      h.stats().signCalls.flat().some(p => p.endsWith('-d.jpg')));
+  }
+  {
+    // A pair made before 577 has no -d file: signing returns nothing for it,
+    // and the card must fall back rather than render a broken image.
+    const dom = await boot({ admin: false, rows: PAIRS, workRows: [] });
+    dom.w.signedPhotoMap = async (paths) => {
+      const out = {};
+      paths.filter(p => !p.endsWith('-d.jpg')).forEach(p => { out[p] = 'https://signed.example/' + p; });
+      return out;                       // pre-577: only full images exist
+    };
+    dom.w.CardinalShowcase.reload && await dom.w.CardinalShowcase.reload();
+    dom.w.CardinalShowcase.open();
+    await settle(); await settle();
+    const c = dom.d.getElementById('cr-show').querySelector('[data-pick="0"] img');
+    ok('pre-577 pair falls back to the full image, not a blank',
+      !!c && c.getAttribute('src') && !c.getAttribute('src').endsWith('-d.jpg'),
+      c ? c.getAttribute('src') : 'no card');
+  }
+
   console.log('\n' + '─'.repeat(58));
   console.log((fails === 0 ? 'GREEN' : 'RED') + ` — ${passes} passed, ${fails} failed`);
   console.log('jsdom proves structure only. Colour and layout are Theo\'s eyes.');

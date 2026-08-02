@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 576 &#8212; the Hall of Fame: a bad install beside ours, so the difference is visible</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 577 &#8212; Showcase photographs keep their detail — full resolution in the slider</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:577, d:'2026-08-02', t:'Showcase photographs keep their detail', s:'Every picture is now kept at full resolution for the slider and pinching in, with a smaller copy made for the browsing grid so the screen still loads fast on a phone. Builds 574-576 shrank everything to 1600px, which went soft the moment a homeowner pinched — the granules and nail heads these photographs exist to show were the first thing lost.' },
 { b:576, d:'2026-08-02', t:'The Hall of Fame', s:'The Showcase gets a second tab: a bad install photographed beside ours, with one line on why it matters. A homeowner cannot tell a good roof from a bad one by looking at the finished surface — two pictures side by side explain it in five seconds. Inspections is a link, not a tab: the reports list already exists and there is no sense building a second one.' },
 { b:575, d:'2026-08-02', t:'Who cleared the photo, and when', s:'A Showcase pair now records the client release — the date and the name of whoever gave it. Pairs without one are marked In-app only: fine to show across the kitchen table, not to publish. Ticking the box without a name is refused, because a date on its own proves nothing a year later.' },
 { b:574, d:'2026-08-02', t:'The Showcase', s:'Before and after, side by side, on the Sales Floor. Drag the divider and the finished roof wipes over the old one. Privacy mode swaps the address for a project number so the tablet can go across the table. Theo adds the pairs from his phone; everyone else can show them.' },
@@ -55695,17 +55696,44 @@ async function loadWork(){
    saveEstimate's lesson: an expiring URL in the database corrupts it forever. */
 async function sign(){
   var paths = [];
-  work.forEach(function(w){
-    [w.bad_path, w.good_path].forEach(function(x){ if(x) paths.push(x); });
-  });
-  pairs.forEach(function(p){
-    [p.before_path, p.build_path, p.after_path].forEach(function(x){ if(x) paths.push(x); });
-  });
+  var add = function(x){ if(x){ paths.push(x); paths.push(dispPath(x)); } };
+  work.forEach(function(w){ [w.bad_path, w.good_path].forEach(add); });
+  pairs.forEach(function(p){ [p.before_path, p.build_path, p.after_path].forEach(add); });
   if(!paths.length) return;
   if(typeof window.signedPhotoMap !== 'function') return;
   try{ signed = await window.signedPhotoMap(paths, 3600) || {}; }catch(_){ signed = {}; }
 }
 function src(path){ return path ? (signed[path] || '') : ''; }
+
+/* One stored path, two files on disk. The display copy is derived rather than
+   stored, so nothing in the schema changed and pairs made before build 577 —
+   which have no -d file — simply fall back to the full one. */
+var FULL = { max: 3840, q: 0.92 };   // the slider, and pinching in
+var DISP = { max: 1400, q: 0.82 };   // the card grid
+
+function dispPath(path){
+  if(!path) return '';
+  return path.replace(/\.jpg$/, '-d.jpg');
+}
+function srcD(path){
+  if(!path) return '';
+  return signed[dispPath(path)] || signed[path] || '';
+}
+
+/* Upload both renditions for one photograph and return the FULL path, which is
+   what the row stores. A failed display copy is not fatal — srcD falls back —
+   but a failed full copy is. */
+async function putPhoto(cl, file, path){
+  var full = await shrink(file, FULL.max, FULL.q);
+  var up = await cl.storage.from('photos').upload(path, full, { contentType:'image/jpeg', upsert:true });
+  if(up && up.error) throw new Error(up.error.message || ('upload failed: ' + path));
+  try{
+    var small = await shrink(file, DISP.max, DISP.q);
+    await cl.storage.from('photos').upload(dispPath(path), small,
+      { contentType:'image/jpeg', upsert:true });
+  }catch(_){ /* cards fall back to the full image */ }
+  return path;
+}
 
 /* ── render ────────────────────────────────────────────────────────────── */
 function render(){
@@ -55778,7 +55806,7 @@ function renderWork(){
 function side(kind, head, path, caption, i){
   return '<div class="cr-sh-side ' + kind + '">' +
     '<div class="h"><span class="sq"></span>' + head + '</div>' +
-    '<img alt="' + esc(head) + '" loading="lazy" src="' + esc(src(path)) + '">' +
+    '<img alt="' + esc(head) + '" loading="lazy" src="' + esc(srcD(path)) + '">' +
     (caption ? '<p>' + esc(caption) + '</p>' : '') +
   '</div>';
 }
@@ -55841,7 +55869,7 @@ function renderCards(){
         if(p.trade) chips += '<span class="cr-sh-chip">' + esc(TRADE_LABEL[p.trade] || p.trade) + '</span>';
         if(p.material) chips += '<span class="cr-sh-chip">' + esc(p.material) + '</span>';
         return '<button class="cr-sh-card' + (i === cur ? ' on' : '') + '" data-pick="' + i + '" type="button">' +
-          '<img alt="" src="' + esc(src(p.after_path)) + '">' +
+          '<img alt="" loading="lazy" src="' + esc(srcD(p.after_path)) + '">' +
           '<div class="m"><div class="a">' + esc(label(p)) + '</div>' +
           '<div class="c">' + chips + '</div></div></button>';
       }).join('') +
@@ -56037,20 +56065,29 @@ function showErr(msg){
   if(e){ e.textContent = msg; e.classList.add('on'); }
 }
 
-/* Shrink before upload. A phone photo is 3-5 MB and the showcase renders it at
-   most a few hundred pixels wide on a tablet; 1600px keeps it sharp when a
-   homeowner pinches in and keeps the bucket small. */
-function shrink(file, max){
+/* Re-encode at a chosen size. Called twice per photograph — see FULL/DISP.
+
+   The old comment here claimed 1600px "keeps it sharp when a homeowner pinches
+   in". It did not: an iPad Pro is 2732x2048 native, so a photo filling the
+   slider on a 2x display already wants ~2400 device pixels before anyone
+   pinches at all. It was soft on the exact gesture it was justified by. */
+function shrink(file, max, quality){
   return new Promise(function(resolve, reject){
     var img = new Image(), url = URL.createObjectURL(file);
     img.onload = function(){
       URL.revokeObjectURL(url);
       var w = img.naturalWidth, h = img.naturalHeight;
-      var scale = Math.min(1, (max || 1600) / Math.max(w, h));
+      var scale = Math.min(1, (max || 3840) / Math.max(w, h));
       var c = document.createElement('canvas');
       c.width = Math.round(w * scale); c.height = Math.round(h * scale);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      c.toBlob(function(b){ b ? resolve(b) : reject(new Error('encode failed')); }, 'image/jpeg', 0.86);
+      var cx = c.getContext('2d');
+      /* Downscaling in one step aliases badly on detail like shingle granules
+         and nail heads — the very thing these photographs are shown to prove. */
+      cx.imageSmoothingEnabled = true;
+      cx.imageSmoothingQuality = 'high';
+      cx.drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(function(b){ b ? resolve(b) : reject(new Error('encode failed')); },
+               'image/jpeg', quality || 0.9);
     };
     img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('could not read that image')); };
     img.src = url;
@@ -56079,11 +56116,7 @@ async function savePair(){
 
     for(var i = 0; i < jobs.length; i++){
       var kind = jobs[i][0];
-      var blob = await shrink(jobs[i][1], 1600);
-      var path = base + kind + '.jpg';
-      var up = await cl.storage.from('photos').upload(path, blob, { contentType:'image/jpeg', upsert:true });
-      if(up && up.error) throw new Error(up.error.message || ('upload failed: ' + kind));
-      paths[kind] = path;
+      paths[kind] = await putPhoto(cl, jobs[i][1], base + kind + '.jpg');
     }
 
     var scoreRaw = get('score');
@@ -56181,11 +56214,7 @@ async function saveWork(){
     var paths = {};
     var jobs = [['bad', fb], ['good', fg]];
     for(var i = 0; i < jobs.length; i++){
-      var blob = await shrink(jobs[i][1], 1600);
-      var path = base + jobs[i][0] + '.jpg';
-      var up = await cl.storage.from('photos').upload(path, blob, { contentType:'image/jpeg', upsert:true });
-      if(up && up.error) throw new Error(up.error.message || ('upload failed: ' + jobs[i][0]));
-      paths[jobs[i][0]] = path;
+      paths[jobs[i][0]] = await putPhoto(cl, jobs[i][1], base + jobs[i][0] + '.jpg');
     }
     var ins = await cl.from('workmanship_pairs').insert({
       id: id, title: title, trade: get('trade') || null, lesson: get('lesson') || null,
