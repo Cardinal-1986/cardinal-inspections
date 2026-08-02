@@ -5453,3 +5453,40 @@ anything real.
 
 Gates: `check_build.py` green, negative-controlled, 563 → 565. **Chromium 5/5 behavioural** —
 the shipped `attachAutocomplete` executed against a failing `loadMaps()` across 40 frames.
+
+### build 566 — the estimates list stops asking for columns that do not exist
+From Theo's console: `projects?select=id,created_at,updated_at,created_by,client_name,address,estimate
+&estimate=not.is.null` → **HTTP 400**.
+
+`projects` has **neither** `client_name` nor `estimate` — the client column is `name`, and there is
+no estimate column at all. Verified against the live database. **So this query has returned 400 on
+every single load since it shipped, and the manual half of the estimates list has been silently
+empty the whole time.**
+
+**Removed rather than repaired, deliberately.** Repairing means choosing a source, and the
+candidates are not equivalent: `manual_estimates` is **empty (0 rows)** while `estimates` holds
+**12 real rows** in a different shape than `normalizeManual()` expects. Picking one would surface
+twelve estimates in a list that has never shown them — a product decision Theo has not been shown.
+`normalizeManual()` is left in place for whoever wires the real source.
+
+**STILL OPEN — the re-render cascade.** Theo's console also reports, from the app's own perf
+detector:
+
+```
+Re-render loop: span#navWrap > span#crPortalChip     ~240 mutations/sec
+Re-render loop: div#landingView                     ~1691 mutations/sec
+```
+
+**This is the missing-nav bug.** `ready()` in cr-lnav-script gates on `navWrap` and `landingView`;
+both are being hammered, so the menu tears itself down. Nothing *removes* the nav — the page never
+holds still long enough for it to stay.
+
+Root cause class identified, culprit NOT yet isolated: **14 MutationObservers, most on
+`document.body` with `subtree:true`**, so any one that writes to the body wakes all the others. At
+least one confirmed write-fight — `rerenderChipIfNeeded` (L~29939) forces `claimchip ct-community`
+on a body-subtree observer while another maintainer sets it back. But the loop the detector names is
+on `crPortalChip`, and `paintChip()` **is** correctly guarded (`if(chip.className !== cls)`), so the
+actual pair is still unfound. Do not blind-patch this: walk all 14 observers first, and note
+`querySelectorAll('#crPortalChip')` at L~47235 implies DUPLICATE IDs from two creators.
+
+Gates: `check_build.py` green, negative-controlled, 565 → 566.
