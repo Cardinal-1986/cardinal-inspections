@@ -48,3 +48,7 @@ community_stages.html
 #     60,485 CompanyCam photos and a three-row claims table. Theo was shown
 #     that and chose the served file over inlining 248 KB into index.html.
 #     It carries <meta name="robots" content="noindex,nofollow">. ---
+
+# --- Operational tooling for the DGX Spark. Runs on Theo's own hardware,
+#     never fetched by the app. Nothing here should be on a public domain. ---
+spark/
