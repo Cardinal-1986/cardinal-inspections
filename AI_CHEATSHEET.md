@@ -437,9 +437,13 @@ loaded. Both columns computed, not quoted — same arithmetic as the table above
 | Mac Studio M3 Ultra | 96 GB | 819 GB/s | ~128B | 7 | $5,299 |
 | MacBook Pro M5 Max | 36 GB | 614 GB/s | ~48B | 15 | from $2,699 |
 | **MacBook Pro M5 Max** | **128 GB** | 614 GB/s | **~171B** | 4 | build to order |
+| **AMD Ryzen AI Max+ 395** | **128 GB** | 256 GB/s | **~171B** | 2 | $3,999 |
 | **DGX Spark** | **128 GB** | 273 GB/s | **~171B** | 2 | $4,699 |
 
-Read that top to bottom and the trade is plain: **you buy capacity or you buy speed.** The
+The bottom two rows are worth a second look: **same memory, same speed, $700 apart.** That is
+not a rounding error, and it is why AMD gets its own section below.
+
+Read the table top to bottom and the wider trade is plain: **you buy capacity or you buy speed.** The
 cheapest Mac runs a 48B model six times faster than the Spark runs a 171B one. Neither is
 better; they are answers to different questions.
 
@@ -481,7 +485,23 @@ Owners running a 397B model measured the Mac at 30–40 tokens a second against 
 
 AMD's answer is the **Ryzen AI Max+ 395** — sold as the Ryzen AI Halo and in mini-PCs from
 several makers. It is the only machine built to the same brief as the Spark: **128 GB of
-unified memory in a box on your desk**. It is worth taking seriously, and it is cheaper.
+unified memory in a box on your desk**.
+
+**Four things it is straightforwardly better at**, before any of the detail:
+
+1. **It costs less — possibly a lot less.** $3,999 against the Spark's $4,699, and other
+   builders sell 128 GB machines from around **$1,500**. That is a third of the price for the
+   same memory.
+2. **It writes just as fast.** Same 128 GB, and 256 against 273 GB/s is a rounding error — look
+   at the last two rows of the table above, which land on the same numbers. On that half of the
+   job they are tied.
+3. **It runs Windows.** The Spark is Linux only, which is why this document needs a commands
+   page at the back. The AMD box is a normal PC that also does AI.
+4. **ROCm is fine now** for Ollama and llama.cpp — which is what most people actually run. The
+   old "AMD doesn't work for AI" line is out of date for inference.
+
+The Spark wins exactly two things. They happen to be the two that matter here, but they are
+only two:
 
 | | DGX Spark | AMD Ryzen AI Max+ 395 |
 |---|---|---|
