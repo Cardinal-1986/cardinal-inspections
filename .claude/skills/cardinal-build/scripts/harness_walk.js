@@ -141,7 +141,7 @@ async function boot(opts) {
     w, walks: clone(opts.walks || WALKS), shots: clone(opts.shots || SHOTS),
     projects: clone(opts.projects || []), jobPhotos: clone(opts.jobPhotos || []),
     inserts: [], updates: [], deletes: [], uploads: [], downloads: [], detects: [],
-    refuseWrites: !!opts.refuseWrites, warns: []
+    refuseWrites: !!opts.refuseWrites, warns: [], confirmCalls: []
   };
 
   /* shrink() runs for real — it is on the path to the AI and to storage, and
@@ -183,7 +183,11 @@ async function boot(opts) {
     return { ok: true, status: 200, json: async () => (opts.detectReply || DETECT_REPLY) };
   };
   w.hideAllViews = () => {}; w.navSetView = () => {}; w.showHome = () => {};
-  w.openReportsView = () => {}; w.confirm = () => true; w.alert = () => {};
+  w.openReportsView = () => {}; w.alert = () => {};
+  // A spy, not a stub — build 580's whole point is WHETHER confirm() is asked,
+  // not just what it answers. state.confirmReturn controls the simulated click.
+  state.confirmReturn = opts.confirmReturn !== false;
+  w.confirm = (msg) => { state.confirmCalls.push(msg); return state.confirmReturn; };
   w.console = Object.assign({}, console, { warn: (...a) => state.warns.push(a.join(' ')) });
 
   w.eval(MODULE_JS);
@@ -402,6 +406,94 @@ const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
     ok('the button offers to ask again', /Ask again/.test(el.textContent));
     ok('editing the saved copy does not mutate the loaded row',
       /JSON\.parse\(JSON\.stringify\(f\)\)/.test(MODULE_JS));
+  }
+
+  /* ── build 580 · the review screen warns before it discards work ────────── */
+  console.log('\n── unsaved-work guard ──');
+  {
+    // Untouched: opening a shot and immediately leaving costs nothing, so no
+    // confirm should fire at all — a guard that nags on every visit is worse
+    // than no guard.
+    const h = await boot({});
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[1].click(); await settle(120);   // pre-reviewed, 1 finding
+    h.d.getElementById('cr-show').querySelector('[data-act="rback"]').click(); await settle();
+    ok('leaving an UNTOUCHED review asks nothing', h.state.confirmCalls.length === 0,
+       JSON.stringify(h.state.confirmCalls));
+    ok('Back actually left', !h.d.getElementById('cr-show').querySelector('[data-act="rback"]'));
+  }
+  {
+    // Rejecting a finding is a decision. Cancelling the confirm must keep the
+    // review screen open with that decision intact, not discard it anyway.
+    const h = await boot({ confirmReturn: false });
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[1].click(); await settle(120);
+    let el = h.d.getElementById('cr-show');
+    el.querySelector('[data-drop="0"]').click(); await settle();
+    ok('rejecting a finding is dirty', el.querySelectorAll('[data-fnd]').length === 0);
+    el.querySelector('[data-act="rback"]').click(); await settle();
+    ok('Back asks before discarding a rejection', h.state.confirmCalls.length === 1,
+       h.state.confirmCalls);
+    ok('cancelling the confirm keeps the review screen open',
+      !!h.d.getElementById('cr-show').querySelector('[data-act="rback"]'));
+    ok('and the rejection is still there, not silently reapplied',
+      h.d.getElementById('cr-show').querySelectorAll('[data-fnd]').length === 0);
+  }
+  {
+    // Same finding, this time the user confirms — the discard actually happens.
+    const h = await boot({ confirmReturn: true });
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[1].click(); await settle(120);
+    let el = h.d.getElementById('cr-show');
+    el.querySelector('[data-drop="0"]').click(); await settle();
+    el.querySelector('[data-act="rback"]').click(); await settle();
+    ok('confirming the discard actually leaves',
+      !h.d.getElementById('cr-show').querySelector('[data-act="rback"]'));
+  }
+  {
+    // Re-classifying severity is a decision too, and Ask Again carries the
+    // SAME risk as Back — both must be guarded, not just one of them.
+    const h = await boot({ confirmReturn: false });
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[1].click(); await settle(120);
+    let el = h.d.getElementById('cr-show');
+    const sev = el.querySelector('[data-sev="0"]');
+    sev.value = 'ok';
+    sev.dispatchEvent(new h.w.Event('change')); await settle();
+    el.querySelector('[data-act="rdetect"]').click(); await settle();
+    ok('Ask again asks before discarding a re-classification',
+      h.state.confirmCalls.length === 1, h.state.confirmCalls);
+    ok('and does NOT call the model when cancelled', h.state.detects.length === 0,
+       h.state.detects.length);
+  }
+  {
+    // Asking the AI for the FIRST time, and asking again with nothing touched,
+    // must never be gated — there is nothing of the user's to lose either way.
+    const h = await boot({});
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[0].click(); await settle(200);   // unreviewed, auto-detects
+    ok('the first detect asked nothing', h.state.confirmCalls.length === 0);
+    h.d.getElementById('cr-show').querySelector('[data-act="rdetect"]').click(); await settle(200);
+    ok('asking again with nothing touched still asks nothing',
+      h.state.confirmCalls.length === 0, JSON.stringify(h.state.confirmCalls));
+    ok('but it DID call the model both times', h.state.detects.length === 2, h.state.detects.length);
+  }
+  {
+    // Nudging a box is a drag, not a click — confirm only that stop() marks it
+    // dirty, since jsdom does no layout and the gesture itself is Chromium's
+    // job (render_showcase.js).
+    ok('a finished drag marks the review dirty',
+      /function stop\(\)\{ if\(drag\)\{ drag = null; review\.dirty = true; repaint\(\); \}/.test(MODULE_JS));
   }
 
   /* ── 10 · an RLS refusal is a silent 204 ───────────────────────────────── */

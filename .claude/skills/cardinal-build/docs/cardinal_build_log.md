@@ -6067,3 +6067,43 @@ an unselected box. jsdom cannot make any of those three claims.
 **`npm install X --no-save` reinstalls from `package.json` and PRUNES anything unlisted** — installing
 `jsdom` that way silently removed `playwright` and the Chromium harness died with MODULE_NOT_FOUND.
 Install them in one command: `npm install jsdom playwright --no-save`.
+
+---
+
+## Build 580 — the review screen warns before it discards work
+
+Found by manual audit, not a gate — exactly the class of thing no assertion existed to catch
+because nothing crashes and nothing renders wrong. A person just loses work silently.
+
+**Both `Back` and `Ask again` discarded unsaved review state with no confirmation.** Concrete
+scenario: reopen an already-reviewed shot, drag a box to fix its position — that edit only
+lives in `review.list`, nothing is written until Save — then tap `Ask again` to see if the AI
+catches anything else, or just tap `Back` thinking you're done. Either one threw the change away
+silently. Same class the project already treats seriously elsewhere (scroll locks, estimate
+edits); this instance just had no test written against it because nobody had thought of the
+interaction yet.
+
+**The fix is a session-local `dirty` flag, not the persisted `edited` field.** Reusing `edited`
+was the first instinct and the wrong one: a previously-saved finding already carries
+`edited:true` from an earlier session, so reopening it would trip the guard on a shot nobody has
+touched this visit — a false positive, not a fix. `dirty` starts `false` on open and is set only
+by an actual decision this session: rejecting a finding, re-classifying severity, or finishing a
+drag (`stop()`, not `pointermove` — starting a drag isn't a decision, finishing one is). Asking
+the AI for the first time, or reopening a shot untouched, sets nothing and asks nothing.
+
+**Two things ruled out in the same pass, worth recording as much as the bug itself:**
+- Suspected `shotBlob()` reading a job photo's `projects/…` path would fail RLS, since
+  `walk_objects_read` only covers `walks/%`. Checked the real policies — a pre-existing blanket
+  `photos_read` (`bucket_id = 'photos'`, no prefix) already covers it. False alarm, confirmed by
+  query, not assumed.
+- `walk_shots.caption` is a real column with zero references in the module — dead schema
+  surface, not a bug, left as-is.
+
+**Gates.** `check_build.py` green 579 → 580, marker `review.dirty`, negative-controlled.
+`harness_walk.js` grew from 67 to **80** — the new assertions confirm the untouched-review case
+asks nothing (a guard that nags every visit is worse than no guard), that cancelling the confirm
+actually keeps the rejection intact rather than discarding anyway, and that `runDetect()` itself
+never sets `dirty` (only the three real decision points do). **Negative-controlled against 579:
+5 of the 13 new assertions correctly fail** there, confirming the harness tests the guard and
+not just its own fixtures. `harness_showcase.js` 106, `harness_detect.js` 39,
+`render_showcase.js` 36 — unaffected, confirming no regression on the surfaces those gates own.

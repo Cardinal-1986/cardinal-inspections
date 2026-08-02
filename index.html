@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 579 &#8212; The Walk — the AI marks the damage, you check every mark, then the client sees it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 580 &#8212; The Walk warns before it throws away a mark you have not saved</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:580, d:'2026-08-02', t:'The Walk asks before it forgets', s:'Rejecting a mark, changing how serious one is, or dragging a box into place, then tapping Back or Ask again — both used to throw the change away with no warning. They ask first now, only when there is actually something to lose. Reopening a photo you have not touched yet, or asking the AI for the first time, still needs no confirmation.' },
 { b:579, d:'2026-08-02', t:'The Walk', s:'A third tab on the Showcase. Add photographs from your phone or pull them off a job, and the AI marks what it thinks is hail bruising, lifted shingles, a failed pipe boot. Every mark is a proposal: keep it, drag it onto the damage if it is close, change how serious it is, or throw it away. Only what you keep is saved, so anything a client sees has been through your hands. The marks are drawn over the photograph and never burned into it — the picture on file stays the picture the camera took. Admins build them; everyone can show them.' },
 { b:578, d:'2026-08-02', t:'The before/after slider follows a mouse', s:'On a laptop, grabbing the photograph itself to drag the divider moved it about a pixel and then stopped, with a ghost copy of the picture stuck to the cursor. The browser had decided you were dragging the image out of the page. Touch was never affected, so it never showed up on a phone or the iPad. Dragging now works from anywhere on the picture, on any device.' },
 { b:577, d:'2026-08-02', t:'Showcase photographs keep their detail', s:'Every picture is now kept at full resolution for the slider and pinching in, with a smaller copy made for the browsing grid so the screen still loads fast on a phone. Builds 574-576 shrank everything to 1600px, which went soft the moment a homeowner pinched — the granules and nail heads these photographs exist to show were the first thing lost.' },
@@ -56794,7 +56795,7 @@ function wireBoxes(){
       live.style.width = pc(n.w); live.style.height = pc(n.h);
     }
   });
-  function stop(){ if(drag){ drag = null; repaint(); } }
+  function stop(){ if(drag){ drag = null; review.dirty = true; repaint(); } }
   stage.addEventListener('pointerup', stop);
   stage.addEventListener('pointercancel', stop);
 }
@@ -57126,29 +57127,39 @@ function wireWalk(){
       /* Re-open on what was SAVED, so a second visit edits the accepted set
          rather than starting from a blank overlay. */
       review = { shot:s, list:(s.findings || []).map(function(f){ return JSON.parse(JSON.stringify(f)); }),
-                 sel:(s.findings || []).length ? 0 : -1, note:'', noteKind:'' };
+                 sel:(s.findings || []).length ? 0 : -1, note:'', noteKind:'', dirty:false };
       repaint();
       if(!s.reviewed_at && !review.list.length) runDetect();
     };
   });
 
   el.querySelectorAll('[data-act="rback"]').forEach(function(b){
-    b.onclick = function(){ review = null; repaint(); };
+    b.onclick = function(){
+      if(review.dirty && !window.confirm('Discard the changes you have not saved?')) return;
+      review = null; repaint();
+    };
   });
-  el.querySelectorAll('[data-act="rdetect"]').forEach(function(b){ b.onclick = runDetect; });
+  el.querySelectorAll('[data-act="rdetect"]').forEach(function(b){
+    b.onclick = function(){
+      if(review.dirty && !window.confirm('Asking again replaces every mark below — ' +
+        'discard the changes you have not saved?')) return;
+      runDetect();
+    };
+  });
   el.querySelectorAll('[data-act="rsave"]').forEach(function(b){ b.onclick = saveReview; });
   el.querySelectorAll('[data-drop]').forEach(function(b){
     b.onclick = function(){
       var i = parseInt(b.dataset.drop, 10);
       review.list.splice(i, 1);
       if(review.sel >= review.list.length) review.sel = review.list.length - 1;
+      review.dirty = true;
       repaint();
     };
   });
   el.querySelectorAll('[data-sev]').forEach(function(s){
     s.onchange = function(){
       var f = review.list[parseInt(s.dataset.sev, 10)];
-      if(f){ f.severity = s.value; f.edited = true; repaint(); }
+      if(f){ f.severity = s.value; f.edited = true; review.dirty = true; repaint(); }
     };
   });
   el.querySelectorAll('[data-fnd]').forEach(function(d){
