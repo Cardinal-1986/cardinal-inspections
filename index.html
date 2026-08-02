@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 562 &#8212; the Estimates page keeps the menu, and Quick Inspection is readable from the first step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 563 &#8212; the Estimates page keeps the menu, and Quick Inspection is readable from the first step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34666,6 +34666,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:563, note:'\uD83D\uDD27 Offline fix: opening the AI Field Manual no longer replaces what the app shows when you have no signal.' },
 { build:562, note:'\uD83D\uDCD5 The AI Field Manual is in the Resource Library \u2014 fifteen chapters on using AI in this business, plus a printable desk card. Its own section on the Library home, below the two hubs.' },
 { build:561, note:'\uD83E\uDDED Two corrections. \u2666 560 gave the menu to the estimate builder behind \u201C+ New estimate\u201D \u2014 but the Estimates item in the menu opens a different screen, and THAT is the one that was covering the menu. Fixed, along with Pricing Catalog and Claims, which had the same fault. \u2666 559 made Quick Inspection readable, but only the photo stream \u2014 the pin-the-property step you actually land on first still had the near-invisible title. It now carries the same yellow panel, so both halves match.' },
 { build:560, note:'\uD83E\uDDED The left menu now stays with you on the Estimates builder too. It was the one screen 558 could not reach \u2014 the builder is created on the fly rather than living in the page, so the sweep that fixed the others never saw it. \u2666 Your estimate keeps its own toolbar and its own outline down the left; the app menu sits outside both. \u2666 Phones and tablets still get the full-screen builder, unchanged.' },

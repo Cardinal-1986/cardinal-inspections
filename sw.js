@@ -66,7 +66,14 @@ self.addEventListener('fetch', function(e){
     e.respondWith(
       fetch(req)
         .then(function(res){
-          if(res && res.ok){
+          /* Cache ONLY the app shell under '/'. This used to run for every
+             successful navigation, which was harmless while '/' was the only
+             navigable URL on the origin. Build 562 added the AI Field Manual
+             at /ai-field-manual.html, loaded in an iframe — and an iframe load
+             IS a navigation — so opening the book overwrote the offline shell
+             with the book, and going offline afterwards served the book where
+             the app should be. Reproduced against this worker before fixing. */
+          if(res && res.ok && url.pathname === '/'){
             var copy = res.clone();
             caches.open(CACHE).then(function(c){ c.put('/', copy); });
           }
