@@ -1301,3 +1301,53 @@ fall back on, so stripping its inline white would leave it with no background at
 **The residue split matters:** of 27 hardcoded light colours outside the token rules, **17 are
 `color:white` on a coloured ground** (primary buttons, toasts, badges) — semantic, correct in both
 themes, left alone. Only the **10 surface backgrounds** were tokenised.
+
+## 574–579 — the Showcase, and The Walk
+
+One module: `<style id="cr-show-styles">` + `<script id="cr-show-script">`, mounted as `#cr-show`,
+opened from the **Sales Floor**. Exports `window.CardinalShowcase` (`open` / `close` / `reload`).
+Registered in `hideAllViews()` and in the `navRestore` switch as `'showcase'` — shown by a **class**,
+so it is closed through its own `close()`, never by writing `display:none`.
+
+**Three tabs and one link.** Showcase · Hall of Fame · The Walk, plus **Inspections ↗**, which is a
+link out to `openReportsView()` and must stay one. A fourth tab means somebody rebuilt the reports
+list that already exists.
+
+| Build | What |
+|---|---|
+| **574** | **Showcase** — before/after with a drag divider, phase dock (Final / During the build), privacy toggle that *removes* the address rather than hiding it, admin add/publish/remove. Table `showcase_pairs`, bytes copied into `photos/showcase/`. |
+| **575** | **The client release** — `release_on` / `release_by`. No release renders as **In-app only**: fine across the kitchen table, not for publishing. Ticking the box without a name is refused. |
+| **576** | **Hall of Fame** — a bad install beside ours with one line on why it matters. Table `workmanship_pairs`, bytes in `photos/workmanship/`. Reads no client record by design. |
+| **577** | **Resolution** — `FULL {3840, .92}` for the slider, `DISP {1400, .82}` for the grid. One stored path, two files; the display copy is *derived* (`-d.jpg`), so pairs made before 577 fall back rather than blank. |
+| **578** | **The slider follows a mouse.** A native image drag was cancelling the pointer stream after one pixel. `-webkit-user-drag:none` on `.cr-sh-cmp img`. Touch was never affected, which is why it went unseen. |
+| **579** | **The Walk** — below. |
+| **580** | **The review screen asks before it discards work.** Back and Ask again both used to throw away an unsaved reject/re-classify/nudge with no warning — found by manual audit, not a gate. Guarded by a session-local `dirty` flag, set only by a real decision this visit; asking the AI or reopening an untouched shot still asks nothing. |
+
+### 579 — The Walk
+
+Theo: *"circling damage ai and checking first then presenting to client is a good third tab.
+Doesn't need to be a report, so new feature then."* The order in that sentence is the design.
+
+- **`api/detect.js`** (26th function) proposes **located** findings — normalized box fractions on the
+  existing `crit`/`warn`/`ok` scale. It touches no pixels: **circles are an overlay, never burned in**,
+  so the stored photograph stays the photograph the camera took.
+- **Photographs come from both** a phone (`multiple` file input) and an existing job. **Both COPY
+  their bytes into `walks/`.** Measured, not assumed: 183 of 196 `project_photos` rows carry a
+  `storage_path` and **13 are inline `data:` URIs with no storage object** — referencing would have
+  silently dropped one photo in fifteen. Deleting a job photo also removes the storage object, which
+  would blank a walk in front of a client.
+- **The review screen** is the point: accept, **nudge** (drag the box, drag the corner), change the
+  severity, or reject. **Only accepted findings are written.** `walk_shots.findings` therefore
+  *means* "seen by a person", and `reviewed_at IS NULL` means nobody has walked it.
+- **Permissions**: admins build, sales and production view — RLS in `walks_schema.sql`, not just the
+  UI. A rep sees the walks and the circles and gets no write controls.
+- Tables `walks` / `walk_shots`; `walks_schema.sql` is **applied**.
+
+**Two traps worth keeping:** `/api/detect` wants **bare base64**, not the `data:` URL `/api/caption`
+takes — copying that call verbatim fails at the model, not the fetch. And moving the selection on
+`pointerdown` must toggle classes, **never repaint**: `repaint()` replaces `innerHTML` and would
+destroy the element under the finger mid-gesture.
+
+Gates: `harness_walk.js` (67, jsdom, data contracts), `harness_showcase.js` (106),
+`harness_detect.js` (39), `render_showcase.js` (36, real Chromium — the only one that can prove a
+box lands where its fraction says).

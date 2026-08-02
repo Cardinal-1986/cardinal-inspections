@@ -5966,3 +5966,144 @@ Gates: `check_build.py` green, negative-controlled, 572 → 573. **Blast radius 
 7 blocks changed (4 style, 2 script, 1 changelog), none added or removed, and exactly 2 line diffs
 outside them — the app stamp. **Chromium:** coach dark `rgb(255,255,255)` → `rgb(20,22,25)`; coach
 light unchanged at `rgb(255,255,255)`; pricing dark `rgb(20,22,25)`.
+
+---
+
+## Build 578 — the before/after slider follows a mouse, not just a finger
+
+**One CSS declaration, and it was found by a gate rather than by reading.** The Chromium render
+harness (`scripts/render_showcase.js`, added this session) asserted that dragging the divider moves
+`--sh-split`. It went red for two runs at 49.5% and **I blamed the harness twice** — first the
+`cr-lnav-on` pin interval re-running style resolution mid-gesture, then the ordering of the test
+inside the file. Both theories were wrong, and the second one I acted on before checking.
+
+Logging the pointer stream settled it in one run:
+
+```
+pointermove   861   --sh-split 52%
+pointerdown   861   --sh-split 52%
+pointermove   833   --sh-split 52.000002%
+pointercancel   0   --sh-split 49.500002%    <- gesture killed
+lostpointercapture
+```
+
+One `pointermove`, then **`pointercancel`**: Chromium starting a native drag-and-drop of the `<img>`
+under the cursor, which cancels the pointer stream `wireSlider()` listens to.
+
+`.cr-sh-cmp` has carried `touch-action:none` and `user-select:none` since 574, so **the iPad was
+covered from day one and nothing covered a mouse.** On a laptop, grabbing the photograph rather than
+the 38px handle moved the divider about a pixel, then a ghost copy of the picture followed the
+cursor until you let go. It never showed up on Theo's phone because touch never had the fault.
+
+Fix: `-webkit-user-drag:none` on `.cr-sh-cmp img`, in the same rule block as the two declarations
+that already solve this family of problem for touch. There is no unprefixed spelling of that
+property in any engine — do not add one. Scoped to the slider only; Hall of Fame photographs stay
+draggable, which is how you drag one out to save it.
+
+**Gates:** `check_build.py` green 577 → 578, marker `-webkit-user-drag:none`, negative-controlled.
+`render_showcase.js` **26/26 green on 578 and red on 577 with exactly one `pointercancel`** — the
+assertion counts cancels separately from "the split did not move", because a stalled split has a
+dozen causes and a cancel has one. `harness_showcase.js` 105/105, `harness_detect.js` 39/39.
+
+**Two counting notes for whoever patches next.** The label regex finds **22** version strings at
+577, not the 20 CLAUDE.md records — builds 574 added two `v2026-08-02 · build 574` module banners
+the doc predates. My patch asserted `== 20` off the doc and correctly aborted; the assertion is now
+self-computing (`len(after) == len(before)`, exactly one moved). And `jsdom` is not installed in a
+fresh container — `npm install jsdom --no-save` keeps it out of `package.json`.
+
+---
+
+## Build 579 — The Walk
+
+Third tab on the Showcase. `walks_schema.sql` **applied and verified before the HTML change**
+(walks 12 cols / walk_shots 13, RLS on both, 4 policies each, 3 storage policies for `walks/`).
+All of it inside the existing `cr-show-*` blocks — **no twelfth full-screen view**, because
+`#cr-show` is already in `hideAllViews()` and `navRestore`.
+
+**The contract, and it lives in the schema rather than in the UI:** `walk_shots.findings` holds
+**only findings a human accepted**. The model's proposals live in the browser until Save; rejected
+ones are dropped, not flagged. So `reviewed_at IS NULL` means nobody has walked it, and anything in
+`findings` has been seen by a person. Present mode (580) can read that with no filtering.
+
+**Copy, don't reference — and the reason came from measuring, not reasoning.** The plan said
+reference the existing `storage_path` for job photos. Then:
+
+```
+select count(*), count(storage_path) from project_photos;   -> 196, 183
+```
+
+**Thirteen rows are inline base64 `data:` URIs with no storage object at all.** Referencing would
+have dropped one photo in fifteen from the picker and looked like it worked — the "correct code
+that does nothing" class this project has paid for twice. Deleting a job photo also removes the
+storage object, which would blank a walk weeks later in front of a client. Both sources copy;
+`origin_photo_id` keeps the provenance.
+
+**Two traps.** `/api/detect` destructures `{image, mime}` and hands `image` straight to Gemini as
+`inline_data.data` — it wants **bare base64**. `/api/caption` is passed a full `data:` URL, so
+copying that call verbatim fails at the model rather than at the fetch. And in `wireBoxes()`,
+moving the selection on `pointerdown` **toggles classes and never repaints**: `repaint()` replaces
+`innerHTML`, so the element under the finger would be destroyed and the capture lost on the first
+frame — 578's lesson arriving in a different shape, one build later.
+
+**Gates.** `check_build.py` green 578 → 579, marker `renderWalkTab`, negative-controlled.
+**`harness_walk.js` — new, 67 assertions**, running the sliced shipped module; its own negative
+control reports cleanly on a pre-579 artifact instead of crashing on a null deref.
+`harness_showcase.js` 106, `harness_detect.js` 39, **`render_showcase.js` 36 in real Chromium** —
+extended to prove a box with fractions `.25/.40/.30/.20` lands at exactly those fractions of the
+rendered stage, that crit and warn resolve to *different* colours, and that the grip is hidden on
+an unselected box. jsdom cannot make any of those three claims.
+
+**Four harness reds, all mine, all the test's fault** — worth recording because the ratio holds:
+- `SHOTS` was shared **by reference** across boots, so a successful save in one block stamped
+  `reviewed_at` onto the fixture and two later blocks silently opened an already-reviewed shot.
+  Three reds, one cause. Fixtures are deep-cloned per boot now.
+- CSSOM normalises `30.000%` to `30%`; the assertion was matching the literal string the module
+  wrote rather than the unit and the value.
+- In `harness_showcase.js`, *"Hall of Fame never reads a client record"* sliced
+  `split('function openWorkForm()')[1]` — **everything after** that function. It was sloppy from the
+  start and only failed once 579 appended a tab that legitimately reads `projects`. Now bounded to
+  `openWorkForm` → `removeWork`, with an assertion that the slice captured anything at all.
+
+**`npm install X --no-save` reinstalls from `package.json` and PRUNES anything unlisted** — installing
+`jsdom` that way silently removed `playwright` and the Chromium harness died with MODULE_NOT_FOUND.
+Install them in one command: `npm install jsdom playwright --no-save`.
+
+---
+
+## Build 580 — the review screen warns before it discards work
+
+Found by manual audit, not a gate — exactly the class of thing no assertion existed to catch
+because nothing crashes and nothing renders wrong. A person just loses work silently.
+
+**Both `Back` and `Ask again` discarded unsaved review state with no confirmation.** Concrete
+scenario: reopen an already-reviewed shot, drag a box to fix its position — that edit only
+lives in `review.list`, nothing is written until Save — then tap `Ask again` to see if the AI
+catches anything else, or just tap `Back` thinking you're done. Either one threw the change away
+silently. Same class the project already treats seriously elsewhere (scroll locks, estimate
+edits); this instance just had no test written against it because nobody had thought of the
+interaction yet.
+
+**The fix is a session-local `dirty` flag, not the persisted `edited` field.** Reusing `edited`
+was the first instinct and the wrong one: a previously-saved finding already carries
+`edited:true` from an earlier session, so reopening it would trip the guard on a shot nobody has
+touched this visit — a false positive, not a fix. `dirty` starts `false` on open and is set only
+by an actual decision this session: rejecting a finding, re-classifying severity, or finishing a
+drag (`stop()`, not `pointermove` — starting a drag isn't a decision, finishing one is). Asking
+the AI for the first time, or reopening a shot untouched, sets nothing and asks nothing.
+
+**Two things ruled out in the same pass, worth recording as much as the bug itself:**
+- Suspected `shotBlob()` reading a job photo's `projects/…` path would fail RLS, since
+  `walk_objects_read` only covers `walks/%`. Checked the real policies — a pre-existing blanket
+  `photos_read` (`bucket_id = 'photos'`, no prefix) already covers it. False alarm, confirmed by
+  query, not assumed.
+- `walk_shots.caption` is a real column with zero references in the module — dead schema
+  surface, not a bug, left as-is.
+
+**Gates.** `check_build.py` green 579 → 580, marker `review.dirty`, negative-controlled.
+`harness_walk.js` grew from 67 to **80** — the new assertions confirm the untouched-review case
+asks nothing (a guard that nags every visit is worse than no guard), that cancelling the confirm
+actually keeps the rejection intact rather than discarding anyway, and that `runDetect()` itself
+never sets `dirty` (only the three real decision points do). **Negative-controlled against 579:
+5 of the 13 new assertions correctly fail** there, confirming the harness tests the guard and
+not just its own fixtures. `harness_showcase.js` 106, `harness_detect.js` 39,
+`render_showcase.js` 36 — unaffected, confirming no regression on the surfaces those gates own.
