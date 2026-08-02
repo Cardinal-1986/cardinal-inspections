@@ -27,7 +27,18 @@ USAGE (on the Spark)
     Resumable: re-run the same command after any interruption. It reads
     state.json, skips files already on disk, and carries on.
 
-    --rendition original|web   default original (the archive), web is ~6x smaller
+    --rendition web|original   DEFAULT WEB, on Theo's call: the archive is for
+                               search, reference and exit insurance, and does not
+                               need camera-resolution copies. ~30 GB instead of
+                               ~185 GB. Presentation quality is a separate path —
+                               Showcase pairs are uploaded at 3840px from the
+                               phone (build 577) and never pass through here.
+
+                               The one consequence, stated plainly: a photograph
+                               archived at `web` can never later be made sharper
+                               than `web`. If a job is one you might put in front
+                               of a homeowner, pull that one at --rendition
+                               original while CompanyCam still exists.
     --with-coords              record each photo's lat/lon in the manifest and
                                roll every job up into jobs.jsonl for mapping.
                                OFF by default, ON when you want it — see below.
@@ -187,6 +198,40 @@ def download(url, path, tries=4):
     return False
 
 
+def jpeg_size(path):
+    """(width, height) from the JPEG header. No Pillow, no full decode.
+
+    Here so the smoke test REPORTS what a `web` rendition actually is rather
+    than taking anyone's word for it — including mine. Walk the marker chain to
+    a Start-Of-Frame and read the two 16-bit fields."""
+    try:
+        with open(path, 'rb') as f:
+            if f.read(2) != b'\xff\xd8':
+                return None
+            while True:
+                b = f.read(1)
+                while b and b != b'\xff':
+                    b = f.read(1)
+                marker = f.read(1)
+                while marker == b'\xff':
+                    marker = f.read(1)
+                if not marker:
+                    return None
+                m = marker[0]
+                # SOF0-SOF15 carry the dimensions; DHT/DAC/RST/SOS do not.
+                if 0xC0 <= m <= 0xCF and m not in (0xC4, 0xC8, 0xCC):
+                    f.read(3)                      # length (2) + precision (1)
+                    h = int.from_bytes(f.read(2), 'big')
+                    w = int.from_bytes(f.read(2), 'big')
+                    return (w, h)
+                ln = int.from_bytes(f.read(2), 'big')
+                if ln < 2:
+                    return None
+                f.seek(ln - 2, 1)
+    except Exception:
+        return None
+
+
 def load_projects(key):
     """Job id -> (name, address). Gives every photo a human folder name."""
     out, cursor, page = {}, None, 0
@@ -226,7 +271,9 @@ def load_projects(key):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dest', required=True, help='archive root, e.g. /data/cardinal/companycam')
-    ap.add_argument('--rendition', default='original', choices=['original', 'web'])
+    ap.add_argument('--rendition', default='web', choices=['web', 'original'],
+                    help="web (default): the smaller rendition, ~6x less disk. "
+                         "original: full camera resolution, ~185 GB for the account.")
     ap.add_argument('--with-coords', action='store_true')
     ap.add_argument('--layout', default='city', choices=['city', 'flat'],
                     help="city (default): Dayton-OH/123-Main-St-45402--<id>/  ·  "
@@ -279,6 +326,7 @@ def main():
     manifest = open(manifest_path, 'a', encoding='utf-8')
     jobs_path = os.path.join(dest, 'jobs.jsonl')
     jobs = {}
+    sizes = []
     started = time.time()
     total = None
 
@@ -323,6 +371,9 @@ def main():
                         continue
                     if download(url, out_file):
                         got += 1
+                        if len(sizes) < 8:
+                            d = jpeg_size(out_file)
+                            if d: sizes.append(d)
                     else:
                         failed += 1
                         print('  could not fetch %s' % photo_id)
@@ -389,6 +440,12 @@ def main():
     print('\ndownloaded %d · already had %d · skipped %d (internal or unprocessed) · failed %d'
           % (got, existing, skipped, failed))
     print('manifest: %s' % manifest_path)
+    if sizes:
+        # Measured, not assumed. If this comes back smaller than you want to put
+        # in front of a homeowner, that is the moment to reconsider --rendition.
+        longest = [max(w, h) for w, h in sizes]
+        print('rendition %r measured: longest edge %d-%d px (sampled %d)'
+              % (args.rendition, min(longest), max(longest), len(sizes)))
     if jobs:
         print('jobs with coordinates: %s (%d jobs)' % (jobs_path, len(jobs)))
     if failed:

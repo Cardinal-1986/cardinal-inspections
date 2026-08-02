@@ -46,10 +46,22 @@ sudo mkdir -p /data/cardinal/{companycam,phone/incoming,phone/sorted,showcase}
 sudo chown -R $USER /data/cardinal
 ```
 
-**Space to expect.** 61,649 originals at ~3 MB averages **≈185 GB**. The `web` rendition is
-roughly a sixth of that (~30 GB) and is still far larger than anything the app displays — worth
-considering if the NVMe is tight. Phone photos are separate: 16,000 iPhone shots run **50–80 GB**,
-much more if there are videos among them.
+**Space to expect.** The archive defaults to the **`web` rendition**, roughly **30 GB** for the
+whole account — Theo's call, and the right one: this archive exists for search, reference and exit
+insurance, not for presentation. Camera-resolution originals would be **≈185 GB** for the same
+61,649 photographs.
+
+Presentation quality is a *separate path and unaffected by this*: Showcase pairs are uploaded from
+the phone at 3840px (build 577) and never pass through the archive at all.
+
+The one consequence, stated plainly: **a photograph archived at `web` can never later be made
+sharper than `web`.** If a job is one you might put in front of a homeowner, pull that one with
+`--rendition original` while CompanyCam still exists.
+
+You will not have to take my word for what `web` means — the run prints the measured longest edge
+of the first few files it writes, read straight from the JPEG headers. Check it on the smoke test.
+
+Phone photos are separate: 16,000 iPhone shots run **50–80 GB**, much more with video.
 
 ---
 
