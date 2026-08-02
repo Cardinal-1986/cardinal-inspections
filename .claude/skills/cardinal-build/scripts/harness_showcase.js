@@ -427,6 +427,47 @@ const settle = () => new Promise(r => setTimeout(r, 30));
   }
 
 
+  /* ── 12 · The Release (build 587) — the consent gate ─────────────────── */
+  console.log('\n── share cards: the consent gate ──');
+  {
+    // A released pair gets a live Share; an unreleased one gets the teaching
+    // state. Pixels and downloads are Chromium's to prove — this harness has
+    // no canvas — so what's pinned here is the GATE, which is the feature.
+    const RELEASED = Object.assign({}, PAIRS[0],
+      { release_on: '2025-11-14', release_by: 'M. Alvarez' });
+    const h = await boot({ admin: true, rows: [RELEASED, PAIRS[1]] });
+    h.w.CardinalShowcase.open(); await settle();
+    const el = h.d.getElementById('cr-show');
+    ok('released pair: Share is live', !!el.querySelector('[data-act="share"]'));
+    ok('and no teaching note', !el.querySelector('.cr-sh-relnote'));
+    // move to the unreleased pair
+    el.querySelector('[data-pick="1"]').click(); await settle();
+    ok('unreleased pair: Share renders dead', !!el.querySelector('[data-act="sharedead"]') &&
+      !el.querySelector('[data-act="share"]'));
+    ok('with the reason in plain words',
+      /Record the client release first/.test(el.textContent));
+    // the guard holds even if the composer is invoked with no release:
+    ok('the composer itself refuses without a release',
+      /if\(!p \|\| !\(p\.release_on \|\| p\.release_by\) \|\| !amAdmin\(\)\) return;/.test(MODULE_JS));
+    // privacy is structural: the card renderer never sees the street.
+    const cardFn = MODULE_JS.slice(MODULE_JS.indexOf('function drawCard('),
+                                   MODULE_JS.indexOf('async function openShareComposer('));
+    ok('drawCard never touches the street address',
+      !cardFn.includes('p.address') && cardFn.includes('p.city'));
+    ok('pixels come through the authenticated download, not a URL',
+      MODULE_JS.includes('Promise.all([shotBlob(p.before_path), shotBlob(p.after_path)])'));
+  }
+  {
+    // Sales never see any of it — marketing is the admin's.
+    const RELEASED = Object.assign({}, PAIRS[0],
+      { release_on: '2025-11-14', release_by: 'M. Alvarez' });
+    const h = await boot({ admin: false, rows: [RELEASED] });
+    h.w.CardinalShowcase.open(); await settle();
+    const el = h.d.getElementById('cr-show');
+    ok('a rep gets no Share at all',
+      !el.querySelector('[data-act="share"]') && !el.querySelector('[data-act="sharedead"]'));
+  }
+
   /* ── 11 · resolution (build 577) ─────────────────────────────────────── */
   console.log('\n── resolution ──');
   {

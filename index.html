@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 586 &#8212; The Lens — pinch into any photograph at full resolution</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 587 &#8212; The Release — share a released before/after as a clean card for social or the website</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:587, d:'2026-08-02', t:'The Release \u2014 share cards', s:'A Showcase pair with a client release on file gains Share: pick Square, Story or Wide and one of three frames \u2014 Classic, Blackout, Kraft \u2014 and download a finished before/after card for social media or the website, or send it straight from the phone. The card names the city only, never the street, and the file carries no location data at all. A pair without a release shows the button greyed out with the reason \u2014 the consent rule is now something you can see.' },
 { b:586, d:'2026-08-02', t:'The Lens \u2014 pinch into any photograph', s:'Every photograph has been stored at full resolution since build 577 so granules and nail heads survive \u2014 and no gesture could reach that detail until now. Tap a Hall of Fame photo, or the expand button on the slider and on The Walk\u2019s review screen: the picture opens full screen with pinch, drag and double-tap zoom. In The Walk your damage marks ride along at any zoom.' },
 { b:585, d:'2026-08-02', t:'Chalk \u2014 draw your own marks', s:'The Walk\u2019s review screen gains + Mark damage: drag a box on the photograph, say what it is and how serious, and it joins the marks exactly like one you accepted from the AI. Asking the AI again now keeps your hand-drawn marks \u2014 it only refreshes its own. Works even when the AI is down, and every mark you draw is recorded as yours, which is exactly what training your own detector later needs.' },
 { b:584, d:'2026-08-02', t:'Spotlight \u2014 present mode for The Walk', s:'A Present button appears on any walk with a reviewed photo. Tap it and the screen goes true black: one finding at a time, the damage lit and everything else dark, with the marks you kept \u2014 nothing the AI proposed that you rejected. Tap the right side for the next finding, the left to go back, past the last one to finish. The address never appears on screen. Works for sales too, not just admins \u2014 presenting is the point.' },
@@ -55837,6 +55838,22 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   font-size:14px;line-height:1;cursor:pointer;font-family:inherit}
 .cr-sh-side{position:relative}
 .cr-sh-side img{cursor:zoom-in}
+
+/* ── The Release (587) — share cards ───────────────────────────────────────
+   Blackout chrome: white ink, the module's red on the primary action. The
+   frame styles below are the CARD's palette — the thing being exported —
+   not app chrome. */
+.cr-sh-btn.dead{opacity:.45;border-style:dashed;cursor:not-allowed}
+.cr-sh-relnote{flex:1 1 100%;margin:2px 0 0;font-size:11px;line-height:1.5;color:var(--sh-mut,#98A29C)}
+.cr-sh-relnote b{color:var(--sh-ink,#F2F4F2)}
+#cr-show-form .cr-sh-seg{display:inline-flex;border:1px solid rgba(242,244,242,.35);
+  border-radius:9px;overflow:hidden;margin:6px 0 4px}
+#cr-show-form .cr-sh-seg button{font:700 11.5px inherit;font-family:inherit;padding:8px 14px;
+  color:var(--sh-mut,#98A29C);background:transparent;border:0;cursor:pointer}
+#cr-show-form .cr-sh-seg button.on{background:var(--sh-ink,#F2F4F2);color:#0B0D0C}
+#cr-show-form .cr-sh-shprev{display:block;max-width:100%;height:auto;margin:12px auto 0;
+  border-radius:5px;box-shadow:0 10px 32px rgba(0,0,0,.5);background:#101312}
+#cr-show-form .cr-sh-shwrap{max-height:46vh;overflow:auto;text-align:center}
 </style>
 
 <script id="cr-show-script">
@@ -56111,7 +56128,13 @@ function renderAdmin(){
     '<button class="cr-sh-btn" data-act="add" type="button">Add a pair</button>' +
     (p ? '<button class="cr-sh-btn ghost" data-act="pub" type="button">' +
            (p.published ? 'Unpublish this one' : 'Publish this one') + '</button>' +
-         '<button class="cr-sh-btn ghost" data-act="del" type="button">Remove</button>' : '') +
+         '<button class="cr-sh-btn ghost" data-act="del" type="button">Remove</button>' +
+         ((p.release_on || p.release_by)
+           ? '<button class="cr-sh-btn" data-act="share" type="button">Share\u2026</button>'
+           : '<button class="cr-sh-btn ghost dead" data-act="sharedead" type="button" ' +
+             'title="Record the client release first">Share\u2026</button>' +
+             '<p class="cr-sh-relnote"><b>Record the client release first.</b> Until then this ' +
+             'pair shows at the kitchen table and goes nowhere else.</p>') : '') +
     '</div>';
 }
 
@@ -56212,6 +56235,7 @@ function wireBody(){
     b.onclick = function(){ if(pairs.length){ cur = (cur + 1) % pairs.length; repaint(); } };
   });
   el.querySelectorAll('[data-act="add"]').forEach(function(b){ b.onclick = openForm; });
+  el.querySelectorAll('[data-act="share"]').forEach(function(b){ b.onclick = openShareComposer; });
   el.querySelectorAll('[data-act="pub"]').forEach(function(b){ b.onclick = togglePublish; });
   el.querySelectorAll('[data-act="del"]').forEach(function(b){ b.onclick = removePair; });
   el.querySelectorAll('[data-ph]').forEach(function(b){
@@ -57589,6 +57613,171 @@ function openLens(opts){
     };
   });
   apply();
+}
+
+
+/* ── The Release (587) — share cards ───────────────────────────────────────
+   The card is drawn on a canvas from bytes fetched through shotBlob() — the
+   authenticated download the Walk already uses — never from a cross-origin
+   URL, so the canvas is never tainted and toBlob() cannot throw for origin
+   reasons. A canvas re-encode carries zero EXIF by construction. The card's
+   inputs are trade, material and CITY — p.address is never passed in. */
+var SHARE_FMT = {
+  sq: { w:1080, h:1080, label:'Square' },
+  st: { w:1080, h:1920, label:'Story' },
+  wd: { w:1200, h:630,  label:'Wide' }
+};
+var SHARE_STY = {
+  classic : { bg:'#FFFFFF', brand:'#C8202E', sub:'#555555', label:'Classic' },
+  blackout: { bg:'#0A0B0C', brand:'#9AA4AE', sub:'#6B747E', label:'Blackout' },
+  kraft   : { bg:'#E8DCC8', brand:'#4A3524', sub:'#6B5B47', label:'Kraft' }
+};
+
+/* Draw one half of the pair into a rect, cropped to cover. */
+function coverDraw(cx, img, dx, dy, dw, dh){
+  var s = Math.max(dw / img.width, dh / img.height);
+  var sw = dw / s, shh = dh / s;
+  var sx = (img.width - sw) / 2, sy = (img.height - shh) / 2;
+  cx.drawImage(img, sx, sy, sw, shh, dx, dy, dw, dh);
+}
+
+function loadBlobImage(blob){
+  return new Promise(function(resolve, reject){
+    var u = URL.createObjectURL(blob);
+    var im = new Image();
+    im.onload = function(){ resolve(im); };
+    im.onerror = function(){ URL.revokeObjectURL(u); reject(new Error('could not read the photo')); };
+    im.src = u;
+  });
+}
+
+function drawCard(imgs, p, fmtKey, styKey){
+  var F = SHARE_FMT[fmtKey], T = SHARE_STY[styKey];
+  var c = document.createElement('canvas');
+  c.width = F.w; c.height = F.h;
+  var x = c.getContext('2d');
+  x.fillStyle = T.bg; x.fillRect(0, 0, F.w, F.h);
+  var m = Math.round(F.w * 0.04);
+  var footH = Math.round(F.h * 0.10);
+  var pw = F.w - 2 * m, ph = F.h - 2 * m - footH;
+  var split = Math.round(pw * 0.5);
+  coverDraw(x, imgs.before, m, m, split, ph);
+  coverDraw(x, imgs.after, m + split, m, pw - split, ph);
+  x.fillStyle = '#FFFFFF';
+  x.fillRect(m + split - 2, m, 4, ph);
+  x.fillStyle = 'rgba(10,10,10,.55)';
+  var tagW = Math.round(F.w * 0.105), tagH = Math.round(F.h * 0.034);
+  x.fillRect(m + 10, m + 10, tagW, tagH);
+  x.fillRect(F.w - m - 10 - tagW, m + 10, tagW, tagH);
+  x.fillStyle = '#FFFFFF';
+  x.font = '700 ' + Math.round(F.w * 0.016) + 'px ui-monospace, Menlo, monospace';
+  x.textBaseline = 'middle';
+  x.fillText('BEFORE', m + 20, m + 10 + tagH / 2);
+  x.fillText('AFTER', F.w - m - tagW + 4, m + 10 + tagH / 2);
+  x.textAlign = 'center';
+  x.fillStyle = T.brand;
+  x.font = '700 ' + Math.round(F.w * 0.036) + 'px Georgia, serif';
+  x.fillText('CARDINAL ROOFING', F.w / 2, F.h - m - footH * 0.55);
+  x.fillStyle = T.sub;
+  x.font = Math.round(F.w * 0.017) + 'px -apple-system, Arial, sans-serif';
+  var bits = [];
+  if(p.trade) bits.push(TRADE_LABEL[p.trade] || p.trade);
+  if(p.material) bits.push(p.material);
+  if(p.city) bits.push(p.city + ', OH');
+  x.fillText(bits.join(' \u00b7 '), F.w / 2, F.h - m - footH * 0.18);
+  x.textAlign = 'left';
+  return c;
+}
+
+async function openShareComposer(){
+  var p = pairs[cur];
+  if(!p || !(p.release_on || p.release_by) || !amAdmin()) return;
+  ensureForm();
+  formEl.innerHTML =
+    '<div class="bx">' +
+      '<h3>Share this transformation</h3>' +
+      '<label>Format</label>' +
+      '<div class="cr-sh-seg" data-shfmt>' +
+        Object.keys(SHARE_FMT).map(function(k){
+          return '<button data-k="' + k + '"' + (k === 'sq' ? ' class="on"' : '') +
+                 ' type="button">' + SHARE_FMT[k].label + '</button>';
+        }).join('') +
+      '</div>' +
+      '<label>Frame</label>' +
+      '<div class="cr-sh-seg" data-shsty>' +
+        Object.keys(SHARE_STY).map(function(k){
+          return '<button data-k="' + k + '"' + (k === 'classic' ? ' class="on"' : '') +
+                 ' type="button">' + SHARE_STY[k].label + '</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="cr-sh-shwrap" data-shslot></div>' +
+      '<div class="err" data-err></div>' +
+      '<p class="note">City only, never the street. The saved picture carries no location ' +
+        'data at all \u2014 that is how the file is made, not a setting.</p>' +
+      '<div class="ft">' +
+        '<button class="cr-sh-btn ghost" data-act="cancel" type="button">Close</button>' +
+        (navigator.share ? '<button class="cr-sh-btn ghost" data-act="shnative" type="button">Share\u2026</button>' : '') +
+        '<button class="cr-sh-btn" data-act="shdl" type="button">Download</button>' +
+      '</div>' +
+    '</div>';
+  formEl.classList.add('open');
+  formEl.querySelector('[data-act="cancel"]').onclick = closeForm;
+
+  var state = { fmt:'sq', sty:'classic', imgs:null };
+  function redraw(){
+    if(!state.imgs) return;
+    var c = drawCard(state.imgs, p, state.fmt, state.sty);
+    c.className = 'cr-sh-shprev';
+    var slot = formEl.querySelector('[data-shslot]');
+    slot.innerHTML = '';
+    slot.appendChild(c);
+    return c;
+  }
+  formEl.querySelectorAll('[data-shfmt] button').forEach(function(b){
+    b.onclick = function(){
+      state.fmt = b.dataset.k;
+      formEl.querySelectorAll('[data-shfmt] button').forEach(function(x){ x.classList.toggle('on', x === b); });
+      redraw();
+    };
+  });
+  formEl.querySelectorAll('[data-shsty] button').forEach(function(b){
+    b.onclick = function(){
+      state.sty = b.dataset.k;
+      formEl.querySelectorAll('[data-shsty] button').forEach(function(x){ x.classList.toggle('on', x === b); });
+      redraw();
+    };
+  });
+  function toPng(cb){
+    var c = redraw();
+    if(c) c.toBlob(cb, 'image/png');
+  }
+  formEl.querySelector('[data-act="shdl"]').onclick = function(){
+    toPng(function(b){
+      if(!b) return;
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = 'cardinal-before-after.png';
+      a.click();
+    });
+  };
+  var nat = formEl.querySelector('[data-act="shnative"]');
+  if(nat) nat.onclick = function(){
+    toPng(function(b){
+      if(!b) return;
+      var f = new File([b], 'cardinal-before-after.png', { type:'image/png' });
+      try{ navigator.share({ files:[f] }).catch(function(){}); }catch(_){}
+    });
+  };
+
+  try{
+    var slot = formEl.querySelector('[data-shslot]');
+    slot.innerHTML = '<p class="cr-sh-note">Building the preview\u2026</p>';
+    var pair = await Promise.all([shotBlob(p.before_path), shotBlob(p.after_path)]);
+    state.imgs = { before: await loadBlobImage(pair[0]), after: await loadBlobImage(pair[1]) };
+    redraw();
+  }catch(e){
+    showErr(String(e && e.message ? e.message : e));
+  }
 }
 
 /* ── open / close ──────────────────────────────────────────────────────── */

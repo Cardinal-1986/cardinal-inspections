@@ -140,7 +140,16 @@ const SHOTS = [
                       then: r => Promise.resolve({ data: table(t), error: null }).then(r) };
           return q;
         },
-        storage: { from: () => ({ upload: async () => ({ error: null }) }) }
+        storage: { from: () => ({
+          upload: async () => ({ error: null }),
+          /* 587's share cards pull pixels through the authenticated download;
+             serve the same swatches the signer serves so drawCard has real
+             decodable images. */
+          download: async (path) => {
+            const u = /before/.test(path) ? imgs.before : imgs.after;
+            return { data: await (await fetch(u)).blob(), error: null };
+          }
+        }) }
       };
       /* LOCKED. The app's async boot nulls window.supa after a plain
          assignment — the skill documents this and the first run of this
@@ -335,6 +344,57 @@ const SHOTS = [
       /^rgb\(2[0-9]{2}, /.test(hof.badHeadColour), [hof.badHeadColour, hof.goodHeadColour].join(' / '));
     ok('side by side on desktop, not stacked', /\s/.test(hof.cols.trim()), hof.cols);
     await shot('04-desktop-hall-of-fame.png');
+
+    /* ── The Release (587) — the card actually draws, pixel-proven ──────── */
+    await page.click('[data-tab="showcase"]');    // Share lives on the Showcase tab
+    await page.waitForTimeout(400);
+    await page.click('[data-act="share"]');
+    await page.waitForFunction(() =>
+      !!document.querySelector('#cr-show-form canvas.cr-sh-shprev'), { timeout: 8000 }).catch(() => {});
+    const sh0 = await page.evaluate(() => {
+      const c = document.querySelector('#cr-show-form canvas.cr-sh-shprev');
+      if (!c) return null;
+      const x = c.getContext('2d');
+      const corner = x.getImageData(2, 2, 1, 1).data;        // the mat
+      const mid = x.getImageData(c.width / 2 - 60, c.height / 2, 1, 1).data;  // before half
+      return { w: c.width, h: c.height, corner: [...corner].slice(0, 3), mid: [...mid].slice(0, 3) };
+    });
+    ok('the share composer built a real 1080-square card', sh0 && sh0.w === 1080 && sh0.h === 1080,
+      sh0 && sh0.w + 'x' + sh0.h);
+    ok('Classic frame: the mat is white', sh0 && sh0.corner.join(',') === '255,255,255', sh0 && sh0.corner.join(','));
+    ok('the photograph is actually drawn inside the mat',
+      sh0 && sh0.mid.join(',') !== '255,255,255' && sh0.mid.join(',') !== '0,0,0', sh0 && sh0.mid.join(','));
+    await page.click('[data-shsty] button[data-k="kraft"]');
+    await page.waitForTimeout(300);
+    const shK = await page.evaluate(() => {
+      const c = document.querySelector('#cr-show-form canvas.cr-sh-shprev');
+      return [...c.getContext('2d').getImageData(2, 2, 1, 1).data].slice(0, 3).join(',');
+    });
+    ok('Kraft frame reskins the mat', shK === '232,220,200', shK);
+    await page.click('[data-shfmt] button[data-k="st"]');
+    await page.waitForTimeout(300);
+    const shS = await page.evaluate(() => {
+      const c = document.querySelector('#cr-show-form canvas.cr-sh-shprev');
+      return c.width + 'x' + c.height;
+    });
+    ok('Story format is 1080x1920', shS === '1080x1920', shS);
+    const [cardDl] = await Promise.all([
+      page.waitForEvent('download', { timeout: 8000 }).catch(() => null),
+      page.click('[data-act="shdl"]')
+    ]);
+    ok('Download saves a real PNG', !!cardDl && cardDl.suggestedFilename() === 'cardinal-before-after.png',
+      cardDl && cardDl.suggestedFilename());
+    await shot('09-desktop-share-card.png');
+    await page.click('#cr-show-form [data-act="cancel"]');
+    await page.waitForTimeout(200);
+    // the unreleased pair teaches instead
+    await page.click('[data-pick="1"]');
+    await page.waitForTimeout(300);
+    ok('the unreleased pair teaches the release rule', await page.evaluate(() =>
+      !!document.querySelector('#cr-show [data-act="sharedead"]') &&
+      /Record the client release first/.test(document.getElementById('cr-show').textContent)));
+    await page.click('[data-pick="0"]');
+    await page.waitForTimeout(300);
 
     /* ── The Walk (579) ───────────────────────────────────────────────────
        The one thing jsdom structurally cannot check. A circle in the wrong
