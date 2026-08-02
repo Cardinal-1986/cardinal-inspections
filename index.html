@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 563 &#8212; the Estimates page keeps the menu, and Quick Inspection is readable from the first step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 565 &#8212; the address-autocomplete retry storm is over, and an estimate can be discarded</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22702,6 +22702,24 @@ function showList() {
     }
     return { t: (r.status === 'converted' ? 'contract signed \u00b7 ' : 'accepted \u00b7 ') + r.date_label, flag: false };
   }
+  /* 565: admin-only, same gate as crew rates and payments. Theo's standing rule is
+     that the money surfaces are his and Joan's; a rep removing an estimate that was
+     already sent to a client is not a mistake worth leaving available. */
+  function creCanDiscard(){
+    try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
+  }
+  async function creDiscard(id, source){
+    if(!creCanDiscard() || !id) return;
+    if(!confirm('Discard this estimate?\n\nIt leaves the list but is kept on the record.')) return;
+    /* Both tables carry a status column — verified against the live database — so one
+       handler serves an AI draft and a manual one. */
+    var table = source === 'ai' ? 'ai_estimates' : 'manual_estimates';
+    var r = await window.supa.from(table).update({ status:'discarded' }).eq('id', id);
+    if(r && r.error){ alert('Could not discard: ' + r.error.message); return; }
+    try{ toast('Discarded'); }catch(_){}
+    cre.rows = cre.rows.filter(function(x){ return String(x.id) !== String(id); });
+    renderEst();
+  }
   function creCardHtml(r){
     const lane = CRE_LANES.find(l => l.key === creLane(r));
     const w = creWhen(r);
@@ -22710,11 +22728,28 @@ function showList() {
     return `<div class="cre-card" data-id="${r.id}" data-source="${r.source}" style="--rcn:${lane.neon}">` +
       `<div class="mid"><div class="dt">${escape(r.client)}${aiBadge}</div>` +
       `<div class="cl"><span class="po">${escape(r.number)}</span>${trades ? ' \u00b7 ' + escape(trades) : ''} \u00b7 <span class="rp">${escape(creRep(r))}</span></div></div>` +
-      `<div class="end"><span class="money">$${fmt(r.amount)}</span><span class="when${w.flag ? ' flag' : ''}">${escape(w.t)}</span></div></div>`;
+      `<div class="end"><span class="money">$${fmt(r.amount)}</span><span class="when${w.flag ? ' flag' : ''}">${escape(w.t)}</span>` +
+      /* 565: Discard. Admin-only, and it reuses the SAME soft delete the AI review
+         screen has always used — status:'discarded' — which no lane matches, so the
+         row leaves the list without anything being destroyed. */
+      (creCanDiscard() ? `<button class="cre-del" data-cre-discard="${r.id}" data-cre-src="${r.source}" title="Discard this estimate">&times;</button>` : '') +
+      `</div></div>`;
   }
   function renderEst(){
     const M = MOUNT;
     if (!M.querySelector('[data-cre-lanes]')) return;
+    /* delegated once — the lanes are re-rendered constantly, so a per-card listener
+       would leak one handler per render. */
+    if(!M.dataset.creDelWired){
+      M.dataset.creDelWired = '1';
+      M.addEventListener('click', function(e){
+        var b = e.target.closest('[data-cre-discard]');
+        if(!b) return;
+        e.stopPropagation();   /* the card itself opens the estimate */
+        e.preventDefault();
+        creDiscard(b.getAttribute('data-cre-discard'), b.getAttribute('data-cre-src'));
+      });
+    }
     const vis = creSorted(cre.rows.filter(creMatch));
     const n = creCount();
     const sub = M.querySelector('[data-cre-sub]');
@@ -31645,7 +31680,17 @@ else start();
 })();
 </script>
 
-<style id="cr-eaf-styles">#cr-estimates-mount .cr-stat[data-cr-clickable="1"]{cursor:pointer;transition:background .1s,transform .08s}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:hover{background:#f7f7f7}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:active{transform:scale(.97)}
+<style id="cr-eaf-styles">/* 565: the Discard control on an estimate card. Muted until hovered so it never
+   competes with the money, and cardinal red only on approach. */
+#cr-estimates-mount .cre-card .cre-del{
+  background:none;border:0;cursor:pointer;padding:2px 6px;margin-left:8px;
+  font:700 17px/1 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa0a8);
+  opacity:.55;border-radius:6px;transition:opacity .14s,color .14s,background .14s;
+}
+#cr-estimates-mount .cre-card .cre-del:hover{
+  opacity:1;color:#fff;background:#c8202e;
+}
+#cr-estimates-mount .cr-stat[data-cr-clickable="1"]{cursor:pointer;transition:background .1s,transform .08s}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:hover{background:#f7f7f7}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:active{transform:scale(.97)}
 /* .cr-back (build 395) — the AI Estimate and Output views always carried a
    "Back to Estimates" control, wired to showList(), but it had no CSS rule
    anywhere in the file, so it painted as bare inheriting text with no padding,
@@ -34666,6 +34711,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:565, note:'\uD83E\uDDEF Two fixes. \u2666 A background job that hooks up address autocomplete was retrying about sixty times a second on every screen, forever, because no Google Maps key is configured \u2014 tens of thousands of errors a minute, quietly eating your device. It now tries once and stops. \u2666 Estimates get a Discard button. It leaves the list but stays on the record, and only you and Joan see it. \u2666 Autocomplete itself still needs the Maps key set on the server.' },
 { build:563, note:'\uD83D\uDD27 Offline fix: opening the AI Field Manual no longer replaces what the app shows when you have no signal.' },
 { build:562, note:'\uD83D\uDCD5 The AI Field Manual is in the Resource Library \u2014 fifteen chapters on using AI in this business, plus a printable desk card. Its own section on the Library home, below the two hubs.' },
 { build:561, note:'\uD83E\uDDED Two corrections. \u2666 560 gave the menu to the estimate builder behind \u201C+ New estimate\u201D \u2014 but the Estimates item in the menu opens a different screen, and THAT is the one that was covering the menu. Fixed, along with Pricing Catalog and Claims, which had the same fault. \u2666 559 made Quick Inspection readable, but only the photo stream \u2014 the pin-the-property step you actually land on first still had the near-invisible title. It now carries the same yellow panel, so both halves match.' },
@@ -36950,8 +36996,17 @@ bubbles: true,
 }));
 });
 }catch(e){
-console.warn('[gmap] autocomplete failed on', input.id || input.name, e && e.message);
-input.dataset.crAutocomplete = '';
+/* 565: DO NOT clear the guard here. It used to be reset to '', which put the field
+   straight back in front of the requestAnimationFrame scanner — so with no Maps key
+   configured this retried at up to 60fps, forever, on every device. Theo photographed
+   the console climbing 21,335 -> 29,873 messages in the seconds between two shots.
+   Leaving it '1' means one failed attempt per field per page load.
+   Deliberately NOT a backoff ladder: loadConfig() already has one (configFailedAt),
+   and a second retry mechanism beside an existing one is a bug with a delay on it. */
+if(!window.__crGmapWarned){
+window.__crGmapWarned = 1;
+console.warn('[gmap] autocomplete unavailable:', e && e.message, '- further attempts suppressed this page load');
+}
 }
 }
 function staticMapUrl(address, opts){

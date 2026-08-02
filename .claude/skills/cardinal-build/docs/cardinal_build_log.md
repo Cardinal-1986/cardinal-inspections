@@ -5406,3 +5406,50 @@ assertion:
 Gates: `check_build.py` green, negative-controlled, 561 → 562. **Chromium 38/38**, extracting the RL
 IIFE from `index.html` on every run — the saved copy went stale the moment `showPage()` gained a
 line and reported a fixture bug as a product bug.
+
+### build 565 — the autocomplete retry storm, and Discard on an estimate
+Built on main @ 7a4a9eb (563). **564 was claimed by a concurrent session** — Theo asked me to check
+for other sessions before deploying and he was right: two builds (562, 563) had landed from another
+session while this one worked, and a third was mid-flight on 564.
+
+**1. The retry storm.** Theo's console: **21,335 messages climbing to 29,873 in the seconds between
+two photographs**, all `[gmap] autocomplete failed on … no google maps key configured`.
+
+```js
+catch(e){ console.warn(...); input.dataset.crAutocomplete = ''; }   // ← clears its own guard
+```
+
+`attachAutocomplete()` marks a field `'1'` on entry, but **the failure path cleared the mark**. A
+`requestAnimationFrame` scanner re-attaches to any field not marked `'1'` — so with no Maps key
+configured it retried **at up to 60fps, forever, on every device**. Fixed by leaving the guard set,
+and logging once per page instead of per attempt. **Deliberately not a backoff ladder** —
+`loadConfig()` already has one (`configFailedAt`), and a second retry mechanism beside an existing
+one is the mistake this file warns about.
+
+Measured, not reasoned: 3 fields × 40 frames → **563 logs 120 warnings with every guard cleared;
+565 logs 1 with every guard set.**
+
+**The missing key is not fixable from here** — `api/config.js` exists but returns no Maps key, so
+autocomplete is dead app-wide. Vercel environment variable, Theo's side. This stops the bleeding.
+
+**2. Discard on an estimate.** Theo could not progress or remove a stuck draft. **The mechanism
+already existed and was merely unreachable** — the AI-review screen has always had
+`update({status:'discarded'})`, a SOFT delete, and the lanes only match `draft` / `sent,viewed` /
+`approved,converted`, so a discarded row leaves the list on its own. The control was added to the
+list card and routed to the **same** update — extend, don't add. Both `ai_estimates` and
+`manual_estimates` carry `status` (verified against the live database), so one handler serves both.
+**Admin-only**, matching `crew_rates` / `crew_payments`.
+
+Handler is **delegated once** (`M.dataset.creDelWired`) because the lanes re-render constantly and a
+per-card listener would leak one per render, and it calls `stopPropagation()` so the click does not
+also open the estimate underneath.
+
+**Also done outside the build:** the stuck draft (`16f5deb1`, "Unknown client · EST-16F5", $21,247)
+was deleted directly from the database. It was an AI-estimator test run against **Bob DeBuilder ·
+921 Testing Way** with `project_id` NULL — which is exactly why nothing could progress it, since
+sending and converting both need a client. The delete carried guards (`project_id is null and
+sent_at is null and approved_at is null and converted_at is null`) so it could not have removed
+anything real.
+
+Gates: `check_build.py` green, negative-controlled, 563 → 565. **Chromium 5/5 behavioural** —
+the shipped `attachAutocomplete` executed against a failing `loadMaps()` across 40 frames.
