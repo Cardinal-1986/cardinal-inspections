@@ -5901,3 +5901,68 @@ Gates: `check_build.py` green, negative-controlled, 571 → 572. **Chromium, eve
 `getComputedStyle` read** (build 481: a rule can parse, balance and never apply): `left 0px → 238px`,
 `top 0px → 110px`, `z-index 9500 → 60` on all three; `max-width` 640→940, 760→940, 640→1180; and
 navigating closes Production and the coach, which 571 did not.
+
+---
+
+### build 573 — the four hardcoded-light modules finally follow the theme
+
+Theo: *"Sales floor does not have dark mode, and when im in dark mode going to sales floor starts
+really bright in light mode and has no toggle."* Then the coach, then the deck.
+
+**What it actually is.** Sales Floor's own shell (`#cr-sf`) is hardcoded **dark** (`#0d0d0e`). The
+Objections Coach that opens inside it is hardcoded **white**. One dark screen handing off to a white
+one — that is the "starts really bright".
+
+And it is four modules, not one, all with an **identical** palette and zero theme awareness:
+
+```
+cr-coach-styles    #cr-coach-mount      --cr-bg:#fff       0 data-theme, 0 rb-light
+cr-pricing-styles  #cr-pricing-mount    --cr-bg:#ffffff    0 data-theme, 0 rb-light
+cr-claims-styles   #cr-claims-mount     --cr-bg:#ffffff    0 data-theme, 0 rb-light
+cr-adj-styles      #cr-adjusters-mount  --cr-bg:#fff       0 data-theme, 0 rb-light
+```
+
+Same 18–20 tokens, four copies. **One dark palette applied to four roots**, which is the only reason
+this is a sane build. Shape copied from `cr-estimates-styles`, already converted.
+
+**Light mode ends up byte-identical to what shipped**, and the patch asserts it: every token in each
+`rb-light` block must equal the pre-patch value or the build aborts. If light changed, the conversion
+was wrong.
+
+**Contrast computed, and re-verified inside the patch** — every ink against the ground (`#141619`),
+the raised surface (`#1b1e22`) **and its own tint chip**. Lowest is 4.98:1 against a 4.5 floor.
+
+**⚠ The tokens alone did nothing, and only the PREVIEW caught it.** The coach read `--cr-bg:#141619`
+and still painted white:
+
+```js
+M.style.background = '#fff';      // cr-coach-script
+MOUNT.style.background = '#fff';  // cr-adj-script
+```
+
+Inline writes beat every stylesheet rule at any specificity — the `styleMounts()` trap. And
+`styleMounts()` **already carries the identical fix**, with a comment: *"background intentionally
+left to CSS (was hardcoded #fff inline here, which beat every…)"*. These two modules were never
+included. A gate on the stylesheet alone would have shipped this inert.
+
+**The residue split, which is the whole build.** 27 hardcoded light colours sit outside the token
+rules. **17 are `color:white` on a coloured ground** (primary buttons, toasts, scorecard) — semantic,
+correct in both themes, all left alone. **10 are `background:#fff|white` on surfaces** — converted.
+Tokenising the inks too would have turned every red button's white label into grey-on-red.
+
+**Two found, deliberately NOT changed:**
+
+- `--cr-muted-2` in **light** is `#a8a8a8` on white = **2.38:1, already below the floor today**. The
+  dark twin is 5.40. Fixing light changes a screen Theo did not report; its own build.
+- **`cr-bpa-script` is a fifth module with the same inline-white fault.** Untouched, asserted
+  byte-for-byte: stripping its inline background without giving it a dark palette would leave it with
+  no background at all.
+
+**A counting trap, again.** `M.style.background='#fff';` is byte-identical in `cr-coach-script` **and**
+`cr-bpa-script`, so a file-wide count is meaningless. Gates are scoped per block — the file's own rule,
+earned a fifth time this session (four gates tripped on comments the same patch had just written).
+
+Gates: `check_build.py` green, negative-controlled, 572 → 573. **Blast radius verified block-by-block:**
+7 blocks changed (4 style, 2 script, 1 changelog), none added or removed, and exactly 2 line diffs
+outside them — the app stamp. **Chromium:** coach dark `rgb(255,255,255)` → `rgb(20,22,25)`; coach
+light unchanged at `rgb(255,255,255)`; pricing dark `rgb(20,22,25)`.
