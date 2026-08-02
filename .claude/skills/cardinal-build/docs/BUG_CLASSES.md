@@ -1,7 +1,111 @@
 # Cardinal Resource App — Bug Classes
 
 **Failure modes already paid for. Every entry cost at least one build.**
-*Read before debugging; skim before shipping. Written at build 427. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
+*Read before debugging; skim before shipping. Written at build 427; **classes 12 and 13 added 2 Aug 2026 at build 573**. For anything else since 427, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
+
+---
+
+## 12. A guard that exists, looks right, and can never once succeed (builds 567 · 569)
+
+**The most expensive class this project has found in one session.** Two functions repainted **on
+every animation frame, forever, on every screen**. Both had a guard. Neither guard could ever be
+satisfied.
+
+**12a — comparing a source string to a serialization.**
+
+```js
+if(chip.innerHTML !== html) chip.innerHTML = html;   // html is a SOURCE string
+```
+
+`meta.icon` is inline SVG. A self-closing `<path .../>` **round-trips as `<path ...></path>`**, so
+the two are never equal. The author saw the hazard, wrote the guard, and wrote a comment explaining
+why it mattered — and it never worked. Confirmed in Chromium: **5 of 5 guarded passes wrote; 0 of 5
+after normalising the source through a detached element.**
+
+**12b — comparing against live content another module legitimately rewrites.**
+
+`wxPaint()` wrote the weather strip's `innerHTML` unconditionally. The icon is an **emoji**, so
+`metallicize` re-wraps it in `<span class="mic">` by design — measured at 4.3 `replaceChild`/sec on
+that exact element. An `innerHTML !==` guard here could never settle either, and the two would fight
+forever.
+
+**12c — the no-guard cousin, which is easy to miss.** **Assigning `textContent` emits a childList
+mutation record even when the string is identical** — the old text node is removed and a new one
+added regardless. 10 identical writes → 10 records; 10 guarded writes → 0. The landing `paint()` had
+seven such writes.
+
+**Cost: 388 DOM writes/sec, waking all 50 `document.body` observers every frame.** After: 3.3/sec.
+
+### The fix depends on the neighbours, and the two builds chose OPPOSITE shapes on purpose
+
+| | compare against | why |
+|---|---|---|
+| `paintChip()` (567) | the **live element**, source normalised through a detached node | so it can still repair a chip another module stomped |
+| `wxPaint()` (569) | a **stored signature** of the underlying data | because `metallicize` rewrites that element by design |
+
+**Copying either into the other's place reintroduces the bug.** Ask what else writes to the element
+before choosing.
+
+### How to find it — reading the source failed three times
+
+Patch `appendChild` / `insertBefore` / `replaceChild` / `innerHTML` / `textContent` / `className` on
+the prototypes **before the app's scripts run**, record `new Error().stack` on every write, and
+**sample only past a settle window** so boot writes cannot drown the signal. The top rows name the
+culprit with a line number. `loop_probe.js`, session scratchpad.
+
+⚠️ **And beware the sandbox.** 567's probe reported the landing loop fixed. It was — *in an
+environment where `api.open-meteo.com` is blocked*, so `wxCached()` always returned null and the
+looping function **never executed once**. **When a sandbox cannot reach a dependency, seed its cache
+and reproduce the production condition** — do not conclude from the path the sandbox happens to allow.
+
+---
+
+## 13. The close lever must match how the screen is shown (builds 570 · 571 · 572)
+
+`hideAllViews()` is what every navigation calls. A `position:fixed; inset:0` view **not registered
+there swaps the page underneath itself and traps the user** — the only way out is that screen's own
+×. Missed for **six** screens at once.
+
+**`BUG_CLASSES` already stated the registration rule. What it did not state is that the lever
+matters:**
+
+| shown by | screens | close with |
+|---|---|---|
+| **`display`** (markup, or `MOUNT.style.display`) | `crewsView`, the three `MOUNT_IDS`, `cr-coach-mount`, `cr-adjusters-mount` | `el.style.display='none'` |
+| **a CLASS** (`.open`, created at runtime) | `cr-sf`, `cr-pb`, `cr-est-view` | the module's `close()`, **then confirm** |
+
+**Writing `display:none` onto a class-shown element is permanent damage** — its own open path never
+clears the inline style, so the screen is dead on the second visit.
+
+**A module's `close()` can no-op without throwing.** It removes the class through the module's own
+`view` reference, which is `null` until `ensureView()` has run — so it clears the scroll lock,
+returns cleanly, and leaves the screen open. **A `catch` cannot see that.** Confirm:
+
+```js
+try{ window.CardinalEstimates.close(); }catch(_){}
+if(_ev.classList.contains('open')) _ev.classList.remove('open');
+```
+
+**The other half of the convention is `navRestore()`** — registered in `hideAllViews()` but missing
+from the history switch means the **back button walks straight past it**.
+
+### The related trap: an inline write beats every rule you can write
+
+Two modules paint `M.style.background='#fff'` in `open()`. **Tokens read dark and the page still
+painted white**, and only a **rendered preview** caught it — every stylesheet gate was green.
+`styleMounts()` already carries this exact fix with a comment saying so; those modules were never
+included. Same family as the `styleMounts()` entry in class A.
+
+### And a self-inflicted one worth naming
+
+**Five gates this session tripped on comments the same patch had just written** —
+`normalizeManual`, `openManualEstimate` (×2), `hideAllViews()`, `M.style.background`. A patch
+documents the value it changes, so a bare-identifier count finds it in its own explanation. **Scope
+assertions to the block, and assert on code *shapes* (`function foo(`, `foo(arg`) rather than bare
+names.** All five aborted before any write, which is the design working — but each cost a round.
+
+Related: `M.style.background='#fff';` is **byte-identical** in `cr-coach-script` and
+`cr-bpa-script`, so a file-wide count is meaningless. Scope to the block.
 
 ---
 
