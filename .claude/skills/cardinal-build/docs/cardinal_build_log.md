@@ -6356,3 +6356,59 @@ Gates: `check_build.py` green 581 → 582, negative-controlled. Book harness **3
 **25** of them fail against the 578 book — each naming exactly what 582 added. `h562_aibook.js`
 42/42, `h581_changelog.js` 25/25. Web ↔ markdown parity 33/33. Screenshots of all six new sections
 at 390 px and 1280 px, light and dark.
+
+---
+
+### build 583 — the Library's floating pills stop covering the book
+
+Theo, with a screenshot of chapter VII half-buried: *"take all of toc, library, manage, ask file out
+of the way ... whichever is easier."*
+
+**Five controls float over whatever Resource Library page is showing**, gated on `body.viewing-rl`
+alone:
+
+```
+#cr-rltoc-btn      TOC         left 24, bottom 24
+#cr-nachi-mgr-btn  MANAGE      left 24, bottom 78    (admin only)
+#cr-rlhome-btn     LIBRARY     left 24, bottom 133
+#cr-rltheme-btn    theme       left 24, bottom 187
+#rlAskBtn          ASK / FILE  bottom right
+```
+
+**None of them acts on the book.** Its Contents drawer is inside the iframe, it has no filed cards,
+the librarian does not answer about it, and it already follows the app theme.
+
+⚠️ **They cannot simply all be hidden, and measuring first is what found that.**
+`#insClientsView .ins-header,#resourceLibraryView .ins-header{display:none}` hides the Library
+header **everywhere** — which is *why* the pills exist at all (447: *"the old back arrow had been
+hidden by the header redesign"*). A Chromium probe against the shipped view reported
+`insHeader.vis:false` and `rlBackBtn 0×0`, so **`#cr-rlhome-btn` was the only way out of the book.**
+Hiding all five would have trapped the reader — the 570–572 class exactly.
+
+So: hide all five **and give the page back the real header**, which already carries a back button
+wired to `parentOf` and is already styled for the Library (`#resourceLibraryView .ins-header` has a
+background and border-bottom sitting unused). Specificity (1,1,1) beats the (1,1,0) that hides it,
+in any order. Chrome above the frame instead of on top of it.
+
+**⚠ The frame change I tried and reverted, because the probe caught it.** I also made
+`.rl-bookframe` flex-sized to stop the pane overscrolling. It collapsed the frame to **150px of
+844** — because `showLibrary()` sets `#resourceLibraryView`'s display **inline**, and inline beats
+every stylesheet rule at any specificity. That is the `styleMounts()` trap, and build 573's notes
+say so in as many words. Reverted; the overscroll is pre-existing and was not what was reported.
+
+**⚠ And an assertion of mine was wrong in a way worth recording.** *"Back sits above the frame"*
+failed on phone with `back.bottom=166 frame.top=0` — because `.ins-header` is `position:sticky`, so
+once the pane scrolls it pins over the frame **by design**, as it does on every other Library page.
+The assertion now measures at scroll-top and separately asserts the header IS sticky. A geometric
+claim that only holds at one scroll position is not a claim about the layout.
+
+Plus the counting trap, again: `s.count('100dvh')` read 2 where 1 was expected, because the comment
+documenting the change contained the value it changed. Assert on `min-height:100dvh`, not the bare
+string.
+
+Gates: `check_build.py` green 582 → 583, negative-controlled. New harness
+`h583_book_chrome.js` — 24 assertions at phone and desktop covering pills-hidden-on-the-book,
+pills-still-work-elsewhere, header-and-back-restored, back-actually-leaves, and
+`rl-at-book` cleared afterwards. Negative control against 582 fails on four visible pills, no header
+and a 0×0 back button. `h562_aibook.js` 42/42, `h581_changelog.js` 25/25, book harness 345/345.
+Rendered over real HTTP and screenshotted at 390 px.
