@@ -28,12 +28,28 @@ USAGE (on the Spark)
     state.json, skips files already on disk, and carries on.
 
     --rendition original|web   default original (the archive), web is ~6x smaller
-    --with-coords              also record job-site lat/lon in the manifest.
-                               OFF by default: the coordinate fence is written
-                               in three places in this repo, and you do not need
-                               it — every photo already carries its job's street
-                               address, which is better for foldering anyway.
+    --with-coords              record each photo's lat/lon in the manifest and
+                               roll every job up into jobs.jsonl for mapping.
+                               OFF by default, ON when you want it — see below.
     --limit N                  stop after N photos (use 50 for a smoke test)
+
+ABOUT --with-coords
+    The no-coordinates rule written in three places in this repo
+    (companycam_index.sql, api/companycam-sync.js, api/companycam.js) is about
+    the SUPABASE MIRROR — not carrying customers' coordinates into a second
+    online system that the whole team queries. This archive is different: it is
+    Cardinal's own hardware, and Theo asked for coordinates so finished work can
+    be matched to a homeowner's neighbourhood for marketing. That is a different
+    decision in a different place, and it is his to make.
+
+    Two things follow, and the second one matters more than it looks:
+
+    1. Knowing a coordinate is not publishing it. Use it to FIND nearby jobs;
+       show the street or the neighbourhood, not the pin.
+    2. EXIF travels inside the file. Post an original straight from this archive
+       and the house's coordinates go with it, whatever the caption says. Run
+       strip_exif.py on anything headed for a website or social — that is what
+       makes "with consent" actually safe.
 
 Standard library only. Nothing to install.
 """
@@ -208,6 +224,8 @@ def main():
 
     order = ['original', 'web'] if args.rendition == 'original' else ['web', 'original']
     manifest = open(manifest_path, 'a', encoding='utf-8')
+    jobs_path = os.path.join(dest, 'jobs.jsonl')
+    jobs = {}
     started = time.time()
     total = None
 
@@ -267,8 +285,18 @@ def main():
                     'description': p.get('description'),
                     'path': os.path.relpath(out_file, dest),
                 }
-                if args.with_coords and p.get('coordinates'):
-                    rec['coordinates'] = p.get('coordinates')
+                if args.with_coords:
+                    c = p.get('coordinates') or {}
+                    lat, lon = c.get('lat'), c.get('lon')
+                    if lat is not None and lon is not None:
+                        rec['lat'], rec['lon'] = lat, lon
+                        # Roll the job up too: one point per job is what a map
+                        # wants, and it is far less duplication than 80 photos
+                        # each carrying the same driveway.
+                        j = jobs.setdefault(pid, {'project_id': pid, 'name': name,
+                                                  'address': addr, 'lat': lat,
+                                                  'lon': lon, 'photos': 0})
+                        j['photos'] += 1
                 manifest.write(json.dumps(rec, ensure_ascii=False) + '\n')
 
                 if args.limit and (got + existing) >= args.limit:
@@ -298,10 +326,18 @@ def main():
         json.dump({'cursor': cursor, 'got': got, 'skipped': skipped,
                    'failed': failed, 'existing': existing},
                   open(state_path, 'w'))
+        if jobs:
+            # Rewritten whole each run rather than appended, so a resumed run
+            # does not leave two lines for the same job.
+            with open(jobs_path, 'w', encoding='utf-8') as jf:
+                for j in jobs.values():
+                    jf.write(json.dumps(j, ensure_ascii=False) + '\n')
 
     print('\ndownloaded %d · already had %d · skipped %d (internal or unprocessed) · failed %d'
           % (got, existing, skipped, failed))
     print('manifest: %s' % manifest_path)
+    if jobs:
+        print('jobs with coordinates: %s (%d jobs)' % (jobs_path, len(jobs)))
     if failed:
         print('re-run to retry the %d that failed' % failed)
 

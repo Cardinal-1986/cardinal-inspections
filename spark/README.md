@@ -76,9 +76,7 @@ containing the original. An archive built from the mirror would be an archive of
 **It refuses the same photos the app refuses** — anything flagged `internal` in CompanyCam, and
 anything not active/processed. The archive must not become a way around that flag.
 
-**Coordinates are off by default.** The no-coordinates decision is written in three places in this
-repo, and you don't need them: every photo already carries its job's street address, which makes a
-better folder name than a lat/lon pair ever would. `--with-coords` is there if you decide otherwise.
+**Coordinates: `--with-coords`.** See the section below — worth reading once before you turn it on.
 
 Expect several hours for the full run. Leave it in `tmux` or `screen` so closing the laptop
 doesn't kill it:
@@ -136,6 +134,67 @@ exiftool -GPSLatitude -GPSLongitude -DateTimeOriginal /data/cardinal/phone/incom
 ```
 
 If GPS is there, carry on. If it isn't, stop and fix the setting before sending the rest.
+
+---
+
+## 3 · Geolocation, for marketing with consent
+
+Theo asked for coordinates to come across so finished work can be matched to a homeowner's
+neighbourhood. They can.
+
+```bash
+python3 fetch_companycam.py --dest /data/cardinal/companycam --with-coords
+```
+
+That writes `lat`/`lon` onto each line of `manifest.jsonl` and rolls every job up into
+**`jobs.jsonl`** — one point per job with its address and photo count, which is what a map or a
+"jobs near this address" query actually wants. Far less duplication than eighty photos each
+carrying the same driveway.
+
+**On the fence.** The no-coordinates rule written into `companycam_index.sql`,
+`api/companycam-sync.js` and `api/companycam.js` is about the **Supabase mirror** — not carrying
+customers' coordinates into a second online system the whole team queries. This archive is
+Cardinal's own hardware and a different decision, and it is Theo's to make. The app's fence stays
+exactly where it is; nothing here changes it.
+
+### Where the photos can and cannot come from
+
+| Source | Coordinates? |
+|---|---|
+| **CompanyCam → Spark** | **Yes.** Every photo carries `coordinates {lat, lon}`; `--with-coords` keeps them. |
+| **Phone → Spark** | **Yes, if** Photos is set to `Keep Originals` (see above). Otherwise iOS strips GPS on the way out. |
+| **Cardinal app → Spark** | **No, and it is already too late for existing photos.** Every upload path in the app re-encodes through a canvas, which drops EXIF as a side effect. The photos in the `photos` bucket never had coordinates and cannot be made to have them retroactively. Use CompanyCam as the geo source. |
+
+### ⚠️ The part that makes "with consent" real
+
+**EXIF travels inside the file.** Post an original straight out of this archive and the house's
+latitude and longitude go with it — whatever the caption says, whatever the client agreed to. Some
+platforms strip EXIF on upload. A file served from cardinalrenovations.net does not.
+
+So keep coordinates in the archive, and publish nothing that carries them:
+
+```bash
+# what would leak right now?
+python3 strip_exif.py /data/cardinal/companycam/originals --check
+
+# clean copies for the website or social — originals untouched
+python3 strip_exif.py /data/cardinal/showcase/raw /data/cardinal/showcase/web --max 2048
+```
+
+`strip_exif.py` re-encodes from pixels only, so nothing from the source header survives, and it
+**verifies every file it writes** rather than trusting the library. It refuses to write inside the
+source folder — the archive original is never modified.
+
+It also **bakes in the rotation before discarding the metadata**. Phone photos are usually stored
+sideways with an EXIF Orientation tag telling the viewer to turn them; strip the tag blind and
+every portrait shot publishes on its side. Tested: an Orientation-6 800×600 input comes out a
+correctly-turned 600×800 with zero EXIF tags.
+
+**Two judgement calls that stay yours:** knowing a coordinate is not the same as publishing one —
+consent to use someone's photos is not automatically consent to publish their address, so prefer
+showing the street or the neighbourhood over the pin. And the release itself belongs in
+`showcase_pairs.release_on` / `release_by` in the app, so a year from now the permission can still
+be proven.
 
 ---
 
