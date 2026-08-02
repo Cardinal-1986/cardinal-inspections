@@ -5684,3 +5684,58 @@ drop policy if exists est_update on public.estimates;
 create policy est_update on public.estimates for update to authenticated
   using (true) with check (true);
 ```
+
+---
+
+### build 569 — the landing loop, actually finished
+
+**567 claimed both re-render loops were fixed. Only one was.** Theo's console after 568 deployed still
+showed `Re-render loop detected: div#landingView ~245 mutations/sec`. The chip loop was gone from that
+same console, so 567's other half landed. This is the correction.
+
+**Why the verification said green when it wasn't — the important part.** 567 guarded the seven
+unconditional `textContent` writes in `paint()`. `paint()` ends with `try{ wx(); }catch(_){ }`, and:
+
+```js
+function wx(){
+  var c = wxCached();
+  if(c){ wxPaint(c); return; }        // cache hit -> paints on EVERY call
+  fetch('https://api.open-meteo.com/...')...
+}
+```
+
+**`api.open-meteo.com` is blocked by this environment's egress policy.** With no network and empty
+localStorage, `wxCached()` returned null, the fetch failed, and `wxPaint()` never executed once. The
+probe measured a path that cannot run here and reported the loop gone — true only in a sandbox where
+the weather does not exist. **The denial was printed in the proxy status I read that same session; I
+saw `api.open-meteo.com:443` in the list and did not connect it to the module under test.**
+
+**The method fix, which matters more than this build:** `loop_probe.js` now seeds
+`localStorage['cr-wx-dayton']` with a real-shaped reading before load, reproducing the production
+condition without the blocked host. With that one line the loop reproduces instantly at 64.8/sec, the
+stack naming `wxPaint` directly. *When a sandbox cannot reach a dependency, seed its cache — do not
+conclude from the path the sandbox happens to allow.*
+
+**The bug:** `wxPaint()` assigned `el.innerHTML` unconditionally. Third instance of the same mistake
+in one chain, after `paintChip` and `paint`'s seven slots.
+
+**Why a stored signature here, when 567 deliberately refused one for the chip.** The probe shows it:
+
+```
+64.8/s  set innerHTML | ...cr-lr-wx        | wxPaint@40956 < wx@40973
+ 4.3/s  replaceChild  | ...cr-lr-wx>span.ic | metallicize@16451
+```
+
+The weather icon is an **emoji**, so `metallicize` legitimately re-wraps it in `<span class="mic">`.
+An `el.innerHTML !== html` guard could therefore never succeed and the two would fight forever — the
+chip's "guard that can never succeed", caused by a neighbouring module rather than SVG serialization.
+A signature compares intent to intent and lets metallicize's version stand. It is the **six numbers
+the markup is a pure function of**, not the markup: the identity of the reading, and small in the
+attribute.
+
+`metallicize` untouched, asserted byte-for-byte. It is not the bug.
+
+Gates: `check_build.py` green, negative-controlled, 568 → 569. **Chromium with the cache seeded:** 568
+still loops under that condition, 569 reports none; weather content byte-identical between the two;
+and — the load-bearing test, because a guard that simply froze the element would pass everything else
+— **changing the reading still repaints it** (78°/Overcast → 41°/Light snow, signature moving with it).
