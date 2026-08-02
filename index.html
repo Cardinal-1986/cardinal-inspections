@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 567 &#8212; the two screens that were redrawing themselves sixty times a second have stopped</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 568 &#8212; your saved estimates finally show up on the Estimates screen, and open when you tap them</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22334,34 +22334,36 @@ body.claim-insurance #brandLogo{
   }
 
   async function loadList(filter) {
-    const [aiRes, projRes] = await Promise.all([
+    const [aiRes, estRes] = await Promise.all([
       window.supa.from('ai_estimates')
         .select('id, created_at, updated_at, created_by, project_id, template, estimate, status, model_used')
         .order('created_at', { ascending: false })
         .limit(200),
-      /* 566: this query could never succeed. It asked `projects` for `client_name`
-         and `estimate`; the table has NEITHER — the client column is `name`, and
-         there is no `estimate` column at all. Verified against the live database.
-         Every load therefore returned HTTP 400 and the manual half of this list has
-         been silently empty since it shipped.
+      /* 568: the real source, which 566 identified and left for a decision.
+         `estimates` holds 12 real rows; `manual_estimates` (what this used to
+         reach for) and `ai_estimates` are both EMPTY, which is why this screen
+         has always looked broken — it queried the two empty tables and never the
+         full one.
 
-         Removed rather than repaired, deliberately. Repairing it would mean
-         choosing a new source, and the obvious candidates are not equivalent:
-         `manual_estimates` is EMPTY (0 rows) while `estimates` holds 12 real rows
-         in a different shape than normalizeManual() expects. Picking one is a
-         product decision Theo has not been shown, and guessing it would surface
-         twelve estimates in a list that has never displayed them.
+         Joined to `projects` for the client name via estimates_project_id_fkey,
+         so PostgREST resolves the embed.
 
-         So the list is AI-only for now — which is what it has ALWAYS been in
-         practice — and the 400 stops. normalizeManual() is left in place for
-         whoever wires the real source. */
-      Promise.resolve({ data: [] }),
+         line_items / photos / notes / payment_instructions are deliberately NOT
+         selected: one line item's description in this data is a 3 KB essay, and
+         the card renders none of it. creOpenSaved() re-reads the full row when
+         the editor opens, which also means the editor gets the CURRENT version
+         rather than whatever the list cached. */
+      window.supa.from('estimates')
+        .select('id, estimate_number, title, status, total, created_at, updated_at, created_by, project_id, projects(name, address)')
+        .eq('archived', false)
+        .order('updated_at', { ascending: false })
+        .limit(200),
     ]);
 
     const me = window.my_email?.() || '';
     const ai = (aiRes.data || []).map(r => normalizeAI(r));
-    const manual = (projRes.data || []).map(p => normalizeManual(p));
-    let all = [...ai, ...manual].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const saved = (estRes.data || []).map(r => normalizeEst(r));
+    let all = [...ai, ...saved].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     switch (filter) {
       case 'pending':   all = all.filter(r => ['draft','sent','viewed'].includes(r.status)); break;
@@ -22392,22 +22394,37 @@ body.claim-insurance #brandLogo{
     };
   }
 
-  function normalizeManual(p) {
-    const e = p.estimate || {};
+  /* 568: replaces normalizeManual(), which read a `manual_estimates` shape that
+     has never had a row in it and no writer anywhere. Deleted rather than left
+     beside this one — a second normalizer for the same concept is how this file
+     grew two of everything.
+     `total` arrives from PostgREST as a STRING ('11920.99'), so it is coerced;
+     `${fmt(r.amount)}` on a string would render but sorting by amount would
+     compare lexically and put $9,000 above $36,654. */
+  function normalizeEst(r) {
+    /* PostgREST returns a many-to-one embed as an OBJECT and a one-to-many as an
+       ARRAY. estimates->projects is many-to-one so this should be an object, but
+       that is the one thing about this query that could not be verified against
+       the live endpoint from the build environment (egress policy blocks the
+       Supabase host; the schema and rows were read through a different path).
+       Accepting both costs one line and removes the only untested assumption —
+       and an unhandled array here would render every card as 'Unknown client',
+       which is exactly the silent-inert failure this project has shipped before. */
+    const pr = (Array.isArray(r.projects) ? r.projects[0] : r.projects) || {};
     return {
-      id: p.id, source: 'manual',
-      number: e.number || fallbackNum('EST', p.id),
-      date: e.updated_at || p.updated_at,
-      date_label: fmtDate(e.updated_at || p.updated_at),
-      client: p.client_name || e.client_name || 'Unknown client',
-      address: p.address || e.client_address || '',
-      scope: truncate(e.scope_line || e.scope_summary, 140),
-      amount: e.total || 0,
-      status: e.status || 'draft',
-      priority: e.priority || 'moderate',
-      rep: (p.created_by || '').split('@')[0],
-      _createdBy: p.created_by,
-      _raw: p,
+      id: r.id, source: 'est',
+      number: r.estimate_number || fallbackNum('EST', r.id),
+      date: r.updated_at || r.created_at,
+      date_label: fmtDate(r.updated_at || r.created_at),
+      client: pr.name || 'Unknown client',
+      address: pr.address || '',
+      scope: truncate(r.title, 140),
+      amount: Number(r.total) || 0,
+      status: r.status || 'draft',
+      priority: 'moderate',
+      rep: (r.created_by || '').split('@')[0],
+      _createdBy: r.created_by,
+      _raw: r,
     };
   }
 
@@ -22620,7 +22637,11 @@ function showList() {
       if (!el) return;
       const id = el.dataset.id, source = el.dataset.source;
       if (source === 'ai') showOutput(id);
-      else if (typeof window.openManualEstimate === 'function') window.openManualEstimate(id);
+      /* 568: was `window.openManualEstimate(id)` — a function DEFINED NOWHERE in
+         this file. One reference, no definition, so every non-AI card has always
+         been inert. Wiring the query without this would have shipped twelve cards
+         that do nothing. */
+      else if (source === 'est') creOpenSaved(id);
     };
     function paintCreSub(){
       const g = creGroups().find(x => x.key === cre.cat);
@@ -22664,7 +22685,11 @@ function showList() {
   function creLane(r){ const l = CRE_LANES.find(x => x.statuses.includes(r.status)); return l ? l.key : 'Unsent'; }
   function creDays(r){ return Math.max(0, Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)); }
   function creProject(r){
-    const pid = r.source === 'manual' ? r.id : (r._raw && r._raw.project_id);
+    /* 568: was `r.source === 'manual' ? r.id : ...` — correct when a manual row
+       WAS a project, so its id was a project id. No row can carry source
+       'manual' any more, and an `est` row's id is an ESTIMATE id, so that branch
+       would have looked up the wrong table's key and silently found no trades. */
+    const pid = r._raw && r._raw.project_id;
     return (window.cacheProjects || []).find(p => p.id === pid) || null;
   }
   function creTrades(r){
@@ -22720,13 +22745,41 @@ function showList() {
   function creCanDiscard(){
     try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
   }
+  /* 568: open a saved estimate in the editor that already exists.
+     CardinalEstimates.openEditor(project, existing) takes an optional second
+     argument and rebuilds its state from exactly the columns `estimates` has, so
+     nothing new had to be written to make an estimate openable.
+     ⚠ openEditor is defined FIVE times in this file; the one exported on
+     CardinalEstimates is the editor module's. Grep the block, not the name.
+     The full row is re-read here rather than carried in the list — see the
+     select() in loadList() for why. */
+  async function creOpenSaved(id){
+    const est = window.CardinalEstimates;
+    if(!est || typeof est.openEditor !== 'function'){
+      alert('The estimate editor has not loaded yet — try again in a moment.');
+      return;
+    }
+    let r;
+    try{ r = await window.supa.from('estimates').select('*').eq('id', id).maybeSingle(); }
+    catch(e){ alert('Could not open: ' + (e && e.message ? e.message : e)); return; }
+    if(r && r.error){ alert('Could not open: ' + r.error.message); return; }
+    if(!r || !r.data){ alert('That estimate is no longer there.'); return; }
+    est.openEditor(r.data.project_id, r.data);
+  }
   async function creDiscard(id, source){
     if(!creCanDiscard() || !id) return;
     if(!confirm('Discard this estimate?\n\nIt leaves the list but is kept on the record.')) return;
     /* Both tables carry a status column — verified against the live database — so one
        handler serves an AI draft and a manual one. */
-    var table = source === 'ai' ? 'ai_estimates' : 'manual_estimates';
-    var r = await window.supa.from(table).update({ status:'discarded' }).eq('id', id);
+    /* 568: was routed to `manual_estimates`, which is empty and has no writer.
+       `estimates` carries its own soft delete — the `archived` boolean — and the
+       editor's loadForProject() already filters on it, as does loadList() above.
+       Reusing that beats inventing a status:'discarded' the table has never held.
+       Hard delete stays where it is: deleteEstimate() is still the only thing
+       that destroys an estimate. */
+    var r = source === 'est'
+      ? await window.supa.from('estimates').update({ archived:true }).eq('id', id)
+      : await window.supa.from('ai_estimates').update({ status:'discarded' }).eq('id', id);
     if(r && r.error){ alert('Could not discard: ' + r.error.message); return; }
     try{ toast('Discarded'); }catch(_){}
     cre.rows = cre.rows.filter(function(x){ return String(x.id) !== String(id); });
@@ -34743,6 +34796,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:568, note:'\uD83D\uDCC4 The Estimates screen shows your estimates. All twelve of them \u2014 Dan Thompson, Kitty Hawk, Kim Guy, Betty Mann \u2014 have been saved in the system the whole time; the screen was reading two other tables, both of which are empty. \u2666 They sort into Drafts and Sent automatically. \u2666 Tap one to open it in the estimate editor, which never worked before. \u2666 The \u00D7 button files one away without deleting it; you and Joan only.' },
 { build:567, note:'\uD83E\uDDEF The app was quietly redrawing two things sixty times a second, on every screen, forever \u2014 the CRM chip in the header and the landing page greeting. \u2666 Nothing looked wrong, but the whole app was doing that work constantly: it drained battery, made phones warm and made everything feel half a step slow. \u2666 Both now redraw only when something has actually changed. Nothing looks different \u2014 it just stops happening.' },
 { build:566, note:'\uD83E\uDDF9 The estimates list was asking the server for two columns that do not exist, so every single load came back as an error. It has been failing quietly since the day it shipped. The bad request is gone.' },
 { build:565, note:'\uD83E\uDDEF Two fixes. \u2666 A background job that hooks up address autocomplete was retrying about sixty times a second on every screen, forever, because no Google Maps key is configured \u2014 tens of thousands of errors a minute, quietly eating your device. It now tries once and stops. \u2666 Estimates get a Discard button. It leaves the list but stays on the record, and only you and Joan see it. \u2666 Autocomplete itself still needs the Maps key set on the server.' },

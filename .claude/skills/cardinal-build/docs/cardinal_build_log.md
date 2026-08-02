@@ -5557,3 +5557,70 @@ class, chip serialized HTML, chip text, SVG count, caret, body portal class, all
 child counts — to be **identical**. All green. The build is invisible by design; the only way it
 could be wrong is by having stopped painting something real, which is what that harness exists to
 catch.
+
+---
+
+### build 568 — the twelve real estimates finally reach the Estimates screen
+
+566 removed a query that could never succeed and left the list AI-only, saying the real source was a
+product decision Theo had not been shown. He said wire it up. Measured against the live database
+first, not assumed:
+
+```
+estimates          12 rows, 0 archived   <- real work, invisible since it shipped
+manual_estimates    0 rows               <- what the list was built to read
+ai_estimates        0 rows               <- what the list has actually been reading
+```
+
+**The screen has always been empty for the best possible reason: both tables it queried are empty,
+and the one with the data was never queried.** Dan Thompson, Kitty Hawk Realty, Kimberly Guy, Kim
+Guy, Betty Mann — totals $1,820 to $36,654, all created by theo@.
+
+**The status vocabulary already matched, which is what made this small.** Live `estimates.status` is
+exactly `draft` and `sent`; the lanes already read `['draft']` / `['sent','viewed']` /
+`['approved','converted']`. Nothing mapped, nothing invented, lanes untouched. The Accepted lane is
+empty until something is accepted — correct, not broken.
+
+**The card click was a dead stub, and wiring the query alone would have shipped twelve inert cards.**
+
+```js
+else if (typeof window.openManualEstimate === 'function') window.openManualEstimate(id);
+```
+
+`window.openManualEstimate` is **defined nowhere** — one reference, no definition. Prime doctrine,
+same class as the manual-estimates stub at 314. The real target already existed too:
+`CardinalEstimates.openEditor(project, existing)` takes an optional second argument and rebuilds the
+editor from exactly the columns `estimates` has. **Nothing new was written to make an estimate
+openable.** ⚠ `openEditor` is defined **five** times (19187, 28766, 31026, 37429, 38841); the exported
+one is 38841. A name is not a contract.
+
+**Discard now uses the table's own soft delete.** 565 routed anything non-AI to `manual_estimates` —
+empty, no writer. `estimates` carries `archived`, and the editor's `loadForProject()` already filters
+on it, as does the new list query. One mechanism. `deleteEstimate()` remains the only hard delete.
+
+`normalizeManual()` deleted rather than left beside `normalizeEst()` — a second normalizer for one
+concept is how this file grew two of everything. `creProject()`'s `source === 'manual'` branch went
+with it: an `est` row's id is an ESTIMATE id, so that branch would have looked up the wrong key and
+silently found no trades.
+
+**`total` is coerced with `Number()`.** PostgREST sends numeric as a string, and the harness proves
+the raw strings really do sort wrong: `34050.00 > 2560.00 > 1820.00 > 11920.99` — the second-largest
+estimate sorts last.
+
+**⚠ What could NOT be verified from here.** Egress policy blocks `yipslubcptjoarblzbpl.supabase.co`,
+so the PostgREST call was never made live (the schema and rows came through the Supabase connector, a
+different path). The one untested assumption is whether the `projects` embed returns an object or an
+array. `normalizeEst()` accepts **both** — one line, and an unhandled array would have rendered every
+card as "Unknown client", which is precisely the silent-inert failure this project has shipped before.
+
+**Also flagged, not changed:** `estimates` RLS has `est_update USING (true)` — any signed-in user can
+update any estimate, including Discard. Pre-existing, and a permissions decision for Theo.
+
+**Three gate-vs-own-comment collisions in one build.** `normalizeManual`, then `openManualEstimate`
+twice — each time the assertion matched the explanatory comment the same patch had just written.
+CLAUDE.md's "counting values inside your own comments", earned three times in an hour. All aborted
+before any write, which is the design working.
+
+Gates: `check_build.py` green, negative-controlled, 567 → 568. Harness runs the **shipped**
+`normalizeEst`, `creProject` and `creLane` (extracted by brace-matching, not re-implemented) against
+**real row shapes read out of the live table** — 19 assertions, all green.
