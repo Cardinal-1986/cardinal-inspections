@@ -238,9 +238,15 @@ const view = (() => {
      utf-8 em-dash and middot look like when decoded as latin-1 */
   ok('no mojibake in the served bytes', !/Ã¢â‚¬|Ã‚Â·/.test(raw));
   ok('the em-dash survives as one character', /A field manual — prompting/.test(doc));
-  ok('the book still carries all fifteen chapters',
-     (doc.match(/<section class="chapter[^"]*" data-ch="/g) || []).length === 19,
+  ok('the book still carries every section',
+     (doc.match(/<section class="chapter[^"]*" data-ch="/g) || []).length === 20,
      (doc.match(/<section class="chapter[^"]*" data-ch="/g) || []).length + ' sections');
+  /* the commands page has to survive the wrap — its content is mostly inside
+     .term blocks, which is exactly the sort of thing an over-eager escape would
+     mangle without failing anything structural */
+  ok('the served book carries the commands page',
+     /data-ch="commands"/.test(doc) && /find ~ -iname/.test(doc));
+  ok('and its shell redirection survived intact', /printf '%h\\n'/.test(doc));
   /* it has to be SERVED for the iframe to load — so it must not be ignored */
   const vi = fs.readFileSync('/home/user/cardinal-inspections/.vercelignore', 'utf8');
   ok('ai-field-manual.html is not excluded from the deploy',
