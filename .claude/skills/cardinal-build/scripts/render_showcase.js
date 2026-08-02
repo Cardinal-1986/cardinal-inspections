@@ -1,0 +1,343 @@
+/* Render the Showcase in a REAL browser and check the rules actually apply.
+ *
+ * WHY THIS EXISTS. jsdom does not resolve var() inside shorthands and does not
+ * do the cascade the way an engine does. This project has shipped three bugs
+ * that every mechanical gate passed:
+ *   build 481 — a rule that parsed, balanced and lost to a more specific
+ *               neighbour, so the button rendered solid red instead of ghost
+ *   build 573 — two modules painting background:#fff inline from JS; the
+ *               tokens read dark and the page painted white
+ *   and a palette that shipped to every preview and never to the app
+ *
+ * So: open index.html in Chromium at desktop width, open the Showcase, and ask
+ * getComputedStyle what actually won. Screenshots go beside the report so a
+ * human can look at the thing rather than read a claim about it.
+ *
+ *   node render_showcase.js [path-to-index.html] [outdir]
+ */
+const path = require('path');
+const fs = require('fs');
+const { chromium } = require('playwright');
+
+const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const OUT = process.argv[3] || '/tmp/showcase-render';
+fs.mkdirSync(OUT, { recursive: true });
+
+/* Playwright's screenshot waits on document.fonts.ready, which never settles
+   here: the page declares faces whose files are blocked, and a 204 leaves the
+   FontFace pending forever. CDP captures the frame as it stands, which is what
+   we want anyway — the point is to see what the engine painted. */
+async function capture(page, file) {
+  try {
+    const cdp = await page.context().newCDPSession(page);
+    const { data } = await cdp.send('Page.captureScreenshot',
+      { format: 'png', fromSurface: true, captureBeyondViewport: false });
+    fs.writeFileSync(file, Buffer.from(data, 'base64'));
+    await cdp.detach();
+    return true;
+  } catch (e) {
+    console.log('  (capture failed: ' + String(e.message).slice(0, 70) + ')');
+    return false;
+  }
+}
+
+let fails = 0, passes = 0;
+const ok = (name, cond, extra) => {
+  if (cond) { passes++; console.log('  PASS  ' + name); }
+  else { fails++; console.log('  FAIL  ' + name + (extra !== undefined ? '  → ' + extra : '')); }
+};
+
+/* Two curated pairs, shaped like real rows. The images are data: URIs so the
+   render needs no network and no signed URLs — what is under test is the CSS
+   and the layout, not the storage path. */
+function swatch(hex, w, h, label) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+    <rect width="100%" height="100%" fill="${hex}"/>
+    <g opacity="0.22" fill="#000">${
+      Array.from({length: 14}, (_, r) =>
+        `<rect x="0" y="${r * (h / 14)}" width="${w}" height="${h / 28}"/>`).join('')
+    }</g>
+    <text x="50%" y="50%" fill="#fff" font-family="sans-serif" font-size="64"
+          text-anchor="middle" dominant-baseline="middle" opacity="0.85">${label || ''}</text></svg>`;
+  return 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64');
+}
+
+const PAIRS = [
+  { id: 'aaaaaaaa-1111-2222-3333-444444444444', address: '123 Main St', city: 'Dayton',
+    trade: 'roof', material: 'Owens Corning Duration — Onyx Black', completed_on: '2025-11-04',
+    before_path: 'showcase/a/before.jpg', build_path: 'showcase/a/build.jpg',
+    after_path: 'showcase/a/after.jpg', score: 98, published: true,
+    release_on: '2025-11-14', release_by: 'M. Alvarez' },
+  { id: 'bbbbbbbb-5555-6666-7777-888888888888', address: '45 Oakwood Ave', city: 'Kettering',
+    trade: 'siding', material: 'James Hardie — Iron Gray', completed_on: '2025-08-19',
+    before_path: 'showcase/b/before.jpg', build_path: null,
+    after_path: 'showcase/b/after.jpg', score: 92, published: true }
+];
+const WORK = [
+  { id: 'w1', title: 'High-nailing', trade: 'roof',
+    lesson: 'Nails above the line pin nothing. First straight-line wind lifts the course.',
+    bad_path: 'workmanship/w1/bad.jpg', bad_caption: '3 nails, 35 mm high. Voids the wind warranty on day one.',
+    good_path: 'workmanship/w1/good.jpg', good_caption: 'Four fasteners through both courses, seated on the line.',
+    published: true }
+];
+
+(async () => {
+  /* The image ships Chromium at a build the npm playwright does not expect, so
+     point at it rather than downloading a second copy (the environment says
+     never run `playwright install`). */
+  const CHROME = process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+  const browser = await chromium.launch(
+    require('fs').existsSync(CHROME) ? { executablePath: CHROME } : {});
+
+  async function open(width, height, tag) {
+    const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2 });
+    const errors = [];
+    page.on('pageerror', e => errors.push(String(e.message || e)));
+
+    // Nothing may reach the network: no Supabase, no Google, no CDN.
+    await page.route('**/*', route => {
+      const u = route.request().url();
+      if (u.startsWith('file://')) return route.continue();
+      /* fulfil rather than abort: an aborted request can leave
+         document.fonts.ready pending, and page.screenshot() waits on it. */
+      return route.fulfill({ status: 204, body: '' });
+    });
+
+    await page.goto('file://' + path.resolve(FILE), { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2500);   // let the app's own boot settle and give up
+
+    await page.evaluate(({ pairs, work, imgs }) => {
+      /* Stub the client the module reads at call time, and the signer. The
+         module is under test; its data source is not. */
+      const table = t => (t === 'workmanship_pairs' ? work : pairs);
+      const supa = {
+        from(t) {
+          const q = { select: () => q, order: () => q, eq: () => q,
+                      insert: () => q, update: () => q, delete: () => q,
+                      then: r => Promise.resolve({ data: table(t), error: null }).then(r) };
+          return q;
+        },
+        storage: { from: () => ({ upload: async () => ({ error: null }) }) }
+      };
+      /* LOCKED. The app's async boot nulls window.supa after a plain
+         assignment — the skill documents this and the first run of this
+         harness walked straight into it, rendering the empty state. */
+      Object.defineProperty(window, 'supa', { value: supa, writable: false, configurable: true });
+      Object.defineProperty(window, 'is_admin', { value: () => true, writable: false, configurable: true });
+      window.signedPhotoMap = async paths => {
+        const out = {};
+        paths.forEach(p => {
+          if (/before/.test(p)) out[p] = imgs.before;
+          else if (/build/.test(p)) out[p] = imgs.build;
+          else if (/bad/.test(p)) out[p] = imgs.bad;
+          else if (/good/.test(p)) out[p] = imgs.good;
+          else out[p] = imgs.after;
+        });
+        return out;
+      };
+      if (window.CardinalShowcase) window.CardinalShowcase.reload = undefined;
+      /* Simulate a signed-in user. #landingView is fixed, inset:0, z-150 and is
+         NOT hidden by hideAllViews() — it is dismissed by an explicit
+         display:none on sign-in. Headless we never sign in, so it stays visible
+         underneath and Playwright's actionability check reports it intercepting
+         clicks. Not a bug in the module; the harness was simply photographing a
+         state no signed-in rep is ever in. */
+      var lv = document.getElementById('landingView');
+      if (lv) lv.style.display = 'none';
+    }, { pairs: PAIRS, work: WORK, imgs: {
+      before: swatch('#6E655C', 1600, 1000, 'BEFORE'), after: swatch('#22252A', 1600, 1000, 'AFTER'),
+      build:  swatch('#55606A', 1600, 1000, 'BUILD'),  bad:   swatch('#8A3B3B', 1200, 750, 'BAD'),
+      good:   swatch('#2F6B43', 1200, 750, 'OURS')
+    }});
+
+    const hasApi = await page.evaluate(() => !!(window.CardinalShowcase && window.CardinalShowcase.open));
+    if (!hasApi) { console.log('  (CardinalShowcase never registered — the module did not run)'); }
+    else {
+      await page.evaluate(() => window.CardinalShowcase.open());
+      await page.waitForTimeout(1200);
+    }
+    return { page, errors, hasApi };
+  }
+
+  /* ── desktop, with the left nav on ─────────────────────────────────────── */
+  console.log('\n── desktop 1440×900, body.cr-lnav-on ──');
+  {
+    const { page, errors, hasApi } = await open(1440, 900, 'desktop');
+    ok('the module registered and opened', hasApi);
+
+    /* Count pointercancel. A cancelled gesture is how this failure presented,
+       and it is worth naming separately from "the split did not move" — the
+       split not moving has a dozen possible causes, a cancel has one. */
+    await page.evaluate(() => {
+      window.__cancels = 0;
+      document.addEventListener('pointercancel', () => { window.__cancels++; }, true);
+    });
+
+    /* 572 gates the desktop treatment on body.cr-lnav-on, which the nav script
+       sets ONLY once the menu has really mounted. In a headless file:// load
+       with no session the menu never mounts, so the class is stripped again
+       within a frame — the first run of this harness read 640px/9500 and looked
+       like the rules had failed. They had not.
+       So: add the class and read the computed style in the SAME synchronous
+       block. getComputedStyle forces layout, so this measures the rule with the
+       class present, which is the question actually worth asking. Whether the
+       class gets SET is the nav module's job, proven separately at 572. */
+    const m = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      if (!el) return null;
+      const wrap = el.querySelector('.cr-sh-wrap');
+      document.body.classList.add('cr-lnav-on');
+      const cs = getComputedStyle(el);
+      const ws = getComputedStyle(wrap);
+      const cmp = el.querySelector('[data-cmp]');
+      const before = el.querySelector('[data-role="before"]');
+      const card = el.querySelector('[data-pick="0"] img');
+      const rel = el.querySelector('.cr-sh-rel-b');
+      return {
+        display: cs.display, zIndex: cs.zIndex, left: cs.left, top: cs.top,
+        bg: cs.backgroundColor, colour: cs.color,
+        wrapMax: ws.maxWidth,
+        cmpW: cmp ? Math.round(cmp.getBoundingClientRect().width) : 0,
+        beforeClip: before ? getComputedStyle(before).clipPath : '',
+        cardSrcIsDisplay: card ? /-d\.jpg|1200|1600/.test(card.getAttribute('src') || '') : false,
+        relClass: rel ? rel.className : '', relText: rel ? rel.textContent.trim() : '',
+        tabs: el.querySelectorAll('[data-tab]').length,
+        bodyOverflow: document.body.style.overflow,
+        classStuck: document.body.classList.contains('cr-lnav-on')
+      };
+    });
+
+    ok('#cr-show exists and is shown', m && m.display === 'block', m && m.display);
+
+    /* The build-481 class: a rule that parses and never applies. This is the
+       assertion jsdom structurally cannot make. */
+    ok('the 572 desktop width rule WINS (1180px)', m && m.wrapMax === '1180px', m && m.wrapMax);
+    ok('the 572 z-index drop WINS (60, not 9500)', m && m.zIndex === '60', m && m.zIndex);
+    ok('the overlay is inset from the left for the nav', m && m.left !== '0px', m && m.left);
+
+    /* The 448-449 class: a token stripped at runtime leaves a surface
+       transparent and the page behind ghosts through. */
+    ok('background actually resolved — not transparent',
+      m && m.bg !== 'rgba(0, 0, 0, 0)' && m.bg !== 'transparent', m && m.bg);
+    ok('text colour resolved', m && m.colour !== 'rgba(0, 0, 0, 0)', m && m.colour);
+
+    ok('the comparison got real width', m && m.cmpW > 600, m && m.cmpW);
+    ok('the before pane is clipped (the slider works at all)',
+      m && /inset\(/.test(m.beforeClip), m && m.beforeClip);
+    ok('the release badge rendered green for a cleared pair',
+      m && /\bok\b/.test(m.relClass) && /Alvarez/.test(m.relText), m && m.relText);
+    ok('both tabs present', m && m.tabs === 2, m && m.tabs);
+    ok('module did not touch body.style.overflow', m && m.bodyOverflow === '', JSON.stringify(m && m.bodyOverflow));
+    ok('no uncaught page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
+
+    /* Hold body.cr-lnav-on on. The nav script strips it within a frame here
+       because the menu never mounts in a headless file:// load; pinning it is
+       how we photograph the desktop treatment a rep actually sees. The rule
+       itself is proven above by the same-tick computed-style reads, not by
+       this. */
+    await page.evaluate(() => {
+      window.__pin = setInterval(() => document.body.classList.add('cr-lnav-on'), 16);
+    });
+    await page.waitForFunction(() => {
+      const c = document.querySelector('[data-cmp]');
+      return c && c.getBoundingClientRect().width > 600;
+    }, { timeout: 10000 }).catch(() => {});
+    await page.waitForTimeout(500);
+
+    const wide = await page.evaluate(() =>
+      getComputedStyle(document.querySelector('.cr-sh-wrap')).maxWidth);
+    ok('pinned nav class gives the wide desktop column', wide === '1180px', wide);
+
+    const shot = n => capture(page, path.join(OUT, n));
+    await shot('01-desktop-showcase.png');
+
+    /* THE MOUSE DRAG, and it is a real regression test, not a formality.
+       This failed for two runs and I twice blamed the harness — first the pin
+       interval above, then the ordering. Both theories were wrong. Logging the
+       pointer stream showed pointerdown → ONE pointermove → pointercancel:
+       Chromium was starting a native image drag-and-drop off the <img>, which
+       cancels the pointer stream. touch-action:none already covered the iPad;
+       nothing covered a mouse. Build 578 added -webkit-user-drag:none to
+       .cr-sh-cmp img. Remove it and this goes red again. */
+    const bb = await page.locator('[data-cmp]').boundingBox();
+    await page.mouse.move(bb.x + bb.width * 0.52, bb.y + bb.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(bb.x + bb.width * 0.22, bb.y + bb.height / 2, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForTimeout(250);
+    const drag = await page.evaluate(() => ({
+      split: getComputedStyle(document.querySelector('[data-cmp]'))
+               .getPropertyValue('--sh-split').trim(),
+      cancels: window.__cancels || 0
+    }));
+    ok('dragging the divider moves the split', drag.split && parseFloat(drag.split) < 40, drag.split);
+    ok('the gesture is never cancelled by a native image drag', drag.cancels === 0, drag.cancels);
+    await shot('02-desktop-dragged.png');
+
+
+    // privacy
+    await page.click('[data-act="priv"]');
+    await page.waitForTimeout(300);
+    const priv = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      return { onClass: el.classList.contains('priv'), text: el.innerText };
+    });
+    ok('privacy on removes the street address from the rendered text',
+      priv.onClass && !/123 Main St/.test(priv.text));
+    ok('privacy keeps the city', /Dayton/.test(priv.text));
+    await shot('03-desktop-privacy.png');
+    await page.click('[data-act="priv"]');
+
+    // hall of fame
+    await page.click('[data-tab="work"]');
+    await page.waitForTimeout(700);
+    const hof = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      const sides = [...el.querySelectorAll('.cr-sh-side')];
+      return {
+        n: sides.length,
+        badHeadColour: sides[0] ? getComputedStyle(sides[0].querySelector('.h')).color : '',
+        goodHeadColour: sides[1] ? getComputedStyle(sides[1].querySelector('.h')).color : '',
+        cols: getComputedStyle(el.querySelector('.cr-sh-wk-g')).gridTemplateColumns
+      };
+    });
+    ok('Hall of Fame renders both sides', hof.n === 2, hof.n);
+    ok('bad side is red, good side is green — and they differ',
+      hof.badHeadColour !== hof.goodHeadColour &&
+      /^rgb\(2[0-9]{2}, /.test(hof.badHeadColour), [hof.badHeadColour, hof.goodHeadColour].join(' / '));
+    ok('side by side on desktop, not stacked', /\s/.test(hof.cols.trim()), hof.cols);
+    await shot('04-desktop-hall-of-fame.png');
+
+    await page.close();
+  }
+
+  /* ── phone: must be byte-for-byte as it shipped, no lnav class ─────────── */
+  console.log('\n── phone 390×844, no lnav ──');
+  {
+    const { page, errors } = await open(390, 844, 'phone');
+    const m = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      /* deliberately WITHOUT the class — a phone must never get these rules */
+      const ws = getComputedStyle(el.querySelector('.cr-sh-wrap'));
+      return { zIndex: getComputedStyle(el).zIndex, left: getComputedStyle(el).left,
+               wrapMax: ws.maxWidth,
+               scrollW: document.documentElement.scrollWidth,
+               clientW: document.documentElement.clientWidth };
+    });
+    ok('phone keeps the original z-index (9500)', m.zIndex === '9500', m.zIndex);
+    ok('phone is not inset', m.left === '0px', m.left);
+    ok('phone keeps the 640px column', m.wrapMax === '640px', m.wrapMax);
+    ok('no horizontal overflow', m.scrollW <= m.clientW + 1, m.scrollW + ' vs ' + m.clientW);
+    ok('no uncaught page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
+    await capture(page, path.join(OUT, '05-phone-showcase.png'));
+    await page.close();
+  }
+
+  await browser.close();
+  console.log('\n' + '─'.repeat(58));
+  console.log((fails === 0 ? 'GREEN' : 'RED') + ` — ${passes} passed, ${fails} failed`);
+  console.log('screenshots: ' + OUT);
+  console.log('This checks that rules APPLY and colours RESOLVE. Whether the');
+  console.log('result looks right is still Theo\'s call.');
+  process.exit(fails === 0 ? 0 : 1);
+})().catch(e => { console.error('RENDER CRASH', e); process.exit(2); });

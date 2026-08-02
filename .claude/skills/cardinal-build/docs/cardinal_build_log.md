@@ -5966,3 +5966,47 @@ Gates: `check_build.py` green, negative-controlled, 572 → 573. **Blast radius 
 7 blocks changed (4 style, 2 script, 1 changelog), none added or removed, and exactly 2 line diffs
 outside them — the app stamp. **Chromium:** coach dark `rgb(255,255,255)` → `rgb(20,22,25)`; coach
 light unchanged at `rgb(255,255,255)`; pricing dark `rgb(20,22,25)`.
+
+---
+
+## Build 578 — the before/after slider follows a mouse, not just a finger
+
+**One CSS declaration, and it was found by a gate rather than by reading.** The Chromium render
+harness (`scripts/render_showcase.js`, added this session) asserted that dragging the divider moves
+`--sh-split`. It went red for two runs at 49.5% and **I blamed the harness twice** — first the
+`cr-lnav-on` pin interval re-running style resolution mid-gesture, then the ordering of the test
+inside the file. Both theories were wrong, and the second one I acted on before checking.
+
+Logging the pointer stream settled it in one run:
+
+```
+pointermove   861   --sh-split 52%
+pointerdown   861   --sh-split 52%
+pointermove   833   --sh-split 52.000002%
+pointercancel   0   --sh-split 49.500002%    <- gesture killed
+lostpointercapture
+```
+
+One `pointermove`, then **`pointercancel`**: Chromium starting a native drag-and-drop of the `<img>`
+under the cursor, which cancels the pointer stream `wireSlider()` listens to.
+
+`.cr-sh-cmp` has carried `touch-action:none` and `user-select:none` since 574, so **the iPad was
+covered from day one and nothing covered a mouse.** On a laptop, grabbing the photograph rather than
+the 38px handle moved the divider about a pixel, then a ghost copy of the picture followed the
+cursor until you let go. It never showed up on Theo's phone because touch never had the fault.
+
+Fix: `-webkit-user-drag:none` on `.cr-sh-cmp img`, in the same rule block as the two declarations
+that already solve this family of problem for touch. There is no unprefixed spelling of that
+property in any engine — do not add one. Scoped to the slider only; Hall of Fame photographs stay
+draggable, which is how you drag one out to save it.
+
+**Gates:** `check_build.py` green 577 → 578, marker `-webkit-user-drag:none`, negative-controlled.
+`render_showcase.js` **26/26 green on 578 and red on 577 with exactly one `pointercancel`** — the
+assertion counts cancels separately from "the split did not move", because a stalled split has a
+dozen causes and a cancel has one. `harness_showcase.js` 105/105, `harness_detect.js` 39/39.
+
+**Two counting notes for whoever patches next.** The label regex finds **22** version strings at
+577, not the 20 CLAUDE.md records — builds 574 added two `v2026-08-02 · build 574` module banners
+the doc predates. My patch asserted `== 20` off the doc and correctly aborted; the assertion is now
+self-computing (`len(after) == len(before)`, exactly one moved). And `jsdom` is not installed in a
+fresh container — `npm install jsdom --no-save` keeps it out of `package.json`.

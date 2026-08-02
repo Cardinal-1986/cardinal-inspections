@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 577 &#8212; Showcase photographs keep their detail — full resolution in the slider</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 578 &#8212; the before/after slider follows a mouse, not just a finger</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:578, d:'2026-08-02', t:'The before/after slider follows a mouse', s:'On a laptop, grabbing the photograph itself to drag the divider moved it about a pixel and then stopped, with a ghost copy of the picture stuck to the cursor. The browser had decided you were dragging the image out of the page. Touch was never affected, so it never showed up on a phone or the iPad. Dragging now works from anywhere on the picture, on any device.' },
 { b:577, d:'2026-08-02', t:'Showcase photographs keep their detail', s:'Every picture is now kept at full resolution for the slider and pinching in, with a smaller copy made for the browsing grid so the screen still loads fast on a phone. Builds 574-576 shrank everything to 1600px, which went soft the moment a homeowner pinched — the granules and nail heads these photographs exist to show were the first thing lost.' },
 { b:576, d:'2026-08-02', t:'The Hall of Fame', s:'The Showcase gets a second tab: a bad install photographed beside ours, with one line on why it matters. A homeowner cannot tell a good roof from a bad one by looking at the finished surface — two pictures side by side explain it in five seconds. Inspections is a link, not a tab: the reports list already exists and there is no sense building a second one.' },
 { b:575, d:'2026-08-02', t:'Who cleared the photo, and when', s:'A Showcase pair now records the client release — the date and the name of whoever gave it. Pairs without one are marked In-app only: fine to show across the kitchen table, not to publish. Ticking the box without a name is refused, because a date on its own proves nothing a year later.' },
@@ -55572,7 +55573,7 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 .cr-sh-step .p{font:600 11.5px ui-monospace,'SF Mono',Menlo,monospace;color:var(--sh-mut,#98A29C);padding:0 4px}
 .cr-sh-cmp{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:var(--sh-card2,#101312);
   touch-action:none;user-select:none;-webkit-user-select:none}
-.cr-sh-cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.cr-sh-cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
 .cr-sh-cmp .bf{clip-path:inset(0 calc(100% - var(--sh-split,52%)) 0 0);z-index:2}
 .cr-sh-hd{position:absolute;top:0;bottom:0;left:var(--sh-split,52%);width:38px;margin-left:-19px;z-index:3;
   cursor:ew-resize;display:flex;align-items:center;justify-content:center}
