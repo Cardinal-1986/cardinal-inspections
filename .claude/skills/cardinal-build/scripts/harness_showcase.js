@@ -252,7 +252,15 @@ const settle = () => new Promise(r => setTimeout(r, 30));
       /body\.cr-lnav-on #cr-sf,\s*\nbody\.cr-lnav-on #cr-pb,\s*\nbody\.cr-lnav-on #cr-show,/.test(HTML));
     ok('desktop measure added', /body\.cr-lnav-on \.cr-sh-wrap\{ max-width:1180px !important; \}/.test(HTML));
     ok('CHANGELOG entry for 574', /\{ b:574,/.test(HTML));
-    ok('app stamp is 574', /data-cr-footer[^>]*>v2026-08-02 build 574/.test(HTML));
+    /* Self-computing, not a hardcoded number: a literal here is read off an
+       already-patched tree and goes stale on the very next build -- it did,
+       one build later. This form also catches the real bug class, which is a
+       stamp and a CHANGELOG that disagree about what shipped. */
+    const stamp = (HTML.match(/data-cr-footer[^>]*>v2026-\d\d-\d\d build (\d+)/) || [])[1];
+    const newestEntry = Math.max(...[...HTML.matchAll(/\{ b:(\d+),/g)].map(m => +m[1]));
+    ok('app stamp exists and is numeric', !!stamp, String(stamp));
+    ok('app stamp matches the newest CHANGELOG entry',
+      Number(stamp) === newestEntry, `stamp=${stamp} newest CHANGELOG=${newestEntry}`);
 
     // Rules the module must obey, asserted against its own shipped text.
     ok('every --sh- reference carries a literal fallback',
@@ -278,6 +286,46 @@ const settle = () => new Promise(r => setTimeout(r, 30));
       /!ins\.data \|\| !ins\.data\.length/.test(MODULE_JS));
     ok('trade vocabulary matches EST_TYPES exactly',
       /var TRADES = \['roof','siding','windows','andersen','gutters','general'\]/.test(MODULE_JS));
+  }
+
+
+  /* ── 9 · release (build 575) ─────────────────────────────────────────── */
+  console.log('\n── release ──');
+  {
+    const CLEARED = [{ ...PAIRS[0], release_on: '2025-11-14', release_by: 'M. Alvarez' }];
+    const h = await boot({ admin: true, rows: CLEARED });
+    h.w.CardinalShowcase.open();
+    await settle();
+    const el = h.d.getElementById('cr-show');
+    const b = el.querySelector('.cr-sh-rel-b');
+    ok('cleared pair shows a release badge', !!b && b.classList.contains('ok'),
+       b ? b.className : 'no badge');
+    ok('badge names who gave it', b && b.textContent.includes('M. Alvarez'), b && b.textContent);
+
+    const u = await boot({ admin: true, rows: [PAIRS[1]] });
+    u.w.CardinalShowcase.open();
+    await settle();
+    const ub = u.d.getElementById('cr-show').querySelector('.cr-sh-rel-b');
+    ok('pair with no release is marked, not left blank', !!ub && ub.classList.contains('no'));
+    ok('unreleased wording is "In-app only"', ub && /In-app only/.test(ub.textContent), ub && ub.textContent);
+
+    // The form must offer the fields, and refuse a date with no name.
+    const f = await boot({ admin: true, rows: [] });
+    f.w.CardinalShowcase.open();
+    await settle();
+    f.d.getElementById('cr-show').querySelector('[data-act="add"]').click();
+    await settle();
+    const form = f.d.getElementById('cr-show-form');
+    ok('form offers the release checkbox', !!form.querySelector('[data-f="has_release"]'));
+    ok('form offers release date + name',
+      !!form.querySelector('[data-f="release_on"]') && !!form.querySelector('[data-f="release_by"]'));
+    ok('save refuses a ticked release with no name',
+      /Who gave the release\?/.test(MODULE_JS) &&
+      /if\(!rby\) throw new Error/.test(MODULE_JS));
+    ok('release defaults to today only when the box is ticked',
+      /if\(relBox && relBox\.checked\)\{/.test(MODULE_JS));
+    ok('unticked pair sends no release columns at all',
+      !/release_on: get\('release_on'\) \|\| new Date/.test(MODULE_JS.split('if(relBox && relBox.checked){')[0]));
   }
 
   console.log('\n' + '─'.repeat(58));

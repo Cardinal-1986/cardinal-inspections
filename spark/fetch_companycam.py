@@ -128,9 +128,36 @@ def pick_uri(photo, order):
 SLUG_RE = re.compile(r'[^A-Za-z0-9]+')
 
 
-def slug(s, cap=60):
+def slug(s, cap=110):
+    """Hyphenated and shell-safe, but NOT abbreviated — Theo asked for the full
+    location on disk. 110 leaves room for a long street address plus city, state
+    and ZIP while staying inside the 255-byte filename limit every filesystem
+    the Spark is likely to use enforces."""
     out = SLUG_RE.sub('-', (s or '')).strip('-')
     return (out[:cap].rstrip('-') or 'unknown')
+
+
+def folder_for(job, pid, layout):
+    """Where one job's photographs live.
+
+    The 8-character project id is appended, always: two jobs really can share an
+    address — a repeat customer, a re-roof years later, a duplicate record — and
+    silently merging their photographs into one folder would be unrecoverable.
+    The full address is in manifest.jsonl either way, exactly as CompanyCam has it.
+    """
+    addr = job.get('address') or job.get('name') or ''
+    tail = '--' + pid[:8]
+
+    if layout == 'flat':
+        return slug(addr) + tail
+
+    # 'city' (default): one folder per town, then the full street line inside it.
+    city = job.get('city') or ''
+    state = job.get('state') or ''
+    top = slug(', '.join(x for x in [city, state] if x)) if city else 'no-city'
+    inner_bits = [job.get('street') or '', job.get('zip') or '']
+    inner = slug(' '.join(x for x in inner_bits if x)) if any(inner_bits) else slug(addr)
+    return os.path.join(top, inner + tail)
 
 
 def download(url, path, tries=4):
@@ -172,10 +199,23 @@ def load_projects(key):
         meta = body.get('meta') or {}
         for p in data:
             a = p.get('address') or {}
-            line = ', '.join(x for x in [
-                a.get('street_address_1'), a.get('city'), a.get('state')
-            ] if x)
-            out[str(p.get('id'))] = (p.get('name') or '', line)
+            # Flattened exactly the way api/companycam-sync.js does it, including
+            # the string case — that shape is proven against this account.
+            if isinstance(a, str):
+                line = a
+                city = state = zipc = street = ''
+            else:
+                street = ' '.join(x for x in [a.get('street_address_1'),
+                                              a.get('street_address_2')] if x)
+                city, state, zipc = a.get('city') or '', a.get('state') or '', a.get('postal_code') or ''
+                line = ', '.join(x for x in [
+                    a.get('street_address_1'), a.get('street_address_2'),
+                    city, state, zipc
+                ] if x)
+            out[str(p.get('id'))] = {
+                'name': p.get('name') or '', 'address': line,
+                'street': street, 'city': city, 'state': state, 'zip': zipc,
+            }
         page += 1
         if not (meta.get('has_next') and meta.get('next_cursor')) or not data:
             break
@@ -188,6 +228,9 @@ def main():
     ap.add_argument('--dest', required=True, help='archive root, e.g. /data/cardinal/companycam')
     ap.add_argument('--rendition', default='original', choices=['original', 'web'])
     ap.add_argument('--with-coords', action='store_true')
+    ap.add_argument('--layout', default='city', choices=['city', 'flat'],
+                    help="city (default): Dayton-OH/123-Main-St-45402--<id>/  ·  "
+                         "flat: 123-Main-St-Dayton-OH-45402--<id>/")
     ap.add_argument('--limit', type=int, default=0)
     ap.add_argument('--restart', action='store_true', help='ignore the saved cursor')
     args = ap.parse_args()
@@ -208,6 +251,16 @@ def main():
             state = json.load(open(state_path))
         except Exception:
             state = {}
+    # Changing --layout after a partial run would put every remaining photo in a
+    # new folder tree while the old one still sits on disk: a silent second copy
+    # and a half-sorted archive. Refuse rather than discover it at 100 GB.
+    prev_layout = state.get('layout')
+    if prev_layout and prev_layout != args.layout:
+        die('this archive was started with --layout %s and you asked for %s.\n'
+            '  Re-running would download everything again into a second folder tree.\n'
+            '  Either keep --layout %s, or move %s aside and start fresh.'
+            % (prev_layout, args.layout, prev_layout, originals))
+
     cursor = state.get('cursor')
     got = int(state.get('got', 0))
     skipped = int(state.get('skipped', 0))
@@ -253,9 +306,9 @@ def main():
                     continue
 
                 pid = str(p.get('project_id') or 'no-job')
-                name, addr = projects.get(pid, ('', ''))
-                folder = '%s--%s' % (pid[:8], slug(addr or name))
-                out_dir = os.path.join(originals, folder)
+                job = projects.get(pid) or {}
+                name, addr = job.get('name', ''), job.get('address', '')
+                out_dir = os.path.join(originals, folder_for(job, pid, args.layout))
                 os.makedirs(out_dir, exist_ok=True)
 
                 photo_id = str(p.get('id'))
@@ -314,7 +367,7 @@ def main():
                   % (done, tail, got, existing, skipped, failed, rate))
 
             json.dump({'cursor': cursor, 'got': got, 'skipped': skipped,
-                       'failed': failed, 'existing': existing},
+                       'failed': failed, 'existing': existing, 'layout': args.layout},
                       open(state_path, 'w'))
             if not has_next:
                 break
@@ -324,7 +377,7 @@ def main():
     finally:
         manifest.close()
         json.dump({'cursor': cursor, 'got': got, 'skipped': skipped,
-                   'failed': failed, 'existing': existing},
+                   'failed': failed, 'existing': existing, 'layout': args.layout},
                   open(state_path, 'w'))
         if jobs:
             # Rewritten whole each run rather than appended, so a resumed run

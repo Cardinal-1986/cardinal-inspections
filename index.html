@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 574 &#8212; the Showcase: before and after, side by side, for the kitchen table</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 575 &#8212; the Showcase records who cleared a photograph for use, and when</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:575, d:'2026-08-02', t:'Who cleared the photo, and when', s:'A Showcase pair now records the client release — the date and the name of whoever gave it. Pairs without one are marked In-app only: fine to show across the kitchen table, not to publish. Ticking the box without a name is refused, because a date on its own proves nothing a year later.' },
 { b:574, d:'2026-08-02', t:'The Showcase', s:'Before and after, side by side, on the Sales Floor. Drag the divider and the finished roof wipes over the old one. Privacy mode swaps the address for a project number so the tablet can go across the table. Theo adds the pairs from his phone; everyone else can show them.' },
 { build:573, note:'\uD83C\uDF13 Four screens were built white and stayed white no matter which theme you were in \u2014 the Objections Coach, Pricing Catalog, Company Documents and Adjusters. Walking into the coach from the dark Sales Floor was a wall of white. \u2666 All four now follow the app theme. \u2666 Light mode looks exactly as it did; only dark is new. \u2666 Every colour that carries text was checked for readability against its new background rather than eyeballed.' },
 { build:572, note:'\uD83D\uDDA5\uFE0F Sales Floor, the Objections Coach and the Production board used to open as a bare screen with no menu, a narrow strip of content down the middle and a lot of empty space either side. \u2666 They now keep the left menu, close properly when you tap another page, and use the width of the screen on a desktop. \u2666 Phones are unchanged.' },
@@ -55512,6 +55513,15 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 .cr-sh-card .c{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 .cr-sh-chip{font:600 10.5px inherit;padding:2px 7px;border-radius:4px;background:var(--sh-chip,rgba(148,157,165,.12));color:var(--sh-mut,#98A29C)}
 .cr-sh-score{font:700 10.5px inherit;padding:2px 7px;border-radius:4px;color:var(--sh-gold,#C9A227);border:1px solid var(--sh-gold,#C9A227)}
+/* Release state. Green reads "cleared", grey reads "internal" — deliberately not
+   red: no release is the normal, correct state for most work, not an error. */
+.cr-sh-rel-b{font:700 10.5px inherit;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.cr-sh-rel-b.ok{color:var(--sh-ok,#46A758);border:1px solid var(--sh-ok,#46A758)}
+.cr-sh-rel-b.no{color:var(--sh-mut,#98A29C);border:1px solid var(--sh-line,rgba(148,157,165,.28))}
+.cr-sh-rel{margin-top:14px;padding-top:12px;border-top:1px solid var(--sh-line,rgba(148,157,165,.20))}
+.cr-sh-rel .ck{display:flex;align-items:center;gap:8px;margin:0 0 4px;font:600 12.5px inherit;
+  letter-spacing:0;text-transform:none;color:var(--sh-ink,#F2F4F2);cursor:pointer}
+.cr-sh-rel .ck input{width:auto;accent-color:var(--sh-ok,#46A758)}
 
 /* featured + slider */
 .cr-sh-show{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));border-radius:11px;padding:13px;margin-top:10px}
@@ -55689,6 +55699,7 @@ function renderShow(){
       '<div class="cr-sh-head">' +
         '<h2>' + esc(label(p)) + '</h2>' +
         (p.score != null ? '<span class="cr-sh-score">★ ' + esc(p.score) + '</span>' : '') +
+        releaseBadge(p) +
         '<div class="cr-sh-step">' +
           '<button data-act="prev" type="button" aria-label="Previous">◄</button>' +
           '<span class="p">' + (cur + 1) + ' / ' + pairs.length + '</span>' +
@@ -55737,6 +55748,20 @@ function renderAdmin(){
            (p.published ? 'Unpublish this one' : 'Publish this one') + '</button>' +
          '<button class="cr-sh-btn ghost" data-act="del" type="button">Remove</button>' : '') +
     '</div>';
+}
+
+/* Says which of the two states a pair is in, and never guesses. Absence of a
+   release is not "probably fine" — it is a photograph that must not be
+   published, and it should look like one. */
+function releaseBadge(p){
+  if(p.release_on || p.release_by){
+    var who = p.release_by ? esc(p.release_by) : 'on file';
+    var when = p.release_on ? ' · ' + esc(fmtDate(p.release_on)) : '';
+    return '<span class="cr-sh-rel-b ok" title="Cleared for marketing use">' +
+           'Release: ' + who + when + '</span>';
+  }
+  return '<span class="cr-sh-rel-b no" title="No client release recorded — ' +
+         'show it at the table, do not publish it">In-app only</span>';
 }
 
 function fmtDate(d){
@@ -55855,6 +55880,14 @@ function openForm(){
       '</select>' +
       '<label>Material</label><input type="text" data-f="material" placeholder="Owens Corning Duration — Onyx Black">' +
       '<label>Completed</label><input type="date" data-f="completed_on">' +
+      '<div class="cr-sh-rel">' +
+        '<label class="ck"><input type="checkbox" data-f="has_release">' +
+          '<span>Client release on file</span></label>' +
+        '<div class="r2">' +
+          '<div><label>Given on</label><input type="date" data-f="release_on"></div>' +
+          '<div><label>By</label><input type="text" data-f="release_by" placeholder="name on the release"></div>' +
+        '</div>' +
+      '</div>' +
       '<div class="err" data-err></div>' +
       '<p class="note">Photographs are copied into Cardinal’s own storage, so they keep working ' +
         'whatever happens to CompanyCam. Nothing is shown to the team until you publish it.</p>' +
@@ -55937,6 +55970,17 @@ async function savePair(){
       score: scoreRaw === '' ? null : Math.max(0, Math.min(100, parseInt(scoreRaw, 10) || 0)),
       published: true
     };
+
+    /* The release is the difference between "we may show this" and "we published
+       someone's house". Record it only when it was actually given, and record
+       WHO gave it — a date with no name proves nothing a year from now. */
+    var relBox = formEl.querySelector('[data-f="has_release"]');
+    if(relBox && relBox.checked){
+      var rby = get('release_by');
+      if(!rby) throw new Error('Who gave the release? A date with no name proves nothing later.');
+      row.release_on = get('release_on') || new Date().toISOString().slice(0, 10);
+      row.release_by = rby;
+    }
     var ins = await cl.from('showcase_pairs').insert(row).select('id');
     if(ins && ins.error) throw new Error(ins.error.message || 'could not save');
     /* An insert refused by RLS comes back with no error and no rows — the same

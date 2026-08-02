@@ -23,11 +23,13 @@ Then build the tree on it. `/data` below is an example; use whatever `df -h` say
 /data/cardinal/
 ├── companycam/
 │   ├── originals/
-│   │   └── 3f9c1a2b--123-Main-St-Dayton-OH/   ← one folder per job
-│   │       └── <photo-id>.jpg
+│   │   └── Dayton-OH/                          ← one folder per town
+│   │       └── 123-Main-St-45402--3f9c1a2b/    ← full street address + ZIP
+│   │           └── <photo-id>.jpg
 │   ├── manifest.jsonl                          ← one line per photo: id, job,
 │   │                                             address, date, caption, path
-│   └── state.json                              ← resume cursor
+│   ├── jobs.jsonl                              ← one point per job (--with-coords)
+│   └── state.json                              ← resume cursor + layout
 │
 ├── phone/
 │   ├── incoming/                               ← raw dump, never edited
@@ -77,6 +79,20 @@ containing the original. An archive built from the mirror would be an archive of
 anything not active/processed. The archive must not become a way around that flag.
 
 **Coordinates: `--with-coords`.** See the section below — worth reading once before you turn it on.
+
+**Foldering: the full address, nested by town.** `--layout city` is the default and gives you
+`Dayton-OH/123-Main-St-45402--3f9c1a2b/`, so you can open one town and see every job in it. The
+street line is the complete address including apartment and ZIP — flattened the same way
+`api/companycam-sync.js` does it, which is proven against this account. `--layout flat` puts the
+whole address on one folder instead.
+
+The eight-character job id on the end is always there, and it earns its place: two jobs really can
+share an address — a repeat customer, a re-roof years later, a duplicate record — and quietly
+merging their photographs into one folder is not something you could untangle afterwards.
+
+⚠️ **Pick the layout before the big run.** Changing it later would download everything a second
+time into a new folder tree while the old one still sits on disk. The script records the layout in
+`state.json` and refuses to run with a different one rather than let that happen quietly.
 
 Expect several hours for the full run. Leave it in `tmux` or `screen` so closing the laptop
 doesn't kill it:
