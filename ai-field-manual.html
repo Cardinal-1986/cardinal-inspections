@@ -1289,12 +1289,16 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
                 <tr><td><strong>Mac Studio M3 Ultra</strong></td><td>96 GB</td><td>819 GB/s</td><td>~128B</td><td>7</td><td>$5,299</td></tr>
                 <tr><td><strong>MacBook Pro M5 Max</strong></td><td>36 GB</td><td>614 GB/s</td><td>~48B</td><td>15</td><td>from $2,699</td></tr>
                 <tr><td class="yes"><strong>MacBook Pro M5 Max</strong></td><td class="yes">128 GB</td><td>614 GB/s</td><td class="yes">~171B</td><td>4</td><td>build to order</td></tr>
+                <tr><td class="yes"><strong>AMD Ryzen AI Max+ 395</strong></td><td class="yes">128 GB</td><td>256 GB/s</td><td class="yes">~171B</td><td>2</td><td>$3,999</td></tr>
                 <tr><td class="yes"><strong>DGX Spark</strong></td><td class="yes">128 GB</td><td>273 GB/s</td><td class="yes">~171B</td><td>2</td><td>$4,699</td></tr>
               </tbody>
             </table>
           </div>
-          <p>Read that top to bottom and the trade is plain: <strong>you buy capacity or you
-          buy speed.</strong> The cheapest Mac runs a 48B model six times faster than the Spark
+          <p>The bottom two rows are worth a second look: <strong>same memory, same speed,
+          $700 apart.</strong> That is not a rounding error, and it is why AMD gets its own
+          section below.</p>
+          <p>Read the table top to bottom and the wider trade is plain: <strong>you buy
+          capacity or you buy speed.</strong> The cheapest Mac runs a 48B model six times faster than the Spark
           runs a 171B one. Neither is better; they are answers to different questions.</p>
 
           <h3>The one sentence that explains every benchmark argument</h3>
@@ -1363,7 +1367,25 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <p>AMD&apos;s answer is the <strong>Ryzen&nbsp;AI Max+ 395</strong> &mdash; sold as
           the Ryzen AI Halo and in mini-PCs from several makers. It is the only machine here
           built to the same brief as the Spark: <strong>128&nbsp;GB of unified memory in a box
-          on your desk</strong>. It is worth taking seriously, and it is cheaper.</p>
+          on your desk</strong>.</p>
+          <p><strong>Four things it is straightforwardly better at</strong>, before any of the
+          detail:</p>
+          <ol class="habits">
+            <li><span><b>It costs less &mdash; possibly a lot less.</b> $3,999 against the
+            Spark&apos;s $4,699, and other builders sell 128&nbsp;GB machines from around
+            <strong>$1,500</strong>. That is a third of the price for the same memory.</span></li>
+            <li><span><b>It writes just as fast.</b> Same 128&nbsp;GB, and 256 against
+            273&nbsp;GB/s is a rounding error &mdash; look at the last two rows of the table
+            above, which land on the same numbers. On that half of the job they are tied.</span></li>
+            <li><span><b>It runs Windows.</b> The Spark is Linux only, which is why this book
+            needs a commands page at the back. The AMD box is a normal PC that also does AI,
+            and you can use it as a normal PC.</span></li>
+            <li><span><b>ROCm is fine now</b> for Ollama and llama.cpp &mdash; which is what
+            most people actually run. The old &ldquo;AMD doesn&apos;t work for AI&rdquo; line is
+            out of date for inference.</span></li>
+          </ol>
+          <p>The Spark wins exactly two things. They happen to be the two that matter here, but
+          they are only two:</p>
           <div class="tw">
             <table class="vs">
               <thead><tr><th></th><th>DGX Spark</th><th>AMD Ryzen AI Max+ 395</th></tr></thead>
