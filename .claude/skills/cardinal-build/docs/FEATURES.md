@@ -1321,6 +1321,7 @@ list that already exists.
 | **577** | **Resolution** — `FULL {3840, .92}` for the slider, `DISP {1400, .82}` for the grid. One stored path, two files; the display copy is *derived* (`-d.jpg`), so pairs made before 577 fall back rather than blank. |
 | **578** | **The slider follows a mouse.** A native image drag was cancelling the pointer stream after one pixel. `-webkit-user-drag:none` on `.cr-sh-cmp img`. Touch was never affected, which is why it went unseen. |
 | **579** | **The Walk** — below. |
+| **580** | **The review screen asks before it discards work.** Back and Ask again both used to throw away an unsaved reject/re-classify/nudge with no warning — found by manual audit, not a gate. Guarded by a session-local `dirty` flag, set only by a real decision this visit; asking the AI or reopening an untouched shot still asks nothing. |
 
 ### 579 — The Walk
 
