@@ -4426,3 +4426,953 @@ loaded the `@media print` rule and reported a `#1b1b1b` text-fill. Fixed by anch
 
 `check_build.py` green (537, marker `cr-titleicon-styles`, negative-controlled).
 Chromium: **18/18**. Harness at `harnesses/h537_chromium.js`.
+
+---
+
+## Build 538 — three left-nav labels carry their own colour
+
+**Theo:** *"make the wording on cardinal truth red, and the community hub the emerald green just the
+text on the nav bar. Also make the Landing Hub a yellow color text on the nav bar for desktop"*
+
+**Just the text.** The rules land on `.lnav-tx`, the span holding the label — not on the row. Icons
+keep the nav's muted grey; the active row keeps its card, its cardinal bar and its lift. A child's
+own `color` beats the row's inherited one, so no specificity fight and no `!important`.
+
+**The hook is `data-k`, and finding it was the whole recon.** The burger menu the rail mirrors
+already carries `data-nav="cardinaltruth"` and `data-nav="landing"` — but **Community Hub is added
+at runtime by `makeOpt()` with only an `id`**, so `data-nav` covers two of the three. `cr-lnav-script`
+now emits `data-k`, the label's own slug, which is *the same value `lnavIcon()` already computes* for
+the icon lookup. That extends an existing computation instead of standing a second mechanism beside
+it, and it equals `data-nav` wherever `data-nav` exists.
+
+**"for desktop" needed no extra scoping.** `--lnav-w` is `0px` at `:root` and only `238px` inside
+`@media (min-width:1100px)` — the rail declares desktop-only in one place.
+
+**Every colour computed, not picked**, at the 4.5:1 body-text floor, against all three grounds a
+label can sit on in each theme — rail, active card, hover. The active card is in that list *because*
+these labels stay coloured when their row is current.
+
+| | dark | light |
+|---|---|---|
+| Cardinal Truth | `#ef6b6b` 6.42 / 5.19 / 5.86 | `#c8202e` 5.11 / 5.67 / 4.66 |
+| Community Hub | `#34D399` 10.05 / 8.12 / 9.16 | `#047857` 4.94 / 5.48 / 4.51 |
+| Landing | `#f0c651` 11.87 / 9.59 / 10.82 | `#8a6100` 4.99 / 5.54 / 4.55 |
+
+**Two places the literal answer was the wrong one**, both said out loud rather than fudged:
+
+- **Cardinal red fails in dark.** `#c8202e` is **3.40 / 2.75 / 3.11** on the rail, the active card
+  and hover. Dark gets a lighter red; light gets the real cardinal red, which passes there.
+- **A true yellow cannot be read on the light rail** — `#f0c651` is **1.6:1** on `#f2f3f5`. Light
+  gets the darkest amber that still reads as the same colour.
+
+Emerald is the community CRM's own value in both themes — `#34D399` is its `--lnav-crmc`, `#047857`
+its `--hbg`.
+
+**Three harness reds, all the test's fault, all worth recording:**
+
+1. **Slugs came out as `128737655039cardinaltruth`.** The harness fed the labels as *raw source* —
+   `&#128737;&#65039; Cardinal Truth` — but the rail reads `(el.textContent || '').trim()` off the
+   mirrored `.navopt`, which is **decoded DOM text**. Fixed by building the real element, setting
+   `innerHTML`, and reading `textContent` back the way the app does.
+2. **Every colour assertion passed against an empty screenshot.** `#cr-lnav` is
+   `display:none !important` until `body.cr-lnav-on` is set, and `getComputedStyle` reads hidden
+   elements happily. A visibility gate now runs *before* any colour reading.
+3. **The rail then rendered 1px wide** — the viewport was 620px, below the 1100px breakpoint, so
+   `--lnav-w` stayed `0px`. Tested at 1220px, which is the only width this feature exists at.
+
+`check_build.py` green (538, marker `cr-lnav-ink-styles`, negative-controlled).
+Chromium: **25/25** — the shipped `stripEmoji`/`iconKey`/render statement executed against the real
+menu labels, and contrast recomputed from the *rendered* colour against the *rendered* background
+rather than from the numbers in the patch comment. Harness at `harnesses/h538_chromium.js`.
+
+---
+
+## Build 539 — Landing is literal yellow in light mode too
+
+538 shipped light-mode Landing as amber `#8a6100`, because a true yellow cannot meet the
+readability floor on a near-white rail. That was flagged **with the measurement**, Theo saw it, and
+answered: *"literal yellow"*. His call, made with the number in front of him, so it ships.
+
+**What it costs, on the record.** `#f0c651` in light: **1.47:1** on the rail, **1.63:1** on the
+active card, **1.34:1** on hover — against a 4.5:1 floor. And no better yellow exists; the whole
+family fails (`#ffd700` 1.26, `#f5c518` 1.47, `#e8b800` 1.68). `#f0c651` is the pick because it is
+the value already used in dark, so **Landing is now one colour in both themes** instead of two.
+
+**The contrast gate is narrowed, not deleted.** It still runs and still fails the build for the
+other five values. Landing-light is a single *named* exemption, and both the patch and the harness
+assert the exemption is exactly one entry wide — the harness even fails if that value ever starts
+*passing*, so a stale exemption cannot sit there unnoticed. The next person to add a colour here
+inherits a live gate, not a disabled one.
+
+**A trap this patch sprang on itself:** `assert '#8a6100' not in src` failed, because the block
+comment now names the amber as the *history* of why the value is what it is. The file's own
+"comments lie in both directions" rule, caught by its own gate. Scoped to the comment-stripped code.
+
+`check_build.py` green (539, marker `literal yellow, Theo's call`, negative-controlled).
+Chromium: **25/25**. Harness at `harnesses/h539_chromium.js`.
+
+---
+
+## Build 540 — the money circle reads the table the money is actually in
+
+**Theo:** *"The circle where it shows the money stays at 0 and should be tied to the contract or
+approved estimate amount."*
+
+**The circle was never broken — it was pointed at the wrong table.** `projectValue()` scanned
+`cacheRows` (which is `inspection_reports`) for rows titled "Estimate…" and took the highest
+`total`. Measured against production, not guessed:
+
+| table | rows | with money |
+|---|---:|---|
+| `inspection_reports` | 22 | **0** — 3 match `isEstimateTitle` and all three total **0**; the other 19 are NULL |
+| `estimates` | 12 | **9** ← the money |
+| `contracts` | 0 | — |
+| `manual_estimates` | 0 | — |
+
+**Not one row in that table has ever carried money.** So the max was always 0 unless someone had
+typed a manual override — and no production checklist carries `manual_value` at all. Five real
+clients were showing $0 with money on the job: Kimberly Guy $36,654 · Kim Guy $36,432 ·
+Dan Thompson $11,920.99 · Kitty Hawk $6,180 · Betty Mann $1,820.
+
+**The order is Theo's own words.** A **signed contract wins outright** — not folded into the max,
+because if the contract says $30k and a stale estimate says $36k the contract is the truth.
+Otherwise the highest of: manual override, best **sent** estimate, legacy `inspection_reports`
+total. **Drafts do not count** — `estimates` is 8 draft / 4 sent today, so Kim Guy and Kitty Hawk
+stay at $0 until those are sent. That is a rule Theo can reverse with one word and the harness
+asserts it explicitly so the reversal is a one-line change.
+
+**Why `projectValue()` and nothing else.** It is the single money chokepoint for retail — **15 call
+sites**: the pipeline stage circles, Leads & Jobs cards, the client directory, reports revenue,
+backlog, profit margin, and the price that prefills a new contract. One fix lands in all of them.
+
+**The two new fetches cannot break the profile.** Both carry `.catch(→[])` exactly as `adb.list()`
+already does, so an RLS refusal degrades to "no contract/estimate money known" rather than taking
+down `reload()` and with it the whole client profile. The lookup maps start `{}` so all 15
+synchronous callers are safe before the fetch resolves — asserted.
+
+**Also found, not fixed here:** there are **two contract pipelines**. `createContractForCurrent()`
+(the `+ New contract` button in the profile) writes a `Contract — {name}` row into
+`inspection_reports`; a newer `/api/estimate_to_contract` flow writes to the `contracts` table.
+Both are empty in production — nobody has made a contract either way. `projectValue()` reads the
+`contracts` table. **This is the duplicate-pipeline bug class and it needs a decision from Theo.**
+
+`check_build.py` green (540, marker `indexMoney`, negative-controlled).
+**Harness: 18/18, and it is the good kind** — `projectValue`, `indexMoney` and `isEstimateTitle`
+are extracted from the shipped artifact by brace matching and executed against **rows pulled out of
+the live database**, nulls and duplicate titles included. The one stub, `parseCkAll`, is proven
+inert by an assertion that no production checklist carries `manual_value`.
+Harness at `harnesses/h540_prod.js`, data at `harnesses/prod540.json`.
+
+---
+
+## Build 541 — contracts get their own tab
+
+**Theo**, asked where the contracts section should live: **"2"** — its own tab.
+
+**Nothing was missing.** The heading, the `+ New contract` button and the list were all there and all
+wired — filed inside `tab-estimates`, below the estimates list, which is exactly why they read as
+absent. The markup moved **verbatim** into a pane of its own; the only edit is dropping a
+`margin-top:22px` that was spacing it below the estimates list and is now just a gap at the top of
+a pane. `pNewContractBtn` and `contractDocsMount` keep their ids, so every existing listener still
+finds its element.
+
+**The tab strip is a `<select>`, not a row of buttons.** Navigation is `#jobMenuSel` in the header
+and `showTab()` syncs it. So a new tab is exactly three things: the pane, an entry in `showTab`'s
+list, and an `<option>`.
+
+**⚠ `showTab()` has no null guard** — `document.getElementById('tab-' + t).style.display` inside a
+`forEach` over a hardcoded list. **The name and the pane have to ship in the same commit**; split
+them and every `showTab()` call throws, killing tab switching across the whole profile. The gate
+asserts `showTab`'s list and the panes in the markup are the *same set* rather than matching a
+number, and the harness carries the negative control that proves the hazard is real: 541's
+`showTab` run against 540's markup throws `Cannot read properties of null (reading 'style')`.
+
+`check_build.py` green (541, marker `id="tab-contracts"`, negative-controlled).
+Chromium: **17/17** — the shipped `showTab` driven against the shipped pane ids, every tab
+exercised. Harness at `harnesses/h541_chromium.js`.
+
+**Next, and Theo has already picked it:** the roofing master agreement rendered in the tab and
+autopopulated ("2" again). `docs/Cardinal_Roofing_Contract.pdf` is 5 pages, US Letter, **zero
+AcroForm fields** — agreement face ×2, T&C, and the two statutory 3-Day Notice copies which must
+not be reworded. Autopopulatable: date, buyer, email, phone, street/city/state/zip (stored as
+separate fields on the lead), insurance carrier + claim #, and the four money lines off `projectValue()`.
+Plus **existing layers, roof pitch and decking type straight from the inspection checklist**.
+
+**Also found:** two Company Documents entries are dead links — `Cardinal_Window_Contract.pdf` and
+`Cardinal_Gutter_Contract_Fillable.pdf` are in `COMPANY_DOCS` but not in the repo. They 404 today.
+
+---
+
+## Build 542 — the roofing Construction Agreement, in the app, autopopulated
+
+**Theo:** *"Use the master roofing/construction agreement in the company docs and make it fillable,
+whatever can be autopopulated do so"* … *"for Roofs in specific"* … and on how much of the spec grid
+to reproduce: **"3"** — full fidelity, except the lines the inspection already answered.
+
+`+ New contract` used `CONTRACT_TEMPLATE`, a generic three-section service contract that looks
+nothing like the paper form Cardinal signs. It now builds the roofing **Construction Agreement** —
+all 13 numbered specification sections with their lettered sub-options, warranty tiers, HOA,
+timeline, insurance, payment structure and signature block.
+
+**Two things deliberately not reproduced, and it is a legal call, not a shortcut:** the **Terms and
+Conditions** (master p3) and **both 3-Day Notice of Cancellation copies** (master p4–5). Statutory
+text under ORC 1345.23. Retyping it invites silent divergence between what the app prints and what
+the reviewed master says, and nobody in this loop is a lawyer. The agreement **references** them the
+way the paper form does and points at the master in Company Documents. Asserted in the gate.
+
+**What autofills:** date · buyer · email · phone · **street / city / state / zip as separate boxes**
+(the lead stores them as separate fields) · rep name & title · the three money lines off
+`projectValue()` · and — the point of Theo's "3" — **existing layers, roof pitch and decking type
+straight off the inspection checklist**, with their lettered option rows *collapsing* when known and
+printing as on paper when not.
+
+**What does not, said plainly:** `INSURANCE CO.` and `CLAIM #`. There is no client-side cache of
+`insurance_claims` — it is fetched ad hoc inside async functions — and `prefillClientInfo()` is
+**synchronous with many callers**. "Adding `await` to a synchronous function is never a local change"
+is this project's own rule and it is not worth breaking for two fields. The gate asserts
+`prefillClientInfo` stays synchronous.
+
+**`CONTRACT_TEMPLATE` survives.** `CardinalEstimateToContract` checks for it by name and warns when
+missing. This build *adds* a template; it does not delete one.
+
+`check_build.py` green (542, marker `ROOF_AGREEMENT`, negative-controlled).
+**Chromium 17/17, against real records:** the shipped `prefillClientInfo` and the shipped template,
+run on **Bob DeBuilder's actual row** — the one client whose roof has been inspected, so the only
+record that can prove the collapses fire — with **Dan Thompson as the control**, a real client with
+no inspection whose option rows must survive. Harness `harnesses/h542_chromium.js`; the template
+body lives at `scripts/roof_body.py`.
+
+---
+
+## Build 543 — the nav's own Schedule Board icon joins the clipboard family
+
+**Theo:** *"yes please do"* — taking up the offer 537 left open.
+
+537 gave 20 card titles drawn icons and **deliberately did not touch the nav's own copy**, because Theo
+had signed off on that surface at 536. `I2.scheduleboard` was **one unbroken filled slab**:
+
+```
+M7 2h2v2.4h6V2h2v2.4h2A2 2 0 0 1 21 6.4V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6.4a2 2 0 0 1 2-2h2z
+```
+
+A calendar outline with nothing cut out, filled with `--rbe-mute`. **That is the white square Theo
+pointed at**, and it is exactly why 537 drew the cards a clipboard instead of reusing this — reusing
+it would have swapped a white square for a grey one.
+
+**This is a port, not a new drawing.** Both weights are lifted verbatim out of the card icon 537 already
+shipped and Theo has already seen in production, so the nav and the cards are now **provably the same
+artwork** rather than two drawings that resemble each other. The gate asserts byte-equality against the
+card markup in the file, not against a copy pasted into the patch script.
+
+**Why the solid weight stops being a slab:** the ported path carries `fill-rule="evenodd"` with an inner
+rect (`M6.6 9.4h10.8v9.6H6.6z`) cutting the body open. Evenodd rather than a knockout fill is
+load-bearing — 537's recon found four `I2` icons using hardcoded `fill="#0d0d10"` (the rail's own
+background) which are black holes anywhere else. This icon sits in **536's recessed well**, `#0A0E16`
+in dark and `#f2f3f5` in light, so a hardcoded knockout would have been visibly wrong in *both*.
+
+`check_build.py` green. Chromium **8/8**, plus rendered before/after in both modes across rest, hover
+and active — active matters because `.lnav-item.on` recolours the icon to cardinal red, which is where
+a solid slab looks worst.
+
+**⚠ The first marker was wrong and the negative control caught it.** `fill-rule="evenodd" d="M6.2 3.6h1.6`
+is **already in 542** — as the card icon. Porting artwork means the geometry is not new; only its
+appearance *inside the `I2`/`I5` sets* is. Marker corrected to `scheduleboard:'<path d="M9.4 1.8h5.2`.
+The test was wrong, not the app — as usual.
+
+`I2` and `I5` are 24 icons each; the gate asserts **exactly one key changed** in each, computed against
+the previous file rather than hardcoded.
+
+---
+
+## Build 544 — retail stage chips finally have a dark variant
+
+**Theo:** *"lets do the ratail stage chips and activity count tiles."*
+
+Eight `.stg-*` rules carry **light pastels with no theme gate at all** — `#e8f0fb`, `#fdf3e2`,
+`#ececec` and friends. Cardinal Claims has a dark-adapted set under `#insClientsView`; **retail never
+got one**, so in dark mode retail chips render as pastel lozenges on a near-black card.
+
+**The palette is Claims', reused verbatim** — one stage palette for the app rather than two that
+drift apart. Contrast computed, not eyeballed: **6.40:1 at worst (Lost), 8.57:1 at best (Approved)**,
+against a 4.5 floor. Chip text is 800 10px uppercase, which is *body* text, not large.
+
+**Scoped to `.stagechip.stg-*`, never bare `.stg-*`** — and this is the load-bearing part. `.pcard`
+also wears these classes, where they set `--stgc` (an accent variable), not a background. A bare rule
+would paint a chip background across the whole card. `stageClass()` only ever emits them onto a
+`.stagechip` span or a `.pcard`, so the two-class form hits exactly the chips. Specificity is
+deliberate: base is (0,1,0), this is (0,3,0) so it wins in dark, and `#insClientsView .stagechip.stg-*`
+is (1,3,0) so **Claims still wins on its own screens** — asserted in a real browser.
+
+## Build 545 — Activity Count tiles go obsidian
+
+**Theo:** *"Keep them orange tho and raise it, color black. Glassy/Glossy style tile"* → previewed
+three treatments → **"obsidian"**.
+
+`.actbox` was flat `var(--rbe-panel)` with a hairline. Now a radial sheen from the top-left, raised on
+a real drop shadow. **The orange is untouched** — `#E8722A`, 6.47:1 on the new ground against a 3.0
+floor for 22px 800 numerals.
+
+**⚠ The label had to be pinned, and this is the bug the build nearly shipped.** `.actbox span` was
+`color:var(--rbe-mute)`. That token is `#9aa0a8` in dark but **`#6b6b6b` in light** — and the tile is
+black in *both* modes, so in light the label would have landed at **3.57:1**, under the floor. A
+theme-independent tile needs a theme-independent label: pinned to `#9aa0a8`, 7.22:1 in both. Caught by
+computing the ratio before writing the rule, not after.
+
+Black in both modes is Theo's literal instruction, shown to him in the preview. A light twin is a
+single added rule.
+
+### Gates, and two tests that were wrong before the app was
+
+`check_build.py` green on both. **Chromium 30/30**, with **every `<style>` block from the artifact
+loaded in file order** — the 481 lesson made into a gate: that build shipped a losing rule with every
+mechanical check green, and only a real engine catches it. Every assertion here is a
+`getComputedStyle` read.
+
+- **The orange assertion fired on a false positive.** `src.count('#E8722A') == 1` failed because the
+  *comment explaining the value quotes the value*. This file's oldest counting trap, verbatim:
+  "patch scripts document the values they change, so a naive count finds the value in its own
+  explanatory comment." Rewritten to compare the `.actbox b` **rule** before and after.
+- **The `.pcard` assertion blamed this build for a pre-existing condition.** It demanded the card not
+  be a pastel; it is one — **and build 543 shows the identical value**. `.stg-Lead{background}` at char
+  41043 outranks `.pcard{background}` at char 14262 by *file order* at equal specificity. Rewritten to
+  assert this build **did not move** it, comparing 543 against 545 in-browser.
+
+**Reported, not fixed — needs a decision:** because a bare `.stg-*` rule outranks `.pcard`'s own
+gradient, a retail pipeline card takes its stage's background. Whether that is the intended
+stage-tinting or a long-standing accident is Theo's call; how visible it is depends on what is painted
+over the card. Not touched here.
+
+---
+
+## Card lift, two navigators, navy leads, obsidian (546)
+
+- **546** · one appended `<style id="cr-nvl-styles">` + nine exact-match JS edits. Hover lift
+  (option 1, 3px, `@media (hover:hover)` so a phone tap cannot latch it) on leads, estimate and
+  reports cards. Lead cards navy (535's `--nv-*`). Leads rail and the new estimate jump list both in
+  536's recessed-channel recipe. Estimate page and `#reportsView` pipe cards obsidian (545's
+  `.actbox` recipe), hairline `#ff2740` left edge on the pipe cards. Milestone pill on 544's stage
+  chips. KPI numerals colour-coded. Retail only, both modes, `#mainView` excluded.
+
+**Three things worth carrying forward:**
+
+- **`</body>` is at ELEVEN, not the 10 `CLAUDE.md` records** (that figure is from 451), and *three of
+  the eleven are prose inside comments* — "paste this block into index.html before `</body>`". The
+  count was never the invariant. Assert that `rfind()` landed on the real close instead: the 9 chars
+  before it are `</style>\n` and the 16 after are `</body>\n</html>\n`.
+- **An inline `style=` attribute is why the milestone pill needed a JS change.** Reusing 544's
+  palette from CSS alone was impossible; `ljRenderPane()` was painting `background`/`color` inline.
+  This is the `styleMounts()` trap in `CLAUDE.md` recurring on a different surface.
+- **A screenshot caught a bug three green harnesses did not.** The nav header read
+  `PHOTOS &AMP; TOTALS` — the label was pre-escaped `&amp;` and then run through `esc()` again.
+  Every structural assertion passed because the *structure* was right. Look at the picture.
+
+**One red that was the test's fault, recorded because half of them are.** An XSS assertion demanded
+the substring `onerror=alert(1)` be absent from the escaped `mailto:` href. Escaping neutralises the
+**delimiters**; the payload text survives as inert attribute content. Rewritten to assert what
+actually matters — no raw `"`, `<` or `>` inside the href value, and no `<img>` opened anywhere.
+
+---
+
+## Build 547 — the Crews page: trade nav, profile, compliance vault, notes
+
+Stage 1 of the crews section. The schema went live at #77; this is the first screen that reads it.
+
+**Scope, deliberately not all six tabs.** Profile, Compliance and Notes are **fully working**. Labor
+Rates, Work Orders and Payments are later builds and are **not rendered as dead tabs** — shipping four
+empty tabs to look complete is how a feature reads as broken. The harness asserts exactly three tabs
+ship.
+
+**One menu entry, two menus.** `cr-lnav-script` **scrapes the live burger menu** rather than keeping a
+copy ("read the LIVE menu rather than keep a copy of it"), so a single
+`<button class="navopt" data-nav="crews">` in `#navMenu` appears in the burger *and* the left nav. No
+second list to drift.
+
+**Chrome is borrowed, not invented:** the trade nav is `#cr-lnav`'s banded `.lnav-sec` headers over
+536's recessed well; dark cards are 545's obsidian gradient and shadow verbatim; status chips are the
+stage palette 544 put into retail dark. The view is a fixed overlay like `#resourceLibraryView`, so it
+needs **no surgery on `hideAllViews()`** or the view registry.
+
+**`TRADES` mirrors the `crews_trade_ck` constraint**, in Theo's order with General Repairs last. The
+patch asserts the two lists match — if one grows a value and the other does not, a crew lands in a
+section that renders nowhere. Same discipline as `STAGES`/`normStage()`.
+
+**Expiry is the whole point, so it got the hardest test.** `daysLeft()` returns **null for "no clock"**
+(a W-9 never expires) which is *not* the same as zero — a caller treating null as 0 would mark every
+W-9 expired. `crewState()` is worst-of-three. Verified in Chromium against realistic rows:
+
+| crew | data | dot |
+|---|---|---|
+| Ramirez | all current | green |
+| Delgado | GL in 21 days | amber |
+| Novak | GL expired, no WC | red |
+| **Halstead** | **nothing on file at all** | **red** — absence must never read as compliant |
+| **Ortiz** | **two GL rows, one expired** | **green** — the newer wins |
+
+**Upload rolls back.** If the `crew_docs` insert fails after the file lands, the object is removed from
+the bucket — otherwise it is stored, billed and referenced by nothing.
+
+**All 46 `--crw-*` references carry a literal fallback**, asserted in the patch. 448–449 are why.
+
+`check_build.py` green (547, marker `cr-crew-script`, negative-controlled).
+**Chromium 20/20**, every `<style>` block loaded in file order, assertions all `getComputedStyle` or
+real DOM state. Harness `harnesses/h547_chromium.js`.
+
+**Next:** Labor Rates (needs crews) → Work Order generator (needs rates) → Payments + Commissions.
+
+---
+
+## Build 548 — Labor Rates on a crew: catalog items plus custom rows
+
+Stage 2. 547 shipped the page; this is the tab that makes `crew_rates` referencing `pricing_items`
+worth having.
+
+**The tab shows what the crew is priced on, not the whole catalog.** `pricing_items` has **34 enabled
+rows across 16 categories** — rendering 34 inputs and asking Theo to fill them on a phone is a chore,
+not a rate sheet. The tab lists this crew's rates grouped by category; you add a catalog item when you
+need one. Custom rows group at the end. The picker offers **only items not already priced for that
+crew**, asserted.
+
+**The tab is admin-only and is HIDDEN, not empty.** `crew_rates` is `is_cardinal_admin()` in RLS —
+it is what Cardinal *pays*, which with `pricing_items.rate` is the margin. Production must not see it.
+A rendered-but-empty tab would turn a correct refusal into what looks like a broken screen, and worse,
+imply the data is there to be had. Gated in **three** places: `tabsFor()` filters the strip,
+the dispatch falls back to Compliance, and `ratesHtml()` refuses on its own. The harness runs the page
+**twice — as Theo and as Curtis** — and asserts four tabs versus three.
+
+**The spread is the point.** Every catalog-linked row shows Cardinal's rate beside the crew's and the
+difference. `spread()` returns **null rather than a number** for a custom row (no catalog twin) and for
+a zero catalog rate (a zero base is not a 100% margin). A negative spread — the crew charging more than
+Cardinal does — is **amber, not red**: a number to look at, not an error.
+
+**Neither new fetch can blank the directory.** `pricing_items` and `crew_rates` degrade to `[]`; only
+the `crews` fetch throws. Asserted by counting `throw` sites in `load()`.
+
+### The harness caught a real bug
+
+`money()` produced **`$-2`** for a negative spread — the sign inside the currency symbol, which is not
+how money is written anywhere. Fixed to `-$2`; the sign now goes outside. It only shows up on a crew
+whose rate is *above* Cardinal's own, which is exactly the row Theo most needs to read correctly.
+
+`check_build.py` green (548, marker `function ratesHtml`, negative-controlled).
+**Chromium 13/13**, both roles, both themes. Harness `harnesses/h548_chromium.js`.
+
+**Next:** the Work Order generator (needs these rates to fill its labor lines), then Payments +
+Commissions.
+
+---
+
+## Build 549 — the rate columns line up, and the panel stops stretching
+
+**Theo, with a phone screenshot:** *"Can you line up and align those sections."*
+
+**Two faults, and the second made the first look worse.**
+
+**1. Every category got its own `<table>`.** Five categories, five tables — and an **auto-layout table
+sizes its columns to its own content**, so Unit / Ours / Theirs landed in a different place in every
+block. Nothing was going to align them while they were separate tables.
+
+**2. The panel was being stretched from inside.** Six auto-width columns forced the card wider than the
+phone, so the row labels clipped on the left and the "Their rate" / "Unit" fields ran off on the right.
+Those fields sit in a `.crw-grid2` whose media query collapses below 620px — **it never fired, because
+a media query keys off the VIEWPORT while the layout was being stretched from within.**
+
+**The fix is one table, not five.** Categories are full-width rows inside a single table, so alignment
+is *structural* rather than coincidental. `table-layout:fixed` with an explicit `<colgroup>` pins the
+widths, and the table sits in its own `overflow-x:auto` box with a `min-width` — the rates scroll
+inside their own frame, the page never does.
+
+**⚠ `min-width:0` is half the fix, and the half that is easy to miss.** A **grid item's default
+`min-width` is `auto`, not 0**, so the panel track refused to shrink below the table's intrinsic width
+and stretched the card anyway — which meant `.crw-rtwrap`'s `overflow-x` never engaged. `minmax(0,1fr)`
+on the track plus `min-width:0` on the children are two halves of one fix. **The harness caught this:
+the first run of 549 still failed both the wrapper-scrolls and form-fits assertions.**
+
+### The negative control did NOT reproduce, and that is recorded rather than hidden
+
+The 548 fixture's five tables happen to *agree* — each is `width:100%` of the same container, and the
+identical headers give columns 2–6 identical minimums, so column 1 comes out the same. Theo's real data
+diverges. Rather than claim a before/after win the fixture cannot support, the control asserts **the
+defect itself**, which is provable either way: 548's tables compute `table-layout: auto`, so agreement
+was a coincidence; 549's computes `fixed`, so it is a guarantee.
+
+`check_build.py` green (549, marker `crw-rtwrap`, negative-controlled).
+**Chromium 13/13 measured at 430px**, Theo's actual phone width — every column asserted to one
+x-position, the view asserted not to exceed the viewport, the wrapper asserted to scroll instead.
+Harness `harnesses/h549_chromium.js`.
+
+---
+
+## Build 550 — light mode for Crews, in the app's own light language
+
+**Theo, with two screenshots** (the Landing and the Insurance home in light): *"Make light modes for
+all sections in crew labor similar to this style and color theme. Raise everything that can be raised
+with shadows."*
+
+**Read off the screenshots rather than guessed:**
+
+- a **warm** off-white ground (`#f7f5f5`), not the cool `#f2f3f5` the crews page had
+- white cards with a **thin cardinal hairline**, not a grey one
+- soft drop shadows on everything — nothing sits flat
+- micro-labels in letterspaced uppercase **cardinal red**
+- section headings as a **label followed by a rule** (`CHASE LIST ————`)
+- the card that matters gets a red edge and a faint red bloom
+
+**The nav inverts, and that is the interesting part.** 547 built it as a **recessed well in both
+themes**, copying 536's left menu. Theo has now asked for the opposite in light, so light gets a raised
+white card with the hairline and a shadow while **the well survives untouched in dark**. The twins
+genuinely differ now — which is this project's own "the dark twin is designed, not recoloured", running
+in the other direction for once.
+
+**Dark is not touched.** Every one of the 25 rules is inside `:root[data-theme="rb-light"]`, and the
+patch asserts it by parsing the selectors and failing on any that would reach dark. It also asserts the
+dark well's `inset 3px 0 7px -3px rgba(0,0,0,.85)` still exists.
+
+**Contrast computed before the colours went in**, not after: worst pair is the section-rule label at
+**4.91:1** against a 4.5 floor; everything else runs 5.7–18:1. The red hairline is decoration, not text,
+but it reads 5.67:1 against white so it is visible rather than theoretical.
+
+`check_build.py` green (550, marker `Build 550 · light mode for Crews`, negative-controlled).
+Chromium 13/13 carried forward, plus **all four tabs rendered in light** for review.
+Harness `harnesses/h550_chromium.js`.
+
+**A gate bug worth recording:** the shadow assertion used `light[light.index(sel)]` — `index()` returns
+an **int**, so the slice was a single character and the check was meaningless before it failed. Rewritten
+to regex out the rule body and assert `box-shadow` inside it. The test was wrong twice over: broken
+*and* silently so.
+
+---
+
+## Build 551 — the light Crews cards actually lift off the page
+
+**Theo, with a third screenshot:** *"I need the light theme to have this type of raised look with
+shadows it pops out."*
+
+550's light shadows were **too weak and the wrong temperature**: `rgba(31,33,36,.09)` — a cool grey I
+picked, on a warm off-white ground.
+
+**Every value here is the app's own, measured rather than invented.** `#leadsView .ljcard` renders
+`rgba(40,20,10,…)` — a *warm* shadow that belongs with the warm page — and it already defines a lifted
+elevation at `0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10)`. **That is its `:hover`
+state.** A phone cannot hover, so the app's own lifted look was unreachable on the device Theo works
+from. 551 promotes it to rest.
+
+Inner objects (doc rows, notes, the rate table, buttons, inputs) lift at a **smaller** amplitude so the
+hierarchy survives the increase — everything getting the same shadow would flatten it again.
+
+**A lit top edge is the other half of "raised":** `border-top:2px solid #fff` with the shadow beneath
+is light-from-above. Without it a card is merely outlined.
+
+The patch asserts **zero `rgba(31,33,36` remain** in the light block — the first attempt missed the
+tabs and the inputs and its own gate caught it, aborting before the write.
+
+**⚠ The first marker failed the negative control**, and correctly: `0 14px 28px rgba(40,20,10,.16)` was
+**already in the file**, because it was lifted *from* `.ljcard:hover`. Reusing the app's values means
+the value is not new — only where it appears is. Same lesson as 543's ported icon. Marker changed to
+`border-top:2px solid var(--crw-lit,#fff)`.
+
+Measured before and after in Chromium:
+`rgba(31,33,36,.09) 0 6px 18px` → `rgba(40,20,10,.16) 0 14px 28px`.
+
+`check_build.py` green (551, negative-controlled). Dark untouched — asserted, all 25 rules still
+light-scoped and the dark recessed well intact.
+
+**Still unresolved, and Theo should say:** his screenshot shows a **dark top edge** on each card. The
+shipped light `.ljcard` renders `border-top: rgb(255,255,255)` — white — so that edge is not coming
+from the current rule. It may be the shadow of the card above, or a build he was looking at. 551 uses a
+**light** top edge, which is the correct physics for a raised card. If he wants a dark edge, say so.
+
+---
+
+## Build 552 — cardinal red top edge on the light Crews cards
+
+**Theo:** *"Use red edge instead of navy."*
+
+551 used a **white** lit edge — correct physics for a raised card (light from above, shadow beneath),
+and it answered the open question from 551's note, which had flagged that the dark edge in Theo's
+screenshot was not coming from any shipped rule. He wants it **red**, not navy and not white.
+
+`border-top:2px solid #c8202e` on the panel and the nav. The edge is **decoration, not text**, so no
+4.5 floor applies — but it reads **5.67:1** against the white card, past the 3.0 non-text floor, so it
+is a visible edge rather than a theoretical one.
+
+Verified in Chromium in both themes:
+
+| | card top | nav top |
+|---|---|---|
+| light | `rgb(200, 32, 46)` @ 2px | `rgb(200, 32, 46)` |
+| dark | `rgb(36, 36, 44)` @ 1px | `rgb(34, 48, 71)` |
+
+Dark is untouched — asserted, and confirmed by reading the rendered border rather than the source.
+
+`check_build.py` green (552, negative-controlled). Closes the open question from 551.
+
+### build 553 — the right side of Crews
+Theo: "How about the right side?" Measured the left nav against the right panel in
+Chromium rather than guessing. The panel is TWO `.crw-card`s butted together (header
+with the tabs, then the body), and three things were wrong with it:
+
+- **Light corners were 10px against the nav's 14px.** `panelHtml()` set the radius as an
+  INLINE style, which beats every rule in the stylesheet. Fixed structurally: the two
+  halves get real classes (`crw-cardtop` / `crw-cardbot`) carrying exactly the geometry
+  the inline styles used to, so a theme rule can reach them. Dark was never affected —
+  its nav is 10px too.
+- **The file input was unstyled in BOTH themes.** The base rule lists `[type=text]`,
+  `[type=date]`, `select`, `textarea` and stops, so Compliance rendered a raw UA control
+  (measured `border-width:0px, border-radius:0px`). Now styled, plus
+  `::file-selector-button`.
+- **Dark drew a white line across the middle of the panel.** `.crw-card`'s
+  `0 1px 0 rgba(255,255,255,.10) inset` is a top-edge bevel, and the body half has no top
+  edge. Pixel-measured at luma 53.0 against the card's own 30.2. Only the inset is
+  dropped; the drop shadow and ledge are kept verbatim.
+
+Also unified the hairline — 550 gave doc rows, notes and the rate frame a translucent-red
+border, 551 changed the CARDS to grey `#e6e2df` and left the children pink.
+
+**A false positive of mine, recorded so it does not come back.** I first diagnosed a
+drop-shadow SMEAR at the seam — the top half's `0 14px 28px` landing on the body half's
+face. It does not happen: the body half is a later sibling with an opaque background and
+paints over that shadow. The luma profile is flat over dy 1-9 in both builds. What I had
+measured was the first document row's own border, 14px down. 550's `.crw-card + .crw-card`
+rule went in under the same wrong theory, aimed at the wrong card, and 551 then set it to
+a value identical to `.crw-card` — a literal no-op. Deleted. No shadow is overridden in
+this build except the one dark inset above. `h553_chromium.js` asserts the absence of the
+smear so the wrong fix cannot be reintroduced.
+
+Caught during the build: adding the classes let the light `.crw-card` rule (1,3,0)
+out-specify the base `.crw-cardbot` (1,1,0) and put the 2px cardinal edge back — a red
+line straight across the middle of the panel, 186 luma. The harness caught it before the
+write; the light rule now re-zeroes `border-top`.
+
+Gates: `check_build.py` green, negative-controlled, 552 → 553. Chromium 22/22, both themes.
+
+### build 554 — a Roofr upload fills the measurements and the pitch
+Theo: "Roofr when uploaded should be auto populating the info for pitch and measurements."
+
+**The audit behind it.** The same roof facts had THREE homes and the import populated
+the one nothing reads:
+- `checklist.roofr` — written by `wireRoofrUpload`, read by nobody afterwards
+- `checklist.meas` — written ONLY by the hand-typed Measurements modal
+- `checklist.pitch` / `.layers` / `.decking` — written by the roof INSPECTION checklist
+  (`ck_pitch`, `ck_layers`, `ck_decking`), read by the Construction Agreement via
+  `collapse('pitch', _ck.pitch)`
+
+So a job could be measured by Roofr and still show an empty Measurements panel and a
+blank pitch line on its agreement.
+
+**The change.** The merge is lifted into a named pure function `roofrMerge(all, d)` beside
+`fillRoofrFields`, so the gate can execute the shipped code rather than a re-implementation.
+Precedence: Roofr fills blanks and refreshes its OWN earlier numbers (a corrected re-upload
+works), never overwrites a field measurement, and a mixed record reads `Field + Roofr`
+rather than being relabelled. `checklist.pitch` is filled only when the inspection left it
+blank. `layers`/`decking` are untouched — Roofr does not report them.
+
+**Corrections to claims I made earlier in the session, all mine:**
+- I said "nothing writes `checklist.layers/pitch/decking`". **Wrong** — the roof inspection
+  checklist writes them (`ck_layers`, `ck_pitch`, `ck_decking`, and `ck_sat` for a satellite
+  dish). My regex `(layers|pitch|decking)\s*:` missed it because the form reads DOM values
+  into a differently-shaped object.
+- I said the one project carrying them was a test row from 542. **Wrong** — it is "Alton",
+  created 17 Jul, with real values (8/12, 2 Layers, 1x6 Plank / Spaced Lumber), and it is a
+  *different* project from the one carrying `meas`.
+- Block attribution by "nearest preceding named block" is unreliable: **unnamed script blocks
+  get credited to whatever named block precedes them**, which made real code look like it
+  lived in `cr-pcard-styles` (the base64 blob). Track block ENDs, not just starts.
+
+**Stated caveat:** zero projects in production carry a `roofr` key, so no real import has
+ever landed. The payload shape is taken from `api/roofr.js`'s own documented contract.
+The harness runs against REAL checklist rows pulled from the database for everything else.
+
+Gates: `check_build.py` green, negative-controlled, 553 → 554. Harness 32/32 against
+production rows.
+
+### build 555 — the crew Work Order (Production → crew)
+Theo: "a work order section for each client for production to send to the crew either via
+email or printed and hand given" · "This is a seperate crew workorder that Cardinal gives to
+them" · "There'll be separate work orders for each trade. I can set the emails later make the
+contact info editable."
+
+**NOT the community work-order module.** `cr-wo-script` stores a file a partner sent IN to
+Cardinal, is community-fenced and is untouched. Theo confirmed these are different documents
+travelling in opposite directions, so the fence STAYS — do not widen it.
+
+**Document type three.** `isWorkOrderTitle` joins `isEstimateTitle`/`isContractTitle`. The
+load-bearing detail: the `insp` bucket in `renderProjectDocs` is defined by NEGATION, so the
+new predicate had to be subtracted there too or every work order would file itself under
+Inspections. Gate asserts `isWorkOrderTitle` is used exactly twice — select and exclude.
+
+**Nothing is retyped.** Layers, pitch, decking + condition, satellite dish and roof type come
+from the roof inspection (`ck_layers`, `ck_pitch`, `ck_decking`, `ck_deckcond`, `ck_sat`,
+`ck_rooftype`); squares and lineal feet from `checklist.meas`, which 554 fills from Roofr;
+labor lines from `crew_rates`; the rep from `prefillUserInfo`. Shell is `buildEstimate()`,
+stored via `db.create` into `inspection_reports` so it reuses the editor and the `@page Letter`
+print path.
+
+**One per trade** — the picker groups crews by trade in the Crews page order. A roof and a
+gutter run on the same job are two documents.
+
+**No email is invented.** The crew block reads `crews.contact_*` and renders a visible blank
+when absent. The gate asserts no `@` appears anywhere in the module.
+
+**Known limitation, needs a decision from Theo:** `crew_rates` is admin-only in RLS, so a work
+order generated by Curtis or Scottie comes back with no labor lines. Rather than print an empty
+money table it says the rates were not readable. Either production reads `crew_rates`, or the
+labor block stays admin-generated.
+
+Gates: `check_build.py` green, negative-controlled, 554 → 555. Harness 32/32 against real
+`projects` rows (Alton's inspection, the field-measured job) and real `crews`/`crew_rates` shapes.
+One harness red was a fixture bug of mine — `woBody` prefers `legal_name`, so the hostile `name`
+in the escaping test could never render; the assertion, not the escaping, was wrong.
+
+### build 556 — Payments to crews, Commissions on a client. Stage 4, the last.
+Theo: "payment history made to crews wired in. with history in the crew section" ·
+"a commission section in the client profile paid out and a history of it" ·
+"Crew rates is not needed by productions, I write the checks."
+
+**Payments tab on a crew** — admin-only, gated the same three ways Labor Rates is (tab strip,
+dispatch fallback, renderer refuses on its own), matching `crew_payments`' `is_cardinal_admin()`
+RLS. `check` is the default method because Theo writes the checks. The paid-to-date total is
+summed from the rows actually rendered, never a second query, so the figure cannot drift from
+the list. `MONEY_TABS = ['rates','payments']` gates both together.
+
+**Commissions tab on the client profile** — `commissions` carries the schema's one split policy:
+admins do everything, a rep may SELECT `rep_email = auth.email()`. So it renders for everyone
+and a rep simply sees fewer rows; only admins get the form. Fetched on tab open rather than
+cached with the project, because the row set depends on who is asking. The rep address is
+format-validated and lower-cased before insert — the rep's own SELECT policy matches on that
+exact string, so a typo silently orphans the row.
+
+**Work-order labor wording** — 555 printed "Labor rates are not readable from this account" when
+production generated one. Theo settled that production doesn't need rates, so that describes the
+design, not a fault; it read like a malfunction on a document handed to a subcontractor. Now
+"Labor pricing is handled by the office."
+
+**Defect the harness caught, in shipped code:** `money()` (from 548) rendered `$1,875.5` — it was
+written for per-unit RATES where `$285` reads fine, but a payment is a check amount and needs two
+decimals. Fixed with an opt-in `money(n, cents)`; rates pass nothing and are byte-identical.
+
+**Two anchor traps hit and worth recording:**
+- `rates   = (res[4].data)` is aligned with THREE spaces, not one; and the click delegation is
+  indented four, not six. Print `repr()` first — both aborted before any write, as designed.
+- **`function money(n){` appears NINE times in this file, one per module.** A file-wide
+  `count == 1` assertion is meaningless here; the edit is scoped to the `cr-crew-script` slice
+  and the patch asserts the other eight survive. This is the file's own "scope the assertion to
+  the function, not the file" rule earning its place again.
+
+Gates: `check_build.py` green, negative-controlled, 555 → 556. Chromium 14/14, both roles, both
+themes — including the total read off the RENDERED cells and summed independently.
+
+### build 557 — a light twin for the Activity Count tiles
+Theo: "fix activity count tiles."
+
+545 shipped them obsidian in BOTH modes — his pick of three gloss treatments, and what he saw in
+the preview. 545's own comment left the door open: *"a light twin is one added rule if he wants
+one."* He wanted one.
+
+**The inks could not simply carry over, and the arithmetic is why.** 545 pinned both inks
+*because* the tile was theme-independent. Computed, not eyeballed:
+
+| ink | on #ffffff | on #f4f1ec cream |
+|---|---:|---:|
+| `#E8722A` as-is | 3.06:1 | **2.71:1 — under the 3.0 floor** |
+| `#C25A18` shipped | 4.40:1 | 3.91:1 |
+| `#5f6670` label | 5.80:1 | 5.15:1 |
+
+`#C25A18` is that same orange deepened for a light ground — not a different colour. Swapping it
+for cardinal red would have made the two themes read as two different components.
+
+**Designed, not recoloured.** Dark is highlight-led (a white sheen inset riding a black radial);
+in light an inset highlight is invisible against a white card, so light is shadow-led — the same
+radial inverted, with a real drop shadow doing the lift the inset used to do. Same geometry, same
+sheen origin at 22% -10%, asserted equal in both.
+
+**Dark is untouched byte-for-byte** — the patch asserts the four dark rules and both pinned inks
+survive unchanged. The one dark-side edit is to a COMMENT: 545 recorded `#E8722A` at 6.47:1 on the
+obsidian; against the gradient's LIGHTEST stop (`#2c2d36`, the worst case that actually governs)
+it is **4.47:1**. Still far over the floor — the dark tile needed no change — but the recorded
+figure was wrong and would have been trusted.
+
+**Blast radius:** `.actbox` has exactly one emitter and appears in no other markup. The "obsidian
+recipe" later builds applied to four more surfaces was COPIED under their own class names, so
+they are unaffected — asserted.
+
+Gates: `check_build.py` green, negative-controlled, 556 → 557. **Chromium 16/16**, both modes from
+the same file, every assertion read via `getComputedStyle` — build 481's lesson, that specificity
+on paper is not proof of which rule won.
+
+### build 558 — the left menu survives on every page but two
+Theo: *"Every single page in this app should have the navigation on the left side on desktops
+except for the landing page"* → asked about the document editor → *"Every page except for the
+document editor."*
+
+**The mount gate was never the problem.** `ready()` already returns true for exactly what he
+described — desktop ≥1100px, signed in, header up, not the landing page. **24 of 30 views** are in
+normal flow and `body.cr-lnav-on{padding-left:var(--lnav-w)}` already handled them.
+
+**Six views are `position:fixed`, and padding on `<body>` does nothing for a fixed child** — it is
+laid out against the viewport, not the padding box. Measured in Chromium, not inferred: **an
+inline-style scan missed `editorView` entirely**, because its `position:fixed` comes from a
+stylesheet. Only a computed-style pass over all 30 found it.
+
+| view | z | before |
+|---|---:|---|
+| landingView | 150 | covers the menu — **correct**, exception 1 |
+| editorView | 150 | covers the menu — **correct**, exception 2 |
+| crewsView | 156 | **covered the menu outright** |
+| cardinalTruthView / insClientsView / resourceLibraryView | 60 | menu visible, but **content hid beneath it** |
+
+**Two defects, one of them mine.** (1) `#crewsView` never joined the convention a prior build
+already established for the other three — `top:var(--headh)!important;z-index:60!important`, which
+drops them below the menu (80) and the header (90). Crews shipped at 547 with a bare `z-index:156`.
+Fixed by adding it to that selector list, **not** by inventing a second mechanism. (2) **Nothing
+has ever offset a fixed view by the menu's width** — all four sat at `left:0` under 238px of menu,
+content at x=72. `.wrap` is `max-width:none;padding:0 36px`, so it is genuinely full-bleed and not
+centred out of harm's way. Live in production on three pages until now.
+
+`!important` is required, not decorative — the views carry `inset:0` in an **inline style
+attribute**, the `styleMounts()` trap. The neighbouring convention rule already uses it for the
+same reason. **No media query**: `--lnav-w` is `0px` at `:root` and `238px` only above 1100px, so
+the rule self-gates; paired with the `body.cr-lnav-on` scope the phone is unreachable.
+
+**Three assertion traps hit while writing the gates**, each caught before any write:
+- A file-wide `body.cr-lnav-on #(\w+View)` sweep also matched the **pre-existing** `#boardView`
+  rule and read as a fifth target — a false failure against a correct patch.
+- `'landingView' not in block` failed on **my own comment**, which names both exceptions to
+  explain why they are excluded. Comments lie in both directions; assert on the selector text.
+- An unbounded `[^{}]*` recon regex over 3.2 MB backtracked past the 120s timeout. Bounded it.
+
+Gates: `check_build.py` green, negative-controlled, 557 → 558. **Chromium 14/14, running the same
+assertions against 557 and 558 from one script** so every line is its own negative control —
+`crewsView` NO→yes, all four content edges x=72→304, the two exceptions byte-identical, the other
+24 unmoved, and all 30 unchanged at 900px.
+
+### build 559 — Quick Inspection gets a yellow panel and stops being unreadable
+Theo: *"The quick inspec page is unreadable… leave the background color black alone then box the
+contents in a square with rounded corners in a deep yellow with white text make the yellow box
+recessed and the boxes within it hover with a shadow."* → shown three depths → *"Anything actually
+yellow yellow?"* → shown real yellows → *"Do option A but make the boxes within the yellow either
+dark grey or black and make them sink into the page with White text."*
+
+**What was actually wrong — rendered and measured, not guessed.** The page is a light-theme design
+stranded on the black retail page:
+
+| | computed | on the black page |
+|---|---|---:|
+| `.viewhead` | `rgb(28,20,22)` | **1.09:1 — invisible** |
+| `.subnote` | `rgb(102,102,102)` | 3.42:1 |
+| `.qibub` / `.qichip` / `.qibar` | white and cream slabs | glare |
+
+The heading was the real complaint. `backgroundImage` computed to `none`, so the retail
+gradient-clip rule people would expect to rescue `.viewhead` is **not** applying — a bare
+`.viewhead{color:#1c1416}` wins by file order.
+
+**White text had to move onto the cards, and arithmetic decided it.** White on `#FFD400` is
+**1.43:1** — no real yellow can carry white. Dark ink on it is 12.63:1, and white on the `#14110c`
+card is 18.83:1. So the panel carries dark ink and Theo's white text lives on the cards inside it.
+
+**Every selector is scoped to `#quickInspView`** — `.btn`, `.chipbtn`, `.axbtn`, `.viewhead`,
+`.subnote` and `.wrap` are app-wide classes; unscoped this would restyle every screen. Gated.
+
+**Two traps.** (1) `.chipbtn` carries `-webkit-text-fill-color:#2c2c2c`, which **beats `color`** —
+`color:#fff` alone would have left the note buttons dark-on-dark, i.e. reproduced the exact bug
+being fixed. Both properties are set everywhere. Same class as `.pipetitle` stripping colour off
+emoji. (2) Semantic colour preserved per CLAUDE.md: Camera red, Finish green (an inline style),
+active chip red, done chip green.
+
+**A defect only the screenshot caught.** Photos is `class="btn ghost"`, so the `.btn` red rule
+swallowed it and rendered a second cardinal-red button beside Camera. **All 19 assertions passed
+while that sat on screen.** Fixed with a `.btn.ghost` rule and a 20th assertion. This project's
+note that *screenshots root-cause more than reasoning does* earned itself again.
+
+**Green is Finish, and only Finish.** Theo, after seeing the render: a *done* chip was also
+green, spending the one colour that means "this inspection is over" on a much smaller idea. Done
+is now the same black card with its label in the panel's own yellow — **13.15:1**, unmistakably a
+different state from a plain white chip, and no second green anywhere. A darker grey card was
+measured first and **rejected**: every candidate came out **1.2–1.7:1 against the neutral chip**,
+so "done" would have been invisible. The harness now asserts green appears nowhere in the block
+and that Finish's inline green is the only one on the page.
+
+**`#qiStartView` is deliberately untouched** — it shares the invisible-heading problem, but
+wrapping a 340px map in a yellow panel is a design decision Theo has not seen. Flagged, not assumed.
+
+Gates: `check_build.py` green, negative-controlled, 558 → 559. **Chromium 20/20** against the
+*shipped* `#quickInspView` markup and real stylesheets, with 558 loaded from disk as its own control.
+
+### build 560 — the left menu reaches the Estimates builder too
+Theo: *"add the nav section desktop on the estimates page."*
+
+**Why 558 could not have found this screen — the lesson worth keeping.** `#cr-est-view` **is not in
+the markup.** `cr-est-script` creates it at runtime:
+
+```js
+function ensureView(){ if(view) return view;
+  view = document.createElement('div'); view.id = 'cr-est-view';
+  document.body.appendChild(view); return view; }
+```
+
+Its id is `cr-est-view`, not `...View`, so 558's static scan **and** its computed-style sweep over
+`[id$="View"]` both walked straight past it. **A DOM audit that only reads the shipped HTML cannot
+see a screen JavaScript appends.** It is `position:fixed;inset:0;z-index:9500` — the highest
+surface in the app — so it covered the menu outright.
+
+**Not simply a fifth selector on 558's rule**, for two reasons:
+
+- **Gated on `body.cr-lnav-on`, not applied flat.** That class is set only once the menu has
+  actually mounted, so a phone keeps the full-screen takeover at `z-index:9500`/`top:0` byte for
+  byte. 558's convention rule is unconditional — right for those four, wrong for this one.
+- **`.cr-est-head` is NOT hidden.** The convention hides `.ins-header` on the views it governs, but
+  this bar carries the estimate number **and the Save button**; hiding it would remove the only way
+  to save an estimate. It reads as a document toolbar beneath the app header.
+
+**Two left rails on desktop, flagged not buried:** the app menu (238px) plus the estimate's own
+document outline (`.cr-est-nav`, 224px, desktop-only ≥901px, its own feature). Measured: **798px of
+form at 1280, 958px at 1440, 1438px at 1920.** Workable everywhere the menu appears (≥1100px).
+
+Gates: `check_build.py` green, negative-controlled, 559 → 560. **Chromium 11/11**, creating
+`#cr-est-view` the same way the app does rather than expecting it in the markup, with 559 as its
+own control, at 1440 and at 820.
+
+### build 561 — the Estimates screen the MENU opens, and the Quick Inspection start step
+Theo, with a screenshot: *"the quick inspects and estimates, the estimates one does not have the nav."*
+
+**Two of my own mistakes, both visible in that one screenshot.**
+
+**1. 560 fixed the wrong Estimates screen.** THREE surfaces carry "estimate" in the name and I
+patched the one nobody reaches from the menu:
+
+| surface | what it is |
+|---|---|
+| `#cr-est-view` | the per-client BUILDER behind "+ New estimate". **560 fixed this** — real, but not the menu's |
+| `#cr-estimates-mount` | **what the menu's Estimates item opens**, via `crOpenEstimates()`. This one |
+| `tab-estimates` | a pane in the client profile, normal flow, always had the menu |
+
+And a stylesheet rule alone could never have fixed it:
+
+```js
+function styleMounts(){ MOUNT_IDS.forEach(function(id){
+  el.style.position='fixed'; el.style.inset='0'; el.style.zIndex='200'; ... }); }
+```
+
+Those are **inline styles written by JavaScript** onto `cr-estimates-mount`, `cr-pricing-mount`
+and `cr-claims-mount`. Inline beats every stylesheet rule at any specificity — the `styleMounts()`
+trap CLAUDE.md lists among its six buried-feature failures, and **the function's own comment
+records it biting once before** ("the real cause of 'dark mode isn't there' on
+#cr-estimates-mount"). So `!important` is mandatory here, not stylistic.
+
+**All three mounts, not just Estimates.** Pricing Catalog and Claims sit in the same menu carrying
+identical inline styles; fixing one and leaving two identical bugs beside it is how this file got
+the way it is.
+
+**2. 559 styled the wrong half of Quick Inspection.** It was scoped to `#quickInspView` — the photo
+stream you reach AFTER pinning — and I explicitly flagged `#qiStartView` as left alone. **That start
+step is the first thing you see**, and its title is the same `#1c1416` on `#0b0b0f` (1.09:1) that
+559 existed to fix. It now shares 559's panel, so both halves of one feature match.
+
+**The screenshot also settled that the menu works everywhere else** — plainly visible down the left
+of that page. 558 and 560 are fine; this was a third surface neither could reach.
+
+**A red that was the test's fault, recorded per the standing rule:** the shadow assertion failed
+because the harness sliced `boxShadow` to 40 chars, chopping `inset` to `inse`. The rule was correct.
+
+Gates: `check_build.py` green, negative-controlled, 560 → 561. **Chromium 12/12**, applying
+styleMounts()' inline styles verbatim before testing — anything less would prove nothing — with 560
+as its own control, at 1440 and 820.

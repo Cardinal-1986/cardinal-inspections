@@ -981,3 +981,123 @@ overriding the nav's slab for card titles only), `accountsreceivable`, `today`, 
 `.pipetitle` no longer clips a gradient to text — see the build log for why that was the whole
 cause of the blank squares, and note that `.acthead` and `.pu-strip .sh b` **still carry the same
 clip** deliberately.
+
+---
+
+## Colour-coded nav labels (build 538)
+
+Three items in the desktop left rail carry their own label colour: **Cardinal Truth** red,
+**Community Hub** emerald, **Landing** yellow. Text only — icons and row states are untouched.
+
+**Where it lives:** `<style id="cr-lnav-ink-styles">`, six selectors, all theme-scoped and all
+ending at `.lnav-tx`. Plus one attribute in `cr-lnav-script`.
+
+**`data-k` is the hook** — the label's own slug, emitted on every `.lnav-item`, computed with the
+same `iconKey(stripEmoji(label))` the icon lookup already uses. **Use it for any future per-item nav
+styling.** `data-nav` looks like the obvious hook and is not: Community Hub is added at runtime by
+`makeOpt()` with only an `id`, so `data-nav` exists on the static items only.
+
+**Cardinal Truth and Community Hub get their own value per theme, and it is not one palette
+recoloured** — cardinal red `#c8202e` is **3.40:1** on the dark rail and fails, so dark uses
+`#ef6b6b`. Contrast is measured against the rail, the active card *and* hover in each theme; the
+active card counts because these labels stay coloured when their row is the current page.
+
+**Landing is the one sanctioned exemption (539).** It is `#f0c651` in both themes — literal yellow,
+on Theo's explicit call after 538 shipped amber `#8a6100` and he was shown the measurement. In light
+it is **1.47 / 1.63 / 1.34**, knowingly under the floor, and no yellow clears it (`#ffd700` is
+1.26:1). **Do not "fix" it back to amber without asking him.** The gate is narrowed, not disabled:
+the patch and the harness both assert the exemption is exactly one entry wide, and the harness fails
+if that value ever starts passing.
+
+Desktop-only comes free: `--lnav-w` is `0px` except inside `@media (min-width:1100px)`.
+
+---
+
+## Card lift, two navigators, navy leads, obsidian estimates + reports (build 546)
+
+Theo, across five preview rounds: *"1 on lift and both on navigator … Make the money Green. Crews
+Grey Approved a dark green Prospects Orange and Leads Yellow (the numbers) … 1 Hairline. Scope will
+be the rest of retail on both dark and light modes leave the home screen alone."*
+
+**Where it lives:** `<style id="cr-nvl-styles">`, the last block in the file, plus nine exact-match
+JS edits. Nothing new was invented: the lead cards reuse 535's `--nv-*`, both rails reuse 536's
+`#cr-lnav` recipe, the milestone pill reuses 544's `.stagechip.stg-*`, and the obsidian is 545's
+`.actbox` recipe. Four shipped decisions applied to four more surfaces.
+
+**The home screen is excluded by construction, not by inspection.** `.pipecard` lives in two
+containers — **8 in `#mainView`** (which *is* `renderHome()`) and **12 in `#reportsView`**. Every
+pipecard rule in the block is prefixed `#reportsView`, so 535's navy home card is untouched. Counted
+per container; do not "finish the job" by dropping the prefix.
+
+### Navigator A — the leads rail (a restyle, no JS)
+
+**The drop-down machinery already existed and had since build 336.** `.ljgroup` / `.ljgroup.closed`,
+the `▾`/`▸` caret, the click handler on `.ljgroup > b` and `ljState.open` were all there and rendered
+as plain text. 546 gave them 536's recessed channel — black well in dark, grey well in light, lit
+ledges for the group headers, and an inset red edge on a ticked option via `:has(.cbx:checked)`
+(progressive: where `:has()` is unsupported the filter still works, it just is not highlighted).
+
+### Navigator B — the estimate jump list (`estNavHtml` / `estNavWire` / `estNavRelabel`)
+
+**The one genuinely new component in the build.** A table of contents for a long estimate: three
+collapsible sections (Details / Line items / Photos & totals) and one row per line item. Desktop
+only (≥901px), the same breakpoint `.ljrail` uses. Built from `state` on every `render()`, so it
+cannot drift; `estNavOpen` survives a re-render the way `ljState.open` does for the leads rail.
+
+**`estNavRelabel()` exists because a re-render would destroy the caret.** Typing in a line-item name
+patches the matching nav row's text directly instead of re-rendering the row you are typing in.
+
+**The sticky works because a grid item's containing block is its grid *area*** — the area is the full
+row height while `align-items:start` keeps the box at content height. Do not "fix" that to
+`align-self:stretch`; it removes the travel sticky needs.
+
+### The gradient-clipped name and PO — an accessibility fix, not a taste change
+
+`.ljnm` and `.ljpo` (and `.ljpname` in the detail pane) were `background-clip:text` with a
+transparent fill, computing to **3.91:1** and **3.10:1** on the dark card — under the 4.5 floor.
+They are now flat: white name (**15.60:1**) and gold PO (**7.21:1**) in dark, near-black and maroon
+in light. **Undoing the clip takes three declarations** — `-webkit-text-fill-color:transparent`
+survives a plain `color:` and swallows it.
+
+### The milestone pill had an inline background, which is why the JS changed
+
+`ljRenderPane()` emitted `style="background:<solid>;color:<ink>"`. **No stylesheet rule can outrank
+an inline declaration**, so reusing 544's palette meant emitting `class="ljmpill stagechip stg-X"`
+and stripping `background`/`color` out of `.ljmpill`'s own rule. The pill keeps its 999px radius
+because `.ljmpill` sits ~85k characters after `.stagechip` at equal specificity.
+
+### The email button
+
+`ljCardHtml()` rendered its action column only when a phone existed. It now renders on **phone OR
+email**, with a third `mailto:` button under the two existing ones (`.ljcta` is already
+flex-column, so it aligns by construction). **On today's data this shows on 1 of 18 projects** —
+`projects.email` is NULL on 13 and empty on 4. Correct, and nearly inert until the column is filled.
+
+### Reports KPI colours
+
+Theo assigned five colours against a preview carrying labels this app does not have ("Bid out",
+"Crews"). Mapped onto the seven real KPIs by what each number **is**, via `k-money` / `k-new` /
+`k-won` / `k-rate` classes on the `<b>`:
+
+| Class | Colour | KPIs | Worst-case ratio |
+|---|---|---|---:|
+| `k-money` | `#4fc98a` | Revenue signed · Avg job size · Open pipeline $ · Backlog value | 6.55:1 |
+| `k-new` | `#E8C21E` | New leads · Upcoming appts | 7.92:1 |
+| `k-won` | `#3d9970` | Deals signed · Jobs completed · Backlog (approved) | **3.90:1** |
+| `k-rate` | `#b9bec7` | Win rate · Avg days to sign | 7.33:1 |
+
+Computed against `#2c2d36`, the **lightest** band of the obsidian gradient and therefore the worst
+case; the floor for 20px/800 is 3.0. **Orange is deliberately absent** — it is spent on the Activity
+Count tiles and spending it twice would stop it meaning anything.
+
+**`Chart.defaults.color` is now set in `rptChart()`.** Chart.js defaults its tick and legend ink to
+`#666`, which is 2.5:1 on obsidian and **was already failing on 535's navy card before this build**.
+Not themed, deliberately: the card is black in both modes, so the ink has to be too. Safe because
+`new Chart(` appears **exactly once** in the file.
+
+### Obsidian is black in both modes
+
+545's stated precedent, and Theo's pick there. The estimate page's header was **already**
+`linear-gradient(120deg,#2c2c2c,#1a1a1a)`, so a dark body finishes a shell that was half-built
+rather than inventing a third ground. The corollary 545 wrote down applies too: a theme-independent
+surface needs theme-independent inks, so every grey in the block is pinned, not tokenised.

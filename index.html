@@ -1459,9 +1459,52 @@ html, body{overflow-x:hidden;max-width:100%;}
 .acthead{margin-top:16px;padding-top:8px;
   font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
 .actstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:10px;}
-.actbox{background:var(--rbe-panel);border:1px solid var(--rbe-line2);border-radius:6px;padding:10px 6px;text-align:center;}
-.actbox span{display:block;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);line-height:1.3;}
+/* 545: obsidian — Theo's pick of three gloss treatments. Black in BOTH modes,
+   which is his literal instruction and what he saw in the preview; a light twin
+   is one added rule if he wants one. Raised on a real drop shadow, sheen from
+   the top-left, and the orange numeral kept exactly as it was kept exactly as it was. 557 re-measured the
+   figure this comment used to carry: #E8722A is 4.47:1 against the gradient's
+   LIGHTEST stop (#2c2d36 — the worst case that actually governs), not the 6.47:1
+   recorded here, which was taken against a darker stop. Still far over the 3.0
+   floor for 22px 800, so the dark tile needed no change — but the number was
+   wrong, and the next person would have trusted it. */
+.actbox{background:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;border-radius:6px;padding:10px 6px;text-align:center;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5),
+             0 1px 0 rgba(255,255,255,.10) inset;}
+/* PINNED, not var(--rbe-mute). That token is #9aa0a8 in dark but #6b6b6b in
+   light, and this tile is black in BOTH — so the themed token would have put the
+   label at 3.57:1 in light mode, under the 4.5 floor. A theme-independent tile
+   needs a theme-independent label. #9aa0a8 is 7.22:1 on this ground. */
+.actbox span{display:block;font:700 11.5px 'Segoe UI',Arial,sans-serif;
+  color:#9aa0a8;line-height:1.3;}
 .actbox b{display:block;font:800 22px 'Segoe UI',Arial,sans-serif;color:#E8722A;margin-top:3px;}
+/* ── 557: the light twin 545 said would be one added rule ──────────────────
+   DESIGNED, not recoloured. Dark is highlight-led — a white sheen inset riding a
+   black radial. In light an inset highlight is invisible against a white card, so
+   light is shadow-led: the same radial inverted, and a real drop shadow doing the
+   lift the inset used to do. Same geometry, same sheen origin at 22% -10%.
+
+   Both inks are re-pinned rather than tokenised, for 545's own stated reason —
+   and because the arithmetic forced it. Computed, not eyeballed:
+     label  #5f6670 on #ffffff  5.80:1  (floor 4.5 for 11.5px 700)
+     number #C25A18 on #ffffff  4.40:1  (floor 3.0 for 22px 800)
+   The orange it replaces, #E8722A, is 3.06:1 on white and 2.71:1 on the app's
+   cream — under the floor. #C25A18 is that orange deepened for a light ground,
+   not a different colour: swapping it for red would make the two themes read as
+   two components.
+
+   Out-specifies the bare .actbox rules above it, (0,2,1) against (0,1,0) — but
+   specificity on paper is not proof, so the harness asserts in Chromium which
+   rule actually won. That is build 481's lesson. */
+:root[data-theme="rb-light"] .actbox{
+  background:radial-gradient(120% 90% at 22% -10%,#ffffff 0%,#f7f7f9 45%,#eceef2 100%);
+  border:1px solid #e2e2e2;
+  box-shadow:0 6px 14px rgba(16,18,24,.10), 0 1px 2px rgba(16,18,24,.06),
+             0 1px 0 rgba(255,255,255,.9) inset;}
+:root[data-theme="rb-light"] .actbox span{color:#5f6670;}
+:root[data-theme="rb-light"] .actbox b{color:#C25A18;}
+
 @media (max-width:900px){ .actstrip{grid-template-columns:repeat(3,1fr);gap:8px;} .actbox b{font-size:19px;} }
 .arhead{font:700 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin-top:8px;}
 .arhead b{font-size:13px;color:var(--rbe-ink);margin-right:8px;}
@@ -1997,8 +2040,11 @@ body.restoring #restoreVeil{display:flex;}
 .ljpname{flex:1;min-width:0;font:800 19px Georgia,'Times New Roman',serif;
   background:linear-gradient(100deg,var(--rbe-name1),var(--rbe-acc) 55%,var(--rbe-acclt));
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc);}
+/* 546: colour moved out to 544's .stagechip.stg-* rules, which the pill now
+   wears as classes. Shape only here - .stagechip is (0,1,0) and so is this, and
+   this one is 85k characters later, so the pill keeps its 999px radius. */
 .ljmpill{display:inline-block;font:800 10.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--rbe-mpill-fg);border-radius:999px;padding:4px 14px;background:var(--slc,var(--rbe-mpill-bg));}
+  text-transform:uppercase;border-radius:999px;padding:4px 14px;}
 .ljpsub{padding:2px 16px 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
 .ljpsub .po{color:var(--rbe-po3);font-weight:800;}
 .ljpact{display:flex;gap:8px;padding:0 16px 13px;}
@@ -3125,6 +3171,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <option value="checklists">Checklists</option>
           <option value="inspections">Inspections</option>
           <option value="estimates">Estimates</option>
+          <option value="contracts">Contracts</option>
+<option value="workorders">Work Orders</option>
+<option value="commissions">Commissions</option>
           <option value="materials">Materials</option>
           <option value="measure">Measurements</option>
         </select>
@@ -3152,12 +3201,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="recents">&#128337; Recents</button>
           <button class="navopt" data-nav="pricing">&#127991;&#65039; Pricing Catalog</button>
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
+          <button class="navopt" data-nav="crews">&#128119; Crews</button>
 
           <div class="navsec">Account</div>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 537 &#8212; the squares beside the headings on the home and reports pages are proper drawn icons now</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 561 &#8212; the Estimates page keeps the menu, and Quick Inspection is readable from the first step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3607,13 +3657,37 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </span>
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
-      <h3 class="projsec" style="margin-top:22px;">&#128209; Contracts</h3>
+    </div>
+
+    <div id="tab-contracts" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <h3 class="projsec">&#128209; Contracts</h3>
       <p class="subnote">Client contracts &#8212; prefilled from this profile. Blank print masters live in
       <b>&#9776; Menu &#8594; Company Documents</b>.</p>
       <div style="margin:6px 0 12px;">
         <button class="btn" id="pNewContractBtn">+ New contract</button>
       </div>
       <div id="contractDocsMount"><div class="loading">Loading…</div></div>
+    </div>
+
+    <div id="tab-commissions" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <h3 class="projsec">&#128176; Commissions</h3>
+      <p class="subnote">What a rep is owed on this job, and what has been paid.
+      Reps see their own rows; admins see everyone&#8217;s.</p>
+      <div id="commMount"><div class="loading">Loading…</div></div>
+    </div>
+
+    <div id="tab-workorders" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <h3 class="projsec">&#128296; Work Orders</h3>
+      <p class="subnote">Cardinal&#8217;s own work order, issued <b>to a crew</b> &#8212; one per trade.
+      Filled from the inspection and the measurements on this job. Open it to correct anything,
+      then print it or send it.</p>
+      <div style="margin:6px 0 12px;">
+        <button class="btn" id="pNewWorkOrderBtn">+ New work order</button>
+      </div>
+      <div id="woDocsMount"><div class="loading">Loading…</div></div>
     </div>
 
     <div id="tab-checklists" style="display:none;">
@@ -8949,6 +9023,113 @@ var CONTRACT_TERMS = `
 <li><b>Payment.</b> Balances unpaid 30 days after completion accrue 1.5% monthly. Owner is responsible for reasonable collection costs.</li>
 `;
 var CONTRACT_TEMPLATE = buildEstimate('SERVICE <span>CONTRACT</span>', CONTRACT_BODY, CONTRACT_TERMS);
+/* 542: the roofing Construction Agreement, faithful to
+   docs/Cardinal_Roofing_Contract.pdf page 1 — all 13 numbered spec sections with
+   their lettered sub-options. The T&C and the two statutory 3-Day Notice copies are
+   NOT retyped; they stay the printed master in Company Documents and this references
+   them the way the paper form does. */
+var ROOF_AGREEMENT_TERMS = `<li><b>The Terms and Conditions and both Notice of Cancellation copies are the printed master.</b> They are reproduced verbatim in <b>&#9776; Menu &#8594; Company Documents &#8594; Roofing &#8594; Construction Agreement (Master)</b> and are deliberately not retyped here &#8212; the cancellation notice is statutory text under ORC 1345.23.</li>\n<li>This Agreement, the accompanying Terms and Conditions, and any specification sheet(s) together form the entire agreement between Buyer and Contractor.</li>`;
+var ROOF_AGREEMENT_BODY = `
+<h2 class="sec">Customer Information</h2>
+<table class="meta">
+<tr><td class="k">Date</td><td><span class="ph">[Date]</span></td></tr>
+<tr><td class="k">Buyer</td><td><span class="ph">[BUYER]</span></td></tr>
+<tr><td class="k">Co-buyer</td><td><span class="ph">[CO-BUYER]</span></td></tr>
+<tr><td class="k">Email</td><td><span class="ph">[EMAIL]</span></td></tr>
+<tr><td class="k">Phone</td><td><span class="ph">[PHONE NUMBER]</span></td></tr>
+<tr><td class="k">Street</td><td><span class="ph">[STREET]</span></td></tr>
+<tr><td class="k">City / State / ZIP</td><td><span class="ph">[CITY]</span> &nbsp; <span class="ph">[STATE]</span> &nbsp; <span class="ph">[ZIP]</span></td></tr>
+<tr><td class="k">Primary residence</td><td><b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span></td></tr>
+</table>
+
+<p style="font-size:10pt;">Buyer(s) hereby jointly and severally agrees to purchase the products
+and/or services of Cardinal Roofing &amp; Renovations, LLC (&#8220;Contractor&#8221;) as listed herein,
+in accordance with the terms and conditions described in this Agreement, the accompanying
+<b>Terms and Conditions</b> form, and any accompanying specification sheet(s).</p>
+
+<h2 class="sec">Project Specifications</h2>
+<table class="meta">
+<tr><td class="k">1. Decking</td><td>A. Remove existing roofing layers to roof deck<br>B. Inspect roof deck &amp; replace wood as needed &#8212; $<span class="ph">[rate]</span> per sheet</td></tr>
+<tr><td class="k">&nbsp;&nbsp;&nbsp;Decking type</td><td><span class="opts" data-opts="decking">A. OSB &nbsp; B. Plywood &nbsp; C. T&amp;G &nbsp; D. Plank Board &nbsp; E. Spaced Decking &nbsp; F. Cedar Shake</span></td></tr>
+<tr><td class="k">2. Roof deck protection</td><td>A. Felt underlayment 15&nbsp;lb &nbsp; B. Felt underlayment 30&nbsp;lb &nbsp; C. Synthetic underlayment &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">3. Drip edge / gutter apron</td><td>A. Drip edge colour <span class="ph">[colour]</span> (rakes)<br>B. Gutter apron colour <span class="ph">[colour]</span> (eaves)</td></tr>
+<tr><td class="k">4. Ice &amp; water barrier</td><td>Install along eaves, valleys &amp; flashings &#8212; A. Standard &nbsp; B. OC &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">5. Valley metal</td><td>A. Colour <span class="ph">[colour]</span></td></tr>
+<tr><td class="k">6. Starter shingles</td><td>Install along all rakes &amp; eaves &#8212; A. Standard &nbsp; B. OC Starter Plus &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">7. Shingles <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Style <span class="ph">[style]</span><br>B. Colour <span class="ph">[colour]</span><br>C. Brand <span class="ph">[brand]</span></td></tr>
+<tr><td class="k">8. Flashing</td><td>A. Chimney &nbsp; B. Wall &nbsp; C. Step &nbsp; <span class="ph">[circle all that apply]</span><br>Extra structure: A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; <span class="ph">[if any]</span></td></tr>
+<tr><td class="k">9. Extrusions</td><td>A. Pipe boots <span class="ph">[qty]</span> &nbsp; B. Skylights <span class="ph">[qty]</span></td></tr>
+<tr><td class="k">10. Ventilation</td><td>A. Shingle-over ridge vent &#8212; 1. Standard &nbsp; 2. OC<br>B. Box / turtle vents <span class="ph">[qty]</span> &nbsp; C. Power vent <span class="ph">[qty]</span> &nbsp; D. Turbine <span class="ph">[qty]</span><br><span style="font-size:9pt;color:#666;">Not responsible for re-attachment of satellite or HVAC.</span></td></tr>
+<tr><td class="k">11. Ridge cap / hip cap</td><td>A. Standard &nbsp; B. OC &#8212; 1. Pro Edge &nbsp; 2. Decoridge &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">12. Existing layers</td><td><span class="opts" data-opts="layers">Number / type of existing layers</span></td></tr>
+<tr><td class="k">13. Roof pitch</td><td><span class="opts" data-opts="pitch">Roof pitch</span></td></tr>
+</table>
+
+<h2 class="sec">Warranty System</h2>
+<table class="meta">
+<tr><td class="k">Standard</td><td>25-yr manufacturer &nbsp;&#183;&nbsp; 5-yr workmanship</td></tr>
+<tr><td class="k">Systems Protection</td><td>25-yr mfr. &nbsp;&#183;&nbsp; 10-yr workmanship &nbsp;&#183;&nbsp; Owens Corning &nbsp;&#183;&nbsp; transferable</td></tr>
+<tr><td class="k">Preferred Protection</td><td>50-yr mfr. &nbsp;&#183;&nbsp; 10-yr workmanship &nbsp;&#183;&nbsp; Owens Corning &nbsp;&#183;&nbsp; transferable</td></tr>
+<tr><td class="k">Selected</td><td><span class="ph">[circle one]</span></td></tr>
+</table>
+
+<h2 class="sec">HOA / Authorization</h2>
+<p style="font-size:10.5pt;">HOA approval required: <b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span><br>
+Buyer to obtain required authorization from the HOA and authorities. &nbsp;&nbsp;
+Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Project Timeline</h2>
+<p style="font-size:10.5pt;">The anticipated start date is <span class="ph">[n]</span> weeks from the date on
+which all HOA permissions, permits and other contingencies necessary to complete the project are
+obtained, and the anticipated completion date is <span class="ph">[n]</span> weeks from the actual start date.</p>
+
+<h2 class="sec">Notes &amp; Insurance Claim</h2>
+<table class="meta">
+<tr><td class="k">Notes</td><td><div class="descbox"><span class="ph">[notes]</span></div></td></tr>
+<tr><td class="k">Insurance co.</td><td><span class="ph">[INSURANCE CO.]</span></td></tr>
+<tr><td class="k">Claim #</td><td><span class="ph">[CLAIM #]</span></td></tr>
+</table>
+<p style="font-size:10pt;">Buyer(s) acknowledges that Contractor is due any and all monies received
+from any insurance company pursuant to an insurance claim, including overhead and profit, approved
+cost increases, and approved claim supplements. &nbsp;&nbsp; Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Payment Structure</h2>
+<table class="items">
+  <thead><tr><th>Payment</th><th>Due</th><th class="price">Amount</th></tr></thead>
+  <tbody>
+    <tr><td>Down payment</td><td>Upon signing this Agreement</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+    <tr><td>Balance due on completion</td><td>Upon substantial completion</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+  </tbody>
+  <tfoot><tr><td colspan="2" style="text-align:right;font-weight:800;">CONTRACT PRICE</td>
+    <td class="price" style="font-weight:800;" id="estTotal">
+      <span class="ph" data-cprice="1">[0.00]</span></td></tr></tfoot>
+</table>
+<p style="font-size:10.5pt;">Cash on completion &nbsp;or&nbsp; financed: $<span class="ph">[0.00]</span>
+per month for <span class="ph">[n]</span> months.</p>
+
+<h2 class="sec">Acknowledgement &amp; Right to Cancel</h2>
+<p style="font-size:10pt;">Buyer(s) hereby acknowledges that Buyer(s) has read this Agreement and
+the accompanying Terms and Conditions, understands the terms of this Agreement, has received a
+completed, signed and dated copy of this Agreement on the date first written above, and was orally
+advised of his/her right to cancel this transaction.</p>
+<p style="font-size:10pt;"><b>You, the buyer, may cancel this transaction at any time prior to
+midnight of the third business day after the date of this transaction.</b> See the two attached
+<i>Notice of Cancellation</i> copies for an explanation of that right.</p>
+<p style="font-size:9.5pt;color:#666;">The Terms and Conditions and both Notice of Cancellation
+copies are the printed master &#8212; <b>&#9776; Menu &#8594; Company Documents &#8594; Roofing
+&#8594; Construction Agreement (Master)</b>. They are reproduced there verbatim and are not
+retyped here.</p>
+
+<table class="meta" style="margin-top:14px;">
+<tr><td class="k">Buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Co-buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Contractor representative</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>
+<tr><td class="k">Contractor signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+</table>
+`;
+var ROOF_AGREEMENT = buildEstimate('CONSTRUCTION <span>AGREEMENT</span>', ROOF_AGREEMENT_BODY, ROOF_AGREEMENT_TERMS);
 var INVOICE_BODY =
   '<div class="secthead">INVOICE</div>' +
   '<table style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px;">' +
@@ -9197,6 +9378,27 @@ var PKEY = 'cardinal_projects_v1';
 function plsLoad(){ try{ return JSON.parse(localStorage.getItem(PKEY)) || []; }catch(e){ return []; } }
 function plsSave(l){ localStorage.setItem(PKEY, JSON.stringify(l)); }
 
+/* 540: the two money tables. Read-only, narrow selects, and deliberately NOT
+   folded into db/pdb — those are the inspection_reports and projects pipelines
+   and have their own local-storage fallbacks. There is no offline story for
+   money, so these simply return [] when signed out. */
+var moneyDb = {
+  estimates: async function(){
+    if(!TEAM) return [];
+    var r = await sb.from('estimates')
+      .select('id,project_id,total,status,archived');
+    if(r.error) throw r.error;
+    return r.data || [];
+  },
+  contracts: async function(){
+    if(!TEAM) return [];
+    var r = await sb.from('contracts')
+      .select('id,project_id,total,status,homeowner_signed_at,voided_at');
+    if(r.error) throw r.error;
+    return r.data || [];
+  }
+};
+
 var pdb = {
   list: async function(){
     if(TEAM){
@@ -9371,6 +9573,12 @@ var mount = document.getElementById('historyMount');
 var countLabel = document.getElementById('countLabel');
 
 var cacheProjects = [];
+/* 540: project_id -> money, filled by reload(). Synchronous readers (there are
+   15 of them through projectValue) must be safe before the fetch resolves, so
+   these start empty and an empty map simply means "no contract/estimate money
+   known yet" — never an exception. */
+var estBest = {};   /* highest total among SENT/approved estimates */
+var ctrSigned = {}; /* total on the signed, un-voided contract */
 /* 493: [] means two different things - the table is empty, or we never got a
    successful read. A denied or failed load leaves cacheProjects at its initial
    [], and the home empty-state then tells the user they have no clients. The
@@ -9394,11 +9602,17 @@ async function reload(){
   try{
     var res = await Promise.all([
       pdb.list(), db.list(),
-      adb.list().catch(function(){ return []; })
+      adb.list().catch(function(){ return []; }),
+      /* 540: the money lives here, not in inspection_reports. Both catch to []
+         for the same reason adb does — an RLS refusal must not take down
+         reload(), and with it the entire client profile. */
+      moneyDb.estimates().catch(function(){ return []; }),
+      moneyDb.contracts().catch(function(){ return []; })
     ]);
     cacheProjects = res[0];
     cacheRows = res[1];
     cacheAppts = res[2];
+    indexMoney(res[3], res[4]);
     cacheLoaded = true;   /* 493: only here, and only after the awaits resolved */
     if(currentProject){
       var fresh = cacheProjects.find(function(x){ return x.id === currentProject.id; });
@@ -10742,6 +10956,9 @@ function ljPhoneSvg(){
 function ljSmsSvg(){
   return '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
 }
+function ljMailSvg(){
+  return '<svg viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M3 6.5l9 6.5 9-6.5"/></svg>';
+}
 function ljCardHtml(p){
   var ck = parseCkAll(p);
   var stg = normStage(p.stage);
@@ -10750,6 +10967,10 @@ function ljCardHtml(p){
   var ink   = LJ_INK[stg]   || '#15171b';
   var cat = [ck.job_category, ljTrades(p).join(', ')].filter(Boolean).join(' \u00b7 ');
   var tel = (p.phone || '').replace(/[^+\d]/g, '');
+  /* 546: the card's action column was phone-only, so a lead with an email and
+     no number showed no way to reach them at all. Theo asked for the email icon
+     under the phone; .ljcta is already flex-column so it aligns by itself. */
+  var eml = (p.email || '').trim();
   return '<div class="ljcard' + (ljState.sel === p.id ? ' sel' : '') + '" data-lj="' + p.id + '" style="--spn:' + spine + ';--slc:' + solid + ';--sli:' + ink + '" title="' + esc(stg) + '">' +
     '<div class="ljrl"><div class="ljmc">' + esc(stg.charAt(0)) + '</div>' +
       '<span class="ljkl">In status</span><span class="ljkv">' + ljAge(ck.stage_since || p.updated_at) + '</span>' +
@@ -10760,9 +10981,10 @@ function ljCardHtml(p){
       (cat ? '<div class="ljct">' + esc(cat) + '</div>' : '') +
       '<div class="ljrep">' + esc(rptRepName(p.created_by || '')) + '</div>' +
     '</div>' +
-    (tel ? '<div class="ljcta">' +
-      '<a class="ljbtn" href="tel:' + tel + '" title="Call">' + ljPhoneSvg() + '</a>' +
-      '<a class="ljbtn" href="sms:' + tel + '" title="Text">' + ljSmsSvg() + '</a>' +
+    ((tel || eml) ? '<div class="ljcta">' +
+      (tel ? '<a class="ljbtn" href="tel:' + tel + '" title="Call">' + ljPhoneSvg() + '</a>' : '') +
+      (tel ? '<a class="ljbtn" href="sms:' + tel + '" title="Text">' + ljSmsSvg() + '</a>' : '') +
+      (eml ? '<a class="ljbtn" href="mailto:' + esc(eml) + '" title="Email">' + ljMailSvg() + '</a>' : '') +
     '</div>' : '') +
   '</div>';
 }
@@ -10849,7 +11071,11 @@ function renderLjPane(){
     : '<div class="ljsummary" style="padding-top:46px;">No address on file for this job.</div>';
   pane.innerHTML =
     '<div class="ljprow"><span class="ljpname">' + esc(p.name || 'Unnamed') + '</span>' +
-      '<span class="ljmpill" style="background:' + solid + ';color:' + ink + ';">' + (stg === 'Closed' ? 'Archived' : stg) + '</span></div>' +
+      /* 546: was style="background:<solid>;color:<ink>" - an inline declaration
+         no stylesheet can outrank. It now wears 544's stage chip classes, so the
+         pill and every other chip in the app read from ONE palette. The stage
+         key drives the class; the label still says Archived for Closed. */
+      '<span class="ljmpill stagechip stg-' + esc(stg) + '">' + (stg === 'Closed' ? 'Archived' : stg) + '</span></div>' +
     '<div class="ljpsub">' + (ck.po ? '<span class="po">' + esc(String(ck.po)) + '</span> \u00b7 ' : '') + esc(addr || 'No address') + '</div>' +
     '<div class="ljpact">' +
       (tel ? '<a class="ljab" href="tel:' + tel + '">' + ljPhoneSvg() + 'Call</a>' +
@@ -11093,6 +11319,14 @@ function rptChart(id, cfg){
   if(rptCharts[id]){ rptCharts[id].destroy(); }
   var el = document.getElementById(id);
   if(!el || typeof Chart === 'undefined') return;
+  /* 546: the reports cards are obsidian now. Chart.js defaults its tick and
+     legend ink to #666, which is 2.5:1 on that ground - and was already failing
+     on 535's navy card before this build. NOT themed, deliberately: the card is
+     black in both modes, so the ink has to be too. Set here rather than per
+     chart because `new Chart(` appears exactly once in this file, which makes
+     this reach the reports charts and nothing else. */
+  Chart.defaults.color = '#b9bec7';
+  Chart.defaults.borderColor = 'rgba(255,255,255,.10)';
   rptCharts[id] = new Chart(el.getContext('2d'), cfg);
 }
 function rptRepName(email){
@@ -11168,13 +11402,17 @@ function renderRptCompany(projs, from, to, pfrom, pto){
   });
   var avgDays = days.length ? Math.round(days.reduce(function(a,b){ return a+b; },0)/days.length) : null;
   document.getElementById('rptKpis').innerHTML =
-    '<div class="rptkpi"><span>Revenue signed</span><b>' + fmtMoney(rev) + '</b>' + rptDelta(rev, revPrev) + '</div>' +
-    '<div class="rptkpi"><span>New leads</span><b>' + newLeads.length + '</b>' + rptDelta(newLeads.length, newLeadsPrev.length) + '</div>' +
-    '<div class="rptkpi"><span>Deals signed</span><b>' + signed.length + '</b>' + rptDelta(signed.length, signedPrev.length) + '</div>' +
-    '<div class="rptkpi"><span>Win rate</span><b>' + rptPct(signed.length, winDen) + '</b></div>' +
-    '<div class="rptkpi"><span>Avg job size</span><b>' + (signed.length ? fmtMoney(rev/signed.length) : '\u2014') + '</b></div>' +
-    '<div class="rptkpi"><span>Avg days to sign</span><b>' + (avgDays != null ? avgDays : '\u2014') + '</b></div>' +
-    '<div class="rptkpi"><span>Open pipeline $</span><b>' + fmtMoney(pipeVal) + '</b></div>';
+    /* 546: k-money / k-new / k-won / k-rate carry the colour. Money is green,
+       new work yellow, closed work the dark green, ratios and durations grey -
+       computed against the obsidian card's lightest band, worst case 3.90:1
+       against a 3.0 floor for 20px/800. */
+    '<div class="rptkpi"><span>Revenue signed</span><b class="k-money">' + fmtMoney(rev) + '</b>' + rptDelta(rev, revPrev) + '</div>' +
+    '<div class="rptkpi"><span>New leads</span><b class="k-new">' + newLeads.length + '</b>' + rptDelta(newLeads.length, newLeadsPrev.length) + '</div>' +
+    '<div class="rptkpi"><span>Deals signed</span><b class="k-won">' + signed.length + '</b>' + rptDelta(signed.length, signedPrev.length) + '</div>' +
+    '<div class="rptkpi"><span>Win rate</span><b class="k-rate">' + rptPct(signed.length, winDen) + '</b></div>' +
+    '<div class="rptkpi"><span>Avg job size</span><b class="k-money">' + (signed.length ? fmtMoney(rev/signed.length) : '\u2014') + '</b></div>' +
+    '<div class="rptkpi"><span>Avg days to sign</span><b class="k-rate">' + (avgDays != null ? avgDays : '\u2014') + '</b></div>' +
+    '<div class="rptkpi"><span>Open pipeline $</span><b class="k-money">' + fmtMoney(pipeVal) + '</b></div>';
 
   var cur = rptSeries(projs.filter(rptIsSigned), rptSignedDate, projectValue, from, to);
   var prevRaw = rptSeries(projs.filter(rptIsSigned), rptSignedDate, projectValue, pfrom, pto);
@@ -11309,10 +11547,10 @@ function renderRptProd(projs, from, to, pfrom, pto){
     return a.appt_date && new Date(a.appt_date + 'T00:00:00') >= new Date();
   }).length;
   document.getElementById('rptProdKpis').innerHTML =
-    '<div class="rptkpi"><span>Jobs completed</span><b>' + done.length + '</b>' + rptDelta(done.length, donePrev.length) + '</div>' +
-    '<div class="rptkpi"><span>Backlog (approved)</span><b>' + backlog.length + '</b></div>' +
-    '<div class="rptkpi"><span>Backlog value</span><b>' + fmtMoney(backlogVal) + '</b></div>' +
-    '<div class="rptkpi"><span>Upcoming appts</span><b>' + schedAhead + '</b></div>';
+    '<div class="rptkpi"><span>Jobs completed</span><b class="k-won">' + done.length + '</b>' + rptDelta(done.length, donePrev.length) + '</div>' +
+    '<div class="rptkpi"><span>Backlog (approved)</span><b class="k-won">' + backlog.length + '</b></div>' +
+    '<div class="rptkpi"><span>Backlog value</span><b class="k-money">' + fmtMoney(backlogVal) + '</b></div>' +
+    '<div class="rptkpi"><span>Upcoming appts</span><b class="k-new">' + schedAhead + '</b></div>';
   var ser = rptSeries(projs, function(p){ return rptStageDate(p,'Completed'); }, function(){ return 1; }, from, to);
   rptChart('chProd', { type:'bar', data:{ labels: ser.labels, datasets:[{
       label:'Completed', data: ser.values, backgroundColor:'#29A3DC' }] },
@@ -11520,23 +11758,34 @@ function openProject(id){
   window.scrollTo(0,0);
 }
 function isContractTitle(t){ return /^contract/i.test((t||'').trim()); }
+/* 555: document type three. The `insp` bucket in renderProjectDocs is defined by
+   NEGATION, so this predicate has to be subtracted there too or every work order
+   files itself under Inspections. */
+function isWorkOrderTitle(t){ return /^work order/i.test((t||'').trim()); }
 function renderProjectDocs(){
   var docs = cacheRows.filter(function(r){ return currentProject && r.project_id === currentProject.id; });
   var ctrs = docs.filter(function(r){ return isContractTitle(r.title); });
   var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
-  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title) && !/^file:/i.test((r.title || '').trim()); });
+  var wos  = docs.filter(function(r){ return isWorkOrderTitle(r.title); });
+  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !/^file:/i.test((r.title || '').trim()); });
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
     : '<div class="empty"><b>No estimates yet.</b><br>Use <b>+ New estimate</b> to pick a template.</div>';
+  var wm = document.getElementById('woDocsMount');
+  if(wm) wm.innerHTML = wos.length ? docTable(wos) : '<div class="empty"><b>No work orders yet.</b><br>Use <b>+ New work order</b> to issue one to a crew.</div>';
   var cm = document.getElementById('contractDocsMount');
   if(cm) cm.innerHTML = ctrs.length ? docTable(ctrs)
     : '<div class="empty"><b>No contracts yet.</b><br>Use <b>+ New contract</b>, or approve the job from the pipeline to auto-create one.</div>';
 }
 function showTab(name){
+  /* 556: commissions are fetched per-tab rather than cached with the project —
+     the row set depends on who is asking (a rep sees only their own), so it must
+     not be served from a cache filled for somebody else. */
+  if(name === 'commissions'){ try{ renderCommissions(); }catch(_){} }
   var sel = document.getElementById('jobMenuSel');
   if(sel && sel.value !== name) sel.value = name;
-  ['overview','inspections','estimates','checklists','materials','measure'].forEach(function(t){
+  ['overview','inspections','estimates','contracts','workorders','commissions','checklists','materials','measure'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
   if(name === 'inspections') refreshInspGalN();
@@ -15687,6 +15936,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'landing'){ goToLanding(); }
   else if(nav === 'profile'){ openMyProfile(); }
   else if(nav === 'clients'){ openClientsDirectory(); }
+  else if(nav === 'crews'){ if(window.CardinalCrews) window.CardinalCrews.open(); }
   else if(nav === 'feed'){ openActivityFeed(); }
   else if(nav === 'reports'){ openReportsView(); }
   else if(nav === 'leads'){ openLeadsView(); }
@@ -16474,8 +16724,48 @@ var PIPE_BUCKETS = [
    would otherwise appear as a permanently empty sixth column on the Retail
    and Insurance boards, because renderPipeline does not filter by CRM. */
 var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
+/* 540 ─ where the money actually is ─────────────────────────────────────────
+   projectValue() used to scan inspection_reports for rows titled "Estimate…"
+   and take the highest total. Measured against production: that table has 22
+   rows, 3 of them match, and ALL THREE have total = 0 — the other 19 are NULL.
+   Not one row in it has ever carried money. The money is in `estimates`, which
+   this function never opened, so the circle read $0 for every client who had
+   not been given a manual override.
+
+   ONLY SENT ESTIMATES COUNT. A draft is a number still being edited; the
+   circle must not move on its own while Theo is typing. */
+var SENT_EST = { sent:1, approved:1, accepted:1, signed:1 };
+
+function indexMoney(estimates, contracts){
+  estBest = {};
+  (estimates || []).forEach(function(e){
+    if(!e || !e.project_id) return;
+    if(e.archived) return;
+    if(!SENT_EST[String(e.status || '').toLowerCase()]) return;
+    var t = Number(e.total) || 0;
+    if(t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
+  });
+  ctrSigned = {};
+  (contracts || []).forEach(function(c){
+    if(!c || !c.project_id) return;
+    if(c.voided_at) return;                       /* a voided contract is not money */
+    if(!c.homeowner_signed_at) return;            /* unsigned is not money either */
+    var t = Number(c.total) || 0;
+    if(t > (ctrSigned[c.project_id] || 0)) ctrSigned[c.project_id] = t;
+  });
+}
+
+/* Theo's own order: "tied to the contract or approved estimate amount".
+   A SIGNED CONTRACT WINS OUTRIGHT — it is not folded into the max, because if
+   the contract says $30k and a stale estimate says $36k, the contract is the
+   truth. Everything else is the highest of what we know. */
 function projectValue(pr){
+  if(!pr) return 0;
+  var signed = Number(ctrSigned[pr.id]) || 0;
+  if(signed > 0) return signed;
   var best = Number(parseCkAll(pr).manual_value) || 0;
+  var est = Number(estBest[pr.id]) || 0;
+  if(est > best) best = est;
   cacheRows.forEach(function(r){
     if(r.project_id === pr.id && isEstimateTitle(r.title) && Number(r.total) > best){
       best = Number(r.total);
@@ -16534,12 +16824,389 @@ async function runTotalsBackfill(){
   await reload();
   alert('Backfill complete: ' + fixed + ' total(s) filled in' + (skipped ? ', ' + skipped + ' had no readable total (open and re-save those to set one)' : '') + '. Pipeline dollars are now up to date.');
 }
+/* ══ 555: the crew Work Order ═══════════════════════════════════════════════
+   Cardinal's own document, issued TO a crew before the job goes on the
+   schedule. Separate from the community work-order module, which stores a file
+   a PARTNER sent in — different direction, different document, deliberately
+   left alone.
+
+   One per trade, per Theo. Nothing here is retyped: the roof facts come from
+   the inspection checklist, the measurements from checklist.meas (which 554
+   fills from a Roofr upload), the labor lines from crew_rates.
+
+   No email address is written anywhere. The crew contact block prefills from
+   the crew record when it has one and shows a blank otherwise, and the whole
+   document is editable in the existing editor before it goes out.          */
+/* ══ 556: commissions on this job ══════════════════════════════════════════
+   `commissions` carries the one split policy in the schema: admins do
+   everything, and a rep may SELECT rows where rep_email = auth.email(). So this
+   renders for everyone and a rep simply sees fewer rows — that is the design,
+   not a refusal to explain away. Only admins get the form.
+
+   The total is summed from the rows actually rendered, so the figure can never
+   disagree with the list above it.                                          */
+var COMM_STATUS = ['pending','approved','paid','void'];
+var COMM_METHODS = [['check','Check'],['ach','ACH'],['payroll','Payroll'],['other','Other']];
+
+function commAdmin(){
+  try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
+}
+function commMoney(n){
+  var v = Number(n);
+  if(!isFinite(v)) return '';
+  return (v < 0 ? '-' : '') + '$' + Math.abs(v).toLocaleString('en-US',
+    { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function commRowsHtml(rows){
+  var paid = 0, open = 0;
+  var body = rows.map(function(r){
+    var v = Number(r.amount);
+    if(isFinite(v)){ if(r.status === 'paid') paid += v; else if(r.status !== 'void') open += v; }
+    return '<tr>' +
+      '<td>' + woEsc(r.rep_email || '') + '</td>' +
+      '<td style="text-align:right">' + commMoney(r.amount) + '</td>' +
+      '<td>' + woEsc(r.basis || '') + '</td>' +
+      '<td>' + woEsc(r.status || '') + '</td>' +
+      '<td>' + woEsc(r.paid_on || '') + '</td>' +
+      '<td>' + woEsc(r.reference || '') + '</td>' +
+      (commAdmin() ? '<td><button class="chipbtn" data-delcomm="' + woEsc(r.id) + '">Remove</button></td>' : '') +
+    '</tr>';
+  }).join('');
+  return { paid: paid, open: open, body: body };
+}
+async function renderCommissions(){
+  var mount = document.getElementById('commMount');
+  if(!mount || !currentProject) return;
+  var rows = [];
+  try{
+    var r = await sb.from('commissions').select('*').eq('project_id', currentProject.id)
+                    .order('created_at', { ascending:false });
+    if(r.error) throw r.error;
+    rows = r.data || [];
+  }catch(e){
+    mount.innerHTML = '<div class="empty">Could not load commissions: ' + woEsc(e.message || e) + '</div>';
+    return;
+  }
+  var t = commRowsHtml(rows);
+  var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;' +
+            'padding:8px 10px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;"';
+  mount.innerHTML =
+    (rows.length
+      ? '<table class="reports"><thead><tr><th>Rep</th><th style="text-align:right">Amount</th>' +
+        '<th>Basis</th><th>Status</th><th>Paid</th><th>Reference</th>' +
+        (commAdmin() ? '<th></th>' : '') + '</tr></thead><tbody>' + t.body + '</tbody></table>' +
+        '<div style="display:flex;justify-content:flex-end;gap:18px;margin:10px 2px 0">' +
+          '<span><span class="subnote">Outstanding</span> <b>' + commMoney(t.open) + '</b></span>' +
+          '<span><span class="subnote">Paid</span> <b>' + commMoney(t.paid) + '</b></span></div>'
+      : '<div class="empty"><b>No commissions on this job yet.</b>' +
+        (commAdmin() ? '<br>Add one below.' : '<br>You have none recorded here.') + '</div>') +
+    (commAdmin()
+      ? '<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(128,128,128,.22)">' +
+        '<div class="ckrow">' +
+          '<label>Rep email<input type="text" id="cmRep" ' + inp + ' placeholder="nick@cardinalrenovations.net"></label>' +
+          '<label>Amount<input type="text" id="cmAmt" ' + inp + ' placeholder="1,250.00"></label>' +
+        '</div><div class="ckrow">' +
+          '<label>Basis<input type="text" id="cmBasis" ' + inp + ' placeholder="5% of contract"></label>' +
+          '<label>Status<select id="cmStatus" ' + inp + '>' +
+            COMM_STATUS.map(function(s){ return '<option value="' + s + '">' + s + '</option>'; }).join('') +
+          '</select></label>' +
+        '</div><div class="ckrow">' +
+          '<label>Paid on<input type="date" id="cmPaid" ' + inp + '></label>' +
+          '<label>Method<select id="cmMethod" ' + inp + '>' +
+            COMM_METHODS.map(function(m){ return '<option value="' + m[0] + '">' + m[1] + '</option>'; }).join('') +
+          '</select></label>' +
+        '</div>' +
+        '<label style="display:block;margin-top:8px">Reference / memo<input type="text" id="cmRef" ' + inp + '></label>' +
+        '<button class="btn" style="margin-top:12px" id="cmAdd">Record commission</button>' +
+        '<span class="subnote" id="cmMsg" style="margin-left:10px"></span></div>'
+      : '');
+  var add = document.getElementById('cmAdd');
+  if(add) add.addEventListener('click', addCommission);
+}
+async function addCommission(){
+  if(!currentProject || !commAdmin()) return;
+  var msg = document.getElementById('cmMsg');
+  var rep = document.getElementById('cmRep').value.trim();
+  var amt = Number(document.getElementById('cmAmt').value.replace(/[$,\s]/g, ''));
+  /* An unverified address is never written on this project. A commission row
+     keyed to a typo silently belongs to nobody — the rep's own SELECT policy
+     matches on this exact string. */
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rep)){
+    if(msg) msg.textContent = 'Enter the rep\u2019s full email address.'; return;
+  }
+  if(!isFinite(amt) || amt === 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
+  if(msg) msg.textContent = 'Saving\u2026';
+  var r = await sb.from('commissions').insert({
+    project_id: currentProject.id, rep_email: rep.toLowerCase(), amount: amt,
+    basis: document.getElementById('cmBasis').value.trim() || null,
+    status: document.getElementById('cmStatus').value || 'pending',
+    paid_on: document.getElementById('cmPaid').value || null,
+    method: document.getElementById('cmMethod').value || null,
+    reference: document.getElementById('cmRef').value.trim() || null,
+    created_by: (currentUser && currentUser.email) || null,
+  });
+  if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+  await renderCommissions();
+}
+async function delCommission(id){
+  if(!commAdmin()) return;
+  if(!confirm('Remove this commission from the record?')) return;
+  var r = await sb.from('commissions').delete().eq('id', id);
+  if(r.error){ alert('Could not remove: ' + r.error.message); return; }
+  await renderCommissions();
+}
+
+var WO_TRADES = ['Roofing','Siding','Windows','Gutters','General Repairs'];
+
+function woEsc(s){
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+/* a blank the crew can see and Production can fill in, rather than a silent gap */
+function woVal(v){
+  return (v == null || v === '') ? '<span class="ph">[&nbsp;&nbsp;&nbsp;&nbsp;]</span>' : woEsc(v);
+}
+function woRow(k, v){
+  return '<tr><td class="k">' + k + '</td><td>' + v + '</td></tr>';
+}
+
+/* The roof block only earns its place on a roofing job, and only once the roof
+   has actually been inspected — getChecklist() returns null until then. */
+function woSpecRows(pr, trade){
+  var out = '';
+  var cl = (typeof getChecklist === 'function') ? getChecklist(pr) : null;
+  if(trade === 'Roofing' && cl){
+    out += woRow('Existing roof type', woVal(cl.rooftype));
+    out += woRow('Number of layers',   woVal(cl.layers));
+    out += woRow('Decking',            woVal(cl.decking) +
+             (cl.deckcond ? ' &#183; condition ' + woEsc(cl.deckcond) : ''));
+    out += woRow('Pitch',              woVal(cl.pitch));
+    if(cl.sat) out += woRow('Satellite dish', woEsc(cl.sat) +
+             ' &#8212; <b>remove and set aside before tear-off</b>');
+    if(cl.structure) out += woRow('Structure', woEsc(cl.structure));
+  }
+  var ms = (typeof parseCkAll === 'function' ? (parseCkAll(pr).meas || {}) : {});
+  var mparts = [];
+  [['sq','squares'],['ridge','ridge LF'],['hip','hip LF'],['valley','valley LF'],
+   ['eave','eave LF'],['rake','rake LF']].forEach(function(p){
+    if(ms[p[0]]) mparts.push(woEsc(ms[p[0]]) + ' ' + p[1]);
+  });
+  if(mparts.length){
+    out += woRow('Measurements', mparts.join(' &#183; ') +
+             (ms.source ? ' <span class="mut">(' + woEsc(ms.source) + ')</span>' : ''));
+  }
+  return out;
+}
+
+function woLaborRows(rates, catalog){
+  /* 556: production does not need crew rates — Theo writes the checks. So this is
+     the design, not a failure, and must not read like one on a document that gets
+     handed to a subcontractor. */
+  if(!rates) return { html:'<p class="mut">Labor pricing is handled by the office.</p>',
+    total:null };
+  if(!rates.length) return { html:'<p class="mut">No labor rates recorded for this crew yet.</p>',
+    total:null };
+  var total = 0, rows = rates.map(function(r){
+    var item = r.pricing_item_id ? (catalog[r.pricing_item_id] || null) : null;
+    var name = item ? item.name : (r.custom_name || 'Line item');
+    var unit = item ? (item.unit || '') : (r.custom_unit || '');
+    var rate = Number(r.rate);
+    if(isFinite(rate)) total += rate;
+    return '<tr><td>' + woEsc(name) + '</td><td>' + woEsc(unit) + '</td>' +
+           '<td style="text-align:right">' +
+           (isFinite(rate) ? '$' + rate.toLocaleString('en-US') : '&#8212;') + '</td></tr>';
+  }).join('');
+  return {
+    total: total,
+    html: '<table class="meta"><thead><tr><th>Labor line</th><th>Unit</th>' +
+          '<th style="text-align:right">Rate</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+          '<p class="mut">Rates are per unit, as agreed with this crew. ' +
+          'Quantities are taken off the measurements above.</p>'
+  };
+}
+
+function woBody(pr, crew, rates, catalog, opts){
+  opts = opts || {};
+  var lab = woLaborRows(rates, catalog);
+  var specs = woSpecRows(pr, crew.trade);
+  return '' +
+  '<h2 class="sec">Work Order</h2>' +
+  '<table class="meta">' +
+    woRow('Work order #', woEsc(opts.wo_number || '')) +
+    woRow('Issued', woEsc(opts.issued || '')) +
+    woRow('Trade', woEsc(crew.trade)) +
+    woRow('Scheduled', woVal(opts.scheduled_on)) +
+  '</table>' +
+  '<h2 class="sec">Job</h2>' +
+  '<table class="meta">' +
+    woRow('Homeowner', woVal(pr.name)) +
+    woRow('Address', woVal(pr.address)) +
+    woRow('Phone', woVal(pr.phone)) +
+  '</table>' +
+  '<h2 class="sec">Crew</h2>' +
+  '<table class="meta">' +
+    woRow('Company', woVal(crew.legal_name || crew.name)) +
+    woRow('Contact', woVal(crew.contact_name)) +
+    woRow('Phone', woVal(crew.contact_phone)) +
+    woRow('Email', woVal(crew.contact_email)) +
+  '</table>' +
+  (specs ? '<h2 class="sec">Job Specifications</h2><table class="meta">' + specs + '</table>' : '') +
+  '<h2 class="sec">Scope of Work</h2>' +
+  '<div class="descbox">' + (opts.scope ? woEsc(opts.scope).replace(/\n/g, '<br>')
+     : '<span class="ph">[describe exactly what this crew is to do]</span>') + '</div>' +
+  '<h2 class="sec">Labor</h2>' + lab.html +
+  '<h2 class="sec">Sign-off</h2>' +
+  '<table class="meta">' +
+    woRow('Crew accepted by', '<span class="ph">[signature]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span>') +
+    woRow('Cardinal', '<span class="ph">[signature]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span>') +
+  '</table>';
+}
+
+var WO_TERMS = '<li>This work order authorises the scope described above and nothing beyond it. ' +
+  'Anything additional must be approved by Cardinal in writing before it is performed.</li>' +
+  '<li>The crew is responsible for its own tools, safety equipment and clean-up, and for ' +
+  'keeping current general liability and workers&#8217; compensation coverage on file with Cardinal.</li>' +
+  '<li>Damage to landscaping, gutters, siding or the structure caused by the crew is the ' +
+  'crew&#8217;s responsibility to make good.</li>';
+
+/* WO-1001 upward. crew_work_orders is readable by production, so the lookup
+   normally succeeds; if it is refused the number falls back to a timestamp
+   rather than blocking the document. */
+async function woNextNumber(){
+  try{
+    var r = await sb.from('crew_work_orders').select('wo_number');
+    if(r.error || !r.data) throw new Error('unreadable');
+    var max = 1000;
+    r.data.forEach(function(row){
+      var m = /(\d+)\s*$/.exec(String(row.wo_number || ''));
+      if(m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return 'WO-' + (max + 1);
+  }catch(e){
+    var d = new Date();
+    return 'WO-' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') +
+           String(d.getDate()).padStart(2,'0') + '-' +
+           String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
+  }
+}
+
+async function openWorkOrderPicker(){
+  var pr = currentProject;
+  if(!pr) return;
+  var m = document.getElementById('tskModal');
+  var body = document.getElementById('tskModalBody');
+  document.getElementById('tskModalTitle').textContent = 'New work order';
+  body.innerHTML = '<div class="loading">Loading crews…</div>';
+  m.style.display = 'flex';
+
+  var crews = [];
+  try{
+    var cr = await sb.from('crews').select('*').eq('archived', false).order('name');
+    if(cr.error) throw cr.error;
+    crews = cr.data || [];
+  }catch(e){
+    body.innerHTML = '<p>Could not load crews: ' + woEsc(e.message || e) + '</p>';
+    return;
+  }
+  if(!crews.length){
+    body.innerHTML = '<p>No crews on file yet. Add one in <b>&#9776; Menu &#8594; Crews</b> first.</p>';
+    return;
+  }
+  /* grouped by trade, in the order the Crews page uses */
+  var opts = '';
+  WO_TRADES.forEach(function(t){
+    var inT = crews.filter(function(c){ return c.trade === t; });
+    if(!inT.length) return;
+    opts += '<optgroup label="' + woEsc(t) + '">' +
+      inT.map(function(c){ return '<option value="' + woEsc(c.id) + '">' + woEsc(c.name) + '</option>'; }).join('') +
+      '</optgroup>';
+  });
+  var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;' +
+            'padding:9px 11px;font:600 14px \'Segoe UI\',Arial,sans-serif;"';
+  body.innerHTML =
+    '<p class="subnote">One work order per trade. Pick the crew this one is for.</p>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-bottom:3px;">Crew</label>' +
+    '<select id="woCrew" ' + inp + '>' + opts + '</select>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Scheduled for</label>' +
+    '<input type="date" id="woWhen" ' + inp + '>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Scope &#8212; what this crew is to do</label>' +
+    '<textarea id="woScope" rows="4" ' + inp + ' placeholder="Tear off to deck, replace rotten sheathing, ice &amp; water at eaves and valleys, OC Duration in Estate Gray…"></textarea>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">' +
+      '<button class="chipbtn" id="woCancel">Cancel</button>' +
+      '<button class="axbtn" id="woGo">Create</button></div>' +
+    '<div id="woErr" style="color:#c8202e;font-size:12.5px;margin-top:8px;"></div>';
+  document.getElementById('woCancel').addEventListener('click', function(){ m.style.display = 'none'; });
+  document.getElementById('woGo').addEventListener('click', function(){
+    var crew = crews.find(function(c){ return String(c.id) === document.getElementById('woCrew').value; });
+    if(!crew) return;
+    createWorkOrder(pr, crew, {
+      scheduled_on: document.getElementById('woWhen').value || null,
+      scope: document.getElementById('woScope').value.trim() || null,
+    });
+  });
+}
+
+async function createWorkOrder(pr, crew, opts){
+  var err = document.getElementById('woErr');
+  var go = document.getElementById('woGo');
+  if(go){ go.disabled = true; go.textContent = 'Creating…'; }
+  try{
+    /* crew_rates is admin-only by RLS. Production gets an error or an empty
+       set, and the document says so rather than printing a blank money table. */
+    var rates = null, catalog = {};
+    try{
+      var rr = await sb.from('crew_rates').select('*').eq('crew_id', crew.id);
+      if(!rr.error && rr.data){
+        rates = rr.data;
+        var ids = rates.map(function(r){ return r.pricing_item_id; }).filter(Boolean);
+        if(ids.length){
+          var pi = await sb.from('pricing_items').select('id,name,unit,category');
+          if(!pi.error && pi.data) pi.data.forEach(function(it){ catalog[it.id] = it; });
+        }
+      }
+    }catch(re){}
+
+    var num = await woNextNumber();
+    var issued = new Date().toLocaleDateString('en-US',
+      { month:'short', day:'numeric', year:'numeric' });
+    var lab = woLaborRows(rates, catalog);
+    var tpl = buildEstimate('WORK <span>ORDER</span>',
+      woBody(pr, crew, rates, catalog,
+             { wo_number:num, issued:issued, scheduled_on:opts.scheduled_on, scope:opts.scope }),
+      WO_TERMS);
+    if(typeof prefillUserInfo === 'function') tpl = prefillUserInfo(tpl);
+
+    var title = 'Work Order — ' + crew.trade + ' — ' + (crew.name || 'Crew');
+    var id = await db.create(title, tpl, pr.name, pr.id);
+
+    /* the document is the deliverable; the row is the record of it. A failure
+       here must not lose the document that was just created. */
+    try{
+      await sb.from('crew_work_orders').insert({
+        wo_number: num, crew_id: crew.id, project_id: pr.id, report_id: id,
+        status: 'draft', scope: opts.scope || null,
+        amount: (lab.total != null && lab.total > 0) ? lab.total : null,
+        scheduled_on: opts.scheduled_on || null,
+        created_by: (currentUser && currentUser.email) || null,
+      });
+    }catch(ie){}
+
+    document.getElementById('tskModal').style.display = 'none';
+    await reload();
+    await openEditor(id);
+  }catch(e){
+    if(err) err.textContent = 'Could not create the work order: ' + (e.message || e);
+    if(go){ go.disabled = false; go.textContent = 'Create'; }
+  }
+}
+
 async function createContractForCurrent(){
   var pr = currentProject;
   if(!pr) return;
   try{
     var price = projectValue(pr);
-    var tpl = prefillUserInfo(prefillClientInfo(CONTRACT_TEMPLATE, pr));
+    var tpl = prefillUserInfo(prefillClientInfo(ROOF_AGREEMENT, pr));
     if(price > 0){
       var half = price / 2;
       var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
@@ -16556,6 +17223,15 @@ var __pNewContractBtn = document.getElementById('pNewContractBtn');
 if(__pNewContractBtn) __pNewContractBtn.addEventListener('click', createContractForCurrent);
 var __contractDocsMount = document.getElementById('contractDocsMount');
 if(__contractDocsMount) __contractDocsMount.addEventListener('click', handleDocAction);
+var __pNewWorkOrderBtn = document.getElementById('pNewWorkOrderBtn');
+if(__pNewWorkOrderBtn) __pNewWorkOrderBtn.addEventListener('click', openWorkOrderPicker);
+var __woDocsMount = document.getElementById('woDocsMount');
+if(__woDocsMount) __woDocsMount.addEventListener('click', handleDocAction);
+var __commMount = document.getElementById('commMount');
+if(__commMount) __commMount.addEventListener('click', function(e){
+  var d = e.target.closest('[data-delcomm]');
+  if(d) delCommission(d.getAttribute('data-delcomm'));
+});
 
 async function approveAndContract(prId){
   var pr = cacheProjects.find(function(x){ return String(x.id) === String(prId); });
@@ -16563,7 +17239,7 @@ async function approveAndContract(prId){
   try{
     await patchProjectCk(pr, { wf_approved: { at: new Date().toISOString(), by: currentUser ? currentUser.email : null } });
     var price = projectValue(pr);
-    var tpl = prefillUserInfo(prefillClientInfo(CONTRACT_TEMPLATE, pr));
+    var tpl = prefillUserInfo(prefillClientInfo(ROOF_AGREEMENT, pr));
     if(price > 0){
       var half = price / 2;
       var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
@@ -17234,6 +17910,32 @@ function prefillClientInfo(tpl, pr){
   put('[Street, City, State ZIP]', pr.address);
   /* shared contact row */
   put('[Phone \u00b7 Email]', contact);
+
+  /* ── 542: the roofing Construction Agreement ─────────────────────────────
+     The lead stores the address as SEPARATE fields, so each one lands in its
+     own box on the form rather than as a single mashed line. */
+  put('[BUYER]', recipient);
+  put('[EMAIL]', pr.email);
+  put('[PHONE NUMBER]', pr.phone);
+  var _loc = (parseCkAll(pr).lead || {}).location || {};
+  put('[STREET]', [_loc.street, _loc.suite].filter(Boolean).join(' '));
+  put('[CITY]', _loc.city);
+  put('[STATE]', _loc.state);
+  put('[ZIP]', _loc.zip);
+
+  /* Theo's "3": where the roof has already been looked at, the line arrives
+     filled and its lettered option row collapses. Where it has not, the
+     options print exactly as they do on paper. */
+  function collapse(key, value){
+    if(!value) return;
+    tpl = tpl.replace(
+      new RegExp('<span class="opts" data-opts="' + key + '">[^<]*(?:<(?!/span>)[^<]*)*</span>'),
+      '<span class="fill">' + esc(value) + '</span>');
+  }
+  var _ck = parseCkAll(pr);
+  collapse('layers', _ck.layers);
+  collapse('pitch', _ck.pitch);
+  collapse('decking', _ck.decking);
   return tpl;
 }
 
@@ -18286,7 +18988,7 @@ function wireRoofrUpload(doc){
           var mAll = {};
           try{ mAll = JSON.parse(mpr.checklist || '{}') || {}; }catch(me){}
           data.imported_at = new Date().toISOString();
-          mAll.roofr = data;
+          roofrMerge(mAll, data);
           var mS = JSON.stringify(mAll);
           await pdb.update(mpr.id, { checklist: mS });
           mpr.checklist = mS;
@@ -18304,6 +19006,56 @@ function wireRoofrUpload(doc){
 
 }
 
+/* 554: a Roofr import used to fill the open document and save its raw payload
+   under checklist.roofr, and stop. Nothing read that key afterwards, so the
+   Measurements panel and the agreement's pitch line stayed empty on a job that
+   had just been measured. This lands the numbers where the app already looks
+   for them: checklist.meas (the Measurements modal) and checklist.pitch (the
+   inspection field the Construction Agreement collapses into line 13).
+
+   Precedence: Roofr fills blanks and refreshes its OWN earlier numbers, so a
+   corrected re-upload works. It never overwrites a field measurement — someone
+   who stood on the roof outranks a model reading a PDF — and a record that
+   ends up mixed is labelled 'Field + Roofr' rather than relabelled 'Roofr',
+   so the mixture stays visible.
+
+   layers and decking are deliberately untouched. Roofr does not report them;
+   ck_layers / ck_decking on the inspection checklist are their only source.
+
+   Kept as a pure (all, data) function so the gate can run THIS code against
+   real checklist rows instead of a re-implementation of it. */
+function roofrMerge(all, d){
+  if(!all || !d) return;
+  all.roofr = d;
+  var sq = (d.squares != null) ? Number(d.squares)
+         : (d.area_sqft != null ? Number(d.area_sqft) / 100 : null);
+  var prev = (all.meas && typeof all.meas === 'object') ? all.meas : {};
+  /* no source recorded means nothing has claimed these numbers yet */
+  var ours = !prev.source || String(prev.source).toLowerCase().indexOf('roofr') === 0;
+  var next = {}, wrote = 0;
+  Object.keys(prev).forEach(function(k){ next[k] = prev[k]; });
+  function put(key, val){
+    if(val == null || val === '') return;
+    if(!ours && next[key]) return;                 /* a human measured this */
+    var s = String(val);
+    if(String(next[key] == null ? '' : next[key]) === s) return;
+    next[key] = s; wrote++;
+  }
+  put('sq', (sq != null && isFinite(sq)) ? sq.toFixed(1) : null);
+  put('pitch',  d.pitch);
+  put('ridge',  d.ridge_lf);
+  put('hip',    d.hip_lf);
+  put('valley', d.valley_lf);
+  put('eave',   d.eave_lf);
+  put('rake',   d.rake_lf);
+  if(wrote){
+    next.source = ours ? 'Roofr' : 'Field + Roofr';
+    next.updated_at = d.imported_at || new Date().toISOString();
+    all.meas = next;
+  }
+  /* the inspector's pitch, taken on the roof, wins over a derived one */
+  if(!all.pitch && d.pitch) all.pitch = String(d.pitch);
+}
 function fillRoofrFields(doc, d){
   function setPh(key, val){
     var el = doc.querySelector('[data-roofr="' + key + '"]');
@@ -33863,6 +34615,30 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:561, note:'\uD83E\uDDED Two corrections. \u2666 560 gave the menu to the estimate builder behind \u201C+ New estimate\u201D \u2014 but the Estimates item in the menu opens a different screen, and THAT is the one that was covering the menu. Fixed, along with Pricing Catalog and Claims, which had the same fault. \u2666 559 made Quick Inspection readable, but only the photo stream \u2014 the pin-the-property step you actually land on first still had the near-invisible title. It now carries the same yellow panel, so both halves match.' },
+{ build:560, note:'\uD83E\uDDED The left menu now stays with you on the Estimates builder too. It was the one screen 558 could not reach \u2014 the builder is created on the fly rather than living in the page, so the sweep that fixed the others never saw it. \u2666 Your estimate keeps its own toolbar and its own outline down the left; the app menu sits outside both. \u2666 Phones and tablets still get the full-screen builder, unchanged.' },
+{ build:559, note:'\u26A1 Quick Inspection is readable again. \u2666 The page title was near-black text on a near-black page \u2014 effectively invisible. \u2666 The whole inspection now sits in a yellow panel sunk into the page, and the chat bubbles, chips and buttons are black cards sunk into the yellow with white text, lifting on hover. \u2666 The glaring white note bar is gone. \u2666 Camera stays red and Finish stays green \u2014 those colours mean something. \u2666 The black background is untouched.' },
+{ build:558, note:'\uD83E\uDDED The left menu now stays with you on every page on a desktop. \u2666 Crews used to cover it completely \u2014 it now sits beside it like everything else. \u2666 Cardinal Truth, the Client Directory and the Resource Library were quietly hiding their own left edge underneath the menu; they now start where the menu ends. \u2666 The landing page and the document editor keep the full screen on purpose \u2014 nothing should sit between you and a document you have not saved. \u2666 Phones and tablets are unchanged.' },
+{ build:557, note:'\u2600\uFE0F The Activity Count tiles get a light twin. They were obsidian in both modes \u2014 deliberate, and your pick \u2014 but in light mode a black tile on a white page was the only one left. Now it is a raised white tile with the same sheen, and the numbers are a deeper orange so they are actually readable on it. Dark mode is untouched.' },
+{ build:556, note:'\uD83D\uDCB0 Money in and money out. \u2666 A Payments tab on every crew records what you have paid them \u2014 amount, date, method, check number \u2014 with a running total. \u2666 A Commissions tab on every client records what a rep is owed and what has been paid, with outstanding and paid totals. \u2666 Reps see their own commissions; you and Joan see everyone\u2019s. Crew payments are yours alone. \u2666 A work order made by production no longer says the rates were unreadable \u2014 it says the office handles pricing, because it does.' },
+{ build:555, note:'\uD83D\uDD28 Work orders for your crews. \u2666 A new Work Orders tab on every client issues Cardinal\u2019s own work order TO a crew \u2014 one per trade, so a roof and a gutter run are two documents. \u2666 It arrives filled: homeowner and address, the layers, pitch, decking and satellite dish off the roof inspection, the squares and lineal feet off the measurements, and that crew\u2019s labor lines. \u2666 Everything is editable before it goes out, and it prints on the same paper as your contracts.' },
+{ build:554, note:'\uD83D\uDCD0 A Roofr upload fills the job, not just the page. \u2666 Squares, pitch, ridge, hip, valley, eave and rake land in Measurements, and the pitch reaches the Construction Agreement. Before, the import filled the document you had open and nothing else. \u2666 It fills blanks and refreshes its own earlier numbers, but never overwrites a measurement taken by hand \u2014 those records read \u2018Field + Roofr\u2019. \u2666 Layers and decking still come from the inspection only.' },
+{ build:553, note:'\u25E7 The right side of Crews got the same finish as the left. \u2666 Its corners were 10px against the crew list\u2019s 14 \u2014 they match now. \u2666 The Choose File button on Compliance was a raw browser control; it is styled like every other field, in both themes. \u2666 Document rows, notes and the rate frame share the card\u2019s hairline instead of a pink one. \u2666 In dark, a white line ran across the middle of the panel where the tabs meet the content. Gone.' },
+{ build:552, note:'\uD83D\uDD34 Red edge on the light Crews cards, on top instead of the plain white one.' },
+{ build:551, note:'\u2728 The light cards pop now. \u2666 Crews cards sit up off the page with a real shadow instead of a faint one \u2014 the app\u2019s own lifted look, which until now you could only see by hovering, and a phone cannot hover.' },
+{ build:550, note:'\u2600\uFE0F Crews looks right in light mode now. \u2666 Warm off-white page, white cards with a thin red edge, and everything lifted off the page the way the Landing and Insurance screens are. \u2666 The crew list is a raised card in light instead of a sunk channel. Dark is unchanged.' },
+{ build:549, note:'\uD83D\uDCD0 Rate columns line up. \u2666 Each category was its own table sizing its own columns, so Unit, Ours and Theirs sat in a different place in every block. One table now. \u2666 And the rates scroll inside their own frame instead of dragging the whole page sideways on a phone.' },
+{ build:548, note:'\uD83D\uDCB5 Labor rates on a crew. \u2666 Price a crew against your own catalog and see what you keep on every line, or add a row only they do. \u2666 Admin only \u2014 production can see who is insured, not what anyone is paid.' },
+{ build:547, note:'\uD83D\uDC77 Crews. \u2666 A page for your subcontractors, grouped by trade \u2014 Roofing, Siding, Window Installers, Gutters, General Repairs. \u2666 Each crew carries their W-9 and insurance certificates, and the list shows at a glance who is covered and whose is about to lapse. \u2666 Notes too. Labor rates, work orders and payments come next.' },
+{ build:546, note:'\u2728 Cards lift when you hover them. \u2666 Leads, the estimate builder and the reports page all raise off the page under the cursor. \u2666 Lead cards are navy now, matching the home screen. \u2666 The client name is white and the PO gold \u2014 they were a red-to-blue gradient that measured below the readable minimum. \u2666 Call, text and now Email sit in raised grey buttons down the right of every lead card. \u2666 The filter rail on Leads is a sunk black channel with proper drop-down sections, the same one the CRM menu uses. \u2666 The estimate builder has a jump list on the left \u2014 tap any line item to go straight to it \u2014 and the whole page is obsidian black. \u2666 Reports cards are obsidian too, with a thin red edge, and the numbers are colour-coded: money green, new leads yellow, signed work dark green.' },
+{ build:545, note:'\u26AB Activity Count tiles are obsidian now. \u2666 Raised off the page, glossy black, with a sheen from the top-left. \u2666 The orange numbers are exactly the same orange as before.' },
+{ build:544, note:'\uD83C\uDFF7\uFE0F Stage chips read properly in dark mode. \u2666 They were light pastel lozenges on a near-black card \u2014 retail never got a dark version, only the insurance side did. \u2666 They now use the same colours Cardinal Claims already uses. Light mode is unchanged.' },
+{ build:543, note:'\uD83D\uDCCB The last square icon is gone. \u2666 Schedule Board in the left menu was still a solid filled calendar \u2014 the one 537 left alone. \u2666 It now uses the same clipboard the Work Schedule card title got, the same artwork rather than a lookalike.' },
+{ build:542, note:'\uD83C\uDFE0 The real roofing agreement, filled in for you. \u2666 + New contract on a client now builds the actual Construction Agreement \u2014 every numbered section from the paper form. \u2666 Date, buyer, email, phone, street, city, state, zip, the rep and all three money lines come in already filled. \u2666 If the roof has been inspected, the layers, pitch and decking lines arrive filled too. \u2666 The Terms and the two cancellation notices are still the printed master in Company Documents \u2014 that is legal wording and is not retyped.' },
+{ build:541, note:'\uD83D\uDCD1 Contracts have their own tab. \u2666 The contracts section was always there \u2014 it was just filed at the bottom of the Estimates tab, which is why nobody could find it. \u2666 It is now its own entry in the job menu at the top of a client. Same button, same list, nothing else changed.' },
+{ build:540, note:'\uD83D\uDCB0 The money on a client is real now. \u2666 The circle, the job cards, the pipeline totals and the reports were all reading a table that has never had a dollar in it, so everything showed $0. \u2666 They now read the signed contract first, and if there is not one, the highest estimate you have actually SENT. \u2666 Drafts do not count \u2014 send the estimate and the number appears.' },
+{ build:539, note:'\uD83D\uDC9B Landing is yellow in both modes. \u2666 In the light theme it had been a darker amber so it would stay readable on the white menu; it is now the same yellow as the dark theme.' },
+{ build:538, note:'\uD83C\uDF08 Three menu items are colour-coded. \u2666 In the left menu on desktop, Cardinal Truth reads red, Community Hub emerald green and Landing yellow \u2014 just the wording, the icons are unchanged. \u2666 Each colour has a light-mode twin, because the bright versions cannot be read on a white menu.' },
 { build:537, note:'\uD83C\uDFA8 Card headings have real icons. \u2666 The squares beside the headings on the home page and the Graphs \u0026 Reports page are gone \u2014 all 20 now carry a drawn icon in the same style as the left menu. \u2666 Both calendars finally look like calendars, and Punch \u0026 Repairs is a wrench rather than a second hammer. \u2666 They follow the theme the way the menu does: filled in dark, outlined in light.' },
 { build:536, note:'\uD83D\uDCD0 The left menu has depth. \u2666 It is now set into the page rather than sitting flat on it, with the section headings as raised bands and whichever page you are on lifted out as a card. \u2666 Works both ways \u2014 in light it is a grey channel with a white card, in dark it is a black channel with a navy one. Desktop only; nothing on the phone changed.' },
 { build:535, note:'\uD83C\uDF11 Dark mode, retail home. \u2666 The grey cards are gone. Everything now sits as navy panels raised off the black, with the numbers and client rows set into them \u2014 your idea, from that checkout screen. \u2666 The pipeline circles are a compact strip that shows the same five numbers in the space one circle used to take. \u2666 Both calendars match now: no red cap, white month, white dates, every square set in, and the greyed-out dates are actually readable. \u2666 \u201Call jobs\u201D came off the Production Calendar so the header sits level.' },
@@ -37821,6 +38597,9 @@ var d = new Date(iso);
 if(isNaN(d.getTime())) return '';
 return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 }
+/* which nav sections are expanded; survives a render(), like ljState.open does
+   for the leads rail. */
+var estNavOpen = {};
 function newLineId(){ return 'l_' + Math.random().toString(36).slice(2, 10); }
 async function loadForProject(projectId){
 if(!window.supa || !projectId) return [];
@@ -37992,7 +38771,9 @@ view.innerHTML =
 '<button class="primary" data-act="save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
 '</div>' +
 '<div class="cr-est-body">' +
-'<div class="cr-est-clientcard">' +
+estNavHtml(s) +
+'<div class="cr-est-main">' +
+'<div class="cr-est-clientcard" data-navsec="client">' +
 '<div class="name">' + esc((s.project && (s.project.name || s.project.client_name)) || 'Untitled client') + '</div>' +
 (s.project && s.project.address
 ? '<div class="addr">' + esc(s.project.address) + '</div>'
@@ -38018,7 +38799,7 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 '<input type="number" data-f="deposit_pct" value="' + esc(s.deposit_pct) + '" min="0" max="100" step="0.5" inputmode="decimal" />' +
 '</div>' +
 '</div>' +
-'<div class="cr-est-items-head">' +
+'<div class="cr-est-items-head" data-navsec="items">' +
 '<h3>Line Items</h3>' +
 '<label class="cr-est-itemchk" title="Turn off for lump-sum pricing \u2014 the client sees a description and one amount">' +
 '<input type="checkbox" data-f="itemized"' + (s.itemized !== false ? ' checked' : '') + ' /> ' +
@@ -38032,7 +38813,7 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 ? s.lines.map(function(l, i){ return renderLine(l, i, s.lines.length); }).join('')
 : '<div class="cr-est-empty-items">No line items yet. Tap <b>+ From Library</b> to pick from your catalog, or <b>+ Custom</b> to type a one-off item.</div>')
 + '</div>' +
-'<div class="cr-est-items-head" style="margin-top:26px;">' +
+'<div class="cr-est-items-head" data-navsec="photos" style="margin-top:26px;">' +
 '<h3>Photos <span style="opacity:.6;font-weight:600;">' +
 (s.photos.length ? '(' + s.photos.length + ')' : '') +
 '</span></h3>' +
@@ -38044,9 +38825,89 @@ renderTotals(t) +
 '<textarea data-f="notes" placeholder="Additional details for the crew or homeowner\u2026">' + esc(s.notes) + '</textarea>' +
 '<label>Payment Instructions</label>' +
 '<textarea data-f="payment_instructions">' + esc(s.payment_instructions) + '</textarea>' +
+'</div>' +
 '</div>';
 wire();
 ensureEstPhotoUrls();
+}
+/* ---- Navigator B: the estimate's table of contents (build 546) ------------
+   Theo asked for a navigator with sections and drop-downs on both screens. The
+   leads rail already had that machinery and only needed a restyle; this side
+   had nothing, so this is the one genuinely new component in the build.
+
+   Desktop only - the CSS hides it under 901px, the same breakpoint .ljrail
+   uses. It is built from `state` on every render(), so it cannot drift out of
+   step with the form; the only live patch is the line-item label, which is
+   retitled as you type rather than re-rendering the row under the cursor. */
+function estNavHtml(s){
+  var open = estNavOpen;
+  var lines = s.lines || [];
+  var items = lines.length
+    ? lines.map(function(l, i){
+        return '<button type="button" class="navitem" data-jump="line" data-lid="' + esc(l._lid) + '">' +
+          '<span class="ix">' + (i + 1) + '</span>' +
+          '<span class="tx">' + esc(l.name || 'Untitled item') + '</span></button>';
+      }).join('')
+    : '<div class="navempty">No line items yet.</div>';
+  function sec(key, label, count, body){
+    var isOpen = open[key] !== false;
+    return '<button type="button" class="navsec" data-sec="' + key + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '">' +
+        '<span class="chev">\u25BE</span><span class="lbl">' + esc(label) + '</span>' +
+        (count == null ? '' : '<span class="cnt">' + count + '</span>') +
+      '</button>' +
+      '<div class="navbody" data-body="' + key + '"' + (isOpen ? '' : ' hidden') + '>' + body + '</div>';
+  }
+  return '<aside class="cr-est-nav" aria-label="Estimate sections">' +
+    '<div class="navhead">This estimate</div>' +
+    sec('details', 'Details', null,
+      '<button type="button" class="navitem" data-jump="sec" data-target="client">' +
+        '<span class="ix">\u00b7</span><span class="tx">Client &amp; title</span></button>') +
+    sec('items', 'Line items', lines.length, items) +
+    /* raw ampersand: sec() runs the label through esc(). Pre-escaping it here
+       double-escaped and the header read "PHOTOS &AMP; TOTALS". */
+    sec('rest', 'Photos & totals', null,
+      '<button type="button" class="navitem" data-jump="sec" data-target="photos">' +
+        '<span class="ix">\u00b7</span><span class="tx">Photos</span></button>' +
+      '<button type="button" class="navitem" data-jump="sec" data-target="totals">' +
+        '<span class="ix">\u00b7</span><span class="tx">Totals</span></button>') +
+  '</aside>';
+}
+function estNavWire(){
+  var nav = view && view.querySelector('.cr-est-nav');
+  if(!nav) return;
+  nav.addEventListener('click', function(e){
+    var sech = e.target.closest('.navsec');
+    if(sech){
+      var key = sech.dataset.sec;
+      var body = nav.querySelector('[data-body="' + key + '"]');
+      var nowOpen = sech.getAttribute('aria-expanded') !== 'true';
+      sech.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+      if(body) body.hidden = !nowOpen;
+      estNavOpen[key] = nowOpen;
+      return;
+    }
+    var item = e.target.closest('.navitem');
+    if(!item) return;
+    var target = item.dataset.jump === 'line'
+      ? view.querySelector('.cr-est-lineitem[data-lid="' + item.dataset.lid + '"]')
+      : (item.dataset.target === 'totals'
+          ? view.querySelector('.cr-est-totals')
+          : view.querySelector('[data-navsec="' + item.dataset.target + '"]'));
+    if(!target) return;
+    target.scrollIntoView({ block:'start', behavior:'smooth' });
+    nav.querySelectorAll('.navitem.on').forEach(function(n){ n.classList.remove('on'); });
+    item.classList.add('on');
+    /* the name field is the point of jumping to a line item */
+    var nameEl = target.querySelector('.name-input');
+    if(nameEl) setTimeout(function(){ nameEl.focus({ preventScroll:true }); }, 260);
+  });
+}
+/* Retitle the nav row while you type, instead of re-rendering the row you are
+   typing in - a re-render there would destroy the caret. */
+function estNavRelabel(lid, text){
+  if(!view) return;
+  var el = view.querySelector('.cr-est-nav .navitem[data-lid="' + lid + '"] .tx');
+  if(el) el.textContent = text || 'Untitled item';
 }
 function renderLine(l, idx, total){
 var itemized = state.itemized !== false;
@@ -38182,6 +39043,8 @@ state.photos[i] = state.photos[j];
 state.photos[j] = tmp;
 render();
 }
+/* renderTotals() emits .cr-est-totals, which Navigator B jumps to by class -
+   no data-navsec needed here, the class is already unique to this view. */
 function renderTotals(t){
 return '<div class="cr-est-totals" data-slot="totals">' +
 '<span class="lbl">Subtotal</span>' +
@@ -38363,11 +39226,13 @@ refreshTotals();
 }else{
 line[field] = v;
 if(field === 'description') autoGrow(e.target);
+if(field === 'name') estNavRelabel(lid, v);
 }
 };
 inp.onchange = inp.oninput;
 });
 });
+estNavWire();
 autoGrowAll();
 }
 async function handleSave(){
@@ -45694,7 +46559,7 @@ body[data-crm="retail"] #cr-hd2-bar .cr-ib.primary{
 /* Build 372: search lives on the banner — the header copy is retired everywhere. */
 #cr-hd2-bar #headSearch,#cr-hd2-bar .cr-ib.searchbtn{display:none !important}
 #cr-hd2-bar.searching #headSearch{display:none !important}}#cr-hd2-bar.searching #headSearch{display:block;flex:1 1 100%;order:9;margin-top:8px}#cr-hd2-bar{flex-wrap:nowrap}#cr-hd2-bar.searching{flex-wrap:wrap}header.site #cr-hd2-bar #navBtn{display:flex !important}#cr-hd2-util{display:flex;align-items:center;gap:6px;flex:0 0 auto}#cr-hd2-util>*{flex:0 0 auto}@media (max-width:560px){#cr-hd2-util #crPortalChip{display:none}}header.site #cr-search-btn{display:none}header.site #whoami,header.site #jobMenuSel,header.site #brandLogo{display:none}body .site{--hbg:#1a1215;--hln:#3a2f22;--hin:#c8202e;--hmt:#d8c9a8;--hdm:#9a917f;--hac:#c8202e;--hoc:#1a1a1a;--hsf:#241c1a;--tgrad:linear-gradient(100deg,var(--red),#c8202e 55%,#e35c63)}body[data-crm="insurance"] .site{--hbg:var(--ct-head-bg);--hln:var(--ct-head-line);--hin:var(--ct-head-ink);--hmt:var(--ct-head-ink);--hdm:var(--ct-head-dim);--hac:var(--ct-head-kick);--hoc:var(--ct-head-bg);--hsf:var(--ct-surface);--tgrad:linear-gradient(100deg,var(--ct-head-kick),var(--ct-head-ink))}body[data-crm="retail"] .site{--hbg:linear-gradient(180deg,#243342,#16202b);--hln:#2f3f4f;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.72);--hac:#8fb4d8;--hoc:#141c24;--hsf:#243342;--tgrad:linear-gradient(100deg,#8fb4d8,#fff)}
-body[data-crm="community"] .site{--hbg:#047857;--hln:#0a9268;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.74);--hac:#A7F3D0;--hoc:#047857;--hsf:#065F46;--tgrad:linear-gradient(100deg,#A7F3D0,#fff)}body[data-crm="production"] .site{--hbg:#181b20;--hln:#2a3038;--hin:#fff;--hmt:#b9c0c9;--hdm:#7d8794;--hac:#f5a623;--hoc:#14171b;--hsf:#1c2128;--tgrad:linear-gradient(100deg,#f5a623,#ffd27a)}body[data-crm="sales"] .site{--hbg:#1a1310;--hln:#2e2320;--hin:#fff;--hmt:#e0cec4;--hdm:#a08b7f;--hac:#e8544f;--hoc:#1a1310;--hsf:#241b17;--tgrad:linear-gradient(100deg,#e8544f,#e35c63)}header.site #navMenu,header.site #newMenu{z-index:95}#cr-hd2-ribbon{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-bottom:3px solid var(--racc,var(--red));background:linear-gradient(168deg,var(--rb1,#241518) 0%,var(--rb2,#170f11) 48%,var(--rb3,#221407) 100%)}#cr-hd2-ribbon::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--rh1,#c8202e) 30%,var(--rh2,#e35c63) 50%,var(--rh1,#c8202e) 70%,transparent)}#cr-hd2-ribbon #qClock,#cr-hd2-ribbon #cbCtx{display:block;max-width:100%;margin:0;color:#fff;font:800 13.5px/1.2 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-ribbon #cbCtx{display:none}#cr-hd2-ribbon #cbCtx small{color:#B57EDC;font-size:.9em;margin-right:4px;font-weight:800}body.projopen #cr-hd2-ribbon #qClock{display:none}body.projopen #cr-hd2-ribbon #cbCtx{display:block}#cr-hd2-ribbon{padding-left:56px;padding-right:56px;min-height:52px}#cr-hd2-home{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;background:rgba(200,32,46,.08);border:1px solid #c8202e;color:#e35c63;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}#cr-hd2-home svg{display:block;width:17px;height:17px}#cr-home-btn{display:none}#cr-hd2-bar{border-bottom:2px solid transparent;border-image:linear-gradient(90deg,transparent,var(--hac,#8fb4d8) 25%,#b9d3ec 50%,var(--hac,#8fb4d8) 75%,transparent) 1}body[data-crm="insurance"] #cr-hd2-bar,body[data-crm="community"] #cr-hd2-bar,body[data-crm="production"] #cr-hd2-bar,body[data-crm="sales"] #cr-hd2-bar{border-image:none;border-bottom:1px solid var(--hln,#ddd6cf)}#cardinalTruthView,#insClientsView,#resourceLibraryView{top:var(--headh,110px) !important;z-index:60 !important}#cr-ih-bar{display:none}#insClientsView .ins-header,#resourceLibraryView .ins-header{display:none}#resourceLibraryView .rl-search{top:0}body.viewing-community-hub footer.site{display:none}body[data-crm="community"]{background:var(--ccm-ground,#0e100f)}body[data-crm="insurance"]{background:var(--ct-bg)}.dashcard,section.history{border-color:var(--rbe-panelbd)}.cr-est-body{max-width:100vw;box-sizing:border-box}.cr-est-head{max-width:100vw;box-sizing:border-box}.cr-est-body{overflow-x:hidden}.cr-est-body input,.cr-est-body select,.cr-est-body textarea{min-width:0;max-width:100%;box-sizing:border-box}.cr-est-head{overflow-x:auto;overscroll-behavior-x:contain}#projectView .subnote{color:#fff}#listView #listTitle{background:linear-gradient(100deg,#8f1620,#c8202e 45%,#e35c63);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#c8202e}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:#fff}#listView label,#listView .listlbl{color:#c8202e}#listView #listBody,#listView .cards,#listView .doclist{background:transparent}#listView .card{margin-bottom:12px;border-radius:12px}#listView .listctl{color:#c8202e}#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}/*cr-lv-readable-487: 44310 made this table transparent over --bg:#09090C but left the cells on their paper-theme colours - #333 read 1.57:1 and var(--muted) 2.97:1 at >700px. Retail token pair, so rb-light flips with it. .projrow sets its own light band and is excluded.*/#listView table.reports tr:not(.projrow) td{color:var(--rbe-ink)}#listView table.reports tr:not(.projrow) td small,#listView table.reports tr:not(.projrow) td .ref{color:var(--rbe-mute)}#listView table.reports tr:not(.projrow):hover td{background:rgba(255,255,255,.06)}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{background:linear-gradient(100deg,#8f1620,#c8202e 45%,#e35c63);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#c8202e}#projectView .projsec a{-webkit-text-fill-color:#e35c63;color:#e35c63}.hero-hi,.hero-hi *,.acthead{background:linear-gradient(100deg,var(--rbe-head),var(--rbe-head));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc)}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm="insurance"] #cr-hd2-ribbon{--racc:var(--ct-red);--rb1:var(--ct-bg);--rb2:var(--ct-surface-2);--rb3:var(--ct-surface);--rh1:var(--ct-red);--rh2:var(--ct-red-deep)}body[data-crm="community"] #cr-hd2-ribbon{--racc:#047857;--rb1:#04150f;--rb2:#061c14;--rb3:#08211a;--rh1:#047857;--rh2:#34D399}body[data-crm="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#e35c63}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
+body[data-crm="community"] .site{--hbg:#047857;--hln:#0a9268;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.74);--hac:#A7F3D0;--hoc:#047857;--hsf:#065F46;--tgrad:linear-gradient(100deg,#A7F3D0,#fff)}body[data-crm="production"] .site{--hbg:#181b20;--hln:#2a3038;--hin:#fff;--hmt:#b9c0c9;--hdm:#7d8794;--hac:#f5a623;--hoc:#14171b;--hsf:#1c2128;--tgrad:linear-gradient(100deg,#f5a623,#ffd27a)}body[data-crm="sales"] .site{--hbg:#1a1310;--hln:#2e2320;--hin:#fff;--hmt:#e0cec4;--hdm:#a08b7f;--hac:#e8544f;--hoc:#1a1310;--hsf:#241b17;--tgrad:linear-gradient(100deg,#e8544f,#e35c63)}header.site #navMenu,header.site #newMenu{z-index:95}#cr-hd2-ribbon{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-bottom:3px solid var(--racc,var(--red));background:linear-gradient(168deg,var(--rb1,#241518) 0%,var(--rb2,#170f11) 48%,var(--rb3,#221407) 100%)}#cr-hd2-ribbon::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--rh1,#c8202e) 30%,var(--rh2,#e35c63) 50%,var(--rh1,#c8202e) 70%,transparent)}#cr-hd2-ribbon #qClock,#cr-hd2-ribbon #cbCtx{display:block;max-width:100%;margin:0;color:#fff;font:800 13.5px/1.2 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-ribbon #cbCtx{display:none}#cr-hd2-ribbon #cbCtx small{color:#B57EDC;font-size:.9em;margin-right:4px;font-weight:800}body.projopen #cr-hd2-ribbon #qClock{display:none}body.projopen #cr-hd2-ribbon #cbCtx{display:block}#cr-hd2-ribbon{padding-left:56px;padding-right:56px;min-height:52px}#cr-hd2-home{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;background:rgba(200,32,46,.08);border:1px solid #c8202e;color:#e35c63;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}#cr-hd2-home svg{display:block;width:17px;height:17px}#cr-home-btn{display:none}#cr-hd2-bar{border-bottom:2px solid transparent;border-image:linear-gradient(90deg,transparent,var(--hac,#8fb4d8) 25%,#b9d3ec 50%,var(--hac,#8fb4d8) 75%,transparent) 1}body[data-crm="insurance"] #cr-hd2-bar,body[data-crm="community"] #cr-hd2-bar,body[data-crm="production"] #cr-hd2-bar,body[data-crm="sales"] #cr-hd2-bar{border-image:none;border-bottom:1px solid var(--hln,#ddd6cf)}#cardinalTruthView,#insClientsView,#resourceLibraryView,#crewsView{top:var(--headh,110px) !important;z-index:60 !important}#cr-ih-bar{display:none}#insClientsView .ins-header,#resourceLibraryView .ins-header{display:none}#resourceLibraryView .rl-search{top:0}body.viewing-community-hub footer.site{display:none}body[data-crm="community"]{background:var(--ccm-ground,#0e100f)}body[data-crm="insurance"]{background:var(--ct-bg)}.dashcard,section.history{border-color:var(--rbe-panelbd)}.cr-est-body{max-width:100vw;box-sizing:border-box}.cr-est-head{max-width:100vw;box-sizing:border-box}.cr-est-body{overflow-x:hidden}.cr-est-body input,.cr-est-body select,.cr-est-body textarea{min-width:0;max-width:100%;box-sizing:border-box}.cr-est-head{overflow-x:auto;overscroll-behavior-x:contain}#projectView .subnote{color:#fff}#listView #listTitle{background:linear-gradient(100deg,#8f1620,#c8202e 45%,#e35c63);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#c8202e}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:#fff}#listView label,#listView .listlbl{color:#c8202e}#listView #listBody,#listView .cards,#listView .doclist{background:transparent}#listView .card{margin-bottom:12px;border-radius:12px}#listView .listctl{color:#c8202e}#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}/*cr-lv-readable-487: 44310 made this table transparent over --bg:#09090C but left the cells on their paper-theme colours - #333 read 1.57:1 and var(--muted) 2.97:1 at >700px. Retail token pair, so rb-light flips with it. .projrow sets its own light band and is excluded.*/#listView table.reports tr:not(.projrow) td{color:var(--rbe-ink)}#listView table.reports tr:not(.projrow) td small,#listView table.reports tr:not(.projrow) td .ref{color:var(--rbe-mute)}#listView table.reports tr:not(.projrow):hover td{background:rgba(255,255,255,.06)}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{background:linear-gradient(100deg,#8f1620,#c8202e 45%,#e35c63);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#c8202e}#projectView .projsec a{-webkit-text-fill-color:#e35c63;color:#e35c63}.hero-hi,.hero-hi *,.acthead{background:linear-gradient(100deg,var(--rbe-head),var(--rbe-head));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--rbe-acc)}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm="insurance"] #cr-hd2-ribbon{--racc:var(--ct-red);--rb1:var(--ct-bg);--rb2:var(--ct-surface-2);--rb3:var(--ct-surface);--rh1:var(--ct-red);--rh2:var(--ct-red-deep)}body[data-crm="community"] #cr-hd2-ribbon{--racc:#047857;--rb1:#04150f;--rb2:#061c14;--rb3:#08211a;--rh1:#047857;--rh2:#34D399}body[data-crm="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#e35c63}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
 <script id="cr-hd2-script">
 (function(){
 'use strict';
@@ -51518,6 +52383,87 @@ window.CardinalSortPhotos = Object.assign(window.CardinalSortPhotos || {}, {
   overscroll-behavior:contain;
 }
 body.cr-lnav-on{padding-left:var(--lnav-w)}
+/* ── 558: the same offset, for the views padding cannot reach ──────────────
+   `padding-left` on <body> does nothing for a `position:fixed` child — it is
+   laid out against the viewport, not the padding box. So every full-screen view
+   sat at left:0 underneath a 238px menu, and its first 238px was unreachable.
+   Live in production on Cardinal Truth, the Client Directory and the Resource
+   Library; Crews was worse and covered the menu outright.
+
+   `!important` is required, not decorative: these four carry `inset:0` in an
+   INLINE style attribute, which out-ranks any stylesheet rule. The convention
+   rule that puts them below the menu already uses it for the same reason.
+
+   Self-gating by design — `--lnav-w` is 0px at :root and only 238px inside
+   @media (min-width:1100px), so this computes to left:0 on every phone. Paired
+   with the body.cr-lnav-on scope, which the script sets only once the menu has
+   actually mounted, the phone cannot be reached by this rule at all.
+
+   #landingView and #editorView are DELIBERATELY absent — Theo's two exceptions.
+   The landing page has no menu by design (ready() refuses to mount there) and
+   the editor is a workspace, where a stray click on Pipeline would abandon an
+   unsaved document. */
+body.cr-lnav-on #cardinalTruthView,
+body.cr-lnav-on #insClientsView,
+body.cr-lnav-on #resourceLibraryView,
+body.cr-lnav-on #crewsView{left:var(--lnav-w) !important}
+
+/* ── 560: the Estimates builder, which 558 could not have found ────────────
+   `#cr-est-view` is not in the markup — cr-est-script creates it at runtime and
+   appends it to <body>, and its id is `cr-est-view`, not `...View`. 558's static
+   scan AND its computed-style sweep over [id$="View"] both walked past it. It is
+   position:fixed;inset:0;z-index:9500, the highest surface in the app, so it
+   covered the menu outright.
+
+   Deliberately NOT folded into the rule above, for two reasons:
+
+   1. It is gated on body.cr-lnav-on, not applied flat. That class is set only
+      once the menu has actually mounted, so a phone keeps the full-screen
+      takeover at z-index 9500 exactly as it ships today. The convention rule is
+      unconditional, which is right for those four and wrong for this one.
+
+   2. Its own header bar STAYS. The convention hides `.ins-header` on the views
+      it governs, but `.cr-est-head` carries the estimate number and the Save
+      button — hiding it would remove the only way to save an estimate. It reads
+      as a document toolbar under the app header, which is what it is.
+
+   The page now carries two left rails on desktop: this menu at 238px and the
+   estimate's own document outline at 224px (desktop-only ≥901px, its own
+   feature). That leaves 958px of form at 1440 and 798px at 1280 — workable, and
+   flagged to Theo rather than assumed. */
+body.cr-lnav-on #cr-est-view{
+  top:var(--headh,110px) !important;
+  left:var(--lnav-w) !important;
+  z-index:60 !important;
+}
+
+/* ── 561: the Estimates screen the MENU actually opens ─────────────────────
+   560 fixed #cr-est-view — the per-client builder behind "+ New estimate". The
+   menu's Estimates item opens something else entirely, `#cr-estimates-mount`,
+   via crOpenEstimates(). Three different surfaces carry "estimate" in the name
+   and I patched the one nobody reaches from the menu.
+
+   `!important` is MANDATORY here, not stylistic. styleMounts() writes
+
+       el.style.position='fixed'; el.style.inset='0'; el.style.zIndex='200';
+
+   as INLINE styles onto these three ids. Inline beats every stylesheet rule at
+   any specificity — the styleMounts() trap CLAUDE.md lists among its six
+   buried-feature failures, and the function's own comment records it biting
+   once already ("the real cause of 'dark mode isn't there'").
+
+   All three, not just Estimates: Pricing Catalog and Claims sit in the same menu
+   and carry the identical inline styles. Fixing one and leaving two identical
+   bugs beside it is how this file got the way it is.
+
+   Gated on body.cr-lnav-on so a phone keeps the full-screen mount untouched. */
+body.cr-lnav-on #cr-estimates-mount,
+body.cr-lnav-on #cr-pricing-mount,
+body.cr-lnav-on #cr-claims-mount{
+  top:var(--headh,110px) !important;
+  left:var(--lnav-w) !important;
+  z-index:60 !important;
+}
 /* The reason this build exists: .wrap ships max-width:none, so every table runs
    the full width of an ultrawide. Cap it — but never the masthead, which lives
    inside the fixed header and must stay full width. */
@@ -51705,7 +52651,7 @@ clients:'<circle cx="9" cy="8.5" r="3.6"/><path d="M2.6 20a6.4 6.4 0 0 1 12.8 0z
 importfromacculynx:'<path d="M11 3h2v8.2l2.6-2.6 1.4 1.4-5 5-5-5 1.4-1.4L11 11.2z"/><path d="M4 17h16v4H4z"/>',
 leadsjobs:'<rect x="3" y="5" width="18" height="2.6" rx="1.3"/><rect x="3" y="10.7" width="18" height="2.6" rx="1.3"/><rect x="3" y="16.4" width="11" height="2.6" rx="1.3"/>',
 production:'<path d="M14.2 2.6 20 8.4l-2.9 2.9-5.8-5.8z"/><path d="M10.2 6.6 3 13.8V21h7.2l7.2-7.2z"/>',
-scheduleboard:'<path d="M7 2h2v2.4h6V2h2v2.4h2A2 2 0 0 1 21 6.4V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6.4a2 2 0 0 1 2-2h2z"/>',
+scheduleboard:'<path d="M9.4 1.8h5.2a1.6 1.6 0 0 1 1.6 1.6v.9H7.8v-.9a1.6 1.6 0 0 1 1.6-1.6z"/><path fill-rule="evenodd" d="M6.2 3.6h1.6v2.8h8.4V3.6h1.6a2 2 0 0 1 2 2v13.8a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM6.6 9.4h10.8v9.6H6.6z"/><rect x="8.4" y="11" width="7.2" height="1.9" rx=".95"/><rect x="8.4" y="14.4" width="5" height="1.9" rx=".95"/>',
 salesfloor:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.4" fill="#0d0d10"/><circle cx="12" cy="12" r="1.7"/>',
 quickinspection:'<path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/>',
 inspections:'<circle cx="11" cy="11" r="6.6"/><rect x="15.2" y="16.6" width="7" height="2.6" rx="1.3" transform="rotate(45 15.2 16.6)"/>',
@@ -51715,6 +52661,7 @@ cardinaltruth:'<path d="M12 2 4 5v6.5c0 5 3.4 9.2 8 10.5 4.6-1.3 8-5.5 8-10.5V5z
 communityhub:'<path d="M12 3 3 10h2.5v11h5v-6h3v6h5V10H21z"/>',
 communitypartners:'<circle cx="7.5" cy="9" r="3.2"/><circle cx="16.5" cy="9" r="3.2"/><path d="M1.6 20a6 6 0 0 1 11.8 0zM10.6 20a6 6 0 0 1 11.8 0z"/>',
 resourcelibrary:'<path d="M4 3h4v18H4zM9.5 3h4v18h-4zM15.4 3.9l3.9 1-4.2 16.2-3.9-1z"/>',
+crews:'<circle cx="9" cy="7.2" r="3.4"/><path d="M2.2 20.4a6.8 6.8 0 0 1 13.6 0z"/><path fill-rule="evenodd" d="M17.4 8.4a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zm0 1.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/><path d="M13.4 20.4a4.6 4.6 0 0 1 8.4-2.6v2.6z"/>',
 graphsreports:'<rect x="3" y="12" width="4.4" height="9" rx="1"/><rect x="9.8" y="7" width="4.4" height="14" rx="1"/><rect x="16.6" y="3" width="4.4" height="18" rx="1"/>',
 activityfeed:'<path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/>',
 recents:'<circle cx="12" cy="12" r="9"/><path d="M11 6.5h2V12l4 2.4-1 1.7-5-3z" fill="#0d0d10"/>',
@@ -51732,7 +52679,7 @@ clients:'<path d="M5 6h14" class="m"/><path d="M5 12h14"/><path d="M5 18h9" clas
 importfromacculynx:'<path d="M12 5v11"/><path d="M8 12.5 12 16.5l4-4" class="m"/>',
 leadsjobs:'<path d="M4 7h16" class="m"/><path d="M4 12h11"/><path d="M4 17h6" class="m"/>',
 production:'<path d="M4 18 10 6l4 8 2-3 4 7" class="m"/><path d="M4 18h16"/>',
-scheduleboard:'<path d="M4 7h16"/><path d="M4 12h16" class="m"/><path d="M4 17h16" class="m"/><path d="M9 5v14" class="m"/>',
+scheduleboard:'<path d="M8.6 4.2H6.4a2 2 0 0 0-2 2v13.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V6.2a2 2 0 0 0-2-2h-2.2"/><rect x="8.4" y="2.4" width="7.2" height="3.6" rx="1.4" class="m"/><path d="M8.2 11.6h7.6" class="m"/><path d="M8.2 15.4h5" class="m"/>',
 salesfloor:'<circle cx="12" cy="12" r="7" class="m"/><path d="M12 5v14"/>',
 quickinspection:'<path d="M13 4 6 13h5l-1 7 8-10h-5z"/>',
 inspections:'<circle cx="11" cy="11" r="5.5" class="m"/><path d="M15 15l5 5"/>',
@@ -51742,6 +52689,7 @@ cardinaltruth:'<path d="M12 4v16"/><path d="M6 8h12" class="m"/>',
 communityhub:'<path d="M4 18h16" class="m"/><path d="M7 18V9l5-4 5 4v9"/>',
 communitypartners:'<path d="M5 8h6" class="m"/><path d="M13 8h6" class="m"/><path d="M5 16h14"/>',
 resourcelibrary:'<path d="M6 4v16" class="m"/><path d="M11 4v16"/><path d="M16 4v16" class="m"/>',
+crews:'<circle cx="9" cy="7.2" r="3.2"/><path d="M3 20.4a6 6 0 0 1 12 0"/><circle cx="17.4" cy="11" r="2.4" class="m"/><path d="M14 20.4a4 4 0 0 1 7.4-2.1" class="m"/>',
 graphsreports:'<path d="M4 20V13" class="m"/><path d="M10 20V8"/><path d="M16 20V4" class="m"/><path d="M4 20h16" class="m"/>',
 activityfeed:'<path d="M13 4 6 13h5l-1 7 8-10h-5z"/>',
 recents:'<circle cx="12" cy="12" r="7" class="m"/><path d="M12 8v4.4l3 1.8"/>',
@@ -51847,7 +52795,7 @@ return '<button type="button" class="lnav-sec" data-sec="' + esc(id) +
 s.items.map(function(it, ii){
 return '<button type="button" class="lnav-item' +
 (it.el.classList.contains('on') ? ' on' : '') +
-'" data-sec="' + esc(id) + '" data-i="' + ii + '">' + lnavIcon(it.label) + '</button>';
+'" data-k="' + esc(iconKey(stripEmoji(it.label))) + '" data-sec="' + esc(id) + '" data-i="' + ii + '">' + lnavIcon(it.label) + '</button>';
 }).join('') +
 '</div>';
 }).join('') +
@@ -52362,6 +53310,34 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 }
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-crm button{border-right-color:#223047}
 </style>
+<style id="cr-stagechip-dark-styles">
+/* ══ Build 544 · retail stage chips finally have a dark variant ════════════
+   The eight .stg-* rules are LIGHT PASTELS with no theme gate — #e8f0fb,
+   #fdf3e2, #ececec and friends. Cardinal Claims has a dark set under
+   #insClientsView; retail never got one, so in dark mode retail chips render
+   as pastel lozenges on a near-black card.
+
+   THE PALETTE IS CLAIMS', REUSED VERBATIM — one stage palette for the app
+   rather than two that drift apart. Contrast computed, not eyeballed: 6.40:1
+   at worst (Lost), 8.57:1 at best (Approved), against a 4.5 floor. Chip text
+   is 800 10px uppercase, which is body text, not large text.
+
+   SCOPED TO .stagechip.stg-*, NEVER BARE .stg-*. `.pcard` also wears these
+   classes, where they set --stgc (an accent variable) and not a background —
+   a bare rule would paint a chip background across the entire card.
+
+   Specificity is deliberate: base .stg-Lead is (0,1,0), this is (0,3,0) so it
+   wins in dark, and #insClientsView .stagechip.stg-Lead is (1,3,0) so Claims
+   still wins on its own screens. Light mode is untouched.                  */
+:root:not([data-theme="rb-light"]) .stagechip.stg-Lead{background:rgba(93,161,243,.18);color:#a3c7fa;border:1px solid rgba(93,161,243,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Prospect{background:rgba(230,145,45,.18);color:#f5b880;border:1px solid rgba(230,145,45,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Approved{background:rgba(76,175,113,.18);color:#8fdfa8;border:1px solid rgba(76,175,113,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Scheduled{background:rgba(200,32,46,.2);color:#f4a7ae;border:1px solid rgba(200,32,46,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Completed{background:rgba(150,150,150,.18);color:#c8c8c8;border:1px solid rgba(150,150,150,.32);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Invoiced{background:rgba(140,90,190,.18);color:#c4a3f0;border:1px solid rgba(140,90,190,.35);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Closed{background:rgba(120,140,160,.18);color:#a5b8ce;border:1px solid rgba(120,140,160,.32);}
+:root:not([data-theme="rb-light"]) .stagechip.stg-Lost{background:rgba(140,120,120,.2);color:#c4a8a8;border:1px solid rgba(140,120,120,.32);}
+</style>
 <style id="cr-titleicon-styles">
 /* ══ Build 537 · card titles carry the nav's icons ════════════════════════
    Colour, weight and the light/dark switch are COPIED off #cr-lnav .lnav-ic,
@@ -52384,5 +53360,1620 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] .pti .i5{display:inline;stroke:#a3121e}
 :root[data-theme="rb-light"] .pti .i5 .m{stroke:#9a9a9a}
 </style>
+<style id="cr-lnav-ink-styles">
+/* ══ Build 538 · three nav labels carry their own colour ══════════════════
+   Cardinal Truth red · Community Hub emerald · Landing yellow. JUST THE TEXT —
+   these land on .lnav-tx, the span holding the label, so the icon keeps the
+   nav's muted grey and the active row keeps its card, bar and lift.
+
+   Hooked on data-k, the label's own slug, emitted by cr-lnav-script. The
+   burger menu carries data-nav for Cardinal Truth and Landing, but Community
+   Hub is added at runtime by makeOpt() with only an id — so data-nav covers
+   two of three. data-k is the value lnavIcon() already computes for the icon
+   lookup, and equals data-nav wherever data-nav exists.
+
+   EVERY VALUE IS COMPUTED, at the 4.5:1 body-text floor, against all three
+   grounds a label sits on — the rail, the active card, and hover. The active
+   card is in that list because these labels stay coloured when their row is
+   the current page: a child's own color beats the row's.
+
+     dark   rail #0A0E16 · card #1A2434 · hover #111927
+     light  rail #f2f3f5 · card #ffffff · hover #e7e9ec
+
+   Two places the literal answer was the wrong one, both stated rather than
+   quietly fudged:
+
+   * CARDINAL RED FAILS IN DARK — #c8202e is 3.40 / 2.75 / 3.11 there. Dark
+     gets #ef6b6b (6.42 / 5.19 / 5.86); light gets the real #c8202e, which
+     passes (5.11 / 5.67 / 4.66).
+   * A TRUE YELLOW CANNOT BE READ ON THE LIGHT RAIL — #f0c651 is 1.47 / 1.63 /
+     1.34 there, and no yellow clears the floor (#ffd700 is 1.26:1). 538 shipped
+     amber #8a6100 (4.99 / 5.54 / 4.55) for that reason; 539 replaced it with
+     literal yellow on Theo's explicit call, made with the measurement in front
+     of him. It is the one value here below the floor, and it is deliberate.
+
+   Emerald is the community CRM's own value in both themes — #34D399 is its
+   --lnav-crmc, #047857 its --hbg. Not invented.
+
+   Desktop-only comes for free: --lnav-w is 0px at :root and only 238px inside
+   @media (min-width:1100px).                                              */
+
+/* ── DARK ────────────────────────────────────────────────────────────────── */
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#ef6b6b}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#34D399}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#f0c651}
+
+/* ── LIGHT ───────────────────────────────────────────────────────────────── */
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#c8202e}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#047857}
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#f0c651}  /* 539: literal yellow, Theo's call with the number in front of him. This is the
+     ONE value in this block that does not meet 4.5:1 — it is 1.47:1 on the light rail,
+     and no yellow clears it (#ffd700 is 1.26:1). Same value as dark, so Landing is one
+     colour in both themes. Do not "fix" this back to amber without asking him. */
+</style>
+<style id="cr-nvl-styles">
+/* ══ Build 546 · lift, two navigators, navy leads, obsidian estimates+reports ══
+   Theo, over five preview rounds: "1 on lift and both on navigator … Make the
+   money Green. Crews Grey Approved a dark green Prospects Orange and Leads
+   Yellow (the numbers) … 1 Hairline. Scope will be the rest of retail on both
+   dark and light modes leave the home screen alone."
+
+   THE HOME SCREEN IS OUT OF SCOPE BY CONSTRUCTION. .pipecard lives in two
+   views — 8 in #mainView (which IS renderHome()) and 12 in #reportsView. Every
+   pipecard rule below is prefixed #reportsView, so 535's navy home card is
+   untouched. Counted per container, not eyeballed.
+
+   NOTHING HERE IS A NEW PALETTE. The lead cards reuse 535's --nv-*, the rail
+   reuses 536's #cr-lnav recipe, the milestone pill reuses 544's
+   .stagechip.stg-* (via a class change in JS, because the pill carried an
+   INLINE background that no stylesheet rule can outrank), and the obsidian is
+   545's .actbox recipe. Four shipped decisions, applied to four more surfaces.
+
+   OBSIDIAN IS BLACK IN BOTH MODES — 545's stated precedent and Theo's pick
+   there. The estimate page's header was ALREADY near-black; a dark body
+   finishes a shell that was half-done rather than inventing a third ground.
+   The corollary 545 also wrote down applies here: a theme-independent surface
+   needs theme-independent inks, so the greys below are pinned, not tokenised. */
+
+/* ── shared: the obsidian recipe, named once ─────────────────────────────── */
+#cr-est-view,
+#reportsView .pipecard,
+#reportsView .rptkpi{
+  --obs-face:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  --obs-bd:#24242c;
+  --obs-lift:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.10) inset;
+  --obs-hover:0 20px 40px rgba(0,0,0,.72), 0 3px 0 rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.16) inset;
+  --obs-ink:#e6e8ec;
+  --obs-mute:#9aa0a8;   /* 6.85:1 on #15161c — 545's pinned label grey, same reason */
+  --obs-well:#0d0e12;
+  --obs-hair:#2f3038;
+}
+
+/* ══ 1 · LIFT — option 1, the soft float ═══════════════════════════════════
+   Travel is 3px and the shadow roughly doubles. Guarded by (hover:hover) so a
+   phone tap does not leave a card stuck in the lifted state — touch devices
+   latch :hover until you tap somewhere else.                                */
+#leadsView .ljcard,
+#cr-est-view .cr-est-lineitem,
+#cr-est-view .cr-est-clientcard,
+#cr-est-view .cr-est-saved-row,
+#cr-est-view .cr-est-totals,
+#cr-est-view .cr-est-photo,
+#reportsView .pipecard,
+#reportsView .rptkpi{
+  transition:transform .18s cubic-bezier(.2,.7,.3,1), box-shadow .18s cubic-bezier(.2,.7,.3,1);
+}
+@media (hover:hover){
+  #leadsView .ljcard:hover,
+  #cr-est-view .cr-est-lineitem:hover,
+  #cr-est-view .cr-est-clientcard:hover,
+  #cr-est-view .cr-est-saved-row:hover,
+  #cr-est-view .cr-est-totals:hover,
+  #cr-est-view .cr-est-photo:hover,
+  #reportsView .pipecard:hover,
+  #reportsView .rptkpi:hover{ transform:translateY(-3px); }
+}
+@media (prefers-reduced-motion:reduce){
+  #leadsView .ljcard,
+  #cr-est-view .cr-est-lineitem,
+  #cr-est-view .cr-est-clientcard,
+  #cr-est-view .cr-est-saved-row,
+  #cr-est-view .cr-est-totals,
+  #cr-est-view .cr-est-photo,
+  #reportsView .pipecard,
+  #reportsView .rptkpi{ transition:none; }
+  #leadsView .ljcard:hover,
+  #cr-est-view .cr-est-lineitem:hover,
+  #cr-est-view .cr-est-clientcard:hover,
+  #cr-est-view .cr-est-saved-row:hover,
+  #cr-est-view .cr-est-totals:hover,
+  #cr-est-view .cr-est-photo:hover,
+  #reportsView .pipecard:hover,
+  #reportsView .rptkpi:hover{ transform:none; }
+}
+
+/* ══ 2 · THE LEAD CARDS ════════════════════════════════════════════════════
+   Dark: navy, 535's card colours, so a lead card and a home card are the same
+   object seen twice. Light: the bright white card on the off-white page, lifted
+   the same way.                                                             */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljcard{
+  background:linear-gradient(180deg,var(--nv-card1,#1A2434),var(--nv-card2,#141C29));
+  border:1px solid var(--nv-bd,#223047);
+  border-top:2px solid var(--nv-edge,#33496A);
+  box-shadow:0 10px 24px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.07);
+  color:var(--nv-ink,#dfe5ee);
+}
+@media (hover:hover){
+  :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljcard:hover{
+    box-shadow:0 20px 40px rgba(0,0,0,.74), inset 0 1px 0 rgba(255,255,255,.13);
+    border-top-color:#435C82;
+  }
+}
+:root[data-theme="rb-light"] #leadsView .ljcard{
+  background:#ffffff;
+  border:1px solid #e6e2df;
+  border-top:2px solid #ffffff;
+  box-shadow:0 2px 6px rgba(40,20,10,.07), 0 1px 2px rgba(40,20,10,.05);
+}
+@media (hover:hover){
+  :root[data-theme="rb-light"] #leadsView .ljcard:hover{
+    box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
+    border-color:#e0d5d2;
+  }
+}
+
+/* — the client name and the PO —
+   THIS IS AN ACCESSIBILITY FIX, not a taste change. Both were gradient-clipped
+   text (background-clip:text + a transparent fill), computing to 3.91:1 for the
+   name and 3.10:1 for the PO on the dark card — under the 4.5 floor. Theo: "For
+   client name and PO I like C". White name is 15.60:1 on the navy card, the
+   gold PO 7.21:1. The clip must be UNDONE explicitly: -webkit-text-fill-color
+   :transparent survives a plain color: declaration and would swallow both.   */
+#leadsView .ljnm,
+#leadsView .ljpname,
+#leadsView .ljpo{
+  background:none;-webkit-background-clip:border-box;background-clip:border-box;
+  -webkit-text-fill-color:currentColor;
+}
+#leadsView .ljpo{opacity:1;}
+:root:not([data-theme="rb-light"]) #leadsView .ljnm,
+:root:not([data-theme="rb-light"]) #leadsView .ljpname{color:#ffffff;}
+:root:not([data-theme="rb-light"]) #leadsView .ljpo{color:#d8a94f;}
+:root[data-theme="rb-light"] #leadsView .ljnm,
+:root[data-theme="rb-light"] #leadsView .ljpname{color:#161616;}
+:root[data-theme="rb-light"] #leadsView .ljpo{color:#8f1620;}
+
+/* — the stage circle: carries the pipeline colour and pops off the card —
+   --slc is LJ_SOLID and --spn is LJ_SPINE, both already set inline per card by
+   ljCardHtml(). The ring is the neon spine at low alpha, so the pop is the
+   stage's own colour rather than a second palette.                          */
+#leadsView .ljmc{
+  width:27px;height:27px;font-size:12px;
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--spn,#dbe7f7) 42%, transparent),
+             0 2px 6px rgba(0,0,0,.55),
+             inset 0 1px 0 rgba(255,255,255,.28);
+}
+@supports not (color:color-mix(in srgb, red 42%, transparent)){
+  #leadsView .ljmc{box-shadow:0 0 0 2px rgba(255,255,255,.22), 0 2px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.28);}
+}
+/* "IN STATUS" / "TOUCHED" — white, per Theo. 15.60:1 on the navy card. */
+:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljkl{color:#ffffff;opacity:.82;}
+:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljkv{color:#ffffff;}
+:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljad{color:#b3bcca;}
+:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljct{color:#8d97a6;}
+:root:not([data-theme="rb-light"]) #leadsView .ljrl::after{background:var(--nv-bd,#223047);}
+:root[data-theme="rb-light"] #leadsView .ljcard .ljkl{color:#5b6673;}
+:root[data-theme="rb-light"] #leadsView .ljcard .ljkv{color:#161616;}
+
+/* — call / text / email: grey raised boxes with white glyphs —
+   Theo: "the phone icon can you make A Grey raised box with a better phone
+   symbol in White  There should also be an Email icon under phone but aligned".
+   .ljcta is already flex-column, so the third button aligns by construction. */
+#leadsView .ljcta{gap:7px;}
+#leadsView .ljbtn{
+  width:38px;height:38px;border-radius:9px;
+  background:linear-gradient(180deg,#4a5160,#343a46);
+  border:1px solid #5b6373;
+  box-shadow:0 2px 5px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.16);
+  transition:transform .14s ease, box-shadow .14s ease, background .14s ease;
+}
+#leadsView .ljbtn svg{stroke:#ffffff;fill:none;stroke-width:1.9;}
+@media (hover:hover){
+  #leadsView .ljbtn:hover{
+    background:linear-gradient(180deg,#59616f,#3d434f);
+    transform:translateY(-1px);
+    box-shadow:0 5px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.22);
+  }
+}
+#leadsView .ljbtn:active{transform:translateY(1px);box-shadow:inset 0 1px 3px rgba(0,0,0,.5);}
+:root[data-theme="rb-light"] #leadsView .ljbtn{
+  background:linear-gradient(180deg,#6a7280,#4e5663);
+  border:1px solid #7c8492;
+  box-shadow:0 2px 5px rgba(40,20,10,.18), inset 0 1px 0 rgba(255,255,255,.28);
+}
+
+/* — the milestone pill: glassy and raised —
+   The COLOUR comes from 544's .stagechip.stg-* rules, which the pill now wears
+   as classes (see the JS change). Nothing here sets a background or a colour,
+   so the two cannot drift apart.                                            */
+#leadsView .ljmpill{
+  -webkit-backdrop-filter:blur(3px) saturate(1.3);
+  backdrop-filter:blur(3px) saturate(1.3);
+  box-shadow:0 3px 8px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.20);
+  text-shadow:0 1px 1px rgba(0,0,0,.28);
+}
+:root[data-theme="rb-light"] #leadsView .ljmpill{
+  box-shadow:0 2px 5px rgba(40,20,10,.16), inset 0 1px 0 rgba(255,255,255,.8);
+  text-shadow:none;
+}
+
+/* ══ 3 · NAVIGATOR A — the leads rail as a recessed channel ════════════════
+   The dropdown machinery is NOT new: .ljgroup / .ljgroup.closed, the ▾/▸ caret,
+   the click handler on .ljgroup > b and ljState.open have been in the file
+   since build 336. This is a restyle with no JS behind it — the sections and
+   drop-downs Theo asked for were already there and looked like plain text.
+
+   Recipe is 536's #cr-lnav: light is shadow-led, dark is highlight-led (in dark
+   the shadow is nearly the page colour and does almost nothing on its own).  */
+@media (min-width:901px){
+  :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrail{
+    background:#0A0E16;
+    border:1px solid #223047;
+    box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055);
+    padding:11px 9px 13px;
+  }
+  :root[data-theme="rb-light"] #leadsView .ljrail{
+    background:#f2f3f5;
+    border:1px solid #dcdee2;
+    box-shadow:inset 3px 0 6px -3px rgba(30,45,65,.22), inset -1px 0 0 #ffffff;
+    padding:11px 9px 13px;
+  }
+}
+/* the group header is 536's .lnav-sec — a lit ledge across the channel */
+#leadsView .ljgroup{margin-top:8px;border-top:0;padding-top:0;}
+#leadsView .ljgroup>b{padding:8px 10px 7px;border-radius:7px;margin-bottom:2px;}
+#leadsView .ljgroup>b::before{transition:transform .15s ease;}
+#leadsView .ljopts{padding:1px 0 3px;}
+#leadsView .ljopt{padding:6px 10px;border-radius:6px;margin:1px 0;transition:background .12s ease, color .12s ease;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljgroup>b{
+  background:linear-gradient(180deg,#141C29,#0F1521);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910;
+  color:#8d97a6;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt{color:#c2cbd8;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt:hover{background:#111927;color:#ffffff;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrhead{color:#dfe5ee;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrailnote{color:#6b7688;}
+:root[data-theme="rb-light"] #leadsView .ljgroup>b{
+  background:linear-gradient(180deg,#e9ebee,#f2f3f5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 #dcdee2;
+  color:#6f7683;
+}
+:root[data-theme="rb-light"] #leadsView .ljopt{color:#3f3f46;}
+:root[data-theme="rb-light"] #leadsView .ljopt:hover{background:#e7e9ec;color:#161616;}
+/* a ticked option is the "on" row — 536's inset red edge. :has() is progressive:
+   where it is unsupported the filter still works, it just is not highlighted. */
+#leadsView .ljopt:has(.cbx:checked){box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e);font-weight:700;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt:has(.cbx:checked){
+  background:linear-gradient(180deg,#1A2434,#141C29);color:#ffffff;
+}
+:root[data-theme="rb-light"] #leadsView .ljopt:has(.cbx:checked){background:#ffffff;color:#161616;}
+
+/* ══ 4 · THE ESTIMATE PAGE — obsidian ══════════════════════════════════════
+   "Now that ive seen obsidian style can you make all the cards in the estimates
+    page obsidian and not navy".
+
+   The cards cannot go black on a cream page, so the SHELL moves with them. The
+   header was already linear-gradient(120deg,#2c2c2c,#1a1a1a); this finishes a
+   dark shell that was half-built, and it is one shell in both modes exactly as
+   545's tiles are. Every ink below is computed against #15161c, the dominant
+   band of the gradient; the softest is --obs-mute at 6.85:1.
+
+   The .cr-est-* rules are hardcoded light values with NO theme gate anywhere,
+   so these overrides key on #cr-est-view rather than on the theme — there is no
+   theme to key on. Specificity: #cr-est-view .x is (1,1,0) against the
+   originals' (0,1,0) / (0,2,0), and every (0,2,0) neighbour lives inside this
+   same view, so nothing outside it is reachable.                            */
+#cr-est-view{background:#0b0b0e;color:var(--obs-ink,#e6e8ec);}
+#cr-est-view .cr-est-body{background:#0b0b0e;}
+
+#cr-est-view .cr-est-lineitem,
+#cr-est-view .cr-est-clientcard,
+#cr-est-view .cr-est-totals,
+#cr-est-view .cr-est-saved-row,
+#cr-est-view .cr-est-photo,
+#cr-est-view .cr-est-empty-items{
+  background:var(--obs-face);
+  border:1px solid var(--obs-bd,#24242c);
+  border-top:1px solid #34353f;
+  border-bottom:1px solid #050507;
+  box-shadow:var(--obs-lift);
+  color:var(--obs-ink,#e6e8ec);
+}
+@media (hover:hover){
+  #cr-est-view .cr-est-lineitem:hover,
+  #cr-est-view .cr-est-clientcard:hover,
+  #cr-est-view .cr-est-totals:hover,
+  #cr-est-view .cr-est-saved-row:hover,
+  #cr-est-view .cr-est-photo:hover{box-shadow:var(--obs-hover);}
+}
+#cr-est-view .cr-est-saved-row:hover{background:var(--obs-face);}
+#cr-est-view .cr-est-empty-items{border-style:dashed;box-shadow:none;color:var(--obs-mute,#9aa0a8);}
+
+/* inks */
+#cr-est-view .cr-est-clientcard .name{color:#ffffff;}
+#cr-est-view .cr-est-clientcard .addr,
+#cr-est-view .cr-est-body label,
+#cr-est-view .cr-est-items-head h3,
+#cr-est-view .cr-est-lineitem .pricing.lump .lump-lbl,
+#cr-est-view .cr-est-lineitem .pricing .lbl,
+#cr-est-view .cr-est-totals .lbl,
+#cr-est-view .cr-est-photohint,
+#cr-est-view .cr-est-saved-list .head{color:var(--obs-mute,#9aa0a8);}
+#cr-est-view .cr-est-lineitem .pricing .amount,
+#cr-est-view .cr-est-lineitem .pricing.lump input,
+#cr-est-view .cr-est-totals .val,
+#cr-est-view .cr-est-totals .grand-lbl,
+#cr-est-view .cr-est-saved-row .title,
+#cr-est-view .cr-est-saved-row .amount{color:#ffffff;}
+#cr-est-view .cr-est-saved-row .num{color:#f08a90;}
+#cr-est-view .cr-est-lineitem .desc-input{color:#c3c7ce;}
+
+/* the fields — sunk cells in the card, the inverse of the raised card */
+#cr-est-view .cr-est-body input[type=text],
+#cr-est-view .cr-est-body input[type=number],
+#cr-est-view .cr-est-body input[type=date],
+#cr-est-view .cr-est-body select,
+#cr-est-view .cr-est-body textarea{
+  background:var(--obs-well,#0d0e12);
+  border:1px solid var(--obs-hair,#2f3038);
+  color:#e6e8ec;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.55);
+}
+#cr-est-view .cr-est-body input::placeholder,
+#cr-est-view .cr-est-body textarea::placeholder{color:#6d747e;}
+#cr-est-view .cr-est-body input:focus,
+#cr-est-view .cr-est-body select:focus,
+#cr-est-view .cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.28);}
+/* the two in-card inputs are transparent at rest by design — keep that, and
+   give them the sunk cell only once they are in use */
+#cr-est-view .cr-est-lineitem .name-input,
+#cr-est-view .cr-est-lineitem .desc-input{background:transparent;box-shadow:none;border-color:transparent;}
+#cr-est-view .cr-est-lineitem .name-input{color:#ffffff;}
+#cr-est-view .cr-est-lineitem .name-input:hover,
+#cr-est-view .cr-est-lineitem .desc-input:hover{background:rgba(255,255,255,.045);border-color:var(--obs-hair,#2f3038);}
+#cr-est-view .cr-est-lineitem .name-input:focus,
+#cr-est-view .cr-est-lineitem .desc-input:focus{background:var(--obs-well,#0d0e12);border-color:#c8202e;}
+#cr-est-view .cr-est-lineitem .pricing{border-top:1px dashed var(--obs-hair,#2f3038);}
+#cr-est-view .cr-est-totals .rule{border-top:1px solid var(--obs-hair,#2f3038);}
+#cr-est-view .cr-est-totals .deposit{background:rgba(200,32,46,.09);border:1px solid rgba(200,32,46,.55);}
+
+/* the small controls */
+#cr-est-view .cr-est-itemchk{background:var(--obs-well,#0d0e12);border:1px solid var(--obs-hair,#2f3038);color:#f0a3a9;}
+#cr-est-view .cr-est-itemchk:hover{background:#16171d;border-color:#c8202e;}
+#cr-est-view .cr-est-items-head .add-custom{color:#f0a3a9;border:1px solid #c8202e;}
+#cr-est-view .cr-est-move button{background:var(--obs-well,#0d0e12);border:1px solid var(--obs-hair,#2f3038);color:#f0a3a9;}
+#cr-est-view .cr-est-move button:disabled{opacity:.35;}
+#cr-est-view .cr-est-photo .thumb{background:#15161c;}
+#cr-est-view .cr-est-photo .caption{background:transparent;color:#c3c7ce;}
+#cr-est-view .cr-est-photo .caption:focus{background:var(--obs-well,#0d0e12);}
+
+/* the library picker rides the same shell */
+#cr-est-picker .box{background:#0b0b0e;box-shadow:0 -8px 40px rgba(0,0,0,.7);}
+#cr-est-picker .box-head{background:#141419;border-bottom:1px solid var(--obs-hair,#2f3038);}
+#cr-est-picker .box-head h3{color:#ffffff;}
+#cr-est-picker .box-head button{color:#9aa0a8;}
+#cr-est-picker .box-search{background:#0b0b0e;}
+#cr-est-picker .box-search input{background-color:#0d0e12;border:1px solid #2f3038;color:#e6e8ec;}
+#cr-est-picker .box-list{background:#0b0b0e;}
+#cr-est-picker .cat-header{background:#141419;color:#9aa0a8;border-top:1px solid #2f3038;border-bottom:1px solid #1c1d23;}
+#cr-est-picker .p-item{border-bottom:1px solid #1c1d23;}
+#cr-est-picker .p-item:hover{background:#16171d;}
+#cr-est-picker .p-item .name{color:#ffffff;}
+#cr-est-picker .p-item .desc,
+#cr-est-picker .empty{color:#9aa0a8;}
+
+/* ══ 5 · NAVIGATOR B — the estimate jump list ══════════════════════════════
+   The only genuinely new component in this build. A long estimate is one
+   unbroken scroll of line items; this is the table of contents for it. Desktop
+   only (≥901px), the same breakpoint the leads rail uses — on a phone a rail
+   would eat the column the form needs.
+
+   The sticky works because a grid ITEM's containing block is its grid AREA: the
+   area is the full row height while align-items:start keeps the box at content
+   height, which is exactly the travel sticky needs.                          */
+#cr-est-view .cr-est-nav{display:none;}
+@media (min-width:901px){
+  #cr-est-view .cr-est-body{
+    display:grid;
+    grid-template-columns:224px minmax(0,1fr);
+    gap:0 20px;
+    align-items:start;
+    max-width:1180px;margin:0 auto;width:100%;
+  }
+  #cr-est-view .cr-est-nav{
+    display:block;
+    position:sticky;top:14px;
+    max-height:calc(100vh - 140px);overflow-y:auto;
+    background:#0A0E16;
+    border:1px solid #223047;
+    border-radius:12px;
+    box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055);
+    padding:11px 9px 13px;
+  }
+  #cr-est-view .cr-est-main{min-width:0;}
+}
+#cr-est-view .cr-est-nav .navhead{
+  font:800 10.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:#6b7688;padding:0 6px 8px;
+}
+#cr-est-view .cr-est-nav .navsec{
+  display:flex;align-items:center;gap:7px;width:100%;
+  background:linear-gradient(180deg,#141C29,#0F1521);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910;
+  color:#8d97a6;border:0;border-radius:7px;
+  font:800 10.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  padding:8px 10px 7px;margin:8px 0 2px;cursor:pointer;text-align:left;
+}
+#cr-est-view .cr-est-nav .navsec:first-of-type{margin-top:0;}
+#cr-est-view .cr-est-nav .navsec .chev{font-size:10px;transition:transform .15s ease;}
+#cr-est-view .cr-est-nav .navsec[aria-expanded="false"] .chev{transform:rotate(-90deg);}
+#cr-est-view .cr-est-nav .navsec .lbl{flex:1;}
+#cr-est-view .cr-est-nav .navsec .cnt{
+  font:700 9.5px ui-monospace,Menlo,monospace;color:#6b7688;
+  background:rgba(255,255,255,.06);border-radius:999px;padding:1px 7px;
+}
+#cr-est-view .cr-est-nav .navbody[hidden]{display:none;}
+#cr-est-view .cr-est-nav .navitem{
+  display:flex;align-items:baseline;gap:8px;width:100%;
+  background:transparent;border:0;border-radius:6px;
+  color:#c2cbd8;font:600 12px 'Segoe UI',Arial,sans-serif;
+  padding:6px 10px;margin:1px 0;cursor:pointer;text-align:left;
+  transition:background .12s ease, color .12s ease;
+}
+#cr-est-view .cr-est-nav .navitem:hover{background:#111927;color:#ffffff;}
+#cr-est-view .cr-est-nav .navitem.on{
+  background:linear-gradient(180deg,#1A2434,#141C29);color:#ffffff;font-weight:700;
+  box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e), 0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07);
+}
+#cr-est-view .cr-est-nav .navitem .ix{
+  flex:0 0 auto;font:700 9.5px ui-monospace,Menlo,monospace;color:#6b7688;min-width:14px;
+}
+#cr-est-view .cr-est-nav .navitem.on .ix{color:#f08a90;}
+#cr-est-view .cr-est-nav .navitem .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#cr-est-view .cr-est-nav .navempty{color:#6b7688;font:600 11px 'Segoe UI',Arial,sans-serif;padding:6px 10px;line-height:1.4;}
+/* the body is the scroller, so scroll-margin keeps a jumped-to row off its lip */
+#cr-est-view .cr-est-lineitem,
+#cr-est-view [data-navsec]{scroll-margin-top:14px;}
+
+/* ══ 6 · REPORTS — obsidian pipe cards, hairline neon red ══════════════════
+   #reportsView ONLY. The 8 .pipecards in #mainView keep 535's navy — "leave the
+   home screen alone".
+
+   Theo picked option 1 of two red treatments: "1 Hairline" — a 2px neon edge
+   with NO glow. The glow version read as a highlighter laid on a black card.  */
+#reportsView .pipecard{
+  background:var(--obs-face);
+  border:1px solid var(--obs-bd,#24242c);
+  border-top:1px solid #34353f;
+  border-bottom:1px solid #050507;
+  border-left:2px solid #ff2740;
+  box-shadow:var(--obs-lift);
+  color:var(--obs-ink,#e6e8ec);
+}
+@media (hover:hover){ #reportsView .pipecard:hover{box-shadow:var(--obs-hover);} }
+#reportsView .pipetitle{color:#ffffff;}
+#reportsView .pipecard .subnote,
+#reportsView .pipecard small{color:var(--obs-mute,#9aa0a8);}
+/* the tables and the funnel strip ride inside those cards. .rpttable td was
+   #2b2b2b with a #faf7f4 even-row stripe — dark ink on a white band, which has
+   been unreadable on the dark card since 535 put navy under it. Fixed here
+   because this build owns the ground it sits on. */
+#reportsView .rpttable th{color:#9aa0a8;}
+#reportsView .rpttable td{color:#dfe2e8;border-bottom:1px solid #22232b;}
+#reportsView .rpttable tr:nth-child(even) td{background:rgba(255,255,255,.035);}
+#reportsView .rptconv{color:#b9bec7;}
+
+/* — the KPI tiles —
+   Theo assigned five colours against a preview of mine carrying labels this app
+   does not have ("Bid out", "Crews"). Mapped onto the seven real KPIs by what
+   each number IS: money is green, new work is yellow, closed work is the dark
+   green, ratios and durations are grey. Every value computed against #2c2d36 —
+   the LIGHTEST band of the gradient and therefore the worst case: the softest
+   is the dark green at 3.90:1, against a 3.0 floor for 20px/800.
+   Orange is deliberately absent: it is spent on the Activity Count tiles and
+   spending it twice would stop it meaning anything.                          */
+#reportsView .rptkpi{
+  background:var(--obs-face);
+  border:1px solid var(--obs-bd,#24242c);
+  border-top:5px solid #c8202e;
+  border-bottom:1px solid #050507;
+  box-shadow:var(--obs-lift);
+}
+#reportsView .rptkpi::after{
+  background:linear-gradient(90deg,transparent,#3a2b2b 30%,#5a1a20 50%,#3a2b2b 70%,transparent);
+}
+#reportsView .rptkpi span{color:#ffffff;}          /* the labels, per Theo */
+#reportsView .rptkpi b{color:#b9bec7;}             /* default: grey, 7.33:1 */
+#reportsView .rptkpi b.k-money{color:#4fc98a;}     /* money — 6.55:1 */
+#reportsView .rptkpi b.k-new{color:#E8C21E;}       /* new / upcoming — 7.92:1 */
+#reportsView .rptkpi b.k-won{color:#3d9970;}       /* approved + closed — 3.90:1 */
+#reportsView .rptkpi b.k-rate{color:#b9bec7;}      /* rates + durations — 7.33:1 */
+#reportsView .rptkpi small{color:var(--obs-mute,#9aa0a8);}
+#reportsView .rptkpi small.up{color:#4fc98a;}
+#reportsView .rptkpi small.down{color:#f0a3a9;}
+</style>
+<div id="crewsView" style="display:none;position:fixed;inset:0;z-index:156;overflow-y:auto;"></div>
+<style id="cr-crew-styles">
+/* ══ Build 547 · Crews — trade nav, profile, compliance vault, notes ═══════
+   Chrome is borrowed, not invented: the trade nav is #cr-lnav's banded
+   sections over 536's recessed well; dark cards are 545's obsidian; status
+   chips are 544's retail-dark stage palette. Every token carries a literal
+   fallback (448-449).                                                      */
+#crewsView{ background:var(--crw-page,#0d0d10); color:var(--crw-ink,#c2cbd8);
+  font:13px/1.45 system-ui,-apple-system,'Segoe UI',Arial,sans-serif; }
+:root[data-theme="rb-light"] #crewsView{ background:var(--crw-page,#f2f3f5); color:var(--crw-ink,#2f3338); }
+
+#crewsView .crw-top{ display:flex;justify-content:space-between;align-items:center;
+  padding:16px 18px 10px;gap:12px;flex-wrap:wrap; }
+#crewsView .crw-h{ font:800 17px system-ui;color:var(--crw-head,#fff); }
+:root[data-theme="rb-light"] #crewsView .crw-h{ color:var(--crw-head,#161616); }
+#crewsView .crw-mut{ color:var(--crw-mut,#9aa0a8); }
+:root[data-theme="rb-light"] #crewsView .crw-mut{ color:var(--crw-mut,#5f666e); }
+
+#crewsView .crw-btn{ font:700 12px system-ui;padding:8px 13px;border-radius:7px;cursor:pointer;
+  border:1px solid var(--crw-line,#2b2b33);background:var(--crw-btn,#1c1c22);color:var(--crw-ink,#c2cbd8); }
+:root[data-theme="rb-light"] #crewsView .crw-btn{ background:var(--crw-btn,#fff);
+  border-color:var(--crw-line,#dcdee2);color:var(--crw-ink,#2f3338); }
+#crewsView .crw-btn.primary{ background:#c8202e;border-color:#c8202e;color:#fff; }
+#crewsView .crw-x{ background:none;border:0;font-size:22px;line-height:1;cursor:pointer;
+  color:var(--crw-mut,#9aa0a8); }
+
+#crewsView .crw-wrap{ display:grid;grid-template-columns:236px minmax(0,1fr);gap:14px;
+  align-items:start;padding:0 18px 26px; }
+/* 549: a grid item's default min-width is AUTO, not 0 — so the panel column
+   refused to shrink below the rate table's intrinsic width and stretched the
+   whole card instead, which is why .crw-rtwrap's overflow-x never engaged and
+   the form fields ran off the right edge. minmax(0,1fr) on the track and
+   min-width:0 here are the two halves of the same fix. */
+#crewsView .crw-wrap > *{ min-width:0; }
+@media (max-width:820px){ #crewsView .crw-wrap{ grid-template-columns:1fr; } }
+
+/* ── trade nav — #cr-lnav's shape, 536's well ── */
+#crewsView .crw-nav{ border-radius:10px;padding:7px 0;overflow:hidden;
+  background:var(--crw-well,#0A0E16);border:1px solid var(--crw-welln,#223047);
+  box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055); }
+:root[data-theme="rb-light"] #crewsView .crw-nav{ background:var(--crw-well,#f2f3f5);
+  border-color:var(--crw-welln,#dcdee2);
+  box-shadow:inset 3px 0 6px -3px rgba(30,45,65,.22), inset -1px 0 0 #fff; }
+#crewsView .crw-sec{ display:flex;justify-content:space-between;align-items:center;
+  font:800 10px system-ui;letter-spacing:.07em;text-transform:uppercase;
+  padding:8px 13px 7px;margin-top:5px;color:var(--crw-secink,#8d97a6);
+  background:linear-gradient(180deg,#141C29,#0F1521);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910; }
+:root[data-theme="rb-light"] #crewsView .crw-sec{ color:var(--crw-secink,#5a6068);
+  background:linear-gradient(180deg,#e9ebee,#f2f3f5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 #dcdee2; }
+#crewsView .crw-item{ display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:8px 13px;font-size:12.5px;cursor:pointer;border-left:3px solid transparent;
+  color:var(--crw-ink,#c2cbd8); }
+:root[data-theme="rb-light"] #crewsView .crw-item{ color:var(--crw-ink,#3f3f46); }
+#crewsView .crw-item.on{ font-weight:700;color:#fff;
+  background:linear-gradient(180deg,#1A2434,#141C29);
+  box-shadow:inset 3px 0 0 #c8202e, 0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07); }
+:root[data-theme="rb-light"] #crewsView .crw-item.on{ background:#fff;color:#161616;
+  box-shadow:inset 3px 0 0 #c8202e, 0 1px 2px rgba(30,45,65,.10); }
+#crewsView .crw-dot{ width:7px;height:7px;border-radius:50%;flex:0 0 auto; }
+#crewsView .crw-dot.ok{ background:#4caf71; } #crewsView .crw-dot.warn{ background:#e6912d; }
+#crewsView .crw-dot.bad{ background:#c8202e; }
+
+/* ── the panel — 545's obsidian in dark, raised white in light ── */
+#crewsView .crw-card{ border-radius:10px;padding:14px;
+  background:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid var(--crw-cardn,#24242c);
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.10) inset; }
+/* 553: the panel is two cards butted together. Geometry here is exactly what
+   the inline styles used to set — moved into classes so the light theme can
+   reach it, which an inline style would never allow.
+
+   The one behavioural change is the body half's shadow: `.crw-card`'s
+   `0 1px 0 rgba(255,255,255,.10) inset` is a top-edge bevel, and the body half
+   has no top edge. It was drawing a white hairline across the middle of the
+   object — measured at luma 54.3 against the card's own 32.3. The drop shadow
+   and the ledge are kept verbatim; only the inset goes. */
+#crewsView .crw-cardtop{ border-radius:10px 10px 0 0;padding-bottom:0; }
+#crewsView .crw-cardbot{ border-radius:0 0 10px 10px;border-top:0;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5); }
+:root[data-theme="rb-light"] #crewsView .crw-card{ background:var(--crw-card,#fff);
+  border-color:var(--crw-cardn,#dcdee2);box-shadow:0 2px 6px rgba(30,45,65,.10); }
+
+#crewsView .crw-pill{ display:inline-block;font:800 9.5px system-ui;letter-spacing:.06em;
+  text-transform:uppercase;padding:3px 8px;border-radius:9px;white-space:nowrap; }
+#crewsView .crw-pill.ok{ background:rgba(76,175,113,.18);color:#8fdfa8;border:1px solid rgba(76,175,113,.35); }
+#crewsView .crw-pill.warn{ background:rgba(230,145,45,.18);color:#f5b880;border:1px solid rgba(230,145,45,.35); }
+#crewsView .crw-pill.bad{ background:rgba(200,32,46,.2);color:#f4a7ae;border:1px solid rgba(200,32,46,.35); }
+:root[data-theme="rb-light"] #crewsView .crw-pill.ok{ background:#e9f5ec;color:#1d6b34;border-color:transparent; }
+:root[data-theme="rb-light"] #crewsView .crw-pill.warn{ background:#fdf3e2;color:#8a5200;border-color:transparent; }
+:root[data-theme="rb-light"] #crewsView .crw-pill.bad{ background:#fff0f0;color:#9c1822;border-color:transparent; }
+
+#crewsView .crw-tabs{ display:flex;gap:2px;flex-wrap:wrap;margin-top:12px; }
+#crewsView .crw-tab{ font:700 11px system-ui;padding:7px 11px;border-radius:6px 6px 0 0;
+  cursor:pointer;background:var(--crw-taboff,#14151a);color:var(--crw-mut,#9aa0a8); }
+:root[data-theme="rb-light"] #crewsView .crw-tab{ background:var(--crw-taboff,#e9ebee);color:#575d64; }
+#crewsView .crw-tab.on{ background:var(--crw-tabon,#242430);color:#fff;box-shadow:inset 0 2px 0 #c8202e; }
+:root[data-theme="rb-light"] #crewsView .crw-tab.on{ background:var(--crw-tabon,#fff);color:#161616; }
+
+/* 553: a raw UA file button was rendering here — border-width:0, radius:0,
+   grey-on-near-black in dark. */
+#crewsView input[type=file]{ padding:6px 8px;font:12.5px system-ui;cursor:pointer; }
+#crewsView input[type=file]::file-selector-button{
+  font:700 12px system-ui;padding:5px 11px;margin-right:9px;cursor:pointer;
+  border-radius:6px;border:1px solid var(--crw-line,#2b2b33);
+  background:var(--crw-taboff,#14151a);color:var(--crw-ink,#c2cbd8); }
+#crewsView .crw-doc{ display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:7px;margin-bottom:7px;font-size:12.5px;
+  background:rgba(255,255,255,.035);border:1px solid var(--crw-line,#26262e); }
+:root[data-theme="rb-light"] #crewsView .crw-doc{ background:var(--crw-doc,#f7f8f9);
+  border-color:var(--crw-line,#e4e6ea); }
+#crewsView .crw-note{ padding:10px 12px;border-radius:7px;margin-bottom:6px;font-size:12.5px;
+  background:rgba(255,255,255,.035);border:1px solid var(--crw-line,#26262e); }
+:root[data-theme="rb-light"] #crewsView .crw-note{ background:var(--crw-doc,#f7f8f9);
+  border-color:var(--crw-line,#e4e6ea); }
+#crewsView label{ display:block;font:700 10px system-ui;letter-spacing:.05em;
+  text-transform:uppercase;margin:10px 0 4px;color:var(--crw-mut,#9aa0a8); }
+:root[data-theme="rb-light"] #crewsView label{ color:var(--crw-mut,#5f666e); }
+#crewsView input[type=text],#crewsView input[type=date],#crewsView input[type=file],#crewsView select,#crewsView textarea{
+  width:100%;padding:8px 10px;border-radius:6px;font:13px system-ui;
+  background:var(--crw-input,#101015);border:1px solid var(--crw-line,#2b2b33);
+  color:var(--crw-ink,#c2cbd8); }
+:root[data-theme="rb-light"] #crewsView input[type=text],
+:root[data-theme="rb-light"] #crewsView input[type=date],
+:root[data-theme="rb-light"] #crewsView select,
+:root[data-theme="rb-light"] #crewsView textarea{
+  background:var(--crw-input,#fff);border-color:var(--crw-line,#dcdee2);color:var(--crw-ink,#2f3338); }
+#crewsView .crw-grid2{ display:grid;grid-template-columns:1fr 1fr;gap:0 12px; }
+@media (max-width:620px){ #crewsView .crw-grid2{ grid-template-columns:1fr; } }
+/* 549: the rate table scrolls inside ITS OWN box. Six columns of auto-width
+   content was forcing the whole card wider than a phone, so the PAGE scrolled
+   sideways — which is why the row labels were clipped on the left and the form
+   fields ran off on the right. Those fields sit in a .crw-grid2 whose media
+   query collapses below 620px; it never fired, because a media query keys off
+   the VIEWPORT while the layout was being stretched from inside. */
+#crewsView .crw-rtwrap{ overflow-x:auto;-webkit-overflow-scrolling:touch;
+  margin:0 -2px 4px;padding:0 2px; }
+#crewsView .crw-rcatrow td{ font:800 10px system-ui;letter-spacing:.06em;text-transform:uppercase;
+  padding:14px 7px 5px;color:var(--crw-mut,#9aa0a8);border-bottom:0; }
+:root[data-theme="rb-light"] #crewsView .crw-rcatrow td{ color:var(--crw-mut,#5f666e); }
+/* table-layout:fixed is what actually pins the columns — without it the widths
+   below are only suggestions and the longest line item still wins. */
+#crewsView .crw-rt{ border-collapse:collapse;width:100%;min-width:540px;
+  table-layout:fixed;font-size:12.5px;margin-bottom:4px; }
+#crewsView .crw-rt .c-name{ width:auto; }
+#crewsView .crw-rt .c-unit{ width:52px; }
+/* Ours and Theirs sit adjacent and right-aligned: comparing them is the entire
+   point of this tab, so they must never be something you scroll to reunite. */
+#crewsView .crw-rt .c-ours{ width:74px; }
+#crewsView .crw-rt .c-theirs{ width:96px; }
+#crewsView .crw-rt .c-spread{ width:82px; }
+#crewsView .crw-rt .c-x{ width:38px; }
+#crewsView .crw-rt .crw-rn{ overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+#crewsView .crw-rt .crw-rx{ text-align:right; }
+#crewsView .crw-rt th{ font:700 9.5px system-ui;letter-spacing:.05em;text-transform:uppercase;
+  text-align:left;padding:5px 7px;color:var(--crw-mut,#9aa0a8);
+  border-bottom:1px solid var(--crw-line,#2b2b33); }
+#crewsView .crw-rt td{ padding:5px 7px;border-bottom:1px solid var(--crw-rowline,#232329);
+  vertical-align:middle; }
+:root[data-theme="rb-light"] #crewsView .crw-rt th{ color:var(--crw-mut,#5f666e);
+  border-bottom-color:var(--crw-line,#dcdee2); }
+:root[data-theme="rb-light"] #crewsView .crw-rt td{ border-bottom-color:var(--crw-rowline,#eceef1); }
+#crewsView .crw-rt .n{ text-align:right;white-space:nowrap; }
+#crewsView .crw-rt input{ width:100%;padding:5px 7px;text-align:right;font:13px system-ui; }
+/* A NEGATIVE spread means the crew charges more than Cardinal does for that
+   line. Amber, not red: it is a number to look at, not an error. */
+#crewsView .crw-rt .crw-neg{ color:#f5b880;font-weight:700; }
+:root[data-theme="rb-light"] #crewsView .crw-rt .crw-neg{ color:#8a5200; }
+#crewsView .crw-mini{ padding:2px 8px;font-size:14px;line-height:1.2; }
+#crewsView .crw-empty{ padding:26px 14px;text-align:center;color:var(--crw-mut,#9aa0a8);font-size:13px; }
+
+/* ══ Build 550 · light mode for Crews, in the app's own light language ══════
+   Read off Theo's two screenshots (Landing + Insurance home): a WARM off-white
+   ground, white cards with a thin CARDINAL hairline rather than a grey one,
+   soft shadows on everything, letterspaced red micro-labels, and section
+   headings as a label followed by a rule.
+
+   The nav inverts. 547 built it as a recessed well in both themes, copying
+   536's left menu; Theo asked for raised, so light gets a raised white card and
+   the well survives in dark. The twins genuinely differ here — which is the
+   point, not an oversight.
+
+   Contrast computed, not eyeballed: worst is the section-rule label at 4.91:1
+   against a 4.5 floor.                                                      */
+
+:root[data-theme="rb-light"] #crewsView{
+  background:var(--crw-page,#f7f5f5);color:var(--crw-ink,#1f2124);
+}
+:root[data-theme="rb-light"] #crewsView .crw-mut{ color:var(--crw-mut,#5f666e); }
+
+/* ── the nav: a raised card, not a sunk well ── */
+:root[data-theme="rb-light"] #crewsView .crw-nav{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-top:2px solid var(--crw-edge,#c8202e);
+  border-radius:14px;
+  box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
+}
+/* section heading = label, then a rule running to the edge */
+:root[data-theme="rb-light"] #crewsView .crw-sec{
+  background:none;box-shadow:none;color:var(--crw-red,#9c1822);
+  padding:13px 14px 6px;margin-top:2px;gap:10px;
+}
+:root[data-theme="rb-light"] #crewsView .crw-sec > span:first-child{
+  flex:0 0 auto;position:relative;
+}
+:root[data-theme="rb-light"] #crewsView .crw-sec::after{
+  content:'';flex:1 1 auto;height:1px;order:1;
+  background:var(--crw-rule,rgba(200,32,46,.22));
+}
+:root[data-theme="rb-light"] #crewsView .crw-sec > span:last-child{
+  order:2;flex:0 0 auto;color:var(--crw-mut,#6b6b6b);
+}
+:root[data-theme="rb-light"] #crewsView .crw-item{
+  color:var(--crw-ink,#3f3f46);margin:3px 8px;border-radius:9px;padding:9px 11px;
+}
+:root[data-theme="rb-light"] #crewsView .crw-item:hover{
+  background:var(--crw-hover,#faf7f7);
+}
+/* the selected crew is the one card that gets the bloom */
+:root[data-theme="rb-light"] #crewsView .crw-item.on{
+  background:var(--crw-card,#fff);color:#161616;
+  box-shadow:inset 3px 0 0 #c8202e, 0 8px 20px rgba(200,32,46,.24),
+             0 0 0 1px rgba(200,32,46,.34);
+}
+
+/* ── panels: white, hairlined, raised ── */
+:root[data-theme="rb-light"] #crewsView .crw-card{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-top:2px solid var(--crw-edge,#c8202e);
+  border-radius:14px;
+  box-shadow:0 14px 28px rgba(40,20,10,.16), 0 3px 8px rgba(40,20,10,.10);
+}
+/* 553: the two halves match the nav's 14px now. They used to carry an inline
+   10px, which beat every rule in this stylesheet, so the left card rendered
+   visibly rounder than the right.
+
+   The rule that stood here before was mine and did nothing: it guarded against
+   the top half's drop shadow smearing onto the body half, which cannot happen
+   — the body half is a later sibling and paints its opaque background over
+   that shadow. Measured flat 255.0 for 13px below the seam. It also aimed at
+   the wrong card, and 551 set it to a value identical to `.crw-card`. Deleted
+   rather than left as decoration. No shadow is overridden here; both halves
+   inherit `.crw-card`'s exactly as they did at 552. */
+:root[data-theme="rb-light"] #crewsView .crw-cardtop{
+  border-radius:14px 14px 0 0;
+}
+:root[data-theme="rb-light"] #crewsView .crw-cardbot{
+  border-radius:0 0 14px 14px;
+  /* border-top MUST be re-zeroed. The base `#crewsView .crw-cardbot` sets it,
+     but the light `.crw-card` rule above out-specifies that one (1,3,0 against
+     1,1,0) and puts the 2px cardinal edge back — drawing a red line straight
+     across the middle of the panel. The harness caught it as a 186-luma band
+     1px below the seam. */
+  border-top:0;
+}
+
+/* ── tabs ── */
+:root[data-theme="rb-light"] #crewsView .crw-tab{
+  background:var(--crw-taboff,#f0eded);color:var(--crw-taboffink,#575d64);
+  border:1px solid transparent;border-bottom:0;
+}
+:root[data-theme="rb-light"] #crewsView .crw-tab.on{
+  background:var(--crw-card,#fff);color:#161616;
+  border-color:var(--crw-hair,rgba(200,32,46,.28));
+  box-shadow:inset 0 2px 0 #c8202e, 0 -3px 8px rgba(40,20,10,.09);
+}
+
+/* ── document rows and notes: little raised cards of their own ── */
+:root[data-theme="rb-light"] #crewsView .crw-doc,
+:root[data-theme="rb-light"] #crewsView .crw-note{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-radius:11px;
+  box-shadow:0 4px 10px rgba(40,20,10,.10), 0 1px 3px rgba(40,20,10,.07);
+}
+
+/* ── the rate table ── */
+:root[data-theme="rb-light"] #crewsView .crw-rtwrap{
+  background:var(--crw-card,#fff);
+  border:1px solid var(--crw-hair,#e6e2df);
+  border-radius:11px;padding:2px 10px 6px;
+  box-shadow:0 4px 10px rgba(40,20,10,.10), 0 1px 3px rgba(40,20,10,.07);
+}
+:root[data-theme="rb-light"] #crewsView .crw-rcatrow td{
+  color:var(--crw-red,#9c1822);
+}
+:root[data-theme="rb-light"] #crewsView .crw-rt th{
+  color:var(--crw-mut,#6b6b6b);border-bottom-color:var(--crw-rule,rgba(200,32,46,.18));
+}
+:root[data-theme="rb-light"] #crewsView .crw-rt td{
+  border-bottom-color:var(--crw-rowline,#f0eded);
+}
+:root[data-theme="rb-light"] #crewsView .crw-rt input,
+:root[data-theme="rb-light"] #crewsView input[type=text],
+:root[data-theme="rb-light"] #crewsView input[type=date],
+:root[data-theme="rb-light"] #crewsView select,
+:root[data-theme="rb-light"] #crewsView textarea{
+  background:var(--crw-card,#fff);color:var(--crw-ink,#1f2124);
+  border:1px solid var(--crw-inputline,#e2dede);border-radius:8px;
+  box-shadow:0 1px 3px rgba(40,20,10,.08);
+}
+:root[data-theme="rb-light"] #crewsView label{ color:var(--crw-red,#9c1822); }
+:root[data-theme="rb-light"] #crewsView input[type=file]::file-selector-button{
+  background:var(--crw-taboff,#f0eded);color:var(--crw-ink,#1f2124);
+  border:1px solid var(--crw-inputline,#e2dede); }
+
+/* ── buttons ── */
+:root[data-theme="rb-light"] #crewsView .crw-btn{
+  background:var(--crw-card,#fff);color:var(--crw-ink,#1f2124);
+  border:1px solid var(--crw-inputline,#e2dede);border-radius:9px;
+  box-shadow:0 3px 7px rgba(40,20,10,.13), 0 1px 2px rgba(40,20,10,.08);
+}
+:root[data-theme="rb-light"] #crewsView .crw-btn.primary{
+  background:#c8202e;border-color:#c8202e;color:#fff;
+  box-shadow:0 3px 10px rgba(200,32,46,.28);
+}
+:root[data-theme="rb-light"] #crewsView .crw-h{ color:#161616; }
+:root[data-theme="rb-light"] #crewsView .crw-x{ color:var(--crw-mut,#5f666e); }
+</style>
+<style id="cr-qi-yellow">
+/* ══ Build 559 · Quick Inspection — the yellow panel ════════════════════════
+   Theo's pick: option A's pure yellow, cards SUNK into it in near-black with
+   white text, lifting out on hover. The black page is left alone, as asked.
+
+   Measured, not chosen by eye:
+     dark ink #1c1416 on #FFD400   12.63:1   (panel heading + subline)
+     white     #ffffff on #14110c  18.83:1   (every card)
+     white     #ffffff on #FFD400   1.43:1   ← why white text is on the CARDS
+                                               and not on the yellow itself
+
+   EVERY selector is scoped to #quickInspView. .btn / .chipbtn / .axbtn /
+   .viewhead / .subnote are app-wide classes; unscoped, this would restyle every
+   screen in the app. */
+
+/* the panel itself — recessed into the black page */
+#qiStartView .wrap,
+#quickInspView .wrap{
+  max-width:720px;margin:16px auto 26px;padding:18px 16px 14px;
+  background:#FFD400;border-radius:18px;
+  box-shadow:inset 0 5px 14px rgba(0,0,0,.40),
+             inset 0 -1px 0 rgba(255,255,255,.45),
+             inset 0 0 0 1px rgba(0,0,0,.16);
+}
+/* the heading was the actual complaint: #1c1416 on a #0b0b0f page. It now has a
+   ground to be read against. -webkit-text-fill-color is reset too, because the
+   retail gradient-clip treatment would otherwise blank it. */
+#qiStartView .viewhead,
+#quickInspView .viewhead{
+  background:none;color:#1c1416;-webkit-text-fill-color:#1c1416;
+}
+#qiStartView .viewhead::after,
+#quickInspView .viewhead::after{background:rgba(0,0,0,.5);}
+#qiStartView .subnote,
+#quickInspView .subnote{color:#1c1416;opacity:.85;}
+
+/* every box within: near-black, sunk into the yellow, white text.
+   The 0 1px 0 white line is the lip of the hole — it is what makes a dark card
+   on a bright panel read as sunk rather than merely dark. */
+#quickInspView .qichip,
+#quickInspView .qibub,
+#quickInspView .qibar .btn,
+#quickInspView .qibar .chipbtn,
+#quickInspView .qibar .axbtn,
+#quickInspView .qibar input[type=text]{
+  background:#14110c;color:#ffffff;-webkit-text-fill-color:#ffffff;border:0;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.85),
+             inset 0 -1px 0 rgba(255,255,255,.08),
+             0 1px 0 rgba(255,255,255,.40);
+  transition:box-shadow .16s ease, transform .16s ease;
+}
+/* and they lift out of the panel on a shadow */
+#quickInspView .qichip:hover,
+#quickInspView .qibub:hover,
+#quickInspView .qibar .btn:hover,
+#quickInspView .qibar .chipbtn:hover,
+#quickInspView .qibar .axbtn:hover{
+  box-shadow:0 11px 24px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.16);
+  transform:translateY(-2px);
+}
+@media (prefers-reduced-motion:reduce){
+  #quickInspView .qichip,#quickInspView .qibub,#quickInspView .qibar .btn,
+  #quickInspView .qibar .chipbtn,#quickInspView .qibar .axbtn{transition:none}
+  #quickInspView .qichip:hover,#quickInspView .qibub:hover{transform:none}
+}
+
+/* SEMANTIC COLOUR IS NOT DECORATION — these keep their meaning. Camera is the
+   primary action, Finish ends the inspection, the active chip is where you are
+   and a done chip is work already shot. CLAUDE.md is explicit that this class of
+   colour stays fixed; only the neutral surfaces went dark. */
+#quickInspView .qibar .btn{background:var(--red,#c8202e);}
+/* ...but Photos is `class="btn ghost"`, a SECONDARY action, and the rule above
+   swallowed it and rendered it cardinal red right beside Camera. Caught by LOOKING
+   at the render — every assertion passed while two identical red buttons sat there.
+   Screenshots root-cause more on this project than reasoning does. */
+#quickInspView .qibar .btn.ghost{background:#14110c;}
+#quickInspView .qichip.act{background:#c8202e;}
+/* GREEN IS FINISH, AND ONLY FINISH — Theo, after seeing the render. A done chip
+   was also green, which spent the one colour that means "this inspection is over"
+   on a much smaller idea. Done is now the same black card with its label in the
+   panel's own yellow: 13.15:1, unmistakably a different state from a plain white
+   chip, and no second green anywhere on the page.
+   A darker grey card was measured first and rejected — every candidate came out
+   1.2-1.7:1 against the neutral chip, so "done" would have been invisible. */
+#quickInspView .qichip.done{background:#14110c;color:#FFD400;-webkit-text-fill-color:#FFD400;}
+#quickInspView .qibub.me{background:#c8202e;}
+
+#quickInspView .qibub.ph{padding:6px;}
+#quickInspView .qibub .qicap{color:#ffffff;-webkit-text-fill-color:#ffffff;opacity:.9;}
+/* the cream sticky bar was the biggest slab of glare on the page */
+#quickInspView .qibar{background:transparent;}
+#quickInspView .qibar input[type=text]::placeholder{color:rgba(255,255,255,.62);-webkit-text-fill-color:rgba(255,255,255,.62);}
+#quickInspView #qiStream{padding-bottom:24px;}
+/* 561: the start step — same panel, so the two halves of Quick Inspection match.
+   Its Search / My location buttons get the stream bar's sunk-card treatment;
+   -webkit-text-fill-color is set alongside colour because .chipbtn pins #2c2c2c
+   and that property beats `color`. The map and the address input are left alone —
+   the input carries an inline style no rule here should be fighting. */
+#qiStartView .chipbtn{
+  background:#14110c;color:#ffffff;-webkit-text-fill-color:#ffffff;border:0;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.85),
+             inset 0 -1px 0 rgba(255,255,255,.08),
+             0 1px 0 rgba(255,255,255,.40);
+  transition:box-shadow .16s ease, transform .16s ease;
+}
+#qiStartView .chipbtn:hover{
+  box-shadow:0 11px 24px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.16);
+  transform:translateY(-2px);
+}
+</style>
+
+<script id="cr-crew-script">
+/* ══ Build 547 · Crews ═════════════════════════════════════════════════════
+   Reads the schema that shipped at PR #77. Profile, Compliance and Notes are
+   working; Labor Rates, Work Orders and Payments are later builds and are
+   deliberately NOT rendered as empty tabs.                                 */
+(function(){
+'use strict';
+
+/* Theo's five sections, in his order — General Repairs last. This list is the
+   UI mirror of the crews_trade_ck constraint in the database; if one grows a
+   value the other must too, or a crew lands in a section that renders nowhere.
+   Same discipline as STAGES/normStage(). */
+var TRADES = [
+  ['Roofing',         'Roofing Crews'],
+  ['Siding',          'Siding Crews'],
+  ['Windows',         'Window Installers'],
+  ['Gutters',         'Gutter Crews'],
+  ['General Repairs', 'General Repairs']
+];
+var DOCS = [
+  ['w9', 'W-9'],
+  ['gl', 'General Liability'],
+  ['wc', "Workers' Comp"]
+];
+/* 548: Labor Rates sits between Compliance and Notes. tabsFor() filters it out
+   for anyone who is not an admin — crew_rates is admin-only in RLS, so for
+   production the tab would render and then show nothing, turning a deliberate
+   restriction into what looks like a broken screen. */
+var TABS = [['profile','Profile'],['compliance','Compliance'],['rates','Labor Rates'],['payments','Payments'],['notes','Notes']];
+/* 556: rates and payments are both admin-only and gate together — crew_rates and
+   crew_payments are both is_cardinal_admin() in RLS. */
+var MONEY_TABS = ['rates','payments'];
+function canSeeRates(){
+  try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
+}
+function tabsFor(){
+  return TABS.filter(function(t){ return MONEY_TABS.indexOf(t[0]) === -1 || canSeeRates(); });
+}
+
+var crews = [], docs = [], notes = [], selId = null, tab = 'compliance', booted = false;
+var catalog = [], rates = [];   /* 548: pricing_items + crew_rates */
+var payments = [];              /* 556: crew_payments, admin-only */
+
+function db(){ return window.supa || window.sb || null; }
+function view(){ return document.getElementById('crewsView'); }
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
+  });
+}
+function me(){
+  try{ return (window.currentUser && window.currentUser.email) || null; }catch(_){ return null; }
+}
+
+/* Days until a certificate lapses. NEGATIVE means it already has. A W-9 has no
+   expiry at all, which is not the same as an expired one — null means "no
+   clock", and the caller must not treat that as zero. */
+function daysLeft(iso){
+  if(!iso) return null;
+  var d = new Date(iso + 'T00:00:00');
+  if(isNaN(d.getTime())) return null;
+  return Math.floor((d.getTime() - Date.now()) / 86400000);
+}
+function docState(kind, row){
+  if(!row) return { cls:'bad', label:'\u2715 Missing', note:'nothing on file' };
+  var n = daysLeft(row.expires_on);
+  if(n === null) return { cls:'ok', label:'\u25cf On file',
+    note:row.issued_on ? 'filed ' + row.issued_on : 'no expiry' };
+  if(n < 0)  return { cls:'bad',  label:'\u2715 Expired',  note:'expired ' + (-n) + ' days ago' };
+  if(n <= 30) return { cls:'warn', label:'\u25b2 ' + n + ' days', note:'expires ' + row.expires_on };
+  return { cls:'ok', label:'\u25cf Current', note:'expires ' + row.expires_on };
+}
+/* A crew is only as good as its worst document. */
+function crewState(id){
+  var worst = 'ok';
+  DOCS.forEach(function(d){
+    var st = docState(d[0], docFor(id, d[0])).cls;
+    if(st === 'bad') worst = 'bad';
+    else if(st === 'warn' && worst !== 'bad') worst = 'warn';
+  });
+  return worst;
+}
+function docFor(crewId, kind){
+  var hit = null;
+  docs.forEach(function(r){
+    if(r.crew_id !== crewId || r.kind !== kind) return;
+    if(!hit || String(r.uploaded_at) > String(hit.uploaded_at)) hit = r;
+  });
+  return hit;
+}
+function sel(){ return crews.find(function(c){ return c.id === selId; }) || null; }
+
+async function load(){
+  var cl = db();
+  if(!cl) throw new Error('not signed in');
+  var res = await Promise.all([
+    cl.from('crews').select('*').eq('archived', false).order('name'),
+    cl.from('crew_docs').select('*'),
+    cl.from('crew_notes').select('*').order('at', { ascending:false }),
+    /* 548: both are optional. RLS refuses crew_rates to production, and that is
+       a correct refusal — it must degrade to "no rates shown", never to a
+       failed load that blanks the whole directory. */
+    cl.from('pricing_items').select('id,category,name,unit,rate,enabled,sort_order').eq('enabled', true),
+    cl.from('crew_rates').select('*'),
+    /* 556: same rule as crew_rates — RLS refusing production is CORRECT and must
+       degrade to an empty list, never to a failed load that blanks the directory. */
+    cl.from('crew_payments').select('*').order('paid_on', { ascending:false })
+  ]);
+  if(res[0].error) throw res[0].error;
+  crews = res[0].data || [];
+  docs  = (res[1].data) || [];      /* a docs failure must not blank the directory */
+  notes = (res[2].data) || [];
+  catalog = (res[3].data) || [];
+  rates   = (res[4].data) || [];
+  payments = (res[5].data) || [];
+  if(selId && !crews.some(function(c){ return c.id === selId; })) selId = null;
+  if(!selId && crews.length) selId = crews[0].id;
+}
+
+function navHtml(){
+  var out = '';
+  TRADES.forEach(function(t){
+    var list = crews.filter(function(c){ return c.trade === t[0]; });
+    out += '<div class="crw-sec"><span>' + esc(t[1]) + '</span><span>' + list.length + '</span></div>';
+    list.forEach(function(c){
+      out += '<div class="crw-item' + (c.id === selId ? ' on' : '') + '" data-crew="' + esc(c.id) + '">' +
+             '<span>' + esc(c.name) + '</span>' +
+             '<span class="crw-dot ' + crewState(c.id) + '"></span></div>';
+    });
+  });
+  return '<div class="crw-nav">' + out + '</div>';
+}
+
+function profileHtml(c){
+  function f(label, key, type){
+    return '<div><label>' + label + '</label>' +
+      '<input type="' + (type || 'text') + '" data-f="' + key + '" value="' + esc(c[key] || '') + '"></div>';
+  }
+  return '<div class="crw-grid2">' +
+    f('Crew name', 'name') + f('Legal name (as on the W-9)', 'legal_name') +
+    f('Contact', 'contact_name') + f('Phone', 'contact_phone') +
+    '<div><label>Email</label><input type="text" data-f="contact_email" value="' + esc(c.contact_email || '') +
+      '" placeholder="never guess this one"></div>' +
+    '<div><label>Trade</label><select data-f="trade">' +
+      TRADES.map(function(t){
+        return '<option value="' + t[0] + '"' + (c.trade === t[0] ? ' selected' : '') + '>' + esc(t[1]) + '</option>';
+      }).join('') + '</select></div>' +
+    '</div>' +
+    '<div><label>Address</label><input type="text" data-f="address" value="' + esc(c.address || '') + '"></div>' +
+    '<div style="margin-top:14px;display:flex;gap:8px">' +
+      '<button class="crw-btn primary" data-act="save">Save</button>' +
+      '<button class="crw-btn" data-act="archive">Archive this crew</button>' +
+    '</div>';
+}
+
+function complianceHtml(c){
+  var out = DOCS.map(function(d){
+    var row = docFor(c.id, d[0]), st = docState(d[0], row);
+    var meta = row ? (row.carrier ? esc(row.carrier) + ' \u00b7 ' : '') +
+                     (row.coverage_limits ? esc(row.coverage_limits) + ' \u00b7 ' : '') + st.note
+                   : st.note;
+    return '<div class="crw-doc"><span><b>' + d[1] + '</b> &nbsp;<span class="crw-mut">' + meta + '</span>' +
+      (row ? ' <button class="crw-btn" style="padding:3px 8px;margin-left:6px" data-open="' + esc(row.storage_path) + '">Open</button>' : '') +
+      '</span><span class="crw-pill ' + st.cls + '">' + st.label + '</span></div>';
+  }).join('');
+  return out +
+    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
+    '<div class="crw-grid2">' +
+      '<div><label>Document</label><select data-u="kind">' +
+        DOCS.map(function(d){ return '<option value="' + d[0] + '">' + d[1] + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div><label>Expires (leave blank for a W-9)</label><input type="date" data-u="expires_on"></div>' +
+      '<div><label>Carrier</label><input type="text" data-u="carrier"></div>' +
+      '<div><label>Policy #</label><input type="text" data-u="policy_number"></div>' +
+      '<div><label>Limits</label><input type="text" data-u="coverage_limits" placeholder="$1M / $2M"></div>' +
+      '<div><label>File</label><input type="file" data-u="file" accept=".pdf,.png,.jpg,.jpeg,.heic"></div>' +
+    '</div>' +
+    '<button class="crw-btn primary" style="margin-top:12px" data-act="upload">Upload</button>' +
+    '<span class="crw-mut" data-upmsg style="margin-left:10px;font-size:12px"></span>' +
+    '</div>';
+}
+
+function itemById(id){
+  for(var i = 0; i < catalog.length; i++){ if(catalog[i].id === id) return catalog[i]; }
+  return null;
+}
+function money(n, cents){
+  var v = Number(n);
+  if(!isFinite(v)) return '';
+  /* The sign goes OUTSIDE the currency symbol. Prepending '$' to an already
+     negative number gives "$-2", which is not how money is written anywhere —
+     caught by the harness on a crew whose rate is above Cardinal's own. */
+  var sign = v < 0 ? '-' : '';
+  /* 556: `cents` forces the two decimal places a payment always has. Rates pass
+     nothing and are unchanged — $285 stays $285. */
+  return sign + '$' + Math.abs(v).toLocaleString('en-US',
+    cents ? { minimumFractionDigits:2, maximumFractionDigits:2 } : { maximumFractionDigits:2 });
+}
+/* What Cardinal keeps on a line: our rate minus theirs. Shown as a spread, not
+   a percentage, because a percentage of a per-square rate reads as a discount
+   rather than as money. Returns null when there is nothing to compare — a
+   custom row has no catalog twin, and a zero catalog rate is not a 100% margin. */
+/* ── 556: what Cardinal has paid this crew ──────────────────────────────────
+   Admin-only, and refused here as well as in the tab strip and the dispatch —
+   crew_payments is is_cardinal_admin() in RLS, so a rendered-but-empty panel
+   would turn a correct refusal into what looks like a broken screen.
+
+   The total is summed from the rows actually rendered, never from a second
+   query, so the figure and the list cannot drift apart. */
+var PAY_METHODS = [['check','Check'],['ach','ACH'],['cash','Cash'],['card','Card'],['other','Other']];
+
+function payFor(crewId){
+  return payments.filter(function(p){ return p.crew_id === crewId; });
+}
+function paymentsHtml(c){
+  if(!canSeeRates()) return '<div class="crw-empty">Payments are not shown for this account.</div>';
+  var mine = payFor(c.id), total = 0;
+  var rows = mine.map(function(p){
+    var v = Number(p.amount);
+    if(isFinite(v)) total += v;
+    var meth = (PAY_METHODS.find(function(m){ return m[0] === p.method; }) || [null, p.method || ''])[1];
+    return '<tr>' +
+      '<td>' + esc(p.paid_on || '\u2014') + '</td>' +
+      '<td style="text-align:right">' + money(p.amount, true) + '</td>' +
+      '<td>' + esc(meth) + '</td>' +
+      '<td>' + esc(p.reference || '') + '</td>' +
+      '<td>' + esc(p.memo || '') + '</td>' +
+      '<td><button class="crw-btn" style="padding:3px 8px" data-delpay="' + esc(p.id) + '">Remove</button></td>' +
+    '</tr>';
+  }).join('');
+  return '<div class="crw-rtwrap"><table class="crw-rt">' +
+      '<colgroup><col style="width:15%"><col style="width:15%"><col style="width:14%">' +
+      '<col style="width:18%"><col style="width:26%"><col style="width:12%"></colgroup>' +
+      '<thead><tr><th>Paid</th><th style="text-align:right">Amount</th><th>Method</th>' +
+      '<th>Reference</th><th>Memo</th><th></th></tr></thead>' +
+      '<tbody>' + (rows || '<tr><td colspan="6" class="crw-mut">Nothing paid to this crew yet.</td></tr>') +
+      '</tbody></table></div>' +
+    '<div style="display:flex;justify-content:flex-end;gap:10px;align-items:baseline;margin:8px 2px 14px">' +
+      '<span class="crw-mut">Paid to date</span><b style="font-size:16px">' + money(total, true) + '</b></div>' +
+    '<div class="crw-grid2">' +
+      '<div><label>Amount</label><input type="text" data-p="amount" placeholder="1,250.00"></div>' +
+      '<div><label>Paid on</label><input type="date" data-p="paid_on"></div>' +
+      '<div><label>Method</label><select data-p="method">' +
+        PAY_METHODS.map(function(m){ return '<option value="' + m[0] + '">' + m[1] + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div><label>Reference</label><input type="text" data-p="reference" placeholder="Check #"></div>' +
+    '</div>' +
+    '<div style="margin-top:10px"><label>Memo</label><input type="text" data-p="memo" placeholder="Which job, or what it covered"></div>' +
+    '<button class="crw-btn primary" style="margin-top:12px" data-act="addpay">Record payment</button>' +
+    '<span class="crw-mut" data-paymsg style="margin-left:10px;font-size:12px"></span>';
+}
+function pval(k){
+  var el = view().querySelector('[data-p="' + k + '"]');
+  return el ? el.value.trim() : '';
+}
+async function addPayment(){
+  var c = sel(), cl = db();
+  if(!c || !cl || !canSeeRates()) return;
+  var msg = view().querySelector('[data-paymsg]');
+  var amt = Number(pval('amount').replace(/[$,\s]/g, ''));
+  if(!isFinite(amt) || amt === 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
+  if(msg) msg.textContent = 'Saving\u2026';
+  var r = await cl.from('crew_payments').insert({
+    crew_id: c.id, amount: amt,
+    method: pval('method') || 'check',
+    reference: pval('reference') || null,
+    paid_on: pval('paid_on') || null,
+    memo: pval('memo') || null,
+    created_by: (window.currentUser && window.currentUser.email) || null,
+  });
+  if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+  await load(); render();
+}
+async function delPayment(id){
+  var cl = db();
+  if(!cl || !canSeeRates()) return;
+  if(!confirm('Remove this payment from the record?')) return;
+  var r = await cl.from('crew_payments').delete().eq('id', id);
+  if(r.error){ alert('Could not remove: ' + r.error.message); return; }
+  await load(); render();
+}
+
+function spread(ours, theirs){
+  var a = Number(ours), b = Number(theirs);
+  if(!isFinite(a) || !isFinite(b) || a <= 0) return null;
+  return a - b;
+}
+function ratesHtml(c){
+  if(!canSeeRates()){
+    return '<div class="crw-empty">Labor rates are admin-only.</div>';
+  }
+  var mine = rates.filter(function(r){ return r.crew_id === c.id; });
+  /* group: catalog rows by their category, custom rows together at the end */
+  var groups = {}, custom = [];
+  mine.forEach(function(r){
+    if(!r.pricing_item_id){ custom.push(r); return; }
+    var it = itemById(r.pricing_item_id);
+    var cat = it ? it.category : 'Uncategorised';
+    (groups[cat] = groups[cat] || []).push({ r:r, it:it });
+  });
+  var cats = Object.keys(groups).sort();
+  /* 549: ONE table, not one per category. Four separate tables each sized their
+     own columns to their own longest line item, so Unit/Ours/Theirs landed at
+     four different x-positions down the page. Categories are full-width rows
+     inside a single table now, so the columns line up structurally rather than
+     by coincidence. */
+  function rateRow(id, name, unit, ours, theirs, sp){
+    return '<tr>' +
+      '<td class="crw-rn" title="' + esc(name) + '">' + esc(name) + '</td>' +
+      '<td class="crw-mut">' + esc(unit || '') + '</td>' +
+      '<td class="n crw-mut">' + ours + '</td>' +
+      '<td class="n"><input type="text" inputmode="decimal" data-rate="' + esc(id) +
+        '" value="' + esc(theirs) + '"></td>' +
+      '<td class="n ' + (sp === null ? 'crw-mut' : sp < 0 ? 'crw-neg' : '') + '">' +
+        (sp === null ? '&mdash;' : money(sp)) + '</td>' +
+      '<td class="crw-rx"><button class="crw-btn crw-mini" data-delrate="' + esc(id) +
+        '">&times;</button></td></tr>';
+  }
+  var rows = '';
+  cats.forEach(function(cat){
+    rows += '<tr class="crw-rcatrow"><td colspan="6">' + esc(cat) + '</td></tr>';
+    groups[cat].sort(function(a, b){
+      return String(a.it && a.it.name).localeCompare(String(b.it && b.it.name));
+    }).forEach(function(g){
+      rows += rateRow(g.r.id,
+        g.it ? g.it.name : '(item removed from the catalog)',
+        g.it ? g.it.unit : '',
+        g.it ? money(g.it.rate) : '&mdash;',
+        g.r.rate,
+        g.it ? spread(g.it.rate, g.r.rate) : null);
+    });
+  });
+  if(custom.length){
+    rows += '<tr class="crw-rcatrow"><td colspan="6">Their own line items</td></tr>';
+    custom.forEach(function(r){
+      rows += rateRow(r.id, r.custom_name, r.custom_unit, '&mdash;', r.rate, null);
+    });
+  }
+  var out = mine.length
+    ? '<div class="crw-rtwrap"><table class="crw-rt">' +
+        '<colgroup><col class="c-name"><col class="c-unit"><col class="c-ours">' +
+        '<col class="c-theirs"><col class="c-spread"><col class="c-x"></colgroup>' +
+        '<tr><th>Line item</th><th>Unit</th><th class="n">Ours</th>' +
+        '<th class="n">Theirs</th><th class="n">Spread</th><th></th></tr>' +
+        rows + '</table></div>'
+    : '<div class="crw-empty">Nothing priced yet. Add a catalog item below, ' +
+      'or a line item only this crew does.</div>';
+  /* only offer catalog items this crew is not already priced on */
+  var taken = {};
+  mine.forEach(function(r){ if(r.pricing_item_id) taken[r.pricing_item_id] = 1; });
+  var free = catalog.filter(function(i){ return !taken[i.id]; })
+    .sort(function(a, b){ return (a.category + a.name).localeCompare(b.category + b.name); });
+
+  return out +
+    '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
+    (mine.length ? '<button class="crw-btn primary" data-act="saverates">Save rates</button>' +
+      '<span class="crw-mut" data-ratemsg style="margin-left:10px;font-size:12px"></span>' : '') +
+    '<div class="crw-grid2" style="margin-top:12px">' +
+      '<div><label>Add a catalog item</label>' +
+        (free.length
+          ? '<select data-r="pick"><option value="">' + free.length + ' available\u2026</option>' +
+            free.map(function(i){
+              return '<option value="' + esc(i.id) + '">' + esc(i.category) + ' \u2014 ' +
+                esc(i.name) + ' (' + esc(i.unit) + ', ours ' + money(i.rate) + ')</option>';
+            }).join('') + '</select>'
+          : '<div class="crw-mut" style="font-size:12.5px;padding:8px 0">Every catalog item is already priced for this crew.</div>') +
+      '</div>' +
+      '<div><label>Their rate</label><input type="text" inputmode="decimal" data-r="pickrate" placeholder="0.00"></div>' +
+    '</div>' +
+    (free.length ? '<button class="crw-btn" style="margin-top:10px" data-act="addcatrate">Add</button>' : '') +
+    '<div class="crw-grid2" style="margin-top:16px">' +
+      '<div><label>Or a line item only they do</label><input type="text" data-r="cname" placeholder="Wrap bay window"></div>' +
+      '<div><label>Unit</label><input type="text" data-r="cunit" placeholder="ea"></div>' +
+      '<div><label>Their rate</label><input type="text" inputmode="decimal" data-r="crate" placeholder="0.00"></div>' +
+    '</div>' +
+    '<button class="crw-btn" style="margin-top:10px" data-act="addcustomrate">Add custom row</button>' +
+    '</div>';
+}
+function notesHtml(c){
+  var mine = notes.filter(function(n){ return n.crew_id === c.id; });
+  return '<div><label>Add a note</label><textarea data-f="newnote" rows="2"></textarea>' +
+    '<button class="crw-btn primary" style="margin-top:8px" data-act="addnote">Add</button></div>' +
+    '<div style="margin-top:14px">' +
+    (mine.length ? mine.map(function(n){
+      return '<div class="crw-note"><div class="crw-mut" style="font-size:11px">' +
+        esc(String(n.at || '').slice(0, 10)) + (n.by ? ' \u00b7 ' + esc(n.by) : '') + '</div>' +
+        esc(n.body) + '</div>';
+    }).join('') : '<div class="crw-mut" style="font-size:12.5px">No notes yet.</div>') +
+    '</div>';
+}
+
+function panelHtml(){
+  var c = sel();
+  if(!c) return '<div class="crw-card"><div class="crw-empty"><b>No crews yet.</b><br>' +
+    'Use <b>+ New crew</b> to add the first one.</div></div>';
+  var st = crewState(c.id);
+  var lbl = st === 'ok' ? '\u25cf Compliant' : st === 'warn' ? '\u25b2 Expiring' : '\u2715 Not compliant';
+  /* 548: a non-admin who somehow lands on 'rates' falls back to compliance
+     rather than seeing an empty panel. */
+  if(MONEY_TABS.indexOf(tab) !== -1 && !canSeeRates()) tab = 'compliance';
+  var body = tab === 'profile' ? profileHtml(c)
+    : tab === 'rates' ? ratesHtml(c)
+    : tab === 'payments' ? paymentsHtml(c)
+    : tab === 'notes' ? notesHtml(c) : complianceHtml(c);
+  return '<div class="crw-card crw-cardtop">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">' +
+      '<div><b style="font-size:15px">' + esc(c.legal_name || c.name) + '</b>' +
+        '<div class="crw-mut" style="margin-top:2px">' +
+        [c.trade, c.contact_name, c.contact_phone].filter(Boolean).map(esc).join(' \u00b7 ') +
+        '</div></div>' +
+      '<span class="crw-pill ' + st + '">' + lbl + '</span></div>' +
+    '<div class="crw-tabs">' + tabsFor().map(function(t){
+      return '<div class="crw-tab' + (tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</div>';
+    }).join('') + '</div></div>' +
+    '<div class="crw-card crw-cardbot">' + body + '</div>';
+}
+
+function render(){
+  var v = view();
+  if(!v) return;
+  v.innerHTML =
+    '<div class="crw-top"><div>' +
+      '<div class="crw-h">Crews</div>' +
+      '<div class="crw-mut" style="font-size:12px">Subcontractors, grouped by trade.</div>' +
+    '</div><div style="display:flex;gap:8px;align-items:center">' +
+      '<button class="crw-btn primary" data-act="new">+ New crew</button>' +
+      '<button class="crw-x" data-act="close" aria-label="Close">&times;</button>' +
+    '</div></div>' +
+    '<div class="crw-wrap"><div>' + navHtml() + '</div><div>' + panelHtml() + '</div></div>';
+}
+
+function val(k){ var el = view().querySelector('[data-u="' + k + '"]'); return el ? el.value : ''; }
+
+async function upload(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var msg = view().querySelector('[data-upmsg]');
+  var fileEl = view().querySelector('[data-u="file"]');
+  var file = fileEl && fileEl.files && fileEl.files[0];
+  if(!file){ if(msg) msg.textContent = 'Pick a file first.'; return; }
+  if(msg) msg.textContent = 'Uploading\u2026';
+  try{
+    var kind = val('kind') || 'w9';
+    var safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+    var path = 'crews/' + c.id + '/' + kind + '/' + Date.now() + '_' + safe;
+    var up = await cl.storage.from('crew-docs').upload(path, file,
+      { contentType: file.type || undefined });
+    if(up.error) throw up.error;
+    var r = await cl.from('crew_docs').insert({
+      crew_id: c.id, kind: kind, storage_path: path, file_name: file.name,
+      expires_on: val('expires_on') || null, carrier: val('carrier') || null,
+      policy_number: val('policy_number') || null,
+      coverage_limits: val('coverage_limits') || null, uploaded_by: me()
+    });
+    /* If the row fails, take the orphan back out of the bucket — otherwise the
+       file is charged for and referenced by nothing. */
+    if(r.error){ try{ await cl.storage.from('crew-docs').remove([path]); }catch(_){} throw r.error; }
+    await load(); render();
+  }catch(e){
+    if(msg) msg.textContent = 'Could not upload: ' + (e.message || e);
+  }
+}
+
+async function openDoc(path){
+  var cl = db();
+  if(!cl || !path) return;
+  try{
+    var r = await cl.storage.from('crew-docs').createSignedUrl(path, 300);
+    if(r.error) throw r.error;
+    window.open(r.data.signedUrl, '_blank', 'noopener');
+  }catch(e){ alert('Could not open that document: ' + (e.message || e)); }
+}
+
+async function save(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var patch = {};
+  view().querySelectorAll('[data-f]').forEach(function(el){
+    var k = el.getAttribute('data-f');
+    if(k !== 'newnote') patch[k] = el.value || null;
+  });
+  patch.updated_at = new Date().toISOString();
+  var r = await cl.from('crews').update(patch).eq('id', c.id);
+  if(r.error){ alert('Could not save: ' + r.error.message); return; }
+  await load(); render();
+}
+
+async function addCrew(){
+  var cl = db();
+  if(!cl) return;
+  var name = prompt('Crew name');
+  if(!name) return;
+  var r = await cl.from('crews').insert({ name:name, trade:'Roofing', created_by:me() })
+    .select('id').single();
+  if(r.error){ alert('Could not add: ' + r.error.message); return; }
+  selId = r.data ? r.data.id : null; tab = 'profile';
+  await load(); render();
+}
+
+async function addNote(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var el = view().querySelector('[data-f="newnote"]');
+  var body = el && el.value.trim();
+  if(!body) return;
+  var r = await cl.from('crew_notes').insert({ crew_id:c.id, body:body, by:me() });
+  if(r.error){ alert('Could not add the note: ' + r.error.message); return; }
+  await load(); render();
+}
+
+function rv(k){ var el = view().querySelector('[data-r="' + k + '"]'); return el ? el.value.trim() : ''; }
+/* A rate must be a real number. '' and 'abc' both become NaN, and a NaN rate
+   written to a NOT NULL numeric column is a 400 from PostgREST rather than a
+   useful message, so it is caught here. Zero is allowed — a crew genuinely can
+   include a line at no charge. */
+function num(v){
+  if(v === '' || v === null || v === undefined) return null;
+  var n = Number(String(v).replace(/[$,\s]/g, ''));
+  return isFinite(n) ? n : null;
+}
+async function addCatRate(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var id = rv('pick'), r = num(rv('pickrate'));
+  if(!id){ alert('Pick a catalog item first.'); return; }
+  if(r === null){ alert('Enter their rate as a number.'); return; }
+  var res = await cl.from('crew_rates').insert({
+    crew_id:c.id, pricing_item_id:id, rate:r, updated_by:me()
+  });
+  if(res.error){ alert('Could not add that rate: ' + res.error.message); return; }
+  await load(); render();
+}
+async function addCustomRate(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  var name = rv('cname'), unit = rv('cunit'), r = num(rv('crate'));
+  if(!name){ alert('Give the line item a name.'); return; }
+  if(r === null){ alert('Enter their rate as a number.'); return; }
+  var res = await cl.from('crew_rates').insert({
+    crew_id:c.id, custom_name:name, custom_unit:unit || null, rate:r, updated_by:me()
+  });
+  if(res.error){ alert('Could not add that row: ' + res.error.message); return; }
+  await load(); render();
+}
+async function saveRates(){
+  var cl = db();
+  if(!cl) return;
+  var msg = view().querySelector('[data-ratemsg]');
+  var edits = [];
+  view().querySelectorAll('[data-rate]').forEach(function(el){
+    var id = el.getAttribute('data-rate'), n = num(el.value);
+    var was = rates.find(function(r){ return r.id === id; });
+    if(n === null || !was || Number(was.rate) === n) return;   /* only what changed */
+    edits.push({ id:id, rate:n });
+  });
+  if(!edits.length){ if(msg) msg.textContent = 'Nothing changed.'; return; }
+  if(msg) msg.textContent = 'Saving\u2026';
+  for(var i = 0; i < edits.length; i++){
+    var r = await cl.from('crew_rates')
+      .update({ rate:edits[i].rate, updated_at:new Date().toISOString(), updated_by:me() })
+      .eq('id', edits[i].id);
+    if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+  }
+  await load(); render();
+}
+async function delRate(id){
+  var cl = db();
+  if(!cl || !id) return;
+  var r = await cl.from('crew_rates').delete().eq('id', id);
+  if(r.error){ alert('Could not remove that row: ' + r.error.message); return; }
+  await load(); render();
+}
+async function archive(){
+  var c = sel(), cl = db();
+  if(!c || !cl) return;
+  if(!confirm('Archive ' + c.name + '? They stop showing in the list. Nothing is deleted.')) return;
+  var r = await cl.from('crews').update({ archived:true }).eq('id', c.id);
+  if(r.error){ alert('Could not archive: ' + r.error.message); return; }
+  selId = null; await load(); render();
+}
+
+function wire(){
+  var v = view();
+  if(!v || booted) return;
+  booted = true;
+  v.addEventListener('click', function(e){
+    var t = e.target.closest('[data-crew]');
+    if(t){ selId = t.getAttribute('data-crew'); render(); return; }
+    var tb = e.target.closest('[data-tab]');
+    if(tb){ tab = tb.getAttribute('data-tab'); render(); return; }
+    var od = e.target.closest('[data-open]');
+    if(od){ openDoc(od.getAttribute('data-open')); return; }
+    var dr = e.target.closest('[data-delrate]');
+    if(dr){ delRate(dr.getAttribute('data-delrate')); return; }
+    var dp = e.target.closest('[data-delpay]');
+    if(dp){ delPayment(dp.getAttribute('data-delpay')); return; }
+    var a = e.target.closest('[data-act]');
+    if(!a) return;
+    var k = a.getAttribute('data-act');
+    if(k === 'close'){ close(); }
+    else if(k === 'new'){ addCrew(); }
+    else if(k === 'save'){ save(); }
+    else if(k === 'upload'){ upload(); }
+    else if(k === 'addnote'){ addNote(); }
+    else if(k === 'archive'){ archive(); }
+    else if(k === 'saverates'){ saveRates(); }
+    else if(k === 'addcatrate'){ addCatRate(); }
+    else if(k === 'addcustomrate'){ addCustomRate(); }
+    else if(k === 'addpay'){ addPayment(); }
+  });
+}
+
+function close(){
+  var v = view();
+  if(v) v.style.display = 'none';
+  /* This module took no scroll lock, so it releases none — the one global lock
+     has 13 writers already and does not need a 14th. */
+  try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
+}
+
+async function open(){
+  var v = view();
+  if(!v) return;
+  wire();
+  v.style.display = 'block';
+  v.innerHTML = '<div class="crw-empty">Loading\u2026</div>';
+  try{ await load(); render(); }
+  catch(e){
+    v.innerHTML = '<div class="crw-top"><div class="crw-h">Crews</div>' +
+      '<button class="crw-x" data-act="close">&times;</button></div>' +
+      '<div class="crw-empty"><b>Could not load crews.</b><br>' + esc(e.message || e) + '</div>';
+  }
+}
+
+window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
+  open: open, reload: async function(){ await load(); render(); }
+});
+})();
+</script>
 </body>
 </html>
