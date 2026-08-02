@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 570 &#8212; Crews, Pricing Catalog and Company Documents no longer trap you on the page</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 572 &#8212; Sales Floor, the Objections Coach and Production keep the menu and use the whole screen</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15024,11 +15024,47 @@ function hideAllViews(){
      and it is shown by a CLASS rather than by display, so an inline display:none
      here would never be cleared by its own open path and would kill the screen
      on the second visit. */
-  ['crewsView','cr-estimates-mount','cr-pricing-mount','cr-claims-mount']
+  /* 572: cr-coach-mount and cr-adjusters-mount are in the markup and shown by
+     display, exactly like the four above, so they belong in the same list. */
+  ['crewsView','cr-estimates-mount','cr-pricing-mount','cr-claims-mount',
+   'cr-coach-mount','cr-adjusters-mount']
     .forEach(function(id){
       var el = document.getElementById(id);
       if(el) el.style.display = 'none';
     });
+  /* 571: the estimate builder, which 570 left out on my judgement and Theo then
+     hit as a trap — 560 gave this screen the left menu, so its items look
+     clickable, and nothing closed the builder when you used one.
+     Closed through its OWN close(), never by display: it is shown by a class, and
+     an inline display:none would never be cleared by its open path.
+     No new way to lose work — close() is exactly what its own Cancel button calls
+     (data-act="close"); there is no confirm and no dirty tracking in that module,
+     so navigating away does what Cancel already does one tap away. */
+  /* 572: Sales Floor and the Production Board are created at runtime and shown by
+     a CLASS, not by display — writing display:none on them would never be cleared
+     by their own open path. Closed through their own close() so scroll locks and
+     module state are released too, then CONFIRMED: 571 proved a module close() can
+     no-op without throwing when its internal element reference is not set, and a
+     catch cannot see that. */
+  [{ id:'cr-sf', api:window.CardinalSalesFloor },
+   { id:'cr-pb', api:window.CardinalProduction }].forEach(function(o){
+    var el = document.getElementById(o.id);
+    if(!el || !el.classList.contains('open')) return;
+    if(o.api && typeof o.api.close === 'function'){ try{ o.api.close(); }catch(_){} }
+    if(el.classList.contains('open')) el.classList.remove('open');
+  });
+  var _ev = document.getElementById('cr-est-view');
+  if(_ev && _ev.classList.contains('open')){
+    if(window.CardinalEstimates && typeof window.CardinalEstimates.close === 'function'){
+      try{ window.CardinalEstimates.close(); }catch(_){}
+    }
+    /* close() removes the class through the module's OWN `view` reference, which is
+       null until ensureView() has run. When it is null close() clears the scroll
+       lock and returns without touching the element — no throw, so a catch cannot
+       see it, and the screen stays open. Confirm the result instead of assuming it.
+       Caught by the harness, which created the element without the module. */
+    if(_ev.classList.contains('open')) _ev.classList.remove('open');
+  }
 }
 
 /* =========================================================================
@@ -20774,7 +20810,16 @@ function __histPush(st){
         case 'communityHub':    if(window.CardinalCommunityHub) window.CardinalCommunityHub.show(); break;
         case 'punch':           if(typeof window.openPunchView === 'function') window.openPunchView(); break;
         case 'photos':          if(typeof window.openPhotosView === 'function') window.openPhotosView(); break;
-        case 'estimates':       if(window.CardinalEstimates) window.CardinalEstimates.open(); break;
+        /* 571: this case has existed for builds but had NEVER fired — nothing ever
+           pushed an 'estimates' state until the wrapNav above. It now goes through
+           the global opener rather than the bare module method, because the global
+           is what runs styleMounts() and hides the sibling mounts; restoring
+           through .open() alone would have left the mount unstyled. */
+        case 'estimates':       if(typeof window.crOpenEstimates === 'function') window.crOpenEstimates();
+                                else if(window.CardinalEstimates) window.CardinalEstimates.open(); break;
+        case 'pricing':         if(typeof window.crOpenPricing === 'function') window.crOpenPricing(); break;
+        case 'claims':          if(typeof window.crOpenClaims === 'function') window.crOpenClaims(); break;
+        case 'crews':           if(window.CardinalCrews) window.CardinalCrews.open(); break;
       }
     }catch(_e){}
     setTimeout(function(){ _navRestoring = false; }, 30);
@@ -20842,6 +20887,28 @@ function __histPush(st){
     /* Build 367: the newer full-screen views record state too. */
     wrapNav('openPunchView',       'punch');
     wrapNav('openPhotosView',      'photos');
+    /* 571: the overlays 570 taught hideAllViews about record history too, or Back
+       walks straight past them — the other half of the same convention.
+       These three ARE globals, so wrapNav reaches them directly. */
+    wrapNav('crOpenEstimates',     'estimates');
+    wrapNav('crOpenPricing',       'pricing');
+    wrapNav('crOpenClaims',        'claims');
+    /* Crews is a METHOD, and wrapNav reads window[name], so it cannot reach it.
+       Same shape as the CardinalCommunityHub wrap below, __crNav guard included
+       so a second pass cannot double-wrap it. */
+    (function(){
+      var c = window.CardinalCrews;
+      if(c && typeof c.open === 'function' && !c.open.__crNav){
+        var origOpen = c.open;
+        var wrappedOpen = function(){
+          var out = origOpen.apply(this, arguments);
+          try{ window.navSetView('crews'); }catch(_e){}
+          return out;
+        };
+        wrappedOpen.__crNav = true;
+        c.open = wrappedOpen;
+      }
+    })();
     (function(){
       var hub = window.CardinalCommunityHub;
       if(hub && typeof hub.show === 'function' && !hub.show.__crNav){
@@ -34813,6 +34880,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:572, note:'\uD83D\uDDA5\uFE0F Sales Floor, the Objections Coach and the Production board used to open as a bare screen with no menu, a narrow strip of content down the middle and a lot of empty space either side. \u2666 They now keep the left menu, close properly when you tap another page, and use the width of the screen on a desktop. \u2666 Phones are unchanged.' },
+{ build:571, note:'\uD83D\uDD19 Finishing 570. \u2666 The estimate editor trapped you the same way \u2014 the menu was right there and did nothing. Menu items now close it, exactly as its own Cancel button does. \u2666 The back button used to walk straight past Crews, Estimates, Pricing Catalog and Company Documents as if they were never open; it now returns to them properly.' },
 { build:570, note:'\uD83D\uDEAA Crews, Pricing Catalog and Company Documents used to trap you: once you were on one, tapping anything in the menu did nothing and the \u00D7 was the only way out. \u2666 Those screens float on top of the app, and the routine that switches pages had never been told they exist \u2014 so it changed the page underneath them. \u2666 Every menu item now closes them properly. \u2666 The estimate editor is left alone on purpose, so a stray tap cannot throw away an estimate you are in the middle of.' },
 { build:569, note:'\uD83C\uDF24\uFE0F Finishing 567 properly. The weather strip on the landing page was still redrawing itself about sixty times a second \u2014 567 fixed the other two but missed this one, because the machine it was tested on cannot reach the weather service, so that code never ran. \u2666 It now redraws only when the temperature actually changes. \u2666 Nothing looks different; the phone just stops working for no reason.' },
 { build:568, note:'\uD83D\uDCC4 The Estimates screen shows your estimates. All twelve of them \u2014 Dan Thompson, Kitty Hawk, Kim Guy, Betty Mann \u2014 have been saved in the system the whole time; the screen was reading two other tables, both of which are empty. \u2666 They sort into Drafts and Sent automatically. \u2666 Tap one to open it in the estimate editor, which never worked before. \u2666 The \u00D7 button files one away without deleting it; you and Joan only.' },
@@ -52704,6 +52773,38 @@ body.cr-lnav-on #cr-claims-mount{
   left:var(--lnav-w) !important;
   z-index:60 !important;
 }
+
+/* ── 572: Sales Floor, the Objections Coach, the Adjusters list and the
+   Production Board — the last full-screen pages with no menu ───────────────
+   Each is position:fixed;inset:0 at z-index 9500+, so it covered the menu
+   outright. Measured before this build at 1440x900: the Production board's
+   content sat at x=400 with width 640, leaving 400px dead on each side, and
+   getComputedStyle(#cr-lnav).display was 'none'.
+
+   !important matches the neighbours above rather than being decided fresh —
+   this file has lost this battle before (build 481: a rule that parsed,
+   balanced and never applied). The harness proves the rule actually wins.
+
+   Gated on body.cr-lnav-on, which is set only once the menu has really
+   mounted, so a phone keeps the full-screen page byte-for-byte as it ships. */
+body.cr-lnav-on #cr-sf,
+body.cr-lnav-on #cr-pb,
+body.cr-lnav-on #cr-coach-mount,
+body.cr-lnav-on #cr-adjusters-mount{
+  top:var(--headh,110px) !important;
+  left:var(--lnav-w) !important;
+  z-index:60 !important;
+}
+
+/* The 640px columns. Desktop-only: below 1100px --lnav-w is 0 and the class is
+   never set, so phones keep the column they were designed around.
+   The board goes wider than the card screens on purpose — a board earns width,
+   but the coach and Sales Floor are prose in cards and a 1200px measure reads
+   worse than 640. 940 fills most of the gap and keeps the line length sane.
+   .cr-k-modal (480px) is a MODAL and is deliberately untouched. */
+body.cr-lnav-on .cr-sf-wrap{ max-width:940px !important; }
+body.cr-lnav-on #cr-coach-mount .cr-k-app{ max-width:940px !important; }
+body.cr-lnav-on .cr-pb-wrap{ max-width:1180px !important; }
 /* The reason this build exists: .wrap ships max-width:none, so every table runs
    the full width of an ultrawide. Cap it — but never the masthead, which lives
    inside the fixed header and must stay full width. */

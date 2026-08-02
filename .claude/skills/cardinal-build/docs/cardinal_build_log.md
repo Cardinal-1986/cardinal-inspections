@@ -5793,3 +5793,111 @@ all four, navigate, read computed display: on 569 all four are still `block` (th
 *Harness note:* the first run FAILED the builder assertions with `(absent)` — `#cr-est-view` is
 created at runtime and does not exist until the builder opens (build 560's own lesson). The test was
 wrong, not the app; it now creates the element the way `ensureView()` does before asserting.
+
+---
+
+### build 571 — the estimate builder stops trapping you, and Back stops walking past
+
+**1. The builder traps too, and excluding it at 570 was my call.** Theo sent a screenshot of "Edit
+Estimate — Betty Mann" with the left menu plainly visible and doing nothing. Both of my reasons for
+leaving it out were wrong:
+
+* *"Theo's editor exception."* That was about SHOWING the menu on the editor, not about navigation
+  closing it — and 560 gave this screen the menu, so its items already look clickable. A visible menu
+  that does nothing is worse than either alternative.
+* *"It would silently discard unsaved work."* **False.** The builder's own Cancel is
+  `data-act="close"` and calls the same `close()`; there is no confirm and the word `dirty` appears
+  nowhere in the module. Navigating away is exactly what Cancel already does, one tap away.
+
+What stayed true from 570: **display is the wrong lever** — the builder is shown by a CLASS, so an
+inline `display:none` would never be cleared by its open path and the screen would be dead on the
+second visit. It is closed through its own `close()`.
+
+**A real defect the harness caught.** `close()` removes the class through the module's own `view`
+reference, which is null until `ensureView()` has run. When null it clears the scroll lock and returns
+**without throwing**, so a `catch` cannot see it and the screen stays open. The fix confirms the
+result rather than assuming it:
+
+```js
+try{ window.CardinalEstimates.close(); }catch(_){}
+if(_ev.classList.contains('open')) _ev.classList.remove('open');
+```
+
+The harness surfaced it by creating the element without the module — the test was artificial, the gap
+it exposed was not.
+
+**2. Back walked straight past all of them.** `BUG_CLASSES` states the rule in one breath: a new
+full-screen view needs registering in `hideAllViews()` **and** a history restore case. 570 did the
+first half; this does the second. Both existing mechanisms are reused, neither reinvented:
+
+* `wrapNav(globalName, viewName)` for the three mount openers, which **are** globals
+  (`crOpenEstimates` / `crOpenPricing` / `crOpenClaims`).
+* The method-wrapping IIFE with a `__crNav` guard — copied in shape from the `CardinalCommunityHub`
+  block three lines above — for `CardinalCrews.open`, a method `wrapNav` cannot reach since it reads
+  `window[name]`.
+
+`case 'estimates'` had existed for builds but **had never once fired**, because nothing ever pushed
+that state. It now restores through the global opener rather than the bare module method: the global
+is what runs `styleMounts()` and hides sibling mounts, so restoring through `.open()` alone would
+have left the mount unstyled.
+
+**The builder deliberately gets no history entry** — a workspace opened from a client, not a
+destination. Pushing it would put "half-finished estimate" in the back stack.
+
+Gates: `check_build.py` green, negative-controlled, 570 → 571. Push/restore symmetry asserted **as a
+set** rather than by hand-listing. **Chromium:** 570 leaves the builder open after navigating (the
+trap reproduces), 571 closes it by class with the scroll lock released; and opening Pricing then Crews
+records `["pricing","crews"]` in `history.state` on 571 versus `[null,null]` on 570.
+
+---
+
+### build 572 — Sales Floor, the Objections Coach and the Production Board join the app
+
+Theo, on four screens: *"The production page pops to a new screen without a navigation bar and will
+have a lot of empty space also."* Then the coach, then the deck. Measured at 1440×900 rather than
+eyeballed:
+
+```
+#cr-pb inner content   x=400  width=640   -> 400px dead on EACH side
+#cr-lnav display       none
+```
+
+Three defects, one family, every one a class 558–571 already fixed elsewhere: no left nav (fixed
+overlays at z-index 9500 cover it), not in `hideAllViews()`, and a 640px phone column in a 1440px
+window.
+
+**The lever has to match how each is shown — 570's lesson, twice over:**
+
+```
+#cr-sf              runtime,  shown by CLASS   (.open)
+#cr-pb              runtime,  shown by CLASS   (.open)
+#cr-coach-mount     markup,   shown by DISPLAY
+#cr-adjusters-mount markup,   shown by DISPLAY
+```
+
+Writing display onto a class-shown element would never be cleared by its open path; removing a class
+from a display-shown one does nothing. So they are closed separately, each by its own lever.
+`cr-adjusters-mount` is included though Theo did not name it — same markup, same mechanism, identical
+fault, and fixing one while leaving an identical bug beside it is how this file got the way it is.
+
+**571's lesson applied:** `close()` is preferred (it releases scroll locks and resets state) but then
+**confirmed**, because a module close() can no-op without throwing when its internal element
+reference is not set.
+
+**Width:** gated on `body.cr-lnav-on`, so phones keep the shipped 640px column byte-for-byte. The
+board goes to 1180 and the two card/prose screens to 940 — deliberately different, because a board
+earns width but a 1200px measure reads worse than 640. `.cr-k-modal` (480) is a modal, untouched.
+
+**⚠ The harness failed first, and the failure is the lesson.** Six CSS assertions read the *old*
+values — including `max-width:940px`, which contains no `var()` at all. The block was in a live
+`<style>`; the fault was the test. **`cr-lnav-script`'s `sync()` runs on every body mutation and calls
+`teardown()`, which REMOVES `cr-lnav-on`** whenever `ready()` is false — and `ready()` needs a
+signed-in DOM the harness cannot reach. Setting the class, waiting, then measuring measured nothing:
+the app had already stripped it. The class is now applied and read back in the **same synchronous
+evaluate**, before a frame can pass. *Forcing a state the app actively reconciles requires measuring
+inside the same tick.*
+
+Gates: `check_build.py` green, negative-controlled, 571 → 572. **Chromium, every assertion a
+`getComputedStyle` read** (build 481: a rule can parse, balance and never apply): `left 0px → 238px`,
+`top 0px → 110px`, `z-index 9500 → 60` on all three; `max-width` 640→940, 760→940, 640→1180; and
+navigating closes Production and the coach, which 571 did not.
