@@ -40,3 +40,11 @@ community_stages.html
 #     committed would have been served at app.cardinalroster.com. Migrations
 #     are run against Supabase by hand; they are never fetched by the app. ---
 *.sql
+
+# --- ai-field-manual.html DELIBERATELY SHIPS. The Resource Library iframes it
+#     (build 562), so it has to be served — an ignored file 404s the section.
+#     Checked before the decision: no credentials, no client records, no staff
+#     addresses. What a stranger with the URL learns is that Cardinal has
+#     60,485 CompanyCam photos and a three-row claims table. Theo was shown
+#     that and chose the served file over inlining 248 KB into index.html.
+#     It carries <meta name="robots" content="noindex,nofollow">. ---
