@@ -2887,6 +2887,18 @@ body:has(#loginView[style*="block"]){background:#fff;}
 /* ---- RL sub-pages ---- */
 #resourceLibraryView .rl-page{display:none;}
 #resourceLibraryView .rl-page.rl-pageActive{display:block;}
+/* 562 — the AI Field Manual. It is a whole document with its own chrome,
+   so its page gives up the article padding and hands over the pane. dvh,
+   not vh: on iOS the address bar makes vh overshoot and the last line of
+   the book ends up under the browser chrome. */
+body.rl-at-book #resourceLibraryView .ins-body{max-width:none;padding:0;}
+.rl-page.rl-fullbleed{padding:0;margin:0;}
+.rl-page.rl-fullbleed.rl-pageActive{display:flex;flex-direction:column;}
+.rl-bookframe{display:block;width:100%;flex:1 1 auto;min-height:100dvh;
+  border:0;background:#DEDBD4;}
+@supports not (height:100dvh){ .rl-bookframe{min-height:100vh;} }
+/* the lone book card uses the app's existing .rl-single — see
+   #resourceLibraryView .rl-boxgrid.rl-single. No new mechanism. */
 #resourceLibraryView .rl-pagehead{margin-bottom:18px;}
 /* --ct-pagehead-done: landing path converted at 396 */
 #resourceLibraryView .rl-pagehead h1{
@@ -3207,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-01 build 561 &#8212; the Estimates page keeps the menu, and Quick Inspection is readable from the first step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 562 &#8212; the Estimates page keeps the menu, and Quick Inspection is readable from the first step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4112,6 +4124,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <symbol id="rl-i-soffit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.6h18"/><path d="M3 6.6v5.8h18V6.6"/><path class="rl-mark-a" d="M7.4 15.8v3M12 15.8v3M16.6 15.8v3"/></symbol>
 <symbol id="rl-i-tape" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.6" cy="14.4" r="4.2"/><circle cx="16.4" cy="14.4" r="4.2"/><path class="rl-mark-a" d="M7.6 10.2h8.8"/><path d="M7.6 14.4h.01M16.4 14.4h.01"/></symbol>
 <symbol id="rl-i-reports" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.4h9l5 4.6V20.6H5Z"/><path d="M14 3.4v4.6h5"/><path class="rl-mark-a" d="M8.4 17V13m3.2 4v-6.4m3.2 6.4v-3"/></symbol>
+<symbol id="rl-i-aibook" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.2h6.2c1 0 1.8.8 1.8 1.8v13.6c0-.9-.8-1.6-1.8-1.6H4Z"/><path d="M20 4.2h-6.2c-1 0-1.8.8-1.8 1.8v13.6c0-.9.8-1.6 1.8-1.6H20Z"/><path class="rl-mark-a" d="M6.6 8.6h3M6.6 11.6h3M14.6 8.6h3M14.6 11.6h3"/></symbol>
 </svg>
 
   <div class="ins-header">
@@ -4127,7 +4140,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
     <div class="rl-page rl-pageActive" id="rlLanding" data-rltitle="Resource Library">
       <div class="rl-pagehead">
         <h1>Resource Library</h1>
-        <p>Two hubs. Insurance is everything you need working a claim. General is codes, materials, and manufacturer specs. Pick a side.</p>
+        <p>Two hubs and a book. Insurance is everything you need working a claim; General is codes, materials and manufacturer specs. The AI Field Manual is separate &mdash; it&rsquo;s about the tools, not the trade.</p>
       </div>
 
       <div class="rl-boxgrid">
@@ -4145,10 +4158,37 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </button>
       </div>
 
+      <div class="rl-divider"></div>
+
+      <div class="rl-boxgrid rl-single">
+        <button class="rl-box" data-rlgoto="ai_book">
+          <div class="rl-boxicon"><svg class="rl-mark" aria-hidden="true"><use href="#rl-i-aibook"/></svg></div>
+          <div class="rl-boxtitle">The AI Field Manual</div>
+          <div class="rl-boxsub">Fifteen chapters on using AI in this business &mdash; prompting, agents, building software, local hardware, which model to pay for, and what never to paste. Plus a printable desk card.</div>
+          <div class="rl-boxgo">Open &rsaquo;</div>
+        </button>
+      </div>
+
       <div class="rl-foot">
         <p><b>Cardinal Roofing &amp; Renovations, LLC</b> &mdash; 5735 Webster St, Dayton OH 45414 &middot; 937.576.6753 &middot; Admin@cardinalrenovations.net</p>
         <p>Resource Library v3 &middot; July 2026 &middot; Sources: 2019 Residential Code of Ohio, 2024 Ohio Building Code, Ohio Admin. Code Title 4101:8, Ohio Admin. Code 3901-1-54, Ohio Revised Code Chapters 3901, 3951, 1345. Not legal advice.</p>
       </div>
+    </div>
+
+    <!-- =========================================================
+         THE AI FIELD MANUAL  (562)
+         Its own section, deliberately absent from the TOC — Theo asked for
+         it that way. Reached from the landing card only.
+
+         Loaded in an iframe from /ai-field-manual.html rather than inlined:
+         the book redefines --ink/--red/--muted, carries bare body{} and *{}
+         rules, reuses 36 class names this app already uses, and runs its own
+         hash router. The iframe is the only thing that keeps all of that on
+         its own side of the fence.
+         ========================================================= -->
+    <div class="rl-page rl-fullbleed" id="rlPageAIBook" data-rltitle="The AI Field Manual">
+      <iframe class="rl-bookframe" id="rlBookFrame" title="The AI Field Manual"
+              loading="lazy" referrerpolicy="no-referrer"></iframe>
     </div>
 
     <!-- =========================================================
@@ -20278,6 +20318,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     rlPageMfg:        'rlPageGenHub',
     rlPageInsp:       'rlPageGenHub',
     rlPageRoofTypes:  'rlPageGenHub',
+    rlPageAIBook:     'rlLanding',   /* 562 — its own section, straight off the landing */
     /* Measurements tree */
     rlPageMsr:                 'rlPageGenHub',
     rlPageMsrRoof:             'rlPageMsr',
@@ -20387,10 +20428,19 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
     ensureThemeBtn();
     /* the landing is its own destination — nothing to go home to */
     if(document.body) document.body.classList.toggle('rl-at-landing', id === 'rlLanding');
+    /* 562 — same mechanism, for the one page that needs the whole pane */
+    if(document.body) document.body.classList.toggle('rl-at-book', id === 'rlPageAIBook');
     pages.forEach(function(p){ p.classList.toggle('rl-pageActive', p.id === id); });
     var active = document.getElementById(id);
     if(active && titleEl){
       titleEl.innerHTML = active.getAttribute('data-rltitle') || 'Resource Library';
+    }
+    /* 562 — the book is 252 KB. Load it the first time it is opened and
+       not before, and only once: setting src again would throw away the
+       reader's place in the book every time they came back to it. */
+    if(id === 'rlPageAIBook'){
+      var fr = document.getElementById('rlBookFrame');
+      if(fr && !fr.getAttribute('src')) fr.setAttribute('src', '/ai-field-manual.html');
     }
     window.scrollTo(0, 0);
   }
@@ -20415,6 +20465,7 @@ document.getElementById('landLibrary').addEventListener('click', showResourceLib
       mfg:       'rlPageMfg',
       insp:      'rlPageInsp',
       roof_types: 'rlPageRoofTypes',
+      ai_book:    'rlPageAIBook',
       /* Measurements */
       msr:                'rlPageMsr',
       msr_roof:           'rlPageMsrRoof',
@@ -34615,6 +34666,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:562, note:'\uD83D\uDCD5 The AI Field Manual is in the Resource Library \u2014 fifteen chapters on using AI in this business, plus a printable desk card. Its own section on the Library home, below the two hubs.' },
 { build:561, note:'\uD83E\uDDED Two corrections. \u2666 560 gave the menu to the estimate builder behind \u201C+ New estimate\u201D \u2014 but the Estimates item in the menu opens a different screen, and THAT is the one that was covering the menu. Fixed, along with Pricing Catalog and Claims, which had the same fault. \u2666 559 made Quick Inspection readable, but only the photo stream \u2014 the pin-the-property step you actually land on first still had the near-invisible title. It now carries the same yellow panel, so both halves match.' },
 { build:560, note:'\uD83E\uDDED The left menu now stays with you on the Estimates builder too. It was the one screen 558 could not reach \u2014 the builder is created on the fly rather than living in the page, so the sweep that fixed the others never saw it. \u2666 Your estimate keeps its own toolbar and its own outline down the left; the app menu sits outside both. \u2666 Phones and tablets still get the full-screen builder, unchanged.' },
 { build:559, note:'\u26A1 Quick Inspection is readable again. \u2666 The page title was near-black text on a near-black page \u2014 effectively invisible. \u2666 The whole inspection now sits in a yellow panel sunk into the page, and the chat bubbles, chips and buttons are black cards sunk into the yellow with white text, lifting on hover. \u2666 The glaring white note bar is gone. \u2666 Camera stays red and Finish stays green \u2014 those colours mean something. \u2666 The black background is untouched.' },
