@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 568 &#8212; your saved estimates finally show up on the Estimates screen, and open when you tap them</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 570 &#8212; Crews, Pricing Catalog and Company Documents no longer trap you on the page</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15012,6 +15012,23 @@ function hideAllViews(){
   boardView.style.display = 'none';
   commsView.style.display = 'none';
   document.getElementById('auditView').style.display = 'none';
+  /* 570: the four full-screen overlays this function never knew about. Each is
+     position:fixed and inset:0, so leaving them shown swapped the page underneath
+     and left you looking at the same screen with no way out but its X — Theo hit
+     it on Crews, Pricing Catalog and Company Documents. BUG_CLASSES' own rule:
+     a new full-screen view has to be registered here.
+     display is the correct lever for all four — crewsView ships display:none in
+     the markup, and the three mounts are shown and hidden through
+     MOUNT.style.display by their own modules.
+     #cr-est-view is deliberately ABSENT: it is Theo's document-editor exception,
+     and it is shown by a CLASS rather than by display, so an inline display:none
+     here would never be cleared by its own open path and would kill the screen
+     on the second visit. */
+  ['crewsView','cr-estimates-mount','cr-pricing-mount','cr-claims-mount']
+    .forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.style.display = 'none';
+    });
 }
 
 /* =========================================================================
@@ -34796,6 +34813,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:570, note:'\uD83D\uDEAA Crews, Pricing Catalog and Company Documents used to trap you: once you were on one, tapping anything in the menu did nothing and the \u00D7 was the only way out. \u2666 Those screens float on top of the app, and the routine that switches pages had never been told they exist \u2014 so it changed the page underneath them. \u2666 Every menu item now closes them properly. \u2666 The estimate editor is left alone on purpose, so a stray tap cannot throw away an estimate you are in the middle of.' },
+{ build:569, note:'\uD83C\uDF24\uFE0F Finishing 567 properly. The weather strip on the landing page was still redrawing itself about sixty times a second \u2014 567 fixed the other two but missed this one, because the machine it was tested on cannot reach the weather service, so that code never ran. \u2666 It now redraws only when the temperature actually changes. \u2666 Nothing looks different; the phone just stops working for no reason.' },
 { build:568, note:'\uD83D\uDCC4 The Estimates screen shows your estimates. All twelve of them \u2014 Dan Thompson, Kitty Hawk, Kim Guy, Betty Mann \u2014 have been saved in the system the whole time; the screen was reading two other tables, both of which are empty. \u2666 They sort into Drafts and Sent automatically. \u2666 Tap one to open it in the estimate editor, which never worked before. \u2666 The \u00D7 button files one away without deleting it; you and Joan only.' },
 { build:567, note:'\uD83E\uDDEF The app was quietly redrawing two things sixty times a second, on every screen, forever \u2014 the CRM chip in the header and the landing page greeting. \u2666 Nothing looked wrong, but the whole app was doing that work constantly: it drained battery, made phones warm and made everything feel half a step slow. \u2666 Both now redraw only when something has actually changed. Nothing looks different \u2014 it just stops happening.' },
 { build:566, note:'\uD83E\uDDF9 The estimates list was asking the server for two columns that do not exist, so every single load came back as an error. It has been failing quietly since the day it shipped. The bad request is gone.' },
@@ -40953,6 +40972,24 @@ var el = lv.querySelector('[data-slot="wx"]');
 /* a reading with no temperature is not a reading */
 if(!el || typeof d.now !== 'number') return;
 var code = WX_CODES[d.code] || ['🌡️',''];
+/* 569: this assignment used to be unconditional, and paint() calls wx() on every
+   animation frame — so with a cached reading (the normal case) it rewrote this
+   element ~65 times a second, forever. Third instance of the same mistake in this
+   chain after paintChip and paint's seven text slots.
+
+   A SIGNATURE, not `el.innerHTML !== html`, and the difference matters. The weather
+   icon is an emoji, so metallicize() legitimately re-wraps it in <span class="mic">
+   — measured at 4.3 replaceChild/sec on this exact element. Comparing against the
+   live content could therefore NEVER succeed, and the two would fight forever: the
+   same "guard that can never succeed" as the chip at 567, caused by a neighbouring
+   module instead of by SVG serialization. Comparing intent to intent lets
+   metallicize's version stand.
+
+   The signature is the six numbers the markup is a pure function of, not the markup
+   — it is the identity of the READING, and it stays small in the attribute. */
+var wxSig = [d.now, d.code, d.wind, d.hi, d.lo, d.rain].join('|');
+if(el.dataset.wxSig === wxSig) return;
+el.dataset.wxSig = wxSig;
 el.innerHTML =
 '<span class="ic" aria-hidden="true">' + code[0] + '</span>' +
 '<span class="tm">' + Math.round(d.now) + '°</span>' +
@@ -55162,6 +55199,11 @@ function close(){
 async function open(){
   var v = view();
   if(!v) return;
+  /* 570: every other full-screen opener in this app clears the decks first —
+     openCompanyDocs(), crOpenPricing() and crOpenClaims() all call hideAllViews().
+     Crews never did, so opening it on top of one of the mounts left two overlays
+     stacked and neither one dismissable by the menu. */
+  try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_){}
   wire();
   v.style.display = 'block';
   v.innerHTML = '<div class="crw-empty">Loading\u2026</div>';

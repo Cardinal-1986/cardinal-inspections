@@ -5684,3 +5684,112 @@ drop policy if exists est_update on public.estimates;
 create policy est_update on public.estimates for update to authenticated
   using (true) with check (true);
 ```
+
+---
+
+### build 569 — the landing loop, actually finished
+
+**567 claimed both re-render loops were fixed. Only one was.** Theo's console after 568 deployed still
+showed `Re-render loop detected: div#landingView ~245 mutations/sec`. The chip loop was gone from that
+same console, so 567's other half landed. This is the correction.
+
+**Why the verification said green when it wasn't — the important part.** 567 guarded the seven
+unconditional `textContent` writes in `paint()`. `paint()` ends with `try{ wx(); }catch(_){ }`, and:
+
+```js
+function wx(){
+  var c = wxCached();
+  if(c){ wxPaint(c); return; }        // cache hit -> paints on EVERY call
+  fetch('https://api.open-meteo.com/...')...
+}
+```
+
+**`api.open-meteo.com` is blocked by this environment's egress policy.** With no network and empty
+localStorage, `wxCached()` returned null, the fetch failed, and `wxPaint()` never executed once. The
+probe measured a path that cannot run here and reported the loop gone — true only in a sandbox where
+the weather does not exist. **The denial was printed in the proxy status I read that same session; I
+saw `api.open-meteo.com:443` in the list and did not connect it to the module under test.**
+
+**The method fix, which matters more than this build:** `loop_probe.js` now seeds
+`localStorage['cr-wx-dayton']` with a real-shaped reading before load, reproducing the production
+condition without the blocked host. With that one line the loop reproduces instantly at 64.8/sec, the
+stack naming `wxPaint` directly. *When a sandbox cannot reach a dependency, seed its cache — do not
+conclude from the path the sandbox happens to allow.*
+
+**The bug:** `wxPaint()` assigned `el.innerHTML` unconditionally. Third instance of the same mistake
+in one chain, after `paintChip` and `paint`'s seven slots.
+
+**Why a stored signature here, when 567 deliberately refused one for the chip.** The probe shows it:
+
+```
+64.8/s  set innerHTML | ...cr-lr-wx        | wxPaint@40956 < wx@40973
+ 4.3/s  replaceChild  | ...cr-lr-wx>span.ic | metallicize@16451
+```
+
+The weather icon is an **emoji**, so `metallicize` legitimately re-wraps it in `<span class="mic">`.
+An `el.innerHTML !== html` guard could therefore never succeed and the two would fight forever — the
+chip's "guard that can never succeed", caused by a neighbouring module rather than SVG serialization.
+A signature compares intent to intent and lets metallicize's version stand. It is the **six numbers
+the markup is a pure function of**, not the markup: the identity of the reading, and small in the
+attribute.
+
+`metallicize` untouched, asserted byte-for-byte. It is not the bug.
+
+Gates: `check_build.py` green, negative-controlled, 568 → 569. **Chromium with the cache seeded:** 568
+still loops under that condition, 569 reports none; weather content byte-identical between the two;
+and — the load-bearing test, because a guard that simply froze the element would pass everything else
+— **changing the reading still repaints it** (78°/Overcast → 41°/Light snow, signature moving with it).
+
+---
+
+### build 570 — Crews, Pricing Catalog and Company Documents stop trapping you
+
+Theo: *"The Crews page from navigation has an x and when trying to go to another page it gets stuck
+and wont let you unless you hit the x. Also the company documents and pricing catalogue gets you
+stuck on the page as well with no way to get out."*
+
+**`hideAllViews()` — what every navigation calls — did not know these four exist:**
+
+```
+crewsView            position:fixed; inset:0; z-index:156      (build 547)
+cr-estimates-mount   position:fixed; inset:0   (styleMounts, inline)
+cr-pricing-mount     "
+cr-claims-mount      "
+```
+
+It hides twenty-odd views by id; these four were never added. So navigating swapped the page
+*underneath* them and left them on top — same screen, no way out but the X. `BUG_CLASSES.md` states
+this rule directly (*new full-screen views need registering in `hideAllViews()`*); it was missed four
+times.
+
+**Why it got worse, and that part is mine.** Before 558/561 these overlays sat above the left nav, so
+the nav was not clickable while one was open and the X was the only affordance. 558/561 lowered them
+to `z-index:60` so the menu would show through — which made every menu item clickable without making
+any of them close the overlay. The trap pre-existed; **I made it easy to walk into.**
+
+Two fixes, both following what the file already does:
+
+1. The four are registered in `hideAllViews()`, in the same shape as the twenty lines above them.
+   `display` is the right lever for all four — `crewsView` ships `style="display:none"` in the markup,
+   and the mounts are shown/hidden through `MOUNT.style.display` by their own modules.
+2. `CardinalCrews.open()` now calls `hideAllViews()` first, like every other full-screen opener
+   already does (`openCompanyDocs()`, `crOpenPricing()`, `crOpenClaims()` all do). Crews was the only
+   one that did not, which is why opening it over a mount stacked two overlays.
+
+**`#cr-est-view` is deliberately excluded**, for two independent reasons: it is Theo's document-editor
+exception (a stray Pipeline tap would abandon unsaved lines), and `display` is the wrong lever anyway
+— the builder is shown by a **class**, so an inline `display:none` would never be cleared by its own
+open path and the screen would be dead on the second visit.
+
+**Found, not fixed here:** the same four are missing from `navRestore()`'s switch, so the BACK BUTTON
+walks past them too — the other half of the same convention. Not reported, changes the history stack,
+wants its own build and its own test.
+
+Gates: `check_build.py` green, negative-controlled, 569 → 570. **Chromium behavioural harness** — show
+all four, navigate, read computed display: on 569 all four are still `block` (the bug reproduces); on
+570 all four are `none`. Plus: opening Crews over an open mount stacks on 569 and clears on 570; and
+`#cr-est-view` receives no inline display and keeps its `.open` class on both.
+
+*Harness note:* the first run FAILED the builder assertions with `(absent)` — `#cr-est-view` is
+created at runtime and does not exist until the builder opens (build 560's own lesson). The test was
+wrong, not the app; it now creates the element the way `ensureView()` does before asserting.
