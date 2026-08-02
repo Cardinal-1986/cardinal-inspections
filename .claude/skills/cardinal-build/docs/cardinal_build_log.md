@@ -5966,3 +5966,62 @@ Gates: `check_build.py` green, negative-controlled, 572 → 573. **Blast radius 
 7 blocks changed (4 style, 2 script, 1 changelog), none added or removed, and exactly 2 line diffs
 outside them — the app stamp. **Chromium:** coach dark `rgb(255,255,255)` → `rgb(20,22,25)`; coach
 light unchanged at `rgb(255,255,255)`; pricing dark `rgb(20,22,25)`.
+
+---
+
+### builds 562–563, 574–577 — The AI Field Manual, and the hardware chapter it kept getting wrong
+
+Written in one long session, logged here in one entry because they are one thing.
+
+**562** — the book (15 chapters + back matter) filed in the Resource Library as its own section,
+**not in the TOC**, which Theo asked for explicitly. Served as `/ai-field-manual.html` and
+iframed. That was **forced, not preferred**: 36 class collisions and 6 token collisions between
+the book's stylesheet and the app's, measured before choosing.
+
+⚠️ **The repo copy is GENERATED.** The book is authored as an artifact, and the artifact host wraps
+what you write in `<!doctype><head><meta charset>`. Ship those same bytes from Vercel and the
+browser guesses the encoding — every em-dash renders `â€"`. **A screenshot is the only thing that
+caught it.** `scripts/wrap_book.py` now does the wrap; never hand-edit `ai-field-manual.html`.
+
+**563** — my own regression from 562, reproduced against a real service worker before fixing.
+`sw.js` cached **every** successful navigation under `'/'`, which was harmless while `/` was the
+only navigable URL on the origin. **An iframe load IS a navigation**, so opening the book replaced
+the offline shell with the book. Now `url.pathname === '/'` gates the write.
+
+**574** — the hardware page was factually wrong and had been since it shipped. Apple **withdrew**
+512 GB (March 2026) and 256/128 GB (May) as AI demand ate DRAM supply, so the Mac Studio line caps
+at **96 GB** — and the Spark's 128 GB is now larger than any Mac Studio sold. The **MacBook Pro
+M5 Max still takes 128 GB at 614 GB/s**, so the laptop outholds the desktop, which sounds like a
+mistake and isn't. Also added the commands page (no fixed photos folder exists on a Spark — the
+page teaches the search, not a path).
+
+**575** — Theo: *"So no pros on the amd at all?"* The AMD cells were **balanced** — three of seven
+went AMD's way — but the specs led and the verdict came last, so the impression was wrong even
+though the content wasn't. **Ordering beat content.** AMD got a four-item pros run ahead of its
+spec table, and a document-order assertion so it stays there.
+
+**576** — Theo: *"This is not all about the photos, that was a small part in buying a spark a very
+small part."* Correct, and mine. Both verdicts rested on the photo job when the chapter's own
+"what local does well" lists six uses with **image generation first**. One harness assertion had
+to be **inverted** — it *required* the narrow argument, so it would have held the mistake in place
+rather than catching it.
+
+**577** — the same 575 fix applied to Apple, plus two figures the book contradicted itself on:
+
+- **`3.4×` reproduces from nothing in the book's own table.** 819/273 is 3.0 (M3 Ultra) and
+  614/273 is 2.2 (MacBook Pro). Now quoted at both ends, like AMD's price.
+- **"the only two machines that reach 128 GB" was stale the moment 575 added the AMD row** — three
+  are highlighted. Mine, from 575.
+- **RTX PRO 6000 Blackwell** added: 96 GB at 1,792 GB/s, which the chapter's own arithmetic puts at
+  a 128B model at **16 t/s** against 2 on the Spark. It is the one thing on the page that refuses
+  the capacity-or-speed trade, so the trade is now named as **a price trade, not a law of physics**.
+  $13,250 + a workstation + 600 W ≈ three and a half Sparks.
+- Plus what was deliberately left out, with a reason each (RTX 5090, a second Spark, Jetson, cloud).
+
+**Two gate failures at 577 were the TEST, not the book** — the file's own rule, earned twice more:
+`parseInt('1,792')` is **1**, so the arithmetic check reported "want 0 t/s" against a correct row;
+and a whole-table `/512|256/` matched AMD's 256 GB/s **bandwidth** cell.
+
+Gates: `check_build.py` green 576 → 577, negative-controlled. Book harness **303 assertions**, and
+the negative control fails **12** of them against the 576 book, each naming what 577 changed.
+`h562_aibook.js` 40/40. Web ↔ markdown numeric parity 20/20.

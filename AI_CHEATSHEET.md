@@ -416,7 +416,25 @@ not added.*
 
 ### Spark vs Mac Studio, in detail
 
-The comparison everybody makes, and the one every article online still gets wrong. **Apple has
+The comparison everybody makes, and the one every article online still gets wrong — in both
+directions. Start with the half that gets left out.
+
+**Four things a Mac is straightforwardly better at**, before any of the detail:
+
+1. **It writes about three times faster.** 819 GB/s on an M3 Ultra against the Spark's 273 — and
+   614 on the MacBook Pro, still 2.2×. On the half of the job you sit and watch, the answer
+   arriving word by word, the Mac is not a little ahead. It is multiples ahead.
+2. **It is a computer, not an appliance.** macOS, and no commands page at the back of a book. The
+   same machine edits video, runs the office and opens a spreadsheet — so if the local-AI plan
+   changes you still own a workstation. A Spark that stops being used is a $4,699 paperweight.
+3. **The software island is the biggest one there is.** MLX, Ollama, LM Studio and llama.cpp are
+   all first-class on Apple silicon, and it has by a wide margin the largest local-LLM community
+   of any platform — so when something breaks, somebody has usually already posted the fix.
+4. **It leaves the building on purpose.** A 128 GB MacBook Pro is a complete local-AI machine in
+   a bag, and nothing else on this page moves off the desk. The same sentence turns up as a con
+   further down; both readings are fair, which is the honest way to put it.
+
+Now the part every article gets wrong in the other direction. **Apple has
 been deleting memory options, not adding them.** 512 GB went in March 2026; 256 GB and 128 GB
 went in May, as AI demand ate the world's DRAM supply and delivery times went from six days to
 six weeks. So the line that used to be the obvious choice for big models now stops at **96 GB**.
@@ -428,7 +446,9 @@ six weeks. So the line that used to be the obvious choice for big models now sto
 > expected to write. It will probably stop being true when the Studio gets its next chip.
 
 **Every tier you can actually order.** Largest model each holds, and what it runs at once
-loaded. Both columns computed, not quoted — same arithmetic as the table above.
+loaded. Both columns computed, not quoted — same arithmetic as the table above. The three
+bold rows are the only *machines* here that reach 128 GB; the last row is not a machine at
+all — it is a card, and it is the only thing on this page that is big *and* fast.
 
 | | Memory | Bandwidth | Biggest model it holds | t/s on that model | Price |
 |---|---:|---:|---:|---:|---:|
@@ -439,13 +459,18 @@ loaded. Both columns computed, not quoted — same arithmetic as the table above
 | **MacBook Pro M5 Max** | **128 GB** | 614 GB/s | **~171B** | 4 | build to order |
 | **AMD Ryzen AI Max+ 395** | **128 GB** | 256 GB/s | **~171B** | 2 | $3,999 |
 | **DGX Spark** | **128 GB** | 273 GB/s | **~171B** | 2 | $4,699 |
+| RTX PRO 6000 Blackwell | 96 GB | 1,792 GB/s | ~128B | 16 | $13,250 — card only |
 
-The bottom two rows are worth a second look: **same memory, same speed, $700 apart.** That is
+The AMD and Spark rows are worth a second look: **same memory, same speed, $700 apart.** That is
 not a rounding error, and it is why AMD gets its own section below.
 
 Read the table top to bottom and the wider trade is plain: **you buy capacity or you buy speed.** The
 cheapest Mac runs a 48B model six times faster than the Spark runs a 171B one. Neither is
 better; they are answers to different questions.
+
+Except in the last row, which is the exception that proves it. **The trade is a price trade, not
+a law of physics** — you can buy both ends at once, for about three times the money. See the end
+of this part.
 
 **The one sentence that explains every benchmark argument: the Spark reads fast, the Mac
 writes fast.**
@@ -453,7 +478,7 @@ writes fast.**
 - **Reading** — chewing through a long prompt before it answers. The Spark's Blackwell tensor
   cores win this, and it is not close.
 - **Writing** — producing the answer word by word. That is pure bandwidth, so the Mac wins by
-  roughly **3.4×**.
+  roughly **3×** on an M3 Ultra and **2.2×** on a MacBook Pro.
 
 Owners running a 397B model measured the Mac at 30–40 tokens a second against two Sparks at
 27–28 — but the Sparks read the prompt far faster. Ask which half of the job you actually do.
@@ -485,7 +510,7 @@ Owners running a 397B model measured the Mac at 30–40 tokens a second against 
 > 2. **It has to run unattended.** Batch jobs are overnight jobs. A laptop throttles under hours
 >    of sustained load, and it leaves the building with whoever picks it up.
 > 3. **Reading beats writing across most of the list.** OCR, tagging, captioning and search all
->    feed it more than they get back. The Mac's 3.4× is on the half you use least.
+>    feed it more than they get back. The Mac's 2–3× is on the half you use least.
 >
 > Worth knowing: people who own both *network* them — Spark reads, Mac writes — for about
 > **2.8×** what the Mac manages alone. Real, and also a second machine and a networking
@@ -543,6 +568,39 @@ the same job.
 > Two of those four go to the Spark on *software*, not speed — and the one it wins hardest is the
 > one you already use every week. **Photo captioning is a single line in that table**, which is
 > roughly its share of the argument.
+
+### Anything else worth a look
+
+Three machines is not the whole market, so: one other thing genuinely earns a place on this page,
+one is worth a phone call, and the rest are a different job wearing similar specs.
+
+**The one that earns it — NVIDIA RTX PRO 6000 Blackwell.** A card, not a machine: **96 GB of
+GDDR7 at 1,792 GB/s**, which is 6.5× the Spark's bandwidth with three quarters of its memory. Run
+this part's own arithmetic on it and it holds a **128B** model and writes at **16 tokens a
+second** — against 2 on the Spark and 7 on a 96 GB Mac Studio. It is the only entry here that
+refuses the trade the rest of this part is built on.
+
+It also costs like it. **$13,250** as of this writing, up from $8,565 at launch in March 2025 — a
+55% rise driven by the same memory shortage that took Apple's big configurations away. And it is
+a card: budget a workstation around it, a 600 W power draw, and a case it physically fits in.
+Call it **$16–17k** before it does anything, or about three and a half Sparks.
+
+**Worth a phone call — the Macs Apple stopped selling.** The 256 GB and 512 GB M3 Ultra Studios
+were withdrawn, not recalled. They are still the largest unified-memory machines ever sold to the
+public, and they turn up secondhand. If somebody offers you one at a sane price, it holds a
+**~683B** model — four times anything in the table above. Buying used, no warranty, from a
+stranger, is its own decision.
+
+**What is deliberately not here:**
+
+- An **RTX 5090**. Same 1,792 GB/s, but 32 GB — so it runs a 43B model at a blistering 48 tokens
+  a second and cannot open anything larger. Wonderful for images, useless for a big model.
+- **A second Spark.** The port on the back is for this, and owners do it. It doubles memory, not
+  bandwidth — so you get bigger, not faster, and you get a networking project.
+- **Jetson Thor** and the rest of the embedded line. Same company, same CUDA, different job —
+  those go in robots.
+- **Renting a cloud GPU.** Cheaper per hour and instantly bigger, and it is the right answer for
+  a one-off. It is also the thing the top of this part explains you would be choosing against.
 
 
 ### Why the numbers you'll read contradict each other

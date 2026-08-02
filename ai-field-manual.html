@@ -1258,8 +1258,30 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
 
         <div class="block">
           <h3>Spark vs Mac Studio, in detail</h3>
-          <p>The comparison everybody makes, and the one every article online still
-          gets wrong. <strong>Apple has been deleting memory options, not adding them.</strong>
+          <p>The comparison everybody makes, and the one every article online still gets
+          wrong &mdash; in both directions. Start with the half that gets left out.</p>
+          <p><strong>Four things a Mac is straightforwardly better at</strong>, before any of
+          the detail:</p>
+          <ol class="habits">
+            <li><span><b>It writes about three times faster.</b> 819&nbsp;GB/s on an M3 Ultra
+            against the Spark&apos;s 273 &mdash; and 614 on the MacBook Pro, still
+            2.2&times;. On the half of the job you sit and watch, the answer arriving word by
+            word, the Mac is not a little ahead. It is multiples ahead.</span></li>
+            <li><span><b>It is a computer, not an appliance.</b> macOS, and no commands page
+            at the back of a book. The same machine edits video, runs the office and opens a
+            spreadsheet &mdash; so if the local-AI plan changes you still own a workstation.
+            A Spark that stops being used is a $4,699 paperweight.</span></li>
+            <li><span><b>The software island is the biggest one there is.</b> MLX, Ollama, LM
+            Studio and llama.cpp are all first-class on Apple silicon, and it has by a wide
+            margin the largest local-LLM community of any platform &mdash; so when something
+            breaks, somebody has usually already posted the fix.</span></li>
+            <li><span><b>It leaves the building on purpose.</b> A 128&nbsp;GB MacBook Pro is a
+            complete local-AI machine in a bag, and nothing else on this page moves off the
+            desk. The same sentence turns up as a con further down; both readings are fair,
+            which is the honest way to put it.</span></li>
+          </ol>
+          <p>Now the part every article gets wrong in the other direction.
+          <strong>Apple has been deleting memory options, not adding them.</strong>
           512&nbsp;GB went in March 2026; 256&nbsp;GB and 128&nbsp;GB went in May, as AI
           demand ate the world&apos;s DRAM supply and delivery times went from six days to
           six weeks. So the line that used to be the obvious choice for big models now
@@ -1278,8 +1300,10 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
 
           <h3>Every tier you can actually order</h3>
           <p>Largest model each one holds, and what it runs at once loaded. Both columns
-          computed, not quoted &mdash; same arithmetic as the table above. The highlighted
-          rows are the only two machines here that reach 128&nbsp;GB.</p>
+          computed, not quoted &mdash; same arithmetic as the table above. The three highlighted
+          rows are the only <em>machines</em> here that reach 128&nbsp;GB. The last row is
+          not a machine at all &mdash; it is a card, and it is the only thing on this page
+          that is big <em>and</em> fast.</p>
           <div class="tw">
             <table class="figs">
               <thead><tr><th></th><th>Memory</th><th>Bandwidth</th><th>Biggest model it holds</th><th>t/s on that model</th><th>Price</th></tr></thead>
@@ -1291,15 +1315,19 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
                 <tr><td class="yes"><strong>MacBook Pro M5 Max</strong></td><td class="yes">128 GB</td><td>614 GB/s</td><td class="yes">~171B</td><td>4</td><td>build to order</td></tr>
                 <tr><td class="yes"><strong>AMD Ryzen AI Max+ 395</strong></td><td class="yes">128 GB</td><td>256 GB/s</td><td class="yes">~171B</td><td>2</td><td>$3,999</td></tr>
                 <tr><td class="yes"><strong>DGX Spark</strong></td><td class="yes">128 GB</td><td>273 GB/s</td><td class="yes">~171B</td><td>2</td><td>$4,699</td></tr>
+                <tr><td><strong>RTX PRO 6000 Blackwell</strong></td><td>96 GB</td><td>1,792 GB/s</td><td>~128B</td><td>16</td><td>$13,250 &mdash; card only</td></tr>
               </tbody>
             </table>
           </div>
-          <p>The bottom two rows are worth a second look: <strong>same memory, same speed,
+          <p>The AMD and Spark rows are worth a second look: <strong>same memory, same speed,
           $700 apart.</strong> That is not a rounding error, and it is why AMD gets its own
           section below.</p>
           <p>Read the table top to bottom and the wider trade is plain: <strong>you buy
           capacity or you buy speed.</strong> The cheapest Mac runs a 48B model six times faster than the Spark
           runs a 171B one. Neither is better; they are answers to different questions.</p>
+          <p>Except in the last row, which is the exception that proves it. <strong>The trade
+          is a price trade, not a law of physics</strong> &mdash; you can buy both ends at
+          once, for about three times the money. See the end of this chapter.</p>
 
           <h3>The one sentence that explains every benchmark argument</h3>
           <p><strong>The Spark reads fast. The Mac writes fast.</strong></p>
@@ -1307,7 +1335,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
             <li><strong>Reading</strong> &mdash; chewing through a long prompt before it
             answers. The Spark&apos;s Blackwell tensor cores win this, and it is not close.</li>
             <li><strong>Writing</strong> &mdash; producing the answer, word by word. That is
-            pure bandwidth, so the Mac wins by roughly <strong>3.4&times;</strong>.</li>
+            pure bandwidth, so the Mac wins by roughly <strong>3&times;</strong> on an M3 Ultra and <strong>2.2&times;</strong> on a MacBook Pro.</li>
           </ul>
           <p>This is why two honest reviewers reach opposite conclusions. Owners running a
           397B model measured the Mac at 30&ndash;40 tokens a second against two Sparks at
@@ -1364,7 +1392,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
               throttles under hours of sustained load, and it is a laptop &mdash; it leaves the
               building with whoever picks it up.</span></li>
               <li><span><b>Reading beats writing across most of the list.</b> OCR, tagging,
-              captioning and search all feed it more than they get back. The Mac&apos;s 3.4&times;
+              captioning and search all feed it more than they get back. The Mac&apos;s 2&ndash;3&times;
               is on the half you use least.</span></li>
             </ol>
             <p>Worth knowing: people who own both <em>network</em> them &mdash; Spark reads,
@@ -1437,6 +1465,49 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
             one it wins hardest is the one you already use every week. <strong>Photo captioning is
             a single line in that table</strong>, which is roughly its share of the argument.</p>
           </div>
+        </div>
+
+        <div class="block">
+          <h3>Anything else worth a look</h3>
+          <p>Three machines is not the whole market, so: one other thing genuinely earns a
+          place on this page, one is worth a phone call, and the rest are a different job
+          wearing similar specs.</p>
+
+          <p><strong>The one that earns it &mdash; NVIDIA RTX PRO 6000 Blackwell.</strong>
+          A card, not a machine: <strong>96&nbsp;GB of GDDR7 at 1,792&nbsp;GB/s</strong>, which
+          is 6.5&times; the Spark&apos;s bandwidth with three quarters of its memory. Run the
+          chapter&apos;s own arithmetic on it and it holds a <strong>128B</strong> model and
+          writes at <strong>16 tokens a second</strong> &mdash; against 2 on the Spark and 7 on
+          a 96&nbsp;GB Mac Studio. It is the only entry here that refuses the trade the rest of
+          this chapter is built on.</p>
+          <p>It also costs like it. <strong>$13,250</strong> as of this writing, up from $8,565
+          at launch in March 2025 &mdash; a 55% rise driven by the same memory shortage that
+          took Apple&apos;s big configurations away. And it is a card: budget a workstation
+          around it, a 600&nbsp;W power draw, and a case it physically fits in. Call it
+          <strong>$16&ndash;17k</strong> before it does anything, or about three and a half
+          Sparks.</p>
+
+          <p><strong>Worth a phone call &mdash; the Macs Apple stopped selling.</strong> The
+          256&nbsp;GB and 512&nbsp;GB M3 Ultra Studios were withdrawn, not recalled. They are
+          still the largest unified-memory machines ever sold to the public, and they turn up
+          secondhand. If somebody offers you one at a sane price, it holds a
+          <strong>~683B</strong> model &mdash; four times anything in the table above. Buying
+          used, no warranty, from a stranger, is its own decision.</p>
+
+          <p><strong>What is deliberately not here:</strong></p>
+          <ul>
+            <li>An <strong>RTX 5090</strong>. Same 1,792&nbsp;GB/s, but 32&nbsp;GB &mdash; so
+            it runs a 43B model at a blistering 48 tokens a second and cannot open anything
+            larger. Wonderful for images, useless for a big model.</li>
+            <li><strong>A second Spark.</strong> The port on the back is for this, and owners
+            do it. It doubles memory, not bandwidth &mdash; so you get bigger, not faster, and
+            you get a networking project.</li>
+            <li><strong>Jetson Thor</strong> and the rest of the embedded line. Same company,
+            same CUDA, different job &mdash; those go in robots.</li>
+            <li><strong>Renting a cloud GPU.</strong> Cheaper per hour and instantly bigger, and
+            it is the right answer for a one-off. It is also the thing the top of this chapter
+            explains you would be choosing against.</li>
+          </ul>
         </div>
 
         <div class="call warn">
