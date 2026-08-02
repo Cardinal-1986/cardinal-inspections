@@ -25,6 +25,14 @@ const CANDIDATES = [
   '/tmp/claude-0/-home-user-cardinal-inspections/a9ea6de9-1097-5812-b046-748af1938962/scratchpad/ai-cheatsheet.html',
   '/home/user/cardinal-inspections/ai-field-manual.html',
 ].filter(Boolean);
+/* An EXPLICIT path must exist. Without this the fallback swallowed a typo and
+   ran against the real book instead — five mutation tests reported 325/325
+   green while the mutated files had never been written. A harness that quietly
+   tests something other than what you named is worse than no harness. */
+if (process.argv[2] && !fs.existsSync(process.argv[2])) {
+  console.error('no such book: ' + process.argv[2]);
+  process.exit(2);
+}
 const SRC = CANDIDATES.find(p => fs.existsSync(p));
 if (!SRC) { console.error('no book found; tried:\n  ' + CANDIDATES.join('\n  ')); process.exit(1); }
 const FILE = 'file://' + path.resolve(SRC);
@@ -33,6 +41,24 @@ const ck = (n, got, want) => {
   const ok = typeof want === 'function' ? want(got) : String(got) === String(want);
   out.push({ ok, n, got: String(got).slice(0, 140), want: typeof want === 'function' ? '(pred)' : String(want) });
 };
+
+/* Report whatever ran, even when the run dies. Results are buffered and only
+   printed at the end, so an exception mid-file threw away every assertion that
+   had already passed OR FAILED — a mutation test that broke navigation showed a
+   bare stack trace and no ✗ at all, which reads like "the harness is broken"
+   rather than "the book is". */
+const report = () => {
+  for (const r of out)
+    console.log(`${r.ok ? '  ✓' : '  ✗'} ${r.n}${r.ok ? '' : `\n        got:  ${r.got}\n        want: ${r.want}`}`);
+  const bad = out.filter(r => !r.ok);
+  console.log(`\n${out.length - bad.length}/${out.length} passed`);
+  return bad.length;
+};
+process.on('uncaughtException', e => {
+  console.log('\n!! run aborted: ' + e.message + '\n');
+  report();
+  process.exit(2);
+});
 
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const page = await b.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 });
@@ -43,13 +69,29 @@ await page.goto(FILE, { waitUntil: 'load' });
 await page.waitForTimeout(400);
 
 ck('no page errors', errs.length, 0);
+/* Chapters are addressed BY NAME from here down. The book was reordered at 578
+   and every '#/9' in this file silently meant a different chapter afterwards —
+   a test that navigates to the wrong page still passes or fails, for reasons
+   that have nothing to do with what it claims to check. One table, one place to
+   change it, and the assertions read as what they test.
+   Back matter keeps its slug (#/cover, #/recap, …) — those never move. */
+const CH = {
+  talking:'1', prompting:'2', paste:'3', agents:'4', model:'5', local:'6',
+  machines:'7', spark:'8', stacks:'9', worth:'10', building:'11',
+  binder:'12', claims:'13', marketing:'14', glasswing:'15', map:'16',
+};
+const go = async slug => {
+  await page.evaluate(x => { window.location.hash = '#/' + x; }, slug);
+  await page.waitForTimeout(170);
+};
+
 
 /* structure */
-ck('twenty sections exist', await page.$$eval('.chapter', n => n.length), 20);
+ck('twenty-one sections exist', await page.$$eval('.chapter', n => n.length), 21);
 ck('exactly one chapter shown', await page.$$eval('.chapter.on', n => n.length), 1);
 ck('opens on the cover', await page.$eval('.chapter.on', n => n.dataset.ch), 'cover');
 ck('running head follows', await page.$eval('#runhead', n => n.textContent), 'Start here');
-ck('toc has twenty links', await page.$$eval('#toc a', n => n.length), 20);
+ck('toc has twenty-one links', await page.$$eval('#toc a', n => n.length), 21);
 
 /* the cover is the front board, not a page of the book */
 ck('cover shows a cloth board', await page.$eval('.board', n => getComputedStyle(n).backgroundImage),
@@ -66,11 +108,11 @@ ck('cover: board carries the stamped rule', await page.$eval('.board', n => {
 }), 'true');
 ck('cover: "Open the book" leads to chapter I',
    await page.$eval('.open-btn', n => n.getAttribute('href')), '#/1');
-ck('cover: what-is-inside lists all fifteen chapters',
-   await page.$$eval('.inside a', n => n.length), 15);
+ck('cover: what-is-inside lists all sixteen chapters',
+   await page.$$eval('.inside a', n => n.length), 16);
 
 /* leaving the cover restores the paper */
-await page.evaluate(() => { window.location.hash = '#/1'; });
+await go(CH.talking);
 await page.waitForTimeout(150);
 ck('off the cover: paper returns', await page.$eval('.sheet', n => getComputedStyle(n).boxShadow), v => v !== 'none');
 ck('off the cover: running head returns', await page.$eval('.runhead', n => getComputedStyle(n).display), 'flex');
@@ -92,7 +134,12 @@ ck('no link points at a missing chapter', wiring.orphanHrefs.join(',') || 'none'
 ck('every chapter is in the contents', wiring.missing.join(',') || 'none', 'none');
 
 /* turning pages */
-for (const [slug, head] of [['3', 'Agents'], ['6', 'Local vs. cloud'], ['7', "What's worth building"], ['8', 'The photo binder'], ['9', 'Which model, when'], ['10', 'The stacks'], ['11', 'The Spark'], ['12', 'Claims'], ['13', 'What never to paste'], ['glossary', 'Glossary'], ['sources', 'Sources']]) {
+for (const [slug, head] of [
+  [CH.paste, 'What never to paste'], [CH.agents, 'Agents'], [CH.model, 'Which model, when'],
+  [CH.local, 'Local vs. cloud'], [CH.machines, 'The machines'], [CH.spark, 'The Spark'],
+  [CH.stacks, 'The stacks'], [CH.worth, "What's worth building"], [CH.building, 'Building software'],
+  [CH.binder, 'The photo binder'], [CH.claims, 'Claims'], [CH.marketing, 'Marketing & SEO'],
+  ['glossary', 'Glossary'], ['sources', 'Sources']]) {
   await page.evaluate(s => { window.location.hash = '#/' + s; }, slug);
   await page.waitForTimeout(120);
   ck(`turn to ${slug}: shown`, await page.$eval('.chapter.on', n => n.dataset.ch), slug);
@@ -107,7 +154,7 @@ await page.waitForTimeout(120);
 ck('unknown hash → cover', await page.$eval('.chapter.on', n => n.dataset.ch), 'cover');
 
 /* arrow keys turn pages */
-await page.evaluate(() => { window.location.hash = '#/2'; });
+await go(CH.prompting);
 await page.waitForTimeout(120);
 await page.keyboard.press('ArrowRight');
 await page.waitForTimeout(150);
@@ -117,7 +164,7 @@ await page.waitForTimeout(150);
 ck('ArrowLeft → previous', await page.$eval('.chapter.on', n => n.dataset.ch), '2');
 
 /* the book actually renders as a book */
-await page.evaluate(() => { window.location.hash = '#/6'; });
+await go(CH.local);
 await page.waitForTimeout(150);
 const cs = (s, p) => page.$eval(s, (e, p) => getComputedStyle(e).getPropertyValue(p).trim(), p);
 ck('binding is navy cloth', await cs('.spine', 'background-image'), v => v.includes('rgb(22, 35, 63)'));
@@ -136,7 +183,7 @@ for (const w of [1280, 900, 420]) {
   await page.setViewportSize({ width: w, height: 900 });
   await page.waitForTimeout(120);
   const bad = [];
-  for (const slug of ['cover','1','2','3','4','5','6','7','8','9','10','11','12','13','recap','glossary','sources']) {
+  for (const slug of ['cover', ...Object.values(CH), 'recap','commands','glossary','sources']) {
     await page.evaluate(s => { window.location.hash = '#/' + s; }, slug);
     await page.waitForTimeout(60);
     const over = await page.evaluate(() =>
@@ -146,14 +193,14 @@ for (const w of [1280, 900, 420]) {
   ck(`no sideways scroll at ${w}px, any chapter`, bad.join(',') || 'none', 'none');
 }
 await page.setViewportSize({ width: 1280, height: 900 });
-await page.evaluate(() => { window.location.hash = '#/6'; });
+await go(CH.local);
 await page.waitForTimeout(120);
 ck('wide tables scroll in their own box', await cs('.tw', 'overflow-x'), 'auto');
 
 /* the page-example mockups: geometry, not just presence. A stage pin sitting on
    top of a caption is invisible to every structural assertion and obvious in a
    screenshot — so measure the rectangles. */
-await page.evaluate(() => { window.location.hash = '#/8'; });
+await go(CH.binder);
 await page.waitForTimeout(200);
 ck('chapter VIII draws the page examples', await page.$$eval('.chapter.on .screen', n => n.length), 5);
 ck('no pin overlaps its caption', await page.evaluate(() => {
@@ -195,7 +242,7 @@ ck('the binder page keeps price off it', await page.$$eval('.chapter.on .screen'
    n => n.some(sc => /no price on this page/i.test(sc.textContent))), 'true');
 
 /* turning a page must not draw a ring round the whole chapter */
-await page.evaluate(() => { window.location.hash = '#/5'; });
+await go(CH.marketing);
 await page.waitForTimeout(150);
 ck('no focus ring boxes the chapter', await page.evaluate(() => {
   const c = document.querySelector('.chapter.on');
@@ -224,7 +271,7 @@ ck('dark: the board darkens with the binding', await cs('.board', 'background-im
    v => v.includes('rgb(12, 21, 38)') && !v.includes('rgb(34, 49, 79)'));
 ck('dark: board foil is the dark-theme gold', await cs('.board .imprint', 'color'), 'rgb(212, 178, 103)');
 ck('dark: title fallback follows the theme', await cs('.board h2', 'color'), 'rgb(212, 178, 103)');
-await page.evaluate(() => { window.location.hash = '#/2'; });
+await go(CH.prompting);
 await page.waitForTimeout(120);
 await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
 await page.waitForTimeout(120);
@@ -247,7 +294,7 @@ for (const [k,v] of Object.entries(ratio)) ck(`contrast ${k} ≥ 4.5`, v.toFixed
    missing the chapter becomes a confident lie, so it is asserted like a
    structural element rather than treated as copy. */
 await page.setViewportSize({ width: 1280, height: 900 });
-await page.evaluate(() => { window.location.hash = '#/9'; });
+await go(CH.model);
 await page.waitForTimeout(200);
 ck('IX: the date stamp is on the page', await page.$$eval('.chapter.on .asof', n => n.length), 1);
 ck('IX: the stamp is actually visible', await cs('.chapter.on .asof', 'display'), v => v !== 'none');
@@ -393,7 +440,7 @@ await page.waitForTimeout(120);
 /* geometry, per chapter, because a broken item is ~10x its span's height */
 {
   const bad = [];
-  for (const slug of ['1','2','3','4','5','9','10','11','12','13','recap']) {
+  for (const slug of [...Object.values(CH), 'recap']) {
     await page.evaluate(s => { window.location.hash = '#/' + s; }, slug);
     await page.waitForTimeout(90);
     const r = await page.evaluate(() => {
@@ -410,7 +457,7 @@ await page.waitForTimeout(120);
   }
   ck('no .habits item is taller than its own text', bad.join(' | ') || 'none', 'none');
 }
-await page.evaluate(() => { window.location.hash = '#/9'; });
+await go(CH.model);
 await page.waitForTimeout(120);
 
 /* ── the folio chain ─────────────────────────────────────────────────────
@@ -442,11 +489,86 @@ await page.waitForTimeout(120);
   });
   ck('folio chain is unbroken end to end', chain.bad.join(' | ') || 'none', 'none');
   ck('chapters are in book order', chain.order,
-     'cover → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → recap → commands → glossary → sources');
+     'cover → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → recap → commands → glossary → sources');
 }
+/* ── the reorder itself (578) ─────────────────────────────────────────────
+   The book went from 15 chapters to 16 and 13 of them changed number, which
+   moved ~150 cross-references. The folio chain above proves navigation; these
+   prove the PROSE still points where it says it does. A missed remap is
+   invisible otherwise — "Chapter XIII" still names a chapter, just the wrong
+   one, so nothing throws and nothing looks broken. */
+{
+  const refs = await page.evaluate(() => {
+    const R = {I:1,II:2,III:3,IV:4,V:5,VI:6,VII:7,VIII:8,IX:9,X:10,XI:11,
+               XII:12,XIII:13,XIV:14,XV:15,XVI:16};
+    const n = [...document.querySelectorAll('.chapter')].filter(c => /^\d+$/.test(c.dataset.ch)).length;
+    const bad = [], self = [];
+    document.querySelectorAll('.chapter').forEach(c => {
+      const me = c.dataset.ch;
+      const txt = c.textContent;
+      /* prose lists and the glossary's "ch VI" tags, both forms */
+      const re = /\b(?:Chapters?|ch)\s+((?:X?(?:IX|IV|V?I{0,3}))(?:\s*(?:,|and|or)\s*X?(?:IX|IV|V?I{0,3}))*)/g;
+      let m;
+      while ((m = re.exec(txt))) {
+        for (const tok of m[1].split(/[^IVX]+/).filter(Boolean)) {
+          if (!(tok in R)) { bad.push(`${me}: "${tok}" is not a numeral`); continue; }
+          if (R[tok] > n) bad.push(`${me}: Chapter ${tok} does not exist (${n} chapters)`);
+          if (String(R[tok]) === me) self.push(`${me}: refers to itself as ${tok}`);
+        }
+      }
+    });
+    return { bad: [...new Set(bad)], self: [...new Set(self)], n };
+  });
+  ck('578: sixteen numbered chapters', refs.n, 16);
+  ck('578: every chapter reference in the whole book resolves',
+     refs.bad.slice(0, 4).join(' | ') || 'none', 'none');
+  /* A chapter citing itself is the signature of a remap that landed on the
+     wrong numeral — the reference was always to a DIFFERENT chapter. */
+  ck('578: no chapter cites itself', refs.self.slice(0, 4).join(' | ') || 'none', 'none');
+}
+{
+  /* three orderings of the same 21 sections — spine, DOM, and the pager chain.
+     They are built from one list now, so any drift means the build regressed
+     to hand-patching. */
+  const three = await page.evaluate(() => ({
+    toc: [...document.querySelectorAll('#toc a')].map(a => a.dataset.ch).join(','),
+    dom: [...document.querySelectorAll('.chapter')].map(c => c.dataset.ch).join(','),
+    pg:  [...document.querySelectorAll('.chapter')]
+           .map(c => { const p = c.querySelector('.folio .pg'); return p && p.textContent.trim(); })
+           .filter(Boolean).join(','),
+  }));
+  ck('578: spine order === document order', three.toc, three.dom);
+  ck('578: the pager counts run I..XVI of XVI', three.pg,
+     ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI']
+       .map(n => `${n} / XVI`).join(','));
+}
+{
+  /* the split: VI keeps the arithmetic and the judgement, VII takes the metal */
+  await go(CH.local);
+  const six = await page.$eval('.chapter.on', n => n.textContent);
+  await go(CH.machines);
+  const seven = await page.$eval('.chapter.on', n => n.textContent);
+  ck('578: VI keeps the formula and the verdict',
+     /The only formula you need/.test(six) && /what the Spark is for/i.test(six)
+     && /Mixture-of-experts/.test(six) ? 'true' : 'false', 'true');
+  ck('578: and no machine is left in it',
+     ['Mac Studio', 'Ryzen', 'RTX', 'MacBook'].filter(w => six.includes(w)).join(',') || 'none', 'none');
+  ck('578: VII carries every machine',
+     ['DGX Spark', 'Mac Studio', 'Ryzen', 'RTX PRO 6000', 'MacBook Pro']
+       .filter(w => !seven.includes(w)).join(',') || 'none', 'none');
+  ck('578: VII points back at VI rather than repeating it',
+     /previous chapter gave you the formula/i.test(seven) ? 'true' : seven.slice(0, 60), 'true');
+}
+{
+  /* the spine now groups the chapters; the groups are the reason for the order */
+  const grps = await page.$$eval('#toc .toc-grp .lbl', n => n.map(x => x.textContent));
+  ck('578: spine groups name the arc', grps.join(' / '),
+     'Front / Using it / Choosing / Building it / The wider world / Back');
+}
+
 /* and prove it by walking it in the browser, not just reading hrefs */
 {
-  await page.evaluate(() => { window.location.hash = '#/8'; });
+  await go(CH.spark);
   await page.waitForTimeout(120);
   const walk = [];
   for (let i = 0; i < 9; i++) {
@@ -454,7 +576,7 @@ await page.waitForTimeout(120);
     await page.waitForTimeout(130);
     walk.push(await page.$eval('.chapter.on', n => n.dataset.ch));
   }
-  ck('arrow-right walks VIII → … → XV → recap → commands → glossary', walk.join(','), '9,10,11,12,13,14,15,recap,commands');
+  ck('arrow-right walks the Spark → … → XVI → recap → commands', walk.join(','), '9,10,11,12,13,14,15,16,recap');
 }
 
 /* Chapter VI has two table.figs. Pick the ladder by a header only it carries —
@@ -463,31 +585,36 @@ await page.waitForTimeout(120);
    clothes. */
 const LADDER = `[...document.querySelectorAll('.chapter.on table.figs')]
   .find(t => /Biggest model it holds/.test(t.tHead.textContent))`;
-/* ── chapter VI · the hardware page, which went stale under us ───────────
+/* ── chapter VII · the machines ─────────────────────────────────────────
+   All of this used to live in VI and navigate to #/6. Build 578 split the
+   chapter: VI keeps the formula and the local-vs-cloud judgement, VII takes
+   every machine. The assertions did not change — only which page they open.
+   The old banner, kept because it is still why they exist:
+   ── the hardware page, which went stale under us ───────────
    This page shipped claiming a 128 GB M4 Max and a 512 GB M3 Ultra. Apple
    withdrew 512 GB in March 2026 and 256/128 GB in May as AI demand ate DRAM
    supply, so the Mac Studio line caps at 96 GB — and the DGX Spark's 128 GB is
    now larger than any Mac Studio sold. The MacBook Pro M5 Max still takes
    128 GB, which means the laptop outholds the desktop. None of that is
    intuitive, so all of it gets asserted rather than trusted to stay written. */
-await page.evaluate(() => { window.location.hash = '#/6'; });
+await go(CH.machines);
 await page.waitForTimeout(150);
-ck('VI: no withdrawn Mac capacity is quoted', await page.evaluate(() => {
+ck('VII: no withdrawn Mac capacity is quoted', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return ['512 GB @', '256 GB @', '128 GB @ 546'].filter(p => t.includes(p)).join(' | ') || 'none';
 }), 'none');
-ck('VI: the Spark price is current', await page.evaluate(() => {
+ck('VII: the Spark price is current', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return !/\$4,000/.test(t) && /\$4,699/.test(t);
 }), 'true');
-ck('VI: the page now carries a date stamp', await page.$$eval('.chapter.on .asof', n => n.length), 1);
-ck('VI: the ladder covers every orderable tier plus the Spark', await page.evaluate(() => {
+ck('VII: the page now carries a date stamp', await page.$$eval('.chapter.on .asof', n => n.length), 1);
+ck('VII: the ladder covers every orderable tier plus the Spark', await page.evaluate(() => {
   const t = [...document.querySelectorAll('.chapter.on table.figs')]
     .find(x => /Biggest model it holds/.test(x.tHead.textContent));
   return t ? t.tBodies[0].rows.length : 0;
 }), 8);   /* 7 machines + the RTX PRO 6000 card, added at 577 */
 /* the finding itself, asserted so a later edit can't quietly undo it */
-ck('VI: no Mac Studio row claims more memory than the Spark', await page.evaluate(() => {
+ck('VII: no Mac Studio row claims more memory than the Spark', await page.evaluate(() => {
   const gb = r => parseInt((r.children[1] || {}).textContent, 10);
   const tb = [...document.querySelectorAll('.chapter.on table.figs')]
     .find(x => /Biggest model it holds/.test(x.tHead.textContent));
@@ -496,17 +623,17 @@ ck('VI: no Mac Studio row claims more memory than the Spark', await page.evaluat
   const bad = rows.filter(r => /Mac Studio/.test(r.textContent) && gb(r) >= gb(spark));
   return bad.map(r => r.children[0].textContent + ' ' + gb(r)).join(' | ') || 'none';
 }), 'none');
-ck('VI: and the MacBook Pro is credited with matching it', await page.evaluate(() => {
+ck('VII: and the MacBook Pro is credited with matching it', await page.evaluate(() => {
   const tb = [...document.querySelectorAll('.chapter.on table.figs')]
     .find(x => /Biggest model it holds/.test(x.tHead.textContent));
   const mbp = [...tb.tBodies[0].rows].filter(r => /MacBook Pro/.test(r.textContent));
   return mbp.some(r => parseInt(r.children[1].textContent, 10) === 128);
 }), 'true');
-ck('VI: says plainly that the laptop outholds the desktop',
+ck('VII: says plainly that the laptop outholds the desktop',
    await page.$eval('.chapter.on', n => /laptop is the better machine/i.test(n.textContent)), 'true');
-ck('VI: read-vs-write is the stated explanation',
+ck('VII: read-vs-write is the stated explanation',
    await page.$eval('.chapter.on', n => /Spark reads fast\. The Mac writes fast/i.test(n.textContent)), 'true');
-ck('VI: the CUDA catch is named specifically',
+ck('VII: the CUDA catch is named specifically',
    await page.$eval('.chapter.on', n => /sm_121/.test(n.textContent)), 'true');
 
 /* 575 gave AMD a pros run before its spec table because Theo read the section
@@ -514,7 +641,7 @@ ck('VI: the CUDA catch is named specifically',
    got the same fix: it opened on Apple withdrawing capacity and kept its
    concessions for the verdict. 577 gives it the same treatment, and these are
    the AMD assertions re-pointed so the two sections can't drift apart. */
-ck('VI: the Mac section leads with what a Mac is better at', await page.evaluate(() => {
+ck('VII: the Mac section leads with what a Mac is better at', await page.evaluate(() => {
   const ch = document.querySelector('.chapter.on');
   const h = [...ch.querySelectorAll('h3')].find(x => /Spark vs Mac Studio/.test(x.textContent));
   const blk = h.parentElement;
@@ -523,7 +650,7 @@ ck('VI: the Mac section leads with what a Mac is better at', await page.evaluate
   if (!run || !tbl) return 'missing';
   return (run.compareDocumentPosition(tbl) & Node.DOCUMENT_POSITION_FOLLOWING) ? 'before' : 'after';
 }), 'before');
-ck('VI: four Apple pros, each named', await page.evaluate(() => {
+ck('VII: four Apple pros, each named', await page.evaluate(() => {
   const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /Spark vs Mac Studio/.test(x.textContent));
   const run = h && h.parentElement.querySelector('.habits');
   return run ? run.querySelectorAll(':scope > li').length : 0;
@@ -531,12 +658,12 @@ ck('VI: four Apple pros, each named', await page.evaluate(() => {
 /* the bandwidth advantage must be quoted at BOTH ends, as AMD's price is.
    It used to say a flat 3.4x, which reproduces from no pair of numbers in the
    book's own table — 819/273 is 3.0 and 614/273 is 2.2. */
-ck('VI: the Mac write advantage reproduces from the table', await page.evaluate(() => {
+ck('VII: the Mac write advantage reproduces from the table', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   if (/3\.4\s*×/.test(t)) return 'still claims 3.4x';
   return (/3\s*×/.test(t) && /2\.2\s*×/.test(t)) ? 'both ends' : 'not stated at both ends';
 }), 'both ends');
-ck('VI: and the Mac pros are not only speed', await page.evaluate(() => {
+ck('VII: and the Mac pros are not only speed', await page.evaluate(() => {
   const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /Spark vs Mac Studio/.test(x.textContent));
   const run = h && h.parentElement.querySelector('.habits');
   if (!run) return 'no pros run';
@@ -544,7 +671,7 @@ ck('VI: and the Mac pros are not only speed', await page.evaluate(() => {
   return /MLX/.test(t) && /macOS/.test(t) && /in a bag/.test(t) ? 'true' : t.slice(0, 80);
 }), 'true');
 /* the laptop pro is also a con further down; saying so is the point */
-ck('VI: the portability pro admits it is also the con', await page.evaluate(() =>
+ck('VII: the portability pro admits it is also the con', await page.evaluate(() =>
   /turns up as a con further down/i.test(document.querySelector('.chapter.on').textContent)), 'true');
 /* The recommendation must rest on the WHOLE workload, not one task.
    The previous version of this assertion required the photo count, unattended
@@ -553,38 +680,38 @@ ck('VI: the portability pro admits it is also the con', await page.evaluate(() =
    photos were "a very small part" of buying the Spark, and Chapter VI's own
    "what local does well" agrees: six uses, image generation first, photos
    fifth. These check the breadth instead. */
-ck('VI: the buy/don-t-buy answer covers the whole workload', await page.evaluate(() => {
+ck('VII: the buy/don-t-buy answer covers the whole workload', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   const uses = ['image generation', 'transcription', 'OCR', 'search'].filter(u =>
     new RegExp(u, 'i').test(t));
   return uses.length >= 4 ? 'all four' : `only ${uses.join(', ')}`;
 }), 'all four');
-ck('VI: image generation is named as the strongest case, not photos', await page.evaluate(() => {
+ck('VII: image generation is named as the strongest case, not photos', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /image generation is first/i.test(t) || /Image work is the most locked-in/i.test(t);
 }), 'true');
-ck('VI: the CUDA lock-in argument is made about diffusion and LoRAs', await page.evaluate(() => {
+ck('VII: the CUDA lock-in argument is made about diffusion and LoRAs', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /LoRA/.test(t) && /CUDA-first/i.test(t) && /diffusion/i.test(t);
 }), 'true');
 /* the load-bearing one: photo captioning must not be the sole justification */
-ck('VI: photo captioning is not the whole argument', await page.evaluate(() => {
+ck('VII: photo captioning is not the whole argument', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /a single line in that table/i.test(t) && /roughly its share of the argument/i.test(t);
 }), 'true');
-ck('VI: the AMD verdict weighs four workloads, not one',
+ck('VII: the AMD verdict weighs four workloads, not one',
    await page.$$eval('.chapter.on table.vs', ts => {
      const t = [...ts].find(x => /What you actually run/.test(x.tHead.textContent));
      return t ? t.tBodies[0].rows.length : 0;
    }), 4);
-ck('VI: and concedes AMD wins the chat/coding case outright', await page.evaluate(() => {
+ck('VII: and concedes AMD wins the chat/coding case outright', await page.evaluate(() => {
   const t = [...document.querySelectorAll('.chapter.on table.vs')]
     .find(x => /What you actually run/.test(x.tHead.textContent));
   const row = [...t.tBodies[0].rows].find(r => /Chatting, coding/.test(r.textContent));
   return /AMD/.test(row.textContent) && row.children[1].className.includes('no');
 }), 'true');
 /* every computed figure must still reproduce from the book's own method */
-ck('VI: the ladder arithmetic reproduces', await page.evaluate(() => {
+ck('VII: the ladder arithmetic reproduces', await page.evaluate(() => {
   const F = 0.58, BPB = 0.5, HEAD = 1.5;
   const bad = [];
   const tb = [...document.querySelectorAll('.chapter.on table.figs')]
@@ -609,12 +736,12 @@ ck('VI: the ladder arithmetic reproduces', await page.evaluate(() => {
    order" and leaving out a machine covered in the same chapter made it quietly
    argue for a two-vendor world. Its row lands on the Spark's numbers, which is
    the point rather than a coincidence. */
-ck('VI: AMD is in the ladder, not only in its own table', await page.evaluate(() => {
+ck('VII: AMD is in the ladder, not only in its own table', await page.evaluate(() => {
   const t = [...document.querySelectorAll('.chapter.on table.figs')]
     .find(x => /Biggest model it holds/.test(x.tHead.textContent));
   return [...t.tBodies[0].rows].some(r => /Ryzen/.test(r.textContent));
 }), 'true');
-ck('VI: AMD and Spark land on the same capacity and speed', await page.evaluate(() => {
+ck('VII: AMD and Spark land on the same capacity and speed', await page.evaluate(() => {
   const t = [...document.querySelectorAll('.chapter.on table.figs')]
     .find(x => /Biggest model it holds/.test(x.tHead.textContent));
   const row = n => [...t.tBodies[0].rows].find(r => new RegExp(n).test(r.textContent));
@@ -626,7 +753,7 @@ ck('VI: AMD and Spark land on the same capacity and speed', await page.evaluate(
    balanced — three of seven go AMD's way — but the specs led and the verdict
    was last, so the impression was wrong even though the content wasn't.
    The pros now come first, and this asserts they stay there. */
-ck('VI: the AMD section leads with what AMD is better at', await page.evaluate(() => {
+ck('VII: the AMD section leads with what AMD is better at', await page.evaluate(() => {
   const ch = document.querySelector('.chapter.on');
   const h = [...ch.querySelectorAll('h3')].find(x => /closest like-for-like/.test(x.textContent));
   const blk = h.parentElement;
@@ -636,37 +763,37 @@ ck('VI: the AMD section leads with what AMD is better at', await page.evaluate((
   /* the pros list must appear before the spec table in document order */
   return (run.compareDocumentPosition(tbl) & Node.DOCUMENT_POSITION_FOLLOWING) ? 'before' : 'after';
 }), 'before');
-ck('VI: four AMD pros, each named', await page.evaluate(() => {
+ck('VII: four AMD pros, each named', await page.evaluate(() => {
   const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /closest like-for-like/.test(x.textContent));
   return h.parentElement.querySelectorAll('.habits > li').length;
 }), 4);
-ck('VI: and the price advantage is stated at both ends', await page.evaluate(() => {
+ck('VII: and the price advantage is stated at both ends', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /\$3,999/.test(t) && /\$1,500/.test(t) && /third of the price/i.test(t);
 }), 'true');
-ck('VI: the Spark is held to exactly two wins', await page.evaluate(() =>
+ck('VII: the Spark is held to exactly two wins', await page.evaluate(() =>
   /Spark wins exactly two things/i.test(document.querySelector('.chapter.on').textContent)), 'true');
 
 /* the AMD block — same brief as the Spark, so it is the only true like-for-like */
-ck('VI: AMD is compared against the Spark', await page.evaluate(() => {
+ck('VII: AMD is compared against the Spark', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /Ryzen\s*AI Max\+ 395/.test(t) && /Ryzen AI Halo/.test(t);
 }), 'true');
-ck('VI: the AMD table is a two-machine comparison, not a three-way',
+ck('VII: the AMD table is a two-machine comparison, not a three-way',
    await page.evaluate(() => {
      const t = [...document.querySelectorAll('.chapter.on table.vs')]
        .find(x => /Ryzen/.test(x.tHead.textContent));
      return t ? t.tHead.rows[0].cells.length : 0;
    }), 3);
-ck('VI: the AMD verdict rests on the measured prefill gap', await page.evaluate(() => {
+ck('VII: the AMD verdict rests on the measured prefill gap', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /1,700/.test(t) && /340/.test(t) && /five times/i.test(t);
 }), 'true');
-ck('VI: and concedes AMD wins on value where it does', await page.evaluate(() => {
+ck('VII: and concedes AMD wins on value where it does', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /better value/i.test(t) && /\$3,999/.test(t) && /Windows/.test(t);
 }), 'true');
-ck('VI: both prefill figures come from the same model', await page.evaluate(() =>
+ck('VII: both prefill figures come from the same model', await page.evaluate(() =>
   /same 120B model/i.test(document.querySelector('.chapter.on').textContent)), 'true');
 
 /* ── the "anything else" block (577) ───────────────────────────────────────
@@ -675,7 +802,7 @@ ck('VI: both prefill figures come from the same model', await page.evaluate(() =
    so out loud rather than leave a reader to notice the row and wonder. Its
    figures are computed by the same method as every other row — the ladder
    assertion above covers the arithmetic; these cover the claims around it. */
-ck('VI: the other-hardware block exists and is honest about being a card',
+ck('VII: the other-hardware block exists and is honest about being a card',
    await page.evaluate(() => {
      const h = [...document.querySelectorAll('.chapter.on h3')]
        .find(x => /Anything else worth a look/.test(x.textContent));
@@ -683,17 +810,17 @@ ck('VI: the other-hardware block exists and is honest about being a card',
      const t = h.parentElement.textContent;
      return /A card, not a machine/.test(t) ? 'true' : 'does not say it is a card';
    }), 'true');
-ck('VI: the RTX price includes the machine you have to put it in',
+ck('VII: the RTX price includes the machine you have to put it in',
    await page.evaluate(() => {
      const t = document.querySelector('.chapter.on').textContent;
      return /\$13,250/.test(t) && /600\s*W/.test(t) && /16–17k/.test(t);
    }), 'true');
 /* it must be named as the exception, not quietly added as an eighth row */
-ck('VI: the trade is called a price trade, not a physical one',
+ck('VII: the trade is called a price trade, not a physical one',
    await page.evaluate(() =>
      /price trade, not a law of physics/i.test(document.querySelector('.chapter.on').textContent)),
    'true');
-ck('VI: the withdrawn Mac capacities appear only as a secondhand note',
+ck('VII: the withdrawn Mac capacities appear only as a secondhand note',
    await page.evaluate(() => {
      const ch = document.querySelector('.chapter.on');
      const h = [...ch.querySelectorAll('h3')].find(x => /Anything else worth a look/.test(x.textContent));
@@ -707,7 +834,7 @@ ck('VI: the withdrawn Mac capacities appear only as a secondhand note',
        .some(r => /^(512|256)\s*GB$/.test(r.children[1].textContent.trim()));
      return inBlock && !inTable ? 'true' : `block ${inBlock} table ${inTable}`;
    }), 'true');
-ck('VI: what was left out is listed, with a reason each', await page.evaluate(() => {
+ck('VII: what was left out is listed, with a reason each', await page.evaluate(() => {
   const h = [...document.querySelectorAll('.chapter.on h3')]
     .find(x => /Anything else worth a look/.test(x.textContent));
   if (!h) return 'no such block';
@@ -716,11 +843,11 @@ ck('VI: what was left out is listed, with a reason each', await page.evaluate(()
 }), 'true');
 /* the second-Spark line is the one most likely to be written wrong: two boxes
    double memory, they do not double bandwidth */
-ck('VI: a second Spark is described as bigger, not faster', await page.evaluate(() =>
+ck('VII: a second Spark is described as bigger, not faster', await page.evaluate(() =>
   /doubles memory, not bandwidth/i.test(document.querySelector('.chapter.on').textContent)), 'true');
 
 /* ── chapter X ──────────────────────────────────────────────────────────── */
-await page.evaluate(() => { window.location.hash = '#/10'; });
+await go(CH.stacks);
 await page.waitForTimeout(180);
 ck('X: the section drawing has six layers', await page.$$eval('.chapter.on .roofsec .lyr', n => n.length), 6);
 ck('X: layers are numbered bottom-to-top 6..1', await page.$$eval('.chapter.on .roofsec .ord',
@@ -755,7 +882,7 @@ ck('contrast roofsec-muted-on-tint dark ≥ 4.5', await page.evaluate(() => {
 }), v => Number(v) >= 4.5);
 
 /* ── chapter XI ─────────────────────────────────────────────────────────── */
-await page.evaluate(() => { window.location.hash = '#/11'; });
+await go(CH.spark);
 await page.waitForTimeout(180);
 ck('XI: terminal blocks render', await page.$$eval('.chapter.on .term', n => n.length), 3);
 ck('XI: terminals are dark in BOTH themes (deliberate)',
@@ -845,7 +972,7 @@ ck('XI: and tied back to RAG rather than left as a feature',
    repeating marketing copy. */
 ck('XI: Smart Approvals carries its documented hole', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
-  return /#21425/.test(t) && /prompt injection/i.test(t) && /Chapter XIII/.test(t);
+  return /#21425/.test(t) && /prompt injection/i.test(t) && /Chapter III/.test(t);  /* never-paste, XIII before 578 */
 }), 'true');
 ck('XI: and gives a default rather than just a warning',
    await page.$eval('.chapter.on', n => /leave approvals on manual/i.test(n.textContent)), 'true');
@@ -870,7 +997,7 @@ ck('contrast term-prompt on fixed ground ≥ 4.5', await page.evaluate(() => {
    assertions below check the two things that keep it honest: that the
    ending is in it (the model class DID ship publicly, as Fable 5), and
    that the reader is given exactly one thing to actually do. */
-await page.evaluate(() => { window.location.hash = '#/14'; });
+await go(CH.glasswing);
 await page.waitForTimeout(150);
 ck('XIV: reachable and titled', await page.$eval('.chapter.on h2', n => n.textContent), 'Project Glasswing');
 ck('XIV: carries a date stamp like the other rotting pages',
@@ -898,7 +1025,7 @@ ck('XIV: says the model class shipped publicly in the end', await page.evaluate(
 ck('XIV: gives the reader exactly one action, and it is "take the update"',
    await page.$eval('.chapter.on', n => /Take the update/.test(n.textContent)), 'true');
 ck('XIV: points back at XIII rather than repeating it',
-   await page.$eval('.chapter.on', n => /Chapter XIII/.test(n.textContent)), 'true');
+   await page.$eval('.chapter.on', n => /Chapter III/.test(n.textContent)), 'true');  /* never-paste */
 
 /* ── chapter XV · Korea and China ────────────────────────────────────────
    Two failure modes to guard against here. One: quoting spec numbers that
@@ -908,7 +1035,7 @@ ck('XIV: points back at XIII rather than repeating it',
    weights-vs-service table and the local-censorship caveat are both
    required, because they cut in opposite directions and the chapter is
    only honest with both. */
-await page.evaluate(() => { window.location.hash = '#/15'; });
+await go(CH.map);
 await page.waitForTimeout(150);
 ck('XV: reachable and titled', await page.$eval('.chapter.on h2', n => n.textContent), 'The other half of the map');
 ck('XV: five Chinese families, each a model card', await page.evaluate(() => {
@@ -978,7 +1105,7 @@ ck('recap: reaches the later chapters', await page.evaluate(() => {
 }), 'none');
 
 /* ── chapter XII — claims ───────────────────────────────────────────────── */
-await page.evaluate(() => { window.location.hash = '#/12'; });
+await go(CH.claims);
 await page.waitForTimeout(180);
 ck('XII: the readout lists what is actually stored',
    await page.$$eval('.chapter.on .readout dt', n => n.length), 8);
@@ -1002,7 +1129,7 @@ ck('XII: the where-the-line-is table', await page.$$eval('.chapter.on table.bb t
 ck('XII: never lets it write to an adjuster',
    await page.$eval('.chapter.on', n => /Correspond with an adjuster/i.test(n.textContent)), 'true');
 ck('XII: points at XIII before pasting a scope',
-   await page.$eval('.chapter.on', n => /read Chapter XIII before you paste a scope/i.test(n.textContent)), 'true');
+   await page.$eval('.chapter.on', n => /read Chapter III before you paste a scope/i.test(n.textContent)), 'true');
 /* the chapter must not leak any of the three real records */
 ck('XII: no homeowner data reached the page', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
@@ -1010,7 +1137,7 @@ ck('XII: no homeowner data reached the page', await page.evaluate(() => {
 }), 'none');
 
 /* ── chapter XIII — what never to paste ─────────────────────────────────── */
-await page.evaluate(() => { window.location.hash = '#/13'; });
+await go(CH.paste);
 await page.waitForTimeout(180);
 ck('XIII: three tiers', await page.$$eval('.chapter.on .tiers3 > div', n => n.length), 3);
 ck('XIII: tiers are colour-ranked never/think/fine', await page.evaluate(() => {
@@ -1052,7 +1179,8 @@ ck('glossary: terms are in alphabetical order', await page.evaluate(() => {
 }), 'none');
 ck('glossary: every chapter reference points at a real chapter', await page.evaluate(() => {
   const known = new Set([...document.querySelectorAll('.chapter')].map(c => c.dataset.ch));
-  const roman = {I:'1',II:'2',III:'3',IV:'4',V:'5',VI:'6',VII:'7',VIII:'8',IX:'9',X:'10',XI:'11',XII:'12',XIII:'13',XIV:'14',XV:'15'};
+  const roman = {I:'1',II:'2',III:'3',IV:'4',V:'5',VI:'6',VII:'7',VIII:'8',IX:'9',X:'10',
+                 XI:'11',XII:'12',XIII:'13',XIV:'14',XV:'15',XVI:'16'};
   const bad = [];
   document.querySelectorAll('.chapter.on .gloss .ref').forEach(r => {
     const m = /ch\s+([IVX]+)/.exec(r.textContent);
@@ -1172,7 +1300,7 @@ ck('commands: the rm warning exists and is styled as a warning', await page.eval
 ck('commands: drag-and-drop mounting is marked community, not official',
    await page.$eval('.chapter.on', n => /community setups, not an NVIDIA\s*feature/i.test(n.textContent)), 'true');
 ck('commands: it points back to XI rather than re-teaching setup',
-   await page.$eval('.chapter.on', n => /Chapter XI/.test(n.textContent)), 'true');
+   await page.$eval('.chapter.on', n => /Chapter VIII/.test(n.textContent)), 'true');  /* the Spark, XI before 578 */
 ck('commands: the folder map is drawn, not described',
    await page.$$eval('.chapter.on .roofsec .lyr', n => n.length), 4);
 ck('commands: there is a no-prose card at the end', await page.evaluate(() => {
@@ -1208,14 +1336,11 @@ ck('mobile: no sideways scroll', await page.evaluate(() => document.documentElem
 await page.setViewportSize({ width: 1280, height: 900 });
 await page.emulateMedia({ media: 'print' });
 await page.waitForTimeout(150);
-ck('print: every section visible', await page.$$eval('.chapter', n => n.filter(c => getComputedStyle(c).display !== 'none').length), 20);
+ck('print: every section visible', await page.$$eval('.chapter', n => n.filter(c => getComputedStyle(c).display !== 'none').length), 21);
 ck('print: binding hidden', await cs('.spine', 'display'), 'none');
 ck('print: pagers hidden', await page.$eval('.folio', n => getComputedStyle(n).display), 'none');
 await page.emulateMedia({ media: 'screen' });
 
 await b.close();
-for (const r of out) console.log(`${r.ok ? '  ✓' : '  ✗'} ${r.n}${r.ok ? '' : `\n        got:  ${r.got}\n        want: ${r.want}`}`);
-if (errs.length) console.log('\nerrors:\n  ' + [...new Set(errs)].join('\n  '));
-const bad = out.filter(r => !r.ok);
-console.log(`\n${out.length - bad.length}/${out.length} passed`);
-process.exit(bad.length ? 1 : 0);
+if (errs.length) console.log('errors:\n  ' + [...new Set(errs)].join('\n  ') + '\n');
+process.exit(report() ? 1 : 0);

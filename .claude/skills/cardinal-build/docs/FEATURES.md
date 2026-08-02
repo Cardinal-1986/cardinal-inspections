@@ -1210,7 +1210,7 @@ styled only `#quickInspView`, not `#qiStartView` — the pin-the-property step y
 first. ⚠️ `styleMounts()` writes **inline** `position/inset/z-index` onto the three mounts, so
 `!important` is mandatory there, not stylistic.
 
-## 562–563, 574–577 — the AI Field Manual
+## 562–563, 574–578 — the AI Field Manual
 
 Fifteen chapters on using AI in this business, plus a printable desk card, filed in the Resource
 Library with its own section. **563** fixed an offline bug: opening it no longer replaces what the app
@@ -1225,7 +1225,14 @@ set on first open only, so coming back keeps the reader's place.
 re-run `.claude/skills/cardinal-build/scripts/wrap_book.py`. It adds the doctype and charset the
 artifact host supplies and Vercel does not; without them every em-dash in the book renders `â€"`.
 
-**574–577 are all Chapter VI**, the local-hardware comparison, and all of them are corrections:
+**578 reordered the book** into 16 chapters in four groups — *Using it* (I–IV), *Choosing* (V–IX),
+*Building it* (X–XIV), *The wider world* (XV–XVI) — and split the hardware out of "Local vs. cloud"
+into **VII · The machines**. Thirteen chapters changed number and ~150 cross-references moved with
+them. ⚠️ **Chapters are regenerated from one ORDER list in `scratchpad/reorder.py`, never patched**
+— the number appears in seven places per chapter plus the spine and the cover. The harness addresses
+chapters by name (`CH.machines`), not by `#/7`.
+
+**574–577 are all the hardware chapter**, and all of them are corrections:
 Apple's withdrawn memory tiers (574), a commands page for the Spark (574), a fair hearing for AMD
 (575), weighing the Spark on all six workloads rather than the photo job (576), the same fair
 hearing for Apple plus the RTX PRO 6000 (577). Its figures are **computed, not quoted** —
@@ -1233,9 +1240,8 @@ hearing for Apple plus the RTX PRO 6000 (577). Its figures are **computed, not q
 recomputes every row of the table on each run, so a wrong number fails rather than ships.
 
 **Its own harnesses**, both required before shipping a book change:
-`scratchpad/checkbook.mjs` (303 assertions, book structure and arithmetic) and
-`.claude/skills/cardinal-build/harnesses/h562_aibook.js` (40, the Library integration and the
-served bytes). `AI_CHEATSHEET.md` mirrors the same content and is `.vercelignore`'d.
+`.claude/skills/cardinal-build/harnesses/checkbook.mjs` (325 assertions; pass a book path as argv[2]) and
+`h562_aibook.js` (42, the Library integration and the served bytes). `AI_CHEATSHEET.md` mirrors the same content and is `.vercelignore`'d.
 
 ## 565 — Discard on an estimate
 

@@ -6025,3 +6025,77 @@ and a whole-table `/512|256/` matched AMD's 256 GB/s **bandwidth** cell.
 Gates: `check_build.py` green 576 → 577, negative-controlled. Book harness **303 assertions**, and
 the negative control fails **12** of them against the 576 book, each naming what 577 changed.
 `h562_aibook.js` 40/40. Web ↔ markdown numeric parity 20/20.
+
+---
+
+### build 578 — the manual reordered into four groups, and the hardware split out
+
+Theo: *"Also reorder the chapters to what makes sense."* Plus a chapter of its own for the machines.
+
+**Four ordering faults, not one.** Laid out end to end they were obvious: VI (local vs cloud) and
+XI (the Spark) were the same subject **five chapters apart**, with IX and X — also hardware — stranded
+between them; **XIII "What never to paste" is a day-one safety rule and four earlier chapters
+cross-referenced *forward* to it**; IV "Building apps" came before VII "What's worth building"; and
+V "Marketing" sat between the how-to-use group and the hardware group, interrupting both.
+
+```
+Using it         I talking · II prompting · III never-paste · IV agents
+Choosing         V which model · VI local vs cloud · VII THE MACHINES · VIII the Spark · IX stacks
+Building it      X what's worth · XI building apps · XII photo binder · XIII claims · XIV marketing
+The wider world  XV Glasswing · XVI the other half of the map
+```
+
+**13 of 16 chapters changed number, moving ~150 cross-references.**
+
+⚠️ **The trap, and it is the one this project keeps paying for.** The map contains **IX→V and
+V→XIV**. A sequential find-and-replace rewrites IX to V and then rewrites *that* V to XIV, and
+chapter IX silently lands on XIV. Every replacement is computed against the ORIGINAL string and
+spliced in **one reverse-order pass**, so no output is ever an input.
+
+**And I walked straight into it anyway**, in the one place numerals are authored by hand: the
+sources deck was rewritten with FINAL numerals and then swept, turning my new "Chapter XIII" back
+into "Chapter III". Caught by a carry-over tally — *the count of references to each new numeral must
+equal the count the old numeral had* — not by reading the code. The deck is now fenced off from the
+sweep.
+
+⚠️ **The separator trap, twice.** 15 source labels use a literal `·` and 24 use `&middot;`; the
+sources deck uses a literal `–` where the rest of the file uses `&#8211;`. Anchoring on one form
+silently found a subset — `Chapter VI · the memory cap` reported **0 occurrences** while sitting in
+the file twice. Same class as `'` vs `&apos;`.
+
+**The split.** VI keeps the formula, the four types, mixture-of-experts, what local does and can't
+do, and the verdict. VII takes every machine. **The four-types table went with VII**, which the
+first cut missed — it is five machines and their tokens/sec, i.e. the formula being *run*. Caught by
+asserting no machine name survives in VI; a Ryzen row was still sitting in it.
+
+**Nothing is patched — everything is regenerated.** A chapter's number appears in seven places
+(data-ch, .cnum, the .pg counter, its own folio, both neighbours' folios, the spine, the cover)
+plus a comment separator. 16 × 7 is 112 chances to be off by one. One ORDER list is now the source
+of truth and all of it is rebuilt from that. The class of bug that put chapter IX's "next" pointing
+at itself cannot occur.
+
+**Two live defects found by the new assertions, both pre-existing:**
+
+- **A chapter cited itself by number** — "Chapter IX picks two Claudes" *inside chapter IX*. Nothing
+  had ever checked. Reworded.
+- **The opener gutter was 3.4rem and the widest numeral is 6.26rem**, so chapter VIII rendered
+  **"VIIThe Spark"** — the title's T sitting on the numeral's last I. **Six chapters were already
+  colliding**; the reorder added a seventh. Measured with a Range, not eyeballed, and confirmed
+  present in the build-577 book before the fix.
+
+**Two harness defects fixed, both of which had produced a false green:**
+
+- **A bad explicit path fell through to the real book.** Five mutation tests reported 325/325 while
+  the mutant files had never been written. An explicit path that does not exist now exits 2.
+- **A crash threw away every result.** Assertions are buffered and printed at the end, so an
+  exception mid-run showed a bare stack trace and no ✗ at all — which reads as "the harness is
+  broken" rather than "the book is". Results now print on abort.
+
+**The harness addresses chapters BY NAME now** (`go(CH.machines)`), because every `'#/9'` in it
+silently meant a different chapter after the reorder — a test that opens the wrong page still passes
+or fails, for reasons unrelated to what it claims to check.
+
+Gates: `check_build.py` green 577 → 578, negative-controlled. Book harness **325**, up from 303, and
+**five mutants** each produce a named failure (reference-to-nowhere, self-citation, machine left in
+VI, pager miscount, TOC drift). `h562_aibook.js` 42/42. Web ↔ markdown chapter order compared
+title-by-title, 16/16.

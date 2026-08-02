@@ -239,8 +239,16 @@ const view = (() => {
   ok('no mojibake in the served bytes', !/Ã¢â‚¬|Ã‚Â·/.test(raw));
   ok('the em-dash survives as one character', /A field manual — prompting/.test(doc));
   ok('the book still carries every section',
-     (doc.match(/<section class="chapter[^"]*" data-ch="/g) || []).length === 20,
+     (doc.match(/<section class="chapter[^"]*" data-ch="/g) || []).length === 21,
      (doc.match(/<section class="chapter[^"]*" data-ch="/g) || []).length + ' sections');
+  /* 578 split the hardware half of VI into its own chapter and reordered the
+     book. Assert the SHIPPED file carries the new chapter and the new count —
+     wrap_book.py regenerates this file, and a stale regeneration is invisible
+     otherwise: the old book parses, balances and serves perfectly well. */
+  ok('the served book carries the machines chapter',
+     /data-ch="7"[^>]*>[\s\S]{0,400}<h2>The machines<\/h2>/.test(doc));
+  ok('and the reordered spine, not the old one',
+     /<span class="lbl">Choosing<\/span>/.test(doc) && /<span class="lbl">The wider world<\/span>/.test(doc));
   /* the commands page has to survive the wrap — its content is mostly inside
      .term blocks, which is exactly the sort of thing an over-eager escape would
      mangle without failing anything structural */
