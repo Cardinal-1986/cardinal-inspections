@@ -784,9 +784,16 @@ const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
       /window\.CardinalShowcase\s*=\s*Object\.assign\(window\.CardinalShowcase\s*\|\|\s*\{\}/.test(MODULE_JS));
     ok('reload resets the walk state too',
       /walksLoaded = false;[\s\S]{0,80}curWalk = null/.test(MODULE_JS));
-    /* Circles are an overlay. If this module ever gains a canvas that composites
-       a box onto the photograph, the original stops being evidence. */
-    const walkPart = MODULE_JS.slice(MODULE_JS.indexOf('The Walk (579)'));
+    /* Circles are an overlay. If The Walk's pipeline ever gains a canvas that
+       composites a box onto the photograph, the original stops being evidence.
+       SCOPE THE SLICE: this once ran to end-of-module and went red the moment
+       587 added the share-card renderer — a different feature that uses canvas
+       legitimately and never touches finding boxes. The Walk's own code ends
+       where the 584 Spotlight section begins. */
+    const wStart = MODULE_JS.indexOf('The Walk (579)');
+    const wEnd = MODULE_JS.indexOf('Spotlight — present mode (584)');
+    const walkPart = MODULE_JS.slice(wStart, wEnd === -1 ? undefined : wEnd);
+    ok('the walk slice was actually captured', walkPart.length > 5000, walkPart.length);
     ok('The Walk never draws onto the image itself',
       !/toBlob|getContext/.test(walkPart), 'a canvas appeared in the walk code');
   }

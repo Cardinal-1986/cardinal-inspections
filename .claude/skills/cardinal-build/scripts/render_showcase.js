@@ -396,6 +396,35 @@ const SHOTS = [
     await page.click('[data-pick="0"]');
     await page.waitForTimeout(300);
 
+    /* ── Curtain Call (588) — the show actually runs ─────────────────────── */
+    await page.click('[data-act="ccplay"]');
+    await page.waitForTimeout(400);
+    const cc0 = await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-cc');
+      return l ? { bg: getComputedStyle(l).backgroundColor,
+                   wipe: l.querySelector('.ph').style.getPropertyValue('--cc-wipe') } : null;
+    });
+    ok('the show layer runs on true black', cc0 && cc0.bg === 'rgb(5, 6, 7)', cc0 && cc0.bg);
+    ok('it opens fully on the BEFORE', cc0 && cc0.wipe === '100%', cc0 && cc0.wipe);
+    await page.waitForTimeout(3400);   // into the wipe
+    const ccMid = await page.evaluate(() =>
+      parseFloat(document.querySelector('#cr-show .cr-sh-cc .ph').style.getPropertyValue('--cc-wipe')));
+    ok('the divider is actually sweeping', ccMid < 95, ccMid);
+    await page.waitForTimeout(2400);   // wipe done, placard up
+    const ccPl = await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-cc');
+      return { show: l.querySelector('.plac').classList.contains('show'),
+               h4: l.querySelector('.plac h4').textContent };
+    });
+    ok('the placard fades in with the pair label', ccPl.show && /123 Main St/.test(ccPl.h4), ccPl.h4);
+    await shot('10-desktop-curtain-call.png');
+    // a touch stops the show and hands over the pair that was showing
+    await page.click('#cr-show .cr-sh-cc');
+    await page.waitForTimeout(400);
+    ok('a touch ends the show and the real slider returns', await page.evaluate(() =>
+      !document.querySelector('#cr-show .cr-sh-cc') &&
+      !!document.querySelector('#cr-show [data-cmp]')));
+
     /* ── The Walk (579) ───────────────────────────────────────────────────
        The one thing jsdom structurally cannot check. A circle in the wrong
        place is worse than no circle: it points a homeowner at sound shingle

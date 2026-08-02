@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 587 &#8212; The Release — share a released before/after as a clean card for social or the website</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 588 &#8212; Curtain Call — press play and the Showcase runs itself until somebody touches it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:588, d:'2026-08-02', t:'Curtain Call \u2014 the tablet sells by itself', s:'A play button beside the pair counter. Press it at a kitchen table or a home-show booth and the Showcase runs on its own: a slow drift on the finished roof, the divider sweeps before to after by itself, the address and material fade in like a gallery placard, then the next pair. Any touch stops the show instantly and hands you the real slider on the pair that was up. Privacy mode masks the placard like everything else.' },
 { b:587, d:'2026-08-02', t:'The Release \u2014 share cards', s:'A Showcase pair with a client release on file gains Share: pick Square, Story or Wide and one of three frames \u2014 Classic, Blackout, Kraft \u2014 and download a finished before/after card for social media or the website, or send it straight from the phone. The card names the city only, never the street, and the file carries no location data at all. A pair without a release shows the button greyed out with the reason \u2014 the consent rule is now something you can see.' },
 { b:586, d:'2026-08-02', t:'The Lens \u2014 pinch into any photograph', s:'Every photograph has been stored at full resolution since build 577 so granules and nail heads survive \u2014 and no gesture could reach that detail until now. Tap a Hall of Fame photo, or the expand button on the slider and on The Walk\u2019s review screen: the picture opens full screen with pinch, drag and double-tap zoom. In The Walk your damage marks ride along at any zoom.' },
 { b:585, d:'2026-08-02', t:'Chalk \u2014 draw your own marks', s:'The Walk\u2019s review screen gains + Mark damage: drag a box on the photograph, say what it is and how serious, and it joins the marks exactly like one you accepted from the AI. Asking the AI again now keeps your hand-drawn marks \u2014 it only refreshes its own. Works even when the AI is down, and every mark you draw is recorded as yours, which is exactly what training your own detector later needs.' },
@@ -55854,6 +55855,41 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 #cr-show-form .cr-sh-shprev{display:block;max-width:100%;height:auto;margin:12px auto 0;
   border-radius:5px;box-shadow:0 10px 32px rgba(0,0,0,.5);background:#101312}
 #cr-show-form .cr-sh-shwrap{max-height:46vh;overflow:auto;text-align:center}
+
+/* ── Curtain Call (588) — the show ─────────────────────────────────────────
+   Blackout gallery: true-black wall, the photograph in a thin white mat,
+   white serif placard ink. Severity colours have no business here — this
+   surface sells finished work, not damage. */
+.cr-sh-cc{position:absolute;inset:0;z-index:50;background:#050607;overflow:hidden;cursor:pointer;
+  user-select:none;-webkit-user-select:none}
+.cr-sh-cc .fr{position:absolute;inset:5% 6% 17%;border:1px solid rgba(242,244,242,.28);
+  padding:clamp(6px,1.2vw,12px);background:#050607}
+.cr-sh-cc .ph{position:absolute;inset:clamp(6px,1.2vw,12px);overflow:hidden}
+.cr-sh-cc .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  -webkit-user-drag:none}
+.cr-sh-cc .ph img.af{clip-path:inset(0 0 0 var(--cc-wipe,0%))}
+.cr-sh-cc .ph .dv{position:absolute;top:0;bottom:0;left:var(--cc-wipe,0%);width:2.5px;z-index:2;
+  background:#fff;box-shadow:0 0 7px rgba(0,0,0,.55)}
+.cr-sh-cc.kb .ph img.af{animation:crShCcKb 8s ease-out forwards}
+@keyframes crShCcKb{from{transform:scale(1)}to{transform:scale(1.06) translate(-1.2%,-0.8%)}}
+.cr-sh-cc .plac{position:absolute;left:6%;bottom:5%;z-index:5;max-width:70%;
+  opacity:0;transform:translateY(8px);transition:opacity .8s ease,transform .8s ease}
+.cr-sh-cc .plac.show{opacity:1;transform:none}
+.cr-sh-cc .plac h4{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;
+  font-size:clamp(16px,2.6vw,22px);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-cc .plac hr{border:0;border-top:1px solid rgba(242,244,242,.45);margin:7px 0}
+.cr-sh-cc .plac p{margin:0;font-family:Georgia,serif;font-size:clamp(11px,1.6vw,13.5px);
+  color:rgba(242,244,242,.75)}
+.cr-sh-cc .stopnote{position:absolute;right:14px;bottom:12px;z-index:5;font-size:10.5px;
+  color:rgba(242,244,242,.55)}
+.cr-sh-play{flex:0 0 auto;background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
+  color:var(--sh-mut,#98A29C);width:30px;height:30px;border-radius:8px;cursor:pointer;
+  font-size:11px;line-height:1;font-family:inherit}
+.cr-sh-play:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
+@media (prefers-reduced-motion:reduce){
+  .cr-sh-cc.kb .ph img.af{animation:none}
+  .cr-sh-cc .plac{transition:none}
+}
 </style>
 
 <script id="cr-show-script">
@@ -56085,6 +56121,7 @@ function renderShow(){
           '<button data-act="prev" type="button" aria-label="Previous">◄</button>' +
           '<span class="p">' + (cur + 1) + ' / ' + pairs.length + '</span>' +
           '<button data-act="next" type="button" aria-label="Next">►</button>' +
+          '<button class="cr-sh-play" data-act="ccplay" type="button" aria-label="Let the showcase run itself" title="Let it run">\u25B6</button>' +
         '</div>' +
         (bits.length ? '<span class="s">' + bits.join(' · ') + '</span>' : '') +
       '</div>' +
@@ -56235,6 +56272,7 @@ function wireBody(){
     b.onclick = function(){ if(pairs.length){ cur = (cur + 1) % pairs.length; repaint(); } };
   });
   el.querySelectorAll('[data-act="add"]').forEach(function(b){ b.onclick = openForm; });
+  el.querySelectorAll('[data-act="ccplay"]').forEach(function(b){ b.onclick = startCurtain; });
   el.querySelectorAll('[data-act="share"]').forEach(function(b){ b.onclick = openShareComposer; });
   el.querySelectorAll('[data-act="pub"]').forEach(function(b){ b.onclick = togglePublish; });
   el.querySelectorAll('[data-act="del"]').forEach(function(b){ b.onclick = removePair; });
@@ -57780,6 +57818,103 @@ async function openShareComposer(){
   }
 }
 
+
+/* ── Curtain Call (588) ────────────────────────────────────────────────────
+   Every timer and frame is tracked in ccRun and cleared by stopCurtain();
+   each async step re-checks the layer is still attached, so a tab switch
+   (render() rewrites the module's DOM) self-heals instead of leaking a
+   loop — the 567/569 always-repainting class, designed against here. */
+var ccRun = null;   // { layer, i, timers:[], raf } while the show runs
+
+function stopCurtain(handOver){
+  if(!ccRun) return;
+  ccRun.timers.forEach(clearTimeout);
+  if(ccRun.raf) cancelAnimationFrame(ccRun.raf);
+  if(ccRun.layer && ccRun.layer.parentNode) ccRun.layer.parentNode.removeChild(ccRun.layer);
+  var at = ccRun.i;
+  ccRun = null;
+  if(handOver && pairs.length){
+    /* Hand the real slider over ON THE PAIR THAT WAS SHOWING — whoever
+       tapped was interested in that one. */
+    cur = at % pairs.length;
+    repaint();
+  }
+}
+
+function ccWait(ms, fn){
+  if(!ccRun) return;
+  ccRun.timers.push(setTimeout(function(){
+    if(!ccRun || !ccRun.layer.isConnected){ stopCurtain(false); return; }
+    fn();
+  }, ms));
+}
+
+function startCurtain(){
+  if(ccRun || !pairs.length) return;
+  ensure();
+  var reduced = false;
+  try{ reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(_){}
+  var layer = document.createElement('div');
+  layer.className = 'cr-sh-cc';
+  layer.innerHTML =
+    '<div class="fr"><div class="ph">' +
+      '<img class="bf" alt="">' +
+      '<img class="af" alt="">' +
+      '<div class="dv"></div>' +
+    '</div></div>' +
+    '<div class="plac"><h4></h4><hr><p></p></div>' +
+    '<span class="stopnote">any touch stops the show</span>';
+  el.appendChild(layer);
+  layer.addEventListener('pointerdown', function(){ stopCurtain(true); });
+  ccRun = { layer: layer, i: cur, timers: [], raf: 0 };
+  ccStep(reduced);
+}
+
+function ccWipe(ph, from, to, ms, done){
+  var t0 = performance.now();
+  function frame(now){
+    if(!ccRun || !ccRun.layer.isConnected){ stopCurtain(false); return; }
+    var k = Math.min(1, (now - t0) / ms);
+    var e = k < .5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2) / 2;
+    ph.style.setProperty('--cc-wipe', (from + (to - from) * e) + '%');
+    if(k < 1){ ccRun.raf = requestAnimationFrame(frame); }
+    else done();
+  }
+  ccRun.raf = requestAnimationFrame(frame);
+}
+
+function ccStep(reduced){
+  if(!ccRun) return;
+  var p = pairs[ccRun.i % pairs.length];
+  var L = ccRun.layer;
+  var ph = L.querySelector('.ph');
+  var bf = L.querySelector('img.bf'), af = L.querySelector('img.af');
+  var plac = L.querySelector('.plac');
+  plac.classList.remove('show');
+  L.classList.remove('kb');
+  bf.src = src(p.before_path);
+  af.src = src(p.after_path);
+  /* Start fully on the BEFORE: the after pane is clipped away, then the
+     divider sweeps it in — the same story the hand slider tells. */
+  ph.style.setProperty('--cc-wipe', '100%');
+  var bits = [];
+  if(p.material) bits.push(p.material);
+  if(p.trade) bits.push(TRADE_LABEL[p.trade] || p.trade);
+  if(p.score != null) bits.push('\u2605 ' + p.score);
+  plac.querySelector('h4').textContent = label(p);
+  plac.querySelector('p').textContent = bits.join(' \u00b7 ');
+  if(!reduced) L.classList.add('kb');
+  ccWait(reduced ? 500 : 2200, function(){
+    ccWipe(ph, 100, 0, reduced ? 0 : 2600, function(){
+      plac.classList.add('show');
+      ccWait(reduced ? 2600 : 3600, function(){
+        ccRun.i++;
+        ccStep(reduced);
+      });
+    });
+  });
+}
+
 /* ── open / close ──────────────────────────────────────────────────────── */
 function open(){
   ensure();
@@ -57808,6 +57943,7 @@ function close(goHome){
   closeForm();
   exitPresent();
   exitLens();
+  stopCurtain(false);
   if(el) el.classList.remove('open');
   if(goHome !== false && typeof window.showHome === 'function') window.showHome();
 }
