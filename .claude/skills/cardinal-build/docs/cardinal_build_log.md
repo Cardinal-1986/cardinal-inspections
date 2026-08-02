@@ -6010,3 +6010,60 @@ dozen causes and a cancel has one. `harness_showcase.js` 105/105, `harness_detec
 the doc predates. My patch asserted `== 20` off the doc and correctly aborted; the assertion is now
 self-computing (`len(after) == len(before)`, exactly one moved). And `jsdom` is not installed in a
 fresh container — `npm install jsdom --no-save` keeps it out of `package.json`.
+
+---
+
+## Build 579 — The Walk
+
+Third tab on the Showcase. `walks_schema.sql` **applied and verified before the HTML change**
+(walks 12 cols / walk_shots 13, RLS on both, 4 policies each, 3 storage policies for `walks/`).
+All of it inside the existing `cr-show-*` blocks — **no twelfth full-screen view**, because
+`#cr-show` is already in `hideAllViews()` and `navRestore`.
+
+**The contract, and it lives in the schema rather than in the UI:** `walk_shots.findings` holds
+**only findings a human accepted**. The model's proposals live in the browser until Save; rejected
+ones are dropped, not flagged. So `reviewed_at IS NULL` means nobody has walked it, and anything in
+`findings` has been seen by a person. Present mode (580) can read that with no filtering.
+
+**Copy, don't reference — and the reason came from measuring, not reasoning.** The plan said
+reference the existing `storage_path` for job photos. Then:
+
+```
+select count(*), count(storage_path) from project_photos;   -> 196, 183
+```
+
+**Thirteen rows are inline base64 `data:` URIs with no storage object at all.** Referencing would
+have dropped one photo in fifteen from the picker and looked like it worked — the "correct code
+that does nothing" class this project has paid for twice. Deleting a job photo also removes the
+storage object, which would blank a walk weeks later in front of a client. Both sources copy;
+`origin_photo_id` keeps the provenance.
+
+**Two traps.** `/api/detect` destructures `{image, mime}` and hands `image` straight to Gemini as
+`inline_data.data` — it wants **bare base64**. `/api/caption` is passed a full `data:` URL, so
+copying that call verbatim fails at the model rather than at the fetch. And in `wireBoxes()`,
+moving the selection on `pointerdown` **toggles classes and never repaints**: `repaint()` replaces
+`innerHTML`, so the element under the finger would be destroyed and the capture lost on the first
+frame — 578's lesson arriving in a different shape, one build later.
+
+**Gates.** `check_build.py` green 578 → 579, marker `renderWalkTab`, negative-controlled.
+**`harness_walk.js` — new, 67 assertions**, running the sliced shipped module; its own negative
+control reports cleanly on a pre-579 artifact instead of crashing on a null deref.
+`harness_showcase.js` 106, `harness_detect.js` 39, **`render_showcase.js` 36 in real Chromium** —
+extended to prove a box with fractions `.25/.40/.30/.20` lands at exactly those fractions of the
+rendered stage, that crit and warn resolve to *different* colours, and that the grip is hidden on
+an unselected box. jsdom cannot make any of those three claims.
+
+**Four harness reds, all mine, all the test's fault** — worth recording because the ratio holds:
+- `SHOTS` was shared **by reference** across boots, so a successful save in one block stamped
+  `reviewed_at` onto the fixture and two later blocks silently opened an already-reviewed shot.
+  Three reds, one cause. Fixtures are deep-cloned per boot now.
+- CSSOM normalises `30.000%` to `30%`; the assertion was matching the literal string the module
+  wrote rather than the unit and the value.
+- In `harness_showcase.js`, *"Hall of Fame never reads a client record"* sliced
+  `split('function openWorkForm()')[1]` — **everything after** that function. It was sloppy from the
+  start and only failed once 579 appended a tab that legitimately reads `projects`. Now bounded to
+  `openWorkForm` → `removeWork`, with an assertion that the slice captured anything at all.
+
+**`npm install X --no-save` reinstalls from `package.json` and PRUNES anything unlisted** — installing
+`jsdom` that way silently removed `playwright` and the Chromium harness died with MODULE_NOT_FOUND.
+Install them in one command: `npm install jsdom playwright --no-save`.

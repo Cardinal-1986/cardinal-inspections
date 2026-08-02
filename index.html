@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 578 &#8212; the before/after slider follows a mouse, not just a finger</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 579 &#8212; The Walk — the AI marks the damage, you check every mark, then the client sees it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:579, d:'2026-08-02', t:'The Walk', s:'A third tab on the Showcase. Add photographs from your phone or pull them off a job, and the AI marks what it thinks is hail bruising, lifted shingles, a failed pipe boot. Every mark is a proposal: keep it, drag it onto the damage if it is close, change how serious it is, or throw it away. Only what you keep is saved, so anything a client sees has been through your hands. The marks are drawn over the photograph and never burned into it — the picture on file stays the picture the camera took. Admins build them; everyone can show them.' },
 { b:578, d:'2026-08-02', t:'The before/after slider follows a mouse', s:'On a laptop, grabbing the photograph itself to drag the divider moved it about a pixel and then stopped, with a ghost copy of the picture stuck to the cursor. The browser had decided you were dragging the image out of the page. Touch was never affected, so it never showed up on a phone or the iPad. Dragging now works from anywhere on the picture, on any device.' },
 { b:577, d:'2026-08-02', t:'Showcase photographs keep their detail', s:'Every picture is now kept at full resolution for the slider and pinching in, with a smaller copy made for the browsing grid so the screen still loads fast on a phone. Builds 574-576 shrank everything to 1600px, which went soft the moment a homeowner pinched — the granules and nail heads these photographs exist to show were the first thing lost.' },
 { b:576, d:'2026-08-02', t:'The Hall of Fame', s:'The Showcase gets a second tab: a bad install photographed beside ours, with one line on why it matters. A homeowner cannot tell a good roof from a bad one by looking at the finished surface — two pictures side by side explain it in five seconds. Inspections is a link, not a tab: the reports list already exists and there is no sense building a second one.' },
@@ -55614,6 +55615,105 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 #cr-show-form .note{margin-top:11px;font-size:11.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
 #cr-show-form .err{margin-top:10px;font-size:12.5px;color:var(--sh-bad,#E5484D);display:none}
 #cr-show-form .err.on{display:block}
+
+/* ── The Walk (579) ────────────────────────────────────────────────────────
+   AI circles the damage, a person checks every circle, then it is shown to the
+   client. The circles are an OVERLAY: absolutely positioned off normalized
+   fractions, so one stored row draws correctly on a phone, on the iPad and at
+   desktop width, and the photograph in storage is never modified.
+
+   No --sh-* token is declared anywhere in this module and none is added here:
+   every reference carries its literal, which is why the 448-449 transparent-
+   screen class cannot reach this stylesheet. Copy the habit.
+
+   Severity inks were computed, not picked: on the card ground #151817 they are
+   4.57 / 8.29 / 5.90:1 — all above the 4.5 body floor. See scripts/contrast.py. */
+.cr-sh-wlk{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:10px;padding:12px 13px;margin-top:9px;cursor:pointer;color:inherit;
+  font-family:inherit;transition:border-color .15s}
+.cr-sh-wlk:hover{border-color:var(--sh-acc,#C8202E)}
+.cr-sh-wlk .t{flex:1;min-width:0}
+.cr-sh-wlk .t b{display:block;font:650 14.5px inherit;font-family:inherit;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-sh-wlk .t span{display:block;margin-top:3px;font-size:11.5px;color:var(--sh-mut,#98A29C)}
+.cr-sh-wlk .n{flex:0 0 auto;font:800 10px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.06em;padding:5px 9px;border-radius:999px;
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));color:var(--sh-mut,#98A29C)}
+.cr-sh-wlk .n.on{border-color:var(--sh-bad,#E5484D);color:var(--sh-bad,#E5484D)}
+
+/* the shots of one walk */
+.cr-sh-shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.cr-sh-shot{position:relative;background:var(--sh-card2,#101312);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:9px;overflow:hidden;padding:0;cursor:pointer;color:inherit;font-family:inherit;text-align:left}
+.cr-sh-shot:hover{border-color:var(--sh-acc,#C8202E)}
+.cr-sh-shot img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;
+  background:var(--sh-card2,#101312);-webkit-user-drag:none}
+.cr-sh-shot .st{display:flex;align-items:center;gap:6px;padding:8px 10px;
+  font:700 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
+.cr-sh-shot .st .sq{width:8px;height:8px;border-radius:2px;flex:0 0 auto}
+.cr-sh-shot.new .st{color:var(--sh-mut,#98A29C)}
+.cr-sh-shot.new .st .sq{background:var(--sh-mut,#98A29C)}
+.cr-sh-shot.done .st{color:var(--sh-ok,#46A758)}
+.cr-sh-shot.done .st .sq{background:var(--sh-ok,#46A758)}
+.cr-sh-shot.hits .st{color:var(--sh-bad,#E5484D)}
+.cr-sh-shot.hits .st .sq{background:var(--sh-bad,#E5484D)}
+
+/* the review stage. Same three declarations the 574 slider needed, and for the
+   same reason — build 578 paid for the third one after a native image drag
+   cancelled the pointer stream mid-gesture. Do not drop -webkit-user-drag. */
+.cr-sh-rev{position:relative;border-radius:9px;overflow:hidden;margin-top:10px;
+  background:var(--sh-card2,#101312);touch-action:none;user-select:none;-webkit-user-select:none}
+.cr-sh-rev img{display:block;width:100%;height:auto;-webkit-user-drag:none}
+.cr-sh-box{position:absolute;border:2.5px solid var(--sh-mut,#98A29C);border-radius:6px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.45);cursor:move}
+.cr-sh-box.crit{border-color:var(--sh-bad,#E5484D)}
+.cr-sh-box.warn{border-color:var(--sh-warn,#E8A33D)}
+.cr-sh-box.ok{border-color:var(--sh-ok,#46A758)}
+.cr-sh-box.sel{border-style:solid;box-shadow:0 0 0 2px var(--sh-ink,#F2F4F2),0 0 0 4px rgba(0,0,0,.5)}
+.cr-sh-box .lb{position:absolute;left:-2px;bottom:100%;margin-bottom:3px;white-space:nowrap;
+  font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.04em;
+  padding:3px 6px;border-radius:5px;background:rgba(6,8,7,.86);color:var(--sh-ink,#F2F4F2)}
+/* The grab corner. 22px because this is used on an iPad with a fingertip, and
+   a 10px handle is a rule about a mouse pretending to be a rule about touch. */
+.cr-sh-box .gr{position:absolute;right:-11px;bottom:-11px;width:22px;height:22px;
+  border-radius:50%;background:var(--sh-ink,#F2F4F2);border:2px solid rgba(6,8,7,.7);cursor:nwse-resize}
+.cr-sh-box:not(.sel) .gr{display:none}
+
+/* one finding, in the list under the picture */
+.cr-sh-fnd{display:flex;align-items:flex-start;gap:10px;padding:10px 11px;margin-top:8px;
+  background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));border-radius:9px}
+.cr-sh-fnd.sel{border-color:var(--sh-ink,#F2F4F2)}
+.cr-sh-fnd .sq{width:10px;height:10px;border-radius:2px;flex:0 0 auto;margin-top:4px}
+.cr-sh-fnd.crit .sq{background:var(--sh-bad,#E5484D)}
+.cr-sh-fnd.warn .sq{background:var(--sh-warn,#E8A33D)}
+.cr-sh-fnd.ok   .sq{background:var(--sh-ok,#46A758)}
+.cr-sh-fnd .m{flex:1;min-width:0}
+.cr-sh-fnd .m b{display:block;font:650 13px inherit;font-family:inherit}
+.cr-sh-fnd .m p{margin:3px 0 0;font-size:11.5px;line-height:1.5;color:var(--sh-mut,#98A29C)}
+.cr-sh-fnd select{background:var(--sh-card2,#101312);color:var(--sh-ink,#F2F4F2);
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:6px;padding:5px 7px;
+  font:700 10px inherit;font-family:inherit;margin-top:6px}
+.cr-sh-fnd .x{flex:0 0 auto;background:transparent;border:0;cursor:pointer;padding:2px 5px;
+  color:var(--sh-mut,#98A29C);font-size:14px;line-height:1;font-family:inherit}
+.cr-sh-fnd .x:hover{color:var(--sh-bad,#E5484D)}
+
+/* the job-photo picker */
+.cr-sh-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;
+  margin-top:10px;max-height:44vh;overflow-y:auto;overscroll-behavior:contain}
+.cr-sh-pick button{position:relative;padding:0;border-radius:7px;overflow:hidden;cursor:pointer;
+  background:var(--sh-card2,#101312);border:2px solid var(--sh-line,rgba(148,157,165,.20))}
+.cr-sh-pick button.on{border-color:var(--sh-acc,#C8202E)}
+.cr-sh-pick img{display:block;width:100%;aspect-ratio:1;object-fit:cover;-webkit-user-drag:none}
+.cr-sh-pick button.on::after{content:'\2713';position:absolute;right:4px;top:3px;
+  font:800 12px ui-monospace,Menlo,monospace;color:var(--sh-acci,#FFF3F3);
+  background:var(--sh-acc,#C8202E);border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center}
+
+/* a plain status line — used for "asking the AI", "3 had no usable location" */
+.cr-sh-note{margin-top:9px;font-size:12px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+.cr-sh-note.warn{color:var(--sh-warn,#E8A33D)}
+.cr-sh-note.bad{color:var(--sh-bad,#E5484D)}
+.cr-sh-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 </style>
 
 <script id="cr-show-script">
@@ -55766,11 +55866,14 @@ function renderTabs(){
       ' type="button">Showcase</button>' +
     '<button data-tab="work"' + (tab === 'work' ? ' class="on"' : '') +
       ' type="button">Hall of Fame</button>' +
+    '<button data-tab="walk"' + (tab === 'walk' ? ' class="on"' : '') +
+      ' type="button">The Walk</button>' +
     '<button data-act="reports" type="button" class="out">Inspections \u2197</button>' +
   '</div>';
 }
 
 function renderBody(){
+  if(tab === 'walk') return renderWalkTab();
   if(tab === 'work') return renderWork();
   if(!loaded) return '<div class="cr-sh-empty">Loading…</div>';
   if(!pairs.length) return renderEmpty();
@@ -55935,6 +56038,9 @@ function wire(){
       if(tab === 'work' && !workLoaded){
         loadWork().then(repaint, function(){ workLoaded = true; repaint(); });
       }
+      if(tab === 'walk' && !walksLoaded){
+        loadWalks().then(repaint, function(){ walksLoaded = true; repaint(); });
+      }
     };
   });
   el.querySelectorAll('[data-act="reports"]').forEach(function(b){
@@ -55950,6 +56056,7 @@ function wire(){
 
 function wireBody(){
   el.querySelectorAll('[data-act="waddc"]').forEach(function(b){ b.onclick = openWorkForm; });
+  wireWalk();
   el.querySelectorAll('[data-wdel]').forEach(function(b){
     b.onclick = function(){ removeWork(b.dataset.wdel); };
   });
@@ -56286,6 +56393,772 @@ async function removePair(){
   repaint();
 }
 
+
+/* ── The Walk (579) ────────────────────────────────────────────────────────
+   Theo: "circling damage ai and checking first then presenting to client is a
+   good third tab. Doesn't need to be a report, so new feature then."
+
+   The order in that sentence is the design. api/detect.js proposes located
+   findings; a person accepts, nudges or rejects each one; ONLY what survives
+   is written. walk_shots.findings therefore means "seen by a human", and
+   reviewed_at IS NULL means "nobody has walked this yet". Present mode (580)
+   reads exactly that and needs no filtering.
+
+   NOT AN INSPECTION REPORT. inspection_reports has its own editor, its own
+   print path and its own list, and the tab strip already links out to it. */
+
+var WALK_SEV = ['crit', 'warn', 'ok'];                      // api/detect.js SEVERITIES
+var SEV_LABEL = { crit:'Critical', warn:'Worth noting', ok:'Sound' };
+/* Mirrors api/detect.js DEFECTS. It is a LABEL map, not a filter: an unknown
+   key renders as itself rather than disappearing, because a defect the client
+   cannot see is worse than one with an ugly name. The route already coerces to
+   'other'; a second silent filter here would hide a real finding. */
+var DEF_LABEL = {
+  hail_impact:'Hail impact', wind_lifted:'Wind-lifted', missing_shingle:'Missing shingle',
+  granule_loss:'Granule loss', cracked_split:'Cracked / split', nail_pop:'Nail pop',
+  exposed_fastener:'Exposed fastener', flashing_failed:'Failed flashing',
+  flashing_missing:'Missing flashing', pipe_boot:'Pipe boot', chimney:'Chimney',
+  valley:'Valley', ridge_cap:'Ridge cap', ponding_debris:'Ponding / debris',
+  decking_sag:'Decking sag', ice_dam:'Ice dam', other:'Other'
+};
+function defLabel(k){ return DEF_LABEL[k] || String(k || 'other').replace(/_/g, ' '); }
+
+/* What goes to the model. Small on purpose: api/detect.js refuses anything over
+   5 MB x 1.4 of base64, and a 1600px frame is well inside that while still
+   resolving a nail head. The stored photograph is unaffected — FULL/DISP above
+   are what actually gets kept. */
+var AI = { max: 1600, q: 0.85 };
+
+var walks = [], walksLoaded = false, curWalk = null;
+var shots = [], shotsLoaded = false;
+var review = null;      // { shot, list:[...], sel:int, note:string } while reviewing
+var jobPick = null;     // { projectId, photos:[], chosen:{} } while picking
+var vocabWarned = false;
+
+/* ── data ──────────────────────────────────────────────────────────────── */
+async function loadWalks(){
+  var cl = sb();
+  if(!cl){ walksLoaded = true; return; }
+  var r = await cl.from('walks').select('*')
+                  .order('sort_order', { ascending:true })
+                  .order('created_at', { ascending:false });
+  walks = (r && !r.error && r.data) ? r.data : [];
+  walksLoaded = true;
+}
+
+async function loadShots(walkId){
+  var cl = sb();
+  shots = []; shotsLoaded = false;
+  if(!cl){ shotsLoaded = true; return; }
+  var r = await cl.from('walk_shots').select('*').eq('walk_id', walkId)
+                  .order('sort_order', { ascending:true })
+                  .order('created_at', { ascending:true });
+  shots = (r && !r.error && r.data) ? r.data : [];
+  shotsLoaded = true;
+  await signShots();
+}
+
+/* Shot paths join the same signing pass everything else uses. Signed for
+   DISPLAY only — never written back onto a row. */
+async function signShots(){
+  var paths = [];
+  shots.forEach(function(s){ if(s.path){ paths.push(s.path); paths.push(dispPath(s.path)); } });
+  if(!paths.length || typeof window.signedPhotoMap !== 'function') return;
+  try{
+    var got = await window.signedPhotoMap(paths, 3600) || {};
+    Object.keys(got).forEach(function(k){ signed[k] = got[k]; });
+  }catch(_){}
+}
+
+/* ── render ────────────────────────────────────────────────────────────── */
+function renderWalkTab(){
+  if(review) return renderReview();
+  if(curWalk) return renderOneWalk();
+  return renderWalkList();
+}
+
+function renderWalkList(){
+  if(!walksLoaded) return '<div class="cr-sh-empty">Loading…</div>';
+  if(!walks.length){
+    return '<div class="cr-sh-empty"><b>No walks yet.</b>' +
+      (amAdmin()
+        ? 'Start one, add a few photographs, and the AI marks what it thinks is damage. ' +
+          'You check every mark before anyone else sees it.'
+        : 'Theo hasn’t put one together yet.') +
+      '</div>' + walkAdminBar();
+  }
+  return '<div class="cr-sh-rule">' + walks.length +
+      (walks.length === 1 ? ' walk' : ' walks') + '</div>' +
+    walks.map(function(w, i){
+      return '<button class="cr-sh-wlk" data-walk="' + i + '" type="button">' +
+        '<div class="t"><b>' + esc(walkLabel(w)) + '</b>' +
+          '<span>' + esc(walkSub(w)) + '</span></div>' +
+        (w.published ? '' : '<span class="n">Draft</span>') +
+      '</button>';
+    }).join('') + walkAdminBar();
+}
+
+/* Privacy mode is the Showcase's, and it applies here for the same reason: the
+   homeowner may be holding the tablet. The address is REMOVED, not hidden. */
+function walkLabel(w){
+  if(el && el.classList.contains('priv')){
+    return (w.title && !/\d/.test(w.title)) ? w.title
+         : ('Walk ' + String(w.id || '').replace(/-/g,'').slice(0,4).toUpperCase());
+  }
+  return w.title || w.address || 'Untitled walk';
+}
+function walkSub(w){
+  var bits = [];
+  if(w.trade) bits.push(TRADE_LABEL[w.trade] || w.trade);
+  if(!(el && el.classList.contains('priv')) && w.address) bits.push(w.address);
+  if(w.city) bits.push(w.city);
+  return bits.join(' · ') || 'No details yet';
+}
+
+function walkAdminBar(){
+  if(!amAdmin()) return '';
+  return '<div class="cr-sh-admin"><button class="cr-sh-btn" data-act="waddwalk" type="button">' +
+    'Start a walk</button></div>';
+}
+
+function renderOneWalk(){
+  var w = curWalk;
+  var head = '<div class="cr-sh-rule">' + esc(walkLabel(w)) + '</div>' +
+    '<div class="cr-sh-bar">' +
+      '<button class="cr-sh-btn ghost" data-act="wback" type="button">← All walks</button>' +
+      (amAdmin() ? '<button class="cr-sh-btn" data-act="wphone" type="button">Add photographs</button>' +
+                   '<button class="cr-sh-btn ghost" data-act="wjob" type="button">From a job</button>' +
+                   '<button class="cr-sh-btn ghost" data-act="wpub" type="button">' +
+                     (w.published ? 'Unpublish' : 'Publish') + '</button>' +
+                   '<button class="cr-sh-btn ghost" data-act="wdelwalk" type="button">Remove</button>' : '') +
+    '</div>' +
+    '<input type="file" accept="image/*" multiple data-wfile style="display:none">';
+
+  if(!shotsLoaded) return head + '<div class="cr-sh-empty">Loading…</div>';
+  if(!shots.length){
+    return head + '<div class="cr-sh-empty"><b>No photographs yet.</b>' +
+      (amAdmin() ? 'Add a few from your phone, or pull them off a job you already have.'
+                 : 'Nothing has been added to this walk.') + '</div>';
+  }
+  return head + '<div class="cr-sh-shots">' +
+    shots.map(function(s, i){
+      var n = (s.findings || []).length;
+      var cls = !s.reviewed_at ? 'new' : (n ? 'hits' : 'done');
+      var txt = !s.reviewed_at ? 'Not checked'
+              : (n ? (n + (n === 1 ? ' finding' : ' findings')) : 'Nothing found');
+      return '<button class="cr-sh-shot ' + cls + '" data-shot="' + i + '" type="button">' +
+        '<img alt="" loading="lazy" src="' + esc(srcD(s.path)) + '">' +
+        '<div class="st"><span class="sq"></span>' + esc(txt) + '</div>' +
+      '</button>';
+    }).join('') + '</div>';
+}
+
+/* The review screen. Boxes are positioned in PERCENT off the stored fractions,
+   so this markup is resolution-independent by construction — the same row is
+   correct on a phone and at 1180px. */
+function renderReview(){
+  var r = review;
+  var img = signed[r.shot.path] || srcD(r.shot.path) || '';
+  var boxes = r.list.map(function(f, i){
+    var b = f.box || { x:0, y:0, w:0, h:0 };
+    return '<div class="cr-sh-box ' + esc(f.severity) + (i === r.sel ? ' sel' : '') + '"' +
+      ' data-box="' + i + '" style="left:' + pc(b.x) + ';top:' + pc(b.y) +
+      ';width:' + pc(b.w) + ';height:' + pc(b.h) + '">' +
+      '<span class="lb">' + esc(f.label || defLabel(f.defect)) + '</span>' +
+      '<span class="gr" data-grip="' + i + '"></span>' +
+    '</div>';
+  }).join('');
+
+  return '<div class="cr-sh-rule">Checking a photograph</div>' +
+    '<div class="cr-sh-bar">' +
+      '<button class="cr-sh-btn ghost" data-act="rback" type="button">← Back</button>' +
+      '<button class="cr-sh-btn ghost" data-act="rdetect" type="button">' +
+        (r.list.length ? 'Ask again' : 'Ask the AI') + '</button>' +
+      '<button class="cr-sh-btn" data-act="rsave" type="button">Save what I accepted</button>' +
+    '</div>' +
+    '<div class="cr-sh-rev" data-rev>' +
+      '<img alt="" src="' + esc(img) + '">' + boxes +
+    '</div>' +
+    (r.note ? '<p class="cr-sh-note' + (r.noteKind ? ' ' + r.noteKind : '') + '">' +
+              esc(r.note) + '</p>' : '') +
+    (r.list.length
+      ? r.list.map(function(f, i){
+          return '<div class="cr-sh-fnd ' + esc(f.severity) + (i === r.sel ? ' sel' : '') +
+            '" data-fnd="' + i + '">' +
+            '<span class="sq"></span>' +
+            '<div class="m"><b>' + esc(f.label || defLabel(f.defect)) + '</b>' +
+              '<p>' + esc(defLabel(f.defect)) + (f.note ? ' — ' + esc(f.note) : '') +
+              (f.confidence != null ? ' · ' + Math.round(f.confidence * 100) + '% sure' : '') +
+              (f.edited ? ' · moved by hand' : '') + '</p>' +
+              '<select data-sev="' + i + '">' +
+                WALK_SEV.map(function(s){
+                  return '<option value="' + s + '"' + (f.severity === s ? ' selected' : '') +
+                         '>' + SEV_LABEL[s] + '</option>';
+                }).join('') +
+              '</select>' +
+            '</div>' +
+            '<button class="x" data-drop="' + i + '" type="button" aria-label="Reject">✕</button>' +
+          '</div>';
+        }).join('')
+      : '<p class="cr-sh-note">Nothing marked yet. Ask the AI, then keep the marks that are ' +
+        'real and drag them onto the damage if they are close but not right.</p>');
+}
+function pc(v){ return (Math.max(0, Math.min(1, +v || 0)) * 100).toFixed(3) + '%'; }
+
+/* ── the AI call ───────────────────────────────────────────────────────── */
+/* api/detect.js hands `image` straight to Gemini as inline_data.data, which
+   must be BARE base64. /api/caption is passed a full data: URL, so copying that
+   call verbatim would have failed at the model rather than at the fetch — the
+   shape of bug that ships looking fine. Strip the prefix, pass mime separately. */
+function blobB64(blob){
+  return new Promise(function(resolve, reject){
+    var fr = new FileReader();
+    fr.onload = function(){
+      var s = String(fr.result || '');
+      var c = s.indexOf(',');
+      resolve(c === -1 ? s : s.slice(c + 1));
+    };
+    fr.onerror = function(){ reject(new Error('could not read the image')); };
+    fr.readAsDataURL(blob);
+  });
+}
+
+async function askDetect(blob, label){
+  var small = await shrink(new File([blob], 'shot.jpg', { type:'image/jpeg' }), AI.max, AI.q);
+  var res = await fetch('/api/detect', {
+    method : 'POST',
+    headers: await window.aiHeaders(),
+    body   : JSON.stringify({ image: await blobB64(small), mime:'image/jpeg', label: label || '' })
+  });
+  var body = null;
+  try{ body = await res.json(); }catch(_){}
+  if(!res.ok) throw new Error((body && (body.detail || body.error)) || ('HTTP ' + res.status));
+
+  /* The route echoes its vocabulary so a client can spot deploy skew between
+     api/ and index.html. Warn once; never coerce on it — the route has already
+     done the coercing and a second pass here could only lose information. */
+  if(!vocabWarned && body && body.vocab && body.vocab.defects){
+    var mine = Object.keys(DEF_LABEL).sort().join(',');
+    var theirs = body.vocab.defects.slice().sort().join(',');
+    if(mine !== theirs){
+      vocabWarned = true;
+      try{ console.warn('[walk] api/detect.js vocabulary differs from this build:',
+                        { api: body.vocab.defects, app: Object.keys(DEF_LABEL) }); }catch(_){}
+    }
+  }
+  return body || {};
+}
+
+/* Fetch the bytes of a shot back out of storage. download() rather than fetch()
+   on a signed URL: the photos bucket is PRIVATE (verified), so the stored
+   public-looking URLs on old project_photos rows are dead links. */
+async function shotBlob(path){
+  var cl = sb();
+  if(!cl) throw new Error('Not signed in.');
+  var d = await cl.storage.from('photos').download(path);
+  if(!d || d.error || !d.data) throw new Error((d && d.error && d.error.message) || 'could not read the photo');
+  return d.data;
+}
+
+async function runDetect(){
+  var r = review;
+  if(!r || busy) return;
+  busy = true;
+  r.note = 'Asking the AI…'; r.noteKind = ''; repaint();
+  try{
+    var blob = await shotBlob(r.shot.path);
+    var out  = await askDetect(blob, curWalk ? (curWalk.trade || '') : '');
+    /* Proposals REPLACE the working set rather than appending: asking twice
+       should not silently double every mark. Anything already accepted and
+       saved is still on the row until Save overwrites it. */
+    r.list = (out.findings || []).map(function(f){
+      return { defect:f.defect, severity:f.severity, label:f.label, note:f.note,
+               box:f.box, confidence:(f.confidence == null ? null : f.confidence), edited:false };
+    });
+    r.sel = r.list.length ? 0 : -1;
+
+    var bits = [];
+    if(out.quality === 'poor'){
+      bits.push('The AI says this photograph is hard to read' +
+                (out.quality_note ? ': ' + out.quality_note : '.'));
+    }
+    if(out.dropped) bits.push(out.dropped + (out.dropped === 1
+      ? ' proposal had no usable location and was dropped.'
+      : ' proposals had no usable location and were dropped.'));
+    if(!r.list.length && !bits.length) bits.push('The AI marked nothing on this one.');
+    r.note = bits.join(' ');
+    r.noteKind = out.quality === 'poor' ? 'warn' : '';
+  }catch(e){
+    r.note = 'The AI could not read this photograph: ' + String(e && e.message ? e.message : e);
+    r.noteKind = 'bad';
+  }
+  busy = false;
+  repaint();
+}
+
+/* ── review: accept, nudge, reject ─────────────────────────────────────── */
+async function saveReview(){
+  var cl = sb(), r = review;
+  if(!cl || !r || busy) return;
+  busy = true;
+  try{
+    var who = '';
+    try{
+      var u = await cl.auth.getUser();
+      who = (u && u.data && u.data.user && u.data.user.email) || '';
+    }catch(_){}
+    /* Only what survived. Rejected proposals are DROPPED, not flagged — the
+       schema comment is the contract: anything in findings has been seen. */
+    var keep = r.list.map(function(f){
+      return { defect:f.defect, severity:f.severity, label:f.label, note:f.note,
+               box:f.box, confidence:f.confidence, edited:!!f.edited };
+    });
+    var up = await cl.from('walk_shots').update({
+      findings   : keep,
+      reviewed_by: who || null,
+      reviewed_at: new Date().toISOString()
+    }).eq('id', r.shot.id).select('id');
+    if(up && up.error) throw new Error(up.error.message || 'could not save');
+    /* Refused by RLS comes back with no error and no rows — check the rows. */
+    if(!up || !up.data || !up.data.length) throw new Error('Saved nothing — admin only.');
+
+    r.shot.findings = keep;
+    r.shot.reviewed_at = new Date().toISOString();
+    r.shot.reviewed_by = who || null;
+    review = null;
+  }catch(e){
+    r.note = String(e && e.message ? e.message : e); r.noteKind = 'bad';
+  }
+  busy = false;
+  repaint();
+}
+
+/* Drag to move, corner to resize. Same pointer idiom as wireSlider() — capture
+   on pointerdown, convert against getBoundingClientRect, clamp exactly the way
+   cleanFindings() clamps server-side so a box can never be saved off-frame. */
+function wireBoxes(){
+  var stage = el.querySelector('[data-rev]');
+  if(!stage || !review) return;
+  var drag = null;
+
+  function frac(e){
+    var r = stage.getBoundingClientRect();
+    if(!r.width || !r.height) return null;
+    return { x:(e.clientX - r.left) / r.width, y:(e.clientY - r.top) / r.height };
+  }
+  stage.addEventListener('pointerdown', function(e){
+    var grip = e.target.closest ? e.target.closest('[data-grip]') : null;
+    var boxEl = e.target.closest ? e.target.closest('[data-box]') : null;
+    if(!boxEl) return;
+    var i = parseInt((grip || boxEl).dataset[grip ? 'grip' : 'box'], 10);
+    var f = review.list[i];
+    if(!f) return;
+    var p = frac(e);
+    if(!p) return;
+    e.preventDefault();
+    try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+    drag = { i:i, mode: grip ? 'size' : 'move', from:p, box:{ x:f.box.x, y:f.box.y, w:f.box.w, h:f.box.h } };
+    /* Move the selection by TOGGLING CLASSES, never by repainting. repaint()
+       replaces innerHTML, so the element under the finger would be destroyed
+       and the pointer capture lost on the first frame of the gesture — build
+       578's lesson arriving in a different shape. The full render happens on
+       pointerup, where it costs nothing. */
+    if(review.sel !== i){
+      review.sel = i;
+      el.querySelectorAll('[data-box]').forEach(function(x){
+        x.classList.toggle('sel', parseInt(x.dataset.box, 10) === i);
+      });
+      el.querySelectorAll('[data-fnd]').forEach(function(x){
+        x.classList.toggle('sel', parseInt(x.dataset.fnd, 10) === i);
+      });
+    }
+  });
+  stage.addEventListener('pointermove', function(e){
+    if(!drag) return;
+    var p = frac(e); if(!p) return;
+    var f = review.list[drag.i]; if(!f) return;
+    var dx = p.x - drag.from.x, dy = p.y - drag.from.y, b = drag.box, n;
+    if(drag.mode === 'move'){
+      n = { x:clamp01(b.x + dx, b.w), y:clamp01(b.y + dy, b.h), w:b.w, h:b.h };
+    }else{
+      n = { x:b.x, y:b.y,
+            w:Math.max(0.01, Math.min(1 - b.x, b.w + dx)),
+            h:Math.max(0.01, Math.min(1 - b.y, b.h + dy)) };
+    }
+    f.box = n; f.edited = true;
+    var live = el.querySelector('[data-box="' + drag.i + '"]');
+    if(live){
+      live.style.left = pc(n.x); live.style.top = pc(n.y);
+      live.style.width = pc(n.w); live.style.height = pc(n.h);
+    }
+  });
+  function stop(){ if(drag){ drag = null; repaint(); } }
+  stage.addEventListener('pointerup', stop);
+  stage.addEventListener('pointercancel', stop);
+}
+function clamp01(v, size){ return Math.max(0, Math.min(1 - (size || 0), v)); }
+
+/* ── adding photographs ────────────────────────────────────────────────── */
+async function addShots(items){
+  var cl = sb();
+  if(!cl || !curWalk || busy || !items.length) return;
+  busy = true;
+  try{
+    for(var i = 0; i < items.length; i++){
+      var it = items[i];
+      var id = newId();
+      var path = 'walks/' + curWalk.id + '/' + id + '.jpg';
+      await putPhoto(cl, it.file, path);
+      var ins = await cl.from('walk_shots').insert({
+        id: id, walk_id: curWalk.id, path: path,
+        source: it.source || 'phone',
+        origin_photo_id: it.originId || null,
+        sort_order: shots.length + i
+      }).select('id');
+      if(ins && ins.error) throw new Error(ins.error.message || 'could not add the photograph');
+      if(!ins || !ins.data || !ins.data.length) throw new Error('Added nothing — admin only.');
+    }
+    await loadShots(curWalk.id);
+  }catch(e){
+    try{ window.alert(String(e && e.message ? e.message : e)); }catch(_){}
+  }
+  busy = false;
+  repaint();
+}
+function newId(){
+  return (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+       : String(Date.now()) + Math.random().toString(16).slice(2);
+}
+
+
+/* ── pulling photographs off a job ─────────────────────────────────────── */
+/* photoDb lives in another block and is a plain var, not a window export, so
+   this module queries project_photos itself. That is not duplication for its
+   own sake: photoDb's select list has no caption and no path for the inline
+   rows, and this picker needs both. */
+function openJobPicker(){
+  if(!amAdmin() || !curWalk) return;
+  jobPick = { projectId:null, projects:[], photos:[], chosen:{}, q:'', busy:false };
+  ensureForm();
+  drawJobPicker();
+  formEl.classList.add('open');
+  loadProjects();
+}
+
+async function loadProjects(){
+  var cl = sb();
+  if(!cl) return;
+  var r = await cl.from('projects').select('id,name,address')
+                  .order('updated_at', { ascending:false }).limit(300);
+  jobPick.projects = (r && !r.error && r.data) ? r.data : [];
+  drawJobPicker();
+}
+
+async function loadJobPhotos(pid){
+  var cl = sb();
+  jobPick.projectId = pid; jobPick.photos = []; jobPick.chosen = {}; jobPick.busy = true;
+  drawJobPicker();
+  var r = await cl.from('project_photos')
+                  .select('id,project_id,data,storage_path,caption,created_at')
+                  .eq('project_id', pid).order('created_at', { ascending:true });
+  var rows = (r && !r.error && r.data) ? r.data : [];
+  /* MEASURED, not assumed: 183 of 196 project_photos rows carry a
+     storage_path; the other 13 are inline base64 data: URIs with no storage
+     object at all. Both are real photographs and both belong in this picker —
+     dropping the inline ones would lose one photo in fifteen silently. */
+  var paths = rows.map(function(p){ return p.storage_path; }).filter(Boolean);
+  var map = {};
+  if(paths.length && typeof window.signedPhotoMap === 'function'){
+    try{ map = await window.signedPhotoMap(paths, 3600) || {}; }catch(_){}
+  }
+  rows.forEach(function(p){
+    p._thumb = p.storage_path ? (map[p.storage_path] || '')
+             : (String(p.data || '').slice(0,5) === 'data:' ? p.data : '');
+  });
+  jobPick.photos = rows.filter(function(p){ return p._thumb; });
+  jobPick.busy = false;
+  drawJobPicker();
+}
+
+function drawJobPicker(){
+  if(!jobPick) return;
+  var j = jobPick;
+  var chosenN = Object.keys(j.chosen).length;
+  var body;
+  if(!j.projectId){
+    var q = j.q.toLowerCase();
+    var list = j.projects.filter(function(p){
+      return !q || String(p.name || '').toLowerCase().indexOf(q) !== -1
+                || String(p.address || '').toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 40);
+    body = '<label>Which job</label>' +
+      '<input type="text" data-jq placeholder="Name or address" value="' + esc(j.q) + '">' +
+      (j.projects.length
+        ? list.map(function(p){
+            return '<button class="cr-sh-wlk" data-proj="' + esc(p.id) + '" type="button">' +
+              '<div class="t"><b>' + esc(p.name) + '</b>' +
+              '<span>' + esc(p.address || 'No address') + '</span></div></button>';
+          }).join('') || '<p class="cr-sh-note">Nothing matches that.</p>'
+        : '<p class="cr-sh-note">Loading jobs…</p>');
+  }else if(j.busy){
+    body = '<p class="cr-sh-note">Loading photographs…</p>';
+  }else if(!j.photos.length){
+    body = '<p class="cr-sh-note">That job has no photographs.</p>' +
+           '<button class="cr-sh-btn ghost" data-jback type="button">← Another job</button>';
+  }else{
+    body = '<div class="cr-sh-bar">' +
+        '<button class="cr-sh-btn ghost" data-jback type="button">← Another job</button>' +
+      '</div>' +
+      '<div class="cr-sh-pick">' +
+        j.photos.map(function(p, i){
+          return '<button data-jp="' + i + '" type="button"' + (j.chosen[i] ? ' class="on"' : '') + '>' +
+            '<img alt="" loading="lazy" src="' + esc(p._thumb) + '"></button>';
+        }).join('') +
+      '</div>';
+  }
+  formEl.innerHTML =
+    '<div class="bx">' +
+      '<h3>Add from a job</h3>' + body +
+      '<div class="err" data-err></div>' +
+      '<p class="note">The photograph is copied into this walk rather than linked. ' +
+        'Deleting it from the job later would otherwise blank the walk — in front of a client.</p>' +
+      '<div class="ft">' +
+        '<button class="cr-sh-btn ghost" data-act="cancel" type="button">Cancel</button>' +
+        '<button class="cr-sh-btn" data-jadd type="button"' + (chosenN ? '' : ' disabled') + '>' +
+          (chosenN ? 'Add ' + chosenN : 'Add') + '</button>' +
+      '</div>' +
+    '</div>';
+  wireJobPicker();
+}
+
+function wireJobPicker(){
+  var qi = formEl.querySelector('[data-jq]');
+  if(qi) qi.oninput = function(){
+    jobPick.q = qi.value;
+    var at = qi.selectionStart;
+    drawJobPicker();
+    var again = formEl.querySelector('[data-jq]');
+    if(again){ again.focus(); try{ again.setSelectionRange(at, at); }catch(_){} }
+  };
+  formEl.querySelectorAll('[data-proj]').forEach(function(b){
+    b.onclick = function(){ loadJobPhotos(b.dataset.proj); };
+  });
+  var back = formEl.querySelector('[data-jback]');
+  if(back) back.onclick = function(){
+    jobPick.projectId = null; jobPick.photos = []; jobPick.chosen = {}; drawJobPicker();
+  };
+  formEl.querySelectorAll('[data-jp]').forEach(function(b){
+    b.onclick = function(){
+      var i = b.dataset.jp;
+      if(jobPick.chosen[i]) delete jobPick.chosen[i]; else jobPick.chosen[i] = true;
+      drawJobPicker();
+    };
+  });
+  var add = formEl.querySelector('[data-jadd]');
+  if(add) add.onclick = takeJobPhotos;
+  var c = formEl.querySelector('[data-act="cancel"]');
+  if(c) c.onclick = function(){ jobPick = null; closeForm(); };
+}
+
+/* Copy the bytes, do not reference the path. Two reasons, both measured:
+   thirteen job photos have no storage object to reference at all, and deleting
+   a job photo in the app also removes the storage object. See walks_schema.sql. */
+async function takeJobPhotos(){
+  if(!jobPick || busy) return;
+  var cl = sb();
+  var picks = Object.keys(jobPick.chosen).map(function(i){ return jobPick.photos[i]; }).filter(Boolean);
+  if(!picks.length || !cl) return;
+  var btn = formEl.querySelector('[data-jadd]');
+  if(btn){ btn.disabled = true; btn.textContent = 'Copying…'; }
+  try{
+    var items = [];
+    for(var i = 0; i < picks.length; i++){
+      var p = picks[i], blob;
+      if(p.storage_path){
+        blob = await shotBlob(p.storage_path);
+      }else{
+        /* An inline data: URI resolves with no network — fetch is the shortest
+           correct way to turn one into a Blob. */
+        blob = await (await fetch(p.data)).blob();
+      }
+      items.push({ file:new File([blob], 'job.jpg', { type:'image/jpeg' }),
+                   source:'job', originId:p.id });
+    }
+    jobPick = null;
+    closeForm();
+    await addShots(items);
+  }catch(e){
+    showErr(String(e && e.message ? e.message : e));
+    if(btn){ btn.disabled = false; btn.textContent = 'Add'; }
+  }
+}
+
+/* ── admin: a walk ─────────────────────────────────────────────────────── */
+function openWalkForm(){
+  if(!amAdmin()) return;
+  ensureForm();
+  formEl.innerHTML =
+    '<div class="bx">' +
+      '<h3>Start a walk</h3>' +
+      '<label>What to call it</label>' +
+      '<input type="text" data-f="title" placeholder="4212 Wilmington Pike — hail">' +
+      '<label>Address</label><input type="text" data-f="address" placeholder="4212 Wilmington Pike">' +
+      '<div class="r2"><div><label>City</label><input type="text" data-f="city" placeholder="Dayton"></div>' +
+        '<div><label>Trade</label><select data-f="trade">' +
+          TRADES.map(function(t){ return '<option value="' + t + '">' + esc(TRADE_LABEL[t]) + '</option>'; }).join('') +
+        '</select></div></div>' +
+      '<label>Notes</label><input type="text" data-f="notes" placeholder="Anything worth remembering">' +
+      '<div class="err" data-err></div>' +
+      '<p class="note">Add photographs next. The AI marks what it thinks is damage and ' +
+        'nothing is shown to anyone until you have been through every mark.</p>' +
+      '<div class="ft">' +
+        '<button class="cr-sh-btn ghost" data-act="cancel" type="button">Cancel</button>' +
+        '<button class="cr-sh-btn" data-act="save" type="button">Start</button>' +
+      '</div>' +
+    '</div>';
+  formEl.classList.add('open');
+  formEl.querySelector('[data-act="cancel"]').onclick = closeForm;
+  formEl.querySelector('[data-act="save"]').onclick = saveWalk;
+}
+
+async function saveWalk(){
+  if(busy) return;
+  var cl = sb();
+  if(!cl) return showErr('Not signed in.');
+  var get = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i ? i.value.trim() : ''; };
+  var title = get('title') || get('address');
+  if(!title) return showErr('Give it a name — it is the heading on the card.');
+  var btn = formEl.querySelector('[data-act="save"]');
+  busy = true; btn.disabled = true; btn.textContent = 'Starting…';
+  try{
+    var who = '';
+    try{
+      var u = await cl.auth.getUser();
+      who = (u && u.data && u.data.user && u.data.user.email) || '';
+    }catch(_){}
+    var id = newId();
+    var ins = await cl.from('walks').insert({
+      id:id, title:title, address:get('address') || null, city:get('city') || null,
+      trade:get('trade') || null, notes:get('notes') || null,
+      created_by: who || null, published:true
+    }).select('id');
+    if(ins && ins.error) throw new Error(ins.error.message || 'could not save');
+    if(!ins || !ins.data || !ins.data.length) throw new Error('Saved nothing — admin only.');
+    closeForm();
+    walksLoaded = false;
+    await loadWalks();
+    curWalk = walks.filter(function(w){ return String(w.id) === String(id); })[0] || null;
+    if(curWalk) await loadShots(curWalk.id);
+  }catch(e){
+    showErr(String(e && e.message ? e.message : e));
+  }finally{
+    busy = false;
+    if(btn){ btn.disabled = false; btn.textContent = 'Start'; }
+    repaint();
+  }
+}
+
+async function toggleWalkPublish(){
+  var cl = sb();
+  if(!cl || !curWalk || busy) return;
+  busy = true;
+  try{
+    var r = await cl.from('walks').update({ published: !curWalk.published, updated_at:new Date().toISOString() })
+                    .eq('id', curWalk.id).select('id');
+    if(r && !r.error && r.data && r.data.length) curWalk.published = !curWalk.published;
+  }catch(_){}
+  busy = false;
+  repaint();
+}
+
+async function removeWalk(){
+  var cl = sb();
+  if(!cl || !curWalk || busy) return;
+  if(!window.confirm('Remove this walk and every photograph in it?')) return;
+  busy = true;
+  try{
+    /* .select('id') is load-bearing: a delete refused by RLS is a silent 204.
+       walk_shots go with it through the on delete cascade. */
+    var r = await cl.from('walks').delete().eq('id', curWalk.id).select('id');
+    if(r && !r.error && r.data && r.data.length){
+      walks = walks.filter(function(w){ return String(w.id) !== String(curWalk.id); });
+      curWalk = null; shots = []; review = null;
+    }
+  }catch(_){}
+  busy = false;
+  repaint();
+}
+
+/* ── wiring ────────────────────────────────────────────────────────────── */
+function wireWalk(){
+  el.querySelectorAll('[data-walk]').forEach(function(b){
+    b.onclick = function(){
+      curWalk = walks[parseInt(b.dataset.walk, 10)] || null;
+      review = null;
+      repaint();
+      if(curWalk) loadShots(curWalk.id).then(repaint, repaint);
+    };
+  });
+  el.querySelectorAll('[data-act="wback"]').forEach(function(b){
+    b.onclick = function(){ curWalk = null; shots = []; review = null; repaint(); };
+  });
+  el.querySelectorAll('[data-act="waddwalk"]').forEach(function(b){ b.onclick = openWalkForm; });
+  el.querySelectorAll('[data-act="wjob"]').forEach(function(b){ b.onclick = openJobPicker; });
+  el.querySelectorAll('[data-act="wpub"]').forEach(function(b){ b.onclick = toggleWalkPublish; });
+  el.querySelectorAll('[data-act="wdelwalk"]').forEach(function(b){ b.onclick = removeWalk; });
+
+  var fi = el.querySelector('[data-wfile]');
+  el.querySelectorAll('[data-act="wphone"]').forEach(function(b){
+    b.onclick = function(){ if(fi) fi.click(); };
+  });
+  if(fi) fi.onchange = function(){
+    var files = Array.prototype.slice.call(fi.files || []);
+    fi.value = '';
+    if(files.length) addShots(files.map(function(f){ return { file:f, source:'phone' }; }));
+  };
+
+  el.querySelectorAll('[data-shot]').forEach(function(b){
+    b.onclick = function(){
+      var s = shots[parseInt(b.dataset.shot, 10)];
+      if(!s) return;
+      /* Re-open on what was SAVED, so a second visit edits the accepted set
+         rather than starting from a blank overlay. */
+      review = { shot:s, list:(s.findings || []).map(function(f){ return JSON.parse(JSON.stringify(f)); }),
+                 sel:(s.findings || []).length ? 0 : -1, note:'', noteKind:'' };
+      repaint();
+      if(!s.reviewed_at && !review.list.length) runDetect();
+    };
+  });
+
+  el.querySelectorAll('[data-act="rback"]').forEach(function(b){
+    b.onclick = function(){ review = null; repaint(); };
+  });
+  el.querySelectorAll('[data-act="rdetect"]').forEach(function(b){ b.onclick = runDetect; });
+  el.querySelectorAll('[data-act="rsave"]').forEach(function(b){ b.onclick = saveReview; });
+  el.querySelectorAll('[data-drop]').forEach(function(b){
+    b.onclick = function(){
+      var i = parseInt(b.dataset.drop, 10);
+      review.list.splice(i, 1);
+      if(review.sel >= review.list.length) review.sel = review.list.length - 1;
+      repaint();
+    };
+  });
+  el.querySelectorAll('[data-sev]').forEach(function(s){
+    s.onchange = function(){
+      var f = review.list[parseInt(s.dataset.sev, 10)];
+      if(f){ f.severity = s.value; f.edited = true; repaint(); }
+    };
+  });
+  el.querySelectorAll('[data-fnd]').forEach(function(d){
+    d.onclick = function(e){
+      if(e.target.closest('button') || e.target.closest('select')) return;
+      review.sel = parseInt(d.dataset.fnd, 10);
+      repaint();
+    };
+  });
+  wireBoxes();
+}
+
 /* ── open / close ──────────────────────────────────────────────────────── */
 function open(){
   ensure();
@@ -56319,7 +57192,9 @@ function close(goHome){
 window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
   open  : open,
   close : close,
-  reload: function(){ loaded = false; workLoaded = false; return Promise.all([load(), loadWork()]); }
+  reload: function(){ loaded = false; workLoaded = false; walksLoaded = false;
+    curWalk = null; shots = []; review = null;
+    return Promise.all([load(), loadWork(), loadWalks()]); }
 });
 })();
 </script>

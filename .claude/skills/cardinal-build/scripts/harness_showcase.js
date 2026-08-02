@@ -345,7 +345,11 @@ const settle = () => new Promise(r => setTimeout(r, 30));
     h.w.CardinalShowcase.open();
     await settle();
     const el = h.d.getElementById('cr-show');
-    ok('tab strip rendered', el.querySelectorAll('[data-tab]').length === 2);
+    /* Three at 579: Showcase, Hall of Fame, The Walk. If this ever reads 4,
+       someone has turned the Inspections link into a tab and rebuilt the
+       reports list that already exists. */
+    ok('tab strip rendered', el.querySelectorAll('[data-tab]').length === 3,
+       el.querySelectorAll('[data-tab]').length);
     ok('showcase is the tab on open', !!el.querySelector('[data-tab="showcase"].on'));
     ok('Inspections is a LINK, not a third tab',
       !el.querySelector('[data-tab="inspections"]') && !!el.querySelector('[data-act="reports"]'));
@@ -406,8 +410,20 @@ const settle = () => new Promise(r => setTimeout(r, 30));
       /from\('workmanship_pairs'\)\.delete\(\)\.eq\('id', id\)\.select\('id'\)/.test(MODULE_JS));
     ok('work uploads land under workmanship/',
       /var base = 'workmanship\/' \+ id \+ '\/'/.test(MODULE_JS));
+    /* SCOPE THE SLICE. This used to take everything AFTER openWorkForm, which
+       was sloppy from the start and went red the moment 579 appended The Walk
+       below it — a tab that legitimately reads projects and project_photos.
+       The claim is about the Hall of Fame write path, so bound the slice to it:
+       openWorkForm + saveWork, stopping at removeWork. The file's own rule,
+       earned again. */
+    const hofPath = (function () {
+      const i = MODULE_JS.indexOf('function openWorkForm()');
+      const j = MODULE_JS.indexOf('async function removeWork(');
+      return (i !== -1 && j > i) ? MODULE_JS.slice(i, j) : '';
+    })();
+    ok('the Hall of Fame slice was actually captured', hofPath.length > 1500, hofPath.length);
     ok('Hall of Fame never reads a client record',
-      !/projects|inspection_reports|companycam/i.test(MODULE_JS.split('function openWorkForm()')[1] || ''));
+      !/projects|inspection_reports|companycam/i.test(hofPath));
   }
 
 
@@ -420,8 +436,12 @@ const settle = () => new Promise(r => setTimeout(r, 30));
     ok('dead 1600 default removed', !/\(max \|\| 1600\)/.test(MODULE_JS));
     ok('downscale uses high-quality smoothing',
       /imageSmoothingQuality = 'high'/.test(MODULE_JS));
-    ok('both upload paths go through putPhoto',
-      (MODULE_JS.match(/await putPhoto\(cl,/g) || []).length === 2);
+    /* Three at 579: a Showcase pair, a Hall of Fame comparison, and a Walk
+       shot. Every photograph this module stores gets both renditions, and a
+       fourth writer that skipped putPhoto would show up here. */
+    ok('every upload path goes through putPhoto',
+      (MODULE_JS.match(/await putPhoto\(cl,/g) || []).length === 3,
+      (MODULE_JS.match(/await putPhoto\(cl,/g) || []).length);
     ok('putPhoto writes both renditions',
       /shrink\(file, FULL\.max, FULL\.q\)/.test(MODULE_JS) &&
       /shrink\(file, DISP\.max, DISP\.q\)/.test(MODULE_JS));

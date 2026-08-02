@@ -81,6 +81,25 @@ const WORK = [
     published: true }
 ];
 
+/* One walk with one reviewed shot. The box fractions are chosen so the expected
+   pixel position is easy to state: x .25 / y .40 / w .30 / h .20. */
+const WALKS = [
+  { id: 'wwww1111-2222-3333-4444-555555555555', title: '4212 Wilmington Pike — hail',
+    address: '4212 Wilmington Pike', city: 'Dayton', trade: 'roof',
+    published: true, sort_order: 0 }
+];
+const SHOTS = [
+  { id: 'shot-1', walk_id: WALKS[0].id, sort_order: 0,
+    path: 'walks/wwww1111-2222-3333-4444-555555555555/s1.jpg', source: 'phone',
+    findings: [
+      { defect: 'hail_impact', severity: 'crit', label: 'Impact bruising',
+        box: { x: 0.25, y: 0.40, w: 0.30, h: 0.20 }, confidence: 0.82, edited: false },
+      { defect: 'nail_pop', severity: 'warn', label: 'Nail pop',
+        box: { x: 0.70, y: 0.10, w: 0.08, h: 0.08 }, confidence: 0.4, edited: false }
+    ],
+    reviewed_at: '2026-08-02T10:00:00Z', reviewed_by: 'theo@cardinalrenovations.net' }
+];
+
 (async () => {
   /* The image ships Chromium at a build the npm playwright does not expect, so
      point at it rather than downloading a second copy (the environment says
@@ -106,10 +125,14 @@ const WORK = [
     await page.goto('file://' + path.resolve(FILE), { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2500);   // let the app's own boot settle and give up
 
-    await page.evaluate(({ pairs, work, imgs }) => {
+    await page.evaluate(({ pairs, work, walks, shots, imgs }) => {
       /* Stub the client the module reads at call time, and the signer. The
          module is under test; its data source is not. */
-      const table = t => (t === 'workmanship_pairs' ? work : pairs);
+      const table = t => (t === 'workmanship_pairs' ? work
+                        : t === 'walks' ? walks
+                        : t === 'walk_shots' ? shots
+                        : t === 'projects' || t === 'project_photos' ? []
+                        : pairs);
       const supa = {
         from(t) {
           const q = { select: () => q, order: () => q, eq: () => q,
@@ -131,6 +154,7 @@ const WORK = [
           else if (/build/.test(p)) out[p] = imgs.build;
           else if (/bad/.test(p)) out[p] = imgs.bad;
           else if (/good/.test(p)) out[p] = imgs.good;
+          else if (/^walks\//.test(p)) out[p] = imgs.walk;
           else out[p] = imgs.after;
         });
         return out;
@@ -144,10 +168,11 @@ const WORK = [
          state no signed-in rep is ever in. */
       var lv = document.getElementById('landingView');
       if (lv) lv.style.display = 'none';
-    }, { pairs: PAIRS, work: WORK, imgs: {
+    }, { pairs: PAIRS, work: WORK, walks: WALKS, shots: SHOTS, imgs: {
       before: swatch('#6E655C', 1600, 1000, 'BEFORE'), after: swatch('#22252A', 1600, 1000, 'AFTER'),
       build:  swatch('#55606A', 1600, 1000, 'BUILD'),  bad:   swatch('#8A3B3B', 1200, 750, 'BAD'),
-      good:   swatch('#2F6B43', 1200, 750, 'OURS')
+      good:   swatch('#2F6B43', 1200, 750, 'OURS'),
+      walk:   swatch('#3A3F46', 1600, 1200, 'ROOF')
     }});
 
     const hasApi = await page.evaluate(() => !!(window.CardinalShowcase && window.CardinalShowcase.open));
@@ -226,7 +251,10 @@ const WORK = [
       m && /inset\(/.test(m.beforeClip), m && m.beforeClip);
     ok('the release badge rendered green for a cleared pair',
       m && /\bok\b/.test(m.relClass) && /Alvarez/.test(m.relText), m && m.relText);
-    ok('both tabs present', m && m.tabs === 2, m && m.tabs);
+    /* Three tabs at 579 — Showcase, Hall of Fame, The Walk. Inspections is
+       deliberately NOT one: it is a link out to the reports list that already
+       exists, so this count going to 4 means someone rebuilt it. */
+    ok('three tabs present, Inspections still a link', m && m.tabs === 3, m && m.tabs);
     ok('module did not touch body.style.overflow', m && m.bodyOverflow === '', JSON.stringify(m && m.bodyOverflow));
     ok('no uncaught page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 
@@ -307,6 +335,69 @@ const WORK = [
       /^rgb\(2[0-9]{2}, /.test(hof.badHeadColour), [hof.badHeadColour, hof.goodHeadColour].join(' / '));
     ok('side by side on desktop, not stacked', /\s/.test(hof.cols.trim()), hof.cols);
     await shot('04-desktop-hall-of-fame.png');
+
+    /* ── The Walk (579) ───────────────────────────────────────────────────
+       The one thing jsdom structurally cannot check. A circle in the wrong
+       place is worse than no circle: it points a homeowner at sound shingle
+       and every later finding stops being believed. jsdom does no layout, so
+       harness_walk.js can only prove the STYLE says 25%; only an engine can
+       prove 25% of the photograph is where the box actually lands. */
+    await page.click('[data-tab="walk"]');
+    await page.waitForTimeout(600);
+    await page.click('[data-walk="0"]');
+    await page.waitForTimeout(600);
+    const shotsN = await page.evaluate(() =>
+      document.querySelectorAll('#cr-show [data-shot]').length);
+    ok('the walk opened and its shots listed', shotsN === 1, shotsN);
+
+    await page.click('[data-shot="0"]');
+    await page.waitForTimeout(700);
+
+    const geo = await page.evaluate(() => {
+      const stage = document.querySelector('#cr-show [data-rev]');
+      const img = stage && stage.querySelector('img');
+      const b0 = document.querySelector('#cr-show [data-box="0"]');
+      const b1 = document.querySelector('#cr-show [data-box="1"]');
+      if (!stage || !b0) return null;
+      const s = stage.getBoundingClientRect(), r0 = b0.getBoundingClientRect();
+      const cs0 = getComputedStyle(b0), cs1 = b1 ? getComputedStyle(b1) : null;
+      return {
+        stageW: s.width, stageH: s.height,
+        imgW: img ? img.getBoundingClientRect().width : 0,
+        // where the box actually is, as a fraction of the stage
+        fx: (r0.left - s.left) / s.width, fy: (r0.top - s.top) / s.height,
+        fw: r0.width / s.width, fh: r0.height / s.height,
+        critColour: cs0.borderTopColor, warnColour: cs1 && cs1.borderTopColor,
+        boxes: document.querySelectorAll('#cr-show [data-box]').length,
+        rows: document.querySelectorAll('#cr-show [data-fnd]').length,
+        gripShown: b1 ? getComputedStyle(b1.querySelector('.gr')).display : ''
+      };
+    });
+
+    ok('the review stage got real size', geo && geo.stageW > 600 && geo.stageH > 100,
+      geo && [Math.round(geo.stageW), Math.round(geo.stageH)].join('x'));
+    ok('the photograph fills the stage', geo && Math.abs(geo.imgW - geo.stageW) < 2,
+      geo && [Math.round(geo.imgW), Math.round(geo.stageW)].join(' vs '));
+    /* .25/.40/.30/.20 in, the same fractions out — within a pixel of rounding. */
+    ok('a box lands exactly where its fraction says (x)',
+      geo && Math.abs(geo.fx - 0.25) < 0.005, geo && geo.fx);
+    ok('a box lands exactly where its fraction says (y)',
+      geo && Math.abs(geo.fy - 0.40) < 0.005, geo && geo.fy);
+    ok('and is the size its fraction says',
+      geo && Math.abs(geo.fw - 0.30) < 0.005 && Math.abs(geo.fh - 0.20) < 0.005,
+      geo && [geo.fw, geo.fh].join(' / '));
+    ok('both findings drew a box and a row', geo && geo.boxes === 2 && geo.rows === 2,
+      geo && geo.boxes + '/' + geo.rows);
+    /* The 481 class: these rules must WIN, not merely parse. crit and warn have
+       to be visibly different or severity carries no information at all. */
+    ok('crit and warn resolve to different colours',
+      geo && geo.critColour && geo.critColour !== geo.warnColour,
+      geo && [geo.critColour, geo.warnColour].join(' / '));
+    ok('crit is the red, resolved not transparent',
+      geo && /^rgb\(229, 72, 77\)$/.test(geo.critColour), geo && geo.critColour);
+    ok('the resize grip is hidden on an unselected box', geo && geo.gripShown === 'none',
+      geo && geo.gripShown);
+    await shot('05-desktop-the-walk.png');
 
     await page.close();
   }
