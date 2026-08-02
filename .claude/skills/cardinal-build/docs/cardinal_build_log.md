@@ -6107,3 +6107,252 @@ never sets `dirty` (only the three real decision points do). **Negative-controll
 5 of the 13 new assertions correctly fail** there, confirming the harness tests the guard and
 not just its own fixtures. `harness_showcase.js` 106, `harness_detect.js` 39,
 `render_showcase.js` 36 — unaffected, confirming no regression on the surfaces those gates own.
+
+### builds 562–563, 574–577 — The AI Field Manual, and the hardware chapter it kept getting wrong
+
+Written in one long session, logged here in one entry because they are one thing.
+
+**562** — the book (15 chapters + back matter) filed in the Resource Library as its own section,
+**not in the TOC**, which Theo asked for explicitly. Served as `/ai-field-manual.html` and
+iframed. That was **forced, not preferred**: 36 class collisions and 6 token collisions between
+the book's stylesheet and the app's, measured before choosing.
+
+⚠️ **The repo copy is GENERATED.** The book is authored as an artifact, and the artifact host wraps
+what you write in `<!doctype><head><meta charset>`. Ship those same bytes from Vercel and the
+browser guesses the encoding — every em-dash renders `â€"`. **A screenshot is the only thing that
+caught it.** `scripts/wrap_book.py` now does the wrap; never hand-edit `ai-field-manual.html`.
+
+**563** — my own regression from 562, reproduced against a real service worker before fixing.
+`sw.js` cached **every** successful navigation under `'/'`, which was harmless while `/` was the
+only navigable URL on the origin. **An iframe load IS a navigation**, so opening the book replaced
+the offline shell with the book. Now `url.pathname === '/'` gates the write.
+
+**574** — the hardware page was factually wrong and had been since it shipped. Apple **withdrew**
+512 GB (March 2026) and 256/128 GB (May) as AI demand ate DRAM supply, so the Mac Studio line caps
+at **96 GB** — and the Spark's 128 GB is now larger than any Mac Studio sold. The **MacBook Pro
+M5 Max still takes 128 GB at 614 GB/s**, so the laptop outholds the desktop, which sounds like a
+mistake and isn't. Also added the commands page (no fixed photos folder exists on a Spark — the
+page teaches the search, not a path).
+
+**575** — Theo: *"So no pros on the amd at all?"* The AMD cells were **balanced** — three of seven
+went AMD's way — but the specs led and the verdict came last, so the impression was wrong even
+though the content wasn't. **Ordering beat content.** AMD got a four-item pros run ahead of its
+spec table, and a document-order assertion so it stays there.
+
+**576** — Theo: *"This is not all about the photos, that was a small part in buying a spark a very
+small part."* Correct, and mine. Both verdicts rested on the photo job when the chapter's own
+"what local does well" lists six uses with **image generation first**. One harness assertion had
+to be **inverted** — it *required* the narrow argument, so it would have held the mistake in place
+rather than catching it.
+
+**577** — the same 575 fix applied to Apple, plus two figures the book contradicted itself on:
+
+- **`3.4×` reproduces from nothing in the book's own table.** 819/273 is 3.0 (M3 Ultra) and
+  614/273 is 2.2 (MacBook Pro). Now quoted at both ends, like AMD's price.
+- **"the only two machines that reach 128 GB" was stale the moment 575 added the AMD row** — three
+  are highlighted. Mine, from 575.
+- **RTX PRO 6000 Blackwell** added: 96 GB at 1,792 GB/s, which the chapter's own arithmetic puts at
+  a 128B model at **16 t/s** against 2 on the Spark. It is the one thing on the page that refuses
+  the capacity-or-speed trade, so the trade is now named as **a price trade, not a law of physics**.
+  $13,250 + a workstation + 600 W ≈ three and a half Sparks.
+- Plus what was deliberately left out, with a reason each (RTX 5090, a second Spark, Jetson, cloud).
+
+**Two gate failures at 577 were the TEST, not the book** — the file's own rule, earned twice more:
+`parseInt('1,792')` is **1**, so the arithmetic check reported "want 0 t/s" against a correct row;
+and a whole-table `/512|256/` matched AMD's 256 GB/s **bandwidth** cell.
+
+Gates: `check_build.py` green 576 → 577, negative-controlled. Book harness **303 assertions**, and
+the negative control fails **12** of them against the 576 book, each naming what 577 changed.
+`h562_aibook.js` 40/40. Web ↔ markdown numeric parity 20/20.
+
+---
+
+### build 578 — the manual reordered into four groups, and the hardware split out
+
+Theo: *"Also reorder the chapters to what makes sense."* Plus a chapter of its own for the machines.
+
+**Four ordering faults, not one.** Laid out end to end they were obvious: VI (local vs cloud) and
+XI (the Spark) were the same subject **five chapters apart**, with IX and X — also hardware — stranded
+between them; **XIII "What never to paste" is a day-one safety rule and four earlier chapters
+cross-referenced *forward* to it**; IV "Building apps" came before VII "What's worth building"; and
+V "Marketing" sat between the how-to-use group and the hardware group, interrupting both.
+
+```
+Using it         I talking · II prompting · III never-paste · IV agents
+Choosing         V which model · VI local vs cloud · VII THE MACHINES · VIII the Spark · IX stacks
+Building it      X what's worth · XI building apps · XII photo binder · XIII claims · XIV marketing
+The wider world  XV Glasswing · XVI the other half of the map
+```
+
+**13 of 16 chapters changed number, moving ~150 cross-references.**
+
+⚠️ **The trap, and it is the one this project keeps paying for.** The map contains **IX→V and
+V→XIV**. A sequential find-and-replace rewrites IX to V and then rewrites *that* V to XIV, and
+chapter IX silently lands on XIV. Every replacement is computed against the ORIGINAL string and
+spliced in **one reverse-order pass**, so no output is ever an input.
+
+**And I walked straight into it anyway**, in the one place numerals are authored by hand: the
+sources deck was rewritten with FINAL numerals and then swept, turning my new "Chapter XIII" back
+into "Chapter III". Caught by a carry-over tally — *the count of references to each new numeral must
+equal the count the old numeral had* — not by reading the code. The deck is now fenced off from the
+sweep.
+
+⚠️ **The separator trap, twice.** 15 source labels use a literal `·` and 24 use `&middot;`; the
+sources deck uses a literal `–` where the rest of the file uses `&#8211;`. Anchoring on one form
+silently found a subset — `Chapter VI · the memory cap` reported **0 occurrences** while sitting in
+the file twice. Same class as `'` vs `&apos;`.
+
+**The split.** VI keeps the formula, the four types, mixture-of-experts, what local does and can't
+do, and the verdict. VII takes every machine. **The four-types table went with VII**, which the
+first cut missed — it is five machines and their tokens/sec, i.e. the formula being *run*. Caught by
+asserting no machine name survives in VI; a Ryzen row was still sitting in it.
+
+**Nothing is patched — everything is regenerated.** A chapter's number appears in seven places
+(data-ch, .cnum, the .pg counter, its own folio, both neighbours' folios, the spine, the cover)
+plus a comment separator. 16 × 7 is 112 chances to be off by one. One ORDER list is now the source
+of truth and all of it is rebuilt from that. The class of bug that put chapter IX's "next" pointing
+at itself cannot occur.
+
+**Two live defects found by the new assertions, both pre-existing:**
+
+- **A chapter cited itself by number** — "Chapter IX picks two Claudes" *inside chapter IX*. Nothing
+  had ever checked. Reworded.
+- **The opener gutter was 3.4rem and the widest numeral is 6.26rem**, so chapter VIII rendered
+  **"VIIThe Spark"** — the title's T sitting on the numeral's last I. **Six chapters were already
+  colliding**; the reorder added a seventh. Measured with a Range, not eyeballed, and confirmed
+  present in the build-577 book before the fix.
+
+**Two harness defects fixed, both of which had produced a false green:**
+
+- **A bad explicit path fell through to the real book.** Five mutation tests reported 325/325 while
+  the mutant files had never been written. An explicit path that does not exist now exits 2.
+- **A crash threw away every result.** Assertions are buffered and printed at the end, so an
+  exception mid-run showed a bare stack trace and no ✗ at all — which reads as "the harness is
+  broken" rather than "the book is". Results now print on abort.
+
+**The harness addresses chapters BY NAME now** (`go(CH.machines)`), because every `'#/9'` in it
+silently meant a different chapter after the reorder — a test that opens the wrong page still passes
+or fails, for reasons unrelated to what it claims to check.
+
+Gates: `check_build.py` green 577 → 578, negative-controlled. Book harness **325**, up from 303, and
+**five mutants** each produce a named failure (reference-to-nowhere, self-citation, machine left in
+VI, pager miscount, TOC drift). `h562_aibook.js` 42/42. Web ↔ markdown chapter order compared
+title-by-title, 16/16.
+
+---
+
+### build 581 — What's New was showing five blank cards, and a merge that had to be untangled
+
+**Found while resolving a merge, not while looking for it.** Two sessions worked 2 Aug in parallel.
+`origin/main` had builds **574–580** (the Showcase, the Hall of Fame, The Walk) while this branch had
+its own **574–578** for the manual — a build-number collision, which CLAUDE.md says is normal here
+and never to renumber.
+
+**The real find was in the conflict.** That PR added its seven entries in a **new changelog shape**:
+
+```js
+{ b:580, d:'2026-08-02', t:'title', s:'summary' }     //  7 entries
+{ build:576, note:'…' }                               // 268 entries
+```
+
+and the renderer only ever read `.build` and `.note`:
+
+```js
+CHANGELOG.filter(function(e){ return e.build > lastSeen; })   // undefined > n  -> false
+'Build ' + e.build          // "Build undefined"
+esc(e.note)                 // '' — esc maps null/undefined to empty
+```
+
+**Reproduced against the shipped module before anything was written** — sliced `cr-cl-script` out of
+`origin/main:index.html` and served it, because it reads `localStorage` and a `setContent` document
+has no origin to read it from (the first attempt died on `SecurityError`, which is its own small
+lesson). Measured:
+
+| lastSeen | before | after |
+|---|---|---|
+| 573 | 3 cards, newest **576** — builds 577–580 invisible | 13 cards, newest 581 |
+| 576 | **5 blank cards reading "Build undefined"** | 7 cards, all with text |
+| 579 | same five blank cards | 2 cards |
+
+The empty filter fell through to `CHANGELOG.slice(0, 5)`, which is exactly the seven new-shape
+entries. **Anyone who had already seen build 576 — everyone, it deployed — got five blank cards.**
+Not mine; found in the merge and fixed here rather than built on top of.
+
+**The fix reads both shapes** (`entryBuild()` / `entryNote()`) rather than rewriting 268 entries.
+A new-shape entry renders as *title* — *summary*.
+
+**And the merge itself needed sorting.** Concatenating two histories gave the box two descending runs
+— 581, 580…574, then 578, 577…574 — which reads as broken. The array is now stably sorted
+newest-first, so the five duplicated numbers sit adjacent, which is the honest presentation of two
+sessions that both used them. Asserted as a pure permutation: same entries, same byte count.
+
+⚠️ **My own assertion was wrong twice in this build, and both times it stopped a bad write.**
+`entryBuild(` appears **3** times, not the 4 I guessed, so the patch refused to land until I counted;
+and the `newest first` check failed on a list that *looked* descending — because it printed only the
+first six of thirteen, and the drop was at index 8. **Print what your extractor captured.**
+
+Gates: `check_build.py` green **580 → 581**, negative-controlled against `origin/main`. New harness
+`h581_changelog.js` (25 assertions) runs the shipped module against the shipped array at eight
+`lastSeen` values. Book harness 325/325, `h562_aibook.js` 42/42.
+
+---
+
+### build 582 — the hardware chapter answers the whole question
+
+Seven asks in one message. 578 built the container; this fills it. **Eight new sections**, and the
+one rewrite that mattered most.
+
+| Ask | Section |
+|---|---|
+| *"Tech specs in its own section"* | **The spec sheet** — six machines, no conclusions drawn |
+| — | **The DGX Spark, since it is the one you own** — four pros, three cons |
+| *"a detailed section on apple as well"* | **Apple, in detail** — the line-up, MLX, then the withdrawals |
+| *"Make the 6000 its own section… pros and cons"* | **The RTX PRO 6000, which breaks the rule** |
+| *"the comparison section spark vs apple vs 6000"* | **Side by side** — one three-column table |
+| *"what if I stacked 2 sparks"* | **What stacking two Sparks actually changes** |
+| *"Can you partner a spark and a 5090"* | **Can you partner a Spark with a 5090?** |
+| *"any references to photo use only… re-analyze"* | VI's workload list, rewritten |
+
+**The photo rewrite was a real defect, not a tone change.** "What local does well" listed **five**
+items while two verdicts leaning on it said **six**. It is now **seven** — image generation, LoRA
+training, transcription, document search, reading paperwork, photo tagging, a private assistant —
+and photo work says of itself that it is *one line of seven, roughly its share of why the machine
+is worth owning*. Theo: *"that was a small part in buying a spark a very small part."*
+
+**Every computed figure is derived in the patch script and self-checked against a row the book
+already ships** before any of it is written:
+
+```python
+def tps(bw, B): return round(bw * 0.58 / (0.5 * B))
+CHECK = [(273,171,2), (819,128,7), (614,171,4), (546,48,13), (256,171,2)]
+```
+
+so RTX PRO 6000 = 96 GB → 128B at **16 t/s**, RTX 5090 = 32 GB → 43B at **48 t/s**, two Sparks =
+256 GB → 341B at **1 t/s**. If the method ever drifts the script aborts before writing.
+
+**The two stacking answers, which are the same answer twice.** Memory adds; bandwidth does not. Two
+Sparks double capacity and make the biggest model *slower* — unless it is mixture-of-experts, which
+is why owners measure 27–28 t/s on a 397B model that the dense maths calls impossible. A Spark and
+a 5090 cannot be joined at all in the way people mean: **the Spark is sealed and has no slot**, so
+"partnering" means two computers on a network, and a token then walks through both.
+
+**Chapter VIII already had a Two Sparks section** and it agreed with the new one — same claim, same
+reasoning. It now points at VII's numbers rather than arguing the case independently. *Grep before
+you write: the prime doctrine, earned again.*
+
+⚠️ **Four of my own assertions were wrong and every one stopped a bad write.** `RTX PRO 6000`
+appears 4 times, not 5 (the three-way table header omits the model word). The new sections add
+**10** headings, not 8 — four of them carry a callout with its own `h3`. A whole-file check on
+`Spark vs Mac Studio` fails on a *source-link title* that must not be renamed. And
+`orig.index('data-ch="8"')` finds the **spine TOC entry**, not the section, so the blast-radius
+check compared the file against itself from the wrong offset.
+
+⚠️ **And two harness patterns were wrong for the same reason twice.** `textContent` hands back
+**decoded** entities, so `200&nbsp;Gb/s` is `200 Gb/s` and `Max&#8209;Q` is `Max‑Q`. A
+pattern written with an ordinary space or hyphen matches neither. Both failed against correct
+prose. The block now normalises before matching.
+
+Gates: `check_build.py` green 581 → 582, negative-controlled. Book harness **345** (was 325), and
+**25** of them fail against the 578 book — each naming exactly what 582 added. `h562_aibook.js`
+42/42, `h581_changelog.js` 25/25. Web ↔ markdown parity 33/33. Screenshots of all six new sections
+at 390 px and 1280 px, light and dark.

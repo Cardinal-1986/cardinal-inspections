@@ -1210,11 +1210,50 @@ styled only `#quickInspView`, not `#qiStartView` — the pin-the-property step y
 first. ⚠️ `styleMounts()` writes **inline** `position/inset/z-index` onto the three mounts, so
 `!important` is mandatory there, not stylistic.
 
-## 562–563 — the AI Field Manual
+## 562–563, 574–582 — the AI Field Manual
 
 Fifteen chapters on using AI in this business, plus a printable desk card, filed in the Resource
 Library with its own section. **563** fixed an offline bug: opening it no longer replaces what the app
 shows when you have no signal.
+
+**Where it lives.** Landing card in `#resourceLibraryView` → `rlPageAIBook` → an iframe on
+`/ai-field-manual.html`. **Deliberately not in the TOC** — Theo asked for that explicitly.
+`body.rl-at-book` drops `.ins-body`'s 840px cap so the book gets the full pane. The iframe `src` is
+set on first open only, so coming back keeps the reader's place.
+
+⚠️ **`ai-field-manual.html` is GENERATED — never hand-edit it.** Edit the authored artifact, then
+re-run `.claude/skills/cardinal-build/scripts/wrap_book.py`. It adds the doctype and charset the
+artifact host supplies and Vercel does not; without them every em-dash in the book renders `â€"`.
+
+**578 reordered the book** into 16 chapters in four groups — *Using it* (I–IV), *Choosing* (V–IX),
+*Building it* (X–XIV), *The wider world* (XV–XVI) — and split the hardware out of "Local vs. cloud"
+into **VII · The machines**. Thirteen chapters changed number and ~150 cross-references moved with
+them. ⚠️ **Chapters are regenerated from one ORDER list in `scratchpad/reorder.py`, never patched**
+— the number appears in seven places per chapter plus the spine and the cover. The harness addresses
+chapters by name (`CH.machines`), not by `#/7`.
+
+**VII · The machines is the chapter that answers hardware questions**, and 582 gave it its full
+shape: a plain **spec sheet** (six machines, no conclusions), then a section each for the **DGX
+Spark**, **Apple**, **AMD** and the **RTX PRO 6000**, a **three-way comparison**, and both stacking
+answers — **two Sparks** (memory adds, speed does not; mixture-of-experts is the exception) and
+**a Spark + a 5090** (impossible as asked — the Spark is sealed and has no slot). ⚠️ Its figures
+are **computed in the patch script and self-checked against rows the book already ships**, so a
+drifting method aborts before it can be written.
+
+⚠️ **Chapter VIII also has a "Two Sparks" section.** It agrees with VII's and now points at it.
+Grep before writing — the two nearly ended up arguing the same case independently.
+
+**574–577 are all the hardware chapter**, and all of them are corrections:
+Apple's withdrawn memory tiers (574), a commands page for the Spark (574), a fair hearing for AMD
+(575), weighing the Spark on all six workloads rather than the photo job (576), the same fair
+hearing for Apple plus the RTX PRO 6000 (577). Its figures are **computed, not quoted** —
+`tok/s = bandwidth × 0.58 ÷ (0.5 × B)`, capacity fits `≥ 1.5 × 0.5 × B` — and the book harness
+recomputes every row of the table on each run, so a wrong number fails rather than ships.
+
+**Its own harnesses**, both required before shipping a book change:
+`.claude/skills/cardinal-build/harnesses/checkbook.mjs` (345 assertions; pass a book path as argv[2] — an explicit path that does not exist exits 2 rather than silently testing the real book) and
+`h562_aibook.js` (42, the Library integration and the served bytes), and
+`h581_changelog.js` (25, What's New against the shipped CHANGELOG). `AI_CHEATSHEET.md` mirrors the same content and is `.vercelignore`'d.
 
 ## 565 — Discard on an estimate
 

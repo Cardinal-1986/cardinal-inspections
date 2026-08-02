@@ -51,8 +51,12 @@ def main(srcpath):
     assert doc.lower().count('<html') == 1 and doc.lower().count('</html>') == 1
     assert doc.count('<meta charset="utf-8">') == 1
     assert '<title>' in doc.split('</head>')[0], 'title escaped the head'
-    # and must still be the book
-    assert 'data-ch="glossary"' in doc and 'data-ch="15"' in doc, 'content lost'
+    # and must still be the whole book — count the sections rather than probe
+    # for one, since 578 renumbered every chapter and data-ch="15" would have
+    # gone on meaning "the last chapter" while silently meaning a different one
+    n = doc.count('<section class="chapter')
+    assert n == 21, f'{n} sections, want 21 (cover + 16 + 4 back)'
+    assert 'data-ch="glossary"' in doc and 'data-ch="sources"' in doc, 'back matter lost'
 
     fd, tmp = tempfile.mkstemp(dir=os.path.dirname(OUT))
     with os.fdopen(fd, 'w', encoding='utf-8') as f:

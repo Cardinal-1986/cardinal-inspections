@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 580 &#8212; The Walk warns before it throws away a mark you have not saved</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 582 &#8212; the manual&#8217;s hardware chapter answers all of it &#8212; specs, the RTX 6000, a three-way comparison, and both stacking questions</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,10 +34998,14 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:582, note:'\uD83D\uDD29 The manual\u2019s hardware chapter now answers the whole question. A plain spec sheet before any argument, the DGX Spark and Apple each written up properly, the RTX PRO 6000 with its own pros and cons, a three-way Spark-vs-Mac-vs-6000 table, and both stacking questions \u2014 what two Sparks really change, and whether you can pair one with a 5090. And what local AI is good for is now seven jobs, with photographs as one of them rather than the argument.' },
+{ build:581, note:'\uD83D\uDD27 What\u2019s New was showing five blank cards reading \u201cBuild undefined\u201d, and the seven newest builds never appeared at all \u2014 two ways of writing an entry had got mixed and the box only understood one of them. It reads both now. Also: the AI Field Manual is reordered into sixteen chapters in four groups, and the hardware has a chapter of its own.' },
 { b:580, d:'2026-08-02', t:'The Walk asks before it forgets', s:'Rejecting a mark, changing how serious one is, or dragging a box into place, then tapping Back or Ask again — both used to throw the change away with no warning. They ask first now, only when there is actually something to lose. Reopening a photo you have not touched yet, or asking the AI for the first time, still needs no confirmation.' },
 { b:579, d:'2026-08-02', t:'The Walk', s:'A third tab on the Showcase. Add photographs from your phone or pull them off a job, and the AI marks what it thinks is hail bruising, lifted shingles, a failed pipe boot. Every mark is a proposal: keep it, drag it onto the damage if it is close, change how serious it is, or throw it away. Only what you keep is saved, so anything a client sees has been through your hands. The marks are drawn over the photograph and never burned into it — the picture on file stays the picture the camera took. Admins build them; everyone can show them.' },
 { b:578, d:'2026-08-02', t:'The before/after slider follows a mouse', s:'On a laptop, grabbing the photograph itself to drag the divider moved it about a pixel and then stopped, with a ghost copy of the picture stuck to the cursor. The browser had decided you were dragging the image out of the page. Touch was never affected, so it never showed up on a phone or the iPad. Dragging now works from anywhere on the picture, on any device.' },
+{ build:578, note:'\uD83D\uDCDA The manual is reordered. Sixteen chapters in four groups \u2014 using it, choosing, building it, the wider world. \u201cWhat never to paste\u201d moves to chapter three, where a safety rule belongs, and the hardware splits out of \u201cLocal vs. cloud\u201d into a chapter of its own called The machines.' },
 { b:577, d:'2026-08-02', t:'Showcase photographs keep their detail', s:'Every picture is now kept at full resolution for the slider and pinching in, with a smaller copy made for the browsing grid so the screen still loads fast on a phone. Builds 574-576 shrank everything to 1600px, which went soft the moment a homeowner pinched — the granules and nail heads these photographs exist to show were the first thing lost.' },
+{ build:577, note:'\uD83C\uDF4E The manual gives Apple the same fair hearing AMD got \u2014 the Mac section now opens with the four things a Mac is genuinely better at, before any of the detail. Two figures it contradicted itself on are fixed, and a new page covers the one card that is big AND fast, plus what was left out and why.' },
 { b:576, d:'2026-08-02', t:'The Hall of Fame', s:'The Showcase gets a second tab: a bad install photographed beside ours, with one line on why it matters. A homeowner cannot tell a good roof from a bad one by looking at the finished surface — two pictures side by side explain it in five seconds. Inspections is a link, not a tab: the reports list already exists and there is no sense building a second one.' },
 { build:576, note:'\uD83D\uDD8C\uFE0F The manual weighs the Spark on everything it does, not just photos \u2014 image generation and LoRAs lead, since diffusion is the most CUDA-locked work there is. Photo captioning is now one line of four.' },
 { b:575, d:'2026-08-02', t:'Who cleared the photo, and when', s:'A Showcase pair now records the client release — the date and the name of whoever gave it. Pairs without one are marked In-app only: fine to show across the kitchen table, not to publish. Ticking the box without a name is refused, because a date on its own proves nothing a year later.' },
@@ -35284,6 +35288,12 @@ var scan = footer ? footer.textContent : document.body.textContent.slice(0, 4000
 var m = String(scan || '').match(/build\s+(\d+)/i);
 return m ? parseInt(m[1], 10) : null;
 }
+function entryBuild(e){ return e.build != null ? e.build : e.b; }
+function entryNote(e){
+if(e.note != null) return e.note;
+if(e.t && e.s) return e.t + ' \u2014 ' + e.s;
+return e.t || e.s || '';
+}
 function getLastSeen(){
 try{ return parseInt(localStorage.getItem(KEY) || '0', 10) || 0; }
 catch(e){ return 0; }
@@ -35294,7 +35304,7 @@ try{ localStorage.setItem(KEY, String(build)); }catch(e){}
 function show(){
 var cur = currentBuild();
 var lastSeen = getLastSeen();
-var newBuilds = CHANGELOG.filter(function(e){ return e.build > lastSeen; });
+var newBuilds = CHANGELOG.filter(function(e){ return entryBuild(e) > lastSeen; });
 if(!newBuilds.length) newBuilds = CHANGELOG.slice(0, 5);
 var bg = document.createElement('div');
 bg.className = 'cr-cl-bg';
@@ -35304,8 +35314,8 @@ bg.innerHTML =
 '<div class="cr-cl-body">' +
 newBuilds.map(function(e){
 return '<div class="cr-cl-entry">' +
-'<div class="cr-cl-build">Build ' + e.build + '</div>' +
-'<div class="cr-cl-desc">' + esc(e.note) + '</div>' +
+'<div class="cr-cl-build">Build ' + esc(entryBuild(e)) + '</div>' +
+'<div class="cr-cl-desc">' + esc(entryNote(e)) + '</div>' +
 '</div>';
 }).join('') +
 '</div>' +
