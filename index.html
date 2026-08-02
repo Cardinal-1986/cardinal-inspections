@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 566 &#8212; the estimates list stops asking the server for columns that do not exist</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 567 &#8212; the two screens that were redrawing themselves sixty times a second have stopped</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -27935,6 +27935,21 @@ function showList() {
   }
 
   // ── Header chip ───────────────────────────────────────────
+  /* 567: an HTML source string and the browser's serialization of it are NOT the
+     same text. meta.icon is inline SVG, and a self-closing <path .../> round-trips
+     as <path ...></path>, so `chip.innerHTML !== html` below was true on EVERY
+     animation frame and the guard it lives in could never succeed. Pushing the
+     source through a detached element makes both sides serializations, so an
+     unchanged chip finally compares equal. Detached, so it emits no mutation
+     records of its own; cached because there are only four portals and this runs
+     once per frame. */
+  var NORM_SCRATCH = null, NORM_CACHE = {};
+  function normHtml(h){
+    if(NORM_CACHE[h] !== undefined) return NORM_CACHE[h];
+    if(!NORM_SCRATCH) NORM_SCRATCH = document.createElement('span');
+    NORM_SCRATCH.innerHTML = h;
+    return (NORM_CACHE[h] = NORM_SCRATCH.innerHTML);
+  }
   function paintChip(){
     var wrap = document.getElementById('navWrap') || document.querySelector('header.site');
     if(!wrap) return;
@@ -27960,8 +27975,13 @@ function showList() {
     });
     if(!document.body.classList.contains(want)) document.body.classList.add(want);
 
-    if(chip.className !== cls)  chip.className = cls;
-    if(chip.innerHTML !== html) chip.innerHTML = html;
+    /* 567: compare serialization against serialization — see normHtml() above.
+       Still compared against the LIVE chip, deliberately: that is what lets this
+       repair a chip another module has stomped, and a dataset signature would
+       have thrown that away to fix the loop. */
+    var wantHtml = normHtml(html);
+    if(chip.className !== cls)      chip.className = cls;
+    if(chip.innerHTML !== wantHtml) chip.innerHTML = wantHtml;
   }
 
   // ── Portal picker sheet ───────────────────────────────────
@@ -34723,6 +34743,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:567, note:'\uD83E\uDDEF The app was quietly redrawing two things sixty times a second, on every screen, forever \u2014 the CRM chip in the header and the landing page greeting. \u2666 Nothing looked wrong, but the whole app was doing that work constantly: it drained battery, made phones warm and made everything feel half a step slow. \u2666 Both now redraw only when something has actually changed. Nothing looks different \u2014 it just stops happening.' },
 { build:566, note:'\uD83E\uDDF9 The estimates list was asking the server for two columns that do not exist, so every single load came back as an error. It has been failing quietly since the day it shipped. The bad request is gone.' },
 { build:565, note:'\uD83E\uDDEF Two fixes. \u2666 A background job that hooks up address autocomplete was retrying about sixty times a second on every screen, forever, because no Google Maps key is configured \u2014 tens of thousands of errors a minute, quietly eating your device. It now tries once and stops. \u2666 Estimates get a Discard button. It leaves the list but stays on the record, and only you and Joan see it. \u2666 Autocomplete itself still needs the Maps key set on the server.' },
 { build:563, note:'\uD83D\uDD27 Offline fix: opening the AI Field Manual no longer replaces what the app shows when you have no signal.' },
@@ -41202,31 +41223,38 @@ if(typeof window.showHome === 'function') window.showHome();
 };
 });
 }
+/* 567: assigning textContent emits a childList mutation record EVEN WHEN THE
+   STRING IS IDENTICAL — the old text node is removed and a new one added
+   regardless. Confirmed in Chromium: 10 identical writes produced 10 records,
+   10 guarded writes produced 0. Every write in paint() below was unconditional,
+   so the six of them retriggered this module's own body observer -> rAF ->
+   build() -> paint(), seven writes per frame at 60fps, forever. That is the
+   ~1691 mutations/sec Theo photographed.
+   The cost was app-wide, not local: 50 modules in this file observe
+   document.body with subtree:true, so a guaranteed mutation every frame woke
+   all 50 every frame, several of them doing forced layout reads.
+   NOT the cause of the vanishing left nav, despite the paths looking alike —
+   that gate reads getComputedStyle(...).display on navWrap and landingView,
+   which rewriting descendant text cannot change. */
+function lrSetText(el, v){
+if(el && el.textContent !== v) el.textContent = v;
+}
 function paint(){
 var lv = document.getElementById('landingView');
 if(!lv || lv.dataset.crLrBuilt !== '1') return;
 var now = new Date();
 var q = QUOTES[dayOfYear(now) % QUOTES.length];
-var qt = lv.querySelector('[data-slot="qt"]');
-var qc = lv.querySelector('[data-slot="qc"]');
-if(qt) qt.textContent = '\u201C' + q.t + '\u201D';
-if(qc) qc.textContent = q.c;
-var hello = lv.querySelector('[data-slot="hello"]');
-if(hello) hello.textContent = greeting(now.getHours());
+lrSetText(lv.querySelector('[data-slot="qt"]'), '\u201C' + q.t + '\u201D');
+lrSetText(lv.querySelector('[data-slot="qc"]'), q.c);
+lrSetText(lv.querySelector('[data-slot="hello"]'), greeting(now.getHours()));
 var nm = firstName();
-var comma = lv.querySelector('[data-slot="comma"]');
-var who = lv.querySelector('[data-slot="who"]');
-if(comma) comma.textContent = nm ? ', ' : '';
-if(who) who.textContent = nm;
-var stamp = lv.querySelector('[data-slot="stamp"]');
-if(stamp){
-stamp.textContent =
+lrSetText(lv.querySelector('[data-slot="comma"]'), nm ? ', ' : '');
+lrSetText(lv.querySelector('[data-slot="who"]'), nm);
+lrSetText(lv.querySelector('[data-slot="stamp"]'),
 now.toLocaleDateString('en-US', { weekday:'long' }) + ' \u00b7 ' +
-now.toLocaleDateString('en-US', { month:'long', day:'numeric' });
-}
+now.toLocaleDateString('en-US', { month:'long', day:'numeric' }));
 var r = qiResume();
-var qs = lv.querySelector('[data-slot="qisub"]');
-if(qs && r) qs.textContent = r;
+if(r) lrSetText(lv.querySelector('[data-slot="qisub"]'), r);
 try{ wx(); }catch(_){ }
 }
 try{ build(); }catch(e){ console.warn('[landing] initial build:', e); }

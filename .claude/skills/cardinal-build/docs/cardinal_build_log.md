@@ -5477,16 +5477,83 @@ Re-render loop: span#navWrap > span#crPortalChip     ~240 mutations/sec
 Re-render loop: div#landingView                     ~1691 mutations/sec
 ```
 
-**This is the missing-nav bug.** `ready()` in cr-lnav-script gates on `navWrap` and `landingView`;
-both are being hammered, so the menu tears itself down. Nothing *removes* the nav — the page never
-holds still long enough for it to stay.
+> **⚠ CLOSED AT 567, AND MOST OF THE PARAGRAPH BELOW WAS WRONG.** Kept, struck, because the way it
+> was wrong is the lesson. It is not a MutationObserver write-fight; `metallicize`,
+> `rerenderChipIfNeeded` and the duplicate-id theory are all innocent. It is two `requestAnimationFrame`
+> repaint loops. And it is **not** the missing-nav bug — see 567.
 
-Root cause class identified, culprit NOT yet isolated: **14 MutationObservers, most on
+~~**This is the missing-nav bug.** `ready()` in cr-lnav-script gates on `navWrap` and `landingView`;
+both are being hammered, so the menu tears itself down. Nothing *removes* the nav — the page never
+holds still long enough for it to stay.~~
+
+~~Root cause class identified, culprit NOT yet isolated: **14 MutationObservers, most on
 `document.body` with `subtree:true`**, so any one that writes to the body wakes all the others. At
 least one confirmed write-fight — `rerenderChipIfNeeded` (L~29939) forces `claimchip ct-community`
 on a body-subtree observer while another maintainer sets it back. But the loop the detector names is
 on `crPortalChip`, and `paintChip()` **is** correctly guarded (`if(chip.className !== cls)`), so the
 actual pair is still unfound. Do not blind-patch this: walk all 14 observers first, and note
-`querySelectorAll('#crPortalChip')` at L~47235 implies DUPLICATE IDs from two creators.
+`querySelectorAll('#crPortalChip')` at L~47235 implies DUPLICATE IDs from two creators.~~
 
 Gates: `check_build.py` green, negative-controlled, 565 → 566.
+
+---
+
+### build 567 — the two re-render loops, root-caused and stopped
+
+Both loops from the 566 note, closed. Reproduced in a clean headless load of the shipped file with
+no sign-in — 60/sec on the chip and 244/sec on the landing, the same loops Theo photographed at 240
+and 1691.
+
+**How they were found, after reading the source had failed twice.** Every candidate read looked
+correctly guarded, so: patch `appendChild` / `insertBefore` / `replaceChild` / `innerHTML` /
+`textContent` / `className` on the prototypes *before* the app's scripts run, record
+`new Error().stack` on every write, and sample only past a 6-second settle so the boot burst cannot
+drown the signal. The top rows named the culprits outright:
+
+```
+64.7/s  set innerHTML   | span#crPortalChip   | paintChip@27964 < tick@28108
+64.7/s  set textContent | ...cr-lr-quote>p    | paint@41212 < build@41034     (x7 targets)
+```
+
+64.7/s is `requestAnimationFrame` at 60fps. **Two rAF repaint loops, not an observer write-fight.**
+`scripts/`-adjacent `loop_probe.js` in the session scratchpad is the pattern; it is worth keeping.
+
+**1. The chip — a guard that could never succeed.** `paintChip()` had the right guard *and* a
+comment saying why it mattered. It silently never worked:
+
+```js
+if(chip.innerHTML !== html) chip.innerHTML = html;   // html is a SOURCE string
+```
+
+`meta.icon` is inline SVG with self-closing `<path .../>`, which the browser serializes back as
+`<path ...></path>`. **A source string and its serialization are never equal**, so the guard fired
+every frame. Confirmed in Chromium: 5 of 5 guarded passes wrote; 0 of 5 after normalising the source
+through a detached element. The fix normalises; it deliberately still compares against the **live**
+chip, because that is what lets `paintChip` repair a chip another module has stomped — a dataset
+signature would have fixed the loop by throwing that away.
+
+**2. The landing — no guard at all.** `paint()` wrote `textContent` to seven slots unconditionally.
+**Assigning `textContent` emits a childList record even when the string is identical** — the old
+text node is removed and a new one added regardless. Confirmed in Chromium: 10 identical writes → 10
+records; 10 guarded writes → 0.
+
+**The cost was app-wide.** **50 modules in this file call `.observe(document.body, {subtree:true})`**
+— a guaranteed mutation every frame woke all 50 every frame, forever, several doing forced layout
+reads inside the handler. Battery, heat, and a half-step of lag everywhere.
+
+**❌ It is NOT the missing-nav bug, and 566's note claiming so is struck above.** The menu's gate
+reads `getComputedStyle(el).display` on `header.site`, `navWrap` and `landingView`. These loops
+rewrote descendant *text* and the chip's *innerHTML*; neither changes either element's `display`, so
+`ready()` could not have flipped because of them. The missing-nav report needs its own reproduction.
+
+**A counting trap, earned again.** `.observe(document.body` is 50 in code. Stripping `/* */` first
+says 39 — naive comment-stripping ate eleven real calls that sit after a `/*` inside a string. The
+file's own warning.
+
+Gates: `check_build.py` green, negative-controlled, 566 → 567. **Chromium, twice:** the probe shows
+388 writes/sec → 3.3 (the three clocks, once a second each, correct) and the perf detector reports
+**no loops at all**; and a 566-vs-567 comparison harness requires every observable output — chip
+class, chip serialized HTML, chip text, SVG count, caret, body portal class, all seven landing slots,
+child counts — to be **identical**. All green. The build is invisible by design; the only way it
+could be wrong is by having stopped painting something real, which is what that harness exists to
+catch.
