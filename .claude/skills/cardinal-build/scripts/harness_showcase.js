@@ -45,9 +45,10 @@ const PAIRS = [
     after_path: 'showcase/b/after.jpg', score: 92, published: true, sort_order: 1 }
 ];
 
-function makeSupa(rows) {
+function makeSupa(rows, workRows) {
   return {
-    from() {
+    from(table) {
+      const data = table === 'workmanship_pairs' ? (workRows || []) : rows;
       const q = {
         select() { return q; },
         order() { return q; },
@@ -55,7 +56,7 @@ function makeSupa(rows) {
         insert() { return q; },
         update() { return q; },
         delete() { return q; },
-        then(res) { return Promise.resolve({ data: rows, error: null }).then(res); }
+        then(res) { return Promise.resolve({ data, error: null }).then(res); }
       };
       return q;
     },
@@ -63,13 +64,13 @@ function makeSupa(rows) {
   };
 }
 
-async function boot({ admin, rows }) {
+async function boot({ admin, rows, workRows }) {
   const dom = new JSDOM('<!doctype html><html><body></body></html>',
     { runScripts: 'outside-only', pretendToBeVisual: true });
   const w = dom.window;
 
   // Lock the mocks — the app's boot has nulled window.supa under a harness before.
-  Object.defineProperty(w, 'supa', { value: makeSupa(rows), writable: false });
+  Object.defineProperty(w, 'supa', { value: makeSupa(rows, workRows), writable: false });
   Object.defineProperty(w, 'is_admin', { value: () => admin, writable: false });
 
   const signCalls = [];
@@ -79,7 +80,8 @@ async function boot({ admin, rows }) {
     paths.forEach(p => { out[p] = 'https://signed.example/' + p + '?token=abc'; });
     return out;
   };
-  let hideCalls = 0, navViews = [], homeCalls = 0;
+  let hideCalls = 0, navViews = [], homeCalls = 0, reportCalls = 0;
+  w.openReportsView = () => { reportCalls++; };
   w.hideAllViews = () => { hideCalls++; };
   w.navSetView = (v) => { navViews.push(v); };
   w.showHome = () => { homeCalls++; };
@@ -88,7 +90,7 @@ async function boot({ admin, rows }) {
   w.eval(MODULE_JS);
   return {
     w, d: w.document,
-    stats: () => ({ hideCalls, navViews, homeCalls, signCalls })
+    stats: () => ({ hideCalls, navViews, homeCalls, signCalls, reportCalls })
   };
 }
 const settle = () => new Promise(r => setTimeout(r, 30));
@@ -326,6 +328,86 @@ const settle = () => new Promise(r => setTimeout(r, 30));
       /if\(relBox && relBox\.checked\)\{/.test(MODULE_JS));
     ok('unticked pair sends no release columns at all',
       !/release_on: get\('release_on'\) \|\| new Date/.test(MODULE_JS.split('if(relBox && relBox.checked){')[0]));
+  }
+
+
+  /* ── 10 · Hall of Fame (build 576) ───────────────────────────────────── */
+  console.log('\n── hall of fame ──');
+  const WORK = [{
+    id: 'w1', title: 'High-nailing', trade: 'roof',
+    lesson: 'Nails above the line pin nothing.',
+    bad_path: 'workmanship/w1/bad.jpg', bad_caption: '3 nails, 35 mm high.',
+    good_path: 'workmanship/w1/good.jpg', good_caption: 'Four fasteners through both courses.',
+    published: true
+  }];
+  {
+    const h = await boot({ admin: false, rows: PAIRS, workRows: WORK });
+    h.w.CardinalShowcase.open();
+    await settle();
+    const el = h.d.getElementById('cr-show');
+    ok('tab strip rendered', el.querySelectorAll('[data-tab]').length === 2);
+    ok('showcase is the tab on open', !!el.querySelector('[data-tab="showcase"].on'));
+    ok('Inspections is a LINK, not a third tab',
+      !el.querySelector('[data-tab="inspections"]') && !!el.querySelector('[data-act="reports"]'));
+
+    el.querySelector('[data-tab="work"]')?.click();
+    await settle(); await settle();
+    ok('switching to Hall of Fame renders a comparison', !!el.querySelector('.cr-sh-wk'));
+    ok('both sides render', el.querySelectorAll('.cr-sh-side').length === 2);
+    ok('bad side is marked bad', !!el.querySelector('.cr-sh-side.bad'));
+    ok('good side is marked good', !!el.querySelector('.cr-sh-side.good'));
+    const imgs = [...el.querySelectorAll('.cr-sh-side img')];
+    ok('both images signed', imgs.length === 2 && imgs.every(i => i.getAttribute('src').startsWith('https://signed.example/')),
+       imgs.map(i => i.getAttribute('src').slice(0, 28)).join(' | '));
+    ok('the lesson line shows', el.textContent.includes('Nails above the line pin nothing.'));
+    ok('non-admin sees no Add', !el.querySelector('[data-act="waddc"]'));
+    ok('non-admin sees no remove', !el.querySelector('[data-wdel]'));
+  }
+  {
+    const h = await boot({ admin: true, rows: PAIRS, workRows: WORK });
+    h.w.CardinalShowcase.open();
+    await settle();
+    const el = h.d.getElementById('cr-show');
+    el.querySelector('[data-tab="work"]')?.click();
+    await settle(); await settle();
+    ok('admin sees Add a comparison', !!el.querySelector('[data-act="waddc"]'));
+    ok('admin sees remove', !!el.querySelector('[data-wdel]'));
+    el.querySelector('[data-act="waddc"]')?.click();
+    await settle();
+    const form = h.d.getElementById('cr-show-form') || h.d.createElement('div');
+    ok('form asks for both photographs',
+      !!form.querySelector('[data-f="bad"]') && !!form.querySelector('[data-f="good"]'));
+    ok('form asks for a title and a lesson',
+      !!form.querySelector('[data-f="title"]') && !!form.querySelector('[data-f="lesson"]'));
+  }
+  {
+    const h = await boot({ admin: true, rows: PAIRS, workRows: [] });
+    h.w.CardinalShowcase.open();
+    await settle();
+    const el = h.d.getElementById('cr-show');
+    el.querySelector('[data-tab="work"]')?.click();
+    await settle(); await settle();
+    ok('empty Hall of Fame still offers Add', !!el.querySelector('[data-act="waddc"]'));
+    ok('empty state shown', !!el.querySelector('.cr-sh-empty'));
+
+    // The link must CLOSE the showcase before handing off — two full-screen
+    // overlays open at once is the trap 570-572 spent three builds on.
+    el.querySelector('[data-act="reports"]')?.click();
+    await settle();
+    ok('Inspections link closed the showcase', !el.classList.contains('open'));
+    ok('Inspections link opened the EXISTING reports view', h.stats().reportCalls === 1);
+  }
+  {
+    ok('save refuses a comparison with no title',
+      /if\(!title\) return showErr/.test(MODULE_JS));
+    ok('save refuses a comparison missing a photograph',
+      /if\(!fb \|\| !fg\) return showErr/.test(MODULE_JS));
+    ok('work delete proves itself with .select(\'id\')',
+      /from\('workmanship_pairs'\)\.delete\(\)\.eq\('id', id\)\.select\('id'\)/.test(MODULE_JS));
+    ok('work uploads land under workmanship/',
+      /var base = 'workmanship\/' \+ id \+ '\/'/.test(MODULE_JS));
+    ok('Hall of Fame never reads a client record',
+      !/projects|inspection_reports|companycam/i.test(MODULE_JS.split('function openWorkForm()')[1] || ''));
   }
 
   console.log('\n' + '─'.repeat(58));

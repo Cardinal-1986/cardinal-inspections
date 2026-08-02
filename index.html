@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 575 &#8212; the Showcase records who cleared a photograph for use, and when</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 576 &#8212; the Hall of Fame: a bad install beside ours, so the difference is visible</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:576, d:'2026-08-02', t:'The Hall of Fame', s:'The Showcase gets a second tab: a bad install photographed beside ours, with one line on why it matters. A homeowner cannot tell a good roof from a bad one by looking at the finished surface — two pictures side by side explain it in five seconds. Inspections is a link, not a tab: the reports list already exists and there is no sense building a second one.' },
 { b:575, d:'2026-08-02', t:'Who cleared the photo, and when', s:'A Showcase pair now records the client release — the date and the name of whoever gave it. Pairs without one are marked In-app only: fine to show across the kitchen table, not to publish. Ticking the box without a name is refused, because a date on its own proves nothing a year later.' },
 { b:574, d:'2026-08-02', t:'The Showcase', s:'Before and after, side by side, on the Sales Floor. Drag the divider and the finished roof wipes over the old one. Privacy mode swaps the address for a project number so the tablet can go across the table. Theo adds the pairs from his phone; everyone else can show them.' },
 { build:573, note:'\uD83C\uDF13 Four screens were built white and stayed white no matter which theme you were in \u2014 the Objections Coach, Pricing Catalog, Company Documents and Adjusters. Walking into the coach from the dark Sales Floor was a wall of white. \u2666 All four now follow the app theme. \u2666 Light mode looks exactly as it did; only dark is new. \u2666 Every colour that carries text was checked for readability against its new background rather than eyeballed.' },
@@ -55495,6 +55496,41 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 #cr-show.priv .cr-sh-priv .y{display:inline}
 /* Privacy masking. The real address is REMOVED from the DOM, not merely hidden:
    a homeowner holding the tablet can select text on the screen. */
+/* Tabs. The Inspections button is styled as a way OUT, not a third tab —
+   it hands off to the reports list that already exists. */
+.cr-sh-tabs{display:flex;gap:6px;margin:14px 0 2px;overflow-x:auto;scrollbar-width:none}
+.cr-sh-tabs::-webkit-scrollbar{display:none}
+.cr-sh-tabs button{flex:0 0 auto;padding:9px 15px;border-radius:20px;cursor:pointer;
+  background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
+  color:var(--sh-mut,#98A29C);font:700 11.5px inherit;font-family:inherit;white-space:nowrap}
+.cr-sh-tabs button:hover{color:var(--sh-ink,#F2F4F2);border-color:var(--sh-acc,#C8202E)}
+.cr-sh-tabs button.on{background:var(--sh-acc,#C8202E);border-color:var(--sh-acc,#C8202E);
+  color:var(--sh-acci,#FFF3F3)}
+.cr-sh-tabs button.out{margin-left:auto;border-style:dashed}
+
+/* A comparison. Two columns on a tablet, stacked on a phone — the pair has to
+   be seen together to mean anything, so they never stack above 560px. */
+.cr-sh-wk{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:11px;padding:13px;margin-top:10px}
+.cr-sh-wk-h{display:flex;align-items:center;gap:9px;font:650 15px inherit;font-family:inherit}
+.cr-sh-wk-l{margin:7px 0 0;font-size:12.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+.cr-sh-x{margin-left:auto;flex:0 0 auto;background:transparent;border:0;cursor:pointer;
+  color:var(--sh-mut,#98A29C);font-size:14px;line-height:1;padding:2px 4px;font-family:inherit}
+.cr-sh-x:hover{color:var(--sh-bad,#E5484D)}
+.cr-sh-wk-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px}
+@media (max-width:560px){ .cr-sh-wk-g{grid-template-columns:1fr} }
+.cr-sh-side{background:var(--sh-card2,#101312);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:9px;overflow:hidden}
+.cr-sh-side .h{display:flex;align-items:center;gap:7px;padding:9px 11px;
+  font:700 10.5px inherit;letter-spacing:.08em;text-transform:uppercase}
+.cr-sh-side .h .sq{width:9px;height:9px;border-radius:2px}
+.cr-sh-side.bad .h{color:var(--sh-bad,#E5484D)}
+.cr-sh-side.bad .h .sq{background:var(--sh-bad,#E5484D)}
+.cr-sh-side.good .h{color:var(--sh-ok,#46A758)}
+.cr-sh-side.good .h .sq{background:var(--sh-ok,#46A758)}
+.cr-sh-side img{display:block;width:100%;aspect-ratio:8/5;object-fit:cover;background:var(--sh-card2,#101312)}
+.cr-sh-side p{margin:0;padding:9px 11px 11px;font-size:12.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+
 .cr-sh-rule{display:flex;align-items:center;gap:12px;margin:26px 0 4px;
   font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
 .cr-sh-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--sh-line,rgba(148,157,165,.4)),transparent)}
@@ -55599,6 +55635,8 @@ var TRADE_LABEL = { roof:'Roofing', siding:'Siding', windows:'Windows',
 
 var el = null, formEl = null;
 var pairs = [], cur = 0, signed = {}, loaded = false, busy = false;
+var tab = 'showcase';
+var work = [], workLoaded = false;
 
 function esc(s){
   return String(s == null ? '' : s)
@@ -55642,10 +55680,24 @@ async function load(){
   loaded = true;
   await sign();
 }
+async function loadWork(){
+  var cl = sb();
+  if(!cl) return;
+  var r = await cl.from('workmanship_pairs').select('*')
+                  .order('sort_order', { ascending:true })
+                  .order('created_at', { ascending:false });
+  work = (r && !r.error && r.data) ? r.data : [];
+  workLoaded = true;
+  await sign();
+}
+
 /* Sign for DISPLAY ONLY. The returned map is never written back onto a row —
    saveEstimate's lesson: an expiring URL in the database corrupts it forever. */
 async function sign(){
   var paths = [];
+  work.forEach(function(w){
+    [w.bad_path, w.good_path].forEach(function(x){ if(x) paths.push(x); });
+  });
   pairs.forEach(function(p){
     [p.before_path, p.build_path, p.after_path].forEach(function(x){ if(x) paths.push(x); });
   });
@@ -55670,15 +55722,72 @@ function render(){
           '<span class="d"></span><span class="n">Privacy off</span><span class="y">Privacy on</span>' +
         '</button>' +
       '</div>' +
+      renderTabs() +
       '<div data-slot="body">' + renderBody() + '</div>' +
     '</div>';
   wire();
 }
 
+/* Inspections is a LINK, not a tab. The app already has a reports list —
+   openReportsView(), defined exactly once — and a second one built in here
+   would be the duplicate-feature class this project keeps paying for. */
+function renderTabs(){
+  return '<div class="cr-sh-tabs">' +
+    '<button data-tab="showcase"' + (tab === 'showcase' ? ' class="on"' : '') +
+      ' type="button">Showcase</button>' +
+    '<button data-tab="work"' + (tab === 'work' ? ' class="on"' : '') +
+      ' type="button">Hall of Fame</button>' +
+    '<button data-act="reports" type="button" class="out">Inspections \u2197</button>' +
+  '</div>';
+}
+
 function renderBody(){
+  if(tab === 'work') return renderWork();
   if(!loaded) return '<div class="cr-sh-empty">Loading…</div>';
   if(!pairs.length) return renderEmpty();
   return renderShow() + renderCards() + renderAdmin();
+}
+
+function renderWork(){
+  if(!workLoaded) return '<div class="cr-sh-empty">Loading…</div>';
+  if(!work.length){
+    return '<div class="cr-sh-empty"><b>No comparisons yet.</b>' +
+      (amAdmin()
+        ? 'Add a bad install beside one of ours. Two photographs explain in five ' +
+          'seconds what a paragraph cannot.'
+        : 'Theo hasn\u2019t added any yet.') +
+      '</div>' + renderWorkAdmin();
+  }
+  return '<div class="cr-sh-rule">' + work.length + ' comparisons</div>' +
+    work.map(function(w, i){
+      return '<div class="cr-sh-wk">' +
+        '<div class="cr-sh-wk-h">' + esc(w.title) +
+          (w.trade ? ' <span class="cr-sh-chip">' + esc(TRADE_LABEL[w.trade] || w.trade) + '</span>' : '') +
+          (amAdmin() ? '<button class="cr-sh-x" data-wdel="' + esc(w.id) + '" type="button" ' +
+                       'aria-label="Remove">\u2715</button>' : '') +
+        '</div>' +
+        (w.lesson ? '<p class="cr-sh-wk-l">' + esc(w.lesson) + '</p>' : '') +
+        '<div class="cr-sh-wk-g">' +
+          side('bad', 'Industry bad install', w.bad_path, w.bad_caption, i) +
+          side('good', 'Cardinal standard', w.good_path, w.good_caption, i) +
+        '</div>' +
+      '</div>';
+    }).join('') + renderWorkAdmin();
+}
+
+function side(kind, head, path, caption, i){
+  return '<div class="cr-sh-side ' + kind + '">' +
+    '<div class="h"><span class="sq"></span>' + head + '</div>' +
+    '<img alt="' + esc(head) + '" loading="lazy" src="' + esc(src(path)) + '">' +
+    (caption ? '<p>' + esc(caption) + '</p>' : '') +
+  '</div>';
+}
+
+function renderWorkAdmin(){
+  if(!amAdmin()) return '';
+  return '<div class="cr-sh-admin">' +
+    '<button class="cr-sh-btn" data-act="waddc" type="button">Add a comparison</button>' +
+  '</div>';
 }
 
 function renderEmpty(){
@@ -55790,10 +55899,31 @@ function wire(){
       repaint();
     };
   });
+  el.querySelectorAll('[data-tab]').forEach(function(b){
+    b.onclick = function(){
+      tab = b.dataset.tab;
+      render();
+      if(tab === 'work' && !workLoaded){
+        loadWork().then(repaint, function(){ workLoaded = true; repaint(); });
+      }
+    };
+  });
+  el.querySelectorAll('[data-act="reports"]').forEach(function(b){
+    b.onclick = function(){
+      /* Close first, then hand off — two full-screen views must never be open
+         at once, and openReportsView calls hideAllViews itself anyway. */
+      close(false);
+      if(typeof window.openReportsView === 'function') window.openReportsView();
+    };
+  });
   wireBody();
 }
 
 function wireBody(){
+  el.querySelectorAll('[data-act="waddc"]').forEach(function(b){ b.onclick = openWorkForm; });
+  el.querySelectorAll('[data-wdel]').forEach(function(b){
+    b.onclick = function(){ removeWork(b.dataset.wdel); };
+  });
   el.querySelectorAll('[data-pick]').forEach(function(b){
     b.onclick = function(){ cur = parseInt(b.dataset.pick, 10) || 0; repaint(); };
   });
@@ -56000,6 +56130,101 @@ async function savePair(){
   }
 }
 
+function openWorkForm(){
+  if(!amAdmin()) return;
+  ensureForm();
+  formEl.innerHTML =
+    '<div class="bx">' +
+      '<h3>Add a comparison</h3>' +
+      '<label>What is it called</label><input type="text" data-f="title" placeholder="High-nailing">' +
+      '<label>Trade</label><select data-f="trade">' +
+        TRADES.map(function(t){ return '<option value="' + t + '">' + esc(TRADE_LABEL[t]) + '</option>'; }).join('') +
+      '</select>' +
+      '<label>Why it matters, in one line</label>' +
+      '<input type="text" data-f="lesson" placeholder="Nails above the line pin nothing. First wind event lifts the course.">' +
+      '<label>The bad install \u2014 photo</label><input type="file" accept="image/*" data-f="bad">' +
+      '<label>What went wrong</label><input type="text" data-f="bad_caption" placeholder="3 nails, 35 mm high. Voids the wind warranty on day one.">' +
+      '<label>Our standard \u2014 photo</label><input type="file" accept="image/*" data-f="good">' +
+      '<label>What we do instead</label><input type="text" data-f="good_caption" placeholder="Four fasteners through both courses, seated on the line.">' +
+      '<div class="err" data-err></div>' +
+      '<p class="note">Both photographs are copied into Cardinal\u2019s own storage. ' +
+        'Nothing here reads a client record \u2014 the bad side is competitor work you ' +
+        'photographed, the good side is ours.</p>' +
+      '<div class="ft">' +
+        '<button class="cr-sh-btn ghost" data-act="cancel" type="button">Cancel</button>' +
+        '<button class="cr-sh-btn" data-act="save" type="button">Save</button>' +
+      '</div>' +
+    '</div>';
+  formEl.classList.add('open');
+  formEl.querySelector('[data-act="cancel"]').onclick = closeForm;
+  formEl.querySelector('[data-act="save"]').onclick = saveWork;
+}
+
+async function saveWork(){
+  if(busy) return;
+  var cl = sb();
+  if(!cl) return showErr('Not signed in.');
+  var btn = formEl.querySelector('[data-act="save"]');
+  var get = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i ? i.value.trim() : ''; };
+  var file = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i && i.files && i.files[0] ? i.files[0] : null; };
+
+  var title = get('title');
+  var fb = file('bad'), fg = file('good');
+  if(!title) return showErr('Give it a name — it is the heading on the card.');
+  if(!fb || !fg) return showErr('Both photographs are needed: the bad one and ours.');
+
+  busy = true; btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+           : String(Date.now()) + Math.random().toString(16).slice(2);
+    var base = 'workmanship/' + id + '/';
+    var paths = {};
+    var jobs = [['bad', fb], ['good', fg]];
+    for(var i = 0; i < jobs.length; i++){
+      var blob = await shrink(jobs[i][1], 1600);
+      var path = base + jobs[i][0] + '.jpg';
+      var up = await cl.storage.from('photos').upload(path, blob, { contentType:'image/jpeg', upsert:true });
+      if(up && up.error) throw new Error(up.error.message || ('upload failed: ' + jobs[i][0]));
+      paths[jobs[i][0]] = path;
+    }
+    var ins = await cl.from('workmanship_pairs').insert({
+      id: id, title: title, trade: get('trade') || null, lesson: get('lesson') || null,
+      bad_path: paths.bad, bad_caption: get('bad_caption') || null,
+      good_path: paths.good, good_caption: get('good_caption') || null,
+      published: true
+    }).select('id');
+    if(ins && ins.error) throw new Error(ins.error.message || 'could not save');
+    /* Refused by RLS comes back with no error and no rows — check the rows. */
+    if(!ins || !ins.data || !ins.data.length) throw new Error('Saved nothing — admin only.');
+
+    closeForm();
+    workLoaded = false;
+    await loadWork();
+    repaint();
+  }catch(e){
+    showErr(String(e && e.message ? e.message : e));
+  }finally{
+    busy = false;
+    if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+  }
+}
+
+async function removeWork(id){
+  var cl = sb();
+  if(!cl || busy) return;
+  if(!window.confirm('Remove this comparison?')) return;
+  busy = true;
+  try{
+    /* .select('id') is load-bearing: a delete refused by RLS is a silent 204. */
+    var r = await cl.from('workmanship_pairs').delete().eq('id', id).select('id');
+    if(r && !r.error && r.data && r.data.length){
+      work = work.filter(function(w){ return String(w.id) !== String(id); });
+    }
+  }catch(_){}
+  busy = false;
+  repaint();
+}
+
 async function togglePublish(){
   var cl = sb(), p = pairs[cur];
   if(!cl || !p || busy) return;
@@ -56043,6 +56268,9 @@ function open(){
   if(typeof window.navSetView === 'function'){
     try{ window.navSetView('showcase'); }catch(_){}
   }
+  if(tab === 'work' && !workLoaded){
+    loadWork().then(function(){ repaint(); }, function(){ workLoaded = true; repaint(); });
+  }
   if(!loaded){
     load().then(function(){ repaint(); }, function(){ loaded = true; repaint(); });
   }else{
@@ -56061,7 +56289,7 @@ function close(goHome){
 window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
   open  : open,
   close : close,
-  reload: function(){ loaded = false; return load(); }
+  reload: function(){ loaded = false; workLoaded = false; return Promise.all([load(), loadWork()]); }
 });
 })();
 </script>
