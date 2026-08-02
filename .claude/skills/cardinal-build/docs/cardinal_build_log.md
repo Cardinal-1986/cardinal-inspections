@@ -5669,5 +5669,18 @@ full-access. `saveEstimate()` is NOT silent — `.select().single()` makes a ref
 table with a read-only SELECT, the effect was simulated per-user with a CROSS JOIN, and the DDL
 itself was proved to run by creating it under a throwaway name — safe because permissive policies OR
 together and `est_update USING (true)` was still in place, so nothing could become more restrictive —
-then reading back Postgres's own parse of both expressions and dropping it. Final `pg_policies` read
-confirms the table is byte-identical to before. **The real policy has NOT been applied; Theo runs it.**
+then reading back Postgres's own parse of both expressions and dropping it. That dry run left the
+table byte-identical to before.
+
+**APPLIED 2 Aug 2026 on Theo's instruction ("1 run it in supabase"), through the Supabase connector.**
+Post-apply state verified: RLS enabled, 4 policies, **0 carrying the bare literal `true`** (was 1),
+12 rows intact, 0 archived. The `.sql` file is idempotent, so running it again from the Supabase SQL
+editor is a no-op.
+
+**To revert**, one statement:
+
+```sql
+drop policy if exists est_update on public.estimates;
+create policy est_update on public.estimates for update to authenticated
+  using (true) with check (true);
+```
