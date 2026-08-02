@@ -226,6 +226,49 @@ be proven.
 
 ---
 
+---
+
+## 4 · Building a YOLO training set from the archive
+
+`hail_review.py` in this folder. Standard library only. Written for hail specifically because
+that's what Theo asked for first, but it runs the same for any of the 16 defect classes
+`api/detect.js` knows — see the module docstring for why running the full vocabulary costs
+nothing extra once you're reviewing anyway.
+
+Three steps, each cheap to abandon before the next:
+
+```bash
+python3 hail_review.py find   --dest /data/cardinal/companycam           # free — job-name match
+python3 hail_review.py detect --dest /data/cardinal/companycam           # real API calls, resumable
+python3 hail_review.py review --dest /data/cardinal/companycam           # builds review.html
+```
+
+**`find`** greps `manifest.jsonl` for job names containing `hail` (or `--keyword anything`) and
+prints the candidate count *before* step 2 spends a single API call. This only catches jobs
+literally named for it — it will miss hail damage sitting in a job called something else. If
+that matters, `detect --all` scans the whole downloaded archive instead, at real cost.
+
+**`detect`** signs in as you — set `CARDINAL_EMAIL` / `CARDINAL_PASSWORD` as environment
+variables first, never on the command line or in a file — and sends each candidate through the
+same `/api/detect` the app uses, over the network. One prompt, one vocabulary, nothing
+re-implemented and nothing that can drift: the script checks its own copy of the defect list
+against what the API echoes back on the first response and warns if they ever disagree.
+Resumable exactly like `fetch_companycam.py` — Ctrl-C costs nothing.
+
+**`review`** builds one self-contained `review.html`: every candidate with its boxes drawn as a
+percentage overlay over the photograph — never burned into the pixels, the same contract The
+Walk uses in the app. Check what's real, uncheck what isn't, and **Export** downloads a YOLO
+label set (`class cx cy w h`, all 0–1) for whatever's still checked. Choices are saved to the
+browser's `localStorage` as you go, so closing the tab mid-review loses nothing.
+
+**What I could not verify from here:** `detect`'s live call, for the same reason as everything
+else in this file — no network path to Vercel or Supabase from this sandbox. `find` and
+`review` were tested end-to-end against synthetic data and real Chromium rendering: the box
+overlay lands at the exact fraction it's given, the checkbox state survives a reload, and a
+rejected finding is provably absent from the exported label file, not merely hidden.
+
+---
+
 ## What I could not verify from here
 
 This sandbox cannot reach CompanyCam or the Spark, so:
