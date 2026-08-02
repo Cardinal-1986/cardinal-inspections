@@ -1349,12 +1349,24 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
             paper a 128&nbsp;GB MacBook Pro is a genuinely strong local-AI machine: same
             capacity as your Spark, more than twice the bandwidth. Anyone who tells you the
             Spark simply wins is not looking at the current line-up.</p>
-            <p>It loses on <em>your</em> job, for two specific reasons. Chapter VIII&apos;s
-            work is 60,485 photographs with a short prompt each &mdash; that is reading and
-            throughput, which is the half the Spark wins. And it runs <strong>overnight,
-            unattended</strong>: a laptop throttles under hours of sustained load, and it is a
-            laptop, so it leaves with whoever is carrying it. A box that sits on a shelf and
-            never stops is the right shape for that work.</p>
+            <p>It loses on <em>the whole job</em>, not one task. Look back at what this
+            chapter says local is actually good for &mdash; six things, and <strong>image
+            generation is first</strong>: the Library illustrations, iterated free, with a LoRA
+            holding one house style. Then transcription, search over your own documents, OCR off
+            a scope, and bulk photo work. That is a <strong>generation and batch machine</strong>,
+            which is this chapter&apos;s own summary of it.</p>
+            <p>Three reasons the Mac is the wrong shape for that:</p>
+            <ol class="habits">
+              <li><span><b>Image work is the most locked-in of the lot.</b> Diffusion tooling and
+              LoRA training are built CUDA-first. This is the one place where &ldquo;MLX is fine
+              now&rdquo; stops being true, and it is your strongest use.</span></li>
+              <li><span><b>It has to run unattended.</b> Batch jobs are overnight jobs. A laptop
+              throttles under hours of sustained load, and it is a laptop &mdash; it leaves the
+              building with whoever picks it up.</span></li>
+              <li><span><b>Reading beats writing across most of the list.</b> OCR, tagging,
+              captioning and search all feed it more than they get back. The Mac&apos;s 3.4&times;
+              is on the half you use least.</span></li>
+            </ol>
             <p>Worth knowing: people who own both <em>network</em> them &mdash; Spark reads,
             Mac writes &mdash; for about <strong>2.8&times;</strong> what the Mac manages
             alone. Real, and also a second machine and a networking project. Not for now.</p>
@@ -1408,10 +1420,22 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
             <p>Same memory, same writing speed, $700 cheaper, and it runs Windows. If you were
             buying today for chatting and coding, <strong>the AMD box is the better value and
             it isn&apos;t close.</strong></p>
-            <p>But <strong>reading is the half Cardinal actually does.</strong> Sixty thousand
-            photographs, each with a short prompt, is prefill in a loop &mdash; the exact number
-            where the Spark is five times ahead. On that job the $700 buys back days of
-            wall-clock, and it is the reason not to feel bad about the box you own.</p>
+            <p><strong>But you did not buy it to chat.</strong> Weigh it against the whole list
+            this chapter opens with, not one job:</p>
+            <div class="tw">
+              <table class="vs">
+                <thead><tr><th>What you actually run</th><th>Who wins</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Image generation, LoRAs</strong> &mdash; the Library illustrations</td><td class="yes">Spark, clearly. Diffusion and fine-tuning are CUDA-first, and this is the one workload where ROCm is still genuinely behind rather than merely different</td></tr>
+                  <tr><td><strong>OCR off a scope, tagging, captioning</strong></td><td class="yes">Spark &mdash; all of it is reading, where it is five times ahead</td></tr>
+                  <tr><td><strong>Transcription, embeddings, search</strong></td><td>Either. Whisper and embedding models run fine on both</td></tr>
+                  <tr><td><strong>Chatting, coding, a local assistant</strong></td><td class="no">AMD, on price. Same speed for $700 less</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>Two of those four go to the Spark on <em>software</em>, not speed &mdash; and the
+            one it wins hardest is the one you already use every week. <strong>Photo captioning is
+            a single line in that table</strong>, which is roughly its share of the argument.</p>
           </div>
         </div>
 
