@@ -503,6 +503,47 @@ const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
       /drag = null; review\.dirty = true; repaint\(\);/.test(MODULE_JS));
   }
 
+  /* ── build 586 · The Lens ──────────────────────────────────────────────── */
+  console.log('\n── the lens ──');
+  {
+    // Pinch/pan are Chromium's to prove. jsdom proves the contracts: the
+    // lens opens on the FULL rendition (not the -d display copy), boxes ride
+    // inside the world as fractions, and close removes the layer.
+    const h = await boot({});
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[1].click(); await settle(120);
+    const el = h.d.getElementById('cr-show');
+    ok('the review bar has an expand button', !!el.querySelector('[data-act="rlens"]'));
+    el.querySelector('[data-act="rlens"]').click(); await settle();
+    const lens = el.querySelector('.cr-sh-lens');
+    ok('the lens opened', !!lens);
+    const img = lens && lens.querySelector('.w img');
+    ok('it loads the FULL rendition, not the display copy',
+      img && img.getAttribute('src').includes('/s2.jpg') && !img.getAttribute('src').includes('-d.jpg'),
+      img && img.getAttribute('src'));
+    ok('the finding boxes ride inside the world',
+      lens && lens.querySelectorAll('.cr-sh-ln-box').length === 1);
+    const box = lens && lens.querySelector('.cr-sh-ln-box');
+    ok('boxes are fraction-positioned', box && /%$/.test(box.style.left) &&
+      Math.abs(parseFloat(box.style.left) - 31) < 0.01, box && box.style.left);
+    lens.querySelector('.cr-sh-ln-x').click(); await settle();
+    ok('close removes the layer', !el.querySelector('.cr-sh-lens'));
+    ok('the lens never touched the scroll lock', h.d.body.style.overflow === '');
+  }
+  {
+    // The other two ways in. This harness stubs workmanship_pairs empty, so
+    // the live Hall of Fame tap is Chromium's to prove (render_showcase has
+    // real fixtures); here the markup contracts are pinned instead.
+    ok('Hall of Fame photographs carry the lens hook in their markup',
+      /data-lens=\\?"' \+ esc\(path\)/.test(MODULE_JS) || MODULE_JS.includes('data-lens="\' + esc(path)'));
+    ok('the slider expand opens what the phase dock is showing',
+      MODULE_JS.includes("(img && img.dataset.path) || p.after_path"));
+    ok('the dock keeps the shown path current for the expand button',
+      MODULE_JS.includes('img.dataset.path = wantPath'));
+  }
+
   /* ── build 585 · Chalk — hand-drawn marks ──────────────────────────────── */
   console.log('\n── hand-drawn marks ──');
   {

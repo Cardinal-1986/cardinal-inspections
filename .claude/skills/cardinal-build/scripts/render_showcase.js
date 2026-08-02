@@ -399,6 +399,62 @@ const SHOTS = [
       geo && geo.gripShown);
     await shot('05-desktop-the-walk.png');
 
+    /* ── The Lens (586) — zoom geometry, which jsdom cannot make ─────────── */
+    await page.click('[data-act="rlens"]');
+    await page.waitForTimeout(400);
+    const lz0 = await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-lens');
+      if (!l) return null;
+      const box = l.querySelector('.cr-sh-ln-box');
+      return { bg: getComputedStyle(l).backgroundColor,
+               boxW: box.getBoundingClientRect().width,
+               zc: l.querySelector('.cr-sh-ln-zc').textContent };
+    });
+    ok('lens opened from the review stage', !!lz0);
+    ok('lens ground resolved true black', lz0 && lz0.bg === 'rgb(5, 6, 7)', lz0 && lz0.bg);
+    ok('starts at fit', lz0 && lz0.zc === '1.0×', lz0 && lz0.zc);
+    // zoom in twice via buttons: the finding box must scale WITH the world
+    await page.click('[data-lz="in"]'); await page.click('[data-lz="in"]');
+    await page.waitForTimeout(250);
+    const lz1 = await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-lens');
+      const box = l.querySelector('.cr-sh-ln-box');
+      return { boxW: box.getBoundingClientRect().width,
+               zc: l.querySelector('.cr-sh-ln-zc').textContent,
+               t: l.querySelector('.w').style.transform };
+    });
+    ok('zoom chip reads 2.0x after two 1.4x steps', lz1.zc === '2.0×', lz1.zc);
+    ok('the finding box scaled with the world (rides along)',
+      Math.abs(lz1.boxW / lz0.boxW - 1.96) < 0.05, (lz1.boxW / lz0.boxW).toFixed(3));
+    // drag pans
+    const lb = await page.locator('#cr-show .cr-sh-lens').boundingBox();
+    await page.mouse.move(lb.x + lb.width / 2, lb.y + lb.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(lb.x + lb.width / 2 - 80, lb.y + lb.height / 2 - 50, { steps: 6 });
+    await page.mouse.up();
+    ok('drag pans the world', /translate\(-/.test(await page.evaluate(() =>
+      document.querySelector('#cr-show .cr-sh-lens .w').style.transform)));
+    // real two-pointer pinch via synthetic PointerEvents
+    await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-lens');
+      const r = l.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const mk = (type, id, x, y) => l.dispatchEvent(new PointerEvent(type,
+        { pointerId: id, clientX: x, clientY: y, bubbles: true }));
+      mk('pointerdown', 11, cx - 40, cy); mk('pointerdown', 12, cx + 40, cy);
+      mk('pointermove', 11, cx - 45, cy); mk('pointermove', 12, cx + 45, cy);
+      mk('pointermove', 11, cx - 90, cy); mk('pointermove', 12, cx + 90, cy);
+      mk('pointerup', 11, cx - 90, cy);  mk('pointerup', 12, cx + 90, cy);
+    });
+    await page.waitForTimeout(150);
+    const pinched = await page.evaluate(() =>
+      document.querySelector('#cr-show .cr-sh-lens .cr-sh-ln-zc').textContent);
+    ok('a two-pointer pinch zooms further', parseFloat(pinched) > 2.0, pinched);
+    await shot('08-desktop-lens.png');
+    await page.click('#cr-show .cr-sh-ln-x');
+    await page.waitForTimeout(200);
+    ok('lens closes', await page.evaluate(() => !document.querySelector('#cr-show .cr-sh-lens')));
+
     /* ── Chalk (585) — the drawing gesture, which jsdom cannot make ──────── */
     await page.click('[data-act="rmark"]');
     await page.waitForTimeout(200);

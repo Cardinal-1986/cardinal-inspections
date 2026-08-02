@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 585 &#8212; Chalk — draw your own damage marks when the AI misses one</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 586 &#8212; The Lens — pinch into any photograph at full resolution</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:586, d:'2026-08-02', t:'The Lens \u2014 pinch into any photograph', s:'Every photograph has been stored at full resolution since build 577 so granules and nail heads survive \u2014 and no gesture could reach that detail until now. Tap a Hall of Fame photo, or the expand button on the slider and on The Walk\u2019s review screen: the picture opens full screen with pinch, drag and double-tap zoom. In The Walk your damage marks ride along at any zoom.' },
 { b:585, d:'2026-08-02', t:'Chalk \u2014 draw your own marks', s:'The Walk\u2019s review screen gains + Mark damage: drag a box on the photograph, say what it is and how serious, and it joins the marks exactly like one you accepted from the AI. Asking the AI again now keeps your hand-drawn marks \u2014 it only refreshes its own. Works even when the AI is down, and every mark you draw is recorded as yours, which is exactly what training your own detector later needs.' },
 { b:584, d:'2026-08-02', t:'Spotlight \u2014 present mode for The Walk', s:'A Present button appears on any walk with a reviewed photo. Tap it and the screen goes true black: one finding at a time, the damage lit and everything else dark, with the marks you kept \u2014 nothing the AI proposed that you rejected. Tap the right side for the next finding, the left to go back, past the last one to finish. The address never appears on screen. Works for sales too, not just admins \u2014 presenting is the point.' },
 { build:582, note:'\uD83D\uDD29 The manual\u2019s hardware chapter now answers the whole question. A plain spec sheet before any argument, the DGX Spark and Apple each written up properly, the RTX PRO 6000 with its own pros and cons, a three-way Spark-vs-Mac-vs-6000 table, and both stacking questions \u2014 what two Sparks really change, and whether you can pair one with a 5090. And what local AI is good for is now seven jobs, with photographs as one of them rather than the argument.' },
@@ -55796,6 +55797,46 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 @media (prefers-reduced-motion:reduce){
   .cr-sh-pr-veil,.cr-sh-pr-ring{transition:none}
 }
+
+/* ── The Lens (586) — pinch into every photograph ──────────────────────────
+   Blackout chrome: white ink on the true-black ground, no new hue. The
+   layer owns its gestures via touch-action:none; everything inside the
+   world is fraction-positioned so zoom costs nothing. */
+.cr-sh-lens{position:absolute;inset:0;z-index:45;background:#050607;overflow:hidden;
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.cr-sh-lens .w{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
+.cr-sh-lens .w img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  -webkit-user-drag:none}
+.cr-sh-ln-box{position:absolute;border:2.5px solid;border-radius:6px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55);pointer-events:none}
+.cr-sh-ln-box.crit{border-color:var(--sh-bad,#E5484D)}
+.cr-sh-ln-box.warn{border-color:var(--sh-warn,#E8A33D)}
+.cr-sh-ln-box.ok{border-color:var(--sh-ok,#46A758)}
+.cr-sh-ln-top{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;
+  gap:10px;padding:calc(max(10px,env(safe-area-inset-top)) + 4px) 15px 12px;
+  background:linear-gradient(rgba(5,6,7,.92),transparent);pointer-events:none}
+.cr-sh-ln-top b{font:650 12.5px inherit;color:var(--sh-ink,#F2F4F2);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cr-sh-ln-x{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 2px);right:10px;z-index:9;
+  background:transparent;border:0;cursor:pointer;color:rgba(242,244,242,.85);font-size:19px;
+  padding:6px 10px;font-family:inherit}
+.cr-sh-ln-zc{position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;
+  font:800 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--sh-ink,#F2F4F2);
+  border:1px solid rgba(242,244,242,.4);border-radius:999px;padding:6px 12px;
+  background:rgba(5,6,7,.65);pointer-events:none}
+.cr-sh-ln-hint{position:absolute;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;
+  font-size:10.5px;color:rgba(242,244,242,.6);pointer-events:none}
+.cr-sh-ln-btns{position:absolute;right:10px;top:calc(max(10px,env(safe-area-inset-top)) + 52px);
+  z-index:6;display:flex;flex-direction:column;gap:7px}
+.cr-sh-ln-btns button{width:40px;height:40px;border-radius:9px;font-size:18px;cursor:pointer;
+  color:var(--sh-ink,#F2F4F2);background:rgba(5,6,7,.65);border:1px solid rgba(242,244,242,.4);
+  font-family:inherit}
+/* the way in: a quiet expand affordance on zoomable photographs */
+.cr-sh-exp{position:absolute;right:8px;top:8px;z-index:6;width:32px;height:32px;border-radius:8px;
+  border:1px solid rgba(242,244,242,.35);background:rgba(5,6,7,.55);color:var(--sh-ink,#F2F4F2);
+  font-size:14px;line-height:1;cursor:pointer;font-family:inherit}
+.cr-sh-side{position:relative}
+.cr-sh-side img{cursor:zoom-in}
 </style>
 
 <script id="cr-show-script">
@@ -55992,7 +56033,7 @@ function renderWork(){
 function side(kind, head, path, caption, i){
   return '<div class="cr-sh-side ' + kind + '">' +
     '<div class="h"><span class="sq"></span>' + head + '</div>' +
-    '<img alt="' + esc(head) + '" loading="lazy" src="' + esc(srcD(path)) + '">' +
+    '<img alt="' + esc(head) + '" loading="lazy" data-lens="' + esc(path) + '" data-cap="' + esc(head) + '" src="' + esc(srcD(path)) + '">' +
     (caption ? '<p>' + esc(caption) + '</p>' : '') +
   '</div>';
 }
@@ -56031,7 +56072,8 @@ function renderShow(){
         (bits.length ? '<span class="s">' + bits.join(' · ') + '</span>' : '') +
       '</div>' +
       '<div class="cr-sh-cmp" data-cmp style="--sh-split:52%">' +
-        '<img data-role="after" alt="After" src="' + esc(src(p.after_path)) + '">' +
+        '<button class="cr-sh-exp" data-act="cmpexp" type="button" aria-label="Open full screen">\u2922</button>' +
+        '<img data-role="after" alt="After" data-path="' + esc(p.after_path) + '" src="' + esc(src(p.after_path)) + '">' +
         '<img class="bf" data-role="before" alt="Before" src="' + esc(src(p.before_path)) + '">' +
         '<div class="cr-sh-hd" data-hd role="slider" tabindex="0" aria-label="Before and after divider"' +
              ' aria-valuemin="0" aria-valuemax="100" aria-valuenow="52"><span class="cr-sh-grip">◄ ►</span></div>' +
@@ -56137,6 +56179,24 @@ function wire(){
 }
 
 function wireBody(){
+  el.querySelectorAll('[data-lens]').forEach(function(im){
+    im.onclick = function(){ openLens({ path: im.dataset.lens, cap: im.dataset.cap || '' }); };
+  });
+  el.querySelectorAll('[data-act="cmpexp"]').forEach(function(b){
+    b.onclick = function(e){
+      e.stopPropagation();
+      var p = pairs[cur]; if(!p) return;
+      var img = el.querySelector('[data-role="after"]');
+      openLens({ path: (img && img.dataset.path) || p.after_path, cap: label(p) });
+    };
+  });
+  el.querySelectorAll('[data-act="rlens"]').forEach(function(b){
+    b.onclick = function(){
+      if(!review) return;
+      openLens({ path: review.shot.path, boxes: review.list,
+                 cap: walkLabel(curWalk || {}) });
+    };
+  });
   el.querySelectorAll('[data-act="waddc"]').forEach(function(b){ b.onclick = openWorkForm; });
   wireWalk();
   el.querySelectorAll('[data-wdel]').forEach(function(b){
@@ -56161,7 +56221,8 @@ function wireBody(){
       var img = el.querySelector('[data-role="after"]');
       var tag = el.querySelector('[data-aftertag]');
       var want = b.dataset.ph;
-      if(img) img.src = src(want === 'build' ? p.build_path : p.after_path);
+      var wantPath = want === 'build' ? p.build_path : p.after_path;
+      if(img){ img.src = src(wantPath); img.dataset.path = wantPath; }
       if(tag) tag.textContent = want === 'build' ? 'During the build' : 'After';
       el.querySelectorAll('[data-ph]').forEach(function(x){ x.classList.toggle('on', x === b); });
     };
@@ -56661,6 +56722,7 @@ function renderReview(){
   return '<div class="cr-sh-rule">Checking a photograph</div>' +
     '<div class="cr-sh-bar">' +
       '<button class="cr-sh-btn ghost" data-act="rback" type="button">← Back</button>' +
+      '<button class="cr-sh-btn ghost" data-act="rlens" type="button" aria-label="Open full screen">\u2922</button>' +
       '<button class="cr-sh-btn ghost" data-act="rdetect" type="button">' +
         (r.list.length ? 'Ask again' : 'Ask the AI') + '</button>' +
       '<button class="cr-sh-btn ghost' + (r.arming ? ' arming' : '') + '" data-act="rmark" type="button">+ Mark damage</button>' +
@@ -57431,6 +57493,104 @@ function wirePresent(){
   });
 }
 
+
+/* ── The Lens (586) ────────────────────────────────────────────────────────
+   A self-contained overlay appended to the module root, outside the body
+   slot: repaint() leaves it alone; render() (tab switches, navigation)
+   removes it, which is the correct close. Pinch is two-pointer distance on
+   the same pointer-capture idiom as wireSlider(); pan clamps to the frame;
+   double-tap toggles 2.5x at the tap point. */
+var lensEl = null;
+
+function exitLens(){
+  if(lensEl && lensEl.parentNode) lensEl.parentNode.removeChild(lensEl);
+  lensEl = null;
+}
+
+function openLens(opts){
+  exitLens();
+  ensure();
+  var url = signed[opts.path] || srcD(opts.path) || '';
+  if(!url) return;
+  lensEl = document.createElement('div');
+  lensEl.className = 'cr-sh-lens';
+  lensEl.innerHTML =
+    '<div class="w">' +
+      '<img alt="" src="' + esc(url) + '">' +
+      (opts.boxes || []).map(function(f){
+        var b = f.box || { x:0, y:0, w:0, h:0 };
+        return '<div class="cr-sh-ln-box ' + esc(f.severity) + '" style="left:' + pc(b.x) +
+               ';top:' + pc(b.y) + ';width:' + pc(b.w) + ';height:' + pc(b.h) + '"></div>';
+      }).join('') +
+    '</div>' +
+    '<div class="cr-sh-ln-top"><b>' + esc(opts.cap || '') + '</b></div>' +
+    '<button class="cr-sh-ln-x" type="button" aria-label="Close">\u2715</button>' +
+    '<div class="cr-sh-ln-btns">' +
+      '<button data-lz="in" type="button" aria-label="Zoom in">+</button>' +
+      '<button data-lz="out" type="button" aria-label="Zoom out">\u2212</button>' +
+    '</div>' +
+    '<span class="cr-sh-ln-zc">1.0\u00d7</span>' +
+    '<span class="cr-sh-ln-hint">pinch \u00b7 drag \u00b7 double-tap</span>';
+  el.appendChild(lensEl);
+
+  var world = lensEl.querySelector('.w');
+  var zc = lensEl.querySelector('.cr-sh-ln-zc');
+  var s = 1, tx = 0, ty = 0, ptrs = {}, lastDist = 0, lastTap = 0;
+
+  function apply(){
+    var r = lensEl.getBoundingClientRect();
+    var maxX = (s - 1) * r.width, maxY = (s - 1) * r.height;
+    tx = Math.min(0, Math.max(-maxX, tx));
+    ty = Math.min(0, Math.max(-maxY, ty));
+    world.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
+    zc.textContent = s.toFixed(1) + '\u00d7';
+  }
+  function zoomAt(f, cx, cy){
+    var r = lensEl.getBoundingClientRect();
+    var ns = Math.max(1, Math.min(5, s * f));
+    var px = (cx - r.left - tx) / s, py = (cy - r.top - ty) / s;
+    tx = cx - r.left - px * ns; ty = cy - r.top - py * ns; s = ns;
+    apply();
+  }
+  lensEl.addEventListener('pointerdown', function(e){
+    if(e.target.closest('.cr-sh-ln-btns') || e.target.closest('.cr-sh-ln-x')) return;
+    ptrs[e.pointerId] = e;
+    try{ lensEl.setPointerCapture(e.pointerId); }catch(_){}
+    var now = Date.now();
+    if(Object.keys(ptrs).length === 1 && now - lastTap < 300){
+      zoomAt(s > 1.5 ? 1 / s : 2.5, e.clientX, e.clientY);
+      lastTap = 0;
+    } else lastTap = now;
+  });
+  lensEl.addEventListener('pointermove', function(e){
+    if(!ptrs[e.pointerId]) return;
+    var prev = ptrs[e.pointerId];
+    ptrs[e.pointerId] = e;
+    var ids = Object.keys(ptrs);
+    if(ids.length === 2){
+      var a = ptrs[ids[0]], b = ptrs[ids[1]];
+      var d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      if(lastDist) zoomAt(d / lastDist, (a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2);
+      lastDist = d;
+    } else if(ids.length === 1){
+      tx += e.clientX - prev.clientX;
+      ty += e.clientY - prev.clientY;
+      apply();
+    }
+  });
+  function lup(e){ delete ptrs[e.pointerId]; lastDist = 0; }
+  lensEl.addEventListener('pointerup', lup);
+  lensEl.addEventListener('pointercancel', lup);
+  lensEl.querySelector('.cr-sh-ln-x').onclick = exitLens;
+  lensEl.querySelectorAll('[data-lz]').forEach(function(b){
+    b.onclick = function(){
+      var r = lensEl.getBoundingClientRect();
+      zoomAt(b.dataset.lz === 'in' ? 1.4 : 1 / 1.4, r.left + r.width / 2, r.top + r.height / 2);
+    };
+  });
+  apply();
+}
+
 /* ── open / close ──────────────────────────────────────────────────────── */
 function open(){
   ensure();
@@ -57458,6 +57618,7 @@ function open(){
 function close(goHome){
   closeForm();
   exitPresent();
+  exitLens();
   if(el) el.classList.remove('open');
   if(goHome !== false && typeof window.showHome === 'function') window.showHome();
 }
