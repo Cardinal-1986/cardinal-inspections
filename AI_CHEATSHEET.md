@@ -398,8 +398,8 @@ fit. Reading speed is about 5 t/s; comfortable is 15; instant is 40.
 | Machine | 8B | 20B | 30B | 70B | 120B | 200B |
 |---|---:|---:|---:|---:|---:|---:|
 | **DGX Spark** · 128 GB @ 273 GB/s | 40 | 16 | 11 | 5 | 3 | — |
-| **Mac M4 Max** · 128 GB @ 546 GB/s | 80 | 32 | 21 | 9 | 5 | — |
-| **Mac M3 Ultra** · 512 GB @ 819 GB/s | 119 | 48 | 32 | 14 | 8 | 5 |
+| **Mac M4 Max** · 96 GB @ 546 GB/s | 80 | 32 | 21 | 9 | 5 | — |
+| **Mac M3 Ultra** · 96 GB @ 819 GB/s | 119 | 48 | 32 | 14 | 8 | — |
 | **AMD Ryzen AI Max+ 395** · 128 GB @ 256 GB/s | 37 | 15 | 10 | 4 | 2 | — |
 | **RTX 5090** · 32 GB @ 1792 GB/s | 261 | 105 | 70 | — | — | — |
 
@@ -410,6 +410,101 @@ not buying your way out.
 **These figures are computed, not quoted** — bandwidth divided by model size at 4-bit, taken to 70%
 for real-world overhead. Published benchmarks disagree with each other because they rarely say which
 model they measured.
+
+*Hardware checked **2 August 2026**. Half-life ≈ two months — capacities are being withdrawn,
+not added.*
+
+### Spark vs Mac Studio, in detail
+
+The comparison everybody makes, and the one every article online still gets wrong. **Apple has
+been deleting memory options, not adding them.** 512 GB went in March 2026; 256 GB and 128 GB
+went in May, as AI demand ate the world's DRAM supply and delivery times went from six days to
+six weeks. So the line that used to be the obvious choice for big models now stops at **96 GB**.
+
+> **And the laptop now holds more than the desktop.** This is the part that sounds like a
+> mistake and isn't. The **MacBook Pro with an M5 Max still takes 128 GB**, at 614 GB/s — while
+> the Mac Studio, the machine that exists to be the bigger one, stops at 96. If you want a Mac
+> for this work today, **the laptop is the better machine**, which is not a sentence anyone
+> expected to write. It will probably stop being true when the Studio gets its next chip.
+
+**Every tier you can actually order.** Largest model each holds, and what it runs at once
+loaded. Both columns computed, not quoted — same arithmetic as the table above.
+
+| | Memory | Bandwidth | Biggest model it holds | t/s on that model | Price |
+|---|---:|---:|---:|---:|---:|
+| Mac Studio M4 Max | 36 GB | 546 GB/s | ~48B | 13 | $2,499 |
+| Mac Studio M4 Max | 64 GB | 546 GB/s | ~85B | 7 | upgrade |
+| Mac Studio M3 Ultra | 96 GB | 819 GB/s | ~128B | 7 | $5,299 |
+| MacBook Pro M5 Max | 36 GB | 614 GB/s | ~48B | 15 | from $2,699 |
+| **MacBook Pro M5 Max** | **128 GB** | 614 GB/s | **~171B** | 4 | build to order |
+| **DGX Spark** | **128 GB** | 273 GB/s | **~171B** | 2 | $4,699 |
+
+Read that top to bottom and the trade is plain: **you buy capacity or you buy speed.** The
+cheapest Mac runs a 48B model six times faster than the Spark runs a 171B one. Neither is
+better; they are answers to different questions.
+
+**The one sentence that explains every benchmark argument: the Spark reads fast, the Mac
+writes fast.**
+
+- **Reading** — chewing through a long prompt before it answers. The Spark's Blackwell tensor
+  cores win this, and it is not close.
+- **Writing** — producing the answer word by word. That is pure bandwidth, so the Mac wins by
+  roughly **3.4×**.
+
+Owners running a 397B model measured the Mac at 30–40 tokens a second against two Sparks at
+27–28 — but the Sparks read the prompt far faster. Ask which half of the job you actually do.
+
+**The cons neither company leads with:**
+
+| | DGX Spark | Mac Studio |
+|---|---|---|
+| **The catch** | "Full CUDA support" is oversold. It is `sm_121`, its own Blackwell variant — plenty of CUDA packages either refuse to run or quietly fall back to years-old code paths | No CUDA at all. MLX is genuinely good now, but a smaller island and some tools never come |
+| **Ceiling** | 128 GB | Studio 96 GB and falling — but the **MacBook Pro M5 Max still takes 128 GB**, faster |
+| **Sustained load** | Built to run flat out, unattended, all night | A laptop throttles on a long batch, and it leaves the building with you |
+| **Best at** | Long prompts, batch work, anything overnight | Writing long answers you sit and wait for |
+
+> **So should Cardinal buy a Mac? No — but the honest reason is narrower than it looks.** On
+> paper a 128 GB MacBook Pro is a genuinely strong local-AI machine: same capacity as your
+> Spark, more than twice the bandwidth. Anyone who tells you the Spark simply wins is not
+> looking at the current line-up.
+>
+> It loses on *your* job, for two specific reasons. Part 8's work is 60,485 photographs with a
+> short prompt each — that is reading and throughput, the half the Spark wins. And it runs
+> **overnight, unattended**: a laptop throttles under hours of sustained load, and it is a
+> laptop. A box that sits on a shelf and never stops is the right shape for that work.
+>
+> Worth knowing: people who own both *network* them — Spark reads, Mac writes — for about
+> **2.8×** what the Mac manages alone. Real, and also a second machine and a networking
+> project. Not for now.
+
+### And AMD, which is the closest like-for-like
+
+AMD's answer is the **Ryzen AI Max+ 395** — sold as the Ryzen AI Halo and in mini-PCs from
+several makers. It is the only machine built to the same brief as the Spark: **128 GB of
+unified memory in a box on your desk**. It is worth taking seriously, and it is cheaper.
+
+| | DGX Spark | AMD Ryzen AI Max+ 395 |
+|---|---|---|
+| **Memory** | 128 GB | 128 GB — the same |
+| **Bandwidth** | 273 GB/s | 256 GB/s — near enough identical |
+| **Writing** | — | Effectively a tie. Same memory, same bandwidth, same arithmetic |
+| **Reading** | **~1,700 tok/s** prefill | **~340 tok/s** — about **five times slower** |
+| **Price** | $4,699 | $3,999, and some builders sell 128 GB machines from ~$1,500 |
+| **Runs** | Linux only | Windows natively |
+| **Software** | CUDA — with the `sm_121` caveat above | ROCm. Fine for Ollama and llama.cpp; fine-tuning and serving frameworks are still CUDA country |
+
+Both figures measured on the same 120B model, so that five-to-one is a like-for-like reading of
+the same job.
+
+> **Which is the whole argument, in one row.** Same memory, same writing speed, $700 cheaper,
+> and it runs Windows. If you were buying today for chatting and coding, **the AMD box is the
+> better value and it isn't close.**
+>
+> But **reading is the half Cardinal actually does.** Sixty thousand photographs, each with a
+> short prompt, is prefill in a loop — the exact number where the Spark is five times ahead. On
+> that job the $700 buys back days of wall-clock, and it is the reason not to feel bad about
+> the box you own.
+
 
 ### Why the numbers you'll read contradict each other
 
@@ -1513,7 +1608,7 @@ interesting argument for running your own is being made by South Korea.
 ### China — five families, and you already depend on them
 
 By mid-2026 five Chinese labs are publishing frontier-class models with **open weights** — the
-actual file, downloadable, yours to keep. This is not a niche. When Part 6 says a $4,000 box can do
+actual file, downloadable, yours to keep. This is not a niche. When Part 6 says a $4,699 box can do
 useful work, this is *why*.
 
 **DeepSeek** (Hangzhou) · open weights, MIT-style licence
@@ -1583,7 +1678,7 @@ regardless: verify anything that matters.
 
 Korea is not on this page because a Korean model will run your business. It's here because Korea is
 doing, at national scale and with public money, **exactly the thing Part 6 recommends you do with a
-$4,000 box**: deciding that some work should happen on machines you control, in your own language,
+$4,699 box**: deciding that some work should happen on machines you control, in your own language,
 on your own soil.
 
 They call it **sovereign AI**. It is the same sentence as "run the photo captioner on the Spark",
@@ -1657,6 +1752,147 @@ for English-language roofing work. This section is about the *strategy*, not the
     everything.** Judge the model on your work, the service on where the bytes land.
 17. **An agent with a terminal fails differently.** Everything else gets you a wrong answer; that
     gets you a deleted folder. Own account, own folder, no keys to money or mail.
+
+---
+
+## The commands
+
+A dozen lines to type at the Spark, in the order you'll need them — and the one that answers
+"where did my photos actually go?" without you having to know the answer first.
+
+> **Start here.** Everything below is typed into the **Terminal** window that NVIDIA Sync opens
+> for you — Part 11 sets that up. If you can see a line ending in `$`, you're in the right place.
+> **Nothing here can break the machine** except the one command in the warning at the bottom.
+
+### First, the shape of the thing
+
+The Spark is a Linux computer. Everything lives in one tree, and you only ever care about the
+middle of it.
+
+| | | |
+|---|---|---|
+| `/` | **The root** | The very top. **You will never work here.** Mentioned only so the leading slash in a path stops looking mysterious. |
+| `~` | **Your home** | **This is where you live and where your things go.** Its real name is `/home/` plus the username you made at first boot. The squiggle `~` is shorthand for it. |
+| `…` | **Folders you made** | Whatever you or a program created inside home — `photos`, `models`, `Downloads`. **Nothing puts pictures in a standard place**, which is exactly why the next section is a search and not an address. |
+| `4 TB` | **The drive** | All of it sits on one 4 terabyte disk. For scale: **all 60,485 CompanyCam photographs would use a few per cent of it.** You are not going to run out. |
+
+### Looking around — four commands, that's all
+
+Type one, press Enter, read what comes back. Lines starting with `#` are notes, not commands.
+
+```bash
+# where am I right now?
+pwd
+# what is in here? (the plain list)
+ls
+# same, but with sizes and dates, and showing hidden files
+ls -lah
+# go home, from anywhere, always
+cd ~
+```
+
+If you get lost, `cd ~` puts you back. It always works.
+
+### Finding the photos — the one you actually wanted
+
+You do **not** need to know where they are. That is the whole point. Ask the machine instead.
+
+```bash
+# show me the first few pictures you can find anywhere in my home
+find ~ -iname '*.jpg' | head
+# how many are there, in total?
+find ~ -iname '*.jpg' | wc -l
+# ← THE ONE. which folders are they actually sitting in?
+find ~ -iname '*.jpg' -printf '%h\n' | sort -u
+```
+
+That last one prints a short list of folders. Those are your answer.
+
+Swap `'*.jpg'` for `'*.png'` or `'*.heic'` if the pictures came off a phone. `-iname` ignores
+capital letters, so `.JPG` is found too — which matters more than you'd think, because cameras
+are inconsistent about it.
+
+Once you know the folder, go and stand in it:
+
+```bash
+# paste one of the folders it printed
+cd ~/photos/roofs
+# and count what is in just this one
+ls | wc -l
+```
+
+### Getting pictures onto it in the first place
+
+> **Run these on your laptop, not on the Spark.** This is the thing everybody gets wrong once.
+> You are *pushing* files from the machine that has them to the machine that doesn't, so you type
+> it into a terminal on **your laptop**. If you type it at the Spark it will look for the folder
+> on the Spark, not find it, and you will be confused for ten minutes.
+
+```bash
+# one folder, one time — simple and fine
+scp -r ~/Desktop/roofphotos you@spark:~/photos/
+# better for anything big: shows progress, and picks up where it left off
+rsync -av --progress ~/Desktop/roofphotos you@spark:~/photos/
+```
+
+Replace `you@spark` with your username and the Spark's name or Tailscale address — Part 11.
+
+**Use `rsync` for anything that matters.** If the Wi-Fi drops halfway through sixty thousand
+photographs, `scp` starts again from nothing and `rsync` carries on from where it stopped.
+
+### Is there room?
+
+```bash
+# how full is the drive
+df -h /
+# what is taking up space in my home folder
+du -sh ~/*
+```
+
+The `-h` on both means "human" — GB rather than a number with nine digits.
+
+### Seeing it as a window instead of a list
+
+If the Spark has a monitor plugged into it, one command opens the folder you're standing in as
+an ordinary window:
+
+```bash
+# open this folder in a normal file window
+xdg-open .
+```
+
+The lone dot means "here". It is a real path, not a typo.
+
+Working from a laptop instead, the supported route is **NVIDIA Sync** — the same thing Part 11
+has you install.
+
+> **One honest caveat about drag-and-drop.** You will find guides for mounting the Spark so it
+> appears in Finder or Explorer like a USB stick. They work, but they are **community setups, not
+> an NVIDIA feature** — so when something breaks after an update, nobody owes you a fix. Fine to
+> try. Don't build a routine on it before you've built one on `rsync`.
+
+> **The only command on this page that can hurt you.** `rm` deletes. **There is no undo and no
+> recycle bin** — the file is simply gone, and `rm -rf` removes a whole folder and everything
+> under it without asking. It is the single most common way people lose work on a Linux machine,
+> and it happens in the half-second after pressing Enter.
+>
+> Two habits that cost nothing: **run `ls` first** so you can see exactly what you're about to
+> remove, and **never paste an `rm` line you did not write yourself.**
+
+### The whole card
+
+```bash
+pwd                                     # where am I
+ls -lah                                 # what is here
+cd ~                                    # go home
+find ~ -iname '*.jpg' | wc -l           # how many photos
+find ~ -iname '*.jpg' -printf '%h\n' | sort -u   # which folders
+df -h /                                 # is there room
+du -sh ~/*                              # what is big
+xdg-open .                              # open a window
+# from the LAPTOP, not the Spark:
+rsync -av --progress folder you@spark:~/photos/
+```
 
 ---
 
@@ -1908,6 +2144,17 @@ Six of these are vendor pages and will always be current. Check those, not this 
 - [DigitalOcean — what OpenClaw is (and that it was Clawdbot until Jan 2026)](https://www.digitalocean.com/resources/articles/what-is-openclaw)
 - [Turing Post — Hermes Agent vs OpenClaw, full comparison](https://www.turingpost.com/p/hermes)
 - [innFactory — an honest comparison of the two agent frameworks](https://innfactory.ai/en/blog/openclaw-vs-hermes-agent-comparison/)
+
+### Part 6 — the hardware caps
+
+- [Tom's Hardware — Apple axes the 128 GB Mac Studio; cap now 96 GB](https://www.tomshardware.com/desktops/apple-quietly-axes-128gb-mac-studio-amid-supply-constraints-and-local-ai-frenzy-highest-memory-capacity-reduced-to-96gb-two-months-after-discontinuation-of-512gb-model)
+- [9to5Mac — the 512 GB M3 Ultra is withdrawn](https://9to5mac.com/2026/03/05/apple-no-longer-offers-m3-ultra-mac-studio-with-original-highest-ram-configuration/)
+- [Tom's Hardware — DGX Spark $3,999 → $4,699 on memory supply](https://www.tomshardware.com/desktops/mini-pcs/nvidia-dgx-spark-gets-18-percent-price-increase-as-memory-shortages-bite-founders-edition-now-usd4-699-up-from-usd3-999)
+- [Apple — MacBook Pro (16-inch, M5 Pro / M5 Max) tech specs](https://support.apple.com/en-us/126319)
+- [Tom's Hardware — AMD's $3,999 Ryzen AI Halo undercuts the Spark by $700](https://www.tomshardware.com/desktops/mini-pcs/amd-challenges-nvidias-dgx-spark-with-usd3-999-ryzen-ai-halo-with-windows-11-support-strix-halo-desktop-undercuts-nvidia-by-usd700-packs-128gb-of-unified-memory)
+- [The Register — Strix Halo and DGX Spark tested head to head](https://www.theregister.com/on-prem/2025/12/25/tested-amds-strix-halo-vs-nvidias-dgx-spark/2098514)
+- [EXO — pairing a Spark with a Mac Studio](https://blog.exolabs.net/nvidia-dgx-spark/)
+- [DGX Spark CUDA compatibility — sm_121 and the fallbacks](https://jangwook.net/en/blog/en/nvidia-dgx-spark-cuda-compatibility/)
 
 ### Part 11 — Quicksilver and the approvals hole
 

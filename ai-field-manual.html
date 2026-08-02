@@ -24,7 +24,7 @@
    chapter numerals, running heads, folios. That split is how technical
    handbooks actually set type, and it keeps the two jobs from competing.
 
-   No drop caps, deliberately: several of the nineteen chapters open on a list
+   No drop caps, deliberately: several of the twenty sections open on a list
    rather than a paragraph, and a flourish that lands on some pages and not
    others reads as a mistake. The chapter numeral in the margin does that
    work instead, and it works everywhere.
@@ -727,7 +727,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         <div class="rule-foil"></div>
         <span class="imprint">Cardinal Roofing &amp; Renovations</span>
         <h1>The AI Field&nbsp;Manual</h1>
-        <span class="ed">Second edition · nineteen chapters</span>
+        <span class="ed">Second edition · twenty sections</span>
       </div>
 
       <div class="toc" id="toc">
@@ -756,6 +756,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         <div class="toc-grp">
           <span class="lbl">Back</span>
           <a href="#/recap" data-ch="recap"><span class="n">—</span><span>The short version</span></a>
+          <a href="#/commands" data-ch="commands"><span class="n">—</span><span>The commands</span></a>
           <a href="#/glossary" data-ch="glossary"><span class="n">—</span><span>Glossary</span></a>
           <a href="#/sources" data-ch="sources"><span class="n">—</span><span>Sources</span></a>
         </div>
@@ -794,7 +795,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
             <p class="board-sub">A field manual — prompting, agents, building software, getting found, and what your own hardware can and can't do.</p>
           </div>
           <div class="board-foot">
-            <span class="ed">Second edition · nineteen chapters</span>
+            <span class="ed">Second edition · twenty sections</span>
             <span class="ed">Dayton, Ohio</span>
           </div>
         </div>
@@ -1224,6 +1225,12 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <p class="deck">You own a DGX Spark, so this isn't theory. One piece of arithmetic decides what any machine can and can't run — and it explains why the marketing numbers contradict each other.</p>
         </div>
 
+        <div class="asof">
+          <span>Hardware checked <b>2 August 2026</b></span>
+          <span class="half">Half&#8209;life &#8776; two months &mdash; capacities are being withdrawn, not added</span>
+        </div>
+
+
         <div class="call">
           <h3>The only formula you need</h3>
           <p><strong>Tokens per second ≈ memory bandwidth ÷ bytes read per token.</strong></p>
@@ -1238,14 +1245,152 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
               <thead><tr><th>Machine</th><th>8B</th><th>20B</th><th>30B</th><th>70B</th><th>120B</th><th>200B</th></tr></thead>
               <tbody>
                 <tr><td><strong>DGX Spark</strong> · 128 GB @ 273 GB/s</td><td>40</td><td>16</td><td>11</td><td>5</td><td>3</td><td>—</td></tr>
-                <tr><td><strong>Mac M4 Max</strong> · 128 GB @ 546 GB/s</td><td>80</td><td>32</td><td>21</td><td>9</td><td>5</td><td>—</td></tr>
-                <tr><td><strong>Mac M3 Ultra</strong> · 512 GB @ 819 GB/s</td><td>119</td><td>48</td><td>32</td><td>14</td><td>8</td><td>5</td></tr>
+                <tr><td><strong>Mac M4 Max</strong> · 96 GB @ 546 GB/s</td><td>80</td><td>32</td><td>21</td><td>9</td><td>5</td><td>—</td></tr>
+                <tr><td><strong>Mac M3 Ultra</strong> · 96 GB @ 819 GB/s</td><td>119</td><td>48</td><td>32</td><td>14</td><td>8</td><td>&mdash;</td></tr>
                 <tr><td><strong>AMD Ryzen AI Max+ 395</strong> · 128 GB @ 256 GB/s</td><td>37</td><td>15</td><td>10</td><td>4</td><td>2</td><td>—</td></tr>
                 <tr><td><strong>RTX 5090</strong> · 32 GB @ 1792 GB/s</td><td>261</td><td>105</td><td>70</td><td>—</td><td>—</td><td>—</td></tr>
               </tbody>
             </table>
           </div>
           <p><strong>The 5090 is six times faster than everything else and holds a fraction as much.</strong> That's the real trade in local AI, and it's a hard one — you're choosing between big-and-slow and small-and-fast, not buying your way out.</p>
+        </div>
+
+
+        <div class="block">
+          <h3>Spark vs Mac Studio, in detail</h3>
+          <p>The comparison everybody makes, and the one every article online still
+          gets wrong. <strong>Apple has been deleting memory options, not adding them.</strong>
+          512&nbsp;GB went in March 2026; 256&nbsp;GB and 128&nbsp;GB went in May, as AI
+          demand ate the world&apos;s DRAM supply and delivery times went from six days to
+          six weeks. So the line that used to be the obvious choice for big models now
+          stops at <strong>96&nbsp;GB</strong>.</p>
+
+          <div class="call warn">
+            <h3>And the laptop now holds more than the desktop</h3>
+            <p>This is the part that sounds like a mistake and isn&apos;t. The
+            <strong>MacBook Pro with an M5 Max still takes 128&nbsp;GB</strong>, at
+            614&nbsp;GB/s &mdash; while the Mac Studio, the machine that exists to be the
+            bigger one, stops at 96. If you want a Mac for this work today, <strong>the
+            laptop is the better machine</strong>, which is not a sentence anyone expected
+            to write. It will probably stop being true when the Studio gets its next chip
+            &mdash; check the date stamp at the top.</p>
+          </div>
+
+          <h3>Every tier you can actually order</h3>
+          <p>Largest model each one holds, and what it runs at once loaded. Both columns
+          computed, not quoted &mdash; same arithmetic as the table above. The highlighted
+          rows are the only two machines here that reach 128&nbsp;GB.</p>
+          <div class="tw">
+            <table class="figs">
+              <thead><tr><th></th><th>Memory</th><th>Bandwidth</th><th>Biggest model it holds</th><th>t/s on that model</th><th>Price</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Mac Studio M4 Max</strong></td><td>36 GB</td><td>546 GB/s</td><td>~48B</td><td>13</td><td>$2,499</td></tr>
+                <tr><td><strong>Mac Studio M4 Max</strong></td><td>64 GB</td><td>546 GB/s</td><td>~85B</td><td>7</td><td>upgrade</td></tr>
+                <tr><td><strong>Mac Studio M3 Ultra</strong></td><td>96 GB</td><td>819 GB/s</td><td>~128B</td><td>7</td><td>$5,299</td></tr>
+                <tr><td><strong>MacBook Pro M5 Max</strong></td><td>36 GB</td><td>614 GB/s</td><td>~48B</td><td>15</td><td>from $2,699</td></tr>
+                <tr><td class="yes"><strong>MacBook Pro M5 Max</strong></td><td class="yes">128 GB</td><td>614 GB/s</td><td class="yes">~171B</td><td>4</td><td>build to order</td></tr>
+                <tr><td class="yes"><strong>DGX Spark</strong></td><td class="yes">128 GB</td><td>273 GB/s</td><td class="yes">~171B</td><td>2</td><td>$4,699</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Read that top to bottom and the trade is plain: <strong>you buy capacity or you
+          buy speed.</strong> The cheapest Mac runs a 48B model six times faster than the Spark
+          runs a 171B one. Neither is better; they are answers to different questions.</p>
+
+          <h3>The one sentence that explains every benchmark argument</h3>
+          <p><strong>The Spark reads fast. The Mac writes fast.</strong></p>
+          <ul>
+            <li><strong>Reading</strong> &mdash; chewing through a long prompt before it
+            answers. The Spark&apos;s Blackwell tensor cores win this, and it is not close.</li>
+            <li><strong>Writing</strong> &mdash; producing the answer, word by word. That is
+            pure bandwidth, so the Mac wins by roughly <strong>3.4&times;</strong>.</li>
+          </ul>
+          <p>This is why two honest reviewers reach opposite conclusions. Owners running a
+          397B model measured the Mac at 30&ndash;40 tokens a second against two Sparks at
+          27&ndash;28 &mdash; but the Sparks read the prompt far faster. Ask which half of the
+          job you actually do more of.</p>
+
+          <h3>The cons neither company leads with</h3>
+          <div class="tw">
+            <table class="vs">
+              <thead><tr><th></th><th>DGX Spark</th><th>Mac Studio</th></tr></thead>
+              <tbody>
+                <tr><td><strong>The catch</strong></td>
+                    <td class="no">&ldquo;Full CUDA support&rdquo; is oversold. It is <code>sm_121</code>,
+                    its own Blackwell variant &mdash; plenty of CUDA packages either refuse to run or
+                    quietly fall back to years-old code paths</td>
+                    <td class="no">No CUDA at all. MLX is genuinely good now, but it is a smaller
+                    island and some tools never come</td></tr>
+                <tr><td><strong>Ceiling</strong></td>
+                    <td>128 GB</td>
+                    <td class="no">Studio 96 GB and falling &mdash; but the
+                    <strong>MacBook Pro M5 Max still takes 128 GB</strong>, faster</td></tr>
+                <tr><td><strong>Sustained load</strong></td>
+                    <td class="yes">Built to run flat out, unattended, all night</td>
+                    <td class="no">A laptop throttles on a long batch, and it is a laptop
+                    &mdash; it leaves the building with you</td></tr>
+                <tr><td><strong>Supply</strong></td>
+                    <td class="no">Price rose 18% in February on memory shortage</td>
+                    <td class="no">Options being withdrawn; weeks to deliver</td></tr>
+                <tr><td><strong>Best at</strong></td>
+                    <td class="yes">Long prompts, batch work, anything overnight</td>
+                    <td class="yes">Writing long answers you sit and wait for</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="call">
+            <h3>So should Cardinal buy a Mac?</h3>
+            <p><strong>No &mdash; but the honest reason is narrower than it looks.</strong> On
+            paper a 128&nbsp;GB MacBook Pro is a genuinely strong local-AI machine: same
+            capacity as your Spark, more than twice the bandwidth. Anyone who tells you the
+            Spark simply wins is not looking at the current line-up.</p>
+            <p>It loses on <em>your</em> job, for two specific reasons. Chapter VIII&apos;s
+            work is 60,485 photographs with a short prompt each &mdash; that is reading and
+            throughput, which is the half the Spark wins. And it runs <strong>overnight,
+            unattended</strong>: a laptop throttles under hours of sustained load, and it is a
+            laptop, so it leaves with whoever is carrying it. A box that sits on a shelf and
+            never stops is the right shape for that work.</p>
+            <p>Worth knowing: people who own both <em>network</em> them &mdash; Spark reads,
+            Mac writes &mdash; for about <strong>2.8&times;</strong> what the Mac manages
+            alone. Real, and also a second machine and a networking project. Not for now.</p>
+          </div>
+        </div>
+
+
+        <div class="block">
+          <h3>And AMD, which is the closest like-for-like</h3>
+          <p>AMD&apos;s answer is the <strong>Ryzen&nbsp;AI Max+ 395</strong> &mdash; sold as
+          the Ryzen AI Halo and in mini-PCs from several makers. It is the only machine here
+          built to the same brief as the Spark: <strong>128&nbsp;GB of unified memory in a box
+          on your desk</strong>. It is worth taking seriously, and it is cheaper.</p>
+          <div class="tw">
+            <table class="vs">
+              <thead><tr><th></th><th>DGX Spark</th><th>AMD Ryzen AI Max+ 395</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Memory</strong></td><td>128 GB</td><td>128 GB &mdash; the same</td></tr>
+                <tr><td><strong>Bandwidth</strong></td><td>273 GB/s</td><td>256 GB/s &mdash; near enough identical</td></tr>
+                <tr><td><strong>Writing</strong></td><td>&mdash;</td><td class="yes">Effectively a tie. Same memory, same bandwidth, same arithmetic</td></tr>
+                <tr><td><strong>Reading</strong></td><td class="yes"><strong>~1,700 tok/s</strong> prefill</td><td class="no"><strong>~340 tok/s</strong> &mdash; about <strong>five times slower</strong></td></tr>
+                <tr><td><strong>Price</strong></td><td class="no">$4,699</td><td class="yes">$3,999, and some builders sell 128 GB machines from ~$1,500</td></tr>
+                <tr><td><strong>Runs</strong></td><td class="no">Linux only</td><td class="yes">Windows natively</td></tr>
+                <tr><td><strong>Software</strong></td><td class="yes">CUDA &mdash; with the <code>sm_121</code> caveat above</td><td class="no">ROCm. Fine for Ollama and llama.cpp; fine-tuning and serving frameworks are still CUDA country</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Both figures measured on the same 120B model, so that five-to-one is a like-for-like
+          reading of the same job.</p>
+
+          <div class="call warn">
+            <h3>Which is the whole argument, in one row</h3>
+            <p>Same memory, same writing speed, $700 cheaper, and it runs Windows. If you were
+            buying today for chatting and coding, <strong>the AMD box is the better value and
+            it isn&apos;t close.</strong></p>
+            <p>But <strong>reading is the half Cardinal actually does.</strong> Sixty thousand
+            photographs, each with a short prompt, is prefill in a loop &mdash; the exact number
+            where the Spark is five times ahead. On that job the $700 buys back days of
+            wall-clock, and it is the reason not to feel bad about the box you own.</p>
+          </div>
         </div>
 
         <div class="call warn">
@@ -2523,7 +2668,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
 
         <div class="block">
           <h3>China &mdash; five families, and you already depend on them</h3>
-          <p>By mid&#8209;2026 five Chinese labs are publishing frontier&#8209;class models with <strong>open weights</strong> &mdash; the actual file, downloadable, yours to keep. This is not a niche. When Chapter VI says a $4,000 box can do useful work, this is <em>why</em>.</p>
+          <p>By mid&#8209;2026 five Chinese labs are publishing frontier&#8209;class models with <strong>open weights</strong> &mdash; the actual file, downloadable, yours to keep. This is not a niche. When Chapter VI says a $4,699 box can do useful work, this is <em>why</em>.</p>
           <ul class="mdl">
             <li>
               <div class="nm"><b>DeepSeek</b><span class="who">Hangzhou</span><span class="tag">open weights &middot; MIT-style licence</span></div>
@@ -2596,7 +2741,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
 
         <div class="block">
           <h3>South Korea &mdash; the argument, not the model</h3>
-          <p>Korea is not on this page because a Korean model will run your business. It&apos;s here because Korea is doing, at national scale and with public money, <strong>exactly the thing Chapter VI recommends you do with a $4,000 box</strong>: deciding that some work should happen on machines you control, in your own language, on your own soil.</p>
+          <p>Korea is not on this page because a Korean model will run your business. It&apos;s here because Korea is doing, at national scale and with public money, <strong>exactly the thing Chapter VI recommends you do with a $4,699 box</strong>: deciding that some work should happen on machines you control, in your own language, on your own soil.</p>
           <p>They call it <strong>sovereign AI</strong>. It is the same sentence as &ldquo;run the photo captioner on the Spark&rdquo;, with eight more zeroes.</p>
           <ul class="mdl">
             <li>
@@ -2673,6 +2818,179 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
 
         <div class="folio">
           <a class="prev" href="#/15"><span class="dir">Previous</span><span class="ttl">XV &middot; The other half of the map</span></a>
+          <span class="pg"></span>
+          <a class="next" href="#/commands"><span class="dir">Next</span><span class="ttl">The commands</span></a>
+        </div>
+      </section>
+
+      <!-- ─────────── THE COMMANDS ─────────── -->
+      <section class="chapter" data-ch="commands" tabindex="-1">
+        <div class="opener">
+          <span class="cnum">&mdash;</span>
+          <h2>The commands</h2>
+          <p class="deck">A dozen lines to type at the Spark, in the order you&apos;ll need them &mdash; and the one that answers &ldquo;where did my photos actually go?&rdquo; without you having to know the answer first.</p>
+        </div>
+
+        <div class="call">
+          <h3>Start here</h3>
+          <p>Everything on this page is typed into the <strong>Terminal</strong> window that
+          NVIDIA Sync opens for you &mdash; Chapter XI sets that up. If you can see a line
+          ending in <code>$</code>, you&apos;re in the right place. <strong>Nothing here can
+          break the machine</strong> except the one command in the red box at the bottom.</p>
+        </div>
+
+        <div class="block">
+          <h3>First, the shape of the thing</h3>
+          <p>The Spark is a Linux computer. Everything lives in one tree, and you only ever
+          care about the middle of it.</p>
+          <div class="roofsec">
+            <div class="lyr top">
+              <span class="nm"><span class="ord">/</span>The root</span>
+              <p class="ds">The very top. <b>You will never work here.</b> Mentioned only so the leading slash in a path stops looking mysterious.</p>
+            </div>
+            <div class="lyr">
+              <span class="nm"><span class="ord">~</span>Your home</span>
+              <p class="ds"><b>This is where you live and where your things go.</b> Its real name is <code>/home/</code> plus the username you made at first boot. The squiggle <code>~</code> is shorthand for it, and you can type <code>~</code> anywhere you&apos;d type the long version.</p>
+            </div>
+            <div class="lyr">
+              <span class="nm"><span class="ord">&#8230;</span>Folders you made</span>
+              <p class="ds">Whatever you or a program created inside home &mdash; <code>photos</code>, <code>models</code>, <code>Downloads</code>. <b>Nothing puts pictures in a standard place</b>, which is exactly why the next section is a search and not an address.</p>
+            </div>
+            <div class="lyr base">
+              <span class="nm"><span class="ord">4 TB</span>The drive</span>
+              <p class="ds">All of the above sits on one 4&nbsp;terabyte disk. For scale: <b>all 60,485 CompanyCam photographs would use a few per cent of it.</b> You are not going to run out.</p>
+            </div>
+          </div>
+          <span class="roofcap"><span>Top of the tree</span><span>Where you actually are</span></span>
+        </div>
+
+        <div class="block">
+          <h3>Looking around &mdash; four commands, that&apos;s all</h3>
+          <p>Type one, press Enter, read what comes back. The grey lines starting with
+          <code>#</code> are notes to you, not something to type.</p>
+          <div class="term">
+<div><span class="c"># where am I right now?</span></div>
+<div><span class="p">$</span> pwd</div>
+<div><span class="c"># what is in here? (the plain list)</span></div>
+<div><span class="p">$</span> ls</div>
+<div><span class="c"># same, but with sizes and dates, and showing hidden files</span></div>
+<div><span class="p">$</span> ls -lah</div>
+<div><span class="c"># go home, from anywhere, always</span></div>
+<div><span class="p">$</span> cd ~</div>
+          </div>
+          <span class="termcap">If you get lost, <code>cd ~</code> puts you back. It always works.</span>
+        </div>
+
+        <div class="block">
+          <h3>Finding the photos &mdash; the one you actually wanted</h3>
+          <p>You do <strong>not</strong> need to know where they are. That is the whole point
+          of this section. Ask the machine instead.</p>
+          <div class="term">
+<div><span class="c"># show me the first few pictures you can find anywhere in my home</span></div>
+<div><span class="p">$</span> find ~ -iname '*.jpg' | head</div>
+<div><span class="c"># how many are there, in total?</span></div>
+<div><span class="p">$</span> find ~ -iname '*.jpg' | wc -l</div>
+<div><span class="c"># ← THE ONE. which folders are they actually sitting in?</span></div>
+<div><span class="p">$</span> find ~ -iname '*.jpg' -printf '%h\n' | sort -u</div>
+          </div>
+          <span class="termcap">That last one prints a short list of folders. Those are your answer.</span>
+          <p>Swap <code>'*.jpg'</code> for <code>'*.png'</code> or <code>'*.heic'</code> if the
+          pictures came off a phone. <code>-iname</code> means it ignores capital letters, so
+          <code>.JPG</code> is found too &mdash; which matters more than you&apos;d think,
+          because cameras are inconsistent about it.</p>
+          <p>Once you know the folder, go and stand in it:</p>
+          <div class="term">
+<div><span class="c"># paste one of the folders it printed</span></div>
+<div><span class="p">$</span> cd ~/photos/roofs</div>
+<div><span class="c"># and count what is in just this one</span></div>
+<div><span class="p">$</span> ls | wc -l</div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>Getting pictures onto it in the first place</h3>
+          <div class="call warn">
+            <h3>Run these on your laptop, not on the Spark</h3>
+            <p>This is the thing everybody gets wrong once. You are <em>pushing</em> files from
+            the machine that has them to the machine that doesn&apos;t, so you type it into a
+            terminal on <strong>your laptop</strong>. If you type it at the Spark it will look
+            for the folder on the Spark, not find it, and you will be confused for ten minutes.</p>
+          </div>
+          <div class="term">
+<div><span class="c"># one folder, one time — simple and fine</span></div>
+<div><span class="p">$</span> scp -r ~/Desktop/roofphotos <b>you@spark</b>:~/photos/</div>
+<div><span class="c"># better for anything big: shows progress, and picks up where it left off</span></div>
+<div><span class="p">$</span> rsync -av --progress ~/Desktop/roofphotos <b>you@spark</b>:~/photos/</div>
+          </div>
+          <span class="termcap">Replace <code>you@spark</code> with your username and the Spark&apos;s name or Tailscale address &mdash; Chapter XI.</span>
+          <p><strong>Use <code>rsync</code> for anything that matters.</strong> If the Wi-Fi
+          drops halfway through sixty thousand photographs, <code>scp</code> starts again from
+          nothing and <code>rsync</code> carries on from where it stopped.</p>
+        </div>
+
+        <div class="block">
+          <h3>Is there room?</h3>
+          <div class="term">
+<div><span class="c"># how full is the drive</span></div>
+<div><span class="p">$</span> df -h /</div>
+<div><span class="c"># what is taking up space in my home folder</span></div>
+<div><span class="p">$</span> du -sh ~/*</div>
+          </div>
+          <span class="termcap">The <code>-h</code> on both means &ldquo;human&rdquo; &mdash; GB rather than a number with nine digits.</span>
+        </div>
+
+        <div class="block">
+          <h3>Seeing it as a window instead of a list</h3>
+          <p>If the Spark has a monitor plugged into it, one command opens the folder you are
+          standing in as an ordinary window:</p>
+          <div class="term">
+<div><span class="c"># open this folder in a normal file window</span></div>
+<div><span class="p">$</span> xdg-open .</div>
+          </div>
+          <span class="termcap">The lone dot means &ldquo;here&rdquo;. It is a real path, not a typo.</span>
+          <p>Working from a laptop instead, the supported route is <strong>NVIDIA Sync</strong>
+          &mdash; the same thing Chapter XI has you install. It gives you the terminal and a
+          dashboard.</p>
+          <div class="call warn">
+            <h3>One honest caveat about drag-and-drop</h3>
+            <p>You will find guides for mounting the Spark so it appears in Finder or Explorer
+            like a USB stick. They work, but they are <strong>community setups, not an NVIDIA
+            feature</strong> &mdash; so when something breaks after an update, nobody owes you a
+            fix. Fine to try. Don&apos;t build a routine on it before you&apos;ve built one on
+            <code>rsync</code>.</p>
+          </div>
+        </div>
+
+        <div class="call warn">
+          <h3>The only command on this page that can hurt you</h3>
+          <p><code>rm</code> deletes. <strong>There is no undo and no recycle bin</strong> &mdash;
+          the file is simply gone, and <code>rm -rf</code> removes a whole folder and everything
+          under it without asking. It is the single most common way people lose work on a Linux
+          machine, and it happens in the half-second after pressing Enter.</p>
+          <p>Two habits that cost nothing: <strong>run <code>ls</code> first</strong> so you can
+          see exactly what you are about to remove, and <strong>never paste an <code>rm</code>
+          line you did not write yourself.</strong></p>
+        </div>
+
+        <div class="block">
+          <h3>The whole card</h3>
+          <p>No explanations. This is the bit to read standing at the machine.</p>
+          <div class="term">
+<div><span class="p">$</span> pwd<span class="c">                                    where am I</span></div>
+<div><span class="p">$</span> ls -lah<span class="c">                                what is here</span></div>
+<div><span class="p">$</span> cd ~<span class="c">                                   go home</span></div>
+<div><span class="p">$</span> find ~ -iname '*.jpg' | wc -l<span class="c">          how many photos</span></div>
+<div><span class="p">$</span> find ~ -iname '*.jpg' -printf '%h\n' | sort -u<span class="c">   which folders</span></div>
+<div><span class="p">$</span> df -h /<span class="c">                                is there room</span></div>
+<div><span class="p">$</span> du -sh ~/*<span class="c">                             what is big</span></div>
+<div><span class="p">$</span> xdg-open .<span class="c">                             open a window</span></div>
+<div><span class="c"># from the LAPTOP, not the Spark:</span></div>
+<div><span class="p">$</span> rsync -av --progress <b>folder</b> you@spark:~/photos/</div>
+          </div>
+        </div>
+
+        <div class="folio">
+          <a class="prev" href="#/recap"><span class="dir">Previous</span><span class="ttl">The short version</span></a>
           <span class="pg"></span>
           <a class="next" href="#/glossary"><span class="dir">Next</span><span class="ttl">Glossary</span></a>
         </div>
@@ -2764,7 +3082,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
 
         <div class="folio">
-          <a class="prev" href="#/recap"><span class="dir">Previous</span><span class="ttl">The short version</span></a>
+          <a class="prev" href="#/commands"><span class="dir">Previous</span><span class="ttl">The commands</span></a>
           <span class="pg"></span>
           <a class="next" href="#/sources"><span class="dir">Next</span><span class="ttl">Sources</span></a>
         </div>
@@ -2816,6 +3134,14 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <li><span class="for">Chapter IX · open weights</span><a href="https://llm-stats.com/leaderboards/open-llm-leaderboard">LLM-Stats — open-weight leaderboard</a></li>
           <li><span class="for">Chapter IX · open weights</span><a href="https://www.mindstudio.ai/blog/best-open-source-llms-agentic-coding-2026">MindStudio — open models for agentic coding, 2026</a></li>
           <li><span class="for">Chapter IX · open weights</span><a href="https://wavect.io/blog/open-weight-llm-comparison-2026">Wavect — open-weight comparison and licence terms</a></li>
+          <li><span class="for">Chapter VI &middot; the memory cap</span><a href="https://www.tomshardware.com/desktops/apple-quietly-axes-128gb-mac-studio-amid-supply-constraints-and-local-ai-frenzy-highest-memory-capacity-reduced-to-96gb-two-months-after-discontinuation-of-512gb-model">Tom&#8217;s Hardware &mdash; Apple axes the 128 GB Mac Studio; cap now 96 GB</a></li>
+          <li><span class="for">Chapter VI &middot; the memory cap</span><a href="https://9to5mac.com/2026/03/05/apple-no-longer-offers-m3-ultra-mac-studio-with-original-highest-ram-configuration/">9to5Mac &mdash; the 512 GB M3 Ultra is withdrawn</a></li>
+          <li><span class="for">Chapter VI &middot; the Spark price</span><a href="https://www.tomshardware.com/desktops/mini-pcs/nvidia-dgx-spark-gets-18-percent-price-increase-as-memory-shortages-bite-founders-edition-now-usd4-699-up-from-usd3-999">Tom&#8217;s Hardware &mdash; DGX Spark $3,999 &rarr; $4,699 on memory supply</a></li>
+          <li><span class="for">Chapter VI &middot; the MacBook Pro</span><a href="https://support.apple.com/en-us/126319">Apple &mdash; MacBook Pro (16-inch, M5 Pro / M5 Max) tech specs, 128 GB and 614 GB/s</a></li>
+          <li><span class="for">Chapter VI &middot; AMD vs Spark</span><a href="https://www.tomshardware.com/desktops/mini-pcs/amd-challenges-nvidias-dgx-spark-with-usd3-999-ryzen-ai-halo-with-windows-11-support-strix-halo-desktop-undercuts-nvidia-by-usd700-packs-128gb-of-unified-memory">Tom&#8217;s Hardware &mdash; AMD&#8217;s $3,999 Ryzen AI Halo undercuts the Spark by $700</a></li>
+          <li><span class="for">Chapter VI &middot; AMD vs Spark</span><a href="https://www.theregister.com/on-prem/2025/12/25/tested-amds-strix-halo-vs-nvidias-dgx-spark/2098514">The Register &mdash; Strix Halo and DGX Spark tested head to head</a></li>
+          <li><span class="for">Chapter VI &middot; read vs write</span><a href="https://blog.exolabs.net/nvidia-dgx-spark/">EXO &mdash; pairing a Spark with a Mac Studio, and why each wins its half</a></li>
+          <li><span class="for">Chapter VI &middot; the CUDA catch</span><a href="https://jangwook.net/en/blog/en/nvidia-dgx-spark-cuda-compatibility/">DGX Spark CUDA compatibility &mdash; sm_121 and the fallbacks</a></li>
           <li><span class="for">Chapter XI &middot; Quicksilver</span><a href="https://github.com/NousResearch/hermes-agent/releases/tag/v2026.7.20">Nous Research &mdash; Hermes Agent v0.19.0 release notes, 20 July 2026</a></li>
           <li><span class="for">Chapter XI &middot; Hermes memory</span><a href="https://hermes-agent.nousresearch.com/docs/user-guide/messaging/">Nous Research &mdash; messaging gateway and memory providers</a></li>
           <li><span class="for">Chapter XI &middot; the approvals hole</span><a href="https://github.com/NousResearch/hermes-agent/issues/21425">Issue #21425 &mdash; prompt injection in the smart-approval reviewer prompt</a></li>
