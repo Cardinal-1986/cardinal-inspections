@@ -399,6 +399,56 @@ const SHOTS = [
       geo && geo.gripShown);
     await shot('05-desktop-the-walk.png');
 
+    /* ── Spotlight (584) ──────────────────────────────────────────────────
+       jsdom proves the markup; only an engine can prove the veil's radial
+       gradient RESOLVES (the 448-449 transparent-surface class) and that the
+       ring lands at its fractions of the real layer. */
+    await page.click('[data-act="rback"]').catch(() => {});
+    await page.waitForTimeout(300);
+    await page.click('[data-act="present"]');
+    await page.waitForTimeout(700);
+    const pr = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      const layer = el.querySelector('.cr-sh-pres');
+      const ring = el.querySelector('.cr-sh-pr-ring');
+      const veil = el.querySelector('.cr-sh-pr-veil');
+      if (!layer || !ring) return null;
+      const L = layer.getBoundingClientRect(), R = ring.getBoundingClientRect();
+      return {
+        presenting: el.classList.contains('presenting'),
+        bg: getComputedStyle(layer).backgroundColor,
+        veilBg: getComputedStyle(veil).backgroundImage.slice(0, 60),
+        fx: (R.left - L.left) / L.width, fy: (R.top - L.top) / L.height,
+        segs: el.querySelectorAll('.cr-sh-pr-segs i').length,
+        ringColour: getComputedStyle(ring).borderTopColor
+      };
+    });
+    ok('present layer shown', pr && pr.presenting);
+    ok('true black resolved, not transparent', pr && pr.bg === 'rgb(5, 6, 7)', pr && pr.bg);
+    ok('the veil gradient actually resolved', pr && /radial-gradient/.test(pr.veilBg), pr && pr.veilBg);
+    ok('ring lands at its stored fraction', pr && Math.abs(pr.fx - 0.25) < 0.005 && Math.abs(pr.fy - 0.40) < 0.005,
+      pr && [pr.fx, pr.fy].join(' / '));
+    ok('one segment per finding', pr && pr.segs === 2, pr && pr.segs);
+    ok('ring colour is the severity, resolved', pr && /^rgb\(229, 72, 77\)$/.test(pr.ringColour),
+      pr && pr.ringColour);
+    await shot('06-desktop-spotlight.png');
+    // advance: second finding is the warn — ring must move and recolour
+    await page.click('[data-prgo="1"]');
+    await page.waitForTimeout(700);
+    const pr2 = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      const r = el.querySelector('.cr-sh-pr-ring');
+      return { c: getComputedStyle(r).borderTopColor, l: r.style.left };
+    });
+    ok('advancing moves and recolours the ring',
+      pr2 && /232, 163, 61/.test(pr2.c) && Math.abs(parseFloat(pr2.l) - 70) < 0.01,
+      pr2 && pr2.c + ' @ ' + pr2.l);
+    // past the last step: the show ends
+    await page.click('[data-prgo="1"]');
+    await page.waitForTimeout(400);
+    ok('past the last step the show ends', await page.evaluate(() =>
+      !document.getElementById('cr-show').classList.contains('presenting')));
+
     await page.close();
   }
 

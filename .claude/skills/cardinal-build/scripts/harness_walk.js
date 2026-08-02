@@ -43,6 +43,11 @@ if (!/function renderWalkTab\(/.test(MODULE_JS)) {
   console.log('\nRED — this artifact has no Walk tab (pre-579). Nothing to exercise.');
   process.exit(1);
 }
+if (!/function renderPresent\(/.test(MODULE_JS)) {
+  console.log('\nRED — this artifact has no present mode (pre-584). The Spotlight');
+  console.log('assertions would null-deref; failing cleanly instead.');
+  process.exit(1);
+}
 
 /* ── fixtures shaped like the real tables ───────────────────────────────── */
 const WALKS = [
@@ -494,6 +499,70 @@ const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
     // job (render_showcase.js).
     ok('a finished drag marks the review dirty',
       /function stop\(\)\{ if\(drag\)\{ drag = null; review\.dirty = true; repaint\(\); \}/.test(MODULE_JS));
+  }
+
+  /* ── build 584 · Spotlight — present mode ──────────────────────────────── */
+  console.log('\n── present mode ──');
+  {
+    // The fixture walk has exactly one reviewed shot WITH findings (shot 2),
+    // one reviewed with none (shot 3) and one unreviewed (shot 1) — so the
+    // show must have exactly ONE step. That the other two are excluded IS the
+    // 579 contract doing the filtering.
+    const h = await boot({});
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    const el = h.d.getElementById('cr-show');
+    ok('Present button appears when a walk has reviewable content',
+      !!el.querySelector('[data-act="present"]'));
+    el.querySelector('[data-act="present"]').click(); await settle();
+    ok('presenting class set on the module root', el.classList.contains('presenting'));
+    ok('exactly one step — unreviewed and empty shots are excluded',
+      /1 \/ 1/.test(el.querySelector('.cr-sh-pr-n').textContent),
+      el.querySelector('.cr-sh-pr-n').textContent);
+    ok('the caption is the finding, never the address',
+      /Impact bruising, south slope/.test(el.textContent) &&
+      !el.querySelector('.cr-sh-pres').textContent.includes('4212 Wilmington'),
+      'address leaked into the present layer');
+    const ring = el.querySelector('.cr-sh-pr-ring');
+    ok('ring is fraction-positioned in percent',
+      /%$/.test(ring.style.left) && Math.abs(parseFloat(ring.style.left) - 31) < 0.01,
+      ring.style.left);
+    ok('severity drives the ring colour', /229, 72, 77|#E5484D/i.test(ring.style.borderColor),
+      ring.style.borderColor);
+    ok('the veil is centred on the box',
+      /at 40\.00% 49\.00%/.test(el.querySelector('.cr-sh-pr-veil').style.background),
+      el.querySelector('.cr-sh-pr-veil').style.background.slice(0, 80));
+    // forward past the last step ends the show and lands back on the walk
+    el.querySelector('[data-prgo="1"]').click(); await settle();
+    ok('advancing past the last step ends the show', !el.classList.contains('presenting'));
+    ok('and lands back on the walk, not a dead screen',
+      el.querySelectorAll('[data-shot]').length === 3);
+  }
+  {
+    // Sales presents the walk Theo reviewed — the button must NOT be
+    // admin-gated, and module close() must end the show for hideAllViews.
+    const h = await boot({ admin: false });
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    const el = h.d.getElementById('cr-show');
+    ok('a rep gets the Present button too', !!el.querySelector('[data-act="present"]'));
+    el.querySelector('[data-act="present"]').click(); await settle();
+    ok('rep is presenting', el.classList.contains('presenting'));
+    h.w.CardinalShowcase.close(); await settle();
+    ok('module close() ends the show (the hideAllViews path)',
+      !el.classList.contains('presenting'));
+    ok('presenting never touched the global scroll lock', h.d.body.style.overflow === '');
+  }
+  {
+    // A walk with nothing reviewed offers no Present button at all.
+    const h = await boot({ shots: [SHOTS[0]] });   // unreviewed only
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    ok('no reviewable content, no Present button',
+      !h.d.getElementById('cr-show').querySelector('[data-act="present"]'));
   }
 
   /* ── 10 · an RLS refusal is a silent 204 ───────────────────────────────── */

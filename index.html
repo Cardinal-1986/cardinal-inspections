@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 582 &#8212; the manual&#8217;s hardware chapter answers all of it &#8212; specs, the RTX 6000, a three-way comparison, and both stacking questions</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 584 &#8212; Spotlight — present a walk full screen, one finding at a time, lights off</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:584, d:'2026-08-02', t:'Spotlight \u2014 present mode for The Walk', s:'A Present button appears on any walk with a reviewed photo. Tap it and the screen goes true black: one finding at a time, the damage lit and everything else dark, with the marks you kept \u2014 nothing the AI proposed that you rejected. Tap the right side for the next finding, the left to go back, past the last one to finish. The address never appears on screen. Works for sales too, not just admins \u2014 presenting is the point.' },
 { build:582, note:'\uD83D\uDD29 The manual\u2019s hardware chapter now answers the whole question. A plain spec sheet before any argument, the DGX Spark and Apple each written up properly, the RTX PRO 6000 with its own pros and cons, a three-way Spark-vs-Mac-vs-6000 table, and both stacking questions \u2014 what two Sparks really change, and whether you can pair one with a 5090. And what local AI is good for is now seven jobs, with photographs as one of them rather than the argument.' },
 { build:581, note:'\uD83D\uDD27 What\u2019s New was showing five blank cards reading \u201cBuild undefined\u201d, and the seven newest builds never appeared at all \u2014 two ways of writing an entry had got mixed and the box only understood one of them. It reads both now. Also: the AI Field Manual is reordered into sixteen chapters in four groups, and the hardware has a chapter of its own.' },
 { b:580, d:'2026-08-02', t:'The Walk asks before it forgets', s:'Rejecting a mark, changing how serious one is, or dragging a box into place, then tapping Back or Ask again — both used to throw the change away with no warning. They ask first now, only when there is actually something to lose. Reopening a photo you have not touched yet, or asking the AI for the first time, still needs no confirmation.' },
@@ -55728,6 +55729,44 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 .cr-sh-note.warn{color:var(--sh-warn,#E8A33D)}
 .cr-sh-note.bad{color:var(--sh-bad,#E5484D)}
 .cr-sh-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+/* ── Spotlight — present mode (584) ────────────────────────────────────────
+   The Blackout treatment: the app's only true-black surface, so entering it
+   reads as "lights off, look here". White ink; severity colours are the only
+   chroma, which is the semantic-colour doctrine made theatrical. All inks
+   computed on #050607: white 18.35:1 · crit 5.0:1 · warn 9.1:1 · ok 6.5:1. */
+.cr-sh-pres{position:absolute;inset:0;z-index:40;background:#050607;display:none;
+  overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#cr-show.presenting .cr-sh-pres{display:block}
+#cr-show.presenting{overflow:hidden}
+.cr-sh-pr-segs{position:absolute;top:max(10px,env(safe-area-inset-top));left:12px;right:12px;
+  display:flex;gap:5px;z-index:8}
+.cr-sh-pr-segs i{flex:1;height:3px;border-radius:2px;background:rgba(242,244,242,.24)}
+.cr-sh-pr-segs i.done{background:var(--sh-ink,#F2F4F2)}
+.cr-sh-pr-photo{position:absolute;inset:0}
+.cr-sh-pr-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  -webkit-user-drag:none}
+.cr-sh-pr-veil{position:absolute;inset:0;z-index:3;transition:background .55s ease}
+.cr-sh-pr-ring{position:absolute;z-index:4;border:3px solid var(--sh-ink,#F2F4F2);border-radius:10px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.6);transition:all .55s cubic-bezier(.3,.8,.3,1)}
+.cr-sh-pr-cap{position:absolute;left:0;right:0;bottom:0;z-index:6;text-align:center;
+  padding:16px 22px calc(18px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(transparent,rgba(5,6,7,.94) 45%)}
+.cr-sh-pr-sev{display:inline-block;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.24em;border-radius:999px;padding:4px 11px;margin-bottom:9px;border:1px solid}
+.cr-sh-pr-cap h3{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;
+  font-size:clamp(18px,4vw,24px);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-pr-cap p{margin:5px 0 0;font-family:Georgia,serif;font-style:italic;font-size:13px;
+  color:rgba(242,244,242,.72)}
+.cr-sh-pr-x{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 14px);right:12px;z-index:9;
+  background:transparent;border:0;cursor:pointer;color:rgba(242,244,242,.8);font-size:19px;
+  padding:6px 10px;font-family:inherit}
+.cr-sh-pr-n{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 20px);left:14px;z-index:8;
+  font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:rgba(242,244,242,.55)}
+.cr-sh-pr-zone{position:absolute;top:0;bottom:0;z-index:7;cursor:pointer}
+@media (prefers-reduced-motion:reduce){
+  .cr-sh-pr-veil,.cr-sh-pr-ring{transition:none}
+}
 </style>
 
 <script id="cr-show-script">
@@ -56486,6 +56525,7 @@ async function signShots(){
 
 /* ── render ────────────────────────────────────────────────────────────── */
 function renderWalkTab(){
+  if(pres) return renderPresent();
   if(review) return renderReview();
   if(curWalk) return renderOneWalk();
   return renderWalkList();
@@ -56540,6 +56580,7 @@ function renderOneWalk(){
   var head = '<div class="cr-sh-rule">' + esc(walkLabel(w)) + '</div>' +
     '<div class="cr-sh-bar">' +
       '<button class="cr-sh-btn ghost" data-act="wback" type="button">← All walks</button>' +
+      (presentable().length ? '<button class="cr-sh-btn" data-act="present" type="button">Present \u25B6</button>' : '') +
       (amAdmin() ? '<button class="cr-sh-btn" data-act="wphone" type="button">Add photographs</button>' +
                    '<button class="cr-sh-btn ghost" data-act="wjob" type="button">From a job</button>' +
                    '<button class="cr-sh-btn ghost" data-act="wpub" type="button">' +
@@ -57113,6 +57154,8 @@ function wireWalk(){
       if(curWalk) loadShots(curWalk.id).then(repaint, repaint);
     };
   });
+  el.querySelectorAll('[data-act="present"]').forEach(function(b){ b.onclick = openPresent; });
+  wirePresent();
   el.querySelectorAll('[data-act="wback"]').forEach(function(b){
     b.onclick = function(){ curWalk = null; shots = []; review = null; repaint(); };
   });
@@ -57183,6 +57226,84 @@ function wireWalk(){
   wireBoxes();
 }
 
+
+/* ── Spotlight — present mode (584) ────────────────────────────────────────
+   One finding at a time, in front of the homeowner. Steps are flattened
+   across the walk's reviewed shots: every accepted finding is one step, and
+   the photograph swaps when the step crosses into the next shot. Only
+   reviewed_at-stamped shots with findings enter — the 579 contract means
+   anything shown here has been through a person's hands, with no filtering
+   logic to get wrong. The caption is label/note/severity only; the address
+   never appears, so privacy mode has nothing to leak. */
+var pres = null;   // { steps:[{shot,f}], i } while presenting
+
+function presentable(){
+  return shots.filter(function(s){ return s.reviewed_at && (s.findings || []).length; });
+}
+function openPresent(){
+  var ok = presentable();
+  if(!ok.length) return;
+  var steps = [];
+  ok.forEach(function(s){ (s.findings || []).forEach(function(f){ steps.push({ shot:s, f:f }); }); });
+  pres = { steps:steps, i:0 };
+  el.classList.add('presenting');
+  repaint();
+}
+function exitPresent(){
+  pres = null;
+  if(el) el.classList.remove('presenting');
+}
+
+var PR_SEV = { crit:['CRITICAL','#E5484D'], warn:['WORTH NOTING','#E8A33D'], ok:['SOUND','#46A758'] };
+
+function renderPresent(){
+  var st = pres.steps[pres.i], f = st.f, b = f.box || { x:0, y:0, w:0, h:0 };
+  var sev = PR_SEV[f.severity] || PR_SEV.ok;
+  var cx = (b.x + b.w/2)*100, cy = (b.y + b.h/2)*100;
+  /* The FULL rendition, not the display copy — this is the surface the
+     3840px files exist for. */
+  var img = signed[st.shot.path] || srcD(st.shot.path) || '';
+  return '<div class="cr-sh-pres">' +
+    '<div class="cr-sh-pr-segs">' +
+      pres.steps.map(function(_, k){
+        return '<i' + (k <= pres.i ? ' class="done"' : '') + '></i>';
+      }).join('') +
+    '</div>' +
+    '<span class="cr-sh-pr-n">' + (pres.i+1) + ' / ' + pres.steps.length + '</span>' +
+    '<button class="cr-sh-pr-x" data-act="prx" type="button" aria-label="End the walkthrough">\u2715</button>' +
+    '<div class="cr-sh-pr-photo"><img alt="" src="' + esc(img) + '"></div>' +
+    '<div class="cr-sh-pr-veil" style="background:radial-gradient(circle 150px at ' +
+      cx.toFixed(2) + '% ' + cy.toFixed(2) + '%,transparent 0 90px,rgba(3,4,6,.6) 145px,rgba(3,4,6,.94) 300px)"></div>' +
+    '<div class="cr-sh-pr-ring" style="left:' + (b.x*100).toFixed(3) + '%;top:' + (b.y*100).toFixed(3) +
+      '%;width:' + (b.w*100).toFixed(3) + '%;height:' + (b.h*100).toFixed(3) +
+      '%;border-color:' + sev[1] + ';box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 34px ' + sev[1] + '88"></div>' +
+    '<div class="cr-sh-pr-zone" style="left:0;width:33%" data-prgo="-1"></div>' +
+    '<div class="cr-sh-pr-zone" style="right:0;width:67%" data-prgo="1"></div>' +
+    '<div class="cr-sh-pr-cap">' +
+      '<span class="cr-sh-pr-sev" style="color:' + sev[1] + ';border-color:' + sev[1] + '99">' + sev[0] + '</span>' +
+      '<h3>' + esc(f.label || defLabel(f.defect)) + '</h3>' +
+      (f.note ? '<p>' + esc(f.note) + '</p>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+function wirePresent(){
+  el.querySelectorAll('[data-act="prx"]').forEach(function(b){
+    b.onclick = function(){ exitPresent(); repaint(); };
+  });
+  el.querySelectorAll('[data-prgo]').forEach(function(z){
+    z.onclick = function(){
+      var n = pres.i + parseInt(z.dataset.prgo, 10);
+      /* Story mechanics: back on the first step stays; forward past the last
+         step ends the show — the homeowner has seen everything. */
+      if(n < 0) return;
+      if(n >= pres.steps.length){ exitPresent(); repaint(); return; }
+      pres.i = n;
+      repaint();
+    };
+  });
+}
+
 /* ── open / close ──────────────────────────────────────────────────────── */
 function open(){
   ensure();
@@ -57209,6 +57330,7 @@ function open(){
 
 function close(goHome){
   closeForm();
+  exitPresent();
   if(el) el.classList.remove('open');
   if(goHome !== false && typeof window.showHome === 'function') window.showHome();
 }
@@ -57217,7 +57339,7 @@ window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
   open  : open,
   close : close,
   reload: function(){ loaded = false; workLoaded = false; walksLoaded = false;
-    curWalk = null; shots = []; review = null;
+    curWalk = null; shots = []; review = null; exitPresent();
     return Promise.all([load(), loadWork(), loadWalks()]); }
 });
 })();
