@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 572 &#8212; Sales Floor, the Objections Coach and Production keep the menu and use the whole screen</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 573 &#8212; the Objections Coach, Pricing, Company Documents and Adjusters follow dark mode</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -23264,17 +23264,42 @@ function showList() {
 
 <style id="cr-pricing-styles">
   #cr-pricing-mount {
-    --cr-red: #D9282A; --cr-red-dark: #B01F21; --cr-red-tint: #FDECEC; --cr-red-tint-2: #FEF7F7;
-    --cr-amber: #C87A00; --cr-amber-tint: #FBEFDA;
-    --cr-green: #2E7D32; --cr-green-tint: #E7F2E7;
-    --cr-blue: #1976D2; --cr-blue-tint: #E3F0FB;
-    --cr-black: #1a1a1a; --cr-text: #2a2a2a; --cr-muted: #6b6b6b; --cr-muted-2: #a8a8a8;
-    --cr-border: #e5e5e5; --cr-border-2: #efefef; --cr-bg: #ffffff; --cr-bg-subtle: #fafafa;
+    --cr-red:#ff6b6b; --cr-red-dark:#ff8e8e; --cr-red-tint:#3a1f22; --cr-red-tint-2:#2a1a1c;
+    --cr-amber:#e0a13a; --cr-amber-tint:#3a2f18;
+    --cr-green:#5ec97f; --cr-green-tint:#1c3324;
+    --cr-blue:#5fa8ea; --cr-blue-tint:#172a3a;
+    --cr-black:#f2f4f7; --cr-text:#e6e9ee; --cr-muted:#9aa3ad; --cr-muted-2:#858d97;
+    --cr-border:#2a2f36; --cr-border-2:#22262c; --cr-bg:#141619; --cr-bg-subtle:#1b1e22;
 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: var(--cr-text); background: var(--cr-bg);
     -webkit-font-smoothing: antialiased; min-height: 100vh;
   }
+/* 573: light mode restores EXACTLY what this module shipped with, so a
+   reviewer can diff light against today and see nothing. The base rule above
+   is now dark, because the app's default theme is dark and this module never
+   had a theme at all. Shape copied from cr-estimates-styles, which was already
+   converted. */
+:root[data-theme="rb-light"] #cr-pricing-mount{
+  --cr-red:#D9282A;
+  --cr-red-dark:#B01F21;
+  --cr-red-tint:#FDECEC;
+  --cr-red-tint-2:#FEF7F7;
+  --cr-amber:#C87A00;
+  --cr-amber-tint:#FBEFDA;
+  --cr-green:#2E7D32;
+  --cr-green-tint:#E7F2E7;
+  --cr-blue:#1976D2;
+  --cr-blue-tint:#E3F0FB;
+  --cr-black:#1a1a1a;
+  --cr-text:#2a2a2a;
+  --cr-muted:#6b6b6b;
+  --cr-muted-2:#a8a8a8;
+  --cr-border:#e5e5e5;
+  --cr-border-2:#efefef;
+  --cr-bg:#ffffff;
+  --cr-bg-subtle:#fafafa;
+}
   #cr-pricing-mount * { box-sizing: border-box; }
   #cr-pricing-mount .cr-p-app { max-width: 900px; margin: 0 auto; padding: 24px 22px 100px; }
 
@@ -23355,7 +23380,7 @@ function showList() {
 
   /* Modal shared */
   #cr-pricing-mount .cr-p-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  #cr-pricing-mount .cr-p-modal { background: white; border-radius: 8px; padding: 24px; max-width: 420px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
+  #cr-pricing-mount .cr-p-modal { background:var(--cr-bg,#fff); border-radius: 8px; padding: 24px; max-width: 420px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
   #cr-pricing-mount .cr-p-modal.wide { max-width: 720px; }
   #cr-pricing-mount .cr-p-modal h3 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--cr-black); letter-spacing: -0.3px; }
   #cr-pricing-mount .cr-p-modal-sub { color: var(--cr-muted); font-size: 13px; margin-bottom: 20px; }
@@ -23363,7 +23388,7 @@ function showList() {
   #cr-pricing-mount .cr-p-modal input, #cr-pricing-mount .cr-p-modal select { width: 100%; padding: 10px 12px; border: 1px solid var(--cr-border); border-radius: 4px; font-size: 14px; font-family: inherit; color: var(--cr-text); }
   #cr-pricing-mount .cr-p-modal input:focus, #cr-pricing-mount .cr-p-modal select:focus { outline: none; border-color: var(--cr-red); box-shadow: 0 0 0 3px var(--cr-red-tint); }
   #cr-pricing-mount .cr-p-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-  #cr-pricing-mount .cr-p-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-border); background: white; color: var(--cr-text); }
+  #cr-pricing-mount .cr-p-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-border); background:var(--cr-bg,#fff); color: var(--cr-text); }
   #cr-pricing-mount .cr-p-modal-btn.primary { background: var(--cr-red); color: white; border-color: var(--cr-red); }
   #cr-pricing-mount .cr-p-modal-error { color: var(--cr-red); font-size: 12px; margin-top: 8px; font-weight: 600; }
 
@@ -23383,7 +23408,7 @@ function showList() {
 
   /* History */
   #cr-pricing-mount .cr-hist-filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  #cr-pricing-mount .cr-hist-filters select, #cr-pricing-mount .cr-hist-filters input { padding: 8px 12px; border: 1px solid var(--cr-border); border-radius: 4px; font-size: 13px; font-family: inherit; color: var(--cr-text); background: white; }
+  #cr-pricing-mount .cr-hist-filters select, #cr-pricing-mount .cr-hist-filters input { padding: 8px 12px; border: 1px solid var(--cr-border); border-radius: 4px; font-size: 13px; font-family: inherit; color: var(--cr-text); background:var(--cr-bg,#fff); }
   #cr-pricing-mount .cr-hist-list { border-top: 1px solid var(--cr-border); }
   #cr-pricing-mount .cr-hist-row { display: grid; grid-template-columns: 110px 1fr 90px; gap: 12px; padding: 12px 4px; border-bottom: 1px solid var(--cr-border-2); font-size: 13px; align-items: baseline; }
   @media (max-width: 620px) { #cr-pricing-mount .cr-hist-row { grid-template-columns: 1fr; gap: 4px; } }
@@ -24730,13 +24755,13 @@ function showList() {
 
 <style id="cr-claims-styles">
   #cr-claims-mount {
-    --cr-red: #D9282A; --cr-red-dark: #B01F21; --cr-red-tint: #FDECEC; --cr-red-tint-2: #FEF7F7;
-    --cr-amber: #C87A00; --cr-amber-tint: #FBEFDA;
-    --cr-green: #2E7D32; --cr-green-tint: #E7F2E7;
-    --cr-blue: #1976D2; --cr-blue-tint: #E3F0FB;
-    --cr-purple: #6A3AB0; --cr-purple-tint: #EEE6F7;
-    --cr-black: #1a1a1a; --cr-text: #2a2a2a; --cr-muted: #6b6b6b; --cr-muted-2: #a8a8a8;
-    --cr-border: #e5e5e5; --cr-border-2: #efefef; --cr-bg: #ffffff; --cr-bg-subtle: #fafafa;
+    --cr-red:#ff6b6b; --cr-red-dark:#ff8e8e; --cr-red-tint:#3a1f22; --cr-red-tint-2:#2a1a1c;
+    --cr-amber:#e0a13a; --cr-amber-tint:#3a2f18;
+    --cr-green:#5ec97f; --cr-green-tint:#1c3324;
+    --cr-blue:#5fa8ea; --cr-blue-tint:#172a3a;
+    --cr-purple:#b28ae8; --cr-purple-tint:#2b2140;
+    --cr-black:#f2f4f7; --cr-text:#e6e9ee; --cr-muted:#9aa3ad; --cr-muted-2:#858d97;
+    --cr-border:#2a2f36; --cr-border-2:#22262c; --cr-bg:#141619; --cr-bg-subtle:#1b1e22;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: var(--cr-text); background: var(--cr-bg);
     -webkit-font-smoothing: antialiased;
@@ -24747,6 +24772,33 @@ function showList() {
        views left mounted underneath. */
     overscroll-behavior: contain;
   }
+/* 573: light mode restores EXACTLY what this module shipped with, so a
+   reviewer can diff light against today and see nothing. The base rule above
+   is now dark, because the app's default theme is dark and this module never
+   had a theme at all. Shape copied from cr-estimates-styles, which was already
+   converted. */
+:root[data-theme="rb-light"] #cr-claims-mount{
+  --cr-red:#D9282A;
+  --cr-red-dark:#B01F21;
+  --cr-red-tint:#FDECEC;
+  --cr-red-tint-2:#FEF7F7;
+  --cr-amber:#C87A00;
+  --cr-amber-tint:#FBEFDA;
+  --cr-green:#2E7D32;
+  --cr-green-tint:#E7F2E7;
+  --cr-blue:#1976D2;
+  --cr-blue-tint:#E3F0FB;
+  --cr-purple:#6A3AB0;
+  --cr-purple-tint:#EEE6F7;
+  --cr-black:#1a1a1a;
+  --cr-text:#2a2a2a;
+  --cr-muted:#6b6b6b;
+  --cr-muted-2:#a8a8a8;
+  --cr-border:#e5e5e5;
+  --cr-border-2:#efefef;
+  --cr-bg:#ffffff;
+  --cr-bg-subtle:#fafafa;
+}
   #cr-claims-mount * { box-sizing: border-box; }
   #cr-claims-mount .cr-c-app { max-width: 800px; margin: 0 auto; padding: 24px 22px 100px; }
 
@@ -24901,7 +24953,7 @@ function showList() {
 
   /* Modal (shared with pattern) */
   #cr-claims-mount .cr-c-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  #cr-claims-mount .cr-c-modal { background: white; border-radius: 8px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
+  #cr-claims-mount .cr-c-modal { background:var(--cr-bg,#fff); border-radius: 8px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
   #cr-claims-mount .cr-c-modal.wide { max-width: 700px; }
   #cr-claims-mount .cr-c-modal h3 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--cr-black); letter-spacing: -0.3px; }
   #cr-claims-mount .cr-c-modal .sub { color: var(--cr-muted); font-size: 13px; margin-bottom: 20px; }
@@ -24911,7 +24963,7 @@ function showList() {
   #cr-claims-mount .cr-c-modal input:focus, #cr-claims-mount .cr-c-modal select:focus, #cr-claims-mount .cr-c-modal textarea:focus { outline: none; border-color: var(--cr-red); box-shadow: 0 0 0 3px var(--cr-red-tint); }
   #cr-claims-mount .cr-c-modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   #cr-claims-mount .cr-c-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-  #cr-claims-mount .cr-c-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-border); background: white; color: var(--cr-text); }
+  #cr-claims-mount .cr-c-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-border); background:var(--cr-bg,#fff); color: var(--cr-text); }
   #cr-claims-mount .cr-c-modal-btn.primary { background: var(--cr-red); color: white; border-color: var(--cr-red); }
   #cr-claims-mount .cr-c-modal-err { color: var(--cr-red); font-size: 12px; margin-top: 8px; font-weight: 600; }
 
@@ -26765,16 +26817,43 @@ function showList() {
 
 <style id="cr-adj-styles">
   #cr-adjusters-mount{
-    --cr-red:#D9282A; --cr-red-dark:#B01F21; --cr-red-tint:#FDECEC; --cr-red-tint-2:#FEF7F7;
-    --cr-amber:#C87A00; --cr-amber-tint:#FBEFDA;
-    --cr-green:#2E7D32; --cr-green-tint:#E7F2E7;
-    --cr-blue:#1976D2;  --cr-blue-tint:#E3F0FB;
-    --cr-purple:#6A3AB0; --cr-purple-tint:#EEE6F7;
-    --cr-black:#1a1a1a; --cr-text:#2a2a2a; --cr-muted:#6b6b6b; --cr-muted-2:#a8a8a8;
-    --cr-border:#e5e5e5; --cr-border-2:#efefef; --cr-bg:#fff; --cr-bg-subtle:#fafafa;
+    --cr-red:#ff6b6b; --cr-red-dark:#ff8e8e; --cr-red-tint:#3a1f22; --cr-red-tint-2:#2a1a1c;
+    --cr-amber:#e0a13a; --cr-amber-tint:#3a2f18;
+    --cr-green:#5ec97f; --cr-green-tint:#1c3324;
+    --cr-blue:#5fa8ea;  --cr-blue-tint:#172a3a;
+    --cr-purple:#b28ae8; --cr-purple-tint:#2b2140;
+    --cr-black:#f2f4f7; --cr-text:#e6e9ee; --cr-muted:#9aa3ad; --cr-muted-2:#858d97;
+    --cr-border:#2a2f36; --cr-border-2:#22262c; --cr-bg:#141619; --cr-bg-subtle:#1b1e22;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     color:var(--cr-text); background:var(--cr-bg); -webkit-font-smoothing:antialiased; min-height:100vh;
   }
+/* 573: light mode restores EXACTLY what this module shipped with, so a
+   reviewer can diff light against today and see nothing. The base rule above
+   is now dark, because the app's default theme is dark and this module never
+   had a theme at all. Shape copied from cr-estimates-styles, which was already
+   converted. */
+:root[data-theme="rb-light"] #cr-adjusters-mount{
+  --cr-red:#D9282A;
+  --cr-red-dark:#B01F21;
+  --cr-red-tint:#FDECEC;
+  --cr-red-tint-2:#FEF7F7;
+  --cr-amber:#C87A00;
+  --cr-amber-tint:#FBEFDA;
+  --cr-green:#2E7D32;
+  --cr-green-tint:#E7F2E7;
+  --cr-blue:#1976D2;
+  --cr-blue-tint:#E3F0FB;
+  --cr-purple:#6A3AB0;
+  --cr-purple-tint:#EEE6F7;
+  --cr-black:#1a1a1a;
+  --cr-text:#2a2a2a;
+  --cr-muted:#6b6b6b;
+  --cr-muted-2:#a8a8a8;
+  --cr-border:#e5e5e5;
+  --cr-border-2:#efefef;
+  --cr-bg:#fff;
+  --cr-bg-subtle:#fafafa;
+}
   #cr-adjusters-mount *{ box-sizing:border-box; }
   #cr-adjusters-mount .cr-a-app{ max-width:800px; margin:0 auto; padding:24px 22px 100px; }
 
@@ -26792,7 +26871,7 @@ function showList() {
   #cr-adjusters-mount .cr-a-toolbar{ display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
   #cr-adjusters-mount .cr-a-search{ flex:1; min-width:180px; padding:10px 14px; border:1px solid var(--cr-border); border-radius:4px; font-size:14px; font-family:inherit; color:var(--cr-text); }
   #cr-adjusters-mount .cr-a-search:focus{ outline:none; border-color:var(--cr-red); box-shadow:0 0 0 3px var(--cr-red-tint); }
-  #cr-adjusters-mount .cr-a-sel{ padding:10px 12px; border:1px solid var(--cr-border); border-radius:4px; font-size:13px; font-family:inherit; background:#fff; color:var(--cr-text); }
+  #cr-adjusters-mount .cr-a-sel{ padding:10px 12px; border:1px solid var(--cr-border); border-radius:4px; font-size:13px; font-family:inherit; background:var(--cr-bg,#fff); color:var(--cr-text); }
 
   #cr-adjusters-mount .cr-a-row{ padding:16px 4px 14px; border-bottom:1px solid var(--cr-border-2); cursor:pointer; }
   #cr-adjusters-mount .cr-a-row:hover{ background:var(--cr-bg-subtle); }
@@ -27190,7 +27269,11 @@ function showList() {
     open: function(fromHub){
       state.openedFromHub = !!fromHub;
       MOUNT.style.position='fixed'; MOUNT.style.inset='0';
-      MOUNT.style.zIndex='200'; MOUNT.style.overflowY='auto'; MOUNT.style.background='#fff';
+      MOUNT.style.zIndex='200'; MOUNT.style.overflowY='auto'; /* 573: was MOUNT.style.background='#fff'; — an INLINE write, which beats every
+   stylesheet rule at any specificity, so this module could never follow the
+   theme no matter what its tokens said. styleMounts() already carries this
+   exact fix with a comment explaining it; these two were never included.
+   Left to CSS, which now has both a dark base and an rb-light twin. */
       if (window.crHideOtherMounts) window.crHideOtherMounts('cr-adjusters-mount');
       showList();
     },
@@ -27267,16 +27350,43 @@ function showList() {
 
 <style id="cr-coach-styles">
   #cr-coach-mount{
-    --cr-red:#D9282A; --cr-red-dark:#B01F21; --cr-red-tint:#FDECEC; --cr-red-tint-2:#FEF7F7;
-    --cr-amber:#C87A00; --cr-amber-tint:#FBEFDA;
-    --cr-green:#2E7D32; --cr-green-tint:#E7F2E7;
-    --cr-blue:#1976D2;  --cr-blue-tint:#E3F0FB;
-    --cr-purple:#6A3AB0; --cr-purple-tint:#EEE6F7;
-    --cr-black:#1a1a1a; --cr-text:#2a2a2a; --cr-muted:#6b6b6b; --cr-muted-2:#a8a8a8;
-    --cr-border:#e5e5e5; --cr-border-2:#efefef; --cr-bg:#fff; --cr-bg-subtle:#fafafa;
+    --cr-red:#ff6b6b; --cr-red-dark:#ff8e8e; --cr-red-tint:#3a1f22; --cr-red-tint-2:#2a1a1c;
+    --cr-amber:#e0a13a; --cr-amber-tint:#3a2f18;
+    --cr-green:#5ec97f; --cr-green-tint:#1c3324;
+    --cr-blue:#5fa8ea;  --cr-blue-tint:#172a3a;
+    --cr-purple:#b28ae8; --cr-purple-tint:#2b2140;
+    --cr-black:#f2f4f7; --cr-text:#e6e9ee; --cr-muted:#9aa3ad; --cr-muted-2:#858d97;
+    --cr-border:#2a2f36; --cr-border-2:#22262c; --cr-bg:#141619; --cr-bg-subtle:#1b1e22;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     color:var(--cr-text); background:var(--cr-bg); -webkit-font-smoothing:antialiased; min-height:100vh;
   }
+/* 573: light mode restores EXACTLY what this module shipped with, so a
+   reviewer can diff light against today and see nothing. The base rule above
+   is now dark, because the app's default theme is dark and this module never
+   had a theme at all. Shape copied from cr-estimates-styles, which was already
+   converted. */
+:root[data-theme="rb-light"] #cr-coach-mount{
+  --cr-red:#D9282A;
+  --cr-red-dark:#B01F21;
+  --cr-red-tint:#FDECEC;
+  --cr-red-tint-2:#FEF7F7;
+  --cr-amber:#C87A00;
+  --cr-amber-tint:#FBEFDA;
+  --cr-green:#2E7D32;
+  --cr-green-tint:#E7F2E7;
+  --cr-blue:#1976D2;
+  --cr-blue-tint:#E3F0FB;
+  --cr-purple:#6A3AB0;
+  --cr-purple-tint:#EEE6F7;
+  --cr-black:#1a1a1a;
+  --cr-text:#2a2a2a;
+  --cr-muted:#6b6b6b;
+  --cr-muted-2:#a8a8a8;
+  --cr-border:#e5e5e5;
+  --cr-border-2:#efefef;
+  --cr-bg:#fff;
+  --cr-bg-subtle:#fafafa;
+}
   #cr-coach-mount *{ box-sizing:border-box; }
   #cr-coach-mount .cr-k-app{ max-width:760px; margin:0 auto; padding:24px 22px 110px; }
 
@@ -27292,7 +27402,7 @@ function showList() {
   #cr-coach-mount .cr-k-fact .val strong{ font-weight:700; color:var(--cr-black); }
 
   #cr-coach-mount .cr-k-actions{ display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
-  #cr-coach-mount .cr-k-btn{ flex:1; min-width:120px; padding:12px 8px; border-radius:4px; font-size:12px; font-weight:700; cursor:pointer; background:#fff; border:1px solid var(--cr-border); color:var(--cr-text); font-family:inherit; letter-spacing:1.2px; text-transform:uppercase; }
+  #cr-coach-mount .cr-k-btn{ flex:1; min-width:120px; padding:12px 8px; border-radius:4px; font-size:12px; font-weight:700; cursor:pointer; background:var(--cr-bg,#fff); border:1px solid var(--cr-border); color:var(--cr-text); font-family:inherit; letter-spacing:1.2px; text-transform:uppercase; }
   #cr-coach-mount .cr-k-btn:hover{ border-color:var(--cr-muted-2); background:var(--cr-bg-subtle); }
   #cr-coach-mount .cr-k-btn.primary{ background:var(--cr-red); color:#fff; border-color:var(--cr-red); flex:1.6; }
   #cr-coach-mount .cr-k-btn.primary:hover{ background:var(--cr-red-dark); }
@@ -27303,7 +27413,7 @@ function showList() {
   #cr-coach-mount .cr-k-tab.active{ color:var(--cr-red); border-bottom-color:var(--cr-red); }
 
   /* Flip card */
-  #cr-coach-mount .cr-k-card{ border:1px solid var(--cr-border); border-left:3px solid var(--cr-red); border-radius:6px; padding:16px 18px; margin-bottom:10px; cursor:pointer; background:#fff; }
+  #cr-coach-mount .cr-k-card{ border:1px solid var(--cr-border); border-left:3px solid var(--cr-red); border-radius:6px; padding:16px 18px; margin-bottom:10px; cursor:pointer; background:var(--cr-bg,#fff); }
   #cr-coach-mount .cr-k-card:hover{ background:var(--cr-bg-subtle); }
   #cr-coach-mount .cr-k-card .cat{ font-size:9px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--cr-red); margin-bottom:6px; }
   #cr-coach-mount .cr-k-card .front{ font-size:16px; font-weight:700; color:var(--cr-black); line-height:1.35; letter-spacing:-.2px; }
@@ -27369,14 +27479,14 @@ function showList() {
   #cr-coach-mount .cr-k-footer{ text-align:center; font-size:10px; color:var(--cr-muted-2); margin-top:40px; padding-top:18px; border-top:1px solid var(--cr-border-2); text-transform:uppercase; font-weight:600; letter-spacing:1px; }
 
   #cr-coach-mount .cr-k-modal-bg{ position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:220; display:flex; align-items:center; justify-content:center; padding:20px; }
-  #cr-coach-mount .cr-k-modal{ background:#fff; border-radius:8px; padding:24px; max-width:480px; width:100%; box-shadow:0 8px 40px rgba(0,0,0,.15); max-height:90vh; overflow-y:auto; }
+  #cr-coach-mount .cr-k-modal{ background:var(--cr-bg,#fff); border-radius:8px; padding:24px; max-width:480px; width:100%; box-shadow:0 8px 40px rgba(0,0,0,.15); max-height:90vh; overflow-y:auto; }
   #cr-coach-mount .cr-k-modal h3{ margin:0 0 4px; font-size:20px; font-weight:700; color:var(--cr-black); letter-spacing:-.3px; }
   #cr-coach-mount .cr-k-modal .sub{ color:var(--cr-muted); font-size:13px; margin-bottom:18px; }
   #cr-coach-mount .cr-k-modal label{ display:block; font-size:10px; font-weight:700; color:var(--cr-red); letter-spacing:1.5px; text-transform:uppercase; margin:12px 0 4px; }
   #cr-coach-mount .cr-k-modal input,#cr-coach-mount .cr-k-modal select,#cr-coach-mount .cr-k-modal textarea{ width:100%; padding:10px 12px; border:1px solid var(--cr-border); border-radius:4px; font-size:14px; font-family:inherit; color:var(--cr-text); }
   #cr-coach-mount .cr-k-modal textarea{ min-height:90px; resize:vertical; line-height:1.5; }
   #cr-coach-mount .cr-k-modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
-  #cr-coach-mount .cr-k-modal-btn{ padding:10px 18px; border-radius:4px; font-size:12px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; cursor:pointer; font-family:inherit; border:1px solid var(--cr-border); background:#fff; color:var(--cr-text); }
+  #cr-coach-mount .cr-k-modal-btn{ padding:10px 18px; border-radius:4px; font-size:12px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; cursor:pointer; font-family:inherit; border:1px solid var(--cr-border); background:var(--cr-bg,#fff); color:var(--cr-text); }
   #cr-coach-mount .cr-k-modal-btn.primary{ background:var(--cr-red); color:#fff; border-color:var(--cr-red); }
   #cr-coach-mount .cr-k-err{ color:var(--cr-red); font-size:12px; margin-top:8px; font-weight:600; }
 
@@ -27414,7 +27524,11 @@ function showList() {
   }
   function show(){
     M.style.position='fixed'; M.style.inset='0'; M.style.zIndex='200';
-    M.style.overflowY='auto'; M.style.background='#fff'; M.style.display='block';
+    M.style.overflowY='auto'; /* 573: was M.style.background='#fff'; — an INLINE write, which beats every
+   stylesheet rule at any specificity, so this module could never follow the
+   theme no matter what its tokens said. styleMounts() already carries this
+   exact fix with a comment explaining it; these two were never included.
+   Left to CSS, which now has both a dark base and an rb-light twin. */ M.style.display='block';
     if(window.crHideOtherMounts) window.crHideOtherMounts('cr-coach-mount');
   }
 
@@ -34880,6 +34994,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ build:573, note:'\uD83C\uDF13 Four screens were built white and stayed white no matter which theme you were in \u2014 the Objections Coach, Pricing Catalog, Company Documents and Adjusters. Walking into the coach from the dark Sales Floor was a wall of white. \u2666 All four now follow the app theme. \u2666 Light mode looks exactly as it did; only dark is new. \u2666 Every colour that carries text was checked for readability against its new background rather than eyeballed.' },
 { build:572, note:'\uD83D\uDDA5\uFE0F Sales Floor, the Objections Coach and the Production board used to open as a bare screen with no menu, a narrow strip of content down the middle and a lot of empty space either side. \u2666 They now keep the left menu, close properly when you tap another page, and use the width of the screen on a desktop. \u2666 Phones are unchanged.' },
 { build:571, note:'\uD83D\uDD19 Finishing 570. \u2666 The estimate editor trapped you the same way \u2014 the menu was right there and did nothing. Menu items now close it, exactly as its own Cancel button does. \u2666 The back button used to walk straight past Crews, Estimates, Pricing Catalog and Company Documents as if they were never open; it now returns to them properly.' },
 { build:570, note:'\uD83D\uDEAA Crews, Pricing Catalog and Company Documents used to trap you: once you were on one, tapping anything in the menu did nothing and the \u00D7 was the only way out. \u2666 Those screens float on top of the app, and the routine that switches pages had never been told they exist \u2014 so it changed the page underneath them. \u2666 Every menu item now closes them properly. \u2666 The estimate editor is left alone on purpose, so a stray tap cannot throw away an estimate you are in the middle of.' },
