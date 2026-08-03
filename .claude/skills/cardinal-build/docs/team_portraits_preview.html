@@ -36,14 +36,15 @@
   <div class="row" style="grid-template-columns:repeat(3,1fr);max-width:620px" id="shirts"></div>
 
   <div class="note">
-    <b>Eleven drawn, eight from photographs.</b> Nick, Jacob and Scottie are
-    stand-ins — plausible rather than accurate. Scottie&rsquo;s <i>cap, stubble
-    and logo tee are real</i>, because Theo described them; only the face
-    proportions are invented, and his label says so. All three sets of features
-    are <i>fixed</i>, not randomised at run time: a face that reshuffled on
-    every reload could never be approved, and would differ between this sheet
-    and the spread it lands on. Send three photos and they become themselves in
-    about two minutes each.
+    <b>Twelve drawn, eight from photographs.</b> Scottie, Beto, Nick and Jacob
+    have <i>generic faces</i> — Theo settled that on 3 Aug, so they are no
+    longer placeholders waiting on a photograph and the labels no longer say
+    &ldquo;stand-in&rdquo;. What Theo <i>described</i> is real on all of them:
+    Scottie&rsquo;s cap, stubble and logo tee, Beto&rsquo;s black lead tee. Only
+    the face proportions are invented. Every set of features is <i>fixed</i>,
+    not randomised at run time: a face that reshuffled on every reload could
+    never be approved, and would differ between this sheet and the spread it
+    lands on.
     <br><br>
     <b>Curtis has the vest and the clipboard</b> — he is the PM, so he is the
     only one carrying either. The vest is lime, not orange: the red ridge mark
@@ -51,10 +52,10 @@
     The clipboard runs off the bottom cut on purpose, the same way the shirt
     does, so it reads as continuing rather than as a cropped rectangle.
     <br><br>
-    <b>The crew leader is a role, not a person.</b> Black tee with the words on
-    it, shown in the shirt row beside the polo and the field red. No name was
-    given, so no roster card was invented for him — say the word and he becomes
-    somebody.
+    <b>Beto is the crew leader</b>, and the only person on the roster in the
+    black lead tee. The third swatch in the shirt row is the <i>shirt</i>
+    reference — same face across all three so the shirt is the only variable —
+    not a second Beto.
     <br><br>
     <b>One thing worth checking, not a claim.</b> Scottie is on the roster now,
     and <i>scottie@</i> is in the app&rsquo;s Production group — those agree. Going
@@ -516,14 +517,24 @@ var PEOPLE=[
   // Cap, stubble and a logo tee are Theo's description, so they are real.
   // The face PROPORTIONS are not — there is no photograph, and the label
   // says so rather than letting a guess pass as a likeness.
-  {n:'SCOTTIE STEINBRUGGE', r:'Punch-outs · face is a stand-in',
+  {n:'SCOTTIE STEINBRUGGE', r:'Punch-outs · generic face',
    o:{skin:'light',hair:'dark',cap:true,capColor:'#2A2E33',beard:'stubble',
    shirt:'tee',fw:16.5,fh:18.4,jaw:0.6}},
+  /* Named by Theo, 3 Aug. The black tee and the words on it are his call and
+     are therefore real; the face is generic, same as the three below. He is
+     the only person on the roster wearing the lead tee — the swatch in the
+     shirt row is the SHIRT reference, not a second Beto. */
+  {n:'BETO', r:'Crew leader · generic face',
+   o:{skin:'mid',hair:'black',style:'fade',beard:'stubble',
+   shirt:'blacktee',lead:true,fw:17.2,fh:18.4,jaw:0.72}},
   {n:'DANNY GUTIERREZ', r:'Logistics', o:{skin:'mid',hair:'dark',style:'swept',
    glasses:'clubmaster',beard:'full',beardColor:'dark',fw:16.6,fh:18.6,jaw:0.62}},
-  {n:'NICK HEY',        r:'Sales · stand-in', o:{skin:'light',hair:'midbrown',
+  /* "use generic for Jacob and Nick" — Theo, 3 Aug. That SETTLES it: these are
+     not placeholders waiting on a photograph any more, and the label no longer
+     says "stand-in", which implied one was coming. */
+  {n:'NICK HEY',        r:'Sales · generic face', o:{skin:'light',hair:'midbrown',
    style:'short',fw:16.4,fh:18.4,jaw:0.5}},
-  {n:'JACOB HENDERSON', r:'Sales · stand-in', o:{skin:'tan',hair:'dark',
+  {n:'JACOB HENDERSON', r:'Sales · generic face', o:{skin:'tan',hair:'dark',
    style:'swept',fw:16.9,fh:18.0,jaw:0.68}}
 ];
 document.getElementById('row').innerHTML = PEOPLE.map(function(p){
