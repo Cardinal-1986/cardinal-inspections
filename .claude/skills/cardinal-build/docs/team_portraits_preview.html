@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Die-cut portraits — first pass</title>
+<style>
+  :root{--board:#E8DCC8;--shade:#D3C3A4;--cut-lt:#F4EDDD;--cut-dk:#C9B893;
+        --ink:#4A3524;--ink2:#6B5B47;--red-tx:#8F1620;
+        --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+        --serif:Georgia,"Times New Roman",serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:#CBB894;font-family:var(--sans);color:var(--ink)}
+  .sheet{max-width:1240px;margin:0 auto;background:var(--board);padding:30px 30px 40px}
+  h1{font:800 30px/1.1 var(--serif);margin:0 0 4px}
+  .sub{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;
+       color:var(--ink2);margin-bottom:24px}
+  .row{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+  .card{background:var(--cut-lt);border:1px solid var(--cut-dk);border-radius:3px;
+        padding:10px 8px 12px;text-align:center}
+  .card svg{display:block;width:100%;height:auto}
+  .nm{font:800 12.5px var(--mono);letter-spacing:.09em;margin-top:6px;color:var(--ink)}
+  .rl{font:12px/1.35 var(--sans);color:var(--ink2);margin-top:2px}
+  .q{color:var(--red-tx);font-weight:700}
+  .note{margin-top:26px;font:14px/1.55 var(--sans);max-width:70ch;color:var(--ink2)}
+  .note b{color:var(--ink)}
+  h2{font:800 17px var(--serif);margin:30px 0 10px}
+</style></head><body>
+<div class="sheet">
+  <h1>Die-cut portraits — first pass</h1>
+  <div class="sub">Same cut-paper vocabulary as the crew · not tracings</div>
+  <div class="row" id="row"></div>
+
+  <h2>The shirt question</h2>
+  <div class="row" style="grid-template-columns:repeat(3,1fr);max-width:620px" id="shirts"></div>
+
+  <div class="note">
+    <b>I only have a name for one of these.</b> The five from the team photo are drawn
+    from what the photograph shows — hair, facial hair, glasses, the pink — and nothing
+    else. Tell me who is who and what each one does, and the names go under the right faces.
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+var CORE='#F4EDDD', CUT='#C9B893', INK='#4A3524', INK2='#6B5B47';
+var SKIN={light:'#EFD2B4',mid:'#E3BC97',tan:'#D2A379',deep:'#B07F55'};
+var HAIR={black:'#2B2118',dark:'#3D2C20',brown:'#5C4128',midbrown:'#7A5636',
+          blonde:'#A98552',grey:'#8C8378',pink:'#C4548C'};
+
+/* A die-cut bust. Same rules as the crew puppet: filled pieces, a pale core
+   at every outer cut, light fixed upper-left, no rendering tricks. */
+function portrait(o){
+  o=o||{};
+  var skin=SKIN[o.skin||'light'], hair=HAIR[o.hair||'dark'];
+  var s='<svg viewBox="-42 -80 84 86" aria-hidden="true">';
+
+  // ── shirt ─────────────────────────────────────────────
+  var shirt=o.shirt==='hoodie'?'#6E2230':(o.shirt==='red'?'#C8202E':'#474C52');
+  var shirtDk=o.shirt==='hoodie'?'#511822':(o.shirt==='red'?'#7E1018':'#33373C');
+  s+='<path d="M-34,6 C-33,-12 -20,-20 -10,-23 L10,-23 C20,-20 33,-12 34,6 Z" fill="'+shirt+
+     '" stroke="'+CORE+'" stroke-width="2" stroke-linejoin="round"/>';
+  // upper-left light, on every piece, always
+  s+='<path d="M-34,6 C-33,-12 -20,-20 -10,-23 L-4,-23 L-14,6 Z" fill="#FFF" opacity=".09"/>';
+
+  if(o.shirt==='hoodie'){
+    // hood roll behind the neck, and drawstrings
+    s+='<path d="M-17,-20 C-13,-9 13,-9 17,-20 L13,-24 C9,-16 -9,-16 -13,-24 Z" fill="'+shirtDk+'"/>';
+    s+='<g stroke="'+CORE+'" stroke-width="1.8" stroke-linecap="round">'+
+       '<path d="M-5,-14 L-6,0"/><path d="M5,-14 L6.5,-1"/></g>';
+  } else {
+    // polo collar + placket
+    s+='<path d="M-12,-22 L0,-11 L12,-22 L7,-24 L0,-17 L-7,-24 Z" fill="'+shirtDk+'"/>';
+    s+='<path d="M-2.2,-12 L2.2,-12 L2.2,0 L-2.2,0 Z" fill="'+shirtDk+'" opacity=".6"/>';
+  }
+  // the CRR mark — a simplified red ridge, left chest
+  s+='<g transform="translate(15,-6) scale(.9)">'+
+     '<path d="M-8,3 L-3,-4 L0,0 L4,-6 L9,3 Z" fill="#C8202E"/>'+
+     '<path d="M-8,4.6 L9,4.6" stroke="'+CORE+'" stroke-width="1.5"/></g>';
+
+  // ── neck ──────────────────────────────────────────────
+  s+='<path d="M-6.5,-22 L6.5,-22 L6.5,-33 L-6.5,-33 Z" fill="'+skin+'" stroke="'+CUT+'" stroke-width="1"/>';
+  s+='<path d="M-6.5,-26 C-3,-22 3,-22 6.5,-26 L6.5,-22 L-6.5,-22 Z" fill="#000" opacity=".1"/>';
+
+  // ── hair BEHIND the head, for the long styles ─────────
+  if(o.style==='bob'||o.style==='long'||o.style==='pony'){
+    s+='<path d="M-19,-52 C-24,-34 -23,-24 -20,-19 L20,-19 C23,-24 24,-34 19,-52 Z" fill="'+hair+'"/>';
+  }
+  if(o.style==='pony'){
+    s+='<path d="M14,-46 C26,-42 28,-30 22,-22 L16,-25 C21,-31 20,-39 11,-42 Z" fill="'+hair+'"/>';
+  }
+
+  // ── head ──────────────────────────────────────────────
+  s+='<ellipse cx="0" cy="-47" rx="16.5" ry="18.5" fill="'+skin+'" stroke="'+CORE+
+     '" stroke-width="2"/>';
+  // ears
+  s+='<circle cx="-16.5" cy="-46" r="3.4" fill="'+skin+'" stroke="'+CUT+'" stroke-width=".9"/>'+
+     '<circle cx="16.5" cy="-46" r="3.4" fill="'+skin+'" stroke="'+CUT+'" stroke-width=".9"/>';
+
+  // ── facial hair, under the features ───────────────────
+  if(o.beard==='goatee'){
+    /* ONE connected ring, not a moustache plus a chin patch. Drawn as two
+       separate pieces they read as three parallel curves stacked with the
+       mouth — which is what the first two passes looked like. It is also
+       what the photograph actually shows: the moustache and the chin join
+       around the mouth. evenodd punches the lip opening out of the middle. */
+    s+='<path fill-rule="evenodd" fill="'+hair+'" d="'+
+       'M-9.4,-44.6 C-9.4,-47.6 9.4,-47.6 9.4,-44.6 C10.4,-36 9.2,-28.8 0,-28.8 '+
+       'C-9.2,-28.8 -10.4,-36 -9.4,-44.6 Z '+
+       'M-5.6,-43 C-5.6,-44.6 5.6,-44.6 5.6,-43 C6,-38 5,-34 0,-34 '+
+       'C-5,-34 -6,-38 -5.6,-43 Z"/>';
+  } else if(o.beard==='full'){
+    s+='<path d="M-16,-50 C-17,-36 -10,-28.5 0,-28.5 C10,-28.5 17,-36 16,-50 '+
+       'C13,-40 10,-36 0,-36 C-10,-36 -13,-40 -16,-50 Z" fill="'+hair+'"/>';
+    s+='<path d="M-7,-42.5 C-4,-44.5 4,-44.5 7,-42.5 C4,-41 -4,-41 -7,-42.5 Z" fill="'+hair+'"/>';
+  } else if(o.beard==='stubble'){
+    s+='<path d="M-14,-46 C-15,-36 -9,-29.5 0,-29.5 C9,-29.5 15,-36 14,-46 '+
+       'C11,-38 8,-35 0,-35 C-8,-35 -11,-38 -14,-46 Z" fill="'+hair+'" opacity=".3"/>';
+  }
+
+  // ── features ──────────────────────────────────────────
+  s+='<circle cx="-5.8" cy="-50" r="1.7" fill="'+INK+'"/><circle cx="5.8" cy="-50" r="1.7" fill="'+INK+'"/>';
+  s+='<path d="M-9.4,-55.5 C-7.4,-57 -3.6,-57 -2.2,-55.6" fill="none" stroke="'+INK+
+     '" stroke-width="1.3" stroke-linecap="round" opacity=".75"/>';
+  s+='<path d="M2.2,-55.6 C3.6,-57 7.4,-57 9.4,-55.5" fill="none" stroke="'+INK+
+     '" stroke-width="1.3" stroke-linecap="round" opacity=".75"/>';
+  s+='<path d="M-5.4,-39.8 Q0,-35.6 5.4,-39.8" fill="none" stroke="'+INK+
+     '" stroke-width="1.5" stroke-linecap="round"/>';
+
+  // ── glasses, over the face ────────────────────────────
+  if(o.glasses){
+    s+='<g fill="none" stroke="'+INK2+'" stroke-width="1.5">'+
+       '<rect x="-12.4" y="-54.4" width="10.6" height="8.4" rx="2.4"/>'+
+       '<rect x="1.8" y="-54.4" width="10.6" height="8.4" rx="2.4"/>'+
+       '<path d="M-1.8,-50.6 L1.8,-50.6"/><path d="M-12.4,-51 L-16.6,-49"/>'+
+       '<path d="M12.4,-51 L16.6,-49"/></g>';
+  }
+
+  // ── hair ON TOP ───────────────────────────────────────
+  if(o.style==='short'){
+    s+='<path d="M-16.6,-52 C-16,-64 -8,-68 0,-68 C8,-68 16,-64 16.6,-52 '+
+       'C13,-60 8,-62 0,-62 C-8,-62 -13,-60 -16.6,-52 Z" fill="'+hair+'"/>';
+  } else if(o.style==='swept'){
+    s+='<path d="M-16.6,-52 C-16.4,-64 -8,-68.6 1,-68.6 C10,-68.6 16.4,-64 16.6,-53 '+
+       'C15,-62 6,-63.5 -2,-60 C-8,-57.4 -13,-56 -16.6,-52 Z" fill="'+hair+'"/>';
+  } else if(o.style==='shaggy'){
+    s+='<path d="M-17.6,-46 C-19,-62 -9,-69.4 0,-69.4 C9,-69.4 19,-62 17.6,-46 '+
+       'C16.4,-56 14,-59.6 9,-61 C4,-58 -4,-58 -9,-61 C-14,-59.6 -16.4,-56 -17.6,-46 Z" fill="'+hair+'"/>';
+  } else if(o.style==='bob'){
+    s+='<path d="M-19,-48 C-20,-64 -9,-69 0,-69 C9,-69 20,-64 19,-48 '+
+       'C17,-58 12,-61.6 4,-62.4 C-2,-60 -9,-59 -13,-61 C-16,-58.6 -18,-54 -19,-48 Z" fill="'+hair+'"/>';
+  } else if(o.style==='long'||o.style==='pony'){
+    s+='<path d="M-17.6,-50 C-18.6,-64 -9,-69 0,-69 C9,-69 18.6,-64 17.6,-50 '+
+       'C16,-60 10,-63 0,-63 C-10,-63 -16,-60 -17.6,-50 Z" fill="'+hair+'"/>';
+  }
+  /* The pink is the top section, not a band. Drawn as the whole crown over
+     the darker base so the back and sides stay dark, which is what the
+     photograph shows. The first pass drew a stripe and read as a headband. */
+  if(o.accent){
+    /* A CAP, not a crescent. The long/pony top-hair shape is itself a thin
+       band — repainting that exact path in pink just made a headband twice
+       over. The pink has to be wide enough to cover the back-hair mass at
+       the crown, which is what the photograph shows: pink on top, dark
+       through the length. */
+    s+='<path d="M-19.4,-51 C-20.6,-66 -9,-70 0,-70 C9,-70 20.6,-66 19.4,-51 '+
+       'C14,-58.4 8,-60.6 0,-60.6 C-8,-60.6 -14,-58.4 -19.4,-51 Z" fill="'+HAIR.pink+'"/>';
+  }
+
+  return s+'</svg>';
+}
+
+var PEOPLE=[
+  {n:'?', r:'Team photo, far left', o:{skin:'light',hair:'dark',style:'short',beard:'goatee'}},
+  {n:'?', r:'Team photo, second',   o:{skin:'tan',  hair:'black',style:'swept',beard:'stubble'}},
+  {n:'?', r:'Team photo, centre',   o:{skin:'light',hair:'blonde',style:'bob',glasses:true}},
+  {n:'?', r:'Team photo, fourth',   o:{skin:'light',hair:'midbrown',style:'short',beard:'goatee'}},
+  {n:'?', r:'Team photo, far right',o:{skin:'light',hair:'dark',style:'pony',accent:true}},
+  {n:'CAINE', r:'Tech — the one I have a name for',
+   o:{skin:'light',hair:'dark',style:'shaggy',beard:'full',shirt:'hoodie'}}
+];
+document.getElementById('row').innerHTML = PEOPLE.map(function(p){
+  return '<div class="card">'+portrait(p.o)+
+    '<div class="nm'+(p.n==='?'?' q':'')+'">'+p.n+'</div><div class="rl">'+p.r+'</div></div>';
+}).join('');
+
+document.getElementById('shirts').innerHTML = [
+  ['Charcoal polo','What the team actually wears',{skin:'light',hair:'dark',style:'short',beard:'goatee'}],
+  ['Cardinal red','What I built the crew in',{skin:'light',hair:'dark',style:'short',beard:'goatee',shirt:'red'}],
+  ['Maroon hoodie','Caine, from the website',{skin:'light',hair:'dark',style:'short',beard:'goatee',shirt:'hoodie'}]
+].map(function(x){
+  return '<div class="card">'+portrait(x[2])+
+    '<div class="nm">'+x[0]+'</div><div class="rl">'+x[1]+'</div></div>';
+}).join('');
+})();
+</script>
+</body></html>
