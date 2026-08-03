@@ -7162,6 +7162,58 @@ zero page errors.
 
 ---
 
+## Four directives in one burst — and the shape question reopened (2026-08-03)
+
+Theo, in order: *"lets just re do the house shape to make everything line up right, give me 5
+different examples. A dormer isnt really needed depending on the roof type"* · *"during the first
+few pics of tear off the roof should look weathered and worn, maybe a few shingles missing"* ·
+*"since there is a chimney lets keep the chimney in the progression"* · *"maybe the cardinal bird
+can move throughout the screen during the taps too"* · *"what happened to the attic picture as
+well, and the take off, the gnome"*.
+
+**Everything built this pass is shape-independent on purpose** — anchored on `roofY`/`spanAt` or
+screen-space — so it survives whichever shape he picks.
+
+**The five shapes** are at `popup_house_shapes.html` (generator beside it): 0 current reference,
+1 side gable ("the rectangle — everything literally lines up"), 2 L front-gable **(recommended)**,
+3 T centred-ish, 4 hip + gable wing, 5 side gable + shed porch. He is right about the dormer:
+2/3/4 make it unnecessary because the valley comes with the roof. 1 and 5 have no valley — spread
+9's caption would go eave-only, stated on the card rather than hidden.
+
+**Weathered old roof:** five missing tabs on the course grid, dodging dormer/chimney/hips. First
+fill was `#0B0D10` on a `#1E2227` field — **1.2:1, a gap nobody can see, the sprayed-sheet lesson
+again the same day**. The reveal is weathered felt `#4A443A` now, with the course above shadowing
+into the hole. The gaps live inside `#shingles`, so the tap-strip takes them with the old roof.
+
+**The chimney is permanent** — moved into `house()` (and `houseSVG`), every state except `none`,
+with its base shadow so it sits on the slope; spread 11's own copy removed (two drawings of one
+chimney is the two-books failure). **This exposed a buried defect:** the dormer had been fully
+covering the sprayed sheet at (114,64) on the stripped deck — a mark nobody could see on the
+spread whose whole point is marking what is bad — and the chimney clipped the (194,82) X. All
+three bad sheets now sit on the bottom row; spread 8 re-laid left-to-right as hole → new sheet →
+two sprayed. The collision check missed it because bare paths were only added for props after the
+pipe-boot episode; sprayed sheets are drawn by `house()` itself and were never candidates.
+
+**The bird is a SLIDER.** A slider is a real pop-up mechanism — a tab riding a slot — so the bird
+can hop the yard during the taps and still be honest paper. Transform-only on the same node
+(`birdSame` still asserted), keyed off `beat` so stepping back walks it back, **ends the last beat
+home** — the old joke survives by inversion: *"The cardinal is back where it started. As far as it
+is concerned, nothing happened."* Reduced motion: instant positions. Verified in Chromium: 7
+distinct positions, ends home, same node, zero errors.
+
+**The Takeoff and The Attic** are drawn as PROPOSED · UNNUMBERED cards on the contact sheet.
+Both are in Theo's brief (point 14, starred) and the copy doc (Stages 1–2); the 16-spread cut
+dropped them silently. They belong between The Climb and The Adjuster, which makes the book 18 —
+**the numbering stays his call**; nothing renumbered.
+
+**The gnome: no record.** Not in the brief, the copy, the directions doc, the repo, or the
+published five-directions artifact (fetched and searched). Asked Theo what it was.
+
+Verified: 18/18 cards render (16 + 2 proposed), zero collisions, `pw_deck` clean at all three
+sizes, bird slider green, shapes page 6 cards zero errors.
+
+---
+
 ## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
 
 ✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like

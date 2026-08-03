@@ -161,12 +161,18 @@
 
   /* ── the cardinal's own pop piece ──────────────────────────
      Theo's mechanism: a second small V-fold in the foreground on a visible
-     stick. It also settles what the bird does — IT STAYS PUT. The roof comes
-     off, the crew works, forty pieces of debris land, and the bird is exactly
-     where it was. The board is taller than its artwork with the bird pinned
-     to the TOP, leaving the lower half transparent for the stick to read
-     through; sized to the bird, the stick was invisible. */
-  .birdpop{position:absolute;right:3%;bottom:var(--floorH);width:64px;height:94px}
+     stick. And as of 3 Aug the stick is a SLIDER — "maybe the cardinal bird
+     can move throughout the screen during the taps too." A slider is a real
+     pop-up mechanism: a tab riding a slot cut in the page, so the bird can
+     hop along the yard between beats and still be honest paper. It moves by
+     transform only — the SAME NODE the whole way, which is what the harness
+     asserts — and it ends the last beat back where it started, which keeps
+     the old joke by inverting it: everything happened, and as far as the
+     bird is concerned, nothing did. The board is taller than its artwork
+     with the bird pinned to the TOP, leaving the lower half transparent for
+     the stick to read through; sized to the bird, the stick was invisible. */
+  .birdpop{position:absolute;right:3%;bottom:var(--floorH);width:64px;height:94px;
+           transition:transform .7s cubic-bezier(.3,.9,.32,1.06)}
   .birdstick{position:absolute;left:50%;bottom:0;width:5px;height:52px;margin-left:-2.5px;
              transform-origin:50% 100%;
              transform:rotateX(calc(58deg - 30deg * var(--open)));
@@ -314,7 +320,7 @@
               text-transform:uppercase;color:var(--ink2)}
 
   @media (prefers-reduced-motion:reduce){
-    .pop,.pshadow,.strut,.birdstick,.birdboard,.signboard,.beat,.say,.drivelit,
+    .pop,.pshadow,.strut,.birdpop,.birdstick,.birdboard,.signboard,.beat,.say,.drivelit,
     .tag,.tagstick,.tagboard{transition:none!important}
     .tag{opacity:1!important}
     .chip.fly{animation:none!important;opacity:1!important;
@@ -911,6 +917,50 @@
    purpose, so the valley membrane and the eave membrane read as one
    continuous sheet, which is what they are. */
 var DRM = { W:50, BOT:84, EAVE:64, PEAK:38 }, DX = 134;
+
+/* ── THE CHIMNEY, IN EVERY STATE ─────────────────────────────────
+   Theo, 3 Aug: "since there is a chimney lets keep the chimney in the
+   progression." It had been drawn only on the flashing spread, which read as
+   a chimney being built for one day and demolished the next. Masonry
+   persists; it is in house() now, every state except 'none'.
+   Step and counter flashing are drawn with it always — a standing chimney is
+   a flashed chimney, even while the field around it is bare deck. */
+function chimney(){
+  var K='#E8DCC8';
+  return '<path d="M183,86 L209,86 L209,89.5 L183,89.5 Z" fill="#000" opacity=".24"/>'+
+         '<path d="M186,48 L206,48 L206,86 L186,86 Z" fill="#7E4A3C" stroke="'+K+'" stroke-width="1.6" stroke-linejoin="round"/>'+
+         '<path d="M196,48 L206,48 L206,86 L196,86 Z" fill="#5F3529"/>'+
+         '<path d="M184,48 L208,48 L208,44.6 L184,44.6 Z" fill="#6B4034"/>'+
+         '<path d="M182,86 L186,82 L186,62 L182,66 Z" fill="#AEB4BA"/>'+
+         '<g fill="#AEB4BA" stroke="'+K+'" stroke-width=".9">'+
+         '<path d="M206,60 L214,66 L214,72 L206,66 Z"/><path d="M206,70 L214,76 L214,82 L206,76 Z"/></g>';
+}
+
+/* ── MISSING SHINGLES on the roof that is coming off ─────────────
+   Theo, 3 Aug: "during the first few pics of tear off the roof should look
+   weathered and worn, maybe a few shingles missing." The blend was already
+   the weathered one; the gaps are what say a roof is DONE, not merely dark.
+   Each gap is one tab of the course grid (CH 8.5, BASE 96 — the same
+   arithmetic shingleArt lays), showing the black underlay beneath, with the
+   course above casting its shadow into the hole. Positions dodge the dormer
+   (109-159), the chimney (182-214) and stay inside spanAt at their height. */
+function wornGaps(){
+  var out = '', G = [[64,1],[86,3],[164,4],[220,2],[236,0]];
+  /* The reveal is WEATHERED FELT, not black-on-black. The first fill was
+     #0B0D10 on a #1E2227 field — 1.2:1, a gap nobody can see, which is a
+     mark that was never made (the sprayed-sheet lesson, again, same day). */
+  G.forEach(function(g){
+    var yb = 96 - g[1] * 8.5, yt = yb - 6.2, x = g[0];
+    out += '<path d="M'+x+','+yt+' L'+(x+15)+','+yt+' L'+(x+15)+','+yb+' L'+x+','+yb+
+           ' Z" fill="#4A443A"/>';
+    out += '<path d="M'+x+','+yt+' L'+(x+15)+','+yt+' L'+(x+15)+','+(yt+2)+' L'+x+','+(yt+2)+
+           ' Z" fill="#000" opacity=".5"/>';
+    out += '<path d="M'+(x+2)+','+(yb-1.4)+' L'+(x+13)+','+(yb-1.4)+
+           '" stroke="#2A2620" stroke-width=".8" fill="none"/>';
+  });
+  return out;
+}
+
 function dormerBox(cx){
   var h = DRM.W / 2;
   return { l: cx - h, r: cx + h, bot: DRM.BOT, eave: DRM.EAVE, peak: DRM.PEAK };
@@ -1148,7 +1198,13 @@ function cutLayers(x1){
          All three sheets are wholly inside the triangle at their course, so no
          clipping is needed: at y=82 the plane spans x 63-237, at y=64 it spans
          92-208. */
-      [[74, 82], [194, 82], [114, 64]].forEach(function(p){
+      /* ALL THREE ON THE BOTTOM ROW. (114,64) had been sitting entirely
+         under the dormer since the dormer went in — a sprayed sheet nobody
+         could see, on the spread whose whole point is marking what is bad.
+         The dormer occupies 109-159 x 38-84 and the chimney 182-214 x 45-86,
+         so the upper grid rows are spoken for; the bottom row (top edge 82)
+         clears both, and the X marks at y86-96 clear the chimney's base. */
+      [[74, 82], [114, 82], [194, 82]].forEach(function(p){
         var bx = p[0], by = p[1];
         s += '<path d="M' + bx + ',' + by + ' L' + (bx + SHW) + ',' + by + ' L' + (bx + SHW) + ',' +
              (by + SHH) + ' L' + bx + ',' + (by + SHH) + ' Z" fill="#C8202E" opacity=".4"/>';
@@ -1173,13 +1229,14 @@ function cutLayers(x1){
          which is the one thing you should never see on a finished roof. Now
          104 to 196 and 23.5 down, leaving 1.4 units showing above the cap.
          That sliver IS the raised line. */
-      s += shingleArt('onyxOld', true) + ridgeVent() + hipCaps('onyxOld');
+      s += shingleArt('onyxOld', true) + wornGaps() + ridgeVent() + hipCaps('onyxOld');
     }
     s += '</g>';
 
     /* THE DORMER, after the roof materials so the courses and the deck sheets
        run BEHIND it — which is where they physically are. Draw order is the
        containment; no clip path and no test needed. */
+    s += chimney();
     s += dormer(DX, {});
 
     // ── gutter along the eave and a downspout — Cardinal's own soft metals
@@ -1291,9 +1348,18 @@ function cutLayers(x1){
      show:['noiseG'], tag:1},
     {txt:'Afterwards you will find nothing. That is the entire trick.',
      lit:true, tag:2},
-    {txt:'The cardinal has not moved. It has no intention of moving.',
+    {txt:'The cardinal is back where it started. As far as it is concerned, nothing happened.',
      tally:true}
   ];
+
+  /* ── where the bird's slider sits on each beat ───────────────
+     Screen-relative (vw) so the hops scale with the page. It slides along
+     the yard — a slider tab cannot fly, and keeping it to the floor slot is
+     what keeps it paper. The LAST position is home: the joke survives the
+     movement by becoming a round trip. Keys off `beat`, not `high`, so
+     stepping back through the captions walks the bird back too. */
+  var BIRD_AT = ['0', '-30vw', '-11vw', '-38vw', '-22vw', '-34vw', '-8vw', '0'];
+  var birdEl = document.querySelector('.birdpop');
 
   /* ── jokes that stand up on the board itself ─────────────────
      Theo asked for "more that pop up on the actual cardboard near the
@@ -1319,6 +1385,8 @@ function cutLayers(x1){
      — the model never resets — and it means there is no reverse state to get
      wrong. */
   function paintScene(){
+    if(birdEl) birdEl.style.transform =
+      'translateX(' + (BIRD_AT[Math.max(0, beat)] || '0') + ')';
     var want = {};
     BEATS.slice(0, high + 1).forEach(function(b){
       (b.show || []).forEach(function(id){ want[id] = 1; });
