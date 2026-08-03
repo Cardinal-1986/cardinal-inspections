@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>The Pop-Up Roof — all sixteen spreads</title>
+<style>
+  :root{--board:#E8DCC8;--shade:#D3C3A4;--cut-lt:#F4EDDD;--cut-dk:#C9B893;
+        --ink:#4A3524;--ink2:#6B5B47;--red-tx:#8F1620;
+        --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+        --serif:Georgia,"Times New Roman",serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:#CBB894;font-family:var(--sans);color:var(--ink)}
+  .sheet{max-width:1320px;margin:0 auto;background:var(--board);padding:30px 30px 44px}
+  h1{font:800 32px/1.1 var(--serif);margin:0 0 4px}
+  .sub{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;
+       color:var(--ink2);margin-bottom:8px}
+  .lede{font:16px/1.6 var(--sans);color:var(--ink2);max-width:74ch;margin:0 0 26px}
+  .lede b{color:var(--ink)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media (max-width:1000px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  .sp{background:var(--cut-lt);border:1px solid var(--cut-dk);border-radius:3px;
+      padding:0 0 11px;overflow:hidden}
+  .sp.done{border-color:var(--red-tx);box-shadow:0 0 0 1px var(--red-tx) inset}
+  .sp svg{display:block;width:100%;height:auto;background:#0E1522}
+  .cap{padding:9px 11px 0}
+  .no{font:700 10px var(--mono);letter-spacing:.14em;color:var(--ink2)}
+  .ti{font:800 15px var(--serif);margin-top:2px}
+  .wh{font:12.5px/1.4 var(--sans);color:var(--ink2);margin-top:3px}
+  .tag{display:inline-block;margin-top:6px;font:700 9px var(--mono);letter-spacing:.1em;
+       text-transform:uppercase;color:var(--cut-lt);background:var(--red-tx);
+       padding:2px 6px;border-radius:2px}
+  h2{font:800 18px var(--serif);margin:34px 0 10px}
+  .note{margin-top:12px;font:14.5px/1.6 var(--sans);max-width:76ch;color:var(--ink2)}
+  .note b{color:var(--ink)}
+  .note li{margin-bottom:7px}
+</style></head><body>
+<div class="sheet">
+  <h1>The Pop-Up Roof — all sixteen spreads</h1>
+  <div class="sub">Scenes drawn · the running order is the thing to correct now</div>
+  <p class="lede">
+    <b>Spread 7 is built and on your iPad.</b> These are the other fifteen, drawn
+    in the same folded vocabulary so the whole book can be read in one go. They
+    are <i>scenes, not spreads</i> — no pop hinge, no beats, no joke tabs yet.
+    That work is twelve to fourteen builds, and the expensive mistake is
+    spending it on the wrong running order. Move things, cut things, tell me
+    what a Cardinal roof actually does that I have missed.
+  </p>
+  <div class="grid" id="grid"></div>
+
+  <h2>What each one still needs</h2>
+  <div class="note" id="after"></div>
+</div>
+<script>
+(function(){
+'use strict';
+
+/* ── the folded palette, identical to spread 7 ──────────────────── */
+var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
+    GLASS='#8FB6CC', GLASSL='#B9D6E4',
+    DOOR='#8F1620', DOORS='#6B0F16', MET='#AEB4BA', METS='#878D93',
+    ROOF='#A8442F', ROOFS='#7E2E20', DECK='#C9B084', DECKS='#A18862',
+    RED='#C8202E', REDS='#7E1018', KRAFT='#E8DCC8', CUT='#C9B893',
+    ORANGE='#E8722A', NAVY='#243B53', GRASS='#7FA863', GRASSD='#43683A',
+    ICE='#3B4A5A', ICES='#2A3644', FELT='#5E6166', FELTS='#44484C',
+    INK='#4A3524', WHT='#F5F3EE', BLK='#1A1416', GOLD='#B8860B';
+
+/* Roof line, same geometry as the shipped spread — apex (150,28), eaves at
+   x=34 and x=266. Reusing the number means a thumbnail and the real spread
+   can never disagree about where the roof is. */
+function roofY(x){ return 28 + Math.abs(x - 150) * (72 / 116); }
+
+/* ── sky ─────────────────────────────────────────────────────────
+   Theo asked for the day to move: dark in the morning, blue by midday,
+   warm at the end. The book runs across more than one day, so the sky is
+   how you know which. */
+var SKY={
+  dawn:['#141C2B','#3A3346','#6B4B41'],
+  early:['#1E2E45','#4A5B72','#9A7A5E'],
+  day:['#2E5C8A','#6E9AC0','#BBD3E2'],
+  noon:['#3572A8','#84B2D2','#D6E6EF'],
+  dusk:['#1F2E4A','#7A4E46','#D08A4E'],
+  night:['#0B1220','#16233A','#2B3A52']
+};
+var UID=0;
+function sky(k){
+  var c=SKY[k]||SKY.day, id='sk'+(++UID);
+  return '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0" stop-color="'+c[0]+'"/><stop offset=".62" stop-color="'+c[1]+'"/>'+
+    '<stop offset="1" stop-color="'+c[2]+'"/></linearGradient></defs>'+
+    '<path d="M0,0 L300,0 L300,150 L0,150 Z" fill="url(#'+id+')"/>';
+}
+function ground(dark){
+  return '<path d="M0,150 L300,150 L300,190 L0,190 Z" fill="'+(dark?GRASSD:GRASS)+'"/>'+
+         '<path d="M0,150 L300,150 L300,168 L0,168 Z" fill="#000" opacity=".12"/>';
+}
+
+/* ── the house, at whatever stage the roof happens to be ─────────
+   ONE house function with a roof state, not eight houses. The states are
+   the actual sequence of a tear-off: shingles → bare deck → ice shield at
+   the eaves → felt → half shingled → finished. */
+function house(o){
+  o=o||{};
+  var s='';
+  // walls
+  s+='<path d="M34,100 L266,100 L266,150 L34,150 Z" fill="'+LIT+'"/>';
+  s+='<path d="M150,100 L266,100 L266,150 L150,150 Z" fill="'+SHD+'"/>';
+  // lap siding
+  s+='<g stroke="'+TRIM+'" stroke-width=".7" opacity=".35">';
+  for(var y=108;y<150;y+=8) s+='<path d="M34,'+y+' L266,'+y+'"/>';
+  s+='</g>';
+  // windows
+  [[64,112],[206,112]].forEach(function(w){
+    s+='<path d="M'+w[0]+','+w[1]+' L'+(w[0]+34)+','+w[1]+' L'+(w[0]+34)+','+(w[1]+28)+
+       ' L'+w[0]+','+(w[1]+28)+' Z" fill="'+GLASS+'" stroke="'+TRIM+'" stroke-width="1.6"/>';
+    s+='<path d="M'+w[0]+','+w[1]+' L'+(w[0]+34)+','+w[1]+' L'+w[0]+','+(w[1]+28)+' Z" fill="'+GLASSL+'"/>';
+    s+='<g stroke="'+TRIM+'" stroke-width="1.6">'+
+       '<path d="M'+(w[0]+17)+','+w[1]+' L'+(w[0]+17)+','+(w[1]+28)+'"/>'+
+       '<path d="M'+w[0]+','+(w[1]+14)+' L'+(w[0]+34)+','+(w[1]+14)+'"/></g>';
+  });
+  // panelled door
+  s+='<path d="M136,116 L164,116 L164,150 L136,150 Z" fill="'+DOOR+'"/>';
+  s+='<path d="M150,116 L164,116 L164,150 L150,150 Z" fill="'+DOORS+'"/>';
+  s+='<g fill="none" stroke="'+DOORS+'" stroke-width="1.2" opacity=".7">'+
+     '<path d="M141,121 L159,121 L159,131 L141,131 Z"/>'+
+     '<path d="M141,136 L159,136 L159,146 L141,146 Z"/></g>';
+  s+='<circle cx="159" cy="134" r="1.6" fill="'+MET+'"/>';
+
+  // ── the roof, by stage ──
+  var A='34,100', B='150,28', C='266,100';
+  function plane(fa, fb){
+    return '<path d="M'+A+' L'+B+' L150,100 Z" fill="'+fa+'"/>'+
+           '<path d="M'+B+' L'+C+' L150,100 Z" fill="'+fb+'"/>';
+  }
+  var st=o.roof||'shingle';
+  if(st==='none'){ /* nothing — used before the house is the subject */ }
+  else if(st==='shingle') s+=plane(ROOF,ROOFS);
+  else if(st==='new')     s+=plane('#4A5866','#333F4A');
+  else if(st==='bare')    s+=plane(DECK,DECKS);
+  else if(st==='ice'){
+    s+=plane(DECK,DECKS);
+    // ice shield along the eaves and up the middle
+    s+='<path d="M34,100 L54,88 L266,88 L266,100 Z" fill="'+ICE+'" opacity=".92"/>';
+    s+='<path d="M150,100 L266,88 L266,100 Z" fill="'+ICES+'" opacity=".5"/>';
+  }
+  else if(st==='felt'){
+    s+=plane(FELT,FELTS);
+    s+='<g stroke="#7A8085" stroke-width=".8" opacity=".55">';
+    for(var t=1;t<5;t++){ var yy=100-t*14, a=34+t*22.6, b=266-t*22.6;
+      s+='<path d="M'+a.toFixed(0)+','+yy+' L'+b.toFixed(0)+','+yy+'"/>'; }
+    s+='</g>';
+  }
+  else if(st==='half'){
+    s+=plane(FELT,FELTS);
+    // new shingles coming up from the left eave
+    s+='<path d="M34,100 L92,64 L150,100 Z" fill="#4A5866"/>';
+    s+='<path d="M150,100 L208,64 L266,100 Z" fill="#333F4A"/>';
+    s+='<g stroke="#2B343E" stroke-width=".9" opacity=".55">'+
+       '<path d="M52,89 L248,89"/><path d="M70,78 L230,78"/></g>';
+  }
+  if(st!=='none'){
+    // shingle courses on the finished states
+    if(st==='shingle'||st==='new'){
+      s+='<g fill="none" stroke="'+(st==='new'?'#2B343E':'#8E3729')+'" stroke-width="1" opacity=".45">';
+      for(var i=1;i<=5;i++){ var q=i/6.2, ry=100-q*70, ra=34+q*116, rb=266-q*116;
+        s+='<path d="M'+ra.toFixed(0)+','+ry.toFixed(0)+' L'+rb.toFixed(0)+','+ry.toFixed(0)+'"/>'; }
+      s+='</g>';
+    }
+    // gutter + downspout, always
+    s+='<path d="M28,100 L272,100 L272,106 L28,106 Z" fill="'+MET+'"/>';
+    s+='<path d="M150,100 L272,100 L272,106 L150,106 Z" fill="'+METS+'"/>';
+    s+='<path d="M266,106 L272,106 L272,150 L266,150 Z" fill="'+METS+'"/>';
+  }
+  if(o.ridge){
+    /* A CHEVRON RIDING THE PEAK, not a horizontal slab. The first pass drew
+       the vent as a 48-wide bar at y=26 — but the apex is at y=28 and the two
+       planes converge to a point, so at that height the roof is about three
+       units across. Forty-eight units of ridge cap hung in the sky on both
+       sides like a hat. The band has to follow the pitch: at x=130 the surface
+       is y=40.4, so the cap straddles it there and rises proud at the peak. */
+    s+='<path d="M126,44 L150,28 L174,44 L174,39 L150,23 L126,39 Z" fill="#3B4550"/>';
+    s+='<path d="M130,40 L150,26 L170,40 L170,34 L150,20 L130,34 Z" fill="#4A5866" '+
+       'stroke="#2B343E" stroke-width="1" stroke-linejoin="round"/>';
+  }
+  return s;
+}
+
+/* ── one puppet, every spread ────────────────────────────────────
+   Simplified from the shipped figure() for thumbnail scale — same
+   silhouette, same pale cut edge, same fixed upper-left light. The cut
+   edge is load-bearing, not decoration: a red shirt on the shaded roof
+   plane is 1.66:1 and vanishes without it. */
+function fig(x, y, s, o){
+  o=o||{};
+  var shirt=o.shirt||RED, shirtDk=o.shirtDk||REDS,
+      hat=o.hat===false?null:(o.hat||ORANGE);
+  var g='<g transform="translate('+x+','+y+') scale('+((o.flip?-s:s))+','+s+')">';
+  // legs
+  g+='<path d="M-5,-16 L-5,0 M5,-16 L5,0" stroke="'+CUT+'" stroke-width="6.4" stroke-linecap="round"/>';
+  g+='<path d="M-5,-16 L-5,0 M5,-16 L5,0" stroke="'+NAVY+'" stroke-width="4.7" stroke-linecap="round"/>';
+  // torso
+  g+='<path d="M-8,-38 L8,-38 L9,-15 L-9,-15 Z" fill="'+shirt+'" stroke="'+KRAFT+
+     '" stroke-width="1.8" stroke-linejoin="round"/>';
+  g+='<path d="M0,-38 L8,-38 L9,-15 L0,-15 Z" fill="'+shirtDk+'"/>';
+  // arms — pose is just the two end points, so a tool can never float off
+  var arm=o.arm||[[-8,-34],[-15,-22]];
+  g+='<path d="M'+arm[0][0]+','+arm[0][1]+' L'+arm[1][0]+','+arm[1][1]+
+     '" stroke="'+KRAFT+'" stroke-width="5.4" stroke-linecap="round"/>';
+  g+='<path d="M'+arm[0][0]+','+arm[0][1]+' L'+arm[1][0]+','+arm[1][1]+
+     '" stroke="'+shirt+'" stroke-width="3.6" stroke-linecap="round"/>';
+  g+='<circle cx="'+arm[1][0]+'" cy="'+arm[1][1]+'" r="2.2" fill="#D9C4A2" stroke="#B39A72" stroke-width=".7"/>';
+  // head
+  g+='<circle cx="0" cy="-45" r="6.6" fill="'+KRAFT+'" stroke="'+CUT+'" stroke-width="1.1"/>';
+  if(hat){
+    g+='<path d="M-6.8,-48.4 A6.8,6.8 0 0 1 6.8,-48.4 Z" fill="'+hat+'"/>';
+    g+='<path d="M-9.4,-48.4 L9.4,-48.4 L9.4,-45.6 L-9.4,-45.6 Z" fill="'+hat+
+       '" stroke="#B4520F" stroke-width=".6"/>';
+  }
+  if(o.tool) g+=o.tool;
+  return g+'</g>';
+}
+
+/* The cardinal. Same silhouette as the shipped bird so the two read as one
+   creature — it is in every spread, and it never moves off its perch. */
+function bird(x, y, s, flip){
+  var body=RED, dark='#9E1A24', edge='#7E1018', beak=ORANGE, mask='#2A1A12';
+  var g='<g transform="translate('+x+','+y+') scale('+(flip?-s:s)+','+s+')">';
+  g+='<path d="M4,-9 L19,-3 L17,0.6 L3,-4 Z" fill="'+dark+'" stroke="'+edge+'" stroke-width=".9" stroke-linejoin="round"/>';
+  g+='<path d="M0,0 C-5,0 -8.6,-3 -9.4,-7 C-10.2,-11.4 -7.6,-15.4 -3.6,-16 '+
+     'C-1,-16.4 1.4,-15.2 2.6,-13.2 C6,-12.4 8.6,-9.6 8.6,-6.2 C8.6,-2.6 5.2,0 0,0 Z" fill="'+body+
+     '" stroke="'+edge+'" stroke-width="1" stroke-linejoin="round"/>';
+  g+='<path d="M-7.6,-14.2 L-6.4,-20.4 L-2.6,-15.6 Z" fill="'+body+'" stroke="'+edge+'" stroke-width=".9" stroke-linejoin="round"/>';
+  g+='<path d="M-9.2,-9.6 C-7.6,-11.6 -5.6,-12 -4.4,-11 C-5,-8.6 -6.8,-7.4 -8.8,-7.8 Z" fill="'+mask+'"/>';
+  g+='<path d="M-9,-10.4 L-13.6,-9 L-8.8,-7.4 Z" fill="'+beak+'" stroke="#B4520F" stroke-width=".7" stroke-linejoin="round"/>';
+  g+='<circle cx="-6" cy="-10.6" r="1.15" fill="#F7F3EA"/><circle cx="-6" cy="-10.6" r=".6" fill="#1A1208"/>';
+  return g+'</g>';
+}
+
+/* ── props ───────────────────────────────────────────────────────── */
+function ladder(x, y, h, lean){
+  var g='<g transform="translate('+x+','+y+') rotate('+(lean||-14)+')">';
+  g+='<path d="M-5,0 L-5,'+(-h)+' M5,0 L5,'+(-h)+'" stroke="'+CUT+'" stroke-width="4" stroke-linecap="round"/>';
+  g+='<path d="M-5,0 L-5,'+(-h)+' M5,0 L5,'+(-h)+'" stroke="'+MET+'" stroke-width="2.6" stroke-linecap="round"/>';
+  for(var i=1;i*11<h;i++) g+='<path d="M-5,'+(-i*11)+' L5,'+(-i*11)+'" stroke="'+MET+'" stroke-width="2"/>';
+  return g+'</g>';
+}
+function trailer(x, y, s){
+  var g='<g transform="translate('+x+','+y+') scale('+(s||1)+')">';
+  g+='<path d="M-46,-34 L46,-34 L46,0 L-46,0 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1.8" stroke-linejoin="round"/>';
+  g+='<path d="M2,-34 L46,-34 L46,0 L2,0 Z" fill="'+METS+'"/>';
+  g+='<circle cx="-24" cy="2" r="7" fill="'+NAVY+'"/><circle cx="22" cy="2" r="7" fill="'+NAVY+'"/>';
+  return g+'</g>';
+}
+function truck(x, y, s, flip){
+  var g='<g transform="translate('+x+','+y+') scale('+((flip?-1:1)*(s||1))+','+(s||1)+')">';
+  g+='<path d="M-44,-24 L6,-24 L6,-2 L-44,-2 Z" fill="'+RED+'" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
+  g+='<path d="M6,-24 L22,-24 L32,-12 L32,-2 L6,-2 Z" fill="'+REDS+'" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
+  g+='<path d="M10,-21 L21,-21 L28,-13 L10,-13 Z" fill="'+GLASS+'"/>';
+  g+='<circle cx="-30" cy="0" r="6.4" fill="'+NAVY+'"/><circle cx="20" cy="0" r="6.4" fill="'+NAVY+'"/>';
+  return g+'</g>';
+}
+/* The yard sign, as it really is — white field, black frame, red keyline,
+   red gables, black subtitle. Same as the one now standing on spread 7. */
+function yardsign(x, y, s){
+  var g='<g transform="translate('+x+','+y+') scale('+(s||1)+')">';
+  g+='<path d="M-2,-4 L-2,20 M2,-4 L2,20" stroke="'+MET+'" stroke-width="1.6"/>';
+  g+='<path d="M-24,-32 L24,-32 L24,-2 L-24,-2 Z" fill="'+WHT+'" stroke="'+BLK+'" stroke-width="2.2" stroke-linejoin="round"/>';
+  g+='<path d="M-21,-29 L21,-29 L21,-5 L-21,-5 Z" fill="none" stroke="'+RED+'" stroke-width="1.1"/>';
+  g+='<g fill="'+RED+'" stroke="'+BLK+'" stroke-width="1.2" stroke-linejoin="round">'+
+     '<path d="M-16,-13 L-6,-23 L4,-13 L4,-10.6 L-6,-20.6 L-16,-10.6 Z"/>'+
+     '<path d="M-7,-13 L6,-27 L19,-13 L19,-10.4 L6,-24.4 L-7,-10.4 Z"/></g>';
+  g+='<text x="0" y="-6.4" text-anchor="middle" fill="'+RED+'" font-size="6.6" font-weight="800" '+
+     'font-family="Helvetica Neue,Helvetica,Arial,sans-serif">CARDINAL</text>';
+  return g+'</g>';
+}
+function chips(seed, n, lo, hi){
+  // deterministic scatter — a preview that reshuffles on reload cannot be approved
+  var s='', r=seed;
+  function rnd(){ r=(r*1103515245+12345)&0x7fffffff; return r/0x7fffffff; }
+  for(var i=0;i<n;i++){
+    var x=lo+rnd()*(hi-lo), y=152+rnd()*34, a=rnd()*360;
+    s+='<g transform="translate('+x.toFixed(1)+','+y.toFixed(1)+') rotate('+a.toFixed(0)+')">'+
+       '<path d="M-3,-2 L3,-2 L3,2 L-3,2 Z" fill="'+KRAFT+'" stroke="'+CUT+'" stroke-width=".6"/></g>';
+  }
+  return s;
+}
+
+/* ── the sixteen ─────────────────────────────────────────────────
+   Six before the tear-off, because that is what actually happens before a
+   crew turns up: somebody knocks, somebody climbs, the adjuster comes out,
+   a number gets agreed, a colour gets picked, the load lands. Then the
+   roof itself, then the sweep, then the people. */
+var SPREADS=[
+  {n:1, t:'The Knock', w:'A rep on the step the morning after a storm. The house has not been touched yet.',
+   sky:'early', build:function(){
+     return house({roof:'shingle'}) +
+       // hail dents on the shaded plane
+       '<g fill="#5E2118" opacity=".55">'+
+       [[176,58],[196,70],[214,82],[188,86],[206,60],[228,74]].map(function(p){
+         return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.6"/>'; }).join('')+'</g>' +
+       // reaching TOWARD the door. The default arm swings left, which had him
+       // knocking at the siding with his back to the house.
+       fig(118,150,1.0,{arm:[[8,-34],[17,-38]]}) +
+       yardsign(255,150,0.72) + bird(60,116,0.72);
+   }},
+  {n:2, t:'The Climb', w:'Up the ladder with chalk. Every hit gets a circle, and the circles are the case.',
+   sky:'day', build:function(){
+     return house({roof:'shingle'}) + ladder(96,150,64,-13) +
+       '<g fill="none" stroke="#F4EDDD" stroke-width="1.5" opacity=".9">'+
+       [[176,58],[196,70],[214,82],[188,86]].map(function(p){
+         return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5"/>'; }).join('')+'</g>' +
+       fig(196,roofY(196)+2,0.88,{arm:[[-8,-34],[-17,-30]]}) +
+       bird(272,112,0.7,true);
+   }},
+  {n:3, t:'The Adjuster', w:'Two people on one roof agreeing what is there. Cardinal meets them up there, every time.',
+   sky:'day', build:function(){
+     return house({roof:'shingle'}) + ladder(96,150,64,-13) +
+       fig(176,roofY(176)+2,0.86,{arm:[[-8,-34],[-18,-36]]}) +
+       fig(214,roofY(214)+2,0.86,{shirt:'#4A5866',shirtDk:'#333F4A',hat:'#D8DEE3',flip:true,
+                                  arm:[[-8,-34],[-17,-28]]}) +
+       bird(56,120,0.7);
+   }},
+  {n:4, t:'The Number', w:'The estimate, on a tailgate. No surprises later is the entire product.',
+   sky:'noon', build:function(){
+     return house({roof:'shingle'}) + truck(96,150,1,true) +
+       '<g transform="translate(150,116) rotate(-8)">'+
+       '<path d="M-17,-22 L17,-22 L17,22 L-17,22 Z" fill="#F7F2E6" stroke="'+CUT+'" stroke-width="1.6"/>'+
+       '<path d="M-8,-26 L8,-26 L8,-19 L-8,-19 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1.2"/>'+
+       '<g stroke="#BCAF97" stroke-width="1.4"><path d="M-11,-13 L11,-13"/><path d="M-11,-5 L11,-5"/>'+
+       '<path d="M-11,3 L4,3"/></g>'+
+       '<path d="M-11,13 L11,13" stroke="'+RED+'" stroke-width="2.6"/></g>' +
+       bird(268,112,0.7,true);
+   }},
+  {n:5, t:'The Colour', w:'Shingle boards against the siding. Owens Corning, and the choice is the homeowner’s.',
+   sky:'noon', build:function(){
+     var sw=['#4A5866','#6B4A3A','#3B3F45','#7E2E20'], s='';
+     sw.forEach(function(c,i){
+       s+='<g transform="translate('+(96+i*36)+',124) rotate('+((i-1.5)*5)+')">'+
+          '<path d="M-14,-20 L14,-20 L14,20 L-14,20 Z" fill="'+c+'" stroke="'+KRAFT+'" stroke-width="1.8" stroke-linejoin="round"/>'+
+          '<g stroke="#000" stroke-width="1" opacity=".28"><path d="M-14,-6 L14,-6"/><path d="M-14,7 L14,7"/></g></g>';
+     });
+     return house({roof:'shingle'}) + s + bird(60,120,0.7);
+   }},
+  {n:6, t:'The Delivery', w:'The load goes up before the crew does. A roof arrives in bundles.',
+   sky:'early', build:function(){
+     var s=house({roof:'shingle'});
+     /* Bundles on the LEFT SLOPE ONLY. The first pass ran them 104→184, which
+        crosses the apex at 150 — so the back half climbed the far slope while
+        still rotated -31° for the near one, and five bundles flew off into the
+        sky in a neat diagonal. The rotation is the pitch; it is only correct
+        on one side. */
+     for(var i=0;i<5;i++){
+       // +5, not -5: roofY IS the surface, so a bundle centred on it straddles
+       // the edge with half its body in the sky. It has to sit INSIDE the plane.
+       var bx=76+i*16, by=roofY(bx)+5;
+       s+='<g transform="translate('+bx+','+by+') rotate(-31)">'+
+          '<path d="M-13,-5 L13,-5 L13,5 L-13,5 Z" fill="#4A5866" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
+          '<path d="M-13,-5 L13,-5 L13,-1 L-13,-1 Z" fill="#5D6D7C"/></g>';
+     }
+     return s + truck(74,150,0.94) + fig(232,150,0.94,{arm:[[-8,-34],[-4,-44]]}) + bird(276,112,0.68,true);
+   }},
+  {n:7, t:'The Tear-Off', w:'Built, tested on your iPad, and the only one with the pop, the beats and the joke tabs.',
+   sky:'dusk', done:true, build:function(){
+     return house({roof:'bare'}) + trailer(62,150,0.8) +
+       fig(196,roofY(196)+2,0.9,{arm:[[-8,-34],[-2,-30]]}) +
+       yardsign(250,150,0.72) + bird(292,112,0.68,true) + chips(7,26,40,290);
+   }},
+  {n:8, t:'The Deck', w:'Bare plywood, and the sheets that have gone soft come out. This is the part nobody else shows you.',
+   sky:'day', build:function(){
+     var s=house({roof:'bare'});
+     // a rotten sheet cut out, one new sheet going in
+     s+='<path d="M96,76 L138,76 L152,94 L110,94 Z" fill="#4A3A28"/>';
+     s+='<path d="M170,70 L214,70 L228,88 L184,88 Z" fill="#E3CDA2" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
+     return s + fig(150,roofY(150)+64,0.86,{arm:[[-8,-34],[-18,-30]]}) +
+       ladder(292,150,58,10) + bird(46,120,0.68);
+   }},
+  {n:9, t:'The Ice Shield', w:'A rubber membrane at every eave and valley. Dayton gets ice dams, and this is what stops one.',
+   sky:'day', build:function(){
+     return house({roof:'ice'}) +
+       fig(96,roofY(96)+6,0.82,{arm:[[-8,-34],[-16,-26]]}) +
+       fig(212,roofY(212)+6,0.82,{flip:true,arm:[[-8,-34],[-16,-26]]}) +
+       bird(276,112,0.68,true);
+   }},
+  {n:10, t:'The Felt', w:'Synthetic underlayment over the whole deck. If it rains tonight, you stay dry tonight.',
+   sky:'dusk', build:function(){
+     var s=house({roof:'felt'});
+     // a roll part way up the slope
+     s+='<g transform="translate(196,64) rotate(-31)">'+
+        '<path d="M-16,-7 L16,-7 L16,7 L-16,7 Z" fill="#6E747A" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
+        '<circle cx="16" cy="0" r="7" fill="#8A9096" stroke="'+KRAFT+'" stroke-width="1.2"/></g>';
+     return s + fig(120,roofY(120)+6,0.84,{arm:[[-8,-34],[-16,-28]]}) + bird(50,120,0.68);
+   }},
+  {n:11, t:'The Flashing', w:'Metal where the roof meets anything else — chimney, wall, pipe. Leaks start here or nowhere.',
+   sky:'noon', build:function(){
+     var s=house({roof:'felt'});
+     // chimney with step flashing
+     s+='<path d="M186,44 L206,44 L206,84 L186,84 Z" fill="#7E4A3C" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
+     s+='<path d="M196,44 L206,44 L206,84 L196,84 Z" fill="#5F3529"/>';
+     s+='<path d="M182,84 L186,80 L186,58 L182,62 Z" fill="'+MET+'"/>';
+     s+='<g fill="'+MET+'" stroke="'+KRAFT+'" stroke-width=".9">'+
+        '<path d="M206,60 L214,66 L214,72 L206,66 Z"/><path d="M206,70 L214,76 L214,82 L206,76 Z"/></g>';
+     // pipe boot
+     s+='<path d="M112,76 L120,76 L120,66 L112,66 Z" fill="'+METS+'"/>';
+     s+='<path d="M106,80 L126,80 L122,74 L110,74 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
+     return s + fig(150,roofY(150)+64,0.82,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
+   }},
+  {n:12, t:'The Shingles', w:'Courses going up the slope, one lap over the next. The part everybody pictures.',
+   sky:'noon', build:function(){
+     return house({roof:'half'}) +
+       fig(104,roofY(104)+34,0.82,{arm:[[-8,-34],[-15,-24]]}) +
+       fig(206,roofY(206)+34,0.82,{flip:true,arm:[[-8,-34],[-15,-24]]}) +
+       trailer(60,150,0.72) + bird(288,112,0.66,true);
+   }},
+  {n:13, t:'The Ridge', w:'Ridge vent along the peak and the cap over it. The roof has to breathe or it cooks itself.',
+   sky:'day', build:function(){
+     return house({roof:'new', ridge:true}) +
+       fig(126,42,0.74,{arm:[[-8,-34],[-14,-40]]}) +
+       fig(176,44,0.74,{flip:true,arm:[[-8,-34],[-14,-40]]}) +
+       bird(56,120,0.68);
+   }},
+  {n:14, t:'The Walk', w:'Theo on the roof at the end, not on the phone. Nothing is finished until he has been up there.',
+   sky:'dusk', build:function(){
+     return house({roof:'new', ridge:true}) + ladder(94,150,64,-13) +
+       fig(186,roofY(186)+2,0.9,{shirt:'#474C52',shirtDk:'#33373C',hat:false,
+                                 arm:[[-8,-34],[-18,-38]]}) +
+       yardsign(254,150,0.72) + bird(292,112,0.68,true);
+   }},
+  {n:15, t:'The Sweep', w:'The magnet runs twice. Every chip flung on spread 7 comes back up here — the same forty pieces.',
+   sky:'dusk', build:function(){
+     var s=house({roof:'new', ridge:true});
+     /* THE HANDLE TOP IS THE HAND. Figure at x=150 with its glove at (2,-40),
+        so the magnet's group origin must be 152 — at 168 the handle started
+        sixteen units to the right of the fist and he was sweeping thin air.
+        Same trap the shipped shovel avoids by construction. */
+     s+='<g transform="translate(152,150)">'+
+        '<path d="M0,-40 L18,-6" stroke="'+CUT+'" stroke-width="4.4" stroke-linecap="round"/>'+
+        '<path d="M0,-40 L18,-6" stroke="'+KRAFT+'" stroke-width="2.8" stroke-linecap="round"/>'+
+        '<path d="M8,-6 L30,-6 L30,2 L8,2 Z" fill="#8C8F94" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
+        '<path d="M8,2 L30,2 L30,4 L8,4 Z" fill="'+RED+'"/></g>';
+     return s + fig(150,150,0.94,{arm:[[-8,-34],[2,-40]]}) +
+       trailer(56,150,0.72) + yardsign(252,150,0.72) + bird(292,112,0.68,true) +
+       chips(7,6,214,288);
+   }},
+  {n:16, t:'The Team', w:'Twelve die-cut portraits, drawn and pushed. Beto in the black lead tee, Curtis in the vest.',
+   sky:'day', build:function(){
+     var s=house({roof:'new', ridge:true}), xs=[52,90,128,166,204,242];
+     xs.forEach(function(x,i){
+       s+=fig(x,150,0.8,{shirt:i===3?'#1C1D20':(i<2?'#474C52':RED),
+                         shirtDk:i===3?'#0F1012':(i<2?'#33373C':REDS),
+                         hat:i<2?false:ORANGE, arm:[[-8,-34],[-14,-24]]});
+     });
+     return s + yardsign(280,150,0.7) + bird(20,120,0.68);
+   }}
+];
+
+document.getElementById('grid').innerHTML = SPREADS.map(function(sp){
+  return '<div class="sp'+(sp.done?' done':'')+'">'+
+    '<svg viewBox="0 0 300 190" aria-hidden="true">'+
+      sky(sp.sky)+ground(sp.sky==='dusk'||sp.sky==='early')+sp.build()+
+    '</svg>'+
+    '<div class="cap"><div class="no">SPREAD '+sp.n+' OF 16</div>'+
+    '<div class="ti">'+sp.t+'</div><div class="wh">'+sp.w+'</div>'+
+    (sp.done?'<span class="tag">Built</span>':'')+'</div></div>';
+}).join('');
+
+document.getElementById('after').innerHTML =
+  '<b>These are scenes, not spreads.</b> Spread 7 is the only one with the pop '+
+  'hinge, the tap-paced beats, the joke tabs on sticks and the forty chips. '+
+  'Each of the other fifteen needs that same treatment, which is where the '+
+  'twelve to fourteen builds go.'+
+  '<br><br><b>Three things are already load-bearing across the whole book:</b>'+
+  '<ul>'+
+  '<li>The <b>cardinal is in all sixteen</b> and never moves off its perch. It is '+
+  'the one thing that does not change while everything else does.</li>'+
+  '<li><b>Spread 15 sweeps up spread 7’s exact chips</b> — same seed, same '+
+  'forty pieces, six left at the end for the magnet’s second pass. If they '+
+  'are re-scattered rather than remembered, the joke stops working.</li>'+
+  '<li>The <b>sky carries the clock</b>. Dark at the knock, blue through the '+
+  'build, warm at the walk and the sweep. A roof is more than one day and the '+
+  'sky is how you know.</li>'+
+  '</ul>'+
+  '<b>What I want corrected before I build any of it:</b> the running order, '+
+  'anything a Cardinal roof does that is not here, and anything here that is '+
+  'not worth a whole spread. Drainage, decking thickness, valleys and starter '+
+  'course all had a case and did not make the cut.';
+})();
+</script>
+</body></html>
