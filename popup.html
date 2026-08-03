@@ -1388,6 +1388,51 @@ function cutLayers(x1){
     return cardinal(x, y, s, flip, 'scene').replace(' id="bird"', '');
   }
 
+  /* ── SPREAD 5 — The Colour ────────────────────────────────────────
+     Sample boards leaning against the real siding, two either side of
+     the door, tops clearing the window sills. The pick gets the same
+     ring language as the takeoff's inventory — one visual grammar. */
+  function colourSVG(){
+    var s = houseSVG(false, true);
+    var BOARDS = [[92, '#6B4A3A'], [120, '#4A5866'], [184, '#3B3F45'], [212, '#7E2E20']];
+    s += '<g id="boardsG" class="beat">';
+    BOARDS.forEach(function(b, i){
+      s += '<g transform="translate(' + b[0] + ',190) rotate(' + (i % 2 ? 4 : -4) + ')">' +
+           '<path d="M-13,0 L13,0 L13,-44 L-13,-44 Z" fill="' + b[1] +
+           '" stroke="#E8DCC8" stroke-width="1.6" stroke-linejoin="round"/>' +
+           '<g stroke="#000" stroke-width="1" opacity=".28">' +
+           '<path d="M-13,-30 L13,-30"/><path d="M-13,-16 L13,-16"/></g></g>';
+    });
+    s += '</g>';
+    s += '<g id="pickG" class="beat">' + inventoryRing(184, 168, 20) + '</g>';
+    return s;
+  }
+
+  /* ── SPREAD 6 — The Delivery ──────────────────────────────────────
+     The boom truck reaches over the gutter and the bundles stage on the
+     left free zone of the band (the wing owns 102-178, the chimney
+     182-214). Same bundle drawing as the sheet, settled at -8. */
+  function deliverySVG(){
+    var s = houseSVG(false, true);
+    s += '<g id="delivTruckG" class="beat">';
+    s += truck(50, 190, 1.15);
+    s += '<path d="M74,168 L98,104" stroke="#8C8F94" stroke-width="3" stroke-linecap="round"/>';
+    s += '<path d="M74,168 L86,168" stroke="#5E6166" stroke-width="2.4" stroke-linecap="round"/>';
+    s += '<path d="M98,104 L104,101" stroke="#8C8F94" stroke-width="2.2" stroke-linecap="round"/>';
+    s += '</g>';
+    s += '<g id="bundlesG" class="beat">';
+    for(var i = 0; i < 5; i++){
+      var bx = 40 + (i % 4) * 14, by = 88 - (i % 4) * 11;
+      if(i === 4){ bx = 54; by = 66; }
+      s += '<g transform="translate(' + bx + ',' + by + ') rotate(-8)">' +
+           '<path d="M-13,-5 L13,-5 L13,5 L-13,5 Z" fill="#4A5866" stroke="#E8DCC8" stroke-width="1.4" stroke-linejoin="round"/>' +
+           '<path d="M-13,-5 L13,-5 L13,-1 L-13,-1 Z" fill="#5D6D7C"/></g>';
+    }
+    s += '</g>';
+    s += '<g id="countG" class="beat">' + figure(240, 187, 0.62, {pose:'point'}) + '</g>';
+    return s;
+  }
+
   /* ── SPREAD 1 — The Knock ──────────────────────────────────────── */
   function knockSVG(){
     var s = houseSVG(false, true);   // the worn roof, no crew — nobody is on it yet
@@ -1633,6 +1678,27 @@ function cutLayers(x1){
         {txt:'The satellite dish: staying or going? Your call either way — we set it back exactly where the signal lives.', show:['dishG']},
         {txt:'Lawn ornaments logged, sprinkler heads flagged — they like to hide in the flower beds. Found them.', show:['yardG'], tag:0},
         {txt:'The drone takes the before pictures. Before, during, after — you get all three.', show:['droneG'], tag:2}
+      ]},
+    { n:5, phase:'The Colour', sky:'noon',
+      birdAt:['0','-28vw','-12vw','0'],
+      scene:colourSVG, high:-1,
+      tags:['', '', 'The cardinal voted red. Overruled.'],
+      beats:[
+        {txt:'One decision on this job is all yours: the colour. It is also the one you will live with longest.'},
+        {txt:'Real sample boards against your real siding — colours lie on phone screens, never in a driveway.', show:['boardsG']},
+        {txt:'This street runs to Onyx Black. Circled, agreed, done — no showroom trip required.', show:['pickG'], tag:2},
+        {txt:'Sleep on it if you want. The boards stay the week.'}
+      ]},
+    { n:6, phase:'The Delivery', sky:'day',
+      birdAt:['0','-26vw','-10vw','-30vw','0'],
+      scene:deliverySVG, high:-1,
+      tags:['', '', 'Seventy pounds a bundle. Zero carried by hand.'],
+      beats:[
+        {txt:'Delivery day. Your roof arrives a day early, in seventy-pound paperbacks.'},
+        {txt:'The boom truck reaches over the gutter, and nobody carries a bundle up a ladder.', show:['delivTruckG']},
+        {txt:'The load stages on the roof, clear of the valleys, where tomorrow\'s crew wants it.', show:['bundlesG'], tag:2},
+        {txt:'Counted twice before anyone leaves. Short a bundle today beats short a bundle Thursday.', show:['countG']},
+        {txt:'Tomorrow it gets loud. Tonight the roof just holds the weight and thinks about it.'}
       ]},
     { n:7, phase:'The Tear-Off', sign:true,
       birdAt:['0', '-30vw', '-11vw', '-38vw', '-22vw', '-34vw', '-8vw', '0'],

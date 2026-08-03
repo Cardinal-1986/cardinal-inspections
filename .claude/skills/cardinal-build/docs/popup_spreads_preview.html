@@ -1015,7 +1015,7 @@ var SPREADS=[
      s+=drone(252,26,0.9);
      return s + bird(288,112,0.66,true);
    }},
-  {n:5, t:'The Colour', w:'Shingle boards against the siding. Owens Corning, and the choice is the homeowner’s.',
+  {n:5, t:'The Colour', done:true, w:'Shingle boards against the siding. Owens Corning, and the choice is the homeowner’s.',
    sky:'noon', build:function(){
      var sw=['#4A5866','#6B4A3A','#3B3F45','#7E2E20'], s='';
      sw.forEach(function(c,i){
@@ -1025,7 +1025,7 @@ var SPREADS=[
      });
      return house({roof:'shingle'}) + s + bird(60,120,0.7);
    }},
-  {n:6, t:'The Delivery', w:'The load goes up before the crew does. A roof arrives in bundles.',
+  {n:6, t:'The Delivery', done:true, w:'The load goes up before the crew does. A roof arrives in bundles.',
    sky:'early', build:function(){
      var s=house({roof:'shingle'});
      /* Bundles on the LEFT SLOPE ONLY. The first pass ran them 104→184, which

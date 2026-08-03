@@ -7448,3 +7448,24 @@ in-scene bird with no `id="bird"`, page turns land with `--open` back at 1, spre
 strips to 40 persisted chips, chips hide when turning back before the tear-off, both hash
 paths). `pw_bird.js` and `pw_deck.js` re-pointed at `#7` and green — spread 7 unregressed.
 Rendered and eyeballed at phone and landscape iPad.
+
+---
+
+## Spreads 5 and 6 — The Colour and The Delivery, tappable (2026-08-03, same night)
+
+Front-to-back continues: the book is now **1-7 with no gaps**. The Colour leans four real sample
+boards against the siding — two either side of the door, tops clearing the window sills — and
+rings the Onyx pick in the same inventory-ring language as the takeoff, one visual grammar. Its
+last line is the true service detail: the boards stay the week. The Delivery parks the boom truck
+on the driveway, reaches a boom over the gutter, and stages five bundles on the band's left free
+zone (the wing owns 102-178, the chimney 182-214); the counting figure points up at the load, and
+the closing caption hands off to the tear-off: "Tomorrow it gets loud."
+
+Two reds on the re-run were the TEST's fault, not the app's — the back-swipe from spread 7 now
+lands on spread 6, which did not exist when the assertion was written expecting spread 4. The
+file's own rule held: when a gate goes red, first ask whether the test or the app is wrong.
+Roughly half of all reds on this project are still the test.
+
+`pw_book.js` now walks seven spreads — ALL GREEN, page errors none. Rendered and eyeballed both
+at phone size; the red sample board half-tucked behind the "voted red, overruled" joke tab stays,
+because a dismissed board hiding behind its own rejection reads as intended.
