@@ -6359,6 +6359,121 @@ at 390 px and 1280 px, light and dark.
 
 ---
 
+## Builds 584–588 — the Vision Suite's five, in one sitting
+
+Theo approved all five preview options ("Why not do all 5?") unified on the Blackout scheme.
+Each shipped as its own build, gated before the next started; the per-build detail is in the
+five commit messages (`abff82d`, `aa6afd2`, `4df8681`, `43de1ee`, `239a8cc`). What belongs here
+is what future sessions need:
+
+- **583 was deliberately skipped** — open PR #105 claims it. Gaps are normal; collisions with an
+  open PR are not.
+- **`walk_shots.findings` grew a `source` key** (`'ai'`|`'human'`) at 585. It is stamped in
+  `runDetect()` and preserved through `saveReview()`'s rebuild (`f.source || 'ai'` defaults old
+  rows). "Ask again" now filters on it: human marks survive, AI marks refresh.
+- **Interactive preview practice paid twice.** The five were first built as a live artifact
+  (claude.ai) Theo could touch; its pre-publish Chromium check caught the +/− buttons feeding
+  the lens's double-tap detector — 578's class — before it ever reached the app.
+- **Harness slice discipline, third occurrence:** "The Walk never draws onto the image" ran to
+  end-of-module and went red when 587 added the share-card canvas legitimately. Bound every
+  slice; assert the slice captured something.
+- Chromium proofs worth keeping as patterns: pixel-reading a canvas (`getImageData` on the share
+  card's mat), synthetic two-pointer `PointerEvent`s for pinch, sampling a CSS var mid-animation
+  for the kiosk wipe.
+
+---
+
+## Build 589 — the slider's expand button works on a real tap
+
+Found by a new four-viewport audit (`scripts/audit_viewports.js`), not the standard ladder:
+build 586's ⤢ expand button sits INSIDE `.cr-sh-cmp`, and the slider's `pointerdown` calls
+`cmp.setPointerCapture()`. Pointerdown targets the button, pointerup is captured by the slider —
+and a browser fires **no click event** when they differ. The button did nothing on a real tap;
+only a synthetic `onclick()` fired it, which is why 586's Chromium test (it clicked the
+review-stage lens, never this one) passed while the feature was dead on a device. **578's class
+exactly** — a control inside a gesture surface.
+
+Fix: the slider's `pointerdown` ignores a press on `.cr-sh-exp`, mirroring the guard the Lens
+already carries for its own +/− buttons. One line.
+
+**The audit is the real deliverable here.** `audit_viewports.js` drives every Vision Suite
+function at phone / iPad-portrait / iPad-landscape / desktop AND runs an overlap sweep: it
+collects every visible button + slider handle + label chip and flags any pair intersecting >15%
+of the smaller one. It caught this dead button and confirmed zero control overlaps at any size —
+the class the eyeball missed twice (the ⤢/After collision, then this). Re-run it on any Showcase
+change: `node .claude/skills/cardinal-build/scripts/audit_viewports.js` from the repo root.
+
+Gates: `check_build` green 588→589 (marker `e.target.closest('.cr-sh-exp')`, negative-controlled),
+audit **76/76 across four viewports**, and the four existing harnesses unchanged
+(walk 115, showcase 123, detect 39, render 69).
+
+---
+
+## Build 590 — Showroom mode (2026-08-03)
+
+A read-only front door into the Showcase, opened from the landing launcher. Same login, same
+data, same module — no second app. Theo's design call, taken literally: *"with the showroom
+there is no editing… everything done in the other end."*
+
+**The read-only guarantee is one choke point plus four gates, and the honest split matters.**
+`amAdmin()` is called at 14 sites across all three tabs, so `if(showroom) return false;` at the
+top of it removes every add / publish / remove / share / add-photographs control at once. But
+**four surfaces were never `amAdmin()`-gated at all** and the choke point does nothing for them:
+
+| Surface | What was reachable | Gated on |
+|---|---|---|
+| `renderReview()` bar | Ask the AI · + Mark damage · Save what I accepted | `!showroom` |
+| `wireBoxes()` | **existing boxes drag with NO arming step** — pointerdown on `[data-box]` sets `mode:'move'`, writes `f.edited` and `review.dirty` | `!showroom` |
+| the findings list | per-finding **remove ✕**, editable severity **`<select>`**, resize **grip** | `!showroom` |
+| `releaseBadge()` | *"Release: M. Alvarez · Nov 2025"* — a real person's name and an internal marketing-consent fact about somebody else's house | `!showroom` |
+
+Gated on `showroom`, **not** on `amAdmin()`: sales and production keep exactly what they have
+today. Changing their permissions is Theo's call, not a side effect of a presentation mode.
+
+### Three things this build got wrong first, all worth keeping
+
+**1 · The launcher card was added to dead markup.** `#landQuick / #landDash / #landClaims /
+#landLibrary` around line 3961 look like the launcher. They are not: `cr-lr-styles` carries
+`#landingView>*{display:none}` and the `cr-lr` module replaces the whole view at runtime with
+`.cr-lr` and its `.cr-lr-course` rows. `getElementById('landQuick')` returns **null** in a real
+browser. The card passed every mechanical gate and was never in the DOM. The live mount is the
+`cr-lr` renderer's own string, and the handler is its `wire()` `data-go` switch.
+
+**2 · The ✕ was unreachable on desktop — third time for this class.** 572 insets every
+full-screen view (`top:var(--headh); left:var(--lnav-w); z-index:60`) so the menu stays
+reachable. With that applied, `#cr-show` drops to z-index 60 while `header.site` is fixed at
+z-index 90 and 138px tall, so `elementFromPoint` at the exit button returned **`HEADER.site`** at
+1180 and 1440. **Raising the button's z-index would not have helped** — it is inside `#cr-show`'s
+stacking context and cannot escape it. The fix is to remove the overlap: the showroom takes the
+whole screen back (`body.cr-lnav-on #cr-show.showroom{top:0;left:0;z-index:9500}`), which is what
+"nothing else reachable" means anyway. Same dead-control class as 578 and 589.
+
+**3 · The counted zero was counting the wrong things.** `audit_viewports.js` asserted zero write
+controls and passed — while the review screen still carried a remove button, a `<select>` and a
+grip, because the scan only looked at `[data-act]` and those use `data-drop` / `data-sev` /
+`data-grip`. **A screenshot caught what the assertion missed.** The scan now sweeps the named
+write actions, a list of write-ish `data-*` attributes, and every `select` / `textarea` / `input`
+by tag — name-independent. *A counted zero is only as good as the list it counts against.*
+
+**Not a kiosk, and the PR says so.** This hides the app; it does not lock the device. A browser
+back gesture still leaves, exactly as from any other full-screen view here. The hold is about a
+client not wandering out, not about restraining one.
+
+Offered at **≥820px only** — the row is hidden below that and the opener falls back to the
+ordinary Showcase rather than refusing, so a phone loses nothing.
+
+Gates: `check_build` green 589→590 (marker `if(showroom) return false;`, negative-controlled) ·
+`audit_viewports` **194/194 across four viewports** (was 76) · `harness_walk` 115 ·
+`harness_showcase` 123 · `harness_detect` 39 · `render_showcase` 69. No SQL, no `/api` change.
+
+**Found, not fixed — flagged for Theo.** On the landing itself, `.cr-lr-course .tt` and `.sb` are
+both `display:inline` (verified with `getComputedStyle`, not by reading CSS), so all four main
+rows run their title straight into their subtitle: *"Quick InspectionWalk the roof, shoot the
+photos…"*. Pre-existing, both themes, every width. Two declarations to fix; deliberately left out
+of 590 rather than widening the build.
+
+---
+
 ### build 583 — the Library's floating pills stop covering the book
 
 Theo, with a screenshot of chapter VII half-buried: *"take all of toc, library, manage, ask file out
@@ -6483,3 +6598,258 @@ Gates: `check_build.py` green 583 → 584, negative-controlled. Book harness **3
 session's start), including deck behaviour at three viewports; **28 fail against the pre-584
 book**. `h562_aibook.js` 42/42 with the served count at 22. Web ↔ markdown parity 18/18, chapter
 order 17/17. `AI_CHEATSHEET.md` mirrors the deck as a written-out slide list.
+
+---
+
+## Build 591 — promote a job to a Showcase pair (2026-08-03)
+
+Every Vision Suite table was empty while **196 photographs sat on 12 jobs**. Making a pair meant
+hand-uploading two files. Now: **From a job** → pick the job → tap the before → tap the after →
+check the address. No SQL — `showcase_pairs.project_id` has existed since the original schema,
+is nullable with no foreign key, and nothing ever wrote it. Now something does.
+
+**Shared, not forked.** 579's picker takes a `mode` on `jobPick`. The regression proof is that
+`harness_walk.js` §13 passes **verbatim** — if it ever needs editing to keep 591 green, the
+picker got forked.
+
+### Four traps, three of which would have shipped silently
+
+**1 · `savePair`'s `file()` helper is byte-identical in two functions** (`savePair` and
+`saveWork`). A `count == 1` assert aborts; the anchor has to extend to the next statement. The
+file's own "scope the assertion to the function, not the file" rule, again.
+
+**2 · `pending` outliving the flow — the one that would have looked like it worked.**
+`closeForm()` only removes a class. After a promote, the carried Files are still in `pending`,
+and `savePair`'s `file()` *prefers* `pending` — so the next hand-made pair would have **silently
+uploaded the previous job's photographs**. Fixed by clearing at the **top of `openForm()`**,
+which makes "openForm always starts clean" unconditional and forces `promoteToPair` to call
+`openForm()` *before* setting `pending`. Asserted directly; nothing else in the suite catches it.
+
+**3 · `b.dataset.jp` is a String.** With roles storing the index as a *value*,
+`roles.before === i` is `0 === '0'` — false, and wrong on the **first tile in the grid**.
+`parseInt` at the boundary.
+
+**4 · The mode test must be `=== 'pair'`, not truthiness.** The walk button is wired
+`b.onclick = openJobPicker`, so it hands arg 0 a **MouseEvent**. Any `mode ||` check flips the
+walk button into pair mode. String equality leaves that call site correct, untouched.
+
+### The address splitter, measured not assumed
+
+`projects.address` is one free-text column and **11 of the 12 photo-bearing jobs have no comma**:
+
+```
+3710 west third Dayton Ohio 45417     3800 klepinger rd  dayton ohio46416   ← state+zip glued
+948 Huron            ← no city at all      449 Harriet, Dayton, OH 45417    ← the only comma form
+```
+
+A comma split scores **1 of 12**. `splitAddr()` peels from the right instead — zip, then state,
+then the last token is the city — and **declines** rather than guessing when neither is present:
+**10 right, 2 correctly blank, 0 wrong**, table-driven in the harness against the real twelve.
+**Never derive the city from the zip here:** half these rows carry Indiana zips (464xx) on
+addresses that say Dayton, Ohio.
+
+Whatever it guesses lands in an editable field with the **raw source string shown underneath**.
+`splitAddr` keeps the record's own spacing for that line — provenance that tidies what it quotes
+is not provenance.
+
+### Two defects the screenshots caught that jsdom could not
+
+- The promoted form still rendered **three empty "Choose File" rows** beside two photographs that
+  *were* chosen — and anything attached there would have been silently ignored, since the carried
+  files win. Replaced with the thumbnails it actually carried, labelled with their roles. Thumbs
+  reuse the picker's already-signed URLs, so no object URL is minted and none leaks.
+- Tile role labels rendered lowercase beside an uppercase slot bar. One declaration.
+
+Also folded in: **a latent 579 crash**. `loadProjects`/`loadJobPhotos` wrote to `jobPick` after
+their awaits with no null guard, and cancel nulls it deliberately *before* `closeForm()`. 591
+makes it likely — the biggest job has 45 photos and signing them is a real round trip to cancel
+during. Three `if(!jobPick) return;` guards, asserted with an `unhandledrejection` listener.
+
+Gates: `check_build` green 590→591 (marker `data-act="addjob"`, negative-controlled) ·
+`harness_walk` **152** (was 115) · `harness_showcase` 123 · `render_showcase` 69 ·
+`audit_viewports` 194, with `'addjob'` added to its write-control list so Showroom's counted zero
+stays honest.
+
+---
+
+## Build 592 — every control in the Showcase reaches 44px (2026-08-03)
+
+Measured at 820px before this build: **11 of the 12 controls were under 44px.** The next/back
+arrows were **30×30**, the expand 32×32, the slider handle 38 wide. The only one that passed was
+590's exit ✕ at 46 — and only because it was built from a mock that specified it.
+
+**The sweep is the deliverable, not the pixels.** `audit_viewports.js` now measures every button
+and the slider handle at four viewports across Showcase / Hall of Fame / review / all three
+Showroom tabs — 8 measurement points. On its **first run it found three more I had missed**:
+`.cr-sh-back` at 36×36 and the dismiss `✕` at **22×20**, the latter being a *destructive* control
+(remove a comparison, reject a finding) rendered smaller than anything else on screen.
+
+Two geometry traps, both real:
+
+- **`.cr-sh-hd` carries `margin-left:-19px`, which is exactly `-width/2`.** Widen the handle
+  without moving that and the white rule at `::before{left:50%}` stops marking the `--sh-split`
+  it is drawn to mark. They move together or not at all. (38→48, −19→−24.)
+- **`.cr-sh-play` is a child of `.cr-sh-step`**, so it matches `.cr-sh-step button` *and*
+  re-declares its own 30×30 295 lines later. Setting one leaves it at 30.
+
+Also: the grip is now a 44px round knob that scales on grab (`.grabbing`, a transform so it
+cannot cost a frame or move the divider), released on **both** pointerup and pointercancel —
+a cancel is what a browser sends when it steals a gesture, and a knob left swollen after that
+reads as stuck.
+
+**One assertion of mine was over-broad and the patch correctly aborted on it:**
+`'width:36px;height:36px' not in css` also matches `.cr-sh-slot img`, which is a *thumbnail*.
+Scoped to the `.cr-sh-back` rule instead. Second time this session — the file's own "scope the
+assertion, then read what it captured" rule.
+
+Gates: `check_build` green 591→592 (marker `width:48px;margin-left:-24px`, negative-controlled) ·
+`audit_viewports` **215** (was 194) · `harness_walk` 152 · `harness_showcase` 123 ·
+`render_showcase` 69.
+
+---
+
+## `studio_photos` — the Studio's schema, applied (2026-08-03)
+
+Backend curation library, decoupled from the CRM entirely — no FK into `projects`, admin-only
+RLS (`is_cardinal_admin()`, same shape as `crew_rates_rw`/`crew_payments_rw`). Grew out of a
+design conversation, not a build request in the usual sense — recorded here because the schema
+is now live in production and two other sessions could otherwise re-derive it differently.
+
+**The boundary that mattered: backend-only is not the same as no-address.** First pass tried to
+scrub `project_address` out of the design entirely on the theory that "no CRM" meant "no
+identifying data." Theo corrected this directly: *"these photos go nowhere but my backend
+curation... no addresses get shown to the public."* The actual rule is about what a **client**
+can see — that rule already lives in `showcase_pairs` (city-only, address never reaches
+`drawCard()`, the release badge hidden in Showroom) and is untouched. `studio_photos` is never in
+that path, so it carries `project_address`/`project_name` as **plain copied strings** — not a
+live FK, so the table keeps working if the CRM row changes or is deleted, matching
+`walks_schema.sql`'s "copy the bytes, do not reference the path" precedent. Without this, the one
+workflow the table exists to serve — search an address, find that house's photos — would have
+been impossible.
+
+**Two Postgres errors, both real, both resolved by checking `pg_proc` instead of guessing:**
+1. A `GENERATED ALWAYS AS` tsvector column combining tags + address + name failed:
+   *"generation expression is not immutable."*
+2. Rewritten as a plain functional GIN index — same failure, because functional indexes also
+   require IMMUTABLE, not just non-volatile.
+
+Checked `pg_proc.provolatile` directly rather than guess a third time: `to_tsvector(regconfig,
+text)` genuinely **is** immutable once explicitly cast (`'pg_catalog.english'::regconfig`) — the
+one-arg form is stable, the two-arg form isn't. The actual blocker was `array_to_string(anyarray,
+text)`, which is STABLE. **Split into two purpose-built mechanisms instead of forcing one:**
+`idx_studio_photos_tags` (GIN on the raw array, for exact/contains queries — tags are a
+controlled vocabulary) and `idx_studio_photos_addr_search` (GIN on a tsvector of address + name
+only, no array involved — free text, human-typed). Verified against a real inserted-then-deleted
+row: both queries return the correct count, and the row is confirmed gone afterward.
+
+**The id scheme reuses what's already on disk rather than inventing a second one.**
+`fetch_companycam.py`'s `manifest.jsonl` already assigns an id (CompanyCam's own) per photo, with
+a `path`. Hermes's tagger is instructed to drive off that file directly and echo the id through
+unchanged — phone photos, which have no such file, get `"phone:" + sha256(relpath)[:16]`. The
+push script (`spark/push_studio_tags.py`) joins tag rows against `manifest.jsonl` by that id — a
+plain dict lookup, no hashing on the push side at all.
+
+**`spark/push_studio_tags.py` folds in a fix `strip_exif.py` in the same folder already earned
+the hard way**: `ImageOps.exif_transpose()` before resize, or a phone photo stored sideways with
+an EXIF Orientation tag renders sideways in the thumbnail — `Image.open()` + `.resize()` does not
+apply that tag on its own.
+
+**What's unverified, stated plainly, same as every other `spark/` script**: no live call has been
+made — no path to the Spark's filesystem, Supabase Storage with real credentials, or a real
+`studio_tags.jsonl` from this sandbox. The auth flow mirrors `hail_review.py`'s `get_token()`,
+which *is* proven against this account. `--limit 5` first, same standing advice as
+`fetch_companycam.py`.
+
+**`spark/STUDIO_TAGGING.md`** is the literal handoff doc — record shape, the reused 17-key
+`api/detect.js` defect vocabulary, the explicit "no folder tree, tags are the folders" rule, and
+the resumability convention every other script in this folder already uses.
+
+No `index.html` change. No UI yet — deliberately: this project has a specific, expensive lesson
+about building a UI against a guessed data shape (`walks_schema.sql`'s 13-of-196 inline-photo
+population) rather than the real one. The Studio's browsing page waits for a real
+`studio_tags.jsonl` to exist.
+
+## `studio.html` + `studio_objects_rls.sql` (2026-08-03, same day)
+
+Built ahead of real `studio_tags.jsonl` after all, while the Spark archive fetch was still
+running — worth flagging against the note directly above, because on its face this looks like the
+exact mistake it warns about. **The difference: the shape here isn't guessed, it's pinned by code
+already read in full** — `push_studio_tags.py`'s own `db_row` dict, verbatim — not inferred from a
+sample or assumed. `walks_schema.sql`'s photo objects were populated by upload paths nobody had
+re-checked; this schema has one writer, already written, already read end to end.
+
+**A real gap found before any of this shipped, not after:** `storage.objects`' `photos_read`
+policy grants SELECT on the *entire* `photos` bucket to any authenticated user, no prefix check —
+proven via `pg_policy.polroles`, not assumed from the table list. `studio_photos` itself is
+`is_cardinal_admin()`-only for every operation, so the table was already correctly locked down,
+but a signed-in rep who somehow knew a `studio/<id>.jpg` path could have fetched it directly
+through Storage regardless — table-level privacy true, storage-level privacy false. Closed with
+`studio_objects_rls.sql`: narrowed `photos_read` to exclude `studio/%`, added a dedicated
+`is_cardinal_admin()`-only read policy for that prefix. Same shape `walk_objects_read` /
+`workmanship_objects_read` already use for their own prefixes, just admin-only instead of
+authenticated-only, matching `studio_photos`' own stricter rule. Left `photos_upload`/`photos_write`
+alone — bucket-wide for any authenticated user across every prefix, a pre-existing condition this
+page doesn't touch or depend on, and a bigger change than today's scope.
+
+**Standalone, not a build.** No app-stamp bump, no `CHANGELOG` entry, no build number — `studio.html`
+is not part of `index.html`'s gate ladder because it isn't part of `index.html`. Same repo, zero
+shared script, zero shared nav, admin-only sign-in of its own (a different subdomain is a different
+origin — the app.cardinalroster.com session does not carry over). Read-only: browse, search, look.
+Retagging happens on the Spark, never in a browser.
+
+**Verification, and its real limit.** A jsdom harness against the shipped script text (21
+assertions) exercises the actual query-building/rendering code against realistic rows — including
+the two documented edge cases from `STUDIO_TAGGING.md` itself (`tags:[]` as a real answer, not an
+omission; a phone-sourced row with no manifest match, so `project_address` is `null`) — by mocking
+`window.supabase`'s client shape rather than a live connection. A second pass in real Chromium
+(same mock, via `page.addInitScript`) proves actual layout/paint, which jsdom cannot: grid,
+chips, empty states, the detail overlay. **What neither can prove: a real sign-in.** No admin
+credential exists in this sandbox, on purpose, and this sandbox's own egress policy separately
+blocks `cdn.jsdelivr.net` (confirmed via the agent-proxy status endpoint, not assumed — a policy
+403, not a code defect; the exact same CDN URL is already load-bearing in production `index.html`).
+Theo signing in for real is the one step only he can do.
+
+**Subdomain: no code change needed for the simple path.** `studio.html` at the repo root is
+already reachable at `/studio.html` on any domain pointed at this Vercel project or a second one
+importing the same repo, with zero rewrite config — same as `bulk_assign.html` already works
+today. A bare-root URL (`studio.cardinalroster.com/` instead of `.../studio.html`) is possible
+with a host-conditional rewrite in the shared `vercel.json`, but that file is shared with the main
+app's deployment — untested from here, and not worth the risk for a tool only Theo uses. Left for
+later if he wants it.
+
+## Build 593 — the Vision hub, in the same index.html after all
+
+Theo walked through both options via a live tap-through preview (a toggle switching "built into
+index.html" vs. "separate file", same visuals either way, only the annotations changing) and chose
+same-file for the practical reason: reusing Showroom's existing code beats standing up a second
+surface for a presentation layer that doesn't need to be redesigned often. See `FEATURES.md` for
+the full shape.
+
+**One real bug, caught before shipping, not after.** First patch rendered `.cr-vh` into
+`#landingView` correctly per every jsdom structural check, but a real-Chromium screenshot showed
+a blank page — plain cream gradient, no tiles, nothing resembling the shipped CSS. `elementFromPoint`
+at the tile coordinates (the exact technique build 590's z-index bug used) showed `.cr-vh` computed
+`display:none` despite `display:flex` in its own rule. Cause: `cr-lr-styles` carries
+`#landingView>*{display:none}` (ID selector) specifically to keep the dead `#landQuick`/`#landDash`
+markup hidden, plus a second `#landingView:not([data-cr-portal-built])>*{display:none}` — and a bare
+class selector can never beat an ID selector regardless of source order. `.cr-lr` only escapes both
+via `#landingView>.cr-lr{display:block}` *and* `build()` setting `lv.dataset.crPortalBuilt='1'` on
+every path. First draft grepped `crPortalBuilt`'s JS readers, found them dead (`refreshCounts()` /
+`buildLanding()`, both unreachable — the file's own comment already says so), and concluded the
+attribute was safe to skip. Missed the CSS attribute-selector reader entirely, which is very much
+alive. Fixed with the matching `#landingView>.cr-vh{display:flex}` override and setting the same
+dataset flag — mirroring `.cr-lr`'s exact pattern rather than inventing a new one.
+
+**The lesson, stated plainly because it is this project's own recurring one:** grepping a name's
+*JS* usage is not the same as grepping all of its usage. The same attribute had a second, silent
+reader in a completely different language, in a completely different part of the file, and only a
+real rendering engine — not a structural DOM check — could have caught the gap.
+
+Verified: `check_build.py` green (105 scripts, 108/108 tags, 115/115 styles, app stamp 592→593,
+marker + negative control). A 20-assertion jsdom harness against the shipped `cr-lr-script` text —
+hostname matching including a deliberate near-miss (`my-showroom.` must not match), the `?vision=1`
+override, admin-gating of the Studio tile, and proof the Presentations tile drives
+`CardinalShowcase.open({showroom:true})` through `wire()`'s *existing* handler rather than a new
+one. Real Chromium screenshots of both the admin and non-admin renders, plus a regression pass
+proving the ordinary ten-destination launcher is completely unaffected (`app.cardinalroster.com`
+still renders `.cr-lr`, never `.cr-vh`).

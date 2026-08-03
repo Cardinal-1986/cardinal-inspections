@@ -140,7 +140,16 @@ const SHOTS = [
                       then: r => Promise.resolve({ data: table(t), error: null }).then(r) };
           return q;
         },
-        storage: { from: () => ({ upload: async () => ({ error: null }) }) }
+        storage: { from: () => ({
+          upload: async () => ({ error: null }),
+          /* 587's share cards pull pixels through the authenticated download;
+             serve the same swatches the signer serves so drawCard has real
+             decodable images. */
+          download: async (path) => {
+            const u = /before/.test(path) ? imgs.before : imgs.after;
+            return { data: await (await fetch(u)).blob(), error: null };
+          }
+        }) }
       };
       /* LOCKED. The app's async boot nulls window.supa after a plain
          assignment — the skill documents this and the first run of this
@@ -336,6 +345,86 @@ const SHOTS = [
     ok('side by side on desktop, not stacked', /\s/.test(hof.cols.trim()), hof.cols);
     await shot('04-desktop-hall-of-fame.png');
 
+    /* ── The Release (587) — the card actually draws, pixel-proven ──────── */
+    await page.click('[data-tab="showcase"]');    // Share lives on the Showcase tab
+    await page.waitForTimeout(400);
+    await page.click('[data-act="share"]');
+    await page.waitForFunction(() =>
+      !!document.querySelector('#cr-show-form canvas.cr-sh-shprev'), { timeout: 8000 }).catch(() => {});
+    const sh0 = await page.evaluate(() => {
+      const c = document.querySelector('#cr-show-form canvas.cr-sh-shprev');
+      if (!c) return null;
+      const x = c.getContext('2d');
+      const corner = x.getImageData(2, 2, 1, 1).data;        // the mat
+      const mid = x.getImageData(c.width / 2 - 60, c.height / 2, 1, 1).data;  // before half
+      return { w: c.width, h: c.height, corner: [...corner].slice(0, 3), mid: [...mid].slice(0, 3) };
+    });
+    ok('the share composer built a real 1080-square card', sh0 && sh0.w === 1080 && sh0.h === 1080,
+      sh0 && sh0.w + 'x' + sh0.h);
+    ok('Classic frame: the mat is white', sh0 && sh0.corner.join(',') === '255,255,255', sh0 && sh0.corner.join(','));
+    ok('the photograph is actually drawn inside the mat',
+      sh0 && sh0.mid.join(',') !== '255,255,255' && sh0.mid.join(',') !== '0,0,0', sh0 && sh0.mid.join(','));
+    await page.click('[data-shsty] button[data-k="kraft"]');
+    await page.waitForTimeout(300);
+    const shK = await page.evaluate(() => {
+      const c = document.querySelector('#cr-show-form canvas.cr-sh-shprev');
+      return [...c.getContext('2d').getImageData(2, 2, 1, 1).data].slice(0, 3).join(',');
+    });
+    ok('Kraft frame reskins the mat', shK === '232,220,200', shK);
+    await page.click('[data-shfmt] button[data-k="st"]');
+    await page.waitForTimeout(300);
+    const shS = await page.evaluate(() => {
+      const c = document.querySelector('#cr-show-form canvas.cr-sh-shprev');
+      return c.width + 'x' + c.height;
+    });
+    ok('Story format is 1080x1920', shS === '1080x1920', shS);
+    const [cardDl] = await Promise.all([
+      page.waitForEvent('download', { timeout: 8000 }).catch(() => null),
+      page.click('[data-act="shdl"]')
+    ]);
+    ok('Download saves a real PNG', !!cardDl && cardDl.suggestedFilename() === 'cardinal-before-after.png',
+      cardDl && cardDl.suggestedFilename());
+    await shot('09-desktop-share-card.png');
+    await page.click('#cr-show-form [data-act="cancel"]');
+    await page.waitForTimeout(200);
+    // the unreleased pair teaches instead
+    await page.click('[data-pick="1"]');
+    await page.waitForTimeout(300);
+    ok('the unreleased pair teaches the release rule', await page.evaluate(() =>
+      !!document.querySelector('#cr-show [data-act="sharedead"]') &&
+      /Record the client release first/.test(document.getElementById('cr-show').textContent)));
+    await page.click('[data-pick="0"]');
+    await page.waitForTimeout(300);
+
+    /* ── Curtain Call (588) — the show actually runs ─────────────────────── */
+    await page.click('[data-act="ccplay"]');
+    await page.waitForTimeout(400);
+    const cc0 = await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-cc');
+      return l ? { bg: getComputedStyle(l).backgroundColor,
+                   wipe: l.querySelector('.ph').style.getPropertyValue('--cc-wipe') } : null;
+    });
+    ok('the show layer runs on true black', cc0 && cc0.bg === 'rgb(5, 6, 7)', cc0 && cc0.bg);
+    ok('it opens fully on the BEFORE', cc0 && cc0.wipe === '100%', cc0 && cc0.wipe);
+    await page.waitForTimeout(3400);   // into the wipe
+    const ccMid = await page.evaluate(() =>
+      parseFloat(document.querySelector('#cr-show .cr-sh-cc .ph').style.getPropertyValue('--cc-wipe')));
+    ok('the divider is actually sweeping', ccMid < 95, ccMid);
+    await page.waitForTimeout(2400);   // wipe done, placard up
+    const ccPl = await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-cc');
+      return { show: l.querySelector('.plac').classList.contains('show'),
+               h4: l.querySelector('.plac h4').textContent };
+    });
+    ok('the placard fades in with the pair label', ccPl.show && /123 Main St/.test(ccPl.h4), ccPl.h4);
+    await shot('10-desktop-curtain-call.png');
+    // a touch stops the show and hands over the pair that was showing
+    await page.click('#cr-show .cr-sh-cc');
+    await page.waitForTimeout(400);
+    ok('a touch ends the show and the real slider returns', await page.evaluate(() =>
+      !document.querySelector('#cr-show .cr-sh-cc') &&
+      !!document.querySelector('#cr-show [data-cmp]')));
+
     /* ── The Walk (579) ───────────────────────────────────────────────────
        The one thing jsdom structurally cannot check. A circle in the wrong
        place is worse than no circle: it points a homeowner at sound shingle
@@ -398,6 +487,151 @@ const SHOTS = [
     ok('the resize grip is hidden on an unselected box', geo && geo.gripShown === 'none',
       geo && geo.gripShown);
     await shot('05-desktop-the-walk.png');
+
+    /* ── The Lens (586) — zoom geometry, which jsdom cannot make ─────────── */
+    await page.click('[data-act="rlens"]');
+    await page.waitForTimeout(400);
+    const lz0 = await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-lens');
+      if (!l) return null;
+      const box = l.querySelector('.cr-sh-ln-box');
+      return { bg: getComputedStyle(l).backgroundColor,
+               boxW: box.getBoundingClientRect().width,
+               zc: l.querySelector('.cr-sh-ln-zc').textContent };
+    });
+    ok('lens opened from the review stage', !!lz0);
+    ok('lens ground resolved true black', lz0 && lz0.bg === 'rgb(5, 6, 7)', lz0 && lz0.bg);
+    ok('starts at fit', lz0 && lz0.zc === '1.0×', lz0 && lz0.zc);
+    // zoom in twice via buttons: the finding box must scale WITH the world
+    await page.click('[data-lz="in"]'); await page.click('[data-lz="in"]');
+    await page.waitForTimeout(250);
+    const lz1 = await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-lens');
+      const box = l.querySelector('.cr-sh-ln-box');
+      return { boxW: box.getBoundingClientRect().width,
+               zc: l.querySelector('.cr-sh-ln-zc').textContent,
+               t: l.querySelector('.w').style.transform };
+    });
+    ok('zoom chip reads 2.0x after two 1.4x steps', lz1.zc === '2.0×', lz1.zc);
+    ok('the finding box scaled with the world (rides along)',
+      Math.abs(lz1.boxW / lz0.boxW - 1.96) < 0.05, (lz1.boxW / lz0.boxW).toFixed(3));
+    // drag pans
+    const lb = await page.locator('#cr-show .cr-sh-lens').boundingBox();
+    await page.mouse.move(lb.x + lb.width / 2, lb.y + lb.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(lb.x + lb.width / 2 - 80, lb.y + lb.height / 2 - 50, { steps: 6 });
+    await page.mouse.up();
+    ok('drag pans the world', /translate\(-/.test(await page.evaluate(() =>
+      document.querySelector('#cr-show .cr-sh-lens .w').style.transform)));
+    // real two-pointer pinch via synthetic PointerEvents
+    await page.evaluate(() => {
+      const l = document.querySelector('#cr-show .cr-sh-lens');
+      const r = l.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const mk = (type, id, x, y) => l.dispatchEvent(new PointerEvent(type,
+        { pointerId: id, clientX: x, clientY: y, bubbles: true }));
+      mk('pointerdown', 11, cx - 40, cy); mk('pointerdown', 12, cx + 40, cy);
+      mk('pointermove', 11, cx - 45, cy); mk('pointermove', 12, cx + 45, cy);
+      mk('pointermove', 11, cx - 90, cy); mk('pointermove', 12, cx + 90, cy);
+      mk('pointerup', 11, cx - 90, cy);  mk('pointerup', 12, cx + 90, cy);
+    });
+    await page.waitForTimeout(150);
+    const pinched = await page.evaluate(() =>
+      document.querySelector('#cr-show .cr-sh-lens .cr-sh-ln-zc').textContent);
+    ok('a two-pointer pinch zooms further', parseFloat(pinched) > 2.0, pinched);
+    await shot('08-desktop-lens.png');
+    await page.click('#cr-show .cr-sh-ln-x');
+    await page.waitForTimeout(200);
+    ok('lens closes', await page.evaluate(() => !document.querySelector('#cr-show .cr-sh-lens')));
+
+    /* ── Chalk (585) — the drawing gesture, which jsdom cannot make ──────── */
+    await page.click('[data-act="rmark"]');
+    await page.waitForTimeout(200);
+    const rev = await page.locator('[data-rev]').boundingBox();
+    await page.mouse.move(rev.x + rev.width * 0.60, rev.y + rev.height * 0.55);
+    await page.mouse.down();
+    await page.mouse.move(rev.x + rev.width * 0.85, rev.y + rev.height * 0.80, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+    ok('drawing opens the classify sheet', await page.evaluate(() =>
+      !!document.querySelector('#cr-show .cr-sh-clsheet')));
+    await page.click('[data-def="nail_pop"]');
+    await page.waitForTimeout(150);
+    await page.click('[data-dsev="warn"]');
+    await page.waitForTimeout(150);
+    await page.click('[data-act="dkeep"]');
+    await page.waitForTimeout(300);
+    const chalk = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      const boxes = [...el.querySelectorAll('[data-box]')];
+      const k = boxes[boxes.length - 1];
+      const stage = el.querySelector('[data-rev]');
+      const S = stage.getBoundingClientRect(), R = k.getBoundingClientRect();
+      return { n: boxes.length,
+        fx: (R.left - S.left) / S.width, fw: R.width / S.width,
+        colour: getComputedStyle(k).borderTopColor,
+        rows: el.querySelectorAll('[data-fnd]').length,
+        label: k.textContent.trim() };
+    });
+    ok('the kept mark is a third box', chalk.n === 3 && chalk.rows === 3, chalk.n + '/' + chalk.rows);
+    ok('it landed where it was drawn', Math.abs(chalk.fx - 0.60) < 0.02 && Math.abs(chalk.fw - 0.25) < 0.02,
+      chalk.fx + ' / ' + chalk.fw);
+    ok('it adopted the picked severity colour', /232, 163, 61/.test(chalk.colour), chalk.colour);
+    ok('and the picked defect label', /Nail pop/.test(chalk.label), chalk.label);
+    await shot('07-desktop-chalk.png');
+
+    /* ── Spotlight (584) ──────────────────────────────────────────────────
+       jsdom proves the markup; only an engine can prove the veil's radial
+       gradient RESOLVES (the 448-449 transparent-surface class) and that the
+       ring lands at its fractions of the real layer.
+       Leaving the review discards the unsaved chalk mark — the 580 guard
+       asks first, and Playwright must answer it. */
+    page.once('dialog', d => d.accept());
+    await page.click('[data-act="rback"]').catch(() => {});
+    await page.waitForTimeout(300);
+    await page.click('[data-act="present"]');
+    await page.waitForTimeout(700);
+    const pr = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      const layer = el.querySelector('.cr-sh-pres');
+      const ring = el.querySelector('.cr-sh-pr-ring');
+      const veil = el.querySelector('.cr-sh-pr-veil');
+      if (!layer || !ring) return null;
+      const L = layer.getBoundingClientRect(), R = ring.getBoundingClientRect();
+      return {
+        presenting: el.classList.contains('presenting'),
+        bg: getComputedStyle(layer).backgroundColor,
+        veilBg: getComputedStyle(veil).backgroundImage.slice(0, 60),
+        fx: (R.left - L.left) / L.width, fy: (R.top - L.top) / L.height,
+        segs: el.querySelectorAll('.cr-sh-pr-segs i').length,
+        ringColour: getComputedStyle(ring).borderTopColor
+      };
+    });
+    ok('present layer shown', pr && pr.presenting);
+    ok('true black resolved, not transparent', pr && pr.bg === 'rgb(5, 6, 7)', pr && pr.bg);
+    ok('the veil gradient actually resolved', pr && /radial-gradient/.test(pr.veilBg), pr && pr.veilBg);
+    ok('ring lands at its stored fraction', pr && Math.abs(pr.fx - 0.25) < 0.005 && Math.abs(pr.fy - 0.40) < 0.005,
+      pr && [pr.fx, pr.fy].join(' / '));
+    ok('one segment per finding', pr && pr.segs === 2, pr && pr.segs);
+    ok('ring colour is the severity, resolved', pr && /^rgb\(229, 72, 77\)$/.test(pr.ringColour),
+      pr && pr.ringColour);
+    await shot('06-desktop-spotlight.png');
+    // advance: second finding is the warn — ring must move and recolour
+    await page.click('[data-prgo="1"]');
+    await page.waitForTimeout(700);
+    const pr2 = await page.evaluate(() => {
+      const el = document.getElementById('cr-show');
+      const r = el.querySelector('.cr-sh-pr-ring');
+      return { c: getComputedStyle(r).borderTopColor, l: r.style.left };
+    });
+    ok('advancing moves and recolours the ring',
+      pr2 && /232, 163, 61/.test(pr2.c) && Math.abs(parseFloat(pr2.l) - 70) < 0.01,
+      pr2 && pr2.c + ' @ ' + pr2.l);
+    // past the last step: the show ends
+    await page.click('[data-prgo="1"]');
+    await page.waitForTimeout(400);
+    ok('past the last step the show ends', await page.evaluate(() =>
+      !document.getElementById('cr-show').classList.contains('presenting')));
 
     await page.close();
   }

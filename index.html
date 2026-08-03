@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 584 &#8212; the manual gains a chapter on what AI can build, with a working slide deck inside it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 593 &#8212; showroom.cardinalroster.com gets its own front door</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35021,6 +35021,16 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:593, d:'2026-08-03', t:'A dedicated front door for presenting', s:'showroom.cardinalroster.com lands somewhere different now \u2014 just Presentations, and Studio if you\u2019re signed in as an admin, none of the ordinary ten-destination launcher. Same sign-in, same file, Showroom underneath completely unchanged. Colors is a placeholder for what\u2019s next.' },
+{ b:592, d:'2026-08-03', t:'Every button in the Showcase got bigger', s:'Measured on an iPad: eleven of the twelve controls on that screen were smaller than a thumb \u2014 the next/back arrows were 30 pixels square. They are all 44 now, the slider grip is a proper round knob that swells when you grab it, and the before/after divider is easier to catch. Nothing moved and nothing changed colour. A test now measures every one of them at four screen sizes, so they cannot quietly shrink again.' },
+{ b:591, d:'2026-08-03', t:'Build a Showcase pair from a job you already have', s:'A <b>From a job</b> button beside Add a pair. Pick the job, tap the before, tap the after, and the address is filled in for you \u2014 with the line it was read from shown underneath, because it guesses and you should be able to see what it guessed from. Add <b>+ During the build</b> for a third. The photographs are copied into the Showcase, so the pair keeps working whatever happens to the job. 196 photographs are already sitting on 12 jobs; this is how they get in front of a homeowner.' },
+{ b:590, d:'2026-08-03', t:'Showroom \u2014 a clean door you can hand across the table', s:'A new card on the landing screen opens the Showcase full screen with every editing control gone \u2014 no add, no publish, no remove, no share, nothing to change on any of the three tabs. Hold the \u2715 for a second to come back; a tap does nothing, so a homeowner can\u2019t wander out of it. Same sign-in, same photographs, no second app. Offered on a tablet, laptop or desktop only \u2014 a phone is not a screen you present from, and the ordinary Showcase there is unchanged.' },
+{ b:589, d:'2026-08-02', t:'The expand button on the slider works on a real tap', s:'Yesterday\u2019s Lens added a full-screen expand button to the before/after slider, and on a real device it did nothing: the slider was swallowing the tap. It opens now. Nothing else changed \u2014 found by testing every button at phone, iPad and desktop sizes before you had to.' },
+{ b:588, d:'2026-08-02', t:'Curtain Call \u2014 the tablet sells by itself', s:'A play button beside the pair counter. Press it at a kitchen table or a home-show booth and the Showcase runs on its own: a slow drift on the finished roof, the divider sweeps before to after by itself, the address and material fade in like a gallery placard, then the next pair. Any touch stops the show instantly and hands you the real slider on the pair that was up. Privacy mode masks the placard like everything else.' },
+{ b:587, d:'2026-08-02', t:'The Release \u2014 share cards', s:'A Showcase pair with a client release on file gains Share: pick Square, Story or Wide and one of three frames \u2014 Classic, Blackout, Kraft \u2014 and download a finished before/after card for social media or the website, or send it straight from the phone. The card names the city only, never the street, and the file carries no location data at all. A pair without a release shows the button greyed out with the reason \u2014 the consent rule is now something you can see.' },
+{ b:586, d:'2026-08-02', t:'The Lens \u2014 pinch into any photograph', s:'Every photograph has been stored at full resolution since build 577 so granules and nail heads survive \u2014 and no gesture could reach that detail until now. Tap a Hall of Fame photo, or the expand button on the slider and on The Walk\u2019s review screen: the picture opens full screen with pinch, drag and double-tap zoom. In The Walk your damage marks ride along at any zoom.' },
+{ b:585, d:'2026-08-02', t:'Chalk \u2014 draw your own marks', s:'The Walk\u2019s review screen gains + Mark damage: drag a box on the photograph, say what it is and how serious, and it joins the marks exactly like one you accepted from the AI. Asking the AI again now keeps your hand-drawn marks \u2014 it only refreshes its own. Works even when the AI is down, and every mark you draw is recorded as yours, which is exactly what training your own detector later needs.' },
+{ b:584, d:'2026-08-02', t:'Spotlight \u2014 present mode for The Walk', s:'A Present button appears on any walk with a reviewed photo. Tap it and the screen goes true black: one finding at a time, the damage lit and everything else dark, with the marks you kept \u2014 nothing the AI proposed that you rejected. Tap the right side for the next finding, the left to go back, past the last one to finish. The address never appears on screen. Works for sales too, not just admins \u2014 presenting is the point.' },
 { build:584, note:'\uD83C\uDFA8 The manual gains a seventeenth chapter: What AI can build. A catalogue of what one person with AI can make \u2014 CRMs, websites, courses, illustrations, audio, dashboards \u2014 every example built around a roofing company, half of them already running at Cardinal. And a real seven-slide adjuster deck runs inside the page as the proof: it presents on an iPad or a computer, and lies flat as readable pages on a phone, because presenting from a phone does a deck no favors.' },
 { build:583, note:'\uD83D\uDCD6 The AI Field Manual is readable again. The TOC, Manage, Library, theme and Ask/File buttons were floating on top of the page and covering the words \u2014 none of them does anything to the book, so they step aside while you are reading it. In their place the book gets a slim bar with just a back arrow \u2014 a better way out than a button sitting on a paragraph.' },
 { build:582, note:'\uD83D\uDD29 The manual\u2019s hardware chapter now answers the whole question. A plain spec sheet before any argument, the DGX Spark and Apple each written up properly, the RTX PRO 6000 with its own pros and cons, a three-way Spark-vs-Mac-vs-6000 table, and both stacking questions \u2014 what two Sparks really change, and whether you can pair one with a 5090. And what local AI is good for is now seven jobs, with photographs as one of them rather than the argument.' },
@@ -41373,10 +41383,75 @@ return '\u21BB Resume: ' + (qs.projectName || 'inspection') +
 }catch(_){}
 return null;
 }
+function isVisionHost(){
+try{
+if(location.search.indexOf('vision=1') !== -1) return true;
+return location.hostname.indexOf('showroom.') === 0;
+}catch(_){ return false; }
+}
+function visionHtml(){
+var isAdmin = false;
+try{ isAdmin = !!(window.is_admin && window.is_admin()); }catch(_){}
+return (
+'<div class="cr-vh"><div class="cr-vh-in">' +
+'<div class="cr-vh-word">Cardinal</div>' +
+'<h1 class="cr-vh-h">Vision</h1>' +
+'<p class="cr-vh-sub">Presentations built from your own work</p>' +
+'<button type="button" class="cr-vh-tile primary" data-go="showroom">' +
+'<span class="ic">\u25B6</span>' +
+'<span class="tx">' +
+'<span class="tt">Presentations</span>' +
+'<span class="sb">Showroom \u2014 Showcase, Workmanship &amp; The Walk</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
+(isAdmin ?
+('<div class="cr-vh-flow"><span>Studio</span><span class="ar">\u2192</span>' +
+'<span>promote</span><span class="ar">\u2192</span><span>Showroom</span></div>' +
+'<a class="cr-vh-tile admin" href="/studio.html">' +
+'<span class="ic">\u25E7</span>' +
+'<span class="tx">' +
+'<span class="tt">Studio<span class="cr-vh-badge">Admin</span></span>' +
+'<span class="sb">Your photo library \u2014 search, tag, curate</span>' +
+'</span><span class="go">\u2192</span>' +
+'</a>')
+: '') +
+'<div class="cr-vh-tile soon" aria-disabled="true">' +
+'<span class="ic">\u25D4</span>' +
+'<span class="tx">' +
+'<span class="tt">Colors<span class="cr-vh-badge soon">Soon</span></span>' +
+'<span class="sb">Owens Corning shingle &amp; siding options</span>' +
+'</span>' +
+'</div>' +
+'</div></div>'
+);
+}
 function build(){
 var lv = document.getElementById('landingView');
 if(!lv) return false;
 if(lv.dataset.crLrBuilt === '1'){ paint(); return true; }
+/* 593: showroom.cardinalroster.com is a dedicated, focused landing —
+   Presentations and (admin-only) Studio, none of the ordinary launcher's
+   ten destinations. ?vision=1 forces it on any hostname, for testing
+   before the real domain is live. Presentations reuses wire()'s existing
+   data-go="showroom" handling below untouched — nothing new to wire for
+   that tile.
+   crPortalBuilt still has to be set here even though refreshCounts()/
+   buildLanding() (the only JS readers) are dead — cr-lr-styles' OWN CSS
+   reads the same attribute: `#landingView:not([data-cr-portal-built])>*
+   {display:none}`, on top of the unconditional `#landingView>*{display:
+   none}` both rules exist to keep #landQuick and friends hidden. Skipping
+   this attribute (first attempt did) left .cr-vh in the DOM but computed
+   display:none — confirmed via elementFromPoint before writing the fix,
+   not guessed. The matching #landingView>.cr-vh{display:flex} override
+   below is the other half, mirroring #landingView>.cr-lr{display:block}
+   exactly. */
+if(isVisionHost()){
+lv.innerHTML = visionHtml();
+wire(lv);
+lv.dataset.crLrBuilt = '1';
+lv.dataset.crPortalBuilt = '1';
+return true;
+}
 lv.dataset.crPortalBuilt = '1';
 var c = counts();
 var seeAll = canSeeAll();
@@ -41467,6 +41542,17 @@ lv.innerHTML =
 '<small>Who is where, and when</small>' +
 '</button>' +
 '</div>' +
+/* 590: Showroom. Full width rather than a third cell in a two-column pair,
+   and blackout rather than the landing's warm brown, because it is a door
+   into a different kind of screen — the one you hand across a table.
+   Hidden below 820px by .cr-lr-show in cr-show-styles. */
+'<button class="cr-lr-show" data-go="showroom">' +
+'<span class="ic">\u2726</span>' +
+'<span class="tx">' +
+'<span class="tt">Showroom<span class="nw">NEW</span></span>' +
+'<span class="sb">Hand the tablet to a homeowner — finished work, full screen, and nothing in it can be changed while they hold it.</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
 /* what is left is an admin shortcut, not a destination - and it renders
    for nobody else, so the row has to be able to vanish. */
 '<div class="cr-lr-minor">' +
@@ -41538,6 +41624,17 @@ leave();
 if(typeof window.showHome === 'function') window.showHome();
 var nav = document.querySelector('.navopt[data-nav="board"]');
 if(nav) setTimeout(function(){ try{ nav.click(); }catch(_){} }, 60);
+return;
+}
+/* 590: the row is hidden below 820px by CSS, but a window can be resized after
+   the landing is built, so the width is asked for here too. The module
+   re-checks and falls back to the ordinary Showcase rather than refusing — a
+   dead button is worse than a plain one. */
+if(d === 'showroom'){
+leave();
+if(window.CardinalShowcase){
+window.CardinalShowcase.open({ showroom: (window.innerWidth || 0) >= 820 });
+}
 return;
 }
 if(d === 'skip'){
@@ -55520,15 +55617,18 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 #cr-show.open{display:block}
 .cr-sh-wrap{max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom,0px))}
 .cr-sh-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+/* 592: 44px is the floor on a screen you hand across a table. */
 .cr-sh-back{flex:0 0 auto;background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
-  color:var(--sh-mut,#98A29C);width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:17px;line-height:1;margin-top:3px}
+  color:var(--sh-mut,#98A29C);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:17px;line-height:1}
 .cr-sh-back:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
 .cr-sh-ttl{flex:1;min-width:0}
 .cr-sh-ttl h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(26px,7vw,34px);letter-spacing:-.02em;line-height:1}
 .cr-sh-ttl h1 span{color:var(--sh-acc,#C8202E)}
 .cr-sh-ttl p{margin:6px 0 0;font:600 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+/* 592: 44px is the floor on a screen you hand across a table. */
 .cr-sh-priv{flex:0 0 auto;display:flex;align-items:center;gap:7px;background:transparent;
-  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:8px;padding:7px 11px;cursor:pointer;
+  min-height:44px;box-sizing:border-box;
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:8px;padding:7px 12px;cursor:pointer;
   color:var(--sh-mut,#98A29C);font:600 11px inherit;font-family:inherit;margin-top:3px}
 .cr-sh-priv .d{width:8px;height:8px;border-radius:50%;background:var(--sh-mut,#98A29C)}
 #cr-show.priv .cr-sh-priv{border-color:var(--sh-ok,#46A758);color:var(--sh-ink,#F2F4F2)}
@@ -55542,7 +55642,9 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
    it hands off to the reports list that already exists. */
 .cr-sh-tabs{display:flex;gap:6px;margin:14px 0 2px;overflow-x:auto;scrollbar-width:none}
 .cr-sh-tabs::-webkit-scrollbar{display:none}
-.cr-sh-tabs button{flex:0 0 auto;padding:9px 15px;border-radius:20px;cursor:pointer;
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-tabs button{flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;
+  box-sizing:border-box;padding:9px 17px;border-radius:22px;cursor:pointer;
   background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
   color:var(--sh-mut,#98A29C);font:700 11.5px inherit;font-family:inherit;white-space:nowrap}
 .cr-sh-tabs button:hover{color:var(--sh-ink,#F2F4F2);border-color:var(--sh-acc,#C8202E)}
@@ -55556,8 +55658,10 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   border-radius:11px;padding:13px;margin-top:10px}
 .cr-sh-wk-h{display:flex;align-items:center;gap:9px;font:650 15px inherit;font-family:inherit}
 .cr-sh-wk-l{margin:7px 0 0;font-size:12.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+/* 592: 44px is the floor on a screen you hand across a table. */
 .cr-sh-x{margin-left:auto;flex:0 0 auto;background:transparent;border:0;cursor:pointer;
-  color:var(--sh-mut,#98A29C);font-size:14px;line-height:1;padding:2px 4px;font-family:inherit}
+  display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;
+  color:var(--sh-mut,#98A29C);font-size:15px;line-height:1;padding:2px 4px;font-family:inherit}
 .cr-sh-x:hover{color:var(--sh-bad,#E5484D)}
 .cr-sh-wk-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px}
 @media (max-width:560px){ .cr-sh-wk-g{grid-template-columns:1fr} }
@@ -55607,7 +55711,8 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 .cr-sh-head h2{margin:0;font:650 18px inherit;font-family:inherit}
 .cr-sh-head .s{color:var(--sh-mut,#98A29C);font-size:12.5px;width:100%}
 .cr-sh-step{margin-left:auto;display:flex;align-items:center;gap:4px;flex:none}
-.cr-sh-step button{width:30px;height:30px;border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:6px;
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-step button{width:44px;height:44px;border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:8px;
   background:transparent;color:var(--sh-mut,#98A29C);cursor:pointer;font-size:12px;line-height:1;font-family:inherit}
 .cr-sh-step button:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
 .cr-sh-step .p{font:600 11.5px ui-monospace,'SF Mono',Menlo,monospace;color:var(--sh-mut,#98A29C);padding:0 4px}
@@ -55615,23 +55720,38 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   touch-action:none;user-select:none;-webkit-user-select:none}
 .cr-sh-cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
 .cr-sh-cmp .bf{clip-path:inset(0 calc(100% - var(--sh-split,52%)) 0 0);z-index:2}
-.cr-sh-hd{position:absolute;top:0;bottom:0;left:var(--sh-split,52%);width:38px;margin-left:-19px;z-index:3;
+/* 592: 48px, per the reference design. margin-left is -width/2 and MUST move with
+   it — otherwise the white rule at ::before{left:50%} stops marking the split it
+   is drawn to mark. The drag math reads [data-cmp], never this element, so
+   widening cannot affect where the divider lands. */
+.cr-sh-hd{position:absolute;top:0;bottom:0;left:var(--sh-split,52%);width:48px;margin-left:-24px;z-index:3;
   cursor:ew-resize;display:flex;align-items:center;justify-content:center}
 .cr-sh-hd::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.6)}
-.cr-sh-grip{position:relative;background:#fff;color:#111;border-radius:999px;padding:5px 9px;font:700 10px inherit;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.cr-sh-grip{position:relative;background:#fff;color:#111;border-radius:999px;
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  font:700 10px inherit;box-shadow:0 2px 8px rgba(0,0,0,.5);
+  transition:transform .13s ease,box-shadow .13s ease}
+/* Tactile feedback on grab. A transform, not a re-layout — it cannot move the
+   divider or cost a frame mid-drag. */
+.cr-sh-cmp.grabbing .cr-sh-grip{transform:scale(1.14);box-shadow:0 4px 16px rgba(0,0,0,.6)}
+@media (prefers-reduced-motion:reduce){ .cr-sh-grip{transition:none} }
 .cr-sh-tag{position:absolute;top:9px;z-index:4;font:600 10.5px inherit;letter-spacing:.06em;padding:3px 9px;border-radius:4px;
   background:rgba(10,12,14,.74);color:#fff;pointer-events:none;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cr-sh-tag.b{left:9px}
 .cr-sh-tag.a{right:9px}
 .cr-sh-dock{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
-.cr-sh-dock button{font:600 12px inherit;font-family:inherit;padding:7px 12px;border-radius:6px;cursor:pointer;
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-dock button{font:600 12px inherit;font-family:inherit;display:inline-flex;align-items:center;
+  min-height:44px;box-sizing:border-box;padding:7px 14px;border-radius:7px;cursor:pointer;
   background:var(--sh-card2,#101312);border:1px solid var(--sh-line,rgba(148,157,165,.20));color:var(--sh-mut,#98A29C)}
 .cr-sh-dock button.on{background:var(--sh-acc,#C8202E);border-color:var(--sh-acc,#C8202E);color:var(--sh-acci,#FFF3F3)}
 .cr-sh-dock button[disabled]{opacity:.4;cursor:default}
 
 /* admin bar + form */
 .cr-sh-admin{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.cr-sh-btn{font:700 12.5px inherit;font-family:inherit;padding:10px 15px;border-radius:7px;cursor:pointer;
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-btn{font:700 12.5px inherit;font-family:inherit;display:inline-flex;align-items:center;
+  justify-content:center;min-height:44px;box-sizing:border-box;padding:10px 16px;border-radius:7px;cursor:pointer;
   background:var(--sh-acc,#C8202E);border:0;color:var(--sh-acci,#FFF3F3)}
 .cr-sh-btn.ghost{background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));color:var(--sh-mut,#98A29C)}
 .cr-sh-btn:disabled{opacity:.55;cursor:wait}
@@ -55733,9 +55853,39 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 .cr-sh-fnd select{background:var(--sh-card2,#101312);color:var(--sh-ink,#F2F4F2);
   border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:6px;padding:5px 7px;
   font:700 10px inherit;font-family:inherit;margin-top:6px}
+/* 592: 44px is the floor on a screen you hand across a table. */
 .cr-sh-fnd .x{flex:0 0 auto;background:transparent;border:0;cursor:pointer;padding:2px 5px;
-  color:var(--sh-mut,#98A29C);font-size:14px;line-height:1;font-family:inherit}
+  display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;
+  color:var(--sh-mut,#98A29C);font-size:15px;line-height:1;font-family:inherit}
 .cr-sh-fnd .x:hover{color:var(--sh-bad,#E5484D)}
+
+/* ── Chalk — draw your own marks (585) ─────────────────────────────────────
+   The drafting state is the only new visual: dashed chalk-white on the
+   stage (16.9:1, computed), adopting its severity colour on classify. */
+.cr-sh-rev.arming{cursor:crosshair}
+.cr-sh-btn.arming{border-style:dashed;border-color:var(--sh-ink,#F2F4F2);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-draft{position:absolute;border:2.5px dashed var(--sh-ink,#F2F4F2);border-radius:6px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.45);z-index:5;pointer-events:none}
+.cr-sh-clsheet{margin-top:10px;background:var(--sh-card,#151817);
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:12px;padding:13px 15px}
+.cr-sh-clsheet label{display:block;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--sh-mut,#98A29C);margin-bottom:8px}
+.cr-sh-defchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
+.cr-sh-defchips button{font:700 11.5px inherit;font-family:inherit;color:var(--sh-ink,#F2F4F2);
+  border:1px solid var(--sh-line,rgba(148,157,165,.35));border-radius:999px;padding:7px 12px;
+  background:transparent;cursor:pointer}
+.cr-sh-defchips button.on{border-color:var(--sh-bad,#E5484D);background:rgba(229,72,77,.13)}
+.cr-sh-sevseg{display:inline-flex;border:1px solid var(--sh-line,rgba(148,157,165,.3));
+  border-radius:9px;overflow:hidden;vertical-align:middle}
+.cr-sh-sevseg button{font:700 11.5px inherit;font-family:inherit;padding:8px 14px;
+  color:var(--sh-mut,#98A29C);background:transparent;border:0;cursor:pointer}
+.cr-sh-sevseg button.on.crit{background:var(--sh-bad,#E5484D);color:#FFF3F3}
+.cr-sh-sevseg button.on.warn{background:var(--sh-warn,#E8A33D);color:#14100C}
+.cr-sh-sevseg button.on.ok{background:var(--sh-ok,#46A758);color:#F2FFF4}
+.cr-sh-clsheet .keep{margin-left:10px;font:800 11.5px inherit;font-family:inherit;color:#FFF3F3;
+  background:var(--sh-acc,#C8202E);border:0;border-radius:9px;padding:9px 15px;cursor:pointer}
+.cr-sh-clsheet .drop{margin-left:6px;font:700 11.5px inherit;font-family:inherit;
+  color:var(--sh-mut,#98A29C);background:transparent;border:0;cursor:pointer;padding:9px 6px}
 
 /* the job-photo picker */
 .cr-sh-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;
@@ -55753,6 +55903,332 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 .cr-sh-note.warn{color:var(--sh-warn,#E8A33D)}
 .cr-sh-note.bad{color:var(--sh-bad,#E5484D)}
 .cr-sh-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+/* ── Spotlight — present mode (584) ────────────────────────────────────────
+   The Blackout treatment: the app's only true-black surface, so entering it
+   reads as "lights off, look here". White ink; severity colours are the only
+   chroma, which is the semantic-colour doctrine made theatrical. All inks
+   computed on #050607: white 18.35:1 · crit 5.0:1 · warn 9.1:1 · ok 6.5:1. */
+.cr-sh-pres{position:absolute;inset:0;z-index:40;background:#050607;display:none;
+  overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#cr-show.presenting .cr-sh-pres{display:block}
+#cr-show.presenting{overflow:hidden}
+.cr-sh-pr-segs{position:absolute;top:max(10px,env(safe-area-inset-top));left:12px;right:12px;
+  display:flex;gap:5px;z-index:8}
+.cr-sh-pr-segs i{flex:1;height:3px;border-radius:2px;background:rgba(242,244,242,.24)}
+.cr-sh-pr-segs i.done{background:var(--sh-ink,#F2F4F2)}
+.cr-sh-pr-photo{position:absolute;inset:0}
+.cr-sh-pr-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  -webkit-user-drag:none}
+.cr-sh-pr-veil{position:absolute;inset:0;z-index:3;transition:background .55s ease}
+.cr-sh-pr-ring{position:absolute;z-index:4;border:3px solid var(--sh-ink,#F2F4F2);border-radius:10px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.6);transition:all .55s cubic-bezier(.3,.8,.3,1)}
+.cr-sh-pr-cap{position:absolute;left:0;right:0;bottom:0;z-index:6;text-align:center;
+  padding:16px 22px calc(18px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(transparent,rgba(5,6,7,.94) 45%)}
+.cr-sh-pr-sev{display:inline-block;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.24em;border-radius:999px;padding:4px 11px;margin-bottom:9px;border:1px solid}
+.cr-sh-pr-cap h3{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;
+  font-size:clamp(18px,4vw,24px);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-pr-cap p{margin:5px 0 0;font-family:Georgia,serif;font-style:italic;font-size:13px;
+  color:rgba(242,244,242,.72)}
+.cr-sh-pr-x{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 14px);right:12px;z-index:9;
+  background:transparent;border:0;cursor:pointer;color:rgba(242,244,242,.8);font-size:19px;
+  padding:6px 10px;font-family:inherit}
+.cr-sh-pr-n{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 20px);left:14px;z-index:8;
+  font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:rgba(242,244,242,.55)}
+.cr-sh-pr-zone{position:absolute;top:0;bottom:0;z-index:7;cursor:pointer}
+@media (prefers-reduced-motion:reduce){
+  .cr-sh-pr-veil,.cr-sh-pr-ring{transition:none}
+}
+
+/* ── The Lens (586) — pinch into every photograph ──────────────────────────
+   Blackout chrome: white ink on the true-black ground, no new hue. The
+   layer owns its gestures via touch-action:none; everything inside the
+   world is fraction-positioned so zoom costs nothing. */
+.cr-sh-lens{position:absolute;inset:0;z-index:45;background:#050607;overflow:hidden;
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.cr-sh-lens .w{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
+.cr-sh-lens .w img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  -webkit-user-drag:none}
+.cr-sh-ln-box{position:absolute;border:2.5px solid;border-radius:6px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55);pointer-events:none}
+.cr-sh-ln-box.crit{border-color:var(--sh-bad,#E5484D)}
+.cr-sh-ln-box.warn{border-color:var(--sh-warn,#E8A33D)}
+.cr-sh-ln-box.ok{border-color:var(--sh-ok,#46A758)}
+.cr-sh-ln-top{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;
+  gap:10px;padding:calc(max(10px,env(safe-area-inset-top)) + 4px) 15px 12px;
+  background:linear-gradient(rgba(5,6,7,.92),transparent);pointer-events:none}
+.cr-sh-ln-top b{font:650 12.5px inherit;color:var(--sh-ink,#F2F4F2);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cr-sh-ln-x{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 2px);right:10px;z-index:9;
+  background:transparent;border:0;cursor:pointer;color:rgba(242,244,242,.85);font-size:19px;
+  padding:6px 10px;font-family:inherit}
+.cr-sh-ln-zc{position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;
+  font:800 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--sh-ink,#F2F4F2);
+  border:1px solid rgba(242,244,242,.4);border-radius:999px;padding:6px 12px;
+  background:rgba(5,6,7,.65);pointer-events:none}
+.cr-sh-ln-hint{position:absolute;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;
+  font-size:10.5px;color:rgba(242,244,242,.6);pointer-events:none}
+.cr-sh-ln-btns{position:absolute;right:10px;top:calc(max(10px,env(safe-area-inset-top)) + 52px);
+  z-index:6;display:flex;flex-direction:column;gap:7px}
+.cr-sh-ln-btns button{width:44px;height:44px;border-radius:10px;font-size:18px;cursor:pointer;
+  color:var(--sh-ink,#F2F4F2);background:rgba(5,6,7,.65);border:1px solid rgba(242,244,242,.4);
+  font-family:inherit}
+/* the way in: a quiet expand affordance on zoomable photographs */
+/* 592: 44px, and note the cost — wireSlider() hole-punches this element out of
+   the drag surface (589), so the dead corner of the slider grows with it. That is
+   the right trade: a control you cannot hit is worse than a corner you cannot
+   drag from, and the divider is reachable everywhere else along its height. */
+.cr-sh-exp{position:absolute;right:8px;bottom:8px;z-index:6;width:44px;height:44px;border-radius:10px;
+  border:1px solid rgba(242,244,242,.35);background:rgba(5,6,7,.55);color:var(--sh-ink,#F2F4F2);
+  font-size:14px;line-height:1;cursor:pointer;font-family:inherit}
+.cr-sh-side{position:relative}
+.cr-sh-side img{cursor:zoom-in}
+
+/* ── The Release (587) — share cards ───────────────────────────────────────
+   Blackout chrome: white ink, the module's red on the primary action. The
+   frame styles below are the CARD's palette — the thing being exported —
+   not app chrome. */
+.cr-sh-btn.dead{opacity:.45;border-style:dashed;cursor:not-allowed}
+.cr-sh-relnote{flex:1 1 100%;margin:2px 0 0;font-size:11px;line-height:1.5;color:var(--sh-mut,#98A29C)}
+.cr-sh-relnote b{color:var(--sh-ink,#F2F4F2)}
+#cr-show-form .cr-sh-seg{display:inline-flex;border:1px solid rgba(242,244,242,.35);
+  border-radius:9px;overflow:hidden;margin:6px 0 4px}
+#cr-show-form .cr-sh-seg button{font:700 11.5px inherit;font-family:inherit;padding:8px 14px;
+  color:var(--sh-mut,#98A29C);background:transparent;border:0;cursor:pointer}
+#cr-show-form .cr-sh-seg button.on{background:var(--sh-ink,#F2F4F2);color:#0B0D0C}
+#cr-show-form .cr-sh-shprev{display:block;max-width:100%;height:auto;margin:12px auto 0;
+  border-radius:5px;box-shadow:0 10px 32px rgba(0,0,0,.5);background:#101312}
+#cr-show-form .cr-sh-shwrap{max-height:46vh;overflow:auto;text-align:center}
+
+/* ── Curtain Call (588) — the show ─────────────────────────────────────────
+   Blackout gallery: true-black wall, the photograph in a thin white mat,
+   white serif placard ink. Severity colours have no business here — this
+   surface sells finished work, not damage. */
+.cr-sh-cc{position:absolute;inset:0;z-index:50;background:#050607;overflow:hidden;cursor:pointer;
+  user-select:none;-webkit-user-select:none}
+.cr-sh-cc .fr{position:absolute;inset:5% 6% 17%;border:1px solid rgba(242,244,242,.28);
+  padding:clamp(6px,1.2vw,12px);background:#050607}
+.cr-sh-cc .ph{position:absolute;inset:clamp(6px,1.2vw,12px);overflow:hidden}
+.cr-sh-cc .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  -webkit-user-drag:none}
+.cr-sh-cc .ph img.af{clip-path:inset(0 0 0 var(--cc-wipe,0%))}
+.cr-sh-cc .ph .dv{position:absolute;top:0;bottom:0;left:var(--cc-wipe,0%);width:2.5px;z-index:2;
+  background:#fff;box-shadow:0 0 7px rgba(0,0,0,.55)}
+.cr-sh-cc.kb .ph img.af{animation:crShCcKb 8s ease-out forwards}
+@keyframes crShCcKb{from{transform:scale(1)}to{transform:scale(1.06) translate(-1.2%,-0.8%)}}
+.cr-sh-cc .plac{position:absolute;left:6%;bottom:5%;z-index:5;max-width:70%;
+  opacity:0;transform:translateY(8px);transition:opacity .8s ease,transform .8s ease}
+.cr-sh-cc .plac.show{opacity:1;transform:none}
+.cr-sh-cc .plac h4{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;
+  font-size:clamp(16px,2.6vw,22px);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-cc .plac hr{border:0;border-top:1px solid rgba(242,244,242,.45);margin:7px 0}
+.cr-sh-cc .plac p{margin:0;font-family:Georgia,serif;font-size:clamp(11px,1.6vw,13.5px);
+  color:rgba(242,244,242,.75)}
+.cr-sh-cc .stopnote{position:absolute;right:14px;bottom:12px;z-index:5;font-size:10.5px;
+  color:rgba(242,244,242,.55)}
+.cr-sh-play{flex:0 0 auto;background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
+  color:var(--sh-mut,#98A29C);width:44px;height:44px;border-radius:8px;cursor:pointer;
+  font-size:12px;line-height:1;font-family:inherit}
+.cr-sh-play:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
+@media (prefers-reduced-motion:reduce){
+  .cr-sh-cc.kb .ph img.af{animation:none}
+  .cr-sh-cc .plac{transition:none}
+}
+
+/* ── Showroom mode (590) ────────────────────────────────────
+   The same three tabs with the chrome off and every write control gone.
+   NOT a second renderer: a second Showcase is the duplicate-feature class
+   this project keeps paying for. What changes is the skin and what is
+   reachable — the photographs, the slider and the phase dock are the ones
+   that already shipped.
+
+   Blackout, matching 584's Present layer and 588's Curtain Call: true black
+   #050607, white ink, severity colour as the only chroma. Every colour here
+   is a literal or var(--sh-*,#literal), same as the rest of this stylesheet
+   — see the header note on the 448-449 class.
+
+   NOT a kiosk, and the PR says so: this hides the app, it does not lock the
+   device. A browser back gesture still leaves, exactly as it does from any
+   other full-screen view here. The hold is about a client not WANDERING
+   out, not about restraining one. */
+#cr-show.showroom{background:#050607}
+/* 572 insets every full-screen view below the header and right of the left
+   nav so the menu stays reachable. The showroom is the one place where that
+   is exactly wrong — the point is that nothing else is reachable until the
+   rep takes the tablet back — so it takes the whole screen at the base
+   z-index the module ships with.
+
+   This also FIXES A DEAD CONTROL, measured rather than guessed: with 572's
+   inset applied, #cr-show drops to z-index 60 while header.site is fixed at
+   z-index 90 and 138px tall, so elementFromPoint at the exit button returned
+   HEADER.site at both 1180 and 1440 and the ✕ could not be tapped. Raising
+   the BUTTON's z-index would NOT have helped — it lives inside #cr-show's
+   stacking context and cannot escape it; only removing the overlap works.
+   Same dead-control class as 578 and 589, third time. audit_viewports.js
+   caught it, not an eye. */
+body.cr-lnav-on #cr-show.showroom{top:0 !important;left:0 !important;z-index:9500 !important}
+#cr-show.showroom .cr-sh-wrap{max-width:min(1120px,100%);
+  padding:max(20px,env(safe-area-inset-top)) clamp(16px,3vw,34px) calc(72px + env(safe-area-inset-bottom,0px))}
+/* The ✕ is position:fixed at the top right. Reserve its lane so it can
+   never land on the privacy toggle — measured, not eyeballed: the four-
+   viewport sweep caught them overlapping 49% at 820px. */
+#cr-show.showroom .cr-sh-top{padding-right:64px}
+#cr-show.showroom .cr-sh-ttl h1{font-size:clamp(21px,3.4vw,27px)}
+#cr-show.showroom .cr-sh-ttl p{color:rgba(242,244,242,.42)}
+#cr-show.showroom .cr-sh-show,
+#cr-show.showroom .cr-sh-wk,
+#cr-show.showroom .cr-sh-card{background:#0A0C0B;border-color:rgba(242,244,242,.14)}
+/* The placard voice — serif, the way 588's gallery card reads. */
+#cr-show.showroom .cr-sh-head h2{font-family:Georgia,'Times New Roman',serif;
+  font-weight:700;font-size:clamp(19px,2.6vw,26px)}
+#cr-show.showroom .cr-sh-head .s{font-family:Georgia,serif;color:rgba(242,244,242,.72)}
+#cr-show.showroom .cr-sh-cmp{aspect-ratio:16/10}
+/* The read-only twin of the severity <select>. Inks are the module's own
+   severity colours, already computed against this ground at 579:
+   4.57 / 8.29 / 5.90:1, all above the 4.5 body floor. */
+.cr-sh-fnd .sv{display:inline-block;margin-top:6px;padding:2px 8px;border-radius:4px;
+  font:700 10px inherit;font-family:inherit;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid currentColor}
+.cr-sh-fnd.crit .sv{color:var(--sh-bad,#E5484D)}
+.cr-sh-fnd.warn .sv{color:var(--sh-warn,#E8A33D)}
+.cr-sh-fnd.ok   .sv{color:var(--sh-ok,#46A758)}
+
+/* Hold to exit. The ring is a conic gradient masked to a ring, driven off
+   --sh-hold in degrees by the SAME clock that decides — no CSS animation, so
+   what you see and what happens cannot drift apart. */
+.cr-sh-exit{position:fixed;top:calc(12px + env(safe-area-inset-top));
+  right:calc(12px + env(safe-area-inset-right,0px));z-index:60;width:46px;height:46px;
+  border-radius:50%;border:1px solid rgba(242,244,242,.30);background:rgba(6,8,7,.62);
+  color:rgba(242,244,242,.88);font-size:15px;cursor:pointer;overflow:hidden;
+  padding:0;font-family:inherit;touch-action:none}
+.cr-sh-exit .ring{position:absolute;inset:-1px;border-radius:50%;pointer-events:none;
+  background:conic-gradient(#F2F4F2 var(--sh-hold,0deg),transparent 0);
+  -webkit-mask:radial-gradient(transparent 60%,#000 62%);mask:radial-gradient(transparent 60%,#000 62%)}
+.cr-sh-exit .x{position:relative;z-index:2;display:block;line-height:44px;text-align:center;pointer-events:none}
+.cr-sh-hold{position:fixed;top:calc(60px + env(safe-area-inset-top));
+  right:calc(10px + env(safe-area-inset-right,0px));z-index:60;pointer-events:none;
+  font:700 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.10em;
+  color:rgba(242,244,242,.5);text-align:right}
+
+/* The launcher row, on the landing that ACTUALLY renders.
+
+   This cost a round trip and is worth writing down. The obvious landing
+   markup — #landQuick / #landDash / #landClaims / #landLibrary, ~line 3961 —
+   is DEAD. cr-lr-styles carries `#landingView>*{display:none}` and the cr-lr
+   module replaces the whole view at runtime with .cr-lr and its .cr-lr-course
+   rows; getElementById('landQuick') returns null in a real browser. A card
+   added there passes every mechanical gate and is never seen. The prime
+   doctrine, arriving in its usual shape: grep for the MOUNT, not the name.
+
+   NO inline display on the button — it has to be beatable by a media query,
+   and an inline style beats every stylesheet rule at any specificity (the
+   styleMounts() trap, which build 573 hit in as many words). Every other
+   button on that landing carries inline style= for its accent only. */
+.cr-lr-show{display:none;width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
+  align-items:center;gap:14px;margin-top:12px;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#12100f,#060707);border:1px solid rgba(242,244,242,.22);
+  border-radius:10px;padding:17px 18px;color:#F2F4F2;font-family:inherit}
+.cr-lr-show::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px 120px at 78% 0%,rgba(197,90,40,.18),transparent 70%)}
+.cr-lr-show:hover{border-color:rgba(242,244,242,.42)}
+.cr-lr-show .ic{position:relative;z-index:1;flex:0 0 auto;width:34px;height:34px;
+  display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.06)}
+.cr-lr-show .tx{position:relative;z-index:1;flex:1;min-width:0}
+.cr-lr-show .tt{display:flex;align-items:center;gap:9px;
+  font:700 17px Georgia,'Times New Roman',serif;color:#F2F4F2;line-height:1.2}
+.cr-lr-show .nw{font:800 8px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;
+  color:#0d0908;background:#F2F4F2;border-radius:999px;padding:4px 9px}
+.cr-lr-show .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
+.cr-lr-show .go{position:relative;z-index:1;flex:0 0 auto;font-size:15px;color:#6d645c}
+/* Theo's call, and he is right: a phone is not a screen you present from.
+   The phone loses nothing — the ordinary Showcase is phone-shaped and always
+   has been; it is only this MODE that isn't offered there. */
+@media (min-width:820px){ .cr-lr-show{display:flex} }
+html[data-mode="light"] .cr-lr-show .sb{color:#8a8078}
+
+/* ── The Vision hub (593) ────────────────────────────────────────────
+   The landing renderer's build() swaps THIS markup into #landingView instead
+   of the ordinary ten-destination launcher when isVisionHost() matches —
+   the dedicated front door for showroom.cardinalroster.com. Committed dark,
+   like Showroom itself: this is the pretty door, not a themed CRM screen,
+   so there is deliberately no light-mode twin, same as .cr-sh-* above.
+
+   #landingView>.cr-vh, NOT plain .cr-vh — cr-lr-styles carries
+   `#landingView>*{display:none}` (ID selector, specificity 1-0-0) to keep
+   the dead #landQuick/#landDash markup hidden, and only an equally-
+   ID-anchored override beats it; a bare class selector never can,
+   regardless of source order. #landingView>.cr-lr{display:block} is the
+   existing instance of this exact pattern — this mirrors it. */
+.cr-vh{min-height:100vh;box-sizing:border-box;background:#0B0D0C;
+  display:flex;flex-direction:column;align-items:center;padding:56px 20px 40px}
+#landingView>.cr-vh{display:flex}
+.cr-vh-in{width:100%;max-width:420px}
+.cr-vh-word{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:#c8202e;margin-bottom:4px}
+.cr-vh-h{font:800 30px Georgia,'Times New Roman',serif;color:#F2F4F2;margin:0 0 6px;
+  letter-spacing:-.01em}
+.cr-vh-sub{font-size:13px;color:#98A29C;margin:0 0 26px}
+.cr-vh-tile{display:flex;align-items:center;gap:13px;width:100%;box-sizing:border-box;
+  text-align:left;border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;
+  font-family:inherit;text-decoration:none;border:1px solid #262a28;background:#151817}
+.cr-vh-tile:hover{border-color:#32372f}
+.cr-vh-tile .ic{flex:0 0 auto;width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:17px}
+.cr-vh-tile.primary{background:linear-gradient(160deg,#1a1210,#0d0908);
+  border-color:rgba(200,32,46,.35)}
+.cr-vh-tile.primary .ic{background:rgba(200,32,46,.18);color:#e35c63}
+.cr-vh-tile.admin .ic{background:rgba(139,150,163,.16);color:#8b96a3}
+.cr-vh-tile.soon{opacity:.5;cursor:default}
+.cr-vh-tile.soon .ic{background:rgba(255,255,255,.05);color:#5d655f}
+.cr-vh-tile .tx{flex:1;min-width:0}
+.cr-vh-tile .tt{display:flex;align-items:center;gap:8px;
+  font:700 16px Georgia,'Times New Roman',serif;color:#F2F4F2}
+.cr-vh-tile .sb{font-size:12px;color:#8a9490;margin-top:2px;line-height:1.4}
+.cr-vh-tile .go{flex:0 0 auto;color:#5d655f;font-size:15px}
+.cr-vh-badge{font:700 8px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 6px;border-radius:4px;
+  background:rgba(139,150,163,.18);color:#8b96a3;margin-left:2px}
+.cr-vh-badge.soon{background:rgba(255,255,255,.06);color:#5d655f}
+.cr-vh-flow{display:flex;align-items:center;gap:5px;
+  font:700 9.5px ui-monospace,'SF Mono',Menlo,monospace;
+  color:#5d655f;letter-spacing:.02em;margin:-2px 0 12px 4px}
+.cr-vh-flow .ar{color:#32372f}
+
+/* ── Promoting a job to a pair (591) ─────────────────────────────
+   The walk picker marks a pick with a tick. A tick cannot say WHICH of two
+   slots a photograph went into, and on a before/after pair that is the only
+   thing that matters — so pair mode labels each pick with the word, shows
+   the two slots above the grid, and dims what can no longer be picked. */
+.cr-sh-slots{display:flex;gap:8px;margin:11px 0 2px;flex-wrap:wrap}
+.cr-sh-slot{flex:1 1 40%;min-width:0;display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:9px;cursor:pointer;font-family:inherit;text-align:left;
+  color:var(--sh-mut,#98A29C);background:var(--sh-card2,#101312);
+  border:1px dashed var(--sh-line,rgba(148,157,165,.30))}
+.cr-sh-slot.full{border-style:solid;border-color:var(--sh-ink,#F2F4F2);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-slot img{width:36px;height:36px;border-radius:6px;object-fit:cover;flex:0 0 auto}
+.cr-sh-slot .t{min-width:0}
+.cr-sh-slot .k{display:block;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.16em;text-transform:uppercase}
+.cr-sh-slot .v{display:block;margin-top:2px;font-size:11px;opacity:.75}
+/* The tick and the word are two answers to the same question — never both. */
+.cr-sh-pick button.role::after{content:none}
+.cr-sh-pick .rl{position:absolute;left:0;right:0;bottom:0;padding:3px 0;text-align:center;
+  font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;
+  text-transform:uppercase;
+  background:rgba(5,6,7,.80);color:#F2F4F2}
+/* Both slots full: the rest are inert, so a stray thumb cannot steal a role. */
+.cr-sh-pick button.dim{opacity:.42;cursor:default}
+.cr-sh-prov{margin:9px 0 0;font-size:11px;line-height:1.5;color:var(--sh-mut,#98A29C)}
+/* What a promoted pair shows INSTEAD of three empty file pickers. */
+.cr-sh-from{display:flex;gap:9px;margin:2px 0 4px;flex-wrap:wrap}
+.cr-sh-from figure{margin:0;flex:0 0 auto;width:84px}
+.cr-sh-from img{display:block;width:84px;height:64px;object-fit:cover;border-radius:7px;
+  border:1px solid var(--sh-line,rgba(148,157,165,.28))}
+.cr-sh-from figcaption{margin-top:4px;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+.cr-sh-prov b{color:var(--sh-ink,#F2F4F2);font-weight:700}
 </style>
 
 <script id="cr-show-script">
@@ -55777,6 +56253,10 @@ var TRADE_LABEL = { roof:'Roofing', siding:'Siding', windows:'Windows',
 var el = null, formEl = null;
 var pairs = [], cur = 0, signed = {}, loaded = false, busy = false;
 var tab = 'showcase';
+/* 590: Showroom mode. Set only by open({showroom:true}); cleared by close()
+   and by any ordinary open() — including the one navRestore calls — so the
+   flag cannot leak into a normal session. */
+var showroom = false;
 var work = [], workLoaded = false;
 
 function esc(s){
@@ -55785,7 +56265,16 @@ function esc(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function sb(){ return window.supa || null; }
+/* THE read-only guarantee for Showroom mode (590), and it is deliberately here
+   rather than at the 14 call sites: every add / publish / remove / share /
+   mark-damage / save control across all three tabs is gated on this one
+   function, so one line removes all of them at once and a harness can prove
+   the count is zero. Fourteen conditionals would be fourteen chances to miss
+   one. Theo: "with the showroom there is no editing."
+   The real enforcement is still the RLS, as the module banner says — a hidden
+   button is not a permission. This is the UI half of it. */
 function amAdmin(){
+  if(showroom) return false;
   try{ if(window.is_admin && window.is_admin()) return true; }catch(_){}
   return false;
 }
@@ -55879,9 +56368,14 @@ async function putPhoto(cl, file, path){
 function render(){
   ensure();
   el.innerHTML =
+    (showroom ? renderExit() : '') +
     '<div class="cr-sh-wrap">' +
       '<div class="cr-sh-top">' +
-        '<button class="cr-sh-back" data-act="back" type="button">←</button>' +
+        /* 590: no back arrow in the showroom — the hold-✕ is the way out.
+           Not rendered rather than hidden, the same way renderAdmin() returns
+           '' when the controls aren't yours. One mechanism, not two. */
+        (showroom ? '' :
+          '<button class="cr-sh-back" data-act="back" type="button">←</button>') +
         '<div class="cr-sh-ttl">' +
           '<h1>Show<span>case</span></h1>' +
           '<p>Cardinal Roofing · Before &amp; After</p>' +
@@ -55896,9 +56390,62 @@ function render(){
   wire();
 }
 
+/* 590: the way out of the showroom. Fixed, and emitted OUTSIDE .cr-sh-wrap so
+   it stays put while the room scrolls. */
+function renderExit(){
+  return '<button class="cr-sh-exit" data-act="exitroom" type="button" ' +
+           'aria-label="Hold to leave the showroom">' +
+           '<span class="ring"></span><span class="x">\u2715</span></button>' +
+         '<div class="cr-sh-hold">hold to exit</div>';
+}
+
+/* HOLD_MS is the contract: the ring is painted from the same clock that
+   decides, so what you see and what happens cannot disagree. A tap does
+   nothing at all — that is the feature, not a side effect.
+   Deliberately NO setPointerCapture: capture would keep pointerleave from
+   firing, and sliding a thumb off the button has to cancel the hold. This is
+   the opposite call from the slider (578/589), for the opposite reason. */
+var HOLD_MS = 900;
+var holdRaf = 0;
+
+function wireExit(){
+  var b = el.querySelector('[data-act="exitroom"]');
+  if(!b) return;
+  var ring = b.querySelector('.ring');
+  var t0 = 0;
+  function paintHold(deg){ if(ring) ring.style.setProperty('--sh-hold', deg + 'deg'); }
+  function stop(){
+    if(holdRaf){ cancelAnimationFrame(holdRaf); holdRaf = 0; }
+    paintHold(0);
+  }
+  function tick(now){
+    /* Re-check the node every frame: the render that owns this button can be
+       replaced under a running hold (a tab switch, a repaint), and a rAF
+       holding a detached node would paint into nothing forever — 567/569's
+       class, and the same guard 588's ccRun uses. */
+    if(!b.isConnected){ stop(); return; }
+    var p = Math.min(1, (now - t0) / HOLD_MS);
+    paintHold(p * 360);
+    if(p < 1){ holdRaf = requestAnimationFrame(tick); return; }
+    stop();
+    close(true);
+  }
+  b.addEventListener('pointerdown', function(e){
+    e.preventDefault();          /* so a tap never becomes a click */
+    e.stopPropagation();
+    stop();
+    t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+    holdRaf = requestAnimationFrame(tick);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+    b.addEventListener(ev, stop);
+  });
+}
+
 /* Inspections is a LINK, not a tab. The app already has a reports list —
    openReportsView(), defined exactly once — and a second one built in here
-   would be the duplicate-feature class this project keeps paying for. */
+   would be the duplicate-feature class this project keeps paying for.
+   590: it is a door OUT of the showroom, so the showroom does not render it. */
 function renderTabs(){
   return '<div class="cr-sh-tabs">' +
     '<button data-tab="showcase"' + (tab === 'showcase' ? ' class="on"' : '') +
@@ -55907,7 +56454,8 @@ function renderTabs(){
       ' type="button">Hall of Fame</button>' +
     '<button data-tab="walk"' + (tab === 'walk' ? ' class="on"' : '') +
       ' type="button">The Walk</button>' +
-    '<button data-act="reports" type="button" class="out">Inspections \u2197</button>' +
+    (showroom ? '' :
+      '<button data-act="reports" type="button" class="out">Inspections \u2197</button>') +
   '</div>';
 }
 
@@ -55949,7 +56497,7 @@ function renderWork(){
 function side(kind, head, path, caption, i){
   return '<div class="cr-sh-side ' + kind + '">' +
     '<div class="h"><span class="sq"></span>' + head + '</div>' +
-    '<img alt="' + esc(head) + '" loading="lazy" src="' + esc(srcD(path)) + '">' +
+    '<img alt="' + esc(head) + '" loading="lazy" data-lens="' + esc(path) + '" data-cap="' + esc(head) + '" src="' + esc(srcD(path)) + '">' +
     (caption ? '<p>' + esc(caption) + '</p>' : '') +
   '</div>';
 }
@@ -55964,7 +56512,7 @@ function renderWorkAdmin(){
 function renderEmpty(){
   return '<div class="cr-sh-empty"><b>Nothing in the showcase yet.</b>' +
     (amAdmin()
-      ? 'Add a pair and it appears here — a before shot, an after shot, and what you put on the house.'
+      ? 'Add a pair and it appears here. <b>From a job</b> is the quick way — pick a job you already have and tap its before and after.'
       : 'Theo hasn’t added any transformations yet.') +
     '</div>' + renderAdmin();
 }
@@ -55984,11 +56532,13 @@ function renderShow(){
           '<button data-act="prev" type="button" aria-label="Previous">◄</button>' +
           '<span class="p">' + (cur + 1) + ' / ' + pairs.length + '</span>' +
           '<button data-act="next" type="button" aria-label="Next">►</button>' +
+          '<button class="cr-sh-play" data-act="ccplay" type="button" aria-label="Let the showcase run itself" title="Let it run">\u25B6</button>' +
         '</div>' +
         (bits.length ? '<span class="s">' + bits.join(' · ') + '</span>' : '') +
       '</div>' +
       '<div class="cr-sh-cmp" data-cmp style="--sh-split:52%">' +
-        '<img data-role="after" alt="After" src="' + esc(src(p.after_path)) + '">' +
+        '<button class="cr-sh-exp" data-act="cmpexp" type="button" aria-label="Open full screen">\u2922</button>' +
+        '<img data-role="after" alt="After" data-path="' + esc(p.after_path) + '" src="' + esc(src(p.after_path)) + '">' +
         '<img class="bf" data-role="before" alt="Before" src="' + esc(src(p.before_path)) + '">' +
         '<div class="cr-sh-hd" data-hd role="slider" tabindex="0" aria-label="Before and after divider"' +
              ' aria-valuemin="0" aria-valuemax="100" aria-valuenow="52"><span class="cr-sh-grip">◄ ►</span></div>' +
@@ -56024,9 +56574,20 @@ function renderAdmin(){
   var p = pairs[cur];
   return '<div class="cr-sh-admin">' +
     '<button class="cr-sh-btn" data-act="add" type="button">Add a pair</button>' +
+    /* 591. It lives in renderAdmin because renderEmpty() calls renderAdmin() too,
+       and with zero pairs the empty state IS the day-one surface. It also
+       inherits the amAdmin() gate, so Showroom hides it with no 15th
+       conditional. `ghost` matches the walk tab's own From-a-job button. */
+    '<button class="cr-sh-btn ghost" data-act="addjob" type="button">From a job</button>' +
     (p ? '<button class="cr-sh-btn ghost" data-act="pub" type="button">' +
            (p.published ? 'Unpublish this one' : 'Publish this one') + '</button>' +
-         '<button class="cr-sh-btn ghost" data-act="del" type="button">Remove</button>' : '') +
+         '<button class="cr-sh-btn ghost" data-act="del" type="button">Remove</button>' +
+         ((p.release_on || p.release_by)
+           ? '<button class="cr-sh-btn" data-act="share" type="button">Share\u2026</button>'
+           : '<button class="cr-sh-btn ghost dead" data-act="sharedead" type="button" ' +
+             'title="Record the client release first">Share\u2026</button>' +
+             '<p class="cr-sh-relnote"><b>Record the client release first.</b> Until then this ' +
+             'pair shows at the kitchen table and goes nowhere else.</p>') : '') +
     '</div>';
 }
 
@@ -56034,6 +56595,11 @@ function renderAdmin(){
    release is not "probably fine" — it is a photograph that must not be
    published, and it should look like one. */
 function releaseBadge(p){
+  /* 590: never in the showroom. This badge names a real person and states an
+     internal marketing-consent fact about SOMEBODY ELSE'S house — the same
+     thing privacy mode strips addresses for. It is for whoever is curating,
+     not for whoever is being sold to. */
+  if(showroom) return '';
   if(p.release_on || p.release_by){
     var who = p.release_by ? esc(p.release_by) : 'on file';
     var when = p.release_on ? ' · ' + esc(fmtDate(p.release_on)) : '';
@@ -56090,10 +56656,29 @@ function wire(){
       if(typeof window.openReportsView === 'function') window.openReportsView();
     };
   });
+  wireExit();
   wireBody();
 }
 
 function wireBody(){
+  el.querySelectorAll('[data-lens]').forEach(function(im){
+    im.onclick = function(){ openLens({ path: im.dataset.lens, cap: im.dataset.cap || '' }); };
+  });
+  el.querySelectorAll('[data-act="cmpexp"]').forEach(function(b){
+    b.onclick = function(e){
+      e.stopPropagation();
+      var p = pairs[cur]; if(!p) return;
+      var img = el.querySelector('[data-role="after"]');
+      openLens({ path: (img && img.dataset.path) || p.after_path, cap: label(p) });
+    };
+  });
+  el.querySelectorAll('[data-act="rlens"]').forEach(function(b){
+    b.onclick = function(){
+      if(!review) return;
+      openLens({ path: review.shot.path, boxes: review.list,
+                 cap: walkLabel(curWalk || {}) });
+    };
+  });
   el.querySelectorAll('[data-act="waddc"]').forEach(function(b){ b.onclick = openWorkForm; });
   wireWalk();
   el.querySelectorAll('[data-wdel]').forEach(function(b){
@@ -56109,6 +56694,14 @@ function wireBody(){
     b.onclick = function(){ if(pairs.length){ cur = (cur + 1) % pairs.length; repaint(); } };
   });
   el.querySelectorAll('[data-act="add"]').forEach(function(b){ b.onclick = openForm; });
+  /* The wrapper is REQUIRED. `b.onclick = openJobPicker` would hand it a
+     MouseEvent, which is not === 'pair', so it would fall to walk mode and bail
+     on !curWalk — a button that silently does nothing. */
+  el.querySelectorAll('[data-act="addjob"]').forEach(function(b){
+    b.onclick = function(){ openJobPicker('pair'); };
+  });
+  el.querySelectorAll('[data-act="ccplay"]').forEach(function(b){ b.onclick = startCurtain; });
+  el.querySelectorAll('[data-act="share"]').forEach(function(b){ b.onclick = openShareComposer; });
   el.querySelectorAll('[data-act="pub"]').forEach(function(b){ b.onclick = togglePublish; });
   el.querySelectorAll('[data-act="del"]').forEach(function(b){ b.onclick = removePair; });
   el.querySelectorAll('[data-ph]').forEach(function(b){
@@ -56118,7 +56711,8 @@ function wireBody(){
       var img = el.querySelector('[data-role="after"]');
       var tag = el.querySelector('[data-aftertag]');
       var want = b.dataset.ph;
-      if(img) img.src = src(want === 'build' ? p.build_path : p.after_path);
+      var wantPath = want === 'build' ? p.build_path : p.after_path;
+      if(img){ img.src = src(wantPath); img.dataset.path = wantPath; }
       if(tag) tag.textContent = want === 'build' ? 'During the build' : 'After';
       el.querySelectorAll('[data-ph]').forEach(function(x){ x.classList.toggle('on', x === b); });
     };
@@ -56141,14 +56735,24 @@ function wireSlider(){
     if(!r.width) return;
     set((e.clientX - r.left) / r.width * 100);
   }
+  /* 592: `grabbing` is the only thing this class does — a scale on the knob. It
+     is removed on BOTH pointerup and pointercancel, because a cancel is exactly
+     what a browser sends when it steals the gesture, and a knob left swollen
+     after that reads as a stuck control. */
+  function grab(on){ cmp.classList.toggle('grabbing', !!on); }
   cmp.addEventListener('pointerdown', function(e){
+    /* The expand button lives inside the slider. Capturing the pointer
+       here would steal its pointerup and the browser would fire no
+       click on it — 578's class. Let a press on the button through. */
+    if(e.target.closest && e.target.closest('.cr-sh-exp')) return;
     dragging = true;
+    grab(true);
     try{ cmp.setPointerCapture(e.pointerId); }catch(_){}
     from(e);
   });
   cmp.addEventListener('pointermove', function(e){ if(dragging) from(e); });
-  cmp.addEventListener('pointerup',     function(){ dragging = false; });
-  cmp.addEventListener('pointercancel', function(){ dragging = false; });
+  cmp.addEventListener('pointerup',     function(){ dragging = false; grab(false); });
+  cmp.addEventListener('pointercancel', function(){ dragging = false; grab(false); });
   hd.addEventListener('keydown', function(e){
     var now = parseFloat(cmp.style.getPropertyValue('--sh-split')) || 52;
     if(e.key === 'ArrowLeft'){ set(now - 4); e.preventDefault(); }
@@ -56171,6 +56775,14 @@ function ensureForm(){
 function openForm(){
   if(!amAdmin()) return;
   ensureForm();
+  /* 591, and this line is the whole reason the promote flow is safe: closeForm()
+     only removes a class, so files carried over from a promoted job would still
+     be sitting in `pending` the next time somebody opened this form by hand — and
+     savePair's file() prefers pending, so it would upload the PREVIOUS job's
+     photographs under the new pair's name, silently. Clearing here rather than in
+     the callers makes "openForm always starts clean" unconditional.
+     promoteToPair therefore calls openForm() first and sets pending after. */
+  pending = null;
   formEl.innerHTML =
     '<div class="bx">' +
       '<h3>Add a transformation</h3>' +
@@ -56205,7 +56817,12 @@ function openForm(){
   formEl.querySelector('[data-act="cancel"]').onclick = closeForm;
   formEl.querySelector('[data-act="save"]').onclick = savePair;
 }
-function closeForm(){ if(formEl) formEl.classList.remove('open'); }
+function closeForm(){
+  /* Belt and braces for the cancel/escape paths. Safe: savePair has already read
+     pending by the time it calls this. */
+  pending = null;
+  if(formEl) formEl.classList.remove('open');
+}
 
 function showErr(msg){
   var e = formEl && formEl.querySelector('[data-err]');
@@ -56247,7 +56864,14 @@ async function savePair(){
   if(!cl) return showErr('Not signed in.');
   var btn = formEl.querySelector('[data-act="save"]');
   var get = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i ? i.value.trim() : ''; };
-  var file = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i && i.files && i.files[0] ? i.files[0] : null; };
+  /* 591: a promoted pair renders no file inputs, so its bytes cannot live in the
+     DOM. `pending` is null for a hand-made pair, which is what keeps a chosen
+     file winning there. Cleared at the top of openForm() — without that, this
+     preference silently uploads the last job's photographs. */
+  var file = function(k){
+    if(pending && pending[k]) return pending[k];
+    var i = formEl.querySelector('[data-f="' + k + '"]'); return i && i.files && i.files[0] ? i.files[0] : null;
+  };
 
   var fb = file('before'), fa = file('after'), fbu = file('build');
   if(!fb || !fa) return showErr('A before and an after photo are both needed.');
@@ -56269,6 +56893,10 @@ async function savePair(){
     var scoreRaw = get('score');
     var row = {
       id: id,
+      /* 591: the column has existed since showcase_pairs.sql and nothing ever
+         wrote it. Nullable, no foreign key, so a hand-made pair still inserts
+         null and no migration ships with this build. */
+      project_id: (pending && pending.projectId) || null,
       address: get('address') || null,
       city: get('city') || null,
       trade: get('trade') || null,
@@ -56471,7 +57099,13 @@ var AI = { max: 1600, q: 0.85 };
 var walks = [], walksLoaded = false, curWalk = null;
 var shots = [], shotsLoaded = false;
 var review = null;      // { shot, list:[...], sel:int, note:string } while reviewing
-var jobPick = null;     // { projectId, photos:[], chosen:{} } while picking
+var jobPick = null;     // { mode, projectId, photos:[], chosen:{}, roles:{} } while picking
+/* 591: files carried from a promoted job. The pair form renders no file inputs
+   in that mode, so the bytes cannot live in the DOM. It is null in the ordinary
+   form, which is exactly why a hand-picked file still wins there. Cleared at the
+   TOP of openForm() — see the comment there; that is not tidiness, it is the
+   difference between saving your photographs and saving the last job's. */
+var pending = null;     // { before:File, after:File, build:File|null, projectId, address, city, raw }
 var vocabWarned = false;
 
 /* ── data ──────────────────────────────────────────────────────────────── */
@@ -56511,6 +57145,7 @@ async function signShots(){
 
 /* ── render ────────────────────────────────────────────────────────────── */
 function renderWalkTab(){
+  if(pres) return renderPresent();
   if(review) return renderReview();
   if(curWalk) return renderOneWalk();
   return renderWalkList();
@@ -56565,6 +57200,7 @@ function renderOneWalk(){
   var head = '<div class="cr-sh-rule">' + esc(walkLabel(w)) + '</div>' +
     '<div class="cr-sh-bar">' +
       '<button class="cr-sh-btn ghost" data-act="wback" type="button">← All walks</button>' +
+      (presentable().length ? '<button class="cr-sh-btn" data-act="present" type="button">Present \u25B6</button>' : '') +
       (amAdmin() ? '<button class="cr-sh-btn" data-act="wphone" type="button">Add photographs</button>' +
                    '<button class="cr-sh-btn ghost" data-act="wjob" type="button">From a job</button>' +
                    '<button class="cr-sh-btn ghost" data-act="wpub" type="button">' +
@@ -56604,20 +57240,35 @@ function renderReview(){
       ' data-box="' + i + '" style="left:' + pc(b.x) + ';top:' + pc(b.y) +
       ';width:' + pc(b.w) + ';height:' + pc(b.h) + '">' +
       '<span class="lb">' + esc(f.label || defLabel(f.defect)) + '</span>' +
-      '<span class="gr" data-grip="' + i + '"></span>' +
+      /* 590: no resize handle in the showroom. wireBoxes() already returns
+         early there, so this is the visual half — a grip you cannot use
+         still reads as an invitation. */
+      (showroom ? '' : '<span class="gr" data-grip="' + i + '"></span>') +
     '</div>';
   }).join('');
+  if(r.draft && r.draft.box){
+    var db = r.draft.box;
+    boxes += '<div class="cr-sh-draft" style="left:' + pc(db.x) + ';top:' + pc(db.y) +
+      ';width:' + pc(db.w) + ';height:' + pc(db.h) + '"></div>';
+  }
 
   return '<div class="cr-sh-rule">Checking a photograph</div>' +
     '<div class="cr-sh-bar">' +
       '<button class="cr-sh-btn ghost" data-act="rback" type="button">← Back</button>' +
-      '<button class="cr-sh-btn ghost" data-act="rdetect" type="button">' +
+      '<button class="cr-sh-btn ghost" data-act="rlens" type="button" aria-label="Open full screen">\u2922</button>' +
+      /* 590: the write half of the review bar. Back and the lens stay — a client
+         seeing the marked-up photograph full screen is the whole point of the
+         room; asking the AI, drawing on it and saving are not. */
+      (showroom ? '' :
+        '<button class="cr-sh-btn ghost" data-act="rdetect" type="button">' +
         (r.list.length ? 'Ask again' : 'Ask the AI') + '</button>' +
-      '<button class="cr-sh-btn" data-act="rsave" type="button">Save what I accepted</button>' +
+        '<button class="cr-sh-btn ghost' + (r.arming ? ' arming' : '') + '" data-act="rmark" type="button">+ Mark damage</button>' +
+        '<button class="cr-sh-btn" data-act="rsave" type="button">Save what I accepted</button>') +
     '</div>' +
-    '<div class="cr-sh-rev" data-rev>' +
+    '<div class="cr-sh-rev' + (r.arming ? ' arming' : '') + '" data-rev>' +
       '<img alt="" src="' + esc(img) + '">' + boxes +
     '</div>' +
+    (r.draft ? renderClassify() : '') +
     (r.note ? '<p class="cr-sh-note' + (r.noteKind ? ' ' + r.noteKind : '') + '">' +
               esc(r.note) + '</p>' : '') +
     (r.list.length
@@ -56627,20 +57278,28 @@ function renderReview(){
             '<span class="sq"></span>' +
             '<div class="m"><b>' + esc(f.label || defLabel(f.defect)) + '</b>' +
               '<p>' + esc(defLabel(f.defect)) + (f.note ? ' — ' + esc(f.note) : '') +
-              (f.confidence != null ? ' · ' + Math.round(f.confidence * 100) + '% sure' : '') +
-              (f.edited ? ' · moved by hand' : '') + '</p>' +
-              '<select data-sev="' + i + '">' +
-                WALK_SEV.map(function(s){
-                  return '<option value="' + s + '"' + (f.severity === s ? ' selected' : '') +
-                         '>' + SEV_LABEL[s] + '</option>';
-                }).join('') +
-              '</select>' +
+              /* 590: confidence and provenance are OURS. "55% sure" argues against
+                 the finding at a kitchen table, and "drawn by hand" is internal
+                 bookkeeping for training the detector. The mark and how serious it
+                 is are what the client needs. */
+              (showroom ? '' :
+                (f.confidence != null ? ' · ' + Math.round(f.confidence * 100) + '% sure' : '') +
+                (f.source === 'human' ? ' · drawn by hand' : (f.edited ? ' · moved by hand' : ''))) + '</p>' +
+              (showroom
+                ? '<span class="sv">' + esc(SEV_LABEL[f.severity] || f.severity) + '</span>'
+                : '<select data-sev="' + i + '">' +
+                  WALK_SEV.map(function(s){
+                    return '<option value="' + s + '"' + (f.severity === s ? ' selected' : '') +
+                           '>' + SEV_LABEL[s] + '</option>';
+                  }).join('') +
+                '</select>') +
             '</div>' +
-            '<button class="x" data-drop="' + i + '" type="button" aria-label="Reject">✕</button>' +
+            (showroom ? '' :
+              '<button class="x" data-drop="' + i + '" type="button" aria-label="Reject">✕</button>') +
           '</div>';
         }).join('')
-      : '<p class="cr-sh-note">Nothing marked yet. Ask the AI, then keep the marks that are ' +
-        'real and drag them onto the damage if they are close but not right.</p>');
+      : '<p class="cr-sh-note">Nothing marked yet. Ask the AI, or press + Mark damage and ' +
+        'draw the box yourself \u2014 then keep what is real.</p>');
 }
 function pc(v){ return (Math.max(0, Math.min(1, +v || 0)) * 100).toFixed(3) + '%'; }
 
@@ -56707,13 +57366,14 @@ async function runDetect(){
   try{
     var blob = await shotBlob(r.shot.path);
     var out  = await askDetect(blob, curWalk ? (curWalk.trade || '') : '');
-    /* Proposals REPLACE the working set rather than appending: asking twice
-       should not silently double every mark. Anything already accepted and
-       saved is still on the row until Save overwrites it. */
-    r.list = (out.findings || []).map(function(f){
+    /* Proposals REPLACE the AI's marks rather than appending — asking twice
+       must not double every mark — but HAND-DRAWN marks survive: they are a
+       person's decisions, and the model has no standing to erase them. */
+    var mine = r.list.filter(function(f){ return f.source === 'human'; });
+    r.list = mine.concat((out.findings || []).map(function(f){
       return { defect:f.defect, severity:f.severity, label:f.label, note:f.note,
-               box:f.box, confidence:(f.confidence == null ? null : f.confidence), edited:false };
-    });
+               box:f.box, confidence:(f.confidence == null ? null : f.confidence), edited:false, source:'ai' };
+    }));
     r.sel = r.list.length ? 0 : -1;
 
     var bits = [];
@@ -56750,7 +57410,7 @@ async function saveReview(){
        schema comment is the contract: anything in findings has been seen. */
     var keep = r.list.map(function(f){
       return { defect:f.defect, severity:f.severity, label:f.label, note:f.note,
-               box:f.box, confidence:f.confidence, edited:!!f.edited };
+               box:f.box, confidence:f.confidence, edited:!!f.edited, source:f.source || 'ai' };
     });
     var up = await cl.from('walk_shots').update({
       findings   : keep,
@@ -56772,12 +57432,66 @@ async function saveReview(){
   repaint();
 }
 
+/* ── Chalk (585): classify a hand-drawn box ──────────────────────────────── */
+function renderClassify(){
+  var d = review.draft;
+  return '<div class="cr-sh-clsheet">' +
+    '<label>What is it?</label>' +
+    '<div class="cr-sh-defchips">' +
+      Object.keys(DEF_LABEL).map(function(k){
+        return '<button data-def="' + k + '"' + (d.defect === k ? ' class="on"' : '') +
+               ' type="button">' + esc(DEF_LABEL[k]) + '</button>';
+      }).join('') +
+    '</div>' +
+    '<span class="cr-sh-sevseg">' +
+      WALK_SEV.map(function(sv){
+        return '<button data-dsev="' + sv + '" class="' + (d.severity === sv ? 'on ' + sv : '') +
+               '" type="button">' + SEV_LABEL[sv] + '</button>';
+      }).join('') +
+    '</span>' +
+    '<button class="keep" data-act="dkeep" type="button">Keep this mark</button>' +
+    '<button class="drop" data-act="ddrop" type="button">Discard</button>' +
+  '</div>';
+}
+function wireClassify(){
+  if(!review || !review.draft) return;
+  el.querySelectorAll('[data-def]').forEach(function(b){
+    b.onclick = function(){ review.draft.defect = b.dataset.def; repaint(); };
+  });
+  el.querySelectorAll('[data-dsev]').forEach(function(b){
+    b.onclick = function(){ review.draft.severity = b.dataset.dsev; repaint(); };
+  });
+  el.querySelectorAll('[data-act="dkeep"]').forEach(function(b){
+    b.onclick = function(){
+      var d = review.draft;
+      /* A hand-drawn mark: no confidence to fabricate, provenance recorded.
+         It joins the working set exactly like an accepted AI mark — the
+         579 contract (findings = what a person decided) already covers it. */
+      review.list.push({ defect:d.defect, severity:d.severity,
+        label:DEF_LABEL[d.defect] || d.defect, note:'', box:d.box,
+        confidence:null, edited:true, source:'human' });
+      review.sel = review.list.length - 1;
+      review.draft = null; review.arming = false; review.dirty = true;
+      repaint();
+    };
+  });
+  el.querySelectorAll('[data-act="ddrop"]').forEach(function(b){
+    b.onclick = function(){ review.draft = null; repaint(); };
+  });
+}
+
 /* Drag to move, corner to resize. Same pointer idiom as wireSlider() — capture
    on pointerdown, convert against getBoundingClientRect, clamp exactly the way
    cleanFindings() clamps server-side so a box can never be saved off-frame. */
 function wireBoxes(){
   var stage = el.querySelector('[data-rev]');
   if(!stage || !review) return;
+  /* 590: in the showroom the circles are evidence to look at, not handles to
+     drag. Note there is no arming step for an EXISTING box — pointerdown on
+     one moves it immediately — so nothing short of not wiring this at all is
+     enough. Returning here also leaves the draft/resize paths unreachable,
+     since both start in this same listener. */
+  if(showroom) return;
   var drag = null;
 
   function frac(e){
@@ -56788,6 +57502,16 @@ function wireBoxes(){
   stage.addEventListener('pointerdown', function(e){
     var grip = e.target.closest ? e.target.closest('[data-grip]') : null;
     var boxEl = e.target.closest ? e.target.closest('[data-box]') : null;
+    /* Armed and not on an existing box: start a chalk draft instead of a
+       drag. The draft lives on `review` so it survives repaints. */
+    if(review.arming && !boxEl){
+      var p0 = frac(e);
+      if(!p0) return;
+      e.preventDefault();
+      try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+      drag = { mode:'draw', from:p0 };
+      return;
+    }
     if(!boxEl) return;
     var i = parseInt((grip || boxEl).dataset[grip ? 'grip' : 'box'], 10);
     var f = review.list[i];
@@ -56815,6 +57539,21 @@ function wireBoxes(){
   stage.addEventListener('pointermove', function(e){
     if(!drag) return;
     var p = frac(e); if(!p) return;
+    if(drag.mode === 'draw'){
+      var bx = { x:Math.min(drag.from.x, p.x), y:Math.min(drag.from.y, p.y),
+                 w:Math.abs(p.x - drag.from.x), h:Math.abs(p.y - drag.from.y) };
+      bx.x = clamp01(bx.x, bx.w); bx.y = clamp01(bx.y, bx.h);
+      drag.box = bx;
+      var live = el.querySelector('.cr-sh-draft');
+      if(!live){
+        live = document.createElement('div');
+        live.className = 'cr-sh-draft';
+        stage.appendChild(live);
+      }
+      live.style.left = pc(bx.x); live.style.top = pc(bx.y);
+      live.style.width = pc(bx.w); live.style.height = pc(bx.h);
+      return;
+    }
     var f = review.list[drag.i]; if(!f) return;
     var dx = p.x - drag.from.x, dy = p.y - drag.from.y, b = drag.box, n;
     if(drag.mode === 'move'){
@@ -56831,7 +57570,20 @@ function wireBoxes(){
       live.style.width = pc(n.w); live.style.height = pc(n.h);
     }
   });
-  function stop(){ if(drag){ drag = null; review.dirty = true; repaint(); } }
+  function stop(){
+    if(!drag) return;
+    if(drag.mode === 'draw'){
+      /* A dot is not a location — same floor cleanFindings() enforces
+         server-side. Too small: quietly drop the draft. */
+      if(drag.box && drag.box.w > 0.02 && drag.box.h > 0.02){
+        review.draft = { box:drag.box, defect:'hail_impact', severity:'crit' };
+      }
+      drag = null;
+      repaint();
+      return;
+    }
+    drag = null; review.dirty = true; repaint();
+  }
   stage.addEventListener('pointerup', stop);
   stage.addEventListener('pointercancel', stop);
 }
@@ -56875,9 +57627,16 @@ function newId(){
    this module queries project_photos itself. That is not duplication for its
    own sake: photoDb's select list has no caption and no path for the inline
    rows, and this picker needs both. */
-function openJobPicker(){
-  if(!amAdmin() || !curWalk) return;
-  jobPick = { projectId:null, projects:[], photos:[], chosen:{}, q:'', busy:false };
+/* 591: two callers now. The mode is compared with === 'pair' and NOT for
+   truthiness, because the walk button is wired `b.onclick = openJobPicker` and
+   therefore hands arg 0 a MouseEvent — `mode ||` would silently flip it into
+   pair mode. String equality leaves that call site correct without touching it. */
+function openJobPicker(mode){
+  mode = (mode === 'pair') ? 'pair' : 'walk';
+  if(!amAdmin()) return;
+  if(mode === 'walk' && !curWalk) return;
+  jobPick = { mode:mode, projectId:null, project:null, projects:[], photos:[],
+              chosen:{}, roles:{}, slots:['before','after'], q:'', busy:false };
   ensureForm();
   drawJobPicker();
   formEl.classList.add('open');
@@ -56889,17 +57648,30 @@ async function loadProjects(){
   if(!cl) return;
   var r = await cl.from('projects').select('id,name,address')
                   .order('updated_at', { ascending:false }).limit(300);
+  /* Cancel nulls jobPick, deliberately, BEFORE closeForm(). Without this the
+     resumed function throws on a null and nobody ever sees it. 579's, not new. */
+  if(!jobPick) return;
   jobPick.projects = (r && !r.error && r.data) ? r.data : [];
   drawJobPicker();
 }
 
 async function loadJobPhotos(pid){
   var cl = sb();
-  jobPick.projectId = pid; jobPick.photos = []; jobPick.chosen = {}; jobPick.busy = true;
+  if(!cl || !jobPick) return;
+  jobPick.projectId = pid; jobPick.photos = []; jobPick.chosen = {}; jobPick.roles = {};
+  jobPick.busy = true;
+  /* 591: keep the row. The pair prefill needs projects.address and the id, and
+     both are already sitting in jobPick.projects — refetching would be a second
+     source of truth for the same fact. */
+  jobPick.project = null;
+  for(var pi = 0; pi < jobPick.projects.length; pi++){
+    if(jobPick.projects[pi].id === pid){ jobPick.project = jobPick.projects[pi]; break; }
+  }
   drawJobPicker();
   var r = await cl.from('project_photos')
                   .select('id,project_id,data,storage_path,caption,created_at')
                   .eq('project_id', pid).order('created_at', { ascending:true });
+  if(!jobPick) return;
   var rows = (r && !r.error && r.data) ? r.data : [];
   /* MEASURED, not assumed: 183 of 196 project_photos rows carry a
      storage_path; the other 13 are inline base64 data: URIs with no storage
@@ -56914,6 +57686,7 @@ async function loadJobPhotos(pid){
     p._thumb = p.storage_path ? (map[p.storage_path] || '')
              : (String(p.data || '').slice(0,5) === 'data:' ? p.data : '');
   });
+  if(!jobPick) return;   /* the signing round trip is the one worth cancelling */
   jobPick.photos = rows.filter(function(p){ return p._thumb; });
   jobPick.busy = false;
   drawJobPicker();
@@ -56944,6 +57717,37 @@ function drawJobPicker(){
   }else if(!j.photos.length){
     body = '<p class="cr-sh-note">That job has no photographs.</p>' +
            '<button class="cr-sh-btn ghost" data-jback type="button">← Another job</button>';
+  }else if(j.mode === 'pair'){
+    var taken = {};
+    j.slots.forEach(function(k){ if(j.roles[k] != null) taken[j.roles[k]] = k; });
+    var allFull = j.slots.every(function(k){ return j.roles[k] != null; });
+    body = '<div class="cr-sh-bar">' +
+        '<button class="cr-sh-btn ghost" data-jback type="button">← Another job</button>' +
+        (j.slots.length < 3
+          ? '<button class="cr-sh-btn ghost" data-jbuild type="button">+ During the build</button>'
+          : '') +
+      '</div>' +
+      '<div class="cr-sh-slots">' +
+        j.slots.map(function(k){
+          var idx = j.roles[k];
+          var ph = idx != null ? j.photos[idx] : null;
+          return '<button class="cr-sh-slot' + (ph ? ' full' : '') + '" data-jslot="' + k + '" type="button">' +
+            (ph ? '<img alt="" src="' + esc(ph._thumb) + '">' : '') +
+            '<span class="t"><span class="k">' + esc(defSlot(k)) + '</span>' +
+            '<span class="v">' + (ph ? 'tap to clear' : 'tap a photo below') + '</span></span>' +
+          '</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="cr-sh-pick">' +
+        j.photos.map(function(p, i){
+          var role = taken[i];
+          var cls = role ? ' class="on role"' : (allFull ? ' class="dim"' : '');
+          return '<button data-jp="' + i + '" type="button"' + cls + '>' +
+            '<img alt="" loading="lazy" src="' + esc(p._thumb) + '">' +
+            (role ? '<span class="rl">' + esc(defSlot(role)) + '</span>' : '') +
+          '</button>';
+        }).join('') +
+      '</div>';
   }else{
     body = '<div class="cr-sh-bar">' +
         '<button class="cr-sh-btn ghost" data-jback type="button">← Another job</button>' +
@@ -56955,16 +57759,28 @@ function drawJobPicker(){
         }).join('') +
       '</div>';
   }
+  var pair = jobPick.mode === 'pair';
+  /* In pair mode the gate is BOTH required slots, not a count. Enabling at one
+     pick would push the failure down to savePair's 'a before and an after are
+     both needed' — a late error where an early disable is honest. */
+  var ready = pair
+    ? jobPick.slots.every(function(k){ return k === 'build' || jobPick.roles[k] != null; })
+    : chosenN > 0;
   formEl.innerHTML =
     '<div class="bx">' +
-      '<h3>Add from a job</h3>' + body +
+      '<h3>' + (pair ? 'Build a pair from a job' : 'Add from a job') + '</h3>' + body +
       '<div class="err" data-err></div>' +
-      '<p class="note">The photograph is copied into this walk rather than linked. ' +
-        'Deleting it from the job later would otherwise blank the walk — in front of a client.</p>' +
+      '<p class="note">' + (pair
+        ? 'The photographs are copied into the Showcase rather than linked, so the ' +
+          'pair survives whatever happens to the job they came from. You fill in the ' +
+          'rest on the next screen.'
+        : 'The photograph is copied into this walk rather than linked. ' +
+          'Deleting it from the job later would otherwise blank the walk — in front of a client.') +
+      '</p>' +
       '<div class="ft">' +
         '<button class="cr-sh-btn ghost" data-act="cancel" type="button">Cancel</button>' +
-        '<button class="cr-sh-btn" data-jadd type="button"' + (chosenN ? '' : ' disabled') + '>' +
-          (chosenN ? 'Add ' + chosenN : 'Add') + '</button>' +
+        '<button class="cr-sh-btn" data-jadd type="button"' + (ready ? '' : ' disabled') + '>' +
+          (pair ? 'Use these' : (chosenN ? 'Add ' + chosenN : 'Add')) + '</button>' +
       '</div>' +
     '</div>';
   wireJobPicker();
@@ -56984,17 +57800,42 @@ function wireJobPicker(){
   });
   var back = formEl.querySelector('[data-jback]');
   if(back) back.onclick = function(){
-    jobPick.projectId = null; jobPick.photos = []; jobPick.chosen = {}; drawJobPicker();
+    jobPick.projectId = null; jobPick.photos = []; jobPick.chosen = {};
+    jobPick.roles = {}; jobPick.project = null; drawJobPicker();
   };
+  var bld = formEl.querySelector('[data-jbuild]');
+  if(bld) bld.onclick = function(){
+    if(jobPick.slots.indexOf('build') === -1) jobPick.slots.push('build');
+    drawJobPicker();
+  };
+  formEl.querySelectorAll('[data-jslot]').forEach(function(b){
+    b.onclick = function(){ delete jobPick.roles[b.dataset.jslot]; drawJobPicker(); };
+  });
   formEl.querySelectorAll('[data-jp]').forEach(function(b){
     b.onclick = function(){
-      var i = b.dataset.jp;
-      if(jobPick.chosen[i]) delete jobPick.chosen[i]; else jobPick.chosen[i] = true;
+      /* dataset is a STRING. roles stores the index as a VALUE, so `=== i` would
+         be 0 === '0' — false, and wrong on the FIRST tile in the grid. */
+      var i = parseInt(b.dataset.jp, 10);
+      if(jobPick.mode === 'pair'){
+        var held = null;
+        jobPick.slots.forEach(function(k){ if(jobPick.roles[k] === i) held = k; });
+        if(held){ delete jobPick.roles[held]; }
+        else{
+          var open = null;
+          for(var s = 0; s < jobPick.slots.length; s++){
+            if(jobPick.roles[jobPick.slots[s]] == null){ open = jobPick.slots[s]; break; }
+          }
+          if(open === null) return;   /* full: inert, matching the dimmed tile */
+          jobPick.roles[open] = i;
+        }
+      }else{
+        if(jobPick.chosen[i]) delete jobPick.chosen[i]; else jobPick.chosen[i] = true;
+      }
       drawJobPicker();
     };
   });
   var add = formEl.querySelector('[data-jadd]');
-  if(add) add.onclick = takeJobPhotos;
+  if(add) add.onclick = (jobPick.mode === 'pair') ? promoteToPair : takeJobPhotos;
   var c = formEl.querySelector('[data-act="cancel"]');
   if(c) c.onclick = function(){ jobPick = null; closeForm(); };
 }
@@ -57002,6 +57843,154 @@ function wireJobPicker(){
 /* Copy the bytes, do not reference the path. Two reasons, both measured:
    thirteen job photos have no storage object to reference at all, and deleting
    a job photo in the app also removes the storage object. See walks_schema.sql. */
+/* 591: extracted so the walk and the pair share ONE blob decoder. Two of them
+   would eventually disagree about the inline rows — which are 13 of 196, i.e.
+   exactly the population an untested second copy would drop. */
+async function jobFiles(picks){
+  var items = [];
+  for(var i = 0; i < picks.length; i++){
+    var p = picks[i], blob;
+    if(p.storage_path){
+      blob = await shotBlob(p.storage_path);
+    }else{
+      /* An inline data: URI resolves with no network — fetch is the shortest
+         correct way to turn one into a Blob. */
+      blob = await (await fetch(p.data)).blob();
+    }
+    items.push({ file:new File([blob], 'job.jpg', { type:'image/jpeg' }),
+                 source:'job', originId:p.id });
+  }
+  return items;
+}
+
+function defSlot(k){ return k === 'build' ? 'During' : k; }
+
+/* Pull a city off a job address. MEASURED against the 12 projects that actually
+   have photographs, because the shape is nothing like a tidy CSV:
+
+     3710 west third Dayton Ohio 45417        231 Delaware  Ave Dayton Ohio 46405
+     3800 klepinger rd  dayton ohio46416      948 Huron            921 Testing Way
+     449 Harriet, Dayton, OH 45417   <- the ONLY comma form among the twelve
+
+   A comma split scores 1 of 12. This peels from the right instead: zip, then
+   state, then take the last token as the city — 10 right, 2 correctly blank,
+   0 wrong. It DECLINES rather than guesses, and whatever it returns lands in an
+   editable field with the source string shown beside it.
+
+   Never derive the city from the zip here: half these rows carry Indiana zips
+   (464xx) on addresses that say Dayton, Ohio. The zip is the wrong oracle. */
+function splitAddr(raw){
+  /* `orig` keeps the record's own spacing. The provenance line quotes it, and
+     provenance that silently tidies what it quotes is not provenance. Parsing
+     still runs on the normalised copy. */
+  var orig = String(raw || '').trim();
+  var s = orig.replace(/\s+/g, ' ');
+  if(!s) return { address:'', city:'', raw:'' };
+  if(s.indexOf(',') !== -1){
+    var parts = s.split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+    if(parts.length >= 2 && !/^(oh|ohio|in|indiana|ky|kentucky|mi|michigan)\b/i.test(parts[1])){
+      return { address:parts[0], city:parts[1], raw:orig };
+    }
+    return { address:parts[0] || s, city:'', raw:orig };
+  }
+  var body = s, hit = false;
+  /* no required space before the digits — 'ohio46416' is real data */
+  var z = body.replace(/\s*\d{5}(?:-\d{4})?$/, '');
+  if(z !== body){ body = z; hit = true; }
+  var st = body.replace(/\s*\b(oh|ohio|in|indiana|ky|kentucky|mi|michigan)$/i, '');
+  if(st !== body){ body = st; hit = true; }
+  if(!hit) return { address:s, city:'', raw:orig };
+  var tok = body.trim().split(' ').filter(Boolean);
+  /* peeling a city has to leave a street behind, or it was never a city */
+  if(tok.length < 3) return { address:s, city:'', raw:orig };
+  var city = tok.pop();
+  if(city === city.toLowerCase()) city = city.charAt(0).toUpperCase() + city.slice(1);
+  return { address:tok.join(' '), city:city, raw:orig };
+}
+
+/* Copy the two (or three) picks, then hand the ordinary pair form the bytes and
+   the prefill. Deliberately NOT a second save path: savePair already carries the
+   release rule, the score clamp and the RLS silent-204 check. */
+async function promoteToPair(){
+  if(!jobPick || busy) return;
+  var cl = sb();
+  if(!cl) return;
+  var slots = jobPick.slots.slice();
+  var picks = [], keys = [];
+  slots.forEach(function(k){
+    var i = jobPick.roles[k];
+    if(i != null && jobPick.photos[i]){ keys.push(k); picks.push(jobPick.photos[i]); }
+  });
+  if(keys.indexOf('before') === -1 || keys.indexOf('after') === -1) return;
+  var btn = formEl.querySelector('[data-jadd]');
+  if(btn){ btn.disabled = true; btn.textContent = 'Copying\u2026'; }
+  /* busy is NOT taken here. takeJobPhotos does not take it either — addShots
+     does. If the copy threw before a finally the module would wedge, and the
+     wedge is invisible by construction: savePair's first line is `if(busy)
+     return;`, which returns before it can write into [data-err]. */
+  var proj = jobPick.project, pid = jobPick.projectId;
+  try{
+    var items = await jobFiles(picks);
+    var byRole = {}, thumbs = {};
+    keys.forEach(function(k, n){ byRole[k] = items[n].file; thumbs[k] = picks[n]._thumb; });
+    var split = splitAddr(proj && proj.address);
+    jobPick = null;
+    /* openForm() clears `pending` as its first act, so it must run FIRST. */
+    openForm();
+    pending = { before:byRole.before, after:byRole.after, build:byRole.build || null,
+                thumbs:thumbs, projectId:pid, address:split.address, city:split.city,
+                raw:split.raw };
+    paintPrefill();
+  }catch(e){
+    showErr(String(e && e.message ? e.message : e));
+    if(btn){ btn.disabled = false; btn.textContent = 'Use these'; }
+  }
+}
+
+/* Put the guess on screen WITH the string it came from. A guess that shows its
+   source is auditable; a guess that hides it is a lie the client reads off the
+   placard later. Nothing here is readonly — editable-with-provenance beats
+   locked-with-confidence. */
+function paintPrefill(){
+  if(!pending || !formEl) return;
+  var set = function(k, v){
+    var i = formEl.querySelector('[data-f="' + k + '"]');
+    if(i && v) i.value = v;
+  };
+  /* The three file inputs are a lie in this mode: they read 'No file chosen'
+     while two photographs ARE chosen, and anything attached to them would be
+     ignored because savePair prefers the carried files. Show what was picked
+     instead. Thumbs are the picker's already-loaded URLs, so no object URL is
+     minted here and none leaks. */
+  var strip = document.createElement('div');
+  strip.className = 'cr-sh-from';
+  ['before','after','build'].forEach(function(k){
+    var inp = formEl.querySelector('[data-f="' + k + '"]');
+    if(!inp) return;
+    var lab = inp.previousElementSibling;
+    if(lab && lab.tagName === 'LABEL') lab.style.display = 'none';
+    inp.style.display = 'none';
+    if(!pending[k]) return;
+    var fig = document.createElement('figure');
+    fig.innerHTML = '<img alt="" src="' + esc((pending.thumbs && pending.thumbs[k]) || '') + '">' +
+      '<figcaption>' + esc(defSlot(k)) + '</figcaption>';
+    strip.appendChild(fig);
+  });
+  var first = formEl.querySelector('.bx > h3');
+  if(first && strip.childNodes.length) first.parentNode.insertBefore(strip, first.nextSibling);
+  set('address', pending.address);
+  set('city', pending.city);
+  var host = formEl.querySelector('[data-f="city"]');
+  host = host && host.parentNode && host.parentNode.parentNode;
+  if(host && pending.raw){
+    var p = document.createElement('p');
+    p.className = 'cr-sh-prov';
+    p.innerHTML = 'Filled in from <b>' + esc(pending.raw) + '</b>' +
+      (pending.city ? ' \u2014 check the city.' : ' \u2014 no city in it; add one.');
+    host.parentNode.insertBefore(p, host.nextSibling);
+  }
+}
+
 async function takeJobPhotos(){
   if(!jobPick || busy) return;
   var cl = sb();
@@ -57010,19 +57999,7 @@ async function takeJobPhotos(){
   var btn = formEl.querySelector('[data-jadd]');
   if(btn){ btn.disabled = true; btn.textContent = 'Copying…'; }
   try{
-    var items = [];
-    for(var i = 0; i < picks.length; i++){
-      var p = picks[i], blob;
-      if(p.storage_path){
-        blob = await shotBlob(p.storage_path);
-      }else{
-        /* An inline data: URI resolves with no network — fetch is the shortest
-           correct way to turn one into a Blob. */
-        blob = await (await fetch(p.data)).blob();
-      }
-      items.push({ file:new File([blob], 'job.jpg', { type:'image/jpeg' }),
-                   source:'job', originId:p.id });
-    }
+    var items = await jobFiles(picks);
     jobPick = null;
     closeForm();
     await addShots(items);
@@ -57138,6 +58115,8 @@ function wireWalk(){
       if(curWalk) loadShots(curWalk.id).then(repaint, repaint);
     };
   });
+  el.querySelectorAll('[data-act="present"]').forEach(function(b){ b.onclick = openPresent; });
+  wirePresent();
   el.querySelectorAll('[data-act="wback"]').forEach(function(b){
     b.onclick = function(){ curWalk = null; shots = []; review = null; repaint(); };
   });
@@ -57175,9 +58154,13 @@ function wireWalk(){
       review = null; repaint();
     };
   });
+  el.querySelectorAll('[data-act="rmark"]').forEach(function(b){
+    b.onclick = function(){ review.arming = !review.arming; review.draft = null; repaint(); };
+  });
+  wireClassify();
   el.querySelectorAll('[data-act="rdetect"]').forEach(function(b){
     b.onclick = function(){
-      if(review.dirty && !window.confirm('Asking again replaces every mark below — ' +
+      if(review.dirty && !window.confirm('Asking again replaces the AI\u2019s marks — your hand-drawn marks stay — ' +
         'discard the changes you have not saved?')) return;
       runDetect();
     };
@@ -57208,9 +58191,464 @@ function wireWalk(){
   wireBoxes();
 }
 
-/* ── open / close ──────────────────────────────────────────────────────── */
-function open(){
+
+/* ── Spotlight — present mode (584) ────────────────────────────────────────
+   One finding at a time, in front of the homeowner. Steps are flattened
+   across the walk's reviewed shots: every accepted finding is one step, and
+   the photograph swaps when the step crosses into the next shot. Only
+   reviewed_at-stamped shots with findings enter — the 579 contract means
+   anything shown here has been through a person's hands, with no filtering
+   logic to get wrong. The caption is label/note/severity only; the address
+   never appears, so privacy mode has nothing to leak. */
+var pres = null;   // { steps:[{shot,f}], i } while presenting
+
+function presentable(){
+  return shots.filter(function(s){ return s.reviewed_at && (s.findings || []).length; });
+}
+function openPresent(){
+  var ok = presentable();
+  if(!ok.length) return;
+  var steps = [];
+  ok.forEach(function(s){ (s.findings || []).forEach(function(f){ steps.push({ shot:s, f:f }); }); });
+  pres = { steps:steps, i:0 };
+  el.classList.add('presenting');
+  repaint();
+}
+function exitPresent(){
+  pres = null;
+  if(el) el.classList.remove('presenting');
+}
+
+var PR_SEV = { crit:['CRITICAL','#E5484D'], warn:['WORTH NOTING','#E8A33D'], ok:['SOUND','#46A758'] };
+
+function renderPresent(){
+  var st = pres.steps[pres.i], f = st.f, b = f.box || { x:0, y:0, w:0, h:0 };
+  var sev = PR_SEV[f.severity] || PR_SEV.ok;
+  var cx = (b.x + b.w/2)*100, cy = (b.y + b.h/2)*100;
+  /* The FULL rendition, not the display copy — this is the surface the
+     3840px files exist for. */
+  var img = signed[st.shot.path] || srcD(st.shot.path) || '';
+  return '<div class="cr-sh-pres">' +
+    '<div class="cr-sh-pr-segs">' +
+      pres.steps.map(function(_, k){
+        return '<i' + (k <= pres.i ? ' class="done"' : '') + '></i>';
+      }).join('') +
+    '</div>' +
+    '<span class="cr-sh-pr-n">' + (pres.i+1) + ' / ' + pres.steps.length + '</span>' +
+    '<button class="cr-sh-pr-x" data-act="prx" type="button" aria-label="End the walkthrough">\u2715</button>' +
+    '<div class="cr-sh-pr-photo"><img alt="" src="' + esc(img) + '"></div>' +
+    '<div class="cr-sh-pr-veil" style="background:radial-gradient(circle 150px at ' +
+      cx.toFixed(2) + '% ' + cy.toFixed(2) + '%,transparent 0 90px,rgba(3,4,6,.6) 145px,rgba(3,4,6,.94) 300px)"></div>' +
+    '<div class="cr-sh-pr-ring" style="left:' + (b.x*100).toFixed(3) + '%;top:' + (b.y*100).toFixed(3) +
+      '%;width:' + (b.w*100).toFixed(3) + '%;height:' + (b.h*100).toFixed(3) +
+      '%;border-color:' + sev[1] + ';box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 34px ' + sev[1] + '88"></div>' +
+    '<div class="cr-sh-pr-zone" style="left:0;width:33%" data-prgo="-1"></div>' +
+    '<div class="cr-sh-pr-zone" style="right:0;width:67%" data-prgo="1"></div>' +
+    '<div class="cr-sh-pr-cap">' +
+      '<span class="cr-sh-pr-sev" style="color:' + sev[1] + ';border-color:' + sev[1] + '99">' + sev[0] + '</span>' +
+      '<h3>' + esc(f.label || defLabel(f.defect)) + '</h3>' +
+      (f.note ? '<p>' + esc(f.note) + '</p>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+function wirePresent(){
+  el.querySelectorAll('[data-act="prx"]').forEach(function(b){
+    b.onclick = function(){ exitPresent(); repaint(); };
+  });
+  el.querySelectorAll('[data-prgo]').forEach(function(z){
+    z.onclick = function(){
+      var n = pres.i + parseInt(z.dataset.prgo, 10);
+      /* Story mechanics: back on the first step stays; forward past the last
+         step ends the show — the homeowner has seen everything. */
+      if(n < 0) return;
+      if(n >= pres.steps.length){ exitPresent(); repaint(); return; }
+      pres.i = n;
+      repaint();
+    };
+  });
+}
+
+
+/* ── The Lens (586) ────────────────────────────────────────────────────────
+   A self-contained overlay appended to the module root, outside the body
+   slot: repaint() leaves it alone; render() (tab switches, navigation)
+   removes it, which is the correct close. Pinch is two-pointer distance on
+   the same pointer-capture idiom as wireSlider(); pan clamps to the frame;
+   double-tap toggles 2.5x at the tap point. */
+var lensEl = null;
+
+function exitLens(){
+  if(lensEl && lensEl.parentNode) lensEl.parentNode.removeChild(lensEl);
+  lensEl = null;
+}
+
+function openLens(opts){
+  exitLens();
   ensure();
+  var url = signed[opts.path] || srcD(opts.path) || '';
+  if(!url) return;
+  lensEl = document.createElement('div');
+  lensEl.className = 'cr-sh-lens';
+  lensEl.innerHTML =
+    '<div class="w">' +
+      '<img alt="" src="' + esc(url) + '">' +
+      (opts.boxes || []).map(function(f){
+        var b = f.box || { x:0, y:0, w:0, h:0 };
+        return '<div class="cr-sh-ln-box ' + esc(f.severity) + '" style="left:' + pc(b.x) +
+               ';top:' + pc(b.y) + ';width:' + pc(b.w) + ';height:' + pc(b.h) + '"></div>';
+      }).join('') +
+    '</div>' +
+    '<div class="cr-sh-ln-top"><b>' + esc(opts.cap || '') + '</b></div>' +
+    '<button class="cr-sh-ln-x" type="button" aria-label="Close">\u2715</button>' +
+    '<div class="cr-sh-ln-btns">' +
+      '<button data-lz="in" type="button" aria-label="Zoom in">+</button>' +
+      '<button data-lz="out" type="button" aria-label="Zoom out">\u2212</button>' +
+    '</div>' +
+    '<span class="cr-sh-ln-zc">1.0\u00d7</span>' +
+    '<span class="cr-sh-ln-hint">pinch \u00b7 drag \u00b7 double-tap</span>';
+  el.appendChild(lensEl);
+
+  var world = lensEl.querySelector('.w');
+  var zc = lensEl.querySelector('.cr-sh-ln-zc');
+  var s = 1, tx = 0, ty = 0, ptrs = {}, lastDist = 0, lastTap = 0;
+
+  function apply(){
+    var r = lensEl.getBoundingClientRect();
+    var maxX = (s - 1) * r.width, maxY = (s - 1) * r.height;
+    tx = Math.min(0, Math.max(-maxX, tx));
+    ty = Math.min(0, Math.max(-maxY, ty));
+    world.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
+    zc.textContent = s.toFixed(1) + '\u00d7';
+  }
+  function zoomAt(f, cx, cy){
+    var r = lensEl.getBoundingClientRect();
+    var ns = Math.max(1, Math.min(5, s * f));
+    var px = (cx - r.left - tx) / s, py = (cy - r.top - ty) / s;
+    tx = cx - r.left - px * ns; ty = cy - r.top - py * ns; s = ns;
+    apply();
+  }
+  lensEl.addEventListener('pointerdown', function(e){
+    if(e.target.closest('.cr-sh-ln-btns') || e.target.closest('.cr-sh-ln-x')) return;
+    ptrs[e.pointerId] = e;
+    try{ lensEl.setPointerCapture(e.pointerId); }catch(_){}
+    var now = Date.now();
+    if(Object.keys(ptrs).length === 1 && now - lastTap < 300){
+      zoomAt(s > 1.5 ? 1 / s : 2.5, e.clientX, e.clientY);
+      lastTap = 0;
+    } else lastTap = now;
+  });
+  lensEl.addEventListener('pointermove', function(e){
+    if(!ptrs[e.pointerId]) return;
+    var prev = ptrs[e.pointerId];
+    ptrs[e.pointerId] = e;
+    var ids = Object.keys(ptrs);
+    if(ids.length === 2){
+      var a = ptrs[ids[0]], b = ptrs[ids[1]];
+      var d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      if(lastDist) zoomAt(d / lastDist, (a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2);
+      lastDist = d;
+    } else if(ids.length === 1){
+      tx += e.clientX - prev.clientX;
+      ty += e.clientY - prev.clientY;
+      apply();
+    }
+  });
+  function lup(e){ delete ptrs[e.pointerId]; lastDist = 0; }
+  lensEl.addEventListener('pointerup', lup);
+  lensEl.addEventListener('pointercancel', lup);
+  lensEl.querySelector('.cr-sh-ln-x').onclick = exitLens;
+  lensEl.querySelectorAll('[data-lz]').forEach(function(b){
+    b.onclick = function(){
+      var r = lensEl.getBoundingClientRect();
+      zoomAt(b.dataset.lz === 'in' ? 1.4 : 1 / 1.4, r.left + r.width / 2, r.top + r.height / 2);
+    };
+  });
+  apply();
+}
+
+
+/* ── The Release (587) — share cards ───────────────────────────────────────
+   The card is drawn on a canvas from bytes fetched through shotBlob() — the
+   authenticated download the Walk already uses — never from a cross-origin
+   URL, so the canvas is never tainted and toBlob() cannot throw for origin
+   reasons. A canvas re-encode carries zero EXIF by construction. The card's
+   inputs are trade, material and CITY — p.address is never passed in. */
+var SHARE_FMT = {
+  sq: { w:1080, h:1080, label:'Square' },
+  st: { w:1080, h:1920, label:'Story' },
+  wd: { w:1200, h:630,  label:'Wide' }
+};
+var SHARE_STY = {
+  classic : { bg:'#FFFFFF', brand:'#C8202E', sub:'#555555', label:'Classic' },
+  blackout: { bg:'#0A0B0C', brand:'#9AA4AE', sub:'#6B747E', label:'Blackout' },
+  kraft   : { bg:'#E8DCC8', brand:'#4A3524', sub:'#6B5B47', label:'Kraft' }
+};
+
+/* Draw one half of the pair into a rect, cropped to cover. */
+function coverDraw(cx, img, dx, dy, dw, dh){
+  var s = Math.max(dw / img.width, dh / img.height);
+  var sw = dw / s, shh = dh / s;
+  var sx = (img.width - sw) / 2, sy = (img.height - shh) / 2;
+  cx.drawImage(img, sx, sy, sw, shh, dx, dy, dw, dh);
+}
+
+function loadBlobImage(blob){
+  return new Promise(function(resolve, reject){
+    var u = URL.createObjectURL(blob);
+    var im = new Image();
+    im.onload = function(){ resolve(im); };
+    im.onerror = function(){ URL.revokeObjectURL(u); reject(new Error('could not read the photo')); };
+    im.src = u;
+  });
+}
+
+function drawCard(imgs, p, fmtKey, styKey){
+  var F = SHARE_FMT[fmtKey], T = SHARE_STY[styKey];
+  var c = document.createElement('canvas');
+  c.width = F.w; c.height = F.h;
+  var x = c.getContext('2d');
+  x.fillStyle = T.bg; x.fillRect(0, 0, F.w, F.h);
+  var m = Math.round(F.w * 0.04);
+  var footH = Math.round(F.h * 0.10);
+  var pw = F.w - 2 * m, ph = F.h - 2 * m - footH;
+  var split = Math.round(pw * 0.5);
+  coverDraw(x, imgs.before, m, m, split, ph);
+  coverDraw(x, imgs.after, m + split, m, pw - split, ph);
+  x.fillStyle = '#FFFFFF';
+  x.fillRect(m + split - 2, m, 4, ph);
+  x.fillStyle = 'rgba(10,10,10,.55)';
+  var tagW = Math.round(F.w * 0.105), tagH = Math.round(F.h * 0.034);
+  x.fillRect(m + 10, m + 10, tagW, tagH);
+  x.fillRect(F.w - m - 10 - tagW, m + 10, tagW, tagH);
+  x.fillStyle = '#FFFFFF';
+  x.font = '700 ' + Math.round(F.w * 0.016) + 'px ui-monospace, Menlo, monospace';
+  x.textBaseline = 'middle';
+  x.fillText('BEFORE', m + 20, m + 10 + tagH / 2);
+  x.fillText('AFTER', F.w - m - tagW + 4, m + 10 + tagH / 2);
+  x.textAlign = 'center';
+  x.fillStyle = T.brand;
+  x.font = '700 ' + Math.round(F.w * 0.036) + 'px Georgia, serif';
+  x.fillText('CARDINAL ROOFING', F.w / 2, F.h - m - footH * 0.55);
+  x.fillStyle = T.sub;
+  x.font = Math.round(F.w * 0.017) + 'px -apple-system, Arial, sans-serif';
+  var bits = [];
+  if(p.trade) bits.push(TRADE_LABEL[p.trade] || p.trade);
+  if(p.material) bits.push(p.material);
+  if(p.city) bits.push(p.city + ', OH');
+  x.fillText(bits.join(' \u00b7 '), F.w / 2, F.h - m - footH * 0.18);
+  x.textAlign = 'left';
+  return c;
+}
+
+async function openShareComposer(){
+  var p = pairs[cur];
+  if(!p || !(p.release_on || p.release_by) || !amAdmin()) return;
+  ensureForm();
+  formEl.innerHTML =
+    '<div class="bx">' +
+      '<h3>Share this transformation</h3>' +
+      '<label>Format</label>' +
+      '<div class="cr-sh-seg" data-shfmt>' +
+        Object.keys(SHARE_FMT).map(function(k){
+          return '<button data-k="' + k + '"' + (k === 'sq' ? ' class="on"' : '') +
+                 ' type="button">' + SHARE_FMT[k].label + '</button>';
+        }).join('') +
+      '</div>' +
+      '<label>Frame</label>' +
+      '<div class="cr-sh-seg" data-shsty>' +
+        Object.keys(SHARE_STY).map(function(k){
+          return '<button data-k="' + k + '"' + (k === 'classic' ? ' class="on"' : '') +
+                 ' type="button">' + SHARE_STY[k].label + '</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="cr-sh-shwrap" data-shslot></div>' +
+      '<div class="err" data-err></div>' +
+      '<p class="note">City only, never the street. The saved picture carries no location ' +
+        'data at all \u2014 that is how the file is made, not a setting.</p>' +
+      '<div class="ft">' +
+        '<button class="cr-sh-btn ghost" data-act="cancel" type="button">Close</button>' +
+        (navigator.share ? '<button class="cr-sh-btn ghost" data-act="shnative" type="button">Share\u2026</button>' : '') +
+        '<button class="cr-sh-btn" data-act="shdl" type="button">Download</button>' +
+      '</div>' +
+    '</div>';
+  formEl.classList.add('open');
+  formEl.querySelector('[data-act="cancel"]').onclick = closeForm;
+
+  var state = { fmt:'sq', sty:'classic', imgs:null };
+  function redraw(){
+    if(!state.imgs) return;
+    var c = drawCard(state.imgs, p, state.fmt, state.sty);
+    c.className = 'cr-sh-shprev';
+    var slot = formEl.querySelector('[data-shslot]');
+    slot.innerHTML = '';
+    slot.appendChild(c);
+    return c;
+  }
+  formEl.querySelectorAll('[data-shfmt] button').forEach(function(b){
+    b.onclick = function(){
+      state.fmt = b.dataset.k;
+      formEl.querySelectorAll('[data-shfmt] button').forEach(function(x){ x.classList.toggle('on', x === b); });
+      redraw();
+    };
+  });
+  formEl.querySelectorAll('[data-shsty] button').forEach(function(b){
+    b.onclick = function(){
+      state.sty = b.dataset.k;
+      formEl.querySelectorAll('[data-shsty] button').forEach(function(x){ x.classList.toggle('on', x === b); });
+      redraw();
+    };
+  });
+  function toPng(cb){
+    var c = redraw();
+    if(c) c.toBlob(cb, 'image/png');
+  }
+  formEl.querySelector('[data-act="shdl"]').onclick = function(){
+    toPng(function(b){
+      if(!b) return;
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = 'cardinal-before-after.png';
+      a.click();
+    });
+  };
+  var nat = formEl.querySelector('[data-act="shnative"]');
+  if(nat) nat.onclick = function(){
+    toPng(function(b){
+      if(!b) return;
+      var f = new File([b], 'cardinal-before-after.png', { type:'image/png' });
+      try{ navigator.share({ files:[f] }).catch(function(){}); }catch(_){}
+    });
+  };
+
+  try{
+    var slot = formEl.querySelector('[data-shslot]');
+    slot.innerHTML = '<p class="cr-sh-note">Building the preview\u2026</p>';
+    var pair = await Promise.all([shotBlob(p.before_path), shotBlob(p.after_path)]);
+    state.imgs = { before: await loadBlobImage(pair[0]), after: await loadBlobImage(pair[1]) };
+    redraw();
+  }catch(e){
+    showErr(String(e && e.message ? e.message : e));
+  }
+}
+
+
+/* ── Curtain Call (588) ────────────────────────────────────────────────────
+   Every timer and frame is tracked in ccRun and cleared by stopCurtain();
+   each async step re-checks the layer is still attached, so a tab switch
+   (render() rewrites the module's DOM) self-heals instead of leaking a
+   loop — the 567/569 always-repainting class, designed against here. */
+var ccRun = null;   // { layer, i, timers:[], raf } while the show runs
+
+function stopCurtain(handOver){
+  if(!ccRun) return;
+  ccRun.timers.forEach(clearTimeout);
+  if(ccRun.raf) cancelAnimationFrame(ccRun.raf);
+  if(ccRun.layer && ccRun.layer.parentNode) ccRun.layer.parentNode.removeChild(ccRun.layer);
+  var at = ccRun.i;
+  ccRun = null;
+  if(handOver && pairs.length){
+    /* Hand the real slider over ON THE PAIR THAT WAS SHOWING — whoever
+       tapped was interested in that one. */
+    cur = at % pairs.length;
+    repaint();
+  }
+}
+
+function ccWait(ms, fn){
+  if(!ccRun) return;
+  ccRun.timers.push(setTimeout(function(){
+    if(!ccRun || !ccRun.layer.isConnected){ stopCurtain(false); return; }
+    fn();
+  }, ms));
+}
+
+function startCurtain(){
+  if(ccRun || !pairs.length) return;
+  ensure();
+  var reduced = false;
+  try{ reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(_){}
+  var layer = document.createElement('div');
+  layer.className = 'cr-sh-cc';
+  layer.innerHTML =
+    '<div class="fr"><div class="ph">' +
+      '<img class="bf" alt="">' +
+      '<img class="af" alt="">' +
+      '<div class="dv"></div>' +
+    '</div></div>' +
+    '<div class="plac"><h4></h4><hr><p></p></div>' +
+    '<span class="stopnote">any touch stops the show</span>';
+  el.appendChild(layer);
+  layer.addEventListener('pointerdown', function(){ stopCurtain(true); });
+  ccRun = { layer: layer, i: cur, timers: [], raf: 0 };
+  ccStep(reduced);
+}
+
+function ccWipe(ph, from, to, ms, done){
+  var t0 = performance.now();
+  function frame(now){
+    if(!ccRun || !ccRun.layer.isConnected){ stopCurtain(false); return; }
+    var k = Math.min(1, (now - t0) / ms);
+    var e = k < .5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2) / 2;
+    ph.style.setProperty('--cc-wipe', (from + (to - from) * e) + '%');
+    if(k < 1){ ccRun.raf = requestAnimationFrame(frame); }
+    else done();
+  }
+  ccRun.raf = requestAnimationFrame(frame);
+}
+
+function ccStep(reduced){
+  if(!ccRun) return;
+  var p = pairs[ccRun.i % pairs.length];
+  var L = ccRun.layer;
+  var ph = L.querySelector('.ph');
+  var bf = L.querySelector('img.bf'), af = L.querySelector('img.af');
+  var plac = L.querySelector('.plac');
+  plac.classList.remove('show');
+  L.classList.remove('kb');
+  bf.src = src(p.before_path);
+  af.src = src(p.after_path);
+  /* Start fully on the BEFORE: the after pane is clipped away, then the
+     divider sweeps it in — the same story the hand slider tells. */
+  ph.style.setProperty('--cc-wipe', '100%');
+  var bits = [];
+  if(p.material) bits.push(p.material);
+  if(p.trade) bits.push(TRADE_LABEL[p.trade] || p.trade);
+  if(p.score != null) bits.push('\u2605 ' + p.score);
+  plac.querySelector('h4').textContent = label(p);
+  plac.querySelector('p').textContent = bits.join(' \u00b7 ');
+  if(!reduced) L.classList.add('kb');
+  ccWait(reduced ? 500 : 2200, function(){
+    ccWipe(ph, 100, 0, reduced ? 0 : 2600, function(){
+      plac.classList.add('show');
+      ccWait(reduced ? 2600 : 3600, function(){
+        ccRun.i++;
+        ccStep(reduced);
+      });
+    });
+  });
+}
+
+/* ── open / close ──────────────────────────────────────────────────────── */
+function open(opts){
+  ensure();
+  var want = !!(opts && opts.showroom);
+  /* Showroom is a presentation surface. Below 820px there is not enough screen
+     to present from, and Theo said so plainly: "presenting in phone wouldn't be
+     very good." Fall back to the ordinary Showcase rather than refusing — the
+     phone keeps every feature, it is only this mode it isn't offered. */
+  if(want && (window.innerWidth || 0) < 820) want = false;
+  showroom = want;
+  el.classList.toggle('showroom', showroom);
+  /* Entering the room always starts clean: the transformation, not whatever
+     tab and half-finished review were left open in the ordinary Showcase an
+     hour ago. Handing a tablet to a homeowner that lands mid-review of
+     somebody else's roof is the whole thing this mode exists to avoid.
+     Same fields reload() resets, minus the refetch. */
+  if(showroom){
+    tab = 'showcase';
+    curWalk = null; shots = []; review = null;
+  }
   render();
   if(typeof window.hideAllViews === 'function'){
     try{ window.hideAllViews(); }catch(_){}
@@ -57234,15 +58672,21 @@ function open(){
 
 function close(goHome){
   closeForm();
-  if(el) el.classList.remove('open');
+  exitPresent();
+  exitLens();
+  stopCurtain(false);
+  if(holdRaf){ cancelAnimationFrame(holdRaf); holdRaf = 0; }
+  showroom = false;
+  if(el) el.classList.remove('open', 'showroom');
   if(goHome !== false && typeof window.showHome === 'function') window.showHome();
 }
 
 window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
   open  : open,
   close : close,
+  inShowroom: function(){ return showroom; },
   reload: function(){ loaded = false; workLoaded = false; walksLoaded = false;
-    curWalk = null; shots = []; review = null;
+    curWalk = null; shots = []; review = null; exitPresent();
     return Promise.all([load(), loadWork(), loadWalks()]); }
 });
 })();

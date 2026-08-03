@@ -1,0 +1,466 @@
+<!--
+════════════════════════════════════════════════════════════════════
+ CARDINAL STUDIO
+ Written 3 Aug 2026 — a backend curation library, standalone.
+────────────────────────────────────────────────────────────────────
+ Not part of index.html. Shares nothing with the CRM but the Supabase
+ project — no shared script, no shared nav, no CRM tables. That split
+ is deliberate (Theo, 3 Aug: "if it was back to the beginning this
+ would have been a completely separate app").
+
+ Reads studio_photos only. Rows land there from the Spark: Hermes
+ tags the local archive and writes studio_tags.jsonl (see
+ spark/STUDIO_TAGGING.md), and spark/push_studio_tags.py joins that
+ against manifest.jsonl and upserts here. This page never writes —
+ browse, search, look. Retagging happens on the Spark, not in a
+ browser.
+
+ Admin-only, both ways: studio_photos' RLS is is_cardinal_admin()-only
+ for every operation, and the photos/studio/* storage prefix is
+ carved out of the bucket's general authenticated-read policy into
+ its own admin-only one (studio_objects_rls.sql, 3 Aug). This page
+ adds a sign-in screen on top of that because it lives on its own
+ subdomain — a different origin means a different localStorage, so
+ the app.cardinalroster.com session never carries over here.
+
+ Never shown to a client. No address is ever sent anywhere public —
+ this page isn't public. See CLAUDE.md's note on the difference
+ between "backend only" and "no address ever": they are not the same
+ rule, and conflating them would have broken the one workflow this
+ tool exists to serve (find this house's before/after by its address).
+════════════════════════════════════════════════════════════════════
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cardinal Studio</title>
+<style>
+  :root{
+    --stu-bg:#0B0D0C; --stu-panel:#151817; --stu-panel2:#1b1f1d; --stu-line:#2a2e2c;
+    --stu-ink:#F2F4F2; --stu-ink2:#98A29C; --stu-ink3:#6b7570;
+    --stu-red:#C8202E; --stu-red-ink:#fff;
+    --stu-crit:#E5484D; --stu-warn:#E8A33D; --stu-ok:#46A758;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--stu-bg); color:var(--stu-ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh;
+  }
+  .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  button{ font-family:inherit; }
+
+  /* ── login ─────────────────────────────────────────────────── */
+  #loginView{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  #loginView .card{
+    width:100%; max-width:340px; background:var(--stu-panel); border:1px solid var(--stu-line);
+    border-radius:10px; padding:28px 26px;
+  }
+  #loginView .wordmark{
+    font:700 11px/1 inherit; letter-spacing:3px; text-transform:uppercase; color:var(--stu-red);
+    margin-bottom:6px;
+  }
+  #loginView h1{ font-size:20px; margin:0 0 20px; font-weight:700; }
+  #loginView label{ display:block; font-size:11px; color:var(--stu-ink2); margin:0 0 5px; text-transform:uppercase; letter-spacing:1px; }
+  #loginView input{
+    width:100%; background:var(--stu-bg); border:1px solid var(--stu-line); color:var(--stu-ink);
+    border-radius:6px; padding:10px 12px; font-size:14px; margin-bottom:14px;
+  }
+  #loginView input:focus{ outline:none; border-color:var(--stu-red); }
+  #loginView button{
+    width:100%; background:var(--stu-red); color:var(--stu-red-ink); border:0; border-radius:6px;
+    padding:11px; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  #loginView button:disabled{ opacity:.55; cursor:default; }
+  #loginView .err{ color:var(--stu-crit); font-size:12.5px; margin:-6px 0 14px; min-height:1em; }
+
+  /* ── shell ─────────────────────────────────────────────────── */
+  #appView{ display:none; min-height:100vh; }
+  header.stu-hd{
+    position:sticky; top:0; z-index:10; background:rgba(11,13,12,.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--stu-line); padding:14px 20px;
+  }
+  header.stu-hd .row{ display:flex; align-items:center; gap:14px; max-width:1400px; margin:0 auto; }
+  header.stu-hd .wordmark{ font:700 12px/1 inherit; letter-spacing:2.5px; text-transform:uppercase; color:var(--stu-red); white-space:nowrap; }
+  header.stu-hd .count{ color:var(--stu-ink2); font-size:12.5px; white-space:nowrap; }
+  header.stu-hd .spacer{ flex:1; }
+  header.stu-hd .signout{
+    background:none; border:1px solid var(--stu-line); color:var(--stu-ink2); border-radius:6px;
+    padding:6px 12px; font-size:11.5px; cursor:pointer;
+  }
+  header.stu-hd .signout:hover{ border-color:var(--stu-ink2); color:var(--stu-ink); }
+
+  .stu-search{
+    max-width:1400px; margin:14px auto 0; padding:0 20px;
+  }
+  .stu-search input{
+    width:100%; background:var(--stu-panel); border:1px solid var(--stu-line); color:var(--stu-ink);
+    border-radius:8px; padding:12px 14px; font-size:15px;
+  }
+  .stu-search input:focus{ outline:none; border-color:var(--stu-red); }
+  .stu-search input::placeholder{ color:var(--stu-ink3); }
+
+  .stu-chips{ max-width:1400px; margin:12px auto 0; padding:0 20px; display:flex; flex-wrap:wrap; gap:7px; }
+  .stu-chip{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:11.5px; background:var(--stu-panel); border:1px solid var(--stu-line); color:var(--stu-ink2);
+    border-radius:20px; padding:6px 12px; cursor:pointer; white-space:nowrap; user-select:none;
+  }
+  .stu-chip:hover{ border-color:var(--stu-ink2); color:var(--stu-ink); }
+  .stu-chip.on{ background:var(--stu-red); border-color:var(--stu-red); color:#fff; }
+  .stu-chip .n{ opacity:.65; margin-left:5px; }
+
+  main.stu-main{ max-width:1400px; margin:0 auto; padding:18px 20px 80px; }
+  .stu-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px; }
+  .stu-card{
+    background:var(--stu-panel); border:1px solid var(--stu-line); border-radius:9px; overflow:hidden;
+    cursor:pointer; transition:border-color .12s;
+  }
+  .stu-card:hover{ border-color:var(--stu-ink3); }
+  .stu-card .th{ position:relative; aspect-ratio:4/3; background:var(--stu-panel2); overflow:hidden; }
+  .stu-card .th img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .stu-card .th .ph{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--stu-ink3); font-size:11px; }
+  .stu-card .meta{ padding:9px 10px; }
+  .stu-card .addr{ font-size:12px; color:var(--stu-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .stu-card .tags{ margin-top:4px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:10.5px; color:var(--stu-ink2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .stu-card .src{
+    position:absolute; top:7px; right:7px; font:700 8.5px/1 ui-monospace,monospace; letter-spacing:.5px;
+    text-transform:uppercase; padding:3px 6px; border-radius:4px; background:rgba(6,8,7,.78); color:var(--stu-ink2);
+  }
+
+  .stu-state{ text-align:center; padding:80px 20px; color:var(--stu-ink2); }
+  .stu-state b{ display:block; color:var(--stu-ink); font-size:16px; margin-bottom:6px; }
+  .stu-more{ display:block; margin:24px auto 0; background:var(--stu-panel); border:1px solid var(--stu-line); color:var(--stu-ink); border-radius:8px; padding:10px 22px; font-size:12.5px; cursor:pointer; }
+  .stu-more:hover{ border-color:var(--stu-ink3); }
+  .stu-more:disabled{ opacity:.5; cursor:default; }
+
+  /* ── detail overlay ────────────────────────────────────────── */
+  #detailView{
+    display:none; position:fixed; inset:0; z-index:100; background:rgba(6,8,7,.92);
+    padding:24px; overflow-y:auto;
+  }
+  #detailView .box{
+    max-width:900px; margin:0 auto; background:var(--stu-panel); border:1px solid var(--stu-line);
+    border-radius:12px; overflow:hidden;
+  }
+  #detailView .imgwrap{ background:#000; display:flex; align-items:center; justify-content:center; max-height:65vh; overflow:hidden; }
+  #detailView .imgwrap img{ width:100%; max-height:65vh; object-fit:contain; display:block; }
+  #detailView .body{ padding:20px 22px 24px; }
+  #detailView .addr{ font-size:18px; font-weight:700; margin:0 0 3px; }
+  #detailView .sub{ color:var(--stu-ink2); font-size:12.5px; margin-bottom:16px; }
+  #detailView .tags{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:16px; }
+  #detailView .tag{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:11.5px;
+    background:var(--stu-panel2); border:1px solid var(--stu-line); color:var(--stu-ink); border-radius:6px; padding:5px 9px;
+  }
+  #detailView .tag .cf{ color:var(--stu-ink2); margin-left:5px; }
+  #detailView .spark{ font-size:11px; color:var(--stu-ink3); word-break:break-all; padding-top:12px; border-top:1px solid var(--stu-line); }
+  #detailView .close{
+    position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:50%;
+    background:rgba(6,8,7,.6); border:1px solid var(--stu-line); color:var(--stu-ink); font-size:16px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  #detailView .close:hover{ border-color:var(--stu-ink2); }
+  #detailView .rel{ position:relative; }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="card">
+    <div class="wordmark">Cardinal</div>
+    <h1>Studio sign-in</h1>
+    <label for="loginEmail">Email</label>
+    <input id="loginEmail" type="email" autocomplete="username" autocapitalize="off">
+    <label for="loginPass">Password</label>
+    <input id="loginPass" type="password" autocomplete="current-password">
+    <div class="err" id="loginErr"></div>
+    <button id="loginBtn" type="button">Sign in</button>
+  </div>
+</div>
+
+<div id="appView">
+  <header class="stu-hd">
+    <div class="row">
+      <div class="wordmark">Cardinal Studio</div>
+      <div class="count" id="stuCount"></div>
+      <div class="spacer"></div>
+      <button class="signout" id="signoutBtn" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <div class="stu-search">
+    <input id="stuSearch" type="text" placeholder="Search by address or job name…">
+  </div>
+  <div class="stu-chips" id="stuChips"></div>
+
+  <main class="stu-main">
+    <div class="stu-grid" id="stuGrid"></div>
+    <div class="stu-state" id="stuState" style="display:none"></div>
+    <button class="stu-more" id="stuMore" type="button" style="display:none">Load more</button>
+  </main>
+</div>
+
+<div id="detailView">
+  <div class="box rel">
+    <button class="close" id="detailClose" type="button">&#10005;</button>
+    <div class="imgwrap"><img id="detailImg" alt=""></div>
+    <div class="body">
+      <p class="addr" id="detailAddr"></p>
+      <p class="sub" id="detailSub"></p>
+      <div class="tags" id="detailTags"></div>
+      <div class="spark mono" id="detailSpark"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  'use strict';
+
+  // Same publishable anon key api/*.js falls back to, and the same one
+  // spark/push_studio_tags.py and spark/hail_review.py already use — CLAUDE.md
+  // is explicit this one is designed to be public. Nothing else in this file is.
+  var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  var COLUMNS = 'id,source,spark_path,storage_path,tags,confidence,project_address,project_name,captured_at,width,height,tagged_at';
+  var PAGE = 60;
+  var SIGN_TTL = 3600;
+
+  var st = { q:'', tags:[], offset:0, total:0, rows:[], loading:false, done:false };
+
+  // ── auth ──────────────────────────────────────────────────────────────
+  var loginView = document.getElementById('loginView');
+  var appView = document.getElementById('appView');
+  var loginErr = document.getElementById('loginErr');
+  var loginBtn = document.getElementById('loginBtn');
+
+  function showApp(){
+    loginView.style.display = 'none';
+    appView.style.display = 'block';
+    loadChips();
+    resetAndLoad();
+  }
+  function showLogin(){
+    appView.style.display = 'none';
+    loginView.style.display = 'flex';
+  }
+
+  async function doLogin(){
+    var email = document.getElementById('loginEmail').value.trim();
+    var pass = document.getElementById('loginPass').value;
+    if(!email || !pass){ loginErr.textContent = 'Enter both fields.'; return; }
+    loginBtn.disabled = true; loginErr.textContent = '';
+    var res = await sb.auth.signInWithPassword({ email: email, password: pass });
+    loginBtn.disabled = false;
+    if(res.error){ loginErr.textContent = res.error.message || 'Sign-in failed.'; return; }
+    showApp();
+  }
+  loginBtn.addEventListener('click', doLogin);
+  document.getElementById('loginPass').addEventListener('keydown', function(e){ if(e.key === 'Enter') doLogin(); });
+
+  document.getElementById('signoutBtn').addEventListener('click', async function(){
+    await sb.auth.signOut();
+    showLogin();
+  });
+
+  sb.auth.getSession().then(function(r){
+    if(r.data && r.data.session){ showApp(); } else { showLogin(); }
+  });
+
+  // ── tag chips (frequency, independent of the active filter) ────────────
+  async function loadChips(){
+    var res = await sb.from('studio_photos').select('tags').limit(5000);
+    if(res.error || !res.data) return;
+    var freq = {};
+    res.data.forEach(function(r){ (r.tags || []).forEach(function(t){ freq[t] = (freq[t]||0) + 1; }); });
+    var sorted = Object.keys(freq).map(function(t){ return [t, freq[t]]; })
+      .sort(function(a,b){ return b[1]-a[1]; }).slice(0, 40);
+    renderChips(sorted);
+  }
+  function renderChips(sorted){
+    var box = document.getElementById('stuChips');
+    box.innerHTML = '';
+    sorted.forEach(function(pair){
+      var t = pair[0], n = pair[1];
+      var el = document.createElement('div');
+      el.className = 'stu-chip' + (st.tags.indexOf(t) !== -1 ? ' on' : '');
+      el.innerHTML = t + '<span class="n">' + n + '</span>';
+      el.addEventListener('click', function(){
+        var i = st.tags.indexOf(t);
+        if(i === -1) st.tags.push(t); else st.tags.splice(i, 1);
+        renderChips(sorted);
+        resetAndLoad();
+      });
+      box.appendChild(el);
+    });
+  }
+
+  // ── search ───────────────────────────────────────────────────────────
+  var searchTimer = null;
+  document.getElementById('stuSearch').addEventListener('input', function(e){
+    var v = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function(){ st.q = v; resetAndLoad(); }, 300);
+  });
+
+  // PostgREST requires a value embedded in an .or() expression to be double-
+  // quoted if it can contain a reserved character (',', '.', '(', ')', etc);
+  // within the quotes, '\' and '"' must be backslash-escaped. Free-typed
+  // search text can contain any of those, so this always quotes rather than
+  // guessing whether it is needed.
+  function orValue(v){
+    return '"' + String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+  }
+
+  function buildQuery(){
+    var q = sb.from('studio_photos').select(COLUMNS, { count: 'exact' });
+    var term = st.q.trim();
+    if(term){
+      var like = orValue('%' + term + '%');
+      q = q.or('project_address.ilike.' + like + ',project_name.ilike.' + like);
+    }
+    if(st.tags.length) q = q.contains('tags', st.tags);
+    return q.order('pushed_at', { ascending: false }).range(st.offset, st.offset + PAGE - 1);
+  }
+
+  function resetAndLoad(){
+    st.offset = 0; st.rows = []; st.done = false;
+    document.getElementById('stuGrid').innerHTML = '';
+    loadPage();
+  }
+
+  async function loadPage(){
+    if(st.loading || st.done) return;
+    st.loading = true;
+    setState(null);
+    document.getElementById('stuMore').disabled = true;
+
+    var res = await buildQuery();
+    st.loading = false;
+    if(res.error){ setState('Search failed — ' + res.error.message); return; }
+
+    var rows = res.data || [];
+    st.total = typeof res.count === 'number' ? res.count : st.total;
+    st.offset += rows.length;
+    if(rows.length < PAGE) st.done = true;
+
+    await signBatch(rows);
+    st.rows = st.rows.concat(rows);
+    renderGrid(rows);
+    updateCount();
+
+    if(!st.rows.length){
+      var filtered = !!(st.q.trim() || st.tags.length);
+      setState(filtered
+        ? 'No matches for this search.'
+        : 'Nothing tagged yet — Hermes hasn’t pushed anything from the Spark.');
+    } else {
+      setState(null);
+    }
+    document.getElementById('stuMore').style.display = st.done ? 'none' : 'block';
+    document.getElementById('stuMore').disabled = false;
+  }
+  document.getElementById('stuMore').addEventListener('click', loadPage);
+
+  async function signBatch(rows){
+    var paths = rows.map(function(r){ return r.storage_path; }).filter(Boolean);
+    if(!paths.length) return;
+    var res = await sb.storage.from('photos').createSignedUrls(paths, SIGN_TTL);
+    if(res.error || !res.data) return;
+    var map = {};
+    res.data.forEach(function(d){ if(d.path) map[d.path] = d.signedUrl; });
+    rows.forEach(function(r){ r.url = map[r.storage_path] || null; });
+  }
+
+  function setState(msg){
+    var el = document.getElementById('stuState');
+    if(!msg){ el.style.display = 'none'; el.innerHTML = ''; return; }
+    el.style.display = 'block';
+    el.innerHTML = '<b>' + esc(msg) + '</b>';
+  }
+
+  function updateCount(){
+    document.getElementById('stuCount').textContent =
+      st.total ? (st.total + ' photo' + (st.total === 1 ? '' : 's')) : '';
+  }
+
+  function esc(s){
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function fmtDate(iso){
+    if(!iso) return '';
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  // ── grid ─────────────────────────────────────────────────────────────
+  function renderGrid(rows){
+    var grid = document.getElementById('stuGrid');
+    rows.forEach(function(r){
+      var card = document.createElement('div');
+      card.className = 'stu-card';
+      var addr = r.project_address || r.project_name || 'No address on file';
+      var tagLine = (r.tags || []).join(' · ') || 'untagged';
+      card.innerHTML =
+        '<div class="th">' +
+          (r.url ? '<img src="' + r.url + '" loading="lazy" alt="">' : '<div class="ph">no preview</div>') +
+          '<span class="src">' + esc(r.source || '') + '</span>' +
+        '</div>' +
+        '<div class="meta">' +
+          '<div class="addr">' + esc(addr) + '</div>' +
+          '<div class="tags">' + esc(tagLine) + '</div>' +
+        '</div>';
+      card.addEventListener('click', function(){ openDetail(r); });
+      grid.appendChild(card);
+    });
+  }
+
+  // ── detail overlay ───────────────────────────────────────────────────
+  var detailView = document.getElementById('detailView');
+  function openDetail(r){
+    document.getElementById('detailImg').src = r.url || '';
+    document.getElementById('detailAddr').textContent = r.project_address || r.project_name || 'No address on file';
+    var bits = [];
+    if(r.project_address && r.project_name) bits.push(r.project_name);
+    if(r.captured_at) bits.push('captured ' + fmtDate(r.captured_at));
+    bits.push(r.source);
+    if(r.width && r.height) bits.push(r.width + '×' + r.height);
+    document.getElementById('detailSub').textContent = bits.filter(Boolean).join('  ·  ');
+
+    var tagsBox = document.getElementById('detailTags');
+    tagsBox.innerHTML = '';
+    (r.tags && r.tags.length ? r.tags : ['(no tags)']).forEach(function(t){
+      var cf = r.confidence && typeof r.confidence[t] === 'number' ? r.confidence[t] : null;
+      var el = document.createElement('span');
+      el.className = 'tag';
+      el.innerHTML = esc(t) + (cf !== null ? '<span class="cf">' + Math.round(cf*100) + '%</span>' : '');
+      tagsBox.appendChild(el);
+    });
+
+    document.getElementById('detailSpark').textContent = r.spark_path ? ('spark: ' + r.spark_path) : '';
+    detailView.style.display = 'block';
+  }
+  function closeDetail(){
+    detailView.style.display = 'none';
+    document.getElementById('detailImg').src = '';
+  }
+  document.getElementById('detailClose').addEventListener('click', closeDetail);
+  detailView.addEventListener('click', function(e){ if(e.target === detailView) closeDetail(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && detailView.style.display === 'block') closeDetail(); });
+
+})();
+</script>
+</body>
+</html>

@@ -43,6 +43,11 @@ if (!/function renderWalkTab\(/.test(MODULE_JS)) {
   console.log('\nRED — this artifact has no Walk tab (pre-579). Nothing to exercise.');
   process.exit(1);
 }
+if (!/function renderPresent\(/.test(MODULE_JS)) {
+  console.log('\nRED — this artifact has no present mode (pre-584). The Spotlight');
+  console.log('assertions would null-deref; failing cleanly instead.');
+  process.exit(1);
+}
 
 /* ── fixtures shaped like the real tables ───────────────────────────────── */
 const WALKS = [
@@ -492,8 +497,181 @@ const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
     // Nudging a box is a drag, not a click — confirm only that stop() marks it
     // dirty, since jsdom does no layout and the gesture itself is Chromium's
     // job (render_showcase.js).
+    /* 585 rewrote stop() to be draw-aware; the move/resize branch must still
+       end with the dirty mark. Anchored on the branch, not the whole shape. */
     ok('a finished drag marks the review dirty',
-      /function stop\(\)\{ if\(drag\)\{ drag = null; review\.dirty = true; repaint\(\); \}/.test(MODULE_JS));
+      /drag = null; review\.dirty = true; repaint\(\);/.test(MODULE_JS));
+  }
+
+  /* ── build 586 · The Lens ──────────────────────────────────────────────── */
+  console.log('\n── the lens ──');
+  {
+    // Pinch/pan are Chromium's to prove. jsdom proves the contracts: the
+    // lens opens on the FULL rendition (not the -d display copy), boxes ride
+    // inside the world as fractions, and close removes the layer.
+    const h = await boot({});
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[1].click(); await settle(120);
+    const el = h.d.getElementById('cr-show');
+    ok('the review bar has an expand button', !!el.querySelector('[data-act="rlens"]'));
+    el.querySelector('[data-act="rlens"]').click(); await settle();
+    const lens = el.querySelector('.cr-sh-lens');
+    ok('the lens opened', !!lens);
+    const img = lens && lens.querySelector('.w img');
+    ok('it loads the FULL rendition, not the display copy',
+      img && img.getAttribute('src').includes('/s2.jpg') && !img.getAttribute('src').includes('-d.jpg'),
+      img && img.getAttribute('src'));
+    ok('the finding boxes ride inside the world',
+      lens && lens.querySelectorAll('.cr-sh-ln-box').length === 1);
+    const box = lens && lens.querySelector('.cr-sh-ln-box');
+    ok('boxes are fraction-positioned', box && /%$/.test(box.style.left) &&
+      Math.abs(parseFloat(box.style.left) - 31) < 0.01, box && box.style.left);
+    lens.querySelector('.cr-sh-ln-x').click(); await settle();
+    ok('close removes the layer', !el.querySelector('.cr-sh-lens'));
+    ok('the lens never touched the scroll lock', h.d.body.style.overflow === '');
+  }
+  {
+    // The other two ways in. This harness stubs workmanship_pairs empty, so
+    // the live Hall of Fame tap is Chromium's to prove (render_showcase has
+    // real fixtures); here the markup contracts are pinned instead.
+    ok('Hall of Fame photographs carry the lens hook in their markup',
+      /data-lens=\\?"' \+ esc\(path\)/.test(MODULE_JS) || MODULE_JS.includes('data-lens="\' + esc(path)'));
+    ok('the slider expand opens what the phase dock is showing',
+      MODULE_JS.includes("(img && img.dataset.path) || p.after_path"));
+    ok('the dock keeps the shown path current for the expand button',
+      MODULE_JS.includes('img.dataset.path = wantPath'));
+  }
+
+  /* ── build 585 · Chalk — hand-drawn marks ──────────────────────────────── */
+  console.log('\n── hand-drawn marks ──');
+  {
+    // The drawing gesture needs layout (Chromium's job). What jsdom CAN prove
+    // is the contracts: provenance survives a save, Ask again keeps human
+    // marks, and the classify sheet drives the working set correctly.
+    const HUMAN_SHOT = {
+      id: 'ssss1111-0000-0000-0000-00000000000h', walk_id: WALKS[0].id, sort_order: 0,
+      path: 'walks/aaaa1111-2222-3333-4444-555555555555/h1.jpg', source: 'phone',
+      findings: [
+        { defect: 'other', severity: 'warn', label: 'Soft decking, hand-marked',
+          box: { x: 0.5, y: 0.5, w: 0.2, h: 0.2 }, confidence: null, edited: true, source: 'human' },
+        { defect: 'hail_impact', severity: 'crit', label: 'AI mark',
+          box: { x: 0.1, y: 0.1, w: 0.1, h: 0.1 }, confidence: 0.8, edited: false, source: 'ai' }
+      ],
+      reviewed_at: '2026-08-02T12:00:00Z', reviewed_by: 'theo@cardinalrenovations.net'
+    };
+    const h = await boot({ shots: [HUMAN_SHOT] });
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[0].click(); await settle(120);
+    const el = h.d.getElementById('cr-show');
+    ok('+ Mark damage button present', !!el.querySelector('[data-act="rmark"]'));
+    ok('a hand-drawn mark reopens like any other',
+      el.querySelectorAll('[data-fnd]').length === 2);
+
+    // Ask again: the AI's mark is replaced by the fresh proposals, the
+    // hand-drawn one SURVIVES — the model has no standing to erase it.
+    el.querySelector('[data-act="rdetect"]').click(); await settle(200);
+    const rows = [...el.querySelectorAll('[data-fnd]')].map(x => x.textContent);
+    ok('Ask again kept the hand-drawn mark',
+      rows.some(t => /Soft decking, hand-marked/.test(t)), JSON.stringify(rows.map(t => t.slice(0, 30))));
+    ok('and replaced the AI marks with fresh proposals',
+      !rows.some(t => /^AI mark/.test(t)) && rows.length === 1 + DETECT_REPLY.findings.length,
+      rows.length);
+
+    // Save: provenance must survive the field-by-field rebuild.
+    el.querySelector('[data-act="rsave"]').click(); await settle(120);
+    const up = h.state.updates.filter(u => u.table === 'walk_shots').pop();
+    const saved = up && up.row.findings;
+    ok('saved findings carry source', saved && saved.every(f => f.source === 'ai' || f.source === 'human'),
+      saved && JSON.stringify(saved.map(f => f.source)));
+    ok('the hand-drawn mark saved as human',
+      saved && saved.filter(f => f.source === 'human').length === 1);
+    ok('a hand-drawn mark has no fabricated confidence',
+      saved && saved.find(f => f.source === 'human').confidence === null);
+  }
+  {
+    // Arming toggles; the confirm guard covers the new decision the moment
+    // a mark is kept (dirty), same as every other decision.
+    const h = await boot({ confirmReturn: false });
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    h.d.querySelectorAll('[data-shot]')[1].click(); await settle(120);
+    const el = h.d.getElementById('cr-show');
+    el.querySelector('[data-act="rmark"]').click(); await settle();
+    ok('arming sets the crosshair state',
+      el.querySelector('[data-rev]').classList.contains('arming'));
+    el.querySelector('[data-act="rmark"]').click(); await settle();
+    ok('tapping again disarms', !el.querySelector('[data-rev]').classList.contains('arming'));
+    // Drive the sheet directly (the gesture itself is Chromium's to prove):
+    ok('classify sheet is absent until a box is drawn', !el.querySelector('.cr-sh-clsheet'));
+  }
+
+  /* ── build 584 · Spotlight — present mode ──────────────────────────────── */
+  console.log('\n── present mode ──');
+  {
+    // The fixture walk has exactly one reviewed shot WITH findings (shot 2),
+    // one reviewed with none (shot 3) and one unreviewed (shot 1) — so the
+    // show must have exactly ONE step. That the other two are excluded IS the
+    // 579 contract doing the filtering.
+    const h = await boot({});
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    const el = h.d.getElementById('cr-show');
+    ok('Present button appears when a walk has reviewable content',
+      !!el.querySelector('[data-act="present"]'));
+    el.querySelector('[data-act="present"]').click(); await settle();
+    ok('presenting class set on the module root', el.classList.contains('presenting'));
+    ok('exactly one step — unreviewed and empty shots are excluded',
+      /1 \/ 1/.test(el.querySelector('.cr-sh-pr-n').textContent),
+      el.querySelector('.cr-sh-pr-n').textContent);
+    ok('the caption is the finding, never the address',
+      /Impact bruising, south slope/.test(el.textContent) &&
+      !el.querySelector('.cr-sh-pres').textContent.includes('4212 Wilmington'),
+      'address leaked into the present layer');
+    const ring = el.querySelector('.cr-sh-pr-ring');
+    ok('ring is fraction-positioned in percent',
+      /%$/.test(ring.style.left) && Math.abs(parseFloat(ring.style.left) - 31) < 0.01,
+      ring.style.left);
+    ok('severity drives the ring colour', /229, 72, 77|#E5484D/i.test(ring.style.borderColor),
+      ring.style.borderColor);
+    ok('the veil is centred on the box',
+      /at 40\.00% 49\.00%/.test(el.querySelector('.cr-sh-pr-veil').style.background),
+      el.querySelector('.cr-sh-pr-veil').style.background.slice(0, 80));
+    // forward past the last step ends the show and lands back on the walk
+    el.querySelector('[data-prgo="1"]').click(); await settle();
+    ok('advancing past the last step ends the show', !el.classList.contains('presenting'));
+    ok('and lands back on the walk, not a dead screen',
+      el.querySelectorAll('[data-shot]').length === 3);
+  }
+  {
+    // Sales presents the walk Theo reviewed — the button must NOT be
+    // admin-gated, and module close() must end the show for hideAllViews.
+    const h = await boot({ admin: false });
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    const el = h.d.getElementById('cr-show');
+    ok('a rep gets the Present button too', !!el.querySelector('[data-act="present"]'));
+    el.querySelector('[data-act="present"]').click(); await settle();
+    ok('rep is presenting', el.classList.contains('presenting'));
+    h.w.CardinalShowcase.close(); await settle();
+    ok('module close() ends the show (the hideAllViews path)',
+      !el.classList.contains('presenting'));
+    ok('presenting never touched the global scroll lock', h.d.body.style.overflow === '');
+  }
+  {
+    // A walk with nothing reviewed offers no Present button at all.
+    const h = await boot({ shots: [SHOTS[0]] });   // unreviewed only
+    h.w.CardinalShowcase.open(); await settle();
+    clickTab(h.d, 'walk'); await settle();
+    h.d.querySelector('[data-walk]').click(); await settle();
+    ok('no reviewable content, no Present button',
+      !h.d.getElementById('cr-show').querySelector('[data-act="present"]'));
   }
 
   /* ── 10 · an RLS refusal is a silent 204 ───────────────────────────────── */
@@ -587,6 +765,231 @@ const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
     ok('the path lives under the walk', ins.every(i => i.row.path.indexOf('walks/' + WALKS[0].id) === 0));
   }
 
+  /* ── build 591 · promoting a job to a Showcase pair ─────────────────────
+     These live in the WALK harness on purpose: 591 shares the walk's picker
+     rather than forking it, and §13 above is the regression that proves it —
+     if §13 ever needs editing to keep these green, the picker got forked. */
+  console.log('\n── from a job → a pair (591) ──');
+
+  const JOB1 = [{ id: 'proj-9', name: 'Klepinger', address: '3800 klepinger rd  dayton ohio46416' }];
+  /* Two stored + one inline, because 13 of 196 real rows have no storage object
+     and a pair built from one of those must still work. */
+  const JOBPH = [
+    { id: 'ph-a', project_id: 'proj-9', storage_path: 'projects/proj-9/a.jpg', data: null },
+    { id: 'ph-b', project_id: 'proj-9', storage_path: 'projects/proj-9/b.jpg', data: null },
+    { id: 'ph-c', project_id: 'proj-9', storage_path: null, data: 'data:image/jpeg;base64,AAAA' }
+  ];
+  const openPicker = async (h) => {
+    h.w.CardinalShowcase.open(); await settle();
+    h.d.querySelector('[data-act="addjob"]').click(); await settle(80);
+    const form = h.d.getElementById('cr-show-form');
+    form.querySelector('[data-proj]').click(); await settle(90);
+    return form;
+  };
+
+  {
+    /* The entry point — and note showcase_pairs is [] in this harness, so this
+       is the EMPTY state. With zero pairs in production that is the only
+       surface that matters on day one. */
+    const h = await boot({ projects: JOB1, jobPhotos: JOBPH });
+    h.w.CardinalShowcase.open(); await settle();
+    const el = h.d.getElementById('cr-show');
+    ok('From a job is offered with ZERO pairs — the day-one surface',
+      !!el.querySelector('[data-act="addjob"]'));
+    ok('and it sits beside Add a pair', !!el.querySelector('[data-act="add"]'));
+  }
+  {
+    const h = await boot({ projects: JOB1, jobPhotos: JOBPH, admin: false });
+    h.w.CardinalShowcase.open(); await settle();
+    ok('a non-admin never sees it',
+      !h.d.getElementById('cr-show').querySelector('[data-act="addjob"]'));
+  }
+  {
+    const h = await boot({ projects: JOB1, jobPhotos: JOBPH });
+    h.w.CardinalShowcase.open(); await settle();
+    h.w.CardinalShowcase.close(false); await settle();
+    h.w.CardinalShowcase.open({ showroom: true }); await settle();
+    ok('and the showroom never sees it either',
+      !h.d.getElementById('cr-show').querySelector('[data-act="addjob"]'));
+  }
+  {
+    /* The picker must open from the Showcase tab with NO walk selected. In 590
+       openJobPicker returned early on !curWalk, so this is the negative
+       control for the whole shared-picker change. */
+    const h = await boot({ projects: JOB1, jobPhotos: JOBPH });
+    const form = await openPicker(h);
+    ok('the picker opens with no walk selected', form.classList.contains('open'));
+    ok('all three photographs are offered, inline one included',
+      form.querySelectorAll('[data-jp]').length === 3, form.querySelectorAll('[data-jp]').length);
+    ok('two slots are shown, not a tick', form.querySelectorAll('[data-jslot]').length === 2);
+    ok('Use these starts disabled', form.querySelector('[data-jadd]').hasAttribute('disabled'));
+
+    form.querySelector('[data-jp="1"]').click(); await settle(20);
+    ok('one slot filled is still not enough',
+      form.querySelector('[data-jadd]').hasAttribute('disabled'));
+    ok('the pick is labelled with the WORD, not a tick',
+      /before/i.test(form.querySelector('[data-jp="1"] .rl').textContent),
+      form.querySelector('[data-jp="1"] .rl').textContent);
+
+    form.querySelector('[data-jp="0"]').click(); await settle(20);
+    ok('both filled enables it', !form.querySelector('[data-jadd]').hasAttribute('disabled'));
+    ok('the second pick reads AFTER',
+      /after/i.test(form.querySelector('[data-jp="0"] .rl').textContent));
+    ok('unpicked tiles go inert once both slots are full',
+      form.querySelector('[data-jp="2"]').className.indexOf('dim') !== -1,
+      form.querySelector('[data-jp="2"]').className);
+
+    /* The cap. A third tap must change nothing — on a touch grid a stray thumb
+       must not be able to steal a role. */
+    form.querySelector('[data-jp="2"]').click(); await settle(20);
+    ok('a third tap changes nothing', !form.querySelector('[data-jp="2"] .rl'));
+
+    form.querySelector('[data-jslot="before"]').click(); await settle(20);
+    ok('tapping a slot clears only that slot',
+      !form.querySelector('[data-jp="1"] .rl') && !!form.querySelector('[data-jp="0"] .rl'));
+  }
+  {
+    /* THE assertion for the role model. Tap tile 1 FIRST, then tile 0 — so tap
+       order and index order disagree. before.jpg must carry tile 1. This fails
+       against any Object.keys(chosen) implementation, which enumerates
+       integer-like keys ascending and would silently swap the two. */
+    const h = await boot({ projects: JOB1, jobPhotos: JOBPH });
+    const form = await openPicker(h);
+    form.querySelector('[data-jp="1"]').click();
+    form.querySelector('[data-jp="0"]').click(); await settle(20);
+    form.querySelector('[data-jadd]').click(); await settle(300);
+
+    ok('the pair form opened', !!h.d.querySelector('[data-f="address"]'));
+    const dls = h.state.downloads;
+    ok('before was fetched first — role order, not tap order and not index order',
+      dls[0] === 'projects/proj-9/b.jpg', JSON.stringify(dls));
+
+    /* prefill, and the guess shown with what it was guessed from */
+    ok('the street is prefilled',
+      h.d.querySelector('[data-f="address"]').value === '3800 klepinger rd',
+      h.d.querySelector('[data-f="address"]').value);
+    ok('the city is peeled off and title-cased',
+      h.d.querySelector('[data-f="city"]').value === 'Dayton',
+      h.d.querySelector('[data-f="city"]').value);
+    /* The three file inputs would otherwise read 'No file chosen' beside two
+       photographs that ARE chosen — and anything attached to them would be
+       silently ignored, because savePair prefers the carried files. */
+    ok('the photographs it carried are shown, not three empty file pickers',
+      h.d.querySelectorAll('#cr-show-form .cr-sh-from figure').length === 2 &&
+      [...h.d.querySelectorAll('#cr-show-form input[type=file]')]
+        .every(i => i.style.display === 'none'),
+      h.d.querySelectorAll('#cr-show-form .cr-sh-from figure').length);
+    ok('and they are labelled with their roles',
+      /BEFORE/i.test(h.d.querySelector('#cr-show-form .cr-sh-from').textContent) &&
+      /AFTER/i.test(h.d.querySelector('#cr-show-form .cr-sh-from').textContent));
+    ok('neither field is locked',
+      !h.d.querySelector('[data-f="address"]').hasAttribute('readonly') &&
+      !h.d.querySelector('[data-f="city"]').hasAttribute('disabled'));
+    ok('and the raw source string is on screen, so the guess is auditable',
+      h.d.getElementById('cr-show-form').textContent.indexOf('3800 klepinger rd  dayton ohio46416') !== -1);
+
+    h.d.querySelector('[data-act="save"]').click(); await settle(400);
+    const ins = h.state.inserts.filter(i => i.table === 'showcase_pairs');
+    ok('one pair was inserted', ins.length === 1, ins.length);
+    ok('it records the job it came from', ins[0] && ins[0].row.project_id === 'proj-9',
+      ins[0] && ins[0].row.project_id);
+    const ups = h.state.uploads;
+    ok('the bytes went to showcase/, never walks/',
+      ups.length >= 4 && ups.every(p => p.slice(0, 9) === 'showcase/'), JSON.stringify(ups));
+    ok('full AND display renditions for both photos',
+      ups.filter(p => /before\.jpg$/.test(p)).length === 1 &&
+      ups.filter(p => /before-d\.jpg$/.test(p)).length === 1, JSON.stringify(ups));
+  }
+  {
+    /* An inline data: photo can carry a role too — the 13-of-196 population,
+       re-proved on the new path rather than assumed from the walk's. */
+    const h = await boot({ projects: JOB1, jobPhotos: JOBPH });
+    const form = await openPicker(h);
+    form.querySelector('[data-jp="2"]').click();   // the inline one
+    form.querySelector('[data-jp="0"]').click(); await settle(20);
+    form.querySelector('[data-jadd]').click(); await settle(300);
+    h.d.querySelector('[data-act="save"]').click(); await settle(400);
+    ok('a pair built from an inline data: photo saves',
+      h.state.inserts.filter(i => i.table === 'showcase_pairs').length === 1);
+    ok('and only ONE storage download was needed for it',
+      h.state.downloads.length === 1, JSON.stringify(h.state.downloads));
+  }
+  {
+    /* THE LEAK. closeForm() only removes a class, so files carried from a
+       promoted job would still be in `pending` when the ordinary form next
+       opens — and savePair prefers pending. Without `pending = null` at the top
+       of openForm() this saves the PREVIOUS job's photographs under the new
+       pair's name, silently. Nothing else in this file catches it. */
+    const h = await boot({ projects: JOB1, jobPhotos: JOBPH });
+    const form = await openPicker(h);
+    form.querySelector('[data-jp="0"]').click();
+    form.querySelector('[data-jp="1"]').click(); await settle(20);
+    form.querySelector('[data-jadd]').click(); await settle(300);
+    h.d.querySelector('[data-act="save"]').click(); await settle(400);
+    const afterPromote = h.state.uploads.length;
+
+    h.d.getElementById('cr-show').querySelector('[data-act="add"]').click(); await settle(60);
+    ok('the ordinary form renders real file inputs again',
+      !!h.d.querySelector('input[type="file"][data-f="before"]'));
+    h.d.querySelector('[data-act="save"]').click(); await settle(200);
+    ok('with no files chosen it REFUSES rather than reusing the last job’s',
+      h.state.uploads.length === afterPromote &&
+      /before and an after/i.test(h.d.querySelector('[data-err]').textContent),
+      h.d.querySelector('[data-err]').textContent);
+  }
+  {
+    /* Cancel mid-flight. The biggest real job has 45 photos and signing them is
+       a genuine round trip, so this is the moment somebody taps Cancel. Before
+       591 the resumed function wrote to a nulled jobPick and threw where nobody
+       saw it. */
+    const h = await boot({ projects: JOB1, jobPhotos: JOBPH });
+    const rejections = [];
+    h.w.addEventListener('unhandledrejection', e => rejections.push(String(e.reason)));
+    h.w.CardinalShowcase.open(); await settle();
+    h.d.querySelector('[data-act="addjob"]').click(); await settle(80);
+    const form = h.d.getElementById('cr-show-form');
+    form.querySelector('[data-proj]').click();          // do NOT settle — cancel mid-load
+    form.querySelector('[data-act="cancel"]').click();
+    await settle(200);
+    ok('cancelling mid-load closes cleanly', !form.classList.contains('open'));
+    ok('and throws nothing into the void', rejections.length === 0, JSON.stringify(rejections));
+    h.d.querySelector('[data-act="addjob"]').click(); await settle(90);
+    ok('and the picker still opens afterwards', form.classList.contains('open'));
+  }
+  {
+    /* splitAddr against the REAL twelve job addresses, by executing the SHIPPED
+       function text rather than a re-implementation. A comma split scores 1/12
+       on this table — that is this block's negative control. */
+    const m = MODULE_JS.indexOf('function splitAddr(');
+    const end = MODULE_JS.indexOf('\n}', m) + 2;
+    const splitAddr = new Function(MODULE_JS.slice(m, end) + '; return splitAddr;')();
+    const REAL = [
+      ['3710 west third Dayton Ohio 45417', '3710 west third', 'Dayton'],
+      ['231 Delaware  Ave Dayton Ohio 46405', '231 Delaware Ave', 'Dayton'],
+      ['4115 Shenandoah dr Dayton Ohio 46417', '4115 Shenandoah dr', 'Dayton'],
+      ['948 Huron Ave Dayton Ohio 46402', '948 Huron Ave', 'Dayton'],
+      ['948 Huron', '948 Huron', ''],
+      ['3800 klepinger rd  dayton ohio46416', '3800 klepinger rd', 'Dayton'],
+      ['5241 rucks rd Dayton Ohio 46417', '5241 rucks rd', 'Dayton'],
+      ['1668 Wesleyan rd Dayton Ohio 46406', '1668 Wesleyan rd', 'Dayton'],
+      ['2299 Adrian cr Dayton Ohio 45439', '2299 Adrian cr', 'Dayton'],
+      ['3431blocker dr Dayton Ohio 45420', '3431blocker dr', 'Dayton'],
+      ['449 Harriet, Dayton, OH 45417', '449 Harriet', 'Dayton'],
+      ['921 Testing Way', '921 Testing Way', '']
+    ];
+    let right = 0, wrong = [];
+    REAL.forEach(([raw, wantA, wantC]) => {
+      const g = splitAddr(raw);
+      if (g.address === wantA && g.city === wantC) right++;
+      else wrong.push(raw + ' -> ' + JSON.stringify(g));
+    });
+    ok('all twelve real job addresses split correctly', right === 12, wrong);
+    ok('ten of them yield a city; the two with none stay EMPTY rather than guessing',
+      REAL.filter(r => splitAddr(r[0]).city).length === 10);
+    ok('the zip is never used as the city — Indiana zips sit on Dayton rows here',
+      !/\d{5}/.test(REAL.map(r => splitAddr(r[0]).city).join('')));
+  }
+
   /* ── 14 · the invariants this module must not break ────────────────────── */
   console.log('\n── invariants ──');
   {
@@ -606,9 +1009,16 @@ const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
       /window\.CardinalShowcase\s*=\s*Object\.assign\(window\.CardinalShowcase\s*\|\|\s*\{\}/.test(MODULE_JS));
     ok('reload resets the walk state too',
       /walksLoaded = false;[\s\S]{0,80}curWalk = null/.test(MODULE_JS));
-    /* Circles are an overlay. If this module ever gains a canvas that composites
-       a box onto the photograph, the original stops being evidence. */
-    const walkPart = MODULE_JS.slice(MODULE_JS.indexOf('The Walk (579)'));
+    /* Circles are an overlay. If The Walk's pipeline ever gains a canvas that
+       composites a box onto the photograph, the original stops being evidence.
+       SCOPE THE SLICE: this once ran to end-of-module and went red the moment
+       587 added the share-card renderer — a different feature that uses canvas
+       legitimately and never touches finding boxes. The Walk's own code ends
+       where the 584 Spotlight section begins. */
+    const wStart = MODULE_JS.indexOf('The Walk (579)');
+    const wEnd = MODULE_JS.indexOf('Spotlight — present mode (584)');
+    const walkPart = MODULE_JS.slice(wStart, wEnd === -1 ? undefined : wEnd);
+    ok('the walk slice was actually captured', walkPart.length > 5000, walkPart.length);
     ok('The Walk never draws onto the image itself',
       !/toBlob|getContext/.test(walkPart), 'a canvas appeared in the walk code');
   }

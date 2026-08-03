@@ -1397,3 +1397,104 @@ destroy the element under the finger mid-gesture.
 Gates: `harness_walk.js` (67, jsdom, data contracts), `harness_showcase.js` (106),
 `harness_detect.js` (39), `render_showcase.js` (36, real Chromium — the only one that can prove a
 box lands where its fraction says).
+
+## 584–588 — the Vision Suite's five, all in Blackout
+
+Theo picked all five preview options and one treatment: **Blackout** — true black `#050607`
+(the app's only pure-black surfaces), white ink, severity colours as the only chroma, cardinal
+red staying on primary buttons. All five live in the existing `cr-show-*` blocks; none adds a
+view, a table, or a scroll-lock writer. Builds 583 was left to PR #105 (Library chrome) — a gap
+if it never merges, which is normal here.
+
+| Build | What | Where it hangs |
+|---|---|---|
+| **584** | **Spotlight** — present mode. Full screen, one accepted finding at a time, radial veil lights the damage, story tap-zones. Only `reviewed_at` shots with findings (the 579 contract filters). Address never rendered. **Not admin-gated** — sales presenting is the point. | `Present ▶` on a walk's header · `.presenting` on `#cr-show` |
+| **585** | **Chalk** — draw your own marks. Crosshair → dashed chalk box → 17-defect sheet + severity → a finding with `source:'human'`, `confidence:null`. **`source` is now stamped on every finding** and threaded through both field-rebuild sites (`runDetect`, `saveReview`). **Ask again preserves human marks** — replaces only the AI's. | `+ Mark damage` in the review bar |
+| **586** | **The Lens** — pinch into any photograph at FULL rendition. Found while proposing: `touch-action:none` had blocked pinch since 574, making 577's 3840px files unreachable. Two-pointer pinch, pan, double-tap; Walk boxes ride inside the world. | tap a Hall of Fame photo · `⤢` on the slider and review stage |
+| **587** | **The Release** — share cards. Released pairs (575's fields) get Square/Story/Wide × Classic/Blackout/Kraft, canvas-drawn from `shotBlob()` bytes (never cross-origin → never tainted), **city only, `p.address` never enters `drawCard`** (pinned by assertion), zero EXIF by construction. Unreleased pairs render Share dead with the reason. Admin-only. | `Share…` in the Showcase admin bar |
+| **588** | **Curtain Call** — kiosk. Play → drift, self-sweeping wipe (starts on the BEFORE), white-serif placard via `label()` (privacy-masked), next pair. **Any touch hands over the real slider on the pair that was showing.** Every timer in `ccRun`, every continuation checks `isConnected` — the 567/569 class designed against. Auto-start deliberately unshipped. | `▶` beside the pair counter |
+
+**Traps recorded while building, for whoever patches next:**
+- Controls inside a gesture surface feed gesture detectors — the Lens `+/−` buttons are guarded
+  from the double-tap detector (caught in the preview; 578's class).
+- Two harness slices went red for being too broad, not wrong: "HoF reads no client record"
+  (fixed at 579-era) and "Walk never draws on the image" (587's legitimate canvas) — **bound the
+  slice, assert it captured something**.
+- `renderAdmin` teaches now: an unreleased pair shows a dead Share with the reason. Don't
+  "clean up" the dead button — the visible refusal *is* the feature.
+
+Gates at 588: `check_build` green per build, each negative-controlled · `harness_walk` 115 ·
+`harness_showcase` 123 · `harness_detect` 39 · `render_showcase` **69 in real Chromium** —
+including pixel-proofs (Kraft mat measured `232,220,200`), a synthetic two-pointer pinch, the
+drawn chalk box landing at its fractions, and the kiosk wipe sampled mid-sweep.
+
+---
+
+## Showroom mode (build 590)
+
+A read-only door into the Showcase you hand across the table. **Entry:** a full-width blackout
+row at the bottom of the landing launcher (`.cr-lr-show`, `data-go="showroom"` — inside the
+`cr-lr` renderer, *not* the dead `#landQuick` markup near the top of the file). **Offered at
+≥820px only**; below that the row does not render and the opener falls back to the ordinary
+Showcase, which is phone-shaped and unchanged.
+
+`window.CardinalShowcase.open({ showroom:true })` · `.inShowroom()` reports the flag ·
+`close()` and any ordinary `open()` clear it, including the one `navRestore` calls.
+
+**Read-only, in one place plus four:** `amAdmin()` short-circuits to `false`, which kills all 14
+of its call sites at once. The review bar, `wireBoxes()`, the per-finding controls and
+`releaseBadge()` were **never `amAdmin()`-gated** and carry their own `!showroom` guard — see the
+build log. Sales and production keep exactly what they had.
+
+**What stays:** all three tabs, the slider, the phase dock, the Lens, Curtain Call ▶, Present ▶,
+privacy mode, and the damage circles (readable, with severity — not draggable, no confidence %,
+no "drawn by hand"). **What goes:** the back arrow, the Inspections ↗ out-link, every write
+control, and the release badge.
+
+**Exit is a HOLD** — ~900ms on the ✕ with a conic ring painted from the same clock that decides.
+A tap does nothing. Releasing early cancels and leaves no rAF running; the tick re-checks
+`isConnected` every frame (567/569's class). **It is not a kiosk** — a browser back gesture still
+leaves.
+
+Entering the room always starts clean: `tab='showcase'`, `curWalk`/`shots`/`review` reset, so a
+tablet never lands mid-review of somebody else's roof.
+
+Verified by `audit_viewports.js` — **194 assertions across phone / iPad portrait / iPad landscape
+/ desktop**, including a counted zero for write controls on every tab and screen, the hold timing,
+that a tap does *not* exit, and that a damage circle cannot be dragged.
+
+## The Vision hub (build 593)
+
+A dedicated, focused landing for `showroom.cardinalroster.com` — same `index.html`, same sign-in,
+same file every CRM user already loads, just a different `#landingView` content branch keyed off
+the hostname. Not a separate app, not a separate deploy.
+
+**Entry point:** `build()` in `cr-lr-script` (the landing renderer) branches at the very top, before
+building the ordinary ten-destination launcher — `isVisionHost()` checks `location.hostname` for a
+`showroom.` prefix, or `?vision=1` in the query string for testing before the real domain exists.
+When it matches, `visionHtml()` replaces the launcher entirely: **Presentations** (reuses `wire()`'s
+existing `data-go="showroom"` handling untouched — the exact same call the ordinary launcher's
+Showroom card already makes, nothing duplicated), **Studio** (admin-only, a plain link to
+`/studio.html`, gated on `window.is_admin()` — a UI hint only, `studio_photos`' own RLS is the real
+gate, same caveat `amAdmin()` already states for Showroom), and **Colors** (a disabled placeholder
+for an Owens Corning presenter — not built yet).
+
+**The one bug that mattered, and the lesson in it:** the first pass rendered `.cr-vh` into the DOM
+correctly but it computed `display:none` and was invisible — `cr-lr-styles` carries
+`#landingView>*{display:none}` (ID selector, beats any plain class regardless of source order) *and*
+a second, narrower `#landingView:not([data-cr-portal-built])>*{display:none}`, both there to keep
+the dead `#landQuick`/`#landDash` markup hidden. `.cr-lr` only escapes them via a matching
+`#landingView>.cr-lr{display:block}` override plus `build()` setting `lv.dataset.crPortalBuilt='1'`
+on every path. The first draft of this feature set neither, having only grepped `crPortalBuilt`'s
+JS readers (dead) and missed the CSS attribute-selector reader (very much alive). Found by
+`elementFromPoint` at the coordinates a tile should occupy, the same technique that caught build
+590's z-index trap — not guessed. Fixed with `#landingView>.cr-vh{display:flex}` and setting the
+same dataset flag, mirroring `.cr-lr`'s exact pattern.
+
+**Committed dark**, like Showroom itself — no light-mode twin, deliberately.
+
+Verified: a 20-assertion jsdom harness against the shipped `cr-lr-script` text (hostname matching,
+the `?vision=1` override, admin-gating, and proof the Presentations tile drives
+`CardinalShowcase.open()` through the *existing* handler rather than a new one) plus real Chromium
+screenshots of both the admin and non-admin renders and a regression pass confirming the ordinary
+launcher is byte-for-byte unaffected.
