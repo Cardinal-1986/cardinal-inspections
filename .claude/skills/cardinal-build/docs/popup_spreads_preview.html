@@ -75,9 +75,10 @@ var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
     ICE='#6E767B', ICES='#565D62', FELT='#22262B', FELTS='#14171A',
     INK='#4A3524', WHT='#F5F3EE', BLK='#1A1416', GOLD='#B8860B';
 
-/* Roof line, same geometry as the shipped spread — apex (150,28), eaves at
-   x=34 and x=266. Reusing the number means a thumbnail and the real spread
-   can never disagree about where the roof is. */
+/* Roof line, same geometry as the shipped spread. Reusing the number means a
+   thumbnail and the real spread can never disagree about where the roof is —
+   and when the shape changed, the two only stayed in step because both ask
+   these functions instead of carrying the apex as a literal. */
 /* ── HIP ROOF WITH A RIDGE, not a pyramid ────────────────────────
    Theo, 3 Aug: "the drip edge doesn't make sense if the house is shaped as a
    pyramid unless you make the house shape different… would be nice if we could
@@ -160,9 +161,10 @@ function grit(seed, n, y0, y1){
 
    Two pieces, both white metal and both real: the APRON along the eave,
    which is the wide one that laps into the gutter, and the RAKE drip edge
-   running up both sloping edges. It shades at 150 because it caps the ROOF,
-   which is where the two facets meet — the gutter below it shades at 176
-   with the wall, and those are genuinely different planes.
+   running up both sloping edges. It used to shade at 150 because that was
+   where the pyramid's two facets met. There is no facet edge there any more,
+   and the apron is one straight horizontal band lying directly on the gutter
+   — so it turns where the gutter turns, at 176.
 
    It goes on from the bare deck onward and stays visible under everything
    after it, which is also the order it goes on in. */
@@ -176,7 +178,7 @@ function dripEdge(){
      The eave apron stays, because the eave is real. */
   s+='<path d="M31,97.2 L269,97.2 L269,101.8 L31,101.8 Z" fill="'+W+
      '" stroke="'+E+'" stroke-width=".7"/>';
-  s+='<path d="M150,97.2 L269,97.2 L269,101.8 L150,101.8 Z" fill="'+WS+'"/>';
+  s+='<path d="M'+SPLIT+',97.2 L269,97.2 L269,101.8 L'+SPLIT+',101.8 Z" fill="'+WS+'"/>';
   return s;
 }
 
@@ -194,10 +196,15 @@ function dripEdge(){
    exist, which is why intake and exhaust are drawn as one diagram and never
    separately. */
 function ridgeVent(){
-  return '<path d="M100,22 L200,22 L200,28 L100,28 Z" fill="#3B4550"/>' +
-         '<path d="M150,22 L200,22 L200,28 L150,28 Z" fill="#2C343C"/>' +
-         '<g fill="none" stroke="#59636E" stroke-width=".8">' +
-         '<path d="M100,24.4 L200,24.4"/></g>';
+  /* NARROWER AND SHALLOWER THAN THE CAP RUN, which the first pass was not:
+     100-200 against a ridge of 104-196, top edge at y=22 against a cap top at
+     24.9. It overhung the caps at both ends and stood proud of them — a metal
+     plate lying ON the ridge, the one thing you never see on a finished roof.
+     1.4 units of it show above the cap now, and that sliver is the raised
+     line you are actually meant to see. */
+  return '<path d="M104,23.5 L196,23.5 L196,28 L104,28 Z" fill="#3B4550"/>' +
+         '<path d="M'+SPLIT+',23.5 L196,23.5 L196,28 L'+SPLIT+',28 Z" fill="#2C343C"/>' +
+         '<path d="M104,24.1 L196,24.1" fill="none" stroke="#59636E" stroke-width=".7"/>';
 }
 function airflow(){
   var AIR = '#8FD4E8', s = '';
@@ -246,8 +253,12 @@ function hipCaps(blend){
      roof now actually has. The ridge caps go on last and lap over the tops of
      both hip runs, which is the order and also hides the junction that used to
      leave a notch when the two hips met at a point. */
+  /* The ridge is TWO runs because it crosses the shade break at 176. One run
+     stayed lit end to end, so the cap was brighter than the plane under it for
+     the last twenty units. The tone cycle restarts at the seam, which is the
+     one place on the roof a tone change is expected anyway. */
   return run(34,100,-A,false) + run(266,100,180+A,true) +
-         run(104,28,0,false,RL);
+         run(104,28,0,false,SPLIT-104) + run(SPLIT,28,0,true,196-SPLIT);
 }
 
 /* ── OC Onyx Black, dimensional ───────────────────────────────────
@@ -278,7 +289,11 @@ var BLEND = {
 function shingleArt(blend, from, to, starter){
   var B = BLEND[blend] || BLEND.onyx;
   var F = B.F, SHADOW = B.S, EDGE = B.E;
-  var SH = 2.4, IN = SH / (72 / 116), out = '';
+  /* IN is the HIP'S SLOPE INVERTED: rising SH in y along an edge of
+     dy/dx = 72/70 means moving SH/(72/70) in x. It read 72/116 until now —
+     the pyramid's slope, correct arithmetic for a roof that no longer
+     exists — and left a gap along both hips on every course. */
+  var SH = 2.4, IN = SH / (72 / 70), out = '';
   /* THE STARTER GOES IN AFTER THE DRIP EDGE — Theo, 3 Aug. It is an untabbed
      strip at the eave, and the first full course laps over it leaving only a
      reveal showing. So the courses start 4 units UP from the eave rather than
@@ -287,9 +302,9 @@ function shingleArt(blend, from, to, starter){
   var ST = starter ? 4 : 0, BASE = 100 - ST, CH = starter ? 8.5 : 9, TW = 15;
   if(starter && (from || 0) === 0){
     var sp0 = spanAt(100), sp1 = spanAt(BASE);
-    out += '<path d="M'+sp0[0].toFixed(1)+',100 L'+sp1[0].toFixed(1)+','+BASE+' L150,'+BASE+
-           ' L150,100 Z" fill="'+F[3]+'"/>';
-    out += '<path d="M150,100 L150,'+BASE+' L'+sp1[1].toFixed(1)+','+BASE+' L'+
+    out += '<path d="M'+sp0[0].toFixed(1)+',100 L'+sp1[0].toFixed(1)+','+BASE+' L'+SPLIT+','+BASE+
+           ' L'+SPLIT+',100 Z" fill="'+F[3]+'"/>';
+    out += '<path d="M'+SPLIT+',100 L'+SPLIT+','+BASE+' L'+sp1[1].toFixed(1)+','+BASE+' L'+
            sp0[1].toFixed(1)+',100 Z" fill="'+dk(F[3])+'"/>';
     out += '<path d="M'+sp1[0].toFixed(1)+','+BASE+' L'+sp1[1].toFixed(1)+','+BASE+
            '" fill="none" stroke="'+SHADOW+'" stroke-width="1.2"/>';
@@ -298,11 +313,11 @@ function shingleArt(blend, from, to, starter){
     var yb = BASE - c * CH, yt = Math.max(28, yb - CH);
     var sb = spanAt(yb), st = spanAt(yt);
     out += '<path d="M'+sb[0].toFixed(1)+','+yb+' L'+st[0].toFixed(1)+','+yt+
-           ' L150,'+yt+' L150,'+yb+' Z" fill="'+F[1]+'"/>';
-    out += '<path d="M150,'+yb+' L150,'+yt+' L'+st[1].toFixed(1)+','+yt+
+           ' L'+SPLIT+','+yt+' L'+SPLIT+','+yb+' Z" fill="'+F[1]+'"/>';
+    out += '<path d="M'+SPLIT+','+yb+' L'+SPLIT+','+yt+' L'+st[1].toFixed(1)+','+yt+
            ' L'+sb[1].toFixed(1)+','+yb+' Z" fill="'+dk(F[1])+'"/>';
     var stag = (c % 2) * (TW / 2);
-    [[st[0], 150, 0], [150, st[1], 1]].forEach(function(seg){
+    [[st[0], SPLIT, 0], [SPLIT, st[1], 1]].forEach(function(seg){
       var lo = seg[0], hi = seg[1], shaded = seg[2];
       for(var x = Math.ceil(lo / TW) * TW + stag, i = 0; x < hi - 3; x += TW, i++){
         var x1 = Math.min(x + TW - 1.2, hi);
@@ -313,12 +328,11 @@ function shingleArt(blend, from, to, starter){
                ' Z" fill="'+(shaded ? dk(tone) : tone)+'"/>';
       }
     });
-    // the laminate shadow — inset SH/0.6207, the rake's slope INVERTED, which
-    // is the arithmetic I got backwards first time in popup.html
-    out += '<path d="M'+sb[0].toFixed(1)+','+yb+' L150,'+yb+' L150,'+(yb-SH)+
+    // the laminate shadow — this is the depth; everything above it is colour
+    out += '<path d="M'+sb[0].toFixed(1)+','+yb+' L'+SPLIT+','+yb+' L'+SPLIT+','+(yb-SH)+
            ' L'+(sb[0]+IN).toFixed(1)+','+(yb-SH)+' Z" fill="'+SHADOW+'"/>';
-    out += '<path d="M150,'+yb+' L'+sb[1].toFixed(1)+','+yb+' L'+(sb[1]-IN).toFixed(1)+
-           ','+(yb-SH)+' L150,'+(yb-SH)+' Z" fill="'+dk(SHADOW)+'"/>';
+    out += '<path d="M'+SPLIT+','+yb+' L'+sb[1].toFixed(1)+','+yb+' L'+(sb[1]-IN).toFixed(1)+
+           ','+(yb-SH)+' L'+SPLIT+','+(yb-SH)+' Z" fill="'+dk(SHADOW)+'"/>';
     out += '<path d="M'+st[0].toFixed(1)+','+yt+' L'+st[1].toFixed(1)+','+yt+
            '" fill="none" stroke="'+EDGE+'" stroke-width=".8" opacity=".5"/>';
   }
@@ -367,7 +381,10 @@ function house(o){
   });
   // panelled door
   s+='<path d="M136,120 L164,120 L164,150 L136,150 Z" fill="'+DOOR+'"/>';
-  s+='<path d="M150,120 L164,120 L164,150 L150,150 Z" fill="'+DOORS+'"/>';
+  /* The door's own facet is OFF-CENTRE at 152, matching popup.html. Dead
+     centre is the same fold-down-the-middle Theo caught on the wall, just at
+     door scale — a panelled door lit from upper left does not split in half. */
+  s+='<path d="M152,120 L164,120 L164,150 L152,150 Z" fill="'+DOORS+'"/>';
   s+='<g fill="none" stroke="'+DOORS+'" stroke-width="1.2" opacity=".7">'+
      '<path d="M141,124 L159,124 L159,133 L141,133 Z"/>'+
      '<path d="M141,137 L159,137 L159,146 L141,146 Z"/></g>';
@@ -437,7 +454,7 @@ function house(o){
     s+=dripEdge();
     var e = spanAt(86);
     s+='<path d="M34,100 L'+e[0].toFixed(1)+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICE+'"/>';
-    s+='<path d="M150,100 L150,86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICES+'"/>';
+    s+='<path d="M'+SPLIT+',100 L'+SPLIT+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICES+'"/>';
     /* GRANULATED, because that is what the mineral surface is. Two tones of
        grit so it reads as texture rather than as noise, deterministic so it
        cannot reshuffle between renders. */
@@ -453,10 +470,16 @@ function house(o){
     s+=plane(DECK,DECKS)+dripEdge();
     var e=spanAt(86);
     s+='<path d="M34,100 L'+e[0].toFixed(1)+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICE+'"/>';
-    s+='<path d="M150,100 L150,86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICES+'"/>';
+    s+='<path d="M'+SPLIT+',100 L'+SPLIT+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICES+'"/>';
     s+=grit(31,90,86,100);
-    s+='<path d="M'+e[0].toFixed(1)+',86 L150,28 L'+e[1].toFixed(1)+',86 Z" fill="'+FELT+'"/>';
-    s+='<path d="M150,28 L'+e[1].toFixed(1)+',86 L150,86 Z" fill="'+FELTS+'"/>';
+    /* THE FELT IS A TRAPEZOID, NOT A TRIANGLE. It ran to a point at (150,28),
+       which was the pyramid's apex; on this roof the top edge is the ridge,
+       104 to 196. A line from the eave to a point 20 units inside the hip is
+       a line that leaves bare deck showing down both edges of the spread — a
+       missed patch of felt, which is the opposite of what the spread says. */
+    s+='<path d="M'+e[0].toFixed(1)+',86 L104,28 L196,28 L'+e[1].toFixed(1)+',86 Z" fill="'+FELT+'"/>';
+    s+='<path d="M'+SPLIT+','+roofY(SPLIT).toFixed(1)+' L196,28 L'+e[1].toFixed(1)+
+       ',86 L'+SPLIT+',86 Z" fill="'+FELTS+'"/>';
     s+='<g fill="none" stroke="#7A8085" stroke-width=".8" opacity=".55">';
     [72,58,44].forEach(function(yy){ var sp=spanAt(yy);
       s+='<path d="M'+sp[0].toFixed(1)+','+yy+' L'+sp[1].toFixed(1)+','+yy+'"/>'; });
@@ -485,19 +508,21 @@ function house(o){
     // gutter + downspout, always
     s+='<path d="M28,100 L272,100 L272,104 L28,104 Z" fill="'+MET+'"/>';
     s+='<path d="M'+SPLIT+',100 L272,100 L272,104 L'+SPLIT+',104 Z" fill="'+METS+'"/>';
-    s+='<path d="M266,110 L272,110 L272,150 L266,150 Z" fill="'+METS+'"/>';
+    /* THE DOWNSPOUT GOES ON THE WALL, not next to it. It ran 266-272 while
+       the wall ends at 260, so on all sixteen spreads it stood six units
+       clear of the house and read as a post in the yard. The gutter is meant
+       to overhang; the pipe that comes off it is not. */
+    s+='<path d="M254,110 L260,110 L260,150 L254,150 Z" fill="'+METS+'"/>';
   }
-  if(o.ridge){
-    /* A CHEVRON RIDING THE PEAK, not a horizontal slab. The first pass drew
-       the vent as a 48-wide bar at y=26 — but the apex is at y=28 and the two
-       planes converge to a point, so at that height the roof is about three
-       units across. Forty-eight units of ridge cap hung in the sky on both
-       sides like a hat. The band has to follow the pitch: at x=130 the surface
-       is y=40.4, so the cap straddles it there and rises proud at the peak. */
-    s+='<path d="M126,44 L150,28 L174,44 L174,39 L150,23 L126,39 Z" fill="#3B4550"/>';
-    s+='<path d="M130,40 L150,26 L170,40 L170,34 L150,20 L130,34 Z" fill="#4A5866" '+
-       'stroke="#2B343E" stroke-width="1" stroke-linejoin="round"/>';
-  }
+  /* THE o.ridge CHEVRON IS GONE, and it was two bugs in one shape. It was
+     drawn for the PYRAMID — a band straddling a peak at (150,28) — and on a
+     roof whose ridge is flat from 104 to 196 its lower corners sat sixteen
+     units below the ridge, out on the open field, reading as a tent pitched
+     on the roof. It was also a DUPLICATE: every one of its four callers
+     passes roof:'new', and the 'new' branch already draws ridgeVent(). Two
+     ways of drawing the same part is how the book starts to disagree with
+     itself. The flag is left accepted-and-ignored nowhere: the callers drop
+     it below. */
   return s;
 }
 
@@ -740,18 +765,18 @@ var SPREADS=[
    sky:'day', build:function(){
      /* NO CREW ON THIS ONE. The subject is the air, and two figures on the
         ridge would sit exactly where the exhaust arrows go. */
-     return house({roof:'new', ridge:true}) + airflow() + bird(20,124,0.66);
+     return house({roof:'new'}) + airflow() + bird(20,124,0.66);
    }},
   {n:14, t:'The Walk', w:'Theo on the roof at the end, not on the phone. Nothing is finished until he has been up there.',
    sky:'dusk', build:function(){
-     return house({roof:'new', ridge:true}) + ladder(94,150,64,-13) +
+     return house({roof:'new'}) + ladder(94,150,64,-13) +
        fig(180,62,0.9,{shirt:'#474C52',shirtDk:'#33373C',hat:false,
                                  arm:[[-8,-34],[-18,-38]]}) +
        yardsign(254,150,0.72) + bird(292,112,0.68,true);
    }},
   {n:15, t:'The Sweep', w:'The magnet runs twice. Every chip flung on spread 7 comes back up here — the same forty pieces.',
    sky:'dusk', build:function(){
-     var s=house({roof:'new', ridge:true});
+     var s=house({roof:'new'});
      /* THE HANDLE TOP IS THE HAND. Figure at x=150 with its glove at (2,-40),
         so the magnet's group origin must be 152 — at 168 the handle started
         sixteen units to the right of the fist and he was sweeping thin air.
@@ -767,7 +792,7 @@ var SPREADS=[
    }},
   {n:16, t:'The Team', w:'Twelve die-cut portraits, drawn and pushed. Beto in the black lead tee, Curtis in the vest.',
    sky:'day', build:function(){
-     var s=house({roof:'new', ridge:true}), xs=[52,90,128,166,204,242];
+     var s=house({roof:'new'}), xs=[52,90,128,166,204,242];
      xs.forEach(function(x,i){
        s+=fig(x,150,0.8,{shirt:i===3?'#1C1D20':(i<2?'#474C52':RED),
                          shirtDk:i===3?'#0F1012':(i<2?'#33373C':REDS),

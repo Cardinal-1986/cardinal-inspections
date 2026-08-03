@@ -6959,6 +6959,69 @@ other fifteen spreads are drawn.**
 
 ---
 
+## The pyramid becomes a hip roof, and the residue it left (2026-08-03)
+
+Theo: *"the drip edge doesn't make sense if the house is shaped as a pyramid unless you make the
+house shape different… would be nice if we could show a ridge vent as well as soffit intake.
+Ventilation being important. Showing airflow. Would it be too difficult to change the shape of
+the house?"*
+
+Not difficult, and it unblocked three things at once: a pyramid has no ridge, so a ridge vent had
+nowhere to live, the drip-edge story was thin, and spread 13 was promising a ridge that did not
+exist. **Eave y=100 from x=34 to 266, ridge y=28 from x=104 to 196.** The two sloping edges are
+still hips and still take cap shingles.
+
+**The reshape itself was one edit in two functions — and that is exactly what made the follow-up
+dangerous.** Everything that asks `roofY()` / `spanAt()` moved with the shape for free. Everything
+carrying a number *derived* from the old shape stayed behind, silently, still parsing and still
+rendering. Four of those, all found by rendering rather than by asserting:
+
+1. **Every material on the roof split its lit face from its shaded one at x=150** — the pyramid's
+   apex, a real facet edge where a shading break belonged. The hip roof has no facet edge there,
+   so it became a seam down the middle of a continuous plane, 26 units away from the 176 the wall,
+   gutter and soffit use. `SPLIT` is module scope in both files now; shingle courses, tabs, starter,
+   laminate shadow, ice course, drip-edge apron, ridge vent and ridge cap all read it.
+2. **The laminate shadow's inset was `SH / (72/116)`** — the pyramid's rake slope. The hip is
+   `72/70`. Correct arithmetic for a roof that no longer exists, leaving ~1.5 units of gap along
+   both hips on all eight courses.
+3. **The felt was still a triangle running to a point at (150,28).** On this roof that line falls
+   about 20 units inside the hip, so spread 10 showed a wedge of bare deck down both edges — a
+   missed patch of underlayment, the opposite of what the spread says. It is a trapezoid to the
+   ridge now.
+4. **The ridge vent was wider and taller than the cap laid over it** — 100→200 against a ridge of
+   104→196, top edge at y=22 against a cap top at 24.9. It overhung the caps at both ends and stood
+   proud of them: a metal plate lying *on* the ridge, the one thing you never see on a finished
+   roof. Now 104→196 and 23.5 down, so 1.4 units show above the cap. **That sliver is the raised
+   line you are actually meant to see.**
+
+Also removed: the `o.ridge` chevron, which was pyramid geometry *and* a duplicate — all four
+callers pass `roof:'new'`, and that branch already draws `ridgeVent()`. And the downspout, which
+ran 266→272 against a wall ending at 260 and stood six units clear of the house on all sixteen
+spreads, reading as a post in the yard.
+
+**How it was proved, and how the first two attempts failed.** Asking `elementFromPoint` whether
+the fills either side of x differed was worthless twice over: shingle tabs rotate four tones so
+adjacent fills differ nearly everywhere, and `elementFromPoint` is viewport-bound, so the eight
+spreads below the fold reported clean without being looked at. A check that cannot fail on half
+its input is not a check. Measuring a luminance step over a ±10-unit window was better but flagged
+spreads 2, 10 and 11 as *inverted* — chalk circles at 176–214, a felt roll centred at 196, a
+chimney at 186–206. **The chimney false positive, again**: measuring the roof and catching what is
+standing on it. What worked: a narrow ±4-unit window, negative-controlled against the previous
+build, so objects contaminate both and cancel.
+
+Result — shade break present at 176 on **16/16**; the stale 150 break gone on 13/16 and the three
+residuals are a figure at x=158, a replacement deck sheet starting at 154 and deck texture, all
+**identical before and after** where the patch did not apply; bare deck bleeding through the felt
+**before [10], after [none]**. Ridge cap is 4 rotated runs (left hip 12 pieces, right hip 12,
+ridge-lit 9, ridge-shaded 3). `pw_deck` clean at phone, iPad and reduced motion.
+
+⚠️ **Two deliberate simplifications, flagged rather than hidden.** The soffit is drawn as a band
+*below* the gutter; straight-on it would be hidden behind it, and then the intake vents Theo asked
+for could not be seen. And spread 13's airflow arrows travel *over* the shingles rather than under
+the deck, because there is no cutaway. Both are diagram convention, both are Theo's to overrule.
+
+---
+
 ## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
 
 ✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like
