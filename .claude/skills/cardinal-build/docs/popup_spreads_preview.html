@@ -81,6 +81,13 @@ var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
 function roofY(x){ return 28 + Math.abs(x - 150) * (72 / 116); }
 // how wide the roof is at a given height — used to trim anything laid on it
 function spanAt(y){ var h = (y - 28) / (72 / 116); return [150 - h, 150 + h]; }
+// one step down for the shaded facet — never a second palette
+function dk(h){
+  var n = parseInt(h.slice(1), 16);
+  return '#' + ((1 << 24) + (Math.round((n >> 16 & 255) * 0.72) << 16) +
+                (Math.round((n >> 8 & 255) * 0.72) << 8) +
+                 Math.round((n & 255) * 0.72)).toString(16).slice(1);
+}
 
 /* THE WALL'S LIGHT/SHADE SPLIT IS 176, NOT 150. Theo, 3 Aug: "the door is in
    the middle on a corner? the grey line is off" — both symptoms, one cause.
@@ -127,6 +134,33 @@ function grit(seed, n, y0, y1){
   }
   return s;
 }
+/* ── the drip edge, and the gutter apron under it ────────────────
+   Theo, 3 Aug: "your missing the gutter apron / drip edge part make that
+   white". It was missing outright — the deck simply ended at the eave.
+
+   Two pieces, both white metal and both real: the APRON along the eave,
+   which is the wide one that laps into the gutter, and the RAKE drip edge
+   running up both sloping edges. It shades at 150 because it caps the ROOF,
+   which is where the two facets meet — the gutter below it shades at 176
+   with the wall, and those are genuinely different planes.
+
+   It goes on from the bare deck onward and stays visible under everything
+   after it, which is also the order it goes on in. */
+function dripEdge(){
+  var W='#F2F4F5', WS='#D2D7DA', E='#98A0A5';
+  var s='';
+  // rakes first, so the eave apron laps over their ends the way it does on a roof
+  s+='<path d="M32.4,101.4 L150,26.6 L267.6,101.4" fill="none" stroke="'+E+
+     '" stroke-width="3.6" stroke-linejoin="round"/>';
+  s+='<path d="M32.4,101.4 L150,26.6" fill="none" stroke="'+W+'" stroke-width="2.2"/>';
+  s+='<path d="M150,26.6 L267.6,101.4" fill="none" stroke="'+WS+'" stroke-width="2.2"/>';
+  // the eave apron
+  s+='<path d="M31,97.2 L269,97.2 L269,101.8 L31,101.8 Z" fill="'+W+
+     '" stroke="'+E+'" stroke-width=".7"/>';
+  s+='<path d="M150,97.2 L269,97.2 L269,101.8 L150,101.8 Z" fill="'+WS+'"/>';
+  return s;
+}
+
 /* ── OC Onyx Black, dimensional ───────────────────────────────────
    Mirrors the function now shipping in popup.html — same geometry, same
    blend, so a thumbnail and the real spread cannot disagree about what a
@@ -139,20 +173,40 @@ function grit(seed, n, y0, y1){
    per tab on (course*3 + tab), so the pattern never lines up vertically.
    `from`/`to` let a half-shingled roof use the same courses as a finished one
    rather than a second way of drawing shingles. */
-function shingleArt(weathered, from, to){
-  var F = weathered ? ['#3B4147','#2A2E33','#484E55','#222629']
-                    : ['#2E343B','#1E2227','#3E454C','#171A1E'],
-      SHADOW = weathered ? '#191C1F' : '#0D1013',
-      EDGE   = weathered ? '#5A6066' : '#525A62';
-  function dk(h){
-    var n = parseInt(h.slice(1), 16);
-    return '#' + ((1 << 24) + (Math.round((n >> 16 & 255) * 0.72) << 16) +
-                  (Math.round((n >> 8 & 255) * 0.72) << 8) +
-                   Math.round((n & 255) * 0.72)).toString(16).slice(1);
+var BLEND = {
+  /* Theo, 3 Aug: "maybe make the roof duration Brownwood." So the blend is
+     named rather than a boolean — OC sells more than one and the book will
+     want to show whichever Cardinal is putting on.
+     onyxOld is the roof coming OFF: greyer and flatter, the way one that has
+     lost its granules actually looks. Keeping the old roof black and the new
+     one brown is what makes three distinct states out of the sequence —
+     black roof, tan deck, brown roof — instead of two warm mid-tones either
+     side of a warm deck. */
+  onyxOld:   { F:['#3B4147','#2A2E33','#484E55','#222629'], S:'#191C1F', E:'#5A6066' },
+  onyx:      { F:['#2E343B','#1E2227','#3E454C','#171A1E'], S:'#0D1013', E:'#525A62' },
+  brownwood: { F:['#6B4F35','#4E3826','#8A6B4A','#3D2C1D'], S:'#241811', E:'#A5825C' }
+};
+function shingleArt(blend, from, to, starter){
+  var B = BLEND[blend] || BLEND.onyx;
+  var F = B.F, SHADOW = B.S, EDGE = B.E;
+  var SH = 2.4, IN = SH / (72 / 116), out = '';
+  /* THE STARTER GOES IN AFTER THE DRIP EDGE — Theo, 3 Aug. It is an untabbed
+     strip at the eave, and the first full course laps over it leaving only a
+     reveal showing. So the courses start 4 units UP from the eave rather than
+     at it, and the 4 units below them are the starter. CH shrinks to 8.5 so
+     eight courses still land exactly on the apex. */
+  var ST = starter ? 4 : 0, BASE = 100 - ST, CH = starter ? 8.5 : 9, TW = 15;
+  if(starter && (from || 0) === 0){
+    var sp0 = spanAt(100), sp1 = spanAt(BASE);
+    out += '<path d="M'+sp0[0].toFixed(1)+',100 L'+sp1[0].toFixed(1)+','+BASE+' L150,'+BASE+
+           ' L150,100 Z" fill="'+F[3]+'"/>';
+    out += '<path d="M150,100 L150,'+BASE+' L'+sp1[1].toFixed(1)+','+BASE+' L'+
+           sp0[1].toFixed(1)+',100 Z" fill="'+dk(F[3])+'"/>';
+    out += '<path d="M'+sp1[0].toFixed(1)+','+BASE+' L'+sp1[1].toFixed(1)+','+BASE+
+           '" fill="none" stroke="'+SHADOW+'" stroke-width="1.2"/>';
   }
-  var CH = 9, TW = 15, SH = 2.4, IN = SH / (72 / 116), out = '';
   for(var c = (from || 0); c < (to === undefined ? 8 : to); c++){
-    var yb = 100 - c * CH, yt = Math.max(28, yb - CH);
+    var yb = BASE - c * CH, yt = Math.max(28, yb - CH);
     var sb = spanAt(yb), st = spanAt(yt);
     out += '<path d="M'+sb[0].toFixed(1)+','+yb+' L'+st[0].toFixed(1)+','+yt+
            ' L150,'+yt+' L150,'+yb+' Z" fill="'+F[1]+'"/>';
@@ -226,9 +280,9 @@ function house(o){
   var st=o.roof||'shingle';
   if(st==='none'){ /* nothing — used before the house is the subject */ }
   // OLD roof: Onyx Black, weathered — granule loss reads greyer and flatter
-  else if(st==='shingle') s+=plane('#22262B','#181B1F')+shingleArt(true);
-  // NEW roof: Onyx Black, crisp off the bundle
-  else if(st==='new')     s+=plane('#1E2227','#161A1D')+shingleArt(false);
+  else if(st==='shingle') s+=plane('#22262B','#181B1F')+shingleArt('onyxOld',0,8,true)+dripEdge();
+  // NEW roof: OC Duration BROWNWOOD, crisp off the bundle, over its starter
+  else if(st==='new')     s+=plane('#4E3826','#38281B')+dripEdge()+shingleArt('brownwood',0,8,true);
   else if(st==='bare'){
     /* 4x8 SHEETS. Theo, 3 Aug — same treatment as the shipped spread 7, and
        the same reason: a flat plane with shingle courses on it reads as a roof
@@ -237,6 +291,10 @@ function house(o){
        roofY rather than clipped, because roofY IS the roof edge. */
     s+=plane(DECK,DECKS);
     var SHW=40, SHH=18;   // spanAt is module-scope now, shared with the ice course
+    /* NO DRIP EDGE HERE ON PURPOSE. The order is tear off, sound the deck,
+       THEN the apron — so on the decking spread it genuinely is not on yet.
+       It first appears on the ice-and-water spread, under the shield.
+       (An earlier line here set o.__drip, which nothing read. Dead flag.) */
     s+='<g fill="none" stroke="#8E7752" stroke-width="1.1" opacity=".55">';
     for(var cc=1;cc<4;cc++){ var cy=100-cc*SHH, sp=spanAt(cy);
       s+='<path d="M'+sp[0].toFixed(1)+','+cy+' L'+sp[1].toFixed(1)+','+cy+'"/>'; }
@@ -256,6 +314,7 @@ function house(o){
          '<path d="M'+(p[0]+7)+','+(p[1]+4)+' L'+(p[0]+SHW-7)+','+(p[1]+SHH-4)+'"/>'+
          '<path d="M'+(p[0]+SHW-7)+','+(p[1]+4)+' L'+(p[0]+7)+','+(p[1]+SHH-4)+'"/></g>';
     });
+    if(o.drip) s+=dripEdge();
   }
   else if(st==='ice'){
     s+=plane(DECK,DECKS);
@@ -263,6 +322,9 @@ function house(o){
        M34,100 L54,88 L266,88 L266,100 — its top-right corner at x=266 is
        twenty units OUTSIDE the roof, which at y=88 only reaches 246.7. It
        spilled into the sky and nothing caught it. spanAt gives the real edge. */
+    /* DRIP EDGE FIRST at the eave — the apron goes UNDER the ice and water,
+       which is the one bit of the order people get backwards. */
+    s+=dripEdge();
     var e = spanAt(86);
     s+='<path d="M34,100 L'+e[0].toFixed(1)+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICE+'"/>';
     s+='<path d="M150,100 L150,86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICES+'"/>';
@@ -272,10 +334,22 @@ function house(o){
     s+=grit(31, 150, 86, 100);
   }
   else if(st==='felt'){
-    s+=plane(FELT,FELTS);
-    s+='<g stroke="#7A8085" stroke-width=".8" opacity=".55">';
-    for(var t=1;t<5;t++){ var yy=100-t*14, a=34+t*22.6, b=266-t*22.6;
-      s+='<path d="M'+a.toFixed(0)+','+yy+' L'+b.toFixed(0)+','+yy+'"/>'; }
+    /* THE FELT DOES NOT GO OVER THE ICE AND WATER — Theo, 3 Aug, and he is
+       right: the shield is the eave course and the underlayment starts ABOVE
+       it and laps down onto it, it does not bury it. The old version covered
+       the whole deck and wiped the shield out entirely, which made spread 9
+       look like work that got undone on spread 10.
+       So: deck, apron, shield at the eave, felt from y=86 up. */
+    s+=plane(DECK,DECKS)+dripEdge();
+    var e=spanAt(86);
+    s+='<path d="M34,100 L'+e[0].toFixed(1)+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICE+'"/>';
+    s+='<path d="M150,100 L150,86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICES+'"/>';
+    s+=grit(31,90,86,100);
+    s+='<path d="M'+e[0].toFixed(1)+',86 L150,28 L'+e[1].toFixed(1)+',86 Z" fill="'+FELT+'"/>';
+    s+='<path d="M150,28 L'+e[1].toFixed(1)+',86 L150,86 Z" fill="'+FELTS+'"/>';
+    s+='<g fill="none" stroke="#7A8085" stroke-width=".8" opacity=".55">';
+    [72,58,44].forEach(function(yy){ var sp=spanAt(yy);
+      s+='<path d="M'+sp[0].toFixed(1)+','+yy+' L'+sp[1].toFixed(1)+','+yy+'"/>'; });
     s+='</g>';
   }
   else if(st==='half'){
@@ -287,12 +361,12 @@ function house(o){
        spread showed no difference between the done half and the undone half —
        the one thing the spread exists to show. The lines are what tells them
        apart, and they are what is really printed on the roll. */
-    s+=plane(FELT,FELTS);
+    s+=plane(FELT,FELTS)+dripEdge();
     s+='<g fill="none" stroke="#7A8085" stroke-width=".8" opacity=".6">';
     [58,44].forEach(function(yy){ var sp=spanAt(yy);
       s+='<path d="M'+sp[0].toFixed(1)+','+yy+' L'+sp[1].toFixed(1)+','+yy+'"/>'; });
     s+='</g>';
-    s+=shingleArt(false,0,4);
+    s+=shingleArt('brownwood',0,4,true);
   }
   if(st!=='none'){
     // the five hairlines that used to live here were a strip shingle;

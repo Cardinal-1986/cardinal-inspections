@@ -681,15 +681,26 @@
      Tabs are clamped to the span at the course's TOP edge, which is the
      narrower one — a tab that fits there fits all the way down, so nothing
      needs clipping and nothing escapes the roof. */
-  function shingleArt(weathered){
+  function shingleArt(blend, starter){
     /* The first blend ran #34383C to #3D4246 — sixteen steps end to end, which
        rendered as one flat black with a couple of tabs slightly off. "Shades
        of blacks AND GREYS" needs the spread to be visible at arm's length, so
        the range is now roughly 34 steps and the lightest tab is a real grey. */
-    var F = weathered ? ['#3B4147','#2A2E33','#484E55','#222629']
-                      : ['#2E343B','#1E2227','#3E454C','#171A1E'],
-        SHADOW = weathered ? '#191C1F' : '#0D1013',
-        EDGE   = weathered ? '#5A6066' : '#525A62';
+    /* Named blends, not a boolean — Theo, 3 Aug: "maybe make the roof duration
+       Brownwood." OC sells more than one and the book will want to show
+       whichever Cardinal is putting on. Spread 7 is the roof coming OFF, so it
+       uses onyxOld: greyer and flatter, the way one that has lost its granules
+       actually looks. The new roof, on the later spreads, is Brownwood — and
+       keeping the two different is what makes the sequence read as black roof,
+       tan deck, brown roof rather than two warm tones either side of a warm
+       deck. Same map as the contact sheet, so the two cannot drift. */
+    var BLEND = {
+      onyxOld:   { F:['#3B4147','#2A2E33','#484E55','#222629'], S:'#191C1F', E:'#5A6066' },
+      onyx:      { F:['#2E343B','#1E2227','#3E454C','#171A1E'], S:'#0D1013', E:'#525A62' },
+      brownwood: { F:['#6B4F35','#4E3826','#8A6B4A','#3D2C1D'], S:'#241811', E:'#A5825C' }
+    };
+    var B = BLEND[blend] || BLEND.onyx;
+    var F = B.F, SHADOW = B.S, EDGE = B.E;
     // the shaded plane is the same blend one step down, never a second palette
     function dk(h){
       var n = parseInt(h.slice(1), 16);
@@ -698,9 +709,24 @@
                      Math.round((n & 255) * 0.72)).toString(16).slice(1);
     }
     function span(y){ var h = (y - 28) / (72 / 116); return [150 - h, 150 + h]; }
-    var CH = 9, TW = 15, SH = 2.4, out = '';
+    var SH = 2.4, out = '';
+    /* THE STARTER GOES IN AFTER THE DRIP EDGE — Theo, 3 Aug. It is an untabbed
+       strip at the eave and the first full course laps over it, leaving only a
+       reveal. So the courses begin 4 units UP from the eave and the 4 below
+       them are the starter; CH drops to 8.5 so eight courses still land
+       exactly on the apex. */
+    var ST = starter ? 4 : 0, BASE = 100 - ST, CH = starter ? 8.5 : 9, TW = 15;
+    if(starter){
+      var s0 = span(100), s1 = span(BASE);
+      out += '<path d="M' + s0[0].toFixed(1) + ',100 L' + s1[0].toFixed(1) + ',' + BASE +
+             ' L150,' + BASE + ' L150,100 Z" fill="' + F[3] + '"/>';
+      out += '<path d="M150,100 L150,' + BASE + ' L' + s1[1].toFixed(1) + ',' + BASE +
+             ' L' + s0[1].toFixed(1) + ',100 Z" fill="' + dk(F[3]) + '"/>';
+      out += '<path d="M' + s1[0].toFixed(1) + ',' + BASE + ' L' + s1[1].toFixed(1) + ',' + BASE +
+             '" fill="none" stroke="' + SHADOW + '" stroke-width="1.2"/>';
+    }
     for(var c = 0; c < 8; c++){
-      var yb = 100 - c * CH, yt = Math.max(28, yb - CH);
+      var yb = BASE - c * CH, yt = Math.max(28, yb - CH);
       var sb = span(yb), st = span(yt);
       // course field, one trapezoid per plane
       out += '<path d="M' + sb[0].toFixed(1) + ',' + yb + ' L' + st[0].toFixed(1) + ',' + yt +
@@ -856,7 +882,7 @@
          blend, lifted and flattened: a tired roof has lost granules, so it
          reads greyer and lower in contrast than the new one will.
          The five hairlines that used to live here were a strip shingle. */
-      s += shingleArt(true);
+      s += shingleArt('onyxOld', true);
     }
     s += '</g>';
 
