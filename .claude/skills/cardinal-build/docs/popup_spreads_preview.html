@@ -134,7 +134,34 @@ function house(o){
   if(st==='none'){ /* nothing — used before the house is the subject */ }
   else if(st==='shingle') s+=plane(ROOF,ROOFS);
   else if(st==='new')     s+=plane('#4A5866','#333F4A');
-  else if(st==='bare')    s+=plane(DECK,DECKS);
+  else if(st==='bare'){
+    /* 4x8 SHEETS. Theo, 3 Aug — same treatment as the shipped spread 7, and
+       the same reason: a flat plane with shingle courses on it reads as a roof
+       that changed colour, not as decking. 40 x 18 is 8:4, the real ratio, and
+       the joints stagger a half sheet per course. Lines are trimmed against
+       roofY rather than clipped, because roofY IS the roof edge. */
+    s+=plane(DECK,DECKS);
+    var SHW=40, SHH=18, spanAt=function(y){ var h=(y-28)/(72/116); return [150-h,150+h]; };
+    s+='<g fill="none" stroke="#8E7752" stroke-width="1.1" opacity=".55">';
+    for(var cc=1;cc<4;cc++){ var cy=100-cc*SHH, sp=spanAt(cy);
+      s+='<path d="M'+sp[0].toFixed(1)+','+cy+' L'+sp[1].toFixed(1)+','+cy+'"/>'; }
+    for(var cr=0;cr<4;cr++){
+      var bot=100-cr*SHH, top=100-(cr+1)*SHH, offx=(cr%2)*(SHW/2);
+      for(var jx=34+offx;jx<266;jx+=SHW){ var hit=roofY(jx);
+        if(hit>=bot) continue;
+        s+='<path d="M'+jx+','+bot+' L'+jx+','+Math.max(top,hit).toFixed(1)+'"/>'; }
+    }
+    s+='</g>';
+    // the bad ones, sprayed. Wash carries the colour, the X carries the
+    // contrast — #7E1018 is 5.08:1 on the lit deck and 3.15:1 on the shaded.
+    (o.bad||[[74,82],[194,82],[114,64]]).forEach(function(p){
+      s+='<path d="M'+p[0]+','+p[1]+' L'+(p[0]+SHW)+','+p[1]+' L'+(p[0]+SHW)+','+(p[1]+SHH)+
+         ' L'+p[0]+','+(p[1]+SHH)+' Z" fill="'+RED+'" opacity=".4"/>';
+      s+='<g fill="none" stroke="#7E1018" stroke-width="3.2" stroke-linecap="round">'+
+         '<path d="M'+(p[0]+7)+','+(p[1]+4)+' L'+(p[0]+SHW-7)+','+(p[1]+SHH-4)+'"/>'+
+         '<path d="M'+(p[0]+SHW-7)+','+(p[1]+4)+' L'+(p[0]+7)+','+(p[1]+SHH-4)+'"/></g>';
+    });
+  }
   else if(st==='ice'){
     s+=plane(DECK,DECKS);
     // ice shield along the eaves and up the middle
@@ -363,12 +390,16 @@ var SPREADS=[
        fig(196,roofY(196)+2,0.9,{arm:[[-8,-34],[-2,-30]]}) +
        yardsign(250,150,0.72) + bird(292,112,0.68,true) + chips(7,26,40,290);
    }},
-  {n:8, t:'The Deck', w:'Bare plywood, and the sheets that have gone soft come out. This is the part nobody else shows you.',
+  {n:8, t:'The Deck', w:'Bare plywood in 4×8 sheets. The bad ones get sprayed and come out — this is the part nobody else shows you.',
    sky:'day', build:function(){
-     var s=house({roof:'bare'});
-     // a rotten sheet cut out, one new sheet going in
-     s+='<path d="M96,76 L138,76 L152,94 L110,94 Z" fill="#4A3A28"/>';
-     s+='<path d="M170,70 L214,70 L228,88 L184,88 Z" fill="#E3CDA2" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
+     /* One marked sheet has already been cut out and one new sheet is going
+        in, so the pair reads as a sequence rather than as decoration: sprayed,
+        gone, replaced. The two remaining marks are on the sheet grid, not
+        floating — 114,64 and 194,82 are real sheet origins. */
+     var s=house({roof:'bare', bad:[[114,64],[194,82]]});
+     s+='<path d="M74,82 L114,82 L114,100 L74,100 Z" fill="#4A3A28"/>';   // the hole it left
+     s+='<path d="M154,64 L194,64 L194,82 L154,82 Z" fill="#E3CDA2" stroke="'+KRAFT+
+        '" stroke-width="1.6" stroke-linejoin="round"/>';                  // the new sheet
      return s + fig(150,roofY(150)+64,0.86,{arm:[[-8,-34],[-18,-30]]}) +
        ladder(292,150,58,10) + bird(46,120,0.68);
    }},

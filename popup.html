@@ -726,12 +726,64 @@
     s += '<g' + (stripped ? '' : ' id="shingles"') + '>';
     s += '<path d="M34,100 L150,28 L150,100 Z" fill="' + fa + '"/>';
     s += '<path d="M150,28 L266,100 L150,100 Z" fill="' + fb + '"/>';
-    s += '<g fill="none" stroke="' + (stripped ? '#8E7752' : '#8E3729') + '" stroke-width="1.1" opacity=".45">';
-    for(var i = 1; i <= 5; i++){
-      var t = i / 6.2, yy = 100 - t * 70, a = 34 + t * 116, b = 266 - t * 116;
-      s += '<path d="M' + a.toFixed(0) + ',' + yy.toFixed(0) + ' L' + b.toFixed(0) + ',' + yy.toFixed(0) + '"/>';
+    if(stripped){
+      /* 4x8 SHEETS, NOT MORE COURSES. Theo, 3 Aug: "make the sheething look
+         like 4x8 sheets mark with red what's bad". The stripped deck had been
+         wearing the SHINGLE courses — the identical five horizontal lines,
+         differing only in colour. Five stripes is what shingles look like and
+         nothing at all like decking, which is why the tear-off read as a roof
+         that had merely changed colour.
+
+         Sheets are 40 x 18 units, which is 8:4 — the real ratio — and the
+         vertical joints stagger a half sheet per course, the way they are
+         actually laid. No clipPath and no new id: every line is trimmed
+         against the roof edge by arithmetic, because roofY IS that edge. */
+      var SHW = 40, SHH = 18;
+      var spanAt = function(y){ var h = (y - 28) / (72 / 116); return [150 - h, 150 + h]; };
+      s += '<g fill="none" stroke="#8E7752" stroke-width="1.1" opacity=".55">';
+      for(var cc = 1; cc < 4; cc++){
+        var cy = 100 - cc * SHH, sp = spanAt(cy);
+        s += '<path d="M' + sp[0].toFixed(1) + ',' + cy + ' L' + sp[1].toFixed(1) + ',' + cy + '"/>';
+      }
+      for(var cr = 0; cr < 4; cr++){
+        var bot = 100 - cr * SHH, top = 100 - (cr + 1) * SHH, offx = (cr % 2) * (SHW / 2);
+        for(var jx = 34 + offx; jx < 266; jx += SHW){
+          var hit = roofY(jx);
+          if(hit >= bot) continue;          // this joint is off the plane at this course
+          s += '<path d="M' + jx + ',' + bot + ' L' + jx + ',' + Math.max(top, hit).toFixed(1) + '"/>';
+        }
+      }
+      s += '</g>';
+      /* THE BAD SHEETS. A crew sprays the ones coming out so nobody has to be
+         told twice, and the mark covers the whole sheet rather than being a
+         tidy symbol in the middle of it.
+         Wash AND an X, because a line alone cannot hold up on both planes.
+         Computed on the two deck tones: #7E1018 is 5.08:1 on the lit face and
+         3.15:1 on the shaded one. A brighter spray red drops to 2.09 and a mid
+         red to 2.70 — under the 3:1 floor for a graphic — because the deck sits
+         mid-luminance and squeezes from both directions. Dark is the only value
+         that clears it on both, so the wash carries the colour and the X carries
+         the contrast.
+         All three sheets are wholly inside the triangle at their course, so no
+         clipping is needed: at y=82 the plane spans x 63-237, at y=64 it spans
+         92-208. */
+      [[74, 82], [194, 82], [114, 64]].forEach(function(p){
+        var bx = p[0], by = p[1];
+        s += '<path d="M' + bx + ',' + by + ' L' + (bx + SHW) + ',' + by + ' L' + (bx + SHW) + ',' +
+             (by + SHH) + ' L' + bx + ',' + (by + SHH) + ' Z" fill="#C8202E" opacity=".4"/>';
+        s += '<g fill="none" stroke="#7E1018" stroke-width="3.2" stroke-linecap="round">' +
+             '<path d="M' + (bx + 7) + ',' + (by + 4) + ' L' + (bx + SHW - 7) + ',' + (by + SHH - 4) + '"/>' +
+             '<path d="M' + (bx + SHW - 7) + ',' + (by + 4) + ' L' + (bx + 7) + ',' + (by + SHH - 4) + '"/></g>';
+      });
+    } else {
+      s += '<g fill="none" stroke="#8E3729" stroke-width="1.1" opacity=".45">';
+      for(var i = 1; i <= 5; i++){
+        var t = i / 6.2, yy = 100 - t * 70, a = 34 + t * 116, b = 266 - t * 116;
+        s += '<path d="M' + a.toFixed(0) + ',' + yy.toFixed(0) + ' L' + b.toFixed(0) + ',' + yy.toFixed(0) + '"/>';
+      }
+      s += '</g>';
     }
-    s += '</g></g>';
+    s += '</g>';
 
     // ── gutter along the eave and a downspout — Cardinal's own soft metals
     s += '<path d="M30,100 L270,100 L270,106 L30,106 Z" fill="' + MET + '"/>';
