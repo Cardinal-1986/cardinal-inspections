@@ -89,17 +89,35 @@ have the certificate" needs no numbers to be strong.
 > We are preferred not platinum, preferred is 50 years , 10 years workmanship
 > transferrable and backed by oc. dont mention platinum
 
-**This closes verification item V5**, which had been the one genuinely blocking
-question. The app contained two contradictory figures (Sales Floor said 25-year
-shingle; the estimate template listed both a 25-year and a 50-year tier). The
-answer, from the owner:
+**This closes verification item V5 — and reframes it.** I had flagged the app as
+holding two *contradictory* warranty figures. **That was wrong, and the error is
+worth recording:** they are not a contradiction, they are **two tiers the client
+chooses between.** The estimate template listing both was correct all along. A
+second message from Theo supplied the other one:
 
-| | |
-|---|---|
-| **Material** | **50 years** |
-| **Workmanship** | **10 years** |
-| **Transferable** | **Yes** |
-| **Backed by** | **Owens Corning**, not only Cardinal |
+> The other option is OC Systems warranty, 25 years, 5 years on labor
+> transferrable and backed
+
+| | **OC Systems** | **Preferred** |
+|---|---|---|
+| **Material** | 25 years | **50 years** |
+| **Labor / workmanship** | 5 years | **10 years** |
+| **Transferable** | Yes | Yes |
+| **Backed** | Yes | Yes — **by Owens Corning** |
+
+**This is a good/better structure, and it is a gift to this page.** It gives the
+homeowner a real choice to make rather than a spec to accept, and a choice is
+far more engaging than a claim. Both tiers are transferable and both are backed
+— so the decision is honestly about *duration*, not about whether they're
+protected at all. Present it as two columns, not as an upsell.
+
+⚠️ **One loose end for Theo, minor and not blocking:** the Sales Floor script
+says *"25 years on the shingle, 10 years on our workmanship"* — which pairs
+Systems' 25-year material with Preferred's 10-year workmanship figure. That may
+be perfectly correct (Cardinal's *own* workmanship guarantee could sit alongside
+the OC-backed labor coverage and run longer), or it may be a legacy line that
+drifted. Worth a glance, but it does not block this page — the page uses the
+two-tier table above.
 
 **Two of these are worth more than the numbers, and the copy must not bury
 them:**
