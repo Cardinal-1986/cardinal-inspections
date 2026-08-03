@@ -60,13 +60,38 @@ var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
     ROOF='#A8442F', ROOFS='#7E2E20', DECK='#C9B084', DECKS='#A18862',
     RED='#C8202E', REDS='#7E1018', KRAFT='#E8DCC8', CUT='#C9B893',
     ORANGE='#E8722A', NAVY='#243B53', GRASS='#7FA863', GRASSD='#43683A',
-    ICE='#3B4A5A', ICES='#2A3644', FELT='#5E6166', FELTS='#44484C',
+    /* Theo, 3 Aug: "ice and water shield grey granulated, make synthetic felt
+       black or something to differentiate". They were #3B4A5A and #5E6166 —
+       two mid greys four steps apart, so spreads 9 and 10 read as the same
+       material photographed twice. Now the shield is a proper mineral grey
+       with grit on it and the underlayment is near-black, which is also what
+       the real products look like.
+       #9AA0A5 was the first grey and it computed 1.26:1 against the tan deck
+       it lies on — near-identical in value, separated only by hue, so the
+       course barely read. #6E767B is 2.21:1 against the deck and 3.29:1
+       against the felt, which is the balance that matters: it has to sit ON
+       the deck and be remembered as a different thing from the underlayment
+       two spreads later. The grit does the rest of the work locally. */
+    ICE='#6E767B', ICES='#565D62', FELT='#22262B', FELTS='#14171A',
     INK='#4A3524', WHT='#F5F3EE', BLK='#1A1416', GOLD='#B8860B';
 
 /* Roof line, same geometry as the shipped spread — apex (150,28), eaves at
    x=34 and x=266. Reusing the number means a thumbnail and the real spread
    can never disagree about where the roof is. */
 function roofY(x){ return 28 + Math.abs(x - 150) * (72 / 116); }
+// how wide the roof is at a given height — used to trim anything laid on it
+function spanAt(y){ var h = (y - 28) / (72 / 116); return [150 - h, 150 + h]; }
+
+/* THE WALL'S LIGHT/SHADE SPLIT IS 176, NOT 150. Theo, 3 Aug: "the door is in
+   the middle on a corner? the grey line is off" — both symptoms, one cause.
+   The split had been at 150, which is the ROOF APEX, and the door spans
+   136-164, so the boundary ran straight down the middle of the door and read
+   as a building corner with a door wrapped round it. It took the gutter's
+   shaded half with it, which is the grey line.
+   176 is what the shipped spread 7 uses, and it clears the door entirely and
+   falls between the two windows. The roof facets still meet at 150 — that is
+   the apex and it is a different thing. */
+var SPLIT = 176;
 
 /* ── sky ─────────────────────────────────────────────────────────
    Theo asked for the day to move: dark in the morning, blue by midday,
@@ -88,6 +113,20 @@ function sky(k){
     '<stop offset="1" stop-color="'+c[2]+'"/></linearGradient></defs>'+
     '<path d="M0,0 L300,0 L300,150 L0,150 Z" fill="url(#'+id+')"/>';
 }
+/* Mineral grit for the ice-and-water shield. Deterministic — a texture that
+   reshuffled between renders would read as a rendering bug, the same reason
+   the shipped spread's grass and chips carry no Math.random. Each speck is
+   placed against spanAt so none lands off the roof. */
+function grit(seed, n, y0, y1){
+  var s='', r=seed;
+  function rnd(){ r=(r*1103515245+12345)&0x7fffffff; return r/0x7fffffff; }
+  for(var i=0;i<n;i++){
+    var y=y0+rnd()*(y1-y0), sp=spanAt(y), x=sp[0]+2+rnd()*(sp[1]-sp[0]-4);
+    s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(0.6+rnd()*0.7).toFixed(2)+
+       '" fill="'+(rnd()<0.5?'#5C6165':'#C3C8CC')+'" opacity=".8"/>';
+  }
+  return s;
+}
 function ground(dark){
   return '<path d="M0,150 L300,150 L300,190 L0,190 Z" fill="'+(dark?GRASSD:GRASS)+'"/>'+
          '<path d="M0,150 L300,150 L300,168 L0,168 Z" fill="#000" opacity=".12"/>';
@@ -102,7 +141,7 @@ function house(o){
   var s='';
   // walls
   s+='<path d="M34,100 L266,100 L266,150 L34,150 Z" fill="'+LIT+'"/>';
-  s+='<path d="M150,100 L266,100 L266,150 L150,150 Z" fill="'+SHD+'"/>';
+  s+='<path d="M'+SPLIT+',100 L266,100 L266,150 L'+SPLIT+',150 Z" fill="'+SHD+'"/>';
   // lap siding
   s+='<g stroke="'+TRIM+'" stroke-width=".7" opacity=".35">';
   for(var y=108;y<150;y+=8) s+='<path d="M34,'+y+' L266,'+y+'"/>';
@@ -141,7 +180,7 @@ function house(o){
        the joints stagger a half sheet per course. Lines are trimmed against
        roofY rather than clipped, because roofY IS the roof edge. */
     s+=plane(DECK,DECKS);
-    var SHW=40, SHH=18, spanAt=function(y){ var h=(y-28)/(72/116); return [150-h,150+h]; };
+    var SHW=40, SHH=18;   // spanAt is module-scope now, shared with the ice course
     s+='<g fill="none" stroke="#8E7752" stroke-width="1.1" opacity=".55">';
     for(var cc=1;cc<4;cc++){ var cy=100-cc*SHH, sp=spanAt(cy);
       s+='<path d="M'+sp[0].toFixed(1)+','+cy+' L'+sp[1].toFixed(1)+','+cy+'"/>'; }
@@ -164,9 +203,17 @@ function house(o){
   }
   else if(st==='ice'){
     s+=plane(DECK,DECKS);
-    // ice shield along the eaves and up the middle
-    s+='<path d="M34,100 L54,88 L266,88 L266,100 Z" fill="'+ICE+'" opacity=".92"/>';
-    s+='<path d="M150,100 L266,88 L266,100 Z" fill="'+ICES+'" opacity=".5"/>';
+    /* A COURSE ALONG THE EAVE, TRIMMED TO THE ROOF. The old band ran
+       M34,100 L54,88 L266,88 L266,100 — its top-right corner at x=266 is
+       twenty units OUTSIDE the roof, which at y=88 only reaches 246.7. It
+       spilled into the sky and nothing caught it. spanAt gives the real edge. */
+    var e = spanAt(86);
+    s+='<path d="M34,100 L'+e[0].toFixed(1)+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICE+'"/>';
+    s+='<path d="M150,100 L150,86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICES+'"/>';
+    /* GRANULATED, because that is what the mineral surface is. Two tones of
+       grit so it reads as texture rather than as noise, deterministic so it
+       cannot reshuffle between renders. */
+    s+=grit(31, 150, 86, 100);
   }
   else if(st==='felt'){
     s+=plane(FELT,FELTS);
@@ -193,7 +240,7 @@ function house(o){
     }
     // gutter + downspout, always
     s+='<path d="M28,100 L272,100 L272,106 L28,106 Z" fill="'+MET+'"/>';
-    s+='<path d="M150,100 L272,100 L272,106 L150,106 Z" fill="'+METS+'"/>';
+    s+='<path d="M'+SPLIT+',100 L272,100 L272,106 L'+SPLIT+',106 Z" fill="'+METS+'"/>';
     s+='<path d="M266,106 L272,106 L272,150 L266,150 Z" fill="'+METS+'"/>';
   }
   if(o.ridge){
