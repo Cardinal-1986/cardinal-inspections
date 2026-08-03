@@ -55,6 +55,55 @@ four after briefly considering eight.
 | 16 | **The PM's card, handed over by the salesperson** | A second named human, with contact details, before work starts | The client is never left with only one number. Handing a *card* is a deliberate physical gesture — it says "this person is yours" |
 | 17 | **The PM is on site periodically all day** | Not a drop-and-vanish crew | Answers the unspoken fear: *"will anyone in charge actually be here?"* |
 | 18 | **A dedicated crew leader, on site the *whole* time, who answers questions** | Someone in charge who never leaves | ⭐ The one that actually matters at 2pm. See below — this completes a three-tier answer to *"who do I talk to right now?"* |
+| 19 | **"we are insured"** | General liability + workers' compensation | ⭐ Weak as a badge, **strong as an explanation** — see below. Most homeowners have no idea what their own exposure is |
+| 20 | **"preferred with oc"** | Owens Corning Roofing Preferred Contractor | Confirms an open verification item — but the *permitted wording* is still manufacturer-restricted, and Preferred ≠ Platinum. See below |
+
+### 19 — insurance: don't print the badge, print the reason
+
+*"Licensed and insured"* is on every roofing van in Ohio and a homeowner has
+stopped reading it. The version that actually lands explains **their own
+exposure**:
+
+- If a roofer without **workers' compensation** has someone fall on your
+  property, the injured worker's route to recovery can run through *the
+  homeowner's* insurance. That is the risk nobody mentions, and it is the real
+  reason this matters.
+- **General liability** covers damage to the house itself — the thing a
+  homeowner assumes is covered and often isn't.
+- The checkable action: **ask any contractor for a certificate of insurance
+  naming you.** A real one produces it same-day.
+
+**The strongest available framing, and it's true and already built:** Cardinal
+*already demands exactly this of its own subcontractor crews* — `crew_docs`
+holds COI, W-9 and licences **with expiry dates**, and the Crews module was
+built to track them (builds 547–556). So the line writes itself: *we require
+from our crews what you should require from us.* That is a claim backed by a
+feature that exists, not a slogan.
+
+⚠️ **Do not print policy amounts, a carrier name, or a licence number** without
+Theo confirming each. "We carry general liability and workers' comp, and you can
+have the certificate" needs no numbers to be strong.
+
+### 20 — Owens Corning Preferred: true, but watch the wording and the tier
+
+This **confirms verification item V4** in `ROOF_JOURNEY_COPY.md` as factually
+true — Cardinal is Preferred with OC. Two things still need care:
+
+1. **Manufacturers restrict how contractor designations may be worded** in
+   public marketing, including trademark treatment. Confirm the exact permitted
+   phrasing before it goes on a public page. *Being* Preferred and being allowed
+   to *say it a particular way* are different questions.
+2. **Preferred is not Platinum Preferred.** The Resource Library already carries
+   a warning that Platinum Protection is Platinum-Preferred-only and must not be
+   quoted. Whatever warranty language attaches to Preferred specifically is what
+   may be used — **do not let "Preferred" drift into implying the Platinum
+   tier.** This is precisely the kind of overclaim that is easy to make by
+   accident and expensive to make in writing.
+
+Still unresolved and Theo's alone: **verification item V5** — the app currently
+contains *two different warranty figures* (Sales Floor says 25-year shingle;
+the estimate template lists both a 25-year and a 50-year tier). They disagree.
+One pair has to be chosen before either appears on a public page.
 
 ### The three tiers of oversight — write them as one thing, not three boasts
 
