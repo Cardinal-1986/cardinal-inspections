@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Three ways to draw the cardboard</title>
+<style>
+  :root{--board:#E8DCC8;--cut-lt:#F4EDDD;--cut-dk:#C9B893;--ink:#4A3524;--ink2:#6B5B47;
+        --red-tx:#8F1620;
+        --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+        --serif:Georgia,"Times New Roman",serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:#CBB894;font-family:var(--sans);color:var(--ink)}
+  .sheet{max-width:1280px;margin:0 auto;background:var(--board);padding:30px 30px 40px}
+  h1{font:800 30px/1.1 var(--serif);margin:0 0 4px}
+  .sub{font:600 11.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;
+       color:var(--ink2);margin-bottom:22px}
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:var(--cut-lt);border:1px solid var(--cut-dk);border-radius:4px;
+        overflow:hidden;display:flex;flex-direction:column}
+  .card svg{display:block;width:100%;height:auto}
+  .cap{padding:12px 13px 14px}
+  .nm{font:800 12.5px var(--mono);letter-spacing:.09em;color:var(--ink)}
+  .rl{font:13px/1.45 var(--sans);color:var(--ink2);margin-top:4px}
+  .rl b{color:var(--ink)}
+  .verdict{margin-top:26px;font:14.5px/1.6 var(--sans);max-width:74ch;color:var(--ink2)}
+  .verdict b{color:var(--ink)}
+  .verdict em{font-style:normal;font-weight:700;color:var(--red-tx)}
+</style></head><body>
+<div class="sheet">
+  <h1>Three ways to draw the cardboard</h1>
+  <div class="sub">Same scene · same geometry · the house detailed as asked</div>
+  <div class="row" id="row"></div>
+  <div class="verdict" id="verdict"></div>
+</div>
+<script>
+(function(){
+'use strict';
+
+/* ── THE HOUSE, DETAILED ───────────────────────────────────────
+   Theo: "Detail the house a bit more the door the windows the siding."
+   So: lap siding courses, a panelled door with a knob and a step, sash
+   windows with mullions and sills, a gutter along the eave, a downspout,
+   and a ridge line. Drawn ONCE, in geometry, and each style below is only
+   a different way of inking and filling the same shapes — which is the
+   only honest way to compare two styles. */
+function house(S){
+  var s = '';
+  var wall = S.wall, wallDk = S.wallDk, roofA = S.roofA, roofB = S.roofB,
+      trim = S.trim, glass = S.glass, edge = S.edge, ew = S.ew, door = S.door;
+
+  // ── wall
+  s += '<path d="M46,190 L46,96 L254,96 L254,190 Z" fill="'+wall+'"'+S.stroke+'/>';
+  // lap siding — the courses are what makes it read as siding rather than a box
+  s += '<g fill="none" stroke="'+S.siding+'" stroke-width="'+S.sidingW+'" opacity="'+S.sidingO+'">';
+  for(var y=104;y<190;y+=9) s += '<path d="M46,'+y+' L254,'+y+'"/>';
+  s += '</g>';
+  if(S.faceted){  // a lit face and a shaded face instead of one flat wall
+    s += '<path d="M170,96 L254,96 L254,190 L170,190 Z" fill="'+wallDk+'"/>';
+    s += '<g fill="none" stroke="'+S.siding+'" stroke-width="'+S.sidingW+'" opacity="'+S.sidingO+'">';
+    for(var y2=104;y2<190;y2+=9) s += '<path d="M170,'+y2+' L254,'+y2+'"/>';
+    s += '</g>';
+  }
+
+  // ── roof, two planes so it can be faceted
+  s += '<path d="M36,100 L150,30 L150,100 Z" fill="'+roofA+'"'+S.stroke+'/>';
+  s += '<path d="M150,30 L264,100 L150,100 Z" fill="'+roofB+'"'+S.stroke+'/>';
+  s += '<path d="M150,30 L150,100" stroke="'+edge+'" stroke-width="'+(ew*0.8)+'" fill="none" opacity="'+S.ridgeO+'"/>';
+  // courses on the roof
+  s += '<g fill="none" stroke="'+S.course+'" stroke-width="'+S.sidingW+'" opacity="'+S.courseO+'">';
+  for(var i=1;i<=5;i++){
+    var t=i/6.2, yy=100-t*70, a=36+t*114, b=264-t*114;
+    s += '<path d="M'+a.toFixed(0)+','+yy.toFixed(0)+' L'+b.toFixed(0)+','+yy.toFixed(0)+'"/>';
+  }
+  s += '</g>';
+
+  // ── gutter along the eave, and a downspout. Cardinal's own soft metals.
+  s += '<path d="M32,100 L268,100 L268,106 L32,106 Z" fill="'+S.metal+'"'+S.stroke+'/>';
+  s += '<path d="M254,106 L262,106 L262,188 L254,188 Z" fill="'+S.metal+'"'+S.stroke+'/>';
+
+  // ── door: panels, knob, step
+  s += '<path d="M132,190 L132,132 L168,132 L168,190 Z" fill="'+door+'"'+S.stroke+'/>';
+  s += '<g fill="none" stroke="'+trim+'" stroke-width="1.4" opacity="'+S.trimO+'">';
+  s += '<path d="M138,140 L162,140 L162,156 L138,156 Z"/>';
+  s += '<path d="M138,162 L162,162 L162,182 L138,182 Z"/></g>';
+  s += '<circle cx="163" cy="163" r="2" fill="'+S.metal+'"/>';
+  s += '<path d="M128,190 L172,190 L172,186 L128,186 Z" fill="'+S.metal+'" opacity=".7"/>';
+
+  // ── two sash windows: trim, mullions, sill
+  [[70,124],[196,124]].forEach(function(w){
+    var x=w[0], y=w[1];
+    s += '<path d="M'+x+','+y+' L'+(x+34)+','+y+' L'+(x+34)+','+(y+32)+' L'+x+','+(y+32)+' Z" fill="'+glass+'"'+S.stroke+'/>';
+    s += '<g fill="none" stroke="'+trim+'" stroke-width="1.6" opacity="'+S.trimO+'">';
+    s += '<path d="M'+(x+17)+','+y+' L'+(x+17)+','+(y+32)+'"/>';
+    s += '<path d="M'+x+','+(y+16)+' L'+(x+34)+','+(y+16)+'"/></g>';
+    s += '<path d="M'+(x-3)+','+(y+32)+' L'+(x+37)+','+(y+32)+' L'+(x+37)+','+(y+36)+' L'+(x-3)+','+(y+36)+' Z" fill="'+trim+'" opacity="'+S.trimO+'"/>';
+    // a glint, so glass reads as glass
+    s += '<path d="M'+(x+2)+','+(y+14)+' L'+(x+14)+','+(y+2)+' L'+(x+16)+','+(y+2)+' L'+(x+4)+','+(y+14)+' Z" fill="#FFF" opacity="'+S.glint+'"/>';
+  });
+
+  return s;
+}
+
+/* ── ground, sky and a couple of trees, per style ─────────────── */
+function scene(S){
+  // A missing colour paints BLACK in SVG, silently. Every key the scene reads
+  // gets checked before a single shape is drawn — the faceted hills shipped
+  // as black wedges because fill="undefined" is not an error, it is a colour.
+  ['sky','trunk','leafA','leafB','grassA','grassB','wall','roofA','roofB','metal']
+    .concat(S.faceted ? ['hillA','hillB','leafC','wallDk'] : [])
+    .forEach(function(k){ if(!S[k]) throw new Error('style "'+S.key+'" is missing '+k); });
+  var s = '<rect x="0" y="0" width="300" height="230" fill="'+S.sky+'"/>';
+  if(S.faceted){
+    // faceted hills, straight off the reference
+    s += '<path d="M0,120 L54,74 L108,120 Z" fill="'+S.hillA+'"/>';
+    s += '<path d="M54,74 L108,120 L84,120 Z" fill="'+S.hillB+'"/>';
+    s += '<path d="M196,120 L250,68 L300,120 Z" fill="'+S.hillA+'"/>';
+    s += '<path d="M250,68 L300,120 L276,120 Z" fill="'+S.hillB+'"/>';
+  }
+  // trees
+  [[20,300,0.9],[284,300,0.78]].forEach(function(t,k){
+    var x=t[0], sc=t[2];
+    s += '<g transform="translate('+x+',190) scale('+sc+')">';
+    s += '<path d="M-3,0 L-3,-30 L3,-30 L3,0 Z" fill="'+S.trunk+'"'+S.stroke+'/>';
+    if(S.faceted){
+      s += '<path d="M0,-78 L-26,-28 L0,-34 Z" fill="'+S.leafA+'"/>';
+      s += '<path d="M0,-78 L26,-28 L0,-34 Z" fill="'+S.leafB+'"/>';
+      s += '<path d="M0,-58 L-20,-20 L20,-20 Z" fill="'+S.leafC+'"/>';
+    } else {
+      s += '<circle cx="0" cy="-46" r="24" fill="'+S.leafA+'"'+S.stroke+'/>';
+      s += '<circle cx="-11" cy="-34" r="15" fill="'+S.leafB+'"'+S.stroke+'/>';
+    }
+    s += '</g>';
+  });
+  s += house(S);
+  // ground
+  if(S.faceted){
+    s += '<path d="M0,190 L300,190 L300,230 L0,230 Z" fill="'+S.grassA+'"/>';
+    s += '<path d="M0,190 L150,230 L0,230 Z" fill="'+S.grassB+'"/>';
+    s += '<path d="M300,190 L300,230 L170,230 Z" fill="'+S.grassB+'"/>';
+  } else {
+    s += '<path d="M0,190 L300,190 L300,230 L0,230 Z" fill="'+S.grassA+'"'+S.stroke+'/>';
+  }
+  return s;
+}
+
+var STYLES = [
+  { key:'Cut paper', now:true,
+    note:'<b>What is built now.</b> Flat fills, a pale core at every cut, light fixed upper-left. Reads as punched card. The house is now detailed: lap siding, sash windows with sills, a panelled door, gutter and downspout.',
+    sky:'#B8CBDD', wall:'#EFE6D2', wallDk:'#DCCDAE', roofA:'#D3C3A4', roofB:'#C6B394',
+    trim:'#6B5B47', glass:'#BFD2DF', door:'#8F1620', metal:'#8C8F94',
+    siding:'#C9B893', sidingW:1, sidingO:.85, course:'#B7A98C',
+    edge:'#C9B893', ew:2, stroke:' stroke="#F4EDDD" stroke-width="1.6" stroke-linejoin="round"',
+    trimO:.75, ridgeO:.5, courseO:.5, glint:.5,
+    trunk:'#8A6A45', leafA:'#5E8A4E', leafB:'#79A863', leafC:'#43683A',
+    grassA:'#6E9A5A', grassB:'#43683A', faceted:false },
+
+  { key:'Inked', ref:'your comic photo',
+    note:'<b>Heavy black outline, saturated flats, cel shadows.</b> Bold and it photographs well. But the ink line is what a <em>comic</em> looks like — it fights the paper story, and the die-cut edge that makes this read as cardboard disappears under it.',
+    sky:'#7EC8E3', wall:'#F2E3C0', wallDk:'#D9C08A', roofA:'#E0553F', roofB:'#B83A2B',
+    trim:'#1A1410', glass:'#5BB3D9', door:'#C8202E', metal:'#9AA3AA',
+    siding:'#1A1410', sidingW:1.1, sidingO:.35, course:'#1A1410',
+    edge:'#1A1410', ew:3, stroke:' stroke="#1A1410" stroke-width="2.6" stroke-linejoin="round"',
+    trimO:1, ridgeO:1, courseO:.4, glint:.55,
+    trunk:'#7A4A22', leafA:'#3E9B4F', leafB:'#67C46B', leafC:'#2C6B38',
+    grassA:'#5FBF5A', grassB:'#2C6B38', faceted:false },
+
+  { key:'Folded', ref:'the pop-up book photo', pick:true,
+    note:'<b>Faceted planes, no outline, every surface its own tone.</b> This is the one I would build. Faceting <em>is</em> folded card — it tells the paper story instead of fighting it, and your reference is literally an open pop-up book. Roof and wall each split into a lit face and a shaded one.',
+    sky:'#DCEAF2', wall:'#F0E6D4', wallDk:'#D6C4A6', roofA:'#C4553F', roofB:'#9E3D2E',
+    trim:'#8A7660', glass:'#9FC4D8', door:'#8F1620', metal:'#A8AEB4',
+    siding:'#D6C4A6', sidingW:.9, sidingO:.7, course:'#8E3729',
+    edge:'#B79A7A', ew:2, stroke:'',
+    trimO:.9, ridgeO:.55, courseO:.35, glint:.4,
+    hillA:'#BFD3DD', hillB:'#A3BCC9',
+    trunk:'#9A7248', leafA:'#7FBF6A', leafB:'#5C9A50', leafC:'#3E7A45',
+    grassA:'#8CC474', grassB:'#5C9A50', faceted:true }
+];
+
+document.getElementById('row').innerHTML = STYLES.map(function(S){
+  return '<div class="card">' +
+    '<svg viewBox="0 0 300 230" aria-hidden="true">' + scene(S) + '</svg>' +
+    '<div class="cap"><div class="nm">' + S.key.toUpperCase() +
+    (S.now ? ' — BUILT' : S.pick ? ' — MY PICK' : '') +
+    (S.ref ? '</div><div class="rl" style="margin-top:2px;font-size:11.5px;opacity:.8">from ' + S.ref : '') +
+    '</div><div class="rl">' + S.note + '</div></div></div>';
+}).join('');
+
+document.getElementById('verdict').innerHTML =
+  '<b>Both of your references are good and they are not the same bet.</b> The comic filter is a look ' +
+  'applied to a photograph; the pop-up render is a look that <em>is</em> the material. For a book whose ' +
+  'whole argument is "this is a piece of card that stands up", faceting wins — it reads as folds. ' +
+  'The ink outline reads as a comic, and it also erases the pale die-cut edge, which is the detail ' +
+  'currently doing the most work.<br><br>' +
+  '<b>Cost, honestly:</b> Folded is roughly a day of re-drawing — every shape needs a lit face and a ' +
+  'shaded face, and the crew and the bird get the same treatment. Inked is about half that. Staying ' +
+  'as-is is free. <b>All three keep the mechanism, the beats and the jokes exactly as they are</b> — ' +
+  'this is only how the pieces are coloured.';
+})();
+</script>
+</body></html>
