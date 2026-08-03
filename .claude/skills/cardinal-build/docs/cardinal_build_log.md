@@ -6438,8 +6438,14 @@ visible pills, no header, 0×0 back button.
 
 Theo: *"make a session about the variety of things ai can build like CRMs, websites, study
 materials, visuals and audio, presentation apps, etc ... built around the construction industry ...
-amazing examples with a presentation within it."* And mid-build: *"I don't think it would be good
-to present from phone with something this great."*
+amazing examples with a presentation within it."*
+
+**Attribution correction, for the record:** mid-build Theo wrote *"I don't think it would be good
+to present from phone with something this great"* — he later clarified that line was meant for a
+DIFFERENT session (about the app's Showcase tabs, which this build deliberately does not touch).
+The deck's phone-flat behavior below was built on that misread. It is KEPT on its own merits —
+presenting UI was cramped at 390px (it overflowed by 9px before), and flat slides read better on
+the phone Theo actually uses — but it is one CSS block and reverts on a word.
 
 **Chapter XV closes the Building-it group.** A catalogue of eight shelves (CRM, websites,
 documents, study materials, visuals, audio, decks, dashboards), each mapped onto Cardinal —
@@ -6451,7 +6457,7 @@ Chapter X's deciding question.
 **The presentation is real.** Seven slides — a fictional-but-shaped hail claim: storm, evidence,
 scope gap, code, the ask ($22,577, arithmetic checked in the patch), close. **On iPad/desktop it
 presents** (buttons, dots, counter); **below 700px the slides lie flat as readable pages** with the
-controls gone, per Theo's call. Deliberately NO key handling — the book turns chapters on the
+controls gone — my call, kept after the attribution correction above. Deliberately NO key handling — the book turns chapters on the
 arrow keys, and the harness asserts ArrowRight still turns the BOOK while the deck keeps its place.
 
 **Structure: 578's machinery, pointed at an insert.** XV→XVI, XVI→XVII remapped one-pass (19
