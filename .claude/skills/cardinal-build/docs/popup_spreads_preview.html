@@ -78,9 +78,29 @@ var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
 /* Roof line, same geometry as the shipped spread — apex (150,28), eaves at
    x=34 and x=266. Reusing the number means a thumbnail and the real spread
    can never disagree about where the roof is. */
-function roofY(x){ return 28 + Math.abs(x - 150) * (72 / 116); }
+/* ── HIP ROOF WITH A RIDGE, not a pyramid ────────────────────────
+   Theo, 3 Aug: "the drip edge doesn't make sense if the house is shaped as a
+   pyramid unless you make the house shape different… would be nice if we could
+   show a ridge vent as well as soffit intake. Would it be too difficult to
+   change the shape of the house?"
+
+   Not difficult, and it unblocks three things at once. A pyramid has no ridge
+   and no rake, so a ridge vent had nowhere to live, the drip edge story was
+   thin, and spread 13 was promising a ridge that did not exist. A hip roof
+   with a ridge is also just the commonest real roof in Dayton.
+
+   Eave y=100 from x=34 to 266. RIDGE y=28 from x=104 to 196. The two sloping
+   edges are still HIPS and still take cap shingles; the ridge between them
+   takes the vent and its own cap run. Everything laid on the roof — sheets,
+   ice course, felt, shingle courses, grit — reads its bounds from these two
+   functions, so changing the shape here changed the whole book at once. */
+function roofY(x){
+  if(x >= 104 && x <= 196) return 28;                       // the ridge
+  return x < 104 ? 100 - (x - 34) * (72 / 70)               // left hip
+                 : 100 - (266 - x) * (72 / 70);             // right hip
+}
 // how wide the roof is at a given height — used to trim anything laid on it
-function spanAt(y){ var h = (y - 28) / (72 / 116); return [150 - h, 150 + h]; }
+function spanAt(y){ var h = (100 - y) * (70 / 72); return [34 + h, 266 - h]; }
 // one step down for the shaded facet — never a second palette
 function dk(h){
   var n = parseInt(h.slice(1), 16);
@@ -160,18 +180,60 @@ function dripEdge(){
   return s;
 }
 
+/* ── ridge vent, and the air that uses it ────────────────────────
+   Theo, 3 Aug: "would be nice if we could show a ridge vent somehow as well as
+   soffit intake. Ventilation being important. Showing airflow."
+
+   This is why the roof shape had to change. A ridge vent needs a ridge; a
+   pyramid has none. Now there is one, 104 to 196, and the vent sits proud of
+   it with the cap shingles laid over the top — which is exactly how it looks
+   on a finished roof: you see the raised line, not the vent itself.
+
+   The SYSTEM is the point, not the parts. Air in low at the soffit, up the
+   underside of the deck, out high at the ridge. It only works if both ends
+   exist, which is why intake and exhaust are drawn as one diagram and never
+   separately. */
+function ridgeVent(){
+  return '<path d="M100,22 L200,22 L200,28 L100,28 Z" fill="#3B4550"/>' +
+         '<path d="M150,22 L200,22 L200,28 L150,28 Z" fill="#2C343C"/>' +
+         '<g fill="none" stroke="#59636E" stroke-width=".8">' +
+         '<path d="M100,24.4 L200,24.4"/></g>';
+}
+function airflow(){
+  var AIR = '#8FD4E8', s = '';
+  function arrow(d, head){
+    return '<path d="' + d + '" fill="none" stroke="' + AIR + '" stroke-width="2.2" ' +
+           'stroke-linecap="round" opacity=".9"/>' +
+           '<path d="' + head + '" fill="' + AIR + '" opacity=".9"/>';
+  }
+  // intake at both soffits, drawn coming from OUTSIDE the house so it reads as
+  // air entering rather than air already in the attic
+  s += arrow('M18,120 C26,116 34,112 44,107.5',  'M44,107.5 L37,108.6 L40.2,112.6 Z');
+  s += arrow('M282,120 C274,116 266,112 256,107.5','M256,107.5 L263,108.6 L259.8,112.6 Z');
+  // up the underside of the deck, both sides, to the ridge
+  s += arrow('M52,100 C66,78 84,54 112,36',  'M112,36 L105.4,39.4 L109.6,42.8 Z');
+  s += arrow('M248,100 C234,78 216,54 188,36','M188,36 L194.6,39.4 L190.4,42.8 Z');
+  // and out
+  s += arrow('M132,20 C132,12 132,10 132,6', 'M132,6 L128,13 L136,13 Z');
+  s += arrow('M168,20 C168,12 168,10 168,6', 'M168,6 L164,13 L172,13 Z');
+  return s;
+}
+
 /* ── hip and ridge cap, over both hips ────────────────────────────
    Theo, 3 Aug: "since the roof is shaped like a pyramid put the hip and ridge
    shingles over the hips since it's visible." Same function as popup.html.
    Laid eave-to-peak so each cap laps the one below, which is how they go on. */
 function hipCaps(blend){
   var B = BLEND[blend] || BLEND.onyx, F = B.F, SHADOW = B.S;
-  var L = Math.sqrt(116*116 + 72*72), A = Math.atan2(72,116) * 180 / Math.PI,
+  var L = Math.sqrt(70*70 + 72*72),                // the hip, 100.4 long
+      A = Math.atan2(72,70) * 180 / Math.PI,      // at 45.83°
+      RL = 92,                                    // and the ridge, 104 to 196
       CW = 8.6, out = '';
-  function run(tx, ty, rot, shaded){
+  function run(tx, ty, rot, shaded, len){
+    var RUN = len || L;
     var g = '<g transform="translate('+tx+','+ty+') rotate('+rot.toFixed(2)+')">';
-    for(var i = 0; i * CW < L; i++){
-      var x = i * CW, w = Math.min(CW, L - x), tone = F[(i + (shaded ? 2 : 0)) % 4];
+    for(var i = 0; i * CW < RUN; i++){
+      var x = i * CW, w = Math.min(CW, RUN - x), tone = F[(i + (shaded ? 2 : 0)) % 4];
       g += '<path d="M'+x.toFixed(1)+',-3.1 L'+(x+w).toFixed(1)+',-3.1 L'+
            (x+w).toFixed(1)+',3.1 L'+x.toFixed(1)+',3.1 Z" fill="'+
            (shaded ? dk(tone) : tone)+'"/>';
@@ -180,14 +242,12 @@ function hipCaps(blend){
     }
     return g + '</g>';
   }
-  /* THE PEAK CAP. Both runs stop AT the apex and each cap straddles the hip
-     line, so the two leave a notch open above the point — a small V in the
-     silhouette. One last cap covers the junction, which is also what really
-     happens: a pyramid has no ridge, so this cap is the only thing playing
-     that part. */
+  /* Hips first, eave to peak, then the RIDGE run across the top — which the
+     roof now actually has. The ridge caps go on last and lap over the tops of
+     both hip runs, which is the order and also hides the junction that used to
+     leave a notch when the two hips met at a point. */
   return run(34,100,-A,false) + run(266,100,180+A,true) +
-    '<path d="M150,21.6 L156.4,29 L150,32.6 L143.6,29 Z" fill="'+F[0]+'"/>' +
-    '<path d="M150,21.6 L156.4,29 L150,32.6 Z" fill="'+dk(F[0])+'"/>';
+         run(104,28,0,false,RL);
 }
 
 /* ── OC Onyx Black, dimensional ───────────────────────────────────
@@ -276,44 +336,63 @@ function ground(dark){
 function house(o){
   o=o||{};
   var s='';
+  /* THE SOFFIT IS NOW A REAL SURFACE, because Theo wants the intake shown and
+     you cannot show intake without somewhere for it to come in. The roof
+     overhangs the wall, so under the fascia there is a horizontal underside —
+     that is the soffit, and it carries the vents. Drawn as a band wider than
+     the wall, which is what an overhang looks like from the front.
+     Wall top drops to 110 to make room; windows and door follow it down. */
+  s+='<path d="M28,104 L272,104 L272,110 L28,110 Z" fill="#C9BFAE"/>';
+  s+='<path d="M'+SPLIT+',104 L272,104 L272,110 L'+SPLIT+',110 Z" fill="#AFA593"/>';
+  // continuous intake, vented every few feet along the run
+  s+='<g fill="#6E6558">';
+  for(var vx=40;vx<262;vx+=16) s+='<path d="M'+vx+',105.6 L'+(vx+9)+',105.6 L'+
+     (vx+9)+',108.4 L'+vx+',108.4 Z"/>';
+  s+='</g>';
   // walls
-  s+='<path d="M34,100 L266,100 L266,150 L34,150 Z" fill="'+LIT+'"/>';
-  s+='<path d="M'+SPLIT+',100 L266,100 L266,150 L'+SPLIT+',150 Z" fill="'+SHD+'"/>';
+  s+='<path d="M40,110 L260,110 L260,150 L40,150 Z" fill="'+LIT+'"/>';
+  s+='<path d="M'+SPLIT+',110 L260,110 L260,150 L'+SPLIT+',150 Z" fill="'+SHD+'"/>';
   // lap siding
   s+='<g stroke="'+TRIM+'" stroke-width=".7" opacity=".35">';
-  for(var y=108;y<150;y+=8) s+='<path d="M34,'+y+' L266,'+y+'"/>';
+  for(var y=117;y<150;y+=8) s+='<path d="M40,'+y+' L260,'+y+'"/>';
   s+='</g>';
   // windows
-  [[64,112],[206,112]].forEach(function(w){
-    s+='<path d="M'+w[0]+','+w[1]+' L'+(w[0]+34)+','+w[1]+' L'+(w[0]+34)+','+(w[1]+28)+
-       ' L'+w[0]+','+(w[1]+28)+' Z" fill="'+GLASS+'" stroke="'+TRIM+'" stroke-width="1.6"/>';
-    s+='<path d="M'+w[0]+','+w[1]+' L'+(w[0]+34)+','+w[1]+' L'+w[0]+','+(w[1]+28)+' Z" fill="'+GLASSL+'"/>';
+  [[64,116],[196,116]].forEach(function(w){
+    s+='<path d="M'+w[0]+','+w[1]+' L'+(w[0]+30)+','+w[1]+' L'+(w[0]+30)+','+(w[1]+24)+
+       ' L'+w[0]+','+(w[1]+24)+' Z" fill="'+GLASS+'" stroke="'+TRIM+'" stroke-width="1.6"/>';
+    s+='<path d="M'+w[0]+','+w[1]+' L'+(w[0]+30)+','+w[1]+' L'+w[0]+','+(w[1]+24)+' Z" fill="'+GLASSL+'"/>';
     s+='<g stroke="'+TRIM+'" stroke-width="1.6">'+
-       '<path d="M'+(w[0]+17)+','+w[1]+' L'+(w[0]+17)+','+(w[1]+28)+'"/>'+
-       '<path d="M'+w[0]+','+(w[1]+14)+' L'+(w[0]+34)+','+(w[1]+14)+'"/></g>';
+       '<path d="M'+(w[0]+15)+','+w[1]+' L'+(w[0]+15)+','+(w[1]+24)+'"/>'+
+       '<path d="M'+w[0]+','+(w[1]+12)+' L'+(w[0]+30)+','+(w[1]+12)+'"/></g>';
   });
   // panelled door
-  s+='<path d="M136,116 L164,116 L164,150 L136,150 Z" fill="'+DOOR+'"/>';
-  s+='<path d="M150,116 L164,116 L164,150 L150,150 Z" fill="'+DOORS+'"/>';
+  s+='<path d="M136,120 L164,120 L164,150 L136,150 Z" fill="'+DOOR+'"/>';
+  s+='<path d="M150,120 L164,120 L164,150 L150,150 Z" fill="'+DOORS+'"/>';
   s+='<g fill="none" stroke="'+DOORS+'" stroke-width="1.2" opacity=".7">'+
-     '<path d="M141,121 L159,121 L159,131 L141,131 Z"/>'+
-     '<path d="M141,136 L159,136 L159,146 L141,146 Z"/></g>';
-  s+='<circle cx="159" cy="134" r="1.6" fill="'+MET+'"/>';
+     '<path d="M141,124 L159,124 L159,133 L141,133 Z"/>'+
+     '<path d="M141,137 L159,137 L159,146 L141,146 Z"/></g>';
+  s+='<circle cx="159" cy="136" r="1.6" fill="'+MET+'"/>';
 
-  // ── the roof, by stage ──
-  var A='34,100', B='150,28', C='266,100';
+  /* ── the roof, by stage ──
+     ONE trapezoid now, not two triangles meeting at a point: eave 34-266 at
+     y=100, ridge 104-196 at y=28. Straight on you see one slope, so the light
+     splits at SPLIT with the wall rather than at a facet edge that no longer
+     exists — which also ends the oddity of the roof shading at 150 while the
+     wall shaded at 176. */
   function plane(fa, fb){
-    return '<path d="M'+A+' L'+B+' L150,100 Z" fill="'+fa+'"/>'+
-           '<path d="M'+B+' L'+C+' L150,100 Z" fill="'+fb+'"/>';
+    var sp = spanAt(28);
+    return '<path d="M34,100 L'+sp[0]+',28 L'+sp[1]+',28 L266,100 Z" fill="'+fa+'"/>'+
+           '<path d="M'+SPLIT+',100 L'+SPLIT+','+roofY(SPLIT).toFixed(1)+
+           ' L'+sp[1]+',28 L266,100 Z" fill="'+fb+'"/>';
   }
   var st=o.roof||'shingle';
   if(st==='none'){ /* nothing — used before the house is the subject */ }
   // OLD roof: Onyx Black, weathered — granule loss reads greyer and flatter
   else if(st==='shingle') s+=plane('#22262B','#181B1F')+shingleArt('onyxOld',0,8,true)+
-                            dripEdge()+hipCaps('onyxOld');
+                            dripEdge()+ridgeVent()+hipCaps('onyxOld');
   // NEW roof: OC Duration BROWNWOOD, crisp off the bundle, over its starter
   else if(st==='new')     s+=plane('#4E3826','#38281B')+dripEdge()+
-                            shingleArt('brownwood',0,8,true)+hipCaps('brownwood');
+                            shingleArt('brownwood',0,8,true)+ridgeVent()+hipCaps('brownwood');
   else if(st==='bare'){
     /* 4x8 SHEETS. Theo, 3 Aug — same treatment as the shipped spread 7, and
        the same reason: a flat plane with shingle courses on it reads as a roof
@@ -404,9 +483,9 @@ function house(o){
     // shingleArt draws the courses now, with the laminate shadow that
     // actually makes them read three-dimensional
     // gutter + downspout, always
-    s+='<path d="M28,100 L272,100 L272,106 L28,106 Z" fill="'+MET+'"/>';
-    s+='<path d="M'+SPLIT+',100 L272,100 L272,106 L'+SPLIT+',106 Z" fill="'+METS+'"/>';
-    s+='<path d="M266,106 L272,106 L272,150 L266,150 Z" fill="'+METS+'"/>';
+    s+='<path d="M28,100 L272,100 L272,104 L28,104 Z" fill="'+MET+'"/>';
+    s+='<path d="M'+SPLIT+',100 L272,100 L272,104 L'+SPLIT+',104 Z" fill="'+METS+'"/>';
+    s+='<path d="M266,110 L272,110 L272,150 L266,150 Z" fill="'+METS+'"/>';
   }
   if(o.ridge){
     /* A CHEVRON RIDING THE PEAK, not a horizontal slab. The first pass drew
@@ -546,14 +625,14 @@ var SPREADS=[
        '<g fill="none" stroke="#F4EDDD" stroke-width="1.5" opacity=".9">'+
        [[176,58],[196,70],[214,82],[188,86]].map(function(p){
          return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5"/>'; }).join('')+'</g>' +
-       fig(196,roofY(196)+2,0.88,{arm:[[-8,-34],[-17,-30]]}) +
+       fig(196,70,0.88,{arm:[[-8,-34],[-17,-30]]}) +
        bird(272,112,0.7,true);
    }},
   {n:3, t:'The Adjuster', w:'Two people on one roof agreeing what is there. Cardinal meets them up there, every time.',
    sky:'day', build:function(){
      return house({roof:'shingle'}) + ladder(96,150,64,-13) +
-       fig(176,roofY(176)+2,0.86,{arm:[[-8,-34],[-18,-36]]}) +
-       fig(214,roofY(214)+2,0.86,{shirt:'#4A5866',shirtDk:'#333F4A',hat:'#D8DEE3',flip:true,
+       fig(158,72,0.86,{arm:[[-8,-34],[-18,-36]]}) +
+       fig(202,66,0.86,{shirt:'#4A5866',shirtDk:'#333F4A',hat:'#D8DEE3',flip:true,
                                   arm:[[-8,-34],[-17,-28]]}) +
        bird(56,120,0.7);
    }},
@@ -589,8 +668,8 @@ var SPREADS=[
      for(var i=0;i<5;i++){
        // +5, not -5: roofY IS the surface, so a bundle centred on it straddles
        // the edge with half its body in the sky. It has to sit INSIDE the plane.
-       var bx=76+i*16, by=roofY(bx)+5;
-       s+='<g transform="translate('+bx+','+by+') rotate(-31)">'+
+       var bx=64+i*15, by=roofY(bx)+9;
+       s+='<g transform="translate('+bx+','+by+') rotate(-46)">'+
           '<path d="M-13,-5 L13,-5 L13,5 L-13,5 Z" fill="#4A5866" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
           '<path d="M-13,-5 L13,-5 L13,-1 L-13,-1 Z" fill="#5D6D7C"/></g>';
      }
@@ -612,44 +691,44 @@ var SPREADS=[
      s+='<path d="M74,82 L114,82 L114,100 L74,100 Z" fill="#4A3A28"/>';   // the hole it left
      s+='<path d="M154,64 L194,64 L194,82 L154,82 Z" fill="#E3CDA2" stroke="'+KRAFT+
         '" stroke-width="1.6" stroke-linejoin="round"/>';                  // the new sheet
-     return s + fig(150,roofY(150)+64,0.86,{arm:[[-8,-34],[-18,-30]]}) +
+     return s + fig(150,88,0.86,{arm:[[-8,-34],[-18,-30]]}) +
        ladder(292,150,58,10) + bird(46,120,0.68);
    }},
   {n:9, t:'The Ice Shield', w:'A rubber membrane at every eave and valley. Dayton gets ice dams, and this is what stops one.',
    sky:'day', build:function(){
      return house({roof:'ice'}) +
-       fig(96,roofY(96)+6,0.82,{arm:[[-8,-34],[-16,-26]]}) +
-       fig(212,roofY(212)+6,0.82,{flip:true,arm:[[-8,-34],[-16,-26]]}) +
+       fig(84,88,0.82,{arm:[[-8,-34],[-16,-26]]}) +
+       fig(216,88,0.82,{flip:true,arm:[[-8,-34],[-16,-26]]}) +
        bird(276,112,0.68,true);
    }},
   {n:10, t:'The Felt', w:'Synthetic underlayment over the whole deck. If it rains tonight, you stay dry tonight.',
    sky:'dusk', build:function(){
      var s=house({roof:'felt'});
      // a roll part way up the slope
-     s+='<g transform="translate(196,64) rotate(-31)">'+
+     s+='<g transform="translate(196,58) rotate(-25)">'+
         '<path d="M-16,-7 L16,-7 L16,7 L-16,7 Z" fill="#6E747A" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
         '<circle cx="16" cy="0" r="7" fill="#8A9096" stroke="'+KRAFT+'" stroke-width="1.2"/></g>';
-     return s + fig(120,roofY(120)+6,0.84,{arm:[[-8,-34],[-16,-28]]}) + bird(50,120,0.68);
+     return s + fig(118,64,0.84,{arm:[[-8,-34],[-16,-28]]}) + bird(50,120,0.68);
    }},
   {n:11, t:'The Flashing', w:'Metal where the roof meets anything else — chimney, wall, pipe. Leaks start here or nowhere.',
    sky:'noon', build:function(){
      var s=house({roof:'felt'});
      // chimney with step flashing
-     s+='<path d="M186,44 L206,44 L206,84 L186,84 Z" fill="#7E4A3C" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
-     s+='<path d="M196,44 L206,44 L206,84 L196,84 Z" fill="#5F3529"/>';
-     s+='<path d="M182,84 L186,80 L186,58 L182,62 Z" fill="'+MET+'"/>';
+     s+='<path d="M186,48 L206,48 L206,86 L186,86 Z" fill="#7E4A3C" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
+     s+='<path d="M196,48 L206,48 L206,86 L196,86 Z" fill="#5F3529"/>';
+     s+='<path d="M182,86 L186,82 L186,62 L182,66 Z" fill="'+MET+'"/>';
      s+='<g fill="'+MET+'" stroke="'+KRAFT+'" stroke-width=".9">'+
         '<path d="M206,60 L214,66 L214,72 L206,66 Z"/><path d="M206,70 L214,76 L214,82 L206,76 Z"/></g>';
      // pipe boot
      s+='<path d="M112,76 L120,76 L120,66 L112,66 Z" fill="'+METS+'"/>';
      s+='<path d="M106,80 L126,80 L122,74 L110,74 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
-     return s + fig(150,roofY(150)+64,0.82,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
+     return s + fig(150,88,0.82,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
    }},
   {n:12, t:'The Shingles', w:'Courses going up the slope, one lap over the next. The part everybody pictures.',
    sky:'noon', build:function(){
      return house({roof:'half'}) +
-       fig(104,roofY(104)+34,0.82,{arm:[[-8,-34],[-15,-24]]}) +
-       fig(206,roofY(206)+34,0.82,{flip:true,arm:[[-8,-34],[-15,-24]]}) +
+       fig(106,78,0.82,{arm:[[-8,-34],[-15,-24]]}) +
+       fig(198,78,0.82,{flip:true,arm:[[-8,-34],[-15,-24]]}) +
        trailer(60,150,0.72) + bird(288,112,0.66,true);
    }},
   /* RETITLED. The caption promised "ridge vent along the peak" and this roof
@@ -657,17 +736,16 @@ var SPREADS=[
      point are what is actually up there. Ventilation on a hip roof is a real
      question and it is Theo's to answer, not mine to draw: hip vent, box
      vents, or a powered unit. Flagged, not invented. */
-  {n:13, t:'The Hip & Ridge', w:'Cap shingles up both hips and over the point. On a pyramid this is the whole finish line — and the most visible shingle on the roof.',
+  {n:13, t:'The Ventilation', w:'Intake low at the soffit, exhaust high at the ridge. A roof that cannot breathe cooks itself — and half a system is no system.',
    sky:'day', build:function(){
-     return house({roof:'new', ridge:true}) +
-       fig(126,42,0.74,{arm:[[-8,-34],[-14,-40]]}) +
-       fig(176,44,0.74,{flip:true,arm:[[-8,-34],[-14,-40]]}) +
-       bird(56,120,0.68);
+     /* NO CREW ON THIS ONE. The subject is the air, and two figures on the
+        ridge would sit exactly where the exhaust arrows go. */
+     return house({roof:'new', ridge:true}) + airflow() + bird(20,124,0.66);
    }},
   {n:14, t:'The Walk', w:'Theo on the roof at the end, not on the phone. Nothing is finished until he has been up there.',
    sky:'dusk', build:function(){
      return house({roof:'new', ridge:true}) + ladder(94,150,64,-13) +
-       fig(186,roofY(186)+2,0.9,{shirt:'#474C52',shirtDk:'#33373C',hat:false,
+       fig(180,62,0.9,{shirt:'#474C52',shirtDk:'#33373C',hat:false,
                                  arm:[[-8,-34],[-18,-38]]}) +
        yardsign(254,150,0.72) + bird(292,112,0.68,true);
    }},
