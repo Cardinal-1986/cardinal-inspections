@@ -7555,3 +7555,24 @@ which is byte-equivalent for everything that existed before tonight.
 Verified: the full sixteen-spread walk ALL GREEN after the CSS change · twelve busts counted in
 `teamG` at phone and iPad · no surnames in the public file (asserted mechanically, not eyeballed)
 · rendered and eyeballed at both sizes.
+
+---
+
+## Theo, actually — the real cutout on The Walk (2026-08-03, same night)
+
+Theo sent a photograph of a cardboard standee of himself — real photo, cardboard edge and foot
+brace already part of the object — and asked to be put in "like this, but at scale." So spread
+14's drawn Theo is now the REAL one: background floodfilled off from the borders (the tan
+cardboard edge rings the whole cutout, hair included, and stops the flood — no threshold
+guesswork), trimmed, scaled to 42 units (the drawn crew's exact height), and embedded as a
+34 KB WebP data URI standing at the base of the ladder with a ground shadow. The one photograph
+in a fully drawn book, which is the signature and the joke at once. The uploaded original stays
+out of the repo; only the processed transparent cutout ships, at his explicit request.
+
+One process miss worth recording: the first spread-14 "verification" screenshot was actually
+spread 16 — a copied shot script whose URL replace silently didn't match (no assert on the
+replace). The rewritten script asserts the phase title before shooting. A screenshot of the
+wrong thing is worse than no screenshot, because it looks like proof.
+
+Verified: full sixteen-spread walk ALL GREEN · the `<image>` node present in `walkG` with the
+right rendered box at phone and iPad · rendered and eyeballed at both sizes.
