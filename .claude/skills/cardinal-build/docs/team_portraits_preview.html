@@ -34,17 +34,18 @@
   <div class="row" style="grid-template-columns:repeat(3,1fr);max-width:620px" id="shirts"></div>
 
   <div class="note">
-    <b>Ten people, roles in your words.</b> Seven are drawn from photographs. Danny,
-    Nick and Jacob have no photo yet, so their board is cut and their polo is on but
-    the face is left <span class="q">unpunched</span> — inventing a face for a named
-    colleague is the same mistake as inventing their name. Send three photos and they
-    take about two minutes each.
+    <b>Ten drawn, eight from photographs.</b> Nick and Jacob are stand-ins at
+    Theo&rsquo;s word — clean-shaven, no glasses, plausible rather than accurate.
+    Their features are <i>fixed</i>, not randomised at run time: a face that
+    reshuffled on every reload could never be approved, and would differ between
+    this sheet and the spread it lands on. Send two photos and they become
+    themselves in about two minutes each.
     <br><br>
-    <b>One thing worth checking, not a claim.</b> The app's permission groups list
-    <i>scottie@</i> under Production, and he isn&rsquo;t on your roster above. Going the
-    other way, Jerry, Amanda, Danny and Caine don&rsquo;t appear in those groups at all —
-    which would mean no app account, and nobody can be assigned work they can&rsquo;t
-    sign in to see. Worth a look; I haven&rsquo;t changed anything.
+    <b>One thing worth checking, not a claim.</b> The app&rsquo;s permission groups
+    list <i>scottie@</i> under Production and he isn&rsquo;t on the roster; going the
+    other way, Jerry, Amanda, Danny and Caine appear in no group at all, which
+    would mean no app account. Nobody can be assigned work they can&rsquo;t sign in
+    to see. I haven&rsquo;t changed anything.
   </div>
 </div>
 <script>
@@ -316,8 +317,10 @@ var PEOPLE=[
    fw:16.4,fh:18.9,jaw:0.52}},
   {n:'DANNY GUTIERREZ', r:'Logistics', o:{skin:'mid',hair:'dark',cap:true,glasses:true,
    beard:'full',beardColor:'dark',fw:16.6,fh:18.6,jaw:0.62}},
-  {n:'NICK HEY',        r:'Sales · photo?',     o:{blank:true}},
-  {n:'JACOB HENDERSON', r:'Sales · photo?',     o:{blank:true}}
+  {n:'NICK HEY',        r:'Sales · stand-in', o:{skin:'light',hair:'midbrown',
+   style:'short',fw:16.4,fh:18.4,jaw:0.5}},
+  {n:'JACOB HENDERSON', r:'Sales · stand-in', o:{skin:'tan',hair:'dark',
+   style:'swept',fw:16.9,fh:18.0,jaw:0.68}}
 ];
 document.getElementById('row').innerHTML = PEOPLE.map(function(p){
   return '<div class="card">'+portrait(p.o)+
