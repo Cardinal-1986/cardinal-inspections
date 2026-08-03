@@ -663,6 +663,82 @@
     return s;
   }
 
+  /* ── OC Onyx Black, dimensional ───────────────────────────────
+     Theo, 3 Aug: "make the shingles a lot more 3 dimensional like shingles do
+     it in oc onyx black. has shades of blacks and greys".
+
+     Owens Corning Duration is a LAMINATED shingle, and what makes one read
+     three-dimensional is one thing above all: the hard shadow cast under
+     every course butt where the second layer stands proud. Two flat planes
+     with five hairlines across them cannot do it — that is a strip shingle at
+     best, and it is what was here.
+
+     Onyx Black is a BLEND, not a colour. Four field tones cycle per tab so no
+     two neighbours match, over the shadow band, with a granule edge catching
+     the light along the top of each course. The cycle is (course*3 + tab), so
+     the pattern never lines up vertically the way a simple alternation would.
+
+     Tabs are clamped to the span at the course's TOP edge, which is the
+     narrower one — a tab that fits there fits all the way down, so nothing
+     needs clipping and nothing escapes the roof. */
+  function shingleArt(weathered){
+    /* The first blend ran #34383C to #3D4246 — sixteen steps end to end, which
+       rendered as one flat black with a couple of tabs slightly off. "Shades
+       of blacks AND GREYS" needs the spread to be visible at arm's length, so
+       the range is now roughly 34 steps and the lightest tab is a real grey. */
+    var F = weathered ? ['#3B4147','#2A2E33','#484E55','#222629']
+                      : ['#2E343B','#1E2227','#3E454C','#171A1E'],
+        SHADOW = weathered ? '#191C1F' : '#0D1013',
+        EDGE   = weathered ? '#5A6066' : '#525A62';
+    // the shaded plane is the same blend one step down, never a second palette
+    function dk(h){
+      var n = parseInt(h.slice(1), 16);
+      return '#' + ((1 << 24) + (Math.round((n >> 16 & 255) * 0.72) << 16) +
+                    (Math.round((n >> 8 & 255) * 0.72) << 8) +
+                     Math.round((n & 255) * 0.72)).toString(16).slice(1);
+    }
+    function span(y){ var h = (y - 28) / (72 / 116); return [150 - h, 150 + h]; }
+    var CH = 9, TW = 15, SH = 2.4, out = '';
+    for(var c = 0; c < 8; c++){
+      var yb = 100 - c * CH, yt = Math.max(28, yb - CH);
+      var sb = span(yb), st = span(yt);
+      // course field, one trapezoid per plane
+      out += '<path d="M' + sb[0].toFixed(1) + ',' + yb + ' L' + st[0].toFixed(1) + ',' + yt +
+             ' L150,' + yt + ' L150,' + yb + ' Z" fill="' + F[1] + '"/>';
+      out += '<path d="M150,' + yb + ' L150,' + yt + ' L' + st[1].toFixed(1) + ',' + yt +
+             ' L' + sb[1].toFixed(1) + ',' + yb + ' Z" fill="' + dk(F[1]) + '"/>';
+      // the tabs — this is the blend
+      var stag = (c % 2) * (TW / 2);
+      [[st[0], 150, 0], [150, st[1], 1]].forEach(function(seg){
+        var lo = seg[0], hi = seg[1], shaded = seg[2];
+        for(var x = Math.ceil(lo / TW) * TW + stag, i = 0; x < hi - 3; x += TW, i++){
+          var x1 = Math.min(x + TW - 1.2, hi);
+          if(x1 - x < 4) continue;
+          var tone = F[(c * 3 + i + shaded) % 4];
+          out += '<path d="M' + x.toFixed(1) + ',' + yt + ' L' + x1.toFixed(1) + ',' + yt +
+                 ' L' + x1.toFixed(1) + ',' + (yb - SH) + ' L' + x.toFixed(1) + ',' + (yb - SH) +
+                 ' Z" fill="' + (shaded ? dk(tone) : tone) + '"/>';
+        }
+      });
+      /* THE LAMINATE SHADOW. Everything above is colour; this is the depth.
+         The inset is SH / 0.6207, not SH * 0.62 — I had the slope INVERTED.
+         Rising SH in y along a rake of dy/dx = 0.6207 means moving 1/0.6207
+         in x, so the band's outer corner was 2.4 units short and poked past
+         the rake on all eight courses. Every mechanical check was green; the
+         one that caught it samples vertices against roofY. */
+      var IN = SH / (72 / 116);
+      out += '<path d="M' + sb[0].toFixed(1) + ',' + yb + ' L150,' + yb + ' L150,' + (yb - SH) +
+             ' L' + (sb[0] + IN).toFixed(1) + ',' + (yb - SH) + ' Z" fill="' + SHADOW + '"/>';
+      out += '<path d="M150,' + yb + ' L' + sb[1].toFixed(1) + ',' + yb + ' L' +
+             (sb[1] - IN).toFixed(1) + ',' + (yb - SH) + ' L150,' + (yb - SH) +
+             ' Z" fill="' + dk(SHADOW) + '"/>';
+      // granules catching the light along the course top
+      out += '<path d="M' + st[0].toFixed(1) + ',' + yt + ' L' + st[1].toFixed(1) + ',' + yt +
+             '" fill="none" stroke="' + EDGE + '" stroke-width=".8" opacity=".5"/>';
+    }
+    return out;
+  }
+
   /* ── the pop's artwork — FOLDED ───────────────────────────────
      Theo picked the low-poly pop-up reference over the comic one, and the
      reason it is the right pick is material rather than taste: FACETING IS
@@ -724,8 +800,8 @@
     var fa = stripped ? DECK  : ROOF,
         fb = stripped ? DECKS : ROOFS;
     s += '<g' + (stripped ? '' : ' id="shingles"') + '>';
-    s += '<path d="M34,100 L150,28 L150,100 Z" fill="' + fa + '"/>';
-    s += '<path d="M150,28 L266,100 L150,100 Z" fill="' + fb + '"/>';
+    s += '<path d="M34,100 L150,28 L150,100 Z" fill="' + (stripped ? fa : '#22262B') + '"/>';
+    s += '<path d="M150,28 L266,100 L150,100 Z" fill="' + (stripped ? fb : '#181B1F') + '"/>';
     if(stripped){
       /* 4x8 SHEETS, NOT MORE COURSES. Theo, 3 Aug: "make the sheething look
          like 4x8 sheets mark with red what's bad". The stripped deck had been
@@ -776,12 +852,11 @@
              '<path d="M' + (bx + SHW - 7) + ',' + (by + 4) + ' L' + (bx + 7) + ',' + (by + SHH - 4) + '"/></g>';
       });
     } else {
-      s += '<g fill="none" stroke="#8E3729" stroke-width="1.1" opacity=".45">';
-      for(var i = 1; i <= 5; i++){
-        var t = i / 6.2, yy = 100 - t * 70, a = 34 + t * 116, b = 266 - t * 116;
-        s += '<path d="M' + a.toFixed(0) + ',' + yy.toFixed(0) + ' L' + b.toFixed(0) + ',' + yy.toFixed(0) + '"/>';
-      }
-      s += '</g>';
+      /* WEATHERED Onyx Black — the roof that is about to come off. Same
+         blend, lifted and flattened: a tired roof has lost granules, so it
+         reads greyer and lower in contrast than the new one will.
+         The five hairlines that used to live here were a strip shingle. */
+      s += shingleArt(true);
     }
     s += '</g>';
 

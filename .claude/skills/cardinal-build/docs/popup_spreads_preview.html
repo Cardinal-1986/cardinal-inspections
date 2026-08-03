@@ -127,6 +127,60 @@ function grit(seed, n, y0, y1){
   }
   return s;
 }
+/* ── OC Onyx Black, dimensional ───────────────────────────────────
+   Mirrors the function now shipping in popup.html — same geometry, same
+   blend, so a thumbnail and the real spread cannot disagree about what a
+   Cardinal roof looks like. (The two files each carry their own copy of
+   house/fig/bird already; this preview is standalone by design.)
+
+   Owens Corning Duration is a LAMINATED shingle, and what makes one read
+   three-dimensional is the hard shadow under every course butt where the
+   second layer stands proud. Onyx Black is a blend — four field tones cycling
+   per tab on (course*3 + tab), so the pattern never lines up vertically.
+   `from`/`to` let a half-shingled roof use the same courses as a finished one
+   rather than a second way of drawing shingles. */
+function shingleArt(weathered, from, to){
+  var F = weathered ? ['#3B4147','#2A2E33','#484E55','#222629']
+                    : ['#2E343B','#1E2227','#3E454C','#171A1E'],
+      SHADOW = weathered ? '#191C1F' : '#0D1013',
+      EDGE   = weathered ? '#5A6066' : '#525A62';
+  function dk(h){
+    var n = parseInt(h.slice(1), 16);
+    return '#' + ((1 << 24) + (Math.round((n >> 16 & 255) * 0.72) << 16) +
+                  (Math.round((n >> 8 & 255) * 0.72) << 8) +
+                   Math.round((n & 255) * 0.72)).toString(16).slice(1);
+  }
+  var CH = 9, TW = 15, SH = 2.4, IN = SH / (72 / 116), out = '';
+  for(var c = (from || 0); c < (to === undefined ? 8 : to); c++){
+    var yb = 100 - c * CH, yt = Math.max(28, yb - CH);
+    var sb = spanAt(yb), st = spanAt(yt);
+    out += '<path d="M'+sb[0].toFixed(1)+','+yb+' L'+st[0].toFixed(1)+','+yt+
+           ' L150,'+yt+' L150,'+yb+' Z" fill="'+F[1]+'"/>';
+    out += '<path d="M150,'+yb+' L150,'+yt+' L'+st[1].toFixed(1)+','+yt+
+           ' L'+sb[1].toFixed(1)+','+yb+' Z" fill="'+dk(F[1])+'"/>';
+    var stag = (c % 2) * (TW / 2);
+    [[st[0], 150, 0], [150, st[1], 1]].forEach(function(seg){
+      var lo = seg[0], hi = seg[1], shaded = seg[2];
+      for(var x = Math.ceil(lo / TW) * TW + stag, i = 0; x < hi - 3; x += TW, i++){
+        var x1 = Math.min(x + TW - 1.2, hi);
+        if(x1 - x < 4) continue;
+        var tone = F[(c * 3 + i + shaded) % 4];
+        out += '<path d="M'+x.toFixed(1)+','+yt+' L'+x1.toFixed(1)+','+yt+' L'+
+               x1.toFixed(1)+','+(yb-SH)+' L'+x.toFixed(1)+','+(yb-SH)+
+               ' Z" fill="'+(shaded ? dk(tone) : tone)+'"/>';
+      }
+    });
+    // the laminate shadow — inset SH/0.6207, the rake's slope INVERTED, which
+    // is the arithmetic I got backwards first time in popup.html
+    out += '<path d="M'+sb[0].toFixed(1)+','+yb+' L150,'+yb+' L150,'+(yb-SH)+
+           ' L'+(sb[0]+IN).toFixed(1)+','+(yb-SH)+' Z" fill="'+SHADOW+'"/>';
+    out += '<path d="M150,'+yb+' L'+sb[1].toFixed(1)+','+yb+' L'+(sb[1]-IN).toFixed(1)+
+           ','+(yb-SH)+' L150,'+(yb-SH)+' Z" fill="'+dk(SHADOW)+'"/>';
+    out += '<path d="M'+st[0].toFixed(1)+','+yt+' L'+st[1].toFixed(1)+','+yt+
+           '" fill="none" stroke="'+EDGE+'" stroke-width=".8" opacity=".5"/>';
+  }
+  return out;
+}
 function ground(dark){
   return '<path d="M0,150 L300,150 L300,190 L0,190 Z" fill="'+(dark?GRASSD:GRASS)+'"/>'+
          '<path d="M0,150 L300,150 L300,168 L0,168 Z" fill="#000" opacity=".12"/>';
@@ -171,8 +225,10 @@ function house(o){
   }
   var st=o.roof||'shingle';
   if(st==='none'){ /* nothing — used before the house is the subject */ }
-  else if(st==='shingle') s+=plane(ROOF,ROOFS);
-  else if(st==='new')     s+=plane('#4A5866','#333F4A');
+  // OLD roof: Onyx Black, weathered — granule loss reads greyer and flatter
+  else if(st==='shingle') s+=plane('#22262B','#181B1F')+shingleArt(true);
+  // NEW roof: Onyx Black, crisp off the bundle
+  else if(st==='new')     s+=plane('#1E2227','#161A1D')+shingleArt(false);
   else if(st==='bare'){
     /* 4x8 SHEETS. Theo, 3 Aug — same treatment as the shipped spread 7, and
        the same reason: a flat plane with shingle courses on it reads as a roof
@@ -223,21 +279,25 @@ function house(o){
     s+='</g>';
   }
   else if(st==='half'){
+    /* Four courses on, four to go. SAME shingleArt as a finished roof, just
+       fewer courses — a second way of drawing a half-done roof is how the
+       book starts to look like two books stapled together.
+       THE FELT ABOVE NEEDS ITS PRINTED LINES. Both materials are now
+       near-black by design (Theo's call), so with the shingles alone the
+       spread showed no difference between the done half and the undone half —
+       the one thing the spread exists to show. The lines are what tells them
+       apart, and they are what is really printed on the roll. */
     s+=plane(FELT,FELTS);
-    // new shingles coming up from the left eave
-    s+='<path d="M34,100 L92,64 L150,100 Z" fill="#4A5866"/>';
-    s+='<path d="M150,100 L208,64 L266,100 Z" fill="#333F4A"/>';
-    s+='<g stroke="#2B343E" stroke-width=".9" opacity=".55">'+
-       '<path d="M52,89 L248,89"/><path d="M70,78 L230,78"/></g>';
+    s+='<g fill="none" stroke="#7A8085" stroke-width=".8" opacity=".6">';
+    [58,44].forEach(function(yy){ var sp=spanAt(yy);
+      s+='<path d="M'+sp[0].toFixed(1)+','+yy+' L'+sp[1].toFixed(1)+','+yy+'"/>'; });
+    s+='</g>';
+    s+=shingleArt(false,0,4);
   }
   if(st!=='none'){
-    // shingle courses on the finished states
-    if(st==='shingle'||st==='new'){
-      s+='<g fill="none" stroke="'+(st==='new'?'#2B343E':'#8E3729')+'" stroke-width="1" opacity=".45">';
-      for(var i=1;i<=5;i++){ var q=i/6.2, ry=100-q*70, ra=34+q*116, rb=266-q*116;
-        s+='<path d="M'+ra.toFixed(0)+','+ry.toFixed(0)+' L'+rb.toFixed(0)+','+ry.toFixed(0)+'"/>'; }
-      s+='</g>';
-    }
+    // the five hairlines that used to live here were a strip shingle;
+    // shingleArt draws the courses now, with the laminate shadow that
+    // actually makes them read three-dimensional
     // gutter + downspout, always
     s+='<path d="M28,100 L272,100 L272,106 L28,106 Z" fill="'+MET+'"/>';
     s+='<path d="M'+SPLIT+',100 L272,100 L272,106 L'+SPLIT+',106 Z" fill="'+METS+'"/>';
