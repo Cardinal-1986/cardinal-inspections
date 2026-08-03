@@ -96,12 +96,19 @@ var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
    ice course, felt, shingle courses, grit — reads its bounds from these two
    functions, so changing the shape here changed the whole book at once. */
 function roofY(x){
-  if(x >= 104 && x <= 196) return 28;                       // the ridge
-  return x < 104 ? 100 - (x - 34) * (72 / 70)               // left hip
-                 : 100 - (266 - x) * (72 / 70);             // right hip
+  /* THE T — Theo's pick from five shapes, 3 Aug. A side-gable MAIN ROOF:
+     one rectangular band, eave y=100 from x=30 to 270, ridge y=44 across the
+     full width. Straight-on a side gable IS a rectangle — the slope runs
+     away from the viewer. The front cross-gable WING (see wing()) sits on
+     top of this plane and makes the two valleys; it does not change the
+     band. So roofY is a constant, and everything that asks it lines up by
+     construction — which is the literal thing Theo asked for. */
+  return 44;
 }
 // how wide the roof is at a given height — used to trim anything laid on it
-function spanAt(y){ var h = (100 - y) * (70 / 72); return [34 + h, 266 - h]; }
+function spanAt(y){ return [30, 270]; }
+/* how wide the roof is at a given height — on the T it is the full band,
+   which is exactly why everything lines up */
 // one step down for the shaded facet — never a second palette
 function dk(h){
   var n = parseInt(h.slice(1), 16);
@@ -196,15 +203,8 @@ function dripEdge(){
    exist, which is why intake and exhaust are drawn as one diagram and never
    separately. */
 function ridgeVent(){
-  /* NARROWER AND SHALLOWER THAN THE CAP RUN, which the first pass was not:
-     100-200 against a ridge of 104-196, top edge at y=22 against a cap top at
-     24.9. It overhung the caps at both ends and stood proud of them — a metal
-     plate lying ON the ridge, the one thing you never see on a finished roof.
-     1.4 units of it show above the cap now, and that sliver is the raised
-     line you are actually meant to see. */
-  return '<path d="M104,23.5 L196,23.5 L196,28 L104,28 Z" fill="#3B4550"/>' +
-         '<path d="M'+SPLIT+',23.5 L196,23.5 L196,28 L'+SPLIT+',28 Z" fill="#2C343C"/>' +
-         '<path d="M104,24.1 L196,24.1" fill="none" stroke="#59636E" stroke-width=".7"/>';
+  /* absorbed into ridgeAndRakes — kept as a no-op so nothing dangles */
+  return '';
 }
 function airflow(){
   var AIR = '#8FD4E8', s = '';
@@ -217,12 +217,12 @@ function airflow(){
   // air entering rather than air already in the attic
   s += arrow('M18,120 C26,116 34,112 44,107.5',  'M44,107.5 L37,108.6 L40.2,112.6 Z');
   s += arrow('M282,120 C274,116 266,112 256,107.5','M256,107.5 L263,108.6 L259.8,112.6 Z');
-  // up the underside of the deck, both sides, to the ridge
-  s += arrow('M52,100 C66,78 84,54 112,36',  'M112,36 L105.4,39.4 L109.6,42.8 Z');
-  s += arrow('M248,100 C234,78 216,54 188,36','M188,36 L194.6,39.4 L190.4,42.8 Z');
-  // and out
-  s += arrow('M132,20 C132,12 132,10 132,6', 'M132,6 L128,13 L136,13 Z');
-  s += arrow('M168,20 C168,12 168,10 168,6', 'M168,6 L164,13 L172,13 Z');
+  // up the band to the ridge, both free zones (the wing owns the middle)
+  s += arrow('M56,96 C62,80 68,62 74,48',  'M74,48 L69.4,53.6 L76.6,55.4 Z');
+  s += arrow('M244,96 C238,80 232,62 226,48','M226,48 L230.6,53.6 L223.4,55.4 Z');
+  // and out at the ridge vent
+  s += arrow('M84,34 C84,26 84,22 84,16', 'M84,16 L80,23 L88,23 Z');
+  s += arrow('M216,34 C216,26 216,22 216,16', 'M216,16 L212,23 L220,23 Z');
   return s;
 }
 
@@ -230,35 +230,26 @@ function airflow(){
    Theo, 3 Aug: "since the roof is shaped like a pyramid put the hip and ridge
    shingles over the hips since it's visible." Same function as popup.html.
    Laid eave-to-peak so each cap laps the one below, which is how they go on. */
-function hipCaps(blend){
-  var B = BLEND[blend] || BLEND.onyx, F = B.F, SHADOW = B.S;
-  var L = Math.sqrt(70*70 + 72*72),                // the hip, 100.4 long
-      A = Math.atan2(72,70) * 180 / Math.PI,      // at 45.83°
-      RL = 92,                                    // and the ridge, 104 to 196
-      CW = 8.6, out = '';
-  function run(tx, ty, rot, shaded, len){
-    var RUN = len || L;
-    var g = '<g transform="translate('+tx+','+ty+') rotate('+rot.toFixed(2)+')">';
-    for(var i = 0; i * CW < RUN; i++){
-      var x = i * CW, w = Math.min(CW, RUN - x), tone = F[(i + (shaded ? 2 : 0)) % 4];
-      g += '<path d="M'+x.toFixed(1)+',-3.1 L'+(x+w).toFixed(1)+',-3.1 L'+
-           (x+w).toFixed(1)+',3.1 L'+x.toFixed(1)+',3.1 Z" fill="'+
-           (shaded ? dk(tone) : tone)+'"/>';
-      g += '<path d="M'+x.toFixed(1)+',-3.1 L'+x.toFixed(1)+',3.1" fill="none" stroke="'+
-           (shaded ? dk(SHADOW) : SHADOW)+'" stroke-width="1.3"/>';
-    }
-    return g + '</g>';
+function ridgeAndRakes(blend){
+  /* What hipCaps used to be, renamed because the hips are gone — a name is
+     not a contract. White rake boards up both gable ends, the ridge vent
+     proud across the top, and the cap run over it, split lit/shaded at
+     SPLIT like every other material. */
+  var B = BLEND[blend] || BLEND.onyx, F = B.F, S = B.S, out = '';
+  out += '<path d="M30,44 L32.4,44 L32.4,97 L30,97 Z" fill="#F2F4F5" stroke="#98A0A5" stroke-width=".6"/>';
+  out += '<path d="M267.6,44 L270,44 L270,97 L267.6,97 Z" fill="#E4E7E9" stroke="#98A0A5" stroke-width=".6"/>';
+  out += '<path d="M34,38 L266,38 L266,44 L34,44 Z" fill="#3B4550"/>';
+  out += '<path d="M34,38.6 L266,38.6" stroke="#59636E" stroke-width=".7" fill="none"/>';
+  var CW = 8.6;
+  for(var x = 30, i = 0; x < 270; x += CW, i++){
+    var xe = Math.min(x + CW, 270), tone = F[i % 4], sh = x >= SPLIT;
+    out += '<path d="M' + x.toFixed(1) + ',40.9 L' + xe.toFixed(1) + ',40.9 L' +
+           xe.toFixed(1) + ',47.1 L' + x.toFixed(1) + ',47.1 Z" fill="' +
+           (sh ? dk(tone) : tone) + '"/>';
+    out += '<path d="M' + x.toFixed(1) + ',40.9 L' + x.toFixed(1) + ',47.1" fill="none" stroke="' +
+           (sh ? dk(S) : S) + '" stroke-width="1.3"/>';
   }
-  /* Hips first, eave to peak, then the RIDGE run across the top — which the
-     roof now actually has. The ridge caps go on last and lap over the tops of
-     both hip runs, which is the order and also hides the junction that used to
-     leave a notch when the two hips met at a point. */
-  /* The ridge is TWO runs because it crosses the shade break at 176. One run
-     stayed lit end to end, so the cap was brighter than the plane under it for
-     the last twenty units. The tone cycle restarts at the seam, which is the
-     one place on the roof a tone change is expected anyway. */
-  return run(34,100,-A,false) + run(266,100,180+A,true) +
-         run(104,28,0,false,SPLIT-104) + run(SPLIT,28,0,true,196-SPLIT);
+  return out;
 }
 
 /* ── OC Onyx Black, dimensional ───────────────────────────────────
@@ -287,54 +278,37 @@ var BLEND = {
   brownwood: { F:['#6B4F35','#4E3826','#8A6B4A','#3D2C1D'], S:'#241811', E:'#A5825C' }
 };
 function shingleArt(blend, from, to, starter){
+  /* Rectangle courses for the T: starter at the eave, then 8 courses of 6.5
+     landing exactly on the ridge (96 - 8*6.5 = 44). Same vocabulary as the
+     hip version — tab cycle, laminate shadow, lit/shaded split at SPLIT —
+     with the convergence arithmetic gone, because there is nothing to
+     converge on. */
   var B = BLEND[blend] || BLEND.onyx;
   var F = B.F, SHADOW = B.S, EDGE = B.E;
-  /* IN is the HIP'S SLOPE INVERTED: rising SH in y along an edge of
-     dy/dx = 72/70 means moving SH/(72/70) in x. It read 72/116 until now —
-     the pyramid's slope, correct arithmetic for a roof that no longer
-     exists — and left a gap along both hips on every course. */
-  var SH = 2.4, IN = SH / (72 / 70), out = '';
-  /* THE STARTER GOES IN AFTER THE DRIP EDGE — Theo, 3 Aug. It is an untabbed
-     strip at the eave, and the first full course laps over it leaving only a
-     reveal showing. So the courses start 4 units UP from the eave rather than
-     at it, and the 4 units below them are the starter. CH shrinks to 8.5 so
-     eight courses still land exactly on the apex. */
-  var ST = starter ? 4 : 0, BASE = 100 - ST, CH = starter ? 8.5 : 9, TW = 15;
+  var SH = 2.4, out = '';
+  var ST = starter ? 4 : 0, BASE = 100 - ST, CH = 6.5, TW = 15;
+  function band(y0, y1, tone){
+    return '<path d="M30,'+y0+' L'+SPLIT+','+y0+' L'+SPLIT+','+y1+' L30,'+y1+' Z" fill="'+tone+'"/>'+
+           '<path d="M'+SPLIT+','+y0+' L270,'+y0+' L270,'+y1+' L'+SPLIT+','+y1+' Z" fill="'+dk(tone)+'"/>';
+  }
   if(starter && (from || 0) === 0){
-    var sp0 = spanAt(100), sp1 = spanAt(BASE);
-    out += '<path d="M'+sp0[0].toFixed(1)+',100 L'+sp1[0].toFixed(1)+','+BASE+' L'+SPLIT+','+BASE+
-           ' L'+SPLIT+',100 Z" fill="'+F[3]+'"/>';
-    out += '<path d="M'+SPLIT+',100 L'+SPLIT+','+BASE+' L'+sp1[1].toFixed(1)+','+BASE+' L'+
-           sp0[1].toFixed(1)+',100 Z" fill="'+dk(F[3])+'"/>';
-    out += '<path d="M'+sp1[0].toFixed(1)+','+BASE+' L'+sp1[1].toFixed(1)+','+BASE+
-           '" fill="none" stroke="'+SHADOW+'" stroke-width="1.2"/>';
+    out += band(BASE, 100, F[3]);
+    out += '<path d="M30,'+BASE+' L270,'+BASE+'" fill="none" stroke="'+SHADOW+'" stroke-width="1.2"/>';
   }
   for(var c = (from || 0); c < (to === undefined ? 8 : to); c++){
-    var yb = BASE - c * CH, yt = Math.max(28, yb - CH);
-    var sb = spanAt(yb), st = spanAt(yt);
-    out += '<path d="M'+sb[0].toFixed(1)+','+yb+' L'+st[0].toFixed(1)+','+yt+
-           ' L'+SPLIT+','+yt+' L'+SPLIT+','+yb+' Z" fill="'+F[1]+'"/>';
-    out += '<path d="M'+SPLIT+','+yb+' L'+SPLIT+','+yt+' L'+st[1].toFixed(1)+','+yt+
-           ' L'+sb[1].toFixed(1)+','+yb+' Z" fill="'+dk(F[1])+'"/>';
+    var yb = BASE - c * CH, yt = yb - CH;
+    out += band(yt, yb, F[1]);
     var stag = (c % 2) * (TW / 2);
-    [[st[0], SPLIT, 0], [SPLIT, st[1], 1]].forEach(function(seg){
-      var lo = seg[0], hi = seg[1], shaded = seg[2];
-      for(var x = Math.ceil(lo / TW) * TW + stag, i = 0; x < hi - 3; x += TW, i++){
-        var x1 = Math.min(x + TW - 1.2, hi);
-        if(x1 - x < 4) continue;
-        var tone = F[(c * 3 + i + shaded) % 4];
-        out += '<path d="M'+x.toFixed(1)+','+yt+' L'+x1.toFixed(1)+','+yt+' L'+
-               x1.toFixed(1)+','+(yb-SH)+' L'+x.toFixed(1)+','+(yb-SH)+
-               ' Z" fill="'+(shaded ? dk(tone) : tone)+'"/>';
-      }
-    });
-    // the laminate shadow — this is the depth; everything above it is colour
-    out += '<path d="M'+sb[0].toFixed(1)+','+yb+' L'+SPLIT+','+yb+' L'+SPLIT+','+(yb-SH)+
-           ' L'+(sb[0]+IN).toFixed(1)+','+(yb-SH)+' Z" fill="'+SHADOW+'"/>';
-    out += '<path d="M'+SPLIT+','+yb+' L'+sb[1].toFixed(1)+','+yb+' L'+(sb[1]-IN).toFixed(1)+
-           ','+(yb-SH)+' L'+SPLIT+','+(yb-SH)+' Z" fill="'+dk(SHADOW)+'"/>';
-    out += '<path d="M'+st[0].toFixed(1)+','+yt+' L'+st[1].toFixed(1)+','+yt+
-           '" fill="none" stroke="'+EDGE+'" stroke-width=".8" opacity=".5"/>';
+    for(var x = 30 + stag, i = 0; x < 267; x += TW, i++){
+      var xe = Math.min(x + TW - 1.2, 270);
+      if(xe - x < 4) continue;
+      var tone = F[(c * 3 + i) % 4];
+      out += '<path d="'+'M'+x.toFixed(1)+','+yt+' L'+xe.toFixed(1)+','+yt+' L'+
+             xe.toFixed(1)+','+(yb - SH)+' L'+x.toFixed(1)+','+(yb - SH)+
+             ' Z" fill="'+(x >= SPLIT ? dk(tone) : tone)+'"/>';
+    }
+    out += band(yb - SH, yb, SHADOW);
+    out += '<path d="M30,'+yt+' L270,'+yt+'" fill="none" stroke="'+EDGE+'" stroke-width=".8" opacity=".5"/>';
   }
   return out;
 }
@@ -393,7 +367,7 @@ function ground(dark){
    50 wide by 46 tall. Base at 84 lands on the eave ice course at 86 on
    purpose, so the valley membrane and the eave membrane read as one
    continuous sheet, which is what they are. */
-var DRM = { W:50, BOT:84, EAVE:64, PEAK:38 }, DX = 134;
+/* DRM/DX retired — the WING (cx 140, half 38, peak 56) replaced the dormer */
 
 /* ── THE CHIMNEY, IN EVERY STATE ─────────────────────────────────
    Theo, 3 Aug: "since there is a chimney lets keep the chimney in the
@@ -403,14 +377,32 @@ var DRM = { W:50, BOT:84, EAVE:64, PEAK:38 }, DX = 134;
    Step and counter flashing are drawn with it always — a standing chimney is
    a flashed chimney, even while the field around it is bare deck. */
 function chimney(){
-  var K='#E8DCC8';
-  return '<path d="M183,86 L209,86 L209,89.5 L183,89.5 Z" fill="#000" opacity=".24"/>'+
-         '<path d="M186,48 L206,48 L206,86 L186,86 Z" fill="#7E4A3C" stroke="'+K+'" stroke-width="1.6" stroke-linejoin="round"/>'+
-         '<path d="M196,48 L206,48 L206,86 L196,86 Z" fill="#5F3529"/>'+
-         '<path d="M184,48 L208,48 L208,44.6 L184,44.6 Z" fill="#6B4034"/>'+
-         '<path d="M182,86 L186,82 L186,62 L182,66 Z" fill="#AEB4BA"/>'+
-         '<g fill="#AEB4BA" stroke="'+K+'" stroke-width=".9">'+
-         '<path d="M206,60 L214,66 L214,72 L206,66 Z"/><path d="M206,70 L214,76 L214,82 L206,76 Z"/></g>';
+  /* A CHIMNEY THAT LOOKS LIKE A CHIMNEY — Theo, 3 Aug: "make the chimney
+     look like a chimney with brick lines." Shaft in two brick tones with
+     mortar coursing (staggered head joints, the way brick is actually
+     laid), a concrete crown, a flue, the base shadow that sits it on the
+     roof, and the step + counter flashing it has always carried. */
+  var MORT='#C9B7A2', K='#E8DCC8';
+  var s='';
+  s+='<path d="M183,86 L209,86 L209,89.5 L183,89.5 Z" fill="#000" opacity=".24"/>';
+  s+='<path d="M186,50 L206,50 L206,86 L186,86 Z" fill="#8A5142" stroke="'+K+'" stroke-width="1.6" stroke-linejoin="round"/>';
+  s+='<path d="M196,50 L206,50 L206,86 L196,86 Z" fill="#6E4034"/>';
+  s+='<g stroke="'+MORT+'" stroke-width=".7" opacity=".55">';
+  for(var by=54.5; by<86; by+=4.5) s+='<path d="M186,'+by.toFixed(1)+' L206,'+by.toFixed(1)+'"/>';
+  var r=0;
+  for(var y0=50; y0<86; y0+=4.5){
+    var y1=Math.min(86,y0+4.5), off=(r%2)*3.3; r++;
+    for(var bx=189.3+off; bx<205.6; bx+=6.7)
+      s+='<path d="M'+bx.toFixed(1)+','+y0.toFixed(1)+' L'+bx.toFixed(1)+','+y1.toFixed(1)+'"/>';
+  }
+  s+='</g>';
+  s+='<path d="M184,46 L208,46 L208,50 L184,50 Z" fill="#B7AC9C" stroke="'+K+'" stroke-width="1.2" stroke-linejoin="round"/>';
+  s+='<path d="M196,46 L208,46 L208,50 L196,50 Z" fill="#9C9184"/>';
+  s+='<path d="M191,42.5 L201,42.5 L201,46 L191,46 Z" fill="#5A4A42"/>';
+  s+='<path d="M182,86 L186,82 L186,62 L182,66 Z" fill="#AEB4BA"/>';
+  s+='<g fill="#AEB4BA" stroke="'+K+'" stroke-width=".9">'+
+     '<path d="M206,60 L214,66 L214,72 L206,66 Z"/><path d="M206,70 L214,76 L214,82 L206,76 Z"/></g>';
+  return s;
 }
 
 /* ── MISSING SHINGLES on the roof that is coming off ─────────────
@@ -422,109 +414,78 @@ function chimney(){
    course above casting its shadow into the hole. Positions dodge the dormer
    (109-159), the chimney (182-214) and stay inside spanAt at their height. */
 function wornGaps(){
-  var out = '', G = [[64,1],[86,3],[164,4],[220,2],[236,0]];
-  /* The reveal is WEATHERED FELT, not black-on-black. The first fill was
-     #0B0D10 on a #1E2227 field — 1.2:1, a gap nobody can see, which is a
-     mark that was never made (the sprayed-sheet lesson, again, same day). */
+  /* Missing tabs on the roof that is coming off — re-laid for the T. The
+     free zones on the band are left of the wing (30-102), right of the
+     chimney (214-270), and the strip above the wing peak. Reveal is
+     weathered felt on the near-black field; black-on-black was invisible. */
+  var out = '', G = [[44,1],[70,3],[120,6],[222,2],[244,0]];
   G.forEach(function(g){
-    var yb = 96 - g[1] * 8.5, yt = yb - 6.2, x = g[0];
-    out += '<path d="M'+x+','+yt+' L'+(x+15)+','+yt+' L'+(x+15)+','+yb+' L'+x+','+yb+
+    var yb = 96 - g[1] * 6.5, yt = yb - 5.2, x = g[0];
+    out += '<path d="M'+x+','+yt.toFixed(1)+' L'+(x+15)+','+yt.toFixed(1)+' L'+(x+15)+','+yb.toFixed(1)+' L'+x+','+yb.toFixed(1)+
            ' Z" fill="#4A443A"/>';
-    out += '<path d="M'+x+','+yt+' L'+(x+15)+','+yt+' L'+(x+15)+','+(yt+2)+' L'+x+','+(yt+2)+
+    out += '<path d="M'+x+','+yt.toFixed(1)+' L'+(x+15)+','+yt.toFixed(1)+' L'+(x+15)+','+(yt+2).toFixed(1)+' L'+x+','+(yt+2).toFixed(1)+
            ' Z" fill="#000" opacity=".5"/>';
-    out += '<path d="M'+(x+2)+','+(yb-1.4)+' L'+(x+13)+','+(yb-1.4)+
+    out += '<path d="M'+(x+2)+','+(yb-1.4).toFixed(1)+' L'+(x+13)+','+(yb-1.4).toFixed(1)+
            '" stroke="#2A2620" stroke-width=".8" fill="none"/>';
   });
   return out;
 }
 
-function dormerBox(cx){
-  var h = DRM.W / 2;
-  return { l: cx - h, r: cx + h, bot: DRM.BOT, eave: DRM.EAVE, peak: DRM.PEAK };
-}
-function dormer(cx, o){
-  o = o || {}; cx = (cx === undefined) ? DX : cx;
-  var d = dormerBox(cx), s = '';
-  var DLIT='#F0E6D4', DSHD='#D6C4A6', DTRIM='#8A7660',
-      DGLASS='#8FB6CC', DGLASSL='#B9D6E4';
-  var W = (cx < SPLIT) ? DLIT : DSHD;
-  /* ── THE VALLEY MEMBRANE, and it goes on BEFORE the dormer ──────
-     Theo asked to see the ice and water at the dormer valley, and the old
-     version could not deliver it: two 9-unit strips beside the cheeks, drawn
-     AFTER the face, so they were a detail stuck on rather than a sheet the
-     dormer sits on.
-
-     A dormer makes TWO valleys and the membrane wraps each one — up the cheek
-     and along under the rake. So the band follows the dormer's whole outline
-     and is emitted first, which puts the face and the rake board on top of
-     it. That is the real order: the membrane is roofed over, not painted
-     beside. It also runs down to the eave course, because on a real roof it
-     is one continuous sheet and not two separate jobs. */
-  function valleyWrap(){
-    var W = 15, g = '';
-    function band(side, fill){
-      var e = side < 0 ? d.l : d.r;          // the cheek this side sits on
-      return '<path d="M'+(e + side*W)+','+(d.bot+6)+
-             ' L'+(e + side*W)+','+(d.eave+2)+
-             /* peak-1, not peak-4: the band's outer corner was FOUR UNITS
-                ABOVE the dormer's own peak, so it stuck out past the rake as
-                a grey horn. It has to die under the rake board, which is
-                drawn at peak-2 with a 2.4 stroke and so covers 36.8 to 39.2. */
-             ' L'+(cx + side*2)+','+(d.peak - 1)+
-             ' L'+cx+','+(d.peak + 2)+
-             ' L'+e+','+(d.eave+3)+
-             ' L'+e+','+(d.bot+6)+' Z" fill="'+fill+'"/>';
+function dormerBox(cx){ return null; } /* retired with the dormer */
+function wing(o){
+  /* THE FRONT CROSS-GABLE — the dormer, grown to what it was pretending to
+     be. Its base is the eave, its wall is the house wall, the door lives
+     under it, and its two rakes against the main roof ARE the valleys the
+     book has been promising since spread 9 was captioned. Ice runs the
+     membranes up both rakes; flash hangs the step flashing on them. */
+  o = o || {};
+  var WX=140, WHALF=38, WPEAK=56, l=WX-WHALF, r=WX+WHALF;
+  var WLIT='#F0E6D4', WSHD='#D6C4A6', WTRIM='#8A7660';
+  function rakeX(y, side){ return WX + side * WHALF * (y - WPEAK) / (100 - WPEAK); }
+  var s='';
+  if(o.ice){
+    /* the valley membranes, BEFORE the face so they are roofed over */
+    s+='<path d="M'+(l-15)+',100 L'+(WX-3)+','+(WPEAK-1)+' L'+WX+','+(WPEAK+2)+' L'+l+',100 Z" fill="#6E767B"/>';
+    s+='<path d="M'+(r+15)+',100 L'+(WX+3)+','+(WPEAK-1)+' L'+WX+','+(WPEAK+2)+' L'+r+',100 Z" fill="#565D62"/>';
+    var g=17;
+    function rnd(){ g=(g*1103515245+12345)&0x7fffffff; return g/0x7fffffff; }
+    s+='<g fill="#C3C8CC" opacity=".8">';
+    for(var i=0;i<26;i++){
+      var t=rnd(), side=i%2?1:-1, yy=100-t*(100-WPEAK-4);
+      var gx=rakeX(yy, side)+side*(3+rnd()*9);
+      s+='<circle cx="'+gx.toFixed(1)+'" cy="'+yy.toFixed(1)+'" r="'+(0.6+rnd()*0.6).toFixed(2)+'"/>';
     }
-    g += band(-1, '#6E767B') + band(1, '#565D62');
-    // deterministic grit, inside the bands, so the mineral surface reads
-    var r = 91;
-    function rnd(){ r = (r * 1103515245 + 12345) & 0x7fffffff; return r / 0x7fffffff; }
-    g += '<g fill="#C3C8CC" opacity=".8">';
-    for(var i = 0; i < 30; i++){
-      var t = rnd(), left = i % 2 === 0;
-      var e = left ? d.l : d.r, sd = left ? -1 : 1;
-      var yy = (d.bot + 6) - t * (d.bot + 6 - (d.peak + 2));
-      var gx = e + sd * (2 + rnd() * (W - 3)) - sd * t * (W - 4) * 0.35;
-      g += '<circle cx="'+gx.toFixed(1)+'" cy="'+yy.toFixed(1)+'" r="'+(0.6+rnd()*0.6).toFixed(2)+'"/>';
-    }
-    return g + '</g>';
+    s+='</g>';
   }
-  if(o.ice) s += valleyWrap();
-  // the shadow it throws on the slope — this is what sits it ON the roof
-  s += '<path d="M'+(d.l-3)+','+(d.bot+3)+' L'+(d.r+3)+','+(d.bot+3)+' L'+(d.r+3)+','+
-       (d.bot+6)+' L'+(d.l-3)+','+(d.bot+6)+' Z" fill="#000" opacity=".22"/>';
-  s += '<path d="M'+d.l+','+d.bot+' L'+d.l+','+d.eave+' L'+d.r+','+d.eave+' L'+d.r+','+d.bot+' Z" fill="'+W+'"/>';
-  s += '<path d="M'+cx+','+d.eave+' L'+d.r+','+d.eave+' L'+d.r+','+d.bot+' L'+cx+','+d.bot+' Z" fill="'+DSHD+'"/>';
-  s += '<path d="M'+d.l+','+d.eave+' L'+cx+','+d.peak+' L'+d.r+','+d.eave+' Z" fill="'+W+'"/>';
-  s += '<path d="M'+cx+','+d.peak+' L'+d.r+','+d.eave+' L'+cx+','+d.eave+' Z" fill="'+DSHD+'"/>';
-  s += '<g fill="none" stroke="'+DTRIM+'" stroke-width=".6" opacity=".35">';
-  for(var ly = d.eave + 5; ly < d.bot; ly += 5) s += '<path d="M'+d.l+','+ly+' L'+d.r+','+ly+'"/>';
-  s += '</g>';
-  // rake board — a dormer without one reads as a sticker on the roof
-  s += '<g fill="none" stroke="#E8DFCD" stroke-width="2.4" stroke-linejoin="round">'+
-       '<path d="M'+(d.l-2.5)+','+(d.eave+1.6)+' L'+cx+','+(d.peak-2)+' L'+(d.r+2.5)+','+(d.eave+1.6)+'"/></g>';
-  s += '<g fill="none" stroke="#B9AC93" stroke-width=".8">'+
-       '<path d="M'+(d.l-2.5)+','+(d.eave+1.6)+' L'+cx+','+(d.peak-2)+' L'+(d.r+2.5)+','+(d.eave+1.6)+'"/></g>';
-  var wx = cx - 8, wy = d.eave + 4;
-  s += '<path d="M'+wx+','+wy+' L'+(wx+16)+','+wy+' L'+(wx+16)+','+(wy+13)+' L'+wx+','+(wy+13)+
-       ' Z" fill="'+DGLASS+'" stroke="'+DTRIM+'" stroke-width="1.3"/>';
-  s += '<path d="M'+wx+','+wy+' L'+(wx+16)+','+wy+' L'+wx+','+(wy+13)+' Z" fill="'+DGLASSL+'"/>';
-  s += '<g stroke="'+DTRIM+'" stroke-width="1.1">'+
-       '<path d="M'+(wx+8)+','+wy+' L'+(wx+8)+','+(wy+13)+'"/>'+
-       '<path d="M'+wx+','+(wy+6.5)+' L'+(wx+16)+','+(wy+6.5)+'"/></g>';
-
+  // the valleys as shadow on the main plane, always — the junction is real
+  s+='<path d="M'+(l-5)+',100 L'+(WX-4)+','+(WPEAK-1)+' L'+WX+','+(WPEAK+3)+' L'+l+',100 Z" fill="#000" opacity=".16"/>';
+  s+='<path d="M'+(r+5)+',100 L'+(WX+4)+','+(WPEAK-1)+' L'+WX+','+(WPEAK+3)+' L'+r+',100 Z" fill="#000" opacity=".22"/>';
+  s+='<path d="M'+l+',100 L'+WX+','+WPEAK+' L'+r+',100 Z" fill="'+WLIT+'"/>';
+  s+='<path d="M'+WX+','+WPEAK+' L'+r+',100 L'+WX+',100 Z" fill="'+WSHD+'"/>';
+  s+='<g stroke="'+WTRIM+'" stroke-width=".6" opacity=".35">';
+  for(var y=WPEAK+8; y<98; y+=6){
+    var w=WHALF*(y-WPEAK)/(100-WPEAK);
+    s+='<path d="M'+(WX-w).toFixed(1)+','+y+' L'+(WX+w).toFixed(1)+','+y+'"/>';
+  }
+  s+='</g>';
+  s+='<g fill="none" stroke="#E8DFCD" stroke-width="2.6" stroke-linejoin="round">'+
+     '<path d="M'+(l-3)+',101.4 L'+WX+','+(WPEAK-2.2)+' L'+(r+3)+',101.4"/></g>';
+  s+='<g fill="none" stroke="#B9AC93" stroke-width=".9">'+
+     '<path d="M'+(l-3)+',101.4 L'+WX+','+(WPEAK-2.2)+' L'+(r+3)+',101.4"/></g>';
+  var wy=WPEAK+(100-WPEAK)*0.34;
+  s+='<path d="M'+(WX-7)+','+wy.toFixed(1)+' L'+(WX+7)+','+wy.toFixed(1)+' L'+(WX+7)+','+(wy+11).toFixed(1)+
+     ' L'+(WX-7)+','+(wy+11).toFixed(1)+' Z" fill="#8FB6CC" stroke="'+WTRIM+'" stroke-width="1.2"/>';
+  s+='<path d="M'+WX+','+wy.toFixed(1)+' L'+WX+','+(wy+11).toFixed(1)+'" stroke="'+WTRIM+'" stroke-width="1.1" fill="none"/>';
   if(o.flash){
-    /* STEP FLASHING — one bent piece per course, lapped, climbing the cheek.
-       Only reads if the steps are actual steps with a visible riser. */
-    s += '<g stroke="#6E6558" stroke-width=".5">';
-    for(var i = 0; i < 5; i++){
-      var yy = d.eave + 1 + i * 4.2, fw = 7, fh = 4.6;
-      s += '<path d="M'+(d.l-fw)+','+(yy+fh)+' L'+(d.l-fw)+','+(yy+fh-2.6)+' L'+d.l+','+yy+
-           ' L'+d.l+','+(yy+fh)+' Z" fill="#C6CCD1"/>';
-      s += '<path d="M'+(d.r+fw)+','+(yy+fh)+' L'+(d.r+fw)+','+(yy+fh-2.6)+' L'+d.r+','+yy+
-           ' L'+d.r+','+(yy+fh)+' Z" fill="#9EA5AB"/>';
+    s+='<g data-wing="1" stroke="#6E6558" stroke-width=".5">';
+    for(var i2=0;i2<5;i2++){
+      var fy=62+i2*7, fx1=rakeX(fy,-1), fx2=rakeX(fy,1);
+      s+='<path d="M'+(fx1-7).toFixed(1)+','+(fy+4.6)+' L'+(fx1-7).toFixed(1)+','+(fy+2)+
+         ' L'+fx1.toFixed(1)+','+fy+' L'+fx1.toFixed(1)+','+(fy+4.6)+' Z" fill="#C6CCD1"/>';
+      s+='<path d="M'+(fx2+7).toFixed(1)+','+(fy+4.6)+' L'+(fx2+7).toFixed(1)+','+(fy+2)+
+         ' L'+fx2.toFixed(1)+','+fy+' L'+fx2.toFixed(1)+','+(fy+4.6)+' Z" fill="#9EA5AB"/>';
     }
-    s += '</g>';
+    s+='</g>';
   }
   return s;
 }
@@ -620,19 +581,17 @@ function house(o){
      exists — which also ends the oddity of the roof shading at 150 while the
      wall shaded at 176. */
   function plane(fa, fb){
-    var sp = spanAt(28);
-    return '<path d="M34,100 L'+sp[0]+',28 L'+sp[1]+',28 L266,100 Z" fill="'+fa+'"/>'+
-           '<path d="M'+SPLIT+',100 L'+SPLIT+','+roofY(SPLIT).toFixed(1)+
-           ' L'+sp[1]+',28 L266,100 Z" fill="'+fb+'"/>';
+    return '<path d="M30,100 L30,44 L'+SPLIT+',44 L'+SPLIT+',100 Z" fill="'+fa+'"/>'+
+           '<path d="M'+SPLIT+',100 L'+SPLIT+',44 L270,44 L270,100 Z" fill="'+fb+'"/>';
   }
   var st=o.roof||'shingle';
   if(st==='none'){ /* nothing — used before the house is the subject */ }
   // OLD roof: Onyx Black, weathered — granule loss reads greyer and flatter
   else if(st==='shingle') s+=plane('#22262B','#181B1F')+shingleArt('onyxOld',0,8,true)+
-                            wornGaps()+dripEdge()+ridgeVent()+hipCaps('onyxOld');
+                            wornGaps()+dripEdge()+ridgeAndRakes('onyxOld');
   // NEW roof: OC Duration BROWNWOOD, crisp off the bundle, over its starter
   else if(st==='new')     s+=plane('#4E3826','#38281B')+dripEdge()+
-                            shingleArt('brownwood',0,8,true)+ridgeVent()+hipCaps('brownwood');
+                            shingleArt('brownwood',0,8,true)+ridgeAndRakes('brownwood');
   else if(st==='bare'){
     /* 4x8 SHEETS. Theo, 3 Aug — same treatment as the shipped spread 7, and
        the same reason: a flat plane with shingle courses on it reads as a roof
@@ -649,17 +608,22 @@ function house(o){
     for(var cc=1;cc<4;cc++){ var cy=100-cc*SHH, sp=spanAt(cy);
       s+='<path d="M'+sp[0].toFixed(1)+','+cy+' L'+sp[1].toFixed(1)+','+cy+'"/>'; }
     for(var cr=0;cr<4;cr++){
-      var bot=100-cr*SHH, top=100-(cr+1)*SHH, offx=(cr%2)*(SHW/2);
-      for(var jx=34+offx;jx<266;jx+=SHW){ var hit=roofY(jx);
-        if(hit>=bot) continue;
-        s+='<path d="M'+jx+','+bot+' L'+jx+','+Math.max(top,hit).toFixed(1)+'"/>'; }
+      var bot=100-cr*SHH, top=Math.max(100-(cr+1)*SHH, 44), offx=(cr%2)*(SHW/2);
+      /* origin 30 on the T — the band starts there, and on a rectangle every
+         joint runs full height with nothing to trim against */
+      for(var jx=30+offx;jx<270;jx+=SHW){
+        if(jx<=30||jx>=270) continue;
+        s+='<path d="M'+jx+','+bot+' L'+jx+','+top.toFixed(1)+'"/>'; }
     }
     s+='</g>';
     // the bad ones, sprayed. Wash carries the colour, the X carries the
     // contrast — #7E1018 is 5.08:1 on the lit deck and 3.15:1 on the shaded.
     /* bottom row only — the dormer and the chimney own the upper rows,
        and a sprayed sheet nobody can see is a mark that was never made */
-    (o.bad||[[74,82],[114,82],[194,82]]).forEach(function(p){
+    /* re-laid for the T: the wing owns 102-178 and the chimney 182-214, so
+       the visible bottom-row sheets are left of the wing and right of the
+       chimney. Grid origin 30. */
+    (o.bad||[[30,82],[70,82],[230,82]]).forEach(function(p){
       s+='<path d="M'+p[0]+','+p[1]+' L'+(p[0]+SHW)+','+p[1]+' L'+(p[0]+SHW)+','+(p[1]+SHH)+
          ' L'+p[0]+','+(p[1]+SHH)+' Z" fill="'+RED+'" opacity=".4"/>';
       s+='<g fill="none" stroke="#7E1018" stroke-width="3.2" stroke-linecap="round">'+
@@ -677,12 +641,12 @@ function house(o){
     /* DRIP EDGE FIRST at the eave — the apron goes UNDER the ice and water,
        which is the one bit of the order people get backwards. */
     s+=dripEdge();
-    var e = spanAt(86);
-    s+='<path d="M34,100 L'+e[0].toFixed(1)+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICE+'"/>';
-    s+='<path d="M'+SPLIT+',100 L'+SPLIT+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICES+'"/>';
+    s+='<path d="M30,100 L30,86 L'+SPLIT+',86 L'+SPLIT+',100 Z" fill="'+ICE+'"/>';
+    s+='<path d="M'+SPLIT+',100 L'+SPLIT+',86 L270,86 L270,100 Z" fill="'+ICES+'"/>';
     /* GRANULATED, because that is what the mineral surface is. Two tones of
        grit so it reads as texture rather than as noise, deterministic so it
-       cannot reshuffle between renders. */
+       cannot reshuffle between renders. The wing's own membranes come with
+       wing({ice:true}) and read as one sheet with this course. */
     s+=grit(31, 150, 86, 100);
   }
   else if(st==='felt'){
@@ -693,18 +657,13 @@ function house(o){
        look like work that got undone on spread 10.
        So: deck, apron, shield at the eave, felt from y=86 up. */
     s+=plane(DECK,DECKS)+dripEdge();
-    var e=spanAt(86);
-    s+='<path d="M34,100 L'+e[0].toFixed(1)+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICE+'"/>';
-    s+='<path d="M'+SPLIT+',100 L'+SPLIT+',86 L'+e[1].toFixed(1)+',86 L266,100 Z" fill="'+ICES+'"/>';
+    s+='<path d="M30,100 L30,86 L'+SPLIT+',86 L'+SPLIT+',100 Z" fill="'+ICE+'"/>';
+    s+='<path d="M'+SPLIT+',100 L'+SPLIT+',86 L270,86 L270,100 Z" fill="'+ICES+'"/>';
     s+=grit(31,90,86,100);
-    /* THE FELT IS A TRAPEZOID, NOT A TRIANGLE. It ran to a point at (150,28),
-       which was the pyramid's apex; on this roof the top edge is the ridge,
-       104 to 196. A line from the eave to a point 20 units inside the hip is
-       a line that leaves bare deck showing down both edges of the spread — a
-       missed patch of felt, which is the opposite of what the spread says. */
-    s+='<path d="M'+e[0].toFixed(1)+',86 L104,28 L196,28 L'+e[1].toFixed(1)+',86 Z" fill="'+FELT+'"/>';
-    s+='<path d="M'+SPLIT+','+roofY(SPLIT).toFixed(1)+' L196,28 L'+e[1].toFixed(1)+
-       ',86 L'+SPLIT+',86 Z" fill="'+FELTS+'"/>';
+    /* THE FELT IS A BAND on the T — ridge to shield, full width, split at
+       SPLIT like everything else. The trapezoid was hip geometry. */
+    s+='<path d="M30,86 L30,44 L'+SPLIT+',44 L'+SPLIT+',86 Z" fill="'+FELT+'"/>';
+    s+='<path d="M'+SPLIT+',86 L'+SPLIT+',44 L270,44 L270,86 Z" fill="'+FELTS+'"/>';
     s+='<g fill="none" stroke="#7A8085" stroke-width=".8" opacity=".55">';
     [72,58,44].forEach(function(yy){ var sp=spanAt(yy);
       s+='<path d="M'+sp[0].toFixed(1)+','+yy+' L'+sp[1].toFixed(1)+','+yy+'"/>'; });
@@ -731,16 +690,15 @@ function house(o){
        OWN spread and that is the 16-becomes-18 question, which is his and is
        still open — so it goes on an existing spread rather than renumbering
        a book whose built spread ships titled "of 16". */
-    /* 104, not 118: the dormer moved left to 134, so its left edge is 109
-       and the stack was running underneath it. */
-    if(o.cut) s+=cutLayers(104);
+    /* 96: the wing's left edge is 102 */
+    if(o.cut) s+=cutLayers(96);
   }
   /* THE DORMER GOES ON AFTER THE ROOF MATERIALS, so the courses, the shield
      and the felt all run BEHIND it — which is where they physically are. No
      clipping needed and no overDormer() test: draw order is the containment.
      The cheeks carry whatever that stage carries. */
   if(st!=='none') s+=chimney();
-  if(st!=='none') s+=dormer(DX, { ice: (st==='ice'||st==='felt'), flash: o.flash });
+  if(st!=='none') s+=wing({ ice: (st==='ice'||st==='felt'), flash: o.flash });
   if(st!=='none'){
     // the five hairlines that used to live here were a strip shingle;
     // shingleArt draws the courses now, with the laminate shadow that
@@ -888,16 +846,16 @@ var SPREADS=[
    sky:'day', build:function(){
      return house({roof:'shingle'}) + ladder(96,150,64,-13) +
        '<g fill="none" stroke="#F4EDDD" stroke-width="1.5" opacity=".9">'+
-       [[176,58],[196,70],[214,82],[188,86]].map(function(p){
+       [[52,58],[76,70],[64,86],[88,52]].map(function(p){
          return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5"/>'; }).join('')+'</g>' +
-       fig(196,70,0.88,{arm:[[-8,-34],[-17,-30]]}) +
+       fig(74,86,0.8,{arm:[[-8,-34],[-17,-30]]}) +
        bird(272,112,0.7,true);
    }},
   {n:3, t:'The Adjuster', w:'Two people on one roof agreeing what is there. Cardinal meets them up there, every time.',
    sky:'day', build:function(){
      return house({roof:'shingle'}) + ladder(96,150,64,-13) +
-       fig(96,72,0.86,{arm:[[-8,-34],[-18,-36]]}) +
-       fig(202,66,0.86,{shirt:'#4A5866',shirtDk:'#333F4A',hat:'#D8DEE3',flip:true,
+       fig(60,88,0.8,{arm:[[-8,-34],[-18,-36]]}) +
+       fig(244,88,0.8,{shirt:'#4A5866',shirtDk:'#333F4A',hat:'#D8DEE3',flip:true,
                                   arm:[[-8,-34],[-17,-28]]}) +
        bird(56,120,0.7);
    }},
@@ -938,8 +896,10 @@ var SPREADS=[
           against a dormer starting at 109. It cannot start below 50 either:
           roofY(42) is 91.8, so by would be 100.8 and the bundle would sit
           under the eave. Bounded at both ends. */
-       var bx=50+i*10, by=roofY(bx)+9;
-       s+='<g transform="translate('+bx+','+by+') rotate(-46)">'+
+       /* on the T a carried bundle just tips a little — -46 was the
+          hip's pitch. Diagonal run up the free zone left of the wing. */
+       var bx=44+(i%4)*13, by=90-(i%4)*12;
+       s+='<g transform="translate('+bx+','+by+') rotate(-12)">'+
           '<path d="M-13,-5 L13,-5 L13,5 L-13,5 Z" fill="#4A5866" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
           '<path d="M-13,-5 L13,-5 L13,-1 L-13,-1 Z" fill="#5D6D7C"/></g>';
      }
@@ -948,7 +908,7 @@ var SPREADS=[
   {n:7, t:'The Tear-Off', w:'Built, tested on your iPad, and the only one with the pop, the beats and the joke tabs.',
    sky:'dusk', done:true, build:function(){
      return house({roof:'bare'}) + trailer(62,150,0.8) +
-       fig(196,roofY(196)+2,0.9,{arm:[[-8,-34],[-2,-30]]}) +
+       fig(218,92,0.8,{arm:[[-8,-34],[-2,-30]]}) +
        yardsign(250,150,0.72) + bird(292,112,0.68,true) + chips(7,26,40,290);
    }},
   {n:8, t:'The Deck', w:'Bare plywood in 4×8 sheets. The bad ones get sprayed and come out — this is the part nobody else shows you.',
@@ -956,18 +916,18 @@ var SPREADS=[
      /* One marked sheet has already been cut out and one new sheet is going
         in, so the pair reads as a sequence rather than as decoration: sprayed,
         gone, replaced. The two remaining marks are on the sheet grid, not
-        floating — all on the bottom row, since the dormer (109-159) and
-        the chimney (182-214) own the upper rows and a mark nobody can see
-        was never made. Left to right it now reads as the actual sequence:
-        the hole one came out of, the bright new one going in, two more
-        sprayed and waiting. */
-     var s=house({roof:'bare', bad:[[154,82],[194,82]]});
-     s+='<path d="M74,82 L114,82 L114,100 L74,100 Z" fill="#4A3A28"/>';   // the hole it left
-     s+='<path d="M114,82 L154,82 L154,100 L114,100 Z" fill="#E3CDA2" stroke="'+KRAFT+
+        floating — all on the bottom row, since the wing (102-178) and the
+        chimney (182-214) own the middle and a mark nobody can see was never
+        made. Left to right it reads as the actual sequence: the hole one
+        came out of, the bright new one going in, sprayed and waiting on the
+        far side. */
+     var s=house({roof:'bare', bad:[[190,82],[230,82]]});
+     s+='<path d="M30,82 L70,82 L70,100 L30,100 Z" fill="#4A3A28"/>';   // the hole it left
+     s+='<path d="M70,82 L102,82 L102,100 L70,100 Z" fill="#E3CDA2" stroke="'+KRAFT+
         '" stroke-width="1.6" stroke-linejoin="round"/>';                  // the new sheet
-     // beside the sheet he is putting in, and clear of the dormer he was
-     // previously standing inside
-     return s + fig(212,88,0.86,{arm:[[-8,-34],[-18,-30]]}) +
+     /* standing on the bright sheet he just laid — feet low on the band,
+        head under the ridge line, which is the T's whole figure rule */
+     return s + fig(84,90,0.78,{arm:[[-8,-34],[-18,-30]]}) +
        ladder(292,150,58,10) + bird(46,120,0.68);
    }},
   {n:9, t:'The Ice Shield', w:'A rubber membrane at every eave and valley. Dayton gets ice dams, and this is what stops one.',
@@ -981,10 +941,10 @@ var SPREADS=[
    sky:'dusk', build:function(){
      var s=house({roof:'felt'});
      // a roll part way up the slope
-     s+='<g transform="translate(196,58) rotate(-25)">'+
+     s+='<g transform="translate(72,62) rotate(-12)">'+
         '<path d="M-16,-7 L16,-7 L16,7 L-16,7 Z" fill="#6E747A" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
         '<circle cx="16" cy="0" r="7" fill="#8A9096" stroke="'+KRAFT+'" stroke-width="1.2"/></g>';
-     return s + fig(96,64,0.84,{arm:[[-8,-34],[-16,-28]]}) + bird(50,120,0.68);
+     return s + fig(52,88,0.8,{arm:[[-8,-34],[-16,-28]]}) + bird(50,120,0.68);
    }},
   {n:11, t:'The Flashing', w:'Metal where the roof meets anything else — chimney, wall, pipe. Leaks start here or nowhere.',
    sky:'noon', build:function(){
@@ -1002,16 +962,16 @@ var SPREADS=[
         reads man, dormer cheek, chimney, boot — four details, no stacking. */
      s+='<path d="M222,72 L230,72 L230,62 L222,62 Z" fill="'+METS+'"/>';
      s+='<path d="M216,76 L236,76 L232,70 L220,70 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
-     return s + fig(64,88,0.82,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
+     return s + fig(52,90,0.8,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
    }},
   {n:12, t:'The Shingles', w:'Courses going up the slope, one lap over the next. The part everybody pictures.',
    sky:'noon', build:function(){
-     /* Both roofers moved right. The layer stack occupies the lower-left of
-        the slope and the left one was standing in the middle of it — you
-        cannot read a section through a man's chest. */
+     /* Roofers on the right, clear of the stack (left), the wing (middle)
+        and the chimney (182-214, feet above its crown at 46 are fine — they
+        stand on the band behind it). */
      return house({roof:'half', cut:true}) +
-       fig(194,88,0.82,{arm:[[-8,-34],[-15,-24]]}) +
-       fig(220,74,0.82,{flip:true,arm:[[-8,-34],[-15,-24]]}) +
+       fig(224,90,0.8,{arm:[[-8,-34],[-15,-24]]}) +
+       fig(250,82,0.78,{flip:true,arm:[[-8,-34],[-15,-24]]}) +
        trailer(60,150,0.72) + bird(288,112,0.66,true);
    }},
   /* RETITLED. The caption promised "ridge vent along the peak" and this roof
@@ -1028,9 +988,8 @@ var SPREADS=[
   {n:14, t:'The Walk', w:'Theo on the roof at the end, not on the phone. Nothing is finished until he has been up there.',
    sky:'dusk', build:function(){
      return house({roof:'new'}) + ladder(94,150,64,-13) +
-       // 206, not 180: the dormer grew to 125-175 and he was standing on its
-       // right rake. Up-slope and clear, still looking at the roof.
-       fig(206,58,0.9,{shirt:'#474C52',shirtDk:'#33373C',hat:false,
+       // right free zone, clear of the wing and the chimney
+       fig(238,88,0.85,{shirt:'#474C52',shirtDk:'#33373C',hat:false,
                                  arm:[[-8,-34],[-18,-38]]}) +
        yardsign(254,150,0.72) + bird(292,112,0.68,true);
    }},
@@ -1059,34 +1018,31 @@ var SPREADS=[
   {n:'P1', proposed:true, t:'The Takeoff', w:'PROPOSED. The measure, before any promise. Every quote starts with a tape, not an estimate — your brief has it, the 16 cut dropped it.',
    sky:'day', build:function(){
      var s=house({roof:'shingle'});
-     // the tape, reel at the eave corner, run up the slope with foot ticks
-     s+='<path d="M46,97 L104,42" stroke="#E8A33D" stroke-width="2" fill="none"/>';
+     // the tape, reel at the eave corner, run up the band with foot ticks
+     s+='<path d="M40,96 L96,50" stroke="#E8A33D" stroke-width="2" fill="none"/>';
      s+='<g stroke="#B27B22" stroke-width="1">';
-     for(var i=1;i<5;i++){ var tx=46+(104-46)*i/5, ty=97+(42-97)*i/5;
+     for(var i=1;i<5;i++){ var tx=40+(96-40)*i/5, ty=96+(50-96)*i/5;
        s+='<path d="M'+(tx-2)+','+(ty-2)+' L'+(tx+2)+','+(ty+2)+'"/>'; }
      s+='</g>';
-     s+='<circle cx="46" cy="97" r="4" fill="#E8A33D" stroke="#8a5c15" stroke-width="1.4"/>';
-     // 226,60 — 212 stood him inside the chimney (182-214)
-     return s + fig(226,60,0.84,{arm:[[-8,-34],[-18,-30]]}) + bird(288,112,0.66,true);
+     s+='<circle cx="40" cy="96" r="4" fill="#E8A33D" stroke="#8a5c15" stroke-width="1.4"/>';
+     return s + fig(232,90,0.8,{arm:[[-8,-34],[-18,-30]]}) + bird(288,112,0.66,true);
    }},
   {n:'P2', proposed:true, t:'The Attic', w:'PROPOSED. A flashlight from underneath, before anything is signed. Decking, leaks and whether the roof can breathe — the surface cannot tell you any of it.',
    sky:'day', build:function(){
      var s=house({roof:'shingle'});
-     /* the section: a wedge of the house opened on the right, rafters cut
-        through perpendicular to the deck, and the beam finding a leak */
-     s+='<path d="M186,150 L186,'+roofY(186).toFixed(1)+' L266,100 L266,150 Z" fill="#141920"/>';
-     var pl=Math.sqrt(70*70+72*72), px=-72/pl, py=70/pl;
-     s+='<g stroke="#8A6B4A" stroke-width="3" stroke-linecap="butt">';
-     for(var i=0;i<5;i++){ var rx=192+i*14; if(rx>262)break; var ry=roofY(rx)+4;
-       s+='<path d="M'+rx.toFixed(1)+','+ry.toFixed(1)+' L'+(rx+px*8).toFixed(1)+','+(ry+py*8).toFixed(1)+'"/>'; }
-     s+='</g>';
-     s+='<path d="M186,'+roofY(186).toFixed(1)+' L266,100 L266,104 L186,'+(roofY(186)+4).toFixed(1)+' Z" fill="#C9B084"/>';
-     // the inspector, and the cone of light on the deck underside
-     s+='<path d="M212,132 L238,96 L252,106 L216,136 Z" fill="#F2E3A8" opacity=".32"/>';
-     s+='<circle cx="243" cy="99" r="4.5" fill="#F2E3A8" opacity=".85"/>';
-     s+='<path d="M186,150 L186,'+roofY(186).toFixed(1)+'" stroke="#F2ECDD" stroke-width="1.6" fill="none"/>';
-     s+='<path d="M186,'+roofY(186).toFixed(1)+' L266,100" stroke="#F2ECDD" stroke-width="1.6" fill="none"/>';
-     return s + fig(210,146,0.8,{arm:[[-8,-34],[6,-40]]}) + bird(46,120,0.68);
+     /* the section: the right end of the house opened, deck underside along
+        the top, rafter ends, and the flashlight beam finding a wet patch on
+        the underside — the thing no surface inspection can see */
+     s+='<path d="M222,150 L222,48 L268,48 L268,150 Z" fill="#141920"/>';
+     s+='<path d="M222,48 L268,48 L268,53 L222,53 Z" fill="#C9B084"/>';
+     s+='<path d="M244,53 L254,53 L254,58 L244,58 Z" fill="#5A4E42"/>';
+     s+='<g stroke="#8A6B4A" stroke-width="3" stroke-linecap="butt">'+
+        '<path d="M230,53 L230,62"/><path d="M245,53 L245,62"/><path d="M260,53 L260,62"/></g>';
+     s+='<path d="M232,132 L246,58 L258,60 L240,134 Z" fill="#F2E3A8" opacity=".3"/>';
+     s+='<circle cx="250" cy="57" r="4" fill="#F2E3A8" opacity=".85"/>';
+     s+='<g fill="none" stroke="#F2ECDD" stroke-width="1.6">'+
+        '<path d="M222,150 L222,48 L268,48"/></g>';
+     return s + fig(236,146,0.8,{arm:[[-8,-34],[6,-40]]}) + bird(46,120,0.68);
    }},
   {n:16, t:'The Team', w:'Twelve die-cut portraits, drawn and pushed. Beto in the black lead tee, Curtis in the vest.',
    sky:'day', build:function(){

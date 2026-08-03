@@ -7214,6 +7214,51 @@ sizes, bird slider green, shapes page 6 cards zero errors.
 
 ---
 
+## THE T — the house shape, rebuilt, both files (2026-08-03)
+
+Theo: *"The T but make the chimney look like a chimney with brick lines."*
+
+**The third house this book has had in one day** — pyramid → hip → T — and the cheapest of the
+three reshapes, because by now everything asks `roofY`/`spanAt` instead of carrying constants.
+The main roof is a **side-gable band**: eave y=100 from x=30 to 270, **ridge y=44 across the full
+width** — `roofY` is a constant, and everything that asks it lines up by construction, which is
+the literal thing he asked for two messages ago. The **front cross-gable WING** (cx=140, half=38,
+peak=56) replaces the dormer outright; its rakes against the main plane are the two valleys, the
+ice membranes climb them, the step flashing hangs on them, and the door lives under it.
+
+**Renamed, not aliased:** `hipCaps` → `ridgeAndRakes` (white rake boards up both gable ends, the
+vent proud across the ridge, cap run over it). `ridgeVent()` is a no-op absorbed into it.
+`dormer()` → `wing()`; `dormerBox`/`DRM`/`DX` retired. A name is not a contract, and a function
+named for a part that no longer exists is how the next session re-learns the pyramid.
+
+**The chimney is BRICK now** — two tones, mortar coursing with staggered head joints the way
+brick is actually laid, a concrete crown, a flue, base shadow, and the same step + counter
+flashing. Same footprint (182–214), which is why the T's wing was nudged left of centre in the
+shapes card: they were never going to collide.
+
+**Re-laid by hand** (everything else moved free): chalk circles and nine figures — **the T has a
+figure rule: feet in the lower half of the band (y≥86), because a mid-band figure's head rises
+past the ridge into the sky and reads as floating** — the spread-6 bundles (the −46° tilt was the
+hip's pitch; a carried bundle tips −12°), the felt roll, spread 8's hole → new sheet → sprayed
+sequence (grid origin 30), spread 13's airflow up both free zones, the takeoff tape, and the attic
+section (now the opened right end of the house, deck underside + rafter ends + the beam).
+
+**The collision detector needed three corrections, all instructive:**
+1. Its wing test rejected any wall-tone path touching y>99 — but the wing's base IS the eave at
+   100, so it reported the wing absent on 18/18. A detector that cannot see the thing it guards.
+2. The wing's own step flashing (bare paths in prop metals) got flagged as colliders — marked
+   `data-wing` in the artwork and excluded.
+3. Ground figures and the tailgate estimate legitimately stand IN FRONT of the wing now that it
+   reaches the eave — groups anchored at ty≥100 are foreground by definition and exempt; bare-path
+   overlaps only count above y=92.
+
+Verified: both files parse · wing on 18/18, zero collisions · shade split at 176 everywhere (the
+band, the caps, the materials all read SPLIT) · bird slider 7 hops ends home, same node · chimney
+survives the strip, gaps go with the old roof, 3 X marks visible · `pw_deck` clean at phone /
+iPad / reduced-motion · full sheet + built spread rendered and eyeballed.
+
+---
+
 ## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
 
 ✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like
