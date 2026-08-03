@@ -20,7 +20,9 @@
   .nm{font:800 12.5px var(--mono);letter-spacing:.09em;margin-top:6px;color:var(--ink)}
   .rl{font:12px/1.35 var(--sans);color:var(--ink2);margin-top:2px}
   .q{color:var(--red-tx);font-weight:700}
-  .row{grid-template-columns:repeat(5,1fr)}
+  /* ELEVEN PEOPLE. Five columns leaves a single orphan on the second row;
+     six gives 6 + 5, which is why this override exists at all. */
+  .row{grid-template-columns:repeat(6,1fr)}
   .note{margin-top:26px;font:14px/1.55 var(--sans);max-width:70ch;color:var(--ink2)}
   .note b{color:var(--ink)}
   h2{font:800 17px var(--serif);margin:30px 0 10px}
@@ -34,18 +36,31 @@
   <div class="row" style="grid-template-columns:repeat(3,1fr);max-width:620px" id="shirts"></div>
 
   <div class="note">
-    <b>Ten drawn, eight from photographs.</b> Nick and Jacob are stand-ins at
-    Theo&rsquo;s word — clean-shaven, no glasses, plausible rather than accurate.
-    Their features are <i>fixed</i>, not randomised at run time: a face that
-    reshuffled on every reload could never be approved, and would differ between
-    this sheet and the spread it lands on. Send two photos and they become
-    themselves in about two minutes each.
+    <b>Eleven drawn, eight from photographs.</b> Nick, Jacob and Scottie are
+    stand-ins — plausible rather than accurate. Scottie&rsquo;s <i>cap, stubble
+    and logo tee are real</i>, because Theo described them; only the face
+    proportions are invented, and his label says so. All three sets of features
+    are <i>fixed</i>, not randomised at run time: a face that reshuffled on
+    every reload could never be approved, and would differ between this sheet
+    and the spread it lands on. Send three photos and they become themselves in
+    about two minutes each.
     <br><br>
-    <b>One thing worth checking, not a claim.</b> The app&rsquo;s permission groups
-    list <i>scottie@</i> under Production and he isn&rsquo;t on the roster; going the
-    other way, Jerry, Amanda, Danny and Caine appear in no group at all, which
-    would mean no app account. Nobody can be assigned work they can&rsquo;t sign in
-    to see. I haven&rsquo;t changed anything.
+    <b>Curtis has the vest and the clipboard</b> — he is the PM, so he is the
+    only one carrying either. The vest is lime, not orange: the red ridge mark
+    computes 3.97:1 against this lime and all but disappears on hi-vis orange.
+    The clipboard runs off the bottom cut on purpose, the same way the shirt
+    does, so it reads as continuing rather than as a cropped rectangle.
+    <br><br>
+    <b>The crew leader is a role, not a person.</b> Black tee with the words on
+    it, shown in the shirt row beside the polo and the field red. No name was
+    given, so no roster card was invented for him — say the word and he becomes
+    somebody.
+    <br><br>
+    <b>One thing worth checking, not a claim.</b> Scottie is on the roster now,
+    and <i>scottie@</i> is in the app&rsquo;s Production group — those agree. Going
+    the other way, Jerry, Amanda, Danny and Caine appear in no group at all,
+    which would mean no app account. Nobody can be assigned work they can&rsquo;t
+    sign in to see. I haven&rsquo;t changed anything.
   </div>
 </div>
 <script>
@@ -55,6 +70,86 @@ var CORE='#F4EDDD', CUT='#C9B893', INK='#4A3524', INK2='#6B5B47';
 var SKIN={light:'#EFD2B4',mid:'#E3BC97',tan:'#D2A379',deep:'#B07F55'};
 var HAIR={black:'#2B2118',dark:'#3D2C20',brown:'#5C4128',midbrown:'#7A5636',
           blonde:'#A98552',grey:'#8C8378',pink:'#C4548C',auburn:'#8A4A28',ginger:'#A65B2E'};
+
+/* Clip paths need document-unique ids and there are fourteen figures on this
+   page. A shared id would make every beard after the first take the FIRST
+   one's silhouette — which renders as a plausible beard on the wrong face, so
+   nothing would look broken. Counter, not a constant. */
+var UID=0;
+
+// lighten (amt>0) or darken (amt<0) toward white/black, 0..1
+function shade(hex,amt){
+  var n=parseInt(hex.slice(1),16), r=n>>16&255, g=n>>8&255, b=n&255;
+  function f(c){ return Math.round(amt>0 ? c+(255-c)*amt : c*(1+amt)); }
+  return '#'+((1<<24)+(f(r)<<16)+(f(g)<<8)+f(b)).toString(16).slice(1);
+}
+
+/* Three bands, not two halves. Both boundary lines run parallel, up and to
+   the right — the perpendicular of the light this sheet fixes at upper-left.
+   Between them the base colour survives, so the form reads as rounded rather
+   than as a beard painted in two colours down a diagonal.
+   Derived, not eyeballed: direction (14,-38) through x=-3 and x=+5 at y=-40. */
+var B_LIT = 'M-11.1,-18 L11.7,-80 L-30,-80 L-30,-18 Z';
+var B_SHD = 'M-3.1,-18 L19.7,-80 L30,-80 L30,-18 Z';
+
+/* ONE PAINTER FOR EVERY BEARD. Theo, 3 Aug: "make everyones beards a bit more
+   sharp as well, give it more depth".
+
+   THE FIRST ATTEMPT AT THIS GOT BOTH BACKWARDS, and the close crop is the only
+   thing that showed it. A pale core stroke all the way round rendered as a fat
+   white halo — a sticker peeled off the face, softer than what it replaced,
+   not sharper. And a 50/50 terminator at .62 opacity was so close to the base
+   colour it barely appeared at all. Every mechanical assertion was green.
+
+   What actually works is the cut-paper vocabulary taken literally: the beard
+   is a PIECE OF CARD LYING ON THE FACE.
+
+     DEPTH — it drops a hard-edged shadow down and right, 0.9 units, because
+     the light is upper-left. That single offset does more than any amount of
+     shading, and it is why the piece now sits above the face instead of in it.
+
+     SHARP — the pale board core shows on the LIT edge only, clipped to the
+     inside of the shape so it is an inner bevel rather than an outline. That
+     is what a cut edge of this board actually does: catches light on one side,
+     goes dark on the other. An outline all the way round is what a sticker does.
+
+   Stubble opts out of both: it is a shadow on skin, not a piece of card, and
+   giving it a cut edge would make it one. */
+function beardArt(d, rule, bhair, isStubble){
+  var id = 'bcl' + (++UID), idL = 'bcl' + (++UID);
+  /* +0.26 blew the lit band out to near-grey and, sitting under the bevel,
+     read as a bandage across the left cheek. The band has to be a shift in
+     the same colour, not a different one. */
+  var lit = shade(bhair, 0.14), shd = shade(bhair, -0.32);
+  var s = '<defs><clipPath id="' + id + '"><path d="' + d + '" clip-rule="' + rule +
+          '"/></clipPath><clipPath id="' + idL + '"><path d="' + B_LIT +
+          '"/></clipPath></defs>';
+
+  if(isStubble){
+    s += '<path d="' + d + '" fill-rule="' + rule + '" fill="' + bhair + '" opacity=".4"/>';
+    s += '<g clip-path="url(#' + id + ')" opacity=".2"><path d="' + B_SHD +
+         '" fill="' + shd + '"/></g>';
+    return s;
+  }
+  // 1 — the shadow it casts on the face, offset toward the light's far side
+  s += '<g transform="translate(0.9,0.9)"><path d="' + d + '" fill-rule="' + rule +
+       '" fill="#2A1C10" opacity=".3"/></g>';
+  // 2 — the piece
+  s += '<path d="' + d + '" fill-rule="' + rule + '" fill="' + bhair + '"/>';
+  // 3 — lit band, base band, shaded band; hard edges, no gradients
+  s += '<g clip-path="url(#' + id + ')">' +
+       '<path d="' + B_LIT + '" fill="' + lit + '"/>' +
+       '<path d="' + B_SHD + '" fill="' + shd + '"/></g>';
+  /* 4 — the board core, inner bevel, lit edge only. The outer clip keeps the
+     stroke inside the silhouette; the inner one keeps it upper-left.
+     A HAIRLINE, 0.8 AT .45. At 1.7/.85 this was the same white-halo failure as
+     the pass before it, just moved to one side — a pale swoosh down the left
+     cheek. The bevel's job is to catch the edge, not to be a shape. */
+  s += '<g clip-path="url(#' + id + ')"><g clip-path="url(#' + idL + ')">' +
+       '<path d="' + d + '" fill-rule="' + rule + '" fill="none" stroke="' + CORE +
+       '" stroke-width="0.8" stroke-linejoin="round" opacity=".45"/></g></g>';
+  return s;
+}
 
 
 /* THE HEAD IS WHY THEY ALL LOOKED LIKE ONE PERSON IN WIGS. Every portrait
@@ -82,27 +177,94 @@ function portrait(o){
   var s='<svg viewBox="-42 -80 84 86" aria-hidden="true">';
 
   // ── shirt ─────────────────────────────────────────────
-  var shirt=o.shirt==='hoodie'?'#6E2230':(o.shirt==='red'?'#C8202E':'#474C52');
-  var shirtDk=o.shirt==='hoodie'?'#511822':(o.shirt==='red'?'#7E1018':'#33373C');
+  /* A MAP WITH A GUARD, not a ternary chain. The chain fell through to the
+     charcoal polo for any value it did not recognise, so a typo'd shirt was
+     indistinguishable from the default — the same silent-nothing that shipped
+     Curtis bald. An unknown shirt now throws. */
+  var SHIRTS={polo:['#474C52','#33373C'], hoodie:['#6E2230','#511822'],
+              red:['#C8202E','#7E1018'],  tee:['#474C52','#33373C'],
+              blacktee:['#1C1D20','#0F1012']};
+  var sk=o.shirt||'polo';
+  if(!SHIRTS[sk]) throw new Error('unknown shirt: '+sk);
+  var shirt=SHIRTS[sk][0], shirtDk=SHIRTS[sk][1];
   s+='<path d="M-34,6 C-33,-12 -20,-20 -10,-23 L10,-23 C20,-20 33,-12 34,6 Z" fill="'+shirt+
      '" stroke="'+CORE+'" stroke-width="2" stroke-linejoin="round"/>';
   // upper-left light, on every piece, always
   s+='<path d="M-34,6 C-33,-12 -20,-20 -10,-23 L-4,-23 L-14,6 Z" fill="#FFF" opacity=".09"/>';
 
-  if(o.shirt==='hoodie'){
+  /* Hi-vis vest — over the polo, under the collar, which is the order you
+     actually wear them in. The panels sit INSIDE the shirt silhouette so their
+     pale core edge never has to hold up against the pale card ground.
+     Lime, not orange: the red ridge mark computes 3.97:1 on this lime and
+     muddies to near-nothing on hi-vis orange. Arithmetic, not taste. */
+  if(o.vest){
+    var VST='#D9E04A', VSTD='#AEB52C', SILV='#E6EBEE', SILVD='#B4BCC2';
+    s+='<path d="M-31.5,6 C-30.6,-10 -21,-18.2 -12.6,-21 L-5,-19.2 L-3.6,6 Z" fill="'+VST+'"/>';
+    s+='<path d="M31.5,6 C30.6,-10 21,-18.2 12.6,-21 L5,-19.2 L3.6,6 Z" fill="'+VST+'"/>';
+    // the opening throws a shadow down each inner edge
+    s+='<path d="M-5,-19.2 L-3.6,6 L-6.6,6 L-7.8,-19 Z" fill="'+VSTD+'"/>';
+    s+='<path d="M5,-19.2 L3.6,6 L6.6,6 L7.8,-19 Z" fill="'+VSTD+'"/>';
+    // reflective banding — one across, one down each panel
+    s+='<g fill="'+SILV+'">'+
+       '<path d="M-30.4,-6.6 L-4.2,-6.6 L-4.1,-2.6 L-30.6,-2.6 Z"/>'+
+       '<path d="M30.4,-6.6 L4.2,-6.6 L4.1,-2.6 L30.6,-2.6 Z"/>'+
+       '<path d="M-21.6,-17.8 L-17.8,-16.6 L-18.8,6 L-22.8,6 Z"/>'+
+       '<path d="M21.6,-17.8 L17.8,-16.6 L18.8,6 L22.8,6 Z"/></g>';
+    s+='<g fill="'+SILVD+'" opacity=".5">'+
+       '<path d="M-30.5,-3.7 L-4.15,-3.7 L-4.1,-2.6 L-30.6,-2.6 Z"/>'+
+       '<path d="M30.5,-3.7 L4.15,-3.7 L4.1,-2.6 L30.6,-2.6 Z"/></g>';
+  }
+
+  if(sk==='hoodie'){
     // hood roll behind the neck, and drawstrings
     s+='<path d="M-17,-20 C-13,-9 13,-9 17,-20 L13,-24 C9,-16 -9,-16 -13,-24 Z" fill="'+shirtDk+'"/>';
     s+='<g stroke="'+CORE+'" stroke-width="1.8" stroke-linecap="round">'+
        '<path d="M-5,-14 L-6,0"/><path d="M5,-14 L6.5,-1"/></g>';
+  } else if(sk==='tee'||sk==='blacktee'){
+    // crew neck — a ribbed band, no collar and no placket. That absence is
+    // the whole difference between a tee and the polo at this size.
+    s+='<path d="M-11,-23.4 C-8,-15.4 8,-15.4 11,-23.4 L7.4,-24.6 '+
+       'C5,-18.4 -5,-18.4 -7.4,-24.6 Z" fill="'+shirtDk+'"/>';
   } else {
     // polo collar + placket
     s+='<path d="M-12,-22 L0,-11 L12,-22 L7,-24 L0,-17 L-7,-24 Z" fill="'+shirtDk+'"/>';
     s+='<path d="M-2.2,-12 L2.2,-12 L2.2,0 L-2.2,0 Z" fill="'+shirtDk+'" opacity=".6"/>';
   }
-  // the CRR mark — a simplified red ridge, left chest
-  s+='<g transform="translate(15,-6) scale(.9)">'+
-     '<path d="M-8,3 L-3,-4 L0,0 L4,-6 L9,3 Z" fill="#C8202E"/>'+
-     '<path d="M-8,4.6 L9,4.6" stroke="'+CORE+'" stroke-width="1.5"/></g>';
+
+  if(o.lead){
+    /* THE CREW LEADER READS FROM TWENTY FEET OR HE IS NOT A CREW LEADER.
+       The ridge moves to centre and the words take the chest — the small
+       left-breast mark and nine characters of type cannot share that space,
+       and the words are the thing doing the work here. 12.4:1 on the black. */
+    s+='<g transform="translate(0,-11.5) scale(.9)">'+
+       '<path d="M-8,3 L-3,-4 L0,0 L4,-6 L9,3 Z" fill="#C8202E"/>'+
+       '<path d="M-8,4.6 L9,4.6" stroke="'+CORE+'" stroke-width="1.5"/></g>';
+    s+='<text x="0" y="-1.4" text-anchor="middle" font-size="5" font-weight="700" '+
+       'letter-spacing=".5" font-family="ui-monospace,Menlo,Consolas,monospace" '+
+       'fill="#E8DCC8">CREW LEAD</text>';
+  } else {
+    // the CRR mark — a simplified red ridge, left chest. On a vest it lands
+    // on the vest, which is where a branded vest carries it.
+    s+='<g transform="translate(15,-6) scale(.9)">'+
+       '<path d="M-8,3 L-3,-4 L0,0 L4,-6 L9,3 Z" fill="#C8202E"/>'+
+       '<path d="M-8,4.6 L9,4.6" stroke="'+CORE+'" stroke-width="1.5"/></g>';
+  }
+
+  /* A clipboard, held at the chest and running off the bottom cut. The bust
+     stops at the viewBox floor, so the board is clipped there exactly as the
+     shirt is — which reads as "it continues below" rather than as a rectangle
+     floating in space. Left side, so it never fights the chest mark. */
+  if(o.clipboard){
+    s+='<g transform="translate(-19,-0.5) rotate(-13)">'+
+       '<path d="M-9.8,-9.6 L9.8,-9.6 L9.8,12 L-9.8,12 Z" fill="#8A7660" stroke="'+CORE+
+       '" stroke-width="1.6" stroke-linejoin="round"/>'+
+       '<path d="M-8.2,-7.4 L8.2,-7.4 L8.2,12 L-8.2,12 Z" fill="#F7F2E6"/>'+
+       '<g stroke="#BCAF97" stroke-width="1" stroke-linecap="round">'+
+       '<path d="M-6,-3.6 L6,-3.6"/><path d="M-6,0.4 L6,0.4"/><path d="M-6,4.4 L2,4.4"/></g>'+
+       '<path d="M-4.4,-11.4 L4.4,-11.4 L4.4,-7 L-4.4,-7 Z" fill="#AEB4BA" stroke="'+CORE+
+       '" stroke-width="1.2" stroke-linejoin="round"/>'+
+       '<path d="M-9.8,-9.6 L-9.8,12 L-6.8,12 L-6.8,-9.6 Z" fill="#FFF" opacity=".1"/></g>';
+  }
 
   // ── neck ──────────────────────────────────────────────
   s+='<path d="M-6.5,-22 L6.5,-22 L6.5,-33 L-6.5,-33 Z" fill="'+skin+'" stroke="'+CUT+'" stroke-width="1"/>';
@@ -140,26 +302,56 @@ function portrait(o){
   s+='<circle cx="-16.5" cy="-46" r="3.4" fill="'+skin+'" stroke="'+CUT+'" stroke-width=".9"/>'+
      '<circle cx="16.5" cy="-46" r="3.4" fill="'+skin+'" stroke="'+CUT+'" stroke-width=".9"/>';
 
-  // ── facial hair, under the features ───────────────────
-  if(o.beard==='goatee'){
+  /* ── facial hair, under the features ───────────────────
+     Each branch now only decides the SILHOUETTE and its fill rule; the edge,
+     the two-tone and the clip all come from beardArt(). Four branches each
+     drawing their own flat fill is how they ended up looking like four
+     different levels of finish. */
+  var bd = null, brule = 'nonzero';
+  if(o.beard==='scruff'){
+    /* Narrower at the sides than the ring (±7.8 vs ±9.4) so it reads as a
+       GOATEE rather than a circle beard, with a jagged bottom edge instead of
+       a clean curve. evenodd punches the lip opening out of the middle.
+
+       LENGTH IS THE WHOLE DIFFICULTY HERE. The chin is at -28.5. The first
+       pass hung the tips to -23.8 — 4.7 units past the chin, with 3.8-unit
+       notches — and rendered as a long pointed wizard beard, not "a bit more
+       scraggly". The tips now stop around -27 and the notches are ~2.
+
+       AND THE JAG HAS TO BE IRREGULAR OR IT IS NOT SCRAGGLY. Evenly spaced
+       notches of equal depth rendered as pinking shears — a sawtooth, which
+       reads as cut card rather than as hair. Every tip is a different length.
+       The round-join blunting is gone: it fought the "sharper" instruction,
+       and irregular-and-sharp is what scraggly actually looks like. */
+    brule='evenodd';
+    bd='M-7.8,-45.4 C-7.8,-48 7.8,-48 7.8,-45.4 C8.4,-38.8 7.6,-33.4 5.4,-30 '+
+       'L4.8,-27.8 L3.4,-29.4 L2,-26.9 L0.4,-29 L-1.2,-27.2 L-2.8,-29.3 '+
+       'L-4.4,-27.6 C-7.6,-33 -8.4,-38.8 -7.8,-45.4 Z '+
+       'M-5,-43.6 C-5,-45.2 5,-45.2 5,-43.6 C5.4,-38.8 4.4,-35 0,-35 '+
+       'C-4.4,-35 -5.4,-38.8 -5,-43.6 Z';
+  } else if(o.beard==='goatee'){
     /* ONE connected ring, not a moustache plus a chin patch. Drawn as two
        separate pieces they read as three parallel curves stacked with the
        mouth — which is what the first two passes looked like. It is also
        what the photograph actually shows: the moustache and the chin join
        around the mouth. evenodd punches the lip opening out of the middle. */
-    s+='<path fill-rule="evenodd" fill="'+bhair+'" d="'+
-       'M-9.4,-44.6 C-9.4,-47.6 9.4,-47.6 9.4,-44.6 C10.4,-36 9.2,-28.8 0,-28.8 '+
+    brule='evenodd';
+    bd='M-9.4,-44.6 C-9.4,-47.6 9.4,-47.6 9.4,-44.6 C10.4,-36 9.2,-28.8 0,-28.8 '+
        'C-9.2,-28.8 -10.4,-36 -9.4,-44.6 Z '+
        'M-5.6,-43 C-5.6,-44.6 5.6,-44.6 5.6,-43 C6,-38 5,-34 0,-34 '+
-       'C-5,-34 -6,-38 -5.6,-43 Z"/>';
+       'C-5,-34 -6,-38 -5.6,-43 Z';
   } else if(o.beard==='full'){
-    s+='<path d="M-16,-50 C-17,-36 -10,-28.5 0,-28.5 C10,-28.5 17,-36 16,-50 '+
-       'C13,-40 10,-36 0,-36 C-10,-36 -13,-40 -16,-50 Z" fill="'+bhair+'"/>';
-    s+='<path d="M-7,-42.5 C-4,-44.5 4,-44.5 7,-42.5 C4,-41 -4,-41 -7,-42.5 Z" fill="'+bhair+'"/>';
+    /* Two subpaths in ONE d, and the rule stays nonzero on purpose: the
+       moustache tips graze the crescent, and evenodd would punch two small
+       holes there — a hole in a beard reads as damage, not as a highlight. */
+    bd='M-16,-50 C-17,-36 -10,-28.5 0,-28.5 C10,-28.5 17,-36 16,-50 '+
+       'C13,-40 10,-36 0,-36 C-10,-36 -13,-40 -16,-50 Z '+
+       'M-7,-42.5 C-4,-44.5 4,-44.5 7,-42.5 C4,-41 -4,-41 -7,-42.5 Z';
   } else if(o.beard==='stubble'){
-    s+='<path d="M-14,-46 C-15,-36 -9,-29.5 0,-29.5 C9,-29.5 15,-36 14,-46 '+
-       'C11,-38 8,-35 0,-35 C-8,-35 -11,-38 -14,-46 Z" fill="'+bhair+'" opacity=".3"/>';
+    bd='M-14,-46 C-15,-36 -9,-29.5 0,-29.5 C9,-29.5 15,-36 14,-46 '+
+       'C11,-38 8,-35 0,-35 C-8,-35 -11,-38 -14,-46 Z';
   }
+  if(bd) s+=beardArt(bd, brule, bhair, o.beard==='stubble');
 
   // ── features ──────────────────────────────────────────
   s+='<circle cx="-5.8" cy="-50" r="1.7" fill="'+INK+'"/><circle cx="5.8" cy="-50" r="1.7" fill="'+INK+'"/>';
@@ -184,9 +376,14 @@ function portrait(o){
       s+='<g fill="'+FRAME+'">'+
          '<path d="M-14.6,-57.4 L-1,-56.4 L-1,-52.6 L-12.8,-53.4 C-13.8,-54.4 -14.4,-55.8 -14.6,-57.4 Z"/>'+
          '<path d="M14.6,-57.4 L1,-56.4 L1,-52.6 L12.8,-53.4 C13.8,-54.4 14.4,-55.8 14.6,-57.4 Z"/></g>';
+      /* THE LOWER RIM HAS TO BE SHALLOW OR THEY ARE NOT CLUBMASTERS. The first
+         version dipped 7.9 units below an 11.8-wide brow — near enough a circle,
+         and at card size it read as two gold hoops, i.e. safety goggles. Which
+         is the one thing Theo asked to take OFF this face. 4.8 deep now, so the
+         lens is wider than it is tall and the brow stays the heavy element. */
       s+='<g fill="none" stroke="'+GOLD+'" stroke-width="1.25" stroke-linecap="round">'+
-         '<path d="M-12.8,-53.2 C-12.2,-46.8 -8.4,-44.8 -4.8,-46.2 C-2.6,-47 -1.2,-49.6 -1,-52.6"/>'+
-         '<path d="M12.8,-53.2 C12.2,-46.8 8.4,-44.8 4.8,-46.2 C2.6,-47 1.2,-49.6 1,-52.6"/>'+
+         '<path d="M-12.8,-53.2 C-12.6,-49.6 -10.6,-47.8 -6.9,-47.8 C-3.4,-47.8 -1.4,-49.8 -1,-52.6"/>'+
+         '<path d="M12.8,-53.2 C12.6,-49.6 10.6,-47.8 6.9,-47.8 C3.4,-47.8 1.4,-49.8 1,-52.6"/>'+
          '<path d="M-1,-55.2 C-0.4,-56.6 0.4,-56.6 1,-55.2"/></g>';
       // a highlight along the top of the acetate, so a black frame still reads
       // against black hair — glossy frames really do catch the light there
@@ -301,22 +498,29 @@ var PEOPLE=[
   // fw/fh/jaw read off each photograph. Curtis is lean and long; Theo is broad
   // with a heavy jaw; Joan and Amanda are softer and more tapered; Jerry is
   // narrower than Theo, which is most of what tells them apart on the shoot.
-  {n:'CURTIS', r:'Project manager', o:{skin:'light',hair:'black',style:'fringe',
-   beard:'goatee',beardColor:'ginger',glasses:'clubmaster',fw:15.7,fh:19.2,jaw:0.42}},
-  {n:'THEO',   r:'Owner',  o:{skin:'tan',hair:'black',style:'fade',
+  // Surnames are Theo's, 3 Aug. Jerry's was not given and is not guessed.
+  {n:'CURTIS HOSKINS', r:'Project manager', o:{skin:'light',hair:'black',style:'fringe',
+   beard:'scruff',beardColor:'ginger',vest:true,clipboard:true,fw:15.7,fh:19.2,jaw:0.42}},
+  {n:'THEO DORION',   r:'Owner',  o:{skin:'tan',hair:'black',style:'fade',
    fw:17.7,fh:18.1,jaw:0.82}},
-  {n:'JOAN',   r:'Admin',  o:{skin:'light',hair:'blonde',style:'bob',glasses:true,
+  {n:'JOAN HUNT',   r:'Admin',  o:{skin:'light',hair:'blonde',style:'bob',glasses:true,
    fw:16.2,fh:17.5,jaw:0.32}},
-  {n:'JOEY',   r:'Sales',  o:{skin:'light',hair:'midbrown',style:'short',beard:'goatee',
+  {n:'JOEY LEHMAN',   r:'Sales',  o:{skin:'light',hair:'midbrown',style:'short',
    fw:16.8,fh:18.2,jaw:0.58}},
   {n:'JERRY',  r:'Sales',  o:{skin:'tan',hair:'black',style:'crop',
    fw:16.0,fh:18.7,jaw:0.55}},
-  {n:'AMANDA', r:'Office', o:{skin:'light',hair:'dark',style:'pony',accent:true,
+  {n:'AMANDA HOSKINS', r:'Office', o:{skin:'light',hair:'dark',style:'pony',accent:true,
    fw:15.9,fh:17.9,jaw:0.30}},
-  {n:'CAINE',  r:'Tech',   o:{skin:'light',hair:'dark',style:'shaggy',beard:'full',
+  {n:'CAINE BARBER',  r:'Tech',   o:{skin:'light',hair:'dark',style:'shaggy',beard:'full',
    fw:16.4,fh:18.9,jaw:0.52}},
-  {n:'DANNY GUTIERREZ', r:'Logistics', o:{skin:'mid',hair:'dark',cap:true,glasses:true,
-   beard:'full',beardColor:'dark',fw:16.6,fh:18.6,jaw:0.62}},
+  // Cap, stubble and a logo tee are Theo's description, so they are real.
+  // The face PROPORTIONS are not — there is no photograph, and the label
+  // says so rather than letting a guess pass as a likeness.
+  {n:'SCOTTIE STEINBRUGGE', r:'Punch-outs · face is a stand-in',
+   o:{skin:'light',hair:'dark',cap:true,capColor:'#2A2E33',beard:'stubble',
+   shirt:'tee',fw:16.5,fh:18.4,jaw:0.6}},
+  {n:'DANNY GUTIERREZ', r:'Logistics', o:{skin:'mid',hair:'dark',style:'swept',
+   glasses:'clubmaster',beard:'full',beardColor:'dark',fw:16.6,fh:18.6,jaw:0.62}},
   {n:'NICK HEY',        r:'Sales · stand-in', o:{skin:'light',hair:'midbrown',
    style:'short',fw:16.4,fh:18.4,jaw:0.5}},
   {n:'JACOB HENDERSON', r:'Sales · stand-in', o:{skin:'tan',hair:'dark',
@@ -329,13 +533,18 @@ document.getElementById('row').innerHTML = PEOPLE.map(function(p){
 }).join('');
 
 /* SETTLED — Theo, 3 Aug: "Cardinal polo" for the team, "Field crew red" for the
-   crew on the roof. Both are shown so the split is visible rather than assumed;
-   nothing here is an open question any more. */
+   crew on the roof, and the crew leader in a black tee that says so. All three
+   are shown so the split is visible rather than assumed.
+   The crew leader is a ROLE here, not a person — no name was given and one is
+   not invented. Same figure in all three so the shirt is the only variable. */
 document.getElementById('shirts').innerHTML = [
   ['Cardinal polo','The team — charcoal with the red ridge',
    {skin:'light',hair:'dark',style:'short',beard:'goatee',beardColor:'grey'}],
   ['Field crew red','On the roof, where it has to read at distance',
-   {skin:'light',hair:'dark',style:'short',beard:'goatee',beardColor:'grey',shirt:'red'}]
+   {skin:'light',hair:'dark',style:'short',beard:'goatee',beardColor:'grey',shirt:'red'}],
+  ['Crew leader','Black tee, and it says which one he is',
+   {skin:'light',hair:'dark',style:'short',beard:'goatee',beardColor:'grey',
+    shirt:'blacktee',lead:true}]
 ].map(function(x){
   return '<div class="card">'+portrait(x[2])+
     '<div class="nm">'+x[0]+'</div><div class="rl">'+x[1]+'</div></div>';
