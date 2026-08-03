@@ -169,14 +169,6 @@ function portrait(o){
   s+='<path d="M-5.4,-39.8 Q0,-35.6 5.4,-39.8" fill="none" stroke="'+INK+
      '" stroke-width="1.5" stroke-linecap="round"/>';
 
-  // ── glasses, over the face ────────────────────────────
-  if(o.glasses){
-    s+='<g fill="none" stroke="'+INK2+'" stroke-width="1.5">'+
-       '<rect x="-12.4" y="-54.4" width="10.6" height="8.4" rx="2.4"/>'+
-       '<rect x="1.8" y="-54.4" width="10.6" height="8.4" rx="2.4"/>'+
-       '<path d="M-1.8,-50.6 L1.8,-50.6"/><path d="M-12.4,-51 L-16.6,-49"/>'+
-       '<path d="M12.4,-51 L16.6,-49"/></g>';
-  }
 
   // ── a ball cap, if there is one. It REPLACES the hair rather than
   //    sitting over it, so it is its own branch and returns early.
@@ -189,12 +181,17 @@ function portrait(o){
     s+='<path d="M-18.4,-54.4 C-12,-47.4 12,-47.4 18.4,-54.4 '+
        'C12,-51.8 -12,-51.8 -18.4,-54.4 Z" fill="'+capD+'"/>';
     if(o.goggles){
-      // pushed up onto the cap, which is where they live between roofs
-      s+='<path d="M-16.4,-59.6 C-8,-63.8 8,-63.8 16.4,-59.6 L16.4,-62.6 '+
-         'C8,-66.6 -8,-66.6 -16.4,-62.6 Z" fill="#3A4250"/>';
-      s+='<g fill="#C9D6DE" opacity=".9">'+
-         '<path d="M-12.6,-61 C-7,-64 -1,-64 -1,-61.4 C-1,-59.6 -7,-59.4 -12.6,-58.6 Z"/>'+
-         '<path d="M12.6,-61 C7,-64 1,-64 1,-61.4 C1,-59.6 7,-59.4 12.6,-58.6 Z"/></g>';
+      // WORN, not pushed up. The tighter crop shows him looking straight
+      // through them under the brim, which is a different shape entirely —
+      // one wide lens with a notch over the nose, and a strap to the sides.
+      var GG = 'M-14.6,-55.8 C-9,-58.6 9,-58.6 14.6,-55.8 C15.2,-50 12,-45.2 6,-45.4 '+
+               'C3,-45.6 1.4,-47.4 0,-47.4 C-1.4,-47.4 -3,-45.6 -6,-45.4 '+
+               'C-12,-45.2 -15.2,-50 -14.6,-55.8 Z';
+      s+='<path d="M-17.4,-53 L17.4,-53" stroke="#3A4250" stroke-width="2.6" stroke-linecap="round"/>';
+      s+='<path d="'+GG+'" fill="#DCE7EC" opacity=".42"/>';
+      s+='<path d="'+GG+'" fill="none" stroke="#3A4250" stroke-width="1.7" stroke-linejoin="round"/>';
+      s+='<path d="M-11.6,-54.4 C-7.6,-56.2 -3.6,-56.4 -2.2,-55.4 L-4,-51.6 '+
+         'C-6.6,-52.6 -9.4,-53 -11.6,-54.4 Z" fill="#FFF" opacity=".55"/>';
     }
     return s+'</g></svg>';
   }
@@ -255,6 +252,33 @@ function portrait(o){
        'C14,-58.4 8,-60.6 0,-60.6 C-8,-60.6 -14,-58.4 -19.4,-51 Z" fill="'+HAIR.pink+'"/>';
   }
 
+  // ── glasses, IN FRONT OF THE HAIR ─────────────────────
+  if(o.glasses === 'clubmaster'){
+    /* BROWLINE. Heavy dark brow bar with the outward flare at the top corner,
+       a thin gold rim under the lens, a gold bridge. Nothing like a wire
+       rectangle, and it is what you recognise Curtis by before anything else. */
+    var GOLD = '#C9A227', FRAME = '#191410';
+    s+='<g fill="'+FRAME+'">'+
+       '<path d="M-14.6,-57.4 L-1,-56.4 L-1,-52.6 L-12.8,-53.4 C-13.8,-54.4 -14.4,-55.8 -14.6,-57.4 Z"/>'+
+       '<path d="M14.6,-57.4 L1,-56.4 L1,-52.6 L12.8,-53.4 C13.8,-54.4 14.4,-55.8 14.6,-57.4 Z"/></g>';
+    s+='<g fill="none" stroke="'+GOLD+'" stroke-width="1.25" stroke-linecap="round">'+
+       '<path d="M-12.8,-53.2 C-12.2,-46.8 -8.4,-44.8 -4.8,-46.2 C-2.6,-47 -1.2,-49.6 -1,-52.6"/>'+
+       '<path d="M12.8,-53.2 C12.2,-46.8 8.4,-44.8 4.8,-46.2 C2.6,-47 1.2,-49.6 1,-52.6"/>'+
+       '<path d="M-1,-55.2 C-0.4,-56.6 0.4,-56.6 1,-55.2"/></g>';
+    // a highlight along the top of the acetate, so a black frame still reads
+    // against black hair — glossy frames really do catch the light there
+    s+='<path d="M-14.4,-57.2 L-1.2,-56.2 M14.4,-57.2 L1.2,-56.2" fill="none" '+
+       'stroke="#7A6E62" stroke-width="0.9" stroke-linecap="round" opacity=".85"/>';
+    s+='<g stroke="'+FRAME+'" stroke-width="1.7" stroke-linecap="round">'+
+       '<path d="M-14.4,-56.4 L-17.6,-53.4"/><path d="M14.4,-56.4 L17.6,-53.4"/></g>';
+  } else if(o.glasses){
+    s+='<g fill="none" stroke="'+INK2+'" stroke-width="1.5">'+
+       '<rect x="-12.4" y="-54.4" width="10.6" height="8.4" rx="2.4"/>'+
+       '<rect x="1.8" y="-54.4" width="10.6" height="8.4" rx="2.4"/>'+
+       '<path d="M-1.8,-50.6 L1.8,-50.6"/><path d="M-12.4,-51 L-16.6,-49"/>'+
+       '<path d="M12.4,-51 L16.6,-49"/></g>';
+  }
+
   return s+'</g></svg>';
 }
 
@@ -267,8 +291,8 @@ var PEOPLE=[
   // fw/fh/jaw read off each photograph. Curtis is lean and long; Theo is broad
   // with a heavy jaw; Joan and Amanda are softer and more tapered; Jerry is
   // narrower than Theo, which is most of what tells them apart on the shoot.
-  {n:'CURTIS', r:'Project manager', o:{skin:'light',hair:'brown',style:'fringe',
-   beard:'goatee',beardColor:'ginger',glasses:true,fw:15.7,fh:19.2,jaw:0.42}},
+  {n:'CURTIS', r:'Project manager', o:{skin:'light',hair:'black',style:'fringe',
+   beard:'goatee',beardColor:'ginger',glasses:'clubmaster',fw:15.7,fh:19.2,jaw:0.42}},
   {n:'THEO',   r:'Owner',  o:{skin:'tan',hair:'black',style:'fade',
    fw:17.7,fh:18.1,jaw:0.82}},
   {n:'JOAN',   r:'Admin',  o:{skin:'light',hair:'blonde',style:'bob',glasses:true,
