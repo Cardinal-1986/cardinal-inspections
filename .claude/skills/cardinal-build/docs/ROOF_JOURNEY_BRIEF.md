@@ -84,26 +84,59 @@ feature that exists, not a slogan.
 Theo confirming each. "We carry general liability and workers' comp, and you can
 have the certificate" needs no numbers to be strong.
 
-### 20 — Owens Corning Preferred: true, but watch the wording and the tier
+### 20 — Owens Corning Preferred — ✅ SETTLED BY THEO, 3 Aug
 
-This **confirms verification item V4** in `ROOF_JOURNEY_COPY.md` as factually
-true — Cardinal is Preferred with OC. Two things still need care:
+> We are preferred not platinum, preferred is 50 years , 10 years workmanship
+> transferrable and backed by oc. dont mention platinum
 
-1. **Manufacturers restrict how contractor designations may be worded** in
-   public marketing, including trademark treatment. Confirm the exact permitted
-   phrasing before it goes on a public page. *Being* Preferred and being allowed
-   to *say it a particular way* are different questions.
-2. **Preferred is not Platinum Preferred.** The Resource Library already carries
-   a warning that Platinum Protection is Platinum-Preferred-only and must not be
-   quoted. Whatever warranty language attaches to Preferred specifically is what
-   may be used — **do not let "Preferred" drift into implying the Platinum
-   tier.** This is precisely the kind of overclaim that is easy to make by
-   accident and expensive to make in writing.
+**This closes verification item V5**, which had been the one genuinely blocking
+question. The app contained two contradictory figures (Sales Floor said 25-year
+shingle; the estimate template listed both a 25-year and a 50-year tier). The
+answer, from the owner:
 
-Still unresolved and Theo's alone: **verification item V5** — the app currently
-contains *two different warranty figures* (Sales Floor says 25-year shingle;
-the estimate template lists both a 25-year and a 50-year tier). They disagree.
-One pair has to be chosen before either appears on a public page.
+| | |
+|---|---|
+| **Material** | **50 years** |
+| **Workmanship** | **10 years** |
+| **Transferable** | **Yes** |
+| **Backed by** | **Owens Corning**, not only Cardinal |
+
+**Two of these are worth more than the numbers, and the copy must not bury
+them:**
+
+- **Transferable** — it survives a sale. That converts the roof from a repair
+  into something that shows up in the resale conversation, and almost nobody
+  asks about it because they don't know to.
+- **Backed by OC** — a manufacturer-backed warranty does not die if the
+  contractor does. That is the *entire* answer to the fear a homeowner has about
+  every contractor and is too polite to say out loud. It's the strongest single
+  sentence available on this whole page.
+
+⚠️ **"dont mention platinum" is a direct instruction — follow it literally.**
+No Platinum, no Platinum Protection, no comparison to a higher tier, not even to
+say Cardinal isn't it. The Resource Library's existing warning stands and is now
+moot: the copy simply never goes near it.
+
+*Residual, minor:* manufacturers do restrict how designations and trademarks are
+written in public marketing. The **terms** are now confirmed by the owner; only
+the **exact typographic/trademark treatment** ("Owens Corning™ Roofing Preferred
+Contractor" and similar) is worth a glance before publishing. That's a
+copy-editing check, not an open question about the facts.
+
+### Cleanup — ✅ ALSO SETTLED, and stronger than what was drafted
+
+> Yes we do go back the next day and sweep again. We are huge on cleanup
+
+The next-day return sweep was drafted as a proposed promise and flagged for
+approval because nothing in the app committed to it. **The owner confirms it is
+real practice.** So it prints as a commitment.
+
+"We are huge on cleanup" should set the *tone* of that section, not just its
+content — it's the last thing the client experiences and it writes the review.
+The concrete, checkable version of the claim is the sequence: magnetic sweep
+before the crew pulls out, dumpster gone, **and a return the following day to
+sweep again**. Very few contractors come back the next day; saying it plainly is
+the whole differentiator.
 
 ### The three tiers of oversight — write them as one thing, not three boasts
 
