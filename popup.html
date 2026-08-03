@@ -516,84 +516,125 @@
     return g + '</g>';
   }
 
-  /* ── the pop's artwork ────────────────────────────────────────
-     Die-cut board, not line art: filled pieces with a cut edge and a
-     printed detail layer. Light is fixed upper-left on every piece,
-     forever — varying it is what makes CSS 3D read as fake. */
+  /* ── the pop's artwork — FOLDED ───────────────────────────────
+     Theo picked the low-poly pop-up reference over the comic one, and the
+     reason it is the right pick is material rather than taste: FACETING IS
+     FOLDED CARD. Every surface splits into a lit face and a shaded face, and
+     nothing carries an outline — separation comes from tone, the way it does
+     on a real folded piece.
+
+     ONE DELIBERATE EXCEPTION, and it is not an oversight: the CREW keep their
+     pale cut edge. Tone alone cannot separate them — a #C8202E shirt on the
+     shaded roof plane is 1.66:1, which is invisible — and a die-cut figure
+     standing proud of the board genuinely does show its pale core at the cut.
+     Scenery is pure faceting; pieces that stand up keep their edge.
+
+     The house is detailed as asked: lap siding courses, sash windows with
+     mullions, sills and a glint, a panelled door with a knob and a step, a
+     gutter along the eave, and a downspout. */
   function houseSVG(stripped){
+    var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
+        GLASS='#8FB6CC', GLASSL='#B9D6E4',
+        DOOR='#8F1620', DOORS='#6B0F16', MET='#AEB4BA', METS='#878D93',
+        ROOF='#A8442F', ROOFS='#7E2E20', DECK='#C9B084', DECKS='#A18862',
+        SPLIT = 176;   // where the lit face of the house turns into shade
     var s = '';
-    // ── the house board
+
+    // ── faceted hills, straight off Theo's reference
     s += '<g>';
-    s += '<path d="M40,186 L40,96 L150,34 L260,96 L260,186 Z" fill="#E8DCC8" stroke="#C9B893" stroke-width="2.5" stroke-linejoin="round"/>';
-    // printed detail: door, two windows, sill lines
-    s += '<g fill="none" stroke="#6B5B47" stroke-width="2" stroke-linecap="square">';
-    s += '<path d="M132,186 L132,140 L168,140 L168,186"/>';
-    s += '<path d="M64,120 L96,120 L96,150 L64,150 Z"/>';
-    s += '<path d="M204,120 L236,120 L236,150 L204,150 Z"/>';
+    s += '<path d="M0,120 L40,84 L86,120 Z" fill="#8FA6B8" opacity=".55"/>';
+    s += '<path d="M40,84 L86,120 L64,120 Z" fill="#75899B" opacity=".55"/>';
+    s += '<path d="M214,120 L262,78 L300,120 Z" fill="#8FA6B8" opacity=".55"/>';
+    s += '<path d="M262,78 L300,120 L278,120 Z" fill="#75899B" opacity=".55"/>';
     s += '</g>';
+
+    // ── the wall, as two planes
+    s += '<path d="M46,190 L46,96 L' + SPLIT + ',96 L' + SPLIT + ',190 Z" fill="' + LIT + '"/>';
+    s += '<path d="M' + SPLIT + ',96 L254,96 L254,190 L' + SPLIT + ',190 Z" fill="' + SHD + '"/>';
+    // lap siding — the courses are what make it read as siding rather than a box
+    s += '<g fill="none" stroke="#D9C8A8" stroke-width="1">';
+    for(var ly = 104; ly < 190; ly += 9) s += '<path d="M46,' + ly + ' L' + SPLIT + ',' + ly + '"/>';
+    s += '</g><g fill="none" stroke="#BFAA88" stroke-width="1">';
+    for(var ry = 104; ry < 190; ry += 9) s += '<path d="M' + SPLIT + ',' + ry + ' L254,' + ry + '"/>';
     s += '</g>';
 
     // ── printed grass along the ground line, skipping the driveway.
-    // DETERMINISTIC on purpose — no Math.random. The board is redrawn when
-    // the roof strips, and grass that reshuffled at that moment would read
-    // as a rendering bug rather than a tear-off.
+    // DETERMINISTIC on purpose — no Math.random. The board is redrawn when the
+    // roof strips, and grass that reshuffled at that moment would read as a
+    // rendering bug rather than a tear-off.
     s += '<g>';
     for(var gx = 78; gx < 298; gx += 5.5){
-      var gh = 5 + (Math.round(gx * 7) % 5);
-      var gl = (Math.round(gx * 3) % 5) - 2;
+      var gh = 5 + (Math.round(gx * 7) % 5), gl = (Math.round(gx * 3) % 5) - 2;
       s += '<path d="M' + gx.toFixed(1) + ',188 L' + (gx + gl).toFixed(1) + ',' + (188 - gh).toFixed(1) +
            ' L' + (gx + 3.4).toFixed(1) + ',188 Z" fill="' +
-           ((Math.round(gx * 2) % 11) < 5 ? '#43683A' : '#6E9A5A') + '"/>';
+           ((Math.round(gx * 2) % 11) < 5 ? '#4E7742' : '#7FA863') + '"/>';
     }
     s += '</g>';
 
-    // ── the roof: either shingled, or stripped to bare deck
-    if(!stripped){
-      s += '<g id="shingles">';
-      s += '<path d="M34,100 L150,28 L266,100 Z" fill="#8F1620" stroke="#7a121b" stroke-width="2" stroke-linejoin="round"/>';
-      // course lines, printed
-      s += '<g fill="none" stroke="#E8DCC8" stroke-width="1.6" opacity=".55">';
-      for(var i=1;i<=4;i++){
-        var t=i/5.4, y=100-t*70, x1=34+t*116, x2=266-t*116;
-        s += '<path d="M'+x1.toFixed(0)+','+y.toFixed(0)+' L'+x2.toFixed(0)+','+y.toFixed(0)+'"/>';
-      }
-      s += '</g></g>';
-    } else {
-      // bare deck — boards with visible gaps, the honest version
-      s += '<g>';
-      s += '<path d="M34,100 L150,28 L266,100 Z" fill="#D3C3A4" stroke="#C9B893" stroke-width="2" stroke-linejoin="round"/>';
-      s += '<g fill="none" stroke="#6B5B47" stroke-width="1.3" opacity=".5">';
-      for(var j=1;j<=5;j++){
-        var u=j/6.4, yy=100-u*70, a=34+u*116, b=266-u*116;
-        s += '<path d="M'+a.toFixed(0)+','+yy.toFixed(0)+' L'+b.toFixed(0)+','+yy.toFixed(0)+'"/>';
-      }
-      s += '</g></g>';
+    // ── the roof: two planes, shingled or stripped to bare deck.
+    // The ridge is where the two facets meet — no drawn line needed, which is
+    // the whole point of the style.
+    var fa = stripped ? DECK  : ROOF,
+        fb = stripped ? DECKS : ROOFS;
+    s += '<g' + (stripped ? '' : ' id="shingles"') + '>';
+    s += '<path d="M34,100 L150,28 L150,100 Z" fill="' + fa + '"/>';
+    s += '<path d="M150,28 L266,100 L150,100 Z" fill="' + fb + '"/>';
+    s += '<g fill="none" stroke="' + (stripped ? '#8E7752' : '#8E3729') + '" stroke-width="1.1" opacity=".45">';
+    for(var i = 1; i <= 5; i++){
+      var t = i / 6.2, yy = 100 - t * 70, a = 34 + t * 116, b = 266 - t * 116;
+      s += '<path d="M' + a.toFixed(0) + ',' + yy.toFixed(0) + ' L' + b.toFixed(0) + ',' + yy.toFixed(0) + '"/>';
     }
+    s += '</g></g>';
 
-    // ── tarps, revealed at their own beat. Blue because every tarp on every
-    // job is blue, and a homeowner recognises them before they recognise
-    // anything else on this drawing.
+    // ── gutter along the eave and a downspout — Cardinal's own soft metals
+    s += '<path d="M30,100 L270,100 L270,106 L30,106 Z" fill="' + MET + '"/>';
+    s += '<path d="M' + SPLIT + ',100 L270,100 L270,106 L' + SPLIT + ',106 Z" fill="' + METS + '"/>';
+    s += '<path d="M252,106 L260,106 L260,188 L252,188 Z" fill="' + METS + '"/>';
+
+    // ── sash windows: trim, mullions, sill, and a glint so glass reads as glass
+    [[66,118],[200,118]].forEach(function(w){
+      var x = w[0], y = w[1];
+      s += '<path d="M' + x + ',' + y + ' L' + (x+34) + ',' + y + ' L' + (x+34) + ',' + (y+34) +
+           ' L' + x + ',' + (y+34) + ' Z" fill="' + GLASS + '"/>';
+      s += '<path d="M' + x + ',' + y + ' L' + (x+34) + ',' + y + ' L' + x + ',' + (y+34) + ' Z" fill="' + GLASSL + '"/>';
+      s += '<g fill="none" stroke="' + TRIM + '" stroke-width="1.5">';
+      s += '<path d="M' + (x+17) + ',' + y + ' L' + (x+17) + ',' + (y+34) + '"/>';
+      s += '<path d="M' + x + ',' + (y+17) + ' L' + (x+34) + ',' + (y+17) + '"/></g>';
+      s += '<path d="M' + (x-3) + ',' + (y+34) + ' L' + (x+37) + ',' + (y+34) + ' L' + (x+37) + ',' +
+           (y+38) + ' L' + (x-3) + ',' + (y+38) + ' Z" fill="' + TRIM + '"/>';
+    });
+
+    // ── door: two panels, a knob, a step
+    s += '<path d="M132,190 L132,134 L168,134 L168,190 Z" fill="' + DOOR + '"/>';
+    s += '<path d="M152,134 L168,134 L168,190 L152,190 Z" fill="' + DOORS + '"/>';
+    s += '<g fill="none" stroke="#5E0D14" stroke-width="1.3">';
+    s += '<path d="M138,142 L162,142 L162,158 L138,158 Z"/>';
+    s += '<path d="M138,164 L162,164 L162,183 L138,183 Z"/></g>';
+    s += '<circle cx="163" cy="164" r="2" fill="' + MET + '"/>';
+    s += '<path d="M127,190 L173,190 L173,186 L127,186 Z" fill="' + METS + '"/>';
+
+    // ── tarps, revealed at their own beat. Blue because every tarp on every job
+    // is blue, and a homeowner recognises them before anything else here.
     s += '<g id="tarpG" class="beat">';
-    s += '<path d="M74,190 L128,190 L124,178 L78,178 Z" fill="#2F7FB5" stroke="#1F6494" stroke-width="1.6" stroke-linejoin="round"/>';
-    s += '<path d="M172,190 L258,190 L252,178 L177,178 Z" fill="#2F7FB5" stroke="#1F6494" stroke-width="1.6" stroke-linejoin="round"/>';
-    s += '<g stroke="#F4EDDD" stroke-width="1" opacity=".5">';
-    s += '<path d="M86,178 L84,190"/><path d="M104,178 L103,190"/>';
-    s += '<path d="M196,178 L194,190"/><path d="M222,178 L221,190"/></g>';
+    s += '<path d="M74,190 L128,190 L124,178 L78,178 Z" fill="#3E8FC0"/>';
+    s += '<path d="M104,178 L124,178 L128,190 L108,190 Z" fill="#2A6E99"/>';
+    s += '<path d="M172,190 L258,190 L252,178 L177,178 Z" fill="#3E8FC0"/>';
+    s += '<path d="M220,178 L252,178 L258,190 L226,190 Z" fill="#2A6E99"/>';
     s += '</g>';
 
-    // ── the trailer on the drive (steel), with a kraft load
+    // ── the trailer, faceted
     s += '<g id="trailerG" class="beat">';
-    s += '<path d="M6,186 L6,158 L74,158 L74,186 Z" fill="#8C8F94" stroke="#5E6166" stroke-width="2" stroke-linejoin="round"/>';
+    s += '<path d="M6,186 L6,158 L74,158 L74,186 Z" fill="#9AA0A6"/>';
+    s += '<path d="M50,158 L74,158 L74,186 L50,186 Z" fill="#7B8187"/>';
+    s += '<path d="M6,158 L74,158 L70,152 L10,152 Z" fill="#B6BCC2"/>';
     s += '<circle cx="24" cy="188" r="6" fill="#243B53"/><circle cx="58" cy="188" r="6" fill="#243B53"/>';
-    s += '<path d="M6,158 L74,158" stroke="#F4EDDD" stroke-width="1.6"/>';
     s += '</g>';
 
-    // ── the noise, drawn as arcs off both rakes. Only up on its own beat —
-    // a permanent noise ring would say the job is loud the whole time, and
-    // it isn't; it stops and starts, which is the actual point of the line.
+    // ── the noise, drawn as arcs off both rakes. Only up on its own beat — a
+    // permanent ring would say the job is loud the whole time, and it isn't;
+    // it stops and starts, which is the actual point of the line.
     s += '<g id="noiseG" class="beat" fill="none" stroke="#5E6166" stroke-linecap="round">';
-    var na;
-    for(na = 0; na < 3; na++){
+    for(var na = 0; na < 3; na++){
       var nr = 16 + na * 11, no = (0.5 - na * 0.11).toFixed(2);
       s += '<path d="M' + (34 - nr) + ',' + (90 - nr) + ' A' + nr + ',' + nr +
            ' 0 0 0 ' + (34 - nr) + ',' + (90 + nr) + '" stroke-width="2" opacity="' + no + '"/>';
@@ -602,9 +643,9 @@
     }
     s += '</g>';
 
-    // ── the crew: one on the slope stripping, one on the ground
-    // The roofer sits ON the right slope — feet land on the rake line, so
-    // the y is computed from the roof geometry rather than eyeballed.
+    // ── the crew: one on the slope stripping, one on the ground.
+    // The roofer sits ON the right slope — feet land on the rake line, so the
+    // y is computed from the roof geometry rather than eyeballed.
     s += figure(222, roofY(222), 0.5,  {pose:'shovel', flip:true});
     s += figure(104, 186,        0.62, {pose:'point'});
 

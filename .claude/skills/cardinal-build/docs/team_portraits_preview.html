@@ -53,7 +53,7 @@
 var CORE='#F4EDDD', CUT='#C9B893', INK='#4A3524', INK2='#6B5B47';
 var SKIN={light:'#EFD2B4',mid:'#E3BC97',tan:'#D2A379',deep:'#B07F55'};
 var HAIR={black:'#2B2118',dark:'#3D2C20',brown:'#5C4128',midbrown:'#7A5636',
-          blonde:'#A98552',grey:'#8C8378',pink:'#C4548C'};
+          blonde:'#A98552',grey:'#8C8378',pink:'#C4548C',auburn:'#8A4A28',ginger:'#A65B2E'};
 
 
 /* THE HEAD IS WHY THEY ALL LOOKED LIKE ONE PERSON IN WIGS. Every portrait
@@ -179,12 +179,27 @@ function portrait(o){
   }
 
   // ── hair ON TOP ───────────────────────────────────────
-  if(o.style==='fade'){
+  var HAIR_STYLES = ['fade','fringe','crop','short','swept','shaggy','bob','long','pony'];
+  // AN UNKNOWN STYLE USED TO DRAW NOTHING. Curtis shipped bald because a
+  // replace that added 'fringe' silently no-opped against a stale anchor, and
+  // a hair style with no matching branch is indistinguishable from no hair.
+  if(HAIR_STYLES.indexOf(o.style) === -1) throw new Error('unknown hair style: ' + o.style);
+
+  if(o.style==='fringe'){
+    /* A DOME WITH A FLAT BOTTOM EDGE — that straight line IS the blunt fringe,
+       and it is the whole identifying feature. */
+    s+='<path d="M-17,-52 C-18,-64.4 -9,-69.6 0,-69.6 C9,-69.6 18,-64.4 17,-52 '+
+       'L-17,-52 Z" fill="'+hair+'"/>';
+  } else if(o.style==='fade'){
     /* Short and tight at the sides, volume brushed up and back on top, with a
        defined hairline. A uniform cap could not tell this apart from 'short'. */
-    s+='<path d="M-16.2,-49 C-17.4,-60 -13.4,-68.6 -3,-70 C7.4,-71.4 16,-65 16.2,-50 '+
-       'C14.6,-58.6 11.6,-62.2 6.6,-63 C1.6,-60.4 -3.4,-59.4 -7.4,-60.8 '+
-       'C-11.4,-58.6 -14.4,-54.6 -16.2,-49 Z" fill="'+hair+'"/>';
+    /* A QUIFF, not a cap. The close-up shows real height on top swept up and
+       back over tight tapered sides — the volume is the identifying feature and
+       the first pass topped out at -70, which read as an ordinary short cut. */
+    s+='<path d="M-15.4,-50 C-16.8,-58.4 -15,-64.6 -10,-68.6 '+
+       'C-4,-74.4 6.4,-78.4 12.2,-74.4 C16.6,-71.4 16.8,-60 15.8,-50 '+
+       'C14.4,-59.4 11.4,-63.8 6.4,-64.8 C1,-61.8 -4,-60.8 -8,-62.2 '+
+       'C-11.8,-59.4 -14,-55 -15.4,-50 Z" fill="'+hair+'"/>';
   } else if(o.style==='crop'){
     // shorter and set higher than 'short' — the head crown is -65.5, so a cap
     // that stops there reads as a hairline that has moved back
@@ -231,8 +246,8 @@ var PEOPLE=[
   // fw/fh/jaw read off each photograph. Curtis is lean and long; Theo is broad
   // with a heavy jaw; Joan and Amanda are softer and more tapered; Jerry is
   // narrower than Theo, which is most of what tells them apart on the shoot.
-  {n:'CURTIS', r:'Project manager', o:{skin:'light',hair:'dark',style:'short',
-   beard:'goatee',beardColor:'grey',fw:15.7,fh:19.2,jaw:0.42}},
+  {n:'CURTIS', r:'Project manager', o:{skin:'light',hair:'auburn',style:'fringe',
+   beard:'goatee',beardColor:'ginger',glasses:true,fw:15.7,fh:19.2,jaw:0.42}},
   {n:'THEO',   r:'Owner',  o:{skin:'tan',hair:'black',style:'fade',
    fw:17.7,fh:18.1,jaw:0.82}},
   {n:'JOAN',   r:'Admin',  o:{skin:'light',hair:'blonde',style:'bob',glasses:true,
