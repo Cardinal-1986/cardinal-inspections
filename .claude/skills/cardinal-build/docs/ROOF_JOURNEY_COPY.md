@@ -521,24 +521,64 @@ ventilation. Those aren't upgrades to be sold to you later. They are the roof.
 
 ### Cardinal runs Owens Corning, and is an Owens Corning Roofing Preferred Contractor
 
-That's a contractor designation from the manufacturer, and what it's worth to you is specific and
-limited. It means we're vetted by Owens Corning and able to register their system warranties on the
-roofs we install — so the coverage on your roof is registered with the manufacturer, rather than being
-a claim on our letterhead.
+That's a contractor designation from the manufacturer, and what it's worth to you is specific: it
+means we're vetted by Owens Corning and able to register their system warranties on the roofs we
+install. So the coverage on your roof is registered with the manufacturer, rather than being a claim
+on our letterhead.
 
-What it isn't: a guarantee, a discount, or a substitute for workmanship. Manufacturers run several
-contractor tiers, and **we'll tell you exactly which one we hold rather than letting a badge do work
-it shouldn't.**
+What it isn't: a discount, or a substitute for workmanship. It's the credential that makes the next
+section possible.
+
+### The warranty is a choice, and it's yours to make
+
+**Headline:** Two levels of cover. You pick which
+
+**Body:**
+Most roofing companies hand you a warranty. You get to choose one, and there are two.
+
+| | **OC Systems** | **Preferred** |
+|---|---|---|
+| **Material** | 25 years | **50 years** |
+| **Labor / workmanship** | 5 years | **10 years** |
+| **Transferable if you sell** | Yes | Yes |
+| **Backed by Owens Corning** | Yes | Yes |
+
+**The honest way to read that table: the decision is about duration, not about whether you're
+protected.** Both are real warranties, both transfer, both are backed by the manufacturer. Nobody
+should tell you the shorter one is the unprotected option, because it isn't. It's the shorter one.
+
+### Transferable — the part nobody asks about
+
+Both warranties **survive a sale.** If you sell the house in year seven, the cover goes with it to
+the buyer.
+
+Almost no homeowner asks about this, because almost nobody knows to. It matters more than it sounds:
+it moves a roof out of the maintenance column and into the resale conversation. A buyer's inspector
+looking at a seven-year-old roof with a transferable manufacturer warranty and a full photo set from
+the day it went on is looking at a different house than one with a receipt.
+
+### Backed by Owens Corning — and this is the important one
+
+**A manufacturer-backed warranty doesn't die if the contractor does.**
+
+That's the answer to the thing every homeowner worries about and nobody says out loud: *what happens
+to my twenty-five-year warranty if this company isn't here in eight years.* Roofing companies close,
+sell, change names, retire. A warranty that lives only on a contractor's letterhead is worth exactly
+as much as that contractor's continued existence.
+
+These are registered with Owens Corning. The obligation sits with the manufacturer, not with us. We
+intend to be here — but you shouldn't have to take that on faith, and with these you don't.
 
 **The honest part:**
-Which warranty you actually end up with depends on the system that goes on your roof, because
-manufacturer system warranties require the accessories to come from the same manufacturer — the
-starter, the underlayment, the ice barrier, the cap, the ventilation. That's Stages 20 and 21 seen
-from a different angle: the reason we don't cut up 3-tab for starter isn't only that it fails at the
-edge, it's that a substituted accessory can drop the coverage you're paying for.
+Which warranty you can register depends on the system that goes on your roof, because manufacturer
+system warranties require the accessories to come from the same manufacturer — the starter, the
+underlayment, the ice barrier, the cap, the ventilation. That's Stages 20 and 21 seen from a different
+angle: the reason we don't cut up 3-tab for starter isn't only that it fails at the edge, it's that a
+substituted accessory can cost you the coverage you're paying for. It's also why ventilation (Stage 3)
+is not optional — manufacturers treat the attic and the roof as one system.
 
-**The exact warranty you're getting gets named in writing on your estimate.** Not described in a
-conversation, not implied by a badge. Named, on paper, before you sign.
+**Whichever you pick gets named in writing on your estimate**, with its terms, before you sign. Not
+described in a conversation. Not implied by a badge.
 
 ---
 
@@ -1067,44 +1107,61 @@ line you paid for should have a picture attached to it.
 
 ## Stage 23 — Cleanup *(Point 8)*
 
-**Headline:** We leave with the nails, not just the shingles
+**Headline:** We come back the next day and sweep again
 
 **Body:**
-Cleanup is the last thing you experience and it's the thing you'll remember. It's a defined part of the
-job, not something done if there's daylight left.
+We are, to put it plainly, huge on cleanup. It's the last thing you experience, it's the thing you'll
+tell people about, and it's the part of a roofing job most likely to be quietly skipped because the
+crew is tired and the light is going.
 
-A tear-off puts several thousand old nails onto your property. They come off the roof, they go down the
-chute, and a percentage of them miss — into the beds, into the grass, into the driveway, into the gravel.
-That's physics, not carelessness. What matters is what happens next.
+A tear-off puts several thousand old nails onto your property. They come off the roof, they go down
+the chute, and a percentage of them miss — into the beds, into the grass, into the driveway, into the
+gravel. That's physics, not carelessness. What matters is everything that happens afterward.
 
-**What cleanup means, specifically:**
+**What cleanup means here, in order:**
 
-- **Tarps go down first**, before a single shingle moves — over the beds, over the AC unit, against the
-  siding, across the walkways.
-- **Debris goes into the trailer as it comes off**, not into a pile on the lawn to be dealt with later. A
-  pile on the grass for eight hours kills the grass.
-- **Gutters get cleared** of tear-off grit and nails before we leave. That's where a large share of both
-  ends up, and a gutter full of granules doesn't drain.
-- **Magnetic sweep — twice, in two directions.** The full perimeter, the driveway, the walkways, the apron
-  and the street edge. Twice matters: a magnet passed one way rolls over nails lying against its direction
-  of travel and picks them up on the cross pass.
-- **The trailer or dumpster leaves.** If it genuinely can't be pulled the same day, you'll be told when it
-  goes. It does not sit in your driveway for a week.
-- **A walk with you** around the outside before we're gone — gutters, siding, plantings, AC unit, driveway.
+1. **Tarps go down first**, before a single shingle moves — over the beds, over the AC unit, against
+   the siding, across the walkways.
+2. **Debris goes into the trailer as it comes off**, not into a pile on the lawn to be dealt with
+   later. A pile on the grass for eight hours kills the grass.
+3. **Gutters get cleared** of tear-off grit and nails before we leave. That's where a large share of
+   both ends up, and a gutter full of granules doesn't drain.
+4. **Magnetic sweep before the crew pulls out.** The full perimeter, the driveway, the walkways, the
+   apron and the street edge — and passed in two directions, because a magnet run one way rolls over
+   nails lying against its direction of travel and picks them up on the cross pass.
+5. **The trailer or dumpster goes.** It does not sit in your driveway for a week. If it genuinely
+   can't be pulled the same day, you'll be told when it goes.
+6. **A walk with you** around the outside before we're gone — gutters, siding, plantings, AC unit,
+   driveway.
+7. **We come back the next day and sweep the whole thing again.**
+
+### That last one is the difference
+
+Nails work their way up out of grass for days after a tear-off, especially after rain. A yard that
+swept clean at six in the evening will give up more nails by the following afternoon. Everybody in
+this trade knows that. Very few come back.
+
+**We come back the next day and run the magnet over it again.** Not if you call and complain. Not as
+a favor. As part of the job, on every roof, scheduled.
 
 **What to look for:**
-**Do your own magnet pass a week later.** A telescoping magnetic sweeper from any hardware store is about
-twenty dollars, and it's the single best test of a roofing crew there is. Run it over the driveway, the
-walkway and the strip of lawn along the house. If it comes up clean, the sweep was done properly.
+Two things, and both are easy.
+
+**Ask any contractor whether they return the next day to sweep.** Most will say the crew cleans up
+before it leaves, which is a different answer to a different question. Listen for whether a second
+visit exists at all.
+
+**Then do your own magnet pass a week later.** A telescoping magnetic sweeper from any hardware store
+is about twenty dollars, and it's the single best test of a roofing crew there is. Run it over the
+driveway, the walkway and the strip of lawn along the house.
 
 **The honest part:**
-Nobody gets every nail. Nails work their way up out of grass for weeks after a tear-off, especially after
-rain, and anyone promising you a permanently clean yard is selling. What we promise is this: we sweep twice
-before we leave, and **if you find nails afterward, call us and we come back and sweep again.** That isn't
-a complaint being handled. That's the job.
+Nobody gets every nail, and anyone promising you a permanently clean yard is selling. Two sweeps on
+two days gets almost all of them, and "almost" is the honest word. If you find nails after that, call
+us and we'll come out again. That isn't a complaint being handled. That's the job.
 
-Worth asking any contractor before you sign: when the contract says "clean-up included," does that mean the
-nails, or just the shingles.
+Worth asking before you sign any roofing contract: when it says "clean-up included," does that mean
+the nails, or just the shingles.
 
 ---
 
@@ -1206,9 +1263,10 @@ the copy depends on it.*
 For nav labels, tooltips, card fronts, hover states and social pull-outs. Same voice, standalone.
 
 **Section labels (short form):**
-Measure · The attic · Ventilation · The contract · Who's here · Insured · Materials · The call · Your prep
-· The sign · The neighbors · Before photos · Arrival · Tear-off · The deck · Edge metal · Ice barrier ·
-Underlayment · Flashings · The chimney · Starter · Ridge · During photos · Cleanup · The walk · Your photos
+Measure · The attic · Ventilation · The contract · Who's here · Insured · Materials · The warranty ·
+The call · Your prep · The sign · The neighbors · Before photos · Arrival · Tear-off · The deck ·
+Edge metal · Ice barrier · Underlayment · Flashings · The chimney · Starter · Ridge · During photos ·
+Cleanup · The walk · Your photos
 
 **One-line card fronts:**
 | Stage | One-liner |
@@ -1219,13 +1277,14 @@ Underlayment · Flashings · The chimney · Starter · Ridge · During photos ·
 | Who's here | Three people. One of them never leaves |
 | Insured | Ask for a certificate with your name on it |
 | Materials | Vetted by the manufacturer, named on your estimate |
+| The warranty | Two levels. Both transfer. Both backed by OC |
 | The deck | Nobody can quote this before the roof comes off |
 | Ice barrier | The layer you'll never see again |
 | Underlayment | Felt wrinkles. Synthetic doesn't |
 | Starter | The bottom edge is the one wind finds |
 | Chimney | Cut into the brick, not caulked to it |
 | Ridge cap | Thicker than the roof it finishes |
-| Cleanup | Twice with the magnet, in two directions |
+| Cleanup | We come back the next day and sweep again |
 | Photos | Every one we took, not the good six |
 
 **Pull quotes:**
@@ -1272,11 +1331,18 @@ sales point):
 - **Stage 5 is a ladder, not a list.** The crew leader comes first on purpose. If someone reorders it to
   put the owner first because that sounds more impressive, the section stops working — the whole point is
   that continuous presence beats seniority from where the homeowner is standing.
-- **Stage 6 prints no numbers and Stage 7 prints no warranty figure. That's deliberate, not an omission.**
-  Policy limits belong on a certificate with the client's name on it; the warranty belongs on the estimate.
-  Both are stronger as an offer than as a claim. See V28 and V5.
-- **Keep "we'll tell you exactly which tier we hold rather than letting a badge do work it shouldn't."**
-  That sentence is what prevents Preferred drifting into implying Platinum Preferred. See V4/V30.
+- ⛔ **Never mention Platinum.** Direct instruction from the owner, and it means literally never — not
+  the tier, not the warranty name, not a comparison, **not even a line saying Cardinal isn't it.** The
+  two tiers on this page are OC Systems and Preferred, and that is the entire universe of warranty
+  language available to this copy.
+- **Stage 6 prints no insurance numbers, and that's deliberate, not an omission.** Policy limits belong
+  on a certificate with the client's name and a date on it, not on a marketing page where they can't be
+  verified and will go stale. Stronger as an offer than as a claim. See V28.
+- **Stage 7's warranty table is a choice, not an upsell ladder.** Both tiers transfer and both are backed
+  by the manufacturer — the decision is honestly about duration. If someone rewrites it so the shorter
+  tier reads as the unprotected option, the section stops being trustworthy and starts being a close.
+- **"Backed by Owens Corning — a manufacturer-backed warranty doesn't die if the contractor does" is the
+  strongest sentence on the page.** Give it room. Don't compress it into a bullet in a spec table.
 - The ventilation section is the one most likely to attract an added statistic or a warranty quote.
   **Don't.** See V19 and V21 — the copy is deliberately specific about mechanism and deliberately vague
   about numbers.
