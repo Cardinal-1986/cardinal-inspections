@@ -1420,3 +1420,38 @@ Gates at 588: `check_build` green per build, each negative-controlled · `harnes
 `harness_showcase` 123 · `harness_detect` 39 · `render_showcase` **69 in real Chromium** —
 including pixel-proofs (Kraft mat measured `232,220,200`), a synthetic two-pointer pinch, the
 drawn chalk box landing at its fractions, and the kiosk wipe sampled mid-sweep.
+
+---
+
+## Showroom mode (build 590)
+
+A read-only door into the Showcase you hand across the table. **Entry:** a full-width blackout
+row at the bottom of the landing launcher (`.cr-lr-show`, `data-go="showroom"` — inside the
+`cr-lr` renderer, *not* the dead `#landQuick` markup near the top of the file). **Offered at
+≥820px only**; below that the row does not render and the opener falls back to the ordinary
+Showcase, which is phone-shaped and unchanged.
+
+`window.CardinalShowcase.open({ showroom:true })` · `.inShowroom()` reports the flag ·
+`close()` and any ordinary `open()` clear it, including the one `navRestore` calls.
+
+**Read-only, in one place plus four:** `amAdmin()` short-circuits to `false`, which kills all 14
+of its call sites at once. The review bar, `wireBoxes()`, the per-finding controls and
+`releaseBadge()` were **never `amAdmin()`-gated** and carry their own `!showroom` guard — see the
+build log. Sales and production keep exactly what they had.
+
+**What stays:** all three tabs, the slider, the phase dock, the Lens, Curtain Call ▶, Present ▶,
+privacy mode, and the damage circles (readable, with severity — not draggable, no confidence %,
+no "drawn by hand"). **What goes:** the back arrow, the Inspections ↗ out-link, every write
+control, and the release badge.
+
+**Exit is a HOLD** — ~900ms on the ✕ with a conic ring painted from the same clock that decides.
+A tap does nothing. Releasing early cancels and leaves no rAF running; the tick re-checks
+`isConnected` every frame (567/569's class). **It is not a kiosk** — a browser back gesture still
+leaves.
+
+Entering the room always starts clean: `tab='showcase'`, `curWalk`/`shots`/`review` reset, so a
+tablet never lands mid-review of somebody else's roof.
+
+Verified by `audit_viewports.js` — **194 assertions across phone / iPad portrait / iPad landscape
+/ desktop**, including a counted zero for write controls on every tab and screen, the hold timing,
+that a tap does *not* exit, and that a damage circle cannot be dragged.

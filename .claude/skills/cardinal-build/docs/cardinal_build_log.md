@@ -6406,3 +6406,68 @@ change: `node .claude/skills/cardinal-build/scripts/audit_viewports.js` from the
 Gates: `check_build` green 588→589 (marker `e.target.closest('.cr-sh-exp')`, negative-controlled),
 audit **76/76 across four viewports**, and the four existing harnesses unchanged
 (walk 115, showcase 123, detect 39, render 69).
+
+---
+
+## Build 590 — Showroom mode (2026-08-03)
+
+A read-only front door into the Showcase, opened from the landing launcher. Same login, same
+data, same module — no second app. Theo's design call, taken literally: *"with the showroom
+there is no editing… everything done in the other end."*
+
+**The read-only guarantee is one choke point plus four gates, and the honest split matters.**
+`amAdmin()` is called at 14 sites across all three tabs, so `if(showroom) return false;` at the
+top of it removes every add / publish / remove / share / add-photographs control at once. But
+**four surfaces were never `amAdmin()`-gated at all** and the choke point does nothing for them:
+
+| Surface | What was reachable | Gated on |
+|---|---|---|
+| `renderReview()` bar | Ask the AI · + Mark damage · Save what I accepted | `!showroom` |
+| `wireBoxes()` | **existing boxes drag with NO arming step** — pointerdown on `[data-box]` sets `mode:'move'`, writes `f.edited` and `review.dirty` | `!showroom` |
+| the findings list | per-finding **remove ✕**, editable severity **`<select>`**, resize **grip** | `!showroom` |
+| `releaseBadge()` | *"Release: M. Alvarez · Nov 2025"* — a real person's name and an internal marketing-consent fact about somebody else's house | `!showroom` |
+
+Gated on `showroom`, **not** on `amAdmin()`: sales and production keep exactly what they have
+today. Changing their permissions is Theo's call, not a side effect of a presentation mode.
+
+### Three things this build got wrong first, all worth keeping
+
+**1 · The launcher card was added to dead markup.** `#landQuick / #landDash / #landClaims /
+#landLibrary` around line 3961 look like the launcher. They are not: `cr-lr-styles` carries
+`#landingView>*{display:none}` and the `cr-lr` module replaces the whole view at runtime with
+`.cr-lr` and its `.cr-lr-course` rows. `getElementById('landQuick')` returns **null** in a real
+browser. The card passed every mechanical gate and was never in the DOM. The live mount is the
+`cr-lr` renderer's own string, and the handler is its `wire()` `data-go` switch.
+
+**2 · The ✕ was unreachable on desktop — third time for this class.** 572 insets every
+full-screen view (`top:var(--headh); left:var(--lnav-w); z-index:60`) so the menu stays
+reachable. With that applied, `#cr-show` drops to z-index 60 while `header.site` is fixed at
+z-index 90 and 138px tall, so `elementFromPoint` at the exit button returned **`HEADER.site`** at
+1180 and 1440. **Raising the button's z-index would not have helped** — it is inside `#cr-show`'s
+stacking context and cannot escape it. The fix is to remove the overlap: the showroom takes the
+whole screen back (`body.cr-lnav-on #cr-show.showroom{top:0;left:0;z-index:9500}`), which is what
+"nothing else reachable" means anyway. Same dead-control class as 578 and 589.
+
+**3 · The counted zero was counting the wrong things.** `audit_viewports.js` asserted zero write
+controls and passed — while the review screen still carried a remove button, a `<select>` and a
+grip, because the scan only looked at `[data-act]` and those use `data-drop` / `data-sev` /
+`data-grip`. **A screenshot caught what the assertion missed.** The scan now sweeps the named
+write actions, a list of write-ish `data-*` attributes, and every `select` / `textarea` / `input`
+by tag — name-independent. *A counted zero is only as good as the list it counts against.*
+
+**Not a kiosk, and the PR says so.** This hides the app; it does not lock the device. A browser
+back gesture still leaves, exactly as from any other full-screen view here. The hold is about a
+client not wandering out, not about restraining one.
+
+Offered at **≥820px only** — the row is hidden below that and the opener falls back to the
+ordinary Showcase rather than refusing, so a phone loses nothing.
+
+Gates: `check_build` green 589→590 (marker `if(showroom) return false;`, negative-controlled) ·
+`audit_viewports` **194/194 across four viewports** (was 76) · `harness_walk` 115 ·
+`harness_showcase` 123 · `harness_detect` 39 · `render_showcase` 69. No SQL, no `/api` change.
+
+**Found, not fixed — flagged for Theo.** On the landing itself, `.cr-lr-course .tt` and `.sb` are
+both `display:inline` (verified with `getComputedStyle`, not by reading CSS), so all four main
+rows run their title straight into their subtitle: *"Quick InspectionWalk the roof, shoot the
+photos…"*. Pre-existing, both themes, every width. Two declarations to fix; deliberately left out
+of 590 rather than widening the build.

@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 589 &#8212; the slider’s expand button opens the lens on a real tap, not just in tests</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 590 &#8212; Showroom: hand the tablet over, and nothing in it can be changed while they hold it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:590, d:'2026-08-03', t:'Showroom \u2014 a clean door you can hand across the table', s:'A new card on the landing screen opens the Showcase full screen with every editing control gone \u2014 no add, no publish, no remove, no share, nothing to change on any of the three tabs. Hold the \u2715 for a second to come back; a tap does nothing, so a homeowner can\u2019t wander out of it. Same sign-in, same photographs, no second app. Offered on a tablet, laptop or desktop only \u2014 a phone is not a screen you present from, and the ordinary Showcase there is unchanged.' },
 { b:589, d:'2026-08-02', t:'The expand button on the slider works on a real tap', s:'Yesterday\u2019s Lens added a full-screen expand button to the before/after slider, and on a real device it did nothing: the slider was swallowing the tap. It opens now. Nothing else changed \u2014 found by testing every button at phone, iPad and desktop sizes before you had to.' },
 { b:588, d:'2026-08-02', t:'Curtain Call \u2014 the tablet sells by itself', s:'A play button beside the pair counter. Press it at a kitchen table or a home-show booth and the Showcase runs on its own: a slow drift on the finished roof, the divider sweeps before to after by itself, the address and material fade in like a gallery placard, then the next pair. Any touch stops the show instantly and hands you the real slider on the pair that was up. Privacy mode masks the placard like everything else.' },
 { b:587, d:'2026-08-02', t:'The Release \u2014 share cards', s:'A Showcase pair with a client release on file gains Share: pick Square, Story or Wide and one of three frames \u2014 Classic, Blackout, Kraft \u2014 and download a finished before/after card for social media or the website, or send it straight from the phone. The card names the city only, never the street, and the file carries no location data at all. A pair without a release shows the button greyed out with the reason \u2014 the consent rule is now something you can see.' },
@@ -41448,6 +41449,17 @@ lv.innerHTML =
 '<small>Who is where, and when</small>' +
 '</button>' +
 '</div>' +
+/* 590: Showroom. Full width rather than a third cell in a two-column pair,
+   and blackout rather than the landing's warm brown, because it is a door
+   into a different kind of screen — the one you hand across a table.
+   Hidden below 820px by .cr-lr-show in cr-show-styles. */
+'<button class="cr-lr-show" data-go="showroom">' +
+'<span class="ic">\u2726</span>' +
+'<span class="tx">' +
+'<span class="tt">Showroom<span class="nw">NEW</span></span>' +
+'<span class="sb">Hand the tablet to a homeowner — finished work, full screen, and nothing in it can be changed while they hold it.</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
 /* what is left is an admin shortcut, not a destination - and it renders
    for nobody else, so the row has to be able to vanish. */
 '<div class="cr-lr-minor">' +
@@ -41519,6 +41531,17 @@ leave();
 if(typeof window.showHome === 'function') window.showHome();
 var nav = document.querySelector('.navopt[data-nav="board"]');
 if(nav) setTimeout(function(){ try{ nav.click(); }catch(_){} }, 60);
+return;
+}
+/* 590: the row is hidden below 820px by CSS, but a window can be resized after
+   the landing is built, so the width is asked for here too. The module
+   re-checks and falls back to the ordinary Showcase rather than refusing — a
+   dead button is worse than a plain one. */
+if(d === 'showroom'){
+leave();
+if(window.CardinalShowcase){
+window.CardinalShowcase.open({ showroom: (window.innerWidth || 0) >= 820 });
+}
 return;
 }
 if(d === 'skip'){
@@ -55891,6 +55914,117 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   .cr-sh-cc.kb .ph img.af{animation:none}
   .cr-sh-cc .plac{transition:none}
 }
+
+/* ── Showroom mode (590) ────────────────────────────────────
+   The same three tabs with the chrome off and every write control gone.
+   NOT a second renderer: a second Showcase is the duplicate-feature class
+   this project keeps paying for. What changes is the skin and what is
+   reachable — the photographs, the slider and the phase dock are the ones
+   that already shipped.
+
+   Blackout, matching 584's Present layer and 588's Curtain Call: true black
+   #050607, white ink, severity colour as the only chroma. Every colour here
+   is a literal or var(--sh-*,#literal), same as the rest of this stylesheet
+   — see the header note on the 448-449 class.
+
+   NOT a kiosk, and the PR says so: this hides the app, it does not lock the
+   device. A browser back gesture still leaves, exactly as it does from any
+   other full-screen view here. The hold is about a client not WANDERING
+   out, not about restraining one. */
+#cr-show.showroom{background:#050607}
+/* 572 insets every full-screen view below the header and right of the left
+   nav so the menu stays reachable. The showroom is the one place where that
+   is exactly wrong — the point is that nothing else is reachable until the
+   rep takes the tablet back — so it takes the whole screen at the base
+   z-index the module ships with.
+
+   This also FIXES A DEAD CONTROL, measured rather than guessed: with 572's
+   inset applied, #cr-show drops to z-index 60 while header.site is fixed at
+   z-index 90 and 138px tall, so elementFromPoint at the exit button returned
+   HEADER.site at both 1180 and 1440 and the ✕ could not be tapped. Raising
+   the BUTTON's z-index would NOT have helped — it lives inside #cr-show's
+   stacking context and cannot escape it; only removing the overlap works.
+   Same dead-control class as 578 and 589, third time. audit_viewports.js
+   caught it, not an eye. */
+body.cr-lnav-on #cr-show.showroom{top:0 !important;left:0 !important;z-index:9500 !important}
+#cr-show.showroom .cr-sh-wrap{max-width:min(1120px,100%);
+  padding:max(20px,env(safe-area-inset-top)) clamp(16px,3vw,34px) calc(72px + env(safe-area-inset-bottom,0px))}
+/* The ✕ is position:fixed at the top right. Reserve its lane so it can
+   never land on the privacy toggle — measured, not eyeballed: the four-
+   viewport sweep caught them overlapping 49% at 820px. */
+#cr-show.showroom .cr-sh-top{padding-right:64px}
+#cr-show.showroom .cr-sh-ttl h1{font-size:clamp(21px,3.4vw,27px)}
+#cr-show.showroom .cr-sh-ttl p{color:rgba(242,244,242,.42)}
+#cr-show.showroom .cr-sh-show,
+#cr-show.showroom .cr-sh-wk,
+#cr-show.showroom .cr-sh-card{background:#0A0C0B;border-color:rgba(242,244,242,.14)}
+/* The placard voice — serif, the way 588's gallery card reads. */
+#cr-show.showroom .cr-sh-head h2{font-family:Georgia,'Times New Roman',serif;
+  font-weight:700;font-size:clamp(19px,2.6vw,26px)}
+#cr-show.showroom .cr-sh-head .s{font-family:Georgia,serif;color:rgba(242,244,242,.72)}
+#cr-show.showroom .cr-sh-cmp{aspect-ratio:16/10}
+/* The read-only twin of the severity <select>. Inks are the module's own
+   severity colours, already computed against this ground at 579:
+   4.57 / 8.29 / 5.90:1, all above the 4.5 body floor. */
+.cr-sh-fnd .sv{display:inline-block;margin-top:6px;padding:2px 8px;border-radius:4px;
+  font:700 10px inherit;font-family:inherit;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid currentColor}
+.cr-sh-fnd.crit .sv{color:var(--sh-bad,#E5484D)}
+.cr-sh-fnd.warn .sv{color:var(--sh-warn,#E8A33D)}
+.cr-sh-fnd.ok   .sv{color:var(--sh-ok,#46A758)}
+
+/* Hold to exit. The ring is a conic gradient masked to a ring, driven off
+   --sh-hold in degrees by the SAME clock that decides — no CSS animation, so
+   what you see and what happens cannot drift apart. */
+.cr-sh-exit{position:fixed;top:calc(12px + env(safe-area-inset-top));
+  right:calc(12px + env(safe-area-inset-right,0px));z-index:60;width:46px;height:46px;
+  border-radius:50%;border:1px solid rgba(242,244,242,.30);background:rgba(6,8,7,.62);
+  color:rgba(242,244,242,.88);font-size:15px;cursor:pointer;overflow:hidden;
+  padding:0;font-family:inherit;touch-action:none}
+.cr-sh-exit .ring{position:absolute;inset:-1px;border-radius:50%;pointer-events:none;
+  background:conic-gradient(#F2F4F2 var(--sh-hold,0deg),transparent 0);
+  -webkit-mask:radial-gradient(transparent 60%,#000 62%);mask:radial-gradient(transparent 60%,#000 62%)}
+.cr-sh-exit .x{position:relative;z-index:2;display:block;line-height:44px;text-align:center;pointer-events:none}
+.cr-sh-hold{position:fixed;top:calc(60px + env(safe-area-inset-top));
+  right:calc(10px + env(safe-area-inset-right,0px));z-index:60;pointer-events:none;
+  font:700 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.10em;
+  color:rgba(242,244,242,.5);text-align:right}
+
+/* The launcher row, on the landing that ACTUALLY renders.
+
+   This cost a round trip and is worth writing down. The obvious landing
+   markup — #landQuick / #landDash / #landClaims / #landLibrary, ~line 3961 —
+   is DEAD. cr-lr-styles carries `#landingView>*{display:none}` and the cr-lr
+   module replaces the whole view at runtime with .cr-lr and its .cr-lr-course
+   rows; getElementById('landQuick') returns null in a real browser. A card
+   added there passes every mechanical gate and is never seen. The prime
+   doctrine, arriving in its usual shape: grep for the MOUNT, not the name.
+
+   NO inline display on the button — it has to be beatable by a media query,
+   and an inline style beats every stylesheet rule at any specificity (the
+   styleMounts() trap, which build 573 hit in as many words). Every other
+   button on that landing carries inline style= for its accent only. */
+.cr-lr-show{display:none;width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
+  align-items:center;gap:14px;margin-top:12px;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#12100f,#060707);border:1px solid rgba(242,244,242,.22);
+  border-radius:10px;padding:17px 18px;color:#F2F4F2;font-family:inherit}
+.cr-lr-show::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px 120px at 78% 0%,rgba(197,90,40,.18),transparent 70%)}
+.cr-lr-show:hover{border-color:rgba(242,244,242,.42)}
+.cr-lr-show .ic{position:relative;z-index:1;flex:0 0 auto;width:34px;height:34px;
+  display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.06)}
+.cr-lr-show .tx{position:relative;z-index:1;flex:1;min-width:0}
+.cr-lr-show .tt{display:flex;align-items:center;gap:9px;
+  font:700 17px Georgia,'Times New Roman',serif;color:#F2F4F2;line-height:1.2}
+.cr-lr-show .nw{font:800 8px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;
+  color:#0d0908;background:#F2F4F2;border-radius:999px;padding:4px 9px}
+.cr-lr-show .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
+.cr-lr-show .go{position:relative;z-index:1;flex:0 0 auto;font-size:15px;color:#6d645c}
+/* Theo's call, and he is right: a phone is not a screen you present from.
+   The phone loses nothing — the ordinary Showcase is phone-shaped and always
+   has been; it is only this MODE that isn't offered there. */
+@media (min-width:820px){ .cr-lr-show{display:flex} }
+html[data-mode="light"] .cr-lr-show .sb{color:#8a8078}
 </style>
 
 <script id="cr-show-script">
@@ -55915,6 +56049,10 @@ var TRADE_LABEL = { roof:'Roofing', siding:'Siding', windows:'Windows',
 var el = null, formEl = null;
 var pairs = [], cur = 0, signed = {}, loaded = false, busy = false;
 var tab = 'showcase';
+/* 590: Showroom mode. Set only by open({showroom:true}); cleared by close()
+   and by any ordinary open() — including the one navRestore calls — so the
+   flag cannot leak into a normal session. */
+var showroom = false;
 var work = [], workLoaded = false;
 
 function esc(s){
@@ -55923,7 +56061,16 @@ function esc(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function sb(){ return window.supa || null; }
+/* THE read-only guarantee for Showroom mode (590), and it is deliberately here
+   rather than at the 14 call sites: every add / publish / remove / share /
+   mark-damage / save control across all three tabs is gated on this one
+   function, so one line removes all of them at once and a harness can prove
+   the count is zero. Fourteen conditionals would be fourteen chances to miss
+   one. Theo: "with the showroom there is no editing."
+   The real enforcement is still the RLS, as the module banner says — a hidden
+   button is not a permission. This is the UI half of it. */
 function amAdmin(){
+  if(showroom) return false;
   try{ if(window.is_admin && window.is_admin()) return true; }catch(_){}
   return false;
 }
@@ -56017,9 +56164,14 @@ async function putPhoto(cl, file, path){
 function render(){
   ensure();
   el.innerHTML =
+    (showroom ? renderExit() : '') +
     '<div class="cr-sh-wrap">' +
       '<div class="cr-sh-top">' +
-        '<button class="cr-sh-back" data-act="back" type="button">←</button>' +
+        /* 590: no back arrow in the showroom — the hold-✕ is the way out.
+           Not rendered rather than hidden, the same way renderAdmin() returns
+           '' when the controls aren't yours. One mechanism, not two. */
+        (showroom ? '' :
+          '<button class="cr-sh-back" data-act="back" type="button">←</button>') +
         '<div class="cr-sh-ttl">' +
           '<h1>Show<span>case</span></h1>' +
           '<p>Cardinal Roofing · Before &amp; After</p>' +
@@ -56034,9 +56186,62 @@ function render(){
   wire();
 }
 
+/* 590: the way out of the showroom. Fixed, and emitted OUTSIDE .cr-sh-wrap so
+   it stays put while the room scrolls. */
+function renderExit(){
+  return '<button class="cr-sh-exit" data-act="exitroom" type="button" ' +
+           'aria-label="Hold to leave the showroom">' +
+           '<span class="ring"></span><span class="x">\u2715</span></button>' +
+         '<div class="cr-sh-hold">hold to exit</div>';
+}
+
+/* HOLD_MS is the contract: the ring is painted from the same clock that
+   decides, so what you see and what happens cannot disagree. A tap does
+   nothing at all — that is the feature, not a side effect.
+   Deliberately NO setPointerCapture: capture would keep pointerleave from
+   firing, and sliding a thumb off the button has to cancel the hold. This is
+   the opposite call from the slider (578/589), for the opposite reason. */
+var HOLD_MS = 900;
+var holdRaf = 0;
+
+function wireExit(){
+  var b = el.querySelector('[data-act="exitroom"]');
+  if(!b) return;
+  var ring = b.querySelector('.ring');
+  var t0 = 0;
+  function paintHold(deg){ if(ring) ring.style.setProperty('--sh-hold', deg + 'deg'); }
+  function stop(){
+    if(holdRaf){ cancelAnimationFrame(holdRaf); holdRaf = 0; }
+    paintHold(0);
+  }
+  function tick(now){
+    /* Re-check the node every frame: the render that owns this button can be
+       replaced under a running hold (a tab switch, a repaint), and a rAF
+       holding a detached node would paint into nothing forever — 567/569's
+       class, and the same guard 588's ccRun uses. */
+    if(!b.isConnected){ stop(); return; }
+    var p = Math.min(1, (now - t0) / HOLD_MS);
+    paintHold(p * 360);
+    if(p < 1){ holdRaf = requestAnimationFrame(tick); return; }
+    stop();
+    close(true);
+  }
+  b.addEventListener('pointerdown', function(e){
+    e.preventDefault();          /* so a tap never becomes a click */
+    e.stopPropagation();
+    stop();
+    t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+    holdRaf = requestAnimationFrame(tick);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+    b.addEventListener(ev, stop);
+  });
+}
+
 /* Inspections is a LINK, not a tab. The app already has a reports list —
    openReportsView(), defined exactly once — and a second one built in here
-   would be the duplicate-feature class this project keeps paying for. */
+   would be the duplicate-feature class this project keeps paying for.
+   590: it is a door OUT of the showroom, so the showroom does not render it. */
 function renderTabs(){
   return '<div class="cr-sh-tabs">' +
     '<button data-tab="showcase"' + (tab === 'showcase' ? ' class="on"' : '') +
@@ -56045,7 +56250,8 @@ function renderTabs(){
       ' type="button">Hall of Fame</button>' +
     '<button data-tab="walk"' + (tab === 'walk' ? ' class="on"' : '') +
       ' type="button">The Walk</button>' +
-    '<button data-act="reports" type="button" class="out">Inspections \u2197</button>' +
+    (showroom ? '' :
+      '<button data-act="reports" type="button" class="out">Inspections \u2197</button>') +
   '</div>';
 }
 
@@ -56180,6 +56386,11 @@ function renderAdmin(){
    release is not "probably fine" — it is a photograph that must not be
    published, and it should look like one. */
 function releaseBadge(p){
+  /* 590: never in the showroom. This badge names a real person and states an
+     internal marketing-consent fact about SOMEBODY ELSE'S house — the same
+     thing privacy mode strips addresses for. It is for whoever is curating,
+     not for whoever is being sold to. */
+  if(showroom) return '';
   if(p.release_on || p.release_by){
     var who = p.release_by ? esc(p.release_by) : 'on file';
     var when = p.release_on ? ' · ' + esc(fmtDate(p.release_on)) : '';
@@ -56236,6 +56447,7 @@ function wire(){
       if(typeof window.openReportsView === 'function') window.openReportsView();
     };
   });
+  wireExit();
   wireBody();
 }
 
@@ -56777,7 +56989,10 @@ function renderReview(){
       ' data-box="' + i + '" style="left:' + pc(b.x) + ';top:' + pc(b.y) +
       ';width:' + pc(b.w) + ';height:' + pc(b.h) + '">' +
       '<span class="lb">' + esc(f.label || defLabel(f.defect)) + '</span>' +
-      '<span class="gr" data-grip="' + i + '"></span>' +
+      /* 590: no resize handle in the showroom. wireBoxes() already returns
+         early there, so this is the visual half — a grip you cannot use
+         still reads as an invitation. */
+      (showroom ? '' : '<span class="gr" data-grip="' + i + '"></span>') +
     '</div>';
   }).join('');
   if(r.draft && r.draft.box){
@@ -56790,10 +57005,14 @@ function renderReview(){
     '<div class="cr-sh-bar">' +
       '<button class="cr-sh-btn ghost" data-act="rback" type="button">← Back</button>' +
       '<button class="cr-sh-btn ghost" data-act="rlens" type="button" aria-label="Open full screen">\u2922</button>' +
-      '<button class="cr-sh-btn ghost" data-act="rdetect" type="button">' +
+      /* 590: the write half of the review bar. Back and the lens stay — a client
+         seeing the marked-up photograph full screen is the whole point of the
+         room; asking the AI, drawing on it and saving are not. */
+      (showroom ? '' :
+        '<button class="cr-sh-btn ghost" data-act="rdetect" type="button">' +
         (r.list.length ? 'Ask again' : 'Ask the AI') + '</button>' +
-      '<button class="cr-sh-btn ghost' + (r.arming ? ' arming' : '') + '" data-act="rmark" type="button">+ Mark damage</button>' +
-      '<button class="cr-sh-btn" data-act="rsave" type="button">Save what I accepted</button>' +
+        '<button class="cr-sh-btn ghost' + (r.arming ? ' arming' : '') + '" data-act="rmark" type="button">+ Mark damage</button>' +
+        '<button class="cr-sh-btn" data-act="rsave" type="button">Save what I accepted</button>') +
     '</div>' +
     '<div class="cr-sh-rev' + (r.arming ? ' arming' : '') + '" data-rev>' +
       '<img alt="" src="' + esc(img) + '">' + boxes +
@@ -56808,16 +57027,24 @@ function renderReview(){
             '<span class="sq"></span>' +
             '<div class="m"><b>' + esc(f.label || defLabel(f.defect)) + '</b>' +
               '<p>' + esc(defLabel(f.defect)) + (f.note ? ' — ' + esc(f.note) : '') +
-              (f.confidence != null ? ' · ' + Math.round(f.confidence * 100) + '% sure' : '') +
-              (f.source === 'human' ? ' · drawn by hand' : (f.edited ? ' · moved by hand' : '')) + '</p>' +
-              '<select data-sev="' + i + '">' +
-                WALK_SEV.map(function(s){
-                  return '<option value="' + s + '"' + (f.severity === s ? ' selected' : '') +
-                         '>' + SEV_LABEL[s] + '</option>';
-                }).join('') +
-              '</select>' +
+              /* 590: confidence and provenance are OURS. "55% sure" argues against
+                 the finding at a kitchen table, and "drawn by hand" is internal
+                 bookkeeping for training the detector. The mark and how serious it
+                 is are what the client needs. */
+              (showroom ? '' :
+                (f.confidence != null ? ' · ' + Math.round(f.confidence * 100) + '% sure' : '') +
+                (f.source === 'human' ? ' · drawn by hand' : (f.edited ? ' · moved by hand' : ''))) + '</p>' +
+              (showroom
+                ? '<span class="sv">' + esc(SEV_LABEL[f.severity] || f.severity) + '</span>'
+                : '<select data-sev="' + i + '">' +
+                  WALK_SEV.map(function(s){
+                    return '<option value="' + s + '"' + (f.severity === s ? ' selected' : '') +
+                           '>' + SEV_LABEL[s] + '</option>';
+                  }).join('') +
+                '</select>') +
             '</div>' +
-            '<button class="x" data-drop="' + i + '" type="button" aria-label="Reject">✕</button>' +
+            (showroom ? '' :
+              '<button class="x" data-drop="' + i + '" type="button" aria-label="Reject">✕</button>') +
           '</div>';
         }).join('')
       : '<p class="cr-sh-note">Nothing marked yet. Ask the AI, or press + Mark damage and ' +
@@ -57008,6 +57235,12 @@ function wireClassify(){
 function wireBoxes(){
   var stage = el.querySelector('[data-rev]');
   if(!stage || !review) return;
+  /* 590: in the showroom the circles are evidence to look at, not handles to
+     drag. Note there is no arming step for an EXISTING box — pointerdown on
+     one moves it immediately — so nothing short of not wiring this at all is
+     enough. Returning here also leaves the draft/resize paths unreachable,
+     since both start in this same listener. */
+  if(showroom) return;
   var drag = null;
 
   function frac(e){
@@ -57921,8 +58154,25 @@ function ccStep(reduced){
 }
 
 /* ── open / close ──────────────────────────────────────────────────────── */
-function open(){
+function open(opts){
   ensure();
+  var want = !!(opts && opts.showroom);
+  /* Showroom is a presentation surface. Below 820px there is not enough screen
+     to present from, and Theo said so plainly: "presenting in phone wouldn't be
+     very good." Fall back to the ordinary Showcase rather than refusing — the
+     phone keeps every feature, it is only this mode it isn't offered. */
+  if(want && (window.innerWidth || 0) < 820) want = false;
+  showroom = want;
+  el.classList.toggle('showroom', showroom);
+  /* Entering the room always starts clean: the transformation, not whatever
+     tab and half-finished review were left open in the ordinary Showcase an
+     hour ago. Handing a tablet to a homeowner that lands mid-review of
+     somebody else's roof is the whole thing this mode exists to avoid.
+     Same fields reload() resets, minus the refetch. */
+  if(showroom){
+    tab = 'showcase';
+    curWalk = null; shots = []; review = null;
+  }
   render();
   if(typeof window.hideAllViews === 'function'){
     try{ window.hideAllViews(); }catch(_){}
@@ -57949,13 +58199,16 @@ function close(goHome){
   exitPresent();
   exitLens();
   stopCurtain(false);
-  if(el) el.classList.remove('open');
+  if(holdRaf){ cancelAnimationFrame(holdRaf); holdRaf = 0; }
+  showroom = false;
+  if(el) el.classList.remove('open', 'showroom');
   if(goHome !== false && typeof window.showHome === 'function') window.showHome();
 }
 
 window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
   open  : open,
   close : close,
+  inShowroom: function(){ return showroom; },
   reload: function(){ loaded = false; workLoaded = false; walksLoaded = false;
     curWalk = null; shots = []; review = null; exitPresent();
     return Promise.all([load(), loadWork(), loadWalks()]); }

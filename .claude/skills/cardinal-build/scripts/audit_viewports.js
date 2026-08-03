@@ -1,4 +1,4 @@
-/* Vision Suite alignment + function audit, build 588.
+/* Vision Suite alignment + function audit, builds 588 + 590.
  *
  * WHY: the eyeball missed the ⤢/After collision until a screenshot happened to
  * show it. This sweep finds that class MECHANICALLY: at four real viewports it
@@ -6,6 +6,13 @@
  * chips they can collide with, and flags any pair whose intersection exceeds
  * 15% of the smaller element. It also drives every function of the five new
  * features end to end at each size.
+ *
+ * 590 adds the SHOWROOM pass. The assertion that matters is not "the buttons
+ * look gone" but a counted zero: every button actually in the DOM across all
+ * three tabs is checked against a write-action list, at every viewport. It also
+ * proves the width rule (card hidden on a phone, and open({showroom:true}) at
+ * phone width falls BACK rather than refusing), that a tap on the ✕ does not
+ * exit, and that a hold does.
  */
 const path = require('path');
 const fs = require('fs');
@@ -204,6 +211,203 @@ async function overlapSweep(page, where) {
     ok(V.name + ': save lands back on the walk', await page.evaluate(() =>
       document.querySelectorAll('#cr-show [data-shot]').length === 1));
     ok(V.name + ': no page errors', errors.length === 0, errors.slice(0, 2));
+
+    /* ══════════════ SHOWROOM MODE (590) ══════════════ */
+    await page.evaluate(() => window.CardinalShowcase.close(false));
+    await page.waitForTimeout(200);
+    /* The launcher row obeys the width rule — CSS, read from the real engine.
+       NOTE the mount: this is the cr-lr landing (.cr-lr-show inside .cr-lr), NOT
+       the dead #landQuick/#landLibrary markup near the top of the file, which is
+       hidden by `#landingView>*{display:none}` and never in the DOM. A card added
+       there passes every mechanical gate and is invisible — that is exactly what
+       happened on the first pass of this build. */
+    const cardVis = await page.evaluate(() => {
+      const lv = document.getElementById('landingView');
+      lv.style.display = 'block';
+      const b = document.querySelector('.cr-lr-show[data-go="showroom"]');
+      if (!b) return { missing: true, lrBuilt: lv.dataset.crLrBuilt || null };
+      const cs = getComputedStyle(b);
+      const r = b.getBoundingClientRect();
+      return { display: cs.display, w: Math.round(r.width), inline: b.getAttribute('style') };
+    });
+    const wantCard = V.w >= 820;
+    ok(V.name + ': showroom card ' + (wantCard ? 'offered' : 'hidden on a phone'),
+      !cardVis.missing && (wantCard ? cardVis.display === 'flex' && cardVis.w > 100
+                                    : cardVis.display === 'none'), cardVis);
+    ok(V.name + ': showroom card carries no inline style (styleMounts trap)',
+      cardVis.inline === null, cardVis.inline);
+
+    if (!wantCard) {
+      // below 820 the opener must FALL BACK, never leave a dead button
+      await page.evaluate(() => window.CardinalShowcase.open({ showroom: true }));
+      await page.waitForTimeout(500);
+      const fell = await page.evaluate(() => ({
+        flag: window.CardinalShowcase.inShowroom(),
+        cls: document.getElementById('cr-show').classList.contains('showroom'),
+        back: !!document.querySelector('#cr-show [data-act="back"]')
+      }));
+      ok(V.name + ': phone falls back to the ordinary Showcase',
+        fell.flag === false && fell.cls === false && fell.back === true, fell);
+      await page.evaluate(() => window.CardinalShowcase.close(false));
+    } else {
+      // enter through the CARD, not the API — the wiring is part of the feature
+      await page.evaluate(() => { document.querySelector('.cr-lr-show').click(); });
+      await page.waitForTimeout(900);
+      ok(V.name + ': the card opens the room', await page.evaluate(() =>
+        window.CardinalShowcase.inShowroom() &&
+        document.getElementById('cr-show').classList.contains('open') &&
+        document.getElementById('cr-show').classList.contains('showroom')));
+
+      /* THE assertion. Not "looks read-only" — a counted zero over every control
+         actually in the DOM, on each of the three tabs, plus the walk and review
+         screens underneath The Walk.
+
+         The first version of this scan looked ONLY at [data-act] and returned a
+         clean zero while the review screen still carried a per-finding remove
+         button, an editable severity <select> and a resize grip — those use
+         data-drop / data-sev / data-grip. A screenshot caught what the assertion
+         missed. A counted zero is only as good as the list it counts against, so
+         this now sweeps BOTH: the named write actions, and every form control and
+         write-ish data-* attribute in the module, whatever it is called. */
+      const WRITE = ['add','del','pub','save','share','sharedead','shdl','shnative',
+        'waddc','waddwalk','wdelwalk','wjob','wphone','wpub','rdetect','rmark','rsave',
+        'ddrop','dkeep'];
+      const WRITE_ATTR = ['data-wdel','data-drop','data-sev','data-grip','data-def',
+        'data-dsev','data-jp','data-proj','data-prgo'];
+      const scanWrites = () => page.evaluate(({ WRITE, WRITE_ATTR }) => {
+        const root = document.getElementById('cr-show');
+        const found = [...root.querySelectorAll('[data-act]')]
+          .map(e => e.dataset.act).filter(a => WRITE.indexOf(a) !== -1);
+        WRITE_ATTR.forEach(a => root.querySelectorAll('[' + a + ']')
+          .forEach(() => found.push(a)));
+        // anything a finger can type into or pick from, by tag — name-independent
+        root.querySelectorAll('select, textarea, input:not([type="file"])')
+          .forEach(e => found.push(e.tagName.toLowerCase()));
+        return { found, admin: root.querySelectorAll('.cr-sh-admin').length,
+          rel: root.querySelectorAll('.cr-sh-rel-b').length,
+          back: root.querySelectorAll('[data-act="back"]').length,
+          out: root.querySelectorAll('[data-act="reports"]').length,
+          exit: root.querySelectorAll('[data-act="exitroom"]').length };
+      }, { WRITE, WRITE_ATTR });
+
+      for (const t of ['showcase', 'work', 'walk']) {
+        await page.evaluate(t => document.querySelector('[data-tab="' + t + '"]').click(), t);
+        await page.waitForTimeout(600);
+        const s = await scanWrites();
+        ok(V.name + ': showroom/' + t + ' — zero write controls', s.found.length === 0, s.found);
+        ok(V.name + ': showroom/' + t + ' — no admin bar', s.admin === 0, s.admin);
+        ok(V.name + ': showroom/' + t + ' — no release badge (names another client)',
+          s.rel === 0, s.rel);
+        ok(V.name + ': showroom/' + t + ' — no back arrow, no way out to Inspections',
+          s.back === 0 && s.out === 0, s);
+        ok(V.name + ': showroom/' + t + ' — the ✕ is there', s.exit === 1, s.exit);
+        const sw = await overlapSweep(page, '#cr-show');
+        ok(V.name + ': showroom/' + t + ' — no control overlaps', sw.bad.length === 0, sw.bad);
+        ok(V.name + ': showroom/' + t + ' — no horizontal overflow', !sw.overflowX);
+      }
+
+      // deeper: a walk, then a shot's review screen — the two surfaces that were
+      // never amAdmin-gated at all
+      await page.evaluate(() => document.querySelector('[data-walk="0"]').click());
+      await page.waitForTimeout(600);
+      let s = await scanWrites();
+      ok(V.name + ': showroom/walk detail — zero write controls', s.found.length === 0, s.found);
+      await page.evaluate(() => document.querySelector('[data-shot="0"]').click());
+      await page.waitForTimeout(700);
+      s = await scanWrites();
+      ok(V.name + ': showroom/review — zero write controls', s.found.length === 0, s.found);
+      ok(V.name + ': showroom/review — back and the lens survive', await page.evaluate(() =>
+        !!document.querySelector('[data-act="rback"]') && !!document.querySelector('[data-act="rlens"]')));
+      // the finding still READS, with its severity — read-only, not stripped
+      const fnd = await page.evaluate(() => {
+        const f = document.querySelector('.cr-sh-fnd');
+        if (!f) return { missing: true };
+        return { text: f.textContent.replace(/\s+/g, ' ').trim(),
+          sev: !!f.querySelector('.sv'), sevText: (f.querySelector('.sv') || {}).textContent };
+      });
+      ok(V.name + ': showroom/review — the finding still reads, with severity',
+        !fnd.missing && fnd.sev && /Impact bruising/.test(fnd.text), fnd);
+      ok(V.name + ': showroom/review — no confidence % and no provenance',
+        !/% sure/.test(fnd.text) && !/by hand/.test(fnd.text), fnd.text);
+
+      // and the circles cannot be dragged: same gesture that moves a box normally
+      const before = await page.evaluate(() => JSON.parse(JSON.stringify(
+        document.querySelector('[data-box="0"]').getAttribute('style'))));
+      const bb = await page.locator('[data-box="0"]').boundingBox();
+      await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(bb.x + bb.width / 2 + 90, bb.y + bb.height / 2 + 60, { steps: 8 });
+      await page.mouse.up();
+      await page.waitForTimeout(300);
+      const after = await page.evaluate(() => {
+        const b = document.querySelector('[data-box="0"]');
+        return b ? b.getAttribute('style') : null;
+      });
+      ok(V.name + ': showroom — a damage circle cannot be dragged', after === before, { before, after });
+
+      // Present ▶ still works — it is the presentation, not an edit
+      await page.evaluate(() => document.querySelector('[data-act="rback"]').click());
+      await page.waitForTimeout(400);
+      await page.evaluate(() => document.querySelector('[data-act="present"]').click());
+      await page.waitForTimeout(700);
+      ok(V.name + ': showroom — Present still runs', await page.evaluate(() =>
+        document.getElementById('cr-show').classList.contains('presenting')));
+      await page.evaluate(() => document.querySelector('.cr-sh-pr-x').click());
+      await page.waitForTimeout(300);
+
+      /* Exit: a TAP must do nothing, a HOLD must leave. */
+      const ex = await page.locator('[data-act="exitroom"]').boundingBox();
+      await page.mouse.click(ex.x + ex.width / 2, ex.y + ex.height / 2);
+      await page.waitForTimeout(400);
+      ok(V.name + ': showroom — a tap on ✕ does NOT exit', await page.evaluate(() =>
+        window.CardinalShowcase.inShowroom() &&
+        document.getElementById('cr-show').classList.contains('open')));
+
+      await page.mouse.move(ex.x + ex.width / 2, ex.y + ex.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(420);
+      const midRing = await page.evaluate(() => {
+        const r = document.querySelector('.cr-sh-exit .ring');
+        return r ? r.style.getPropertyValue('--sh-hold') : '';
+      });
+      ok(V.name + ': showroom — the ring fills while held',
+        /^\d/.test(midRing) && parseFloat(midRing) > 60 && parseFloat(midRing) < 300, midRing);
+      await page.waitForTimeout(700);
+      await page.mouse.up();
+      await page.waitForTimeout(400);
+      ok(V.name + ': showroom — holding ✕ leaves the room', await page.evaluate(() =>
+        !window.CardinalShowcase.inShowroom() &&
+        !document.getElementById('cr-show').classList.contains('open') &&
+        !document.getElementById('cr-show').classList.contains('showroom')));
+
+      // releasing early cancels, and leaves no rAF running
+      await page.evaluate(() => {
+        document.getElementById('landingView').style.display = 'block';
+        document.querySelector('.cr-lr-show').click();
+      });
+      await page.waitForTimeout(800);
+      const ex2 = await page.locator('[data-act="exitroom"]').boundingBox();
+      await page.mouse.move(ex2.x + ex2.width / 2, ex2.y + ex2.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(300);
+      await page.mouse.up();
+      await page.waitForTimeout(600);
+      ok(V.name + ': showroom — releasing early cancels and the ring resets',
+        await page.evaluate(() => window.CardinalShowcase.inShowroom() &&
+          (document.querySelector('.cr-sh-exit .ring').style.getPropertyValue('--sh-hold') || '0deg') === '0deg'));
+
+      // and the flag cannot leak: an ordinary open() clears it
+      await page.evaluate(() => window.CardinalShowcase.open());
+      await page.waitForTimeout(500);
+      ok(V.name + ': an ordinary open() clears showroom', await page.evaluate(() =>
+        !window.CardinalShowcase.inShowroom() &&
+        !document.getElementById('cr-show').classList.contains('showroom') &&
+        !!document.querySelector('#cr-show [data-act="back"]')));
+      ok(V.name + ': admin controls come BACK outside the room', await page.evaluate(() =>
+        !!document.querySelector('#cr-show [data-act="add"]')));
+    }
+    ok(V.name + ': no page errors after the showroom pass', errors.length === 0, errors.slice(0, 2));
+
     if (V.name.startsWith('iPad')) {
       const cdp = await page.context().newCDPSession(page);
       await page.evaluate(() => { document.querySelector('[data-tab="showcase"]').click(); });
