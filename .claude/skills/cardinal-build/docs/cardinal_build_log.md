@@ -6956,3 +6956,57 @@ run with `reducedMotion: 'reduce'`, not assumed.
 biggest engineering risk and this sandbox has only Chromium. The sibling-not-nested structure was
 chosen specifically to reduce that exposure, but **it must be opened on a real iPad before the
 other fifteen spreads are drawn.**
+
+---
+
+## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
+
+✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like
+the preview."* `preserve-3d` survives, the pop stands, and the direction's largest engineering
+risk is closed. **The remaining fifteen spreads are buildable.** The sibling-not-nested structure
+recorded above is what carried it; keep that shape on every future spread.
+
+**The page was then rebuilt around Theo's own direction**, given in four notes over one evening:
+*"the interactive part is only half the screen"* → *"maybe can be a full screen … the right side
+words separate"* → *"as we go in the picture just have the words come and go as you click
+through"* → *"alot less words since ill be there describing it anyway. Just use the jokes. maybe
+add some more that pop up on the actual cardboard near the bottom."*
+
+So the picture **is** the screen, the words are **paced by taps**, and what survives on screen is
+**humour only** — every informational line was cut because Theo says those out loud. Copy went
+**~233 words → ~110 → jokes only**. Each joke still carries its fact underneath; that is the
+trick, not a compromise.
+
+**Three joke tabs stand up on the page itself**, on their own sticks in the foreground grass,
+each popping on its own beat. The yard-sign line is Theo's own joke from the brief, nearly
+verbatim. **The spread is now titled by its PHASE — "The Tear-Off"** — which becomes the spine of
+all sixteen: the prep, the take-off, the tear-off, the build.
+
+**THE PICTURE ONLY EVER MOVES FORWARD.** Layers key off a high-water mark, never the current
+beat, so stepping back re-reads a joke but never un-strips the roof or un-flings the debris.
+That is the book's own rule and it means there is no reverse state to get wrong.
+
+### Five defects, every one green on every assertion, all caught by looking
+
+1. **`.pop` was `height:var(--popH)`** — fine as px, but once the scene sized itself to the
+   artwork that became **59% of a box already 59% of the scene**. The board came out 35% tall,
+   the drawing scaled down to fit it, and the house sat small in a huge sky. `.strut` had already
+   been fixed for exactly this; `.pop` was missed. **Percentages resolve against the parent.**
+2. **The scene filled the viewport instead of the artwork**, so the board was taller than the
+   300×190 drawing on it. Sized by ratio now: drawing 0.583W + floor 0.30W + sky 0.11W.
+3. **The house floated mid-board** — default `xMidYMid` centred it with sky under its feet.
+   `preserveAspectRatio="xMidYMax"` seats it on the fold.
+4. **The joke tabs were planted on the kraft, off the page.** The floor is laid out at `--floorH`
+   but `rotateX(58deg)` means it only *covers* cos(58) ≈ 53% of that — the visible grass ends
+   well above the layout box. Same arithmetic left a dead band above the caption.
+5. **The runhead sat on top of the progress dots** — three things competing for one 390px strip.
+   The spread name moved into the top bar, which now holds the phase title and nothing else.
+
+**One red was the test's fault, not the app's**: the caution-styling assertion ran *after* the
+walk finished at beat 7, by which point caution is correctly off. Captured in the loop instead.
+Roughly half the reds on this project are still the test.
+
+Verified in real Chromium at phone, iPad and reduced-motion: 8 beats · 3 joke tabs revealing on
+their own beats · 40 chips flung and persisting through a step back · shingles gone by id and by
+colour · caution styling on beat 4 only · zero overflow · zero body text in the failing red ·
+zero JS errors.
