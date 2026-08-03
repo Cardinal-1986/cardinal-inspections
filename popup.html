@@ -885,7 +885,24 @@
    DX is 140: ten units left of centre. Dead centre sits under the ridge vent
    and dead over the door and reads like a symmetry no real house has; 124
    read as deliberately shoved to one side. */
-var DRM = { W:36, BOT:78, EAVE:58, PEAK:43 }, DX = 140;
+/* BIGGER, and at 150. Theo, 3 Aug: "Any way to make the dormer bigger and
+   show the ice and water at the dormer valley? Dead center wasn't what I
+   meant. As a pop up the dormer should be a little over to the left equal
+   distance from both left and right hip."
+
+   Those two halves only look contradictory. EQUIDISTANT FROM BOTH HIPS IS
+   x=150 — spanAt is symmetric about 150 at every height, so the gap to the
+   left hip and the gap to the right hip are equal there and nowhere else. It
+   READS as "a little over to the left" because the house's light turns at
+   176, so the lit face is 142 wide against 90 in shade and the eye puts the
+   centre of the house right of where it actually is. He described one point
+   twice. What he was rejecting was my word "dead centre", not the position.
+
+   50 wide by 44 tall, up from 36 by 35 — half again the area. Peak at 40
+   leaves 12 units of roof between it and the ridge vent; base at 84 lands on
+   the eave ice course at 86, so the valley membrane and the eave membrane
+   read as one continuous sheet, which is what they are. */
+var DRM = { W:50, BOT:84, EAVE:60, PEAK:40 }, DX = 150;
 function dormerBox(cx){
   var h = DRM.W / 2;
   return { l: cx - h, r: cx + h, bot: DRM.BOT, eave: DRM.EAVE, peak: DRM.PEAK };
@@ -896,6 +913,48 @@ function dormer(cx, o){
   var DLIT='#F0E6D4', DSHD='#D6C4A6', DTRIM='#8A7660',
       DGLASS='#8FB6CC', DGLASSL='#B9D6E4';
   var W = (cx < SPLIT) ? DLIT : DSHD;
+  /* ── THE VALLEY MEMBRANE, and it goes on BEFORE the dormer ──────
+     Theo asked to see the ice and water at the dormer valley, and the old
+     version could not deliver it: two 9-unit strips beside the cheeks, drawn
+     AFTER the face, so they were a detail stuck on rather than a sheet the
+     dormer sits on.
+
+     A dormer makes TWO valleys and the membrane wraps each one — up the cheek
+     and along under the rake. So the band follows the dormer's whole outline
+     and is emitted first, which puts the face and the rake board on top of
+     it. That is the real order: the membrane is roofed over, not painted
+     beside. It also runs down to the eave course, because on a real roof it
+     is one continuous sheet and not two separate jobs. */
+  function valleyWrap(){
+    var W = 15, g = '';
+    function band(side, fill){
+      var e = side < 0 ? d.l : d.r;          // the cheek this side sits on
+      return '<path d="M'+(e + side*W)+','+(d.bot+6)+
+             ' L'+(e + side*W)+','+(d.eave+2)+
+             /* peak-1, not peak-4: the band's outer corner was FOUR UNITS
+                ABOVE the dormer's own peak, so it stuck out past the rake as
+                a grey horn. It has to die under the rake board, which is
+                drawn at peak-2 with a 2.4 stroke and so covers 36.8 to 39.2. */
+             ' L'+(cx + side*2)+','+(d.peak - 1)+
+             ' L'+cx+','+(d.peak + 2)+
+             ' L'+e+','+(d.eave+3)+
+             ' L'+e+','+(d.bot+6)+' Z" fill="'+fill+'"/>';
+    }
+    g += band(-1, '#6E767B') + band(1, '#565D62');
+    // deterministic grit, inside the bands, so the mineral surface reads
+    var r = 91;
+    function rnd(){ r = (r * 1103515245 + 12345) & 0x7fffffff; return r / 0x7fffffff; }
+    g += '<g fill="#C3C8CC" opacity=".8">';
+    for(var i = 0; i < 30; i++){
+      var t = rnd(), left = i % 2 === 0;
+      var e = left ? d.l : d.r, sd = left ? -1 : 1;
+      var yy = (d.bot + 6) - t * (d.bot + 6 - (d.peak + 2));
+      var gx = e + sd * (2 + rnd() * (W - 3)) - sd * t * (W - 4) * 0.35;
+      g += '<circle cx="'+gx.toFixed(1)+'" cy="'+yy.toFixed(1)+'" r="'+(0.6+rnd()*0.6).toFixed(2)+'"/>';
+    }
+    return g + '</g>';
+  }
+  if(o.ice) s += valleyWrap();
   // the shadow it throws on the slope — this is what sits it ON the roof
   s += '<path d="M'+(d.l-3)+','+(d.bot+3)+' L'+(d.r+3)+','+(d.bot+3)+' L'+(d.r+3)+','+
        (d.bot+6)+' L'+(d.l-3)+','+(d.bot+6)+' Z" fill="#000" opacity=".22"/>';
@@ -918,23 +977,7 @@ function dormer(cx, o){
   s += '<g stroke="'+DTRIM+'" stroke-width="1.1">'+
        '<path d="M'+(wx+8)+','+wy+' L'+(wx+8)+','+(wy+13)+'"/>'+
        '<path d="M'+wx+','+(wy+6.5)+' L'+(wx+16)+','+(wy+6.5)+'"/></g>';
-  if(o.ice){
-    /* THE SHIELD CLIMBS THE CHEEKS. This is the valley the caption promises.
-       Drawn as a real 9-unit strip, not the hairline triangles of the first
-       pass — a detail that does not read is a detail that is not there. */
-    s += '<g fill="#6E767B">'+
-         '<path d="M'+(d.l-9)+','+(d.bot+2)+' L'+(d.l-1)+','+(d.eave-2)+' L'+(d.l+3)+','+(d.eave-2)+
-         ' L'+(d.l+3)+','+(d.bot+2)+' Z"/>'+
-         '<path d="M'+(d.r+9)+','+(d.bot+2)+' L'+(d.r+1)+','+(d.eave-2)+' L'+(d.r-3)+','+(d.eave-2)+
-         ' L'+(d.r-3)+','+(d.bot+2)+' Z" fill="#565D62"/></g>';
-    s += '<g fill="#C3C8CC" opacity=".75">';
-    for(var gi = 0; gi < 16; gi++){
-      var gt = (gi % 8) / 7, gy = d.bot + 2 - gt * (d.bot - d.eave + 4);
-      var gx = (gi < 8) ? (d.l - 7 + (gi % 3) * 3) : (d.r - 1 + (gi % 3) * 3);
-      s += '<circle cx="'+gx.toFixed(1)+'" cy="'+gy.toFixed(1)+'" r=".85"/>';
-    }
-    s += '</g>';
-  }
+
   if(o.flash){
     /* STEP FLASHING — one bent piece per course, lapped, climbing the cheek.
        Only reads if the steps are actual steps with a visible riser. */

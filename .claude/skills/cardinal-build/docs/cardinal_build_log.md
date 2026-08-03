@@ -7075,6 +7075,51 @@ parse, zero page errors.
 
 ---
 
+## The dormer, bigger — and the valley membrane it was added for (2026-08-03)
+
+Theo: *"With there being a dormer that adds 2 valleys. Any way to make the dormer bigger and show
+the ice and water at the dormer valley? Dead center wasn't what I meant. As a pop up the dormer
+should be a little over to the left equal distance from both left and right hip."*
+
+**The two halves of that sentence only look contradictory, and resolving it settles the placement
+for good.** `spanAt` is symmetric about 150 at every height, so **equidistant from both hips is
+x=150 and nowhere else**. It *reads* as "a little over to the left" because the house's light turns
+at 176 — the lit face is 142 wide against 90 in shade, so the eye puts the centre of the house
+right of where it actually is. He described one point twice. What he was rejecting was my word
+"dead centre", not the position. **`DX = 150`, and this is settled — do not move it back to 140.**
+
+**Size: 50 × 44, up from 36 × 35** — half again the area. Peak at y=40 leaves 12 units between it
+and the ridge vent. Base at y=84 lands on the eave ice course at 86, deliberately: the valley
+membrane and the eave membrane then read as **one continuous sheet, which is what they are**.
+
+**The valley membrane is drawn BEFORE the dormer, and that is the whole fix.** The old version was
+two 9-unit strips beside the cheeks emitted *after* the face — a detail stuck on beside the dormer
+rather than a sheet the dormer sits on. It now wraps each valley, up the cheek and along under the
+rake, is emitted first so the face and rake board land on top of it, and runs down to meet the eave
+course. That is the real order: the membrane is roofed over, not painted beside.
+
+**One defect, caught by rendering:** the band's outer corner was set at `peak - 4`, four units
+**above** the dormer's own peak, so it stuck out past the rake as a grey horn. It dies at `peak - 1`
+now, under the rake board (drawn at `peak-2` with a 2.4 stroke, so covering 36.8–39.2).
+
+**Two more collisions from the bigger box**, found by the same rendered-DOM rectangle intersection:
+spread 12's left roofer (moved 176 → 194) and **spread 14's Theo, who was standing on the dormer's
+right rake** (180 → 206, up-slope and clear).
+
+⚠️ **A stale-check warning for next time.** `pw_split2` reported the 150 shade break going from
+13/16 to **0/16** and it is NOT a regression — the dormer is centred at 150, so its own gable facet
+legitimately splits there and the probe band sat inside the dormer's height. Re-probed outside the
+dormer (y<38 and y>88): **at176 positive on 16/16**, at150 non-positive on 14/16, and the two
+positives are spreads 7 and 8, the bare-deck spreads, where the sprayed-sheet edges sit near 150.
+The check was measuring the dormer, not the roof.
+
+Verified: dormer on 16/16, **zero** collisions, shade break at 176 on 16/16, no bare deck through
+the felt, `pw_deck` clean at phone / iPad / reduced-motion, `pw_shingle` unchanged
+(`planeIsTrapezoid`, `ridgeVent`, `strippedByColour` all true; `offRoof` 2 is the starter strip's
+two eave-line vertices, boundary-exclusive, not a defect), zero page errors.
+
+---
+
 ## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
 
 ✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like
