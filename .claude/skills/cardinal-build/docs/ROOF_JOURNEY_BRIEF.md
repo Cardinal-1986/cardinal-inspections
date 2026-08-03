@@ -52,6 +52,8 @@ four after briefly considering eight.
 | 13 | **Knock the neighbors' doors** | Told in advance that work is coming | "Good neighbor" — reframes the noisiest, most disruptive day as considerate |
 | 14 | **Check the attic — at the beginning** | Inspecting from *underneath* at takeoff, before any commitment | ⭐ The only way to see decking condition, existing leaks, and whether the ventilation actually works. The roof surface cannot tell you any of it |
 | 15 | **Ventilation — "super important"** | Balanced intake (soffit) + exhaust (ridge) | ⭐⭐ See below. This is the one that quietly **voids shingle warranties**, and almost no homeowner knows it |
+| 16 | **The PM's card, handed over by the salesperson** | A second named human, with contact details, before work starts | The client is never left with only one number. Handing a *card* is a deliberate physical gesture — it says "this person is yours" |
+| 17 | **The PM is on site periodically all day** | Not a drop-and-vanish crew | Answers the unspoken fear: *"will anyone in charge actually be here?"* Pairs with Theo's own site checks (#9) — two levels of oversight, not one |
 
 ### 14–15 added later the same session, verbatim
 
@@ -121,6 +123,38 @@ network access must confirm before any of it is stated to a homeowner as law.
 Safer framing that needs no citation and is true regardless: *"this is how we
 do it, and here's what it's for"* — show the component and its purpose, rather
 than asserting a legal requirement. Sell the workmanship, not the statute.
+
+## The fifth direction — requested by name
+
+Settled at four, then he asked for a fifth, specified directly:
+
+> Maybe add a 5th in kind of like a pop up cardboard book style illustration
+> thats interactive and things pop, make it fun and colorful. add some humor like
+> a warning of debris. […] be unique in this one
+
+**So: five directions, two of which the client engages with.** This one is
+specified more tightly than the others and should be taken literally — a
+**pop-up cardboard book**: paper craft, visible fold lines and scored creases,
+tabs you pull, layers that rise off the page when a spread opens.
+
+Three things make it worth building rather than a gimmick:
+
+1. **It licenses a full departure from Cardinal's near-black palette.** Every
+   other surface in this app is dark chrome for a working CRM. This is a
+   storybook handed to a homeowner — kraft board, bright inks, warm and colourful
+   is *correct* here, and the departure is deliberate rather than an
+   inconsistency. Note the Showcase's existing **Kraft** share-card frame
+   (measured `232,220,200`) is already a sanctioned paper tone in this app.
+2. **Humour is explicitly wanted** — he named the debris warning himself. A
+   mock safety label on a pop-up that flings cardboard debris is exactly the
+   register: dry, self-aware, never cutesy.
+3. **The physical metaphor carries the roof assembly better than any other
+   direction.** A roof genuinely *is* layers stacked on a deck — a pop-up book
+   is layers stacked on a page. The material and the medium agree.
+
+⚠️ **Motion honesty:** a pop-up-heavy design must respect
+`prefers-reduced-motion` and still be fully readable with every animation off.
+The pops are the delight, not the information.
 
 ## What NOT to do with this material
 
