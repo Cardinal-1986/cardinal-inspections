@@ -1,0 +1,434 @@
+<!--
+════════════════════════════════════════════════════════════════════
+ THE POP-UP ROOF — Spread 7 of 16, on its own
+ Written 3 Aug 2026.
+────────────────────────────────────────────────────────────────────
+ ONE SPREAD, DELIBERATELY. The full book is 12-14 builds and 35-60
+ hours of illustration. Its own spec says build this spread first and
+ look at it before anyone draws the other fifteen, because the whole
+ direction lives or dies on whether the register is right — dry and
+ self-aware, or cutesy. Spread 7 is the right test: it carries the
+ debris warning, the biggest pop, and the joke that is also the
+ argument.
+
+ THE MECHANISM, as specced:
+   fold line   visible whether the pop is up or down — that crease is
+               the tell that this is paper. Never hide it.
+   hinge       transform-origin 50% 100%, rotateX(-78deg). NOT -90:
+               a piece at a true right angle reads as a wall. Real
+               board never stands square because the strut holds it
+               back.
+   strut       a second board hinged behind at -52deg, drawn in the
+               SHADE tone because you are seeing its back.
+   shadow      a FLAT SIBLING, not filter:drop-shadow. drop-shadow on
+               a 3D element silently flattens preserve-3d on iOS
+               Safari. It also foreshortens (scaleY) as the piece
+               stands up, which is the bit that sells it.
+ All five read one --open custom property, so they cannot desync.
+
+ THE DEBRIS IS THE POINT. Tap the roof and forty chips fling off and
+ land on the floor of the page. THEY STAY THERE. In the full book the
+ magnet on spread 15 sweeps up these exact chips nine spreads later —
+ cleanup stops being a paragraph and becomes a chore you have to do.
+ Theo flagged cleanup himself as the most important part.
+
+ PALETTE — a full departure from the app's near-black, and deliberate.
+ Every other surface in this app is dark chrome for people doing work.
+ This is the one artefact that leaves the building. Ground is
+ #E8DCC8, the Showcase's already-sanctioned Kraft share-card frame
+ (measured rgb(232,220,200)).
+
+ ⚠ CONTRAST, computed not eyeballed: cardinal red #C8202E is 4.19:1
+ on kraft and FAILS body text. Text uses the deepened twin #8F1620
+ (6.73:1), which already ships in this app. White on #E8722A is
+ 3.06:1 and fails — the caution label is black-on-orange, which is
+ also what real hazard signage looks like.
+
+ REDUCED MOTION is a second presentation, not a switch: the pop lies
+ flat as a labelled diagram, the debris is already on the floor, and
+ every word is present. The pops are the delight, never the
+ information.
+════════════════════════════════════════════════════════════════════
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#E8DCC8">
+<title>The Pop-Up Roof — the tear-off spread</title>
+<style>
+  :root{
+    /* board */
+    --board:#E8DCC8; --shade:#D3C3A4; --cut-lt:#F4EDDD; --cut-dk:#C9B893;
+    --crease:#C0AE8B;
+    /* ink */
+    --ink:#4A3524; --ink2:#6B5B47;
+    /* spot colours — FILL first, then the text-safe twin */
+    --red:#C8202E;    --red-tx:#8F1620;
+    --orange:#E8722A; --orange-tx:#96430E; --on-orange:#1A1208;
+    --sky:#2F7FB5;    --sky-tx:#1F6494;
+    --green:#3E7A4E;
+    --steel:#8C8F94;  --steel-tx:#5E6166;
+    --navy:#243B53;   --ice:#F7F3EA;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    --serif:Georgia,"Times New Roman",serif;
+    --open:0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:#CBB894;
+    /* paper fibre — one turbulence, baked, tiled, multiplied */
+    color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.6;
+    padding:0 0 50px;
+  }
+  .sheet{max-width:940px;margin:0 auto;background:var(--board);
+         box-shadow:0 24px 60px rgba(74,53,36,.34)}
+  .fibre{position:relative}
+  .fibre::after{content:'';position:absolute;inset:0;pointer-events:none;
+    background-image:var(--fibre);background-size:180px 180px;
+    opacity:.07;mix-blend-mode:multiply}
+
+  /* ── the test banner, not part of the book ─────────────── */
+  .testbar{background:var(--navy);color:var(--ice);padding:11px 20px;
+           font:700 10.5px var(--mono);letter-spacing:.13em;text-transform:uppercase;
+           display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .testbar b{color:#F7C8A0}
+
+  /* ── page furniture ────────────────────────────────────── */
+  .book{position:relative;padding:26px 20px 20px}
+  .crop{position:absolute;width:9px;height:9px;border:0}
+  .crop.tl{top:8px;left:8px;border-top:1px solid var(--ink2);border-left:1px solid var(--ink2)}
+  .crop.tr{top:8px;right:8px;border-top:1px solid var(--ink2);border-right:1px solid var(--ink2)}
+  .crop.bl{bottom:8px;left:8px;border-bottom:1px solid var(--ink2);border-left:1px solid var(--ink2)}
+  .crop.br{bottom:8px;right:8px;border-bottom:1px solid var(--ink2);border-right:1px solid var(--ink2)}
+  .runhead{font:700 9px var(--mono);letter-spacing:.2em;text-transform:uppercase;
+           color:var(--ink2);opacity:.75;margin-bottom:16px}
+
+  .spread{display:grid;grid-template-columns:1fr 1fr;gap:0;position:relative}
+  @media (max-width:720px){ .spread{grid-template-columns:1fr} .gutter{display:none} }
+  .gutter{position:absolute;left:50%;top:0;bottom:0;width:1px;
+          background:linear-gradient(var(--crease),transparent);opacity:.55}
+  .page{padding:6px 20px 0}
+
+  h1{font:800 clamp(26px,6vw,38px)/1.08 var(--serif);margin:0 0 8px;letter-spacing:-.015em}
+  .kicker{font:700 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;
+          color:var(--red-tx);margin-bottom:9px}
+  p{margin:0 0 13px;max-width:46ch}
+  p.lede{font-size:16.5px}
+  b{color:var(--ink)}
+
+  /* ── the stage the pop stands on ───────────────────────── */
+  /* The page is a receding surface, like an open book on a table — that
+     tilt is what makes a rising board read as RISING. Without it, a
+     face-on camera collapses the pop to a sliver, which is the first
+     thing this spread got wrong.
+       lying flat on the page = 58deg (the page's own tilt)
+       standing up           = -20deg (58 - 78)
+     78, not 90: a piece at a true right angle reads as a wall. Real
+     board never stands square, because the strut holds it back. */
+  .stage{position:relative;height:300px;margin:4px 0 0;
+         perspective:clamp(900px,150vw,1700px);perspective-origin:50% 34%;
+         touch-action:manipulation;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+  .stage:focus-visible{outline:2px solid var(--red);outline-offset:4px}
+  .floor{position:absolute;left:0;right:0;bottom:0;height:118px;
+         transform-origin:50% 0%;transform:rotateX(58deg);
+         background:linear-gradient(var(--shade),#C6B394)}
+  .crease{position:absolute;left:4%;right:4%;bottom:118px;height:0;
+          border-top:1px dashed var(--crease)}
+  .crease::after{content:'';position:absolute;left:0;right:0;top:1px;height:1px;background:var(--cut-lt)}
+
+  .popwrap{position:absolute;left:4%;right:4%;bottom:118px;height:172px}
+  .strut{position:absolute;left:24%;right:24%;bottom:0;height:104px;
+         transform-origin:50% 100%;
+         transform:rotateX(calc(58deg - 40deg * var(--open)));
+         background:var(--shade);border:1px solid var(--cut-dk);border-radius:2px;
+         transition:transform .48s cubic-bezier(.22,1.1,.36,1) .34s}
+  .pop{position:absolute;left:0;right:0;bottom:0;height:172px;
+       transform-origin:50% 100%;
+       transform:rotateX(calc(58deg - 78deg * var(--open)));
+       transition:transform .48s cubic-bezier(.22,1.1,.36,1) .34s}
+  .pop .flute{position:absolute;left:0;right:0;top:-4px;height:4px;border-radius:1px;
+    background:repeating-linear-gradient(90deg,var(--cut-dk) 0 1.5px,var(--cut-lt) 1.5px 3px)}
+  .pop svg{display:block;width:100%;height:100%}
+  /* the shadow is a FLAT SIBLING on the page, never a filter on the 3D element */
+  .pshadow{position:absolute;left:10%;right:10%;bottom:96px;height:30px;border-radius:50%;
+           background:var(--ink);
+           opacity:calc(.10 + .22 * var(--open));
+           filter:blur(calc(2px + 10px * var(--open)));
+           transform:translate(calc(4px * var(--open)),calc(9px * var(--open)))
+                     scaleY(calc(1 - .42 * var(--open)));
+           transition:opacity .48s .34s,filter .48s .34s,transform .48s .34s}
+
+  .tapme{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+         font:700 9.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;
+         color:var(--ink2);background:rgba(232,220,200,.85);padding:6px 11px;border-radius:3px;
+         pointer-events:none;transition:opacity .3s}
+  .stage.spent .tapme{opacity:0}
+
+  /* ── debris ────────────────────────────────────────────── */
+  .chip{position:absolute;width:var(--w,13px);height:var(--h,8px);
+        background:linear-gradient(#F4EDDD,#DCCDAE);
+        border:1px solid #B9A882;border-radius:1px;pointer-events:none;
+        box-shadow:0 1px 0 rgba(74,53,36,.18);
+        transform:translate3d(0,0,0) rotate(0deg);opacity:0}
+  .chip.fly{animation:fling var(--dur) cubic-bezier(.3,.9,.4,1) forwards;animation-delay:var(--dly)}
+  .chip.rest{opacity:1;transform:translate(var(--tx),var(--ty)) rotate(var(--rot))}
+  @keyframes fling{
+    0%  {opacity:1;transform:translate(0,0) rotate(0deg)}
+    70% {opacity:1;transform:translate(calc(var(--tx) * .96),calc(var(--ty) + 8px)) rotate(calc(var(--rot) * .9))}
+    85% {transform:translate(var(--tx),calc(var(--ty) - 5px)) rotate(var(--rot))}
+    100%{opacity:1;transform:translate(var(--tx),var(--ty)) rotate(var(--rot))}
+  }
+
+  /* ── the caution label ─────────────────────────────────── */
+  .caution{background:var(--orange);color:var(--on-orange);
+           border-radius:3px;padding:12px 14px;margin:20px 0 4px;max-width:44ch;
+           font:13px/1.5 var(--sans)}
+  .caution b{display:block;color:var(--on-orange);font:800 12px var(--mono);
+             letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+
+  .count{margin-top:16px;font:700 10.5px var(--mono);letter-spacing:.12em;
+         text-transform:uppercase;color:var(--ink2)}
+  .count span{color:var(--red-tx)}
+
+  .swatches{display:flex;gap:0;margin-top:26px;border:1px solid var(--cut-dk);width:max-content}
+  .swatches i{display:block;width:22px;height:11px}
+  .pagenum{margin-top:8px;font:700 9.5px var(--mono);letter-spacing:.16em;color:var(--ink2)}
+
+  .flatnote{display:none;background:var(--shade);border-left:3px solid var(--steel-tx);
+            padding:10px 13px;margin:14px 0;font-size:13.5px;color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){
+    .pop,.pshadow{transition:none!important}
+    .chip.fly{animation:none!important;opacity:1!important;
+              transform:translate(var(--tx),var(--ty)) rotate(var(--rot))!important}
+    .flatnote{display:block}
+    .tapme{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="testbar">
+  <span>The Pop-Up Roof</span>
+  <b>Spread 7 of 16 — built on its own as the test</b>
+  <span style="margin-left:auto;opacity:.75">Tap the roof</span>
+</div>
+
+<div class="sheet fibre">
+  <div class="book">
+    <span class="crop tl"></span><span class="crop tr"></span>
+    <span class="crop bl"></span><span class="crop br"></span>
+    <div class="runhead">The Pop-Up Roof · Vol. 1 · Tear-off to handoff</div>
+
+    <div class="spread">
+      <div class="gutter"></div>
+
+      <!-- ── left page: the pop ── -->
+      <div class="page">
+        <div class="kicker">Spread seven</div>
+        <h1>The trailer, the noise, and a great deal of debris</h1>
+
+        <div class="stage" id="stage" tabindex="0" role="button"
+             aria-label="Tap the roof to strip the shingles off">
+          <div class="pshadow" id="shadow"></div>
+          <div class="popwrap" id="popwrap">
+            <div class="strut"></div>
+            <div class="pop" id="pop">
+              <div class="flute"></div>
+              <svg viewBox="0 0 300 190" aria-hidden="true" id="popsvg"></svg>
+            </div>
+          </div>
+          <div class="floor" id="floor"></div>
+          <div class="crease"></div>
+          <div class="tapme">Tap the roof</div>
+        </div>
+
+        <p class="count" id="chipCount"></p>
+        <div class="flatnote"><b>Flat-pack edition.</b> Everything is here. Nothing rises.</div>
+        <div class="swatches" aria-hidden="true">
+          <i style="background:#C8202E"></i><i style="background:#E8722A"></i>
+          <i style="background:#2F7FB5"></i><i style="background:#3E7A4E"></i>
+          <i style="background:#8C8F94"></i><i style="background:#243B53"></i>
+        </div>
+        <div class="pagenum">14</div>
+      </div>
+
+      <!-- ── right page: the words ── -->
+      <div class="page">
+        <p class="lede">The trailer lands on the driveway first, and then the roof comes off. This is the loudest few hours of the whole job, and it is also the fastest — a crew that took three days to schedule can strip a house before lunch.</p>
+
+        <div class="caution">
+          <b>⚠ Caution — falling cardboard</b>
+          This spread contains loose debris. It is paper. The real thing is heavier, and there is considerably more of it.
+        </div>
+
+        <p>Everything that leaves the roof lands somewhere. We tarp the beds on the tear-off side and the ground under the eave before the first shingle moves, and the trailer sits where the fall is shortest — which is usually the driveway, and is the reason we asked you to move the cars.</p>
+
+        <p><b>What you'll hear:</b> scraping, then a long rolling clatter as a section lets go, then boots. It stops for a moment and starts again. It is not the sound of anything going wrong.</p>
+
+        <p><b>What you'll find afterwards:</b> nothing, if we've done it right. The nails are the part everyone forgets — a tear-off drops thousands of them, and they end up in grass, in mulch, in the gaps between paving. That's why the magnet comes out at the end of the day, <b>and again the next morning.</b></p>
+
+        <p style="color:var(--ink2);font-size:13.5px"><b>Nine spreads from now</b>, the magnet sweeps up the chips you just knocked off this page. Not a picture of them — the same ones, wherever they landed.</p>
+
+        <div class="pagenum" style="text-align:right">15</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.documentElement;
+
+  /* ── paper fibre: one feTurbulence, baked once to a data URI ──── */
+  root.style.setProperty('--fibre',
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23f)'/%3E%3C/svg%3E\")");
+
+  /* ── the pop's artwork ────────────────────────────────────────
+     Die-cut board, not line art: filled pieces with a cut edge and a
+     printed detail layer. Light is fixed upper-left on every piece,
+     forever — varying it is what makes CSS 3D read as fake. */
+  function houseSVG(stripped){
+    var s = '';
+    // ── the house board
+    s += '<g>';
+    s += '<path d="M40,186 L40,96 L150,34 L260,96 L260,186 Z" fill="#E8DCC8" stroke="#C9B893" stroke-width="2.5" stroke-linejoin="round"/>';
+    // printed detail: door, two windows, sill lines
+    s += '<g fill="none" stroke="#6B5B47" stroke-width="2" stroke-linecap="square">';
+    s += '<path d="M132,186 L132,140 L168,140 L168,186"/>';
+    s += '<path d="M64,120 L96,120 L96,150 L64,150 Z"/>';
+    s += '<path d="M204,120 L236,120 L236,150 L204,150 Z"/>';
+    s += '</g>';
+    s += '</g>';
+
+    // ── the roof: either shingled, or stripped to bare deck
+    if(!stripped){
+      s += '<g id="shingles">';
+      s += '<path d="M34,100 L150,28 L266,100 Z" fill="#8F1620" stroke="#7a121b" stroke-width="2" stroke-linejoin="round"/>';
+      // course lines, printed
+      s += '<g fill="none" stroke="#E8DCC8" stroke-width="1.6" opacity=".55">';
+      for(var i=1;i<=4;i++){
+        var t=i/5.4, y=100-t*70, x1=34+t*116, x2=266-t*116;
+        s += '<path d="M'+x1.toFixed(0)+','+y.toFixed(0)+' L'+x2.toFixed(0)+','+y.toFixed(0)+'"/>';
+      }
+      s += '</g></g>';
+    } else {
+      // bare deck — boards with visible gaps, the honest version
+      s += '<g>';
+      s += '<path d="M34,100 L150,28 L266,100 Z" fill="#D3C3A4" stroke="#C9B893" stroke-width="2" stroke-linejoin="round"/>';
+      s += '<g fill="none" stroke="#6B5B47" stroke-width="1.3" opacity=".5">';
+      for(var j=1;j<=5;j++){
+        var u=j/6.4, yy=100-u*70, a=34+u*116, b=266-u*116;
+        s += '<path d="M'+a.toFixed(0)+','+yy.toFixed(0)+' L'+b.toFixed(0)+','+yy.toFixed(0)+'"/>';
+      }
+      s += '</g></g>';
+    }
+
+    // ── the trailer on the drive (steel), with a kraft load
+    s += '<g>';
+    s += '<path d="M6,186 L6,158 L74,158 L74,186 Z" fill="#8C8F94" stroke="#5E6166" stroke-width="2" stroke-linejoin="round"/>';
+    s += '<circle cx="24" cy="188" r="6" fill="#243B53"/><circle cx="58" cy="188" r="6" fill="#243B53"/>';
+    s += '<path d="M6,158 L74,158" stroke="#F4EDDD" stroke-width="1.6"/>';
+    s += '</g>';
+
+    // ── a jointed paper puppet, orange hard hat, no expression
+    s += '<g stroke="#6B5B47" stroke-width="2" stroke-linecap="round" fill="none">';
+    s += '<path d="M96,186 L96,168"/><path d="M96,168 L88,152"/><path d="M96,168 L104,152"/>'; // legs
+    s += '<path d="M96,152 L96,132"/>';                                                        // torso
+    s += '<path d="M96,140 L84,132"/><path d="M96,140 L110,134"/>';                            // arms
+    s += '</g>';
+    s += '<circle cx="96" cy="126" r="6.5" fill="#E8DCC8" stroke="#C9B893" stroke-width="1.6"/>';
+    s += '<path d="M88,124 A8,8 0 0 1 104,124 Z" fill="#E8722A"/>';                            // hard hat
+    s += '<circle cx="94" cy="126" r=".9" fill="#4A3524"/><circle cx="99" cy="126" r=".9" fill="#4A3524"/>';
+    // brass joints
+    s += '<g fill="#8C8F94">';
+    s += '<circle cx="96" cy="168" r="1.6"/><circle cx="96" cy="152" r="1.6"/><circle cx="96" cy="140" r="1.6"/>';
+    s += '</g>';
+
+    return s;
+  }
+
+  var pop = document.getElementById('pop');
+  var popsvg = document.getElementById('popsvg');
+  var stage = document.getElementById('stage');
+  var floor = document.getElementById('floor');
+  var countEl = document.getElementById('chipCount');
+  var stripped = false, chips = 0;
+
+  popsvg.innerHTML = houseSVG(false);
+
+  function setOpen(v){ root.style.setProperty('--open', v); }
+
+  /* the rise: --open drives the hinge, the strut and the shadow together,
+     so they physically cannot desync */
+  if(reduce){
+    setOpen(0);                 // flat-pack: the board lies on the page
+  } else {
+    setTimeout(function(){ setOpen(1); }, 260);
+  }
+
+  /* ── the debris ──────────────────────────────────────────────
+     Forty chips fling off the roof and land on the floor of the page.
+     THEY STAY. In the full book the magnet on spread 15 sweeps up
+     these exact chips — that persistence is the joke and the argument
+     at the same time. */
+  function rand(a,b){ return a + Math.random()*(b-a); }
+
+  function shed(){
+    if(stripped) return;
+    stripped = true;
+    stage.classList.add('spent');
+
+    var box = stage.getBoundingClientRect();
+    for(var i=0;i<40;i++){
+      var c = document.createElement('div');
+      c.className = 'chip';
+      // start on the roof face
+      var sx = rand(0.20, 0.80) * box.width;
+      var sy = rand(0.16, 0.44) * box.height;
+      c.style.left = sx + 'px';
+      c.style.top  = sy + 'px';
+      // land on the floor strip, spread across the page
+      c.style.setProperty('--tx', (rand(-0.34,0.34) * box.width).toFixed(0) + 'px');
+      var floorTop = box.height - 118;                 // where the page surface starts
+      var floorVis = 118 * Math.cos(58 * Math.PI / 180); // ~62px once foreshortened
+      var landY = floorTop + rand(0.18, 0.92) * floorVis;
+      c.style.setProperty('--ty', (landY - sy).toFixed(0) + 'px');
+      c.style.setProperty('--rot', rand(-220,220).toFixed(0) + 'deg');
+      c.style.setProperty('--dur', rand(.72,1.02).toFixed(2) + 's');
+      c.style.setProperty('--dly', rand(0,.22).toFixed(2) + 's');
+      c.style.setProperty('--w', rand(9,16).toFixed(0) + 'px');
+      c.style.setProperty('--h', rand(6,10).toFixed(0) + 'px');
+      c.classList.add(reduce ? 'rest' : 'fly');
+      stage.appendChild(c);
+      chips++;
+    }
+    // the roof goes to bare deck underneath
+    setTimeout(function(){ popsvg.innerHTML = houseSVG(true); }, reduce ? 0 : 240);
+    paintCount();
+  }
+
+  function paintCount(){
+    countEl.innerHTML = chips
+      ? 'On the floor of this page: <span>' + chips + ' pieces</span> · they stay there'
+      : '';
+  }
+
+  stage.addEventListener('click', shed);
+  stage.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); shed(); }
+  });
+
+  // reduced motion: the spread is already stripped and already swept-less,
+  // because the information must survive with every animation off
+  if(reduce) shed();
+})();
+</script>
+</body>
+</html>

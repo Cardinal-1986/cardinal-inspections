@@ -6903,3 +6903,56 @@ track, arrow keys move the divider, `aria-valuenow` updates, no horizontal overf
 **Not linked from anywhere yet** — that is an `index.html` change (the Vision hub is the obvious
 front door) and it is Theo's call whether this is public-facing marketing or something a rep
 hands over. Reachable directly at `/drivewaytest.html` on any domain serving this repo.
+
+## `popup.html` — the Pop-Up Roof, spread 7 alone (2026-08-03)
+
+**One spread of sixteen, deliberately.** The full book is 12–14 builds and 35–60 hours of
+illustration; its own spec says build this spread first and look at it before anyone draws the
+other fifteen, because the direction lives or dies on whether the register is right — dry and
+self-aware, or cutesy. Spread 7 is the correct test: it carries the debris warning, the biggest
+pop, and the joke that is also the argument.
+
+**The debris is the whole bet.** Tap the roof, forty kraft chips fling off and land on the page,
+**and they stay there.** In the full book the magnet on spread 15 sweeps up these exact chips
+nine spreads later — cleanup stops being a paragraph the client skims and becomes a chore they
+have to do. Theo named cleanup himself as the most important part of the job.
+
+**Two geometry bugs, both found by looking rather than by asserting.**
+
+1. **The pop rotated flat INTO the screen instead of standing up off it.** `rotateX(-78deg)` on
+   a board whose page is the screen plane collapses it to a sliver under a face-on camera — the
+   house was nearly invisible. The fix is that a pop-up only reads as rising if the page itself
+   is a *receding surface*: the floor is now tilted `rotateX(58deg)`, and the pop travels
+   `58deg → -20deg` (i.e. 78° off its own page). Lying flat and standing up are now both correct,
+   and the maths is written into the CSS comment so the next person doesn't rediscover it.
+2. **The chips fell past the page onto the background**, which kills the one gag the spread is
+   built on. The floor is 118px tall rotated 58°, so it occupies only ~62px of *visual* height
+   (`118 × cos 58°`) — landing chips at `height − 26` dropped them off the page entirely. They
+   now land inside the foreshortened band.
+
+Every mechanical assertion was green through both bugs: the pop transformed, the shadow
+responded, forty chips existed and were visible, the roof stripped to bare deck, zero JS errors,
+zero overflow. **Same class as the Driveway Test's overlapping captions earlier the same day** —
+green checks on a picture that was wrong.
+
+**The mechanism**, all five parts reading one `--open` property so they cannot desync: a fold
+line visible whether the pop is up or down (that crease is the tell that this is paper); the
+hinge at 78° not 90° because a piece at a true right angle reads as a wall; a strut hinged
+behind, drawn in the shade tone because you are seeing its back; and the shadow as a **flat
+sibling with `scaleY` foreshortening, never `filter: drop-shadow`** — drop-shadow on a 3D element
+silently flattens `preserve-3d` on iOS Safari. The pop and strut are siblings in screen space
+rather than nested under `preserve-3d`, which sidesteps that fragility entirely.
+
+⚠️ **Contrast, computed:** cardinal red `#C8202E` is **4.19:1 on kraft and fails body text** —
+text uses the deepened twin `#8F1620` (6.73:1), which already ships in this app. White on
+`#E8722A` is 3.06:1 and fails, so the caution label is black-on-orange, which is also what real
+hazard signage looks like. A test asserts no body text renders in the failing red.
+
+**Reduced motion is a second presentation, not a switch**: the board lies flat, the debris is
+already on the page, the flat-pack note appears, and every word survives. Verified as its own
+run with `reducedMotion: 'reduce'`, not assumed.
+
+**Still unverified from here:** iOS Safari. The spec flags `preserve-3d` as the direction's
+biggest engineering risk and this sandbox has only Chromium. The sibling-not-nested structure was
+chosen specifically to reduce that exposure, but **it must be opened on a real iPad before the
+other fifteen spreads are drawn.**
