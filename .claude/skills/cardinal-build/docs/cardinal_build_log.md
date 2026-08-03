@@ -7576,3 +7576,23 @@ wrong thing is worse than no screenshot, because it looks like proof.
 
 Verified: full sixteen-spread walk ALL GREEN · the `<image>` node present in `walkG` with the
 right rendered box at phone and iPad · rendered and eyeballed at both sizes.
+
+---
+
+## The second cutout — Theo and the super magnet on The Sweep (2026-08-04, past midnight)
+
+Theo sent a second standee photograph — him pushing the actual Little Giant magnet sweeper,
+debris speckles real on the bar — with the fact that makes the spread true: *"I always come out
+the next day and sweep with a super magnet."* The drawn figure and drawn cart on spread 15 are
+gone; the real cutout stands in their place, sized so the man reads the same 52 units as his
+walk standee, and the caption now carries the next-day commitment in nearly his words. The
+sweep acts still collect spread 7's real chips toward the bar's spot.
+
+Processing note for the next standee: the border flood cannot reach background pockets fully
+ENCLOSED by bright pixels — the magnet handle's A-frame held one (2,714 px of studio black
+fenced in by the white struts). A second pass finds remaining near-pure-black components
+(threshold under 22, size over 60) and clears them, reported before clearing so a dark shoe
+never silently vanishes. Both cutouts now ship; both originals stay out of the repo.
+
+Verified: full sixteen-spread walk ALL GREEN · zero unswept chips at the end · rendered and
+eyeballed before and after the sweep.
