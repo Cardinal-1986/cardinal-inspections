@@ -681,33 +681,79 @@
      Tabs are clamped to the span at the course's TOP edge, which is the
      narrower one — a tab that fits there fits all the way down, so nothing
      needs clipping and nothing escapes the roof. */
+  /* The first blend ran #34383C to #3D4246 — sixteen steps end to end, which
+     rendered as one flat black with a couple of tabs slightly off. "Shades of
+     blacks AND GREYS" needs the spread visible at arm's length, so the range
+     is now roughly 34 steps and the lightest tab is a real grey.
+
+     Named blends, not a boolean — Theo, 3 Aug: "maybe make the roof duration
+     Brownwood." OC sells more than one and the book will want whichever
+     Cardinal is putting on. Spread 7 is the roof coming OFF, so it uses
+     onyxOld: greyer and flatter, the way one that has lost its granules
+     actually looks. The new roof is Brownwood, and keeping the two different
+     is what makes the sequence read as black roof, tan deck, brown roof.
+
+     MODULE SCOPE, because the hip caps have to use the same blend as the field
+     they cap — a cap in a different blend is a cap off a different roof. */
+  var BLEND = {
+    onyxOld:   { F:['#3B4147','#2A2E33','#484E55','#222629'], S:'#191C1F', E:'#5A6066' },
+    onyx:      { F:['#2E343B','#1E2227','#3E454C','#171A1E'], S:'#0D1013', E:'#525A62' },
+    brownwood: { F:['#6B4F35','#4E3826','#8A6B4A','#3D2C1D'], S:'#241811', E:'#A5825C' }
+  };
+  // the shaded facet is the same blend one step down, never a second palette
+  function dk(h){
+    var n = parseInt(h.slice(1), 16);
+    return '#' + ((1 << 24) + (Math.round((n >> 16 & 255) * 0.72) << 16) +
+                  (Math.round((n >> 8 & 255) * 0.72) << 8) +
+                   Math.round((n & 255) * 0.72)).toString(16).slice(1);
+  }
+
+  /* ── hip and ridge cap, over both hips ────────────────────────
+     Theo, 3 Aug: "since the roof is shaped like a pyramid put the hip and
+     ridge shingles over the hips since it's visible."
+
+     He is reading his own drawing correctly, and it changes what those two
+     sloping edges ARE. This roof is a pyramid, so they are HIPS, not rakes —
+     and a hip carries cap shingles, not drip edge. They are also the most
+     visible shingle detail on the whole roof, running corner to peak straight
+     across the silhouette, and they were bare.
+
+     Laid from the eave UP so each cap laps the one below it, which is the
+     order they actually go on. Same blend as the field, one step down on the
+     shaded hip, and offset two in the cycle so the two hips do not mirror. */
+  function hipCaps(blend){
+    var B = BLEND[blend] || BLEND.onyx, F = B.F, SHADOW = B.S;
+    var L = Math.sqrt(116 * 116 + 72 * 72),        // the hip's true length, 136.5
+        A = Math.atan2(72, 116) * 180 / Math.PI,   // and its pitch, 31.83°
+        CW = 8.6, out = '';
+    function run(tx, ty, rot, shaded){
+      var g = '<g transform="translate(' + tx + ',' + ty + ') rotate(' + rot.toFixed(2) + ')">';
+      for(var i = 0; i * CW < L; i++){
+        var x = i * CW, w = Math.min(CW, L - x), tone = F[(i + (shaded ? 2 : 0)) % 4];
+        g += '<path d="M' + x.toFixed(1) + ',-3.1 L' + (x + w).toFixed(1) + ',-3.1 L' +
+             (x + w).toFixed(1) + ',3.1 L' + x.toFixed(1) + ',3.1 Z" fill="' +
+             (shaded ? dk(tone) : tone) + '"/>';
+        g += '<path d="M' + x.toFixed(1) + ',-3.1 L' + x.toFixed(1) +
+             ',3.1" fill="none" stroke="' + (shaded ? dk(SHADOW) : SHADOW) +
+             '" stroke-width="1.3"/>';
+      }
+      return g + '</g>';
+    }
+    out += run(34, 100, -A, false);         // left hip, eave to peak
+    out += run(266, 100, 180 + A, true);    // right hip, eave to peak
+    /* THE PEAK CAP. Both runs stop AT the apex, and because each cap is a
+       rectangle straddling the hip line, the two leave a notch open above the
+       point — visible as a small V in the silhouette. One last cap covers the
+       junction, which is also what really happens: a pyramid has no ridge, so
+       the final cap over the point is the only thing playing that part. */
+    out += '<path d="M150,21.6 L156.4,29 L150,32.6 L143.6,29 Z" fill="' + F[0] + '"/>';
+    out += '<path d="M150,21.6 L156.4,29 L150,32.6 Z" fill="' + dk(F[0]) + '"/>';
+    return out;
+  }
+
   function shingleArt(blend, starter){
-    /* The first blend ran #34383C to #3D4246 — sixteen steps end to end, which
-       rendered as one flat black with a couple of tabs slightly off. "Shades
-       of blacks AND GREYS" needs the spread to be visible at arm's length, so
-       the range is now roughly 34 steps and the lightest tab is a real grey. */
-    /* Named blends, not a boolean — Theo, 3 Aug: "maybe make the roof duration
-       Brownwood." OC sells more than one and the book will want to show
-       whichever Cardinal is putting on. Spread 7 is the roof coming OFF, so it
-       uses onyxOld: greyer and flatter, the way one that has lost its granules
-       actually looks. The new roof, on the later spreads, is Brownwood — and
-       keeping the two different is what makes the sequence read as black roof,
-       tan deck, brown roof rather than two warm tones either side of a warm
-       deck. Same map as the contact sheet, so the two cannot drift. */
-    var BLEND = {
-      onyxOld:   { F:['#3B4147','#2A2E33','#484E55','#222629'], S:'#191C1F', E:'#5A6066' },
-      onyx:      { F:['#2E343B','#1E2227','#3E454C','#171A1E'], S:'#0D1013', E:'#525A62' },
-      brownwood: { F:['#6B4F35','#4E3826','#8A6B4A','#3D2C1D'], S:'#241811', E:'#A5825C' }
-    };
     var B = BLEND[blend] || BLEND.onyx;
     var F = B.F, SHADOW = B.S, EDGE = B.E;
-    // the shaded plane is the same blend one step down, never a second palette
-    function dk(h){
-      var n = parseInt(h.slice(1), 16);
-      return '#' + ((1 << 24) + (Math.round((n >> 16 & 255) * 0.72) << 16) +
-                    (Math.round((n >> 8 & 255) * 0.72) << 8) +
-                     Math.round((n & 255) * 0.72)).toString(16).slice(1);
-    }
     function span(y){ var h = (y - 28) / (72 / 116); return [150 - h, 150 + h]; }
     var SH = 2.4, out = '';
     /* THE STARTER GOES IN AFTER THE DRIP EDGE — Theo, 3 Aug. It is an untabbed
@@ -882,7 +928,7 @@
          blend, lifted and flattened: a tired roof has lost granules, so it
          reads greyer and lower in contrast than the new one will.
          The five hairlines that used to live here were a strip shingle. */
-      s += shingleArt('onyxOld', true);
+      s += shingleArt('onyxOld', true) + hipCaps('onyxOld');
     }
     s += '</g>';
 
