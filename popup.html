@@ -885,24 +885,32 @@
    DX is 140: ten units left of centre. Dead centre sits under the ridge vent
    and dead over the door and reads like a symmetry no real house has; 124
    read as deliberately shoved to one side. */
-/* BIGGER, and at 150. Theo, 3 Aug: "Any way to make the dormer bigger and
-   show the ice and water at the dormer valley? Dead center wasn't what I
-   meant. As a pop up the dormer should be a little over to the left equal
-   distance from both left and right hip."
+/* ── PLACEMENT AND PITCH, and I got the placement wrong once ──────
+   Theo, 3 Aug, in order: option 2 was x=124 and "put dormer closer to the
+   middle of the house tho" · then "dead center wasn't what I meant, as a pop
+   up the dormer should be a little over to the left" · then, after I moved it
+   to 150 anyway, "Dormer should be over to the left and similar to the house
+   with the profile view."
 
-   Those two halves only look contradictory. EQUIDISTANT FROM BOTH HIPS IS
-   x=150 — spanAt is symmetric about 150 at every height, so the gap to the
-   left hip and the gap to the right hip are equal there and nowhere else. It
-   READS as "a little over to the left" because the house's light turns at
-   176, so the lit face is 142 wide against 90 in shade and the eye puts the
-   centre of the house right of where it actually is. He described one point
-   twice. What he was rejecting was my word "dead centre", not the position.
+   MY ERROR, recorded so it is not repeated: I read "equal distance from both
+   left and right hip" as a geometric spec — spanAt IS symmetric about 150, so
+   that phrase does pick 150 exactly — and built the clever reading instead of
+   the plain one. He had already said "a little over to the left" twice by
+   then. 124 was too far left, 150 too central; DX = 134 sits between them and
+   is the third correction on this one number. If it needs to go further, move
+   this constant and nothing else.
 
-   50 wide by 44 tall, up from 36 by 35 — half again the area. Peak at 40
-   leaves 12 units of roof between it and the ridge vent; base at 84 lands on
-   the eave ice course at 86, so the valley membrane and the eave membrane
-   read as one continuous sheet, which is what they are. */
-var DRM = { W:50, BOT:84, EAVE:60, PEAK:40 }, DX = 150;
+   PITCH: the gable now rises 26 over a run of 25, which is 46.1 degrees
+   against the main roof's 45.8. A dormer whose roof is visibly shallower than
+   the roof it sits on reads as a bolted-on box, and matching the pitch is
+   what "similar to the house" means on a real elevation. Eave dropped 60 to
+   64 to buy that rise without crowding the ridge vent — peak 38 still leaves
+   10 units of roof above it.
+
+   50 wide by 46 tall. Base at 84 lands on the eave ice course at 86 on
+   purpose, so the valley membrane and the eave membrane read as one
+   continuous sheet, which is what they are. */
+var DRM = { W:50, BOT:84, EAVE:64, PEAK:38 }, DX = 134;
 function dormerBox(cx){
   var h = DRM.W / 2;
   return { l: cx - h, r: cx + h, bot: DRM.BOT, eave: DRM.EAVE, peak: DRM.PEAK };

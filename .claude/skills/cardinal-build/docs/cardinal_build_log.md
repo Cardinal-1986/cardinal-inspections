@@ -7120,6 +7120,48 @@ two eave-line vertices, boundary-exclusive, not a defect), zero page errors.
 
 ---
 
+## `DX = 134` — the placement, corrected, and a check with a blind spot (2026-08-03)
+
+Theo: *"Dormer should be over to the left and similar to the house with the profile view."*
+
+**My error, and it is worth recording because it was a reasoning failure rather than a slip.** He
+had said "a little over to the left" twice. I read the accompanying phrase *"equal distance from
+both left and right hip"* as a geometric spec — and it genuinely does pick x=150, because `spanAt`
+is symmetric about 150 at every height — then built the clever reading over the plain one and
+argued for it. **Prefer the plain reading when a plain and a clever one conflict**, especially when
+the plain one has already been stated twice.
+
+The sequence on this single number: **124** ("closer to the middle") → **140** → **150** (mine,
+wrong) → **134**. If it moves again, move the constant and nothing else.
+
+**"Similar to the house with the profile view" is read as pitch**, and matching it is right on the
+merits: the gable now rises 26 over a run of 25 — **46.1° against the main roof's 45.8°**. A dormer
+visibly shallower than the roof it sits on reads as a bolted-on box. The eave dropped 60 → 64 to
+buy that rise without crowding the ridge vent; peak 38 still leaves 10 units of roof above it.
+
+### The collision check had a blind spot, and it cost a real defect
+
+The check inspected **only `g[transform*="translate"]` groups** — figures, ladders, trucks, signs.
+Spread 11's **chimney and pipe boot are bare `<path>` elements**, so it never looked at them, and
+the boot ended up sitting in the middle of the dormer's valley membrane: **a plumbing vent through
+the ice-and-water**, which is a leak, not a detail. It reported "no collisions" throughout.
+
+*A check that only inspects one kind of element is a check with a blind spot.* It now tests bare
+paths too, filtered to prop fills (metals and masonry) so the roof, walls and covering materials
+are not swept in. The boot moved to 216–236, past the chimney flashing at 214 and inside the roof
+(`spanAt(80)` gives 246.6 that side).
+
+Also re-bounded: spread 6's flying-bundle run, shortened a **second** time (`50+i*10`) — and it
+cannot start below x=50 either, because `roofY(42)` is 91.8 and the bundle would sit under the
+eave. Bounded at both ends now. Spread 12's layer stack narrowed to `X1=104`, since the dormer's
+left edge is 109.
+
+Verified: dormer on 16/16, zero collisions **with the widened check**, shade break at 176 on 16/16,
+no bare deck through the felt, `pw_deck` clean at phone / iPad / reduced-motion, both files parse,
+zero page errors.
+
+---
+
 ## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
 
 ✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like

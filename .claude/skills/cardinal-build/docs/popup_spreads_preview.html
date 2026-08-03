@@ -368,24 +368,32 @@ function ground(dark){
    DX is 140: ten units left of centre. Dead centre sits under the ridge vent
    and dead over the door and reads like a symmetry no real house has; 124
    read as deliberately shoved to one side. */
-/* BIGGER, and at 150. Theo, 3 Aug: "Any way to make the dormer bigger and
-   show the ice and water at the dormer valley? Dead center wasn't what I
-   meant. As a pop up the dormer should be a little over to the left equal
-   distance from both left and right hip."
+/* ── PLACEMENT AND PITCH, and I got the placement wrong once ──────
+   Theo, 3 Aug, in order: option 2 was x=124 and "put dormer closer to the
+   middle of the house tho" · then "dead center wasn't what I meant, as a pop
+   up the dormer should be a little over to the left" · then, after I moved it
+   to 150 anyway, "Dormer should be over to the left and similar to the house
+   with the profile view."
 
-   Those two halves only look contradictory. EQUIDISTANT FROM BOTH HIPS IS
-   x=150 — spanAt is symmetric about 150 at every height, so the gap to the
-   left hip and the gap to the right hip are equal there and nowhere else. It
-   READS as "a little over to the left" because the house's light turns at
-   176, so the lit face is 142 wide against 90 in shade and the eye puts the
-   centre of the house right of where it actually is. He described one point
-   twice. What he was rejecting was my word "dead centre", not the position.
+   MY ERROR, recorded so it is not repeated: I read "equal distance from both
+   left and right hip" as a geometric spec — spanAt IS symmetric about 150, so
+   that phrase does pick 150 exactly — and built the clever reading instead of
+   the plain one. He had already said "a little over to the left" twice by
+   then. 124 was too far left, 150 too central; DX = 134 sits between them and
+   is the third correction on this one number. If it needs to go further, move
+   this constant and nothing else.
 
-   50 wide by 44 tall, up from 36 by 35 — half again the area. Peak at 40
-   leaves 12 units of roof between it and the ridge vent; base at 84 lands on
-   the eave ice course at 86, so the valley membrane and the eave membrane
-   read as one continuous sheet, which is what they are. */
-var DRM = { W:50, BOT:84, EAVE:60, PEAK:40 }, DX = 150;
+   PITCH: the gable now rises 26 over a run of 25, which is 46.1 degrees
+   against the main roof's 45.8. A dormer whose roof is visibly shallower than
+   the roof it sits on reads as a bolted-on box, and matching the pitch is
+   what "similar to the house" means on a real elevation. Eave dropped 60 to
+   64 to buy that rise without crowding the ridge vent — peak 38 still leaves
+   10 units of roof above it.
+
+   50 wide by 46 tall. Base at 84 lands on the eave ice course at 86 on
+   purpose, so the valley membrane and the eave membrane read as one
+   continuous sheet, which is what they are. */
+var DRM = { W:50, BOT:84, EAVE:64, PEAK:38 }, DX = 134;
 function dormerBox(cx){
   var h = DRM.W / 2;
   return { l: cx - h, r: cx + h, bot: DRM.BOT, eave: DRM.EAVE, peak: DRM.PEAK };
@@ -677,7 +685,9 @@ function house(o){
        OWN spread and that is the 16-becomes-18 question, which is his and is
        still open — so it goes on an existing spread rather than renumbering
        a book whose built spread ships titled "of 16". */
-    if(o.cut) s+=cutLayers(118);
+    /* 104, not 118: the dormer moved left to 134, so its left edge is 109
+       and the stack was running underneath it. */
+    if(o.cut) s+=cutLayers(104);
   }
   /* THE DORMER GOES ON AFTER THE ROOF MATERIALS, so the courses, the shield
      and the felt all run BEHIND it — which is where they physically are. No
@@ -876,10 +886,12 @@ var SPREADS=[
      for(var i=0;i<5;i++){
        // +5, not -5: roofY IS the surface, so a bundle centred on it straddles
        // the edge with half its body in the sky. It has to sit INSIDE the plane.
-       // 48+i*14, not 64+i*15: the old run put the last two bundles at
-       // x=109 and x=124, and the dormer's gable starts at 122. A bundle
-       // parked on a dormer roof is not a bundle being carried up.
-       var bx=48+i*14, by=roofY(bx)+9;
+       /* 50+i*10. The run has been shortened twice, both times because the
+          dormer grew or moved left into it — the last bundle now lands at 90
+          against a dormer starting at 109. It cannot start below 50 either:
+          roofY(42) is 91.8, so by would be 100.8 and the bundle would sit
+          under the eave. Bounded at both ends. */
+       var bx=50+i*10, by=roofY(bx)+9;
        s+='<g transform="translate('+bx+','+by+') rotate(-46)">'+
           '<path d="M-13,-5 L13,-5 L13,5 L-13,5 Z" fill="#4A5866" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
           '<path d="M-13,-5 L13,-5 L13,-1 L-13,-1 Z" fill="#5D6D7C"/></g>';
@@ -933,12 +945,16 @@ var SPREADS=[
      s+='<g fill="'+MET+'" stroke="'+KRAFT+'" stroke-width=".9">'+
         '<path d="M206,60 L214,66 L214,72 L206,66 Z"/><path d="M206,70 L214,76 L214,82 L206,76 Z"/></g>';
      // pipe boot
-     /* the boot moved 14 left: it ran 106-126 and the dormer's flashing strip
-        starts at 115, so the two were on top of each other. The spread now
-        reads left to right as four separate details — man, boot, dormer
-        cheek, chimney — instead of three of them stacked in the middle. */
-     s+='<path d="M98,76 L106,76 L106,66 L98,66 Z" fill="'+METS+'"/>';
-     s+='<path d="M92,80 L112,80 L108,74 L96,74 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
+     /* THE BOOT IS ON THE RIGHT NOW, past the chimney. It has been moved
+        twice and both times for the same reason: the dormer's valley membrane
+        runs 15 units out from each cheek, so at DX=134 it occupies 94-109 and
+        the boot at 92-112 was sitting in the middle of it. A plumbing vent
+        through the ice-and-water is not a detail, it is a leak.
+        216-236 clears the chimney flashing at 214 and stays inside the roof:
+        spanAt(80) gives 246.6 on that side. Left to right the spread now
+        reads man, dormer cheek, chimney, boot — four details, no stacking. */
+     s+='<path d="M222,72 L230,72 L230,62 L222,62 Z" fill="'+METS+'"/>';
+     s+='<path d="M216,76 L236,76 L232,70 L220,70 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
      return s + fig(64,88,0.82,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
    }},
   {n:12, t:'The Shingles', w:'Courses going up the slope, one lap over the next. The part everybody pictures.',
