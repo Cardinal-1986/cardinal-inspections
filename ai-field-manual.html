@@ -24,7 +24,7 @@
    chapter numerals, running heads, folios. That split is how technical
    handbooks actually set type, and it keeps the two jobs from competing.
 
-   No drop caps, deliberately: several of the twenty-one sections open on a list
+   No drop caps, deliberately: several of the twenty-two sections open on a list
    rather than a paragraph, and a flourish that lands on some pages and not
    others reads as a mistake. The chapter numeral in the margin does that
    work instead, and it works everywhere.
@@ -711,6 +711,76 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
   body.card-open .dc-sec .pair .y{color:#000;font-weight:600;}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── ch XV: the built-in presentation ─────────────────────────────────────
+   The slides are their own visual world (a projected deck), so they keep one
+   navy palette in both themes — every ink below clears 4.5:1 on #101A30.
+   The CONTROLS sit on the page ground, so they inherit currentColor and work
+   on cream and dark without theme rules. */
+.aid{margin:18px 0 4px;}
+.aid-frame{position:relative;background:#101A30;border:1px solid #2E3B5B;border-radius:8px;
+  overflow:hidden;box-shadow:0 12px 30px rgba(10,16,32,.35);}
+.aid-slide{display:none;padding:clamp(18px,4.5vw,44px);min-height:340px;color:#E8ECF5;}
+.aid-slide.on{display:flex;flex-direction:column;gap:12px;}
+.aid-kick{font:700 10.5px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.18em;text-transform:uppercase;color:#D4B267;}
+.aid-slide h4{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;
+  font-size:clamp(1.3rem,3.6vw,2rem);line-height:1.15;color:#fff;text-wrap:balance;}
+.aid-sub{margin:0;color:#AAB8D4;font-size:.95rem;line-height:1.55;max-width:58ch;}
+.aid-big{font-family:Georgia,'Times New Roman',serif;font-size:clamp(2.6rem,8vw,4.2rem);
+  color:#D4B267;line-height:1;}
+.aid-rows{display:flex;flex-direction:column;gap:9px;}
+.aid-row{display:flex;gap:12px;align-items:baseline;font-size:.93rem;line-height:1.5;color:#DEE5F2;}
+.aid-row .m{color:#D4B267;font:700 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.08em;flex:0 0 3.2em;}
+.aid-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.aid-ph{margin:0;border:1px solid #33415F;border-radius:6px;overflow:hidden;
+  background:linear-gradient(145deg,#1B2742,#0D1526);}
+.aid-ph .px{height:56px;background:repeating-linear-gradient(115deg,#22304F 0 14px,#1A2743 14px 28px);}
+.aid-ph figcaption{padding:8px 10px;font-size:.78rem;line-height:1.45;color:#C3CEE4;}
+.aid-tbl{width:100%;border-collapse:collapse;font-size:.88rem;}
+.aid-tbl th{font:700 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:#93A5C8;text-align:left;
+  padding:6px 10px;border-bottom:1px solid #33415F;}
+.aid-tbl td{padding:7px 10px;border-bottom:1px solid #202C49;color:#DEE5F2;vertical-align:top;}
+.aid-tbl td.no{color:#EDA2A8;} .aid-tbl td.yes{color:#A8D8B4;}
+.aid-total{font-family:Georgia,'Times New Roman',serif;font-size:1.4rem;color:#fff;}
+.aid-tag{margin-top:auto;padding-top:10px;font:600 10.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.05em;color:#8496BA;border-top:1px dashed #2C3A5C;}
+.aid-ctl{display:flex;align-items:center;gap:12px;margin-top:10px;}
+.aid-ctl button{background:transparent;border:1px solid currentColor;color:inherit;opacity:.85;
+  border-radius:7px;padding:7px 13px;font-weight:700;font-size:12px;font-family:inherit;cursor:pointer;}
+.aid-ctl button:hover{opacity:1;}
+.aid-dots{display:flex;gap:7px;margin-left:auto;}
+/* .aid-ctl .aid-dot, not bare .aid-dot: the dots sit INSIDE .aid-ctl, so the
+   `.aid-ctl button` pill rule above (0,1,1) was beating (0,1,0) and the dots
+   rendered as seven bordered pills. Caught in the screenshot, not the gate. */
+.aid-ctl .aid-dot{width:9px;height:9px;border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:currentColor;opacity:.25;}
+.aid-ctl .aid-dot.on{opacity:1;}
+.aid-count{font:600 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.08em;opacity:.7;margin-right:auto;}
+/* Below iPad width the deck does not present — Theo's call: a deck this good
+   deserves a screen. The slides lie flat as readable pages, the controls go,
+   and a note says where to present from. 700px splits phones (~390-440
+   logical px) from iPads (744+). This also retires an earlier 9px overflow in
+   the control row at 420px — the row no longer exists there. */
+.aid-phonenote{display:none;margin-top:9px;font:600 11px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.04em;opacity:.7;}
+@media (max-width:699px){
+  /* column, explicitly: only the .on slide inherits flex-direction from the
+     base rule, so the other six stacked in a ROW — kicker, headline and
+     rows all side by side. Visible in the phone screenshot, not the gate. */
+  .aid-frame .aid-slide{display:flex !important;flex-direction:column;gap:12px;
+    min-height:0;border-bottom:1px solid #2C3A5C;}
+  .aid-frame .aid-slide:last-child{border-bottom:0;}
+  .aid-ctl{display:none !important;}
+  .aid-phonenote{display:block;}
+}
+@media print{
+  .aid-slide{display:flex !important;page-break-inside:avoid;border-bottom:1px solid #33415F;}
+  .aid-ctl{display:none !important;}
+}
 </style>
 
 <a class="skip" href="#leaf">Skip to the page</a>
@@ -731,7 +801,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         <div class="rule-foil"></div>
         <span class="imprint">Cardinal Roofing &amp; Renovations</span>
         <h1>The AI Field&nbsp;Manual</h1>
-        <span class="ed">Second edition · twenty-one sections</span>
+        <span class="ed">Second edition · twenty-two sections</span>
       </div>
 
       <div class="toc" id="toc">
@@ -761,11 +831,12 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <a href="#/12" data-ch="12"><span class="n">XII</span><span>The photo binder</span></a>
           <a href="#/13" data-ch="13"><span class="n">XIII</span><span>Claims</span></a>
           <a href="#/14" data-ch="14"><span class="n">XIV</span><span>Marketing &amp; SEO</span></a>
+          <a href="#/15" data-ch="15"><span class="n">XV</span><span>What AI can build</span></a>
         </div>
         <div class="toc-grp">
           <span class="lbl">The wider world</span>
-          <a href="#/15" data-ch="15"><span class="n">XV</span><span>Project Glasswing</span></a>
-          <a href="#/16" data-ch="16"><span class="n">XVI</span><span>The other half of the map</span></a>
+          <a href="#/16" data-ch="16"><span class="n">XVI</span><span>Project Glasswing</span></a>
+          <a href="#/17" data-ch="17"><span class="n">XVII</span><span>The other half of the map</span></a>
         </div>
         <div class="toc-grp">
           <span class="lbl">Back</span>
@@ -809,7 +880,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
             <p class="board-sub">A field manual — prompting, agents, building software, getting found, and what your own hardware can and can't do.</p>
           </div>
           <div class="board-foot">
-            <span class="ed">Second edition · twenty-one sections</span>
+            <span class="ed">Second edition · twenty-two sections</span>
             <span class="ed">Dayton, Ohio</span>
           </div>
         </div>
@@ -833,8 +904,9 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <a href="#/12"><span class="n">XII</span><span class="t">A worked example<span class="d">The photo binder, page by page.</span></span></a>
           <a href="#/13"><span class="n">XIII</span><span class="t">Claims<span class="d">The instrument you already built, and the three rows in it.</span></span></a>
           <a href="#/14"><span class="n">XIV</span><span class="t">Marketing, SEO and the website<span class="d">One new thing, one old thing, one false belief.</span></span></a>
-          <a href="#/15"><span class="n">XV</span><span class="t">Project Glasswing<span class="d">The model that wasn&apos;t for sale, and the ten thousand holes it found.</span></span></a>
-          <a href="#/16"><span class="n">XVI</span><span class="t">The other half of the map<span class="d">China&apos;s open weights, Korea&apos;s sovereign bet, and which one touches your data.</span></span></a>
+          <a href="#/15"><span class="n">XV</span><span class="t">What AI can build<span class="d">CRMs, websites, courses, decks &mdash; and the proof, embedded as a working slide show.</span></span></a>
+          <a href="#/16"><span class="n">XVI</span><span class="t">Project Glasswing<span class="d">The model that wasn&apos;t for sale, and the ten thousand holes it found.</span></span></a>
+          <a href="#/17"><span class="n">XVII</span><span class="t">The other half of the map<span class="d">China&apos;s open weights, Korea&apos;s sovereign bet, and which one touches your data.</span></span></a>
         </div>
         <div class="folio">
           <span></span>
@@ -876,7 +948,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/cover"><span class="dir">Previous</span><span class="ttl">Start here</span></a>
-          <span class="pg">I / XVI</span>
+          <span class="pg">I / XVII</span>
           <a class="next" href="#/2"><span class="dir">Next chapter</span><span class="ttl">II &middot; Prompting</span></a>
         </div>
       </section>
@@ -958,7 +1030,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/1"><span class="dir">Previous</span><span class="ttl">I &middot; What you're actually talking to</span></a>
-          <span class="pg">II / XVI</span>
+          <span class="pg">II / XVII</span>
           <a class="next" href="#/3"><span class="dir">Next chapter</span><span class="ttl">III &middot; What never to paste</span></a>
         </div>
       </section>
@@ -1059,7 +1131,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/2"><span class="dir">Previous</span><span class="ttl">II &middot; Prompting</span></a>
-          <span class="pg">III / XVI</span>
+          <span class="pg">III / XVII</span>
           <a class="next" href="#/4"><span class="dir">Next chapter</span><span class="ttl">IV &middot; Agents</span></a>
         </div>
       </section>
@@ -1175,7 +1247,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/3"><span class="dir">Previous</span><span class="ttl">III &middot; What never to paste</span></a>
-          <span class="pg">IV / XVI</span>
+          <span class="pg">IV / XVII</span>
           <a class="next" href="#/5"><span class="dir">Next chapter</span><span class="ttl">V &middot; Which model, and when</span></a>
         </div>
       </section>
@@ -1427,7 +1499,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/4"><span class="dir">Previous</span><span class="ttl">IV &middot; Agents</span></a>
-          <span class="pg">V / XVI</span>
+          <span class="pg">V / XVII</span>
           <a class="next" href="#/6"><span class="dir">Next chapter</span><span class="ttl">VI &middot; Local AI vs. the cloud</span></a>
         </div>
       </section>
@@ -1502,7 +1574,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/5"><span class="dir">Previous</span><span class="ttl">V &middot; Which model, and when</span></a>
-          <span class="pg">VI / XVI</span>
+          <span class="pg">VI / XVII</span>
           <a class="next" href="#/7"><span class="dir">Next chapter</span><span class="ttl">VII &middot; The machines</span></a>
         </div>
       </section>
@@ -2029,9 +2101,9 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
             not about the hourly rate.</li>
           </ul>
         </div>
-<div class="folio">
+        <div class="folio">
           <a class="prev" href="#/6"><span class="dir">Previous</span><span class="ttl">VI &middot; Local AI vs. the cloud</span></a>
-          <span class="pg">VII / XVI</span>
+          <span class="pg">VII / XVII</span>
           <a class="next" href="#/8"><span class="dir">Next chapter</span><span class="ttl">VIII &middot; The Spark, end to end</span></a>
         </div>
       </section>
@@ -2280,7 +2352,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/7"><span class="dir">Previous</span><span class="ttl">VII &middot; The machines</span></a>
-          <span class="pg">VIII / XVI</span>
+          <span class="pg">VIII / XVII</span>
           <a class="next" href="#/9"><span class="dir">Next chapter</span><span class="ttl">IX &middot; The stacks</span></a>
         </div>
       </section>
@@ -2432,7 +2504,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/8"><span class="dir">Previous</span><span class="ttl">VIII &middot; The Spark, end to end</span></a>
-          <span class="pg">IX / XVI</span>
+          <span class="pg">IX / XVII</span>
           <a class="next" href="#/10"><span class="dir">Next chapter</span><span class="ttl">X &middot; What's worth building</span></a>
         </div>
       </section>
@@ -2520,7 +2592,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/9"><span class="dir">Previous</span><span class="ttl">IX &middot; The stacks</span></a>
-          <span class="pg">X / XVI</span>
+          <span class="pg">X / XVII</span>
           <a class="next" href="#/11"><span class="dir">Next chapter</span><span class="ttl">XI &middot; Building apps and features</span></a>
         </div>
       </section>
@@ -2579,7 +2651,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/10"><span class="dir">Previous</span><span class="ttl">X &middot; What's worth building</span></a>
-          <span class="pg">XI / XVI</span>
+          <span class="pg">XI / XVII</span>
           <a class="next" href="#/12"><span class="dir">Next chapter</span><span class="ttl">XII &middot; The photo binder</span></a>
         </div>
       </section>
@@ -2759,7 +2831,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/11"><span class="dir">Previous</span><span class="ttl">XI &middot; Building apps and features</span></a>
-          <span class="pg">XII / XVI</span>
+          <span class="pg">XII / XVII</span>
           <a class="next" href="#/13"><span class="dir">Next chapter</span><span class="ttl">XIII &middot; Claims</span></a>
         </div>
       </section>
@@ -2855,7 +2927,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/12"><span class="dir">Previous</span><span class="ttl">XII &middot; The photo binder</span></a>
-          <span class="pg">XIII / XVI</span>
+          <span class="pg">XIII / XVII</span>
           <a class="next" href="#/14"><span class="dir">Next chapter</span><span class="ttl">XIV &middot; Marketing, SEO and the website</span></a>
         </div>
       </section>
@@ -2944,8 +3016,8 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         </div>
         <div class="folio">
           <a class="prev" href="#/13"><span class="dir">Previous</span><span class="ttl">XIII &middot; Claims</span></a>
-          <span class="pg">XIV / XVI</span>
-          <a class="next" href="#/15"><span class="dir">Next chapter</span><span class="ttl">XV &middot; Project Glasswing</span></a>
+          <span class="pg">XIV / XVII</span>
+          <a class="next" href="#/15"><span class="dir">Next chapter</span><span class="ttl">XV &middot; What AI can build</span></a>
         </div>
       </section>
 
@@ -2953,6 +3025,253 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
       <section class="chapter" data-ch="15" tabindex="-1">
         <div class="opener">
           <span class="cnum">XV</span>
+          <h2>What AI can build</h2>
+          <p class="deck">Chapter XI taught you to build features. This is the wider catalogue &mdash; websites, courses, illustrations, audio, slide decks &mdash; each one mapped onto this company, with a finished presentation embedded on the page to prove the point.</p>
+        </div>
+
+        <div class="call">
+          <h3>The premise, and the proof you already own</h3>
+          <p>The cost of making things collapsed. Software, documents, courses, pictures, audio,
+          slides &mdash; the whole shelf used to mean hiring somebody, and now it means describing
+          what you want to a machine that has read how everything is made. The working rule:
+          <strong>if you can describe it, and you own the data it feeds on, it can exist this
+          month.</strong></p>
+          <p>You do not have to take that on faith. Count what this company already built without
+          a software firm on retainer:</p>
+          <ul>
+            <li><strong>The app around this book.</strong> Leads, claims, crews, work orders,
+            commissions &mdash; one HTML file, five hundred and eighty-odd builds, written by AI
+            under one person&rsquo;s direction.</li>
+            <li><strong>This book</strong>, and the working slide deck further down this page.</li>
+            <li><strong>The Walk.</strong> Open a job photo and the AI marks what it thinks is
+            hail bruising or a failed pipe boot &mdash; every mark a proposal you keep, drag or
+            throw away.</li>
+            <li><strong>The Library illustrations</strong>, drawn on the Spark, and
+            <strong>the librarian</strong> that files what the crew sends in.</li>
+          </ul>
+          <p>Everything below is the same trick pointed in new directions.</p>
+        </div>
+
+        <div class="block">
+          <h3>The catalogue</h3>
+          <p>Eight shelves. <strong>Already yours</strong> means it is running at Cardinal today;
+          the rest is buildable with what Chapter XI teaches and the data you already keep.</p>
+          <div class="tw">
+            <table class="vs">
+              <thead><tr><th>What</th><th>The idea</th><th>Built around a roofing company</th></tr></thead>
+              <tbody>
+                <tr><td><strong>CRMs &amp; business systems</strong></td>
+                    <td>The system of record &mdash; who, where, what stage, what money</td>
+                    <td class="yes"><strong>Already yours</strong> &mdash; the app this book lives inside. No
+                    per-seat licence, no vendor roadmap; when it needs a feature, it grows one.</td></tr>
+                <tr><td><strong>Websites &amp; landing pages</strong></td>
+                    <td>Pages that exist to be found, and to convert</td>
+                    <td>The morning after a hail storm: a page per affected suburb &mdash;
+                    &ldquo;hail damage in Beavercreek&rdquo; &mdash; carrying that storm&rsquo;s
+                    date, the permit office, and photos from jobs two streets over. Drafted from
+                    your own records while competitors are still printing door hangers.</td></tr>
+                <tr><td><strong>Documents &amp; paperwork</strong></td>
+                    <td>Contracts, letters, filled forms</td>
+                    <td class="yes"><strong>Already yours in part</strong> &mdash; work orders that fill
+                    themselves from the inspection, estimates, contract printing. Next in line: a
+                    scope-rebuttal letter that cites the code library, drafted the moment the
+                    carrier&rsquo;s PDF is read.</td></tr>
+                <tr><td><strong>Study materials &amp; training</strong></td>
+                    <td>Courses, quizzes, flashcards, onboarding</td>
+                    <td>Eighteen years of punch lists and photo captions become the textbook: a
+                    new-hire course where every module is a mistake Cardinal already paid for
+                    once, a quiz per module, Spanish parallel text for the crews, exam prep built
+                    from the Library&rsquo;s own code sections.</td></tr>
+                <tr><td><strong>Visuals &amp; illustration</strong></td>
+                    <td>Diagrams, marked-up photos, house-style art</td>
+                    <td class="yes"><strong>Already yours</strong> &mdash; the Library illustrations drawn
+                    on the Spark, and The Walk marking damage on job photos. Next: the roof
+                    diagram off the measurement report, redrawn per trade on each work
+                    order.</td></tr>
+                <tr><td><strong>Audio &amp; voice</strong></td>
+                    <td>Transcripts in, speech out</td>
+                    <td>Voice notes off a roof already become text (Chapter VI). Point it the
+                    other way: Monday&rsquo;s toolbox talk written from last week&rsquo;s punch
+                    items and read aloud in English and Spanish &mdash; two minutes, done before
+                    the coffee is.</td></tr>
+                <tr><td><strong>Presentations &amp; decks</strong></td>
+                    <td>Slides that argue a case</td>
+                    <td class="yes"><strong>One is embedded below.</strong> An adjuster-meeting deck
+                    assembled from photos, the carrier&rsquo;s scope and the code library. The
+                    same trick makes the homeowner close deck and the year-end deck for the
+                    bank.</td></tr>
+                <tr><td><strong>Dashboards &amp; analytics</strong></td>
+                    <td>Numbers you can act on, live</td>
+                    <td class="yes"><strong>Already yours</strong> &mdash; the analytics pages and the
+                    Activity Count. Next: a storm-season command board &mdash; claims by stage by
+                    adjuster, aging in days, one screen on the office wall.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>The presentation, built in</h3>
+          <p>This is not a picture of a slide deck &mdash; it is one, running inside the page,
+          and AI wrote both. It is the adjuster deck from the catalogue: <strong>the shape is a
+          real Cardinal claim; the address and numbers are invented for the example.</strong>
+          On an iPad or a computer it presents &mdash; use the buttons; the arrow keys stay
+          with the book. On a phone the seven slides lie flat on the page instead, because
+          presenting something this considered from a phone does it no favors.</p>
+
+          <div class="aid" id="aidDeck">
+            <div class="aid-frame">
+              <section class="aid-slide on">
+                <span class="aid-kick">Cardinal Roofing &amp; Renovations &middot; claim file</span>
+                <h4>The hail did more than the scope says.</h4>
+                <p class="aid-sub">Adjuster meeting &middot; 1442 Bellhaven Ct., Kettering, Ohio
+                &middot; prepared 18 June</p>
+                <div class="aid-tag">built by AI from: 128 job photos &middot; the carrier&rsquo;s scope PDF &middot; the code library</div>
+              </section>
+              <section class="aid-slide">
+                <span class="aid-kick">The storm</span>
+                <div class="aid-big">1&frac34; in</div>
+                <div class="aid-rows">
+                  <div class="aid-row"><span class="m">NWS</span><span>Hail verified at 9:41&nbsp;PM, 14 June &mdash; spotter report 2.1 miles from the property</span></div>
+                  <div class="aid-row"><span class="m">WIND</span><span>Gusts to 61&nbsp;mph on the same pass</span></div>
+                  <div class="aid-row"><span class="m">PATH</span><span>The core crossed the neighborhood west to east &mdash; both street-facing slopes were windward</span></div>
+                </div>
+                <div class="aid-tag">source: National Weather Service storm report, pulled automatically</div>
+              </section>
+              <section class="aid-slide">
+                <span class="aid-kick">The evidence</span>
+                <h4>128 photographs. Four tell the story.</h4>
+                <div class="aid-grid">
+                  <figure class="aid-ph"><div class="px"></div><figcaption>South slope &mdash; circular bruising, granule loss, mat exposed at three strikes</figcaption></figure>
+                  <figure class="aid-ph"><div class="px"></div><figcaption>Ridge cap &mdash; three fractures in ten feet</figcaption></figure>
+                  <figure class="aid-ph"><div class="px"></div><figcaption>Downspouts &mdash; dents at one-inch spacing, both elevations</figcaption></figure>
+                  <figure class="aid-ph"><div class="px"></div><figcaption>Window wraps &mdash; oxidation spatter, one consistent impact field</figcaption></figure>
+                </div>
+                <div class="aid-tag">captions drafted by the vision model, confirmed on the roof</div>
+              </section>
+              <section class="aid-slide">
+                <span class="aid-kick">The gap</span>
+                <h4>What the scope pays for, and what the roof shows.</h4>
+                <table class="aid-tbl">
+                  <thead><tr><th>Carrier scope</th><th>The documentation</th></tr></thead>
+                  <tbody>
+                    <tr><td class="no">Repair south slope &mdash; one square</td><td class="yes">Strike density fails repairability on all four slopes</td></tr>
+                    <tr><td class="no">Reuse existing ridge cap</td><td class="yes">Fractured in place &mdash; it does not survive a tear-off</td></tr>
+                    <tr><td class="no">No gutters or soft metals</td><td class="yes">Impact-dented on both elevations, photographed</td></tr>
+                  </tbody>
+                </table>
+                <div class="aid-tag">scope read by OCR; every line matched to photographs automatically</div>
+              </section>
+              <section class="aid-slide">
+                <span class="aid-kick">The code</span>
+                <h4>Repair is not compliance.</h4>
+                <div class="aid-rows">
+                  <div class="aid-row"><span class="m">R905</span><span>Replacement shingles must integrate with the existing roof covering &mdash; a discontinued profile cannot</span></div>
+                  <div class="aid-row"><span class="m">MFR</span><span>The installed shingle was discontinued in 2019; no color or profile match exists</span></div>
+                  <div class="aid-row"><span class="m">MATCH</span><span>A visible mismatch on a street-facing slope is the diminishment argument the carrier already knows</span></div>
+                </div>
+                <div class="aid-tag">citations pulled from the Resource Library, checked by a human before the meeting</div>
+              </section>
+              <section class="aid-slide">
+                <span class="aid-kick">The ask</span>
+                <h4>One number, itemized.</h4>
+                <table class="aid-tbl">
+                  <tbody>
+                    <tr><td>Full replacement &mdash; 38 squares, laminate</td><td>$15,656</td></tr>
+                    <tr><td>Steep-slope and two-story charges</td><td>$1,240</td></tr>
+                    <tr><td>Ridge, starter, ice &amp; water at eaves</td><td>$1,918</td></tr>
+                    <tr><td>Overhead &amp; profit at 20%</td><td>$3,763</td></tr>
+                    <tr><td class="yes"><strong>Total</strong></td><td class="yes"><span class="aid-total">$22,577</span></td></tr>
+                  </tbody>
+                </table>
+                <div class="aid-tag">line items priced from the supplier list the estimator already uses</div>
+              </section>
+              <section class="aid-slide">
+                <span class="aid-kick">The close</span>
+                <h4>Approve Friday. Dried-in Tuesday.</h4>
+                <div class="aid-rows">
+                  <div class="aid-row"><span class="m">1</span><span>Approval and ACV release this week</span></div>
+                  <div class="aid-row"><span class="m">2</span><span>Crew scheduled within five working days &mdash; one trade, one day dried-in</span></div>
+                  <div class="aid-row"><span class="m">3</span><span>Depreciation invoice the day the final photos land, captioned by the same model that opened this deck</span></div>
+                </div>
+                <div class="aid-tag">every fact in this deck came out of systems Cardinal already runs</div>
+              </section>
+            </div>
+            <div class="aid-ctl">
+              <button type="button" id="aidPrev">&larr; Back</button>
+              <div class="aid-dots" id="aidDots"></div>
+              <span class="aid-count" id="aidCount">1 / 7</span>
+              <button type="button" id="aidNext">Next &rarr;</button>
+            </div>
+            <div class="aid-phonenote">Slides shown laid flat &mdash; open this page on an iPad or a computer to present it as a deck.</div>
+          </div>
+
+          <div class="call">
+            <h3>How a deck like this gets made</h3>
+            <p>Three feeds and a prompt. The photos already carry AI captions (Chapter XII built
+            that), the scope is a PDF the models read directly, and the code citations live in
+            the Resource Library. <strong>Every claim in Cardinal&rsquo;s database is already
+            carrying the raw material</strong> &mdash; one button on the claim page could
+            produce this deck per claim, and that is a weekend build, not a project.</p>
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>Three builds worth stealing</h3>
+          <ol class="habits">
+            <li><span><b>The storm-morning kit.</b> One command after the weather does its thing:
+            the per-suburb landing page, a door-hanger PDF with a QR code pointing at it, and a
+            draft crew-day schedule &mdash; written from the storm map plus your job history in
+            the affected streets. You approve everything before it publishes; Chapter III&rsquo;s
+            rule holds with marketing on it.</span></li>
+            <li><span><b>The apprentice curriculum.</b> Feed it the punch-list history and
+            eighteen years of photo captions; out comes a twelve-week onboarding course &mdash;
+            one module per failure mode Cardinal has already paid for, a quiz per module,
+            Spanish parallel text. Your own callbacks become the syllabus, which is the one
+            course no vendor can sell you.</span></li>
+            <li><span><b>The one-button adjuster deck.</b> The presentation above, generated per
+            claim. It passes Chapter X&rsquo;s test without argument: it turns records you
+            already keep into the money conversation you were already going to have.</span></li>
+          </ol>
+        </div>
+
+        <div class="block">
+          <h3>What each first version costs</h3>
+          <p>First working version, not finished product &mdash; the same one-at-a-time
+          discipline as everything else in this group of chapters.</p>
+          <div class="tw">
+            <table class="figs">
+              <thead><tr><th>Thing</th><th>Feeds on</th><th>First version</th><th>The how-to</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Toolbox-talk audio</strong></td><td>last week's punch items</td><td>an hour</td><td>Chapter VI</td></tr>
+                <tr><td><strong>Per-storm landing page</strong></td><td>storm date + job history</td><td>an afternoon</td><td>Chapters XI and XIV</td></tr>
+                <tr><td><strong>Storm command board</strong></td><td>the app's own tables</td><td>a day</td><td>Chapter XI</td></tr>
+                <tr><td><strong>Adjuster deck button</strong></td><td>photos + scope + Library</td><td>a weekend</td><td>Chapters XI and XII</td></tr>
+                <tr><td><strong>Onboarding course</strong></td><td>punch lists + captions</td><td>a weekend</td><td>Chapter XI</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="call warn">
+          <h3>The catalogue is not a to-do list</h3>
+          <p>Chapter X&rsquo;s deciding question governs every shelf above: <strong>does it turn
+          something you already have into something you can act on?</strong> The rows here earn
+          their place because they run on Cardinal&rsquo;s own data, which nobody sells. The
+          moment a row starts recreating what a vendor rents for thirty dollars a month, it
+          stops being a build and starts being a hobby with a maintenance bill.</p>
+        </div>
+        <div class="folio">
+          <a class="prev" href="#/14"><span class="dir">Previous</span><span class="ttl">XIV &middot; Marketing, SEO and the website</span></a>
+          <span class="pg">XV / XVII</span>
+          <a class="next" href="#/16"><span class="dir">Next chapter</span><span class="ttl">XVI &middot; Project Glasswing</span></a>
+        </div>
+      </section>
+
+      <!-- ─────────── XVI ─────────── -->
+      <section class="chapter" data-ch="16" tabindex="-1">
+        <div class="opener">
+          <span class="cnum">XVI</span>
           <h2>Project Glasswing</h2>
           <p class="deck">In April 2026 Anthropic finished a model and decided not to sell it. What they did instead is the clearest illustration in this book of why the best model and the model you can buy are two different questions.</p>
         </div>
@@ -3019,16 +3338,16 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <p>Because it&apos;s the clearest available answer to &ldquo;why can&apos;t I just use the best one?&rdquo; &mdash; a question you will ask every time a headline names a model you can&apos;t find a buy button for. Sometimes the answer is price. Sometimes it&apos;s a waiting list. And sometimes it&apos;s that the thing is genuinely dangerous in the wrong hands and the people who built it decided the order of operations mattered.</p>
         </div>
         <div class="folio">
-          <a class="prev" href="#/14"><span class="dir">Previous</span><span class="ttl">XIV &middot; Marketing, SEO and the website</span></a>
-          <span class="pg">XV / XVI</span>
-          <a class="next" href="#/16"><span class="dir">Next chapter</span><span class="ttl">XVI &middot; The other half of the map</span></a>
+          <a class="prev" href="#/15"><span class="dir">Previous</span><span class="ttl">XV &middot; What AI can build</span></a>
+          <span class="pg">XVI / XVII</span>
+          <a class="next" href="#/17"><span class="dir">Next chapter</span><span class="ttl">XVII &middot; The other half of the map</span></a>
         </div>
       </section>
 
-      <!-- ─────────── XVI ─────────── -->
-      <section class="chapter" data-ch="16" tabindex="-1">
+      <!-- ─────────── XVII ─────────── -->
+      <section class="chapter" data-ch="17" tabindex="-1">
         <div class="opener">
-          <span class="cnum">XVI</span>
+          <span class="cnum">XVII</span>
           <h2>The other half of the map</h2>
           <p class="deck">Chapter V listed four American companies. But almost every model you can actually <em>download</em> &mdash; the entire premise of Chapters VI, IX and VIII &mdash; comes from somewhere else. Mostly China. And the most interesting argument for running your own is being made by South Korea.</p>
         </div>
@@ -3158,8 +3477,8 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           </ol>
         </div>
         <div class="folio">
-          <a class="prev" href="#/15"><span class="dir">Previous</span><span class="ttl">XV &middot; Project Glasswing</span></a>
-          <span class="pg">XVI / XVI</span>
+          <a class="prev" href="#/16"><span class="dir">Previous</span><span class="ttl">XVI &middot; Project Glasswing</span></a>
+          <span class="pg">XVII / XVII</span>
           <a class="next" href="#/recap"><span class="dir">Next chapter</span><span class="ttl">The short version</span></a>
         </div>
       </section>
@@ -3192,7 +3511,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <li><b>Chinese weights on your own machine send nothing anywhere; a Chinese website sends everything.</b> Judge the model on your work, the service on where the bytes land.</li>
         </ol>
         <div class="folio">
-          <a class="prev" href="#/16"><span class="dir">Previous</span><span class="ttl">XVI &middot; The other half of the map</span></a>
+          <a class="prev" href="#/17"><span class="dir">Previous</span><span class="ttl">XVII &middot; The other half of the map</span></a>
           <span class="pg"></span>
           <a class="next" href="#/commands"><span class="dir">Next chapter</span><span class="ttl">The commands</span></a>
         </div>
@@ -3391,7 +3710,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
             <li><span><b>Prompt.</b> What you type. The whole of Chapter II is the argument that it is a <em>work order</em> rather than a wish, and that the difference is most of the value.</span></li>
             <li><span><b>Agent.</b> AI that does a job rather than answering a question &mdash; it takes steps, uses tools, and stops when it decides it is finished. Chats answer; agents act. Know which one you are talking to.</span></li>
             <li><span><b>Weights.</b> The model itself: one very large file of numbers, produced by training and never changed by using it. When someone says &ldquo;the model&rdquo;, this file is the thing they mean.</span></li>
-            <li><span><b>Open-weight.</b> A model whose weights you can download and keep, as against one you can only rent by the token. <strong>This single distinction decides where your data goes</strong> &mdash; see Chapter XVI, which is mostly about it.</span></li>
+            <li><span><b>Open-weight.</b> A model whose weights you can download and keep, as against one you can only rent by the token. <strong>This single distinction decides where your data goes</strong> &mdash; see Chapter XVII, which is mostly about it.</span></li>
             <li><span><b>RAG.</b> Search your own documents first, then answer from what the search found. The practical way to make a model use <em>your</em> material &mdash; your prices, your specs, your twenty years &mdash; without retraining anything.</span></li>
             <li><span><b>Fine-tuning.</b> Retraining a model on your own material. Teaches it a <em>style</em>; does <strong>not</strong> reliably teach it facts. Nine times in ten the thing you actually wanted was RAG, one line up.</span></li>
           </ol>
@@ -3410,7 +3729,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <dt>Benchmark</dt><dd>A standard test used to rank models. Useful for spotting the rough tier a model sits in; close to useless for predicting how it does on <em>your</em> work. Run your own three real jobs instead.<span class="ref">ch V</span></dd>
           <dt>Container</dt><dd>Software packed with everything it needs to run, so installing it can&apos;t break anything else &mdash; and removing it leaves no trace. Your undo button.<span class="ref">ch IX</span></dd>
           <dt>Context</dt><dd>Everything the model can see at once: your question plus whatever you pasted. It has no memory beyond this, which is most of Chapter I.<span class="ref">ch I</span></dd>
-          <dt>Data residency</dt><dd>Which country&apos;s soil your information physically sits on, and therefore whose laws reach it. The real question behind &ldquo;is this service safe&rdquo;.<span class="ref">ch XVI</span></dd>
+          <dt>Data residency</dt><dd>Which country&apos;s soil your information physically sits on, and therefore whose laws reach it. The real question behind &ldquo;is this service safe&rdquo;.<span class="ref">ch XVII</span></dd>
           <dt>Deep learning</dt><dd>Machine learning using neural networks with many layers stacked up &mdash; &ldquo;deep&rdquo; is literally the number of layers. Everything in this book is built on it.<span class="ref">ch I</span></dd>
           <dt>Embedding</dt><dd>A way of turning text into numbers so a computer can find things that <em>mean</em> the same, not just things spelled the same. The search half of RAG.<span class="ref">ch IX</span></dd>
           <dt>Fine-tuning</dt><dd>Adjusting a model&apos;s own weights on your material. Teaches it a style; does <strong>not</strong> reliably teach it facts. For facts you want RAG.<span class="ref">ch IX</span></dd>
@@ -3427,7 +3746,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <dt>Machine learning</dt><dd>Software that learns a pattern from examples instead of following rules a person wrote. The parent field; every term on this page sits inside it.<span class="ref">ch I</span></dd>
           <dt>Mixture-of-experts</dt><dd>A model built in parts, only some of which are read per word. Why one shape of model runs at 64 tokens a second on your Spark and another at 5.<span class="ref">ch VI</span></dd>
           <dt>Model training</dt><dd>The one-time, very expensive process that produces the weights &mdash; months of computation over enormous amounts of text. <strong>You will never do this.</strong> What you might do is fine-tuning or RAG, both of which are a different and much smaller thing.<span class="ref">ch IX</span></dd>
-          <dt>Multimodal</dt><dd>A model that handles more than text &mdash; images, audio, sometimes video &mdash; in the same conversation. Reading a roof photograph and a scope PDF in one go needs this.<span class="ref">ch XVI</span></dd>
+          <dt>Multimodal</dt><dd>A model that handles more than text &mdash; images, audio, sometimes video &mdash; in the same conversation. Reading a roof photograph and a scope PDF in one go needs this.<span class="ref">ch XVII</span></dd>
           <dt>Neural network</dt><dd>The structure underneath all of it: layers of very simple units, each passing numbers to the next, with the connection strengths adjusted during training until the output is right. The &ldquo;weights&rdquo; are those strengths.<span class="ref">ch I</span></dd>
           <dt>Open-weight</dt><dd>A model whose file you can download and keep. Not quite the same as open source &mdash; check the licence, especially Llama&apos;s.<span class="ref">ch V</span></dd>
           <dt>Parameters</dt><dd>The individual numbers inside the model &mdash; the count you see quoted as 7B, 236B or 2.8T. Roughly, capacity. It is also what sets the file size and therefore whether the thing fits on your hardware at all, which is the arithmetic in Chapter VI.<span class="ref">ch VI</span></dd>
@@ -3439,7 +3758,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <dt>safetensors</dt><dd>The safe model file format: data only, so opening one cannot run code. Prefer it to the older <code>.bin</code> whenever both are offered.<span class="ref">ch VIII</span></dd>
           <dt>Scope</dt><dd>The adjuster&apos;s itemised list of what the carrier agrees to pay for. The document Chapter XIII is mostly about, and the one carrying the homeowner&apos;s details.<span class="ref">ch XIII</span></dd>
           <dt>Skill</dt><dd>A capability you give an agent &mdash; run a command, send a message, read a folder. OpenClaw ships over a hundred; Hermes writes its own.<span class="ref">ch VIII</span></dd>
-          <dt>Sovereign AI</dt><dd>A country deciding it needs models trained on its own data, in its own language, running on its own soil. Cardinal&apos;s argument for a Spark, at national scale.<span class="ref">ch XVI</span></dd>
+          <dt>Sovereign AI</dt><dd>A country deciding it needs models trained on its own data, in its own language, running on its own soil. Cardinal&apos;s argument for a Spark, at national scale.<span class="ref">ch XVII</span></dd>
           <dt>SSH</dt><dd>Typing on your laptop while the words run on another machine. How you reach the Spark.<span class="ref">ch VIII</span></dd>
           <dt>Stack</dt><dd>The layers of software between a model file and something you can use. Like a roof: decking, underlayment, shingles &mdash; each doing one job.<span class="ref">ch IX</span></dd>
           <dt>Supplement</dt><dd>A request to the carrier to pay for work the first scope missed. The number Cardinal&apos;s claims table was built to measure and hasn&apos;t yet.<span class="ref">ch XIII</span></dd>
@@ -3466,7 +3785,7 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
         <div class="opener">
           <span class="cnum">—</span>
           <h2>Sources</h2>
-          <p class="deck">Chapters I, II, IV and X–XII are practice rather than claims — nothing in them needs a citation. Everything below backs a number or a tool name in one of the rest. Chapter XIII&#8217;s figures came from querying Cardinal&#8217;s own database on 1 August 2026.</p>
+          <p class="deck">Chapters I, II, IV, X–XII and XV are practice rather than claims — nothing in them needs a citation. Everything below backs a number or a tool name in one of the rest. Chapter XIII&#8217;s figures came from querying Cardinal&#8217;s own database on 1 August 2026.</p>
         </div>
 
         <ul class="srclist">
@@ -3519,21 +3838,21 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
           <li><span class="for">Chapter VIII &middot; Hermes memory</span><a href="https://hermes-agent.nousresearch.com/docs/user-guide/messaging/">Nous Research &mdash; messaging gateway and memory providers</a></li>
           <li><span class="for">Chapter VIII &middot; the approvals hole</span><a href="https://github.com/NousResearch/hermes-agent/issues/21425">Issue #21425 &mdash; prompt injection in the smart-approval reviewer prompt</a></li>
           <li><span class="for">Glossary &middot; a longer one</span><a href="https://zapier.com/blog/ai-terms/">Zapier &mdash; AI terms glossary, the fuller A&ndash;Z</a></li>
-          <li><span class="for">Chapter XV &middot; Glasswing</span><a href="https://www.anthropic.com/glasswing">Anthropic &mdash; Project Glasswing: securing critical software for the AI era</a></li>
-          <li><span class="for">Chapter XV &middot; Glasswing</span><a href="https://www.anthropic.com/news/expanding-project-glasswing">Anthropic &mdash; Expanding Project Glasswing (partner count, vulnerability total, donations)</a></li>
-          <li><span class="for">Chapter XV &middot; Glasswing</span><a href="https://www.anthropic.com/research/glasswing-initial-update">Anthropic &mdash; Project Glasswing: an initial update</a></li>
-          <li><span class="for">Chapter XV &middot; Mythos</span><a href="https://red.anthropic.com/2026/mythos-preview/">Anthropic Red &mdash; assessing Claude Mythos Preview&#8217;s cybersecurity capabilities</a></li>
-          <li><span class="for">Chapter XVI &middot; China</span><a href="https://kingy.ai/news/best-open-weight-ai-models-in-2026-glm-5-2-vs-deepseek-v4-vs-kimi-k2-6-vs-qwen-vs-mistral/">Kingy AI &mdash; best open-weight models 2026: GLM, DeepSeek, Kimi, Qwen</a></li>
-          <li><span class="for">Chapter XVI &middot; China</span><a href="https://tokenmix.ai/blog/best-chinese-ai-models-2026-comparison-guide">TokenMix &mdash; Chinese model comparison, Q2 2026 update</a></li>
-          <li><span class="for">Chapter XVI &middot; local weights</span><a href="https://techcrunch.com/2025/02/03/no-deepseek-isnt-uncensored-if-you-run-it-locally/">TechCrunch &mdash; DeepSeek is not uncensored when run locally</a></li>
-          <li><span class="for">Chapter XVI &middot; local weights</span><a href="https://arxiv.org/html/2505.12625v1">R1dacted &mdash; investigating local censorship in DeepSeek&#8217;s weights (arXiv)</a></li>
-          <li><span class="for">Chapter XVI &middot; bans</span><a href="https://introl.com/blog/deepseek-government-bans-spreading-worldwide-2026">Introl &mdash; government bans on the DeepSeek service, by country and agency</a></li>
-          <li><span class="for">Chapter XVI &middot; Korea</span><a href="https://www.kedglobal.com/artificial-intelligence/newsView/ked202508040010">KED Global &mdash; the firms selected to build Korea&#8217;s sovereign model</a></li>
-          <li><span class="for">Chapter XVI &middot; Korea</span><a href="https://www.lightreading.com/ai-machine-learning/south-korea-enters-second-phase-of-sovereign-ai-project">Light Reading &mdash; Korea&#8217;s sovereign AI project, second phase</a></li>
-          <li><span class="for">Chapter XVI &middot; Korea</span><a href="https://thenextweb.com/news/south-korea-free-ai-chatbot-all-citizens-domestic-models">The Next Web &mdash; free AI for all 52 million citizens, and the domestic-model floor</a></li>
-          <li><span class="for">Chapter XVI &middot; Korea</span><a href="https://www.upi.com/Top_News/World-News/2026/07/13/ai-for-everyone-public-services/9121783997023/">UPI &mdash; &ldquo;AI for All&rdquo; launch, 13 July 2026</a></li>
-          <li><span class="for">Chapter XVI &middot; Korea</span><a href="https://www.marktechpost.com/2025/08/21/meet-south-koreas-llm-powerhouses-hyperclova-ax-solar-pro-and-more/">MarkTechPost &mdash; HyperCLOVA X, A.X, Solar Pro and the Korean model families</a></li>
-          <li><span class="for">Chapter XVI &middot; Korea</span><a href="https://www.barchart.com/story/news/36803176/sk-telecom-unveils-a-x-k1-korea-s-first-500b-scale-hyperscale-ai-model">Barchart &mdash; SK Telecom&#8217;s A.X K1, 519B parameters</a></li>
+          <li><span class="for">Chapter XVI &middot; Glasswing</span><a href="https://www.anthropic.com/glasswing">Anthropic &mdash; Project Glasswing: securing critical software for the AI era</a></li>
+          <li><span class="for">Chapter XVI &middot; Glasswing</span><a href="https://www.anthropic.com/news/expanding-project-glasswing">Anthropic &mdash; Expanding Project Glasswing (partner count, vulnerability total, donations)</a></li>
+          <li><span class="for">Chapter XVI &middot; Glasswing</span><a href="https://www.anthropic.com/research/glasswing-initial-update">Anthropic &mdash; Project Glasswing: an initial update</a></li>
+          <li><span class="for">Chapter XVI &middot; Mythos</span><a href="https://red.anthropic.com/2026/mythos-preview/">Anthropic Red &mdash; assessing Claude Mythos Preview&#8217;s cybersecurity capabilities</a></li>
+          <li><span class="for">Chapter XVII &middot; China</span><a href="https://kingy.ai/news/best-open-weight-ai-models-in-2026-glm-5-2-vs-deepseek-v4-vs-kimi-k2-6-vs-qwen-vs-mistral/">Kingy AI &mdash; best open-weight models 2026: GLM, DeepSeek, Kimi, Qwen</a></li>
+          <li><span class="for">Chapter XVII &middot; China</span><a href="https://tokenmix.ai/blog/best-chinese-ai-models-2026-comparison-guide">TokenMix &mdash; Chinese model comparison, Q2 2026 update</a></li>
+          <li><span class="for">Chapter XVII &middot; local weights</span><a href="https://techcrunch.com/2025/02/03/no-deepseek-isnt-uncensored-if-you-run-it-locally/">TechCrunch &mdash; DeepSeek is not uncensored when run locally</a></li>
+          <li><span class="for">Chapter XVII &middot; local weights</span><a href="https://arxiv.org/html/2505.12625v1">R1dacted &mdash; investigating local censorship in DeepSeek&#8217;s weights (arXiv)</a></li>
+          <li><span class="for">Chapter XVII &middot; bans</span><a href="https://introl.com/blog/deepseek-government-bans-spreading-worldwide-2026">Introl &mdash; government bans on the DeepSeek service, by country and agency</a></li>
+          <li><span class="for">Chapter XVII &middot; Korea</span><a href="https://www.kedglobal.com/artificial-intelligence/newsView/ked202508040010">KED Global &mdash; the firms selected to build Korea&#8217;s sovereign model</a></li>
+          <li><span class="for">Chapter XVII &middot; Korea</span><a href="https://www.lightreading.com/ai-machine-learning/south-korea-enters-second-phase-of-sovereign-ai-project">Light Reading &mdash; Korea&#8217;s sovereign AI project, second phase</a></li>
+          <li><span class="for">Chapter XVII &middot; Korea</span><a href="https://thenextweb.com/news/south-korea-free-ai-chatbot-all-citizens-domestic-models">The Next Web &mdash; free AI for all 52 million citizens, and the domestic-model floor</a></li>
+          <li><span class="for">Chapter XVII &middot; Korea</span><a href="https://www.upi.com/Top_News/World-News/2026/07/13/ai-for-everyone-public-services/9121783997023/">UPI &mdash; &ldquo;AI for All&rdquo; launch, 13 July 2026</a></li>
+          <li><span class="for">Chapter XVII &middot; Korea</span><a href="https://www.marktechpost.com/2025/08/21/meet-south-koreas-llm-powerhouses-hyperclova-ax-solar-pro-and-more/">MarkTechPost &mdash; HyperCLOVA X, A.X, Solar Pro and the Korean model families</a></li>
+          <li><span class="for">Chapter XVII &middot; Korea</span><a href="https://www.barchart.com/story/news/36803176/sk-telecom-unveils-a-x-k1-korea-s-first-500b-scale-hyperscale-ai-model">Barchart &mdash; SK Telecom&#8217;s A.X K1, 519B parameters</a></li>
         </ul>
 
         <div class="call warn">
@@ -3667,6 +3986,40 @@ body.card-open .deskcard{display:block;position:fixed;inset:0;z-index:60;
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  'use strict';
+  /* ch XV — the embedded deck. Buttons only, deliberately NO key handling:
+     the book itself turns chapters on the arrow keys, and a second listener
+     here would either double-fire or swallow page turns. */
+  var root = document.getElementById('aidDeck');
+  if (!root) return;
+  var slides = Array.prototype.slice.call(root.querySelectorAll('.aid-slide'));
+  var dots = document.getElementById('aidDots');
+  var count = document.getElementById('aidCount');
+  var at = 0;
+  slides.forEach(function (_, i) {
+    var d = document.createElement('button');
+    d.type = 'button';
+    d.className = 'aid-dot';
+    d.setAttribute('aria-label', 'Slide ' + (i + 1) + ' of ' + slides.length);
+    d.addEventListener('click', function () { go(i); });
+    dots.appendChild(d);
+  });
+  function go(i) {
+    at = (i + slides.length) % slides.length;
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === at); });
+    Array.prototype.forEach.call(dots.children, function (d, k) {
+      d.classList.toggle('on', k === at);
+    });
+    count.textContent = (at + 1) + ' / ' + slides.length;
+  }
+  document.getElementById('aidPrev').addEventListener('click', function () { go(at - 1); });
+  document.getElementById('aidNext').addEventListener('click', function () { go(at + 1); });
+  go(0);
+})();
+</script>
 
 <script>
 (function () {

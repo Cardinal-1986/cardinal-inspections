@@ -8,7 +8,7 @@ rest land; skip it and the others read like a list of tricks. Every prompt is me
 written.
 
 Four groups. **Parts 1-4** are using it at all. **Parts 5-9** are choosing — which model, cloud
-or local, and which machine. **Parts 10-14** are applying it to Cardinal's own work. **Parts 15-16**
+or local, and which machine. **Parts 10-15** are applying it to Cardinal's own work. **Parts 16-17**
 are the wider view: why the strongest model isn't always for sale, and where the models you can
 download actually come from.
 
@@ -1790,7 +1790,91 @@ is most of a content strategy.
 
 ---
 
-## Part 15 — Project Glasswing
+## Part 15 — What AI can build
+
+Part 11 taught you to build features. This is the wider catalogue — websites, courses,
+illustrations, audio, slide decks — each one mapped onto this company. The web version of this
+part embeds a **working seven-slide presentation**; on an iPad or a computer it presents, and on
+a phone the slides lie flat as readable pages, because presenting from a phone does a deck no
+favors.
+
+> **The premise, and the proof you already own.** The cost of making things collapsed. The
+> working rule: **if you can describe it, and you own the data it feeds on, it can exist this
+> month.** Count what this company already built without a software firm on retainer: the app
+> around this document (one HTML file, five hundred and eighty-odd builds), this manual, The Walk
+> (AI marks hail bruising on job photos — every mark a proposal), the Library illustrations drawn
+> on the Spark, and the librarian that files what the crew sends in.
+
+### The catalogue
+
+**Already yours** means it is running at Cardinal today.
+
+| What | The idea | Built around a roofing company |
+|---|---|---|
+| **CRMs & business systems** | The system of record | **Already yours** — the app this document lives inside. No per-seat licence, no vendor roadmap |
+| **Websites & landing pages** | Pages that exist to be found | The morning after a hail storm: a page per affected suburb — "hail damage in Beavercreek" — with that storm's date, the permit office, and photos from jobs two streets over |
+| **Documents & paperwork** | Contracts, letters, filled forms | **Already yours in part** — work orders that fill themselves, estimates, contract printing. Next: a scope-rebuttal letter that cites the code library |
+| **Study materials & training** | Courses, quizzes, onboarding | Eighteen years of punch lists and captions become the textbook: one module per mistake Cardinal already paid for, a quiz per module, Spanish parallel text |
+| **Visuals & illustration** | Diagrams, marked-up photos, house-style art | **Already yours** — the Library illustrations and The Walk. Next: the roof diagram off the measurement report, redrawn per trade |
+| **Audio & voice** | Transcripts in, speech out | Monday's toolbox talk written from last week's punch items and read aloud in English and Spanish — two minutes |
+| **Presentations & decks** | Slides that argue a case | **One is embedded in the web version** — the adjuster deck below. Same trick makes the homeowner close deck and the banker deck |
+| **Dashboards & analytics** | Numbers you can act on | **Already yours** — the analytics pages and the Activity Count. Next: a storm-season command board |
+
+### The presentation, built in
+
+The web version runs a real deck on the page. Its seven slides, for the paper record — the shape
+is a real Cardinal claim; the address and numbers are invented:
+
+1. **Cover** — "The hail did more than the scope says." Adjuster meeting, 1442 Bellhaven Ct.,
+   Kettering. *Built from: 128 job photos, the carrier's scope PDF, the code library.*
+2. **The storm** — 1¾-inch hail, NWS-verified 9:41 PM 14 June, gusts to 61 mph, core crossed the
+   neighborhood west to east.
+3. **The evidence** — 128 photographs, four telling the story: south-slope bruising, fractured
+   ridge cap, dented downspouts at one-inch spacing, oxidation spatter. *Captions drafted by the
+   vision model, confirmed on the roof.*
+4. **The gap** — carrier scope ("repair one square, reuse ridge cap, no soft metals") against the
+   documentation, line by line.
+5. **The code** — replacement shingles must integrate with the existing covering; the installed
+   shingle was discontinued in 2019, so no match exists. *Citations pulled from the Resource
+   Library, checked by a human.*
+6. **The ask** — full replacement 38 squares $15,656, steep and two-story $1,240, ridge/starter/
+   ice & water $1,918, O&P $3,763 — **$22,577**.
+7. **The close** — approve Friday, dried-in Tuesday, depreciation invoice the day the final
+   photos land.
+
+> **How a deck like this gets made.** Three feeds and a prompt: the photos already carry AI
+> captions (Part 12 built that), the scope is a PDF the models read directly, and the citations
+> live in the Resource Library. **Every claim in Cardinal's database is already carrying the raw
+> material** — one button on the claim page could produce this per claim. A weekend build.
+
+### Three builds worth stealing
+
+1. **The storm-morning kit.** One command after the weather does its thing: the per-suburb
+   landing page, a door-hanger PDF with a QR code pointing at it, and a draft crew-day schedule.
+   You approve everything before it publishes — Part 3's rule with marketing on it.
+2. **The apprentice curriculum.** Punch-list history plus eighteen years of captions in; a
+   twelve-week onboarding course out — one module per failure mode, quiz per module, Spanish
+   parallel text. Your own callbacks become the syllabus.
+3. **The one-button adjuster deck.** The presentation above, generated per claim. It passes
+   Part 10's test without argument.
+
+### What each first version costs
+
+| Thing | Feeds on | First version | The how-to |
+|---|---|---|---|
+| Toolbox-talk audio | last week's punch items | an hour | Part 6 |
+| Per-storm landing page | storm date + job history | an afternoon | Parts 11 and 14 |
+| Storm command board | the app's own tables | a day | Part 11 |
+| Adjuster deck button | photos + scope + Library | a weekend | Parts 11 and 12 |
+| Onboarding course | punch lists + captions | a weekend | Part 11 |
+
+> **The catalogue is not a to-do list.** Part 10's deciding question governs every shelf: does it
+> turn something you already have into something you can act on? The moment a row starts
+> recreating what a vendor rents for thirty dollars a month, it stops being a build and starts
+> being a hobby with a maintenance bill.
+
+
+## Part 16 — Project Glasswing
 
 *Checked 1 August 2026. Figures from Anthropic's own announcements.*
 
@@ -1861,7 +1945,7 @@ decided the order of operations mattered.
 
 ---
 
-## Part 16 — The other half of the map: China and South Korea
+## Part 17 — The other half of the map: China and South Korea
 
 *Checked 1 August 2026. Half-life ≈ three months — faster than Part 5.*
 
@@ -2193,7 +2277,7 @@ a decision you will actually make.
 7. **Weights.** The model itself: one very large file of numbers, produced by training and never
    changed by using it. When someone says "the model", this file is the thing they mean.
 8. **Open-weight.** A model whose weights you can download and keep, as against one you can only rent
-   by the token. **This single distinction decides where your data goes** — see Part 16, which is
+   by the token. **This single distinction decides where your data goes** — see Part 17, which is
    mostly about it.
 9. **RAG.** Search your own documents first, then answer from what the search found. The practical way
    to make a model use *your* material — your prices, your specs, your twenty years — without
@@ -2358,7 +2442,7 @@ its own shows status. `/goal clear` stops it. (Slash, not `@`.)
 
 ## Sources
 
-Parts 1-11 and 10-12 are practice rather than claims. Everything below backs a number or a tool name in Part 14, 6, 5, 9, 8, 15 or 16. Part 13's figures came
+Parts 1-11 and 10-12 are practice rather than claims. Everything below backs a number or a tool name in Part 14, 6, 5, 9, 8, 16 or 17. Part 13's figures came
 from querying Cardinal's own database on 1 August 2026.
 
 ### Part 14 — marketing and SEO
@@ -2436,14 +2520,14 @@ Six of these are vendor pages and will always be current. Check those, not this 
 
 - [Zapier — AI terms glossary, the fuller A–Z](https://zapier.com/blog/ai-terms/)
 
-### Part 15 — Project Glasswing
+### Part 16 — Project Glasswing
 
 - [Anthropic — Project Glasswing: securing critical software for the AI era](https://www.anthropic.com/glasswing)
 - [Anthropic — Expanding Project Glasswing (partner count, vulnerability total, donations)](https://www.anthropic.com/news/expanding-project-glasswing)
 - [Anthropic — Project Glasswing: an initial update](https://www.anthropic.com/research/glasswing-initial-update)
 - [Anthropic Red — assessing Claude Mythos Preview's cybersecurity capabilities](https://red.anthropic.com/2026/mythos-preview/)
 
-### Part 16 — China and South Korea
+### Part 17 — China and South Korea
 
 - [Kingy AI — best open-weight models 2026: GLM, DeepSeek, Kimi, Qwen](https://kingy.ai/news/best-open-weight-ai-models-in-2026-glm-5-2-vs-deepseek-v4-vs-kimi-k2-6-vs-qwen-vs-mistral/)
 - [TokenMix — Chinese model comparison, Q2 2026 update](https://tokenmix.ai/blog/best-chinese-ai-models-2026-comparison-guide)
