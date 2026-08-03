@@ -6705,3 +6705,66 @@ assertion, then read what it captured" rule.
 Gates: `check_build` green 591→592 (marker `width:48px;margin-left:-24px`, negative-controlled) ·
 `audit_viewports` **215** (was 194) · `harness_walk` 152 · `harness_showcase` 123 ·
 `render_showcase` 69.
+
+---
+
+## `studio_photos` — the Studio's schema, applied (2026-08-03)
+
+Backend curation library, decoupled from the CRM entirely — no FK into `projects`, admin-only
+RLS (`is_cardinal_admin()`, same shape as `crew_rates_rw`/`crew_payments_rw`). Grew out of a
+design conversation, not a build request in the usual sense — recorded here because the schema
+is now live in production and two other sessions could otherwise re-derive it differently.
+
+**The boundary that mattered: backend-only is not the same as no-address.** First pass tried to
+scrub `project_address` out of the design entirely on the theory that "no CRM" meant "no
+identifying data." Theo corrected this directly: *"these photos go nowhere but my backend
+curation... no addresses get shown to the public."* The actual rule is about what a **client**
+can see — that rule already lives in `showcase_pairs` (city-only, address never reaches
+`drawCard()`, the release badge hidden in Showroom) and is untouched. `studio_photos` is never in
+that path, so it carries `project_address`/`project_name` as **plain copied strings** — not a
+live FK, so the table keeps working if the CRM row changes or is deleted, matching
+`walks_schema.sql`'s "copy the bytes, do not reference the path" precedent. Without this, the one
+workflow the table exists to serve — search an address, find that house's photos — would have
+been impossible.
+
+**Two Postgres errors, both real, both resolved by checking `pg_proc` instead of guessing:**
+1. A `GENERATED ALWAYS AS` tsvector column combining tags + address + name failed:
+   *"generation expression is not immutable."*
+2. Rewritten as a plain functional GIN index — same failure, because functional indexes also
+   require IMMUTABLE, not just non-volatile.
+
+Checked `pg_proc.provolatile` directly rather than guess a third time: `to_tsvector(regconfig,
+text)` genuinely **is** immutable once explicitly cast (`'pg_catalog.english'::regconfig`) — the
+one-arg form is stable, the two-arg form isn't. The actual blocker was `array_to_string(anyarray,
+text)`, which is STABLE. **Split into two purpose-built mechanisms instead of forcing one:**
+`idx_studio_photos_tags` (GIN on the raw array, for exact/contains queries — tags are a
+controlled vocabulary) and `idx_studio_photos_addr_search` (GIN on a tsvector of address + name
+only, no array involved — free text, human-typed). Verified against a real inserted-then-deleted
+row: both queries return the correct count, and the row is confirmed gone afterward.
+
+**The id scheme reuses what's already on disk rather than inventing a second one.**
+`fetch_companycam.py`'s `manifest.jsonl` already assigns an id (CompanyCam's own) per photo, with
+a `path`. Hermes's tagger is instructed to drive off that file directly and echo the id through
+unchanged — phone photos, which have no such file, get `"phone:" + sha256(relpath)[:16]`. The
+push script (`spark/push_studio_tags.py`) joins tag rows against `manifest.jsonl` by that id — a
+plain dict lookup, no hashing on the push side at all.
+
+**`spark/push_studio_tags.py` folds in a fix `strip_exif.py` in the same folder already earned
+the hard way**: `ImageOps.exif_transpose()` before resize, or a phone photo stored sideways with
+an EXIF Orientation tag renders sideways in the thumbnail — `Image.open()` + `.resize()` does not
+apply that tag on its own.
+
+**What's unverified, stated plainly, same as every other `spark/` script**: no live call has been
+made — no path to the Spark's filesystem, Supabase Storage with real credentials, or a real
+`studio_tags.jsonl` from this sandbox. The auth flow mirrors `hail_review.py`'s `get_token()`,
+which *is* proven against this account. `--limit 5` first, same standing advice as
+`fetch_companycam.py`.
+
+**`spark/STUDIO_TAGGING.md`** is the literal handoff doc — record shape, the reused 17-key
+`api/detect.js` defect vocabulary, the explicit "no folder tree, tags are the folders" rule, and
+the resumability convention every other script in this folder already uses.
+
+No `index.html` change. No UI yet — deliberately: this project has a specific, expensive lesson
+about building a UI against a guessed data shape (`walks_schema.sql`'s 13-of-196 inline-photo
+population) rather than the real one. The Studio's browsing page waits for a real
+`studio_tags.jsonl` to exist.
