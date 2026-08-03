@@ -155,7 +155,11 @@
     background:repeating-linear-gradient(90deg,var(--cut-dk) 0 1.5px,var(--cut-lt) 1.5px 3px)}
   /* xMidYMax in the markup, so the house stands ON the fold rather than
      floating mid-board with sky under its feet. */
-  .pop svg{display:block;width:100%;height:100%}
+  /* DIRECT CHILD ONLY. The team spread nests per-bust <svg> viewports
+     inside the board, and this rule's width:100% was overriding their
+     width attributes — twelve busts rendered board-sized and stacked.
+     CSS beats presentation attributes; scoping beats both. */
+  .pop > svg{display:block;width:100%;height:100%}
   /* the shadow is a FLAT SIBLING on the page, never a filter on the 3D element */
   .pshadow{position:absolute;left:10%;right:10%;bottom:calc(var(--floorH) - 4%);height:5%;
            border-radius:50%;background:var(--ink);
@@ -1511,21 +1515,434 @@ function cutLayers(x1){
     return s;
   }
 
-  /* ── SPREAD 16 — The Team. ── */
+  /* ── SPREAD 16 — The Team: the real faces, the classic photo ──────
+     Two staggered rows of the twelve die-cut busts in front of the
+     finished roof — back row first so the front overlaps it. The
+     cardinal's home slot photobombs the right end of the back row,
+     which is in character and stays. Indexes into PORTRAITS; the
+     vest+clipboard and the lead tee anchor the front row. */
   function teamSVG(){
     var s = houseSVG('new', true);
     s += '<g id="teamG" class="beat">';
-    var XS = [52, 90, 128, 166, 204, 242];
-    for(var i = 0; i < XS.length; i++){
-      var o = {pose:'point'};
-      if(i < 2){ o.hat = false; o.shirt = '#474C52'; o.shirtDk = '#33373C'; }       // office
-      else if(i === 3){ o.shirt = '#1C1D20'; o.shirtDk = '#0F1012'; }               // Beto, lead tee
-      else if(i === 4){ o.hat = false; o.shirt = '#C4D435'; o.shirtDk = '#98A722'; } // Curtis, vest
-      s += figure(XS[i], 190, 0.62, o);
-    }
+    var BACK  = [[3,57],[4,99],[6,141],[7,183],[10,225],[11,264]];
+    var FRONT = [[0,36],[1,78],[2,120],[5,162],[8,204],[9,246]];
+    BACK.forEach(function(b){  s += portrait(PORTRAITS[b[0]], b[1] - 21, 136, 42); });
+    FRONT.forEach(function(f){ s += portrait(PORTRAITS[f[0]], f[1] - 23, 142.9, 46); });
     s += '</g>';
     return s;
   }
+
+  /* ════ THE TEAM'S FACES — the die-cut portrait engine ════════════
+     Ported VERBATIM from the approved portrait sheet (only the <svg>
+     wrapper gained placement args). Proportions were read off the real
+     photographs; four faces are generic by Theo's instruction. The
+     option-objects below carry DRAWING PARAMETERS ONLY — no names ship
+     in this public file; the roster mapping lives in the private sheet. */
+var CORE='#F4EDDD', CUT='#C9B893', INK='#4A3524', INK2='#6B5B47';
+var SKIN={light:'#EFD2B4',mid:'#E3BC97',tan:'#D2A379',deep:'#B07F55'};
+var HAIR={black:'#2B2118',dark:'#3D2C20',brown:'#5C4128',midbrown:'#7A5636',
+          blonde:'#A98552',grey:'#8C8378',pink:'#C4548C',auburn:'#8A4A28',ginger:'#A65B2E'};
+
+/* Clip paths need document-unique ids and there are fourteen figures on this
+   page. A shared id would make every beard after the first take the FIRST
+   one's silhouette — which renders as a plausible beard on the wrong face, so
+   nothing would look broken. Counter, not a constant. */
+var UID=0;
+
+function shade(hex,amt){
+  var n=parseInt(hex.slice(1),16), r=n>>16&255, g=n>>8&255, b=n&255;
+  function f(c){ return Math.round(amt>0 ? c+(255-c)*amt : c*(1+amt)); }
+  return '#'+((1<<24)+(f(r)<<16)+(f(g)<<8)+f(b)).toString(16).slice(1);
+}
+
+var B_LIT = 'M-11.1,-18 L11.7,-80 L-30,-80 L-30,-18 Z';
+var B_SHD = 'M-3.1,-18 L19.7,-80 L30,-80 L30,-18 Z';
+
+function beardArt(d, rule, bhair, isStubble){
+  var id = 'bcl' + (++UID), idL = 'bcl' + (++UID);
+  /* +0.26 blew the lit band out to near-grey and, sitting under the bevel,
+     read as a bandage across the left cheek. The band has to be a shift in
+     the same colour, not a different one. */
+  var lit = shade(bhair, 0.14), shd = shade(bhair, -0.32);
+  var s = '<defs><clipPath id="' + id + '"><path d="' + d + '" clip-rule="' + rule +
+          '"/></clipPath><clipPath id="' + idL + '"><path d="' + B_LIT +
+          '"/></clipPath></defs>';
+
+  if(isStubble){
+    s += '<path d="' + d + '" fill-rule="' + rule + '" fill="' + bhair + '" opacity=".4"/>';
+    s += '<g clip-path="url(#' + id + ')" opacity=".2"><path d="' + B_SHD +
+         '" fill="' + shd + '"/></g>';
+    return s;
+  }
+  // 1 — the shadow it casts on the face, offset toward the light's far side
+  s += '<g transform="translate(0.9,0.9)"><path d="' + d + '" fill-rule="' + rule +
+       '" fill="#2A1C10" opacity=".3"/></g>';
+  // 2 — the piece
+  s += '<path d="' + d + '" fill-rule="' + rule + '" fill="' + bhair + '"/>';
+  // 3 — lit band, base band, shaded band; hard edges, no gradients
+  s += '<g clip-path="url(#' + id + ')">' +
+       '<path d="' + B_LIT + '" fill="' + lit + '"/>' +
+       '<path d="' + B_SHD + '" fill="' + shd + '"/></g>';
+  /* 4 — the board core, inner bevel, lit edge only. The outer clip keeps the
+     stroke inside the silhouette; the inner one keeps it upper-left.
+     A HAIRLINE, 0.8 AT .45. At 1.7/.85 this was the same white-halo failure as
+     the pass before it, just moved to one side — a pale swoosh down the left
+     cheek. The bevel's job is to catch the edge, not to be a shape. */
+  s += '<g clip-path="url(#' + id + ')"><g clip-path="url(#' + idL + ')">' +
+       '<path d="' + d + '" fill-rule="' + rule + '" fill="none" stroke="' + CORE +
+       '" stroke-width="0.8" stroke-linejoin="round" opacity=".45"/></g></g>';
+  return s;
+}
+
+function facePath(jaw){
+  var cy=-47, h=18.5, w=16.5, jx=w*(0.40+0.44*jaw), bot=cy+h, cheek=cy+h*0.46;
+  return 'M'+(-w)+','+(cy-1.5)+
+    ' C'+(-w)+','+(cy-h-6.4)+' '+w+','+(cy-h-6.4)+' '+w+','+(cy-1.5)+
+    ' C'+w+','+cheek+' '+jx+','+bot+' 0,'+bot+
+    ' C'+(-jx)+','+bot+' '+(-w)+','+cheek+' '+(-w)+','+(cy-1.5)+' Z';
+}
+
+function portrait(o, px, py, pw){
+  o=o||{};
+  var skin=SKIN[o.skin||'light'], hair=HAIR[o.hair||'dark'];
+  // Beard colour is separate because it goes grey first. Curtis in the field
+  // photo has dark hair and a properly salt-and-pepper beard; tying the two
+  // together would have made him either too young or too old.
+  var bhair=HAIR[o.beardColor||o.hair||'dark'];
+  var s='<svg x="'+px+'" y="'+py+'" width="'+pw+'" height="'+(pw*86/84).toFixed(1)+'" viewBox="-42 -80 84 86">';
+
+  // ── shirt ─────────────────────────────────────────────
+  /* A MAP WITH A GUARD, not a ternary chain. The chain fell through to the
+     charcoal polo for any value it did not recognise, so a typo'd shirt was
+     indistinguishable from the default — the same silent-nothing that shipped
+     Curtis bald. An unknown shirt now throws. */
+  var SHIRTS={polo:['#474C52','#33373C'], hoodie:['#6E2230','#511822'],
+              red:['#C8202E','#7E1018'],  tee:['#474C52','#33373C'],
+              blacktee:['#1C1D20','#0F1012']};
+  var sk=o.shirt||'polo';
+  if(!SHIRTS[sk]) throw new Error('unknown shirt: '+sk);
+  var shirt=SHIRTS[sk][0], shirtDk=SHIRTS[sk][1];
+  s+='<path d="M-34,6 C-33,-12 -20,-20 -10,-23 L10,-23 C20,-20 33,-12 34,6 Z" fill="'+shirt+
+     '" stroke="'+CORE+'" stroke-width="2" stroke-linejoin="round"/>';
+  // upper-left light, on every piece, always
+  s+='<path d="M-34,6 C-33,-12 -20,-20 -10,-23 L-4,-23 L-14,6 Z" fill="#FFF" opacity=".09"/>';
+
+  /* Hi-vis vest — over the polo, under the collar, which is the order you
+     actually wear them in. The panels sit INSIDE the shirt silhouette so their
+     pale core edge never has to hold up against the pale card ground.
+     Lime, not orange: the red ridge mark computes 3.97:1 on this lime and
+     muddies to near-nothing on hi-vis orange. Arithmetic, not taste. */
+  if(o.vest){
+    var VST='#D9E04A', VSTD='#AEB52C', SILV='#E6EBEE', SILVD='#B4BCC2';
+    s+='<path d="M-31.5,6 C-30.6,-10 -21,-18.2 -12.6,-21 L-5,-19.2 L-3.6,6 Z" fill="'+VST+'"/>';
+    s+='<path d="M31.5,6 C30.6,-10 21,-18.2 12.6,-21 L5,-19.2 L3.6,6 Z" fill="'+VST+'"/>';
+    // the opening throws a shadow down each inner edge
+    s+='<path d="M-5,-19.2 L-3.6,6 L-6.6,6 L-7.8,-19 Z" fill="'+VSTD+'"/>';
+    s+='<path d="M5,-19.2 L3.6,6 L6.6,6 L7.8,-19 Z" fill="'+VSTD+'"/>';
+    // reflective banding — one across, one down each panel
+    s+='<g fill="'+SILV+'">'+
+       '<path d="M-30.4,-6.6 L-4.2,-6.6 L-4.1,-2.6 L-30.6,-2.6 Z"/>'+
+       '<path d="M30.4,-6.6 L4.2,-6.6 L4.1,-2.6 L30.6,-2.6 Z"/>'+
+       '<path d="M-21.6,-17.8 L-17.8,-16.6 L-18.8,6 L-22.8,6 Z"/>'+
+       '<path d="M21.6,-17.8 L17.8,-16.6 L18.8,6 L22.8,6 Z"/></g>';
+    s+='<g fill="'+SILVD+'" opacity=".5">'+
+       '<path d="M-30.5,-3.7 L-4.15,-3.7 L-4.1,-2.6 L-30.6,-2.6 Z"/>'+
+       '<path d="M30.5,-3.7 L4.15,-3.7 L4.1,-2.6 L30.6,-2.6 Z"/></g>';
+  }
+
+  if(sk==='hoodie'){
+    // hood roll behind the neck, and drawstrings
+    s+='<path d="M-17,-20 C-13,-9 13,-9 17,-20 L13,-24 C9,-16 -9,-16 -13,-24 Z" fill="'+shirtDk+'"/>';
+    s+='<g stroke="'+CORE+'" stroke-width="1.8" stroke-linecap="round">'+
+       '<path d="M-5,-14 L-6,0"/><path d="M5,-14 L6.5,-1"/></g>';
+  } else if(sk==='tee'||sk==='blacktee'){
+    // crew neck — a ribbed band, no collar and no placket. That absence is
+    // the whole difference between a tee and the polo at this size.
+    s+='<path d="M-11,-23.4 C-8,-15.4 8,-15.4 11,-23.4 L7.4,-24.6 '+
+       'C5,-18.4 -5,-18.4 -7.4,-24.6 Z" fill="'+shirtDk+'"/>';
+  } else {
+    // polo collar + placket
+    s+='<path d="M-12,-22 L0,-11 L12,-22 L7,-24 L0,-17 L-7,-24 Z" fill="'+shirtDk+'"/>';
+    s+='<path d="M-2.2,-12 L2.2,-12 L2.2,0 L-2.2,0 Z" fill="'+shirtDk+'" opacity=".6"/>';
+  }
+
+  if(o.lead){
+    /* THE CREW LEADER READS FROM TWENTY FEET OR HE IS NOT A CREW LEADER.
+       The ridge moves to centre and the words take the chest — the small
+       left-breast mark and nine characters of type cannot share that space,
+       and the words are the thing doing the work here. 12.4:1 on the black. */
+    s+='<g transform="translate(0,-11.5) scale(.9)">'+
+       '<path d="M-8,3 L-3,-4 L0,0 L4,-6 L9,3 Z" fill="#C8202E"/>'+
+       '<path d="M-8,4.6 L9,4.6" stroke="'+CORE+'" stroke-width="1.5"/></g>';
+    s+='<text x="0" y="-1.4" text-anchor="middle" font-size="5" font-weight="700" '+
+       'letter-spacing=".5" font-family="ui-monospace,Menlo,Consolas,monospace" '+
+       'fill="#E8DCC8">CREW LEAD</text>';
+  } else {
+    // the CRR mark — a simplified red ridge, left chest. On a vest it lands
+    // on the vest, which is where a branded vest carries it.
+    s+='<g transform="translate(15,-6) scale(.9)">'+
+       '<path d="M-8,3 L-3,-4 L0,0 L4,-6 L9,3 Z" fill="#C8202E"/>'+
+       '<path d="M-8,4.6 L9,4.6" stroke="'+CORE+'" stroke-width="1.5"/></g>';
+  }
+
+  /* A clipboard, held at the chest and running off the bottom cut. The bust
+     stops at the viewBox floor, so the board is clipped there exactly as the
+     shirt is — which reads as "it continues below" rather than as a rectangle
+     floating in space. Left side, so it never fights the chest mark. */
+  if(o.clipboard){
+    s+='<g transform="translate(-19,-0.5) rotate(-13)">'+
+       '<path d="M-9.8,-9.6 L9.8,-9.6 L9.8,12 L-9.8,12 Z" fill="#8A7660" stroke="'+CORE+
+       '" stroke-width="1.6" stroke-linejoin="round"/>'+
+       '<path d="M-8.2,-7.4 L8.2,-7.4 L8.2,12 L-8.2,12 Z" fill="#F7F2E6"/>'+
+       '<g stroke="#BCAF97" stroke-width="1" stroke-linecap="round">'+
+       '<path d="M-6,-3.6 L6,-3.6"/><path d="M-6,0.4 L6,0.4"/><path d="M-6,4.4 L2,4.4"/></g>'+
+       '<path d="M-4.4,-11.4 L4.4,-11.4 L4.4,-7 L-4.4,-7 Z" fill="#AEB4BA" stroke="'+CORE+
+       '" stroke-width="1.2" stroke-linejoin="round"/>'+
+       '<path d="M-9.8,-9.6 L-9.8,12 L-6.8,12 L-6.8,-9.6 Z" fill="#FFF" opacity=".1"/></g>';
+  }
+
+  // ── neck ──────────────────────────────────────────────
+  s+='<path d="M-6.5,-22 L6.5,-22 L6.5,-33 L-6.5,-33 Z" fill="'+skin+'" stroke="'+CUT+'" stroke-width="1"/>';
+  s+='<path d="M-6.5,-26 C-3,-22 3,-22 6.5,-26 L6.5,-22 L-6.5,-22 Z" fill="#000" opacity=".1"/>';
+
+  /* Head, hair, features and glasses scale together about the face centre.
+     Scaling the group rather than rewriting sixty coordinates is what makes
+     per-person proportions cheap enough to actually do. */
+  var fw=o.fw||16.5, fh=o.fh||18.5;
+  s+='<g transform="translate(0,-47) scale('+(fw/16.5).toFixed(3)+','+(fh/18.5).toFixed(3)+
+     ') translate(0,47)">';
+
+  // ── hair BEHIND the head, for the long styles ─────────
+  if(o.style==='bob'||o.style==='long'||o.style==='pony'){
+    s+='<path d="M-19,-52 C-24,-34 -23,-24 -20,-19 L20,-19 C23,-24 24,-34 19,-52 Z" fill="'+hair+'"/>';
+  }
+  if(o.style==='pony'){
+    s+='<path d="M14,-46 C26,-42 28,-30 22,-22 L16,-25 C21,-31 20,-39 11,-42 Z" fill="'+hair+'"/>';
+  }
+
+  // ── head ──────────────────────────────────────────────
+  if(o.blank){
+    /* NO PHOTOGRAPH YET. The bust is real board in a real polo, but the face
+       is left unpunched — a piece still on the sprue. Inventing a face for a
+       named colleague is the same error as inventing their name. */
+    s+='<path d="'+facePath(0.5)+'" fill="#DCCDAE" stroke="'+CORE+
+       '" stroke-width="2" stroke-linejoin="round"/>';
+    s+='<ellipse cx="0" cy="-47" rx="11.5" ry="13" fill="none" stroke="'+CUT+
+       '" stroke-width="1.2" stroke-dasharray="3 3"/>';
+    return s+'</g></svg>';
+  }
+  s+='<path d="'+facePath(o.jaw===undefined?0.5:o.jaw)+'" fill="'+skin+'" stroke="'+CORE+
+     '" stroke-width="2" stroke-linejoin="round"/>';
+  // ears
+  s+='<circle cx="-16.5" cy="-46" r="3.4" fill="'+skin+'" stroke="'+CUT+'" stroke-width=".9"/>'+
+     '<circle cx="16.5" cy="-46" r="3.4" fill="'+skin+'" stroke="'+CUT+'" stroke-width=".9"/>';
+
+  /* ── facial hair, under the features ───────────────────
+     Each branch now only decides the SILHOUETTE and its fill rule; the edge,
+     the two-tone and the clip all come from beardArt(). Four branches each
+     drawing their own flat fill is how they ended up looking like four
+     different levels of finish. */
+  var bd = null, brule = 'nonzero';
+  if(o.beard==='scruff'){
+    /* Narrower at the sides than the ring (±7.8 vs ±9.4) so it reads as a
+       GOATEE rather than a circle beard, with a jagged bottom edge instead of
+       a clean curve. evenodd punches the lip opening out of the middle.
+
+       LENGTH IS THE WHOLE DIFFICULTY HERE. The chin is at -28.5. The first
+       pass hung the tips to -23.8 — 4.7 units past the chin, with 3.8-unit
+       notches — and rendered as a long pointed wizard beard, not "a bit more
+       scraggly". The tips now stop around -27 and the notches are ~2.
+
+       AND THE JAG HAS TO BE IRREGULAR OR IT IS NOT SCRAGGLY. Evenly spaced
+       notches of equal depth rendered as pinking shears — a sawtooth, which
+       reads as cut card rather than as hair. Every tip is a different length.
+       The round-join blunting is gone: it fought the "sharper" instruction,
+       and irregular-and-sharp is what scraggly actually looks like. */
+    brule='evenodd';
+    bd='M-7.8,-45.4 C-7.8,-48 7.8,-48 7.8,-45.4 C8.4,-38.8 7.6,-33.4 5.4,-30 '+
+       'L4.8,-27.8 L3.4,-29.4 L2,-26.9 L0.4,-29 L-1.2,-27.2 L-2.8,-29.3 '+
+       'L-4.4,-27.6 C-7.6,-33 -8.4,-38.8 -7.8,-45.4 Z '+
+       'M-5,-43.6 C-5,-45.2 5,-45.2 5,-43.6 C5.4,-38.8 4.4,-35 0,-35 '+
+       'C-4.4,-35 -5.4,-38.8 -5,-43.6 Z';
+  } else if(o.beard==='goatee'){
+    /* ONE connected ring, not a moustache plus a chin patch. Drawn as two
+       separate pieces they read as three parallel curves stacked with the
+       mouth — which is what the first two passes looked like. It is also
+       what the photograph actually shows: the moustache and the chin join
+       around the mouth. evenodd punches the lip opening out of the middle. */
+    brule='evenodd';
+    bd='M-9.4,-44.6 C-9.4,-47.6 9.4,-47.6 9.4,-44.6 C10.4,-36 9.2,-28.8 0,-28.8 '+
+       'C-9.2,-28.8 -10.4,-36 -9.4,-44.6 Z '+
+       'M-5.6,-43 C-5.6,-44.6 5.6,-44.6 5.6,-43 C6,-38 5,-34 0,-34 '+
+       'C-5,-34 -6,-38 -5.6,-43 Z';
+  } else if(o.beard==='full'){
+    /* Two subpaths in ONE d, and the rule stays nonzero on purpose: the
+       moustache tips graze the crescent, and evenodd would punch two small
+       holes there — a hole in a beard reads as damage, not as a highlight. */
+    bd='M-16,-50 C-17,-36 -10,-28.5 0,-28.5 C10,-28.5 17,-36 16,-50 '+
+       'C13,-40 10,-36 0,-36 C-10,-36 -13,-40 -16,-50 Z '+
+       'M-7,-42.5 C-4,-44.5 4,-44.5 7,-42.5 C4,-41 -4,-41 -7,-42.5 Z';
+  } else if(o.beard==='stubble'){
+    bd='M-14,-46 C-15,-36 -9,-29.5 0,-29.5 C9,-29.5 15,-36 14,-46 '+
+       'C11,-38 8,-35 0,-35 C-8,-35 -11,-38 -14,-46 Z';
+  }
+  if(bd) s+=beardArt(bd, brule, bhair, o.beard==='stubble');
+
+  // ── features ──────────────────────────────────────────
+  s+='<circle cx="-5.8" cy="-50" r="1.7" fill="'+INK+'"/><circle cx="5.8" cy="-50" r="1.7" fill="'+INK+'"/>';
+  s+='<path d="M-9.4,-55.5 C-7.4,-57 -3.6,-57 -2.2,-55.6" fill="none" stroke="'+INK+
+     '" stroke-width="1.3" stroke-linecap="round" opacity=".75"/>';
+  s+='<path d="M2.2,-55.6 C3.6,-57 7.4,-57 9.4,-55.5" fill="none" stroke="'+INK+
+     '" stroke-width="1.3" stroke-linecap="round" opacity=".75"/>';
+  s+='<path d="M-5.4,-39.8 Q0,-35.6 5.4,-39.8" fill="none" stroke="'+INK+
+     '" stroke-width="1.5" stroke-linecap="round"/>';
+
+
+  /* Glasses draw IN FRONT OF the hair — a black Clubmaster brow vanishes
+     into a black fringe otherwise. Defined once and called from both the
+     capped path and the haired path, because the cap branch returns early. */
+  function glassesArt(){
+    var s = '';
+    if(o.glasses === 'clubmaster'){
+      /* BROWLINE. Heavy dark brow bar with the outward flare at the top corner,
+         a thin gold rim under the lens, a gold bridge. Nothing like a wire
+         rectangle, and it is what you recognise Curtis by before anything else. */
+      var GOLD = '#C9A227', FRAME = '#191410';
+      s+='<g fill="'+FRAME+'">'+
+         '<path d="M-14.6,-57.4 L-1,-56.4 L-1,-52.6 L-12.8,-53.4 C-13.8,-54.4 -14.4,-55.8 -14.6,-57.4 Z"/>'+
+         '<path d="M14.6,-57.4 L1,-56.4 L1,-52.6 L12.8,-53.4 C13.8,-54.4 14.4,-55.8 14.6,-57.4 Z"/></g>';
+      /* THE LOWER RIM HAS TO BE SHALLOW OR THEY ARE NOT CLUBMASTERS. The first
+         version dipped 7.9 units below an 11.8-wide brow — near enough a circle,
+         and at card size it read as two gold hoops, i.e. safety goggles. Which
+         is the one thing Theo asked to take OFF this face. 4.8 deep now, so the
+         lens is wider than it is tall and the brow stays the heavy element. */
+      s+='<g fill="none" stroke="'+GOLD+'" stroke-width="1.25" stroke-linecap="round">'+
+         '<path d="M-12.8,-53.2 C-12.6,-49.6 -10.6,-47.8 -6.9,-47.8 C-3.4,-47.8 -1.4,-49.8 -1,-52.6"/>'+
+         '<path d="M12.8,-53.2 C12.6,-49.6 10.6,-47.8 6.9,-47.8 C3.4,-47.8 1.4,-49.8 1,-52.6"/>'+
+         '<path d="M-1,-55.2 C-0.4,-56.6 0.4,-56.6 1,-55.2"/></g>';
+      // a highlight along the top of the acetate, so a black frame still reads
+      // against black hair — glossy frames really do catch the light there
+      s+='<path d="M-14.4,-57.2 L-1.2,-56.2 M14.4,-57.2 L1.2,-56.2" fill="none" '+
+         'stroke="#7A6E62" stroke-width="0.9" stroke-linecap="round" opacity=".85"/>';
+      s+='<g stroke="'+FRAME+'" stroke-width="1.7" stroke-linecap="round">'+
+         '<path d="M-14.4,-56.4 L-17.6,-53.4"/><path d="M14.4,-56.4 L17.6,-53.4"/></g>';
+    } else if(o.glasses){
+      s+='<g fill="none" stroke="'+INK2+'" stroke-width="1.5">'+
+         '<rect x="-12.4" y="-54.4" width="10.6" height="8.4" rx="2.4"/>'+
+         '<rect x="1.8" y="-54.4" width="10.6" height="8.4" rx="2.4"/>'+
+         '<path d="M-1.8,-50.6 L1.8,-50.6"/><path d="M-12.4,-51 L-16.6,-49"/>'+
+         '<path d="M12.4,-51 L16.6,-49"/></g>';
+    }
+    return s;
+  }
+
+  // ── a ball cap, if there is one. It REPLACES the hair rather than
+  //    sitting over it, so it is its own branch and returns early.
+  if(o.cap){
+    var capC = o.capColor || '#1E2430', capD = '#141922';
+    s+='<path d="M-16.6,-54 C-16,-66.4 -8,-70.4 0,-70.4 C8,-70.4 16,-66.4 16.6,-54 Z" fill="'+capC+'"/>';
+    s+='<path d="M0,-70.4 C8,-70.4 16,-66.4 16.6,-54 L0,-54 Z" fill="'+capD+'"/>';
+    s+='<circle cx="0" cy="-69.4" r="1.8" fill="'+capD+'"/>';
+    // brim, curved, projecting toward the viewer
+    s+='<path d="M-18.4,-54.4 C-12,-47.4 12,-47.4 18.4,-54.4 '+
+       'C12,-51.8 -12,-51.8 -18.4,-54.4 Z" fill="'+capD+'"/>';
+    if(o.goggles){
+      // WORN, not pushed up. The tighter crop shows him looking straight
+      // through them under the brim, which is a different shape entirely —
+      // one wide lens with a notch over the nose, and a strap to the sides.
+      var GG = 'M-14.6,-55.8 C-9,-58.6 9,-58.6 14.6,-55.8 C15.2,-50 12,-45.2 6,-45.4 '+
+               'C3,-45.6 1.4,-47.4 0,-47.4 C-1.4,-47.4 -3,-45.6 -6,-45.4 '+
+               'C-12,-45.2 -15.2,-50 -14.6,-55.8 Z';
+      s+='<path d="M-17.4,-53 L17.4,-53" stroke="#3A4250" stroke-width="2.6" stroke-linecap="round"/>';
+      s+='<path d="'+GG+'" fill="#DCE7EC" opacity=".42"/>';
+      s+='<path d="'+GG+'" fill="none" stroke="#3A4250" stroke-width="1.7" stroke-linejoin="round"/>';
+      s+='<path d="M-11.6,-54.4 C-7.6,-56.2 -3.6,-56.4 -2.2,-55.4 L-4,-51.6 '+
+         'C-6.6,-52.6 -9.4,-53 -11.6,-54.4 Z" fill="#FFF" opacity=".55"/>';
+    }
+    s += glassesArt();
+    return s+'</g></svg>';
+  }
+
+  // ── hair ON TOP ───────────────────────────────────────
+  var HAIR_STYLES = ['fade','fringe','crop','short','swept','shaggy','bob','long','pony'];
+  // AN UNKNOWN STYLE USED TO DRAW NOTHING. Curtis shipped bald because a
+  // replace that added 'fringe' silently no-opped against a stale anchor, and
+  // a hair style with no matching branch is indistinguishable from no hair.
+  if(!o.cap && HAIR_STYLES.indexOf(o.style) === -1) throw new Error('unknown hair style: ' + o.style);
+
+  if(o.style==='fringe'){
+    /* A DOME WITH A FLAT BOTTOM EDGE — that straight line IS the blunt fringe,
+       and it is the whole identifying feature. */
+    s+='<path d="M-17,-52 C-18,-64.4 -9,-69.6 0,-69.6 C9,-69.6 18,-64.4 17,-52 '+
+       'L-17,-52 Z" fill="'+hair+'"/>';
+  } else if(o.style==='fade'){
+    /* Short and tight at the sides, volume brushed up and back on top, with a
+       defined hairline. A uniform cap could not tell this apart from 'short'. */
+    /* A QUIFF, not a cap. The close-up shows real height on top swept up and
+       back over tight tapered sides — the volume is the identifying feature and
+       the first pass topped out at -70, which read as an ordinary short cut. */
+    s+='<path d="M-15.4,-50 C-16.8,-58.4 -15,-64.6 -10,-68.6 '+
+       'C-4,-74.4 6.4,-78.4 12.2,-74.4 C16.6,-71.4 16.8,-60 15.8,-50 '+
+       'C14.4,-59.4 11.4,-63.8 6.4,-64.8 C1,-61.8 -4,-60.8 -8,-62.2 '+
+       'C-11.8,-59.4 -14,-55 -15.4,-50 Z" fill="'+hair+'"/>';
+  } else if(o.style==='crop'){
+    // shorter and set higher than 'short' — the head crown is -65.5, so a cap
+    // that stops there reads as a hairline that has moved back
+    s+='<path d="M-15.6,-53 C-15.4,-62 -8,-65.6 0,-65.6 C8,-65.6 15.4,-62 15.6,-53 '+
+       'C13,-59 8,-60.6 0,-60.6 C-8,-60.6 -13,-59 -15.6,-53 Z" fill="'+hair+'"/>';
+  } else if(o.style==='short'){
+    s+='<path d="M-16.6,-52 C-16,-64 -8,-68 0,-68 C8,-68 16,-64 16.6,-52 '+
+       'C13,-60 8,-62 0,-62 C-8,-62 -13,-60 -16.6,-52 Z" fill="'+hair+'"/>';
+  } else if(o.style==='swept'){
+    s+='<path d="M-16.6,-52 C-16.4,-64 -8,-68.6 1,-68.6 C10,-68.6 16.4,-64 16.6,-53 '+
+       'C15,-62 6,-63.5 -2,-60 C-8,-57.4 -13,-56 -16.6,-52 Z" fill="'+hair+'"/>';
+  } else if(o.style==='shaggy'){
+    s+='<path d="M-17.6,-46 C-19,-62 -9,-69.4 0,-69.4 C9,-69.4 19,-62 17.6,-46 '+
+       'C16.4,-56 14,-59.6 9,-61 C4,-58 -4,-58 -9,-61 C-14,-59.6 -16.4,-56 -17.6,-46 Z" fill="'+hair+'"/>';
+  } else if(o.style==='bob'){
+    s+='<path d="M-19,-48 C-20,-64 -9,-69 0,-69 C9,-69 20,-64 19,-48 '+
+       'C17,-58 12,-61.6 4,-62.4 C-2,-60 -9,-59 -13,-61 C-16,-58.6 -18,-54 -19,-48 Z" fill="'+hair+'"/>';
+  } else if(o.style==='long'||o.style==='pony'){
+    s+='<path d="M-17.6,-50 C-18.6,-64 -9,-69 0,-69 C9,-69 18.6,-64 17.6,-50 '+
+       'C16,-60 10,-63 0,-63 C-10,-63 -16,-60 -17.6,-50 Z" fill="'+hair+'"/>';
+  }
+  /* The pink is the top section, not a band. Drawn as the whole crown over
+     the darker base so the back and sides stay dark, which is what the
+     photograph shows. The first pass drew a stripe and read as a headband. */
+  if(o.accent){
+    /* A CAP, not a crescent. The long/pony top-hair shape is itself a thin
+       band — repainting that exact path in pink just made a headband twice
+       over. The pink has to be wide enough to cover the back-hair mass at
+       the crown, which is what the photograph shows: pink on top, dark
+       through the length. */
+    s+='<path d="M-19.4,-51 C-20.6,-66 -9,-70 0,-70 C9,-70 20.6,-66 19.4,-51 '+
+       'C14,-58.4 8,-60.6 0,-60.6 C-8,-60.6 -14,-58.4 -19.4,-51 Z" fill="'+HAIR.pink+'"/>';
+  }
+
+  s += glassesArt();
+
+  return s+'</g></svg>';
+}
+
+  /* twelve busts, same order as the private sheet's roster */
+  var PORTRAITS = [
+    {skin:'light',hair:'black',style:'fringe',beard:'scruff',beardColor:'ginger',
+     vest:true,clipboard:true,fw:15.7,fh:19.2,jaw:0.42},
+    {skin:'tan',hair:'black',style:'fade',fw:17.7,fh:18.1,jaw:0.82},
+    {skin:'light',hair:'blonde',style:'bob',glasses:true,fw:16.2,fh:17.5,jaw:0.32},
+    {skin:'light',hair:'midbrown',style:'short',fw:16.8,fh:18.2,jaw:0.58},
+    {skin:'tan',hair:'black',style:'crop',fw:16.0,fh:18.7,jaw:0.55},
+    {skin:'light',hair:'dark',style:'pony',accent:true,fw:15.9,fh:17.9,jaw:0.30},
+    {skin:'light',hair:'dark',style:'shaggy',beard:'full',fw:16.4,fh:18.9,jaw:0.52},
+    {skin:'light',hair:'dark',cap:true,capColor:'#2A2E33',beard:'stubble',
+     shirt:'tee',fw:16.5,fh:18.4,jaw:0.6},
+    {skin:'mid',hair:'black',style:'fade',beard:'stubble',
+     shirt:'blacktee',lead:true,fw:17.2,fh:18.4,jaw:0.72},
+    {skin:'mid',hair:'dark',style:'swept',glasses:'clubmaster',beard:'full',
+     beardColor:'dark',fw:16.6,fh:18.6,jaw:0.62},
+    {skin:'light',hair:'midbrown',style:'short',fw:16.4,fh:18.4,jaw:0.5},
+    {skin:'tan',hair:'dark',style:'swept',fw:16.9,fh:18.0,jaw:0.68}
+  ];
 
   /* granulated mineral surface on the shield — deterministic, two tones */
   function gritBand(seed, n, y0, y1){
@@ -2015,7 +2432,7 @@ function cutLayers(x1){
       tags:['', '', 'This book: also built in-house.'],
       beats:[
         {txt:'Sixteen spreads, one roof. The roof was never the whole story.'},
-        {txt:'The people who built it: the crew in Cardinal red, Curtis in the vest, Beto in the black lead tee.', show:['teamG']},
+        {txt:'All twelve of them, drawn from the real team: Curtis in the vest with the clipboard, Beto in the lead tee.', show:['teamG']},
         {txt:'Same crew start to finish, same office answering the phone, same trucks on these streets next year.'},
         {txt:'The end. The cardinal never left — as far as it is concerned, this whole book was about its yard.', tag:2}
       ]}

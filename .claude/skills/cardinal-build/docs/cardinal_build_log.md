@@ -7528,3 +7528,30 @@ spread 16's final beat stays put.
 
 `pw_book.js`: the full sixteen-spread walk, ALL GREEN, page errors none. The sheet's footer note
 ("these are scenes, not spreads") is rewritten — it stopped being true tonight.
+
+---
+
+## The team's real faces on spread 16 (2026-08-03, same night)
+
+Theo: *"Can we add the faces of the team instead of the generic people."* The die-cut portrait
+engine — drawn earlier this session from the real photographs and parked in `.claude/` so no
+likeness went public before he said so — is now IN the book, at his explicit request. Ported
+VERBATIM (the approved artwork; only the `<svg>` wrapper gained placement args), and spread 16
+is the classic company photo: two staggered rows of all twelve busts in front of the finished
+roof. Curtis's vest, clipboard and Clubmasters-free ginger scruff anchor the left; Beto's CREW
+LEAD tee reads; the four generic faces stay generic per the settled instruction. **No names ship
+in the public source** — the option-objects carry drawing parameters only; the roster mapping
+stays in the private sheet. The cardinal's home slot photobombs the right end of the back row,
+which is in character and stays.
+
+**The defect the render caught this time is a CSS class, recorded for the next nested viewport:**
+`.pop svg{width:100%;height:100%}` is a DESCENDANT selector, and the team spread is the first
+time `#popsvg` has ever contained nested `<svg>` elements — so the rule overrode every bust's
+width attribute (CSS beats presentation attributes) and all twelve rendered board-sized and
+stacked into giant overlapping hair. Every DOM assertion was green: twelve svgs, right x/y,
+right viewBox. `getBoundingClientRect` in the probe is what told the truth. Now `.pop > svg`,
+which is byte-equivalent for everything that existed before tonight.
+
+Verified: the full sixteen-spread walk ALL GREEN after the CSS change · twelve busts counted in
+`teamG` at phone and iPad · no surnames in the public file (asserted mechanically, not eyeballed)
+· rendered and eyeballed at both sizes.
