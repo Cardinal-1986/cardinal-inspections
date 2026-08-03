@@ -6768,3 +6768,51 @@ No `index.html` change. No UI yet — deliberately: this project has a specific,
 about building a UI against a guessed data shape (`walks_schema.sql`'s 13-of-196 inline-photo
 population) rather than the real one. The Studio's browsing page waits for a real
 `studio_tags.jsonl` to exist.
+
+## `studio.html` + `studio_objects_rls.sql` (2026-08-03, same day)
+
+Built ahead of real `studio_tags.jsonl` after all, while the Spark archive fetch was still
+running — worth flagging against the note directly above, because on its face this looks like the
+exact mistake it warns about. **The difference: the shape here isn't guessed, it's pinned by code
+already read in full** — `push_studio_tags.py`'s own `db_row` dict, verbatim — not inferred from a
+sample or assumed. `walks_schema.sql`'s photo objects were populated by upload paths nobody had
+re-checked; this schema has one writer, already written, already read end to end.
+
+**A real gap found before any of this shipped, not after:** `storage.objects`' `photos_read`
+policy grants SELECT on the *entire* `photos` bucket to any authenticated user, no prefix check —
+proven via `pg_policy.polroles`, not assumed from the table list. `studio_photos` itself is
+`is_cardinal_admin()`-only for every operation, so the table was already correctly locked down,
+but a signed-in rep who somehow knew a `studio/<id>.jpg` path could have fetched it directly
+through Storage regardless — table-level privacy true, storage-level privacy false. Closed with
+`studio_objects_rls.sql`: narrowed `photos_read` to exclude `studio/%`, added a dedicated
+`is_cardinal_admin()`-only read policy for that prefix. Same shape `walk_objects_read` /
+`workmanship_objects_read` already use for their own prefixes, just admin-only instead of
+authenticated-only, matching `studio_photos`' own stricter rule. Left `photos_upload`/`photos_write`
+alone — bucket-wide for any authenticated user across every prefix, a pre-existing condition this
+page doesn't touch or depend on, and a bigger change than today's scope.
+
+**Standalone, not a build.** No app-stamp bump, no `CHANGELOG` entry, no build number — `studio.html`
+is not part of `index.html`'s gate ladder because it isn't part of `index.html`. Same repo, zero
+shared script, zero shared nav, admin-only sign-in of its own (a different subdomain is a different
+origin — the app.cardinalroster.com session does not carry over). Read-only: browse, search, look.
+Retagging happens on the Spark, never in a browser.
+
+**Verification, and its real limit.** A jsdom harness against the shipped script text (21
+assertions) exercises the actual query-building/rendering code against realistic rows — including
+the two documented edge cases from `STUDIO_TAGGING.md` itself (`tags:[]` as a real answer, not an
+omission; a phone-sourced row with no manifest match, so `project_address` is `null`) — by mocking
+`window.supabase`'s client shape rather than a live connection. A second pass in real Chromium
+(same mock, via `page.addInitScript`) proves actual layout/paint, which jsdom cannot: grid,
+chips, empty states, the detail overlay. **What neither can prove: a real sign-in.** No admin
+credential exists in this sandbox, on purpose, and this sandbox's own egress policy separately
+blocks `cdn.jsdelivr.net` (confirmed via the agent-proxy status endpoint, not assumed — a policy
+403, not a code defect; the exact same CDN URL is already load-bearing in production `index.html`).
+Theo signing in for real is the one step only he can do.
+
+**Subdomain: no code change needed for the simple path.** `studio.html` at the repo root is
+already reachable at `/studio.html` on any domain pointed at this Vercel project or a second one
+importing the same repo, with zero rewrite config — same as `bulk_assign.html` already works
+today. A bare-root URL (`studio.cardinalroster.com/` instead of `.../studio.html`) is possible
+with a host-conditional rewrite in the shared `vercel.json`, but that file is shared with the main
+app's deployment — untested from here, and not worth the risk for a tool only Theo uses. Left for
+later if he wants it.
