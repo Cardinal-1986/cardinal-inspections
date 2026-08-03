@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 592 &#8212; every button in the Showcase is now big enough to hit with a thumb</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 593 &#8212; showroom.cardinalroster.com gets its own front door</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35021,6 +35021,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:593, d:'2026-08-03', t:'A dedicated front door for presenting', s:'showroom.cardinalroster.com lands somewhere different now \u2014 just Presentations, and Studio if you\u2019re signed in as an admin, none of the ordinary ten-destination launcher. Same sign-in, same file, Showroom underneath completely unchanged. Colors is a placeholder for what\u2019s next.' },
 { b:592, d:'2026-08-03', t:'Every button in the Showcase got bigger', s:'Measured on an iPad: eleven of the twelve controls on that screen were smaller than a thumb \u2014 the next/back arrows were 30 pixels square. They are all 44 now, the slider grip is a proper round knob that swells when you grab it, and the before/after divider is easier to catch. Nothing moved and nothing changed colour. A test now measures every one of them at four screen sizes, so they cannot quietly shrink again.' },
 { b:591, d:'2026-08-03', t:'Build a Showcase pair from a job you already have', s:'A <b>From a job</b> button beside Add a pair. Pick the job, tap the before, tap the after, and the address is filled in for you \u2014 with the line it was read from shown underneath, because it guesses and you should be able to see what it guessed from. Add <b>+ During the build</b> for a third. The photographs are copied into the Showcase, so the pair keeps working whatever happens to the job. 196 photographs are already sitting on 12 jobs; this is how they get in front of a homeowner.' },
 { b:590, d:'2026-08-03', t:'Showroom \u2014 a clean door you can hand across the table', s:'A new card on the landing screen opens the Showcase full screen with every editing control gone \u2014 no add, no publish, no remove, no share, nothing to change on any of the three tabs. Hold the \u2715 for a second to come back; a tap does nothing, so a homeowner can\u2019t wander out of it. Same sign-in, same photographs, no second app. Offered on a tablet, laptop or desktop only \u2014 a phone is not a screen you present from, and the ordinary Showcase there is unchanged.' },
@@ -41382,10 +41383,75 @@ return '\u21BB Resume: ' + (qs.projectName || 'inspection') +
 }catch(_){}
 return null;
 }
+function isVisionHost(){
+try{
+if(location.search.indexOf('vision=1') !== -1) return true;
+return location.hostname.indexOf('showroom.') === 0;
+}catch(_){ return false; }
+}
+function visionHtml(){
+var isAdmin = false;
+try{ isAdmin = !!(window.is_admin && window.is_admin()); }catch(_){}
+return (
+'<div class="cr-vh"><div class="cr-vh-in">' +
+'<div class="cr-vh-word">Cardinal</div>' +
+'<h1 class="cr-vh-h">Vision</h1>' +
+'<p class="cr-vh-sub">Presentations built from your own work</p>' +
+'<button type="button" class="cr-vh-tile primary" data-go="showroom">' +
+'<span class="ic">\u25B6</span>' +
+'<span class="tx">' +
+'<span class="tt">Presentations</span>' +
+'<span class="sb">Showroom \u2014 Showcase, Workmanship &amp; The Walk</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
+(isAdmin ?
+('<div class="cr-vh-flow"><span>Studio</span><span class="ar">\u2192</span>' +
+'<span>promote</span><span class="ar">\u2192</span><span>Showroom</span></div>' +
+'<a class="cr-vh-tile admin" href="/studio.html">' +
+'<span class="ic">\u25E7</span>' +
+'<span class="tx">' +
+'<span class="tt">Studio<span class="cr-vh-badge">Admin</span></span>' +
+'<span class="sb">Your photo library \u2014 search, tag, curate</span>' +
+'</span><span class="go">\u2192</span>' +
+'</a>')
+: '') +
+'<div class="cr-vh-tile soon" aria-disabled="true">' +
+'<span class="ic">\u25D4</span>' +
+'<span class="tx">' +
+'<span class="tt">Colors<span class="cr-vh-badge soon">Soon</span></span>' +
+'<span class="sb">Owens Corning shingle &amp; siding options</span>' +
+'</span>' +
+'</div>' +
+'</div></div>'
+);
+}
 function build(){
 var lv = document.getElementById('landingView');
 if(!lv) return false;
 if(lv.dataset.crLrBuilt === '1'){ paint(); return true; }
+/* 593: showroom.cardinalroster.com is a dedicated, focused landing —
+   Presentations and (admin-only) Studio, none of the ordinary launcher's
+   ten destinations. ?vision=1 forces it on any hostname, for testing
+   before the real domain is live. Presentations reuses wire()'s existing
+   data-go="showroom" handling below untouched — nothing new to wire for
+   that tile.
+   crPortalBuilt still has to be set here even though refreshCounts()/
+   buildLanding() (the only JS readers) are dead — cr-lr-styles' OWN CSS
+   reads the same attribute: `#landingView:not([data-cr-portal-built])>*
+   {display:none}`, on top of the unconditional `#landingView>*{display:
+   none}` both rules exist to keep #landQuick and friends hidden. Skipping
+   this attribute (first attempt did) left .cr-vh in the DOM but computed
+   display:none — confirmed via elementFromPoint before writing the fix,
+   not guessed. The matching #landingView>.cr-vh{display:flex} override
+   below is the other half, mirroring #landingView>.cr-lr{display:block}
+   exactly. */
+if(isVisionHost()){
+lv.innerHTML = visionHtml();
+wire(lv);
+lv.dataset.crLrBuilt = '1';
+lv.dataset.crPortalBuilt = '1';
+return true;
+}
 lv.dataset.crPortalBuilt = '1';
 var c = counts();
 var seeAll = canSeeAll();
@@ -56081,6 +56147,54 @@ body.cr-lnav-on #cr-show.showroom{top:0 !important;left:0 !important;z-index:950
    has been; it is only this MODE that isn't offered there. */
 @media (min-width:820px){ .cr-lr-show{display:flex} }
 html[data-mode="light"] .cr-lr-show .sb{color:#8a8078}
+
+/* ── The Vision hub (593) ────────────────────────────────────────────
+   The landing renderer's build() swaps THIS markup into #landingView instead
+   of the ordinary ten-destination launcher when isVisionHost() matches —
+   the dedicated front door for showroom.cardinalroster.com. Committed dark,
+   like Showroom itself: this is the pretty door, not a themed CRM screen,
+   so there is deliberately no light-mode twin, same as .cr-sh-* above.
+
+   #landingView>.cr-vh, NOT plain .cr-vh — cr-lr-styles carries
+   `#landingView>*{display:none}` (ID selector, specificity 1-0-0) to keep
+   the dead #landQuick/#landDash markup hidden, and only an equally-
+   ID-anchored override beats it; a bare class selector never can,
+   regardless of source order. #landingView>.cr-lr{display:block} is the
+   existing instance of this exact pattern — this mirrors it. */
+.cr-vh{min-height:100vh;box-sizing:border-box;background:#0B0D0C;
+  display:flex;flex-direction:column;align-items:center;padding:56px 20px 40px}
+#landingView>.cr-vh{display:flex}
+.cr-vh-in{width:100%;max-width:420px}
+.cr-vh-word{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:#c8202e;margin-bottom:4px}
+.cr-vh-h{font:800 30px Georgia,'Times New Roman',serif;color:#F2F4F2;margin:0 0 6px;
+  letter-spacing:-.01em}
+.cr-vh-sub{font-size:13px;color:#98A29C;margin:0 0 26px}
+.cr-vh-tile{display:flex;align-items:center;gap:13px;width:100%;box-sizing:border-box;
+  text-align:left;border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;
+  font-family:inherit;text-decoration:none;border:1px solid #262a28;background:#151817}
+.cr-vh-tile:hover{border-color:#32372f}
+.cr-vh-tile .ic{flex:0 0 auto;width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:17px}
+.cr-vh-tile.primary{background:linear-gradient(160deg,#1a1210,#0d0908);
+  border-color:rgba(200,32,46,.35)}
+.cr-vh-tile.primary .ic{background:rgba(200,32,46,.18);color:#e35c63}
+.cr-vh-tile.admin .ic{background:rgba(139,150,163,.16);color:#8b96a3}
+.cr-vh-tile.soon{opacity:.5;cursor:default}
+.cr-vh-tile.soon .ic{background:rgba(255,255,255,.05);color:#5d655f}
+.cr-vh-tile .tx{flex:1;min-width:0}
+.cr-vh-tile .tt{display:flex;align-items:center;gap:8px;
+  font:700 16px Georgia,'Times New Roman',serif;color:#F2F4F2}
+.cr-vh-tile .sb{font-size:12px;color:#8a9490;margin-top:2px;line-height:1.4}
+.cr-vh-tile .go{flex:0 0 auto;color:#5d655f;font-size:15px}
+.cr-vh-badge{font:700 8px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 6px;border-radius:4px;
+  background:rgba(139,150,163,.18);color:#8b96a3;margin-left:2px}
+.cr-vh-badge.soon{background:rgba(255,255,255,.06);color:#5d655f}
+.cr-vh-flow{display:flex;align-items:center;gap:5px;
+  font:700 9.5px ui-monospace,'SF Mono',Menlo,monospace;
+  color:#5d655f;letter-spacing:.02em;margin:-2px 0 12px 4px}
+.cr-vh-flow .ar{color:#32372f}
 
 /* ── Promoting a job to a pair (591) ─────────────────────────────
    The walk picker marks a pick with a tick. A tick cannot say WHICH of two

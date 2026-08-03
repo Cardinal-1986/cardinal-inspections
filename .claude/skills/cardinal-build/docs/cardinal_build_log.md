@@ -6816,3 +6816,40 @@ today. A bare-root URL (`studio.cardinalroster.com/` instead of `.../studio.html
 with a host-conditional rewrite in the shared `vercel.json`, but that file is shared with the main
 app's deployment — untested from here, and not worth the risk for a tool only Theo uses. Left for
 later if he wants it.
+
+## Build 593 — the Vision hub, in the same index.html after all
+
+Theo walked through both options via a live tap-through preview (a toggle switching "built into
+index.html" vs. "separate file", same visuals either way, only the annotations changing) and chose
+same-file for the practical reason: reusing Showroom's existing code beats standing up a second
+surface for a presentation layer that doesn't need to be redesigned often. See `FEATURES.md` for
+the full shape.
+
+**One real bug, caught before shipping, not after.** First patch rendered `.cr-vh` into
+`#landingView` correctly per every jsdom structural check, but a real-Chromium screenshot showed
+a blank page — plain cream gradient, no tiles, nothing resembling the shipped CSS. `elementFromPoint`
+at the tile coordinates (the exact technique build 590's z-index bug used) showed `.cr-vh` computed
+`display:none` despite `display:flex` in its own rule. Cause: `cr-lr-styles` carries
+`#landingView>*{display:none}` (ID selector) specifically to keep the dead `#landQuick`/`#landDash`
+markup hidden, plus a second `#landingView:not([data-cr-portal-built])>*{display:none}` — and a bare
+class selector can never beat an ID selector regardless of source order. `.cr-lr` only escapes both
+via `#landingView>.cr-lr{display:block}` *and* `build()` setting `lv.dataset.crPortalBuilt='1'` on
+every path. First draft grepped `crPortalBuilt`'s JS readers, found them dead (`refreshCounts()` /
+`buildLanding()`, both unreachable — the file's own comment already says so), and concluded the
+attribute was safe to skip. Missed the CSS attribute-selector reader entirely, which is very much
+alive. Fixed with the matching `#landingView>.cr-vh{display:flex}` override and setting the same
+dataset flag — mirroring `.cr-lr`'s exact pattern rather than inventing a new one.
+
+**The lesson, stated plainly because it is this project's own recurring one:** grepping a name's
+*JS* usage is not the same as grepping all of its usage. The same attribute had a second, silent
+reader in a completely different language, in a completely different part of the file, and only a
+real rendering engine — not a structural DOM check — could have caught the gap.
+
+Verified: `check_build.py` green (105 scripts, 108/108 tags, 115/115 styles, app stamp 592→593,
+marker + negative control). A 20-assertion jsdom harness against the shipped `cr-lr-script` text —
+hostname matching including a deliberate near-miss (`my-showroom.` must not match), the `?vision=1`
+override, admin-gating of the Studio tile, and proof the Presentations tile drives
+`CardinalShowcase.open({showroom:true})` through `wire()`'s *existing* handler rather than a new
+one. Real Chromium screenshots of both the admin and non-admin renders, plus a regression pass
+proving the ordinary ten-destination launcher is completely unaffected (`app.cardinalroster.com`
+still renders `.cr-lr`, never `.cr-vh`).

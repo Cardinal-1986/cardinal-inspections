@@ -1462,3 +1462,39 @@ tablet never lands mid-review of somebody else's roof.
 Verified by `audit_viewports.js` — **194 assertions across phone / iPad portrait / iPad landscape
 / desktop**, including a counted zero for write controls on every tab and screen, the hold timing,
 that a tap does *not* exit, and that a damage circle cannot be dragged.
+
+## The Vision hub (build 593)
+
+A dedicated, focused landing for `showroom.cardinalroster.com` — same `index.html`, same sign-in,
+same file every CRM user already loads, just a different `#landingView` content branch keyed off
+the hostname. Not a separate app, not a separate deploy.
+
+**Entry point:** `build()` in `cr-lr-script` (the landing renderer) branches at the very top, before
+building the ordinary ten-destination launcher — `isVisionHost()` checks `location.hostname` for a
+`showroom.` prefix, or `?vision=1` in the query string for testing before the real domain exists.
+When it matches, `visionHtml()` replaces the launcher entirely: **Presentations** (reuses `wire()`'s
+existing `data-go="showroom"` handling untouched — the exact same call the ordinary launcher's
+Showroom card already makes, nothing duplicated), **Studio** (admin-only, a plain link to
+`/studio.html`, gated on `window.is_admin()` — a UI hint only, `studio_photos`' own RLS is the real
+gate, same caveat `amAdmin()` already states for Showroom), and **Colors** (a disabled placeholder
+for an Owens Corning presenter — not built yet).
+
+**The one bug that mattered, and the lesson in it:** the first pass rendered `.cr-vh` into the DOM
+correctly but it computed `display:none` and was invisible — `cr-lr-styles` carries
+`#landingView>*{display:none}` (ID selector, beats any plain class regardless of source order) *and*
+a second, narrower `#landingView:not([data-cr-portal-built])>*{display:none}`, both there to keep
+the dead `#landQuick`/`#landDash` markup hidden. `.cr-lr` only escapes them via a matching
+`#landingView>.cr-lr{display:block}` override plus `build()` setting `lv.dataset.crPortalBuilt='1'`
+on every path. The first draft of this feature set neither, having only grepped `crPortalBuilt`'s
+JS readers (dead) and missed the CSS attribute-selector reader (very much alive). Found by
+`elementFromPoint` at the coordinates a tile should occupy, the same technique that caught build
+590's z-index trap — not guessed. Fixed with `#landingView>.cr-vh{display:flex}` and setting the
+same dataset flag, mirroring `.cr-lr`'s exact pattern.
+
+**Committed dark**, like Showroom itself — no light-mode twin, deliberately.
+
+Verified: a 20-assertion jsdom harness against the shipped `cr-lr-script` text (hostname matching,
+the `?vision=1` override, admin-gating, and proof the Presentations tile drives
+`CardinalShowcase.open()` through the *existing* handler rather than a new one) plus real Chromium
+screenshots of both the admin and non-admin renders and a regression pass confirming the ordinary
+launcher is byte-for-byte unaffected.
