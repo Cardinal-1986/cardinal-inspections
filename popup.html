@@ -111,7 +111,13 @@
      including the JS, which measures .floor rather than carrying its own copy.
      An early version hardcoded 118 in three places and the chips landed off
      the page the moment the stage grew. */
-  .scene{position:relative;width:min(96vw,940px,80vh);aspect-ratio:300 / 297;
+  /* THE MISSING DEPTH. rotateX without an ancestor perspective is a
+     vertical squash, not a fold — the board shrank instead of leaning.
+     Theo caught it: 'did we stray away from the 3D pop up style?'
+     Perspective goes on each folding piece's DIRECT parent, never via
+     preserve-3d, which iOS silently flattens under overflow/filter/
+     opacity. Independent vanishing points are right for paper anyway. */
+  .scene{position:relative;width:min(96vw,940px,80vh);aspect-ratio:300 / 297;perspective:1000px;
          --floorH:30%; --popH:59%}
 
   /* ── the back page, printed ────────────────────────────────
@@ -141,7 +147,7 @@
           border-top:1px dashed var(--crease)}
   .crease::after{content:'';position:absolute;left:0;right:0;top:1px;height:1px;background:var(--cut-lt)}
 
-  .popwrap{position:absolute;left:4%;right:4%;bottom:var(--floorH);height:var(--popH)}
+  .popwrap{position:absolute;left:4%;right:4%;bottom:var(--floorH);height:var(--popH);perspective:1000px}
   .strut{position:absolute;left:24%;right:24%;bottom:0;height:60%;
          transform-origin:50% 100%;
          transform:rotateX(calc(58deg - 40deg * var(--open)));
@@ -187,7 +193,7 @@
      caption pointed at a bird the sign was hiding. The bird is the book's
      protagonist; it stacks in front. On wide screens they never overlap
      and nothing changes. */
-  .birdpop{position:absolute;right:3%;bottom:var(--floorH);width:64px;height:94px;z-index:2;
+  .birdpop{position:absolute;right:3%;bottom:var(--floorH);width:64px;height:94px;z-index:2;perspective:500px;
            transition:transform .7s cubic-bezier(.3,.9,.32,1.06)}
   .birdstick{position:absolute;left:50%;bottom:0;width:5px;height:52px;margin-left:-2.5px;
              transform-origin:50% 100%;
@@ -222,7 +228,7 @@
      That is also where a contractor really plants one — front corner of the
      lot, opposite the driveway, facing the street — and it puts the Cardinal
      sign right beside the cardinal. */
-  .signpop{position:absolute;left:78%;bottom:var(--floorH);width:84px;height:108px}
+  .signpop{position:absolute;left:78%;bottom:var(--floorH);width:84px;height:108px;perspective:500px}
   .signboard{position:absolute;left:0;right:0;bottom:0;height:108px;
              transform-origin:50% 100%;
              transform:rotateX(calc(58deg - 76deg * var(--open)));
@@ -234,7 +240,7 @@
      they clear the house entirely. Same --open hinge as the bird, so they
      rise with everything else and cannot desync. z-index puts them in front
      of the debris, which is where a foreground pop-up piece belongs. */
-  .tag{position:absolute;bottom:17%;width:30%;max-width:210px;height:60px;z-index:2;
+  .tag{position:absolute;bottom:17%;width:30%;max-width:210px;height:60px;z-index:2;perspective:400px;
        opacity:0;transition:opacity .45s ease}
   .tag.on{opacity:1}
   .tagstick{position:absolute;left:50%;bottom:0;width:4px;height:24px;margin-left:-2px;
@@ -271,6 +277,10 @@
   .floor-dark .floor{background:linear-gradient(#3A3128,#241E17)}
   .floor-wood .drivelit,.floor-dark .drivelit{display:none}
   .nochips .chip{display:none}
+  /* the crew hauls the mess on install day — after the tear-off spread
+     only the two strays the grass kept are left for the magnet */
+  .strays .chip{display:none}
+  .strays .chip.stray{display:block}
 
   /* ── debris ────────────────────────────────────────────── */
   .chip{position:absolute;width:var(--w,13px);height:var(--h,8px);
@@ -2426,11 +2436,11 @@ function portrait(o, px, py, pw){
       scene:sweepSVG, high:-1,
       tags:['', '', 'Nails: 0. Chips: 0. Excuses: 0.'],
       beats:[
-        {txt:'The roof is on. What is left of the old one is forty pieces of it hiding in your grass.'},
+        {txt:'The crew hauled the mess away before they left. But steel hides — there is always a piece or two the grass keeps.'},
         {txt:'The next day it is Theo himself, back with the super magnet. Every job, every lawn.', show:['magnetG']},
-        {txt:'First pass: the lawn gives up nearly everything.', act:'sweep1'},
-        {txt:'The magnet runs twice — the second pass is for the ones that thought they got away.', act:'sweep2', tag:2},
-        {txt:'Zero left in the grass. The magnet counted.', tally:true}
+        {txt:'First pass: got one.', act:'sweep1'},
+        {txt:'The magnet runs twice — the second pass is for the one that thought it got away.', act:'sweep2', tag:2},
+        {txt:'Zero. The crew took the other thirty-eight before dinner. Your lawn never knew.'}
       ]},
     { n:16, phase:'The Team', sky:'day', sign:true,
       birdAt:['0','-18vw','-30vw','0'],
@@ -2517,6 +2527,7 @@ function portrait(o, px, py, pw){
        back to a spread from BEFORE the tear-off hides it, because that lawn
        has not happened yet */
     scene.classList.toggle('nochips', sp.n < 7);
+    scene.classList.toggle('strays', sp.n > 7);
     birdEl.style.display = sp.birdAt ? '' : 'none';
     if(!sp.birdAt) birdEl.style.transform = '';
     signEl.style.display = sp.sign ? '' : 'none';
@@ -2592,6 +2603,7 @@ function portrait(o, px, py, pw){
       c.style.setProperty('--w', rand(9,16).toFixed(0) + 'px');
       c.style.setProperty('--h', rand(6,10).toFixed(0) + 'px');
       c.classList.add(reduce ? 'rest' : 'fly');
+      if(i === 13 || i === 31) c.classList.add('stray');   // the two the grass keeps
       scene.appendChild(c);
       chips++;
     }
@@ -2614,9 +2626,10 @@ function portrait(o, px, py, pw){
     var box = scene.getBoundingClientRect();
     var gx = 0.55 * box.width;
     var gy = box.height - (floor.offsetHeight || 118) * 0.4;
+    var strays = all.filter(function(c){ return c.classList.contains('stray'); });
     all.forEach(function(c, i){
       if(c.classList.contains('swept')) return;
-      if(pass === 1 && i >= all.length - 6) return;   // six escape the first pass
+      if(pass === 1 && strays.length && c === strays[strays.length - 1]) return;   // one escapes the first pass
       c.style.setProperty('--mx', (gx - (parseFloat(c.style.left) || 0)).toFixed(0) + 'px');
       c.style.setProperty('--my', (gy - (parseFloat(c.style.top) || 0)).toFixed(0) + 'px');
       c.classList.add('swept');

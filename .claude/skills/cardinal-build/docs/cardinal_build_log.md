@@ -7596,3 +7596,31 @@ never silently vanishes. Both cutouts now ship; both originals stay out of the r
 
 Verified: full sixteen-spread walk ALL GREEN · zero unswept chips at the end · rendered and
 eyeballed before and after the sweep.
+
+---
+
+## Two strays and real depth — Theo's two-part correction (2026-08-04, past midnight)
+
+Theo, on the sweep spread: *"Not good, there should only be maybe one or two pieces of
+confetti."* His crew hauls the debris on install day — forty chips on the next-morning lawn
+told a false story about his own cleanup. And: *"did we stray away from making this look 3day
+pop up style?"* He was right twice.
+
+**The depth was genuinely missing.** `perspective` appeared ZERO times in popup.html — every
+`rotateX` fold was rendering as a flat vertical squash, not a fold. Fixed per the file's own
+header doctrine: perspective on each folding piece's DIRECT parent (`.scene` and `.popwrap`
+1000px, `.birdpop` and `.signpop` 500px, `.tag` 400px), never `preserve-3d`, which iOS
+silently flattens under overflow/filter/opacity. The mid-fold render now shows the sky
+panel's creased edge swinging toward the viewer and the deck piece foreshortening with real
+convergence.
+
+**The lawn now keeps only two.** Spread 7 still flings all 40 chips (that part is true — the
+tear-off is loud and messy). Past spread 7, `.strays` shows only chips 13 and 31; the other
+38 leave with the crew. The sweep's first pass collects one stray, the second pass gets the
+one that thought it got away — "the magnet runs twice" survives intact. The auto-tally
+caption is gone; the closer now reads "Zero. The crew took the other thirty-eight before
+dinner. Your lawn never knew."
+
+Verified: full sixteen-spread walk ALL GREEN · exactly 2 strays visible at spread 15, zero
+unswept at the end · mid-fold frame shot at 340ms confirms real 3D · before/after renders
+eyeballed.
