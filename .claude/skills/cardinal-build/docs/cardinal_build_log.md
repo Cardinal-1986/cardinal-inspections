@@ -7379,3 +7379,30 @@ Verified in real Chromium at phone, iPad and reduced-motion: 8 beats · 3 joke t
 their own beats · 40 chips flung and persisting through a step back · shingles gone by id and by
 colour · caution styling on beat 4 only · zero overflow · zero body text in the failing red ·
 zero JS errors.
+
+---
+
+## Tarps, not a tractor — the typo corrected (2026-08-03)
+
+Theo: *"I didn't mean tractor I meant tarps. Looks good."*
+
+So "What about tractor protect the flowers?" was phone-typed for **tarps**, and the machine two
+entries up was built off a typo. It is gone from both files — function, banner, both call sites —
+and the sheet's tear-off card now shows what he actually asked for: **blue poly tarps over both
+flower beds**, the same shape language as popup.html's `tarpG` beat, which had the tarps (and the
+caption) all along and needed nothing added. The sheet's trailer moved to the left edge — where
+the built spread parks it — so tarp A reads past its tail; the chips scatter on the lawn *below*
+the beds, which is the tarps doing their job.
+
+Everything the tractor round produced besides the machine survives on its own merits: the flower
+beds exist now in both files, and the bed/tarp zones line up. The "bin drawn FULL" reconciliation
+with the magnet joke is moot — the trailer is back to being the debris destination, and the forty
+chips that get away still explain the magnet running twice on 15.
+
+The quote comments in both files keep his original words and note the correction, so nobody reads
+"tractor" in a shipped comment and rebuilds the machine.
+
+Verified after the cut: sheet harness green (bird in all 16, nothing floats, 0 undefined fills) ·
+collision check 16/16 clear · popup harness green (7 hops end home, chimney survives strip, 3 X
+marks) · both the popup beat and the sheet card re-rendered and eyeballed — tarps visible, no
+machine, nothing else moved.

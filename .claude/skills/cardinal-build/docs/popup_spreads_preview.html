@@ -433,8 +433,9 @@ function wornGaps(){
 
 function dormerBox(cx){ return null; } /* retired with the dormer */
 /* ── THE FLOWER BEDS, so there is something to protect ────────────
-   Theo, 3 Aug: "what about tractor protect the flowers?" The beds had been a
-   caption with nothing drawn under it. Two beds against the wall, tufts and
+   Theo, 3 Aug: "what about tractor protect the flowers?" — phone-typed for
+   TARPS, corrected next message; the machine built off the typo is gone.
+   The beds had been a caption with nothing drawn under it. Two beds against the wall, tufts and
    blooms, deterministic — the same bed every render. */
 function flowerBeds(spans, yTop, yBot){
   var g = 9, s = '';
@@ -454,54 +455,6 @@ function flowerBeds(spans, yTop, yBot){
            BLOOM[i % 4] + '"/>';
     }
   });
-  return s;
-}
-
-/* ── THE TRACTOR — the self-propelled debris catcher ──────────────
-   Tracks, a scissor lift, and a bin raised to the eave, parked over the
-   beds it protects. The bin is drawn FULL: most of the roof goes into
-   steel, which is the machine's whole argument — and the chips that got
-   away are why the magnet still runs twice. */
-function tractor(cx, gy, binTop, binHalf){
-  var BODY='#5C646C', BODY2='#464D54', TRK='#2A2E33', BIN='#6E767E', BIN2='#51585F',
-      K='#E8DCC8', s='';
-  var bt = gy - 8;                       // top of the tracks
-  var by = bt - 12;                      // top of the body
-  var bl = cx - binHalf, br = cx + binHalf, bb = binTop + 13;
-  // tracks
-  s += '<path d="M' + (cx-17) + ',' + gy + ' L' + (cx-17) + ',' + bt + ' L' + (cx+17) + ',' + bt +
-       ' L' + (cx+17) + ',' + gy + ' Z" fill="' + TRK + '" stroke="' + K + '" stroke-width="1.2"/>';
-  s += '<circle cx="' + (cx-11) + '" cy="' + (bt+4) + '" r="2.6" fill="#4A5056"/>' +
-       '<circle cx="' + cx + '" cy="' + (bt+4) + '" r="2.6" fill="#4A5056"/>' +
-       '<circle cx="' + (cx+11) + '" cy="' + (bt+4) + '" r="2.6" fill="#4A5056"/>';
-  // body with the cardinal-red keyline every Cardinal machine wears
-  s += '<path d="M' + (cx-15) + ',' + bt + ' L' + (cx-15) + ',' + by + ' L' + (cx+15) + ',' + by +
-       ' L' + (cx+15) + ',' + bt + ' Z" fill="' + BODY + '" stroke="' + K + '" stroke-width="1.2"/>';
-  s += '<path d="M' + cx + ',' + bt + ' L' + cx + ',' + by + ' L' + (cx+15) + ',' + by +
-       ' L' + (cx+15) + ',' + bt + ' Z" fill="' + BODY2 + '"/>';
-  s += '<path d="M' + (cx-15) + ',' + (by+3) + ' L' + (cx+15) + ',' + (by+3) +
-       '" stroke="#C8202E" stroke-width="1.6" fill="none"/>';
-  // scissor lift, crossed struts with pivot rivets
-  s += '<g stroke="' + BODY2 + '" stroke-width="2.2" stroke-linecap="round">' +
-       '<path d="M' + (cx-12) + ',' + by + ' L' + (cx+12) + ',' + bb + '"/>' +
-       '<path d="M' + (cx+12) + ',' + by + ' L' + (cx-12) + ',' + bb + '"/></g>';
-  s += '<circle cx="' + cx + '" cy="' + ((by+bb)/2).toFixed(1) + '" r="1.8" fill="#B08D4F"/>';
-  // the bin, raised to the eave, interior dark
-  s += '<path d="M' + bl + ',' + binTop + ' L' + br + ',' + binTop + ' L' + (br-4) + ',' + bb +
-       ' L' + (bl+4) + ',' + bb + ' Z" fill="' + BIN + '" stroke="' + K + '" stroke-width="1.2" stroke-linejoin="round"/>';
-  s += '<path d="M' + cx + ',' + binTop + ' L' + br + ',' + binTop + ' L' + (br-4) + ',' + bb +
-       ' L' + cx + ',' + bb + ' Z" fill="' + BIN2 + '"/>';
-  s += '<path d="M' + bl + ',' + binTop + ' L' + br + ',' + binTop +
-       '" stroke="#2A2E33" stroke-width="1.4" fill="none"/>';
-  // the catch: kraft chips heaped over the rim — the roof going into steel
-  var g = 41; function rnd(){ g = (g*1103515245+12345)&0x7fffffff; return g/0x7fffffff; }
-  s += '<g stroke="#C9B893" stroke-width=".5">';
-  for(var i = 0; i < 9; i++){
-    var chx = bl + 6 + rnd() * (2*binHalf - 14), chy = binTop - 1.5 - rnd() * 2.5;
-    s += '<path d="M' + chx.toFixed(1) + ',' + chy.toFixed(1) + ' l5,-1 l1,3 l-5,1 Z" fill="#E8DCC8" ' +
-         'transform="rotate(' + Math.round(rnd()*60-30) + ' ' + chx.toFixed(1) + ' ' + chy.toFixed(1) + ')"/>';
-  }
-  s += '</g>';
   return s;
 }
 
@@ -772,8 +725,8 @@ function house(o){
      The cheeks carry whatever that stage carries. */
   if(st!=='none') s+=chimney();
   if(st!=='none') s+=wing({ ice: (st==='ice'||st==='felt'), flash: o.flash });
-  /* the flower beds, both sides of the door — what the tarps cover and the
-     tractor parks over. Clear of the door (136-164) and downspout (254). */
+  /* the flower beds, both sides of the door — what the tear-off tarps
+     cover. Clear of the door (136-164) and downspout (254). */
   if(st!=='none') s+=flowerBeds([[48,96],[184,248]], 144.5, 150);
   if(st!=='none'){
     // the five hairlines that used to live here were a strip shingle;
@@ -1099,13 +1052,18 @@ var SPREADS=[
    }},
   {n:7, t:'The Tear-Off', w:'Built, tested on your iPad, and the only one with the pop, the beats and the joke tabs.',
    sky:'dusk', done:true, build:function(){
-     /* the tractor parks over bed A with its bin at the eave — the roof
-        goes into steel, not into the flowers, and the chips on the lawn are
-        the ones that got away (why the magnet runs twice on 15) */
-     return house({roof:'bare'}) + trailer(62,150,0.8) +
-       tractor(214, 150, 98, 24) +   /* bin top AT the eave, same as the built
-          spread — at 92 the roofer's feet were inside it */
-       
+     /* TARPS over both beds — Theo: "I didn't mean tractor I meant tarps."
+        Blue poly, the same shape language as the built spread's tarpG beat,
+        drawn right after the house so every prop stays in front of them.
+        The trailer parks at the left edge (where the built spread parks it)
+        so tarp A reads past its tail; the chips scatter on the lawn BELOW
+        the beds — the tarps did their job. */
+     return house({roof:'bare'}) +
+       '<path d="M44,150 L100,150 L96,142.5 L48,142.5 Z" fill="#3E8FC0"/>' +
+       '<path d="M80,142.5 L96,142.5 L100,150 L84,150 Z" fill="#2A6E99"/>' +
+       '<path d="M180,150 L250,150 L244,142.5 L185,142.5 Z" fill="#3E8FC0"/>' +
+       '<path d="M226,142.5 L244,142.5 L250,150 L232,150 Z" fill="#2A6E99"/>' +
+       trailer(34,150,0.68) +
        fig(232,90,0.8,{arm:[[-8,-34],[-2,-30]]}) +
        yardsign(250,150,0.72) + bird(292,112,0.68,true) + chips(7,26,40,290);
    }},
