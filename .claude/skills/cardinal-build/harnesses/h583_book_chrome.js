@@ -73,6 +73,8 @@ const PILLS = ['cr-rltoc-btn','cr-nachi-mgr-btn','cr-rlhome-btn','cr-rltheme-btn
         hdrH: Math.round(hdr.getBoundingClientRect().height),
         backW: Math.round(bb.width), backH: Math.round(bb.height),
         title: (document.querySelector('.ins-title') || {}).textContent,
+        titleHidden: getComputedStyle(document.querySelector('#resourceLibraryView .ins-title')).display === 'none',
+        themeHidden: getComputedStyle(document.getElementById('rlThemeBtn')).display === 'none',
         /* the back control must be ABOVE the frame, not on top of it */
         backClearsFrame: bb.bottom <= fb.top + 1,
         geo: `back.bottom=${Math.round(bb.bottom)} frame.top=${Math.round(fb.top)}`,
@@ -85,7 +87,13 @@ const PILLS = ['cr-rltoc-btn','cr-nachi-mgr-btn','cr-rlhome-btn','cr-rltheme-btn
     ok(`${tag}: all five pills hidden on the book`, r.shown.length === 0, r.shown.join(','));
     ok(`${tag}: the Library header is back`, r.hdrDisplay === 'flex', r.hdrDisplay);
     ok(`${tag}: with a real back button`, r.backW > 10 && r.backH > 10, `${r.backW}x${r.backH}`);
-    ok(`${tag}: titled for the book`, r.title === 'The AI Field Manual', r.title);
+    /* 583b: the bar is just the arrow. The router must still WRITE the title
+       (other pages show it) — so assert the text is right AND that it is
+       hidden, plus the theme toggle, plus that the bar actually got slim. */
+    ok(`${tag}: router still writes the book title`, r.title === 'The AI Field Manual', r.title);
+    ok(`${tag}: but the bar shows only the arrow`, r.titleHidden && r.themeHidden,
+       `title:${r.titleHidden} theme:${r.themeHidden}`);
+    ok(`${tag}: and the bar is slim`, r.hdrH <= 64, r.hdrH + 'px');
     ok(`${tag}: at rest the header sits ABOVE the frame, not over it`, r.backClearsFrame, r.geo);
     ok(`${tag}: and it is sticky, like every other Library page`, r.hdrSticky, r.hdrSticky);
     /* the frame keeps its 100dvh. An earlier attempt made it flex-sized, which
