@@ -6669,3 +6669,39 @@ Gates: `check_build` green 590→591 (marker `data-act="addjob"`, negative-contr
 `harness_walk` **152** (was 115) · `harness_showcase` 123 · `render_showcase` 69 ·
 `audit_viewports` 194, with `'addjob'` added to its write-control list so Showroom's counted zero
 stays honest.
+
+---
+
+## Build 592 — every control in the Showcase reaches 44px (2026-08-03)
+
+Measured at 820px before this build: **11 of the 12 controls were under 44px.** The next/back
+arrows were **30×30**, the expand 32×32, the slider handle 38 wide. The only one that passed was
+590's exit ✕ at 46 — and only because it was built from a mock that specified it.
+
+**The sweep is the deliverable, not the pixels.** `audit_viewports.js` now measures every button
+and the slider handle at four viewports across Showcase / Hall of Fame / review / all three
+Showroom tabs — 8 measurement points. On its **first run it found three more I had missed**:
+`.cr-sh-back` at 36×36 and the dismiss `✕` at **22×20**, the latter being a *destructive* control
+(remove a comparison, reject a finding) rendered smaller than anything else on screen.
+
+Two geometry traps, both real:
+
+- **`.cr-sh-hd` carries `margin-left:-19px`, which is exactly `-width/2`.** Widen the handle
+  without moving that and the white rule at `::before{left:50%}` stops marking the `--sh-split`
+  it is drawn to mark. They move together or not at all. (38→48, −19→−24.)
+- **`.cr-sh-play` is a child of `.cr-sh-step`**, so it matches `.cr-sh-step button` *and*
+  re-declares its own 30×30 295 lines later. Setting one leaves it at 30.
+
+Also: the grip is now a 44px round knob that scales on grab (`.grabbing`, a transform so it
+cannot cost a frame or move the divider), released on **both** pointerup and pointercancel —
+a cancel is what a browser sends when it steals a gesture, and a knob left swollen after that
+reads as stuck.
+
+**One assertion of mine was over-broad and the patch correctly aborted on it:**
+`'width:36px;height:36px' not in css` also matches `.cr-sh-slot img`, which is a *thumbnail*.
+Scoped to the `.cr-sh-back` rule instead. Second time this session — the file's own "scope the
+assertion, then read what it captured" rule.
+
+Gates: `check_build` green 591→592 (marker `width:48px;margin-left:-24px`, negative-controlled) ·
+`audit_viewports` **215** (was 194) · `harness_walk` 152 · `harness_showcase` 123 ·
+`render_showcase` 69.

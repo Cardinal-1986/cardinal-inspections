@@ -88,6 +88,32 @@ async function overlapSweep(page, where) {
   }, where);
 }
 
+/* Touch-target sweep (592). 44px is Apple's floor; this screen gets handed to a
+   homeowner, so it is not negotiable. Before 592, 11 of the 12 controls in the
+   room were under it — the next/back arrows were 30x30. Measured, not eyeballed,
+   at every viewport, so they cannot quietly shrink again.
+   Exempt: nothing. If a control is too small to hit it does not belong here. */
+async function touchSweep(page, where) {
+  return page.evaluate((where) => {
+    const root = document.querySelector(where) || document.getElementById('cr-show');
+    if (!root) return { error: 'no root' };
+    const small = [];
+    root.querySelectorAll('button, [data-hd]').forEach(e => {
+      const cs = getComputedStyle(e);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return;
+      const r = e.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) return;
+      if (r.height < 44 || r.width < 44) {
+        small.push((e.dataset.act || e.dataset.tab || e.dataset.ph || e.dataset.jp ||
+          (e.hasAttribute('data-hd') ? 'slider-handle' : '') ||
+          e.textContent.trim().slice(0, 14) || e.className) +
+          ' ' + Math.round(r.width) + 'x' + Math.round(r.height));
+      }
+    });
+    return { small };
+  }, where);
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
   for (const V of VIEWPORTS) {
@@ -138,6 +164,8 @@ async function overlapSweep(page, where) {
     let sweep = await overlapSweep(page, '#cr-show');
     ok(V.name + ': showcase — no control overlaps', sweep.bad.length === 0, sweep.bad);
     ok(V.name + ': showcase — no horizontal overflow', !sweep.overflowX);
+    let touch = await touchSweep(page, '#cr-show');
+    ok(V.name + ': showcase — every control is at least 44px', touch.small.length === 0, touch.small);
     // slider drag
     const cmp = await page.locator('[data-cmp]').boundingBox();
     await page.mouse.move(cmp.x + cmp.width * 0.52, cmp.y + cmp.height / 2);
@@ -169,6 +197,8 @@ async function overlapSweep(page, where) {
     await page.click('[data-tab="work"]'); await page.waitForTimeout(500);
     sweep = await overlapSweep(page, '#cr-show');
     ok(V.name + ': hall of fame — no control overlaps', sweep.bad.length === 0, sweep.bad);
+    touch = await touchSweep(page, '#cr-show');
+    ok(V.name + ': hall of fame — every control is at least 44px', touch.small.length === 0, touch.small);
     await page.click('[data-lens]'); await page.waitForTimeout(300);
     ok(V.name + ': HoF photo opens the lens', await page.evaluate(() => !!document.querySelector('.cr-sh-lens')));
     await page.click('.cr-sh-ln-x'); await page.waitForTimeout(200);
@@ -195,6 +225,8 @@ async function overlapSweep(page, where) {
     await page.click('[data-shot="0"]'); await page.waitForTimeout(500);
     sweep = await overlapSweep(page, '#cr-show');
     ok(V.name + ': review — no control overlaps', sweep.bad.length === 0, sweep.bad);
+    touch = await touchSweep(page, '#cr-show');
+    ok(V.name + ': review — every control is at least 44px', touch.small.length === 0, touch.small);
     await page.click('[data-act="rmark"]'); await page.waitForTimeout(200);
     const rev = await page.locator('[data-rev]').boundingBox();
     await page.mouse.move(rev.x + rev.width * 0.6, rev.y + rev.height * 0.55);
@@ -303,6 +335,8 @@ async function overlapSweep(page, where) {
         ok(V.name + ': showroom/' + t + ' — the ✕ is there', s.exit === 1, s.exit);
         const sw = await overlapSweep(page, '#cr-show');
         ok(V.name + ': showroom/' + t + ' — no control overlaps', sw.bad.length === 0, sw.bad);
+        const tt = await touchSweep(page, '#cr-show');
+        ok(V.name + ': showroom/' + t + ' — every control is at least 44px', tt.small.length === 0, tt.small);
         ok(V.name + ': showroom/' + t + ' — no horizontal overflow', !sw.overflowX);
       }
 

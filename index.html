@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 591 &#8212; build a Showcase pair straight from a job you already have, instead of uploading two files</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 592 &#8212; every button in the Showcase is now big enough to hit with a thumb</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35021,6 +35021,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:592, d:'2026-08-03', t:'Every button in the Showcase got bigger', s:'Measured on an iPad: eleven of the twelve controls on that screen were smaller than a thumb \u2014 the next/back arrows were 30 pixels square. They are all 44 now, the slider grip is a proper round knob that swells when you grab it, and the before/after divider is easier to catch. Nothing moved and nothing changed colour. A test now measures every one of them at four screen sizes, so they cannot quietly shrink again.' },
 { b:591, d:'2026-08-03', t:'Build a Showcase pair from a job you already have', s:'A <b>From a job</b> button beside Add a pair. Pick the job, tap the before, tap the after, and the address is filled in for you \u2014 with the line it was read from shown underneath, because it guesses and you should be able to see what it guessed from. Add <b>+ During the build</b> for a third. The photographs are copied into the Showcase, so the pair keeps working whatever happens to the job. 196 photographs are already sitting on 12 jobs; this is how they get in front of a homeowner.' },
 { b:590, d:'2026-08-03', t:'Showroom \u2014 a clean door you can hand across the table', s:'A new card on the landing screen opens the Showcase full screen with every editing control gone \u2014 no add, no publish, no remove, no share, nothing to change on any of the three tabs. Hold the \u2715 for a second to come back; a tap does nothing, so a homeowner can\u2019t wander out of it. Same sign-in, same photographs, no second app. Offered on a tablet, laptop or desktop only \u2014 a phone is not a screen you present from, and the ordinary Showcase there is unchanged.' },
 { b:589, d:'2026-08-02', t:'The expand button on the slider works on a real tap', s:'Yesterday\u2019s Lens added a full-screen expand button to the before/after slider, and on a real device it did nothing: the slider was swallowing the tap. It opens now. Nothing else changed \u2014 found by testing every button at phone, iPad and desktop sizes before you had to.' },
@@ -55550,15 +55551,18 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 #cr-show.open{display:block}
 .cr-sh-wrap{max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom,0px))}
 .cr-sh-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+/* 592: 44px is the floor on a screen you hand across a table. */
 .cr-sh-back{flex:0 0 auto;background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
-  color:var(--sh-mut,#98A29C);width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:17px;line-height:1;margin-top:3px}
+  color:var(--sh-mut,#98A29C);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:17px;line-height:1}
 .cr-sh-back:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
 .cr-sh-ttl{flex:1;min-width:0}
 .cr-sh-ttl h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(26px,7vw,34px);letter-spacing:-.02em;line-height:1}
 .cr-sh-ttl h1 span{color:var(--sh-acc,#C8202E)}
 .cr-sh-ttl p{margin:6px 0 0;font:600 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+/* 592: 44px is the floor on a screen you hand across a table. */
 .cr-sh-priv{flex:0 0 auto;display:flex;align-items:center;gap:7px;background:transparent;
-  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:8px;padding:7px 11px;cursor:pointer;
+  min-height:44px;box-sizing:border-box;
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:8px;padding:7px 12px;cursor:pointer;
   color:var(--sh-mut,#98A29C);font:600 11px inherit;font-family:inherit;margin-top:3px}
 .cr-sh-priv .d{width:8px;height:8px;border-radius:50%;background:var(--sh-mut,#98A29C)}
 #cr-show.priv .cr-sh-priv{border-color:var(--sh-ok,#46A758);color:var(--sh-ink,#F2F4F2)}
@@ -55572,7 +55576,9 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
    it hands off to the reports list that already exists. */
 .cr-sh-tabs{display:flex;gap:6px;margin:14px 0 2px;overflow-x:auto;scrollbar-width:none}
 .cr-sh-tabs::-webkit-scrollbar{display:none}
-.cr-sh-tabs button{flex:0 0 auto;padding:9px 15px;border-radius:20px;cursor:pointer;
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-tabs button{flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;
+  box-sizing:border-box;padding:9px 17px;border-radius:22px;cursor:pointer;
   background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
   color:var(--sh-mut,#98A29C);font:700 11.5px inherit;font-family:inherit;white-space:nowrap}
 .cr-sh-tabs button:hover{color:var(--sh-ink,#F2F4F2);border-color:var(--sh-acc,#C8202E)}
@@ -55586,8 +55592,10 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   border-radius:11px;padding:13px;margin-top:10px}
 .cr-sh-wk-h{display:flex;align-items:center;gap:9px;font:650 15px inherit;font-family:inherit}
 .cr-sh-wk-l{margin:7px 0 0;font-size:12.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+/* 592: 44px is the floor on a screen you hand across a table. */
 .cr-sh-x{margin-left:auto;flex:0 0 auto;background:transparent;border:0;cursor:pointer;
-  color:var(--sh-mut,#98A29C);font-size:14px;line-height:1;padding:2px 4px;font-family:inherit}
+  display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;
+  color:var(--sh-mut,#98A29C);font-size:15px;line-height:1;padding:2px 4px;font-family:inherit}
 .cr-sh-x:hover{color:var(--sh-bad,#E5484D)}
 .cr-sh-wk-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px}
 @media (max-width:560px){ .cr-sh-wk-g{grid-template-columns:1fr} }
@@ -55637,7 +55645,8 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 .cr-sh-head h2{margin:0;font:650 18px inherit;font-family:inherit}
 .cr-sh-head .s{color:var(--sh-mut,#98A29C);font-size:12.5px;width:100%}
 .cr-sh-step{margin-left:auto;display:flex;align-items:center;gap:4px;flex:none}
-.cr-sh-step button{width:30px;height:30px;border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:6px;
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-step button{width:44px;height:44px;border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:8px;
   background:transparent;color:var(--sh-mut,#98A29C);cursor:pointer;font-size:12px;line-height:1;font-family:inherit}
 .cr-sh-step button:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
 .cr-sh-step .p{font:600 11.5px ui-monospace,'SF Mono',Menlo,monospace;color:var(--sh-mut,#98A29C);padding:0 4px}
@@ -55645,23 +55654,38 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   touch-action:none;user-select:none;-webkit-user-select:none}
 .cr-sh-cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
 .cr-sh-cmp .bf{clip-path:inset(0 calc(100% - var(--sh-split,52%)) 0 0);z-index:2}
-.cr-sh-hd{position:absolute;top:0;bottom:0;left:var(--sh-split,52%);width:38px;margin-left:-19px;z-index:3;
+/* 592: 48px, per the reference design. margin-left is -width/2 and MUST move with
+   it — otherwise the white rule at ::before{left:50%} stops marking the split it
+   is drawn to mark. The drag math reads [data-cmp], never this element, so
+   widening cannot affect where the divider lands. */
+.cr-sh-hd{position:absolute;top:0;bottom:0;left:var(--sh-split,52%);width:48px;margin-left:-24px;z-index:3;
   cursor:ew-resize;display:flex;align-items:center;justify-content:center}
 .cr-sh-hd::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.6)}
-.cr-sh-grip{position:relative;background:#fff;color:#111;border-radius:999px;padding:5px 9px;font:700 10px inherit;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.cr-sh-grip{position:relative;background:#fff;color:#111;border-radius:999px;
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  font:700 10px inherit;box-shadow:0 2px 8px rgba(0,0,0,.5);
+  transition:transform .13s ease,box-shadow .13s ease}
+/* Tactile feedback on grab. A transform, not a re-layout — it cannot move the
+   divider or cost a frame mid-drag. */
+.cr-sh-cmp.grabbing .cr-sh-grip{transform:scale(1.14);box-shadow:0 4px 16px rgba(0,0,0,.6)}
+@media (prefers-reduced-motion:reduce){ .cr-sh-grip{transition:none} }
 .cr-sh-tag{position:absolute;top:9px;z-index:4;font:600 10.5px inherit;letter-spacing:.06em;padding:3px 9px;border-radius:4px;
   background:rgba(10,12,14,.74);color:#fff;pointer-events:none;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cr-sh-tag.b{left:9px}
 .cr-sh-tag.a{right:9px}
 .cr-sh-dock{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
-.cr-sh-dock button{font:600 12px inherit;font-family:inherit;padding:7px 12px;border-radius:6px;cursor:pointer;
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-dock button{font:600 12px inherit;font-family:inherit;display:inline-flex;align-items:center;
+  min-height:44px;box-sizing:border-box;padding:7px 14px;border-radius:7px;cursor:pointer;
   background:var(--sh-card2,#101312);border:1px solid var(--sh-line,rgba(148,157,165,.20));color:var(--sh-mut,#98A29C)}
 .cr-sh-dock button.on{background:var(--sh-acc,#C8202E);border-color:var(--sh-acc,#C8202E);color:var(--sh-acci,#FFF3F3)}
 .cr-sh-dock button[disabled]{opacity:.4;cursor:default}
 
 /* admin bar + form */
 .cr-sh-admin{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.cr-sh-btn{font:700 12.5px inherit;font-family:inherit;padding:10px 15px;border-radius:7px;cursor:pointer;
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-btn{font:700 12.5px inherit;font-family:inherit;display:inline-flex;align-items:center;
+  justify-content:center;min-height:44px;box-sizing:border-box;padding:10px 16px;border-radius:7px;cursor:pointer;
   background:var(--sh-acc,#C8202E);border:0;color:var(--sh-acci,#FFF3F3)}
 .cr-sh-btn.ghost{background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));color:var(--sh-mut,#98A29C)}
 .cr-sh-btn:disabled{opacity:.55;cursor:wait}
@@ -55763,8 +55787,10 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 .cr-sh-fnd select{background:var(--sh-card2,#101312);color:var(--sh-ink,#F2F4F2);
   border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:6px;padding:5px 7px;
   font:700 10px inherit;font-family:inherit;margin-top:6px}
+/* 592: 44px is the floor on a screen you hand across a table. */
 .cr-sh-fnd .x{flex:0 0 auto;background:transparent;border:0;cursor:pointer;padding:2px 5px;
-  color:var(--sh-mut,#98A29C);font-size:14px;line-height:1;font-family:inherit}
+  display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;
+  color:var(--sh-mut,#98A29C);font-size:15px;line-height:1;font-family:inherit}
 .cr-sh-fnd .x:hover{color:var(--sh-bad,#E5484D)}
 
 /* ── Chalk — draw your own marks (585) ─────────────────────────────────────
@@ -55880,11 +55906,15 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   font-size:10.5px;color:rgba(242,244,242,.6);pointer-events:none}
 .cr-sh-ln-btns{position:absolute;right:10px;top:calc(max(10px,env(safe-area-inset-top)) + 52px);
   z-index:6;display:flex;flex-direction:column;gap:7px}
-.cr-sh-ln-btns button{width:40px;height:40px;border-radius:9px;font-size:18px;cursor:pointer;
+.cr-sh-ln-btns button{width:44px;height:44px;border-radius:10px;font-size:18px;cursor:pointer;
   color:var(--sh-ink,#F2F4F2);background:rgba(5,6,7,.65);border:1px solid rgba(242,244,242,.4);
   font-family:inherit}
 /* the way in: a quiet expand affordance on zoomable photographs */
-.cr-sh-exp{position:absolute;right:8px;bottom:8px;z-index:6;width:32px;height:32px;border-radius:8px;
+/* 592: 44px, and note the cost — wireSlider() hole-punches this element out of
+   the drag surface (589), so the dead corner of the slider grows with it. That is
+   the right trade: a control you cannot hit is worse than a corner you cannot
+   drag from, and the divider is reachable everywhere else along its height. */
+.cr-sh-exp{position:absolute;right:8px;bottom:8px;z-index:6;width:44px;height:44px;border-radius:10px;
   border:1px solid rgba(242,244,242,.35);background:rgba(5,6,7,.55);color:var(--sh-ink,#F2F4F2);
   font-size:14px;line-height:1;cursor:pointer;font-family:inherit}
 .cr-sh-side{position:relative}
@@ -55933,8 +55963,8 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
 .cr-sh-cc .stopnote{position:absolute;right:14px;bottom:12px;z-index:5;font-size:10.5px;
   color:rgba(242,244,242,.55)}
 .cr-sh-play{flex:0 0 auto;background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
-  color:var(--sh-mut,#98A29C);width:30px;height:30px;border-radius:8px;cursor:pointer;
-  font-size:11px;line-height:1;font-family:inherit}
+  color:var(--sh-mut,#98A29C);width:44px;height:44px;border-radius:8px;cursor:pointer;
+  font-size:12px;line-height:1;font-family:inherit}
 .cr-sh-play:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
 @media (prefers-reduced-motion:reduce){
   .cr-sh-cc.kb .ph img.af{animation:none}
@@ -56591,18 +56621,24 @@ function wireSlider(){
     if(!r.width) return;
     set((e.clientX - r.left) / r.width * 100);
   }
+  /* 592: `grabbing` is the only thing this class does — a scale on the knob. It
+     is removed on BOTH pointerup and pointercancel, because a cancel is exactly
+     what a browser sends when it steals the gesture, and a knob left swollen
+     after that reads as a stuck control. */
+  function grab(on){ cmp.classList.toggle('grabbing', !!on); }
   cmp.addEventListener('pointerdown', function(e){
     /* The expand button lives inside the slider. Capturing the pointer
        here would steal its pointerup and the browser would fire no
        click on it — 578's class. Let a press on the button through. */
     if(e.target.closest && e.target.closest('.cr-sh-exp')) return;
     dragging = true;
+    grab(true);
     try{ cmp.setPointerCapture(e.pointerId); }catch(_){}
     from(e);
   });
   cmp.addEventListener('pointermove', function(e){ if(dragging) from(e); });
-  cmp.addEventListener('pointerup',     function(){ dragging = false; });
-  cmp.addEventListener('pointercancel', function(){ dragging = false; });
+  cmp.addEventListener('pointerup',     function(){ dragging = false; grab(false); });
+  cmp.addEventListener('pointercancel', function(){ dragging = false; grab(false); });
   hd.addEventListener('keydown', function(e){
     var now = parseFloat(cmp.style.getPropertyValue('--sh-split')) || 52;
     if(e.key === 'ArrowLeft'){ set(now - 4); e.preventDefault(); }
