@@ -893,7 +893,7 @@ function inventoryRing(x, y, r){
 }
 
 var SPREADS=[
-  {n:1, t:'The Knock', w:'A rep on the step. Nobody has touched the house yet — this is an install book, and it starts with a conversation.',
+  {n:1, t:'The Knock', done:true, w:'A rep on the step. Nobody has touched the house yet — this is an install book, and it starts with a conversation.',
    sky:'early', build:function(){
      /* NO STORM. Theo, 3 Aug: "this is not for insurance, it is to show
         someone the install process." The hail dents came off this roof the
@@ -910,7 +910,7 @@ var SPREADS=[
      kitchen table, the attic inspection exactly as he described it, and the
      takeoff as a component inventory by Curtis and his clipboard. Three out,
      three in — the book stays sixteen. */
-  {n:2, t:'The Kitchen Table', w:'The contract gets signed where the coffee is — inside, unhurried, before a single ladder goes up.',
+  {n:2, t:'The Kitchen Table', done:true, w:'The contract gets signed where the coffee is — inside, unhurried, before a single ladder goes up.',
    sky:'day', build:function(){
      var s='';
      // full-bleed interior; the sky and lawn the loop painted are behind this
@@ -949,7 +949,7 @@ var SPREADS=[
                           arm:[[8,-30],[24,-27]]});
      return s;
    }},
-  {n:3, t:'The Attic', w:'Ladder down, lights on. Decking first, then the flashlight to the soffit — and these baffles are buried. Found before anyone quoted a shingle.',
+  {n:3, t:'The Attic', done:true, w:'Ladder down, lights on. Decking first, then the flashlight to the soffit — and these baffles are buried. Found before anyone quoted a shingle.',
    sky:'day', build:function(){
      var s='';
      // full-bleed attic: deck underside, rafters, joists, insulation
@@ -987,7 +987,7 @@ var SPREADS=[
         which is the spread's whole point, wearing feathers */
      return s + bird(24,124,0.55);
    }},
-  {n:4, t:'The Takeoff', w:'Curtis and the clipboard: pipe boots counted, the dish staying or going, sprinklers flagged — and the gnome noted for witness protection. Drone photos start here.',
+  {n:4, t:'The Takeoff', done:true, w:'Curtis and the clipboard: pipe boots counted, the dish staying or going, sprinklers flagged — and the gnome noted for witness protection. Drone photos start here.',
    sky:'noon', build:function(){
      var s=house({roof:'shingle'});
      // what the clipboard is counting, each with its inventory ring
@@ -1050,7 +1050,7 @@ var SPREADS=[
      }
      return s + truck(74,150,0.94) + fig(232,150,0.94,{arm:[[-8,-34],[-4,-44]]}) + bird(276,112,0.68,true);
    }},
-  {n:7, t:'The Tear-Off', w:'Built, tested on your iPad, and the only one with the pop, the beats and the joke tabs.',
+  {n:7, t:'The Tear-Off', w:'Built and tested on your iPad — the pop, the beats, the joke tabs, and the debris the magnet remembers on 15.',
    sky:'dusk', done:true, build:function(){
      /* TARPS over both beds — Theo: "I didn't mean tractor I meant tarps."
         Blue poly, the same shape language as the built spread's tarpG beat,

@@ -1,12 +1,18 @@
 <!--
 ════════════════════════════════════════════════════════════════════
- THE POP-UP ROOF — Spread 7 of 16, full screen
+ THE POP-UP ROOF — the book, front to back
  Written 3 Aug 2026. Rebuilt the same day around Theo's own direction.
 ────────────────────────────────────────────────────────────────────
  ✅ iOS SAFARI PASSES. Theo opened the first version on his iPad —
  "it looks just like the preview." preserve-3d survives, the pop
  stands up, and the direction's single largest engineering risk is
- closed. The remaining fifteen spreads are buildable.
+ closed. The remaining fifteen spreads are buildable — and as of the
+ same night, being built: this file now carries the WHOLE BOOK. A
+ SPREADS registry, one spread mounted at a time, and a page turn that
+ folds the pop down, swaps the scene, and stands it back up. Spreads
+ 1-4 (the retail open Theo scripted) and 7 are in; the rest slot into
+ the registry as they get drawn. Only built spreads are listed, and
+ the top bar numbers them honestly out of 16.
 
  THE SHAPE OF THIS PAGE IS THEO'S, in three notes over one evening:
    "the interactive part is only half the screen"
@@ -69,7 +75,7 @@
      delivered. -->
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<title>The Pop-Up Roof — the tear-off spread</title>
+<title>The Pop-Up Roof</title>
 <style>
   :root{
     --board:#E8DCC8; --shade:#D3C3A4; --cut-lt:#F4EDDD; --cut-dk:#C9B893;
@@ -105,7 +111,7 @@
      including the JS, which measures .floor rather than carrying its own copy.
      An early version hardcoded 118 in three places and the chips landed off
      the page the moment the stage grew. */
-  .scene{position:relative;width:min(96vw,940px);aspect-ratio:300 / 297;
+  .scene{position:relative;width:min(96vw,940px,80vh);aspect-ratio:300 / 297;
          --floorH:30%; --popH:59%}
 
   /* ── the back page, printed ────────────────────────────────
@@ -240,6 +246,22 @@
   .beat{opacity:0;transition:opacity .55s ease}
   .beat.on{opacity:1}
 
+  /* ── per-spread sky, floor and debris scope ────────────────
+     The dawn gradient above is spread 7's and stays the default. The
+     other spreads re-time the same printed board; interiors trade the
+     lawn for boards and lose the driveway. Debris chips only exist
+     from the tear-off onward — turning back to an earlier spread
+     hides a lawn that has not happened yet. */
+  .sky-day  .backdrop{background:linear-gradient(#5B84B4 0%,#8FB2D6 45%,#D8E2E8 78%,#EDE7D6 100%)}
+  .sky-noon .backdrop{background:linear-gradient(#4E7BB0 0%,#7FA9D0 40%,#C6D9E6 80%,#F0EAD8 100%)}
+  .sky-dusk .backdrop{background:linear-gradient(#2E2A4E 0%,#5C4670 40%,#B86A50 78%,#EFB988 100%)}
+  .sky-attic .backdrop{background:#191410}
+  .sky-attic .cloud{display:none}
+  .floor-wood .floor{background:linear-gradient(#C7A97E,#8A6B44)}
+  .floor-dark .floor{background:linear-gradient(#3A3128,#241E17)}
+  .floor-wood .drivelit,.floor-dark .drivelit{display:none}
+  .nochips .chip{display:none}
+
   /* ── debris ────────────────────────────────────────────── */
   .chip{position:absolute;width:var(--w,13px);height:var(--h,8px);
         background:linear-gradient(#F4EDDD,#DCCDAE);
@@ -336,9 +358,9 @@
 <body>
 
 <div class="deck fibre" id="deck" tabindex="0" role="button"
-     aria-label="Tap to advance through the tear-off spread">
+     aria-label="Tap to advance through The Pop-Up Roof">
   <div class="topbar">
-    <div class="phase">The Tear-Off<i>Spread 7 of 16</i></div>
+    <div class="phase" id="phase">The Pop-Up Roof<i>&nbsp;</i></div>
     <div class="dots" id="dots"></div>
   </div>
 
@@ -469,7 +491,17 @@
               tool: limb('M4,-38 L-22,12', 2.6, '#E8DCC8', '#C9B893') +
                     '<g transform="translate(-22,12) rotate(22)">' +
                     '<path d="M-8,-3.4 L8,-3.4 L8,0 L6,3 L4,0 L2,3 L0,0 L-2,3 L-4,0 L-6,3 L-8,0 Z" ' +
-                    'fill="#8C8F94" stroke="#5E6166" stroke-width=".8" stroke-linejoin="round"/></g>' }
+                    'fill="#8C8F94" stroke="#5E6166" stroke-width=".8" stroke-linejoin="round"/></g>' },
+    /* the reaches the rest of the book needs — a knock at a door panel,
+       hands over a table, a clipboard held close, a flashlight held level */
+    knock:  { back:'M-10.6,-43.4 L-13,-33 L-11,-25',     bh:[-11,-25],
+              front:'M10.6,-43.4 L17.4,-41 L23,-44.6',   fh:[23,-44.6] },
+    table:  { back:'M-10.6,-43.4 L-12.6,-34 L-10.4,-26', bh:[-10.4,-26],
+              front:'M10.6,-43.4 L16.6,-36.4 L22,-31',   fh:[22,-31] },
+    clip:   { back:'M-10.6,-43.4 L-13,-33 L-11,-25',     bh:[-11,-25],
+              front:'M10.6,-43.4 L15,-36 L11,-30.4',     fh:[11,-30.4] },
+    torch:  { back:'M-10.6,-43.4 L-13,-33 L-11,-25',     bh:[-11,-25],
+              front:'M10.6,-43.4 L16.4,-38.4 L23,-36.6', fh:[23,-36.6] }
   };
 
   function figure(x, y, s, o){
@@ -537,12 +569,17 @@
     g += '<path d="M-5.6,-49.8 Q0,-45.6 5.6,-49.8" fill="none" stroke="' + ink +
          '" stroke-width=".6" opacity=".35"/>';
 
-    // hard hat: dome, sheen, brim
-    g += '<path d="M-7.8,-59.4 A7.8,7.8 0 0 1 7.8,-59.4 Z" fill="' + hat + '"/>';
-    g += '<path d="M-4.8,-60.8 A5.4,5.4 0 0 1 0.6,-66.2" fill="none" stroke="' + hatLt +
-         '" stroke-width="1.5" stroke-linecap="round"/>';
-    g += '<rect x="-10.6" y="-60.8" width="21.2" height="3.2" rx="1.6" fill="' + hat +
-         '" stroke="#B4520F" stroke-width=".7"/>';
+    // hard hat: dome, sheen, brim — or, hat:false, a civilian head of hair
+    if(o.hat !== false){
+      g += '<path d="M-7.8,-59.4 A7.8,7.8 0 0 1 7.8,-59.4 Z" fill="' + hat + '"/>';
+      g += '<path d="M-4.8,-60.8 A5.4,5.4 0 0 1 0.6,-66.2" fill="none" stroke="' + hatLt +
+           '" stroke-width="1.5" stroke-linecap="round"/>';
+      g += '<rect x="-10.6" y="-60.8" width="21.2" height="3.2" rx="1.6" fill="' + hat +
+           '" stroke="#B4520F" stroke-width=".7"/>';
+    } else {
+      g += '<path d="M-6.6,-55.6 A6.6,6.6 0 0 1 6.6,-55.6 L6,-53.4 A6.6,6.6 0 0 0 -6,-53.4 Z" fill="' +
+           ink + '" opacity=".85"/>';
+    }
 
     // brass pivots — shoulder, hip, knee
     g += '<g fill="' + rivet + '">' +
@@ -1071,7 +1108,7 @@ function cutLayers(x1){
   return s;
 }
 
-  function houseSVG(stripped){
+  function houseSVG(stripped, noCrew){
     var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
         GLASS='#8FB6CC', GLASSL='#B9D6E4',
         DOOR='#8F1620', DOORS='#6B0F16', MET='#AEB4BA', METS='#878D93',
@@ -1285,8 +1322,10 @@ function cutLayers(x1){
     // ── the crew: one on the roof stripping, one on the ground.
     // On the T the band is flat, so he stands mid-band in the right free
     // zone — clear of the wing (102-178) and the chimney (182-214).
-    s += figure(232, 90, 0.5,  {pose:'shovel', flip:true});
-    s += figure(104, 186,        0.62, {pose:'point'});
+    if(!noCrew){
+      s += figure(232, 90, 0.5,  {pose:'shovel', flip:true});
+      s += figure(104, 186,        0.62, {pose:'point'});
+    }
 
     // The cardinal is NOT drawn here — it is its own pop piece on a stick,
     // outside this board, because it must not move when the roof strips.
@@ -1294,6 +1333,225 @@ function cutLayers(x1){
     return s;
   }
 
+
+
+  /* ════ THE OTHER SPREADS' PROPS — ported from the contact sheet ════
+     The sheet and this file share the T's roof band exactly (eave y=100,
+     ridge y=44, x 30-270), so ROOF props port verbatim. GROUND props remap
+     y150→190 because this board's wall is taller than the sheet card's.
+     The interiors (kitchen, attic) were drawn full-bleed 300×190 on the
+     sheet and port as compositions — only the puppets change, because this
+     file's rule is ONE puppet for the whole book. */
+
+  function truck(x, y, s){
+    var g = '<g transform="translate(' + x + ',' + y + ') scale(' + s + ')">';
+    g += '<path d="M-44,-24 L6,-24 L6,-2 L-44,-2 Z" fill="#C8202E" stroke="#E8DCC8" stroke-width="1.6" stroke-linejoin="round"/>';
+    g += '<path d="M6,-24 L22,-24 L32,-12 L32,-2 L6,-2 Z" fill="#8F1620" stroke="#E8DCC8" stroke-width="1.6" stroke-linejoin="round"/>';
+    g += '<path d="M10,-21 L21,-21 L28,-13 L10,-13 Z" fill="#9CBEDA"/>';
+    g += '<circle cx="-30" cy="0" r="6.4" fill="#243B53"/><circle cx="20" cy="0" r="6.4" fill="#243B53"/>';
+    return g + '</g>';
+  }
+  function gnome(x, y, sc){
+    /* the lawn ornament, inventoried on the Takeoff. Red hat, of course. */
+    var g = '<g transform="translate(' + x + ',' + y + ') scale(' + sc + ')">';
+    g += '<ellipse cx="0" cy="0" rx="4.6" ry="1.3" fill="#000" opacity=".18"/>';
+    g += '<path d="M-3.4,0 L-2.6,-6.5 L2.6,-6.5 L3.4,0 Z" fill="#3E6FA8"/>';
+    g += '<path d="M0,-6.5 L2.6,-6.5 L3.4,0 L0,0 Z" fill="#2E5480"/>';
+    g += '<path d="M-2.6,-7.5 Q0,-4.5 2.6,-7.5 L2.6,-9.5 Q0,-8 -2.6,-9.5 Z" fill="#F2F4F2"/>';
+    g += '<circle cx="0" cy="-9.6" r="2.5" fill="#E8C39E"/>';
+    g += '<path d="M-2.5,-10.6 L0,-16.5 L2.5,-10.6 Z" fill="#C8202E"/>';
+    g += '<circle cx="0" cy="-16.6" r="0.9" fill="#8F1620"/>';
+    return g + '</g>';
+  }
+  function sprinkler(x, y){
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+           '<path d="M-1.4,0 L1.4,0 L1.4,-3.4 L-1.4,-3.4 Z" fill="#B08D4F"/>' +
+           '<path d="M-2.2,-3.4 L2.2,-3.4 L2.2,-4.6 L-2.2,-4.6 Z" fill="#8F7138"/></g>';
+  }
+  function drone(x, y, sc){
+    var g = '<g transform="translate(' + x + ',' + y + ') scale(' + sc + ')">';
+    g += '<path d="M-11,-4 L11,-4" stroke="#4A5056" stroke-width="1.6" fill="none"/>';
+    g += '<ellipse cx="-11" cy="-4" rx="5" ry="1.2" fill="#9AA2A8" opacity=".8"/>';
+    g += '<ellipse cx="11" cy="-4" rx="5" ry="1.2" fill="#9AA2A8" opacity=".8"/>';
+    g += '<path d="M-4,-4.6 L4,-4.6 L4,0.6 L-4,0.6 Z" fill="#4A5056" stroke="#E8DCC8" stroke-width=".9"/>';
+    g += '<circle cx="0" cy="-1.6" r="1.2" fill="#C8202E"/>';
+    g += '<path d="M-3,0.6 L-3,2.4 M3,0.6 L3,2.4" stroke="#4A5056" stroke-width="1" fill="none"/>';
+    return g + '</g>';
+  }
+  function inventoryRing(x, y, r, col){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="none" stroke="' +
+           (col || '#F4EDDD') + '" stroke-width="1.5" opacity=".9"/>';
+  }
+  /* the cardinal drawn INSIDE a scene (interiors only) — the pop-piece bird
+     owns id="bird", so the in-scene copy must never carry it */
+  function sceneBird(x, y, s, flip){
+    return cardinal(x, y, s, flip, 'scene').replace(' id="bird"', '');
+  }
+
+  /* ── SPREAD 1 — The Knock ──────────────────────────────────────── */
+  function knockSVG(){
+    var s = houseSVG(false, true);   // the worn roof, no crew — nobody is on it yet
+    s += '<g id="truckG" class="beat">' + truck(52, 190, 1.15) + '</g>';
+    /* on the step, fist on the door panel — the default arm swings up at the
+       roof, which had him knocking on the sky */
+    s += '<g id="repG" class="beat">' + figure(129, 187, 0.62, {pose:'knock'}) + '</g>';
+    return s;
+  }
+
+  /* ── SPREAD 2 — The Kitchen Table ─────────────────────────────────
+     Full-bleed interior, ported from the sheet composition Theo approved.
+     Base is the room; the people, the contract and the pen each arrive on
+     their own beat. */
+  function kitchenSVG(){
+    var s = '';
+    s += '<path d="M0,0 L300,0 L300,190 L0,190 Z" fill="#EFE7D8"/>';
+    s += '<path d="M' + SPLIT + ',0 L300,0 L300,190 L' + SPLIT + ',190 Z" fill="#E2D6C2"/>';
+    s += '<path d="M0,148 L300,148 L300,190 L0,190 Z" fill="#C7A97E"/>';
+    s += '<g stroke="#A98C62" stroke-width=".8" opacity=".6">' +
+         '<path d="M0,162 L300,162"/><path d="M0,176 L300,176"/></g>';
+    // the window, and the cardinal on the sill outside it
+    s += '<path d="M44,26 L96,26 L96,66 L44,66 Z" fill="#6E9AC0" stroke="#8A7660" stroke-width="2"/>';
+    s += '<path d="M44,26 L96,26 L44,66 Z" fill="#9CBEDA"/>';
+    s += '<path d="M70,26 L70,66 M44,46 L96,46" stroke="#8A7660" stroke-width="1.6" fill="none"/>';
+    s += sceneBird(58, 65, 0.42, false);
+    s += '<path d="M40,66 L100,66 L100,70 L40,70 Z" fill="#8A7660"/>';
+    // a framed something on the shaded wall — every kitchen has one
+    s += '<path d="M226,34 L252,34 L252,54 L226,54 Z" fill="#F7F2E6" stroke="#8A7660" stroke-width="1.6"/>';
+    s += '<path d="M231,48 L238,40 L243,45 L248,38" stroke="#C8202E" stroke-width="1.4" fill="none"/>';
+    // the table and two mugs — the coffee is here before anyone sits down
+    s += '<path d="M112,104 L238,104 L238,112 L112,112 Z" fill="#8A5C36"/>';
+    s += '<path d="M175,104 L238,104 L238,112 L175,112 Z" fill="#6E4527"/>';
+    s += '<path d="M118,112 L124,112 L124,148 L118,148 Z" fill="#6E4527"/>';
+    s += '<path d="M226,112 L232,112 L232,148 L226,148 Z" fill="#59371E"/>';
+    s += '<path d="M126,96 L136,96 L135,104 L127,104 Z" fill="#C8202E"/>' +
+         '<path d="M136,98 Q140,99 136,101" stroke="#C8202E" stroke-width="1.2" fill="none"/>';
+    s += '<path d="M152,96 L162,96 L161,104 L153,104 Z" fill="#3E5C80"/>';
+    // the people, on their own beat
+    s += '<g id="peopleG" class="beat">';
+    s += figure(88, 148, 0.8, {pose:'table'});
+    s += figure(252, 148, 0.8, {pose:'table', flip:true, hat:false,
+                                shirt:'#6B7A93', shirtDk:'#4F5C72'});
+    s += '</g>';
+    // the contract, then the pen ON the signature line
+    s += '<g id="contractG" class="beat"><g transform="translate(186,96) rotate(-4)">' +
+         '<path d="M-16,-8 L16,-8 L16,8 L-16,8 Z" fill="#F7F2E6" stroke="#C9B893" stroke-width="1.2"/>' +
+         '<g stroke="#BCAF97" stroke-width="1"><path d="M-11,-4 L11,-4"/><path d="M-11,0 L11,0"/></g>' +
+         '<path d="M-11,5 L6,5" stroke="#C8202E" stroke-width="1.8"/></g></g>';
+    s += '<g id="penG" class="beat">' +
+         '<path d="M196,99 L204,94" stroke="#2A2E33" stroke-width="1.6" stroke-linecap="round"/></g>';
+    return s;
+  }
+
+  /* ── SPREAD 3 — The Attic ─────────────────────────────────────────
+     Theo's own beat script, verbatim from the brief: "you pull the ladder
+     down, hit the switch for the lights, look at the decking, then hit the
+     flashlight and look for soffit intake and see the baffles covered."
+     Beats only ever ADD, so the lighting is additive: the base is the dark
+     room, and each beat lays more light on it. */
+  function atticSVG(){
+    var s = '';
+    s += '<path d="M0,0 L300,0 L300,190 L0,190 Z" fill="#241E17"/>';
+    // the deck underside, dim until the lights come on
+    s += '<path d="M10,84 L150,14 L290,84 L290,96 L150,26 L10,96 Z" fill="#6E5B41"/>';
+    // joist band and the insulation between
+    s += '<path d="M0,124 L300,124 L300,132 L0,132 Z" fill="#6B5A42"/>';
+    s += '<path d="M0,128 L300,128" stroke="#59492F" stroke-width="1" fill="none"/>';
+    s += '<g fill="#C98FA0">' +
+         '<path d="M6,124 Q26,112 46,124 Z"/><path d="M52,124 Q72,114 92,124 Z"/>' +
+         '<path d="M100,124 Q118,115 136,124 Z"/><path d="M144,124 Q162,114 180,124 Z"/></g>';
+    // the MOUND, fully burying the baffles — the finding comes later
+    s += '<path d="M212,124 Q238,98 268,110 Q286,118 292,124 Z" fill="#C98FA0"/>';
+    // the hatch, shut — a hairline of hallway light around it
+    s += '<path d="M56,124 L108,124 L108,132 L56,132 Z" fill="#3A3128"/>';
+    s += '<path d="M56,124 L108,124 L108,132 L56,132 Z" fill="none" stroke="#B08D4F" stroke-width=".8" opacity=".5"/>';
+    // the bulb, OFF
+    s += '<path d="M150,26 L150,34" stroke="#8A8378" stroke-width="1.4" fill="none"/>';
+    s += '<circle cx="150" cy="39" r="5" fill="#4A443C" stroke="#5E574C" stroke-width="1"/>';
+    s += '<path d="M154,42 L154,50 M154,50 L156,52" stroke="#6B6458" stroke-width="1" fill="none"/>';
+    // the cardinal is already up here — it found the one bay that breathes
+    s += sceneBird(24, 124, 0.5, false);
+
+    // BEAT: the ladder comes down, and the inspector with it
+    s += '<g id="ladderG" class="beat">';
+    s += '<path d="M56,124 L108,124 L108,132 L56,132 Z" fill="#0E0B08"/>';
+    s += '<path d="M62,128 Q82,150 96,186 L104,186 Q88,148 70,128 Z" fill="#B08D4F" opacity=".9"/>';
+    s += '<g stroke="#8F7138" stroke-width="1.6">' +
+         '<path d="M70,140 L84,136"/><path d="M76,152 L90,148"/><path d="M82,164 L96,160"/></g>';
+    s += '<path d="M60,132 L104,132 L96,190 L68,190 Z" fill="#F2E3A8" opacity=".18"/>';
+    s += figure(174, 124, 0.7, {pose:'torch'});
+    s += '</g>';
+
+    // BEAT: hit the switch — the bulb, its glow, and the room warming
+    s += '<g id="lightG" class="beat">';
+    s += '<ellipse cx="150" cy="70" rx="150" ry="80" fill="#F7E8B0" opacity=".07"/>';
+    s += '<circle cx="150" cy="44" r="20" fill="#F7E8B0" opacity=".28"/>';
+    s += '<circle cx="150" cy="39" r="5" fill="#F7E8B0" stroke="#D9C070" stroke-width="1"/>';
+    s += '<path d="M154,42 L154,50 M154,50 L156,52" stroke="#B8B0A2" stroke-width="1" fill="none"/>';
+    s += '</g>';
+
+    // BEAT: read the decking — the plane lifts, the rafter ticks show
+    s += '<g id="deckG" class="beat">';
+    s += '<path d="M10,84 L150,14 L290,84 L290,96 L150,26 L10,96 Z" fill="#B99F76" opacity=".55"/>';
+    s += '<g stroke="#8A6B4A" stroke-width="3">' +
+         '<path d="M40,81 L40,70"/><path d="M78,62 L78,51"/><path d="M116,43 L116,32"/>' +
+         '<path d="M184,43 L184,32"/><path d="M222,62 L222,51"/><path d="M260,81 L260,70"/></g>';
+    s += '</g>';
+
+    // BEAT: the flashlight, from his hand to the soffit line
+    s += '<g id="beamG" class="beat">';
+    s += '<path d="M188,97 L192,94" stroke="#2A2E33" stroke-width="2.6" stroke-linecap="round"/>';
+    s += '<path d="M192,94 L252,100 L258,118 L194,100 Z" fill="#F2E3A8" opacity=".3"/>';
+    s += '</g>';
+
+    // BEAT: the finding — the baffles peek from the mound, ringed in red
+    s += '<g id="findG" class="beat">';
+    s += '<path d="M252,112 L262,105 L268,110 L258,117 Z" fill="#9CB8D8" opacity=".8"/>';
+    s += '<path d="M264,104 L274,97 L280,102 L270,109 Z" fill="#9CB8D8" opacity=".55"/>';
+    s += inventoryRing(258, 108, 16, '#E35C63');
+    s += '</g>';
+    return s;
+  }
+
+  /* ── SPREAD 4 — The Takeoff ───────────────────────────────────────
+     The component inventory: Curtis, the clipboard, and a ring around
+     everything the roof is wearing. Roof props sit at the sheet's own
+     coordinates (same band); ground props stand on this board's y=190. */
+  function takeoffSVG(){
+    var s = houseSVG(false, true);
+    s += '<g id="curtisG" class="beat">';
+    s += figure(160, 190, 0.62, {pose:'clip', hat:false, shirt:'#C4D435', shirtDk:'#98A722'});
+    s += '<g transform="translate(168,170) rotate(8) scale(0.85)">' +
+         '<path d="M-5,-7 L5,-7 L5,7 L-5,7 Z" fill="#F7F2E6" stroke="#C9B893" stroke-width="1.1"/>' +
+         '<path d="M-2,-8.4 L2,-8.4 L2,-6.4 L-2,-6.4 Z" fill="#9AA0A6"/>' +
+         '<g stroke="#BCAF97" stroke-width=".9"><path d="M-3,-3 L3,-3"/><path d="M-3,0 L3,0"/><path d="M-3,3 L1,3"/></g></g>';
+    s += '</g>';
+    s += '<g id="bootsG" class="beat">';
+    s += '<path d="M56,74 L64,74 L64,64 L56,64 Z" fill="#7B8187"/>';
+    s += '<path d="M50,78 L70,78 L66,72 L54,72 Z" fill="#9AA0A6" stroke="#E8DCC8" stroke-width="1"/>';
+    s += inventoryRing(60, 72, 11);
+    s += '<path d="M84,60 L92,60 L92,52 L84,52 Z" fill="#7B8187"/>';
+    s += '<path d="M79,64 L97,64 L93,58 L83,58 Z" fill="#9AA0A6" stroke="#E8DCC8" stroke-width="1"/>';
+    s += inventoryRing(88, 59, 10);
+    s += '</g>';
+    s += '<g id="dishG" class="beat">';
+    s += '<ellipse cx="242" cy="60" rx="9" ry="6" fill="#C9CFD4" stroke="#8A9096" stroke-width="1.2"/>' +
+         '<path d="M242,66 L242,74" stroke="#6E747A" stroke-width="2" fill="none"/>' +
+         '<circle cx="242" cy="60" r="1.6" fill="#6E747A"/>';
+    s += inventoryRing(242, 63, 13);
+    s += '</g>';
+    /* the second sprinkler hides IN the flower bed, which is the entire
+       point of flagging them — ringed where it hides */
+    /* centre band only (x92-207): the joke tabs rise over both lower
+       corners of the page and cover the board's lawn there — the first
+       render had the gnome tab covering the gnome */
+    s += '<g id="yardG" class="beat">';
+    s += gnome(112, 187, 1) + inventoryRing(112, 179, 10);
+    s += sprinkler(92, 186) + inventoryRing(92, 184, 5);
+    s += sprinkler(190, 186) + inventoryRing(190, 184, 5);
+    s += '</g>';
+    s += '<g id="droneG" class="beat">' + drone(250, 28, 1.2) + '</g>';
+    return s;
+  }
 
   var pop     = document.getElementById('pop');
   var popsvg  = document.getElementById('popsvg');
@@ -1305,83 +1563,130 @@ function cutLayers(x1){
   var dotsEl  = document.getElementById('dots');
   var hint    = document.getElementById('hint');
   var drivelit= document.getElementById('drivelit');
+  var phaseEl = document.getElementById('phase');
+  var birdEl  = document.querySelector('.birdpop');
+  var signEl  = document.querySelector('.signpop');
   var stripped = false, chips = 0;
 
-  popsvg.innerHTML = houseSVG(false);
   // drawn ONCE, and never again — the bird does not get redrawn with the roof
   document.getElementById('birdsvg').innerHTML = cardinal(0, 0, 1, false, 'post');
   document.getElementById('signsvg').innerHTML = yardSign();
 
   function setOpen(v){ root.style.setProperty('--open', v); }
-  if(reduce){ setOpen(0); } else { setTimeout(function(){ setOpen(1); }, 260); }
 
-  /* ── the beats ────────────────────────────────────────────────
-     Each one is a line Theo says out loud and a thing the picture does.
+  /* ══ THE BOOK ═════════════════════════════════════════════════
+     One registry, one spread mounted at a time. Every entry owns its
+     beats, its joke tabs, its sky, and where the bird's slider sits on
+     each beat — and every slider ends at '0', because the bird finishing
+     exactly where it started is the book's rule, not spread 7's.
+     The numbering is honest: only the built spreads are here, and the
+     top bar says "Spread N of 16" with the true N — the gaps fill in
+     as the rest get built. Tapping past a spread's last beat TURNS THE
+     PAGE: the pop folds down, the scene swaps, and it stands back up.
+
+     Each beat is a line Theo says out loud and a thing the picture does.
      A beat with no visual is a caption carousel, which is what this page
-     exists to not be. */
-  var BEATS = [
-    {txt:'The trailer gets here before the crew does. It likes to make an entrance.',
-     show:['trailerG']},
-    {txt:'Tarps first. Your flower beds have been through enough.',
-     show:['tarpG'], tag:0},
-    {txt:'Move the cars. The trailer wins every argument about parking.',
-     drive:true},
-    {txt:'A roof that took three days to schedule comes off before lunch.',
-     act:'shed'},
-    {txt:'⚠ Caution — falling cardboard. The real thing is heavier, and there is a great deal more of it.',
-     caution:true},
-    {txt:'That is not the sound of something going wrong. That is the sound of a roof leaving.',
-     show:['noiseG'], tag:1},
-    {txt:'Afterwards you will find nothing. That is the entire trick.',
-     lit:true, tag:2},
-    {txt:'The cardinal is back where it started. As far as it is concerned, nothing happened.',
-     tally:true}
+     exists to not be. The attic's beat script is Theo's own, verbatim
+     from the brief: pull the ladder down, hit the switch, look at the
+     decking, hit the flashlight, see the baffles covered. */
+  var SPREADS = [
+    { n:1, phase:'The Knock', sky:'day',
+      birdAt:['0','-24vw','-9vw','0'],
+      scene:knockSVG, high:-1,
+      tags:['', '', 'The dog gets a treat. Every time.'],
+      beats:[
+        {txt:'An ordinary roof, twenty-odd years in. It has started letting go of a shingle here and there — quietly, the way roofs do.'},
+        {txt:'The truck pulls up. Ten minutes, no ladder, no pressure — just eyes on the roof and a straight answer.', show:['truckG']},
+        {txt:'The knock. If it needs a repair and not a roof, that is what you hear on the doorstep. Cheapest sentence in roofing.', show:['repG']},
+        {txt:'The cardinal has supervised every job on this street. It accepts payment in sunflower seed.', tag:2}
+      ]},
+    { n:2, phase:'The Kitchen Table', sky:'dusk', floor:'wood',
+      birdAt:null, scene:kitchenSVG, high:-1,
+      tags:['', '', 'Best coffee on the route gets remembered'],
+      beats:[
+        {txt:'The paperwork happens at your kitchen table, not on the hood of a truck.'},
+        {txt:'One rep, one homeowner, two coffees. Nobody is in a hurry.', show:['peopleG']},
+        {txt:'One contract, plain English. The price on it is the price.', show:['contractG']},
+        {txt:'Sign on the red line. That line is the only red tape in the whole job.', show:['penG'], tag:2},
+        {txt:'The cardinal watched the whole thing through the window. No notes.'}
+      ]},
+    { n:3, phase:'The Attic', sky:'attic', floor:'dark',
+      birdAt:null, scene:atticSVG, high:-1,
+      tags:['', '', 'We vacuum the hallway after. Every crumb.'],
+      beats:[
+        {txt:'Before anyone quotes you a shingle, somebody goes up through the hallway ceiling.'},
+        {txt:'Pull the cord. The ladder unfolds like it has been waiting all year.', show:['ladderG']},
+        {txt:'One bare bulb on a chain. Hit the switch.', show:['lightG']},
+        {txt:'Decking first — water leaves handwriting up here years before your ceiling hears about it. This one reads clean.', show:['deckG']},
+        {txt:'Now the flashlight, into the corners the bulb cannot reach: the soffit line, where your roof is supposed to breathe.', show:['beamG']},
+        {txt:'And there it is — the intake vents are <em>buried in insulation</em>. That gets fixed as part of the job, not sold as an extra.', show:['findG'], tag:2},
+        {txt:'The cardinal got in through the one bay that still breathes. It always finds it.'}
+      ]},
+    { n:4, phase:'The Takeoff', sky:'noon',
+      birdAt:['0','-30vw','-14vw','-6vw','-22vw','0'],
+      scene:takeoffSVG, high:-1,
+      tags:['The gnome has been counted', '', 'Sprinkler heads: found the hard way, once'],
+      beats:[
+        {txt:'The takeoff: before we order your roof, we count everything the old one is wearing.'},
+        {txt:'Curtis, the clipboard, and a list nothing gets past.', show:['curtisG']},
+        {txt:'Two pipe boots. Counted, priced, replaced new — never reused.', show:['bootsG']},
+        {txt:'The satellite dish: staying or going? Your call either way — we set it back exactly where the signal lives.', show:['dishG']},
+        {txt:'Lawn ornaments logged, sprinkler heads flagged — they like to hide in the flower beds. Found them.', show:['yardG'], tag:0},
+        {txt:'The drone takes the before pictures. Before, during, after — you get all three.', show:['droneG'], tag:2}
+      ]},
+    { n:7, phase:'The Tear-Off', sign:true,
+      birdAt:['0', '-30vw', '-11vw', '-38vw', '-22vw', '-34vw', '-8vw', '0'],
+      scene:function(){ return houseSVG(stripped); }, high:-1,
+      tags:[
+        'Sign goes up a day early — so we roof the right house',
+        'Your neighbours got a knock, too',
+        'The magnet runs twice'
+      ],
+      beats:[
+        {txt:'The trailer gets here before the crew does. It likes to make an entrance.',
+         show:['trailerG']},
+        {txt:'Tarps first. Your flower beds have been through enough.',
+         show:['tarpG'], tag:0},
+        {txt:'Move the cars. The trailer wins every argument about parking.',
+         drive:true},
+        {txt:'A roof that took three days to schedule comes off before lunch.',
+         act:'shed'},
+        {txt:'⚠ Caution — falling cardboard. The real thing is heavier, and there is a great deal more of it.',
+         caution:true},
+        {txt:'That is not the sound of something going wrong. That is the sound of a roof leaving.',
+         show:['noiseG'], tag:1},
+        {txt:'Afterwards you will find nothing. That is the entire trick.',
+         lit:true, tag:2},
+        {txt:'The cardinal is back where it started. As far as it is concerned, nothing happened.',
+         tally:true}
+      ]}
   ];
 
-  /* ── where the bird's slider sits on each beat ───────────────
-     Screen-relative (vw) so the hops scale with the page. It slides along
-     the yard — a slider tab cannot fly, and keeping it to the floor slot is
-     what keeps it paper. The LAST position is home: the joke survives the
-     movement by becoming a round trip. Keys off `beat`, not `high`, so
-     stepping back through the captions walks the bird back too. */
-  var BIRD_AT = ['0', '-30vw', '-11vw', '-38vw', '-22vw', '-34vw', '-8vw', '0'];
-  var birdEl = document.querySelector('.birdpop');
+  var si = 0, beat = -1, turning = false, dots = [];
+  function S(){ return SPREADS[si]; }
 
-  /* ── jokes that stand up on the board itself ─────────────────
-     Theo asked for "more that pop up on the actual cardboard near the
-     bottom". They are their own little die-cut tabs on sticks, planted in
-     the foreground of the page where they clear the house entirely, and
-     each one pops on its own beat. The yard-sign line is Theo's own joke
-     from the brief, in his words nearly verbatim. */
-  var TAGS = [
-    'Sign goes up a day early — so we roof the right house',
-    'Your neighbours got a knock, too',
-    'The magnet runs twice'
-  ];
-
-  var beat = -1, high = -1;
-
-  // dots
-  BEATS.forEach(function(){ dotsEl.appendChild(document.createElement('i')); });
-  var dots = dotsEl.querySelectorAll('i');
-
-  /* THE PICTURE ONLY EVER MOVES FORWARD. Layers key off `high`, the furthest
-     beat reached, never off `beat`. Stepping back re-reads a caption; it does
-     not un-strip the roof or suck the debris back onto it. The book's own rule
-     — the model never resets — and it means there is no reverse state to get
-     wrong. */
+  /* THE PICTURE ONLY EVER MOVES FORWARD. Layers key off each spread's own
+     `high`, the furthest beat reached there, never off `beat`. Stepping back
+     re-reads a caption; it does not un-strip the roof or suck the debris
+     back onto it. The bird alone keys off `beat`, so it walks back with the
+     captions — paintScene now runs on every go(), which is what the old
+     comment always claimed and the old code only did on forward steps. */
   function paintScene(){
-    if(birdEl) birdEl.style.transform =
-      'translateX(' + (BIRD_AT[Math.max(0, beat)] || '0') + ')';
+    var sp = S();
+    if(birdEl && sp.birdAt) birdEl.style.transform =
+      'translateX(' + (sp.birdAt[Math.max(0, beat)] || '0') + ')';
     var want = {};
-    BEATS.slice(0, high + 1).forEach(function(b){
+    sp.beats.slice(0, sp.high + 1).forEach(function(b){
       (b.show || []).forEach(function(id){ want[id] = 1; });
       if(b.drive) want.__drive = 1;
       if(b.tag !== undefined) want['tag' + b.tag] = 1;
       if(b.lit)   want.__lit = 1;
       if(b.act === 'shed') shed();
     });
-    ['tarpG','trailerG','noiseG','tag0','tag1','tag2'].forEach(function(id){
+    var ids = {};
+    sp.beats.forEach(function(b){ (b.show || []).forEach(function(id){ ids[id] = 1; }); });
+    ['tag0','tag1','tag2'].forEach(function(id){ ids[id] = 1; });
+    Object.keys(ids).forEach(function(id){
       var el = document.getElementById(id);
       if(el) el.classList.toggle('on', !!want[id]);
     });
@@ -1390,7 +1695,7 @@ function cutLayers(x1){
   }
 
   function paintSay(){
-    var b = BEATS[beat];
+    var sp = S(), b = sp.beats[beat];
     if(!b) return;
     sayTxt.innerHTML = b.txt + (b.tally && chips ? ' <em>All ' + chips + ' of them.</em>' : '');
     say.classList.toggle('caution', !!b.caution);
@@ -1398,18 +1703,73 @@ function cutLayers(x1){
       d.classList.toggle('now', i === beat);
       d.classList.toggle('seen', i < beat);
     });
+    // the page-turn affordance, only where there is a next page
+    if(beat === sp.beats.length - 1 && si < SPREADS.length - 1){
+      hint.textContent = 'Tap for the next spread';
+      hint.classList.remove('gone');
+    }
   }
 
   function go(n){
-    if(n < 0 || n >= BEATS.length) return;
+    var sp = S();
+    if(n < 0 || n >= sp.beats.length) return;
     beat = n;
-    if(n > high){ high = n; paintScene(); }
+    if(n > sp.high) sp.high = n;
+    paintScene();
     if(reduce){ paintSay(); return; }
     say.classList.add('swap');
     setTimeout(function(){ paintSay(); say.classList.remove('swap'); }, 200);
   }
 
-  /* ── the debris ──────────────────────────────────────────────
+  /* ── mounting a spread: scene, chrome, tags, dots, flat list ── */
+  function mountSpread(atEnd){
+    var sp = S();
+    popsvg.innerHTML = sp.scene();
+    phaseEl.innerHTML = sp.phase + '<i>Spread ' + sp.n + ' of 16</i>';
+    deck.setAttribute('aria-label', 'Tap to advance through ' + sp.phase);
+    deck.className = 'deck fibre' + (sp.sky ? ' sky-' + sp.sky : '') +
+                     (sp.floor ? ' floor-' + sp.floor : '');
+    /* the debris belongs to the tear-off and everything after it — turning
+       back to a spread from BEFORE the tear-off hides it, because that lawn
+       has not happened yet */
+    scene.classList.toggle('nochips', sp.n < 7);
+    birdEl.style.display = sp.birdAt ? '' : 'none';
+    if(!sp.birdAt) birdEl.style.transform = '';
+    signEl.style.display = sp.sign ? '' : 'none';
+    dotsEl.innerHTML = '';
+    sp.beats.forEach(function(){ dotsEl.appendChild(document.createElement('i')); });
+    dots = Array.prototype.slice.call(dotsEl.querySelectorAll('i'));
+    for(var i = 0; i < 3; i++){
+      var t = (sp.tags || [])[i] || '';
+      var el = document.getElementById('tag' + i);
+      el.classList.remove('on');
+      el.innerHTML = t ? '<div class="tagstick"></div><div class="tagboard"><span>' + t + '</span></div>' : '';
+    }
+    document.getElementById('flatBody').innerHTML =
+      '<b>' + sp.phase + ' — spread ' + sp.n + ' of 16</b>' +
+      sp.beats.map(function(b){ return '<p>' + b.txt + '</p>'; }).join('');
+    if(reduce) sp.high = sp.beats.length - 1;
+    try{ history.replaceState(null, '', '#' + sp.n); }catch(_){}
+    beat = -1;
+    go(atEnd ? sp.beats.length - 1 : 0);
+  }
+
+  /* ── turning the page: fold down, swap, stand back up ───────── */
+  function turnTo(idx, atEnd){
+    if(turning || idx < 0 || idx >= SPREADS.length) return;
+    turning = true;
+    hint.classList.add('gone');
+    if(reduce){ si = idx; mountSpread(atEnd); turning = false; return; }
+    setOpen(0);
+    say.classList.add('swap');
+    setTimeout(function(){
+      si = idx; mountSpread(atEnd);
+      setOpen(1);
+      setTimeout(function(){ turning = false; }, 540);
+    }, 600);
+  }
+
+  /* ── the debris (spread 7's own machinery, untouched) ────────
      Forty chips fling off the roof and land on the floor of the page.
      THEY STAY. On spread 15 the magnet sweeps up these exact chips —
      that persistence is the joke and the argument at the same time. */
@@ -1451,42 +1811,57 @@ function cutLayers(x1){
       scene.appendChild(c);
       chips++;
     }
-    setTimeout(function(){ popsvg.innerHTML = houseSVG(true); paintScene(); }, reduce ? 0 : 240);
+    setTimeout(function(){
+      if(S().n === 7){ popsvg.innerHTML = houseSVG(true); paintScene(); }
+    }, reduce ? 0 : 240);
   }
 
-  /* ── input: tap anywhere forward, arrows both ways ─────────── */
+  /* ── input: tap forward, swipe right back — and past either end
+     of a spread, the same gesture turns the page ─────────────── */
   var downX = null;
   deck.addEventListener('pointerdown', function(e){ downX = e.clientX; });
   deck.addEventListener('click', function(){
+    if(turning) return;
     hint.classList.add('gone');
-    go(beat + 1 >= BEATS.length ? beat : beat + 1);
+    if(reduce){ turnTo(si + 1); return; }
+    if(beat + 1 >= S().beats.length) turnTo(si + 1);
+    else go(beat + 1);
   });
   deck.addEventListener('pointerup', function(e){
     if(downX === null) return;
     var dx = e.clientX - downX; downX = null;
-    if(dx > 60) go(beat - 1);           // swipe right = back a caption
+    if(dx > 60 && !turning){                 // swipe right = back
+      if(reduce){ turnTo(si - 1, true); return; }
+      if(beat <= 0) turnTo(si - 1, true);    // past the first beat = previous page
+      else go(beat - 1);
+    }
   });
   deck.addEventListener('keydown', function(e){
+    if(turning) return;
     if(e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter'){
-      e.preventDefault(); hint.classList.add('gone'); go(beat + 1);
-    } else if(e.key === 'ArrowLeft'){ e.preventDefault(); go(beat - 1); }
+      e.preventDefault(); hint.classList.add('gone');
+      if(reduce){ turnTo(si + 1); return; }
+      if(beat + 1 >= S().beats.length) turnTo(si + 1);
+      else go(beat + 1);
+    } else if(e.key === 'ArrowLeft'){
+      e.preventDefault();
+      if(reduce){ turnTo(si - 1, true); return; }
+      if(beat <= 0) turnTo(si - 1, true);
+      else go(beat - 1);
+    }
   });
 
-  TAGS.forEach(function(t, i){
-    document.getElementById('tag' + i).innerHTML =
-      '<div class="tagstick"></div><div class="tagboard"><span>' + t + '</span></div>';
+  /* ── boot: open at #N if the hash names a built spread ──────── */
+  var startN = parseInt((location.hash || '').replace('#', ''), 10);
+  SPREADS.forEach(function(sp, i){ if(sp.n === startN) si = i; });
+  /* and honour a hash typed into an ALREADY-OPEN book — mountSpread uses
+     replaceState, which never fires this, so there is no loop */
+  addEventListener('hashchange', function(){
+    var n = parseInt((location.hash || '').replace('#', ''), 10);
+    SPREADS.forEach(function(sp, i){ if(sp.n === n && i !== si) turnTo(i); });
   });
-
-  // reduced motion: every beat present at once, nothing sequenced
-  document.getElementById('flatBody').innerHTML = BEATS.map(function(b){
-    return '<p>' + b.txt + '</p>';
-  }).join('');
-
-  if(reduce){
-    high = BEATS.length - 1;
-    paintScene();
-  }
-  go(0);
+  mountSpread(false);
+  if(reduce){ setOpen(0); } else { setTimeout(function(){ setOpen(1); }, 260); }
   deck.focus({preventScroll:true});
 })();
 </script>

@@ -7406,3 +7406,45 @@ Verified after the cut: sheet harness green (bird in all 16, nothing floats, 0 u
 collision check 16/16 clear · popup harness green (7 hops end home, chimney survives strip, 3 X
 marks) · both the popup beat and the sheet card re-rendered and eyeballed — tarps visible, no
 machine, nothing else moved.
+
+---
+
+## The book — popup.html goes multi-spread, opening four tappable (2026-08-03)
+
+Theo picked **1: front to back**. `popup.html` is no longer "spread 7, full screen" — it now
+carries a `SPREADS` registry, one spread mounted at a time, and a real page turn: the pop folds
+flat, the scene swaps, and it stands back up. Tapping past a spread's last beat turns forward;
+swiping back past its first beat turns back (landing on the previous spread's last beat). Only
+built spreads are listed — 1, 2, 3, 4, 7 — and the top bar numbers them honestly out of 16.
+`#N` in the URL opens spread N, on load or typed into an open book.
+
+**The opening four, drawn in this file's own geometry and puppet** (the sheet's compositions,
+never its `fig()` — one puppet per book): The Knock (worn roof, the truck, the rep on the step),
+The Kitchen Table (full-bleed interior, contract + pen on the line, the bare-headed homeowner,
+the cardinal on the sill), The Attic (**Theo's own beat script verbatim** — ladder down, switch,
+decking, flashlight, baffles found buried, ringed in red; lighting is additive because beats only
+ever add), The Takeoff (Curtis bare-headed in hi-vis, pipe boots + dish + gnome + sprinklers each
+ringed, drone up for the before pictures). The bird's slider ends at home on **every** spread now
+— the round-trip joke is the book's rule, not spread 7's. `figure()` grew `hat:false` and four
+new POSE reaches (knock/table/clip/torch); `houseSVG` grew a `noCrew` flag; spread 7 calls it
+exactly as before.
+
+**What the render pass caught that green harnesses did not** — four, all real: the sheet-scale
+truck stood half a man tall (0.8 → 1.15); **the "gnome has been counted" joke tab covered the
+gnome** (tabs overlap the board's lawn corners on a phone — the yard inventory moved to the
+centre band, into the flower beds where ornaments genuinely live); the drone read as a speck;
+and on a landscape iPad **the board ran under the top bar** — `.scene` had no height bound
+(invisible on 7 whose board-top is sky, glaring on the kitchen whose board-top is ceiling; now
+`min(96vw, 940px, 80vh)`) — plus the desktop caption box sat on the centre joke tab, so
+single-tag spreads moved their tab to the right slot.
+
+One latent mismatch fixed while in there: `BIRD_AT`'s comment promised the bird walks back on a
+back-step, but `paintScene()` only ran on forward steps. It runs on every `go()` now, so the
+comment is finally true.
+
+Verified: `pw_book.js` — 47 assertions, ALL GREEN (phases, distinct captions per beat, every
+show-group on, sliders end home, interiors hide the pop-piece bird and carry exactly one
+in-scene bird with no `id="bird"`, page turns land with `--open` back at 1, spread 7 still
+strips to 40 persisted chips, chips hide when turning back before the tear-off, both hash
+paths). `pw_bird.js` and `pw_deck.js` re-pointed at `#7` and green — spread 7 unregressed.
+Rendered and eyeballed at phone and landscape iPad.
