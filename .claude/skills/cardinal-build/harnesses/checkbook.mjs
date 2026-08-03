@@ -78,7 +78,8 @@ ck('no page errors', errs.length, 0);
 const CH = {
   talking:'1', prompting:'2', paste:'3', agents:'4', model:'5', local:'6',
   machines:'7', spark:'8', stacks:'9', worth:'10', building:'11',
-  binder:'12', claims:'13', marketing:'14', glasswing:'15', map:'16',
+  binder:'12', claims:'13', marketing:'14', canbuild:'15',   /* 584 */
+  glasswing:'16', map:'17',
 };
 const go = async slug => {
   await page.evaluate(x => { window.location.hash = '#/' + x; }, slug);
@@ -87,11 +88,11 @@ const go = async slug => {
 
 
 /* structure */
-ck('twenty-one sections exist', await page.$$eval('.chapter', n => n.length), 21);
+ck('twenty-two sections exist', await page.$$eval('.chapter', n => n.length), 22);
 ck('exactly one chapter shown', await page.$$eval('.chapter.on', n => n.length), 1);
 ck('opens on the cover', await page.$eval('.chapter.on', n => n.dataset.ch), 'cover');
 ck('running head follows', await page.$eval('#runhead', n => n.textContent), 'Start here');
-ck('toc has twenty-one links', await page.$$eval('#toc a', n => n.length), 21);
+ck('toc has twenty-two links', await page.$$eval('#toc a', n => n.length), 22);
 
 /* the cover is the front board, not a page of the book */
 ck('cover shows a cloth board', await page.$eval('.board', n => getComputedStyle(n).backgroundImage),
@@ -108,8 +109,8 @@ ck('cover: board carries the stamped rule', await page.$eval('.board', n => {
 }), 'true');
 ck('cover: "Open the book" leads to chapter I',
    await page.$eval('.open-btn', n => n.getAttribute('href')), '#/1');
-ck('cover: what-is-inside lists all sixteen chapters',
-   await page.$$eval('.inside a', n => n.length), 16);
+ck('cover: what-is-inside lists all seventeen chapters',
+   await page.$$eval('.inside a', n => n.length), 17);
 
 /* leaving the cover restores the paper */
 await go(CH.talking);
@@ -139,6 +140,7 @@ for (const [slug, head] of [
   [CH.local, 'Local vs. cloud'], [CH.machines, 'The machines'], [CH.spark, 'The Spark'],
   [CH.stacks, 'The stacks'], [CH.worth, "What's worth building"], [CH.building, 'Building software'],
   [CH.binder, 'The photo binder'], [CH.claims, 'Claims'], [CH.marketing, 'Marketing & SEO'],
+  [CH.canbuild, 'What AI can build'],
   ['glossary', 'Glossary'], ['sources', 'Sources']]) {
   await page.evaluate(s => { window.location.hash = '#/' + s; }, slug);
   await page.waitForTimeout(120);
@@ -489,7 +491,7 @@ await page.waitForTimeout(120);
   });
   ck('folio chain is unbroken end to end', chain.bad.join(' | ') || 'none', 'none');
   ck('chapters are in book order', chain.order,
-     'cover → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → recap → commands → glossary → sources');
+     'cover → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → recap → commands → glossary → sources');
 }
 /* ── the reorder itself (578) ─────────────────────────────────────────────
    The book went from 15 chapters to 16 and 13 of them changed number, which
@@ -500,7 +502,7 @@ await page.waitForTimeout(120);
 {
   const refs = await page.evaluate(() => {
     const R = {I:1,II:2,III:3,IV:4,V:5,VI:6,VII:7,VIII:8,IX:9,X:10,XI:11,
-               XII:12,XIII:13,XIV:14,XV:15,XVI:16};
+               XII:12,XIII:13,XIV:14,XV:15,XVI:16,XVII:17};
     const n = [...document.querySelectorAll('.chapter')].filter(c => /^\d+$/.test(c.dataset.ch)).length;
     const bad = [], self = [];
     document.querySelectorAll('.chapter').forEach(c => {
@@ -519,7 +521,7 @@ await page.waitForTimeout(120);
     });
     return { bad: [...new Set(bad)], self: [...new Set(self)], n };
   });
-  ck('578: sixteen numbered chapters', refs.n, 16);
+  ck('578: seventeen numbered chapters (584 added one)', refs.n, 17);
   ck('578: every chapter reference in the whole book resolves',
      refs.bad.slice(0, 4).join(' | ') || 'none', 'none');
   /* A chapter citing itself is the signature of a remap that landed on the
@@ -538,9 +540,9 @@ await page.waitForTimeout(120);
            .filter(Boolean).join(','),
   }));
   ck('578: spine order === document order', three.toc, three.dom);
-  ck('578: the pager counts run I..XVI of XVI', three.pg,
-     ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI']
-       .map(n => `${n} / XVI`).join(','));
+  ck('578: the pager counts run I..XVII of XVII', three.pg,
+     ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII']
+       .map(n => `${n} / XVII`).join(','));
 }
 {
   /* the split: VI keeps the arithmetic and the judgement, VII takes the metal */
@@ -576,7 +578,7 @@ await page.waitForTimeout(120);
     await page.waitForTimeout(130);
     walk.push(await page.$eval('.chapter.on', n => n.dataset.ch));
   }
-  ck('arrow-right walks the Spark → … → XVI → recap → commands', walk.join(','), '9,10,11,12,13,14,15,16,recap');
+  ck('arrow-right walks the Spark → … → XVII', walk.join(','), '9,10,11,12,13,14,15,16,17');
 }
 
 /* Chapter VI has two table.figs. Pick the ladder by a header only it carries —
@@ -1092,32 +1094,32 @@ ck('contrast term-prompt on fixed ground ≥ 4.5', await page.evaluate(() => {
    that the reader is given exactly one thing to actually do. */
 await go(CH.glasswing);
 await page.waitForTimeout(150);
-ck('XIV: reachable and titled', await page.$eval('.chapter.on h2', n => n.textContent), 'Project Glasswing');
-ck('XIV: carries a date stamp like the other rotting pages',
+ck('XVI: reachable and titled', await page.$eval('.chapter.on h2', n => n.textContent), 'Project Glasswing');
+ck('XVI: carries a date stamp like the other rotting pages',
    await page.$$eval('.chapter.on .asof', n => n.length), 1);
-ck('XIV: names the launch partners rather than saying "major companies"', await page.evaluate(() => {
+ck('XVI: names the launch partners rather than saying "major companies"', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return ['Amazon Web Services','Apple','Broadcom','Cisco','CrowdStrike','Google',
           'JPMorganChase','Linux Foundation','Microsoft','NVIDIA','Palo Alto Networks']
     .filter(p => !t.includes(p)).join(' | ') || 'none';
 }), 'none');
-ck('XIV: the ten thousand figure is qualified by severity', await page.evaluate(() => {
+ck('XVI: the ten thousand figure is qualified by severity', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /ten thousand high- or critical-severity vulnerabilities/i.test(t);
 }), 'true');
-ck('XIV: the donations are named with amounts', await page.evaluate(() => {
+ck('XVI: the donations are named with amounts', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /\$2\.5M/.test(t) && /\$1\.5M/.test(t) && /Apache/.test(t) && /OpenSSF/.test(t);
 }), 'true');
-ck('XIV: three lessons, in a table', await page.$$eval('.chapter.on table.stk tbody tr', n => n.length), 3);
+ck('XVI: three lessons, in a table', await page.$$eval('.chapter.on table.stk tbody tr', n => n.length), 3);
 /* the load-bearing one: without this the chapter is fear, not information */
-ck('XIV: says the model class shipped publicly in the end', await page.evaluate(() => {
+ck('XVI: says the model class shipped publicly in the end', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /Fable 5/.test(t) && /publicly available/i.test(t) && /delay, not a lock/i.test(t);
 }), 'true');
-ck('XIV: gives the reader exactly one action, and it is "take the update"',
+ck('XVI: gives the reader exactly one action, and it is "take the update"',
    await page.$eval('.chapter.on', n => /Take the update/.test(n.textContent)), 'true');
-ck('XIV: points back at XIII rather than repeating it',
+ck('XVI: points back at XIII rather than repeating it',
    await page.$eval('.chapter.on', n => /Chapter III/.test(n.textContent)), 'true');  /* never-paste */
 
 /* ── chapter XV · Korea and China ────────────────────────────────────────
@@ -1130,21 +1132,21 @@ ck('XIV: points back at XIII rather than repeating it',
    only honest with both. */
 await go(CH.map);
 await page.waitForTimeout(150);
-ck('XV: reachable and titled', await page.$eval('.chapter.on h2', n => n.textContent), 'The other half of the map');
-ck('XV: five Chinese families, each a model card', await page.evaluate(() => {
+ck('XVII: reachable and titled', await page.$eval('.chapter.on h2', n => n.textContent), 'The other half of the map');
+ck('XVII: five Chinese families, each a model card', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return ['DeepSeek','Qwen','GLM','Kimi','MiniMax'].filter(m => !t.includes(m)).join(' | ') || 'none';
 }), 'none');
-ck('XV: no context-window figure was quoted', await page.evaluate(() => {
+ck('XVII: no context-window figure was quoted', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   const hits = t.match(/\d+\s*[KM]\b[^.]{0,12}context/gi) || [];
   return hits.join(' | ') || 'none';
 }), 'none');
-ck('XV: warns the reader that sources disagreed',
+ck('XVII: warns the reader that sources disagreed',
    await page.$eval('.chapter.on', n => /disagreed with each other/i.test(n.textContent)), 'true');
-ck('XV: the weights-vs-service table has four rows',
+ck('XVII: the weights-vs-service table has four rows',
    await page.$$eval('.chapter.on table.vs tbody tr', n => n.length), 4);
-ck('XV: the table ranks local as yes and hosted as no', await page.evaluate(() => {
+ck('XVII: the table ranks local as yes and hosted as no', await page.evaluate(() => {
   const rows = [...document.querySelectorAll('.chapter.on table.vs tbody tr')];
   const bad = rows.filter(r => {
     const td = r.querySelectorAll('td');
@@ -1152,27 +1154,27 @@ ck('XV: the table ranks local as yes and hosted as no', await page.evaluate(() =
   });
   return bad.length ? bad.map(r => r.textContent.slice(0, 24)).join(' | ') : 'none';
 }), 'none');
-ck('XV: says the bans target the service, not the weights', await page.evaluate(() => {
+ck('XVII: says the bans target the service, not the weights', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /aimed at .{0,4}the service/i.test(t) && /None of them is aimed at the maths/i.test(t);
 }), 'true');
 /* the counterweight — running it locally fixes privacy and not bias */
-ck('XV: the local-censorship caveat is present and specific', await page.evaluate(() => {
+ck('XVII: the local-censorship caveat is present and specific', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /trained into the weights/i.test(t) && /Tiananmen/.test(t) && /entirely offline/i.test(t);
 }), 'true');
-ck('XV: and generalises it rather than leaving it as a China point',
+ck('XVII: and generalises it rather than leaving it as a China point',
    await page.$eval('.chapter.on', n => /every model from every country/i.test(n.textContent)), 'true');
-ck('XV: Korea is framed as the argument, not a shopping list', await page.evaluate(() => {
+ck('XVII: Korea is framed as the argument, not a shopping list', await page.evaluate(() => {
   const t = document.querySelector('.chapter.on').textContent;
   return /sovereign AI/i.test(t) && /80% domestic floor/i.test(t) && /unlikely to use any of these/i.test(t);
 }), 'true');
-ck('XV: ties Korea back to the Spark rather than leaving it abstract',
+ck('XVII: ties Korea back to the Spark rather than leaving it abstract',
    await page.$eval('.chapter.on', n => /run the photo captioner on the Spark/i.test(n.textContent)), 'true');
-ck('XV: four closing rules', await page.$$eval('.chapter.on .habits > li', n => n.length), 4);
-ck('XV: separates judging the model from judging the service',
+ck('XVII: four closing rules', await page.$$eval('.chapter.on .habits > li', n => n.length), 4);
+ck('XVII: separates judging the model from judging the service',
    await page.$eval('.chapter.on', n => /Judge the model on your own work; judge the service on where it sends the bytes/i.test(n.textContent)), 'true');
-ck('XV: every .habits item is wrapped in a span', await page.evaluate(() => {
+ck('XVII: every .habits item is wrapped in a span', await page.evaluate(() => {
   const bad = [];
   document.querySelectorAll('.chapter.on .habits li').forEach((li, i) => {
     const els = [...li.childNodes].filter(n => n.nodeType === 1);
@@ -1185,6 +1187,128 @@ ck('XV: every .habits item is wrapped in a span', await page.evaluate(() => {
 /* ── the recap, which had gone stale ─────────────────────────────────────
    It was still the five-part version: ten lines, none of them from VI, IX,
    X or XI. Six chapters never reached the one page anyone actually reads. */
+/* ── chapter XV · What AI can build (584) ─────────────────────────────────
+   Theo: "the variety of things ai can build ... with a presentation within
+   it." The presentation is a REAL deck running in the page, so it gets
+   behavioural assertions, not just presence — and one negative assertion
+   that matters more than the rest: it must NOT touch the arrow keys, because
+   the book turns chapters on them. */
+await go(CH.canbuild);
+ck('XV: reachable and titled', await page.$eval('.chapter.on h2', n => n.textContent), 'What AI can build');
+ck('XV: the catalogue has eight shelves', await page.evaluate(() => {
+  const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /^The catalogue/.test(x.textContent));
+  if (!h) return 'missing';
+  return h.parentElement.querySelector('table.vs tbody').rows.length;
+}), 8);
+ck('XV: at least four shelves are already shipped, and say so', await page.evaluate(() => {
+  const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /^The catalogue/.test(x.textContent));
+  const t = h.parentElement.querySelector('table.vs');
+  return [...t.querySelectorAll('td.yes')].filter(td => /Already yours|embedded below/i.test(td.textContent)).length >= 4;
+}), 'true');
+ck('XV: the proof list cites only things that exist', await page.evaluate(() => {
+  const t = document.querySelector('.chapter.on').textContent;
+  /* The Walk, the librarian, the Library illustrations and the app all ship
+     today. Nothing unshipped may be claimed as built. */
+  return /The Walk/.test(t) && /librarian/.test(t) && !/weather alert/i.test(t);
+}), 'true');
+{
+  const deck = await page.evaluate(() => {
+    const d = document.getElementById('aidDeck');
+    if (!d) return { missing: true };
+    const slides = [...d.querySelectorAll('.aid-slide')];
+    const vis = () => slides.findIndex(sl => getComputedStyle(sl).display !== 'none');
+    return {
+      slides: slides.length,
+      dots: document.getElementById('aidDots').children.length,
+      visible: slides.filter(sl => getComputedStyle(sl).display !== 'none').length,
+      at: vis(),
+      count: document.getElementById('aidCount').textContent.trim(),
+      tags: [...d.querySelectorAll('.aid-tag')].length,
+      allTagged: [...d.querySelectorAll('.aid-slide')].every(sl => sl.querySelector('.aid-tag')),
+    };
+  });
+  ck('XV: the deck has seven slides', deck.slides, 7);
+  ck('XV: dots track the slides', deck.dots, 7);
+  ck('XV: exactly one slide visible at a time', deck.visible, 1);
+  ck('XV: the counter reads 1 / 7 at rest', deck.count, '1 / 7');
+  ck('XV: every slide names what it was built from', deck.allTagged ? 'true' : deck.tags, 'true');
+}
+ck('XV: Next actually advances', await page.evaluate(() => {
+  document.getElementById('aidNext').click();
+  const slides = [...document.querySelectorAll('#aidDeck .aid-slide')];
+  const at = slides.findIndex(sl => getComputedStyle(sl).display !== 'none');
+  return at + '|' + document.getElementById('aidCount').textContent.trim();
+}), '1|2 / 7');
+ck('XV: Back wraps from the cover to the close', await page.evaluate(() => {
+  document.getElementById('aidPrev').click();  /* -> 0 */
+  document.getElementById('aidPrev').click();  /* -> wraps to 6 */
+  const slides = [...document.querySelectorAll('#aidDeck .aid-slide')];
+  return slides.findIndex(sl => getComputedStyle(sl).display !== 'none');
+}), 6);
+ck('XV: a dot jumps straight to its slide', await page.evaluate(() => {
+  document.getElementById('aidDots').children[3].click();
+  const slides = [...document.querySelectorAll('#aidDeck .aid-slide')];
+  return slides.findIndex(sl => getComputedStyle(sl).display !== 'none');
+}), 3);
+/* the negative assertion: the deck must not have stolen the book's keys */
+{
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(150);
+  const after = await page.$eval('.chapter.on', n => n.dataset.ch);
+  ck('XV: arrow keys still turn the BOOK, not the deck', after, CH.glasswing);
+  await go(CH.canbuild);
+  const deckAt = await page.evaluate(() => {
+    const slides = [...document.querySelectorAll('#aidDeck .aid-slide')];
+    return slides.findIndex(sl => getComputedStyle(sl).display !== 'none');
+  });
+  ck('XV: and the deck kept its place across the page turn', deckAt, 3);
+}
+ck('XV: the deck admits its details are invented', await page.evaluate(() =>
+  /invented for the example/i.test(document.querySelector('.chapter.on').textContent)), 'true');
+ck('XV: the effort table prices five first versions', await page.evaluate(() => {
+  const h = [...document.querySelectorAll('.chapter.on h3')].find(x => /first version costs/.test(x.textContent));
+  if (!h) return 'missing';
+  const rows = [...h.parentElement.querySelectorAll('table.figs tbody tr')];
+  return rows.length === 5 && rows.every(r => r.cells[2].textContent.trim().length > 0);
+}), 'true');
+ck('XV: the closing rule points at the deciding question', await page.evaluate(() => {
+  const t = document.querySelector('.chapter.on').textContent;
+  return /Chapter X(?![IVX])/.test(t) && /thirty dollars a month/.test(t);
+}), 'true');
+ck('XV: sits in the Building it group on the spine', await page.evaluate(() => {
+  const a = document.querySelector('#toc a[data-ch="15"]');
+  return a.closest('.toc-grp').querySelector('.lbl').textContent;
+}), 'Building it');
+
+
+/* Theo: "I don't think it would be good to present from phone." Below 700px
+   the deck must lie flat — every slide visible, no presenting controls — and
+   above it, it must present. Both states asserted, not just the default. */
+{
+  await page.setViewportSize({ width: 420, height: 900 });
+  await go(CH.canbuild);
+  const flat = await page.evaluate(() => ({
+    visible: [...document.querySelectorAll('#aidDeck .aid-slide')]
+      .filter(sl => getComputedStyle(sl).display !== 'none').length,
+    ctl: getComputedStyle(document.querySelector('.aid-ctl')).display,
+    note: getComputedStyle(document.querySelector('.aid-phonenote')).display,
+  }));
+  ck('XV: on a phone all seven slides lie flat', flat.visible, 7);
+  ck('XV: and the presenting controls are gone', flat.ctl, 'none');
+  ck('XV: with a note saying where to present from', flat.note !== 'none' ? 'shown' : 'none', 'shown');
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.waitForTimeout(120);
+  const pad = await page.evaluate(() => ({
+    visible: [...document.querySelectorAll('#aidDeck .aid-slide')]
+      .filter(sl => getComputedStyle(sl).display !== 'none').length,
+    ctl: getComputedStyle(document.querySelector('.aid-ctl')).display,
+  }));
+  ck('XV: on an iPad it presents — one slide', pad.visible, 1);
+  ck('XV: with the controls back', pad.ctl !== 'none' ? 'shown' : 'none', 'shown');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.waitForTimeout(120);
+}
+
 await page.evaluate(() => { window.location.hash = '#/recap'; });
 await page.waitForTimeout(150);
 ck('recap: seventeen lines', await page.$$eval('.chapter.on ol > li', n => n.length), 17);
@@ -1273,7 +1397,7 @@ ck('glossary: terms are in alphabetical order', await page.evaluate(() => {
 ck('glossary: every chapter reference points at a real chapter', await page.evaluate(() => {
   const known = new Set([...document.querySelectorAll('.chapter')].map(c => c.dataset.ch));
   const roman = {I:'1',II:'2',III:'3',IV:'4',V:'5',VI:'6',VII:'7',VIII:'8',IX:'9',X:'10',
-                 XI:'11',XII:'12',XIII:'13',XIV:'14',XV:'15',XVI:'16'};
+                 XI:'11',XII:'12',XIII:'13',XIV:'14',XV:'15',XVI:'16',XVII:'17'};
   const bad = [];
   document.querySelectorAll('.chapter.on .gloss .ref').forEach(r => {
     const m = /ch\s+([IVX]+)/.exec(r.textContent);
@@ -1429,7 +1553,7 @@ ck('mobile: no sideways scroll', await page.evaluate(() => document.documentElem
 await page.setViewportSize({ width: 1280, height: 900 });
 await page.emulateMedia({ media: 'print' });
 await page.waitForTimeout(150);
-ck('print: every section visible', await page.$$eval('.chapter', n => n.filter(c => getComputedStyle(c).display !== 'none').length), 21);
+ck('print: every section visible', await page.$$eval('.chapter', n => n.filter(c => getComputedStyle(c).display !== 'none').length), 22);
 ck('print: binding hidden', await cs('.spine', 'display'), 'none');
 ck('print: pagers hidden', await page.$eval('.folio', n => getComputedStyle(n).display), 'none');
 await page.emulateMedia({ media: 'screen' });

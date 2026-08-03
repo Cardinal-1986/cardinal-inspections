@@ -6412,3 +6412,68 @@ pills-still-work-elsewhere, header-and-back-restored, back-actually-leaves, and
 `rl-at-book` cleared afterwards. Negative control against 582 fails on four visible pills, no header
 and a 0×0 back button. `h562_aibook.js` 42/42, `h581_changelog.js` 25/25, book harness 345/345.
 Rendered over real HTTP and screenshotted at 390 px.
+
+---
+
+### build 583 — the Library's pills stop covering the book, then the bar slims to just the arrow
+
+Theo, with a screenshot of chapter VII half-buried: *"take all of toc, library, manage, ask file out
+of the way."* Five floating controls sat over the book and none of them acts on it. They could not
+simply be hidden — `#resourceLibraryView .ins-header{display:none}` hides the Library header
+everywhere (which is WHY the pills exist, 447), so a Chromium probe showed `#cr-rlhome-btn` was the
+only way out. The fix hides all five on `body.rl-at-book` AND restores the real header, whose back
+button was already wired to `parentOf`. Then, on review: *"slim the app one down to just the back
+arrow"* — title and Library theme toggle hidden on the book page only, tight padding; the router
+still writes the title, asserted, because every other Library page shows it.
+
+Two of my own steps were reverted/corrected by measurement: a flex-height frame collapsed to 150px
+(`showLibrary()` sets display INLINE — the `styleMounts()` trap), and a "back sits above the frame"
+assertion failed a correct layout because `.ins-header` is `position:sticky` and pins when scrolled
+by design. Harness `h583_book_chrome.js`, 28 assertions; negative control vs 582 fails on four
+visible pills, no header, 0×0 back button.
+
+---
+
+### build 584 — the seventeenth chapter: What AI can build, with a deck running inside it
+
+Theo: *"make a session about the variety of things ai can build like CRMs, websites, study
+materials, visuals and audio, presentation apps, etc ... built around the construction industry ...
+amazing examples with a presentation within it."* And mid-build: *"I don't think it would be good
+to present from phone with something this great."*
+
+**Chapter XV closes the Building-it group.** A catalogue of eight shelves (CRM, websites,
+documents, study materials, visuals, audio, decks, dashboards), each mapped onto Cardinal —
+**five marked "already yours"** because they ship today (the app, work orders, The Walk, the
+Library illustrations, the analytics). Three worked builds (storm-morning kit, apprentice
+curriculum, one-button adjuster deck), an effort table, and the closing rule pointing back at
+Chapter X's deciding question.
+
+**The presentation is real.** Seven slides — a fictional-but-shaped hail claim: storm, evidence,
+scope gap, code, the ask ($22,577, arithmetic checked in the patch), close. **On iPad/desktop it
+presents** (buttons, dots, counter); **below 700px the slides lie flat as readable pages** with the
+controls gone, per Theo's call. Deliberately NO key handling — the book turns chapters on the
+arrow keys, and the harness asserts ArrowRight still turns the BOOK while the deck keeps its place.
+
+**Structure: 578's machinery, pointed at an insert.** XV→XVI, XVI→XVII remapped one-pass (19
+sites, carry-over tallied); everything regenerated from the ORDER list; edition line to
+twenty-two, three sites.
+
+**Four defects caught by rendering, not by the gate:**
+
+- **`font:700 12px inherit` is invalid** — CSS-wide keywords cannot appear in shorthands; the whole
+  declaration drops silently. Caught before it shipped by reading the CSS, not by any parser.
+- **The dots rendered as seven bordered pills** — my own `.aid-ctl button` (0,1,1) beat `.aid-dot`
+  (0,1,0). The 481 lesson again: read the NEIGHBOURS' selectors, including your own.
+- **Stacked slides laid out in a ROW on phones** — the stacked rule said `display:flex` without
+  `flex-direction:column`, and only the `.on` slide inherited column from the base rule.
+- **The control row overflowed 420px by 9px** — retired by the phone-stacking, which removes the
+  row below 700px entirely.
+
+**And one pre-existing harness rot found by the negative control:** the map chapter's assertions
+still carried `XV:` labels from before the 578 reorder — meaningless then, colliding once 584 made
+XV real. Relabelled to the chapters they actually test (`XVI:` Glasswing, `XVII:` map).
+
+Gates: `check_build.py` green 583 → 584, negative-controlled. Book harness **372** (325 at the
+session's start), including deck behaviour at three viewports; **28 fail against the pre-584
+book**. `h562_aibook.js` 42/42 with the served count at 22. Web ↔ markdown parity 18/18, chapter
+order 17/17. `AI_CHEATSHEET.md` mirrors the deck as a written-out slide list.

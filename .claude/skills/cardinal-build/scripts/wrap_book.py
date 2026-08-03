@@ -55,7 +55,7 @@ def main(srcpath):
     # for one, since 578 renumbered every chapter and data-ch="15" would have
     # gone on meaning "the last chapter" while silently meaning a different one
     n = doc.count('<section class="chapter')
-    assert n == 21, f'{n} sections, want 21 (cover + 16 + 4 back)'
+    assert n == 22, f'{n} sections, want 22 (cover + 17 + 4 back)'
     assert 'data-ch="glossary"' in doc and 'data-ch="sources"' in doc, 'back matter lost'
 
     fd, tmp = tempfile.mkstemp(dir=os.path.dirname(OUT))
