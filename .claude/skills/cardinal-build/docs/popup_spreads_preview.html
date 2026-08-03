@@ -1120,7 +1120,7 @@ var SPREADS=[
      s+='<path d="M216,76 L236,76 L232,70 L220,70 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
      return s + fig(52,90,0.8,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
    }},
-  {n:12, t:'The Shingles', w:'Courses going up the slope, one lap over the next. The part everybody pictures.',
+  {n:12, t:'The Shingles', done:true, w:'Courses going up the slope, one lap over the next. The part everybody pictures.',
    sky:'noon', build:function(){
      /* Roofers on the right, clear of the stack (left), the wing (middle)
         and the chimney (182-214, feet above its crown at 46 are fine — they
@@ -1136,13 +1136,13 @@ var SPREADS=[
      point are what is actually up there. Ventilation on a hip roof is a real
      question and it is Theo's to answer, not mine to draw: hip vent, box
      vents, or a powered unit. Flagged, not invented. */
-  {n:13, t:'The Ventilation', w:'Intake low at the soffit, exhaust high at the ridge. A roof that cannot breathe cooks itself — and half a system is no system.',
+  {n:13, t:'The Ventilation', done:true, w:'Intake low at the soffit, exhaust high at the ridge. A roof that cannot breathe cooks itself — and half a system is no system.',
    sky:'day', build:function(){
      /* NO CREW ON THIS ONE. The subject is the air, and two figures on the
         ridge would sit exactly where the exhaust arrows go. */
      return house({roof:'new'}) + airflow() + bird(20,124,0.66);
    }},
-  {n:14, t:'The Walk', w:'Theo on the roof at the end, not on the phone. Nothing is finished until he has been up there.',
+  {n:14, t:'The Walk', done:true, w:'Theo on the roof at the end, not on the phone. Nothing is finished until he has been up there.',
    sky:'dusk', build:function(){
      return house({roof:'new'}) + ladder(94,150,64,-13) +
        // right free zone, clear of the wing and the chimney
@@ -1151,7 +1151,7 @@ var SPREADS=[
        drone(30,32,0.8) +
        yardsign(254,150,0.72) + bird(292,112,0.68,true);
    }},
-  {n:15, t:'The Sweep', w:'The magnet runs twice. Every chip flung on spread 7 comes back up here — the same forty pieces.',
+  {n:15, t:'The Sweep', done:true, w:'The magnet runs twice. Every chip flung on spread 7 comes back up here — the same forty pieces.',
    sky:'dusk', build:function(){
      var s=house({roof:'new'});
      /* THE HANDLE TOP IS THE HAND. Figure at x=150 with its glove at (2,-40),
@@ -1170,7 +1170,7 @@ var SPREADS=[
   /* The Takeoff and The Attic are REAL spreads 3-4 now — Theo slotted them
      on 3 Aug when he set the retail order, and the two PROPOSED cards that
      lived here are superseded. The book is sixteen again, no renumber. */
-  {n:16, t:'The Team', w:'Twelve die-cut portraits, drawn and pushed. Beto in the black lead tee, Curtis in the vest.',
+  {n:16, t:'The Team', done:true, w:'Twelve die-cut portraits, drawn and pushed. Beto in the black lead tee, Curtis in the vest.',
    sky:'day', build:function(){
      var s=house({roof:'new'}), xs=[52,90,128,166,204,242];
      xs.forEach(function(x,i){
@@ -1193,17 +1193,19 @@ document.getElementById('grid').innerHTML = SPREADS.map(function(sp){
 }).join('');
 
 document.getElementById('after').innerHTML =
-  '<b>These are scenes, not spreads.</b> Spread 7 is the only one with the pop '+
-  'hinge, the tap-paced beats, the joke tabs on sticks and the forty chips. '+
-  'Each of the other fifteen needs that same treatment, which is where the '+
-  'twelve to fourteen builds go.'+
+  '<b>The book is BUILT — all sixteen spreads, tappable, in popup.html.</b> '+
+  'Every card above is a live spread now: the pop hinge, the tap-paced beats, '+
+  'the joke tabs, the bird slider that ends every spread back home, and a page '+
+  'turn that folds the pop flat between spreads. This sheet stays as the '+
+  'storyboard; popup.html is the book.'+
   '<br><br><b>Three things are already load-bearing across the whole book:</b>'+
   '<ul>'+
   '<li>The <b>cardinal is in all sixteen</b> and never moves off its perch. It is '+
   'the one thing that does not change while everything else does.</li>'+
-  '<li><b>Spread 15 sweeps up spread 7’s exact chips</b> — same seed, same '+
-  'forty pieces, six left at the end for the magnet’s second pass. If they '+
-  'are re-scattered rather than remembered, the joke stops working.</li>'+
+  '<li><b>Spread 15 sweeps up spread 7’s exact chips — literally now:</b> '+
+  'the forty chips are DOM elements that persist across every page turn, and '+
+  'the magnet collects those same forty, thirty-four on the first pass and '+
+  'the six that thought they got away on the second.</li>'+
   '<li>The <b>sky carries the clock</b>. Dark at the knock, blue through the '+
   'build, warm at the walk and the sweep. A roof is more than one day and the '+
   'sky is how you know.</li>'+

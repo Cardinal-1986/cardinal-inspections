@@ -7499,3 +7499,32 @@ protagonist stacks in front, and on wide screens nothing changes because they ne
 `pw_book.js` walks eleven spreads — ALL GREEN (sign presence now asserted per spread: up from
 the tear-off onward, absent before). Back-nav expectations moved with the longer book. Rendered
 and eyeballed at phone size; the cardinal perched in front of its own logo sign stays.
+
+---
+
+## Spreads 12-16 — THE BOOK IS COMPLETE (2026-08-03, same night)
+
+All sixteen spreads of The Pop-Up Roof are built and tappable in `popup.html`. The final five:
+**The Shingles** (the `'half'` state — Brownwood courses under the felt's printed lines, with
+`cutLayers(96)`'s labelled cutaway carrying the whole-roof-in-one-bite caption), **The
+Ventilation** (`'new'` + the airflow arrows in two beat groups, intake tying back to the attic's
+buried baffles from spread 3, no crew because the subject is the air), **The Walk** (Theo in
+grey, no hat, on his own roof; the drone's after pictures; "He checks the gnome too"), **The
+Sweep**, and **The Team** (the office in grey, Beto in the black lead tee, Curtis in the vest).
+
+**The sweep is the book's flagship mechanic made literal.** Spread 7's forty chips are real DOM
+elements that persisted across every page turn — and the magnet collects THOSE, not a re-scatter:
+thirty-four on the first pass, the six that thought they got away on the second, each dragged to
+the cart by a `--mx/--my` transform whose `!important` outranks the fling animation's forwards
+fill (importance beats animations in the cascade — this is the one place that rule earns its
+keep). The tally caption reuses spread 7's own `tally` machinery, so "All 40 of them" counts the
+real number, and a book opened straight at `#15` with no chips ever flung just reads captions
+that never name a count. Verified in Chromium: zero unswept chips at the end, the same-node
+assertion holding the whole way.
+
+`shingleArt` grew an `upTo` param for the half-done roof; `houseSVG` gained `'half'`/`'new'`
+plane bases; the ladder and airflow ported from the sheet. The last page holds — tapping past
+spread 16's final beat stays put.
+
+`pw_book.js`: the full sixteen-spread walk, ALL GREEN, page errors none. The sheet's footer note
+("these are scenes, not spreads") is rewritten — it stopped being true tonight.

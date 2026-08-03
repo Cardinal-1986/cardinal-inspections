@@ -277,6 +277,12 @@
   .chip.fly{animation:fling var(--dur) cubic-bezier(.3,.9,.4,1) forwards;animation-delay:var(--dly)}
   .chip.rest{opacity:1;transform:translate(var(--tx),var(--ty)) rotate(var(--rot))}
   .scene.lit .chip{box-shadow:0 1px 0 rgba(74,53,36,.18),0 0 0 1.6px rgba(232,114,42,.42)}
+  /* spread 15: the magnet collects the REAL chips spread 7 flung. The
+     !important transform outranks the fling animation's forwards fill
+     (importance beats animations in the cascade), so a landed chip can
+     still be dragged to the cart. */
+  .chip.swept{transition:transform .85s cubic-bezier(.45,.1,.7,1),opacity .85s ease;
+              transform:translate(var(--mx),var(--my)) rotate(30deg)!important;opacity:0!important}
   @keyframes fling{
     0%  {opacity:1;transform:translate(0,0) rotate(0deg)}
     70% {opacity:1;transform:translate(calc(var(--tx) * .96),calc(var(--ty) + 8px)) rotate(calc(var(--rot) * .9))}
@@ -353,6 +359,7 @@
     .tag{opacity:1!important}
     .chip.fly{animation:none!important;opacity:1!important;
               transform:translate(var(--tx),var(--ty)) rotate(var(--rot))!important}
+    .chip.swept{transition:none!important;opacity:0!important}
     /* A second presentation, not a switch: every beat is present at once and
        the deck stops being a sequence. Nothing is lost, only the pacing. */
     .flatlist{display:block}
@@ -823,7 +830,7 @@
      part drift apart. */
   function ridgeVent(){ return ''; } /* absorbed into ridgeAndRakes */
 
-  function shingleArt(blend, starter){
+  function shingleArt(blend, starter, upTo){
     /* Rectangle courses for the T — starter at the eave, 8 courses of 6.5
        landing exactly on the ridge (96 - 52 = 44). Same tab cycle, laminate
        shadow and SPLIT shading as always; the convergence arithmetic is
@@ -843,7 +850,7 @@
       out += '<path d="M30,' + BASE + ' L270,' + BASE +
              '" fill="none" stroke="' + SHADOW + '" stroke-width="1.2"/>';
     }
-    for(var c = 0; c < 8; c++){
+    for(var c = 0; c < (upTo || 8); c++){
       var yb = BASE - c * CH, yt = yb - CH;
       out += band(yt, yb, F[1]);
       var stag = (c % 2) * (TW / 2);
@@ -1181,10 +1188,27 @@ function cutLayers(x1){
        than at a facet edge that no longer exists — which also ends the oddity
        of the roof shading at 150 while the wall shaded at 176. */
     s += '<path d="M30,100 L30,44 L' + SPLIT + ',44 L' + SPLIT + ',100 Z" fill="' +
-         (mode !== 'worn' ? fa : '#22262B') + '"/>';
+         (mode === 'new' ? '#4E3826' : mode === 'half' ? '#22262B' : mode !== 'worn' ? fa : '#22262B') + '"/>';
     s += '<path d="M' + SPLIT + ',100 L' + SPLIT + ',44 L270,44 L270,100 Z" fill="' +
-         (mode !== 'worn' ? fb : '#181B1F') + '"/>';
-    if(mode !== 'worn'){
+         (mode === 'new' ? '#38281B' : mode === 'half' ? '#14171A' : mode !== 'worn' ? fb : '#181B1F') + '"/>';
+    if(mode === 'half' || mode === 'new'){
+      /* Duration Brownwood going on ('half') or on ('new'). Half stops
+         after four courses with the felt's printed lines still showing
+         above, and carries the cut-layer stack Theo picked — the whole
+         roof in one bite at the left edge. The white drip edge shows at
+         the eave on both, which is what a finished eave looks like. */
+      s += '<path d="M31,97.2 L' + SPLIT + ',97.2 L' + SPLIT + ',101.8 L31,101.8 Z" fill="#F2F4F5"/>';
+      s += '<path d="M' + SPLIT + ',97.2 L269,97.2 L269,101.8 L' + SPLIT + ',101.8 Z" fill="#D2D7DA"/>';
+      if(mode === 'half'){
+        s += '<g fill="none" stroke="#7A8085" stroke-width=".8" opacity=".6">' +
+             '<path d="M30,58 L270,58"/><path d="M30,44 L270,44"/></g>';
+        s += shingleArt('brownwood', true, 4);
+        s += cutLayers(96);
+      } else {
+        s += shingleArt('brownwood', true);
+        s += ridgeAndRakes('brownwood');
+      }
+    } else if(mode !== 'worn'){
       /* 4x8 SHEETS, NOT MORE COURSES. Theo, 3 Aug: "make the sheething look
          like 4x8 sheets mark with red what's bad". The stripped deck had been
          wearing the SHINGLE courses — the identical five horizontal lines,
@@ -1415,6 +1439,92 @@ function cutLayers(x1){
      owns id="bird", so the in-scene copy must never carry it */
   function sceneBird(x, y, s, flip){
     return cardinal(x, y, s, flip, 'scene').replace(' id="bird"', '');
+  }
+
+  /* ── the extension ladder (walk spread) and the airflow arrows ── */
+  function ladder(x, y, h, lean){
+    var g = '<g transform="translate(' + x + ',' + y + ') rotate(' + (lean || -14) + ')">';
+    g += '<path d="M-5,0 L-5,' + (-h) + ' M5,0 L5,' + (-h) + '" stroke="#C9B893" stroke-width="4" stroke-linecap="round"/>';
+    g += '<path d="M-5,0 L-5,' + (-h) + ' M5,0 L5,' + (-h) + '" stroke="#AEB4BA" stroke-width="2.6" stroke-linecap="round"/>';
+    for(var i = 1; i * 11 < h; i++) g += '<path d="M-5,' + (-i * 11) + ' L5,' + (-i * 11) + '" stroke="#AEB4BA" stroke-width="2"/>';
+    return g + '</g>';
+  }
+  function airArrow(d, head){
+    return '<path d="' + d + '" fill="none" stroke="#8FD4E8" stroke-width="2.2" ' +
+           'stroke-linecap="round" opacity=".9"/>' +
+           '<path d="' + head + '" fill="#8FD4E8" opacity=".9"/>';
+  }
+  function airIntake(){
+    /* from OUTSIDE the eave, curling in under the gutter — air entering,
+       not air already in the attic */
+    return airArrow('M14,132 C22,126 32,120 42,113', 'M42,113 L35,114 L38.2,118.4 Z') +
+           airArrow('M286,132 C278,126 268,120 258,113', 'M258,113 L265,114 L261.8,118.4 Z');
+  }
+  function airExhaust(){
+    return airArrow('M56,96 C62,80 68,62 74,48',  'M74,48 L69.4,53.6 L76.6,55.4 Z') +
+           airArrow('M244,96 C238,80 232,62 226,48', 'M226,48 L230.6,53.6 L223.4,55.4 Z') +
+           airArrow('M84,34 C84,26 84,22 84,16', 'M84,16 L80,23 L88,23 Z') +
+           airArrow('M216,34 C216,26 216,22 216,16', 'M216,16 L212,23 L220,23 Z');
+  }
+
+  /* ── SPREAD 12 — The Shingles. The trailer is spread 7's own trailerG,
+     revealed by beat — one trailer, drawn once, both spreads. */
+  function shinglesSVG(){
+    var s = houseSVG('half', true);
+    s += '<g id="crew12G" class="beat">' +
+         figure(224, 90, 0.5, {pose:'point', flip:true}) +
+         figure(250, 82, 0.48, {pose:'table', flip:true}) + '</g>';
+    s += '<g id="drone12G" class="beat">' + drone(40, 28, 1.1) + '</g>';
+    return s;
+  }
+
+  /* ── SPREAD 13 — The Ventilation. No crew: the subject is the air. ── */
+  function ventSVG(){
+    var s = houseSVG('new', true);
+    s += '<g id="intakeG" class="beat">' + airIntake() + '</g>';
+    s += '<g id="exhaustG" class="beat">' + airExhaust() + '</g>';
+    return s;
+  }
+
+  /* ── SPREAD 14 — The Walk. Theo on his own roof, grey shirt, no hat. ── */
+  function walkSVG(){
+    var s = houseSVG('new', true);
+    s += '<g id="walkG" class="beat">' + ladder(94, 190, 74, -13) +
+         figure(238, 86, 0.55, {pose:'point', hat:false, shirt:'#474C52', shirtDk:'#33373C'}) + '</g>';
+    s += '<g id="drone14G" class="beat">' + drone(34, 30, 1.1) + '</g>';
+    return s;
+  }
+
+  /* ── SPREAD 15 — The Sweep. The magnet cart; the chips it collects are
+     spread 7's own, still sitting in the DOM. The handle top IS the hand
+     — drawn from the figure's glove to the cart, so it cannot float. */
+  function sweepSVG(){
+    var s = houseSVG('new', true);
+    s += '<g id="magnetG" class="beat">';
+    s += figure(146, 190, 0.62, {pose:'table'});
+    s += '<path d="M159.6,170.8 L178,184.5" stroke="#C9B893" stroke-width="3.4" stroke-linecap="round"/>';
+    s += '<path d="M159.6,170.8 L178,184.5" stroke="#E8DCC8" stroke-width="2" stroke-linecap="round"/>';
+    s += '<path d="M168,184 L192,184 L192,189 L168,189 Z" fill="#8C8F94" stroke="#E8DCC8" stroke-width="1.2" stroke-linejoin="round"/>';
+    s += '<path d="M168,189 L192,189 L192,190.5 L168,190.5 Z" fill="#C8202E"/>';
+    s += '<circle cx="172" cy="190" r="1.6" fill="#2A2E33"/><circle cx="188" cy="190" r="1.6" fill="#2A2E33"/>';
+    s += '</g>';
+    return s;
+  }
+
+  /* ── SPREAD 16 — The Team. ── */
+  function teamSVG(){
+    var s = houseSVG('new', true);
+    s += '<g id="teamG" class="beat">';
+    var XS = [52, 90, 128, 166, 204, 242];
+    for(var i = 0; i < XS.length; i++){
+      var o = {pose:'point'};
+      if(i < 2){ o.hat = false; o.shirt = '#474C52'; o.shirtDk = '#33373C'; }       // office
+      else if(i === 3){ o.shirt = '#1C1D20'; o.shirtDk = '#0F1012'; }               // Beto, lead tee
+      else if(i === 4){ o.hat = false; o.shirt = '#C4D435'; o.shirtDk = '#98A722'; } // Curtis, vest
+      s += figure(XS[i], 190, 0.62, o);
+    }
+    s += '</g>';
+    return s;
   }
 
   /* granulated mineral surface on the shield — deterministic, two tones */
@@ -1856,6 +1966,58 @@ function cutLayers(x1){
         {txt:'Every pipe gets a new boot, never a reused one. Old boots are where bathroom stains come from.', show:['bootG']},
         {txt:'The wing\'s valleys run membrane under the metal. Belt, then suspenders.', show:['valleyG']},
         {txt:'A roof fails at its seams or not at all. These are the seams.', tag:2}
+      ]},
+    { n:12, phase:'The Shingles', sky:'noon', sign:true,
+      birdAt:['0','-30vw','-12vw','-24vw','0'],
+      scene:shinglesSVG, high:-1,
+      tags:['', '', 'Four nails a shingle. Six in the wind rows.'],
+      beats:[
+        {txt:'The part everybody pictures: Duration Brownwood walking up the slope, one lap over the next.'},
+        {txt:'Two on the roof, nailing to a chalk line nobody will ever see again.', show:['crew12G']},
+        {txt:'The trailer keeps pace below. Wrappers in, bundles out.', show:['trailerG']},
+        {txt:'The drone gets the during pictures.', show:['drone12G']},
+        {txt:'And the cutaway at the left edge is your whole roof in one bite — deck, shield, felt, shingle. Every layer you just tapped through.', tag:2}
+      ]},
+    { n:13, phase:'The Ventilation', sky:'day', sign:true,
+      birdAt:['0','-20vw','-32vw','0'],
+      scene:ventSVG, high:-1,
+      tags:['', '', 'The attic finally exhales.'],
+      beats:[
+        {txt:'The new roof breathes on purpose. A roof that cannot breathe cooks itself from underneath.'},
+        {txt:'Cool air in low, at the soffit — the same bays the flashlight found buried on spread three. Not buried any more.', show:['intakeG']},
+        {txt:'Hot air out high, through the ridge vent — that raised line along the peak is doing this all day.', show:['exhaustG']},
+        {txt:'Half a system is no system. You got both halves.', tag:2}
+      ]},
+    { n:14, phase:'The Walk', sky:'dusk', sign:true,
+      birdAt:['0','-26vw','-10vw','0'],
+      scene:walkSVG, high:-1,
+      tags:['', '', 'He checks the gnome too.'],
+      beats:[
+        {txt:'The crew rolls up. Theo does not — not yet. The last thing on every job is the walk.'},
+        {txt:'Up the ladder one more time: every course, every seam, every cap, on foot.', show:['walkG']},
+        {txt:'The drone gets the after pictures — same angles as the before ones, on purpose.', show:['drone14G']},
+        {txt:'Nothing is finished until it has been walked. Then it is finished.', tag:2}
+      ]},
+    { n:15, phase:'The Sweep', sky:'dusk', sign:true,
+      birdAt:['0','-24vw','-36vw','-12vw','0'],
+      scene:sweepSVG, high:-1,
+      tags:['', '', 'Nails: 0. Chips: 0. Excuses: 0.'],
+      beats:[
+        {txt:'The roof is on. What is left of the old one is forty pieces of it hiding in your grass.'},
+        {txt:'The magnet cart. It finds steel the eye gave up on.', show:['magnetG']},
+        {txt:'First pass: the lawn gives up nearly everything.', act:'sweep1'},
+        {txt:'The magnet runs twice — the second pass is for the ones that thought they got away.', act:'sweep2', tag:2},
+        {txt:'Zero left in the grass. The magnet counted.', tally:true}
+      ]},
+    { n:16, phase:'The Team', sky:'day', sign:true,
+      birdAt:['0','-18vw','-30vw','0'],
+      scene:teamSVG, high:-1,
+      tags:['', '', 'This book: also built in-house.'],
+      beats:[
+        {txt:'Sixteen spreads, one roof. The roof was never the whole story.'},
+        {txt:'The people who built it: the crew in Cardinal red, Curtis in the vest, Beto in the black lead tee.', show:['teamG']},
+        {txt:'Same crew start to finish, same office answering the phone, same trucks on these streets next year.'},
+        {txt:'The end. The cardinal never left — as far as it is concerned, this whole book was about its yard.', tag:2}
       ]}
   ];
 
@@ -1879,6 +2041,8 @@ function cutLayers(x1){
       if(b.tag !== undefined) want['tag' + b.tag] = 1;
       if(b.lit)   want.__lit = 1;
       if(b.act === 'shed') shed();
+      if(b.act === 'sweep1') sweep(1);
+      if(b.act === 'sweep2') sweep(2);
     });
     var ids = {};
     sp.beats.forEach(function(b){ (b.show || []).forEach(function(id){ ids[id] = 1; }); });
@@ -2011,6 +2175,29 @@ function cutLayers(x1){
     setTimeout(function(){
       if(S().n === 7){ popsvg.innerHTML = houseSVG(true); paintScene(); }
     }, reduce ? 0 : 240);
+  }
+
+  /* ── the sweep: the magnet collects spread 7's REAL chips ────
+     Pass 1 takes all but six; pass 2 takes the six that thought they
+     got away. Guarded so re-entering the spread cannot re-sweep, and
+     a book opened straight at #15 (no chips ever flung) just reads
+     the captions — nothing references a count except the tally,
+     which spread 7's own machinery already makes conditional. */
+  var sweptPass = 0;
+  function sweep(pass){
+    if(pass <= sweptPass) return;
+    sweptPass = pass;
+    var all = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+    var box = scene.getBoundingClientRect();
+    var gx = 0.55 * box.width;
+    var gy = box.height - (floor.offsetHeight || 118) * 0.4;
+    all.forEach(function(c, i){
+      if(c.classList.contains('swept')) return;
+      if(pass === 1 && i >= all.length - 6) return;   // six escape the first pass
+      c.style.setProperty('--mx', (gx - (parseFloat(c.style.left) || 0)).toFixed(0) + 'px');
+      c.style.setProperty('--my', (gy - (parseFloat(c.style.top) || 0)).toFixed(0) + 'px');
+      c.classList.add('swept');
+    });
   }
 
   /* ── input: tap forward, swipe right back — and past either end
