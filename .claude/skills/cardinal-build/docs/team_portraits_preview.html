@@ -20,7 +20,7 @@
   .nm{font:800 12.5px var(--mono);letter-spacing:.09em;margin-top:6px;color:var(--ink)}
   .rl{font:12px/1.35 var(--sans);color:var(--ink2);margin-top:2px}
   .q{color:var(--red-tx);font-weight:700}
-  .row{grid-template-columns:repeat(7,1fr)}
+  .row{grid-template-columns:repeat(5,1fr)}
   .note{margin-top:26px;font:14px/1.55 var(--sans);max-width:70ch;color:var(--ink2)}
   .note b{color:var(--ink)}
   h2{font:800 17px var(--serif);margin:30px 0 10px}
@@ -34,14 +34,17 @@
   <div class="row" style="grid-template-columns:repeat(3,1fr);max-width:620px" id="shirts"></div>
 
   <div class="note">
-    <b>Names are yours, roles are only the ones you told me.</b> Curtis is the project
-    manager and you're the owner; Joan, Joey, Amanda and Jerry say <span class="q">role?</span>
-    until you fill them in. I could guess from the app's permission groups, but a
-    permission level is not a job title and this ends up printed under someone's face.
+    <b>Ten people, roles in your words.</b> Seven are drawn from photographs. Danny,
+    Nick and Jacob have no photo yet, so their board is cut and their polo is on but
+    the face is left <span class="q">unpunched</span> — inventing a face for a named
+    colleague is the same mistake as inventing their name. Send three photos and they
+    take about two minutes each.
     <br><br>
-    <b>Grey is drawn separately from hair colour now</b> — Curtis has dark hair and a
-    genuinely salt-and-pepper beard in the ladder photo, and tying the two together made
-    him read as either too young or too old.
+    <b>One thing worth checking, not a claim.</b> The app's permission groups list
+    <i>scottie@</i> under Production, and he isn&rsquo;t on your roster above. Going the
+    other way, Jerry, Amanda, Danny and Caine don&rsquo;t appear in those groups at all —
+    which would mean no app account, and nobody can be assigned work they can&rsquo;t
+    sign in to see. Worth a look; I haven&rsquo;t changed anything.
   </div>
 </div>
 <script>
@@ -99,6 +102,16 @@ function portrait(o){
   }
 
   // ── head ──────────────────────────────────────────────
+  if(o.blank){
+    /* NO PHOTOGRAPH YET. The bust is real board in a real polo, but the face
+       is left unpunched — a piece still on the sprue. Inventing a face for a
+       named colleague is the same error as inventing their name. */
+    s+='<ellipse cx="0" cy="-47" rx="16.5" ry="18.5" fill="#DCCDAE" stroke="'+CORE+
+       '" stroke-width="2"/>';
+    s+='<ellipse cx="0" cy="-47" rx="11.5" ry="13" fill="none" stroke="'+CUT+
+       '" stroke-width="1.2" stroke-dasharray="3 3"/>';
+    return s+'</svg>';
+  }
   s+='<ellipse cx="0" cy="-47" rx="16.5" ry="18.5" fill="'+skin+'" stroke="'+CORE+
      '" stroke-width="2"/>';
   // ears
@@ -190,18 +203,15 @@ function portrait(o){
 var PEOPLE=[
   {n:'CURTIS', r:'Project manager',
    o:{skin:'light',hair:'dark',style:'short',beard:'goatee',beardColor:'grey'}},
-  {n:'THEO',   r:'Owner',
-   o:{skin:'tan',hair:'black',style:'swept'}},
-  {n:'JOAN',   r:'role?',
-   o:{skin:'light',hair:'blonde',style:'bob',glasses:true}},
-  {n:'JOEY',   r:'role?',
-   o:{skin:'light',hair:'midbrown',style:'short',beard:'goatee'}},
-  {n:'AMANDA', r:'role?',
-   o:{skin:'light',hair:'dark',style:'pony',accent:true}},
-  {n:'JERRY',  r:'role? · cut off in the team photo',
-   o:{skin:'tan',hair:'black',style:'crop'}},
-  {n:'CAINE',  r:'Tech',
-   o:{skin:'light',hair:'dark',style:'shaggy',beard:'full'}}
+  {n:'THEO',   r:'Owner',    o:{skin:'tan',hair:'black',style:'swept'}},
+  {n:'JOAN',   r:'Admin',    o:{skin:'light',hair:'blonde',style:'bob',glasses:true}},
+  {n:'JOEY',   r:'Sales',    o:{skin:'light',hair:'midbrown',style:'short',beard:'goatee'}},
+  {n:'JERRY',  r:'Sales',    o:{skin:'tan',hair:'black',style:'crop'}},
+  {n:'AMANDA', r:'Office',   o:{skin:'light',hair:'dark',style:'pony',accent:true}},
+  {n:'CAINE',  r:'Tech',     o:{skin:'light',hair:'dark',style:'shaggy',beard:'full'}},
+  {n:'DANNY GUTIERREZ', r:'Logistics · photo?', o:{blank:true}},
+  {n:'NICK HEY',        r:'Sales · photo?',     o:{blank:true}},
+  {n:'JACOB HENDERSON', r:'Sales · photo?',     o:{blank:true}}
 ];
 document.getElementById('row').innerHTML = PEOPLE.map(function(p){
   return '<div class="card">'+portrait(p.o)+
