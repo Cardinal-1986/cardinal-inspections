@@ -177,7 +177,13 @@
      bird is concerned, nothing did. The board is taller than its artwork
      with the bird pinned to the TOP, leaving the lower half transparent for
      the stick to read through; sized to the bird, the stick was invisible. */
-  .birdpop{position:absolute;right:3%;bottom:var(--floorH);width:64px;height:94px;
+  /* z-index 2: the sign's 78% + 84px fixed width overlaps the bird's slot
+     on a phone-width scene (the measured gap was wide-screen arithmetic),
+     and the sign sits later in the DOM — so at spread 7's final beat the
+     caption pointed at a bird the sign was hiding. The bird is the book's
+     protagonist; it stacks in front. On wide screens they never overlap
+     and nothing changes. */
+  .birdpop{position:absolute;right:3%;bottom:var(--floorH);width:64px;height:94px;z-index:2;
            transition:transform .7s cubic-bezier(.3,.9,.32,1.06)}
   .birdstick{position:absolute;left:50%;bottom:0;width:5px;height:52px;margin-left:-2.5px;
              transform-origin:50% 100%;
@@ -1109,6 +1115,11 @@ function cutLayers(x1){
 }
 
   function houseSVG(stripped, noCrew){
+    /* spread 7 calls with true/false and is untouched; the layer spreads
+       pass a string. 'bare' is the stripped deck WITH the sprayed sheets;
+       'ice'/'felt'/'flash' are the same deck with the water layers on,
+       and the marks gone — those sheets were cut out on spread 8. */
+    var mode = typeof stripped === 'string' ? stripped : (stripped ? 'bare' : 'worn');
     var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
         GLASS='#8FB6CC', GLASSL='#B9D6E4',
         DOOR='#8F1620', DOORS='#6B0F16', MET='#AEB4BA', METS='#878D93',
@@ -1164,16 +1175,16 @@ function cutLayers(x1){
     // the whole point of the style.
     var fa = stripped ? DECK  : ROOF,
         fb = stripped ? DECKS : ROOFS;
-    s += '<g' + (stripped ? '' : ' id="shingles"') + '>';
+    s += '<g' + (mode === 'worn' ? ' id="shingles"' : '') + '>';
     /* ONE trapezoid now, not two triangles meeting at a point. Straight on you
        see a single slope, so the light splits at SPLIT with the wall rather
        than at a facet edge that no longer exists — which also ends the oddity
        of the roof shading at 150 while the wall shaded at 176. */
     s += '<path d="M30,100 L30,44 L' + SPLIT + ',44 L' + SPLIT + ',100 Z" fill="' +
-         (stripped ? fa : '#22262B') + '"/>';
+         (mode !== 'worn' ? fa : '#22262B') + '"/>';
     s += '<path d="M' + SPLIT + ',100 L' + SPLIT + ',44 L270,44 L270,100 Z" fill="' +
-         (stripped ? fb : '#181B1F') + '"/>';
-    if(stripped){
+         (mode !== 'worn' ? fb : '#181B1F') + '"/>';
+    if(mode !== 'worn'){
       /* 4x8 SHEETS, NOT MORE COURSES. Theo, 3 Aug: "make the sheething look
          like 4x8 sheets mark with red what's bad". The stripped deck had been
          wearing the SHINGLE courses — the identical five horizontal lines,
@@ -1223,7 +1234,7 @@ function cutLayers(x1){
       /* re-laid for the T: the wing owns 102-178 and the chimney 182-214,
          so the visible bottom-row sheets sit left of the wing and right of
          the chimney. Grid origin 30. */
-      [[30, 82], [70, 82], [230, 82]].forEach(function(p){
+      if(mode === 'bare') [[30, 82], [70, 82], [230, 82]].forEach(function(p){
         var bx = p[0], by = p[1];
         s += '<path d="M' + bx + ',' + by + ' L' + (bx + SHW) + ',' + by + ' L' + (bx + SHW) + ',' +
              (by + SHH) + ' L' + bx + ',' + (by + SHH) + ' Z" fill="#C8202E" opacity=".4"/>';
@@ -1231,6 +1242,23 @@ function cutLayers(x1){
              '<path d="M' + (bx + 7) + ',' + (by + 4) + ' L' + (bx + SHW - 7) + ',' + (by + SHH - 4) + '"/>' +
              '<path d="M' + (bx + SHW - 7) + ',' + (by + 4) + ' L' + (bx + 7) + ',' + (by + SHH - 4) + '"/></g>';
       });
+      /* ── the water layers, in the order water meets them ────────
+         Ported from the sheet at identical coordinates. Drip edge FIRST
+         at the eave; the shield goes OVER it; the felt starts above the
+         shield and laps DOWN onto it — it never buries it. */
+      if(mode === 'ice' || mode === 'felt' || mode === 'flash'){
+        s += '<path d="M31,97.2 L' + SPLIT + ',97.2 L' + SPLIT + ',101.8 L31,101.8 Z" fill="#F2F4F5"/>';
+        s += '<path d="M' + SPLIT + ',97.2 L269,97.2 L269,101.8 L' + SPLIT + ',101.8 Z" fill="#D2D7DA"/>';
+        s += '<path d="M30,100 L30,86 L' + SPLIT + ',86 L' + SPLIT + ',100 Z" fill="#6E767B"/>';
+        s += '<path d="M' + SPLIT + ',100 L' + SPLIT + ',86 L270,86 L270,100 Z" fill="#565D62"/>';
+        s += gritBand(31, 90, 86, 100);
+      }
+      if(mode === 'felt' || mode === 'flash'){
+        s += '<path d="M30,86 L30,44 L' + SPLIT + ',44 L' + SPLIT + ',86 Z" fill="#22262B"/>';
+        s += '<path d="M' + SPLIT + ',86 L' + SPLIT + ',44 L270,44 L270,86 Z" fill="#14171A"/>';
+        s += '<g fill="none" stroke="#7A8085" stroke-width=".8" opacity=".55">' +
+             '<path d="M30,72 L270,72"/><path d="M30,58 L270,58"/><path d="M30,44 L270,44"/></g>';
+      }
     } else {
       /* WEATHERED Onyx Black — the roof that is about to come off. Same
          blend, lifted and flattened: a tired roof has lost granules, so it
@@ -1256,7 +1284,8 @@ function cutLayers(x1){
        run BEHIND it — which is where they physically are. Draw order is the
        containment; no clip path and no test needed. */
     s += chimney();
-    s += wing({});
+    s += wing({ ice: mode === 'ice' || mode === 'felt' || mode === 'flash',
+                flash: mode === 'flash' });
 
     /* the flower beds, under the exact zones the tarps cover on beat 2 —
        "Your flower beds have been through enough" finally has flowers */
@@ -1388,9 +1417,69 @@ function cutLayers(x1){
     return cardinal(x, y, s, flip, 'scene').replace(' id="bird"', '');
   }
 
+  /* granulated mineral surface on the shield — deterministic, two tones */
+  function gritBand(seed, n, y0, y1){
+    var g = '', r = seed;
+    function rnd(){ r = (r * 1103515245 + 12345) & 0x7fffffff; return r / 0x7fffffff; }
+    for(var i = 0; i < n; i++){
+      var y = y0 + rnd() * (y1 - y0), x = 32 + rnd() * 236;
+      g += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (0.6 + rnd() * 0.7).toFixed(2) +
+           '" fill="' + (rnd() < 0.5 ? '#5C6165' : '#C3C8CC') + '" opacity=".8"/>';
+    }
+    return g;
+  }
+
+  /* ── SPREAD 8 — The Deck. The three sprayed sheets are already there
+     (spread 7 stripped to them); the beats cut one out and lay one new. */
+  function deckSVG(){
+    var s = houseSVG('bare', true);
+    s += '<g id="soundG" class="beat">' + figure(222, 88, 0.5, {pose:'table', flip:true}) + '</g>';
+    s += '<g id="cutG" class="beat">' +
+         '<path d="M30,82 L70,82 L70,100 L30,100 Z" fill="#4A3A28"/></g>';
+    s += '<g id="newG" class="beat">' +
+         '<path d="M70,82 L101.5,82 L101.5,100 L70,100 Z" fill="#E3CDA2" stroke="#C9B893" stroke-width="1.6" stroke-linejoin="round"/></g>';
+    return s;
+  }
+
+  /* ── SPREAD 9 — The Ice Shield ── */
+  function iceSVG(){
+    var s = houseSVG('ice', true);
+    s += '<g id="rollG" class="beat"><g transform="translate(56,90) rotate(-4)">' +
+         '<path d="M-14,-6 L14,-6 L14,6 L-14,6 Z" fill="#6E767B" stroke="#E8DCC8" stroke-width="1.3" stroke-linejoin="round"/>' +
+         '<circle cx="14" cy="0" r="6" fill="#8A9096" stroke="#E8DCC8" stroke-width="1.1"/></g></g>';
+    s += '<g id="crewG" class="beat">' + figure(232, 88, 0.5, {pose:'table', flip:true}) + '</g>';
+    return s;
+  }
+
+  /* ── SPREAD 10 — The Felt ── */
+  function feltSVG(){
+    var s = houseSVG('felt', true);
+    s += '<g id="rollG2" class="beat"><g transform="translate(64,60) rotate(-8)">' +
+         '<path d="M-16,-7 L16,-7 L16,7 L-16,7 Z" fill="#6E747A" stroke="#E8DCC8" stroke-width="1.4" stroke-linejoin="round"/>' +
+         '<circle cx="16" cy="0" r="7" fill="#8A9096" stroke="#E8DCC8" stroke-width="1.2"/></g></g>';
+    s += '<g id="crewG2" class="beat">' + figure(236, 86, 0.5, {pose:'point', flip:true}) + '</g>';
+    return s;
+  }
+
+  /* ── SPREAD 11 — The Flashing. The ring is the book's "look here"
+     grammar; the three seams each get one on their own beat. The left
+     valley line at y=72 sits at x≈126 by rakeX arithmetic — measured,
+     not eyeballed, after the takeoff's gnome lesson. */
+  function flashSVG(){
+    var s = houseSVG('flash', true);
+    s += '<g id="chimFlashG" class="beat">' + inventoryRing(196, 84, 17) + '</g>';
+    s += '<g id="bootG" class="beat">' +
+         '<path d="M222,72 L230,72 L230,62 L222,62 Z" fill="#878D93"/>' +
+         '<path d="M216,76 L236,76 L232,70 L220,70 Z" fill="#AEB4BA" stroke="#E8DCC8" stroke-width="1"/>' +
+         inventoryRing(226, 68, 12) + '</g>';
+    s += '<g id="valleyG" class="beat">' + inventoryRing(126, 72, 12) + '</g>';
+    return s;
+  }
+
   /* ── SPREAD 5 — The Colour ────────────────────────────────────────
      Sample boards leaning against the real siding, two either side of
-     the door, tops clearing the window sills. The pick gets the same
+     the door, tops clearing the window sills. The BROWN board is the
+     pick — the book's new roof is Duration Brownwood. It gets the same
      ring language as the takeoff's inventory — one visual grammar. */
   function colourSVG(){
     var s = houseSVG(false, true);
@@ -1404,7 +1493,7 @@ function cutLayers(x1){
            '<path d="M-13,-30 L13,-30"/><path d="M-13,-16 L13,-16"/></g></g>';
     });
     s += '</g>';
-    s += '<g id="pickG" class="beat">' + inventoryRing(184, 168, 20) + '</g>';
+    s += '<g id="pickG" class="beat">' + inventoryRing(92, 168, 20) + '</g>';
     return s;
   }
 
@@ -1686,7 +1775,7 @@ function cutLayers(x1){
       beats:[
         {txt:'One decision on this job is all yours: the colour. It is also the one you will live with longest.'},
         {txt:'Real sample boards against your real siding — colours lie on phone screens, never in a driveway.', show:['boardsG']},
-        {txt:'This street runs to Onyx Black. Circled, agreed, done — no showroom trip required.', show:['pickG'], tag:2},
+        {txt:'The pick: Owens Corning Duration, Brownwood. Circled, agreed, done — no showroom trip required.', show:['pickG'], tag:2},
         {txt:'Sleep on it if you want. The boards stay the week.'}
       ]},
     { n:6, phase:'The Delivery', sky:'day',
@@ -1725,6 +1814,48 @@ function cutLayers(x1){
          lit:true, tag:2},
         {txt:'The cardinal is back where it started. As far as it is concerned, nothing happened.',
          tally:true}
+      ]},
+    { n:8, phase:'The Deck', sky:'day', sign:true,
+      birdAt:['0','-24vw','-10vw','-30vw','0'],
+      scene:deckSVG, high:-1,
+      tags:['', '', 'We knock. The deck answers.'],
+      beats:[
+        {txt:'Underneath it all: the deck. Bare plywood — the only honest look anybody ever gets at it.'},
+        {txt:'Every sheet gets walked and sounded. A good one knocks back; a bad one thuds.', show:['soundG']},
+        {txt:'The thudding ones come out. This is the part no drive-by quote includes.', show:['cutG']},
+        {txt:'New plywood goes in flush, nailed to the same rafters. Everything above it is only as honest as this layer.', show:['newG']},
+        {txt:'Sprayed, cut, replaced — the deck\'s whole report card, written before lunch.', tag:2}
+      ]},
+    { n:9, phase:'The Ice Shield', sky:'day', sign:true,
+      birdAt:['0','-26vw','-12vw','0'],
+      scene:iceSVG, high:-1,
+      tags:['', '', 'Water reads this and turns around.'],
+      beats:[
+        {txt:'Rubber first: ice and water shield, glued straight to the deck at every eave and valley.'},
+        {txt:'Dayton winters make ice dams. When meltwater backs up under the shingles, this membrane is what tells it no.', show:['rollG']},
+        {txt:'It seals itself around every nail that will ever pass through it. Self-healing, like a good crew.', show:['crewG']},
+        {txt:'And the white drip edge went on FIRST, under the shield — order is everything up here.', tag:2}
+      ]},
+    { n:10, phase:'The Felt', sky:'dusk', sign:true,
+      birdAt:['0','-22vw','-34vw','0'],
+      scene:feltSVG, high:-1,
+      tags:['', '', 'It rained that night once. Nobody noticed.'],
+      beats:[
+        {txt:'Synthetic underlayment over everything else, lapped like shingles — uphill over downhill, always.'},
+        {txt:'Off the roll, down in courses. If it rains tonight, you stay dry tonight.', show:['rollG2']},
+        {txt:'The printed lines are real — the crew\'s own ruler for every course that lands above.', show:['crewG2']},
+        {txt:'From here on the house is dry. The rest is armour and looks.', tag:2}
+      ]},
+    { n:11, phase:'The Flashing', sky:'noon', sign:true,
+      birdAt:['0','-28vw','-12vw','-24vw','0'],
+      scene:flashSVG, high:-1,
+      tags:['', '', 'Old boots leak. Bathroom ceilings remember.'],
+      beats:[
+        {txt:'Metal wherever the roof meets anything that is not roof. Leaks start here or nowhere.'},
+        {txt:'The chimney gets step flashing up its sides and counter flashing over the top — two layers, staggered like shingles.', show:['chimFlashG']},
+        {txt:'Every pipe gets a new boot, never a reused one. Old boots are where bathroom stains come from.', show:['bootG']},
+        {txt:'The wing\'s valleys run membrane under the metal. Belt, then suspenders.', show:['valleyG']},
+        {txt:'A roof fails at its seams or not at all. These are the seams.', tag:2}
       ]}
   ];
 

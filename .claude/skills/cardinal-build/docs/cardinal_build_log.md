@@ -7469,3 +7469,33 @@ Roughly half of all reds on this project are still the test.
 `pw_book.js` now walks seven spreads — ALL GREEN, page errors none. Rendered and eyeballed both
 at phone size; the red sample board half-tucked behind the "voted red, overruled" joke tab stays,
 because a dismissed board hiding behind its own rejection reads as intended.
+
+---
+
+## Spreads 8-11 — the layers quartet, tappable (2026-08-03, same night)
+
+The book runs **1 through 11 with no gaps**. `houseSVG` grew a mode string behind its boolean —
+spread 7 still calls `houseSVG(true/false)` and gets identical behaviour; the layer spreads pass
+`'bare'/'ice'/'felt'/'flash'`. The water layers ported from the sheet at identical coordinates,
+in the order water meets them: drip edge FIRST at the eave, shield OVER it, felt starting above
+and lapping down — never burying it (the sheet already carried Theo's correction on that). The
+sprayed X marks belong to `'bare'` only: by the ice spread those sheets have been cut out, so
+the marks are gone by construction. `wing()` carries the stage (`ice`/`flash` flags), and the
+flashing spread rings its three seams — chimney, boot, valley — in the takeoff's ring grammar.
+The valley ring sits at x=126, computed from `rakeX` at y=72 rather than eyeballed.
+
+**Corrected before it shipped wrong: spread 5 now picks BROWNWOOD.** The ring sat on the
+charcoal board with a caption saying Onyx Black — which is the colour of the roof coming OFF.
+The book's `'new'` state has been OC Duration Brownwood on the sheet all along. Ring moved to
+the brown board, caption names the product.
+
+**The phone renders exposed a collision as old as the yard sign.** The sign (`left:78%` + fixed
+84px) and the bird's slider (fixed 64px at `right:3%`) fully overlap on a 374pt phone scene —
+the "measured gap" that placed the sign was wide-screen arithmetic, and fixed pixel widths eat
+percentages on a phone. The sign, later in the DOM, was hiding the cardinal — including on
+spread 7, where the final caption points at the bird. `.birdpop` gets `z-index:2`: the book's
+protagonist stacks in front, and on wide screens nothing changes because they never overlapped.
+
+`pw_book.js` walks eleven spreads — ALL GREEN (sign presence now asserted per spread: up from
+the tear-off onward, absent before). Back-nav expectations moved with the longer book. Rendered
+and eyeballed at phone size; the cardinal perched in front of its own logo sign stays.

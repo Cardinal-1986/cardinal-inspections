@@ -1067,7 +1067,7 @@ var SPREADS=[
        fig(232,90,0.8,{arm:[[-8,-34],[-2,-30]]}) +
        yardsign(250,150,0.72) + bird(292,112,0.68,true) + chips(7,26,40,290);
    }},
-  {n:8, t:'The Deck', w:'Bare plywood in 4×8 sheets. The bad ones get sprayed and come out — this is the part nobody else shows you.',
+  {n:8, t:'The Deck', done:true, w:'Bare plywood in 4×8 sheets. The bad ones get sprayed and come out — this is the part nobody else shows you.',
    sky:'day', build:function(){
      /* One marked sheet has already been cut out and one new sheet is going
         in, so the pair reads as a sequence rather than as decoration: sprayed,
@@ -1086,14 +1086,14 @@ var SPREADS=[
      return s + fig(84,90,0.78,{arm:[[-8,-34],[-18,-30]]}) +
        ladder(292,150,58,10) + bird(46,120,0.68);
    }},
-  {n:9, t:'The Ice Shield', w:'A rubber membrane at every eave and valley. Dayton gets ice dams, and this is what stops one.',
+  {n:9, t:'The Ice Shield', done:true, w:'A rubber membrane at every eave and valley. Dayton gets ice dams, and this is what stops one.',
    sky:'day', build:function(){
      return house({roof:'ice'}) +
        fig(84,88,0.82,{arm:[[-8,-34],[-16,-26]]}) +
        fig(216,88,0.82,{flip:true,arm:[[-8,-34],[-16,-26]]}) +
        bird(276,112,0.68,true);
    }},
-  {n:10, t:'The Felt', w:'Synthetic underlayment over the whole deck. If it rains tonight, you stay dry tonight.',
+  {n:10, t:'The Felt', done:true, w:'Synthetic underlayment over the whole deck. If it rains tonight, you stay dry tonight.',
    sky:'dusk', build:function(){
      var s=house({roof:'felt'});
      // a roll part way up the slope
@@ -1102,7 +1102,7 @@ var SPREADS=[
         '<circle cx="16" cy="0" r="7" fill="#8A9096" stroke="'+KRAFT+'" stroke-width="1.2"/></g>';
      return s + fig(52,88,0.8,{arm:[[-8,-34],[-16,-28]]}) + bird(50,120,0.68);
    }},
-  {n:11, t:'The Flashing', w:'Metal where the roof meets anything else — chimney, wall, pipe. Leaks start here or nowhere.',
+  {n:11, t:'The Flashing', done:true, w:'Metal where the roof meets anything else — chimney, wall, pipe. Leaks start here or nowhere.',
    sky:'noon', build:function(){
      /* the chimney lives in house() now — Theo asked for it in every
         spread, and two drawings of one chimney is the two-books failure */
