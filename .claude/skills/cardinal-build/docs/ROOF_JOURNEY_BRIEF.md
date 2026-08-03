@@ -73,12 +73,27 @@ exposure**:
 - The checkable action: **ask any contractor for a certificate of insurance
   naming you.** A real one produces it same-day.
 
-**The strongest available framing, and it's true and already built:** Cardinal
-*already demands exactly this of its own subcontractor crews* — `crew_docs`
-holds COI, W-9 and licences **with expiry dates**, and the Crews module was
-built to track them (builds 547–556). So the line writes itself: *we require
-from our crews what you should require from us.* That is a claim backed by a
-feature that exists, not a slogan.
+**⚠️ CORRECTED 3 Aug — do NOT use the compliance-vault framing here.** Theo:
+
+> No need to put the crew part with workers comp, I have workers comp. They do to
+
+I had proposed leaning on the `crew_docs` compliance vault (COI/W-9/licences
+with expiry dates, builds 547–556) as the proof point — *"we require from our
+crews what you should require from us."* **That was a clever line answering a
+question nobody asked.** The actual fact is simpler and stronger:
+
+> **Cardinal carries workers' comp. The crews carry it too. Everyone who sets
+> foot on your roof is covered.**
+
+That is a plain statement of fact, it needs no mechanism to justify it, and it
+closes the homeowner's exposure completely rather than explaining a filing
+system to them. **Keep the crew compliance vault out of this section entirely.**
+
+**This also retires verification item V29** — the drafted line *"a crew with an
+expired certificate doesn't go on a roof"* was flagged because a table that
+*stores* expiry dates is not the same as a rule that *stops* a crew working.
+That claim is no longer needed at all, so the gap it exposed simply doesn't
+arise. Cut the sentence rather than trying to make it defensible.
 
 ⚠️ **Do not print policy amounts, a carrier name, or a licence number** without
 Theo confirming each. "We carry general liability and workers' comp, and you can
