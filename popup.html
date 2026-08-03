@@ -577,34 +577,55 @@
      the doctrine is that scenery is pure faceting while pieces that stand up
      keep their edge. */
   function yardSign(){
-    var FACE='#1A1416', RED='#C8202E', PALE='#F4EDDD', GOLD='#B8860B',
-        MET='#AEB4BA', METS='#878D93';
+    /* FLIPPED TO THE REAL SIGN, 3 Aug — Theo sent a photograph of one and said
+       "white background and the white to black". So BOARD and INK swapped
+       places wholesale: the field is white, and every element that was the
+       pale board core is now black — gable outlines, chimney outline, the
+       subtitle, and the arched window, which inverts to a black arch with
+       white mullions.
+
+       Two things did NOT simply swap, and they are why this needs two names
+       rather than one:
+         · The bird's face mask, its beak and its keyline were the same
+           near-black as the old board. They are INK and must STAY black —
+           swapping them with the field would have turned them white and
+           erased the bird's face on a white sign.
+         · The board's cut edge WAS the pale core. A pale edge on a white face
+           is invisible, so the edge is now the black frame the real sign has,
+           with the red keyline inside it. Accurate and it solves the problem
+           at the same time. */
+    var BOARD='#F5F3EE', INK='#1A1416', RED='#C8202E', GOLD='#B8860B',
+        MET='#AEB4BA', METS='#878D93', PALE='#F4EDDD';
     var s='';
 
-    // ── the two legs, behind the face ──
+    // ── the two legs, behind the face. Their cut edge stays pale: it sits
+    //    against grass, not against the board. ──
     s+='<g stroke="'+PALE+'" stroke-width=".7" stroke-linejoin="round">'+
        '<path d="M30.6,66 L33.2,66 L33.2,126 L30.6,126 Z" fill="'+MET+'"/>'+
        '<path d="M66.8,66 L69.4,66 L69.4,126 L66.8,126 Z" fill="'+METS+'"/></g>';
 
-    // ── the board ──
-    s+='<path d="M3,2 L97,2 L97,74 L3,74 Z" fill="'+FACE+'" stroke="'+PALE+
-       '" stroke-width="1.6" stroke-linejoin="round"/>';
+    // ── the board: white field, black frame, red keyline inside it ──
+    s+='<path d="M3,2 L97,2 L97,74 L3,74 Z" fill="'+BOARD+'" stroke="'+INK+
+       '" stroke-width="2.2" stroke-linejoin="round"/>';
+    s+='<path d="M6.5,5 L93.5,5 L93.5,71 L6.5,71 Z" fill="none" stroke="'+RED+
+       '" stroke-width="1.2"/>';
 
     /* chimney FIRST, so the roof band laps over its base the way it does on
        the real mark rather than sitting on top of it like a sticker */
-    s+='<path d="M20,21 L25,21 L25,33 L20,33 Z" fill="'+RED+'" stroke="'+PALE+
+    s+='<path d="M20,21 L25,21 L25,33 L20,33 Z" fill="'+RED+'" stroke="'+INK+
        '" stroke-width="1.2" stroke-linejoin="round"/>';
 
-    // the arched window, in the small gable's face
-    s+='<path d="M28,35 L28,30.5 A3.5,3.5 0 0 1 35,30.5 L35,35 Z" fill="'+PALE+'"/>';
-    s+='<g stroke="'+FACE+'" stroke-width=".9" stroke-linecap="round">'+
+    // the arched window — black on the real sign, with the mullions punched
+    // out of it in white. Straight inversion of what it was.
+    s+='<path d="M28,35 L28,30.5 A3.5,3.5 0 0 1 35,30.5 L35,35 Z" fill="'+INK+'"/>';
+    s+='<g stroke="'+BOARD+'" stroke-width=".9" stroke-linecap="round">'+
        '<path d="M31.5,27.4 L31.5,35"/><path d="M28,31.6 L35,31.6"/></g>';
 
     /* Both gables are one chevron band each: outer apex, then back along the
        same line dropped by the band thickness. Small one first — the large
-       one is in front on the real mark, and its pale outline is what cuts the
+       one is in front on the real mark, and its outline is what cuts the
        small one's right slope off. */
-    s+='<g fill="'+RED+'" stroke="'+PALE+'" stroke-width="1.4" stroke-linejoin="round">'+
+    s+='<g fill="'+RED+'" stroke="'+INK+'" stroke-width="1.4" stroke-linejoin="round">'+
        '<path d="M16,38 L36,17 L56,38 L56,43 L36,22 L16,43 Z"/>'+
        '<path d="M34,38 L60,9 L86,38 L86,43.5 L60,14.5 L34,43.5 Z"/></g>';
 
@@ -612,25 +633,26 @@
        edge — with a thin dark keyline, because red-on-red needs a separation
        the tone cannot give it (the shirt-on-shingles problem, 1.66:1, in
        miniature). Body geometry is the same silhouette as the die-cut bird so
-       the two read as the same creature. */
-    s+='<g transform="translate(51,22) scale(.78)" stroke="'+FACE+
+       the two read as the same creature. Dropped a touch and shrunk slightly
+       so the crest clears the new red keyline instead of grazing it. */
+    s+='<g transform="translate(51,22.6) scale(.76)" stroke="'+INK+
        '" stroke-width=".9" stroke-linejoin="round">'+
        '<path d="M4,-9 L19,-3 L17,0.6 L3,-4 Z" fill="'+RED+'"/>'+
        '<path d="M0,0 C-5,0 -8.6,-3 -9.4,-7 C-10.2,-11.4 -7.6,-15.4 -3.6,-16 '+
        'C-1,-16.4 1.4,-15.2 2.6,-13.2 C6,-12.4 8.6,-9.6 8.6,-6.2 C8.6,-2.6 5.2,0 0,0 Z" fill="'+RED+'"/>'+
        '<path d="M-7.6,-14.2 L-6.4,-20.4 L-2.6,-15.6 Z" fill="'+RED+'"/>'+
        '<path d="M-9.2,-9.6 C-7.6,-11.6 -5.6,-12 -4.4,-11 C-5,-8.6 -6.8,-7.4 -8.8,-7.8 Z" '+
-       'fill="'+FACE+'" stroke="none"/>'+
-       '<path d="M-9,-10.4 L-13.6,-9 L-8.8,-7.4 Z" fill="'+FACE+'" stroke="none"/></g>';
+       'fill="'+INK+'" stroke="none"/>'+
+       '<path d="M-9,-10.4 L-13.6,-9 L-8.8,-7.4 Z" fill="'+INK+'" stroke="none"/></g>';
 
-    // ── the wordmark ──
-    s+='<text x="50" y="59" text-anchor="middle" fill="'+RED+'" font-size="13.4" '+
+    // ── the wordmark. Red stays red; the subtitle goes black. ──
+    s+='<text x="50" y="58" text-anchor="middle" fill="'+RED+'" font-size="13.4" '+
        'font-weight="800" letter-spacing=".4" font-family="'+
        'Helvetica Neue,Helvetica,Arial,sans-serif">CARDINAL</text>';
-    s+='<text x="50" y="66.6" text-anchor="middle" fill="'+PALE+'" font-size="4.6" '+
+    s+='<text x="50" y="65.4" text-anchor="middle" fill="'+INK+'" font-size="4.6" '+
        'font-weight="600" letter-spacing=".35" font-family="'+
        'Helvetica Neue,Helvetica,Arial,sans-serif">ROOFING &amp; RENOVATIONS</text>';
-    s+='<path d="M23,70.4 L77,70.4" stroke="'+GOLD+'" stroke-width=".8"/>';
+    s+='<path d="M23,68.4 L77,68.4" stroke="'+GOLD+'" stroke-width=".8"/>';
     return s;
   }
 
