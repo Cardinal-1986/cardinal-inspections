@@ -55,6 +55,20 @@ var SKIN={light:'#EFD2B4',mid:'#E3BC97',tan:'#D2A379',deep:'#B07F55'};
 var HAIR={black:'#2B2118',dark:'#3D2C20',brown:'#5C4128',midbrown:'#7A5636',
           blonde:'#A98552',grey:'#8C8378',pink:'#C4548C'};
 
+
+/* THE HEAD IS WHY THEY ALL LOOKED LIKE ONE PERSON IN WIGS. Every portrait
+   used the identical ellipse (rx 16.5, ry 18.5), so the only thing telling
+   two people apart was hair. A face is a silhouette before it is anything
+   else — this makes width, length and jaw per-person.
+     jaw 0 = tapered to a point, 1 = square and heavy. */
+function facePath(jaw){
+  var cy=-47, h=18.5, w=16.5, jx=w*(0.40+0.44*jaw), bot=cy+h, cheek=cy+h*0.46;
+  return 'M'+(-w)+','+(cy-1.5)+
+    ' C'+(-w)+','+(cy-h-6.4)+' '+w+','+(cy-h-6.4)+' '+w+','+(cy-1.5)+
+    ' C'+w+','+cheek+' '+jx+','+bot+' 0,'+bot+
+    ' C'+(-jx)+','+bot+' '+(-w)+','+cheek+' '+(-w)+','+(cy-1.5)+' Z';
+}
+
 /* A die-cut bust. Same rules as the crew puppet: filled pieces, a pale core
    at every outer cut, light fixed upper-left, no rendering tricks. */
 function portrait(o){
@@ -93,6 +107,13 @@ function portrait(o){
   s+='<path d="M-6.5,-22 L6.5,-22 L6.5,-33 L-6.5,-33 Z" fill="'+skin+'" stroke="'+CUT+'" stroke-width="1"/>';
   s+='<path d="M-6.5,-26 C-3,-22 3,-22 6.5,-26 L6.5,-22 L-6.5,-22 Z" fill="#000" opacity=".1"/>';
 
+  /* Head, hair, features and glasses scale together about the face centre.
+     Scaling the group rather than rewriting sixty coordinates is what makes
+     per-person proportions cheap enough to actually do. */
+  var fw=o.fw||16.5, fh=o.fh||18.5;
+  s+='<g transform="translate(0,-47) scale('+(fw/16.5).toFixed(3)+','+(fh/18.5).toFixed(3)+
+     ') translate(0,47)">';
+
   // ── hair BEHIND the head, for the long styles ─────────
   if(o.style==='bob'||o.style==='long'||o.style==='pony'){
     s+='<path d="M-19,-52 C-24,-34 -23,-24 -20,-19 L20,-19 C23,-24 24,-34 19,-52 Z" fill="'+hair+'"/>';
@@ -106,14 +127,14 @@ function portrait(o){
     /* NO PHOTOGRAPH YET. The bust is real board in a real polo, but the face
        is left unpunched — a piece still on the sprue. Inventing a face for a
        named colleague is the same error as inventing their name. */
-    s+='<ellipse cx="0" cy="-47" rx="16.5" ry="18.5" fill="#DCCDAE" stroke="'+CORE+
-       '" stroke-width="2"/>';
+    s+='<path d="'+facePath(0.5)+'" fill="#DCCDAE" stroke="'+CORE+
+       '" stroke-width="2" stroke-linejoin="round"/>';
     s+='<ellipse cx="0" cy="-47" rx="11.5" ry="13" fill="none" stroke="'+CUT+
        '" stroke-width="1.2" stroke-dasharray="3 3"/>';
-    return s+'</svg>';
+    return s+'</g></svg>';
   }
-  s+='<ellipse cx="0" cy="-47" rx="16.5" ry="18.5" fill="'+skin+'" stroke="'+CORE+
-     '" stroke-width="2"/>';
+  s+='<path d="'+facePath(o.jaw===undefined?0.5:o.jaw)+'" fill="'+skin+'" stroke="'+CORE+
+     '" stroke-width="2" stroke-linejoin="round"/>';
   // ears
   s+='<circle cx="-16.5" cy="-46" r="3.4" fill="'+skin+'" stroke="'+CUT+'" stroke-width=".9"/>'+
      '<circle cx="16.5" cy="-46" r="3.4" fill="'+skin+'" stroke="'+CUT+'" stroke-width=".9"/>';
@@ -158,7 +179,13 @@ function portrait(o){
   }
 
   // ── hair ON TOP ───────────────────────────────────────
-  if(o.style==='crop'){
+  if(o.style==='fade'){
+    /* Short and tight at the sides, volume brushed up and back on top, with a
+       defined hairline. A uniform cap could not tell this apart from 'short'. */
+    s+='<path d="M-16.2,-49 C-17.4,-60 -13.4,-68.6 -3,-70 C7.4,-71.4 16,-65 16.2,-50 '+
+       'C14.6,-58.6 11.6,-62.2 6.6,-63 C1.6,-60.4 -3.4,-59.4 -7.4,-60.8 '+
+       'C-11.4,-58.6 -14.4,-54.6 -16.2,-49 Z" fill="'+hair+'"/>';
+  } else if(o.style==='crop'){
     // shorter and set higher than 'short' — the head crown is -65.5, so a cap
     // that stops there reads as a hairline that has moved back
     s+='<path d="M-15.6,-53 C-15.4,-62 -8,-65.6 0,-65.6 C8,-65.6 15.4,-62 15.6,-53 '+
@@ -192,7 +219,7 @@ function portrait(o){
        'C14,-58.4 8,-60.6 0,-60.6 C-8,-60.6 -14,-58.4 -19.4,-51 Z" fill="'+HAIR.pink+'"/>';
   }
 
-  return s+'</svg>';
+  return s+'</g></svg>';
 }
 
 /* Names are Theo's, left to right off the team photograph: Curtis, Theo, Joan,
@@ -201,14 +228,23 @@ function portrait(o){
    the rest say "role?" rather than being inferred from app permissions, which
    are not job titles. */
 var PEOPLE=[
-  {n:'CURTIS', r:'Project manager',
-   o:{skin:'light',hair:'dark',style:'short',beard:'goatee',beardColor:'grey'}},
-  {n:'THEO',   r:'Owner',    o:{skin:'tan',hair:'black',style:'swept'}},
-  {n:'JOAN',   r:'Admin',    o:{skin:'light',hair:'blonde',style:'bob',glasses:true}},
-  {n:'JOEY',   r:'Sales',    o:{skin:'light',hair:'midbrown',style:'short',beard:'goatee'}},
-  {n:'JERRY',  r:'Sales',    o:{skin:'tan',hair:'black',style:'crop'}},
-  {n:'AMANDA', r:'Office',   o:{skin:'light',hair:'dark',style:'pony',accent:true}},
-  {n:'CAINE',  r:'Tech',     o:{skin:'light',hair:'dark',style:'shaggy',beard:'full'}},
+  // fw/fh/jaw read off each photograph. Curtis is lean and long; Theo is broad
+  // with a heavy jaw; Joan and Amanda are softer and more tapered; Jerry is
+  // narrower than Theo, which is most of what tells them apart on the shoot.
+  {n:'CURTIS', r:'Project manager', o:{skin:'light',hair:'dark',style:'short',
+   beard:'goatee',beardColor:'grey',fw:15.7,fh:19.2,jaw:0.42}},
+  {n:'THEO',   r:'Owner',  o:{skin:'tan',hair:'black',style:'fade',
+   fw:17.7,fh:18.1,jaw:0.82}},
+  {n:'JOAN',   r:'Admin',  o:{skin:'light',hair:'blonde',style:'bob',glasses:true,
+   fw:16.2,fh:17.5,jaw:0.32}},
+  {n:'JOEY',   r:'Sales',  o:{skin:'light',hair:'midbrown',style:'short',beard:'goatee',
+   fw:16.8,fh:18.2,jaw:0.58}},
+  {n:'JERRY',  r:'Sales',  o:{skin:'tan',hair:'black',style:'crop',
+   fw:16.0,fh:18.7,jaw:0.55}},
+  {n:'AMANDA', r:'Office', o:{skin:'light',hair:'dark',style:'pony',accent:true,
+   fw:15.9,fh:17.9,jaw:0.30}},
+  {n:'CAINE',  r:'Tech',   o:{skin:'light',hair:'dark',style:'shaggy',beard:'full',
+   fw:16.4,fh:18.9,jaw:0.52}},
   {n:'DANNY GUTIERREZ', r:'Logistics · photo?', o:{blank:true}},
   {n:'NICK HEY',        r:'Sales · photo?',     o:{blank:true}},
   {n:'JACOB HENDERSON', r:'Sales · photo?',     o:{blank:true}}
