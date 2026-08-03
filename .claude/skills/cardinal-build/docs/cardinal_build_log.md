@@ -7259,6 +7259,33 @@ iPad / reduced-motion · full sheet + built spread rendered and eyeballed.
 
 ---
 
+## The tractor, and the flowers it protects (2026-08-03)
+
+Theo: *"What about tractor protect the flowers?"*
+
+The self-propelled debris catcher — tracks, scissor lift, bin raised to the eave — parked over
+the beds so the tear-off drops into steel instead of into the flowers. Which exposed that **the
+flower beds did not exist**: popup.html's tarps beat has said *"Your flower beds have been
+through enough"* since the spread was built, with nothing drawn under the tarps. Beds are in both
+files now — deterministic tufts and blooms, under the exact zones the tarps cover, so the beat
+finally means something.
+
+**The bin is drawn FULL**, and that is a deliberate reconciliation with the book's central joke:
+most of the roof goes into the bin (the machine's whole argument), and the forty chips that got
+away are why the magnet still runs twice on spread 15. The tractor arrives inside `trailerG`, on
+the trailer's own beat — same convoy, no new beat.
+
+Two placement rounds on the sheet card, both caught by rendering: the first put the tractor left
+and buried a sprayed X under the bin; the second had the bin top at 92 with the roofer's feet at
+90 — **standing in the bin**. The built spread's relationship is the right one: bin top AT the
+eave (98/100), roofer on the deck behind it, sweeping in.
+
+Verified: both files parse · 18/18 clear on the collision check · bird/chimney/gaps harness green
+· `pw_deck` clean · popup rendered mid-beats (trailer + tractor + tarps on) and the sheet card
+rendered and eyeballed.
+
+---
+
 ## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
 
 ✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like
