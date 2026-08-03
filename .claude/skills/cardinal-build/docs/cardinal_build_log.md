@@ -7022,6 +7022,59 @@ the deck, because there is no cutaway. Both are diagram convention, both are The
 
 ---
 
+## The front dormer and the layer stack (2026-08-03)
+
+Theo: *"If you put a gable in the front then make it a dormer? Looks weird. Maybe do like a cutout
+after the roof is done also."* Then, from nine rendered options: *"Options 2 for dormer and 4 for
+layer stack. Put dormer closer to the middle of the house tho."*
+
+**A note on the pick, recorded so nobody re-reads it later and 'corrects' it.** The layer stack was
+option **A**; option 4 was the ice-shield-with-dormer view. He named the layer stack in words, so
+that is what was built. He did **not** take option B, the attic section — so spread 13's airflow
+arrows still travel over the shingles rather than inside the attic. That remains a known, stated
+simplification, not an oversight.
+
+**`DX = 140`** — option 2 was 124, which read as deliberately shoved to one side. Dead centre (150)
+sits under the ridge vent and dead over the door and reads like a symmetry no real house has. Ten
+units left of centre is the compromise; a 140/150 comparison went to Theo so a nudge costs one word.
+
+**The dormer is not decoration, and that is why it was worth the build.** Two captions in this book
+were writing cheques the drawing could not cash:
+
+- Spread 9 has always said *"a rubber membrane at every eave and **valley**"* over a plain hip roof
+  with **no valley on it**. The dormer cheeks are that valley, and the shield now climbs them.
+- Spread 11 is *"The Flashing"* and had a chimney and a pipe boot. **Step flashing up a dormer cheek
+  is the detail every roofer argues about** and it was absent.
+
+**Draw order is the containment.** The dormer is emitted after the roof materials, so courses,
+sheets, shield and felt all run *behind* it — which is where they physically are. No clip path, no
+`overDormer()` test, nothing to keep in sync when the geometry moves again.
+
+**Five collisions, found by rectangle intersection on the rendered DOM.** This is the check that was
+wrong twice on the yard sign — first taking the wrong figure out of the list, then comparing only
+x. This time both axes, on `getBBox()` read from the render, mapped through each group's own
+transform, against a dormer box **identified from the render** rather than trusting `DX`:
+
+| Spread | What collided | Moved to |
+|---|---|---|
+| 3 The Adjuster | figure at x=158, standing on the right cheek | x=96 |
+| 6 The Delivery | flying bundles at x=109 and 124 landing **on the gable** | run is 48+i*14, ending at 104 |
+| 8 The Deck | figure at x=150 — head and shoulders across the window | x=212, beside the sheet he is fitting |
+| 10 The Felt | figure clipping the left edge | x=96 |
+| 11 The Flashing | figure at x=150, **and** the pipe boot at 106–126 sitting on the flashing strip | figure x=64, boot moved 14 left |
+| 12 The Shingles | both roofers standing in the middle of the new cutaway | x=176 and x=216 |
+
+**The layer stack sits on spread 12 rather than becoming spread 13.** Theo said *"after the roof is
+done"* and spread 12's own caption is *"one lap over the next"*, which is exactly what a section
+shows. It **wants its own spread** — that is the 16-becomes-18 question, still his, still open — and
+the built spread ships titled *"of 16"*, so nothing is renumbered unilaterally.
+
+Verified: dormer present on **16/16**, **zero** collisions, shade break still at 176 on 16/16, bare
+deck through the felt still **none**, `pw_deck` clean at phone / iPad / reduced-motion, both files
+parse, zero page errors.
+
+---
+
 ## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
 
 ✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like

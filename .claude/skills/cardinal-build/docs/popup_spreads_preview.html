@@ -347,6 +347,134 @@ function ground(dark){
    ONE house function with a roof state, not eight houses. The states are
    the actual sequence of a tear-off: shingles → bare deck → ice shield at
    the eaves → felt → half shingled → finished. */
+
+/* ── THE FRONT DORMER ─────────────────────────────────────────────
+   Theo, 3 Aug: "If you put a gable in the front then make it a dormer? Looks
+   weird." Then, after seeing four placements: "2 ... put dormer closer to the
+   middle of the house tho."
+
+   It is not only a shape fix, and that is why it was worth the build:
+     · Spread 9's caption has always promised "every eave and valley" over a
+       roof with no valley on it. The dormer cheeks ARE that valley, and the
+       ice shield climbs them.
+     · Spread 11 is "The Flashing" and had a chimney and a pipe boot. Step
+       flashing up a dormer cheek is the detail every roofer argues about.
+     · It breaks a very large blank slope, which is what looked weird.
+
+   Straight on you do not see a dormer's cheeks or its valleys — they are
+   edge-on. What you see is the gable face, the rake board, the window, and
+   the shadow where it lands on the main roof. That is what is drawn.
+
+   DX is 140: ten units left of centre. Dead centre sits under the ridge vent
+   and dead over the door and reads like a symmetry no real house has; 124
+   read as deliberately shoved to one side. */
+var DRM = { W:36, BOT:78, EAVE:58, PEAK:43 }, DX = 140;
+function dormerBox(cx){
+  var h = DRM.W / 2;
+  return { l: cx - h, r: cx + h, bot: DRM.BOT, eave: DRM.EAVE, peak: DRM.PEAK };
+}
+function dormer(cx, o){
+  o = o || {}; cx = (cx === undefined) ? DX : cx;
+  var d = dormerBox(cx), s = '';
+  var DLIT='#F0E6D4', DSHD='#D6C4A6', DTRIM='#8A7660',
+      DGLASS='#8FB6CC', DGLASSL='#B9D6E4';
+  var W = (cx < SPLIT) ? DLIT : DSHD;
+  // the shadow it throws on the slope — this is what sits it ON the roof
+  s += '<path d="M'+(d.l-3)+','+(d.bot+3)+' L'+(d.r+3)+','+(d.bot+3)+' L'+(d.r+3)+','+
+       (d.bot+6)+' L'+(d.l-3)+','+(d.bot+6)+' Z" fill="#000" opacity=".22"/>';
+  s += '<path d="M'+d.l+','+d.bot+' L'+d.l+','+d.eave+' L'+d.r+','+d.eave+' L'+d.r+','+d.bot+' Z" fill="'+W+'"/>';
+  s += '<path d="M'+cx+','+d.eave+' L'+d.r+','+d.eave+' L'+d.r+','+d.bot+' L'+cx+','+d.bot+' Z" fill="'+DSHD+'"/>';
+  s += '<path d="M'+d.l+','+d.eave+' L'+cx+','+d.peak+' L'+d.r+','+d.eave+' Z" fill="'+W+'"/>';
+  s += '<path d="M'+cx+','+d.peak+' L'+d.r+','+d.eave+' L'+cx+','+d.eave+' Z" fill="'+DSHD+'"/>';
+  s += '<g fill="none" stroke="'+DTRIM+'" stroke-width=".6" opacity=".35">';
+  for(var ly = d.eave + 5; ly < d.bot; ly += 5) s += '<path d="M'+d.l+','+ly+' L'+d.r+','+ly+'"/>';
+  s += '</g>';
+  // rake board — a dormer without one reads as a sticker on the roof
+  s += '<g fill="none" stroke="#E8DFCD" stroke-width="2.4" stroke-linejoin="round">'+
+       '<path d="M'+(d.l-2.5)+','+(d.eave+1.6)+' L'+cx+','+(d.peak-2)+' L'+(d.r+2.5)+','+(d.eave+1.6)+'"/></g>';
+  s += '<g fill="none" stroke="#B9AC93" stroke-width=".8">'+
+       '<path d="M'+(d.l-2.5)+','+(d.eave+1.6)+' L'+cx+','+(d.peak-2)+' L'+(d.r+2.5)+','+(d.eave+1.6)+'"/></g>';
+  var wx = cx - 8, wy = d.eave + 4;
+  s += '<path d="M'+wx+','+wy+' L'+(wx+16)+','+wy+' L'+(wx+16)+','+(wy+13)+' L'+wx+','+(wy+13)+
+       ' Z" fill="'+DGLASS+'" stroke="'+DTRIM+'" stroke-width="1.3"/>';
+  s += '<path d="M'+wx+','+wy+' L'+(wx+16)+','+wy+' L'+wx+','+(wy+13)+' Z" fill="'+DGLASSL+'"/>';
+  s += '<g stroke="'+DTRIM+'" stroke-width="1.1">'+
+       '<path d="M'+(wx+8)+','+wy+' L'+(wx+8)+','+(wy+13)+'"/>'+
+       '<path d="M'+wx+','+(wy+6.5)+' L'+(wx+16)+','+(wy+6.5)+'"/></g>';
+  if(o.ice){
+    /* THE SHIELD CLIMBS THE CHEEKS. This is the valley the caption promises.
+       Drawn as a real 9-unit strip, not the hairline triangles of the first
+       pass — a detail that does not read is a detail that is not there. */
+    s += '<g fill="#6E767B">'+
+         '<path d="M'+(d.l-9)+','+(d.bot+2)+' L'+(d.l-1)+','+(d.eave-2)+' L'+(d.l+3)+','+(d.eave-2)+
+         ' L'+(d.l+3)+','+(d.bot+2)+' Z"/>'+
+         '<path d="M'+(d.r+9)+','+(d.bot+2)+' L'+(d.r+1)+','+(d.eave-2)+' L'+(d.r-3)+','+(d.eave-2)+
+         ' L'+(d.r-3)+','+(d.bot+2)+' Z" fill="#565D62"/></g>';
+    s += '<g fill="#C3C8CC" opacity=".75">';
+    for(var gi = 0; gi < 16; gi++){
+      var gt = (gi % 8) / 7, gy = d.bot + 2 - gt * (d.bot - d.eave + 4);
+      var gx = (gi < 8) ? (d.l - 7 + (gi % 3) * 3) : (d.r - 1 + (gi % 3) * 3);
+      s += '<circle cx="'+gx.toFixed(1)+'" cy="'+gy.toFixed(1)+'" r=".85"/>';
+    }
+    s += '</g>';
+  }
+  if(o.flash){
+    /* STEP FLASHING — one bent piece per course, lapped, climbing the cheek.
+       Only reads if the steps are actual steps with a visible riser. */
+    s += '<g stroke="#6E6558" stroke-width=".5">';
+    for(var i = 0; i < 5; i++){
+      var yy = d.eave + 1 + i * 4.2, fw = 7, fh = 4.6;
+      s += '<path d="M'+(d.l-fw)+','+(yy+fh)+' L'+(d.l-fw)+','+(yy+fh-2.6)+' L'+d.l+','+yy+
+           ' L'+d.l+','+(yy+fh)+' Z" fill="#C6CCD1"/>';
+      s += '<path d="M'+(d.r+fw)+','+(yy+fh)+' L'+(d.r+fw)+','+(yy+fh-2.6)+' L'+d.r+','+yy+
+           ' L'+d.r+','+(yy+fh)+' Z" fill="#9EA5AB"/>';
+    }
+    s += '</g>';
+  }
+  return s;
+}
+
+/* ── THE CUTAWAY: THE LAYER STACK ─────────────────────────────────
+   Theo, 3 Aug: "Maybe do like a cutout after the roof is done also" — then
+   picked the layer stack over the attic section.
+
+   Everything the client paid for and will never see again, in the order it
+   goes on: deck, ice and water, felt, starter, shingle. Stepped so each one
+   shows, with a white cut edge so it reads as a section with thickness
+   rather than as five stripes painted on.
+
+   THE LEFT EDGE ASKS spanAt, IT DOES NOT CARRY A CONSTANT. The first pass
+   anchored every band at a fixed x=44 — and at x=44 this roof is at y=89.7,
+   not 100, so the bottom two layers hung off the slope and over the gutter.
+   Precisely the class the whole reshape has been about. */
+function cutLayers(x1){
+  var s = '', X1 = (x1 === undefined ? 118 : x1), BOT = 96, CH = 6.4;
+  var L = [['#C9B084','DECK'], ['#6E767B','ICE & WATER'], ['#22262B','FELT'],
+           ['#3D2C1D','STARTER'], ['#4E3826','SHINGLE']];
+  function lft(y, k){ return Math.max(spanAt(y)[0] + 3, 34 + k); }
+  s += '<path d="M'+lft(BOT,0).toFixed(1)+','+BOT+' L'+X1+','+BOT+' L'+X1+','+
+       (BOT - L.length * CH).toFixed(1)+' L'+lft(BOT - L.length * CH, 0).toFixed(1)+','+
+       (BOT - L.length * CH).toFixed(1)+' Z" fill="#000" opacity=".38"/>';
+  L.forEach(function(l, i){
+    var y0 = BOT - i * CH, y1 = y0 - CH, k = i * 7;
+    var a = lft(y0, k), b = lft(y1, k + 5);
+    s += '<path d="M'+a.toFixed(1)+','+y0+' L'+X1+','+y0+' L'+X1+','+y1+' L'+b.toFixed(1)+
+         ','+y1+' Z" fill="'+l[0]+'"/>';
+    s += '<path d="M'+a.toFixed(1)+','+y0+' L'+b.toFixed(1)+','+y1+
+         '" stroke="#F2ECDD" stroke-width="1.2" fill="none"/>';
+    s += '<text x="'+(X1 - 2)+'" y="'+(y0 - 1.7)+'" font-size="5" text-anchor="end" '+
+         'font-family="ui-monospace,monospace" font-weight="700" letter-spacing=".3" '+
+         'fill="#F7F2E6">'+l[1]+'</text>';
+  });
+  // one tab lifted at the cut — a cut with nothing lifted reads as a stain
+  s += '<path d="M'+X1+','+BOT+' L'+(X1+26)+','+BOT+' L'+(X1+21)+','+(BOT+9)+
+       ' L'+(X1-2)+','+(BOT+7)+' Z" fill="#4E3826"/>';
+  s += '<path d="M'+(X1+26)+','+BOT+' L'+(X1+21)+','+(BOT+9)+' L'+(X1+16)+','+(BOT+8.4)+
+       ' L'+(X1+20)+','+BOT+' Z" fill="#2E2114"/>';
+  s += '<path d="M'+X1+','+BOT+' L'+(X1-2)+','+(BOT+7)+'" stroke="#A5825C" stroke-width="1" fill="none"/>';
+  return s;
+}
+
 function house(o){
   o=o||{};
   var s='';
@@ -500,7 +628,19 @@ function house(o){
       s+='<path d="M'+sp[0].toFixed(1)+','+yy+' L'+sp[1].toFixed(1)+','+yy+'"/>'; });
     s+='</g>';
     s+=shingleArt('brownwood',0,4,true);
+    /* THE LAYER STACK LIVES HERE FOR NOW. Theo picked it and said "after the
+       roof is done"; this spread's own caption is "one lap over the next",
+       which is exactly what the stack shows in section. It wants to be its
+       OWN spread and that is the 16-becomes-18 question, which is his and is
+       still open — so it goes on an existing spread rather than renumbering
+       a book whose built spread ships titled "of 16". */
+    if(o.cut) s+=cutLayers(118);
   }
+  /* THE DORMER GOES ON AFTER THE ROOF MATERIALS, so the courses, the shield
+     and the felt all run BEHIND it — which is where they physically are. No
+     clipping needed and no overDormer() test: draw order is the containment.
+     The cheeks carry whatever that stage carries. */
+  if(st!=='none') s+=dormer(DX, { ice: (st==='ice'||st==='felt'), flash: o.flash });
   if(st!=='none'){
     // the five hairlines that used to live here were a strip shingle;
     // shingleArt draws the courses now, with the laminate shadow that
@@ -656,7 +796,7 @@ var SPREADS=[
   {n:3, t:'The Adjuster', w:'Two people on one roof agreeing what is there. Cardinal meets them up there, every time.',
    sky:'day', build:function(){
      return house({roof:'shingle'}) + ladder(96,150,64,-13) +
-       fig(158,72,0.86,{arm:[[-8,-34],[-18,-36]]}) +
+       fig(96,72,0.86,{arm:[[-8,-34],[-18,-36]]}) +
        fig(202,66,0.86,{shirt:'#4A5866',shirtDk:'#333F4A',hat:'#D8DEE3',flip:true,
                                   arm:[[-8,-34],[-17,-28]]}) +
        bird(56,120,0.7);
@@ -693,7 +833,10 @@ var SPREADS=[
      for(var i=0;i<5;i++){
        // +5, not -5: roofY IS the surface, so a bundle centred on it straddles
        // the edge with half its body in the sky. It has to sit INSIDE the plane.
-       var bx=64+i*15, by=roofY(bx)+9;
+       // 48+i*14, not 64+i*15: the old run put the last two bundles at
+       // x=109 and x=124, and the dormer's gable starts at 122. A bundle
+       // parked on a dormer roof is not a bundle being carried up.
+       var bx=48+i*14, by=roofY(bx)+9;
        s+='<g transform="translate('+bx+','+by+') rotate(-46)">'+
           '<path d="M-13,-5 L13,-5 L13,5 L-13,5 Z" fill="#4A5866" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
           '<path d="M-13,-5 L13,-5 L13,-1 L-13,-1 Z" fill="#5D6D7C"/></g>';
@@ -716,7 +859,9 @@ var SPREADS=[
      s+='<path d="M74,82 L114,82 L114,100 L74,100 Z" fill="#4A3A28"/>';   // the hole it left
      s+='<path d="M154,64 L194,64 L194,82 L154,82 Z" fill="#E3CDA2" stroke="'+KRAFT+
         '" stroke-width="1.6" stroke-linejoin="round"/>';                  // the new sheet
-     return s + fig(150,88,0.86,{arm:[[-8,-34],[-18,-30]]}) +
+     // beside the sheet he is putting in, and clear of the dormer he was
+     // previously standing inside
+     return s + fig(212,88,0.86,{arm:[[-8,-34],[-18,-30]]}) +
        ladder(292,150,58,10) + bird(46,120,0.68);
    }},
   {n:9, t:'The Ice Shield', w:'A rubber membrane at every eave and valley. Dayton gets ice dams, and this is what stops one.',
@@ -733,11 +878,11 @@ var SPREADS=[
      s+='<g transform="translate(196,58) rotate(-25)">'+
         '<path d="M-16,-7 L16,-7 L16,7 L-16,7 Z" fill="#6E747A" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
         '<circle cx="16" cy="0" r="7" fill="#8A9096" stroke="'+KRAFT+'" stroke-width="1.2"/></g>';
-     return s + fig(118,64,0.84,{arm:[[-8,-34],[-16,-28]]}) + bird(50,120,0.68);
+     return s + fig(96,64,0.84,{arm:[[-8,-34],[-16,-28]]}) + bird(50,120,0.68);
    }},
   {n:11, t:'The Flashing', w:'Metal where the roof meets anything else — chimney, wall, pipe. Leaks start here or nowhere.',
    sky:'noon', build:function(){
-     var s=house({roof:'felt'});
+     var s=house({roof:'felt', flash:true});
      // chimney with step flashing
      s+='<path d="M186,48 L206,48 L206,86 L186,86 Z" fill="#7E4A3C" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
      s+='<path d="M196,48 L206,48 L206,86 L196,86 Z" fill="#5F3529"/>';
@@ -745,15 +890,22 @@ var SPREADS=[
      s+='<g fill="'+MET+'" stroke="'+KRAFT+'" stroke-width=".9">'+
         '<path d="M206,60 L214,66 L214,72 L206,66 Z"/><path d="M206,70 L214,76 L214,82 L206,76 Z"/></g>';
      // pipe boot
-     s+='<path d="M112,76 L120,76 L120,66 L112,66 Z" fill="'+METS+'"/>';
-     s+='<path d="M106,80 L126,80 L122,74 L110,74 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
-     return s + fig(150,88,0.82,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
+     /* the boot moved 14 left: it ran 106-126 and the dormer's flashing strip
+        starts at 115, so the two were on top of each other. The spread now
+        reads left to right as four separate details — man, boot, dormer
+        cheek, chimney — instead of three of them stacked in the middle. */
+     s+='<path d="M98,76 L106,76 L106,66 L98,66 Z" fill="'+METS+'"/>';
+     s+='<path d="M92,80 L112,80 L108,74 L96,74 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
+     return s + fig(64,88,0.82,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
    }},
   {n:12, t:'The Shingles', w:'Courses going up the slope, one lap over the next. The part everybody pictures.',
    sky:'noon', build:function(){
-     return house({roof:'half'}) +
-       fig(106,78,0.82,{arm:[[-8,-34],[-15,-24]]}) +
-       fig(198,78,0.82,{flip:true,arm:[[-8,-34],[-15,-24]]}) +
+     /* Both roofers moved right. The layer stack occupies the lower-left of
+        the slope and the left one was standing in the middle of it — you
+        cannot read a section through a man's chest. */
+     return house({roof:'half', cut:true}) +
+       fig(176,88,0.82,{arm:[[-8,-34],[-15,-24]]}) +
+       fig(216,74,0.82,{flip:true,arm:[[-8,-34],[-15,-24]]}) +
        trailer(60,150,0.72) + bird(288,112,0.66,true);
    }},
   /* RETITLED. The caption promised "ridge vent along the peak" and this roof
