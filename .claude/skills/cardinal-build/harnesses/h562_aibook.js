@@ -239,7 +239,7 @@ const view = (() => {
   ok('no mojibake in the served bytes', !/Ã¢â‚¬|Ã‚Â·/.test(raw));
   ok('the em-dash survives as one character', /A field manual — prompting/.test(doc));
   ok('the book still carries every section',
-     (doc.match(/<section class="chapter[^"]*" data-ch="/g) || []).length === 21,
+     (doc.match(/<section class="chapter[^"]*" data-ch="/g) || []).length === 22,
      (doc.match(/<section class="chapter[^"]*" data-ch="/g) || []).length + ' sections');
   /* 578 split the hardware half of VI into its own chapter and reordered the
      book. Assert the SHIPPED file carries the new chapter and the new count —

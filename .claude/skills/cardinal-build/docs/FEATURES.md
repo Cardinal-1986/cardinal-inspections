@@ -1210,7 +1210,7 @@ styled only `#quickInspView`, not `#qiStartView` — the pin-the-property step y
 first. ⚠️ `styleMounts()` writes **inline** `position/inset/z-index` onto the three mounts, so
 `!important` is mandatory there, not stylistic.
 
-## 562–563, 574–582 — the AI Field Manual
+## 562–563, 574–584 — the AI Field Manual
 
 Fifteen chapters on using AI in this business, plus a printable desk card, filed in the Resource
 Library with its own section. **563** fixed an offline bug: opening it no longer replaces what the app
@@ -1224,6 +1224,13 @@ set on first open only, so coming back keeps the reader's place.
 ⚠️ **`ai-field-manual.html` is GENERATED — never hand-edit it.** Edit the authored artifact, then
 re-run `.claude/skills/cardinal-build/scripts/wrap_book.py`. It adds the doctype and charset the
 artifact host supplies and Vercel does not; without them every em-dash in the book renders `â€"`.
+
+**584 added chapter XV · What AI can build** — the catalogue of buildable things (eight shelves,
+five already shipping at Cardinal) with a REAL seven-slide adjuster deck running in the page.
+Presents on iPad/desktop; lies flat as readable pages below 700px (Theo: don't present from a
+phone). The deck deliberately binds NO keys — the book owns the arrow keys. 583 removed the
+Library's floating pills from the book page and restored the header's back arrow (slimmed to just
+the arrow on review).
 
 **578 reordered the book** into 16 chapters in four groups — *Using it* (I–IV), *Choosing* (V–IX),
 *Building it* (X–XIV), *The wider world* (XV–XVI) — and split the hardware out of "Local vs. cloud"
@@ -1251,7 +1258,7 @@ hearing for Apple plus the RTX PRO 6000 (577). Its figures are **computed, not q
 recomputes every row of the table on each run, so a wrong number fails rather than ships.
 
 **Its own harnesses**, both required before shipping a book change:
-`.claude/skills/cardinal-build/harnesses/checkbook.mjs` (345 assertions; pass a book path as argv[2] — an explicit path that does not exist exits 2 rather than silently testing the real book) and
+`.claude/skills/cardinal-build/harnesses/checkbook.mjs` (372 assertions; pass a book path as argv[2] — an explicit path that does not exist exits 2 rather than silently testing the real book) and
 `h562_aibook.js` (42, the Library integration and the served bytes), and
 `h581_changelog.js` (25, What's New against the shipped CHANGELOG). `AI_CHEATSHEET.md` mirrors the same content and is `.vercelignore`'d.
 

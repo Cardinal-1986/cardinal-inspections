@@ -2892,6 +2892,29 @@ body:has(#loginView[style*="block"]){background:#fff;}
    not vh: on iOS the address bar makes vh overshoot and the last line of
    the book ends up under the browser chrome. */
 body.rl-at-book #resourceLibraryView .ins-body{max-width:none;padding:0;}
+/* 583 — the book gets the header back, and the floating pills go away.
+   The five pills (TOC / Manage / Library / theme / Ask-File) are gated on
+   `body.viewing-rl` alone, so they float over the book and cover its text.
+   None of them acts on it: the book carries its own Contents drawer inside the
+   iframe, has no filed cards, is not what the librarian answers about, and
+   already follows the app theme.
+   They cannot just be hidden, though — `#resourceLibraryView .ins-header` is
+   display:none for the whole Library (which is WHY the pills exist, build 447),
+   so #cr-rlhome-btn is the only way out of the book. Restoring the header hands
+   back a real back button, already wired to parentOf and already styled here.
+   Specificity: (1,1,1) beats the (1,1,0) that hides it, in any order. */
+body.rl-at-book #resourceLibraryView .ins-header{display:flex;padding:8px 10px;min-height:0;}
+/* 583b — Theo: "slim the app one down to just the back arrow." The book keeps
+   its own bar (AI FIELD MANUAL · Contents) inside the frame, so the app's bar
+   carries only the way out. The router still writes .ins-title for every
+   OTHER Library page — it is hidden here, not emptied. */
+body.rl-at-book #resourceLibraryView .ins-header .ins-title,
+body.rl-at-book #resourceLibraryView .ins-header #rlThemeBtn{display:none;}
+body.rl-at-book #cr-rltoc-btn,
+body.rl-at-book #cr-nachi-mgr-btn,
+body.rl-at-book #cr-rlhome-btn,
+body.rl-at-book #cr-rltheme-btn,
+body.rl-at-book #rlAskBtn{display:none !important;}
 .rl-page.rl-fullbleed{padding:0;margin:0;}
 .rl-page.rl-fullbleed.rl-pageActive{display:flex;flex-direction:column;}
 .rl-bookframe{display:block;width:100%;flex:1 1 auto;min-height:100dvh;
@@ -35005,6 +35028,8 @@ var CHANGELOG = [
 { b:586, d:'2026-08-02', t:'The Lens \u2014 pinch into any photograph', s:'Every photograph has been stored at full resolution since build 577 so granules and nail heads survive \u2014 and no gesture could reach that detail until now. Tap a Hall of Fame photo, or the expand button on the slider and on The Walk\u2019s review screen: the picture opens full screen with pinch, drag and double-tap zoom. In The Walk your damage marks ride along at any zoom.' },
 { b:585, d:'2026-08-02', t:'Chalk \u2014 draw your own marks', s:'The Walk\u2019s review screen gains + Mark damage: drag a box on the photograph, say what it is and how serious, and it joins the marks exactly like one you accepted from the AI. Asking the AI again now keeps your hand-drawn marks \u2014 it only refreshes its own. Works even when the AI is down, and every mark you draw is recorded as yours, which is exactly what training your own detector later needs.' },
 { b:584, d:'2026-08-02', t:'Spotlight \u2014 present mode for The Walk', s:'A Present button appears on any walk with a reviewed photo. Tap it and the screen goes true black: one finding at a time, the damage lit and everything else dark, with the marks you kept \u2014 nothing the AI proposed that you rejected. Tap the right side for the next finding, the left to go back, past the last one to finish. The address never appears on screen. Works for sales too, not just admins \u2014 presenting is the point.' },
+{ build:584, note:'\uD83C\uDFA8 The manual gains a seventeenth chapter: What AI can build. A catalogue of what one person with AI can make \u2014 CRMs, websites, courses, illustrations, audio, dashboards \u2014 every example built around a roofing company, half of them already running at Cardinal. And a real seven-slide adjuster deck runs inside the page as the proof: it presents on an iPad or a computer, and lies flat as readable pages on a phone, because presenting from a phone does a deck no favors.' },
+{ build:583, note:'\uD83D\uDCD6 The AI Field Manual is readable again. The TOC, Manage, Library, theme and Ask/File buttons were floating on top of the page and covering the words \u2014 none of them does anything to the book, so they step aside while you are reading it. In their place the book gets a slim bar with just a back arrow \u2014 a better way out than a button sitting on a paragraph.' },
 { build:582, note:'\uD83D\uDD29 The manual\u2019s hardware chapter now answers the whole question. A plain spec sheet before any argument, the DGX Spark and Apple each written up properly, the RTX PRO 6000 with its own pros and cons, a three-way Spark-vs-Mac-vs-6000 table, and both stacking questions \u2014 what two Sparks really change, and whether you can pair one with a 5090. And what local AI is good for is now seven jobs, with photographs as one of them rather than the argument.' },
 { build:581, note:'\uD83D\uDD27 What\u2019s New was showing five blank cards reading \u201cBuild undefined\u201d, and the seven newest builds never appeared at all \u2014 two ways of writing an entry had got mixed and the box only understood one of them. It reads both now. Also: the AI Field Manual is reordered into sixteen chapters in four groups, and the hardware has a chapter of its own.' },
 { b:580, d:'2026-08-02', t:'The Walk asks before it forgets', s:'Rejecting a mark, changing how serious one is, or dragging a box into place, then tapping Back or Ask again — both used to throw the change away with no warning. They ask first now, only when there is actually something to lose. Reopening a photo you have not touched yet, or asking the AI for the first time, still needs no confirmation.' },
