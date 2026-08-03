@@ -7286,6 +7286,48 @@ rendered and eyeballed.
 
 ---
 
+## The retail order — the running-order answer, built (2026-08-03)
+
+Theo, in full: *"This is not for insurance, it is to show someone the install process. The storm
+damage should be gone as well as the adjuster. The contract sign inside the house so new scene at
+a kitchen table, then an attic inspection where you pull the ladder down hit the switch for the
+lights look at the decking then hit the flashlight and look for soffit intake and see the baffles
+covered these should be at the very beginning. The takeoff is checking roof components, number of
+pipeboots, satellite dish, staying or going. The lawn ornaments, hidden sprinkler heads by Curtis
+and his clipboard. That's next. Drone photos before during and after."*
+
+**This closes three open questions at once:**
+- **The running order** — three insurance scenes out (The Climb's chalk circles, The Adjuster,
+  the tailgate Number), three retail scenes in (The Kitchen Table, The Attic, The Takeoff). Same
+  slots. **The book stays sixteen — the 16-vs-18 question dissolves**, and spread 7 keeps its
+  "of 16" title untouched.
+- **The gnome** — a lawn ornament, inventoried on the Takeoff with its own ring, noted for
+  witness protection. Drawn: red hat, white beard, blue tunic, standing in bed B.
+- **The Takeoff's meaning** — not a tape measure. A component inventory: two pipe boots ringed,
+  the satellite dish ringed (staying or going), sprinkler heads flagged in the lawn, the gnome —
+  all by **Curtis in the lime vest with his clipboard**, matching his portrait card.
+
+**Two interiors, a first for the book:** the Kitchen Table (contract with red signature line, pen
+ON the line under the homeowner's reach — first pass had it floating in mid-air held by nobody —
+mugs, window with the cardinal on the sill) and the Attic exactly as dictated: pull-down ladder
+with light from the hallway, bulb ON with pull chain, deck underside and rafters, and the beam
+landing on **baffles buried under insulation** with a red finding-ring — the discovery made
+before anyone quoted a shingle. The cardinal got in through the one soffit bay that still
+breathes, which is the spread's point wearing feathers.
+
+**Spread 1 de-stormed** (hail dents deleted, caption rewritten). **The drone** appears before
+(Takeoff), during (Shingles) and after (Walk) — same aircraft each time. The PROPOSED P1/P2
+cards are retired, superseded by the real spreads 3–4.
+
+Harness notes: the wing detector now knows spreads 2–3 are interiors (no wing by design —
+reporting it absent there was noise); `birdInAll` caught the attic missing its cardinal before
+any human did.
+
+Verified: 16 cards, bird in all, zero collisions, zero page errors, opening four rendered and
+eyeballed.
+
+---
+
 ## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
 
 ✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like

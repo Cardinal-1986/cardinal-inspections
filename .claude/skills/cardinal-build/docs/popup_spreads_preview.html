@@ -905,46 +905,162 @@ function chips(seed, n, lo, hi){
    crew turns up: somebody knocks, somebody climbs, the adjuster comes out,
    a number gets agreed, a colour gets picked, the load lands. Then the
    roof itself, then the sweep, then the people. */
+/* ── retail-order props (Theo, 3 Aug: not an insurance book) ─────── */
+function gnome(x, y, sc){
+  /* THE GNOME, found at last — a lawn ornament, inventoried on the Takeoff
+     and moved to safety before the crew arrives. Red hat, of course. */
+  var g='<g transform="translate('+x+','+y+') scale('+sc+')">';
+  g+='<ellipse cx="0" cy="0" rx="4.6" ry="1.3" fill="#000" opacity=".18"/>';
+  g+='<path d="M-3.4,0 L-2.6,-6.5 L2.6,-6.5 L3.4,0 Z" fill="#3E6FA8"/>';
+  g+='<path d="M0,-6.5 L2.6,-6.5 L3.4,0 L0,0 Z" fill="#2E5480"/>';
+  g+='<path d="M-2.6,-7.5 Q0,-4.5 2.6,-7.5 L2.6,-9.5 Q0,-8 -2.6,-9.5 Z" fill="#F2F4F2"/>';
+  g+='<circle cx="0" cy="-9.6" r="2.5" fill="#E8C39E"/>';
+  g+='<path d="M-2.5,-10.6 L0,-16.5 L2.5,-10.6 Z" fill="#C8202E"/>';
+  g+='<circle cx="0" cy="-16.6" r="0.9" fill="#8F1620"/>';
+  return g+'</g>';
+}
+function sprinkler(x, y){
+  return '<g transform="translate('+x+','+y+')">'+
+         '<path d="M-1.4,0 L1.4,0 L1.4,-3.4 L-1.4,-3.4 Z" fill="#B08D4F"/>'+
+         '<path d="M-2.2,-3.4 L2.2,-3.4 L2.2,-4.6 L-2.2,-4.6 Z" fill="#8F7138"/></g>';
+}
+function drone(x, y, sc){
+  /* before, during, after — the same aircraft each time */
+  var g='<g transform="translate('+x+','+y+') scale('+sc+')">';
+  g+='<path d="M-11,-4 L11,-4" stroke="#4A5056" stroke-width="1.6" fill="none"/>';
+  g+='<ellipse cx="-11" cy="-4" rx="5" ry="1.2" fill="#9AA2A8" opacity=".8"/>';
+  g+='<ellipse cx="11" cy="-4" rx="5" ry="1.2" fill="#9AA2A8" opacity=".8"/>';
+  g+='<path d="M-4,-4.6 L4,-4.6 L4,0.6 L-4,0.6 Z" fill="#4A5056" stroke="#E8DCC8" stroke-width=".9"/>';
+  g+='<circle cx="0" cy="-1.6" r="1.2" fill="#C8202E"/>';
+  g+='<path d="M-3,0.6 L-3,2.4 M3,0.6 L3,2.4" stroke="#4A5056" stroke-width="1" fill="none"/>';
+  return g+'</g>';
+}
+function inventoryRing(x, y, r){
+  return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="none" stroke="#F4EDDD" stroke-width="1.5" opacity=".9"/>';
+}
+
 var SPREADS=[
-  {n:1, t:'The Knock', w:'A rep on the step the morning after a storm. The house has not been touched yet.',
+  {n:1, t:'The Knock', w:'A rep on the step. Nobody has touched the house yet — this is an install book, and it starts with a conversation.',
    sky:'early', build:function(){
+     /* NO STORM. Theo, 3 Aug: "this is not for insurance, it is to show
+        someone the install process." The hail dents came off this roof the
+        moment he said it. */
      return house({roof:'shingle'}) +
-       // hail dents on the shaded plane
-       '<g fill="#5E2118" opacity=".55">'+
-       [[176,58],[196,70],[214,82],[188,86],[206,60],[228,74]].map(function(p){
-         return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.6"/>'; }).join('')+'</g>' +
        // reaching TOWARD the door. The default arm swings left, which had him
        // knocking at the siding with his back to the house.
        fig(118,150,1.0,{arm:[[8,-34],[17,-38]]}) +
        yardsign(255,150,0.72) + bird(60,116,0.72);
    }},
-  {n:2, t:'The Climb', w:'Up the ladder with chalk. Every hit gets a circle, and the circles are the case.',
+  /* ── SPREADS 2-4 REBUILT AS THE RETAIL OPEN — Theo, 3 Aug. The Climb
+     (chalk circles), The Adjuster and the tailgate Number were all insurance
+     scenes; this is an install book. In their place: the contract at the
+     kitchen table, the attic inspection exactly as he described it, and the
+     takeoff as a component inventory by Curtis and his clipboard. Three out,
+     three in — the book stays sixteen. */
+  {n:2, t:'The Kitchen Table', w:'The contract gets signed where the coffee is — inside, unhurried, before a single ladder goes up.',
    sky:'day', build:function(){
-     return house({roof:'shingle'}) + ladder(96,150,64,-13) +
-       '<g fill="none" stroke="#F4EDDD" stroke-width="1.5" opacity=".9">'+
-       [[52,58],[76,70],[64,86],[88,52]].map(function(p){
-         return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5"/>'; }).join('')+'</g>' +
-       fig(74,86,0.8,{arm:[[-8,-34],[-17,-30]]}) +
-       bird(272,112,0.7,true);
+     var s='';
+     // full-bleed interior; the sky and lawn the loop painted are behind this
+     s+='<path d="M0,0 L300,0 L300,190 L0,190 Z" fill="#EFE7D8"/>';
+     s+='<path d="M'+SPLIT+',0 L300,0 L300,190 L'+SPLIT+',190 Z" fill="#E2D6C2"/>';
+     s+='<path d="M0,148 L300,148 L300,190 L0,190 Z" fill="#C7A97E"/>';
+     s+='<g stroke="#A98C62" stroke-width=".8" opacity=".6">'+
+        '<path d="M0,162 L300,162"/><path d="M0,176 L300,176"/></g>';
+     // the window, and the cardinal on the sill outside it
+     s+='<path d="M44,26 L96,26 L96,66 L44,66 Z" fill="#6E9AC0" stroke="#8A7660" stroke-width="2"/>';
+     s+='<path d="M44,26 L96,26 L44,66 Z" fill="#9CBEDA"/>';
+     s+='<path d="M70,26 L70,66 M44,46 L96,46" stroke="#8A7660" stroke-width="1.6" fill="none"/>';
+     s+=bird(56,64,0.5);
+     s+='<path d="M40,66 L100,66 L100,70 L40,70 Z" fill="#8A7660"/>';
+     // a framed something on the shaded wall — every kitchen has one
+     s+='<path d="M226,34 L252,34 L252,54 L226,54 Z" fill="#F7F2E6" stroke="#8A7660" stroke-width="1.6"/>';
+     s+='<path d="M231,48 L238,40 L243,45 L248,38" stroke="#C8202E" stroke-width="1.4" fill="none"/>';
+     // the table, the contract, the pen, two mugs
+     s+='<path d="M112,104 L238,104 L238,112 L112,112 Z" fill="#8A5C36"/>';
+     s+='<path d="M175,104 L238,104 L238,112 L175,112 Z" fill="#6E4527"/>';
+     s+='<path d="M118,112 L124,112 L124,150 L118,150 Z" fill="#6E4527"/>';
+     s+='<path d="M226,112 L232,112 L232,150 L226,150 Z" fill="#59371E"/>';
+     s+='<g transform="translate(186,96) rotate(-4)">'+
+        '<path d="M-16,-8 L16,-8 L16,8 L-16,8 Z" fill="#F7F2E6" stroke="'+CUT+'" stroke-width="1.2"/>'+
+        '<g stroke="#BCAF97" stroke-width="1"><path d="M-11,-4 L11,-4"/><path d="M-11,0 L11,0"/></g>'+
+        '<path d="M-11,5 L6,5" stroke="'+RED+'" stroke-width="1.8"/></g>';
+     /* the pen ON the signature line, under the homeowner's reach — it was
+        floating in the air above the contract, held by nobody */
+     s+='<path d="M196,99 L204,94" stroke="#2A2E33" stroke-width="1.6" stroke-linecap="round"/>';
+     s+='<path d="M126,96 L136,96 L135,104 L127,104 Z" fill="'+RED+'"/>'+
+        '<path d="M136,98 Q140,99 136,101" stroke="'+RED+'" stroke-width="1.2" fill="none"/>';
+     s+='<path d="M152,96 L162,96 L161,104 L153,104 Z" fill="#3E5C80"/>';
+     // the rep, and the homeowner with the pen down on the line
+     s+=fig(88,148,0.95,{arm:[[8,-30],[22,-26]]});
+     s+=fig(252,148,0.95,{flip:true,hat:false,shirt:'#6B7A93',shirtDk:'#4F5C72',
+                          arm:[[8,-30],[24,-27]]});
+     return s;
    }},
-  {n:3, t:'The Adjuster', w:'Two people on one roof agreeing what is there. Cardinal meets them up there, every time.',
+  {n:3, t:'The Attic', w:'Ladder down, lights on. Decking first, then the flashlight to the soffit — and these baffles are buried. Found before anyone quoted a shingle.',
    sky:'day', build:function(){
-     return house({roof:'shingle'}) + ladder(96,150,64,-13) +
-       fig(60,88,0.8,{arm:[[-8,-34],[-18,-36]]}) +
-       fig(244,88,0.8,{shirt:'#4A5866',shirtDk:'#333F4A',hat:'#D8DEE3',flip:true,
-                                  arm:[[-8,-34],[-17,-28]]}) +
-       bird(56,120,0.7);
+     var s='';
+     // full-bleed attic: deck underside, rafters, joists, insulation
+     s+='<path d="M0,0 L300,0 L300,190 L0,190 Z" fill="#241E17"/>';
+     s+='<path d="M10,84 L150,14 L290,84 L290,96 L150,26 L10,96 Z" fill="#B99F76"/>';
+     s+='<g stroke="#8A6B4A" stroke-width="3">'+
+        '<path d="M40,81 L40,70"/><path d="M78,62 L78,51"/><path d="M116,43 L116,32"/>'+
+        '<path d="M184,43 L184,32"/><path d="M222,62 L222,51"/><path d="M260,81 L260,70"/></g>';
+     s+='<path d="M0,124 L300,124 L300,132 L0,132 Z" fill="#6B5A42"/>';
+     s+='<g stroke="#59492F" stroke-width="1"><path d="M0,128 L300,128"/></g>';
+     // insulation between the joists, and the MOUND burying the baffles
+     s+='<g fill="#E8A7B8">'+
+        '<path d="M6,124 Q26,112 46,124 Z"/><path d="M52,124 Q72,114 92,124 Z"/>'+
+        '<path d="M100,124 Q118,115 136,124 Z"/><path d="M144,124 Q162,114 180,124 Z"/></g>';
+     s+='<path d="M212,124 Q238,98 268,110 Q286,118 292,124 Z" fill="#E8A7B8"/>';
+     s+='<path d="M252,112 L262,105 L268,110 L258,117 Z" fill="#9CB8D8" opacity=".8"/>';
+     s+='<path d="M264,104 L274,97 L280,102 L270,109 Z" fill="#9CB8D8" opacity=".55"/>';
+     s+=inventoryRing(258,108,16).replace('#F4EDDD','#E35C63');
+     // the hatch, the folding ladder, the light from the hallway below
+     s+='<path d="M56,124 L108,124 L108,132 L56,132 Z" fill="#0E0B08"/>';
+     s+='<path d="M62,128 Q82,150 96,186 L104,186 Q88,148 70,128 Z" fill="#B08D4F" opacity=".9"/>';
+     s+='<g stroke="#8F7138" stroke-width="1.6">'+
+        '<path d="M70,140 L84,136"/><path d="M76,152 L90,148"/><path d="M82,164 L96,160"/></g>';
+     s+='<path d="M60,132 L104,132 L96,190 L68,190 Z" fill="#F2E3A8" opacity=".18"/>';
+     // the bulb, ON, with its pull chain
+     s+='<circle cx="150" cy="44" r="20" fill="#F7E8B0" opacity=".28"/>';
+     s+='<path d="M150,26 L150,34" stroke="#8A8378" stroke-width="1.4" fill="none"/>';
+     s+='<circle cx="150" cy="39" r="5" fill="#F7E8B0" stroke="#D9C070" stroke-width="1"/>';
+     s+='<path d="M154,42 L154,50 M154,50 L156,52" stroke="#B8B0A2" stroke-width="1" fill="none"/>';
+     // the inspector on the joists, beam to the buried baffles
+     s+='<path d="M186,116 L246,102 L252,116 L192,124 Z" fill="#F2E3A8" opacity=".3"/>';
+     s+=fig(174,124,0.85,{arm:[[8,-28],[20,-24]]});
+     s+='<path d="M192,101 L198,99" stroke="#2A2E33" stroke-width="2.4" stroke-linecap="round"/>';
+     /* the cardinal got in through the one soffit bay that still breathes —
+        which is the spread's whole point, wearing feathers */
+     return s + bird(24,124,0.55);
    }},
-  {n:4, t:'The Number', w:'The estimate, on a tailgate. No surprises later is the entire product.',
+  {n:4, t:'The Takeoff', w:'Curtis and the clipboard: pipe boots counted, the dish staying or going, sprinklers flagged — and the gnome noted for witness protection. Drone photos start here.',
    sky:'noon', build:function(){
-     return house({roof:'shingle'}) + truck(96,150,1,true) +
-       '<g transform="translate(150,116) rotate(-8)">'+
-       '<path d="M-17,-22 L17,-22 L17,22 L-17,22 Z" fill="#F7F2E6" stroke="'+CUT+'" stroke-width="1.6"/>'+
-       '<path d="M-8,-26 L8,-26 L8,-19 L-8,-19 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1.2"/>'+
-       '<g stroke="#BCAF97" stroke-width="1.4"><path d="M-11,-13 L11,-13"/><path d="M-11,-5 L11,-5"/>'+
-       '<path d="M-11,3 L4,3"/></g>'+
-       '<path d="M-11,13 L11,13" stroke="'+RED+'" stroke-width="2.6"/></g>' +
-       bird(268,112,0.7,true);
+     var s=house({roof:'shingle'});
+     // what the clipboard is counting, each with its inventory ring
+     s+='<path d="M56,74 L64,74 L64,64 L56,64 Z" fill="'+METS+'"/>';
+     s+='<path d="M50,78 L70,78 L66,72 L54,72 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
+     s+=inventoryRing(60,72,11);
+     s+='<path d="M84,60 L92,60 L92,52 L84,52 Z" fill="'+METS+'"/>';
+     s+='<path d="M79,64 L97,64 L93,58 L83,58 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
+     s+=inventoryRing(88,59,10);
+     s+='<ellipse cx="242" cy="60" rx="9" ry="6" fill="#C9CFD4" stroke="#8A9096" stroke-width="1.2"/>'+
+        '<path d="M242,66 L242,74" stroke="#6E747A" stroke-width="2" fill="none"/>'+
+        '<circle cx="242" cy="60" r="1.6" fill="#6E747A"/>';
+     s+=inventoryRing(242,63,13);
+     s+=gnome(266,148,1);
+     s+=inventoryRing(266,140,10);
+     s+=sprinkler(36,148)+sprinkler(120,148);
+     s+=inventoryRing(36,146,5)+inventoryRing(120,146,5);
+     // Curtis, in the vest, clipboard up
+     s+=fig(160,150,0.95,{shirt:'#C4D435',shirtDk:'#98A722',hat:false,
+                          arm:[[8,-30],[18,-34]]});
+     s+='<g transform="translate(178,118) rotate(8)">'+
+        '<path d="M-5,-7 L5,-7 L5,7 L-5,7 Z" fill="#F7F2E6" stroke="'+CUT+'" stroke-width="1.1"/>'+
+        '<path d="M-2,-8.4 L2,-8.4 L2,-6.4 L-2,-6.4 Z" fill="'+MET+'"/>'+
+        '<g stroke="#BCAF97" stroke-width=".9"><path d="M-3,-3 L3,-3"/><path d="M-3,0 L3,0"/><path d="M-3,3 L1,3"/></g></g>';
+     s+=drone(252,26,0.9);
+     return s + bird(288,112,0.66,true);
    }},
   {n:5, t:'The Colour', w:'Shingle boards against the siding. Owens Corning, and the choice is the homeowner’s.',
    sky:'noon', build:function(){
@@ -1054,6 +1170,7 @@ var SPREADS=[
      return house({roof:'half', cut:true}) +
        fig(224,90,0.8,{arm:[[-8,-34],[-15,-24]]}) +
        fig(250,82,0.78,{flip:true,arm:[[-8,-34],[-15,-24]]}) +
+       drone(36,30,0.8) +
        trailer(60,150,0.72) + bird(288,112,0.66,true);
    }},
   /* RETITLED. The caption promised "ridge vent along the peak" and this roof
@@ -1073,6 +1190,7 @@ var SPREADS=[
        // right free zone, clear of the wing and the chimney
        fig(238,88,0.85,{shirt:'#474C52',shirtDk:'#33373C',hat:false,
                                  arm:[[-8,-34],[-18,-38]]}) +
+       drone(30,32,0.8) +
        yardsign(254,150,0.72) + bird(292,112,0.68,true);
    }},
   {n:15, t:'The Sweep', w:'The magnet runs twice. Every chip flung on spread 7 comes back up here — the same forty pieces.',
@@ -1091,41 +1209,9 @@ var SPREADS=[
        trailer(56,150,0.72) + yardsign(252,150,0.72) + bird(292,112,0.68,true) +
        chips(7,6,214,288);
    }},
-  /* ── THE TWO SCENES THE 16 CUT DROPPED — Theo, 3 Aug: "what happened to
-     the attic picture as well, and the take off." Both are in his brief
-     (point 14, starred) and the copy doc (Stages 1-2), and the 16-spread
-     list silently lost them. Drawn now, flagged PROPOSED and unnumbered —
-     where they slot is the running-order call, which is his. They belong
-     between The Climb and The Adjuster, which makes the book 18. */
-  {n:'P1', proposed:true, t:'The Takeoff', w:'PROPOSED. The measure, before any promise. Every quote starts with a tape, not an estimate — your brief has it, the 16 cut dropped it.',
-   sky:'day', build:function(){
-     var s=house({roof:'shingle'});
-     // the tape, reel at the eave corner, run up the band with foot ticks
-     s+='<path d="M40,96 L96,50" stroke="#E8A33D" stroke-width="2" fill="none"/>';
-     s+='<g stroke="#B27B22" stroke-width="1">';
-     for(var i=1;i<5;i++){ var tx=40+(96-40)*i/5, ty=96+(50-96)*i/5;
-       s+='<path d="M'+(tx-2)+','+(ty-2)+' L'+(tx+2)+','+(ty+2)+'"/>'; }
-     s+='</g>';
-     s+='<circle cx="40" cy="96" r="4" fill="#E8A33D" stroke="#8a5c15" stroke-width="1.4"/>';
-     return s + fig(232,90,0.8,{arm:[[-8,-34],[-18,-30]]}) + bird(288,112,0.66,true);
-   }},
-  {n:'P2', proposed:true, t:'The Attic', w:'PROPOSED. A flashlight from underneath, before anything is signed. Decking, leaks and whether the roof can breathe — the surface cannot tell you any of it.',
-   sky:'day', build:function(){
-     var s=house({roof:'shingle'});
-     /* the section: the right end of the house opened, deck underside along
-        the top, rafter ends, and the flashlight beam finding a wet patch on
-        the underside — the thing no surface inspection can see */
-     s+='<path d="M222,150 L222,48 L268,48 L268,150 Z" fill="#141920"/>';
-     s+='<path d="M222,48 L268,48 L268,53 L222,53 Z" fill="#C9B084"/>';
-     s+='<path d="M244,53 L254,53 L254,58 L244,58 Z" fill="#5A4E42"/>';
-     s+='<g stroke="#8A6B4A" stroke-width="3" stroke-linecap="butt">'+
-        '<path d="M230,53 L230,62"/><path d="M245,53 L245,62"/><path d="M260,53 L260,62"/></g>';
-     s+='<path d="M232,132 L246,58 L258,60 L240,134 Z" fill="#F2E3A8" opacity=".3"/>';
-     s+='<circle cx="250" cy="57" r="4" fill="#F2E3A8" opacity=".85"/>';
-     s+='<g fill="none" stroke="#F2ECDD" stroke-width="1.6">'+
-        '<path d="M222,150 L222,48 L268,48"/></g>';
-     return s + fig(236,146,0.8,{arm:[[-8,-34],[6,-40]]}) + bird(46,120,0.68);
-   }},
+  /* The Takeoff and The Attic are REAL spreads 3-4 now — Theo slotted them
+     on 3 Aug when he set the retail order, and the two PROPOSED cards that
+     lived here are superseded. The book is sixteen again, no renumber. */
   {n:16, t:'The Team', w:'Twelve die-cut portraits, drawn and pushed. Beto in the black lead tee, Curtis in the vest.',
    sky:'day', build:function(){
      var s=house({roof:'new'}), xs=[52,90,128,166,204,242];
