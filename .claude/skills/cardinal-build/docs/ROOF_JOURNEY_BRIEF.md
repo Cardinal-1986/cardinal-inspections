@@ -53,7 +53,25 @@ four after briefly considering eight.
 | 14 | **Check the attic — at the beginning** | Inspecting from *underneath* at takeoff, before any commitment | ⭐ The only way to see decking condition, existing leaks, and whether the ventilation actually works. The roof surface cannot tell you any of it |
 | 15 | **Ventilation — "super important"** | Balanced intake (soffit) + exhaust (ridge) | ⭐⭐ See below. This is the one that quietly **voids shingle warranties**, and almost no homeowner knows it |
 | 16 | **The PM's card, handed over by the salesperson** | A second named human, with contact details, before work starts | The client is never left with only one number. Handing a *card* is a deliberate physical gesture — it says "this person is yours" |
-| 17 | **The PM is on site periodically all day** | Not a drop-and-vanish crew | Answers the unspoken fear: *"will anyone in charge actually be here?"* Pairs with Theo's own site checks (#9) — two levels of oversight, not one |
+| 17 | **The PM is on site periodically all day** | Not a drop-and-vanish crew | Answers the unspoken fear: *"will anyone in charge actually be here?"* |
+| 18 | **A dedicated crew leader, on site the *whole* time, who answers questions** | Someone in charge who never leaves | ⭐ The one that actually matters at 2pm. See below — this completes a three-tier answer to *"who do I talk to right now?"* |
+
+### The three tiers of oversight — write them as one thing, not three boasts
+
+Points 9, 17 and 18 are not three separate claims. Together they answer a single
+question a homeowner is too polite to ask out loud: **"if something looks wrong,
+who do I actually talk to, and will they be here?"**
+
+| Who | When they're there | What they're for |
+|---|---|---|
+| **Crew leader** | **The whole time, never leaves** | The answer to *right now*. Any question, at any moment, without waiting for a callback |
+| **Project manager** | Periodically through the day | Named, carries a card the client already has (#16), the escalation if the answer isn't on the roof |
+| **Theo — the owner** | Checks on the job himself | The buck stops visibly, not theoretically |
+
+**Written as a stack, this is genuinely unusual and hard for a competitor to
+match.** Written as three separate bullet points, it reads as padding. The copy
+must present the ladder, and the crew leader must come **first** — being there
+continuously beats being senior, from where the homeowner is standing.
 
 ### 14–15 added later the same session, verbatim
 
