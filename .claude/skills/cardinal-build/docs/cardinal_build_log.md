@@ -6380,3 +6380,29 @@ is what future sessions need:
 - Chromium proofs worth keeping as patterns: pixel-reading a canvas (`getImageData` on the share
   card's mat), synthetic two-pointer `PointerEvent`s for pinch, sampling a CSS var mid-animation
   for the kiosk wipe.
+
+---
+
+## Build 589 — the slider's expand button works on a real tap
+
+Found by a new four-viewport audit (`scripts/audit_viewports.js`), not the standard ladder:
+build 586's ⤢ expand button sits INSIDE `.cr-sh-cmp`, and the slider's `pointerdown` calls
+`cmp.setPointerCapture()`. Pointerdown targets the button, pointerup is captured by the slider —
+and a browser fires **no click event** when they differ. The button did nothing on a real tap;
+only a synthetic `onclick()` fired it, which is why 586's Chromium test (it clicked the
+review-stage lens, never this one) passed while the feature was dead on a device. **578's class
+exactly** — a control inside a gesture surface.
+
+Fix: the slider's `pointerdown` ignores a press on `.cr-sh-exp`, mirroring the guard the Lens
+already carries for its own +/− buttons. One line.
+
+**The audit is the real deliverable here.** `audit_viewports.js` drives every Vision Suite
+function at phone / iPad-portrait / iPad-landscape / desktop AND runs an overlap sweep: it
+collects every visible button + slider handle + label chip and flags any pair intersecting >15%
+of the smaller one. It caught this dead button and confirmed zero control overlaps at any size —
+the class the eyeball missed twice (the ⤢/After collision, then this). Re-run it on any Showcase
+change: `node .claude/skills/cardinal-build/scripts/audit_viewports.js` from the repo root.
+
+Gates: `check_build` green 588→589 (marker `e.target.closest('.cr-sh-exp')`, negative-controlled),
+audit **76/76 across four viewports**, and the four existing harnesses unchanged
+(walk 115, showcase 123, detect 39, render 69).

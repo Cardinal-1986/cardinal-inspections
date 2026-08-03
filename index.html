@@ -3219,7 +3219,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 588 &#8212; Curtain Call — press play and the Showcase runs itself until somebody touches it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-02 build 589 &#8212; the slider’s expand button opens the lens on a real tap, not just in tests</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34998,6 +34998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:589, d:'2026-08-02', t:'The expand button on the slider works on a real tap', s:'Yesterday\u2019s Lens added a full-screen expand button to the before/after slider, and on a real device it did nothing: the slider was swallowing the tap. It opens now. Nothing else changed \u2014 found by testing every button at phone, iPad and desktop sizes before you had to.' },
 { b:588, d:'2026-08-02', t:'Curtain Call \u2014 the tablet sells by itself', s:'A play button beside the pair counter. Press it at a kitchen table or a home-show booth and the Showcase runs on its own: a slow drift on the finished roof, the divider sweeps before to after by itself, the address and material fade in like a gallery placard, then the next pair. Any touch stops the show instantly and hands you the real slider on the pair that was up. Privacy mode masks the placard like everything else.' },
 { b:587, d:'2026-08-02', t:'The Release \u2014 share cards', s:'A Showcase pair with a client release on file gains Share: pick Square, Story or Wide and one of three frames \u2014 Classic, Blackout, Kraft \u2014 and download a finished before/after card for social media or the website, or send it straight from the phone. The card names the city only, never the street, and the file carries no location data at all. A pair without a release shows the button greyed out with the reason \u2014 the consent rule is now something you can see.' },
 { b:586, d:'2026-08-02', t:'The Lens \u2014 pinch into any photograph', s:'Every photograph has been stored at full resolution since build 577 so granules and nail heads survive \u2014 and no gesture could reach that detail until now. Tap a Hall of Fame photo, or the expand button on the slider and on The Walk\u2019s review screen: the picture opens full screen with pinch, drag and double-tap zoom. In The Walk your damage marks ride along at any zoom.' },
@@ -56308,6 +56309,10 @@ function wireSlider(){
     set((e.clientX - r.left) / r.width * 100);
   }
   cmp.addEventListener('pointerdown', function(e){
+    /* The expand button lives inside the slider. Capturing the pointer
+       here would steal its pointerup and the browser would fire no
+       click on it — 578's class. Let a press on the button through. */
+    if(e.target.closest && e.target.closest('.cr-sh-exp')) return;
     dragging = true;
     try{ cmp.setPointerCapture(e.pointerId); }catch(_){}
     from(e);
