@@ -6853,3 +6853,53 @@ override, admin-gating of the Studio tile, and proof the Presentations tile driv
 one. Real Chromium screenshots of both the admin and non-admin renders, plus a regression pass
 proving the ordinary ten-destination launcher is completely unaffected (`app.cardinalroster.com`
 still renders `.cr-lr`, never `.cr-vh`).
+
+## `drivewaytest.html` — the Driveway Test, shipped (2026-08-03)
+
+Theo picked **Option 5 (the pop-up book) and the Driveway Test** off the five-way preview.
+The Driveway Test went first on purpose, and the reason is the whole argument for it: the
+pop-up book bets **35–60 hours of illustration** on a drawing style nobody had seen. This page
+bets six hours on twelve small plates in the same pen. Cheap answer first — and if the pen
+lands, these plates get reused inside the book rather than thrown away.
+
+**It is a sibling page, not a build.** No app-stamp bump, no `CHANGELOG` entry, no gate ladder —
+`drivewaytest.html` is not part of `index.html`. No login, no Supabase, no SQL, no RLS, no token,
+no API, no client data, no static asset. **That is why it could be built without waiting on the
+delivery decision** — the app boots to a signed-in session and "text them a link" still does not
+exist, but this page needs none of that.
+
+**Six right-versus-wrong pairs**, one wiper each: cut 3-tab used as starter · cut 3-tab used as
+hip and ridge · two exhaust types short-circuiting a balanced system · a missing kickout ·
+one-strip-and-caulk instead of woven step flashing · drip edge stopping short of the peak. The
+two starred shortcuts are here because **no other direction could structurally hold them** — a
+hero cutaway cannot show the wrong version beside the right one, and the comparison *is* the
+content.
+
+Copy is lifted from `ROOF_JOURNEY_COPY.md` rather than rewritten, so the verification discipline
+carries: no code section numbers, no code-mandated dimensions, no warranty terms.
+
+**The bug the mechanical checks could not see, and it is the recurring class on this project.**
+Every plate carried a caption centred at `x=150`. Both plates stack, and the wipe clips only the
+top one — so at any divider position you read **the left half of one caption beside the right half
+of the other**: `NOTCHES, ~~NOTCHESLT~~`, `THIN — ~~REAADSHADOWED~~`. Twelve plates drew, twelve
+carried their accent stroke, all six wipers dragged, keyboard worked, zero JS errors, zero
+horizontal overflow — **every assertion green on a page whose labels were illegible.** Caught by
+looking at the render, not by a check. Fixed by anchoring each caption to its own side of the
+split (`x=12` start / `x=288` end) and shortening each to fit half the plate.
+
+**The pen convention**, matching the app's existing `.fig-ink` figures so the plates transfer to
+the book: 1.75px structure, 1px dashed hairline for hidden geometry, round caps and joins,
+`fill:none`, no gradients, no filters, inverted to white-on-near-black. **One accent stroke per
+plate**, on the thing the copy tells you to look at — red when it is the fault, green when it is
+the fix.
+
+⚠️ **Contrast, computed not eyeballed:** `#c8202e` is **3.44:1 on `#0B0D0C` and fails as body
+text.** Red ink on this page is `#e35c63`; the brand red is strokes and chrome only. A test
+asserts zero body text renders in the failing red.
+
+Verified in real Chromium at phone and desktop: 12 plates drawn and non-empty, all six wipers
+track, arrow keys move the divider, `aria-valuenow` updates, no horizontal overflow.
+
+**Not linked from anywhere yet** — that is an `index.html` change (the Vision hub is the obvious
+front door) and it is Theo's call whether this is public-facing marketing or something a rep
+hands over. Reachable directly at `/drivewaytest.html` on any domain serving this repo.

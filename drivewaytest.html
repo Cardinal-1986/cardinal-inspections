@@ -1,0 +1,489 @@
+<!--
+════════════════════════════════════════════════════════════════════
+ THE DRIVEWAY TEST
+ Written 3 Aug 2026 — client-facing, public, no login.
+────────────────────────────────────────────────────────────────────
+ Six things a homeowner can check from the ground on any finished
+ roof. Theo picked this alongside the pop-up book (Option 5), and it
+ goes first deliberately: the twelve small plates below are the
+ go/no-go on the drawing style the pop-up book then bets 35-60 hours
+ of illustration on. Cheap answer first.
+
+ STANDALONE ON PURPOSE. No login, no Supabase, no SQL, no token, no
+ API, no client data, no static asset. That is why it could be built
+ without waiting on the delivery decision (the app boots to a
+ signed-in session; "text them a link" does not exist yet). This page
+ needs none of that — it is a public page anyone can open.
+
+ It arms the homeowner rather than reassuring them, and that includes
+ arming them to inspect Cardinal's own finished roofs. Theo chose
+ that knowingly. It is only a feature if the work is right every
+ time, on every crew, including subs.
+
+ THE PEN, matching the app's existing .fig-ink figures:
+   1.75px structure · 1px dashed hairline for hidden geometry
+   round caps and joins · fill:none · no gradients · no filters
+   ONE red stroke per plate, on the thing you are told to look at.
+   Inverted to white-on-near-black, which is a blueprint in the
+   literal sense rather than a dark-mode conversion.
+
+ CONTRAST, computed not eyeballed: #c8202e is 3.44:1 on #0B0D0C and
+ FAILS as body text. Red ink here is #e35c63. The bright red is used
+ for strokes and chrome only.
+
+ Copy is lifted from ROOF_JOURNEY_COPY.md (stages 3, 15, 18, 20, 21)
+ rather than rewritten, so the voice matches the rest of the journey
+ material and the verification discipline carries over: no code
+ section numbers, no code-mandated dimensions, no warranty terms.
+════════════════════════════════════════════════════════════════════
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B0D0C">
+<meta name="description" content="Six things you can check on any roof from the ground, in about four minutes. From Cardinal Roofing &amp; Renovations, Dayton Ohio.">
+<title>The Driveway Test — Cardinal Roofing</title>
+<style>
+  :root{
+    --bg:#0B0D0C; --panel:#121614; --panel2:#171c19; --line:#242b27; --line2:#333c37;
+    --ink:#F2F4F2; --ink2:#9aa5a0; --ink3:#606b65;
+    --red:#c8202e; --red-ink:#e35c63;
+    --bad:#e5484d; --good:#7fd08f;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    --serif:Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);
+       font-size:15.5px;line-height:1.62;padding:0 0 60px}
+  .wrap{max-width:720px;margin:0 auto;padding:0 18px}
+
+  header.top{padding:36px 0 4px}
+  .brand{font:800 10.5px var(--mono);letter-spacing:.2em;text-transform:uppercase;
+         color:var(--red-ink);margin-bottom:12px}
+  h1{font:800 clamp(28px,8vw,40px)/1.1 var(--serif);margin:0 0 12px;letter-spacing:-.015em;
+     text-wrap:balance}
+  .sub{font-size:16.5px;color:var(--ink2);max-width:56ch;margin:0 0 18px}
+  .sub b{color:var(--ink)}
+  .rule{height:2px;background:var(--red);width:56px;margin:22px 0}
+  .how{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+       padding:15px 17px;margin-bottom:6px}
+  .how p{margin:0;font-size:14.5px;color:var(--ink2)}
+  .how p + p{margin-top:9px}
+  .how b{color:var(--ink)}
+
+  .count{font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;
+         color:var(--ink3);margin:38px 0 10px;display:flex;align-items:center;gap:10px}
+  .count::after{content:'';flex:1;height:1px;background:var(--line)}
+
+  .pair{margin-bottom:30px}
+  .pair h2{font:800 21px/1.25 var(--serif);margin:0 0 6px;letter-spacing:-.005em}
+  .pair .lede{font-size:14.5px;color:var(--ink2);margin:0 0 13px}
+
+  .stage{position:relative;width:100%;aspect-ratio:15/8;border:1px solid var(--line);
+         border-radius:9px;overflow:hidden;background:#080a09;touch-action:none;
+         cursor:ew-resize;user-select:none}
+  .stage:focus-visible{outline:2px solid var(--red-ink);outline-offset:2px}
+  .plate{position:absolute;inset:0}
+  .plate svg{width:100%;height:100%;display:block}
+  .top{clip-path:inset(0 0 0 50%)}
+  .bar{position:absolute;top:0;bottom:0;left:50%;width:2px;background:#F2F4F2;
+       transform:translateX(-1px);pointer-events:none}
+  .bar::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+              width:30px;height:30px;border-radius:50%;background:#F2F4F2;
+              box-shadow:0 2px 10px rgba(0,0,0,.55)}
+  .bar::before{content:'';position:absolute;top:50%;left:50%;
+               transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%}
+  .tg{position:absolute;top:9px;font:700 9.5px var(--mono);letter-spacing:.13em;
+      text-transform:uppercase;padding:4px 8px;border-radius:4px;background:rgba(8,10,9,.82);
+      pointer-events:none}
+  .tg.l{left:9px;color:var(--bad)}
+  .tg.r{right:9px;color:var(--good)}
+  .hint{font:700 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;
+        color:var(--ink3);text-align:center;margin-top:7px}
+
+  .look{margin-top:14px;padding:14px 16px;background:var(--panel);
+        border-left:2px solid var(--red);border-radius:0 8px 8px 0}
+  .look .l{display:block;font:700 9.5px var(--mono);letter-spacing:.13em;
+           text-transform:uppercase;color:var(--red-ink);margin-bottom:7px}
+  .look p{margin:0;font-size:14.5px;color:var(--ink)}
+  .look p + p{margin-top:9px;color:var(--ink2)}
+  .look b{color:var(--ink)}
+
+  .honest{margin-top:12px;font-size:13.5px;color:var(--ink3)}
+  .honest b{color:var(--ink2)}
+
+  .closer{margin-top:44px;padding:22px 20px;background:var(--panel);
+          border:1px solid var(--line);border-radius:12px}
+  .closer h2{font:800 22px var(--serif);margin:0 0 11px}
+  .closer p{margin:11px 0 0;font-size:15px;color:var(--ink2)}
+  .closer p:first-of-type{margin-top:0}
+  .closer b{color:var(--ink)}
+  .sig{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);
+       font:700 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+  .sig span{color:var(--red-ink)}
+
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Cardinal Roofing &amp; Renovations</div>
+    <h1>The Driveway Test</h1>
+    <p class="sub">Six things you can check on <b>any</b> roof from the ground, in about four minutes. No ladder. Bring your phone — most of these read better zoomed in on a screen than with the naked eye.</p>
+    <div class="rule"></div>
+    <div class="how">
+      <p><b>Drag the divider on each picture.</b> Left is the shortcut. Right is how it should be done.</p>
+      <p>Then go outside and look at your own roof. <b>Then look at ours.</b> That's the point — this works on everybody's roof, and we'd rather you knew what you were looking at.</p>
+    </div>
+  </header>
+
+  <div class="count">Check one of six</div>
+
+  <!-- ═══ 1 · STARTER ═══ -->
+  <section class="pair">
+    <h2>The first row is the one wind finds</h2>
+    <p class="lede">The bottom row of shingles doesn't sit on the deck. It sits on a <b>starter strip</b> — a solid strip with its glue line at the bottom edge. That glue is the only thing holding the very edge of your roof down, and that edge is where wind gets its grip.</p>
+    <div class="stage" id="s1" tabindex="0" role="slider" aria-label="Compare cut 3-tab starter with purpose-made starter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+      <div class="plate bot"></div><div class="plate top"></div><div class="bar"></div>
+      <span class="tg l">Cut 3-tab</span><span class="tg r">Real starter</span>
+    </div>
+    <p class="hint">← drag →</p>
+    <div class="look">
+      <span class="l">What to look for</span>
+      <p><b>Sight along the very bottom edge of the roof</b>, the line just above the gutter. It should read as one solid, unbroken shadow line, dead straight the whole way.</p>
+      <p>If you see small <b>evenly spaced notches</b> interrupting it — roughly one every foot, at perfectly regular intervals — that's a 3-tab shingle cut up and used as starter. A purpose-made starter is solid. <b>It has no notches, ever.</b> The regular spacing is the tell: damage is random, manufacturing is not.</p>
+    </div>
+    <p class="honest"><b>Not a story about crooks.</b> Roofs were built this way for years, before dedicated starter was a stocked product, and plenty are still standing. The argument is that the right product exists now, it's a small line on an estimate, and the edge it protects is the edge that fails first.</p>
+  </section>
+
+  <div class="count">Check two of six</div>
+
+  <!-- ═══ 2 · RIDGE ═══ -->
+  <section class="pair">
+    <h2>The ridge tells you who did the work</h2>
+    <p class="lede">The cap along the peak is its own product — thicker, pre-bent, made to fold over the ridge without cracking. A 3-tab shingle can be cut into squares and used instead. It's cheaper and it's already on the truck.</p>
+    <div class="stage" id="s2" tabindex="0" role="slider" aria-label="Compare cut 3-tab ridge cap with purpose-made hip and ridge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+      <div class="plate bot"></div><div class="plate top"></div><div class="bar"></div>
+      <span class="tg l">Cut 3-tab</span><span class="tg r">Real cap</span>
+    </div>
+    <p class="hint">← drag →</p>
+    <div class="look">
+      <span class="l">What to look for</span>
+      <p><b>Look at the ridge against the sky.</b> A purpose-made cap reads as a deliberate, heavy band along the peak — visibly <b>thicker</b> than the courses below it, with a real shadow at each cap. Cut-up 3-tab reads thin and flat; the ridge almost disappears into the field.</p>
+      <p><b>If the peak looks skinnier than the roof underneath it, that's your answer.</b> Then look at the very end of the ridge, at the gable, where you see the last cap edge-on. Two visible layers of thickness is the real thing. One thin layer isn't. A zoomed phone photo settles it in four seconds.</p>
+    </div>
+    <p class="honest"><b>After a hard winter</b>, sight along the peak for hairline cracks breaking the line. They tend to appear at <b>even intervals</b> — because they appear at the folds.</p>
+  </section>
+
+  <div class="count">Check three of six</div>
+
+  <!-- ═══ 3 · VENTILATION ═══ -->
+  <section class="pair">
+    <h2>Count your exhaust types</h2>
+    <p class="lede">An attic breathes by pulling cool air in low at the eaves and pushing hot air out high at the ridge. Both halves have to work. This is the check almost nobody knows to make, and it's the easiest one here.</p>
+    <div class="stage" id="s3" tabindex="0" role="slider" aria-label="Compare mixed exhaust vents with a single balanced system" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+      <div class="plate bot"></div><div class="plate top"></div><div class="bar"></div>
+      <span class="tg l">Two types fighting</span><span class="tg r">Balanced</span>
+    </div>
+    <p class="hint">← drag →</p>
+    <div class="look">
+      <span class="l">What to look for</span>
+      <p><b>Name every kind of vent on the roof.</b> A raised line along the peak is a ridge vent. Small square hoods partway down the slope are box vents. A round dome or a powered fan is a third kind. <b>You should see one kind, not two.</b></p>
+      <p>Two exhaust types on the same attic short-circuit each other — the fan or the box vents start pulling air <b>down through the ridge vent</b> instead of up from the eaves, and the low end of the attic stops moving air at all. Then stand under the overhang and look straight up at the soffit: are there vents, and are they actually open? <b>Hold a phone flashlight against one. If no light passes, nothing else does either.</b></p>
+    </div>
+    <p class="honest"><b>Why it matters more than it sounds:</b> a roof that can't breathe cooks its own shingles from underneath in summer and grows ice dams at the eaves in winter. It's invisible, it's rarely explained, and it's the thing most likely to shorten a roof that was otherwise installed well.</p>
+  </section>
+
+  <div class="count">Check four of six</div>
+
+  <!-- ═══ 4 · KICKOUT ═══ -->
+  <section class="pair">
+    <h2>The corner where a roof meets a wall</h2>
+    <p class="lede">Where a roof edge runs into a wall — over a garage, under a dormer — the water coming down that edge has to be thrown clear into the gutter. A small bent piece of metal called a <b>kickout</b> does it. It's the size of your hand.</p>
+    <div class="stage" id="s4" tabindex="0" role="slider" aria-label="Compare a missing kickout with a kickout fitted" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+      <div class="plate bot"></div><div class="plate top"></div><div class="bar"></div>
+      <span class="tg l">No kickout</span><span class="tg r">Kickout fitted</span>
+    </div>
+    <p class="hint">← drag →</p>
+    <div class="look">
+      <span class="l">What to look for</span>
+      <p><b>Find where a roof edge dies into a wall</b> and look at the very bottom of that line, right where the gutter starts. There should be a small flared piece of metal turning the water outward, away from the wall.</p>
+      <p>If there's nothing there, water has been running <b>down the inside of that wall</b> every time it rains. This one hides for years and then shows up as rot behind the siding, so it's worth finding now. Look for a stain, a dark streak, or paint lifting on the wall directly under that corner.</p>
+    </div>
+  </section>
+
+  <div class="count">Check five of six</div>
+
+  <!-- ═══ 5 · STEP FLASHING ═══ -->
+  <section class="pair">
+    <h2>Metal, or caulk pretending to be metal</h2>
+    <p class="lede">Where a roof slope runs alongside a wall, the joint is sealed with <b>step flashing</b> — separate L-shaped pieces, one per course of shingles, each tucked up behind the siding and lapped over the one below like a staircase.</p>
+    <div class="stage" id="s5" tabindex="0" role="slider" aria-label="Compare caulked flashing with woven step flashing" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+      <div class="plate bot"></div><div class="plate top"></div><div class="bar"></div>
+      <span class="tg l">One strip + caulk</span><span class="tg r">Woven steps</span>
+    </div>
+    <p class="hint">← drag →</p>
+    <div class="look">
+      <span class="l">What to look for</span>
+      <p><b>Look for the staircase.</b> Along a roof-to-wall joint you should be able to see a stepped pattern of small metal pieces going up the slope, each one overlapping the next, disappearing up behind the siding.</p>
+      <p>What you don't want: <b>one long strip of metal</b> laid over the top of the siding, or a bead of caulk doing the sealing. Caulk is a maintenance item pretending to be a flashing detail — it shrinks and pulls away, and when it does, the water goes behind it instead of over it.</p>
+    </div>
+    <p class="honest">Same test on a chimney. The metal should be <b>cut into the mortar joint</b> and folded down over the flashing below — a clean horizontal line stepping up with the brick courses. Metal run up the face of the brick and caulked is the shortcut version.</p>
+  </section>
+
+  <div class="count">Check six of six</div>
+
+  <!-- ═══ 6 · DRIP EDGE ═══ -->
+  <section class="pair">
+    <h2>The metal at the edges</h2>
+    <p class="lede">A thin strip of metal runs along the eaves and up the rakes — the sloped edge at the gable end — under the shingles and over the fascia. It's what makes water leave the roof cleanly instead of curling back onto the wood.</p>
+    <div class="stage" id="s6" tabindex="0" role="slider" aria-label="Compare drip edge stopping short with drip edge run full length" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+      <div class="plate bot"></div><div class="plate top"></div><div class="bar"></div>
+      <span class="tg l">Stops short</span><span class="tg r">Runs full</span>
+    </div>
+    <p class="hint">← drag →</p>
+    <div class="look">
+      <span class="l">What to look for</span>
+      <p><b>Follow the sloped edge of the roof with your eye</b>, from the gutter all the way up to the peak. You're looking for a consistent thin line of metal along the whole run, with the shingles sitting neatly over it and a small even overhang.</p>
+      <p>If the metal <b>stops partway</b>, or the overhang wanders in and out, that edge was finished by eye. Where the overhang comes up short, water runs behind the gutter and down the fascia board — which is why some houses have one stripe of peeling paint and nobody can work out why.</p>
+    </div>
+  </section>
+
+  <!-- ═══ closer ═══ -->
+  <div class="closer">
+    <h2>Now go look at ours</h2>
+    <p>We wrote this knowing you'd use it on our roofs too. That's the deal — <b>we'd rather be checked than trusted.</b></p>
+    <p>None of these six are exotic. They're small products and small details that add up to a few hundred dollars on an estimate, and every one of them is somewhere a cheaper bid can quietly save money without you ever seeing it. Now you can see it.</p>
+    <p>If you check your own roof and something here worries you, you're welcome to send us a photo. <b>No charge and no pitch</b> — we'll tell you what you're looking at, including if the answer is that it's fine.</p>
+    <div class="sig">Cardinal Roofing &amp; Renovations <span>·</span> Dayton, Ohio</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ── the pen ──────────────────────────────────────────────────────
+     Every plate is drawn with the same three weights and the same
+     rules as the app's existing figures: 1.75px structure, 1px dashed
+     for hidden geometry, round caps and joins, fill:none. ONE accent
+     stroke per plate, on the thing the copy tells you to look at —
+     red when it is the fault, green when it is the fix. */
+  var S = '<svg viewBox="0 0 300 160" preserveAspectRatio="xMidYMid meet">';
+  var E = '</svg>';
+  var STRUCT = 'fill="none" stroke="#9aa5a0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"';
+  var GHOST  = 'fill="none" stroke="#606b65" stroke-width="1" stroke-dasharray="4 3" stroke-linecap="round"';
+  var INK    = 'fill="none" stroke="#F2F4F2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+
+  function label(x, y, text, colour, anchor){
+    return '<text x="'+x+'" y="'+y+'" fill="'+colour+'" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" '+
+           'font-size="10.5" font-weight="700" letter-spacing="0.6" text-anchor="'+(anchor||'middle')+'">'+text+'</text>';
+  }
+  function accent(d, colour, w){
+    return '<path d="'+d+'" fill="none" stroke="'+colour+'" stroke-width="'+(w||3)+'" '+
+           'stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  var BAD = '#e5484d', GOOD = '#7fd08f';
+
+  /* 1 · STARTER — the eave, seen straight on from the driveway */
+  function starter(wrong){
+    var s = S;
+    s += '<g '+STRUCT+'>';
+    s += '<path d="M22,116 L278,116"/>';                       // gutter top
+    s += '<path d="M22,128 L278,128"/>';                       // gutter bottom
+    s += '</g>';
+    s += '<g '+INK+'>';
+    for(var y=54; y<=94; y+=20){ s += '<path d="M22,'+y+' L278,'+y+'"/>'; }  // courses above
+    s += '</g>';
+    if(wrong){
+      // the first course, broken by regular notches — the tell
+      var d = '';
+      for(var x=22; x<270; x+=26){ d += 'M'+x+',104 L'+(x+18)+',104 '; }
+      s += accent(d, BAD, 3.4);
+      s += label(12, 153, 'NOTCHES, EVERY FOOT', BAD, 'start');
+    } else {
+      s += accent('M22,104 L278,104', GOOD, 3.4);
+      s += label(288, 153, 'SOLID \u2014 NO NOTCHES', GOOD, 'end');
+    }
+    return s + E;
+  }
+
+  /* 2 · RIDGE — the peak against the sky, from across the street */
+  function ridge(wrong){
+    var s = S;
+    s += '<g '+STRUCT+'>';
+    s += '<path d="M28,132 L150,44 L272,132"/>';               // the two slopes
+    s += '</g>';
+    s += '<g '+INK+'>';
+    s += '<path d="M52,116 L248,116"/><path d="M74,98 L226,98"/><path d="M96,80 L204,80"/>';
+    s += '</g>';
+    if(wrong){
+      s += accent('M124,64 L176,64', BAD, 2.2);                 // thin, flat, disappears
+      s += label(12, 153, 'THIN, READS FLAT', BAD, 'start');
+    } else {
+      s += accent('M120,62 L180,62', GOOD, 7);                  // a real heavy band
+      // the shadow at each cap
+      s += '<g fill="none" stroke="#0B0D0C" stroke-width="1.2" stroke-linecap="round">';
+      for(var x=128; x<=172; x+=11){ s += '<path d="M'+x+',59 L'+x+',66"/>'; }
+      s += '</g>';
+      s += label(288, 153, 'THICK, SHADOWED', GOOD, 'end');
+    }
+    return s + E;
+  }
+
+  /* 3 · VENTILATION — whole elevation, airflow as arrows */
+  function vent(wrong){
+    var s = S;
+    s += '<g '+STRUCT+'>';
+    s += '<path d="M40,130 L150,58 L260,130"/>';               // roof
+    s += '<path d="M40,130 L40,146 M260,130 L260,146"/>';      // eaves down to soffit
+    s += '</g>';
+    s += '<g '+GHOST+'><path d="M56,120 L244,120"/></g>';      // attic floor
+    if(wrong){
+      s += accent('M126,56 L174,56', BAD, 3);                   // ridge vent
+      s += '<rect x="196" y="86" width="18" height="11" fill="none" stroke="'+BAD+'" stroke-width="2.4"/>'; // box vent
+      // air pulled DOWN through the ridge — the short circuit
+      s += '<g fill="none" stroke="'+BAD+'" stroke-width="2" stroke-linecap="round">';
+      s += '<path d="M150,64 L150,84"/><path d="M145,78 L150,85 L155,78"/>';
+      s += '</g>';
+      s += '<g fill="none" stroke="#606b65" stroke-width="1.6" stroke-linecap="round">';
+      s += '<path d="M46,140 L60,140"/>';                       // soffit: nothing moving
+      s += '</g>';
+      s += label(12, 153, 'TWO EXHAUST TYPES', BAD, 'start');
+    } else {
+      s += accent('M126,56 L174,56', GOOD, 3);                   // ridge vent only
+      // intake low, exhaust high — the loop actually closes
+      s += '<g fill="none" stroke="'+GOOD+'" stroke-width="2" stroke-linecap="round">';
+      s += '<path d="M48,140 L70,128"/><path d="M64,128 L71,127 L69,134"/>';
+      s += '<path d="M252,140 L230,128"/><path d="M236,128 L229,127 L231,134"/>';
+      s += '<path d="M150,86 L150,64"/><path d="M145,71 L150,63 L155,71"/>';
+      s += '</g>';
+      s += label(288, 153, 'IN LOW, OUT HIGH', GOOD, 'end');
+    }
+    return s + E;
+  }
+
+  /* 4 · KICKOUT — roof edge dying into a wall, water path */
+  function kickout(wrong){
+    var s = S;
+    s += '<g '+STRUCT+'>';
+    s += '<path d="M92,26 L92,140"/>';                         // the wall
+    s += '<path d="M92,96 L232,132"/>';                        // roof edge running into it
+    s += '<path d="M78,132 L232,132"/>';                       // gutter line
+    s += '</g>';
+    if(wrong){
+      // water continues straight down the wall
+      s += '<g fill="none" stroke="'+BAD+'" stroke-width="2.4" stroke-linecap="round">';
+      s += '<path d="M92,100 L92,146"/><path d="M87,138 L92,147 L97,138"/>';
+      s += '</g>';
+      s += label(12, 153, 'DOWN THE WALL', BAD, 'start');
+    } else {
+      s += accent('M92,96 L108,104 L104,114', GOOD, 3);          // the little bent metal
+      s += '<g fill="none" stroke="'+GOOD+'" stroke-width="2.2" stroke-linecap="round">';
+      s += '<path d="M104,112 L134,128"/><path d="M126,122 L136,129 L126,133"/>';
+      s += '</g>';
+      s += label(288, 153, 'THROWN CLEAR', GOOD, 'end');
+    }
+    return s + E;
+  }
+
+  /* 5 · STEP FLASHING — the staircase, or one strip and a bead */
+  function step(wrong){
+    var s = S;
+    s += '<g '+STRUCT+'>';
+    s += '<path d="M84,20 L84,140"/>';                         // wall
+    s += '<path d="M84,134 L256,58"/>';                        // roof slope
+    s += '</g>';
+    // siding courses on the wall
+    s += '<g '+GHOST+'>';
+    s += '<path d="M40,44 L84,44"/><path d="M40,68 L84,68"/><path d="M40,92 L84,92"/><path d="M40,116 L84,116"/>';
+    s += '</g>';
+    if(wrong){
+      s += accent('M88,128 L250,56', BAD, 3.2);                  // one long strip, on top
+      s += '<g fill="none" stroke="'+BAD+'" stroke-width="1.4" stroke-dasharray="3 3">';
+      s += '<path d="M86,132 L248,60"/>';                        // the caulk bead
+      s += '</g>';
+      s += label(12, 153, 'ONE STRIP + CAULK', BAD, 'start');
+    } else {
+      // individual pieces, stepping up, each tucked behind the siding
+      s += '<g fill="none" stroke="'+GOOD+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">';
+      var x=92, y=130;
+      for(var i=0;i<6;i++){
+        s += '<path d="M'+x+','+(y+2)+' L'+x+','+(y-12)+' L'+(x+26)+','+(y-12)+'"/>';
+        x += 26; y -= 11;
+      }
+      s += '</g>';
+      s += label(288, 153, 'STEPPED, TUCKED', GOOD, 'end');
+    }
+    return s + E;
+  }
+
+  /* 6 · DRIP EDGE — the rake, followed from gutter to peak */
+  function drip(wrong){
+    var s = S;
+    s += '<g '+STRUCT+'>';
+    s += '<path d="M44,134 L166,46"/>';                        // the rake edge
+    s += '<path d="M44,134 L256,134"/>';                       // eave
+    s += '<path d="M166,46 L268,120"/>';                       // far slope
+    s += '</g>';
+    if(wrong){
+      s += accent('M48,131 L108,88', BAD, 3);                    // metal stops partway
+      s += '<g '+GHOST+'><path d="M108,88 L164,48"/></g>';       // and then nothing
+      s += label(12, 153, 'STOPS PARTWAY', BAD, 'start');
+    } else {
+      s += accent('M48,131 L164,48', GOOD, 3);                   // full run
+      s += label(288, 153, 'FULL RUN', GOOD, 'end');
+    }
+    return s + E;
+  }
+
+  /* ── wire the six comparators ────────────────────────────────────
+     One wiper each, and that is the entire interaction budget. Same
+     shape as the Showcase compare slider that already ships: pointer
+     capture on down, 1:1 tracking, released on pointerup AND
+     pointercancel (a cancel is what a browser sends when it steals a
+     gesture — build 592's lesson). Keyboard works too. */
+  var PLATES = [
+    { id:'s1', f:starter }, { id:'s2', f:ridge }, { id:'s3', f:vent },
+    { id:'s4', f:kickout }, { id:'s5', f:step },  { id:'s6', f:drip }
+  ];
+
+  PLATES.forEach(function(p){
+    var st = document.getElementById(p.id);
+    if(!st) return;
+    st.querySelector('.bot').innerHTML = p.f(true);   // the shortcut, underneath
+    st.querySelector('.top').innerHTML = p.f(false);  // the right way, clipped over it
+    var top = st.querySelector('.top'), bar = st.querySelector('.bar');
+    var pos = 50;
+
+    function paint(){
+      top.style.clipPath = 'inset(0 0 0 ' + pos.toFixed(1) + '%)';
+      bar.style.left = pos.toFixed(1) + '%';
+      st.setAttribute('aria-valuenow', Math.round(pos));
+    }
+    function at(clientX){
+      var b = st.getBoundingClientRect();
+      pos = Math.max(0, Math.min(100, (clientX - b.left) / b.width * 100));
+      paint();
+    }
+    st.addEventListener('pointerdown', function(e){
+      try{ st.setPointerCapture(e.pointerId); }catch(_){}
+      at(e.clientX); e.preventDefault();
+    });
+    st.addEventListener('pointermove', function(e){ if(e.buttons) at(e.clientX); });
+    st.addEventListener('keydown', function(e){
+      if(e.key === 'ArrowLeft'){ pos = Math.max(0, pos - 4); paint(); e.preventDefault(); }
+      if(e.key === 'ArrowRight'){ pos = Math.min(100, pos + 4); paint(); e.preventDefault(); }
+    });
+    paint();
+  });
+})();
+</script>
+</body>
+</html>

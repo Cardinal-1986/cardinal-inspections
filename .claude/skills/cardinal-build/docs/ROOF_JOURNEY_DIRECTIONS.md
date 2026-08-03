@@ -12,7 +12,14 @@ Source material: `ROOF_JOURNEY_BRIEF.md` (Theo's 20 points, verbatim) and
 `ROOF_JOURNEY_COPY.md` (25 stages of client-facing copy, design-independent — it drops
 into whichever direction gets picked).
 
-**Nothing here is built. No `index.html` change until Theo picks.**
+**Theo picked, 3 Aug: Option 5 (the pop-up book) and the Driveway Test.**
+
+- ✅ **The Driveway Test is BUILT and shipped** — `drivewaytest.html` at the repo root.
+  Standalone, public, no login. See the build log entry.
+- ⏳ **The pop-up book** is next. Its own spec says build **one spread first** (the tear-off,
+  with the debris) before drawing the other fifteen — that is the go/no-go on the register.
+
+**No `index.html` change yet.** The Driveway Test is a sibling page, so it needed none.
 
 ## ⚠️ Numbering — this doc holds EIGHT, the preview shows FIVE
 
