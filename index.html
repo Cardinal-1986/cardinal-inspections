@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 590 &#8212; Showroom: hand the tablet over, and nothing in it can be changed while they hold it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 591 &#8212; build a Showcase pair straight from a job you already have, instead of uploading two files</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35021,6 +35021,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:591, d:'2026-08-03', t:'Build a Showcase pair from a job you already have', s:'A <b>From a job</b> button beside Add a pair. Pick the job, tap the before, tap the after, and the address is filled in for you \u2014 with the line it was read from shown underneath, because it guesses and you should be able to see what it guessed from. Add <b>+ During the build</b> for a third. The photographs are copied into the Showcase, so the pair keeps working whatever happens to the job. 196 photographs are already sitting on 12 jobs; this is how they get in front of a homeowner.' },
 { b:590, d:'2026-08-03', t:'Showroom \u2014 a clean door you can hand across the table', s:'A new card on the landing screen opens the Showcase full screen with every editing control gone \u2014 no add, no publish, no remove, no share, nothing to change on any of the three tabs. Hold the \u2715 for a second to come back; a tap does nothing, so a homeowner can\u2019t wander out of it. Same sign-in, same photographs, no second app. Offered on a tablet, laptop or desktop only \u2014 a phone is not a screen you present from, and the ordinary Showcase there is unchanged.' },
 { b:589, d:'2026-08-02', t:'The expand button on the slider works on a real tap', s:'Yesterday\u2019s Lens added a full-screen expand button to the before/after slider, and on a real device it did nothing: the slider was swallowing the tap. It opens now. Nothing else changed \u2014 found by testing every button at phone, iPad and desktop sizes before you had to.' },
 { b:588, d:'2026-08-02', t:'Curtain Call \u2014 the tablet sells by itself', s:'A play button beside the pair counter. Press it at a kitchen table or a home-show booth and the Showcase runs on its own: a slow drift on the finished roof, the divider sweeps before to after by itself, the address and material fade in like a gallery placard, then the next pair. Any touch stops the show instantly and hands you the real slider on the pair that was up. Privacy mode masks the placard like everything else.' },
@@ -56050,6 +56051,40 @@ body.cr-lnav-on #cr-show.showroom{top:0 !important;left:0 !important;z-index:950
    has been; it is only this MODE that isn't offered there. */
 @media (min-width:820px){ .cr-lr-show{display:flex} }
 html[data-mode="light"] .cr-lr-show .sb{color:#8a8078}
+
+/* ── Promoting a job to a pair (591) ─────────────────────────────
+   The walk picker marks a pick with a tick. A tick cannot say WHICH of two
+   slots a photograph went into, and on a before/after pair that is the only
+   thing that matters — so pair mode labels each pick with the word, shows
+   the two slots above the grid, and dims what can no longer be picked. */
+.cr-sh-slots{display:flex;gap:8px;margin:11px 0 2px;flex-wrap:wrap}
+.cr-sh-slot{flex:1 1 40%;min-width:0;display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:9px;cursor:pointer;font-family:inherit;text-align:left;
+  color:var(--sh-mut,#98A29C);background:var(--sh-card2,#101312);
+  border:1px dashed var(--sh-line,rgba(148,157,165,.30))}
+.cr-sh-slot.full{border-style:solid;border-color:var(--sh-ink,#F2F4F2);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-slot img{width:36px;height:36px;border-radius:6px;object-fit:cover;flex:0 0 auto}
+.cr-sh-slot .t{min-width:0}
+.cr-sh-slot .k{display:block;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.16em;text-transform:uppercase}
+.cr-sh-slot .v{display:block;margin-top:2px;font-size:11px;opacity:.75}
+/* The tick and the word are two answers to the same question — never both. */
+.cr-sh-pick button.role::after{content:none}
+.cr-sh-pick .rl{position:absolute;left:0;right:0;bottom:0;padding:3px 0;text-align:center;
+  font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;
+  text-transform:uppercase;
+  background:rgba(5,6,7,.80);color:#F2F4F2}
+/* Both slots full: the rest are inert, so a stray thumb cannot steal a role. */
+.cr-sh-pick button.dim{opacity:.42;cursor:default}
+.cr-sh-prov{margin:9px 0 0;font-size:11px;line-height:1.5;color:var(--sh-mut,#98A29C)}
+/* What a promoted pair shows INSTEAD of three empty file pickers. */
+.cr-sh-from{display:flex;gap:9px;margin:2px 0 4px;flex-wrap:wrap}
+.cr-sh-from figure{margin:0;flex:0 0 auto;width:84px}
+.cr-sh-from img{display:block;width:84px;height:64px;object-fit:cover;border-radius:7px;
+  border:1px solid var(--sh-line,rgba(148,157,165,.28))}
+.cr-sh-from figcaption{margin-top:4px;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+.cr-sh-prov b{color:var(--sh-ink,#F2F4F2);font-weight:700}
 </style>
 
 <script id="cr-show-script">
@@ -56333,7 +56368,7 @@ function renderWorkAdmin(){
 function renderEmpty(){
   return '<div class="cr-sh-empty"><b>Nothing in the showcase yet.</b>' +
     (amAdmin()
-      ? 'Add a pair and it appears here — a before shot, an after shot, and what you put on the house.'
+      ? 'Add a pair and it appears here. <b>From a job</b> is the quick way — pick a job you already have and tap its before and after.'
       : 'Theo hasn’t added any transformations yet.') +
     '</div>' + renderAdmin();
 }
@@ -56395,6 +56430,11 @@ function renderAdmin(){
   var p = pairs[cur];
   return '<div class="cr-sh-admin">' +
     '<button class="cr-sh-btn" data-act="add" type="button">Add a pair</button>' +
+    /* 591. It lives in renderAdmin because renderEmpty() calls renderAdmin() too,
+       and with zero pairs the empty state IS the day-one surface. It also
+       inherits the amAdmin() gate, so Showroom hides it with no 15th
+       conditional. `ghost` matches the walk tab's own From-a-job button. */
+    '<button class="cr-sh-btn ghost" data-act="addjob" type="button">From a job</button>' +
     (p ? '<button class="cr-sh-btn ghost" data-act="pub" type="button">' +
            (p.published ? 'Unpublish this one' : 'Publish this one') + '</button>' +
          '<button class="cr-sh-btn ghost" data-act="del" type="button">Remove</button>' +
@@ -56510,6 +56550,12 @@ function wireBody(){
     b.onclick = function(){ if(pairs.length){ cur = (cur + 1) % pairs.length; repaint(); } };
   });
   el.querySelectorAll('[data-act="add"]').forEach(function(b){ b.onclick = openForm; });
+  /* The wrapper is REQUIRED. `b.onclick = openJobPicker` would hand it a
+     MouseEvent, which is not === 'pair', so it would fall to walk mode and bail
+     on !curWalk — a button that silently does nothing. */
+  el.querySelectorAll('[data-act="addjob"]').forEach(function(b){
+    b.onclick = function(){ openJobPicker('pair'); };
+  });
   el.querySelectorAll('[data-act="ccplay"]').forEach(function(b){ b.onclick = startCurtain; });
   el.querySelectorAll('[data-act="share"]').forEach(function(b){ b.onclick = openShareComposer; });
   el.querySelectorAll('[data-act="pub"]').forEach(function(b){ b.onclick = togglePublish; });
@@ -56579,6 +56625,14 @@ function ensureForm(){
 function openForm(){
   if(!amAdmin()) return;
   ensureForm();
+  /* 591, and this line is the whole reason the promote flow is safe: closeForm()
+     only removes a class, so files carried over from a promoted job would still
+     be sitting in `pending` the next time somebody opened this form by hand — and
+     savePair's file() prefers pending, so it would upload the PREVIOUS job's
+     photographs under the new pair's name, silently. Clearing here rather than in
+     the callers makes "openForm always starts clean" unconditional.
+     promoteToPair therefore calls openForm() first and sets pending after. */
+  pending = null;
   formEl.innerHTML =
     '<div class="bx">' +
       '<h3>Add a transformation</h3>' +
@@ -56613,7 +56667,12 @@ function openForm(){
   formEl.querySelector('[data-act="cancel"]').onclick = closeForm;
   formEl.querySelector('[data-act="save"]').onclick = savePair;
 }
-function closeForm(){ if(formEl) formEl.classList.remove('open'); }
+function closeForm(){
+  /* Belt and braces for the cancel/escape paths. Safe: savePair has already read
+     pending by the time it calls this. */
+  pending = null;
+  if(formEl) formEl.classList.remove('open');
+}
 
 function showErr(msg){
   var e = formEl && formEl.querySelector('[data-err]');
@@ -56655,7 +56714,14 @@ async function savePair(){
   if(!cl) return showErr('Not signed in.');
   var btn = formEl.querySelector('[data-act="save"]');
   var get = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i ? i.value.trim() : ''; };
-  var file = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i && i.files && i.files[0] ? i.files[0] : null; };
+  /* 591: a promoted pair renders no file inputs, so its bytes cannot live in the
+     DOM. `pending` is null for a hand-made pair, which is what keeps a chosen
+     file winning there. Cleared at the top of openForm() — without that, this
+     preference silently uploads the last job's photographs. */
+  var file = function(k){
+    if(pending && pending[k]) return pending[k];
+    var i = formEl.querySelector('[data-f="' + k + '"]'); return i && i.files && i.files[0] ? i.files[0] : null;
+  };
 
   var fb = file('before'), fa = file('after'), fbu = file('build');
   if(!fb || !fa) return showErr('A before and an after photo are both needed.');
@@ -56677,6 +56743,10 @@ async function savePair(){
     var scoreRaw = get('score');
     var row = {
       id: id,
+      /* 591: the column has existed since showcase_pairs.sql and nothing ever
+         wrote it. Nullable, no foreign key, so a hand-made pair still inserts
+         null and no migration ships with this build. */
+      project_id: (pending && pending.projectId) || null,
       address: get('address') || null,
       city: get('city') || null,
       trade: get('trade') || null,
@@ -56879,7 +56949,13 @@ var AI = { max: 1600, q: 0.85 };
 var walks = [], walksLoaded = false, curWalk = null;
 var shots = [], shotsLoaded = false;
 var review = null;      // { shot, list:[...], sel:int, note:string } while reviewing
-var jobPick = null;     // { projectId, photos:[], chosen:{} } while picking
+var jobPick = null;     // { mode, projectId, photos:[], chosen:{}, roles:{} } while picking
+/* 591: files carried from a promoted job. The pair form renders no file inputs
+   in that mode, so the bytes cannot live in the DOM. It is null in the ordinary
+   form, which is exactly why a hand-picked file still wins there. Cleared at the
+   TOP of openForm() — see the comment there; that is not tidiness, it is the
+   difference between saving your photographs and saving the last job's. */
+var pending = null;     // { before:File, after:File, build:File|null, projectId, address, city, raw }
 var vocabWarned = false;
 
 /* ── data ──────────────────────────────────────────────────────────────── */
@@ -57401,9 +57477,16 @@ function newId(){
    this module queries project_photos itself. That is not duplication for its
    own sake: photoDb's select list has no caption and no path for the inline
    rows, and this picker needs both. */
-function openJobPicker(){
-  if(!amAdmin() || !curWalk) return;
-  jobPick = { projectId:null, projects:[], photos:[], chosen:{}, q:'', busy:false };
+/* 591: two callers now. The mode is compared with === 'pair' and NOT for
+   truthiness, because the walk button is wired `b.onclick = openJobPicker` and
+   therefore hands arg 0 a MouseEvent — `mode ||` would silently flip it into
+   pair mode. String equality leaves that call site correct without touching it. */
+function openJobPicker(mode){
+  mode = (mode === 'pair') ? 'pair' : 'walk';
+  if(!amAdmin()) return;
+  if(mode === 'walk' && !curWalk) return;
+  jobPick = { mode:mode, projectId:null, project:null, projects:[], photos:[],
+              chosen:{}, roles:{}, slots:['before','after'], q:'', busy:false };
   ensureForm();
   drawJobPicker();
   formEl.classList.add('open');
@@ -57415,17 +57498,30 @@ async function loadProjects(){
   if(!cl) return;
   var r = await cl.from('projects').select('id,name,address')
                   .order('updated_at', { ascending:false }).limit(300);
+  /* Cancel nulls jobPick, deliberately, BEFORE closeForm(). Without this the
+     resumed function throws on a null and nobody ever sees it. 579's, not new. */
+  if(!jobPick) return;
   jobPick.projects = (r && !r.error && r.data) ? r.data : [];
   drawJobPicker();
 }
 
 async function loadJobPhotos(pid){
   var cl = sb();
-  jobPick.projectId = pid; jobPick.photos = []; jobPick.chosen = {}; jobPick.busy = true;
+  if(!cl || !jobPick) return;
+  jobPick.projectId = pid; jobPick.photos = []; jobPick.chosen = {}; jobPick.roles = {};
+  jobPick.busy = true;
+  /* 591: keep the row. The pair prefill needs projects.address and the id, and
+     both are already sitting in jobPick.projects — refetching would be a second
+     source of truth for the same fact. */
+  jobPick.project = null;
+  for(var pi = 0; pi < jobPick.projects.length; pi++){
+    if(jobPick.projects[pi].id === pid){ jobPick.project = jobPick.projects[pi]; break; }
+  }
   drawJobPicker();
   var r = await cl.from('project_photos')
                   .select('id,project_id,data,storage_path,caption,created_at')
                   .eq('project_id', pid).order('created_at', { ascending:true });
+  if(!jobPick) return;
   var rows = (r && !r.error && r.data) ? r.data : [];
   /* MEASURED, not assumed: 183 of 196 project_photos rows carry a
      storage_path; the other 13 are inline base64 data: URIs with no storage
@@ -57440,6 +57536,7 @@ async function loadJobPhotos(pid){
     p._thumb = p.storage_path ? (map[p.storage_path] || '')
              : (String(p.data || '').slice(0,5) === 'data:' ? p.data : '');
   });
+  if(!jobPick) return;   /* the signing round trip is the one worth cancelling */
   jobPick.photos = rows.filter(function(p){ return p._thumb; });
   jobPick.busy = false;
   drawJobPicker();
@@ -57470,6 +57567,37 @@ function drawJobPicker(){
   }else if(!j.photos.length){
     body = '<p class="cr-sh-note">That job has no photographs.</p>' +
            '<button class="cr-sh-btn ghost" data-jback type="button">← Another job</button>';
+  }else if(j.mode === 'pair'){
+    var taken = {};
+    j.slots.forEach(function(k){ if(j.roles[k] != null) taken[j.roles[k]] = k; });
+    var allFull = j.slots.every(function(k){ return j.roles[k] != null; });
+    body = '<div class="cr-sh-bar">' +
+        '<button class="cr-sh-btn ghost" data-jback type="button">← Another job</button>' +
+        (j.slots.length < 3
+          ? '<button class="cr-sh-btn ghost" data-jbuild type="button">+ During the build</button>'
+          : '') +
+      '</div>' +
+      '<div class="cr-sh-slots">' +
+        j.slots.map(function(k){
+          var idx = j.roles[k];
+          var ph = idx != null ? j.photos[idx] : null;
+          return '<button class="cr-sh-slot' + (ph ? ' full' : '') + '" data-jslot="' + k + '" type="button">' +
+            (ph ? '<img alt="" src="' + esc(ph._thumb) + '">' : '') +
+            '<span class="t"><span class="k">' + esc(defSlot(k)) + '</span>' +
+            '<span class="v">' + (ph ? 'tap to clear' : 'tap a photo below') + '</span></span>' +
+          '</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="cr-sh-pick">' +
+        j.photos.map(function(p, i){
+          var role = taken[i];
+          var cls = role ? ' class="on role"' : (allFull ? ' class="dim"' : '');
+          return '<button data-jp="' + i + '" type="button"' + cls + '>' +
+            '<img alt="" loading="lazy" src="' + esc(p._thumb) + '">' +
+            (role ? '<span class="rl">' + esc(defSlot(role)) + '</span>' : '') +
+          '</button>';
+        }).join('') +
+      '</div>';
   }else{
     body = '<div class="cr-sh-bar">' +
         '<button class="cr-sh-btn ghost" data-jback type="button">← Another job</button>' +
@@ -57481,16 +57609,28 @@ function drawJobPicker(){
         }).join('') +
       '</div>';
   }
+  var pair = jobPick.mode === 'pair';
+  /* In pair mode the gate is BOTH required slots, not a count. Enabling at one
+     pick would push the failure down to savePair's 'a before and an after are
+     both needed' — a late error where an early disable is honest. */
+  var ready = pair
+    ? jobPick.slots.every(function(k){ return k === 'build' || jobPick.roles[k] != null; })
+    : chosenN > 0;
   formEl.innerHTML =
     '<div class="bx">' +
-      '<h3>Add from a job</h3>' + body +
+      '<h3>' + (pair ? 'Build a pair from a job' : 'Add from a job') + '</h3>' + body +
       '<div class="err" data-err></div>' +
-      '<p class="note">The photograph is copied into this walk rather than linked. ' +
-        'Deleting it from the job later would otherwise blank the walk — in front of a client.</p>' +
+      '<p class="note">' + (pair
+        ? 'The photographs are copied into the Showcase rather than linked, so the ' +
+          'pair survives whatever happens to the job they came from. You fill in the ' +
+          'rest on the next screen.'
+        : 'The photograph is copied into this walk rather than linked. ' +
+          'Deleting it from the job later would otherwise blank the walk — in front of a client.') +
+      '</p>' +
       '<div class="ft">' +
         '<button class="cr-sh-btn ghost" data-act="cancel" type="button">Cancel</button>' +
-        '<button class="cr-sh-btn" data-jadd type="button"' + (chosenN ? '' : ' disabled') + '>' +
-          (chosenN ? 'Add ' + chosenN : 'Add') + '</button>' +
+        '<button class="cr-sh-btn" data-jadd type="button"' + (ready ? '' : ' disabled') + '>' +
+          (pair ? 'Use these' : (chosenN ? 'Add ' + chosenN : 'Add')) + '</button>' +
       '</div>' +
     '</div>';
   wireJobPicker();
@@ -57510,17 +57650,42 @@ function wireJobPicker(){
   });
   var back = formEl.querySelector('[data-jback]');
   if(back) back.onclick = function(){
-    jobPick.projectId = null; jobPick.photos = []; jobPick.chosen = {}; drawJobPicker();
+    jobPick.projectId = null; jobPick.photos = []; jobPick.chosen = {};
+    jobPick.roles = {}; jobPick.project = null; drawJobPicker();
   };
+  var bld = formEl.querySelector('[data-jbuild]');
+  if(bld) bld.onclick = function(){
+    if(jobPick.slots.indexOf('build') === -1) jobPick.slots.push('build');
+    drawJobPicker();
+  };
+  formEl.querySelectorAll('[data-jslot]').forEach(function(b){
+    b.onclick = function(){ delete jobPick.roles[b.dataset.jslot]; drawJobPicker(); };
+  });
   formEl.querySelectorAll('[data-jp]').forEach(function(b){
     b.onclick = function(){
-      var i = b.dataset.jp;
-      if(jobPick.chosen[i]) delete jobPick.chosen[i]; else jobPick.chosen[i] = true;
+      /* dataset is a STRING. roles stores the index as a VALUE, so `=== i` would
+         be 0 === '0' — false, and wrong on the FIRST tile in the grid. */
+      var i = parseInt(b.dataset.jp, 10);
+      if(jobPick.mode === 'pair'){
+        var held = null;
+        jobPick.slots.forEach(function(k){ if(jobPick.roles[k] === i) held = k; });
+        if(held){ delete jobPick.roles[held]; }
+        else{
+          var open = null;
+          for(var s = 0; s < jobPick.slots.length; s++){
+            if(jobPick.roles[jobPick.slots[s]] == null){ open = jobPick.slots[s]; break; }
+          }
+          if(open === null) return;   /* full: inert, matching the dimmed tile */
+          jobPick.roles[open] = i;
+        }
+      }else{
+        if(jobPick.chosen[i]) delete jobPick.chosen[i]; else jobPick.chosen[i] = true;
+      }
       drawJobPicker();
     };
   });
   var add = formEl.querySelector('[data-jadd]');
-  if(add) add.onclick = takeJobPhotos;
+  if(add) add.onclick = (jobPick.mode === 'pair') ? promoteToPair : takeJobPhotos;
   var c = formEl.querySelector('[data-act="cancel"]');
   if(c) c.onclick = function(){ jobPick = null; closeForm(); };
 }
@@ -57528,6 +57693,154 @@ function wireJobPicker(){
 /* Copy the bytes, do not reference the path. Two reasons, both measured:
    thirteen job photos have no storage object to reference at all, and deleting
    a job photo in the app also removes the storage object. See walks_schema.sql. */
+/* 591: extracted so the walk and the pair share ONE blob decoder. Two of them
+   would eventually disagree about the inline rows — which are 13 of 196, i.e.
+   exactly the population an untested second copy would drop. */
+async function jobFiles(picks){
+  var items = [];
+  for(var i = 0; i < picks.length; i++){
+    var p = picks[i], blob;
+    if(p.storage_path){
+      blob = await shotBlob(p.storage_path);
+    }else{
+      /* An inline data: URI resolves with no network — fetch is the shortest
+         correct way to turn one into a Blob. */
+      blob = await (await fetch(p.data)).blob();
+    }
+    items.push({ file:new File([blob], 'job.jpg', { type:'image/jpeg' }),
+                 source:'job', originId:p.id });
+  }
+  return items;
+}
+
+function defSlot(k){ return k === 'build' ? 'During' : k; }
+
+/* Pull a city off a job address. MEASURED against the 12 projects that actually
+   have photographs, because the shape is nothing like a tidy CSV:
+
+     3710 west third Dayton Ohio 45417        231 Delaware  Ave Dayton Ohio 46405
+     3800 klepinger rd  dayton ohio46416      948 Huron            921 Testing Way
+     449 Harriet, Dayton, OH 45417   <- the ONLY comma form among the twelve
+
+   A comma split scores 1 of 12. This peels from the right instead: zip, then
+   state, then take the last token as the city — 10 right, 2 correctly blank,
+   0 wrong. It DECLINES rather than guesses, and whatever it returns lands in an
+   editable field with the source string shown beside it.
+
+   Never derive the city from the zip here: half these rows carry Indiana zips
+   (464xx) on addresses that say Dayton, Ohio. The zip is the wrong oracle. */
+function splitAddr(raw){
+  /* `orig` keeps the record's own spacing. The provenance line quotes it, and
+     provenance that silently tidies what it quotes is not provenance. Parsing
+     still runs on the normalised copy. */
+  var orig = String(raw || '').trim();
+  var s = orig.replace(/\s+/g, ' ');
+  if(!s) return { address:'', city:'', raw:'' };
+  if(s.indexOf(',') !== -1){
+    var parts = s.split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+    if(parts.length >= 2 && !/^(oh|ohio|in|indiana|ky|kentucky|mi|michigan)\b/i.test(parts[1])){
+      return { address:parts[0], city:parts[1], raw:orig };
+    }
+    return { address:parts[0] || s, city:'', raw:orig };
+  }
+  var body = s, hit = false;
+  /* no required space before the digits — 'ohio46416' is real data */
+  var z = body.replace(/\s*\d{5}(?:-\d{4})?$/, '');
+  if(z !== body){ body = z; hit = true; }
+  var st = body.replace(/\s*\b(oh|ohio|in|indiana|ky|kentucky|mi|michigan)$/i, '');
+  if(st !== body){ body = st; hit = true; }
+  if(!hit) return { address:s, city:'', raw:orig };
+  var tok = body.trim().split(' ').filter(Boolean);
+  /* peeling a city has to leave a street behind, or it was never a city */
+  if(tok.length < 3) return { address:s, city:'', raw:orig };
+  var city = tok.pop();
+  if(city === city.toLowerCase()) city = city.charAt(0).toUpperCase() + city.slice(1);
+  return { address:tok.join(' '), city:city, raw:orig };
+}
+
+/* Copy the two (or three) picks, then hand the ordinary pair form the bytes and
+   the prefill. Deliberately NOT a second save path: savePair already carries the
+   release rule, the score clamp and the RLS silent-204 check. */
+async function promoteToPair(){
+  if(!jobPick || busy) return;
+  var cl = sb();
+  if(!cl) return;
+  var slots = jobPick.slots.slice();
+  var picks = [], keys = [];
+  slots.forEach(function(k){
+    var i = jobPick.roles[k];
+    if(i != null && jobPick.photos[i]){ keys.push(k); picks.push(jobPick.photos[i]); }
+  });
+  if(keys.indexOf('before') === -1 || keys.indexOf('after') === -1) return;
+  var btn = formEl.querySelector('[data-jadd]');
+  if(btn){ btn.disabled = true; btn.textContent = 'Copying\u2026'; }
+  /* busy is NOT taken here. takeJobPhotos does not take it either — addShots
+     does. If the copy threw before a finally the module would wedge, and the
+     wedge is invisible by construction: savePair's first line is `if(busy)
+     return;`, which returns before it can write into [data-err]. */
+  var proj = jobPick.project, pid = jobPick.projectId;
+  try{
+    var items = await jobFiles(picks);
+    var byRole = {}, thumbs = {};
+    keys.forEach(function(k, n){ byRole[k] = items[n].file; thumbs[k] = picks[n]._thumb; });
+    var split = splitAddr(proj && proj.address);
+    jobPick = null;
+    /* openForm() clears `pending` as its first act, so it must run FIRST. */
+    openForm();
+    pending = { before:byRole.before, after:byRole.after, build:byRole.build || null,
+                thumbs:thumbs, projectId:pid, address:split.address, city:split.city,
+                raw:split.raw };
+    paintPrefill();
+  }catch(e){
+    showErr(String(e && e.message ? e.message : e));
+    if(btn){ btn.disabled = false; btn.textContent = 'Use these'; }
+  }
+}
+
+/* Put the guess on screen WITH the string it came from. A guess that shows its
+   source is auditable; a guess that hides it is a lie the client reads off the
+   placard later. Nothing here is readonly — editable-with-provenance beats
+   locked-with-confidence. */
+function paintPrefill(){
+  if(!pending || !formEl) return;
+  var set = function(k, v){
+    var i = formEl.querySelector('[data-f="' + k + '"]');
+    if(i && v) i.value = v;
+  };
+  /* The three file inputs are a lie in this mode: they read 'No file chosen'
+     while two photographs ARE chosen, and anything attached to them would be
+     ignored because savePair prefers the carried files. Show what was picked
+     instead. Thumbs are the picker's already-loaded URLs, so no object URL is
+     minted here and none leaks. */
+  var strip = document.createElement('div');
+  strip.className = 'cr-sh-from';
+  ['before','after','build'].forEach(function(k){
+    var inp = formEl.querySelector('[data-f="' + k + '"]');
+    if(!inp) return;
+    var lab = inp.previousElementSibling;
+    if(lab && lab.tagName === 'LABEL') lab.style.display = 'none';
+    inp.style.display = 'none';
+    if(!pending[k]) return;
+    var fig = document.createElement('figure');
+    fig.innerHTML = '<img alt="" src="' + esc((pending.thumbs && pending.thumbs[k]) || '') + '">' +
+      '<figcaption>' + esc(defSlot(k)) + '</figcaption>';
+    strip.appendChild(fig);
+  });
+  var first = formEl.querySelector('.bx > h3');
+  if(first && strip.childNodes.length) first.parentNode.insertBefore(strip, first.nextSibling);
+  set('address', pending.address);
+  set('city', pending.city);
+  var host = formEl.querySelector('[data-f="city"]');
+  host = host && host.parentNode && host.parentNode.parentNode;
+  if(host && pending.raw){
+    var p = document.createElement('p');
+    p.className = 'cr-sh-prov';
+    p.innerHTML = 'Filled in from <b>' + esc(pending.raw) + '</b>' +
+      (pending.city ? ' \u2014 check the city.' : ' \u2014 no city in it; add one.');
+    host.parentNode.insertBefore(p, host.nextSibling);
+  }
+}
+
 async function takeJobPhotos(){
   if(!jobPick || busy) return;
   var cl = sb();
@@ -57536,19 +57849,7 @@ async function takeJobPhotos(){
   var btn = formEl.querySelector('[data-jadd]');
   if(btn){ btn.disabled = true; btn.textContent = 'Copying…'; }
   try{
-    var items = [];
-    for(var i = 0; i < picks.length; i++){
-      var p = picks[i], blob;
-      if(p.storage_path){
-        blob = await shotBlob(p.storage_path);
-      }else{
-        /* An inline data: URI resolves with no network — fetch is the shortest
-           correct way to turn one into a Blob. */
-        blob = await (await fetch(p.data)).blob();
-      }
-      items.push({ file:new File([blob], 'job.jpg', { type:'image/jpeg' }),
-                   source:'job', originId:p.id });
-    }
+    var items = await jobFiles(picks);
     jobPick = null;
     closeForm();
     await addShots(items);

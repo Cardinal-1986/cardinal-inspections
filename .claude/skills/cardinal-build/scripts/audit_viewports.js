@@ -269,7 +269,7 @@ async function overlapSweep(page, where) {
          missed. A counted zero is only as good as the list it counts against, so
          this now sweeps BOTH: the named write actions, and every form control and
          write-ish data-* attribute in the module, whatever it is called. */
-      const WRITE = ['add','del','pub','save','share','sharedead','shdl','shnative',
+      const WRITE = ['add','addjob','del','pub','save','share','sharedead','shdl','shnative',
         'waddc','waddwalk','wdelwalk','wjob','wphone','wpub','rdetect','rmark','rsave',
         'ddrop','dkeep'];
       const WRITE_ATTR = ['data-wdel','data-drop','data-sev','data-grip','data-def',

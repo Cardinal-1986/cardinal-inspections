@@ -6598,3 +6598,74 @@ Gates: `check_build.py` green 583 → 584, negative-controlled. Book harness **3
 session's start), including deck behaviour at three viewports; **28 fail against the pre-584
 book**. `h562_aibook.js` 42/42 with the served count at 22. Web ↔ markdown parity 18/18, chapter
 order 17/17. `AI_CHEATSHEET.md` mirrors the deck as a written-out slide list.
+
+---
+
+## Build 591 — promote a job to a Showcase pair (2026-08-03)
+
+Every Vision Suite table was empty while **196 photographs sat on 12 jobs**. Making a pair meant
+hand-uploading two files. Now: **From a job** → pick the job → tap the before → tap the after →
+check the address. No SQL — `showcase_pairs.project_id` has existed since the original schema,
+is nullable with no foreign key, and nothing ever wrote it. Now something does.
+
+**Shared, not forked.** 579's picker takes a `mode` on `jobPick`. The regression proof is that
+`harness_walk.js` §13 passes **verbatim** — if it ever needs editing to keep 591 green, the
+picker got forked.
+
+### Four traps, three of which would have shipped silently
+
+**1 · `savePair`'s `file()` helper is byte-identical in two functions** (`savePair` and
+`saveWork`). A `count == 1` assert aborts; the anchor has to extend to the next statement. The
+file's own "scope the assertion to the function, not the file" rule, again.
+
+**2 · `pending` outliving the flow — the one that would have looked like it worked.**
+`closeForm()` only removes a class. After a promote, the carried Files are still in `pending`,
+and `savePair`'s `file()` *prefers* `pending` — so the next hand-made pair would have **silently
+uploaded the previous job's photographs**. Fixed by clearing at the **top of `openForm()`**,
+which makes "openForm always starts clean" unconditional and forces `promoteToPair` to call
+`openForm()` *before* setting `pending`. Asserted directly; nothing else in the suite catches it.
+
+**3 · `b.dataset.jp` is a String.** With roles storing the index as a *value*,
+`roles.before === i` is `0 === '0'` — false, and wrong on the **first tile in the grid**.
+`parseInt` at the boundary.
+
+**4 · The mode test must be `=== 'pair'`, not truthiness.** The walk button is wired
+`b.onclick = openJobPicker`, so it hands arg 0 a **MouseEvent**. Any `mode ||` check flips the
+walk button into pair mode. String equality leaves that call site correct, untouched.
+
+### The address splitter, measured not assumed
+
+`projects.address` is one free-text column and **11 of the 12 photo-bearing jobs have no comma**:
+
+```
+3710 west third Dayton Ohio 45417     3800 klepinger rd  dayton ohio46416   ← state+zip glued
+948 Huron            ← no city at all      449 Harriet, Dayton, OH 45417    ← the only comma form
+```
+
+A comma split scores **1 of 12**. `splitAddr()` peels from the right instead — zip, then state,
+then the last token is the city — and **declines** rather than guessing when neither is present:
+**10 right, 2 correctly blank, 0 wrong**, table-driven in the harness against the real twelve.
+**Never derive the city from the zip here:** half these rows carry Indiana zips (464xx) on
+addresses that say Dayton, Ohio.
+
+Whatever it guesses lands in an editable field with the **raw source string shown underneath**.
+`splitAddr` keeps the record's own spacing for that line — provenance that tidies what it quotes
+is not provenance.
+
+### Two defects the screenshots caught that jsdom could not
+
+- The promoted form still rendered **three empty "Choose File" rows** beside two photographs that
+  *were* chosen — and anything attached there would have been silently ignored, since the carried
+  files win. Replaced with the thumbnails it actually carried, labelled with their roles. Thumbs
+  reuse the picker's already-signed URLs, so no object URL is minted and none leaks.
+- Tile role labels rendered lowercase beside an uppercase slot bar. One declaration.
+
+Also folded in: **a latent 579 crash**. `loadProjects`/`loadJobPhotos` wrote to `jobPick` after
+their awaits with no null guard, and cancel nulls it deliberately *before* `closeForm()`. 591
+makes it likely — the biggest job has 45 photos and signing them is a real round trip to cancel
+during. Three `if(!jobPick) return;` guards, asserted with an `unhandledrejection` listener.
+
+Gates: `check_build` green 590→591 (marker `data-act="addjob"`, negative-controlled) ·
+`harness_walk` **152** (was 115) · `harness_showcase` 123 · `render_showcase` 69 ·
+`audit_viewports` 194, with `'addjob'` added to its write-control list so Showroom's counted zero
+stays honest.
