@@ -23,6 +23,12 @@ hype, no exclamation marks, no competitor hit-piece.*
 > because continuous presence beats seniority from where the homeowner is standing. As three
 > separate bullets it would read as padding. As a stack it is hard to match.
 >
+> **Points 19–20 (insured, Owens Corning) turned two "trust me" claims into two checkable ones.**
+> Insurance is written as the reader's *own* exposure plus an action they can take on every bid, not
+> as a badge. The warranty is written as a **two-column choice they get to make**, with real numbers,
+> because the owner settled the terms directly — and a decision engages a reader far more than a
+> claim does.
+>
 > The result is a five-act structure across 25 stages.
 
 ---
@@ -36,7 +42,8 @@ warranty term, a policy amount, or a carrier name.** Every material claim is wri
 survive editing.
 
 This session had **no outbound internet**, so nothing here was checked against a source. The items
-below need a human before the page goes live. **V19, V27 and V29 carry the most exposure.**
+below need a human before the page goes live. **V19 and V27 carry the most exposure.** (V29 was
+withdrawn on 3 Aug — the claim it covered is no longer in the copy.)
 
 ### ✅ Settled by the owner, 3 Aug — do not re-open these
 
@@ -57,7 +64,7 @@ below need a human before the page goes live. **V19, V27 and V29 carry the most 
 |---|---|---|
 | **V19** ⚠ | **"Shingle manufacturers require adequate attic ventilation as a condition of their warranties."** Stated as an **industry-wide principle**, with **no specific Owens Corning term, threshold, ratio or clause quoted** | The most important verification on the page. The principle is standard; the specifics are not ours to paraphrase. Confirm current OC limited-warranty language on ventilation, confirm it's fair to characterize as a condition, and confirm whether OC restricts mixing exhaust types (ridge + box, ridge + powered fan). **If any of it is ambiguous, soften to "manufacturers expect adequate ventilation and can take it into account on a claim." Do not print a stronger version than the paperwork supports.** Note this is now sharper than it was: the copy states warranty *durations* as fact, so a reader will reasonably assume the ventilation condition is equally well established |
 | **V27** ⚠ | **The workers'-comp exposure claim** — that where a contractor carries no workers' comp, an injured worker's route to recovery **can** run through the homeowner's own insurance | This is a claim about **the reader's own legal exposure**, which is a different category of risk from anything else on the page. The copy uses **"can"**, never "will," and names no statute. **Have Theo's own insurance agent read that paragraph before it ships.** If the agent won't endorse it, cut the mechanism and keep only the checkable action ("ask for a certificate naming you") — that action survives on its own |
-| **V29** ⚠ | **"Every crew has a compliance file — COI, W-9, licenses, each with an expiry date. When one lapses the system flags it, and a crew with an expired certificate doesn't go on a roof."** | The **feature** provably exists (`crew_docs`, the Crews compliance vault, builds 547–556). The **enforcement** is a policy commitment, not a software fact. A table that stores expiry dates is not the same as a rule that stops a crew working. Confirm with Theo that the last clause is true in practice — and if it is aspirational, change it to what actually happens |
+| **V29** ✅ **WITHDRAWN** | ~~"Every crew has a compliance file… a crew with an expired certificate doesn't go on a roof."~~ | **The claim is gone from the copy, so the risk it carried is gone with it.** Theo, 3 Aug: *"No need to put the crew part with workers comp, I have workers comp. They do to."* The compliance-vault framing was the coordinator's proposal, and it was weaker precisely because it was cleverer — it explained a filing system to justify a fact that stands on its own. The copy now says plainly that Cardinal carries workers' comp, the crews carry it too, and everyone who sets foot on the roof is covered. **Withdrawn, not answered** — no confirmation needed |
 
 ### The rest
 
@@ -110,7 +117,7 @@ Twenty points, twenty-five stages, five acts, in the order they happen on a real
 | **16** | **PM's card, handed over by the salesperson** | **Stage 5, tier two** |
 | 9 | Owner checks the job | Stage 5, tier three + Stage 24 |
 | **19** | **Insured** ⭐ | **Stage 6** |
-| **20** | **Owens Corning Preferred** | **Stage 7** |
+| **20** | **Owens Corning Preferred**, and the two warranty tiers | **Stage 7** (both halves) |
 | 12 | Yard sign | Stage 9 |
 | 13 | Neighbor door-knock | Stage 10 |
 | 10 | Drone — before / during / after | Stages 11, 22, 25 |
@@ -136,10 +143,11 @@ physically verify something) · **The honest part** (cost, caveat, or what we ca
 **Standfirst:**
 Most homeowners buy a roof having never seen one go on. You get a price, a color, and two days of
 noise, and then it's over and there's no way to check what's underneath. This page is the whole job
-in order — from the flashlight in your attic weeks before anyone quotes a number, to the photos that
-land in your inbox after the trailer's gone. Including the parts that get covered up, the two
-shortcuts you can spot from your own driveway, the three people who'll be on your property, and the
-one thing nearly every homeowner is missing that quietly costs them a decade of roof.
+in order — from the flashlight in your attic weeks before anyone quotes a number, to the magnet we run
+over your lawn the day *after* we finish. Including the parts that get covered up, the two shortcuts
+you can spot from your own driveway, the three people who'll be on your property, the warranty choice
+that's actually yours to make, and the one thing nearly every homeowner is missing that quietly costs
+them a decade of roof.
 
 **Pull quote for the top of the page:**
 > A roof is about eight products stacked in a specific order, over a space that has to breathe. You
@@ -481,7 +489,8 @@ your exposure.
 bundle off the roof onto a car, water in a bedroom because a slope was left open ahead of a storm.
 Most homeowners assume that's automatically somebody's responsibility. Often it isn't.
 
-**Cardinal carries both.**
+**Cardinal carries both. The crews we work with carry workers' comp too — everyone who sets foot
+on your roof is covered.**
 
 **What to look for — the checkable action:**
 **Ask any contractor for a certificate of insurance naming you.** Not a photo of a card. Not a policy
@@ -491,16 +500,6 @@ and your address on it as certificate holder.
 A contractor who actually carries the coverage produces one the same day, because it's one phone call
 to their agent and it costs them nothing. A contractor who doesn't will explain why they can't, and
 the explanation will be interesting. Do this for every bid you take, including ours.
-
-### We require this from our own crews
-
-Cardinal works with subcontracted crews, and every one of them has a compliance file with us:
-certificate of insurance, W-9, and trade licenses, each carrying an **expiry date**. We track those
-dates, and a crew whose paperwork has lapsed doesn't go on a roof.
-
-We built that because we aren't willing to carry somebody else's exposure — which is exactly the
-position you're in when you hire a roofer. **We require from our crews what you should be requiring
-from us.** So require it. Same paperwork, same standard, and no offense taken.
 
 **The honest part:**
 We aren't going to print policy limits or a carrier name on a web page. That information belongs on a
@@ -1236,6 +1235,10 @@ We'd rather you knew what to look for than took our word for it. A homeowner who
 starter course and a soffit vent from the driveway is a harder sell, and that suits us — we'd rather bid
 against somebody who knows what the bid says.
 
+Two things on this page can't be checked from a driveway, so ask for them instead: a certificate of
+insurance with your name on it, and the warranty named in writing on the estimate. Both take one phone
+call. Ask us. Ask everyone.
+
 **CTA:** Get your roof inspected · Ask for a quote · See what a photo set looks like
 
 ---
@@ -1300,7 +1303,14 @@ Cleanup · The walk · Your photos
 
 > A senior person you have to phone is a delay. A person on your driveway is an answer.
 
-> We require from our crews what you should be requiring from us.
+> Everyone who sets foot on your roof is covered.
+
+> A manufacturer-backed warranty doesn't die if the contractor does.
+
+> Both warranties transfer if you sell. The decision is about duration, not about whether you're
+> protected.
+
+> Everybody in this trade knows nails come up out of the grass overnight. Very few come back.
 
 > Wind uplift starts at the edges. Not in the middle.
 
@@ -1322,6 +1332,14 @@ sales point):
 **The oversight teaser** (for a trust module, a footer, or the quote-request page):
 > Three people are responsible for your roof, and the one who never leaves is the one you'll actually
 > talk to.
+
+**The warranty teaser** (for a quote-request page or a comparison module — it works because it hands
+the reader a decision rather than a claim):
+> Two warranties, and you choose. 25 years or 50. Both transfer when you sell. Both are backed by
+> Owens Corning, which means neither one depends on us still being here.
+
+**The cleanup teaser** (short, and the differentiator is the second sentence):
+> We sweep the yard with a magnet before we pull out. Then we come back the next day and do it again.
 
 **Tone guardrails for anyone extending this copy:**
 - Never name a competitor, a local company, or "some roofers." The subject is always the practice, never

@@ -17,8 +17,9 @@ Theo is load-bearing on this project** — CLAUDE.md says so explicitly, and the
 > It doesnt necessarily have to use any of my real photos. It can use any design
 > of your choice.
 
-Four directions, **two of which the client actively engages with**. Settled at
-four after briefly considering eight.
+**Five directions, two of which the client actively engages with.** Settled at
+four after briefly considering eight, then a fifth (the pop-up book) was asked
+for by name — see "The fifth direction" below.
 
 ## What he added — the differentiators, verbatim
 
@@ -295,5 +296,5 @@ The pops are the delight, not the information.
   as *"here's what to look for"*, not *"the other guy is a crook."* The Resource
   Library's existing Do & Don't page is the tonal precedent.
 - **Don't state code as law without verification** — see above.
-- **Don't let it become a wall of text.** Thirteen points is a lot; each design
+- **Don't let it become a wall of text.** Twenty points is a lot; each design
   should carry the ones it can hold well and let the others go.
