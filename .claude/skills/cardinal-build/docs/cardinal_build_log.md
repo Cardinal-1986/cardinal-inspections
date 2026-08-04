@@ -7624,3 +7624,31 @@ dinner. Your lawn never knew."
 Verified: full sixteen-spread walk ALL GREEN · exactly 2 strays visible at spread 15, zero
 unswept at the end · mid-fold frame shot at 340ms confirms real 3D · before/after renders
 eyeballed.
+
+---
+
+## Four field notes from Theo — nails, pink bundles, the trailer as a destination (2026-08-04)
+
+Theo, iPad walkthrough verdict: *"Works great on iPad."* Then four fixes, ready to merge after:
+
+- **"6 nails / shingle always when possible."** Spread 12's tag read "Four nails a shingle.
+  Six in the wind rows." — now "Six nails a shingle. Every one, every time."
+- **Shingle bundles are pink** — Owens Corning's own wrap colour, not the generic blue-grey
+  they were drawn in. `bundlesG` (spread 6, `deliverySVG`) recoloured; the SAME hex
+  (`#4A5866`) is also spread 5's colour-board swatch and was left alone — scoped the edit to
+  the one `bundlesG` path, not a file-wide swap.
+- **The trailer is dark grey/black**, not the original light grey — `trailerG` lives inside
+  the shared `houseSVG()`, so recolouring it fixed spread 7 and spread 12 (which reveals the
+  same group) in one edit, by construction.
+- **"When the debris gets picked up it should show inside the trailer."** Spread 15 never
+  drew a trailer at all — the magnet's collected chips converged on an arbitrary point
+  (`0.55 * box.width`) and just faded there. Now `trailerG` shows alongside Theo's own
+  standee at the first sweep beat, and `sweep()` targets the trailer's REAL rendered
+  position (`getBoundingClientRect()` on `#trailerG`, not a hardcoded fraction) — it survives
+  the 3D fold and the `preserveAspectRatio` scaling by construction, with the old formula
+  kept as a fallback only.
+
+Verified: inline script re-extracted and `node --check`ed clean · full sixteen-spread walk
+ALL GREEN, unchanged from the previous round · all four spots rendered and eyeballed
+(pink bundles, black trailer on both 7 and 12, the "Six nails" tag, the trailer parked
+during the sweep).

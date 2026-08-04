@@ -1365,11 +1365,12 @@ function cutLayers(x1){
     s += '<path d="M220,178 L252,178 L258,190 L226,190 Z" fill="#2A6E99"/>';
     s += '</g>';
 
-    // ── the trailer, faceted
+    // ── the trailer, faceted. Dark grey/black — Theo's call, so it reads
+    // as his own equipment rather than a generic light-grey dumpster.
     s += '<g id="trailerG" class="beat">';
-    s += '<path d="M6,186 L6,158 L74,158 L74,186 Z" fill="#9AA0A6"/>';
-    s += '<path d="M50,158 L74,158 L74,186 L50,186 Z" fill="#7B8187"/>';
-    s += '<path d="M6,158 L74,158 L70,152 L10,152 Z" fill="#B6BCC2"/>';
+    s += '<path d="M6,186 L6,158 L74,158 L74,186 Z" fill="#2A2D31"/>';
+    s += '<path d="M50,158 L74,158 L74,186 L50,186 Z" fill="#17181A"/>';
+    s += '<path d="M6,158 L74,158 L70,152 L10,152 Z" fill="#3D4247"/>';
     s += '<circle cx="24" cy="188" r="6" fill="#243B53"/><circle cx="58" cy="188" r="6" fill="#243B53"/>';
     s += '</g>';
 
@@ -2057,8 +2058,8 @@ function portrait(o, px, py, pw){
       var bx = 40 + (i % 4) * 14, by = 88 - (i % 4) * 11;
       if(i === 4){ bx = 54; by = 66; }
       s += '<g transform="translate(' + bx + ',' + by + ') rotate(-8)">' +
-           '<path d="M-13,-5 L13,-5 L13,5 L-13,5 Z" fill="#4A5866" stroke="#E8DCC8" stroke-width="1.4" stroke-linejoin="round"/>' +
-           '<path d="M-13,-5 L13,-5 L13,-1 L-13,-1 Z" fill="#5D6D7C"/></g>';
+           '<path d="M-13,-5 L13,-5 L13,5 L-13,5 Z" fill="#E1719A" stroke="#E8DCC8" stroke-width="1.4" stroke-linejoin="round"/>' +
+           '<path d="M-13,-5 L13,-5 L13,-1 L-13,-1 Z" fill="#F0A0C0"/></g>';
     }
     s += '</g>';
     s += '<g id="countG" class="beat">' + figure(240, 187, 0.62, {pose:'point'}) + '</g>';
@@ -2403,7 +2404,7 @@ function portrait(o, px, py, pw){
     { n:12, phase:'The Shingles', sky:'noon', sign:true,
       birdAt:['0','-30vw','-12vw','-24vw','0'],
       scene:shinglesSVG, high:-1,
-      tags:['', '', 'Four nails a shingle. Six in the wind rows.'],
+      tags:['', '', 'Six nails a shingle. Every one, every time.'],
       beats:[
         {txt:'The part everybody pictures: Duration Brownwood walking up the slope, one lap over the next.'},
         {txt:'Two on the roof, nailing to a chalk line nobody will ever see again.', show:['crew12G']},
@@ -2437,7 +2438,7 @@ function portrait(o, px, py, pw){
       tags:['', '', 'Nails: 0. Chips: 0. Excuses: 0.'],
       beats:[
         {txt:'The crew hauled the mess away before they left. But steel hides — there is always a piece or two the grass keeps.'},
-        {txt:'The next day it is Theo himself, back with the super magnet. Every job, every lawn.', show:['magnetG']},
+        {txt:'The next day it is Theo himself, back with the super magnet. Every job, every lawn.', show:['magnetG','trailerG']},
         {txt:'First pass: got one.', act:'sweep1'},
         {txt:'The magnet runs twice — the second pass is for the one that thought it got away.', act:'sweep2', tag:2},
         {txt:'Zero. The crew took the other thirty-eight before dinner. Your lawn never knew.'}
@@ -2624,8 +2625,21 @@ function portrait(o, px, py, pw){
     sweptPass = pass;
     var all = Array.prototype.slice.call(document.querySelectorAll('.chip'));
     var box = scene.getBoundingClientRect();
-    var gx = 0.55 * box.width;
-    var gy = box.height - (floor.offsetHeight || 118) * 0.4;
+    // Picked-up debris shows going INTO the trailer — Theo's call. MEASURED
+    // against the trailer's own real rendered box (getBoundingClientRect
+    // survives the 3D fold and preserveAspectRatio scaling; a fraction of
+    // box.width would not), so it stays true if the trailer's SVG position
+    // ever moves. Falls back to the old gather point if it is ever missing.
+    var trailer = document.getElementById('trailerG');
+    var gx, gy;
+    if(trailer){
+      var tb = trailer.getBoundingClientRect();
+      gx = tb.left + tb.width * 0.5 - box.left;
+      gy = tb.top + tb.height * 0.55 - box.top;
+    } else {
+      gx = 0.55 * box.width;
+      gy = box.height - (floor.offsetHeight || 118) * 0.4;
+    }
     var strays = all.filter(function(c){ return c.classList.contains('stray'); });
     all.forEach(function(c, i){
       if(c.classList.contains('swept')) return;
