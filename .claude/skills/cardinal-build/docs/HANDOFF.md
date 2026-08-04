@@ -4,6 +4,54 @@
 
 ---
 
+# Session of 3 August 2026 (late) — THE POP-UP ROOF: the complete sixteen-spread book
+
+**Branch `claude/contractor-vision-suite-bwq21i`, head `da08782`, PR #108 open (draft), CI green,
+nothing uncommitted.** Theo reviews and merges; every commit deployed clean to the Vercel preview.
+
+**`popup.html` is the whole book now — all sixteen spreads, tappable, front to back.** A `SPREADS`
+registry, one spread mounted at a time, a page turn that folds the pop flat and stands it back up,
+`#N` hash entry, honest "Spread N of 16" numbering. The contact sheet
+(`popup_spreads_preview.html`) is the storyboard; the book is the artifact. Full trail in
+`cardinal_build_log.md` — eight entries tonight, from "the retail order" through "THE BOOK IS
+COMPLETE."
+
+## Settled tonight — do not re-litigate
+
+- **The house is THE T** (Theo's pick), brick chimney with mortar lines, worn Onyx coming off,
+  **Duration BROWNWOOD going on** — spread 5 rings the BROWN board. Onyx is the OLD roof.
+- **This is an install book, not an insurance book** (Theo, verbatim). Storm damage, the adjuster
+  and the tailgate Number are deleted; Kitchen Table, Attic, Takeoff open the book. Do not restore.
+- **"Tarps, not tractor"** — the tractor was a phone typo, removed everywhere; tarps protect the beds.
+- **The bird ends every spread at translateX(0)** — the round trip is the book's rule. Interiors
+  (2, 3) hide the pop-piece bird and draw a `sceneBird` (no `id="bird"`).
+- **Spread 15 sweeps spread 7's REAL chips** — same DOM nodes, 34 + 6. Never re-scatter.
+- **The yard sign stands from 7 onward**; `.birdpop` carries `z-index:2` because on phone widths
+  the sign's fixed 84px overlaps the bird's slot (wide-screen "measured gap" arithmetic).
+
+## Awaiting Theo
+
+1. **Walk the whole book on the real iPad** — the pop hinge is proven there for spread 7 only.
+2. Caption and joke rewrites — the beat scripts are drafts in his voice, his to correct.
+3. **Crew names in spread 16** (Curtis, Beto, from the sheet's own notes) — confirm they belong in
+   a client-facing book.
+4. How the book ships (it is `noindex` at a guessable root path — same holding pattern as
+   `ai-field-manual.html`).
+
+## Verification state
+
+`pw_book.js` (scratchpad) walks all sixteen in real Chromium — phases, distinct captions, beat
+groups, sliders home, sign presence, page turns, chips scoping, both hash paths: ALL GREEN, zero
+page errors. `pw_bird.js` / `pw_deck.js` re-pointed at `#7`, green — spread 7 unregressed. Every
+spread rendered at phone size and eyeballed; the render pass caught what green harnesses did not,
+five separate times (truck scale, gnome under its own joke tab, speck drone, landscape-iPad height,
+sign hiding the bird).
+
+Earlier this session (same day, before the book): the Vision Suite builds 574-593, studio.html,
+and the roof-journey page — all logged in `cardinal_build_log.md` and merged or in PR #106/#108.
+
+---
+
 # Session of 1–2 August 2026 — builds 565–573, and one applied migration
 
 **`main` is at `35fa7c9`, app stamp build 573. Branch `claude/git-log-oneline-7b9nbd` is merged and

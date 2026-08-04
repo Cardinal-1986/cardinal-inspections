@@ -6853,3 +6853,802 @@ override, admin-gating of the Studio tile, and proof the Presentations tile driv
 one. Real Chromium screenshots of both the admin and non-admin renders, plus a regression pass
 proving the ordinary ten-destination launcher is completely unaffected (`app.cardinalroster.com`
 still renders `.cr-lr`, never `.cr-vh`).
+
+## `drivewaytest.html` — the Driveway Test, shipped (2026-08-03)
+
+Theo picked **Option 5 (the pop-up book) and the Driveway Test** off the five-way preview.
+The Driveway Test went first on purpose, and the reason is the whole argument for it: the
+pop-up book bets **35–60 hours of illustration** on a drawing style nobody had seen. This page
+bets six hours on twelve small plates in the same pen. Cheap answer first — and if the pen
+lands, these plates get reused inside the book rather than thrown away.
+
+**It is a sibling page, not a build.** No app-stamp bump, no `CHANGELOG` entry, no gate ladder —
+`drivewaytest.html` is not part of `index.html`. No login, no Supabase, no SQL, no RLS, no token,
+no API, no client data, no static asset. **That is why it could be built without waiting on the
+delivery decision** — the app boots to a signed-in session and "text them a link" still does not
+exist, but this page needs none of that.
+
+**Six right-versus-wrong pairs**, one wiper each: cut 3-tab used as starter · cut 3-tab used as
+hip and ridge · two exhaust types short-circuiting a balanced system · a missing kickout ·
+one-strip-and-caulk instead of woven step flashing · drip edge stopping short of the peak. The
+two starred shortcuts are here because **no other direction could structurally hold them** — a
+hero cutaway cannot show the wrong version beside the right one, and the comparison *is* the
+content.
+
+Copy is lifted from `ROOF_JOURNEY_COPY.md` rather than rewritten, so the verification discipline
+carries: no code section numbers, no code-mandated dimensions, no warranty terms.
+
+**The bug the mechanical checks could not see, and it is the recurring class on this project.**
+Every plate carried a caption centred at `x=150`. Both plates stack, and the wipe clips only the
+top one — so at any divider position you read **the left half of one caption beside the right half
+of the other**: `NOTCHES, ~~NOTCHESLT~~`, `THIN — ~~REAADSHADOWED~~`. Twelve plates drew, twelve
+carried their accent stroke, all six wipers dragged, keyboard worked, zero JS errors, zero
+horizontal overflow — **every assertion green on a page whose labels were illegible.** Caught by
+looking at the render, not by a check. Fixed by anchoring each caption to its own side of the
+split (`x=12` start / `x=288` end) and shortening each to fit half the plate.
+
+**The pen convention**, matching the app's existing `.fig-ink` figures so the plates transfer to
+the book: 1.75px structure, 1px dashed hairline for hidden geometry, round caps and joins,
+`fill:none`, no gradients, no filters, inverted to white-on-near-black. **One accent stroke per
+plate**, on the thing the copy tells you to look at — red when it is the fault, green when it is
+the fix.
+
+⚠️ **Contrast, computed not eyeballed:** `#c8202e` is **3.44:1 on `#0B0D0C` and fails as body
+text.** Red ink on this page is `#e35c63`; the brand red is strokes and chrome only. A test
+asserts zero body text renders in the failing red.
+
+Verified in real Chromium at phone and desktop: 12 plates drawn and non-empty, all six wipers
+track, arrow keys move the divider, `aria-valuenow` updates, no horizontal overflow.
+
+**Not linked from anywhere yet** — that is an `index.html` change (the Vision hub is the obvious
+front door) and it is Theo's call whether this is public-facing marketing or something a rep
+hands over. Reachable directly at `/drivewaytest.html` on any domain serving this repo.
+
+## `popup.html` — the Pop-Up Roof, spread 7 alone (2026-08-03)
+
+**One spread of sixteen, deliberately.** The full book is 12–14 builds and 35–60 hours of
+illustration; its own spec says build this spread first and look at it before anyone draws the
+other fifteen, because the direction lives or dies on whether the register is right — dry and
+self-aware, or cutesy. Spread 7 is the correct test: it carries the debris warning, the biggest
+pop, and the joke that is also the argument.
+
+**The debris is the whole bet.** Tap the roof, forty kraft chips fling off and land on the page,
+**and they stay there.** In the full book the magnet on spread 15 sweeps up these exact chips
+nine spreads later — cleanup stops being a paragraph the client skims and becomes a chore they
+have to do. Theo named cleanup himself as the most important part of the job.
+
+**Two geometry bugs, both found by looking rather than by asserting.**
+
+1. **The pop rotated flat INTO the screen instead of standing up off it.** `rotateX(-78deg)` on
+   a board whose page is the screen plane collapses it to a sliver under a face-on camera — the
+   house was nearly invisible. The fix is that a pop-up only reads as rising if the page itself
+   is a *receding surface*: the floor is now tilted `rotateX(58deg)`, and the pop travels
+   `58deg → -20deg` (i.e. 78° off its own page). Lying flat and standing up are now both correct,
+   and the maths is written into the CSS comment so the next person doesn't rediscover it.
+2. **The chips fell past the page onto the background**, which kills the one gag the spread is
+   built on. The floor is 118px tall rotated 58°, so it occupies only ~62px of *visual* height
+   (`118 × cos 58°`) — landing chips at `height − 26` dropped them off the page entirely. They
+   now land inside the foreshortened band.
+
+Every mechanical assertion was green through both bugs: the pop transformed, the shadow
+responded, forty chips existed and were visible, the roof stripped to bare deck, zero JS errors,
+zero overflow. **Same class as the Driveway Test's overlapping captions earlier the same day** —
+green checks on a picture that was wrong.
+
+**The mechanism**, all five parts reading one `--open` property so they cannot desync: a fold
+line visible whether the pop is up or down (that crease is the tell that this is paper); the
+hinge at 78° not 90° because a piece at a true right angle reads as a wall; a strut hinged
+behind, drawn in the shade tone because you are seeing its back; and the shadow as a **flat
+sibling with `scaleY` foreshortening, never `filter: drop-shadow`** — drop-shadow on a 3D element
+silently flattens `preserve-3d` on iOS Safari. The pop and strut are siblings in screen space
+rather than nested under `preserve-3d`, which sidesteps that fragility entirely.
+
+⚠️ **Contrast, computed:** cardinal red `#C8202E` is **4.19:1 on kraft and fails body text** —
+text uses the deepened twin `#8F1620` (6.73:1), which already ships in this app. White on
+`#E8722A` is 3.06:1 and fails, so the caution label is black-on-orange, which is also what real
+hazard signage looks like. A test asserts no body text renders in the failing red.
+
+**Reduced motion is a second presentation, not a switch**: the board lies flat, the debris is
+already on the page, the flat-pack note appears, and every word survives. Verified as its own
+run with `reducedMotion: 'reduce'`, not assumed.
+
+**Still unverified from here:** iOS Safari. The spec flags `preserve-3d` as the direction's
+biggest engineering risk and this sandbox has only Chromium. The sibling-not-nested structure was
+chosen specifically to reduce that exposure, but **it must be opened on a real iPad before the
+other fifteen spreads are drawn.**
+
+---
+
+## The pyramid becomes a hip roof, and the residue it left (2026-08-03)
+
+Theo: *"the drip edge doesn't make sense if the house is shaped as a pyramid unless you make the
+house shape different… would be nice if we could show a ridge vent as well as soffit intake.
+Ventilation being important. Showing airflow. Would it be too difficult to change the shape of
+the house?"*
+
+Not difficult, and it unblocked three things at once: a pyramid has no ridge, so a ridge vent had
+nowhere to live, the drip-edge story was thin, and spread 13 was promising a ridge that did not
+exist. **Eave y=100 from x=34 to 266, ridge y=28 from x=104 to 196.** The two sloping edges are
+still hips and still take cap shingles.
+
+**The reshape itself was one edit in two functions — and that is exactly what made the follow-up
+dangerous.** Everything that asks `roofY()` / `spanAt()` moved with the shape for free. Everything
+carrying a number *derived* from the old shape stayed behind, silently, still parsing and still
+rendering. Four of those, all found by rendering rather than by asserting:
+
+1. **Every material on the roof split its lit face from its shaded one at x=150** — the pyramid's
+   apex, a real facet edge where a shading break belonged. The hip roof has no facet edge there,
+   so it became a seam down the middle of a continuous plane, 26 units away from the 176 the wall,
+   gutter and soffit use. `SPLIT` is module scope in both files now; shingle courses, tabs, starter,
+   laminate shadow, ice course, drip-edge apron, ridge vent and ridge cap all read it.
+2. **The laminate shadow's inset was `SH / (72/116)`** — the pyramid's rake slope. The hip is
+   `72/70`. Correct arithmetic for a roof that no longer exists, leaving ~1.5 units of gap along
+   both hips on all eight courses.
+3. **The felt was still a triangle running to a point at (150,28).** On this roof that line falls
+   about 20 units inside the hip, so spread 10 showed a wedge of bare deck down both edges — a
+   missed patch of underlayment, the opposite of what the spread says. It is a trapezoid to the
+   ridge now.
+4. **The ridge vent was wider and taller than the cap laid over it** — 100→200 against a ridge of
+   104→196, top edge at y=22 against a cap top at 24.9. It overhung the caps at both ends and stood
+   proud of them: a metal plate lying *on* the ridge, the one thing you never see on a finished
+   roof. Now 104→196 and 23.5 down, so 1.4 units show above the cap. **That sliver is the raised
+   line you are actually meant to see.**
+
+Also removed: the `o.ridge` chevron, which was pyramid geometry *and* a duplicate — all four
+callers pass `roof:'new'`, and that branch already draws `ridgeVent()`. And the downspout, which
+ran 266→272 against a wall ending at 260 and stood six units clear of the house on all sixteen
+spreads, reading as a post in the yard.
+
+**How it was proved, and how the first two attempts failed.** Asking `elementFromPoint` whether
+the fills either side of x differed was worthless twice over: shingle tabs rotate four tones so
+adjacent fills differ nearly everywhere, and `elementFromPoint` is viewport-bound, so the eight
+spreads below the fold reported clean without being looked at. A check that cannot fail on half
+its input is not a check. Measuring a luminance step over a ±10-unit window was better but flagged
+spreads 2, 10 and 11 as *inverted* — chalk circles at 176–214, a felt roll centred at 196, a
+chimney at 186–206. **The chimney false positive, again**: measuring the roof and catching what is
+standing on it. What worked: a narrow ±4-unit window, negative-controlled against the previous
+build, so objects contaminate both and cancel.
+
+Result — shade break present at 176 on **16/16**; the stale 150 break gone on 13/16 and the three
+residuals are a figure at x=158, a replacement deck sheet starting at 154 and deck texture, all
+**identical before and after** where the patch did not apply; bare deck bleeding through the felt
+**before [10], after [none]**. Ridge cap is 4 rotated runs (left hip 12 pieces, right hip 12,
+ridge-lit 9, ridge-shaded 3). `pw_deck` clean at phone, iPad and reduced motion.
+
+⚠️ **Two deliberate simplifications, flagged rather than hidden.** The soffit is drawn as a band
+*below* the gutter; straight-on it would be hidden behind it, and then the intake vents Theo asked
+for could not be seen. And spread 13's airflow arrows travel *over* the shingles rather than under
+the deck, because there is no cutaway. Both are diagram convention, both are Theo's to overrule.
+
+---
+
+## The front dormer and the layer stack (2026-08-03)
+
+Theo: *"If you put a gable in the front then make it a dormer? Looks weird. Maybe do like a cutout
+after the roof is done also."* Then, from nine rendered options: *"Options 2 for dormer and 4 for
+layer stack. Put dormer closer to the middle of the house tho."*
+
+**A note on the pick, recorded so nobody re-reads it later and 'corrects' it.** The layer stack was
+option **A**; option 4 was the ice-shield-with-dormer view. He named the layer stack in words, so
+that is what was built. He did **not** take option B, the attic section — so spread 13's airflow
+arrows still travel over the shingles rather than inside the attic. That remains a known, stated
+simplification, not an oversight.
+
+**`DX = 140`** — option 2 was 124, which read as deliberately shoved to one side. Dead centre (150)
+sits under the ridge vent and dead over the door and reads like a symmetry no real house has. Ten
+units left of centre is the compromise; a 140/150 comparison went to Theo so a nudge costs one word.
+
+**The dormer is not decoration, and that is why it was worth the build.** Two captions in this book
+were writing cheques the drawing could not cash:
+
+- Spread 9 has always said *"a rubber membrane at every eave and **valley**"* over a plain hip roof
+  with **no valley on it**. The dormer cheeks are that valley, and the shield now climbs them.
+- Spread 11 is *"The Flashing"* and had a chimney and a pipe boot. **Step flashing up a dormer cheek
+  is the detail every roofer argues about** and it was absent.
+
+**Draw order is the containment.** The dormer is emitted after the roof materials, so courses,
+sheets, shield and felt all run *behind* it — which is where they physically are. No clip path, no
+`overDormer()` test, nothing to keep in sync when the geometry moves again.
+
+**Five collisions, found by rectangle intersection on the rendered DOM.** This is the check that was
+wrong twice on the yard sign — first taking the wrong figure out of the list, then comparing only
+x. This time both axes, on `getBBox()` read from the render, mapped through each group's own
+transform, against a dormer box **identified from the render** rather than trusting `DX`:
+
+| Spread | What collided | Moved to |
+|---|---|---|
+| 3 The Adjuster | figure at x=158, standing on the right cheek | x=96 |
+| 6 The Delivery | flying bundles at x=109 and 124 landing **on the gable** | run is 48+i*14, ending at 104 |
+| 8 The Deck | figure at x=150 — head and shoulders across the window | x=212, beside the sheet he is fitting |
+| 10 The Felt | figure clipping the left edge | x=96 |
+| 11 The Flashing | figure at x=150, **and** the pipe boot at 106–126 sitting on the flashing strip | figure x=64, boot moved 14 left |
+| 12 The Shingles | both roofers standing in the middle of the new cutaway | x=176 and x=216 |
+
+**The layer stack sits on spread 12 rather than becoming spread 13.** Theo said *"after the roof is
+done"* and spread 12's own caption is *"one lap over the next"*, which is exactly what a section
+shows. It **wants its own spread** — that is the 16-becomes-18 question, still his, still open — and
+the built spread ships titled *"of 16"*, so nothing is renumbered unilaterally.
+
+Verified: dormer present on **16/16**, **zero** collisions, shade break still at 176 on 16/16, bare
+deck through the felt still **none**, `pw_deck` clean at phone / iPad / reduced-motion, both files
+parse, zero page errors.
+
+---
+
+## The dormer, bigger — and the valley membrane it was added for (2026-08-03)
+
+Theo: *"With there being a dormer that adds 2 valleys. Any way to make the dormer bigger and show
+the ice and water at the dormer valley? Dead center wasn't what I meant. As a pop up the dormer
+should be a little over to the left equal distance from both left and right hip."*
+
+**The two halves of that sentence only look contradictory, and resolving it settles the placement
+for good.** `spanAt` is symmetric about 150 at every height, so **equidistant from both hips is
+x=150 and nowhere else**. It *reads* as "a little over to the left" because the house's light turns
+at 176 — the lit face is 142 wide against 90 in shade, so the eye puts the centre of the house
+right of where it actually is. He described one point twice. What he was rejecting was my word
+"dead centre", not the position. **`DX = 150`, and this is settled — do not move it back to 140.**
+
+**Size: 50 × 44, up from 36 × 35** — half again the area. Peak at y=40 leaves 12 units between it
+and the ridge vent. Base at y=84 lands on the eave ice course at 86, deliberately: the valley
+membrane and the eave membrane then read as **one continuous sheet, which is what they are**.
+
+**The valley membrane is drawn BEFORE the dormer, and that is the whole fix.** The old version was
+two 9-unit strips beside the cheeks emitted *after* the face — a detail stuck on beside the dormer
+rather than a sheet the dormer sits on. It now wraps each valley, up the cheek and along under the
+rake, is emitted first so the face and rake board land on top of it, and runs down to meet the eave
+course. That is the real order: the membrane is roofed over, not painted beside.
+
+**One defect, caught by rendering:** the band's outer corner was set at `peak - 4`, four units
+**above** the dormer's own peak, so it stuck out past the rake as a grey horn. It dies at `peak - 1`
+now, under the rake board (drawn at `peak-2` with a 2.4 stroke, so covering 36.8–39.2).
+
+**Two more collisions from the bigger box**, found by the same rendered-DOM rectangle intersection:
+spread 12's left roofer (moved 176 → 194) and **spread 14's Theo, who was standing on the dormer's
+right rake** (180 → 206, up-slope and clear).
+
+⚠️ **A stale-check warning for next time.** `pw_split2` reported the 150 shade break going from
+13/16 to **0/16** and it is NOT a regression — the dormer is centred at 150, so its own gable facet
+legitimately splits there and the probe band sat inside the dormer's height. Re-probed outside the
+dormer (y<38 and y>88): **at176 positive on 16/16**, at150 non-positive on 14/16, and the two
+positives are spreads 7 and 8, the bare-deck spreads, where the sprayed-sheet edges sit near 150.
+The check was measuring the dormer, not the roof.
+
+Verified: dormer on 16/16, **zero** collisions, shade break at 176 on 16/16, no bare deck through
+the felt, `pw_deck` clean at phone / iPad / reduced-motion, `pw_shingle` unchanged
+(`planeIsTrapezoid`, `ridgeVent`, `strippedByColour` all true; `offRoof` 2 is the starter strip's
+two eave-line vertices, boundary-exclusive, not a defect), zero page errors.
+
+---
+
+## `DX = 134` — the placement, corrected, and a check with a blind spot (2026-08-03)
+
+Theo: *"Dormer should be over to the left and similar to the house with the profile view."*
+
+**My error, and it is worth recording because it was a reasoning failure rather than a slip.** He
+had said "a little over to the left" twice. I read the accompanying phrase *"equal distance from
+both left and right hip"* as a geometric spec — and it genuinely does pick x=150, because `spanAt`
+is symmetric about 150 at every height — then built the clever reading over the plain one and
+argued for it. **Prefer the plain reading when a plain and a clever one conflict**, especially when
+the plain one has already been stated twice.
+
+The sequence on this single number: **124** ("closer to the middle") → **140** → **150** (mine,
+wrong) → **134**. If it moves again, move the constant and nothing else.
+
+**"Similar to the house with the profile view" is read as pitch**, and matching it is right on the
+merits: the gable now rises 26 over a run of 25 — **46.1° against the main roof's 45.8°**. A dormer
+visibly shallower than the roof it sits on reads as a bolted-on box. The eave dropped 60 → 64 to
+buy that rise without crowding the ridge vent; peak 38 still leaves 10 units of roof above it.
+
+### The collision check had a blind spot, and it cost a real defect
+
+The check inspected **only `g[transform*="translate"]` groups** — figures, ladders, trucks, signs.
+Spread 11's **chimney and pipe boot are bare `<path>` elements**, so it never looked at them, and
+the boot ended up sitting in the middle of the dormer's valley membrane: **a plumbing vent through
+the ice-and-water**, which is a leak, not a detail. It reported "no collisions" throughout.
+
+*A check that only inspects one kind of element is a check with a blind spot.* It now tests bare
+paths too, filtered to prop fills (metals and masonry) so the roof, walls and covering materials
+are not swept in. The boot moved to 216–236, past the chimney flashing at 214 and inside the roof
+(`spanAt(80)` gives 246.6 that side).
+
+Also re-bounded: spread 6's flying-bundle run, shortened a **second** time (`50+i*10`) — and it
+cannot start below x=50 either, because `roofY(42)` is 91.8 and the bundle would sit under the
+eave. Bounded at both ends now. Spread 12's layer stack narrowed to `X1=104`, since the dormer's
+left edge is 109.
+
+Verified: dormer on 16/16, zero collisions **with the widened check**, shade break at 176 on 16/16,
+no bare deck through the felt, `pw_deck` clean at phone / iPad / reduced-motion, both files parse,
+zero page errors.
+
+---
+
+## Four directives in one burst — and the shape question reopened (2026-08-03)
+
+Theo, in order: *"lets just re do the house shape to make everything line up right, give me 5
+different examples. A dormer isnt really needed depending on the roof type"* · *"during the first
+few pics of tear off the roof should look weathered and worn, maybe a few shingles missing"* ·
+*"since there is a chimney lets keep the chimney in the progression"* · *"maybe the cardinal bird
+can move throughout the screen during the taps too"* · *"what happened to the attic picture as
+well, and the take off, the gnome"*.
+
+**Everything built this pass is shape-independent on purpose** — anchored on `roofY`/`spanAt` or
+screen-space — so it survives whichever shape he picks.
+
+**The five shapes** are at `popup_house_shapes.html` (generator beside it): 0 current reference,
+1 side gable ("the rectangle — everything literally lines up"), 2 L front-gable **(recommended)**,
+3 T centred-ish, 4 hip + gable wing, 5 side gable + shed porch. He is right about the dormer:
+2/3/4 make it unnecessary because the valley comes with the roof. 1 and 5 have no valley — spread
+9's caption would go eave-only, stated on the card rather than hidden.
+
+**Weathered old roof:** five missing tabs on the course grid, dodging dormer/chimney/hips. First
+fill was `#0B0D10` on a `#1E2227` field — **1.2:1, a gap nobody can see, the sprayed-sheet lesson
+again the same day**. The reveal is weathered felt `#4A443A` now, with the course above shadowing
+into the hole. The gaps live inside `#shingles`, so the tap-strip takes them with the old roof.
+
+**The chimney is permanent** — moved into `house()` (and `houseSVG`), every state except `none`,
+with its base shadow so it sits on the slope; spread 11's own copy removed (two drawings of one
+chimney is the two-books failure). **This exposed a buried defect:** the dormer had been fully
+covering the sprayed sheet at (114,64) on the stripped deck — a mark nobody could see on the
+spread whose whole point is marking what is bad — and the chimney clipped the (194,82) X. All
+three bad sheets now sit on the bottom row; spread 8 re-laid left-to-right as hole → new sheet →
+two sprayed. The collision check missed it because bare paths were only added for props after the
+pipe-boot episode; sprayed sheets are drawn by `house()` itself and were never candidates.
+
+**The bird is a SLIDER.** A slider is a real pop-up mechanism — a tab riding a slot — so the bird
+can hop the yard during the taps and still be honest paper. Transform-only on the same node
+(`birdSame` still asserted), keyed off `beat` so stepping back walks it back, **ends the last beat
+home** — the old joke survives by inversion: *"The cardinal is back where it started. As far as it
+is concerned, nothing happened."* Reduced motion: instant positions. Verified in Chromium: 7
+distinct positions, ends home, same node, zero errors.
+
+**The Takeoff and The Attic** are drawn as PROPOSED · UNNUMBERED cards on the contact sheet.
+Both are in Theo's brief (point 14, starred) and the copy doc (Stages 1–2); the 16-spread cut
+dropped them silently. They belong between The Climb and The Adjuster, which makes the book 18 —
+**the numbering stays his call**; nothing renumbered.
+
+**The gnome: no record.** Not in the brief, the copy, the directions doc, the repo, or the
+published five-directions artifact (fetched and searched). Asked Theo what it was.
+
+Verified: 18/18 cards render (16 + 2 proposed), zero collisions, `pw_deck` clean at all three
+sizes, bird slider green, shapes page 6 cards zero errors.
+
+---
+
+## THE T — the house shape, rebuilt, both files (2026-08-03)
+
+Theo: *"The T but make the chimney look like a chimney with brick lines."*
+
+**The third house this book has had in one day** — pyramid → hip → T — and the cheapest of the
+three reshapes, because by now everything asks `roofY`/`spanAt` instead of carrying constants.
+The main roof is a **side-gable band**: eave y=100 from x=30 to 270, **ridge y=44 across the full
+width** — `roofY` is a constant, and everything that asks it lines up by construction, which is
+the literal thing he asked for two messages ago. The **front cross-gable WING** (cx=140, half=38,
+peak=56) replaces the dormer outright; its rakes against the main plane are the two valleys, the
+ice membranes climb them, the step flashing hangs on them, and the door lives under it.
+
+**Renamed, not aliased:** `hipCaps` → `ridgeAndRakes` (white rake boards up both gable ends, the
+vent proud across the ridge, cap run over it). `ridgeVent()` is a no-op absorbed into it.
+`dormer()` → `wing()`; `dormerBox`/`DRM`/`DX` retired. A name is not a contract, and a function
+named for a part that no longer exists is how the next session re-learns the pyramid.
+
+**The chimney is BRICK now** — two tones, mortar coursing with staggered head joints the way
+brick is actually laid, a concrete crown, a flue, base shadow, and the same step + counter
+flashing. Same footprint (182–214), which is why the T's wing was nudged left of centre in the
+shapes card: they were never going to collide.
+
+**Re-laid by hand** (everything else moved free): chalk circles and nine figures — **the T has a
+figure rule: feet in the lower half of the band (y≥86), because a mid-band figure's head rises
+past the ridge into the sky and reads as floating** — the spread-6 bundles (the −46° tilt was the
+hip's pitch; a carried bundle tips −12°), the felt roll, spread 8's hole → new sheet → sprayed
+sequence (grid origin 30), spread 13's airflow up both free zones, the takeoff tape, and the attic
+section (now the opened right end of the house, deck underside + rafter ends + the beam).
+
+**The collision detector needed three corrections, all instructive:**
+1. Its wing test rejected any wall-tone path touching y>99 — but the wing's base IS the eave at
+   100, so it reported the wing absent on 18/18. A detector that cannot see the thing it guards.
+2. The wing's own step flashing (bare paths in prop metals) got flagged as colliders — marked
+   `data-wing` in the artwork and excluded.
+3. Ground figures and the tailgate estimate legitimately stand IN FRONT of the wing now that it
+   reaches the eave — groups anchored at ty≥100 are foreground by definition and exempt; bare-path
+   overlaps only count above y=92.
+
+Verified: both files parse · wing on 18/18, zero collisions · shade split at 176 everywhere (the
+band, the caps, the materials all read SPLIT) · bird slider 7 hops ends home, same node · chimney
+survives the strip, gaps go with the old roof, 3 X marks visible · `pw_deck` clean at phone /
+iPad / reduced-motion · full sheet + built spread rendered and eyeballed.
+
+---
+
+## The tractor, and the flowers it protects (2026-08-03)
+
+Theo: *"What about tractor protect the flowers?"*
+
+The self-propelled debris catcher — tracks, scissor lift, bin raised to the eave — parked over
+the beds so the tear-off drops into steel instead of into the flowers. Which exposed that **the
+flower beds did not exist**: popup.html's tarps beat has said *"Your flower beds have been
+through enough"* since the spread was built, with nothing drawn under the tarps. Beds are in both
+files now — deterministic tufts and blooms, under the exact zones the tarps cover, so the beat
+finally means something.
+
+**The bin is drawn FULL**, and that is a deliberate reconciliation with the book's central joke:
+most of the roof goes into the bin (the machine's whole argument), and the forty chips that got
+away are why the magnet still runs twice on spread 15. The tractor arrives inside `trailerG`, on
+the trailer's own beat — same convoy, no new beat.
+
+Two placement rounds on the sheet card, both caught by rendering: the first put the tractor left
+and buried a sprayed X under the bin; the second had the bin top at 92 with the roofer's feet at
+90 — **standing in the bin**. The built spread's relationship is the right one: bin top AT the
+eave (98/100), roofer on the deck behind it, sweeping in.
+
+Verified: both files parse · 18/18 clear on the collision check · bird/chimney/gaps harness green
+· `pw_deck` clean · popup rendered mid-beats (trailer + tractor + tarps on) and the sheet card
+rendered and eyeballed.
+
+---
+
+## The retail order — the running-order answer, built (2026-08-03)
+
+Theo, in full: *"This is not for insurance, it is to show someone the install process. The storm
+damage should be gone as well as the adjuster. The contract sign inside the house so new scene at
+a kitchen table, then an attic inspection where you pull the ladder down hit the switch for the
+lights look at the decking then hit the flashlight and look for soffit intake and see the baffles
+covered these should be at the very beginning. The takeoff is checking roof components, number of
+pipeboots, satellite dish, staying or going. The lawn ornaments, hidden sprinkler heads by Curtis
+and his clipboard. That's next. Drone photos before during and after."*
+
+**This closes three open questions at once:**
+- **The running order** — three insurance scenes out (The Climb's chalk circles, The Adjuster,
+  the tailgate Number), three retail scenes in (The Kitchen Table, The Attic, The Takeoff). Same
+  slots. **The book stays sixteen — the 16-vs-18 question dissolves**, and spread 7 keeps its
+  "of 16" title untouched.
+- **The gnome** — a lawn ornament, inventoried on the Takeoff with its own ring, noted for
+  witness protection. Drawn: red hat, white beard, blue tunic, standing in bed B.
+- **The Takeoff's meaning** — not a tape measure. A component inventory: two pipe boots ringed,
+  the satellite dish ringed (staying or going), sprinkler heads flagged in the lawn, the gnome —
+  all by **Curtis in the lime vest with his clipboard**, matching his portrait card.
+
+**Two interiors, a first for the book:** the Kitchen Table (contract with red signature line, pen
+ON the line under the homeowner's reach — first pass had it floating in mid-air held by nobody —
+mugs, window with the cardinal on the sill) and the Attic exactly as dictated: pull-down ladder
+with light from the hallway, bulb ON with pull chain, deck underside and rafters, and the beam
+landing on **baffles buried under insulation** with a red finding-ring — the discovery made
+before anyone quoted a shingle. The cardinal got in through the one soffit bay that still
+breathes, which is the spread's point wearing feathers.
+
+**Spread 1 de-stormed** (hail dents deleted, caption rewritten). **The drone** appears before
+(Takeoff), during (Shingles) and after (Walk) — same aircraft each time. The PROPOSED P1/P2
+cards are retired, superseded by the real spreads 3–4.
+
+Harness notes: the wing detector now knows spreads 2–3 are interiors (no wing by design —
+reporting it absent there was noise); `birdInAll` caught the attic missing its cardinal before
+any human did.
+
+Verified: 16 cards, bird in all, zero collisions, zero page errors, opening four rendered and
+eyeballed.
+
+---
+
+## The Pop-Up Roof — full screen, jokes only (3 Aug 2026, same evening)
+
+✅ **iOS SAFARI PASSES.** Theo opened the spread on his iPad: *"on the ipad it looks just like
+the preview."* `preserve-3d` survives, the pop stands, and the direction's largest engineering
+risk is closed. **The remaining fifteen spreads are buildable.** The sibling-not-nested structure
+recorded above is what carried it; keep that shape on every future spread.
+
+**The page was then rebuilt around Theo's own direction**, given in four notes over one evening:
+*"the interactive part is only half the screen"* → *"maybe can be a full screen … the right side
+words separate"* → *"as we go in the picture just have the words come and go as you click
+through"* → *"alot less words since ill be there describing it anyway. Just use the jokes. maybe
+add some more that pop up on the actual cardboard near the bottom."*
+
+So the picture **is** the screen, the words are **paced by taps**, and what survives on screen is
+**humour only** — every informational line was cut because Theo says those out loud. Copy went
+**~233 words → ~110 → jokes only**. Each joke still carries its fact underneath; that is the
+trick, not a compromise.
+
+**Three joke tabs stand up on the page itself**, on their own sticks in the foreground grass,
+each popping on its own beat. The yard-sign line is Theo's own joke from the brief, nearly
+verbatim. **The spread is now titled by its PHASE — "The Tear-Off"** — which becomes the spine of
+all sixteen: the prep, the take-off, the tear-off, the build.
+
+**THE PICTURE ONLY EVER MOVES FORWARD.** Layers key off a high-water mark, never the current
+beat, so stepping back re-reads a joke but never un-strips the roof or un-flings the debris.
+That is the book's own rule and it means there is no reverse state to get wrong.
+
+### Five defects, every one green on every assertion, all caught by looking
+
+1. **`.pop` was `height:var(--popH)`** — fine as px, but once the scene sized itself to the
+   artwork that became **59% of a box already 59% of the scene**. The board came out 35% tall,
+   the drawing scaled down to fit it, and the house sat small in a huge sky. `.strut` had already
+   been fixed for exactly this; `.pop` was missed. **Percentages resolve against the parent.**
+2. **The scene filled the viewport instead of the artwork**, so the board was taller than the
+   300×190 drawing on it. Sized by ratio now: drawing 0.583W + floor 0.30W + sky 0.11W.
+3. **The house floated mid-board** — default `xMidYMid` centred it with sky under its feet.
+   `preserveAspectRatio="xMidYMax"` seats it on the fold.
+4. **The joke tabs were planted on the kraft, off the page.** The floor is laid out at `--floorH`
+   but `rotateX(58deg)` means it only *covers* cos(58) ≈ 53% of that — the visible grass ends
+   well above the layout box. Same arithmetic left a dead band above the caption.
+5. **The runhead sat on top of the progress dots** — three things competing for one 390px strip.
+   The spread name moved into the top bar, which now holds the phase title and nothing else.
+
+**One red was the test's fault, not the app's**: the caution-styling assertion ran *after* the
+walk finished at beat 7, by which point caution is correctly off. Captured in the loop instead.
+Roughly half the reds on this project are still the test.
+
+Verified in real Chromium at phone, iPad and reduced-motion: 8 beats · 3 joke tabs revealing on
+their own beats · 40 chips flung and persisting through a step back · shingles gone by id and by
+colour · caution styling on beat 4 only · zero overflow · zero body text in the failing red ·
+zero JS errors.
+
+---
+
+## Tarps, not a tractor — the typo corrected (2026-08-03)
+
+Theo: *"I didn't mean tractor I meant tarps. Looks good."*
+
+So "What about tractor protect the flowers?" was phone-typed for **tarps**, and the machine two
+entries up was built off a typo. It is gone from both files — function, banner, both call sites —
+and the sheet's tear-off card now shows what he actually asked for: **blue poly tarps over both
+flower beds**, the same shape language as popup.html's `tarpG` beat, which had the tarps (and the
+caption) all along and needed nothing added. The sheet's trailer moved to the left edge — where
+the built spread parks it — so tarp A reads past its tail; the chips scatter on the lawn *below*
+the beds, which is the tarps doing their job.
+
+Everything the tractor round produced besides the machine survives on its own merits: the flower
+beds exist now in both files, and the bed/tarp zones line up. The "bin drawn FULL" reconciliation
+with the magnet joke is moot — the trailer is back to being the debris destination, and the forty
+chips that get away still explain the magnet running twice on 15.
+
+The quote comments in both files keep his original words and note the correction, so nobody reads
+"tractor" in a shipped comment and rebuilds the machine.
+
+Verified after the cut: sheet harness green (bird in all 16, nothing floats, 0 undefined fills) ·
+collision check 16/16 clear · popup harness green (7 hops end home, chimney survives strip, 3 X
+marks) · both the popup beat and the sheet card re-rendered and eyeballed — tarps visible, no
+machine, nothing else moved.
+
+---
+
+## The book — popup.html goes multi-spread, opening four tappable (2026-08-03)
+
+Theo picked **1: front to back**. `popup.html` is no longer "spread 7, full screen" — it now
+carries a `SPREADS` registry, one spread mounted at a time, and a real page turn: the pop folds
+flat, the scene swaps, and it stands back up. Tapping past a spread's last beat turns forward;
+swiping back past its first beat turns back (landing on the previous spread's last beat). Only
+built spreads are listed — 1, 2, 3, 4, 7 — and the top bar numbers them honestly out of 16.
+`#N` in the URL opens spread N, on load or typed into an open book.
+
+**The opening four, drawn in this file's own geometry and puppet** (the sheet's compositions,
+never its `fig()` — one puppet per book): The Knock (worn roof, the truck, the rep on the step),
+The Kitchen Table (full-bleed interior, contract + pen on the line, the bare-headed homeowner,
+the cardinal on the sill), The Attic (**Theo's own beat script verbatim** — ladder down, switch,
+decking, flashlight, baffles found buried, ringed in red; lighting is additive because beats only
+ever add), The Takeoff (Curtis bare-headed in hi-vis, pipe boots + dish + gnome + sprinklers each
+ringed, drone up for the before pictures). The bird's slider ends at home on **every** spread now
+— the round-trip joke is the book's rule, not spread 7's. `figure()` grew `hat:false` and four
+new POSE reaches (knock/table/clip/torch); `houseSVG` grew a `noCrew` flag; spread 7 calls it
+exactly as before.
+
+**What the render pass caught that green harnesses did not** — four, all real: the sheet-scale
+truck stood half a man tall (0.8 → 1.15); **the "gnome has been counted" joke tab covered the
+gnome** (tabs overlap the board's lawn corners on a phone — the yard inventory moved to the
+centre band, into the flower beds where ornaments genuinely live); the drone read as a speck;
+and on a landscape iPad **the board ran under the top bar** — `.scene` had no height bound
+(invisible on 7 whose board-top is sky, glaring on the kitchen whose board-top is ceiling; now
+`min(96vw, 940px, 80vh)`) — plus the desktop caption box sat on the centre joke tab, so
+single-tag spreads moved their tab to the right slot.
+
+One latent mismatch fixed while in there: `BIRD_AT`'s comment promised the bird walks back on a
+back-step, but `paintScene()` only ran on forward steps. It runs on every `go()` now, so the
+comment is finally true.
+
+Verified: `pw_book.js` — 47 assertions, ALL GREEN (phases, distinct captions per beat, every
+show-group on, sliders end home, interiors hide the pop-piece bird and carry exactly one
+in-scene bird with no `id="bird"`, page turns land with `--open` back at 1, spread 7 still
+strips to 40 persisted chips, chips hide when turning back before the tear-off, both hash
+paths). `pw_bird.js` and `pw_deck.js` re-pointed at `#7` and green — spread 7 unregressed.
+Rendered and eyeballed at phone and landscape iPad.
+
+---
+
+## Spreads 5 and 6 — The Colour and The Delivery, tappable (2026-08-03, same night)
+
+Front-to-back continues: the book is now **1-7 with no gaps**. The Colour leans four real sample
+boards against the siding — two either side of the door, tops clearing the window sills — and
+rings the Onyx pick in the same inventory-ring language as the takeoff, one visual grammar. Its
+last line is the true service detail: the boards stay the week. The Delivery parks the boom truck
+on the driveway, reaches a boom over the gutter, and stages five bundles on the band's left free
+zone (the wing owns 102-178, the chimney 182-214); the counting figure points up at the load, and
+the closing caption hands off to the tear-off: "Tomorrow it gets loud."
+
+Two reds on the re-run were the TEST's fault, not the app's — the back-swipe from spread 7 now
+lands on spread 6, which did not exist when the assertion was written expecting spread 4. The
+file's own rule held: when a gate goes red, first ask whether the test or the app is wrong.
+Roughly half of all reds on this project are still the test.
+
+`pw_book.js` now walks seven spreads — ALL GREEN, page errors none. Rendered and eyeballed both
+at phone size; the red sample board half-tucked behind the "voted red, overruled" joke tab stays,
+because a dismissed board hiding behind its own rejection reads as intended.
+
+---
+
+## Spreads 8-11 — the layers quartet, tappable (2026-08-03, same night)
+
+The book runs **1 through 11 with no gaps**. `houseSVG` grew a mode string behind its boolean —
+spread 7 still calls `houseSVG(true/false)` and gets identical behaviour; the layer spreads pass
+`'bare'/'ice'/'felt'/'flash'`. The water layers ported from the sheet at identical coordinates,
+in the order water meets them: drip edge FIRST at the eave, shield OVER it, felt starting above
+and lapping down — never burying it (the sheet already carried Theo's correction on that). The
+sprayed X marks belong to `'bare'` only: by the ice spread those sheets have been cut out, so
+the marks are gone by construction. `wing()` carries the stage (`ice`/`flash` flags), and the
+flashing spread rings its three seams — chimney, boot, valley — in the takeoff's ring grammar.
+The valley ring sits at x=126, computed from `rakeX` at y=72 rather than eyeballed.
+
+**Corrected before it shipped wrong: spread 5 now picks BROWNWOOD.** The ring sat on the
+charcoal board with a caption saying Onyx Black — which is the colour of the roof coming OFF.
+The book's `'new'` state has been OC Duration Brownwood on the sheet all along. Ring moved to
+the brown board, caption names the product.
+
+**The phone renders exposed a collision as old as the yard sign.** The sign (`left:78%` + fixed
+84px) and the bird's slider (fixed 64px at `right:3%`) fully overlap on a 374pt phone scene —
+the "measured gap" that placed the sign was wide-screen arithmetic, and fixed pixel widths eat
+percentages on a phone. The sign, later in the DOM, was hiding the cardinal — including on
+spread 7, where the final caption points at the bird. `.birdpop` gets `z-index:2`: the book's
+protagonist stacks in front, and on wide screens nothing changes because they never overlapped.
+
+`pw_book.js` walks eleven spreads — ALL GREEN (sign presence now asserted per spread: up from
+the tear-off onward, absent before). Back-nav expectations moved with the longer book. Rendered
+and eyeballed at phone size; the cardinal perched in front of its own logo sign stays.
+
+---
+
+## Spreads 12-16 — THE BOOK IS COMPLETE (2026-08-03, same night)
+
+All sixteen spreads of The Pop-Up Roof are built and tappable in `popup.html`. The final five:
+**The Shingles** (the `'half'` state — Brownwood courses under the felt's printed lines, with
+`cutLayers(96)`'s labelled cutaway carrying the whole-roof-in-one-bite caption), **The
+Ventilation** (`'new'` + the airflow arrows in two beat groups, intake tying back to the attic's
+buried baffles from spread 3, no crew because the subject is the air), **The Walk** (Theo in
+grey, no hat, on his own roof; the drone's after pictures; "He checks the gnome too"), **The
+Sweep**, and **The Team** (the office in grey, Beto in the black lead tee, Curtis in the vest).
+
+**The sweep is the book's flagship mechanic made literal.** Spread 7's forty chips are real DOM
+elements that persisted across every page turn — and the magnet collects THOSE, not a re-scatter:
+thirty-four on the first pass, the six that thought they got away on the second, each dragged to
+the cart by a `--mx/--my` transform whose `!important` outranks the fling animation's forwards
+fill (importance beats animations in the cascade — this is the one place that rule earns its
+keep). The tally caption reuses spread 7's own `tally` machinery, so "All 40 of them" counts the
+real number, and a book opened straight at `#15` with no chips ever flung just reads captions
+that never name a count. Verified in Chromium: zero unswept chips at the end, the same-node
+assertion holding the whole way.
+
+`shingleArt` grew an `upTo` param for the half-done roof; `houseSVG` gained `'half'`/`'new'`
+plane bases; the ladder and airflow ported from the sheet. The last page holds — tapping past
+spread 16's final beat stays put.
+
+`pw_book.js`: the full sixteen-spread walk, ALL GREEN, page errors none. The sheet's footer note
+("these are scenes, not spreads") is rewritten — it stopped being true tonight.
+
+---
+
+## The team's real faces on spread 16 (2026-08-03, same night)
+
+Theo: *"Can we add the faces of the team instead of the generic people."* The die-cut portrait
+engine — drawn earlier this session from the real photographs and parked in `.claude/` so no
+likeness went public before he said so — is now IN the book, at his explicit request. Ported
+VERBATIM (the approved artwork; only the `<svg>` wrapper gained placement args), and spread 16
+is the classic company photo: two staggered rows of all twelve busts in front of the finished
+roof. Curtis's vest, clipboard and Clubmasters-free ginger scruff anchor the left; Beto's CREW
+LEAD tee reads; the four generic faces stay generic per the settled instruction. **No names ship
+in the public source** — the option-objects carry drawing parameters only; the roster mapping
+stays in the private sheet. The cardinal's home slot photobombs the right end of the back row,
+which is in character and stays.
+
+**The defect the render caught this time is a CSS class, recorded for the next nested viewport:**
+`.pop svg{width:100%;height:100%}` is a DESCENDANT selector, and the team spread is the first
+time `#popsvg` has ever contained nested `<svg>` elements — so the rule overrode every bust's
+width attribute (CSS beats presentation attributes) and all twelve rendered board-sized and
+stacked into giant overlapping hair. Every DOM assertion was green: twelve svgs, right x/y,
+right viewBox. `getBoundingClientRect` in the probe is what told the truth. Now `.pop > svg`,
+which is byte-equivalent for everything that existed before tonight.
+
+Verified: the full sixteen-spread walk ALL GREEN after the CSS change · twelve busts counted in
+`teamG` at phone and iPad · no surnames in the public file (asserted mechanically, not eyeballed)
+· rendered and eyeballed at both sizes.
+
+---
+
+## Theo, actually — the real cutout on The Walk (2026-08-03, same night)
+
+Theo sent a photograph of a cardboard standee of himself — real photo, cardboard edge and foot
+brace already part of the object — and asked to be put in "like this, but at scale." So spread
+14's drawn Theo is now the REAL one: background floodfilled off from the borders (the tan
+cardboard edge rings the whole cutout, hair included, and stops the flood — no threshold
+guesswork), trimmed, scaled to 42 units (the drawn crew's exact height), and embedded as a
+34 KB WebP data URI standing at the base of the ladder with a ground shadow. The one photograph
+in a fully drawn book, which is the signature and the joke at once. The uploaded original stays
+out of the repo; only the processed transparent cutout ships, at his explicit request.
+
+One process miss worth recording: the first spread-14 "verification" screenshot was actually
+spread 16 — a copied shot script whose URL replace silently didn't match (no assert on the
+replace). The rewritten script asserts the phase title before shooting. A screenshot of the
+wrong thing is worse than no screenshot, because it looks like proof.
+
+Verified: full sixteen-spread walk ALL GREEN · the `<image>` node present in `walkG` with the
+right rendered box at phone and iPad · rendered and eyeballed at both sizes.
+
+---
+
+## The second cutout — Theo and the super magnet on The Sweep (2026-08-04, past midnight)
+
+Theo sent a second standee photograph — him pushing the actual Little Giant magnet sweeper,
+debris speckles real on the bar — with the fact that makes the spread true: *"I always come out
+the next day and sweep with a super magnet."* The drawn figure and drawn cart on spread 15 are
+gone; the real cutout stands in their place, sized so the man reads the same 52 units as his
+walk standee, and the caption now carries the next-day commitment in nearly his words. The
+sweep acts still collect spread 7's real chips toward the bar's spot.
+
+Processing note for the next standee: the border flood cannot reach background pockets fully
+ENCLOSED by bright pixels — the magnet handle's A-frame held one (2,714 px of studio black
+fenced in by the white struts). A second pass finds remaining near-pure-black components
+(threshold under 22, size over 60) and clears them, reported before clearing so a dark shoe
+never silently vanishes. Both cutouts now ship; both originals stay out of the repo.
+
+Verified: full sixteen-spread walk ALL GREEN · zero unswept chips at the end · rendered and
+eyeballed before and after the sweep.
+
+---
+
+## Two strays and real depth — Theo's two-part correction (2026-08-04, past midnight)
+
+Theo, on the sweep spread: *"Not good, there should only be maybe one or two pieces of
+confetti."* His crew hauls the debris on install day — forty chips on the next-morning lawn
+told a false story about his own cleanup. And: *"did we stray away from making this look 3day
+pop up style?"* He was right twice.
+
+**The depth was genuinely missing.** `perspective` appeared ZERO times in popup.html — every
+`rotateX` fold was rendering as a flat vertical squash, not a fold. Fixed per the file's own
+header doctrine: perspective on each folding piece's DIRECT parent (`.scene` and `.popwrap`
+1000px, `.birdpop` and `.signpop` 500px, `.tag` 400px), never `preserve-3d`, which iOS
+silently flattens under overflow/filter/opacity. The mid-fold render now shows the sky
+panel's creased edge swinging toward the viewer and the deck piece foreshortening with real
+convergence.
+
+**The lawn now keeps only two.** Spread 7 still flings all 40 chips (that part is true — the
+tear-off is loud and messy). Past spread 7, `.strays` shows only chips 13 and 31; the other
+38 leave with the crew. The sweep's first pass collects one stray, the second pass gets the
+one that thought it got away — "the magnet runs twice" survives intact. The auto-tally
+caption is gone; the closer now reads "Zero. The crew took the other thirty-eight before
+dinner. Your lawn never knew."
+
+Verified: full sixteen-spread walk ALL GREEN · exactly 2 strays visible at spread 15, zero
+unswept at the end · mid-fold frame shot at 340ms confirms real 3D · before/after renders
+eyeballed.
+
+---
+
+## Four field notes from Theo — nails, pink bundles, the trailer as a destination (2026-08-04)
+
+Theo, iPad walkthrough verdict: *"Works great on iPad."* Then four fixes, ready to merge after:
+
+- **"6 nails / shingle always when possible."** Spread 12's tag read "Four nails a shingle.
+  Six in the wind rows." — now "Six nails a shingle. Every one, every time."
+- **Shingle bundles are pink** — Owens Corning's own wrap colour, not the generic blue-grey
+  they were drawn in. `bundlesG` (spread 6, `deliverySVG`) recoloured; the SAME hex
+  (`#4A5866`) is also spread 5's colour-board swatch and was left alone — scoped the edit to
+  the one `bundlesG` path, not a file-wide swap.
+- **The trailer is dark grey/black**, not the original light grey — `trailerG` lives inside
+  the shared `houseSVG()`, so recolouring it fixed spread 7 and spread 12 (which reveals the
+  same group) in one edit, by construction.
+- **"When the debris gets picked up it should show inside the trailer."** Spread 15 never
+  drew a trailer at all — the magnet's collected chips converged on an arbitrary point
+  (`0.55 * box.width`) and just faded there. Now `trailerG` shows alongside Theo's own
+  standee at the first sweep beat, and `sweep()` targets the trailer's REAL rendered
+  position (`getBoundingClientRect()` on `#trailerG`, not a hardcoded fraction) — it survives
+  the 3D fold and the `preserveAspectRatio` scaling by construction, with the old formula
+  kept as a fallback only.
+
+Verified: inline script re-extracted and `node --check`ed clean · full sixteen-spread walk
+ALL GREEN, unchanged from the previous round · all four spots rendered and eyeballed
+(pink bundles, black trailer on both 7 and 12, the "Six nails" tag, the trailer parked
+during the sweep).

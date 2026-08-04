@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>The Pop-Up Roof — all sixteen spreads</title>
+<style>
+  :root{--board:#E8DCC8;--shade:#D3C3A4;--cut-lt:#F4EDDD;--cut-dk:#C9B893;
+        --ink:#4A3524;--ink2:#6B5B47;--red-tx:#8F1620;
+        --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+        --serif:Georgia,"Times New Roman",serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:#CBB894;font-family:var(--sans);color:var(--ink)}
+  .sheet{max-width:1320px;margin:0 auto;background:var(--board);padding:30px 30px 44px}
+  h1{font:800 32px/1.1 var(--serif);margin:0 0 4px}
+  .sub{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;
+       color:var(--ink2);margin-bottom:8px}
+  .lede{font:16px/1.6 var(--sans);color:var(--ink2);max-width:74ch;margin:0 0 26px}
+  .lede b{color:var(--ink)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media (max-width:1000px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  .sp{background:var(--cut-lt);border:1px solid var(--cut-dk);border-radius:3px;
+      padding:0 0 11px;overflow:hidden}
+  .sp.done{border-color:var(--red-tx);box-shadow:0 0 0 1px var(--red-tx) inset}
+  .sp svg{display:block;width:100%;height:auto;background:#0E1522}
+  .cap{padding:9px 11px 0}
+  .no{font:700 10px var(--mono);letter-spacing:.14em;color:var(--ink2)}
+  .ti{font:800 15px var(--serif);margin-top:2px}
+  .wh{font:12.5px/1.4 var(--sans);color:var(--ink2);margin-top:3px}
+  .tag{display:inline-block;margin-top:6px;font:700 9px var(--mono);letter-spacing:.1em;
+       text-transform:uppercase;color:var(--cut-lt);background:var(--red-tx);
+       padding:2px 6px;border-radius:2px}
+  h2{font:800 18px var(--serif);margin:34px 0 10px}
+  .note{margin-top:12px;font:14.5px/1.6 var(--sans);max-width:76ch;color:var(--ink2)}
+  .note b{color:var(--ink)}
+  .note li{margin-bottom:7px}
+</style></head><body>
+<div class="sheet">
+  <h1>The Pop-Up Roof — all sixteen spreads</h1>
+  <div class="sub">Scenes drawn · the running order is the thing to correct now</div>
+  <p class="lede">
+    <b>Spread 7 is built and on your iPad.</b> These are the other fifteen, drawn
+    in the same folded vocabulary so the whole book can be read in one go. They
+    are <i>scenes, not spreads</i> — no pop hinge, no beats, no joke tabs yet.
+    That work is twelve to fourteen builds, and the expensive mistake is
+    spending it on the wrong running order. Move things, cut things, tell me
+    what a Cardinal roof actually does that I have missed.
+  </p>
+  <div class="grid" id="grid"></div>
+
+  <h2>What each one still needs</h2>
+  <div class="note" id="after"></div>
+</div>
+<script>
+(function(){
+'use strict';
+
+/* ── the folded palette, identical to spread 7 ──────────────────── */
+var LIT='#F0E6D4', SHD='#D6C4A6', TRIM='#8A7660',
+    GLASS='#8FB6CC', GLASSL='#B9D6E4',
+    DOOR='#8F1620', DOORS='#6B0F16', MET='#AEB4BA', METS='#878D93',
+    ROOF='#A8442F', ROOFS='#7E2E20', DECK='#C9B084', DECKS='#A18862',
+    RED='#C8202E', REDS='#7E1018', KRAFT='#E8DCC8', CUT='#C9B893',
+    ORANGE='#E8722A', NAVY='#243B53', GRASS='#7FA863', GRASSD='#43683A',
+    /* Theo, 3 Aug: "ice and water shield grey granulated, make synthetic felt
+       black or something to differentiate". They were #3B4A5A and #5E6166 —
+       two mid greys four steps apart, so spreads 9 and 10 read as the same
+       material photographed twice. Now the shield is a proper mineral grey
+       with grit on it and the underlayment is near-black, which is also what
+       the real products look like.
+       #9AA0A5 was the first grey and it computed 1.26:1 against the tan deck
+       it lies on — near-identical in value, separated only by hue, so the
+       course barely read. #6E767B is 2.21:1 against the deck and 3.29:1
+       against the felt, which is the balance that matters: it has to sit ON
+       the deck and be remembered as a different thing from the underlayment
+       two spreads later. The grit does the rest of the work locally. */
+    ICE='#6E767B', ICES='#565D62', FELT='#22262B', FELTS='#14171A',
+    INK='#4A3524', WHT='#F5F3EE', BLK='#1A1416', GOLD='#B8860B';
+
+/* Roof line, same geometry as the shipped spread. Reusing the number means a
+   thumbnail and the real spread can never disagree about where the roof is —
+   and when the shape changed, the two only stayed in step because both ask
+   these functions instead of carrying the apex as a literal. */
+/* ── HIP ROOF WITH A RIDGE, not a pyramid ────────────────────────
+   Theo, 3 Aug: "the drip edge doesn't make sense if the house is shaped as a
+   pyramid unless you make the house shape different… would be nice if we could
+   show a ridge vent as well as soffit intake. Would it be too difficult to
+   change the shape of the house?"
+
+   Not difficult, and it unblocks three things at once. A pyramid has no ridge
+   and no rake, so a ridge vent had nowhere to live, the drip edge story was
+   thin, and spread 13 was promising a ridge that did not exist. A hip roof
+   with a ridge is also just the commonest real roof in Dayton.
+
+   Eave y=100 from x=34 to 266. RIDGE y=28 from x=104 to 196. The two sloping
+   edges are still HIPS and still take cap shingles; the ridge between them
+   takes the vent and its own cap run. Everything laid on the roof — sheets,
+   ice course, felt, shingle courses, grit — reads its bounds from these two
+   functions, so changing the shape here changed the whole book at once. */
+function roofY(x){
+  /* THE T — Theo's pick from five shapes, 3 Aug. A side-gable MAIN ROOF:
+     one rectangular band, eave y=100 from x=30 to 270, ridge y=44 across the
+     full width. Straight-on a side gable IS a rectangle — the slope runs
+     away from the viewer. The front cross-gable WING (see wing()) sits on
+     top of this plane and makes the two valleys; it does not change the
+     band. So roofY is a constant, and everything that asks it lines up by
+     construction — which is the literal thing Theo asked for. */
+  return 44;
+}
+// how wide the roof is at a given height — used to trim anything laid on it
+function spanAt(y){ return [30, 270]; }
+/* how wide the roof is at a given height — on the T it is the full band,
+   which is exactly why everything lines up */
+// one step down for the shaded facet — never a second palette
+function dk(h){
+  var n = parseInt(h.slice(1), 16);
+  return '#' + ((1 << 24) + (Math.round((n >> 16 & 255) * 0.72) << 16) +
+                (Math.round((n >> 8 & 255) * 0.72) << 8) +
+                 Math.round((n & 255) * 0.72)).toString(16).slice(1);
+}
+
+/* THE WALL'S LIGHT/SHADE SPLIT IS 176, NOT 150. Theo, 3 Aug: "the door is in
+   the middle on a corner? the grey line is off" — both symptoms, one cause.
+   The split had been at 150, which is the ROOF APEX, and the door spans
+   136-164, so the boundary ran straight down the middle of the door and read
+   as a building corner with a door wrapped round it. It took the gutter's
+   shaded half with it, which is the grey line.
+   176 is what the shipped spread 7 uses, and it clears the door entirely and
+   falls between the two windows. The roof facets still meet at 150 — that is
+   the apex and it is a different thing. */
+var SPLIT = 176;
+
+/* ── sky ─────────────────────────────────────────────────────────
+   Theo asked for the day to move: dark in the morning, blue by midday,
+   warm at the end. The book runs across more than one day, so the sky is
+   how you know which. */
+var SKY={
+  dawn:['#141C2B','#3A3346','#6B4B41'],
+  early:['#1E2E45','#4A5B72','#9A7A5E'],
+  day:['#2E5C8A','#6E9AC0','#BBD3E2'],
+  noon:['#3572A8','#84B2D2','#D6E6EF'],
+  dusk:['#1F2E4A','#7A4E46','#D08A4E'],
+  night:['#0B1220','#16233A','#2B3A52']
+};
+var UID=0;
+function sky(k){
+  var c=SKY[k]||SKY.day, id='sk'+(++UID);
+  return '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0" stop-color="'+c[0]+'"/><stop offset=".62" stop-color="'+c[1]+'"/>'+
+    '<stop offset="1" stop-color="'+c[2]+'"/></linearGradient></defs>'+
+    '<path d="M0,0 L300,0 L300,150 L0,150 Z" fill="url(#'+id+')"/>';
+}
+/* Mineral grit for the ice-and-water shield. Deterministic — a texture that
+   reshuffled between renders would read as a rendering bug, the same reason
+   the shipped spread's grass and chips carry no Math.random. Each speck is
+   placed against spanAt so none lands off the roof. */
+function grit(seed, n, y0, y1){
+  var s='', r=seed;
+  function rnd(){ r=(r*1103515245+12345)&0x7fffffff; return r/0x7fffffff; }
+  for(var i=0;i<n;i++){
+    var y=y0+rnd()*(y1-y0), sp=spanAt(y), x=sp[0]+2+rnd()*(sp[1]-sp[0]-4);
+    s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(0.6+rnd()*0.7).toFixed(2)+
+       '" fill="'+(rnd()<0.5?'#5C6165':'#C3C8CC')+'" opacity=".8"/>';
+  }
+  return s;
+}
+/* ── the drip edge, and the gutter apron under it ────────────────
+   Theo, 3 Aug: "your missing the gutter apron / drip edge part make that
+   white". It was missing outright — the deck simply ended at the eave.
+
+   Two pieces, both white metal and both real: the APRON along the eave,
+   which is the wide one that laps into the gutter, and the RAKE drip edge
+   running up both sloping edges. It used to shade at 150 because that was
+   where the pyramid's two facets met. There is no facet edge there any more,
+   and the apron is one straight horizontal band lying directly on the gutter
+   — so it turns where the gutter turns, at 176.
+
+   It goes on from the bare deck onward and stays visible under everything
+   after it, which is also the order it goes on in. */
+function dripEdge(){
+  var W='#F2F4F5', WS='#D2D7DA', E='#98A0A5';
+  var s='';
+  /* NO RAKE EDGE. It was here and it was wrong: Theo pointed out this roof is a
+     PYRAMID, so the two sloping edges are HIPS, not rakes. A rake only exists
+     on a gable. A hip carries cap shingles — see hipCaps — and putting white
+     drip edge up it was drawing a gable detail on a hip roof.
+     The eave apron stays, because the eave is real. */
+  s+='<path d="M31,97.2 L269,97.2 L269,101.8 L31,101.8 Z" fill="'+W+
+     '" stroke="'+E+'" stroke-width=".7"/>';
+  s+='<path d="M'+SPLIT+',97.2 L269,97.2 L269,101.8 L'+SPLIT+',101.8 Z" fill="'+WS+'"/>';
+  return s;
+}
+
+/* ── ridge vent, and the air that uses it ────────────────────────
+   Theo, 3 Aug: "would be nice if we could show a ridge vent somehow as well as
+   soffit intake. Ventilation being important. Showing airflow."
+
+   This is why the roof shape had to change. A ridge vent needs a ridge; a
+   pyramid has none. Now there is one, 104 to 196, and the vent sits proud of
+   it with the cap shingles laid over the top — which is exactly how it looks
+   on a finished roof: you see the raised line, not the vent itself.
+
+   The SYSTEM is the point, not the parts. Air in low at the soffit, up the
+   underside of the deck, out high at the ridge. It only works if both ends
+   exist, which is why intake and exhaust are drawn as one diagram and never
+   separately. */
+function ridgeVent(){
+  /* absorbed into ridgeAndRakes — kept as a no-op so nothing dangles */
+  return '';
+}
+function airflow(){
+  var AIR = '#8FD4E8', s = '';
+  function arrow(d, head){
+    return '<path d="' + d + '" fill="none" stroke="' + AIR + '" stroke-width="2.2" ' +
+           'stroke-linecap="round" opacity=".9"/>' +
+           '<path d="' + head + '" fill="' + AIR + '" opacity=".9"/>';
+  }
+  // intake at both soffits, drawn coming from OUTSIDE the house so it reads as
+  // air entering rather than air already in the attic
+  s += arrow('M18,120 C26,116 34,112 44,107.5',  'M44,107.5 L37,108.6 L40.2,112.6 Z');
+  s += arrow('M282,120 C274,116 266,112 256,107.5','M256,107.5 L263,108.6 L259.8,112.6 Z');
+  // up the band to the ridge, both free zones (the wing owns the middle)
+  s += arrow('M56,96 C62,80 68,62 74,48',  'M74,48 L69.4,53.6 L76.6,55.4 Z');
+  s += arrow('M244,96 C238,80 232,62 226,48','M226,48 L230.6,53.6 L223.4,55.4 Z');
+  // and out at the ridge vent
+  s += arrow('M84,34 C84,26 84,22 84,16', 'M84,16 L80,23 L88,23 Z');
+  s += arrow('M216,34 C216,26 216,22 216,16', 'M216,16 L212,23 L220,23 Z');
+  return s;
+}
+
+/* ── hip and ridge cap, over both hips ────────────────────────────
+   Theo, 3 Aug: "since the roof is shaped like a pyramid put the hip and ridge
+   shingles over the hips since it's visible." Same function as popup.html.
+   Laid eave-to-peak so each cap laps the one below, which is how they go on. */
+function ridgeAndRakes(blend){
+  /* What hipCaps used to be, renamed because the hips are gone — a name is
+     not a contract. White rake boards up both gable ends, the ridge vent
+     proud across the top, and the cap run over it, split lit/shaded at
+     SPLIT like every other material. */
+  var B = BLEND[blend] || BLEND.onyx, F = B.F, S = B.S, out = '';
+  out += '<path d="M30,44 L32.4,44 L32.4,97 L30,97 Z" fill="#F2F4F5" stroke="#98A0A5" stroke-width=".6"/>';
+  out += '<path d="M267.6,44 L270,44 L270,97 L267.6,97 Z" fill="#E4E7E9" stroke="#98A0A5" stroke-width=".6"/>';
+  out += '<path d="M34,38 L266,38 L266,44 L34,44 Z" fill="#3B4550"/>';
+  out += '<path d="M34,38.6 L266,38.6" stroke="#59636E" stroke-width=".7" fill="none"/>';
+  var CW = 8.6;
+  for(var x = 30, i = 0; x < 270; x += CW, i++){
+    var xe = Math.min(x + CW, 270), tone = F[i % 4], sh = x >= SPLIT;
+    out += '<path d="M' + x.toFixed(1) + ',40.9 L' + xe.toFixed(1) + ',40.9 L' +
+           xe.toFixed(1) + ',47.1 L' + x.toFixed(1) + ',47.1 Z" fill="' +
+           (sh ? dk(tone) : tone) + '"/>';
+    out += '<path d="M' + x.toFixed(1) + ',40.9 L' + x.toFixed(1) + ',47.1" fill="none" stroke="' +
+           (sh ? dk(S) : S) + '" stroke-width="1.3"/>';
+  }
+  return out;
+}
+
+/* ── OC Onyx Black, dimensional ───────────────────────────────────
+   Mirrors the function now shipping in popup.html — same geometry, same
+   blend, so a thumbnail and the real spread cannot disagree about what a
+   Cardinal roof looks like. (The two files each carry their own copy of
+   house/fig/bird already; this preview is standalone by design.)
+
+   Owens Corning Duration is a LAMINATED shingle, and what makes one read
+   three-dimensional is the hard shadow under every course butt where the
+   second layer stands proud. Onyx Black is a blend — four field tones cycling
+   per tab on (course*3 + tab), so the pattern never lines up vertically.
+   `from`/`to` let a half-shingled roof use the same courses as a finished one
+   rather than a second way of drawing shingles. */
+var BLEND = {
+  /* Theo, 3 Aug: "maybe make the roof duration Brownwood." So the blend is
+     named rather than a boolean — OC sells more than one and the book will
+     want to show whichever Cardinal is putting on.
+     onyxOld is the roof coming OFF: greyer and flatter, the way one that has
+     lost its granules actually looks. Keeping the old roof black and the new
+     one brown is what makes three distinct states out of the sequence —
+     black roof, tan deck, brown roof — instead of two warm mid-tones either
+     side of a warm deck. */
+  onyxOld:   { F:['#3B4147','#2A2E33','#484E55','#222629'], S:'#191C1F', E:'#5A6066' },
+  onyx:      { F:['#2E343B','#1E2227','#3E454C','#171A1E'], S:'#0D1013', E:'#525A62' },
+  brownwood: { F:['#6B4F35','#4E3826','#8A6B4A','#3D2C1D'], S:'#241811', E:'#A5825C' }
+};
+function shingleArt(blend, from, to, starter){
+  /* Rectangle courses for the T: starter at the eave, then 8 courses of 6.5
+     landing exactly on the ridge (96 - 8*6.5 = 44). Same vocabulary as the
+     hip version — tab cycle, laminate shadow, lit/shaded split at SPLIT —
+     with the convergence arithmetic gone, because there is nothing to
+     converge on. */
+  var B = BLEND[blend] || BLEND.onyx;
+  var F = B.F, SHADOW = B.S, EDGE = B.E;
+  var SH = 2.4, out = '';
+  var ST = starter ? 4 : 0, BASE = 100 - ST, CH = 6.5, TW = 15;
+  function band(y0, y1, tone){
+    return '<path d="M30,'+y0+' L'+SPLIT+','+y0+' L'+SPLIT+','+y1+' L30,'+y1+' Z" fill="'+tone+'"/>'+
+           '<path d="M'+SPLIT+','+y0+' L270,'+y0+' L270,'+y1+' L'+SPLIT+','+y1+' Z" fill="'+dk(tone)+'"/>';
+  }
+  if(starter && (from || 0) === 0){
+    out += band(BASE, 100, F[3]);
+    out += '<path d="M30,'+BASE+' L270,'+BASE+'" fill="none" stroke="'+SHADOW+'" stroke-width="1.2"/>';
+  }
+  for(var c = (from || 0); c < (to === undefined ? 8 : to); c++){
+    var yb = BASE - c * CH, yt = yb - CH;
+    out += band(yt, yb, F[1]);
+    var stag = (c % 2) * (TW / 2);
+    for(var x = 30 + stag, i = 0; x < 267; x += TW, i++){
+      var xe = Math.min(x + TW - 1.2, 270);
+      if(xe - x < 4) continue;
+      var tone = F[(c * 3 + i) % 4];
+      out += '<path d="'+'M'+x.toFixed(1)+','+yt+' L'+xe.toFixed(1)+','+yt+' L'+
+             xe.toFixed(1)+','+(yb - SH)+' L'+x.toFixed(1)+','+(yb - SH)+
+             ' Z" fill="'+(x >= SPLIT ? dk(tone) : tone)+'"/>';
+    }
+    out += band(yb - SH, yb, SHADOW);
+    out += '<path d="M30,'+yt+' L270,'+yt+'" fill="none" stroke="'+EDGE+'" stroke-width=".8" opacity=".5"/>';
+  }
+  return out;
+}
+function ground(dark){
+  return '<path d="M0,150 L300,150 L300,190 L0,190 Z" fill="'+(dark?GRASSD:GRASS)+'"/>'+
+         '<path d="M0,150 L300,150 L300,168 L0,168 Z" fill="#000" opacity=".12"/>';
+}
+
+/* ── the house, at whatever stage the roof happens to be ─────────
+   ONE house function with a roof state, not eight houses. The states are
+   the actual sequence of a tear-off: shingles → bare deck → ice shield at
+   the eaves → felt → half shingled → finished. */
+
+/* ── THE FRONT DORMER ─────────────────────────────────────────────
+   Theo, 3 Aug: "If you put a gable in the front then make it a dormer? Looks
+   weird." Then, after seeing four placements: "2 ... put dormer closer to the
+   middle of the house tho."
+
+   It is not only a shape fix, and that is why it was worth the build:
+     · Spread 9's caption has always promised "every eave and valley" over a
+       roof with no valley on it. The dormer cheeks ARE that valley, and the
+       ice shield climbs them.
+     · Spread 11 is "The Flashing" and had a chimney and a pipe boot. Step
+       flashing up a dormer cheek is the detail every roofer argues about.
+     · It breaks a very large blank slope, which is what looked weird.
+
+   Straight on you do not see a dormer's cheeks or its valleys — they are
+   edge-on. What you see is the gable face, the rake board, the window, and
+   the shadow where it lands on the main roof. That is what is drawn.
+
+   DX is 140: ten units left of centre. Dead centre sits under the ridge vent
+   and dead over the door and reads like a symmetry no real house has; 124
+   read as deliberately shoved to one side. */
+/* ── PLACEMENT AND PITCH, and I got the placement wrong once ──────
+   Theo, 3 Aug, in order: option 2 was x=124 and "put dormer closer to the
+   middle of the house tho" · then "dead center wasn't what I meant, as a pop
+   up the dormer should be a little over to the left" · then, after I moved it
+   to 150 anyway, "Dormer should be over to the left and similar to the house
+   with the profile view."
+
+   MY ERROR, recorded so it is not repeated: I read "equal distance from both
+   left and right hip" as a geometric spec — spanAt IS symmetric about 150, so
+   that phrase does pick 150 exactly — and built the clever reading instead of
+   the plain one. He had already said "a little over to the left" twice by
+   then. 124 was too far left, 150 too central; DX = 134 sits between them and
+   is the third correction on this one number. If it needs to go further, move
+   this constant and nothing else.
+
+   PITCH: the gable now rises 26 over a run of 25, which is 46.1 degrees
+   against the main roof's 45.8. A dormer whose roof is visibly shallower than
+   the roof it sits on reads as a bolted-on box, and matching the pitch is
+   what "similar to the house" means on a real elevation. Eave dropped 60 to
+   64 to buy that rise without crowding the ridge vent — peak 38 still leaves
+   10 units of roof above it.
+
+   50 wide by 46 tall. Base at 84 lands on the eave ice course at 86 on
+   purpose, so the valley membrane and the eave membrane read as one
+   continuous sheet, which is what they are. */
+/* DRM/DX retired — the WING (cx 140, half 38, peak 56) replaced the dormer */
+
+/* ── THE CHIMNEY, IN EVERY STATE ─────────────────────────────────
+   Theo, 3 Aug: "since there is a chimney lets keep the chimney in the
+   progression." It had been drawn only on the flashing spread, which read as
+   a chimney being built for one day and demolished the next. Masonry
+   persists; it is in house() now, every state except 'none'.
+   Step and counter flashing are drawn with it always — a standing chimney is
+   a flashed chimney, even while the field around it is bare deck. */
+function chimney(){
+  /* A CHIMNEY THAT LOOKS LIKE A CHIMNEY — Theo, 3 Aug: "make the chimney
+     look like a chimney with brick lines." Shaft in two brick tones with
+     mortar coursing (staggered head joints, the way brick is actually
+     laid), a concrete crown, a flue, the base shadow that sits it on the
+     roof, and the step + counter flashing it has always carried. */
+  var MORT='#C9B7A2', K='#E8DCC8';
+  var s='';
+  s+='<path d="M183,86 L209,86 L209,89.5 L183,89.5 Z" fill="#000" opacity=".24"/>';
+  s+='<path d="M186,50 L206,50 L206,86 L186,86 Z" fill="#8A5142" stroke="'+K+'" stroke-width="1.6" stroke-linejoin="round"/>';
+  s+='<path d="M196,50 L206,50 L206,86 L196,86 Z" fill="#6E4034"/>';
+  s+='<g stroke="'+MORT+'" stroke-width=".7" opacity=".55">';
+  for(var by=54.5; by<86; by+=4.5) s+='<path d="M186,'+by.toFixed(1)+' L206,'+by.toFixed(1)+'"/>';
+  var r=0;
+  for(var y0=50; y0<86; y0+=4.5){
+    var y1=Math.min(86,y0+4.5), off=(r%2)*3.3; r++;
+    for(var bx=189.3+off; bx<205.6; bx+=6.7)
+      s+='<path d="M'+bx.toFixed(1)+','+y0.toFixed(1)+' L'+bx.toFixed(1)+','+y1.toFixed(1)+'"/>';
+  }
+  s+='</g>';
+  s+='<path d="M184,46 L208,46 L208,50 L184,50 Z" fill="#B7AC9C" stroke="'+K+'" stroke-width="1.2" stroke-linejoin="round"/>';
+  s+='<path d="M196,46 L208,46 L208,50 L196,50 Z" fill="#9C9184"/>';
+  s+='<path d="M191,42.5 L201,42.5 L201,46 L191,46 Z" fill="#5A4A42"/>';
+  s+='<path d="M182,86 L186,82 L186,62 L182,66 Z" fill="#AEB4BA"/>';
+  s+='<g fill="#AEB4BA" stroke="'+K+'" stroke-width=".9">'+
+     '<path d="M206,60 L214,66 L214,72 L206,66 Z"/><path d="M206,70 L214,76 L214,82 L206,76 Z"/></g>';
+  return s;
+}
+
+/* ── MISSING SHINGLES on the roof that is coming off ─────────────
+   Theo, 3 Aug: "during the first few pics of tear off the roof should look
+   weathered and worn, maybe a few shingles missing." The blend was already
+   the weathered one; the gaps are what say a roof is DONE, not merely dark.
+   Each gap is one tab of the course grid (CH 8.5, BASE 96 — the same
+   arithmetic shingleArt lays), showing the black underlay beneath, with the
+   course above casting its shadow into the hole. Positions dodge the dormer
+   (109-159), the chimney (182-214) and stay inside spanAt at their height. */
+function wornGaps(){
+  /* Missing tabs on the roof that is coming off — re-laid for the T. The
+     free zones on the band are left of the wing (30-102), right of the
+     chimney (214-270), and the strip above the wing peak. Reveal is
+     weathered felt on the near-black field; black-on-black was invisible. */
+  var out = '', G = [[44,1],[70,3],[120,6],[222,2],[244,0]];
+  G.forEach(function(g){
+    var yb = 96 - g[1] * 6.5, yt = yb - 5.2, x = g[0];
+    out += '<path d="M'+x+','+yt.toFixed(1)+' L'+(x+15)+','+yt.toFixed(1)+' L'+(x+15)+','+yb.toFixed(1)+' L'+x+','+yb.toFixed(1)+
+           ' Z" fill="#4A443A"/>';
+    out += '<path d="M'+x+','+yt.toFixed(1)+' L'+(x+15)+','+yt.toFixed(1)+' L'+(x+15)+','+(yt+2).toFixed(1)+' L'+x+','+(yt+2).toFixed(1)+
+           ' Z" fill="#000" opacity=".5"/>';
+    out += '<path d="M'+(x+2)+','+(yb-1.4).toFixed(1)+' L'+(x+13)+','+(yb-1.4).toFixed(1)+
+           '" stroke="#2A2620" stroke-width=".8" fill="none"/>';
+  });
+  return out;
+}
+
+function dormerBox(cx){ return null; } /* retired with the dormer */
+/* ── THE FLOWER BEDS, so there is something to protect ────────────
+   Theo, 3 Aug: "what about tractor protect the flowers?" — phone-typed for
+   TARPS, corrected next message; the machine built off the typo is gone.
+   The beds had been a caption with nothing drawn under it. Two beds against the wall, tufts and
+   blooms, deterministic — the same bed every render. */
+function flowerBeds(spans, yTop, yBot){
+  var g = 9, s = '';
+  function rnd(){ g = (g * 1103515245 + 12345) & 0x7fffffff; return g / 0x7fffffff; }
+  var BLOOM = ['#C8202E', '#E8A33D', '#F2F4F5', '#C77FB0'];
+  spans.forEach(function(sp){
+    s += '<path d="M' + sp[0] + ',' + yBot + ' L' + sp[0] + ',' + (yTop + 1.5) +
+         ' Q' + ((sp[0] + sp[1]) / 2) + ',' + (yTop - 1.5) + ' ' + sp[1] + ',' + (yTop + 1.5) +
+         ' L' + sp[1] + ',' + yBot + ' Z" fill="#4C7A46"/>';
+    s += '<path d="M' + sp[0] + ',' + yBot + ' L' + sp[0] + ',' + (yBot - 2) +
+         ' L' + sp[1] + ',' + (yBot - 2) + ' L' + sp[1] + ',' + yBot + ' Z" fill="#3E6339"/>';
+    var n = Math.round((sp[1] - sp[0]) / 7);
+    for(var i = 0; i < n; i++){
+      var bx = sp[0] + 3 + rnd() * (sp[1] - sp[0] - 6);
+      var by = yTop + 1 + rnd() * (yBot - yTop - 3);
+      s += '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="1.3" fill="' +
+           BLOOM[i % 4] + '"/>';
+    }
+  });
+  return s;
+}
+
+function wing(o){
+  /* THE FRONT CROSS-GABLE — the dormer, grown to what it was pretending to
+     be. Its base is the eave, its wall is the house wall, the door lives
+     under it, and its two rakes against the main roof ARE the valleys the
+     book has been promising since spread 9 was captioned. Ice runs the
+     membranes up both rakes; flash hangs the step flashing on them. */
+  o = o || {};
+  var WX=140, WHALF=38, WPEAK=56, l=WX-WHALF, r=WX+WHALF;
+  var WLIT='#F0E6D4', WSHD='#D6C4A6', WTRIM='#8A7660';
+  function rakeX(y, side){ return WX + side * WHALF * (y - WPEAK) / (100 - WPEAK); }
+  var s='';
+  if(o.ice){
+    /* the valley membranes, BEFORE the face so they are roofed over */
+    s+='<path d="M'+(l-15)+',100 L'+(WX-3)+','+(WPEAK-1)+' L'+WX+','+(WPEAK+2)+' L'+l+',100 Z" fill="#6E767B"/>';
+    s+='<path d="M'+(r+15)+',100 L'+(WX+3)+','+(WPEAK-1)+' L'+WX+','+(WPEAK+2)+' L'+r+',100 Z" fill="#565D62"/>';
+    var g=17;
+    function rnd(){ g=(g*1103515245+12345)&0x7fffffff; return g/0x7fffffff; }
+    s+='<g fill="#C3C8CC" opacity=".8">';
+    for(var i=0;i<26;i++){
+      var t=rnd(), side=i%2?1:-1, yy=100-t*(100-WPEAK-4);
+      var gx=rakeX(yy, side)+side*(3+rnd()*9);
+      s+='<circle cx="'+gx.toFixed(1)+'" cy="'+yy.toFixed(1)+'" r="'+(0.6+rnd()*0.6).toFixed(2)+'"/>';
+    }
+    s+='</g>';
+  }
+  // the valleys as shadow on the main plane, always — the junction is real
+  s+='<path d="M'+(l-5)+',100 L'+(WX-4)+','+(WPEAK-1)+' L'+WX+','+(WPEAK+3)+' L'+l+',100 Z" fill="#000" opacity=".16"/>';
+  s+='<path d="M'+(r+5)+',100 L'+(WX+4)+','+(WPEAK-1)+' L'+WX+','+(WPEAK+3)+' L'+r+',100 Z" fill="#000" opacity=".22"/>';
+  s+='<path d="M'+l+',100 L'+WX+','+WPEAK+' L'+r+',100 Z" fill="'+WLIT+'"/>';
+  s+='<path d="M'+WX+','+WPEAK+' L'+r+',100 L'+WX+',100 Z" fill="'+WSHD+'"/>';
+  s+='<g stroke="'+WTRIM+'" stroke-width=".6" opacity=".35">';
+  for(var y=WPEAK+8; y<98; y+=6){
+    var w=WHALF*(y-WPEAK)/(100-WPEAK);
+    s+='<path d="M'+(WX-w).toFixed(1)+','+y+' L'+(WX+w).toFixed(1)+','+y+'"/>';
+  }
+  s+='</g>';
+  s+='<g fill="none" stroke="#E8DFCD" stroke-width="2.6" stroke-linejoin="round">'+
+     '<path d="M'+(l-3)+',101.4 L'+WX+','+(WPEAK-2.2)+' L'+(r+3)+',101.4"/></g>';
+  s+='<g fill="none" stroke="#B9AC93" stroke-width=".9">'+
+     '<path d="M'+(l-3)+',101.4 L'+WX+','+(WPEAK-2.2)+' L'+(r+3)+',101.4"/></g>';
+  var wy=WPEAK+(100-WPEAK)*0.34;
+  s+='<path d="M'+(WX-7)+','+wy.toFixed(1)+' L'+(WX+7)+','+wy.toFixed(1)+' L'+(WX+7)+','+(wy+11).toFixed(1)+
+     ' L'+(WX-7)+','+(wy+11).toFixed(1)+' Z" fill="#8FB6CC" stroke="'+WTRIM+'" stroke-width="1.2"/>';
+  s+='<path d="M'+WX+','+wy.toFixed(1)+' L'+WX+','+(wy+11).toFixed(1)+'" stroke="'+WTRIM+'" stroke-width="1.1" fill="none"/>';
+  if(o.flash){
+    s+='<g data-wing="1" stroke="#6E6558" stroke-width=".5">';
+    for(var i2=0;i2<5;i2++){
+      var fy=62+i2*7, fx1=rakeX(fy,-1), fx2=rakeX(fy,1);
+      s+='<path d="M'+(fx1-7).toFixed(1)+','+(fy+4.6)+' L'+(fx1-7).toFixed(1)+','+(fy+2)+
+         ' L'+fx1.toFixed(1)+','+fy+' L'+fx1.toFixed(1)+','+(fy+4.6)+' Z" fill="#C6CCD1"/>';
+      s+='<path d="M'+(fx2+7).toFixed(1)+','+(fy+4.6)+' L'+(fx2+7).toFixed(1)+','+(fy+2)+
+         ' L'+fx2.toFixed(1)+','+fy+' L'+fx2.toFixed(1)+','+(fy+4.6)+' Z" fill="#9EA5AB"/>';
+    }
+    s+='</g>';
+  }
+  return s;
+}
+
+/* ── THE CUTAWAY: THE LAYER STACK ─────────────────────────────────
+   Theo, 3 Aug: "Maybe do like a cutout after the roof is done also" — then
+   picked the layer stack over the attic section.
+
+   Everything the client paid for and will never see again, in the order it
+   goes on: deck, ice and water, felt, starter, shingle. Stepped so each one
+   shows, with a white cut edge so it reads as a section with thickness
+   rather than as five stripes painted on.
+
+   THE LEFT EDGE ASKS spanAt, IT DOES NOT CARRY A CONSTANT. The first pass
+   anchored every band at a fixed x=44 — and at x=44 this roof is at y=89.7,
+   not 100, so the bottom two layers hung off the slope and over the gutter.
+   Precisely the class the whole reshape has been about. */
+function cutLayers(x1){
+  var s = '', X1 = (x1 === undefined ? 118 : x1), BOT = 96, CH = 6.4;
+  var L = [['#C9B084','DECK'], ['#6E767B','ICE & WATER'], ['#22262B','FELT'],
+           ['#3D2C1D','STARTER'], ['#4E3826','SHINGLE']];
+  function lft(y, k){ return Math.max(spanAt(y)[0] + 3, 34 + k); }
+  s += '<path d="M'+lft(BOT,0).toFixed(1)+','+BOT+' L'+X1+','+BOT+' L'+X1+','+
+       (BOT - L.length * CH).toFixed(1)+' L'+lft(BOT - L.length * CH, 0).toFixed(1)+','+
+       (BOT - L.length * CH).toFixed(1)+' Z" fill="#000" opacity=".38"/>';
+  L.forEach(function(l, i){
+    var y0 = BOT - i * CH, y1 = y0 - CH, k = i * 7;
+    var a = lft(y0, k), b = lft(y1, k + 5);
+    s += '<path d="M'+a.toFixed(1)+','+y0+' L'+X1+','+y0+' L'+X1+','+y1+' L'+b.toFixed(1)+
+         ','+y1+' Z" fill="'+l[0]+'"/>';
+    s += '<path d="M'+a.toFixed(1)+','+y0+' L'+b.toFixed(1)+','+y1+
+         '" stroke="#F2ECDD" stroke-width="1.2" fill="none"/>';
+    s += '<text x="'+(X1 - 2)+'" y="'+(y0 - 1.7)+'" font-size="5" text-anchor="end" '+
+         'font-family="ui-monospace,monospace" font-weight="700" letter-spacing=".3" '+
+         'fill="#F7F2E6">'+l[1]+'</text>';
+  });
+  // one tab lifted at the cut — a cut with nothing lifted reads as a stain
+  s += '<path d="M'+X1+','+BOT+' L'+(X1+26)+','+BOT+' L'+(X1+21)+','+(BOT+9)+
+       ' L'+(X1-2)+','+(BOT+7)+' Z" fill="#4E3826"/>';
+  s += '<path d="M'+(X1+26)+','+BOT+' L'+(X1+21)+','+(BOT+9)+' L'+(X1+16)+','+(BOT+8.4)+
+       ' L'+(X1+20)+','+BOT+' Z" fill="#2E2114"/>';
+  s += '<path d="M'+X1+','+BOT+' L'+(X1-2)+','+(BOT+7)+'" stroke="#A5825C" stroke-width="1" fill="none"/>';
+  return s;
+}
+
+function house(o){
+  o=o||{};
+  var s='';
+  /* THE SOFFIT IS NOW A REAL SURFACE, because Theo wants the intake shown and
+     you cannot show intake without somewhere for it to come in. The roof
+     overhangs the wall, so under the fascia there is a horizontal underside —
+     that is the soffit, and it carries the vents. Drawn as a band wider than
+     the wall, which is what an overhang looks like from the front.
+     Wall top drops to 110 to make room; windows and door follow it down. */
+  s+='<path d="M28,104 L272,104 L272,110 L28,110 Z" fill="#C9BFAE"/>';
+  s+='<path d="M'+SPLIT+',104 L272,104 L272,110 L'+SPLIT+',110 Z" fill="#AFA593"/>';
+  // continuous intake, vented every few feet along the run
+  s+='<g fill="#6E6558">';
+  for(var vx=40;vx<262;vx+=16) s+='<path d="M'+vx+',105.6 L'+(vx+9)+',105.6 L'+
+     (vx+9)+',108.4 L'+vx+',108.4 Z"/>';
+  s+='</g>';
+  // walls
+  s+='<path d="M40,110 L260,110 L260,150 L40,150 Z" fill="'+LIT+'"/>';
+  s+='<path d="M'+SPLIT+',110 L260,110 L260,150 L'+SPLIT+',150 Z" fill="'+SHD+'"/>';
+  // lap siding
+  s+='<g stroke="'+TRIM+'" stroke-width=".7" opacity=".35">';
+  for(var y=117;y<150;y+=8) s+='<path d="M40,'+y+' L260,'+y+'"/>';
+  s+='</g>';
+  // windows
+  [[64,116],[196,116]].forEach(function(w){
+    s+='<path d="M'+w[0]+','+w[1]+' L'+(w[0]+30)+','+w[1]+' L'+(w[0]+30)+','+(w[1]+24)+
+       ' L'+w[0]+','+(w[1]+24)+' Z" fill="'+GLASS+'" stroke="'+TRIM+'" stroke-width="1.6"/>';
+    s+='<path d="M'+w[0]+','+w[1]+' L'+(w[0]+30)+','+w[1]+' L'+w[0]+','+(w[1]+24)+' Z" fill="'+GLASSL+'"/>';
+    s+='<g stroke="'+TRIM+'" stroke-width="1.6">'+
+       '<path d="M'+(w[0]+15)+','+w[1]+' L'+(w[0]+15)+','+(w[1]+24)+'"/>'+
+       '<path d="M'+w[0]+','+(w[1]+12)+' L'+(w[0]+30)+','+(w[1]+12)+'"/></g>';
+  });
+  // panelled door
+  s+='<path d="M136,120 L164,120 L164,150 L136,150 Z" fill="'+DOOR+'"/>';
+  /* The door's own facet is OFF-CENTRE at 152, matching popup.html. Dead
+     centre is the same fold-down-the-middle Theo caught on the wall, just at
+     door scale — a panelled door lit from upper left does not split in half. */
+  s+='<path d="M152,120 L164,120 L164,150 L152,150 Z" fill="'+DOORS+'"/>';
+  s+='<g fill="none" stroke="'+DOORS+'" stroke-width="1.2" opacity=".7">'+
+     '<path d="M141,124 L159,124 L159,133 L141,133 Z"/>'+
+     '<path d="M141,137 L159,137 L159,146 L141,146 Z"/></g>';
+  s+='<circle cx="159" cy="136" r="1.6" fill="'+MET+'"/>';
+
+  /* ── the roof, by stage ──
+     ONE trapezoid now, not two triangles meeting at a point: eave 34-266 at
+     y=100, ridge 104-196 at y=28. Straight on you see one slope, so the light
+     splits at SPLIT with the wall rather than at a facet edge that no longer
+     exists — which also ends the oddity of the roof shading at 150 while the
+     wall shaded at 176. */
+  function plane(fa, fb){
+    return '<path d="M30,100 L30,44 L'+SPLIT+',44 L'+SPLIT+',100 Z" fill="'+fa+'"/>'+
+           '<path d="M'+SPLIT+',100 L'+SPLIT+',44 L270,44 L270,100 Z" fill="'+fb+'"/>';
+  }
+  var st=o.roof||'shingle';
+  if(st==='none'){ /* nothing — used before the house is the subject */ }
+  // OLD roof: Onyx Black, weathered — granule loss reads greyer and flatter
+  else if(st==='shingle') s+=plane('#22262B','#181B1F')+shingleArt('onyxOld',0,8,true)+
+                            wornGaps()+dripEdge()+ridgeAndRakes('onyxOld');
+  // NEW roof: OC Duration BROWNWOOD, crisp off the bundle, over its starter
+  else if(st==='new')     s+=plane('#4E3826','#38281B')+dripEdge()+
+                            shingleArt('brownwood',0,8,true)+ridgeAndRakes('brownwood');
+  else if(st==='bare'){
+    /* 4x8 SHEETS. Theo, 3 Aug — same treatment as the shipped spread 7, and
+       the same reason: a flat plane with shingle courses on it reads as a roof
+       that changed colour, not as decking. 40 x 18 is 8:4, the real ratio, and
+       the joints stagger a half sheet per course. Lines are trimmed against
+       roofY rather than clipped, because roofY IS the roof edge. */
+    s+=plane(DECK,DECKS);
+    var SHW=40, SHH=18;   // spanAt is module-scope now, shared with the ice course
+    /* NO DRIP EDGE HERE ON PURPOSE. The order is tear off, sound the deck,
+       THEN the apron — so on the decking spread it genuinely is not on yet.
+       It first appears on the ice-and-water spread, under the shield.
+       (An earlier line here set o.__drip, which nothing read. Dead flag.) */
+    s+='<g fill="none" stroke="#8E7752" stroke-width="1.1" opacity=".55">';
+    for(var cc=1;cc<4;cc++){ var cy=100-cc*SHH, sp=spanAt(cy);
+      s+='<path d="M'+sp[0].toFixed(1)+','+cy+' L'+sp[1].toFixed(1)+','+cy+'"/>'; }
+    for(var cr=0;cr<4;cr++){
+      var bot=100-cr*SHH, top=Math.max(100-(cr+1)*SHH, 44), offx=(cr%2)*(SHW/2);
+      /* origin 30 on the T — the band starts there, and on a rectangle every
+         joint runs full height with nothing to trim against */
+      for(var jx=30+offx;jx<270;jx+=SHW){
+        if(jx<=30||jx>=270) continue;
+        s+='<path d="M'+jx+','+bot+' L'+jx+','+top.toFixed(1)+'"/>'; }
+    }
+    s+='</g>';
+    // the bad ones, sprayed. Wash carries the colour, the X carries the
+    // contrast — #7E1018 is 5.08:1 on the lit deck and 3.15:1 on the shaded.
+    /* bottom row only — the dormer and the chimney own the upper rows,
+       and a sprayed sheet nobody can see is a mark that was never made */
+    /* re-laid for the T: the wing owns 102-178 and the chimney 182-214, so
+       the visible bottom-row sheets are left of the wing and right of the
+       chimney. Grid origin 30. */
+    (o.bad||[[30,82],[70,82],[230,82]]).forEach(function(p){
+      s+='<path d="M'+p[0]+','+p[1]+' L'+(p[0]+SHW)+','+p[1]+' L'+(p[0]+SHW)+','+(p[1]+SHH)+
+         ' L'+p[0]+','+(p[1]+SHH)+' Z" fill="'+RED+'" opacity=".4"/>';
+      s+='<g fill="none" stroke="#7E1018" stroke-width="3.2" stroke-linecap="round">'+
+         '<path d="M'+(p[0]+7)+','+(p[1]+4)+' L'+(p[0]+SHW-7)+','+(p[1]+SHH-4)+'"/>'+
+         '<path d="M'+(p[0]+SHW-7)+','+(p[1]+4)+' L'+(p[0]+7)+','+(p[1]+SHH-4)+'"/></g>';
+    });
+    if(o.drip) s+=dripEdge();
+  }
+  else if(st==='ice'){
+    s+=plane(DECK,DECKS);
+    /* A COURSE ALONG THE EAVE, TRIMMED TO THE ROOF. The old band ran
+       M34,100 L54,88 L266,88 L266,100 — its top-right corner at x=266 is
+       twenty units OUTSIDE the roof, which at y=88 only reaches 246.7. It
+       spilled into the sky and nothing caught it. spanAt gives the real edge. */
+    /* DRIP EDGE FIRST at the eave — the apron goes UNDER the ice and water,
+       which is the one bit of the order people get backwards. */
+    s+=dripEdge();
+    s+='<path d="M30,100 L30,86 L'+SPLIT+',86 L'+SPLIT+',100 Z" fill="'+ICE+'"/>';
+    s+='<path d="M'+SPLIT+',100 L'+SPLIT+',86 L270,86 L270,100 Z" fill="'+ICES+'"/>';
+    /* GRANULATED, because that is what the mineral surface is. Two tones of
+       grit so it reads as texture rather than as noise, deterministic so it
+       cannot reshuffle between renders. The wing's own membranes come with
+       wing({ice:true}) and read as one sheet with this course. */
+    s+=grit(31, 150, 86, 100);
+  }
+  else if(st==='felt'){
+    /* THE FELT DOES NOT GO OVER THE ICE AND WATER — Theo, 3 Aug, and he is
+       right: the shield is the eave course and the underlayment starts ABOVE
+       it and laps down onto it, it does not bury it. The old version covered
+       the whole deck and wiped the shield out entirely, which made spread 9
+       look like work that got undone on spread 10.
+       So: deck, apron, shield at the eave, felt from y=86 up. */
+    s+=plane(DECK,DECKS)+dripEdge();
+    s+='<path d="M30,100 L30,86 L'+SPLIT+',86 L'+SPLIT+',100 Z" fill="'+ICE+'"/>';
+    s+='<path d="M'+SPLIT+',100 L'+SPLIT+',86 L270,86 L270,100 Z" fill="'+ICES+'"/>';
+    s+=grit(31,90,86,100);
+    /* THE FELT IS A BAND on the T — ridge to shield, full width, split at
+       SPLIT like everything else. The trapezoid was hip geometry. */
+    s+='<path d="M30,86 L30,44 L'+SPLIT+',44 L'+SPLIT+',86 Z" fill="'+FELT+'"/>';
+    s+='<path d="M'+SPLIT+',86 L'+SPLIT+',44 L270,44 L270,86 Z" fill="'+FELTS+'"/>';
+    s+='<g fill="none" stroke="#7A8085" stroke-width=".8" opacity=".55">';
+    [72,58,44].forEach(function(yy){ var sp=spanAt(yy);
+      s+='<path d="M'+sp[0].toFixed(1)+','+yy+' L'+sp[1].toFixed(1)+','+yy+'"/>'; });
+    s+='</g>';
+  }
+  else if(st==='half'){
+    /* Four courses on, four to go. SAME shingleArt as a finished roof, just
+       fewer courses — a second way of drawing a half-done roof is how the
+       book starts to look like two books stapled together.
+       THE FELT ABOVE NEEDS ITS PRINTED LINES. Both materials are now
+       near-black by design (Theo's call), so with the shingles alone the
+       spread showed no difference between the done half and the undone half —
+       the one thing the spread exists to show. The lines are what tells them
+       apart, and they are what is really printed on the roll. */
+    s+=plane(FELT,FELTS)+dripEdge();
+    s+='<g fill="none" stroke="#7A8085" stroke-width=".8" opacity=".6">';
+    [58,44].forEach(function(yy){ var sp=spanAt(yy);
+      s+='<path d="M'+sp[0].toFixed(1)+','+yy+' L'+sp[1].toFixed(1)+','+yy+'"/>'; });
+    s+='</g>';
+    s+=shingleArt('brownwood',0,4,true);
+    /* THE LAYER STACK LIVES HERE FOR NOW. Theo picked it and said "after the
+       roof is done"; this spread's own caption is "one lap over the next",
+       which is exactly what the stack shows in section. It wants to be its
+       OWN spread and that is the 16-becomes-18 question, which is his and is
+       still open — so it goes on an existing spread rather than renumbering
+       a book whose built spread ships titled "of 16". */
+    /* 96: the wing's left edge is 102 */
+    if(o.cut) s+=cutLayers(96);
+  }
+  /* THE DORMER GOES ON AFTER THE ROOF MATERIALS, so the courses, the shield
+     and the felt all run BEHIND it — which is where they physically are. No
+     clipping needed and no overDormer() test: draw order is the containment.
+     The cheeks carry whatever that stage carries. */
+  if(st!=='none') s+=chimney();
+  if(st!=='none') s+=wing({ ice: (st==='ice'||st==='felt'), flash: o.flash });
+  /* the flower beds, both sides of the door — what the tear-off tarps
+     cover. Clear of the door (136-164) and downspout (254). */
+  if(st!=='none') s+=flowerBeds([[48,96],[184,248]], 144.5, 150);
+  if(st!=='none'){
+    // the five hairlines that used to live here were a strip shingle;
+    // shingleArt draws the courses now, with the laminate shadow that
+    // actually makes them read three-dimensional
+    // gutter + downspout, always
+    s+='<path d="M28,100 L272,100 L272,104 L28,104 Z" fill="'+MET+'"/>';
+    s+='<path d="M'+SPLIT+',100 L272,100 L272,104 L'+SPLIT+',104 Z" fill="'+METS+'"/>';
+    /* THE DOWNSPOUT GOES ON THE WALL, not next to it. It ran 266-272 while
+       the wall ends at 260, so on all sixteen spreads it stood six units
+       clear of the house and read as a post in the yard. The gutter is meant
+       to overhang; the pipe that comes off it is not. */
+    s+='<path d="M254,110 L260,110 L260,150 L254,150 Z" fill="'+METS+'"/>';
+  }
+  /* THE o.ridge CHEVRON IS GONE, and it was two bugs in one shape. It was
+     drawn for the PYRAMID — a band straddling a peak at (150,28) — and on a
+     roof whose ridge is flat from 104 to 196 its lower corners sat sixteen
+     units below the ridge, out on the open field, reading as a tent pitched
+     on the roof. It was also a DUPLICATE: every one of its four callers
+     passes roof:'new', and the 'new' branch already draws ridgeVent(). Two
+     ways of drawing the same part is how the book starts to disagree with
+     itself. The flag is left accepted-and-ignored nowhere: the callers drop
+     it below. */
+  return s;
+}
+
+/* ── one puppet, every spread ────────────────────────────────────
+   Simplified from the shipped figure() for thumbnail scale — same
+   silhouette, same pale cut edge, same fixed upper-left light. The cut
+   edge is load-bearing, not decoration: a red shirt on the shaded roof
+   plane is 1.66:1 and vanishes without it. */
+function fig(x, y, s, o){
+  o=o||{};
+  var shirt=o.shirt||RED, shirtDk=o.shirtDk||REDS,
+      hat=o.hat===false?null:(o.hat||ORANGE);
+  var g='<g transform="translate('+x+','+y+') scale('+((o.flip?-s:s))+','+s+')">';
+  // legs
+  g+='<path d="M-5,-16 L-5,0 M5,-16 L5,0" stroke="'+CUT+'" stroke-width="6.4" stroke-linecap="round"/>';
+  g+='<path d="M-5,-16 L-5,0 M5,-16 L5,0" stroke="'+NAVY+'" stroke-width="4.7" stroke-linecap="round"/>';
+  // torso
+  g+='<path d="M-8,-38 L8,-38 L9,-15 L-9,-15 Z" fill="'+shirt+'" stroke="'+KRAFT+
+     '" stroke-width="1.8" stroke-linejoin="round"/>';
+  g+='<path d="M0,-38 L8,-38 L9,-15 L0,-15 Z" fill="'+shirtDk+'"/>';
+  // arms — pose is just the two end points, so a tool can never float off
+  var arm=o.arm||[[-8,-34],[-15,-22]];
+  g+='<path d="M'+arm[0][0]+','+arm[0][1]+' L'+arm[1][0]+','+arm[1][1]+
+     '" stroke="'+KRAFT+'" stroke-width="5.4" stroke-linecap="round"/>';
+  g+='<path d="M'+arm[0][0]+','+arm[0][1]+' L'+arm[1][0]+','+arm[1][1]+
+     '" stroke="'+shirt+'" stroke-width="3.6" stroke-linecap="round"/>';
+  g+='<circle cx="'+arm[1][0]+'" cy="'+arm[1][1]+'" r="2.2" fill="#D9C4A2" stroke="#B39A72" stroke-width=".7"/>';
+  // head
+  g+='<circle cx="0" cy="-45" r="6.6" fill="'+KRAFT+'" stroke="'+CUT+'" stroke-width="1.1"/>';
+  if(hat){
+    g+='<path d="M-6.8,-48.4 A6.8,6.8 0 0 1 6.8,-48.4 Z" fill="'+hat+'"/>';
+    g+='<path d="M-9.4,-48.4 L9.4,-48.4 L9.4,-45.6 L-9.4,-45.6 Z" fill="'+hat+
+       '" stroke="#B4520F" stroke-width=".6"/>';
+  }
+  if(o.tool) g+=o.tool;
+  return g+'</g>';
+}
+
+/* The cardinal. Same silhouette as the shipped bird so the two read as one
+   creature — it is in every spread, and it never moves off its perch. */
+function bird(x, y, s, flip){
+  var body=RED, dark='#9E1A24', edge='#7E1018', beak=ORANGE, mask='#2A1A12';
+  var g='<g transform="translate('+x+','+y+') scale('+(flip?-s:s)+','+s+')">';
+  g+='<path d="M4,-9 L19,-3 L17,0.6 L3,-4 Z" fill="'+dark+'" stroke="'+edge+'" stroke-width=".9" stroke-linejoin="round"/>';
+  g+='<path d="M0,0 C-5,0 -8.6,-3 -9.4,-7 C-10.2,-11.4 -7.6,-15.4 -3.6,-16 '+
+     'C-1,-16.4 1.4,-15.2 2.6,-13.2 C6,-12.4 8.6,-9.6 8.6,-6.2 C8.6,-2.6 5.2,0 0,0 Z" fill="'+body+
+     '" stroke="'+edge+'" stroke-width="1" stroke-linejoin="round"/>';
+  g+='<path d="M-7.6,-14.2 L-6.4,-20.4 L-2.6,-15.6 Z" fill="'+body+'" stroke="'+edge+'" stroke-width=".9" stroke-linejoin="round"/>';
+  g+='<path d="M-9.2,-9.6 C-7.6,-11.6 -5.6,-12 -4.4,-11 C-5,-8.6 -6.8,-7.4 -8.8,-7.8 Z" fill="'+mask+'"/>';
+  g+='<path d="M-9,-10.4 L-13.6,-9 L-8.8,-7.4 Z" fill="'+beak+'" stroke="#B4520F" stroke-width=".7" stroke-linejoin="round"/>';
+  g+='<circle cx="-6" cy="-10.6" r="1.15" fill="#F7F3EA"/><circle cx="-6" cy="-10.6" r=".6" fill="#1A1208"/>';
+  return g+'</g>';
+}
+
+/* ── props ───────────────────────────────────────────────────────── */
+function ladder(x, y, h, lean){
+  var g='<g transform="translate('+x+','+y+') rotate('+(lean||-14)+')">';
+  g+='<path d="M-5,0 L-5,'+(-h)+' M5,0 L5,'+(-h)+'" stroke="'+CUT+'" stroke-width="4" stroke-linecap="round"/>';
+  g+='<path d="M-5,0 L-5,'+(-h)+' M5,0 L5,'+(-h)+'" stroke="'+MET+'" stroke-width="2.6" stroke-linecap="round"/>';
+  for(var i=1;i*11<h;i++) g+='<path d="M-5,'+(-i*11)+' L5,'+(-i*11)+'" stroke="'+MET+'" stroke-width="2"/>';
+  return g+'</g>';
+}
+function trailer(x, y, s){
+  var g='<g transform="translate('+x+','+y+') scale('+(s||1)+')">';
+  g+='<path d="M-46,-34 L46,-34 L46,0 L-46,0 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1.8" stroke-linejoin="round"/>';
+  g+='<path d="M2,-34 L46,-34 L46,0 L2,0 Z" fill="'+METS+'"/>';
+  g+='<circle cx="-24" cy="2" r="7" fill="'+NAVY+'"/><circle cx="22" cy="2" r="7" fill="'+NAVY+'"/>';
+  return g+'</g>';
+}
+function truck(x, y, s, flip){
+  var g='<g transform="translate('+x+','+y+') scale('+((flip?-1:1)*(s||1))+','+(s||1)+')">';
+  g+='<path d="M-44,-24 L6,-24 L6,-2 L-44,-2 Z" fill="'+RED+'" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
+  g+='<path d="M6,-24 L22,-24 L32,-12 L32,-2 L6,-2 Z" fill="'+REDS+'" stroke="'+KRAFT+'" stroke-width="1.6" stroke-linejoin="round"/>';
+  g+='<path d="M10,-21 L21,-21 L28,-13 L10,-13 Z" fill="'+GLASS+'"/>';
+  g+='<circle cx="-30" cy="0" r="6.4" fill="'+NAVY+'"/><circle cx="20" cy="0" r="6.4" fill="'+NAVY+'"/>';
+  return g+'</g>';
+}
+/* The yard sign, as it really is — white field, black frame, red keyline,
+   red gables, black subtitle. Same as the one now standing on spread 7. */
+function yardsign(x, y, s){
+  var g='<g transform="translate('+x+','+y+') scale('+(s||1)+')">';
+  g+='<path d="M-2,-4 L-2,20 M2,-4 L2,20" stroke="'+MET+'" stroke-width="1.6"/>';
+  g+='<path d="M-24,-32 L24,-32 L24,-2 L-24,-2 Z" fill="'+WHT+'" stroke="'+BLK+'" stroke-width="2.2" stroke-linejoin="round"/>';
+  g+='<path d="M-21,-29 L21,-29 L21,-5 L-21,-5 Z" fill="none" stroke="'+RED+'" stroke-width="1.1"/>';
+  g+='<g fill="'+RED+'" stroke="'+BLK+'" stroke-width="1.2" stroke-linejoin="round">'+
+     '<path d="M-16,-13 L-6,-23 L4,-13 L4,-10.6 L-6,-20.6 L-16,-10.6 Z"/>'+
+     '<path d="M-7,-13 L6,-27 L19,-13 L19,-10.4 L6,-24.4 L-7,-10.4 Z"/></g>';
+  g+='<text x="0" y="-6.4" text-anchor="middle" fill="'+RED+'" font-size="6.6" font-weight="800" '+
+     'font-family="Helvetica Neue,Helvetica,Arial,sans-serif">CARDINAL</text>';
+  return g+'</g>';
+}
+function chips(seed, n, lo, hi){
+  // deterministic scatter — a preview that reshuffles on reload cannot be approved
+  var s='', r=seed;
+  function rnd(){ r=(r*1103515245+12345)&0x7fffffff; return r/0x7fffffff; }
+  for(var i=0;i<n;i++){
+    var x=lo+rnd()*(hi-lo), y=152+rnd()*34, a=rnd()*360;
+    s+='<g transform="translate('+x.toFixed(1)+','+y.toFixed(1)+') rotate('+a.toFixed(0)+')">'+
+       '<path d="M-3,-2 L3,-2 L3,2 L-3,2 Z" fill="'+KRAFT+'" stroke="'+CUT+'" stroke-width=".6"/></g>';
+  }
+  return s;
+}
+
+/* ── the sixteen ─────────────────────────────────────────────────
+   Six before the tear-off, because that is what actually happens before a
+   crew turns up: somebody knocks, somebody climbs, the adjuster comes out,
+   a number gets agreed, a colour gets picked, the load lands. Then the
+   roof itself, then the sweep, then the people. */
+/* ── retail-order props (Theo, 3 Aug: not an insurance book) ─────── */
+function gnome(x, y, sc){
+  /* THE GNOME, found at last — a lawn ornament, inventoried on the Takeoff
+     and moved to safety before the crew arrives. Red hat, of course. */
+  var g='<g transform="translate('+x+','+y+') scale('+sc+')">';
+  g+='<ellipse cx="0" cy="0" rx="4.6" ry="1.3" fill="#000" opacity=".18"/>';
+  g+='<path d="M-3.4,0 L-2.6,-6.5 L2.6,-6.5 L3.4,0 Z" fill="#3E6FA8"/>';
+  g+='<path d="M0,-6.5 L2.6,-6.5 L3.4,0 L0,0 Z" fill="#2E5480"/>';
+  g+='<path d="M-2.6,-7.5 Q0,-4.5 2.6,-7.5 L2.6,-9.5 Q0,-8 -2.6,-9.5 Z" fill="#F2F4F2"/>';
+  g+='<circle cx="0" cy="-9.6" r="2.5" fill="#E8C39E"/>';
+  g+='<path d="M-2.5,-10.6 L0,-16.5 L2.5,-10.6 Z" fill="#C8202E"/>';
+  g+='<circle cx="0" cy="-16.6" r="0.9" fill="#8F1620"/>';
+  return g+'</g>';
+}
+function sprinkler(x, y){
+  return '<g transform="translate('+x+','+y+')">'+
+         '<path d="M-1.4,0 L1.4,0 L1.4,-3.4 L-1.4,-3.4 Z" fill="#B08D4F"/>'+
+         '<path d="M-2.2,-3.4 L2.2,-3.4 L2.2,-4.6 L-2.2,-4.6 Z" fill="#8F7138"/></g>';
+}
+function drone(x, y, sc){
+  /* before, during, after — the same aircraft each time */
+  var g='<g transform="translate('+x+','+y+') scale('+sc+')">';
+  g+='<path d="M-11,-4 L11,-4" stroke="#4A5056" stroke-width="1.6" fill="none"/>';
+  g+='<ellipse cx="-11" cy="-4" rx="5" ry="1.2" fill="#9AA2A8" opacity=".8"/>';
+  g+='<ellipse cx="11" cy="-4" rx="5" ry="1.2" fill="#9AA2A8" opacity=".8"/>';
+  g+='<path d="M-4,-4.6 L4,-4.6 L4,0.6 L-4,0.6 Z" fill="#4A5056" stroke="#E8DCC8" stroke-width=".9"/>';
+  g+='<circle cx="0" cy="-1.6" r="1.2" fill="#C8202E"/>';
+  g+='<path d="M-3,0.6 L-3,2.4 M3,0.6 L3,2.4" stroke="#4A5056" stroke-width="1" fill="none"/>';
+  return g+'</g>';
+}
+function inventoryRing(x, y, r){
+  return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="none" stroke="#F4EDDD" stroke-width="1.5" opacity=".9"/>';
+}
+
+var SPREADS=[
+  {n:1, t:'The Knock', done:true, w:'A rep on the step. Nobody has touched the house yet — this is an install book, and it starts with a conversation.',
+   sky:'early', build:function(){
+     /* NO STORM. Theo, 3 Aug: "this is not for insurance, it is to show
+        someone the install process." The hail dents came off this roof the
+        moment he said it. */
+     return house({roof:'shingle'}) +
+       // reaching TOWARD the door. The default arm swings left, which had him
+       // knocking at the siding with his back to the house.
+       fig(118,150,1.0,{arm:[[8,-34],[17,-38]]}) +
+       yardsign(255,150,0.72) + bird(60,116,0.72);
+   }},
+  /* ── SPREADS 2-4 REBUILT AS THE RETAIL OPEN — Theo, 3 Aug. The Climb
+     (chalk circles), The Adjuster and the tailgate Number were all insurance
+     scenes; this is an install book. In their place: the contract at the
+     kitchen table, the attic inspection exactly as he described it, and the
+     takeoff as a component inventory by Curtis and his clipboard. Three out,
+     three in — the book stays sixteen. */
+  {n:2, t:'The Kitchen Table', done:true, w:'The contract gets signed where the coffee is — inside, unhurried, before a single ladder goes up.',
+   sky:'day', build:function(){
+     var s='';
+     // full-bleed interior; the sky and lawn the loop painted are behind this
+     s+='<path d="M0,0 L300,0 L300,190 L0,190 Z" fill="#EFE7D8"/>';
+     s+='<path d="M'+SPLIT+',0 L300,0 L300,190 L'+SPLIT+',190 Z" fill="#E2D6C2"/>';
+     s+='<path d="M0,148 L300,148 L300,190 L0,190 Z" fill="#C7A97E"/>';
+     s+='<g stroke="#A98C62" stroke-width=".8" opacity=".6">'+
+        '<path d="M0,162 L300,162"/><path d="M0,176 L300,176"/></g>';
+     // the window, and the cardinal on the sill outside it
+     s+='<path d="M44,26 L96,26 L96,66 L44,66 Z" fill="#6E9AC0" stroke="#8A7660" stroke-width="2"/>';
+     s+='<path d="M44,26 L96,26 L44,66 Z" fill="#9CBEDA"/>';
+     s+='<path d="M70,26 L70,66 M44,46 L96,46" stroke="#8A7660" stroke-width="1.6" fill="none"/>';
+     s+=bird(56,64,0.5);
+     s+='<path d="M40,66 L100,66 L100,70 L40,70 Z" fill="#8A7660"/>';
+     // a framed something on the shaded wall — every kitchen has one
+     s+='<path d="M226,34 L252,34 L252,54 L226,54 Z" fill="#F7F2E6" stroke="#8A7660" stroke-width="1.6"/>';
+     s+='<path d="M231,48 L238,40 L243,45 L248,38" stroke="#C8202E" stroke-width="1.4" fill="none"/>';
+     // the table, the contract, the pen, two mugs
+     s+='<path d="M112,104 L238,104 L238,112 L112,112 Z" fill="#8A5C36"/>';
+     s+='<path d="M175,104 L238,104 L238,112 L175,112 Z" fill="#6E4527"/>';
+     s+='<path d="M118,112 L124,112 L124,150 L118,150 Z" fill="#6E4527"/>';
+     s+='<path d="M226,112 L232,112 L232,150 L226,150 Z" fill="#59371E"/>';
+     s+='<g transform="translate(186,96) rotate(-4)">'+
+        '<path d="M-16,-8 L16,-8 L16,8 L-16,8 Z" fill="#F7F2E6" stroke="'+CUT+'" stroke-width="1.2"/>'+
+        '<g stroke="#BCAF97" stroke-width="1"><path d="M-11,-4 L11,-4"/><path d="M-11,0 L11,0"/></g>'+
+        '<path d="M-11,5 L6,5" stroke="'+RED+'" stroke-width="1.8"/></g>';
+     /* the pen ON the signature line, under the homeowner's reach — it was
+        floating in the air above the contract, held by nobody */
+     s+='<path d="M196,99 L204,94" stroke="#2A2E33" stroke-width="1.6" stroke-linecap="round"/>';
+     s+='<path d="M126,96 L136,96 L135,104 L127,104 Z" fill="'+RED+'"/>'+
+        '<path d="M136,98 Q140,99 136,101" stroke="'+RED+'" stroke-width="1.2" fill="none"/>';
+     s+='<path d="M152,96 L162,96 L161,104 L153,104 Z" fill="#3E5C80"/>';
+     // the rep, and the homeowner with the pen down on the line
+     s+=fig(88,148,0.95,{arm:[[8,-30],[22,-26]]});
+     s+=fig(252,148,0.95,{flip:true,hat:false,shirt:'#6B7A93',shirtDk:'#4F5C72',
+                          arm:[[8,-30],[24,-27]]});
+     return s;
+   }},
+  {n:3, t:'The Attic', done:true, w:'Ladder down, lights on. Decking first, then the flashlight to the soffit — and these baffles are buried. Found before anyone quoted a shingle.',
+   sky:'day', build:function(){
+     var s='';
+     // full-bleed attic: deck underside, rafters, joists, insulation
+     s+='<path d="M0,0 L300,0 L300,190 L0,190 Z" fill="#241E17"/>';
+     s+='<path d="M10,84 L150,14 L290,84 L290,96 L150,26 L10,96 Z" fill="#B99F76"/>';
+     s+='<g stroke="#8A6B4A" stroke-width="3">'+
+        '<path d="M40,81 L40,70"/><path d="M78,62 L78,51"/><path d="M116,43 L116,32"/>'+
+        '<path d="M184,43 L184,32"/><path d="M222,62 L222,51"/><path d="M260,81 L260,70"/></g>';
+     s+='<path d="M0,124 L300,124 L300,132 L0,132 Z" fill="#6B5A42"/>';
+     s+='<g stroke="#59492F" stroke-width="1"><path d="M0,128 L300,128"/></g>';
+     // insulation between the joists, and the MOUND burying the baffles
+     s+='<g fill="#E8A7B8">'+
+        '<path d="M6,124 Q26,112 46,124 Z"/><path d="M52,124 Q72,114 92,124 Z"/>'+
+        '<path d="M100,124 Q118,115 136,124 Z"/><path d="M144,124 Q162,114 180,124 Z"/></g>';
+     s+='<path d="M212,124 Q238,98 268,110 Q286,118 292,124 Z" fill="#E8A7B8"/>';
+     s+='<path d="M252,112 L262,105 L268,110 L258,117 Z" fill="#9CB8D8" opacity=".8"/>';
+     s+='<path d="M264,104 L274,97 L280,102 L270,109 Z" fill="#9CB8D8" opacity=".55"/>';
+     s+=inventoryRing(258,108,16).replace('#F4EDDD','#E35C63');
+     // the hatch, the folding ladder, the light from the hallway below
+     s+='<path d="M56,124 L108,124 L108,132 L56,132 Z" fill="#0E0B08"/>';
+     s+='<path d="M62,128 Q82,150 96,186 L104,186 Q88,148 70,128 Z" fill="#B08D4F" opacity=".9"/>';
+     s+='<g stroke="#8F7138" stroke-width="1.6">'+
+        '<path d="M70,140 L84,136"/><path d="M76,152 L90,148"/><path d="M82,164 L96,160"/></g>';
+     s+='<path d="M60,132 L104,132 L96,190 L68,190 Z" fill="#F2E3A8" opacity=".18"/>';
+     // the bulb, ON, with its pull chain
+     s+='<circle cx="150" cy="44" r="20" fill="#F7E8B0" opacity=".28"/>';
+     s+='<path d="M150,26 L150,34" stroke="#8A8378" stroke-width="1.4" fill="none"/>';
+     s+='<circle cx="150" cy="39" r="5" fill="#F7E8B0" stroke="#D9C070" stroke-width="1"/>';
+     s+='<path d="M154,42 L154,50 M154,50 L156,52" stroke="#B8B0A2" stroke-width="1" fill="none"/>';
+     // the inspector on the joists, beam to the buried baffles
+     s+='<path d="M186,116 L246,102 L252,116 L192,124 Z" fill="#F2E3A8" opacity=".3"/>';
+     s+=fig(174,124,0.85,{arm:[[8,-28],[20,-24]]});
+     s+='<path d="M192,101 L198,99" stroke="#2A2E33" stroke-width="2.4" stroke-linecap="round"/>';
+     /* the cardinal got in through the one soffit bay that still breathes —
+        which is the spread's whole point, wearing feathers */
+     return s + bird(24,124,0.55);
+   }},
+  {n:4, t:'The Takeoff', done:true, w:'Curtis and the clipboard: pipe boots counted, the dish staying or going, sprinklers flagged — and the gnome noted for witness protection. Drone photos start here.',
+   sky:'noon', build:function(){
+     var s=house({roof:'shingle'});
+     // what the clipboard is counting, each with its inventory ring
+     s+='<path d="M56,74 L64,74 L64,64 L56,64 Z" fill="'+METS+'"/>';
+     s+='<path d="M50,78 L70,78 L66,72 L54,72 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
+     s+=inventoryRing(60,72,11);
+     s+='<path d="M84,60 L92,60 L92,52 L84,52 Z" fill="'+METS+'"/>';
+     s+='<path d="M79,64 L97,64 L93,58 L83,58 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
+     s+=inventoryRing(88,59,10);
+     s+='<ellipse cx="242" cy="60" rx="9" ry="6" fill="#C9CFD4" stroke="#8A9096" stroke-width="1.2"/>'+
+        '<path d="M242,66 L242,74" stroke="#6E747A" stroke-width="2" fill="none"/>'+
+        '<circle cx="242" cy="60" r="1.6" fill="#6E747A"/>';
+     s+=inventoryRing(242,63,13);
+     s+=gnome(266,148,1);
+     s+=inventoryRing(266,140,10);
+     s+=sprinkler(36,148)+sprinkler(120,148);
+     s+=inventoryRing(36,146,5)+inventoryRing(120,146,5);
+     // Curtis, in the vest, clipboard up
+     s+=fig(160,150,0.95,{shirt:'#C4D435',shirtDk:'#98A722',hat:false,
+                          arm:[[8,-30],[18,-34]]});
+     s+='<g transform="translate(178,118) rotate(8)">'+
+        '<path d="M-5,-7 L5,-7 L5,7 L-5,7 Z" fill="#F7F2E6" stroke="'+CUT+'" stroke-width="1.1"/>'+
+        '<path d="M-2,-8.4 L2,-8.4 L2,-6.4 L-2,-6.4 Z" fill="'+MET+'"/>'+
+        '<g stroke="#BCAF97" stroke-width=".9"><path d="M-3,-3 L3,-3"/><path d="M-3,0 L3,0"/><path d="M-3,3 L1,3"/></g></g>';
+     s+=drone(252,26,0.9);
+     return s + bird(288,112,0.66,true);
+   }},
+  {n:5, t:'The Colour', done:true, w:'Shingle boards against the siding. Owens Corning, and the choice is the homeowner’s.',
+   sky:'noon', build:function(){
+     var sw=['#4A5866','#6B4A3A','#3B3F45','#7E2E20'], s='';
+     sw.forEach(function(c,i){
+       s+='<g transform="translate('+(96+i*36)+',124) rotate('+((i-1.5)*5)+')">'+
+          '<path d="M-14,-20 L14,-20 L14,20 L-14,20 Z" fill="'+c+'" stroke="'+KRAFT+'" stroke-width="1.8" stroke-linejoin="round"/>'+
+          '<g stroke="#000" stroke-width="1" opacity=".28"><path d="M-14,-6 L14,-6"/><path d="M-14,7 L14,7"/></g></g>';
+     });
+     return house({roof:'shingle'}) + s + bird(60,120,0.7);
+   }},
+  {n:6, t:'The Delivery', done:true, w:'The load goes up before the crew does. A roof arrives in bundles.',
+   sky:'early', build:function(){
+     var s=house({roof:'shingle'});
+     /* Bundles on the LEFT SLOPE ONLY. The first pass ran them 104→184, which
+        crosses the apex at 150 — so the back half climbed the far slope while
+        still rotated -31° for the near one, and five bundles flew off into the
+        sky in a neat diagonal. The rotation is the pitch; it is only correct
+        on one side. */
+     for(var i=0;i<5;i++){
+       // +5, not -5: roofY IS the surface, so a bundle centred on it straddles
+       // the edge with half its body in the sky. It has to sit INSIDE the plane.
+       /* 50+i*10. The run has been shortened twice, both times because the
+          dormer grew or moved left into it — the last bundle now lands at 90
+          against a dormer starting at 109. It cannot start below 50 either:
+          roofY(42) is 91.8, so by would be 100.8 and the bundle would sit
+          under the eave. Bounded at both ends. */
+       /* on the T a carried bundle just tips a little — -46 was the
+          hip's pitch. Diagonal run up the free zone left of the wing. */
+       var bx=44+(i%4)*13, by=90-(i%4)*12;
+       s+='<g transform="translate('+bx+','+by+') rotate(-12)">'+
+          '<path d="M-13,-5 L13,-5 L13,5 L-13,5 Z" fill="#4A5866" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
+          '<path d="M-13,-5 L13,-5 L13,-1 L-13,-1 Z" fill="#5D6D7C"/></g>';
+     }
+     return s + truck(74,150,0.94) + fig(232,150,0.94,{arm:[[-8,-34],[-4,-44]]}) + bird(276,112,0.68,true);
+   }},
+  {n:7, t:'The Tear-Off', w:'Built and tested on your iPad — the pop, the beats, the joke tabs, and the debris the magnet remembers on 15.',
+   sky:'dusk', done:true, build:function(){
+     /* TARPS over both beds — Theo: "I didn't mean tractor I meant tarps."
+        Blue poly, the same shape language as the built spread's tarpG beat,
+        drawn right after the house so every prop stays in front of them.
+        The trailer parks at the left edge (where the built spread parks it)
+        so tarp A reads past its tail; the chips scatter on the lawn BELOW
+        the beds — the tarps did their job. */
+     return house({roof:'bare'}) +
+       '<path d="M44,150 L100,150 L96,142.5 L48,142.5 Z" fill="#3E8FC0"/>' +
+       '<path d="M80,142.5 L96,142.5 L100,150 L84,150 Z" fill="#2A6E99"/>' +
+       '<path d="M180,150 L250,150 L244,142.5 L185,142.5 Z" fill="#3E8FC0"/>' +
+       '<path d="M226,142.5 L244,142.5 L250,150 L232,150 Z" fill="#2A6E99"/>' +
+       trailer(34,150,0.68) +
+       fig(232,90,0.8,{arm:[[-8,-34],[-2,-30]]}) +
+       yardsign(250,150,0.72) + bird(292,112,0.68,true) + chips(7,26,40,290);
+   }},
+  {n:8, t:'The Deck', done:true, w:'Bare plywood in 4×8 sheets. The bad ones get sprayed and come out — this is the part nobody else shows you.',
+   sky:'day', build:function(){
+     /* One marked sheet has already been cut out and one new sheet is going
+        in, so the pair reads as a sequence rather than as decoration: sprayed,
+        gone, replaced. The two remaining marks are on the sheet grid, not
+        floating — all on the bottom row, since the wing (102-178) and the
+        chimney (182-214) own the middle and a mark nobody can see was never
+        made. Left to right it reads as the actual sequence: the hole one
+        came out of, the bright new one going in, sprayed and waiting on the
+        far side. */
+     var s=house({roof:'bare', bad:[[190,82],[230,82]]});
+     s+='<path d="M30,82 L70,82 L70,100 L30,100 Z" fill="#4A3A28"/>';   // the hole it left
+     s+='<path d="M70,82 L102,82 L102,100 L70,100 Z" fill="#E3CDA2" stroke="'+KRAFT+
+        '" stroke-width="1.6" stroke-linejoin="round"/>';                  // the new sheet
+     /* standing on the bright sheet he just laid — feet low on the band,
+        head under the ridge line, which is the T's whole figure rule */
+     return s + fig(84,90,0.78,{arm:[[-8,-34],[-18,-30]]}) +
+       ladder(292,150,58,10) + bird(46,120,0.68);
+   }},
+  {n:9, t:'The Ice Shield', done:true, w:'A rubber membrane at every eave and valley. Dayton gets ice dams, and this is what stops one.',
+   sky:'day', build:function(){
+     return house({roof:'ice'}) +
+       fig(84,88,0.82,{arm:[[-8,-34],[-16,-26]]}) +
+       fig(216,88,0.82,{flip:true,arm:[[-8,-34],[-16,-26]]}) +
+       bird(276,112,0.68,true);
+   }},
+  {n:10, t:'The Felt', done:true, w:'Synthetic underlayment over the whole deck. If it rains tonight, you stay dry tonight.',
+   sky:'dusk', build:function(){
+     var s=house({roof:'felt'});
+     // a roll part way up the slope
+     s+='<g transform="translate(72,62) rotate(-12)">'+
+        '<path d="M-16,-7 L16,-7 L16,7 L-16,7 Z" fill="#6E747A" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
+        '<circle cx="16" cy="0" r="7" fill="#8A9096" stroke="'+KRAFT+'" stroke-width="1.2"/></g>';
+     return s + fig(52,88,0.8,{arm:[[-8,-34],[-16,-28]]}) + bird(50,120,0.68);
+   }},
+  {n:11, t:'The Flashing', done:true, w:'Metal where the roof meets anything else — chimney, wall, pipe. Leaks start here or nowhere.',
+   sky:'noon', build:function(){
+     /* the chimney lives in house() now — Theo asked for it in every
+        spread, and two drawings of one chimney is the two-books failure */
+     var s=house({roof:'felt', flash:true});
+     // pipe boot
+     /* THE BOOT IS ON THE RIGHT NOW, past the chimney. It has been moved
+        twice and both times for the same reason: the dormer's valley membrane
+        runs 15 units out from each cheek, so at DX=134 it occupies 94-109 and
+        the boot at 92-112 was sitting in the middle of it. A plumbing vent
+        through the ice-and-water is not a detail, it is a leak.
+        216-236 clears the chimney flashing at 214 and stays inside the roof:
+        spanAt(80) gives 246.6 on that side. Left to right the spread now
+        reads man, dormer cheek, chimney, boot — four details, no stacking. */
+     s+='<path d="M222,72 L230,72 L230,62 L222,62 Z" fill="'+METS+'"/>';
+     s+='<path d="M216,76 L236,76 L232,70 L220,70 Z" fill="'+MET+'" stroke="'+KRAFT+'" stroke-width="1"/>';
+     return s + fig(52,90,0.8,{arm:[[-8,-34],[-17,-32]]}) + bird(46,120,0.68);
+   }},
+  {n:12, t:'The Shingles', done:true, w:'Courses going up the slope, one lap over the next. The part everybody pictures.',
+   sky:'noon', build:function(){
+     /* Roofers on the right, clear of the stack (left), the wing (middle)
+        and the chimney (182-214, feet above its crown at 46 are fine — they
+        stand on the band behind it). */
+     return house({roof:'half', cut:true}) +
+       fig(224,90,0.8,{arm:[[-8,-34],[-15,-24]]}) +
+       fig(250,82,0.78,{flip:true,arm:[[-8,-34],[-15,-24]]}) +
+       drone(36,30,0.8) +
+       trailer(60,150,0.72) + bird(288,112,0.66,true);
+   }},
+  /* RETITLED. The caption promised "ridge vent along the peak" and this roof
+     is a pyramid — it has no ridge to vent. The hips and the one cap over the
+     point are what is actually up there. Ventilation on a hip roof is a real
+     question and it is Theo's to answer, not mine to draw: hip vent, box
+     vents, or a powered unit. Flagged, not invented. */
+  {n:13, t:'The Ventilation', done:true, w:'Intake low at the soffit, exhaust high at the ridge. A roof that cannot breathe cooks itself — and half a system is no system.',
+   sky:'day', build:function(){
+     /* NO CREW ON THIS ONE. The subject is the air, and two figures on the
+        ridge would sit exactly where the exhaust arrows go. */
+     return house({roof:'new'}) + airflow() + bird(20,124,0.66);
+   }},
+  {n:14, t:'The Walk', done:true, w:'Theo on the roof at the end, not on the phone. Nothing is finished until he has been up there.',
+   sky:'dusk', build:function(){
+     return house({roof:'new'}) + ladder(94,150,64,-13) +
+       // right free zone, clear of the wing and the chimney
+       fig(238,88,0.85,{shirt:'#474C52',shirtDk:'#33373C',hat:false,
+                                 arm:[[-8,-34],[-18,-38]]}) +
+       drone(30,32,0.8) +
+       yardsign(254,150,0.72) + bird(292,112,0.68,true);
+   }},
+  {n:15, t:'The Sweep', done:true, w:'The magnet runs twice. Every chip flung on spread 7 comes back up here — the same forty pieces.',
+   sky:'dusk', build:function(){
+     var s=house({roof:'new'});
+     /* THE HANDLE TOP IS THE HAND. Figure at x=150 with its glove at (2,-40),
+        so the magnet's group origin must be 152 — at 168 the handle started
+        sixteen units to the right of the fist and he was sweeping thin air.
+        Same trap the shipped shovel avoids by construction. */
+     s+='<g transform="translate(152,150)">'+
+        '<path d="M0,-40 L18,-6" stroke="'+CUT+'" stroke-width="4.4" stroke-linecap="round"/>'+
+        '<path d="M0,-40 L18,-6" stroke="'+KRAFT+'" stroke-width="2.8" stroke-linecap="round"/>'+
+        '<path d="M8,-6 L30,-6 L30,2 L8,2 Z" fill="#8C8F94" stroke="'+KRAFT+'" stroke-width="1.4" stroke-linejoin="round"/>'+
+        '<path d="M8,2 L30,2 L30,4 L8,4 Z" fill="'+RED+'"/></g>';
+     return s + fig(150,150,0.94,{arm:[[-8,-34],[2,-40]]}) +
+       trailer(56,150,0.72) + yardsign(252,150,0.72) + bird(292,112,0.68,true) +
+       chips(7,6,214,288);
+   }},
+  /* The Takeoff and The Attic are REAL spreads 3-4 now — Theo slotted them
+     on 3 Aug when he set the retail order, and the two PROPOSED cards that
+     lived here are superseded. The book is sixteen again, no renumber. */
+  {n:16, t:'The Team', done:true, w:'Twelve die-cut portraits, drawn and pushed. Beto in the black lead tee, Curtis in the vest.',
+   sky:'day', build:function(){
+     var s=house({roof:'new'}), xs=[52,90,128,166,204,242];
+     xs.forEach(function(x,i){
+       s+=fig(x,150,0.8,{shirt:i===3?'#1C1D20':(i<2?'#474C52':RED),
+                         shirtDk:i===3?'#0F1012':(i<2?'#33373C':REDS),
+                         hat:i<2?false:ORANGE, arm:[[-8,-34],[-14,-24]]});
+     });
+     return s + yardsign(280,150,0.7) + bird(20,120,0.68);
+   }}
+];
+
+document.getElementById('grid').innerHTML = SPREADS.map(function(sp){
+  return '<div class="sp'+(sp.done?' done':'')+'">'+
+    '<svg viewBox="0 0 300 190" aria-hidden="true">'+
+      sky(sp.sky)+ground(sp.sky==='dusk'||sp.sky==='early')+sp.build()+
+    '</svg>'+
+    '<div class="cap"><div class="no">'+(sp.proposed ? 'PROPOSED · UNNUMBERED' : 'SPREAD '+sp.n+' OF 16')+'</div>'+
+    '<div class="ti">'+sp.t+'</div><div class="wh">'+sp.w+'</div>'+
+    (sp.done?'<span class="tag">Built</span>':'')+'</div></div>';
+}).join('');
+
+document.getElementById('after').innerHTML =
+  '<b>The book is BUILT — all sixteen spreads, tappable, in popup.html.</b> '+
+  'Every card above is a live spread now: the pop hinge, the tap-paced beats, '+
+  'the joke tabs, the bird slider that ends every spread back home, and a page '+
+  'turn that folds the pop flat between spreads. This sheet stays as the '+
+  'storyboard; popup.html is the book.'+
+  '<br><br><b>Three things are already load-bearing across the whole book:</b>'+
+  '<ul>'+
+  '<li>The <b>cardinal is in all sixteen</b> and never moves off its perch. It is '+
+  'the one thing that does not change while everything else does.</li>'+
+  '<li><b>Spread 15 sweeps up spread 7’s exact chips — literally now:</b> '+
+  'the forty chips are DOM elements that persist across every page turn, and '+
+  'the magnet collects those same forty, thirty-four on the first pass and '+
+  'the six that thought they got away on the second.</li>'+
+  '<li>The <b>sky carries the clock</b>. Dark at the knock, blue through the '+
+  'build, warm at the walk and the sweep. A roof is more than one day and the '+
+  'sky is how you know.</li>'+
+  '</ul>'+
+  '<b>What I want corrected before I build any of it:</b> the running order, '+
+  'anything a Cardinal roof does that is not here, and anything here that is '+
+  'not worth a whole spread. Drainage, decking thickness, valleys and starter '+
+  'course all had a case and did not make the cut.';
+})();
+</script>
+</body></html>
