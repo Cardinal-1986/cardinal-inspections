@@ -7766,3 +7766,59 @@ with the bed running, then muting mid-book) both still ALL GREEN, zero page erro
 generator's amplitude bounds checked numerically in isolation. **Not independently verified by
 ear** — I have no way to hear the result; this is a best-effort redesign against known failure
 modes of the first attempt, not a confirmed fix. Theo's ears are still the actual gate here.
+
+## Build 595 — Add project could not be scrolled to its Save button (2026-08-04)
+
+Theo, with a screenshot: *"Please fix add new lead. Cant scroll to submit client."* The `+` button's
+**Add project** modal (`#projModal`) filled the phone screen from Client name down to the Trades
+checkboxes, and Cancel/Save were simply not reachable — no scroll, nothing to drag.
+
+**One missing declaration, and it is the file's own convention that names it.** `#projModal` is
+`position:fixed; inset:0` with **no `overflow`** — so the default `visible`, and a fixed element that
+cannot scroll. Its card, `.projform`, is `margin:9vh auto 0`: no bottom margin, no height cap. When
+the content is taller than the viewport it simply renders past the fold.
+
+**It was the only one.** Every sibling overlay in the same file already had the fix — `#ckModal`,
+`#gcModal`, `#leadModal`, `#leadFormModal` and `#apptModal` all carry `overflow:auto` inline, and all
+give their card a bottom margin (4vh / 6vh / 7vh / 10vh). `#projModal` had been missed. This is the
+buried-not-missing doctrine's inverse and now its own bug class (**§14**): the convention existed,
+was correct, and had been applied to five of six.
+
+**Second half of the bug, and the reason `overflow:auto` alone is not enough.** In the installed app
+`body.standalone #pwaNav` is `z-index:9990 !important`; `#projModal` is `z-index:200`. The bottom nav
+**paints over the modal**. Scrolling to the end without clearance just parks Save underneath the nav
+bar — the harness proved this by hit-testing Save's own centre and getting back `pwaLib`, the nav's
+library button.
+
+Shipped:
+
+- **inline on `#projModal`** — `overflow:auto;overscroll-behavior:contain;`. Scroll matches the five
+  siblings exactly. `overscroll-behavior:contain` stops scroll chaining into the page beneath, which
+  is the class PR #17 removed an `overflow-y:auto !important` band-aid for.
+- **`<style id="cr-pm-scroll">`** — `#projModal .projform{margin-bottom:calc(24px + safe-area)}` and
+  `body.standalone #projModal .projform{margin-bottom:calc(88px + safe-area)}`. **Scoped by id, not
+  added to `.projform`**, because that class is shared by nine screens and none of the others may
+  move. `88 = 64 + 24`, and the **64px is the existing `#pwaNav` clearance constant** —
+  `body.standalone{padding-bottom:calc(64px + env(safe-area-inset-bottom))}` already uses it. Grepped
+  for the convention rather than inventing a gap, per the corollary in `CLAUDE.md`.
+
+App stamp 594→595, CHANGELOG entry added. **No scroll-lock writer added** — `openProjModal()` never
+locked body scroll, and this fix does not make it a 14th writer.
+
+Verified: `check_build.py` GREEN against the real 594 artifact as `--prev` (105 inline scripts,
+116/116 style tags, marker present, negative control clean). Then a **real Chromium** harness, since
+this is layout and jsdom cannot resolve it — **27/27 PASS on 595 against a 12-FAILURE negative
+control on 594**, across three phone sizes, hit-testing Save's own centre rather than trusting its
+rectangle. Desktop (1440) and iPad (820) re-measured non-standalone: card top margin, Save visibility
+and horizontal scroll all byte-identical to 594. Before/after rendered and eyeballed — the 594
+"scrolled to the bottom" render reproduces Theo's screenshot exactly, Trades row and no buttons.
+
+**A counting trap worth recording, caught by the patch's own assert before any write:** an assertion
+that the shared `.projform{` rule was untouched failed, because `#projModal .projform{` *contains*
+that substring — my two new rules counted as edits to the rule they were written to avoid. Anchored
+on `\n.projform{` instead. The file's rule — *scope the assertion, then read what it captured* —
+earning its place again.
+
+⚠ **`#sigModal` (the signature pad, z-index 230) is the one remaining fixed overlay with no
+`overflow`.** Left alone deliberately: not what Theo reported, and a signature canvas has different
+sizing rules than a form. Recorded here so it is found on purpose rather than by another screenshot.
