@@ -7652,3 +7652,40 @@ Verified: inline script re-extracted and `node --check`ed clean · full sixteen-
 ALL GREEN, unchanged from the previous round · all four spots rendered and eyeballed
 (pink bundles, black trailer on both 7 and 12, the "Six nails" tag, the trailer parked
 during the sweep).
+
+---
+
+## Sound — a proof of concept on four cues (2026-08-04)
+
+Theo, after the merge: "is there a way to make it have sounds and music?" Answered with a
+small POC rather than wiring all sixteen spreads at once, per his own "one build at a time,
+verified before the next" habit.
+
+Everything is SYNTHESIZED with the Web Audio API — no audio files, so `popup.html` stays one
+self-contained page with no licensing question and no size growth. An `AudioContext` is
+created lazily on the first cue, since browsers refuse to start one before a user gesture —
+and every cue here already fires from a tap or a swipe, so nothing has to ask separately.
+
+Four cues wired in this pass:
+- **The page turn** (every spread) — a filtered noise whoosh, hooked into `turnTo()`.
+- **The knock** (spread 1, the beat that shows `repG`) — three short percussive taps, via a
+  new per-beat `sound:` property read in `go()`.
+- **The tear-off** (spread 7) — a longer tearing/scraping noise burst, hooked into `shed()`.
+- **The magnet find** (spread 15) — a short metallic clink, hooked into `sweep()`.
+
+A speaker-icon mute toggle sits top-right beside the progress dots (`#soundBtn`), defaults to
+on, persists the choice to `localStorage['crpop-muted']`, and calls `e.stopPropagation()` so
+tapping it never also turns the page.
+
+Verified: inline script re-extracted and `node --check`ed clean · full sixteen-spread walk
+ALL GREEN, unchanged · a new harness confirms the button toggles without advancing the beat,
+the mute choice survives a reload, and none of the four cues throw (knock, tear-off, sweep
+clink, page-turn whoosh all exercised) · rendered and eyeballed on phone and iPad widths.
+
+**Branch note:** PR #108 had already merged (squash), so this round restarted
+`claude/contractor-vision-suite-bwq21i` from `origin/main` before committing, per the
+merged-branch protocol — this is a fresh PR, not a reopen of #108.
+
+Still open: if Theo wants this expanded to all sixteen spreads, or wants ambient background
+music (a loop, with the same mute gate) rather than just discrete cues, or wants the
+synthesized cues swapped for real recorded/licensed audio he supplies.
