@@ -7737,3 +7737,32 @@ Still Theo's: confirm which apex domain (`cardinalroster.com` or `cardinalrenova
 is actually added under this Vercel project's custom domains for both `presentation.` and
 `showroom.` — that setting isn't visible from the repo, and the showroom failure can't be
 fully diagnosed without it.
+
+---
+
+## Ambient sound, redesigned (2026-08-04)
+
+Theo: "The ambient sound doesn't sound too good." No further spec — the call was mine to make.
+
+The first version was a three-note sine chord (A2-E3-A3) with independent slow detune drift
+on each note. Two likely culprits, both structural: bare sine oscillators read as thin and
+synthetic (a test-tone quality, not music), and three independently-drifting pitches is
+exactly the shape that can sound quietly OUT OF TUNE rather than alive — there's a chord for
+the drift to clash against.
+
+Replaced it with a texture instead of a chord: a soft filtered "room hush" — brown-ish noise
+(a leaky integrator over white noise, `last = last*.97 + white*.03`, bounded by construction,
+no clamping artifacts — verified numerically: 192,000 samples, peak 0.75, zero non-finite
+values) through a 480Hz lowpass — plus ONE low tone (E2) for warmth. A texture has no pitch to
+get wrong; a single tone can't clash with anything. Movement comes from a slow ~23-second
+volume swell on the whole bed rather than pitch drift, so nothing ever wavers in a way that
+could read as "off." Quieter overall too (.045 peak vs .06).
+
+Same routing as before — through `master`, so the existing mute toggle still covers it, and
+the same one-shot cues (knock, tear-off, sweep clink, page-turn whoosh) are untouched.
+
+Verified: `node --check` clean · sixteen-spread walk and the ambient stress harness (30 taps
+with the bed running, then muting mid-book) both still ALL GREEN, zero page errors · the noise
+generator's amplitude bounds checked numerically in isolation. **Not independently verified by
+ear** — I have no way to hear the result; this is a best-effort redesign against known failure
+modes of the first attempt, not a confirmed fix. Theo's ears are still the actual gate here.

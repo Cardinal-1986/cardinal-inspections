@@ -2291,9 +2291,15 @@ function portrait(o, px, py, pw){
      first gesture that creates the AudioContext, and runs continuously.
      It routes through the SAME master gain as every one-shot cue, so
      the mute toggle silences both together; nothing new to wire there.
-     Quiet open fifth (A2-E3-A3), slow independent detune drift on each
-     note plus a slow drift on the filter cutoff, so it breathes instead
-     of droning — never louder than a room tone under the captions. */
+
+     REDESIGNED (Theo: "doesn't sound too good"). The first version was a
+     three-note sine chord with independent per-note detune drift — bare
+     sine tones read as thin/synthetic, and three slowly-drifting pitches
+     is exactly the shape that can sound quietly OUT OF TUNE rather than
+     "alive". A texture has no pitch to get wrong, so it can't do that:
+     this is a soft filtered noise hush (paper-and-air, fitting the book
+     itself) plus ONE low tone for warmth — no chord, nothing to clash.
+     Movement comes from a slow volume swell, not pitch drift. */
   var ambientStarted = false;
   function startAmbient(){
     if(ambientStarted || !actx) return;
@@ -2301,27 +2307,41 @@ function portrait(o, px, py, pw){
     try{
       var bed = actx.createGain();
       bed.gain.setValueAtTime(0, actx.currentTime);
-      bed.gain.linearRampToValueAtTime(.06, actx.currentTime + 3);
-      var filt = actx.createBiquadFilter();
-      filt.type = 'lowpass'; filt.frequency.value = 900; filt.Q.value = .7;
-      bed.connect(filt); filt.connect(master);
-      [110, 164.81, 220].forEach(function(freq, i){
-        var o = actx.createOscillator(), og = actx.createGain();
-        o.type = 'sine'; o.frequency.value = freq;
-        og.gain.value = i === 0 ? .55 : .3;
-        o.connect(og); og.connect(bed);
-        o.start();
-        var lfo = actx.createOscillator(), lfoGain = actx.createGain();
-        lfo.type = 'sine'; lfo.frequency.value = .05 + i * .017;
-        lfoGain.gain.value = 3 + i;
-        lfo.connect(lfoGain); lfoGain.connect(o.detune);
-        lfo.start();
-      });
-      var flfo = actx.createOscillator(), flfoGain = actx.createGain();
-      flfo.type = 'sine'; flfo.frequency.value = .04;
-      flfoGain.gain.value = 220;
-      flfo.connect(flfoGain); flfoGain.connect(filt.frequency);
-      flfo.start();
+      bed.gain.linearRampToValueAtTime(.045, actx.currentTime + 4);
+      bed.connect(master);
+
+      // the hush: brown-ish noise (a leaky integrator over white noise,
+      // bounded by construction — no clamping artifacts) through a low
+      // filter, so it reads as soft room air, never a hiss
+      var secs = 4, n = actx.sampleRate * secs;
+      var buf = actx.createBuffer(1, n, actx.sampleRate);
+      var d = buf.getChannelData(0);
+      var last = 0;
+      for(var i = 0; i < n; i++){
+        last = last * .97 + (Math.random() * 2 - 1) * .03;
+        d[i] = last * 2.4;
+      }
+      var noise = actx.createBufferSource();
+      noise.buffer = buf; noise.loop = true;
+      var noiseFilt = actx.createBiquadFilter();
+      noiseFilt.type = 'lowpass'; noiseFilt.frequency.value = 480; noiseFilt.Q.value = .5;
+      noise.connect(noiseFilt); noiseFilt.connect(bed);
+      noise.start();
+
+      // one quiet low tone for warmth — a single pitch can't be "out of
+      // tune", there is nothing for it to clash against
+      var o = actx.createOscillator(), og = actx.createGain();
+      o.type = 'sine'; o.frequency.value = 82.41;  // E2
+      og.gain.value = .32;
+      o.connect(og); og.connect(bed);
+      o.start();
+
+      // a slow breathing swell on overall level — movement without pitch
+      var swell = actx.createOscillator(), swellGain = actx.createGain();
+      swell.type = 'sine'; swell.frequency.value = 1 / 23;
+      swellGain.gain.value = .012;
+      swell.connect(swellGain); swellGain.connect(bed.gain);
+      swell.start();
     }catch(_){}
   }
   soundBtn && soundBtn.addEventListener('click', function(e){
