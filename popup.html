@@ -353,6 +353,16 @@
   .dots i.now{background:var(--red-tx);transform:scale(1.32)}
   .dots i.seen{background:var(--ink2)}
 
+  /* ── sound toggle — a proof of concept, so it sits right beside the
+     dots it shares the top-right corner with ── */
+  .topRight{display:flex;align-items:center;gap:11px}
+  .soundbtn{-webkit-appearance:none;appearance:none;border:1.5px solid var(--cut-dk);
+            background:rgba(244,237,221,.55);color:var(--ink);border-radius:50%;
+            width:34px;height:34px;min-width:34px;font-size:15px;line-height:1;
+            cursor:pointer;display:flex;align-items:center;justify-content:center;
+            padding:0;transition:transform .15s}
+  .soundbtn:active{transform:scale(.9)}
+
   .hint{position:absolute;left:0;right:0;bottom:calc(100% + 9px);text-align:center;
         font:700 9px var(--mono);letter-spacing:.14em;text-transform:uppercase;
         color:var(--ink2);opacity:.75;transition:opacity .4s}
@@ -388,7 +398,10 @@
      aria-label="Tap to advance through The Pop-Up Roof">
   <div class="topbar">
     <div class="phase" id="phase">The Pop-Up Roof<i>&nbsp;</i></div>
-    <div class="dots" id="dots"></div>
+    <div class="topRight">
+      <button type="button" id="soundBtn" class="soundbtn" aria-label="Sound on">🔊</button>
+      <div class="dots" id="dots"></div>
+    </div>
   </div>
 
   <div class="stage">
@@ -2244,7 +2257,125 @@ function portrait(o, px, py, pw){
   var phaseEl = document.getElementById('phase');
   var birdEl  = document.querySelector('.birdpop');
   var signEl  = document.querySelector('.signpop');
+  var soundBtn= document.getElementById('soundBtn');
   var stripped = false, chips = 0;
+
+  /* ══ SOUND — a proof of concept ══════════════════════════════════
+     Everything here is SYNTHESIZED with the Web Audio API, not loaded
+     from files — so the book stays one self-contained page and there
+     is no licensing question. The AudioContext is created lazily, on
+     the first sound cue, because browsers refuse to run one before a
+     user gesture — and every cue on this page already fires from one
+     (a tap or a swipe), so this never has to ask separately. */
+  var actx = null, master = null;
+  var muted = localStorage.getItem('crpop-muted') === '1';
+  function paintSoundBtn(){
+    if(!soundBtn) return;
+    soundBtn.textContent = muted ? '🔇' : '🔊';
+    soundBtn.setAttribute('aria-label', muted ? 'Sound off' : 'Sound on');
+  }
+  paintSoundBtn();
+  function audioReady(){
+    if(!actx){
+      try{
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        master = actx.createGain();
+        master.gain.value = muted ? 0 : .5;
+        master.connect(actx.destination);
+      }catch(_){ actx = null; return; }
+      startAmbient();
+    }
+    if(actx.state === 'suspended') actx.resume().catch(function(){});
+  }
+  /* a soft ambient bed under the whole book — starts once, on the same
+     first gesture that creates the AudioContext, and runs continuously.
+     It routes through the SAME master gain as every one-shot cue, so
+     the mute toggle silences both together; nothing new to wire there.
+     Quiet open fifth (A2-E3-A3), slow independent detune drift on each
+     note plus a slow drift on the filter cutoff, so it breathes instead
+     of droning — never louder than a room tone under the captions. */
+  var ambientStarted = false;
+  function startAmbient(){
+    if(ambientStarted || !actx) return;
+    ambientStarted = true;
+    try{
+      var bed = actx.createGain();
+      bed.gain.setValueAtTime(0, actx.currentTime);
+      bed.gain.linearRampToValueAtTime(.06, actx.currentTime + 3);
+      var filt = actx.createBiquadFilter();
+      filt.type = 'lowpass'; filt.frequency.value = 900; filt.Q.value = .7;
+      bed.connect(filt); filt.connect(master);
+      [110, 164.81, 220].forEach(function(freq, i){
+        var o = actx.createOscillator(), og = actx.createGain();
+        o.type = 'sine'; o.frequency.value = freq;
+        og.gain.value = i === 0 ? .55 : .3;
+        o.connect(og); og.connect(bed);
+        o.start();
+        var lfo = actx.createOscillator(), lfoGain = actx.createGain();
+        lfo.type = 'sine'; lfo.frequency.value = .05 + i * .017;
+        lfoGain.gain.value = 3 + i;
+        lfo.connect(lfoGain); lfoGain.connect(o.detune);
+        lfo.start();
+      });
+      var flfo = actx.createOscillator(), flfoGain = actx.createGain();
+      flfo.type = 'sine'; flfo.frequency.value = .04;
+      flfoGain.gain.value = 220;
+      flfo.connect(flfoGain); flfoGain.connect(filt.frequency);
+      flfo.start();
+    }catch(_){}
+  }
+  soundBtn && soundBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    audioReady();
+    muted = !muted;
+    localStorage.setItem('crpop-muted', muted ? '1' : '0');
+    paintSoundBtn();
+    if(master) master.gain.setTargetAtTime(muted ? 0 : .5, actx.currentTime, .05);
+  });
+  // a single decaying tone
+  function tone(freq, dur, type, gain, when){
+    if(!actx || muted) return;
+    var t = actx.currentTime + (when || 0);
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || 'sine'; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain || .5, t + .008);
+    g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + dur + .02);
+  }
+  // filtered white noise, swept — whooshes, tears, taps
+  function noiseBurst(dur, f0, f1, gain, when, q){
+    if(!actx || muted) return;
+    var t = actx.currentTime + (when || 0);
+    var n = Math.max(1, Math.round(actx.sampleRate * dur));
+    var buf = actx.createBuffer(1, n, actx.sampleRate);
+    var d = buf.getChannelData(0);
+    for(var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    var src = actx.createBufferSource(); src.buffer = buf;
+    var filt = actx.createBiquadFilter(); filt.type = 'bandpass'; filt.Q.value = q || 1;
+    filt.frequency.setValueAtTime(f0, t);
+    filt.frequency.exponentialRampToValueAtTime(Math.max(40, f1), t + dur);
+    var g = actx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain || .4, t + dur * .12);
+    g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    src.connect(filt); filt.connect(g); g.connect(master);
+    src.start(t); src.stop(t + dur + .02);
+  }
+  var SOUNDS = {
+    // the page turn — every spread, the one universal cue
+    whoosh: function(){ noiseBurst(.42, 2200, 260, .32, 0, .9); tone(170, .3, 'sine', .1, .04); },
+    // spread 1: the actual knock on the door
+    knock: function(){ [0, .16, .34].forEach(function(dt){
+      tone(118, .09, 'sine', .5, dt); noiseBurst(.05, 900, 300, .28, dt, 2);
+    }); },
+    // spread 7: the tear-off, timed with shed()'s own fling
+    tear: function(){ noiseBurst(.6, 3400, 380, .38, 0, .6); noiseBurst(.3, 1800, 220, .2, .18, 1.4); },
+    // spread 15: the magnet finding a piece
+    clink: function(){ tone(1760, .16, 'triangle', .28, 0); tone(2640, .1, 'sine', .15, .015); }
+  };
+  function play(name){ audioReady(); var f = SOUNDS[name]; if(f) f(); }
 
   // drawn ONCE, and never again — the bird does not get redrawn with the roof
   document.getElementById('birdsvg').innerHTML = cardinal(0, 0, 1, false, 'post');
@@ -2275,7 +2406,7 @@ function portrait(o, px, py, pw){
       beats:[
         {txt:'An ordinary roof, twenty-odd years in. It has started letting go of a shingle here and there — quietly, the way roofs do.'},
         {txt:'The truck pulls up. Ten minutes, no ladder, no pressure — just eyes on the roof and a straight answer.', show:['truckG']},
-        {txt:'The knock. If it needs a repair and not a roof, that is what you hear on the doorstep. Cheapest sentence in roofing.', show:['repG']},
+        {txt:'The knock. If it needs a repair and not a roof, that is what you hear on the doorstep. Cheapest sentence in roofing.', show:['repG'], sound:'knock'},
         {txt:'The cardinal has supervised every job on this street. It accepts payment in sunflower seed.', tag:2}
       ]},
     { n:2, phase:'The Kitchen Table', sky:'dusk', floor:'wood',
@@ -2510,6 +2641,8 @@ function portrait(o, px, py, pw){
     if(n < 0 || n >= sp.beats.length) return;
     beat = n;
     if(n > sp.high) sp.high = n;
+    var snd = sp.beats[n] && sp.beats[n].sound;
+    if(snd) play(snd);
     paintScene();
     if(reduce){ paintSay(); return; }
     say.classList.add('swap');
@@ -2556,6 +2689,7 @@ function portrait(o, px, py, pw){
     turning = true;
     hint.classList.add('gone');
     if(reduce){ si = idx; mountSpread(atEnd); turning = false; return; }
+    play('whoosh');
     setOpen(0);
     say.classList.add('swap');
     setTimeout(function(){
@@ -2574,6 +2708,7 @@ function portrait(o, px, py, pw){
   function shed(){
     if(stripped) return;
     stripped = true;
+    play('tear');
 
     var box = scene.getBoundingClientRect();
     for(var i=0;i<40;i++){
@@ -2623,6 +2758,7 @@ function portrait(o, px, py, pw){
   function sweep(pass){
     if(pass <= sweptPass) return;
     sweptPass = pass;
+    play('clink');
     var all = Array.prototype.slice.call(document.querySelectorAll('.chip'));
     var box = scene.getBoundingClientRect();
     // Picked-up debris shows going INTO the trailer — Theo's call. MEASURED

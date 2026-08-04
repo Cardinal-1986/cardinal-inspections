@@ -7652,3 +7652,88 @@ Verified: inline script re-extracted and `node --check`ed clean · full sixteen-
 ALL GREEN, unchanged from the previous round · all four spots rendered and eyeballed
 (pink bundles, black trailer on both 7 and 12, the "Six nails" tag, the trailer parked
 during the sweep).
+
+---
+
+## Sound — a proof of concept on four cues (2026-08-04)
+
+Theo, after the merge: "is there a way to make it have sounds and music?" Answered with a
+small POC rather than wiring all sixteen spreads at once, per his own "one build at a time,
+verified before the next" habit.
+
+Everything is SYNTHESIZED with the Web Audio API — no audio files, so `popup.html` stays one
+self-contained page with no licensing question and no size growth. An `AudioContext` is
+created lazily on the first cue, since browsers refuse to start one before a user gesture —
+and every cue here already fires from a tap or a swipe, so nothing has to ask separately.
+
+Four cues wired in this pass:
+- **The page turn** (every spread) — a filtered noise whoosh, hooked into `turnTo()`.
+- **The knock** (spread 1, the beat that shows `repG`) — three short percussive taps, via a
+  new per-beat `sound:` property read in `go()`.
+- **The tear-off** (spread 7) — a longer tearing/scraping noise burst, hooked into `shed()`.
+- **The magnet find** (spread 15) — a short metallic clink, hooked into `sweep()`.
+
+A speaker-icon mute toggle sits top-right beside the progress dots (`#soundBtn`), defaults to
+on, persists the choice to `localStorage['crpop-muted']`, and calls `e.stopPropagation()` so
+tapping it never also turns the page.
+
+Verified: inline script re-extracted and `node --check`ed clean · full sixteen-spread walk
+ALL GREEN, unchanged · a new harness confirms the button toggles without advancing the beat,
+the mute choice survives a reload, and none of the four cues throw (knock, tear-off, sweep
+clink, page-turn whoosh all exercised) · rendered and eyeballed on phone and iPad widths.
+
+**Branch note:** PR #108 had already merged (squash), so this round restarted
+`claude/contractor-vision-suite-bwq21i` from `origin/main` before committing, per the
+merged-branch protocol — this is a fresh PR, not a reopen of #108.
+
+Still open: if Theo wants this expanded to all sixteen spreads, or wants ambient background
+music (a loop, with the same mute gate) rather than just discrete cues, or wants the
+synthesized cues swapped for real recorded/licensed audio he supplies.
+
+---
+
+## Build 594 — the book gets an actual link, plus ambient music, plus a domain fix (2026-08-04)
+
+Theo, after merge: "There's nowhere to find this book. No link at all." He was right — a full
+`grep popup.html index.html` turned up ZERO references. The presentation subdomain was staged
+but there was never an in-app way to reach it, which is exactly the "buried, not missing"
+class this file warns about, except this time it really was missing: nobody had built the
+link at all.
+
+**Build 594 (`index.html`)** — a new landing card, `.cr-lr-book`, right under Showroom:
+"The Pop-Up Roof," a plain `<a href="/popup.html" target="_blank" rel="noopener">` (same
+pattern as the Studio tile — it's a static page, not an SPA view, so nothing needed wiring
+through `wire()`'s `data-go` dispatch). Deliberately **not** width-gated like `.cr-lr-show` —
+the book is phone-shaped and proven at 390px all session; only Showroom needs the ≥820px
+floor. Rendered in isolation before trusting it in the full app (`book_card_preview.png`) —
+the CSS is a straight copy of `.cr-lr-show`'s structure with the width gate removed and the
+glow recoloured toward cardinal red. App stamp bumped 593→594, CHANGELOG entry added.
+
+**`vercel.json`** — Theo also reported `presentation.cardinalrenovations.com` landing on the
+retail CRM, "just like the showroom." The concrete, provable half of that: the existing
+rewrite matched `host === "presentation.cardinalroster.com"` only — a different hostname
+falls through to ordinary routing with no rewrite firing at all, silently. Added a second
+rewrite for `presentation.cardinalrenovations.com` so whichever apex he actually bound in the
+Vercel dashboard works. **The showroom half is NOT explained by this fix** — that detection
+(`location.hostname.indexOf('showroom.') === 0` in `index.html`) is apex-agnostic by design,
+so if `showroom.*` is failing the same way on either domain, the domain most likely isn't
+bound to this Vercel project's Domains settings at all — something only Theo can check from
+his dashboard, not something visible from the repo.
+
+**`popup.html`** — Theo also asked for ambient sound. Added a continuous ambient bed: a quiet
+open fifth (A2-E3-A3) on sine oscillators through a lowpass filter, slow independent detune
+drift per note plus a slow filter-cutoff drift so it breathes instead of droning, starting
+once on the same first gesture that creates the `AudioContext` and routed through the SAME
+`master` gain node as every one-shot cue — so the existing mute toggle silences both together,
+nothing new to wire. Never above .06 gain, well under the one-shot cues.
+
+Verified: `check_build.py` GREEN against the real previous commit as `--prev` (not a
+self-comparison) · `vercel.json` re-validated as JSON · sixteen-spread walk and the sound
+harness both still ALL GREEN · a new stress pass (30 rapid taps with ambient and cues
+overlapping, then muting mid-book) produced zero page errors · the new landing card rendered
+and eyeballed in isolation before trusting it inside the full app.
+
+Still Theo's: confirm which apex domain (`cardinalroster.com` or `cardinalrenovations.com`)
+is actually added under this Vercel project's custom domains for both `presentation.` and
+`showroom.` — that setting isn't visible from the repo, and the showroom failure can't be
+fully diagnosed without it.
