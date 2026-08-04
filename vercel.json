@@ -15,6 +15,16 @@
         }
       ],
       "destination": "/popup.html"
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "presentation.cardinalrenovations.com"
+        }
+      ],
+      "destination": "/popup.html"
     }
   ]
 }

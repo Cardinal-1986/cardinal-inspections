@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-03 build 593 &#8212; showroom.cardinalroster.com gets its own front door</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-04 build 594 &#8212; The Pop-Up Roof gets an actual link on the landing screen</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35022,6 +35022,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
 { b:593, d:'2026-08-03', t:'A dedicated front door for presenting', s:'showroom.cardinalroster.com lands somewhere different now \u2014 just Presentations, and Studio if you\u2019re signed in as an admin, none of the ordinary ten-destination launcher. Same sign-in, same file, Showroom underneath completely unchanged. Colors is a placeholder for what\u2019s next.' },
+{ b:594, d:'2026-08-04', t:'The Pop-Up Roof, findable at last', s:'The sixteen-spread interactive book had no link anywhere in the app \u2014 the only way in was typing a URL. A new card sits right under Showroom on the landing screen, opens in a new tab, and works on a phone (Showroom itself still needs a tablet or bigger).' },
 { b:592, d:'2026-08-03', t:'Every button in the Showcase got bigger', s:'Measured on an iPad: eleven of the twelve controls on that screen were smaller than a thumb \u2014 the next/back arrows were 30 pixels square. They are all 44 now, the slider grip is a proper round knob that swells when you grab it, and the before/after divider is easier to catch. Nothing moved and nothing changed colour. A test now measures every one of them at four screen sizes, so they cannot quietly shrink again.' },
 { b:591, d:'2026-08-03', t:'Build a Showcase pair from a job you already have', s:'A <b>From a job</b> button beside Add a pair. Pick the job, tap the before, tap the after, and the address is filled in for you \u2014 with the line it was read from shown underneath, because it guesses and you should be able to see what it guessed from. Add <b>+ During the build</b> for a third. The photographs are copied into the Showcase, so the pair keeps working whatever happens to the job. 196 photographs are already sitting on 12 jobs; this is how they get in front of a homeowner.' },
 { b:590, d:'2026-08-03', t:'Showroom \u2014 a clean door you can hand across the table', s:'A new card on the landing screen opens the Showcase full screen with every editing control gone \u2014 no add, no publish, no remove, no share, nothing to change on any of the three tabs. Hold the \u2715 for a second to come back; a tap does nothing, so a homeowner can\u2019t wander out of it. Same sign-in, same photographs, no second app. Offered on a tablet, laptop or desktop only \u2014 a phone is not a screen you present from, and the ordinary Showcase there is unchanged.' },
@@ -41553,6 +41554,18 @@ lv.innerHTML =
 '<span class="sb">Hand the tablet to a homeowner — finished work, full screen, and nothing in it can be changed while they hold it.</span>' +
 '</span><span class="go">\u2192</span>' +
 '</button>' +
+/* Same "plain <a>, new tab" pattern as the Studio tile below — popup.html
+   is its own static page, not an SPA view, so there is nothing to wire
+   through wire()'s data-go dispatch. Opens in a new tab so the rep's
+   CRM session and place in the app are still there when they come back.
+   NOT width-gated like Showroom — the book is phone-shaped already. */
+'<a class="cr-lr-book" href="/popup.html" target="_blank" rel="noopener">' +
+'<span class="ic">\ud83d\udcd6</span>' +
+'<span class="tx">' +
+'<span class="tt">The Pop-Up Roof</span>' +
+'<span class="sb">A tap-through book of how your roof gets built — works great on a homeowner’s own phone.</span>' +
+'</span><span class="go">\u2192</span>' +
+'</a>' +
 /* what is left is an admin shortcut, not a destination - and it renders
    for nobody else, so the row has to be able to vanish. */
 '<div class="cr-lr-minor">' +
@@ -56147,6 +56160,26 @@ body.cr-lnav-on #cr-show.showroom{top:0 !important;left:0 !important;z-index:950
    has been; it is only this MODE that isn't offered there. */
 @media (min-width:820px){ .cr-lr-show{display:flex} }
 html[data-mode="light"] .cr-lr-show .sb{color:#8a8078}
+
+/* The Pop-Up Roof — a plain link to /popup.html, not a data-go dispatch
+   (same pattern as the Studio tile's <a>). Unlike .cr-lr-show it is NOT
+   width-gated: the book is phone-shaped and always has been, so it is
+   offered everywhere the Showroom card is hidden below 820px. */
+.cr-lr-book{display:flex;width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
+  align-items:center;gap:14px;margin-top:12px;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#1a1410,#0d0906);border:1px solid rgba(242,244,242,.16);
+  border-radius:10px;padding:17px 18px;color:#F2F4F2;font-family:inherit;text-decoration:none}
+.cr-lr-book::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px 120px at 78% 0%,rgba(200,32,46,.16),transparent 70%)}
+.cr-lr-book:hover{border-color:rgba(242,244,242,.36)}
+.cr-lr-book .ic{position:relative;z-index:1;flex:0 0 auto;width:34px;height:34px;
+  display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.06)}
+.cr-lr-book .tx{position:relative;z-index:1;flex:1;min-width:0}
+.cr-lr-book .tt{display:flex;align-items:center;gap:9px;
+  font:700 17px Georgia,'Times New Roman',serif;color:#F2F4F2;line-height:1.2}
+.cr-lr-book .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
+.cr-lr-book .go{position:relative;z-index:1;flex:0 0 auto;font-size:15px;color:#6d645c}
+html[data-mode="light"] .cr-lr-book .sb{color:#8a8078}
 
 /* ── The Vision hub (593) ────────────────────────────────────────────
    The landing renderer's build() swaps THIS markup into #landingView instead

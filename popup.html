@@ -2283,8 +2283,46 @@ function portrait(o, px, py, pw){
         master.gain.value = muted ? 0 : .5;
         master.connect(actx.destination);
       }catch(_){ actx = null; return; }
+      startAmbient();
     }
     if(actx.state === 'suspended') actx.resume().catch(function(){});
+  }
+  /* a soft ambient bed under the whole book — starts once, on the same
+     first gesture that creates the AudioContext, and runs continuously.
+     It routes through the SAME master gain as every one-shot cue, so
+     the mute toggle silences both together; nothing new to wire there.
+     Quiet open fifth (A2-E3-A3), slow independent detune drift on each
+     note plus a slow drift on the filter cutoff, so it breathes instead
+     of droning — never louder than a room tone under the captions. */
+  var ambientStarted = false;
+  function startAmbient(){
+    if(ambientStarted || !actx) return;
+    ambientStarted = true;
+    try{
+      var bed = actx.createGain();
+      bed.gain.setValueAtTime(0, actx.currentTime);
+      bed.gain.linearRampToValueAtTime(.06, actx.currentTime + 3);
+      var filt = actx.createBiquadFilter();
+      filt.type = 'lowpass'; filt.frequency.value = 900; filt.Q.value = .7;
+      bed.connect(filt); filt.connect(master);
+      [110, 164.81, 220].forEach(function(freq, i){
+        var o = actx.createOscillator(), og = actx.createGain();
+        o.type = 'sine'; o.frequency.value = freq;
+        og.gain.value = i === 0 ? .55 : .3;
+        o.connect(og); og.connect(bed);
+        o.start();
+        var lfo = actx.createOscillator(), lfoGain = actx.createGain();
+        lfo.type = 'sine'; lfo.frequency.value = .05 + i * .017;
+        lfoGain.gain.value = 3 + i;
+        lfo.connect(lfoGain); lfoGain.connect(o.detune);
+        lfo.start();
+      });
+      var flfo = actx.createOscillator(), flfoGain = actx.createGain();
+      flfo.type = 'sine'; flfo.frequency.value = .04;
+      flfoGain.gain.value = 220;
+      flfo.connect(flfoGain); flfoGain.connect(filt.frequency);
+      flfo.start();
+    }catch(_){}
   }
   soundBtn && soundBtn.addEventListener('click', function(e){
     e.stopPropagation();
