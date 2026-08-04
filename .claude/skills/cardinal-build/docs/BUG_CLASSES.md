@@ -1,7 +1,7 @@
 # Cardinal Resource App — Bug Classes
 
 **Failure modes already paid for. Every entry cost at least one build.**
-*Read before debugging; skim before shipping. Written at build 427; **classes 12 and 13 added 2 Aug 2026 at build 573**. For anything else since 427, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
+*Read before debugging; skim before shipping. Written at build 427; **classes 12 and 13 added 2 Aug 2026 at build 573; class 14 added 4 Aug 2026 at build 595**. For anything else since 427, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
 
 ---
 
@@ -225,6 +225,71 @@ Tonight's rule was tokens everywhere — one variable, both themes. **The except
 - Modal CSS scoped to mount points must not be appended to `document.body` (white screens).
 - Unicode: raw surrogate escapes mid-write can zero out a file. Use HTML entities and atomic writes.
 - CI regexes matching `<script>` miss module scripts tagged with `id=`.
+
+## 14. The convention was right, and applied to five of six (build 595)
+
+**The inverse of the prime doctrine.** *Things that look missing are usually buried* — but sometimes
+the mechanism exists, is correct, is used consistently, and **one member of the set never got it**.
+That reads as a mysterious one-off bug, and it is really an inventory gap.
+
+`#projModal` — the **Add project** modal behind the `+` button — is `position:fixed; inset:0` with
+**no `overflow` declaration**. Default `visible`: a fixed element that cannot scroll. Its card is
+`.projform` at `margin:9vh auto 0`, no bottom margin, no height cap. On a phone the Cancel/Save row
+rendered past the fold and there was nothing to drag. Theo could not save a client.
+
+**Every sibling already had the fix:**
+
+| overlay | z-index | `overflow` | card bottom margin |
+|---|---:|---|---|
+| `#ckModal` | 210 | `auto` | 4vh |
+| `#gcModal` | 210 | `auto` | 6vh |
+| `#leadModal` | 215 | `auto` | 10vh (`auto` shorthand) |
+| `#leadFormModal` | 225 | `auto` | 6vh on its wrapper |
+| `#apptModal` | 220 | `auto` | 7vh |
+| **`#projModal`** | **200** | **— none —** | **— none —** |
+| `#sigModal` | 230 | — none — | 0 (signature pad; different sizing rules, left alone) |
+
+**How to find this class before a screenshot does:** when you fix a layout property on one element,
+**enumerate its siblings and diff the property across all of them.** One `grep -n 'position:fixed;inset:0'`
+would have surfaced the whole table above in a single pass. A convention held by 5 of 6 is not a
+convention, it is five accidents.
+
+### The half that `overflow:auto` does not fix
+
+**A lower-z-index modal is painted over by the installed bottom nav.** `body.standalone #pwaNav` is
+`z-index:9990 !important`; `#projModal` is `200`. Adding scroll alone parks the Save button
+*underneath* the nav bar — visibly present, geometrically inside the viewport, and untappable.
+
+**So a rectangle check is not proof.** `getBoundingClientRect()` said Save was on screen while the
+nav sat on top of it. **Hit-test the control's own centre:**
+
+```js
+const el = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2);
+const reachable = !!el && (el === btn || btn.contains(el));
+```
+
+On the pre-fix build that returned `pwaLib` — the nav's library button. That single check is the
+difference between "the button is there" and "a thumb lands on it."
+
+**Reuse the existing clearance constant, do not invent a gap.** `body.standalone` already declares
+`padding-bottom:calc(64px + env(safe-area-inset-bottom))` for exactly this nav. 595 used `64 + 24`.
+`.cd-crmbar` uses `104px + safe-area` for the same bar. Grep for the number before choosing one.
+
+### ⚠ Headless Chromium reports every `env(safe-area-inset-*)` as 0
+
+Theo's device is 1320×2868 @3x = **440×956 CSS px**. At a flat 440×956 in headless Chromium the form
+very nearly fits and **the bug barely reproduces**. A real notched iPhone loses ~59px of status area
+and ~34px of home bar, so the honest viewport is ~440×863 — and there it fails outright. **Subtract
+the insets by hand when modelling a phone**, or a height-dependent bug will pass in the sandbox for
+the same reason build 567's weather loop did.
+
+### Scope the fix by id — `.projform` is shared by nine screens
+
+The clearance went in as `#projModal .projform{...}`, never onto `.projform` itself. Id + class
+out-specifies the shared rule with no `!important` and no risk to the other eight. The gate asserts
+the five siblings' computed `margin-bottom` did **not** move.
+
+---
 
 ---
 
