@@ -55,7 +55,36 @@ const DEFECTS = {
   ponding_debris:   'standing water, packed debris or organic growth holding moisture',
   decking_sag:      'a sag, dip or soft spot indicating decking or framing trouble',
   ice_dam:          'ice damming or the staining and wear it leaves behind',
-  other:            'a real, visible defect that fits none of the above'
+  other:            'a real, visible defect that fits none of the above',
+
+  /* ── 17-32: the exterior half, added 5 Aug 2026 ──────────────────────────
+     THESE KEYS ARE A CONTRACT AND THE ORDER IS LOAD-BEARING. They are
+     exterior_vocab.py on Theo's Spark, verbatim — the same file
+     prepare_yolo.py and recover_other.py import, so DEFECT_KEYS is index-
+     aligned with the trained model's class indices 0-32. `other` stays at 16
+     for that reason, not because an escape hatch belongs mid-list. Renaming or
+     reordering silently decouples this route from the model.
+
+     They are not invented. They are the clusters of what the model ACTUALLY
+     called the 294 boxes a roof-only vocabulary had to flatten to 'other'
+     (gutter 65, soffit/fascia 57, window 42, deck 42), and they map onto the
+     six trades in walks_trade_ck with no seventh trade needed. */
+  gutter_damage:        'a bent, sagging, separated or holed gutter trough',
+  downspout_damage:     'a crushed, detached, missing or mis-draining downspout or elbow',
+  soffit_damage:        'soffit rot, holes, sagging panels or displaced vented panels',
+  fascia_damage:        'rotted, split, water-stained or detached fascia board',
+  siding_damage:        'cracked, holed, buckled, chalked or missing siding or trim',
+  masonry_damage:       'spalling brick, cracked or missing mortar, damaged stone or stucco',
+  vegetation_contact:   'branches, vines or heavy growth touching or overhanging the envelope',
+  paint_deterioration:  'peeling, blistering, flaking or bare-wood paint failure',
+  window_glass_damage:  'cracked, chipped, shattered or impact-marked glazing',
+  window_seal_failure:  'a failed sealed unit — fogging or condensation between the panes',
+  window_frame_damage:  'rot, warp, separation or damage to a sash, frame, sill or surround',
+  deck_penetration:     'an unsealed hole or penetration through the roof deck or sheathing',
+  underlayment_exposed: 'underlayment, felt or housewrap left exposed to the weather',
+  hardware_loose:       'loose, missing or failing fasteners, hangers, brackets or straps',
+  electrical_hazard:    'a damaged service mast, weatherhead, exposed conductor or meter',
+  interior_water_damage:'staining, streaking or water damage visible from outside'
 };
 const DEFECT_KEYS = Object.keys(DEFECTS);
 
@@ -106,11 +135,42 @@ async function requireSession(req, res) {
   }
 }
 
+/* THE SIX TRADES, and they are not this file's invention — they are
+   walks_trade_ck (walks_schema.sql:53), and index.html:57402 passes the walk's
+   trade into this route as `label`. One grows, all grow.
+
+   Why this exists: 294 of 959 collected boxes (30.7%) coerced to 'other',
+   because a roof-only vocabulary was being asked to describe siding, window and
+   gutter walks. Widening DEFECTS is half the fix. The other half is here — a
+   prompt that opened "You are assisting a ROOFING inspector" and instructed
+   "undamaged ROOFS exist" tells the model what to look at, and it was not
+   gutters. Naming the trade uses information the route already receives.
+
+   Anything not in this map falls back to the old generic label hint, so a
+   caller passing something else is unaffected. */
+const TRADE_FOCUS = {
+  roof:     'a ROOF inspection — shingles, flashing, valleys, ridge and hip, penetrations, decking',
+  siding:   'a SIDING inspection — cladding, trim, soffit, fascia, corners, J-channel, wraps',
+  windows:  'a WINDOW inspection — glass, seals, screens, sills, surrounds, caulking, trim',
+  andersen: 'an ANDERSEN WINDOW inspection — as windows, on Andersen units specifically',
+  gutters:  'a GUTTER inspection — troughs, downspouts, hangers, end caps, pitch and drainage',
+  general:  'a GENERAL exterior inspection — the whole envelope, roof through foundation line'
+};
+
 function prompt(label, collect) {
+  const focus = TRADE_FOCUS[String(label || '').trim().toLowerCase()] || '';
   return (
-    'You are assisting a roofing inspector for Cardinal Roofing & Renovations. ' +
-    'Examine this inspection photograph' + (label ? ' (labelled: "' + label + '")' : '') + ' ' +
+    'You are assisting an exterior inspector for Cardinal Roofing & Renovations. ' +
+    'Examine this inspection photograph' +
+    (focus ? '' : (label ? ' (labelled: "' + label + '")' : '')) + ' ' +
     'and locate every DEFECT you can actually see and point at.\n\n' +
+
+    (focus
+      ? 'THIS PHOTOGRAPH IS FROM ' + focus +
+        '. Look there first. Defects on other parts of the building still count ' +
+        'if you can see them and place a box on them — report what is in front ' +
+        'of you, not only what the trade name says.\n\n'
+      : '') +
 
     'Return ONLY JSON, no prose, no code fence:\n' +
     '{"quality":"ok"|"poor","quality_note":"...","findings":[' +
@@ -121,15 +181,16 @@ function prompt(label, collect) {
     'THE BOX IS THE POINT. x,y is the TOP-LEFT corner as a FRACTION of image ' +
     'width and height, w,h are the width and height as fractions. All four are ' +
     'between 0 and 1. x=0,y=0 is the top-left of the photograph. Make the box ' +
-    'tight around the defect, not the whole slope.\n\n' +
+    'tight around the defect, not the whole slope or wall.\n\n' +
 
     'RULES, and the first one matters more than the rest:\n' +
     '1. If you cannot point at it, do not report it. A finding with no box is ' +
     'not wanted here. Better to return nothing than to guess a location.\n' +
-    '2. An empty findings array is a correct and useful answer. Undamaged roofs ' +
-    'exist. Do not manufacture a defect to fill the list.\n' +
+    '2. An empty findings array is a correct and useful answer. Sound roofs, sound ' +
+    'siding and sound windows all exist. Do not manufacture a defect to fill the ' +
+    'list.\n' +
     '3. Report only what is VISIBLE in this photograph. Do not infer damage ' +
-    'from the age or style of the roof.\n' +
+    'from the age or style of the building.\n' +
     '4. If the photograph is too dark, blurry, distant or obstructed to judge, ' +
     'set quality "poor", say why in quality_note, and return few or no findings. ' +
     'A confident box on an unreadable photo is worse than no box.\n' +

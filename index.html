@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-04 build 595 &#8212; Add project scrolls to the Save button again</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 596 &#8212; Inspections read siding, gutters and windows, not just roofs</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35021,6 +35021,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:596, d:'2026-08-05', t:'Inspections read the whole exterior, not just the roof', s:'The photo inspector could only name roof problems. On a siding, window or gutter walk it still found the damage \u2014 it just had nowhere to file it, so everything came back labelled \u201cOther.\u201d Nearly a third of everything it found was landing there. It now knows gutters, downspouts, soffit, fascia, siding, masonry, windows and sixteen other exterior problems by name, and it is told which trade the walk is for before it looks, so a gutter walk gets read as a gutter walk. The new names came from what it had already been calling those problems in its own words, not from a list somebody made up.' },
 { b:595, d:'2026-08-04', t:'Add project scrolls to Save again', s:'Adding a client on the phone, the form ran off the bottom of the screen and would not scroll \u2014 Cancel and Save were there, just unreachable, so nothing could be saved. The box scrolls now, and the last row clears the bottom bar in the installed app. Every other pop-up in the app (the checklists, leads, appointments) already scrolled; this one had been missed.' },
 { b:593, d:'2026-08-03', t:'A dedicated front door for presenting', s:'showroom.cardinalroster.com lands somewhere different now \u2014 just Presentations, and Studio if you\u2019re signed in as an admin, none of the ordinary ten-destination launcher. Same sign-in, same file, Showroom underneath completely unchanged. Colors is a placeholder for what\u2019s next.' },
 { b:594, d:'2026-08-04', t:'The Pop-Up Roof, findable at last', s:'The sixteen-spread interactive book had no link anywhere in the app \u2014 the only way in was typing a URL. A new card sits right under Showroom on the landing screen, opens in a new tab, and works on a phone (Showroom itself still needs a tablet or bigger).' },
@@ -57120,7 +57121,18 @@ var DEF_LABEL = {
   exposed_fastener:'Exposed fastener', flashing_failed:'Failed flashing',
   flashing_missing:'Missing flashing', pipe_boot:'Pipe boot', chimney:'Chimney',
   valley:'Valley', ridge_cap:'Ridge cap', ponding_debris:'Ponding / debris',
-  decking_sag:'Decking sag', ice_dam:'Ice dam', other:'Other'
+  decking_sag:'Decking sag', ice_dam:'Ice dam', other:'Other',
+  /* 17-32 — the exterior half (build 596). Mirrors api/detect.js DEFECTS,
+     which is exterior_vocab.py on the Spark verbatim. Order is index-aligned
+     with the trained model's classes; do not reorder or rename. */
+  gutter_damage:'Gutter damage', downspout_damage:'Downspout damage',
+  soffit_damage:'Soffit damage', fascia_damage:'Fascia damage',
+  siding_damage:'Siding damage', masonry_damage:'Masonry damage',
+  vegetation_contact:'Vegetation contact', paint_deterioration:'Paint deterioration',
+  window_glass_damage:'Window glass', window_seal_failure:'Window seal failure',
+  window_frame_damage:'Window frame', deck_penetration:'Deck penetration',
+  underlayment_exposed:'Underlayment exposed', hardware_loose:'Loose hardware',
+  electrical_hazard:'Electrical hazard', interior_water_damage:'Interior water damage'
 };
 function defLabel(k){ return DEF_LABEL[k] || String(k || 'other').replace(/_/g, ' '); }
 
