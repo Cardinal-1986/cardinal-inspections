@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 596 &#8212; Inspections read siding, gutters and windows, not just roofs</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 597 &#8212; The Showcase job picker is no longer a dead end</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14997,6 +14997,14 @@ function hideAllViews(){
   /* Release any scroll lock a modal or viewer left behind (build 364) — otherwise
      the next view opens unscrollable on desktop. */
   if(document.body.style.overflow === 'hidden') document.body.style.overflow = '';
+  /* 597: the Showcase pair picker is CLASS-shown and was never registered here, so
+     navigating away left it open over the next screen — the 570-572 class again.
+     The class is the correct lever (writing display:none onto a class-shown element
+     is permanent damage, per BUG_CLASSES). Clearing it directly rather than through
+     the module is safe because openForm() clears `pending` unconditionally on every
+     open, which is the only state closeForm() carries. */
+  var _shf = document.getElementById('cr-show-form');
+  if(_shf) _shf.classList.remove('open');
   /* Self-heal: whenever we're about to show a main-app view, make sure the
      site header is visible. Anything upstream that left it hidden gets fixed here. */
   var _hd = document.querySelector('header.site');
@@ -35021,6 +35029,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:597, d:'2026-08-05', t:'The Showcase job picker is no longer a dead end', s:'Picking a job to build a before/after pair, the Cancel and \u201cUse these\u201d buttons sat underneath the bar at the bottom of the phone \u2014 you could see the top of them and could not tap them, and there was nothing below to scroll to. Tapping the dark area outside the box does nothing either, so the only way out was to close the app. The box now sits above the bottom bar, tapping outside closes it, and so does Escape on a keyboard. Leaving the screen no longer leaves it hanging open behind the next one.' },
 { b:596, d:'2026-08-05', t:'Inspections read the whole exterior, not just the roof', s:'The photo inspector could only name roof problems. On a siding, window or gutter walk it still found the damage \u2014 it just had nowhere to file it, so everything came back labelled \u201cOther.\u201d Nearly a third of everything it found was landing there. It now knows gutters, downspouts, soffit, fascia, siding, masonry, windows and sixteen other exterior problems by name, and it is told which trade the walk is for before it looks, so a gutter walk gets read as a gutter walk. The new names came from what it had already been calling those problems in its own words, not from a list somebody made up.' },
 { b:595, d:'2026-08-04', t:'Add project scrolls to Save again', s:'Adding a client on the phone, the form ran off the bottom of the screen and would not scroll \u2014 Cancel and Save were there, just unreachable, so nothing could be saved. The box scrolls now, and the last row clears the bottom bar in the installed app. Every other pop-up in the app (the checklists, leads, appointments) already scrolled; this one had been missed.' },
 { b:593, d:'2026-08-03', t:'A dedicated front door for presenting', s:'showroom.cardinalroster.com lands somewhere different now \u2014 just Presentations, and Studio if you\u2019re signed in as an admin, none of the ordinary ten-destination launcher. Same sign-in, same file, Showroom underneath completely unchanged. Colors is a placeholder for what\u2019s next.' },
@@ -55770,8 +55779,15 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   background:var(--sh-acc,#C8202E);border:0;color:var(--sh-acci,#FFF3F3)}
 .cr-sh-btn.ghost{background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));color:var(--sh-mut,#98A29C)}
 .cr-sh-btn:disabled{opacity:.55;cursor:wait}
-#cr-show-form{display:none;position:fixed;inset:0;background:rgba(8,10,9,.82);z-index:9610;
-  align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain;
+#cr-show-form{display:none;position:fixed;inset:0;background:rgba(8,10,9,.82);z-index:9996;
+  /* 597: was 9610, UNDER #pwaNav's 9990 !important — the 104px phone bottom bar
+     drew on top of this modal and covered .ft, so Cancel and "Use these" could not
+     be tapped and there was nothing below to scroll to. 9996 clears #pwaNav and
+     .cd-crmbar (9995) and stays under the .cd-sheet/.pu-sheet tier (9997/9998).
+     The bottom padding clears the home indicator now that the box can reach the
+     real bottom of the screen. */
+  align-items:center;justify-content:center;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));overscroll-behavior:contain;
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
 #cr-show-form.open{display:flex}
 #cr-show-form .bx{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.28));
@@ -56804,6 +56820,15 @@ function ensureForm(){
     formEl.id = 'cr-show-form';
     document.body.appendChild(formEl);
   }
+  /* 597: closeForm()'s own comment says "the cancel/escape paths", but no escape
+     path was ever wired — no backdrop click, no Escape key. With .ft hidden under
+     the bottom bar that left NO way out of this modal at all. Both are added here
+     rather than in openForm() so they attach exactly once: ensureForm() returns
+     early on every later call. */
+  formEl.onclick = function(e){ if(e.target === formEl) closeForm(); };
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && formEl && formEl.classList.contains('open')) closeForm();
+  });
   return formEl;
 }
 
