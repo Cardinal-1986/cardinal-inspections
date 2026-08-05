@@ -47,6 +47,66 @@ one**, and every drop path in `cleanFindings()` increments that counter: the >12
 size floor, and the unplaceable-box path have **never fired**. Three of four proposed mechanisms were
 wrong. Only the coercion was real.
 
+## 🔴 Modal z-index vs the phone bottom bar — ONE fixed, five unaudited
+
+*Build 597, 5 Aug 2026. **Test in the INSTALLED app, never a browser tab.***
+
+`body.standalone #pwaNav{z-index:9990 !important}` — the 104px phone bottom bar. Any centred modal
+with its buttons at the bottom edge and a **lower** z-index gets its footer covered, and it reads to
+the user as "scrolling is broken" because there is nothing below to scroll to.
+
+**The rule is scoped to `body.standalone`.** In a browser tab `#pwaNav` computes to **160**, every
+modal wins, and the bug is invisible. That is why it survived: it cannot be seen on a desktop.
+
+**Fixed at 597:** `#cr-show-form` 9610 → **9996** (clears `#pwaNav` 9990 and `.cd-crmbar` 9995, stays
+under the `.cd-sheet`/`.pu-sheet` tier at 9997/9998 — the existing convention, not a new mechanism).
+
+**NOT audited, all below 9990:**
+
+| | z-index |
+|---|---:|
+| `#cr-ped` (photo editor) | 9600 |
+| `#cr-sp-modal` (supplements) | 9570 |
+| `#cr-epub-preview` | 9550 |
+| `#cr-est-picker` | 9510 |
+| `#cr-lil-editor` | 9410 |
+
+Some are full-screen views where it cannot bite. **That is a guess — nobody has measured them.**
+The harness exists: set `body.standalone`, force `#pwaNav` visible, scroll the box to its end, and
+`document.elementFromPoint` at the footer button's centre. It returns `DIV#pwaNav` when the bug is
+present and the button when it is not. Negative-control by flipping the z-index on the same page.
+
+**Two companions worth checking at the same time**, because they made 597 a trap rather than an
+annoyance: does the modal close on **backdrop click or Escape**, and is it registered in
+**`hideAllViews()`**? `#cr-show-form` had neither — `closeForm()`'s own comment claimed an "escape
+path" that was never wired.
+
+## 🟠 The Studio and the Showcase do not connect
+
+*Diagnosed 5 Aug 2026. Verified, not inferred: **`index.html` references `studio_photos` ZERO
+times**, and `studio.html` performs zero writes.*
+
+Two photo worlds, no bridge:
+
+- **Cardinal Studio** browses `studio_photos` — the Spark's 60,503. Own subdomain, own sign-in,
+  admin-only. Deliberately read-only ("browse, search, look"; retagging happens on the Spark).
+- **The Showroom** presents `showcase_pairs`, and pairs are built **only** two ways: the upload form,
+  or "From a job" (`promoteToPair`, which **copies** the bytes).
+
+**So the 60k archive cannot feed the Showroom.** Spot the perfect before shot in Studio and there is
+no button — you have to find that same photograph again through the job picker. Not deliberate; the
+Showcase predates Studio (3 Aug) and nobody wired them.
+
+**The hard part is already built.** `promoteToPair` copies rather than links, which is exactly what
+the privacy boundary needs: `photos/studio/*` is admin-only and Showcase pairs are shown to
+homeowners, so a studio photo must be **copied** into the showcase prefix, never referenced.
+
+Preferred shape: **a third source, "From the archive", beside "Upload photos" and "From a job"** —
+keeps one screen owning pair-building and lets Studio stay honestly read-only.
+
+**Do it AFTER the push finishes and together with the grid-transform fix.** Building a picker on a
+half-loaded table with 20 MB-per-page thumbnails means judging it twice.
+
 ## 📌 v4's corpus — the filter decision, recorded so the number can be read
 
 *Settled 5 Aug 2026, after v4 was killed at epoch 25 to avoid training on a mismatched corpus.*
