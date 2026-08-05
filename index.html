@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 599 &#8212; Jerry Vera is on the team lists, so he can be assigned work</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 600 &#8212; What&#8217;s New is mine alone now</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20628,6 +20628,10 @@ var hd = document.querySelector('header.site');
   document.getElementById('auditNav').style.display =
     (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
   document.getElementById('teamNav').style.display = document.getElementById('auditNav').style.display;
+  /* 600: What's New is Theo's build log. show() refuses for anyone else, but
+     hide the entry too so nobody taps a control that does nothing. */
+  var wnItem = document.querySelector('.cbi[data-go="whatsnew"]');
+  if(wnItem) wnItem.style.display = (userEmail === 'theo@cardinalrenovations.net') ? '' : 'none';
   var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
   if(leadOpt) leadOpt.style.display = (PRODUCTION_EMAILS.indexOf(userEmail) !== -1) ? 'none' : 'block';
   hideAllViews();
@@ -35047,6 +35051,7 @@ var CHANGELOG = [
 { b:586, d:'2026-08-02', t:'The Lens \u2014 pinch into any photograph', s:'Every photograph has been stored at full resolution since build 577 so granules and nail heads survive \u2014 and no gesture could reach that detail until now. Tap a Hall of Fame photo, or the expand button on the slider and on The Walk\u2019s review screen: the picture opens full screen with pinch, drag and double-tap zoom. In The Walk your damage marks ride along at any zoom.' },
 { b:585, d:'2026-08-02', t:'Chalk \u2014 draw your own marks', s:'The Walk\u2019s review screen gains + Mark damage: drag a box on the photograph, say what it is and how serious, and it joins the marks exactly like one you accepted from the AI. Asking the AI again now keeps your hand-drawn marks \u2014 it only refreshes its own. Works even when the AI is down, and every mark you draw is recorded as yours, which is exactly what training your own detector later needs.' },
 { b:584, d:'2026-08-02', t:'Spotlight \u2014 present mode for The Walk', s:'A Present button appears on any walk with a reviewed photo. Tap it and the screen goes true black: one finding at a time, the damage lit and everything else dark, with the marks you kept \u2014 nothing the AI proposed that you rejected. Tap the right side for the next finding, the left to go back, past the last one to finish. The address never appears on screen. Works for sales too, not just admins \u2014 presenting is the point.' },
+{ build:600, note:'\uD83D\uDD12 What\u2019s New no longer opens for the team. It popped up for everyone three seconds after load on every new build; now it is yours alone, at both the automatic and the manual entry.' },
 { build:599, note:'\uD83D\uDC64 Jerry Vera is on the team. He could sign in but was on none of the six team lists, so nobody could assign him a job and his name showed as a bare email address. He now appears in the roster, both rep pickers, the Assign to list and the initials map.' },
 { build:584, note:'\uD83C\uDFA8 The manual gains a seventeenth chapter: What AI can build. A catalogue of what one person with AI can make \u2014 CRMs, websites, courses, illustrations, audio, dashboards \u2014 every example built around a roofing company, half of them already running at Cardinal. And a real seven-slide adjuster deck runs inside the page as the proof: it presents on an iPad or a computer, and lies flat as readable pages on a phone, because presenting from a phone does a deck no favors.' },
 { build:583, note:'\uD83D\uDCD6 The AI Field Manual is readable again. The TOC, Manage, Library, theme and Ask/File buttons were floating on top of the page and covering the words \u2014 none of them does anything to the book, so they step aside while you are reading it. In their place the book gets a slim bar with just a back arrow \u2014 a better way out than a button sitting on a paragraph.' },
@@ -35353,7 +35358,21 @@ catch(e){ return 0; }
 function setLastSeen(build){
 try{ localStorage.setItem(KEY, String(build)); }catch(e){}
 }
+/* 600: What's New is Theo's build log, not the team's. It auto-opened for
+   EVERYONE three seconds after load on every new build — and the CHANGELOG
+   array has had no entry since 584, so what the team actually got was a stale
+   popup. Gated at BOTH entry points: autoShow() below and show() here, which
+   also covers the command-bar item and any future caller.
+
+   window.currentUser is the top-level `var currentUser` (19916). userEmail is
+   NOT a global — it is a parameter of showMain()/showLanding() and cannot be
+   read from in here, which is why this reads the user object instead. */
+function isOwner(){
+var u = window.currentUser;
+return !!(u && String(u.email || '').toLowerCase() === 'theo@cardinalrenovations.net');
+}
 function show(){
+if(!isOwner()) return;
 var cur = currentBuild();
 var lastSeen = getLastSeen();
 var newBuilds = CHANGELOG.filter(function(e){ return entryBuild(e) > lastSeen; });
@@ -35386,6 +35405,14 @@ if(e.key === 'Escape'){ close(); document.removeEventListener('keydown', esc); }
 }
 function autoShow(){
 setTimeout(function(){
+/* Poll for the session rather than guess. currentUser is filled by the auth
+   flow, which on a cold start may not have finished at 3s — deciding on an
+   unresolved session would deny the owner his own popup. A non-owner is never
+   shown no matter how long it takes, so waiting costs nothing. */
+var waited = 0;
+(function tick(){
+if(!window.currentUser && (waited += 500) <= 10000) return setTimeout(tick, 500);
+if(!isOwner()) return;
 var cur = currentBuild();
 var lastSeen = getLastSeen();
 if(!cur) return;
@@ -35394,6 +35421,7 @@ setLastSeen(cur);
 return;
 }
 if(cur > lastSeen) show();
+})();
 }, 3000);
 }
 window.CardinalChangelog = { show:show, setLastSeen:setLastSeen };
