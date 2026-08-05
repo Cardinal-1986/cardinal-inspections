@@ -125,6 +125,22 @@ create index if not exists idx_studio_photos_damage on studio_photos using gin (
 -- why it can update studio_photos at all — which means the admin check has to
 -- live INSIDE the function. Without it, any signed-in rep could call this over
 -- PostgREST RPC and rewrite damage_tags on every photograph in the table.
+--
+-- ⚠ THE GATE MUST BE `not coalesce(is_cardinal_admin(), false)`, NEVER A BARE
+-- `not is_cardinal_admin()`. This file shipped the bare form on 5 Aug 2026 and
+-- it did not hold. Measured against production, as role anon with no JWT:
+--
+--     is_cardinal_admin() -> NULL          (not false)
+--
+-- because its body ends `... or auth.email() in ('theo@…','joan@…')`, and with
+-- no JWT auth.email() is NULL, so `NULL in (…)` is NULL and `false OR NULL` is
+-- NULL. In plpgsql `IF NOT <null> THEN` is `IF NULL THEN`, which does not fire:
+-- the raise was skipped and the whole function ran for an anonymous caller.
+-- Verified by calling it as anon with an id matching no row — it returned.
+--
+-- RLS policies calling the same function are NOT affected: a policy predicate
+-- evaluating to NULL filters the row out, which is the safe direction. It is
+-- specifically the negation inside an IF that inverts a NULL into "allow".
 create or replace function studio_refresh_damage_tags(p_photo_id text default null)
 returns void
 language plpgsql
@@ -132,7 +148,7 @@ security definer
 set search_path = public
 as $$
 begin
-  if not is_cardinal_admin() then
+  if not coalesce(is_cardinal_admin(), false) then
     raise exception 'studio_refresh_damage_tags is admin-only';
   end if;
 
@@ -153,8 +169,25 @@ $$;
 -- RPC as `authenticated`, and `public` includes it, so a bare revoke locks out
 -- the one caller this function exists for. The admin gate above is what makes
 -- that grant safe.
+--
+-- ⚠ `revoke … from public` IS NOT ENOUGH ON SUPABASE, and this file also
+-- shipped that mistake on 5 Aug. Supabase's default privileges grant EXECUTE on
+-- new functions to anon, authenticated and service_role DIRECTLY — not through
+-- `public` — so revoking public left anon holding EXECUTE, and the anon key is
+-- in the shipped index.html. Measured after the first apply:
+--
+--     postgres=EXECUTE, anon=EXECUTE, authenticated=EXECUTE, service_role=EXECUTE
+--
+-- anon must be named explicitly. Belt and braces with the coalesce above:
+-- either one closes the hole, and both means re-granting one does not reopen it.
 revoke all on function studio_refresh_damage_tags(text) from public;
+revoke all on function studio_refresh_damage_tags(text) from anon;
 grant execute on function studio_refresh_damage_tags(text) to authenticated;
+
+-- Verified against production after the fix, all three callers:
+--   anon (no JWT)            -> permission denied for function
+--   authenticated, nick@     -> raises 'studio_refresh_damage_tags is admin-only'
+--   authenticated, theo@     -> allowed (the ingest path still works)
 
 
 -- ── how the ingest uses this ────────────────────────────────────────────────
