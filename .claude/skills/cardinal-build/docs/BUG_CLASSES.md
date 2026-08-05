@@ -820,6 +820,114 @@ step between the patch script and the artifact can mangle it.
 
 ---
 
+## 12. A security gate that fails OPEN on NULL (found and fixed 5 Aug 2026, same hour it shipped)
+
+**`studio_findings.sql` shipped a SECURITY DEFINER function whose admin gate did not stop an
+anonymous caller.** Two independent defects, either one sufficient. Both were in SQL I had written,
+reviewed, merged and applied, with a comment above the gate explaining what it prevented.
+
+### 12a. `IF NOT f()` when `f()` can return NULL
+
+```sql
+if not is_cardinal_admin() then           -- ✗ does not fire for anon
+  raise exception 'admin-only';
+end if;
+```
+
+`is_cardinal_admin()` ends `… or auth.email() in ('theo@…','joan@…')`. With no JWT, `auth.email()`
+is NULL, so `NULL in (…)` is NULL and `false OR NULL` is **NULL — not false**. Measured, as role
+`anon`:
+
+```
+is_cardinal_admin() -> NULL       (not false)
+not is_cardinal_admin() -> NULL
+```
+
+In plpgsql **`IF NULL THEN` does not execute**, so the raise was skipped and the definer-rights
+function ran for an unauthenticated caller. Proven by calling it as `anon` with an id matching no
+row — it returned instead of raising.
+
+**The fix is `not coalesce(f(), false)`.** Never negate a three-valued expression in a gate.
+
+**⚠ The RLS policies calling the same function are FINE — do not "fix" them.** A policy predicate
+evaluating to NULL filters the row *out*; NULL fails safe there. It is specifically **negation inside
+an IF** that turns NULL into "allow". Same function, opposite outcome, depending only on where it is
+called. That asymmetry is why this hid.
+
+### 12b. On Supabase, `revoke … from public` does not revoke from `anon`
+
+```sql
+revoke all on function f(text) from public;      -- ✗ anon keeps EXECUTE
+grant execute on function f(text) to authenticated;
+```
+
+Supabase's default privileges grant EXECUTE on new functions to `anon`, `authenticated` and
+`service_role` **directly**, not through `public`. Measured immediately after applying:
+
+```
+postgres=EXECUTE, anon=EXECUTE, authenticated=EXECUTE, service_role=EXECUTE
+```
+
+`anon` must be named. And the anon key is in the shipped `index.html` by design, so "only anon" is
+not a limit — it is everyone.
+
+**How to check any definer function, in one query:**
+
+```sql
+select grantee, privilege_type from information_schema.routine_privileges
+ where routine_schema='public' and routine_name='<fn>';
+```
+
+**Then prove it with the three callers, not by reading the code** — anon, a non-admin rep, and an
+admin. The rep and the admin both behaved correctly the whole time; only anon was open, and no
+amount of re-reading the gate would have shown that.
+
+---
+
+## 13. A long run that outlives its credentials — and reports success while doing nothing
+
+**Twice in two days**, on two different scripts, same cause.
+
+A Supabase access token lives **one hour**. `hail_review.py` and `push_studio_tags.py` both minted
+one before the loop and never renewed it. The `push_studio_tags` instance is the clean measurement:
+
+```sql
+select date_trunc('minute', pushed_at), count(*) from studio_photos group by 1 order by 1;
+--  first row 02:05 UTC · last row 03:06 UTC · 61 minutes · then nothing
+```
+
+6,290 of 60,503 landed — about 10% — and **the script kept running**, 401ing on every one of the
+remaining ~54,000 photographs, counting each as an ordinary failure and printing nothing that looked
+like an emergency. It was reported to Theo as "running, resumable." It was, technically. It was also
+doing nothing at all, for 47 minutes before anyone looked.
+
+**Three separate mistakes, and the third is the one that cost the time:**
+
+1. **The token was never refreshed.** Fix: refresh proactively at 45 min, before anything fails.
+2. **A 401 was indistinguishable from a corrupt JPEG**, because both helpers flattened
+   `urllib.error.HTTPError` into a bare `RuntimeError` with the code baked into a *string*. The
+   `except Exception` at the bottom then treated the one recoverable error like any other. Fix:
+   an exception class that keeps `.code`, and re-auth once per item on 401.
+3. **Nothing distinguished "working" from "failing every time."** A loop that catches, counts and
+   continues will walk 54,000 items into a wall without raising its voice. Fix: stop after N
+   consecutive failures and **exit non-zero**, so the tail of the log and the exit status disagree
+   with "it's fine."
+
+**The diagnostic that actually found it** was not the log — it was one query against the destination:
+
+```sql
+select max(pushed_at), count(*) filter (where pushed_at > now() - interval '5 minutes')
+  from studio_photos;
+```
+
+**Ask the destination whether rows are still arriving. Never ask the process whether it is still
+running.** A process can be extremely busy accomplishing nothing.
+
+Regression cover: `spark/test_push_retry.py` executes the shipped `main()` against stubbed network
+leaves, with a negative control that must LOSE photographs when the re-auth is disabled.
+
+---
+
 ## Do-not-reflag register — imported from the Hyperagent session, verified at 472
 
 Each of these looks like a defect and is not. Re-reporting one costs trust.

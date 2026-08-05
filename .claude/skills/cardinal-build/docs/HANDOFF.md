@@ -107,6 +107,9 @@ Changing it alters live behaviour for reps, so it wants a decision, not a quiet 
 | `showcase_pairs` | 1 |
 | `inspection_reports` | 5 |
 
+⚠️ **The `studio_photos` row above is superseded** — the push started 02:05 UTC and **6,290 landed
+before it stalled**. See "The push stalled at 10%" below. The rest of the table still holds.
+
 `walk_shots.findings` is jsonb and joins to `walks.trade` — it is exactly the right shape to confirm
 the `'other'` mechanism end to end, and it will be usable the moment anyone runs a walk.
 
@@ -126,6 +129,67 @@ here.**
   land under their own names. The leak is closed, verified by absence.
 - ⚠️ **`renderClassify()` now renders 33 chips, not 17** (`index.html:57487`). The one visible cost.
   If it feels cluttered on a phone, the walk knows its trade — lead with that trade's classes.
+
+## ✅ SQL APPLIED to production, 5 Aug ~03:55 UTC — do NOT run these again
+
+Theo said "Can you run sql". Both merged files were applied with `apply_migration`, so they are in
+`supabase_migrations.schema_migrations` alongside `studio_photos` and `studio_objects_rls`:
+
+| migration | what landed |
+|---|---|
+| `studio_findings` | `studio_findings` table · `studio_photos.damage_tags text[]` + GIN index · `studio_refresh_damage_tags()` |
+| `studio_media` | `studio_photos`: `kind`, `duration_s`, `live_pair_id`, `live_is_clip`, `lat`, `lon`, `device`, `event_id` · `studio_events` · `studio_private` · `studio_private_events` |
+| `studio_findings_admin_gate_null_fix` | the security fix below |
+
+Verified after applying: all 9 columns present, all 4 tables present, **RLS enabled on all four**,
+policies are `is_cardinal_admin()` on the two work tables and `owner_email = my_email()` on the two
+private ones, and all **6,290 existing `studio_photos` rows survived** with `kind='photo'` and an
+empty `damage_tags`.
+
+### ⚠ My own bug, caught minutes after applying — a definer function that failed OPEN
+
+`studio_refresh_damage_tags()` is SECURITY DEFINER with an admin gate, and **the gate did not stop an
+anonymous caller.** Full write-up as **BUG_CLASSES §12**; the two-line version:
+
+- **`is_cardinal_admin()` returns NULL, not false, for anon** (`auth.email()` is NULL → `NULL in (…)`
+  → `false OR NULL` → NULL). `IF NOT NULL THEN` does not fire, so the raise was skipped.
+- **`revoke … from public` left `anon` holding EXECUTE**, because Supabase grants to anon /
+  authenticated / service_role *directly*, not via `public`.
+
+Fixed with `not coalesce(is_cardinal_admin(), false)` **and** an explicit `revoke … from anon`.
+Re-verified all three callers: anon → `permission denied for function`; rep `nick@` → raises
+`admin-only`; admin `theo@` → allowed, so the ingest path still works. The repo `.sql` now matches
+production and carries the reasoning.
+
+**The transferable half: the RLS policies calling the same function were never affected** — a policy
+predicate evaluating to NULL filters the row out, which fails safe. Only the negated `IF` inverts.
+Do not "fix" the policies.
+
+## ⚠ The push stalled at 10% — and it was still running while doing nothing
+
+**6,290 of 60,503 (~10%). First row 02:05 UTC, last 03:06 — exactly 61 minutes — then nothing.**
+Hermes reported it "running, resumable," which was true and also completely misleading.
+
+Root cause is the **same token-expiry defect already fixed in `hail_review.py` (PR #122)**:
+`push_studio_tags.py` minted one token before the loop, both HTTP helpers flattened the status code
+into a string, and the loop's `except Exception` counted every 401 as an ordinary failure and carried
+on. Recorded as **BUG_CLASSES §13**.
+
+Fixed with three defences: proactive refresh at 45 min, at-most-one re-auth per photo on 401, and a
+**stall-out after 25 consecutive failures with a non-zero exit** so this can never again look healthy
+from the outside. `spark/test_push_retry.py` executes the shipped `main()` and carries a negative
+control that must lose photographs when the re-auth is disabled.
+
+**The diagnostic worth keeping — ask the destination, not the process:**
+
+```sql
+select max(pushed_at) as last_write,
+       count(*) filter (where pushed_at > now() - interval '5 minutes') as last_5min
+  from studio_photos;
+```
+
+**Next: Theo re-runs the push on the Spark.** `.pushed.json` makes it resume from 6,290; it does not
+need to start over.
 
 ## Metrics lessons that cost three wrong tables — read before quoting any number
 

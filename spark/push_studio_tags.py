@@ -47,6 +47,21 @@ AUTH
     allowlist regardless of team_profiles — so a real sign-in as either
     satisfies studio_photos' RLS with no other setup needed.
 
+    THE TOKEN LIVES ONE HOUR, AND THIS RUN IS LONGER THAN THAT. Measured on the
+    5 Aug run against studio_photos.pushed_at: the first row landed 02:05 UTC,
+    the last 03:06 — 61 minutes — and then all ~54,000 remaining photographs
+    failed while the script kept running and reported nothing wrong. 6,290 of
+    60,503 landed, about 10%. The token was minted once before the loop and
+    nothing renewed it.
+
+    So there are now three defences, in order of preference:
+      1. refresh proactively at TOKEN_TTL_S, before anything can fail;
+      2. if a 401 arrives anyway, sign in again and retry that photograph once;
+      3. if STALL_AFTER photographs fail back-to-back, STOP and exit non-zero,
+         because a run that cannot land anything should say so rather than
+         quietly walk the rest of the list.
+    hail_review.py carries defence 2 for the same reason and the same cause.
+
 USAGE
     # smoke test first — a handful of photos, look at what actually lands
     python3 push_studio_tags.py --dest /data/cardinal/companycam \
@@ -64,16 +79,23 @@ REQUIRES PILLOW
     pip3 install --user Pillow — already an accepted dependency in this same
     folder; strip_exif.py requires it too.
 
-WHAT I COULD NOT VERIFY FROM HERE
-    This sandbox has no path to the Spark's filesystem, to Supabase Storage
-    with real credentials, or to a real studio_tags.jsonl — so this script has
-    never made a live call. The auth flow mirrors hail_review.py's
-    get_token(), which IS proven against this account. The Storage and
-    PostgREST request shapes (headers, upsert semantics) are standard Supabase
-    REST, but standard is not the same as tested. Run --limit 5 first and
-    check studio_photos afterward before trusting a big run.
+WHAT IS AND IS NOT VERIFIED
+    PROVEN, by a live run: the request shapes work. 6,290 rows and their
+    browsing copies landed in production on 5 Aug before the token expired.
+    That is no longer a theory.
+
+    PROVEN, by test_push_retry.py in this folder: the retry, re-auth, proactive
+    refresh and stall-out paths above. It imports THIS file and executes the
+    real main() with only the four network/IO leaves stubbed, and it carries a
+    negative control — the same expiry scenario with a permanently dead token,
+    which must lose photographs. If that control ever passes, the test is
+    proving nothing and needs fixing before it is trusted.
+
+    STILL NOT VERIFIED FROM HERE: nothing exercises a real Storage PUT or a
+    real PostgREST upsert from this sandbox. Run --limit 5 first and look at
+    studio_photos before trusting a big run.
 """
-import argparse, json, os, sys
+import argparse, json, os, sys, time
 import urllib.error, urllib.request
 
 try:
@@ -88,10 +110,33 @@ SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ'
 DISP_MAX = 1400        # matches cr-show-script's DISP rendition
 DISP_QUALITY = 82
 
+# A Supabase access token lives one hour. MEASURED on the 5 Aug run, not
+# assumed: the first row landed at 02:05 UTC and the last at 03:06, exactly 61
+# minutes, and then every remaining photo failed. Refresh well inside that.
+TOKEN_TTL_S = 45 * 60
+# If this many photographs fail back-to-back, something systemic is wrong and
+# grinding through the remaining tens of thousands helps nobody. The 5 Aug run
+# was reported as "running, resumable" while it was in exactly this state.
+STALL_AFTER = 25
+
 
 def die(msg, code=1):
     print('ERROR: ' + msg, file=sys.stderr)
     sys.exit(code)
+
+
+class ApiError(RuntimeError):
+    """An HTTP failure that still knows its status code.
+
+    The first version of this script flattened every urllib.error.HTTPError
+    into a bare RuntimeError with the code baked into a string. The loop's
+    `except Exception` then counted it and moved on, so a 401 — the one error
+    that is recoverable and that a long run is GUARANTEED to hit — was
+    indistinguishable from a corrupt JPEG. Keep the code."""
+
+    def __init__(self, msg, code):
+        super().__init__(msg)
+        self.code = code
 
 
 def get_token(email, password):
@@ -172,8 +217,8 @@ def upload_storage(token, path, data):
         with urllib.request.urlopen(req, timeout=60) as r:
             r.read()
     except urllib.error.HTTPError as e:
-        raise RuntimeError('storage upload failed (%d): %s' %
-                            (e.code, e.read().decode('utf-8', 'replace')[:300]))
+        raise ApiError('storage upload failed (%d): %s' %
+                       (e.code, e.read().decode('utf-8', 'replace')[:300]), e.code)
 
 
 def upsert_row(token, row):
@@ -194,8 +239,8 @@ def upsert_row(token, row):
         with urllib.request.urlopen(req, timeout=30) as r:
             got = json.loads(r.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
-        raise RuntimeError('insert failed (%d): %s' %
-                            (e.code, e.read().decode('utf-8', 'replace')[:300]))
+        raise ApiError('insert failed (%d): %s' %
+                       (e.code, e.read().decode('utf-8', 'replace')[:300]), e.code)
     # An RLS refusal is a silent empty array, not an error — the same shape
     # savePair() in the app already has to guard against. Check the rows, not
     # just the absence of an exception.
@@ -236,7 +281,8 @@ def main():
         return
 
     token = get_token(email, password)
-    ok, failed = 0, 0
+    token_at = time.time()
+    ok, failed, consecutive, stalled = 0, 0, 0, False
 
     for i, row in enumerate(todo, 1):
         rid = row.get('id')
@@ -245,39 +291,108 @@ def main():
         if not src or not os.path.exists(src):
             print('  [%d/%d] SKIP %s — no file at %s' % (i, len(todo), rid, src))
             failed += 1
+            consecutive += 1
+            if consecutive >= STALL_AFTER:
+                stalled = True
+                print('  STOPPING: %d in a row failed. Check --root points at the right '
+                      'folder.' % consecutive)
+                break
             continue
+
+        # Refresh BEFORE the token dies rather than after. Reactive re-auth
+        # below is the safety net; this is what stops the net being needed.
+        if time.time() - token_at > TOKEN_TTL_S:
+            print('  refreshing the access token (%d min old)' %
+                  round((time.time() - token_at) / 60))
+            token = get_token(email, password)
+            token_at = time.time()
+
+        # Resizing is the expensive part and does not depend on the token, so
+        # it stays outside the retry — a re-auth must not re-decode the JPEG.
         try:
             thumb, w, h = make_thumb(src)
-            storage_path = 'studio/%s.jpg' % rid
-            upload_storage(token, storage_path, thumb)
-
-            enrich = manifest_idx.get(rid, {}) if row.get('source') == 'companycam' else {}
-            db_row = {
-                'id': rid,
-                'source': row.get('source'),
-                'spark_path': rel_path,
-                'storage_path': storage_path,
-                'tags': row.get('tags') or [],
-                'confidence': row.get('confidence'),
-                'project_address': enrich.get('project_address'),
-                'project_name': enrich.get('project_name'),
-                'captured_at': enrich.get('captured_at'),
-                'width': w,
-                'height': h,
-                'tagged_at': row.get('tagged_at'),
-            }
-            upsert_row(token, db_row)
-            pushed.add(rid)
-            ok += 1
-            if i % 25 == 0 or i == len(todo):
-                print('  [%d/%d] pushed (%d ok, %d failed so far)' % (i, len(todo), ok, failed))
-                json.dump(sorted(pushed), open(state_path, 'w'))
         except Exception as e:
             failed += 1
-            print('  [%d/%d] FAILED %s — %s' % (i, len(todo), rid, e))
+            consecutive += 1
+            print('  [%d/%d] FAILED %s — could not read image: %s' % (i, len(todo), rid, e))
+            continue
+
+        storage_path = 'studio/%s.jpg' % rid
+        enrich = manifest_idx.get(rid, {}) if row.get('source') == 'companycam' else {}
+        db_row = {
+            'id': rid,
+            'source': row.get('source'),
+            'spark_path': rel_path,
+            'storage_path': storage_path,
+            'tags': row.get('tags') or [],
+            'confidence': row.get('confidence'),
+            'project_address': enrich.get('project_address'),
+            'project_name': enrich.get('project_name'),
+            'captured_at': enrich.get('captured_at'),
+            'width': w,
+            'height': h,
+            'tagged_at': row.get('tagged_at'),
+        }
+
+        # Both calls sit inside one retry: the upload is idempotent
+        # (x-upsert:true) and the insert is an upsert on id, so repeating the
+        # pair after a mid-pair 401 costs one wasted PUT and nothing else.
+        attempt, err, reauthed = 0, None, False
+        while attempt < 3:
+            attempt += 1
+            try:
+                upload_storage(token, storage_path, thumb)
+                upsert_row(token, db_row)
+                err = None
+                break
+            except ApiError as e:
+                err = e
+                # THE 5 AUG FAILURE. The token was minted once before the loop
+                # and the run outlived it at exactly 61 minutes; every one of
+                # the remaining ~54,000 photographs then 401'd, was counted as
+                # a plain failure, and the script kept going for as long as it
+                # was left running. Retrying with the same dead token cannot
+                # help — sign in again, then retry. At most once per photo, so
+                # a genuine permissions failure cannot become a sign-in storm.
+                if e.code == 401 and not reauthed:
+                    reauthed = True
+                    print('  token expired — signing in again')
+                    token = get_token(email, password)
+                    token_at = time.time()
+                    continue
+                if e.code in (502, 503, 429):
+                    time.sleep(1.5 * attempt)
+                    continue
+                break
+            except Exception as e:
+                err = e
+                time.sleep(1.5 * attempt)
+
+        if err is not None:
+            failed += 1
+            consecutive += 1
+            print('  [%d/%d] FAILED %s — %s' % (i, len(todo), rid, err))
+            if consecutive >= STALL_AFTER:
+                stalled = True
+                print('  STOPPING: %d in a row failed, last error above. Nothing is '
+                      'landing; fix that before re-running.' % consecutive)
+                break
+            continue
+
+        pushed.add(rid)
+        ok += 1
+        consecutive = 0
+        if i % 25 == 0 or i == len(todo):
+            print('  [%d/%d] pushed (%d ok, %d failed so far)' % (i, len(todo), ok, failed))
+            json.dump(sorted(pushed), open(state_path, 'w'))
 
     json.dump(sorted(pushed), open(state_path, 'w'))
     print('done: %d pushed, %d failed, %d total pushed all-time' % (ok, failed, len(pushed)))
+    if stalled:
+        # A non-zero exit so a wrapper, a cron or a person reading the tail can
+        # tell a stalled run from a finished one. The 5 Aug run looked healthy
+        # from the outside precisely because it never said otherwise.
+        sys.exit(2)
 
 
 if __name__ == '__main__':
