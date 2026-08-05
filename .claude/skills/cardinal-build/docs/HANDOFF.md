@@ -4,6 +4,126 @@
 
 ---
 
+# Session of 5 August 2026 — the label pipeline is DISTILLATION, and its biggest leak
+
+**`main` at the `/api/detect` merge (PR #114). No `index.html` change, no build bump — the app stamp
+stays at 595. PR #113 (the seven decisions) also merged. Nothing uncommitted.**
+
+This session ran alongside **Hermes**, an agent on Theo's Spark DGX box. Hermes owns the Spark, this
+session owns the repo. Most of the value below came out of that exchange, not out of the repo alone.
+
+## The thing a fresh session most needs to know
+
+**Theo's YOLO model is trained on `/api/detect`'s output.** The pipeline is *fetch candidates →
+detect → clean → retrain*, so **Gemini is the teacher and YOLO is the student** — confirmed by Hermes,
+not inferred. Four consequences, all agreed and none to re-derive:
+
+1. **mAP50 0.244 measures agreement with Gemini, not correctness.** A v3 at 0.40 means "agrees with
+   the teacher more." The ceiling is the teacher's labelling quality, not YOLO's capacity.
+2. **"1–3 labelled examples" means the teacher rarely emitted those classes** — not that labelling
+   was incomplete. So more *volume* mostly yields more of what is already abundant. The rare classes
+   need **targeted fetch** (storm-date jobs, close-up framing), which is a different plan.
+3. **`via` was never captured**, so the existing 2038-record set is **not stratifiable by teacher**
+   and cannot be fixed retroactively. The ladder falls through on 503/429 — three different models
+   may be mixed in one training set.
+4. **Never put `best.pt` behind `/api/detect`.** That is the student replacing the teacher. Valid for
+   cost, latency or offline; never for accuracy.
+
+## The biggest measured leak, and where it actually was
+
+I proposed four mechanisms for the weak-class problem. **Three were measurably not happening.**
+`dropped` was **0 on all 1274** collected photographs, and *every* drop path in `cleanFindings()`
+increments that same counter — so the >12 truncation, the 0.5% size floor and the unplaceable-box
+path have never once fired. A `dropped` of 0 is **positive evidence**, not missing evidence. Do not
+re-litigate those three.
+
+**The fourth is real and large.** Coercion to `'other'` does **not** increment `dropped`, and
+**294 of 959 boxes (30.7%)** landed there.
+
+**The cause is in this repo, not in the model:**
+
+- `walks_schema.sql:53` constrains a walk's trade to
+  `('roof','siding','windows','andersen','gutters','general')`
+- `index.html:57402` passes that trade to `/api/detect` as the label hint
+- `DEFECTS` in `api/detect.js` is **roof-only**
+
+So the app asks *"here is a SIDING walk, find defects"* and the vocabulary cannot answer. Every
+siding, window, gutter and Andersen finding necessarily lands on `'other'`. **This is structural, not
+a model failing.**
+
+## What PR #114 shipped (`api/` only)
+
+- **`raw_defect`** — the model's own string, kept when it differs from the coerced value. Nothing
+  needs recovering after this.
+- **`collect:true`** — opt-in, session-gated. Lifts the *prompt's* "at most 12, most significant" to
+  "every distinct defect, repeats included, up to 40". **The instruction moves, not just the
+  constant** — the model self-capping is the one truncation invisible from the response.
+- **`dropped_by`** — which path took them.
+
+Reviewer path is byte-identical: `collect` defaults false, `MAX_FINDINGS` stays 12.
+
+## Settled — do not re-litigate
+
+- **The expanded vocabulary is DERIVED FROM THE CLUSTERS, not hand-specified** (Theo, verbatim:
+  *"using the clusters"*). The 294 `'other'` findings kept their `label` and `note` free text, so what
+  the teacher actually called them is readable at zero API cost. **Do not propose a class list before
+  reading them** — this project already shipped one change verified against invented shapes that was
+  completely inert.
+- Expanding `DEFECTS` is **two sites**: `api/detect.js` `DEFECTS` and `index.html:57117` `DEF_LABEL`.
+  Defects and trades are separate vocabularies; the trade family only moves if a *trade* is added.
+- **`recover_other.py` must stamp provenance on every recovered label** and tune for **precision, not
+  recall**. It is a *third* label generator with its own error profile — 150 confident recoveries beat
+  294 with a fuzzy tail, because v3 can then be trained with and without them and compared. Without
+  the stamp you are back where `via` left you.
+- **Ownership:** Hermes owns the Spark copy of `spark/hail_review.py` (already patched with `via`
+  capture); **this repo takes the diff** rather than writing its own. The file lives in `spark/` here,
+  so divergence is the hazard.
+
+## Flagged, NOT fixed — needs Theo
+
+**The `/api/detect` prompt is roof-framed throughout** — *"assisting a roofing inspector"*,
+*"undamaged roofs exist"*, *"do not infer damage from the age or style of the roof."* Widening
+`DEFECTS` will not fully help while the prompt still tells the model it is looking at a roof.
+Changing it alters live behaviour for reps, so it wants a decision, not a quiet edit.
+
+## Corrections I owe
+
+- I said a rep running a siding walk **today** gets every finding labelled "Other." Mechanically true,
+  **but zero walks exist** — nobody has hit it. Latent, not live. I overstated the urgency.
+- I proposed four drop mechanisms and three were wrong. The story was compelling; only the
+  measurement caught it. **Measure before theorising** — this file's own rule, earned again.
+- I described the archive's 60k tags as YOLO output. They are `studio_tagger.py` — path keywords and
+  aspect ratio, **no vision model**. Composition tags (aerial/close-up/wide), not anatomy. I read the
+  schema *example* in `spark/STUDIO_TAGGING.md` and took it for what runs.
+
+## Production state, verified against the database 5 Aug
+
+**Everything on the Vision/Studio surface is built and EMPTY.** Checked, not assumed:
+
+| table | rows |
+|---|---:|
+| `walks` · `walk_shots` | **0** · **0** |
+| `studio_photos` | **0** — the Spark's 60,503 tagged photos have **not** been pushed |
+| `showcase_pairs` | 1 |
+| `inspection_reports` | 5 |
+
+`walk_shots.findings` is jsonb and joins to `walks.trade` — it is exactly the right shape to confirm
+the `'other'` mechanism end to end, and it will be usable the moment anyone runs a walk.
+
+## Blocked on Hermes
+
+1. **The cluster output** — grouped `label`/`note` text from the 294. The vocabulary work cannot
+   start without it, and this session has no path to the Spark's filesystem.
+2. **The `hail_review.py` diff** with `via` capture.
+
+## Still owed Theo, unblocked
+
+**The Production hub revamp** — his explicit ask, unbuilt. **Punch is already built**
+(`punch_items`, `cr-punch-*`, statuses already in the data), so it is wiring, not building. He wants
+**labelled previews before code**.
+
+---
+
 # Session of 3 August 2026 (late) — THE POP-UP ROOF: the complete sixteen-spread book
 
 **Branch `claude/contractor-vision-suite-bwq21i`, head `da08782`, PR #108 open (draft), CI green,

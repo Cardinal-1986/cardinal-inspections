@@ -8,6 +8,49 @@ real. Everything under "Illustrations in the Resource Library" and beyond is 467
 
 ---
 
+## 🔴 LIVE — the detect vocabulary is roof-only and the app already asks it for siding
+
+*Opened 5 Aug 2026, after PR #114. **Read the 5 Aug section of `HANDOFF.md` first** — it carries the
+distillation finding this depends on.*
+
+**The defect.** `walks_schema.sql:53` allows a walk trade of
+`('roof','siding','windows','andersen','gutters','general')`. `index.html:57402` passes that trade to
+`/api/detect`. **`DEFECTS` in `api/detect.js` is roof-only.** So every siding, window, gutter and
+Andersen finding is coerced to `'other'` — **294 of 959 collected boxes, 30.7%**, the largest measured
+leak in the label pipeline.
+
+**Latent, not live** — `walks` and `walk_shots` are both **0 rows** as of 5 Aug. Nobody has run a walk
+yet. It breaks the first time someone does.
+
+**Next step is NOT to propose a class list.** Theo settled this: *"using the clusters."* The 294
+`'other'` findings kept their `label` and `note` free text, so what the teacher actually called them
+is readable from `findings.jsonl` at zero API cost. **Hermes owns that step; this repo has no path to
+the Spark.** The vocabulary falls out of the clusters.
+
+**When the clusters land, the change is two sites:** `DEFECTS` in `api/detect.js` and `DEF_LABEL` at
+`index.html:57117`. Defects and trades are separate vocabularies — the trade family
+(`showcase_pairs`, `EST_TYPES`, `api/sortphotos.js`) only moves if a *trade* is added.
+
+**Related, flagged, needs Theo:** the `/api/detect` prompt is roof-framed throughout — *"assisting a
+roofing inspector"*, *"undamaged roofs exist"*, *"do not infer damage from the age or style of the
+roof."* Widening `DEFECTS` will not fully help while the prompt still says roof. Changing it alters
+live behaviour for reps.
+
+**Do NOT re-open these three** — measured 5 Aug over 1274 photographs, `dropped` was **0 on every
+one**, and every drop path in `cleanFindings()` increments that counter: the >12 truncation, the 0.5%
+size floor, and the unplaceable-box path have **never fired**. Three of four proposed mechanisms were
+wrong. Only the coercion was real.
+
+## 🟡 The Spark corpus is not in production
+
+`studio_photos` is **0 rows** as of 5 Aug — the 60,503 tagged photos are on the Spark and have not
+been pushed. The Studio browser has nothing in it. Not a bug; the push has not run.
+
+Also still open from 2 Aug and unchanged: **`studio_photos` has no bounding-box column** and
+`spark/push_studio_tags.py` never sends one, while Theo's stated output shape is labels + **boxes** +
+confidence. Fine for search, not enough for the annotation half of decision 4. Schema **and** ingest
+change — cheaper before a 60k pass than after.
+
 ## ✅ Contractor Vision Suite — all 7 decisions SETTLED BY THEO, 5 Aug 2026
 
 *Answered directly by Theo. **Do not re-litigate any of these.** The questions come from
