@@ -196,18 +196,50 @@ class ApiError(RuntimeError):
         self.code = code
 
 
-def get_token(email, password):
+# Sign-in failures split into two kinds and they must be handled differently.
+#
+#   FATAL     400 / 401 / 422 — the credentials are wrong. Retrying cannot fix
+#             it and hammering an auth endpoint with a bad password is how an
+#             account gets locked. Die, loudly, straight away.
+#   TRANSIENT 429 / 5xx / a dropped connection — the credentials are fine and
+#             the service is briefly not. Back off and try again.
+#
+# Before this, EVERY sign-in failure called die() -> sys.exit(1). SystemExit is
+# not an Exception, so the push loop's `except Exception` cannot catch it: one
+# momentary 429 killed an eight-hour run outright. That matters most on the
+# every-N-photographs refresh strategy — a sign-in every two minutes is ~32 an
+# hour, right at GoTrue's rate limit for password grants — but this run signs in
+# hourly and a single bad moment was still fatal.
+AUTH_FATAL = (400, 401, 422)
+
+
+def get_token(email, password, tries=4):
     req = urllib.request.Request(
         SUPABASE_URL + '/auth/v1/token?grant_type=password',
         data=json.dumps({'email': email, 'password': password}).encode('utf-8'),
         headers={'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY},
         method='POST')
-    try:
-        with urllib.request.urlopen(req, timeout=20) as r:
-            body = json.loads(r.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        die('Sign-in failed (%d): %s' % (e.code, e.read().decode('utf-8', 'replace')[:300]))
-        return  # unreachable, quiets linters
+    body = None
+    for attempt in range(1, tries + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                body = json.loads(r.read().decode('utf-8'))
+            break
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode('utf-8', 'replace')[:300]
+            if e.code in AUTH_FATAL:
+                die('Sign-in failed (%d): %s' % (e.code, detail))
+            if attempt == tries:
+                die('Sign-in failed (%d) after %d tries: %s' % (e.code, tries, detail))
+            wait = 2 ** attempt            # 2s, 4s, 8s
+            print('  sign-in got %d, retrying in %ds (%d/%d)' % (e.code, wait, attempt, tries))
+            time.sleep(wait)
+        except Exception as e:             # URLError, timeout, a dropped socket
+            if attempt == tries:
+                die('Sign-in failed after %d tries: %s' % (tries, e))
+            wait = 2 ** attempt
+            print('  sign-in error (%s), retrying in %ds (%d/%d)' % (e, wait, attempt, tries))
+            time.sleep(wait)
     tok = body.get('access_token')
     if not tok:
         die('Sign-in returned no access_token — check CARDINAL_EMAIL/CARDINAL_PASSWORD.')

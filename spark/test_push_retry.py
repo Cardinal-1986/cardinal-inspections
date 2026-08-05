@@ -126,6 +126,70 @@ check('unparseable token falls back, does not crash',
       pst.token_expiry('not-a-jwt') == pst.TOKEN_TTL_S)
 
 
+# ── 0a · a transient sign-in failure must not kill the run ──────────────────
+# get_token() used to die() on ANY HTTPError, and SystemExit is not an
+# Exception, so the push loop could not catch it: one momentary 429 ended an
+# eight-hour job. Bad credentials must still be fatal — retrying a wrong
+# password is how an account gets locked.
+print('\n0a · sign-in retries transient failures, dies on bad credentials')
+
+
+def _fake_urlopen(seq):
+    """Hand back queued outcomes: an int raises that HTTP status, a dict is a body."""
+    calls = {'n': 0}
+
+    class _Resp:
+        def __init__(self, payload): self.payload = payload
+        def read(self): return json.dumps(self.payload).encode()
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    def opener(req, timeout=None):
+        calls['n'] += 1
+        nxt = seq[min(calls['n'] - 1, len(seq) - 1)]
+        if isinstance(nxt, int):
+            raise pst.urllib.error.HTTPError('u', nxt, 'err', {}, io.BytesIO(b'{"m":"x"}'))
+        return _Resp(nxt)
+    return opener, calls
+
+
+_real_urlopen, _real_sleep = pst.urllib.request.urlopen, pst.time.sleep
+pst.time.sleep = lambda s: None                      # no real backoff in tests
+
+# 429 twice, then success -> must recover and return the token
+opener, calls = _fake_urlopen([429, 429, {'access_token': 'tok-ok'}])
+pst.urllib.request.urlopen = opener
+with contextlib.redirect_stdout(io.StringIO()):
+    got = pst.get_token('a@b.c', 'pw')
+check('recovers from two 429s', got == 'tok-ok', 'got %r after %d calls' % (got, calls['n']))
+
+# 401 -> fatal immediately, and must NOT retry
+opener, calls = _fake_urlopen([401])
+pst.urllib.request.urlopen = opener
+_exited = None
+try:
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        pst.get_token('a@b.c', 'wrong')
+except SystemExit as e:
+    _exited = e.code
+check('bad credentials are fatal', _exited == 1, 'exit %r' % _exited)
+check('and are NOT retried', calls['n'] == 1, '%d sign-in attempts' % calls['n'])
+
+# 503 forever -> gives up rather than looping, still fatal
+opener, calls = _fake_urlopen([503])
+pst.urllib.request.urlopen = opener
+_exited = None
+try:
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        pst.get_token('a@b.c', 'pw', tries=4)
+except SystemExit as e:
+    _exited = e.code
+check('a permanent 503 gives up after its tries', _exited == 1 and calls['n'] == 4,
+      'exit %r after %d attempts' % (_exited, calls['n']))
+
+pst.urllib.request.urlopen, pst.time.sleep = _real_urlopen, _real_sleep
+
+
 # ── 1 · the 5 Aug failure: the token dies mid-run ───────────────────────────
 # Uses the STORAGE shape, because upload_storage() is the call that runs first
 # and is therefore what a long run actually hits. Under the old `e.code == 401`
