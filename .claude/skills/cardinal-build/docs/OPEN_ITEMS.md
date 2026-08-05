@@ -4,6 +4,105 @@
 
 ---
 
+## ✅ Contractor Vision Suite — all 7 decisions SETTLED BY THEO, 5 Aug 2026
+
+*Answered directly by Theo. **Do not re-litigate any of these.** The questions come from
+`CONTRACTOR_VISION_SUITE.md` on `claude/contractor-vision-suite-bwq21i` (PR #98) — recorded here
+because `OPEN_ITEMS.md` is where settled decisions live, and that branch may never merge as-is.*
+
+| # | Question | **Theo's answer** | vs. the recommendation |
+|---|---|---|---|
+| 1 | Reopen the photo-GPS fence? | **YES, but ADMIN-GATED IN-APP ONLY** — never public; SEO uses city/area | ⚠️ **OVERRIDES** the recommended NO, narrowly |
+| 2 | Corpus-scale AI tagging | **(c) Spark pass** — already largely DONE with **YOLO**; output is **labels + boxes + confidence** | matches, and overtaken by events |
+| 3 | Hall of Shame sourcing | **Allow the exception** | (none offered — his call) |
+| 4 | Photo enhancement | **"I would never alter insurance photos"** | matches |
+| 5 | Privacy toggle scope | **No client names on the front end. The photo organizer is his eyes only and needs no masking** | (none offered — his call) |
+| 6 | Mirror auto-sync cron | **Wait** | deferred |
+| 7 | Remote sign-off for reports | **Yes — can be signed with a link** | matches |
+
+### 1 — the GPS fence reopens, and this reverses a written constraint
+
+The no-coordinates fence is written at **three sites** (`companycam_index.sql:15-18`,
+`companycam-sync.js:11-14`, `companycam.js safePhoto()`) and every one says a searchable index does
+not need the customer's latitude and longitude. **Theo has decided to reopen it for website/SEO use,
+gated by permissions.** That is his call and it is now the standing position.
+
+**"With permissions" was pinned down the same day, and it is narrower than it first sounds:**
+
+> **ADMIN-GATED IN THE APP ONLY.** Coordinates may be stored and shown to Theo and Joan inside the
+> app — organising, mapping, clustering jobs. **Nothing carrying a lat/long ever reaches a public
+> page.** SEO uses the job's **city/area**, not photo coordinates.
+
+So the *public* half of the original fence still stands. What changes is that the index may now
+**carry** coordinates for admin use, where before it refused to store them at all.
+
+**Implementation notes for whoever builds this:**
+- The three fence sites (`companycam_index.sql:15-18`, `companycam-sync.js:11-14`,
+  `companycam.js safePhoto()`) are **not simply deleted** — `safePhoto()` is the public-facing
+  shaper and must keep stripping coordinates. The change is at *storage* and *admin read*, not at
+  the public serializer.
+- Same shape as the existing `internal:true` refusal, which is already enforced in list + fetch +
+  sync. Copy that, do not invent a second mechanism.
+- **A public page must never be able to ask for coordinates at all** — not gated, absent.
+
+### 2 — already in flight, on Theo's own hardware
+
+Theo: *"im in the process and tagged all photos almost with Yolo."*
+
+**This overtakes the plan.** The doc proposed a trial-first Spark pass using the `sample_captions`
+pattern to justify the spend. That justification is moot — the corpus is nearly tagged already,
+**with YOLO, on the Spark, outside this repo.** YOLO appears nowhere in the codebase or the plan; it
+is Theo's own pipeline.
+
+**What this changes for the app side:** the work is no longer "run a tagging pass", it is **ingest
+the tags Theo already has**.
+
+**The output shape, confirmed by Theo 5 Aug: labels + bounding boxes + confidence, per photo.**
+
+That is the full detection output, and it decides three things at once:
+- **Search** takes the labels. **Confidence is load-bearing** — low-confidence tags must be held
+  back or flagged for review, never surfaced as fact. This app runs insurance claims; a wrong
+  confident-looking tag on a claim photo is worse than no tag.
+- **Boxes** are exactly what the drawn-annotation half needs later (`cr-ped-script` already draws).
+  Per decision 4 they arrive as **machine-suggested, human-confirmed** — never auto-stamped.
+- The `phase` vocabulary (`before|progress|after`) still ships **in its own commit, before any
+  writer** — the `normStage` whitelist lesson. Unrecognised values become `'Lead'`-equivalent
+  silently, which is how this class corrupts data.
+
+**Do not design the table until you have a real sample of his YOLO output.** This project shipped a
+photo-signing change that was completely inert because it was verified against invented shapes.
+
+### 4 — the altered-evidence rule is now Theo's own words
+
+> **"I would never alter insurance photos."**
+
+Enhancement and auto-annotation are **presentation surfaces only** — never claims, reports or
+supplements. Annotations stay machine-*suggested*, human-confirmed.
+
+### 5 — masking is a front-end concern only
+
+Client names and addresses are hidden on **the front end** (anything a customer or the public sees).
+The **photo organizer is Theo's own tool** — admin-only by construction — and deliberately needs no
+masking or redaction. Do not spend effort privacy-proofing the organizer.
+
+*(The separate CDN-residue item — 11 of 26 sampled photo objects still served anonymously after the
+bucket flip — was bundled into this question in the plan doc but is NOT answered by it. It remains
+open.)*
+
+### 6 — no cron yet
+
+Mirror auto-sync waits. Search stays manual-press. Do not build the secret-header path or the
+incremental mode until he asks.
+
+### 7 — reports get remote sign-off
+
+Align the inspection templates' sign block with `SIGN_RX` ("Client Acceptance") so reports sign from
+the share link exactly as estimates and work orders already do. Today inspection templates say
+"Client Acknowledgment" — **one word apart**, which is the whole reason reports can only be signed in
+person.
+
+---
+
 ## 🔴 Open after builds 565–573 (2 Aug 2026)
 
 ### ✅ Closed this session — do not re-open
