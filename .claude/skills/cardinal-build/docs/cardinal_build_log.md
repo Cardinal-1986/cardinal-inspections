@@ -7853,3 +7853,45 @@ This is the **581 class recurring** (581's own note: *"two ways of writing an en
 mixed"*). `entryBuild`/`entryNote` normalise both shapes, so nothing rendered as
 `Build undefined` this time — only the ordering broke. **Grep both `{ b:` and `{ build:` before
 concluding anything about this array's contents.**
+
+## Defect taxonomy narrowed, 33 -> 31 (602)
+
+- **602** · `soffit_damage` + `fascia_damage` **merged** to `soffit_fascia_damage`;
+  `paint_deterioration` **removed**, its boxes reassigned to the surface they are peeling off.
+
+**Why, and it was written down at 596 without anyone noticing.** v4's `val_batch1_pred.jpg` came
+back with one rotted eave boxed three and four times, each box a different class. **NMS is
+per-class** — it only suppresses overlapping boxes of the *same* class, so splitting one repair
+across three names guarantees all three survive. Not tunable.
+
+The ground truth was measured and is mostly innocent: **3 cross-class overlaps above 0.5 IoU in 454
+images.** The annotations did not teach it. The *taxonomy* invited it — and `api/detect.js`'s own
+596 comment already said the exterior vocabulary came from what the model called 294 flattened
+boxes, clustered as *"gutter 65, **soffit/fascia 57**, window 42, deck 42."* **Soffit and fascia
+were ONE cluster in the data.** Splitting them into two classes is what broke it.
+
+`paint_deterioration` was a **condition among locations** — it stacks on every surface, which is
+why it had the most boxes of the four (36). Paint failure now belongs to whichever surface carries
+it, and is named in both surface descriptions so the model still has somewhere to put it.
+
+**Every index ≤18 is unchanged** — the 17 roof classes and `other` (pinned at 16) keep their exact
+numbers. The merge sits entirely in the exterior tail, so the roof half of the model is untouched
+by the renumbering. `walks_trade_ck`'s six trades are unaffected; no DB change.
+
+**Three files carry this list and all three were changed together** — `api/detect.js` DEFECTS,
+`spark/hail_review.py` DEFECT_KEYS, and `spark/remap_taxonomy_602.py` NEW_NAMES. A gate asserts all
+three are identical. Same rule as `STAGES`/`WO_TRADES`: one grows, all grow.
+
+**`spark/remap_taxonomy_602.py`** migrates the label files. Two bugs were found by testing it
+against a fixture rather than reasoning about it:
+
+1. **Paint boxes parked at 24 collided with the new `window_seal_failure`.** Anyone training between
+   pass one and pass two would have turned every peeling soffit into a failed window seal, silently.
+   They now park on **class 99** — outside `nc`, so training hard-fails instead. Loud beats subtle.
+2. **The double-apply guard never armed.** The marker file was written only when no paint boxes were
+   pending, but pass one *always* leaves them pending — so the marker was never written and a second
+   run shifted every index again. Caught in test: a `siding_damage` box silently became
+   `soffit_fascia_damage`. The marker now means *"indices have been shifted"*, written by pass one.
+
+⚠ **Nothing ships until the dataset is remapped and retrained.** The code and the label files must
+move together or the next YOLO export is silently wrong.

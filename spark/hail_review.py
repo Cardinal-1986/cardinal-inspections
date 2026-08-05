@@ -63,7 +63,7 @@ SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ'
 # silently mislabeling everything.
 SEVERITIES = ['crit', 'warn', 'ok']
 DEFECT_KEYS = [
-    # 0-16 roof, 17-32 exterior. Mirrors api/detect.js DEFECTS at build 596 AND
+    # 0-16 roof, 17-30 exterior. Mirrors api/detect.js DEFECTS at build 602 AND
     # exterior_vocab.py on the Spark — same strings, same order, so this list is
     # index-aligned with the trained model's classes. Used only by the skew
     # warning below, but a warning that is permanently wrong gets ignored, which
@@ -72,8 +72,8 @@ DEFECT_KEYS = [
     'cracked_split', 'nail_pop', 'exposed_fastener', 'flashing_failed',
     'flashing_missing', 'pipe_boot', 'chimney', 'valley', 'ridge_cap',
     'ponding_debris', 'decking_sag', 'ice_dam', 'other',
-    'gutter_damage', 'downspout_damage', 'soffit_damage', 'fascia_damage',
-    'siding_damage', 'masonry_damage', 'vegetation_contact', 'paint_deterioration',
+    'gutter_damage', 'downspout_damage', 'soffit_fascia_damage',
+    'siding_damage', 'masonry_damage', 'vegetation_contact',
     'window_glass_damage', 'window_seal_failure', 'window_frame_damage',
     'deck_penetration', 'underlayment_exposed', 'hardware_loose',
     'electrical_hazard', 'interior_water_damage'
