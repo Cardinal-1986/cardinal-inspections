@@ -162,7 +162,20 @@ def main():
     counts, paint_left, changed = {}, [], 0
     for path in files:
         boxes = read_boxes(path)
-        out, dirty = [], False
+        # Substitute in place over the ORIGINAL lines rather than rebuilding the
+        # file out of boxes alone. read_boxes() skips blank lines, so rebuilding
+        # dropped them and every line below shifted up — while paint_review.tsv
+        # still carried the PRE-rewrite numbers. Pass two then looked up a line
+        # that had moved: the filled-in decision was silently discarded and the
+        # box stayed on 99, and in a file with more than one paint box the shift
+        # could land the recorded line on a DIFFERENT sentinel and apply the
+        # roofer's ruling to the wrong box.
+        #
+        # (path, line) IS the addressing scheme for the whole two-pass design,
+        # so line numbers have to survive pass one byte-stably.
+        with open(path) as fh:
+            out = fh.read().split('\n')
+        dirty = False
         for cls, rest, ln in boxes:
             key = (os.path.relpath(path, args.root), ln)
             if cls == SENTINEL:                    # pass two: resolve or keep
@@ -181,7 +194,7 @@ def main():
             if new != cls:
                 dirty = True
             counts[new] = counts.get(new, 0) + 1
-            out.append(' '.join([str(new)] + rest))
+            out[ln - 1] = ' '.join([str(new)] + rest)
 
         if dirty:
             changed += 1
@@ -191,7 +204,11 @@ def main():
                     shutil.copyfile(path, bak)
                 tmp = path + '.tmp'
                 with open(tmp, 'w') as fh:
-                    fh.write('\n'.join(out) + ('\n' if out else ''))
+                    # `out` came from split('\n'), so a file that ended in a
+                    # newline already carries a trailing '' and round-trips
+                    # exactly. Appending one here would grow the file by a
+                    # blank line on every pass.
+                    fh.write('\n'.join(out))
                 os.replace(tmp, path)
 
     # ---- report ------------------------------------------------------------
