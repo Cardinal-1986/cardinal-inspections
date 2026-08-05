@@ -1,6 +1,10 @@
 # Cardinal Resource App — Open Items
 
-*Last worked at build **573** · 2 Aug 2026. The section immediately below is this session's; everything under "Illustrations in the Resource Library" and beyond is 467–557 era and still describes that app. For anything not covered here, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder. **Crews (547–556) is now documented in `FEATURES.md`**, not only in CLAUDE.md.*
+*Decisions section below worked at **5 Aug 2026**; the rest of the file was last worked at build
+**573** · 2 Aug 2026. ⚠️ **The app is at build 595** — parallel sessions shipped 574–595 (Showcase,
+the Vision hub, Cardinal Studio, the Spark tagging pipeline, the Pop-Up Roof book) without bringing
+this file forward, so everything below the decisions section is 573-era or older and the gap is
+real. Everything under "Illustrations in the Resource Library" and beyond is 467–557 era. For anything not covered here, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder. **Crews (547–556) is now documented in `FEATURES.md`**, not only in CLAUDE.md.*
 
 ---
 
@@ -8,7 +12,9 @@
 
 *Answered directly by Theo. **Do not re-litigate any of these.** The questions come from
 `CONTRACTOR_VISION_SUITE.md` on `claude/contractor-vision-suite-bwq21i` (PR #98) — recorded here
-because `OPEN_ITEMS.md` is where settled decisions live, and that branch may never merge as-is.*
+because `OPEN_ITEMS.md` is where settled decisions live. **That branch has since MERGED** (PR #106,
+build 593), and a parallel session shipped much of the storage half against these answers the same
+night — see the build-state note under decision 2 before planning any of this work.*
 
 | # | Question | **Theo's answer** | vs. the recommendation |
 |---|---|---|---|
@@ -69,8 +75,24 @@ That is the full detection output, and it decides three things at once:
   writer** — the `normStage` whitelist lesson. Unrecognised values become `'Lead'`-equivalent
   silently, which is how this class corrupts data.
 
-**Do not design the table until you have a real sample of his YOLO output.** This project shipped a
-photo-signing change that was completely inert because it was verified against invented shapes.
+**⚠ Overtaken a second time — the table SHIPPED while this was being written.** A parallel session
+merged `studio_photos.sql` at **PR #106 / build 593**, along with `spark/push_studio_tags.py`,
+`spark/STUDIO_TAGGING.md` and `studio.html`. The warning that used to sit here — *don't design the
+table from invented shapes* — was **honoured, not skipped**: it was built against a documented real
+sample (`studio_tags.jsonl`, shape given in `spark/STUDIO_TAGGING.md`). What shipped:
+
+```
+id · source · spark_path · storage_path · tags text[] · confidence jsonb
+project_address · project_name · captured_at · width · height · tagged_at · pushed_at
+```
+
+**But it carries labels and confidence only — there is NO bounding-box column, and
+`push_studio_tags.py` never sends one.** Theo's stated output shape is labels + **boxes** +
+confidence, so the boxes are dropped at ingest today. That is fine for search, which is all the
+Studio browser needs. It is **not** fine for the annotation half of decision 4, which needs boxes to
+offer machine-suggested / human-confirmed marks. **Adding them is a schema change AND an ingest
+change — do not start the annotation work assuming the data is already there.** Confidence did
+survive (`{tag: 0.0-1.0}`), so the load-bearing half above is intact.
 
 ### 4 — the altered-evidence rule is now Theo's own words
 
