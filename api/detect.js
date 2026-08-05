@@ -63,6 +63,23 @@ const DEFECT_KEYS = Object.keys(DEFECTS);
    press can cost and how much a confused model can return. */
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;    // matches analyze.js
 const MAX_FINDINGS = 12;                    // a roof slope with 30 boxes is noise
+
+/* COLLECTION MODE — `{collect:true}` in the body.
+
+   This route has two callers with opposite requirements. A rep reviewing one
+   photograph wants the 12 most significant findings; 30 boxes is noise, and
+   that is what MAX_FINDINGS is for. The Spark's label pipeline wants the
+   OPPOSITE: a slope with 30 hail impacts is 30 training examples for the class
+   with the least data, and summarising it to 12 throws away the 18 that matter
+   most.
+
+   Measured 5 Aug 2026 over 1274 collected photographs: `dropped` was 0 on every
+   one, so the route-side truncation below has NEVER fired in a collection run,
+   and neither has the size floor. The cap that may still bite is the one in
+   rule 6 of the prompt — the model self-limiting before this code ever sees the
+   excess. That is invisible from the response, which is why collection mode
+   lifts the instruction rather than only the constant. */
+const COLLECT_MAX_FINDINGS = 40;
 const LABEL_MAX = 70;
 const NOTE_MAX = 180;
 
@@ -89,7 +106,7 @@ async function requireSession(req, res) {
   }
 }
 
-function prompt(label) {
+function prompt(label, collect) {
   return (
     'You are assisting a roofing inspector for Cardinal Roofing & Renovations. ' +
     'Examine this inspection photograph' + (label ? ' (labelled: "' + label + '")' : '') + ' ' +
@@ -121,8 +138,13 @@ function prompt(label) {
     'between two, choose the LESS severe — a person reviews this before a ' +
     'homeowner ever sees it, and overstating damage on an insurance job is the ' +
     'more costly mistake.\n' +
-    '6. At most ' + MAX_FINDINGS + ' findings. If there are more, return the ' +
-    'most significant.\n' +
+    (collect
+      ? '6. List EVERY distinct defect you can place a box on, up to ' +
+        COLLECT_MAX_FINDINGS + '. Do NOT summarise and do NOT skip repeats: if a ' +
+        'slope carries twenty separate hail impacts, return twenty boxes, one ' +
+        'per impact. Repetition is wanted here.\n'
+      : '6. At most ' + MAX_FINDINGS + ' findings. If there are more, return the ' +
+        'most significant.\n') +
     '7. confidence is your own 0-1 estimate that this defect is really there.\n\n' +
 
     'defect must be exactly one of these keys:\n' +
@@ -157,16 +179,17 @@ function trim(s, max) {
 /* Everything the model returns is treated as a proposal, not a fact. A finding
    that cannot be placed on the photograph is DROPPED rather than coerced: this
    route's whole contract is that a finding has a location. */
-function cleanFindings(raw) {
-  if (!Array.isArray(raw)) return { findings: [], dropped: 0 };
-  let dropped = 0;
+function cleanFindings(raw, cap) {
+  const by = { malformed: 0, unplaceable: 0, tiny: 0, truncated: 0 };
+  const total = () => by.malformed + by.unplaceable + by.tiny + by.truncated;
+  if (!Array.isArray(raw)) return { findings: [], dropped: 0, dropped_by: by };
   const out = [];
 
   for (const f of raw) {
-    if (!f || typeof f !== 'object') { dropped++; continue; }
+    if (!f || typeof f !== 'object') { by.malformed++; continue; }
     const b = f.box || {};
     let x = num(b.x), y = num(b.y), w = num(b.w), h = num(b.h);
-    if (x === null || y === null || w === null || h === null) { dropped++; continue; }
+    if (x === null || y === null || w === null || h === null) { by.unplaceable++; continue; }
 
     // Some models answer in percent despite the instruction. 0-100 is
     // unambiguous here because a legal fraction never exceeds 1.
@@ -176,9 +199,17 @@ function cleanFindings(raw) {
     w = clamp01(w); h = clamp01(h);
     if (x + w > 1) w = 1 - x;
     if (y + h > 1) h = 1 - y;
-    if (w <= 0.005 || h <= 0.005) { dropped++; continue; }   // a dot is not a location
+    if (w <= 0.005 || h <= 0.005) { by.tiny++; continue; }   // a dot is not a location
 
+    /* THE MODEL'S OWN WORD IS KEPT. Coercing an unrecognised name to 'other' is
+       right for the reviewer — a defect the client cannot render is worse than
+       one with an ugly name — but it is lossy, and the loss was not small.
+       Measured 5 Aug 2026 over the collected corpus: 294 of 959 boxes (30.7%)
+       landed on 'other', the largest single leak in the label pipeline. The raw
+       string is the only thing that can recover them, so it now travels with the
+       finding instead of being discarded at the coercion. */
     const defect = DEFECT_KEYS.indexOf(f.defect) !== -1 ? f.defect : 'other';
+    const rawDefect = typeof f.defect === 'string' ? trim(f.defect, 40) : '';
     /* Unknown severity falls to the LEAST alarming, not the most. The reviewer
        can raise it; nobody wants the machine inventing urgency on a roof that
        may end up in a claim. */
@@ -191,21 +222,29 @@ function cleanFindings(raw) {
       label: trim(f.label, LABEL_MAX) || defect.replace(/_/g, ' '),
       note: trim(f.note, NOTE_MAX),
       box: { x: +x.toFixed(4), y: +y.toFixed(4), w: +w.toFixed(4), h: +h.toFixed(4) },
-      confidence: conf === null ? null : +clamp01(conf).toFixed(2)
+      confidence: conf === null ? null : +clamp01(conf).toFixed(2),
+      /* Present ONLY when the model said something the vocabulary does not have.
+         JSON.stringify omits undefined, so the ~69% that matched cost nothing. */
+      raw_defect: (rawDefect && rawDefect !== defect) ? rawDefect : undefined
     });
   }
 
   const rank = { crit: 0, warn: 1, ok: 2 };
   out.sort((p, q) => (rank[p.severity] - rank[q.severity]) ||
                      ((q.confidence || 0) - (p.confidence || 0)));
-  if (out.length > MAX_FINDINGS) {
-    dropped += out.length - MAX_FINDINGS;
-    out.length = MAX_FINDINGS;
+  const lim = cap || MAX_FINDINGS;
+  if (out.length > lim) {
+    by.truncated += out.length - lim;
+    out.length = lim;
   }
-  return { findings: out, dropped: dropped };
+  /* `dropped` stays a plain integer — the client and the Spark's hail_review.py
+     both read it, and a bare 0 was the useful answer over 1274 photographs.
+     `dropped_by` is the addition: a zero told us nothing had gone, but a
+     non-zero would not have said which path took it. */
+  return { findings: out, dropped: total(), dropped_by: by };
 }
 
-async function askGemini(model, key, image, mime, label) {
+async function askGemini(model, key, image, mime, label, collect) {
   const g = await fetch(
     'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',
     {
@@ -214,7 +253,7 @@ async function askGemini(model, key, image, mime, label) {
       body: JSON.stringify({
         contents: [{ parts: [
           { inline_data: { mime_type: mime || 'image/jpeg', data: image } },
-          { text: prompt(label) }
+          { text: prompt(label, collect) }
         ]}],
         generationConfig: {
           maxOutputTokens: 1400,
@@ -233,7 +272,7 @@ async function askGemini(model, key, image, mime, label) {
   return (((j.candidates || [])[0] || {}).content || {}).parts?.map(p => p.text).join('') || '';
 }
 
-async function askOpenAI(oaKey, image, mime, label) {
+async function askOpenAI(oaKey, image, mime, label, collect) {
   const o = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + oaKey },
@@ -243,7 +282,7 @@ async function askOpenAI(oaKey, image, mime, label) {
       temperature: 0.1,
       response_format: { type: 'json_object' },
       messages: [{ role: 'user', content: [
-        { type: 'text', text: prompt(label) },
+        { type: 'text', text: prompt(label, collect) },
         { type: 'image_url', image_url: { url: 'data:' + (mime || 'image/jpeg') + ';base64,' + image } }
       ]}]
     })
@@ -263,6 +302,9 @@ export default async function handler(req, res) {
     if (!user) return;
 
     const { image, mime, label } = req.body || {};
+    /* Collection mode is opt-in and session-gated like everything else here.
+       The reviewer path never sets it, so its behaviour is byte-identical. */
+    const collect = (req.body || {}).collect === true;
     if (!image || typeof image !== 'string') { res.status(400).json({ error: 'No image' }); return; }
     if (image.length > MAX_IMAGE_BYTES * 1.4) { res.status(413).json({ error: 'Image too large' }); return; }
 
@@ -278,7 +320,7 @@ export default async function handler(req, res) {
     if (key) {
       for (const model of GEMINI_MODELS) {
         try {
-          text = await askGemini(model, key, image, mime, label);
+          text = await askGemini(model, key, image, mime, label, collect);
           via = model;
           break;
         } catch (e) {
@@ -288,7 +330,7 @@ export default async function handler(req, res) {
       }
     }
     if (!text && oaKey) {
-      try { text = await askOpenAI(oaKey, image, mime, label); via = 'gpt-4o-mini'; }
+      try { text = await askOpenAI(oaKey, image, mime, label, collect); via = 'gpt-4o-mini'; }
       catch (e) { lastErr = e; }
     }
     if (!text) {
@@ -303,7 +345,8 @@ export default async function handler(req, res) {
       return;
     }
 
-    const { findings, dropped } = cleanFindings(parsed.findings);
+    const { findings, dropped, dropped_by } = cleanFindings(
+      parsed.findings, collect ? COLLECT_MAX_FINDINGS : MAX_FINDINGS);
     const quality = parsed.quality === 'poor' ? 'poor' : 'ok';
 
     res.status(200).json({
@@ -312,6 +355,8 @@ export default async function handler(req, res) {
       quality_note: trim(parsed.quality_note, NOTE_MAX),
       counted: findings.length,
       dropped: dropped,                 // unplaceable proposals, for honest debugging
+      dropped_by: dropped_by,           // which path took them — 0 everywhere is a real answer
+      collect: collect || undefined,    // so a collected record says how it was gathered
       via: via,
       /* Echoed so the client can detect deploy skew against its own copy of the
          vocabulary, the way cr-sortvocab-script does with sortphotos. */
