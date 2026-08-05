@@ -63,10 +63,20 @@ SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ'
 # silently mislabeling everything.
 SEVERITIES = ['crit', 'warn', 'ok']
 DEFECT_KEYS = [
+    # 0-16 roof, 17-32 exterior. Mirrors api/detect.js DEFECTS at build 596 AND
+    # exterior_vocab.py on the Spark — same strings, same order, so this list is
+    # index-aligned with the trained model's classes. Used only by the skew
+    # warning below, but a warning that is permanently wrong gets ignored, which
+    # is exactly what happened on the 5 Aug run.
     'hail_impact', 'wind_lifted', 'missing_shingle', 'granule_loss',
     'cracked_split', 'nail_pop', 'exposed_fastener', 'flashing_failed',
     'flashing_missing', 'pipe_boot', 'chimney', 'valley', 'ridge_cap',
-    'ponding_debris', 'decking_sag', 'ice_dam', 'other'
+    'ponding_debris', 'decking_sag', 'ice_dam', 'other',
+    'gutter_damage', 'downspout_damage', 'soffit_damage', 'fascia_damage',
+    'siding_damage', 'masonry_damage', 'vegetation_contact', 'paint_deterioration',
+    'window_glass_damage', 'window_seal_failure', 'window_frame_damage',
+    'deck_penetration', 'underlayment_exposed', 'hardware_loose',
+    'electrical_hazard', 'interior_water_damage'
 ]
 
 def log(msg):
@@ -180,7 +190,13 @@ def cmd_detect(args):
         for l in open(findings_path, encoding='utf-8'):
             l = l.strip()
             if l:
-                done_paths.add(json.loads(l)['path'])
+                _r = json.loads(l)
+                # An error record is NOT done. Writing one is right — it is the
+                # honest trail of what failed — but treating it as complete means
+                # a 401 or a 502 is never retried on the next run. The 5 Aug run
+                # wrote 55 of them and they could only be re-driven by hand.
+                if not _r.get('error'):
+                    done_paths.add(_r['path'])
     log('%d already done, resuming' % len(done_paths) if done_paths else 'starting fresh')
 
     vocab_checked = False
@@ -199,6 +215,7 @@ def cmd_detect(args):
                 b64 = base64.b64encode(fh.read()).decode('ascii')
 
             attempt, body, err = 0, None, None
+            reauthed = False          # at most one fresh sign-in per photograph
             while attempt < 3:
                 attempt += 1
                 try:
@@ -208,6 +225,19 @@ def cmd_detect(args):
                     break
                 except urllib.error.HTTPError as e:
                     err = e
+                    # The token is minted ONCE before the loop and a long run
+                    # outlives it: 50 of the 55 failures on the 5 Aug run were
+                    # 401s that arrived hours in. Retrying with the same dead
+                    # token cannot help — sign in again, then retry.
+                    if e.code == 401 and not reauthed:
+                        reauthed = True
+                        log('  token expired — signing in again')
+                        try:
+                            token = get_token(email, password)
+                            continue
+                        except Exception as e2:
+                            err = e2
+                            break
                     if e.code in (502, 503, 429):
                         time.sleep(1.5 * attempt)
                         continue
