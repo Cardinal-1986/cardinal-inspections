@@ -155,6 +155,50 @@ child's face. Those are biometric data and they do not belong in a hosted databa
 
 ---
 
+## ⚠ This folder on the Spark is a COPY, and copies drift
+
+`spark/` on the Spark box is **manually maintained — not a git worktree.** `git rev-parse` there
+finds no repository. Everything in this directory therefore exists twice: once in the repo, where
+it is edited, and once on the Spark, where it runs. Those two go out of step by default, silently,
+every time anything here changes.
+
+**This has already produced a wrong report.** On 5 Aug, `first_pass.py` was checked for on the
+Spark's disk, not found, and reported as *"the repo expects a script that does not exist."* It had
+been in the repo since PR #123 — 412 lines, merged hours earlier — sitting in the same directory of
+the same commit as the `ORIENTATION.md` that had just been read. Nothing was unwritten; the box was
+behind.
+
+**The rule: the disk is a cache of the repo, not a record of it.** When they disagree, the repo
+wins, and the answer is *sync*, never *"it doesn't exist."* Same class as reading a `val/` directory
+and reporting a training split (§14 in `BUG_CLASSES.md`) — both are asking a stale artifact to
+testify about its source.
+
+### ⚠ And do not sync from `raw.githubusercontent.com`
+
+It **serves stale copies for minutes after a commit** — `CLAUDE.md` states this outright. A fetch
+from raw shortly after a merge can hand back the *pre-merge* file and look like it worked, which is
+the worst possible failure here: a sync that reports success and changes nothing. That is exactly
+the shape of every other bug this project logged on 5 Aug.
+
+**Sync one of these two ways instead:**
+
+```bash
+# BEST — make it a real clone once, then `git pull` genuinely is the answer
+git clone --filter=blob:none --sparse https://github.com/Cardinal-1986/cardinal-inspections.git
+cd cardinal-inspections && git sparse-checkout set spark
+
+# OR pin to a commit SHA so a stale CDN cannot answer for it
+curl -H 'Accept: application/vnd.github.raw' \
+  https://api.github.com/repos/Cardinal-1986/cardinal-inspections/contents/spark/first_pass.py?ref=<SHA>
+```
+
+**Then verify the sync landed rather than assuming it did** — check for something you know is in the
+new version:
+
+```bash
+grep -c -- '--sources' spark/push_studio_tags.py    # 0 = you have the pre-guard copy
+```
+
 ## Two libraries, and they must not mix
 
 There are now **two** photo libraries in play on the Spark, and everything written before 5 Aug
