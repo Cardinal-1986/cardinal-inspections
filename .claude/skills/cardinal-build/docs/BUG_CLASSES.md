@@ -966,6 +966,67 @@ drops 30 landed photographs to 5 with the `#124` check reinstated.
 
 ---
 
+## 14. A measurement whose provenance was never checked (5 Aug 2026, the v4 model)
+
+Not a code bug. Three evaluations were run to answer one question — *is hail_v4 better than
+hail_v3* — and **all three were invalid**, each for a different provenance reason. The question is
+still unanswered, and the cost was an evening.
+
+| eval | result | why it was void |
+|---|---|---|
+| v4 on **v4's own val** | +0.27 | v3 and v4 validated on **different photo sets**. Comparing two models on two sets measures the sets. |
+| both on a **regenerated** `v3_val ∩ v4_val` | −0.025 | `prepare_yolo.py` splits **unseeded** and never persists. A fresh seed draws independently of the old one, so ~2 of the 36 "shared" photos were genuinely held out from both models. |
+| v3 on **`images/val/` as it sits on disk** | +0.070 | The directory **accumulated across runs** — `train ∩ val = 441 photos`. Both `.cache` files faithfully recorded the duplicates. |
+
+**Each fix introduced the next flaw.** Fixing the split confound created the regeneration confound;
+fixing that by using on-disk artifacts created the accumulation confound.
+
+### The three checks that would have caught all of it, in order
+
+```bash
+comm -12 <(ls images/train|sort) <(ls images/val|sort) | wc -l   # 1. MUST be 0
+ls images/train|wc -l; ls images/val|wc -l                       # 2. sum ≈ corpus?
+ls -l --time-style=+%F_%H:%M images/val | awk '{print $6}' | sort | uniq -c   # 3. one cluster?
+```
+
+Check 1 returned **441**. Check 3 returned **two** timestamp clusters. Either alone voids the number.
+
+### ⚠ The timestamps disproved the story being told about them
+
+The decisive fact was not any of the three checks — it was reading `ls -l` output against the claim:
+
+```
+runs/hail_v4/weights/best.pt      08-04 23:13     <- the model
+images/val/, images/train/        08-05 00:22     <- the "val set it was tested on"
+```
+
+**The weights predate the dataset directory by 69 minutes.** A model cannot have trained on a
+dataset written after it was saved. So `images/val/` is not a contaminated copy of v4's val set —
+**it is not v4's val set at all**, and no artifact on disk records what was. The summary being
+written at the time asserted the opposite ("v4 trained on the 00:22 dataset") in the same table that
+disproved it.
+
+**Read the mtimes before trusting any artifact that claims to be a record of a past run.** They are
+free, they are not opinions, and here they overturned a conclusion that three evaluations and several
+hours of compute had converged on.
+
+### The rules that generalise
+
+- **A split that is not persisted did not happen.** If it cannot be reconstructed, no later
+  comparison against it is possible — and *regenerating* one is not reconstruction, it is a new
+  split wearing the old one's name.
+- **An output directory that is written with `exist_ok=True` and never purged is a union, not a
+  state.** It accumulates silently and every consumer downstream inherits the contamination.
+- **Say which direction a bias runs before running the test.** The one useful thing salvaged here:
+  a test biased *against* the hypothesis is decisive when the hypothesis wins and merely
+  inconclusive when it loses. Stating that in advance is what makes a cheap test worth running.
+- **Know what the number is for.** All of this measured *agreement with the Gemini teacher*, on a
+  Spark-local preview tool with **zero references anywhere in the repo** (`best.pt`, `hail_v3`,
+  `hail_v4`, any `.pt` — all zero across `.js`/`.html`/`.json`/`.py`). Nothing a homeowner sees
+  depended on the answer. The stakes never justified the third eval, let alone a retrain.
+
+---
+
 ## Do-not-reflag register — imported from the Hyperagent session, verified at 472
 
 Each of these looks like a defect and is not. Re-reporting one costs trust.
