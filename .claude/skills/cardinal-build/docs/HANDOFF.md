@@ -110,11 +110,57 @@ Changing it alters live behaviour for reps, so it wants a decision, not a quiet 
 `walk_shots.findings` is jsonb and joins to `walks.trade` — it is exactly the right shape to confirm
 the `'other'` mechanism end to end, and it will be usable the moment anyone runs a walk.
 
-## Blocked on Hermes
+## ✅ RESOLVED LATER THE SAME NIGHT — build 596 shipped, the leak is closed
 
-1. **The cluster output** — grouped `label`/`note` text from the 294. The vocabulary work cannot
-   start without it, and this session has no path to the Spark's filesystem.
-2. **The `hail_review.py` diff** with `via` capture.
+The clusters arrived and the work landed. **This supersedes the "blocked" note that used to sit
+here.**
+
+- **The clusters answered the scope question: NO SEVENTH TRADE.** The 16 exterior classes map onto
+  the six already in `walks_trade_ck`. Derived from what the teacher actually called the 294 boxes
+  (gutter 65, soffit/fascia 57, window 42, deck 42), not invented.
+- **Build 596 (PR #116)** — `DEFECTS` 17 → 33, the keys verbatim from `exterior_vocab.py` on the
+  Spark **and in its order**, so `DEFECT_KEYS` is index-aligned with the model's classes 0-32 and
+  `other` stays at index 16. `DEF_LABEL` mirrored. Prompt is now **neutral base + trade-aware**
+  (`TRADE_FOCUS`), using the trade `index.html:57402` had always passed and the route never read.
+- **Confirmed in production:** on the first B batch `raw_defect` is **quiet** and exterior classes
+  land under their own names. The leak is closed, verified by absence.
+- ⚠️ **`renderClassify()` now renders 33 chips, not 17** (`index.html:57487`). The one visible cost.
+  If it feels cluttered on a phone, the walk knows its trade — lead with that trade's classes.
+
+## Metrics lessons that cost three wrong tables — read before quoting any number
+
+**Three per-class tables in a row were wrong**, each published to the Spark's `CLAUDE.md` as
+authoritative. The pattern every time: an extraction script partially failed, the partial data got
+written down as fact. Guards now in place, all three cheap:
+
+1. **`box.maps` is per-class mAP50-95, DESPITE THE NAME.** A table of it was published labelled
+   mAP50. Caught by arithmetic: the 33 values averaged 0.1792, exactly the reported mAP50-95 of
+   0.179, not the mAP50 of 0.278. **Reconcile the per-class mean against the reported aggregate** —
+   one line, and it catches this whole class.
+2. **Unmapped classes leak the aggregate.** Five classes with **zero val instances** printed 0.179,
+   the overall figure, after an `IndexError` mid-extraction. They are MISSING, not zero. A sixth
+   (`granule_loss`, 0.180 with 6 val instances) was nearly marked missing too — a false "no data"
+   invites re-collecting data you already have.
+3. **5 of 33 classes drew zero val instances from an unstratified split.** Dataset design, not a
+   metrics bug, and **B does not fix it** — you can add 40 `nail_pop` boxes and still have an
+   unmeasurable class. **Stratify before v4**, and print val instances per class beside every metric.
+
+**Roof genuinely improved and the doc said otherwise for a while.** Apples-to-apples on mAP50-95
+over the same 17 roof classes: v2 **0.155** → v3 roof-17 **0.274**, +77%, on unchanged roof boxes —
+so it is the 120 epochs, not data. The exterior 16 at ~0.078 **dilute** the 33-class overall down to
+0.179. "The new classes averaging in lifted the number" is backwards; near-zero classes drag a mean
+down. (Caveat: the val splits differ, so it is not a controlled experiment.)
+
+**Recall is flat at ~0.277 across conf 0.05/0.10/0.25** — v3 misses ~73% of ground-truth boxes at
+any threshold. Not an over-confidence problem; threshold tuning will not fix it, more data will.
+
+## Still outstanding
+
+1. **The `hail_review.py` diff** — `--collect`, `--candidates`, `dropped_by` and `via` capture live
+   **only on the Spark**. The file is in this repo, the two copies have diverged, and nothing
+   surfaces that until someone edits the repo one. Hermes owns the Spark copy; this repo takes the
+   diff. **Asked three times, not yet received.**
+2. **Stratify the val split before v4 trains.**
 
 ## Still owed Theo, unblocked
 

@@ -8,7 +8,7 @@ real. Everything under "Illustrations in the Resource Library" and beyond is 467
 
 ---
 
-## 🔴 LIVE — the detect vocabulary is roof-only and the app already asks it for siding
+## ✅ CLOSED at build 596 — the detect vocabulary now covers the whole exterior
 
 *Opened 5 Aug 2026, after PR #114. **Read the 5 Aug section of `HANDOFF.md` first** — it carries the
 distillation finding this depends on.*
@@ -22,10 +22,16 @@ leak in the label pipeline.
 **Latent, not live** — `walks` and `walk_shots` are both **0 rows** as of 5 Aug. Nobody has run a walk
 yet. It breaks the first time someone does.
 
-**Next step is NOT to propose a class list.** Theo settled this: *"using the clusters."* The 294
-`'other'` findings kept their `label` and `note` free text, so what the teacher actually called them
-is readable from `findings.jsonl` at zero API cost. **Hermes owns that step; this repo has no path to
-the Spark.** The vocabulary falls out of the clusters.
+**SHIPPED at build 596 (PR #116), same night.** Theo settled the method — *"using the clusters"* —
+and the clusters answered it: **no seventh trade needed.** `DEFECTS` is now 33 keys, taken verbatim
+and **in order** from `exterior_vocab.py` on the Spark, so `DEFECT_KEYS` is index-aligned with the
+trained model's classes 0-32 and `other` stays at index 16. The prompt is neutral + trade-aware.
+Verified in production on the first collection batch: **`raw_defect` is quiet** and exterior classes
+arrive under their own names.
+
+**If `raw_defect` ever starts appearing at volume again, that is a 34th class asking to exist** —
+and unlike last time you will have the model's own word for it instead of recovering it from free
+text.
 
 **When the clusters land, the change is two sites:** `DEFECTS` in `api/detect.js` and `DEF_LABEL` at
 `index.html:57117`. Defects and trades are separate vocabularies — the trade family
