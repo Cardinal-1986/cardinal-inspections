@@ -975,7 +975,7 @@ still unanswered, and the cost was an evening.
 | eval | result | why it was void |
 |---|---|---|
 | v4 on **v4's own val** | +0.27 | v3 and v4 validated on **different photo sets**. Comparing two models on two sets measures the sets. |
-| both on a **regenerated** `v3_val ∩ v4_val` | −0.025 | `prepare_yolo.py` splits **unseeded** and never persists. A fresh seed draws independently of the old one, so ~2 of the 36 "shared" photos were genuinely held out from both models. |
+| both on a **regenerated** `v3_val ∩ v4_val` | −0.025 | The split was never persisted, and **regenerating it does not reconstruct it** — see the seed note below. ~2 of the 36 "shared" photos were genuinely held out from both models. |
 | v3 on **`images/val/` as it sits on disk** | +0.070 | The directory **accumulated across runs** — `train ∩ val = 441 photos`. Both `.cache` files faithfully recorded the duplicates. |
 
 **Each fix introduced the next flaw.** Fixing the split confound created the regeneration confound;
@@ -1015,6 +1015,14 @@ hours of compute had converged on.
 - **A split that is not persisted did not happen.** If it cannot be reconstructed, no later
   comparison against it is possible — and *regenerating* one is not reconstruction, it is a new
   split wearing the old one's name.
+- **⚠ A fixed seed is NOT enough, and this entry originally got it wrong.** It first said
+  `prepare_yolo.py` splits "unseeded". It does not — it carried `random.seed(42)` the whole time,
+  which surfaced only when the enforcement patch removed that line. The split was deterministic and
+  still unreconstructible, because **the corpus grew between runs**: the same seed drawing over a
+  different-length pool assigns different photographs. Reproducing a split needs the seed **and** a
+  byte-exact corpus, and the corpus is the harder half. An entry about unchecked provenance claims
+  carrying an unchecked provenance claim is the joke writing itself — check the line before quoting
+  it, including this one.
 - **An output directory that is written with `exist_ok=True` and never purged is a union, not a
   state.** It accumulates silently and every consumer downstream inherits the contamination.
 - **Say which direction a bias runs before running the test.** The one useful thing salvaged here:
