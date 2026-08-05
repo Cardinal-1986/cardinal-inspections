@@ -139,19 +139,26 @@ def get_token(email, password):
         sys.exit('Sign-in returned no access_token — check CARDINAL_EMAIL/CARDINAL_PASSWORD.')
     return tok
 
-def call_detect(token, image_b64, mime, label):
+def call_detect(token, image_b64, mime, label, collect=False):
+    # collect=True asks /api/detect for COLLECTION MODE (build 596 / PR #114):
+    # up to 40 findings instead of 12, the prompt's "most significant" cap
+    # lifted, and raw_defect kept when the model names something the 33-key
+    # vocabulary lacks. The reviewer path never sets it.
+    payload = {'image': image_b64, 'mime': mime, 'label': label}
+    if collect:
+        payload['collect'] = True
     req = urllib.request.Request(
         APP_URL + '/api/detect',
-        data=json.dumps({'image': image_b64, 'mime': mime, 'label': label}).encode('utf-8'),
+        data=json.dumps(payload).encode('utf-8'),
         headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
         method='POST')
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.loads(r.read().decode('utf-8'))
 
 def cmd_detect(args):
-    cand_path = os.path.join(out_dir(args.dest), 'candidates.jsonl')
+    cand_path = getattr(args, 'candidates', None) or os.path.join(out_dir(args.dest), 'candidates.jsonl')
     if not os.path.exists(cand_path):
-        sys.exit('No candidates.jsonl — run `find` first (or pass --all to scan everything below).')
+        sys.exit('No candidates file at %s — run `find` first (or pass --candidates).' % cand_path)
 
     candidates = [json.loads(l) for l in open(cand_path, encoding='utf-8') if l.strip()]
     if args.all:
@@ -195,7 +202,8 @@ def cmd_detect(args):
             while attempt < 3:
                 attempt += 1
                 try:
-                    body = call_detect(token, b64, 'image/jpeg', rec.get('project_name') or '')
+                    body = call_detect(token, b64, 'image/jpeg', rec.get('project_name') or '',
+                                       collect=getattr(args, 'collect', False))
                     err = None
                     break
                 except urllib.error.HTTPError as e:
@@ -232,7 +240,14 @@ def cmd_detect(args):
                        'project_address': rec.get('project_address'),
                        'findings': body.get('findings', []),
                        'quality': body.get('quality'), 'quality_note': body.get('quality_note'),
-                       'dropped': body.get('dropped', 0)}
+                       'dropped': body.get('dropped', 0),
+                       # dropped_by says WHICH path took them. `via` is the
+                       # teacher model that produced these labels — the first
+                       # 2038 records were collected without it and are
+                       # therefore not stratifiable by teacher, which cannot be
+                       # fixed retroactively. Never drop this field again.
+                       'dropped_by': body.get('dropped_by'),
+                       'via': body.get('via')}
             out.write(json.dumps(rec_out, ensure_ascii=False) + '\n')
             out.flush()
 
@@ -412,6 +427,10 @@ def main():
     d = sub.add_parser('detect', help='run candidates through /api/detect, resumable')
     d.add_argument('--dest', required=True)
     d.add_argument('--all', action='store_true', help='scan the whole archive instead of candidates.jsonl')
+    d.add_argument('--collect', action='store_true',
+                   help='send collect:true — collection mode: up to 40 findings, raw_defect kept')
+    d.add_argument('--candidates', default=None,
+                   help='path to a candidates file (default: <dest>/candidates.jsonl)')
     d.set_defaults(func=cmd_detect)
 
     r = sub.add_parser('review', help='build the HTML review + export page')
