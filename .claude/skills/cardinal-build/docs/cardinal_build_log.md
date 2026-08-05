@@ -7854,6 +7854,130 @@ mixed"*). `entryBuild`/`entryNote` normalise both shapes, so nothing rendered as
 `Build undefined` this time — only the ordering broke. **Grep both `{ b:` and `{ build:` before
 concluding anything about this array's contents.**
 
+
+---
+
+# Backfill — 23 builds that shipped without a log entry (560–600)
+
+**Reconstructed 5 Aug 2026, not written at build time.** Sources: the in-app `CHANGELOG`
+in `<script id="cr-cl-script">` and the commit titles on `main`. **Where an entry below
+carries engineering detail, it came from `CLAUDE.md` or the code itself; where it does
+not, the detail was never recorded and is not invented here.** Contemporaneous entries
+(584–595, 601) carry gates, markers and negative controls. These do not. Do not read the
+absence as "no gates ran" — read it as "not recorded".
+
+The gap was found by comparing entry headers in this file against the `CHANGELOG` array:
+41 builds shipped in 560–601, 18 had an entry. **Two earlier measurements of this same gap
+were both wrong** — one regex counted only `**NNN**` bold rows and under-reported; a looser
+one counted any three-digit mention and over-reported, including numbers written *today*
+inside the 601 entry. The file's own rule earned its place twice in five minutes.
+
+## The menu could not reach the screens that float above the app (560–561, 570–572)
+
+- **560** · The left menu reached the Estimates builder, the one screen 558's sweep missed —
+  the builder is created on the fly rather than living in the page, so the sweep never saw it.
+- **561** · Two corrections: 560 had fixed the builder behind "+ New estimate", but the menu's
+  *Estimates* item opens a different screen, and that was the one covering the menu. Pricing
+  Catalog and Claims had the same fault. Also finished 559's Quick Inspection readability pass —
+  it had done the photo stream but not the pin-the-property step you land on first.
+- **570** · Crews, Pricing Catalog and Company Documents **trapped the user**: they float over
+  the app, and `hideAllViews()` had never been told they exist, so navigation swapped the page
+  *underneath* them. The estimate editor was left alone deliberately, so a stray tap could not
+  discard an estimate mid-edit.
+- **571** · Finished 570 — the estimate editor, and `navRestore()`: the back button had walked
+  straight past Crews, Estimates, Pricing Catalog and Company Documents as if never opened.
+- **572** · Sales Floor, the Objections Coach and the Production board opened bare — no menu, a
+  narrow strip down the middle, empty space either side. Now they keep the menu, close properly
+  and use the full desktop width. Phones unchanged.
+
+⚠ **`CLAUDE.md` carries the full doctrine for this span** — which screens close by `display`
+and which by a CLASS, and why writing `display:none` onto a class-shown element is permanent
+damage. Read that before touching `hideAllViews()`.
+
+## Two functions repainted every frame, forever, on every screen (567, 569)
+
+- **567** · `paintChip()` (the header CRM chip) and the landing `paint()`. Both had guards that
+  could never succeed — `paintChip()` compared an HTML **source string** against `innerHTML`,
+  which is the browser's **serialization** of it, and `meta.icon` is inline SVG, so a
+  self-closing `<path .../>` round-trips as `<path ...></path>`. The landing `paint()` had no
+  guard at all: assigning `textContent` emits a childList mutation **even when the string is
+  identical**.
+- **569** · `wxPaint()`, the weather strip — 567 missed it because **the machine it was tested
+  on cannot reach the weather service, so that code never ran.** It compares against a stored
+  signature rather than live content, because `metallicize` legitimately re-wraps the emoji and
+  a live compare would fight it forever.
+
+**Cost: 388 DOM writes/sec waking all 50 `document.body` observers every frame. After: 3.3/sec.**
+The two builds chose *opposite* guard shapes on purpose — copying either into the other's place
+reintroduces the bug.
+
+## Screens reading the wrong tables, and a retry storm (565–566, 568)
+
+- **565** · A background job wiring address autocomplete was **retrying ~60×/second on every
+  screen, forever**, because no Google Maps key was configured — tens of thousands of errors a
+  minute. Now tries once and stops. Also added Discard to estimates (theo@ and joan@ only).
+- **566** · The estimates list asked the server for **two columns that do not exist**, so every
+  load returned an error. It had been failing quietly since the day it shipped.
+- **568** · The Estimates screen showed nothing because it read **two other tables, both empty** —
+  all twelve estimates had been saved the whole time. Added Drafts/Sent sorting, open-in-editor
+  (which had never worked), and archive-without-delete.
+
+## The AI Field Manual (574–577, 581–583)
+
+- **574** · Hardware page corrected — Apple cut the Mac Studio to 96 GB. Added a Spark vs Mac vs
+  AMD comparison and a plain-English "The commands" page.
+- **575** · AMD given a fairer hearing — joins the memory table, section leads with what it is
+  genuinely better at.
+- **576** · The Spark weighed on everything it does, not just photographs; image generation and
+  LoRAs lead, since diffusion is the most CUDA-locked work there is.
+- **577** · Apple given the same fair hearing as AMD. Two self-contradicting figures fixed.
+- **581** · **What's New was showing five blank cards reading "Build undefined"**, and the seven
+  newest builds never appeared — two ways of writing an entry had got mixed and the renderer
+  understood one. `entryBuild`/`entryNote` now normalise both. **This class recurred at 601** in
+  a quieter form: the shapes were tolerated but the ordering was not.
+- **582** · Hardware chapter answers the whole question — spec sheet, DGX Spark and Apple each
+  written up, RTX PRO 6000 with its own trade-offs, three-way table, and both stacking questions.
+- **583** · The Library's floating buttons (TOC, Manage, theme, Ask/File) were covering the words.
+  None of them acts on the book, so they step aside while reading.
+
+## Theming (573)
+
+- **573** · Four screens were hardcoded white in both themes — Objections Coach, Pricing Catalog,
+  Company Documents, Adjusters. Walking into the coach from the dark Sales Floor was a wall of
+  white. **Nearly shipped inert:** two of those modules paint an inline `M.style.background='#fff'`
+  in JS, which beats every stylesheet rule at any specificity — the tokens read `#141619` and the
+  page still painted white. Only a rendered preview caught it. Every colour carrying text was
+  computed for contrast rather than eyeballed. `cr-bpa-script` was left alone on purpose: it has
+  no dark palette to fall back on.
+
+## The exterior vocabulary (596) — now load-bearing for 602
+
+- **596** · The photo inspector could only name **roof** problems, so on a siding, window or
+  gutter walk it found the damage and had nowhere to file it — **nearly a third of everything it
+  found came back as "Other."** Added 16 exterior classes and told the route which trade the walk
+  is for before it looks.
+
+**Read this entry before touching `DEFECTS`.** The names "came from what it had already been
+calling those problems in its own words, not from a list somebody made up" — 294 flattened boxes,
+clustered as *gutter 65, **soffit/fascia 57**, window 42, deck 42*. That soffit/fascia cluster is
+the evidence build **602** rests on: they were **one** cluster in the data, and splitting them
+into two classes is what produced the per-class-NMS duplication in v4.
+
+## Showcase, and the team (597–600)
+
+- **597** · The Showcase job picker was a dead end — Cancel and "Use these" sat **under the phone's
+  bottom bar**, visible but untappable, with nothing below to scroll to and no outside-tap to
+  dismiss. The only way out was closing the app.
+- **598** · Finished 597, and surfaced the upload that had been there all along — the button said
+  "Add a pair", which does not sound like an upload. Now "Upload photos", with "Upload instead" on
+  the picker.
+- **599** · **Jerry Vera** could sign in but was on **none of the six team lists**, so nobody could
+  assign him a job and his name rendered as a bare email address. Added to the roster, both rep
+  pickers, the Assign-to list and the initials map. ⚠ His `ROSTER` entry was correct; **Joan's was
+  not**, and the collision that created is what 601 fixed.
+- **600** · What's New auto-opened for **everyone** three seconds after load on every new build.
+  Gated to theo@ at both the automatic and manual entry points.
+
 ## Defect taxonomy narrowed, 33 -> 31 (602)
 
 - **602** · `soffit_damage` + `fascia_damage` **merged** to `soffit_fascia_damage`;
