@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 597 &#8212; The Showcase job picker is no longer a dead end</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 598 &#8212; Escape the Showcase picker, and find the upload</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35029,6 +35029,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:598, d:'2026-08-05', t:'Escape the Showcase picker, and find the upload', s:'Two things about building a before/after pair. First, picking a job put Cancel and \u201cUse these\u201d underneath the bar at the bottom of the phone \u2014 you could see the top of them and could not tap them, and tapping outside did nothing, so the only way out was closing the app. That box now sits above the bar, and tapping outside or pressing Escape closes it. Second, uploading straight from your phone was already there the whole time, on the button next to it \u2014 it just said \u201cAdd a pair\u201d, which does not sound like an upload. It now says \u201cUpload photos\u201d, and the job picker has an \u201cUpload instead\u201d button so you are not stuck on the wrong screen. That gives you the phone\u2019s own sheet: photo library, camera, or any file from iCloud or your computer.' },
 { b:597, d:'2026-08-05', t:'The Showcase job picker is no longer a dead end', s:'Picking a job to build a before/after pair, the Cancel and \u201cUse these\u201d buttons sat underneath the bar at the bottom of the phone \u2014 you could see the top of them and could not tap them, and there was nothing below to scroll to. Tapping the dark area outside the box does nothing either, so the only way out was to close the app. The box now sits above the bottom bar, tapping outside closes it, and so does Escape on a keyboard. Leaving the screen no longer leaves it hanging open behind the next one.' },
 { b:596, d:'2026-08-05', t:'Inspections read the whole exterior, not just the roof', s:'The photo inspector could only name roof problems. On a siding, window or gutter walk it still found the damage \u2014 it just had nowhere to file it, so everything came back labelled \u201cOther.\u201d Nearly a third of everything it found was landing there. It now knows gutters, downspouts, soffit, fascia, siding, masonry, windows and sixteen other exterior problems by name, and it is told which trade the walk is for before it looks, so a gutter walk gets read as a gutter walk. The new names came from what it had already been calling those problems in its own words, not from a list somebody made up.' },
 { b:595, d:'2026-08-04', t:'Add project scrolls to Save again', s:'Adding a client on the phone, the form ran off the bottom of the screen and would not scroll \u2014 Cancel and Save were there, just unreachable, so nothing could be saved. The box scrolls now, and the last row clears the bottom bar in the installed app. Every other pop-up in the app (the checklists, leads, appointments) already scrolled; this one had been missed.' },
@@ -55801,7 +55802,8 @@ window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
   border-radius:8px;font:400 14px inherit;font-family:inherit;outline:none}
 #cr-show-form input:focus,#cr-show-form select:focus{border-color:var(--sh-acc,#C8202E)}
 #cr-show-form .r2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
-#cr-show-form .ft{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+#cr-show-form .ft [data-jupload]{margin-right:auto}
+#cr-show-form .ft{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:18px}
 #cr-show-form .note{margin-top:11px;font-size:11.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
 #cr-show-form .err{margin-top:10px;font-size:12.5px;color:var(--sh-bad,#E5484D);display:none}
 #cr-show-form .err.on{display:block}
@@ -56624,7 +56626,7 @@ function renderAdmin(){
   if(!amAdmin()) return '';
   var p = pairs[cur];
   return '<div class="cr-sh-admin">' +
-    '<button class="cr-sh-btn" data-act="add" type="button">Add a pair</button>' +
+    '<button class="cr-sh-btn" data-act="add" type="button">Upload photos</button>' +
     /* 591. It lives in renderAdmin because renderEmpty() calls renderAdmin() too,
        and with zero pairs the empty state IS the day-one surface. It also
        inherits the amAdmin() gate, so Showroom hides it with no 15th
@@ -57849,6 +57851,13 @@ function drawJobPicker(){
           'Deleting it from the job later would otherwise blank the walk — in front of a client.') +
       '</p>' +
       '<div class="ft">' +
+        /* 598: only in pair mode. openForm() is the SHOWCASE pair form, so
+           offering it from the walk-photo picker would send you to the wrong
+           screen entirely. `pair` is the flag the rest of this function already
+           branches on. */
+        (pair
+          ? '<button class="cr-sh-btn ghost" data-jupload type="button">Upload instead</button>'
+          : '') +
         '<button class="cr-sh-btn ghost" data-act="cancel" type="button">Cancel</button>' +
         '<button class="cr-sh-btn" data-jadd type="button"' + (ready ? '' : ' disabled') + '>' +
           (pair ? 'Use these' : (chosenN ? 'Add ' + chosenN : 'Add')) + '</button>' +
@@ -57869,6 +57878,8 @@ function wireJobPicker(){
   formEl.querySelectorAll('[data-proj]').forEach(function(b){
     b.onclick = function(){ loadJobPhotos(b.dataset.proj); };
   });
+  var up = formEl.querySelector('[data-jupload]');
+  if(up) up.onclick = function(){ jobPick = null; openForm(); };
   var back = formEl.querySelector('[data-jback]');
   if(back) back.onclick = function(){
     jobPick.projectId = null; jobPick.photos = []; jobPick.chosen = {};
