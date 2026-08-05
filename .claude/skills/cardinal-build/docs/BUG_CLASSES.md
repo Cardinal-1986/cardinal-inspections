@@ -926,6 +926,113 @@ running.** A process can be extremely busy accomplishing nothing.
 Regression cover: `spark/test_push_retry.py` executes the shipped `main()` against stubbed network
 leaves, with a negative control that must LOSE photographs when the re-auth is disabled.
 
+### 13a. …and the first fix was inert, because the harness invented the error shape
+
+**The fix above shipped in #124 and did not work.** It tested `e.code == 401`. The run kept dying.
+
+**Supabase reports an expired token differently per service:**
+
+| service | on an expired token |
+|---|---|
+| PostgREST `/rest/v1` | **HTTP 401**, `{"message":"JWT expired"}` |
+| Storage `/storage/v1` | **HTTP 400**, `{"statusCode":"403", … "\"exp\" claim timestamp check failed"}` |
+
+`upload_storage()` is called **before** `upsert_row()`, so the 400 is what a long run actually hits.
+The 401 never arrives. The check was correct for the endpoint it was never reached from.
+
+**The harness passed because I wrote the fixture.** It raised a 401 — the shape I assumed — so it
+confirmed my assumption instead of testing it. This is the same class as the photo-signing change
+that shipped completely inert against `{path, url}` fixtures when **zero** real photo objects have
+`path`: *test against production data shapes, not convenient ones.* A stub you author from memory
+tests your memory.
+
+**What found it:** the error string out of the real run. Not reasoning, not the test.
+
+**And the loose check beat the precise one.** Hermes's independent patch matched `'403' in str(e)` —
+sloppy, false-positive-prone, and it **caught the real failure** where the exact `e.code == 401` did
+not. Precision aimed at the wrong target loses to imprecision aimed at the right one. The fix keeps
+the precision and moves the target: match `401`/`403` by code, plus a 400 **only** when the body
+carries a known expiry marker. Not `'exp' in s` — that matches "unexpected". Not `'403' in s` — a
+body can say 403 for unrelated reasons. Both traps are pinned as tests.
+
+**Refresh on the token's own `exp` claim, not on a count.** "Every 200 photographs" reads as
+equivalent to a timer and is not: at ~100/min it signs in every two minutes, ~300 times over this
+run, and GoTrue rate-limits password grants. Time is what expires, so time is what to count — and
+the token states its own expiry, so nothing has to be guessed.
+
+**The check that makes this real:** re-run the harness with the *old* predicate restored and confirm
+it now fails. If a regression test cannot see the bug it was written for, it is decoration. This one
+drops 30 landed photographs to 5 with the `#124` check reinstated.
+
+---
+
+## 14. A measurement whose provenance was never checked (5 Aug 2026, the v4 model)
+
+Not a code bug. Three evaluations were run to answer one question — *is hail_v4 better than
+hail_v3* — and **all three were invalid**, each for a different provenance reason. The question is
+still unanswered, and the cost was an evening.
+
+| eval | result | why it was void |
+|---|---|---|
+| v4 on **v4's own val** | +0.27 | v3 and v4 validated on **different photo sets**. Comparing two models on two sets measures the sets. |
+| both on a **regenerated** `v3_val ∩ v4_val` | −0.025 | The split was never persisted, and **regenerating it does not reconstruct it** — see the seed note below. ~2 of the 36 "shared" photos were genuinely held out from both models. |
+| v3 on **`images/val/` as it sits on disk** | +0.070 | The directory **accumulated across runs** — `train ∩ val = 441 photos`. Both `.cache` files faithfully recorded the duplicates. |
+
+**Each fix introduced the next flaw.** Fixing the split confound created the regeneration confound;
+fixing that by using on-disk artifacts created the accumulation confound.
+
+### The three checks that would have caught all of it, in order
+
+```bash
+comm -12 <(ls images/train|sort) <(ls images/val|sort) | wc -l   # 1. MUST be 0
+ls images/train|wc -l; ls images/val|wc -l                       # 2. sum ≈ corpus?
+ls -l --time-style=+%F_%H:%M images/val | awk '{print $6}' | sort | uniq -c   # 3. one cluster?
+```
+
+Check 1 returned **441**. Check 3 returned **two** timestamp clusters. Either alone voids the number.
+
+### ⚠ The timestamps disproved the story being told about them
+
+The decisive fact was not any of the three checks — it was reading `ls -l` output against the claim:
+
+```
+runs/hail_v4/weights/best.pt      08-04 23:13     <- the model
+images/val/, images/train/        08-05 00:22     <- the "val set it was tested on"
+```
+
+**The weights predate the dataset directory by 69 minutes.** A model cannot have trained on a
+dataset written after it was saved. So `images/val/` is not a contaminated copy of v4's val set —
+**it is not v4's val set at all**, and no artifact on disk records what was. The summary being
+written at the time asserted the opposite ("v4 trained on the 00:22 dataset") in the same table that
+disproved it.
+
+**Read the mtimes before trusting any artifact that claims to be a record of a past run.** They are
+free, they are not opinions, and here they overturned a conclusion that three evaluations and several
+hours of compute had converged on.
+
+### The rules that generalise
+
+- **A split that is not persisted did not happen.** If it cannot be reconstructed, no later
+  comparison against it is possible — and *regenerating* one is not reconstruction, it is a new
+  split wearing the old one's name.
+- **⚠ A fixed seed is NOT enough, and this entry originally got it wrong.** It first said
+  `prepare_yolo.py` splits "unseeded". It does not — it carried `random.seed(42)` the whole time,
+  which surfaced only when the enforcement patch removed that line. The split was deterministic and
+  still unreconstructible, because **the corpus grew between runs**: the same seed drawing over a
+  different-length pool assigns different photographs. Reproducing a split needs the seed **and** a
+  byte-exact corpus, and the corpus is the harder half. An entry about unchecked provenance claims
+  carrying an unchecked provenance claim is the joke writing itself — check the line before quoting
+  it, including this one.
+- **An output directory that is written with `exist_ok=True` and never purged is a union, not a
+  state.** It accumulates silently and every consumer downstream inherits the contamination.
+- **Say which direction a bias runs before running the test.** The one useful thing salvaged here:
+  a test biased *against* the hypothesis is decisive when the hypothesis wins and merely
+  inconclusive when it loses. Stating that in advance is what makes a cheap test worth running.
+- **Know what the number is for.** All of this measured *agreement with the Gemini teacher*, on a
+  Spark-local preview tool with **zero references anywhere in the repo** (`best.pt`, `hail_v3`,
+  `hail_v4`, any `.pt` — all zero across `.js`/`.html`/`.json`/`.py`). Nothing a homeowner sees
+  depended on the answer. The stakes never justified the third eval, let alone a retrain.
+
 ---
 
 ## Do-not-reflag register — imported from the Hyperagent session, verified at 472
