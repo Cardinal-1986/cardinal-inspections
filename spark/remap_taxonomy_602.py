@@ -39,9 +39,13 @@ HOW TO RUN
 
     Step 2 parks every paint box on class 99 rather than guessing a surface.
     99 is outside nc, so the dataset is NOT trainable until step 4 resolves
-    them — deliberately. A silent default is how you end up with 36 boxes on
+    them — deliberately. A silent default is how you end up with 128 boxes on
     the wrong surface and no way to tell; a hard training error is how you
     find out immediately.
+
+    128 is the measured count on the real dataset (1,149 label files, 473 of
+    them changing). An earlier revision of this docstring said 36; that number
+    came from a fixture and was wrong by 3.5x.
 """
 import argparse, os, shutil, sys
 
@@ -91,7 +95,13 @@ def die(m):
 
 def label_files(root):
     for dirpath, _, names in os.walk(root):
-        if os.path.basename(dirpath) != 'labels':
+        # A split dataset keeps its labels in labels/train/ and labels/val/,
+        # which is what prepare_yolo.py emits. Matching only the LAST path
+        # component finds nothing there and the remap dies with "no labels"
+        # on a dataset that is full of them. Match any component that is
+        # exactly 'labels' — a substring test would also sweep in
+        # labels_backup/ and unlabelled/, so it has to be a component match.
+        if 'labels' not in dirpath.replace(os.sep, '/').split('/'):
             continue
         for n in sorted(names):
             if n.endswith('.txt') and n != 'classes.txt':
