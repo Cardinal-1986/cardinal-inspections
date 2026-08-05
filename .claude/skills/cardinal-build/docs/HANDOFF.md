@@ -4,6 +4,143 @@
 
 ---
 
+# Session of 5 August 2026 (later) — the archive landed, and a taxonomy that was fighting itself
+
+**`main` at `5cbb888`, app stamp `build 601`, working tree clean. PR #129 merged.
+PR #130 is OPEN, DRAFT and DELIBERATELY HELD — see the warning below before touching it.**
+
+## ⚠ Read this before you do anything on the repo
+
+**PR #130 (`claude/taxonomy-602`) must not be merged, rebased or force-pushed by a new session.**
+It is code-complete and CI-green, and it is held on purpose: it renumbers the model's class
+indices, and **the Spark's label files have not been remapped yet.** Merging it before Hermes runs
+`spark/remap_taxonomy_602.py` and retrains makes the next YOLO export silently wrong — the code
+would say index 19 is `soffit_fascia_damage` while every label file still says it is `soffit_damage`.
+
+The session that opened it is watching it. **If you are a different session: leave that branch
+alone.** Two agents pushing to the same repo is how #130 picked up a phantom conflict in the first
+place (see below).
+
+## What shipped
+
+- **601** — the `ROSTER` initials map in `cr-pae-script` gave **Joan and Jerry the same badge**,
+  both `JV`. Four of eight were wrong against `team_profiles`: Joan `JV`→`JH`, Nick `NP`→`NH`,
+  Joey `JC`→`JL`, Jacob `JM`→`JSH`. **Jerry's `JV` was correct** and is untouched — 599 added him
+  correctly; Joan's entry had been wrong all along and adding Jerry only made it visible.
+  **Jacob is three characters on purpose**: he and Joan Hunt both reduce to `JH` from surnames, so
+  `JSH` is the only reason all eight badges are now unique.
+- **601 also** — builds 599 and 600 sat at positions **15–16** of `CHANGELOG`, wedged between two
+  584 entries, because whoever added them grepped `{ build:` and concluded the array stopped at 584.
+  **585–598 use the `{ b:, d:, t:, s: }` shape instead.** No sort in the renderer; the automatic
+  open was fine (`show()` filters on `entryBuild(e) > lastSeen`) but the manual-open fallback
+  `CHANGELOG.slice(0, 5)` took the first five in file order and skipped both.
+  **Grep BOTH `{ b:` and `{ build:` before concluding anything about that array.**
+- **Docs** — 23 builds backfilled into `cardinal_build_log.md` (560–561, 565–577, 581–583,
+  596–600), marked as reconstructed from the `CHANGELOG` and commit titles. They carry no gate
+  detail because none was recorded; that is stated rather than invented.
+
+## Held, not shipped: build 602, the defect taxonomy
+
+v4's `val_batch1_pred.jpg` came back with **one rotted eave boxed three and four times**, each box
+a different class. **NMS is per-class** — it only suppresses overlapping boxes of the *same* class,
+so splitting one repair across three names guarantees all three survive. Not tunable.
+
+**The ground truth is mostly innocent** — Hermes measured **3 cross-class overlaps above 0.5 IoU
+across 454 images.** The annotations did not teach it. **The taxonomy invited it, and
+`api/detect.js` already said so at 596**: the exterior vocabulary came from what the model actually
+called 294 flattened boxes, clustered as *"gutter 65, **soffit/fascia 57**, window 42, deck 42."*
+Soffit and fascia were **one cluster in the data**; splitting them into two classes is what broke it.
+
+```
+19 soffit_damage + 20 fascia_damage  ->  19 soffit_fascia_damage
+24 paint_deterioration               ->  removed   (a CONDITION among LOCATIONS)
+33 -> 31 classes.  Every index <= 18 is UNCHANGED — the roof half and `other`@16 keep their numbers.
+```
+
+**Three files carry this list and all three must move together** — `api/detect.js` DEFECTS,
+`spark/hail_review.py` DEFECT_KEYS, `spark/remap_taxonomy_602.py` NEW_NAMES. A gate asserts all
+three identical. Same rule as `STAGES`/`WO_TRADES`. `walks_trade_ck`'s six trades are unaffected —
+**no SQL.**
+
+**Hermes' steps are in #130's body.** The one part needing a human is `paint_review.tsv`: 36 boxes,
+each marked **19** (soffit/fascia) or **20** (siding). Theo chose redistribute-by-surface over
+folding them wholesale.
+
+## Two bugs the migration script had, found by testing it rather than reasoning about it
+
+1. **Paint boxes parked at old index 24 collided with the NEW `window_seal_failure`.** Training
+   between pass one and pass two would have turned every peeling soffit into a failed window seal,
+   **silently**. They now park on **class 99** — outside `nc`, so training hard-fails. Loud beats subtle.
+2. **The double-apply guard never armed.** The marker file was written only when no paint boxes were
+   pending — but pass one *always* leaves them pending, so it was never written and a second run
+   shifted every index again. Caught in the fixture: a `siding_damage` box silently became
+   `soffit_fascia_damage`. The marker now means *"indices have been shifted"*, written by pass one.
+
+## The photo archive is CLOSED
+
+**60,503 rows in `studio_photos`, 60,503 objects under `photos/studio/`, and — the number that
+matters — ZERO rows whose `storage_path` has no object behind it.** Verified by joining the two,
+not by comparing totals, because two equal-but-mismatched counts look identical to a real match.
+
+The run held **270 proactive token refreshes with no 403** across ~15 hours. One photo
+(`1471231495`) failed on a transient Storage 400 and retried clean.
+
+**`studio_findings` is empty and `photos/private/` has zero objects.** That is why the taxonomy
+could change for free — **nothing stored anywhere uses the 33 class names.** `studio_photos.tags` is
+shot-type only (`close-up` 20836, `wide` 8362, `aerial` 51), a different vocabulary. **That window
+closes the moment findings start being written.**
+
+## v4 is NOT promoted, and this is settled
+
+Two independent reasons, no reason for: the numeric comparison was withdrawn as unproven (three void
+evals, `BUG_CLASSES.md` §14), and the eyeball shows per-class duplication, wrong-object labels
+(`wind_lifted` on a gutter, `granule_loss` over an aerial house) and a 1.0/0.3 confidence spread.
+Hermes also measured **5 starved classes** (`nail_pop` **1** box, `electrical_hazard` 4,
+`decking_sag` 5, `masonry_damage` 5, `window_seal_failure` 5).
+
+⚠ **`nail_pop` having one example does not mean the class is wrong.** "Drop the class" and "label
+more of them" are opposite fixes and the data cannot choose between them — that is Theo's call, and
+he has not made it. **Do not delete a starved class on the strength of its count.**
+
+## Still open
+
+1. **The real private-room 4xx test.** Theo checked Nick's account and it could not pull private —
+   but `photos/private/` is **empty**, so that refusal cannot be told apart from absence. The bucket
+   being `public:false` and Nick getting no listing are both real signals; the gate is not closed.
+   **The test that closes it:** one throwaway file at a known exact path, Nick requests *that path*
+   directly, confirm the refusal, delete it. Do this before any personal photograph moves.
+2. **Hermes' remap + retrain**, then #130.
+3. **A second initials path**, separate from `ROSTER`, derives from `name` by first-two-words at
+   `index.html:14691`, `:17429`, `:17456`, `:19901`. There Joan Hunt and Jacob Henderson **still
+   both produce `JH`** — that path has no middle initial to work with. Different key (name, not
+   email), different pipeline. Folding the two together is its own build.
+
+## Pointers for whoever takes Production next
+
+**`cr-prod`, `productionView` and `prodBoard` all return ZERO.** The Production Board lives in
+**`<script id="cr-pb-script">`** and exports **`window.CardinalProduction`** (23 refs); reached by
+`data-go="prodboard"` and `case 'production':`. Permission helper is `isProductionUser()` (8 refs).
+
+⚠ **It is a CLASS-shown view** (`.open`, created at runtime), not a `display`-shown one. Per the
+565–573 doctrine in `CLAUDE.md`: close it with the module's `close()` **and then confirm**, because
+a module's `close()` can no-op without throwing when `ensureView()` has not run. **Writing
+`display:none` onto it is permanent damage** — its own open path never clears an inline style, so
+the screen is dead on the second visit.
+
+Build **393** made the Production board one of the **four sanctioned** light/dark design exceptions.
+Do not "fix" it into tokens. And per `CLAUDE.md`, the punch-out routing to Curtis is **already
+built** (`punch_items` + `cr-punch-*`); the gap there is routing and notification, not software.
+
+## One process note
+
+**#130 picked up a merge conflict the moment #129 squash-merged** — the squash creates a new commit
+with 601's content, so git cannot tell the 602 branch already contained it and flags both files.
+Neither was a real disagreement: `index.html` resolved to the 602 branch (it is 601+602, and main's
+copy hashed byte-identical to the 601 commit's), and `cardinal_build_log.md` kept **both** sides.
+Expect this on any branch outstanding across a squash merge.
+
+---
+
 # Session of 5 August 2026 — the label pipeline is DISTILLATION, and its biggest leak
 
 **`main` at the `/api/detect` merge (PR #114). No `index.html` change, no build bump — the app stamp
