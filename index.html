@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 598 &#8212; Escape the Showcase picker, and find the upload</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 599 &#8212; Jerry Vera is on the team lists, so he can be assigned work</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19864,6 +19864,7 @@ var TEAM_ROSTER = [
   { name:'Joseph Lehman',       email:'joey@cardinalrenovations.net' },
   { name:'Theo Dorion',         email:'theo@cardinalrenovations.net' },
   { name:'Jacob Henderson',     email:'jacob@cardinalrenovations.net' },
+  { name:'Jerry Vera',          email:'jerry@cardinalrenovations.net' },
   { name:'Scottie Steinbrugge', email:'scottie@cardinalrenovations.net' },
   { name:'Curtis',              email:'curtis@cardinalrenovations.net' }
 ];
@@ -29551,6 +29552,7 @@ esc(p.name) +
 '<option value="nick@cardinalrenovations.net">Nick (sales)</option>' +
 '<option value="joey@cardinalrenovations.net">Joey (sales)</option>' +
 '<option value="jacob@cardinalrenovations.net">Jacob (sales)</option>' +
+'<option value="jerry@cardinalrenovations.net">Jerry (sales)</option>' +
 '</select>' +
 '</div>' +
 '</div>' +
@@ -33739,6 +33741,7 @@ var ROSTER = [
 { name:'Nick Hey',            email:'nick@cardinalrenovations.net',    role:'sales'      },
 { name:'Joseph Lehman',       email:'joey@cardinalrenovations.net',    role:'sales'      },
 { name:'Jacob Henderson',     email:'jacob@cardinalrenovations.net',   role:'sales'      },
+{ name:'Jerry Vera',          email:'jerry@cardinalrenovations.net',   role:'sales'      },
 ];
 var ROSTER_EMAILS = ROSTER.map(function(m){ return m.email.toLowerCase(); });
 var SILENT_THRESHOLD_DAYS = 30;
@@ -35044,6 +35047,7 @@ var CHANGELOG = [
 { b:586, d:'2026-08-02', t:'The Lens \u2014 pinch into any photograph', s:'Every photograph has been stored at full resolution since build 577 so granules and nail heads survive \u2014 and no gesture could reach that detail until now. Tap a Hall of Fame photo, or the expand button on the slider and on The Walk\u2019s review screen: the picture opens full screen with pinch, drag and double-tap zoom. In The Walk your damage marks ride along at any zoom.' },
 { b:585, d:'2026-08-02', t:'Chalk \u2014 draw your own marks', s:'The Walk\u2019s review screen gains + Mark damage: drag a box on the photograph, say what it is and how serious, and it joins the marks exactly like one you accepted from the AI. Asking the AI again now keeps your hand-drawn marks \u2014 it only refreshes its own. Works even when the AI is down, and every mark you draw is recorded as yours, which is exactly what training your own detector later needs.' },
 { b:584, d:'2026-08-02', t:'Spotlight \u2014 present mode for The Walk', s:'A Present button appears on any walk with a reviewed photo. Tap it and the screen goes true black: one finding at a time, the damage lit and everything else dark, with the marks you kept \u2014 nothing the AI proposed that you rejected. Tap the right side for the next finding, the left to go back, past the last one to finish. The address never appears on screen. Works for sales too, not just admins \u2014 presenting is the point.' },
+{ build:599, note:'\uD83D\uDC64 Jerry Vera is on the team. He could sign in but was on none of the six team lists, so nobody could assign him a job and his name showed as a bare email address. He now appears in the roster, both rep pickers, the Assign to list and the initials map.' },
 { build:584, note:'\uD83C\uDFA8 The manual gains a seventeenth chapter: What AI can build. A catalogue of what one person with AI can make \u2014 CRMs, websites, courses, illustrations, audio, dashboards \u2014 every example built around a roofing company, half of them already running at Cardinal. And a real seven-slide adjuster deck runs inside the page as the proof: it presents on an iPad or a computer, and lies flat as readable pages on a phone, because presenting from a phone does a deck no favors.' },
 { build:583, note:'\uD83D\uDCD6 The AI Field Manual is readable again. The TOC, Manage, Library, theme and Ask/File buttons were floating on top of the page and covering the words \u2014 none of them does anything to the book, so they step aside while you are reading it. In their place the book gets a slim bar with just a back arrow \u2014 a better way out than a button sitting on a paragraph.' },
 { build:582, note:'\uD83D\uDD29 The manual\u2019s hardware chapter now answers the whole question. A plain spec sheet before any argument, the DGX Spark and Apple each written up properly, the RTX PRO 6000 with its own pros and cons, a three-way Spark-vs-Mac-vs-6000 table, and both stacking questions \u2014 what two Sparks really change, and whether you can pair one with a 5090. And what local AI is good for is now seven jobs, with photographs as one of them rather than the argument.' },
@@ -37939,6 +37943,7 @@ var ROSTER = {
 'nick@cardinalrenovations.net':    { name:'Nick',         initials:'NP' },
 'joey@cardinalrenovations.net':    { name:'Joey',         initials:'JC' },
 'jacob@cardinalrenovations.net':   { name:'Jacob',        initials:'JM' },
+'jerry@cardinalrenovations.net':   { name:'Jerry',        initials:'JV' },
 };
 var activeTab = 'all';
 var pickerMode = false;
@@ -40961,6 +40966,7 @@ var ROSTER = [
 { email:'nick@cardinalrenovations.net',    name:'Nick'    },
 { email:'joey@cardinalrenovations.net',    name:'Joey'    },
 { email:'jacob@cardinalrenovations.net',   name:'Jacob'   },
+{ email:'jerry@cardinalrenovations.net',   name:'Jerry'   },
 ];
 var filter = '';
 function esc(s){
@@ -43810,6 +43816,7 @@ shell('\uD83D\uDCF7 Check the details',
 '<option value="nick@cardinalrenovations.net">Nick</option>' +
 '<option value="joey@cardinalrenovations.net">Joey</option>' +
 '<option value="jacob@cardinalrenovations.net">Jacob</option>' +
+'<option value="jerry@cardinalrenovations.net">Jerry</option>' +
 '<option value="theo@cardinalrenovations.net">Theo</option>' +
 '<option value="joan@cardinalrenovations.net">Joan</option>' +
 '</select></div>' +
