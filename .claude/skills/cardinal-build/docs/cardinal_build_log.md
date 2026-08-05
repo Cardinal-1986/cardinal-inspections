@@ -7822,3 +7822,34 @@ earning its place again.
 ⚠ **`#sigModal` (the signature pad, z-index 230) is the one remaining fixed overlay with no
 `overflow`.** Left alone deliberately: not what Theo reported, and a signature canvas has different
 sizing rules than a form. Recorded here so it is found on purpose rather than by another screenshot.
+
+## Photo Activity initials + What's New ordering (601)
+
+- **601** · the `ROSTER` map in `cr-pae-script` gave Joan and Jerry the **same badge** — both
+  `JV` — so the initials circle on every photo tile in Photo Activity could not tell them apart.
+  Four of the eight entries were wrong against `team_profiles`: Joan `JV`→`JH`, Nick `NP`→`NH`,
+  Joey `JC`→`JL`, Jacob `JM`→`JSH`. Jerry's `JV` was correct and is untouched.
+
+**Two traps in a four-line data fix.**
+
+`initials:'JV'` occurs **twice** — Joan's and Jerry's. A value-level replace retags the one entry
+that was already right. Every edit was anchored on the full line *including the email key*, and
+the patch asserts Jerry survived byte-for-byte and that exactly one `JV` remains.
+
+Jacob is **`JSH`, three characters**, which is what keeps him clear of Joan Hunt — both derive
+`JH` from a surname. The badge is a fixed 24px circle at `font:800 10.5px`; the harness computes
+the rendered width (~20.8px) rather than assuming it fits.
+
+**Found while filing the changelog entry, fixed in the same build:** builds **599 and 600 were
+sitting at positions 15–16** of `CHANGELOG`, wedged between two 584 entries. Whoever added them
+grepped `{ build:` and concluded the array stopped at 584 — 585–598 use the `{ b:, d:, t:, s: }`
+shape instead. The renderer has **no sort**; `show()` filters on `entryBuild(e) > lastSeen`, so an
+automatic open was unaffected, but the fallback `CHANGELOG.slice(0, 5)` — the *manual* open, once
+there is nothing new — took the first five in file order and **skipped both**. Reproduced against
+the 600 artifact: its `slice(0,5)` is `598,597,596,595,593`. Both entries moved to the head, 601
+filed above them, entry text unchanged.
+
+This is the **581 class recurring** (581's own note: *"two ways of writing an entry had got
+mixed"*). `entryBuild`/`entryNote` normalise both shapes, so nothing rendered as
+`Build undefined` this time — only the ordering broke. **Grep both `{ b:` and `{ build:` before
+concluding anything about this array's contents.**
