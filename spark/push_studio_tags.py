@@ -348,7 +348,27 @@ def main():
     ap.add_argument('--tags', required=True, help="Hermes's studio_tags.jsonl")
     ap.add_argument('--limit', type=int, default=0,
                      help='stop after N photos (use a small number for a smoke test)')
+    # THIS SCRIPT WRITES TO studio_photos, WHICH IS THE WORK TABLE.
+    # studio_photos is is_cardinal_admin(), so every row here is readable by
+    # theo@ AND joan@. That is correct for job photographs and wrong for
+    # anything personal.
+    #
+    # STUDIO_TAGGING.md (3 Aug) says `source` may be "companycam" or "phone",
+    # and it was written before the private room existed (5 Aug). So the
+    # documented path would take a phone library — family, holidays, Theo's son
+    # — straight into a table another admin can read. Nothing downstream
+    # distinguishes "a job photo I took on my phone" from "my son".
+    #
+    # Personal photographs belong in studio_private (owner-scoped, joan@ has no
+    # route) at photos/private/<owner_email>/…, and THE PUSHER FOR THAT DOES NOT
+    # EXIST YET — deliberately. Until it does, the only safe default is to
+    # refuse anything that is not CompanyCam.
+    ap.add_argument('--sources', default='companycam',
+                     help='comma-separated sources to push. Default companycam. '
+                          'Anything else must be named explicitly, and NEVER name a '
+                          'personal library here — see the note in the source.')
     args = ap.parse_args()
+    allowed = set(s.strip() for s in args.sources.split(',') if s.strip())
 
     email = os.environ.get('CARDINAL_EMAIL')
     password = os.environ.get('CARDINAL_PASSWORD')
@@ -360,11 +380,30 @@ def main():
 
     manifest_idx = load_manifest_index(args.dest)
     tag_rows = load_jsonl(args.tags)
+
+    # Filter by source BEFORE anything else, and say out loud what was held
+    # back. A silent skip on this particular filter would be the worst of both
+    # worlds: it exists to stop personal photographs reaching an
+    # admin-readable table, so a run that quietly dropped rows would look
+    # identical to one that had nothing to drop.
+    held = [r for r in tag_rows if (r.get('source') or '') not in allowed]
+    if held:
+        by_src = {}
+        for r in held:
+            by_src[r.get('source') or '(none)'] = by_src.get(r.get('source') or '(none)', 0) + 1
+        print('HELD BACK, not pushed — sources not in --sources (%s):' % ','.join(sorted(allowed)))
+        for s, n in sorted(by_src.items()):
+            print('   %-14s %d' % (s, n))
+        print('   studio_photos is admin-readable (theo@ AND joan@). If any of the'
+              ' above is a\n   personal library it does NOT belong here — see the note'
+              ' at --sources.')
+
+    tag_rows = [r for r in tag_rows if (r.get('source') or '') in allowed]
     todo = [r for r in tag_rows if r.get('id') not in pushed]
     if args.limit:
         todo = todo[:args.limit]
 
-    print('%d tagged, %d already pushed, %d to do%s' %
+    print('%d tagged (after source filter), %d already pushed, %d to do%s' %
           (len(tag_rows), len(pushed), len(todo), ' (limited)' if args.limit else ''))
     if not todo:
         return
