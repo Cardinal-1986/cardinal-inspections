@@ -47,6 +47,40 @@ one**, and every drop path in `cleanFindings()` increments that counter: the >12
 size floor, and the unplaceable-box path have **never fired**. Three of four proposed mechanisms were
 wrong. Only the coercion was real.
 
+## 📌 v4's corpus — the filter decision, recorded so the number can be read
+
+*Settled 5 Aug 2026, after v4 was killed at epoch 25 to avoid training on a mismatched corpus.*
+
+**The question:** v3's 615 boxes were filtered by `build_clean_labels.py` at `conf >= 0.5`, with `other`
+dropped and window-caulk `flashing_failed` dropped. B's 664 boxes were appended **unfiltered**. A
+v3→v4 change would then be *more data* or *looser data*, with no way to tell which — the same
+ambiguity `via` was captured to prevent, one layer down at label-assembly instead of collection.
+
+**Measured, not assumed:**
+
+| | |
+|---|---|
+| B boxes below `conf 0.5` | **0 (0.0%)** — the confidence half of the filter is a no-op |
+| B boxes that are `other` | **28 (4.2%)** — the only real asymmetry |
+| B after the v3-equivalent filter | **~617**, against v3's **615** |
+
+**Decision: apply the v3 filter to B**, so the two halves match. Volume-matched at ~617 vs 615 means
+any v3→v4 difference is attributable to **which photographs** (storm-scored, native rare-class
+labels) rather than to how many boxes or how loose the bar was.
+
+**The one deliberate deviation is the 28 dropped `other` boxes.** v3 dropped `other` too — they were
+recovered separately into real exterior classes rather than trained as `other` — so this is
+consistency, not loss.
+
+`append_b_labels.py` applies the filter by default and logs every skip counter, and the `MARKER` in
+`yolo_labels.txt` still delimits B's section, so the corpus can be trained with and without B
+without re-deriving anything.
+
+**When v4's numbers land, write them down beside this.** And remember `box.maps` is per-class
+mAP50-95 despite the name, five classes had zero val instances before the split was stratified, and
+the per-class mean must reconcile against the reported aggregate — three tables were wrong before
+those guards existed.
+
 ## 🟠 Cardinal Studio — the grid downloads ~50× the bytes it displays
 
 *Found 5 Aug 2026 while the first real push was running. **Invisible at 120 rows, obvious at
