@@ -95,7 +95,7 @@ WHAT IS AND IS NOT VERIFIED
     real PostgREST upsert from this sandbox. Run --limit 5 first and look at
     studio_photos before trusting a big run.
 """
-import argparse, json, os, sys, time
+import argparse, base64, json, os, sys, time
 import urllib.error, urllib.request
 
 try:
@@ -110,14 +110,71 @@ SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ'
 DISP_MAX = 1400        # matches cr-show-script's DISP rendition
 DISP_QUALITY = 82
 
-# A Supabase access token lives one hour. MEASURED on the 5 Aug run, not
-# assumed: the first row landed at 02:05 UTC and the last at 03:06, exactly 61
-# minutes, and then every remaining photo failed. Refresh well inside that.
+# Fallback only. The real expiry is read out of the token's own `exp` claim by
+# token_expiry() below, so nothing here has to guess. This is what gets used if
+# a token ever arrives in a shape that cannot be parsed.
+#
+# For the record, because it was measured rather than assumed: on the 5 Aug run
+# the first row landed 02:05 UTC and the last 03:06 — 61 minutes — so the tokens
+# this project gets really do live an hour, not the "few minutes" a truncated
+# log suggested.
 TOKEN_TTL_S = 45 * 60
+# Refresh at 80% of the token's real life. Proportional, not a fixed count:
+# "every N photographs" looks equivalent and is not — at 100 photos/min a
+# refresh every 200 is a sign-in every two minutes, ~300 over this run, and
+# GoTrue rate-limits password grants. Time is the thing that expires, so time
+# is what this counts.
+TOKEN_REFRESH_AT = 0.80
 # If this many photographs fail back-to-back, something systemic is wrong and
 # grinding through the remaining tens of thousands helps nobody. The 5 Aug run
 # was reported as "running, resumable" while it was in exactly this state.
 STALL_AFTER = 25
+
+
+def token_expiry(token):
+    """Seconds this token has left, read from its own `exp` claim.
+
+    A JWT payload is base64url in the middle segment; no signature check is
+    needed or wanted here — we are not validating the token, only asking when
+    it dies. Returns TOKEN_TTL_S if anything about it is unreadable, so a
+    shape change degrades to the old guess instead of crashing a long run."""
+    try:
+        payload = token.split('.')[1]
+        payload += '=' * (-len(payload) % 4)          # restore stripped padding
+        exp = json.loads(base64.urlsafe_b64decode(payload).decode('utf-8'))['exp']
+        return max(0, float(exp) - time.time())
+    except Exception:
+        return TOKEN_TTL_S
+
+
+# Supabase reports an expired token DIFFERENTLY depending on which service you
+# hit, and that cost a whole run to learn:
+#
+#   PostgREST  /rest/v1     HTTP 401  {"message":"JWT expired"}
+#   Storage    /storage/v1  HTTP 400  {"statusCode":"403", …
+#                                      "\"exp\" claim timestamp check failed"}
+#
+# upload_storage() is called BEFORE upsert_row(), so the 400 is what a long run
+# actually hits — the 401 never arrives. The fix shipped in #124 tested
+# `e.code == 401`, which is correct for PostgREST and inert here. It passed its
+# harness because the harness simulated the 401 I assumed rather than the 400
+# production sends.
+#
+# Match the MESSAGE, not a bare '403' anywhere in the body: a response body can
+# carry '403' for unrelated reasons, and substring-matching 'exp' also matches
+# "unexpected".
+AUTH_MARKERS = ('claim timestamp check failed', 'jwt expired', 'jwt is expired',
+                'token is expired', 'invalidjwt', 'invalid jwt')
+
+
+def is_auth_failure(e):
+    """True when an ApiError means 'your token is no longer good'."""
+    if e.code in (401, 403):
+        return True
+    if e.code == 400:                       # Storage's wrapper around a 403
+        s = str(e).lower()
+        return any(m in s for m in AUTH_MARKERS)
+    return False
 
 
 def die(msg, code=1):
@@ -281,7 +338,8 @@ def main():
         return
 
     token = get_token(email, password)
-    token_at = time.time()
+    token_refresh_at = time.time() + token_expiry(token) * TOKEN_REFRESH_AT
+    print('token good for %d min' % round(token_expiry(token) / 60))
     ok, failed, consecutive, stalled = 0, 0, 0, False
 
     for i, row in enumerate(todo, 1):
@@ -299,13 +357,14 @@ def main():
                 break
             continue
 
-        # Refresh BEFORE the token dies rather than after. Reactive re-auth
-        # below is the safety net; this is what stops the net being needed.
-        if time.time() - token_at > TOKEN_TTL_S:
-            print('  refreshing the access token (%d min old)' %
-                  round((time.time() - token_at) / 60))
+        # Refresh BEFORE the token dies rather than after, on the token's OWN
+        # stated lifetime rather than on a guess. Reactive re-auth below is the
+        # safety net; this is what stops the net being needed.
+        if time.time() >= token_refresh_at:
+            left = token_expiry(token)
+            print('  refreshing the access token (%d min left on it)' % round(left / 60))
             token = get_token(email, password)
-            token_at = time.time()
+            token_refresh_at = time.time() + token_expiry(token) * TOKEN_REFRESH_AT
 
         # Resizing is the expensive part and does not depend on the token, so
         # it stays outside the retry — a re-auth must not re-decode the JPEG.
@@ -349,16 +408,20 @@ def main():
                 err = e
                 # THE 5 AUG FAILURE. The token was minted once before the loop
                 # and the run outlived it at exactly 61 minutes; every one of
-                # the remaining ~54,000 photographs then 401'd, was counted as
+                # the remaining ~54,000 photographs then failed, was counted as
                 # a plain failure, and the script kept going for as long as it
                 # was left running. Retrying with the same dead token cannot
                 # help — sign in again, then retry. At most once per photo, so
                 # a genuine permissions failure cannot become a sign-in storm.
-                if e.code == 401 and not reauthed:
+                #
+                # is_auth_failure(), NOT `e.code == 401`. Storage answers an
+                # expired token with a 400 wrapping a 403, and it is the call
+                # that runs first — see the note on AUTH_MARKERS above.
+                if is_auth_failure(e) and not reauthed:
                     reauthed = True
-                    print('  token expired — signing in again')
+                    print('  token rejected (%d) — signing in again' % e.code)
                     token = get_token(email, password)
-                    token_at = time.time()
+                    token_refresh_at = time.time() + token_expiry(token) * TOKEN_REFRESH_AT
                     continue
                 if e.code in (502, 503, 429):
                     time.sleep(1.5 * attempt)

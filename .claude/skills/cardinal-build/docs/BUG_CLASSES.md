@@ -926,6 +926,44 @@ running.** A process can be extremely busy accomplishing nothing.
 Regression cover: `spark/test_push_retry.py` executes the shipped `main()` against stubbed network
 leaves, with a negative control that must LOSE photographs when the re-auth is disabled.
 
+### 13a. …and the first fix was inert, because the harness invented the error shape
+
+**The fix above shipped in #124 and did not work.** It tested `e.code == 401`. The run kept dying.
+
+**Supabase reports an expired token differently per service:**
+
+| service | on an expired token |
+|---|---|
+| PostgREST `/rest/v1` | **HTTP 401**, `{"message":"JWT expired"}` |
+| Storage `/storage/v1` | **HTTP 400**, `{"statusCode":"403", … "\"exp\" claim timestamp check failed"}` |
+
+`upload_storage()` is called **before** `upsert_row()`, so the 400 is what a long run actually hits.
+The 401 never arrives. The check was correct for the endpoint it was never reached from.
+
+**The harness passed because I wrote the fixture.** It raised a 401 — the shape I assumed — so it
+confirmed my assumption instead of testing it. This is the same class as the photo-signing change
+that shipped completely inert against `{path, url}` fixtures when **zero** real photo objects have
+`path`: *test against production data shapes, not convenient ones.* A stub you author from memory
+tests your memory.
+
+**What found it:** the error string out of the real run. Not reasoning, not the test.
+
+**And the loose check beat the precise one.** Hermes's independent patch matched `'403' in str(e)` —
+sloppy, false-positive-prone, and it **caught the real failure** where the exact `e.code == 401` did
+not. Precision aimed at the wrong target loses to imprecision aimed at the right one. The fix keeps
+the precision and moves the target: match `401`/`403` by code, plus a 400 **only** when the body
+carries a known expiry marker. Not `'exp' in s` — that matches "unexpected". Not `'403' in s` — a
+body can say 403 for unrelated reasons. Both traps are pinned as tests.
+
+**Refresh on the token's own `exp` claim, not on a count.** "Every 200 photographs" reads as
+equivalent to a timer and is not: at ~100/min it signs in every two minutes, ~300 times over this
+run, and GoTrue rate-limits password grants. Time is what expires, so time is what to count — and
+the token states its own expiry, so nothing has to be guessed.
+
+**The check that makes this real:** re-run the harness with the *old* predicate restored and confirm
+it now fails. If a regression test cannot see the bug it was written for, it is decoration. This one
+drops 30 landed photographs to 5 with the `#124` check reinstated.
+
 ---
 
 ## Do-not-reflag register — imported from the Hyperagent session, verified at 472
