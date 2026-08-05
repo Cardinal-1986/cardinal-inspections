@@ -47,6 +47,39 @@ one**, and every drop path in `cleanFindings()` increments that counter: the >12
 size floor, and the unplaceable-box path have **never fired**. Three of four proposed mechanisms were
 wrong. Only the coercion was real.
 
+## 🟠 Cardinal Studio — the grid downloads ~50× the bytes it displays
+
+*Found 5 Aug 2026 while the first real push was running. **Invisible at 120 rows, obvious at
+60,503** — which is why the push had to run before anything was built.*
+
+`signBatch()` in `studio.html` calls `createSignedUrls` with **no transform**, `PAGE = 60`, and the
+cards are `minmax(190px, 1fr)`. The stored browsing copy averages **341 KB**.
+
+**So every page load pulls 60 × 341 KB ≈ 20.5 MB to render sixty 190-pixel thumbnails**, on every
+scroll, on a phone.
+
+- **Do NOT change the push.** 1400px is correct for the detail view — the stored size is right. It is
+  the *grid's request* that is wrong.
+- Supabase Storage on **Pro** (confirmed: this org is Pro) does transform-on-read. The fix is a
+  transform option on the signing call **in the grid path only**, full size when a photo is opened.
+- Small, well-understood, and better made against the full archive than guessed at now.
+
+## 🟡 studio_findings.sql is in the repo and NOT applied
+
+`studio_findings.sql` shipped at PR #119 — the join that lets the Studio search for damage rather
+than only composition. **Theo runs it in Supabase; it has never been executed.** It must run before
+any ingest that fills it.
+
+Why it exists: `studio_photos.tags` comes from `studio_tagger.py`, which has **no vision model** —
+`aerial`, `roof`, `siding`, `close-up`, `wide`. The damage labels live in `findings.jsonl` on the
+Spark and never reach the table, so the Studio can find *"aerial shots of siding"* and cannot find
+*"hail damage"*. `damage_tags` is denormalised into the same `text[]` + GIN shape the page already
+filters on, so it needs **no front-end change**.
+
+**Storage projection, measured 5 Aug:** the browsing copies land at ~341 KB each, so the full
+archive is **~20.1 GB** — into a 100 GB Pro allowance. Not a blocker; worth knowing before a second
+corpus is ever added.
+
 ## 🟡 The Spark corpus is not in production
 
 `studio_photos` is **0 rows** as of 5 Aug — the 60,503 tagged photos are on the Spark and have not
