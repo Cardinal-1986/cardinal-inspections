@@ -155,6 +155,55 @@ child's face. Those are biometric data and they do not belong in a hosted databa
 
 ---
 
+## Two libraries, and they must not mix
+
+There are now **two** photo libraries in play on the Spark, and everything written before 5 Aug
+only knew about the first.
+
+| | CompanyCam archive | Theo's personal library |
+|---|---|---|
+| What | ~60,500 job photographs | ~20,000 phone + iPad, years deep |
+| Lands in | `studio_photos` — **`is_cardinal_admin()`, so joan@ reads it too** | `studio_private` — owner-scoped, joan@ has no route |
+| Bytes at | `photos/studio/…` | `photos/private/<owner_email>/…` |
+| Pusher | `push_studio_tags.py` | **does not exist yet — deliberately** |
+| Doc | `STUDIO_TAGGING.md` | this section, and `first_pass.py`'s own docstring |
+
+⚠ **`push_studio_tags.py` writes to `studio_photos` unconditionally.** `STUDIO_TAGGING.md` (3 Aug)
+says `source` may be `"companycam"` or `"phone"` — written before the private room existed, so the
+documented path would take a family library straight into a table another admin can read. Nothing
+downstream distinguishes *a job photo I took on my phone* from *my son*.
+
+That is now closed in code rather than in prose: `--sources` defaults to `companycam`, anything
+else is **held back and reported out loud**, and pushing another source requires naming it. The
+default cannot leak by accident. **Do not name a personal library there.** When the private pusher
+is written it will target `studio_private` and `photos/private/…`, and it is not written yet.
+
+### The First Pass — step one, and it moves nothing
+
+`first_pass.py` in this folder. **Read its docstring; it explains itself and this section will not
+repeat it.** What matters here is where it sits:
+
+```
+1. photographs reachable on the Spark        ← a cable, not code. Not done.
+2. pip3 install --user pillow-heif           ← iPhones shoot HEIC; without it
+                                               you get no date, no GPS, no device
+3. python3 first_pass.py <dir>               ← READ-ONLY. Reports. Moves nothing.
+4. Theo reads the report                     ← ← ← the gate. Nothing proceeds without it.
+5. re-check the triage design against it     ← every number in that design is
+                                               currently invented
+6. build                                     ← studio.html, two rooms
+```
+
+**Step 5 is not optional and is the whole reason step 3 exists.** The triage plan says things like
+"about 300 decisions" and "roughly fifty to one" — those are *guesses made in a chat window*. On
+5 Aug this project spent an evening on three model evaluations that were all void because numbers
+were trusted without checking where they came from (`BUG_CLASSES.md` §14). Do not let a design get
+built on invented counts when a read-only script can produce real ones in an afternoon.
+
+**Nothing personal uploads until the live 4xx test in the private-room section passes.** The First
+Pass never uploads anything, so it is safe to run before that test — and it is the only step that
+is.
+
 ## Secrets
 
 Never in a commit, never in a chat message, never in a file that gets committed. Environment

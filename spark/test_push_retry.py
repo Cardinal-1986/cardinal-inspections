@@ -273,5 +273,60 @@ state, log, code, calls = run(6, flaky, ttl=10 ** 9)
 check('all 6 landed despite a 503', len(state) == 6, '%d landed' % len(state))
 check('exit code 0', code == 0)
 
+# ── 5 · personal photographs must not reach the work table ─────────────────
+# studio_photos is is_cardinal_admin() — readable by theo@ AND joan@.
+# STUDIO_TAGGING.md sanctions source:"phone", which predates the private room,
+# so the documented path would land a family library in an admin-readable
+# table. Default --sources is companycam; anything else is held back and said
+# out loud.
+print('\n5 · non-companycam sources are held back by default')
+
+d = tempfile.mkdtemp()
+os.makedirs(os.path.join(d, 'cc'), exist_ok=True)
+rows = []
+for i, src in enumerate(['companycam', 'companycam', 'phone', 'phone', 'phone']):
+    rel = 'cc/m%02d.jpg' % i
+    with open(os.path.join(d, rel), 'wb') as f:
+        f.write(b'\xff\xd8\xff\xd9')
+    rows.append({'id': '%s:%02d' % (src, i), 'path': rel, 'source': src, 'tags': []})
+tags = os.path.join(d, 'mixed.jsonl')
+with open(tags, 'w') as f:
+    for r in rows:
+        f.write(json.dumps(r) + '\n')
+
+pushed_ids = []
+pst.get_token = lambda e, p: 'tok'
+pst.make_thumb = lambda s: (b'x', 800, 600)
+pst.upload_storage = lambda *a, **k: None
+pst.upsert_row = lambda token, row: pushed_ids.append(row['id'])
+pst.TOKEN_TTL_S = 10 ** 9
+os.environ.update(CARDINAL_EMAIL='t@x.com', CARDINAL_PASSWORD='x')
+
+sys.argv = ['x', '--dest', d, '--root', d, '--tags', tags]
+buf = io.StringIO()
+try:
+    with contextlib.redirect_stdout(buf):
+        pst.main()
+except SystemExit:
+    pass
+log5 = buf.getvalue()
+check('only the 2 companycam rows pushed', len(pushed_ids) == 2,
+      'pushed %d: %s' % (len(pushed_ids), pushed_ids))
+check('no phone row reached studio_photos',
+      not any(i.startswith('phone') for i in pushed_ids))
+check('the run SAYS what it held back', 'HELD BACK' in log5 and 'phone' in log5)
+
+# Explicit opt-in still works, so the flag is a guard and not a wall.
+pushed_ids.clear()
+os.remove(tags + '.pushed.json')
+sys.argv = ['x', '--dest', d, '--root', d, '--tags', tags, '--sources', 'companycam,phone']
+try:
+    with contextlib.redirect_stdout(io.StringIO()):
+        pst.main()
+except SystemExit:
+    pass
+check('naming phone explicitly pushes all 5', len(pushed_ids) == 5,
+      'pushed %d' % len(pushed_ids))
+
 print('\n' + ('ALL GREEN' if not FAILS else 'RED: ' + ', '.join(FAILS)))
 sys.exit(1 if FAILS else 0)
