@@ -8128,3 +8128,97 @@ class 32 instead of class 24.
   **The lesson worth keeping: un-hiding something is not the same as making it work.** 604's gates
   were green and correct — they proved the card rendered, and proved nothing about the modal behind
   it. The question that found this was Theo's, not a gate's.
+- **606** · **The punch card repainted 54×/sec, and its words were invisible.** Both found from one
+  screenshot Theo sent of a live client profile — *"Issues with clicking the button 3 times to open.
+  Also can't see the words."* Both reproduced and measured before anything was changed.
+  **The three taps were a runaway repaint.** `render()` in `cr-pp-script` wrote `host.innerHTML`
+  unconditionally, and **that write is itself a childList mutation inside `document.body` — which
+  this module's own MutationObserver watches.** Each write scheduled the next: **~54 rewrites per
+  second, forever**, destroying and rebuilding the `+ Add` button under his finger, so a press that
+  began on one instance ended on another and never became a click. **The 567/569 class, in a module
+  that had no guard at all** — like the landing `paint()`. Guard is the **stored-signature** shape
+  (`wxPaint`'s, not `paintChip`'s): compare the markup we generated against the last markup we
+  generated, never against live `innerHTML`, because the browser re-serialises and a live compare
+  can never settle. **Measured: 54/sec → 1 write to settle, 0 on an unrelated DOM change**, while a
+  real data change still repaints and `+ Add` fires on **one** click.
+  **The invisible words were a half-finished dark conversion.** One retail rule
+  (`body:not(.claim-insurance):not(.claim-community) #cr-pp-mount > div`) gives the card a dark
+  ground and `color:var(--rbe-ink)` — and stops. Every child carrying an explicit colour kept the
+  ink it was given for the original **white** card and beat inheritance: title **1.22:1**, meta and
+  empty copy **2.38:1**. Now `var(--rbe-ink,#cfd6df)` **8.67:1** and `var(--rbe-mute,#9aa0a8)`
+  **4.82:1**, computed at **both ends of the gradient** (`#2e333b` and `#262a31`) so nothing passes
+  at the top and fails at the bottom. **`--rbe-mute2` `#6d747e` was REJECTED for completed rows at
+  2.69 / 3.05:1** — they take the legible ink and keep the strikethrough as the "done" signal,
+  because dimming is not what carries that meaning. Every token carries a literal fallback: this
+  card is painted from a stylesheet other than the one declaring them, which is the 448–449 case.
+  ⚠ **The cream header is deliberately untouched** — brown on cream reads fine and converting it is
+  taste, not correctness. Offered to Theo as a separate choice rather than decided here.
+  ⚠ **Two of my own measurements were wrong first time and are worth remembering.** `background:
+  linear-gradient(...)` sets background-**image** and resets background-**color** to transparent, so
+  reading `backgroundColor` returned `rgba(0,0,0,0)` and looked exactly like the 448–449 stripped-
+  token bug; it was not. And a selector scan filtered to rules *naming* `cr-pp-*` missed the rule
+  that actually wins, which is `#cr-pp-mount > div`. Enumerate what an element **matches**, not what
+  mentions it.
+- **607** · **Punch Outs moved into the job menu, and each item got a discussion thread.** Theo:
+  *"move the location into job menu as Punch outs ... have it click into the punch out for the
+  client. Maybe a list for the client and when you click on it, opens that specific punch out and
+  add a small discussion box that you can tag other users in"* — then, asked how tagging should
+  behave: *"chat box primarily. Only notify if @user."*
+  **✅ SQL APPLIED to production 6 Aug 2026** (`punch_items_comments_607`) — verified: `jsonb`
+  `NOT NULL DEFAULT '[]'`, 3 of 3 rows a valid array, none null, RLS untouched (four policies
+  intact). **Do not re-run it as pending work.**
+  **`punch_comments.sql` adds `punch_items.comments jsonb`.** Same shape as the
+  project-level `ck.comments` (`{by,name,at,text,mentions}`) so one renderer and one resolver serve
+  both. **No new RLS** — the column rides on `punch_items`' existing policies rather than creating a
+  second place for that rule to drift.
+  **Most of this was already built, which is the whole point of auditing first.** `sendChat()`
+  already extracted `@name`, resolved it against `TEAM_ROSTER` by first name **or** email prefix,
+  excluded the author, and pushed via `notifyTeam()` → the wrapper at 21313 → `/api/notify`. That is
+  precisely the rule Theo asked for. **Extracted to ONE implementation** — `mentionNamesIn()` /
+  `mentionEmailsFor()`, exported as `window.CardinalMentions` — and `sendChat` now calls it, so
+  there is not a second copy of the tagging rule. Copying it would have been the duplicate-pipeline
+  bug this project keeps paying for.
+  **It is a real TAB, not a fixed overlay** — `#tab-punch`, driven by the existing
+  `showTab()`/`#jobMenuSel`. So it needs no `hideAllViews()` / `navRestore()` registration and
+  cannot strand the user the way 570–572's unregistered full-screen views did. It also **retires the
+  604 fight** rather than continuing to win it: nothing mounts into `#tab-overview` any more.
+  **Community deliberately keeps its inline card** — the takeover has no tab strip to move it to,
+  and that path was never affected by 604/606. Verified unchanged.
+  Both new surfaces carry 606's stored-signature guard; an unguarded `innerHTML` write on the tab
+  would have reintroduced the runaway repaint on a second surface.
+  Verified: **32-assertion harness against the shipped module text and the shipped mention helpers**,
+  including the three that reach real phones — **a push goes only to the tagged person, never to the
+  author even if self-tagged, and an untagged message notifies nobody** — plus tile count, list,
+  detail, chip insertion, save shape, back navigation, and 0 repaints in 1.2s. Community regression
+  test separate. 603/605/606 harnesses re-run green.
+- **608** · **Push notifications have never worked, and the gate meant to prevent exactly that was
+  blind to it.** Found while replicating `check.yml` locally because **GitHub Actions had stopped
+  running on this repo entirely** (no runs at all after 07:48 UTC on 6 Aug — 606, 607 and the SQL
+  commit all got zero, none queued; repo-wide, not PR-specific).
+  `index.html` declared `VAPID_PUBLIC` **twice, with two different keys**, in two script blocks
+  feeding two subscribe paths:
+  | line | key | writes |
+  |---|---|---|
+  | 17566 | `BI-nCdP…` | `push_subscriptions` |
+  | 21311 | `BG8JTSY…` | **`push_subs`** — the table `api/notify.js` READS |
+  **Proved, not argued:** `api/notify.js`'s private key run through
+  `crypto.createECDH('prime256v1')` derives to **exactly `BI-nCdP…`**. So notify.js is
+  self-consistent and `BG8JTSY…` was the odd one out. A push signed with one VAPID pair against a
+  subscription created with another is rejected by the push service — **so every subscription in
+  `push_subs` was unreachable, silently, at both ends.**
+  **The gate could never have caught it.** It used `String.match` **without `/g`**, which returns
+  only the FIRST occurrence — it compared first-in-index (`BI-nCdP…`) against first-in-notify
+  (`BI-nCdP…`), matched, and passed. Verified against the real shipped 607 file: **old gate PASS,
+  new gate FAIL.** Now checks *every* declaration. **Do not narrow it again** — a gate that reports
+  confidence it has not earned is worse than no gate, and this one's own comment says it exists so
+  push cannot silently fail.
+  ⚠ **Existing subscriptions cannot be repaired, only replaced** — a VAPID mismatch returns 403, not
+  404/410, so `notify.js`'s auto-prune never removes them. Everyone must re-enable notifications
+  once per device. The stale `push_subs` row survives until then.
+  ⚠ **Still open, deliberately not touched here: `push_subs` and `push_subscriptions` are two tables
+  for one concept**, one row each, both theo@. `notify.js` reads only `push_subs`, so the 17609 path
+  writes somewhere nothing reads. One build at a time — but this is the duplicate-pipeline pattern
+  again and it is what made the two-key split possible.
+  Verified: one distinct key across both declarations, matching `notify.js` and derivable from its
+  private key; gate negative-controlled against the shipped 607 artifact; 603/607 harnesses and the
+  community test re-run green.

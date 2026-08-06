@@ -142,8 +142,22 @@ jobs:
               const fs = require('fs');
               const app = fs.readFileSync('index.html','utf8');
               const api = fs.readFileSync('api/notify.js','utf8');
-              const a = (app.match(/VAPID_PUBLIC = '([^']+)'/)||[])[1];
+              // FIXED (608) — this used String.match WITHOUT /g, so it read only the
+              // FIRST VAPID_PUBLIC in index.html. The file had TWO, with different
+              // keys, and the second one fed the very table api/notify.js reads.
+              // The gate compared first-vs-first, matched, and passed for as long as
+              // push was silently broken. Check EVERY copy. Do not narrow this again.
+              const all = [...app.matchAll(/VAPID_PUBLIC = '([^']+)'/g)].map(m => m[1]);
+              const a = all[0];
               const b = (api.match(/VAPID_PUBLIC = '([^']+)'/)||[])[1];
+              const odd = [...new Set(all)].filter(k => k !== b);
+              if(b && odd.length){
+                console.error('::error::index.html has ' + new Set(all).size + ' distinct VAPID public keys; '
+                  + odd.length + ' differ from api/notify.js - those subscriptions can never receive a push');
+                process.exit(1);
+              }
+              console.log('VAPID: ' + all.length + ' declaration(s) in index.html, '
+                + new Set(all).size + ' distinct, all matching api/notify.js');
               if(a && b && a !== b){ console.error('::error::VAPID public keys differ between index.html and api/notify.js - push will fail'); process.exit(1); }
               console.log('VAPID keys: ' + (a && b ? 'matched' : 'not applicable'));
             "
