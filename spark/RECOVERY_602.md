@@ -223,11 +223,12 @@ python3 spark/test_drop_paint.py
 
 ## 9 · Unrelated, also parked on Theo
 
-The **private room** storage test. The database half is proven — an owner sees a
-private object, a non-admin and an admin who is not the owner both see nothing. The
-**HTTP half is still open**: it needs one throwaway file at
-`photos/private/theo@cardinalrenovations.net/` and a request for it from a
-non-admin session, expecting a 4xx. `photos/private/` is currently empty, which is
-why a refusal cannot be told apart from absence.
+The **private room** storage test is **CLOSED as of 6 Aug 2026** — both halves pass,
+and personal uploads are no longer gated on it.
 
-**Nothing personal should be uploaded until that test passes.**
+The HTTP half was proven by requesting one real object at
+`private/theo@cardinalrenovations.net/` from two callers on the same path:
+`nick@` (real staff session) got *"Object not found"*; `theo@` (the owner) got
+2,742,127 bytes. The owner's run is the half that matters — Supabase returns
+*"Object not found"* for an RLS denial and for a missing file alike, so a refusal
+on its own is uninterpretable. See `ORIENTATION.md` for the full note.

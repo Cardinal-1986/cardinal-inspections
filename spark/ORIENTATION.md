@@ -144,10 +144,23 @@ lives in `studio_private` / `studio_private_events` and at `photos/private/<owne
 which is right for job photographs and wrong for a man's family. Both the table and the storage
 policy check `owner_email = my_email()`. Verified 5 Aug: joan@, an admin, cannot read it.
 
-**⚠ Nothing personal uploads until one live test passes.** Sign in as a non-admin account, request
-a private object by its exact path, confirm a 4xx. The policy predicates are verified; the HTTP
-path — signed URLs, the storage API's own checks — is not. **A policy that reads correctly and a
-request that is actually refused are two different facts.**
+**✅ THE LIVE TEST PASSED — 6 Aug 2026. The upload gate is lifted.** Both halves are now proven,
+and the second one is the one that took three attempts to get right.
+
+    predicate half   joan@ (an admin) and nick@ cannot see an owner's row. Verified 5 Aug.
+    HTTP half        a real object at private/theo@cardinalrenovations.net/ was requested twice
+                     on the same path, minutes apart:
+                         nick@  (real staff session)  -> "Object not found"
+                         theo@  (the owner)           -> 2,742,127 bytes
+
+**The owner's run is what makes it evidence.** Supabase returns "Object not found" for an RLS
+denial AND for a genuinely missing file — deliberately, so the error cannot be used to probe what
+exists. So a refusal alone proves nothing, which is exactly why the earlier attempts settled
+nothing: `photos/private/` was empty and there was nothing to be refused. Only the pair — same
+path, same minute, different caller — isolates the policy as the cause.
+
+If you ever re-run this: upload a throwaway FIRST, and always run both callers. A test that only
+checks the refusal is the test that wasted two rounds here.
 
 **Face grouping, if it ever runs, runs on the Spark and stays there.** What crosses is the name
 Theo typed — `people text[]`. Never an embedding, never a descriptor, never a bounding box of a
@@ -244,9 +257,8 @@ repeat it.** What matters here is where it sits:
 were trusted without checking where they came from (`BUG_CLASSES.md` §14). Do not let a design get
 built on invented counts when a read-only script can produce real ones in an afternoon.
 
-**Nothing personal uploads until the live 4xx test in the private-room section passes.** The First
-Pass never uploads anything, so it is safe to run before that test — and it is the only step that
-is.
+**The live test in the private-room section PASSED on 6 Aug 2026**, so this no longer blocks
+uploads. The First Pass still never uploads anything and remains safe to run at any point.
 
 ## Secrets
 
