@@ -8309,3 +8309,38 @@ an observation with a timestamp, not a standing fact. I checked once at 09:00 an
 "Actions is still down" at 14:00, 15:58, 18:57 and 19:00 without re-measuring. **Re-check before
 repeating any claim about live infrastructure** — the same rule this document applies to build numbers
 and doc staleness applies to CI.
+
+**Follow-up, measured 00:20 UTC — 610 IS gated, directly, and the note above needed the same
+treatment it prescribes.** Actions recovered on its own.
+
+**Run #902 attempt 2 ran build 610 itself and passed.** Re-queued 22:54, it sat about sixteen
+minutes, picked up runner `1000000938` at 23:10:55 and went green at 23:11:05 — `head_sha`
+**`5fa7889`**, all twelve steps (Vercel-safe filenames, ESM in `api/`, `index.html` not truncated,
+every inline script parses, structural balance, `sw.js`, every API function, JSON validity, VAPID
+key match). Nothing inferred: the gate checked out the exact commit.
+
+Run **#903** (`main` @ `b7456b7`) independently confirms it, and is worth keeping because the
+reasoning generalises: `b7456b7` is a descendant of `5fa7889` differing only in
+`spark/ORIENTATION.md` and `spark/RECOVERY_602.md`; **`check.yml` contains zero references to
+`spark`**, and `index.html` hashes identically on both
+(`98c8624f89a636bbf8daabd228b0595485437e91`, still live on `main`). A green run on a descendant
+gates an ancestor whenever every file the workflow reads is unchanged between them.
+
+So **"only 610 is genuinely ungated" was true at 22:50 and false by 23:11.**
+
+**⚠ And the first draft of this very note was wrong too — corrected before it merged.** It said
+`rerun_workflow_run` on a stale run "can sit queued indefinitely" and advised preferring a fresh
+push. **It cannot and you should not.** The re-run worked; it was queued, not stuck. Two reading
+errors produced that claim, and both are worth knowing:
+
+- **A run's top-level `status` lags its job.** At 23:10:59 the run list still said `queued` — the
+  job had been created at 23:10:53, six seconds earlier. **Read `list_workflow_jobs`, not the run's
+  `status` field**, when you need to know whether work has actually started.
+- **Queue latency was 16–28 minutes that night**, on a repo where runs normally start in seconds.
+  `b7456b7` pushed 22:35, ran 23:03. #902 re-queued 22:54, ran 23:10. **Neither an absent run nor a
+  `queued` one is evidence of failure** — it is evidence you measured too early.
+
+That is now **four** stale-infrastructure claims in one evening: the original outage, its repeat
+across three builds, "only 610 is ungated", and this one. The pattern is always the same — a
+correct observation restated later as a standing fact. **Timestamp the reading, or don't make the
+claim.**
