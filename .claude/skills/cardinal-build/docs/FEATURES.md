@@ -1375,7 +1375,12 @@ Theo: *"circling damage ai and checking first then presenting to client is a goo
 Doesn't need to be a report, so new feature then."* The order in that sentence is the design.
 
 - **`api/detect.js`** (26th function) proposes **located** findings — normalized box fractions on the
-  existing `crit`/`warn`/`ok` scale. It touches no pixels: **circles are an overlay, never burned in**,
+  existing `crit`/`warn`/`ok` scale. **Its `DEFECTS` keys are index-aligned with the trained model's
+  class indices 0-30 and the order is a contract** — renaming or reordering silently decouples the
+  route from the model. **Build 602** narrowed it to **31 classes**: `soffit_damage` + `fascia_damage`
+  merged to `soffit_fascia_damage`, `paint_deterioration` deleted outright (it had been used as a
+  junk drawer — its boxes were on decking, windows, roofs and leaks). Paint failure is now named in
+  both surface descriptions instead. Every index ≤18 is unchanged. It touches no pixels: **circles are an overlay, never burned in**,
   so the stored photograph stays the photograph the camera took.
 - **Photographs come from both** a phone (`multiple` file input) and an existing job. **Both COPY
   their bytes into `walks/`.** Measured, not assumed: 183 of 196 `project_photos` rows carry a

@@ -57,26 +57,36 @@ const DEFECTS = {
   ice_dam:          'ice damming or the staining and wear it leaves behind',
   other:            'a real, visible defect that fits none of the above',
 
-  /* ── 17-32: the exterior half, added 5 Aug 2026 ──────────────────────────
+  /* ── 17-30: the exterior half, added 5 Aug 2026; narrowed 602 ────────────
      THESE KEYS ARE A CONTRACT AND THE ORDER IS LOAD-BEARING. They are
      exterior_vocab.py on Theo's Spark, verbatim — the same file
      prepare_yolo.py and recover_other.py import, so DEFECT_KEYS is index-
-     aligned with the trained model's class indices 0-32. `other` stays at 16
+     aligned with the trained model's class indices 0-30. `other` stays at 16
      for that reason, not because an escape hatch belongs mid-list. Renaming or
      reordering silently decouples this route from the model.
 
      They are not invented. They are the clusters of what the model ACTUALLY
      called the 294 boxes a roof-only vocabulary had to flatten to 'other'
      (gutter 65, soffit/fascia 57, window 42, deck 42), and they map onto the
-     six trades in walks_trade_ck with no seventh trade needed. */
+     six trades in walks_trade_ck with no seventh trade needed.
+
+     602: soffit_damage and fascia_damage MERGED back to one key, and
+     paint_deterioration REMOVED. The cluster line above is the reason —
+     the boxes grouped as 'soffit/fascia 57', one cluster, and splitting
+     them into two classes is what let the model spread confidence across
+     both. NMS is per-class, so neither suppressed the other and the same
+     eave came back boxed three or four times. paint_deterioration was a
+     CONDITION among LOCATIONS — it stacked on every surface — so paint
+     failure now belongs to whichever surface carries it, and is named in
+     both descriptions above so the model still has somewhere to put it.
+     33 -> 31 classes. Every index <= 18 is unchanged; the roof half and
+     `other` keep their numbers. */
   gutter_damage:        'a bent, sagging, separated or holed gutter trough',
   downspout_damage:     'a crushed, detached, missing or mis-draining downspout or elbow',
-  soffit_damage:        'soffit rot, holes, sagging panels or displaced vented panels',
-  fascia_damage:        'rotted, split, water-stained or detached fascia board',
-  siding_damage:        'cracked, holed, buckled, chalked or missing siding or trim',
+  soffit_fascia_damage: 'soffit rot, holes or sagging panels, or a rotted, split, water-stained or detached fascia board \u2014 including paint failure on either',
+  siding_damage:        'cracked, holed, buckled, chalked or missing siding or trim, including paint failure on it',
   masonry_damage:       'spalling brick, cracked or missing mortar, damaged stone or stucco',
   vegetation_contact:   'branches, vines or heavy growth touching or overhanging the envelope',
-  paint_deterioration:  'peeling, blistering, flaking or bare-wood paint failure',
   window_glass_damage:  'cracked, chipped, shattered or impact-marked glazing',
   window_seal_failure:  'a failed sealed unit — fogging or condensation between the panes',
   window_frame_damage:  'rot, warp, separation or damage to a sash, frame, sill or surround',
