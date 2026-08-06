@@ -8245,3 +8245,30 @@ class 32 instead of class 24.
   Verified: 15-assertion harness covering tile placement in the rendering menu, router fall-through,
   single in-scope definition, and all four `punchOpenCount` behaviours executed as shipped text;
   603/607 harnesses, community test and the add-modal repro re-run green.
+- **610** · **Tapping a punch out opens the punch out, and the discussion reads as a chat.** Theo,
+  from the live app: *"When clicking on the punch out it still takes you to client screen. There's
+  already a view profile. Instead it should take you to the clients punch out screen."* and *"Can you
+  make a chat box style? Or discussion box."*
+  **The deep link.** A punch row in the Production dossier called `openProject()` and landed on the
+  client **Overview** — duplicating the "Open client profile" button directly above it and burying
+  the item just tapped. It now lands on that client's **Punch Outs** tab with **that item open**, via
+  a new `CardinalPunchProfile.openItem(pid, itemId)`. ⚠ `openProject()` is asynchronous in effect —
+  it swaps the view and `check()` reloads rows on its own observer pass — so `openItem` **polls for
+  that project's rows** (≤3s) rather than firing into an empty list, and an unknown id falls back to
+  the list rather than a blank pane. Both proved.
+  **The chat.** Full-width stacked cards became a conversation: yours right in amber, everyone
+  else's left on the card ground, and a **name only where the speaker changes**, so a run of replies
+  reads as one voice. `.pp-msgt` → `.pp-bub`.
+  ⚠ **The negative control earned its place before any of this ran.** The first marker was
+  `openItem`, which **already appeared twice at 609** — the gate refused it as proof, correctly. A
+  marker that predates the build proves nothing.
+  ⚠ **And I made the 604 mistake a third time in the first CSS proof**, loading only
+  `cr-ppg-styles`: with no `:root` to define `--rbe-bg1`, both themes fell back to the same literal
+  and "daylight" was an artifact, not a verification. Re-run against the **whole page**: daylight
+  resolves theirs to white at **18.10:1** and mine to bronze at **5.92:1**; dark is 8.67 / 8.87:1.
+  **Load every stylesheet or the reading is fiction.**
+  Verified: 14-assertion harness (deep link, unknown-id fallback, `.mine` on the author's messages
+  only, one name per speaker change, escaping, composer intact) · full-cascade Chromium proof of
+  layout and contrast in both themes · 603/607/609 harnesses, community test and add-modal repro
+  green. 607's harness asserted on `.pp-msgt`; **the test was stale, not the app** — rewritten to
+  assert on rendered thread text so a restyle cannot fail it and a missing message still does.
