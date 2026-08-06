@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 601 &#8212; photo initials name the right person</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 602 &#8212; soffit and fascia are one finding again</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35036,6 +35036,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:602, d:'2026-08-05', t:'The inspector stops calling one rotted eave four different things', s:'A soffit and the fascia above it are one repair, but the photo inspector had them as two separate findings, with paint failure as a third on top. So one rotted eave came back boxed three or four times, each with a different name and none of them wrong enough to drop. Soffit and fascia are one finding again, and peeling paint now belongs to whatever it is peeling off \u2014 the soffit, the fascia or the siding. Nothing about the roof changed.' },
 { b:601, d:'2026-08-05', t:'Initials on a photograph name the right person', s:'Joan and Jerry both showed JV on every photograph in Photo Activity, so there was no telling whose work you were looking at. Four of the eight were wrong: Joan is JH, Nick is NH, Joey is JL, Jacob is JSH. Jerry keeps JV \u2014 his was right all along. The last two builds were also filed into the middle of this list instead of the top, so opening What\u2019s New by hand skipped straight past them; they are back in order.' },
 { build:600, note:'\uD83D\uDD12 What\u2019s New no longer opens for the team. It popped up for everyone three seconds after load on every new build; now it is yours alone, at both the automatic and the manual entry.' },
 { build:599, note:'\uD83D\uDC64 Jerry Vera is on the team. He could sign in but was on none of the six team lists, so nobody could assign him a job and his name showed as a bare email address. He now appears in the roster, both rep pickers, the Assign to list and the initials map.' },
@@ -57185,13 +57186,13 @@ var DEF_LABEL = {
   flashing_missing:'Missing flashing', pipe_boot:'Pipe boot', chimney:'Chimney',
   valley:'Valley', ridge_cap:'Ridge cap', ponding_debris:'Ponding / debris',
   decking_sag:'Decking sag', ice_dam:'Ice dam', other:'Other',
-  /* 17-32 — the exterior half (build 596). Mirrors api/detect.js DEFECTS,
+  /* 17-30 — the exterior half (596, narrowed 602). Mirrors api/detect.js DEFECTS,
      which is exterior_vocab.py on the Spark verbatim. Order is index-aligned
      with the trained model's classes; do not reorder or rename. */
   gutter_damage:'Gutter damage', downspout_damage:'Downspout damage',
-  soffit_damage:'Soffit damage', fascia_damage:'Fascia damage',
+  soffit_fascia_damage:'Soffit / fascia damage',
   siding_damage:'Siding damage', masonry_damage:'Masonry damage',
-  vegetation_contact:'Vegetation contact', paint_deterioration:'Paint deterioration',
+  vegetation_contact:'Vegetation contact',
   window_glass_damage:'Window glass', window_seal_failure:'Window seal failure',
   window_frame_damage:'Window frame', deck_penetration:'Deck penetration',
   underlayment_exposed:'Underlayment exposed', hardware_loose:'Loose hardware',
