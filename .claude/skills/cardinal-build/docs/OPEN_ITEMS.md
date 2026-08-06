@@ -354,17 +354,28 @@ which is why a missing *column* is reported as *"Query failed · Fix: Check RLS 
 `payments` / `supplements` should come **out** of the `REQUIREMENTS` registry — nothing uses them, so
 flagging them makes the whole screen cry wolf. 16 of the 18 registry tables do exist.
 
-### 🟡 Production hub revamp — Theo asked, previews first
+### ~~🟡 Production hub revamp — Theo asked, previews first~~ ✅ SHIPPED at 603
 
 > *"Can we possible Revamp the productions page with a nav on the left and maybe reconstruct with
 > added relevant info or have it to where its relevant with all productions related hub that also has
 > all the punch outs that are new/remaining/closed?"*
 
-**Punch is already built** — `punch_items`, the `cr-punch-*` blocks, and the statuses are already in
-the data. This is **wiring, not building**. 572 already gave the board the left menu and the desktop
-width, so the remaining work is the hub layout and the punch-outs grouped by status.
+**Done at build 603.** Five labelled options were previewed dark/light and phone/desktop as agreed;
+Theo cut to 3 and 5, then picked **3 — the job dossier** ("Let's do 3 and wire it to actual client
+also"). Shipped as master-detail with the punch buckets and a button through to the client profile.
+See the 603 entry in `cardinal_build_log.md` and the Production row in `FEATURES.md`.
 
-**Agreed with Theo: labelled previews, dark and light, before any code.** Do not guess at it.
+**One correction to what this entry claimed, worth keeping.** It said *"the statuses are already in
+the data."* **They are not.** `punch_items.status` is binary — `open` | `done` — verified against the
+live table. New / Remaining / Closed is **derived** (open and <7 days · open and older · done). It
+still needed no migration, so the "wiring, not building" conclusion held, but for a different reason
+than the one written here.
+
+**And the screen is empty on the live database today, which is not a bug.** 20 projects — 15 Lead,
+4 Prospect, 1 Invoiced — **zero in Approved / Scheduled / Completed**, so `activeJobs()` returns
+`[]`. The one existing punch item sits on a **Prospect**, which is why 603 added the off-stage tail;
+without it the new screen could not have reached a single real item. **Jobs have to be moved into
+those three stages before the board has anything to show.** That is stage hygiene, not software.
 
 ### 🟡 Two left rails on the estimate builder — flagged at 560, never answered
 

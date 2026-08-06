@@ -8066,3 +8066,65 @@ The lesson worth keeping: every one of the five was caught by **a number that di
 files, 7 lines vs 5, 16 of 128, 139 vs 128 — and not one by a passing test. Three trace to a fixture
 that did not contain the case that mattered: flat instead of split, contained instead of covers,
 class 32 instead of class 24.
+- **603** · **The Production board became a job dossier** — Theo picked option 3 from a five-option
+  preview set. Master-detail: the job list on the left, the selected job's own page on the right,
+  carrying stage, address, blocker, **a button straight through to the client profile**
+  (`window.openProject`, the existing opener — extended, not rebuilt), tap-to-call where
+  `projects.phone` is actually populated, and its punch items under **New / Remaining / Closed**
+  tabs. Desktop shows both panes, gated on `body.cr-lnav-on` — **the same signal 572's width rule
+  uses; the convention already existed, so no media query was invented.** Phone shows one pane and
+  a back button. ⚠ **The three buckets are DERIVED, not stored**: `punch_items.status` is binary
+  (`open` | `done`), confirmed against the live table — NEW is open and under 7 days, REMAINING is
+  open and older, CLOSED is done. No column, no migration, nothing to backfill.
+  ⚠ **The board also gained an off-stage tail**, and this is the part that mattered most: the job
+  list now includes any project carrying punch items even when its stage is not Approved /
+  Scheduled / Completed. On the live database **that is every punch item there is** — the only row
+  sits on a **Prospect** — so without the tail the dossier would have shipped unable to reach a
+  single real item. Found by querying the table before building, not after.
+  ⚠ **Live data reality, recorded so nobody calls the empty screen a bug:** 20 projects — 15 Lead,
+  4 Prospect, 1 Invoiced — and **zero in Approved, Scheduled or Completed**, so `activeJobs()`
+  legitimately returns `[]` and the board's job list is empty until a job is moved. That predates
+  603; the empty state now says so in words instead of just "Nothing in production right now."
+  Verified: 10/10 mechanical gates with negative control · a **32-assertion jsdom harness against
+  the shipped module text** (not a re-implementation) covering the off-stage tail, bucket
+  derivation at real timestamps, the client wiring, tab switching, pane push/back, MINE, and the
+  empty state · **18 Chromium computed-style proofs** that the desktop rule actually wins the
+  specificity contest (0,3,1 over 0,3,0) and that both themes paint — the build-481 lesson.
+  Scope proof: 21 hunks, **zero outside** `cr-pb-styles` / `cr-pb-script` / stamp / changelog;
+  all 46 of 393's daylight rules and all 93 original dark `.cr-pb-*` rules present byte-for-byte.
+- **604** · **The client-profile punch card had been `display:none` the whole time.** Theo, after
+  testing 603: *"there is nothing in client profile to add the punch out. Right now, client profile
+  then landing then productions then hope it lands on the most recent client."* He was right that
+  nothing was there — and the code was right too. **`cr-pp-script` is complete and correct**: it
+  mounts a Punch List card with an unconditional `+ Add` that calls
+  `CardinalProduction.addFor(pr.id)`, reproduced working against the shipped module text.
+  **The AccuLynx overview rebuild had hidden it.** `#tab-overview > *:not(#acxMount)
+  {display:none !important;}` hides every direct child of the tab except the overview mount, and
+  `cr-pp-script` inserts `#cr-pp-mount` as a sibling of `#jaGrid` — a direct child. So a fully
+  built, fully wired card rendered correctly and invisibly on every retail and insurance profile.
+  **Community was never affected**: there the card mounts inside `#cr-cc`, a different container.
+  Fixed at source by naming the second legitimate child — `:not(#acxMount):not(#cr-pp-mount)` —
+  rather than fighting `!important` with an override layer. **This is the prime doctrine and the
+  333 bug class, again**: buried, not missing; a mount anchor that still exists but no longer
+  renders. Build 333 fixed one instance of exactly this and the overview rebuild recreated it.
+  Verified: **a real-engine negative control across both builds** — `#cr-pp-mount` computes
+  `display:none` with a **0×0** `+ Add` at 603 and `block` with a **50×21** button at 604, while
+  `#acxMount` stays visible and `#jaGrid` and the retired legacy rows stay hidden in both, proving
+  the dead markup was not un-hidden along with it. jsdom cannot rule on an `!important` cascade;
+  Chromium is the only witness for this class. 603's harness and CSS proof re-run green.
+- **605** · **"+ Add" could not file against most of the book, and 604 is what exposed it.** Theo,
+  on being told the client-profile card was back: *"But since productions is being redesigned does
+  it matter?"* — checking the answer found the button did not work at all. `openAdd()` built its Job
+  dropdown from **`activeJobs()` alone** (Approved / Scheduled / Completed). The live database has
+  **zero** of those, so the dropdown rendered `No active jobs`, `saveAdd()` refused with
+  *"Pick a job."*, and **both** the card 604 un-hid and 603's own "+ Punch item" were dead ends.
+  Pre-existing — but nobody hit it while the card was invisible, which is exactly how 604 turned a
+  dormant defect into a live one. **Reported as mine.**
+  Now: the preset job is **always** selectable whatever its stage, plus everything `boardJobs()`
+  already returns, with the stage shown beside off-stage names so it is obvious you are filing
+  against a lead rather than a job in flight. Verified with a three-case repro on the live data
+  shape — a Prospect carrying punch, a bare Lead (15 of 20 jobs), and an active-job control that is
+  unchanged. All three now file against the right job; before, the first two were refused outright.
+  **The lesson worth keeping: un-hiding something is not the same as making it work.** 604's gates
+  were green and correct — they proved the card rendered, and proved nothing about the modal behind
+  it. The question that found this was Theo's, not a gate's.
