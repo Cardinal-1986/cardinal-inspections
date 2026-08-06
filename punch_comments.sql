@@ -13,6 +13,13 @@
 -- Adding a separate punch_comments table would have needed its own policy set
 -- and a second place for that rule to drift out of step.
 --
+-- ✅ APPLIED to production 6 Aug 2026 (migration punch_items_comments_607) and
+-- verified: column present as jsonb NOT NULL DEFAULT '[]'::jsonb, 3 of 3 rows
+-- hold a valid array, none null. RLS untouched — punch_items still has its four
+-- policies (punch_read/insert/update/delete) and the column rides on them.
+-- DO NOT re-run this as pending work. It is idempotent, so a re-run is harmless,
+-- but it is done.
+--
 -- Idempotent. Safe to re-run.
 
 alter table public.punch_items

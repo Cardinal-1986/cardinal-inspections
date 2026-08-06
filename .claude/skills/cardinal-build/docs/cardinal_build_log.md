@@ -8164,7 +8164,10 @@ class 32 instead of class 24.
   client. Maybe a list for the client and when you click on it, opens that specific punch out and
   add a small discussion box that you can tag other users in"* — then, asked how tagging should
   behave: *"chat box primarily. Only notify if @user."*
-  **⚠ SQL FIRST: `punch_comments.sql` adds `punch_items.comments jsonb`.** Same shape as the
+  **✅ SQL APPLIED to production 6 Aug 2026** (`punch_items_comments_607`) — verified: `jsonb`
+  `NOT NULL DEFAULT '[]'`, 3 of 3 rows a valid array, none null, RLS untouched (four policies
+  intact). **Do not re-run it as pending work.**
+  **`punch_comments.sql` adds `punch_items.comments jsonb`.** Same shape as the
   project-level `ck.comments` (`{by,name,at,text,mentions}`) so one renderer and one resolver serve
   both. **No new RLS** — the column rides on `punch_items`' existing policies rather than creating a
   second place for that rule to drift.
