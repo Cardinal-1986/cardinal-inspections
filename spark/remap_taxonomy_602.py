@@ -23,8 +23,7 @@ WHAT CHANGES
                       ├─> 19 soffit_fascia_damage
     20 fascia_damage  ┘
     24 paint_deterioration  -> REMOVED; a condition among locations, so it
-                               stacked on every surface. Each box is reassigned
-                               to the surface it is peeling off.
+                               stacked on every surface.
     33 -> 31 classes.
 
     EVERY INDEX <= 18 IS UNCHANGED. The 17 roof classes and `other` (pinned at
@@ -46,6 +45,22 @@ HOW TO RUN
     128 is the measured count on the real dataset (1,149 label files, 473 of
     them changing). An earlier revision of this docstring said 36; that number
     came from a fixture and was wrong by 3.5x.
+
+--drop-paint  DELETES the paint boxes instead, and steps 3-4 disappear.
+    The two-pass design above assumed every paint box was peeling paint on
+    soffit/fascia or siding, so a human only had to pick between two. Reviewing
+    the actual photographs killed that: the first seven boxes were on decking,
+    windows, roofs and leaks, and three that WERE on soffit/fascia/siding
+    duplicated a box already annotated there. Not one warranted reassignment.
+    paint_deterioration had been used as a junk drawer.
+
+    Reassigning a junk drawer to two surfaces teaches the model that a leaking
+    window is siding damage. Deleting is the honest migration, and it removes
+    the human gate entirely.
+
+    It works on a dataset already parked at pass-one state (boxes on 99, marker
+    present) without restoring backups first, and does NOT re-shift the indices
+    of everything else. test_drop_paint.py case B2 is that assertion.
 """
 import argparse, os, shutil, sys
 
@@ -128,7 +143,14 @@ def main():
     ap.add_argument('--root', required=True, help='dataset root (contains images/ and labels/)')
     ap.add_argument('--apply', action='store_true', help='actually write (default: dry run)')
     ap.add_argument('--paint', help='TSV of resolved class-24 boxes: path<TAB>line<TAB>19|20')
+    ap.add_argument('--drop-paint', action='store_true',
+                    help='DELETE every paint box instead of parking it on the '
+                         'sentinel for a human. No paint_review.tsv is written '
+                         'and the dataset is trainable in one pass.')
     args = ap.parse_args()
+
+    if args.drop_paint and args.paint:
+        die('--drop-paint and --paint are opposites; pass one or the other')
 
     if not os.path.isdir(args.root):
         die('no such directory: ' + args.root)
@@ -142,9 +164,10 @@ def main():
     # 19 and 20 meaning soffit/fascia. Cheapest reliable tell: a marker file.
     marker = os.path.join(args.root, '.remapped_602')
     already = os.path.exists(marker)
-    if already and not args.paint:
+    if already and not (args.paint or args.drop_paint):
         die('already remapped (%s exists). Re-running would shift indices twice.\n'
-            '       To resolve paint boxes, pass --paint <tsv>.' % marker)
+            '       To resolve paint boxes, pass --paint <tsv>.\n'
+            '       To delete them instead, pass --drop-paint.' % marker)
 
     resolved = {}
     if args.paint:
@@ -160,6 +183,7 @@ def main():
         print('paint decisions loaded: %d' % len(resolved))
 
     counts, paint_left, changed = {}, [], 0
+    dropped_boxes, emptied = [], []
     for path in files:
         boxes = read_boxes(path)
         # Substitute in place over the ORIGINAL lines rather than rebuilding the
@@ -176,8 +200,21 @@ def main():
         with open(path) as fh:
             out = fh.read().split('\n')
         dirty = False
+        drop = set()
         for cls, rest, ln in boxes:
             key = (os.path.relpath(path, args.root), ln)
+
+            # --drop-paint removes the box outright. It catches BOTH the
+            # pre-remap class (24) and the parked sentinel (99), so it works on
+            # a fresh dataset AND on one already sitting at pass-one state —
+            # which matters, because restoring 473 backups just to re-run is a
+            # bigger, riskier operation than deleting the boxes where they are.
+            if args.drop_paint and cls in (PAINT, SENTINEL):
+                drop.add(ln)
+                dropped_boxes.append((path, ln))
+                dirty = True
+                continue
+
             if cls == SENTINEL:                    # pass two: resolve or keep
                 new = resolved.get(key, SENTINEL)
             elif already:
@@ -195,6 +232,14 @@ def main():
                 dirty = True
             counts[new] = counts.get(new, 0) + 1
             out[ln - 1] = ' '.join([str(new)] + rest)
+
+        if drop:
+            # Drop by line number, after every substitution above has landed.
+            # Deleting as we went would have shifted the indices the remaining
+            # boxes are addressed by, inside the same loop that uses them.
+            out = [t for i, t in enumerate(out, 1) if i not in drop]
+            if not [t for t in out if t.strip()]:
+                emptied.append(path)
 
         if dirty:
             changed += 1
@@ -218,6 +263,21 @@ def main():
         n = counts.get(i, 0)
         flag = '   <-- STARVED' if 0 < n <= 5 else ('   <-- EMPTY' if n == 0 else '')
         print('  %2d  %-24s %5d%s' % (i, name, n, flag))
+
+    if args.drop_paint:
+        print('\n%d paint boxes DELETED (class %d pre-remap, %d if already parked).'
+              % (len(dropped_boxes), PAINT, SENTINEL))
+        if emptied:
+            print('%d label files now have no boxes at all. YOLO reads an empty'
+                  % len(emptied))
+            print('label file as a background image, which is harmless -- but if you')
+            print('expected every image to carry a defect, that is the list to check:')
+            for q in emptied[:10]:
+                print('    %s' % q)
+            if len(emptied) > 10:
+                print('    ... and %d more' % (len(emptied) - 10))
+        if not args.apply:
+            print('(dry run -- nothing deleted yet)')
 
     still = counts.get(SENTINEL, 0)
     if still:
