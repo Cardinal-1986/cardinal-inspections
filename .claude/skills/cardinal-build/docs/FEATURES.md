@@ -1566,3 +1566,73 @@ tab, it must be named in that rule or it will not render, and nothing will tell 
 
 Community profiles use a different branch entirely (`#cr-cc-jm` inside `#cr-cc`) and were never
 affected — which is why the card "worked" whenever anyone checked it on a community job.
+
+---
+
+## Cardinal Studio — the Private gallery ("Atlas")
+
+**File:** `studio.html` at the repo root — **not** `index.html`. Its own page, its own sign-in, its
+own `--stu-*` palette; shares nothing with the CRM but the Supabase project. That split is
+deliberate (Theo, 3 Aug: *"if it was back to the beginning this would have been a completely
+separate app"*). Reached from the **Vision hub** on `showroom.cardinalroster.com`, admin-gated
+there as a UI hint — RLS is the real gate.
+
+Studio already browsed `studio_photos` (the Spark's tagged work archive). It now also browses
+**`studio_private`**, the owner-scoped personal sibling, behind a `WORK / PRIVATE` switch.
+
+**Read-only, still.** The file's own header says *browse, search, look* — tagging happens on the
+Spark. Atlas adds no writer.
+
+### The safety rule — Private does not exist on the showroom host
+
+`isShowroomHost()` mirrors `index.html`'s `isVisionHost()` **exactly**, including the `?vision=1`
+override, because that flag exists to preview the presentation door. On a match the switch is
+hidden **and `st.mode` is forced back to `'work'`** — hiding a button is not closing a door. The
+switch is `display:none` in the markup and only JS turns it on, so a script failure leaves Private
+unreachable rather than exposed. Same reasoning as the Showcase release badge (build 590): a
+private fact is for whoever is curating, not whoever is being sold to.
+
+### One rail, three lenses
+
+`TIME | PLACES | PEOPLE` are the same control reading three different columns, so they are one
+segmented picker rather than three competing navigations. One `select('captured_at,place,people')`
+builds all three facet lists client-side — PostgREST has no `GROUP BY`, and this is the shape
+`loadChips()` already used.
+
+**Each accent names a lens**, and none of it is decoration — the Sales Floor discipline:
+
+| token | means | dark | light |
+|---|---|---|---|
+| `--atl-time` | time | `#8FA3A9` | `#4A6068` |
+| `--atl-place` | place | `#3FBF9F` | `#17715A` |
+| `--atl-event` | event | `#E8A33D` | `#8A5A12` |
+| `--stu-red` | **the Private pill only** | `#C8202E` | unchanged |
+
+Selecting a facet filters the query — `gte`/`lt` on `captured_at` for a month (`is null` for
+Undated), `eq('place')`, or `contains('people',[…])`.
+
+**`GRID | EVENTS` is a density, not a second layout.** Events reads `studio_private_events` and
+fetches its shots with a single `.in('event_id', …)` — no N+1.
+
+### Light is a theme, not a second design
+
+`:root[data-theme="light"]` twins every `--stu-*` and `--atl-*` token; a head script resolves the
+choice **before first paint** (stored, else OS), same shape as `index.html`'s `data-mode`.
+`--stu-scrim` / `--stu-overlay` / `--stu-sunk` exist because the header and overlay backgrounds
+were hardcoded copies of the ground and had to move with the theme. Contrast computed, not
+eyeballed: dark **6.73–16.63:1**, light **4.55–14.40:1**, avatar initials **5.67–8.02:1**.
+
+⚠️ **The bug worth remembering.** `showApp()` sets an inline `appView.style.display='block'`, which
+outranks `#appView.priv{display:grid}` at any specificity — the rail rendered full-width and the
+main column vanished. **The gate passed it**, because `getComputedStyle` still reports
+`grid-template-columns` on a `display:block` element. Only a rendered screenshot caught it, exactly
+as with `styleMounts()`'s inline white in `index.html`. The gate now asserts the computed `display`
+*and* the real geometry (rail exactly 236px, main >600px, rail at x=0).
+
+⚠️ **Both tables are empty.** `studio_private` and `studio_private_events` are **0 rows** — the
+Spark-side pusher does not exist yet. The **Time** lens works the day it runs; **Places** needs
+`place` populated and **Events** needs the events table filled, so both render an honest empty
+state until then. Nothing here has been verified against a real photograph.
+
+**CI does not gate `studio.html`** — `.github/workflows/check.yml` covers `index.html`, `sw.js` and
+`api/*.js` only. This file deploys unchecked.

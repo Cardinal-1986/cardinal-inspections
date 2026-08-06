@@ -8272,3 +8272,34 @@ class 32 instead of class 24.
   layout and contrast in both themes · 603/607/609 harnesses, community test and add-modal repro
   green. 607's harness asserted on `.pp-msgt`; **the test was stale, not the app** — rewritten to
   assert on rendered thread text so a restyle cannot fail it and a missing message still does.
+
+## `studio.html` — the Private gallery, "Atlas" (2026-08-06)
+
+**No build number.** `studio.html` carries no version label and is not part of `index.html`'s app
+stamp, which stays where build 610 left it. No SQL — `studio_private` and `studio_private_events`
+were already applied, with `owner_email = my_email()` on USING *and* WITH CHECK, verified on the
+live database before a line was written.
+
+- Studio gains a `WORK / PRIVATE` switch. Work mode is **byte-for-byte unchanged** in behaviour —
+  Atlas is the Private experience only, so the whole Work path carries no regression risk.
+- One rail, three lenses (Time / Places / People); each accent names a lens, red is spent only on
+  the Private pill. `GRID | EVENTS` is a density toggle. Light is a token twin, resolved before
+  first paint.
+- Private is **unreachable on `showroom.*` and under `?vision=1`** — switch hidden, mode forced
+  back, and `display:none` in the markup so a script failure fails closed.
+- ⚠ **Inline style beat the stylesheet again.** `showApp()`'s `appView.style.display='block'`
+  outranked `#appView.priv{display:grid}`; the rail went full-width and the main column vanished.
+  **The gate passed it** — `getComputedStyle` reports `grid-template-columns` on a `display:block`
+  element, so a token-level assertion is not proof a layout is alive. Caught only by a rendered
+  screenshot. Gate now asserts computed `display` plus real geometry.
+- ⚠ **Three gate reds were the test's fault, not the app's** — a fixture miscount (Ava is in three
+  rows, not two), avatar arithmetic (2+1+2=5, not 3), and a hardcoded dark accent when Playwright's
+  default context is light. Fixed the assertions; the accent check now asserts the right token for
+  the active theme, flips, and asserts the other.
+- Verified: 45-assertion Chromium harness across 11 sections (real hostnames via route
+  interception, since the whole safety rule keys off `location.hostname`) · negative control fails
+  against both the pre-Atlas and the origin/main file · patch reproduces byte-for-byte · contrast
+  computed for both themes.
+- **Not verified against real data:** both tables are 0 rows. Fixtures match `information_schema`
+  column-for-column and nothing more. Places and Events render honest empty states until the
+  Spark-side pusher exists.
