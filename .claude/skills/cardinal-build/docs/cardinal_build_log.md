@@ -8023,3 +8023,19 @@ into two classes is what produced the per-class-NMS duplication in v4.
   `#acxMount` stays visible and `#jaGrid` and the retired legacy rows stay hidden in both, proving
   the dead markup was not un-hidden along with it. jsdom cannot rule on an `!important` cascade;
   Chromium is the only witness for this class. 603's harness and CSS proof re-run green.
+- **605** · **"+ Add" could not file against most of the book, and 604 is what exposed it.** Theo,
+  on being told the client-profile card was back: *"But since productions is being redesigned does
+  it matter?"* — checking the answer found the button did not work at all. `openAdd()` built its Job
+  dropdown from **`activeJobs()` alone** (Approved / Scheduled / Completed). The live database has
+  **zero** of those, so the dropdown rendered `No active jobs`, `saveAdd()` refused with
+  *"Pick a job."*, and **both** the card 604 un-hid and 603's own "+ Punch item" were dead ends.
+  Pre-existing — but nobody hit it while the card was invisible, which is exactly how 604 turned a
+  dormant defect into a live one. **Reported as mine.**
+  Now: the preset job is **always** selectable whatever its stage, plus everything `boardJobs()`
+  already returns, with the stage shown beside off-stage names so it is obvious you are filing
+  against a lead rather than a job in flight. Verified with a three-case repro on the live data
+  shape — a Prospect carrying punch, a bare Lead (15 of 20 jobs), and an active-job control that is
+  unchanged. All three now file against the right job; before, the first two were refused outright.
+  **The lesson worth keeping: un-hiding something is not the same as making it work.** 604's gates
+  were green and correct — they proved the card rendered, and proved nothing about the modal behind
+  it. The question that found this was Theo's, not a gate's.

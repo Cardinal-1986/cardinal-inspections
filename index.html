@@ -3251,7 +3251,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 604 &#8212; the punch list is back on the client profile</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 605 &#8212; you can add a punch item to any job</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35045,6 +35045,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:605, d:'2026-08-06', t:'Adding a punch item works on any job', s:'The + Add button only offered jobs at Approved, Scheduled or Completed. Nothing is sitting at those right now, so it opened saying \u201cNo active jobs\u201d and would not save \u2014 which made the button on the client profile useless the moment it came back. The job you opened it from is now always in the list whatever stage it is at, along with anything already carrying punch, and a job that is not in flight shows its stage beside its name so you can see you are filing against a lead rather than a live job.' },
 { b:604, d:'2026-08-06', t:'The punch list is back on the client profile', s:'Adding a punch item meant leaving the client, going out to the landing page, opening Production and hoping it landed on the right job. It should never have needed any of that \u2014 the client profile has had its own Punch List card, with a + Add button, the whole time. It was being hidden by a styling rule left over from the overview rebuild, so it rendered correctly and invisibly on every job. It is back on the Overview tab, under the overview card: what is outstanding, what has been completed, and + Add to file a new one against that job without leaving the page. Community jobs were never affected \u2014 the card sits somewhere else on those and has been showing all along.' },
 { b:603, d:'2026-08-06', t:'The production board is a job dossier', s:'Production used to be one long column \u2014 every job, then every punch item for every job, all in one scroll. Pick a job now and it opens its own page: who it is, the address, the stage, what is holding it up, and a button straight through to the client. Its punch items sit under three tabs \u2014 New, Remaining and Closed \u2014 so you can see what came in this week without reading past what has been sitting for a month. New means opened in the last seven days, Remaining means still open and older, Closed means done. On a computer the job list stays on the left and the job you picked fills the right; on a phone you tap a job and tap back. MINE filters the list to jobs with punch assigned to you. A job with punch items on it now appears here even if its stage is not Approved, Scheduled or Completed \u2014 those items were previously reachable from this screen only by scrolling past everything else.' },
 { b:601, d:'2026-08-05', t:'Initials on a photograph name the right person', s:'Joan and Jerry both showed JV on every photograph in Photo Activity, so there was no telling whose work you were looking at. Four of the eight were wrong: Joan is JH, Nick is NH, Joey is JL, Jacob is JSH. Jerry keeps JV \u2014 his was right all along. The last two builds were also filed into the middle of this list instead of the top, so opening What\u2019s New by hand skipped straight past them; they are back in order.' },
@@ -43014,10 +43015,29 @@ modal.id = 'cr-pb-modal';
 modal.onclick = function(e){ if(e.target === modal) closeAdd(); };
 document.body.appendChild(modal);
 }
-var opts = activeJobs().map(function(j){
-return '<option value="' + esc(j.pr.id) + '"' +
-(String(j.pr.id) === String(presetProjectId) ? ' selected' : '') + '>' +
-esc(j.pr.name || 'Unnamed') + '</option>';
+/* 605: this list used to be activeJobs() alone — Approved / Scheduled /
+   Completed. With none of those on the books that is an EMPTY list, so every
+   "+ Add" opened a modal reading "No active jobs" and saveAdd() refused with
+   "Pick a job." The client-profile card 604 un-hid, and this module's own
+   "+ Punch item", were both dead ends on real data.
+   Two rules now: the job you opened this FROM is always selectable whatever its
+   stage, and anything already carrying punch belongs here for the same reason
+   it is on the board. Off-stage jobs carry their stage in the label so it is
+   obvious you are filing against a Prospect rather than a job in flight. */
+var _addJobs = boardJobs().map(function(j){ return j.pr; });
+var _seenJob = {};
+_addJobs.forEach(function(p){ _seenJob[String(p.id)] = true; });
+if(presetProjectId && !_seenJob[String(presetProjectId)]){
+var _pp = projectFor(presetProjectId);
+if(_pp){ _addJobs.unshift(_pp); _seenJob[String(_pp.id)] = true; }
+}
+var opts = _addJobs.map(function(pr){
+var st = normStage(pr.stage);
+var inFlight = st === 'Approved' || st === 'Scheduled' || st === 'Completed';
+return '<option value="' + esc(pr.id) + '"' +
+(String(pr.id) === String(presetProjectId) ? ' selected' : '') + '>' +
+esc(pr.name || 'Unnamed') +
+(inFlight ? '' : ' · ' + esc(st)) + '</option>';
 }).join('');
 modal.innerHTML =
 '<div class="box">' +
@@ -43025,7 +43045,7 @@ modal.innerHTML =
 '<label>What needs doing</label>' +
 '<input type="text" data-f="title" placeholder="Reattach gutter on the north side">' +
 '<label>Job</label>' +
-'<select data-f="project">' + (opts || '<option value="">No active jobs</option>') + '</select>' +
+'<select data-f="project">' + (opts || '<option value="">No jobs yet</option>') + '</select>' +
 '<div class="row2">' +
 '<div><label>Kind</label><select data-f="kind">' +
 '<option value="punch">Punch</option>' +
