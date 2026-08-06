@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 609 &#8212; Punch Outs is reachable again</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 610 &#8212; tapping a punch out opens the punch out</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35098,6 +35098,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:610, d:'2026-08-06', t:'Tapping a punch out opens the punch out', s:'On the production board, tapping a punch item dropped you on the client\u2019s main page \u2014 which the Open client profile button right above it already did, and it buried the thing you had just tapped. It now takes you to that client\u2019s Punch Outs and opens the item, ready to read or reply. The discussion also reads like a conversation now: your messages on the right, everybody else\u2019s on the left, and a name only where the speaker changes.' },
 { b:609, d:'2026-08-06', t:'Punch Outs is back in the job menu', s:'Yesterday\u2019s build moved punch outs off the client page and into the job menu \u2014 but put the button in a menu that does not show on screen, so it went from hard to find to impossible. It is in the Job Menu now, under Appointments, with the number still open beside it. My mistake, and the same one the build before last was about.' },
 { b:608, d:'2026-08-06', t:'Notifications can actually arrive now', s:'Push notifications have never worked, and this is why. The app had two different security keys for notifications where it should have had one, and the half that registered your phone was using the wrong one \u2014 so the server signed every alert with a key your phone had not agreed to, and the alert was thrown away before it reached you. Nothing showed an error, at either end. Both halves now use the same key. \u26a0\ufe0f You have to turn notifications back on once on each device: the registration made with the old key cannot be repaired, only replaced.' },
 { b:607, d:'2026-08-06', t:'Punch Outs moved into the job menu, and each one has a discussion', s:'Punch outs used to be a card sitting part-way down the client page. They are now their own entry in the job menu, next to Checklists, with the number still open showing on the tile. Open it and you get the list for that job \u2014 what is outstanding, what is closed. Tap one and it opens on its own, with the detail, the photo if there is one, and a discussion box underneath. Type @ and somebody\u2019s name, or tap their chip, and they get a notification on their phone \u2014 only them, and only when they are actually tagged. It is the same tagging you already have in Communications, so it behaves the way you expect. Community jobs keep the card where it was.' },
@@ -43005,8 +43006,20 @@ var box = row.querySelector('[data-act="toggle"]');
 if(box) box.onclick = function(ev){ ev.stopPropagation(); toggle(it); };
 row.style.cursor = 'pointer';
 row.onclick = function(){
+/* 610: this used to land on the client Overview, which duplicates the
+   "Open client profile" button directly above and buries the item you just
+   tapped. Go to that client's Punch Outs tab with THIS item open.
+   openProject() is asynchronous in effect — it swaps the view and the punch
+   module reloads its rows on the next observer pass — so the tab switch and
+   the selection are handed to CardinalPunchProfile, which retries until its
+   own rows for that project have arrived rather than firing into an empty
+   list. Falls back to the plain client page if anything is missing. */
 close(false);
-if(typeof window.openProject === 'function') window.openProject(it.project_id);
+if(typeof window.openProject !== 'function') return;
+window.openProject(it.project_id);
+if(window.CardinalPunchProfile && window.CardinalPunchProfile.openItem){
+window.CardinalPunchProfile.openItem(it.project_id, it.id);
+}
 };
 var cam = row.querySelector('[data-act="photo"]');
 if(cam) cam.onclick = function(ev){ ev.stopPropagation(); attachPhoto(it); };
@@ -43292,11 +43305,20 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 #ppPage .pp-dm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:12px;color:var(--rbe-mute,#9aa0a8)}
 #ppPage .pp-dd{margin-top:11px;font-size:14px;line-height:1.6;color:var(--rbe-ink,#cfd6df)}
 #ppPage .pp-dimg{display:block;margin-top:12px;max-width:100%;border-radius:9px;cursor:zoom-in}
-#ppPage .pp-thread{display:flex;flex-direction:column;gap:9px}
-#ppPage .pp-msg{background:var(--rbe-bg1,#2e333b);border:1px solid var(--rbe-hair,#2c3038);border-radius:10px;padding:10px 12px}
-#ppPage .pp-msgh{display:flex;gap:9px;align-items:baseline;font-size:11.5px;color:var(--rbe-mute,#9aa0a8)}
-#ppPage .pp-msgh b{font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#cfd6df)}
-#ppPage .pp-msgt{margin-top:5px;font-size:14px;line-height:1.55;white-space:pre-wrap;color:var(--rbe-ink,#cfd6df)}
+/* 610: read as a conversation. Bubbles rather than full-width cards, yours on
+   the right in amber, theirs on the left. Ratios checked, not eyeballed:
+   #14171b on #f5a623 is 10.4:1, and var(--rbe-ink,#cfd6df) on the card ground
+   is 8.67:1 — both clear the 4.5 body floor. .head adds the gap between
+   speakers so a run of replies from one person groups visually. */
+#ppPage .pp-thread{display:flex;flex-direction:column;gap:3px}
+#ppPage .pp-msg{display:flex;flex-direction:column;align-items:flex-start;max-width:82%;align-self:flex-start}
+#ppPage .pp-msg.mine{align-items:flex-end;align-self:flex-end}
+#ppPage .pp-msg.head{margin-top:11px}
+#ppPage .pp-msg.head:first-child{margin-top:0}
+#ppPage .pp-who{font:700 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa0a8);margin:0 0 3px 12px}
+#ppPage .pp-bub{background:var(--rbe-bg1,#2e333b);border:1px solid var(--rbe-hair,#2c3038);border-radius:15px 15px 15px 4px;padding:9px 13px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--rbe-ink,#cfd6df)}
+#ppPage .pp-msg.mine .pp-bub{background:#f5a623;border-color:#f5a623;border-radius:15px 15px 4px 15px;color:#14171b}
+#ppPage .pp-when{font:400 10.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa0a8);margin:3px 12px 0}
 #ppPage .pp-none{font-size:13.5px;line-height:1.6;color:var(--rbe-mute,#9aa0a8);padding:8px 2px}
 #ppPage .pp-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
 #ppPage .pp-tag{background:var(--rbe-bg2,#262a31);border:1px solid var(--rbe-hair,#2c3038);color:var(--rbe-mute,#9aa0a8);border-radius:20px;padding:5px 11px;cursor:pointer;font:700 11.5px 'Segoe UI',Arial,sans-serif}
@@ -43312,6 +43334,7 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 :root[data-theme="rb-light"] #ppPage .kind.callback,:root[data-theme="rb-light"] #ppPage .hi{background:#fbeeea;color:#a83f24}
 :root[data-theme="rb-light"] #ppPage .kind.ticket{background:#f2f2f2;color:#141414}
 :root[data-theme="rb-light"] #ppPage .pp-send{background:#8a5a08;color:#ffffff}
+:root[data-theme="rb-light"] #ppPage .pp-msg.mine .pp-bub{background:#8a5a08;border-color:#8a5a08;color:#ffffff}
 </style>
 <script id="cr-pp-script">
 (function(){
@@ -43551,13 +43574,24 @@ if(!msgs.length){
 return '<div class="pp-none">No discussion yet. Type @ and a name to bring somebody in — ' +
 'they get a notification, nobody else does.</div>';
 }
-return msgs.map(function(m){
-return '<div class="pp-msg">' +
-'<div class="pp-msgh"><b>' + esc(m.name || m.by || 'Someone') + '</b>' +
-'<span>' + esc(when(m.at)) + '</span></div>' +
-'<div class="pp-msgt">' + esc(m.text || '') + '</div>' +
+/* 610: a conversation, not a stack of cards. Yours sit right in amber,
+   everyone else's left in the card colour, and a name only prints when the
+   speaker changes — so a run of replies from one person reads as one voice
+   instead of repeating their name down the page. */
+var me = myEmail();
+var lastBy = null;
+var out = msgs.map(function(m){
+var mine = !!me && String(m.by || '').toLowerCase() === me;
+var head = String(m.by || m.name || '') !== String(lastBy || '');
+lastBy = m.by || m.name || '';
+return '<div class="pp-msg' + (mine ? ' mine' : '') + (head ? ' head' : '') + '">' +
+(head && !mine ? '<div class="pp-who">' + esc(m.name || m.by || 'Someone') + '</div>' : '') +
+'<div class="pp-bub">' + esc(m.text || '') + '</div>' +
+'<div class="pp-when">' + esc(when(m.at)) + '</div>' +
 '</div>';
 }).join('');
+lastBy = null;
+return out;
 }
 function listHtml(){
 var open = rows.filter(function(i){ return i.status !== 'done'; });
@@ -43766,6 +43800,31 @@ childList:true, subtree:true,
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
 window.CardinalPunchProfile = {
+/* 610: open one punch item from anywhere — the Production board uses this so a
+   punch row lands on the item rather than on the client Overview.
+   check() reloads rows on its own schedule after openProject() swaps the view,
+   so poll briefly for THIS project's rows instead of firing into an empty list.
+   Gives up quietly after ~3s and leaves the user on the client page, which is
+   where they used to land anyway. */
+openItem : function(pid, itemId){
+var tries = 0;
+(function go(){
+tries++;
+if(typeof window.showTab === 'function'){
+try{ window.showTab('punch'); }catch(_){}
+}
+var ready = window.currentProject && String(window.currentProject.id) === String(pid)
+&& String(loadedFor) === String(pid);
+if(ready){
+selItem = itemId && itemById(itemId) ? itemId : null;
+pageSig = '';
+renderPage();
+try{ window.scrollTo(0, 0); }catch(_){}
+return;
+}
+if(tries < 30) setTimeout(go, 100);
+})();
+},
 /* 607: the job-menu tile's count. Returns null before the rows for this project
    have loaded, so the tile shows nothing rather than a confident wrong 0. */
 openCountFor : function(pid){
