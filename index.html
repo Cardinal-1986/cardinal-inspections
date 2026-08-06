@@ -13480,16 +13480,6 @@ function renderOverview(){
       el.classList.toggle('zero', !l.length);
     }
   }).catch(function(){});
-  function punchOpenCount(pr){
-    /* 607: asked of the module that owns punch, so there is one source of truth
-       for "how many are open". Returns '' before the rows have loaded rather
-       than a wrong 0, which would read as "nothing to do". */
-    try{
-      var r = window.CardinalPunchProfile && window.CardinalPunchProfile.openCountFor;
-      var n = r ? r(pr.id) : null;
-      return (n === null || n === undefined) ? '' : n;
-    }catch(_){ return ''; }
-  }
   function tile(ic, label, n, act){
     return '<div class="jatile" data-ja="' + act + '"><span><span class="jic">' + ic + '</span> ' + label + '</span>' +
       '<span class="jn' + (n ? '' : ' zero') + '">' + n + '</span></div>';
