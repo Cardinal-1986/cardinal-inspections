@@ -8019,3 +8019,50 @@ against a fixture rather than reasoning about it:
 
 ⚠ **Nothing ships until the dataset is remapped and retrained.** The code and the label files must
 move together or the next YOLO export is silently wrong.
+
+---
+
+## Build 602 — soffit and fascia are one finding again; paint_deterioration deleted (2026-08-06)
+
+Shipped the merge. **Did not ship the reassignment** — that half of the plan was wrong and the
+photographs said so.
+
+`19 soffit_damage` + `20 fascia_damage` → `19 soffit_fascia_damage`. `24 paint_deterioration`
+**deleted, boxes and all**. 33 → 31 classes; every index ≤18 untouched.
+
+**The reassignment premise died on contact with the data.** The original design said paint is a
+condition, not a location, so each box should be re-homed to the surface carrying it — soffit/fascia
+or siding. A two-pass migration, a 128-row review file and an overlap-scoring suggester were built on
+that binary. Theo opened the photographs: the first seven boxes were on **decking, windows, roofs and
+leaks**, and three that *were* on soffit/fascia/siding **duplicated a box already annotated there**.
+`paint_deterioration` had been a junk drawer. Reassigning it would have taught the model that a
+leaking window is siding damage — and would have manufactured the same redundancy 602 exists to
+remove. `--drop-paint` deletes instead, and the whole human gate disappears with it.
+
+**Applied:** 1,821 → 1,693 boxes (128 deleted) · `window_seal_failure` preserved at 11 · sentinel 99
+at 0 · `data.yaml` `nc: 31` · 474 `.pre602` backups.
+
+**Retrain `hail_v5`** (yolov8n, 120 epochs, mirroring v4's args). Cross-class stacking is gone
+**structurally**, not by measurement: `soffit_fascia` vs `siding` overlaps = 0, and with paint deleted
+and soffit+fascia merged, NMS now sees same-class boxes. Compared **by name** (v4/v5 indices are not
+comparable): precision 0.68 → **0.827**, mAP50 ~0.56 → **0.603**, **recall 0.667 → 0.617 — down**.
+One merged class predicts more precisely than two split ones; it does not find more. Residual
+*intra-class* overlap is threshold-sensitive (9 images at `iou=0.7`, 1 at `0.5`, 0 at `0.3`) and
+there is no threshold to quote against — **nothing in this repo consumes the `.pt` yet**;
+`api/detect.js` is a prompt route with no NMS at all.
+
+**Five bugs in `remap_taxonomy_602.py`, four of them in code already called verified.** Two from
+fixture testing (paint colliding with `window_seal_failure` at 24; the double-apply guard never
+arming). Three from real data: `label_files()` matched only the last path component and found zero
+files on a split dataset; line numbers shifted between passes and silently discarded human decisions;
+and **`--drop-paint` deleted `window_seal_failure`** — on a remapped tree old 26 shifts into NEW 24,
+the index paint vacated, and the drop took both. The live dry run said **139** where 128 was expected
+and the extra 11 were real window boxes. **The count was the entire signal**; no test caught it.
+
+Four negative-controlled harnesses now guard it: `test_remap_layouts` · `test_remap_lines` ·
+`test_suggest_paint` · `test_drop_paint`. `spark/RECOVERY_602.md` carries the mid-flight state.
+
+The lesson worth keeping: every one of the five was caught by **a number that did not match** — 0
+files, 7 lines vs 5, 16 of 128, 139 vs 128 — and not one by a passing test. Three trace to a fixture
+that did not contain the case that mattered: flat instead of split, contained instead of covers,
+class 32 instead of class 24.
