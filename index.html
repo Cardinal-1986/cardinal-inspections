@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 607 &#8212; Punch Outs is in the job menu, with a discussion on each one</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 608 &#8212; notifications can actually arrive now</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21308,7 +21308,16 @@ document.getElementById('tmMount').addEventListener('change', async function(e){
 /* =========================================================================
    WEB PUSH NOTIFICATIONS
    ========================================================================= */
-var VAPID_PUBLIC = 'BG8JTSYJiVSevLqUWTbevdsuXBpdcqYoQ1oNXmU6bwcFghSuJ-dsC2tgpxaxwm-FVy5DvhVrp0JKoMDz90hbYPA';
+/* 608: this was a DIFFERENT VAPID public key from the one api/notify.js signs
+   with, and this is the path that writes push_subs — the table notify.js reads.
+   A push signed with one VAPID pair against a subscription created with another
+   is rejected, so every subscription made here was unreachable and push has
+   never worked. Proved, not argued: notify.js's private key run through
+   crypto.createECDH('prime256v1') derives to exactly the key below.
+   ⚠ There must be ONE VAPID public key in this file. If you add another
+   subscribe path, reuse this value — check.yml now fails on any copy that
+   differs, which it could not do before (it only ever read the first one). */
+var VAPID_PUBLIC = 'BI-nCdPXgT_WzKQA34jhHsX3dYQephRPLDKy7xr__Jyl1WergJWPlliAvbIldjztrds65MPkT5xI0TvDTg-Q_2k';
 function __b64ToU8(s){
   var pad = '='.repeat((4 - s.length % 4) % 4);
   var b = (s + pad).replace(/-/g,'+').replace(/_/g,'/');
@@ -35078,6 +35087,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:608, d:'2026-08-06', t:'Notifications can actually arrive now', s:'Push notifications have never worked, and this is why. The app had two different security keys for notifications where it should have had one, and the half that registered your phone was using the wrong one \u2014 so the server signed every alert with a key your phone had not agreed to, and the alert was thrown away before it reached you. Nothing showed an error, at either end. Both halves now use the same key. \u26a0\ufe0f You have to turn notifications back on once on each device: the registration made with the old key cannot be repaired, only replaced.' },
 { b:607, d:'2026-08-06', t:'Punch Outs moved into the job menu, and each one has a discussion', s:'Punch outs used to be a card sitting part-way down the client page. They are now their own entry in the job menu, next to Checklists, with the number still open showing on the tile. Open it and you get the list for that job \u2014 what is outstanding, what is closed. Tap one and it opens on its own, with the detail, the photo if there is one, and a discussion box underneath. Type @ and somebody\u2019s name, or tap their chip, and they get a notification on their phone \u2014 only them, and only when they are actually tagged. It is the same tagging you already have in Communications, so it behaves the way you expect. Community jobs keep the card where it was.' },
 { b:606, d:'2026-08-06', t:'The punch list is readable, and + Add opens on the first tap', s:'Two things about the punch list on a client. The words were unreadable \u2014 the card had been given a dark background but the writing on it was still the near-black it had when the card was white, so the item you added was there and you could not see it. And + Add took three taps to open, because the card was quietly redrawing itself about fifty times a second, taking the button away and rebuilding it under your finger; a tap that started on one and finished on the other never counted. It now redraws only when something actually changed, and every line on the card is a colour that can be read against it \u2014 checked by arithmetic, at both the light and dark end of the card.' },
 { b:605, d:'2026-08-06', t:'Adding a punch item works on any job', s:'The + Add button only offered jobs at Approved, Scheduled or Completed. Nothing is sitting at those right now, so it opened saying \u201cNo active jobs\u201d and would not save \u2014 which made the button on the client profile useless the moment it came back. The job you opened it from is now always in the list whatever stage it is at, along with anything already carrying punch, and a job that is not in flight shows its stage beside its name so you can see you are filing against a lead rather than a live job.' },

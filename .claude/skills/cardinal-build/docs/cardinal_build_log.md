@@ -8191,3 +8191,34 @@ class 32 instead of class 24.
   author even if self-tagged, and an untagged message notifies nobody** — plus tile count, list,
   detail, chip insertion, save shape, back navigation, and 0 repaints in 1.2s. Community regression
   test separate. 603/605/606 harnesses re-run green.
+- **608** · **Push notifications have never worked, and the gate meant to prevent exactly that was
+  blind to it.** Found while replicating `check.yml` locally because **GitHub Actions had stopped
+  running on this repo entirely** (no runs at all after 07:48 UTC on 6 Aug — 606, 607 and the SQL
+  commit all got zero, none queued; repo-wide, not PR-specific).
+  `index.html` declared `VAPID_PUBLIC` **twice, with two different keys**, in two script blocks
+  feeding two subscribe paths:
+  | line | key | writes |
+  |---|---|---|
+  | 17566 | `BI-nCdP…` | `push_subscriptions` |
+  | 21311 | `BG8JTSY…` | **`push_subs`** — the table `api/notify.js` READS |
+  **Proved, not argued:** `api/notify.js`'s private key run through
+  `crypto.createECDH('prime256v1')` derives to **exactly `BI-nCdP…`**. So notify.js is
+  self-consistent and `BG8JTSY…` was the odd one out. A push signed with one VAPID pair against a
+  subscription created with another is rejected by the push service — **so every subscription in
+  `push_subs` was unreachable, silently, at both ends.**
+  **The gate could never have caught it.** It used `String.match` **without `/g`**, which returns
+  only the FIRST occurrence — it compared first-in-index (`BI-nCdP…`) against first-in-notify
+  (`BI-nCdP…`), matched, and passed. Verified against the real shipped 607 file: **old gate PASS,
+  new gate FAIL.** Now checks *every* declaration. **Do not narrow it again** — a gate that reports
+  confidence it has not earned is worse than no gate, and this one's own comment says it exists so
+  push cannot silently fail.
+  ⚠ **Existing subscriptions cannot be repaired, only replaced** — a VAPID mismatch returns 403, not
+  404/410, so `notify.js`'s auto-prune never removes them. Everyone must re-enable notifications
+  once per device. The stale `push_subs` row survives until then.
+  ⚠ **Still open, deliberately not touched here: `push_subs` and `push_subscriptions` are two tables
+  for one concept**, one row each, both theo@. `notify.js` reads only `push_subs`, so the 17609 path
+  writes somewhere nothing reads. One build at a time — but this is the duplicate-pipeline pattern
+  again and it is what made the two-key split possible.
+  Verified: one distinct key across both declarations, matching `notify.js` and derivable from its
+  private key; gate negative-controlled against the shipped 607 artifact; 603/607 harnesses and the
+  community test re-run green.
