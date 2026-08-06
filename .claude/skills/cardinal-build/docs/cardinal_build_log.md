@@ -8128,3 +8128,34 @@ class 32 instead of class 24.
   **The lesson worth keeping: un-hiding something is not the same as making it work.** 604's gates
   were green and correct — they proved the card rendered, and proved nothing about the modal behind
   it. The question that found this was Theo's, not a gate's.
+- **606** · **The punch card repainted 54×/sec, and its words were invisible.** Both found from one
+  screenshot Theo sent of a live client profile — *"Issues with clicking the button 3 times to open.
+  Also can't see the words."* Both reproduced and measured before anything was changed.
+  **The three taps were a runaway repaint.** `render()` in `cr-pp-script` wrote `host.innerHTML`
+  unconditionally, and **that write is itself a childList mutation inside `document.body` — which
+  this module's own MutationObserver watches.** Each write scheduled the next: **~54 rewrites per
+  second, forever**, destroying and rebuilding the `+ Add` button under his finger, so a press that
+  began on one instance ended on another and never became a click. **The 567/569 class, in a module
+  that had no guard at all** — like the landing `paint()`. Guard is the **stored-signature** shape
+  (`wxPaint`'s, not `paintChip`'s): compare the markup we generated against the last markup we
+  generated, never against live `innerHTML`, because the browser re-serialises and a live compare
+  can never settle. **Measured: 54/sec → 1 write to settle, 0 on an unrelated DOM change**, while a
+  real data change still repaints and `+ Add` fires on **one** click.
+  **The invisible words were a half-finished dark conversion.** One retail rule
+  (`body:not(.claim-insurance):not(.claim-community) #cr-pp-mount > div`) gives the card a dark
+  ground and `color:var(--rbe-ink)` — and stops. Every child carrying an explicit colour kept the
+  ink it was given for the original **white** card and beat inheritance: title **1.22:1**, meta and
+  empty copy **2.38:1**. Now `var(--rbe-ink,#cfd6df)` **8.67:1** and `var(--rbe-mute,#9aa0a8)`
+  **4.82:1**, computed at **both ends of the gradient** (`#2e333b` and `#262a31`) so nothing passes
+  at the top and fails at the bottom. **`--rbe-mute2` `#6d747e` was REJECTED for completed rows at
+  2.69 / 3.05:1** — they take the legible ink and keep the strikethrough as the "done" signal,
+  because dimming is not what carries that meaning. Every token carries a literal fallback: this
+  card is painted from a stylesheet other than the one declaring them, which is the 448–449 case.
+  ⚠ **The cream header is deliberately untouched** — brown on cream reads fine and converting it is
+  taste, not correctness. Offered to Theo as a separate choice rather than decided here.
+  ⚠ **Two of my own measurements were wrong first time and are worth remembering.** `background:
+  linear-gradient(...)` sets background-**image** and resets background-**color** to transparent, so
+  reading `backgroundColor` returned `rgba(0,0,0,0)` and looked exactly like the 448–449 stripped-
+  token bug; it was not. And a selector scan filtered to rules *naming* `cr-pp-*` missed the rule
+  that actually wins, which is `#cr-pp-mount > div`. Enumerate what an element **matches**, not what
+  mentions it.

@@ -3251,7 +3251,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 605 &#8212; you can add a punch item to any job</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 606 &#8212; the punch list is readable and opens on the first tap</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35045,6 +35045,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:606, d:'2026-08-06', t:'The punch list is readable, and + Add opens on the first tap', s:'Two things about the punch list on a client. The words were unreadable \u2014 the card had been given a dark background but the writing on it was still the near-black it had when the card was white, so the item you added was there and you could not see it. And + Add took three taps to open, because the card was quietly redrawing itself about fifty times a second, taking the button away and rebuilding it under your finger; a tap that started on one and finished on the other never counted. It now redraws only when something actually changed, and every line on the card is a colour that can be read against it \u2014 checked by arithmetic, at both the light and dark end of the card.' },
 { b:605, d:'2026-08-06', t:'Adding a punch item works on any job', s:'The + Add button only offered jobs at Approved, Scheduled or Completed. Nothing is sitting at those right now, so it opened saying \u201cNo active jobs\u201d and would not save \u2014 which made the button on the client profile useless the moment it came back. The job you opened it from is now always in the list whatever stage it is at, along with anything already carrying punch, and a job that is not in flight shows its stage beside its name so you can see you are filing against a lead rather than a live job.' },
 { b:604, d:'2026-08-06', t:'The punch list is back on the client profile', s:'Adding a punch item meant leaving the client, going out to the landing page, opening Production and hoping it landed on the right job. It should never have needed any of that \u2014 the client profile has had its own Punch List card, with a + Add button, the whole time. It was being hidden by a styling rule left over from the overview rebuild, so it rendered correctly and invisibly on every job. It is back on the Overview tab, under the overview card: what is outstanding, what has been completed, and + Add to file a new one against that job without leaving the page. Community jobs were never affected \u2014 the card sits somewhere else on those and has been showing all along.' },
 { b:603, d:'2026-08-06', t:'The production board is a job dossier', s:'Production used to be one long column \u2014 every job, then every punch item for every job, all in one scroll. Pick a job now and it opens its own page: who it is, the address, the stage, what is holding it up, and a button straight through to the client. Its punch items sit under three tabs \u2014 New, Remaining and Closed \u2014 so you can see what came in this week without reading past what has been sitting for a month. New means opened in the last seven days, Remaining means still open and older, Closed means done. On a computer the job list stays on the left and the job you picked fills the right; on a phone you tap a job and tap back. MINE filters the list to jobs with punch assigned to you. A job with punch items on it now appears here even if its stage is not Approved, Scheduled or Completed \u2014 those items were previously reachable from this screen only by scrolling past everything else.' },
@@ -43204,6 +43205,17 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 (function(){
 'use strict';
 var rows = [];
+/* 606: the signature of the markup last written. Without it render() rewrote
+   host.innerHTML on EVERY call, and that write is itself a childList mutation
+   inside document.body — which this module's own MutationObserver watches. So
+   each write scheduled the next one and the card repainted ~54 times a second,
+   forever, destroying and rebuilding the "+ Add" button under the user's
+   finger. That is why adding an item took three taps: a press that began on one
+   button instance ended on another and never became a click.
+   Compare a STORED signature of what we generated, never the live innerHTML —
+   the browser re-serialises markup (a self-closing tag comes back expanded), so
+   a live compare can never settle. Build 567 proved that the expensive way. */
+var lastHtml = '';
 var loadedFor = null;
 var histOpen = false;
 function esc(s){
@@ -43265,11 +43277,11 @@ return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +
 function render(){
 var pr = window.currentProject;
 var host = document.getElementById('cr-pp-mount');
-if(!pr){ if(host) host.remove(); return; }
+if(!pr){ if(host) host.remove(); lastHtml = ''; return; }
 var ccOpen = document.body.classList.contains('cr-cc-open') && document.getElementById('cr-cc');
 if(host){
 var inCc = !!(host.closest && host.closest('#cr-cc'));
-if(!!ccOpen !== inCc){ host.remove(); host = null; }
+if(!!ccOpen !== inCc){ host.remove(); host = null; lastHtml = ''; }
 }
 if(!host){
 var anchor = null;
@@ -43289,7 +43301,7 @@ anchor.parentNode.insertBefore(host, anchor.nextSibling);
 }
 var open = rows.filter(function(i){ return i.status === 'open'; });
 var done = rows.filter(function(i){ return i.status === 'done'; });
-host.innerHTML =
+var html =
 '<div class="cr-pp-card">' +
 '<div class="cr-pp-hd">' +
 '<span class="t">\uD83D\uDD28 Punch List</span>' +
@@ -43317,6 +43329,11 @@ done.map(itemHtml).join('') +
 : '') +
 '</div>' +
 '</div>';
+/* Nothing changed and the card is already on screen — leave the DOM alone.
+   host.firstChild guards the case where the mount was just created empty. */
+if(html === lastHtml && host.firstChild) return;
+lastHtml = html;
+host.innerHTML = html;
 wire(host);
 paintSignedPhotoImgs(host);
 }
@@ -43377,6 +43394,7 @@ var view = document.getElementById('projectView');
 if(!pr || !view || view.style.display === 'none'){
 var h = document.getElementById('cr-pp-mount');
 if(h) h.remove();
+lastHtml = '';
 loadedFor = null;
 return;
 }
@@ -49183,6 +49201,30 @@ document.addEventListener('click', function(e){
 .kpev::before{content:'';position:absolute;left:-17px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--rbe-acc);}
 .kpw{font-size:10px;color:var(--rbe-mute2);margin-top:1px;}
 body:not(.claim-insurance):not(.claim-community) #cr-pp-mount > div{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2)) !important;border:1px solid var(--rbe-line2) !important;border-radius:13px !important;color:var(--rbe-ink);}
+/* 606: the rule above dark-moded the CARD and stopped there. Every child
+   carrying an explicit colour kept the ink it was given for the original white
+   card and beat the inherited var(--rbe-ink): the item title read 1.22:1 and
+   the meta line 2.38:1 on this ground — invisible, which is exactly what Theo
+   reported. Ratios computed against BOTH ends of the gradient (#2e333b and
+   #262a31) so nothing passes at the top and fails at the bottom:
+     title  var(--rbe-ink)  #cfd6df  8.67 / 9.83:1
+     meta   var(--rbe-mute) #9aa0a8  4.82 / 5.47:1
+   var(--rbe-mute2) #6d747e was REJECTED for completed rows at 2.69 / 3.05:1 —
+   they get the same legible ink and keep the strikethrough as the "done"
+   signal, because dimming is not what carries that meaning.
+   Literal fallbacks on every token: this card is painted by a rule living in a
+   different stylesheet from the one declaring them, which is the 448-449 case
+   exactly. Scoped to the same body:not(...) selector so Claims and Community,
+   which have their own complete treatments, are untouched. */
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount .cr-pp-item .t{color:var(--rbe-ink,#cfd6df);}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount .cr-pp-item.done .t{color:var(--rbe-mute,#9aa0a8);}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount .cr-pp-item .m{color:var(--rbe-mute,#9aa0a8);}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount .cr-pp-none{color:var(--rbe-mute,#9aa0a8);}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount .cr-pp-item{border-bottom-color:var(--rbe-hair,#2c3038);}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount .cr-pp-hist{border-top-color:var(--rbe-hair,#2c3038);}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount .cr-pp-fold{background:var(--rbe-bg2,#262a31);border-color:var(--rbe-hair,#2c3038);color:var(--rbe-mute,#9aa0a8);}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount .cr-pp-item .box{background:var(--rbe-bg2,#262a31);border-color:var(--rbe-checkbd,#4a505a);}
+body:not(.claim-insurance):not(.claim-community) #cr-pp-mount .cr-pp-item.done .box{background:#4a8c5a;border-color:#4a8c5a;}
 </style>
 <script id="cr-keeper3-script">
 (function(){
