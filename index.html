@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 608 &#8212; notifications can actually arrive now</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 609 &#8212; Punch Outs is reachable again</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10156,6 +10156,20 @@ function dbIc(n){
   return '<svg class="dbic2" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" ' +
     'xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="' + (DB_ICONS[n] || '') + '"/></svg>';
 }
+/* 609: hoisted to the shared scope. It was defined inside renderOverview(), so
+   renderAcxOverview() — the job menu that actually renders — could not see it and
+   the Punch Outs tile would have thrown a ReferenceError, taking the whole
+   overview card down with it. One definition, both callers. */
+function punchOpenCount(pr){
+  /* Asked of the module that owns punch, so there is one source of truth for
+     "how many are open". Returns '' before the rows have loaded rather than a
+     wrong 0, which would read as "nothing to do". */
+  try{
+    var r = window.CardinalPunchProfile && window.CardinalPunchProfile.openCountFor;
+    var n = r ? r(pr.id) : null;
+    return (n === null || n === undefined) ? '' : n;
+  }catch(_){ return ''; }
+}
 function renderAcxOverview(){
   var mount = document.getElementById('acxMount');
   if(!mount || !currentProject) return;
@@ -10252,6 +10266,13 @@ function renderAcxOverview(){
     '</div><div class="jaboxrow">' +
       jt(dbIc('docs'), 'Documents', fileDocs.length, 'docs') +
       jt(dbIc('appts'), 'Appointments', appts, 'appts') +
+    '</div><div class="jaboxrow">' +
+      /* 609: THIS is the job menu that renders. 607 added Punch Outs to #jaGrid
+         instead — the legacy grid hidden by #tab-overview's display:none rule,
+         the exact trap 604 was about. 607 also removed the overview card, so
+         punch had no reachable entry point at all. data-jm="punch" falls through
+         the router's else branch to showTab('punch'), which 607 already wired. */
+      jt(dbIc('tasks'), 'Punch Outs', punchOpenCount(pr), 'punch') +
     '</div><div class="jaboxrow">' +
       jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
       jt(dbIc('orders'), 'Orders', '', 'materials') +
@@ -13459,16 +13480,6 @@ function renderOverview(){
       el.classList.toggle('zero', !l.length);
     }
   }).catch(function(){});
-  function punchOpenCount(pr){
-    /* 607: asked of the module that owns punch, so there is one source of truth
-       for "how many are open". Returns '' before the rows have loaded rather
-       than a wrong 0, which would read as "nothing to do". */
-    try{
-      var r = window.CardinalPunchProfile && window.CardinalPunchProfile.openCountFor;
-      var n = r ? r(pr.id) : null;
-      return (n === null || n === undefined) ? '' : n;
-    }catch(_){ return ''; }
-  }
   function tile(ic, label, n, act){
     return '<div class="jatile" data-ja="' + act + '"><span><span class="jic">' + ic + '</span> ' + label + '</span>' +
       '<span class="jn' + (n ? '' : ' zero') + '">' + n + '</span></div>';
@@ -35087,6 +35098,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:609, d:'2026-08-06', t:'Punch Outs is back in the job menu', s:'Yesterday\u2019s build moved punch outs off the client page and into the job menu \u2014 but put the button in a menu that does not show on screen, so it went from hard to find to impossible. It is in the Job Menu now, under Appointments, with the number still open beside it. My mistake, and the same one the build before last was about.' },
 { b:608, d:'2026-08-06', t:'Notifications can actually arrive now', s:'Push notifications have never worked, and this is why. The app had two different security keys for notifications where it should have had one, and the half that registered your phone was using the wrong one \u2014 so the server signed every alert with a key your phone had not agreed to, and the alert was thrown away before it reached you. Nothing showed an error, at either end. Both halves now use the same key. \u26a0\ufe0f You have to turn notifications back on once on each device: the registration made with the old key cannot be repaired, only replaced.' },
 { b:607, d:'2026-08-06', t:'Punch Outs moved into the job menu, and each one has a discussion', s:'Punch outs used to be a card sitting part-way down the client page. They are now their own entry in the job menu, next to Checklists, with the number still open showing on the tile. Open it and you get the list for that job \u2014 what is outstanding, what is closed. Tap one and it opens on its own, with the detail, the photo if there is one, and a discussion box underneath. Type @ and somebody\u2019s name, or tap their chip, and they get a notification on their phone \u2014 only them, and only when they are actually tagged. It is the same tagging you already have in Communications, so it behaves the way you expect. Community jobs keep the card where it was.' },
 { b:606, d:'2026-08-06', t:'The punch list is readable, and + Add opens on the first tap', s:'Two things about the punch list on a client. The words were unreadable \u2014 the card had been given a dark background but the writing on it was still the near-black it had when the card was white, so the item you added was there and you could not see it. And + Add took three taps to open, because the card was quietly redrawing itself about fifty times a second, taking the button away and rebuilding it under your finger; a tap that started on one and finished on the other never counted. It now redraws only when something actually changed, and every line on the card is a colour that can be read against it \u2014 checked by arithmetic, at both the light and dark end of the card.' },

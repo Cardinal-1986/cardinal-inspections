@@ -8222,3 +8222,26 @@ class 32 instead of class 24.
   Verified: one distinct key across both declarations, matching `notify.js` and derivable from its
   private key; gate negative-controlled against the shipped 607 artifact; 603/607 harnesses and the
   community test re-run green.
+- **609** · **My regression, and it made punch UNREACHABLE.** 607 moved the punch card off the client
+  overview into a job-menu entry — and put that entry in **`#jaGrid`**, the legacy grid hidden by
+  `#tab-overview > *:not(#acxMount)`. **That is the exact rule build 604 existed to explain**, and I
+  walked into it one build after documenting it. The card was gone and the replacement never
+  rendered, so between 607 and 609 there was no way to reach punch on a retail or insurance job at
+  all. Caught only because Theo screenshotted the whole client page and Punch Outs was not in the
+  menu.
+  **There are TWO job menus and only one renders.** `#jaGrid` / `.jatile` / `data-ja` is legacy,
+  hidden, and mirrored into community by `syncJobMenu()`. The one on screen is built by
+  **`renderAcxOverview()`** via `jt()` into `.jaboxrow` pairs with **`data-jm`** — ten tiles:
+  comms · notifs · album · tasks · measure · estimates · docs · appts · inspections · materials.
+  **If you are adding something to "the job menu", it is the `jt()` one.** The tile now sits in both:
+  the `jt()` one because it renders, the `#jaGrid` one because community mirrors that.
+  No new routing — `data-jm="punch"` falls through the router's `else` to `showTab('punch')`, which
+  607 had already wired correctly.
+  ⚠ **A second error caught before it shipped:** `punchOpenCount()` had been defined *inside*
+  `renderOverview()`, so `renderAcxOverview()` could not see it and the tile would have thrown a
+  **ReferenceError, taking the entire overview card down**. Hoisted to one shared definition ahead of
+  both callers, verified same-`<script>`-block. It also returns `''` rather than `0` before rows
+  load, and swallows a throwing module, so a punch problem can never blank the client page.
+  Verified: 15-assertion harness covering tile placement in the rendering menu, router fall-through,
+  single in-scope definition, and all four `punchOpenCount` behaviours executed as shipped text;
+  603/607 harnesses, community test and the add-modal repro re-run green.
