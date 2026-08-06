@@ -1545,3 +1545,19 @@ still shows per item.
 **Theming:** dark values in the block, daylight twins under `:root[data-theme="rb-light"]` in 393's
 shape. The Production board is one of the **four sanctioned light/dark exceptions**; all 46 of
 393's rules and all 93 original dark `.cr-pb-*` rules are byte-for-byte untouched.
+
+### The punch card on the client profile (`cr-pp-script`) — and why it vanished
+
+`#cr-pp-mount`, inserted as a sibling of `#jaGrid` on the Overview tab. Header `🔨 Punch List`,
+open count, an unconditional **+ Add** that calls `CardinalProduction.addFor(projectId)`, and a
+fold-out of completed items. Exports `window.CardinalPunchProfile` (`refresh`, `rows`).
+
+**⚠ It is a direct child of `#tab-overview`, which is a hostile place to live.** That tab carries
+`#tab-overview > *:not(#acxMount):not(#cr-pp-mount){display:none !important;}` — the AccuLynx
+overview rebuild hides everything except the overview mount. Until **604** the punch mount was not
+named in that exception, so the card rendered perfectly and invisibly on every retail and insurance
+profile, and adding a punch item meant leaving for Production. **If you add another element to this
+tab, it must be named in that rule or it will not render, and nothing will tell you.**
+
+Community profiles use a different branch entirely (`#cr-cc-jm` inside `#cr-cc`) and were never
+affected — which is why the card "worked" whenever anyone checked it on a community job.

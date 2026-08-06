@@ -8003,3 +8003,23 @@ into two classes is what produced the per-class-NMS duplication in v4.
   specificity contest (0,3,1 over 0,3,0) and that both themes paint — the build-481 lesson.
   Scope proof: 21 hunks, **zero outside** `cr-pb-styles` / `cr-pb-script` / stamp / changelog;
   all 46 of 393's daylight rules and all 93 original dark `.cr-pb-*` rules present byte-for-byte.
+- **604** · **The client-profile punch card had been `display:none` the whole time.** Theo, after
+  testing 603: *"there is nothing in client profile to add the punch out. Right now, client profile
+  then landing then productions then hope it lands on the most recent client."* He was right that
+  nothing was there — and the code was right too. **`cr-pp-script` is complete and correct**: it
+  mounts a Punch List card with an unconditional `+ Add` that calls
+  `CardinalProduction.addFor(pr.id)`, reproduced working against the shipped module text.
+  **The AccuLynx overview rebuild had hidden it.** `#tab-overview > *:not(#acxMount)
+  {display:none !important;}` hides every direct child of the tab except the overview mount, and
+  `cr-pp-script` inserts `#cr-pp-mount` as a sibling of `#jaGrid` — a direct child. So a fully
+  built, fully wired card rendered correctly and invisibly on every retail and insurance profile.
+  **Community was never affected**: there the card mounts inside `#cr-cc`, a different container.
+  Fixed at source by naming the second legitimate child — `:not(#acxMount):not(#cr-pp-mount)` —
+  rather than fighting `!important` with an override layer. **This is the prime doctrine and the
+  333 bug class, again**: buried, not missing; a mount anchor that still exists but no longer
+  renders. Build 333 fixed one instance of exactly this and the overview rebuild recreated it.
+  Verified: **a real-engine negative control across both builds** — `#cr-pp-mount` computes
+  `display:none` with a **0×0** `+ Add` at 603 and `block` with a **50×21** button at 604, while
+  `#acxMount` stays visible and `#jaGrid` and the retired legacy rows stay hidden in both, proving
+  the dead markup was not un-hidden along with it. jsdom cannot rule on an `!important` cascade;
+  Chromium is the only witness for this class. 603's harness and CSS proof re-run green.
