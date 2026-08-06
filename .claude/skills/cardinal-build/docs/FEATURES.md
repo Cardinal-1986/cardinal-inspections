@@ -1498,3 +1498,50 @@ the `?vision=1` override, admin-gating, and proof the Presentations tile drives
 `CardinalShowcase.open()` through the *existing* handler rather than a new one) plus real Chromium
 screenshots of both the admin and non-admin renders and a regression pass confirming the ordinary
 launcher is byte-for-byte unaffected.
+
+---
+
+## Production board — the job dossier (603)
+
+`<style id="cr-pb-styles">` + `<script id="cr-pb-script">` · `#cr-pb` · `window.CardinalProduction`
+· burger menu → 🔨 Production, and the banner's Production ▾.
+
+**Master-detail.** The job list is the master; the selected job's dossier is the detail.
+
+| | Desktop (`body.cr-lnav-on`) | Phone |
+|---|---|---|
+| Panes | both, `360px` + rest, dossier sticky | one at a time, `data-pane` on `.cr-pb-split` |
+| Back | hidden — nothing to go back to | `← Jobs` returns to the list |
+
+**The desktop signal is `body.cr-lnav-on`, not a media query** — the same class 572's
+`max-width:1180px` rule uses. The desktop rule out-specifies the phone rule 0,3,1 vs 0,3,0;
+that contest is proved in Chromium, not assumed (build 481).
+
+**The dossier carries:** portal dot · stage chip · name · address · blocker banner ·
+**Open client profile** → `window.openProject(id)` (the *existing* opener; the board already called
+it — extended, not rebuilt) · **Call** only where `projects.phone` is really populated ·
+**+ Punch item** → the existing `openAdd(projectId)` modal, job pre-selected · then the punch
+items under three tabs.
+
+**⚠ New / Remaining / Closed is DERIVED, not stored.** `punch_items.status` is binary
+(`open` | `done`) — read off the live table, not assumed. **NEW** = open, `created_at` inside 7 days
+· **REMAINING** = open, older · **CLOSED** = done. `NEW_DAYS` is one constant in the module. No
+column, no migration. *If you go looking for a `status` value called "new", there isn't one.*
+
+**⚠ The job list has an off-stage tail, and it is load-bearing.** `activeJobs()` only returns
+Approved / Scheduled / Completed. `boardJobs()` appends **any project carrying punch items**
+regardless of stage, marked `.off` and labelled "Not in production". On the live database *every*
+punch item is in that tail — the only row sits on a **Prospect** — so removing it makes the screen
+unable to reach a single real item. Do not "tidy" it away.
+
+**⚠ The board is legitimately empty right now.** 20 projects: 15 Lead, 4 Prospect, 1 Invoiced,
+**none** Approved/Scheduled/Completed. The empty state says so in words. Not a bug, not a
+regression — jobs have to be moved into those stages first.
+
+**MINE** filters the job list to jobs with an open item assigned to `myEmail()` — this replaced the
+old global `all / mine / high` punch filter row, which the per-job tabs made redundant. Urgency
+still shows per item.
+
+**Theming:** dark values in the block, daylight twins under `:root[data-theme="rb-light"]` in 393's
+shape. The Production board is one of the **four sanctioned light/dark exceptions**; all 46 of
+393's rules and all 93 original dark `.cr-pb-*` rules are byte-for-byte untouched.

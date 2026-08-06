@@ -7977,3 +7977,29 @@ into two classes is what produced the per-class-NMS duplication in v4.
   not**, and the collision that created is what 601 fixed.
 - **600** · What's New auto-opened for **everyone** three seconds after load on every new build.
   Gated to theo@ at both the automatic and manual entry points.
+- **603** · **The Production board became a job dossier** — Theo picked option 3 from a five-option
+  preview set. Master-detail: the job list on the left, the selected job's own page on the right,
+  carrying stage, address, blocker, **a button straight through to the client profile**
+  (`window.openProject`, the existing opener — extended, not rebuilt), tap-to-call where
+  `projects.phone` is actually populated, and its punch items under **New / Remaining / Closed**
+  tabs. Desktop shows both panes, gated on `body.cr-lnav-on` — **the same signal 572's width rule
+  uses; the convention already existed, so no media query was invented.** Phone shows one pane and
+  a back button. ⚠ **The three buckets are DERIVED, not stored**: `punch_items.status` is binary
+  (`open` | `done`), confirmed against the live table — NEW is open and under 7 days, REMAINING is
+  open and older, CLOSED is done. No column, no migration, nothing to backfill.
+  ⚠ **The board also gained an off-stage tail**, and this is the part that mattered most: the job
+  list now includes any project carrying punch items even when its stage is not Approved /
+  Scheduled / Completed. On the live database **that is every punch item there is** — the only row
+  sits on a **Prospect** — so without the tail the dossier would have shipped unable to reach a
+  single real item. Found by querying the table before building, not after.
+  ⚠ **Live data reality, recorded so nobody calls the empty screen a bug:** 20 projects — 15 Lead,
+  4 Prospect, 1 Invoiced — and **zero in Approved, Scheduled or Completed**, so `activeJobs()`
+  legitimately returns `[]` and the board's job list is empty until a job is moved. That predates
+  603; the empty state now says so in words instead of just "Nothing in production right now."
+  Verified: 10/10 mechanical gates with negative control · a **32-assertion jsdom harness against
+  the shipped module text** (not a re-implementation) covering the off-stage tail, bucket
+  derivation at real timestamps, the client wiring, tab switching, pane push/back, MINE, and the
+  empty state · **18 Chromium computed-style proofs** that the desktop rule actually wins the
+  specificity contest (0,3,1 over 0,3,0) and that both themes paint — the build-481 lesson.
+  Scope proof: 21 hunks, **zero outside** `cr-pb-styles` / `cr-pb-script` / stamp / changelog;
+  all 46 of 393's daylight rules and all 93 original dark `.cr-pb-*` rules present byte-for-byte.

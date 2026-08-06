@@ -3242,7 +3242,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-05 build 601 &#8212; photo initials name the right person</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 603 &#8212; the production board is a job dossier</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35036,6 +35036,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:603, d:'2026-08-06', t:'The production board is a job dossier', s:'Production used to be one long column \u2014 every job, then every punch item for every job, all in one scroll. Pick a job now and it opens its own page: who it is, the address, the stage, what is holding it up, and a button straight through to the client. Its punch items sit under three tabs \u2014 New, Remaining and Closed \u2014 so you can see what came in this week without reading past what has been sitting for a month. New means opened in the last seven days, Remaining means still open and older, Closed means done. On a computer the job list stays on the left and the job you picked fills the right; on a phone you tap a job and tap back. MINE filters the list to jobs with punch assigned to you. A job with punch items on it now appears here even if its stage is not Approved, Scheduled or Completed \u2014 those items were previously reachable from this screen only by scrolling past everything else.' },
 { b:601, d:'2026-08-05', t:'Initials on a photograph name the right person', s:'Joan and Jerry both showed JV on every photograph in Photo Activity, so there was no telling whose work you were looking at. Four of the eight were wrong: Joan is JH, Nick is NH, Joey is JL, Jacob is JSH. Jerry keeps JV \u2014 his was right all along. The last two builds were also filed into the middle of this list instead of the top, so opening What\u2019s New by hand skipped straight past them; they are back in order.' },
 { build:600, note:'\uD83D\uDD12 What\u2019s New no longer opens for the team. It popped up for everyone three seconds after load on every new build; now it is yours alone, at both the automatic and the manual entry.' },
 { build:599, note:'\uD83D\uDC64 Jerry Vera is on the team. He could sign in but was on none of the six team lists, so nobody could assign him a job and his name showed as a bare email address. He now appears in the roster, both rep pickers, the Assign to list and the initials map.' },
@@ -42466,14 +42467,131 @@ objections : OBJECTIONS,
 :root[data-theme="rb-light"] #cr-pb-modal input,:root[data-theme="rb-light"] #cr-pb-modal select,:root[data-theme="rb-light"] #cr-pb-modal textarea{background:#ffffff;color:#141414;border-color:#e0e0e0}
 :root[data-theme="rb-light"] #cr-pb-modal input:focus,:root[data-theme="rb-light"] #cr-pb-modal select:focus,:root[data-theme="rb-light"] #cr-pb-modal textarea:focus{border-color:#8a5a08;box-shadow:0 0 0 3px rgba(138,90,8,.15)}
 :root[data-theme="rb-light"] #cr-pb-modal .ft .cancel{color:#5b6169;border-color:#e0e0e0}
-:root[data-theme="rb-light"] #cr-pb-modal .ft .save{background:#8a5a08;color:#ffffff}</style>
+:root[data-theme="rb-light"] #cr-pb-modal .ft .save{background:#8a5a08;color:#ffffff}
+/* ── 603: the board became a job dossier ──────────────────────────────────
+   Master-detail. The phone shows ONE pane at a time (data-pane on the split);
+   the desktop shows both, gated on body.cr-lnav-on — the SAME signal the 572
+   width rule below uses, not a fresh media query (grep the convention before
+   inventing a mechanism). The desktop rule out-specifies the phone rule
+   0,3,1 vs 0,3,0, which is deliberate and proved in a real engine, not
+   assumed — build 481 shipped a rule that parsed, balanced and never applied.
+   Dark values here; the daylight twins sit at the bottom of this block in the
+   393 shape. Every rule 393 shipped is untouched. */
+.cr-pb-split{margin-top:4px}
+.cr-pb-list,.cr-pb-doss{min-width:0}
+.cr-pb-split[data-pane="list"] .cr-pb-doss{display:none}
+.cr-pb-split[data-pane="doss"] .cr-pb-list{display:none}
+body.cr-lnav-on .cr-pb-split{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:24px;align-items:start}
+body.cr-lnav-on .cr-pb-split .cr-pb-list,body.cr-lnav-on .cr-pb-split .cr-pb-doss{display:block}
+body.cr-lnav-on .cr-pb-dback{display:none}
+.cr-pb-job.sel{border-color:#f5a623;background:#2a323d}
+.cr-pb-job.off{opacity:.72}
+.cr-pb-job .blk.off{background:rgba(230,232,234,.08);color:#8d959d}
+.cr-pb-job .pcount{flex:0 0 auto;min-width:22px;text-align:center;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;color:#f5a623;background:rgba(245,166,35,.14);border-radius:20px;padding:3px 7px}
+.cr-pb-job .chev{flex:0 0 auto;color:#4a525b;font-size:16px;line-height:1}
+.cr-pb-mine{background:none;border:0;cursor:pointer;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#697079;padding:0 0 0 10px;font-family:inherit}
+.cr-pb-mine.on{color:#f5a623}
+.cr-pb-hint{display:block;margin-top:8px;font-size:12px;line-height:1.6;color:#697079}
+.cr-pb-dcard{background:#1c2128;border:1px solid rgba(230,232,234,.09);border-radius:12px;padding:16px 16px 14px;margin-top:9px}
+.cr-pb-dtop{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cr-pb-dback{background:transparent;border:1px solid rgba(230,232,234,.2);color:#8d959d;border-radius:8px;padding:6px 11px;cursor:pointer;font:700 11.5px inherit;font-family:inherit}
+.cr-pb-dback:hover{border-color:#f5a623;color:#e6e8ea}
+.cr-pb-dstage{margin-left:auto;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#697079;border:1px solid rgba(230,232,234,.14);border-radius:5px;padding:3px 8px}
+.cr-pb-dname{margin:0;font:700 20px Georgia,'Times New Roman',serif;color:#e6e8ea;line-height:1.2}
+.cr-pb-daddr{margin-top:3px;font-size:12.5px;color:#697079}
+.cr-pb-dblk{margin-top:11px;border-radius:9px;padding:10px 12px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase}
+.cr-pb-dblk.blocked{background:rgba(224,122,95,.16);color:#e07a5f}
+.cr-pb-dblk.soon{background:rgba(245,166,35,.15);color:#f5a623}
+.cr-pb-dblk.clear{background:rgba(108,185,143,.15);color:#6cb98f}
+.cr-pb-dacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
+.cr-pb-dgo{flex:1 1 auto;background:#f5a623;color:#14171b;border:0;border-radius:9px;padding:11px 14px;cursor:pointer;font:800 12.5px inherit;font-family:inherit}
+.cr-pb-dgo:hover{background:#e0940f}
+.cr-pb-dtel,.cr-pb-dadd{flex:0 0 auto;background:transparent;border:1px solid rgba(230,232,234,.2);color:#e6e8ea;border-radius:9px;padding:11px 14px;cursor:pointer;font:700 12.5px inherit;font-family:inherit;text-decoration:none;display:inline-block}
+.cr-pb-dtel:hover,.cr-pb-dadd:hover{border-color:#f5a623}
+.cr-pb-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:16px 0 4px}
+.cr-pb-tab{background:#14171b;border:1px solid rgba(230,232,234,.1);border-radius:9px;padding:9px 8px;cursor:pointer;font-family:inherit;color:#e6e8ea;text-align:center}
+.cr-pb-tab:hover{border-color:#f5a623}
+.cr-pb-tab.on{border-color:#f5a623;background:#2a323d}
+.cr-pb-tab .tn{display:block;font:700 19px ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;line-height:1}
+.cr-pb-tab .tl{display:block;margin-top:5px;font:700 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#697079}
+.cr-pb-tab.on .tn{color:#f5a623}
+/* 603 daylight twins — 393's shape, its rules untouched */
+:root[data-theme="rb-light"] .cr-pb-job.sel{border-color:#8a5a08;background:#faf6ee}
+:root[data-theme="rb-light"] .cr-pb-job .blk.off{background:#f2f2f2;color:#6b7280}
+:root[data-theme="rb-light"] .cr-pb-job .pcount{color:#8a5a08;background:#faf4e8}
+:root[data-theme="rb-light"] .cr-pb-job .chev{color:#c9c9c9}
+:root[data-theme="rb-light"] .cr-pb-mine{color:#6b7280}
+:root[data-theme="rb-light"] .cr-pb-mine.on{color:#8a5a08}
+:root[data-theme="rb-light"] .cr-pb-hint{color:#6b7280}
+:root[data-theme="rb-light"] .cr-pb-dcard{background:#ffffff;border-color:#e6e6e6}
+:root[data-theme="rb-light"] .cr-pb-dback{border-color:#e0e0e0;color:#5b6169}
+:root[data-theme="rb-light"] .cr-pb-dback:hover{border-color:#8a5a08;color:#141414}
+:root[data-theme="rb-light"] .cr-pb-dstage{color:#6b7280;border-color:#e6e6e6}
+:root[data-theme="rb-light"] .cr-pb-dname{color:#141414}
+:root[data-theme="rb-light"] .cr-pb-daddr{color:#6b7280}
+:root[data-theme="rb-light"] .cr-pb-dblk.blocked{background:#fbeeea;color:#a83f24}
+:root[data-theme="rb-light"] .cr-pb-dblk.soon{background:#faf4e8;color:#8a5a08}
+:root[data-theme="rb-light"] .cr-pb-dblk.clear{background:#eaf6ef;color:#2f7d55}
+:root[data-theme="rb-light"] .cr-pb-dgo{background:#8a5a08;color:#ffffff}
+:root[data-theme="rb-light"] .cr-pb-dgo:hover{background:#6f4806}
+:root[data-theme="rb-light"] .cr-pb-dtel,:root[data-theme="rb-light"] .cr-pb-dadd{border-color:#e0e0e0;color:#141414}
+:root[data-theme="rb-light"] .cr-pb-dtel:hover,:root[data-theme="rb-light"] .cr-pb-dadd:hover{border-color:#8a5a08}
+:root[data-theme="rb-light"] .cr-pb-tab{background:#ffffff;border-color:#e6e6e6;color:#141414}
+:root[data-theme="rb-light"] .cr-pb-tab:hover{border-color:#8a5a08}
+:root[data-theme="rb-light"] .cr-pb-tab.on{border-color:#8a5a08;background:#faf6ee}
+:root[data-theme="rb-light"] .cr-pb-tab .tl{color:#6b7280}
+:root[data-theme="rb-light"] .cr-pb-tab.on .tn{color:#8a5a08}</style>
 <script id="cr-pb-script">
 (function(){
 'use strict';
 var items = [];
 var recentlyDone = {};
-var activeFilter = 'all';
 var jobFilter    = '';
+/* 603: master-detail state. selJob is the project the dossier is showing;
+   pane is the PHONE's visible half (the desktop shows both and ignores it);
+   dossTab is which punch bucket is open. */
+var selJob  = null;
+var pane    = 'list';
+var dossTab = 'new';
+/* New / Remaining / Closed is DERIVED, not stored — punch_items.status is
+   binary ('open' | 'done'), confirmed against the live table. A row is NEW
+   while it is open and under a week old, REMAINING once it is open and older,
+   CLOSED when it is done. No column, no migration, nothing to backfill. */
+var NEW_DAYS = 7;
+function bucketOf(it){
+if(it.status === 'done') return 'closed';
+var t = it.created_at ? Date.parse(it.created_at) : 0;
+if(!t || isNaN(t)) return 'remaining';
+return (Date.now() - t) < NEW_DAYS * 86400000 ? 'new' : 'remaining';
+}
+function punchFor(pid){
+return items.filter(function(i){ return String(i.project_id) === String(pid); });
+}
+function openPunchFor(pid){
+return punchFor(pid).filter(function(i){ return i.status === 'open'; });
+}
+/* The list is every project carrying production work: the active jobs first,
+   then any project that owns punch items without being in an active stage.
+   Without that tail those items are reachable from nowhere on this screen —
+   and on the live table today that is EVERY punch item, because the only one
+   sits on a Prospect. */
+function boardJobs(){
+var act = activeJobs();
+var seen = {};
+act.forEach(function(j){ seen[String(j.pr.id)] = true; });
+var extra = [];
+items.forEach(function(i){
+var k = String(i.project_id || '');
+if(!k || seen[k]) return;
+seen[k] = true;
+var pr = projectFor(i.project_id);
+if(pr) extra.push({ pr:pr, blk:null, off:true });
+});
+extra.sort(function(x, y){
+return String(x.pr.name || '').localeCompare(String(y.pr.name || ''));
+});
+return act.concat(extra);
+}
 function esc(s){
 return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
 return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
@@ -42592,33 +42710,22 @@ return el;
 function render(){
 ensure();
 var allJobs = activeJobs();
-var open = items.filter(function(i){ return i.status === 'open'; });
+var open    = items.filter(function(i){ return i.status === 'open'; });
 var blocked = allJobs.filter(function(j){ return j.blk && j.blk.tone === 'blocked'; });
 var ready   = allJobs.filter(function(j){ return j.blk && j.blk.tone === 'clear'; });
-var jobs = allJobs;
-if(jobFilter === 'blocked') jobs = blocked;
-else if(jobFilter === 'ready') jobs = ready;
-var doneNow = items.filter(function(i){
-return i.status === 'done' && recentlyDone[i.id];
-});
-var shown = open;
-if(activeFilter === 'mine'){
-shown = open.filter(function(i){ return (i.assigned_to || '') === myEmail(); });
-}else if(activeFilter === 'high'){
-shown = open.filter(function(i){ return i.priority === 'high' || i.kind === 'callback'; });
-}
-shown = shown.slice().sort(function(a, b){
-var wa = (a.priority === 'high' ? 0 : 1) + (a.kind === 'callback' ? -0.5 : 0);
-var wb = (b.priority === 'high' ? 0 : 1) + (b.kind === 'callback' ? -0.5 : 0);
-return wa - wb;
-}).concat(doneNow);
+var list    = boardJobs();
+/* Keep the selection across a reload; fall back to the top of the list. The
+   desktop always has a dossier open, the phone starts on the list. */
+if(selJob && !list.some(function(j){ return String(j.pr.id) === String(selJob); })) selJob = null;
+if(!selJob && list.length) selJob = list[0].pr.id;
+if(!list.length){ selJob = null; pane = 'list'; }
 el.innerHTML =
 '<div class="cr-pb-wrap">' +
 '<div class="cr-pb-top">' +
-'<button class="cr-pb-back" data-act="back" type="button">\u2190</button>' +
+'<button class="cr-pb-back" data-act="back" type="button" title="Back">←</button>' +
 '<div class="cr-pb-ttl">' +
 '<h1>Pro<span>duction</span></h1>' +
-'<p>Jobs \u00b7 Punch \u00b7 Callbacks</p>' +
+'<p>Jobs · Punch · Callbacks</p>' +
 '</div>' +
 '</div>' +
 '<div class="cr-pb-att">' +
@@ -42634,48 +42741,125 @@ el.innerHTML =
 '<div class="n">' + ready.length + '</div>' +
 '<div class="l">To invoice</div></button>' +
 '</div>' +
-'<div class="cr-pb-rule" id="cr-pb-jobs">' +
-(jobFilter === 'blocked' ? 'Blocked jobs'
+'<div class="cr-pb-split" data-pane="' + pane + '">' +
+'<div class="cr-pb-list">' + listHtml(list) + '</div>' +
+'<div class="cr-pb-doss">' + dossHtml(list) + '</div>' +
+'</div>' +
+'</div>';
+wire();
+paintSignedPhotoImgs(el);
+}
+function listHtml(list){
+var jobs = list;
+if(jobFilter === 'blocked'){
+jobs = list.filter(function(j){ return j.blk && j.blk.tone === 'blocked'; });
+}else if(jobFilter === 'ready'){
+jobs = list.filter(function(j){ return j.blk && j.blk.tone === 'clear'; });
+}else if(jobFilter === 'mine'){
+var me = myEmail();
+jobs = list.filter(function(j){
+return openPunchFor(j.pr.id).some(function(i){
+return String(i.assigned_to || '').toLowerCase() === me;
+});
+});
+}
+var head = jobFilter === 'blocked' ? 'Blocked jobs'
 : jobFilter === 'ready' ? 'Ready to invoice'
-: 'Jobs in flight') +
-(jobFilter ? '<button data-jump="clear" type="button" ' +
-'style="background:none;border:0;color:#f5a623;cursor:pointer;' +
-'font:800 9.5px inherit;letter-spacing:.14em;padding:0 0 0 10px;">' +
-'SHOW ALL</button>' : '') +
+: jobFilter === 'mine' ? 'My punch items'
+: 'Jobs in flight';
+return '<div class="cr-pb-rule" id="cr-pb-jobs">' + head +
+'<button class="cr-pb-mine' + (jobFilter === 'mine' ? ' on' : '') +
+'" data-jump="mine" type="button">MINE</button>' +
+(jobFilter ? '<button class="cr-pb-mine" data-jump="clear" type="button">SHOW ALL</button>' : '') +
 '</div>' +
 (jobs.length
-? jobs.map(function(j){
+? jobs.map(jobRow).join('')
+: '<div class="cr-pb-empty">' +
+(list.length
+? 'Nothing under that filter.'
+: 'Nothing in production right now.' +
+'<span class="cr-pb-hint">A job lands here once its stage is Approved, ' +
+'Scheduled or Completed. Any job carrying punch items shows up too, ' +
+'whatever its stage.</span>') +
+'</div>');
+}
+function jobRow(j){
 var p = portalOf(j.pr);
 var tone = j.blk ? j.blk.tone : '';
-return '<button class="cr-pb-job ' + tone + '" data-open="' + esc(j.pr.id) + '" type="button">' +
+var nOpen = openPunchFor(j.pr.id).length;
+return '<button class="cr-pb-job ' + tone +
+(String(j.pr.id) === String(selJob) ? ' sel' : '') +
+(j.off ? ' off' : '') + '" data-sel="' + esc(j.pr.id) + '" type="button">' +
 '<span class="portal ' + p + '" title="' + p + '"></span>' +
 '<span class="who">' +
 '<span class="nm">' + esc(j.pr.name || 'Unnamed') + '</span>' +
 '<span class="ad">' + esc(j.pr.address || '') + '</span>' +
-(j.blk ? '<span class="blk">' + esc(j.blk.text) + '</span>' : '') +
+(j.blk
+? '<span class="blk">' + esc(j.blk.text) + '</span>'
+: (j.off ? '<span class="blk off">Not in production</span>' : '')) +
 '</span>' +
+(nOpen ? '<span class="pcount">' + nOpen + '</span>' : '') +
+'<span class="chev">›</span>' +
 '</button>';
-}).join('')
-: '<div class="cr-pb-empty">Nothing in production right now.</div>') +
-'<div class="cr-pb-rule" id="cr-pb-punch">Punch list</div>' +
-'<div class="cr-pb-att" style="grid-template-columns:repeat(3,1fr);margin:12px 0 6px;">' +
-['all:Everything', 'mine:Mine', 'high:Urgent'].map(function(f){
-var k = f.split(':')[0], lbl = f.split(':')[1];
-return '<button data-filter="' + k + '" type="button" ' +
-'style="text-align:center;' +
-(k === activeFilter ? 'border-color:#f5a623;background:#222831;' : '') + '">' +
-'<div class="l" style="margin:0;">' + lbl + '</div></button>';
-}).join('') +
+}
+function tabBtn(k, lbl, n){
+return '<button class="cr-pb-tab' + (dossTab === k ? ' on' : '') +
+'" data-tab="' + k + '" type="button">' +
+'<span class="tn">' + n + '</span>' +
+'<span class="tl">' + lbl + '</span></button>';
+}
+function dossHtml(list){
+var entry = null;
+for(var x = 0; x < list.length; x++){
+if(String(list[x].pr.id) === String(selJob)){ entry = list[x]; break; }
+}
+if(!entry) return '';
+var pr = entry.pr;
+var pf = punchFor(pr.id);
+var nNew = 0, nRem = 0, nCls = 0;
+pf.forEach(function(i){
+var bk = bucketOf(i);
+if(bk === 'new') nNew++; else if(bk === 'remaining') nRem++; else nCls++;
+});
+var counts = { 'new':nNew, 'remaining':nRem, 'closed':nCls };
+if(!counts[dossTab]) dossTab = nNew ? 'new' : (nRem ? 'remaining' : (nCls ? 'closed' : 'new'));
+var shown = pf.filter(function(i){ return bucketOf(i) === dossTab; }).sort(function(a, b){
+var wa = (a.priority === 'high' ? 0 : 1) + (a.kind === 'callback' ? -0.5 : 0);
+var wb = (b.priority === 'high' ? 0 : 1) + (b.kind === 'callback' ? -0.5 : 0);
+if(wa !== wb) return wa - wb;
+return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+});
+var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
+var empty = dossTab === 'new' ? 'Nothing new on this job.'
+: dossTab === 'remaining' ? 'Nothing outstanding on this job.'
+: 'Nothing closed on this job yet.';
+return '<div class="cr-pb-dcard">' +
+'<div class="cr-pb-dtop">' +
+'<button class="cr-pb-dback" data-act="tolist" type="button">← Jobs</button>' +
+'<span class="portal ' + portalOf(pr) + '" title="' + portalOf(pr) + '"></span>' +
+'<span class="cr-pb-dstage">' + esc(normStage(pr.stage) || '') + '</span>' +
+'</div>' +
+'<h2 class="cr-pb-dname">' + esc(pr.name || 'Unnamed') + '</h2>' +
+(pr.address ? '<div class="cr-pb-daddr">' + esc(pr.address) + '</div>' : '') +
+(entry.blk
+? '<div class="cr-pb-dblk ' + entry.blk.tone + '">' + esc(entry.blk.text) + '</div>'
+: (entry.off
+? '<div class="cr-pb-dblk soon">Carries punch · not in an active stage</div>'
+: '')) +
+'<div class="cr-pb-dacts">' +
+'<button class="cr-pb-dgo" data-open="' + esc(pr.id) + '" type="button">Open client profile</button>' +
+(tel ? '<a class="cr-pb-dtel" href="tel:' + esc(tel) + '">Call</a>' : '') +
+'<button class="cr-pb-dadd" data-addfor="' + esc(pr.id) + '" type="button">+ Punch item</button>' +
+'</div>' +
+'<div class="cr-pb-tabs">' +
+tabBtn('new', 'New', nNew) +
+tabBtn('remaining', 'Remaining', nRem) +
+tabBtn('closed', 'Closed', nCls) +
 '</div>' +
 (shown.length
 ? shown.map(renderItem).join('')
-: '<div class="cr-pb-empty">' +
-(open.length ? 'Nothing here under that filter.'
-: 'Punch list is clear. Tap + to add an item.') +
-'</div>') +
+: '<div class="cr-pb-empty">' + empty + '</div>') +
 '</div>';
-wire();
-paintSignedPhotoImgs(el);
 }
 function renderItem(i){
 var pr = projectFor(i.project_id);
@@ -42706,7 +42890,11 @@ el.querySelectorAll('[data-jump]').forEach(function(b){
 b.onclick = function(){
 var k = b.dataset.jump;
 if(k === 'punch'){
-var n = document.getElementById('cr-pb-punch');
+/* The phone has to change pane to show the dossier at all; the desktop
+   already has it on screen and only needs it scrolled to. */
+if(!document.body.classList.contains('cr-lnav-on') && selJob) pane = 'doss';
+render();
+var n = el.querySelector('.cr-pb-doss');
 if(n) n.scrollIntoView({ behavior:'smooth', block:'start' });
 return;
 }
@@ -42716,8 +42904,22 @@ var top = document.getElementById('cr-pb-jobs');
 if(top) top.scrollIntoView({ behavior:'smooth', block:'start' });
 };
 });
-el.querySelectorAll('[data-filter]').forEach(function(b){
-b.onclick = function(){ activeFilter = b.dataset.filter; render(); };
+el.querySelectorAll('[data-sel]').forEach(function(b){
+b.onclick = function(){
+selJob  = b.dataset.sel;
+dossTab = 'new';
+if(!document.body.classList.contains('cr-lnav-on')) pane = 'doss';
+render();
+el.scrollTop = 0;
+};
+});
+el.querySelectorAll('[data-tab]').forEach(function(b){
+b.onclick = function(){ dossTab = b.dataset.tab; render(); };
+});
+var back = el.querySelector('[data-act="tolist"]');
+if(back) back.onclick = function(){ pane = 'list'; render(); el.scrollTop = 0; };
+el.querySelectorAll('[data-addfor]').forEach(function(b){
+b.onclick = function(){ openAdd(b.dataset.addfor); };
 });
 el.querySelectorAll('[data-open]').forEach(function(b){
 b.onclick = function(){
@@ -42889,6 +43091,7 @@ btn.disabled = false; btn.textContent = 'Add it';
 }
 async function open(){
 ensure();
+pane = 'list';
 render();
 if(typeof window.hideAllViews === 'function'){
 try{ window.hideAllViews(); }catch(_){}
