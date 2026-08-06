@@ -3213,6 +3213,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <select id="jobMenuSel" class="jobmenu jobmenu-head" style="display:none;">
           <option value="overview">Overview</option>
           <option value="checklists">Checklists</option>
+          <option value="punch">Punch Outs</option>
           <option value="inspections">Inspections</option>
           <option value="estimates">Estimates</option>
           <option value="contracts">Contracts</option>
@@ -3251,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 606 &#8212; the punch list is readable and opens on the first tap</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 607 &#8212; Punch Outs is in the job menu, with a discussion on each one</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3795,6 +3796,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="matmount" id="msListField"></div></div>
       </div>
       <input type="file" id="msFileInput" accept="application/pdf,image/*" style="display:none;">
+    </div>
+    <div id="tab-punch" style="display:none;">
+      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <div id="ppPage"></div>
     </div>
     <div id="tab-materials" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
@@ -11857,7 +11862,7 @@ function showTab(name){
   if(name === 'commissions'){ try{ renderCommissions(); }catch(_){} }
   var sel = document.getElementById('jobMenuSel');
   if(sel && sel.value !== name) sel.value = name;
-  ['overview','inspections','estimates','contracts','workorders','commissions','checklists','materials','measure'].forEach(function(t){
+  ['overview','inspections','estimates','contracts','workorders','commissions','checklists','materials','measure','punch'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
   if(name === 'inspections') refreshInspGalN();
@@ -13454,6 +13459,16 @@ function renderOverview(){
       el.classList.toggle('zero', !l.length);
     }
   }).catch(function(){});
+  function punchOpenCount(pr){
+    /* 607: asked of the module that owns punch, so there is one source of truth
+       for "how many are open". Returns '' before the rows have loaded rather
+       than a wrong 0, which would read as "nothing to do". */
+    try{
+      var r = window.CardinalPunchProfile && window.CardinalPunchProfile.openCountFor;
+      var n = r ? r(pr.id) : null;
+      return (n === null || n === undefined) ? '' : n;
+    }catch(_){ return ''; }
+  }
   function tile(ic, label, n, act){
     return '<div class="jatile" data-ja="' + act + '"><span><span class="jic">' + ic + '</span> ' + label + '</span>' +
       '<span class="jn' + (n ? '' : ' zero') + '">' + n + '</span></div>';
@@ -13466,7 +13481,8 @@ function renderOverview(){
     tile('\uD83D\uDCDC', 'Contracts', contracts, 'estimates') +
     tile('\uD83D\uDD0D', 'Inspections', insp, 'inspections') +
     tile('\uD83D\uDCE6', 'Materials', '', 'materials') +
-    tile('\uD83D\uDCCB', 'Checklists', '', 'checklists');
+    tile('\uD83D\uDCCB', 'Checklists', '', 'checklists') +
+    tile('\uD83D\uDD28', 'Punch Outs', punchOpenCount(pr), 'punch');
   /* contacts */
   var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
   document.getElementById('contactRow').innerHTML =
@@ -14719,7 +14735,7 @@ async function sendChat(){
     at: new Date().toISOString(),
     text: text
   };
-  var mentions = (text.match(/@([A-Za-z][\w.-]*)/g) || []).map(function(s){ return s.slice(1).toLowerCase(); });
+  var mentions = mentionNamesIn(text);
   if(mentions.length) msg.mentions = mentions;
   try{
     var all = parseCkAll(currentProject);
@@ -14729,14 +14745,7 @@ async function sendChat(){
     inp.value = '';
     renderChat();
     if(mentions.length){
-      var to = [];
-      TEAM_ROSTER.forEach(function(mbr){
-        var first = (mbr.name || '').trim().split(/\s+/)[0].toLowerCase();
-        var pre = (mbr.email || '').split('@')[0].toLowerCase();
-        if(mentions.some(function(mn){ return mn === first || mn === pre || first.indexOf(mn) === 0; })){
-          if(mbr.email && to.indexOf(mbr.email) < 0 && mbr.email !== msg.by) to.push(mbr.email);
-        }
-      });
+      var to = mentionEmailsFor(mentions, msg.by);
       if(to.length){
         notifyTeam(to,
           '\uD83D\uDCAC ' + msg.name + ' tagged you \u2014 ' + (currentProject.name || 'a client'),
@@ -14748,6 +14757,30 @@ async function sendChat(){
     }
   }catch(err){ showError('Could not post: ' + (err.message || err)); }
 }
+/* 607: ONE implementation of "who did this message tag". The punch-item
+   discussion needs precisely this rule, and a second copy is the duplicate-
+   pipeline bug this project keeps paying for. Extracted verbatim from
+   sendChat() — matches on first name OR email prefix, never returns the author.
+   Exported so cr-pp-script can use it without reaching into this block. */
+function mentionNamesIn(text){
+  return (String(text || '').match(/@([A-Za-z][\w.-]*)/g) || [])
+    .map(function(s){ return s.slice(1).toLowerCase(); });
+}
+function mentionEmailsFor(names, byEmail){
+  var to = [];
+  (typeof TEAM_ROSTER !== 'undefined' ? TEAM_ROSTER : []).forEach(function(mbr){
+    var first = (mbr.name || '').trim().split(/\s+/)[0].toLowerCase();
+    var pre = (mbr.email || '').split('@')[0].toLowerCase();
+    if(names.some(function(mn){ return mn === first || mn === pre || first.indexOf(mn) === 0; })){
+      if(mbr.email && to.indexOf(mbr.email) < 0 && mbr.email !== byEmail) to.push(mbr.email);
+    }
+  });
+  return to;
+}
+window.CardinalMentions = Object.assign(window.CardinalMentions || {}, {
+  names  : mentionNamesIn,
+  emails : mentionEmailsFor,
+});
 function qcNotified(to){
   var names = to.map(function(em){ return rptRepName(em); }).join(', ');
   var th = document.getElementById('chatThread');
@@ -35045,6 +35078,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:607, d:'2026-08-06', t:'Punch Outs moved into the job menu, and each one has a discussion', s:'Punch outs used to be a card sitting part-way down the client page. They are now their own entry in the job menu, next to Checklists, with the number still open showing on the tile. Open it and you get the list for that job \u2014 what is outstanding, what is closed. Tap one and it opens on its own, with the detail, the photo if there is one, and a discussion box underneath. Type @ and somebody\u2019s name, or tap their chip, and they get a notification on their phone \u2014 only them, and only when they are actually tagged. It is the same tagging you already have in Communications, so it behaves the way you expect. Community jobs keep the card where it was.' },
 { b:606, d:'2026-08-06', t:'The punch list is readable, and + Add opens on the first tap', s:'Two things about the punch list on a client. The words were unreadable \u2014 the card had been given a dark background but the writing on it was still the near-black it had when the card was white, so the item you added was there and you could not see it. And + Add took three taps to open, because the card was quietly redrawing itself about fifty times a second, taking the button away and rebuilding it under your finger; a tap that started on one and finished on the other never counted. It now redraws only when something actually changed, and every line on the card is a colour that can be read against it \u2014 checked by arithmetic, at both the light and dark end of the card.' },
 { b:605, d:'2026-08-06', t:'Adding a punch item works on any job', s:'The + Add button only offered jobs at Approved, Scheduled or Completed. Nothing is sitting at those right now, so it opened saying \u201cNo active jobs\u201d and would not save \u2014 which made the button on the client profile useless the moment it came back. The job you opened it from is now always in the list whatever stage it is at, along with anything already carrying punch, and a job that is not in flight shows its stage beside its name so you can see you are filing against a lead rather than a live job.' },
 { b:604, d:'2026-08-06', t:'The punch list is back on the client profile', s:'Adding a punch item meant leaving the client, going out to the landing page, opening Production and hoping it landed on the right job. It should never have needed any of that \u2014 the client profile has had its own Punch List card, with a + Add button, the whole time. It was being hidden by a styling rule left over from the overview rebuild, so it rendered correctly and invisibly on every job. It is back on the Overview tab, under the overview card: what is outstanding, what has been completed, and + Add to file a new one against that job without leaving the page. Community jobs were never affected \u2014 the card sits somewhere else on those and has been showing all along.' },
@@ -43201,6 +43235,62 @@ openCount : function(){ return items.filter(function(i){ return i.status === 'op
 .dbaddr{font-weight:700;font-size:15px;color:var(--rbe-ink,#cfd6df)}
 body[data-crm="community"] .dbaddr{color:var(--ccm-ink,#f2f4f3)}.cr-pp-item{display:flex;align-items:flex-start;gap:11px;padding:10px 4px;border-bottom:1px solid #f2ece1}.cr-pp-item:last-child{border-bottom:0}.cr-pp-item .box{flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:5px;border:2px solid #d0c6b4;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}.cr-pp-item .box:hover{border-color:#4a8c5a}.cr-pp-item.done .box{background:#4a8c5a;border-color:#4a8c5a}.cr-pp-item .tx{flex:1;min-width:0}.cr-pp-item .t{font:600 13.5px 'Segoe UI',Arial,sans-serif;line-height:1.4;color:#1e2432}.cr-pp-item.done .t{color:#8a8578;text-decoration:line-through}.cr-pp-item .m{font-size:11px;color:#6b6b6b;margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}.cr-pp-item .kind{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fdf1dd;color:#8f1620}.cr-pp-item .kind.callback{background:#fbe9e8;color:var(--red-dk)}.cr-pp-item .kind.ticket{background:#e9f0f9;color:#2d4468}.cr-pp-item .hi{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fbe9e8;color:var(--red-dk)}.cr-pp-item img{width:34px;height:34px;object-fit:cover;border-radius:6px;flex:0 0 auto;cursor:zoom-in}.cr-pp-fold{width:100%;margin-top:10px;padding:9px 12px;background:#faf7f0;border:1px dashed #ddd6cf;border-radius:8px;cursor:pointer;text-align:left;font-family:inherit;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-pp-fold:hover{background:#f5efe4;border-color:#c8202e;color:#5a4a1a}.cr-pp-fold .chev{float:right;color:#a89e88}.cr-pp-hist[hidden]{display:none}.cr-pp-hist{margin-top:8px;padding-top:4px;border-top:1px solid #f2ece1}/* community blue, round 2 */
 body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba(4,120,87,.35)}body.cr-cc-open .cr-pp-hd{background:linear-gradient(180deg,var(--ccm-raise,#1e2220),var(--ccm-card,#161918));border-bottom-color:rgba(4,120,87,.2)}body.cr-cc-open .cr-pp-hd .t{color:var(--ccm-ink,#f2f4f3)}body.cr-cc-open .cr-pp-hd .add{background:transparent;border:1px solid var(--ccm-ac,#34D399);color:var(--ccm-ac,#34D399)}body.cr-cc-open .cr-pp-item{border-bottom-color:rgba(4,120,87,.12)}body.cr-cc-open .cr-pp-item .t{color:var(--ccm-ink,#f2f4f3)}body.cr-cc-open .cr-pp-item.done .t{color:var(--ccm-dim,#7d8781)}body.cr-cc-open .cr-pp-item .m{color:var(--ccm-dim,#7d8781)}body.cr-cc-open .cr-pp-item .box{background:var(--ccm-ground,#0e100f);border-color:var(--ccm-washln,#047857)}body.cr-cc-open .cr-pp-none{color:var(--ccm-mute,#b6c0ba)}body.cr-cc-open .cr-pp-fold{color:var(--ccm-ac,#34D399)}body.claim-insurance .cr-pp-card{background:linear-gradient(160deg,var(--ct-surface) 0%,var(--ct-bg) 100%);border-color:var(--ct-line)}body.claim-insurance .cr-pp-hd{background:linear-gradient(180deg,var(--ct-surface-3),var(--ct-surface-2));border-bottom-color:var(--ct-line)}body.claim-insurance .cr-pp-hd .t{color:var(--ct-ink)}body.claim-insurance .cr-pp-item .t{color:var(--ct-ink)}body.claim-insurance .cr-pp-item.done .t{color:var(--ct-ink-2)}body.claim-insurance .cr-pp-item .m{color:var(--ct-ink-2)}body.claim-insurance .cr-pp-item{border-bottom-color:var(--ct-line)}body.claim-insurance .cr-pp-item .box{background:var(--ct-surface-2);border-color:var(--ct-red)}body.claim-insurance .cr-pp-none{color:var(--ct-ink-2)}body.claim-insurance .cr-pp-fold{color:var(--ct-red-deep)}</style>
+<style id="cr-ppg-styles">/* 607: Punch Outs tab. Lives in its own block so the
+   card's stylesheet stays the card's. Dark values first — this app's default
+   theme is dark — with the retail daylight twin under :root[data-theme="rb-light"].
+   Every token carries a literal fallback (448-449), and every ink was checked
+   against its real ground rather than eyeballed. */
+#ppPage .pp-page{padding:2px 0 30px}
+#ppPage .pp-actions{margin:2px 0 14px}
+#ppPage .pp-add{background:var(--rbe-bg2,#262a31);border:1px solid var(--rbe-hair,#2c3038);color:var(--rbe-ink,#cfd6df);border-radius:9px;padding:10px 14px;cursor:pointer;font:700 12.5px 'Segoe UI',Arial,sans-serif}
+#ppPage .pp-add:hover{border-color:#f5a623;color:#f5a623}
+#ppPage .pp-rule{display:flex;align-items:center;gap:9px;margin:20px 0 9px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8)}
+#ppPage .pp-rule span{font-variant-numeric:tabular-nums;color:#f5a623}
+#ppPage .pp-rule::after{content:'';flex:1;height:1px;background:var(--rbe-hair,#2c3038)}
+#ppPage .pp-row{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:var(--rbe-bg1,#2e333b);border:1px solid var(--rbe-hair,#2c3038);border-radius:11px;padding:12px 13px;margin-top:8px;cursor:pointer;font-family:inherit;color:var(--rbe-ink,#cfd6df)}
+#ppPage .pp-row:hover{border-color:#f5a623}
+#ppPage .pp-rowb{flex:1;min-width:0}
+#ppPage .pp-rowt{display:block;font:600 14px 'Segoe UI',Arial,sans-serif;line-height:1.35;color:var(--rbe-ink,#cfd6df)}
+#ppPage .pp-row.done .pp-rowt{text-decoration:line-through;color:var(--rbe-mute,#9aa0a8)}
+#ppPage .pp-rowm{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:5px;font-size:11.5px;color:var(--rbe-mute,#9aa0a8)}
+#ppPage .pp-rowc{flex:0 0 auto;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--rbe-mute,#9aa0a8)}
+#ppPage .pp-chev{flex:0 0 auto;color:var(--rbe-mute,#9aa0a8);font-size:17px;line-height:1}
+#ppPage .kind{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(245,166,35,.16);color:#f5a623}
+#ppPage .kind.callback{background:rgba(224,122,95,.18);color:#e07a5f}
+#ppPage .kind.ticket{background:rgba(230,232,234,.1);color:var(--rbe-ink,#cfd6df)}
+#ppPage .hi{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(224,122,95,.18);color:#e07a5f}
+#ppPage .pp-back{background:transparent;border:1px solid var(--rbe-hair,#2c3038);color:var(--rbe-mute,#9aa0a8);border-radius:8px;padding:7px 12px;cursor:pointer;font:700 11.5px 'Segoe UI',Arial,sans-serif;margin-bottom:12px}
+#ppPage .pp-back:hover{border-color:#f5a623;color:var(--rbe-ink,#cfd6df)}
+#ppPage .pp-card{background:var(--rbe-bg1,#2e333b);border:1px solid var(--rbe-hair,#2c3038);border-radius:12px;padding:15px}
+#ppPage .pp-dh{display:flex;align-items:flex-start;gap:11px}
+#ppPage .pp-box{flex:0 0 auto;width:22px;height:22px;margin-top:2px;border-radius:6px;border:2px solid var(--rbe-checkbd,#4a505a);background:var(--rbe-bg2,#262a31);cursor:pointer;color:#fff;font-size:13px;line-height:1;padding:0}
+#ppPage .pp-box.on{background:#4a8c5a;border-color:#4a8c5a}
+#ppPage .pp-dt{flex:1;min-width:0;font:700 17px Georgia,'Times New Roman',serif;line-height:1.3;color:var(--rbe-ink,#cfd6df)}
+#ppPage .pp-dt.done{text-decoration:line-through;color:var(--rbe-mute,#9aa0a8)}
+#ppPage .pp-dm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:12px;color:var(--rbe-mute,#9aa0a8)}
+#ppPage .pp-dd{margin-top:11px;font-size:14px;line-height:1.6;color:var(--rbe-ink,#cfd6df)}
+#ppPage .pp-dimg{display:block;margin-top:12px;max-width:100%;border-radius:9px;cursor:zoom-in}
+#ppPage .pp-thread{display:flex;flex-direction:column;gap:9px}
+#ppPage .pp-msg{background:var(--rbe-bg1,#2e333b);border:1px solid var(--rbe-hair,#2c3038);border-radius:10px;padding:10px 12px}
+#ppPage .pp-msgh{display:flex;gap:9px;align-items:baseline;font-size:11.5px;color:var(--rbe-mute,#9aa0a8)}
+#ppPage .pp-msgh b{font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#cfd6df)}
+#ppPage .pp-msgt{margin-top:5px;font-size:14px;line-height:1.55;white-space:pre-wrap;color:var(--rbe-ink,#cfd6df)}
+#ppPage .pp-none{font-size:13.5px;line-height:1.6;color:var(--rbe-mute,#9aa0a8);padding:8px 2px}
+#ppPage .pp-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+#ppPage .pp-tag{background:var(--rbe-bg2,#262a31);border:1px solid var(--rbe-hair,#2c3038);color:var(--rbe-mute,#9aa0a8);border-radius:20px;padding:5px 11px;cursor:pointer;font:700 11.5px 'Segoe UI',Arial,sans-serif}
+#ppPage .pp-tag:hover{border-color:#f5a623;color:#f5a623}
+#ppPage .pp-compose{display:flex;gap:9px;align-items:flex-end;margin-top:10px}
+#ppPage .pp-input{flex:1;min-width:0;box-sizing:border-box;background:var(--rbe-bg2,#262a31);border:1px solid var(--rbe-hair,#2c3038);border-radius:9px;padding:10px 12px;font:400 14px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#cfd6df);resize:vertical;outline:none}
+#ppPage .pp-input:focus{border-color:#f5a623}
+#ppPage .pp-send{flex:0 0 auto;background:#f5a623;color:#14171b;border:0;border-radius:9px;padding:11px 16px;cursor:pointer;font:800 12.5px 'Segoe UI',Arial,sans-serif}
+#ppPage .pp-send:disabled{opacity:.5;cursor:wait}
+:root[data-theme="rb-light"] #ppPage .pp-rule span,:root[data-theme="rb-light"] #ppPage .pp-add:hover,:root[data-theme="rb-light"] #ppPage .pp-back:hover,:root[data-theme="rb-light"] #ppPage .pp-tag:hover{color:#8a5a08;border-color:#8a5a08}
+:root[data-theme="rb-light"] #ppPage .pp-row:hover,:root[data-theme="rb-light"] #ppPage .pp-input:focus{border-color:#8a5a08}
+:root[data-theme="rb-light"] #ppPage .kind{background:#faf4e8;color:#8a5a08}
+:root[data-theme="rb-light"] #ppPage .kind.callback,:root[data-theme="rb-light"] #ppPage .hi{background:#fbeeea;color:#a83f24}
+:root[data-theme="rb-light"] #ppPage .kind.ticket{background:#f2f2f2;color:#141414}
+:root[data-theme="rb-light"] #ppPage .pp-send{background:#8a5a08;color:#ffffff}
+</style>
 <script id="cr-pp-script">
 (function(){
 'use strict';
@@ -43277,8 +43367,18 @@ return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +
 function render(){
 var pr = window.currentProject;
 var host = document.getElementById('cr-pp-mount');
-if(!pr){ if(host) host.remove(); lastHtml = ''; return; }
+if(!pr){ if(host) host.remove(); lastHtml = ''; selItem = null; renderPage(); return; }
 var ccOpen = document.body.classList.contains('cr-cc-open') && document.getElementById('cr-cc');
+/* 607: on retail and insurance this card MOVED into the Punch Outs tab, so the
+   overview mount is no longer created at all — which also retires the build-604
+   fight with #tab-overview's display:none rule rather than continuing to win it.
+   Community keeps its inline card: the community takeover has no tab strip to
+   move it to, and that path was never affected by any of this. */
+if(!ccOpen){
+if(host){ host.remove(); lastHtml = ''; }
+renderPage();
+return;
+}
 if(host){
 var inCc = !!(host.closest && host.closest('#cr-cc'));
 if(!!ccOpen !== inCc){ host.remove(); host = null; lastHtml = ''; }
@@ -43331,11 +43431,12 @@ done.map(itemHtml).join('') +
 '</div>';
 /* Nothing changed and the card is already on screen — leave the DOM alone.
    host.firstChild guards the case where the mount was just created empty. */
-if(html === lastHtml && host.firstChild) return;
+if(html === lastHtml && host.firstChild){ renderPage(); return; }
 lastHtml = html;
 host.innerHTML = html;
 wire(host);
 paintSignedPhotoImgs(host);
+renderPage();
 }
 function wire(host){
 var add = host.querySelector('[data-act="add"]');
@@ -43387,6 +43488,225 @@ alert('Could not save: ' + (e.message || e));
 await load(it.project_id); render();
 }
 }
+
+/* ================= 607: the Punch Outs tab =============================
+   A real tab (#tab-punch, driven by showTab/#jobMenuSel), NOT a fixed overlay —
+   so it needs no hideAllViews()/navRestore() registration and cannot strand the
+   user the way an unregistered full-screen view does (570-572).
+   Guarded with a stored signature, same as the card: writing innerHTML is a
+   mutation this module's own observer watches, and an unguarded write here
+   would reintroduce 606's runaway repaint on a second surface. */
+var selItem = null;
+var pageSig = '';
+function meName(){
+try{
+if(typeof window.displayNameFor === 'function' && window.currentUser){
+return window.displayNameFor(window.currentUser);
+}
+}catch(_){}
+var e = myEmail();
+return e ? e.split('@')[0] : 'Me';
+}
+function itemById(id){
+for(var i = 0; i < rows.length; i++){
+if(String(rows[i].id) === String(id)) return rows[i];
+}
+return null;
+}
+function tagChips(){
+var me = myEmail();
+var R = (typeof window.TEAM_ROSTER !== 'undefined' && window.TEAM_ROSTER) || [];
+return R.filter(function(m){ return m.email && m.email !== me; }).map(function(m){
+var first = String(m.name || '').trim().split(/\s+/)[0];
+if(!first) return '';
+return '<button class="pp-tag" data-tag="' + esc(first.toLowerCase()) +
+'" type="button">@' + esc(first) + '</button>';
+}).join('');
+}
+function threadHtml(it){
+var msgs = Array.isArray(it.comments) ? it.comments : [];
+if(!msgs.length){
+return '<div class="pp-none">No discussion yet. Type @ and a name to bring somebody in — ' +
+'they get a notification, nobody else does.</div>';
+}
+return msgs.map(function(m){
+return '<div class="pp-msg">' +
+'<div class="pp-msgh"><b>' + esc(m.name || m.by || 'Someone') + '</b>' +
+'<span>' + esc(when(m.at)) + '</span></div>' +
+'<div class="pp-msgt">' + esc(m.text || '') + '</div>' +
+'</div>';
+}).join('');
+}
+function listHtml(){
+var open = rows.filter(function(i){ return i.status !== 'done'; });
+var done = rows.filter(function(i){ return i.status === 'done'; });
+function row(i){
+var n = Array.isArray(i.comments) ? i.comments.length : 0;
+return '<button class="pp-row' + (i.status === 'done' ? ' done' : '') +
+'" data-open="' + esc(i.id) + '" type="button">' +
+'<span class="pp-rowb">' +
+'<span class="pp-rowt">' + esc(i.title) + '</span>' +
+'<span class="pp-rowm">' +
+'<span class="kind ' + esc(i.kind) + '">' + esc(i.kind) + '</span>' +
+(i.priority === 'high' && i.status !== 'done' ? '<span class="hi">urgent</span>' : '') +
+(i.assigned_to ? '<span>' + esc(shortName(i.assigned_to)) + '</span>' : '') +
+'<span>· ' + esc(when(i.created_at)) + '</span>' +
+'</span>' +
+'</span>' +
+(n ? '<span class="pp-rowc">💬 ' + n + '</span>' : '') +
+'<span class="pp-chev">›</span>' +
+'</button>';
+}
+return '<div class="pp-page">' +
+'<h3 class="projsec">🔨 Punch Outs</h3>' +
+'<div class="pp-actions"><button class="pp-add" data-act="add" type="button">+ Add a punch out</button></div>' +
+'<div class="pp-rule">Open <span>' + open.length + '</span></div>' +
+(open.length ? open.map(row).join('')
+: '<div class="pp-none">Nothing outstanding on this job.</div>') +
+(done.length
+? '<div class="pp-rule">Closed <span>' + done.length + '</span></div>' + done.map(row).join('')
+: '') +
+'</div>';
+}
+function detailHtml(it){
+var n = Array.isArray(it.comments) ? it.comments.length : 0;
+return '<div class="pp-page">' +
+'<button class="pp-back" data-act="tolist" type="button">← All punch outs</button>' +
+'<div class="pp-card">' +
+'<div class="pp-dh">' +
+'<button class="pp-box' + (it.status === 'done' ? ' on' : '') +
+'" data-act="toggle" type="button">' + (it.status === 'done' ? '✓' : '') + '</button>' +
+'<span class="pp-dt' + (it.status === 'done' ? ' done' : '') + '">' + esc(it.title) + '</span>' +
+'</div>' +
+'<div class="pp-dm">' +
+'<span class="kind ' + esc(it.kind) + '">' + esc(it.kind) + '</span>' +
+(it.priority === 'high' && it.status !== 'done' ? '<span class="hi">urgent</span>' : '') +
+(it.assigned_to ? '<span>' + esc(shortName(it.assigned_to)) + '</span>' : '<span>unassigned</span>') +
+'<span>· added ' + esc(when(it.created_at)) + '</span>' +
+(it.status === 'done' && it.done_at ? '<span>· done ' + esc(when(it.done_at)) + '</span>' : '') +
+'</div>' +
+(it.detail ? '<div class="pp-dd">' + esc(it.detail) + '</div>' : '') +
+(it.photo_url ? '<img class="pp-dimg" src="' + esc(it.photo_url) + '" alt="" data-act="zoom">' : '') +
+'</div>' +
+'<div class="pp-rule">Discussion' + (n ? ' <span>' + n + '</span>' : '') + '</div>' +
+'<div class="pp-thread">' + threadHtml(it) + '</div>' +
+'<div class="pp-tags">' + tagChips() + '</div>' +
+'<div class="pp-compose">' +
+'<textarea class="pp-input" data-f="msg" rows="2" placeholder="Write a note…"></textarea>' +
+'<button class="pp-send" data-act="send" type="button">Post</button>' +
+'</div>' +
+'</div>';
+}
+function renderPage(){
+var host = document.getElementById('ppPage');
+if(!host) return;
+var pr = window.currentProject;
+var html;
+if(!pr){
+html = '';
+}else if(selItem){
+var it = itemById(selItem);
+if(!it){ selItem = null; html = listHtml(); }
+else html = detailHtml(it);
+}else{
+html = listHtml();
+}
+if(html === pageSig && (host.firstChild || html === '')) return;
+pageSig = html;
+host.innerHTML = html;
+wirePage(host);
+if(html) paintSignedPhotoImgs(host);
+}
+function wirePage(host){
+host.querySelectorAll('[data-open]').forEach(function(b){
+b.onclick = function(){ selItem = b.dataset.open; renderPage(); window.scrollTo(0, 0); };
+});
+var back = host.querySelector('[data-act="tolist"]');
+if(back) back.onclick = function(){ selItem = null; renderPage(); window.scrollTo(0, 0); };
+var add = host.querySelector('[data-act="add"]');
+if(add) add.onclick = function(){
+var pr = window.currentProject;
+if(!pr) return;
+if(window.CardinalProduction && window.CardinalProduction.addFor){
+window.CardinalProduction.addFor(pr.id);
+}else{
+alert('Production board not loaded — reload the app.');
+}
+};
+var tg = host.querySelector('[data-act="toggle"]');
+if(tg) tg.onclick = function(){
+var it = itemById(selItem);
+if(it) toggle(it);
+};
+var img = host.querySelector('[data-act="zoom"]');
+if(img) img.onclick = function(){
+var it = itemById(selItem);
+if(it && window.CardinalResourceImages) window.CardinalResourceImages.open(it.photo_url, it.title);
+};
+host.querySelectorAll('[data-tag]').forEach(function(b){
+b.onclick = function(){
+var inp = host.querySelector('[data-f="msg"]');
+if(!inp) return;
+inp.value = (inp.value ? inp.value.replace(/\s*$/, ' ') : '') + '@' + b.dataset.tag + ' ';
+inp.focus();
+};
+});
+var send = host.querySelector('[data-act="send"]');
+if(send) send.onclick = function(){
+var inp = host.querySelector('[data-f="msg"]');
+var it = itemById(selItem);
+if(!inp || !it) return;
+var text = inp.value.trim();
+if(!text) return;
+send.disabled = true;
+postComment(it, text).catch(function(e){
+alert('Could not post: ' + (e.message || e));
+}).then(function(){ send.disabled = false; });
+};
+}
+/* Save the message, then notify ONLY the people it tagged — Theo's rule. The
+   mention resolution is the app's single implementation (window.CardinalMentions),
+   the same one the job-level Communications chat uses; a second copy of that
+   rule here is exactly the duplicate-pipeline bug this project keeps paying for. */
+async function postComment(it, text){
+if(!window.supa) throw new Error('offline');
+var by = myEmail();
+var M = window.CardinalMentions;
+var names = M ? M.names(text) : [];
+var msg = { by: by || null, name: meName(), at: new Date().toISOString(), text: text };
+if(names.length) msg.mentions = names;
+var list = (Array.isArray(it.comments) ? it.comments : []).slice();
+list.push(msg);
+var r = await window.supa.from('punch_items').update({ comments: list }).eq('id', it.id).select().single();
+if(r.error){
+if(/comments|column|schema cache/i.test(r.error.message || '')){
+throw new Error('the discussion column is missing — run punch_comments.sql first');
+}
+throw r.error;
+}
+it.comments = list;
+pageSig = '';
+renderPage();
+if(!names.length || !M) return;
+var to = M.emails(names, by);
+if(!to.length || typeof window.notifyTeam !== 'function') return;
+var pr = window.currentProject;
+window.notifyTeam(to,
+'🔨 ' + msg.name + ' tagged you — ' + ((pr && pr.name) || 'a job'),
+'<p><b>' + esc(msg.name) + '</b> tagged you on the punch out <b>' + esc(it.title) + '</b>' +
+((pr && pr.name) ? ' at <b>' + esc(pr.name) + '</b>' : '') + ':</p>' +
+'<blockquote>' + esc(text) + '</blockquote>' +
+'<p>Open the job’s Punch Outs page in Cardinal Resource to reply.</p>');
+var th = document.querySelector('#ppPage .pp-thread');
+if(th){
+var d = document.createElement('div');
+d.className = 'pp-none';
+d.textContent = '🔔 Notified ' + to.map(function(em){
+return (typeof window.rptRepName === 'function' ? window.rptRepName(em) : em.split('@')[0]);
+}).join(', ');
+th.appendChild(d);
+}
+}
 var busy = false;
 async function check(){
 var pr = window.currentProject;
@@ -43424,6 +43744,12 @@ childList:true, subtree:true,
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
 window.CardinalPunchProfile = {
+/* 607: the job-menu tile's count. Returns null before the rows for this project
+   have loaded, so the tile shows nothing rather than a confident wrong 0. */
+openCountFor : function(pid){
+if(loadedFor === null || String(loadedFor) !== String(pid)) return null;
+return rows.filter(function(i){ return i.status !== 'done'; }).length;
+},
 refresh : async function(){
 var pr = window.currentProject;
 if(pr){ await load(pr.id); render(); }

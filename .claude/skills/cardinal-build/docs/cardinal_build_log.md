@@ -8159,3 +8159,32 @@ class 32 instead of class 24.
   token bug; it was not. And a selector scan filtered to rules *naming* `cr-pp-*` missed the rule
   that actually wins, which is `#cr-pp-mount > div`. Enumerate what an element **matches**, not what
   mentions it.
+- **607** · **Punch Outs moved into the job menu, and each item got a discussion thread.** Theo:
+  *"move the location into job menu as Punch outs ... have it click into the punch out for the
+  client. Maybe a list for the client and when you click on it, opens that specific punch out and
+  add a small discussion box that you can tag other users in"* — then, asked how tagging should
+  behave: *"chat box primarily. Only notify if @user."*
+  **⚠ SQL FIRST: `punch_comments.sql` adds `punch_items.comments jsonb`.** Same shape as the
+  project-level `ck.comments` (`{by,name,at,text,mentions}`) so one renderer and one resolver serve
+  both. **No new RLS** — the column rides on `punch_items`' existing policies rather than creating a
+  second place for that rule to drift.
+  **Most of this was already built, which is the whole point of auditing first.** `sendChat()`
+  already extracted `@name`, resolved it against `TEAM_ROSTER` by first name **or** email prefix,
+  excluded the author, and pushed via `notifyTeam()` → the wrapper at 21313 → `/api/notify`. That is
+  precisely the rule Theo asked for. **Extracted to ONE implementation** — `mentionNamesIn()` /
+  `mentionEmailsFor()`, exported as `window.CardinalMentions` — and `sendChat` now calls it, so
+  there is not a second copy of the tagging rule. Copying it would have been the duplicate-pipeline
+  bug this project keeps paying for.
+  **It is a real TAB, not a fixed overlay** — `#tab-punch`, driven by the existing
+  `showTab()`/`#jobMenuSel`. So it needs no `hideAllViews()` / `navRestore()` registration and
+  cannot strand the user the way 570–572's unregistered full-screen views did. It also **retires the
+  604 fight** rather than continuing to win it: nothing mounts into `#tab-overview` any more.
+  **Community deliberately keeps its inline card** — the takeover has no tab strip to move it to,
+  and that path was never affected by 604/606. Verified unchanged.
+  Both new surfaces carry 606's stored-signature guard; an unguarded `innerHTML` write on the tab
+  would have reintroduced the runaway repaint on a second surface.
+  Verified: **32-assertion harness against the shipped module text and the shipped mention helpers**,
+  including the three that reach real phones — **a push goes only to the tagged person, never to the
+  author even if self-tagged, and an untagged message notifies nobody** — plus tile count, list,
+  detail, chip insertion, save shape, back navigation, and 0 repaints in 1.2s. Community regression
+  test separate. 603/605/606 harnesses re-run green.
