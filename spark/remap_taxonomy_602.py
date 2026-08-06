@@ -204,12 +204,20 @@ def main():
         for cls, rest, ln in boxes:
             key = (os.path.relpath(path, args.root), ln)
 
-            # --drop-paint removes the box outright. It catches BOTH the
-            # pre-remap class (24) and the parked sentinel (99), so it works on
-            # a fresh dataset AND on one already sitting at pass-one state —
-            # which matters, because restoring 473 backups just to re-run is a
-            # bigger, riskier operation than deleting the boxes where they are.
-            if args.drop_paint and cls in (PAINT, SENTINEL):
+            # --drop-paint removes the box outright, but WHICH index means
+            # "paint" depends on whether this tree has already been remapped,
+            # and getting that wrong destroys real annotations:
+            #
+            #   fresh tree   -> paint is 24. No sentinels exist yet.
+            #   parked tree  -> paint is 99, and 24 now means WINDOW_SEAL_FAILURE
+            #                   (old 26 shifts down to 24). Dropping 24 here
+            #                   deletes real window annotations, silently.
+            #
+            # An earlier version dropped `cls in (PAINT, SENTINEL)` in both
+            # states. On the live dataset that was 139 boxes instead of 128 —
+            # the extra 11 were window_seal_failure. Caught only because the
+            # count did not match; nothing in the run would have said so.
+            if args.drop_paint and cls == (SENTINEL if already else PAINT):
                 drop.add(ln)
                 dropped_boxes.append((path, ln))
                 dirty = True

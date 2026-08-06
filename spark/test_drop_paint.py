@@ -31,6 +31,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REMAP = os.path.join(HERE, 'remap_taxonomy_602.py')
 
 SOFFIT, FASCIA, SIDING, PAINT, INTERIOR = 19, 20, 21, 24, 32
+# OLD 26 window_seal_failure remaps to NEW 24 -- the same index paint used to
+# occupy. On a parked tree, dropping "24" therefore deletes real window
+# annotations. Case B3 exists because that shipped once.
+WINDOW_SEAL = 26
 SENTINEL = 99
 
 YAML = 'path: /x\ntrain: images/train\nval: images/val\nnc: 33\nnames:\n  - hail_impact\n'
@@ -48,6 +52,10 @@ def build(ds):
     with open(os.path.join(lab, 'a.txt'), 'w') as fh:
         fh.write('%d 0.5 0.5 0.2 0.2\n\n%d 0.4 0.4 0.1 0.1\n%d 0.3 0.3 0.1 0.1\n'
                  % (SOFFIT, PAINT, INTERIOR))
+    # d.txt — a window_seal_failure box. After the remap it lands on NEW 24,
+    # the index paint vacated. It must survive --drop-paint in BOTH entry states.
+    with open(os.path.join(lab, 'd.txt'), 'w') as fh:
+        fh.write('%d 0.5 0.5 0.1 0.1\n%d 0.2 0.2 0.1 0.1\n' % (WINDOW_SEAL, PAINT))
     # b.txt — paint is the ONLY box; the file must end up empty
     with open(os.path.join(lab, 'b.txt'), 'w') as fh:
         fh.write('%d 0.5 0.5 0.1 0.1\n' % PAINT)
@@ -89,6 +97,8 @@ def main():
                     classes(os.path.join(lab, 'a.txt')), [19, 30])
         ok &= check('A b.txt emptied', classes(os.path.join(lab, 'b.txt')), [])
         ok &= check('A c.txt siding 21->20', classes(os.path.join(lab, 'c.txt')), [20])
+        ok &= check('A3 window_seal_failure 26->24 SURVIVES the drop',
+                    classes(os.path.join(lab, 'd.txt')), [24])
 
         body = open(os.path.join(lab, 'a.txt')).read().split('\n')
         if body[1].strip() != '':
@@ -96,11 +106,11 @@ def main():
         else:
             print('ok    A blank line preserved through the deletion')
 
-        # Two paint boxes in the fixture: one in a.txt, one in b.txt. c.txt has
-        # none. (An earlier revision of this harness asserted 3 and went red
-        # against correct code -- count the fixture, do not guess it.)
-        if '2 paint boxes DELETED' not in log:
-            print('FAIL  A did not report 2 deletions\n%s' % log); ok = False
+        # Three paint boxes in the fixture: a.txt, b.txt, d.txt. c.txt has none.
+        # Count the fixture, do not guess it -- an earlier revision asserted a
+        # number from memory and went red against correct code.
+        if '3 paint boxes DELETED' not in log:
+            print('FAIL  A did not report 3 deletions\n%s' % log); ok = False
         else:
             print('ok    A reported the deletions')
         if 'label files now have no boxes' not in log:
@@ -135,6 +145,11 @@ def main():
                     classes(os.path.join(lab, 'a.txt')), [19, 30])
         ok &= check('B c.txt still 20, not shifted again',
                     classes(os.path.join(lab, 'c.txt')), [20])
+        # B3 — THE ONE THAT SHIPPED BROKEN. On a parked tree, 24 means
+        # window_seal_failure. Dropping it deleted 11 real boxes on the live
+        # dataset and only the count gave it away.
+        ok &= check('B3 window_seal_failure on NEW 24 SURVIVES on a parked tree',
+                    classes(os.path.join(lab, 'd.txt')), [24])
         if 'nc: 31' not in open(os.path.join(ds, 'data.yaml')).read():
             print('FAIL  B left data.yaml un-rewritten'); ok = False
         else:
