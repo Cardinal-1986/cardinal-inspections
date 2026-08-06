@@ -1,33 +1,46 @@
 # RECOVERY — build 602 taxonomy remap, mid-flight state
 
-**Written 6 Aug 2026, ~01:40 UTC, because the office Spark session lost its context
-mid-task.** If you are a fresh session on the Spark and you are reading this, the
-dataset is **half-migrated** and there are things you must not do. Read the whole
-file before running anything.
+**Written 6 Aug 2026. Rewritten ~02:50 UTC after the plan changed.** If you are a
+fresh session on the Spark, the dataset is **half-migrated** and there are things
+you must not do. Read the whole file before running anything.
 
 Nothing in here is reproducible from the repo alone — the state lives on the box.
+
+> **Superseded plan warning.** An earlier revision of this file said the dataset
+> was waiting on a human to rule 19-or-20 on 128 paint boxes, 91 of them by eye.
+> **That review was abandoned and should not be resumed.** §2 says why. If you are
+> working from a copy that describes `paint_review.tsv`, a suggester pass or a
+> review page, that copy is stale — re-pull the branch.
 
 ---
 
 ## 0 · The one-paragraph version
 
-`remap_taxonomy_602.py --apply` **pass one has already been run** on
-`yolo_dataset`. 473 label files were rewritten, 128 `paint_deterioration` boxes
-were parked on **class 99**, and every touched file was backed up to `.pre602`.
-The dataset is **deliberately not trainable** in this state. It is waiting on Theo
-to rule 19 (soffit/fascia) or 20 (siding) on 128 boxes, of which 91 need his eye
-on the photograph. Then pass two resolves them and rewrites `data.yaml`.
+`remap_taxonomy_602.py --apply` **pass one has already been run**. 473 label files
+were rewritten, 128 `paint_deterioration` boxes were parked on **class 99**, and
+every touched file was backed up to `.pre602`. The dataset is **deliberately not
+trainable** in this state.
 
-**Do not re-run pass one. Do not train. Do not delete `.pre602` files.**
+**One command finishes it:**
+
+```bash
+python3 remap_taxonomy_602.py --root $DS --drop-paint            # dry run
+python3 remap_taxonomy_602.py --root $DS --drop-paint --apply    # deletes
+```
+
+That deletes the parked boxes, rewrites `data.yaml` to `nc: 31`, and the dataset is
+trainable. No review file, no human gate, no restoring backups first.
+
+**Do not re-run plain pass one. Do not train while any box sits on 99. Do not
+delete the `.pre602` backups.**
 
 ---
 
 ## 1 · Verify where you actually are — run this FIRST
 
-Everything below is what the previous session **reported**. This session could not
-reach the Spark to confirm it (the container is not on the tailnet), so **verify
-before acting on any of it**. Run from the dataset root — the directory holding
-`images/` and `labels/`:
+Everything below is what previous sessions **reported**. The session that wrote
+this could not reach the Spark to confirm it, so **verify before acting on any of
+it**. Run from the dataset root — the directory holding `images/` and `labels/`:
 
 ```bash
 DS=/home/cardinal2023/hailapp/yolo_dataset      # confirm this is right
@@ -35,21 +48,20 @@ DS=/home/cardinal2023/hailapp/yolo_dataset      # confirm this is right
 echo "marker:      $([ -f $DS/.remapped_602 ] && echo PRESENT || echo absent)"
 echo "backups:     $(find $DS/labels -name '*.pre602' | wc -l)   (expect 473)"
 echo "label files: $(find $DS/labels -name '*.txt' ! -name 'classes.txt' | wc -l)   (expect 1149)"
-echo "on class 99: $(grep -rhc '^99 ' $DS/labels --include='*.txt' | paste -sd+ | bc)   (expect 128)"
-echo "data.yaml:   $(grep -E '^nc:' $DS/data.yaml)   (expect nc: 33 until pass two)"
-echo "review tsv:  $([ -f $DS/paint_review.tsv ] && wc -l < $DS/paint_review.tsv || echo MISSING)   (expect 129 = 128 + header)"
-echo "suggested:   $([ -f $DS/paint_review.suggested.tsv ] && echo present || echo absent)"
+echo "on class 99: $(grep -rh '^99 ' $DS/labels --include='*.txt' | wc -l)   (expect 128)"
+echo "on class 24: $(grep -rh '^24 ' $DS/labels --include='*.txt' | wc -l)   (expect 0 post-pass-one)"
+echo "data.yaml:   $(grep -E '^nc:' $DS/data.yaml)"
 ```
 
 ### Read the result against this table
 
-| marker | `.pre602` | boxes on 99 | where you are | what to do |
-|---|---|---|---|---|
-| present | ~473 | ~128 | **pass one done** — the expected state | wait for Theo's rulings, then pass two |
-| present | ~473 | **0** | pass two already ran | check `data.yaml` says `nc: 31`; if so you are done, retrain |
-| **absent** | some | any | **pass one died partway** | **restore from `.pre602`, do NOT re-run** — see §4 |
-| absent | none | 0 | pass one never ran | start from the dry run, §5 |
-| — | — | — | dataset directory gone | rebuild with `prepare_yolo.py`, then §5 |
+| marker | `.pre602` | on 99 | on 24 | where you are | what to do |
+|---|---|---|---|---|---|
+| present | ~473 | ~128 | 0 | **pass one done** — the expected state | run `--drop-paint --apply` |
+| present | ~473 | **0** | 0 | drop already ran | check `data.yaml` says `nc: 31`; retrain |
+| **absent** | some | any | any | **pass one died partway** | **restore from `.pre602`, do NOT re-run** — §5 |
+| absent | none | 0 | ~128 | pass one never ran | §6 — go straight to `--drop-paint` |
+| — | — | — | — | dataset directory gone | rebuild with `prepare_yolo.py`, then §6 |
 
 The marker is written **only at the very end** of pass one. Marker absent while
 backups exist means it stopped mid-write, and re-running would shift the finished
@@ -57,58 +69,66 @@ files a second time.
 
 ---
 
-## 2 · What must not happen
+## 2 · Why the 128 boxes are deleted rather than reassigned
 
-- **Never run `--apply` pass one twice.** The `.remapped_602` marker makes the
-  script refuse, which is the guard. Do not delete the marker to "get past" it.
-- **Never train while any box sits on class 99.** 99 is outside `nc`, so training
-  hard-fails on purpose. A hard failure here is correct behaviour, not a bug to
-  work around.
-- **Never delete `.pre602` files** until the retrain is done and Theo has accepted
-  the result. They are the only way back.
-- **Never merge, rebase or force-push `claude/taxonomy-602` / PR #130.**
-- The scripts live **only on branch `claude/taxonomy-602`**, not on `main`. A
-  `git pull` of `main` will not give you `remap_taxonomy_602.py` or
-  `suggest_paint_surface.py`.
+602 removed `paint_deterioration` on the reasoning that paint is a *condition*, not
+a *location*, so each box should be reassigned to the surface carrying it — assumed
+to be soffit/fascia or siding. A two-pass design, a review page and an
+overlap-scoring suggester were all built on that binary.
+
+**Theo reviewed the actual photographs and it does not hold.** The first seven
+boxes were on **decking, windows, roofs and leaks**. Three that *were* on
+soffit/fascia/siding **duplicated a box already annotated there** — so reassigning
+those would put a second identical-class box on the same defect, manufacturing the
+redundancy this build exists to remove. Not one of the boxes examined warranted
+reassignment.
+
+`paint_deterioration` had been used as a **junk drawer**. Reassigning a junk drawer
+across two surfaces teaches the model that a leaking window is siding damage.
+
+**Only the paint half of 602 is affected.** Merging `soffit_damage` +
+`fascia_damage` rests on NMS being per-class and on the 294-box clustering. That
+half is untouched and still correct.
+
+`suggest_paint_surface.py` and its harness remain in the tree, and the `--paint`
+two-pass route still works. Neither should be used for this migration.
 
 ---
 
-## 3 · The pipeline, and where the stall is
+## 3 · What must not happen
+
+- **Never run plain `--apply` pass one twice.** The `.remapped_602` marker makes
+  the script refuse. Do not delete the marker to "get past" it.
+- **Never train while any box sits on class 99.** 99 is outside `nc`, so training
+  hard-fails on purpose. That failure is correct behaviour, not a bug to route around.
+- **Never delete `.pre602` files** until the retrain is done and Theo has accepted
+  the result. They are the only way back from the deletion.
+- **Never merge, rebase or force-push `claude/taxonomy-602` / PR #130.**
+- The scripts live **only on branch `claude/taxonomy-602`**, not on `main`.
+
+---
+
+## 4 · The pipeline
 
 ```
 1. dry run          python3 remap_taxonomy_602.py --root $DS
 2. pass one  DONE   python3 remap_taxonomy_602.py --root $DS --apply
-3. suggester DONE   python3 suggest_paint_surface.py --tsv $DS/paint_review.tsv
-4. THEO RULES  <-- STALLED HERE. 91 boxes need a human looking at photographs.
-5. pass two         python3 remap_taxonomy_602.py --root $DS --paint <tsv> --apply
-6. retrain, eyeball val_batch*_pred.jpg
-7. re-stamp the build number, then merge PR #130
+3. drop      <-- HERE.  --drop-paint --apply   deletes the 128, rewrites data.yaml
+4. retrain, eyeball val_batch*_pred.jpg
+5. re-stamp the build number (§7), then merge PR #130
 ```
 
-### What the suggester produced (reported, verify)
+`--drop-paint` catches **both** class 24 and the 99 sentinel, so it works on a fresh
+dataset and on one already parked — no restore needed. It does **not** re-shift the
+surviving indices while doing so; `test_drop_paint.py` case B2 asserts exactly that.
 
-| bucket | count | meaning |
-|---|---:|---|
-| decided | 25 | overlap arithmetic was confident; still review them |
-| **no surface box on the image** | **91** | geometry cannot help — Theo's eye, on the photo |
-| below the containment floor | 12 | tuning recovers a couple, not worth much |
-| split / ambiguous | 0 | none |
-
-Decided rows are live (`path<TAB>line<TAB>19|20`). The other 103 are emitted
-**commented out** so they parse but stay unresolved. Evidence for every row is in
-`#` lines above it.
-
-⚠ **The remap accepts only `19` or `20`** and dies on anything else. There is no
-"drop this box" value. If Theo decides some paint boxes are cosmetic-only and
-should be removed rather than reassigned, **the script needs a third value added
-before he rules**, not after.
-
-⚠ **Any rulings Theo made in a browser page and did not write to a file are
-gone** when that page closed. Rulings only count once they are in a TSV on disk.
+It reports any label file left with **no boxes at all**. YOLO reads an empty label
+file as a background image, which is harmless — but read the list rather than
+discover it later.
 
 ---
 
-## 4 · If pass one died partway (marker absent, backups present)
+## 5 · If pass one died partway (marker absent, backups present)
 
 Restore, do not re-run:
 
@@ -118,15 +138,12 @@ find labels -name '*.pre602' | while read -r b; do mv -- "$b" "${b%.pre602}"; do
 rm -f .remapped_602 paint_review.tsv paint_review.suggested.tsv
 ```
 
-Then verify you are back to the pre-migration state — `grep -rc '^99 ' labels`
-should total 0 and `grep -rc '^24 ' labels` should total 128 — and start again
-from the dry run.
+Then verify you are back to pre-migration — `grep -rh '^99 ' labels | wc -l` should
+be 0 and `grep -rh '^24 ' labels | wc -l` should be 128 — and go to §6.
 
 ---
 
-## 5 · Running it from scratch
-
-Only if verification says pass one never ran.
+## 6 · Running it from scratch
 
 ```bash
 git clone --filter=blob:none --sparse https://github.com/Cardinal-1986/cardinal-inspections.git
@@ -134,11 +151,8 @@ cd cardinal-inspections && git sparse-checkout set spark
 git checkout claude/taxonomy-602            # the branch, NOT main
 grep -c -- '--sources' spark/push_studio_tags.py    # 0 means the copy is stale
 
-python3 spark/remap_taxonomy_602.py --root $DS               # dry run, writes nothing
-python3 spark/remap_taxonomy_602.py --root $DS --apply       # pass one
-python3 spark/suggest_paint_surface.py --tsv $DS/paint_review.tsv
-# Theo rules on the refusals
-python3 spark/remap_taxonomy_602.py --root $DS --paint $DS/<final>.tsv --apply
+python3 spark/remap_taxonomy_602.py --root $DS                        # dry run
+python3 spark/remap_taxonomy_602.py --root $DS --drop-paint --apply   # one pass, done
 ```
 
 Do not sync `spark/` from `raw.githubusercontent.com` — it serves stale copies for
@@ -146,71 +160,72 @@ minutes after a commit, and a sync that silently changes nothing is the worst
 failure mode here.
 
 Expected dry-run numbers on this dataset: **1,149 label files, 473 would change,
-128 paint boxes.** If you get something materially different, stop and say so
-rather than proceeding.
-
----
-
-## 6 · Four bugs were found in this script tonight — do not reintroduce them
-
-All four were in code that had been "verified" before shipping. Three were caught
-only by running it on the real dataset.
-
-1. **`label_files()` matched only the last path component**, so a split dataset
-   (`labels/train/`, `labels/val/`) yielded zero files. The pre-ship fixture was
-   flat. Fixed with a path-**component** match — a substring test also fixes the
-   split case but starts feeding `labels_backup/` and `unlabelled/` into a
-   destructive rewrite.
-2. **Line numbers shifted between passes.** `read_boxes()` skips blank lines and
-   the rewrite rebuilt files from boxes alone, so a blank line vanished and every
-   line below moved up — while `paint_review.tsv` still held pre-rewrite numbers.
-   A filled-in decision was silently discarded, or applied to the wrong box.
-   Fixed by substituting in place. *(Measured: 0 of 1,149 files here contain a
-   blank line, so it never actually bit this dataset.)*
-3. **The suggester scored overlap in one direction only.** `contained` is
-   intersection ÷ paint area, which cannot see a paint box that *encloses* a small
-   surface box — the commonest annotation shape here. IoU cannot substitute:
-   `iou ≤ contained` always. Now scores `max(contained, covers)`.
-4. **Evidence printed at two decimals**, so 0.003 (barely overlapping) and 0.000
-   (not touching) looked identical. Three decimals now.
-
-Three standalone harnesses guard these, all negative-controlled — they fail
-against the pre-fix versions:
-
-```bash
-python3 spark/test_remap_layouts.py
-python3 spark/test_remap_lines.py
-python3 spark/test_suggest_paint.py
-```
-
-**Run all three before trusting any change to these scripts.**
+128 paint boxes.** Materially different means stop and say so.
 
 ---
 
 ## 7 · Before PR #130 can merge
 
-**The build stamp must be re-checked.** The branch stamps **602**, which was correct
-when cut (`main` was 601) and was still correct at 01:20 UTC 6 Aug. But **#132
-claims 603** and is waiting. If anything lands first, 602 goes backwards and the
-gate fails.
+**Re-check the build stamp.** The branch stamps **602**, correct when cut (`main`
+was 601) and still correct as of 02:50 UTC 6 Aug. But **#132 claims 603** and is
+waiting. If anything lands first, 602 goes backwards and the gate fails.
 
 ```bash
 git fetch origin main
 git show origin/main:index.html | grep -o 'data-cr-footer[^<]*' | head -1
 ```
 
-Bump **both**, together — they are separate strings:
+Bump **both**, together — separate strings, and a check on one passes while the
+other is stale:
 
 1. the `data-cr-footer` app stamp in `index.html`
 2. the `CHANGELOG` head entry in `<script id="cr-cl-script">`, currently `{ b:602`
 
+The PR description also needs its paint section rewritten to say deletion rather
+than reassignment.
+
 ---
 
-## 8 · Unrelated, also parked on Theo
+## 8 · Five bugs were found in these scripts — do not reintroduce them
+
+Four were in code that had been "verified" before shipping; three were caught only
+by running on the real dataset, and the fifth by looking at real photographs.
+
+1. **`label_files()` matched only the last path component**, so a split dataset
+   (`labels/train/`, `labels/val/`) yielded zero files. The pre-ship fixture was
+   flat. Fixed with a path-**component** match — a substring test also fixes the
+   split case but starts feeding `labels_backup/` and `unlabelled/` into a
+   destructive rewrite.
+2. **Line numbers shifted between passes.** `read_boxes()` skips blank lines and the
+   rewrite rebuilt files from boxes alone, so a blank line vanished and every line
+   below moved up while the review TSV held pre-rewrite numbers. A decision was
+   silently discarded, or applied to the wrong box. *(Measured: 0 of 1,149 files
+   here contain a blank line, so it never bit this dataset.)*
+3. **The suggester scored overlap in one direction only.** `contained` is
+   intersection ÷ paint area, which cannot see a paint box that *encloses* a small
+   surface box. IoU cannot substitute: `iou ≤ contained` always.
+4. **Evidence printed at two decimals**, so 0.003 and 0.000 looked identical.
+5. **The reassignment premise itself was wrong** — §2.
+
+Four harnesses guard these, all negative-controlled — they fail against the pre-fix
+versions:
+
+```bash
+python3 spark/test_remap_layouts.py
+python3 spark/test_remap_lines.py
+python3 spark/test_suggest_paint.py
+python3 spark/test_drop_paint.py
+```
+
+**Run all four before trusting any change to these scripts.**
+
+---
+
+## 9 · Unrelated, also parked on Theo
 
 The **private room** storage test. The database half is proven — an owner sees a
-private object, a non-admin and an admin who is not the owner both see nothing.
-The **HTTP half is still open**: it needs one throwaway file at
+private object, a non-admin and an admin who is not the owner both see nothing. The
+**HTTP half is still open**: it needs one throwaway file at
 `photos/private/theo@cardinalrenovations.net/` and a request for it from a
 non-admin session, expecting a 4xx. `photos/private/` is currently empty, which is
 why a refusal cannot be told apart from absence.
