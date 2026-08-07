@@ -185,7 +185,13 @@ comment on table public.itel_lab_reports is
 -- ten months apart, with the same match both times. The fifth time one comes
 -- up, the outcome is already known and three prior control numbers can be
 -- cited by number.
-create or replace view public.itel_product_register as
+-- security_invoker is NOT optional here. A view defaults to the owner's
+-- privileges, which would read straight past the row-level security defined
+-- below and hand every determination — insured names, loss addresses — to
+-- anyone who can select from the view. The RLS on the base table is the only
+-- gate, so the view has to run as the caller for it to mean anything.
+create or replace view public.itel_product_register
+  with (security_invoker = true) as
   select
     lower(coalesce(product, 'unidentified')) as product_key,
     max(product)                              as product,
