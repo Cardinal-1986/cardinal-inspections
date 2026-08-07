@@ -1054,3 +1054,29 @@ Each of these looks like a defect and is not. Re-reporting one costs trust.
 | **Unguarded `JSON.parse(JSON.stringify(x))`** | Deep-copy idiom; cannot throw. |
 | **`querySelector('[data-sh="' + name + '"]')`** | `name` is an internal literal from the sort/filter build, not user data. |
 | **The Punch panel's CSS says "claim"** | The panel is **cross-CRM**. Its vocabulary misfiled it as insurance-only for two scanners while it sat in Theo's community screenshots. **Don't scope it by its words.** |
+
+## Silent success — a 200 that means nothing happened
+
+**Three instances found together at build 611, all on notifications.** The class: a call path
+returns success while doing nothing, so no one investigates for months.
+
+1. **Payload key mismatch across a fetch boundary.** `notifyTeam()` sent `{to, subject, html}`;
+   `/api/notify` read `{emails, title, body, url}`. `emails` was `undefined` → `[]` → the route's
+   own `if(!emails.length){ res.status(200).json({ok:true, sent:0}); return; }` fired. **Seven call
+   sites, `ok:true` every time.** Nothing in the app checks `sent`.
+2. **Writing a table nothing reads.** `#pushEnableBtn` upserted `push_subscriptions`;
+   `api/notify.js` only ever queried `push_subs`. The write succeeded, so the UI said
+   *"this device now gets Cardinal alerts."*
+3. **A browser API that must be reset before reuse.** `pushManager.subscribe()` throws
+   `InvalidStateError` if a subscription exists with a different `applicationServerKey`. Only
+   visible because it *does* throw — the one of the three that surfaced.
+
+**How to catch it:** grep the caller's payload keys against the reader's, and the written table
+against the read one. `grep -c` on each side is enough and takes seconds. Then ask what the
+success path would look like if the feature were entirely disconnected — if the answer is
+"identical", the assertion is missing.
+
+**And the test-side twin:** an assertion that cannot fail is the same bug in the harness. 611's
+"queried push_subs for BOTH recipients" used `cond ? realCheck : true` and so **passed against the
+known-broken handler**. Always run the harness against the pre-fix artifact and read the output
+line by line — an exit code of 1 does not tell you *which* assertions earned it.
