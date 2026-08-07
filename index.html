@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 619 &#8212; FLEX shows only the colours FLEX is made in</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 620 &#8212; the SureNail strip, which is what sells Duration</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35184,6 +35184,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:620, d:'2026-08-07', t:'The SureNail strip, which is what sells Duration', s:'Theo: "Sure nail strip is what sells the duration compared to competitors." The Duration page had been leading with a comparison against Oakridge, which is the wrong fight. It now leads with Owens Corning\u2019s own claim \u2014 that SureNail is the first and only reinforced nailing zone ON THE FACE of the shingle, a visible woven strip embedded where the nails actually go, so a crew can see the target instead of guessing. Underneath it are the three tested numbers from the SureNail sell sheet: up to twice the nail pull-through resistance, up to nine times the nail blow-through resistance, up to twice the delamination resistance. The basis of those comparisons is printed with them, because a multiple with no basis is a marketing number and a multiple with one survives being questioned across a kitchen table. Duration FLEX carries the same strip and the same figures.' },
 { b:619, d:'2026-08-07', t:'FLEX shows only the colours FLEX is made in', s:'The Duration FLEX page had been showing all twenty Duration colours. It should not have been. Owens Corning\u2019s FLEX brochure lists nine, and Owens Corning\u2019s own line comparison independently says nine — Brownwood, Driftwood, Estate Gray, Onyx Black, Teak, Black Sable, Sand Dune, and the discontinued Storm Cloud and Summer Harvest. FLEX uses the same colour platform, so a shade reads the same on either shingle, but it is not manufactured in the full range. Left alone, a rep could have stood on the FLEX page, picked Merlot, and ordered a roof in a colour FLEX is not made in — the same kind of mistake as selling a discontinued colour. The page now shows the seven you can actually order.' },
 { b:618, d:'2026-08-07', t:'Three presentation styles for the iPad', s:'On a tablet Colors used to render as a phone layout stranded on a big screen \u2014 a narrow column pinned to the left with a third of the display empty beside it, and no roof visible on a line page until you scrolled past the whole specification table. It now has three presentation styles you switch between from the header, and it remembers which one you chose. Roofs opens on full-bleed photographs of real Owens Corning roofs. Compare turns the hub into a board where each line\u2019s wind warranty is a bar drawn to scale \u2014 Supreme\u2019s stops well short of Duration\u2019s, which is the whole argument for the better shingle in one picture. Feature is an editorial spread with a full-width hero. Oakridge and Supreme have no colours in the catalogue and so no photograph; rather than borrow another line\u2019s roof and imply something false, their wind rating becomes the artwork. The phone is deliberately untouched.' },
 { b:617, d:'2026-08-07', t:'Oakridge and Supreme go live', s:'Theo sent the official Owens Corning documents \u2014 the Supreme data sheet and the Oakridge brochure \u2014 so both lines came off the \u201cComing\u201d list and now carry full specification tables quoted from those two files, with the file named underneath. Supreme is 60 MPH against Duration\u2019s 130, which is the plain reason to put a better shingle on a house. Oakridge carries a caution above its source line, because its wind warranty is 110 MPH as normally nailed and only reaches 130 with six nails and Owens Corning starter along the eaves and rakes \u2014 the brochure\u2019s own footnote. Quote 110 unless the roof was actually built that way. Neither document claims an impact rating, so both tables say so rather than leave a blank. Designer is a proper tab now instead of a chip sitting among the colour shades.' },
@@ -60031,9 +60032,42 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
   #cr-occ .occ-ours{padding:0 40px; grid-template-columns:repeat(auto-fill,minmax(255px,1fr))}
   #cr-occ .occ-none,#cr-occ .occ-actions{padding-left:40px; padding-right:40px}
 }
+
+/* ---- 620: the SureNail proof --------------------------------------------
+   Theo: "Sure nail strip is what sells the duration compared to competitors."
+   The figures read big because that is what a customer carries away; the
+   basis sits under them in small type because that is what makes them true.
+   Never style the basis to disappear — a multiple without it is marketing.
+-------------------------------------------------------------------------- */
+#cr-occ .occ-proof{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0 10px;
+}
+#cr-occ .occ-proof .pf{
+  padding:13px 12px; border-radius:12px; text-align:center;
+  background:var(--occ-raise,#12151A); border:1px solid var(--occ-line,#1D2126);
+}
+#cr-occ .occ-proof .pf b{
+  display:block; font:800 27px/1 var(--occ-sans,sans-serif); letter-spacing:-.03em;
+  color:var(--occ-red,#c8202e);
+}
+#cr-occ .occ-proof .pf span{
+  display:block; margin-top:7px; font-size:11.5px; line-height:1.35;
+  color:var(--occ-ink2,#C6CCD4);
+}
+#cr-occ .occ-pbasis{
+  font-size:11.5px; line-height:1.45; color:var(--occ-dim,#9AA3AE); margin-bottom:4px;
+}
+@media (min-width:820px){
+  #cr-occ .occ-proof .pf b{font-size:31px}
+  #cr-occ .occ-proof .pf span{font-size:12.5px}
+  #cr-occ[data-style="feature"] .occ-proof,
+  #cr-occ[data-style="feature"] .occ-pbasis{
+    max-width:900px; margin-left:auto; margin-right:auto; padding:0 44px;
+  }
+}
 </style>
 <script id="cr-occ-script">
-/* Cardinal OC Colors — the product-line hub.  v2026-08-07 · build 619
+/* Cardinal OC Colors — the product-line hub.  v2026-08-07 · build 620
    Reached from the Vision hub's Colors tile (data-go="colors").
 
    616 turned one flat wall of 30 cards into a LINE PICKER, Theo's design:
@@ -60159,7 +60193,7 @@ var LINES = [
     kind:'Architectural shingle',
     ready:true,
     glance:'130 MPH · Class 3 impact · Limited Lifetime',
-    blurb:'Cardinal’s standard. SureNail® Technology is a woven fabric strip laid through the nailing zone; it works with the patented Tru-Bond® sealant for the grip behind a 130-MPH wind warranty. Where that fabric overlays both shingle layers it forms a triple layer of reinforcement — Triple Layer Protection® — which is what resists “nail pull” in high wind. That nailing strip is the single thing Oakridge does not have.',
+    blurb:'Cardinal’s standard, and SureNail® is what sells it. Owens Corning’s own claim: it is the first and only reinforced nailing zone ON THE FACE of the shingle — a wide, highly visible woven-fabric strip embedded where the nails actually go, so a crew can see the target instead of guessing at it. Where that fabric overlays both shingle layers it forms Triple Layer Protection®, up to a 200% wider common bond than a standard shingle, and that is what resists “nail pull” in high wind. It is not only about grip: a shingle may not be covered under warranty at all if it is not fastened in the right place.',
     specs:[
       ['Shingle type',      'Architectural (laminate)'],
       ['Limited warranty',  'Limited Lifetime — for as long as you own your home'],
@@ -60172,9 +60206,20 @@ var LINES = [
       ['Non-prorated period','TRU PROtection\u00ae \u2014 10 years']
     ],
     note:'',
+    /* OC's tested figures. The basis line is NOT optional: the comparison is
+       against competing products with wide, SINGLE-LAYER nailing zones, nailed
+       in the middle of the allowable zone. A multiple with no basis is a
+       marketing number; with the basis it is a claim that survives being
+       questioned across a kitchen table. Same discipline as Oakridge's footnote. */
+    proof:{
+      rows:[['2\u00d7','better nail pull-through resistance'],
+            ['9\u00d7','better nail blow-through resistance'],
+            ['2\u00d7','better delamination resistance']],
+      basis:'Up to. Owens Corning testing against competing products with wide, single-layer nailing zones, following manufacturers\u2019 installation instructions and nailing in the middle of the allowable nailing zone.'
+    },
     hero:'onyx-black',
     chart:{ mph:130, ext:null, impact:'Class 3', impactKey:'c3', warranty:'Limited Lifetime' },
-    source:'TruDefinition Duration Beauty Book',
+    source:'TruDefinition Duration Beauty Book, and the SureNail Sell Sheet (10020692) for the tested figures',
     match:function(c){
       return c.status !== 'discontinued' &&
              (c.product_line === 'duration' || c.product_line === 'designer');
@@ -60197,9 +60242,20 @@ var LINES = [
       ['Non-prorated period','TRU PROtection\u00ae \u2014 10 years']
     ],
     note:'',
+    /* OC's tested figures. The basis line is NOT optional: the comparison is
+       against competing products with wide, SINGLE-LAYER nailing zones, nailed
+       in the middle of the allowable zone. A multiple with no basis is a
+       marketing number; with the basis it is a claim that survives being
+       questioned across a kitchen table. Same discipline as Oakridge's footnote. */
+    proof:{
+      rows:[['2\u00d7','better nail pull-through resistance'],
+            ['9\u00d7','better nail blow-through resistance'],
+            ['2\u00d7','better delamination resistance']],
+      basis:'Up to. Owens Corning testing against competing products with wide, single-layer nailing zones, following manufacturers\u2019 installation instructions and nailing in the middle of the allowable nailing zone.'
+    },
     hero:'estate-gray',
     chart:{ mph:130, ext:null, impact:'Class 4', impactKey:'c4', warranty:'Limited Lifetime' },
-    source:'TruDefinition Duration FLEX brochure',
+    source:'TruDefinition Duration FLEX brochure, and the SureNail Sell Sheet (10020692) for the tested figures',
     match:function(c){
       return c.status !== 'discontinued' && FLEX_COLOURS.indexOf(c.slug) !== -1;
     }
@@ -60430,6 +60486,15 @@ function lead(L){
   var box = VIEW.querySelector('#occLead');
   var html = '';
   if(L.blurb) html += '<p class="occ-blurb">' + esc(L.blurb) + '</p>';
+  /* 620: the SureNail proof. Theo: "Sure nail strip is what sells the duration
+     compared to competitors." Figures first, because that is what a customer
+     remembers; the basis underneath, because that is what makes them true. */
+  if(L.proof){
+    html += '<div class="occ-proof">' + L.proof.rows.map(function(r){
+      return '<div class="pf"><b>' + esc(r[0]) + '</b><span>' + esc(r[1]) + '</span></div>';
+    }).join('') + '</div>' +
+    '<div class="occ-pbasis">' + esc(L.proof.basis) + '</div>';
+  }
   if(L.specs && L.specs.length){
     html += '<table class="occ-spec"><tbody>' + L.specs.map(function(r){
       return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>';
