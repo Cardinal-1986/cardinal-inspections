@@ -1651,7 +1651,7 @@ state until then. Nothing here has been verified against a real photograph.
 
 ---
 
-## OC Colors — the colour wall (build 615, 7 Aug 2026)
+## OC Colors — the shingle-line hub (builds 615–616, 7 Aug 2026)
 
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
@@ -1662,6 +1662,33 @@ inset:0`.
 disabled with a "Soon" badge and 615 turned it into a `<button data-go="colors">` driving the
 `wire()` handler that was already there. **There is no entry point from the ordinary app menu**,
 and Resources and Vision still have zero cross-references either way.
+
+### 616: it opens on the LINES, not on colours
+
+Three levels — **hub → line → colour** — and the back button steps one at a time, closing only from
+the hub. State is two classes on `#cr-occ`: none, `.line`, `.detail`. `.detail` sits on top of
+`.line`, so its rules carry an extra class and **out-specify** rather than depend on source order.
+
+| Line | Ships | Holds |
+|---|---|---|
+| **TruDefinition Duration** | ✅ description + 8-row spec table | the 20 sellable colours, with a **Designer / Standard** filter |
+| **Duration FLEX** | ✅ description + specs | the same 20 — same colour platform, so it matches the same rows rather than duplicating data |
+| **Oakridge** | ⏳ "Coming" tile, not openable | — |
+| **Supreme** | ⏳ "Coming" tile, not openable | — |
+| **Discontinued** | ✅ description | the 10 dead colours, each naming its closest current replacement **on the card** |
+
+**⚠ No spec figure that isn't sourced — and it is enforced, not intended.** Duration's and FLEX's
+numbers are quoted from the Owens Corning books Theo supplied and each page names the book under
+the table. Oakridge and Supreme carry `ready:false` with empty `specs` because OC's own site was
+unreachable and a search returned contractor blogs and big-box listings — the sourcing Theo already
+rejected once. `patch616.py` asserts **no mph / year / impact-class figure appears anywhere in those
+two entries, comments included**, and the harness re-asserts it on the rendered tiles. When the real
+numbers arrive: fill `blurb`/`specs`/`source`, flip `ready`, and only add a `match` if Oakridge or
+Supreme colours actually exist in `oc_colors` — today there are none.
+
+**`lineLabel()` exists because the sub-line used to lie.** It was a binary, so the five rows with
+`product_line='other'` all read "TruDefinition Duration" — a claim nobody recorded. They now say
+"Owens Corning" and stop. Found by rendering, not by a gate.
 
 **Tables:** `oc_colors` (the catalogue), `oc_color_photos` (Cardinal's own installs),
 `oc_color_wall` (the view). All read for `authenticated` — **sales can see colours**, settled by
@@ -1691,7 +1718,7 @@ colour. A rep must not hold a tablet against a house and call an eyeballed hex t
 **JS must never recompute a slug**, or photos end up filed under a colour that no longer matches.
 Signed with `createSignedUrls` for **display only**, never written back into a row.
 
-**23 of the 30 colours on the wall have a cover** (`oc_color_covers_set.sql`) — **every sellable
+**23 of the 30 colours have a cover** (`oc_color_covers_set.sql`) — **every sellable
 one**. The seven without are all discontinued, which is correct and permanent: a colour nobody can
 buy renders its labelled swatch. No new storage policy was added or is wanted — `oc-colors/` sits
 under the bucket's general authenticated-read; only `photos/studio/*` is carved out of it.

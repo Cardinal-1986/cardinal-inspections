@@ -8935,3 +8935,78 @@ a swatch are all discontinued, and that is the end state rather than a backlog.
 Verified two ways that matter more than the row count: **zero paths with no file behind them, zero
 uploaded files no row claims.** The second catches a typo'd slug — which a row count alone passes
 straight through.
+
+---
+
+## Build 616 — Colors opens on the shingle lines, not one long wall (7 Aug 2026)
+
+Theo, after seeing 615 on the tablet: *"can we section off what's discontinued or tab it"* — then,
+asked which, he described something larger and better: *"What I had envisioned. When clicking oc
+colors, 3 options. Duration, Oakridge, Discontinued. In Duration, a filter with Designer or a tab.
+A description in the duration page first of what makes it better. Description in oakridge. I think
+even an oc supreme section within colors. When selling I can show the differences in each where
+supreme has the worst wind rating."*
+
+So the flat wall became a **line picker**: Duration · Duration FLEX · Oakridge · Supreme ·
+Discontinued. FLEX is its own page on his pick. It shares Duration's palette — his own words on the
+FLEX brochure, *"The is flex but the color is the same"* — so both lines `match` the same catalogue
+rows rather than duplicating data.
+
+### The rule this build exists to hold: no spec figure that isn't sourced
+
+Duration's and FLEX's numbers are quoted from the Owens Corning books he supplied, and each page
+**names the book underneath the table**. 130 MPH, Class 3 / Class 4, Class A fire, ASTM D3161 F and
+D7158 H, the 25-year StreakGuard term — all off pages 614–656 of the Duration Beauty Book and the
+FLEX brochure.
+
+**Oakridge and Supreme ship as "Coming" tiles that cannot be opened.** Owens Corning's own site is
+blocked by the sandbox egress proxy, and a web search returned contractor blogs and big-box
+listings — *the same weak sourcing Theo threw out on Williamsburg Gray* ("Please don't list Lowe's
+they mix batches"). The figures looked right and matched what he said about Supreme, which is
+exactly why they were dangerous. He is supplying the real ones.
+
+The guard is mechanical, not a good intention: `patch616.py` asserts that **no `\d+ MPH`, `\d+ year`
+or impact class appears anywhere inside the two unsourced `LINES` entries — comments included** —
+and the jsdom harness re-asserts it against the rendered tiles. A wind rating read aloud to a
+homeowner is close to a warranty claim.
+
+⚠️ **One figure to handle carefully when Oakridge lands**, recorded in the module so it is not lost:
+its wind rating is reported as **conditional** on OC starter plus **six** nails rather than four. If
+that holds, the page has to say so. A rep quoting the higher number on a four-nail roof is stating
+something false about a warranty.
+
+### Two levels became three, so the module was rewritten rather than patched
+
+`hub → line → colour`. The back button now steps one level at a time and only closes from the hub.
+Nine interlocking edits would have risked a half-applied nav — the 570–572 class with extra steps —
+so the whole `cr-occ-script` block was replaced in one asserted splice.
+
+State is two classes on `#cr-occ`: none = hub, `.line`, `.detail`. **`.detail` sits on top of
+`.line`** (a colour is always opened from a line), so the `.detail` rules carry an extra class and
+**out-specify** the `.line` ones rather than relying on source order that a later edit could quietly
+reverse. `:not(.line):not(.detail)` hides the grid at the hub.
+
+### The bug a harness could not have found
+
+The card's sub-line was a binary — `designer ? 'Designer Collection' : 'TruDefinition Duration'` —
+so the **five rows carrying `product_line='other'`** (Slate Grey, Aged Cedar, Desert Tan, Summer
+Harvest, Bourbon) were every one of them labelled **TruDefinition Duration**, a product claim
+nobody ever recorded. Inherited from 615 and invisible there because they were scattered through
+thirty cards; on the Discontinued page all five sit together. **Found by rendering the module and
+looking at it**, not by any assertion. They now read "Owens Corning" and stop. `lineLabel()`.
+
+That is the third time on this project a rendered screenshot has caught what a green gate did not —
+`styleMounts()`'s inline white, `showApp()`'s inline `display:block` in studio.html, and now this.
+
+### Verified
+
+`check_build.py` green and negative-controlled. **jsdom 39/39** against real row shapes, walking all
+three levels of the back button in both directions. **Chromium 20/20** on the CSS state machine —
+including that `.detail` really does out-specify `.line`, which is the one thing the whole stylesheet
+block is shaped around — plus 592's 44px floor and no horizontal overflow at 390px. Then the shipped
+module was **rendered against the live `oc_colors` rows and the real cover images** at 430×932 and
+looked at. Theo's eyes remain the gate for whether it sells.
+
+**Build 614 was skipped again**: `next_build.py` still reports it free because it scans the app
+stamp, and `studio.html`'s 614 never touched `index.html`. It also did not see this session's own
+pushed 615. Treat its answer as a floor, not an answer.
