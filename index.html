@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 612 &#8212; the app tells you when a notification did not go</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 613 &#8212; the password reset link finally works</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20875,12 +20875,18 @@ try{
 
 (async function boot(){
   if(!TEAM){ showMain(); return; }
+  /* 613: read the hash BEFORE the await. getSession() yields, and while it is
+     pending the rest of the document parses — including the history block far
+     below, which rewrites any unrecognised hash to '#h'. By the time we resume,
+     '#access_token=...&type=recovery' is already gone and the prompt below can
+     never fire. Capturing first makes the check independent of that race. */
+  var __bootHash = location.hash || '';
   try{
     var s = await sb.auth.getSession();
     if(s.data && s.data.session && s.data.session.user){
       currentUser = s.data.session.user;
       /* arrived via a password-reset email link? finish the reset */
-      if(location.hash.indexOf('type=recovery') !== -1){
+      if(__bootHash.indexOf('type=recovery') !== -1 || location.hash.indexOf('type=recovery') !== -1){
         var np = prompt('Welcome back \u2014 enter your NEW password (at least 6 characters):');
         while(np !== null && np.length < 6){
           np = prompt('Too short \u2014 enter a new password with at least 6 characters:');
@@ -21498,7 +21504,10 @@ async function enableNotifications(){
     if(!__histLock && history.state && history.state.v === 'editor'){ history.back(); return; }
     return _ce();
   };
-  try{ if(!/^#(p|e|list)\//.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
+  /* 613: a password-reset fragment must survive this. Nothing else consumes it
+     — __tryRestoreFromHash matches a fixed pattern list and ignores it — and
+     leaving it in place keeps the URL honest for the reset handler in boot(). */
+  try{ if(!/^#(p|e|list)\//.test(location.hash) && !/type=recovery/.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
   var __restored = false, __restoreTries = 0;
   window.__tryRestoreFromHash = function(){
     if(__restored) return;
@@ -35170,6 +35179,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:613, d:'2026-08-07', t:'The password reset link finally works', s:'Forgot password has been broken for everyone, and it looked like it was working. The emailed link opened the app, the app quietly threw the link away before reading it, and nothing happened \u2014 no error, no prompt. Two separate faults caused it: the app checked for the reset code a moment too late, after another part of the page had already wiped it from the address bar. Both are fixed, so the link now does what it says. If you have been stuck, use Forgot password on the sign-in screen and follow the email.' },
 { b:612, d:'2026-08-07', t:'The app tells you when a notification did not go', s:'The line under a tagged message used to say \u201cNotified\u201d the moment you posted, whether or not anything had been sent \u2014 it was drawn beside the send, not after it. It now waits for the answer and reports it: notified by phone, by email, or not at all with the reason in plain words. The server behind it was also throwing away every delivery failure except an expired phone, so a rejected push looked exactly like no push. It now counts what went, what failed and what was emailed, and names the cause.' },
 { b:611, d:'2026-08-06', t:'Notifications actually reach you', s:'Three faults, each silent, stacked on the same feature. The Enable button could never succeed on a phone that had enabled notifications before: the old subscription was still registered against the previous key, and nothing cleared it \u2014 so the browser refused every attempt. The button in My Profile also saved to a table nothing sends from, then said it had worked. And the function behind team alerts posted its message under field names the sender does not read, so seven kinds of alert quietly went nowhere. All three fixed, and team alerts now go out by email as well as to the phone, so a device that is not set up no longer means silence. Press Enable once more on each phone.' },
 { b:610, d:'2026-08-06', t:'Tapping a punch out opens the punch out', s:'On the production board, tapping a punch item dropped you on the client\u2019s main page \u2014 which the Open client profile button right above it already did, and it buried the thing you had just tapped. It now takes you to that client\u2019s Punch Outs and opens the item, ready to read or reply. The discussion also reads like a conversation now: your messages on the right, everybody else\u2019s on the left, and a name only where the speaker changes.' },
