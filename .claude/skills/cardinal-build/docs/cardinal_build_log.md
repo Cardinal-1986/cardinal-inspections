@@ -8273,6 +8273,43 @@ class 32 instead of class 24.
   green. 607's harness asserted on `.pp-msgt`; **the test was stale, not the app** — rewritten to
   assert on rendered thread text so a restyle cannot fail it and a missing message still does.
 
+---
+
+### ⚠ Correction to the "Actions was down" claim in 608, 609 and 610 — read before repeating it
+
+**Build 608's entry above says GitHub Actions "had stopped running on this repo entirely (no runs at
+all after 07:48 UTC on 6 Aug)". That was true when it was written, around 09:00, and false within a
+few hours.** It was then repeated in 609's and 610's reporting and in **610's commit message**, which
+is merged and cannot be corrected — *"Actions is down repo-wide, so check.yml gated none of this"* is
+permanently wrong in main's history. This note is the correction.
+
+What actually happened, measured against `check.yml`'s run list rather than remembered:
+
+| commit | build | on main | CI |
+|---|---|---|---|
+| `279fd51` | 602 | 07:10 | ✅ success |
+| `dae0209` | 603–605 | 07:23 | ✅ success |
+| `694b855` | **606–608** | 14:00 | ✅ **success** |
+| `25bcda8` | **609** | 14:42 | ✅ **success** |
+| `5fa7889` | 610 | 19:27 | ❌ **cancelled, never ran** |
+
+So there was a real gap roughly 07:48 → 14:00 during which branch pushes got no runs. **Actions then
+recovered and gated 606–608 and 609 properly.** Only **610** is genuinely ungated.
+
+**And 610's red is not a code defect.** The job's conclusion is **`cancelled`**, not `failure`, with
+`runner_id: 0` and an empty runner name — queued 19:27:20, killed 19:42:24, exactly fifteen minutes,
+never assigned a runner. A second session saw its own run fail identically at the same minute on a
+different branch. **`get_job_logs` returns "No failed jobs found" for it, which is the tell**: a run
+whose conclusion is failure but which reports zero failed jobs did not execute. Do not go looking for
+a broken assertion in 610 — there isn't one. Re-running the workflow is the fix; if it cancels again
+after ~15 minutes it is runner availability or quota, not the repo.
+
+**The lesson, which this file already teaches and I still got wrong four times running:** an outage is
+an observation with a timestamp, not a standing fact. I checked once at 09:00 and then asserted
+"Actions is still down" at 14:00, 15:58, 18:57 and 19:00 without re-measuring. **Re-check before
+repeating any claim about live infrastructure** — the same rule this document applies to build numbers
+and doc staleness applies to CI.
+
 ## `studio.html` — the Private gallery, "Atlas" (2026-08-06)
 
 **No build number.** `studio.html` carries no version label and is not part of `index.html`'s app
