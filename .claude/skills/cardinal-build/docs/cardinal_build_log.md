@@ -8474,3 +8474,72 @@ microtask checkpoint, so `boot()` resumed *before* the rewriter ran and **build
 612 passed as fixed**. In the real file both sit in one block with no checkpoint
 between them. A harness that splits them validates fiction. Recorded in
 `BUG_CLASSES.md`.
+
+---
+
+## Build 614 — the Sites lens, and a Bin you can undo (7 Aug 2026)
+
+`studio.html` + `.github/workflows/check.yml`. **Two SQL files, both applied
+first:** `studio_archive.sql`, `studio_site_facets.sql`.
+
+Theo: *"The 66000 photos only 20% are useful most likely. I need to be able to
+delete by address tho as some were inspections I never got the bid on."*
+
+**Two measurements shaped it, both taken before any design:**
+
+- **The WORK library has better facet data than Private, and was running the
+  lesser UI.** `project_address` 100%, `captured_at` 100%, 756 distinct sites,
+  678 with 10+ photos. The tag chips it browsed by offer **three values in
+  total** — `close-up` 20,836, `wide` 8,362, `aerial` 51. The Atlas rail was
+  Private-only; it earns its space in Work more. `.rail2` is the layout class,
+  `.priv` stays the room, and they are never both on.
+- **The ask says delete; the reason is signal.** 9.57 GB costs nothing. So
+  stage one archives — reversible, no confirm, because pruning 200 dead
+  inspections has to feel cheap. Permanent deletion is deliberate and is **not
+  in this build**. CompanyCam is still running, confirmed by Theo, so the
+  originals survive regardless.
+
+**Referential safety, checked before designing:** `studio_findings` (0 rows,
+CASCADE) and `studio_events.cover_id` (0 rows, SET NULL) are the only FKs, and
+`showcase_pairs` points at `showcase/` **copies** rather than studio originals.
+Deleting a work photo cannot break a published before/after.
+
+**Why an RPC.** PostgREST has no GROUP BY, so grouping in the browser meant
+pulling all 60,503 rows (~5 MB) every time the rail drew.
+`studio_site_facets()` returns **756**. `security invoker`, so
+`is_cardinal_admin()` still applies and a non-admin gets an empty set rather
+than every address Cardinal has worked. `live_photos` and `binned_photos` are
+counted separately so a half-failed restore shows as a split, not as one state.
+
+**`--stu-ink3` is below the contrast floor in both themes** — 4.01:1 dark,
+3.57:1 light, against 4.5:1 for body text. Pre-existing, not introduced here.
+The job-name line uses `ink2` (7.27:1 / 4.55:1). Computed, not eyeballed.
+
+**⚠ studio.html had NO CI coverage at all.** Every step in `check.yml` names
+`index.html` explicitly, so a broken Studio deployed green. Added here: inline
+scripts parse, CSS/div/script balance, truncation guard.
+
+Verified: 26-assertion Chromium gate on the **shipped** `streetOf`, `jobLine`,
+`applyLens`, `buildQuery` and `setArchived`, all extracted by brace-matching ·
+18-assertion **render** gate driving the real page with Supabase stubbed,
+measuring geometry and both themes · patch reproduces byte-for-byte · negative
+control confirms 613 has none of it.
+
+**Three defects were caught before shipping, two of them mine and one only
+visible by reading the call path:**
+
+1. `.is('archived_at', undefined)` on the restore path — the two directions
+   need different **operators** (`.is(...,null)` vs `.not(...,'is',null)`), not
+   one operator with a swapped argument.
+2. `paintChip()` early-returned outside Private, so Work would filter to one
+   address and nothing on screen would say which.
+3. **`applyMode()` is only called from `setupMode()`'s showroom branch.** The
+   normal path just wires listeners. That was fine while the rail was
+   Private-only — Work genuinely wanted `display:block` and no rail. With a
+   Work rail, the Sites lens would not have appeared until you toggled to
+   Private and back. `showApp()` now calls it explicitly.
+
+The render gate also had a defect worth recording: its "dark" pass rendered
+**light**, because Playwright's default `colorScheme` is light and Studio's
+toggle seeds from the OS preference. A pass merely NAMED dark proves nothing —
+it now stamps the attribute and asserts the body background actually moved.

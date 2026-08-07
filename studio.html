@@ -197,8 +197,50 @@
   .stu-mode button.on{ background:var(--stu-red); color:var(--stu-red-ink); }
   .stu-mode button:not(.on):hover{ color:var(--stu-ink); }
 
-  /* two columns, but only in Private — Work is untouched */
-  #appView.priv{ display:grid; grid-template-columns:236px 1fr; align-items:start; }
+  /* 614: two columns in both rooms. Work has the better facet data — every
+     one of its 60,503 photos carries an address and a date, against 0% place
+     and 0% people in Private — so the rail earns its space there more than
+     here. .rail2 is the LAYOUT, .priv stays the ROOM; they are never both on,
+     which is what lets the lens buttons below select on one or the other. */
+  #appView.priv, #appView.rail2{ display:grid; grid-template-columns:236px 1fr; align-items:start; }
+
+  /* Each room shows only its own lenses. Bin is Work-only: Private is 411
+     photos Theo chose to keep, and carries its own `kept` flag already. */
+  #appView.priv  #atlLens button[data-lens="site"],
+  #appView.priv  #atlLens button[data-lens="bin"],
+  #appView.rail2 #atlLens button[data-lens="place"],
+  #appView.rail2 #atlLens button[data-lens="people"]{ display:none; }
+
+  /* A site is two lines: the street, then the job name when it says something
+     the street doesn't. --stu-ink3 measures 4.01:1 dark and 3.57:1 light on
+     the rail, under the 4.5:1 body floor in BOTH themes, so the second line
+     uses ink2 (7.27:1 / 4.55:1). Computed, not eyeballed. */
+  .atl-rail[data-lens="site"] .atl-f,
+  .atl-rail[data-lens="bin"]  .atl-f{ align-items:flex-start; }
+  .atl-f .ftx{ min-width:0; flex:1; text-align:left; }
+  .atl-f .fst{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .atl-f .fsub{
+    display:block; margin-top:1px; font-size:11.5px; color:var(--stu-ink2);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .atl-rail[data-lens="site"] .atl-f.on{ border-left-color:var(--atl-place); }
+  .atl-rail[data-lens="site"] .atl-f.on .fst{ color:var(--atl-place); }
+  .atl-rail[data-lens="bin"]  .atl-f.on{ border-left-color:var(--stu-warn); }
+  .atl-rail[data-lens="bin"]  .atl-f.on .fst{ color:var(--stu-warn); }
+  .atl-lens button[data-lens="bin"].on{ color:var(--stu-warn); }
+
+  /* Archive / Restore live in the header beside the site pill, so the action
+     is always next to the thing it acts on and never next to a photo. */
+  .stu-act{
+    background:none; border:1px solid var(--stu-line); color:var(--stu-ink2);
+    border-radius:20px; padding:5px 11px; cursor:pointer;
+    font:700 9.5px/1 inherit; letter-spacing:1.1px; text-transform:uppercase;
+  }
+  .stu-act:hover{ color:var(--stu-ink); border-color:var(--stu-ink2); }
+  .stu-act.warn:hover{ color:var(--stu-warn); border-color:var(--stu-warn); }
+  .stu-act.go:hover{ color:var(--atl-place); border-color:var(--atl-place); }
+  .stu-act[disabled]{ opacity:.45; cursor:default; }
+  .stu-act:focus-visible{ outline:2px solid var(--atl-place); outline-offset:2px; }
 
   .atl-rail{
     border-right:1px solid var(--stu-line); background:var(--stu-sunk);
@@ -327,7 +369,7 @@
   .atl-sh:hover{ border-color:var(--atl-event); }
 
   @media (max-width:760px){
-    #appView.priv{ grid-template-columns:1fr; }
+    #appView.priv, #appView.rail2{ grid-template-columns:1fr; }
     .atl-rail{
       position:static; height:auto; border-right:0; border-bottom:1px solid var(--stu-line);
       padding:12px 0 10px;
@@ -394,11 +436,13 @@
 <div id="appView">
   <nav class="atl-rail" id="atlRail" data-lens="time" style="display:none">
     <div class="atl-brand">Cardinal Studio</div>
-    <div class="atl-h1">Private</div>
+    <div class="atl-h1" id="atlH1">Private</div>
     <div class="atl-lens" id="atlLens">
       <button type="button" data-lens="time" class="on">Time</button>
+      <button type="button" data-lens="site">Sites</button>
       <button type="button" data-lens="place">Places</button>
       <button type="button" data-lens="people">People</button>
+      <button type="button" data-lens="bin">Bin</button>
     </div>
     <div class="atl-facets" id="atlFacets"></div>
   </nav>
@@ -412,6 +456,8 @@
       </div>
       <div class="count" id="stuCount"></div>
       <span class="atl-chip time" id="atlChip" style="display:none"></span>
+      <button type="button" class="stu-act warn" id="stuArchive" style="display:none">Archive site</button>
+      <button type="button" class="stu-act go" id="stuRestore" style="display:none">Restore site</button>
       <div class="spacer"></div>
       <div class="atl-view" id="atlView" style="display:none">
         <button type="button" data-view="grid" class="on">Grid</button>
@@ -477,7 +523,10 @@
   var st = { q:'', tags:[], offset:0, total:0, rows:[], loading:false, done:false,
              mode:'work', lastDay:null,
              // Atlas
-             lens:'time', sel:null, view:'grid', facets:null };
+             // 614: Work opens on Sites — it is the lens the data supports
+             // best (100% of work photos carry an address) and the one Theo
+             // asked for. Private still opens on Time.
+             lens:'site', sel:null, view:'grid', facets:null };
 
   // Mirrors index.html's isVisionHost() exactly, including the ?vision=1
   // override — that flag exists to preview the presentation door, so it must
@@ -500,6 +549,11 @@
     loginView.style.display = 'none';
     appView.style.display = 'block';
     setupMode();
+    // 614: applyMode() owns the layout class, the rail visibility and the
+    // inline display that outranks the stylesheet. setupMode() only reaches it
+    // on the showroom branch, so first paint needs it explicitly. Idempotent —
+    // the showroom path calling it twice costs nothing.
+    applyMode();
     loadChips();
     resetAndLoad();
   }
@@ -527,7 +581,16 @@
       var l = b.getAttribute('data-lens');
       if(l === st.lens) return;
       st.lens = l; st.sel = null;
-      renderRail(); paintChip(); resetAndLoad();
+      renderRail(); paintChip(); paintSiteActions(); resetAndLoad();
+    });
+
+    document.getElementById('stuArchive').addEventListener('click', function(){
+      if(!st.sel) return;
+      setArchived(st.sel, true);
+    });
+    document.getElementById('stuRestore').addEventListener('click', function(){
+      if(!st.sel) return;
+      setArchived(st.sel, false);
     });
 
     document.getElementById('atlView').addEventListener('click', function(e){
@@ -570,14 +633,26 @@
     var priv = (st.mode === 'private');
     var app = document.getElementById('appView');
     app.classList.toggle('priv', priv);
+    // 614: .rail2 is the two-column layout for Work. Never both — the lens
+    // visibility rules select on one or the other.
+    app.classList.toggle('rail2', !priv);
+    var h1 = document.getElementById('atlH1');
+    if(h1) h1.textContent = priv ? 'Private' : 'Work';
+    // A lens from the other room would render an empty rail and filter on a
+    // column that does not exist on this table.
+    if(priv && (st.lens === 'site' || st.lens === 'bin')){ st.lens = 'time'; st.sel = null; }
+    if(!priv && (st.lens === 'place' || st.lens === 'people')){ st.lens = 'site'; st.sel = null; }
     // showApp() sets an INLINE display:block, which outranks the stylesheet's
     // #appView.priv{display:grid} at any specificity — so the rail rendered
     // full-width and the main column vanished. Same class as styleMounts()'s
     // inline white in index.html, and again only a rendered preview caught it:
     // getComputedStyle still reports grid-template-columns on a display:block
     // element, so a token-level assertion passes while the layout is dead.
-    app.style.display = priv ? 'grid' : 'block';
-    document.getElementById('atlRail').style.display = priv ? '' : 'none';
+    // Both rooms are grid now. showApp() sets an INLINE display:block, which
+    // outranks the stylesheet at any specificity — the 613 note below still
+    // applies, it just applies to both modes.
+    app.style.display = 'grid';
+    document.getElementById('atlRail').style.display = '';
     document.getElementById('atlView').style.display = priv ? 'flex' : 'none';
     document.getElementById('stuChips').style.display = priv ? 'none' : '';
     Array.prototype.forEach.call(
@@ -585,7 +660,46 @@
         x.classList.toggle('on', x.getAttribute('data-view') === st.view);
       });
     paintChip();
-    if(priv){ loadFacets().then(renderRail); } else { renderRail(); }
+    paintSiteActions();
+    loadFacets().then(function(){ renderRail(); paintSiteActions(); });
+  }
+
+  // 614: archive and restore act on the SELECTED SITE, so they only appear
+  // when one is selected — never floating over a grid with nothing chosen.
+  function paintSiteActions(){
+    var a = document.getElementById('stuArchive');
+    var r = document.getElementById('stuRestore');
+    if(!a || !r) return;
+    var onSite = (st.mode === 'work' && st.sel);
+    a.style.display = (onSite && st.lens === 'site') ? '' : 'none';
+    r.style.display = (onSite && st.lens === 'bin')  ? '' : 'none';
+  }
+
+  // Archiving is reversible and deliberately has no confirm — the whole point
+  // is that pruning 200 dead inspections should feel cheap. Nothing is
+  // destroyed; Restore is one tap away in the Bin, and CompanyCam still holds
+  // the originals regardless.
+  async function setArchived(address, on){
+    var a = document.getElementById('stuArchive');
+    var r = document.getElementById('stuRestore');
+    [a, r].forEach(function(b){ if(b) b.disabled = true; });
+    // Match only rows on the side we are moving FROM. `.is(col, undefined)` is
+    // not a filter — the two directions need different operators, not one
+    // operator with a swapped argument.
+    var upd = sb.from('studio_photos')
+      .update({ archived_at: on ? new Date().toISOString() : null })
+      .eq('project_address', address);
+    upd = on ? upd.is('archived_at', null) : upd.not('archived_at', 'is', null);
+    var res = await upd;
+    [a, r].forEach(function(b){ if(b) b.disabled = false; });
+    if(res.error){
+      setState((on ? 'Could not archive' : 'Could not restore') + ' — ' + res.error.message);
+      return false;
+    }
+    st.sel = null;
+    await loadFacets();
+    renderRail(); paintChip(); paintSiteActions(); resetAndLoad();
+    return true;
   }
 
   document.getElementById('atlTheme').addEventListener('click', function(){
@@ -686,6 +800,11 @@
       q = q.or('project_address.ilike.' + like + ',project_name.ilike.' + like);
     }
     if(st.tags.length) q = q.contains('tags', st.tags);
+    // 614: the Bin is the same library read from the other side of the line.
+    // Everywhere else, archived photos are simply gone — that IS the feature,
+    // and it is why this filter is on the query rather than on the renderer.
+    q = (st.lens === 'bin') ? q.not('archived_at', 'is', null) : q.is('archived_at', null);
+    q = applyLens(q);
     return q.order('pushed_at', { ascending: false }).range(st.offset, st.offset + PAGE - 1);
   }
 
@@ -781,6 +900,32 @@
     return ATL_AV[name];
   }
 
+  // 614: project_address is uniformly 'street, city, ST, zip' — verified
+  // across all 756 — so the rail shows the street and the header the whole
+  // thing. Splitting on the first comma is safe here and nowhere else.
+  function streetOf(addr){
+    var a = String(addr || '').split(',')[0].trim();
+    return a || String(addr || '') || 'No address';
+  }
+
+  // The job name earns its line only when it says something the street does
+  // not. Roughly a third are the address typed again — '4115 Shenandoah
+  // Drive, Dayton, OH 45417' under a street already reading '4115 Shenandoah
+  // Drive' reads as a rendering fault. Suppressed, the line is only ever real
+  // information: 'Habitat- Sheila', 'CR215 - Devon', 'Rebuild Day 2026 -
+  // Roslyn Usher'.
+  function jobLine(addr, job){
+    var n = String(job || '').replace(/\s+/g, ' ').trim();
+    if(!n) return '';
+    var flat = function(x){ return String(x).toLowerCase().replace(/[^a-z0-9]/g, ''); };
+    var street = flat(streetOf(addr));
+    var name = flat(n);
+    if(!street) return n;
+    if(name === street) return '';
+    if(name.indexOf(street) === 0) return '';
+    return n;
+  }
+
   function monthKey(iso){ return iso ? String(iso).slice(0, 7) : ''; }
   function monthName(key){
     if(!key) return 'Undated';
@@ -789,8 +934,36 @@
     return d.toLocaleDateString(undefined, { year:'numeric', month:'long', timeZone:'UTC' });
   }
 
+  // 614: one row per site instead of one per photo. Grouping in the browser
+  // would mean pulling all 60,503 rows (~5 MB) every time the rail is drawn;
+  // studio_site_facets() returns 756. security invoker, so RLS still applies
+  // and a non-admin gets an empty set rather than every address we've worked.
+  async function loadWorkFacets(){
+    var res = await sb.rpc('studio_site_facets');
+    if(res.error || !res.data){ st.facets = { time:[], site:[], bin:[] }; return; }
+    var t = {}, site = [], bin = [];
+    res.data.forEach(function(r){
+      if(r.live_photos > 0){
+        site.push({ v:r.address, n:r.live_photos, job:r.job, last:r.last_shot });
+        var k = monthKey(r.last_shot);
+        t[k] = (t[k] || 0) + Number(r.live_photos);
+      }
+      if(r.binned_photos > 0){
+        bin.push({ v:r.address, n:r.binned_photos, job:r.job, last:r.last_shot });
+      }
+    });
+    // The RPC already orders by last_shot desc, so both lists arrive
+    // recent-first — the ordering Theo picked — and need no re-sort.
+    st.facets = {
+      time: Object.keys(t).map(function(k){ return { v:k, n:t[k] }; })
+              .sort(function(a, b){ return a.v < b.v ? 1 : -1; }),
+      site: site,
+      bin: bin
+    };
+  }
+
   async function loadFacets(){
-    if(st.mode !== 'private'){ st.facets = null; return; }
+    if(st.mode !== 'private'){ return loadWorkFacets(); }
     var res = await sb.from('studio_private').select('captured_at,place,people').limit(5000);
     if(res.error || !res.data){ st.facets = { time:[], place:[], people:[] }; return; }
     var t = {}, p = {}, w = {};
@@ -814,6 +987,9 @@
 
   function applyLens(q){
     if(st.sel === null || st.sel === undefined) return q;
+    // 614: both Work lenses filter on the same column; they differ only in
+    // which side of the archive line they read, and buildQuery() sets that.
+    if(st.lens === 'site' || st.lens === 'bin'){ return q.eq('project_address', st.sel); }
     if(st.lens === 'time'){
       if(st.sel === '') return q.is('captured_at', null);
       var y = +st.sel.slice(0, 4), m = +st.sel.slice(5, 7);
@@ -841,7 +1017,9 @@
       var empty = document.createElement('div');
       empty.className = 'atl-grp';
       empty.textContent = st.lens === 'people' ? 'nobody tagged yet'
-                        : st.lens === 'place' ? 'no places yet' : 'nothing yet';
+                        : st.lens === 'place' ? 'no places yet'
+                        : st.lens === 'bin'   ? 'the bin is empty'
+                        : st.lens === 'site'  ? 'no sites yet' : 'nothing yet';
       box.appendChild(empty);
       return;
     }
@@ -849,7 +1027,9 @@
     items.forEach(function(it){
       var grp = st.lens === 'time'
         ? (it.v ? it.v.slice(0, 4) : 'No date')
-        : (st.lens === 'place' ? 'Places' : 'Who');
+        : (st.lens === 'site' ? (it.last ? monthName(monthKey(it.last)) : 'No date')
+        : (st.lens === 'bin'  ? 'Archived'
+        : (st.lens === 'place' ? 'Places' : 'Who')));
       if(grp !== lastGrp){
         lastGrp = grp;
         var g = document.createElement('div');
@@ -863,11 +1043,19 @@
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'atl-f' + (st.sel === it.v ? ' on' : '');
-      btn.innerHTML = '<span class="k"></span>' + esc(label) +
-                      '<span class="n">' + it.n + '</span>';
+      if(st.lens === 'site' || st.lens === 'bin'){
+        var sub = jobLine(it.v, it.job);
+        btn.innerHTML = '<span class="k"></span><span class="ftx">' +
+          '<span class="fst">' + esc(streetOf(it.v)) + '</span>' +
+          (sub ? '<span class="fsub">' + esc(sub) + '</span>' : '') +
+          '</span><span class="n">' + it.n + '</span>';
+      } else {
+        btn.innerHTML = '<span class="k"></span>' + esc(label) +
+                        '<span class="n">' + it.n + '</span>';
+      }
       btn.addEventListener('click', function(){
         st.sel = (st.sel === it.v) ? null : it.v;
-        renderRail(); paintChip(); resetAndLoad();
+        renderRail(); paintChip(); paintSiteActions(); resetAndLoad();
       });
       box.appendChild(btn);
     });
@@ -876,8 +1064,16 @@
   function paintChip(){
     var chip = document.getElementById('atlChip');
     if(!chip) return;
-    if(st.mode !== 'private' || st.sel === null || st.sel === undefined){
+    if(st.sel === null || st.sel === undefined){
       chip.style.display = 'none'; chip.textContent = ''; return;
+    }
+    // 614: Work names its selected site here. Without this the grid filters to
+    // one address and nothing on screen says which one.
+    if(st.mode !== 'private'){
+      chip.className = 'atl-chip ' + (st.lens === 'bin' ? 'time' : 'place');
+      chip.textContent = streetOf(st.sel);
+      chip.style.display = '';
+      return;
     }
     var txt = st.lens === 'time' ? monthName(st.sel)
             : st.lens === 'place' ? (st.sel || 'No place')
