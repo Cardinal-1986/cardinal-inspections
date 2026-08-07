@@ -8,6 +8,62 @@ real. Everything under "Illustrations in the Resource Library" and beyond is 467
 
 ---
 
+## ✅ OC Colors — the showroom. 2 decisions SETTLED BY THEO, 7 Aug 2026
+
+*Answered directly by Theo. **Do not re-litigate either of these.***
+
+| # | Question | **Theo's answer** |
+|---|---|---|
+| 1 | Is the colour wall admin-only, like the CompanyCam picker, or can sales see it? | **"Yes they can see colors."** All signed-in staff — Nick, Joey and Jacob included |
+| 2 | Does the colour sheet carry pricing? | **"No pricing on sheets it's not a quote."** |
+
+**Decision 2 is a structural constraint, not a preference.** A colour sheet with a number on it
+becomes a quote the moment it leaves the phone — it would need approval, an audit trail and the
+`bidAmt()` chokepoint, and it would stop being something a rep can send from a driveway without
+asking. Keeping money off it is what makes decision 1 safe. **The colour-sheet document type must
+have no money fields at all**, not merely blank ones, and it stays out of the estimate/contract
+document family.
+
+**Decision 1 needed no code.** `oc_colors`, `oc_color_photos` and `oc_color_wall` already read for
+`auth.role() = 'authenticated'`. The admin gate people will remember is on `api/companycam.js`
+(`role === 'admin'`), and this feature routes around it entirely: Theo's own colour folders land in
+the `photos` bucket under `oc-colors/`, which `photos_read` already opens to any signed-in user.
+**Do not "fix" the CompanyCam gate for this** — it is a different pipeline with a different reason.
+
+### Shipped 7 Aug (PR #145) — the data half
+
+`oc_colors` 29 rows (20 current · 6 discontinued · 2 new for 2026 · 1 COTY) · `oc_color_photos`
+(empty) · `oc_color_wall`. Spellings corrected to OC's own: **Sierra Gray**, **Chateau Green**.
+
+⚠️ **`hex_verified` is false on all 29 and must stay false until someone samples a real swatch.**
+The hex values are approximations eyeballed for the preview mock. A photograph of a roof in
+afternoon sun is not the product colour, so importing Theo's folders does NOT verify them. The
+table comment says it: do not show a customer an unverified swatch and call it the colour.
+
+The mock's per-colour photo counts were invented to make the preview look alive and are
+deliberately absent from the schema rather than loaded as fact.
+
+### Still open
+
+- **The photos.** Theo's 28 hand-sorted iPad folders. Agreed to start with the top three or four
+  sellers at 5–8 shots each rather than all 28 at once.
+- **The upload UI** — an `index.html` build, needs the full gate ladder.
+- **The colour sheet is NOT a new pipeline.** `api/share.js` already serves stored document HTML
+  via an unguessable token (not a signed URL, so it does not expire in an hour like photo links do),
+  `api/senddoc.js` emails it, and `@page{size:Letter}` appears 7× for print-to-PDF. A colour sheet
+  is another document in that pipeline. **Do not build a PDF generator.**
+- **Delivery already exists and is proven.** `ccDeliver()` in `cr-lib-script` (build 482) hands
+  files to `navigator.share()`, so Messages/Mail/AirDrop already work for multiple photos, with an
+  anchor-download fallback and `AbortError` correctly treated as the user's choice rather than a
+  failure. Point it at a colour instead of a project. **A zip was considered and rejected** — there
+  is no zip library in the app (`JSZip` 0 hits; the 18 `zip` matches are postcodes and one
+  `zipper`), and a zip arrives as an attachment an iPhone client must fight with, where Web Share
+  delivers real images inline.
+- **OC's colour copy** — normal to use as an authorised dealer, but attribute it. The catalogue's
+  descriptions are paraphrased, not lifted.
+
+---
+
 ## ✅ CLOSED at build 596 — the detect vocabulary now covers the whole exterior
 
 *Opened 5 Aug 2026, after PR #114. **Read the 5 Aug section of `HANDOFF.md` first** — it carries the
