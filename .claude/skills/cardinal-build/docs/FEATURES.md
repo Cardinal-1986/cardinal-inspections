@@ -1651,7 +1651,7 @@ state until then. Nothing here has been verified against a real photograph.
 
 ---
 
-## OC Colors — the shingle-line hub (builds 615–619, 7 Aug 2026)
+## OC Colors — the shingle-line hub (builds 615–620, 7 Aug 2026)
 
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
@@ -1740,6 +1740,32 @@ screen. And it grids **`#occBody`**, a wrapper — never `#cr-occ`, which carrie
 Supreme have no catalogue rows and so no photograph; their wind rating becomes the artwork
 rather than borrowing another line's roof. `chart` feeds the bars and is guarded at patch
 time against drifting from the sourced `specs` text.
+
+### 620: SureNail is the pitch, and its figures carry their basis
+
+Theo — *"Sure nail strip is what sells the duration compared to competitors."* Duration's blurb
+led with a comparison to **Oakridge**, Cardinal's own cheaper line; it now leads with Owens
+Corning's own competitive claim — the first and only reinforced nailing zone **on the face** of
+the shingle, Triple Layer Protection® where the fabric overlays both layers, and the warranty
+point that closes it: *a shingle may not be covered at all if it is not fastened in the right
+place.*
+
+`proof` on `LINES` renders `.occ-proof` — **2× nail pull-through, 9× nail blow-through, 2×
+delamination** — on **Duration and FLEX only**, the two lines that have SureNail. Oakridge and
+Supreme carry none, because neither document mentions it; *absence is not a claim* applies here
+too, and the harness asserts it.
+
+⚠️ **`basis` is not optional and must never be dropped.** OC's own qualification: *up to*, against
+**competing products with wide, single-layer nailing zones**, nailed in the middle of the
+allowable zone. "9× better" alone is a different claim from the one that was tested — the same
+discipline as Oakridge's ‡‡ footnote. `source` on both lines names the **SureNail Sell Sheet
+(10020692)** for the tested figures.
+
+⚠️ **No competitor is named, and the patch asserts it.** Theo's framing was a comparison — IKO's
+equivalent strip is on the **back** of the shingle. It is a good sales point and it is deliberately
+not on screen: this surface is handed to homeowners, and a claim about a named competitor's product
+is Cardinal's claim with nothing behind it, where a claim about Owens Corning's own has OC's
+documentation. Awaiting Theo's call on whether to add it, and with what sourcing.
 
 **617: the collection split is a TAB, not a chip.** Theo — *"Also tab designer series."* A
 collection and a shade are different kinds of choice, so `#occTabs` (`All colours · Standard ·

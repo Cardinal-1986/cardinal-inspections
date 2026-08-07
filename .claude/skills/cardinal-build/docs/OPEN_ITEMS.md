@@ -47,7 +47,7 @@ table comment says it: do not show a customer an unverified swatch and call it t
 The mock's per-colour photo counts were invented to make the preview look alive and are
 deliberately absent from the schema rather than loaded as fact.
 
-### ✅ Shipped 7 Aug — PR #148 (schema) and build 615 / PR #149 (the wall)
+### ✅ Shipped 7 Aug — PR #148 (schema) and builds 615–620 / PR #149 (the wall)
 
 **PR #148**, six migrations, all applied before merge: `slug` (generated) + `cover_image_path` +
 `cover_credit`; `coty_year` with a one-winner-per-year index (2017–2026, no gaps); the two missing
@@ -71,6 +71,18 @@ fallback**; the seven that are, are all discontinued, and that is the end state,
   sourced spec tables. ⚠️ **Oakridge's wind row is 110/130 and conditional** — 130 only with six
   nails and OC starter along eaves and rakes, per the brochure's own footnote. It renders as a
   caution and the harness asserts it. **Do not collapse it to one number.**
+- ⏳ **Two questions are with Theo and neither should be answered by guessing.**
+  1. **The `###` footnote behind "up to 160 MPH."** Owens Corning's web line-comparison says 160 for
+     every Duration-series shingle; **none of the seven OC documents on hand mentions it** — the
+     Beauty Book, the FLEX brochure and the SureNail sell sheet all say **130**, which is what the
+     pages quote. "Up to" plus a footnote marker is the same shape as Oakridge's conditional
+     110/130. **Do not raise the number until the footnote text exists.** Asked at 619, unanswered
+     at 620.
+  2. **Whether to name IKO.** Theo, at 620: *"Iko has something like it but it's on the back."* A
+     real sales point, deliberately left off the screen — `#cr-occ` is handed to homeowners, and a
+     claim about a named competitor's product is Cardinal's own with no document behind it. The
+     patch **asserts no competitor name appears in `LINES`**, so adding one is a conscious act. If
+     he says yes, it needs either a source or plainly-his-own-words framing.
 - **The photos.** Theo's 28 hand-sorted iPad folders — *Cardinal's own roofs*, `oc_color_photos`,
   still **empty**. Distinct from the covers, which are Owens Corning's photography, and the reason
   the two render in visibly separate sections. Agreed to start with the top three or four sellers

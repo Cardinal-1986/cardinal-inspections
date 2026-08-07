@@ -9253,3 +9253,66 @@ on every red is not a gate.
 no Duration-only colour can be reached from the FLEX page, that the discontinued FLEX
 colours are filtered out of the sellable page but still appear on the Discontinued one, and
 that Duration was not narrowed alongside it. **Chromium 50/50.**
+
+## Build 620 — the SureNail strip, which is what sells Duration (7 Aug 2026)
+
+Theo, on reading 619: *"Sure nail strip is what sells the duration compared to
+competitors. Iko has something like it but it's on the back."*
+
+The Duration blurb was leading with a comparison to **Oakridge** — Cardinal's own
+cheaper line. That is an argument for buying up within Owens Corning, and it is not the
+argument a rep is making at a kitchen table. The pitch now leads with Owens Corning's own
+competitive claim: SureNail is the **first and only reinforced nailing zone ON THE FACE of
+the shingle** — a wide, visible woven-fabric strip embedded where the nails actually go,
+so a crew can see the target instead of guessing at it. Where the fabric overlays both
+shingle layers it forms **Triple Layer Protection®**, up to a **200% wider common bond**.
+
+The closing sentence is the one that does the work with a homeowner, and it is a warranty
+point rather than a materials point: *a shingle may not be covered under warranty at all
+if it is not fastened in the right place.*
+
+### The three tested figures get their basis line, on the same rule as Oakridge
+
+New `proof` field on `LINES`, rendered as `.occ-proof` / `.occ-pbasis` on **Duration and
+FLEX only** — the two lines that have SureNail:
+
+| | |
+|---|---|
+| **2×** | better nail pull-through resistance |
+| **9×** | better nail blow-through resistance |
+| **2×** | better delamination resistance |
+
+**`basis` is not decoration and must not be dropped.** The sell sheet's own qualification:
+*up to*, against **competing products with wide, single-layer nailing zones**, following
+manufacturers' installation instructions and **nailing in the middle of the allowable
+nailing zone**. A bare "9× better" on a tablet in front of a homeowner is a different
+claim from the one Owens Corning tested. Same discipline as Oakridge's ‡‡ footnote, for
+the same reason. `source` on both lines now names the **SureNail Sell Sheet (10020692)**
+alongside the brochure, so the tested figures are attributed to the document they came
+from rather than to the beauty book.
+
+### ⚠️ IKO is deliberately NOT named
+
+Theo's own framing is a competitor comparison, and it is a good one — the observation that
+IKO's equivalent strip is on the **back** of the shingle is exactly the kind of detail
+that closes. It is not on the screen, and that is a decision, not an oversight.
+
+`#cr-occ` is handed **to homeowners**. A claim about Owens Corning's own product carries
+OC's documentation behind it; a claim about a named competitor's product is Cardinal's
+claim, sourced from nothing in the folder. **The patch asserts no competitor name appears
+in `LINES`.** If Theo wants it, it goes on with a source or as plainly his own words —
+his call, asked and not yet answered.
+
+### Still not changed: the 130 MPH
+
+The `###` footnote behind Owens Corning's *"up to 160 MPH"* has still not been supplied.
+619's entry explains why the number does not move without it. Unchanged at 620.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 619 → 620. **jsdom 92/92** — nine new
+assertions covering the proof rows, that the basis line renders with them and cannot be
+orphaned, that Oakridge and Supreme carry **no** proof block (neither document mentions
+SureNail — absence is not a claim), and that no competitor name reaches `LINES`. **Chromium
+50/50**, including the phone baseline. Rendered at phone width and read by eye, which is
+what the copy change actually needed.
