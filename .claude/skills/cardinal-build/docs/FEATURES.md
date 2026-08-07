@@ -389,6 +389,18 @@ blocked from the build sandbox.
 
 Photos & Album (`cr-pae`, `cr-ped`, `cr-paf`), Inspections, Documents/contracts (isolated iframes), Production board (`cr-pb`), Sales Floor + Objection Coach (`cr-sf`, `cr-coach`), Scheduling, Client Portal (`cr-portal`), Cross-links (`cr-xlinks`), AccuLynx import (`cr-import`), Adjuster Directory, Recents, Search, CSV, Undo, Offline, Palette, Perf, Errors, Invariants, Self Check (`cr-sc`), Admin health badge (`cr-ahc`), Changelog (`CardinalChangelog`), NACHI content, **Resource Library — see its own section above**, ABC Supply (`cr-abc`).
 
+**Company letterhead (`brand/`) — not an app surface, and deliberately not deployed.** A Word
+template Theo writes letters in: `brand/Cardinal_Letterhead.docx`, the rendered `.pdf`, the
+generator (`letterhead.js` + `fix_field.py`), the extracted logo, and a README. **Nothing in
+`index.html` references it and nothing should** — it is a document, not a screen. `brand/` is in
+`.vercelignore` because a blank letterhead is the raw material for forged correspondence. Its logo
+and contact details are *copies* of values that live in shipped code (the `cover-logo` data URI in
+`index.html`, the address in `api/estimate-to-contract.js`, the print footer in `api/share.js`) —
+**those remain the source of truth**, so a phone-number change has to be made there too, not only
+here. Rebuild steps are in `brand/README.md`. Not verified against production: outbound to the live
+host is blocked from the build sandbox, so "`brand/` 404s" is reasoned from the `.vercelignore`
+entry, not proven by request.
+
 **Live back buttons — do not "clean" these:** `galBackBtn`, `commsBackBtn`, `apBackBtn`, `icBackBtn`, `jdBackBtn`, `payBackBtn`, `rlBackBtn`, `tskBackBtn`.
 
 ---
