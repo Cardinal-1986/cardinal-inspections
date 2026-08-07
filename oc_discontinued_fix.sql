@@ -1,0 +1,62 @@
+-- OC Colors — correct five colours wrongly marked 'current'.
+-- APPLIED TO PRODUCTION 7 Aug 2026. Run after oc_peppercorn.sql.
+--
+-- ============================================================================
+-- WHAT WAS WRONG
+-- ============================================================================
+-- Amber, Harbor Blue, Quarry Gray, Shasta White and Sierra Gray were all
+-- status='current'. Theo, 7 Aug 2026: "Those are all colors that have been
+-- discontinued." They are not sellable and must not be offered.
+--
+-- This is the more dangerous direction of the two errors. A discontinued colour
+-- shown as current puts a rep in front of a customer selling something Cardinal
+-- cannot order, and the mistake only surfaces at order time — after the pitch.
+--
+-- ============================================================================
+-- THE SIGNAL WAS THERE BEFORE THE CONFIRMATION
+-- ============================================================================
+-- These five were the ONLY colours that could not be found in any of four
+-- Owens Corning books supplied on 7 Aug — the Duration Beauty Book, the Designer
+-- Colors Collection, the Designer Colors Beauty Book, and the Duration FLEX
+-- brochure. That was read as a gap in the source material and chased for several
+-- rounds. It was not a gap. Current marketing books do not carry dead colours.
+--
+-- Worth keeping as a heuristic, but NOT as a rule: three discontinued colours
+-- (Bourbon, Summer Harvest, Storm Cloud) DO appear in the Designer books, which
+-- carry some legacy palette. So "absent from the books" suggests discontinued;
+-- it does not prove it, and the reverse — "present in a book" — proves nothing
+-- about status at all. Ask Theo.
+
+update public.oc_colors
+   set status = 'discontinued', updated_at = now()
+ where name in ('Amber','Harbor Blue','Quarry Gray','Shasta White','Sierra Gray')
+   and status = 'current';
+
+-- ---------------------------------------------------------------------------
+-- WHY THIS CLOSES THE COVER-IMAGE WORK
+-- ---------------------------------------------------------------------------
+-- With the five corrected, the catalogue splits cleanly:
+--
+--   status          colours   have a cover   missing
+--   coty                  1              1         0
+--   current              17             17         0
+--   new                   2              2         0
+--   discontinued         11              3         8
+--
+-- EVERY SELLABLE COLOUR — all 20 — has a cover image extracted. The only eight
+-- without one are discontinued, and a dead colour does not need a marketing
+-- photograph. The wall renders its (unverified) hex swatch, which is the right
+-- treatment for something nobody can buy.
+--
+-- So: do NOT keep hunting OC books for Amber, Harbor Blue, Quarry Gray, Shasta
+-- White or Sierra Gray covers. They will not be there, and they are not needed.
+--
+-- ---------------------------------------------------------------------------
+-- Verify
+-- ---------------------------------------------------------------------------
+--   select status, count(*) from public.oc_colors group by status order by status;
+--   -- expect coty 1 · current 17 · discontinued 11 · new 2  (31 total)
+--
+-- Rollback (only if Theo says one of these is in fact still sellable):
+--   update public.oc_colors set status='current'
+--    where name in ('Amber','Harbor Blue','Quarry Gray','Shasta White','Sierra Gray');
