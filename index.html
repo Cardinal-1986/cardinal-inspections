@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 615 &#8212; the Owens Corning colour wall, on the Vision hub</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 616 &#8212; Colors opens on the shingle lines, not one long wall</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35184,6 +35184,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:616, d:'2026-08-07', t:'Colors opens on the shingle lines', s:'Tapping Colors used to drop you into one long wall of thirty cards with the discontinued ones mixed in among the live ones. Now it opens on the lines themselves \u2014 TruDefinition Duration, Duration FLEX, and Discontinued kept separate \u2014 each with a plain description of what the shingle actually is and a specification table quoting Owens Corning\u2019s own books: wind warranty, impact class, fire class, algae cover. Duration has a Designer filter inside it. Discontinued colours now name their closest current replacement on the card itself, so a repair can be matched off the grid without opening anything. Oakridge and Supreme are on the list marked Coming \u2014 their pages go live once the published figures are in hand, because a wind rating read to a homeowner has to be right.' },
 { b:615, d:'2026-08-07', t:'The Owens Corning colour wall', s:'The Colors tile on the Vision hub has said "Soon" since build 593. It works now. It opens a wall of every Owens Corning colour Cardinal sells, with Owens Corning\u2019s own roof photograph on each card, the Color of the Year going back to 2017, and the collection each colour belongs to. Tap one and you get its description, and underneath it a separate section for OUR roofs in that colour \u2014 Cardinal installs, kept visibly apart from the manufacturer\u2019s photography, because those are two different claims. Anyone on staff can add a roof to that section from the phone. Discontinued colours are still there and marked, so a homeowner with an older roof can find theirs and a repair can be matched. A colour with no photograph yet shows its approximate shade and says so \u2014 it is not presented as the real thing.' },
 { b:613, d:'2026-08-07', t:'The password reset link finally works', s:'Forgot password has been broken for everyone, and it looked like it was working. The emailed link opened the app, the app quietly threw the link away before reading it, and nothing happened \u2014 no error, no prompt. Two separate faults caused it: the app checked for the reset code a moment too late, after another part of the page had already wiped it from the address bar. Both are fixed, so the link now does what it says. If you have been stuck, use Forgot password on the sign-in screen and follow the email.' },
 { b:612, d:'2026-08-07', t:'The app tells you when a notification did not go', s:'The line under a tagged message used to say \u201cNotified\u201d the moment you posted, whether or not anything had been sent \u2014 it was drawn beside the send, not after it. It now waits for the answer and reports it: notified by phone, by email, or not at all with the reason in plain words. The server behind it was also throwing away every delivery failure except an expired phone, so a rejected push looked exactly like no push. It now counts what went, what failed and what was emailed, and names the cause.' },
@@ -59728,20 +59729,221 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
   #cr-occ .occ-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px}
   #cr-occ .occ-h{font-size:21px}
 }
+
+/* ---- 616: the line picker, and the three-level state machine -------------
+   Levels are two classes on #cr-occ:
+       (none)   the hub — pick a product line
+       .line    a line page — description, specs, its colours
+       .detail  one colour
+
+   .detail sits ON TOP of .line (a colour is always opened from a line), so the
+   .detail rules below carry an extra class and out-specify the .line ones
+   rather than relying on source order — which a later edit could quietly
+   reverse. Every --occ-* reference carries a literal fallback: builds 448–449
+   are what happens when a token is stripped by another module at load.
+-------------------------------------------------------------------------- */
+#cr-occ .occ-hub{display:block; padding:14px 16px 40px; max-width:760px}
+#cr-occ .occ-lead{display:none; padding:16px 16px 4px; max-width:760px}
+#cr-occ:not(.line):not(.detail) .occ-filters,
+#cr-occ:not(.line):not(.detail) .occ-count,
+#cr-occ:not(.line):not(.detail) .occ-grid{display:none}
+#cr-occ.line .occ-hub{display:none}
+#cr-occ.line .occ-lead{display:block}
+#cr-occ.detail .occ-hub,
+#cr-occ.detail .occ-lead{display:none}
+
+/* the tiles */
+#cr-occ .occ-line{
+  display:block; width:100%; text-align:left; margin:0 0 10px;
+  padding:15px 16px; min-height:44px; cursor:pointer;
+  background:var(--occ-card,#0E1114); color:var(--occ-ink,#EDEFF2);
+  border:1px solid var(--occ-line,#1D2126); border-radius:14px;
+  font:inherit; -webkit-appearance:none; appearance:none;
+}
+#cr-occ .occ-line:active{border-color:var(--occ-red,#c8202e)}
+#cr-occ .occ-line.soon{cursor:default; opacity:.62}
+#cr-occ .occ-line.soon:active{border-color:var(--occ-line,#1D2126)}
+#cr-occ .occ-lname{
+  display:flex; align-items:center; gap:9px;
+  font:700 17.5px var(--occ-sans,sans-serif); letter-spacing:-.02em;
+  color:var(--occ-ink,#EDEFF2);
+}
+#cr-occ .occ-go{margin-left:auto; color:var(--occ-dim,#9AA3AE); font-weight:600}
+#cr-occ .occ-soon{
+  margin-left:auto; padding:3px 8px; border-radius:999px;
+  font:700 10.5px/1.35 var(--occ-sans,sans-serif); letter-spacing:.06em; text-transform:uppercase;
+  background:var(--occ-raise,#12151A); color:var(--occ-dim,#9AA3AE);
+  border:1px solid var(--occ-line,#1D2126);
+}
+#cr-occ .occ-lkind{margin-top:4px; font-size:13px; color:var(--occ-ink2,#C6CCD4)}
+#cr-occ .occ-lsub{margin-top:6px; font-size:12.5px; color:var(--occ-dim,#9AA3AE)}
+
+/* the line page's description and spec table */
+#cr-occ .occ-blurb{margin:0 0 14px; font-size:15.5px; line-height:1.5; color:var(--occ-ink2,#C6CCD4)}
+#cr-occ .occ-spec{width:100%; border-collapse:collapse; font-size:14px}
+#cr-occ .occ-spec th,
+#cr-occ .occ-spec td{
+  text-align:left; vertical-align:top; padding:9px 0;
+  border-bottom:1px solid var(--occ-line,#1D2126);
+}
+#cr-occ .occ-spec th{
+  width:41%; padding-right:14px; font-weight:600;
+  color:var(--occ-dim,#9AA3AE);
+}
+#cr-occ .occ-spec td{color:var(--occ-ink,#EDEFF2)}
+#cr-occ .occ-src{margin-top:10px; font-size:12px; color:var(--occ-dim,#9AA3AE)}
+
+/* the replacement, on the discontinued card itself */
+#cr-occ .occ-repl{margin-top:7px; font-size:12.5px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-repl b{color:var(--occ-ink2,#C6CCD4); font-weight:600}
+
+/* separates the Designer chips from the shade chips */
+#cr-occ .occ-div{
+  flex:0 0 auto; width:1px; align-self:stretch; margin:2px 4px;
+  background:var(--occ-line,#1D2126);
+}
+
+@media (max-width:520px){
+  #cr-occ .occ-spec th{width:46%; font-size:13px}
+  #cr-occ .occ-spec td{font-size:13.5px}
+  #cr-occ .occ-lname{font-size:16.5px}
+}
 </style>
 <script id="cr-occ-script">
-/* Cardinal OC Colors — the colour wall.  v2026-08-07 · build 615
-   Reached from the Vision hub's Colors tile (data-go="colors"), which shipped
-   DISABLED at build 593 and is enabled by this build. Not a new surface.
+/* Cardinal OC Colors — the product-line hub.  v2026-08-07 · build 616
+   Reached from the Vision hub's Colors tile (data-go="colors").
 
-   Two rules this module exists to keep, both from settled decisions:
-     1. `hidden` is not `status`. Discontinued colours DO get a spot (badged);
-        hidden ones get none. The query filters on hidden, never on status.
+   616 turned one flat wall of 30 cards into a LINE PICKER, Theo's design:
+   "When clicking oc colors, 3 options. Duration, Oakridge, Discontinued. In
+   Duration, a filter with Designer or a tab. A description in the duration
+   page first of what makes it better." Plus Supreme, and FLEX as its own page.
+
+   THREE LEVELS, and the back button must walk all three:
+       hub  →  line page  →  colour detail
+   State is two classes on #cr-occ: none = hub, .line = a line, .detail = a
+   colour. .detail can sit on top of .line, so the stylesheet's .detail rules
+   are written to out-specify the .line ones rather than rely on order alone.
+
+   Rules this module exists to keep, all from settled decisions:
+     1. `hidden` is not `status`. The query filters on hidden, never status.
+        Discontinued colours keep a spot — now their OWN page — so an owner can
+        identify an older roof and a rep can match a repair.
      2. A cover is Owens Corning's image. oc_color_photos holds OUR roofs, and
-        the two are rendered in visibly separate sections. Never mix them. */
+        the two render in visibly separate sections. Never mix them.
+     3. NO SPEC FIGURE THAT ISN'T SOURCED. Every number in LINES below is
+        quoted from an Owens Corning book Theo supplied — the file is named in
+        `source` and shown on the page. Oakridge and Supreme carry ready:false
+        precisely because nothing published by OC was reachable for them; a
+        wind rating read aloud to a homeowner is close to a warranty claim.
+        Do not fill them in from memory or from a retailer listing. */
 (function(){
 'use strict';
-var VIEW = null, COLORS = [], FAM = '', STAT = '', CUR = null;
+var VIEW = null, COLORS = [], LINE = '', FAM = '', COLL = '', CUR = null;
+
+/* ---------------------------------------------------------------------------
+   The product lines.
+
+   `match` decides which catalogue rows land on a line's page. Duration and FLEX
+   share one palette — Theo, of the FLEX brochure: "The is flex but the color is
+   the same" — so they deliberately match the same rows rather than duplicating
+   any data. Verified against the books: FLEX's palette (Brownwood, Driftwood,
+   Estate Gray, Onyx Black, Teak, Black Sable) is a subset of Duration's.
+
+   `specs` rows are [label, value]. Both strings are escaped on render.
+   `ready:false` renders a "Coming" tile that cannot be opened — the same
+   convention the Colors tile itself used between builds 593 and 615.
+--------------------------------------------------------------------------- */
+var LINES = [
+  {
+    key:'duration',
+    name:'TruDefinition® Duration®',
+    kind:'Architectural shingle',
+    ready:true,
+    glance:'130 MPH · Class 3 impact · Limited Lifetime',
+    blurb:'Cardinal’s standard. SureNail® Technology is a woven fabric strip laid through the nailing zone; it works with the patented Tru-Bond® sealant for the grip behind a 130-MPH wind warranty. Where that fabric overlays both shingle layers it forms a triple layer of reinforcement — Triple Layer Protection® — which is what resists “nail pull” in high wind. That nailing strip is the single thing Oakridge does not have.',
+    specs:[
+      ['Shingle type',      'Architectural (laminate)'],
+      ['Limited warranty',  'Limited Lifetime — for as long as you own your home'],
+      ['Wind resistance',   '130 MPH limited warranty'],
+      ['Impact resistance', 'UL 2218 / FM 4473 — Class 3'],
+      ['Algae resistance',  '25-year limited warranty (StreakGuard®)'],
+      ['Fire resistance',   'ASTM E108 / UL 790 — Class A'],
+      ['Wind classification','ASTM D3161 Class F · ASTM D7158 Class H'],
+      ['Nailing',           'SureNail® Technology']
+    ],
+    source:'TruDefinition Duration Beauty Book',
+    match:function(c){
+      return c.status !== 'discontinued' &&
+             (c.product_line === 'duration' || c.product_line === 'designer');
+    }
+  },
+  {
+    key:'flex',
+    name:'TruDefinition® Duration® FLEX®',
+    kind:'Impact-rated architectural shingle',
+    ready:true,
+    glance:'130 MPH · Class 4 impact · insurance discount',
+    blurb:'The impact-rated one. SBS-modified asphalt absorbs the energy of storm debris, which earns two of the industry’s highest impact ratings — UL 2218 and FM 4473 Class 4 — and may qualify a homeowner for an insurance discount. Same TruDefinition® colour platform as Duration, so the colours below are the same ones.',
+    specs:[
+      ['Shingle type',      'Architectural (laminate), SBS-modified'],
+      ['Limited warranty',  'Limited Lifetime'],
+      ['Wind resistance',   '130 MPH limited warranty'],
+      ['Impact resistance', 'UL 2218 / FM 4473 — Class 4, the highest rating. May qualify for a homeowner insurance discount.'],
+      ['Algae resistance',  '25-year limited warranty (StreakGuard®)'],
+      ['Nailing',           'SureNail® Technology']
+    ],
+    source:'TruDefinition Duration FLEX brochure',
+    match:function(c){
+      return c.status !== 'discontinued' &&
+             (c.product_line === 'duration' || c.product_line === 'designer');
+    }
+  },
+  {
+    key:'oakridge',
+    name:'Oakridge®',
+    kind:'Architectural shingle',
+    ready:false,
+    glance:'Specifications to come',
+    /* ready:false ON PURPOSE. Owens Corning's own site is unreachable from the
+       build sandbox, and the figures that came back from a search were from
+       contractor blogs and big-box listings — the same weak sourcing Theo threw
+       out on Williamsburg Gray ("Please don't list Lowe's they mix batches").
+       He is supplying the real numbers. When they arrive: fill kind/blurb/specs,
+       set ready:true, name the source, and add a `match` only if Oakridge
+       colours are actually loaded into oc_colors — there are none today.
+       One figure needs care when it lands: Oakridge's wind rating is reported
+       as CONDITIONAL on OC starter plus six nails rather than four. If that
+       holds, the page must say so. A rep quoting the higher number on a
+       four-nail roof is stating something false about a warranty. */
+    blurb:'', specs:[], source:'', match:null
+  },
+  {
+    key:'supreme',
+    name:'Supreme®',
+    kind:'3-tab strip shingle',
+    ready:false,
+    glance:'Specifications to come',
+    /* ready:false for the same reason as Oakridge. Theo's selling point for
+       this page is that Supreme has the weakest wind rating of the lines — that
+       comparison only works if the number is right, so it waits for him. */
+    blurb:'', specs:[], source:'', match:null
+  },
+  {
+    key:'discontinued',
+    name:'Discontinued',
+    kind:'No longer available to order',
+    ready:true,
+    glance:'For identifying and matching an existing roof',
+    blurb:'Cardinal has been roofing for years, and a homeowner cannot name the colour on a twelve-year-old roof from the driveway. These are kept so an existing roof can be identified and a repair matched. None of them can be ordered. Where Owens Corning has a current colour that comes closest, it is named on the card.',
+    specs:[], source:'',
+    match:function(c){ return c.status === 'discontinued'; }
+  }
+];
+
+function lineOf(key){
+  for(var i = 0; i < LINES.length; i++) if(LINES[i].key === key) return LINES[i];
+  return null;
+}
 
 function sb(){ return (typeof supa !== 'undefined' && supa) ? supa : (window.supa || null); }
 function esc(s){
@@ -59778,13 +59980,17 @@ function ensureView(){
       '<button type="button" class="occ-back" id="occBack">← Back</button>' +
       '<div class="occ-title"><b id="occTitle">Colors</b><span id="occSub">Owens Corning shingle colours</span></div>' +
     '</div>' +
+    '<div class="occ-hub" id="occHub"></div>' +
+    '<div class="occ-lead" id="occLead"></div>' +
     '<div class="occ-filters" id="occFilters"></div>' +
     '<div class="occ-count" id="occCount"></div>' +
     '<div class="occ-grid" id="occGrid"></div>' +
     '<div class="occ-detail" id="occDetail"></div>';
   document.body.appendChild(VIEW);
+  /* Three levels, so this walks back one at a time rather than closing. */
   VIEW.querySelector('#occBack').onclick = function(){
-    if(VIEW.classList.contains('detail')) return showWall();
+    if(VIEW.classList.contains('detail')) return showLine(LINE);
+    if(VIEW.classList.contains('line'))   return showHub();
     close();
   };
   return VIEW;
@@ -59799,6 +60005,17 @@ function tags(c){
   return t.join('');
 }
 
+/* 616 fix: the card sub-line used to be a binary — designer or "TruDefinition
+   Duration" — so the five rows carrying product_line='other' (Slate Grey, Aged
+   Cedar, Desert Tan, Summer Harvest, Bourbon) were all labelled Duration, which
+   is a product claim nobody recorded. They are old discontinued colours whose
+   line was never captured. Say the manufacturer and stop there; do not guess. */
+function lineLabel(c){
+  if(c.product_line === 'designer') return 'Designer Collection';
+  if(c.product_line === 'duration') return 'TruDefinition Duration';
+  return 'Owens Corning';
+}
+
 function shot(c){
   if(c._src) return '<div class="occ-shot"><img src="' + esc(c._src) + '" alt="' + esc(c.name) + '" loading="lazy"></div>';
   /* No cover. Fall back to the hex — but every hex in this table is eyeballed
@@ -59808,11 +60025,56 @@ function shot(c){
          '<div class="occ-unver">Approximate colour — not a verified swatch</div></div></div>';
 }
 
+/* ---- the hub: pick a line ------------------------------------------------ */
+function hub(){
+  var box = VIEW.querySelector('#occHub');
+  box.innerHTML = LINES.map(function(L){
+    var n = L.match ? COLORS.filter(L.match).length : 0;
+    var sub = L.ready
+      ? (n ? n + (n === 1 ? ' colour' : ' colours') + ' · ' + esc(L.glance) : esc(L.glance))
+      : esc(L.glance);
+    if(!L.ready){
+      return '<div class="occ-line soon" aria-disabled="true">' +
+        '<div class="occ-lname">' + esc(L.name) + '<span class="occ-soon">Coming</span></div>' +
+        '<div class="occ-lkind">' + esc(L.kind) + '</div>' +
+        '<div class="occ-lsub">' + sub + '</div>' +
+      '</div>';
+    }
+    return '<button type="button" class="occ-line" data-line="' + esc(L.key) + '">' +
+      '<div class="occ-lname">' + esc(L.name) + '<span class="occ-go">→</span></div>' +
+      '<div class="occ-lkind">' + esc(L.kind) + '</div>' +
+      '<div class="occ-lsub">' + sub + '</div>' +
+    '</button>';
+  }).join('');
+  box.querySelectorAll('.occ-line[data-line]').forEach(function(b){
+    b.onclick = function(){ showLine(b.dataset.line); };
+  });
+}
+
+/* ---- a line page: description, specs, then its colours ------------------- */
+function lead(L){
+  var box = VIEW.querySelector('#occLead');
+  var html = '';
+  if(L.blurb) html += '<p class="occ-blurb">' + esc(L.blurb) + '</p>';
+  if(L.specs && L.specs.length){
+    html += '<table class="occ-spec"><tbody>' + L.specs.map(function(r){
+      return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+    /* Name where the figures came from. A warranty number on a client-facing
+       screen has to be attributable, not just plausible. */
+    if(L.source) html += '<div class="occ-src">Specifications as published by Owens Corning — ' + esc(L.source) + '.</div>';
+  }
+  box.innerHTML = html;
+}
+
 function render(){
   var g = VIEW.querySelector('#occGrid');
-  var list = COLORS.filter(function(c){
-    if(FAM  && c.family !== FAM)  return false;
-    if(STAT && c.status !== STAT) return false;
+  var L = lineOf(LINE);
+  if(!L || !L.match){ g.innerHTML = ''; VIEW.querySelector('#occCount').textContent = ''; return; }
+  var list = COLORS.filter(L.match).filter(function(c){
+    if(FAM  && c.family !== FAM) return false;
+    if(COLL === 'designer' && c.product_line !== 'designer') return false;
+    if(COLL === 'standard' && c.product_line === 'designer') return false;
     return true;
   });
   VIEW.querySelector('#occCount').textContent =
@@ -59823,8 +60085,13 @@ function render(){
       shot(c) +
       '<div class="occ-meta">' +
         '<div class="occ-name">' + esc(c.name) + '</div>' +
-        '<div class="occ-sub">' + esc(c.product_line === 'designer' ? 'Designer Collection' : 'TruDefinition Duration') + '</div>' +
+        '<div class="occ-sub">' + esc(lineLabel(c)) + '</div>' +
         '<div class="occ-tags">' + tags(c) + '</div>' +
+        /* 616: the replacement on the CARD, not just in detail — a repair match
+           should read straight off the grid without opening anything, which is
+           the whole reason these rows still have a spot. */
+        (c.status === 'discontinued' && c.replaced_by
+          ? '<div class="occ-repl">Closest current: <b>' + esc(c.replaced_by) + '</b></div>' : '') +
       '</div></button>';
   }).join('');
   g.querySelectorAll('.occ-card').forEach(function(b){
@@ -59833,27 +60100,34 @@ function render(){
 }
 
 function filters(){
-  var fams = [], sts = [];
-  COLORS.forEach(function(c){
-    if(c.family && fams.indexOf(c.family) === -1) fams.push(c.family);
-    if(c.status && sts.indexOf(c.status) === -1) sts.push(c.status);
-  });
+  var L = lineOf(LINE); if(!L || !L.match){ VIEW.querySelector('#occFilters').innerHTML = ''; return; }
+  var pool = COLORS.filter(L.match);
+  var fams = [];
+  pool.forEach(function(c){ if(c.family && fams.indexOf(c.family) === -1) fams.push(c.family); });
   fams.sort();
-  var LABEL = { coty:'Color of the Year', current:'Current', 'new':'New', discontinued:'Discontinued' };
-  var html = '<button type="button" class="occ-chip" data-f="" aria-pressed="' + (FAM ? 'false' : 'true') + '">All colours</button>';
+
+  var html = '';
+  /* The Designer split, which Theo asked for by name. Only offered where the
+     line actually has both — Discontinued does not. */
+  var hasDes = pool.some(function(c){ return c.product_line === 'designer'; });
+  var hasStd = pool.some(function(c){ return c.product_line !== 'designer'; });
+  if(hasDes && hasStd){
+    html += '<button type="button" class="occ-chip" data-c="" aria-pressed="' + (COLL ? 'false' : 'true') + '">All colours</button>' +
+            '<button type="button" class="occ-chip" data-c="standard" aria-pressed="' + (COLL === 'standard' ? 'true' : 'false') + '">Standard</button>' +
+            '<button type="button" class="occ-chip" data-c="designer" aria-pressed="' + (COLL === 'designer' ? 'true' : 'false') + '">Designer</button>' +
+            '<span class="occ-div"></span>';
+  }
+  html += '<button type="button" class="occ-chip" data-f="" aria-pressed="' + (FAM ? 'false' : 'true') + '">Every shade</button>';
   html += fams.map(function(f){
     return '<button type="button" class="occ-chip" data-f="' + esc(f) + '" aria-pressed="' + (FAM === f ? 'true' : 'false') + '">' +
            esc(f.charAt(0).toUpperCase() + f.slice(1)) + '</button>';
   }).join('');
-  html += sts.map(function(s){
-    return '<button type="button" class="occ-chip" data-s="' + esc(s) + '" aria-pressed="' + (STAT === s ? 'true' : 'false') + '">' +
-           esc(LABEL[s] || s) + '</button>';
-  }).join('');
+
   var bar = VIEW.querySelector('#occFilters');
   bar.innerHTML = html;
   bar.querySelectorAll('.occ-chip').forEach(function(b){
     b.onclick = function(){
-      if(b.hasAttribute('data-s')) STAT = (STAT === b.dataset.s) ? '' : b.dataset.s;
+      if(b.hasAttribute('data-c')) COLL = b.dataset.c || '';
       else                         FAM  = b.dataset.f || '';
       filters(); render();
     };
@@ -59872,10 +60146,24 @@ async function load(){
   COLORS.forEach(function(c){ c._src = c.cover_image_path ? map[c.cover_image_path] : null; });
 }
 
-function showWall(){
-  VIEW.classList.remove('detail'); CUR = null;
+function showHub(){
+  VIEW.classList.remove('detail'); VIEW.classList.remove('line');
+  LINE = ''; CUR = null; FAM = ''; COLL = '';
   VIEW.querySelector('#occTitle').textContent = 'Colors';
-  VIEW.querySelector('#occSub').textContent = 'Owens Corning shingle colours';
+  VIEW.querySelector('#occSub').textContent = 'Owens Corning shingle lines';
+  hub();
+  VIEW.scrollTop = 0;
+}
+
+function showLine(key){
+  var L = lineOf(key); if(!L || !L.ready) return showHub();
+  if(LINE !== key){ FAM = ''; COLL = ''; }
+  LINE = key; CUR = null;
+  VIEW.classList.remove('detail');
+  VIEW.classList.add('line');
+  VIEW.querySelector('#occTitle').textContent = L.name;
+  VIEW.querySelector('#occSub').textContent = L.kind;
+  lead(L); filters(); render();
   VIEW.scrollTop = 0;
 }
 
@@ -59885,8 +60173,7 @@ async function openColor(slug){
   CUR = c;
   VIEW.classList.add('detail');
   VIEW.querySelector('#occTitle').textContent = c.name;
-  VIEW.querySelector('#occSub').textContent =
-    (c.product_line === 'designer' ? 'Designer Collection' : 'TruDefinition Duration');
+  VIEW.querySelector('#occSub').textContent = lineLabel(c);
   VIEW.scrollTop = 0;
 
   var d = VIEW.querySelector('#occDetail');
@@ -59971,10 +60258,10 @@ async function open(){
   ensureView();
   try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
   VIEW.style.display = 'block';
-  showWall();
-  VIEW.querySelector('#occGrid').innerHTML = '<div class="occ-empty">Loading colours…</div>';
+  showHub();
+  VIEW.querySelector('#occHub').innerHTML = '<div class="occ-empty">Loading…</div>';
   await load();
-  filters(); render();
+  showHub();
   try{ if(window.navPush) window.navPush('cr-occ'); }catch(_){}
 }
 function close(){
@@ -59985,10 +60272,13 @@ function close(){
 window.CardinalColors = Object.assign(window.CardinalColors || {}, {
   open: open,
   close: close,
-  reload: async function(){ if(!VIEW) return; await load(); filters(); render(); }
+  reload: async function(){
+    if(!VIEW) return;
+    await load();
+    if(LINE){ filters(); render(); } else { hub(); }
+  }
 });
-})();
-</script>
+})();</script>
 
 </body>
 </html>
