@@ -9168,3 +9168,88 @@ user path and immune to the origin.
 50/50** — the two phone diffs, ≥44px on every control including the switcher, all three
 nav levels in all three styles, and no horizontal overflow at 820 / 834 / 1024 / 1194px.
 All three styles rendered against live rows and looked at.
+
+---
+
+## Build 619 — FLEX shows only the colours FLEX is made in (7 Aug 2026)
+
+Theo sent Owens Corning's **Duration series comparison** and the **SureNail sell sheet
+(10020692)**. The comparison says **DurationFLEX: "9 Colors Available Regionally"**. The
+FLEX brochure's own colour section lists exactly nine:
+
+| | |
+|---|---|
+| *Rich, sophisticated classic hues* | Brownwood · Driftwood · Estate Gray · Onyx Black · Teak |
+| *Vibrant, dimensional combinations* | Black Sable · Sand Dune · Storm Cloud · Summer Harvest |
+
+Two independent OC sources, same count. **The FLEX page was showing all twenty of
+Duration's.**
+
+### Where the mistake came from
+
+616 matched FLEX to Duration's rows on the strength of Theo's *"The is flex but the color
+is the same."* He meant the colour **renders** the same — a FLEX Onyx Black looks like a
+Duration Onyx Black — **not** that FLEX is manufactured in all of them.
+
+The 616 build-log entry also claimed FLEX's palette was *"Brownwood, Driftwood, Estate
+Gray, Onyx Black, Teak, Black Sable"* — **six. It is nine.** That count came from a
+keyword sweep of the brochure that never checked the colour section itself, which is this
+file's own "print what your extractor captured" rule going unheeded.
+
+**The cost if it had shipped:** a rep stands on the FLEX page, picks Merlot, and orders a
+roof in a colour FLEX is not made in. Same class of error as selling a discontinued
+colour — the thing this module exists to prevent.
+
+`FLEX_COLOURS` is now an explicit nine-slug list mirroring the brochure. Two of the nine
+are discontinued, so the sellable page shows **seven**; both still appear on the
+Discontinued page. Duration is untouched and keeps its full palette, asserted at patch
+time. Every slug is checked against the live catalogue, so a typo shrinks the page loudly
+rather than silently.
+
+### ⚠️ NOT changed: the 130 MPH. There is a source conflict and it is unresolved
+
+Theo's comparison table says **"up to 160 MPH###"** for every Duration-series shingle. Our
+pages say 130. **Not one of the seven Owens Corning documents on hand mentions 160:**
+
+- Duration Beauty Book — *130-MPH Wind Resistance Limited Warranty*
+- Duration FLEX brochure — *130-MPH*
+- SureNail sell sheet (10020692) — *"exceptional wind resistance of a 130-MPH wind warranty"*
+
+The `###` footnote is not in anything supplied. **"Up to" plus a footnote marker is the
+same shape as Oakridge's 110/130**, which turned out to be conditional on six nails and OC
+starter. Putting 160 on a tablet without its condition would be a false warranty statement
+in front of a homeowner. The footnote was asked for rather than guessed. **Do not raise
+this number until that text exists.**
+
+### Oakridge needed nothing
+
+The technical table Theo pasted matches what 617 ships line for line — Limited Lifetime,
+110/130 MPH, 25-year algae, 13¼″ × 39⅜″, 5⅝″ exposure, 98.4 sq ft per square. A
+confirmation, not a correction.
+
+### A harness caught a bad edit of mine
+
+I changed the FLEX tile's glance from *"insurance discount"* to *"a shorter colour range"*.
+An existing 617 assertion failed, correctly: that **traded the insurance-discount lever —
+the entire reason to sell FLEX — for a caveat.** The tile already prints the colour count
+ahead of the glance, so the shorter range needs no words. Reverted.
+
+### The phone baseline moved on purpose, and that is the interesting part
+
+618's Chromium check asserts the phone render is pixel-identical to an approved baseline;
+it is what caught the hero leaking onto the phone. 619 **legitimately** changes phone
+content — FLEX's tile now reads "7 colours" — so the check went red.
+
+**The baseline was not refreshed to make it green.** A tile-by-tile render
+(`phonediff.js`) proved the difference was confined to the FLEX row and nothing else moved,
+and only then was the baseline re-approved. The assertion is now named *"PHONE MATCHES THE
+APPROVED BASELINE (no unintended viewport leak)"* and its failure message says to check
+**which** kind of change it is before touching the file. A pixel gate that gets refreshed
+on every red is not a gate.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 618 → 619. **jsdom 83/83** — including that
+no Duration-only colour can be reached from the FLEX page, that the discontinued FLEX
+colours are filtered out of the sellable page but still appear on the Discontinued one, and
+that Duration was not narrowed alongside it. **Chromium 50/50.**

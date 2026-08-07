@@ -1651,7 +1651,7 @@ state until then. Nothing here has been verified against a real photograph.
 
 ---
 
-## OC Colors — the shingle-line hub (builds 615–618, 7 Aug 2026)
+## OC Colors — the shingle-line hub (builds 615–619, 7 Aug 2026)
 
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
@@ -1672,10 +1672,26 @@ the hub. State is two classes on `#cr-occ`: none, `.line`, `.detail`. `.detail` 
 | Line | Ships | Holds |
 |---|---|---|
 | **TruDefinition Duration** | ✅ description + 8-row spec table | the 20 sellable colours, with a **Designer Series** tab |
-| **Duration FLEX** | ✅ description + specs | the same 20 — same colour platform, so it matches the same rows rather than duplicating data |
+| **Duration FLEX** | ✅ description + specs | **its own 9-colour palette** (7 sellable) — `FLEX_COLOURS` |
 | **Oakridge** | ✅ description + 10-row spec table + a wind caution | no catalogue rows — spec page only |
 | **Supreme** | ✅ description + 9-row spec table | no catalogue rows — spec page only |
 | **Discontinued** | ✅ description | the 10 dead colours, each naming its closest current replacement **on the card** |
+
+⚠️ **FLEX is NOT made in Duration's full range.** `FLEX_COLOURS` is an explicit nine-slug
+list mirroring the FLEX brochure's colour section; Owens Corning's own line comparison
+independently says "9 Colors Available Regionally". 616 matched FLEX to Duration's rows on
+a misreading of *"the is flex but the color is the same"* — he meant a colour **renders**
+the same, not that FLEX comes in all of them — which let a rep pick Merlot on the FLEX page
+and order a roof in a colour FLEX is not made in. **If that list grows, the brochure grew:
+check the document.** Two of the nine are discontinued and are filtered out of the sellable
+page while still appearing on the Discontinued one.
+
+⚠️ **Duration's and FLEX's wind figure is 130 MPH and there is an unresolved conflict.**
+Owens Corning's web line-comparison says *"up to 160 MPH###"*, but none of the seven OC
+documents on hand mentions 160 — the Duration Beauty Book, the FLEX brochure and the
+SureNail sell sheet all say 130 — and the `###` footnote has not been supplied. "Up to"
+plus a footnote marker is the same shape as Oakridge's conditional 110/130. **Do not raise
+this number until the footnote text exists.**
 
 **⚠ No spec figure that isn't sourced — enforced at patch time, not intended.** Every number in
 `LINES` is quoted from an Owens Corning document Theo supplied, and each page **names its file
