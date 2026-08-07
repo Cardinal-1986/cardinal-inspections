@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 610 &#8212; tapping a punch out opens the punch out</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 612 &#8212; the app tells you when a notification did not go</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14758,12 +14758,13 @@ async function sendChat(){
     if(mentions.length){
       var to = mentionEmailsFor(mentions, msg.by);
       if(to.length){
-        notifyTeam(to,
+        /* 612: await the report rather than claiming success beside it. */
+        var _r = await notifyTeam(to,
           '\uD83D\uDCAC ' + msg.name + ' tagged you \u2014 ' + (currentProject.name || 'a client'),
           '<p><b>' + esc(msg.name) + '</b> tagged you on <b>' + esc(currentProject.name || '') + '</b>:</p>' +
           '<blockquote>' + esc(text) + '</blockquote>' +
           '<p>Open the client\u2019s Communications page in Cardinal Resource to reply.</p>');
-        qcNotified(to);
+        qcNotified(to, _r);
       }
     }
   }catch(err){ showError('Could not post: ' + (err.message || err)); }
@@ -14792,12 +14793,14 @@ window.CardinalMentions = Object.assign(window.CardinalMentions || {}, {
   names  : mentionNamesIn,
   emails : mentionEmailsFor,
 });
-function qcNotified(to){
-  var names = to.map(function(em){ return rptRepName(em); }).join(', ');
+function qcNotified(to, res){
   var th = document.getElementById('chatThread');
   var d = document.createElement('div');
   d.className = 'chatempty';
-  d.textContent = '\uD83D\uDD14 Notified ' + names;
+  /* 612: was '\uD83D\uDD14 Notified ' + names, drawn whether or not anything
+     was sent. It now states the outcome. */
+  d.textContent = notifyOutcomeText(res, to);
+  if(!(res && (res.sent > 0 || res.mailed > 0))) d.style.color = '#C8202E';
   th.appendChild(d);
   th.scrollTop = th.scrollHeight;
 }
@@ -15554,19 +15557,74 @@ function normStage(s){
   return STAGES.indexOf(s) !== -1 ? s : 'Lead';
 }
 function stageClass(s){ return 'stg-' + normStage(s).replace(/ /g,''); }
+/* 612: this was fire-and-forget with an EMPTY .catch(), so seven call sites
+   could not tell success from silence — and for months it was silence. It
+   now RESOLVES to the route's report. Still never throws: callers may ignore
+   the promise and behave exactly as before. */
 function notifyTeam(to, subject, bodyHtml){
-  /* fire-and-forget team email; silent if offline/unconfigured */
-  if(!TEAM) return;
-  sb.auth.getSession().then(function(s){
+  if(!TEAM) return Promise.resolve({ ok:false, reason:'offline' });
+  return sb.auth.getSession().then(function(s){
     var tok = s.data.session && s.data.session.access_token;
-    if(!tok) return;
-    fetch('/api/notify', {
+    if(!tok) return { ok:false, reason:'signed_out' };
+    /* 611: this sent {to, subject, html}; the route reads
+       {emails, title, body, url}. `emails` was undefined on every one of the
+       seven call sites, so the route early-returned {ok:true, sent:0} and the
+       200 meant nobody ever noticed. Send the canonical shape, and keep the
+       html — the route now emails it as well as pushing. */
+    var _list = Array.isArray(to) ? to.filter(Boolean)
+              : (to ? String(to).split(/[,;]\s*/).filter(Boolean) : []);
+    var _text = String(bodyHtml || '')
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return fetch('/api/notify', {
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
-      body: JSON.stringify({ to: to, subject: subject, html: bodyHtml })
-    }).catch(function(){});
-  }).catch(function(){});
+      body: JSON.stringify({ emails: _list, title: subject, body: _text,
+                             html: bodyHtml, url: '/' })
+    }).then(function(r){ return r.json(); })
+      .then(function(j){ return j || { ok:false, reason:'empty_response' }; })
+      .catch(function(e){
+        return { ok:false, reason:'network',
+                 detail:String((e && e.message) || e).slice(0,120) };
+      });
+  }).catch(function(e){
+    return { ok:false, reason:'network', detail:String((e && e.message) || e).slice(0,120) };
+  });
 }
+
+/* 612: ONE place that turns a route report into a sentence a person can act
+   on. Both "Notified" lines use it, so they cannot drift apart — the same
+   rule 607 applied to mention-parsing. */
+function notifyOutcomeText(res, to){
+  var names = to.map(function(em){
+    return (typeof rptRepName === 'function' ? rptRepName(em) : em.split('@')[0]);
+  }).join(', ');
+  if(res && (res.sent > 0 || res.mailed > 0)){
+    var how = [];
+    if(res.sent > 0) how.push(res.sent === 1 ? 'phone' : res.sent + ' phones');
+    if(res.mailed > 0) how.push('email');
+    return '\uD83D\uDD14 Notified ' + names + ' \u2014 ' + how.join(' + ');
+  }
+  var r = res && res.reason, why;
+  if(r === 'offline')              why = 'you are offline';
+  else if(r === 'signed_out')      why = 'you are signed out';
+  else if(r === 'network')         why = 'the request never reached the server';
+  else if(r === 'no_recipients')   why = 'no one was tagged';
+  else if(r === 'no_subscriptions')why = 'no phone registered, and email is off';
+  else if(r === 'subscriptions_expired') why = 'their phone registration had expired';
+  else if(r === 'vapid_mismatch')  why = 'the server\u2019s push keys are wrong (VAPID_PRIVATE_KEY)';
+  else if(r === 'push_rejected')   why = 'the phone service refused it' +
+                                         (res.detail ? ' \u2014 ' + res.detail : '');
+  else if(r === 'resend_missing')  why = 'email is not switched on (RESEND_API_KEY)';
+  else if(r === 'email_failed')    why = 'email was refused' + (res.detail ? ' \u2014 ' + res.detail : '');
+  else if(r === 'subs_query_failed') why = 'could not read the subscription list';
+  else                             why = (r ? String(r) : 'no reason given');
+  return '\u26A0\uFE0F Could NOT notify ' + names + ' \u2014 ' + why;
+}
+window.notifyOutcomeText = notifyOutcomeText;
 async function patchProjectCk(pr, patch){
   var all = {};
   try{ all = JSON.parse(pr.checklist || '{}') || {}; }catch(e){}
@@ -17617,11 +17675,18 @@ document.getElementById('pushEnableBtn').addEventListener('click', async functio
     var reg = await navigator.serviceWorker.register('/sw.js');
     var perm = await Notification.requestPermission();
     if(perm !== 'granted'){ st.textContent = 'Permission was not granted. You can change this in device settings.'; return; }
+    /* 611: same stale-subscription clear as enableNotifications() — see the
+       note there. Both buttons subscribe; both must drop the old one. */
+    var old = await reg.pushManager.getSubscription();
+    if(old){ try{ await old.unsubscribe(); }catch(_){} }
     var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(VAPID_PUBLIC) });
     var j = sub.toJSON();
-    var r = await sb.from('push_subscriptions').upsert({
-      email: currentUser.email, endpoint: sub.endpoint,
-      p256dh: j.keys.p256dh, auth: j.keys.auth
+    /* 611: this wrote `push_subscriptions`, which api/notify.js NEVER reads —
+       so it reported success while guaranteeing silence. push_subs is the
+       table the sender actually queries, and `sub` is the whole JSON because
+       web-push needs endpoint + keys together. */
+    var r = await sb.from('push_subs').upsert({
+      email: currentUser.email, endpoint: sub.endpoint, sub: j
     }, { onConflict: 'endpoint' });
     if(r.error) throw r.error;
     st.textContent = '\u2705 Done \u2014 this device now gets Cardinal alerts.';
@@ -21348,6 +21413,13 @@ async function enableNotifications(){
     var perm = await Notification.requestPermission();
     if(perm !== 'granted'){ alert('Notifications were not allowed.'); return; }
     var reg = await navigator.serviceWorker.ready;
+    /* 611: a subscription made with a DIFFERENT applicationServerKey makes
+       subscribe() throw InvalidStateError, and every device that subscribed
+       before 608 corrected the VAPID key holds exactly that. Nothing here
+       ever cleared it, so the button could not succeed however many times it
+       was pressed. Drop the old one first; a no-op when there isn't one. */
+    var old = await reg.pushManager.getSubscription();
+    if(old){ try{ await old.unsubscribe(); }catch(_){} }
     var sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: __b64ToU8(VAPID_PUBLIC)
@@ -35098,6 +35170,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:612, d:'2026-08-07', t:'The app tells you when a notification did not go', s:'The line under a tagged message used to say \u201cNotified\u201d the moment you posted, whether or not anything had been sent \u2014 it was drawn beside the send, not after it. It now waits for the answer and reports it: notified by phone, by email, or not at all with the reason in plain words. The server behind it was also throwing away every delivery failure except an expired phone, so a rejected push looked exactly like no push. It now counts what went, what failed and what was emailed, and names the cause.' },
+{ b:611, d:'2026-08-06', t:'Notifications actually reach you', s:'Three faults, each silent, stacked on the same feature. The Enable button could never succeed on a phone that had enabled notifications before: the old subscription was still registered against the previous key, and nothing cleared it \u2014 so the browser refused every attempt. The button in My Profile also saved to a table nothing sends from, then said it had worked. And the function behind team alerts posted its message under field names the sender does not read, so seven kinds of alert quietly went nowhere. All three fixed, and team alerts now go out by email as well as to the phone, so a device that is not set up no longer means silence. Press Enable once more on each phone.' },
 { b:610, d:'2026-08-06', t:'Tapping a punch out opens the punch out', s:'On the production board, tapping a punch item dropped you on the client\u2019s main page \u2014 which the Open client profile button right above it already did, and it buried the thing you had just tapped. It now takes you to that client\u2019s Punch Outs and opens the item, ready to read or reply. The discussion also reads like a conversation now: your messages on the right, everybody else\u2019s on the left, and a name only where the speaker changes.' },
 { b:609, d:'2026-08-06', t:'Punch Outs is back in the job menu', s:'Yesterday\u2019s build moved punch outs off the client page and into the job menu \u2014 but put the button in a menu that does not show on screen, so it went from hard to find to impossible. It is in the Job Menu now, under Appointments, with the number still open beside it. My mistake, and the same one the build before last was about.' },
 { b:608, d:'2026-08-06', t:'Notifications can actually arrive now', s:'Push notifications have never worked, and this is why. The app had two different security keys for notifications where it should have had one, and the half that registered your phone was using the wrong one \u2014 so the server signed every alert with a key your phone had not agreed to, and the alert was thrown away before it reached you. Nothing showed an error, at either end. Both halves now use the same key. \u26a0\ufe0f You have to turn notifications back on once on each device: the registration made with the old key cannot be repaired, only replaced.' },
@@ -43747,7 +43821,7 @@ if(!names.length || !M) return;
 var to = M.emails(names, by);
 if(!to.length || typeof window.notifyTeam !== 'function') return;
 var pr = window.currentProject;
-window.notifyTeam(to,
+var _r = await window.notifyTeam(to,
 '🔨 ' + msg.name + ' tagged you — ' + ((pr && pr.name) || 'a job'),
 '<p><b>' + esc(msg.name) + '</b> tagged you on the punch out <b>' + esc(it.title) + '</b>' +
 ((pr && pr.name) ? ' at <b>' + esc(pr.name) + '</b>' : '') + ':</p>' +
@@ -43757,9 +43831,11 @@ var th = document.querySelector('#ppPage .pp-thread');
 if(th){
 var d = document.createElement('div');
 d.className = 'pp-none';
-d.textContent = '🔔 Notified ' + to.map(function(em){
-return (typeof window.rptRepName === 'function' ? window.rptRepName(em) : em.split('@')[0]);
-}).join(', ');
+/* 612: the same outcome sentence the Communications thread uses. */
+d.textContent = (typeof window.notifyOutcomeText === 'function')
+  ? window.notifyOutcomeText(_r, to)
+  : ('\uD83D\uDD14 Notified ' + to.join(', '));
+if(!(_r && (_r.sent > 0 || _r.mailed > 0))) d.style.color = '#C8202E';
 th.appendChild(d);
 }
 }

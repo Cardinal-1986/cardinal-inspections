@@ -8344,3 +8344,121 @@ That is now **four** stale-infrastructure claims in one evening: the original ou
 across three builds, "only 610 is ungated", and this one. The pattern is always the same — a
 correct observation restated later as a standing fact. **Timestamp the reading, or don't make the
 claim.**
+
+---
+
+## `studio.html` — the Private gallery, "Atlas" (2026-08-06)
+
+**No build number.** `studio.html` carries no version label and is not part of `index.html`'s app
+stamp, which stays where build 610 left it. No SQL — `studio_private` and `studio_private_events`
+were already applied, with `owner_email = my_email()` on USING *and* WITH CHECK, verified on the
+live database before a line was written.
+
+- Studio gains a `WORK / PRIVATE` switch. Work mode is **byte-for-byte unchanged** in behaviour —
+  Atlas is the Private experience only, so the whole Work path carries no regression risk.
+- One rail, three lenses (Time / Places / People); each accent names a lens, red is spent only on
+  the Private pill. `GRID | EVENTS` is a density toggle. Light is a token twin, resolved before
+  first paint.
+- Private is **unreachable on `showroom.*` and under `?vision=1`** — switch hidden, mode forced
+  back, and `display:none` in the markup so a script failure fails closed.
+- ⚠ **Inline style beat the stylesheet again.** `showApp()`'s `appView.style.display='block'`
+  outranked `#appView.priv{display:grid}`; the rail went full-width and the main column vanished.
+  **The gate passed it** — `getComputedStyle` reports `grid-template-columns` on a `display:block`
+  element, so a token-level assertion is not proof a layout is alive. Caught only by a rendered
+  screenshot. Gate now asserts computed `display` plus real geometry.
+- ⚠ **Three gate reds were the test's fault, not the app's** — a fixture miscount (Ava is in three
+  rows, not two), avatar arithmetic (2+1+2=5, not 3), and a hardcoded dark accent when Playwright's
+  default context is light. Fixed the assertions; the accent check now asserts the right token for
+  the active theme, flips, and asserts the other.
+- Verified: 45-assertion Chromium harness across 11 sections (real hostnames via route
+  interception, since the whole safety rule keys off `location.hostname`) · negative control fails
+  against both the pre-Atlas and the origin/main file · patch reproduces byte-for-byte · contrast
+  computed for both themes.
+- **Not verified against real data:** both tables are 0 rows. Fixtures match `information_schema`
+  column-for-column and nothing more. Places and Events render honest empty states until the
+  Spark-side pusher exists.
+
+## 611 — notifications actually reach you (2026-08-06)
+
+Three silent failures stacked on one feature. Found from a screenshot, not from reasoning.
+
+- **The Enable button could never succeed on a phone that had enabled before.** A
+  `PushSubscription` made with a different `applicationServerKey` makes `subscribe()` throw
+  `InvalidStateError`, and every device that subscribed before **608** corrected the VAPID key
+  holds exactly that. **`getSubscription` and `unsubscribe` appeared ZERO times** in `index.html`
+  and `sw.js` — nothing ever cleared it. Both subscribe paths now drop the old one first.
+- **The My Profile button wrote `push_subscriptions`**, which `api/notify.js` never reads, then
+  said *"this device now gets Cardinal alerts."* It writes `push_subs` now. A lie is worse than
+  an error.
+- **`notifyTeam()` posted `{to, subject, html}` while `/api/notify` read `{emails, title, body,
+  url}`.** `emails` was undefined on all **seven** call sites, so the route hit
+  `if(!emails.length)` and answered `{ok:true, sent:0}` — a 200, so nothing ever surfaced. The
+  payload is canonical now, and the route accepts either shape.
+- **`/api/notify` now sends email as well as push**, through the same Resend account
+  `api/digest.js` already proves is live. `notifyTeam`'s own comment always called itself "team
+  email"; it finally is one. Best-effort — no `RESEND_API_KEY` means `mailed:0`, which is the
+  old behaviour rather than a failure, and push is never blocked by it.
+
+Verified: `check_build.py` green (105 scripts, stamp 610→611, marker `pushManager.getSubscription()`
+present and **absent from prev**) · 21-assertion Node harness against the **shipped** `api/notify.js`
+with `web-push` stubbed and every fetch intercepted · 19-assertion Chromium harness running the
+**extracted shipped source** of both subscribe paths against a mock that reproduces the browser's
+real `InvalidStateError` rule · both patches reproduce byte-for-byte.
+
+**The negative controls are the proof.** Against 610 the route harness returns
+`{"ok":true,"sent":0}` on the `notifyTeam` shape — the silent no-op, reproduced — and the client
+harness emits *"Provided applicationServerKey does not match the key in the existing
+subscription"*, which is Theo's screenshot verbatim.
+
+⚠ **A vacuous assertion nearly shipped.** "queried push_subs for BOTH recipients" **passed against
+the broken handler**, because a ternary returned `true` whenever the query count wasn't 1. Caught
+by reading the negative-control output rather than trusting its exit code. Tightened.
+
+**Still owed, and not a build:** every phone must press Enable once more. Two subscribe paths
+remain (`enableNotifications()` and `#pushEnableBtn`); consolidating them is a follow-up, not done
+here to keep the diff on a live fix small.
+
+## 612 — the notification path stops lying (2026-08-07)
+
+611 fixed three causes of silent notification failure. It did not fix the
+**reporting**, and within an hour that cost an evening: a tagged message said
+"🔔 Notified Theo Dorion", nothing arrived, and there was no way from inside the
+app to learn why. Everything I could inspect from outside was sound — valid
+subscription, matching emails, permissive RLS, a working `sw.js` push handler,
+both phones on 611 — which left only the inside of the Vercel function, where I
+cannot see.
+
+- **`api/notify.js` discarded every send error except 404/410.** A push refused
+  with **401/403** — the signature that says `VAPID_PRIVATE_KEY` no longer pairs
+  with `VAPID_PUBLIC` — returned `{ok:true, sent:0}`, identical to no push at
+  all. It now counts `sent / failed / gone / mailed / subs` and names the cause:
+  `vapid_mismatch`, `push_rejected`, `no_subscriptions`, `subscriptions_expired`,
+  `subs_query_failed`, `resend_missing`, `email_failed`, `no_recipients`.
+- **A non-array Supabase response** returned `sent:0` and looked like "nobody is
+  subscribed". Now `subs_query_failed`, with the database's own message.
+- **`env: { vapid_from_env, resend }`** — booleans only, so the one question I
+  could not answer from here ("is the key actually set in Vercel?") is answerable
+  from the app. **The gate asserts neither secret ever appears in the response.**
+- **`notifyTeam()` had an EMPTY `.catch()`** and returned nothing. It now resolves
+  to the route's report and still never throws, so callers may ignore it.
+- **Both "Notified" lines were drawn beside the send, not after it** — the chat
+  thread and the punch discussion. Both now await the outcome and print it
+  through one shared `notifyOutcomeText()`, red when nothing was delivered.
+  One implementation, for the reason 607 gave: a second copy is the duplicate-
+  pipeline bug this project keeps paying for.
+
+Verified: `check_build.py` green (105 scripts, stamp 611→612, marker
+`notifyOutcomeText` present and absent from prev) · **26-assertion** Node harness
+on the shipped route covering every reason string, including that a 401 is
+reported and that neither secret leaks · **12-assertion** extraction test on the
+shipped `notifyOutcomeText()` proving a failure never renders the word
+"Notified" · 611's own route and client harnesses both still pass · both patches
+reproduce byte-for-byte.
+
+**The negative control is the finding.** Against 611's route, a push rejected
+401 returns `{"ok":true,"sent":0,"mailed":0}` — the exact silent success that
+made tonight undiagnosable.
+
+⚠ **This build diagnoses; it does not repair.** If the cause is a wrong
+`VAPID_PRIVATE_KEY` in Vercel, 612 will say so in plain words and the key still
+has to be fixed by hand.
