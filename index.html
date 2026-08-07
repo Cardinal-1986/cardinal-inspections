@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 613 &#8212; the password reset link finally works</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 615 &#8212; the Owens Corning colour wall, on the Vision hub</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15061,6 +15061,11 @@ function hideAllViews(){
      open, which is the only state closeForm() carries. */
   var _shf = document.getElementById('cr-show-form');
   if(_shf) _shf.classList.remove('open');
+  /* 615: the OC Colors wall is a fixed inset:0 view. It is DISPLAY-shown, so
+     display:none is the correct lever here — writing a class instead would
+     leave it covering the next screen (the 570-572 class). */
+  var _occ = document.getElementById('cr-occ');
+  if(_occ) _occ.style.display = 'none';
   /* Self-heal: whenever we're about to show a main-app view, make sure the
      site header is visible. Anything upstream that left it hidden gets fixed here. */
   var _hd = document.querySelector('header.site');
@@ -26696,7 +26701,7 @@ function showList() {
   window.__crViewPoke = true;
 
   var PANES = ['landingView','retailView','cardinalTruthView','insClientsView',
-               'resourceLibraryView','projView','teamView','punchView'];
+               'resourceLibraryView','projView','teamView','punchView','cr-occ'];
   var last = Object.create(null);
   var pokeEl = null, pending = false;
 
@@ -31649,7 +31654,7 @@ onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
 (function () {
 'use strict';
 var OVERLAY_IDS = ['cardinalTruthView', 'resourceLibraryView',
-'insClientsView',   'editorView'];
+'insClientsView',   'editorView',       'cr-occ'];
 function anyOverlayVisible(){
 for(var i = 0; i < OVERLAY_IDS.length; i++){
 var el = document.getElementById(OVERLAY_IDS[i]);
@@ -35179,6 +35184,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:615, d:'2026-08-07', t:'The Owens Corning colour wall', s:'The Colors tile on the Vision hub has said "Soon" since build 593. It works now. It opens a wall of every Owens Corning colour Cardinal sells, with Owens Corning\u2019s own roof photograph on each card, the Color of the Year going back to 2017, and the collection each colour belongs to. Tap one and you get its description, and underneath it a separate section for OUR roofs in that colour \u2014 Cardinal installs, kept visibly apart from the manufacturer\u2019s photography, because those are two different claims. Anyone on staff can add a roof to that section from the phone. Discontinued colours are still there and marked, so a homeowner with an older roof can find theirs and a repair can be matched. A colour with no photograph yet shows its approximate shade and says so \u2014 it is not presented as the real thing.' },
 { b:613, d:'2026-08-07', t:'The password reset link finally works', s:'Forgot password has been broken for everyone, and it looked like it was working. The emailed link opened the app, the app quietly threw the link away before reading it, and nothing happened \u2014 no error, no prompt. Two separate faults caused it: the app checked for the reset code a moment too late, after another part of the page had already wiped it from the address bar. Both are fixed, so the link now does what it says. If you have been stuck, use Forgot password on the sign-in screen and follow the email.' },
 { b:612, d:'2026-08-07', t:'The app tells you when a notification did not go', s:'The line under a tagged message used to say \u201cNotified\u201d the moment you posted, whether or not anything had been sent \u2014 it was drawn beside the send, not after it. It now waits for the answer and reports it: notified by phone, by email, or not at all with the reason in plain words. The server behind it was also throwing away every delivery failure except an expired phone, so a rejected push looked exactly like no push. It now counts what went, what failed and what was emailed, and names the cause.' },
 { b:611, d:'2026-08-06', t:'Notifications actually reach you', s:'Three faults, each silent, stacked on the same feature. The Enable button could never succeed on a phone that had enabled notifications before: the old subscription was still registered against the previous key, and nothing cleared it \u2014 so the browser refused every attempt. The button in My Profile also saved to a table nothing sends from, then said it had worked. And the function behind team alerts posted its message under field names the sender does not read, so seven kinds of alert quietly went nowhere. All three fixed, and team alerts now go out by email as well as to the phone, so a device that is not set up no longer means silence. Press Enable once more on each phone.' },
@@ -41618,13 +41624,13 @@ return (
 '</span><span class="go">\u2192</span>' +
 '</a>')
 : '') +
-'<div class="cr-vh-tile soon" aria-disabled="true">' +
+'<button type="button" class="cr-vh-tile" data-go="colors">' +
 '<span class="ic">\u25D4</span>' +
 '<span class="tx">' +
-'<span class="tt">Colors<span class="cr-vh-badge soon">Soon</span></span>' +
-'<span class="sb">Owens Corning shingle &amp; siding options</span>' +
-'</span>' +
-'</div>' +
+'<span class="tt">Colors</span>' +
+'<span class="sb">Owens Corning shingle colours &amp; our roofs</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
 '</div></div>'
 );
 }
@@ -41832,6 +41838,11 @@ return;
 if(d === 'library'){
 leave();
 if(typeof window.showResourceLibrary === 'function') window.showResourceLibrary();
+return;
+}
+if(d === 'colors'){
+leave();
+if(window.CardinalColors) window.CardinalColors.open();
 return;
 }
 if(d === 'board'){
@@ -59593,6 +59604,391 @@ window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
 #projModal .projform{margin-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
 body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-inset-bottom,0px));}
 </style>
+
+
+<style id="cr-occ-styles">
+/* Cardinal OC Colors — the colour wall.  v2026-08-07 · build 615
+   A Vision surface, so BLACKOUT by design like #cr-show — deliberately outside
+   both app themes. Do NOT wire this to rb-light.
+   Every --occ-* reference carries a literal fallback (the Crews/Showcase
+   pattern) so a token stripped by another module cannot make this see-through:
+   builds 448-449 are the proof that is not theoretical. */
+#cr-occ{
+  display:none; position:fixed; inset:0; z-index:158;
+  background:var(--occ-bg,#050607); color:var(--occ-ink,#EDEFF2);
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  font:400 16px/1.45 var(--occ-sans,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif);
+}
+#cr-occ *{box-sizing:border-box}
+#cr-occ .occ-head{
+  position:sticky; top:0; z-index:3; display:flex; align-items:center; gap:12px;
+  padding:14px 16px; background:var(--occ-head,#0A0C0E);
+  border-bottom:1px solid var(--occ-line,#1D2126);
+}
+#cr-occ .occ-back{
+  flex:0 0 auto; min-width:44px; min-height:44px; display:inline-flex;
+  align-items:center; justify-content:center; gap:6px; padding:0 12px;
+  background:transparent; color:var(--occ-ink,#EDEFF2);
+  border:1px solid var(--occ-line,#1D2126); border-radius:9px;
+  font:600 15px var(--occ-sans,sans-serif); cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#cr-occ .occ-back:active{background:var(--occ-raise,#12151A)}
+#cr-occ .occ-title{flex:1 1 auto; min-width:0}
+#cr-occ .occ-title b{display:block; font:700 19px var(--occ-sans,sans-serif); letter-spacing:-.02em}
+#cr-occ .occ-title span{display:block; font-size:13px; color:var(--occ-dim,#9AA3AE)}
+
+#cr-occ .occ-filters{
+  display:flex; flex-wrap:wrap; gap:8px; padding:12px 16px 4px;
+}
+#cr-occ .occ-chip{
+  min-height:36px; padding:0 13px; border-radius:999px; cursor:pointer;
+  background:var(--occ-raise,#12151A); color:var(--occ-dim,#9AA3AE);
+  border:1px solid var(--occ-line,#1D2126);
+  font:600 13.5px var(--occ-sans,sans-serif); -webkit-tap-highlight-color:transparent;
+}
+#cr-occ .occ-chip[aria-pressed="true"]{
+  background:var(--occ-red,#c8202e); border-color:var(--occ-red,#c8202e); color:#fff;
+}
+#cr-occ .occ-count{padding:6px 16px 10px; font-size:13px; color:var(--occ-dim,#9AA3AE)}
+
+#cr-occ .occ-grid{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:14px; padding:4px 16px 32px;
+}
+#cr-occ .occ-card{
+  background:var(--occ-card,#0E1114); border:1px solid var(--occ-line,#1D2126);
+  border-radius:12px; overflow:hidden; cursor:pointer; text-align:left;
+  padding:0; color:inherit; font:inherit; -webkit-tap-highlight-color:transparent;
+}
+#cr-occ .occ-card:active{border-color:var(--occ-red,#c8202e)}
+#cr-occ .occ-shot{position:relative; width:100%; aspect-ratio:3/2; background:#0A0C0E; overflow:hidden}
+#cr-occ .occ-shot img{width:100%; height:100%; object-fit:cover; display:block}
+/* the hex-swatch fallback. hex_verified is false on every row, so this must
+   never be presented as the product colour — hence the explicit label. */
+#cr-occ .occ-swatch{width:100%; height:100%; display:flex; align-items:flex-end}
+#cr-occ .occ-unver{
+  width:100%; padding:6px 9px; font:600 11px var(--occ-sans,sans-serif);
+  letter-spacing:.02em; color:#fff; background:rgba(0,0,0,.62);
+}
+#cr-occ .occ-meta{padding:11px 12px 13px}
+#cr-occ .occ-name{font:700 15.5px var(--occ-sans,sans-serif); letter-spacing:-.01em}
+#cr-occ .occ-sub{margin-top:3px; font-size:12.5px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-tags{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px}
+#cr-occ .occ-tag{
+  padding:3px 8px; border-radius:999px; font:700 10.5px var(--occ-sans,sans-serif);
+  letter-spacing:.04em; text-transform:uppercase;
+}
+#cr-occ .occ-tag.coty{background:var(--occ-gold,#C9A227); color:#1A1400}
+#cr-occ .occ-tag.was{background:var(--occ-goldq,#3A3208); color:var(--occ-gold,#C9A227)}
+#cr-occ .occ-tag.new{background:var(--occ-red,#c8202e); color:#fff}
+#cr-occ .occ-tag.disc{background:var(--occ-raise,#12151A); color:var(--occ-dim,#9AA3AE); border:1px solid var(--occ-line,#1D2126)}
+
+#cr-occ .occ-empty{padding:40px 16px; text-align:center; color:var(--occ-dim,#9AA3AE)}
+
+/* ---- detail ---- */
+#cr-occ .occ-detail{display:none; padding:0 0 40px}
+#cr-occ.detail .occ-filters,#cr-occ.detail .occ-grid,#cr-occ.detail .occ-count{display:none}
+#cr-occ.detail .occ-detail{display:block}
+#cr-occ .occ-hero{width:100%; aspect-ratio:3/2; background:#0A0C0E; overflow:hidden; position:relative}
+#cr-occ .occ-hero img{width:100%; height:100%; object-fit:cover; display:block}
+#cr-occ .occ-credit{
+  position:absolute; right:8px; bottom:8px; padding:4px 8px; border-radius:6px;
+  background:rgba(0,0,0,.6); font-size:11px; color:#D8DCE2;
+}
+#cr-occ .occ-body{padding:18px 16px 0; max-width:760px}
+#cr-occ .occ-h{font:700 24px var(--occ-sans,sans-serif); letter-spacing:-.02em}
+#cr-occ .occ-desc{margin-top:10px; color:var(--occ-ink2,#C6CCD4); font-size:15.5px}
+#cr-occ .occ-note{
+  margin-top:14px; padding:10px 12px; border-left:3px solid var(--occ-red,#c8202e);
+  background:var(--occ-raise,#12151A); font-size:14px; color:var(--occ-ink2,#C6CCD4);
+  border-radius:0 8px 8px 0;
+}
+#cr-occ .occ-sec{margin:26px 0 10px; padding:0 16px; max-width:760px}
+#cr-occ .occ-sec b{display:block; font:700 17px var(--occ-sans,sans-serif)}
+#cr-occ .occ-sec span{display:block; margin-top:3px; font-size:13px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-ours{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px; padding:0 16px;
+}
+#cr-occ .occ-ours figure{margin:0; border:1px solid var(--occ-line,#1D2126); border-radius:10px; overflow:hidden; background:var(--occ-card,#0E1114)}
+#cr-occ .occ-ours img{width:100%; aspect-ratio:3/2; object-fit:cover; display:block}
+#cr-occ .occ-ours figcaption{padding:8px 10px; font-size:12.5px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-none{padding:0 16px; color:var(--occ-dim,#9AA3AE); font-size:14px}
+#cr-occ .occ-actions{display:flex; flex-wrap:wrap; gap:10px; padding:16px}
+#cr-occ .occ-btn{
+  min-height:44px; padding:0 16px; border-radius:10px; cursor:pointer;
+  background:var(--occ-red,#c8202e); color:#fff; border:0;
+  font:700 15px var(--occ-sans,sans-serif); -webkit-tap-highlight-color:transparent;
+}
+#cr-occ .occ-btn.ghost{background:transparent; color:var(--occ-ink,#EDEFF2); border:1px solid var(--occ-line,#1D2126)}
+#cr-occ .occ-btn[disabled]{opacity:.5; cursor:default}
+#cr-occ input[type=file]{display:none}
+@media (max-width:520px){
+  #cr-occ .occ-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px}
+  #cr-occ .occ-h{font-size:21px}
+}
+</style>
+<script id="cr-occ-script">
+/* Cardinal OC Colors — the colour wall.  v2026-08-07 · build 615
+   Reached from the Vision hub's Colors tile (data-go="colors"), which shipped
+   DISABLED at build 593 and is enabled by this build. Not a new surface.
+
+   Two rules this module exists to keep, both from settled decisions:
+     1. `hidden` is not `status`. Discontinued colours DO get a spot (badged);
+        hidden ones get none. The query filters on hidden, never on status.
+     2. A cover is Owens Corning's image. oc_color_photos holds OUR roofs, and
+        the two are rendered in visibly separate sections. Never mix them. */
+(function(){
+'use strict';
+var VIEW = null, COLORS = [], FAM = '', STAT = '', CUR = null;
+
+function sb(){ return (typeof supa !== 'undefined' && supa) ? supa : (window.supa || null); }
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function amStaff(){ try{ return !!(window.currentUser && window.currentUser.email); }catch(_){ return false; } }
+function amAdmin(){ try{ return !!(window.is_admin && window.is_admin()); }catch(_){ return false; } }
+
+/* Sign for DISPLAY ONLY. Never write a signed URL back onto a row — the
+   estimates lesson: a signed URL persisted into a record expires and corrupts
+   it permanently. */
+async function signMany(paths){
+  var out = {}, list = (paths || []).filter(Boolean);
+  if(!list.length) return out;
+  var cl = sb(); if(!cl || !cl.storage) return out;
+  try{
+    var r = await cl.storage.from('photos').createSignedUrls(list, 3600);
+    if(!r || r.error || !Array.isArray(r.data)) return out;
+    r.data.forEach(function(d, i){ if(d && d.signedUrl && !d.error) out[list[i]] = d.signedUrl; });
+  }catch(e){ try{ if(window.report) window.report(e, 'Colors', 'sign'); }catch(_){} }
+  return out;
+}
+
+function ensureView(){
+  if(VIEW && document.body.contains(VIEW)) return VIEW;
+  VIEW = document.getElementById('cr-occ');
+  if(VIEW) return VIEW;
+  VIEW = document.createElement('div');
+  VIEW.id = 'cr-occ';
+  VIEW.innerHTML =
+    '<div class="occ-head">' +
+      '<button type="button" class="occ-back" id="occBack">← Back</button>' +
+      '<div class="occ-title"><b id="occTitle">Colors</b><span id="occSub">Owens Corning shingle colours</span></div>' +
+    '</div>' +
+    '<div class="occ-filters" id="occFilters"></div>' +
+    '<div class="occ-count" id="occCount"></div>' +
+    '<div class="occ-grid" id="occGrid"></div>' +
+    '<div class="occ-detail" id="occDetail"></div>';
+  document.body.appendChild(VIEW);
+  VIEW.querySelector('#occBack').onclick = function(){
+    if(VIEW.classList.contains('detail')) return showWall();
+    close();
+  };
+  return VIEW;
+}
+
+function tags(c){
+  var t = [];
+  if(c.status === 'coty') t.push('<span class="occ-tag coty">Color of the Year' + (c.coty_year ? ' ' + c.coty_year : '') + '</span>');
+  else if(c.coty_year)   t.push('<span class="occ-tag was">' + c.coty_year + ' Color of the Year</span>');
+  if(c.status === 'new')          t.push('<span class="occ-tag new">New</span>');
+  if(c.status === 'discontinued') t.push('<span class="occ-tag disc">Discontinued</span>');
+  return t.join('');
+}
+
+function shot(c){
+  if(c._src) return '<div class="occ-shot"><img src="' + esc(c._src) + '" alt="' + esc(c.name) + '" loading="lazy"></div>';
+  /* No cover. Fall back to the hex — but every hex in this table is eyeballed
+     and hex_verified is false, so say so on the card rather than let a rep
+     hold a tablet up to a house and call it the colour. */
+  return '<div class="occ-shot"><div class="occ-swatch" style="background:' + esc(c.hex || '#333') + ';">' +
+         '<div class="occ-unver">Approximate colour — not a verified swatch</div></div></div>';
+}
+
+function render(){
+  var g = VIEW.querySelector('#occGrid');
+  var list = COLORS.filter(function(c){
+    if(FAM  && c.family !== FAM)  return false;
+    if(STAT && c.status !== STAT) return false;
+    return true;
+  });
+  VIEW.querySelector('#occCount').textContent =
+    list.length + (list.length === 1 ? ' colour' : ' colours');
+  if(!list.length){ g.innerHTML = '<div class="occ-empty">No colours match that filter.</div>'; return; }
+  g.innerHTML = list.map(function(c){
+    return '<button type="button" class="occ-card" data-slug="' + esc(c.slug) + '">' +
+      shot(c) +
+      '<div class="occ-meta">' +
+        '<div class="occ-name">' + esc(c.name) + '</div>' +
+        '<div class="occ-sub">' + esc(c.product_line === 'designer' ? 'Designer Collection' : 'TruDefinition Duration') + '</div>' +
+        '<div class="occ-tags">' + tags(c) + '</div>' +
+      '</div></button>';
+  }).join('');
+  g.querySelectorAll('.occ-card').forEach(function(b){
+    b.onclick = function(){ openColor(b.dataset.slug); };
+  });
+}
+
+function filters(){
+  var fams = [], sts = [];
+  COLORS.forEach(function(c){
+    if(c.family && fams.indexOf(c.family) === -1) fams.push(c.family);
+    if(c.status && sts.indexOf(c.status) === -1) sts.push(c.status);
+  });
+  fams.sort();
+  var LABEL = { coty:'Color of the Year', current:'Current', 'new':'New', discontinued:'Discontinued' };
+  var html = '<button type="button" class="occ-chip" data-f="" aria-pressed="' + (FAM ? 'false' : 'true') + '">All colours</button>';
+  html += fams.map(function(f){
+    return '<button type="button" class="occ-chip" data-f="' + esc(f) + '" aria-pressed="' + (FAM === f ? 'true' : 'false') + '">' +
+           esc(f.charAt(0).toUpperCase() + f.slice(1)) + '</button>';
+  }).join('');
+  html += sts.map(function(s){
+    return '<button type="button" class="occ-chip" data-s="' + esc(s) + '" aria-pressed="' + (STAT === s ? 'true' : 'false') + '">' +
+           esc(LABEL[s] || s) + '</button>';
+  }).join('');
+  var bar = VIEW.querySelector('#occFilters');
+  bar.innerHTML = html;
+  bar.querySelectorAll('.occ-chip').forEach(function(b){
+    b.onclick = function(){
+      if(b.hasAttribute('data-s')) STAT = (STAT === b.dataset.s) ? '' : b.dataset.s;
+      else                         FAM  = b.dataset.f || '';
+      filters(); render();
+    };
+  });
+}
+
+async function load(){
+  var cl = sb(); if(!cl) return;
+  var r = await cl.from('oc_colors')
+    .select('id,name,slug,hex,hex_verified,family,product_line,status,replaced_by,description,sort_order,cover_image_path,cover_credit,coty_year,hidden')
+    .eq('hidden', false)
+    .order('sort_order', { ascending:true });
+  if(r.error || !r.data){ COLORS = []; return; }
+  COLORS = r.data;
+  var map = await signMany(COLORS.map(function(c){ return c.cover_image_path; }));
+  COLORS.forEach(function(c){ c._src = c.cover_image_path ? map[c.cover_image_path] : null; });
+}
+
+function showWall(){
+  VIEW.classList.remove('detail'); CUR = null;
+  VIEW.querySelector('#occTitle').textContent = 'Colors';
+  VIEW.querySelector('#occSub').textContent = 'Owens Corning shingle colours';
+  VIEW.scrollTop = 0;
+}
+
+async function openColor(slug){
+  var c = COLORS.filter(function(x){ return x.slug === slug; })[0];
+  if(!c) return;
+  CUR = c;
+  VIEW.classList.add('detail');
+  VIEW.querySelector('#occTitle').textContent = c.name;
+  VIEW.querySelector('#occSub').textContent =
+    (c.product_line === 'designer' ? 'Designer Collection' : 'TruDefinition Duration');
+  VIEW.scrollTop = 0;
+
+  var d = VIEW.querySelector('#occDetail');
+  var hero = c._src
+    ? '<div class="occ-hero"><img src="' + esc(c._src) + '" alt="' + esc(c.name) + '">' +
+      (c.cover_credit ? '<div class="occ-credit">' + esc(c.cover_credit) + '</div>' : '') + '</div>'
+    : '<div class="occ-hero"><div class="occ-swatch" style="background:' + esc(c.hex || '#333') + ';">' +
+      '<div class="occ-unver">Approximate colour — not a verified swatch</div></div></div>';
+
+  d.innerHTML = hero +
+    '<div class="occ-body">' +
+      '<div class="occ-h">' + esc(c.name) + '</div>' +
+      '<div class="occ-tags" style="margin-top:9px">' + tags(c) + '</div>' +
+      (c.description ? '<div class="occ-desc">' + esc(c.description) + '</div>' : '') +
+      (c.status === 'discontinued'
+        ? '<div class="occ-note"><b>Discontinued.</b> Shown so an older roof can be identified' +
+          (c.replaced_by ? ' — closest current colour is <b>' + esc(c.replaced_by) + '</b>' : '') +
+          '. Not available to order.</div>'
+        : '') +
+    '</div>' +
+    '<div class="occ-sec"><b>Our roofs in this colour</b>' +
+      '<span>Cardinal installs, not manufacturer photography.</span></div>' +
+    '<div id="occOurs" class="occ-none">Loading…</div>' +
+    '<div class="occ-actions">' +
+      (amStaff() ? '<button type="button" class="occ-btn" id="occAdd">Add one of our roofs</button>' +
+                   '<input type="file" id="occFile" accept="image/*">' : '') +
+    '</div>';
+
+  if(amStaff()){
+    var fi = d.querySelector('#occFile');
+    d.querySelector('#occAdd').onclick = function(){ fi.click(); };
+    fi.onchange = function(){ if(fi.files && fi.files[0]) upload(fi.files[0]); };
+  }
+  ours(c);
+}
+
+async function ours(c){
+  var box = VIEW.querySelector('#occOurs'); if(!box) return;
+  var cl = sb(); if(!cl){ box.textContent = ''; return; }
+  var r = await cl.from('oc_color_photos')
+    .select('id,storage_path,project_address,captured_on,caption,is_hero,sort_order')
+    .eq('color_id', c.id)
+    .order('is_hero', { ascending:false })
+    .order('sort_order', { ascending:true });
+  if(r.error || !r.data || !r.data.length){
+    box.className = 'occ-none';
+    box.textContent = 'No Cardinal roofs recorded in this colour yet.';
+    return;
+  }
+  var map = await signMany(r.data.map(function(p){ return p.storage_path; }));
+  box.className = 'occ-ours';
+  box.innerHTML = r.data.map(function(p){
+    var src = map[p.storage_path]; if(!src) return '';
+    var cap = p.project_address || p.caption || 'Cardinal install';
+    return '<figure><img src="' + esc(src) + '" alt="' + esc(cap) + '" loading="lazy">' +
+           '<figcaption>' + esc(cap) + '</figcaption></figure>';
+  }).join('');
+}
+
+async function upload(file){
+  var cl = sb(); if(!cl || !CUR) return;
+  var btn = VIEW.querySelector('#occAdd');
+  if(btn){ btn.disabled = true; btn.textContent = 'Uploading…'; }
+  try{
+    /* slug comes from the DB, never recomputed here — a second derivation is
+       how photos end up filed under a colour that no longer matches. */
+    var ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+    var path = 'oc-colors/' + CUR.slug + '/' + Date.now() + '.' + ext;
+    var up = await cl.storage.from('photos').upload(path, file, { upsert:false });
+    if(up && up.error) throw up.error;
+    var ins = await cl.from('oc_color_photos').insert({ color_id: CUR.id, storage_path: path });
+    if(ins && ins.error) throw ins.error;
+    await ours(CUR);
+  }catch(e){
+    try{ if(window.report) window.report(e, 'Colors', 'upload'); }catch(_){}
+    try{ if(window.toast) window.toast('Upload failed'); else alert('Upload failed'); }catch(_){}
+  }
+  if(btn){ btn.disabled = false; btn.textContent = 'Add one of our roofs'; }
+}
+
+async function open(){
+  ensureView();
+  try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
+  VIEW.style.display = 'block';
+  showWall();
+  VIEW.querySelector('#occGrid').innerHTML = '<div class="occ-empty">Loading colours…</div>';
+  await load();
+  filters(); render();
+  try{ if(window.navPush) window.navPush('cr-occ'); }catch(_){}
+}
+function close(){
+  if(VIEW) VIEW.style.display = 'none';
+  try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
+}
+
+window.CardinalColors = Object.assign(window.CardinalColors || {}, {
+  open: open,
+  close: close,
+  reload: async function(){ if(!VIEW) return; await load(); filters(); render(); }
+});
+})();
+</script>
 
 </body>
 </html>
