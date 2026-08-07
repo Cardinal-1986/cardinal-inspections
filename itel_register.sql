@@ -92,6 +92,30 @@ create table if not exists public.itel_lab_reports (
   -- available in the region of the claim is a Metric dimension shingle."
   mismatch_notes    text,
 
+  -- ...and the same breaks as flags, because THE COMMENTS CAN OUTRANK THE
+  -- STATUS SENTENCE and ranking on `verdict` alone gets it wrong.
+  --
+  -- RRS18995984 (Dunwiddie, Jun 2026) is the proof. Its status sentence is
+  -- "matching products are available" — the weakest discontinued class — yet
+  -- its comments carry BOTH breaks at once:
+  --
+  --   "A suitable substitute product is not available in a product with the
+  --    same warranty..."
+  --   "The submitted sample is an English dimension shingle. The current
+  --    product available in the region of the claim is a Metric dimension
+  --    shingle."
+  --
+  -- CertainTeed Landmark English 36x12 against Landmark AR Metric is a real
+  -- size break wearing a weak verdict. Sort on these, not on verdict alone.
+  --
+  -- ITEL also argues the other way and it must be recordable: SRS17995353
+  -- says "the sample submitted has an extruded nail hem. The current product
+  -- has a post-formed nail hem. This change does not affect the panel
+  -- visually." A difference the lab itself calls invisible is not a break.
+  warranty_break    boolean not null default false,
+  dimension_break   boolean not null default false,
+  profile_break     boolean not null default false,
+
   -- Hazmat. Siding samples get an asbestos panel test and it can come back
   -- positive; SBS7898800 did, at 20% chrysotile. Nothing else in the schema
   -- has anywhere to put that, and it changes scope, cost and legal duty.
@@ -99,10 +123,29 @@ create table if not exists public.itel_lab_reports (
   asbestos_positive boolean,
   asbestos_detail   text,
 
-  -- Provenance. Three company names appear across the history (Andrews
-  -- Services, Renegade Roofing, Cardinal) under two ITEL customer IDs.
-  -- A report cited as precedent shows the letterhead it was issued on.
-  ordered_by_company text,
+  -- Provenance, and it is not cosmetic — it changed in 2026.
+  --
+  -- Through 2024 Cardinal (and before it Renegade, and before that Andrews)
+  -- ordered and pre-paid every test. In 2026 the CARRIER orders it: Erie,
+  -- USAA, Grange, Allstate and Nationwide each appear as the ITEL customer
+  -- with their own customer ID and their own adjuster named, with Cardinal
+  -- listed only as the vendor contact.
+  --
+  -- That is the strongest evidentiary position in the set regardless of
+  -- verdict — a carrier is poorly placed to dispute a laboratory report it
+  -- commissioned and paid for. Worth being able to filter on.
+  --
+  -- One report (RRS17850254) is not Cardinal's job at all: Nationwide
+  -- ordered it through Hancock Claims, their own field vendor, and sent it
+  -- on. Read the verdict on those before building an argument — that one
+  -- came back in production.
+  ordered_by        text not null default 'cardinal'
+                      check (ordered_by in ('cardinal','carrier','third_party')),
+  ordered_by_name   text,          -- 'Erie', 'USAA', 'Hancock Claims', 'Cardinal Roofing…'
+
+  -- Four ITEL accounts seen so far: ANDS0001 (Andrews), CUST0004 (Cardinal,
+  -- through 2024), CUST0003 (Cardinal, current), plus one per carrier.
+  -- A history pull needs all of the Cardinal-side IDs, not just one.
   itel_customer_id   text,
 
   insured_name      text,
