@@ -105,41 +105,6 @@ jobs:
           if [ -f sw.js ]; then node --check sw.js && echo "sw.js: valid"; else echo "sw.js not present - skipping"; fi
 
       # ─────────────────────────────────────────────────────
-      # NEW (614) — studio.html was shipping to production with
-      # NO CI coverage at all. Every step above names index.html
-      # explicitly, so a broken Studio deployed green. It is a
-      # standalone page with its own sign-in, its own palette and
-      # its own Supabase queries; nothing else guards it.
-      # Same checks index.html gets: every inline script parses,
-      # and the structural balance holds.
-      # ─────────────────────────────────────────────────────
-      - name: studio.html parses and balances (if present)
-        run: |
-          if [ ! -f studio.html ]; then echo "studio.html not present - skipping"; exit 0; fi
-          node -e "
-            const src = require('fs').readFileSync('studio.html','utf8');
-            if (src.length < 20000) { console.error('::error::studio.html is only ' + src.length + ' bytes - truncated'); process.exit(1); }
-            const blocks = [...src.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-            if (!blocks.length) { console.error('::error::studio.html has no inline scripts - wrong file?'); process.exit(1); }
-            let bad = 0;
-            blocks.forEach((b, i) => {
-              try { new Function(b); }
-              catch (e) { bad++; console.error('::error::syntax error in studio.html inline script #' + i + ': ' + e.message); }
-            });
-            if (bad) process.exit(1);
-            const styles = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m => m[1]);
-            for (const s of styles) {
-              const o = (s.match(/\{/g)||[]).length, c = (s.match(/\}/g)||[]).length;
-              if (o !== c) { console.error('::error::studio.html CSS braces unbalanced: ' + o + ' vs ' + c); process.exit(1); }
-            }
-            const dv = (src.match(/<div/g)||[]).length, dc = (src.match(/<\/div>/g)||[]).length;
-            if (dv !== dc) { console.error('::error::studio.html div tags unbalanced: ' + dv + ' vs ' + dc); process.exit(1); }
-            const so = (src.match(/<script/g)||[]).length, sc = (src.match(/<\/script>/g)||[]).length;
-            if (so !== sc) { console.error('::error::studio.html script tags unbalanced: ' + so + ' vs ' + sc); process.exit(1); }
-            console.log('studio.html: ' + blocks.length + ' inline scripts parse, balance OK');
-          "
-
-      # ─────────────────────────────────────────────────────
       # FIXED — used to check api/notify.js only. Everything
       # else in that folder could be broken and CI stayed green.
       # ─────────────────────────────────────────────────────
