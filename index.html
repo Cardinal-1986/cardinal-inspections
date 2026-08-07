@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 618 &#8212; three presentation styles for the iPad</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 619 &#8212; FLEX shows only the colours FLEX is made in</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35184,6 +35184,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:619, d:'2026-08-07', t:'FLEX shows only the colours FLEX is made in', s:'The Duration FLEX page had been showing all twenty Duration colours. It should not have been. Owens Corning\u2019s FLEX brochure lists nine, and Owens Corning\u2019s own line comparison independently says nine — Brownwood, Driftwood, Estate Gray, Onyx Black, Teak, Black Sable, Sand Dune, and the discontinued Storm Cloud and Summer Harvest. FLEX uses the same colour platform, so a shade reads the same on either shingle, but it is not manufactured in the full range. Left alone, a rep could have stood on the FLEX page, picked Merlot, and ordered a roof in a colour FLEX is not made in — the same kind of mistake as selling a discontinued colour. The page now shows the seven you can actually order.' },
 { b:618, d:'2026-08-07', t:'Three presentation styles for the iPad', s:'On a tablet Colors used to render as a phone layout stranded on a big screen \u2014 a narrow column pinned to the left with a third of the display empty beside it, and no roof visible on a line page until you scrolled past the whole specification table. It now has three presentation styles you switch between from the header, and it remembers which one you chose. Roofs opens on full-bleed photographs of real Owens Corning roofs. Compare turns the hub into a board where each line\u2019s wind warranty is a bar drawn to scale \u2014 Supreme\u2019s stops well short of Duration\u2019s, which is the whole argument for the better shingle in one picture. Feature is an editorial spread with a full-width hero. Oakridge and Supreme have no colours in the catalogue and so no photograph; rather than borrow another line\u2019s roof and imply something false, their wind rating becomes the artwork. The phone is deliberately untouched.' },
 { b:617, d:'2026-08-07', t:'Oakridge and Supreme go live', s:'Theo sent the official Owens Corning documents \u2014 the Supreme data sheet and the Oakridge brochure \u2014 so both lines came off the \u201cComing\u201d list and now carry full specification tables quoted from those two files, with the file named underneath. Supreme is 60 MPH against Duration\u2019s 130, which is the plain reason to put a better shingle on a house. Oakridge carries a caution above its source line, because its wind warranty is 110 MPH as normally nailed and only reaches 130 with six nails and Owens Corning starter along the eaves and rakes \u2014 the brochure\u2019s own footnote. Quote 110 unless the roof was actually built that way. Neither document claims an impact rating, so both tables say so rather than leave a blank. Designer is a proper tab now instead of a chip sitting among the colour shades.' },
 { b:616, d:'2026-08-07', t:'Colors opens on the shingle lines', s:'Tapping Colors used to drop you into one long wall of thirty cards with the discontinued ones mixed in among the live ones. Now it opens on the lines themselves \u2014 TruDefinition Duration, Duration FLEX, and Discontinued kept separate \u2014 each with a plain description of what the shingle actually is and a specification table quoting Owens Corning\u2019s own books: wind warranty, impact class, fire class, algae cover. Duration has a Designer filter inside it. Discontinued colours now name their closest current replacement on the card itself, so a repair can be matched off the grid without opening anything. Oakridge and Supreme are on the list marked Coming \u2014 their pages go live once the published figures are in hand, because a wind rating read to a homeowner has to be right.' },
@@ -60032,7 +60033,7 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
 }
 </style>
 <script id="cr-occ-script">
-/* Cardinal OC Colors — the product-line hub.  v2026-08-07 · build 618
+/* Cardinal OC Colors — the product-line hub.  v2026-08-07 · build 619
    Reached from the Vision hub's Colors tile (data-go="colors").
 
    616 turned one flat wall of 30 cards into a LINE PICKER, Theo's design:
@@ -60125,6 +60126,32 @@ function styleBar(){
    `ready:false` renders a "Coming" tile that cannot be opened — the same
    convention the Colors tile itself used between builds 593 and 615.
 --------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+   FLEX does NOT come in Duration's whole palette.
+
+   616 matched FLEX to the same rows as Duration on the strength of Theo's
+   "The is flex but the color is the same". He meant the colour RENDERS the
+   same — a FLEX Onyx Black looks like a Duration Onyx Black — not that FLEX is
+   made in all of them. The FLEX brochure lists nine, under two headings:
+
+     classic  Brownwood · Driftwood · Estate Gray · Onyx Black · Teak
+     vibrant  Black Sable · Sand Dune · Storm Cloud · Summer Harvest
+
+   and Owens Corning's own line comparison independently says "9 Colors
+   Available Regionally" for DurationFLEX. Two sources, same count.
+
+   Showing all twenty let a rep stand on the FLEX page, pick Merlot, and order
+   a roof in a colour FLEX is not made in — the same class of error as selling
+   a discontinued colour, which is the thing this module exists to prevent.
+
+   ⚠ This list mirrors the brochure. If it grows, the brochure grew: check the
+   document, do not add a slug because it looks like it belongs. Two of the
+   nine (Storm Cloud, Summer Harvest) are discontinued and so are filtered out
+   by `match` — they still appear on the Discontinued page, as they should.
+--------------------------------------------------------------------------- */
+var FLEX_COLOURS = ['brownwood','driftwood','estate-gray','onyx-black','teak',
+                    'black-sable','sand-dune','storm-cloud','summer-harvest'];
+
 var LINES = [
   {
     key:'duration',
@@ -60159,7 +60186,7 @@ var LINES = [
     kind:'Impact-rated architectural shingle',
     ready:true,
     glance:'130 MPH · Class 4 impact · insurance discount',
-    blurb:'The impact-rated one. SBS-modified asphalt absorbs the energy of storm debris, which earns two of the industry’s highest impact ratings — UL 2218 and FM 4473 Class 4 — and may qualify a homeowner for an insurance discount. Same TruDefinition® colour platform as Duration, so the colours below are the same ones.',
+    blurb:'The impact-rated one. SBS-modified asphalt absorbs the energy of storm debris, which earns two of the industry’s highest impact ratings — UL 2218 and FM 4473 Class 4 — and may qualify a homeowner for an insurance discount. It uses the same TruDefinition® colour platform as Duration, so a colour reads the same on either shingle — but FLEX is only made in the short list below, not the full Duration range.',
     specs:[
       ['Shingle type',      'Architectural (laminate), SBS-modified'],
       ['Limited warranty',  'Limited Lifetime'],
@@ -60170,12 +60197,11 @@ var LINES = [
       ['Non-prorated period','TRU PROtection\u00ae \u2014 10 years']
     ],
     note:'',
-    hero:'storm-cloud',
+    hero:'estate-gray',
     chart:{ mph:130, ext:null, impact:'Class 4', impactKey:'c4', warranty:'Limited Lifetime' },
     source:'TruDefinition Duration FLEX brochure',
     match:function(c){
-      return c.status !== 'discontinued' &&
-             (c.product_line === 'duration' || c.product_line === 'designer');
+      return c.status !== 'discontinued' && FLEX_COLOURS.indexOf(c.slug) !== -1;
     }
   },
   {
