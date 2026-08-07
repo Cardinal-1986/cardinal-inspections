@@ -1080,3 +1080,41 @@ success path would look like if the feature were entirely disconnected — if th
 "queried push_subs for BOTH recipients" used `cond ? realCheck : true` and so **passed against the
 known-broken handler**. Always run the harness against the pre-fix artifact and read the output
 line by line — an exit code of 1 does not tell you *which* assertions earned it.
+
+---
+
+## A harness that re-orders the code it is testing
+
+*Added 7 Aug 2026, build 613. The negative control caught this before the build
+shipped — it is a gate defect, not an app defect, and it passed a known-broken
+build as fixed.*
+
+Build 613 fixed a race between `boot()` and the history rewriter: `boot()` reads
+`location.hash` after an `await`, and the rewriter — **~29,500 characters later
+in the same `<script>` block** — stomps that hash while the await is pending.
+
+The first harness extracted both pieces faithfully and then placed them in **two
+separate `<script>` tags**. That single difference inverted the result:
+
+> Between script elements the HTML parser performs a **microtask checkpoint**.
+> So `boot()`'s continuation ran *before* the later script — and build **612,
+> which is broken, passed as fixed**.
+
+Inside one block there is no checkpoint, so the rewriter genuinely runs first.
+
+**The rule:** when the bug *is* an ordering or timing interaction, the harness
+must preserve the real execution context, not just the real source text.
+Extracting the shipped code is necessary and **not sufficient** — where you put
+it is part of the test. Verify the enclosing block before assuming two regions
+are separated (`rfind('<script'`) on each, compare the offsets).
+
+**And the meta-lesson:** the negative control is what surfaced this. A green run
+against the patched file proved nothing; the red-that-should-have-been-red is
+what exposed the harness. Never accept a gate that has not been seen to fail
+against the previous build for the right reason — "it failed" is not enough,
+check *how* it failed.
+
+Related: the shipped alert in this same flow says "Password updated" whenever
+`updateUser` returns without error, including when the new password matches the
+old one. Another **silent success** (see the 612 entry) — the confirmation
+dialog is not evidence the credential changed.

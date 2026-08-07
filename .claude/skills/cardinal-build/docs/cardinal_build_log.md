@@ -8462,3 +8462,52 @@ made tonight undiagnosable.
 ⚠ **This build diagnoses; it does not repair.** If the cause is a wrong
 `VAPID_PRIVATE_KEY` in Vercel, 612 will say so in plain words and the key still
 has to be fixed by hand.
+
+---
+
+## Build 613 — the password reset link finally works (7 Aug 2026)
+
+`index.html` only. **No SQL.** Prompted by six failed attempts to rotate one
+password on the night of 7 Aug — the app said nothing, showed nothing, and
+looked healthy throughout.
+
+**Forgot password has never worked for anyone**, and the failure was silent at
+every layer. Two independent faults:
+
+- **`boot()` read `location.hash` AFTER `await sb.auth.getSession()`.** That
+  await yields, and while it is pending the rest of the document parses —
+  including the history block ~29,500 chars further down **inside the same
+  `<script>` block** (595207–1570820, zero script tags between), which rewrites
+  any unrecognised hash to `#h`. By the time `boot()` resumed,
+  `#access_token=…&type=recovery` was already gone, so the check was always
+  `-1` and the "enter your NEW password" prompt could never fire.
+  Same class as **448–449**: another module strips a value within a second of
+  load and every late consumer sees nothing.
+- **The rewriter should never have eaten it.** `type=recovery` now joins the
+  skip list. `__tryRestoreFromHash` matches a fixed pattern list and ignores a
+  recovery fragment, so preserving it has no navigation side effect — checked,
+  not assumed.
+
+Fix 2 alone would suffice today; fix 1 is what stops the next module that
+stomps the hash from silently re-breaking it.
+
+⚠ **The redirect half is NOT code.** The Supabase project must list
+`https://app.cardinalroster.com/**` under Redirect URLs or GoTrue falls back to
+the Site URL — which was still `localhost` from the dev project, so every reset
+email in the app's history landed on a dead page. Theo set that on 7 Aug. The
+app's own `resetPasswordForEmail(email, { redirectTo: location.origin })` was
+always correct and was being overridden by the missing allow-list entry.
+
+Verified: `check_build.py` green (105 scripts, 108/108 script tags, 117/117
+style tags, stamp 612→613, marker `__bootHash` present and **absent from prev**)
+· **22-assertion** Chromium harness running the **shipped** `boot()` IIFE and the
+**shipped** rewriter line, both extracted by brace-matching · patch reproduces
+byte-for-byte · diff is 16 lines across exactly four regions.
+
+**The negative control found a bug in the gate, not the app** — and that is the
+entry worth remembering. The first harness put `boot()` and the rewriter in two
+separate `<script>` tags. Between script elements the HTML parser runs a
+microtask checkpoint, so `boot()` resumed *before* the rewriter ran and **build
+612 passed as fixed**. In the real file both sit in one block with no checkpoint
+between them. A harness that splits them validates fiction. Recorded in
+`BUG_CLASSES.md`.
