@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 610 &#8212; tapping a punch out opens the punch out</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-06 build 611 &#8212; notifications actually reach you</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15560,10 +15560,24 @@ function notifyTeam(to, subject, bodyHtml){
   sb.auth.getSession().then(function(s){
     var tok = s.data.session && s.data.session.access_token;
     if(!tok) return;
+    /* 611: this sent {to, subject, html}; the route reads
+       {emails, title, body, url}. `emails` was undefined on every one of the
+       seven call sites, so the route early-returned {ok:true, sent:0} and the
+       200 meant nobody ever noticed. Send the canonical shape, and keep the
+       html — the route now emails it as well as pushing. */
+    var _list = Array.isArray(to) ? to.filter(Boolean)
+              : (to ? String(to).split(/[,;]\s*/).filter(Boolean) : []);
+    var _text = String(bodyHtml || '')
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     fetch('/api/notify', {
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
-      body: JSON.stringify({ to: to, subject: subject, html: bodyHtml })
+      body: JSON.stringify({ emails: _list, title: subject, body: _text,
+                             html: bodyHtml, url: '/' })
     }).catch(function(){});
   }).catch(function(){});
 }
@@ -17617,11 +17631,18 @@ document.getElementById('pushEnableBtn').addEventListener('click', async functio
     var reg = await navigator.serviceWorker.register('/sw.js');
     var perm = await Notification.requestPermission();
     if(perm !== 'granted'){ st.textContent = 'Permission was not granted. You can change this in device settings.'; return; }
+    /* 611: same stale-subscription clear as enableNotifications() — see the
+       note there. Both buttons subscribe; both must drop the old one. */
+    var old = await reg.pushManager.getSubscription();
+    if(old){ try{ await old.unsubscribe(); }catch(_){} }
     var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(VAPID_PUBLIC) });
     var j = sub.toJSON();
-    var r = await sb.from('push_subscriptions').upsert({
-      email: currentUser.email, endpoint: sub.endpoint,
-      p256dh: j.keys.p256dh, auth: j.keys.auth
+    /* 611: this wrote `push_subscriptions`, which api/notify.js NEVER reads —
+       so it reported success while guaranteeing silence. push_subs is the
+       table the sender actually queries, and `sub` is the whole JSON because
+       web-push needs endpoint + keys together. */
+    var r = await sb.from('push_subs').upsert({
+      email: currentUser.email, endpoint: sub.endpoint, sub: j
     }, { onConflict: 'endpoint' });
     if(r.error) throw r.error;
     st.textContent = '\u2705 Done \u2014 this device now gets Cardinal alerts.';
@@ -21348,6 +21369,13 @@ async function enableNotifications(){
     var perm = await Notification.requestPermission();
     if(perm !== 'granted'){ alert('Notifications were not allowed.'); return; }
     var reg = await navigator.serviceWorker.ready;
+    /* 611: a subscription made with a DIFFERENT applicationServerKey makes
+       subscribe() throw InvalidStateError, and every device that subscribed
+       before 608 corrected the VAPID key holds exactly that. Nothing here
+       ever cleared it, so the button could not succeed however many times it
+       was pressed. Drop the old one first; a no-op when there isn't one. */
+    var old = await reg.pushManager.getSubscription();
+    if(old){ try{ await old.unsubscribe(); }catch(_){} }
     var sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: __b64ToU8(VAPID_PUBLIC)
@@ -35098,6 +35126,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:611, d:'2026-08-06', t:'Notifications actually reach you', s:'Three faults, each silent, stacked on the same feature. The Enable button could never succeed on a phone that had enabled notifications before: the old subscription was still registered against the previous key, and nothing cleared it \u2014 so the browser refused every attempt. The button in My Profile also saved to a table nothing sends from, then said it had worked. And the function behind team alerts posted its message under field names the sender does not read, so seven kinds of alert quietly went nowhere. All three fixed, and team alerts now go out by email as well as to the phone, so a device that is not set up no longer means silence. Press Enable once more on each phone.' },
 { b:610, d:'2026-08-06', t:'Tapping a punch out opens the punch out', s:'On the production board, tapping a punch item dropped you on the client\u2019s main page \u2014 which the Open client profile button right above it already did, and it buried the thing you had just tapped. It now takes you to that client\u2019s Punch Outs and opens the item, ready to read or reply. The discussion also reads like a conversation now: your messages on the right, everybody else\u2019s on the left, and a name only where the speaker changes.' },
 { b:609, d:'2026-08-06', t:'Punch Outs is back in the job menu', s:'Yesterday\u2019s build moved punch outs off the client page and into the job menu \u2014 but put the button in a menu that does not show on screen, so it went from hard to find to impossible. It is in the Job Menu now, under Appointments, with the number still open beside it. My mistake, and the same one the build before last was about.' },
 { b:608, d:'2026-08-06', t:'Notifications can actually arrive now', s:'Push notifications have never worked, and this is why. The app had two different security keys for notifications where it should have had one, and the half that registered your phone was using the wrong one \u2014 so the server signed every alert with a key your phone had not agreed to, and the alert was thrown away before it reached you. Nothing showed an error, at either end. Both halves now use the same key. \u26a0\ufe0f You have to turn notifications back on once on each device: the registration made with the old key cannot be repaired, only replaced.' },

@@ -8309,3 +8309,43 @@ an observation with a timestamp, not a standing fact. I checked once at 09:00 an
 "Actions is still down" at 14:00, 15:58, 18:57 and 19:00 without re-measuring. **Re-check before
 repeating any claim about live infrastructure** — the same rule this document applies to build numbers
 and doc staleness applies to CI.
+
+## 611 — notifications actually reach you (2026-08-06)
+
+Three silent failures stacked on one feature. Found from a screenshot, not from reasoning.
+
+- **The Enable button could never succeed on a phone that had enabled before.** A
+  `PushSubscription` made with a different `applicationServerKey` makes `subscribe()` throw
+  `InvalidStateError`, and every device that subscribed before **608** corrected the VAPID key
+  holds exactly that. **`getSubscription` and `unsubscribe` appeared ZERO times** in `index.html`
+  and `sw.js` — nothing ever cleared it. Both subscribe paths now drop the old one first.
+- **The My Profile button wrote `push_subscriptions`**, which `api/notify.js` never reads, then
+  said *"this device now gets Cardinal alerts."* It writes `push_subs` now. A lie is worse than
+  an error.
+- **`notifyTeam()` posted `{to, subject, html}` while `/api/notify` read `{emails, title, body,
+  url}`.** `emails` was undefined on all **seven** call sites, so the route hit
+  `if(!emails.length)` and answered `{ok:true, sent:0}` — a 200, so nothing ever surfaced. The
+  payload is canonical now, and the route accepts either shape.
+- **`/api/notify` now sends email as well as push**, through the same Resend account
+  `api/digest.js` already proves is live. `notifyTeam`'s own comment always called itself "team
+  email"; it finally is one. Best-effort — no `RESEND_API_KEY` means `mailed:0`, which is the
+  old behaviour rather than a failure, and push is never blocked by it.
+
+Verified: `check_build.py` green (105 scripts, stamp 610→611, marker `pushManager.getSubscription()`
+present and **absent from prev**) · 21-assertion Node harness against the **shipped** `api/notify.js`
+with `web-push` stubbed and every fetch intercepted · 19-assertion Chromium harness running the
+**extracted shipped source** of both subscribe paths against a mock that reproduces the browser's
+real `InvalidStateError` rule · both patches reproduce byte-for-byte.
+
+**The negative controls are the proof.** Against 610 the route harness returns
+`{"ok":true,"sent":0}` on the `notifyTeam` shape — the silent no-op, reproduced — and the client
+harness emits *"Provided applicationServerKey does not match the key in the existing
+subscription"*, which is Theo's screenshot verbatim.
+
+⚠ **A vacuous assertion nearly shipped.** "queried push_subs for BOTH recipients" **passed against
+the broken handler**, because a ternary returned `true` whenever the query count wasn't 1. Caught
+by reading the negative-control output rather than trusting its exit code. Tightened.
+
+**Still owed, and not a build:** every phone must press Enable once more. Two subscribe paths
+remain (`enableNotifications()` and `#pushEnableBtn`); consolidating them is a follow-up, not done
+here to keep the diff on a live fix small.
