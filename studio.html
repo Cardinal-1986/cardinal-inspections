@@ -37,12 +37,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Cardinal Studio</title>
+<script>
+/* Atlas: resolve the theme BEFORE first paint. Stored choice wins, else the
+   OS preference. Same shape as index.html's data-mode head script, and the
+   same reason — a paper-white page flashing black is worse than either. */
+(function(){
+  try{
+    var m = localStorage.getItem('cr-studio-theme');
+    if(m !== 'light' && m !== 'dark'){
+      m = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+        ? 'light' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', m);
+  }catch(_){ document.documentElement.setAttribute('data-theme','dark'); }
+})();
+</script>
 <style>
   :root{
     --stu-bg:#0B0D0C; --stu-panel:#151817; --stu-panel2:#1b1f1d; --stu-line:#2a2e2c;
     --stu-ink:#F2F4F2; --stu-ink2:#98A29C; --stu-ink3:#6b7570;
     --stu-red:#C8202E; --stu-red-ink:#fff;
     --stu-crit:#E5484D; --stu-warn:#E8A33D; --stu-ok:#46A758;
+    /* Atlas: the header and overlay scrims were hardcoded copies of the
+       ground. They have to move with the theme, so they are tokens now. */
+    --stu-scrim:rgba(11,13,12,.92); --stu-overlay:rgba(6,8,7,.92);
+    --stu-sunk:#0D100F;
+    /* Each accent NAMES a lens — steel is time, teal is place, amber is
+       event. Cardinal red is spent only on the Private pill. */
+    --atl-time:#8FA3A9; --atl-place:#3FBF9F; --atl-event:#E8A33D;
+    --atl-shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  /* The light twin. Every accent is the SAME HUE walked down until it
+     clears 4.5:1 on paper — deepened, not swapped, so the two themes read
+     as one component. Ratios computed, not eyeballed:
+       ink 14.40  ink2 4.55  time 5.62  place 5.02  event 5.01 (worst ground) */
+  :root[data-theme="light"]{
+    --stu-bg:#F7F6F3; --stu-panel:#FFFFFF; --stu-panel2:#F0EEE9; --stu-line:#E3E0D9;
+    --stu-ink:#1A1D1B; --stu-ink2:#656C6A; --stu-ink3:#767D7A;
+    --stu-scrim:rgba(247,246,243,.92); --stu-overlay:rgba(32,34,32,.55);
+    --stu-sunk:#EEECE7;
+    --atl-time:#4A6068; --atl-place:#17715A; --atl-event:#8A5A12;
+    --atl-shadow:0 6px 20px rgba(26,29,27,.10);
   }
   *{ box-sizing:border-box; }
   html,body{ margin:0; padding:0; }
@@ -83,7 +118,7 @@
   /* ── shell ─────────────────────────────────────────────────── */
   #appView{ display:none; min-height:100vh; }
   header.stu-hd{
-    position:sticky; top:0; z-index:10; background:rgba(11,13,12,.92); backdrop-filter:blur(6px);
+    position:sticky; top:0; z-index:10; background:var(--stu-scrim); backdrop-filter:blur(6px);
     border-bottom:1px solid var(--stu-line); padding:14px 20px;
   }
   header.stu-hd .row{ display:flex; align-items:center; gap:14px; max-width:1400px; margin:0 auto; }
@@ -140,9 +175,180 @@
   .stu-more:hover{ border-color:var(--stu-ink3); }
   .stu-more:disabled{ opacity:.5; cursor:default; }
 
+  /* ══ ATLAS ═══════════════════════════════════════════════════════
+     Option 5. One rail with three lenses; Grid/Events is a density
+     toggle, not a second layout; light is a theme, not a second design.
+
+     The Work/Private switch keeps v1's fail-closed contract: display:none
+     in the markup, only JS turns it on, and on the showroom host the mode
+     is forced back rather than merely hidden. index.html's Showcase hides
+     the release badge in Showroom for the same reason (build 590) — a
+     private fact is for whoever is curating, not whoever is being sold to.
+  ── */
+  .stu-mode{
+    display:flex; gap:2px; background:var(--stu-panel); border:1px solid var(--stu-line);
+    border-radius:8px; padding:2px;
+  }
+  .stu-mode button{
+    background:none; border:0; color:var(--stu-ink2); border-radius:6px;
+    padding:6px 14px; font-size:11.5px; font-weight:700; letter-spacing:.4px;
+    text-transform:uppercase; cursor:pointer; white-space:nowrap;
+  }
+  .stu-mode button.on{ background:var(--stu-red); color:var(--stu-red-ink); }
+  .stu-mode button:not(.on):hover{ color:var(--stu-ink); }
+
+  /* two columns, but only in Private — Work is untouched */
+  #appView.priv{ display:grid; grid-template-columns:236px 1fr; align-items:start; }
+
+  .atl-rail{
+    border-right:1px solid var(--stu-line); background:var(--stu-sunk);
+    padding:20px 0 30px; position:sticky; top:0; height:100vh; overflow:auto;
+  }
+  .atl-brand{
+    font:700 10px/1 inherit; letter-spacing:3px; text-transform:uppercase;
+    color:var(--stu-red); padding:0 18px 3px;
+  }
+  .atl-h1{ font-size:16px; font-weight:700; padding:0 18px 16px; letter-spacing:-.2px; }
+  .atl-lens{
+    display:flex; gap:2px; margin:0 14px 14px; background:var(--stu-panel);
+    border:1px solid var(--stu-line); border-radius:9px; padding:2px;
+  }
+  .atl-lens button{
+    flex:1; background:none; border:0; color:var(--stu-ink2); border-radius:7px;
+    padding:7px 4px; font:700 9.5px/1 inherit; letter-spacing:.7px;
+    text-transform:uppercase; cursor:pointer;
+  }
+  .atl-lens button.on{ color:var(--stu-ink); background:var(--stu-panel2); }
+  .atl-lens button.on[data-lens="time"]{ box-shadow:inset 0 0 0 1px var(--atl-time); }
+  .atl-lens button.on[data-lens="place"]{ box-shadow:inset 0 0 0 1px var(--atl-place); }
+  .atl-lens button.on[data-lens="people"]{ box-shadow:inset 0 0 0 1px var(--atl-event); }
+  .atl-grp{
+    font:700 9.5px/1 inherit; letter-spacing:2px; text-transform:uppercase;
+    color:var(--stu-ink2); padding:15px 18px 8px; border-top:1px solid var(--stu-line);
+    margin-top:9px;
+  }
+  .atl-grp:first-child{ border-top:0; margin-top:0; }
+  .atl-f{
+    display:flex; align-items:center; gap:9px; padding:8px 18px; width:100%;
+    background:none; border:0; border-left:2px solid transparent;
+    color:var(--stu-ink2); font:13px/1.4 inherit; text-align:left; cursor:pointer;
+  }
+  .atl-f:hover{ color:var(--stu-ink); }
+  .atl-f .n{ margin-left:auto; font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace; opacity:.85; }
+  .atl-f .k{ width:7px; height:7px; border-radius:50%; flex:0 0 auto; opacity:.5; }
+  .atl-f.on{ color:var(--stu-ink); background:var(--stu-panel); }
+  .atl-f.on .k{ opacity:1; }
+  .atl-rail[data-lens="time"]   .atl-f .k{ background:var(--atl-time); }
+  .atl-rail[data-lens="time"]   .atl-f.on{ border-left-color:var(--atl-time); }
+  .atl-rail[data-lens="place"]  .atl-f .k{ background:var(--atl-place); }
+  .atl-rail[data-lens="place"]  .atl-f.on{ border-left-color:var(--atl-place); }
+  .atl-rail[data-lens="people"] .atl-f .k{ background:var(--atl-event); }
+  .atl-rail[data-lens="people"] .atl-f.on{ border-left-color:var(--atl-event); }
+
+  .atl-chip{
+    font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace; border-radius:20px;
+    padding:5px 11px; border:1px solid; white-space:nowrap;
+  }
+  .atl-chip.time{ color:var(--atl-time); border-color:var(--atl-time); background:transparent; }
+  .atl-chip.place{ color:var(--atl-place); border-color:var(--atl-place); background:transparent; }
+  .atl-view{
+    display:flex; gap:2px; background:var(--stu-panel); border:1px solid var(--stu-line);
+    border-radius:8px; padding:2px;
+  }
+  .atl-view button{
+    background:none; border:0; color:var(--stu-ink2); border-radius:6px; padding:6px 13px;
+    font:700 10.5px/1 inherit; letter-spacing:.5px; text-transform:uppercase; cursor:pointer;
+  }
+  .atl-view button.on{ background:var(--stu-panel2); color:var(--stu-ink); }
+  .atl-theme{
+    background:none; border:1px solid var(--stu-line); color:var(--stu-ink2);
+    border-radius:6px; width:30px; height:30px; cursor:pointer; padding:0;
+    display:grid; place-items:center;
+  }
+  .atl-theme svg{ width:15px; height:15px; display:block; }
+  .atl-theme:hover{ color:var(--stu-ink); border-color:var(--stu-ink2); }
+
+  /* The rail carries the brand in Private, so the header's copy is a
+     duplicate. Hide it rather than delete it — Work still needs it. */
+  #appView.priv .stu-hd .wordmark{ display:none; }
+  /* Square tiles in Private: a personal archive is browsed, not read, and
+     the square grid is what was signed off. Work keeps its 4:3. */
+  #appView.priv .stu-card .th{ aspect-ratio:1/1; }
+
+  /* day rules — the place is teal because place is a lens you can click */
+  .atl-rule{ grid-column:1/-1; display:flex; align-items:baseline; gap:11px; margin:26px 0 3px; }
+  .atl-rule:first-child{ margin-top:0; }
+  .atl-rule b{ font-size:13px; letter-spacing:.2px; color:var(--stu-ink); }
+  .atl-rule .w{ font-size:12.5px; color:var(--atl-place); font-weight:600; }
+  .atl-rule i{ flex:1; height:1px; background:var(--stu-line); }
+  .atl-rule span{ font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--stu-ink2); }
+
+  .stu-card .kindb{
+    position:absolute; top:7px; left:7px; font:700 8px/1 ui-monospace,monospace;
+    letter-spacing:.6px; text-transform:uppercase; padding:3px 6px; border-radius:4px;
+    background:rgba(6,8,7,.82); color:var(--atl-event);
+  }
+  .atl-who{ margin-top:4px; display:flex; gap:4px; flex-wrap:wrap; }
+  .atl-av{
+    width:19px; height:19px; border-radius:50%; display:grid; place-items:center;
+    font:700 8.5px/1 inherit; color:#fff;
+  }
+  .atl-none{
+    margin-top:4px; font:10.5px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:var(--stu-ink2);
+  }
+
+  /* events density */
+  .atl-ev{ border-bottom:1px solid var(--stu-line); }
+  .atl-ev:last-child{ border-bottom:0; }
+  .atl-ev .top{ display:flex; align-items:baseline; gap:11px; padding:20px 0 12px; flex-wrap:wrap; }
+  .atl-ev h3{ font-size:16px; margin:0; font-weight:700; letter-spacing:-.15px; }
+  .atl-ev .pl{ color:var(--atl-place); font-size:12.5px; font-weight:600; }
+  .atl-ev .dt{ color:var(--stu-ink2); font-size:12.5px; }
+  .atl-ev .n{ margin-left:auto; font:11px/1 ui-monospace,monospace; color:var(--atl-event); }
+  .atl-strip{ display:flex; align-items:flex-start; gap:11px; overflow-x:auto; padding:0 0 18px; }
+  .atl-hero{
+    flex:0 0 320px; position:relative; border-radius:11px; overflow:hidden;
+    aspect-ratio:4/3; cursor:pointer; background:var(--stu-panel2);
+  }
+  .atl-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .atl-hero .cap{
+    position:absolute; left:0; right:0; bottom:0; padding:32px 14px 12px; color:#F2F5F3;
+    background:linear-gradient(180deg,transparent,rgba(6,8,7,.9)); font-size:13.5px; font-weight:700;
+  }
+  .atl-hero .cap .w{
+    display:block; font:11px/1.4 ui-monospace,monospace; opacity:.72; margin-top:3px;
+  }
+  .atl-sh{
+    flex:0 0 142px; position:relative; border-radius:9px; overflow:hidden; aspect-ratio:1/1;
+    cursor:pointer; border:1px solid var(--stu-line); background:var(--stu-panel2);
+  }
+  .atl-sh img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .atl-sh:hover{ border-color:var(--atl-event); }
+
+  @media (max-width:760px){
+    #appView.priv{ grid-template-columns:1fr; }
+    .atl-rail{
+      position:static; height:auto; border-right:0; border-bottom:1px solid var(--stu-line);
+      padding:12px 0 10px;
+    }
+    .atl-brand,.atl-h1,.atl-grp{ display:none; }
+    .atl-lens{ margin:0 14px 10px; }
+    .atl-facets{ display:flex; gap:6px; overflow-x:auto; padding:0 14px; white-space:nowrap; }
+    .atl-f{
+      width:auto; flex:0 0 auto; border-left:0; border:1px solid var(--stu-line);
+      border-radius:16px; padding:6px 11px; font-size:12.5px;
+    }
+    .atl-f .n{ margin-left:3px; }
+    .atl-rail[data-lens="time"]   .atl-f.on{ border-color:var(--atl-time); }
+    .atl-rail[data-lens="place"]  .atl-f.on{ border-color:var(--atl-place); }
+    .atl-rail[data-lens="people"] .atl-f.on{ border-color:var(--atl-event); }
+    .atl-hero{ flex:0 0 250px; } .atl-sh{ flex:0 0 112px; }
+  }
+
   /* ── detail overlay ────────────────────────────────────────── */
   #detailView{
-    display:none; position:fixed; inset:0; z-index:100; background:rgba(6,8,7,.92);
+    display:none; position:fixed; inset:0; z-index:100; background:var(--stu-overlay);
     padding:24px; overflow-y:auto;
   }
   #detailView .box{
@@ -186,11 +392,37 @@
 </div>
 
 <div id="appView">
+  <nav class="atl-rail" id="atlRail" data-lens="time" style="display:none">
+    <div class="atl-brand">Cardinal Studio</div>
+    <div class="atl-h1">Private</div>
+    <div class="atl-lens" id="atlLens">
+      <button type="button" data-lens="time" class="on">Time</button>
+      <button type="button" data-lens="place">Places</button>
+      <button type="button" data-lens="people">People</button>
+    </div>
+    <div class="atl-facets" id="atlFacets"></div>
+  </nav>
+  <div class="atl-main">
   <header class="stu-hd">
     <div class="row">
       <div class="wordmark">Cardinal Studio</div>
+      <div class="stu-mode" id="stuMode" style="display:none">
+        <button type="button" data-mode="work" class="on">Work</button>
+        <button type="button" data-mode="private">Private</button>
+      </div>
       <div class="count" id="stuCount"></div>
+      <span class="atl-chip time" id="atlChip" style="display:none"></span>
       <div class="spacer"></div>
+      <div class="atl-view" id="atlView" style="display:none">
+        <button type="button" data-view="grid" class="on">Grid</button>
+        <button type="button" data-view="events">Events</button>
+      </div>
+      <button class="atl-theme" id="atlTheme" type="button" aria-label="Switch theme" title="Switch theme">
+        <svg viewBox="0 0 16 16" aria-hidden="true" fill="none">
+          <circle cx="8" cy="8" r="6.6" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/>
+        </svg>
+      </button>
       <button class="signout" id="signoutBtn" type="button">Sign out</button>
     </div>
   </header>
@@ -205,6 +437,7 @@
     <div class="stu-state" id="stuState" style="display:none"></div>
     <button class="stu-more" id="stuMore" type="button" style="display:none">Load more</button>
   </main>
+  </div>
 </div>
 
 <div id="detailView">
@@ -233,10 +466,29 @@
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   var COLUMNS = 'id,source,spark_path,storage_path,tags,confidence,project_address,project_name,captured_at,width,height,tagged_at';
+  // studio_private is studio_photos' owner-scoped sibling: no address, no
+  // job name, no confidence; it carries place, people, device and the live
+  // -photo pair instead. RLS is owner_email = my_email() on every operation,
+  // so even an admin sees only their own rows — the query needs no filter.
+  var PRIV_COLUMNS = 'id,kind,duration_s,spark_path,storage_path,captured_at,device,place,live_pair_id,live_is_clip,event_id,tags,people,width,height';
   var PAGE = 60;
   var SIGN_TTL = 3600;
 
-  var st = { q:'', tags:[], offset:0, total:0, rows:[], loading:false, done:false };
+  var st = { q:'', tags:[], offset:0, total:0, rows:[], loading:false, done:false,
+             mode:'work', lastDay:null,
+             // Atlas
+             lens:'time', sel:null, view:'grid', facets:null };
+
+  // Mirrors index.html's isVisionHost() exactly, including the ?vision=1
+  // override — that flag exists to preview the presentation door, so it must
+  // hide Private too, not just the real subdomain.
+  function isShowroomHost(){
+    try{
+      if(location.search.indexOf('vision=1') !== -1) return true;
+      return location.hostname.indexOf('showroom.') === 0;
+    }catch(_){ return false; }
+  }
+  function table(){ return st.mode === 'private' ? 'studio_private' : 'studio_photos'; }
 
   // ── auth ──────────────────────────────────────────────────────────────
   var loginView = document.getElementById('loginView');
@@ -247,9 +499,100 @@
   function showApp(){
     loginView.style.display = 'none';
     appView.style.display = 'block';
+    setupMode();
     loadChips();
     resetAndLoad();
   }
+
+  var modeWired = false;
+  function setupMode(){
+    var box = document.getElementById('stuMode');
+    if(!box) return;
+    if(isShowroomHost()){
+      // Force the mode back as well as hiding the control — hiding a button
+      // is not the same as closing the door.
+      st.mode = 'work';
+      st.sel = null; st.view = 'grid';
+      box.style.display = 'none';
+      applyMode();
+      return;
+    }
+    box.style.display = 'flex';
+    if(modeWired) return;
+    modeWired = true;
+
+    document.getElementById('atlLens').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-lens]');
+      if(!b) return;
+      var l = b.getAttribute('data-lens');
+      if(l === st.lens) return;
+      st.lens = l; st.sel = null;
+      renderRail(); paintChip(); resetAndLoad();
+    });
+
+    document.getElementById('atlView').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-view]');
+      if(!b) return;
+      var v = b.getAttribute('data-view');
+      if(v === st.view) return;
+      st.view = v;
+      Array.prototype.forEach.call(this.querySelectorAll('button[data-view]'), function(x){
+        x.classList.toggle('on', x.getAttribute('data-view') === v);
+      });
+      resetAndLoad();
+    });
+    box.addEventListener('click', function(e){
+      var b = e.target.closest('button[data-mode]');
+      if(!b) return;
+      var m = b.getAttribute('data-mode');
+      if(m === st.mode) return;
+      st.mode = m;
+      st.tags = [];
+      Array.prototype.forEach.call(box.querySelectorAll('button[data-mode]'), function(x){
+        x.classList.toggle('on', x.getAttribute('data-mode') === m);
+      });
+      var s = document.getElementById('stuSearch');
+      s.value = '';
+      s.placeholder = (m === 'private')
+        ? 'Search by place\u2026'
+        : 'Search by address or job name\u2026';
+      st.q = '';
+      st.sel = null; st.view = 'grid';
+      applyMode();
+      loadChips();
+      resetAndLoad();
+    });
+  }
+
+  // Everything that has to move when the mode changes, in one place, so a
+  // future edit cannot update one half and forget the other.
+  function applyMode(){
+    var priv = (st.mode === 'private');
+    var app = document.getElementById('appView');
+    app.classList.toggle('priv', priv);
+    // showApp() sets an INLINE display:block, which outranks the stylesheet's
+    // #appView.priv{display:grid} at any specificity — so the rail rendered
+    // full-width and the main column vanished. Same class as styleMounts()'s
+    // inline white in index.html, and again only a rendered preview caught it:
+    // getComputedStyle still reports grid-template-columns on a display:block
+    // element, so a token-level assertion passes while the layout is dead.
+    app.style.display = priv ? 'grid' : 'block';
+    document.getElementById('atlRail').style.display = priv ? '' : 'none';
+    document.getElementById('atlView').style.display = priv ? 'flex' : 'none';
+    document.getElementById('stuChips').style.display = priv ? 'none' : '';
+    Array.prototype.forEach.call(
+      document.querySelectorAll('#atlView button[data-view]'), function(x){
+        x.classList.toggle('on', x.getAttribute('data-view') === st.view);
+      });
+    paintChip();
+    if(priv){ loadFacets().then(renderRail); } else { renderRail(); }
+  }
+
+  document.getElementById('atlTheme').addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('cr-studio-theme', next); }catch(_){}
+  });
   function showLogin(){
     appView.style.display = 'none';
     loginView.style.display = 'flex';
@@ -279,7 +622,7 @@
 
   // ── tag chips (frequency, independent of the active filter) ────────────
   async function loadChips(){
-    var res = await sb.from('studio_photos').select('tags').limit(5000);
+    var res = await sb.from(table()).select('tags').limit(5000);
     if(res.error || !res.data) return;
     var freq = {};
     res.data.forEach(function(r){ (r.tags || []).forEach(function(t){ freq[t] = (freq[t]||0) + 1; }); });
@@ -323,6 +666,19 @@
   }
 
   function buildQuery(){
+    if(st.mode === 'private'){
+      var qp = sb.from('studio_private').select(PRIV_COLUMNS, { count: 'exact' });
+      var pterm = st.q.trim();
+      // Single column, so .ilike() directly — no .or() expression, and
+      // therefore none of orValue()'s quoting rules apply.
+      if(pterm) qp = qp.ilike('place', '%' + pterm + '%');
+      if(st.tags.length) qp = qp.contains('tags', st.tags);
+      qp = applyLens(qp);
+      // A personal archive reads by when it was taken, not when it was
+      // pushed. captured_at is nullable, so undated rows sort last.
+      return qp.order('captured_at', { ascending: false, nullsFirst: false })
+               .range(st.offset, st.offset + PAGE - 1);
+    }
     var q = sb.from('studio_photos').select(COLUMNS, { count: 'exact' });
     var term = st.q.trim();
     if(term){
@@ -334,12 +690,13 @@
   }
 
   function resetAndLoad(){
-    st.offset = 0; st.rows = []; st.done = false;
+    st.offset = 0; st.rows = []; st.done = false; st.lastDay = null;
     document.getElementById('stuGrid').innerHTML = '';
     loadPage();
   }
 
   async function loadPage(){
+    if(st.mode === 'private' && st.view === 'events'){ return loadEvents(); }
     if(st.loading || st.done) return;
     st.loading = true;
     setState(null);
@@ -363,7 +720,9 @@
       var filtered = !!(st.q.trim() || st.tags.length);
       setState(filtered
         ? 'No matches for this search.'
-        : 'Nothing tagged yet — Hermes hasn’t pushed anything from the Spark.');
+        : (st.mode === 'private'
+            ? 'Nothing here yet — the private pusher hasn’t run.'
+            : 'Nothing tagged yet — Hermes hasn’t pushed anything from the Spark.'));
     } else {
       setState(null);
     }
@@ -405,32 +764,255 @@
     return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
   }
 
+  // ══ ATLAS ═════════════════════════════════════════════════════════
+  // A lens is a column; a facet is a value in it. One cheap query builds
+  // all three lenses client-side — PostgREST has no GROUP BY, and this is
+  // the same shape loadChips() already uses.
+  var ATL_AV = { };
+  function avColour(name){
+    if(ATL_AV[name]) return ATL_AV[name];
+    // deterministic, so a person keeps their colour between loads
+    var h = 0, i;
+    for(i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    // White sits at 5.67-6.06:1 on every one of these; the washed grey that
+    // was here originally made two people look like the same person.
+    var pool = ['#C8202E','#2F6F4F','#4A5FA8','#8A5A12','#6B3F7A','#1E6B72'];
+    ATL_AV[name] = pool[h % pool.length];
+    return ATL_AV[name];
+  }
+
+  function monthKey(iso){ return iso ? String(iso).slice(0, 7) : ''; }
+  function monthName(key){
+    if(!key) return 'Undated';
+    var d = new Date(key + '-01T00:00:00Z');
+    if(isNaN(d.getTime())) return 'Undated';
+    return d.toLocaleDateString(undefined, { year:'numeric', month:'long', timeZone:'UTC' });
+  }
+
+  async function loadFacets(){
+    if(st.mode !== 'private'){ st.facets = null; return; }
+    var res = await sb.from('studio_private').select('captured_at,place,people').limit(5000);
+    if(res.error || !res.data){ st.facets = { time:[], place:[], people:[] }; return; }
+    var t = {}, p = {}, w = {};
+    res.data.forEach(function(r){
+      var k = monthKey(r.captured_at);
+      t[k] = (t[k] || 0) + 1;
+      var pl = r.place || '';
+      p[pl] = (p[pl] || 0) + 1;
+      (r.people || []).forEach(function(x){ w[x] = (w[x] || 0) + 1; });
+    });
+    function list(o, dateish){
+      return Object.keys(o).map(function(k){ return { v:k, n:o[k] }; })
+        .sort(function(a, b){
+          if(a.v === '') return 1;
+          if(b.v === '') return -1;
+          return dateish ? (a.v < b.v ? 1 : -1) : (b.n - a.n);
+        });
+    }
+    st.facets = { time:list(t, true), place:list(p, false), people:list(w, false) };
+  }
+
+  function applyLens(q){
+    if(st.sel === null || st.sel === undefined) return q;
+    if(st.lens === 'time'){
+      if(st.sel === '') return q.is('captured_at', null);
+      var y = +st.sel.slice(0, 4), m = +st.sel.slice(5, 7);
+      var from = new Date(Date.UTC(y, m - 1, 1)).toISOString();
+      var to = new Date(Date.UTC(m === 12 ? y + 1 : y, m === 12 ? 0 : m, 1)).toISOString();
+      return q.gte('captured_at', from).lt('captured_at', to);
+    }
+    if(st.lens === 'place'){
+      return st.sel === '' ? q.is('place', null) : q.eq('place', st.sel);
+    }
+    return q.contains('people', [st.sel]);
+  }
+
+  function renderRail(){
+    var rail = document.getElementById('atlRail');
+    var box = document.getElementById('atlFacets');
+    if(!rail || !box) return;
+    rail.setAttribute('data-lens', st.lens);
+    Array.prototype.forEach.call(document.querySelectorAll('#atlLens button'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-lens') === st.lens);
+    });
+    var items = (st.facets && st.facets[st.lens]) || [];
+    box.innerHTML = '';
+    if(!items.length){
+      var empty = document.createElement('div');
+      empty.className = 'atl-grp';
+      empty.textContent = st.lens === 'people' ? 'nobody tagged yet'
+                        : st.lens === 'place' ? 'no places yet' : 'nothing yet';
+      box.appendChild(empty);
+      return;
+    }
+    var lastGrp = null;
+    items.forEach(function(it){
+      var grp = st.lens === 'time'
+        ? (it.v ? it.v.slice(0, 4) : 'No date')
+        : (st.lens === 'place' ? 'Places' : 'Who');
+      if(grp !== lastGrp){
+        lastGrp = grp;
+        var g = document.createElement('div');
+        g.className = 'atl-grp';
+        g.textContent = grp;
+        box.appendChild(g);
+      }
+      var label = st.lens === 'time'
+        ? (it.v ? monthName(it.v).replace(/\s\d{4}$/, '') : 'Undated')
+        : (it.v || (st.lens === 'place' ? 'No place' : 'Unnamed'));
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'atl-f' + (st.sel === it.v ? ' on' : '');
+      btn.innerHTML = '<span class="k"></span>' + esc(label) +
+                      '<span class="n">' + it.n + '</span>';
+      btn.addEventListener('click', function(){
+        st.sel = (st.sel === it.v) ? null : it.v;
+        renderRail(); paintChip(); resetAndLoad();
+      });
+      box.appendChild(btn);
+    });
+  }
+
+  function paintChip(){
+    var chip = document.getElementById('atlChip');
+    if(!chip) return;
+    if(st.mode !== 'private' || st.sel === null || st.sel === undefined){
+      chip.style.display = 'none'; chip.textContent = ''; return;
+    }
+    var txt = st.lens === 'time' ? monthName(st.sel)
+            : st.lens === 'place' ? (st.sel || 'No place')
+            : st.sel;
+    chip.className = 'atl-chip ' + (st.lens === 'place' ? 'place' : 'time');
+    chip.textContent = txt;
+    chip.style.display = '';
+  }
+
+  // Events is a DENSITY over the same rows, not a second data source.
+  async function loadEvents(){
+    var grid = document.getElementById('stuGrid');
+    grid.innerHTML = '';
+    document.getElementById('stuMore').style.display = 'none';
+    setState(null);
+    var evs = await sb.from('studio_private_events')
+      .select('id,label,place,started_at,ended_at,item_count,cover_id')
+      .order('started_at', { ascending:false }).limit(40);
+    if(evs.error){ setState('Could not load events — ' + evs.error.message); return; }
+    var list = evs.data || [];
+    if(!list.length){
+      setState('No events yet — the pusher groups shots into events when it runs.');
+      return;
+    }
+    var ids = list.map(function(x){ return x.id; });
+    var shots = await sb.from('studio_private').select(PRIV_COLUMNS)
+      .in('event_id', ids).order('captured_at', { ascending:true });
+    var rows = (shots && shots.data) || [];
+    await signBatch(rows);
+    var by = {};
+    rows.forEach(function(r){ (by[r.event_id] = by[r.event_id] || []).push(r); });
+    list.forEach(function(ev){
+      var mine = by[ev.id] || [];
+      var sec = document.createElement('section');
+      sec.className = 'atl-ev';
+      var head = '<div class="top"><h3>' + esc(ev.label || 'Untitled') + '</h3>' +
+        (ev.place ? '<span class="pl">' + esc(ev.place) + '</span>' : '') +
+        '<span class="dt">' + esc(fmtDate(ev.started_at)) + '</span>' +
+        '<span class="n">' + (ev.item_count || mine.length) + '</span></div>';
+      var cells = '';
+      mine.forEach(function(r, i){
+        if(i === 0){
+          cells += '<div class="atl-hero" data-id="' + esc(r.id) + '">' +
+            (r.url ? '<img src="' + r.url + '" loading="lazy" alt="">' : '') +
+            '<div class="cap">' + esc(ev.label || 'Untitled') +
+            '<span class="w">' + esc((r.people || []).join(', ') || '\u2014') + '</span>' +
+            '</div></div>';
+        } else {
+          cells += '<div class="atl-sh" data-id="' + esc(r.id) + '">' +
+            (r.url ? '<img src="' + r.url + '" loading="lazy" alt="">' : '') +
+            (r.kind === 'video' ? '<span class="kindb">video</span>' : '') + '</div>';
+        }
+      });
+      sec.innerHTML = head + '<div class="atl-strip">' + cells + '</div>';
+      sec.addEventListener('click', function(e){
+        var t = e.target.closest('[data-id]');
+        if(!t) return;
+        var hit = mine.filter(function(r){ return String(r.id) === t.getAttribute('data-id'); })[0];
+        if(hit) openDetail(hit);
+      });
+      grid.appendChild(sec);
+    });
+    st.total = list.length;
+    document.getElementById('stuCount').textContent =
+      list.length + ' event' + (list.length === 1 ? '' : 's');
+  }
+
+  function monthLabel(iso){
+    if(!iso) return 'Undated';
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return 'Undated';
+    return d.toLocaleDateString(undefined, { year:'numeric', month:'long' });
+  }
+
   // ── grid ─────────────────────────────────────────────────────────────
   function renderGrid(rows){
     var grid = document.getElementById('stuGrid');
     rows.forEach(function(r){
+      var addr, tagLine, badge;
+      if(st.mode === 'private'){
+        // Rows arrive already ordered by captured_at, so a rule whenever the
+        // DAY changes works across pages without re-sorting anything.
+        var dl = fmtDate(r.captured_at) || 'Undated';
+        if(dl !== st.lastDay){
+          st.lastDay = dl;
+          var h = document.createElement('div');
+          h.className = 'atl-rule';
+          h.innerHTML = '<b>' + esc(dl) + '</b>' +
+            (r.place ? '<span class="w">' + esc(r.place) + '</span>' : '') +
+            '<i></i>';
+          grid.appendChild(h);
+        }
+        addr = r.place || dl;
+        // People are faces, not words — the avatar row reads faster than a
+        // comma list, and tags fall back only when nobody is tagged.
+        tagLine = null;
+        badge = (r.kind === 'video') ? '<span class="kindb">video</span>' : '';
+      } else {
+        addr = r.project_address || r.project_name || 'No address on file';
+        tagLine = (r.tags || []).join(' · ') || 'untagged';
+        badge = '<span class="src">' + esc(r.source || '') + '</span>';
+      }
       var card = document.createElement('div');
       card.className = 'stu-card';
-      var addr = r.project_address || r.project_name || 'No address on file';
-      var tagLine = (r.tags || []).join(' · ') || 'untagged';
       card.innerHTML =
         '<div class="th">' +
           (r.url ? '<img src="' + r.url + '" loading="lazy" alt="">' : '<div class="ph">no preview</div>') +
-          '<span class="src">' + esc(r.source || '') + '</span>' +
+          badge +
         '</div>' +
         '<div class="meta">' +
           '<div class="addr">' + esc(addr) + '</div>' +
-          '<div class="tags">' + esc(tagLine) + '</div>' +
+          (tagLine === null ? avatarRow(r) : '<div class="tags">' + esc(tagLine) + '</div>') +
         '</div>';
       card.addEventListener('click', function(){ openDetail(r); });
       grid.appendChild(card);
     });
   }
 
+  function avatarRow(r){
+    var who = r.people || [];
+    if(!who.length){
+      var t = (r.tags || []).join(' \u00b7 ');
+      return '<div class="atl-none">' + esc(t || 'no one tagged') + '</div>';
+    }
+    return '<div class="atl-who">' + who.map(function(w){
+      return '<span class="atl-av" style="background:' + avColour(w) + '">' +
+             esc(String(w).slice(0, 1).toUpperCase()) + '</span>';
+    }).join('') + '</div>';
+  }
+
   // ── detail overlay ───────────────────────────────────────────────────
   var detailView = document.getElementById('detailView');
   function openDetail(r){
     document.getElementById('detailImg').src = r.url || '';
+    if(st.mode === 'private'){ openPrivateDetail(r); return; }
     document.getElementById('detailAddr').textContent = r.project_address || r.project_name || 'No address on file';
     var bits = [];
     if(r.project_address && r.project_name) bits.push(r.project_name);
@@ -452,6 +1034,37 @@
     document.getElementById('detailSpark').textContent = r.spark_path ? ('spark: ' + r.spark_path) : '';
     detailView.style.display = 'block';
   }
+  // studio_private carries none of studio_photos' job fields, so this is a
+  // separate renderer rather than a pile of ternaries in openDetail().
+  function openPrivateDetail(r){
+    document.getElementById('detailAddr').textContent =
+      r.place || fmtDate(r.captured_at) || 'Undated';
+
+    var bits = [];
+    if(r.captured_at) bits.push(fmtDate(r.captured_at));
+    bits.push(r.kind === 'video'
+      ? ('video' + (r.duration_s ? ' · ' + Math.round(r.duration_s) + 's' : ''))
+      : 'photo');
+    if(r.live_pair_id) bits.push('live');
+    if(r.device) bits.push(r.device);
+    if(r.width && r.height) bits.push(r.width + '×' + r.height);
+    document.getElementById('detailSub').textContent = bits.filter(Boolean).join('  ·  ');
+
+    var tagsBox = document.getElementById('detailTags');
+    tagsBox.innerHTML = '';
+    var chips = [].concat(r.people || [], r.tags || []);
+    (chips.length ? chips : ['(no tags)']).forEach(function(t){
+      var el = document.createElement('span');
+      el.className = 'tag';
+      el.textContent = t;
+      tagsBox.appendChild(el);
+    });
+
+    document.getElementById('detailSpark').textContent =
+      r.spark_path ? ('spark: ' + r.spark_path) : '';
+    detailView.style.display = 'block';
+  }
+
   function closeDetail(){
     detailView.style.display = 'none';
     document.getElementById('detailImg').src = '';
