@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 617 &#8212; Oakridge and Supreme go live, and Designer gets its own tab</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 618 &#8212; three presentation styles for the iPad</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35184,6 +35184,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:618, d:'2026-08-07', t:'Three presentation styles for the iPad', s:'On a tablet Colors used to render as a phone layout stranded on a big screen \u2014 a narrow column pinned to the left with a third of the display empty beside it, and no roof visible on a line page until you scrolled past the whole specification table. It now has three presentation styles you switch between from the header, and it remembers which one you chose. Roofs opens on full-bleed photographs of real Owens Corning roofs. Compare turns the hub into a board where each line\u2019s wind warranty is a bar drawn to scale \u2014 Supreme\u2019s stops well short of Duration\u2019s, which is the whole argument for the better shingle in one picture. Feature is an editorial spread with a full-width hero. Oakridge and Supreme have no colours in the catalogue and so no photograph; rather than borrow another line\u2019s roof and imply something false, their wind rating becomes the artwork. The phone is deliberately untouched.' },
 { b:617, d:'2026-08-07', t:'Oakridge and Supreme go live', s:'Theo sent the official Owens Corning documents \u2014 the Supreme data sheet and the Oakridge brochure \u2014 so both lines came off the \u201cComing\u201d list and now carry full specification tables quoted from those two files, with the file named underneath. Supreme is 60 MPH against Duration\u2019s 130, which is the plain reason to put a better shingle on a house. Oakridge carries a caution above its source line, because its wind warranty is 110 MPH as normally nailed and only reaches 130 with six nails and Owens Corning starter along the eaves and rakes \u2014 the brochure\u2019s own footnote. Quote 110 unless the roof was actually built that way. Neither document claims an impact rating, so both tables say so rather than leave a blank. Designer is a proper tab now instead of a chip sitting among the colour shades.' },
 { b:616, d:'2026-08-07', t:'Colors opens on the shingle lines', s:'Tapping Colors used to drop you into one long wall of thirty cards with the discontinued ones mixed in among the live ones. Now it opens on the lines themselves \u2014 TruDefinition Duration, Duration FLEX, and Discontinued kept separate \u2014 each with a plain description of what the shingle actually is and a specification table quoting Owens Corning\u2019s own books: wind warranty, impact class, fire class, algae cover. Duration has a Designer filter inside it. Discontinued colours now name their closest current replacement on the card itself, so a repair can be matched off the grid without opening anything. Oakridge and Supreme are on the list marked Coming \u2014 their pages go live once the published figures are in hand, because a wind rating read to a homeowner has to be right.' },
 { b:615, d:'2026-08-07', t:'The Owens Corning colour wall', s:'The Colors tile on the Vision hub has said "Soon" since build 593. It works now. It opens a wall of every Owens Corning colour Cardinal sells, with Owens Corning\u2019s own roof photograph on each card, the Color of the Year going back to 2017, and the collection each colour belongs to. Tap one and you get its description, and underneath it a separate section for OUR roofs in that colour \u2014 Cardinal installs, kept visibly apart from the manufacturer\u2019s photography, because those are two different claims. Anyone on staff can add a roof to that section from the phone. Discontinued colours are still there and marked, so a homeowner with an older roof can find theirs and a repair can be matched. A colour with no photograph yet shows its approximate shade and says so \u2014 it is not presented as the real thing.' },
@@ -59844,9 +59845,194 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
   font-size:13.5px; line-height:1.5; color:var(--occ-ink2,#C6CCD4);
 }
 #cr-occ .occ-note2 b{display:block; margin-bottom:3px; color:var(--occ-ink,#EDEFF2)}
+
+/* ---- 618: three presentation styles, ABOVE 820px ONLY --------------------
+   Theo: "What if you could filter between 3 styles?" — roofs first for a warm
+   lead, the comparison board when you are justifying why not the cheap shingle,
+   the editorial spread when the room wants to be impressed.
+
+   THE PHONE IS UNTOUCHED. Everything below is inside one min-width query, and
+   the switcher itself is display:none under it, because a control that changes
+   nothing you can see is worse than no control.
+
+   The two-column split grids #occBody, NOT #cr-occ — open() writes an inline
+   display:block on #cr-occ, and inline beats every stylesheet rule at any
+   specificity. That is the styleMounts()/showApp() trap, avoided deliberately.
+-------------------------------------------------------------------------- */
+#cr-occ .occ-styles{display:none}
+#cr-occ .cmp,#cr-occ .cmp-right,#cr-occ .cmp-head{display:none}
+
+@media (min-width:820px){
+  #cr-occ .occ-head{padding:16px 40px}
+  #cr-occ .occ-title b{font-size:26px}
+  #cr-occ .occ-title span{font-size:15px}
+
+  #cr-occ .occ-styles{
+    display:flex; flex:0 0 auto; gap:2px; padding:3px; border-radius:12px;
+    background:var(--occ-raise,#12151A); border:1px solid var(--occ-line,#1D2126);
+  }
+  #cr-occ .occ-sty{
+    min-height:44px; padding:0 16px; border:0; border-radius:9px; cursor:pointer;
+    background:transparent; color:var(--occ-dim,#9AA3AE);
+    font:600 14.5px var(--occ-sans,sans-serif); letter-spacing:-.01em;
+    -webkit-appearance:none; appearance:none; white-space:nowrap;
+  }
+  #cr-occ .occ-sty[aria-pressed="true"]{
+    background:var(--occ-red,#c8202e); color:#fff;
+  }
+
+  /* ---- the split, shared by Roofs and Compare ---- */
+  #cr-occ[data-style="roofs"] .occ-body2,
+  #cr-occ[data-style="compare"] .occ-body2{
+    /* NOT a grid. A grid item spanning all four rows contributes its height
+       back into those tracks, so the tall pitch column pushed the first roof
+       1161px down an 834px screen — and min-content tracks did not stop it.
+       A float is genuinely the right tool: it leaves normal flow for sizing,
+       the rest of the content flows beside it, and position:sticky composes
+       with it. Measured, not assumed. */
+    position:relative;
+  }
+  #cr-occ[data-style="roofs"].line .occ-lead,
+  #cr-occ[data-style="compare"].line .occ-lead{
+    float:left; width:37%; position:sticky; top:80px;
+    max-width:none; padding:26px 24px 30px 40px;
+  }
+  #cr-occ[data-style="roofs"].line .occ-tabs,
+  #cr-occ[data-style="compare"].line .occ-tabs{margin-left:37%; max-width:none; padding:22px 40px 0}
+  #cr-occ[data-style="roofs"].line .occ-filters,
+  #cr-occ[data-style="compare"].line .occ-filters{margin-left:37%; padding:16px 40px 4px}
+  #cr-occ[data-style="roofs"].line .occ-count,
+  #cr-occ[data-style="compare"].line .occ-count{margin-left:37%; padding:6px 40px 12px}
+  #cr-occ[data-style="roofs"].line .occ-grid,
+  #cr-occ[data-style="compare"].line .occ-grid{
+    margin-left:37%; padding:0 40px 60px; gap:18px;
+    grid-template-columns:repeat(auto-fill,minmax(228px,1fr));
+  }
+  #cr-occ[data-style="roofs"] .occ-blurb,
+  #cr-occ[data-style="compare"] .occ-blurb{font-size:17.5px; line-height:1.55}
+  #cr-occ .occ-tab{font-size:16px; padding:0 18px}
+
+  /* ---- ROOFS: the hub is five roofs ---- */
+  #cr-occ[data-style="roofs"]:not(.line):not(.detail) .occ-hub{
+    max-width:none; padding:24px 40px 60px;
+    display:grid; grid-template-columns:1fr 1fr; gap:20px;
+  }
+  #cr-occ[data-style="roofs"] .occ-line{
+    background-image:var(--hero);
+    position:relative; margin:0; padding:0; height:264px; overflow:hidden;
+    border-radius:20px; background-size:cover; background-position:center 62%;
+    display:flex; flex-direction:column; justify-content:flex-end;
+  }
+  #cr-occ[data-style="roofs"] .occ-line::after{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg,rgba(4,5,7,.10) 0%,rgba(4,5,7,.55) 52%,rgba(4,5,7,.93) 100%);
+  }
+  #cr-occ[data-style="roofs"] .occ-line > *{position:relative; z-index:1; padding:0 26px}
+  #cr-occ[data-style="roofs"] .occ-lname{font-size:28px; letter-spacing:-.025em; text-shadow:0 2px 14px rgba(0,0,0,.6)}
+  #cr-occ[data-style="roofs"] .occ-lkind{font-size:15px; margin-top:6px; color:#D8DDE3}
+  #cr-occ[data-style="roofs"] .occ-lsub{
+    font-size:12px; margin:12px 0 24px; letter-spacing:.09em; text-transform:uppercase;
+    color:#AEB6BF; font-weight:600;
+  }
+  /* the two lines with no catalogue rows and therefore no roof: the wind
+     rating becomes the artwork rather than borrowing another line's photo */
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto]{background:var(--occ-card,#0E1114)}
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto]::after{
+    background:linear-gradient(180deg,rgba(4,5,7,0) 0%,rgba(4,5,7,.65) 100%);
+  }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto]::before{
+    content:attr(data-nophoto); position:absolute; right:26px; top:4px; z-index:0;
+    font:800 132px/1 var(--occ-sans,sans-serif); letter-spacing:-.06em; color:#181D24;
+  }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lsub{color:#A9B2BC}
+
+  /* ---- COMPARE: the hub is a board ---- */
+  #cr-occ[data-style="compare"]:not(.line):not(.detail) .occ-hub{max-width:none; padding:24px 40px 60px}
+  #cr-occ[data-style="compare"] .occ-line{
+    margin:0 0 10px; padding:18px 26px; border-radius:14px; height:auto;
+    display:grid; grid-template-columns:290px 1fr 180px;
+    grid-template-rows:auto auto; align-items:center; column-gap:30px; text-align:left;
+  }
+  #cr-occ[data-style="compare"] .occ-lname{grid-column:1; grid-row:1; font-size:20px}
+  #cr-occ[data-style="compare"] .occ-lkind{grid-column:1; grid-row:2; font-size:13px; margin-top:3px}
+  #cr-occ[data-style="compare"] .occ-lsub{display:none}
+  #cr-occ[data-style="compare"] .occ-go{display:none}
+  #cr-occ .cmp{display:block; grid-column:2; grid-row:1 / span 2; position:relative}
+  #cr-occ .cmp-right{display:block; grid-column:3; grid-row:1 / span 2; text-align:right}
+  #cr-occ .cmp-track{height:26px; border-radius:6px; background:#121620; position:relative; overflow:hidden}
+  #cr-occ .cmp-fill{position:absolute; top:0; bottom:0; left:0; border-radius:6px;
+    background:linear-gradient(90deg,#8f1620,#c8202e)}
+  #cr-occ .cmp-ext{position:absolute; top:0; bottom:0; border-radius:0 6px 6px 0;
+    background:repeating-linear-gradient(115deg,#3a2226 0 7px,#241417 7px 14px);
+    border-right:2px solid #6b2b32}
+  #cr-occ .cmp-num{margin-top:8px; font:700 13.5px var(--occ-sans,sans-serif); color:var(--occ-ink,#EDEFF2)}
+  #cr-occ .cmp-num.soft{font-weight:500; color:var(--occ-dim,#9AA3AE); margin-top:0}
+  #cr-occ .cmp-num small{font-weight:500; color:var(--occ-dim,#9AA3AE)}
+  #cr-occ .cmp-chip{display:inline-block; padding:5px 11px; border-radius:999px;
+    font:700 11.5px var(--occ-sans,sans-serif); letter-spacing:.05em; text-transform:uppercase}
+  #cr-occ .cmp-c4{background:var(--occ-red,#c8202e); color:#fff}
+  #cr-occ .cmp-c3{background:#1B2028; color:var(--occ-ink2,#C6CCD4); border:1px solid #262C35}
+  #cr-occ .cmp-cn{background:transparent; color:#6E7681; border:1px dashed #2A3038}
+  #cr-occ .cmp-warr{margin-top:8px; font-size:13px; color:var(--occ-dim,#9AA3AE)}
+  #cr-occ .cmp-head{
+    display:grid; grid-template-columns:290px 1fr 180px; column-gap:30px; padding:0 26px 10px;
+    font:600 11.5px var(--occ-sans,sans-serif); letter-spacing:.1em; text-transform:uppercase;
+    color:#6E7681;
+  }
+  #cr-occ .cmp-head span:last-child{text-align:right}
+
+  /* ---- FEATURE: an editorial spread ---- */
+  #cr-occ[data-style="feature"]:not(.line):not(.detail) .occ-hub{
+    max-width:none; padding:24px 44px 60px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
+  }
+  #cr-occ[data-style="feature"] .occ-line{
+    background-image:var(--hero);
+    position:relative; margin:0; padding:0; height:326px; overflow:hidden;
+    border-radius:4px; background-size:cover; background-position:center 60%;
+    display:flex; flex-direction:column; justify-content:flex-end;
+  }
+  #cr-occ[data-style="feature"] .occ-line::after{content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg,rgba(4,5,7,0) 30%,rgba(4,5,7,.92) 100%)}
+  #cr-occ[data-style="feature"] .occ-line > *{position:relative; z-index:1; padding:0 22px}
+  #cr-occ[data-style="feature"] .occ-lname{font-size:24px; letter-spacing:-.02em}
+  #cr-occ[data-style="feature"] .occ-lkind{font-size:14px; margin-top:5px; color:#CBD2D9}
+  #cr-occ[data-style="feature"] .occ-lsub{font-size:11.5px; margin:10px 0 20px;
+    letter-spacing:.09em; text-transform:uppercase; color:#9AA3AE; font-weight:600}
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto]{background:#0C0F13}
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto]::after{display:none}
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto]::before{
+    content:attr(data-nophoto); position:absolute; left:22px; top:28px;
+    font:800 92px/1 var(--occ-sans,sans-serif); letter-spacing:-.05em; color:#1A2028;
+  }
+  #cr-occ[data-style="feature"] .occ-lead{max-width:none; padding:0 0 10px}
+  #cr-occ[data-style="feature"] .occ-blurb{
+    max-width:820px; margin:0 auto 22px; padding:0 44px;
+    font-size:20px; line-height:1.5; color:#DDE2E8;
+  }
+  #cr-occ[data-style="feature"] .occ-spec{max-width:900px; margin:0 auto; padding:0 44px; font-size:15px}
+  #cr-occ[data-style="feature"] .occ-src,
+  #cr-occ[data-style="feature"] .occ-note2{max-width:900px; margin-left:auto; margin-right:auto}
+  #cr-occ[data-style="feature"].line .occ-tabs{max-width:none; padding:24px 44px 0; justify-content:center; border-bottom:0}
+  #cr-occ[data-style="feature"] .occ-filters{justify-content:center; padding:14px 44px 4px}
+  #cr-occ[data-style="feature"] .occ-count{text-align:center; padding:4px 44px 16px}
+  #cr-occ[data-style="feature"] .occ-grid{padding:0 44px 70px; gap:22px;
+    grid-template-columns:repeat(auto-fill,minmax(292px,1fr))}
+  #cr-occ[data-style="feature"] .occ-card{border-radius:4px}
+  #cr-occ[data-style="feature"] .occ-name{font-size:18px}
+
+  /* a colour reads big in every style */
+  #cr-occ.detail .occ-hero{aspect-ratio:16/7}
+  #cr-occ .occ-body{max-width:900px; padding:26px 40px 0}
+  #cr-occ .occ-h{font-size:32px}
+  #cr-occ .occ-desc{font-size:17.5px}
+  #cr-occ .occ-sec{padding:0 40px; max-width:900px}
+  #cr-occ .occ-ours{padding:0 40px; grid-template-columns:repeat(auto-fill,minmax(255px,1fr))}
+  #cr-occ .occ-none,#cr-occ .occ-actions{padding-left:40px; padding-right:40px}
+}
 </style>
 <script id="cr-occ-script">
-/* Cardinal OC Colors — the product-line hub.  v2026-08-07 · build 617
+/* Cardinal OC Colors — the product-line hub.  v2026-08-07 · build 618
    Reached from the Vision hub's Colors tile (data-go="colors").
 
    616 turned one flat wall of 30 cards into a LINE PICKER, Theo's design:
@@ -59885,6 +60071,48 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
 var VIEW = null, COLORS = [], LINE = '', FAM = '', COLL = '', CUR = null;
 
 /* ---------------------------------------------------------------------------
+   618 — three presentation styles, switchable, ABOVE 820px ONLY.
+
+   Theo, having been asked to pick one: "What if you could filter between 3
+   styles?" Different moments want different things — roofs first for a warm
+   lead, the comparison board when you are justifying why not the cheap shingle.
+
+     roofs    full-bleed roof cards            (default: a roofing showroom
+                                                should open on a roof)
+     compare  every line as a bar to scale
+     feature  editorial spread
+
+   THE PHONE IS UNTOUCHED. Every style collapses below 820px to exactly what
+   shipped at 617, and the switcher is display:none there — a control that does
+   nothing visible is worse than no control.
+--------------------------------------------------------------------------- */
+var STYLES = [['roofs','Roofs'], ['compare','Compare'], ['feature','Feature']];
+var STYLE = 'roofs';
+function styleLoad(){
+  try{
+    var v = localStorage.getItem('cr-occ-style');
+    if(v && STYLES.some(function(s){ return s[0] === v; })) STYLE = v;
+  }catch(_){}
+  return STYLE;
+}
+function styleSet(v){
+  STYLE = v;
+  try{ localStorage.setItem('cr-occ-style', v); }catch(_){}
+  if(VIEW) VIEW.dataset.style = v;
+  hub(); styleBar();
+}
+function styleBar(){
+  var bar = VIEW && VIEW.querySelector('#occStyles'); if(!bar) return;
+  bar.innerHTML = STYLES.map(function(s){
+    return '<button type="button" class="occ-sty" data-sty="' + esc(s[0]) + '" aria-pressed="' +
+           (STYLE === s[0] ? 'true' : 'false') + '">' + esc(s[1]) + '</button>';
+  }).join('');
+  bar.querySelectorAll('.occ-sty').forEach(function(b){
+    b.onclick = function(){ styleSet(b.dataset.sty); };
+  });
+}
+
+/* ---------------------------------------------------------------------------
    The product lines.
 
    `match` decides which catalogue rows land on a line's page. Duration and FLEX
@@ -59917,6 +60145,8 @@ var LINES = [
       ['Non-prorated period','TRU PROtection\u00ae \u2014 10 years']
     ],
     note:'',
+    hero:'onyx-black',
+    chart:{ mph:130, ext:null, impact:'Class 3', impactKey:'c3', warranty:'Limited Lifetime' },
     source:'TruDefinition Duration Beauty Book',
     match:function(c){
       return c.status !== 'discontinued' &&
@@ -59940,6 +60170,8 @@ var LINES = [
       ['Non-prorated period','TRU PROtection\u00ae \u2014 10 years']
     ],
     note:'',
+    hero:'storm-cloud',
+    chart:{ mph:130, ext:null, impact:'Class 4', impactKey:'c4', warranty:'Limited Lifetime' },
     source:'TruDefinition Duration FLEX brochure',
     match:function(c){
       return c.status !== 'discontinued' &&
@@ -59969,6 +60201,10 @@ var LINES = [
        something false about a warranty, and this is the exact ‡‡ text from the
        brochure. Never shorten this row to a single number. */
     note:'110 MPH is standard with 4-nail application. 130 MPH applies ONLY with 6-nail application and Owens Corning\u00ae Starter Shingle along eaves and rakes, per the installation instructions. Quote 110 unless the roof was actually built that way.',
+    hero:null,
+    /* ext is the hatched part of the bar. It exists so the board can never draw
+       Oakridge as a flat 130 — same rule as the spec row, same reason. */
+    chart:{ mph:110, ext:130, impact:'Not stated', impactKey:'cn', warranty:'Limited Lifetime' },
     source:'Oakridge Brochure (10024153)',
     match:null
   },
@@ -59991,6 +60227,8 @@ var LINES = [
       ['Size / exposure',    '12\u2033 \u00d7 36\u2033 \u00b7 5\u2033 exposure']
     ],
     note:'',
+    hero:null,
+    chart:{ mph:60, ext:null, impact:'Not stated', impactKey:'cn', warranty:'25 years' },
     source:'Supreme Product Data Sheet (10013324)',
     match:null
   },
@@ -60002,6 +60240,7 @@ var LINES = [
     glance:'For identifying and matching an existing roof',
     blurb:'Cardinal has been roofing for years, and a homeowner cannot name the colour on a twelve-year-old roof from the driveway. These are kept so an existing roof can be identified and a repair matched. None of them can be ordered. Where Owens Corning has a current colour that comes closest, it is named on the card.',
     specs:[], note:'', source:'',
+    hero:'bourbon', chart:null,
     match:function(c){ return c.status === 'discontinued'; }
   }
 ];
@@ -60045,14 +60284,23 @@ function ensureView(){
     '<div class="occ-head">' +
       '<button type="button" class="occ-back" id="occBack">← Back</button>' +
       '<div class="occ-title"><b id="occTitle">Colors</b><span id="occSub">Owens Corning shingle colours</span></div>' +
+      '<div class="occ-styles" id="occStyles" role="group" aria-label="Presentation style"></div>' +
     '</div>' +
     '<div class="occ-hub" id="occHub"></div>' +
-    '<div class="occ-lead" id="occLead"></div>' +
-    '<div class="occ-tabs" id="occTabs"></div>' +
-    '<div class="occ-filters" id="occFilters"></div>' +
-    '<div class="occ-count" id="occCount"></div>' +
-    '<div class="occ-grid" id="occGrid"></div>' +
+    /* 618: the line content is WRAPPED so a style can make it two columns.
+       The grid could not go on #cr-occ itself — open() sets an inline
+       display:block there, and an inline style beats every stylesheet rule at
+       any specificity. That is the styleMounts() / showApp() trap this repo
+       has now hit three times; it does not get a fourth. */
+    '<div class="occ-body2" id="occBody">' +
+      '<div class="occ-lead" id="occLead"></div>' +
+      '<div class="occ-tabs" id="occTabs"></div>' +
+      '<div class="occ-filters" id="occFilters"></div>' +
+      '<div class="occ-count" id="occCount"></div>' +
+      '<div class="occ-grid" id="occGrid"></div>' +
+    '</div>' +
     '<div class="occ-detail" id="occDetail"></div>';
+  VIEW.dataset.style = styleLoad();
   document.body.appendChild(VIEW);
   /* Three levels, so this walks back one at a time rather than closing. */
   VIEW.querySelector('#occBack').onclick = function(){
@@ -60093,24 +60341,57 @@ function shot(c){
 }
 
 /* ---- the hub: pick a line ------------------------------------------------ */
+function bar(L){
+  /* The comparison bar, drawn from `chart`. 130 is the scale maximum because it
+     is the highest wind warranty any of these lines carries.
+     Oakridge draws 110 SOLID plus a HATCHED extension to 130 with the condition
+     written beside it. It must never read as a flat 130 — quoting that on a
+     four-nail roof is a false statement about a warranty. */
+  var c = L.chart;
+  if(!c) return '<div class="cmp"><div class="cmp-num soft">' + esc(L.glance) + '</div></div>';
+  var pct = function(v){ return Math.round((v / 130) * 100); };
+  return '<div class="cmp">' +
+    '<div class="cmp-track">' +
+      '<div class="cmp-fill" style="width:' + pct(c.mph) + '%"></div>' +
+      (c.ext ? '<div class="cmp-ext" style="left:' + pct(c.mph) + '%;width:' + (pct(c.ext) - pct(c.mph)) + '%"></div>' : '') +
+    '</div>' +
+    '<div class="cmp-num">' + c.mph + ' MPH' +
+      (c.ext ? ' <small>\u2014 ' + c.ext + ' only with 6 nails and OC starter</small>' : '') +
+    '</div>' +
+  '</div>' +
+  '<div class="cmp-right">' +
+    '<span class="cmp-chip cmp-' + esc(c.impactKey) + '">' + esc(c.impact) + '</span>' +
+    '<div class="cmp-warr">' + esc(c.warranty) + '</div>' +
+  '</div>';
+}
+
 function hub(){
   var box = VIEW.querySelector('#occHub');
-  box.innerHTML = LINES.map(function(L){
+  var board = (STYLE === 'compare');
+  box.className = 'occ-hub' + (board ? ' board' : '');
+  var head = board
+    ? '<div class="cmp-head"><span>Line</span><span>Wind resistance limited warranty</span><span>Impact \u00b7 warranty</span></div>'
+    : '';
+  box.innerHTML = head + LINES.map(function(L){
     var n = L.match ? COLORS.filter(L.match).length : 0;
     var sub = L.ready
-      ? (n ? n + (n === 1 ? ' colour' : ' colours') + ' · ' + esc(L.glance) : esc(L.glance))
+      ? (n ? n + (n === 1 ? ' colour' : ' colours') + ' \u00b7 ' + esc(L.glance) : esc(L.glance))
       : esc(L.glance);
-    if(!L.ready){
-      return '<div class="occ-line soon" aria-disabled="true">' +
-        '<div class="occ-lname">' + esc(L.name) + '<span class="occ-soon">Coming</span></div>' +
-        '<div class="occ-lkind">' + esc(L.kind) + '</div>' +
-        '<div class="occ-lsub">' + sub + '</div>' +
-      '</div>';
-    }
-    return '<button type="button" class="occ-line" data-line="' + esc(L.key) + '">' +
-      '<div class="occ-lname">' + esc(L.name) + '<span class="occ-go">→</span></div>' +
+    /* A CUSTOM PROPERTY, not background-image. Setting the image directly here
+       painted it on the PHONE as well — below 820px nothing sizes or positions
+       it, so the tile grew a tiled roof. --hero is consumed only inside the
+       min-width query, so the phone cannot be reached. Caught by a pixel diff
+       against the 617 baseline, not by any structural assertion. */
+    var img = (!board && L._hero)
+      ? ' style="--hero:url(&quot;' + esc(L._hero) + '&quot;)"' : '';
+    /* No photograph exists for Oakridge or Supreme. data-nophoto turns the wind
+       rating itself into the graphic rather than borrowing another line's roof. */
+    var np = (!board && !L._hero && L.chart) ? ' data-nophoto="' + esc(String(L.chart.mph)) + '"' : '';
+    return '<button type="button" class="occ-line" data-line="' + esc(L.key) + '"' + img + np + '>' +
+      '<div class="occ-lname">' + esc(L.name) + '<span class="occ-go">\u2192</span></div>' +
       '<div class="occ-lkind">' + esc(L.kind) + '</div>' +
       '<div class="occ-lsub">' + sub + '</div>' +
+      (board ? bar(L) : '') +
     '</button>';
   }).join('');
   box.querySelectorAll('.occ-line[data-line]').forEach(function(b){
@@ -60226,6 +60507,24 @@ async function load(){
   COLORS = r.data;
   var map = await signMany(COLORS.map(function(c){ return c.cover_image_path; }));
   COLORS.forEach(function(c){ c._src = c.cover_image_path ? map[c.cover_image_path] : null; });
+  /* A line's hero is one of its OWN colours' covers — already signed above, so
+     no second round trip and nothing new written anywhere.
+
+     The named slug is only a preference. If that colour is hidden, or loses its
+     cover, fall back to the first colour on the SAME line that has one. Never
+     reach outside the line: a Duration roof standing in for Oakridge would be a
+     false product claim, which is why the two lines with no colours at all get
+     `hero:null` and the typographic treatment instead of a borrowed photo.
+     Without this fallback a missing cover left Discontinued rendering a blank
+     card, because it has no `chart` to fall back on either. */
+  LINES.forEach(function(L){
+    L._hero = null;
+    if(!L.hero || !L.match) return;
+    var mine = COLORS.filter(L.match);
+    var named = mine.filter(function(c){ return c.slug === L.hero && c._src; })[0];
+    var any   = named || mine.filter(function(c){ return !!c._src; })[0];
+    L._hero = (any && any._src) || null;
+  });
 }
 
 function showHub(){
@@ -60340,6 +60639,8 @@ async function open(){
   ensureView();
   try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
   VIEW.style.display = 'block';
+  VIEW.dataset.style = styleLoad();
+  styleBar();
   showHub();
   VIEW.querySelector('#occHub').innerHTML = '<div class="occ-empty">Loading…</div>';
   await load();
