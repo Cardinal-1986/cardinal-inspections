@@ -8609,3 +8609,107 @@ tags Studio has today. Roof colour is the only genuinely new field.
 library is useful. Tag AFTER pruning. Analysing 60,503 photos costs five times
 what analysing ~12,000 costs, and four fifths of it would be spent on photos
 about to be archived.
+---
+
+## SQL — `itel_lab_reports`, a register of ITEL determinations (7 Aug 2026)
+
+**APPLIED to production.** No build number: SQL only, no `index.html` change.
+PR #144. Revert is in `itel_register.sql`.
+
+Theo sent 36 ITEL lab report PDFs across the session — **29 distinct control
+numbers, Dec 2020 to Jun 2026**, out of two Gmail accounts. Parsed from the
+documents with `pypdf`, not from the subject lines, which carry only the
+insured name and the claim and control numbers.
+
+### Why a new table and not a wider `itel_reports`
+
+`public.itel_reports` was modelled as a child of a live claim — `claim_id uuid
+NOT NULL` against `insurance_claims`, which has 3 rows. Every historical report
+predates all of them, so **not one of the 29 could be recorded at all.** It is
+left alone as the per-claim sample tracker; a determination outlives the claim
+that paid for it, so `claim_id` is nullable in the new table.
+
+### `discontinued boolean` is the wrong column, and this is the finding
+
+Only **12 of 22** reports in the first pass say "discontinued" at all, and those
+split four ways. ITEL prints **seven distinct status sentences**, and the
+sentence *is* the verdict — so it is stored verbatim beside a seven-value code:
+
+| verdict | ITEL's words | n |
+|---|---|---:|
+| `no_match` | "No matches were found in our national search." | 2 |
+| `unreservable` | "…a sufficient quantity of the color could not be reserved" | 2 |
+| `salvage_only` | "…may be available through Discontinued Materials, Inc." | 2 |
+| `similar_only` | "…however, similar matches were found" | 3 |
+| `match_available` | "…matching products are available" | 5 |
+| `unidentifiable` | "the exact original manufacturer…could not be determined" | 3 |
+| `in_production` | "The original product is available; see Match 1" | 4 |
+
+`RRS9991577` and `RRS10131363` both add *"there are no products on the current
+market with a color that would be considered similar"* — the direct negation of
+Ohio Admin. Code **3901-1-54(I)**, which asks only for a *reasonably comparable
+appearance*. Those two are the strongest documents in the set and nothing in the
+app knew they existed.
+
+### ⚠ The comments can outrank the status sentence
+
+`RRS18995984` (Dunwiddie, Jun 2026) carries the *weakest* discontinued verdict,
+"matching products are available", yet its comments fire both breaks at once —
+no substitute at the same warranty, **and** "the submitted sample is an English
+dimension shingle. The current product available in the region of the claim is a
+Metric dimension shingle." CertainTeed Landmark English 36×12 against Landmark
+AR Metric is a real size break wearing a weak verdict.
+
+So ranking on `verdict` alone files a strong case as no-argument. The breaks are
+separate flags — `warranty_break`, `dimension_break`, `profile_break` — and they
+are what a strong-case query sorts on. The reverse is recordable too:
+`SRS17995353` has ITEL saying an extruded-vs-post-formed nail hem *"does not
+affect the panel visually."* A difference the lab itself calls invisible is not
+a break.
+
+### Two things the old schema could not hold at all
+
+- **Asbestos.** `SBS7898800` (2021) and `SBS18608459` (2026) both came back
+  **POSITIVE, chrysotile 20.00%, Transite** — every fiber-cement siding sample
+  ever submitted, two for two. That outweighs any matching question on the same
+  job and there was nowhere to put it.
+- **Who ordered it.** Through 2024 Cardinal pre-paid every test. In 2026 the
+  **carrier** orders it — Erie, USAA, Grange, Allstate and Nationwide each
+  appear as the ITEL customer with their own ID and adjuster, Cardinal listed
+  only as vendor contact. A carrier is poorly placed to dispute a lab report it
+  commissioned, so `ordered_by` / `ordered_by_name` make that filterable.
+  `RRS17850254` is not Cardinal's job at all: Nationwide ordered it through
+  Hancock Claims and forwarded it, already decided — in production.
+
+### `itel_product_register` — why the view earns its place
+
+Keyed by product. **Tamko Heritage English appears 5 times** across three
+colours and two verdict classes. **OC Oakridge Pro 30** twice, ten months apart,
+same match both times. And **CertainTeed Landmark AR Metric in Weathered Wood
+was tested three times** — 2021, 2022, 2026 — coming back *in production* every
+time, at roughly $143–167 a test.
+
+**`security_invoker = true` on the view is load-bearing.** A view defaults to
+the owner's privileges and would have read straight past the RLS below it,
+handing every insured name and loss address to any caller. Caught before apply;
+the security advisor reports no new warnings.
+
+### Verified
+
+38 columns · RLS enabled · 2 policies (`select` to authenticated so production
+can read a determination to argue a supplement, `all` gated on
+`is_cardinal_admin()` so they cannot change one) · 5 indexes · view runs
+security-invoker and is selectable · `public.itel_reports` untouched at 0 rows ·
+`get_advisors(security)` reports nothing new.
+
+### Still open
+
+The Same / Similar / Different tick marks in ITEL's comparison grid are drawn
+inside form XObjects and are **absent from the PDF text layer** — an early pass
+mistook the supplier bullet glyphs for them (5 suppliers → 5 marks, 2 → 2).
+Every other field is quoted from the document. The 29 reports are parsed but
+**not yet loaded**; the table is empty.
+
+Four ITEL accounts seen: `ANDS0001` (Andrews Services), `CUST0004` (Cardinal
+through 2024), `CUST0003` (Cardinal, current), plus one per carrier. A full
+history pull from ITEL needs all three Cardinal-side IDs.
