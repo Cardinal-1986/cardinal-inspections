@@ -229,6 +229,16 @@
   .atl-rail[data-lens="bin"]  .atl-f.on .fst{ color:var(--stu-warn); }
   .atl-lens button[data-lens="bin"].on{ color:var(--stu-warn); }
 
+  /* 614b: shape chips are visually distinct from subject tags — they answer a
+     different question, and they are the only Work filter guaranteed to be
+     populated. Steel is the TIME accent reused for a second mechanical
+     property; the subject tags keep the default chip treatment. */
+  .stu-chip.shape{ border-style:dashed; }
+  .stu-chip.shape.on{
+    border-style:solid; border-color:var(--atl-time);
+    color:var(--atl-time); background:transparent;
+  }
+
   /* Archive / Restore live in the header beside the site pill, so the action
      is always next to the thing it acts on and never next to a photo. */
   .stu-act{
@@ -511,7 +521,7 @@
   var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  var COLUMNS = 'id,source,spark_path,storage_path,tags,confidence,project_address,project_name,captured_at,width,height,tagged_at';
+  var COLUMNS = 'id,source,spark_path,storage_path,tags,confidence,project_address,project_name,captured_at,width,height,tagged_at,orientation';
   // studio_private is studio_photos' owner-scoped sibling: no address, no
   // job name, no confidence; it carries place, people, device and the live
   // -photo pair instead. RLS is owner_email = my_email() on every operation,
@@ -520,7 +530,7 @@
   var PAGE = 60;
   var SIGN_TTL = 3600;
 
-  var st = { q:'', tags:[], offset:0, total:0, rows:[], loading:false, done:false,
+  var st = { q:'', tags:[], orient:null, offset:0, total:0, rows:[], loading:false, done:false,
              mode:'work', lastDay:null,
              // Atlas
              // 614: Work opens on Sites — it is the lens the data supports
@@ -611,6 +621,8 @@
       if(m === st.mode) return;
       st.mode = m;
       st.tags = [];
+      // studio_private has no orientation column; a stale filter would 400.
+      st.orient = null;
       Array.prototype.forEach.call(box.querySelectorAll('button[data-mode]'), function(x){
         x.classList.toggle('on', x.getAttribute('data-mode') === m);
       });
@@ -744,9 +756,31 @@
       .sort(function(a,b){ return b[1]-a[1]; }).slice(0, 40);
     renderChips(sorted);
   }
+  // 614b: shape, not subject. Free — width/height are set on all 60,503 rows,
+  // so this needs no tagging pass and no AI. Rendered first because it is the
+  // only filter in Work that is guaranteed to be populated: 52% of the library
+  // carries no tag at all.
+  var ORIENTS = [['landscape', 'Landscape'], ['portrait', 'Portrait']];
+
+  function renderOrientChips(box){
+    ORIENTS.forEach(function(pair){
+      var v = pair[0], label = pair[1];
+      var el = document.createElement('div');
+      el.className = 'stu-chip shape' + (st.orient === v ? ' on' : '');
+      el.textContent = label;
+      el.addEventListener('click', function(){
+        st.orient = (st.orient === v) ? null : v;
+        loadChips();
+        resetAndLoad();
+      });
+      box.appendChild(el);
+    });
+  }
+
   function renderChips(sorted){
     var box = document.getElementById('stuChips');
     box.innerHTML = '';
+    if(st.mode !== 'private') renderOrientChips(box);
     sorted.forEach(function(pair){
       var t = pair[0], n = pair[1];
       var el = document.createElement('div');
@@ -800,6 +834,9 @@
       q = q.or('project_address.ilike.' + like + ',project_name.ilike.' + like);
     }
     if(st.tags.length) q = q.contains('tags', st.tags);
+    // 614b: orientation is a real generated column, so this filters server-side
+    // and pagination stays correct. Doing it client-side would break .range().
+    if(st.orient) q = q.eq('orientation', st.orient);
     // 614: the Bin is the same library read from the other side of the line.
     // Everywhere else, archived photos are simply gone — that IS the feature,
     // and it is why this filter is on the query rather than on the renderer.
