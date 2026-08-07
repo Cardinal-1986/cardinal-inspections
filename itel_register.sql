@@ -123,29 +123,38 @@ create table if not exists public.itel_lab_reports (
   asbestos_positive boolean,
   asbestos_detail   text,
 
-  -- Provenance, and it is not cosmetic — it changed in 2026.
+  -- Provenance, and it is not cosmetic.
   --
-  -- Through 2024 Cardinal (and before it Renegade, and before that Andrews)
-  -- ordered and pre-paid every test. In 2026 the CARRIER orders it: Erie,
-  -- USAA, Grange, Allstate and Nationwide each appear as the ITEL customer
-  -- with their own customer ID and their own adjuster named, with Cardinal
-  -- listed only as the vendor contact.
+  -- ⚠ CORRECTION. An earlier revision of this file said Cardinal pre-paid
+  -- every test through 2024 and the carrier only started ordering them in
+  -- 2026. Loading all 28 reports disproved it: carrier-ordered tests run from
+  -- SEP 2022 — Travelers, then Farmers, USAA twice, Cincinnati and Allstate
+  -- through 2023 — pause across 2024-25, and resume in 2026 with Nationwide,
+  -- Allstate, Erie, USAA and Grange. The split is 17 Cardinal, 10 carrier,
+  -- 1 third party. The claim was written off a seven-report sample; the full
+  -- set says otherwise.
   --
-  -- That is the strongest evidentiary position in the set regardless of
-  -- verdict — a carrier is poorly placed to dispute a laboratory report it
-  -- commissioned and paid for. Worth being able to filter on.
+  -- It still matters which side ordered it. A carrier is poorly placed to
+  -- dispute a laboratory report it commissioned and paid for, so those ten
+  -- are the strongest evidentiary position in the set whatever the verdict.
   --
-  -- One report (RRS17850254) is not Cardinal's job at all: Nationwide
-  -- ordered it through Hancock Claims, their own field vendor, and sent it
-  -- on. Read the verdict on those before building an argument — that one
-  -- came back in production.
+  -- One report (RRS17850254) is not Cardinal's job at all: Nationwide ordered
+  -- it through Hancock Claims, their own field vendor, and sent it on. Read
+  -- the verdict on those before building an argument — that one came back in
+  -- production, i.e. already decided, before Cardinal opened the envelope.
   ordered_by        text not null default 'cardinal'
                       check (ordered_by in ('cardinal','carrier','third_party')),
   ordered_by_name   text,          -- 'Erie', 'USAA', 'Hancock Claims', 'Cardinal Roofing…'
 
-  -- Four ITEL accounts seen so far: ANDS0001 (Andrews), CUST0004 (Cardinal,
-  -- through 2024), CUST0003 (Cardinal, current), plus one per carrier.
-  -- A history pull needs all of the Cardinal-side IDs, not just one.
+  -- TWELVE ITEL accounts across the history, and FOUR of them are Cardinal's
+  -- own side under three trading names — a history pull needs all four:
+  --   ANDS0001  Andrews Services
+  --   CUST0004  Andrews, later Renegade
+  --   RGRR0000  Renegade Roofing and Restoration
+  --   CUST0003  Cardinal Roofing & Renovations  (current)
+  -- The other eight are the carriers' own accounts: ALLS0300 Allstate,
+  -- CINC0003 Cincinnati, ERIE0005 Erie, FRIN0001 Farmers, GRAN0001 Grange,
+  -- NATWS0052 Nationwide, TRAVRC101 Travelers, USAA0041 USAA.
   itel_customer_id   text,
 
   insured_name      text,
@@ -190,20 +199,50 @@ comment on table public.itel_lab_reports is
 -- below and hand every determination — insured names, loss addresses — to
 -- anyone who can select from the view. The RLS on the base table is the only
 -- gate, so the view has to run as the caller for it to mean anything.
-create or replace view public.itel_product_register
+--
+-- ⚠ THE KEY IS THE WHOLE DESIGN, and the first version got it wrong.
+-- Keying on lower(product) verbatim split five Tamko Heritage English reports
+-- into THREE register rows, because ITEL does not write the name the same way
+-- twice:
+--     Tamko Heritage 30 AR English (12" x 37")        2
+--     Tamko Heritage 30 AR English (12" x 36.375")    1
+--     Tamko Heritage 30 English                       2
+-- The parenthetical is the MEASURED SAMPLE, not the product — and one of those
+-- samples was explicitly a partial shingle ("the sample received measures
+-- 12 x 35.4 and is a partial shingle"). A register that splits a product from
+-- itself is worth nothing, since answering "have we seen this before" is the
+-- only reason it exists.
+--
+-- So a dimensional parenthetical is stripped, and ONLY that — one containing a
+-- digit and an x. (Metric) and (English) survive: they are genuinely different
+-- products at different physical sizes, and folding CertainTeed Landmark
+-- (English) into Landmark AR (Metric) would erase the exact dimensional break
+-- the register exists to surface. AR versus non-AR also stays split — algae
+-- resistant is a different granule spec, and granule blend is what a matching
+-- argument turns on.
+--
+-- Rows with no product identified are excluded. ITEL could not name the
+-- product on 8 of 28; grouping them under one 'unidentified' key produced a
+-- register row mixing unrelated roofs that read as though it meant something.
+create view public.itel_product_register
   with (security_invoker = true) as
   select
-    lower(coalesce(product, 'unidentified')) as product_key,
+    regexp_replace(lower(product), '\s*\([^)]*[0-9][^)]*x[^)]*\)', '', 'g') as product_key,
     max(product)                              as product,
     max(manufacturer)                         as manufacturer,
     count(*)                                  as reports,
     array_agg(distinct verdict)               as verdicts,
     array_agg(distinct color)   filter (where color is not null)         as colors,
     array_agg(distinct match_product) filter (where match_product is not null) as matches,
+    array_agg(distinct control_number)        as controls,
+    bool_or(warranty_break)                   as any_warranty_break,
+    bool_or(dimension_break)                  as any_dimension_break,
+    bool_or(profile_break)                    as any_profile_break,
     min(report_date)                          as first_seen,
     max(report_date)                          as last_seen,
     bool_or(verdict in ('no_match','unreservable','salvage_only')) as ever_strong
   from public.itel_lab_reports
+  where product is not null
   group by 1;
 
 -- ── RLS ──────────────────────────────────────────────────────────────
