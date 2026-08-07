@@ -8810,3 +8810,122 @@ and must return 200. A probe whose control fails proves nothing in either direct
 the same `dir/` form as `.claude/`, `spark/` and `.github/`, which are known-good on this deploy, so
 the reasoning is strong — but it is reasoning. Closing it needs one request from outside the
 sandbox, run **with** the control, since a bare 404 could also mean the deploy had not finished.
+
+---
+
+## OC Colors — the schema half (PR #148, 7 Aug 2026)
+
+Six migrations, all applied to production **before** the merge, all idempotent. **No app change
+went with them** — `index.html`, `api/` and `sw.js` untouched, no build number bumped, and `*.sql`
+is vercelignored, so merging changed nothing for a user. Listed in run order:
+
+| File | What |
+|---|---|
+| `oc_color_covers.sql` | `slug` (**generated always** from `name`), `cover_image_path`, `cover_credit` |
+| `oc_coty_year.sql` | `coty_year` + a partial unique index — one Color of the Year winner per year |
+| `oc_williamsburg_gray.sql` | the 2024 COTY, which had no catalogue row |
+| `oc_peppercorn.sql` | the other missing colour |
+| `oc_discontinued_fix.sql` | five colours wrongly marked `current` |
+| `oc_colors_hidden.sql` | `hidden`, so a colour can exist without being offered |
+
+Catalogue after: **31 colours · 30 on the wall · 20 sellable · COTY 2017–2026 with no gaps ·
+`hex_verified` false on every row.**
+
+### `hidden` is not `status`, and that distinction is the point
+
+Theo, verbatim: *"But they should still have a spot. I still would like a spot for them except for
+Shasta white."* So **discontinued colours keep their spot on the wall, badged** — Cardinal has been
+roofing for years, and an owner with a twelve-year-old roof has to be able to find their colour,
+as does a rep matching a repair. `hidden` removes the spot entirely without destroying the row, so
+history and any job referencing the colour still resolve. One row is hidden: Shasta White.
+**A query that filters on `status` alone puts Shasta White back on the tablet.**
+
+### Two corrections from Theo, and the second one is the lesson
+
+**"Please don't list Lowe's they mix batches."** `oc_williamsburg_gray.sql` had cited a big-box
+stock listing as evidence the colour was still current. Shingle colour varies between production
+batches, so a retailer's stock says nothing reliable about what a customer would actually receive —
+citing one in a showroom context invites a mismatched roof. The citation was removed from the file
+**and from the pushed commit message** (`66ec14c` → `49e6ce9`, force-with-lease), because a
+reasoning left in history is a precedent the next session copies forward.
+
+**"Those are all colors that have been discontinued"** — Amber, Harbor Blue, Quarry Gray, Shasta
+White, Sierra Gray, all sitting as `current`. This is the more dangerous direction of the two
+errors: a discontinued colour shown as current puts a rep in front of a customer selling something
+Cardinal cannot order, and it surfaces at order time, after the pitch.
+
+**The signal was there and was read backwards.** Those five were the *only* colours that could not
+be found in any of the four Owens Corning books supplied that day. That was chased for several
+rounds as a gap in the source material. It was not a gap — current marketing books do not carry
+dead colours. Worth keeping as a heuristic and **not** as a rule: three discontinued colours
+(Bourbon, Summer Harvest, Storm Cloud) *do* appear in the Designer books, which carry some legacy
+palette. Absent from the books suggests discontinued; present in one proves nothing at all. Ask.
+
+---
+
+## Build 615 — the Owens Corning colour wall, on the Vision hub (7 Aug 2026)
+
+PR #149. The front-end half: `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`,
+`window.CardinalColors`, full-screen `#cr-occ`.
+
+**It enables a tile that already existed.** `visionHtml()` in `cr-lr-script` has rendered a Colors
+tile since build 593 as `class="cr-vh-tile soon" aria-disabled="true"` with a "Soon" badge, and
+`wire()` already had the dispatch pattern for `showroom` and `library`. This build turns the div
+into a button with `data-go="colors"` and adds one case beside them — **no new surface, nothing
+duplicated.** An hour was nearly spent building this as a new top-level overlay in the main app;
+Theo's question — *"links back to vision? or does resources link to vision"* — is what caught it.
+The prime doctrine, again: the mount point was already in the file.
+
+Registered in all three registries a `fixed; inset:0` view needs — `hideAllViews()`, `OVERLAY_IDS`,
+`PANES` — and it is **display-shown**, so `display:none` is the correct lever. Writing a class
+instead would leave it covering the next screen (the 570–572 class). Palette is `--occ-*`, Blackout
+like `#cr-show`, **every reference carrying a literal fallback** (the Crews/Showcase pattern), so
+448–449 cannot repeat here. **Zero new global scroll-lock writers** — still 13.
+
+**614 was already taken** by the `studio.html` work earlier the same day (`Build 614` and `614b`
+above). `next_build.py` reported 614 free because it scans the app stamp, and that build never
+touched `index.html`. **Known blind spot: the script cannot see builds that ship outside
+`index.html`.** Stamped 615.
+
+### Verified
+
+`check_build.py` green and negative-controlled. **jsdom harness 27/27 against real `oc_colors` row
+shapes**, not fixtures — the `hidden` filter, Shasta White absent, Storm Cloud present, the
+cover-vs-swatch fallback, the unverified label, badge logic, the cover/our-roofs separation, the
+`hideAllViews` close, and no 14th scroll-lock writer. **Chromium `elementFromPoint`** confirms the
+tile is genuinely hit-testable at 420×74 — not the invisible-but-present render that killed the
+Vision hub at 593, and clear of 592's 44px floor.
+
+**Screenshots do not render in this sandbox** (webfonts hang), so nobody has seen it. Theo's eyes
+are the gate for how it looks; the harness proves structure only.
+
+---
+
+## OC Colors — `cover_image_path` set on 22 covers (7 Aug 2026)
+
+`oc_color_covers_set.sql`. Data only, applied to production. This is the statement that makes the
+wall stop rendering 30 hex swatches and start rendering Owens Corning's roofs.
+
+**The path convention is flat — `oc-colors/covers/<slug>.jpg`.** One folder, 23 files, one drag.
+The original plan was `oc-colors/<slug>/cover.jpg` and was changed because uploading through the
+Supabase dashboard means creating each folder by hand. ⚠️ **The README inside the cover-image zip
+still names the old path**, as did PR #149's description until it was corrected — the flat one is
+what is live. The filename is the row's `slug`, which is `generated always` from `name`, which is
+exactly why no lookup table is needed and why JS must never recompute a slug.
+
+**`where exists` is the safety, not decoration.** A colour only gets a path if the file is actually
+in storage. A path pointing at nothing is *worse* than no path: the `<img>` fails and the card
+renders empty, instead of falling back to the hex swatch with its "Approximate colour — not a
+verified swatch" label. Empty tells a customer nothing; the labelled swatch at least tells the
+truth. The `is distinct from` clause makes it idempotent, so it is simply re-run as more covers
+land.
+
+22 rows updated. Verified two ways that matter more than the count: **zero paths with no file
+behind them, zero uploaded files no row claims** (the second catches a typo'd slug, which the row
+count alone would pass straight through).
+
+Eight colours stay on the swatch fallback. **Seven are discontinued and that is correct** — a
+colour nobody can buy does not need a marketing photograph, only to stay findable. The eighth is
+**Mountain Pine**, which is `new` and therefore sellable; its image exists and was in the zip
+(verified: 1400×933, 257,329 bytes, sha256 `08cc05fd…`, listed in the zip's own README) but had not
+been uploaded when the statement ran.

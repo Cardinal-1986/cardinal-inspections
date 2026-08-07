@@ -35,7 +35,11 @@ the `photos` bucket under `oc-colors/`, which `photos_read` already opens to any
 `oc_colors` 29 rows (20 current · 6 discontinued · 2 new for 2026 · 1 COTY) · `oc_color_photos`
 (empty) · `oc_color_wall`. Spellings corrected to OC's own: **Sierra Gray**, **Chateau Green**.
 
-⚠️ **`hex_verified` is false on all 29 and must stay false until someone samples a real swatch.**
+⚠️ **Those 29-row counts are superseded — see the two sections below.** PR #148 added two missing
+colours and corrected five statuses; the catalogue is now **31 colours · 30 on the wall · 20
+sellable**. Kept as written so the history reads straight.
+
+⚠️ **`hex_verified` is false on all 31 and must stay false until someone samples a real swatch.**
 The hex values are approximations eyeballed for the preview mock. A photograph of a roof in
 afternoon sun is not the product colour, so importing Theo's folders does NOT verify them. The
 table comment says it: do not show a customer an unverified swatch and call it the colour.
@@ -43,11 +47,31 @@ table comment says it: do not show a customer an unverified swatch and call it t
 The mock's per-colour photo counts were invented to make the preview look alive and are
 deliberately absent from the schema rather than loaded as fact.
 
+### ✅ Shipped 7 Aug — PR #148 (schema) and build 615 / PR #149 (the wall)
+
+**PR #148**, six migrations, all applied before merge: `slug` (generated) + `cover_image_path` +
+`cover_credit`; `coty_year` with a one-winner-per-year index (2017–2026, no gaps); the two missing
+colours (**Williamsburg Gray**, the 2024 COTY, and **Peppercorn**); five colours corrected from
+`current` to `discontinued` on Theo's word; and **`hidden`**, which is *not* `status` — discontinued
+colours keep their spot on the wall badged, `hidden` removes it. One row hidden: Shasta White.
+
+**Build 615** enabled the Colors tile that had been sitting disabled in `visionHtml()` since 593 —
+no new surface. Full detail in `FEATURES.md` and `cardinal_build_log.md`. **The upload UI struck
+from this list: it shipped with 615**, `is_staff()`, writing to `oc-colors/<slug>/`.
+
+`oc_color_covers_set.sql` then set `cover_image_path` on **22 of the 30 colours on the wall**.
+
 ### Still open
 
-- **The photos.** Theo's 28 hand-sorted iPad folders. Agreed to start with the top three or four
-  sellers at 5–8 shots each rather than all 28 at once.
-- **The upload UI** — an `index.html` build, needs the full gate ladder.
+- **Mountain Pine has no cover uploaded.** The only *sellable* colour still on the hex-swatch
+  fallback; the other seven are discontinued and correctly stay that way. The image exists
+  (1400×933, in the cover zip and sent separately). Drop it in `oc-colors/covers/` and re-run
+  `oc_color_covers_set.sql` — it is guarded by `where exists` and idempotent.
+- **The photos.** Theo's 28 hand-sorted iPad folders — *Cardinal's own roofs*, `oc_color_photos`,
+  still empty. Distinct from the covers, which are OC's photography. Agreed to start with the top
+  three or four sellers at 5–8 shots each rather than all 28 at once.
+- ⚠️ **The README inside the cover-image zip names the wrong upload path** —
+  `oc-colors/<slug>/cover.jpg`. The live convention is flat: **`oc-colors/covers/<slug>.jpg`**.
 - **The colour sheet is NOT a new pipeline.** `api/share.js` already serves stored document HTML
   via an unguessable token (not a signed URL, so it does not expire in an hour like photo links do),
   `api/senddoc.js` emails it, and `@page{size:Letter}` appears 7× for print-to-PDF. A colour sheet

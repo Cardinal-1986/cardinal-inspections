@@ -1648,3 +1648,64 @@ state until then. Nothing here has been verified against a real photograph.
 
 **CI does not gate `studio.html`** — `.github/workflows/check.yml` covers `index.html`, `sw.js` and
 `api/*.js` only. This file deploys unchecked.
+
+---
+
+## OC Colors — the colour wall (build 615, 7 Aug 2026)
+
+**Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
+`</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
+inset:0`.
+
+**How you get there:** the **Vision hub only** — `showroom.cardinalroster.com`, or any URL with
+`?vision=1`. `visionHtml()` in `cr-lr-script` has carried a Colors tile since build 593; it shipped
+disabled with a "Soon" badge and 615 turned it into a `<button data-go="colors">` driving the
+`wire()` handler that was already there. **There is no entry point from the ordinary app menu**,
+and Resources and Vision still have zero cross-references either way.
+
+**Tables:** `oc_colors` (the catalogue), `oc_color_photos` (Cardinal's own installs),
+`oc_color_wall` (the view). All read for `authenticated` — **sales can see colours**, settled by
+Theo. Writes split: `oc_colors` is `is_cardinal_admin()`, `oc_color_photos` insert is `is_staff()`,
+so whoever is on the roof can add a photo but only Theo curates the catalogue.
+
+### The three rules the module exists to keep
+
+**1. `hidden` is not `status`.** The query filters on `hidden`, **never** on `status`. Discontinued
+colours keep their spot and are badged, because an owner with an old roof has to find their colour
+and a repair has to be matched. Only `hidden` removes a spot. Currently one row: Shasta White.
+
+**2. A cover is Owens Corning's photograph; `oc_color_photos` is ours.** They render in visibly
+separate sections, the second labelled *"Cardinal installs, not manufacturer photography."* Those
+are two different claims and merging them makes the showroom's whole pitch false. **Never render a
+cover inside the "our roofs" section.**
+
+**3. `hex_verified` is false on every row.** A colour with no cover falls back to its hex and the
+card says **"Approximate colour — not a verified swatch."** The hexes were sampled from OC's
+*printed swatches*, never from a roof photograph — a roof in afternoon sun is not the product
+colour. A rep must not hold a tablet against a house and call an eyeballed hex the colour.
+
+### Covers
+
+`cover_image_path` → `oc-colors/covers/<slug>.jpg` in the `photos` bucket, **flat, one folder**.
+`slug` is `generated always` from `name`, so there is one derivation and it lives in the database —
+**JS must never recompute a slug**, or photos end up filed under a colour that no longer matches.
+Signed with `createSignedUrls` for **display only**, never written back into a row.
+
+**22 of the 30 colours on the wall have a cover** (`oc_color_covers_set.sql`). Seven of the eight
+without are discontinued, which is correct and permanent. The eighth is Mountain Pine, pending an
+upload. No new storage policy was added or is wanted — `oc-colors/` sits under the bucket's general
+authenticated-read; only `photos/studio/*` is carved out of it.
+
+### Conventions
+
+Blackout, like `#cr-show` — a client-facing Vision surface, deliberately outside both app themes.
+**Every `--occ-*` reference carries a literal fallback**, so the 448–449 stripped-token class cannot
+reach it. Registered in `hideAllViews()`, `OVERLAY_IDS` and `PANES`; **display-shown**, so
+`display:none` is the close lever. Adds **zero** global scroll-lock writers.
+
+### Not built
+
+**The colour sheet.** Deferred from 615 deliberately. It is a document in the existing
+`api/share.js` + `ccDeliver()` pipeline — **no PDF generator**, the `@page{size:Letter}` print path
+already exists. Theo, settled: *"No pricing on sheets it's not a quote."* **No money fields at all**,
+not blank ones, and it stays outside the estimate/contract document family.
