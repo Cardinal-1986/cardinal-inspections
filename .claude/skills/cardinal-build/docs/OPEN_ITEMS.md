@@ -83,39 +83,21 @@ fallback**; the seven that are, are all discontinued, and that is the end state,
   sourced spec tables. ⚠️ **Oakridge's wind row is 110/130 and conditional** — 130 only with six
   nails and OC starter along eaves and rakes, per the brochure's own footnote. It renders as a
   caution and the harness asserts it. **Do not collapse it to one number.**
-- ⏳ **One question is with Theo, and it must not be answered by guessing.** (The second — whether
-  to name IKO — was **settled on 7 Aug**: *"doesn't need to be here."* See decision 3 above.)
-  1. **The `###` footnote behind "up to 160 MPH."** Owens Corning's web line-comparison says 160 for
-     every Duration-series shingle; **none of the seven OC documents on hand mentions it** — the
-     Beauty Book, the FLEX brochure and the SureNail sell sheet all say **130**, which is what the
-     pages quote. "Up to" plus a footnote marker is the same shape as Oakridge's conditional
-     110/130. **Do not raise the number until the footnote text exists.** Asked at 619 and 620.
+- ✅ ~~The `###` footnote behind "up to 160 MPH."~~ — **CLOSED at build 621.** Theo supplied the
+  Owens Corning Sales notice (Sara Fagerman, Mid-South) on 7 Aug. It answered all three
+  questions: it is a **warranty** figure, **effective 1 Aug 2026**, conditional on **at least
+  four Total Protection Roofing System® components** (Hip & Ridge, OC Underlayment, Starter on
+  **both** eaves and rakes, and either Ice & Water Barrier or Ventilation). Duration and FLEX
+  ship **130/160** with the condition in a caution block; anything short of the spec is still
+  130. All three predicted rendering defects were real and were fixed in the same build.
+  ⚠️ **Two things this deliberately does NOT do, both still open if Theo wants them:**
+  1. It does **not** claim Cardinal installs the full system as standard. If he confirms that,
+     it is the strongest line on the page — *your warranty is 160 because of how we build it*
+     — but it is his statement to make, not one to infer.
+  2. The source is a **sales notice, not the warranty document**. Revised documents were due on
+     OwensCorning.com 3 Aug 2026 and the sandbox cannot reach that site. Swap both `source`
+     strings when the published document is in hand.
 
-     **7 Aug, after 620: Theo has an email from Owens Corning claiming 160 and is sending it
-     ("Soon").** So this is in flight, not cold — but the number still does not move until the text
-     is in hand, and what matters in it is the **condition**, not the figure. Three things asked
-     for: the 160 sentence verbatim; whatever sits behind the `###`; and **whether it is a warranty
-     figure or a wind-resistance/classification figure**. Duration's table says *"130 MPH limited
-     warranty"* — if 160 is a rating rather than the warranty, it is a **second row, not a
-     replacement**, and a rep saying "160 MPH warranty" over a 130 warranty is the expensive
-     version of this mistake.
-
-     ⚠️ **Changing the number alone would break the comparison bar in three ways, two of them
-     silently. Measured on the 620 artifact, not assumed — fix these in the SAME build as the
-     figure:**
-     1. **`pct()` is `v / 130 * 100`** — a hardcoded maximum. 160 computes to 123%, and
-        `.cmp-track` is `overflow:hidden`, so Duration's bar renders **pinned at full width**: it
-        reads as *maxed*, not as *biggest*. The scale has to come off the largest `chart` value.
-     2. **The hatched extension would vanish.** `.cmp-ext` positions at `left:pct(c.mph)` — 100%
-        for a 130 base — so it lands outside the track and is **clipped away entirely**. The one
-        visual that says *"this part carries a condition"* would silently disappear, which is
-        precisely the failure the Oakridge caution exists to prevent.
-     3. **The condition caption is hardcoded in the renderer** — `— <ext> only with 6 nails and OC
-        starter`. That is **Oakridge's** condition, baked in when Oakridge was the only conditional
-        line. Give Duration an `ext` and it prints Oakridge's condition under Duration's number: a
-        false warranty statement, and **`harness_colors.js` would not catch it** because it asserts
-        Oakridge's text, not Duration's. The condition must become per-line data on `chart`, and
-        the harness needs an assertion that each line's caption is its own.
 - **The photos.** Theo's 28 hand-sorted iPad folders — *Cardinal's own roofs*, `oc_color_photos`,
   still **empty**. Distinct from the covers, which are Owens Corning's photography, and the reason
   the two render in visibly separate sections. Agreed to start with the top three or four sellers

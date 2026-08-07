@@ -9338,3 +9338,90 @@ on Oakridge or Supreme — which were already true at 619 and are meant to stay 
 harness checked Oakridge for an absent proof block but not Supreme, while the docs claimed
 both. Supreme is the line where it matters most, not least: it is the cheap one, so a
 borrowed SureNail figure on it would be the most profitable false claim on the screen.
+
+## Build 621 — Duration's wind warranty goes conditional 130/160 (7 Aug 2026)
+
+Theo forwarded an **Owens Corning Sales notice** (Sara Fagerman, Senior Area Sales Manager,
+Mid-South / Cincinnati–Dayton). It closes the question 619 opened and 620 left open, and it
+answers all three things that were asked for rather than just the number:
+
+- **It is a WARRANTY figure** — *"the wind warranty on Duration® Series shingles will
+  increase from 130 MPH to 160 MPH"*. So it upgrades the existing wind row; it is not a
+  second row, which is what it would have had to be if 160 were a rating.
+- **Effective 1 August 2026** — already live.
+- **The condition:** at least **four** Owens Corning Total Protection Roofing System®
+  components — Hip & Ridge, OC Underlayment (Titanium® / RhinoRoof®), Starter shingles on
+  **both eaves and rakes**, and either an Ice & Water Barrier or a Ventilation product.
+  Anything short of that still carries **130**.
+
+Duration and Duration FLEX now read **130/160** on the tile, carry the full condition in an
+`.occ-note2` caution under the spec table, and draw a hatched extension on the comparison
+board exactly like Oakridge's.
+
+### The two conditional lines mean OPPOSITE things, and the code now enforces it
+
+This is the part worth remembering. Oakridge's 110/130 is a **caution** — quote the lower
+number unless the roof was actually built that way. Duration's 130/160 is an **upsell** —
+quote the higher only when the full system went on. Identical geometry, opposite sales
+meaning. The condition text moved from a hardcoded string in the renderer onto each line's
+own `chart.extNote`, and both harnesses assert Duration never prints Oakridge's six-nail
+wording. Before this build there was exactly one string, and it said "6 nails and OC
+starter".
+
+### The three latent defects predicted at 620 were all real
+
+Fixed in the same build, because shipping the number alone would have broken the board and
+**two of the three fail silently**:
+
+1. `pct()` divided by a hardcoded **130**. 160 computes to 123% inside an `overflow:hidden`
+   track, so Duration would have rendered **pinned at full width** — reading as *maxed*
+   rather than as *biggest*. The scale is now computed from the largest figure any line
+   carries.
+2. `.cmp-ext` positions at `left:pct(mph)`. At a 130 base that is `left:100%`, so the
+   hatched band lands outside the track and is **clipped away entirely** — the one visual
+   that marks a condition, gone, with no error anywhere. Chromium now measures that every
+   extension paints at least 8px inside its own track; jsdom checks `left + width <= 100`.
+3. The caption was Oakridge's condition, hardcoded. See above.
+
+### ⚠️ What this build deliberately does NOT say
+
+**That Cardinal installs the full Total Protection system as standard.** The screen states
+the condition; whether Cardinal meets it is Theo's to say, and saying it for him would be
+inventing a warranty claim in front of a homeowner. If he confirms it, the blurb can lead
+with it and it is the strongest line on the page — *your warranty is 160 because of how we
+build it, not 130.*
+
+**And the source is a sales notice, not the warranty document.** The revised documents were
+due on OwensCorning.com on 3 Aug 2026 and the sandbox cannot reach that site. Both `source`
+strings name the notice explicitly. Replace it when the published document is in hand.
+
+### Four gate failures, all of them the test being wrong rather than the app
+
+Worth recording because the ratio keeps holding. The patch aborted twice before writing —
+`{ key:'` occurs **zero** times in the file (entries open the brace on their own line), so
+every slice ran to the end of the module and Duration's "slice" contained FLEX's wind row;
+and the glance anchors were written with `·` when Duration and FLEX store a **literal**
+`·` while Supreme stores the escape. The file mixes both forms. Then `'ext:' not in supreme`
+failed against a correct file because Supreme has always carried `ext:null`, and a recon
+regex missed it because `.` does not cross newlines. In the harness, `/130 MPH/` on the
+Duration tile stopped matching once the tile correctly read `130/160 MPH`.
+
+The one that mattered: the chart-extraction regex bounded at `{0,2600}` returned **nothing**
+because 619's note grew Duration's entry to 2897 bytes — and it was caught only because the
+new assertion prints what the extractor captured. An extractor that swallows everything
+returns empty, and empty looks like a legitimate zero.
+
+### The phone baseline moved for the second time, and again on evidence
+
+Duration and FLEX legitimately read "130/160 MPH" on the phone now. A tile-by-tile diff
+proved **exactly two of five** tiles changed and that Oakridge, Supreme and Discontinued
+were byte-identical, and only then was the baseline re-approved — through a separate
+`approve_baseline.js`, not by the harness regenerating its own expected value.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 620 → 621. **jsdom 104/104**, negative-
+controlled: **5 assertions fail against the 620 artifact**. **Chromium 53/53**, including
+the geometry proof that each hatched extension actually paints inside its track — the thing
+jsdom structurally cannot see and the reason defect 2 would otherwise have shipped. Board,
+Duration line page and phone all rendered and read by eye.

@@ -127,8 +127,13 @@ const ok = (l, c) => { if(c){ pass++; console.log('  PASS ' + l); }
       return src2 && src2[1].length > 3 && spx && spx[1].trim().length > 0;
     });
   })());
+  /* 621: the glance carries BOTH figures, the way Oakridge's always has.
+     Asserting on /130 MPH/ alone passed until the pair arrived and then
+     failed against a correct file — the tile reads '130/160 MPH' now. */
   ok('Duration tile shows its sourced figures at a glance',
-     /130 MPH/.test(tiles()[0].textContent) && /Class 3/.test(tiles()[0].textContent));
+     /130\/160 MPH/.test(tiles()[0].textContent) && /Class 3/.test(tiles()[0].textContent));
+  ok('621: the Duration tile never shows the 160 alone, without its 130 base',
+     !/(^|[^\/])160 MPH/.test(tiles()[0].textContent));
   ok('FLEX tile shows Class 4 and the insurance lever',
      /Class 4/.test(tiles()[1].textContent) && /insurance/i.test(tiles()[1].textContent));
 
@@ -282,22 +287,68 @@ const ok = (l, c) => { if(c){ pass++; console.log('  PASS ' + l); }
   ok('compare: the hub becomes a board', V.querySelector('.occ-hub').classList.contains('board'));
   ok('compare: every sellable line draws a bar',
      V.querySelectorAll('.cmp-track').length === 4);
-  ok('compare: Duration and FLEX run the full 130 scale',
-     tile('duration').querySelector('.cmp-fill').getAttribute('style') === 'width:100%');
-  ok('compare: Supreme\u2019s 60 is visibly less than half of Duration\u2019s 130',
-     tile('supreme').querySelector('.cmp-fill').getAttribute('style') === 'width:46%');
+  /* SELF-COMPUTING, deliberately. These were hardcoded percentages (100 / 85 /
+     46) until 621 raised the scale maximum from 130 to Duration's new
+     conditional 160, at which point every one of them went red for a
+     completely correct reason. Deriving them from the same `chart` figures the
+     renderer reads means the next scale change costs nothing, and removes the
+     temptation to edit magic numbers until a red goes away. */
+  const CHART = {};
+  for (const m of OCC.matchAll(/\n    key:'(\w+)'[\s\S]{0,4000}?chart:\{ mph:(\d+), ext:(null|\d+)/g)) {
+    CHART[m[1]] = { mph: +m[2], ext: m[3] === 'null' ? null : +m[3] };
+  }
+  ok('harness: chart figures were actually extracted from the shipped module',
+     Object.keys(CHART).length === 4, JSON.stringify(CHART));
+  const TOP = Math.max(...Object.values(CHART).map(c => c.ext || c.mph));
+  const expect = v => 'width:' + Math.round((v / TOP) * 100) + '%';
+  ok('compare: the scale maximum is the largest figure on the board, not a literal',
+     TOP === 160, 'TOP=' + TOP);
+  for (const key of ['duration', 'flex', 'oakridge', 'supreme']) {
+    ok('compare: ' + key + ' draws its own sourced figure to scale',
+       tile(key).querySelector('.cmp-fill').getAttribute('style') === expect(CHART[key].mph),
+       tile(key).querySelector('.cmp-fill').getAttribute('style') + ' vs ' + expect(CHART[key].mph));
+  }
 
   // THE one that matters most
   const oakBar = tile('oakridge');
   ok('compare: Oakridge draws 110 SOLID, not a flat 130',
-     oakBar.querySelector('.cmp-fill').getAttribute('style') === 'width:85%');
+     oakBar.querySelector('.cmp-fill').getAttribute('style') === expect(110));
   ok('compare: …with the 130 portion drawn as a separate hatched extension',
      !!oakBar.querySelector('.cmp-ext'));
   ok('compare: …and the condition written beside the number',
      /110 MPH/.test(oakBar.querySelector('.cmp-num').textContent) &&
      /6 nails and OC starter/.test(oakBar.querySelector('.cmp-num').textContent));
-  ok('compare: no other line invents a hatched extension',
-     V.querySelectorAll('.cmp-ext').length === 1);
+  /* 621: the extension must land INSIDE the track. It positions at
+     left:pct(mph), so while the scale was a hardcoded 130 Duration's base sat
+     at left:100% and the band was clipped away entirely by overflow:hidden --
+     the one visual that marks a condition, gone, and silently. Pixel geometry
+     is Chromium's job; what jsdom can prove is that left + width never exceeds
+     100%. */
+  for (const el of V.querySelectorAll('.cmp-ext')) {
+    const st = el.getAttribute('style') || '';
+    const left = parseInt((st.match(/left:(\d+)%/) || [])[1], 10);
+    const wide = parseInt((st.match(/width:(\d+)%/) || [])[1], 10);
+    ok('compare: the hatched extension sits inside the track (' + st + ')',
+       Number.isFinite(left) && Number.isFinite(wide) && wide > 0 && left + wide <= 100);
+  }
+
+  /* 621: every conditional line writes its OWN condition. Oakridge's second
+     number is a CAUTION -- quote the lower one unless the roof was built that
+     way -- and Duration's is an UPSELL you earn by installing the full system.
+     One shared string would print a false warranty statement under one of
+     them, which is exactly what the hardcoded caption would have done. */
+  ok('compare: exactly the three conditional lines draw an extension',
+     V.querySelectorAll('.cmp-ext').length === 3);
+  ok('compare: Duration\u2019s condition is its own, not Oakridge\u2019s',
+     /160 with the full OC Total Protection system/
+       .test(tile('duration').querySelector('.cmp-num').textContent) &&
+     !/6 nails/.test(tile('duration').querySelector('.cmp-num').textContent));
+  ok('compare: FLEX carries the same 160 condition',
+     /160 with the full OC Total Protection system/
+       .test(tile('flex').querySelector('.cmp-num').textContent));
+  ok('compare: Supreme stays unconditional \u2014 no extension, no caption',
+     !tile('supreme').querySelector('.cmp-ext') &&
+     !/only with|full OC/.test(tile('supreme').querySelector('.cmp-num').textContent));
   ok('compare: impact chips come from chart, and only FLEX is Class 4',
      tile('flex').querySelector('.cmp-chip').textContent === 'Class 4' &&
      tile('duration').querySelector('.cmp-chip').textContent === 'Class 3' &&

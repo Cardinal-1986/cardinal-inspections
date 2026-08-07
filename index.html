@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 620 &#8212; the SureNail strip, which is what sells Duration</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 621 &#8212; Duration now carries a 160 MPH wind warranty on a full OC system</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35184,6 +35184,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:621, d:'2026-08-07', t:'Duration\u2019s wind warranty is now 130/160 MPH', s:'Owens Corning raised the Duration Series wind warranty from 130 MPH to 160 MPH, effective 1 August 2026, when the roof is built with the required Owens Corning Total Protection Roofing System components \u2014 at least four of them, including Hip & Ridge, OC Underlayment, Starter shingles on both the eaves and the rakes, and either an Ice & Water Barrier or a Ventilation product. Duration and Duration FLEX now show 130/160 on the tile, the full condition underneath the spec table, and a hatched extension on the comparison bar exactly like Oakridge\u2019s. The difference is which way it cuts: Oakridge\u2019s second number is a caution, quote the lower one unless the roof was built that way, while Duration\u2019s is a selling point you earn by installing the complete system. A roof that does not meet the specification still carries 130. Sourced from the Owens Corning Sales notice of 1 August 2026.' },
 { b:620, d:'2026-08-07', t:'The SureNail strip, which is what sells Duration', s:'Theo: "Sure nail strip is what sells the duration compared to competitors." The Duration page had been leading with a comparison against Oakridge, which is the wrong fight. It now leads with Owens Corning\u2019s own claim \u2014 that SureNail is the first and only reinforced nailing zone ON THE FACE of the shingle, a visible woven strip embedded where the nails actually go, so a crew can see the target instead of guessing. Underneath it are the three tested numbers from the SureNail sell sheet: up to twice the nail pull-through resistance, up to nine times the nail blow-through resistance, up to twice the delamination resistance. The basis of those comparisons is printed with them, because a multiple with no basis is a marketing number and a multiple with one survives being questioned across a kitchen table. Duration FLEX carries the same strip and the same figures.' },
 { b:619, d:'2026-08-07', t:'FLEX shows only the colours FLEX is made in', s:'The Duration FLEX page had been showing all twenty Duration colours. It should not have been. Owens Corning\u2019s FLEX brochure lists nine, and Owens Corning\u2019s own line comparison independently says nine — Brownwood, Driftwood, Estate Gray, Onyx Black, Teak, Black Sable, Sand Dune, and the discontinued Storm Cloud and Summer Harvest. FLEX uses the same colour platform, so a shade reads the same on either shingle, but it is not manufactured in the full range. Left alone, a rep could have stood on the FLEX page, picked Merlot, and ordered a roof in a colour FLEX is not made in — the same kind of mistake as selling a discontinued colour. The page now shows the seven you can actually order.' },
 { b:618, d:'2026-08-07', t:'Three presentation styles for the iPad', s:'On a tablet Colors used to render as a phone layout stranded on a big screen \u2014 a narrow column pinned to the left with a third of the display empty beside it, and no roof visible on a line page until you scrolled past the whole specification table. It now has three presentation styles you switch between from the header, and it remembers which one you chose. Roofs opens on full-bleed photographs of real Owens Corning roofs. Compare turns the hub into a board where each line\u2019s wind warranty is a bar drawn to scale \u2014 Supreme\u2019s stops well short of Duration\u2019s, which is the whole argument for the better shingle in one picture. Feature is an editorial spread with a full-width hero. Oakridge and Supreme have no colours in the catalogue and so no photograph; rather than borrow another line\u2019s roof and imply something false, their wind rating becomes the artwork. The phone is deliberately untouched.' },
@@ -60192,12 +60193,12 @@ var LINES = [
     name:'TruDefinition® Duration®',
     kind:'Architectural shingle',
     ready:true,
-    glance:'130 MPH · Class 3 impact · Limited Lifetime',
+    glance:'130/160 MPH · Class 3 impact · Limited Lifetime',
     blurb:'Cardinal’s standard, and SureNail® is what sells it. Owens Corning’s own claim: it is the first and only reinforced nailing zone ON THE FACE of the shingle — a wide, highly visible woven-fabric strip embedded where the nails actually go, so a crew can see the target instead of guessing at it. Where that fabric overlays both shingle layers it forms Triple Layer Protection®, up to a 200% wider common bond than a standard shingle, and that is what resists “nail pull” in high wind. It is not only about grip: a shingle may not be covered under warranty at all if it is not fastened in the right place.',
     specs:[
       ['Shingle type',      'Architectural (laminate)'],
       ['Limited warranty',  'Limited Lifetime — for as long as you own your home'],
-      ['Wind resistance',   '130 MPH limited warranty'],
+      ['Wind resistance',   '130 MPH limited warranty \u00b7 160 MPH with the Owens Corning\u00ae Total Protection Roofing System\u00ae \u2014 see the note below'],
       ['Impact resistance', 'UL 2218 / FM 4473 — Class 3'],
       ['Algae resistance',  '25-year limited warranty (StreakGuard®)'],
       ['Fire resistance',   'ASTM E108 / UL 790 — Class A'],
@@ -60205,7 +60206,7 @@ var LINES = [
       ['Nailing',           'SureNail\u00ae Technology'],
       ['Non-prorated period','TRU PROtection\u00ae \u2014 10 years']
     ],
-    note:'',
+    note:'Since 1 August 2026 the Duration Series wind warranty is 160 MPH when the required Owens Corning\u00ae Total Protection Roofing System\u00ae components are installed \u2014 at least FOUR OC components, including Hip & Ridge, OC Underlayment (Titanium\u00ae or RhinoRoof\u00ae), Starter shingles on BOTH the eaves and the rakes, and either an OC Ice & Water Barrier or an OC Ventilation product. A roof that does not meet that specification still carries the 130 MPH warranty. Quote 160 only when the job is actually built that way.',
     /* OC's tested figures. The basis line is NOT optional: the comparison is
        against competing products with wide, SINGLE-LAYER nailing zones, nailed
        in the middle of the allowable zone. A multiple with no basis is a
@@ -60218,8 +60219,9 @@ var LINES = [
       basis:'Up to. Owens Corning testing against competing products with wide, single-layer nailing zones, following manufacturers\u2019 installation instructions and nailing in the middle of the allowable nailing zone.'
     },
     hero:'onyx-black',
-    chart:{ mph:130, ext:null, impact:'Class 3', impactKey:'c3', warranty:'Limited Lifetime' },
-    source:'TruDefinition Duration Beauty Book, and the SureNail Sell Sheet (10020692) for the tested figures',
+    chart:{ mph:130, ext:160, extNote:'160 with the full OC Total Protection system',
+            impact:'Class 3', impactKey:'c3', warranty:'Limited Lifetime' },
+    source:'TruDefinition Duration Beauty Book, and the SureNail Sell Sheet (10020692) for the tested figures, and the Owens Corning Sales notice of 1 Aug 2026 for the 160 MPH Total Protection warranty',
     match:function(c){
       return c.status !== 'discontinued' &&
              (c.product_line === 'duration' || c.product_line === 'designer');
@@ -60230,18 +60232,18 @@ var LINES = [
     name:'TruDefinition® Duration® FLEX®',
     kind:'Impact-rated architectural shingle',
     ready:true,
-    glance:'130 MPH · Class 4 impact · insurance discount',
+    glance:'130/160 MPH · Class 4 impact · insurance discount',
     blurb:'The impact-rated one. SBS-modified asphalt absorbs the energy of storm debris, which earns two of the industry’s highest impact ratings — UL 2218 and FM 4473 Class 4 — and may qualify a homeowner for an insurance discount. It uses the same TruDefinition® colour platform as Duration, so a colour reads the same on either shingle — but FLEX is only made in the short list below, not the full Duration range.',
     specs:[
       ['Shingle type',      'Architectural (laminate), SBS-modified'],
       ['Limited warranty',  'Limited Lifetime'],
-      ['Wind resistance',   '130 MPH limited warranty'],
+      ['Wind resistance',   '130 MPH limited warranty \u00b7 160 MPH with the Owens Corning\u00ae Total Protection Roofing System\u00ae \u2014 see the note below'],
       ['Impact resistance', 'UL 2218 / FM 4473 — Class 4, the highest rating. May qualify for a homeowner insurance discount.'],
       ['Algae resistance',  '25-year limited warranty (StreakGuard®)'],
       ['Nailing',           'SureNail\u00ae Technology'],
       ['Non-prorated period','TRU PROtection\u00ae \u2014 10 years']
     ],
-    note:'',
+    note:'Since 1 August 2026 the Duration Series wind warranty is 160 MPH when the required Owens Corning\u00ae Total Protection Roofing System\u00ae components are installed \u2014 at least FOUR OC components, including Hip & Ridge, OC Underlayment (Titanium\u00ae or RhinoRoof\u00ae), Starter shingles on BOTH the eaves and the rakes, and either an OC Ice & Water Barrier or an OC Ventilation product. A roof that does not meet that specification still carries the 130 MPH warranty. Quote 160 only when the job is actually built that way.',
     /* OC's tested figures. The basis line is NOT optional: the comparison is
        against competing products with wide, SINGLE-LAYER nailing zones, nailed
        in the middle of the allowable zone. A multiple with no basis is a
@@ -60254,8 +60256,9 @@ var LINES = [
       basis:'Up to. Owens Corning testing against competing products with wide, single-layer nailing zones, following manufacturers\u2019 installation instructions and nailing in the middle of the allowable nailing zone.'
     },
     hero:'estate-gray',
-    chart:{ mph:130, ext:null, impact:'Class 4', impactKey:'c4', warranty:'Limited Lifetime' },
-    source:'TruDefinition Duration FLEX brochure, and the SureNail Sell Sheet (10020692) for the tested figures',
+    chart:{ mph:130, ext:160, extNote:'160 with the full OC Total Protection system',
+            impact:'Class 4', impactKey:'c4', warranty:'Limited Lifetime' },
+    source:'TruDefinition Duration FLEX brochure, and the SureNail Sell Sheet (10020692) for the tested figures, and the Owens Corning Sales notice of 1 Aug 2026 for the 160 MPH Total Protection warranty',
     match:function(c){
       return c.status !== 'discontinued' && FLEX_COLOURS.indexOf(c.slug) !== -1;
     }
@@ -60286,7 +60289,8 @@ var LINES = [
     hero:null,
     /* ext is the hatched part of the bar. It exists so the board can never draw
        Oakridge as a flat 130 — same rule as the spec row, same reason. */
-    chart:{ mph:110, ext:130, impact:'Not stated', impactKey:'cn', warranty:'Limited Lifetime' },
+    chart:{ mph:110, ext:130, extNote:'130 only with 6 nails and OC starter',
+            impact:'Not stated', impactKey:'cn', warranty:'Limited Lifetime' },
     source:'Oakridge Brochure (10024153)',
     match:null
   },
@@ -60424,21 +60428,31 @@ function shot(c){
 
 /* ---- the hub: pick a line ------------------------------------------------ */
 function bar(L){
-  /* The comparison bar, drawn from `chart`. 130 is the scale maximum because it
-     is the highest wind warranty any of these lines carries.
-     Oakridge draws 110 SOLID plus a HATCHED extension to 130 with the condition
-     written beside it. It must never read as a flat 130 — quoting that on a
-     four-nail roof is a false statement about a warranty. */
+  /* The comparison bar, drawn from `chart`. The scale maximum is COMPUTED from
+     the largest figure any line carries. It was hardcoded to 130 until 621, and
+     Duration's new 160 would have divided to 123% inside an overflow:hidden
+     track — rendering pinned at full width, reading as MAXED rather than as
+     BIGGEST, with the hatched extension pushed outside the track and clipped
+     away entirely. Both failures were silent. Do not put a literal back.
+
+     A conditional line draws a SOLID base plus a HATCHED extension, and each
+     supplies its OWN `extNote`. That is not tidiness: Oakridge's 110/130 is a
+     CAUTION (quote the lower number unless the roof was built that way) and
+     Duration's 130/160 is an UPSELL (quote the higher only when the system was
+     actually installed). Same geometry, opposite sales meaning — sharing one
+     string would print a false warranty statement under one of them. */
   var c = L.chart;
   if(!c) return '<div class="cmp"><div class="cmp-num soft">' + esc(L.glance) + '</div></div>';
-  var pct = function(v){ return Math.round((v / 130) * 100); };
+  var top = LINES.reduce(function(m, x){
+    return Math.max(m, (x.chart && (x.chart.ext || x.chart.mph)) || 0); }, 1);
+  var pct = function(v){ return Math.round((v / top) * 100); };
   return '<div class="cmp">' +
     '<div class="cmp-track">' +
       '<div class="cmp-fill" style="width:' + pct(c.mph) + '%"></div>' +
       (c.ext ? '<div class="cmp-ext" style="left:' + pct(c.mph) + '%;width:' + (pct(c.ext) - pct(c.mph)) + '%"></div>' : '') +
     '</div>' +
     '<div class="cmp-num">' + c.mph + ' MPH' +
-      (c.ext ? ' <small>\u2014 ' + c.ext + ' only with 6 nails and OC starter</small>' : '') +
+      (c.ext ? ' <small>\u2014 ' + esc(c.extNote) + '</small>' : '') +
     '</div>' +
   '</div>' +
   '<div class="cmp-right">' +

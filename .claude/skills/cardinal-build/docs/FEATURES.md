@@ -1651,7 +1651,7 @@ state until then. Nothing here has been verified against a real photograph.
 
 ---
 
-## OC Colors — the shingle-line hub (builds 615–620, 7 Aug 2026)
+## OC Colors — the shingle-line hub (builds 615–621, 7 Aug 2026)
 
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
@@ -1671,8 +1671,8 @@ the hub. State is two classes on `#cr-occ`: none, `.line`, `.detail`. `.detail` 
 
 | Line | Ships | Holds |
 |---|---|---|
-| **TruDefinition Duration** | ✅ description + 8-row spec table | the 20 sellable colours, with a **Designer Series** tab |
-| **Duration FLEX** | ✅ description + specs | **its own 9-colour palette** (7 sellable) — `FLEX_COLOURS` |
+| **TruDefinition Duration** | ✅ description + 9-row spec table + a wind caution | the 20 sellable colours, with a **Designer Series** tab |
+| **Duration FLEX** | ✅ description + specs + a wind caution | **its own 9-colour palette** (7 sellable) — `FLEX_COLOURS` |
 | **Oakridge** | ✅ description + 10-row spec table + a wind caution | no catalogue rows — spec page only |
 | **Supreme** | ✅ description + 9-row spec table | no catalogue rows — spec page only |
 | **Discontinued** | ✅ description | the 10 dead colours, each naming its closest current replacement **on the card** |
@@ -1686,12 +1686,36 @@ and order a roof in a colour FLEX is not made in. **If that list grows, the broc
 check the document.** Two of the nine are discontinued and are filtered out of the sellable
 page while still appearing on the Discontinued one.
 
-⚠️ **Duration's and FLEX's wind figure is 130 MPH and there is an unresolved conflict.**
-Owens Corning's web line-comparison says *"up to 160 MPH###"*, but none of the seven OC
-documents on hand mentions 160 — the Duration Beauty Book, the FLEX brochure and the
-SureNail sell sheet all say 130 — and the `###` footnote has not been supplied. "Up to"
-plus a footnote marker is the same shape as Oakridge's conditional 110/130. **Do not raise
-this number until the footnote text exists.**
+### ✅ 621: Duration and FLEX are 130/160 MPH — the conflict is RESOLVED, do not re-open it
+
+The `"up to 160 MPH###"` on Owens Corning's website sat unexplained for two builds and the
+pages stayed at 130, because *"up to"* plus a footnote marker is the same shape as
+Oakridge's conditional 110/130 and no document on hand mentioned 160. **Theo supplied the
+Owens Corning Sales notice on 7 Aug and it settles all three questions at once:**
+
+- It is a **warranty** figure, not a rating — *"the wind warranty … will increase from 130
+  MPH to 160 MPH"* — so it upgrades the existing wind row rather than adding a second one.
+- **Effective 1 August 2026**, so it is already live.
+- The condition is **at least FOUR Owens Corning Total Protection Roofing System®
+  components**: Hip & Ridge, OC Underlayment (Titanium® / RhinoRoof®), Starter shingles on
+  **both the eaves and the rakes**, and either an OC Ice & Water Barrier or an OC
+  Ventilation product. Anything short of that **still carries 130**.
+
+⚠️ **Duration's second number and Oakridge's are opposite in sales meaning, and the code
+now keeps them apart on purpose.** Oakridge's 130 is a **caution** — quote the lower figure
+unless the roof was built that way. Duration's 160 is an **upsell** — quote it only when
+the full system was actually installed. They render with identical geometry (solid base +
+hatched extension), so the wording is the only thing separating them: each line carries its
+own `chart.extNote`, and both the jsdom and Chromium harnesses assert that Duration never
+prints Oakridge's six-nail condition.
+
+⚠️ **The screen states the condition; it does not claim Cardinal meets it.** Whether the
+full Total Protection system is Cardinal's standard install is Theo's to say, and saying it
+for him would be inventing a warranty claim. Not asserted anywhere in the module.
+
+⚠️ **The source is a sales notice, not the warranty document.** Revised warranty documents
+were due on OwensCorning.com 3 Aug 2026; the sandbox cannot reach that site. When Theo can
+pull the published document, it should replace the notice in both `source` strings.
 
 **⚠ No spec figure that isn't sourced — enforced at patch time, not intended.** Every number in
 `LINES` is quoted from an Owens Corning document Theo supplied, and each page **names its file
