@@ -1,0 +1,108 @@
+-- OC Colors — point `cover_image_path` at the uploaded cover images.
+-- APPLIED TO PRODUCTION 7 Aug 2026. Run after oc_colors_hidden.sql.
+--
+-- Data only. No DDL, no policy change, no app change — build 615 already reads
+-- `cover_image_path` and signs it. This is the statement that makes the wall
+-- stop rendering 30 hex swatches and start rendering Owens Corning's roofs.
+--
+-- ============================================================================
+-- THE PATH CONVENTION IS FLAT — oc-colors/covers/<slug>.jpg
+-- ============================================================================
+-- One folder, 23 files, one drag. The original plan was
+-- oc-colors/<slug>/cover.jpg — 23 folders — and was changed because uploading
+-- through the Supabase dashboard means creating each folder by hand.
+--
+-- ⚠ The README shipped inside the cover-image zip still says the OLD path.
+-- The flat path below is the one that is live and the one the app reads.
+--
+-- The filename is the row's `slug`, which is GENERATED ALWAYS from `name`
+-- (see oc_color_covers.sql). That is the whole reason no lookup table is
+-- needed here, and the reason the app must never recompute a slug in JS — one
+-- derivation, in the database, or photos end up filed under a colour that no
+-- longer matches.
+--
+-- ============================================================================
+-- WHY `where exists` — this is the safety, not decoration
+-- ============================================================================
+-- A colour only gets a path if the file is ACTUALLY IN STORAGE. A path
+-- pointing at nothing is worse than no path at all: the card's <img> fails and
+-- renders empty, instead of falling back to the hex swatch with its
+-- "Approximate colour — not a verified swatch" label. Empty tells a customer
+-- nothing; the labelled swatch at least tells the truth.
+--
+-- The `is distinct from` clause makes it idempotent and cheap to re-run —
+-- re-running picks up newly uploaded files and leaves settled rows untouched,
+-- including their `updated_at`.
+
+update public.oc_colors c
+   set cover_image_path = 'oc-colors/covers/' || c.slug || '.jpg',
+       updated_at = now()
+ where exists (select 1 from storage.objects o
+                where o.bucket_id = 'photos'
+                  and o.name = 'oc-colors/covers/' || c.slug || '.jpg')
+   and cover_image_path is distinct from 'oc-colors/covers/' || c.slug || '.jpg';
+
+-- ---------------------------------------------------------------------------
+-- Result — 22 rows, 7 Aug 2026
+-- ---------------------------------------------------------------------------
+--   Aged Copper, Black Sable, Bourbon, Brownwood, Chateau Green, Desert Rose,
+--   Driftwood, Estate Gray, Evergreen Mist, Gray Tweed, Merlot, Midnight Plum,
+--   Onyx Black, Pacific Wave, Peppercorn, Sand Dune, Sedona Canyon,
+--   Storm Cloud, Summer Harvest, Teak, Terra Cotta, Williamsburg Gray
+--
+--   broken paths (path set, no file):   0
+--   unclaimed files (file, no row):     0
+--
+-- STILL ON THE HEX-SWATCH FALLBACK — 8 of the 30 on the wall:
+--
+--   Mountain Pine  [new]           <- the only SELLABLE one. Its image exists
+--                                     (mountain-pine.jpg, 1400x933, in the zip
+--                                     and sent separately) but had not been
+--                                     uploaded when this ran. RE-RUN THE
+--                                     STATEMENT ABOVE once it is there.
+--   Quarry Gray    [discontinued]
+--   Sierra Gray    [discontinued]
+--   Slate Grey     [discontinued]
+--   Amber          [discontinued]
+--   Aged Cedar     [discontinued]
+--   Desert Tan     [discontinued]
+--   Harbor Blue    [discontinued]
+--
+-- The seven discontinued ones are CORRECT and stay that way. A colour nobody
+-- can buy does not need a marketing photograph; it needs to remain findable so
+-- an owner can identify a twelve-year-old roof and a rep can match a repair.
+-- Their swatch is eyeballed (hex_verified = false on every row in this table),
+-- which is exactly why the card carries the unverified label. Do not go hunting
+-- OC books for them — see oc_discontinued_fix.sql.
+--
+-- Shasta White is hidden and is not counted here at all. See oc_colors_hidden.sql.
+--
+-- ---------------------------------------------------------------------------
+-- Verify
+-- ---------------------------------------------------------------------------
+--   -- must return zero rows: a path with no file behind it
+--   select c.name, c.cover_image_path from public.oc_colors c
+--    where c.cover_image_path is not null
+--      and not exists (select 1 from storage.objects o
+--                       where o.bucket_id='photos' and o.name = c.cover_image_path);
+--
+--   -- must return zero rows: an uploaded file no row claims (a typo'd slug)
+--   select o.name from storage.objects o
+--    where o.bucket_id='photos' and o.name like 'oc-colors/covers/%'
+--      and not exists (select 1 from public.oc_colors c where c.cover_image_path = o.name);
+--
+--   -- must be 0 once Mountain Pine lands: a sellable colour on the swatch fallback
+--   select count(*) from public.oc_colors
+--    where not hidden and cover_image_path is null
+--      and status in ('coty','current','new');
+--
+-- No new storage policy is needed or wanted. `oc-colors/` sits under the
+-- photos bucket's general authenticated-read policy; only `photos/studio/*` is
+-- carved out of it. Signed URLs are minted for display and never written back
+-- into a row.
+--
+-- Rollback:
+--   update public.oc_colors set cover_image_path = null, updated_at = now()
+--    where cover_image_path like 'oc-colors/covers/%';
+--   -- The wall degrades to hex swatches. Nothing breaks; it just gets honest
+--   -- and ugly.
