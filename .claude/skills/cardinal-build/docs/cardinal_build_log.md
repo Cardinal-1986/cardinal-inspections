@@ -8380,3 +8380,48 @@ by reading the negative-control output rather than trusting its exit code. Tight
 **Still owed, and not a build:** every phone must press Enable once more. Two subscribe paths
 remain (`enableNotifications()` and `#pushEnableBtn`); consolidating them is a follow-up, not done
 here to keep the diff on a live fix small.
+
+## 612 — the notification path stops lying (2026-08-07)
+
+611 fixed three causes of silent notification failure. It did not fix the
+**reporting**, and within an hour that cost an evening: a tagged message said
+"🔔 Notified Theo Dorion", nothing arrived, and there was no way from inside the
+app to learn why. Everything I could inspect from outside was sound — valid
+subscription, matching emails, permissive RLS, a working `sw.js` push handler,
+both phones on 611 — which left only the inside of the Vercel function, where I
+cannot see.
+
+- **`api/notify.js` discarded every send error except 404/410.** A push refused
+  with **401/403** — the signature that says `VAPID_PRIVATE_KEY` no longer pairs
+  with `VAPID_PUBLIC` — returned `{ok:true, sent:0}`, identical to no push at
+  all. It now counts `sent / failed / gone / mailed / subs` and names the cause:
+  `vapid_mismatch`, `push_rejected`, `no_subscriptions`, `subscriptions_expired`,
+  `subs_query_failed`, `resend_missing`, `email_failed`, `no_recipients`.
+- **A non-array Supabase response** returned `sent:0` and looked like "nobody is
+  subscribed". Now `subs_query_failed`, with the database's own message.
+- **`env: { vapid_from_env, resend }`** — booleans only, so the one question I
+  could not answer from here ("is the key actually set in Vercel?") is answerable
+  from the app. **The gate asserts neither secret ever appears in the response.**
+- **`notifyTeam()` had an EMPTY `.catch()`** and returned nothing. It now resolves
+  to the route's report and still never throws, so callers may ignore it.
+- **Both "Notified" lines were drawn beside the send, not after it** — the chat
+  thread and the punch discussion. Both now await the outcome and print it
+  through one shared `notifyOutcomeText()`, red when nothing was delivered.
+  One implementation, for the reason 607 gave: a second copy is the duplicate-
+  pipeline bug this project keeps paying for.
+
+Verified: `check_build.py` green (105 scripts, stamp 611→612, marker
+`notifyOutcomeText` present and absent from prev) · **26-assertion** Node harness
+on the shipped route covering every reason string, including that a 401 is
+reported and that neither secret leaks · **12-assertion** extraction test on the
+shipped `notifyOutcomeText()` proving a failure never renders the word
+"Notified" · 611's own route and client harnesses both still pass · both patches
+reproduce byte-for-byte.
+
+**The negative control is the finding.** Against 611's route, a push rejected
+401 returns `{"ok":true,"sent":0,"mailed":0}` — the exact silent success that
+made tonight undiagnosable.
+
+⚠ **This build diagnoses; it does not repair.** If the cause is a wrong
+`VAPID_PRIVATE_KEY` in Vercel, 612 will say so in plain words and the key still
+has to be fixed by hand.
