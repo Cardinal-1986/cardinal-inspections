@@ -9085,3 +9085,86 @@ and looked at.
 One stale harness assertion was corrected rather than worked around: it froze Duration's spec table at
 8 rows and 617 legitimately added a 9th. An assertion pinned to an old count reads as a regression when
 the thing it measures is supposed to grow.
+
+---
+
+## Build 618 — three presentation styles for the iPad (7 Aug 2026)
+
+Theo: *"Can you make the iPad a presentation style. Or will it look the same as my
+iPhone?"* **It looked worse.** Measured on 617 at 1194px: the hub was a 760px column
+pinned left with **434px of dead black** beside it, and a line page showed **no roof at
+all** until you scrolled past the entire spec table.
+
+Two fixes were rendered and rejected — *"Show me a few other options that really pop and
+is professional."* Three concepts were then rendered and he was asked to pick one. His
+answer was better than the question: **"What if you could filter between 3 styles?"**
+
+| Style | Hub | Line page |
+|---|---|---|
+| **Roofs** (default) | five full-bleed roof photographs | pitch + specs pinned left, colours beside |
+| **Compare** | each line's wind warranty as a bar to scale | same split |
+| **Feature** | three-across image cards | editorial spread, full-width hero |
+
+Switcher in the header, choice remembered in `localStorage`, **everything above 820px**.
+
+### The phone is untouched, and it is asserted rather than hoped
+
+The 430×932 render is **pixel-identical across all three styles** *and* **pixel-identical
+to the build-617 baseline**. That single check earned its place immediately — see below.
+
+### The hub had 23 roof photographs available and used none of them
+
+Now it does — but only a line's **own** colours, with a fallback that also stays inside
+the line. **Oakridge and Supreme have zero catalogue rows and therefore no photograph;
+borrowing a Duration roof for them would be a false product claim** (the 616 `lineLabel()`
+class). Their wind rating becomes the artwork instead — and on Supreme that number is the
+pitch.
+
+`chart` drives the bars. It must not become a second source of truth beside the sourced
+`specs` strings, so `patch618.py` asserts **every `chart.mph` appears inside that same
+line's wind row**. Oakridge draws **110 solid plus a hatched extension to 130** with the
+condition written beside it — never a flat 130.
+
+### ⚠️ Four defects, all mine, each caught by a different gate
+
+1. **The hero leaked onto the phone.** It was an inline `background-image`, emitted
+   regardless of viewport, and nothing below 820px sizes or positions one — so a phone
+   tile grew a tiled roof photograph. **No structural assertion caught this. Only the
+   pixel diff against the 617 baseline did.** Now a **custom property** consumed solely
+   inside the media query, so the leak is impossible by construction, plus an assertion
+   that no inline `background-image` is ever emitted.
+2. **The board's markup reached the phone** as unstyled divs, because `hub()` emits it
+   whenever the style is `compare` and all the `.cmp-*` CSS lives in the query. Hidden in
+   the base sheet instead; the query turns it on. **JS stays viewport-independent** — no
+   resize listener, no second opinion about what counts as a tablet.
+3. **`#cr-occ[data-style="roofs"] .occ-hub{display:grid}` beat
+   `#cr-occ.line .occ-hub{display:none}`** — equal specificity, later in source order — so
+   the hub painted **on top of a line page**. Scoped with `:not(.line):not(.detail)` rather
+   than trusting order a later edit could reverse.
+4. **The split was a grid whose pitch column spanned four rows.** A spanning item feeds
+   its height back into the tracks it crosses, which pushed the first roof **1161px down an
+   834px screen**; `min-content` tracks did not stop it. Rebuilt on **float**, which leaves
+   normal flow for sizing and composes with `position:sticky`. Old-fashioned and correct.
+
+### The trap that was avoided rather than hit
+
+The two-column split grids **`#occBody`, a new wrapper — not `#cr-occ`**. `open()` writes
+an inline `display:block` on `#cr-occ`, and **inline beats every stylesheet rule at any
+specificity**. That is the `styleMounts()` / `showApp()` trap this repo has hit three
+times. Checking the base rule *before* writing the CSS is what caught it.
+
+### One harness bug worth recording
+
+The Chromium harness seeded `localStorage` to pick a style. `setContent` runs on
+`about:blank`, where Chromium **throws** on `localStorage` — the module catches that
+correctly and keeps the default, so every page rendered in the default style and the
+"three styles differ" check compared three identical screenshots. It looked like a CSS
+failure and was a harness failure. It now **clicks the switcher**, which is both the real
+user path and immune to the origin.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 617 → 618. **jsdom 76/76.** **Chromium
+50/50** — the two phone diffs, ≥44px on every control including the switcher, all three
+nav levels in all three styles, and no horizontal overflow at 820 / 834 / 1024 / 1194px.
+All three styles rendered against live rows and looked at.

@@ -1651,7 +1651,7 @@ state until then. Nothing here has been verified against a real photograph.
 
 ---
 
-## OC Colors — the shingle-line hub (builds 615–617, 7 Aug 2026)
+## OC Colors — the shingle-line hub (builds 615–618, 7 Aug 2026)
 
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
@@ -1698,6 +1698,32 @@ the nailing zone"*).
 
 Oakridge and Supreme have **no rows in `oc_colors`**, so their pages carry specs and no colour grid.
 Only add a `match` if colours are actually loaded.
+
+### 618: three presentation styles, above 820px only
+
+`data-style` on `#cr-occ` — **`roofs`** (default), **`compare`**, **`feature`** — switched
+from a control in the header and remembered in `localStorage['cr-occ-style']`.
+
+**The phone is untouched and that is a gate, not an intention:** the 430×932 render must
+stay pixel-identical across all three styles *and* against the build-617 baseline. Two
+leaks were caught only by that diff — an inline `background-image` on the hub tiles, and
+the comparison board's markup rendering as unstyled divs. Heroes are now a `--hero` custom
+property consumed solely inside the media query, and `.cmp-*` is `display:none` in the
+base sheet. **JS stays viewport-independent** — no resize listener anywhere.
+
+⚠️ **A `[data-style]` rule ties with `#cr-occ.line .occ-hub{display:none}` on specificity
+and wins on source order.** The hub rules therefore carry `:not(.line):not(.detail)`. Do
+not simplify them.
+
+⚠️ **The split is a float, deliberately.** As a grid, the pitch column spanning four rows
+fed its height back into those tracks and pushed the first roof 1161px down an 834px
+screen. And it grids **`#occBody`**, a wrapper — never `#cr-occ`, which carries an inline
+`display:block` from `open()` that beats any stylesheet rule.
+
+**A line's hero is always one of its OWN colours**, including the fallback. Oakridge and
+Supreme have no catalogue rows and so no photograph; their wind rating becomes the artwork
+rather than borrowing another line's roof. `chart` feeds the bars and is guarded at patch
+time against drifting from the sourced `specs` text.
 
 **617: the collection split is a TAB, not a chip.** Theo — *"Also tab designer series."* A
 collection and a shade are different kinds of choice, so `#occTabs` (`All colours · Standard ·
