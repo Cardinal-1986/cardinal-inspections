@@ -8920,12 +8920,18 @@ verified swatch" label. Empty tells a customer nothing; the labelled swatch at l
 truth. The `is distinct from` clause makes it idempotent, so it is simply re-run as more covers
 land.
 
-22 rows updated. Verified two ways that matter more than the count: **zero paths with no file
-behind them, zero uploaded files no row claims** (the second catches a typo'd slug, which the row
-count alone would pass straight through).
+**Run twice, and the second run is the proof.** The first set 22 rows; 23 of 23 covers had been
+sent but only 22 reached storage. Mountain Pine — `new`, therefore sellable — was the missing one,
+and it was **in the zip all along** (verified rather than argued: 1400×933, 257,329 bytes, sha256
+`08cc05fd…`, byte-identical to the working copy, listed in the zip's own README). It sits between
+`midnight-plum` and `onyx-black`, easy to scroll past on a phone. Sent again on its own, uploaded,
+and the identical statement re-run: **1 row, Mountain Pine only.** The other 22 were untouched,
+`updated_at` included.
 
-Eight colours stay on the swatch fallback. **Seven are discontinued and that is correct** — a
-colour nobody can buy does not need a marketing photograph, only to stay findable. The eighth is
-**Mountain Pine**, which is `new` and therefore sellable; its image exists and was in the zip
-(verified: 1400×933, 257,329 bytes, sha256 `08cc05fd…`, listed in the zip's own README) but had not
-been uploaded when the statement ran.
+**Final state: 23 covers · 0 broken paths · 0 unclaimed files · 0 sellable colours on the swatch
+fallback.** Every sellable colour renders a real Owens Corning roof photograph. The seven still on
+a swatch are all discontinued, and that is the end state rather than a backlog.
+
+Verified two ways that matter more than the row count: **zero paths with no file behind them, zero
+uploaded files no row claims.** The second catches a typo'd slug — which a row count alone passes
+straight through.

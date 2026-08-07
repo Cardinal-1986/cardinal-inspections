@@ -59,17 +59,17 @@ colours keep their spot on the wall badged, `hidden` removes it. One row hidden:
 no new surface. Full detail in `FEATURES.md` and `cardinal_build_log.md`. **The upload UI struck
 from this list: it shipped with 615**, `is_staff()`, writing to `oc-colors/<slug>/`.
 
-`oc_color_covers_set.sql` then set `cover_image_path` on **22 of the 30 colours on the wall**.
+`oc_color_covers_set.sql` then set `cover_image_path` on **23 of the 30 colours on the wall** — run
+twice, the second time for Mountain Pine alone. **Zero sellable colours are on the hex-swatch
+fallback**; the seven that are, are all discontinued, and that is the end state, not a backlog.
+**The cover work is closed.**
 
 ### Still open
 
-- **Mountain Pine has no cover uploaded.** The only *sellable* colour still on the hex-swatch
-  fallback; the other seven are discontinued and correctly stay that way. The image exists
-  (1400×933, in the cover zip and sent separately). Drop it in `oc-colors/covers/` and re-run
-  `oc_color_covers_set.sql` — it is guarded by `where exists` and idempotent.
 - **The photos.** Theo's 28 hand-sorted iPad folders — *Cardinal's own roofs*, `oc_color_photos`,
-  still empty. Distinct from the covers, which are OC's photography. Agreed to start with the top
-  three or four sellers at 5–8 shots each rather than all 28 at once.
+  still **empty**. Distinct from the covers, which are Owens Corning's photography, and the reason
+  the two render in visibly separate sections. Agreed to start with the top three or four sellers
+  at 5–8 shots each rather than all 28 at once.
 - ⚠️ **The README inside the cover-image zip names the wrong upload path** —
   `oc-colors/<slug>/cover.jpg`. The live convention is flat: **`oc-colors/covers/<slug>.jpg`**.
 - **The colour sheet is NOT a new pipeline.** `api/share.js` already serves stored document HTML

@@ -43,30 +43,31 @@ update public.oc_colors c
    and cover_image_path is distinct from 'oc-colors/covers/' || c.slug || '.jpg';
 
 -- ---------------------------------------------------------------------------
--- Result — 22 rows, 7 Aug 2026
+-- Result — 23 rows, 7 Aug 2026. Run twice; the idempotence held.
 -- ---------------------------------------------------------------------------
+-- First run, 22 rows:
 --   Aged Copper, Black Sable, Bourbon, Brownwood, Chateau Green, Desert Rose,
 --   Driftwood, Estate Gray, Evergreen Mist, Gray Tweed, Merlot, Midnight Plum,
 --   Onyx Black, Pacific Wave, Peppercorn, Sand Dune, Sedona Canyon,
 --   Storm Cloud, Summer Harvest, Teak, Terra Cotta, Williamsburg Gray
 --
---   broken paths (path set, no file):   0
---   unclaimed files (file, no row):     0
+-- Second run after Mountain Pine was uploaded: **1 row, Mountain Pine only.**
+-- The other 22 were left alone, `updated_at` included — which is the whole
+-- point of the `is distinct from` clause and is the proof it works.
 --
--- STILL ON THE HEX-SWATCH FALLBACK — 8 of the 30 on the wall:
+--   cover_image_path set:             23
+--   broken paths (path set, no file):  0
+--   unclaimed files (file, no row):    0
+--   SELLABLE colours on the swatch:    0   <- the goal state
 --
---   Mountain Pine  [new]           <- the only SELLABLE one. Its image exists
---                                     (mountain-pine.jpg, 1400x933, in the zip
---                                     and sent separately) but had not been
---                                     uploaded when this ran. RE-RUN THE
---                                     STATEMENT ABOVE once it is there.
---   Quarry Gray    [discontinued]
---   Sierra Gray    [discontinued]
---   Slate Grey     [discontinued]
---   Amber          [discontinued]
---   Aged Cedar     [discontinued]
---   Desert Tan     [discontinued]
---   Harbor Blue    [discontinued]
+-- STILL ON THE HEX-SWATCH FALLBACK — 7 of the 30 on the wall, ALL discontinued:
+--
+--   Quarry Gray · Sierra Gray · Slate Grey · Amber · Aged Cedar · Desert Tan
+--   · Harbor Blue
+--
+-- This is the end state, not a backlog. Every sellable colour — all 20 —
+-- renders a real Owens Corning roof photograph. Do NOT go hunting OC books for
+-- the seven; see oc_discontinued_fix.sql.
 --
 -- The seven discontinued ones are CORRECT and stay that way. A colour nobody
 -- can buy does not need a marketing photograph; it needs to remain findable so
@@ -91,7 +92,7 @@ update public.oc_colors c
 --    where o.bucket_id='photos' and o.name like 'oc-colors/covers/%'
 --      and not exists (select 1 from public.oc_colors c where c.cover_image_path = o.name);
 --
---   -- must be 0 once Mountain Pine lands: a sellable colour on the swatch fallback
+--   -- must be 0: a sellable colour still on the swatch fallback
 --   select count(*) from public.oc_colors
 --    where not hidden and cover_image_path is null
 --      and status in ('coty','current','new');

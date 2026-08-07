@@ -1691,10 +1691,10 @@ colour. A rep must not hold a tablet against a house and call an eyeballed hex t
 **JS must never recompute a slug**, or photos end up filed under a colour that no longer matches.
 Signed with `createSignedUrls` for **display only**, never written back into a row.
 
-**22 of the 30 colours on the wall have a cover** (`oc_color_covers_set.sql`). Seven of the eight
-without are discontinued, which is correct and permanent. The eighth is Mountain Pine, pending an
-upload. No new storage policy was added or is wanted — `oc-colors/` sits under the bucket's general
-authenticated-read; only `photos/studio/*` is carved out of it.
+**23 of the 30 colours on the wall have a cover** (`oc_color_covers_set.sql`) — **every sellable
+one**. The seven without are all discontinued, which is correct and permanent: a colour nobody can
+buy renders its labelled swatch. No new storage policy was added or is wanted — `oc-colors/` sits
+under the bucket's general authenticated-read; only `photos/studio/*` is carved out of it.
 
 ### Conventions
 
