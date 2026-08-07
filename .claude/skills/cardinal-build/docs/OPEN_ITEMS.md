@@ -76,8 +76,33 @@ fallback**; the seven that are, are all discontinued, and that is the end state,
      every Duration-series shingle; **none of the seven OC documents on hand mentions it** — the
      Beauty Book, the FLEX brochure and the SureNail sell sheet all say **130**, which is what the
      pages quote. "Up to" plus a footnote marker is the same shape as Oakridge's conditional
-     110/130. **Do not raise the number until the footnote text exists.** Asked at 619, unanswered
-     at 620.
+     110/130. **Do not raise the number until the footnote text exists.** Asked at 619 and 620.
+
+     **7 Aug, after 620: Theo has an email from Owens Corning claiming 160 and is sending it
+     ("Soon").** So this is in flight, not cold — but the number still does not move until the text
+     is in hand, and what matters in it is the **condition**, not the figure. Three things asked
+     for: the 160 sentence verbatim; whatever sits behind the `###`; and **whether it is a warranty
+     figure or a wind-resistance/classification figure**. Duration's table says *"130 MPH limited
+     warranty"* — if 160 is a rating rather than the warranty, it is a **second row, not a
+     replacement**, and a rep saying "160 MPH warranty" over a 130 warranty is the expensive
+     version of this mistake.
+
+     ⚠️ **Changing the number alone would break the comparison bar in three ways, two of them
+     silently. Measured on the 620 artifact, not assumed — fix these in the SAME build as the
+     figure:**
+     1. **`pct()` is `v / 130 * 100`** — a hardcoded maximum. 160 computes to 123%, and
+        `.cmp-track` is `overflow:hidden`, so Duration's bar renders **pinned at full width**: it
+        reads as *maxed*, not as *biggest*. The scale has to come off the largest `chart` value.
+     2. **The hatched extension would vanish.** `.cmp-ext` positions at `left:pct(c.mph)` — 100%
+        for a 130 base — so it lands outside the track and is **clipped away entirely**. The one
+        visual that says *"this part carries a condition"* would silently disappear, which is
+        precisely the failure the Oakridge caution exists to prevent.
+     3. **The condition caption is hardcoded in the renderer** — `— <ext> only with 6 nails and OC
+        starter`. That is **Oakridge's** condition, baked in when Oakridge was the only conditional
+        line. Give Duration an `ext` and it prints Oakridge's condition under Duration's number: a
+        false warranty statement, and **`harness_colors.js` would not catch it** because it asserts
+        Oakridge's text, not Duration's. The condition must become per-line data on `chart`, and
+        the harness needs an assertion that each line's caption is its own.
   2. **Whether to name IKO.** Theo, at 620: *"Iko has something like it but it's on the back."* A
      real sales point, deliberately left off the screen — `#cr-occ` is handed to homeowners, and a
      claim about a named competitor's product is Cardinal's own with no document behind it.
