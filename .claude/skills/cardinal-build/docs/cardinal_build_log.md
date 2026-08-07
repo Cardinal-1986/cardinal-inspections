@@ -9010,3 +9010,78 @@ looked at. Theo's eyes remain the gate for whether it sells.
 **Build 614 was skipped again**: `next_build.py` still reports it free because it scans the app
 stamp, and `studio.html`'s 614 never touched `index.html`. It also did not see this session's own
 pushed 615. Treat its answer as a floor, not an answer.
+
+---
+
+## Build 617 — Oakridge and Supreme go live, from Owens Corning's own documents (7 Aug 2026)
+
+Theo: *"You've got a lot of great info within the official pdfs but I can get more if needed"* — and
+sent the **Supreme Product Data Sheet (10013324)** and the **Oakridge Brochure (10024153)**. Both are
+OC publications, which is exactly the sourcing 616 held out for. Both lines come off the "Coming"
+list with full spec tables, each naming its file underneath.
+
+| | Supreme | Oakridge |
+|---|---|---|
+| type | three-tab strip | laminated (architectural) |
+| warranty | 25-Year Limited | Limited Lifetime · 40-yr commercial |
+| **wind** | **60 MPH** | **110 / 130 MPH — conditional** |
+| algae | 10 yr, regional | 25 yr, requires an OC Hip & Ridge product |
+| non-prorated | TRU PROtection 5 yr | TRU PROtection 10 yr |
+| impact | not stated | not stated |
+
+**Supreme's 60 against Duration's 130 is the whole pitch**, and it is now quotable rather than
+remembered.
+
+### The Oakridge wind row is not one number, and the brochure says so
+
+> ‡‡ *110 MPH is standard with 4-nail application. 130 MPH is applicable only with 6-nail application
+> and Owens Corning® Starter Shingle products application along eaves and rakes.*
+
+**The suspicion recorded at 616 was right.** It renders as a caution styled louder than the source
+line and placed *above* it, and the harness asserts both the text and the ordering. A rep quoting 130
+on a four-nail roof is stating something false about a warranty. **Never collapse that row.**
+
+### Absence is not a claim
+
+**Neither document mentions SureNail, and neither states an impact class** (`grep -c surenail` = 0 on
+both). It would have been easy — and wrong — to write "no SureNail" as a spec row: 616's own build-log
+entry says absence from a book *suggests* and does not *prove*. So the tables say **"Not stated in the
+product brochure"** for impact, and quote OC's own words for Oakridge's nailing — *"full double layer
+in the nailing zone… greater integrity and better holding power compared to shingles with single-layer
+nail zones."* That is a sourced claim about Oakridge, not an unsourced claim about what it lacks.
+
+### The guard changed shape rather than being deleted
+
+616 asserted *no figures in the unsourced lines*. That is satisfied by them now being sourced, so it
+would have been quietly dropped. It is replaced by the invariant that survives the change: **any line
+rendering a spec table must name its source**, asserted at patch time over each `LINES` entry.
+
+### Designer is a tab
+
+Theo: *"Also tab designer series."* A collection and a shade are different kinds of choice and should
+not look like the same control, so the split moved out of the chip row into its own tab strip
+(`All colours · Standard · Designer Series`) with an underline indicator, above the shade chips.
+
+### ⚠ Three assertions failed against a correct file before this landed — all the same trap
+
+Bare counts of `ready:false` picked up **the word inside comments explaining the flag**. `== 1` failed
+where the truth was 2 (one code line, one `/* ready:false ON PURPOSE */`). This is the file's own
+documented counting trap, walked into three times in one patch, and the fix each time was to scope to
+the declaration — `'\n    ready:false,'`.
+
+**One of those failures was worth having.** The final guard caught the **module header comment still
+claiming both lines carry `ready:false`** — stale documentation sitting in the file every future
+session reads first. A hand-waved assertion would have shipped it. The fix was the comment, not the
+assertion; the *last* remaining `ready:false` is prose correctly describing what the flag does, and
+that one must not be "fixed".
+
+### Verified
+
+`check_build.py` green, negative-controlled, stamp 616 → 617. **jsdom 51/51**, including the caution's
+text, its position above the source line, that Oakridge's tile never shows 130 alone, and that Designer
+is a real tab rather than a chip. **Chromium 20/20.** All five screens re-rendered against live rows
+and looked at.
+
+One stale harness assertion was corrected rather than worked around: it froze Duration's spec table at
+8 rows and 617 legitimately added a 9th. An assertion pinned to an old count reads as a regression when
+the thing it measures is supposed to grow.

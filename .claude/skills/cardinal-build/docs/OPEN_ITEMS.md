@@ -66,14 +66,11 @@ fallback**; the seven that are, are all discontinued, and that is the end state,
 
 ### Still open
 
-- ⏳ **Oakridge and Supreme specifications — waiting on Theo.** Build 616 ships both as "Coming"
-  tiles that cannot be opened. Owens Corning's own site is blocked by the sandbox egress proxy and
-  a search returned only contractor blogs and big-box listings, which is the sourcing he already
-  rejected. **Do not fill these in from memory, a search, or a retailer listing** — `patch616.py`
-  and the harness both assert no figure appears in either entry. What is needed for each: shingle
-  type, limited-warranty term, wind-resistance warranty, impact class, algae term, fire class.
-  ⚠️ Oakridge's wind rating is reported as **conditional on OC starter plus six nails** rather than
-  four — if that holds, the page must say so, or a rep quotes a number the roof doesn't have.
+- ✅ ~~Oakridge and Supreme specifications~~ — **CLOSED at build 617.** Theo supplied the Supreme
+  Product Data Sheet (10013324) and the Oakridge Brochure (10024153); both lines are live with
+  sourced spec tables. ⚠️ **Oakridge's wind row is 110/130 and conditional** — 130 only with six
+  nails and OC starter along eaves and rakes, per the brochure's own footnote. It renders as a
+  caution and the harness asserts it. **Do not collapse it to one number.**
 - **The photos.** Theo's 28 hand-sorted iPad folders — *Cardinal's own roofs*, `oc_color_photos`,
   still **empty**. Distinct from the covers, which are Owens Corning's photography, and the reason
   the two render in visibly separate sections. Agreed to start with the top three or four sellers

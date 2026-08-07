@@ -1651,7 +1651,7 @@ state until then. Nothing here has been verified against a real photograph.
 
 ---
 
-## OC Colors — the shingle-line hub (builds 615–616, 7 Aug 2026)
+## OC Colors — the shingle-line hub (builds 615–617, 7 Aug 2026)
 
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
@@ -1671,20 +1671,38 @@ the hub. State is two classes on `#cr-occ`: none, `.line`, `.detail`. `.detail` 
 
 | Line | Ships | Holds |
 |---|---|---|
-| **TruDefinition Duration** | ✅ description + 8-row spec table | the 20 sellable colours, with a **Designer / Standard** filter |
+| **TruDefinition Duration** | ✅ description + 8-row spec table | the 20 sellable colours, with a **Designer Series** tab |
 | **Duration FLEX** | ✅ description + specs | the same 20 — same colour platform, so it matches the same rows rather than duplicating data |
-| **Oakridge** | ⏳ "Coming" tile, not openable | — |
-| **Supreme** | ⏳ "Coming" tile, not openable | — |
+| **Oakridge** | ✅ description + 10-row spec table + a wind caution | no catalogue rows — spec page only |
+| **Supreme** | ✅ description + 9-row spec table | no catalogue rows — spec page only |
 | **Discontinued** | ✅ description | the 10 dead colours, each naming its closest current replacement **on the card** |
 
-**⚠ No spec figure that isn't sourced — and it is enforced, not intended.** Duration's and FLEX's
-numbers are quoted from the Owens Corning books Theo supplied and each page names the book under
-the table. Oakridge and Supreme carry `ready:false` with empty `specs` because OC's own site was
-unreachable and a search returned contractor blogs and big-box listings — the sourcing Theo already
-rejected once. `patch616.py` asserts **no mph / year / impact-class figure appears anywhere in those
-two entries, comments included**, and the harness re-asserts it on the rendered tiles. When the real
-numbers arrive: fill `blurb`/`specs`/`source`, flip `ready`, and only add a `match` if Oakridge or
-Supreme colours actually exist in `oc_colors` — today there are none.
+**⚠ No spec figure that isn't sourced — enforced at patch time, not intended.** Every number in
+`LINES` is quoted from an Owens Corning document Theo supplied, and each page **names its file
+underneath the table**: the Duration Beauty Book, the FLEX brochure, the Supreme Data Sheet
+(10013324) and the Oakridge Brochure (10024153). `patch617.py` asserts that **any line rendering a
+spec table names a source**. Oakridge and Supreme were deliberately held at `ready:false` for two
+builds because OC's own site is unreachable from the sandbox and a search returned contractor blogs
+and big-box listings — the sourcing Theo already rejected once on Williamsburg Gray.
+
+**⚠⚠ Oakridge's wind number is CONDITIONAL and must never be shown as one figure.** The brochure's
+own ‡‡ footnote: *110 MPH is standard with 4-nail application; 130 MPH applies only with 6-nail
+application and Owens Corning Starter Shingle along eaves and rakes.* It renders as an `.occ-note2`
+caution above the source line, and the harness asserts both its text and that it precedes the
+source. A rep quoting 130 on a four-nail roof is stating something false about a warranty.
+
+**Absence is not a claim.** Neither the Oakridge nor the Supreme document mentions SureNail, and
+neither states an impact class. Nothing says "no SureNail" — the tables say *"Not stated in the
+product brochure"* and quote OC's own wording for what Oakridge *does* have (*"full double layer in
+the nailing zone"*).
+
+Oakridge and Supreme have **no rows in `oc_colors`**, so their pages carry specs and no colour grid.
+Only add a `match` if colours are actually loaded.
+
+**617: the collection split is a TAB, not a chip.** Theo — *"Also tab designer series."* A
+collection and a shade are different kinds of choice, so `#occTabs` (`All colours · Standard ·
+Designer Series`, underline indicator) sits above the shade chips in `#occFilters`. `filters()`
+clears both, so a line with no designer rows shows no tab strip rather than a stale one.
 
 **`lineLabel()` exists because the sub-line used to lie.** It was a binary, so the five rows with
 `product_line='other'` all read "TruDefinition Duration" — a claim nobody recorded. They now say
