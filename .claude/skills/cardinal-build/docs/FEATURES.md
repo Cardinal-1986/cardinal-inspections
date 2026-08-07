@@ -1761,7 +1761,8 @@ allowable zone. "9× better" alone is a different claim from the one that was te
 discipline as Oakridge's ‡‡ footnote. `source` on both lines names the **SureNail Sell Sheet
 (10020692)** for the tested figures.
 
-⚠️ **No competitor is named, and the patch asserts it.** Theo's framing was a comparison — IKO's
+⚠️ **No competitor is named, and `h620.js` asserts it** — IKO, GAF, CertainTeed, Malarkey and
+TAMKO are all checked against the rendered markup. Theo's framing was a comparison — IKO's
 equivalent strip is on the **back** of the shingle. It is a good sales point and it is deliberately
 not on screen: this surface is handed to homeowners, and a claim about a named competitor's product
 is Cardinal's claim with nothing behind it, where a claim about Owens Corning's own has OC's
@@ -1808,6 +1809,17 @@ Signed with `createSignedUrls` for **display only**, never written back into a r
 one**. The seven without are all discontinued, which is correct and permanent: a colour nobody can
 buy renders its labelled swatch. No new storage policy was added or is wanted — `oc-colors/` sits
 under the bucket's general authenticated-read; only `photos/studio/*` is carved out of it.
+
+### The harness is committed — run it before you touch this module
+
+`scripts/harness_colors.js` (jsdom, **93 assertions**, optional path argument) executes the
+*shipped* `cr-occ-script` text against real `oc_colors` row shapes. It is where the claims above
+are actually enforced: that every line rendering a spec table names its source, that Oakridge's
+wind row is never a flat 130, that the SureNail figures can never render without their basis line,
+that Oakridge and Supreme carry no proof block at all, that no competitor is named, that FLEX shows
+only its nine, and that the wall filters on `hidden` and never on `status`. It cannot see layout or
+colour — the 618 styles, the ≥44px targets and the phone pixel baseline are Chromium's job, and
+whether any of it sells is Theo's.
 
 ### Conventions
 

@@ -9299,9 +9299,10 @@ that closes. It is not on the screen, and that is a decision, not an oversight.
 
 `#cr-occ` is handed **to homeowners**. A claim about Owens Corning's own product carries
 OC's documentation behind it; a claim about a named competitor's product is Cardinal's
-claim, sourced from nothing in the folder. **The patch asserts no competitor name appears
-in `LINES`.** If Theo wants it, it goes on with a source or as plainly his own words —
-his call, asked and not yet answered.
+claim, sourced from nothing in the folder. **`h620.js` asserts no competitor name — IKO,
+GAF, CertainTeed, Malarkey, TAMKO — appears anywhere in the rendered `#cr-occ` markup**,
+so adding one is a deliberate act rather than a drift. If Theo wants it, it goes on with a
+source or as plainly his own words — his call, asked and not yet answered.
 
 ### Still not changed: the 130 MPH
 
@@ -9310,9 +9311,22 @@ The `###` footnote behind Owens Corning's *"up to 160 MPH"* has still not been s
 
 ### Verified
 
-`check_build.py` green and negative-controlled, 619 → 620. **jsdom 92/92** — nine new
+`check_build.py` green and negative-controlled, 619 → 620. **jsdom 93/93** — ten new
 assertions covering the proof rows, that the basis line renders with them and cannot be
-orphaned, that Oakridge and Supreme carry **no** proof block (neither document mentions
-SureNail — absence is not a claim), and that no competitor name reaches `LINES`. **Chromium
+orphaned, that the basis is read *after* the claim rather than before it, that **Oakridge
+and Supreme carry no proof block** (neither document mentions SureNail — absence is not a
+claim), and that no competitor name appears anywhere in the rendered markup. **Chromium
 50/50**, including the phone baseline. Rendered at phone width and read by eye, which is
 what the copy change actually needed.
+
+**The harness is now committed** as `scripts/harness_colors.js`, alongside
+`harness_showcase.js` / `harness_walk.js` / `harness_detect.js`, and takes an optional
+path argument so it can be pointed at an older tree. It is negative-controlled: run
+against the build-619 artifact it goes **RED, 7 of the ten 620 assertions failing**. The
+three that stay green there are the absence checks — no competitor named, no proof block
+on Oakridge or Supreme — which were already true at 619 and are meant to stay true.
+
+**The Supreme assertion was missing and was added rather than documented around.** The
+harness checked Oakridge for an absent proof block but not Supreme, while the docs claimed
+both. Supreme is the line where it matters most, not least: it is the cheap one, so a
+borrowed SureNail figure on it would be the most profitable false claim on the screen.

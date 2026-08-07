@@ -80,9 +80,10 @@ fallback**; the seven that are, are all discontinued, and that is the end state,
      at 620.
   2. **Whether to name IKO.** Theo, at 620: *"Iko has something like it but it's on the back."* A
      real sales point, deliberately left off the screen — `#cr-occ` is handed to homeowners, and a
-     claim about a named competitor's product is Cardinal's own with no document behind it. The
-     patch **asserts no competitor name appears in `LINES`**, so adding one is a conscious act. If
-     he says yes, it needs either a source or plainly-his-own-words framing.
+     claim about a named competitor's product is Cardinal's own with no document behind it.
+     `h620.js` **asserts no competitor name — IKO, GAF, CertainTeed, Malarkey, TAMKO — appears in
+     the rendered markup**, so adding one is a conscious act. If he says yes, it needs either a
+     source or plainly-his-own-words framing.
 - **The photos.** Theo's 28 hand-sorted iPad folders — *Cardinal's own roofs*, `oc_color_photos`,
   still **empty**. Distinct from the covers, which are Owens Corning's photography, and the reason
   the two render in visibly separate sections. Agreed to start with the top three or four sellers
