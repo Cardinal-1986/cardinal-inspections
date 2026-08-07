@@ -8511,3 +8511,138 @@ microtask checkpoint, so `boot()` resumed *before* the rewriter ran and **build
 612 passed as fixed**. In the real file both sit in one block with no checkpoint
 between them. A harness that splits them validates fiction. Recorded in
 `BUG_CLASSES.md`.
+
+---
+
+## Build 614 — the Sites lens, and a Bin you can undo (7 Aug 2026)
+
+`studio.html` + `.github/workflows/check.yml`. **Two SQL files, both applied
+first:** `studio_archive.sql`, `studio_site_facets.sql`.
+
+Theo: *"The 66000 photos only 20% are useful most likely. I need to be able to
+delete by address tho as some were inspections I never got the bid on."*
+
+**Two measurements shaped it, both taken before any design:**
+
+- **The WORK library has better facet data than Private, and was running the
+  lesser UI.** `project_address` 100%, `captured_at` 100%, 756 distinct sites,
+  678 with 10+ photos. The tag chips it browsed by offer **three values in
+  total** — `close-up` 20,836, `wide` 8,362, `aerial` 51. The Atlas rail was
+  Private-only; it earns its space in Work more. `.rail2` is the layout class,
+  `.priv` stays the room, and they are never both on.
+- **The ask says delete; the reason is signal.** 9.57 GB costs nothing. So
+  stage one archives — reversible, no confirm, because pruning 200 dead
+  inspections has to feel cheap. Permanent deletion is deliberate and is **not
+  in this build**. CompanyCam is still running, confirmed by Theo, so the
+  originals survive regardless.
+
+**Referential safety, checked before designing:** `studio_findings` (0 rows,
+CASCADE) and `studio_events.cover_id` (0 rows, SET NULL) are the only FKs, and
+`showcase_pairs` points at `showcase/` **copies** rather than studio originals.
+Deleting a work photo cannot break a published before/after.
+
+**Why an RPC.** PostgREST has no GROUP BY, so grouping in the browser meant
+pulling all 60,503 rows (~5 MB) every time the rail drew.
+`studio_site_facets()` returns **756**. `security invoker`, so
+`is_cardinal_admin()` still applies and a non-admin gets an empty set rather
+than every address Cardinal has worked. `live_photos` and `binned_photos` are
+counted separately so a half-failed restore shows as a split, not as one state.
+
+**`--stu-ink3` is below the contrast floor in both themes** — 4.01:1 dark,
+3.57:1 light, against 4.5:1 for body text. Pre-existing, not introduced here.
+The job-name line uses `ink2` (7.27:1 / 4.55:1). Computed, not eyeballed.
+
+**⚠ studio.html had NO CI coverage at all.** Every step in `check.yml` names
+`index.html` explicitly, so a broken Studio deployed green. Added here: inline
+scripts parse, CSS/div/script balance, truncation guard.
+
+Verified: 26-assertion Chromium gate on the **shipped** `streetOf`, `jobLine`,
+`applyLens`, `buildQuery` and `setArchived`, all extracted by brace-matching ·
+18-assertion **render** gate driving the real page with Supabase stubbed,
+measuring geometry and both themes · patch reproduces byte-for-byte · negative
+control confirms 613 has none of it.
+
+**Three defects were caught before shipping, two of them mine and one only
+visible by reading the call path:**
+
+1. `.is('archived_at', undefined)` on the restore path — the two directions
+   need different **operators** (`.is(...,null)` vs `.not(...,'is',null)`), not
+   one operator with a swapped argument.
+2. `paintChip()` early-returned outside Private, so Work would filter to one
+   address and nothing on screen would say which.
+3. **`applyMode()` is only called from `setupMode()`'s showroom branch.** The
+   normal path just wires listeners. That was fine while the rail was
+   Private-only — Work genuinely wanted `display:block` and no rail. With a
+   Work rail, the Sites lens would not have appeared until you toggled to
+   Private and back. `showApp()` now calls it explicitly.
+
+The render gate also had a defect worth recording: its "dark" pass rendered
+**light**, because Playwright's default `colorScheme` is light and Studio's
+toggle seeds from the OS preference. A pass merely NAMED dark proves nothing —
+it now stamps the attribute and asserts the body background actually moved.
+
+---
+
+## Build 614b — the false `aerial` tag, and orientation (7 Aug 2026)
+
+`studio.html` + `studio_tag_repair.sql` (**applied**).
+
+**Theo found a real bug by reading the UI:** *"Aerial is literally the job
+Aerial and not Aerial photos."* Measured before touching anything:
+
+| | |
+|---|---:|
+| photos tagged `aerial` | 51 |
+| ...whose address contains "Aerial" | **51** |
+| ...anywhere else | **0** |
+| photos at Aerial-named streets | **51** |
+
+Every one came from `2805 Aerial Ave, Dayton` or `2805 Aerial Dr, Kettering`.
+The tag was derived from the STREET NAME and contained no aerial photography at
+all, so it was **deleted rather than renamed** — there was nothing to rename it
+to. `close-up` (20,836 / 715 addresses) and `wide` (8,362 / 377) were checked
+the same way and ARE real: 366 sites carry both, which is classification
+behaviour rather than an address artifact. Left alone.
+
+**Orientation is a CHIP, not a lens** — a deliberate reversal of what was first
+proposed. Lenses are mutually exclusive: choosing one clears `st.sel`, so an
+Orientation lens would deselect the site being viewed. Chips stack, and the
+useful question is *"landscape photos at 120 Cross St"*. It is also free:
+`width`/`height` are set on all 60,503 rows, so `orientation` is a STORED
+GENERATED column — needed because PostgREST cannot filter an expression
+comparing two columns, and doing it client-side would break `.range()`.
+landscape 39,650 · portrait 20,842 · square 11.
+
+`st.orient` is deliberately NOT part of `st.tags`: that array feeds
+`.contains('tags', …)`, and `'landscape'` is not in that column — mixing them
+would have returned zero rows silently.
+
+Verified: 11-assertion gate on the shipped `buildQuery` including that
+orientation **stacks** with the Sites lens and the Bin rather than replacing
+them, and never leaks into the tags filter · 614's own 26-assertion gate and
+18-assertion render gate both still pass · reproduces byte-for-byte · negative
+control confirms 614 lacks all of it.
+
+### ⚠ The tagging vocabulary already exists — do not build a new one
+
+Chasing *"a lot more options we could filter with"* nearly produced a fresh
+vision pipeline. It is already built and shipping, just never pointed at
+`studio_photos`:
+
+- **`api/organize.js`** — 6 report sections, including **4 "Aerial Roof
+  Overview (drone/overhead shots)"**, which is the genuine article the broken
+  street-name tag was pretending to be.
+- **`api/sortphotos.js`** — emits `section` + `caption` + `severity`
+  (crit/warn/ok) + `trade` (roof/siding/windows/andersen/gutters/general) per
+  photo, capped at MAX_PHOTOS = 24 per call.
+- **`api/detect.js`** — a **31-key `DEFECTS` vocabulary** (hail_impact,
+  wind_lifted, granule_loss, flashing_failed, … interior_water_damage) with
+  located boxes and the same crit/warn/ok scale.
+
+That is **46 filterable values already in shipping code**, against the 2 real
+tags Studio has today. Roof colour is the only genuinely new field.
+
+**Sequencing, and it is the whole cost argument:** Theo estimates ~20% of the
+library is useful. Tag AFTER pruning. Analysing 60,503 photos costs five times
+what analysing ~12,000 costs, and four fifths of it would be spent on photos
+about to be archived.
