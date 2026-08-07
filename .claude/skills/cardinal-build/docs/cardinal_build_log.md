@@ -8750,3 +8750,63 @@ Every other field is quoted from the document. The 29 reports are parsed but
 Four ITEL accounts seen: `ANDS0001` (Andrews Services), `CUST0004` (Cardinal
 through 2024), `CUST0003` (Cardinal, current), plus one per carrier. A full
 history pull from ITEL needs all three Cardinal-side IDs.
+
+---
+
+## Company letterhead — a Word template in `brand/` (7 Aug 2026)
+
+PR #74. **Not an app build** — `index.html`, `api/` and `sw.js` are untouched, no build number was
+bumped and no `CHANGELOG` entry was added. That is deliberate: build numbers are the app's ordering
+record and inventing one for a document would corrupt it. Logged here anyway so that "where did
+`brand/` come from?" has an answer.
+
+`brand/Cardinal_Letterhead.docx` (editable), `Cardinal_Letterhead.pdf` (rendered),
+`letterhead.js` + `fix_field.py` (the generator), `cardinal_doc_logo.png`, `README.md`.
+
+**Nothing was typed from memory.** The logo is the `cover-logo` data URI `index.html` already embeds
+in estimates and contracts (1100×647, byte-identical across both of its occurrences). The address
+came from `api/estimate-to-contract.js`, the phone and email from the `api/share.js` print footer,
+and the footer strip is the same string `api/share.js` prints on shared documents. **Those files
+stay the source of truth** — this folder is a copy, so a phone-number change has to be made there
+too.
+
+`brand/` is in `.vercelignore`. A blank letterhead is the raw material for forged correspondence.
+
+### `fix_field.py` is a required build step, not a nicety
+
+docx-js writes the page-number field as `begin`/`instrText`/`separate`/`end` inside a **single**
+`<w:r>` with **no result run**. Word and LibreOffice both then regenerate the field result with
+default formatting, so a page number styled 8.5pt grey renders large and black. The script rewrites
+it as five properly-structured runs that each carry the original `rPr`, including a result run.
+Skip it and the continuation header is visibly wrong.
+
+### The regex that ate the header — this file's own rule, re-learned
+
+The first version of `fix_field.py` matched `<w:r>(<w:rPr>.*?</w:rPr>)?…` with `re.S`. The `.*?`
+inside the optional group is **unbounded** and crossed a run boundary: it matched from the
+*company-name* run, swallowed everything up to the field's `</w:rPr>`, and emitted that text five
+times across the header. "Recon regexes need bounds" caught exactly as described. Fixed by bounding
+the run to `((?:(?!</w:r>).)*?)` so it cannot span `</w:r>`, and by making the script **print what
+it captured** (`instr='PAGE'` plus the rPr) before trusting it.
+
+### Verified
+
+Rendered the actual `.docx` through LibreOffice and looked at it — not inspected as XML and assumed.
+A forced two-page variant proved the continuation header, which is what surfaced the field defect;
+a zoomed crop confirmed the red-over-black rule sits tight enough to read as one roof edge. Schema
+validation passes (`scripts/office/validate.py`, 19 paragraphs).
+
+**Note for the next session:** LibreOffice Writer is **not installed** in the build sandbox by
+default — only a partial LibreOffice, missing `libswlo.so`. Every conversion fails with
+"source file could not be loaded", for `.txt` as readily as `.docx`, which reads like a corrupt
+document and is not one. `apt-get update && apt-get install -y libreoffice-writer` fixes it.
+
+### Still open
+
+**Whether `brand/` is actually excluded from the deploy is unproven.** `curl` gets a 403 from the
+egress proxy and `WebFetch` returns `EGRESS_BLOCKED` for `app.cardinalroster.com` — and both fail
+**identically for the control**, `/docs/Cardinal_Roofing_Contract.pdf`, which is deliberately public
+and must return 200. A probe whose control fails proves nothing in either direction. The entry uses
+the same `dir/` form as `.claude/`, `spark/` and `.github/`, which are known-good on this deploy, so
+the reasoning is strong — but it is reasoning. Closing it needs one request from outside the
+sandbox, run **with** the control, since a bare 404 could also mean the deploy had not finished.
