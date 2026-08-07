@@ -9291,18 +9291,26 @@ the same reason. `source` on both lines now names the **SureNail Sell Sheet (100
 alongside the brochure, so the tested figures are attributed to the document they came
 from rather than to the beauty book.
 
-### ⚠️ IKO is deliberately NOT named
+### ⚠️ IKO is deliberately NOT named — and Theo settled it the same day
 
 Theo's own framing is a competitor comparison, and it is a good one — the observation that
 IKO's equivalent strip is on the **back** of the shingle is exactly the kind of detail
 that closes. It is not on the screen, and that is a decision, not an oversight.
 
+**Asked and answered, 7 Aug:** *"As far as competition goes, doesn't need to be here
+that's a whole separate thing."* The harness assertion below was written as a defensive
+default while the question was open; it is now **the settled design**. No code changed —
+the code was already right. ⚠️ *"A whole separate thing" is an observation, not a
+request:* no competitor-comparison surface was asked for, and none should be built off
+that phrase. If one is ever wanted, the sourcing is the hard part, not the screen.
+
 `#cr-occ` is handed **to homeowners**. A claim about Owens Corning's own product carries
 OC's documentation behind it; a claim about a named competitor's product is Cardinal's
-claim, sourced from nothing in the folder. **`h620.js` asserts no competitor name — IKO,
-GAF, CertainTeed, Malarkey, TAMKO — appears anywhere in the rendered `#cr-occ` markup**,
-so adding one is a deliberate act rather than a drift. If Theo wants it, it goes on with a
-source or as plainly his own words — his call, asked and not yet answered.
+claim, sourced from nothing in the folder. **`harness_colors.js` asserts no competitor name
+— IKO, GAF, CertainTeed, Malarkey, TAMKO — appears anywhere in the rendered `#cr-occ`
+markup**,
+so adding one is a deliberate act rather than a drift. **The assertion is now permanent by
+Theo's decision above, not merely a default while a question sat open.**
 
 ### Still not changed: the 130 MPH
 

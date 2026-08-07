@@ -8,14 +8,26 @@ real. Everything under "Illustrations in the Resource Library" and beyond is 467
 
 ---
 
-## ✅ OC Colors — the showroom. 2 decisions SETTLED BY THEO, 7 Aug 2026
+## ✅ OC Colors — the showroom. 3 decisions SETTLED BY THEO, 7 Aug 2026
 
-*Answered directly by Theo. **Do not re-litigate either of these.***
+*Answered directly by Theo. **Do not re-litigate any of these.***
 
 | # | Question | **Theo's answer** |
 |---|---|---|
 | 1 | Is the colour wall admin-only, like the CompanyCam picker, or can sales see it? | **"Yes they can see colors."** All signed-in staff — Nick, Joey and Jacob included |
 | 2 | Does the colour sheet carry pricing? | **"No pricing on sheets it's not a quote."** |
+| 3 | Should the Duration card name IKO, whose equivalent strip is on the back of the shingle? | **"As far as competition goes, doesn't need to be here that's a whole separate thing."** |
+
+**Decision 3 closes the one question 620 left open, and it makes an existing assertion permanent.**
+`harness_colors.js` already refuses IKO, GAF, CertainTeed, Malarkey and TAMKO anywhere in the
+rendered `#cr-occ` markup — written as a defensive default while the question was open. It is now
+**the settled design**, not a placeholder: this screen sells Owens Corning on Owens Corning's own
+documented claims, and a competitor's product is a claim Cardinal would have to defend with nothing
+in the folder. No code changed, because the code was already right.
+
+⚠️ **"A whole separate thing" is an observation, not a request.** Theo did not ask for a competitor
+comparison surface and nobody should build one off that phrase. If it is ever wanted it is its own
+feature with its own sourcing problem — and the sourcing is the hard part, not the screen.
 
 **Decision 2 is a structural constraint, not a preference.** A colour sheet with a number on it
 becomes a quote the moment it leaves the phone — it would need approval, an audit trail and the
@@ -71,7 +83,8 @@ fallback**; the seven that are, are all discontinued, and that is the end state,
   sourced spec tables. ⚠️ **Oakridge's wind row is 110/130 and conditional** — 130 only with six
   nails and OC starter along eaves and rakes, per the brochure's own footnote. It renders as a
   caution and the harness asserts it. **Do not collapse it to one number.**
-- ⏳ **Two questions are with Theo and neither should be answered by guessing.**
+- ⏳ **One question is with Theo, and it must not be answered by guessing.** (The second — whether
+  to name IKO — was **settled on 7 Aug**: *"doesn't need to be here."* See decision 3 above.)
   1. **The `###` footnote behind "up to 160 MPH."** Owens Corning's web line-comparison says 160 for
      every Duration-series shingle; **none of the seven OC documents on hand mentions it** — the
      Beauty Book, the FLEX brochure and the SureNail sell sheet all say **130**, which is what the
@@ -103,12 +116,6 @@ fallback**; the seven that are, are all discontinued, and that is the end state,
         false warranty statement, and **`harness_colors.js` would not catch it** because it asserts
         Oakridge's text, not Duration's. The condition must become per-line data on `chart`, and
         the harness needs an assertion that each line's caption is its own.
-  2. **Whether to name IKO.** Theo, at 620: *"Iko has something like it but it's on the back."* A
-     real sales point, deliberately left off the screen — `#cr-occ` is handed to homeowners, and a
-     claim about a named competitor's product is Cardinal's own with no document behind it.
-     `h620.js` **asserts no competitor name — IKO, GAF, CertainTeed, Malarkey, TAMKO — appears in
-     the rendered markup**, so adding one is a conscious act. If he says yes, it needs either a
-     source or plainly-his-own-words framing.
 - **The photos.** Theo's 28 hand-sorted iPad folders — *Cardinal's own roofs*, `oc_color_photos`,
   still **empty**. Distinct from the covers, which are Owens Corning's photography, and the reason
   the two render in visibly separate sections. Agreed to start with the top three or four sellers

@@ -1761,12 +1761,15 @@ allowable zone. "9× better" alone is a different claim from the one that was te
 discipline as Oakridge's ‡‡ footnote. `source` on both lines names the **SureNail Sell Sheet
 (10020692)** for the tested figures.
 
-⚠️ **No competitor is named, and `h620.js` asserts it** — IKO, GAF, CertainTeed, Malarkey and
-TAMKO are all checked against the rendered markup. Theo's framing was a comparison — IKO's
-equivalent strip is on the **back** of the shingle. It is a good sales point and it is deliberately
-not on screen: this surface is handed to homeowners, and a claim about a named competitor's product
-is Cardinal's claim with nothing behind it, where a claim about Owens Corning's own has OC's
-documentation. Awaiting Theo's call on whether to add it, and with what sourcing.
+⚠️ **No competitor is named — SETTLED BY THEO, do not re-litigate.** *"As far as competition goes,
+doesn't need to be here that's a whole separate thing."* `harness_colors.js` asserts it: IKO, GAF,
+CertainTeed, Malarkey and TAMKO are all checked against the rendered markup. Theo's original framing
+*was* a comparison — IKO's equivalent strip is on the **back** of the shingle — and it is a good
+sales point that stays off this screen anyway. This surface sells Owens Corning on Owens Corning's
+own documented claims; a claim about a named competitor's product is Cardinal's own with nothing in
+the folder behind it. The assertion began as a defensive default while the question was open and is
+now the settled design. **"A whole separate thing" is an observation, not a request** — nobody
+should build a competitor-comparison surface off that phrase.
 
 **617: the collection split is a TAB, not a chip.** Theo — *"Also tab designer series."* A
 collection and a shade are different kinds of choice, so `#occTabs` (`All colours · Standard ·
