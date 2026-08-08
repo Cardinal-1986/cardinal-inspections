@@ -31,6 +31,7 @@ Owner: **Theo Dorion** · theo@cardinalrenovations.net
 | `.claude/skills/cardinal-build/docs/ROOF_JOURNEY_BRIEF.md` (+ `_COPY`, `_DIRECTIONS`) | Before touching `popup.html` — Theo's verbatim brief and the book's copy |
 | `.claude/skills/cardinal-build/docs/DGX_SPARK_ILLUSTRATIONS.md` | Anything DGX-Spark-adjacent — the standing rule that the Spark is never a live app dependency |
 | `spark/README.md` + `spark/STUDIO_TAGGING.md` | Spark-side pipeline work — archiving photo bytes, tagging, Studio pushes |
+| `.claude/skills/cardinal-build/docs/OC_BRAND_RULES.md` | **Before putting any Owens Corning or Pink Panther mark on a screen** — the approval gate is Theo's to pass, and the Panther IS available to contractors (a claim to the contrary shipped at 615–623 and was wrong) |
 
 The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It triggers on any Cardinal work — features, bug fixes, theming, SQL, `/api`, audits.
 

@@ -9498,11 +9498,11 @@ px), rich black **`#231F20`** (126,336 px), white. OC's logo red `#E31837` also
 appears in the flyer and is deliberately unused — it is close enough to
 Cardinal's `#c8202e` to muddle the two brands.
 
-**The Pink Panther is not used, and that is a licence matter.** The flyer's own
-footer: *"THE PINK PANTHER & © 1964–2025 Metro-Goldwyn-Mayer Studios Inc."* OC
-licenses that character; Cardinal does not. The colour is fair game as an
-authorised dealer. Theo has confirmed he holds rights to OC's **logos** and is
-sending them — a later build.
+**The Pink Panther is not used.** ⚠️ **The reason given here at the time was
+WRONG and is corrected below** — see the 8 Aug entry. The flyer's footer
+(*"THE PINK PANTHER & © 1964–2025 Metro-Goldwyn-Mayer Studios Inc."*) was read
+as meaning Cardinal has no rights to the character. It does not mean that.
+Theo confirmed he holds rights to OC's **logos** and sent them — a later build.
 
 ### One value cannot serve three grounds — the third instance of the same defect
 
@@ -9569,3 +9569,59 @@ structure untouched, which is the point: this is a skin. **Chromium 53/53.**
 baseline re-approved: a deliberate total restyle, so the evidence is that every
 rule is `#cr-occ`-scoped plus a clean audit at phone width, not a tile diff.
 Board, line page and phone rendered and read by eye.
+
+
+## 8 Aug 2026 — saving OC's brand rules, and correcting two things I had asserted
+
+Theo sent **`MGM_Guidelines_for_Contractors.pdf`** and asked to save it as a
+reference. Reading it corrected me twice. Both errors were stated confidently,
+and one of them is written into the shipped file.
+
+### 1. Cardinal MAY use the Pink Panther. I said it could not.
+
+The document is titled *"The Pink Panther™ Guidelines — **For Contractors,
+Distributors and Dealers**."* Owens Corning holds exclusive licensing in its
+product categories and **extends the character to contractors** under an
+approval process. My claim at 623 — *"the colour is fair game as an authorised
+dealer; the cat is not"* — was wrong, and it shipped in `cr-occ-styles`'
+banner, the 623 build-log entry, `FEATURES.md` and PR #151.
+
+The character is still absent from the Colors screen, but for a different and
+**true** reason: **nothing has been submitted for approval.**
+
+### 2. The OC logo must NEVER be reversed to white. I was about to ask for that.
+
+The plan for the logo build said to request the *"reversed / white variant"* for
+the dark ground. *"Don't reverse out the logo"* is listed under INCORRECT USE.
+Approved colours are red **PMS 186 `#CE1126`**, one-colour **black**, or silver;
+and page 6 explicitly approves the logo on a **black background**, which is
+exactly our `#231F20`. Asking a manufacturer for an asset their own rules forbid
+would have been an expensive way to look careless.
+
+### The thing that actually changes how the next build runs
+
+**Any OC-co-branded material — and any use of the Panther — must be approved
+before launch.** LMARoofing@owenscorning.com; websites additionally require the
+layout *and a test-site URL*, with launch only after Local Marketing approves;
+the Panther adds 8 business days at MGM plus 8 more for revisions.
+
+**That gate is Theo's to pass. A session builds and stages; it does not ship a
+mark on the assumption approval will follow.** Recorded so no future session
+treats "we have the logo file" as "we may publish the logo".
+
+Also required whenever the OC logo appears: **"Proud Installer of Owens Corning®
+Products"** above it, the independent-contractor disclaimer, and clear space of
+one cap-**"O"** height on all sides. The Preferred / Platinum Preferred lockups
+are separate artwork with their own rules and do **not** need the "Proud
+Installer" line — **ask Theo which status Cardinal holds** before picking an
+asset.
+
+### Saved
+
+`docs/OC_MGM_Guidelines_for_Contractors.pdf` (the source of truth, unaltered)
+and `docs/OC_BRAND_RULES.md` (the distillation, because a 2.3 MB PDF is not
+greppable). Both under `.claude/`, which `.vercelignore` excludes — a partner's
+internal brand manual must not be served publicly, which is also why it did not
+go in root `docs/`, a directory that deliberately ships.
+
+`CLAUDE.md`'s doc-set table now points at it.

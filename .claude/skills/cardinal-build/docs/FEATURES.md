@@ -1891,9 +1891,17 @@ photograph and its ink sits over a scrim, so those keep a dark card; the compare
 colour grid, the proof figures and the wind note are the white ones. `[data-nophoto]` tiles
 are white because there is no photo to sit on.
 
-⚠️ **The Pink Panther is NOT used** — MGM's licensed character that Owens Corning pays for.
-The colour is fair game as an authorised dealer; the cat is not. OC **logos** are cleared
-(Theo holds the rights) and are not in yet.
+⚠️ **The Pink Panther is not used — but NOT for the reason 615–623 claimed.** Those builds
+said Cardinal lacks the licence. **That was wrong**: Owens Corning's guidelines are written
+*for contractors* and extend the character to them under an approval process. The real
+reason it is absent is that **nothing has been submitted for approval**. See
+`OC_BRAND_RULES.md`, which also records that the OC logo must **never be reversed to white**
+— red on our black ground is explicitly approved, and a white variant was nearly requested
+on the strength of the same wrong assumption.
+
+⚠️ **Any OC or Pink Panther mark needs Owens Corning's approval before launch** —
+LMARoofing@owenscorning.com, plus 8 business days at MGM for the character. **That gate is
+Theo's to pass; a session can build and stage, never ship on the assumption of approval.**
 
 **Run `scripts/audit_contrast.js` after any colour work here.** It measures every text node
 against its real computed background in Chromium and found **25** violations at 623 where
