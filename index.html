@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 629 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 630 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35195,6 +35195,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:630, d:'2026-08-08', t:'Colour photos: many at once, and they open full screen',
+    s:'Adding your own roofs to a shingle colour got fixed in five ways. You can now pick MANY photos at once instead of one at a time. Uploads stop failing on big pictures \u2014 photos straight off a camera or drone were larger than the limit and were being refused; they are now resized on the way up, which also means the page loads a great deal faster. Tap any photo to open it full screen and swipe left and right through the rest. There is a delete button on each one, so a duplicate is no longer permanent. And the little label under each photo was white with faint grey writing, which was hard to read \u2014 it is now black with pink lettering. Scrolling on the iPad should also settle down: the page was loading about forty megabytes of photographs on the Onyx Black colour alone.' },
   { b:629, d:'2026-08-08', t:'Three bins in Studio, and a trade on each photo',
     s:'Picking photos in Cardinal Studio changed shape. Instead of tapping a circle over and over to cycle through the bins, there is now a row above the photos saying which bin you are filling \u2014 Showcase, Hall of Fame, or Colours. Tap a photo to put it in, tap again to take it out, one tap either way no matter how many bins there are. A photo already sitting in a different bin shows that bin\u2019s colour, so you can see before you tap; tapping moves it. Colours is the new one: our own finished roofs, headed for the shingle colour pages. There is also a Tag trades button. Flip to it, pick Roof or Siding or Gutters, and tap photos to label what they show \u2014 a label that is separate from the bin, so a siding before-and-after can be both. The counter at the top says how many are in each bin and how many still have no trade on them. Collecting into Colours works now; putting them onto the colour pages themselves is the next build.' },
   { b:628, d:'2026-08-08', t:'Two trays: before-and-afters, and theirs-vs-ours',
@@ -59768,6 +59770,13 @@ function close(goHome){
 window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
   open  : open,
   close : close,
+  /* 630: OC Colors uploaded RAW camera files and the photos bucket refuses
+     anything over 10 MB, so big shots failed outright and the ones that fitted
+     made a 40 MB grid. This module already had the answer. Exported rather
+     than copied — a second shrinker would drift from FULL/DISP and reintroduce
+     624 on a different screen. */
+  shrink: shrink,
+  renditions: { full: FULL, disp: DISP },
   inShowroom: function(){ return showroom; },
   reload: function(){ loaded = false; workLoaded = false; walksLoaded = false;
     curWalk = null; shots = []; review = null; exitPresent();
@@ -59852,6 +59861,12 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
   display:none; position:fixed; inset:0; z-index:158;
   background:var(--occ-bg,#050607); color:var(--occ-ink,#EDEFF2);
   overflow-y:auto; -webkit-overflow-scrolling:touch;
+  /* 630: the view is position:fixed and scrolls itself, so a flick that reaches
+     either end used to chain into the page behind and the two fought — which is
+     the "scrolling locks up" Theo reported. `contain` keeps the gesture in this
+     scroller. It does NOT fix weight; the shrink work below does that, and the
+     grid was ~40 MB before it. */
+  overscroll-behavior:contain;
   font:400 16px/1.45 var(--occ-sans,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif);
 }
 #cr-occ *{box-sizing:border-box}
@@ -59953,9 +59968,61 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
   display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
   gap:12px; padding:0 16px;
 }
-#cr-occ .occ-ours figure{margin:0; border:1px solid var(--occ-line,#1D2126); border-radius:10px; overflow:hidden; background:var(--occ-card,#0E1114)}
+#cr-occ .occ-ours figure{margin:0; border:1px solid var(--occ-line,#1D2126); border-radius:10px; overflow:hidden; background:var(--occ-card,#0E1114); position:relative}
+#cr-occ .occ-ours img{cursor:zoom-in}
+/* 630: the delete. Admin-only in the UI and admin-only in RLS — the button is a
+   convenience, the policy is the fence. It sits over the image, not in the
+   caption, so it cannot be hit while reading the label. */
+#cr-occ .occ-del{
+  position:absolute; top:8px; right:8px; z-index:2;
+  width:32px; height:32px; padding:0; border-radius:8px; cursor:pointer;
+  background:rgba(8,10,12,.72); border:1px solid rgba(255,255,255,.30);
+  color:#fff; font:700 15px/1 system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent}
+#cr-occ .occ-del:hover{background:var(--occ-pink-deep,#C4007A); border-color:var(--occ-pink-deep,#C4007A)}
+#cr-occ .occ-del[disabled]{opacity:.5; cursor:default}
+
+/* 630: full screen, swipe through. Deliberately its OWN element rather than
+   reusing the Showcase's openLens: that one reads data-path against showcase
+   storage paths and belongs to a client-facing presentation surface. This is
+   an internal browse. */
+#cr-occ-shot{
+  display:none; position:fixed; inset:0; z-index:170; background:rgba(8,7,9,.96);
+  touch-action:pan-y; overscroll-behavior:contain}
+#cr-occ-shot.open{display:flex; flex-direction:column; align-items:center; justify-content:center}
+#cr-occ-shot img{max-width:100%; max-height:calc(100% - 96px); object-fit:contain;
+  border-radius:8px; box-shadow:0 20px 50px rgba(0,0,0,.6)}
+#cr-occ-shot .cap{margin-top:14px; max-width:640px; text-align:center;
+  font:650 13.5px var(--occ-sans,system-ui,sans-serif); color:var(--occ-pink-on-dark,#F55CB2)}
+#cr-occ-shot .n{margin-top:5px; font:500 12px var(--occ-sans,system-ui,sans-serif); color:#9AA3AE}
+#cr-occ-shot button{
+  position:absolute; width:48px; height:48px; border-radius:50%; cursor:pointer;
+  background:rgba(255,255,255,.13); border:0; color:#fff; font:600 20px/1 system-ui,sans-serif;
+  display:flex; align-items:center; justify-content:center;
+  -webkit-tap-highlight-color:transparent}
+#cr-occ-shot button:hover{background:rgba(255,255,255,.26)}
+#cr-occ-shot .x{top:calc(14px + env(safe-area-inset-top,0px)); right:16px}
+#cr-occ-shot .prev{left:14px; top:50%; margin-top:-24px}
+#cr-occ-shot .next{right:14px; top:50%; margin-top:-24px}
+#cr-occ-shot .prev[disabled], #cr-occ-shot .next[disabled]{opacity:.25; cursor:default}
+@media (max-width:640px){
+  /* 592's floor still applies, but arrows at the screen edge fight a thumb
+     swipe on a phone. The swipe IS the control there; the arrows step aside. */
+  #cr-occ-shot .prev, #cr-occ-shot .next{display:none}
+}
 #cr-occ .occ-ours img{width:100%; aspect-ratio:3/2; object-fit:cover; display:block}
-#cr-occ .occ-ours figcaption{padding:8px 10px; font-size:12.5px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-ours figcaption{
+  /* 630, Theo: "make those small white labels black with pink letters".
+     He was reading a real defect. 623 set --occ-card:#FFFFFF, and the figure
+     paints from it, so this caption has been grey-on-white at 2.55:1 since —
+     under the 4.5:1 body floor, which is why it looked washed out.
+     The pink is --occ-pink-on-dark (5.48:1 on this ground), NOT the brand pink
+     #EC008C: that is 3.84:1 as small text and is a FILL/large-type colour by
+     OC's own rules. Same shade the rest of this module uses for small pink. */
+  padding:8px 10px; font-size:12.5px; font-weight:650;
+  background:var(--occ-head,#231F20);
+  color:var(--occ-pink-on-dark,#F55CB2);
+  border-top:1px solid var(--occ-line,#3A3536)}
 #cr-occ .occ-none{padding:0 16px; color:var(--occ-dim,#9AA3AE); font-size:14px}
 #cr-occ .occ-actions{display:flex; flex-wrap:wrap; gap:10px; padding:16px}
 #cr-occ .occ-btn{
@@ -61017,14 +61084,21 @@ async function openColor(slug){
       '<span>Cardinal installs, not manufacturer photography.</span></div>' +
     '<div id="occOurs" class="occ-none">Loading…</div>' +
     '<div class="occ-actions">' +
-      (amStaff() ? '<button type="button" class="occ-btn" id="occAdd">Add one of our roofs</button>' +
-                   '<input type="file" id="occFile" accept="image/*">' : '') +
+      (amStaff() ? '<button type="button" class="occ-btn" id="occAdd">Add our roofs</button>' +
+                   /* 630: `multiple`. Theo: "I can't multi select from my files.
+                      One at a time would take forever." */
+                   '<input type="file" id="occFile" accept="image/*" multiple>' : '') +
     '</div>';
 
   if(amStaff()){
     var fi = d.querySelector('#occFile');
     d.querySelector('#occAdd').onclick = function(){ fi.click(); };
-    fi.onchange = function(){ if(fi.files && fi.files[0]) upload(fi.files[0]); };
+    fi.onchange = function(){
+      if(fi.files && fi.files.length) upload(Array.prototype.slice.call(fi.files));
+      /* Clear it, or picking the same file twice in a row fires no change event
+         and reads as "nothing happened". */
+      fi.value = '';
+    };
   }
   ours(c);
 }
@@ -61033,7 +61107,7 @@ async function ours(c){
   var box = VIEW.querySelector('#occOurs'); if(!box) return;
   var cl = sb(); if(!cl){ box.textContent = ''; return; }
   var r = await cl.from('oc_color_photos')
-    .select('id,storage_path,project_address,captured_on,caption,is_hero,sort_order')
+    .select('id,storage_path,project_address,captured_on,caption,is_hero,sort_order,created_by')
     .eq('color_id', c.id)
     .order('is_hero', { ascending:false })
     .order('sort_order', { ascending:true });
@@ -61042,39 +61116,221 @@ async function ours(c){
     box.textContent = 'No Cardinal roofs recorded in this colour yet.';
     return;
   }
-  var map = await signMany(r.data.map(function(p){ return p.storage_path; }));
+  /* 630: ask for the DISPLAY rendition and fall back to the original — the same
+     move as 624. Photos uploaded before 630 have no -d twin, so the fallback is
+     load-bearing rather than defensive: without it every pre-630 photo vanishes
+     from the grid. Both paths are signed in ONE round trip. */
+  var rows = r.data;
+  var want = [];
+  rows.forEach(function(p){ want.push(dispOf(p.storage_path)); want.push(p.storage_path); });
+  var map = await signMany(want);
+  OURS = rows.filter(function(p){ return map[dispOf(p.storage_path)] || map[p.storage_path]; });
+  OURS.forEach(function(p){
+    p._src  = map[dispOf(p.storage_path)] || map[p.storage_path];
+    p._full = map[p.storage_path] || p._src;
+    p._cap  = p.project_address || p.caption || 'Cardinal install';
+  });
+  var canDel = amAdmin();
   box.className = 'occ-ours';
-  box.innerHTML = r.data.map(function(p){
-    var src = map[p.storage_path]; if(!src) return '';
-    var cap = p.project_address || p.caption || 'Cardinal install';
-    return '<figure><img src="' + esc(src) + '" alt="' + esc(cap) + '" loading="lazy">' +
-           '<figcaption>' + esc(cap) + '</figcaption></figure>';
+  box.innerHTML = OURS.map(function(p, i){
+    return '<figure>' +
+      '<img src="' + esc(p._src) + '" alt="' + esc(p._cap) + '" loading="lazy" data-shot="' + i + '">' +
+      (canDel ? '<button type="button" class="occ-del" data-del="' + esc(p.id) +
+                '" aria-label="Delete this photo">\u00d7</button>' : '') +
+      '<figcaption>' + esc(p._cap) + '</figcaption></figure>';
   }).join('');
+  box.querySelectorAll('img[data-shot]').forEach(function(im){
+    im.onclick = function(){ openShot(parseInt(im.dataset.shot, 10) || 0); };
+  });
+  box.querySelectorAll('[data-del]').forEach(function(b){
+    b.onclick = function(){ removeOurs(b.dataset.del, b); };
+  });
 }
 
-async function upload(file){
-  var cl = sb(); if(!cl || !CUR) return;
-  var btn = VIEW.querySelector('#occAdd');
-  if(btn){ btn.disabled = true; btn.textContent = 'Uploading…'; }
+/* The display twin of a path, matching the Showcase's own convention. Kept
+   local rather than imported: the Showcase's dispPath() is not exported, and
+   one four-line function is cheaper than widening that module's API. */
+function dispOf(path){
+  if(!path) return '';
+  var dot = path.lastIndexOf('.');
+  return dot === -1 ? (path + '-d') : (path.slice(0, dot) + '-d' + path.slice(dot));
+}
+
+var OURS = [], SHOT = 0;
+
+/* 630, Theo: "I accidentally uploaded a duplicate with no way to delete."
+   The row goes first. If the storage object refuses or has already gone, the
+   row is still gone and the grid is right — an orphaned object costs pennies,
+   a row pointing at nothing renders as a hole. Deliberate order. */
+async function removeOurs(id, btn){
+  var cl = sb(); if(!cl || !id) return;
+  var row = null;
+  for(var i = 0; i < OURS.length; i++){ if(String(OURS[i].id) === String(id)) row = OURS[i]; }
+  if(btn){ btn.disabled = true; }
   try{
-    /* slug comes from the DB, never recomputed here — a second derivation is
-       how photos end up filed under a colour that no longer matches. */
-    var ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
-    var path = 'oc-colors/' + CUR.slug + '/' + Date.now() + '.' + ext;
-    var up = await cl.storage.from('photos').upload(path, file, { upsert:false });
-    if(up && up.error) throw up.error;
-    var ins = await cl.from('oc_color_photos').insert({ color_id: CUR.id, storage_path: path });
-    if(ins && ins.error) throw ins.error;
+    var del = await cl.from('oc_color_photos').delete().eq('id', id).select('id');
+    if(del && del.error) throw del.error;
+    /* Refused by RLS comes back with no error and no rows — check the rows. */
+    if(!del || !del.data || !del.data.length) throw new Error('Not allowed \u2014 admin only.');
+    if(row && row.storage_path){
+      try{ await cl.storage.from('photos').remove([row.storage_path, dispOf(row.storage_path)]); }catch(_){}
+    }
     await ours(CUR);
   }catch(e){
-    try{ if(window.report) window.report(e, 'Colors', 'upload'); }catch(_){}
-    try{ if(window.toast) window.toast('Upload failed'); else alert('Upload failed'); }catch(_){}
+    if(btn) btn.disabled = false;
+    try{ if(window.report) window.report(e, 'Colors', 'delete'); }catch(_){}
+    try{ if(window.toast) window.toast('Could not delete \u2014 ' + (e && e.message ? e.message : 'try again'));
+         else alert('Could not delete'); }catch(_){}
   }
-  if(btn){ btn.disabled = false; btn.textContent = 'Add one of our roofs'; }
+}
+
+/* 630, Theo: "make the photo open full screen and be able to swipe through".
+   Its own overlay, not the Showcase's openLens — that one is a client-facing
+   presentation surface reading showcase paths. This is an internal browse. */
+function openShot(i){
+  if(!OURS.length) return;
+  SHOT = Math.max(0, Math.min(i, OURS.length - 1));
+  var el = document.getElementById('cr-occ-shot');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'cr-occ-shot';
+    el.innerHTML = '<img alt=""><div class="cap"></div><div class="n"></div>' +
+      '<button type="button" class="x" aria-label="Close">\u2715</button>' +
+      '<button type="button" class="prev" aria-label="Previous">\u2039</button>' +
+      '<button type="button" class="next" aria-label="Next">\u203a</button>';
+    (VIEW || document.body).appendChild(el);
+    el.querySelector('.x').onclick = closeShot;
+    el.querySelector('.prev').onclick = function(){ stepShot(-1); };
+    el.querySelector('.next').onclick = function(){ stepShot(1); };
+    /* Tapping the backdrop closes; tapping the photo does not, so a mis-tap
+       while looking does not throw you out. */
+    el.addEventListener('click', function(ev){ if(ev.target === el) closeShot(); });
+    var x0 = null, y0 = null;
+    el.addEventListener('touchstart', function(ev){
+      if(ev.touches.length !== 1) return;
+      x0 = ev.touches[0].clientX; y0 = ev.touches[0].clientY;
+    }, { passive:true });
+    el.addEventListener('touchend', function(ev){
+      if(x0 === null) return;
+      var t = ev.changedTouches && ev.changedTouches[0];
+      if(t){
+        var dx = t.clientX - x0, dy = t.clientY - y0;
+        /* Horizontal intent only, and a real distance — otherwise a vertical
+           flick or a tap would step the photo. */
+        if(Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.6) stepShot(dx < 0 ? 1 : -1);
+      }
+      x0 = y0 = null;
+    }, { passive:true });
+  }
+  el.classList.add('open');
+  paintShot();
+  onShotKey.on = true;
+  document.addEventListener('keydown', onShotKey);
+}
+
+function paintShot(){
+  var el = document.getElementById('cr-occ-shot');
+  if(!el) return;
+  var p = OURS[SHOT]; if(!p) return;
+  el.querySelector('img').src = p._full || p._src;
+  el.querySelector('img').alt = p._cap;
+  el.querySelector('.cap').textContent = p._cap;
+  el.querySelector('.n').textContent = (SHOT + 1) + ' of ' + OURS.length;
+  el.querySelector('.prev').disabled = SHOT === 0;
+  el.querySelector('.next').disabled = SHOT === OURS.length - 1;
+}
+
+function stepShot(d){
+  var n = SHOT + d;
+  if(n < 0 || n >= OURS.length) return;
+  SHOT = n; paintShot();
+}
+
+function onShotKey(ev){
+  if(ev.key === 'Escape') return closeShot();
+  if(ev.key === 'ArrowLeft') return stepShot(-1);
+  if(ev.key === 'ArrowRight') return stepShot(1);
+}
+
+function closeShot(){
+  var el = document.getElementById('cr-occ-shot');
+  if(el) el.classList.remove('open');
+  document.removeEventListener('keydown', onShotKey);
+}
+
+/* 630 — MEASURED, and it explains two of Theo's reports at once.
+   The photos bucket refuses anything over 10 MB (file_size_limit = 10485760),
+   and this function sent RAW camera bytes: the six photos already on Onyx Black
+   are 5.37-8.04 MB each. Bigger ones were refused outright ("upload fails"),
+   and the survivors made the grid ~40 MB to paint, which is an iPad locking up
+   while scrolling. Shrinking fixes both, and converts HEIC to JPEG on the way —
+   without which an iPhone photo renders for Theo in Safari and is a broken box
+   for anyone on Chrome. */
+async function shrinkFor(file){
+  var S = window.CardinalShowcase;
+  if(!S || typeof S.shrink !== 'function' || !S.renditions) return null;
+  return { full: await S.shrink(file, S.renditions.full.max, S.renditions.full.q),
+           disp: await S.shrink(file, S.renditions.disp.max, S.renditions.disp.q) };
+}
+
+async function upload(files){
+  var cl = sb(); if(!cl || !CUR) return;
+  var list = (files || []).filter(Boolean);
+  if(!list.length) return;
+  var btn = VIEW.querySelector('#occAdd');
+  var say = function(t){ if(btn) btn.textContent = t; };
+  if(btn) btn.disabled = true;
+
+  var done = 0, failed = 0;
+  for(var i = 0; i < list.length; i++){
+    say(list.length > 1 ? ('Uploading ' + (i + 1) + ' of ' + list.length + '\u2026') : 'Uploading\u2026');
+    try{
+      /* slug comes from the DB, never recomputed here — a second derivation is
+         how photos end up filed under a colour that no longer matches. */
+      var small = await shrinkFor(list[i]);
+      if(!small) throw new Error('Image tools unavailable \u2014 reload and try again.');
+      /* A uuid, not Date.now(): several files picked at once land in the same
+         millisecond, and with upsert:false the collision throws. That is a bug
+         `multiple` would have created on its first use. */
+      var id   = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+               : String(Date.now()) + Math.random().toString(16).slice(2);
+      var path = 'oc-colors/' + CUR.slug + '/' + id + '.jpg';
+      var up = await cl.storage.from('photos')
+                       .upload(path, small.full, { contentType:'image/jpeg', upsert:false });
+      if(up && up.error) throw up.error;
+      /* The display twin is best-effort: the grid falls back to the full image,
+         so a failed twin costs weight, not the photograph. */
+      try{
+        await cl.storage.from('photos')
+                .upload(dispOf(path), small.disp, { contentType:'image/jpeg', upsert:true });
+      }catch(_){}
+      var ins = await cl.from('oc_color_photos')
+                        .insert({ color_id: CUR.id, storage_path: path }).select('id');
+      if(ins && ins.error) throw ins.error;
+      if(!ins || !ins.data || !ins.data.length) throw new Error('Saved nothing \u2014 staff only.');
+      done++;
+    }catch(e){
+      failed++;
+      try{ if(window.report) window.report(e, 'Colors', 'upload'); }catch(_){}
+    }
+  }
+
+  if(done) await ours(CUR);
+  /* Say what actually happened. The old version said "Upload failed" for any
+     fault and nothing at all on success, which is how a 10 MB refusal read as
+     the whole feature being broken. */
+  try{
+    if(failed && window.toast) window.toast(
+      failed + ' of ' + list.length + ' could not be added' + (done ? ' \u2014 the other ' + done + ' went up' : ''));
+    else if(failed) alert(failed + ' of ' + list.length + ' could not be added');
+  }catch(_){}
+  if(btn){ btn.disabled = false; btn.textContent = 'Add our roofs'; }
 }
 
 async function open(){
   ensureView();
+  /* 630: a lightbox left open from a previous visit would sit over the hub. */
+  try{ closeShot(); }catch(_){}
   try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
   VIEW.style.display = 'block';
   VIEW.dataset.style = styleLoad();

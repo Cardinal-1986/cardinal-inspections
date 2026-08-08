@@ -1118,3 +1118,49 @@ Related: the shipped alert in this same flow says "Password updated" whenever
 `updateUser` returns without error, including when the new password matches the
 old one. Another **silent success** (see the 612 entry) — the confirmation
 dialog is not evidence the credential changed.
+
+---
+
+## 15. An assertion that matches your own comment about the code (8 Aug 2026, build 630)
+
+**Cost: six false reds in a single session, on code that was correct every time.**
+
+Every one of these went RED against a working build, and every one was the
+test's fault:
+
+| Build | The assertion | What it actually matched |
+|---|---|---|
+| 624 | `esc(srcD(p.after_path))` appears once | a second, legitimate site on the thumbnail |
+| 626 | `text-size-adjust:100%` count | the comment containing `html{text-size-adjust:100%}` |
+| 627 | no `lat`/`lon` in `toggleTray` | the comment explaining why coordinates are excluded |
+| 628 | `stopPropagation` near `stu-tick` | nothing — the class moved into `paintTick()`, so the *proximity* broke while the code stayed right |
+| 629 | `nextBucket` is gone | the comment `/* 629 replaced nextBucket() …` |
+| 630 | `openLens` not used here | the comment *"not the Showcase's openLens"* |
+
+**The shape is always the same: the assertion's search space included prose.**
+Comments on this project explain *what was removed and why*, so an
+absence-assertion over a region containing its own rationale is guaranteed to
+find the thing it is proving absent.
+
+### The rules that fall out of it
+
+1. **Scope an absence-assertion to CODE.** `jslex_count.py` exists for exactly
+   this and settled two of the six: at 629 it reported `nextBucket` as **0 in
+   CODE, 1 in comments**; at 630, `openLens` as **4 in CODE (all in
+   `cr-show-script`), 1 in comments**. A bare regex said 1 and 6.
+2. **Assert on syntax, not on a name.** `openLens(` with the paren is a call;
+   `openLens` is also English. Same for `multiple` — the attribute
+   `accept="image/*" multiple` versus the word in *"a multiple with no basis is
+   a marketing number"*, which is prose about SureNail and cost a seventh red.
+3. **Never assert by proximity.** `/stu-tick[\s\S]{0,700}stopPropagation/`
+   passed at 627 by luck and broke at 628 because a class name moved a thousand
+   lines. Slice the function or the listener and assert inside it.
+4. **Prefer self-computing counts.** 628 hardcoded `paintTick` calls `=== 4`;
+   629 added a fifth caller and the correct build failed. Assert the *intent* —
+   one definition, N callers — not a number read off an already-patched tree.
+5. **Reword the comment as well as the test** when the identifier is the thing
+   under assertion. Belt and braces; 626 and 629 both did this.
+
+**When a gate goes red, the first question is still "is the test wrong or the
+app wrong?"** On this project it has been the test roughly half the time, and
+in this class it was the test **six times out of six**.

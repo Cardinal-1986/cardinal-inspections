@@ -10092,3 +10092,97 @@ That is build 630, and it was split out rather than rushed.
 
 Also unchanged and still Theo's: nothing prunes the tray once a pair is built,
 and whether a Hall of Fame comparison should take a third "during" shot.
+
+---
+
+## Build 630 — the colour photo grid: many at once, smaller, deletable, full screen (8 Aug 2026)
+
+`cr-occ-script` + `cr-occ-styles`, plus one export added to `cr-show-script`.
+No SQL: `oc_color_photos` already had a delete policy
+(`created_by = my_email() OR is_cardinal_admin()`).
+
+Theo, from the iPad on the Onyx Black page, six reports in one message:
+multi-select missing · "Upload fails as well" · a duplicate with no way to
+delete · open full screen and swipe · the white labels · "Scrolling also locks
+up and has issues".
+
+### ⚠ Two of those were ONE root cause, and it was measurable
+
+```
+storage.buckets.photos.file_size_limit = 10,485,760   (10 MB)
+oc-colors/onyx-black/*  →  6 objects at 5.37–8.04 MB, 4 at ~0.30 MB
+```
+
+`upload()` sent **raw camera bytes**. Anything over 10 MB was refused outright —
+that is "upload fails" — and the survivors made the grid **~40 MB to paint**,
+which is an iPad locking up while scrolling. The Showcase never has this problem
+because `putPhoto()` shrinks first.
+
+**Prime doctrine again: the mechanism already existed.** `shrink()` and the
+`FULL`/`DISP` rendition constants were exported from `cr-show-script` rather than
+copied — a second shrinker would drift and reintroduce 624 on a new screen.
+Uploads now write both renditions, always as JPEG (which also fixes HEIC off an
+iPhone rendering for Theo in Safari and as a broken box for anyone on Chrome),
+and the grid asks for the display twin with a **fallback to the original** —
+load-bearing, because pre-630 photos have no twin and would otherwise vanish.
+
+### The rest
+
+- **`multiple` on the input**, with a per-file progress label and a batch that
+  survives one failure. ⚠️ Paths became **uuids**: `Date.now()` collides when
+  several files land in the same millisecond and `upsert:false` throws — a bug
+  `multiple` would have created on its first use.
+- **A delete button**, admin-gated in the UI and by RLS. The **row goes first**,
+  then the storage objects: an orphaned object costs pennies, a row pointing at
+  nothing is a hole in the grid. An RLS refusal is caught by **row count**, not
+  by an error, per the `.single()` doctrine.
+- **A lightbox** — tap to open, swipe or arrow through, Escape to close, and the
+  key listener is removed on close. Its own element, deliberately **not** the
+  Showcase's `openLens`, which reads showcase paths on a client-facing surface.
+  Swipe requires horizontal intent (`|dx| > 45 && |dx| > |dy| * 1.6`) so a tap
+  cannot step it, and both touch listeners are passive.
+- **`overscroll-behavior:contain`** on the view and the lightbox. The view is
+  `position:fixed` and scrolls itself, so a flick reaching either end chained
+  into the page behind. Weight was the bigger half of the scroll complaint.
+
+### The caption was a real defect, not a preference
+
+Theo: *"make those small white labels black with pink letters"*. He was reading
+a **contrast failure**. 623 set `--occ-card:#FFFFFF` ("tiles with no hero photo
+are white too") and `.occ-ours figure` paints from it, so the caption has been
+`--occ-dim` grey on white — **2.55:1**, which this file's own palette comment
+already records — since 623.
+
+Now `--occ-head` ground with `--occ-pink-on-dark` (**5.48:1**). ⚠️ **Not** the
+brand pink `#EC008C`: that is 3.84:1 as small text and is a FILL/large-type
+colour under OC's own rules. Honouring the request literally would have failed
+the floor. Rendered before/after, and the first render was **discarded as
+misleading** — the "before" override lost specificity and both columns showed
+the new style.
+
+### Gates
+
+`check_build.py` green and negative-controlled, 629 → 630 · **`harness_ourroofs.js`
+— 38 assertions, negative-controlled (37 fail against 629)**, including six that
+execute the shipped `dispOf` and `stepShot` · colors 110 · occhead 42 · showcase
+124 · tray 57 · vision 23, all still green.
+
+⚠️ The new harness's functional section is **wrapped in try/catch on purpose**:
+without it, a build lacking these functions *crashed* rather than reporting RED,
+and a crash proves the file differs while a RED proves which behaviours are
+missing.
+
+### ⚠ BUG_CLASSES class 15 opened — six false reds in one session
+
+`openLens` matched this module's own comment saying it is *not* used here. That
+is the **sixth** assertion this session to match prose rather than code. Written
+up as its own class with the five rules that fall out of it, because fixing it a
+seventh time quietly would be the wrong response.
+
+### Not fixed, and stated plainly
+
+The **six oversized photos already uploaded stay oversized** — they can only be
+re-encoded by re-uploading, and this container has no storage credentials (nor
+should it). With delete and multi-select now present, replacing them is about
+thirty seconds of Theo's time, and the grid pulls the display twin for anything
+uploaded from 630 on.

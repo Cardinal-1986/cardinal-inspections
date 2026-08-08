@@ -2082,6 +2082,37 @@ Verified by executing the shipped `tapResult` through every state — 11 functio
 including that **every reachable result is a valid row**, so no sequence of taps can hit a DB
 constraint. `harness_tray.js` is 57 assertions, negative-controlled.
 
+### 630 — the "Our roofs in this colour" grid, fixed in six places
+
+Theo, from the iPad: multi-select missing · "Upload fails as well" · a duplicate with no way to
+delete · open full screen and swipe · the white labels · "Scrolling also locks up".
+
+⚠️ **Two of those were one root cause.** The `photos` bucket refuses anything over **10 MB** and
+`upload()` sent **raw camera bytes** — the six photos already on Onyx Black are **5.37–8.04 MB
+each**. Bigger ones were refused ("upload fails"); the survivors made the grid **~40 MB to paint**,
+which is an iPad locking up while scrolling. `shrink()` and the `FULL`/`DISP` constants were
+**exported from `cr-show-script` rather than copied**, uploads now write both renditions as JPEG
+(fixing HEIC-on-Chrome too), and the grid asks for the display twin **with a fallback** — pre-630
+photos have no twin and would otherwise vanish.
+
+Also: `multiple` on the input with per-file progress and uuid paths (`Date.now()` collides when
+several files land in one millisecond, which `multiple` would have triggered immediately) · a
+delete button, admin-gated in UI and RLS, deleting the **row before** the storage object · a
+lightbox with swipe, arrows and Escape, its own element rather than the Showcase's `openLens` ·
+`overscroll-behavior:contain` on the view and the lightbox.
+
+**The caption was a contrast failure, not a preference.** 623 set `--occ-card:#FFFFFF`, so the label
+had been `--occ-dim` grey on white — **2.55:1**, which this file's own palette comment already
+recorded. It is now `--occ-head` ground with `--occ-pink-on-dark` (**5.48:1**). ⚠️ **Not** the brand
+pink `#EC008C`, which is 3.84:1 as small text and is a FILL colour under OC's rules — honouring the
+request literally would have failed the floor.
+
+`harness_ourroofs.js` — 38 assertions, negative-controlled (37 fail against 629).
+
+**Known and stated:** the six already-uploaded oversized photos stay oversized until re-uploaded.
+
+---
+
 ⚠️ **The colours bin collects but has nowhere to go yet — that is 630.** `oc_color_photos.color_id`
 is NOT NULL, and the choice of *which* colour belongs on the Colors page where the swatches are.
 More importantly the photo must be **copied** into `oc-colors/<slug>/`, not referenced in place:
