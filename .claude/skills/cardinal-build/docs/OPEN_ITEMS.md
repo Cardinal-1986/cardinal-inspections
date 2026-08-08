@@ -8,14 +8,26 @@ real. Everything under "Illustrations in the Resource Library" and beyond is 467
 
 ---
 
-## ✅ OC Colors — the showroom. 2 decisions SETTLED BY THEO, 7 Aug 2026
+## ✅ OC Colors — the showroom. 3 decisions SETTLED BY THEO, 7 Aug 2026
 
-*Answered directly by Theo. **Do not re-litigate either of these.***
+*Answered directly by Theo. **Do not re-litigate any of these.***
 
 | # | Question | **Theo's answer** |
 |---|---|---|
 | 1 | Is the colour wall admin-only, like the CompanyCam picker, or can sales see it? | **"Yes they can see colors."** All signed-in staff — Nick, Joey and Jacob included |
 | 2 | Does the colour sheet carry pricing? | **"No pricing on sheets it's not a quote."** |
+| 3 | Should the Duration card name IKO, whose equivalent strip is on the back of the shingle? | **"As far as competition goes, doesn't need to be here that's a whole separate thing."** |
+
+**Decision 3 closes the one question 620 left open, and it makes an existing assertion permanent.**
+`harness_colors.js` already refuses IKO, GAF, CertainTeed, Malarkey and TAMKO anywhere in the
+rendered `#cr-occ` markup — written as a defensive default while the question was open. It is now
+**the settled design**, not a placeholder: this screen sells Owens Corning on Owens Corning's own
+documented claims, and a competitor's product is a claim Cardinal would have to defend with nothing
+in the folder. No code changed, because the code was already right.
+
+⚠️ **"A whole separate thing" is an observation, not a request.** Theo did not ask for a competitor
+comparison surface and nobody should build one off that phrase. If it is ever wanted it is its own
+feature with its own sourcing problem — and the sourcing is the hard part, not the screen.
 
 **Decision 2 is a structural constraint, not a preference.** A colour sheet with a number on it
 becomes a quote the moment it leaves the phone — it would need approval, an audit trail and the
@@ -35,7 +47,11 @@ the `photos` bucket under `oc-colors/`, which `photos_read` already opens to any
 `oc_colors` 29 rows (20 current · 6 discontinued · 2 new for 2026 · 1 COTY) · `oc_color_photos`
 (empty) · `oc_color_wall`. Spellings corrected to OC's own: **Sierra Gray**, **Chateau Green**.
 
-⚠️ **`hex_verified` is false on all 29 and must stay false until someone samples a real swatch.**
+⚠️ **Those 29-row counts are superseded — see the two sections below.** PR #148 added two missing
+colours and corrected five statuses; the catalogue is now **31 colours · 30 on the wall · 20
+sellable**. Kept as written so the history reads straight.
+
+⚠️ **`hex_verified` is false on all 31 and must stay false until someone samples a real swatch.**
 The hex values are approximations eyeballed for the preview mock. A photograph of a roof in
 afternoon sun is not the product colour, so importing Theo's folders does NOT verify them. The
 table comment says it: do not show a customer an unverified swatch and call it the colour.
@@ -43,11 +59,51 @@ table comment says it: do not show a customer an unverified swatch and call it t
 The mock's per-colour photo counts were invented to make the preview look alive and are
 deliberately absent from the schema rather than loaded as fact.
 
+### ✅ Shipped 7 Aug — PR #148 (schema) and builds 615–620 / PR #149 (the wall)
+
+**PR #148**, six migrations, all applied before merge: `slug` (generated) + `cover_image_path` +
+`cover_credit`; `coty_year` with a one-winner-per-year index (2017–2026, no gaps); the two missing
+colours (**Williamsburg Gray**, the 2024 COTY, and **Peppercorn**); five colours corrected from
+`current` to `discontinued` on Theo's word; and **`hidden`**, which is *not* `status` — discontinued
+colours keep their spot on the wall badged, `hidden` removes it. One row hidden: Shasta White.
+
+**Build 615** enabled the Colors tile that had been sitting disabled in `visionHtml()` since 593 —
+no new surface. Full detail in `FEATURES.md` and `cardinal_build_log.md`. **The upload UI struck
+from this list: it shipped with 615**, `is_staff()`, writing to `oc-colors/<slug>/`.
+
+`oc_color_covers_set.sql` then set `cover_image_path` on **23 of the 30 colours on the wall** — run
+twice, the second time for Mountain Pine alone. **Zero sellable colours are on the hex-swatch
+fallback**; the seven that are, are all discontinued, and that is the end state, not a backlog.
+**The cover work is closed.**
+
 ### Still open
 
-- **The photos.** Theo's 28 hand-sorted iPad folders. Agreed to start with the top three or four
-  sellers at 5–8 shots each rather than all 28 at once.
-- **The upload UI** — an `index.html` build, needs the full gate ladder.
+- ✅ ~~Oakridge and Supreme specifications~~ — **CLOSED at build 617.** Theo supplied the Supreme
+  Product Data Sheet (10013324) and the Oakridge Brochure (10024153); both lines are live with
+  sourced spec tables. ⚠️ **Oakridge's wind row is 110/130 and conditional** — 130 only with six
+  nails and OC starter along eaves and rakes, per the brochure's own footnote. It renders as a
+  caution and the harness asserts it. **Do not collapse it to one number.**
+- ✅ ~~The `###` footnote behind "up to 160 MPH."~~ — **CLOSED at build 621.** Theo supplied the
+  Owens Corning Sales notice (Sara Fagerman, Mid-South) on 7 Aug. It answered all three
+  questions: it is a **warranty** figure, **effective 1 Aug 2026**, conditional on **at least
+  four Total Protection Roofing System® components** (Hip & Ridge, OC Underlayment, Starter on
+  **both** eaves and rakes, and either Ice & Water Barrier or Ventilation). Duration and FLEX
+  ship **130/160** with the condition in a caution block; anything short of the spec is still
+  130. All three predicted rendering defects were real and were fixed in the same build.
+  ⚠️ **Two things this deliberately does NOT do, both still open if Theo wants them:**
+  1. It does **not** claim Cardinal installs the full system as standard. If he confirms that,
+     it is the strongest line on the page — *your warranty is 160 because of how we build it*
+     — but it is his statement to make, not one to infer.
+  2. The source is a **sales notice, not the warranty document**. Revised documents were due on
+     OwensCorning.com 3 Aug 2026 and the sandbox cannot reach that site. Swap both `source`
+     strings when the published document is in hand.
+
+- **The photos.** Theo's 28 hand-sorted iPad folders — *Cardinal's own roofs*, `oc_color_photos`,
+  still **empty**. Distinct from the covers, which are Owens Corning's photography, and the reason
+  the two render in visibly separate sections. Agreed to start with the top three or four sellers
+  at 5–8 shots each rather than all 28 at once.
+- ⚠️ **The README inside the cover-image zip names the wrong upload path** —
+  `oc-colors/<slug>/cover.jpg`. The live convention is flat: **`oc-colors/covers/<slug>.jpg`**.
 - **The colour sheet is NOT a new pipeline.** `api/share.js` already serves stored document HTML
   via an unguessable token (not a signed URL, so it does not expire in an hour like photo links do),
   `api/senddoc.js` emails it, and `@page{size:Letter}` appears 7× for print-to-PDF. A colour sheet

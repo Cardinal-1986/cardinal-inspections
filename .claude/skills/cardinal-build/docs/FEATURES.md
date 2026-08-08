@@ -1648,3 +1648,216 @@ state until then. Nothing here has been verified against a real photograph.
 
 **CI does not gate `studio.html`** — `.github/workflows/check.yml` covers `index.html`, `sw.js` and
 `api/*.js` only. This file deploys unchecked.
+
+---
+
+## OC Colors — the shingle-line hub (builds 615–621, 7 Aug 2026)
+
+**Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
+`</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
+inset:0`.
+
+**How you get there:** the **Vision hub only** — `showroom.cardinalroster.com`, or any URL with
+`?vision=1`. `visionHtml()` in `cr-lr-script` has carried a Colors tile since build 593; it shipped
+disabled with a "Soon" badge and 615 turned it into a `<button data-go="colors">` driving the
+`wire()` handler that was already there. **There is no entry point from the ordinary app menu**,
+and Resources and Vision still have zero cross-references either way.
+
+### 616: it opens on the LINES, not on colours
+
+Three levels — **hub → line → colour** — and the back button steps one at a time, closing only from
+the hub. State is two classes on `#cr-occ`: none, `.line`, `.detail`. `.detail` sits on top of
+`.line`, so its rules carry an extra class and **out-specify** rather than depend on source order.
+
+| Line | Ships | Holds |
+|---|---|---|
+| **TruDefinition Duration** | ✅ description + 9-row spec table + a wind caution | the 20 sellable colours, with a **Designer Series** tab |
+| **Duration FLEX** | ✅ description + specs + a wind caution | **its own 9-colour palette** (7 sellable) — `FLEX_COLOURS` |
+| **Oakridge** | ✅ description + 10-row spec table + a wind caution | no catalogue rows — spec page only |
+| **Supreme** | ✅ description + 9-row spec table | no catalogue rows — spec page only |
+| **Discontinued** | ✅ description | the 10 dead colours, each naming its closest current replacement **on the card** |
+
+⚠️ **FLEX is NOT made in Duration's full range.** `FLEX_COLOURS` is an explicit nine-slug
+list mirroring the FLEX brochure's colour section; Owens Corning's own line comparison
+independently says "9 Colors Available Regionally". 616 matched FLEX to Duration's rows on
+a misreading of *"the is flex but the color is the same"* — he meant a colour **renders**
+the same, not that FLEX comes in all of them — which let a rep pick Merlot on the FLEX page
+and order a roof in a colour FLEX is not made in. **If that list grows, the brochure grew:
+check the document.** Two of the nine are discontinued and are filtered out of the sellable
+page while still appearing on the Discontinued one.
+
+### ✅ 621: Duration and FLEX are 130/160 MPH — the conflict is RESOLVED, do not re-open it
+
+The `"up to 160 MPH###"` on Owens Corning's website sat unexplained for two builds and the
+pages stayed at 130, because *"up to"* plus a footnote marker is the same shape as
+Oakridge's conditional 110/130 and no document on hand mentioned 160. **Theo supplied the
+Owens Corning Sales notice on 7 Aug and it settles all three questions at once:**
+
+- It is a **warranty** figure, not a rating — *"the wind warranty … will increase from 130
+  MPH to 160 MPH"* — so it upgrades the existing wind row rather than adding a second one.
+- **Effective 1 August 2026**, so it is already live.
+- The condition is **at least FOUR Owens Corning Total Protection Roofing System®
+  components**: Hip & Ridge, OC Underlayment (Titanium® / RhinoRoof®), Starter shingles on
+  **both the eaves and the rakes**, and either an OC Ice & Water Barrier or an OC
+  Ventilation product. Anything short of that **still carries 130**.
+
+⚠️ **Duration's second number and Oakridge's are opposite in sales meaning, and the code
+now keeps them apart on purpose.** Oakridge's 130 is a **caution** — quote the lower figure
+unless the roof was built that way. Duration's 160 is an **upsell** — quote it only when
+the full system was actually installed. They render with identical geometry (solid base +
+hatched extension), so the wording is the only thing separating them: each line carries its
+own `chart.extNote`, and both the jsdom and Chromium harnesses assert that Duration never
+prints Oakridge's six-nail condition.
+
+⚠️ **The screen states the condition; it does not claim Cardinal meets it.** Whether the
+full Total Protection system is Cardinal's standard install is Theo's to say, and saying it
+for him would be inventing a warranty claim. Not asserted anywhere in the module.
+
+⚠️ **The source is a sales notice, not the warranty document.** Revised warranty documents
+were due on OwensCorning.com 3 Aug 2026; the sandbox cannot reach that site. When Theo can
+pull the published document, it should replace the notice in both `source` strings.
+
+**⚠ No spec figure that isn't sourced — enforced at patch time, not intended.** Every number in
+`LINES` is quoted from an Owens Corning document Theo supplied, and each page **names its file
+underneath the table**: the Duration Beauty Book, the FLEX brochure, the Supreme Data Sheet
+(10013324) and the Oakridge Brochure (10024153). `patch617.py` asserts that **any line rendering a
+spec table names a source**. Oakridge and Supreme were deliberately held at `ready:false` for two
+builds because OC's own site is unreachable from the sandbox and a search returned contractor blogs
+and big-box listings — the sourcing Theo already rejected once on Williamsburg Gray.
+
+**⚠⚠ Oakridge's wind number is CONDITIONAL and must never be shown as one figure.** The brochure's
+own ‡‡ footnote: *110 MPH is standard with 4-nail application; 130 MPH applies only with 6-nail
+application and Owens Corning Starter Shingle along eaves and rakes.* It renders as an `.occ-note2`
+caution above the source line, and the harness asserts both its text and that it precedes the
+source. A rep quoting 130 on a four-nail roof is stating something false about a warranty.
+
+**Absence is not a claim.** Neither the Oakridge nor the Supreme document mentions SureNail, and
+neither states an impact class. Nothing says "no SureNail" — the tables say *"Not stated in the
+product brochure"* and quote OC's own wording for what Oakridge *does* have (*"full double layer in
+the nailing zone"*).
+
+Oakridge and Supreme have **no rows in `oc_colors`**, so their pages carry specs and no colour grid.
+Only add a `match` if colours are actually loaded.
+
+### 618: three presentation styles, above 820px only
+
+`data-style` on `#cr-occ` — **`roofs`** (default), **`compare`**, **`feature`** — switched
+from a control in the header and remembered in `localStorage['cr-occ-style']`.
+
+**The phone is untouched and that is a gate, not an intention:** the 430×932 render must
+stay pixel-identical across all three styles *and* against the build-617 baseline. Two
+leaks were caught only by that diff — an inline `background-image` on the hub tiles, and
+the comparison board's markup rendering as unstyled divs. Heroes are now a `--hero` custom
+property consumed solely inside the media query, and `.cmp-*` is `display:none` in the
+base sheet. **JS stays viewport-independent** — no resize listener anywhere.
+
+⚠️ **A `[data-style]` rule ties with `#cr-occ.line .occ-hub{display:none}` on specificity
+and wins on source order.** The hub rules therefore carry `:not(.line):not(.detail)`. Do
+not simplify them.
+
+⚠️ **The split is a float, deliberately.** As a grid, the pitch column spanning four rows
+fed its height back into those tracks and pushed the first roof 1161px down an 834px
+screen. And it grids **`#occBody`**, a wrapper — never `#cr-occ`, which carries an inline
+`display:block` from `open()` that beats any stylesheet rule.
+
+**A line's hero is always one of its OWN colours**, including the fallback. Oakridge and
+Supreme have no catalogue rows and so no photograph; their wind rating becomes the artwork
+rather than borrowing another line's roof. `chart` feeds the bars and is guarded at patch
+time against drifting from the sourced `specs` text.
+
+### 620: SureNail is the pitch, and its figures carry their basis
+
+Theo — *"Sure nail strip is what sells the duration compared to competitors."* Duration's blurb
+led with a comparison to **Oakridge**, Cardinal's own cheaper line; it now leads with Owens
+Corning's own competitive claim — the first and only reinforced nailing zone **on the face** of
+the shingle, Triple Layer Protection® where the fabric overlays both layers, and the warranty
+point that closes it: *a shingle may not be covered at all if it is not fastened in the right
+place.*
+
+`proof` on `LINES` renders `.occ-proof` — **2× nail pull-through, 9× nail blow-through, 2×
+delamination** — on **Duration and FLEX only**, the two lines that have SureNail. Oakridge and
+Supreme carry none, because neither document mentions it; *absence is not a claim* applies here
+too, and the harness asserts it.
+
+⚠️ **`basis` is not optional and must never be dropped.** OC's own qualification: *up to*, against
+**competing products with wide, single-layer nailing zones**, nailed in the middle of the
+allowable zone. "9× better" alone is a different claim from the one that was tested — the same
+discipline as Oakridge's ‡‡ footnote. `source` on both lines names the **SureNail Sell Sheet
+(10020692)** for the tested figures.
+
+⚠️ **No competitor is named — SETTLED BY THEO, do not re-litigate.** *"As far as competition goes,
+doesn't need to be here that's a whole separate thing."* `harness_colors.js` asserts it: IKO, GAF,
+CertainTeed, Malarkey and TAMKO are all checked against the rendered markup. Theo's original framing
+*was* a comparison — IKO's equivalent strip is on the **back** of the shingle — and it is a good
+sales point that stays off this screen anyway. This surface sells Owens Corning on Owens Corning's
+own documented claims; a claim about a named competitor's product is Cardinal's own with nothing in
+the folder behind it. The assertion began as a defensive default while the question was open and is
+now the settled design. **"A whole separate thing" is an observation, not a request** — nobody
+should build a competitor-comparison surface off that phrase.
+
+**617: the collection split is a TAB, not a chip.** Theo — *"Also tab designer series."* A
+collection and a shade are different kinds of choice, so `#occTabs` (`All colours · Standard ·
+Designer Series`, underline indicator) sits above the shade chips in `#occFilters`. `filters()`
+clears both, so a line with no designer rows shows no tab strip rather than a stale one.
+
+**`lineLabel()` exists because the sub-line used to lie.** It was a binary, so the five rows with
+`product_line='other'` all read "TruDefinition Duration" — a claim nobody recorded. They now say
+"Owens Corning" and stop. Found by rendering, not by a gate.
+
+**Tables:** `oc_colors` (the catalogue), `oc_color_photos` (Cardinal's own installs),
+`oc_color_wall` (the view). All read for `authenticated` — **sales can see colours**, settled by
+Theo. Writes split: `oc_colors` is `is_cardinal_admin()`, `oc_color_photos` insert is `is_staff()`,
+so whoever is on the roof can add a photo but only Theo curates the catalogue.
+
+### The three rules the module exists to keep
+
+**1. `hidden` is not `status`.** The query filters on `hidden`, **never** on `status`. Discontinued
+colours keep their spot and are badged, because an owner with an old roof has to find their colour
+and a repair has to be matched. Only `hidden` removes a spot. Currently one row: Shasta White.
+
+**2. A cover is Owens Corning's photograph; `oc_color_photos` is ours.** They render in visibly
+separate sections, the second labelled *"Cardinal installs, not manufacturer photography."* Those
+are two different claims and merging them makes the showroom's whole pitch false. **Never render a
+cover inside the "our roofs" section.**
+
+**3. `hex_verified` is false on every row.** A colour with no cover falls back to its hex and the
+card says **"Approximate colour — not a verified swatch."** The hexes were sampled from OC's
+*printed swatches*, never from a roof photograph — a roof in afternoon sun is not the product
+colour. A rep must not hold a tablet against a house and call an eyeballed hex the colour.
+
+### Covers
+
+`cover_image_path` → `oc-colors/covers/<slug>.jpg` in the `photos` bucket, **flat, one folder**.
+`slug` is `generated always` from `name`, so there is one derivation and it lives in the database —
+**JS must never recompute a slug**, or photos end up filed under a colour that no longer matches.
+Signed with `createSignedUrls` for **display only**, never written back into a row.
+
+**23 of the 30 colours have a cover** (`oc_color_covers_set.sql`) — **every sellable
+one**. The seven without are all discontinued, which is correct and permanent: a colour nobody can
+buy renders its labelled swatch. No new storage policy was added or is wanted — `oc-colors/` sits
+under the bucket's general authenticated-read; only `photos/studio/*` is carved out of it.
+
+### The harness is committed — run it before you touch this module
+
+`scripts/harness_colors.js` (jsdom, **93 assertions**, optional path argument) executes the
+*shipped* `cr-occ-script` text against real `oc_colors` row shapes. It is where the claims above
+are actually enforced: that every line rendering a spec table names its source, that Oakridge's
+wind row is never a flat 130, that the SureNail figures can never render without their basis line,
+that Oakridge and Supreme carry no proof block at all, that no competitor is named, that FLEX shows
+only its nine, and that the wall filters on `hidden` and never on `status`. It cannot see layout or
+colour — the 618 styles, the ≥44px targets and the phone pixel baseline are Chromium's job, and
+whether any of it sells is Theo's.
+
+### Conventions
+
+Blackout, like `#cr-show` — a client-facing Vision surface, deliberately outside both app themes.
+**Every `--occ-*` reference carries a literal fallback**, so the 448–449 stripped-token class cannot
+reach it. Registered in `hideAllViews()`, `OVERLAY_IDS` and `PANES`; **display-shown**, so
+`display:none` is the close lever. Adds **zero** global scroll-lock writers.
+
+### Not built
+
+**The colour sheet.** Deferred from 615 deliberately. It is a document in the existing
+`api/share.js` + `ccDeliver()` pipeline — **no PDF generator**, the `@page{size:Letter}` print path
+already exists. Theo, settled: *"No pricing on sheets it's not a quote."* **No money fields at all**,
+not blank ones, and it stays outside the estimate/contract document family.

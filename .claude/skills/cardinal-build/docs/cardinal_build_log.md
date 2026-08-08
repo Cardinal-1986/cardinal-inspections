@@ -8810,3 +8810,618 @@ and must return 200. A probe whose control fails proves nothing in either direct
 the same `dir/` form as `.claude/`, `spark/` and `.github/`, which are known-good on this deploy, so
 the reasoning is strong — but it is reasoning. Closing it needs one request from outside the
 sandbox, run **with** the control, since a bare 404 could also mean the deploy had not finished.
+
+---
+
+## OC Colors — the schema half (PR #148, 7 Aug 2026)
+
+Six migrations, all applied to production **before** the merge, all idempotent. **No app change
+went with them** — `index.html`, `api/` and `sw.js` untouched, no build number bumped, and `*.sql`
+is vercelignored, so merging changed nothing for a user. Listed in run order:
+
+| File | What |
+|---|---|
+| `oc_color_covers.sql` | `slug` (**generated always** from `name`), `cover_image_path`, `cover_credit` |
+| `oc_coty_year.sql` | `coty_year` + a partial unique index — one Color of the Year winner per year |
+| `oc_williamsburg_gray.sql` | the 2024 COTY, which had no catalogue row |
+| `oc_peppercorn.sql` | the other missing colour |
+| `oc_discontinued_fix.sql` | five colours wrongly marked `current` |
+| `oc_colors_hidden.sql` | `hidden`, so a colour can exist without being offered |
+
+Catalogue after: **31 colours · 30 on the wall · 20 sellable · COTY 2017–2026 with no gaps ·
+`hex_verified` false on every row.**
+
+### `hidden` is not `status`, and that distinction is the point
+
+Theo, verbatim: *"But they should still have a spot. I still would like a spot for them except for
+Shasta white."* So **discontinued colours keep their spot on the wall, badged** — Cardinal has been
+roofing for years, and an owner with a twelve-year-old roof has to be able to find their colour,
+as does a rep matching a repair. `hidden` removes the spot entirely without destroying the row, so
+history and any job referencing the colour still resolve. One row is hidden: Shasta White.
+**A query that filters on `status` alone puts Shasta White back on the tablet.**
+
+### Two corrections from Theo, and the second one is the lesson
+
+**"Please don't list Lowe's they mix batches."** `oc_williamsburg_gray.sql` had cited a big-box
+stock listing as evidence the colour was still current. Shingle colour varies between production
+batches, so a retailer's stock says nothing reliable about what a customer would actually receive —
+citing one in a showroom context invites a mismatched roof. The citation was removed from the file
+**and from the pushed commit message** (`66ec14c` → `49e6ce9`, force-with-lease), because a
+reasoning left in history is a precedent the next session copies forward.
+
+**"Those are all colors that have been discontinued"** — Amber, Harbor Blue, Quarry Gray, Shasta
+White, Sierra Gray, all sitting as `current`. This is the more dangerous direction of the two
+errors: a discontinued colour shown as current puts a rep in front of a customer selling something
+Cardinal cannot order, and it surfaces at order time, after the pitch.
+
+**The signal was there and was read backwards.** Those five were the *only* colours that could not
+be found in any of the four Owens Corning books supplied that day. That was chased for several
+rounds as a gap in the source material. It was not a gap — current marketing books do not carry
+dead colours. Worth keeping as a heuristic and **not** as a rule: three discontinued colours
+(Bourbon, Summer Harvest, Storm Cloud) *do* appear in the Designer books, which carry some legacy
+palette. Absent from the books suggests discontinued; present in one proves nothing at all. Ask.
+
+---
+
+## Build 615 — the Owens Corning colour wall, on the Vision hub (7 Aug 2026)
+
+PR #149. The front-end half: `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`,
+`window.CardinalColors`, full-screen `#cr-occ`.
+
+**It enables a tile that already existed.** `visionHtml()` in `cr-lr-script` has rendered a Colors
+tile since build 593 as `class="cr-vh-tile soon" aria-disabled="true"` with a "Soon" badge, and
+`wire()` already had the dispatch pattern for `showroom` and `library`. This build turns the div
+into a button with `data-go="colors"` and adds one case beside them — **no new surface, nothing
+duplicated.** An hour was nearly spent building this as a new top-level overlay in the main app;
+Theo's question — *"links back to vision? or does resources link to vision"* — is what caught it.
+The prime doctrine, again: the mount point was already in the file.
+
+Registered in all three registries a `fixed; inset:0` view needs — `hideAllViews()`, `OVERLAY_IDS`,
+`PANES` — and it is **display-shown**, so `display:none` is the correct lever. Writing a class
+instead would leave it covering the next screen (the 570–572 class). Palette is `--occ-*`, Blackout
+like `#cr-show`, **every reference carrying a literal fallback** (the Crews/Showcase pattern), so
+448–449 cannot repeat here. **Zero new global scroll-lock writers** — still 13.
+
+**614 was already taken** by the `studio.html` work earlier the same day (`Build 614` and `614b`
+above). `next_build.py` reported 614 free because it scans the app stamp, and that build never
+touched `index.html`. **Known blind spot: the script cannot see builds that ship outside
+`index.html`.** Stamped 615.
+
+### Verified
+
+`check_build.py` green and negative-controlled. **jsdom harness 27/27 against real `oc_colors` row
+shapes**, not fixtures — the `hidden` filter, Shasta White absent, Storm Cloud present, the
+cover-vs-swatch fallback, the unverified label, badge logic, the cover/our-roofs separation, the
+`hideAllViews` close, and no 14th scroll-lock writer. **Chromium `elementFromPoint`** confirms the
+tile is genuinely hit-testable at 420×74 — not the invisible-but-present render that killed the
+Vision hub at 593, and clear of 592's 44px floor.
+
+**Screenshots do not render in this sandbox** (webfonts hang), so nobody has seen it. Theo's eyes
+are the gate for how it looks; the harness proves structure only.
+
+---
+
+## OC Colors — `cover_image_path` set on 22 covers (7 Aug 2026)
+
+`oc_color_covers_set.sql`. Data only, applied to production. This is the statement that makes the
+wall stop rendering 30 hex swatches and start rendering Owens Corning's roofs.
+
+**The path convention is flat — `oc-colors/covers/<slug>.jpg`.** One folder, 23 files, one drag.
+The original plan was `oc-colors/<slug>/cover.jpg` and was changed because uploading through the
+Supabase dashboard means creating each folder by hand. ⚠️ **The README inside the cover-image zip
+still names the old path**, as did PR #149's description until it was corrected — the flat one is
+what is live. The filename is the row's `slug`, which is `generated always` from `name`, which is
+exactly why no lookup table is needed and why JS must never recompute a slug.
+
+**`where exists` is the safety, not decoration.** A colour only gets a path if the file is actually
+in storage. A path pointing at nothing is *worse* than no path: the `<img>` fails and the card
+renders empty, instead of falling back to the hex swatch with its "Approximate colour — not a
+verified swatch" label. Empty tells a customer nothing; the labelled swatch at least tells the
+truth. The `is distinct from` clause makes it idempotent, so it is simply re-run as more covers
+land.
+
+**Run twice, and the second run is the proof.** The first set 22 rows; 23 of 23 covers had been
+sent but only 22 reached storage. Mountain Pine — `new`, therefore sellable — was the missing one,
+and it was **in the zip all along** (verified rather than argued: 1400×933, 257,329 bytes, sha256
+`08cc05fd…`, byte-identical to the working copy, listed in the zip's own README). It sits between
+`midnight-plum` and `onyx-black`, easy to scroll past on a phone. Sent again on its own, uploaded,
+and the identical statement re-run: **1 row, Mountain Pine only.** The other 22 were untouched,
+`updated_at` included.
+
+**Final state: 23 covers · 0 broken paths · 0 unclaimed files · 0 sellable colours on the swatch
+fallback.** Every sellable colour renders a real Owens Corning roof photograph. The seven still on
+a swatch are all discontinued, and that is the end state rather than a backlog.
+
+Verified two ways that matter more than the row count: **zero paths with no file behind them, zero
+uploaded files no row claims.** The second catches a typo'd slug — which a row count alone passes
+straight through.
+
+---
+
+## Build 616 — Colors opens on the shingle lines, not one long wall (7 Aug 2026)
+
+Theo, after seeing 615 on the tablet: *"can we section off what's discontinued or tab it"* — then,
+asked which, he described something larger and better: *"What I had envisioned. When clicking oc
+colors, 3 options. Duration, Oakridge, Discontinued. In Duration, a filter with Designer or a tab.
+A description in the duration page first of what makes it better. Description in oakridge. I think
+even an oc supreme section within colors. When selling I can show the differences in each where
+supreme has the worst wind rating."*
+
+So the flat wall became a **line picker**: Duration · Duration FLEX · Oakridge · Supreme ·
+Discontinued. FLEX is its own page on his pick. It shares Duration's palette — his own words on the
+FLEX brochure, *"The is flex but the color is the same"* — so both lines `match` the same catalogue
+rows rather than duplicating data.
+
+### The rule this build exists to hold: no spec figure that isn't sourced
+
+Duration's and FLEX's numbers are quoted from the Owens Corning books he supplied, and each page
+**names the book underneath the table**. 130 MPH, Class 3 / Class 4, Class A fire, ASTM D3161 F and
+D7158 H, the 25-year StreakGuard term — all off pages 614–656 of the Duration Beauty Book and the
+FLEX brochure.
+
+**Oakridge and Supreme ship as "Coming" tiles that cannot be opened.** Owens Corning's own site is
+blocked by the sandbox egress proxy, and a web search returned contractor blogs and big-box
+listings — *the same weak sourcing Theo threw out on Williamsburg Gray* ("Please don't list Lowe's
+they mix batches"). The figures looked right and matched what he said about Supreme, which is
+exactly why they were dangerous. He is supplying the real ones.
+
+The guard is mechanical, not a good intention: `patch616.py` asserts that **no `\d+ MPH`, `\d+ year`
+or impact class appears anywhere inside the two unsourced `LINES` entries — comments included** —
+and the jsdom harness re-asserts it against the rendered tiles. A wind rating read aloud to a
+homeowner is close to a warranty claim.
+
+⚠️ **One figure to handle carefully when Oakridge lands**, recorded in the module so it is not lost:
+its wind rating is reported as **conditional** on OC starter plus **six** nails rather than four. If
+that holds, the page has to say so. A rep quoting the higher number on a four-nail roof is stating
+something false about a warranty.
+
+### Two levels became three, so the module was rewritten rather than patched
+
+`hub → line → colour`. The back button now steps one level at a time and only closes from the hub.
+Nine interlocking edits would have risked a half-applied nav — the 570–572 class with extra steps —
+so the whole `cr-occ-script` block was replaced in one asserted splice.
+
+State is two classes on `#cr-occ`: none = hub, `.line`, `.detail`. **`.detail` sits on top of
+`.line`** (a colour is always opened from a line), so the `.detail` rules carry an extra class and
+**out-specify** the `.line` ones rather than relying on source order that a later edit could quietly
+reverse. `:not(.line):not(.detail)` hides the grid at the hub.
+
+### The bug a harness could not have found
+
+The card's sub-line was a binary — `designer ? 'Designer Collection' : 'TruDefinition Duration'` —
+so the **five rows carrying `product_line='other'`** (Slate Grey, Aged Cedar, Desert Tan, Summer
+Harvest, Bourbon) were every one of them labelled **TruDefinition Duration**, a product claim
+nobody ever recorded. Inherited from 615 and invisible there because they were scattered through
+thirty cards; on the Discontinued page all five sit together. **Found by rendering the module and
+looking at it**, not by any assertion. They now read "Owens Corning" and stop. `lineLabel()`.
+
+That is the third time on this project a rendered screenshot has caught what a green gate did not —
+`styleMounts()`'s inline white, `showApp()`'s inline `display:block` in studio.html, and now this.
+
+### Verified
+
+`check_build.py` green and negative-controlled. **jsdom 39/39** against real row shapes, walking all
+three levels of the back button in both directions. **Chromium 20/20** on the CSS state machine —
+including that `.detail` really does out-specify `.line`, which is the one thing the whole stylesheet
+block is shaped around — plus 592's 44px floor and no horizontal overflow at 390px. Then the shipped
+module was **rendered against the live `oc_colors` rows and the real cover images** at 430×932 and
+looked at. Theo's eyes remain the gate for whether it sells.
+
+**Build 614 was skipped again**: `next_build.py` still reports it free because it scans the app
+stamp, and `studio.html`'s 614 never touched `index.html`. It also did not see this session's own
+pushed 615. Treat its answer as a floor, not an answer.
+
+---
+
+## Build 617 — Oakridge and Supreme go live, from Owens Corning's own documents (7 Aug 2026)
+
+Theo: *"You've got a lot of great info within the official pdfs but I can get more if needed"* — and
+sent the **Supreme Product Data Sheet (10013324)** and the **Oakridge Brochure (10024153)**. Both are
+OC publications, which is exactly the sourcing 616 held out for. Both lines come off the "Coming"
+list with full spec tables, each naming its file underneath.
+
+| | Supreme | Oakridge |
+|---|---|---|
+| type | three-tab strip | laminated (architectural) |
+| warranty | 25-Year Limited | Limited Lifetime · 40-yr commercial |
+| **wind** | **60 MPH** | **110 / 130 MPH — conditional** |
+| algae | 10 yr, regional | 25 yr, requires an OC Hip & Ridge product |
+| non-prorated | TRU PROtection 5 yr | TRU PROtection 10 yr |
+| impact | not stated | not stated |
+
+**Supreme's 60 against Duration's 130 is the whole pitch**, and it is now quotable rather than
+remembered.
+
+### The Oakridge wind row is not one number, and the brochure says so
+
+> ‡‡ *110 MPH is standard with 4-nail application. 130 MPH is applicable only with 6-nail application
+> and Owens Corning® Starter Shingle products application along eaves and rakes.*
+
+**The suspicion recorded at 616 was right.** It renders as a caution styled louder than the source
+line and placed *above* it, and the harness asserts both the text and the ordering. A rep quoting 130
+on a four-nail roof is stating something false about a warranty. **Never collapse that row.**
+
+### Absence is not a claim
+
+**Neither document mentions SureNail, and neither states an impact class** (`grep -c surenail` = 0 on
+both). It would have been easy — and wrong — to write "no SureNail" as a spec row: 616's own build-log
+entry says absence from a book *suggests* and does not *prove*. So the tables say **"Not stated in the
+product brochure"** for impact, and quote OC's own words for Oakridge's nailing — *"full double layer
+in the nailing zone… greater integrity and better holding power compared to shingles with single-layer
+nail zones."* That is a sourced claim about Oakridge, not an unsourced claim about what it lacks.
+
+### The guard changed shape rather than being deleted
+
+616 asserted *no figures in the unsourced lines*. That is satisfied by them now being sourced, so it
+would have been quietly dropped. It is replaced by the invariant that survives the change: **any line
+rendering a spec table must name its source**, asserted at patch time over each `LINES` entry.
+
+### Designer is a tab
+
+Theo: *"Also tab designer series."* A collection and a shade are different kinds of choice and should
+not look like the same control, so the split moved out of the chip row into its own tab strip
+(`All colours · Standard · Designer Series`) with an underline indicator, above the shade chips.
+
+### ⚠ Three assertions failed against a correct file before this landed — all the same trap
+
+Bare counts of `ready:false` picked up **the word inside comments explaining the flag**. `== 1` failed
+where the truth was 2 (one code line, one `/* ready:false ON PURPOSE */`). This is the file's own
+documented counting trap, walked into three times in one patch, and the fix each time was to scope to
+the declaration — `'\n    ready:false,'`.
+
+**One of those failures was worth having.** The final guard caught the **module header comment still
+claiming both lines carry `ready:false`** — stale documentation sitting in the file every future
+session reads first. A hand-waved assertion would have shipped it. The fix was the comment, not the
+assertion; the *last* remaining `ready:false` is prose correctly describing what the flag does, and
+that one must not be "fixed".
+
+### Verified
+
+`check_build.py` green, negative-controlled, stamp 616 → 617. **jsdom 51/51**, including the caution's
+text, its position above the source line, that Oakridge's tile never shows 130 alone, and that Designer
+is a real tab rather than a chip. **Chromium 20/20.** All five screens re-rendered against live rows
+and looked at.
+
+One stale harness assertion was corrected rather than worked around: it froze Duration's spec table at
+8 rows and 617 legitimately added a 9th. An assertion pinned to an old count reads as a regression when
+the thing it measures is supposed to grow.
+
+---
+
+## Build 618 — three presentation styles for the iPad (7 Aug 2026)
+
+Theo: *"Can you make the iPad a presentation style. Or will it look the same as my
+iPhone?"* **It looked worse.** Measured on 617 at 1194px: the hub was a 760px column
+pinned left with **434px of dead black** beside it, and a line page showed **no roof at
+all** until you scrolled past the entire spec table.
+
+Two fixes were rendered and rejected — *"Show me a few other options that really pop and
+is professional."* Three concepts were then rendered and he was asked to pick one. His
+answer was better than the question: **"What if you could filter between 3 styles?"**
+
+| Style | Hub | Line page |
+|---|---|---|
+| **Roofs** (default) | five full-bleed roof photographs | pitch + specs pinned left, colours beside |
+| **Compare** | each line's wind warranty as a bar to scale | same split |
+| **Feature** | three-across image cards | editorial spread, full-width hero |
+
+Switcher in the header, choice remembered in `localStorage`, **everything above 820px**.
+
+### The phone is untouched, and it is asserted rather than hoped
+
+The 430×932 render is **pixel-identical across all three styles** *and* **pixel-identical
+to the build-617 baseline**. That single check earned its place immediately — see below.
+
+### The hub had 23 roof photographs available and used none of them
+
+Now it does — but only a line's **own** colours, with a fallback that also stays inside
+the line. **Oakridge and Supreme have zero catalogue rows and therefore no photograph;
+borrowing a Duration roof for them would be a false product claim** (the 616 `lineLabel()`
+class). Their wind rating becomes the artwork instead — and on Supreme that number is the
+pitch.
+
+`chart` drives the bars. It must not become a second source of truth beside the sourced
+`specs` strings, so `patch618.py` asserts **every `chart.mph` appears inside that same
+line's wind row**. Oakridge draws **110 solid plus a hatched extension to 130** with the
+condition written beside it — never a flat 130.
+
+### ⚠️ Four defects, all mine, each caught by a different gate
+
+1. **The hero leaked onto the phone.** It was an inline `background-image`, emitted
+   regardless of viewport, and nothing below 820px sizes or positions one — so a phone
+   tile grew a tiled roof photograph. **No structural assertion caught this. Only the
+   pixel diff against the 617 baseline did.** Now a **custom property** consumed solely
+   inside the media query, so the leak is impossible by construction, plus an assertion
+   that no inline `background-image` is ever emitted.
+2. **The board's markup reached the phone** as unstyled divs, because `hub()` emits it
+   whenever the style is `compare` and all the `.cmp-*` CSS lives in the query. Hidden in
+   the base sheet instead; the query turns it on. **JS stays viewport-independent** — no
+   resize listener, no second opinion about what counts as a tablet.
+3. **`#cr-occ[data-style="roofs"] .occ-hub{display:grid}` beat
+   `#cr-occ.line .occ-hub{display:none}`** — equal specificity, later in source order — so
+   the hub painted **on top of a line page**. Scoped with `:not(.line):not(.detail)` rather
+   than trusting order a later edit could reverse.
+4. **The split was a grid whose pitch column spanned four rows.** A spanning item feeds
+   its height back into the tracks it crosses, which pushed the first roof **1161px down an
+   834px screen**; `min-content` tracks did not stop it. Rebuilt on **float**, which leaves
+   normal flow for sizing and composes with `position:sticky`. Old-fashioned and correct.
+
+### The trap that was avoided rather than hit
+
+The two-column split grids **`#occBody`, a new wrapper — not `#cr-occ`**. `open()` writes
+an inline `display:block` on `#cr-occ`, and **inline beats every stylesheet rule at any
+specificity**. That is the `styleMounts()` / `showApp()` trap this repo has hit three
+times. Checking the base rule *before* writing the CSS is what caught it.
+
+### One harness bug worth recording
+
+The Chromium harness seeded `localStorage` to pick a style. `setContent` runs on
+`about:blank`, where Chromium **throws** on `localStorage` — the module catches that
+correctly and keeps the default, so every page rendered in the default style and the
+"three styles differ" check compared three identical screenshots. It looked like a CSS
+failure and was a harness failure. It now **clicks the switcher**, which is both the real
+user path and immune to the origin.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 617 → 618. **jsdom 76/76.** **Chromium
+50/50** — the two phone diffs, ≥44px on every control including the switcher, all three
+nav levels in all three styles, and no horizontal overflow at 820 / 834 / 1024 / 1194px.
+All three styles rendered against live rows and looked at.
+
+---
+
+## Build 619 — FLEX shows only the colours FLEX is made in (7 Aug 2026)
+
+Theo sent Owens Corning's **Duration series comparison** and the **SureNail sell sheet
+(10020692)**. The comparison says **DurationFLEX: "9 Colors Available Regionally"**. The
+FLEX brochure's own colour section lists exactly nine:
+
+| | |
+|---|---|
+| *Rich, sophisticated classic hues* | Brownwood · Driftwood · Estate Gray · Onyx Black · Teak |
+| *Vibrant, dimensional combinations* | Black Sable · Sand Dune · Storm Cloud · Summer Harvest |
+
+Two independent OC sources, same count. **The FLEX page was showing all twenty of
+Duration's.**
+
+### Where the mistake came from
+
+616 matched FLEX to Duration's rows on the strength of Theo's *"The is flex but the color
+is the same."* He meant the colour **renders** the same — a FLEX Onyx Black looks like a
+Duration Onyx Black — **not** that FLEX is manufactured in all of them.
+
+The 616 build-log entry also claimed FLEX's palette was *"Brownwood, Driftwood, Estate
+Gray, Onyx Black, Teak, Black Sable"* — **six. It is nine.** That count came from a
+keyword sweep of the brochure that never checked the colour section itself, which is this
+file's own "print what your extractor captured" rule going unheeded.
+
+**The cost if it had shipped:** a rep stands on the FLEX page, picks Merlot, and orders a
+roof in a colour FLEX is not made in. Same class of error as selling a discontinued
+colour — the thing this module exists to prevent.
+
+`FLEX_COLOURS` is now an explicit nine-slug list mirroring the brochure. Two of the nine
+are discontinued, so the sellable page shows **seven**; both still appear on the
+Discontinued page. Duration is untouched and keeps its full palette, asserted at patch
+time. Every slug is checked against the live catalogue, so a typo shrinks the page loudly
+rather than silently.
+
+### ⚠️ NOT changed: the 130 MPH. There is a source conflict and it is unresolved
+
+Theo's comparison table says **"up to 160 MPH###"** for every Duration-series shingle. Our
+pages say 130. **Not one of the seven Owens Corning documents on hand mentions 160:**
+
+- Duration Beauty Book — *130-MPH Wind Resistance Limited Warranty*
+- Duration FLEX brochure — *130-MPH*
+- SureNail sell sheet (10020692) — *"exceptional wind resistance of a 130-MPH wind warranty"*
+
+The `###` footnote is not in anything supplied. **"Up to" plus a footnote marker is the
+same shape as Oakridge's 110/130**, which turned out to be conditional on six nails and OC
+starter. Putting 160 on a tablet without its condition would be a false warranty statement
+in front of a homeowner. The footnote was asked for rather than guessed. **Do not raise
+this number until that text exists.**
+
+### Oakridge needed nothing
+
+The technical table Theo pasted matches what 617 ships line for line — Limited Lifetime,
+110/130 MPH, 25-year algae, 13¼″ × 39⅜″, 5⅝″ exposure, 98.4 sq ft per square. A
+confirmation, not a correction.
+
+### A harness caught a bad edit of mine
+
+I changed the FLEX tile's glance from *"insurance discount"* to *"a shorter colour range"*.
+An existing 617 assertion failed, correctly: that **traded the insurance-discount lever —
+the entire reason to sell FLEX — for a caveat.** The tile already prints the colour count
+ahead of the glance, so the shorter range needs no words. Reverted.
+
+### The phone baseline moved on purpose, and that is the interesting part
+
+618's Chromium check asserts the phone render is pixel-identical to an approved baseline;
+it is what caught the hero leaking onto the phone. 619 **legitimately** changes phone
+content — FLEX's tile now reads "7 colours" — so the check went red.
+
+**The baseline was not refreshed to make it green.** A tile-by-tile render
+(`phonediff.js`) proved the difference was confined to the FLEX row and nothing else moved,
+and only then was the baseline re-approved. The assertion is now named *"PHONE MATCHES THE
+APPROVED BASELINE (no unintended viewport leak)"* and its failure message says to check
+**which** kind of change it is before touching the file. A pixel gate that gets refreshed
+on every red is not a gate.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 618 → 619. **jsdom 83/83** — including that
+no Duration-only colour can be reached from the FLEX page, that the discontinued FLEX
+colours are filtered out of the sellable page but still appear on the Discontinued one, and
+that Duration was not narrowed alongside it. **Chromium 50/50.**
+
+## Build 620 — the SureNail strip, which is what sells Duration (7 Aug 2026)
+
+Theo, on reading 619: *"Sure nail strip is what sells the duration compared to
+competitors. Iko has something like it but it's on the back."*
+
+The Duration blurb was leading with a comparison to **Oakridge** — Cardinal's own
+cheaper line. That is an argument for buying up within Owens Corning, and it is not the
+argument a rep is making at a kitchen table. The pitch now leads with Owens Corning's own
+competitive claim: SureNail is the **first and only reinforced nailing zone ON THE FACE of
+the shingle** — a wide, visible woven-fabric strip embedded where the nails actually go,
+so a crew can see the target instead of guessing at it. Where the fabric overlays both
+shingle layers it forms **Triple Layer Protection®**, up to a **200% wider common bond**.
+
+The closing sentence is the one that does the work with a homeowner, and it is a warranty
+point rather than a materials point: *a shingle may not be covered under warranty at all
+if it is not fastened in the right place.*
+
+### The three tested figures get their basis line, on the same rule as Oakridge
+
+New `proof` field on `LINES`, rendered as `.occ-proof` / `.occ-pbasis` on **Duration and
+FLEX only** — the two lines that have SureNail:
+
+| | |
+|---|---|
+| **2×** | better nail pull-through resistance |
+| **9×** | better nail blow-through resistance |
+| **2×** | better delamination resistance |
+
+**`basis` is not decoration and must not be dropped.** The sell sheet's own qualification:
+*up to*, against **competing products with wide, single-layer nailing zones**, following
+manufacturers' installation instructions and **nailing in the middle of the allowable
+nailing zone**. A bare "9× better" on a tablet in front of a homeowner is a different
+claim from the one Owens Corning tested. Same discipline as Oakridge's ‡‡ footnote, for
+the same reason. `source` on both lines now names the **SureNail Sell Sheet (10020692)**
+alongside the brochure, so the tested figures are attributed to the document they came
+from rather than to the beauty book.
+
+### ⚠️ IKO is deliberately NOT named — and Theo settled it the same day
+
+Theo's own framing is a competitor comparison, and it is a good one — the observation that
+IKO's equivalent strip is on the **back** of the shingle is exactly the kind of detail
+that closes. It is not on the screen, and that is a decision, not an oversight.
+
+**Asked and answered, 7 Aug:** *"As far as competition goes, doesn't need to be here
+that's a whole separate thing."* The harness assertion below was written as a defensive
+default while the question was open; it is now **the settled design**. No code changed —
+the code was already right. ⚠️ *"A whole separate thing" is an observation, not a
+request:* no competitor-comparison surface was asked for, and none should be built off
+that phrase. If one is ever wanted, the sourcing is the hard part, not the screen.
+
+`#cr-occ` is handed **to homeowners**. A claim about Owens Corning's own product carries
+OC's documentation behind it; a claim about a named competitor's product is Cardinal's
+claim, sourced from nothing in the folder. **`harness_colors.js` asserts no competitor name
+— IKO, GAF, CertainTeed, Malarkey, TAMKO — appears anywhere in the rendered `#cr-occ`
+markup**,
+so adding one is a deliberate act rather than a drift. **The assertion is now permanent by
+Theo's decision above, not merely a default while a question sat open.**
+
+### Still not changed: the 130 MPH
+
+The `###` footnote behind Owens Corning's *"up to 160 MPH"* has still not been supplied.
+619's entry explains why the number does not move without it. Unchanged at 620.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 619 → 620. **jsdom 93/93** — ten new
+assertions covering the proof rows, that the basis line renders with them and cannot be
+orphaned, that the basis is read *after* the claim rather than before it, that **Oakridge
+and Supreme carry no proof block** (neither document mentions SureNail — absence is not a
+claim), and that no competitor name appears anywhere in the rendered markup. **Chromium
+50/50**, including the phone baseline. Rendered at phone width and read by eye, which is
+what the copy change actually needed.
+
+**The harness is now committed** as `scripts/harness_colors.js`, alongside
+`harness_showcase.js` / `harness_walk.js` / `harness_detect.js`, and takes an optional
+path argument so it can be pointed at an older tree. It is negative-controlled: run
+against the build-619 artifact it goes **RED, 7 of the ten 620 assertions failing**. The
+three that stay green there are the absence checks — no competitor named, no proof block
+on Oakridge or Supreme — which were already true at 619 and are meant to stay true.
+
+**The Supreme assertion was missing and was added rather than documented around.** The
+harness checked Oakridge for an absent proof block but not Supreme, while the docs claimed
+both. Supreme is the line where it matters most, not least: it is the cheap one, so a
+borrowed SureNail figure on it would be the most profitable false claim on the screen.
+
+## Build 621 — Duration's wind warranty goes conditional 130/160 (7 Aug 2026)
+
+Theo forwarded an **Owens Corning Sales notice** (Sara Fagerman, Senior Area Sales Manager,
+Mid-South / Cincinnati–Dayton). It closes the question 619 opened and 620 left open, and it
+answers all three things that were asked for rather than just the number:
+
+- **It is a WARRANTY figure** — *"the wind warranty on Duration® Series shingles will
+  increase from 130 MPH to 160 MPH"*. So it upgrades the existing wind row; it is not a
+  second row, which is what it would have had to be if 160 were a rating.
+- **Effective 1 August 2026** — already live.
+- **The condition:** at least **four** Owens Corning Total Protection Roofing System®
+  components — Hip & Ridge, OC Underlayment (Titanium® / RhinoRoof®), Starter shingles on
+  **both eaves and rakes**, and either an Ice & Water Barrier or a Ventilation product.
+  Anything short of that still carries **130**.
+
+Duration and Duration FLEX now read **130/160** on the tile, carry the full condition in an
+`.occ-note2` caution under the spec table, and draw a hatched extension on the comparison
+board exactly like Oakridge's.
+
+### The two conditional lines mean OPPOSITE things, and the code now enforces it
+
+This is the part worth remembering. Oakridge's 110/130 is a **caution** — quote the lower
+number unless the roof was actually built that way. Duration's 130/160 is an **upsell** —
+quote the higher only when the full system went on. Identical geometry, opposite sales
+meaning. The condition text moved from a hardcoded string in the renderer onto each line's
+own `chart.extNote`, and both harnesses assert Duration never prints Oakridge's six-nail
+wording. Before this build there was exactly one string, and it said "6 nails and OC
+starter".
+
+### The three latent defects predicted at 620 were all real
+
+Fixed in the same build, because shipping the number alone would have broken the board and
+**two of the three fail silently**:
+
+1. `pct()` divided by a hardcoded **130**. 160 computes to 123% inside an `overflow:hidden`
+   track, so Duration would have rendered **pinned at full width** — reading as *maxed*
+   rather than as *biggest*. The scale is now computed from the largest figure any line
+   carries.
+2. `.cmp-ext` positions at `left:pct(mph)`. At a 130 base that is `left:100%`, so the
+   hatched band lands outside the track and is **clipped away entirely** — the one visual
+   that marks a condition, gone, with no error anywhere. Chromium now measures that every
+   extension paints at least 8px inside its own track; jsdom checks `left + width <= 100`.
+3. The caption was Oakridge's condition, hardcoded. See above.
+
+### ⚠️ What this build deliberately does NOT say
+
+**That Cardinal installs the full Total Protection system as standard.** The screen states
+the condition; whether Cardinal meets it is Theo's to say, and saying it for him would be
+inventing a warranty claim in front of a homeowner. If he confirms it, the blurb can lead
+with it and it is the strongest line on the page — *your warranty is 160 because of how we
+build it, not 130.*
+
+**And the source is a sales notice, not the warranty document.** The revised documents were
+due on OwensCorning.com on 3 Aug 2026 and the sandbox cannot reach that site. Both `source`
+strings name the notice explicitly. Replace it when the published document is in hand.
+
+### Four gate failures, all of them the test being wrong rather than the app
+
+Worth recording because the ratio keeps holding. The patch aborted twice before writing —
+`{ key:'` occurs **zero** times in the file (entries open the brace on their own line), so
+every slice ran to the end of the module and Duration's "slice" contained FLEX's wind row;
+and the glance anchors were written with `·` when Duration and FLEX store a **literal**
+`·` while Supreme stores the escape. The file mixes both forms. Then `'ext:' not in supreme`
+failed against a correct file because Supreme has always carried `ext:null`, and a recon
+regex missed it because `.` does not cross newlines. In the harness, `/130 MPH/` on the
+Duration tile stopped matching once the tile correctly read `130/160 MPH`.
+
+The one that mattered: the chart-extraction regex bounded at `{0,2600}` returned **nothing**
+because 619's note grew Duration's entry to 2897 bytes — and it was caught only because the
+new assertion prints what the extractor captured. An extractor that swallows everything
+returns empty, and empty looks like a legitimate zero.
+
+### The phone baseline moved for the second time, and again on evidence
+
+Duration and FLEX legitimately read "130/160 MPH" on the phone now. A tile-by-tile diff
+proved **exactly two of five** tiles changed and that Oakridge, Supreme and Discontinued
+were byte-identical, and only then was the baseline re-approved — through a separate
+`approve_baseline.js`, not by the harness regenerating its own expected value.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 620 → 621. **jsdom 104/104**, negative-
+controlled: **5 assertions fail against the 620 artifact**. **Chromium 53/53**, including
+the geometry proof that each hatched extension actually paints inside its track — the thing
+jsdom structurally cannot see and the reason defect 2 would otherwise have shipped. Board,
+Duration line page and phone all rendered and read by eye.
