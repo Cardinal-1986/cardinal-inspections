@@ -9780,3 +9780,64 @@ write. `count('text-size-adjust:100%')` matched **my own explanatory comment**;
 so did a tightened regex, because the comment contained `html{text-size-adjust:100%}`.
 Fixed by anchoring the assertion to the declaration's newline-and-indent — and by
 not writing declaration-shaped text in a comment that assertions scan.
+
+---
+
+## Build 626 — the shingle name fits, and the third guess was replaced by a measurement (8 Aug 2026)
+
+**625's theory was wrong, and this entry exists so nobody re-derives it.**
+
+625 scoped `text-size-adjust:100%` to `#cr-occ` on the theory that iOS font
+boosting was inflating the Colors line title. Theo, after it: **"Fine in Roofs
+and Compare, only slightly off in Feature."** That answer kills the theory —
+`text-size-adjust` sits on `#cr-occ` and disables boosting for the whole subtree,
+so all three styles would behave identically. It also showed 625 *helped*: the
+photo was six stacked lines; "slightly off" is not.
+
+### What three renders missed, and why
+
+**Every previous look at this screen was at 1194px**, the one width where the
+longest product name happens to fit. Measured there, all three styles were
+identical — `.occ-title` 747px, the `<b>` 747×31px on one line at 26px — so the
+render kept saying "fine" and I kept theorising about iOS.
+
+**At 820px on build 625 it reproduces in plain Chromium:** 26px in a 373px box,
+**2 lines, 62px tall**. The bug was never iOS-only. It was width-only, and the
+harness was never narrow.
+
+Also ruled out on the way, so nobody re-checks: **no global
+`overflow-wrap`/`word-break` rule can inherit into `#cr-occ`** — all 17 in the
+file are scoped to unrelated classes.
+
+### The fix — make it impossible rather than diagnose it
+
+1. **`font-size:clamp(19px, 2.1vw, 26px)`** in the ≥820px rule. The name shrinks
+   to fit instead of breaking. At 1194px that is ~25px, visually where it already
+   sat; it only gives ground when the header is genuinely tight.
+2. **`word-break:keep-all`** on `.occ-title b`. CSS Text 3 applies it to all
+   scripts, not just CJK, so a break can never land inside a word. The stored name
+   is `'TruDefinition® Duration® FLEX®'` with **no space before the mark**, so the
+   orphaned ® in the photograph could only have come from an intra-word break.
+
+**Deliberately NOT done:** `.occ-styles` was left at `flex:0 0 auto`. Letting the
+switcher shrink would squeeze the pills horizontally, and **592 pushed every
+showroom control to ≥44px**. The clamp solves the fit without touching a settled
+accessibility decision. 623's `font-weight:700` on the pressed pill — which does
+widen the strip and take width from the title — is likewise left alone, because
+it is what carries the pressed state to the 3.0 contrast floor.
+
+### `harness_occhead.js` — the check nobody had
+
+42 assertions across **five widths × three styles**, on the line page. It is the
+gate that would have caught this the first time.
+
+⚠️ **My first draft of it asserted the wrong thing** and failed 6 of 30 — all at
+390px, where the name wraps at a **space** into two lines. That is ordinary,
+long-standing, and on the one surface with a pixel baseline. **The test was
+wrong, not the app.** The invariant is *"no break inside a word, at every
+width"* plus *"one line where the header has room (≥820px)"*. **Do not tighten it
+back to "always one line"** — that would force phone typography Theo already
+approved.
+
+Negative-controlled against the 625 artifact, where it fails 20 assertions
+including the real 820px two-line wrap.
