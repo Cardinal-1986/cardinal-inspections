@@ -9780,3 +9780,131 @@ write. `count('text-size-adjust:100%')` matched **my own explanatory comment**;
 so did a tightened regex, because the comment contained `html{text-size-adjust:100%}`.
 Fixed by anchoring the assertion to the declaration's newline-and-indent — and by
 not writing declaration-shaped text in a comment that assertions scan.
+
+---
+
+## Build 626 — the shingle name fits, and the third guess was replaced by a measurement (8 Aug 2026)
+
+**625's theory was wrong, and this entry exists so nobody re-derives it.**
+
+625 scoped `text-size-adjust:100%` to `#cr-occ` on the theory that iOS font
+boosting was inflating the Colors line title. Theo, after it: **"Fine in Roofs
+and Compare, only slightly off in Feature."** That answer kills the theory —
+`text-size-adjust` sits on `#cr-occ` and disables boosting for the whole subtree,
+so all three styles would behave identically. It also showed 625 *helped*: the
+photo was six stacked lines; "slightly off" is not.
+
+### What three renders missed, and why
+
+**Every previous look at this screen was at 1194px**, the one width where the
+longest product name happens to fit. Measured there, all three styles were
+identical — `.occ-title` 747px, the `<b>` 747×31px on one line at 26px — so the
+render kept saying "fine" and I kept theorising about iOS.
+
+**At 820px on build 625 it reproduces in plain Chromium:** 26px in a 373px box,
+**2 lines, 62px tall**. The bug was never iOS-only. It was width-only, and the
+harness was never narrow.
+
+Also ruled out on the way, so nobody re-checks: **no global
+`overflow-wrap`/`word-break` rule can inherit into `#cr-occ`** — all 17 in the
+file are scoped to unrelated classes.
+
+### The fix — make it impossible rather than diagnose it
+
+1. **`font-size:clamp(19px, 2.1vw, 26px)`** in the ≥820px rule. The name shrinks
+   to fit instead of breaking. At 1194px that is ~25px, visually where it already
+   sat; it only gives ground when the header is genuinely tight.
+2. **`word-break:keep-all`** on `.occ-title b`. CSS Text 3 applies it to all
+   scripts, not just CJK, so a break can never land inside a word. The stored name
+   is `'TruDefinition® Duration® FLEX®'` with **no space before the mark**, so the
+   orphaned ® in the photograph could only have come from an intra-word break.
+
+**Deliberately NOT done:** `.occ-styles` was left at `flex:0 0 auto`. Letting the
+switcher shrink would squeeze the pills horizontally, and **592 pushed every
+showroom control to ≥44px**. The clamp solves the fit without touching a settled
+accessibility decision. 623's `font-weight:700` on the pressed pill — which does
+widen the strip and take width from the title — is likewise left alone, because
+it is what carries the pressed state to the 3.0 contrast floor.
+
+### `harness_occhead.js` — the check nobody had
+
+42 assertions across **five widths × three styles**, on the line page. It is the
+gate that would have caught this the first time.
+
+⚠️ **My first draft of it asserted the wrong thing** and failed 6 of 30 — all at
+390px, where the name wraps at a **space** into two lines. That is ordinary,
+long-standing, and on the one surface with a pixel baseline. **The test was
+wrong, not the app.** The invariant is *"no break inside a word, at every
+width"* plus *"one line where the header has room (≥820px)"*. **Do not tighten it
+back to "always one line"** — that would force phone typography Theo already
+approved.
+
+Negative-controlled against the 625 artifact, where it fails 20 assertions
+including the real 820px two-line wrap.
+
+---
+
+## Build 627 — tick photos in Studio, build the pair in the Showcase (8 Aug 2026)
+
+Theo, looking at 218 photos for 1227 Styer Dr: *"Any way you could make
+checkboxes on these photos so they can be transferred to another section to
+where I could pick which photos I use for before and afters and bad vs good
+installs?"* Offered four shapes, he chose the **holding tray**.
+
+### The prime doctrine earned its keep again
+
+**The checkbox-and-assign-roles UI he asked for already existed.** The Showcase's
+pair-builder already tracks `chosen{}` (which photos are ticked) and `roles{}`
+(which is before, which is after — or bad vs Cardinal-standard), and already
+writes the pair. It had simply never been pointed at the archive.
+
+So 627 adds a **tray and a source**, and the pair-builder is untouched.
+`promoteToPair`, `drawJobPicker` and `takeJobPhotos` are each still defined
+exactly once — harness-asserted, because a second picker was the obvious move
+and would have been the wrong one.
+
+### Measured before designing (production)
+
+**60,503 photos · 756 sites · avg 1138×1033 · 166 kB · 0 `-d` renditions ·
+0 rows with coordinates.**
+
+The 166 kB and missing `-d` turn out not to matter, and that is worth recording:
+`promoteToPair` runs picks through `jobFiles()` → `shotBlob()` → a real `File`,
+and the save path puts that through `putPhoto()`, which writes **both**
+renditions at proper showcase paths. A tray photo lands exactly like an uploaded
+one, so **build 624's `srcD()` work is not undermined** — asserted.
+
+### ⚠️ The fence this feature runs straight at
+
+`studio_photos` carries **`lat` and `lon`**. All 60,503 rows are NULL today, so
+the EXIF/GPS exclusion in `CONTRACTOR_VISION_SUITE.md` is holding *in practice*
+— but this is the **first path from the archive toward a client-facing screen**,
+which makes it exactly the seam where a `{...r}` spread would carry coordinates
+across.
+
+**`studio_tray` has no coordinate columns, and `toggleTray` names its six fields
+explicitly.** Both are asserted, in the schema and at both ends of the code.
+Do not "complete" the row.
+
+### Why a table and not a Set
+
+Theo ticks on the iPad and may build the pair on the desktop. A tray that does
+not survive that is not a tray. `storage_path` is the primary key, so a double
+tick upserts rather than duplicating. `studio_tray.sql` is **APPLIED and
+verified** — 0 rows, RLS on, one `is_cardinal_admin()` policy, **0 coordinate
+columns**.
+
+### Corrections to the doc set
+
+**`CLAUDE.md` says Studio "never writes". That was already untrue** before this
+build — `studio.html` carries an `update()` that archives a whole site — and it
+is more untrue now. Fix the sentence rather than the code.
+
+### `harness_tray.js` — 23 assertions, negative-controlled (16 fail on 626)
+
+⚠️ **My own comment failed my own assertion, for the third time tonight.**
+`!/\blat\b|\blon\b/` over `toggleTray` matched the comment *explaining why
+coordinates are excluded*. Fixed by scoping to the `upsert()` **object literal**
+— the prose is not the payload. Same trap as 626's `text-size-adjust` count and
+624's `esc(srcD(...))` count. **When asserting a thing is absent, assert over
+code, never over a slice that contains your reasoning about it.**

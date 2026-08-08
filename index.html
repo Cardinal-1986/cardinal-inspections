@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 625 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 627 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35195,6 +35195,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:627, d:'2026-08-08', t:'Tick photos in Studio, build the pair here',
+    s:'Cardinal Studio now has a tick box on every photo. Tick the ones worth using \u2014 anywhere in the archive, across as many sites as you like \u2014 and they collect in a tray. Then in the Showcase, Add a pair now offers the Studio tray alongside your jobs: open it, choose which photograph is the before and which is the after (or which install is the bad one and which is ours), and it builds the pair exactly as it always has. The tray survives closing the tab and moving between the iPad and the desktop, so you can gather on one and build on the other. Photos smaller than the screen needs are marked, so nothing soft ends up in front of a customer by accident.' },
+  { b:626, d:'2026-08-08', t:'The shingle name fits on one line',
+    s:'On the iPad the long product names \u2014 TruDefinition Duration FLEX especially \u2014 were breaking across several lines with the little registered-trademark marks stranded on their own. The name now shrinks slightly to fit the space instead of breaking, and a word can no longer be split part-way through, so the mark always stays with the word it belongs to. On a wide screen nothing changes; it only gives ground when the space is genuinely tight.' },
   { b:625, d:'2026-08-08', t:'The showroom stops looking like the office',
     s:'Signing in at showroom.cardinalroster.com used to hand you the presentation front door with the whole CRM built around it \u2014 the site header, the nav strip, the Add-project button. On a tablet you are holding out to a homeowner, that is the office showing through. It is gone now: on the showroom address you get the front door and nothing else, and the ordinary app address is completely unchanged. Also fixed a thing only an iPad could show us \u2014 Safari quietly enlarges text in narrow columns, which was blowing the shingle name on the Colors page up to about double its size and breaking it across six lines with the registered-trademark marks stranded on their own. The page now renders at the size it was designed at.' },
   { b:624, d:'2026-08-08', t:'The Showcase got quick',
@@ -58595,6 +58599,52 @@ async function loadProjects(){
      resumed function throws on a null and nobody ever sees it. 579's, not new. */
   if(!jobPick) return;
   jobPick.projects = (r && !r.error && r.data) ? r.data : [];
+  /* 627: the Studio tray enters as a PSEUDO-PROJECT rather than as a second
+     mode. Everything downstream — chosen{}, roles{}, promoteToPair,
+     takeJobPhotos — already works on a list of photos with a storage_path, so
+     pointing the existing picker at a different source costs two seams and
+     leaves the pair-builder itself untouched. A whole second picker was the
+     obvious move and would have been the wrong one; this file has a standing
+     rule about one pipeline per concept. */
+  try{
+    var tc = await cl.from('studio_tray').select('storage_path', { count:'exact', head:true });
+    var tn = (tc && tc.count) || 0;
+    if(!jobPick) return;
+    if(tn) jobPick.projects.unshift({ id:TRAY_ID, name:'\u2605 Studio tray',
+      address: tn + ' photo' + (tn === 1 ? '' : 's') + ' picked in Studio' });
+  }catch(_){ /* a missing tray must never break the ordinary job picker */ }
+  if(!jobPick) return;
+  drawJobPicker();
+}
+
+/* 627: not a real project id, and deliberately unlike one. */
+var TRAY_ID = '__studio_tray__';
+
+/* The tray's rows are shaped into what the picker already expects — a
+   storage_path plus a signed _thumb. `width` rides along so the picker can warn
+   about a photo too small for the compare card: the archive averages 1138px and
+   only 40% of it clears 1400, while the card wants 1224 device pixels at 2x. */
+async function loadTrayPhotos(){
+  var cl = sb();
+  if(!cl || !jobPick) return;
+  var r = await cl.from('studio_tray')
+                  .select('storage_path,project_address,project_name,width,height,added_at')
+                  .order('added_at', { ascending:false }).limit(300);
+  if(!jobPick) return;
+  var rows = (r && !r.error && r.data) ? r.data : [];
+  var paths = rows.map(function(p){ return p.storage_path; }).filter(Boolean);
+  var map = {};
+  if(paths.length && typeof window.signedPhotoMap === 'function'){
+    try{ map = await window.signedPhotoMap(paths, 3600) || {}; }catch(_){}
+  }
+  rows.forEach(function(p){
+    p.id = p.storage_path;
+    p._thumb = map[p.storage_path] || '';
+    p._small = (p.width || 0) < 1400;
+  });
+  if(!jobPick) return;   /* the signing round trip is the one worth cancelling */
+  jobPick.photos = rows.filter(function(p){ return p._thumb; });
+  jobPick.busy = false;
   drawJobPicker();
 }
 
@@ -58603,6 +58653,11 @@ async function loadJobPhotos(pid){
   if(!cl || !jobPick) return;
   jobPick.projectId = pid; jobPick.photos = []; jobPick.chosen = {}; jobPick.roles = {};
   jobPick.busy = true;
+  /* 627: the tray is not in `projects`, so the row-keeping below would find
+     nothing and jobPick.project stays null — which is correct. A tray photo has
+     no job address to prefill, and inventing one would be worse than leaving
+     the field empty for Theo to type. */
+  if(pid === TRAY_ID){ await loadTrayPhotos(); return; }
   /* 591: keep the row. The pair prefill needs projects.address and the id, and
      both are already sitting in jobPick.projects — refetching would be a second
      source of truth for the same fact. */
@@ -59741,7 +59796,14 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
 }
 #cr-occ .occ-back:active{background:var(--occ-raise,#12151A)}
 #cr-occ .occ-title{flex:1 1 auto; min-width:0}
-#cr-occ .occ-title b{display:block; font:700 19px var(--occ-sans,sans-serif); letter-spacing:-.02em}
+#cr-occ .occ-title b{display:block; font:700 19px var(--occ-sans,sans-serif); letter-spacing:-.02em;
+  /* 626: forbid a break INSIDE a word. The line name is stored
+     'TruDefinition\00ae Duration\00ae FLEX\00ae' with no space before the mark,
+     so an ordinary wrap cannot strand it — yet Theo's iPad put every \00ae on
+     its own line. Chromium will not reproduce that at any width tested, which
+     points at a Safari line-breaking difference around U+00AE that cannot be
+     observed from here. keep-all closes it regardless of the cause. */
+  word-break:keep-all}
 #cr-occ .occ-title span{display:block; font-size:13px; color:var(--occ-dim,#9AA3AE)}
 
 #cr-occ .occ-filters{
@@ -59967,7 +60029,7 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
 
 @media (min-width:820px){
   #cr-occ .occ-head{padding:16px 40px}
-  #cr-occ .occ-title b{font-size:26px}
+  #cr-occ .occ-title b{font-size:clamp(19px, 2.1vw, 26px)}   /* 626: fits rather than wraps */
   #cr-occ .occ-title span{font-size:15px}
 
   #cr-occ .occ-styles{
