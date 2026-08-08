@@ -3,7 +3,7 @@
 Single-file PWA (`index.html`) for **Cardinal Roofing & Renovations, LLC**, Dayton OH.
 Live at **app.cardinalroster.com** · Vercel deploys on merge to `main` · Supabase backend (DB, storage, auth, RLS) · serverless functions in `/api/` (ESM — `api/package.json` has `"type":"module"`, handlers are `export default async function handler`).
 
-Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–631" below before touching any of them.
+Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–632" below before touching any of them.
 
 For app work the file you want is still lowercase **`index.html`** at the repo root. **106** inline `<script>` blocks, **118** `<style>` blocks, **3** external CDN scripts, **0** module scripts. No build step, no bundler, no framework, no test runner.
 
@@ -39,15 +39,15 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 *The one thing that has never changed: **`cardinal_build_log.md` has no entry for roughly 468–542**, because much of that span was built through a different tool that never read this folder.*
 
-**As of 8 Aug 2026 the app is at build 631.** Current state:
+**As of 8 Aug 2026 the app is at build 632.** Current state:
 
 | File | Worked forward to | Trust it? |
 |---|---|---|
-| `cardinal_build_log.md` | **631** — last entry is the photo optimiser (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
+| `cardinal_build_log.md` | **632** — last entry is the Studio archive wiring fix (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
 | `FEATURES.md` | **628 in content**; the header stamp now says 627 and no stamp inside it outranks the section it sits in | ✅ 624–628 appended at the bottom 8 Aug |
 | `OPEN_ITEMS.md` | **628** | ✅ brought forward 8 Aug — the bundle-splitting verdict, the deferred `showroom.html`, what 627 left open, and the 628 question deliberately left unanswered |
 | `HANDOFF.md` | **3 Aug session** (the book; 574–593 the same day) | ⚠️ **now five days and ~34 builds behind** — nothing from 595–627 is in it. Still newest-session-first, and still the fastest read for *why* something was done. Known staleness: it records PR #108 as open; that landed on `main` long ago |
-| `BUG_CLASSES.md` | **631** (class 15) | ✅ classes 12–13 at 573, 14 at 595, **15 at 630 — assertions that match their own prose or hardcode a count; EIGHT false reds in one session, two of them after the class was written**; the rest is 427-era |
+| `BUG_CLASSES.md` | **632** (classes 15–16) | ✅ classes 12–13 at 573, 14 at 595, **15 at 630 (assertions matching their own prose or a hardcoded count — TEN false reds in one session) and 16 at 632 (a control that renders but is never wired: the Studio Archive button did nothing from 614 to 632)**; the rest is 427-era |
 | `OC_BRAND_RULES.md` | **8 Aug** | ✅ newest doc in the set — read it before any OC or Pink Panther mark |
 | `CONTRACTOR_VISION_SUITE.md` | **572** | ✅ an audit, not a status page — its fences are still the fences |
 | `START_HERE.md` | 467 | ⚠️ historical — it now says itself to read `CLAUDE.md` first |
@@ -473,7 +473,7 @@ A sixteen-spread interactive pop-up book of how a roof gets built, client-facing
 
 ---
 
-## Builds 595–631 — the span this file had no narrative for
+## Builds 595–632 — the span this file had no narrative for
 
 *Written 8 Aug 2026. `cardinal_build_log.md` has an entry for every build here; this is the orientation map, not the record. Nothing below is new work — it is 33 builds that shipped while this document said 594.*
 

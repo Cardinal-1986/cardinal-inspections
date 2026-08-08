@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 631 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 632 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35195,6 +35195,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:632, d:'2026-08-08', t:'Archive site actually archives, and you can bin several at once',
+    s:'The Archive site button in Cardinal Studio did nothing at all. It was not a permissions problem and not a wrong address \u2014 on the showroom web address the button was drawn but never connected to anything, so tapping it was the same as tapping the background. Nothing had ever been archived. It works now, on every address, and so do Restore site and the Time/Sites/Places/People/Bin switcher, which were dead in the same way. On top of that: a tick box beside each street in the left list. Tick as many as you like and one button appears \u2014 Archive 6 sites \u2014 so a run of dead jobs goes in one action instead of six. It tells you how many sites and how many photographs moved. And if an archive ever matches nothing it now says so, instead of quietly looking like it worked.' },
   { b:631, d:'2026-08-08', t:'Optimise the photos that were already up',
     s:'The last update shrank every new photo on the way up, but it could not do anything about the ones already there \u2014 Onyx Black alone was carrying about forty megabytes across ten photographs, which is why it took so long to appear. There is now an Optimise button on the colour page. Tap it once and it re-saves those older photographs at a sensible size, in place, without you deleting or re-adding anything. It tells you how much it saved, it only shows up when there is actually something to fix, and it disappears when there is not. Safe to tap twice.' },
   { b:630, d:'2026-08-08', t:'Colour photos: many at once, and they open full screen',

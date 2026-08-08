@@ -1123,8 +1123,8 @@ dialog is not evidence the credential changed.
 
 ## 15. An assertion that matches your own comment about the code (8 Aug 2026, build 630)
 
-**Cost: EIGHT false reds in a single session, on code that was correct every time —
-and two of them landed after this entry was written.**
+**Cost: TEN false reds in a single session, on code that was correct every time —
+and four of them landed after this entry was written.**
 
 Every one of these went RED against a working build, and every one was the
 test's fault:
@@ -1139,6 +1139,8 @@ test's fault:
 | 630 | `openLens` not used here | the comment *"not the Showcase's openLens"* |
 | 631 | `upsert:true` appears twice | the comment *"upsert:true and the SAME path…"* |
 | 631 | `contentType:'image/jpeg'` **=== 2** | nothing — 631 legitimately added two more uploads |
+| 632 | `return;` **=== 2** in `setupMode` | all ELEVEN nested listener guards — the slice was the whole function |
+| 632 | no `from('studio_photos')` in `bulkArchive` | neighbouring functions — the slice ran to the next landmark, not the closing brace |
 
 ⚠️ **The last two happened AFTER this class was written, in the same hour.** The
 `=== 2` was hardcoded into `harness_ourroofs.js` by the build that created this
@@ -1161,15 +1163,62 @@ find the thing it is proving absent.
    `openLens` is also English. Same for `multiple` — the attribute
    `accept="image/*" multiple` versus the word in *"a multiple with no basis is
    a marketing number"*, which is prose about SureNail and cost a seventh red.
-3. **Never assert by proximity.** `/stu-tick[\s\S]{0,700}stopPropagation/`
+3. **Brace-match the function; never slice to the next landmark.** 632 lost
+   two rounds to this — a slice to `function esc(` swept up neighbours that
+   legitimately query the same table. Walk the braces.
+4. **Never assert by proximity.** `/stu-tick[\s\S]{0,700}stopPropagation/`
    passed at 627 by luck and broke at 628 because a class name moved a thousand
    lines. Slice the function or the listener and assert inside it.
-4. **Prefer self-computing counts.** 628 hardcoded `paintTick` calls `=== 4`;
+5. **Prefer self-computing counts.** 628 hardcoded `paintTick` calls `=== 4`;
    629 added a fifth caller and the correct build failed. Assert the *intent* —
    one definition, N callers — not a number read off an already-patched tree.
-5. **Reword the comment as well as the test** when the identifier is the thing
+6. **Reword the comment as well as the test** when the identifier is the thing
    under assertion. Belt and braces; 626 and 629 both did this.
 
 **When a gate goes red, the first question is still "is the test wrong or the
 app wrong?"** On this project it has been the test roughly half the time, and
 in this class it was the test **six times out of six**.
+
+
+---
+
+## 16. A control that is rendered but never wired (8 Aug 2026, build 632)
+
+**Cost: the Archive site button did nothing from build 614 until 632, and
+nobody could tell.** `archived_at` was NULL on all 60,503 rows — the feature had
+never once run.
+
+`setupMode()` in `studio.html` returned inside its `isShowroomHost()` branch,
+**before any `addEventListener`**. On a `showroom.` host, three controls were
+drawn and dead: Archive site, Restore site, and the lens switcher.
+
+### Why it was invisible for so long
+
+- **The button still renders.** `paintSiteActions()` decides visibility from
+  state alone; it has no idea whether anything is listening.
+- **Everything around it worked.** Site selection is wired in `renderRail()`,
+  not `setupMode()`, so the rail behaved normally. The default lens is already
+  `'site'`, so the dead lens switcher was never reached for.
+- **It only broke on one host.** On `studio.` the same code wires correctly.
+- **The write is silent when it does run.** See class 15's cousin below: an
+  update matching zero rows *succeeds*, so even a wired-but-wrong version would
+  have looked identical.
+
+### The rules
+
+1. **An early return above a wiring block disables every listener below it.**
+   When a guard clause and one-time setup share a function, put the wiring
+   first, or make the guard affect only what it is actually guarding.
+2. **Rendering and wiring must be checked separately.** "The button is on
+   screen" proves nothing about whether it does anything.
+3. **A regex cannot see this.** The code exists, reads correctly, and never
+   runs. The only assertion that catches it EXECUTES the function and asks the
+   DOM whether a listener attached — `harness_studiobin.js` does this under both
+   hostnames, and its negative control reproduces the symptom exactly.
+4. **Suspect the host gate when a bug is device- or URL-shaped.** "It works for
+   me but not for him" on the same build is a strong hint that a host or width
+   branch is involved. Two other bugs this session (626 width-only, 625 the
+   vision gate) had the same shape.
+5. **When an action reports success but nothing changes, check the row count.**
+   `.select('id')` and treat empty as failure — the rule `removeOurs()` and now
+   `setArchived()` both follow.

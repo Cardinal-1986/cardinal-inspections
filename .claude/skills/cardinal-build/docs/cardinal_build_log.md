@@ -10259,3 +10259,108 @@ credentials). The reasoning about blob-URL sameness is sound and the trap is
 documented, but **Theo tapping the button is the real gate.** If it reports
 failures, the first thing to check is whether the signed-URL fetch is being
 refused by CORS.
+
+---
+
+## Build 632 — the Archive button was never wired, and binning several sites (8 Aug 2026)
+
+`studio.html`. No SQL. `index.html` gets the stamp and a `CHANGELOG` entry only.
+
+**Theo: *"The archive site button does not work."*** Then, on the rail:
+*"Also the bin several would be nice."*
+
+### ⚠ TWO THEORIES WERE TESTED AND BOTH WERE WRONG — do not re-chase them
+
+- ~~The rail address does not match `project_address`.~~ **It matches exactly.**
+  Every site's rail count equals what `.eq('project_address', …)` would select,
+  checked against production for the twelve largest sites.
+- ~~RLS refuses the update.~~ One policy, `FOR ALL`, `is_cardinal_admin()`. He
+  SELECTs 60,503 rows *through that same policy*, so it evaluates true. Ordinary
+  table, RLS on, **0 triggers**, `archived_at` writable and never generated.
+
+Both were plausible and both were wrong. Recording them because the third guess
+is the one that cost nothing to check and should have been first.
+
+### The actual cause
+
+`setupMode()` **returned inside its `isShowroomHost()` branch, before any
+`addEventListener` ran.** On a `showroom.` host three controls were drawn and
+dead: **Archive site, Restore site, and the lens switcher.**
+
+Every piece of evidence agrees, and none of it required a browser:
+
+| Evidence | Conclusion |
+|---|---|
+| the Work/Private toggle is **absent** from his screenshot | the showroom branch ran — hiding that toggle is what it does |
+| the default lens is already `'site'` (line 620) | he reaches Sites without the dead lens button, so its deadness was invisible |
+| the facet click is wired in `renderRail()`, not `setupMode()` | selecting a site still worked, which made the button look like the only broken thing |
+| `paintSiteActions()` shows the button from state alone | it renders whether or not anything is listening |
+| `archived_at` NULL on **all 60,503 rows**, `max(archived_at)` NULL | the click had never once reached the database |
+
+625's intent is kept exactly — the mode is still forced and the toggle still
+hidden ("hiding a button is not the same as closing the door"). Only the early
+`return` is gone, and it was **protecting nothing**: Studio is admin-gated twice
+over, by its own sign-in and by `is_cardinal_admin()`, so no customer can reach
+those controls on any host. All the return did was disable three of Theo's tools.
+
+### ⚠ A second, independent defect — the reason it presented as silence
+
+`setArchived()` checked only `res.error`. **A PostgREST update matching zero rows
+SUCCEEDS**, so a no-op was indistinguishable from success. It now `.select('id')`s
+and reports an empty result by name — the rule `removeOurs()` in `cr-occ-script`
+already follows. Fixed independently of the wiring, because the next silent
+failure would otherwise be invisible the same way.
+
+### Bin several sites
+
+A tick beside each street in the rail, then one **Archive N sites** button.
+
+- **Reuses `setArchived()` per address** rather than one wide
+  `.in('project_address', […])`. Fewer round trips, but a second code path for
+  the same act — and the per-site call has to be right regardless. `quiet`
+  suppresses the per-site repaint so the bulk run paints once at the end.
+- ⚠️ **The tick is a `<span role="checkbox">`, not a button.** The rail row is
+  *already* a `<button>`, and a nested button is invalid markup that engines
+  resolve by dropping one — it would have been silently unclickable on some.
+- Ticking `stopPropagation()`s so it does not also *select* the site, which
+  would reload the grid for that address mid-tick.
+- The button only appears in Sites and Bin, follows the lens for direction, and
+  a selection is cleared on a lens change so it cannot mean the opposite thing.
+
+### Gates — and the one that actually matters
+
+`check_build.py` green and negative-controlled · `studio.html` parsed separately
+· **`harness_studiobin.js`, 28 assertions**, plus the six existing harnesses
+(ourroofs 46 · tray 57 · showcase 124 · colors 110 · occhead 42 · vision 23).
+
+**The static assertions are the weaker half.** This bug shipped past everything a
+regex could check, because the code existed and simply never ran. So the harness
+**EXECUTES the shipped `setupMode` under both hostnames** and asks the DOM
+whether a listener is attached.
+
+**The negative control reproduces Theo's symptom exactly.** Against 631:
+
+```
+studio.cardinalroster.com    Archive/Restore/lens  WIRED
+showroom.cardinalroster.com  Archive/Restore/lens  NOT WIRED   ← the bug
+```
+
+Same code, different host — which is why it looked like a permissions or data
+problem and was neither.
+
+⚠️ Two of this build's own assertions failed on correct code first (class 15,
+instances nine and ten): a `return;` count over the whole of `setupMode` caught
+all eleven nested listener guards, and a `bulk` slice that ran to the next
+landmark swept up neighbouring functions that legitimately query
+`studio_photos`. Both fixed by **brace-matching the function** instead of
+slicing to a marker. The jsdom stubs also threw twice until every element
+`setupMode` touches was enumerated **by reading the function** rather than
+guessed — a missing stub reads exactly like an app failure.
+
+### Still not built, deliberately
+
+**Per-photo junk.** His question also floated *"individually checking"*.
+`archived_at` is already per-row so it needs **no migration** — a **Junk** chip
+in the 629 arm row would do it, writing `archived_at` instead of `studio_tray`.
+Left out because he answered "bin several", and because one unverified surface
+at a time is the rule. Offer it once 632 is confirmed working.

@@ -297,6 +297,23 @@
   .atl-rail[data-lens="site"] .atl-f,
   .atl-rail[data-lens="bin"]  .atl-f{ align-items:flex-start; }
   .atl-f .ftx{ min-width:0; flex:1; text-align:left; }
+  /* 632: the site tick. Sits before the colour dot so the column of boxes reads
+     as one edge down the rail. 22px with generous padding around it — it is a
+     thumb target on the iPad, not a mouse target. */
+  .atl-tick{
+    flex:0 0 auto; width:16px; height:16px; margin-right:2px; border-radius:4px;
+    border:1.5px solid var(--stu-ink2,#5b636b); background:transparent;
+    position:relative; cursor:pointer;
+  }
+  .atl-tick::after{
+    content:''; position:absolute; left:4px; top:1px; width:5px; height:9px;
+    border:solid transparent; border-width:0 2px 2px 0; transform:rotate(42deg);
+  }
+  .atl-tick.on{ background:var(--stu-red,#c4141f); border-color:var(--stu-red,#c4141f); }
+  .atl-tick.on::after{ border-color:#fff; }
+  .atl-f:hover .atl-tick{ border-color:var(--stu-ink,#e6eaee); }
+  /* The hit area is bigger than the box, without moving the box. */
+  .atl-tick::before{ content:''; position:absolute; inset:-9px -7px; }
   .atl-f .fst{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .atl-f .fsub{
     display:block; margin-top:1px; font-size:11.5px; color:var(--stu-ink2);
@@ -547,6 +564,7 @@
       <span class="atl-chip time" id="atlChip" style="display:none"></span>
       <button type="button" class="stu-act warn" id="stuArchive" style="display:none">Archive site</button>
       <button type="button" class="stu-act go" id="stuRestore" style="display:none">Restore site</button>
+      <button type="button" class="stu-act warn" id="stuBulk" hidden></button>
       <div class="spacer"></div>
       <div class="atl-view" id="atlView" style="display:none">
         <button type="button" data-view="grid" class="on">Grid</button>
@@ -660,16 +678,28 @@
   function setupMode(){
     var box = document.getElementById('stuMode');
     if(!box) return;
+
+    /* 632 — THE BUG. This branch used to `return` here, BEFORE any listener was
+       attached, so on a showroom host Archive site, Restore site and the lens
+       switcher were rendered but dead. Theo: "The archive site button does not
+       work." archived_at was NULL on all 60,503 rows: the click had never once
+       reached the database.
+
+       625's intent is kept exactly — the mode is still forced and the toggle is
+       still hidden ("hiding a button is not the same as closing the door"). What
+       is removed is the early return, because it was protecting nothing: Studio
+       is admin-gated twice over, by its own sign-in and by is_cardinal_admin()
+       RLS, so a customer cannot reach these controls on any host. All it did was
+       disable three of Theo's own tools. */
     if(isShowroomHost()){
-      // Force the mode back as well as hiding the control — hiding a button
-      // is not the same as closing the door.
       st.mode = 'work';
       st.sel = null; st.view = 'grid';
       box.style.display = 'none';
       applyMode();
-      return;
+    }else{
+      box.style.display = 'flex';
     }
-    box.style.display = 'flex';
+
     if(modeWired) return;
     modeWired = true;
 
@@ -679,8 +709,13 @@
       var l = b.getAttribute('data-lens');
       if(l === st.lens) return;
       st.lens = l; st.sel = null;
-      renderRail(); paintChip(); paintSiteActions(); resetAndLoad();
+      /* 632: a selection made in Sites must not survive into Bin, where the
+         same button would mean the opposite thing. */
+      clearPicked();
+      renderRail(); paintChip(); paintSiteActions(); paintBulk(); resetAndLoad();
     });
+
+    document.getElementById('stuBulk').addEventListener('click', bulkArchive);
 
     document.getElementById('stuArchive').addEventListener('click', function(){
       if(!st.sel) return;
@@ -780,7 +815,10 @@
   // is that pruning 200 dead inspections should feel cheap. Nothing is
   // destroyed; Restore is one tap away in the Bin, and CompanyCam still holds
   // the originals regardless.
-  async function setArchived(address, on){
+  /* 632: `quiet` suppresses the per-site repaint so a bulk run can do it once
+     at the end. The single-site path is unchanged in behaviour. */
+  async function setArchived(address, on, quiet){
+    if(!sb || !address) return false;
     var a = document.getElementById('stuArchive');
     var r = document.getElementById('stuRestore');
     [a, r].forEach(function(b){ if(b) b.disabled = true; });
@@ -791,16 +829,86 @@
       .update({ archived_at: on ? new Date().toISOString() : null })
       .eq('project_address', address);
     upd = on ? upd.is('archived_at', null) : upd.not('archived_at', 'is', null);
-    var res = await upd;
+    /* 632: SELECT the ids back. An update matching ZERO rows SUCCEEDS in
+       PostgREST, so checking only res.error made a no-op indistinguishable from
+       a success — which is precisely how the unwired button presented itself as
+       "nothing happens" instead of as an error. Same rule removeOurs() already
+       follows in cr-occ-script: count the rows, do not trust the absence of an
+       error. */
+    var res = await upd.select('id');
     [a, r].forEach(function(b){ if(b) b.disabled = false; });
     if(res.error){
-      setState((on ? 'Could not archive' : 'Could not restore') + ' — ' + res.error.message);
+      setState((on ? 'Could not archive' : 'Could not restore') + ' \u2014 ' + res.error.message);
       return false;
     }
+    if(!res.data || !res.data.length){
+      setState((on ? 'Nothing was archived' : 'Nothing was restored') +
+               ' \u2014 no photos matched ' + address);
+      return false;
+    }
+    if(quiet) return res.data.length;
     st.sel = null;
+    setState('');
     await loadFacets();
     renderRail(); paintChip(); paintSiteActions(); resetAndLoad();
     return true;
+  }
+
+  /* ── 632: bin several sites at once ──────────────────────────────────────
+     Theo: "the bin several would be nice" — a checkbox next to the street in
+     the rail, then one button.
+
+     It reuses setArchived() per address rather than issuing one wide update.
+     A single `.in('project_address', [...])` would be fewer round trips, but it
+     would be a SECOND code path for the same act, and this file has a standing
+     rule about one pipeline per concept — the per-site call is the one that has
+     to be right anyway. */
+  var PICKED = new Set();
+
+  function clearPicked(){
+    if(!PICKED.size) return;
+    PICKED.clear();
+    paintBulk();
+  }
+
+  function paintBulk(){
+    var b = document.getElementById('stuBulk');
+    if(!b) return;
+    var n = PICKED.size;
+    /* Only in the two lenses where a row IS a site. In Time/Places/People a row
+       is a month or a person, and "archive 3 people" is meaningless. */
+    var okLens = (st.lens === 'site' || st.lens === 'bin');
+    b.hidden = !n || !okLens || st.mode === 'private';
+    if(b.hidden) return;
+    b.className = 'stu-act ' + (st.lens === 'bin' ? 'go' : 'warn');
+    b.textContent = (st.lens === 'bin' ? 'Restore ' : 'Archive ') + n +
+                    ' site' + (n === 1 ? '' : 's');
+  }
+
+  async function bulkArchive(){
+    var b = document.getElementById('stuBulk');
+    var list = Array.prototype.slice.call(PICKED);
+    if(!list.length) return;
+    var on = (st.lens !== 'bin');
+    if(b) b.disabled = true;
+    var done = 0, moved = 0, failed = 0;
+    for(var i = 0; i < list.length; i++){
+      if(b) b.textContent = (on ? 'Archiving ' : 'Restoring ') + (i + 1) + ' of ' + list.length + '\u2026';
+      var n = await setArchived(list[i], on, true);
+      if(n){ done++; moved += n; } else { failed++; }
+    }
+    PICKED.clear();
+    st.sel = null;
+    if(b) b.disabled = false;
+    /* One repaint at the end rather than one per site — that is what `quiet`
+       above is for. */
+    await loadFacets();
+    renderRail(); paintChip(); paintSiteActions(); paintBulk(); resetAndLoad();
+    setState(done
+      ? (done + ' site' + (done === 1 ? '' : 's') + (on ? ' archived' : ' restored') +
+         ' \u2014 ' + moved + ' photo' + (moved === 1 ? '' : 's') +
+         (failed ? ' \u00b7 ' + failed + ' failed' : ''))
+      : 'Nothing changed');
   }
 
   document.getElementById('atlTheme').addEventListener('click', function(){
@@ -1406,7 +1514,14 @@
       btn.className = 'atl-f' + (st.sel === it.v ? ' on' : '');
       if(st.lens === 'site' || st.lens === 'bin'){
         var sub = jobLine(it.v, it.job);
-        btn.innerHTML = '<span class="k"></span><span class="ftx">' +
+        /* 632: a SPAN, not a button. The row itself is already a <button>, and
+           a button inside a button is invalid markup that browsers resolve by
+           dropping one of them — which would have made this tick silently
+           unclickable on some engines. role+aria carry the semantics instead. */
+        btn.innerHTML = '<span class="atl-tick' + (PICKED.has(it.v) ? ' on' : '') +
+            '" role="checkbox" aria-checked="' + (PICKED.has(it.v) ? 'true' : 'false') +
+            '" aria-label="Select this site"></span>' +
+          '<span class="k"></span><span class="ftx">' +
           '<span class="fst">' + esc(streetOf(it.v)) + '</span>' +
           (sub ? '<span class="fsub">' + esc(sub) + '</span>' : '') +
           '</span><span class="n">' + it.n + '</span>';
@@ -1414,7 +1529,19 @@
         btn.innerHTML = '<span class="k"></span>' + esc(label) +
                         '<span class="n">' + it.n + '</span>';
       }
-      btn.addEventListener('click', function(){
+      btn.addEventListener('click', function(ev){
+        /* 632: ticking must NOT also select the site — selecting reloads the
+           whole grid for that address, which is the opposite of what you want
+           while ticking six of them. Same rule the photo tick follows. */
+        var t = ev.target && ev.target.closest ? ev.target.closest('.atl-tick') : null;
+        if(t){
+          ev.stopPropagation();
+          if(PICKED.has(it.v)) PICKED.delete(it.v); else PICKED.add(it.v);
+          t.classList.toggle('on', PICKED.has(it.v));
+          t.setAttribute('aria-checked', PICKED.has(it.v) ? 'true' : 'false');
+          paintBulk();
+          return;
+        }
         st.sel = (st.sel === it.v) ? null : it.v;
         renderRail(); paintChip(); paintSiteActions(); resetAndLoad();
       });

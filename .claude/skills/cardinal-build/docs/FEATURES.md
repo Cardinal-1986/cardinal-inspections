@@ -2149,3 +2149,46 @@ shape would carry the state as well as colour. Every gate was green. The picture
 a bar in a checkbox is the universal *indeterminate / excluded* mark, so green → amber read as
 **un-picking** the photo. The tick now means PICKED in both and the **chip shape** carries the pile.
 Theo's eyes remain the gate on anything visual.
+
+
+---
+
+## 632 — the Archive button was never wired, and binning several sites (8 Aug 2026)
+
+**Theo: *"The archive site button does not work."*** It genuinely did nothing, from
+**614 until 632** — `archived_at` was NULL on all 60,503 rows.
+
+⚠️ **Two theories were tested and both were WRONG — do not re-chase them.** The rail
+address matches `project_address` exactly, and RLS is fine (one `FOR ALL` policy with
+`is_cardinal_admin()`; he SELECTs 60,503 rows through it).
+
+**The cause:** `setupMode()` returned inside its `isShowroomHost()` branch **before any
+`addEventListener`**. On a `showroom.` host, three controls were drawn and dead —
+**Archive site, Restore site, and the lens switcher**. It was invisible because the
+button still renders (`paintSiteActions()` reads state, not listeners), site selection is
+wired elsewhere (`renderRail()`), and the default lens is already `'site'`.
+
+625's intent is kept — the mode is still forced, the toggle still hidden. Only the early
+return went, and it protected nothing: Studio is admin-gated by its own sign-in *and* by
+RLS on every host.
+
+**A second, independent defect:** `setArchived()` checked only `res.error`, and a
+PostgREST update matching **zero rows succeeds** — so a no-op looked exactly like a
+success. It now `.select('id')`s and names what matched nothing.
+
+### Bin several sites
+
+A tick beside each street in the rail, then one **Archive N sites** button. It **reuses
+`setArchived()` per address** rather than a second bulk query; `quiet` suppresses the
+per-site repaint so it paints once at the end. ⚠️ The tick is a **`<span role="checkbox">`,
+not a button** — the rail row is already a `<button>` and a nested one is invalid markup
+that engines resolve by dropping one. Ticking `stopPropagation()`s so it does not also
+select the site.
+
+`harness_studiobin.js` — **28 assertions**, and the ones that matter **execute** the
+shipped `setupMode` under both hostnames and ask the DOM whether a listener attached.
+Its negative control reproduces the symptom exactly: on 631, `studio.` wires and
+`showroom.` does not.
+
+**Not built, deliberately:** per-photo junk. `archived_at` is already per-row so it needs
+no migration — a **Junk** chip in the 629 arm row would do it. Ask before building.
