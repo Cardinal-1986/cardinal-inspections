@@ -10259,3 +10259,328 @@ credentials). The reasoning about blob-URL sameness is sound and the trap is
 documented, but **Theo tapping the button is the real gate.** If it reports
 failures, the first thing to check is whether the signed-URL fetch is being
 refused by CORS.
+
+---
+
+## Build 632 — the Archive button was never wired, and binning several sites (8 Aug 2026)
+
+`studio.html`. No SQL. `index.html` gets the stamp and a `CHANGELOG` entry only.
+
+**Theo: *"The archive site button does not work."*** Then, on the rail:
+*"Also the bin several would be nice."*
+
+### ⚠ TWO THEORIES WERE TESTED AND BOTH WERE WRONG — do not re-chase them
+
+- ~~The rail address does not match `project_address`.~~ **It matches exactly.**
+  Every site's rail count equals what `.eq('project_address', …)` would select,
+  checked against production for the twelve largest sites.
+- ~~RLS refuses the update.~~ One policy, `FOR ALL`, `is_cardinal_admin()`. He
+  SELECTs 60,503 rows *through that same policy*, so it evaluates true. Ordinary
+  table, RLS on, **0 triggers**, `archived_at` writable and never generated.
+
+Both were plausible and both were wrong. Recording them because the third guess
+is the one that cost nothing to check and should have been first.
+
+### The actual cause
+
+`setupMode()` **returned inside its `isShowroomHost()` branch, before any
+`addEventListener` ran.** On a `showroom.` host three controls were drawn and
+dead: **Archive site, Restore site, and the lens switcher.**
+
+Every piece of evidence agrees, and none of it required a browser:
+
+| Evidence | Conclusion |
+|---|---|
+| the Work/Private toggle is **absent** from his screenshot | the showroom branch ran — hiding that toggle is what it does |
+| the default lens is already `'site'` (line 620) | he reaches Sites without the dead lens button, so its deadness was invisible |
+| the facet click is wired in `renderRail()`, not `setupMode()` | selecting a site still worked, which made the button look like the only broken thing |
+| `paintSiteActions()` shows the button from state alone | it renders whether or not anything is listening |
+| `archived_at` NULL on **all 60,503 rows**, `max(archived_at)` NULL | the click had never once reached the database |
+
+625's intent is kept exactly — the mode is still forced and the toggle still
+hidden ("hiding a button is not the same as closing the door"). Only the early
+`return` is gone, and it was **protecting nothing**: Studio is admin-gated twice
+over, by its own sign-in and by `is_cardinal_admin()`, so no customer can reach
+those controls on any host. All the return did was disable three of Theo's tools.
+
+### ⚠ A second, independent defect — the reason it presented as silence
+
+`setArchived()` checked only `res.error`. **A PostgREST update matching zero rows
+SUCCEEDS**, so a no-op was indistinguishable from success. It now `.select('id')`s
+and reports an empty result by name — the rule `removeOurs()` in `cr-occ-script`
+already follows. Fixed independently of the wiring, because the next silent
+failure would otherwise be invisible the same way.
+
+### Bin several sites
+
+A tick beside each street in the rail, then one **Archive N sites** button.
+
+- **Reuses `setArchived()` per address** rather than one wide
+  `.in('project_address', […])`. Fewer round trips, but a second code path for
+  the same act — and the per-site call has to be right regardless. `quiet`
+  suppresses the per-site repaint so the bulk run paints once at the end.
+- ⚠️ **The tick is a `<span role="checkbox">`, not a button.** The rail row is
+  *already* a `<button>`, and a nested button is invalid markup that engines
+  resolve by dropping one — it would have been silently unclickable on some.
+- Ticking `stopPropagation()`s so it does not also *select* the site, which
+  would reload the grid for that address mid-tick.
+- The button only appears in Sites and Bin, follows the lens for direction, and
+  a selection is cleared on a lens change so it cannot mean the opposite thing.
+
+### Gates — and the one that actually matters
+
+`check_build.py` green and negative-controlled · `studio.html` parsed separately
+· **`harness_studiobin.js`, 28 assertions**, plus the six existing harnesses
+(ourroofs 46 · tray 57 · showcase 124 · colors 110 · occhead 42 · vision 23).
+
+**The static assertions are the weaker half.** This bug shipped past everything a
+regex could check, because the code existed and simply never ran. So the harness
+**EXECUTES the shipped `setupMode` under both hostnames** and asks the DOM
+whether a listener is attached.
+
+**The negative control reproduces Theo's symptom exactly.** Against 631:
+
+```
+studio.cardinalroster.com    Archive/Restore/lens  WIRED
+showroom.cardinalroster.com  Archive/Restore/lens  NOT WIRED   ← the bug
+```
+
+Same code, different host — which is why it looked like a permissions or data
+problem and was neither.
+
+⚠️ Two of this build's own assertions failed on correct code first (class 15,
+instances nine and ten): a `return;` count over the whole of `setupMode` caught
+all eleven nested listener guards, and a `bulk` slice that ran to the next
+landmark swept up neighbouring functions that legitimately query
+`studio_photos`. Both fixed by **brace-matching the function** instead of
+slicing to a marker. The jsdom stubs also threw twice until every element
+`setupMode` touches was enumerated **by reading the function** rather than
+guessed — a missing stub reads exactly like an app failure.
+
+### Still not built, deliberately
+
+**Per-photo junk.** His question also floated *"individually checking"*.
+`archived_at` is already per-row so it needs **no migration** — a **Junk** chip
+in the 629 arm row would do it, writing `archived_at` instead of `studio_tray`.
+Left out because he answered "bin several", and because one unverified surface
+at a time is the rule. Offer it once 632 is confirmed working.
+
+---
+
+## Build 633 — a thumbnail sized for the tile, and the white boxes go dark (8 Aug 2026)
+
+Theo, after running 631's Optimise on the Onyx Black page: *"39.9 down to 29mb
+after optimizing 9"* — and then, having reloaded it: **"Page still feels heavy,
+white boxes then loads slow"**.
+
+Three things, and only one of them was the one I had predicted.
+
+### 1. The grid was loading an image 4.8× too big
+
+Measured, not reasoned:
+
+| | | |
+|---|---:|---:|
+| `oc-colors/onyx-black` display copies | 37 files | **23.94 MB** (663 kB avg) |
+| `oc-colors/black-sable` display copies | 26 files | **17.31 MB** (682 kB avg) |
+| full originals | 63 files | 224.74 MB |
+
+And the tile, measured in Chromium at his 1194px iPad width: the grid resolves
+to **four 269.5px columns**, so about 540 device pixels at 2×. It was being
+handed `DISP` — 1400px, sized for the Showcase's compare card at 612 CSS px.
+**One rendition was serving two surfaces that differ by nearly 5× in area.**
+
+`THUMB = { max: 640, q: 0.80 }` joins `FULL` and `DISP` in `cr-show-script`,
+declared beside them so nobody adds a fourth somewhere else. 640 rather than 800
+is a deliberate trade: the iPad in the report gets 2.4 device pixels per CSS
+pixel, a phone (one column, ~358 CSS px at 3×) gets about 1.8 — softer than
+native, and far lighter. Tapping a tile still opens the full-resolution
+original, which is where sharpness actually matters.
+
+The grid signs **three** paths per photo in the same single round trip and falls
+back `-t → -d → original`, because three eras of photograph share this screen:
+pre-630 (original only), 630–632 (original + `-d`) and 633+ (original + `-t`).
+That order is the feature — without it every existing photograph vanishes.
+
+New uploads write **full + thumb**. `DISP` is deliberately no longer written
+here: nothing on this screen shows a 1400px image, and a rendition no consumer
+reads is upload time and storage spent on nothing.
+
+### 2. The Optimise button was doing the wrong work — my error, named as mine
+
+631 re-encoded the **original** to 3840px. A drone photo is already about that
+size, so it was a re-encode, not a resize — which is exactly where *"39.9 down
+to 29mb"* came from. I had told him to expect roughly 40 MB down to 2.4 MB.
+**That prediction was wrong, and it was checkable before I made it.**
+
+633 makes the button do the thing the page actually pays for:
+
+- the test moved from "has no `-d`" to **"has no `-t`"**;
+- it re-encodes **from the display copy** where one exists — 663 kB fetched per
+  photo instead of 3.5 MB, which on an iPad over a phone connection is the
+  difference between usable and not;
+- it writes **only the thumbnail**. The original is never touched, so a failed
+  run now costs nothing at all;
+- the toast reports **what the page will load next time**, not what the stored
+  originals weigh. 631's number was true and told him nothing.
+
+⚠️ At 632 the button is correctly **hidden** — every one of those 63 photographs
+already has its `-d` twin, so there was nothing left for it to do. 633 gives it
+a new job and it will reappear with all 63 to process.
+
+### 3. The white boxes had their own cause, and it is one line
+
+623 set `--occ-card:#FFFFFF`. The `<figure>` paints from it and shows through
+until the image arrives — so an ordinary lazy load **flashed white on a
+near-black page** and read as something broken. The image element now carries
+the dark ground itself.
+
+Confirmed in Chromium rather than asserted: at 632 the tile image computes
+`rgba(0,0,0,0)` over a `rgb(255,255,255)` figure; at 633 it computes
+`rgb(35,31,32)`. The side-by-side render reproduces his description exactly — a
+stack of glaring white boxes on the left, tiles that read as *loading* on the
+right. **347 green assertions could not have told me that.**
+
+### A latent bug found on the way, fixed in the build that would have triggered it
+
+`signMany()` keyed its result **by array position**. True since 630, and it got
+away with it because both requested paths usually existed. 633 asks for a third
+that is absent on **every** photograph the first time it runs — so a compacted
+response would have handed each photo its neighbour's picture. Silent, wrong,
+and on a client-facing screen. It now keys by the path the API answered for,
+falling back to position.
+
+### One place checks the image toolchain
+
+The first pass gave the optimiser its own copy of the
+`window.CardinalShowcase` / `renditions.thumb` guard, because it wants the
+thumbnail alone and composing it from `shrinkFor()` would re-encode a 3840px
+copy per photo only to discard it. Two copies of an availability check is the
+"second mechanism beside the first" smell this project keeps paying for.
+`shrinkOne(file, name)` is now the one place; `shrinkFor` composes it, the
+optimiser calls it directly. Asserted: `window.CardinalShowcase` appears
+**exactly once** in the module.
+
+### Verification
+
+`check_build.py` green, negative-controlled. `harness_ourroofs.js` grew to
+**58 assertions**, green on 633 and **27 red on 632** — every changed behaviour
+named. All eight harnesses green (633 assertions across the set, which is a
+coincidence worth nothing). Plus the Chromium render above, and the geometry
+measured rather than read off the stylesheet.
+
+⚠️ **Theo's eyes remain the gate**, and the honest limit is this: the *projected*
+page weight is arithmetic from the pixel-area ratio, not a measurement. The
+toast will report the real figure the first time he runs Optimise. What is
+measured is what the page loads **today** — 23.94 MB of display copies for Onyx
+Black alone.
+
+---
+
+## Build 634 — the Community Partners crash, and stack traces out of the job thread (8 Aug 2026)
+
+Theo photographed job 1002 (Zulema Hall — Habitat for Humanity) with a raw
+JavaScript stack trace sitting in the Thread as if it were a job note, and asked
+for it to be fixed. **That screenshot is two separate defects**, and only one of
+them is the thing you can see.
+
+### A. The directory was broken for the sales reps, every time
+
+`renderDirectory()` in `cr-cpartners-script` renders Edit/Archive behind a
+condition and then wired them unconditionally:
+
+```js
+'<div class="btns">' + (p.__masked ? '' : '<button data-act="edit">…')
+…
+row.querySelector('[data-act="edit"]').onclick = …     // null on a masked row
+```
+
+`maskIfConfidential()` masks a partner flagged `confidential` for anyone outside
+`ADMIN_EMAILS` / `PROD_EMAILS`. So theo@, joan@, curtis@ and scottie@ never saw
+it, and **the sales reps were exactly the people who crashed.**
+
+Confirmed against production rather than inferred:
+
+| Evidence | Conclusion |
+|---|---|
+| **2 of 10** `community_partners` are `confidential` and un-archived | it fired every time, not in an edge case |
+| the reporter is **clarkie022@gmail.com** | in neither privileged list — a rep |
+| the stack names `openEditor(get(id))`, one argument | the **partners** directory, not the properties one (`openEditor(partnerId, get(id))`) |
+
+⚠️ **The damage was bigger than one toast.** The throw is inside a `forEach`, so
+it aborted the loop: the masked row **and every row after it** got no handlers
+at all. Edit and Archive were dead on a list that still looked perfectly normal.
+`openDirectory` is `async`, which is why it surfaced as an unhandledrejection.
+
+**The fix already existed ten lines above.** `renderProspects()` does exactly
+`var b = …; if(b) b.onclick = …`. Copied the neighbour — no new mechanism, and
+nothing about what renders changed.
+
+⚠️ **The PROPERTIES `renderDirectory` (~31469) was deliberately left unguarded.**
+Its two buttons are unconditional, so a guard could not fix anything today and
+would convert a future regression from a loud crash into a **silently dead
+button — class 16, the worse failure.** The guard belongs in the partners
+directory precisely *because* the absence there is deliberate and known. Both
+halves of that are asserted, so nobody "finishes the job" later.
+
+### B. A stack trace should never be a job note
+
+`capture()` stamps every client error with `project_id: currentProjectId()` —
+whatever job happened to be open when it fired. The Community client page loads
+`audit_events` for the project with **no type filter** and renders `e.detail` as
+the entry **title**, so a 412-character stack trace became a bold thread card.
+
+The error had nothing to do with Zulema Hall; he simply had that job open when
+the partner directory blew up.
+
+Fixed at the consumer, not the source. `var THREAD_SKIP = { client_error:1 };`
+shaped like `IC_SKIP` / `PIPE_SKIP`, and applied **at load**, deliberately:
+`events.length` feeds `key()`, so filtering at render would let an incoming
+error change the key and repaint the whole page.
+
+- **The project stamp stays** — knowing which job was open is useful in a bug report.
+- **Nothing is deleted.** The Team audit log reads the same table and *should*
+  keep showing every error. No SQL in this build.
+- Checked: that log is the only other consumer, so this was the only thread affected.
+
+Of the five `client_error` rows in production, **one** carries a `project_id` —
+the one he photographed. The other four are Theo's own, all `project_id` NULL
+(three are the pre-630 10 MB upload refusal, already fixed).
+
+### ⚠️ The anchor trap, caught by the tool rather than by me
+
+The first run aborted: `var LABEL = {` matched **twice**. There are **three** in
+the file and the **two community ones are byte-identical** — CLAUDE.md warns
+about `LABEL` finding the *insurance* map, but the real trap is worse than the
+documented one. My assertion was correctly scoped to the `cr-cc` block and said
+1; `pl.sub()` splices **file-wide** and found 2.
+
+**Scoping the assertion is not enough if the substitution is global.** Re-anchored
+on `async function load(pid){` + its first line, which is unique file-wide, and
+which also puts the constant beside its only consumer. Nothing was written — the
+gate did its job.
+
+### Verification
+
+`check_build.py` green, negative-controlled. **New `harness_partners.js` — 23
+assertions**, and the ones that matter **execute the shipped
+`maskIfConfidential` / `list` / `get` / `renderDirectory`** under jsdom as both
+an admin and a rep, then ask the DOM what actually got wired.
+
+**The negative control reproduces his symptom exactly.** Against 633:
+
+```
+admin: renderDirectory completes without throwing   PASS
+rep  : renderDirectory completes without throwing   FAIL
+       → Cannot set properties of null (setting 'onclick')
+```
+
+Same code, different user — which is why it looked like a data problem and was
+not. (Safari words the same throw as *"null is not an object"*.) 5 red on 633,
+23 green on 634. All ten harnesses green.
+
+It also asserts the masking still holds — that the confidential name is **not in
+the DOM** for a rep — so a "fix" that simply rendered the buttons could not pass.
+
+⚠️ **Theo's eyes are still the gate**: a rep opening Community Partners is the
+real test, and I cannot sign in as one.

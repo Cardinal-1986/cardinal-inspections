@@ -3,7 +3,7 @@
 Single-file PWA (`index.html`) for **Cardinal Roofing & Renovations, LLC**, Dayton OH.
 Live at **app.cardinalroster.com** · Vercel deploys on merge to `main` · Supabase backend (DB, storage, auth, RLS) · serverless functions in `/api/` (ESM — `api/package.json` has `"type":"module"`, handlers are `export default async function handler`).
 
-Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–631" below before touching any of them.
+Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–634" below before touching any of them.
 
 For app work the file you want is still lowercase **`index.html`** at the repo root. **106** inline `<script>` blocks, **118** `<style>` blocks, **3** external CDN scripts, **0** module scripts. No build step, no bundler, no framework, no test runner.
 
@@ -39,20 +39,20 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 *The one thing that has never changed: **`cardinal_build_log.md` has no entry for roughly 468–542**, because much of that span was built through a different tool that never read this folder.*
 
-**As of 8 Aug 2026 the app is at build 631.** Current state:
+**As of 8 Aug 2026 the app is at build 634.** Current state:
 
 | File | Worked forward to | Trust it? |
 |---|---|---|
-| `cardinal_build_log.md` | **631** — last entry is the photo optimiser (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
-| `FEATURES.md` | **628 in content**; the header stamp now says 627 and no stamp inside it outranks the section it sits in | ✅ 624–628 appended at the bottom 8 Aug |
-| `OPEN_ITEMS.md` | **628** | ✅ brought forward 8 Aug — the bundle-splitting verdict, the deferred `showroom.html`, what 627 left open, and the 628 question deliberately left unanswered |
-| `HANDOFF.md` | **3 Aug session** (the book; 574–593 the same day) | ⚠️ **now five days and ~34 builds behind** — nothing from 595–627 is in it. Still newest-session-first, and still the fastest read for *why* something was done. Known staleness: it records PR #108 as open; that landed on `main` long ago |
-| `BUG_CLASSES.md` | **631** (class 15) | ✅ classes 12–13 at 573, 14 at 595, **15 at 630 — assertions that match their own prose or hardcode a count; EIGHT false reds in one session, two of them after the class was written**; the rest is 427-era |
+| `cardinal_build_log.md` | **634** — last entry is the partners crash (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
+| `FEATURES.md` | **634 in content**; the header stamp still says 627 and no stamp inside it outranks the section it sits in | ✅ 624–633 appended at the bottom 8 Aug |
+| `OPEN_ITEMS.md` | **634** | ✅ brought forward 8 Aug — what 633 closed, the three things still needing Theo's eyes, and the `next_build.py` under-report |
+| `HANDOFF.md` | **3 Aug session** (the book; 574–593 the same day) | ⚠️ **now five days and ~39 builds behind** — nothing from 595–633 is in it. Still newest-session-first, and still the fastest read for *why* something was done. Known staleness: it records PR #108 as open; that landed on `main` long ago |
+| `BUG_CLASSES.md` | **632** (classes 15–16) | ✅ classes 12–13 at 573, 14 at 595, **15 at 630 (assertions matching their own prose or a hardcoded count — TEN false reds in one session) and 16 at 632 (a control that renders but is never wired: the Studio Archive button did nothing from 614 to 632)**; the rest is 427-era |
 | `OC_BRAND_RULES.md` | **8 Aug** | ✅ newest doc in the set — read it before any OC or Pink Panther mark |
 | `CONTRACTOR_VISION_SUITE.md` | **572** | ✅ an audit, not a status page — its fences are still the fences |
 | `START_HERE.md` | 467 | ⚠️ historical — it now says itself to read `CLAUDE.md` first |
 
-**The span with no narrative record anywhere in the doc set is still roughly 468–542.** 595–627 *is* recorded — in `cardinal_build_log.md`, in the in-app `CHANGELOG`, and (since 8 Aug) in this file and `FEATURES.md`.
+**The span with no narrative record anywhere in the doc set is still roughly 468–542.** 595–633 *is* recorded — in `cardinal_build_log.md`, in the in-app `CHANGELOG`, and (since 8 Aug) in this file and `FEATURES.md`.
 
 **Every doc states the build it was worked forward to.** That stamp stays true forever; the table above says whether it is still current. This file has twice been found making a *stale claim about staleness* — asserting `START_HERE.md` said 427 when it said 467, then calling the whole set two sessions behind after most of it had been updated. **Re-check the table before repeating any claim in it, including this one.**
 
@@ -107,7 +107,7 @@ No build pipeline, no module folder, no pristine base. **All work is direct surg
 - **`function money(` is defined ELEVEN times** — one per module, with three different signatures. A file-wide `count == 1` assertion on it is meaningless. Build 556 changed only the `cr-crew-script` one (to `money(n, cents)`) by slicing the block first and asserting the other ten survived. Same class as the `.single()` and `LABEL` traps below.
 - **Grep the whole file for every occurrence of a selector before patching it.** `.acthead` had three definitions; the winner was ~39,000 lines after the two found first.
 
-Helpers: `.claude/skills/cardinal-build/scripts/patch_lib.py` (atomic temp-then-rename writes) and `check_build.py` (the mechanical gate ladder). Also `jslex_count.py` (the lexer — see below), `next_build.py` (**asks the remote which build number is safe** — run it before the first patch and again before opening a PR; see the build-label section), `contrast.py`, `selector_audit.py`, `token_pairs.py`, and the Vision-era harnesses (`harness_showcase.js`, `harness_walk.js`, `harness_detect.js`, `render_showcase.js`, `audit_viewports.js`, and `harness_colors.js` for OC Colors — 93 assertions, takes an optional path argument so it can be pointed at an older tree).
+Helpers: `.claude/skills/cardinal-build/scripts/patch_lib.py` (atomic temp-then-rename writes) and `check_build.py` (the mechanical gate ladder). Also `jslex_count.py` (the lexer — see below), `next_build.py` (**asks the remote which build number is safe** — run it before the first patch and again before opening a PR; see the build-label section, and ⚠️ note it **under-reports**: it reads the app stamp from `origin/main` only and its entry regex still expects the pre-574 changelog shape, so cross-check with a per-branch stamp sweep), `measure_counts.py` (re-derives every number in the table below), `contrast.py`, `selector_audit.py`, `token_pairs.py`, and the harnesses — `harness_showcase.js` (124), `harness_walk.js` (152), `harness_detect.js` (39), `harness_vision.js` (23), `harness_colors.js` (110), `harness_occhead.js` (42), `harness_ourroofs.js` (58), `harness_tray.js` (57), `harness_studiobin.js` (28), `harness_partners.js` (23), plus `render_showcase.js` and `audit_viewports.js`. **Every one takes an optional path argument so it can be pointed at the previous build as a negative control** — a harness that has never been run red proves nothing.
 
 ---
 
@@ -127,7 +127,7 @@ Worked example — counting the global scroll lock:
 
 Both shortcuts were wrong, in opposite directions. **Use the lexer** — `scripts/jslex_count.py`, which reports CODE / strings / comments / regex-literal hits separately and tells you what a bare regex would have said.
 
-**Scope the assertion to the function, not the file.** The single most repeated error here. `await signedPhotoMap(...)` appears twice — `publish()` and `openPreview()` — so asserting `1` file-wide fails a correct patch. Extract the function by brace-matching, then assert against that slice. Same trap with `LABEL`: a file-wide regex finds the *insurance* map (`'Lead':'Claim Filed'`) when you meant community (`'Lead':'Bid Requested'`).
+**Scope the assertion to the function, not the file.** The single most repeated error here. `await signedPhotoMap(...)` appears twice — `publish()` and `openPreview()` — so asserting `1` file-wide fails a correct patch. Extract the function by brace-matching, then assert against that slice. Same trap with `LABEL`, and **it is worse than this file used to say**: there are **three** `var LABEL` maps, and the **two community ones are byte-identical** — so an anchor that reads correctly still matches twice. A file-wide regex also finds the *insurance* map (`'Lead':'Claim Filed'`) when you meant community (`'Lead':'Bid Requested'`). **634 hit this**: the assertion was correctly scoped to the `cr-cc` block and said 1, but `pl.sub()` splices **file-wide** and found 2. **Scoping the assertion is not enough if the substitution is global** — anchor on something unique in the whole file, or slice, patch and re-join the block.
 
 **Prefer self-computing assertions** over hardcoded numbers, which are usually read off an already-patched tree:
 
@@ -473,7 +473,7 @@ A sixteen-spread interactive pop-up book of how a roof gets built, client-facing
 
 ---
 
-## Builds 595–631 — the span this file had no narrative for
+## Builds 595–634 — the span this file had no narrative for
 
 *Written 8 Aug 2026. `cardinal_build_log.md` has an entry for every build here; this is the orientation map, not the record. Nothing below is new work — it is 33 builds that shipped while this document said 594.*
 
@@ -491,6 +491,12 @@ A sixteen-spread interactive pop-up book of how a roof gets built, client-facing
 | **625** | The **vision host gate** — on `showroom.*` (or `?vision=1`) the CRM chrome does not render at all. `isVisionHost()` hangs off `window.CardinalLanding`. **Option 1 of three**, Theo's pick; Option 3 (a real separate `showroom.html`) is recorded in `OPEN_ITEMS.md` with its triggers | landing / `showMain()` |
 | **626** | The shingle name fits: `word-break:keep-all` + `clamp(19px,2.1vw,26px)`. **The bug was width-only, never iOS-only** — three renders said "fine" because all three were at 1194px | `cr-occ-styles` |
 | **627** | **The Studio tray** — see below | `studio.html` + `cr-show-script` |
+| **628–629** | The tray splits into **bins** (showcase / workmanship, then colours + a `trade` facet) and the Hall of Fame gains the picker it never had — see below | `studio.html` + `cr-show-script` |
+| **630** | The colour photo grid, fixed in six places at once from one iPad session: **multi-select, the 10 MB refusal, delete, full screen + swipe, the caption, the scroll** | `cr-occ-*` |
+| **631** | **Optimise** — repair in place what 630 could only fix on the way up. ⚠️ It re-encoded the ORIGINAL, which a drone photo already is; that is why it only managed "39.9 down to 29mb". Superseded by 633 | `cr-occ-script` |
+| **632** | **The Studio Archive button had never been wired** — `setupMode()` returned inside its `isShowroomHost()` branch before any listener attached, so three controls were drawn and dead and `archived_at` was NULL on all 60,503 rows. Plus **bin several sites** | `studio.html` |
+| **634** | **Two defects in one screenshot**: Community Partners threw for every non-admin (a masked row renders no buttons and they were wired unconditionally — the throw killed that row *and every row after it*), and client error reports were rendering as job-thread notes (`THREAD_SKIP`) | `cr-cpartners-script` + `cr-cc-script` |
+| **633** | **`THUMB` (640px)** — the colour grid tile is 269.5 CSS px and was being handed the 1400px `DISP` copy. Optimise now writes only the missing thumbnail, from the display copy, and never touches the original. See below | `cr-show-script` + `cr-occ-*` |
 
 ### OC Colors (615–623) — `cr-occ-styles` + `cr-occ-script`, `window.CardinalColors`
 
@@ -530,6 +536,20 @@ Theo: *"Is there a bin for keep for before and after, a bin for damage vs how we
 ⚠️ **`openWorkForm()` had no `pending = null`**, which was harmless only because `saveWork` ignored `pending`. Making it prefer carried files would have silently uploaded the *previous* pick's photographs — the exact failure the 591 comment on `openForm` describes. Both forms now clear unconditionally.
 
 ⚠️ **A Chromium render caught what 347 green assertions could not.** The amber state first drew a **bar** so shape would carry the state alongside colour — but a bar in a checkbox is the universal *indeterminate / excluded* mark, so green → amber read as **un-picking**. The tick now means PICKED in both and the chip *shape* carries the pile. Gates prove structure; pictures catch meaning.
+
+---
+
+### 633 — one rendition cannot serve two surfaces
+
+`cr-show-script` declares **three** renditions together: `FULL` 3840px/q0.92 (the lightbox and the Showcase pinch), `DISP` 1400px/q0.82 (the Showcase compare card, 612 CSS px) and **`THUMB` 640px/q0.80 (the Colors grid tile)**. The tile is **269.5 CSS px — measured in Chromium at Theo's 1194px iPad width**, and it had been loading `DISP`: 4.8× the pixels it can show, at a measured 663 kB average across 63 photographs.
+
+⚠️ **The fallback order is load-bearing, not defensive.** Three eras of photograph share that grid — pre-630 (original only), 630–632 (original + `-d`), 633+ (original + `-t`) — so it signs all three paths in ONE round trip and takes `-t → -d → original`. Remove the fallback and every existing photograph vanishes.
+
+**Optimise changed job at 633, and 631's version was my error.** 631 re-encoded the original to 3840px, which a drone photo already is — a re-encode, not a resize, and the source of *"39.9 down to 29mb"*. 633 targets the missing **thumbnail**, re-encodes **from the display copy** (663 kB fetched per photo instead of 3.5 MB) and **never touches the original**, so a failed run costs nothing. The toast reports what the page will load next time.
+
+**The white boxes were `--occ-card:#FFFFFF` showing through a lazy load**, not a fault. `#cr-occ .occ-ours img` now carries the dark ground. Confirmed in Chromium — 632 computes `rgba(0,0,0,0)` over a white figure, 633 computes `rgb(35,31,32)`. **A render answered this; 347 assertions could not.**
+
+Two hardenings shipped with it: **`shrinkOne(file, name)` is the single place that checks the image toolchain** (`window.CardinalShowcase` appears exactly once in the module, asserted), and **`signMany()` keys by the path the API answered for, not by array position** — latent since 630, and 633 is the build that would have triggered it by asking for a third path absent on every photo.
 
 ---
 

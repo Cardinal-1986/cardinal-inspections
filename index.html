@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 631 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 634 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29203,10 +29203,23 @@ html += '<button class="cr-cp-addbtn" data-act="add">+ Add Partner</button>';
 var bd = host.querySelector('.cr-cp-bd');
 bd.innerHTML = html;
 bd.querySelector('[data-act="add"]').onclick = function(){ openEditor(null); };
+/* 634: a masked row renders NO buttons (see the p.__masked ternary above), so
+   both of these were null for anyone outside ADMIN_EMAILS / PROD_EMAILS — i.e.
+   for the sales reps, every time, because two live partners are confidential.
+   The throw aborted this forEach, which killed Edit and Archive on the masked
+   row AND on every row after it while the list still looked fine.
+   renderProspects() ten lines up already guards exactly this way; this is that
+   shape, not a new one.
+   ⚠️ Do NOT copy this guard onto the PROPERTIES renderDirectory — its buttons
+   are unconditional, so a guard there would turn a future regression into a
+   silently dead button (BUG_CLASSES 16) instead of a loud crash. The guard is
+   right HERE because the absence is deliberate and known. */
 bd.querySelectorAll('.cr-cp-row').forEach(function(row){
 var id = row.dataset.id;
-row.querySelector('[data-act="edit"]').onclick = function(){ openEditor(get(id)); };
-row.querySelector('[data-act="archive"]').onclick = async function(){
+var eBtn = row.querySelector('[data-act="edit"]');
+if(eBtn) eBtn.onclick = function(){ openEditor(get(id)); };
+var aBtn = row.querySelector('[data-act="archive"]');
+if(aBtn) aBtn.onclick = async function(){
 if(!confirm('Archive this partner? They will no longer appear in pickers.')) return;
 await archive(id);
 openDirectory();
@@ -35195,6 +35208,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:634, d:'2026-08-08', t:'Community Partners stopped breaking, and error reports stay out of job threads',
+    s:'Two things, both visible in one screenshot from a job page. First: the Community Partners list broke for anyone who is not an admin or on production. Two partners are marked confidential, and their rows correctly hide the Edit and Archive buttons \u2014 but the code still tried to wire those buttons up, which threw an error and left Edit and Archive dead on that row and on every row below it, while the list still looked perfectly normal. It now checks whether a button is there first, the same way the Prospective Partners list next to it already did. Second: when something goes wrong anywhere in the app, the error report gets tagged with whichever job you had open at the time. Those reports were being shown in the job thread, so a page of technical gibberish appeared on Zulema Hall alongside the real notes. Error reports still get recorded, and still show in the Team audit log where they belong \u2014 they just no longer appear in a job\u2019s thread.' },
+  { b:633, d:'2026-08-08', t:'The colour pages load properly now',
+    s:'The photo grid on a shingle colour was loading pictures about five times larger than the space it shows them in \u2014 a 1400-pixel image into a tile roughly 270 pixels wide. There is now a proper thumbnail size for that grid, so a page of forty photographs loads a fraction of what it did. Tapping a photo still opens the full-size one. The Optimise button now makes those thumbnails, and it no longer re-saves the original, which is why last time it only went from 39.9 MB to 29 MB \u2014 it was resizing something that was already the right size. It also reports the number that matters: what the page will load next time. And the empty squares that flashed white before a photograph appeared are now dark, so a page that is still loading looks like it is loading rather than broken.' },
+  { b:632, d:'2026-08-08', t:'Archive site actually archives, and you can bin several at once',
+    s:'The Archive site button in Cardinal Studio did nothing at all. It was not a permissions problem and not a wrong address \u2014 on the showroom web address the button was drawn but never connected to anything, so tapping it was the same as tapping the background. Nothing had ever been archived. It works now, on every address, and so do Restore site and the Time/Sites/Places/People/Bin switcher, which were dead in the same way. On top of that: a tick box beside each street in the left list. Tick as many as you like and one button appears \u2014 Archive 6 sites \u2014 so a run of dead jobs goes in one action instead of six. It tells you how many sites and how many photographs moved. And if an archive ever matches nothing it now says so, instead of quietly looking like it worked.' },
   { b:631, d:'2026-08-08', t:'Optimise the photos that were already up',
     s:'The last update shrank every new photo on the way up, but it could not do anything about the ones already there \u2014 Onyx Black alone was carrying about forty megabytes across ten photographs, which is why it took so long to appear. There is now an Optimise button on the colour page. Tap it once and it re-saves those older photographs at a sensible size, in place, without you deleting or re-adding anything. It tells you how much it saved, it only shows up when there is actually something to fix, and it disappears when there is not. Safe to tap twice.' },
   { b:630, d:'2026-08-08', t:'Colour photos: many at once, and they open full screen',
@@ -47431,6 +47450,16 @@ var LABEL = {
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
 'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded',
 };
+/* 634: the thread is the record of the JOB. capture() stamps a client error
+   with whatever project happened to be open when it fired, so a stack trace was
+   rendering as a thread entry beside real job notes — Theo photographed one on
+   Zulema Hall that came from the partner directory and had nothing to do with
+   that job.
+   Skipped HERE only. The rows are not deleted and the project stamp stays: the
+   Team audit log reads the same table and should keep showing them, and knowing
+   which job was open is useful when debugging.
+   Shaped like IC_SKIP / PIPE_SKIP so a second diagnostic type is one key. */
+var THREAD_SKIP = { client_error:1 };
 async function load(pid){
 estimates = []; events = []; contacts = [];
 if(!window.supa || !pid) return;
@@ -47442,7 +47471,9 @@ try{
 var r = await window.supa.from('audit_events')
 .select('at,email,type,detail,project_id')
 .eq('project_id', pid).order('at', { ascending:false }).limit(60);
-events = r.data || [];
+/* Filtered at LOAD, not at render: events.length feeds key(), so filtering
+   later would let an incoming error change the key and repaint the page. */
+events = (r.data || []).filter(function(e){ return !THREAD_SKIP[e.type]; });
 }catch(e){ console.warn('[cc] events:', e); }
 try{
 var c = await window.supa.from('community_contacts')
@@ -57248,7 +57279,20 @@ function src(path){ return path ? (signed[path] || '') : ''; }
    stored, so nothing in the schema changed and pairs made before build 577 —
    which have no -d file — simply fall back to the full one. */
 var FULL = { max: 3840, q: 0.92 };   // the slider, and pinching in
-var DISP = { max: 1400, q: 0.82 };   // the card grid
+var DISP = { max: 1400, q: 0.82 }
+/* 633: a TILE-sized rendition. DISP is sized for the Showcase compare card
+   (612 CSS px, so 1224 device px at 2x). The Colors grid tile is much smaller —
+   MEASURED in Chromium at Theo's 1194px iPad width, the grid resolves to four
+   269.5px columns, so ~540 device px at 2x — and it was being handed DISP:
+   4.8x the pixels it can show, at a measured 663 kB average. One rendition
+   cannot serve two surfaces that differ by that much.
+   640 rather than 800 is a deliberate trade. It gives the iPad in the report
+   2.4 device pixels per CSS pixel, and a phone — one column, ~358 CSS px at 3x
+   — about 1.8, which is softer than native but far better than the weight of
+   the alternative. Tapping a tile still opens the full-resolution original,
+   which is where sharpness actually matters.
+   Declared here beside its siblings so the three stay in one place. */
+var THUMB = { max: 640, q: 0.80 };   // the card grid
 
 function dispPath(path){
   if(!path) return '';
@@ -59778,7 +59822,7 @@ window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
      than copied — a second shrinker would drift from FULL/DISP and reintroduce
      624 on a different screen. */
   shrink: shrink,
-  renditions: { full: FULL, disp: DISP },
+  renditions: { full: FULL, disp: DISP, thumb: THUMB },
   inShowroom: function(){ return showroom; },
   reload: function(){ loaded = false; workLoaded = false; walksLoaded = false;
     curWalk = null; shots = []; review = null; exitPresent();
@@ -60018,7 +60062,13 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
      swipe on a phone. The swipe IS the control there; the arrows step aside. */
   #cr-occ-shot .prev, #cr-occ-shot .next{display:none}
 }
-#cr-occ .occ-ours img{width:100%; aspect-ratio:3/2; object-fit:cover; display:block}
+#cr-occ .occ-ours img{width:100%; aspect-ratio:3/2; object-fit:cover; display:block;
+  /* 633, Theo: "white boxes then loads slow". The white was not a fault — 623
+     set --occ-card:#FFFFFF and the figure shows through until the image paints,
+     so an ordinary lazy load flashed WHITE on a near-black page and read as
+     something broken. The image carries the dark ground itself, so an unpainted
+     tile looks like a tile waiting rather than a hole. */
+  background:var(--occ-head,#231F20)}
 #cr-occ .occ-ours figcaption{
   /* 630, Theo: "make those small white labels black with pink letters".
      He was reading a real defect. 623 set --occ-card:#FFFFFF, and the figure
@@ -60757,7 +60807,15 @@ async function signMany(paths){
   try{
     var r = await cl.storage.from('photos').createSignedUrls(list, 3600);
     if(!r || r.error || !Array.isArray(r.data)) return out;
-    r.data.forEach(function(d, i){ if(d && d.signedUrl && !d.error) out[list[i]] = d.signedUrl; });
+    /* 633: key by the path the API answered FOR, falling back to position.
+       This has keyed by position since 630 and got away with it because both
+       requested paths usually existed. 633 asks for a third that is absent on
+       every photograph the first time it runs, and a compacted response would
+       then hand each photo its neighbour's picture — silently, and wrongly. */
+    r.data.forEach(function(d, i){
+      if(!d || !d.signedUrl || d.error) return;
+      out[d.path || list[i]] = d.signedUrl;
+    });
   }catch(e){ try{ if(window.report) window.report(e, 'Colors', 'sign'); }catch(_){} }
   return out;
 }
@@ -61133,18 +61191,31 @@ async function ours(c){
      load-bearing rather than defensive: without it every pre-630 photo vanishes
      from the grid. Both paths are signed in ONE round trip. */
   var rows = r.data;
+  /* 633: three renditions signed in ONE round trip. The order of the fallback
+     below is the whole point — thumb for the tile, then the older display copy,
+     then the original. A photo from any era still renders. */
   var want = [];
-  rows.forEach(function(p){ want.push(dispOf(p.storage_path)); want.push(p.storage_path); });
+  rows.forEach(function(p){
+    want.push(thumbOf(p.storage_path));
+    want.push(dispOf(p.storage_path));
+    want.push(p.storage_path);
+  });
   var map = await signMany(want);
-  OURS = rows.filter(function(p){ return map[dispOf(p.storage_path)] || map[p.storage_path]; });
+  OURS = rows.filter(function(p){
+    return map[thumbOf(p.storage_path)] || map[dispOf(p.storage_path)] || map[p.storage_path];
+  });
   OURS.forEach(function(p){
-    p._src  = map[dispOf(p.storage_path)] || map[p.storage_path];
-    p._full = map[p.storage_path] || p._src;
+    var t = map[thumbOf(p.storage_path)], d = map[dispOf(p.storage_path)];
+    p._src  = t || d || map[p.storage_path];
+    p._full = map[p.storage_path] || d || t;
     p._cap  = p.project_address || p.caption || 'Cardinal install';
-    /* 631: a photo uploaded before 630 has no -d twin. That absence is an exact
-       test for "went up raw" — no size lookup, no guessing, and it costs nothing
-       because both paths are already being signed in the round trip above. */
-    p._needsOpt = !map[dispOf(p.storage_path)];
+    /* 633: the test moved from "has no -d" to "has no -t". A photo with a
+       display copy but no thumbnail predates this build and is exactly what the
+       page is still paying for — 0.65 MB a tile against a 270px tile. */
+    p._needsOpt = !t;
+    /* Prefer the display copy as the source to re-encode FROM: 1400px is ample
+       for a 640px thumbnail and costs 0.65 MB to fetch instead of 3.42 MB. */
+    p._optFrom = d || map[p.storage_path];
   });
   var canDel = amAdmin();
   box.className = 'occ-ours';
@@ -61179,10 +61250,13 @@ function paintOptBtn(){
 /* The display twin of a path, matching the Showcase's own convention. Kept
    local rather than imported: the Showcase's dispPath() is not exported, and
    one four-line function is cheaper than widening that module's API. */
-function dispOf(path){
+function dispOf(path){ return sfx(path, '-d'); }
+/* 633: the tile rendition. Same shape as dispOf so the two cannot drift. */
+function thumbOf(path){ return sfx(path, '-t'); }
+function sfx(path, tag){
   if(!path) return '';
   var dot = path.lastIndexOf('.');
-  return dot === -1 ? (path + '-d') : (path.slice(0, dot) + '-d' + path.slice(dot));
+  return dot === -1 ? (path + tag) : (path.slice(0, dot) + tag + path.slice(dot));
 }
 
 var OURS = [], SHOT = 0;
@@ -61202,7 +61276,8 @@ async function removeOurs(id, btn){
     /* Refused by RLS comes back with no error and no rows — check the rows. */
     if(!del || !del.data || !del.data.length) throw new Error('Not allowed \u2014 admin only.');
     if(row && row.storage_path){
-      try{ await cl.storage.from('photos').remove([row.storage_path, dispOf(row.storage_path)]); }catch(_){}
+      try{ await cl.storage.from('photos').remove(
+        [row.storage_path, dispOf(row.storage_path), thumbOf(row.storage_path)]); }catch(_){}
     }
     await ours(CUR);
   }catch(e){
@@ -61231,26 +61306,30 @@ async function optimiseOurs(){
          is same-origin and keeps the canvas clean; pointing it at the remote
          https URL would taint the canvas and make toBlob() throw. Named trap on
          this project — see the CompanyCam picker. */
-      var res = await fetch(todo[i]._full);
-      if(!res.ok) throw new Error('could not read the original (' + res.status + ')');
+      /* 633: fetch the DISPLAY copy where one exists, not the original. A
+         640px thumbnail does not need a 3840px source, and this turns a 3.42 MB
+         download per photo into 0.65 MB — on an iPad, over a phone connection,
+         that is the difference between usable and not. */
+      var from = todo[i]._optFrom || todo[i]._full;
+      var res = await fetch(from);
+      if(!res.ok) throw new Error('could not read the photo (' + res.status + ')');
       var blob = await res.blob();
       before += blob.size;
-      var file = new File([blob], 'original.jpg', { type: blob.type || 'image/jpeg' });
+      var file = new File([blob], 'source.jpg', { type: blob.type || 'image/jpeg' });
 
-      var small = await shrinkFor(file);
-      if(!small) throw new Error('Image tools unavailable \u2014 reload and try again.');
-      after += small.full.size;
+      var thumb = await shrinkOne(file, 'thumb');
+      if(!thumb) throw new Error('Image tools unavailable \u2014 reload and try again.');
+      after += thumb.size;
 
-      /* Overwrite in place, at the SAME path — that is what makes this safe to
-         re-run and what keeps every row valid throughout. */
+      /* 633: the ORIGINAL IS NOT TOUCHED. 631 re-encoded it and gained almost
+         nothing, because a drone photo is already about 3840px — that is where
+         "39.9 down to 29 MB" came from. What the page actually pays for is the
+         tile, so this writes only the missing thumbnail. Nothing is overwritten,
+         which also makes a failed run cost nothing at all. */
       var up = await cl.storage.from('photos')
-                       .upload(todo[i].storage_path, small.full,
+                       .upload(thumbOf(todo[i].storage_path), thumb,
                                { contentType:'image/jpeg', upsert:true });
       if(up && up.error) throw up.error;
-      var up2 = await cl.storage.from('photos')
-                        .upload(dispOf(todo[i].storage_path), small.disp,
-                                { contentType:'image/jpeg', upsert:true });
-      if(up2 && up2.error) throw up2.error;
       done++;
     }catch(e){
       failed++;
@@ -61263,9 +61342,14 @@ async function optimiseOurs(){
   paintOptBtn();
   try{
     var mb = function(n){ return (n / 1048576).toFixed(1) + ' MB'; };
+    /* 633: report the number Theo actually FEELS — what this page will load
+       next time — not the change in the stored original. 631's toast said
+       "39.9 MB down to 29 MB", which was true of the originals and told him
+       nothing about why the page was still slow. */
     var msg = done
-      ? (done + ' optimised \u2014 ' + mb(before) + ' down to ' + mb(after))
-      : 'Nothing could be optimised';
+      ? (done + ' photo' + (done === 1 ? '' : 's') + ' \u2014 this page now loads ' +
+         mb(after) + ' instead of ' + mb(before))
+      : 'Nothing needed optimising';
     if(failed) msg += ' \u00b7 ' + failed + ' failed';
     if(window.toast) window.toast(msg); else alert(msg);
   }catch(_){}
@@ -61353,11 +61437,24 @@ function closeShot(){
    while scrolling. Shrinking fixes both, and converts HEIC to JPEG on the way —
    without which an iPhone photo renders for Theo in Safari and is a broken box
    for anyone on Chrome. */
-async function shrinkFor(file){
+/* 633: ONE place that knows whether the image toolchain is there, because the
+   optimiser wants the thumbnail alone and composing it out of shrinkFor() would
+   re-encode a 3840px copy per photo only to throw it away — the expensive half
+   of the work, on an iPad. Returns null when the toolchain is missing, and every
+   caller treats null as "fail loudly rather than upload raw". */
+async function shrinkOne(file, name){
   var S = window.CardinalShowcase;
-  if(!S || typeof S.shrink !== 'function' || !S.renditions) return null;
-  return { full: await S.shrink(file, S.renditions.full.max, S.renditions.full.q),
-           disp: await S.shrink(file, S.renditions.disp.max, S.renditions.disp.q) };
+  if(!S || typeof S.shrink !== 'function' || !S.renditions || !S.renditions[name]) return null;
+  return await S.shrink(file, S.renditions[name].max, S.renditions[name].q);
+}
+async function shrinkFor(file){
+  /* 633: full for the lightbox, thumb for the grid. DISP is deliberately NOT
+     written any more — nothing on this screen shows a 1400px image, and writing
+     a rendition no consumer reads is storage and upload time spent on nothing.
+     Older photos keep theirs and the grid still falls back to it. */
+  var full = await shrinkOne(file, 'full'); if(!full) return null;
+  var thumb = await shrinkOne(file, 'thumb'); if(!thumb) return null;
+  return { full: full, thumb: thumb };
 }
 
 async function upload(files){
@@ -61385,11 +61482,11 @@ async function upload(files){
       var up = await cl.storage.from('photos')
                        .upload(path, small.full, { contentType:'image/jpeg', upsert:false });
       if(up && up.error) throw up.error;
-      /* The display twin is best-effort: the grid falls back to the full image,
-         so a failed twin costs weight, not the photograph. */
+      /* The thumbnail is best-effort: the grid falls back to the full image, so a
+         failed twin costs weight, not the photograph. */
       try{
         await cl.storage.from('photos')
-                .upload(dispOf(path), small.disp, { contentType:'image/jpeg', upsert:true });
+                .upload(thumbOf(path), small.thumb, { contentType:'image/jpeg', upsert:true });
       }catch(_){}
       var ins = await cl.from('oc_color_photos')
                         .insert({ color_id: CUR.id, storage_path: path }).select('id');

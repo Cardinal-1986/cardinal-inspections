@@ -12,6 +12,11 @@
    build re-introduces a raw upload here, or copies shrink() instead of reusing
    it, these assertions are what should go red.
 
+   633 added a THIRD rendition and this harness moved with it. The tile is
+   ~270 CSS px and was loading the 1400px DISP copy — five times more image than
+   it can show. THUMB (640px) is what the grid asks for now, with a three-level
+   fallback so a photo from any era still renders.
+
    Usage: node harness_ourroofs.js [path-to-index.html] */
 const fs = require('fs');
 const { JSDOM } = require('jsdom');
@@ -33,14 +38,32 @@ ok('the raw file is NEVER uploaded — it is shrunk first',
   /await shrinkFor\(list\[i\]\)/.test(OCC) &&
   !/\.upload\(path, file\b/.test(OCC), 'a raw upload survived');
 ok('shrink is REUSED from the Showcase, not copied into this module',
-  /shrink: shrink,/.test(SH) && /renditions: \{ full: FULL, disp: DISP \}/.test(SH) &&
+  /shrink: shrink,/.test(SH) && /renditions: \{ full: FULL, disp: DISP, thumb: THUMB \}/.test(SH) &&
   (OCC.match(/function shrink\(/g) || []).length === 0,
   'a second shrink implementation exists');
+/* 633: the three renditions are declared together in cr-show-script, beside each
+   other, so nobody adds a fourth somewhere else. THUMB is 640px because the tile
+   is minmax(255px,1fr) — ~270 CSS px, ~540 device px at 2x. */
+ok('the tile rendition exists and is sized for a tile, not a compare card',
+  /var THUMB = \{ max: 640, q: 0\.80 \}/.test(SH) &&
+  /var DISP = \{ max: 1400, q: 0\.82 \}/.test(SH));
 ok('a missing image toolchain fails loudly rather than uploading raw',
   /if\(!small\) throw new Error\('Image tools unavailable/.test(OCC));
-ok('both renditions are written, and the display twin is best-effort',
+/* 633: ONE place looks the toolchain up. The optimiser wants the thumbnail
+   alone — composing it from shrinkFor() would re-encode a 3840px copy per photo
+   only to discard it — so it calls shrinkOne directly rather than growing a
+   second availability check beside the first. */
+ok('the toolchain is looked up in exactly one place',
+  (OCC.match(/window\.CardinalShowcase/g) || []).length === 1 &&
+  (OCC.match(/async function shrinkOne\(/g) || []).length === 1);
+ok('an upload writes full + thumb, and the thumb is best-effort',
   /upload\(path, small\.full, \{ contentType:'image\/jpeg', upsert:false \}\)/.test(OCC) &&
-  /upload\(dispOf\(path\), small\.disp, \{ contentType:'image\/jpeg', upsert:true \}\)/.test(OCC));
+  /upload\(thumbOf\(path\), small\.thumb, \{ contentType:'image\/jpeg', upsert:true \}\)/.test(OCC));
+/* DISP is no longer written on this screen. Nothing here consumes a 1400px
+   image, and a rendition no consumer reads is upload time and storage spent on
+   nothing. Older photos keep theirs — hence the fallback below. */
+ok('a new upload no longer writes the display copy nothing shows',
+  !/small\.disp/.test(OCC));
 /* The invariant is "EVERY upload in this module writes JPEG", not "there are
    exactly two of them". 630 wrote `=== 2`; 631 added the optimiser's two and the
    correct build failed. That is rule 4 of BUG_CLASSES class 15 — the class I had
@@ -50,15 +73,27 @@ const jpegs   = (OCC.match(/contentType:'image\/jpeg'/g) || []).length;
 ok('EVERY upload stores JPEG — HEIC off an iPhone would break on Chrome',
   uploads > 0 && jpegs === uploads && /'\.jpg'/.test(OCC),
   `${uploads} uploads, ${jpegs} declare image/jpeg`);
-ok('the grid asks for the DISPLAY rendition (the 624 lesson, on a new screen)',
-  /p\._src  = map\[dispOf\(p\.storage_path\)\] \|\| map\[p\.storage_path\]/.test(OCC));
-/* Pre-630 photos have no -d twin. Without the fallback every existing
-   photograph would vanish from the grid — load-bearing, not defensive. */
-ok('...and falls back to the original, so pre-630 photos still render',
-  /\|\| map\[p\.storage_path\]/.test(OCC) &&
-  /OURS = rows\.filter\(function\(p\)\{ return map\[dispOf\(p\.storage_path\)\] \|\| map\[p\.storage_path\]; \}\)/.test(OCC));
-ok('both paths are signed in ONE round trip, not two',
-  (OCC.match(/await signMany\(want\)/g) || []).length === 1);
+/* 633, and this is the build. Theo: "Page still feels heavy". The tile is
+   ~270 CSS px and was being handed the 1400px DISP copy at 0.65 MB each. */
+ok('the grid asks for the TILE rendition, not the compare-card one',
+  /p\._src  = t \|\| d \|\| map\[p\.storage_path\]/.test(OCC));
+/* THREE eras of photograph share this grid: pre-630 (original only), 630-632
+   (original + -d) and 633+ (original + -t). The fallback ORDER is the feature —
+   without it every existing photograph vanishes. Load-bearing, not defensive. */
+ok('...falling back through the display copy to the original',
+  /return map\[thumbOf\(p\.storage_path\)\] \|\| map\[dispOf\(p\.storage_path\)\] \|\| map\[p\.storage_path\];/.test(OCC));
+ok('the lightbox still prefers the biggest thing that exists',
+  /p\._full = map\[p\.storage_path\] \|\| d \|\| t;/.test(OCC));
+ok('all three paths are signed in ONE round trip, not three',
+  (OCC.match(/await signMany\(want\)/g) || []).length === 1 &&
+  (OCC.match(/want\.push\(/g) || []).length === 3);
+/* signMany keyed by ARRAY POSITION from 630 to 632 and got away with it because
+   both requested paths usually existed. 633 asks for a third that is absent on
+   EVERY photograph the first time it runs; a compacted response would then hand
+   each photo its neighbour's picture — silently, and on a client-facing screen. */
+ok('the signed map is keyed by the path the API answered for, not by position',
+  /out\[d\.path \|\| list\[i\]\] = d\.signedUrl;/.test(OCC) &&
+  !/out\[list\[i\]\] = d\.signedUrl;/.test(OCC));
 
 console.log('\n── multi-select ──');
 ok('the input accepts many files',
@@ -88,8 +123,10 @@ ok('an RLS refusal is detected by ROW COUNT, not by an error',
    nothing renders as a hole in the grid. */
 ok('the ROW is deleted before the storage object, deliberately',
   OCC.indexOf(".from('oc_color_photos').delete()") < OCC.indexOf("storage.from('photos').remove"));
-ok('the display twin is removed alongside the original',
-  /remove\(\[row\.storage_path, dispOf\(row\.storage_path\)\]\)/.test(OCC));
+/* All three, because a photo can have any combination of them depending on the
+   build it was uploaded under. Removing a path that does not exist is free. */
+ok('every rendition is removed alongside the original',
+  /remove\(\s*\[row\.storage_path, dispOf\(row\.storage_path\), thumbOf\(row\.storage_path\)\]\)/.test(OCC));
 
 console.log('\n── full screen, and swiping ──');
 /* `openLens` with PARENS — a call. The bare name also appears in this module's
@@ -124,6 +161,11 @@ ok('the caption is a dark bar with pink letters, as asked',
    here would have honoured the request and failed the floor. */
 ok('it uses the measured pink, NOT the brand fill pink',
   !/#cr-occ \.occ-ours figcaption\{[^}]*color:var\(--occ-red/.test(CSS));
+/* 633, Theo: "white boxes then loads slow". 623 set --occ-card:#FFFFFF and the
+   figure showed through until the image painted, so an ordinary lazy load
+   flashed WHITE on a near-black page and read as a fault. */
+ok('an unpainted tile is dark, not white',
+  /#cr-occ \.occ-ours img\{[\s\S]{0,600}background:var\(--occ-head,#231F20\)\}/.test(CSS));
 ok('the view contains its own scroll instead of chaining into the page',
   /#cr-occ\{[\s\S]{0,3000}overscroll-behavior:contain;/.test(CSS));
 ok('the lightbox contains its scroll too', /#cr-occ-shot\{[^}]*overscroll-behavior:contain/.test(CSS));
@@ -134,8 +176,8 @@ ok('there is an optimiser, defined once',
 /* The exact test for "went up before 630" is the missing -d twin — no size
    lookup and no guessing, and it costs nothing because both paths are already
    being signed for the grid. */
-ok('it targets photos with no display twin, not a guess at size',
-  /p\._needsOpt = !map\[dispOf\(p\.storage_path\)\];/.test(OCC) &&
+ok('it targets photos with no THUMBNAIL, not a guess at size',
+  /p\._needsOpt = !t;/.test(OCC) &&
   /OURS\.filter\(function\(p\)\{ return p\._needsOpt && p\._full; \}\)/.test(OCC));
 /* ⚠️ THE SAFETY PROPERTY. It never writes the table, so a failure leaves the
    photo exactly as it was. A re-encode that rewrote storage_path could strand
@@ -144,23 +186,50 @@ ok('it NEVER touches oc_color_photos — a failure cannot orphan a row', (() => 
   const f = OCC.slice(OCC.indexOf('async function optimiseOurs('));
   return !f.slice(0, f.indexOf('/* 630, Theo:')).includes("from('oc_color_photos')");
 })());
-ok('...and overwrites the SAME path, so it is safe to run twice',
-  /\.upload\(todo\[i\]\.storage_path, small\.full,[\s\S]{0,90}upsert:true/.test(OCC));
+/* ⚠️ 633 CHANGED THIS DELIBERATELY. 631 re-encoded the ORIGINAL to 3840px and
+   gained almost nothing — a drone photo is already about that size, which is
+   exactly where "39.9 down to 29 MB" came from. What the page pays for is the
+   tile, so 633 writes only the missing thumbnail and never touches the original.
+   Brace-matched, not sliced to a landmark: a slice that runs past the function
+   sweeps up the neighbours and fails correct code (BUG_CLASSES class 15). */
+const optBody = (() => {
+  const i = OCC.indexOf('async function optimiseOurs('); if (i === -1) return '';
+  let d = 0; const j = OCC.indexOf('{', i);
+  for (let k = j; k < OCC.length; k++) {
+    if (OCC[k] === '{') d++;
+    else if (OCC[k] === '}') { d--; if (!d) return OCC.slice(i, k + 1); }
+  }
+  return '';
+})();
+ok('the optimiser was found and brace-matched', optBody.length > 400, optBody.length + ' chars');
+ok('it writes the THUMBNAIL and nothing else — the original is untouched',
+  /\.upload\(thumbOf\(todo\[i\]\.storage_path\), thumb,[\s\S]{0,90}upsert:true/.test(optBody) &&
+  (optBody.match(/\.upload\(/g) || []).length === 1 &&
+  !/\.upload\(todo\[i\]\.storage_path/.test(optBody));
+/* Re-encoding a 640px thumbnail from a 3840px source downloads 3.42 MB per
+   photo on an iPad when a 0.65 MB one is right there and ample. */
+ok('it re-encodes FROM the display copy where one exists, not the original',
+  /p\._optFrom = d \|\| map\[p\.storage_path\];/.test(OCC) &&
+  /var from = todo\[i\]\._optFrom \|\| todo\[i\]\._full;/.test(optBody));
 /* shrink() does URL.createObjectURL(file) — a blob: URL, same-origin, canvas
    stays clean. Handing it the remote https URL would taint the canvas and make
    toBlob() throw. Named trap on this project (the CompanyCam picker). */
 ok('the bytes are fetched to a BLOB first — the canvas-taint trap',
   /await res\.blob\(\)/.test(OCC) && /new File\(\[blob\]/.test(OCC) &&
   !/shrinkFor\(todo\[i\]\._full\)/.test(OCC));
-ok('it reuses 630s shrink rather than growing a second one',
+ok('it reuses the shared shrink rather than growing a second one',
   (OCC.match(/async function shrinkFor\(/g) || []).length === 1 &&
-  (OCC.match(/function shrink\(/g) || []).length === 0);
+  (OCC.match(/function shrink\(/g) || []).length === 0 &&
+  /var thumb = await shrinkOne\(file, 'thumb'\);/.test(optBody));
 ok('the button hides itself when there is nothing to fix',
   /b\.hidden = !n;/.test(OCC) && /paintOptBtn\(\)/.test(OCC));
-ok('it reports what it actually saved, in MB',
-  /' optimised \\u2014 ' \+ mb\(before\) \+ ' down to ' \+ mb\(after\)/.test(OCC));
+/* 631's toast said "39.9 MB down to 29 MB" — true of the stored originals, and
+   it told him nothing about why the page was still slow. Report the number he
+   actually feels: what this page loads next time. */
+ok('it reports what the PAGE will load, not what the originals weigh',
+  /' \\u2014 this page now loads ' \+\s*\n?\s*mb\(after\) \+ ' instead of ' \+ mb\(before\)/.test(OCC));
 
-console.log('\n── functional: the shipped dispOf and step bounds ──');
+console.log('\n── functional: the shipped path helpers and step bounds ──');
 /* Wrapped so a build WITHOUT these functions reports six clean FAILs instead of
    throwing. A negative control that crashes proves the file differs; one that
    goes RED proves WHICH behaviours are missing. */
@@ -172,7 +241,7 @@ try {
              + 'var OURS = [], SHOT = 0;'
              + grab('function stepShot(d){', 'function onShotKey(')
              + 'function paintShot(){}';
-  const f = new Function(code + '; return { dispOf, setOurs:function(n){ OURS.length=0; for(var i=0;i<n;i++) OURS.push({}); }, get:function(){return SHOT;}, set:function(v){SHOT=v;}, stepShot };')();
+  const f = new Function(code + '; return { dispOf, thumbOf, setOurs:function(n){ OURS.length=0; for(var i=0;i<n;i++) OURS.push({}); }, get:function(){return SHOT;}, set:function(v){SHOT=v;}, stepShot };')();
 
   ok('dispOf inserts -d before the extension',
     f.dispOf('oc-colors/onyx-black/abc.jpg') === 'oc-colors/onyx-black/abc-d.jpg',
@@ -180,6 +249,16 @@ try {
   ok('dispOf handles a path with no extension rather than mangling it',
     f.dispOf('oc-colors/x/abc') === 'oc-colors/x/abc-d', f.dispOf('oc-colors/x/abc'));
   ok('dispOf on empty is empty, not "-d"', f.dispOf('') === '' && f.dispOf(null) === '');
+  /* Both helpers delegate to one sfx(), so they cannot drift into different
+     rules for the no-extension case — which is the whole reason for it. */
+  ok('thumbOf inserts -t in exactly the same place',
+    f.thumbOf('oc-colors/onyx-black/abc.jpg') === 'oc-colors/onyx-black/abc-t.jpg',
+    f.thumbOf('oc-colors/onyx-black/abc.jpg'));
+  ok('thumbOf handles a path with no extension the same way',
+    f.thumbOf('oc-colors/x/abc') === 'oc-colors/x/abc-t', f.thumbOf('oc-colors/x/abc'));
+  ok('thumbOf on empty is empty, not "-t"', f.thumbOf('') === '' && f.thumbOf(null) === '');
+  ok('the two never collide on the same original',
+    f.thumbOf('a/b.jpg') !== f.dispOf('a/b.jpg'));
 
   f.setOurs(3);
   f.set(0); f.stepShot(-1);
@@ -192,6 +271,10 @@ try {
   ['dispOf inserts -d before the extension',
    'dispOf handles a path with no extension rather than mangling it',
    'dispOf on empty is empty, not "-d"',
+   'thumbOf inserts -t in exactly the same place',
+   'thumbOf handles a path with no extension the same way',
+   'thumbOf on empty is empty, not "-t"',
+   'the two never collide on the same original',
    'stepping back from the first photo does nothing',
    'stepping past the last photo does nothing',
    'stepping forward walks the list']
