@@ -173,6 +173,11 @@
   }
   .stu-tick.on{ background:#1f9d55; border-color:#1f9d55; }
   .stu-tick.on::after{ border-color:#fff; }
+  /* 629: the third bin. Each bin differs in BOTH hue and shape, so none of the
+     three depends on colour vision alone: showcase is a green rounded square,
+     hall of fame an amber circle, colours a blue rounded square with a heavier
+     ring. The tick itself never changes — it means PICKED, in all three. */
+  .stu-tick.colors{ background:#2563c9; border-color:#5b93ec; box-shadow:0 0 0 1.5px rgba(91,147,236,.45); }
   /* 628: the second bucket. Amber against the green is a hue AND a lightness
      difference, so the two stay tellable apart on a sunlit iPad and by anyone
      who does not distinguish red from green.
@@ -185,6 +190,45 @@
      square for the showcase. Shape still carries it; it just carries the right
      thing. */
   .stu-tick.work{ background:#c2761a; border-color:#e8a33f; border-radius:999px; }
+
+  /* 629: the trade tag. Opposite corner from the bin chip on purpose — they
+     answer different questions ("kept for what" vs "shows what"), and stacking
+     them in one control is how you end up unable to express "a siding
+     before-and-after". Text, not a colour: six trades is past the point where
+     hues are tellable apart at 30px. */
+  .stu-trade{
+    position:absolute; top:8px; right:8px; z-index:2; pointer-events:none;
+    padding:2px 6px; border-radius:6px; font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;
+    letter-spacing:.04em; text-transform:uppercase;
+    background:rgba(8,10,12,.78); color:#dfe5ea; border:1px solid rgba(255,255,255,.28);
+  }
+
+  /* 629: the arm row. It is deliberately loud — this is a MODE, and the whole
+     risk of a mode is forgetting which one you are in. It states the mode, the
+     armed value, and what a tap will do, in words. */
+  .stu-arm{
+    max-width:1400px; margin:12px auto 0; padding:10px 20px 0;
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  }
+  .stu-arm .lbl{ font:700 11.5px system-ui,sans-serif; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--stu-dim,#8c949c); margin-right:2px; }
+  .stu-arm button{
+    min-height:34px; padding:6px 13px; border-radius:999px; cursor:pointer;
+    background:transparent; border:1px solid var(--stu-line); color:var(--stu-dim,#8c949c);
+    font:650 12.5px system-ui,sans-serif; white-space:nowrap;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .stu-arm button:hover{ color:var(--stu-ink,#e6eaee); border-color:var(--stu-ink2,#5b636b); }
+  .stu-arm button.on{ color:#fff; }
+  .stu-arm button.on[data-bin="showcase"]{   background:#1f9d55; border-color:#1f9d55; }
+  .stu-arm button.on[data-bin="workmanship"]{ background:#c2761a; border-color:#e8a33f; }
+  .stu-arm button.on[data-bin="colors"]{     background:#2563c9; border-color:#5b93ec; }
+  .stu-arm button.on[data-trade]{            background:#4a5058; border-color:#6d757e; }
+  .stu-arm .sep{ width:1px; align-self:stretch; margin:2px 6px; background:var(--stu-line); }
+  .stu-arm .hint{ font:500 11.5px system-ui,sans-serif; color:var(--stu-dim,#8c949c); }
+  /* In trade mode a photo that is not in the tray cannot take a trade — there is
+     no row to write it on. Say so by dimming rather than by failing on tap. */
+  .stu-grid.trademode .stu-card:not(.intray){ opacity:.34; }
   .stu-card:hover .stu-tick{ border-color:rgba(255,255,255,.85); }
   .stu-tray{
     padding:5px 12px; border-radius:999px; cursor:default;
@@ -522,6 +566,7 @@
   <div class="stu-search">
     <input id="stuSearch" type="text" placeholder="Search by address or job name…">
   </div>
+  <div class="stu-arm" id="stuArm"></div>
   <div class="stu-chips" id="stuChips"></div>
 
   <main class="stu-main">
@@ -598,6 +643,7 @@
        tray. Failure is silent by design — a tray that will not load must not
        stop Theo browsing the archive. */
     loadTray();
+    renderArm();
     loginView.style.display = 'none';
     appView.style.display = 'block';
     setupMode();
@@ -709,6 +755,7 @@
     document.getElementById('atlRail').style.display = '';
     document.getElementById('atlView').style.display = priv ? 'flex' : 'none';
     document.getElementById('stuChips').style.display = priv ? 'none' : '';
+    renderArm();   /* 629: hides itself on the private side — see renderArm */
     Array.prototype.forEach.call(
       document.querySelectorAll('#atlView button[data-view]'), function(x){
         x.classList.toggle('on', x.getAttribute('data-view') === st.view);
@@ -964,41 +1011,136 @@
   /* 628: a Map of path -> bucket, where it was a Set of paths. Map keeps .has(),
      .size and .delete() with the same meaning, so every existing read site is
      correct without being touched — the only additions are .get() and .set(). */
+  /* 629: path -> { b:bucket, t:trade|null }. Was path -> bucket at 628; the
+     value grew rather than a second Map appearing beside it, because the two
+     facts are read together on every paint and two maps would drift. */
   var TRAY = new Map();
 
-  /* The two buckets, in cycle order. A photo is in ONE of them: storage_path is
-     the primary key, so re-ticking MOVES it rather than duplicating it. The same
-     photograph being both halves of two different stories is not a real case. */
-  var BUCKETS = ['showcase', 'workmanship'];
+  /* THREE buckets now. A photo is in exactly ONE: storage_path is the primary
+     key, so moving it between bins is an upsert, not a duplicate. */
+  var BUCKETS = ['showcase', 'workmanship', 'colors'];
   var BUCKET_LABEL = { showcase:'the Showcase (before and after)',
-                       workmanship:'the Hall of Fame (theirs vs ours)' };
+                       workmanship:'the Hall of Fame (theirs vs ours)',
+                       colors:'the Colors page (one of our roofs)' };
+  var BUCKET_SHORT = { showcase:'Showcase', workmanship:'Hall of Fame', colors:'Colours' };
+  var BUCKET_CLASS = { showcase:'on', workmanship:'on work', colors:'on colors' };
 
-  /* off -> showcase -> workmanship -> off. Returns null for "remove". */
-  function nextBucket(cur){
-    var i = BUCKETS.indexOf(cur);
-    return i === -1 ? BUCKETS[0] : (i + 1 < BUCKETS.length ? BUCKETS[i + 1] : null);
-  }
+  /* The app's six trades, not a new list — the same values workmanship_pairs
+     and crews_trade_ck already carry. When one grows they all grow. */
+  var TRADES = ['roof', 'siding', 'windows', 'andersen', 'gutters', 'general'];
+  var TRADE_SHORT = { roof:'Roof', siding:'Siding', windows:'Windows',
+                      andersen:'Andersen', gutters:'Gutters', general:'General' };
+
+  /* 629 retired the 628 cycle helper. It was right for two bins and wrong for
+     three: undoing a mis-tap cost one tap per remaining bin. Arming a bin makes
+     a tap mean the same thing however many bins there are. */
+  var ARM = { mode:'bin', bin:'showcase', trade:'roof' };
 
   /* ONE painter, used by the grid renderer AND by the toggle. Two copies of this
      would drift the moment either changed, and the drift would be invisible —
      the chip would simply stop matching what the database says. */
   function paintTick(btn, bucket){
-    btn.className = 'stu-tick' + (bucket ? ' on' : '') + (bucket === 'workmanship' ? ' work' : '');
+    btn.className = 'stu-tick' + (bucket ? ' ' + BUCKET_CLASS[bucket] : '');
     btn.setAttribute('aria-pressed', bucket ? 'true' : 'false');
-    btn.setAttribute('aria-label', bucket
-      ? ('Picked for ' + BUCKET_LABEL[bucket] + ' \u2014 tap to change')
-      : 'Pick this photo for the Showcase');
+    /* The label states the CURRENT bin and what a tap does next, because in an
+       armed mode those are different sentences and only one of them is obvious
+       from the colour. */
+    btn.setAttribute('aria-label', !bucket
+      ? ('Add to ' + BUCKET_LABEL[ARM.bin])
+      : bucket === ARM.bin
+        ? ('In ' + BUCKET_LABEL[bucket] + ' \u2014 tap to remove')
+        : ('In ' + BUCKET_LABEL[bucket] + ' \u2014 tap to move to ' + BUCKET_LABEL[ARM.bin]));
+  }
+
+  /* The trade tag is separate markup, not a second state of the chip: a photo
+     can be a siding before-and-after, and one control cannot say both. */
+  function paintTrade(card, trade){
+    var tag = card.querySelector('.stu-trade');
+    if(!trade){ if(tag) tag.remove(); return; }
+    if(!tag){ tag = document.createElement('span'); tag.className = 'stu-trade'; card.appendChild(tag); }
+    tag.textContent = TRADE_SHORT[trade] || trade;
+  }
+
+  /* 629: the arm row. Rebuilt rather than mutated, because it is small and a
+     rebuild cannot leave a stale `.on` behind on a button nobody looked at. */
+  function renderArm(){
+    var box = document.getElementById('stuArm');
+    if(!box) return;
+    box.innerHTML = '';
+    if(st.mode === 'private'){ box.style.display = 'none'; return; }
+    box.style.display = '';
+
+    var mk = function(txt, on, attr, val, fn){
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = txt;
+      if(on) b.className = 'on';
+      if(attr) b.setAttribute(attr, val);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.addEventListener('click', fn);
+      box.appendChild(b);
+      return b;
+    };
+
+    var lbl = document.createElement('span');
+    lbl.className = 'lbl';
+    lbl.textContent = ARM.mode === 'bin' ? 'Filling' : 'Tagging';
+    box.appendChild(lbl);
+
+    if(ARM.mode === 'bin'){
+      BUCKETS.forEach(function(b){
+        mk(BUCKET_SHORT[b], ARM.bin === b, 'data-bin', b, function(){
+          ARM.bin = b; renderArm(); repaintTicks();
+        });
+      });
+    }else{
+      TRADES.forEach(function(t){
+        mk(TRADE_SHORT[t], ARM.trade === t, 'data-trade', t, function(){
+          ARM.trade = t; renderArm();
+        });
+      });
+    }
+
+    var sep = document.createElement('span'); sep.className = 'sep'; box.appendChild(sep);
+    mk(ARM.mode === 'bin' ? 'Tag trades' : 'Back to bins', false, 'data-mode',
+       ARM.mode === 'bin' ? 'trade' : 'bin', function(){
+      ARM.mode = (ARM.mode === 'bin') ? 'trade' : 'bin';
+      renderArm(); repaintTicks();
+    });
+
+    var hint = document.createElement('span');
+    hint.className = 'hint';
+    hint.textContent = ARM.mode === 'bin'
+      ? 'Tap a photo to put it in \u2014 or take it out'
+      : 'Tap a picked photo to tag it \u2014 tap again to clear';
+    box.appendChild(hint);
+  }
+
+  /* Every chip repaints when the armed bin changes, because a chip's LABEL
+     depends on it ("tap to move to \u2026") even though its colour does not. */
+  function repaintTicks(){
+    var grid = document.getElementById('stuGrid');
+    if(!grid) return;
+    grid.classList.toggle('trademode', ARM.mode === 'trade');
+    grid.querySelectorAll('.stu-card').forEach(function(card){
+      var path = card.dataset.path;
+      if(!path) return;
+      var e = TRAY.get(path) || null;
+      var btn = card.querySelector('.stu-tick');
+      if(btn) paintTick(btn, e ? e.b : null);
+      paintTrade(card, e ? e.t : null);
+      card.classList.toggle('intray', !!e);
+    });
   }
 
   async function loadTray(){
     if(!sb) return;
     try{
-      var r = await sb.from('studio_tray').select('storage_path,bucket');
+      var r = await sb.from('studio_tray').select('storage_path,bucket,trade');
       if(r && !r.error && r.data) r.data.forEach(function(x){
-        /* A row written before 628 has no bucket in hand only if the column were
-           null, which the schema forbids — but default to showcase anyway rather
-           than storing undefined and painting a photo as un-picked. */
-        TRAY.set(x.storage_path, x.bucket || 'showcase');
+        /* The schema forbids a null bucket, but default anyway rather than
+           storing undefined and painting a picked photo as un-picked. trade is
+           legitimately null — most of the archive has never been looked at. */
+        TRAY.set(x.storage_path, { b: x.bucket || 'showcase', t: x.trade || null });
       });
     }catch(_){}
     paintTrayCount();
@@ -1009,22 +1151,52 @@
   function paintTrayCount(){
     var el = document.getElementById('stuTrayCount');
     if(!el) return;
-    var n = { showcase:0, workmanship:0 };
-    TRAY.forEach(function(b){ if(n[b] != null) n[b]++; });
+    var n = { showcase:0, workmanship:0, colors:0 }, untagged = 0;
+    TRAY.forEach(function(e){
+      if(n[e.b] != null) n[e.b]++;
+      if(!e.t) untagged++;
+    });
     var bits = [];
     if(n.showcase) bits.push(n.showcase + ' showcase');
     if(n.workmanship) bits.push(n.workmanship + ' hall of fame');
+    if(n.colors) bits.push(n.colors + ' colours');
+    /* Untagged is worth surfacing: trade is the thing you forget, because the
+       bin is why you tapped and the trade is an afterthought. */
+    if(bits.length && untagged) bits.push(untagged + ' untagged');
     el.textContent = bits.length ? ('Tray \u2014 ' + bits.join(', ')) : 'Tray';
     el.classList.toggle('on', TRAY.size > 0);
+  }
+
+  /* 629: what a tap MEANS, in one place.
+       bin mode  · not in the tray        -> add to the armed bin
+                 · in the armed bin       -> take it out
+                 · in a DIFFERENT bin     -> move it to the armed bin
+       trade mode· not in the tray        -> nothing; there is no row to write on
+                 · already the armed trade-> clear it
+                 · otherwise              -> set it
+     The move-on-tap rule is why the chip shows the bin it is ACTUALLY in rather
+     than the armed one: you can see before you tap that this photo belongs to
+     something else. */
+  function tapResult(was){
+    if(ARM.mode === 'trade'){
+      if(!was) return undefined;                      /* undefined = no-op */
+      return { b: was.b, t: (was.t === ARM.trade) ? null : ARM.trade };
+    }
+    if(!was) return { b: ARM.bin, t: null };
+    if(was.b === ARM.bin) return null;                /* null = remove */
+    return { b: ARM.bin, t: was.t };                  /* move, keep the trade */
   }
 
   async function toggleTray(r, btn){
     if(!sb || !r || !r.storage_path) return;
     var path = r.storage_path;
-    var was = TRAY.get(path) || null, now = nextBucket(was);
+    var was = TRAY.get(path) || null, now = tapResult(was);
+    if(now === undefined) return;   /* trade mode on an unpicked photo */
+    var card = btn.closest ? btn.closest('.stu-card') : null;
     /* optimistic, then reconciled — the grid must feel instant at 218 photos */
     if(now) TRAY.set(path, now); else TRAY.delete(path);
-    paintTick(btn, now);
+    paintTick(btn, now ? now.b : null);
+    if(card){ paintTrade(card, now ? now.t : null); card.classList.toggle('intray', !!now); }
     paintTrayCount();
     var res;
     try{
@@ -1042,7 +1214,8 @@
           project_name   : r.project_name || null,
           width          : r.width || null,
           height         : r.height || null,
-          bucket         : now,
+          bucket         : now.b,
+          trade          : now.t,
           added_by       : who
         }, { onConflict: 'storage_path' });
       }else{
@@ -1054,7 +1227,8 @@
          bucket, not merely un-ticking: a failed showcase->workmanship move must
          land back on showcase, not on nothing. */
       if(was) TRAY.set(path, was); else TRAY.delete(path);
-      paintTick(btn, was);
+      paintTick(btn, was ? was.b : null);
+      if(card){ paintTrade(card, was ? was.t : null); card.classList.toggle('intray', !!was); }
       paintTrayCount();
     }
   }
@@ -1338,6 +1512,7 @@
   // ── grid ─────────────────────────────────────────────────────────────
   function renderGrid(rows){
     var grid = document.getElementById('stuGrid');
+    if(grid) grid.classList.toggle('trademode', ARM.mode === 'trade' && st.mode !== 'private');
     rows.forEach(function(r){
       var addr, tagLine, badge;
       if(st.mode === 'private'){
@@ -1382,8 +1557,14 @@
       if(st.mode !== 'private' && r.storage_path){
         var tick = document.createElement('button');
         tick.type = 'button';
-        /* 628: one painter for the grid and the toggle — see paintTick. */
-        paintTick(tick, TRAY.get(r.storage_path) || null);
+        /* 629: the path rides on the card so repaintTicks() can find it when the
+           armed bin changes — the chip's LABEL depends on the arm even where its
+           colour does not. */
+        card.dataset.path = r.storage_path;
+        var _e = TRAY.get(r.storage_path) || null;
+        if(_e) card.classList.add('intray');
+        paintTick(tick, _e ? _e.b : null);
+        paintTrade(card, _e ? _e.t : null);
         tick.addEventListener('click', function(ev){
           ev.stopPropagation();
           toggleTray(r, tick);

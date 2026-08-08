@@ -3,7 +3,7 @@
 Single-file PWA (`index.html`) for **Cardinal Roofing & Renovations, LLC**, Dayton OH.
 Live at **app.cardinalroster.com** · Vercel deploys on merge to `main` · Supabase backend (DB, storage, auth, RLS) · serverless functions in `/api/` (ESM — `api/package.json` has `"type":"module"`, handlers are `export default async function handler`).
 
-Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–628" below before touching any of them.
+Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–629" below before touching any of them.
 
 For app work the file you want is still lowercase **`index.html`** at the repo root. **106** inline `<script>` blocks, **118** `<style>` blocks, **3** external CDN scripts, **0** module scripts. No build step, no bundler, no framework, no test runner.
 
@@ -39,11 +39,11 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 *The one thing that has never changed: **`cardinal_build_log.md` has no entry for roughly 468–542**, because much of that span was built through a different tool that never read this folder.*
 
-**As of 8 Aug 2026 the app is at build 628.** Current state:
+**As of 8 Aug 2026 the app is at build 629.** Current state:
 
 | File | Worked forward to | Trust it? |
 |---|---|---|
-| `cardinal_build_log.md` | **628** — last entry is the two-bucket tray (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
+| `cardinal_build_log.md` | **629** — last entry is the armed three-bin tray (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
 | `FEATURES.md` | **628 in content**; the header stamp now says 627 and no stamp inside it outranks the section it sits in | ✅ 624–628 appended at the bottom 8 Aug |
 | `OPEN_ITEMS.md` | **628** | ✅ brought forward 8 Aug — the bundle-splitting verdict, the deferred `showroom.html`, what 627 left open, and the 628 question deliberately left unanswered |
 | `HANDOFF.md` | **3 Aug session** (the book; 574–593 the same day) | ⚠️ **now five days and ~34 builds behind** — nothing from 595–627 is in it. Still newest-session-first, and still the fastest read for *why* something was done. Known staleness: it records PR #108 as open; that landed on `main` long ago |
@@ -473,7 +473,7 @@ A sixteen-spread interactive pop-up book of how a roof gets built, client-facing
 
 ---
 
-## Builds 595–628 — the span this file had no narrative for
+## Builds 595–629 — the span this file had no narrative for
 
 *Written 8 Aug 2026. `cardinal_build_log.md` has an entry for every build here; this is the orientation map, not the record. Nothing below is new work — it is 33 builds that shipped while this document said 594.*
 
@@ -507,6 +507,15 @@ Settled by Theo, not to be re-litigated: **"Yes they can see colors"** — all s
 Tick boxes on every archive photo in Studio collect into `studio_tray`; the Showcase's **existing** pair-builder reads the tray as a pseudo-project (`TRAY_ID = '__studio_tray__'`) alongside real jobs. **The prime doctrine earned its keep**: the checkbox-and-assign-roles UI Theo asked for already existed — `chosen{}` and `roles{}` in `cr-show-script` — and had simply never been pointed at the archive. Two seams, no second picker. `promoteToPair`, `drawJobPicker` and `takeJobPhotos` are each still defined exactly once, asserted.
 
 ⚠️ **The GPS fence runs straight through this feature.** `studio_photos` carries `lat`/`lon` (all 60,503 rows NULL today, so the `CONTRACTOR_VISION_SUITE.md` exclusion is holding *in practice*), and the tray is the first path from the archive toward a screen a customer sees. **`studio_tray` has no coordinate columns, and `toggleTray()` names its six fields explicitly rather than spreading the row.** Asserted at the schema, at both ends of the code, and by `harness_tray.js` (23 assertions). **Do not "complete" the row.**
+
+**629 made it three bins and added a trade.** Colours joined showcase and
+workmanship as a **bucket**; `trade` is a separate nullable column because it is a
+**facet** — a before/after can be a siding job, and as a fourth bucket it would have
+forced that photo to choose. The 628 cycling chip was replaced by an **armed** bin
+(a row above the grid; tap = in/out), because a cycle costs one tap per bin to undo.
+`tapResult()` is the single place a tap's meaning lives. ⚠️ **The colours bin has no
+consumer yet — that is 630**, and it must COPY into `oc-colors/<slug>/` rather than
+reference `photos/studio/*`, which is admin-only while Colors is all-staff.
 
 Why a table and not a Set: Theo ticks on the iPad and may build the pair on the desktop. `storage_path` is the primary key, so a double tick upserts. `studio_tray.sql` is **applied**.
 

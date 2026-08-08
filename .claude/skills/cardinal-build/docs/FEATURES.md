@@ -2060,6 +2060,36 @@ than spreading the archive row, and both tray reads filter by a bucket derived f
 mode so the two cannot disagree. `harness_tray.js` is **48 assertions**, negative-controlled — 24 of
 them fail against 627.
 
+### 629 — a third bin, and a trade on every photo
+
+Theo, an hour later: **"Extra bins"** → *"Colors but also would be nice to have by trades as well"* →
+on the control, **"Arm a bin, then tap."**
+
+⚠️ **Those are two different kinds of thing, and the schema says so.** **Colours is a BUCKET** (a
+destination, like showcase and workmanship — one per photo, `storage_path` is the primary key).
+**Trade is a FACET** that cuts across all three: a before/after can be a siding job. As a fourth
+bucket it would have forced a roofing before/after to choose between being a before/after and being
+roofing. Its six values are the app's **existing** `TRADES`, the same list `workmanship_pairs.trade`
+and `crews_trade_ck` already carry — one vocabulary, three tables.
+
+**The 628 cycle is gone.** Right for two bins, wrong for three: undoing a mis-tap cost one tap per
+remaining bin. The chip is now a plain in/out toggle against whatever bin is **armed** in a row above
+the grid — one tap either way, however many bins exist. `tapResult()` holds the entire meaning of a
+tap in one place, including that a photo in a *different* bin **moves** on tap and keeps its trade,
+and that trade mode is a **no-op** on a photo not in the tray (there is no row to write on).
+
+Verified by executing the shipped `tapResult` through every state — 11 functional assertions,
+including that **every reachable result is a valid row**, so no sequence of taps can hit a DB
+constraint. `harness_tray.js` is 57 assertions, negative-controlled.
+
+⚠️ **The colours bin collects but has nowhere to go yet — that is 630.** `oc_color_photos.color_id`
+is NOT NULL, and the choice of *which* colour belongs on the Colors page where the swatches are.
+More importantly the photo must be **copied** into `oc-colors/<slug>/`, not referenced in place:
+Colors is visible to all signed-in staff while `photos/studio/*` is admin-only, so a referenced
+archive path renders for Theo and is broken for Curtis and Nick.
+
+---
+
 ⚠️ **A Chromium render caught what no assertion could.** The amber state first drew a **bar** so that
 shape would carry the state as well as colour. Every gate was green. The picture showed the mistake:
 a bar in a checkbox is the universal *indeterminate / excluded* mark, so green → amber read as

@@ -1716,6 +1716,22 @@ which, and the Hall of Fame gained the picker it never had. Do not re-file it.
 - **A work order with no labor lines is still correct** (the 556 permission rule),
   and unrelated to any of the above.
 
+### 📌 Build 630 — the colours bin needs its destination
+
+629 ships a **colours** bin in Studio that collects but consumes nowhere. Two
+things make this its own build rather than a footnote:
+
+1. **`oc_color_photos.color_id` is NOT NULL.** Which Owens Corning colour a roof
+   is belongs on the Colors page, where the swatches are visible — not in Studio,
+   where you are looking at a photograph.
+2. ⚠️ **The photo must be COPIED, not referenced.** Colors is visible to **all
+   signed-in staff** (Theo, settled: *"Yes they can see colors"*), while
+   `photos/studio/*` is admin-only by storage policy. A tray row pointing at an
+   archive path renders for Theo and is **broken for Curtis and Nick**. Copy into
+   `oc-colors/<slug>/` the way the Showcase copies through `putPhoto()`.
+
+Do not "simplify" this by inserting the archive path directly.
+
 ### Asked at 628 and deliberately left unanswered
 
 **Should a Hall of Fame comparison also take a third "during" shot**, the way the

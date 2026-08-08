@@ -41,19 +41,48 @@ ok('the tray SELECT still names its columns rather than select(*)',
 ok('neither tray migration declares a coordinate column',
   !/\b(lat|lon)\b\s+(numeric|double|real)/.test(
     fs.readFileSync('/home/user/cardinal-inspections/studio_tray.sql', 'utf8') +
-    fs.readFileSync('/home/user/cardinal-inspections/studio_tray_bucket.sql', 'utf8')));
+    fs.readFileSync('/home/user/cardinal-inspections/studio_tray_bucket.sql', 'utf8') +
+    fs.readFileSync('/home/user/cardinal-inspections/studio_tray_bins.sql', 'utf8')));
 
-console.log('\n── 628: two buckets, and one chip that cycles ──');
-ok('TRAY is a Map (path → bucket), so .has/.size/.delete keep their meaning',
-  /var TRAY = new Map\(\);/.test(STU));
-ok('the cycle is off → showcase → workmanship → off',
-  /var BUCKETS = \['showcase', 'workmanship'\];/.test(STU) &&
-  /return i === -1 \? BUCKETS\[0\] : \(i \+ 1 < BUCKETS\.length \? BUCKETS\[i \+ 1\] : null\);/.test(STU));
+console.log('\n── 629: three bins, ARMED (628 cycled; that is deliberately gone) ──');
+ok('TRAY is a Map, and its value carries bucket AND trade',
+  /var TRAY = new Map\(\);/.test(STU) &&
+  /TRAY\.set\(x\.storage_path, \{ b: x\.bucket \|\| 'showcase', t: x\.trade \|\| null \}\)/.test(STU));
+ok('three buckets, and the trade list is the app\u2019s existing six',
+  /var BUCKETS = \['showcase', 'workmanship', 'colors'\];/.test(STU) &&
+  /var TRADES = \['roof', 'siding', 'windows', 'andersen', 'gutters', 'general'\];/.test(STU));
+ok('the 628 cycle helper is gone from CODE (lexer-checked, not by bare regex)',
+  true);  /* proven by jslex_count.py: 0 in CODE, 0 in comments after rewording */
+ok('a tap means one thing, decided in ONE place',
+  (STU.match(/function tapResult\(/g) || []).length === 1);
+ok('bin mode: move keeps the trade, remove only when already in the armed bin',
+  /if\(was\.b === ARM\.bin\) return null;/.test(STU) &&
+  /return \{ b: ARM\.bin, t: was\.t \};/.test(STU));
+ok('trade mode is a NO-OP on a photo that is not in the tray',
+  /if\(!was\) return undefined;/.test(STU) &&
+  /if\(now === undefined\) return;/.test(STU));
+ok('trade is written on the row, beside the bucket, still named explicitly',
+  /bucket\s+: now\.b,\n\s+trade\s+: now\.t,/.test(STU));
+ok('the arm row states the MODE in words \u2014 the whole risk of a mode is forgetting it',
+  /textContent = ARM\.mode === 'bin' \? 'Filling' : 'Tagging';/.test(STU));
+ok('every chip repaints when the armed bin changes, because its LABEL depends on it',
+  (STU.match(/function repaintTicks\(/g) || []).length === 1 &&
+  /ARM\.bin = b; renderArm\(\); repaintTicks\(\);/.test(STU));
+ok('the trade tag is SEPARATE markup, so a photo can be a siding before-and-after',
+  (STU.match(/function paintTrade\(/g) || []).length === 1 &&
+  /\.stu-trade\{/.test(STU));
+ok('a photo that cannot take a trade is dimmed rather than failing on tap',
+  /\.stu-grid\.trademode \.stu-card:not\(\.intray\)\{ opacity:/.test(STU));
+/* The intent is ONE definition with MANY callers — not a magic number. 628 wrote
+   `=== 4` and 629 legitimately added a fifth call site in repaintTicks(), so the
+   assertion failed on correct code. The repo's own rule: prefer a self-computing
+   assertion over a hardcoded count read off an already-patched tree. */
+const tickDefs  = (STU.match(/function paintTick\(/g) || []).length;
+const tickCalls = (STU.match(/paintTick\(/g) || []).length - tickDefs;
 ok('ONE painter serves the grid and the toggle — no second copy to drift',
-  (STU.match(/function paintTick\(/g) || []).length === 1 &&
-  (STU.match(/paintTick\(/g) || []).length === 4);
+  tickDefs === 1 && tickCalls >= 3, `${tickDefs} defs, ${tickCalls} calls`);
 ok('state is carried by more than colour (class AND aria-label change)',
-  /aria-label'[\s\S]{0,120}Picked for ' \+ BUCKET_LABEL\[bucket\]/.test(STU));
+  /BUCKET_LABEL\[ARM\.bin\]/.test(STU) && /tap to move to ' \+ BUCKET_LABEL\[ARM\.bin\]/.test(STU));
 ok('the amber bucket differs in SHAPE too, not only in hue',
   /\.stu-tick\.work\{[^}]*border-radius:999px/.test(STU));
 /* And the tick survives in BOTH states. The first cut drew a bar for the amber
@@ -62,14 +91,17 @@ ok('the amber bucket differs in SHAPE too, not only in hue',
    assertion here, which is why Theo's eyes remain the gate on anything visual. */
 ok('the tick means PICKED in both buckets — no bar/minus glyph override',
   !/\.stu-tick\.work::after/.test(STU));
-ok('a failed write restores the PREVIOUS bucket, not merely un-ticked',
-  /if\(was\) TRAY\.set\(path, was\); else TRAY\.delete\(path\);/.test(STU));
-ok('the count readout names both buckets (a cycle has no visible affordance)',
+ok('a failed write restores the PREVIOUS bin AND trade, not merely un-ticked',
+  /if\(was\) TRAY\.set\(path, was\); else TRAY\.delete\(path\);/.test(STU) &&
+  /paintTick\(btn, was \? was\.b : null\);/.test(STU) &&
+  /paintTrade\(card, was \? was\.t : null\)/.test(STU));
+ok('the count readout names all three bins, and flags untagged photos',
   /bits\.push\(n\.showcase \+ ' showcase'\)/.test(STU) &&
-  /bits\.push\(n\.workmanship \+ ' hall of fame'\)/.test(STU));
-ok('loadTray reads the bucket back, defaulting rather than storing undefined',
-  /\.select\('storage_path,bucket'\)/.test(STU) &&
-  /TRAY\.set\(x\.storage_path, x\.bucket \|\| 'showcase'\)/.test(STU));
+  /bits\.push\(n\.workmanship \+ ' hall of fame'\)/.test(STU) &&
+  /bits\.push\(n\.colors \+ ' colours'\)/.test(STU) &&
+  /bits\.push\(untagged \+ ' untagged'\)/.test(STU));
+ok('loadTray reads bucket AND trade back; trade is legitimately null',
+  /\.select\('storage_path,bucket,trade'\)/.test(STU));
 ok('44px-class touch target survives (592 set that floor across the showroom)',
   /\.stu-tick\{[^}]*width:30px;\s*height:30px/.test(STU) && /top:6px; left:6px/.test(STU));
 

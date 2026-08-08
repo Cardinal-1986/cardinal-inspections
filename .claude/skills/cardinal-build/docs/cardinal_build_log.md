@@ -10002,3 +10002,93 @@ Nothing prunes the tray once a pair is built (unchanged from 627 — Theo's call
 and the reader still takes `.limit(300)` with no paging. Whether a Hall of Fame
 comparison should also accept a third "during" shot, as the Showcase path does
 via its optional `build` slot, was **not** assumed either way.
+
+---
+
+## Build 629 — arm a bin, then tap. Three bins, plus trade (8 Aug 2026)
+
+`studio.html` + `studio_tray_bins.sql` (**applied and verified before the HTML
+change**). `index.html` gets the stamp and a `CHANGELOG` entry only.
+
+**Theo, an hour after 628 shipped two buckets: *"Extra bins"*.** Asked which:
+**"Colors but also would be nice to have by trades as well."** Asked how the
+control should work, given three-plus bins: **"Arm a bin, then tap."**
+
+### ⚠ The two things he asked for are NOT the same kind of thing
+
+This is the whole design, and getting it wrong would have been unrecoverable
+without a migration:
+
+- **COLOURS is a BUCKET** — a destination like showcase and workmanship, headed
+  for `oc_color_photos`. A photo is in exactly one, because `storage_path` is
+  the primary key.
+- **TRADE is a FACET** — it cuts across every bucket. A before/after can be a
+  siding job; a theirs-vs-ours can be gutters. As a fourth bucket it would have
+  forced a roofing before/after to choose between being a before/after and being
+  roofing. So: its own nullable column, orthogonal to bucket.
+
+`trade`'s six values are the app's **existing** `TRADES` — the same list in three
+places in `index.html`, the same `workmanship_pairs.trade` carries, the same
+`crews_trade_ck` constrains. One vocabulary; when one grows they all grow.
+
+### The cycle is gone, deliberately
+
+628's chip cycled off → showcase → workmanship → off. That was right for two
+bins and wrong for three: undoing a mis-tap cost one tap per remaining bin, and
+a fourth bin would have cost four. **The chip is now a plain in/out toggle
+against whatever bin is ARMED in a row above the grid** — one tap either way,
+however many bins exist. Offered against a per-photo menu and against extending
+the cycle; Theo picked this.
+
+`tapResult()` holds the whole meaning of a tap in one place:
+
+| mode | state | result |
+|---|---|---|
+| bin | not in tray | into the armed bin |
+| bin | in the armed bin | out |
+| bin | in a **different** bin | **moves**, keeping its trade |
+| trade | not in tray | **no-op** — there is no row to write on |
+| trade | already the armed trade | cleared |
+| trade | otherwise | set |
+
+The move-on-tap rule is why the chip shows the bin it is **actually** in rather
+than the armed one: you can see before you tap that a photo belongs elsewhere.
+
+### Verified by executing the shipped code, not a re-implementation
+
+11 functional assertions drive the real `tapResult` through every state,
+including the one that matters: **every reachable result is a valid row** —
+bucket in the three, trade in the six or null — so the DB constraints cannot be
+hit by any sequence of taps.
+
+`harness_tray.js` is now **57 assertions**, negative-controlled (14 fail against
+628). `check_build.py` green and negative-controlled; `studio.html` parsed
+separately; showcase 124 · vision 23 · colors 110 · occhead 42 all still green.
+
+### ⚠ Two assertions failed on CORRECT code, and both were the test's fault
+
+1. **`nextBucket` "survived".** The lexer settled it: **0 in CODE, 1 in
+   comments** — my own comment, `/* 629 replaced nextBucket() …`. The **fourth**
+   instance this session of an assertion matching its own explanatory prose.
+   Fixed by rewording the comment so it no longer contains the identifier it
+   discusses, and by checking with `jslex_count.py` rather than a bare regex.
+2. **`paintTick` call count `=== 4`.** 628 hardcoded it; 629 legitimately added
+   a fifth call site in `repaintTicks()`. Rewritten to assert the *intent* —
+   one definition, three or more callers — which is the repo's own standing rule
+   about self-computing assertions over numbers read off a patched tree.
+
+### What is NOT done, and is the next build
+
+**The colours bin collects but has nowhere to go yet.** `oc_color_photos.color_id`
+is NOT NULL and names a specific Owens Corning colour — a choice that belongs on
+the Colors page where the swatches are visible, not in Studio.
+
+⚠️ **And it cannot simply reference the archive path.** The Colors page is
+visible to **all signed-in staff** ("Yes they can see colors" — Theo, settled),
+while `photos/studio/*` is admin-only by storage policy. A tray photo must be
+**copied** into `oc-colors/<slug>/` the way the Showcase copies through
+`putPhoto()`, or the photo renders for Theo and is broken for Curtis and Nick.
+That is build 630, and it was split out rather than rushed.
+
+Also unchanged and still Theo's: nothing prunes the tray once a pair is built,
+and whether a Hall of Fame comparison should take a third "during" shot.
