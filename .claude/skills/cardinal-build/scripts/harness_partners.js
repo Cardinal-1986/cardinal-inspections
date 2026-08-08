@@ -14,6 +14,13 @@
    both a privileged user and a rep, and asks the DOM what actually got wired.
    A regex is satisfied by an `if(x)` that guards the wrong thing.
 
+   635 closed the other half of the same class, and the section at the very
+   bottom is the one that matters: it TAKES THE TAP. renderProspects rendered
+   Edit unconditionally and its handler calls getRaw() — the deliberately
+   UNMASKED lookup — so a rep saw "Confidential Partner" in the list and one tap
+   opened the real name, email, phone and notes. Asserting the button is absent
+   is not enough; the test clicks it and reads the form.
+
    Usage: node harness_partners.js [path-to-index.html] */
 const fs = require('fs');
 const { JSDOM } = require('jsdom');
@@ -57,6 +64,34 @@ ok('the masked row still renders no buttons (markup unchanged)',
 const rp = body(CP, 'function renderProspects(host){');
 ok('renderProspects still guards the same way — the convention survives',
   /var b = row\.querySelector\('\[data-act="edit"\]'\);/.test(rp) && /if\(b\) b\.onclick/.test(rp));
+
+console.log('\n── 635: the prospects list masks too ──');
+/* prospects() ALWAYS masked — that half was already right and must stay right.
+   Asserted because a "fix" that dropped it would make everything below moot. */
+ok('prospects() still runs every row through the mask',
+  /return \(CACHE \|\| \[\]\)\.filter\(function\(p\)\{ return !!p\.prospective; \}\)\.map\(maskIfConfidential\);/.test(CP));
+ok('the Edit button is hidden on a masked prospect, same ternary as the directory',
+  /\(p\.__masked \? '' : '<button data-act="edit">Edit<\/button>'\)/.test(rp) &&
+  !/'<div class="btns"><button data-act="edit">Edit<\/button><\/div>'/.test(CP));
+/* A control that is silently absent reads as broken. The chip explains it. */
+ok('a confidential prospect carries the CONFIDENTIAL chip, so the absence is explained',
+  /var lockChip = p\.confidential/.test(rp));
+ok('...and it is the SAME chip the directory uses, not a second design',
+  (CP.match(/\\uD83D\\uDD12 CONFIDENTIAL<\/span>/g) || []).length === 2 &&
+  (CP.match(/var lockChip = p\.confidential/g) || []).length === 2);
+
+console.log('\n── 635: the fence under the UI ──');
+/* getRaw() is the unmask, and openEditor calls it on EVERY id it is handed —
+   so the mask was only ever as strong as its callers. This is the boundary. */
+const oe = body(CP, 'function openEditor(partner){');
+ok('openEditor refuses to unmask for a non-privileged caller',
+  /if\(raw && raw\.confidential && !isPrivileged\(\)\)\{/.test(oe) &&
+  !/if\(partner && partner\.id\) partner = getRaw\(partner\.id\) \|\| partner;/.test(CP));
+/* A silent return is itself a dead button (class 16) — it must say why. */
+ok('it says why rather than doing nothing',
+  /alert\('That partner is confidential/.test(oe));
+ok('an admin is untouched — the refusal is gated on isPrivileged, nothing else',
+  /!isPrivileged\(\)/.test(oe) && !/ADMIN_EMAILS/.test(oe));
 
 console.log('\n── the PROPERTIES directory is deliberately NOT guarded ──');
 /* Its two buttons are unconditional, so a guard could not fix anything today
@@ -161,6 +196,99 @@ for (const [who, email] of [['admin', 'theo@cardinalrenovations.net'],
       /Confidential GC Partner/.test(conf.textContent));
     ok(`${who}: the masked row has NO buttons to wire`,
       conf.querySelectorAll('[data-act]').length === 0);
+  }
+}
+
+
+console.log('\n── EXECUTED: the prospects tap, which is where the leak was ──');
+/* Asserting the button is absent is NOT enough — that is the mistake 632 taught.
+   This renders the real renderProspects, finds the confidential row, TAKES THE
+   TAP, and reads what openEditor was actually handed. On 634 the form fills with
+   the real name and email; on 635 there is no button, and the fence refuses even
+   if something reaches openEditor another way. */
+const SECRET = 'Ohio Valley Restoration LLC', SECRET_MAIL = 'ray@ovr-example.com';
+function runProspects(email) {
+  const dom = new JSDOM('<!doctype html><body><div class="cr-cp-shell">' +
+    '<div class="cr-cp-bd"></div></div></body>');
+  const d = dom.window.document;
+  const host = d.querySelector('.cr-cp-shell');
+  /* openEditor's real head, cut at the form markup: everything past the fence is
+     irrelevant here and would drag in the whole module. */
+  const oeHead = (() => {
+    const b = body(CP, 'function openEditor(partner){');
+    return b.slice(b.indexOf('{') + 1, b.indexOf('var p = partner ||'));
+  })();
+  const code = `
+    var CACHE = [
+      { id:'pr-open', name:'Miami Valley Housing', partner_type:'nonprofit',
+        prospective:true, confidential:false, contact_name:'Dana',
+        contact_phone:'555', contact_email:'dana@example.org', notes:'called them' },
+      { id:'pr-conf', name:${JSON.stringify(SECRET)}, partner_type:'general_contractor',
+        prospective:true, confidential:true, contact_name:'Ray Secret',
+        contact_phone:'556', contact_email:${JSON.stringify(SECRET_MAIL)},
+        notes:'do not circulate' }
+    ];
+    var ADMIN_EMAILS = ['theo@cardinalrenovations.net','joan@cardinalrenovations.net'];
+    var PROD_EMAILS  = ['curtis@cardinalrenovations.net','scottie@cardinalrenovations.net'];
+    function currentEmailLower(){ return '${email}'; }
+    function esc(s){ return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    var OPENED = [], ALERTS = [];
+    function alert(m){ ALERTS.push(String(m)); }
+    ${body(CP, 'function isPrivileged(){')}
+    ${body(CP, 'var MASK_NAMES = {')};
+    ${body(CP, 'function maskIfConfidential(p){')}
+    function prospects(){
+      return (CACHE || []).filter(function(p){ return !!p.prospective; }).map(maskIfConfidential);
+    }
+    function getRaw(id){
+      return (CACHE || []).filter(function(x){ return x.id === id; })[0] || null;
+    }
+    function openEditor(partner){ ${oeHead} OPENED.push(partner); }
+    ${body(CP, 'function renderProspects(host){')}
+    renderProspects(host);
+    return { OPENED: OPENED, ALERTS: ALERTS, privileged: isPrivileged(),
+             direct: function(){ openEditor({ id:'pr-conf' }); return OPENED[OPENED.length-1]; } };
+  `;
+  try {
+    return { d, out: new Function('host', 'document', code)(host, d), threw: null };
+  } catch (e) { return { d, out: null, threw: e.message }; }
+}
+
+for (const [who, email] of [['admin', 'theo@cardinalrenovations.net'],
+                            ['rep  ', 'clarkie022@gmail.com']]) {
+  const { d, out, threw } = runProspects(email);
+  ok(`${who}: renderProspects runs`, threw === null, threw);
+  if (threw) continue;
+
+  const rows = [...d.querySelectorAll('.cr-cp-row')];
+  const conf = rows.find(r => r.dataset.id === 'pr-conf');
+  ok(`${who}: both prospects render — masking hides data, not the row`,
+    rows.length === 2, rows.length);
+
+  const btn = conf && conf.querySelector('[data-act="edit"]');
+  if (btn && typeof btn.onclick === 'function') btn.onclick();      /* TAKE THE TAP */
+  const tapped = out.OPENED[out.OPENED.length - 1];
+  const leaked = o => !!o && (o.name === SECRET || o.contact_email === SECRET_MAIL);
+
+  if (out.privileged) {
+    ok(`${who}: can still tap Edit on a confidential prospect`, !!btn);
+    ok(`${who}: and is handed the REAL row — that is what the feature is for`,
+      leaked(tapped));
+    ok(`${who}: no refusal shown`, out.ALERTS.length === 0, out.ALERTS.join(' | '));
+  } else {
+    ok(`${who}: the secret name is NOT in the list`,
+      !d.body.textContent.includes(SECRET), conf && conf.textContent.trim());
+    ok(`${who}: the CONFIDENTIAL chip explains the missing button`,
+      /CONFIDENTIAL/.test(conf.textContent));
+    ok(`${who}: there is no Edit button to tap`, !btn);
+    ok(`${who}: having tapped it, nothing unmasked was handed over`,
+      !leaked(tapped), tapped && JSON.stringify(tapped).slice(0, 110));
+    /* The fence itself, called directly — this is what holds if a future caller
+       reaches openEditor without going through the list. */
+    ok(`${who}: openEditor refuses even when called directly, and says why`,
+      !leaked(out.direct()) && out.ALERTS.some(a => /confidential/i.test(a)),
+      out.ALERTS.join(' | '));
   }
 }
 

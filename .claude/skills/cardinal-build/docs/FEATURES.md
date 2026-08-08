@@ -2294,3 +2294,35 @@ the Team audit log reads the same table and should keep showing every error. No 
 mask/render pair as both an admin and a rep. Negative control on 633: admin passes, **rep
 throws** — the reported symptom, reproduced. It also asserts the confidential name stays
 out of the DOM, so a "fix" that just rendered the buttons cannot pass.
+
+---
+
+## Build 635 — a confidential partner stays confidential on the prospects list (8 Aug 2026)
+
+⚠️ **Correction to the 634 note:** `prospects()` **always masked** — the list was never
+the leak. A confidential prospect has always rendered as "Confidential Partner" with no
+contact details.
+
+**The leak was the Edit button.** `renderProspects` rendered it unconditionally and its
+handler calls `getRaw()`, the deliberately unmasked lookup. One tap opened the real name,
+contact, email, phone, address and notes.
+
+Three parts:
+
+1. **The button is hidden on a masked prospect** — `renderDirectory`'s ternary, copied.
+   The `if(b)` guard that handles the absence is **build 634's fix**, used the next build.
+2. **The CONFIDENTIAL chip**, same markup as the directory, so the missing button is
+   explained rather than mysterious — a silently absent control reads as broken.
+3. **`openEditor` refuses to unmask for a non-privileged caller**, and says why. This is
+   the fence; 1 and 2 are the UI. `getRaw()` is called on every id `openEditor` receives,
+   so without it the mask is only as strong as its callers.
+
+⚠️ **Part 3 is deliberately not the same call as 634's "don't guard the properties
+directory".** That rule is about controls, where a guard hides a regression behind a dead
+button. This is a confidentiality boundary — and `pickPartner()` already leaked this way
+once. Admins are untouched.
+
+`harness_partners.js` — **42 assertions** (was 23). The new section **takes the tap**:
+renders the real `renderProspects`, clicks Edit on the confidential row, and reads what
+`openEditor` got. Negative control on 634 prints the leaked record. It also asserts the
+admin still gets the real row, so breaking editing cannot pass.

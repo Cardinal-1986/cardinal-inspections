@@ -1818,3 +1818,27 @@ non-zero, this is a real leak** — the same query is in `cardinal_build_log.md`
 3. Does the **colour page feel light** after running Optimise (633) — the button
    reappears with all 63 to do, which is correct.
 4. The **Feature header** after 626.
+
+---
+
+## Worked forward to build 635 — 8 Aug 2026
+
+### ✅ Closed by 635 — the item 634 recorded as found-but-unfixed
+
+~~`renderProspects()` bypasses the mask~~ — closed on Theo's "Close it".
+⚠️ **And the 634 note was half wrong:** `prospects()` always masked, so the list
+was never leaking. Only the Edit button was, via `getRaw()`. Fixed at three
+levels: the button is hidden, the CONFIDENTIAL chip explains why, and
+`openEditor` refuses to unmask for a non-privileged caller.
+
+**Do not "simplify" the third one away.** It is the fence — the hidden button is
+only the UI in front of it, and `openEditor` is the single place `getRaw()` turns
+an id into unmasked data.
+
+### ⚠️ Still Theo's to confirm — unchanged from 634
+
+1. **A rep opening Community Partners** (634) and **the prospects list** (635).
+   I cannot sign in as one.
+2. **Archive site** (632) — `select count(*) from studio_photos where archived_at is not null`.
+3. **The colour page after Optimise** (633) — the button reappears with all 63 to do.
+4. The **Feature header** after 626.

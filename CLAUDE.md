@@ -3,7 +3,7 @@
 Single-file PWA (`index.html`) for **Cardinal Roofing & Renovations, LLC**, Dayton OH.
 Live at **app.cardinalroster.com** · Vercel deploys on merge to `main` · Supabase backend (DB, storage, auth, RLS) · serverless functions in `/api/` (ESM — `api/package.json` has `"type":"module"`, handlers are `export default async function handler`).
 
-Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–634" below before touching any of them.
+Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–635" below before touching any of them.
 
 For app work the file you want is still lowercase **`index.html`** at the repo root. **106** inline `<script>` blocks, **118** `<style>` blocks, **3** external CDN scripts, **0** module scripts. No build step, no bundler, no framework, no test runner.
 
@@ -39,13 +39,13 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 *The one thing that has never changed: **`cardinal_build_log.md` has no entry for roughly 468–542**, because much of that span was built through a different tool that never read this folder.*
 
-**As of 8 Aug 2026 the app is at build 634.** Current state:
+**As of 8 Aug 2026 the app is at build 635.** Current state:
 
 | File | Worked forward to | Trust it? |
 |---|---|---|
-| `cardinal_build_log.md` | **634** — last entry is the partners crash (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
-| `FEATURES.md` | **634 in content**; the header stamp still says 627 and no stamp inside it outranks the section it sits in | ✅ 624–633 appended at the bottom 8 Aug |
-| `OPEN_ITEMS.md` | **634** | ✅ brought forward 8 Aug — what 633 closed, the three things still needing Theo's eyes, and the `next_build.py` under-report |
+| `cardinal_build_log.md` | **635** — last entry is the prospects mask bypass (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
+| `FEATURES.md` | **635 in content**; the header stamp still says 627 and no stamp inside it outranks the section it sits in | ✅ 624–633 appended at the bottom 8 Aug |
+| `OPEN_ITEMS.md` | **635** | ✅ brought forward 8 Aug — what 633 closed, the three things still needing Theo's eyes, and the `next_build.py` under-report |
 | `HANDOFF.md` | **3 Aug session** (the book; 574–593 the same day) | ⚠️ **now five days and ~39 builds behind** — nothing from 595–633 is in it. Still newest-session-first, and still the fastest read for *why* something was done. Known staleness: it records PR #108 as open; that landed on `main` long ago |
 | `BUG_CLASSES.md` | **632** (classes 15–16) | ✅ classes 12–13 at 573, 14 at 595, **15 at 630 (assertions matching their own prose or a hardcoded count — TEN false reds in one session) and 16 at 632 (a control that renders but is never wired: the Studio Archive button did nothing from 614 to 632)**; the rest is 427-era |
 | `OC_BRAND_RULES.md` | **8 Aug** | ✅ newest doc in the set — read it before any OC or Pink Panther mark |
@@ -107,7 +107,7 @@ No build pipeline, no module folder, no pristine base. **All work is direct surg
 - **`function money(` is defined ELEVEN times** — one per module, with three different signatures. A file-wide `count == 1` assertion on it is meaningless. Build 556 changed only the `cr-crew-script` one (to `money(n, cents)`) by slicing the block first and asserting the other ten survived. Same class as the `.single()` and `LABEL` traps below.
 - **Grep the whole file for every occurrence of a selector before patching it.** `.acthead` had three definitions; the winner was ~39,000 lines after the two found first.
 
-Helpers: `.claude/skills/cardinal-build/scripts/patch_lib.py` (atomic temp-then-rename writes) and `check_build.py` (the mechanical gate ladder). Also `jslex_count.py` (the lexer — see below), `next_build.py` (**asks the remote which build number is safe** — run it before the first patch and again before opening a PR; see the build-label section, and ⚠️ note it **under-reports**: it reads the app stamp from `origin/main` only and its entry regex still expects the pre-574 changelog shape, so cross-check with a per-branch stamp sweep), `measure_counts.py` (re-derives every number in the table below), `contrast.py`, `selector_audit.py`, `token_pairs.py`, and the harnesses — `harness_showcase.js` (124), `harness_walk.js` (152), `harness_detect.js` (39), `harness_vision.js` (23), `harness_colors.js` (110), `harness_occhead.js` (42), `harness_ourroofs.js` (58), `harness_tray.js` (57), `harness_studiobin.js` (28), `harness_partners.js` (23), plus `render_showcase.js` and `audit_viewports.js`. **Every one takes an optional path argument so it can be pointed at the previous build as a negative control** — a harness that has never been run red proves nothing.
+Helpers: `.claude/skills/cardinal-build/scripts/patch_lib.py` (atomic temp-then-rename writes) and `check_build.py` (the mechanical gate ladder). Also `jslex_count.py` (the lexer — see below), `next_build.py` (**asks the remote which build number is safe** — run it before the first patch and again before opening a PR; see the build-label section, and ⚠️ note it **under-reports**: it reads the app stamp from `origin/main` only and its entry regex still expects the pre-574 changelog shape, so cross-check with a per-branch stamp sweep), `measure_counts.py` (re-derives every number in the table below), `contrast.py`, `selector_audit.py`, `token_pairs.py`, and the harnesses — `harness_showcase.js` (124), `harness_walk.js` (152), `harness_detect.js` (39), `harness_vision.js` (23), `harness_colors.js` (110), `harness_occhead.js` (42), `harness_ourroofs.js` (58), `harness_tray.js` (57), `harness_studiobin.js` (28), `harness_partners.js` (42), plus `render_showcase.js` and `audit_viewports.js`. **Every one takes an optional path argument so it can be pointed at the previous build as a negative control** — a harness that has never been run red proves nothing.
 
 ---
 
@@ -473,7 +473,7 @@ A sixteen-spread interactive pop-up book of how a roof gets built, client-facing
 
 ---
 
-## Builds 595–634 — the span this file had no narrative for
+## Builds 595–635 — the span this file had no narrative for
 
 *Written 8 Aug 2026. `cardinal_build_log.md` has an entry for every build here; this is the orientation map, not the record. Nothing below is new work — it is 33 builds that shipped while this document said 594.*
 
@@ -495,6 +495,7 @@ A sixteen-spread interactive pop-up book of how a roof gets built, client-facing
 | **630** | The colour photo grid, fixed in six places at once from one iPad session: **multi-select, the 10 MB refusal, delete, full screen + swipe, the caption, the scroll** | `cr-occ-*` |
 | **631** | **Optimise** — repair in place what 630 could only fix on the way up. ⚠️ It re-encoded the ORIGINAL, which a drone photo already is; that is why it only managed "39.9 down to 29mb". Superseded by 633 | `cr-occ-script` |
 | **632** | **The Studio Archive button had never been wired** — `setupMode()` returned inside its `isShowroomHost()` branch before any listener attached, so three controls were drawn and dead and `archived_at` was NULL on all 60,503 rows. Plus **bin several sites** | `studio.html` |
+| **635** | **The prospects mask bypass.** `prospects()` always masked, so the LIST was never leaking — but Edit rendered unconditionally and its handler calls `getRaw()`, the unmasked lookup. One tap opened the real record. Button hidden + CONFIDENTIAL chip + **`openEditor` refuses to unmask for a non-privileged caller**, which is the actual fence | `cr-cpartners-script` |
 | **634** | **Two defects in one screenshot**: Community Partners threw for every non-admin (a masked row renders no buttons and they were wired unconditionally — the throw killed that row *and every row after it*), and client error reports were rendering as job-thread notes (`THREAD_SKIP`) | `cr-cpartners-script` + `cr-cc-script` |
 | **633** | **`THUMB` (640px)** — the colour grid tile is 269.5 CSS px and was being handed the 1400px `DISP` copy. Optimise now writes only the missing thumbnail, from the display copy, and never touches the original. See below | `cr-show-script` + `cr-occ-*` |
 

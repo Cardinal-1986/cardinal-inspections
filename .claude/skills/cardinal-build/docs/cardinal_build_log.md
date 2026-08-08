@@ -10584,3 +10584,101 @@ the DOM** for a rep — so a "fix" that simply rendered the buttons could not pa
 
 ⚠️ **Theo's eyes are still the gate**: a rep opening Community Partners is the
 real test, and I cannot sign in as one.
+
+---
+
+## Build 635 — the prospects mask bypass, closed (8 Aug 2026)
+
+Theo, after 634 shipped and I flagged this as found-but-unfixed: **"Close it"**.
+
+### ⚠️ First, a correction to what I told him
+
+I said the Prospective Partners screen "reads around the confidentiality mask."
+**Half of that was wrong**, and I should have checked before saying it:
+
+```js
+function prospects(){
+  return (CACHE || []).filter(function(p){ return !!p.prospective; })
+                      .map(maskIfConfidential);        // ← it DOES mask
+}
+```
+
+**The list was always safe.** A confidential prospect already rendered as
+"Confidential Partner" with no contact name, phone, email, address or notes. The
+harness confirms it: `rep: the secret name is NOT in the list` passes on **634**
+as well as 635.
+
+### The real hole was one tap wide, and it was real
+
+`renderProspects` rendered `<button data-act="edit">` **unconditionally** —
+unlike `renderDirectory`, which has always hidden it behind `p.__masked ? '' : …`.
+Its handler calls `getRaw(row.dataset.id)`, the deliberately **unmasked** lookup,
+and hands the real row to `openEditor`.
+
+So a rep saw "Confidential Partner" in the list, tapped Edit, and the form opened
+pre-filled with the real name, contact, email, phone, address and notes.
+
+Not exploitable at the time — measured 4 prospective/not-confidential and
+2 confidential/not-prospective, **zero overlap**. It opened the moment anyone
+ticked Confidential on a prospect, which is a checkbox an admin already has.
+
+### Three parts, and the third is the one that fences it
+
+1. **No Edit button on a masked prospect.** `renderDirectory`'s ternary, copied
+   exactly — same shape, same module, ten lines apart. The `if(b)` guard below it
+   handles the absence, and **that guard is build 634's fix earning its keep the
+   very next build.**
+2. **The CONFIDENTIAL chip**, so the missing button is *explained*. The directory
+   already showed one; prospects did not. A control that is silently absent reads
+   as broken — this project's own rule is that a correct refusal must never
+   render as a failure. Same markup, so the two lists read as one feature.
+3. **`openEditor` refuses to unmask for a non-privileged caller.** This is the
+   fence; 1 and 2 are the UI in front of it. `getRaw()` turns an id into unmasked
+   data and `openEditor` calls it on **every** id it is given, so without this the
+   mask is only as strong as every present and future caller. It alerts rather
+   than returning silently, because a silent return is itself a dead control.
+
+⚠️ **Part 3 is deliberately NOT the same judgement as 634's** "do not add a
+speculative guard to the properties directory". That rule is about **controls**,
+where a guard hides a regression behind a dead button. This is a
+**confidentiality boundary**, where a second check is the whole point — and the
+class has bitten this project before: `CLAUDE.md` records that reading `CACHE`
+directly once "leaked confidential partner names out of `pickPartner()`".
+
+Admins are untouched. `isPrivileged()` is the same test the rest of the module
+uses, and editing a confidential partner is exactly what it exists for.
+
+### ⚠️ A hardcoded count failed in the same session that documented the class
+
+The first run aborted on my own scope proof:
+
+```python
+assert NCP.count('.map(maskIfConfidential);') == 1 and NCP.count('.map(...)') == 3
+```
+
+Both numbers were guesses. The real answers are **3 and 4**. That is
+BUG_CLASSES **class 15, rule 4** — *prefer counts that scale over today's number*
+— and I wrote that rule three builds ago. Replaced with a self-computing
+assertion: this build changes no masking, so the count must be **identical**
+before and after, whatever it is. Nothing was written; the gate did its job.
+
+### Verification
+
+`check_build.py` green, negative-controlled. `harness_partners.js` grew
+**23 → 42**, and the new section is the one that matters: it renders the real
+`renderProspects`, finds the confidential row, **takes the tap**, and reads what
+`openEditor` was actually handed. Asserting the button is absent would not have
+been enough — that is exactly the mistake 632 taught.
+
+**The negative control demonstrates the leak rather than arguing it.** On 634:
+
+```
+rep: having tapped it, nothing unmasked was handed over   FAIL
+  → {"id":"pr-conf","name":"Ohio Valley Restoration LLC", …
+```
+
+A row labelled "Confidential GC Partner", one tap, the full record. 10 red on
+634, 42 green on 635. All ten harnesses green.
+
+It also asserts the **admin** path still works — that a privileged user taps Edit
+and *is* handed the real row — so a fix that simply broke editing could not pass.
