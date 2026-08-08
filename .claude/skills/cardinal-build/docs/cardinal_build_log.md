@@ -9425,3 +9425,203 @@ controlled: **5 assertions fail against the 620 artifact**. **Chromium 53/53**, 
 the geometry proof that each hatched extension actually paints inside its track — the thing
 jsdom structurally cannot see and the reason defect 2 would otherwise have shipped. Board,
 Duration line page and phone all rendered and read by eye.
+
+## Build 622 — Cardinal installs the complete OC system, so the page says so (8 Aug 2026)
+
+621 put the 160 MPH warranty on Duration and FLEX and **deliberately stopped short** of
+claiming Cardinal met the condition for it, because that was Theo's statement to make and
+not one to infer. Asked directly whether Cardinal installs the full Owens Corning Total
+Protection Roofing System as standard: **"Yes we do."**
+
+So the block under the spec table flips from a caution a rep must read carefully into the
+strongest line on the page — *Cardinal installs the complete Owens Corning® system. That is
+what qualifies this roof for the 160 MPH wind warranty rather than 130.*
+
+### Three things keep the claim true, and all three are asserted
+
+Removing any one of them turns an accurate statement into a false one on a screen handed to
+homeowners. **Do not trim this copy.**
+
+1. **The 130 fallback survives.** *Standard* is not *always* — a component can be
+   substituted or declined on a job, and that roof carries 130. The note still says so and
+   still tells the rep to confirm the specification before quoting 160.
+2. **The warranty stays Owens Corning's to grant.** *Owens Corning requires … and Cardinal
+   installs all four.* Cardinal installs; OC warrants. The patch asserts that neither
+   "Cardinal warrants" nor "our warranty" appears anywhere in the module.
+3. **The four components stay named.** They are the proof of the claim, and a homeowner
+   seeing them is seeing what they are paying for.
+
+### The same shared-string defect, one level up
+
+621 moved the bar caption onto each line because Oakridge's second number is a **caution**
+and Duration's is an **upsell**. The note's *heading* was still a single hardcoded string —
+*"Read this before quoting the wind number."* — shared by both. Correct on Oakridge; on
+Duration it now framed a selling point as a warning. `noteTitle` became per-line data with
+the old string as the fallback, so Oakridge and anything unspecified are unchanged.
+
+**The rule this is the second instance of: anything that reads differently on two lines
+belongs on the line, not in the renderer.** Worth checking the remaining shared strings in
+`cr-occ-script` before a third one is found the same way.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 621 → 622. **jsdom 110/110**, negative-
+controlled: **4 assertions fail against the 621 artifact**. **Chromium 53/53**, and the
+**phone baseline did not move** — 622 touches the note block and the bar caption, neither of
+which is phone-visible above the fold, so an unchanged baseline is the correct result rather
+than a skipped check. Rendered and read by eye.
+
+Two harness assertions were rewritten rather than worked around: both pinned the exact
+caption string *"160 with the full OC Total Protection system"* and failed the moment 622
+reworded it. They now assert the **invariant** — Duration carries its own 160 condition and
+never Oakridge's nailing one — so Theo can reword the copy without breaking a gate. Pinning
+marketing text in an assertion makes the copy hostage to the test.
+
+### Left alone deliberately
+
+The claim block still uses `.occ-note2`, the same red-edged styling as Oakridge's caution.
+It reads as emphasis rather than warning in Cardinal red, and both blocks are the same kind
+of content — the condition attached to the wind number. Splitting the style would create a
+second thing to keep in sync for no gain. Theo can call it if he wants them distinct.
+
+## Build 623 — OC Colors wears Owens Corning's own colours (8 Aug 2026)
+
+Theo sent the **VentSure® RidgeProwler™ 30** flyer — one of the four Total
+Protection components 621 put on the Duration page — and asked whether the
+Colors screen could use its pink/white/black. Shown four renders (today, accent
+only, pink masthead, the full flyer) he picked **the flyer**, and scoped it:
+*"only for the Owens Corning colors part of this."* So `#cr-occ` and nothing
+else. The patch asserts every rule in the stylesheet is `#cr-occ`-scoped.
+
+**Colours are sampled from the PDF, not eyeballed:** pink **`#EC008C`** (15,520
+px), rich black **`#231F20`** (126,336 px), white. OC's logo red `#E31837` also
+appears in the flyer and is deliberately unused — it is close enough to
+Cardinal's `#c8202e` to muddle the two brands.
+
+**The Pink Panther is not used.** ⚠️ **The reason given here at the time was
+WRONG and is corrected below** — see the 8 Aug entry. The flyer's footer
+(*"THE PINK PANTHER & © 1964–2025 Metro-Goldwyn-Mayer Studios Inc."*) was read
+as meaning Cardinal has no rights to the character. It does not mean that.
+Theo confirmed he holds rights to OC's **logos** and sent them — a later build.
+
+### One value cannot serve three grounds — the third instance of the same defect
+
+`--occ-ink` and `--occ-dim` each did two jobs, because every surface used to be
+dark. Turn the cards white and `--occ-dim` (`#9AA3AE`) lands at **2.55:1**.
+Same shape as 621's shared bar caption and 622's shared note heading. The inks
+are now **split by surface**, and the brand pink split too — it fails as small
+text on the black (3.84:1) and under small white text (4.25:1):
+
+| token | value | job | ratio |
+|---|---|---|---|
+| `--occ-red` | `#EC008C` | fills and large type | — |
+| `--occ-pink-on-dark` | `#F55CB2` | small pink text on `#231F20` | 5.48:1 |
+| `--occ-pink-deep` | `#C4007A` | ground under small white text | 5.79:1 |
+| `--occ-pink-ink` | `#A6006A` | body pink on white | 7.42:1 |
+| `--occ-panel-ink` | `#231F20` | text on white | 16.30:1 |
+| `--occ-panel-dim` | `#55595E` | secondary on white | 7.05:1 |
+
+The palette is **declared once** on `#cr-occ` rather than edited across 103 call
+sites, and every reference keeps its old literal fallback — so if another module
+ever strips these the screen degrades to the old Blackout instead of going
+see-through. The 448–449 failure mode stays closed.
+
+### `scripts/audit_contrast.js` — new, and it earned itself immediately
+
+Walks every text node in a real engine, resolves its computed colour against
+the nearest opaque ancestor background, and reports anything under its WCAG
+floor (4.5 body / 3.0 for ≥18.66px or bold ≥14px). **It found 25 violations.
+Eyes had found two.** Including `.occ-lname` at **1.12:1** — `#231F20` ink on a
+`#171415` card — which no screenshot made obvious.
+
+⚠️ **Its blind spot, stated so nobody over-trusts it:** it reads
+`backgroundColor`, so text over a background-**image** is measured against the
+colour beneath the photo. A "failure" on a photo card may be the audit's limit
+rather than a defect — but it is still worth reading, because it says what the
+text lands on if the image never loads. That is exactly how the real bug on the
+hero tiles was found.
+
+### Two regressions of mine, both caught by gates rather than by me
+
+1. **`background:` instead of `background-color:`.** The shorthand resets
+   `background-image`, so my dark photo-card rule **wiped the hero photograph
+   off every tile**. 618's *"the Duration tile really paints a roof"* assertion
+   caught it; nothing else would have.
+2. **Style rules written ungated.** `data-style` is on `#cr-occ` at *every*
+   width — only the 618 presentation rules are `@media (min-width:820px)`. Mine
+   were not, so the iPad's dark photo-cards landed on the **phone**, putting
+   `#231F20` on `#171415` at 1.12:1. Wrapped. **The phone is the surface with
+   the pixel baseline; nothing style-specific may reach it.**
+
+### White is for DATA surfaces, not photo cards
+
+The rule the audit forced into the open: in `roofs` and `feature` a tile is a
+**photograph** and its ink sits over a scrim, so those keep a dark card. The
+compare board's rows, the colour grid, the proof figures and the wind note are
+**data** — those are the white panels. `[data-nophoto]` tiles (Oakridge,
+Supreme) are white too, since there is no photo to sit on.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 622 → 623. **jsdom 110/110** —
+structure untouched, which is the point: this is a skin. **Chromium 53/53.**
+**`audit_contrast.js` CLEAN** at iPad-roofs, iPad-compare and phone. Phone
+baseline re-approved: a deliberate total restyle, so the evidence is that every
+rule is `#cr-occ`-scoped plus a clean audit at phone width, not a tile diff.
+Board, line page and phone rendered and read by eye.
+
+
+## 8 Aug 2026 — saving OC's brand rules, and correcting two things I had asserted
+
+Theo sent **`MGM_Guidelines_for_Contractors.pdf`** and asked to save it as a
+reference. Reading it corrected me twice. Both errors were stated confidently,
+and one of them is written into the shipped file.
+
+### 1. Cardinal MAY use the Pink Panther. I said it could not.
+
+The document is titled *"The Pink Panther™ Guidelines — **For Contractors,
+Distributors and Dealers**."* Owens Corning holds exclusive licensing in its
+product categories and **extends the character to contractors** under an
+approval process. My claim at 623 — *"the colour is fair game as an authorised
+dealer; the cat is not"* — was wrong, and it shipped in `cr-occ-styles`'
+banner, the 623 build-log entry, `FEATURES.md` and PR #151.
+
+The character is still absent from the Colors screen, but for a different and
+**true** reason: **nothing has been submitted for approval.**
+
+### 2. The OC logo must NEVER be reversed to white. I was about to ask for that.
+
+The plan for the logo build said to request the *"reversed / white variant"* for
+the dark ground. *"Don't reverse out the logo"* is listed under INCORRECT USE.
+Approved colours are red **PMS 186 `#CE1126`**, one-colour **black**, or silver;
+and page 6 explicitly approves the logo on a **black background**, which is
+exactly our `#231F20`. Asking a manufacturer for an asset their own rules forbid
+would have been an expensive way to look careless.
+
+### The thing that actually changes how the next build runs
+
+**Any OC-co-branded material — and any use of the Panther — must be approved
+before launch.** LMARoofing@owenscorning.com; websites additionally require the
+layout *and a test-site URL*, with launch only after Local Marketing approves;
+the Panther adds 8 business days at MGM plus 8 more for revisions.
+
+**That gate is Theo's to pass. A session builds and stages; it does not ship a
+mark on the assumption approval will follow.** Recorded so no future session
+treats "we have the logo file" as "we may publish the logo".
+
+Also required whenever the OC logo appears: **"Proud Installer of Owens Corning®
+Products"** above it, the independent-contractor disclaimer, and clear space of
+one cap-**"O"** height on all sides. The Preferred / Platinum Preferred lockups
+are separate artwork with their own rules and do **not** need the "Proud
+Installer" line — **ask Theo which status Cardinal holds** before picking an
+asset.
+
+### Saved
+
+`docs/OC_MGM_Guidelines_for_Contractors.pdf` (the source of truth, unaltered)
+and `docs/OC_BRAND_RULES.md` (the distillation, because a 2.3 MB PDF is not
+greppable). Both under `.claude/`, which `.vercelignore` excludes — a partner's
+internal brand manual must not be served publicly, which is also why it did not
+go in root `docs/`, a directory that deliberately ships.
+
+`CLAUDE.md`'s doc-set table now points at it.

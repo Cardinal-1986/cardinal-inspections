@@ -339,13 +339,53 @@ const ok = (l, c) => { if(c){ pass++; console.log('  PASS ' + l); }
      them, which is exactly what the hardcoded caption would have done. */
   ok('compare: exactly the three conditional lines draw an extension',
      V.querySelectorAll('.cmp-ext').length === 3);
+  /* Assert the INVARIANT, not the wording. These pinned the exact marketing
+     string until 622 reworded the caption, and then failed against a correct
+     file. What must hold is that Duration's caption carries its own 160
+     condition and never Oakridge's nailing one — the copy above it is Theo's
+     to change without breaking a gate. */
+  const capOf = k => tile(k).querySelector('.cmp-num').textContent;
   ok('compare: Duration\u2019s condition is its own, not Oakridge\u2019s',
-     /160 with the full OC Total Protection system/
-       .test(tile('duration').querySelector('.cmp-num').textContent) &&
-     !/6 nails/.test(tile('duration').querySelector('.cmp-num').textContent));
+     /\b160\b/.test(capOf('duration')) && !/6 nails/.test(capOf('duration')));
   ok('compare: FLEX carries the same 160 condition',
-     /160 with the full OC Total Protection system/
-       .test(tile('flex').querySelector('.cmp-num').textContent));
+     /\b160\b/.test(capOf('flex')) && !/6 nails/.test(capOf('flex')));
+
+  /* ---- 622: the claim, and the qualifier that keeps it true ---- */
+  V.querySelector('#occBack') && V.querySelector('#occBack').click();
+  await new Promise(r => setTimeout(r, 20));
+  V.querySelector('.occ-line[data-line="duration"]').click();
+  await new Promise(r => setTimeout(r, 20));
+  const note = () => V.querySelector('.occ-note2');
+  ok('622: the block is titled as Cardinal\u2019s claim, not as a caution',
+     !!note() && /Cardinal installs the complete Owens Corning/.test(note().textContent) &&
+     !/Read this before quoting/.test(note().textContent));
+  ok('622: it still names all four required components',
+     ['Hip & Ridge','Underlayment','eaves and the rakes','Ice & Water Barrier','Ventilation']
+       .every(p => note().textContent.indexOf(p) !== -1));
+  /* THE assertion that keeps the claim honest. "Standard" is not "always": a
+     component can be substituted or declined, and that roof carries 130.
+     Losing this sentence turns a conditional truth into an unconditional
+     statement about a warranty, in front of a homeowner. */
+  ok('622: the 130 fallback survives \u2014 standard is not the same as always',
+     /carries the 130 MPH warranty instead/.test(note().textContent) &&
+     /confirm the specification before quoting 160/.test(note().textContent));
+  ok('622: the warranty stays Owens Corning\u2019s to grant, not Cardinal\u2019s',
+     /Owens Corning requires/.test(note().textContent) &&
+     !/Cardinal warrants/.test(V.textContent));
+
+  V.querySelector('#occBack').click(); await new Promise(r => setTimeout(r, 20));
+  V.querySelector('.occ-line[data-line="oakridge"]').click();
+  await new Promise(r => setTimeout(r, 20));
+  ok('622: Oakridge keeps the CAUTION heading \u2014 its second number still warns',
+     /Read this before quoting the wind number/.test(V.querySelector('.occ-note2').textContent) &&
+     !/Cardinal installs/.test(V.querySelector('.occ-note2').textContent));
+
+  V.querySelector('#occBack').click(); await new Promise(r => setTimeout(r, 20));
+  V.querySelector('.occ-line[data-line="flex"]').click();
+  await new Promise(r => setTimeout(r, 20));
+  ok('622: FLEX carries the same claim and the same qualifier',
+     /Cardinal installs the complete Owens Corning/.test(V.querySelector('.occ-note2').textContent) &&
+     /carries the 130 MPH warranty instead/.test(V.querySelector('.occ-note2').textContent));
   ok('compare: Supreme stays unconditional \u2014 no extension, no caption',
      !tile('supreme').querySelector('.cmp-ext') &&
      !/only with|full OC/.test(tile('supreme').querySelector('.cmp-num').textContent));

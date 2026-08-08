@@ -1651,7 +1651,7 @@ state until then. Nothing here has been verified against a real photograph.
 
 ---
 
-## OC Colors — the shingle-line hub (builds 615–621, 7 Aug 2026)
+## OC Colors — the shingle-line hub (builds 615–623, 7–8 Aug 2026)
 
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
@@ -1709,9 +1709,33 @@ hatched extension), so the wording is the only thing separating them: each line 
 own `chart.extNote`, and both the jsdom and Chromium harnesses assert that Duration never
 prints Oakridge's six-nail condition.
 
-⚠️ **The screen states the condition; it does not claim Cardinal meets it.** Whether the
-full Total Protection system is Cardinal's standard install is Theo's to say, and saying it
-for him would be inventing a warranty claim. Not asserted anywhere in the module.
+### ✅ 622: Cardinal DOES install the complete system, and the page says so
+
+621 stated the condition and deliberately refused to claim Cardinal met it — that was Theo's
+to say. **Asked directly, he said "Yes we do."** So the block under the spec table flipped
+from a caution into the strongest line on the page: *Cardinal installs the complete Owens
+Corning® system. That is what qualifies this roof for the 160 MPH wind warranty rather
+than 130.*
+
+⚠️ **Three things keep that claim true, and all three are harness-asserted. Do not
+"tighten" the copy by removing any of them:**
+
+1. **The 130 fallback stays.** *Standard* is not *always* — a component can be substituted
+   or declined on a job, and that roof carries 130. Deleting the sentence turns a
+   conditional truth into an unconditional statement about a warranty, in front of a
+   homeowner.
+2. **The warranty stays Owens Corning's to grant.** The copy says *Owens Corning requires…
+   and Cardinal installs all four*. Cardinal installs; OC warrants. Never "our warranty".
+3. **The four components stay named.** A homeowner reading Hip & Ridge, underlayment,
+   starter on the eaves *and* the rakes, and ice-and-water or ventilation is seeing what
+   they are paying for. It is the proof of the claim, not decoration.
+
+⚠️ **`noteTitle` is per-line, and this is the second time the same lesson was paid for.**
+621 moved the bar caption onto each line because Oakridge's second number is a caution and
+Duration's an upsell. The note's *heading* was still one hardcoded string — *"Read this
+before quoting the wind number."* — which framed Cardinal's selling point as a warning.
+**Anything that reads differently on two lines belongs on the line, not in the renderer.**
+Oakridge keeps the caution heading; Supreme has neither.
 
 ⚠️ **The source is a sales notice, not the warranty document.** Revised warranty documents
 were due on OwensCorning.com 3 Aug 2026; the sandbox cannot reach that site. When Theo can
@@ -1850,7 +1874,41 @@ whether any of it sells is Theo's.
 
 ### Conventions
 
-Blackout, like `#cr-show` — a client-facing Vision surface, deliberately outside both app themes.
+**Owens Corning's own palette since 623** — pink `#EC008C`, rich black `#231F20`, white,
+sampled from their VentSure RidgeProwler flyer on Theo's pick. It was Blackout like
+`#cr-show` until then. Still deliberately outside both app themes.
+
+⚠️ **The pink is THREE values with three jobs, and they are not interchangeable.**
+`--occ-red` `#EC008C` is a **fill and large-type** colour only — it is 3.84:1 as small text
+on the black and 4.25:1 under small white text, both below floor. `--occ-pink-on-dark`
+`#F55CB2` (5.48:1) is small pink text on the black ground; `--occ-pink-deep` `#C4007A`
+(5.79:1) is the ground under small white text; `--occ-pink-ink` `#A6006A` (7.42:1) is body
+pink on white. Same for the inks: `--occ-panel-ink` / `--occ-panel-dim` are the white-panel
+set, and **`--occ-dim` must never touch a white panel** — it is 2.55:1 there.
+
+⚠️ **White is for DATA surfaces, not photo cards.** In `roofs` and `feature` a tile is a
+photograph and its ink sits over a scrim, so those keep a dark card; the compare rows, the
+colour grid, the proof figures and the wind note are the white ones. `[data-nophoto]` tiles
+are white because there is no photo to sit on.
+
+⚠️ **The Pink Panther is not used — but NOT for the reason 615–623 claimed.** Those builds
+said Cardinal lacks the licence. **That was wrong**: Owens Corning's guidelines are written
+*for contractors* and extend the character to them under an approval process. The real
+reason it is absent is that **nothing has been submitted for approval**. See
+`OC_BRAND_RULES.md`, which also records that the OC logo must **never be reversed to white**
+— red on our black ground is explicitly approved, and a white variant was nearly requested
+on the strength of the same wrong assumption.
+
+⚠️ **Any OC or Pink Panther mark needs Owens Corning's approval before launch** —
+LMARoofing@owenscorning.com, plus 8 business days at MGM for the character. **That gate is
+Theo's to pass; a session can build and stage, never ship on the assumption of approval.**
+
+**Run `scripts/audit_contrast.js` after any colour work here.** It measures every text node
+against its real computed background in Chromium and found **25** violations at 623 where
+eyes had found two. Its blind spot: it reads `backgroundColor`, so text over a
+background-image is measured against the colour beneath the photo.
+
+Blackout was the original design, like `#cr-show` — a client-facing Vision surface, deliberately outside both app themes.
 **Every `--occ-*` reference carries a literal fallback**, so the 448–449 stripped-token class cannot
 reach it. Registered in `hideAllViews()`, `OVERLAY_IDS` and `PANES`; **display-shown**, so
 `display:none` is the close lever. Adds **zero** global scroll-lock writers.
