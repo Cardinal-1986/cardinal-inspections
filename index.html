@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-07 build 621 &#8212; Duration now carries a 160 MPH wind warranty on a full OC system</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 622 &#8212; we install the complete Owens Corning system, and the Duration page now says so</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35184,6 +35184,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:622, d:'2026-08-08', t:'Cardinal installs the complete Owens Corning system \u2014 and now the page says so', s:'Build 621 put the 160 MPH wind warranty on Duration and Duration FLEX but stopped short of claiming Cardinal meets the condition for it, because that was Theo\u2019s statement to make rather than something to infer. Asked directly, he confirmed it: Cardinal installs all four required Total Protection Roofing System components as standard. So the block under the spec table has flipped from a caution a rep has to read carefully into the strongest line on the page \u2014 this roof qualifies for 160 rather than 130 because of how we build it. The four components are still named, because a homeowner seeing Hip & Ridge, underlayment, starter on the eaves AND the rakes, and ice-and-water or ventilation is seeing what they are paying for. And the 130 fallback is still there on purpose: standard is not the same as always, so if a component is substituted or declined on a job that roof carries 130, and a rep needs to be able to see that before quoting.' },
 { b:621, d:'2026-08-07', t:'Duration\u2019s wind warranty is now 130/160 MPH', s:'Owens Corning raised the Duration Series wind warranty from 130 MPH to 160 MPH, effective 1 August 2026, when the roof is built with the required Owens Corning Total Protection Roofing System components \u2014 at least four of them, including Hip & Ridge, OC Underlayment, Starter shingles on both the eaves and the rakes, and either an Ice & Water Barrier or a Ventilation product. Duration and Duration FLEX now show 130/160 on the tile, the full condition underneath the spec table, and a hatched extension on the comparison bar exactly like Oakridge\u2019s. The difference is which way it cuts: Oakridge\u2019s second number is a caution, quote the lower one unless the roof was built that way, while Duration\u2019s is a selling point you earn by installing the complete system. A roof that does not meet the specification still carries 130. Sourced from the Owens Corning Sales notice of 1 August 2026.' },
 { b:620, d:'2026-08-07', t:'The SureNail strip, which is what sells Duration', s:'Theo: "Sure nail strip is what sells the duration compared to competitors." The Duration page had been leading with a comparison against Oakridge, which is the wrong fight. It now leads with Owens Corning\u2019s own claim \u2014 that SureNail is the first and only reinforced nailing zone ON THE FACE of the shingle, a visible woven strip embedded where the nails actually go, so a crew can see the target instead of guessing. Underneath it are the three tested numbers from the SureNail sell sheet: up to twice the nail pull-through resistance, up to nine times the nail blow-through resistance, up to twice the delamination resistance. The basis of those comparisons is printed with them, because a multiple with no basis is a marketing number and a multiple with one survives being questioned across a kitchen table. Duration FLEX carries the same strip and the same figures.' },
 { b:619, d:'2026-08-07', t:'FLEX shows only the colours FLEX is made in', s:'The Duration FLEX page had been showing all twenty Duration colours. It should not have been. Owens Corning\u2019s FLEX brochure lists nine, and Owens Corning\u2019s own line comparison independently says nine — Brownwood, Driftwood, Estate Gray, Onyx Black, Teak, Black Sable, Sand Dune, and the discontinued Storm Cloud and Summer Harvest. FLEX uses the same colour platform, so a shade reads the same on either shingle, but it is not manufactured in the full range. Left alone, a rep could have stood on the FLEX page, picked Merlot, and ordered a roof in a colour FLEX is not made in — the same kind of mistake as selling a discontinued colour. The page now shows the seven you can actually order.' },
@@ -60206,7 +60207,8 @@ var LINES = [
       ['Nailing',           'SureNail\u00ae Technology'],
       ['Non-prorated period','TRU PROtection\u00ae \u2014 10 years']
     ],
-    note:'Since 1 August 2026 the Duration Series wind warranty is 160 MPH when the required Owens Corning\u00ae Total Protection Roofing System\u00ae components are installed \u2014 at least FOUR OC components, including Hip & Ridge, OC Underlayment (Titanium\u00ae or RhinoRoof\u00ae), Starter shingles on BOTH the eaves and the rakes, and either an OC Ice & Water Barrier or an OC Ventilation product. A roof that does not meet that specification still carries the 130 MPH warranty. Quote 160 only when the job is actually built that way.',
+    noteTitle:'Cardinal installs the complete Owens Corning\u00ae system.',
+    note:'That is what qualifies this roof for the 160 MPH wind warranty rather than 130. Owens Corning requires at least FOUR Total Protection Roofing System\u00ae components \u2014 Hip & Ridge, OC Underlayment (Titanium\u00ae or RhinoRoof\u00ae), Starter shingles on BOTH the eaves and the rakes, and either an OC Ice & Water Barrier or an OC Ventilation product \u2014 and Cardinal installs all four as standard. The higher warranty applies to work from 1 August 2026. If a component is substituted or declined on a particular job, that roof carries the 130 MPH warranty instead, so confirm the specification before quoting 160.',
     /* OC's tested figures. The basis line is NOT optional: the comparison is
        against competing products with wide, SINGLE-LAYER nailing zones, nailed
        in the middle of the allowable zone. A multiple with no basis is a
@@ -60219,7 +60221,7 @@ var LINES = [
       basis:'Up to. Owens Corning testing against competing products with wide, single-layer nailing zones, following manufacturers\u2019 installation instructions and nailing in the middle of the allowable nailing zone.'
     },
     hero:'onyx-black',
-    chart:{ mph:130, ext:160, extNote:'160 with the full OC Total Protection system',
+    chart:{ mph:130, ext:160, extNote:'160 on Cardinal\u2019s standard OC system install',
             impact:'Class 3', impactKey:'c3', warranty:'Limited Lifetime' },
     source:'TruDefinition Duration Beauty Book, and the SureNail Sell Sheet (10020692) for the tested figures, and the Owens Corning Sales notice of 1 Aug 2026 for the 160 MPH Total Protection warranty',
     match:function(c){
@@ -60243,7 +60245,8 @@ var LINES = [
       ['Nailing',           'SureNail\u00ae Technology'],
       ['Non-prorated period','TRU PROtection\u00ae \u2014 10 years']
     ],
-    note:'Since 1 August 2026 the Duration Series wind warranty is 160 MPH when the required Owens Corning\u00ae Total Protection Roofing System\u00ae components are installed \u2014 at least FOUR OC components, including Hip & Ridge, OC Underlayment (Titanium\u00ae or RhinoRoof\u00ae), Starter shingles on BOTH the eaves and the rakes, and either an OC Ice & Water Barrier or an OC Ventilation product. A roof that does not meet that specification still carries the 130 MPH warranty. Quote 160 only when the job is actually built that way.',
+    noteTitle:'Cardinal installs the complete Owens Corning\u00ae system.',
+    note:'That is what qualifies this roof for the 160 MPH wind warranty rather than 130. Owens Corning requires at least FOUR Total Protection Roofing System\u00ae components \u2014 Hip & Ridge, OC Underlayment (Titanium\u00ae or RhinoRoof\u00ae), Starter shingles on BOTH the eaves and the rakes, and either an OC Ice & Water Barrier or an OC Ventilation product \u2014 and Cardinal installs all four as standard. The higher warranty applies to work from 1 August 2026. If a component is substituted or declined on a particular job, that roof carries the 130 MPH warranty instead, so confirm the specification before quoting 160.',
     /* OC's tested figures. The basis line is NOT optional: the comparison is
        against competing products with wide, SINGLE-LAYER nailing zones, nailed
        in the middle of the allowable zone. A multiple with no basis is a
@@ -60256,7 +60259,7 @@ var LINES = [
       basis:'Up to. Owens Corning testing against competing products with wide, single-layer nailing zones, following manufacturers\u2019 installation instructions and nailing in the middle of the allowable nailing zone.'
     },
     hero:'estate-gray',
-    chart:{ mph:130, ext:160, extNote:'160 with the full OC Total Protection system',
+    chart:{ mph:130, ext:160, extNote:'160 on Cardinal\u2019s standard OC system install',
             impact:'Class 4', impactKey:'c4', warranty:'Limited Lifetime' },
     source:'TruDefinition Duration FLEX brochure, and the SureNail Sell Sheet (10020692) for the tested figures, and the Owens Corning Sales notice of 1 Aug 2026 for the 160 MPH Total Protection warranty',
     match:function(c){
@@ -60285,6 +60288,7 @@ var LINES = [
     /* The footnote is NOT decoration. Quoting 130 on a four-nail roof states
        something false about a warranty, and this is the exact ‡‡ text from the
        brochure. Never shorten this row to a single number. */
+    noteTitle:'Read this before quoting the wind number.',
     note:'110 MPH is standard with 4-nail application. 130 MPH applies ONLY with 6-nail application and Owens Corning\u00ae Starter Shingle along eaves and rakes, per the installation instructions. Quote 110 unless the roof was actually built that way.',
     hero:null,
     /* ext is the hatched part of the bar. It exists so the board can never draw
@@ -60518,7 +60522,13 @@ function lead(L){
     /* 617: the note rides ABOVE the source line and is styled as a caution,
        because on Oakridge it is the difference between a true and a false
        statement about a warranty. */
-    if(L.note)   html += '<div class="occ-note2"><b>Read this before quoting the wind number.</b> ' + esc(L.note) + '</div>';
+    /* 622: the TITLE is per-line for the same reason 621 moved the bar caption
+       there. On Oakridge this block is a caution — quote the lower number
+       unless the roof was built that way. On Duration it is now the opposite:
+       Cardinal installs the full system, so the higher number is earned rather
+       than hoped for. One shared heading framed a selling point as a warning.
+       Anything that reads differently on two lines belongs on the line. */
+    if(L.note)   html += '<div class="occ-note2"><b>' + esc(L.noteTitle || 'Read this before quoting the wind number.') + '</b> ' + esc(L.note) + '</div>';
     if(L.source) html += '<div class="occ-src">Specifications as published by Owens Corning — ' + esc(L.source) + '.</div>';
   }
   box.innerHTML = html;

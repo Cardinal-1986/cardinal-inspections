@@ -91,9 +91,10 @@ fallback**; the seven that are, are all discontinued, and that is the end state,
   ship **130/160** with the condition in a caution block; anything short of the spec is still
   130. All three predicted rendering defects were real and were fixed in the same build.
   ⚠️ **Two things this deliberately does NOT do, both still open if Theo wants them:**
-  1. It does **not** claim Cardinal installs the full system as standard. If he confirms that,
-     it is the strongest line on the page — *your warranty is 160 because of how we build it*
-     — but it is his statement to make, not one to infer.
+  1. ✅ ~~It does not claim Cardinal installs the full system as standard.~~ **CLOSED at 622.**
+     Theo, asked directly: **"Yes we do."** The Duration and FLEX note now leads with it. The
+     130 fallback, the OC-grants-the-warranty attribution and the four named components are
+     all harness-asserted — they are what keep the claim true and must not be trimmed.
   2. The source is a **sales notice, not the warranty document**. Revised documents were due on
      OwensCorning.com 3 Aug 2026 and the sandbox cannot reach that site. Swap both `source`
      strings when the published document is in hand.

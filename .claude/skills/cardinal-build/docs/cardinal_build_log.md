@@ -9425,3 +9425,61 @@ controlled: **5 assertions fail against the 620 artifact**. **Chromium 53/53**, 
 the geometry proof that each hatched extension actually paints inside its track — the thing
 jsdom structurally cannot see and the reason defect 2 would otherwise have shipped. Board,
 Duration line page and phone all rendered and read by eye.
+
+## Build 622 — Cardinal installs the complete OC system, so the page says so (8 Aug 2026)
+
+621 put the 160 MPH warranty on Duration and FLEX and **deliberately stopped short** of
+claiming Cardinal met the condition for it, because that was Theo's statement to make and
+not one to infer. Asked directly whether Cardinal installs the full Owens Corning Total
+Protection Roofing System as standard: **"Yes we do."**
+
+So the block under the spec table flips from a caution a rep must read carefully into the
+strongest line on the page — *Cardinal installs the complete Owens Corning® system. That is
+what qualifies this roof for the 160 MPH wind warranty rather than 130.*
+
+### Three things keep the claim true, and all three are asserted
+
+Removing any one of them turns an accurate statement into a false one on a screen handed to
+homeowners. **Do not trim this copy.**
+
+1. **The 130 fallback survives.** *Standard* is not *always* — a component can be
+   substituted or declined on a job, and that roof carries 130. The note still says so and
+   still tells the rep to confirm the specification before quoting 160.
+2. **The warranty stays Owens Corning's to grant.** *Owens Corning requires … and Cardinal
+   installs all four.* Cardinal installs; OC warrants. The patch asserts that neither
+   "Cardinal warrants" nor "our warranty" appears anywhere in the module.
+3. **The four components stay named.** They are the proof of the claim, and a homeowner
+   seeing them is seeing what they are paying for.
+
+### The same shared-string defect, one level up
+
+621 moved the bar caption onto each line because Oakridge's second number is a **caution**
+and Duration's is an **upsell**. The note's *heading* was still a single hardcoded string —
+*"Read this before quoting the wind number."* — shared by both. Correct on Oakridge; on
+Duration it now framed a selling point as a warning. `noteTitle` became per-line data with
+the old string as the fallback, so Oakridge and anything unspecified are unchanged.
+
+**The rule this is the second instance of: anything that reads differently on two lines
+belongs on the line, not in the renderer.** Worth checking the remaining shared strings in
+`cr-occ-script` before a third one is found the same way.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 621 → 622. **jsdom 110/110**, negative-
+controlled: **4 assertions fail against the 621 artifact**. **Chromium 53/53**, and the
+**phone baseline did not move** — 622 touches the note block and the bar caption, neither of
+which is phone-visible above the fold, so an unchanged baseline is the correct result rather
+than a skipped check. Rendered and read by eye.
+
+Two harness assertions were rewritten rather than worked around: both pinned the exact
+caption string *"160 with the full OC Total Protection system"* and failed the moment 622
+reworded it. They now assert the **invariant** — Duration carries its own 160 condition and
+never Oakridge's nailing one — so Theo can reword the copy without breaking a gate. Pinning
+marketing text in an assertion makes the copy hostage to the test.
+
+### Left alone deliberately
+
+The claim block still uses `.occ-note2`, the same red-edged styling as Oakridge's caution.
+It reads as emphasis rather than warning in Cardinal red, and both blocks are the same kind
+of content — the condition attached to the wind number. Splitting the style would create a
+second thing to keep in sync for no gain. Theo can call it if he wants them distinct.

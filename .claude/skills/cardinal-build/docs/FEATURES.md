@@ -1651,7 +1651,7 @@ state until then. Nothing here has been verified against a real photograph.
 
 ---
 
-## OC Colors — the shingle-line hub (builds 615–621, 7 Aug 2026)
+## OC Colors — the shingle-line hub (builds 615–622, 7–8 Aug 2026)
 
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
@@ -1709,9 +1709,33 @@ hatched extension), so the wording is the only thing separating them: each line 
 own `chart.extNote`, and both the jsdom and Chromium harnesses assert that Duration never
 prints Oakridge's six-nail condition.
 
-⚠️ **The screen states the condition; it does not claim Cardinal meets it.** Whether the
-full Total Protection system is Cardinal's standard install is Theo's to say, and saying it
-for him would be inventing a warranty claim. Not asserted anywhere in the module.
+### ✅ 622: Cardinal DOES install the complete system, and the page says so
+
+621 stated the condition and deliberately refused to claim Cardinal met it — that was Theo's
+to say. **Asked directly, he said "Yes we do."** So the block under the spec table flipped
+from a caution into the strongest line on the page: *Cardinal installs the complete Owens
+Corning® system. That is what qualifies this roof for the 160 MPH wind warranty rather
+than 130.*
+
+⚠️ **Three things keep that claim true, and all three are harness-asserted. Do not
+"tighten" the copy by removing any of them:**
+
+1. **The 130 fallback stays.** *Standard* is not *always* — a component can be substituted
+   or declined on a job, and that roof carries 130. Deleting the sentence turns a
+   conditional truth into an unconditional statement about a warranty, in front of a
+   homeowner.
+2. **The warranty stays Owens Corning's to grant.** The copy says *Owens Corning requires…
+   and Cardinal installs all four*. Cardinal installs; OC warrants. Never "our warranty".
+3. **The four components stay named.** A homeowner reading Hip & Ridge, underlayment,
+   starter on the eaves *and* the rakes, and ice-and-water or ventilation is seeing what
+   they are paying for. It is the proof of the claim, not decoration.
+
+⚠️ **`noteTitle` is per-line, and this is the second time the same lesson was paid for.**
+621 moved the bar caption onto each line because Oakridge's second number is a caution and
+Duration's an upsell. The note's *heading* was still one hardcoded string — *"Read this
+before quoting the wind number."* — which framed Cardinal's selling point as a warning.
+**Anything that reads differently on two lines belongs on the line, not in the renderer.**
+Oakridge keeps the caution heading; Supreme has neither.
 
 ⚠️ **The source is a sales notice, not the warranty document.** Revised warranty documents
 were due on OwensCorning.com 3 Aug 2026; the sandbox cannot reach that site. When Theo can
