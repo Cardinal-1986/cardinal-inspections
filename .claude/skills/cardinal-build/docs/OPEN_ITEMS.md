@@ -1605,3 +1605,57 @@ exact-match surgery on one artifact, every harness slices blocks out by `id`,
 CI asserts the VAPID key in hand-written `sw.js` matches `api/notify.js`) for a
 re-architecture estimated at a week by an auditor who thought the file was 59,000
 lines of JavaScript.
+## 📌 A separate `showroom.html` — a REAL project, deliberately deferred
+
+Theo, 8 Aug 2026, choosing between host-gating the CRM chrome and true
+separation: **"Option 1 but remember option 3."** Build 625 shipped Option 1.
+This is Option 3, recorded at his explicit request so it is not lost or
+re-litigated from scratch.
+
+**The idea:** a `showroom.html` carrying only the presentation surfaces — the
+Vision hub, the Showcase, OC Colors, the Studio link — with **no CRM code at
+all**. `showroom.cardinalroster.com` would serve it instead of `index.html`.
+
+### For
+
+- A customer-facing tablet **never downloads CRM code**. Build 625 hides the
+  chrome; it does not remove it. There is no errant tap that shows a claim or a
+  crew payment because the screens are not there.
+- **Independent deploys.** A CRM change cannot break the sales tool the night
+  before a pitch.
+- **Here the load argument is genuinely strong** — and this is the distinction
+  worth holding onto. The bundle-splitting audit (see above) was rejected because
+  it targeted the 4.5% Showcase. This targets the **977 KB shell**, which is the
+  actual mass and the part no lazy-load can defer.
+- It matches what Theo already said about Studio: *"if it was back to the
+  beginning this would have been a completely separate app."*
+
+### Against — and this is what makes it days, not hours
+
+- **The Showcase (162 KB) and Colors (~60 KB) live inside `index.html`.** Two
+  routes, both costly:
+  - **Duplicate them** → two copies, every future fix landing twice. This
+    violates "one pipeline per concept", the rule that exists *because* four
+    features on this project were built twice and lost. **Do not take this
+    route.**
+  - **Extract them to shared files** → breaks `check_build.py` (it parses inline
+    blocks individually), `patch_lib.py`'s exact-match surgery, and every harness
+    that slices a module out by `id`. The gate ladder would need rebuilding first.
+- Auth gets a third implementation (`index.html`, `studio.html`, and this).
+- `sw.js`, push/VAPID and the offline shell all assume one document; CI asserts
+  the VAPID key matches `api/notify.js`.
+
+**Why Studio was cheap and this is not:** Studio reads one table and never
+writes. The showroom needs the two biggest presentation modules in the file.
+
+### The trigger to actually do it
+
+Not "someday" — one of these two concrete things:
+
+1. **Wanting independent deploys**, so CRM work cannot destabilise a sales tool.
+2. **Putting the tablet in the hands of someone who must never see money
+   screens** — a rep, a subcontractor, a hire. Build 625's gate is a curtain,
+   not a wall.
+
+Until one of those is true, 625 gives Theo the thing he described — sign in at
+showroom, get a presentation front door — at a fraction of the cost.

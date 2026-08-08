@@ -9711,3 +9711,72 @@ suspect is app-wide rather than Showcase-local: the module registers **zero**
 `document.body` observers and its four `requestAnimationFrame` sites are all
 bounded and `isConnected`-guarded, so the Showcase is not the 567/569 class.
 Do not re-flag it as such.
+
+---
+
+## Build 625 — the showroom stops wearing the CRM (8 Aug 2026)
+
+Two things Theo hit on the live site and sent photos of from his iPad. Both were
+invisible to every gate in this repo, for different reasons.
+
+### The showroom was the CRM in a different hat
+
+`showMain()` contained **zero** references to `isVisionHost()` and turned the
+whole CRM shell on regardless of hostname — site header, nav strip, Add-project
+button, admin nav. Build 593 only ever swapped the **contents** of
+`#landingView`, so signing in at `showroom.cardinalroster.com` handed him a
+customer-facing tablet with the office painted around the presentation door.
+
+⚠️ **`isVisionHost()` was trapped.** It lives in `cr-lr-script` and was exported
+**nowhere**; `showMain()` lives in the main unnamed block and could not see it.
+It is now a member of the **existing** `window.CardinalLanding` object — not a
+new `window.Cardinal*`, because `check_build.py`'s dupe-API check exists to stop
+a second one appearing, and "extend, don't add" is the standing rule.
+
+The call is deliberately defensive — `window.CardinalLanding && …isVisionHost &&
+…isVisionHost()` — so if the landing block has not run the answer is **false**,
+which is the safe direction: a normal CRM load.
+
+**Theo chose this (Option 1) over a separate `showroom.html` (Option 3) after
+being shown both.** Option 3 is recorded in `OPEN_ITEMS.md` as a real future
+project, at his explicit request — *"Option 1 but remember option 3."*
+
+### The iPad header was Safari, not the stylesheet
+
+The Colors line title rendered at roughly double its authored size, wrapping
+"TruDefinition® Duration® FLEX®" over six lines with the ® marks orphaned.
+
+**`text-size-adjust` appeared zero times in the entire file.** `.occ-title b` is
+a `display:block` inside a flex item with `min-width:0` — the exact narrow-block
+shape iOS Safari inflates. Every rule mentioning `.occ-title` was read: there is
+**no `[data-style="feature"]` title rule anywhere**, and the CSS says 19px /
+26px. The stylesheet was never the cause.
+
+⚠️ **NO GATE HERE CAN SEE THIS.** Chromium does not font-boost, which is why
+every render shown to Theo looked correct. **His iPad is the only verification**,
+and that is stated rather than papered over.
+
+**Scoped to `#cr-occ` deliberately.** Boosting has been active on iOS across this
+whole app for years, so setting it globally on `html` would shrink text app-wide
+on the one device he uses most — a large, unreviewed visual change smuggled in
+under a bug fix. Widening later is one selector. **`#cr-show` probably wants the
+same and is NOT included**: it was not reported and cannot be verified here.
+
+### The gate this build is really carrying — `harness_vision.js`
+
+New, 23 assertions, and it runs the **shipped** `showMain()` and `isVisionHost()`
+text rather than a re-implementation. Every assertion is made **twice**: once with
+`?vision=1`, once without.
+
+**A gate that only ever hides is as wrong as one that only ever shows**, and
+`app.cardinalroster.com` is the branch nobody would notice breaking. The negative
+control against the 624 artifact proves the shape: all six vision assertions fail
+there, and **every "nothing may change" assertion passes on both artifacts**.
+
+### Two of my own tests were wrong before the app was
+
+Both were the documented comment-pollution trap, and both aborted before any
+write. `count('text-size-adjust:100%')` matched **my own explanatory comment**;
+so did a tightened regex, because the comment contained `html{text-size-adjust:100%}`.
+Fixed by anchoring the assertion to the declaration's newline-and-indent — and by
+not writing declaration-shaped text in a comment that assertions scan.
