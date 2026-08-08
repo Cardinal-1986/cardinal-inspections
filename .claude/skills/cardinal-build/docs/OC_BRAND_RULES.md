@@ -234,6 +234,42 @@ legal line are required at the **bottom of the homepage**.
 
 ---
 
+## The approved design, for whenever the asset arrives
+
+Planned and approved 8 Aug 2026, blocked only on the artwork. Recorded here rather
+than left in a session plan file, which does not survive.
+
+**A foot block, not the header.** `.occ-head` (built in `cr-occ-script`'s
+`VIEW.innerHTML`) is a tight sticky flex row — back button, title, and the 618 style
+switcher — and staging wants clear space equal to the cap "O" on **all** sides. It
+does not fit there without crowding the mark.
+
+Append the block to `VIEW` **after** `#occHub` and `#occBody`, so it sits under
+whichever screen is showing. That is the point: a rep can hand the tablet over on a
+line page or a colour detail, and the disclaimer has to travel with the co-branding
+instead of living only on the hub. It carries the lockup, then the
+independent-contractor disclaimer verbatim. **No "Proud Installer" line** (not needed
+with the lockup) and **no Panther** (nothing submitted).
+
+**Three traps this module has already sprung, so write around them:**
+
+- **`background-color:`, never the `background:` shorthand** — the shorthand resets
+  `background-image` and wiped the hero photos at 623.
+- **Write these rules UNGATED, deliberately.** 623's lesson was that *style-specific*
+  rules must sit inside `@media (min-width:820px)`. This is the opposite case — the
+  disclaimer must show at every width — so it belongs outside the media query. Put
+  that in a comment or someone will "fix" it.
+- **Every `--occ-*` reference needs a literal fallback.** `harness_colors.js` already
+  asserts this across the whole stylesheet, so a bare `var()` fails the gate.
+
+**Gates to add** to `harness_colors.js`: the lockup `<img>` exists at its root path;
+**no `filter:`, `opacity`, `mix-blend-mode` or recolouring applies to it**; the
+disclaimer is present **verbatim** including "LLC" and the closing period; and the
+block renders on the hub, a line page and a colour detail. Then `audit_contrast.js`
+at phone and both iPad widths, and look at it at the smallest size it appears.
+
+---
+
 ## If a mark ever lands in `index.html`
 
 - Reference it like every other root asset: `src="/oc-logo.svg"`. Root files
