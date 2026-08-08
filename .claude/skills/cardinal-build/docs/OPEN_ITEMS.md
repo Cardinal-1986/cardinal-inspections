@@ -1,10 +1,13 @@
 # Cardinal Resource App — Open Items
 
-*Decisions section below worked at **5 Aug 2026**; the rest of the file was last worked at build
-**573** · 2 Aug 2026. ⚠️ **The app is at build 595** — parallel sessions shipped 574–595 (Showcase,
-the Vision hub, Cardinal Studio, the Spark tagging pipeline, the Pop-Up Roof book) without bringing
-this file forward, so everything below the decisions section is 573-era or older and the gap is
-real. Everything under "Illustrations in the Resource Library" and beyond is 467–557 era. For anything not covered here, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder. **Crews (547–556) is now documented in `FEATURES.md`**, not only in CLAUDE.md.*
+*⚠️ **This file is layered, and each layer carries its own date.** The newest material —
+the bundle-splitting verdict, the deferred `showroom.html`, and what build 627 left open — is at the
+**bottom**, worked **8 Aug 2026 at build 627**. The decisions section was worked **5 Aug 2026**. The
+long middle of the file was last worked at build **573** · 2 Aug 2026 and knows nothing of 574–627;
+everything under "Illustrations in the Resource Library" and beyond is 467–557 era. Read the date on
+the section you are in, not the top of the file. For anything not covered here, read the `CHANGELOG`
+array in `index.html` — it is the only record that survives work done outside this folder. **Crews
+(547–556) is now documented in `FEATURES.md`**, not only in CLAUDE.md.*
 
 ---
 
@@ -1645,8 +1648,14 @@ all**. `showroom.cardinalroster.com` would serve it instead of `index.html`.
 - `sw.js`, push/VAPID and the offline shell all assume one document; CI asserts
   the VAPID key matches `api/notify.js`.
 
-**Why Studio was cheap and this is not:** Studio reads one table and never
-writes. The showroom needs the two biggest presentation modules in the file.
+**Why Studio was cheap and this is not:** Studio touches two tables and its
+writes are trivial — an `archived_at` flag (614) and the tray upsert/delete
+(627). The showroom needs the two biggest presentation modules in the file.
+
+*(Corrected 8 Aug: this said Studio "never writes". It did, at 614, and does
+more at 627. The **argument** is unaffected — Studio was cheap because its
+surface is small, not because it was read-only — but the claim was false and had
+propagated to four places in the doc set. See `CLAUDE.md` → Cardinal Studio.)*
 
 ### The trigger to actually do it
 
@@ -1659,3 +1668,75 @@ Not "someday" — one of these two concrete things:
 
 Until one of those is true, 625 gives Theo the thing he described — sign in at
 showroom, get a presentation front door — at a fraction of the cost.
+
+---
+
+## What build 627 left open — observations, not work
+
+*8 Aug 2026. Both are known and deliberate as shipped. Neither is a bug report;
+both are here so the next session does not "discover" them and fix the wrong one.*
+
+### 1. Nothing removes a photo from the tray once its pair is built
+
+Verified: there is **no `studio_tray` delete anywhere in `index.html`** — the
+Showcase reads the tray and never prunes it. The only way out is to untick the
+photo in Studio.
+
+**This may well be correct.** A tray is a shortlist, and a shortlist that empties
+itself as you use it cannot be reviewed, re-cut, or used to build a second pair
+from the same site. The alternative — auto-remove on `promoteToPair` — is one
+line and would be a silent behaviour change to a feature Theo has not used yet.
+
+⚠️ **Do not pick for him.** If the tray gets unwieldy in practice he will say so,
+and the answer might be "clear tray" button, auto-remove, or an "already used"
+badge — three different features. Ask before building any of them.
+
+### 2. The tray reads `.limit(300)` with no paging
+
+`loadTrayPhotos()` takes the 300 most recent by `added_at`. At the tray's intended
+size — a shortlist of pairs worth showing a customer — this is not reachable.
+It is recorded because a limit with no UI to say it was hit is exactly the "silent
+cap" this project has been bitten by before: **if it ever does truncate, say so on
+screen rather than quietly showing 300.**
+
+### ✅ CLOSED at 628 — the third bucket exists now
+
+~~There is no bucket for "damage vs how we do it".~~ **Shipped at 628.** The tick
+in Studio cycles off → Showcase → Hall of Fame, `studio_tray.bucket` records
+which, and the Hall of Fame gained the picker it never had. Do not re-file it.
+
+**Still open from 627, and item 1 is still Theo's call — 628 did NOT decide it:**
+
+### Not open, so nobody re-files them
+
+- **The tray badge paints.** `#stuTrayCount` exists in the markup (`studio.html`),
+  and `paintTrayCount()` is called on load and on every toggle. Checked.
+- **The tray carries no coordinates**, by three independent mechanisms. That is a
+  fence, not an omission — see `FEATURES.md` → 627.
+- **A work order with no labor lines is still correct** (the 556 permission rule),
+  and unrelated to any of the above.
+
+### 📌 Build 630 — the colours bin needs its destination
+
+629 ships a **colours** bin in Studio that collects but consumes nowhere. Two
+things make this its own build rather than a footnote:
+
+1. **`oc_color_photos.color_id` is NOT NULL.** Which Owens Corning colour a roof
+   is belongs on the Colors page, where the swatches are visible — not in Studio,
+   where you are looking at a photograph.
+2. ⚠️ **The photo must be COPIED, not referenced.** Colors is visible to **all
+   signed-in staff** (Theo, settled: *"Yes they can see colors"*), while
+   `photos/studio/*` is admin-only by storage policy. A tray row pointing at an
+   archive path renders for Theo and is **broken for Curtis and Nick**. Copy into
+   `oc-colors/<slug>/` the way the Showcase copies through `putPhoto()`.
+
+Do not "simplify" this by inserting the archive path directly.
+
+### Asked at 628 and deliberately left unanswered
+
+**Should a Hall of Fame comparison also take a third "during" shot**, the way the
+Showcase path does via its optional `build` slot? The machinery is already
+generic — `build` is the only slot the completion guard treats as optional, so
+adding one is an array entry and a form field. Not assumed either way, because
+"theirs vs ours" is a two-sided argument by construction and a third photo may
+simply muddy it. **Ask before building it.**

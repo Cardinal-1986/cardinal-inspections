@@ -9908,3 +9908,281 @@ coordinates are excluded*. Fixed by scoping to the `upsert()` **object literal**
 — the prose is not the payload. Same trap as 626's `text-size-adjust` count and
 624's `esc(srcD(...))` count. **When asserting a thing is absent, assert over
 code, never over a slice that contains your reasoning about it.**
+
+---
+
+## Build 628 — two keep buckets, and the Hall of Fame gets a picker (8 Aug 2026)
+
+`studio.html` + `cr-show-script` + `studio_tray_bucket.sql` (**applied and
+verified before the HTML change**).
+
+**Theo, on the tray shipped at 627:** *"1 is the bin for trashing or selecting?
+Is there a bin for keep for before and after a bin for damage vs how we do it
+and a bin for junk?"*
+
+Measured before answering, not guessed:
+
+| He described | What existed | Reachable? |
+|---|---|---|
+| junk | the Bin — `archived_at`, per SITE via `setArchived(address, on)` | ✅ |
+| before & after | `studio_tray` → pair-builder → `showcase_pairs` | ✅ |
+| theirs vs ours | `workmanship_pairs` (build 576) | ❌ **upload-only** |
+
+**The gap was precise.** `saveWork()` read both photographs from file inputs and
+`openWorkForm()` rendered no picker, so the Hall of Fame **could not see the
+tray at all** — a ticked bad-install photo landed in the same undifferentiated
+pile as the before/afters and could only become a Showcase pair.
+
+### The picker was reused, not duplicated
+
+`jobPick` was already slot-driven: `slots:['before','after']` is just an array
+and every consumer walks it. The second shape is that array plus a generic
+completion guard. **`promoteToPair`, `drawJobPicker`, `takeJobPhotos`,
+`openJobPicker`, `openWorkForm`, `savePair`, `saveWork`, `defSlot` and
+`loadTrayPhotos` are each still defined exactly once** — asserted.
+
+The old guard `keys.indexOf('before') === -1 || keys.indexOf('after') === -1`
+became `jobPick.slots.some(k => k !== 'build' && …)` — the same rule the "Use
+these" button already enforced, now read off the shape instead of naming one.
+
+### ⚠ A latent bug this would have created, closed in the same build
+
+`openWorkForm()` had **no `pending = null`**. Harmless while `saveWork` ignored
+`pending` — but the moment it started preferring carried files, the next
+hand-made comparison would have silently uploaded the *previous* pick's
+photographs. That is exactly the failure the 591 comment on `openForm` describes.
+Both forms now clear unconditionally, and two assertions cover it.
+
+### The chip: a Chromium render caught what no assertion did
+
+Theo picked "one chip that cycles" from rendered options. First cut drew the
+amber state as a **bar** so shape would carry the state as well as colour —
+and the render showed the mistake: **a bar in a checkbox is the universal
+"indeterminate / excluded" mark**, so tapping green → amber read as *un-picking*
+the photo. Tick now means PICKED in both; the **chip shape** carries which pile
+(rounded square = Showcase, circle = Hall of Fame). Every gate was green across
+that change. Only the picture showed it.
+
+`TRAY` went `Set` → `Map` (path → bucket): `.has()`, `.size` and `.delete()` keep
+their meaning, so every existing read site is correct without being touched.
+One `paintTick()` serves both the grid renderer and the toggle — two copies
+would drift invisibly. A failed write restores the **previous bucket**, not
+merely un-ticked: a failed showcase→workmanship move must land back on showcase.
+
+### The fence is unchanged and still asserted
+
+`studio_tray` still has **no coordinate columns**, `toggleTray()` still names its
+fields explicitly rather than spreading the archive row, and both tray reads now
+filter `.eq('bucket', want)` where `want` is derived from the picker's own mode
+so the two cannot disagree. `studio_tray_bucket.sql` verified against production:
+bucket NOT NULL default `'showcase'`, check constraint `('showcase','workmanship')`,
+admin-only policy inherited, **0 coordinate columns**, 0 rows.
+
+### Gates
+
+`check_build.py` green and negative-controlled · `studio.html`'s inline scripts
+parsed separately (outside its scope) · **347 assertions green**: tray **48**
+(negative-controlled — 24 fail against 627) · showcase 124 · vision 23 · colors
+110 · occhead 42 · plus 8 functional assertions executing the *shipped*
+`nextBucket`/`paintTick` in jsdom, proving the cycle repeats and that all three
+states differ in class, `aria-pressed` and label.
+
+⚠️ **A harness assertion broke for no app reason and the test was wrong.** The
+627 check `/stu-tick[\s\S]{0,700}ev\.stopPropagation\(\)/` passed by string
+*proximity*; 628 moved the class into `paintTick()`, so the nearest `stu-tick`
+literal is now in the CSS a thousand lines away. `ev.stopPropagation()` was
+still right there in the listener. Rescoped to the listener itself. Same lesson
+as `harness_showcase`'s FULL-image assertion and `harness_occhead`'s
+one-line-at-every-width draft: **assert on the code that must be true, never on
+how close two strings happen to sit.**
+
+### Left open deliberately
+
+Nothing prunes the tray once a pair is built (unchanged from 627 — Theo's call),
+and the reader still takes `.limit(300)` with no paging. Whether a Hall of Fame
+comparison should also accept a third "during" shot, as the Showcase path does
+via its optional `build` slot, was **not** assumed either way.
+
+---
+
+## Build 629 — arm a bin, then tap. Three bins, plus trade (8 Aug 2026)
+
+`studio.html` + `studio_tray_bins.sql` (**applied and verified before the HTML
+change**). `index.html` gets the stamp and a `CHANGELOG` entry only.
+
+**Theo, an hour after 628 shipped two buckets: *"Extra bins"*.** Asked which:
+**"Colors but also would be nice to have by trades as well."** Asked how the
+control should work, given three-plus bins: **"Arm a bin, then tap."**
+
+### ⚠ The two things he asked for are NOT the same kind of thing
+
+This is the whole design, and getting it wrong would have been unrecoverable
+without a migration:
+
+- **COLOURS is a BUCKET** — a destination like showcase and workmanship, headed
+  for `oc_color_photos`. A photo is in exactly one, because `storage_path` is
+  the primary key.
+- **TRADE is a FACET** — it cuts across every bucket. A before/after can be a
+  siding job; a theirs-vs-ours can be gutters. As a fourth bucket it would have
+  forced a roofing before/after to choose between being a before/after and being
+  roofing. So: its own nullable column, orthogonal to bucket.
+
+`trade`'s six values are the app's **existing** `TRADES` — the same list in three
+places in `index.html`, the same `workmanship_pairs.trade` carries, the same
+`crews_trade_ck` constrains. One vocabulary; when one grows they all grow.
+
+### The cycle is gone, deliberately
+
+628's chip cycled off → showcase → workmanship → off. That was right for two
+bins and wrong for three: undoing a mis-tap cost one tap per remaining bin, and
+a fourth bin would have cost four. **The chip is now a plain in/out toggle
+against whatever bin is ARMED in a row above the grid** — one tap either way,
+however many bins exist. Offered against a per-photo menu and against extending
+the cycle; Theo picked this.
+
+`tapResult()` holds the whole meaning of a tap in one place:
+
+| mode | state | result |
+|---|---|---|
+| bin | not in tray | into the armed bin |
+| bin | in the armed bin | out |
+| bin | in a **different** bin | **moves**, keeping its trade |
+| trade | not in tray | **no-op** — there is no row to write on |
+| trade | already the armed trade | cleared |
+| trade | otherwise | set |
+
+The move-on-tap rule is why the chip shows the bin it is **actually** in rather
+than the armed one: you can see before you tap that a photo belongs elsewhere.
+
+### Verified by executing the shipped code, not a re-implementation
+
+11 functional assertions drive the real `tapResult` through every state,
+including the one that matters: **every reachable result is a valid row** —
+bucket in the three, trade in the six or null — so the DB constraints cannot be
+hit by any sequence of taps.
+
+`harness_tray.js` is now **57 assertions**, negative-controlled (14 fail against
+628). `check_build.py` green and negative-controlled; `studio.html` parsed
+separately; showcase 124 · vision 23 · colors 110 · occhead 42 all still green.
+
+### ⚠ Two assertions failed on CORRECT code, and both were the test's fault
+
+1. **`nextBucket` "survived".** The lexer settled it: **0 in CODE, 1 in
+   comments** — my own comment, `/* 629 replaced nextBucket() …`. The **fourth**
+   instance this session of an assertion matching its own explanatory prose.
+   Fixed by rewording the comment so it no longer contains the identifier it
+   discusses, and by checking with `jslex_count.py` rather than a bare regex.
+2. **`paintTick` call count `=== 4`.** 628 hardcoded it; 629 legitimately added
+   a fifth call site in `repaintTicks()`. Rewritten to assert the *intent* —
+   one definition, three or more callers — which is the repo's own standing rule
+   about self-computing assertions over numbers read off a patched tree.
+
+### What is NOT done, and is the next build
+
+**The colours bin collects but has nowhere to go yet.** `oc_color_photos.color_id`
+is NOT NULL and names a specific Owens Corning colour — a choice that belongs on
+the Colors page where the swatches are visible, not in Studio.
+
+⚠️ **And it cannot simply reference the archive path.** The Colors page is
+visible to **all signed-in staff** ("Yes they can see colors" — Theo, settled),
+while `photos/studio/*` is admin-only by storage policy. A tray photo must be
+**copied** into `oc-colors/<slug>/` the way the Showcase copies through
+`putPhoto()`, or the photo renders for Theo and is broken for Curtis and Nick.
+That is build 630, and it was split out rather than rushed.
+
+Also unchanged and still Theo's: nothing prunes the tray once a pair is built,
+and whether a Hall of Fame comparison should take a third "during" shot.
+
+---
+
+## Build 630 — the colour photo grid: many at once, smaller, deletable, full screen (8 Aug 2026)
+
+`cr-occ-script` + `cr-occ-styles`, plus one export added to `cr-show-script`.
+No SQL: `oc_color_photos` already had a delete policy
+(`created_by = my_email() OR is_cardinal_admin()`).
+
+Theo, from the iPad on the Onyx Black page, six reports in one message:
+multi-select missing · "Upload fails as well" · a duplicate with no way to
+delete · open full screen and swipe · the white labels · "Scrolling also locks
+up and has issues".
+
+### ⚠ Two of those were ONE root cause, and it was measurable
+
+```
+storage.buckets.photos.file_size_limit = 10,485,760   (10 MB)
+oc-colors/onyx-black/*  →  6 objects at 5.37–8.04 MB, 4 at ~0.30 MB
+```
+
+`upload()` sent **raw camera bytes**. Anything over 10 MB was refused outright —
+that is "upload fails" — and the survivors made the grid **~40 MB to paint**,
+which is an iPad locking up while scrolling. The Showcase never has this problem
+because `putPhoto()` shrinks first.
+
+**Prime doctrine again: the mechanism already existed.** `shrink()` and the
+`FULL`/`DISP` rendition constants were exported from `cr-show-script` rather than
+copied — a second shrinker would drift and reintroduce 624 on a new screen.
+Uploads now write both renditions, always as JPEG (which also fixes HEIC off an
+iPhone rendering for Theo in Safari and as a broken box for anyone on Chrome),
+and the grid asks for the display twin with a **fallback to the original** —
+load-bearing, because pre-630 photos have no twin and would otherwise vanish.
+
+### The rest
+
+- **`multiple` on the input**, with a per-file progress label and a batch that
+  survives one failure. ⚠️ Paths became **uuids**: `Date.now()` collides when
+  several files land in the same millisecond and `upsert:false` throws — a bug
+  `multiple` would have created on its first use.
+- **A delete button**, admin-gated in the UI and by RLS. The **row goes first**,
+  then the storage objects: an orphaned object costs pennies, a row pointing at
+  nothing is a hole in the grid. An RLS refusal is caught by **row count**, not
+  by an error, per the `.single()` doctrine.
+- **A lightbox** — tap to open, swipe or arrow through, Escape to close, and the
+  key listener is removed on close. Its own element, deliberately **not** the
+  Showcase's `openLens`, which reads showcase paths on a client-facing surface.
+  Swipe requires horizontal intent (`|dx| > 45 && |dx| > |dy| * 1.6`) so a tap
+  cannot step it, and both touch listeners are passive.
+- **`overscroll-behavior:contain`** on the view and the lightbox. The view is
+  `position:fixed` and scrolls itself, so a flick reaching either end chained
+  into the page behind. Weight was the bigger half of the scroll complaint.
+
+### The caption was a real defect, not a preference
+
+Theo: *"make those small white labels black with pink letters"*. He was reading
+a **contrast failure**. 623 set `--occ-card:#FFFFFF` ("tiles with no hero photo
+are white too") and `.occ-ours figure` paints from it, so the caption has been
+`--occ-dim` grey on white — **2.55:1**, which this file's own palette comment
+already records — since 623.
+
+Now `--occ-head` ground with `--occ-pink-on-dark` (**5.48:1**). ⚠️ **Not** the
+brand pink `#EC008C`: that is 3.84:1 as small text and is a FILL/large-type
+colour under OC's own rules. Honouring the request literally would have failed
+the floor. Rendered before/after, and the first render was **discarded as
+misleading** — the "before" override lost specificity and both columns showed
+the new style.
+
+### Gates
+
+`check_build.py` green and negative-controlled, 629 → 630 · **`harness_ourroofs.js`
+— 38 assertions, negative-controlled (37 fail against 629)**, including six that
+execute the shipped `dispOf` and `stepShot` · colors 110 · occhead 42 · showcase
+124 · tray 57 · vision 23, all still green.
+
+⚠️ The new harness's functional section is **wrapped in try/catch on purpose**:
+without it, a build lacking these functions *crashed* rather than reporting RED,
+and a crash proves the file differs while a RED proves which behaviours are
+missing.
+
+### ⚠ BUG_CLASSES class 15 opened — six false reds in one session
+
+`openLens` matched this module's own comment saying it is *not* used here. That
+is the **sixth** assertion this session to match prose rather than code. Written
+up as its own class with the five rules that fall out of it, because fixing it a
+seventh time quietly would be the wrong response.
+
+### Not fixed, and stated plainly
+
+The **six oversized photos already uploaded stay oversized** — they can only be
+re-encoded by re-uploading, and this container has no storage credentials (nor
+should it). With delete and multi-select now present, replacing them is about
+thirty seconds of Theo's time, and the grid pulls the display twin for anything
+uploaded from 630 on.

@@ -4,10 +4,15 @@
 
 **Rule: read this before proposing any new feature. If something related exists, extend it.**
 
-*Worked forward to **build 573** on 2 Aug 2026. The body of this file was written at 427 with sections
-added through 546; **Crews (547–556) and builds 557–573 are backfilled at the very bottom.** The
-`CHANGELOG` array in `index.html` remains authoritative for what shipped and covers 468–542, which
-still has no narrative entry anywhere.*
+*Worked forward to **build 627** on 8 Aug 2026. The body of this file was written at 427 with sections
+added through 546; **Crews (547–556), builds 557–573, the Vision suite, Cardinal Studio, the
+Production dossier (603), OC Colors (615–623) and builds 624–627 are appended at the very bottom, in
+that order.** The `CHANGELOG` array in `index.html` remains authoritative for what shipped and covers
+468–542, which still has no narrative entry anywhere.*
+
+*⚠️ **Section stamps outrank the header stamp.** This file grew by appending, so a section written at
+427 is still a 427 section no matter what the header says. Trust the date on the section you are
+reading, and check `cardinal_build_log.md` — the one doc that never fell behind — when they differ.*
 
 *Written at build 427 · 29 July 2026, with sections added at 456–474. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
 
@@ -1919,3 +1924,205 @@ reach it. Registered in `hideAllViews()`, `OVERLAY_IDS` and `PANES`; **display-s
 `api/share.js` + `ccDeliver()` pipeline — **no PDF generator**, the `@page{size:Letter}` print path
 already exists. Theo, settled: *"No pricing on sheets it's not a quote."* **No money fields at all**,
 not blank ones, and it stays outside the estimate/contract document family.
+
+---
+
+## 624–627 — weight, the front door, the header, and the tray (8 Aug 2026)
+
+*Appended 8 Aug 2026 at build 627. Four builds, three of them small; 627 is a feature.*
+
+### 624 — the Showcase asks for the display rendition
+
+`cr-show-script`. The slider and thumbnails were requesting the **FULL** rendition
+(`{3840, q0.92}`) to paint a card that **caps at 612 CSS px on every device**. Four call sites moved
+`src(` → **`srcD(`** (`{1400, q0.82}`): a twelve-pair Showcase went **8,346 kB → 1,455 kB**.
+
+**No quality trade** — 1400px still covers 612 CSS px at 2× with room over. **`openLens()`
+deliberately keeps `src()`**: the pinch-to-full-resolution view reads `data-path` and resolves the
+FULL rendition itself, so the one surface that genuinely wants 3840px still gets it.
+
+⚠️ `harness_showcase.js`'s assertion *"the slider uses the FULL image"* encoded **577's** intent,
+which 624 reverses on purpose. The test was updated, with 577's reasoning kept in a comment. **When
+a gate goes red, first ask whether the test or the app is wrong** — here it was the test.
+
+### 625 — the showroom stops wearing the CRM
+
+`isVisionHost()` (already on `window.CardinalLanding`, extended rather than duplicated) now also
+gates **`showMain()`**: on `showroom.*` — or `?vision=1` for testing — the CRM chrome does not render
+at all. The header, Add project, the nav wrap, and the backup/audit nav items are all skipped.
+
+Theo's report: *"whenever I log into showroom or the other one, it takes me to the crm homepage."*
+Offered three options; he chose **"Option 1 but remember option 3."** Option 3 — a genuinely separate
+`showroom.html` — is recorded in `OPEN_ITEMS.md` **with the two triggers that would justify it**.
+`harness_vision.js` is 23 assertions, each run twice (with and without `?vision=1`), against the
+*shipped* `showMain()` text.
+
+### 626 — the shingle name fits
+
+`#cr-occ .occ-title b` gained `word-break:keep-all` and `font-size:clamp(19px, 2.1vw, 26px)`.
+
+**The lesson is worth more than the fix.** Theo's iPad photo showed the Duration FLEX title stacked
+across six lines with the ® marks stranded. Two builds guessed at iOS font-boosting and a third was
+about to. **Every prior render had been at 1194px — the one width where the name happens to fit.**
+Pointing a harness at **820px** reproduced it instantly in plain Chromium. It was **width-only,
+never iOS-only**.
+
+`harness_occhead.js` — 42 assertions, 5 widths × 3 styles — now asserts *no break inside a word at
+every width* and *one line at ≥820px*. It deliberately does **not** demand one line at 390px, where
+wrapping at a space is ordinary. An earlier draft did, failed six times, and **the test was wrong.**
+
+### 627 — tick photos in Studio, build the pair in the Showcase
+
+**Theo:** *"Any way you could make checkboxes on these photos so they can be transferred to another
+section to where I could pick which photos I use for before and afters and bad vs good installs?"*
+
+**The prime doctrine again: the UI he described already existed.** The Showcase pair-builder already
+tracked `chosen{}` (which photos are ticked) and `roles{}` (which is before, which is after) — it had
+simply never been pointed at the archive. So 627 adds a **tray** and a **source**, and reuses the
+picker, the role assignment and the whole create path untouched.
+
+| Half | Where | What |
+|---|---|---|
+| Studio | `studio.html` | a `.stu-tick` button on every archive card. `ev.stopPropagation()`, so ticking never opens the lightbox. Archive rows only — the Private side is not curation material. Optimistic write that **reverts on failure**, because a tick that looks saved and is not is worse than one that visibly refuses |
+| Showcase | `cr-show-script` | the tray enters as a **pseudo-project**, `TRAY_ID = '__studio_tray__'`, unshifted onto the job list only when it has something in it. `loadJobPhotos()` branches to `loadTrayPhotos()` before the project lookup |
+
+`promoteToPair`, `drawJobPicker` and `takeJobPhotos` are each **still defined exactly once** —
+asserted, because a second picker was the obvious move and the wrong one.
+
+**Storage:** `studio_tray.sql`, applied before the HTML change. `storage_path` is the primary key, so
+a double tick upserts instead of duplicating. Admin-only RLS matching `studio_photos`.
+
+⚠️ **The GPS fence runs straight through this.** `studio_photos` carries `lat`/`lon` — all 60,503
+rows NULL today — and the tray is the **first path from the archive toward a client-facing screen**.
+`studio_tray` has **no coordinate columns**, and `toggleTray()` **names its six fields explicitly
+rather than spreading the row**. Asserted at the schema, at both ends of the code, and by
+`harness_tray.js`. **Do not "complete" the row.**
+
+**Quality guard:** the archive averages 1138×1033 and only ~40% clears 1400px, while the compare card
+wants 1224 device pixels at 2×. Tray rows carry `_small` so a soft photo is marked **before** it
+lands in front of a customer.
+
+**Known, and recorded in `OPEN_ITEMS.md` rather than fixed:** nothing removes a photo from the tray
+once its pair is built, and the tray reads `.limit(300)` with no paging.
+
+---
+
+## 628 — two keep buckets, and the Hall of Fame finally gets a picker (8 Aug 2026)
+
+**Theo:** *"1 is the bin for trashing or selecting? Is there a bin for keep for before and after a
+bin for damage vs how we do it and a bin for junk?"*
+
+**Three destinations existed; only two were reachable.** The answer to the first half: the Bin is
+**trashing** — `setArchived(address, on)` matches `.eq('project_address', address)`, so it archives a
+whole SITE, reversibly, with no confirm. It is for pruning, not picking.
+
+| Bucket | Table | Before 628 |
+|---|---|---|
+| junk | `studio_photos.archived_at` | ✅ the Bin |
+| before & after | `showcase_pairs` | ✅ via the tray |
+| theirs vs ours | `workmanship_pairs` (built at 576) | ❌ **upload-only — could not see the tray at all** |
+
+### What changed
+
+- **The tick cycles** — off → Showcase (green rounded square) → Hall of Fame (amber circle) → off.
+  Theo picked this shape from rendered options over two separate boxes and sort-it-later.
+- **`studio_tray.bucket`** — one idempotent ALTER, NOT NULL default `'showcase'`, constrained to
+  the two values. `storage_path` stays the primary key, so a photo lives in **one bucket at a time**
+  and re-ticking MOVES it.
+- **Two pseudo-projects** in the picker instead of one, each offered only to the shape that can
+  consume it, so a Hall of Fame pick cannot become a Showcase pair by accident.
+- **The Hall of Fame gained "From a job"**, and its upload button now says *Upload photos* — the
+  same rename 598 made on the Showcase, for the same reason.
+
+### The doctrine held again: the picker was reused, not rebuilt
+
+`jobPick` was already slot-driven — `slots:['before','after']` is just an array every consumer walks.
+The second shape is that array (`['bad','good']`) plus a completion guard that reads
+`jobPick.slots` instead of naming before/after. **`promoteToPair`, `drawJobPicker`, `takeJobPhotos`,
+`openJobPicker`, `openWorkForm`, `savePair`, `saveWork`, `defSlot` and `loadTrayPhotos` are each
+still defined exactly once** — asserted. `defSlot()` labels the new slots **"Theirs" / "Ours"**,
+because `bad`/`good` are column names and the wrong words to show mid-pick.
+
+### ⚠ Two traps closed in the same build
+
+**`openWorkForm()` had no `pending = null`.** Harmless while `saveWork` ignored `pending` — but the
+moment it started preferring carried files, the next hand-made comparison would have silently
+uploaded the *previous* pick's photographs. Exactly what the 591 comment on `openForm` warns about.
+Both forms now clear unconditionally.
+
+**A Hall of Fame comparison never prefills an address.** The bad side is somebody else's roof;
+naming it is not Cardinal's business.
+
+### The fence is unchanged
+
+`studio_tray` still declares **no coordinate columns**, `toggleTray()` still names its fields rather
+than spreading the archive row, and both tray reads filter by a bucket derived from the picker's own
+mode so the two cannot disagree. `harness_tray.js` is **48 assertions**, negative-controlled — 24 of
+them fail against 627.
+
+### 629 — a third bin, and a trade on every photo
+
+Theo, an hour later: **"Extra bins"** → *"Colors but also would be nice to have by trades as well"* →
+on the control, **"Arm a bin, then tap."**
+
+⚠️ **Those are two different kinds of thing, and the schema says so.** **Colours is a BUCKET** (a
+destination, like showcase and workmanship — one per photo, `storage_path` is the primary key).
+**Trade is a FACET** that cuts across all three: a before/after can be a siding job. As a fourth
+bucket it would have forced a roofing before/after to choose between being a before/after and being
+roofing. Its six values are the app's **existing** `TRADES`, the same list `workmanship_pairs.trade`
+and `crews_trade_ck` already carry — one vocabulary, three tables.
+
+**The 628 cycle is gone.** Right for two bins, wrong for three: undoing a mis-tap cost one tap per
+remaining bin. The chip is now a plain in/out toggle against whatever bin is **armed** in a row above
+the grid — one tap either way, however many bins exist. `tapResult()` holds the entire meaning of a
+tap in one place, including that a photo in a *different* bin **moves** on tap and keeps its trade,
+and that trade mode is a **no-op** on a photo not in the tray (there is no row to write on).
+
+Verified by executing the shipped `tapResult` through every state — 11 functional assertions,
+including that **every reachable result is a valid row**, so no sequence of taps can hit a DB
+constraint. `harness_tray.js` is 57 assertions, negative-controlled.
+
+### 630 — the "Our roofs in this colour" grid, fixed in six places
+
+Theo, from the iPad: multi-select missing · "Upload fails as well" · a duplicate with no way to
+delete · open full screen and swipe · the white labels · "Scrolling also locks up".
+
+⚠️ **Two of those were one root cause.** The `photos` bucket refuses anything over **10 MB** and
+`upload()` sent **raw camera bytes** — the six photos already on Onyx Black are **5.37–8.04 MB
+each**. Bigger ones were refused ("upload fails"); the survivors made the grid **~40 MB to paint**,
+which is an iPad locking up while scrolling. `shrink()` and the `FULL`/`DISP` constants were
+**exported from `cr-show-script` rather than copied**, uploads now write both renditions as JPEG
+(fixing HEIC-on-Chrome too), and the grid asks for the display twin **with a fallback** — pre-630
+photos have no twin and would otherwise vanish.
+
+Also: `multiple` on the input with per-file progress and uuid paths (`Date.now()` collides when
+several files land in one millisecond, which `multiple` would have triggered immediately) · a
+delete button, admin-gated in UI and RLS, deleting the **row before** the storage object · a
+lightbox with swipe, arrows and Escape, its own element rather than the Showcase's `openLens` ·
+`overscroll-behavior:contain` on the view and the lightbox.
+
+**The caption was a contrast failure, not a preference.** 623 set `--occ-card:#FFFFFF`, so the label
+had been `--occ-dim` grey on white — **2.55:1**, which this file's own palette comment already
+recorded. It is now `--occ-head` ground with `--occ-pink-on-dark` (**5.48:1**). ⚠️ **Not** the brand
+pink `#EC008C`, which is 3.84:1 as small text and is a FILL colour under OC's rules — honouring the
+request literally would have failed the floor.
+
+`harness_ourroofs.js` — 38 assertions, negative-controlled (37 fail against 629).
+
+**Known and stated:** the six already-uploaded oversized photos stay oversized until re-uploaded.
+
+---
+
+⚠️ **The colours bin collects but has nowhere to go yet — that is 630.** `oc_color_photos.color_id`
+is NOT NULL, and the choice of *which* colour belongs on the Colors page where the swatches are.
+More importantly the photo must be **copied** into `oc-colors/<slug>/`, not referenced in place:
+Colors is visible to all signed-in staff while `photos/studio/*` is admin-only, so a referenced
+archive path renders for Theo and is broken for Curtis and Nick.
+
+---
+
+⚠️ **A Chromium render caught what no assertion could.** The amber state first drew a **bar** so that
+shape would carry the state as well as colour. Every gate was green. The picture showed the mistake:
+a bar in a checkbox is the universal *indeterminate / excluded* mark, so green → amber read as
+**un-picking** the photo. The tick now means PICKED in both and the **chip shape** carries the pile.
+Theo's eyes remain the gate on anything visual.
