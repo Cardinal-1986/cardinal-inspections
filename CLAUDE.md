@@ -3,7 +3,7 @@
 Single-file PWA (`index.html`) for **Cardinal Roofing & Renovations, LLC**, Dayton OH.
 Live at **app.cardinalroster.com** · Vercel deploys on merge to `main` · Supabase backend (DB, storage, auth, RLS) · serverless functions in `/api/` (ESM — `api/package.json` has `"type":"module"`, handlers are `export default async function handler`).
 
-Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–627" below before touching any of them.
+Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–628" below before touching any of them.
 
 For app work the file you want is still lowercase **`index.html`** at the repo root. **106** inline `<script>` blocks, **118** `<style>` blocks, **3** external CDN scripts, **0** module scripts. No build step, no bundler, no framework, no test runner.
 
@@ -39,13 +39,13 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 *The one thing that has never changed: **`cardinal_build_log.md` has no entry for roughly 468–542**, because much of that span was built through a different tool that never read this folder.*
 
-**As of 8 Aug 2026 the app is at build 627.** Current state:
+**As of 8 Aug 2026 the app is at build 628.** Current state:
 
 | File | Worked forward to | Trust it? |
 |---|---|---|
-| `cardinal_build_log.md` | **627** — last entry is the Studio tray (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
-| `FEATURES.md` | **627 in content** — the header stamp still says 573, and no stamp inside it is worth more than the section it sits in | ✅ 624–627 appended at the bottom 8 Aug |
-| `OPEN_ITEMS.md` | **627** | ✅ brought forward 8 Aug — the bundle-splitting verdict, the deferred `showroom.html`, and what 627 left open |
+| `cardinal_build_log.md` | **628** — last entry is the two-bucket tray (8 Aug) | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
+| `FEATURES.md` | **628 in content**; the header stamp now says 627 and no stamp inside it outranks the section it sits in | ✅ 624–628 appended at the bottom 8 Aug |
+| `OPEN_ITEMS.md` | **628** | ✅ brought forward 8 Aug — the bundle-splitting verdict, the deferred `showroom.html`, what 627 left open, and the 628 question deliberately left unanswered |
 | `HANDOFF.md` | **3 Aug session** (the book; 574–593 the same day) | ⚠️ **now five days and ~34 builds behind** — nothing from 595–627 is in it. Still newest-session-first, and still the fastest read for *why* something was done. Known staleness: it records PR #108 as open; that landed on `main` long ago |
 | `BUG_CLASSES.md` | **595** (class 14) | ✅ classes 12–13 added at 573, class 14 at 595; the rest is 427-era |
 | `OC_BRAND_RULES.md` | **8 Aug** | ✅ newest doc in the set — read it before any OC or Pink Panther mark |
@@ -459,7 +459,7 @@ A backend photo-curation browser: search and browse the tagged archive when stoc
 | Site | What | Since |
 |---|---|---|
 | `studio.html` → `.update({ archived_at })` | the Bin — archive or restore a whole site | **614** |
-| `studio.html` → `studio_tray` `.upsert()` / `.delete()` | the tick boxes — pick photos for the Showcase | **627** |
+| `studio.html` → `studio_tray` `.upsert()` / `.delete()` | the tick boxes — pick photos for the Showcase, and since **628** for the Hall of Fame too (the `bucket` column) | **627** |
 
 All three are `is_cardinal_admin()` at the RLS layer, so the fence held even while the sentence was wrong. **`studio_tray` is the one seam between Studio and the client-facing Showcase**, and it is the reason the GPS rule below is stated at the schema, at both ends of the code, and in `harness_tray.js`.
 
@@ -473,7 +473,7 @@ A sixteen-spread interactive pop-up book of how a roof gets built, client-facing
 
 ---
 
-## Builds 595–627 — the span this file had no narrative for
+## Builds 595–628 — the span this file had no narrative for
 
 *Written 8 Aug 2026. `cardinal_build_log.md` has an entry for every build here; this is the orientation map, not the record. Nothing below is new work — it is 33 builds that shipped while this document said 594.*
 
@@ -509,6 +509,18 @@ Tick boxes on every archive photo in Studio collect into `studio_tray`; the Show
 ⚠️ **The GPS fence runs straight through this feature.** `studio_photos` carries `lat`/`lon` (all 60,503 rows NULL today, so the `CONTRACTOR_VISION_SUITE.md` exclusion is holding *in practice*), and the tray is the first path from the archive toward a screen a customer sees. **`studio_tray` has no coordinate columns, and `toggleTray()` names its six fields explicitly rather than spreading the row.** Asserted at the schema, at both ends of the code, and by `harness_tray.js` (23 assertions). **Do not "complete" the row.**
 
 Why a table and not a Set: Theo ticks on the iPad and may build the pair on the desktop. `storage_path` is the primary key, so a double tick upserts. `studio_tray.sql` is **applied**.
+
+### 628 — the tray splits in two, and the Hall of Fame gets a picker
+
+Theo: *"Is there a bin for keep for before and after, a bin for damage vs how we do it, and a bin for junk?"* **The Bin is trashing** (per SITE, reversible). Junk and before/after already worked; **"theirs vs ours" did not** — `workmanship_pairs` has existed since 576 but `saveWork()` read its photographs from file inputs and `openWorkForm()` rendered no picker, so the Hall of Fame **could not see the tray at all**.
+
+`studio_tray.bucket` (`studio_tray_bucket.sql`, **applied**) records which pile a photo is in — NOT NULL, default `'showcase'`, constrained to `('showcase','workmanship')`. One bucket per photo, because `storage_path` is still the primary key. The Studio tick **cycles**: off → Showcase (green rounded square) → Hall of Fame (amber circle) → off, Theo's pick from rendered options.
+
+**The picker was reused again, not rebuilt.** `jobPick` was already slot-driven — `slots:['before','after']` is just an array every consumer walks — so the second shape is `['bad','good']` plus a completion guard that reads `jobPick.slots` instead of naming before/after. All nine of the pair-builder's functions are **still defined exactly once**, asserted.
+
+⚠️ **`openWorkForm()` had no `pending = null`**, which was harmless only because `saveWork` ignored `pending`. Making it prefer carried files would have silently uploaded the *previous* pick's photographs — the exact failure the 591 comment on `openForm` describes. Both forms now clear unconditionally.
+
+⚠️ **A Chromium render caught what 347 green assertions could not.** The amber state first drew a **bar** so shape would carry the state alongside colour — but a bar in a checkbox is the universal *indeterminate / excluded* mark, so green → amber read as **un-picking**. The tick now means PICKED in both and the chip *shape* carries the pile. Gates prove structure; pictures catch meaning.
 
 ---
 

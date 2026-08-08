@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 627 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 628 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35195,6 +35195,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:628, d:'2026-08-08', t:'Two trays: before-and-afters, and theirs-vs-ours',
+    s:'The tick box in Cardinal Studio now picks a photo for one of two places instead of just one. Tap once and it is green \u2014 that is a before-and-after for the Showcase. Tap again and it turns amber \u2014 that is a theirs-versus-ours comparison for the Hall of Fame. A third tap takes it back off. The counter at the top says how many are waiting in each. Over in Presentations, both trays show up where you build the pair, and the Hall of Fame has a From a job button for the first time \u2014 before this you could only build a comparison by uploading two photographs from your device, which meant saving them out of Studio first. The Bin is unchanged and is still for throwing away: it archives a whole address at once and Restore is one tap.' },
   { b:627, d:'2026-08-08', t:'Tick photos in Studio, build the pair here',
     s:'Cardinal Studio now has a tick box on every photo. Tick the ones worth using \u2014 anywhere in the archive, across as many sites as you like \u2014 and they collect in a tray. Then in the Showcase, Add a pair now offers the Studio tray alongside your jobs: open it, choose which photograph is the before and which is the after (or which install is the bad one and which is ours), and it builds the pair exactly as it always has. The tray survives closing the tab and moving between the iPad and the desktop, so you can gather on one and build on the other. Photos smaller than the screen needs are marked, so nothing soft ends up in front of a customer by accident.' },
   { b:626, d:'2026-08-08', t:'The shingle name fits on one line',
@@ -57407,7 +57409,8 @@ function side(kind, head, path, caption, i){
 function renderWorkAdmin(){
   if(!amAdmin()) return '';
   return '<div class="cr-sh-admin">' +
-    '<button class="cr-sh-btn" data-act="waddc" type="button">Add a comparison</button>' +
+    '<button class="cr-sh-btn" data-act="waddc" type="button">Upload photos</button>' +
+    '<button class="cr-sh-btn ghost" data-act="waddjob" type="button">From a job</button>' +
   '</div>';
 }
 
@@ -57582,6 +57585,13 @@ function wireBody(){
     };
   });
   el.querySelectorAll('[data-act="waddc"]').forEach(function(b){ b.onclick = openWorkForm; });
+  /* The wrapper is REQUIRED — see the identical note on addjob. A bare
+     `b.onclick = openJobPicker` hands arg 0 a MouseEvent, which is neither
+     'pair' nor 'work', so it would fall to walk mode and bail on !curWalk: a
+     button that silently does nothing. */
+  el.querySelectorAll('[data-act="waddjob"]').forEach(function(b){
+    b.onclick = function(){ openJobPicker('work'); };
+  });
   wireWalk();
   el.querySelectorAll('[data-wdel]').forEach(function(b){
     b.onclick = function(){ removeWork(b.dataset.wdel); };
@@ -57877,6 +57887,12 @@ async function savePair(){
 function openWorkForm(){
   if(!amAdmin()) return;
   ensureForm();
+  /* 628, and it is load-bearing exactly as it is on openForm: closeForm() only
+     removes a class, so files carried from a promoted pick would still be in
+     `pending` the next time this form was opened by hand — and saveWork's file()
+     now prefers pending. Clearing here makes "opening always starts clean"
+     unconditional rather than something every caller has to remember. */
+  pending = null;
   formEl.innerHTML =
     '<div class="bx">' +
       '<h3>Add a comparison</h3>' +
@@ -57910,7 +57926,12 @@ async function saveWork(){
   if(!cl) return showErr('Not signed in.');
   var btn = formEl.querySelector('[data-act="save"]');
   var get = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i ? i.value.trim() : ''; };
-  var file = function(k){ var i = formEl.querySelector('[data-f="' + k + '"]'); return i && i.files && i.files[0] ? i.files[0] : null; };
+  /* 628: the same preference savePair has carried since 591. `pending` is null
+     for a hand-made comparison, which is what keeps a chosen file winning there. */
+  var file = function(k){
+    if(pending && pending[k]) return pending[k];
+    var i = formEl.querySelector('[data-f="' + k + '"]'); return i && i.files && i.files[0] ? i.files[0] : null;
+  };
 
   var title = get('title');
   var fb = file('bad'), fg = file('good');
@@ -58579,11 +58600,18 @@ function newId(){
    therefore hands arg 0 a MouseEvent — `mode ||` would silently flip it into
    pair mode. String equality leaves that call site correct without touching it. */
 function openJobPicker(mode){
-  mode = (mode === 'pair') ? 'pair' : 'walk';
+  /* 628: three modes. Still compared with === and never for truthiness — the
+     walk button is wired `b.onclick = openJobPicker`, so arg 0 is a MouseEvent
+     there and any truthiness test would silently pick the wrong branch. */
+  mode = (mode === 'pair' || mode === 'work') ? mode : 'walk';
   if(!amAdmin()) return;
   if(mode === 'walk' && !curWalk) return;
+  /* The slots ARE the shape. Everything downstream walks this array —
+     drawJobPicker's assignment, the completion test, promoteToPair — so the
+     Hall of Fame needed a different array and nothing else. */
+  var slots = (mode === 'work') ? ['bad', 'good'] : ['before', 'after'];
   jobPick = { mode:mode, projectId:null, project:null, projects:[], photos:[],
-              chosen:{}, roles:{}, slots:['before','after'], q:'', busy:false };
+              chosen:{}, roles:{}, slots:slots, q:'', busy:false };
   ensureForm();
   drawJobPicker();
   formEl.classList.add('open');
@@ -58606,11 +58634,20 @@ async function loadProjects(){
      leaves the pair-builder itself untouched. A whole second picker was the
      obvious move and would have been the wrong one; this file has a standing
      rule about one pipeline per concept. */
+  /* 628: TWO trays now, because Theo ticks a photo for a reason and the reason
+     is either "before and after" or "theirs vs ours". Each appears only when it
+     has something in it, and each is offered only to the picker shape that can
+     consume it — a Hall of Fame pick cannot become a Showcase pair by accident. */
   try{
-    var tc = await cl.from('studio_tray').select('storage_path', { count:'exact', head:true });
+    var want = (jobPick.mode === 'work') ? 'workmanship' : 'showcase';
+    var tc = await cl.from('studio_tray')
+                     .select('storage_path', { count:'exact', head:true })
+                     .eq('bucket', want);
     var tn = (tc && tc.count) || 0;
     if(!jobPick) return;
-    if(tn) jobPick.projects.unshift({ id:TRAY_ID, name:'\u2605 Studio tray',
+    if(tn) jobPick.projects.unshift({ id:TRAY_ID,
+      name: (want === 'workmanship') ? '\u2605 Studio tray \u2014 hall of fame'
+                                     : '\u2605 Studio tray',
       address: tn + ' photo' + (tn === 1 ? '' : 's') + ' picked in Studio' });
   }catch(_){ /* a missing tray must never break the ordinary job picker */ }
   if(!jobPick) return;
@@ -58627,8 +58664,12 @@ var TRAY_ID = '__studio_tray__';
 async function loadTrayPhotos(){
   var cl = sb();
   if(!cl || !jobPick) return;
+  /* 628: the bucket is taken from the picker's own shape rather than passed in,
+     so the two can never disagree about which tray is on screen. */
+  var want = (jobPick.mode === 'work') ? 'workmanship' : 'showcase';
   var r = await cl.from('studio_tray')
-                  .select('storage_path,project_address,project_name,width,height,added_at')
+                  .select('storage_path,project_address,project_name,width,height,added_at,bucket')
+                  .eq('bucket', want)
                   .order('added_at', { ascending:false }).limit(300);
   if(!jobPick) return;
   var rows = (r && !r.error && r.data) ? r.data : [];
@@ -58870,7 +58911,15 @@ async function jobFiles(picks){
   return items;
 }
 
-function defSlot(k){ return k === 'build' ? 'During' : k; }
+/* 628: 'bad' and 'good' are the column names in workmanship_pairs and they are
+   the wrong words to put in front of Theo mid-pick. "Theirs" and "Ours" is how
+   he described the comparison in the first place. */
+function defSlot(k){
+  if(k === 'build') return 'During';
+  if(k === 'bad') return 'Theirs';
+  if(k === 'good') return 'Ours';
+  return k;
+}
 
 /* Pull a city off a job address. MEASURED against the 12 projects that actually
    have photographs, because the shape is nothing like a tidy CSV:
@@ -58928,7 +58977,15 @@ async function promoteToPair(){
     var i = jobPick.roles[k];
     if(i != null && jobPick.photos[i]){ keys.push(k); picks.push(jobPick.photos[i]); }
   });
-  if(keys.indexOf('before') === -1 || keys.indexOf('after') === -1) return;
+  /* 628: was a hardcoded before/after test. The rule is the same one the Use
+     these button already enforces — every slot filled except `build`, which is
+     the only optional one — so it now reads off jobPick.slots and covers both
+     shapes rather than naming one. */
+  var missing = jobPick.slots.some(function(k){
+    return k !== 'build' && keys.indexOf(k) === -1;
+  });
+  if(missing) return;
+  var toWork = (jobPick.mode === 'work');
   var btn = formEl.querySelector('[data-jadd]');
   if(btn){ btn.disabled = true; btn.textContent = 'Copying\u2026'; }
   /* busy is NOT taken here. takeJobPhotos does not take it either — addShots
@@ -58942,11 +58999,22 @@ async function promoteToPair(){
     keys.forEach(function(k, n){ byRole[k] = items[n].file; thumbs[k] = picks[n]._thumb; });
     var split = splitAddr(proj && proj.address);
     jobPick = null;
-    /* openForm() clears `pending` as its first act, so it must run FIRST. */
-    openForm();
-    pending = { before:byRole.before, after:byRole.after, build:byRole.build || null,
-                thumbs:thumbs, projectId:pid, address:split.address, city:split.city,
-                raw:split.raw };
+    /* Both forms clear `pending` as their first act, so the open must run FIRST.
+       628 gave openWorkForm the same clear — it did not have one, and the moment
+       saveWork started preferring carried files that omission would have uploaded
+       the previous pick's photographs under a new comparison's name, silently.
+       Exactly the failure the 591 comment on openForm describes. */
+    if(toWork){
+      openWorkForm();
+      pending = { bad:byRole.bad, good:byRole.good, slots:['bad','good'],
+                  thumbs:thumbs, projectId:pid };
+    }else{
+      openForm();
+      pending = { before:byRole.before, after:byRole.after, build:byRole.build || null,
+                  slots:['before','after','build'],
+                  thumbs:thumbs, projectId:pid, address:split.address, city:split.city,
+                  raw:split.raw };
+    }
     paintPrefill();
   }catch(e){
     showErr(String(e && e.message ? e.message : e));
@@ -58971,7 +59039,8 @@ function paintPrefill(){
      minted here and none leaks. */
   var strip = document.createElement('div');
   strip.className = 'cr-sh-from';
-  ['before','after','build'].forEach(function(k){
+  /* 628: the shape rides along on `pending` instead of being assumed here. */
+  (pending.slots || ['before','after','build']).forEach(function(k){
     var inp = formEl.querySelector('[data-f="' + k + '"]');
     if(!inp) return;
     var lab = inp.previousElementSibling;
@@ -58985,6 +59054,9 @@ function paintPrefill(){
   });
   var first = formEl.querySelector('.bx > h3');
   if(first && strip.childNodes.length) first.parentNode.insertBefore(strip, first.nextSibling);
+  /* A Hall of Fame comparison has no address field — and should not: the bad
+     side is somebody else's roof and naming it is not our business. */
+  if(!pending.address && !pending.city) return;
   set('address', pending.address);
   set('city', pending.city);
   var host = formEl.querySelector('[data-f="city"]');

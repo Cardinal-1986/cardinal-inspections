@@ -173,6 +173,18 @@
   }
   .stu-tick.on{ background:#1f9d55; border-color:#1f9d55; }
   .stu-tick.on::after{ border-color:#fff; }
+  /* 628: the second bucket. Amber against the green is a hue AND a lightness
+     difference, so the two stay tellable apart on a sunlit iPad and by anyone
+     who does not distinguish red from green.
+
+     The TICK IS KEPT IN BOTH STATES, deliberately. The first cut drew a bar for
+     the amber one so that shape carried the state as well as colour — but a bar
+     in a checkbox is the universal "indeterminate / excluded" mark, so tapping
+     green -> amber read as UN-picking the photo. Tick means picked, in both.
+     What differs is the CHIP: a circle for the hall of fame against a rounded
+     square for the showcase. Shape still carries it; it just carries the right
+     thing. */
+  .stu-tick.work{ background:#c2761a; border-color:#e8a33f; border-radius:999px; }
   .stu-card:hover .stu-tick{ border-color:rgba(255,255,255,.85); }
   .stu-tray{
     padding:5px 12px; border-radius:999px; cursor:default;
@@ -949,47 +961,88 @@
      can paint state without a query per card; a failed write puts the mirror
      back, because a tick that looks saved and is not is worse than one that
      visibly refuses. */
-  var TRAY = new Set();
+  /* 628: a Map of path -> bucket, where it was a Set of paths. Map keeps .has(),
+     .size and .delete() with the same meaning, so every existing read site is
+     correct without being touched — the only additions are .get() and .set(). */
+  var TRAY = new Map();
+
+  /* The two buckets, in cycle order. A photo is in ONE of them: storage_path is
+     the primary key, so re-ticking MOVES it rather than duplicating it. The same
+     photograph being both halves of two different stories is not a real case. */
+  var BUCKETS = ['showcase', 'workmanship'];
+  var BUCKET_LABEL = { showcase:'the Showcase (before and after)',
+                       workmanship:'the Hall of Fame (theirs vs ours)' };
+
+  /* off -> showcase -> workmanship -> off. Returns null for "remove". */
+  function nextBucket(cur){
+    var i = BUCKETS.indexOf(cur);
+    return i === -1 ? BUCKETS[0] : (i + 1 < BUCKETS.length ? BUCKETS[i + 1] : null);
+  }
+
+  /* ONE painter, used by the grid renderer AND by the toggle. Two copies of this
+     would drift the moment either changed, and the drift would be invisible —
+     the chip would simply stop matching what the database says. */
+  function paintTick(btn, bucket){
+    btn.className = 'stu-tick' + (bucket ? ' on' : '') + (bucket === 'workmanship' ? ' work' : '');
+    btn.setAttribute('aria-pressed', bucket ? 'true' : 'false');
+    btn.setAttribute('aria-label', bucket
+      ? ('Picked for ' + BUCKET_LABEL[bucket] + ' \u2014 tap to change')
+      : 'Pick this photo for the Showcase');
+  }
 
   async function loadTray(){
     if(!sb) return;
     try{
-      var r = await sb.from('studio_tray').select('storage_path');
-      if(r && !r.error && r.data) r.data.forEach(function(x){ TRAY.add(x.storage_path); });
+      var r = await sb.from('studio_tray').select('storage_path,bucket');
+      if(r && !r.error && r.data) r.data.forEach(function(x){
+        /* A row written before 628 has no bucket in hand only if the column were
+           null, which the schema forbids — but default to showcase anyway rather
+           than storing undefined and painting a photo as un-picked. */
+        TRAY.set(x.storage_path, x.bucket || 'showcase');
+      });
     }catch(_){}
     paintTrayCount();
   }
 
+  /* 628: both counts, because a cycling chip has no visible affordance — the
+     readout is how you tell what a tap just did without hunting for the card. */
   function paintTrayCount(){
     var el = document.getElementById('stuTrayCount');
     if(!el) return;
-    el.textContent = TRAY.size ? ('Tray ' + TRAY.size) : 'Tray';
+    var n = { showcase:0, workmanship:0 };
+    TRAY.forEach(function(b){ if(n[b] != null) n[b]++; });
+    var bits = [];
+    if(n.showcase) bits.push(n.showcase + ' showcase');
+    if(n.workmanship) bits.push(n.workmanship + ' hall of fame');
+    el.textContent = bits.length ? ('Tray \u2014 ' + bits.join(', ')) : 'Tray';
     el.classList.toggle('on', TRAY.size > 0);
   }
 
   async function toggleTray(r, btn){
     if(!sb || !r || !r.storage_path) return;
-    var path = r.storage_path, on = !TRAY.has(path);
+    var path = r.storage_path;
+    var was = TRAY.get(path) || null, now = nextBucket(was);
     /* optimistic, then reconciled — the grid must feel instant at 218 photos */
-    if(on) TRAY.add(path); else TRAY.delete(path);
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if(now) TRAY.set(path, now); else TRAY.delete(path);
+    paintTick(btn, now);
     paintTrayCount();
     var res;
     try{
-      if(on){
+      if(now){
         var who = '';
         try{ var u = await sb.auth.getUser(); who = (u && u.data && u.data.user && u.data.user.email) || ''; }catch(_){}
         /* Deliberately NOT spreading the row. studio_photos carries lat/lon —
            all NULL today, and this is the seam toward a client-facing screen
            where they would leak if anyone copied it wholesale. Named fields
-           only. studio_tray.sql says the same thing at the schema. */
+           only. studio_tray.sql says the same thing at the schema, and 628's
+           bucket does not change it: this list is still written out by hand. */
         res = await sb.from('studio_tray').upsert({
           storage_path   : path,
           project_address: r.project_address || null,
           project_name   : r.project_name || null,
           width          : r.width || null,
           height         : r.height || null,
+          bucket         : now,
           added_by       : who
         }, { onConflict: 'storage_path' });
       }else{
@@ -997,10 +1050,11 @@
       }
     }catch(e){ res = { error: e }; }
     if(res && res.error){
-      /* put it back — see the comment on TRAY above */
-      if(on) TRAY.delete(path); else TRAY.add(path);
-      btn.classList.toggle('on', !on);
-      btn.setAttribute('aria-pressed', !on ? 'true' : 'false');
+      /* put it back — see the comment on TRAY above. Restoring the PREVIOUS
+         bucket, not merely un-ticking: a failed showcase->workmanship move must
+         land back on showcase, not on nothing. */
+      if(was) TRAY.set(path, was); else TRAY.delete(path);
+      paintTick(btn, was);
       paintTrayCount();
     }
   }
@@ -1328,9 +1382,8 @@
       if(st.mode !== 'private' && r.storage_path){
         var tick = document.createElement('button');
         tick.type = 'button';
-        tick.className = 'stu-tick' + (TRAY.has(r.storage_path) ? ' on' : '');
-        tick.setAttribute('aria-pressed', TRAY.has(r.storage_path) ? 'true' : 'false');
-        tick.setAttribute('aria-label', 'Pick for the Showcase tray');
+        /* 628: one painter for the grid and the toggle — see paintTick. */
+        paintTick(tick, TRAY.get(r.storage_path) || null);
         tick.addEventListener('click', function(ev){
           ev.stopPropagation();
           toggleTray(r, tick);

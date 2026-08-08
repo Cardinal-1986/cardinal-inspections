@@ -2004,3 +2004,64 @@ lands in front of a customer.
 
 **Known, and recorded in `OPEN_ITEMS.md` rather than fixed:** nothing removes a photo from the tray
 once its pair is built, and the tray reads `.limit(300)` with no paging.
+
+---
+
+## 628 — two keep buckets, and the Hall of Fame finally gets a picker (8 Aug 2026)
+
+**Theo:** *"1 is the bin for trashing or selecting? Is there a bin for keep for before and after a
+bin for damage vs how we do it and a bin for junk?"*
+
+**Three destinations existed; only two were reachable.** The answer to the first half: the Bin is
+**trashing** — `setArchived(address, on)` matches `.eq('project_address', address)`, so it archives a
+whole SITE, reversibly, with no confirm. It is for pruning, not picking.
+
+| Bucket | Table | Before 628 |
+|---|---|---|
+| junk | `studio_photos.archived_at` | ✅ the Bin |
+| before & after | `showcase_pairs` | ✅ via the tray |
+| theirs vs ours | `workmanship_pairs` (built at 576) | ❌ **upload-only — could not see the tray at all** |
+
+### What changed
+
+- **The tick cycles** — off → Showcase (green rounded square) → Hall of Fame (amber circle) → off.
+  Theo picked this shape from rendered options over two separate boxes and sort-it-later.
+- **`studio_tray.bucket`** — one idempotent ALTER, NOT NULL default `'showcase'`, constrained to
+  the two values. `storage_path` stays the primary key, so a photo lives in **one bucket at a time**
+  and re-ticking MOVES it.
+- **Two pseudo-projects** in the picker instead of one, each offered only to the shape that can
+  consume it, so a Hall of Fame pick cannot become a Showcase pair by accident.
+- **The Hall of Fame gained "From a job"**, and its upload button now says *Upload photos* — the
+  same rename 598 made on the Showcase, for the same reason.
+
+### The doctrine held again: the picker was reused, not rebuilt
+
+`jobPick` was already slot-driven — `slots:['before','after']` is just an array every consumer walks.
+The second shape is that array (`['bad','good']`) plus a completion guard that reads
+`jobPick.slots` instead of naming before/after. **`promoteToPair`, `drawJobPicker`, `takeJobPhotos`,
+`openJobPicker`, `openWorkForm`, `savePair`, `saveWork`, `defSlot` and `loadTrayPhotos` are each
+still defined exactly once** — asserted. `defSlot()` labels the new slots **"Theirs" / "Ours"**,
+because `bad`/`good` are column names and the wrong words to show mid-pick.
+
+### ⚠ Two traps closed in the same build
+
+**`openWorkForm()` had no `pending = null`.** Harmless while `saveWork` ignored `pending` — but the
+moment it started preferring carried files, the next hand-made comparison would have silently
+uploaded the *previous* pick's photographs. Exactly what the 591 comment on `openForm` warns about.
+Both forms now clear unconditionally.
+
+**A Hall of Fame comparison never prefills an address.** The bad side is somebody else's roof;
+naming it is not Cardinal's business.
+
+### The fence is unchanged
+
+`studio_tray` still declares **no coordinate columns**, `toggleTray()` still names its fields rather
+than spreading the archive row, and both tray reads filter by a bucket derived from the picker's own
+mode so the two cannot disagree. `harness_tray.js` is **48 assertions**, negative-controlled — 24 of
+them fail against 627.
+
+⚠️ **A Chromium render caught what no assertion could.** The amber state first drew a **bar** so that
+shape would carry the state as well as colour. Every gate was green. The picture showed the mistake:
+a bar in a checkbox is the universal *indeterminate / excluded* mark, so green → amber read as
+**un-picking** the photo. The tick now means PICKED in both and the **chip shape** carries the pile.
+Theo's eyes remain the gate on anything visual.

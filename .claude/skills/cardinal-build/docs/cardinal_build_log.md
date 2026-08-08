@@ -9908,3 +9908,97 @@ coordinates are excluded*. Fixed by scoping to the `upsert()` **object literal**
 — the prose is not the payload. Same trap as 626's `text-size-adjust` count and
 624's `esc(srcD(...))` count. **When asserting a thing is absent, assert over
 code, never over a slice that contains your reasoning about it.**
+
+---
+
+## Build 628 — two keep buckets, and the Hall of Fame gets a picker (8 Aug 2026)
+
+`studio.html` + `cr-show-script` + `studio_tray_bucket.sql` (**applied and
+verified before the HTML change**).
+
+**Theo, on the tray shipped at 627:** *"1 is the bin for trashing or selecting?
+Is there a bin for keep for before and after a bin for damage vs how we do it
+and a bin for junk?"*
+
+Measured before answering, not guessed:
+
+| He described | What existed | Reachable? |
+|---|---|---|
+| junk | the Bin — `archived_at`, per SITE via `setArchived(address, on)` | ✅ |
+| before & after | `studio_tray` → pair-builder → `showcase_pairs` | ✅ |
+| theirs vs ours | `workmanship_pairs` (build 576) | ❌ **upload-only** |
+
+**The gap was precise.** `saveWork()` read both photographs from file inputs and
+`openWorkForm()` rendered no picker, so the Hall of Fame **could not see the
+tray at all** — a ticked bad-install photo landed in the same undifferentiated
+pile as the before/afters and could only become a Showcase pair.
+
+### The picker was reused, not duplicated
+
+`jobPick` was already slot-driven: `slots:['before','after']` is just an array
+and every consumer walks it. The second shape is that array plus a generic
+completion guard. **`promoteToPair`, `drawJobPicker`, `takeJobPhotos`,
+`openJobPicker`, `openWorkForm`, `savePair`, `saveWork`, `defSlot` and
+`loadTrayPhotos` are each still defined exactly once** — asserted.
+
+The old guard `keys.indexOf('before') === -1 || keys.indexOf('after') === -1`
+became `jobPick.slots.some(k => k !== 'build' && …)` — the same rule the "Use
+these" button already enforced, now read off the shape instead of naming one.
+
+### ⚠ A latent bug this would have created, closed in the same build
+
+`openWorkForm()` had **no `pending = null`**. Harmless while `saveWork` ignored
+`pending` — but the moment it started preferring carried files, the next
+hand-made comparison would have silently uploaded the *previous* pick's
+photographs. That is exactly the failure the 591 comment on `openForm` describes.
+Both forms now clear unconditionally, and two assertions cover it.
+
+### The chip: a Chromium render caught what no assertion did
+
+Theo picked "one chip that cycles" from rendered options. First cut drew the
+amber state as a **bar** so shape would carry the state as well as colour —
+and the render showed the mistake: **a bar in a checkbox is the universal
+"indeterminate / excluded" mark**, so tapping green → amber read as *un-picking*
+the photo. Tick now means PICKED in both; the **chip shape** carries which pile
+(rounded square = Showcase, circle = Hall of Fame). Every gate was green across
+that change. Only the picture showed it.
+
+`TRAY` went `Set` → `Map` (path → bucket): `.has()`, `.size` and `.delete()` keep
+their meaning, so every existing read site is correct without being touched.
+One `paintTick()` serves both the grid renderer and the toggle — two copies
+would drift invisibly. A failed write restores the **previous bucket**, not
+merely un-ticked: a failed showcase→workmanship move must land back on showcase.
+
+### The fence is unchanged and still asserted
+
+`studio_tray` still has **no coordinate columns**, `toggleTray()` still names its
+fields explicitly rather than spreading the archive row, and both tray reads now
+filter `.eq('bucket', want)` where `want` is derived from the picker's own mode
+so the two cannot disagree. `studio_tray_bucket.sql` verified against production:
+bucket NOT NULL default `'showcase'`, check constraint `('showcase','workmanship')`,
+admin-only policy inherited, **0 coordinate columns**, 0 rows.
+
+### Gates
+
+`check_build.py` green and negative-controlled · `studio.html`'s inline scripts
+parsed separately (outside its scope) · **347 assertions green**: tray **48**
+(negative-controlled — 24 fail against 627) · showcase 124 · vision 23 · colors
+110 · occhead 42 · plus 8 functional assertions executing the *shipped*
+`nextBucket`/`paintTick` in jsdom, proving the cycle repeats and that all three
+states differ in class, `aria-pressed` and label.
+
+⚠️ **A harness assertion broke for no app reason and the test was wrong.** The
+627 check `/stu-tick[\s\S]{0,700}ev\.stopPropagation\(\)/` passed by string
+*proximity*; 628 moved the class into `paintTick()`, so the nearest `stu-tick`
+literal is now in the CSS a thousand lines away. `ev.stopPropagation()` was
+still right there in the listener. Rescoped to the listener itself. Same lesson
+as `harness_showcase`'s FULL-image assertion and `harness_occhead`'s
+one-line-at-every-width draft: **assert on the code that must be true, never on
+how close two strings happen to sit.**
+
+### Left open deliberately
+
+Nothing prunes the tray once a pair is built (unchanged from 627 — Theo's call),
+and the reader still takes `.limit(300)` with no paging. Whether a Hall of Fame
+comparison should also accept a third "during" shot, as the Showcase path does
+via its optional `build` slot, was **not** assumed either way.

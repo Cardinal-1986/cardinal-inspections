@@ -1699,6 +1699,14 @@ It is recorded because a limit with no UI to say it was hit is exactly the "sile
 cap" this project has been bitten by before: **if it ever does truncate, say so on
 screen rather than quietly showing 300.**
 
+### ✅ CLOSED at 628 — the third bucket exists now
+
+~~There is no bucket for "damage vs how we do it".~~ **Shipped at 628.** The tick
+in Studio cycles off → Showcase → Hall of Fame, `studio_tray.bucket` records
+which, and the Hall of Fame gained the picker it never had. Do not re-file it.
+
+**Still open from 627, and item 1 is still Theo's call — 628 did NOT decide it:**
+
 ### Not open, so nobody re-files them
 
 - **The tray badge paints.** `#stuTrayCount` exists in the markup (`studio.html`),
@@ -1707,3 +1715,12 @@ screen rather than quietly showing 300.**
   fence, not an omission — see `FEATURES.md` → 627.
 - **A work order with no labor lines is still correct** (the 556 permission rule),
   and unrelated to any of the above.
+
+### Asked at 628 and deliberately left unanswered
+
+**Should a Hall of Fame comparison also take a third "during" shot**, the way the
+Showcase path does via its optional `build` slot? The machinery is already
+generic — `build` is the only slot the completion guard treats as optional, so
+adding one is an array entry and a form field. Not assumed either way, because
+"theirs vs ours" is a two-sided argument by construction and a third photo may
+simply muddy it. **Ask before building it.**
