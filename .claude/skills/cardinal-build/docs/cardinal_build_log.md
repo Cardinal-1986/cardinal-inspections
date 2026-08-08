@@ -10474,3 +10474,113 @@ page weight is arithmetic from the pixel-area ratio, not a measurement. The
 toast will report the real figure the first time he runs Optimise. What is
 measured is what the page loads **today** — 23.94 MB of display copies for Onyx
 Black alone.
+
+---
+
+## Build 634 — the Community Partners crash, and stack traces out of the job thread (8 Aug 2026)
+
+Theo photographed job 1002 (Zulema Hall — Habitat for Humanity) with a raw
+JavaScript stack trace sitting in the Thread as if it were a job note, and asked
+for it to be fixed. **That screenshot is two separate defects**, and only one of
+them is the thing you can see.
+
+### A. The directory was broken for the sales reps, every time
+
+`renderDirectory()` in `cr-cpartners-script` renders Edit/Archive behind a
+condition and then wired them unconditionally:
+
+```js
+'<div class="btns">' + (p.__masked ? '' : '<button data-act="edit">…')
+…
+row.querySelector('[data-act="edit"]').onclick = …     // null on a masked row
+```
+
+`maskIfConfidential()` masks a partner flagged `confidential` for anyone outside
+`ADMIN_EMAILS` / `PROD_EMAILS`. So theo@, joan@, curtis@ and scottie@ never saw
+it, and **the sales reps were exactly the people who crashed.**
+
+Confirmed against production rather than inferred:
+
+| Evidence | Conclusion |
+|---|---|
+| **2 of 10** `community_partners` are `confidential` and un-archived | it fired every time, not in an edge case |
+| the reporter is **clarkie022@gmail.com** | in neither privileged list — a rep |
+| the stack names `openEditor(get(id))`, one argument | the **partners** directory, not the properties one (`openEditor(partnerId, get(id))`) |
+
+⚠️ **The damage was bigger than one toast.** The throw is inside a `forEach`, so
+it aborted the loop: the masked row **and every row after it** got no handlers
+at all. Edit and Archive were dead on a list that still looked perfectly normal.
+`openDirectory` is `async`, which is why it surfaced as an unhandledrejection.
+
+**The fix already existed ten lines above.** `renderProspects()` does exactly
+`var b = …; if(b) b.onclick = …`. Copied the neighbour — no new mechanism, and
+nothing about what renders changed.
+
+⚠️ **The PROPERTIES `renderDirectory` (~31469) was deliberately left unguarded.**
+Its two buttons are unconditional, so a guard could not fix anything today and
+would convert a future regression from a loud crash into a **silently dead
+button — class 16, the worse failure.** The guard belongs in the partners
+directory precisely *because* the absence there is deliberate and known. Both
+halves of that are asserted, so nobody "finishes the job" later.
+
+### B. A stack trace should never be a job note
+
+`capture()` stamps every client error with `project_id: currentProjectId()` —
+whatever job happened to be open when it fired. The Community client page loads
+`audit_events` for the project with **no type filter** and renders `e.detail` as
+the entry **title**, so a 412-character stack trace became a bold thread card.
+
+The error had nothing to do with Zulema Hall; he simply had that job open when
+the partner directory blew up.
+
+Fixed at the consumer, not the source. `var THREAD_SKIP = { client_error:1 };`
+shaped like `IC_SKIP` / `PIPE_SKIP`, and applied **at load**, deliberately:
+`events.length` feeds `key()`, so filtering at render would let an incoming
+error change the key and repaint the whole page.
+
+- **The project stamp stays** — knowing which job was open is useful in a bug report.
+- **Nothing is deleted.** The Team audit log reads the same table and *should*
+  keep showing every error. No SQL in this build.
+- Checked: that log is the only other consumer, so this was the only thread affected.
+
+Of the five `client_error` rows in production, **one** carries a `project_id` —
+the one he photographed. The other four are Theo's own, all `project_id` NULL
+(three are the pre-630 10 MB upload refusal, already fixed).
+
+### ⚠️ The anchor trap, caught by the tool rather than by me
+
+The first run aborted: `var LABEL = {` matched **twice**. There are **three** in
+the file and the **two community ones are byte-identical** — CLAUDE.md warns
+about `LABEL` finding the *insurance* map, but the real trap is worse than the
+documented one. My assertion was correctly scoped to the `cr-cc` block and said
+1; `pl.sub()` splices **file-wide** and found 2.
+
+**Scoping the assertion is not enough if the substitution is global.** Re-anchored
+on `async function load(pid){` + its first line, which is unique file-wide, and
+which also puts the constant beside its only consumer. Nothing was written — the
+gate did its job.
+
+### Verification
+
+`check_build.py` green, negative-controlled. **New `harness_partners.js` — 23
+assertions**, and the ones that matter **execute the shipped
+`maskIfConfidential` / `list` / `get` / `renderDirectory`** under jsdom as both
+an admin and a rep, then ask the DOM what actually got wired.
+
+**The negative control reproduces his symptom exactly.** Against 633:
+
+```
+admin: renderDirectory completes without throwing   PASS
+rep  : renderDirectory completes without throwing   FAIL
+       → Cannot set properties of null (setting 'onclick')
+```
+
+Same code, different user — which is why it looked like a data problem and was
+not. (Safari words the same throw as *"null is not an object"*.) 5 red on 633,
+23 green on 634. All ten harnesses green.
+
+It also asserts the masking still holds — that the confidential name is **not in
+the DOM** for a rep — so a "fix" that simply rendered the buttons could not pass.
+
+⚠️ **Theo's eyes are still the gate**: a rep opening Community Partners is the
+real test, and I cannot sign in as one.

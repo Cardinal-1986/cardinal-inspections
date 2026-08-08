@@ -2252,3 +2252,45 @@ carries `background:var(--occ-head,#231F20)`. Confirmed in Chromium: 632 compute
   picture.
 
 `harness_ourroofs.js` — **58 assertions**, green on 633, **27 red on 632**.
+
+---
+
+## Build 634 — Community Partners stopped crashing, and errors left the job thread (8 Aug 2026)
+
+Two defects, both visible in one screenshot of job 1002.
+
+### The masked-row crash (`cr-cpartners-script`)
+
+`renderDirectory()` renders Edit/Archive behind `p.__masked ? '' : …` and wired them
+unconditionally. `maskIfConfidential()` masks a `confidential` partner for anyone outside
+`ADMIN_EMAILS` / `PROD_EMAILS` — so **the sales reps were exactly the people who crashed**,
+and with 2 of 10 live partners confidential it fired every time.
+
+⚠️ **The throw was inside a `forEach`**, so the masked row **and every row after it** lost
+Edit and Archive while the list still looked normal. `openDirectory` is `async`, hence
+`[unhandledrejection]`.
+
+Fixed by copying `renderProspects()` ten lines above — `var b = …; if(b) b.onclick = …`.
+Markup unchanged.
+
+⚠️ **The properties `renderDirectory` is deliberately NOT guarded.** Its buttons are
+unconditional, so a guard would only turn a future regression into a silently dead button
+(**class 16**) instead of a loud crash. Both halves asserted.
+
+### `THREAD_SKIP` (`cr-cc-script`)
+
+`capture()` stamps client errors with whatever project was open, and the Community thread
+read `audit_events` with no type filter, rendering `e.detail` as the entry **title**.
+
+```js
+var THREAD_SKIP = { client_error:1 };   /* shaped like IC_SKIP / PIPE_SKIP */
+```
+
+Applied **at load**, not at render: `events.length` feeds `key()`, so a late filter would
+let an incoming error repaint the page. **The project stamp stays and nothing is deleted** —
+the Team audit log reads the same table and should keep showing every error. No SQL.
+
+`harness_partners.js` — **23 assertions**; the ones that matter **execute** the shipped
+mask/render pair as both an admin and a rep. Negative control on 633: admin passes, **rep
+throws** — the reported symptom, reproduced. It also asserts the confidential name stays
+out of the DOM, so a "fix" that just rendered the buttons cannot pass.

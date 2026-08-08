@@ -1788,3 +1788,33 @@ simply muddy it. **Ask before building it.**
   `{ b, d, t, s }` form. At 633 it answered "632" while a pushed branch already
   carried 632. It still catches the collision it was written for; it just is not
   the whole answer. Cross-check with the per-branch stamp sweep until it is fixed.
+
+---
+
+## Worked forward to build 634 — 8 Aug 2026
+
+### ✅ Closed by 634
+
+- ~~Community Partners throws for non-privileged users~~ — the masked-row guard.
+  **Was live**: 2 of 10 partners confidential, so every rep hit it every time.
+- ~~Client error reports render as job-thread notes~~ — `THREAD_SKIP`.
+
+### 📌 Found and deliberately NOT fixed — read before "finishing" it
+
+**`renderProspects()` bypasses the mask.** It calls `getRaw(row.dataset.id)` and
+always renders an Edit button, so a partner that was **both `prospective` and
+`confidential`** would hand its real name and contacts to a rep.
+
+**It is not exploitable today** — measured: 4 prospective/not-confidential,
+2 confidential/not-prospective, **zero overlap**. The trigger is someone ticking
+Confidential on a prospect. Left alone because it is a separate change with its
+own blast radius and Theo asked for the crash. **If the overlap ever becomes
+non-zero, this is a real leak** — the same query is in `cardinal_build_log.md`.
+
+### ⚠️ Still Theo's to confirm
+
+1. **A rep opening Community Partners** — the real test for 634; I cannot sign in as one.
+2. Does **Archive site** work (632) — `select count(*) from studio_photos where archived_at is not null`.
+3. Does the **colour page feel light** after running Optimise (633) — the button
+   reappears with all 63 to do, which is correct.
+4. The **Feature header** after 626.
