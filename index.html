@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 634 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 635 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29122,19 +29122,34 @@ var rows = prospects();
 var body = rows.length
 ? rows.map(function(p){
 var who = [p.contact_name, p.contact_phone].filter(Boolean).join(' \u00b7 ');
+/* 635: the SAME chip the directory shows, byte for byte, so a row with no Edit
+   button is explained rather than mysterious. A control that is silently absent
+   reads as broken — the rule on this project is that a correct refusal must
+   never render as a failure. */
+var lockChip = p.confidential
+? ' <span style="font:800 8.5px \'Segoe UI\',Arial,sans-serif;letter-spacing:.14em;background:#8f1620;color:#fff;padding:1px 6px;border-radius:8px;vertical-align:middle;margin-left:6px;">\uD83D\uDD12 CONFIDENTIAL</span>'
+: '';
 var mail = p.contact_email
 ? '<a href="mailto:' + esc(p.contact_email) + '">' + esc(p.contact_email) + '</a>'
 : '<span style="opacity:.6;font-style:italic">no public email \u2014 call them</span>';
 return '<div class="cr-cp-row" data-id="' + esc(p.id) + '" style="align-items:flex-start">' +
 '<div style="min-width:0">' +
-'<div class="n">' + esc(p.name) + '</div>' +
+'<div class="n">' + esc(p.name) + lockChip + '</div>' +
 (who ? '<div class="m">' + esc(who) + '</div>' : '') +
 '<div class="m" style="margin-top:2px">' + mail + '</div>' +
 (p.notes
 ? '<div class="m" style="margin-top:7px;line-height:1.55;opacity:.92">' + esc(p.notes) + '</div>'
 : '') +
 '</div>' +
-'<div class="btns"><button data-act="edit">Edit</button></div>' +
+/* 635: prospects() already masks, so a confidential prospect renders with no
+   contacts — but Edit was rendered anyway, and its handler calls getRaw(), the
+   deliberately UNMASKED lookup. One tap opened the real name, email, phone and
+   notes. renderDirectory has hidden this button since it was written; this is
+   that ternary, not a new rule. The `if(b)` guard below already handles the
+   absence — that guard is build 634's fix, earning its keep straight away. */
+'<div class="btns">' +
+(p.__masked ? '' : '<button data-act="edit">Edit</button>') +
+'</div>' +
 '</div>';
 }).join('')
 : '<div class="cr-cp-empty">No prospective partners yet.</div>';
@@ -29227,7 +29242,23 @@ openDirectory();
 });
 }
 function openEditor(partner){
-if(partner && partner.id) partner = getRaw(partner.id) || partner;
+/* 635: getRaw() is the UNMASKED row, and this line hands it to whoever asked.
+   That makes openEditor the one place the mask can be undone, so the check
+   belongs here — the hidden buttons above are the UI, this is the fence.
+   ⚠️ Deliberately NOT the same call as 634's "do not add a speculative guard to
+   the properties directory": that rule is about CONTROLS, where a guard can hide
+   a regression behind a dead button. This is a confidentiality boundary, and the
+   class has bitten this project before — reading CACHE directly once leaked
+   confidential names out of pickPartner(). It says so out loud rather than
+   returning quietly, because a silent return is itself a dead button. */
+if(partner && partner.id){
+var raw = getRaw(partner.id);
+if(raw && raw.confidential && !isPrivileged()){
+alert('That partner is confidential \u2014 ask Theo or Joan to make the change.');
+return;
+}
+partner = raw || partner;
+}
 var p = partner || { partner_type:'nonprofit' };
 var title = partner ? 'Edit Partner' : 'Add Partner';
 var canFlagConfidential = isPrivileged();
@@ -35208,6 +35239,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:635, d:'2026-08-08', t:'A confidential partner stays confidential on the prospects list too',
+    s:'Partners marked confidential already show as \u201cConfidential Partner\u201d with no contact details to anyone outside Theo, Joan, Curtis and Scottie \u2014 and that was true on the Prospective Partners list as well. But that list still showed an Edit button on those rows, and opening it filled the form with the real name, contact, email, phone and notes. No prospect is marked confidential today, so nothing was actually exposed, but ticking that box would have opened it. The Edit button is now hidden on a confidential row, exactly as it already was on the main partner list, and those rows carry the same red CONFIDENTIAL tag so it is clear why. Underneath, the editor itself now refuses to open a confidential partner for anyone not allowed to see it, and says so rather than doing nothing. Nothing changes for Theo or Joan.' },
   { b:634, d:'2026-08-08', t:'Community Partners stopped breaking, and error reports stay out of job threads',
     s:'Two things, both visible in one screenshot from a job page. First: the Community Partners list broke for anyone who is not an admin or on production. Two partners are marked confidential, and their rows correctly hide the Edit and Archive buttons \u2014 but the code still tried to wire those buttons up, which threw an error and left Edit and Archive dead on that row and on every row below it, while the list still looked perfectly normal. It now checks whether a button is there first, the same way the Prospective Partners list next to it already did. Second: when something goes wrong anywhere in the app, the error report gets tagged with whichever job you had open at the time. Those reports were being shown in the job thread, so a page of technical gibberish appeared on Zulema Hall alongside the real notes. Error reports still get recorded, and still show in the Team audit log where they belong \u2014 they just no longer appear in a job\u2019s thread.' },
   { b:633, d:'2026-08-08', t:'The colour pages load properly now',
