@@ -531,7 +531,20 @@ const settle = () => new Promise(r => setTimeout(r, 30));
     const el = h.d.getElementById('cr-show');
     const slider = el.querySelector('[data-role="after"]').getAttribute('src');
     const card = el.querySelector('[data-pick="0"] img').getAttribute('src');
-    ok('slider uses the FULL image', /after\.jpg/.test(slider) && !/-d\.jpg/.test(slider), slider);
+    /* 624 REVERSED THIS ONE DELIBERATELY, and the old assertion is why it is
+       worth reading rather than deleting. 577 gave the slider the FULL file so
+       pinching in had detail. Measured at 624 against production: that is
+       8,346 kB of JPEG, capped at 3840px, painted into a card ~900px wide —
+       tens of megabytes of decoded bitmap on the tablet to show one roof, and
+       Theo's report was that the whole screen felt sluggish.
+       The slider now takes the display copy. Pinch is unaffected because the
+       Lens never depended on the slider's pixels: cmpexp reads data-path, which
+       still carries the FULL path, and openLens fetches that itself. THAT is
+       the invariant to guard — not which file the slider happens to request. */
+    const expandPath = el.querySelector('[data-role="after"]').getAttribute('data-path');
+    ok('slider uses the DISPLAY image', /after-d\.jpg/.test(slider), slider);
+    ok('but still carries the FULL path, so pinching in has something to open',
+      /after\.jpg/.test(expandPath) && !/-d\.jpg/.test(expandPath), expandPath);
     ok('card uses the DISPLAY image', /after-d\.jpg/.test(card), card);
     ok('display paths were signed too',
       h.stats().signCalls.flat().some(p => p.endsWith('-d.jpg')));

@@ -9625,3 +9625,89 @@ internal brand manual must not be served publicly, which is also why it did not
 go in root `docs/`, a directory that deliberately ships.
 
 `CLAUDE.md`'s doc-set table now points at it.
+
+---
+
+## Build 624 — the Showcase got quick (8 Aug 2026)
+
+Theo: *"Showcase is not responsive. It works but is sluggish."* Asked **which
+part**, he said **the whole screen, generally** — not one gesture. That single
+answer redirected the whole build, and asking was worth more than any amount of
+reading: I had already measured a real defect in the drag path and would have
+shipped a fix for a bug he had not reported.
+
+### The cause: 8 MB of photograph painted into a 612px card
+
+Production holds **1 showcase pair, 1 workmanship pair, 0 walks** — so this was
+never a volume problem. Every photo is uploaded twice (`FULL {max:3840,q:0.92}`
+and `DISP {max:1400,q:0.82}`), and the card grid already used `srcD()`. **Only
+the compare slider and Curtain Call asked for FULL.** Real sizes, from
+production storage, for the one pair on the wall:
+
+| | before | after | total |
+|---|---:|---:|---:|
+| `src()` — the slider | 3,374 kB | 4,972 kB | **8,346 kB** |
+| `srcD()` — already beside it | 609 kB | 846 kB | **1,455 kB** |
+
+**And there is no quality trade, which is the part worth remembering.** The
+compare card is capped at **612 CSS px at every viewport measured** — iPhone,
+both iPads in both orientations, 1080p and ultrawide. At 2× Retina that is
+1,224 device px. The 1,400px copy still *oversamples* it. The 3,840px copy was
+being downscaled by a factor of three before anyone saw it.
+
+**Pinching in is untouched.** `cmpexp` reads `data-path`, which still carries
+the FULL path, and `openLens()` fetches that itself — the slider never held the
+full copy on the Lens's behalf. That is the invariant the harness now guards.
+
+### And one write per frame instead of one per touch report
+
+Secondary, not what Theo noticed, but on the same screen and already measured.
+`from()` did `getBoundingClientRect()` **per pointer event** and `set()` wrote
+twice — and on this app every mutation wakes all 50 `document.body` observers
+the other modules register. A 120-event burst dispatched **in one frame**, which
+is how a 120 Hz digitizer actually delivers:
+
+| | forced reflows | mutation records | ×50 observers |
+|---|---:|---:|---:|
+| 623 | 121 | 243 | 12,150 |
+| 624 | **1** | **4** | **200** |
+
+`--sh-split` ends at `79.5%` either way. Both writes now compare against a
+**stored** last value, never a read-back of the DOM — 567/569's lesson.
+
+⚠️ **Re-run that measurement the same way or it lies.** Driving the drag with
+awaited `page.mouse.move()` lets a frame paint between every event, so
+coalescing has nothing to coalesce and the identical fix scores only 243 → 183.
+The burst test is the honest one.
+
+⚠️ **The trap this build had to dodge:** the keyboard handler read the position
+back out of the DOM (`getPropertyValue('--sh-split')` — the only such reader,
+measured). With the write deferred a frame, two quick arrow presses would both
+read the same stale value and the second would undo the first. It reads the
+tracked variable now.
+
+### The harness assertion that had to be reversed
+
+`harness_showcase.js` asserted **"slider uses the FULL image"** — 577's
+intent, encoded. 624 reverses it deliberately, so the test was updated rather
+than the artifact bent, and the old reasoning is kept in the comment beside it.
+The replacement asserts the *invariant* — the slider takes the display copy
+**and still carries the FULL path so pinch has something to open** — rather
+than which file it happens to request. 124/124 green; negative-controlled
+against the 623 artifact, where the new assertion correctly fails.
+
+Also caught by the patch's own asserts: `esc(srcD(p.after_path))` **already
+occurred once** (the thumbnail), so an `== 1` check was the test being wrong,
+not the app. Rewritten self-computing (`== SHOW.count(x) + 1`).
+
+### Not done, deliberately
+
+The same shape exists in the Walk review drag (`frac()`, 4 style writes per
+event) and The Lens pan (`apply()` rewrites the zoom label on every pan though
+the zoom never changes). **Zero walks exist and Theo did not report either.**
+
+**This does not claim to be all of it.** If the screen still drags, the next
+suspect is app-wide rather than Showcase-local: the module registers **zero**
+`document.body` observers and its four `requestAnimationFrame` sites are all
+bounded and `isConnected`-guarded, so the Showcase is not the 567/569 class.
+Do not re-flag it as such.
