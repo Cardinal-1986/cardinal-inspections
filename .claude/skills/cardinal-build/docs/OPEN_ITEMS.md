@@ -1579,15 +1579,25 @@ genuine coupling and the audit found it honestly.
 and refactoring 379 call sites on spec is churn on an app the crew uses daily.
 If a state bug ever appears, start here.
 
-### Status — measure before touching anything
+### ✅ CLOSED — Theo, 8 Aug 2026: *"It does not feel slow."*
 
-Theo's call, 8 Aug: **measure first.** He is pulling the document transfer size
-and time-to-interactive off Safari on the iPad. Nothing changes until that lands.
+**That is the end of it.** The owner uses this app daily, on the phone and on an
+ultrawide desktop, and reports no load problem. No further work was done and none
+is planned. The audit was solving a hypothetical.
 
-The whole reason: the audit's premise was an unmeasured number that turned out to
-be wrong by 5×, and acting on *any* number — mine included — without checking the
-real one repeats exactly that mistake. **The sandbox cannot measure it** —
-the agent proxy returns 403 for `app.cardinalroster.com`.
+**The CDN-defer change was NOT made**, deliberately. It is a real inefficiency and
+it stays available (see above) — but shipping a change to a working app that
+nobody is complaining about is how regressions get introduced for nothing. **If
+load time ever becomes an actual complaint, start there**, not with a bundler.
+
+⚠️ **Do not reopen this on the strength of the file size alone.** That is exactly
+what the audit did. A 3.6 MB single file *looks* alarming, compresses to ~750 KB,
+and is reported as fine by the person using it.
+
+**The sandbox cannot measure load time — confirmed twice.** The agent proxy
+returns **403 to CONNECT** for `app.cardinalroster.com` *and* for the
+`*.vercel.app` preview domain. Do not burn a turn retrying; ask Theo or read it
+off a desktop browser's Network tab, where the transferred figure is the same.
 
 **Do not open the Vite rewrite.** It trades a working gate ladder
 (`check_build.py` parses 106 inline blocks individually, `patch_lib.py` does
