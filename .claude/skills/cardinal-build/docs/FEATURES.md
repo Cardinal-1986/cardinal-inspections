@@ -2109,7 +2109,30 @@ request literally would have failed the floor.
 
 `harness_ourroofs.js` — 38 assertions, negative-controlled (37 fail against 629).
 
-**Known and stated:** the six already-uploaded oversized photos stay oversized until re-uploaded.
+~~**Known and stated:** the six already-uploaded oversized photos stay oversized until re-uploaded.~~
+**CLOSED at 631** — see below.
+
+### 631 — Optimise, for the photos that predate 630
+
+630 shrank new uploads but could not reach the ten already there (**40.2 MB, 4.02 MB average, none
+with a `-d` twin**). An **Optimise** button on the colour page now re-encodes them **in place**:
+fetch the signed URL the grid already signs → the **same `shrink()`** → upload to the **same path**.
+
+**It never writes the table.** `storage_path` is unchanged, so a failure leaves that photo exactly
+as it was — a re-encode that rewrote paths could strand rows and hole the grid. Harness-asserted by
+slicing the function and checking `oc_color_photos` never appears in it.
+
+Which photos need it is **exact**: a missing `-d` twin *is* the test, and it is free because both
+paths are already signed. The button appears only when the count is non-zero, names it, and hides
+itself when done. Safe to run twice.
+
+⚠️ **It fetches to a Blob first, and that is load-bearing.** `shrink()` uses
+`URL.createObjectURL(file)` — a `blob:` URL, same-origin, canvas stays clean. Pointing it at the
+remote `https` signed URL would **taint the canvas and make `toBlob()` throw** (the CompanyCam
+picker carries the same warning).
+
+**Theo tapping it is the gate** — the fetch → canvas → re-upload path cannot be exercised in the
+build container.
 
 ---
 

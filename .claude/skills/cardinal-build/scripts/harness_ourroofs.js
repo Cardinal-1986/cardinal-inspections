@@ -41,8 +41,15 @@ ok('a missing image toolchain fails loudly rather than uploading raw',
 ok('both renditions are written, and the display twin is best-effort',
   /upload\(path, small\.full, \{ contentType:'image\/jpeg', upsert:false \}\)/.test(OCC) &&
   /upload\(dispOf\(path\), small\.disp, \{ contentType:'image\/jpeg', upsert:true \}\)/.test(OCC));
-ok('everything is stored as JPEG — HEIC off an iPhone would break on Chrome',
-  /'\.jpg'/.test(OCC) && (OCC.match(/contentType:'image\/jpeg'/g) || []).length === 2);
+/* The invariant is "EVERY upload in this module writes JPEG", not "there are
+   exactly two of them". 630 wrote `=== 2`; 631 added the optimiser's two and the
+   correct build failed. That is rule 4 of BUG_CLASSES class 15 — the class I had
+   just written — so it now counts uploads and requires each to declare the type. */
+const uploads = (OCC.match(/\.upload\(/g) || []).length;
+const jpegs   = (OCC.match(/contentType:'image\/jpeg'/g) || []).length;
+ok('EVERY upload stores JPEG — HEIC off an iPhone would break on Chrome',
+  uploads > 0 && jpegs === uploads && /'\.jpg'/.test(OCC),
+  `${uploads} uploads, ${jpegs} declare image/jpeg`);
 ok('the grid asks for the DISPLAY rendition (the 624 lesson, on a new screen)',
   /p\._src  = map\[dispOf\(p\.storage_path\)\] \|\| map\[p\.storage_path\]/.test(OCC));
 /* Pre-630 photos have no -d twin. Without the fallback every existing
@@ -120,6 +127,38 @@ ok('it uses the measured pink, NOT the brand fill pink',
 ok('the view contains its own scroll instead of chaining into the page',
   /#cr-occ\{[\s\S]{0,3000}overscroll-behavior:contain;/.test(CSS));
 ok('the lightbox contains its scroll too', /#cr-occ-shot\{[^}]*overscroll-behavior:contain/.test(CSS));
+
+console.log('\n── 631: optimise in place ──');
+ok('there is an optimiser, defined once',
+  (OCC.match(/async function optimiseOurs\(/g) || []).length === 1);
+/* The exact test for "went up before 630" is the missing -d twin — no size
+   lookup and no guessing, and it costs nothing because both paths are already
+   being signed for the grid. */
+ok('it targets photos with no display twin, not a guess at size',
+  /p\._needsOpt = !map\[dispOf\(p\.storage_path\)\];/.test(OCC) &&
+  /OURS\.filter\(function\(p\)\{ return p\._needsOpt && p\._full; \}\)/.test(OCC));
+/* ⚠️ THE SAFETY PROPERTY. It never writes the table, so a failure leaves the
+   photo exactly as it was. A re-encode that rewrote storage_path could strand
+   rows mid-run and leave the grid full of holes. */
+ok('it NEVER touches oc_color_photos — a failure cannot orphan a row', (() => {
+  const f = OCC.slice(OCC.indexOf('async function optimiseOurs('));
+  return !f.slice(0, f.indexOf('/* 630, Theo:')).includes("from('oc_color_photos')");
+})());
+ok('...and overwrites the SAME path, so it is safe to run twice',
+  /\.upload\(todo\[i\]\.storage_path, small\.full,[\s\S]{0,90}upsert:true/.test(OCC));
+/* shrink() does URL.createObjectURL(file) — a blob: URL, same-origin, canvas
+   stays clean. Handing it the remote https URL would taint the canvas and make
+   toBlob() throw. Named trap on this project (the CompanyCam picker). */
+ok('the bytes are fetched to a BLOB first — the canvas-taint trap',
+  /await res\.blob\(\)/.test(OCC) && /new File\(\[blob\]/.test(OCC) &&
+  !/shrinkFor\(todo\[i\]\._full\)/.test(OCC));
+ok('it reuses 630s shrink rather than growing a second one',
+  (OCC.match(/async function shrinkFor\(/g) || []).length === 1 &&
+  (OCC.match(/function shrink\(/g) || []).length === 0);
+ok('the button hides itself when there is nothing to fix',
+  /b\.hidden = !n;/.test(OCC) && /paintOptBtn\(\)/.test(OCC));
+ok('it reports what it actually saved, in MB',
+  /' optimised \\u2014 ' \+ mb\(before\) \+ ' down to ' \+ mb\(after\)/.test(OCC));
 
 console.log('\n── functional: the shipped dispOf and step bounds ──');
 /* Wrapped so a build WITHOUT these functions reports six clean FAILs instead of

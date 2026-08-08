@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 630 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 631 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35195,6 +35195,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:631, d:'2026-08-08', t:'Optimise the photos that were already up',
+    s:'The last update shrank every new photo on the way up, but it could not do anything about the ones already there \u2014 Onyx Black alone was carrying about forty megabytes across ten photographs, which is why it took so long to appear. There is now an Optimise button on the colour page. Tap it once and it re-saves those older photographs at a sensible size, in place, without you deleting or re-adding anything. It tells you how much it saved, it only shows up when there is actually something to fix, and it disappears when there is not. Safe to tap twice.' },
   { b:630, d:'2026-08-08', t:'Colour photos: many at once, and they open full screen',
     s:'Adding your own roofs to a shingle colour got fixed in five ways. You can now pick MANY photos at once instead of one at a time. Uploads stop failing on big pictures \u2014 photos straight off a camera or drone were larger than the limit and were being refused; they are now resized on the way up, which also means the page loads a great deal faster. Tap any photo to open it full screen and swipe left and right through the rest. There is a delete button on each one, so a duplicate is no longer permanent. And the little label under each photo was white with faint grey writing, which was hard to read \u2014 it is now black with pink lettering. Scrolling on the iPad should also settle down: the page was loading about forty megabytes of photographs on the Onyx Black colour alone.' },
   { b:629, d:'2026-08-08', t:'Three bins in Studio, and a trade on each photo',
@@ -59981,6 +59983,12 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
   -webkit-tap-highlight-color:transparent}
 #cr-occ .occ-del:hover{background:var(--occ-pink-deep,#C4007A); border-color:var(--occ-pink-deep,#C4007A)}
 #cr-occ .occ-del[disabled]{opacity:.5; cursor:default}
+/* 631: secondary to "Add our roofs" — it is a one-off repair, not a daily
+   action, and it disappears once there is nothing left to repair. */
+#cr-occ .occ-btn.ghost{background:transparent; color:var(--occ-pink-on-dark,#F55CB2);
+  border:1px solid var(--occ-pink-on-dark,#F55CB2)}
+#cr-occ .occ-btn.ghost:hover{background:var(--occ-pink-deep,#C4007A); border-color:var(--occ-pink-deep,#C4007A); color:#fff}
+#cr-occ .occ-btn.ghost[disabled]{opacity:.6; cursor:default}
 
 /* 630: full screen, swipe through. Deliberately its OWN element rather than
    reusing the Showcase's openLens: that one reads data-path against showcase
@@ -61084,6 +61092,10 @@ async function openColor(slug){
       '<span>Cardinal installs, not manufacturer photography.</span></div>' +
     '<div id="occOurs" class="occ-none">Loading…</div>' +
     '<div class="occ-actions">' +
+      /* 631: only rendered when there is something to do, and it says HOW MANY.
+         A permanently visible "Optimise" invites re-running it on a page that
+         is already fine. */
+      (amAdmin() ? '<button type="button" class="occ-btn ghost" id="occOpt" hidden></button>' : '') +
       (amStaff() ? '<button type="button" class="occ-btn" id="occAdd">Add our roofs</button>' +
                    /* 630: `multiple`. Theo: "I can't multi select from my files.
                       One at a time would take forever." */
@@ -61129,6 +61141,10 @@ async function ours(c){
     p._src  = map[dispOf(p.storage_path)] || map[p.storage_path];
     p._full = map[p.storage_path] || p._src;
     p._cap  = p.project_address || p.caption || 'Cardinal install';
+    /* 631: a photo uploaded before 630 has no -d twin. That absence is an exact
+       test for "went up raw" — no size lookup, no guessing, and it costs nothing
+       because both paths are already being signed in the round trip above. */
+    p._needsOpt = !map[dispOf(p.storage_path)];
   });
   var canDel = amAdmin();
   box.className = 'occ-ours';
@@ -61145,6 +61161,19 @@ async function ours(c){
   box.querySelectorAll('[data-del]').forEach(function(b){
     b.onclick = function(){ removeOurs(b.dataset.del, b); };
   });
+  paintOptBtn();
+}
+
+/* 631: shows itself only when photos actually predate 630. */
+function paintOptBtn(){
+  var b = VIEW && VIEW.querySelector('#occOpt');
+  if(!b) return;
+  var n = OURS.filter(function(p){ return p._needsOpt; }).length;
+  b.hidden = !n;
+  if(n){
+    b.textContent = 'Optimise ' + n + ' photo' + (n === 1 ? '' : 's');
+    b.onclick = function(){ optimiseOurs(); };
+  }
 }
 
 /* The display twin of a path, matching the Showcase's own convention. Kept
@@ -61182,6 +61211,64 @@ async function removeOurs(id, btn){
     try{ if(window.toast) window.toast('Could not delete \u2014 ' + (e && e.message ? e.message : 'try again'));
          else alert('Could not delete'); }catch(_){}
   }
+}
+
+/* 631 — re-encode in place what 630 could only fix on the way up.
+   Same paths, same shrink, upsert:true. The row is never touched, so this
+   cannot orphan anything: the worst case is a photo that stays as it was. */
+async function optimiseOurs(){
+  var cl = sb(); if(!cl) return;
+  var todo = OURS.filter(function(p){ return p._needsOpt && p._full; });
+  if(!todo.length) return;
+  var btn = VIEW.querySelector('#occOpt');
+  if(btn) btn.disabled = true;
+
+  var done = 0, failed = 0, before = 0, after = 0;
+  for(var i = 0; i < todo.length; i++){
+    if(btn) btn.textContent = 'Optimising ' + (i + 1) + ' of ' + todo.length + '\u2026';
+    try{
+      /* ⚠️ Fetch to a BLOB first. shrink() does URL.createObjectURL(file), which
+         is same-origin and keeps the canvas clean; pointing it at the remote
+         https URL would taint the canvas and make toBlob() throw. Named trap on
+         this project — see the CompanyCam picker. */
+      var res = await fetch(todo[i]._full);
+      if(!res.ok) throw new Error('could not read the original (' + res.status + ')');
+      var blob = await res.blob();
+      before += blob.size;
+      var file = new File([blob], 'original.jpg', { type: blob.type || 'image/jpeg' });
+
+      var small = await shrinkFor(file);
+      if(!small) throw new Error('Image tools unavailable \u2014 reload and try again.');
+      after += small.full.size;
+
+      /* Overwrite in place, at the SAME path — that is what makes this safe to
+         re-run and what keeps every row valid throughout. */
+      var up = await cl.storage.from('photos')
+                       .upload(todo[i].storage_path, small.full,
+                               { contentType:'image/jpeg', upsert:true });
+      if(up && up.error) throw up.error;
+      var up2 = await cl.storage.from('photos')
+                        .upload(dispOf(todo[i].storage_path), small.disp,
+                                { contentType:'image/jpeg', upsert:true });
+      if(up2 && up2.error) throw up2.error;
+      done++;
+    }catch(e){
+      failed++;
+      try{ if(window.report) window.report(e, 'Colors', 'optimise'); }catch(_){}
+    }
+  }
+
+  if(done) await ours(CUR);
+  if(btn) btn.disabled = false;
+  paintOptBtn();
+  try{
+    var mb = function(n){ return (n / 1048576).toFixed(1) + ' MB'; };
+    var msg = done
+      ? (done + ' optimised \u2014 ' + mb(before) + ' down to ' + mb(after))
+      : 'Nothing could be optimised';
+    if(failed) msg += ' \u00b7 ' + failed + ' failed';
+    if(window.toast) window.toast(msg); else alert(msg);
+  }catch(_){}
 }
 
 /* 630, Theo: "make the photo open full screen and be able to swipe through".
