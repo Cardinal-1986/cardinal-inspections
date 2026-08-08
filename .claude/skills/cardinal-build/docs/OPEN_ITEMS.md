@@ -1740,3 +1740,51 @@ generic — `build` is the only slot the completion guard treats as optional, so
 adding one is an array entry and a form field. Not assumed either way, because
 "theirs vs ours" is a two-sided argument by construction and a third photo may
 simply muddy it. **Ask before building it.**
+
+---
+
+## Worked forward to build 633 — 8 Aug 2026
+
+### ✅ Closed by 633 — do not re-file
+
+- ~~The colour grid loads too much~~ — **`THUMB` (640px) shipped.** The tile was
+  measured at 269.5 CSS px and was being handed the 1400px `DISP` copy. See
+  `FEATURES.md` → 633 for the fallback order, which is load-bearing.
+- ~~"White boxes then loads slow"~~ — the tile image now carries the dark ground.
+  It was never a fault, only `--occ-card:#FFFFFF` showing through a lazy load.
+- ~~`signMany()` keys by array position~~ — keys by the returned path now. It had
+  been latent since 630 and 633 is the build that would have triggered it.
+
+### ⚠️ Still Theo's to confirm — three things, all of them one tap each
+
+1. **Does the Archive site button work now?** (632, unmerged as of writing.) The
+   check afterwards is `select count(*) from studio_photos where archived_at is
+   not null` — it was **0 across 60,503 rows** before, which is how we know the
+   click had never once reached the database.
+2. **Does the colour page feel light now?** (633.) The Optimise button will
+   **reappear** with all 63 photographs to process — that is correct, not a
+   regression: at 632 it was hidden because every photo already had its `-d`
+   twin, and 633 moved the test to the missing `-t`.
+3. **The Feature header after 626**, still unverified by eye.
+
+### 📌 Open, and worth stating plainly
+
+- **The projected page weight after 633 is arithmetic, not a measurement.** What
+  is measured is what the page loads *today*: 23.94 MB of display copies on Onyx
+  Black, 17.31 MB on Black Sable. The toast reports the real figure the first
+  time Optimise runs. Do not quote a predicted number as fact — that is exactly
+  the error that produced "40 MB down to 2.4 MB" before 631.
+- **Optimising 63 photographs is a real client-side job** — it fetches ~42 MB of
+  display copies and re-encodes each one on his iPad. Per-photo progress is
+  shown, and nothing is overwritten, so an interrupted run is safe to re-run.
+  If it proves painful, the next move is a server-side pass, not a smaller batch.
+- **The colours bin from 629 still has no consumer** — that is build 630's entry
+  above and it is still open. The copy-not-reference rule in it is the load-bearing
+  part.
+- **Nothing prunes the Studio tray** once a pair is built.
+- **`scripts/next_build.py` under-reports.** It reads the app stamp from
+  `origin/main` only and its `ENTRY` regex still expects the **pre-574** changelog
+  shape (`{ build:N, note:'…' }`), so it cannot see entries in the current
+  `{ b, d, t, s }` form. At 633 it answered "632" while a pushed branch already
+  carried 632. It still catches the collision it was written for; it just is not
+  the whole answer. Cross-check with the per-branch stamp sweep until it is fixed.

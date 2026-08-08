@@ -10364,3 +10364,113 @@ guessed — a missing stub reads exactly like an app failure.
 in the 629 arm row would do it, writing `archived_at` instead of `studio_tray`.
 Left out because he answered "bin several", and because one unverified surface
 at a time is the rule. Offer it once 632 is confirmed working.
+
+---
+
+## Build 633 — a thumbnail sized for the tile, and the white boxes go dark (8 Aug 2026)
+
+Theo, after running 631's Optimise on the Onyx Black page: *"39.9 down to 29mb
+after optimizing 9"* — and then, having reloaded it: **"Page still feels heavy,
+white boxes then loads slow"**.
+
+Three things, and only one of them was the one I had predicted.
+
+### 1. The grid was loading an image 4.8× too big
+
+Measured, not reasoned:
+
+| | | |
+|---|---:|---:|
+| `oc-colors/onyx-black` display copies | 37 files | **23.94 MB** (663 kB avg) |
+| `oc-colors/black-sable` display copies | 26 files | **17.31 MB** (682 kB avg) |
+| full originals | 63 files | 224.74 MB |
+
+And the tile, measured in Chromium at his 1194px iPad width: the grid resolves
+to **four 269.5px columns**, so about 540 device pixels at 2×. It was being
+handed `DISP` — 1400px, sized for the Showcase's compare card at 612 CSS px.
+**One rendition was serving two surfaces that differ by nearly 5× in area.**
+
+`THUMB = { max: 640, q: 0.80 }` joins `FULL` and `DISP` in `cr-show-script`,
+declared beside them so nobody adds a fourth somewhere else. 640 rather than 800
+is a deliberate trade: the iPad in the report gets 2.4 device pixels per CSS
+pixel, a phone (one column, ~358 CSS px at 3×) gets about 1.8 — softer than
+native, and far lighter. Tapping a tile still opens the full-resolution
+original, which is where sharpness actually matters.
+
+The grid signs **three** paths per photo in the same single round trip and falls
+back `-t → -d → original`, because three eras of photograph share this screen:
+pre-630 (original only), 630–632 (original + `-d`) and 633+ (original + `-t`).
+That order is the feature — without it every existing photograph vanishes.
+
+New uploads write **full + thumb**. `DISP` is deliberately no longer written
+here: nothing on this screen shows a 1400px image, and a rendition no consumer
+reads is upload time and storage spent on nothing.
+
+### 2. The Optimise button was doing the wrong work — my error, named as mine
+
+631 re-encoded the **original** to 3840px. A drone photo is already about that
+size, so it was a re-encode, not a resize — which is exactly where *"39.9 down
+to 29mb"* came from. I had told him to expect roughly 40 MB down to 2.4 MB.
+**That prediction was wrong, and it was checkable before I made it.**
+
+633 makes the button do the thing the page actually pays for:
+
+- the test moved from "has no `-d`" to **"has no `-t`"**;
+- it re-encodes **from the display copy** where one exists — 663 kB fetched per
+  photo instead of 3.5 MB, which on an iPad over a phone connection is the
+  difference between usable and not;
+- it writes **only the thumbnail**. The original is never touched, so a failed
+  run now costs nothing at all;
+- the toast reports **what the page will load next time**, not what the stored
+  originals weigh. 631's number was true and told him nothing.
+
+⚠️ At 632 the button is correctly **hidden** — every one of those 63 photographs
+already has its `-d` twin, so there was nothing left for it to do. 633 gives it
+a new job and it will reappear with all 63 to process.
+
+### 3. The white boxes had their own cause, and it is one line
+
+623 set `--occ-card:#FFFFFF`. The `<figure>` paints from it and shows through
+until the image arrives — so an ordinary lazy load **flashed white on a
+near-black page** and read as something broken. The image element now carries
+the dark ground itself.
+
+Confirmed in Chromium rather than asserted: at 632 the tile image computes
+`rgba(0,0,0,0)` over a `rgb(255,255,255)` figure; at 633 it computes
+`rgb(35,31,32)`. The side-by-side render reproduces his description exactly — a
+stack of glaring white boxes on the left, tiles that read as *loading* on the
+right. **347 green assertions could not have told me that.**
+
+### A latent bug found on the way, fixed in the build that would have triggered it
+
+`signMany()` keyed its result **by array position**. True since 630, and it got
+away with it because both requested paths usually existed. 633 asks for a third
+that is absent on **every** photograph the first time it runs — so a compacted
+response would have handed each photo its neighbour's picture. Silent, wrong,
+and on a client-facing screen. It now keys by the path the API answered for,
+falling back to position.
+
+### One place checks the image toolchain
+
+The first pass gave the optimiser its own copy of the
+`window.CardinalShowcase` / `renditions.thumb` guard, because it wants the
+thumbnail alone and composing it from `shrinkFor()` would re-encode a 3840px
+copy per photo only to discard it. Two copies of an availability check is the
+"second mechanism beside the first" smell this project keeps paying for.
+`shrinkOne(file, name)` is now the one place; `shrinkFor` composes it, the
+optimiser calls it directly. Asserted: `window.CardinalShowcase` appears
+**exactly once** in the module.
+
+### Verification
+
+`check_build.py` green, negative-controlled. `harness_ourroofs.js` grew to
+**58 assertions**, green on 633 and **27 red on 632** — every changed behaviour
+named. All eight harnesses green (633 assertions across the set, which is a
+coincidence worth nothing). Plus the Chromium render above, and the geometry
+measured rather than read off the stylesheet.
+
+⚠️ **Theo's eyes remain the gate**, and the honest limit is this: the *projected*
+page weight is arithmetic from the pixel-area ratio, not a measurement. The
+toast will report the real figure the first time he runs Optimise. What is
+measured is what the page loads **today** — 23.94 MB of display copies for Onyx
+Black alone.

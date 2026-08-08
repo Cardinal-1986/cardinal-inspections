@@ -2192,3 +2192,63 @@ Its negative control reproduces the symptom exactly: on 631, `studio.` wires and
 
 **Not built, deliberately:** per-photo junk. `archived_at` is already per-row so it needs
 no migration — a **Junk** chip in the 629 arm row would do it. Ask before building.
+
+---
+
+## Build 633 — the colour grid loads a tile-sized picture (8 Aug 2026)
+
+Theo: *"Page still feels heavy, white boxes then loads slow."*
+
+### A third rendition
+
+`cr-show-script` now declares **three**, together, so nobody adds a fourth elsewhere:
+
+| | size | for |
+|---|---|---|
+| `FULL` | 3840px q0.92 | the lightbox, and the Showcase's pinch |
+| `DISP` | 1400px q0.82 | the Showcase compare card (612 CSS px) |
+| **`THUMB`** | **640px q0.80** | **the Colors grid tile** |
+
+The tile is **269.5 CSS px** — measured in Chromium at his 1194px iPad width, where
+the grid resolves to four columns — and it was being handed `DISP`, 4.8× the pixels it
+can show at a measured 663 kB average. 640 rather than 800 is a trade stated in the
+code: 2.4 device px per CSS px on the iPad, ~1.8 on a phone, full resolution still one
+tap away.
+
+**`thumbOf()` and `dispOf()` both delegate to one `sfx(path, tag)`**, so they cannot
+drift into different rules for the no-extension case.
+
+⚠️ **The fallback order is the feature.** Three eras of photograph share this grid —
+pre-630 (original only), 630–632 (original + `-d`), 633+ (original + `-t`) — so the
+grid signs all three paths in one round trip and takes `-t → -d → original`. Remove
+the fallback and every existing photograph vanishes.
+
+New uploads write **full + thumb**. `DISP` is deliberately no longer written here.
+
+### Optimise now does the work the page pays for
+
+It targets photos with **no thumbnail** (was: no display twin), re-encodes **from the
+display copy** where one exists (663 kB fetched instead of 3.5 MB), and writes **only
+the thumbnail — the original is never touched**, so a failed run costs nothing. The
+toast reports **what the page will load next time**.
+
+⚠️ 631 re-encoded the original to 3840px, which a drone photo already is — that is
+where *"39.9 down to 29mb"* came from.
+
+### The white boxes
+
+623 set `--occ-card:#FFFFFF` and the `<figure>` shows through until the image paints,
+so a lazy load flashed **white on a near-black page**. `#cr-occ .occ-ours img` now
+carries `background:var(--occ-head,#231F20)`. Confirmed in Chromium: 632 computes
+`rgba(0,0,0,0)` over a white figure, 633 computes `rgb(35,31,32)`.
+
+### Two hardenings
+
+- **`shrinkOne(file, name)`** is the single place that checks the image toolchain;
+  `window.CardinalShowcase` appears **exactly once** in the module, asserted.
+- **`signMany()` keys by the path the API answered for**, not by array position. It
+  had keyed positionally since 630; 633 asks for a third path absent on every photo on
+  first run, and a compacted response would have handed each photo its neighbour's
+  picture.
+
+`harness_ourroofs.js` — **58 assertions**, green on 633, **27 red on 632**.
