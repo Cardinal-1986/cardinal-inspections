@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 623 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 624 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35184,6 +35184,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:624, d:'2026-08-08', t:'The Showcase got quick',
+    s:'The before/after slider was loading the full-resolution photographs — for the pair on the wall that is 8.3 MB — to paint a card about 900 pixels wide. The smaller copies were already sitting beside them on disk, made at upload time and already used by the card grid. The slider and the self-running Curtain Call now use those: 8.3 MB became 1.5 MB, and the tablet no longer holds tens of megabytes of decoded picture to show you one roof. Pinching in is untouched — the Lens still fetches the full-resolution file the moment you pinch, which is the only place the detail was ever visible. The divider also stopped doing work on every single touch report: it now paints once a frame, which on a 120Hz iPad is a 60-fold cut in the work behind your thumb.' },
 { b:623, d:'2026-08-08', t:'Colors now wears Owens Corning\u2019s own colours', s:'Theo sent the VentSure RidgeProwler flyer and asked whether the Colors screen could use its pink, white and black. It can, and now does. The pink and the rich black are sampled straight out of that PDF rather than guessed, the roof photographs sit on white cards the way they do in Owens Corning\u2019s own literature, and the wind bars are drawn in OC pink. It reads like the manufacturer\u2019s material because that is what this screen sells. Two things it does not do: the Pink Panther is Metro-Goldwyn-Mayer\u2019s licensed character that Owens Corning pays for, so only the colour is used and not the cat; and nothing outside this screen changed \u2014 the rest of the app is still Cardinal red. Every colour that carries text was checked with a contrast calculation first, which caught that the old grey would have been unreadable on a white card.' },
 { b:622, d:'2026-08-08', t:'Cardinal installs the complete Owens Corning system \u2014 and now the page says so', s:'Build 621 put the 160 MPH wind warranty on Duration and Duration FLEX but stopped short of claiming Cardinal meets the condition for it, because that was Theo\u2019s statement to make rather than something to infer. Asked directly, he confirmed it: Cardinal installs all four required Total Protection Roofing System components as standard. So the block under the spec table has flipped from a caution a rep has to read carefully into the strongest line on the page \u2014 this roof qualifies for 160 rather than 130 because of how we build it. The four components are still named, because a homeowner seeing Hip & Ridge, underlayment, starter on the eaves AND the rakes, and ice-and-water or ventilation is seeing what they are paying for. And the 130 fallback is still there on purpose: standard is not the same as always, so if a component is substituted or declined on a job that roof carries 130, and a rep needs to be able to see that before quoting.' },
 { b:621, d:'2026-08-07', t:'Duration\u2019s wind warranty is now 130/160 MPH', s:'Owens Corning raised the Duration Series wind warranty from 130 MPH to 160 MPH, effective 1 August 2026, when the roof is built with the required Owens Corning Total Protection Roofing System components \u2014 at least four of them, including Hip & Ridge, OC Underlayment, Starter shingles on both the eaves and the rakes, and either an Ice & Water Barrier or a Ventilation product. Duration and Duration FLEX now show 130/160 on the tile, the full condition underneath the spec table, and a hatched extension on the comparison bar exactly like Oakridge\u2019s. The difference is which way it cuts: Oakridge\u2019s second number is a caution, quote the lower one unless the roof was built that way, while Duration\u2019s is a selling point you earn by installing the complete system. A roof that does not meet the specification still carries 130. Sourced from the Owens Corning Sales notice of 1 August 2026.' },
@@ -57415,8 +57417,8 @@ function renderShow(){
       '</div>' +
       '<div class="cr-sh-cmp" data-cmp style="--sh-split:52%">' +
         '<button class="cr-sh-exp" data-act="cmpexp" type="button" aria-label="Open full screen">\u2922</button>' +
-        '<img data-role="after" alt="After" data-path="' + esc(p.after_path) + '" src="' + esc(src(p.after_path)) + '">' +
-        '<img class="bf" data-role="before" alt="Before" src="' + esc(src(p.before_path)) + '">' +
+        '<img data-role="after" alt="After" decoding="async" data-path="' + esc(p.after_path) + '" src="' + esc(srcD(p.after_path)) + '">' +
+        '<img class="bf" data-role="before" alt="Before" decoding="async" src="' + esc(srcD(p.before_path)) + '">' +
         '<div class="cr-sh-hd" data-hd role="slider" tabindex="0" aria-label="Before and after divider"' +
              ' aria-valuemin="0" aria-valuemax="100" aria-valuenow="52"><span class="cr-sh-grip">◄ ►</span></div>' +
         '<span class="cr-sh-tag b">Before</span>' +
@@ -57602,13 +57604,37 @@ function wireSlider(){
   var hd  = el.querySelector('[data-hd]');
   if(!cmp || !hd) return;
   var dragging = false;
+  /* 624: one write per FRAME, not one per pointer event.
+     A 120Hz digitizer delivers pointermove in bursts BETWEEN paints, so the
+     shipped code did a forced layout read plus two DOM mutations per event —
+     and on this app every mutation wakes all 50 document.body observers the
+     other modules register. Measured on a 120-event burst dispatched in one
+     frame: 121 forced reflows and 243 mutation records became 1 and 4, with
+     --sh-split landing on the identical value.
+     Both writes compare against a STORED last value, never a read-back of the
+     DOM. That is 567/569's lesson: a guard that compares against live content
+     can look right and never once succeed, because the browser's serialization
+     of what you wrote is not the string you wrote. */
+  var splitPct = 52, splitRect = null, splitRaf = 0, wrotePct = -1, wroteAria = -1;
+  function flushSplit(){
+    splitRaf = 0;
+    if(splitPct !== wrotePct){
+      cmp.style.setProperty('--sh-split', splitPct + '%');
+      wrotePct = splitPct;
+    }
+    var a = Math.round(splitPct);
+    if(a !== wroteAria){ hd.setAttribute('aria-valuenow', String(a)); wroteAria = a; }
+  }
   function set(pct){
-    pct = Math.max(3, Math.min(97, pct));
-    cmp.style.setProperty('--sh-split', pct + '%');
-    hd.setAttribute('aria-valuenow', String(Math.round(pct)));
+    splitPct = Math.max(3, Math.min(97, pct));
+    if(!splitRaf) splitRaf = requestAnimationFrame(flushSplit);
   }
   function from(e){
-    var r = cmp.getBoundingClientRect();
+    /* 624: cached for the gesture. The slider cannot move under the finger
+       while the finger is down, so re-reading this per event bought nothing and
+       cost a forced synchronous layout each time. pointerdown clears it, which
+       is what makes a scroll or a rotation between gestures safe. */
+    var r = splitRect || (splitRect = cmp.getBoundingClientRect());
     if(!r.width) return;
     set((e.clientX - r.left) / r.width * 100);
   }
@@ -57623,6 +57649,7 @@ function wireSlider(){
        click on it — 578's class. Let a press on the button through. */
     if(e.target.closest && e.target.closest('.cr-sh-exp')) return;
     dragging = true;
+    splitRect = null;            /* 624: re-measure once, at the start of each gesture */
     grab(true);
     try{ cmp.setPointerCapture(e.pointerId); }catch(_){}
     from(e);
@@ -57631,7 +57658,7 @@ function wireSlider(){
   cmp.addEventListener('pointerup',     function(){ dragging = false; grab(false); });
   cmp.addEventListener('pointercancel', function(){ dragging = false; grab(false); });
   hd.addEventListener('keydown', function(e){
-    var now = parseFloat(cmp.style.getPropertyValue('--sh-split')) || 52;
+    var now = splitPct;   /* 624: NOT the DOM — the write is deferred a frame */
     if(e.key === 'ArrowLeft'){ set(now - 4); e.preventDefault(); }
     if(e.key === 'ArrowRight'){ set(now + 4); e.preventDefault(); }
   });
@@ -59512,8 +59539,11 @@ function ccStep(reduced){
   var plac = L.querySelector('.plac');
   plac.classList.remove('show');
   L.classList.remove('kb');
-  bf.src = src(p.before_path);
-  af.src = src(p.after_path);
+  /* 624: the display copy here too. Curtain Call swaps these on EVERY step,
+     so the full-resolution version was re-downloading and re-decoding a
+     multi-megapixel pair on a loop while the tablet sold by itself. */
+  bf.src = srcD(p.before_path);
+  af.src = srcD(p.after_path);
   /* Start fully on the BEFORE: the after pane is clipped away, then the
      divider sweeps it in — the same story the hand slider tells. */
   ph.style.setProperty('--cc-wipe', '100%');
