@@ -1651,7 +1651,7 @@ state until then. Nothing here has been verified against a real photograph.
 
 ---
 
-## OC Colors — the shingle-line hub (builds 615–622, 7–8 Aug 2026)
+## OC Colors — the shingle-line hub (builds 615–623, 7–8 Aug 2026)
 
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
@@ -1874,7 +1874,33 @@ whether any of it sells is Theo's.
 
 ### Conventions
 
-Blackout, like `#cr-show` — a client-facing Vision surface, deliberately outside both app themes.
+**Owens Corning's own palette since 623** — pink `#EC008C`, rich black `#231F20`, white,
+sampled from their VentSure RidgeProwler flyer on Theo's pick. It was Blackout like
+`#cr-show` until then. Still deliberately outside both app themes.
+
+⚠️ **The pink is THREE values with three jobs, and they are not interchangeable.**
+`--occ-red` `#EC008C` is a **fill and large-type** colour only — it is 3.84:1 as small text
+on the black and 4.25:1 under small white text, both below floor. `--occ-pink-on-dark`
+`#F55CB2` (5.48:1) is small pink text on the black ground; `--occ-pink-deep` `#C4007A`
+(5.79:1) is the ground under small white text; `--occ-pink-ink` `#A6006A` (7.42:1) is body
+pink on white. Same for the inks: `--occ-panel-ink` / `--occ-panel-dim` are the white-panel
+set, and **`--occ-dim` must never touch a white panel** — it is 2.55:1 there.
+
+⚠️ **White is for DATA surfaces, not photo cards.** In `roofs` and `feature` a tile is a
+photograph and its ink sits over a scrim, so those keep a dark card; the compare rows, the
+colour grid, the proof figures and the wind note are the white ones. `[data-nophoto]` tiles
+are white because there is no photo to sit on.
+
+⚠️ **The Pink Panther is NOT used** — MGM's licensed character that Owens Corning pays for.
+The colour is fair game as an authorised dealer; the cat is not. OC **logos** are cleared
+(Theo holds the rights) and are not in yet.
+
+**Run `scripts/audit_contrast.js` after any colour work here.** It measures every text node
+against its real computed background in Chromium and found **25** violations at 623 where
+eyes had found two. Its blind spot: it reads `backgroundColor`, so text over a
+background-image is measured against the colour beneath the photo.
+
+Blackout was the original design, like `#cr-show` — a client-facing Vision surface, deliberately outside both app themes.
 **Every `--occ-*` reference carries a literal fallback**, so the 448–449 stripped-token class cannot
 reach it. Registered in `hideAllViews()`, `OVERLAY_IDS` and `PANES`; **display-shown**, so
 `display:none` is the close lever. Adds **zero** global scroll-lock writers.

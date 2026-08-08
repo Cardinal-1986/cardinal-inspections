@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 622 &#8212; we install the complete Owens Corning system, and the Duration page now says so</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 623 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35184,6 +35184,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:623, d:'2026-08-08', t:'Colors now wears Owens Corning\u2019s own colours', s:'Theo sent the VentSure RidgeProwler flyer and asked whether the Colors screen could use its pink, white and black. It can, and now does. The pink and the rich black are sampled straight out of that PDF rather than guessed, the roof photographs sit on white cards the way they do in Owens Corning\u2019s own literature, and the wind bars are drawn in OC pink. It reads like the manufacturer\u2019s material because that is what this screen sells. Two things it does not do: the Pink Panther is Metro-Goldwyn-Mayer\u2019s licensed character that Owens Corning pays for, so only the colour is used and not the cat; and nothing outside this screen changed \u2014 the rest of the app is still Cardinal red. Every colour that carries text was checked with a contrast calculation first, which caught that the old grey would have been unreadable on a white card.' },
 { b:622, d:'2026-08-08', t:'Cardinal installs the complete Owens Corning system \u2014 and now the page says so', s:'Build 621 put the 160 MPH wind warranty on Duration and Duration FLEX but stopped short of claiming Cardinal meets the condition for it, because that was Theo\u2019s statement to make rather than something to infer. Asked directly, he confirmed it: Cardinal installs all four required Total Protection Roofing System components as standard. So the block under the spec table has flipped from a caution a rep has to read carefully into the strongest line on the page \u2014 this roof qualifies for 160 rather than 130 because of how we build it. The four components are still named, because a homeowner seeing Hip & Ridge, underlayment, starter on the eaves AND the rakes, and ice-and-water or ventilation is seeing what they are paying for. And the 130 fallback is still there on purpose: standard is not the same as always, so if a component is substituted or declined on a job that roof carries 130, and a rep needs to be able to see that before quoting.' },
 { b:621, d:'2026-08-07', t:'Duration\u2019s wind warranty is now 130/160 MPH', s:'Owens Corning raised the Duration Series wind warranty from 130 MPH to 160 MPH, effective 1 August 2026, when the roof is built with the required Owens Corning Total Protection Roofing System components \u2014 at least four of them, including Hip & Ridge, OC Underlayment, Starter shingles on both the eaves and the rakes, and either an Ice & Water Barrier or a Ventilation product. Duration and Duration FLEX now show 130/160 on the tile, the full condition underneath the spec table, and a hatched extension on the comparison bar exactly like Oakridge\u2019s. The difference is which way it cuts: Oakridge\u2019s second number is a caution, quote the lower one unless the roof was built that way, while Duration\u2019s is a selling point you earn by installing the complete system. A roof that does not meet the specification still carries 130. Sourced from the Owens Corning Sales notice of 1 August 2026.' },
 { b:620, d:'2026-08-07', t:'The SureNail strip, which is what sells Duration', s:'Theo: "Sure nail strip is what sells the duration compared to competitors." The Duration page had been leading with a comparison against Oakridge, which is the wrong fight. It now leads with Owens Corning\u2019s own claim \u2014 that SureNail is the first and only reinforced nailing zone ON THE FACE of the shingle, a visible woven strip embedded where the nails actually go, so a crew can see the target instead of guessing. Underneath it are the three tested numbers from the SureNail sell sheet: up to twice the nail pull-through resistance, up to nine times the nail blow-through resistance, up to twice the delamination resistance. The basis of those comparisons is printed with them, because a multiple with no basis is a marketing number and a multiple with one survives being questioned across a kitchen table. Duration FLEX carries the same strip and the same figures.' },
@@ -59614,13 +59615,41 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
 
 
 <style id="cr-occ-styles">
-/* Cardinal OC Colors — the colour wall.  v2026-08-07 · build 615
-   A Vision surface, so BLACKOUT by design like #cr-show — deliberately outside
-   both app themes. Do NOT wire this to rb-light.
+/* Cardinal OC Colors — the colour wall.  v2026-08-08 · build 623
+   A Vision surface, deliberately outside both app themes. Do NOT wire this to
+   rb-light. It was Blackout like #cr-show until 623; it now carries OWENS
+   CORNING'S OWN flyer palette — pink #EC008C, rich black #231F20, white —
+   sampled from their VentSure RidgeProwler 30 sheet, on Theo's pick. This
+   screen sells OC product, so it looks like OC. The Pink Panther is MGM's
+   licensed character and is NOT used; the colour is, as an authorised dealer.
+   ⚠ The inks are SPLIT BY SURFACE below. --occ-dim is 6.38:1 on the black
+   ground and 2.55:1 on a white panel — it must never be used on white.
    Every --occ-* reference carries a literal fallback (the Crews/Showcase
    pattern) so a token stripped by another module cannot make this see-through:
    builds 448-449 are the proof that is not theoretical. */
 #cr-occ{
+  /* 623: the palette is DECLARED here rather than edited across 103 call
+     sites. Every reference keeps its old literal fallback, so if another
+     module ever strips these the screen degrades to the old Blackout instead
+     of going see-through — the 448-449 failure mode stays closed. */
+  --occ-bg:#231F20;        /* OC rich black, sampled */
+  --occ-head:#231F20;
+  --occ-red:#EC008C;       /* OC brand pink — fills and LARGE type only */
+  --occ-line:#3A3536;      /* hairlines on the black ground */
+  /* white-panel set. These exist because a white card cannot reuse the dark
+     ground's inks: --occ-dim is 2.55:1 on white. Split, not shared. */
+  --occ-panel:#FFFFFF;
+  --occ-panel-ink:#231F20; /* 16.30:1 */
+  --occ-panel-dim:#55595E; /*  7.05:1 */
+  --occ-panel-line:#DCDCDC;
+  --occ-pink-ink:#A6006A;  /*  7.42:1 — pink that passes BODY on white */
+  /* The brand pink #EC008C is a FILL and a LARGE-type colour. It fails as small
+     text on the black ground (3.84:1) and fails under small white text
+     (4.25:1). Two measured variants do those two jobs. Same split-by-role rule
+     as the inks — a single value cannot serve three grounds. */
+  --occ-pink-on-dark:#F55CB2;  /* 5.48:1 — small pink TEXT on #231F20 */
+  --occ-pink-deep:#C4007A;     /* 5.79:1 under small WHITE text */
+  --occ-card:#FFFFFF;          /* tiles with no hero photo are white too */
   display:none; position:fixed; inset:0; z-index:158;
   background:var(--occ-bg,#050607); color:var(--occ-ink,#EDEFF2);
   overflow-y:auto; -webkit-overflow-scrolling:touch;
@@ -59664,8 +59693,8 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
   gap:14px; padding:4px 16px 32px;
 }
 #cr-occ .occ-card{
-  background:var(--occ-card,#0E1114); border:1px solid var(--occ-line,#1D2126);
-  border-radius:12px; overflow:hidden; cursor:pointer; text-align:left;
+  background:var(--occ-panel,#fff); border:1px solid var(--occ-panel-line,#DCDCDC);
+  color:var(--occ-panel-ink,#231F20); border-radius:12px; overflow:hidden; cursor:pointer; text-align:left;
   padding:0; color:inherit; font:inherit; -webkit-tap-highlight-color:transparent;
 }
 #cr-occ .occ-card:active{border-color:var(--occ-red,#c8202e)}
@@ -59680,7 +59709,7 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
 }
 #cr-occ .occ-meta{padding:11px 12px 13px}
 #cr-occ .occ-name{font:700 15.5px var(--occ-sans,sans-serif); letter-spacing:-.01em}
-#cr-occ .occ-sub{margin-top:3px; font-size:12.5px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-sub{margin-top:3px; font-size:12.5px; color:var(--occ-panel-dim,#55595E)}
 #cr-occ .occ-tags{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px}
 #cr-occ .occ-tag{
   padding:3px 8px; border-radius:999px; font:700 10.5px var(--occ-sans,sans-serif);
@@ -59762,8 +59791,8 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
 #cr-occ .occ-line{
   display:block; width:100%; text-align:left; margin:0 0 10px;
   padding:15px 16px; min-height:44px; cursor:pointer;
-  background:var(--occ-card,#0E1114); color:var(--occ-ink,#EDEFF2);
-  border:1px solid var(--occ-line,#1D2126); border-radius:14px;
+  background:var(--occ-panel,#fff); color:var(--occ-panel-ink,#231F20);
+  border:1px solid var(--occ-panel-line,#DCDCDC); border-radius:14px;
   font:inherit; -webkit-appearance:none; appearance:none;
 }
 #cr-occ .occ-line:active{border-color:var(--occ-red,#c8202e)}
@@ -59772,7 +59801,7 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
 #cr-occ .occ-lname{
   display:flex; align-items:center; gap:9px;
   font:700 17.5px var(--occ-sans,sans-serif); letter-spacing:-.02em;
-  color:var(--occ-ink,#EDEFF2);
+  color:var(--occ-panel-ink,#231F20);
 }
 #cr-occ .occ-go{margin-left:auto; color:var(--occ-dim,#9AA3AE); font-weight:600}
 #cr-occ .occ-soon{
@@ -59781,8 +59810,8 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
   background:var(--occ-raise,#12151A); color:var(--occ-dim,#9AA3AE);
   border:1px solid var(--occ-line,#1D2126);
 }
-#cr-occ .occ-lkind{margin-top:4px; font-size:13px; color:var(--occ-ink2,#C6CCD4)}
-#cr-occ .occ-lsub{margin-top:6px; font-size:12.5px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-lkind{margin-top:4px; font-size:13px; color:var(--occ-panel-dim,#55595E)}
+#cr-occ .occ-lsub{margin-top:6px; font-size:12.5px; color:var(--occ-panel-dim,#55595E)}
 
 /* the line page's description and spec table */
 #cr-occ .occ-blurb{margin:0 0 14px; font-size:15.5px; line-height:1.5; color:var(--occ-ink2,#C6CCD4)}
@@ -59963,12 +59992,12 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
   #cr-occ[data-style="compare"] .occ-go{display:none}
   #cr-occ .cmp{display:block; grid-column:2; grid-row:1 / span 2; position:relative}
   #cr-occ .cmp-right{display:block; grid-column:3; grid-row:1 / span 2; text-align:right}
-  #cr-occ .cmp-track{height:26px; border-radius:6px; background:#121620; position:relative; overflow:hidden}
+  #cr-occ .cmp-track{height:26px; border-radius:6px; background:#ECECEC; position:relative; overflow:hidden}
   #cr-occ .cmp-fill{position:absolute; top:0; bottom:0; left:0; border-radius:6px;
-    background:linear-gradient(90deg,#8f1620,#c8202e)}
+    background:linear-gradient(90deg,#A6006A,#EC008C)}
   #cr-occ .cmp-ext{position:absolute; top:0; bottom:0; border-radius:0 6px 6px 0;
-    background:repeating-linear-gradient(115deg,#3a2226 0 7px,#241417 7px 14px);
-    border-right:2px solid #6b2b32}
+    background:repeating-linear-gradient(115deg,#F7B9DC 0 7px,#FBDCEE 7px 14px);
+    border-right:2px solid var(--occ-red,#EC008C)}
   #cr-occ .cmp-num{margin-top:8px; font:700 13.5px var(--occ-sans,sans-serif); color:var(--occ-ink,#EDEFF2)}
   #cr-occ .cmp-num.soft{font-weight:500; color:var(--occ-dim,#9AA3AE); margin-top:0}
   #cr-occ .cmp-num small{font-weight:500; color:var(--occ-dim,#9AA3AE)}
@@ -60067,6 +60096,94 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
     max-width:900px; margin-left:auto; margin-right:auto; padding:0 44px;
   }
 }
+
+/* ---- 623: the flyer skin ------------------------------------------------
+   Only surfaces that CHANGE ROLE (dark card -> white panel) are restated here;
+   everything else moved with the tokens above. Kept small on purpose — retail
+   proved an override layer is a liability past ~20 rules. If this grows, move
+   it into the base rules instead of stacking. */
+#cr-occ .occ-head{ border-bottom:3px solid var(--occ-red,#EC008C); }
+#cr-occ .occ-title span{ color:var(--occ-red,#EC008C); }
+#cr-occ .occ-hub, #cr-occ #occBody, #cr-occ .occ-lead{ background:var(--occ-bg,#231F20); }
+
+/* white panels: cards, tiles, the proof figures, the wind note */
+#cr-occ .occ-name{ color:var(--occ-panel-ink,#231F20); }
+#cr-occ .occ-proof .pf{ background:var(--occ-panel,#fff); border-color:var(--occ-panel-line,#DCDCDC); color:var(--occ-panel-dim,#55595E); }
+#cr-occ .occ-proof .pf b{ color:var(--occ-red,#EC008C); }   /* 27px/800 — large, 4.25:1 */
+#cr-occ .occ-note2{ background:var(--occ-panel,#fff); color:var(--occ-panel-ink,#231F20); border-left-color:var(--occ-red,#EC008C); }
+#cr-occ .occ-note2 b{ color:var(--occ-pink-ink,#A6006A); }  /* body-size pink -> 7.42:1 */
+
+/* the comparison board sits on white rows now */
+#cr-occ .cmp-num{ color:var(--occ-panel-ink,#231F20); }
+#cr-occ .cmp-num small{ color:var(--occ-panel-dim,#55595E); }
+#cr-occ .cmp-warr{ color:var(--occ-panel-dim,#55595E); }
+#cr-occ .cmp-head{ color:var(--occ-red,#EC008C); }
+#cr-occ .cmp-chip.cmp-cn{ color:var(--occ-panel-dim,#55595E); border-color:var(--occ-panel-line,#DCDCDC); }
+/* .cmp-c3 carried background:#1B2028 from the dark scheme. Restating only its
+   INK left dark-on-dark — the chip rendered as an unreadable black pill on a
+   white row, and no gate could see it. Restate the GROUND with the ink. */
+#cr-occ .cmp-chip.cmp-c3{ background:#F1F1F1; color:var(--occ-panel-ink,#231F20); border-color:var(--occ-panel-line,#DCDCDC); }
+/* Discontinued's glance uses .cmp-num.soft -> --occ-dim, which is 2.55:1 on
+   white. The banner above says never to do that; this is the site it meant. */
+#cr-occ .cmp-num.soft{ color:var(--occ-panel-dim,#55595E); }
+
+/* gold survives only as a GROUND. #C9A227 as text on white is 2.42:1. */
+#cr-occ .occ-tag.coty{ color:#1A1400; }
+
+/* ---- 623b: every finding from the real-engine contrast audit ------------
+   25 text nodes measured below their WCAG floor. jsdom cannot see any of this
+   (var() in a shorthand comes back transparent), and most were invisible to me
+   by eye — including .occ-lname at 1.16:1, dark ink on the dark card that the
+   un-photographed Oakridge and Supreme tiles still used. */
+#cr-occ .occ-go{ color:var(--occ-panel-dim,#55595E); }
+#cr-occ .occ-title span{ color:var(--occ-pink-on-dark,#F55CB2); }
+#cr-occ .cmp-head{ color:var(--occ-pink-on-dark,#F55CB2); }
+#cr-occ .cmp-head span{ color:var(--occ-pink-on-dark,#F55CB2); }
+/* small white text needs the deeper pink underneath it */
+#cr-occ .cmp-c4{ background:var(--occ-pink-deep,#C4007A); }
+#cr-occ .occ-sty[aria-pressed="true"]{ background:var(--occ-pink-deep,#C4007A); font-weight:700; }
+
+/* ---- 623c: white is for DATA surfaces, not for photo cards ---------------
+   ⚠ MUST stay inside @media(min-width:820px). `data-style` is set on #cr-occ at
+   EVERY width — only the 618 presentation rules are viewport-gated. Written
+   ungated, these dark photo-cards landed on the PHONE, where tiles are white,
+   and put #231F20 ink on a #171415 card at 1.12:1. The phone is the surface
+   with the pixel baseline; nothing style-specific may reach it.
+
+   The audit read Duration's tile as "light ink on white" in `roofs` — that is
+   the audit's blind spot, not a defect: the tile is a PHOTO card and the ink
+   sits over the hero's scrim, which backgroundColor cannot see. The real bug it
+   exposed is that the colour BENEATH the photo had gone white, so a hero that
+   failed to load would strand light text on white. */
+@media (min-width:820px){
+  /* background-COLOR, never the shorthand: `background:` resets
+     background-image and wiped the hero photograph off every tile. The
+     "really paints a roof" assertion caught it; nothing else would have. */
+  #cr-occ[data-style="roofs"] .occ-line,
+  #cr-occ[data-style="feature"] .occ-line{ background-color:#171415; }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto],
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto]{ background-color:var(--occ-panel,#fff); }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lname,
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto] .occ-lname{ color:var(--occ-panel-ink,#231F20); }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lkind,
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lsub,
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto] .occ-lkind,
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto] .occ-lsub,
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-go,
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto] .occ-go{ color:var(--occ-panel-dim,#55595E); }
+  /* photo tiles keep light ink over the scrim, and the name with it */
+  #cr-occ[data-style="roofs"] .occ-line:not([data-nophoto]) .occ-lname,
+  #cr-occ[data-style="feature"] .occ-line:not([data-nophoto]) .occ-lname{ color:#F4F6F8; }
+  #cr-occ[data-style="roofs"] .occ-line:not([data-nophoto]) .occ-go,
+  #cr-occ[data-style="feature"] .occ-line:not([data-nophoto]) .occ-go{ color:#E7EAEE; }
+  /* the compare board's rows ARE data surfaces */
+  #cr-occ[data-style="compare"] .occ-line{ background-color:var(--occ-panel,#fff); }
+  #cr-occ[data-style="compare"] .occ-lname{ color:var(--occ-panel-ink,#231F20); }
+  #cr-occ[data-style="compare"] .occ-lkind{ color:var(--occ-panel-dim,#55595E); }
+}
+/* the switcher's pressed label: white on the deeper pink, bold so the 3.0
+   large-text floor applies at 14px+ */
+#cr-occ .occ-sty[aria-pressed="true"]{ color:#fff; }
 </style>
 <script id="cr-occ-script">
 /* Cardinal OC Colors — the product-line hub.  v2026-08-07 · build 620

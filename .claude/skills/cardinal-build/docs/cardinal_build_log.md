@@ -9483,3 +9483,89 @@ The claim block still uses `.occ-note2`, the same red-edged styling as Oakridge'
 It reads as emphasis rather than warning in Cardinal red, and both blocks are the same kind
 of content — the condition attached to the wind number. Splitting the style would create a
 second thing to keep in sync for no gain. Theo can call it if he wants them distinct.
+
+## Build 623 — OC Colors wears Owens Corning's own colours (8 Aug 2026)
+
+Theo sent the **VentSure® RidgeProwler™ 30** flyer — one of the four Total
+Protection components 621 put on the Duration page — and asked whether the
+Colors screen could use its pink/white/black. Shown four renders (today, accent
+only, pink masthead, the full flyer) he picked **the flyer**, and scoped it:
+*"only for the Owens Corning colors part of this."* So `#cr-occ` and nothing
+else. The patch asserts every rule in the stylesheet is `#cr-occ`-scoped.
+
+**Colours are sampled from the PDF, not eyeballed:** pink **`#EC008C`** (15,520
+px), rich black **`#231F20`** (126,336 px), white. OC's logo red `#E31837` also
+appears in the flyer and is deliberately unused — it is close enough to
+Cardinal's `#c8202e` to muddle the two brands.
+
+**The Pink Panther is not used, and that is a licence matter.** The flyer's own
+footer: *"THE PINK PANTHER & © 1964–2025 Metro-Goldwyn-Mayer Studios Inc."* OC
+licenses that character; Cardinal does not. The colour is fair game as an
+authorised dealer. Theo has confirmed he holds rights to OC's **logos** and is
+sending them — a later build.
+
+### One value cannot serve three grounds — the third instance of the same defect
+
+`--occ-ink` and `--occ-dim` each did two jobs, because every surface used to be
+dark. Turn the cards white and `--occ-dim` (`#9AA3AE`) lands at **2.55:1**.
+Same shape as 621's shared bar caption and 622's shared note heading. The inks
+are now **split by surface**, and the brand pink split too — it fails as small
+text on the black (3.84:1) and under small white text (4.25:1):
+
+| token | value | job | ratio |
+|---|---|---|---|
+| `--occ-red` | `#EC008C` | fills and large type | — |
+| `--occ-pink-on-dark` | `#F55CB2` | small pink text on `#231F20` | 5.48:1 |
+| `--occ-pink-deep` | `#C4007A` | ground under small white text | 5.79:1 |
+| `--occ-pink-ink` | `#A6006A` | body pink on white | 7.42:1 |
+| `--occ-panel-ink` | `#231F20` | text on white | 16.30:1 |
+| `--occ-panel-dim` | `#55595E` | secondary on white | 7.05:1 |
+
+The palette is **declared once** on `#cr-occ` rather than edited across 103 call
+sites, and every reference keeps its old literal fallback — so if another module
+ever strips these the screen degrades to the old Blackout instead of going
+see-through. The 448–449 failure mode stays closed.
+
+### `scripts/audit_contrast.js` — new, and it earned itself immediately
+
+Walks every text node in a real engine, resolves its computed colour against
+the nearest opaque ancestor background, and reports anything under its WCAG
+floor (4.5 body / 3.0 for ≥18.66px or bold ≥14px). **It found 25 violations.
+Eyes had found two.** Including `.occ-lname` at **1.12:1** — `#231F20` ink on a
+`#171415` card — which no screenshot made obvious.
+
+⚠️ **Its blind spot, stated so nobody over-trusts it:** it reads
+`backgroundColor`, so text over a background-**image** is measured against the
+colour beneath the photo. A "failure" on a photo card may be the audit's limit
+rather than a defect — but it is still worth reading, because it says what the
+text lands on if the image never loads. That is exactly how the real bug on the
+hero tiles was found.
+
+### Two regressions of mine, both caught by gates rather than by me
+
+1. **`background:` instead of `background-color:`.** The shorthand resets
+   `background-image`, so my dark photo-card rule **wiped the hero photograph
+   off every tile**. 618's *"the Duration tile really paints a roof"* assertion
+   caught it; nothing else would have.
+2. **Style rules written ungated.** `data-style` is on `#cr-occ` at *every*
+   width — only the 618 presentation rules are `@media (min-width:820px)`. Mine
+   were not, so the iPad's dark photo-cards landed on the **phone**, putting
+   `#231F20` on `#171415` at 1.12:1. Wrapped. **The phone is the surface with
+   the pixel baseline; nothing style-specific may reach it.**
+
+### White is for DATA surfaces, not photo cards
+
+The rule the audit forced into the open: in `roofs` and `feature` a tile is a
+**photograph** and its ink sits over a scrim, so those keep a dark card. The
+compare board's rows, the colour grid, the proof figures and the wind note are
+**data** — those are the white panels. `[data-nophoto]` tiles (Oakridge,
+Supreme) are white too, since there is no photo to sit on.
+
+### Verified
+
+`check_build.py` green and negative-controlled, 622 → 623. **jsdom 110/110** —
+structure untouched, which is the point: this is a skin. **Chromium 53/53.**
+**`audit_contrast.js` CLEAN** at iPad-roofs, iPad-compare and phone. Phone
+baseline re-approved: a deliberate total restyle, so the evidence is that every
+rule is `#cr-occ`-scoped plus a clean audit at phone width, not a tile diff.
+Board, line page and phone rendered and read by eye.
