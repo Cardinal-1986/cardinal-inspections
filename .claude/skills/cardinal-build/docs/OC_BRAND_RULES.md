@@ -31,6 +31,74 @@ is explicitly incorrect use. Red on black is **approved** — see below.
 
 ---
 
+## ✅ Cardinal's status — settled 8 Aug 2026, do not re-ask
+
+**Owens Corning™ Roofing Preferred Contractor.** Theo, asked directly: *"Preferred
+contractor."* Not Platinum Preferred.
+
+**The app already knew this** — the question was answerable from the file the whole
+time, which is the prime doctrine earning its keep again. Three sites in
+`index.html` state it, and they agree:
+
+| Where | What it says |
+|---|---|
+| Resource Library card (~5346–5352) | the OC tier ladder, and *"**Cardinal status:** Owens Corning™ Roofing Preferred Contractor"* |
+| the **ROOFING ESTIMATE** template (~8657) | `<div class="est-oc">⭐ Owens Corning® Preferred Contractor</div>` in the document header |
+| warranty comparison table (~9149) | Preferred Protection — 50-yr mfr · 10-yr workmanship |
+
+**What Preferred does and does not entitle Cardinal to quote**, from that Library
+card and consistent with OC's ladder: Preferred registers **System Protection** and
+**Preferred Protection** (the latter adds 10-year workmanship and needs a
+qualifying multi-component OC system). **Platinum Protection is Platinum
+Preferred only — do not quote it.** Checked at 623: the OC Colors module
+(`cr-occ-script`) names **zero** warranty tiers — it quotes only product-level
+shingle warranties — so nothing there over-claims.
+
+### Therefore: which artwork, decided by arithmetic rather than by eye
+
+The Preferred Contractor lockup ships in **three variants**, keyed to how dark the
+background is (guidelines p. 6):
+
+| Variant | Roundel | "PREFERRED CONTRACTOR" type |
+|---|---|---|
+| **49% black or less** background | red | black |
+| **50% black or more** background | red | **white** |
+| **65% black or less** background | one-colour black | black |
+
+The Colors screen grounds at `#231F20` = rgb(35,31,32) → **~87% black** (86.3% by
+the lightest channel). That is ≥50%, and it **exceeds** the 65%-or-less ceiling on
+the black-roundel variant.
+
+➡️ **The required asset is the "50% BLACK OR MORE BACKGROUND COLOR" Preferred
+Contractor lockup — red roundel, white lockup type.** On this ground the roundel
+is red. Not black, not white, not pink.
+
+✅ **This also closes the "Proud Installer" question.** Page 6, verbatim: *"Proud
+Installer of Owens Corning® Products" is **not needed** when using the Preferred
+Contractor logo.* The same sentence appears on p. 5 for Platinum. The relationship
+line is required with the **plain OC logo**, not with a tier lockup.
+
+⚠️ **The PDF is not a source of artwork.** Its embedded images on that sheet are
+100–150 ppi and a few hundred pixels wide (the lockups measure ~302×50 and
+~315×47). Cropping one would ship a blurry, proportion-drifted mark — which the
+guidelines forbid outright. **The official file has to come from Theo or from OC.**
+
+### ⚠️ Finding: the estimate already co-brands, and carries no disclaimer
+
+`.est-oc` sits in the header of the **ROOFING ESTIMATE** print template — a
+client-facing document with a signature block — as a pink (`#d40f7d`) pill reading
+*"⭐ Owens Corning® Preferred Contractor"*. That is co-branded contractor material.
+
+**`index.html` contains ZERO occurrences of "independent contractor" or "not an
+affiliate".** Measured, not assumed. The required disclaimer is absent from the
+whole app, and this document predates all the OC Colors work. It is **text, not
+the logo**, so the "Proud Installer" rule does not bite — but the disclaimer rule
+is written against *co-branding*, not against the logo specifically, so the honest
+reading is that this document needs it. **Theo's call, not a session's** — it edits
+a document homeowners sign.
+
+---
+
 ## The approval gate — this blocks shipping, and it is Theo's to pass
 
 - **All material co-branded with Owens Corning** goes to
@@ -102,11 +170,31 @@ alternative). Contractors use *Installer*; dealers and distributors use
 
 Exceptions are made only for extremely small ads and apparel.
 
-⚠️ **Preferred Contractor / Platinum Preferred Contractor lockups are separate
+✅ **Preferred Contractor / Platinum Preferred Contractor lockups are separate
 artwork with their own rules, and with those the "Proud Installer" line is NOT
-needed.** Their "ARC" and type are always white, and which version to use
-depends on how dark the background is. **Ask Theo which status Cardinal holds
-before choosing an asset.**
+needed.** Which version to use depends on how dark the background is. **Cardinal
+is Preferred — settled 8 Aug 2026; the variant and the arithmetic are in the
+status section above.**
+
+The caption under all six lockups — *"'ARC' and type always WHITE"* — is about the
+**inside of the roundel** (the white swoosh and the white "OWENS CORNING"
+wordmark within it), not the "PREFERRED CONTRACTOR" type beside it, which is black
+on two of the three variants. The ® is *"same color as logo"*.
+
+### ⚠️ The logo and the logotype are two different assets — don't cross their rules
+
+The **logotype** is the Company-name type treatment, used *"in limited cases, when
+the Owens Corning logo cannot be used"* — pens, wearables, tiny imprint areas. Its
+approved colours are **black, PMS 186, PMS Cool Gray 10, or white**, and page 5
+shows white-on-black as correct usage.
+
+So **"never reverse it out" governs the LOGO, not the logotype** — an earlier note
+here risked over-applying it. Neither is licence to invent: the logotype *"is not
+to be recreated or typed using a similar or different font"*, and its own
+incorrect-use list is the same shape (no altered proportions, no recoloured type,
+no drop shadow/bevel/glow, not on photographic backgrounds). If a mark is wanted on
+the dark Colors ground, the answer is the **Preferred lockup**, not a hand-set
+white wordmark.
 
 ---
 
