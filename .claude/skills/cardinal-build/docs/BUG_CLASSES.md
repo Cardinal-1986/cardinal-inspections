@@ -1123,7 +1123,8 @@ dialog is not evidence the credential changed.
 
 ## 15. An assertion that matches your own comment about the code (8 Aug 2026, build 630)
 
-**Cost: six false reds in a single session, on code that was correct every time.**
+**Cost: EIGHT false reds in a single session, on code that was correct every time —
+and two of them landed after this entry was written.**
 
 Every one of these went RED against a working build, and every one was the
 test's fault:
@@ -1136,6 +1137,14 @@ test's fault:
 | 628 | `stopPropagation` near `stu-tick` | nothing — the class moved into `paintTick()`, so the *proximity* broke while the code stayed right |
 | 629 | `nextBucket` is gone | the comment `/* 629 replaced nextBucket() …` |
 | 630 | `openLens` not used here | the comment *"not the Showcase's openLens"* |
+| 631 | `upsert:true` appears twice | the comment *"upsert:true and the SAME path…"* |
+| 631 | `contentType:'image/jpeg'` **=== 2** | nothing — 631 legitimately added two more uploads |
+
+⚠️ **The last two happened AFTER this class was written, in the same hour.** The
+`=== 2` was hardcoded into `harness_ourroofs.js` by the build that created this
+very entry. Knowing the rule is not the same as applying it: the fix is to write
+assertions that *scale* (count the uploads, require each to declare its type)
+rather than assertions that record today's number.
 
 **The shape is always the same: the assertion's search space included prose.**
 Comments on this project explain *what was removed and why*, so an

@@ -10186,3 +10186,76 @@ re-encoded by re-uploading, and this container has no storage credentials (nor
 should it). With delete and multi-select now present, replacing them is about
 thirty seconds of Theo's time, and the grid pulls the display twin for anything
 uploaded from 630 on.
+
+---
+
+## Build 631 — Optimise: repair in place what 630 could only fix on the way up (8 Aug 2026)
+
+`cr-occ-script` + `cr-occ-styles`. No SQL, and deliberately no table write at all.
+
+630 shrank every new upload but could not reach what was already there. Measured
+against production at the time:
+
+```
+oc_color_photos      10 rows · 40.2 MB total · 4.02 MB average · 0 with a -d twin
+```
+
+Theo, testing: *"Also takes a very long time to load."* That is those forty
+megabytes. **He was on build 627 at the time** — 628–630 were still sitting in
+PR #155 — so everything in that report was already fixed and unmerged. Offered
+merge-then-optimise or merge-and-replace-by-hand; he picked **"Merge, then
+optimise"**, #155 was merged as `44e6811`, and this is the follow-up.
+
+### The whole job is already-built parts
+
+Fetch the signed URL the grid is **already signing**, hand the bytes to the
+**same `shrink()`** 630 exported, upload to the **same path** with upsert. No new
+mechanism, no second shrinker, no schema change.
+
+**The safety property is that it never writes the table.** `storage_path` does
+not change, so a failure mid-run leaves that photograph exactly as it was. A
+re-encode that rewrote paths could strand rows and leave the grid full of holes;
+this cannot produce one, and the harness asserts it by slicing the function and
+checking `oc_color_photos` never appears inside it.
+
+**Which photos need it is exact, not a guess:** a missing `-d` twin *is* the
+test for "went up raw", and it costs nothing because both paths are already
+signed for the grid. The button renders only when the count is non-zero, names
+the count, and hides itself again afterwards.
+
+⚠️ **It fetches to a Blob before shrinking, and that is load-bearing.**
+`shrink()` does `URL.createObjectURL(file)` — a `blob:` URL, same-origin, canvas
+stays clean. Pointing it at the remote `https` signed URL would **taint the
+canvas and make `toBlob()` throw**. Named trap on this project; the CompanyCam
+picker carries the same note ("the bytes always come through
+`api/companycam.js`, never the CDN").
+
+### ⚠ Class 15 caught me twice more, in the same hour I wrote it
+
+**Seventh instance:** `opt.count('upsert:true') == 2` returned 3 — the third was
+my own comment *"upsert:true and the SAME path…"*. Fixed by **rule 5** (reword
+the prose) **and rule 2** (assert on the call form
+`{ contentType:'image/jpeg', upsert:true }`).
+
+**Eighth instance, and this one is worse:** `harness_ourroofs.js` — written an
+hour earlier — asserted `contentType:'image/jpeg'` appears **exactly twice**.
+631 legitimately added two more uploads and a correct build went red. That is
+**rule 4**, in a harness written after the rule. Rewritten to the real
+invariant: *every* `.upload(` in the module declares JPEG, counted rather than
+hardcoded, so it scales with the next build instead of breaking on it.
+
+The lesson stands sharper than when it was written: **a hardcoded count is a
+time bomb, and knowing the rule is not the same as applying it.**
+
+### Gates
+
+`check_build.py` green and negative-controlled, 630 → 631 · **`harness_ourroofs.js`
+now 46 assertions, negative-controlled — 6 fail against 630** · colors 110 ·
+occhead 42 · showcase 124 · tray 57 · vision 23, all green.
+
+**Unverifiable from here, and stated as such:** the fetch → canvas → re-upload
+path cannot be exercised in this container (no browser session, no storage
+credentials). The reasoning about blob-URL sameness is sound and the trap is
+documented, but **Theo tapping the button is the real gate.** If it reports
+failures, the first thing to check is whether the signed-URL fetch is being
+refused by CORS.
