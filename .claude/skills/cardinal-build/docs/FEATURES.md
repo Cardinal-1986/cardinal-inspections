@@ -4,10 +4,15 @@
 
 **Rule: read this before proposing any new feature. If something related exists, extend it.**
 
-*Worked forward to **build 573** on 2 Aug 2026. The body of this file was written at 427 with sections
-added through 546; **Crews (547–556) and builds 557–573 are backfilled at the very bottom.** The
-`CHANGELOG` array in `index.html` remains authoritative for what shipped and covers 468–542, which
-still has no narrative entry anywhere.*
+*Worked forward to **build 627** on 8 Aug 2026. The body of this file was written at 427 with sections
+added through 546; **Crews (547–556), builds 557–573, the Vision suite, Cardinal Studio, the
+Production dossier (603), OC Colors (615–623) and builds 624–627 are appended at the very bottom, in
+that order.** The `CHANGELOG` array in `index.html` remains authoritative for what shipped and covers
+468–542, which still has no narrative entry anywhere.*
+
+*⚠️ **Section stamps outrank the header stamp.** This file grew by appending, so a section written at
+427 is still a 427 section no matter what the header says. Trust the date on the section you are
+reading, and check `cardinal_build_log.md` — the one doc that never fell behind — when they differ.*
 
 *Written at build 427 · 29 July 2026, with sections added at 456–474. For anything since, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
 
@@ -1919,3 +1924,83 @@ reach it. Registered in `hideAllViews()`, `OVERLAY_IDS` and `PANES`; **display-s
 `api/share.js` + `ccDeliver()` pipeline — **no PDF generator**, the `@page{size:Letter}` print path
 already exists. Theo, settled: *"No pricing on sheets it's not a quote."* **No money fields at all**,
 not blank ones, and it stays outside the estimate/contract document family.
+
+---
+
+## 624–627 — weight, the front door, the header, and the tray (8 Aug 2026)
+
+*Appended 8 Aug 2026 at build 627. Four builds, three of them small; 627 is a feature.*
+
+### 624 — the Showcase asks for the display rendition
+
+`cr-show-script`. The slider and thumbnails were requesting the **FULL** rendition
+(`{3840, q0.92}`) to paint a card that **caps at 612 CSS px on every device**. Four call sites moved
+`src(` → **`srcD(`** (`{1400, q0.82}`): a twelve-pair Showcase went **8,346 kB → 1,455 kB**.
+
+**No quality trade** — 1400px still covers 612 CSS px at 2× with room over. **`openLens()`
+deliberately keeps `src()`**: the pinch-to-full-resolution view reads `data-path` and resolves the
+FULL rendition itself, so the one surface that genuinely wants 3840px still gets it.
+
+⚠️ `harness_showcase.js`'s assertion *"the slider uses the FULL image"* encoded **577's** intent,
+which 624 reverses on purpose. The test was updated, with 577's reasoning kept in a comment. **When
+a gate goes red, first ask whether the test or the app is wrong** — here it was the test.
+
+### 625 — the showroom stops wearing the CRM
+
+`isVisionHost()` (already on `window.CardinalLanding`, extended rather than duplicated) now also
+gates **`showMain()`**: on `showroom.*` — or `?vision=1` for testing — the CRM chrome does not render
+at all. The header, Add project, the nav wrap, and the backup/audit nav items are all skipped.
+
+Theo's report: *"whenever I log into showroom or the other one, it takes me to the crm homepage."*
+Offered three options; he chose **"Option 1 but remember option 3."** Option 3 — a genuinely separate
+`showroom.html` — is recorded in `OPEN_ITEMS.md` **with the two triggers that would justify it**.
+`harness_vision.js` is 23 assertions, each run twice (with and without `?vision=1`), against the
+*shipped* `showMain()` text.
+
+### 626 — the shingle name fits
+
+`#cr-occ .occ-title b` gained `word-break:keep-all` and `font-size:clamp(19px, 2.1vw, 26px)`.
+
+**The lesson is worth more than the fix.** Theo's iPad photo showed the Duration FLEX title stacked
+across six lines with the ® marks stranded. Two builds guessed at iOS font-boosting and a third was
+about to. **Every prior render had been at 1194px — the one width where the name happens to fit.**
+Pointing a harness at **820px** reproduced it instantly in plain Chromium. It was **width-only,
+never iOS-only**.
+
+`harness_occhead.js` — 42 assertions, 5 widths × 3 styles — now asserts *no break inside a word at
+every width* and *one line at ≥820px*. It deliberately does **not** demand one line at 390px, where
+wrapping at a space is ordinary. An earlier draft did, failed six times, and **the test was wrong.**
+
+### 627 — tick photos in Studio, build the pair in the Showcase
+
+**Theo:** *"Any way you could make checkboxes on these photos so they can be transferred to another
+section to where I could pick which photos I use for before and afters and bad vs good installs?"*
+
+**The prime doctrine again: the UI he described already existed.** The Showcase pair-builder already
+tracked `chosen{}` (which photos are ticked) and `roles{}` (which is before, which is after) — it had
+simply never been pointed at the archive. So 627 adds a **tray** and a **source**, and reuses the
+picker, the role assignment and the whole create path untouched.
+
+| Half | Where | What |
+|---|---|---|
+| Studio | `studio.html` | a `.stu-tick` button on every archive card. `ev.stopPropagation()`, so ticking never opens the lightbox. Archive rows only — the Private side is not curation material. Optimistic write that **reverts on failure**, because a tick that looks saved and is not is worse than one that visibly refuses |
+| Showcase | `cr-show-script` | the tray enters as a **pseudo-project**, `TRAY_ID = '__studio_tray__'`, unshifted onto the job list only when it has something in it. `loadJobPhotos()` branches to `loadTrayPhotos()` before the project lookup |
+
+`promoteToPair`, `drawJobPicker` and `takeJobPhotos` are each **still defined exactly once** —
+asserted, because a second picker was the obvious move and the wrong one.
+
+**Storage:** `studio_tray.sql`, applied before the HTML change. `storage_path` is the primary key, so
+a double tick upserts instead of duplicating. Admin-only RLS matching `studio_photos`.
+
+⚠️ **The GPS fence runs straight through this.** `studio_photos` carries `lat`/`lon` — all 60,503
+rows NULL today — and the tray is the **first path from the archive toward a client-facing screen**.
+`studio_tray` has **no coordinate columns**, and `toggleTray()` **names its six fields explicitly
+rather than spreading the row**. Asserted at the schema, at both ends of the code, and by
+`harness_tray.js`. **Do not "complete" the row.**
+
+**Quality guard:** the archive averages 1138×1033 and only ~40% clears 1400px, while the compare card
+wants 1224 device pixels at 2×. Tray rows carry `_small` so a soft photo is marked **before** it
+lands in front of a customer.
+
+**Known, and recorded in `OPEN_ITEMS.md` rather than fixed:** nothing removes a photo from the tray
+once its pair is built, and the tray reads `.limit(300)` with no paging.
