@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 624 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 625 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20736,20 +20736,31 @@ document.getElementById('cardinalTruthView').addEventListener('click', function(
 });
 
 function showMain(userEmail){
+/* 625: showroom.cardinalroster.com is a PRESENTATION front door, not the CRM
+   wearing a different landing. Build 593 swapped the CONTENTS of #landingView
+   for the Vision hub, but this function painted the entire CRM shell around
+   it regardless of hostname — so signing in there handed Theo a customer-
+   facing tablet with a site header, a nav strip and an Add-project button on
+   it. Every line below is now gated; NOTHING changes on app.cardinalroster.com.
+   Defensive on purpose: if the landing block has not run, the answer is false,
+   and false is the safe direction (a normal CRM load). */
+var _vision = false;
+try{ _vision = !!(window.CardinalLanding && window.CardinalLanding.isVisionHost
+                  && window.CardinalLanding.isVisionHost()); }catch(_){}
 var _rv0 = document.getElementById('restoreVeil');
 if(_rv0){ _rv0.style.display = 'flex'; setTimeout(function(){ _rv0.style.display = 'none'; }, 1600); }
 var hd = document.querySelector('header.site');
-  if(hd) hd.style.display = '';
+  if(hd) hd.style.display = _vision ? 'none' : '';
   fixHeadPad();
   setTimeout(auditStart, 800);
   loginView.classList.remove('open');
   mainView.style.display = 'block';
-  addProjBtn.style.display = 'inline-block';
-  document.getElementById('navWrap').style.display = 'inline-block';
+  addProjBtn.style.display = _vision ? 'none' : 'inline-block';
+  document.getElementById('navWrap').style.display = _vision ? 'none' : 'inline-block';
   document.getElementById('backupNav').style.display =
-    (ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
+    (!_vision && ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
   document.getElementById('auditNav').style.display =
-    (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
+    (!_vision && userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
   document.getElementById('teamNav').style.display = document.getElementById('auditNav').style.display;
   /* 600: What's New is Theo's build log. show() refuses for anyone else, but
      hide the entry too so nobody taps a control that does nothing. */
@@ -35184,6 +35195,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:625, d:'2026-08-08', t:'The showroom stops looking like the office',
+    s:'Signing in at showroom.cardinalroster.com used to hand you the presentation front door with the whole CRM built around it \u2014 the site header, the nav strip, the Add-project button. On a tablet you are holding out to a homeowner, that is the office showing through. It is gone now: on the showroom address you get the front door and nothing else, and the ordinary app address is completely unchanged. Also fixed a thing only an iPad could show us \u2014 Safari quietly enlarges text in narrow columns, which was blowing the shingle name on the Colors page up to about double its size and breaking it across six lines with the registered-trademark marks stranded on their own. The page now renders at the size it was designed at.' },
   { b:624, d:'2026-08-08', t:'The Showcase got quick',
     s:'The before/after slider was loading the full-resolution photographs — for the pair on the wall that is 8.3 MB — to paint a card about 900 pixels wide. The smaller copies were already sitting beside them on disk, made at upload time and already used by the card grid. The slider and the self-running Curtain Call now use those: 8.3 MB became 1.5 MB, and the tablet no longer holds tens of megabytes of decoded picture to show you one roof. Pinching in is untouched — the Lens still fetches the full-resolution file the moment you pinch, which is the only place the detail was ever visible. The divider also stopped doing work on every single touch report: it now paints once a frame, which on a 120Hz iPad is a 60-fold cut in the work behind your thumb.' },
 { b:623, d:'2026-08-08', t:'Colors now wears Owens Corning\u2019s own colours', s:'Theo sent the VentSure RidgeProwler flyer and asked whether the Colors screen could use its pink, white and black. It can, and now does. The pink and the rich black are sampled straight out of that PDF rather than guessed, the roof photographs sit on white cards the way they do in Owens Corning\u2019s own literature, and the wind bars are drawn in OC pink. It reads like the manufacturer\u2019s material because that is what this screen sells. Two things it does not do: the Pink Panther is Metro-Goldwyn-Mayer\u2019s licensed character that Owens Corning pays for, so only the colour is used and not the cat; and nothing outside this screen changed \u2014 the rest of the app is still Cardinal red. Every colour that carries text was checked with a contrast calculation first, which caught that the old grey would have been unreadable on a white card.' },
@@ -41937,6 +41950,12 @@ new MutationObserver(scan).observe(document.body, { childList:true, subtree:true
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
 window.CardinalLanding = {
+/* 625: exported so showMain() can ask. It lives here, in the landing block,
+   and the main block could not see it — which is why the CRM shell painted
+   over the Vision hub on showroom.cardinalroster.com. Added to the EXISTING
+   export object on purpose: a second window.Cardinal* would trip the
+   dupe-API gate, and "extend, don't add" is the standing rule. */
+isVisionHost : isVisionHost,
 rebuild : function(){
 var lv = document.getElementById('landingView');
 if(lv) delete lv.dataset.crLrBuilt;
@@ -59663,6 +59682,22 @@ body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-ins
    pattern) so a token stripped by another module cannot make this see-through:
    builds 448-449 are the proof that is not theoretical. */
 #cr-occ{
+  /* 625: iOS Safari inflates text inside narrow block containers, and
+     .occ-title b is a display:block in a flex item with min-width:0 — the
+     exact shape it boosts. On Theo's iPad the line title rendered at roughly
+     double its authored size and wrapped "TruDefinition(R) Duration(R)
+     FLEX(R)" over six lines with the (R)s orphaned. text-size-adjust appears
+     NOWHERE else in this file.
+     SCOPED TO #cr-occ DELIBERATELY. Boosting has been active on iOS across
+     this whole app for years, so setting this globally on html would shrink
+     text app-wide on the one device Theo uses most — a large unreviewed
+     visual change smuggled in under a bug fix. Widening later is one
+     selector. #cr-show probably wants the same and is NOT included: it was
+     not reported and cannot be verified here.
+     NO GATE CAN SEE THIS. Chromium does not font-boost, which is why every
+     render of this screen looked correct. Theo's iPad is the only proof. */
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
   /* 623: the palette is DECLARED here rather than edited across 103 call
      sites. Every reference keeps its old literal fallback, so if another
      module ever strips these the screen degrades to the old Blackout instead

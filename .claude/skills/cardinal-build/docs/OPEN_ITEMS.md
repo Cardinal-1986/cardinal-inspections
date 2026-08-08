@@ -1505,3 +1505,157 @@ darkening fixes it. Six surfaces, all low-risk.
    `.cr-pb-job`), geometry only. They are deliberate designs with their own colour semantics and the
    Production board is one of the three sanctioned light-theme exceptions — **if Theo dislikes the
    lift there, remove those three selectors rather than retuning the block.**
+
+---
+
+## ✅ Bundle splitting / Vite — audited 8 Aug 2026, DO NOT RE-REPORT
+
+An outside audit (Kimi, commissioned by Theo) recommended extracting the app into
+ES modules and moving onto Vite — *"~1 week of focused work"*. Every claim was
+checked against `index.html` at `ec4a406` (build 624). **The architecture
+observation is fair; the numbers are not, and the headline recommendation is
+aimed at the wrong target by roughly 8×.**
+
+Recorded here because this is an obvious thing for any reader — human or model —
+to propose on sight of a 3.6 MB single file, and re-deriving it costs a session.
+
+### What was actually measured
+
+| the audit said | measured |
+|---|---|
+| "~59,000 lines of inline JavaScript" | **46,009** of 60,934 total (10,063 CSS, 4,862 markup) |
+| "3.5MB downloaded", "8–12s on 3G" | raw **3,645,784 B**, but **brotli q11 = 751,440 B (734 KB)**, gzip -9 = 1,097,486 B. Vercel compresses at the edge, so the wire cost is **~5× smaller than the premise** |
+| Vite "splits heavy third-party deps into separate files"; "vendor chunks cache for months" | supabase-js, chart.js and papaparse are **already three separate CDN files** and already cache independently. **0** `type=module` scripts. That benefit exists today |
+| Showroom is "~400KB"; extracting it alone "cuts your bundle by 30–40%" | `cr-show-script` + `cr-show-styles` = **162,539 B = 4.5%** of the file |
+| "crews reverting to paper" | invented — nothing in the repo supports it |
+| "8–12s → <1s on LTE" | swaps 3G for LTE mid-sentence |
+
+⚠️ **Quote the raw and the compressed figure together, always.** Splitting them is
+how the audit got to a 5× error. Same family as this repo's standing
+bytes-vs-characters trap — `len(s)` on the decoded string gives **3,622,512**
+where `wc -c` gives **3,645,784**, and a mid-analysis slip between the two happened
+during this very audit.
+
+### What the audit missed, and it inverts its own plan
+
+The largest object in the file is a **single unnamed `<script>` of 976,673 bytes —
+26.8% of the file on its own**, six times the Showcase it says to extract first.
+
+```
+  1. (no id, script)   976,673   26.8%      <- the shell: auth, router, nav, CRM core
+  2. (no id, style)    198,709    5.5%
+  3. cr-show-script    112,097    3.1%      <- the audit's "extract this first"
+  4. cr-cl-script      102,940    2.8%         (the CHANGELOG)
+  5. cr-lib-script      76,520    2.1%
+  6. cr-estimates-script 47,530   1.3%
+  top 12 blocks = 48.2%  ·  the other 212 = 40.5%  ·  median block 4,642 B
+```
+
+**That 977 KB block is the part that cannot be lazy-loaded.** Extract every named
+module on the audit's list and the biggest single thing in the file still ships on
+first paint. Nobody has audited what is inside it — if load time ever becomes a
+real problem, that is the honest first question, not a bundler.
+
+### The real finding, which the audit never mentions
+
+**All three CDN scripts are render-blocking** — no `defer`, no `async` — and two
+sit in `<head>`. Chart.js blocks parsing on every load of every screen and is
+only needed for dashboard charts.
+
+That is the change with a good ratio: no build step, no new files, existing gates
+still apply. **It is not free** — deferring changes execution order, so every
+parse-time reference to `supabase`, `Chart` and `Papa` must be found first and
+sign-in verified in a real browser. Half a day, done properly. **Not yet done —
+gated on a measurement (below).**
+
+### The one thing the audit got right, and it deserves credit
+
+**Shared mutable state, rated HIGH, with "fix this before you split anything."**
+Verified: `window.currentProject` ×72, `window.currentUser` ×86,
+`window.currentPhotos` ×19, and **379 bare `currentProject` references**. That is
+genuine coupling and the audit found it honestly.
+
+**Recorded as real but deliberately not chased.** It is not causing a known bug,
+and refactoring 379 call sites on spec is churn on an app the crew uses daily.
+If a state bug ever appears, start here.
+
+### ✅ CLOSED — Theo, 8 Aug 2026: *"It does not feel slow."*
+
+**That is the end of it.** The owner uses this app daily, on the phone and on an
+ultrawide desktop, and reports no load problem. No further work was done and none
+is planned. The audit was solving a hypothetical.
+
+**The CDN-defer change was NOT made**, deliberately. It is a real inefficiency and
+it stays available (see above) — but shipping a change to a working app that
+nobody is complaining about is how regressions get introduced for nothing. **If
+load time ever becomes an actual complaint, start there**, not with a bundler.
+
+⚠️ **Do not reopen this on the strength of the file size alone.** That is exactly
+what the audit did. A 3.6 MB single file *looks* alarming, compresses to ~750 KB,
+and is reported as fine by the person using it.
+
+**The sandbox cannot measure load time — confirmed twice.** The agent proxy
+returns **403 to CONNECT** for `app.cardinalroster.com` *and* for the
+`*.vercel.app` preview domain. Do not burn a turn retrying; ask Theo or read it
+off a desktop browser's Network tab, where the transferred figure is the same.
+
+**Do not open the Vite rewrite.** It trades a working gate ladder
+(`check_build.py` parses 106 inline blocks individually, `patch_lib.py` does
+exact-match surgery on one artifact, every harness slices blocks out by `id`,
+CI asserts the VAPID key in hand-written `sw.js` matches `api/notify.js`) for a
+re-architecture estimated at a week by an auditor who thought the file was 59,000
+lines of JavaScript.
+## 📌 A separate `showroom.html` — a REAL project, deliberately deferred
+
+Theo, 8 Aug 2026, choosing between host-gating the CRM chrome and true
+separation: **"Option 1 but remember option 3."** Build 625 shipped Option 1.
+This is Option 3, recorded at his explicit request so it is not lost or
+re-litigated from scratch.
+
+**The idea:** a `showroom.html` carrying only the presentation surfaces — the
+Vision hub, the Showcase, OC Colors, the Studio link — with **no CRM code at
+all**. `showroom.cardinalroster.com` would serve it instead of `index.html`.
+
+### For
+
+- A customer-facing tablet **never downloads CRM code**. Build 625 hides the
+  chrome; it does not remove it. There is no errant tap that shows a claim or a
+  crew payment because the screens are not there.
+- **Independent deploys.** A CRM change cannot break the sales tool the night
+  before a pitch.
+- **Here the load argument is genuinely strong** — and this is the distinction
+  worth holding onto. The bundle-splitting audit (see above) was rejected because
+  it targeted the 4.5% Showcase. This targets the **977 KB shell**, which is the
+  actual mass and the part no lazy-load can defer.
+- It matches what Theo already said about Studio: *"if it was back to the
+  beginning this would have been a completely separate app."*
+
+### Against — and this is what makes it days, not hours
+
+- **The Showcase (162 KB) and Colors (~60 KB) live inside `index.html`.** Two
+  routes, both costly:
+  - **Duplicate them** → two copies, every future fix landing twice. This
+    violates "one pipeline per concept", the rule that exists *because* four
+    features on this project were built twice and lost. **Do not take this
+    route.**
+  - **Extract them to shared files** → breaks `check_build.py` (it parses inline
+    blocks individually), `patch_lib.py`'s exact-match surgery, and every harness
+    that slices a module out by `id`. The gate ladder would need rebuilding first.
+- Auth gets a third implementation (`index.html`, `studio.html`, and this).
+- `sw.js`, push/VAPID and the offline shell all assume one document; CI asserts
+  the VAPID key matches `api/notify.js`.
+
+**Why Studio was cheap and this is not:** Studio reads one table and never
+writes. The showroom needs the two biggest presentation modules in the file.
+
+### The trigger to actually do it
+
+Not "someday" — one of these two concrete things:
+
+1. **Wanting independent deploys**, so CRM work cannot destabilise a sales tool.
+2. **Putting the tablet in the hands of someone who must never see money
+   screens** — a rep, a subcontractor, a hire. Build 625's gate is a curtain,
+   not a wall.
+
+Until one of those is true, 625 gives Theo the thing he described — sign in at
+showroom, get a presentation front door — at a fraction of the cost.
