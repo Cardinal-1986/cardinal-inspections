@@ -11192,3 +11192,86 @@ before that filter, so the safe number never depended on the display choice.
 `--self-test` gained a dual-shape parse case, **negative-controlled**: it fails
 against the old single-shape regex, so it is not an assertion that matches its
 own prose (BUG_CLASSES 15).
+
+---
+
+## 641 — the rest of the insurance cards, which 639 left behind
+
+**Theo, after asking for a safety check on 639: "1"** — unhide the three, leave
+the Scope of Loss card showing everywhere.
+
+### 639's own comment was wrong, and that is why it was partial
+
+It claimed *"every OTHER child here is genuinely retired legacy and carries its
+own inline display:none as well."* **False.** Four children of `#tab-overview`
+are LIVE, and their renderers set display at runtime:
+
+| child | renderer | what it does |
+|---|---|---|
+| `insCard` | `renderInsurancePanel` | `mount.style.display='block'` |
+| `insDocsCard` | `renderInsuranceDocsCard` | `mount.style.display='block'` |
+| `insItelCard` | `paintInsuranceItelCard` | `mount.style.display='block'` |
+| `leadCard` | `renderLeadCard` | `card.style.display='block'` |
+
+**Not one of those assignments can work.** An `!important` stylesheet
+declaration outranks a **normal** inline style — only an inline `!important`
+would beat it. Confirmed in Chromium, because this is a cascade question that
+neither jsdom nor reading the code can answer:
+
+```
+insCard   as-shipped none (0px)  ->  after its renderer sets 'block':  STILL none (0px)
+```
+
+iTel shipped at **406**; Keeper retired this container at **348**. They were
+built into a container that was already dead and have **never once rendered**.
+
+### The impact was not theoretical
+
+Of **30** projects exactly **one** has `lead.claim_type = 'insurance'` — **Adam
+Gunn**, the client Theo could not work. All three cards self-gate on
+`projClaimType === 'insurance'`, so his profile is the only place the absence
+was ever visible. *"There is no way to attach a scope upload to Adam Gunn"* was
+one symptom of the whole group being invisible.
+
+⚠️ **A wrong query nearly sent this the other way.** A first pass read
+`checklist->>'claim_type'` and reported **null for every project including
+Gunn**, which would have made "gate the SOL card to insurance" look like it
+broke his case. `projClaimType()` reads `parseCkAll(pr).lead` — the value lives
+at `checklist.lead.claim_type`. Correct path: community 14, retail 12,
+**insurance 1**, unset 3. Read the accessor before trusting the query.
+
+### Why exempting them decides nothing
+
+Each renderer opens with the same guard:
+
+```js
+if(ct !== 'insurance'){ mount.style.display = 'none'; mount.innerHTML = ''; return; }
+```
+
+So on the 26 retail/community profiles they hide themselves. The exemption hands
+control back to the renderers.
+
+`leadCard` is **deliberately not exempt** — it is the real pre-Keeper card
+`acxMount` replaced at 348. It still **runs** (that is how these four renderers
+get called at all) while painting into a hidden element, exactly as the markup
+comment describes. Unhiding it would put the old profile under the new one.
+
+`renderSolCard()` keeps **no** claim-type gate, so SOL still shows on every
+profile. Theo's pick; whether a scope belongs on a pre-claim profile is part of
+the insurance write-up.
+
+### Gates
+
+`check_build.py` green, stamp **639 → 641** (640 was taken by a parallel branch —
+the repaired `next_build.py` saw it, which the broken one could not).
+**13 harnesses, 723 assertions**, all green.
+
+New `render_inscards.js` — lifts the rule and the child list **out of the
+artifact** so it is a real negative control: against 639 it goes **RED on
+exactly the three cards** plus the exemption count.
+
+⚠️ **It first reported a false RED on a correct build.** `#cr-pp-mount` is not
+in the markup — the punch card creates it at runtime and inserts it as a sibling
+of `insCard`. The harness asserted on an element that did not exist. It now
+injects it the way the app does, same anchor order. Half of all reds are the
+test's fault; this was one.
