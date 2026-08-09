@@ -2795,3 +2795,28 @@ a **boolean** — `false` must render "No", and the modal select converts
 **`money(v)` beside `fmt()` in `cr-claims-script`**: `—` for null/undefined,
 `$0` for a real zero. The four Financials cells use it. **Do not "simplify"
 `fmt()` into it** — other callers want NULL coerced to 0.
+
+### 658 — ordinance & law is TRI-STATE
+
+**`ord_law` is `true` / `false` / `null` and the third state is load-bearing.**
+`null` = not stated and **must never render as "No"** — that was Theo's
+complaint and the reason for the build. Three writers used to manufacture
+`false` from an absence (an untouched checkbox, a cancelled `confirm()`, a null
+extraction applied); all three now preserve null.
+
+- **`insOrdLawFromSelect(v)`** — the ONE `''`/`yes`/`no` → `null`/`true`/`false`
+  conversion. Every control uses it (lead form, claim modal). Do not inline
+  another.
+- **`insOrdLawText(o)`** — the ONE formatter: "Not stated" / "No" / "Yes" /
+  "Yes — <basis>, $<limit>". `cr-claims-script` carries a **correct** local twin
+  (`ordLawText`) for standalone use — ⚠ its fallback must render `false` as
+  "No", never as blank, or `kv()`'s placeholder turns a real No into "Not
+  stated".
+- **`ord_law_basis` / `ord_law_limit`** record what the document CALLED the
+  coverage and its limit, because it goes by many names. `api/sol.js` lists the
+  aliases (ordinance or law, law and ordinance, code upgrade, code coverage,
+  code compliance, building code, Coverage D) and is told explicitly never to
+  use `false` for "not mentioned".
+- **A `<select>`, never a checkbox** — a checkbox cannot express "unknown", and
+  that is exactly how the false answers got written. If you add an ord_law
+  control anywhere, it needs three states.

@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 657 &#8212; A big scope you already filed can finally be read, the claim screen shows Coverage Type and Ord. &amp; Law, and never-entered money stops reading $0</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 658 &#8212; Ordinance &amp; Law stops saying &#8220;No&#8221; when nobody said no, and records what the policy actually calls it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7550,7 +7550,15 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
             </select></label>
         </div>
         <div class="ckinline" style="margin-top:8px;">
-          <label><input type="checkbox" id="ldInsOrdLaw"> Ordinance &amp; Law Coverage present</label>
+          <!-- 658: was a checkbox, and a checkbox cannot say "unknown" — an
+               untouched one wrote false, which every screen then printed as a
+               confident "No". Three states or none. -->
+          <label>Ordinance &amp; Law Coverage
+            <select id="ldInsOrdLaw">
+              <option value="">Not stated</option>
+              <option value="yes">Yes — present</option>
+              <option value="no">No — confirmed absent</option>
+            </select></label>
         </div>
         <label style="margin-top:8px;">Insurance Notes<textarea id="ldInsNotes" rows="2" style="width:100%;box-sizing:border-box;margin-top:4px;
           padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;resize:vertical;"></textarea></label><label style="margin-top:8px;display:block;">&#128209; Scope of Loss (optional)<input type="file" id="ldScopeFile" accept=".pdf,image/*" style="display:block;margin-top:5px;font-size:12.5px;"><small id="ldScopeNote" style="display:block;color:#8a6f66;margin-top:3px;">Attach the carrier scope &mdash; after saving, the reader opens the new claim and fills carrier, claim #, RCV/ACV and the rest automatically.</small></label>
@@ -13174,7 +13182,10 @@ function openLeadForm(){
   document.getElementById('ldStatus').value = 'Not Contacted';
   document.getElementById('ldPartnerCk').checked = false;
   document.getElementById('ldPartnerWrap').style.display = 'none';
-  document.getElementById('ldInsOrdLaw').checked = false;
+  /* 658: this is a <select> now, not a checkbox — writing .checked on it is
+     inert, so the control would have kept the previous lead's answer. Reset to
+     the empty option, which means "not stated". */
+  document.getElementById('ldInsOrdLaw').value = '';
   /* default claim type: follow the portal you're standing in */
   var __ldDef = (function(){
     try{
@@ -13330,7 +13341,16 @@ function openInsuranceEditor(pr, isTypeChange){
   if(acv === null) return;
   var cov       = prompt('Coverage Type (RCV or ACV):', existing.coverage_type || '');
   if(cov === null) return;
-  var ordLaw    = confirm('Does the policy have Ordinance & Law coverage?\n\nOK = Yes, Cancel = No');
+  /* 658: confirm() has two outcomes and this field has three. Cancel used to
+     mean "No"; it now means "leave it alone", so dismissing a prompt can no
+     longer assert a coverage finding. */
+  var ordAns = prompt('Ordinance & Law coverage \u2014 type y for yes, n for no.\n\n' +
+                      'Leave blank if the paperwork does not say. It may be called code\n' +
+                      'upgrade, code coverage, building code or Coverage D.',
+                      existing.ord_law === true ? 'y' : (existing.ord_law === false ? 'n' : ''));
+  if(ordAns === null) return;
+  var _oa = String(ordAns).trim().toLowerCase();
+  var ordLaw = _oa === '' ? null : (_oa.charAt(0) === 'y');
   var notes     = prompt('Insurance notes (optional):', existing.notes || '');
   if(notes === null) return;
   var insObj = {
@@ -13343,7 +13363,7 @@ function openInsuranceEditor(pr, isTypeChange){
     rcv: rcv === '' ? null : (parseFloat(rcv) || null),
     acv: acv === '' ? null : (parseFloat(acv) || null),
     coverage_type: cov.trim().toUpperCase(),
-    ord_law: !!ordLaw,
+    ord_law: ordLaw,   /* 658: tri-state — was !!ordLaw, which had no null */
     notes: notes.trim()
   };
   updateProjectLead(pr, function(L){
@@ -13464,7 +13484,7 @@ document.getElementById('ldSave').addEventListener('click', async function(){
         },
         deductible: parseFloat(document.getElementById('ldInsDeductible').value) || null,
         coverage_type: document.getElementById('ldInsCoverage').value,
-        ord_law: document.getElementById('ldInsOrdLaw').checked,
+        ord_law: insOrdLawFromSelect(document.getElementById('ldInsOrdLaw').value),
         notes: document.getElementById('ldInsNotes').value.trim()
       };
     })(),
@@ -14069,6 +14089,37 @@ async function paintSignedPhotoImgs(root, ttl){
     try{ if(window.report) window.report(e, 'Photos', 'paint signed imgs'); }catch(e2){}
   }
 }
+/* 658: ordinance & law is TRI-STATE and the app used to flatten it.
+   Theo: "It says no on ordinance and law ... this can't simply say no. It's
+   deceiving." He was right — nobody had said no. Three writers turned an
+   absence into a confident false (an untouched checkbox, a cancelled
+   confirm(), and an apply that read anything != 'true' as false) and every
+   display printed it as "No".
+     null  -> "Not stated"   (NEVER "No")
+     false -> "No"           (only when a human or the document said so)
+     true  -> "Yes", plus what the document CALLED it and any limit —
+              the coverage goes by ordinance or law, code upgrade, code
+              coverage, building code, Coverage D and more, so the wording
+              is evidence and worth showing. */
+function insOrdLawFromSelect(v){
+  /* 658: the ONE conversion. '' means not stated and must stay null —
+     never false. Same shape 657 put in the claim modal. */
+  return (v === '' || v == null) ? null : (v === 'yes' || v === true || v === 'true');
+}
+window.insOrdLawFromSelect = insOrdLawFromSelect;
+function insOrdLawText(o){
+  o = o || {};
+  if(o.ord_law == null) return 'Not stated';
+  if(o.ord_law === false) return 'No';
+  var bits = [];
+  if(o.ord_law_basis) bits.push(String(o.ord_law_basis));
+  var lim = Number(o.ord_law_limit);
+  if(o.ord_law_limit != null && o.ord_law_limit !== '' && !isNaN(lim) && lim > 0){
+    bits.push('$' + lim.toLocaleString('en-US', { maximumFractionDigits: 2 }));
+  }
+  return bits.length ? ('Yes \u2014 ' + bits.join(', ')) : 'Yes';
+}
+window.insOrdLawText = insOrdLawText;
 function projInsurance(pr){
   var L = pr ? parseCkAll(pr).lead : null;
   return (L && L.insurance && typeof L.insurance === 'object') ? L.insurance : null;
@@ -14637,7 +14688,7 @@ function renderInsurancePanel(){
             cell('Claim Number',    I.claim_number) +
             cell('Date of Loss',    I.date_of_loss ? fmtDay(I.date_of_loss) : '') +
             cell('Coverage Type',   I.coverage_type) +
-            cell('Ord. &amp; Law',  I.ord_law ? 'Yes' : (I.ord_law === false ? 'No' : '')) +
+            cell('Ord. &amp; Law',  insOrdLawText(I)) +   /* 658: tri-state, never a bare No */
             cell('Adjuster Email',  adj.email) +
           '</div>' +
           (I.notes ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #d0dae8;font-size:13px;color:#3b4a60;"><b style="color:#2d4468;">Notes:</b> ' + esc(I.notes) + '</div>' : '') +
@@ -14927,7 +14978,11 @@ function openSolReviewModal(extracted, fileName){
     ['RCV Amount',      'rcv',                eTot.rcv,                 currentIns.rcv],
     ['ACV Amount',      'acv',                eTot.acv,                 currentIns.acv],
     ['Coverage Type',   'coverage_type',      extracted.coverage_type,  currentIns.coverage_type],
+    /* 658: show the wording and limit beside the yes/no so Theo can see WHAT
+       the reader matched before he applies it. */
     ['Ord. & Law',      'ord_law',            extracted.ord_law,        currentIns.ord_law],
+    ['O&L Called',      'ord_law_basis',      extracted.ord_law_basis,  currentIns.ord_law_basis],
+    ['O&L Limit',       'ord_law_limit',      extracted.ord_law_limit,  currentIns.ord_law_limit],
     ['Adjuster Name',   'adjuster.name',      eAdj.name,                curAdj.name],
     ['Adjuster Company','adjuster.company',   eAdj.company,             curAdj.company],
     ['Adjuster Phone',  'adjuster.phone',     eAdj.phone,               curAdj.phone],
@@ -15009,7 +15064,11 @@ function applySolExtraction(){
       if(path === 'deductible' || path === 'rcv' || path === 'acv'){
         var n = parseFloat(val); val = isNaN(n) ? null : n;
       } else if(path === 'ord_law'){
-        val = (val === 'true');
+        /* 658: was `val === 'true'`, so a null extraction applied as a
+           confident false. Absence stays absence. */
+        val = (val === '' || val === 'null' || val == null) ? null : (val === 'true');
+      } else if(path === 'ord_law_limit'){
+        var ol = parseFloat(val); val = isNaN(ol) ? null : ol;
       } else if(path === 'coverage_type'){
         val = String(val).toUpperCase();
       }
@@ -26323,6 +26382,17 @@ function showList() {
      how a scope filed but never read looked like data for a day. Absence now
      reads as absence; a real 0 still reads $0. fmt() itself is untouched —
      other callers legitimately want the zero. */
+  /* 658: prefer the shared formatter; the local twin keeps this module
+     standalone AND correct — it must never render a real `false` as blank. */
+  function ordLawText(o) {
+    if (window.insOrdLawText) return window.insOrdLawText(o);
+    if (!o || o.ord_law == null) return '';          /* kv() prints "Not stated" */
+    if (o.ord_law === false) return 'No';
+    var bits = [];
+    if (o.ord_law_basis) bits.push(String(o.ord_law_basis));
+    if (o.ord_law_limit) bits.push('$' + fmt(o.ord_law_limit));
+    return bits.length ? ('Yes \u2014 ' + bits.join(', ')) : 'Yes';
+  }
   function money(v) { return (v === null || v === undefined || v === '') ? '\u2014' : '$' + fmt(v); }
   function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
   function fmtDateShort(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); }
@@ -26678,7 +26748,13 @@ function showList() {
         /* 657: both columns arrived at 655 and this screen never showed them.
            ord_law is a BOOLEAN — false must read "No", not blank. */
         kv('Coverage Type', esc(c.coverage_type || ''), 'Not set') +
-        kv('Ord. &amp; Law', c.ord_law === true ? 'Yes' : (c.ord_law === false ? 'No' : ''), 'Not set') +
+        /* 658: one formatter for all three screens — null reads "Not stated",
+           and a Yes carries the document's own wording and limit.
+           ⚠ The fallback must render CORRECTLY, not emptily. Falling through to
+           '' made kv() print its "Not stated" placeholder for a real `false` —
+           a fresh way to be deceiving, which is the exact thing this build
+           exists to stop. Same standalone-module shape as 655's label maps. */
+        kv('Ord. &amp; Law', ordLawText(c), 'Not stated') +
       '</div>') +
     sect(2, 'Adjuster', '',
       '<div class="cr-c-info">' +
@@ -26960,10 +27036,23 @@ function showList() {
           <div>
             <label>Ord. &amp; Law</label>
             <select data-f="ord_law">
-              <option value=""${c.ord_law == null ? ' selected' : ''}>Not set</option>
+              <option value=""${c.ord_law == null ? ' selected' : ''}>Not stated</option>
               <option value="yes"${c.ord_law === true ? ' selected' : ''}>Yes</option>
-              <option value="no"${c.ord_law === false ? ' selected' : ''}>No</option>
+              <option value="no"${c.ord_law === false ? ' selected' : ''}>No \u2014 confirmed absent</option>
             </select>
+          </div>
+        </div>
+
+        <!-- 658: the coverage goes by many names; record the document's own
+             wording and limit so a Yes is evidence, not an assertion. -->
+        <div class="cr-c-modal-row">
+          <div>
+            <label>O&amp;L — called</label>
+            <input type="text" data-f="ord_law_basis" placeholder="Code Upgrade Coverage" value="${esc(c.ord_law_basis || '')}">
+          </div>
+          <div>
+            <label>O&amp;L limit ($)</label>
+            <input type="number" step="0.01" min="0" data-f="ord_law_limit" value="${c.ord_law_limit || ''}">
           </div>
         </div>
 
@@ -27022,12 +27111,14 @@ function showList() {
         adjuster_email:    get('adjuster_email'),
         adjuster_company:  get('adjuster_company'),
         coverage_type:     get('coverage_type'),
+        ord_law_basis:     get('ord_law_basis'),
+        ord_law_limit:     num('ord_law_limit'),
         /* 657: a BOOLEAN column — send true/false/null, never the string,
            or PostgREST refuses the whole row. */
-        ord_law:           (function(){
-                             var v = modal.querySelector('[data-f="ord_law"]').value;
-                             return v === '' ? null : (v === 'yes');
-                           })(),
+        /* 658: one converter, shared with the lead form — '' stays null */
+        ord_law:           (window.insOrdLawFromSelect
+                             ? window.insOrdLawFromSelect(modal.querySelector('[data-f="ord_law"]').value)
+                             : null),
         approved_rcv:      num('approved_rcv'),
         approved_acv:      num('approved_acv'),
         deductible:        num('deductible'),
@@ -36476,6 +36567,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:658, d:'2026-08-09', t:'Ordinance & Law stops saying no when nobody said no',
+s:'A claim was reading \u201COrd. & Law: No\u201D on jobs where nobody had ever answered the question. Three different places in the app turned an untouched control into a confident \u201Cno\u201D \u2014 a tick box left alone, a prompt you cancelled, and the scope reader applying a blank as a negative. All three now leave it alone, and the screen reads \u201CNot stated\u201D until somebody actually says otherwise. Every claim carrying one of those false \u201Cno\u201D answers has been reset, because no screen in the app could have produced a real one. And because this coverage goes by a different name on nearly every policy \u2014 code upgrade, code coverage, building code, ordinance or law \u2014 the scope reader now knows all of them, and records what YOUR document called it and the limit it carried, so a \u201CYes\u201D shows its evidence instead of asking to be trusted.' },
 { b:657, d:'2026-08-09', t:'The scope you already filed can be read',
 s:'Two buttons on a client mention the Scope of Loss: one files a copy, the other reads it and fills in the carrier, claim number and the RCV/ACV figures. File a scope into the document slot and it never touched the claim \u2014 so Adam Gunn\u2019s money sat in a PDF nobody had read. Now the filing button offers to read it on the spot, and it says plainly that filing alone does not update the claim. The \u201CRead the scope already on file\u201D button also works on big files at last: anything over about 3 MB used to be sent in a way the reader could not accept, which is why it looked like nothing happened. The claim screen now shows Coverage Type and Ord. & Law, and lets you edit them. And money nobody has entered reads \u201C\u2014\u201D instead of \u201C$0\u201D, so an unread scope stops looking like a carrier approving nothing.' },
 { b:656, d:'2026-08-09', t:'The claim panel comes out of hiding',
@@ -43300,6 +43393,8 @@ claim_number:  row.claim_number  || null,
 date_of_loss:  row.date_of_loss  || null,
 coverage_type: row.coverage_type || null,
 ord_law:       row.ord_law != null ? row.ord_law : null,
+ord_law_basis: row.ord_law_basis || null,
+ord_law_limit: row.ord_law_limit != null ? row.ord_law_limit : null,
 deductible:    n(row.deductible),
 deductible_waived: !!row.deductible_waived,
 rcv:           n(row.approved_rcv),
@@ -43327,7 +43422,7 @@ try{
    select('*') grew with the table and shipped every byte to every boot. */
 var r = await window.supa.from('insurance_claims').select(
 'id,project_id,carrier,policy_number,claim_number,date_of_loss,' +
-'coverage_type,ord_law,deductible,deductible_waived,' +
+'coverage_type,ord_law,ord_law_basis,ord_law_limit,deductible,deductible_waived,' +
 'approved_rcv,approved_acv,approved_depreciation,' +
 'adjuster_name,adjuster_phone,adjuster_email,' +
 'supplement_status,supplement_filed,supplement_approved,' +
