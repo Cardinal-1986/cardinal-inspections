@@ -12409,3 +12409,63 @@ approvals 15/15, pay 58/58.
 **Still unproven:** whether Gemini now returns a complete object for Gunn's
 particular 6.4 MB scope. The truncation is fixed and the failure is legible;
 the next run is the answer.
+
+## Build 660 — Ordinance & Law by the name it actually goes by (9 Aug 2026)
+
+Theo, reading the estimate 658's reader missed: *"Adam Gunns claim estimate
+includes Ordinance and Law coverage. In insurance estimates, Ordinance and Law
+is typically categorized under Building Codes (Coverage BC). Page 5 lists
+BC-Building Codes with an Item Total of $1,887.33 and an ACV Total of
+$1,933.72. Page 7 provides a dedicated Summary for BC-Building Codes."*
+
+**658 taught the reader the PROSE names and not one of them appears on an
+Xactimate scope.** There the coverage is a **COVERAGE CATEGORY CODE** — "BC",
+printed "BC-Building Codes", with its own subtotal and often its own summary
+page. Not a sentence, not an endorsement line. The reader walked past it.
+
+⚠️ **First, the state of the data, because it changes what this build is.**
+The claim's `updated_at` was still the 658 migration and the project's was
+02:32 that morning: **no scope read has ever been applied.** So "Not stated"
+was not the app disagreeing with the document — it was the app knowing nothing.
+The alias gap is real and worth fixing on its own merits; it is not, on this
+evidence, why Gunn's screen is empty.
+
+- **Migration `insurance_claims_ord_law_bc_totals.sql` (APPLIED before the
+  PR):** `ord_law_rcv` + `ord_law_acv`. **Two figures, not one, and Theo's
+  reason is the load-bearing part:** the Item/RCV total is the carrier's full
+  valuation of the code work; the ACV/Net total is what is being paid now —
+  and **on Allstate the ACV EXCEEDS the RCV, because sales tax lands on code
+  items.** A single amount column would have silently discarded one of them,
+  and an ACV above an RCV would have read as corrupt data. `ord_law_limit` is
+  kept and made precise: the **endorsement cap** (commonly 10% of Coverage A),
+  which is not a scope amount. Nothing was ever stored in it, so this is a
+  definition sharpened, not values migrated.
+- **The prompt** now leads with the category: BC / "BC-Building Codes" /
+  "Summary for BC-Building Codes", states that a non-zero BC category **IS**
+  the coverage, asks for both totals, and **warns the model not to assume the
+  ACV is the smaller one**. Code-driven line items (ice & water barrier,
+  upgraded sheathing, EPA Lead-Safe practices on pre-1978 homes) count as
+  evidence when no category prints.
+- **Line items deliberately NOT stored** — Theo's call: the PDF stays the
+  single source for granularity, and a second store would drift on every
+  supplement.
+- `insOrdLawText()` shows "Yes — BC-Building Codes, $1,887.33 RCV /
+  $1,933.72 ACV"; the cap renders labelled "cap".
+
+**Gates.** `check_build.py` green, stamp 659 → 660. New `harness_660.js`
+(27 assertions) executes the formatter **on Gunn's real figures**, including
+an explicit assertion that the larger ACV is rendered as-is rather than
+"corrected". 658's guarantees are re-asserted here so they cannot regress
+(null → "Not stated", false → "No"). Negative control on 659 (artifact **and**
+`api/sol.js`): 20 red.
+
+⚠️ **Two false reds, both the test's fault, both instructive.** One assertion
+matched `ice & water barrier` against the source, where it is split across a
+string-concatenation line break — the "a regex cannot see an expression split
+across lines" trap from this project's own notes; it now matches the prompt
+as the MODEL receives it, concatenated. And `harness_658` went red at 3, all
+660 supersessions (the cap relabel, the review-row split, the widened select)
+— updated and labelled `660 SUPERSEDED`.
+
+Regressions: 659 16/16, 658 38/38, 657 32/32, 655 42/42, 654 31/31,
+653 45/45, approvals 15/15, pay 58/58.

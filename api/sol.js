@@ -186,9 +186,33 @@ export default async function handler(req, res) {
       'explicitly states there is none \u2014 for example "no ordinance or law coverage ' +
       'applies". If the document simply does not mention it, set it to NULL. Do not ' +
       'guess, and never use false to mean "not mentioned".\n\n' +
+      /* 660, Theo, reading the estimate 658's reader missed: "In insurance
+         estimates, Ordinance and Law is typically categorized under Building
+         Codes (Coverage BC)." 658 taught the PROSE names and none of them
+         appear on an Xactimate scope — the coverage is a CATEGORY CODE with
+         its own subtotal and summary page, not an endorsement line. */
+      'MOST IMPORTANT: on an Xactimate-style estimate this coverage appears as a ' +
+      'COVERAGE CATEGORY, not as a sentence. The category is coded "BC" and reads ' +
+      '"BC-Building Codes" or "Building Codes", with its own line in the coverage ' +
+      'breakdown and often a dedicated "Summary for BC-Building Codes" page. ' +
+      'A BC category with a non-zero total IS ordinance & law coverage \u2014 set ' +
+      'ord_law true and put the category name in ord_law_basis.\n\n' +
+      'That category carries TWO totals and they are different numbers: the ' +
+      'Item Total (replacement cost of the code work) goes in ord_law_rcv, and ' +
+      'the ACV / Net Total goes in ord_law_acv. Report both when both are shown. ' +
+      'Do NOT assume the ACV is the smaller one \u2014 on some carriers sales tax on ' +
+      'code items makes the ACV total exceed the item total. Copy what is printed.\n\n' +
+      'ord_law_limit is a DIFFERENT thing: the policy endorsement cap, often ' +
+      'expressed as a percentage of Coverage A. Only fill it if the document ' +
+      'states such a cap. Never put a scope subtotal there.\n\n' +
+      'Code-driven line items support a yes but are not the number: ice & water ' +
+      'barrier, radiant-barrier or upgraded sheathing, drip edge, and EPA ' +
+      'Lead-Safe Work Practice allowances on homes built before 1978. If you see ' +
+      'these but no BC category, still set ord_law true and say so in ' +
+      'ord_law_basis, leaving the amounts null.\n\n' +
       'Put the document\u2019s OWN wording in ord_law_basis, verbatim and short ' +
-      '(for example "Code Upgrade Coverage" or "Ordinance or Law - Coverage D"), ' +
-      'and any stated dollar limit in ord_law_limit. Leave both null when ord_law ' +
+      '(for example "BC-Building Codes", "Code Upgrade Coverage" or ' +
+      '"Ordinance or Law - Coverage D"). Leave the amounts null when ord_law ' +
       'is not true.\n\n' +
       'For adjuster.company give the adjusting firm or catastrophe team named on ' +
       'the document \u2014 for example a carrier\u2019s national catastrophe team, or an ' +
@@ -209,6 +233,8 @@ export default async function handler(req, res) {
       '  "coverage_type": "RCV" or "ACV" or null,\n' +
       '  "ord_law": true or false or null,\n' +
       '  "ord_law_basis": string or null,\n' +
+      '  "ord_law_rcv": number or null,\n' +
+      '  "ord_law_acv": number or null,\n' +
       '  "ord_law_limit": number or null,\n' +
       '  "insured_name": string or null,\n' +
       '  "property_address": string or null,\n' +

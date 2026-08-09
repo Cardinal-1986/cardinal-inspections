@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 659 &#8212; The scope reader stops running out of room mid-answer, and says what went wrong in words instead of dumping its own half-finished reply</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 660 &#8212; The scope reader knows Ordinance &amp; Law by the name it actually appears under: BC &#8212; Building Codes</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14113,10 +14113,22 @@ function insOrdLawText(o){
   if(o.ord_law === false) return 'No';
   var bits = [];
   if(o.ord_law_basis) bits.push(String(o.ord_law_basis));
-  var lim = Number(o.ord_law_limit);
-  if(o.ord_law_limit != null && o.ord_law_limit !== '' && !isNaN(lim) && lim > 0){
-    bits.push('$' + lim.toLocaleString('en-US', { maximumFractionDigits: 2 }));
+  /* 660: the code CATEGORY carries two totals and they are not
+     interchangeable — the Item/RCV total is the carrier's full valuation of
+     the code work, the ACV/Net total is what is being paid now. On Allstate
+     the ACV EXCEEDS the RCV because sales tax lands on code items, so show
+     both labelled rather than picking one and looking wrong. */
+  function _m(v){
+    var n = Number(v);
+    return (v == null || v === '' || isNaN(n) || n <= 0) ? null
+      : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
+  var rcv = _m(o.ord_law_rcv), acv = _m(o.ord_law_acv);
+  if(rcv && acv) bits.push(rcv + ' RCV / ' + acv + ' ACV');
+  else if(rcv)   bits.push(rcv + ' RCV');
+  else if(acv)   bits.push(acv + ' ACV');
+  var cap = _m(o.ord_law_limit);
+  if(cap) bits.push('cap ' + cap);   /* the endorsement cap, a different thing */
   return bits.length ? ('Yes \u2014 ' + bits.join(', ')) : 'Yes';
 }
 window.insOrdLawText = insOrdLawText;
@@ -14993,7 +15005,9 @@ function openSolReviewModal(extracted, fileName){
        the reader matched before he applies it. */
     ['Ord. & Law',      'ord_law',            extracted.ord_law,        currentIns.ord_law],
     ['O&L Called',      'ord_law_basis',      extracted.ord_law_basis,  currentIns.ord_law_basis],
-    ['O&L Limit',       'ord_law_limit',      extracted.ord_law_limit,  currentIns.ord_law_limit],
+    ['O&L RCV',         'ord_law_rcv',        extracted.ord_law_rcv,    currentIns.ord_law_rcv],
+    ['O&L ACV',         'ord_law_acv',        extracted.ord_law_acv,    currentIns.ord_law_acv],
+    ['O&L cap',         'ord_law_limit',      extracted.ord_law_limit,  currentIns.ord_law_limit],
     ['Adjuster Name',   'adjuster.name',      eAdj.name,                curAdj.name],
     ['Adjuster Company','adjuster.company',   eAdj.company,             curAdj.company],
     ['Adjuster Phone',  'adjuster.phone',     eAdj.phone,               curAdj.phone],
@@ -15078,7 +15092,7 @@ function applySolExtraction(){
         /* 658: was `val === 'true'`, so a null extraction applied as a
            confident false. Absence stays absence. */
         val = (val === '' || val === 'null' || val == null) ? null : (val === 'true');
-      } else if(path === 'ord_law_limit'){
+      } else if(path === 'ord_law_limit' || path === 'ord_law_rcv' || path === 'ord_law_acv'){
         var ol = parseFloat(val); val = isNaN(ol) ? null : ol;
       } else if(path === 'coverage_type'){
         val = String(val).toUpperCase();
@@ -26401,7 +26415,10 @@ function showList() {
     if (o.ord_law === false) return 'No';
     var bits = [];
     if (o.ord_law_basis) bits.push(String(o.ord_law_basis));
-    if (o.ord_law_limit) bits.push('$' + fmt(o.ord_law_limit));
+    if (o.ord_law_rcv && o.ord_law_acv) bits.push('$' + fmt(o.ord_law_rcv) + ' RCV / $' + fmt(o.ord_law_acv) + ' ACV');
+    else if (o.ord_law_rcv) bits.push('$' + fmt(o.ord_law_rcv) + ' RCV');
+    else if (o.ord_law_acv) bits.push('$' + fmt(o.ord_law_acv) + ' ACV');
+    if (o.ord_law_limit) bits.push('cap $' + fmt(o.ord_law_limit));
     return bits.length ? ('Yes \u2014 ' + bits.join(', ')) : 'Yes';
   }
   function money(v) { return (v === null || v === undefined || v === '') ? '\u2014' : '$' + fmt(v); }
@@ -27062,8 +27079,23 @@ function showList() {
             <input type="text" data-f="ord_law_basis" placeholder="Code Upgrade Coverage" value="${esc(c.ord_law_basis || '')}">
           </div>
           <div>
-            <label>O&amp;L limit ($)</label>
-            <input type="number" step="0.01" min="0" data-f="ord_law_limit" value="${c.ord_law_limit || ''}">
+            <label>O&amp;L endorsement cap ($)</label>
+            <input type="number" step="0.01" min="0" data-f="ord_law_limit" placeholder="policy cap, not scope" value="${c.ord_law_limit || ''}">
+          </div>
+        </div>
+
+        <!-- 660: the code CATEGORY totals (Xactimate "BC-Building Codes").
+             Two numbers on purpose: RCV is the carrier's full valuation of the
+             code work, ACV is what is being paid now, and on Allstate the ACV
+             is the LARGER of the two because sales tax lands on code items. -->
+        <div class="cr-c-modal-row">
+          <div>
+            <label>Code category \u2014 RCV ($)</label>
+            <input type="number" step="0.01" min="0" data-f="ord_law_rcv" value="${c.ord_law_rcv || ''}">
+          </div>
+          <div>
+            <label>Code category \u2014 ACV ($)</label>
+            <input type="number" step="0.01" min="0" data-f="ord_law_acv" value="${c.ord_law_acv || ''}">
           </div>
         </div>
 
@@ -27124,6 +27156,8 @@ function showList() {
         coverage_type:     get('coverage_type'),
         ord_law_basis:     get('ord_law_basis'),
         ord_law_limit:     num('ord_law_limit'),
+        ord_law_rcv:       num('ord_law_rcv'),
+        ord_law_acv:       num('ord_law_acv'),
         /* 657: a BOOLEAN column — send true/false/null, never the string,
            or PostgREST refuses the whole row. */
         /* 658: one converter, shared with the lead form — '' stays null */
@@ -36578,6 +36612,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:660, d:'2026-08-09', t:'Ordinance & Law by the name it actually goes by',
+s:'The reader was taught the words for this coverage \u2014 ordinance or law, code upgrade, code coverage \u2014 and none of them appear on an adjuster\u2019s estimate. On an Xactimate scope it is a coverage CATEGORY, coded BC and printed as \u201CBC-Building Codes\u201D, with its own subtotal and often its own summary page. Adam Gunn\u2019s estimate carries exactly that and the reader walked straight past it. It now knows the category by its code, and records BOTH of the totals that category carries: the Item/RCV total, which is the carrier\u2019s full valuation of the code work, and the ACV/Net total, which is what they are paying now. On Allstate the ACV comes out HIGHER than the RCV because sales tax lands on code items \u2014 so both are kept, labelled, rather than one being quietly thrown away. The policy\u2019s endorsement cap is a separate field, because a cap is not a scope amount. Code-driven line items \u2014 ice and water barrier, upgraded sheathing, lead-safe practices on pre-1978 homes \u2014 now count as evidence of the coverage even when no category is printed.' },
 { b:659, d:'2026-08-09', t:'The scope reader finishes its sentence',
 s:'Reading Adam Gunn\u2019s scope failed three times with three different piles of gibberish \u2014 \u201CCould not read that scope:\u201D followed by half a sentence about page 5 totals. The AI had actually read the document correctly every time: the carrier, the policy number and the figures were all sitting there in the error. It was being cut off mid-answer, because it narrates its way through a long PDF before writing the fields and there was only room for about a page of that. It now answers in fields only, with eight times the room, and both AI services got the same treatment. If it ever does run out of room it says so in a sentence \u2014 and suggests uploading just the scope and totals pages \u2014 instead of showing you its own unfinished reply.' },
 { b:658, d:'2026-08-09', t:'Ordinance & Law stops saying no when nobody said no',
@@ -43408,6 +43444,8 @@ coverage_type: row.coverage_type || null,
 ord_law:       row.ord_law != null ? row.ord_law : null,
 ord_law_basis: row.ord_law_basis || null,
 ord_law_limit: row.ord_law_limit != null ? row.ord_law_limit : null,
+ord_law_rcv:   row.ord_law_rcv != null ? row.ord_law_rcv : null,
+ord_law_acv:   row.ord_law_acv != null ? row.ord_law_acv : null,
 deductible:    n(row.deductible),
 deductible_waived: !!row.deductible_waived,
 rcv:           n(row.approved_rcv),
@@ -43435,7 +43473,8 @@ try{
    select('*') grew with the table and shipped every byte to every boot. */
 var r = await window.supa.from('insurance_claims').select(
 'id,project_id,carrier,policy_number,claim_number,date_of_loss,' +
-'coverage_type,ord_law,ord_law_basis,ord_law_limit,deductible,deductible_waived,' +
+'coverage_type,ord_law,ord_law_basis,ord_law_limit,ord_law_rcv,ord_law_acv,' +
+'deductible,deductible_waived,' +
 'approved_rcv,approved_acv,approved_depreciation,' +
 'adjuster_name,adjuster_phone,adjuster_email,' +
 'supplement_status,supplement_filed,supplement_approved,' +

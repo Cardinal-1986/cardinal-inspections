@@ -2837,3 +2837,28 @@ totals pages"; unparseable → a sentence about the document; prose-wrapped JSON
 salvaged from the outermost `{…}` rather than refused.
 Gate: `harness_659.js` — imports the real handler and drives it through every
 shape; negative control covers `api/sol.js` too, not only `index.html`.
+
+### 660 — Ordinance & Law is "BC — Building Codes" on a real scope
+
+**On an Xactimate estimate this coverage is a CATEGORY CODE, not prose.** It
+prints as `BC-Building Codes` with its own subtotal and often a dedicated
+"Summary for BC-Building Codes" page. 658's prose aliases (ordinance or law,
+code upgrade…) do not appear on these documents at all. If you touch the
+`/api/sol` prompt, **do not drop the BC vocabulary** — it is the one that matches.
+
+**Three amount fields, and they mean different things:**
+- `ord_law_rcv` — the category's Item/RCV total: the carrier's full valuation of
+  the code work.
+- `ord_law_acv` — the same category's ACV/Net total. ⚠ **On Allstate this is
+  LARGER than the RCV** because sales tax applies to code items. Never "fix" an
+  ACV that exceeds an RCV here, and never collapse the two into one column.
+- `ord_law_limit` — the **endorsement cap** (commonly 10% of Coverage A). A cap
+  is not a scope amount; it renders labelled "cap".
+
+**Line items are deliberately not stored** (Theo, 9 Aug): the scope PDF stays the
+single source for granularity — a second store would drift on every supplement.
+Code-driven items (ice & water barrier, upgraded sheathing, EPA Lead-Safe
+practices pre-1978) are *evidence* the prompt uses, not rows the app keeps.
+
+Gate: `harness_660.js` — runs the formatter on Gunn's real figures and asserts
+the larger ACV renders as-is; negative control covers `api/sol.js` too.
