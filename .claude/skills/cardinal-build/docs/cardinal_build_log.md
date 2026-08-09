@@ -10902,7 +10902,231 @@ design.
 
 ---
 
-## Build 638 — /api/notify was public, and it was sending everything twice (9 Aug 2026)
+## Build 637 — the address on the Location card, readable in dark mode (9 Aug 2026)
+
+Theo: *"Cannot hardly read address on card in dark mode."* He was being polite.
+
+**Measured in Chromium, not eyeballed:**
+
+| | ink | card | ratio |
+|---|---|---|---:|
+| retail **dark** | `#cfd6df` | `#ffffff` | **1.46:1** |
+| retail light | `#161616` | `#ffffff` | 18.10:1 |
+
+The floor for body text is 4.5:1.
+
+**The cause is one declaration.** `.acxsec{background:#fff}` has **no dark twin
+anywhere**, while `.dbaddr{color:var(--rbe-ink,#cfd6df)}` flips `#161616` →
+`#cfd6df` with the theme. The ink was tokenised against a theme its own
+background does not follow.
+
+⚠️ **It is the only thing on that card that does this.** Every sibling —
+`.acxbody`, `.ackv > span`, `.ackv > div`, `.axnote`, `.dbprim b`, `.dbrep b`,
+`.dbassign`, `.acxtrs label` — pins no colour at all in the base stylesheet;
+they inherit and read correctly on white. Every `--ct-*` rule that turns up in a
+grep for them is scoped to `body.claim-insurance`. So the fix is genuinely local.
+My first instinct was to give `.acxsec` a dark twin, which would have restyled
+every retail card in dark mode off one report.
+
+### ⚠️ A RENDER CAUGHT ME SHIPPING A REGRESSION, and then caught my test too
+
+**First attempt:** change `.dbaddr` globally to a fixed dark ink, plus a
+`body.claim-insurance … .dbaddr{color:var(--ct-ink)}` override. Chromium said
+insurance went to **1.06:1** — worse than before.
+
+**Then the second correction, which matters more than the first.** That number
+was itself an artifact: **`--ct-*` is gated on `[data-rltheme="docket"|"siren"]`
+— a THIRD theme attribute**, alongside `data-theme` (`--rbe-*`) and `data-mode`
+(the landing page). My harness set only `data-theme`, so every `--ct-*` value it
+resolved was a fallback. *The test was wrong, not the app.*
+
+With `data-rltheme` set correctly, insurance was **fine all along**: 13.58:1 in
+siren, 17.09:1 in docket. My "insurance is broken" reading and my "fix" for it
+were both wrong, and only a corrected render showed it.
+
+**So this build touches retail only** — one scoped rule, insurance and community
+left on the exact declaration they had:
+
+```css
+body:not(.claim-insurance):not(.claim-community) .dbaddr{color:#1e2432}
+```
+
+Fixed rather than tokenised because the *ground* is fixed. Same call CLAUDE.md
+already records for the seventeen `color:white` on a coloured ground.
+
+**Rendered, before and after, across every theme × CRM** (`render_dbaddr.js`):
+
+```
+              BEFORE            AFTER
+retail dark    1.46:1  <-- bug  15.51:1
+retail light  18.10:1           15.51:1
+insurance siren  13.58:1        13.58:1   (untouched)
+insurance docket 17.09:1        17.09:1   (untouched)
+```
+
+### 📌 A SECOND, PRE-EXISTING PROBLEM THE RENDER FOUND — not fixed, not verified
+
+With `body.claim-community` on `#projectView`, the address renders
+**`rgb(242,244,243)` on `rgb(255,253,247)` — 1.09:1.** `body.claim-community
+.acxsec:not(.rvsec)` grounds the card in cream `#fffdf7`, while
+`body[data-crm="community"] .dbaddr` inks it near-white from `--ccm-ink`.
+
+⚠️ **I am NOT claiming this is live.** In the real Community client page
+`adoptLocation()` **moves** that `.acxsec` into `#cr-cc-loc`, where
+`#cr-cc .cc-loc .acxsec{background:transparent !important}` sits it on a dark
+ground and near-white ink is right. My harness renders the pre-adoption state.
+It may be a transient flash, a real bug when adoption does not run, or nothing.
+
+**Not touched.** I have now been wrong twice this build about a CRM I cannot
+open, and the correct next step is a screenshot of a Community job in dark mode,
+not a third guess. Recorded so it is not lost.
+
+---
+
+## Build 638 — a claim with nothing in it is not a claim (9 Aug 2026)
+
+Theo: *"when starting the claim after profile is made, if you put no info and
+just accept it will take you to this screen instead, with no way to upload
+scope. And not attach to client (unknown)."*
+
+**He reproduced how the junk got in.** `insurance_claims` holds four rows:
+
+| created | homeowner | address | carrier | project |
+|---|---|---|---|---|
+| 23 Jul | `grdgdfg` | `dfgfdg` | — | null |
+| 24 Jul | — | — | — | null |
+| 29 Jul | — | — | — | null |
+| 7 Aug | Maker Space Solutions LLC | 1630 E 5th St | State Farm | **set** |
+
+Every field goes through `get()`, which returns null when empty, and `status`
+falls back to `'filed'` — so an untouched form inserted a row of nulls and the
+detail screen rendered exactly what he photographed.
+
+### ⚠️ The "not attached" half is NOT a bug — all four entry points traced
+
+| path | passes a project id? |
+|---|---|
+| `CardinalClaims.new(projectId)` — the API | yes, optional |
+| `crNewClaimFromHub(projectId)` | passes it through |
+| **"+ Start Claim Record"** on a client profile | **yes, `pid`** |
+| **"+ NEW CLAIM"** on the claims list | **no — no client is selected there** |
+
+The profile paths already attach, and the 7 Aug claim proves it. The list button
+has nothing to attach to; that is inherent to starting from the list, not a
+defect. **So "unknown, and not attached" is one root cause wearing two faces: an
+empty claim created from the list.** Require identity and both symptoms go.
+
+### The fix
+
+Refuse to save unless the claim can be identified by **any one** of homeowner,
+property, carrier, or claim number. One is enough deliberately — a claim really
+does start as *"State Farm, number pending"* or *"the Gunn place, carrier
+unknown"*. Demanding a particular field would be inventing process; demanding
+*something* is just refusing to write a blank row.
+
+Placed before **both** writes, so neither insert nor update can blank a claim.
+
+### Verification
+
+**New `harness_claimguard.js` — 15 assertions.** It lifts the guard's own source
+by paren-matching and **executes it against the real payload shapes**, including
+the three junk rows verbatim:
+
+```
+REFUSED: 24 Jul junk — all null          REFUSED: all blank strings
+REFUSED: 29 Jul junk — all null          allowed: carrier only, number pending
+allowed: 23 Jul junk — typed nonsense    allowed: claim number only
+allowed: 7 Aug real — State Farm         allowed: property only, carrier unknown
+```
+
+⚠️ **23 Jul is allowed on purpose.** `grdgdfg` is nonsense, but it is nonsense a
+person typed. The guard's job is to stop a BLANK row, not to judge what someone
+meant — refusing it would need a rule nobody has agreed.
+
+Negative control on 637: **10 red**, wrapped so it reports FAILs rather than
+throwing. All twelve harnesses green.
+
+⚠️ Extracting the condition by offset (`i - 4`) grabbed the `if (` and made
+`new Function` throw. Paren-match it — same family as the `[^;]` trap.
+
+### Deliberately NOT built — both belong to his insurance write-up
+
+- **No scope upload on the claim screen.** `cr-claims-script` has **zero** file
+  inputs and **zero** storage calls; there has never been one. `scope_pdf_url`
+  exists on the table with **no writer anywhere** in `index.html`. That is a
+  feature to design with him.
+- **No forcing the list's "+ New Claim" to pick a client.** Whether a claim may
+  exist before a client does is a process question and it is his.
+
+⚠️ **The three junk rows are NOT deleted.** Offered twice, no answer. Deleting
+production rows unprompted is not mine to do, and they are harmless.
+
+---
+
+## Build 639 — the Scope of Loss card was hidden by CSS all along (9 Aug 2026)
+
+Theo: *"There is no way to attach a scope upload to Adam Gunn ... In the new
+claim menu it says attach to existing client but since I skipped the claim
+upload there is no way to upload a scope for Gunn."*
+
+**He is exactly right, and it is one selector.**
+
+`renderSolCard()` builds a "Scope of Loss Reader (AI)" card on every client
+profile — upload control, AI extraction, and it even retitles itself "Update
+from Scope of Loss" when the client already has insurance fields. It runs. It
+has always run. Then this paints it out:
+
+```css
+#tab-overview > *:not(#acxMount):not(#cr-pp-mount){display:none !important;}
+```
+
+`<div id="solCard"></div>` is a **direct child** of `#tab-overview` — depth 0,
+verified by walking div depth from the container, not assumed.
+
+⚠️ **Third victim of this exact rule.** The 609 comment in this file already
+describes it: *"607 added Punch Outs to #jaGrid instead — the legacy grid hidden
+by #tab-overview's display:none rule, the exact trap 604 was about."* It is
+BUG_CLASSES 16's sibling — not a control that was never wired, but one that is
+wired, rendered, and painted out.
+
+**And the app sends him straight at it.** The Scope of Loss modal's second
+choice reads, verbatim: *"Add to an existing claim — Open the client, then use
+the Scope of Loss card on their profile."* Its handler closes the modal and
+opens the Insurance Clients list. So the one instruction the app gives for
+adding a scope to an existing client points at a card CSS had hidden.
+
+**Fix:** add `#solCard` to the allow-list. One selector.
+
+⚠️ **Not a speculative unhide.** Every other direct child there is genuinely
+retired — the markup says so out loud (*"retired by Keeper (build 348) but kept
+in the DOM because boot-time listeners attach to them unguarded"*) and they all
+carry their own inline `display:none` too. `#solCard` carries none, is written
+to on every render, and is a live modal's documented destination. Asserted that
+the rule still has **exactly three** exemptions, so this cannot drift into a
+general unhide.
+
+**Rendered in Chromium** (`render_solcard.js`), because `display:none !important`
+out of a `:not()` list is precisely what jsdom cannot resolve:
+
+```
+              BEFORE            AFTER
+solCard       none (0 height)   block (visible)
+acxMount      block (visible)   block (visible)
+cr-pp-mount   block (visible)   block (visible)
+contactRow    none (0 height)   none (0 height)   <- legacy stays hidden
+```
+
+### The "+" menu — never built, and it says so
+
+`#ctPlusMenu` holds three buttons: **"New Claim — soon"**, **"Adjuster note —
+soon"**, **"Supplement — soon"**. No ids, no `data-act`, no handlers anywhere.
+Not a regression and not class 16 — they are honestly labelled placeholders.
+
+⚠️ **Theo's directive, recorded for when they are built:** *"Plus new should
+absolutely make you pick a client first."* Do not build those buttons without
+it. It also settles the open question from 638 — the claims-list "+ New Claim"
+should require a client rather than creating an unattached claim.
+## Build 640 — /api/notify was public, and it was sending everything twice (9 Aug 2026)
 
 `api/notify.js` + `index.html`. **No SQL.** Two defects in one pipeline, shipped
 together because fixing either alone leaves the other silently broken.
@@ -10927,7 +11151,7 @@ wrapper always sent the canonical `{emails,title,body,url}`**, so well-formed
 requests *were* reaching the route all along. The route has been exercised; what
 it did with the push is the still-open `VAPID_PRIVATE_KEY` question, not this.
 
-Verified: `check_build.py` green (106 scripts, stamp 636→638, marker
+Verified: `check_build.py` green (106 scripts, stamp 639→640, marker
 `Do not reintroduce a second sender` present and **absent from prev**) ·
 **18-assertion** Node harness against the **shipped** handler — no token,
 non-Bearer, forged token, session with no email, auth server unreachable
@@ -10948,5 +11172,5 @@ changelog shape `{ build:N, note:'…' }`. `index.html` still carries **both**
 arrays — 275 old-shape entries (to build 600, ~line 35314) and 35 current-shape
 `{ b:… }` ones — so the regex finds an identical 275 on every branch, no branch
 ever appears to add a build, and **branch collision detection has been dead since
-574**. This build took 638. *(Also: CLAUDE.md says the old array "now exists only
+574**. This build took 640 (638 and 639 both landed on main while this was open). *(Also: CLAUDE.md says the old array "now exists only
 in git history" — it does not, it is still in the file.)*
