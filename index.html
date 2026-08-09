@@ -1760,10 +1760,23 @@ body.restoring #restoreVeil{display:flex;}
    Loss modal literally instructs you to "use the Scope of Loss card on their
    profile" — pointing at something CSS had hidden.
    Third victim of this rule; the 609 comment on the job menu describes the same
-   trap. Every OTHER child here is genuinely retired legacy and carries its own
-   inline display:none as well. #solCard carries none, is written to on every
-   render, and is a live modal's documented destination. */
-#tab-overview > *:not(#acxMount):not(#cr-pp-mount):not(#solCard){display:none !important;}
+   trap.
+   641 CORRECTION — 639's next sentence used to claim "every OTHER child here is
+   genuinely retired legacy". THAT WAS WRONG, and it is why 639 fixed one card of
+   four. insCard, insDocsCard and insItelCard are LIVE: their renderers each run
+   `mount.style.display='block'`, which CANNOT win, because an !important
+   stylesheet declaration outranks a normal inline style. Verified in Chromium —
+   insCard computes `none` even after its renderer sets `block`. iTel shipped at
+   406; Keeper retired this container at 348, so they were built into a dead
+   container and never rendered once. Of 30 projects exactly one is claim_type
+   'insurance' (Adam Gunn), which is the only profile where the absence showed.
+   Exempting them is safe and decides nothing: each renderer opens with
+   `if(ct !== 'insurance'){ mount.style.display='none'; ...; return; }`, so they
+   hide themselves on the 26 retail/community profiles.
+   leadCard is deliberately NOT exempt — it is the real pre-Keeper card acxMount
+   replaced, and it still runs (that is how these four renderers get called) while
+   painting into a hidden element, exactly as the markup comment describes. */
+#tab-overview > *:not(#acxMount):not(#cr-pp-mount):not(#solCard):not(#insCard):not(#insDocsCard):not(#insItelCard){display:none !important;}
 .acxsec{background:#fff;border:1px solid #ddd6cf;border-radius:6px;margin-bottom:14px;overflow:visible;}
 /* AccuLynx-style activity tiles (photo album / inspections) */
 .jaboxrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px;}
@@ -3262,7 +3275,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 640 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 642 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21491,7 +21504,7 @@ async function enableNotifications(){
       '\n\nIf this mentions a missing table, run the push_subs SQL in Supabase first.');
   }
 }
-/* 640: a wrapper lived here from build 527 that fired its OWN unauthenticated
+/* 642: a wrapper lived here from build 527 that fired its OWN unauthenticated
    request to the notify route and then called the real notifyTeam as well — so
    every team notification went out TWICE, and one of the two carried no
    session. Its .catch(function(){}) meant neither the duplicate nor any failure
@@ -35286,7 +35299,9 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:640, d:'2026-08-09', t:'Team alerts: one send, and only from inside the app', s:'Two problems in the alert path, both invisible from the outside. Every team alert was being sent twice \u2014 two pushes and two emails for one event \u2014 because a second sender added long ago was still running alongside the real one. And the server route that sends them never checked who was asking, so anyone who knew the address could have used it to send email that looked like it came from Cardinal. The route now requires you to be signed in, and there is one sender instead of two. Nothing changes in how you use it.' },
+{ b:642, d:'2026-08-09', t:'Team alerts: one send, and only from inside the app', s:'Two problems in the alert path, both invisible from the outside. Every team alert was being sent twice \u2014 two pushes and two emails for one event \u2014 because a second sender added long ago was still running alongside the real one. And the server route that sends them never checked who was asking, so anyone who knew the address could have used it to send email that looked like it came from Cardinal. The route now requires you to be signed in, and there is one sender instead of two. Nothing changes in how you use it.' },
+  { b:641, d:'2026-08-09', t:'The rest of the insurance cards are back on a client profile',
+    s:'Build 639 brought back the Scope of Loss upload. It turns out that was one of four \u2014 the claim panel, the Insurance Documents card (where you upload and list the paperwork) and the iTel card were all being built and then painted out by the same stylesheet rule, on every insurance client. They had never appeared: the iTel card was added in build 406, and the section it sits in was retired back in build 348. All three are back now. They show only on an insurance job, exactly as they were written to \u2014 nothing changes on a retail or community profile.' },
   { b:639, d:'2026-08-09', t:'The Scope of Loss upload is visible on a client profile again',
     s:'There was no way to upload an adjuster\u2019s scope for a client who already existed. The card that does it \u2014 \u201cScope of Loss Reader\u201d, with the upload button and the AI extraction \u2014 was being built on every client profile and then hidden by a stylesheet rule that was meant for old retired sections. It has been invisible the whole time, which is also why the Scope of Loss window telling you to \u201cuse the Scope of Loss card on their profile\u201d led nowhere. It shows again now. Nothing else on the profile changed.' },
   { b:638, d:'2026-08-09', t:'A claim can no longer be saved empty',

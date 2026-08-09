@@ -20,7 +20,7 @@ const VAPID_FROM_ENV = !!(process.env.VAPID_PRIVATE_KEY || process.env.VAPID_PRI
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || process.env.VAPID_PRIVATE ||
   'vtIkMaIEJxS2yUNI0wgulFiFxze4w3dfcRXFzsG-3qU';
 
-/* 640: this route had NO session check. It touched `req` exactly twice —
+/* 642: this route had NO session check. It touched `req` exactly twice —
    req.method and req.body — while notifyTeam() in index.html has always sent an
    Authorization header the route then ignored. Anyone who knew the path could
    POST to it. That was merely noisy while the route was push-only; 611 added

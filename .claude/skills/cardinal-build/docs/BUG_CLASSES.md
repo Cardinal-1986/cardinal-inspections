@@ -1243,8 +1243,18 @@ route had one. Three things made it invisible, and all three generalise.
    **An empty catch on a network call is a defect that cannot report itself** —
    and gating a route without deleting such a duplicate just moves the silence.
 
-**Corollary for tooling:** `next_build.py` reported build 637 free while a pushed
-branch was stamped 637, because its changelog regex still matches the pre-574
-`{ build:N, note:'…' }` shape. A checker keyed to a format the file no longer
-uses does not fail — it passes everything. **When a tool exists to prevent one
-specific error, test it against a case that should trip it.**
+**Corollary for tooling — the bug is FIXED at 641; the lesson is not.**
+`next_build.py` once reported build 637 free while a pushed branch was stamped
+637, because its changelog regex matched only the pre-574 `{ build:N, note:'…' }`
+shape. It was worse than under-reporting: the always-empty new/bad/edited lists
+made the print guard skip those branches entirely, so they never even reached
+the `highest` calculation. **A checker keyed to a format the file no longer uses
+does not fail — it passes everything.** 641 fixed it by reading *both* shapes and
+folding each branch's stamp in independently, because one regex is a single
+assumption about a shape that has already changed once. It now catches the live
+collision and the historical 584 one, and `--self-test` covers the dual-shape
+parse.
+
+**The durable rule: when a tool exists to prevent one specific error, test it
+against a case that should trip it.** This one passed clean for 67 builds while
+blind.
