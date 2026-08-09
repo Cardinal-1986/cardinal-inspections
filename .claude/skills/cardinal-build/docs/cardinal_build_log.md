@@ -11060,3 +11060,69 @@ throwing. All twelve harnesses green.
 
 ⚠️ **The three junk rows are NOT deleted.** Offered twice, no answer. Deleting
 production rows unprompted is not mine to do, and they are harmless.
+
+---
+
+## Build 639 — the Scope of Loss card was hidden by CSS all along (9 Aug 2026)
+
+Theo: *"There is no way to attach a scope upload to Adam Gunn ... In the new
+claim menu it says attach to existing client but since I skipped the claim
+upload there is no way to upload a scope for Gunn."*
+
+**He is exactly right, and it is one selector.**
+
+`renderSolCard()` builds a "Scope of Loss Reader (AI)" card on every client
+profile — upload control, AI extraction, and it even retitles itself "Update
+from Scope of Loss" when the client already has insurance fields. It runs. It
+has always run. Then this paints it out:
+
+```css
+#tab-overview > *:not(#acxMount):not(#cr-pp-mount){display:none !important;}
+```
+
+`<div id="solCard"></div>` is a **direct child** of `#tab-overview` — depth 0,
+verified by walking div depth from the container, not assumed.
+
+⚠️ **Third victim of this exact rule.** The 609 comment in this file already
+describes it: *"607 added Punch Outs to #jaGrid instead — the legacy grid hidden
+by #tab-overview's display:none rule, the exact trap 604 was about."* It is
+BUG_CLASSES 16's sibling — not a control that was never wired, but one that is
+wired, rendered, and painted out.
+
+**And the app sends him straight at it.** The Scope of Loss modal's second
+choice reads, verbatim: *"Add to an existing claim — Open the client, then use
+the Scope of Loss card on their profile."* Its handler closes the modal and
+opens the Insurance Clients list. So the one instruction the app gives for
+adding a scope to an existing client points at a card CSS had hidden.
+
+**Fix:** add `#solCard` to the allow-list. One selector.
+
+⚠️ **Not a speculative unhide.** Every other direct child there is genuinely
+retired — the markup says so out loud (*"retired by Keeper (build 348) but kept
+in the DOM because boot-time listeners attach to them unguarded"*) and they all
+carry their own inline `display:none` too. `#solCard` carries none, is written
+to on every render, and is a live modal's documented destination. Asserted that
+the rule still has **exactly three** exemptions, so this cannot drift into a
+general unhide.
+
+**Rendered in Chromium** (`render_solcard.js`), because `display:none !important`
+out of a `:not()` list is precisely what jsdom cannot resolve:
+
+```
+              BEFORE            AFTER
+solCard       none (0 height)   block (visible)
+acxMount      block (visible)   block (visible)
+cr-pp-mount   block (visible)   block (visible)
+contactRow    none (0 height)   none (0 height)   <- legacy stays hidden
+```
+
+### The "+" menu — never built, and it says so
+
+`#ctPlusMenu` holds three buttons: **"New Claim — soon"**, **"Adjuster note —
+soon"**, **"Supplement — soon"**. No ids, no `data-act`, no handlers anywhere.
+Not a regression and not class 16 — they are honestly labelled placeholders.
+
+⚠️ **Theo's directive, recorded for when they are built:** *"Plus new should
+absolutely make you pick a client first."* Do not build those buttons without
+it. It also settles the open question from 638 — the claims-list "+ New Claim"
+should require a client rather than creating an unattached claim.
