@@ -11961,3 +11961,48 @@ set local request.jwt.claims = '{"email":"..."}'` — real RLS, not the
 service-role bypass. Each rep saw only their own rows on all three tables;
 Theo saw both. This was already correctly enforced by the RLS shipped at
 650; nothing needed to change. All test rows deleted.
+
+## Build 652 — Contracts a tap away, and the Approvals queue stops missing signed estimates (9 Aug 2026)
+
+Both fixes are from one screenshot Theo sent minutes after signing the
+Joeseph estimate: "Where did contracts go? Did the workflow pipeline break?
+What moves the job value?"
+
+**Diagnosis first, against the live data.** Contracts never had a job-menu
+tile (tile list verified byte-identical 649 → 651 apart from the Money In
+tile) — it lived only in the header job dropdown. The pipeline had not
+broken: the estimate signed fine ($20,525, EST-2026-0896, in the DB), but
+the home-page **Approvals card filtered to Lead/Prospect stages only** — and
+Joeseph had been advanced to Approved BY HAND three days before the client
+signed, so the signature could never surface for approval. And Job Value is
+signed-CONTRACT-driven by design (`jobFinance()` counts documents titled
+"Contract…" with `signed_at` and a total, plus manual worksheet value) — a
+signed estimate deliberately moves nothing.
+
+**The two changes, Theo's pick ("3" — both):**
+- **A Contracts tile on the job menu**, filling the Punch Outs row. Rides
+  the router's existing `else{ showTab(act); }` fall-through, the same
+  mechanism 607 wired for punch — zero new routing.
+- **The Approvals filter**: was `s !== 'Lead' && s !== 'Prospect' → out`;
+  now only **Lost/Closed** are out, and two honest exclusions joined the
+  existing `wf_approved` / `manual_value` guards: a job **already carrying a
+  contract document** is never re-listed (`isContractTitle` over cacheRows).
+  Verified safe to approve an already-Approved job: `approveAndContract()`
+  never touches the stage (its own alert says the stage moves when the
+  CONTRACT is signed), and the price prefill reads `projectValue()` →
+  `estBest` → the estimates TABLE total ($20,525 here), not the doc row's
+  NULL total.
+
+**Gates.** `check_build.py` green first run, stamp 651 → 652. New
+`harness_approvals.js` — 15 assertions, brace-matches the SHIPPED
+renderApprovals out of the artifact and executes it in jsdom: the
+stage-advanced case, Scheduled, the original Lead case (regression guard),
+no-signature, non-admin, contract-doc exclusion, Lost/Closed, wf_approved,
+manual_value, plus the tile structurals. **Negative control on 651: 5 red,
+exit 1** — the old filter really does hide the Approved-stage signature.
+`harness_pay.js` re-run on 652: 58/58 (commissions untouched). Div balance
+3,694/3,694.
+
+**For Joeseph specifically:** after deploy, the signed estimate appears in
+the home-page Approvals card → Approve & create contract → client signs the
+contract → Job Value shows $20,525.
