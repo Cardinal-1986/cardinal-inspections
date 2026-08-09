@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 656 &#8212; The claim panel is visible at last (Coverage Type and Ord. &amp; Law with it), the claim tabs stop jumping, and the Invoiced chip gets shorter</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 657 &#8212; A big scope you already filed can finally be read, the claim screen shows Coverage Type and Ord. &amp; Law, and never-entered money stops reading $0</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14191,7 +14191,9 @@ function renderInsuranceDocsCard(){
       '<span class="insdocic">' + dt.icon + '</span>' +
       '<div class="insdoctxt"><b>' + dt.label + '</b>' +
         '<small class="muted">Not uploaded</small></div>' +
-      '<button class="insdocupload" data-insdocupload="' + esc(dt.key) + '">&#128228; Upload</button>' +
+      /* 657: name what this does. It files a copy; it does not read one. */
+      '<button class="insdocupload" data-insdocupload="' + esc(dt.key) + '">&#128228; ' +
+        (dt.key === 'scope_of_loss' ? 'File a copy' : 'Upload') + '</button>' +
     '</div>';
   }).join('');
   mount.innerHTML =
@@ -14559,6 +14561,16 @@ function pickAndUploadInsDoc(typeKey){
     try{
       await uploadInsuranceDoc(typeKey, f);
       renderInsuranceDocsCard();
+      /* 657: this slot FILES a copy and reads nothing. Theo filed Adam
+         Gunn's scope here believing it would update the claim, and the
+         money sat unextracted for a day. Two controls on one page mention
+         the scope; only the Scope of Loss card reads one. Offer the read
+         right here rather than leaving the wrong button silently wrong. */
+      if(typeKey === 'scope_of_loss' && typeof routeScopeToReader === 'function'){
+        if(confirm('Filed.\n\nRead it now and fill in the carrier, claim number and the RCV/ACV figures?\n\nFiling alone does not update the claim.')){
+          await routeScopeToReader(f, null);
+        }
+      }
     }catch(err){
       alert('Upload failed: ' + (err.message || err));
     }
@@ -14796,11 +14808,39 @@ async function sendScopeToReader(b64, mime, name, btn){
   if(btn){ btn.disabled = false; btn.textContent = label; }
 }
 
-async function readScopeOfLoss(file){
-  if(!currentProject) return;
-  if(file.size > 12 * 1024 * 1024){
-    alert('That file is bigger than 12 MB. Try compressing the PDF or splitting it.');
-    return;
+/* 657: THE SIZE ROUTER for this card's two doors.
+   Both doors used to POST the file inline whatever its size. api/sol.js
+   accepts 12 MB, but a Vercel serverless REQUEST BODY caps around 4.5 MB,
+   which is precisely why 643 built CardinalSolUpload.prepare(): under
+   MAX_INLINE (3.1 MB) send bytes, over it upload to storage and send
+   { url }. prepare() had four callers and this card was not one of them —
+   so "Read the scope already on file", added at 647 to rescue exactly this
+   case, could not read the 6.4 MB scope it was built for.
+   ⚠ NO new /api/sol pipeline here. Over-size goes through the existing
+   extractFromUrl; inline still lands on solRead, 648's one transport. The
+   647 banner names five callers and forbids a sixth — this is not one. */
+async function routeScopeToReader(file, btn){
+  var SU = window.CardinalSolUpload;
+  if(SU && typeof SU.prepare === 'function'){
+    var ready = await SU.prepare(file);   /* alerts and returns null over the cap */
+    if(!ready) return;
+    if(ready.url){
+      var card  = document.getElementById('solCardEl');
+      var label = btn ? btn.textContent : '';
+      if(card) card.classList.add('solLoading');
+      if(btn){ btn.disabled = true; btn.textContent = 'Reading\u2026'; }
+      try{
+        openSolReviewModal(await SU.extractFromUrl(ready.url), file.name);
+        if(currentProject) auditLog('doc', 'SOL read via storage (' + file.name + ')', currentProject.id);
+      }catch(err){
+        alert('Could not read that scope: ' + (err.message || err));
+      }finally{
+        if(card) card.classList.remove('solLoading');
+        if(btn){ btn.disabled = false; btn.textContent = label; }
+      }
+      return;
+    }
+    if(ready.file) file = ready.file;   /* prepare may have compressed an image */
   }
   var dataUrl;
   try{
@@ -14814,7 +14854,12 @@ async function readScopeOfLoss(file){
   await sendScopeToReader(String(dataUrl || '').split(',')[1] || '',
                           file.type || 'application/pdf',
                           file.name,
-                          document.getElementById('solBtn'));
+                          btn);
+}
+async function readScopeOfLoss(file){
+  if(!currentProject) return;
+  /* the 12 MB refusal lives in prepare() now — one policy, one place */
+  await routeScopeToReader(file, document.getElementById('solBtn'));
 }
 
 /* 647: read the scope that is ALREADY on file. The document slot stores
@@ -14841,10 +14886,21 @@ async function readFiledScope(docId){
     alert('That document has no stored file to read.');
     return;
   }
-  await sendScopeToReader(String(pay.data).split(',')[1] || '',
-                          pay.mime || 'application/pdf',
-                          pay.name || 'Scope of Loss',
-                          document.getElementById('solReadBtn'));
+  /* 657: the stored payload is a dataURL, and the size router takes a File.
+     Same dataURL->blob recipe photoDb.add uses. Gunn's filed scope is 6.4 MB
+     of base64 — inline it would exceed the request-body cap and never
+     reach the reader, which is the whole reason this button appeared to do
+     nothing. */
+  var nm = pay.name || 'Scope of Loss';
+  var f;
+  try{
+    var blob = await (await fetch(pay.data)).blob();
+    f = new File([blob], nm, { type: pay.mime || blob.type || 'application/pdf' });
+  }catch(e){
+    alert('Could not open that stored file: ' + (e.message || e));
+    return;
+  }
+  await routeScopeToReader(f, document.getElementById('solReadBtn'));
 }
 
 function openSolReviewModal(extracted, fileName){
@@ -26262,6 +26318,12 @@ function showList() {
   // ── Helpers ──
   function esc(s) { return String(s == null ? '' : s).replace(/[<>&"']/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c])); }
   function fmt(n) { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+  /* 657: fmt() coerces null to 0, so a claim nobody has entered figures for
+     rendered "$0" — indistinguishable from a carrier approving zero. That is
+     how a scope filed but never read looked like data for a day. Absence now
+     reads as absence; a real 0 still reads $0. fmt() itself is untouched —
+     other callers legitimately want the zero. */
+  function money(v) { return (v === null || v === undefined || v === '') ? '\u2014' : '$' + fmt(v); }
   function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
   function fmtDateShort(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); }
   function statusLabel(s) { return STATUSES.find(x => x.v === s)?.l || s; }
@@ -26508,10 +26570,10 @@ function showList() {
         <div class="cr-c-fin">
           <div class="cr-c-fin-h">Financials</div>
           <div class="cr-c-fin-grid">
-            <div class="cr-c-fin-cell"><div class="lbl">Approved RCV</div><div class="val">$${fmt(rcv)}</div></div>
-            <div class="cr-c-fin-cell"><div class="lbl">ACV Portion</div><div class="val">$${fmt(acv)}</div></div>
-            <div class="cr-c-fin-cell"><div class="lbl">Depreciation</div><div class="val warn">$${fmt(depr)}</div></div>
-            <div class="cr-c-fin-cell"><div class="lbl">Deductible</div><div class="val neg">$${fmt(c.deductible)}${c.deductible_waived ? ' <small style="font-size:10px; color:#7cd18d; letter-spacing:1px;">WAIVED</small>' : ''}</div></div>
+            <div class="cr-c-fin-cell"><div class="lbl">Approved RCV</div><div class="val">${money(rcv)}</div></div>
+            <div class="cr-c-fin-cell"><div class="lbl">ACV Portion</div><div class="val">${money(acv)}</div></div>
+            <div class="cr-c-fin-cell"><div class="lbl">Depreciation</div><div class="val warn">${money(depr)}</div></div>
+            <div class="cr-c-fin-cell"><div class="lbl">Deductible</div><div class="val neg">${money(c.deductible)}${c.deductible_waived ? ' <small style="font-size:10px; color:#7cd18d; letter-spacing:1px;">WAIVED</small>' : ''}</div></div>
           </div>
           <div class="cr-c-fin-progress">
             <div class="cr-c-fin-progress-bar">
@@ -26613,6 +26675,10 @@ function showList() {
         kv('Filed', c.filed_at ? fmtDate(c.filed_at) : '', 'Not set') +
         kv('Approved', c.approved_at ? fmtDate(c.approved_at) : '', 'Not yet') +
         kv('Cause of Loss', c.cause_of_loss ? causeLabel(c.cause_of_loss) : '', 'Not set') +
+        /* 657: both columns arrived at 655 and this screen never showed them.
+           ord_law is a BOOLEAN — false must read "No", not blank. */
+        kv('Coverage Type', esc(c.coverage_type || ''), 'Not set') +
+        kv('Ord. &amp; Law', c.ord_law === true ? 'Yes' : (c.ord_law === false ? 'No' : ''), 'Not set') +
       '</div>') +
     sect(2, 'Adjuster', '',
       '<div class="cr-c-info">' +
@@ -26882,6 +26948,25 @@ function showList() {
           </div>
         </div>
 
+        <!-- 657: both columns arrived at 655 and this modal never offered them,
+             so they could only be set from the client profile. ord_law is a
+             BOOLEAN column — the handler converts ''/yes/no to null/true/false,
+             because writing the string refuses the whole row. -->
+        <div class="cr-c-modal-row">
+          <div>
+            <label>Coverage Type</label>
+            <input type="text" data-f="coverage_type" placeholder="RCV / ACV" value="${esc(c.coverage_type || '')}">
+          </div>
+          <div>
+            <label>Ord. &amp; Law</label>
+            <select data-f="ord_law">
+              <option value=""${c.ord_law == null ? ' selected' : ''}>Not set</option>
+              <option value="yes"${c.ord_law === true ? ' selected' : ''}>Yes</option>
+              <option value="no"${c.ord_law === false ? ' selected' : ''}>No</option>
+            </select>
+          </div>
+        </div>
+
         <div class="cr-c-modal-row">
           <div>
             <label>Approved RCV ($)</label>
@@ -26936,6 +27021,13 @@ function showList() {
         adjuster_phone:    get('adjuster_phone'),
         adjuster_email:    get('adjuster_email'),
         adjuster_company:  get('adjuster_company'),
+        coverage_type:     get('coverage_type'),
+        /* 657: a BOOLEAN column — send true/false/null, never the string,
+           or PostgREST refuses the whole row. */
+        ord_law:           (function(){
+                             var v = modal.querySelector('[data-f="ord_law"]').value;
+                             return v === '' ? null : (v === 'yes');
+                           })(),
         approved_rcv:      num('approved_rcv'),
         approved_acv:      num('approved_acv'),
         deductible:        num('deductible'),
@@ -36384,6 +36476,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:657, d:'2026-08-09', t:'The scope you already filed can be read',
+s:'Two buttons on a client mention the Scope of Loss: one files a copy, the other reads it and fills in the carrier, claim number and the RCV/ACV figures. File a scope into the document slot and it never touched the claim \u2014 so Adam Gunn\u2019s money sat in a PDF nobody had read. Now the filing button offers to read it on the spot, and it says plainly that filing alone does not update the claim. The \u201CRead the scope already on file\u201D button also works on big files at last: anything over about 3 MB used to be sent in a way the reader could not accept, which is why it looked like nothing happened. The claim screen now shows Coverage Type and Ord. & Law, and lets you edit them. And money nobody has entered reads \u201C\u2014\u201D instead of \u201C$0\u201D, so an unread scope stops looking like a carrier approving nothing.' },
 { b:656, d:'2026-08-09', t:'The claim panel comes out of hiding',
 s:'Coverage Type and Ord. & Law had nowhere to show. The Insurance Information panel that holds them \u2014 along with Insurance Documents and iTel \u2014 was being hidden by a stylesheet rule that outranked the code trying to show it, so all three had been invisible on every client profile (iTel since the day it was built, in 2026). All three are back. The claim screen\u2019s tabs no longer jump up and down when you swipe them sideways: the row that sticks to the top and the row that scrolls were the same element, and now they aren\u2019t. And the Invoiced chip on the insurance client filter reads \u201CAwaiting Depreciation\u201D so the filter row stays three lines on a phone instead of four \u2014 the pipeline rail still says the full \u201CAwaiting Depreciation / Supplements\u201D.' },
 { b:655, d:'2026-08-09', t:'Insurance repair and write safety',
