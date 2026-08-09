@@ -10777,3 +10777,44 @@ so it reports clean FAILs instead of throwing. All eleven harnesses green.
 ⚠️ **Theo's eyes are the gate.** I cannot load a Google static map from this
 sandbox, so "the image renders" is proven only as far as the correct URL being
 built and painted.
+
+---
+
+## Storage config — PDF scopes could never upload (9 Aug 2026, no build number)
+
+Theo: *"when trying to upload Adam Gunn's scope there was an error."*
+
+**Not an app bug, and no build of the app could have fixed it.** The scope
+uploader (`toStorageUrl`) writes to `photos` under `scopes/…` and *defaults the
+content type to `application/pdf`* — it knows a carrier scope is a PDF. But the
+bucket's `allowed_mime_types` was images only, so Storage refused it before it
+landed. It failed on **every** PDF, at any size.
+
+`photos` now also accepts `application/pdf`, and the cap went **10 MB → 25 MB**
+(a scope with photographs in it routinely passes 10 MB). Applied to production
+on his explicit yes; recorded as `photos_bucket_pdf.sql`, idempotent.
+
+⚠️ **The same bucket takes `work_orders/…` and `nachi/…`**, both of which pass a
+real filename through — so PDFs failed there too. One change covered all three.
+
+**How it was found, which is the reusable part:** no `client_error` row existed
+for it — the uploader throws a plain `Error` that nothing reports — so there was
+nothing to read. Instead: list every `storage.from(...).upload(` site and its
+bucket, then read the bucket's own config. The mismatch was visible in one query.
+
+⚠️ **`scope_pdf_url` on `insurance_claims` has no writer anywhere in
+`index.html`.** The scope upload does not populate it. Not touched — worth
+knowing before someone assumes that column means something.
+
+### Also found, NOT fixed, and Theo has ruled on it
+
+The insurance stage vocabulary exists in **four copies** that have drifted:
+Cardinal Truth's `RAIL` calls `Invoiced` *"Awaiting Depreciation / Supplements"*
+and `Closed` *"Closed"*, while the three `LABEL` maps say *"Awaiting RCV"* and
+*"Archived"*. `RAIL` also carries a **`supplement` row that is not a stage** —
+synthetic, driven by supplement data, so no job can ever sit in it.
+
+Asked him whether that was what he meant by *"the pipeline for insurance is
+completely different."* **He answered: different from retail/community — i.e.
+working as designed.** So the drift is recorded, not repaired. Do not "unify" the
+four maps without asking; the pipeline is deliberate.
