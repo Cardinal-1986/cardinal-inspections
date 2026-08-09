@@ -11275,3 +11275,51 @@ in the markup — the punch card creates it at runtime and inserts it as a sibli
 of `insCard`. The harness asserted on an element that did not exist. It now
 injects it the way the app does, same anchor order. Half of all reds are the
 test's fault; this was one.
+## Build 642 — /api/notify was public, and it was sending everything twice (9 Aug 2026)
+
+`api/notify.js` + `index.html`. **No SQL.** Two defects in one pipeline, shipped
+together because fixing either alone leaves the other silently broken.
+
+- **The route had NO session check.** It touched `req` exactly twice —
+  `req.method` and `req.body`. Every sibling gates (`organize.js`, `analyze.js`,
+  `caption.js`, `librarian.js`); this one never did. Merely noisy while it was
+  push-only; **611 added Resend email and passes `to: emails` straight from the
+  request body**, which turned it into a relay able to send mail *from* Cardinal's
+  account to any address, and to push to any team member in `push_subs`
+  (`firstname@cardinalrenovations.net` — guessable). `requireSession()` copied
+  from `organize.js`; it runs **before** the `web-push` import.
+- **`index.html` had a second, unauthenticated sender since build 527.** A
+  wrapper around `notifyTeam` fired its own request to the route with no
+  `Authorization` header and `.catch(function(){})` swallowing everything, *then*
+  called the real `notifyTeam` — so **every team alert went out twice**, one of
+  the two unauthenticated. Deleted. One pipeline per concept.
+
+⚠ **A correction to 611's account, found here.** 611 says `emails` was undefined
+on "all seven call sites". True of the inner `notifyTeam` only — **the 527
+wrapper always sent the canonical `{emails,title,body,url}`**, so well-formed
+requests *were* reaching the route all along. The route has been exercised; what
+it did with the push is the still-open `VAPID_PRIVATE_KEY` question, not this.
+
+Verified: `check_build.py` green (106 scripts, stamp 641→642, marker
+`Do not reintroduce a second sender` present and **absent from prev**) ·
+**18-assertion** Node harness against the **shipped** handler — no token,
+non-Bearer, forged token, session with no email, auth server unreachable
+(**fails closed**), valid session, GET — each also asserting *nothing was sent* ·
+**8-assertion** client test proving one caller remains and it carries the token ·
+both negative-controlled against 636 (**12** and **3** failures).
+
+⚠ **The harness cannot prove the 636 route would have sent.** `web-push` is not
+installed here, so ungated 636 dies at the import and the three "nothing sent"
+assertions pass on it too. In production the library exists and it would have
+reached `push_subs` and Resend. The 401 assertions carry the proof; those three
+do not discriminate.
+
+⚠ **`scripts/next_build.py` gave the wrong answer and nearly caused a collision.**
+It said 637 was free; `origin/claude/cardinal-roofing-letterhead-o5hl17` is
+stamped **637** with a `{ b:637 }` entry. Cause: `ENTRY` matches the **pre-574**
+changelog shape `{ build:N, note:'…' }`. `index.html` still carries **both**
+arrays — 275 old-shape entries (to build 600, ~line 35314) and 35 current-shape
+`{ b:… }` ones — so the regex finds an identical 275 on every branch, no branch
+ever appears to add a build, and **branch collision detection has been dead since
+574**. This build took 642; 638, 639 and 641 all landed on main while it was open. *(Also: CLAUDE.md says the old array "now exists only
+in git history" — it does not, it is still in the file.)*
