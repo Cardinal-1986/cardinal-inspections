@@ -1889,23 +1889,28 @@ insert an empty row in the first place. Both are real, neither was asked for.
 
 # Layer: build 650 — 9 Aug 2026 (Money In & Commissions)
 
+## ✅ SETTLED BY THEO, 9 Aug 2026 — do not re-litigate
+
+- **"Pedro Vera" in the spec IS Jerry Vera** — same person, spec used the
+  wrong first name. `jerry@cardinalrenovations.net` was already
+  `role:'sales'` in `team_profiles` and already in `TEAM_ROSTER`, so he was
+  already selectable as a commission rep with no code change needed. Nothing
+  to fix — this closes the "same family?" question outright.
+- **Kyle Mantia: leave him out.** Not a rep in this system. The roster
+  staying silent on him (no `team_profiles` row, no hardcoded email) is
+  correct, not a gap — do not add him speculatively.
+- **Greg Clark's display name is set** (`clarkie022@gmail.com` → "Greg
+  Clark" in `team_profiles`, confirmed live). He now renders by name
+  everywhere `rptRepName()` is used, no longer as "clarkie022".
+
 ## Needs Theo — commission system (none of it blocks using the feature)
 
-1. **Kyle Mantia and Pedro Vera** are in the spec's rep list but have NO
-   `team_profiles` row and no known email. They cannot be picked as sales reps
-   until Theo adds them on the Team page with their real addresses. **Never
-   guess an email** — a typo'd `rep_email` silently orphans commission rows.
-   (Also: the spec says *Pedro* Vera; the DB has *Jerry* Vera — same family?
-   Theo to confirm which is right.)
-2. **clarkie022@gmail.com** (Greg Clark, sales — seeded by
-   `is_staff_policies.sql`) has no display name in `team_profiles`, so he shows
-   as "clarkie022" everywhere. One edit on the Team page fixes it.
-3. **Backfill check:** 26 of 30 projects got a `sales_rep` from the checklist
+1. **Backfill check:** 26 of 30 projects got a `sales_rep` from the checklist
    assignment (joey 10 · clarkie022 8 · theo 6 · nick 2); 4 have none. All
    editable on the job's Commissions tab until the first collection locks them.
-4. **Deferred from the spec, by design** (manual paths exist today):
+2. **Deferred from the spec, by design** (manual paths exist today):
    in-app draw *requests* (Theo logs draws himself), split commissions
    (use the manual-entry form for the second rep), and a weekly owed-email.
-5. **Rep-role rendering is verified by RLS + harness, not by signing in as a
+3. **Rep-role rendering is verified by RLS + harness, not by signing in as a
    rep** — the standing sandbox limitation. First Friday run-through is the
    real gate.
